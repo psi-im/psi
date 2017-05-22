@@ -27,6 +27,7 @@
 class ContactListModel;
 class ContactListItem;
 class QAction;
+class QLabel;
 
 class ContactListItemMenu : public QMenu
 {
@@ -37,6 +38,7 @@ public:
 
 	virtual ContactListItem* item() const;
 
+	void setLabelTitle(const QString &title);
 	virtual void removeActions(QStringList actionNames);
 	virtual QList<QAction*> availableActions() const;
 
@@ -48,6 +50,7 @@ protected:
 private:
 	ContactListItem* item_;
 	ContactListModel* model_;
+	QLabel *_lblTitle;
 };
 
 #endif

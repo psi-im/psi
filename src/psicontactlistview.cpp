@@ -20,23 +20,23 @@
 
 #include "psicontactlistview.h"
 
-#include <QHelpEvent>
-#include <QLayout>
-#include <QApplication>
-#include <QDesktopWidget>
-#include <QTimer>
-#include <QFileInfo>
-#include <QMimeData>
-
-#include "psicontactlistviewdelegate.h"
-#include "psitooltip.h"
-#include "psioptions.h"
+#include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "contactlistproxymodel.h"
-#include "contactlistgroup.h"
-#include "contactlistitemproxy.h"
-#include "psicontact.h"
+#include "contactlistviewdelegate.h"
+#include "debug.h"
 #include "psiaccount.h"
+#include "psicontact.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QFileInfo>
+#include <QHelpEvent>
+#include <QLayout>
+#include <QMimeData>
+#include <QTimer>
 
 static const int recalculateTimerTimeout = 2000;
 
@@ -157,9 +157,8 @@ public:
 PsiContactListView::PsiContactListView(QWidget* parent)
 	: ContactListDragView(parent)
 {
-	//setLayoutDirection(Qt::RightToLeft);
-	setIndentation(0); // bigger values make roster look weird
-	setItemDelegate(new PsiContactListViewDelegate(this));
+	setIndentation(4);
+	setItemDelegate(new ContactListViewDelegate(this));
 
 	d = new Private(this);
 
@@ -167,9 +166,9 @@ PsiContactListView::PsiContactListView(QWidget* parent)
 	connect(this, SIGNAL(collapsed(QModelIndex)), d, SLOT(recalculateSize()));
 }
 
-PsiContactListViewDelegate* PsiContactListView::itemDelegate() const
+ContactListViewDelegate *PsiContactListView::itemDelegate() const
 {
-	return static_cast<PsiContactListViewDelegate*>(ContactListDragView::itemDelegate());
+	return qobject_cast<ContactListViewDelegate*>(ContactListDragView::itemDelegate());
 }
 
 void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& globalPos) const
@@ -181,16 +180,20 @@ void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& glo
 
 bool PsiContactListView::acceptableDragOperation(QDropEvent *e)
 {
-	ContactListItemProxy* ip = itemProxy(indexAt(e->pos()));
-	if(ip) {
-		PsiContact *pc = dynamic_cast<PsiContact*>(ip->item());
-		if(pc) {
-			foreach(const QUrl& url, e->mimeData()->urls()) {
-				const QFileInfo fi(url.toLocalFile());
-				if (!fi.isDir() && fi.exists()) {
-					return true;
-				}
-			}
+	ContactListItem *item = itemProxy(indexAt(e->pos()));
+
+	if (!item)
+		return false;
+
+	PsiContact *contact = item->contact();
+
+	if (!contact)
+		return false;
+
+	for (const QUrl& url: e->mimeData()->urls()) {
+		const QFileInfo fi(url.toLocalFile());
+		if (!fi.isDir() && fi.exists()) {
+			return true;
 		}
 	}
 
@@ -221,59 +224,76 @@ void PsiContactListView::dragMoveEvent(QDragMoveEvent *e)
 
 void PsiContactListView::dropEvent(QDropEvent *e)
 {
-	ContactListItemProxy* ip = itemProxy(indexAt(e->pos()));
-	if(ip) {
-		PsiContact *pc = dynamic_cast<PsiContact*>(ip->item());
-		if(pc) {
-			QStringList files;
-			foreach(const QUrl& url, e->mimeData()->urls()) {
-				const QFileInfo fi(url.toLocalFile());
-				if (!fi.isDir() && fi.exists()) {
-					const QString fileName = QFileInfo(fi.isSymLink() ?
-										fi.symLinkTarget() : fi.absoluteFilePath()
-										).canonicalFilePath();
-					files.append(fileName);
-				}
-			}
+	ContactListItem *item = itemProxy(indexAt(e->pos()));
 
-			if(!files.isEmpty()) {
-				e->acceptProposedAction();
-				pc->account()->sendFiles(pc->jid(), files, true);
-				return;
-			}
+	if (!item)
+		return;
+
+	PsiContact *contact = item->contact();
+
+	if (!contact)
+		return;
+
+	QStringList files;
+	foreach(const QUrl& url, e->mimeData()->urls()) {
+		const QFileInfo fi(url.toLocalFile());
+		if (!fi.isDir() && fi.exists()) {
+			const QString fileName = QFileInfo(fi.isSymLink() ?
+												   fi.symLinkTarget() : fi.absoluteFilePath()
+												   ).canonicalFilePath();
+			files.append(fileName);
 		}
+	}
+
+	if(!files.isEmpty()) {
+		e->acceptProposedAction();
+		contact->account()->sendFiles(contact->jid(), files, true);
+		return;
 	}
 
 	ContactListDragView::dropEvent(e);
 }
 
-void PsiContactListView::setModel(QAbstractItemModel* model)
+void PsiContactListView::setModel(QAbstractItemModel *model)
 {
 	ContactListDragView::setModel(model);
-	QAbstractItemModel* connectToModel = realModel();
-	if (dynamic_cast<ContactListModel*>(connectToModel)) {
-		connect(connectToModel, SIGNAL(contactAlert(const QModelIndex&)), SLOT(contactAlert(const QModelIndex&)));
-	}
-	if (dynamic_cast<ContactListProxyModel*>(model)) {
+
+	if (qobject_cast<ContactListProxyModel*>(model)) {
 		connect(model, SIGNAL(recalculateSize()), d, SLOT(recalculateSize()));
 	}
 }
 
-void PsiContactListView::contactAlert(const QModelIndex& realIndex)
+void PsiContactListView::alertContacts(const QModelIndexList &indexes)
 {
-	QModelIndex index = proxyIndex(realIndex);
-	itemDelegate()->contactAlert(index);
+	SLOW_TIMER(100);
 
-	bool alerting = index.data(ContactListModel::IsAlertingRole).toBool();
-	if (alerting && PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
-		ensureVisible(index);
+	QModelIndex alertingIndex;
+
+	for (const auto &index: indexes) {
+		QModelIndex proxyIndex = this->proxyIndex(index);
+
+		itemDelegate()->contactAlert(proxyIndex);
+
+		if (index.data(ContactListModel::IsAlertingRole).toBool()) {
+			alertingIndex = proxyIndex;
+		}
+	}
+
+	if (alertingIndex.isValid() && PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
+		ensureVisible(alertingIndex);
 	}
 }
 
-void PsiContactListView::doItemsLayoutStart()
+void PsiContactListView::animateContacts(const QModelIndexList &indexes, bool started)
 {
-	ContactListDragView::doItemsLayoutStart();
-	itemDelegate()->clearAlerts();
+	SLOW_TIMER(100);
+
+	QModelIndexList proxyIndexes;
+	for (const auto &index: indexes) {
+		proxyIndexes << proxyIndex(index);
+	}
+
+	itemDelegate()->animateContacts(proxyIndexes, started);
 }
 
 void PsiContactListView::setAutoResizeEnabled(bool enabled)

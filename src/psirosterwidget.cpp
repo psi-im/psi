@@ -20,6 +20,9 @@
 
 #include "psirosterwidget.h"
 
+#include "widgets/actionlineedit.h"
+#include "widgets/iconaction.h"
+
 #include <QVBoxLayout>
 #include <QStackedWidget>
 #include <QMessageBox>
@@ -28,19 +31,18 @@
 #include <QKeyEvent>
 #include <QMimeData>
 
-#include "psicontactlistmodel.h"
+#include "contactlistdragmodel.h"
 #include "psicontactlistview.h"
 #include "psifilteredcontactlistview.h"
 #include "contactlistproxymodel.h"
 #include "psicontact.h"
-#include "contactlistitemproxy.h"
-#include "contactlistgroup.h"
+#include "contactlistitem.h"
 #ifdef MODELTEST
 #include "modeltest.h"
 #endif
 #include "psioptions.h"
-#include "contactlistutil.h"
 #include "psiaccount.h"
+#include "debug.h"
 
 static const QString contactSortStyleOptionPath = "options.ui.contactlist.contact-sort-style";
 static const QString showOfflineOptionPath = "options.ui.contactlist.show.offline-contacts";
@@ -64,7 +66,6 @@ public:
 		: QSortFilterProxyModel(parent)
 	{
 		sort(0, Qt::AscendingOrder);
-		setDynamicSortFilter(true);
 		setFilterCaseSensitivity(Qt::CaseInsensitive);
 		setSortLocaleAware(true);
 	}
@@ -94,11 +95,11 @@ protected:
 	// reimplemented
 	bool lessThan(const QModelIndex& left, const QModelIndex& right) const
 	{
-		ContactListItemProxy* item1 = static_cast<ContactListItemProxy*>(left.internalPointer());
-		ContactListItemProxy* item2 = static_cast<ContactListItemProxy*>(right.internalPointer());
+		ContactListItem* item1 = static_cast<ContactListItem*>(left.internalPointer());
+		ContactListItem* item2 = static_cast<ContactListItem*>(right.internalPointer());
 		if (!item1 || !item2)
 			return false;
-		return item1->item()->compare(item2->item());
+		return item1->lessThan(item2);
 	}
 };
 
@@ -114,7 +115,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 	, contactListPageView_(0)
 	, filterPageView_(0)
 	, contactListModel_(0)
-	, filterModel_(0)
+	, filterModel_(nullptr)
 {
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setMargin(0);
@@ -139,13 +140,17 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 	// filterPage_
 	filterPage_ = new QWidget(0);
 	filterPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	filterPage_->installEventFilter(this);
 	stackedWidget_->addWidget(filterPage_);
 
 	QVBoxLayout* filterPageLayout = new QVBoxLayout(filterPage_);
 	filterPageLayout->setMargin(0);
 	filterPageLayout->setSpacing(0);
 
-	filterEdit_ = new QLineEdit(filterPage_);
+	filterEdit_ = new ActionLineEdit(filterPage_);
+	QAction *clearAction = new IconAction("", "psi/clearChat", tr("Clear"), 0, this);
+	connect(clearAction, SIGNAL(triggered()), SLOT(clearFilterEdit()));
+	filterEdit_->addAction(clearAction);
 	connect(filterEdit_, SIGNAL(textChanged(const QString&)), SLOT(filterEditTextChanged(const QString&)));
 	filterEdit_->installEventFilter(this);
 	filterPageLayout->addWidget(filterEdit_);
@@ -179,42 +184,21 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 	optionChanged(allowAutoResizeOptionPath);
 	optionChanged(showScrollBarOptionPath);
 
-	contactListModel_ = new PsiContactListModel(contactList_);
+	contactListModel_ = new ContactListDragModel(contactList_);
 	contactListModel_->invalidateLayout();
 	contactListModel_->setGroupsEnabled(PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool());
 	contactListModel_->setAccountsEnabled(true);
-	contactListModel_->storeGroupState("contacts");
 #ifdef MODELTEST
 	new ModelTest(contactListModel_, this);
 #endif
 
-	ContactListProxyModel* contactListProxyModel = new ContactListProxyModel(this);
+	ContactListProxyModel *contactListProxyModel = new ContactListProxyModel(this);
 	contactListProxyModel->setSourceModel(contactListModel_);
 #ifdef MODELTEST
 	new ModelTest(contactListProxyModel, this);
 #endif
 
 	contactListPageView_->setModel(contactListProxyModel);
-
-	{
-		filterModel_ = new PsiRosterFilterProxyModel(this);
-
-		ContactListModel* clone = contactListModel_->clone();
-		clone->setGroupsEnabled(false);
-		clone->setAccountsEnabled(false);
-		clone->invalidateLayout();
-
-		filterModel_->setSourceModel(clone);
-		filterPageView_->setModel(filterModel_);
-	}
-
-	QList<PsiContactListView*> contactListViews;
-	contactListViews << contactListPageView_;
-	contactListViews << filterPageView_;
-	foreach(PsiContactListView* clv, contactListViews) {
-		connect(clv, SIGNAL(removeSelection(QMimeData*)), SLOT(removeSelection(QMimeData*)));
-		connect(clv, SIGNAL(removeGroupWithoutContacts(QMimeData*)), SLOT(removeGroupWithoutContacts(QMimeData*)));
-	}
 }
 
 void PsiRosterWidget::optionChanged(const QString& option)
@@ -249,42 +233,6 @@ void PsiRosterWidget::optionChanged(const QString& option)
 	}
 }
 
-void PsiRosterWidget::removeSelection(QMimeData* selection)
-{
-	ContactListUtil::removeContact(0, selection, contactListModel_, this, this);
-}
-
-void PsiRosterWidget::removeContactConfirmation(const QString& id, bool confirmed)
-{
-	ContactListUtil::removeContactConfirmation(id, confirmed, contactListModel_, contactListPageView_);
-}
-
-void PsiRosterWidget::removeGroupWithoutContacts(QMimeData* selection)
-{
-	int n = QMessageBox::information(contactListPageView_, tr("Remove Group"),
-	                                 tr("This will cause all contacts in this group to be disassociated with it.\n"
-	                                    "\n"
-	                                    "Proceed?"),
-	                                 tr("&Yes"), tr("&No"));
-
-	if (n == 0) {
-		QModelIndexList indexes = contactListModel_->indexesFor(0, selection);
-		Q_ASSERT(indexes.count() == 1);
-		Q_ASSERT(contactListModel_->indexType(indexes.first()) == ContactListModel::GroupType);
-		if (indexes.count() != 1)
-			return;
-		ContactListItemProxy* proxy = contactListModel_->modelIndexToItemProxy(indexes.first());
-		ContactListGroup* group = proxy ? dynamic_cast<ContactListGroup*>(proxy->item()) : 0;
-		if (!group)
-			return;
-
-		QList<PsiContact*> contacts = group->contacts();
-		foreach(PsiContact* c, group->contacts()) {
-			c->account()->actionGroupRemove(c->jid(), group->name());
-		}
-	}
-}
-
 void PsiRosterWidget::showAgentsChanged(bool enabled)
 {
 	PsiOptions::instance()->setOption(showAgentsOptionPath, enabled);
@@ -312,8 +260,8 @@ void PsiRosterWidget::setShowStatusMsg(bool enabled)
 
 void PsiRosterWidget::filterEditTextChanged(const QString& text)
 {
-	updateFilterMode();
-	filterModel_->setFilterRegExp(QRegExp::escape(text));
+	if (filterModel_)
+		filterModel_->setFilterRegExp(QRegExp::escape(text));
 }
 
 void PsiRosterWidget::quitFilteringMode()
@@ -328,14 +276,25 @@ void PsiRosterWidget::updateFilterMode()
 
 void PsiRosterWidget::setFilterModeEnabled(bool enabled)
 {
+	SLOW_TIMER(100);
 	bool currentlyEnabled = stackedWidget_->currentWidget() == filterPage_;
 	if (enabled == currentlyEnabled)
 		return;
 
-	PsiContactListView* selectionSource = 0;
-	PsiContactListView* selectionDestination = 0;
+	PsiContactListView *selectionSource = 0;
+	PsiContactListView *selectionDestination = 0;
 
 	if (enabled) {
+		Q_ASSERT(!filterModel_);
+		filterModel_ = new PsiRosterFilterProxyModel(this);
+
+		ContactListDragModel *clone = new ContactListDragModel(contactList_);
+		clone->invalidateLayout();
+		clone->setParent(filterModel_);
+
+		filterModel_->setSourceModel(clone);
+		filterPageView_->setModel(filterModel_);
+
 		selectionSource = contactListPageView_;
 		selectionDestination = filterPageView_;
 
@@ -350,11 +309,22 @@ void PsiRosterWidget::setFilterModeEnabled(bool enabled)
 
 		stackedWidget_->setCurrentWidget(contactListPage_);
 		contactListPageView_->setFocus();
+
+		delete filterModel_;
+		filterModel_ = nullptr;
 	}
 
 	QMimeData* selection = selectionSource->selection();
 	selectionDestination->restoreSelection(selection);
 	delete selection;
+}
+
+void PsiRosterWidget::clearFilterEdit()
+{
+	if (filterEdit_->text().isEmpty())
+		setFilterModeEnabled(false);
+	else
+		filterEdit_->setText("");
 }
 
 bool PsiRosterWidget::eventFilter(QObject* obj, QEvent* e)
@@ -378,12 +348,22 @@ bool PsiRosterWidget::eventFilter(QObject* obj, QEvent* e)
 		QString text = ke->text().trimmed();
 		if (!text.isEmpty() && (obj == contactListPageView_ || obj == contactListPage_)) {
 			bool correctChar = (text[0].isLetterOrNumber() || text[0].isPunct()) &&
-			                   (!ke->modifiers() || ke->modifiers() & (Qt::ShiftModifier | Qt::KeypadModifier));
+			                   (ke->modifiers() == Qt::NoModifier || ke->modifiers() == Qt::ShiftModifier);
 			if (correctChar && !contactListPageView_->textInputInProgress()) {
 				setFilterModeEnabled(true);
 				filterEdit_->setText(text);
 				return true;
 			}
+		}
+		else if (ke->key() == Qt::Key_F3) {
+			if (filterEdit_->isVisible() && filterEdit_->text().isEmpty()) {
+				setFilterModeEnabled(false);
+			}
+			else {
+				setFilterModeEnabled(true);
+			}
+			filterEdit_->setText("");
+			return true;
 		}
 
 		if (obj == filterEdit_ || obj == filterPageView_ || obj == filterPage_) {

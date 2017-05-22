@@ -27,7 +27,6 @@ class ContactListItem;
 class ContactListGroupItem;
 class PsiContactGroup;
 class PsiAccount;
-class ContactListModelSelection;
 class PsiContact;
 
 #include "xmpp_jid.h"
@@ -46,7 +45,7 @@ public:
 	struct Operation {
 		Operation()
 		{}
-		Operation(const QString& _groupFrom, const QString& _groupTo)
+		Operation(const QString &_groupFrom, const QString &_groupTo)
 			: groupFrom(_groupFrom)
 			, groupTo(_groupTo)
 		{}
@@ -64,40 +63,36 @@ public:
 
 	Action action() const;
 
-	void addOperation(PsiContact* contact, const QString& groupFrom, const QString& groupTo);
+	void addOperation(PsiContact* contact, const QString &groupFrom, const QString &groupTo);
 	QList<ContactOperation> operations() const;
 
 	void removeAccidentalContactMoveOperations();
 
 private:
 	Action action_;
-	QHash<PsiContact*, QList<Operation> > operations_;
+	QHash<PsiContact*, QList<Operation>> operations_;
 };
 
 class ContactListDragModel : public ContactListModel
 {
 	Q_OBJECT
+
 public:
-	ContactListDragModel(PsiContactList* contactList);
+	ContactListDragModel(PsiContactList *contactList);
 
 	// reimplemented
 	Qt::DropActions supportedDragActions() const;
 	Qt::DropActions supportedDropActions() const;
-	Qt::ItemFlags flags(const QModelIndex& index) const;
+	Qt::ItemFlags flags(const QModelIndex &index) const;
 	QStringList mimeTypes() const;
-	QMimeData* mimeData(const QModelIndexList& indexes) const;
-	bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent);
-	virtual ContactListModel* clone() const;
-	void renameGroup(ContactListGroup* group, const QString& newName);
+	QMimeData *mimeData(const QModelIndexList &indexes) const;
+	bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+	void renameGroup(ContactListItem *group, const QString &newName);
 
-	QModelIndexList indexesFor(const QMimeData* data) const;
-	QModelIndexList indexesFor(PsiContact* contact, QMimeData* contactSelection) const;
+	QModelIndexList indexesFor(const QMimeData *data) const;
+	QModelIndexList indexesFor(PsiContact *contact, QMimeData *contactSelection) const;
 
-	QList<PsiContact*> contactsLostByRemove(const QMimeData* data) const;
-	void removeIndexes(const QMimeData* data);
-	QStringList contactGroupsLostByRemove(PsiContact* contact, const QMimeData* data) const;
-
-	bool supportsMimeDataOnIndex(const QMimeData* data, const QModelIndex& parent) const;
+	bool supportsMimeDataOnIndex(const QMimeData *data, const QModelIndex &parent) const;
 
 protected:
 	enum OperationType {
@@ -105,25 +100,11 @@ protected:
 		Operation_GroupRename
 	};
 
-	// reimplemented
-	virtual bool filterRemoveContact(PsiContact* psiContact, const QStringList& newGroups);
-	virtual void initializeModel();
+	virtual PsiAccount *getDropAccount(PsiAccount *account, const QModelIndex &parent) const;
+	virtual QString getDropGroupName(const QModelIndex &parent) const;
 
-	virtual PsiAccount* getDropAccount(PsiAccount* account, const QModelIndex& parent) const;
-	virtual QString getDropGroupName(const QModelIndex& parent) const;
-	virtual void contactOperationsPerformed(const ContactListModelOperationList& operations, OperationType operationType, const QHash<ContactListGroup*, int>& groupContactCount);
-
-	QString processContactSetGroupName(const QString& groupName) const;
-	QStringList processContactSetGroupNames(const QStringList& groups) const;
-	QStringList processContactGetGroupNames(PsiContact* contact) const;
-	QString sourceOperationsForContactGroup(const QString& groupName, PsiContact* contact) const;
-	QString destinationOperationsForContactGroup(const QString& groupName, PsiContact* contact) const;
-
-private:
-	QList<PsiContact*> removeIndexesHelper(const QMimeData* data, bool performRemove);
-	ContactListModelOperationList removeOperationsFor(const QMimeData* data) const;
-	void addOperationsForGroupRename(const QString& currentGroupName, const QString& newGroupName, ContactListModelOperationList* operations) const;
-	void performContactOperations(const ContactListModelOperationList& operations, OperationType operationType);
+	QString sourceOperationsForContactGroup(const QString &groupName, PsiContact *contact) const;
+	QString destinationOperationsForContactGroup(const QString &groupName, PsiContact *contact) const;
 };
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * contactlistgroupcache.h - contact list group cache
+ * psicontactmenu.cpp - a PsiContact context menu
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -18,37 +18,35 @@
  *
  */
 
-#ifndef CONTACTLISTGROUPCACHE_H
-#define CONTACTLISTGROUPCACHE_H
+#pragma once
 
-#include <QHash>
-#include <QObject>
+#include <QMenu>
+#include <QPointer>
 
-class ContactListGroup;
 class PsiContact;
 
-class ContactListGroupCache : public QObject
+class GroupMenu : public QMenu
 {
 	Q_OBJECT
 public:
-	ContactListGroupCache(QObject *parent);
-	~ContactListGroupCache();
+	GroupMenu(QWidget* parent);
+	void updateMenu(PsiContact* contact);
 
-	QStringList groups() const;
-	bool hasContacts(bool onlineOnly) const;
-
-	QList<ContactListGroup*> groupsFor(PsiContact* contact) const;
-	ContactListGroup* findGroup(const QString& fullName) const;
-
-	void addContact(ContactListGroup* group, PsiContact* contact);
-	void removeContact(ContactListGroup* group, PsiContact* contact);
-
-	void addGroup(ContactListGroup* group);
-	void removeGroup(ContactListGroup* group);
+signals:
+	void groupActivated(QString groupName);
 
 private:
-	QHash<PsiContact*, QList<ContactListGroup*> > contacts_;
-	QHash<QString, ContactListGroup*> groups_;
-};
+	QPointer<PsiContact> contact_;
+	QAction* createNewGroupAction_;
 
-#endif
+	/**
+	 * \param text will be shown on screen, and \param groupName is the
+	 * actual group name. Specify true as \param current when group is
+	 * currently selected for a contact.
+	 */
+	void addGroup(QString text, QString groupName, bool selected);
+
+private slots:
+	void actionActivated();
+	void createNewGroup();
+};

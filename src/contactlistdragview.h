@@ -66,10 +66,6 @@ public:
 public:
 	virtual int suggestedItemHeight();
 
-signals:
-	void removeSelection(QMimeData* selection);
-	void removeGroupWithoutContacts(QMimeData* selection);
-
 public slots:
 	void toolTipEntered(PsiContact* contact, QMimeData* contactSelection);
 	void toolTipHidden(PsiContact* contact, QMimeData* contactSelection);
@@ -89,10 +85,6 @@ protected:
 	void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
 
 protected slots:
-	// reimplemented
-	virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
-	virtual void doItemsLayout();
-
 	virtual void scrollbarValueChanged();
 	void modelChanged();
 
@@ -107,9 +99,6 @@ protected:
 	virtual void mouseReleaseEvent(QMouseEvent* event);
 	virtual void updateGeometries();
 
-	virtual void doItemsLayoutStart();
-	virtual void doItemsLayoutFinish();
-
 	enum UpdateCursorOrigin {
 		UC_MouseClick,
 		UC_MouseHover,
@@ -120,7 +109,6 @@ protected:
 	virtual bool updateCursor(const QModelIndex& index, UpdateCursorOrigin origin, bool force);
 	void updateKeyboardModifiers(const QEvent* e);
 	Qt::KeyboardModifiers keyboardModifiers() const;
-	int backedUpVerticalScrollBarValue() const;
 	int indexCombinedHeight(const QModelIndex& index, QAbstractItemDelegate* delegate) const;
 
 private slots:
@@ -132,7 +120,6 @@ private slots:
 
 private:
 	QMimeData* backedUpSelection_;
-	int backedUpVerticalScrollBarValue_;
 	QString backedUpEditorValue_;
 	QAction* removeAction_;
 	QRect dropIndicatorRect_;
@@ -155,8 +142,8 @@ private:
 	DropIndicatorPosition dropPosition(QDropEvent* e, const ContactListModelSelection& selection, const QModelIndex& index) const;
 	QRect groupVisualRect(const QModelIndex& index) const;
 	void combineVisualRects(const QModelIndex& index, QRect* result) const;
-	bool supportsDropOnIndex(QDropEvent* e, const QModelIndex& index) const;
-	void reorderGroups(QDropEvent* e, const QModelIndex& index);
+	bool supportsDropOnIndex(QDropEvent *e, const QModelIndex &index) const;
+	void reorderGroups(QDropEvent *e, const QModelIndex &index);
 };
 
 #endif

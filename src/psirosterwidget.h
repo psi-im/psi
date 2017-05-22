@@ -24,7 +24,7 @@
 #include <QWidget>
 #include <QPointer>
 
-class PsiContactListModel;
+class ContactListDragModel;
 class PsiContactList;
 class QStackedWidget;
 class PsiContactListView;
@@ -48,18 +48,15 @@ public slots:
 	void quitFilteringMode();
 	void updateFilterMode();
 	void setFilterModeEnabled(bool enabled);
+	void clearFilterEdit();
 
 private slots:
-	void removeSelection(QMimeData* selection);
-	void removeGroupWithoutContacts(QMimeData* selection);
 	void optionChanged(const QString& option);
 	void showAgentsChanged(bool);
 	void showHiddenChanged(bool);
 	void showSelfChanged(bool);
 	void showOfflineChanged(bool);
 	void setShowStatusMsg(bool);
-
-	void removeContactConfirmation(const QString& id, bool confirmed);
 
 protected:
 	bool eventFilter(QObject* obj, QEvent* e);
@@ -73,7 +70,7 @@ private:
 	PsiFilteredContactListView* filterPageView_;
 	QLineEdit* filterEdit_;
 
-	PsiContactListModel* contactListModel_;
+	ContactListDragModel* contactListModel_;
 	QSortFilterProxyModel* filterModel_;
 };
 

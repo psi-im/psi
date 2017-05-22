@@ -30,54 +30,17 @@
 
 #include "contactlistitem.h"
 #include "contactlistitemmenu.h"
-#include "contactlistitemproxy.h"
 #include "contactlistmodel.h"
 #include "contactlistview.h"
 #include "psioptions.h"
 #include "psitooltip.h"
-#include "contactlistgroupcache.h"
-#include "contactlistgroup.h"
 #include "contactlistproxymodel.h"
-#ifdef YAPSI
-#include "smoothscrollbar.h"
-#include "yawindowtheme.h"
-#include "yavisualutil.h"
-#endif
-
-#ifdef YAPSI
-class ContactListViewCorner : public QWidget
-{
-public:
-	ContactListViewCorner()
-		 : QWidget(0)
-	{}
-
-protected:
-	// reimplemented
-	void paintEvent(QPaintEvent*)
-	{
-		QPainter p(this);
-
-		Ya::VisualUtil::paintRosterBackground(this, &p);
-
-		QLinearGradient linearGrad(
-			QPointF(rect().left(), rect().top()), QPointF(rect().right(), rect().bottom())
-		);
-		QColor transparent(Qt::white);
-		transparent.setAlpha(0);
-		linearGrad.setColorAt(0, Qt::white);
-		linearGrad.setColorAt(0.4, Qt::white);
-		linearGrad.setColorAt(1, transparent);
-		p.fillRect(rect(), linearGrad);
-	}
-};
-#endif
+#include "debug.h"
 
 ContactListView::ContactListView(QWidget* parent)
 	: HoverableTreeView(parent)
 	, contextMenuActive_(false)
 {
-	setAnimated(false); // FIXME hack hack!! prevents crash on Plasma 5
 	setUniformRowHeights(false);
 	setAlternatingRowColors(true);
 	setRootIsDecorated(false);
@@ -87,7 +50,7 @@ ContactListView::ContactListView(QWidget* parent)
 	setIndentation(5);
 	header()->hide();
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	//setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+	setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 	verticalScrollBar()->setSingleStep(1);
 
 	// setItemDelegate(new PsiContactListViewDelegate(this));
@@ -96,17 +59,14 @@ ContactListView::ContactListView(QWidget* parent)
 	setFrameShape(QFrame::NoFrame);
 #endif
 
-#ifdef YAPSI
-	setCornerWidget(new ContactListViewCorner());
-#endif
-
 	connect(this, SIGNAL(doubleClicked(const QModelIndex&)), SLOT(itemActivated(const QModelIndex&)));
 	// showStatus_ = PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.show").toBool();
 }
 
-static void setExpandedState(QTreeView* view, QAbstractItemModel* model, const QModelIndex& parent)
+static void setExpandedState(QTreeView *view, QAbstractItemModel *model, const QModelIndex &parent)
 {
 	Q_ASSERT(model);
+
 	for (int i = 0; i < model->rowCount(parent); i++) {
 		QModelIndex index = model->index(i, 0, parent);
 		view->setExpanded(index, model->data(index, ContactListModel::ExpandedRole).toBool());
@@ -116,18 +76,19 @@ static void setExpandedState(QTreeView* view, QAbstractItemModel* model, const Q
 	}
 }
 
-void ContactListView::doItemsLayout()
-{
-	if (!model())
-		return;
-	HoverableTreeView::doItemsLayout();
-	updateGroupExpandedState();
-}
+//void ContactListView::doItemsLayout()
+//{
+//	if (!model())
+//		return;
+//	HoverableTreeView::doItemsLayout();
+//	updateGroupExpandedState();
+//}
 
 void ContactListView::updateGroupExpandedState()
 {
 	if (!model())
 		return;
+
 	setExpandedState(this, model(), QModelIndex());
 }
 
@@ -153,15 +114,15 @@ void ContactListView::updateContextMenu()
 	if (isContextMenuVisible())
 		return;
 
-	if (contextMenu_)
-		delete contextMenu_;
+	delete contextMenu_;
 	contextMenu_ = 0;
 
 	// FIXME: need to implement context menu merging
 	if (selectedIndexes().count() == 1) {
-		ContactListItemProxy* item = itemProxy(selectedIndexes().first());
+		QModelIndex index = realIndex(selectedIndexes().first());
+		ContactListItem *item = realModel()->toItem(index);
 		if (item) {
-			contextMenu_ = createContextMenuFor(item->item());
+			contextMenu_ = createContextMenuFor(item);
 			addContextMenuActions();
 		}
 	}
@@ -170,8 +131,9 @@ void ContactListView::updateContextMenu()
 ContactListItemMenu* ContactListView::createContextMenuFor(ContactListItem* item) const
 {
 	if (item)
-		return item->contextMenu(dynamic_cast<ContactListModel*>(realModel()));
-	return 0;
+		return item->contextMenu();
+
+	return nullptr;
 }
 
 void ContactListView::focusInEvent(QFocusEvent* event)
@@ -189,7 +151,7 @@ void ContactListView::focusOutEvent(QFocusEvent* event)
 void ContactListView::addContextMenuActions()
 {
 	if (contextMenu_) {
-		foreach(QAction* action, contextMenu_->availableActions()) {
+		for (QAction* action: contextMenu_->availableActions()) {
 			addContextMenuAction(action);
 		}
 	}
@@ -224,7 +186,7 @@ void ContactListView::setModel(QAbstractItemModel* model)
 {
 	HoverableTreeView::setModel(model);
 	QAbstractItemModel* connectToModel = realModel();
-	if (dynamic_cast<ContactListModel*>(connectToModel)) {
+	if (qobject_cast<ContactListModel*>(connectToModel)) {
 		connect(this, SIGNAL(expanded(const QModelIndex&)), SLOT(itemExpanded(const QModelIndex&)));
 		connect(this, SIGNAL(collapsed(const QModelIndex&)), SLOT(itemCollapsed(const QModelIndex&)));
 		connect(this, SIGNAL(realExpanded(const QModelIndex&)), connectToModel, SLOT(expanded(const QModelIndex&)));
@@ -234,7 +196,8 @@ void ContactListView::setModel(QAbstractItemModel* model)
 		// connection to showOfflineChanged() should be established after the proxy model does so,
 		// otherwise we won't get consistently re-expanded groups. Qt::QueuedConnection could
 		// be advised for in such case.
-		connect(connectToModel, SIGNAL(showOfflineChanged()), SLOT(showOfflineChanged()));
+		// connect(connectToModel, SIGNAL(showOfflineChanged()), SLOT(showOfflineChanged()));
+		connect(model, SIGNAL(layoutChanged()), SLOT(showOfflineChanged()));
 	}
 }
 
@@ -243,6 +206,15 @@ void ContactListView::resizeEvent(QResizeEvent* e)
 	HoverableTreeView::resizeEvent(e);
 	if (header()->count() > 0)
 		header()->resizeSection(0, viewport()->width());
+}
+
+void ContactListView::rowsInserted(const QModelIndex &parent, int start, int end)
+{
+	for (int i = start; i <= end; ++i) {
+		QModelIndex index = parent.child(i, 0);
+		if (realIndex(index).data(ContactListModel::ExpandedRole).toBool())
+			setExpanded(index, true);
+	}
 }
 
 void ContactListView::itemExpanded(const QModelIndex& index)
@@ -288,12 +260,14 @@ void ContactListView::keyPressEvent(QKeyEvent* event)
 		break;
 	case Qt::Key_Space:
 		if (state() != EditingState) {
-			if (ContactListModel::isGroupType(currentIndex())) {
+
+			ContactListItem *item = qvariant_cast<ContactListItem*>(currentIndex().data(ContactListModel::ContactListItemRole));
+
+			if (item->isGroup()) {
 				toggleExpandedState(currentIndex());
 			}
 			else {
-				QContextMenuEvent e(QContextMenuEvent::Keyboard,
-							visualRect(currentIndex()).center());
+				QContextMenuEvent e(QContextMenuEvent::Keyboard, visualRect(currentIndex()).center());
 				QCoreApplication::sendEvent(this, &e);
 			}
 		}
@@ -367,15 +341,15 @@ void ContactListView::itemActivated(const QModelIndex& index)
 
 static QAbstractItemModel* realModel(QAbstractItemModel* model)
 {
-	QSortFilterProxyModel* proxyModel = dynamic_cast<QSortFilterProxyModel*>(model);
+	QSortFilterProxyModel* proxyModel = qobject_cast<QSortFilterProxyModel*>(model);
 	if (proxyModel)
 		return realModel(proxyModel->sourceModel());
 	return model;
 }
 
-QAbstractItemModel* ContactListView::realModel() const
+ContactListModel *ContactListView::realModel() const
 {
-	return ::realModel(model());
+	return qobject_cast<ContactListModel*>(::realModel(model()));
 }
 
 QModelIndexList ContactListView::realIndexes(const QModelIndexList& indexes) const
@@ -391,7 +365,7 @@ QModelIndexList ContactListView::realIndexes(const QModelIndexList& indexes) con
 
 static QModelIndex realIndex(QAbstractItemModel* model, QModelIndex index)
 {
-	QSortFilterProxyModel* proxyModel = dynamic_cast<QSortFilterProxyModel*>(model);
+	QSortFilterProxyModel* proxyModel = qobject_cast<QSortFilterProxyModel*>(model);
 	if (proxyModel)
 		return realIndex(proxyModel->sourceModel(), proxyModel->mapToSource(index));
 	return index;
@@ -421,16 +395,16 @@ static QModelIndex proxyIndex(QAbstractItemModel* model, QModelIndex index)
 	return index;
 }
 
-QModelIndex ContactListView::proxyIndex(const QModelIndex& index) const
+QModelIndex ContactListView::proxyIndex(const QModelIndex &index) const
 {
 	return ::proxyIndex(model(), index);
 }
 
-ContactListItemProxy* ContactListView::itemProxy(const QModelIndex& index) const
+ContactListItem *ContactListView::itemProxy(const QModelIndex& index) const
 {
 	if (!index.isValid())
 		return 0;
-	return static_cast<ContactListItemProxy*>(realIndex(index).internalPointer());
+	return static_cast<ContactListItem*>(realIndex(index).internalPointer());
 }
 
 QLineEdit* ContactListView::currentEditor() const
@@ -441,14 +415,9 @@ QLineEdit* ContactListView::currentEditor() const
 
 void ContactListView::setEditingIndex(const QModelIndex& index, bool editing) const
 {
-	ContactListItemProxy* itemProxy = this->itemProxy(index);
-	if (itemProxy) {
-		itemProxy->item()->setEditing(editing);
-	}
-
-	ContactListModel* contactListModel = dynamic_cast<ContactListModel*>(realModel());
-	if (contactListModel) {
-		contactListModel->setUpdatesEnabled(!editing);
+	ContactListItem *item = itemProxy(index);
+	if (item) {
+		item->setEditing(editing);
 	}
 }
 
@@ -457,85 +426,6 @@ void ContactListView::closeEditor(QWidget* editor, QAbstractItemDelegate::EndEdi
 	setEditingIndex(currentIndex(), false);
 
 	HoverableTreeView::closeEditor(editor, hint);
-}
-
-void ContactListView::saveCurrentGroupOrder(const QModelIndex& parent)
-{
-	ContactListModel* contactListModel = dynamic_cast<ContactListModel*>(realModel());
-	Q_ASSERT(contactListModel);
-	if (!contactListModel)
-		return;
-
-	QModelIndexList groups;
-	for (int row = 0; row < this->model()->rowCount(parent); ++row) {
-		QModelIndex i = this->model()->index(row, parent.column(), parent);
-		if (ContactListModel::indexType(i) == ContactListModel::GroupType) {
-			groups << i;
-
-			saveCurrentGroupOrder(i);
-		}
-	}
-
-	foreach(QModelIndex i, groups) {
-		contactListModel->setGroupOrder(i.data(ContactListModel::FullGroupNameRole).toString(),
-		                     groups.indexOf(i));
-	}
-}
-
-// TODO: FIXME: need to adapt the code in order to make it work with nested groups
-void ContactListView::commitData(QWidget* editor)
-{
-	QString newGroupName;
-	int groupOrder = 0;
-
-	QLineEdit* lineEdit = currentEditor();
-	ContactListModel* contactListModel = dynamic_cast<ContactListModel*>(realModel());
-	if (lineEdit && contactListModel && contactListModel->indexType(realIndex(currentIndex())) == ContactListModel::GroupType) {
-		// TODO: deal with nested groups too!
-		newGroupName = lineEdit->text();
-		groupOrder = contactListModel->groupOrder(currentIndex().data(ContactListModel::FullGroupNameRole).toString());
-	}
-
-	HoverableTreeView::commitData(editor);
-
-	if (!newGroupName.isEmpty() && contactListModel) {
-		setEditingIndex(currentIndex(), false);
-		contactListModel->updaterCommit();
-		contactListModel->setGroupOrder(newGroupName, groupOrder);
-
-		ContactListGroup* group = contactListModel->groupCache()->findGroup(newGroupName);
-		if (group) {
-			group->updateOnlineContactsFlag();
-		}
-		ContactListGroup* parent = group ? group->parent() : 0;
-		int i = (group && parent) ? parent->indexOf(group) : -1;
-		ContactListItemProxy* proxy = (parent && (i >= 0)) ? parent->item(i) : 0;
-
-		saveCurrentGroupOrder(QModelIndex());
-
-		if (proxy) {
-			// we don't want doItemsLayout() to restore a previous selection (now out of date)
-			doItemsLayout();
-
-			QModelIndex index = contactListModel->itemProxyToModelIndex(proxy);
-			QModelIndex proxyIndex = this->proxyIndex(index);
-			if (proxyIndex.isValid()) {
-#ifdef YAPSI
-				dynamic_cast<SmoothScrollBar*>(verticalScrollBar())->setEnableSmoothScrolling(false);
-#endif
-				setCurrentIndex(proxyIndex);
-				scrollTo(proxyIndex);
-#ifdef YAPSI
-				dynamic_cast<SmoothScrollBar*>(verticalScrollBar())->setEnableSmoothScrolling(true);
-#endif
-			}
-			else {
-				// TODO: proxy model somehow is not always updated
-			}
-		}
-	}
-	// setFocus(); // commented out in order to avoid deep recursion
-	updateContextMenu();
 }
 
 void ContactListView::ensureVisible(const QModelIndex& index)

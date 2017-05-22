@@ -20,10 +20,11 @@
 
 #include "psifilteredcontactlistview.h"
 
+#include "contactlistviewdelegate.h"
+#include "psioptions.h"
+
 #include <QKeyEvent>
 #include <QPainter>
-
-#include "psicontactlistviewdelegate.h"
 
 PsiFilteredContactListView::PsiFilteredContactListView(QWidget* parent)
 	: PsiContactListView(parent)
@@ -120,8 +121,9 @@ void PsiFilteredContactListView::selectIndex(int row)
 
 void PsiFilteredContactListView::itemActivated(const QModelIndex& index)
 {
-	emit quitFilteringMode();
 	PsiContactListView::itemActivated(index);
+	if (PsiOptions::instance()->getOption("options.ui.contactlist.autohide-contact-filter").toBool())
+		emit quitFilteringMode();
 }
 
 bool PsiFilteredContactListView::extendSelection() const

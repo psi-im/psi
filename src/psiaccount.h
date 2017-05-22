@@ -253,7 +253,7 @@ public:
 	void playSound(SoundType onevent);
 
 #ifdef PSI_PLUGINS
-	void createNewPluginEvent(const QString& jid, const QString& descr, QObject *receiver, const char* slot);
+	void createNewPluginEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
 #endif
 
 	QStringList hiddenChats(const Jid &) const;
@@ -395,6 +395,7 @@ public slots:
 	void actionUnsetAvatar();
 	void actionQueryVersion(const Jid& j);
 	void featureActivated(QString feature, Jid jid, QString node);
+	void actionSendStatus(const Jid &jid);
 
 	void actionAssignKey(const Jid &);
 	void actionUnassignKey(const Jid &);

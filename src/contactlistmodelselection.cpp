@@ -26,14 +26,12 @@
 #include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
 #include "psicontact.h"
-#include "contactlistnestedgroup.h"
-#include "contactlistaccountgroup.h"
-#include "contactlistitemproxy.h"
+#include "contactlistitem.h"
 #include "textutil.h"
 
 static const QString psiRosterSelectionMimeType = "application/psi-roster-selection";
 
-ContactListModelSelection::ContactListModelSelection(QList<ContactListItemProxy*> items)
+ContactListModelSelection::ContactListModelSelection(QList<ContactListItem*> items)
 	: QMimeData()
 	, mimeData_(0)
 {
@@ -42,64 +40,63 @@ ContactListModelSelection::ContactListModelSelection(QList<ContactListItemProxy*
 	root.setAttribute("version", "2.0");
 	doc.appendChild(root);
 
-	// TODO: maybe also embed a random instance-specific token to
-	// prevent drag'n'drop with other running Psi instances?
-
 	QStringList jids;
 
-	foreach(ContactListItemProxy* itemProxy, items) {
-		Q_ASSERT(itemProxy);
+	for (auto *item: items) {
+		Q_ASSERT(item);
 
-		PsiContact* contact = 0;
-		ContactListNestedGroup* group = 0;
-		ContactListAccountGroup* account = 0;
-		if ((contact = dynamic_cast<PsiContact*>(itemProxy->item()))) {
+		switch (item->type()) {
+		case ContactListItem::Type::ContactType: {
+			PsiContact* contact = item->contact();
 			QDomElement tag = textTag(&doc, "contact", contact->jid().full());
 			tag.setAttribute("account", contact->account()->id());
-			tag.setAttribute("group", itemProxy->parent() ? itemProxy->parent()->fullName() : "");
+			tag.setAttribute("group", item->parent()->isGroup() ? item->parent()->internalName() : "");
 			root.appendChild(tag);
 
 			jids << contact->jid().full();
-		}
-		else if ((account = dynamic_cast<ContactListAccountGroup*>(itemProxy->item()))) {
-			QDomElement tag = doc.createElement("account");
-			tag.setAttribute("id", account->account()->id());
-			root.appendChild(tag);
+			break; }
 
-			jids << account->displayName();
-		}
-		else if ((group = dynamic_cast<ContactListNestedGroup*>(itemProxy->item()))) {
+		case ContactListItem::Type::GroupType: {
 			// if group->fullName() consists only of whitespace when we'll try
 			// to read it back we'll get an empty string, so we're using CDATA
 			// QDomElement tag = textTag(&doc, "group", group->fullName());
 			QDomElement tag = doc.createElement("group");
-			QDomText text = doc.createCDATASection(TextUtil::escape(group->fullName()));
+			QDomText text = doc.createCDATASection(TextUtil::escape(item->internalName()));
 			tag.appendChild(text);
 
 			root.appendChild(tag);
 
-			jids << group->fullName();
-		}
-		else {
-			qWarning("ContactListModelSelection::ContactListModelSelection(): Unable to serialize %d, unsupported type", itemProxy->item()->type());
+			jids << item->name();
+			break; }
+
+		case ContactListItem::Type::AccountType: {
+			QDomElement tag = doc.createElement("account");
+			tag.setAttribute("id", item->account()->id());
+			root.appendChild(tag);
+
+			jids << item->name();
+			break; }
+
+		default:
+			break;
 		}
 	}
 
-	setText(jids.join(";"));
+	setText(jids.join(", "));
 	setData(psiRosterSelectionMimeType, doc.toByteArray());
 }
 
-ContactListModelSelection::ContactListModelSelection(const QMimeData* mimeData)
+ContactListModelSelection::ContactListModelSelection(const QMimeData *mimeData)
 	: QMimeData()
 	, mimeData_(mimeData)
 {
-	const ContactListModelSelection* other = dynamic_cast<const ContactListModelSelection*>(mimeData_);
+	const ContactListModelSelection* other = qobject_cast<const ContactListModelSelection*>(mimeData_);
 	if (other) {
 		mimeData_ = other->mimeData();
 	}
 }
 
-const QString& ContactListModelSelection::mimeType()
+const QString &ContactListModelSelection::mimeType()
 {
 	return psiRosterSelectionMimeType;
 }

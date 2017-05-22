@@ -1,6 +1,5 @@
 /*
- * contactlistitemproxy.h - proxy item contact list item class
- * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
+ * Copyright (C) 2015  Ivan Romanov <drizt@land.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,27 +17,27 @@
  *
  */
 
-#ifndef CONTACTLISTITEMPROXY_H
-#define CONTACTLISTITEMPROXY_H
+#pragma once
 
-#include <QObject>
-#include <QPointer>
+#include <QAbstractItemModel>
 
-class ContactListItem;
-class ContactListGroup;
+class AbstractTreeItem;
 
-class ContactListItemProxy : public QObject
+class AbstractTreeModel : public QAbstractItemModel
 {
-public:
-	ContactListItemProxy(ContactListGroup* parent, ContactListItem* item);
-	~ContactListItemProxy();
+	Q_OBJECT
 
-	ContactListItem* item() const { return item_; }
-	ContactListGroup* parent() const { return parent_; }
+public:
+	explicit AbstractTreeModel(AbstractTreeItem *root, QObject *parent = 0);
+	~AbstractTreeModel() override;
+
+	QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
+	QModelIndex parent(const QModelIndex &index) const override;
+	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+
+protected:
+	AbstractTreeItem *root() const;
 
 private:
-	QPointer<ContactListItem> item_;
-	QPointer<ContactListGroup> parent_;
+	AbstractTreeItem *_root;
 };
-
-#endif

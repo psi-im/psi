@@ -25,7 +25,6 @@
 #include "pluginmanager.h"
 #include "psiiconset.h"
 #include "psiaccount.h"
-#include "contactlistaccountgroup.h"
 #include "accountstatusmenu.h"
 #include "serverinfomanager.h"
 #include "bookmarkmanager.h"
@@ -34,13 +33,14 @@
 #include "privacy/privacydlg.h"
 #include "psiiconset.h"
 #include "common.h"
+#include "contactmanager/contactmanagerdlg.h"
 #include "mucjoindlg.h"
 
 class ContactListAccountMenu::Private : public QObject
 {
 	Q_OBJECT
 
-	QPointer<ContactListAccountGroup> account;
+	PsiAccount *account;
 	AccountStatusMenu* statusMenu_;
 	QAction* moodAction_;
 	QAction* activityAction_;
@@ -48,6 +48,7 @@ class ContactListAccountMenu::Private : public QObject
 	QAction* setAvatarAction_;
 	QMenu* avatarMenu_;
 	QAction* unsetAvatarAction_;
+	QAction* contactManagerAction_;
 	QMenu* bookmarksMenu_;
 	QAction* bookmarksManageAction_;
 	QList<QAction*> bookmarksJoinActions_;
@@ -67,35 +68,34 @@ class ContactListAccountMenu::Private : public QObject
 	QMenu* pluginsMenu_;
 
 public:
-	Private(ContactListAccountMenu* menu, ContactListAccountGroup* _account)
+	Private(ContactListAccountMenu *menu, PsiAccount *_account)
 		: QObject(0)
 		, account(_account)
-		, menu_(menu)
 	{
 		connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
-		connect(account->account(), SIGNAL(updatedActivity()), SLOT(updateActions()));
-		connect(account->account(), SIGNAL(updatedAccount()), SLOT(updateActions()));
+		connect(account, SIGNAL(updatedActivity()), SLOT(updateActions()));
+		connect(account, SIGNAL(updatedAccount()), SLOT(updateActions()));
 
-		statusMenu_ = new AccountStatusMenu(0, account->account()->psi(), account->account());
+		statusMenu_ = new AccountStatusMenu(0, account->psi(), account);
 		statusMenu_->fill();
 		statusMenu_->setTitle(tr("&Status"));
-		statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->account()->status())).icon());
+		statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->status())).icon());
 		connect(statusMenu_, SIGNAL(statusSelected(XMPP::Status::Type, bool)), SLOT(statusChanged(XMPP::Status::Type, bool)));
-		connect(statusMenu_, SIGNAL(statusPresetSelected(const XMPP::Status &, bool, bool)), account->account(), SLOT(setStatus(const XMPP::Status &, bool, bool)));
-		connect(statusMenu_, SIGNAL(statusPresetDialogForced(const QString &)), account->account(), SLOT(showStatusDialog(const QString &)));
-		connect(statusMenu_, SIGNAL(reconnectActivated()), account->account(), SLOT(reconnectOnce()));
+		connect(statusMenu_, SIGNAL(statusPresetSelected(const XMPP::Status &, bool, bool)), account, SLOT(setStatus(const XMPP::Status &, bool, bool)));
+		connect(statusMenu_, SIGNAL(statusPresetDialogForced(const QString &)), account, SLOT(showStatusDialog(const QString &)));
+		connect(statusMenu_, SIGNAL(reconnectActivated()), account, SLOT(reconnectOnce()));
 
-		QString moodIcon = account->account()->mood().typeValue();
-		if (!moodIcon.isNull()) {
-			moodIcon = QLatin1String("mood/") + moodIcon;
-		}
-		moodAction_ = new IconAction(tr("Mood"), this, moodIcon);
+		moodAction_ = new IconAction(tr("Mood"), this, QString(("mood/%1")).arg(account->mood().typeValue()));
 		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
 
-		activityAction_ = new IconAction(tr("Activity"), this, activityIconName(account->account()->activity()));
+		QString act = account->activity().typeValue();
+		if (account->activity().specificType() != Activity::UnknownSpecific && account->activity().specificType() != Activity::Other) {
+			act += "_" + account->activity().specificTypeValue();
+		}
+		activityAction_ = new IconAction(tr("Activity"), this, QString(("activities/%1")).arg(act));
 		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
-		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "pep/geolocation");
+		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "system/geolocation");
 		connect(geolocationAction_, SIGNAL(triggered()), SLOT(setGeolocation()));
 
 		setAvatarAction_ = new QAction(tr("Set Avatar"), this);
@@ -103,6 +103,9 @@ public:
 
 		unsetAvatarAction_ = new QAction(tr("Unset Avatar"), this);
 		connect(unsetAvatarAction_, SIGNAL(triggered()), SLOT(unsetAvatar()));
+
+		contactManagerAction_ = new IconAction(tr("&Contacts Manager"), this, "psi/action_contacts_manager");
+		connect(contactManagerAction_, SIGNAL(triggered()), SLOT(contactManager()));
 
 		bookmarksManageAction_ = new QAction(tr("Manage Bookmarks"), this);
 		connect(bookmarksManageAction_, SIGNAL(triggered()), SLOT(bookmarksManage()));
@@ -158,6 +161,7 @@ public:
 		menu->addAction(addContactAction_);
 		menu->addAction(serviceDiscoveryAction_);
 		menu->addAction(newMessageAction_);
+		menu->addAction(contactManagerAction_);
 		menu->addAction(privacyListsAction_);
 		menu->addSeparator();
 		menu->addAction(xmlConsoleAction_);
@@ -166,7 +170,7 @@ public:
 
 #ifdef PSI_PLUGINS
 		pluginsMenu_ = menu->addMenu(IconsetFactory::icon("psi/plugins").icon(), tr("Plugins"));
-		PluginManager::instance()->addAccountMenu(pluginsMenu_, account->account());
+		PluginManager::instance()->addAccountMenu(pluginsMenu_, account);
 #endif
 
 		adminMenu_ = menu->addMenu(tr("&Admin"));
@@ -190,17 +194,17 @@ private slots:
 		if (!account)
 			return;
 
-		statusMenu_->statusChanged(account->account()->status());
+		statusMenu_->statusChanged(account->status());
 #ifndef USE_PEP
 		moodAction_->setVisible(false);
 		activityAction_->setVisible(false);
 		geolocationAction_->setVisible(false);
 		avatarMenu_->setVisible(false);
 #else
-		moodAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
-		activityAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
-		geolocationAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
-		avatarMenu_->setEnabled(account->account()->serverInfoManager()->hasPEP());
+		moodAction_->setEnabled(account->serverInfoManager()->hasPEP());
+		activityAction_->setEnabled(account->serverInfoManager()->hasPEP());
+		geolocationAction_->setEnabled(account->serverInfoManager()->hasPEP());
+		avatarMenu_->setEnabled(account->serverInfoManager()->hasPEP());
 #endif
 		bookmarksMenu_->clear();
 		qDeleteAll(bookmarksJoinActions_);
@@ -209,10 +213,10 @@ private slots:
 		bookmarksMenu_->addSeparator();
 		bookmarksMenu_->addAction(bookmarksManageAction_);
 		bookmarksMenu_->setEnabled(true);
-		if (account->account()->bookmarkManager()->isAvailable()) {
+		if (account->bookmarkManager()->isAvailable()) {
 			bookmarksManageAction_->setEnabled(true);
 			bookmarksMenu_->addSeparator();
-			foreach(ConferenceBookmark c, account->account()->bookmarkManager()->conferences()) {
+			foreach(ConferenceBookmark c, account->bookmarkManager()->conferences()) {
 				QAction* joinAction = new QAction(QString(tr("Join %1")).arg(c.name()), this);
 				joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
 				connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));
@@ -224,15 +228,16 @@ private slots:
 			bookmarksManageAction_->setEnabled(false);
 		}
 
-		newMessageAction_->setVisible(PsiOptions::instance()->getOption("options.ui.message.enabled").toBool());
-		newMessageAction_->setEnabled(account->account()->isAvailable());
-		addContactAction_->setEnabled(account->account()->isAvailable());
-		serviceDiscoveryAction_->setEnabled(account->account()->isAvailable());
-		privacyListsAction_->setEnabled(account->account()->isAvailable());
+		newMessageAction_->setVisible(true);
+		newMessageAction_->setEnabled(account->isAvailable());
+		addContactAction_->setEnabled(account->isAvailable());
+		serviceDiscoveryAction_->setEnabled(account->isAvailable());
+		contactManagerAction_->setEnabled(account->isAvailable());
+		privacyListsAction_->setEnabled(account->isAvailable());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
 			adminMenu_->menuAction()->setVisible(false);
 		}
-		adminMenu_->setEnabled(account->account()->isAvailable());
+		adminMenu_->setEnabled(account->isAvailable());
 		adminSendServerMessageAction_->setVisible(newMessageAction_->isVisible());
 		adminSetMotdAction_->setVisible(newMessageAction_->isVisible());
 		adminUpdateMotdAction_->setVisible(newMessageAction_->isVisible());
@@ -241,7 +246,7 @@ private slots:
 #ifdef PSI_PLUGINS
 		if(pluginsMenu_->isEmpty())
 			pluginsMenu_->menuAction()->setVisible(false);
-		pluginsMenu_->setEnabled(account->account()->isAvailable() && !pluginsMenu_->isEmpty());
+		pluginsMenu_->setEnabled(account->isAvailable() && !pluginsMenu_->isEmpty());
 #endif
 	}
 
@@ -250,7 +255,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->changeStatus(static_cast<int>(statusType), forceDialog);
+		account->changeStatus(static_cast<int>(statusType), forceDialog);
 	}
 
 	void setMood()
@@ -258,7 +263,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionSetMood();
+		account->actionSetMood();
 	}
 
 	void setActivity()
@@ -266,7 +271,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionSetActivity();
+		account->actionSetActivity();
 	}
 
 	void setGeolocation()
@@ -274,7 +279,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionSetGeoLocation();
+		account->actionSetGeoLocation();
 	}
 
 	void setAvatar()
@@ -282,7 +287,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionSetAvatar();
+		account->actionSetAvatar();
 	}
 
 	void unsetAvatar()
@@ -290,7 +295,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionUnsetAvatar();
+		account->actionUnsetAvatar();
 	}
 
 	void bookmarksManage()
@@ -298,7 +303,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionManageBookmarks();
+		account->actionManageBookmarks();
 	}
 
 	void doGroupChat()
@@ -306,7 +311,7 @@ private slots:
 		if (!account)
 			return;
 
-		MUCJoinDlg *w = new MUCJoinDlg(account->account()->psi(), account->account());
+		MUCJoinDlg *w = new MUCJoinDlg(account->psi(), account);
 		w->show();
 	}
 
@@ -316,8 +321,8 @@ private slots:
 			return;
 
 		QAction* joinAction = static_cast<QAction*>(sender());
-		ConferenceBookmark c = account->account()->bookmarkManager()->conferences()[joinAction->property("bookmark").toInt()];
-		account->account()->actionJoin(c, true);
+		ConferenceBookmark c = account->bookmarkManager()->conferences()[joinAction->property("bookmark").toInt()];
+		account->actionJoin(c, true);
 	}
 
 	void addContact()
@@ -325,7 +330,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->openAddUserDlg();
+		account->openAddUserDlg();
 	}
 
 	void serviceDiscovery()
@@ -333,8 +338,8 @@ private slots:
 		if (!account)
 			return;
 
-		XMPP::Jid j = account->account()->jid().domain();
-		account->account()->actionDisco(j, "");
+		XMPP::Jid j = account->jid().domain();
+		account->actionDisco(j, "");
 	}
 
 	void newMessage()
@@ -342,7 +347,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->actionSendMessage("");
+		account->actionSendMessage("");
 	}
 
 	void privacyLists()
@@ -350,10 +355,23 @@ private slots:
 		if (!account)
 			return;
 
-		PrivacyDlg *dlg = account->account()->findDialog<PrivacyDlg*>();
+		PrivacyDlg *dlg = account->findDialog<PrivacyDlg*>();
 		if(!dlg) {
-			dlg = new PrivacyDlg(account->account()->name(), account->account()->privacyManager());
-			account->account()->dialogRegister(dlg);
+			dlg = new PrivacyDlg(account->name(), account->privacyManager());
+			account->dialogRegister(dlg);
+			dlg->show();
+		} else
+			bringToFront(dlg);
+	}
+
+	void contactManager()
+	{
+		if (!account)
+			return;
+
+		ContactManagerDlg *dlg = account->findDialog<ContactManagerDlg*>();
+		if(!dlg) {
+			dlg = new ContactManagerDlg(account);
 			dlg->show();
 		} else
 			bringToFront(dlg);
@@ -364,7 +382,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->showXmlConsole();
+		account->showXmlConsole();
 	}
 
 	void modifyAccount()
@@ -372,7 +390,7 @@ private slots:
 		if (!account)
 			return;
 
-		account->account()->modify();
+		account->modify();
 	}
 
 	void adminOnlineUsers()
@@ -381,8 +399,8 @@ private slots:
 			return;
 
 		// FIXME: will it still work on XMPP servers?
-		XMPP::Jid j = account->account()->jid().domain() + '/' + "admin";
-		account->account()->actionDisco(j, "");
+		XMPP::Jid j = account->jid().domain() + '/' + "admin";
+		account->actionDisco(j, "");
 	}
 
 	void adminSendServerMessage()
@@ -390,8 +408,8 @@ private slots:
 		if (!account)
 			return;
 
-		XMPP::Jid j = account->account()->jid().domain() + '/' + "announce/online";
-		account->account()->actionSendMessage(j);
+		XMPP::Jid j = account->jid().domain() + '/' + "announce/online";
+		account->actionSendMessage(j);
 	}
 
 	void adminSetMotd()
@@ -399,8 +417,8 @@ private slots:
 		if (!account)
 			return;
 
-		XMPP::Jid j = account->account()->jid().domain() + '/' + "announce/motd";
-		account->account()->actionSendMessage(j);
+		XMPP::Jid j = account->jid().domain() + '/' + "announce/motd";
+		account->actionSendMessage(j);
 	}
 
 	void adminUpdateMotd()
@@ -408,8 +426,8 @@ private slots:
 		if (!account)
 			return;
 
-		XMPP::Jid j = account->account()->jid().domain() + '/' + "announce/motd/update";
-		account->account()->actionSendMessage(j);
+		XMPP::Jid j = account->jid().domain() + '/' + "announce/motd/update";
+		account->actionSendMessage(j);
 	}
 
 	void adminDeleteMotd()
@@ -417,18 +435,17 @@ private slots:
 		if (!account)
 			return;
 
-		XMPP::Jid j = account->account()->jid().domain() + '/' + "announce/motd/delete";
-		account->account()->actionSendMessage(j);
+		XMPP::Jid j = account->jid().domain() + '/' + "announce/motd/delete";
+		account->actionSendMessage(j);
 	}
 
-private:
-	ContactListAccountMenu* menu_;
 };
 
-ContactListAccountMenu::ContactListAccountMenu(ContactListAccountGroup* account, ContactListModel* model)
-	: ContactListItemMenu(account, model)
+ContactListAccountMenu::ContactListAccountMenu(PsiAccount *account, ContactListModel *model)
+	: ContactListItemMenu(nullptr, model)
 {
 	d = new Private(this, account);
+	setLabelTitle(account->name());
 }
 
 ContactListAccountMenu::~ContactListAccountMenu()

@@ -28,6 +28,7 @@ include($$PWD/irisprotocol/irisprotocol.pri)
 include($$PWD/privacy/privacy.pri)
 include($$PWD/tabs/tabs.pri)
 include($$PWD/Certificates/Certificates.pri)
+include($$PWD/contactmanager/contactmanager.pri)
 
 # tools
 # include($$PWD/tools/trayicon/trayicon.pri)
@@ -94,6 +95,7 @@ include($$PWD/../iris/iris.pri)
 
 # Header files
 HEADERS += \
+	$$PWD/debug.h \
 	$$PWD/varlist.h \
 	$$PWD/jidutil.h \
 	$$PWD/showtextdlg.h \
@@ -232,6 +234,7 @@ HEADERS += \
 
 # Source files
 SOURCES += \
+	$$PWD/debug.cpp \
 	$$PWD/varlist.cpp \
 	$$PWD/jidutil.cpp \
 	$$PWD/showtextdlg.cpp \
@@ -456,32 +459,31 @@ newcontactlist {
 		$$PWD/contactlistdragview.h \
 		$$PWD/hoverabletreeview.h \
 		$$PWD/contactlistmodel.h \
+		$$PWD/contactlistmodel_p.h \
 		$$PWD/contactlistmodelselection.h \
 		$$PWD/contactlistdragmodel.h \
 		$$PWD/contactlistviewdelegate.h \
-		$$PWD/contactlistmodelupdater.h \
+		$$PWD/contactlistviewdelegate_p.h \
 		$$PWD/contactlistproxymodel.h \
 		$$PWD/psicontact.h \
 		$$PWD/psiselfcontact.h \
 		$$PWD/psicontactmenu.h \
-		$$PWD/contactlistgroupstate.h \
-		$$PWD/contactlistgroupcache.h \
-		$$PWD/contactlistgroup.h \
-		$$PWD/contactlistnestedgroup.h \
-		$$PWD/contactlistaccountgroup.h \
-		$$PWD/contactlistspecialgroup.h \
+		$$PWD/psicontactmenu_p.h \
+		$$PWD/groupmenu.h \
+		$$PWD/invitetogroupchatmenu.h \
 		$$PWD/contactlistgroupmenu.h \
+		$$PWD/contactlistgroupmenu_p.h \
 		$$PWD/contactlistaccountmenu.h \
 		$$PWD/contactlistitem.h \
 		$$PWD/contactlistitemmenu.h \
-		$$PWD/contactlistutil.h \
-		$$PWD/contactlistitemproxy.h \
 		$$PWD/contactupdatesmanager.h \
 		$$PWD/statusmenu.h \
 		$$PWD/globalstatusmenu.h \
 		$$PWD/accountstatusmenu.h \
 		$$PWD/psirosterwidget.h \
-		$$PWD/psifilteredcontactlistview.h
+		$$PWD/psifilteredcontactlistview.h \
+		$$PWD/abstracttreeitem.h \
+		$$PWD/abstracttreemodel.h
 
 	SOURCES += \
 		$$PWD/contactlistview.cpp \
@@ -491,40 +493,30 @@ newcontactlist {
 		$$PWD/contactlistmodelselection.cpp \
 		$$PWD/contactlistdragmodel.cpp \
 		$$PWD/contactlistviewdelegate.cpp \
-		$$PWD/contactlistmodelupdater.cpp \
 		$$PWD/contactlistproxymodel.cpp \
 		$$PWD/psicontact.cpp \
-		$$PWD/psiselfcontact.cpp \
 		$$PWD/psicontactmenu.cpp \
-		$$PWD/contactlistgroupstate.cpp \
-		$$PWD/contactlistgroupcache.cpp \
-		$$PWD/contactlistgroup.cpp \
-		$$PWD/contactlistnestedgroup.cpp \
-		$$PWD/contactlistaccountgroup.cpp \
-		$$PWD/contactlistspecialgroup.cpp \
+		$$PWD/invitetogroupchatmenu.cpp \
+		$$PWD/groupmenu.cpp \
 		$$PWD/contactlistgroupmenu.cpp \
 		$$PWD/contactlistaccountmenu.cpp \
 		$$PWD/contactlistitem.cpp \
 		$$PWD/contactlistitemmenu.cpp \
-		$$PWD/contactlistutil.cpp \
-		$$PWD/contactlistitemproxy.cpp \
 		$$PWD/contactupdatesmanager.cpp \
 		$$PWD/statusmenu.cpp \
 		$$PWD/globalstatusmenu.cpp \
 		$$PWD/accountstatusmenu.cpp \
 		$$PWD/psirosterwidget.cpp \
-		$$PWD/psifilteredcontactlistview.cpp
+		$$PWD/psifilteredcontactlistview.cpp \
+		$$PWD/abstracttreeitem.cpp \
+		$$PWD/abstracttreemodel.cpp
 
 	!yapsi {
 		HEADERS += \
 			$$PWD/psicontactlistview.h \
-			$$PWD/psicontactlistviewdelegate.h \
-			$$PWD/psicontactlistmodel.h
 
 		SOURCES += \
 			$$PWD/psicontactlistview.cpp \
-			$$PWD/psicontactlistviewdelegate.cpp \
-			$$PWD/psicontactlistmodel.cpp
 	}
 }
 !newcontactlist {
@@ -554,14 +546,12 @@ pgputil {
 }
 
 HEADERS += \
-	$$PWD/removeconfirmationmessagebox.h \
 	$$PWD/globaleventqueue.h \
 	$$PWD/dummystream.h \
 	$$PWD/networkaccessmanager.h \
 	$$PWD/bytearrayreply.h \
 
 SOURCES += \
-	$$PWD/removeconfirmationmessagebox.cpp \
 	$$PWD/globaleventqueue.cpp \
 	$$PWD/dummystream.cpp \
 	$$PWD/networkaccessmanager.cpp \

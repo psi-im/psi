@@ -24,7 +24,7 @@
 #include "contactlistdragview.h"
 
 class QAbstractItemModel;
-class PsiContactListViewDelegate;
+class ContactListViewDelegate;
 
 class PsiContactListView : public ContactListDragView
 {
@@ -36,24 +36,23 @@ public:
 	// reimplemented
 	void setModel(QAbstractItemModel* model);
 
-	virtual QSize minimumSizeHint() const;
-	virtual QSize sizeHint() const;
+	QSize minimumSizeHint() const;
+	QSize sizeHint() const;
 
 	void setAutoResizeEnabled(bool enabled);
 
 protected slots:
-	void contactAlert(const QModelIndex&);
+	void alertContacts(const QModelIndexList &indexes);
+	void animateContacts(const QModelIndexList &indexes, bool started);
 
 protected:
 	// reimplemented
-	virtual void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
-	virtual void doItemsLayoutStart();
+	void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
+	void dragEnterEvent(QDragEnterEvent *e);
+	void dropEvent(QDropEvent *e);
+	void dragMoveEvent(QDragMoveEvent *e);
 
-	virtual void dragEnterEvent(QDragEnterEvent *e);
-	virtual void dropEvent(QDropEvent *e);
-	virtual void dragMoveEvent(QDragMoveEvent *e);
-
-	PsiContactListViewDelegate* itemDelegate() const;
+	ContactListViewDelegate *itemDelegate() const;
 
 private:
 	bool acceptableDragOperation(QDropEvent *e);

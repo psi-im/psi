@@ -924,7 +924,7 @@ void PluginManager::createNewEvent(int account, const QString &jid, const QStrin
 {
 	PsiAccount *acc = accountIds_.account(account);
 	if(acc) {
-		acc->createNewPluginEvent(jid, descr, receiver, slot);
+		acc->createNewPluginEvent(account, jid, descr, receiver, slot);
 	}
 }
 

@@ -23,13 +23,13 @@
 
 #include "contactlistitemmenu.h"
 
-class ContactListAccountGroup;
+class PsiAccount;
 
 class ContactListAccountMenu : public ContactListItemMenu
 {
 	Q_OBJECT
 public:
-	ContactListAccountMenu(ContactListAccountGroup* account, ContactListModel* model);
+	ContactListAccountMenu(PsiAccount *account, ContactListModel *model);
 	~ContactListAccountMenu();
 
 private:

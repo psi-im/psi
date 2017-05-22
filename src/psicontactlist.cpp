@@ -27,6 +27,7 @@
 #include "accountadddlg.h"
 #include "serverinfomanager.h"
 #include "psicon.h"
+#include <QDebug>
 
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.
@@ -127,23 +128,10 @@ bool PsiContactList::haveConnectingAccounts() const
 
 /**
  * At the moment, it returns first enabled account.
- * Note: In YaPsi it tries to return first enabled ya.ru account, then
- * reverts to the usual behavior.
  */
 PsiAccount *PsiContactList::defaultAccount() const
 {
-#ifdef YAPSI_ACTIVEX_SERVER
-	if (onlineAccount_) {
-		return onlineAccount();
-	}
-#endif
 	if (!enabledAccounts_.isEmpty()) {
-#ifdef YAPSI
-		foreach(PsiAccount* account, enabledAccounts_) {
-			if (account->isYaAccount())
-				return account;
-		}
-#endif
 		return enabledAccounts_.first();
 	}
 	return 0;
@@ -179,15 +167,18 @@ PsiAccount* PsiContactList::createAccount(const QString& name, const Jid& j, con
 	acc.tlsOverrideDomain = tlsOverrideDomain;
 
 	PsiAccount *pa = loadAccount(acc);
+
 	emit saveAccounts();
+	emit accountCreated(pa);
 
 	return pa;
 }
 
 void PsiContactList::createAccount(const UserAccount& acc)
 {
-	loadAccount(acc);
+	PsiAccount *pa = loadAccount(acc);
 	emit saveAccounts();
+	emit accountCreated(pa);
 }
 
 /**
@@ -217,6 +208,14 @@ int PsiContactList::queueCount() const
 	int total = 0;
 	foreach(PsiAccount* account, enabledAccounts_)
 		total += account->eventQueue()->count();
+	return total;
+}
+
+int PsiContactList::queueContactCount() const
+{
+	int total = 0;
+	foreach(PsiAccount* account, enabledAccounts_)
+		total += account->eventQueue()->contactCount();
 	return total;
 }
 

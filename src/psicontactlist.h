@@ -70,6 +70,7 @@ public:
 	void setAccountEnabled(PsiAccount*, bool enabled = true);
 
 	int queueCount() const;
+	int queueContactCount() const;
 	PsiAccount *queueLowestEventId();
 
 	void loadAccounts(const UserAccountList &);
@@ -145,6 +146,8 @@ signals:
 	 * minute processing.
 	 */
 	void destroying();
+
+	void accountCreated(PsiAccount *account);
 
 private slots:
 	void accountEnabledChanged();

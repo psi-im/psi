@@ -1,6 +1,8 @@
 /*
- * contactlistitemproxy.cpp - proxy item contact list item class
+ * invitetogroupchatmenu.h - invite to groupchat context menu option
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
+ *
+ * This file is part of the WhoerIM project.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,20 +20,28 @@
  *
  */
 
-#include "contactlistitemproxy.h"
+#pragma once
 
-#include "contactlistgroup.h"
-#include "contactlistmodel.h"
+#include <QMenu>
 
-ContactListItemProxy::ContactListItemProxy(ContactListGroup* parent, ContactListItem* item)
-	: item_(item)
-	, parent_(parent)
+class PsiContact;
+class PsiAccount;
+class PsiCon;
+
+class InviteToGroupChatMenu : public QMenu
 {
-	Q_ASSERT(item);
-	Q_ASSERT(parent);
-	parent->model()->contactListItemProxyCreated(this);
-}
+	Q_OBJECT
 
-ContactListItemProxy::~ContactListItemProxy()
-{
-}
+public:
+	InviteToGroupChatMenu(QWidget *parent = 0);
+	void updateMenu(PsiContact *contact);
+
+signals:
+	void inviteToGroupchat(PsiAccount *account, const QString &groupChat);
+
+private slots:
+	void actionActivated();
+
+private:
+	PsiCon* controller_;
+};

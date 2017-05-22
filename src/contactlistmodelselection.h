@@ -18,20 +18,19 @@
  *
  */
 
-#ifndef CONTACTLISTMODELSELECTION_H
-#define CONTACTLISTMODELSELECTION_H
+#pragma once
 
 #include <QMimeData>
 
-class ContactListItemProxy;
+class ContactListItem;
 class QDomElement;
 
 class ContactListModelSelection : public QMimeData
 {
 	Q_OBJECT
 public:
-	ContactListModelSelection(QList<ContactListItemProxy*> items);
-	ContactListModelSelection(const QMimeData* mimeData);
+	ContactListModelSelection(QList<ContactListItem*> items);
+	ContactListModelSelection(const QMimeData *mimeData);
 
 	static const QString& mimeType();
 
@@ -81,5 +80,3 @@ private:
 	QList<Group> groupsFor(const QMimeData* mimeData) const;
 	QList<Account> accountsFor(const QMimeData* mimeData) const;
 };
-
-#endif

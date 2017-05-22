@@ -21,12 +21,38 @@
 #include "contactlistitemmenu.h"
 
 #include "shortcutmanager.h"
+#include "psioptions.h"
+
+#include <QWidgetAction>
+#include <QLabel>
 
 ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel* model)
 	: QMenu(0)
 	, item_(item)
 	, model_(model)
+	, _lblTitle(new QLabel)
 {
+	const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+	}
+
+	QPalette palette = _lblTitle->palette();
+	QColor textColor = palette.color(QPalette::BrightText);
+	QColor bcgColor = palette.color(QPalette::Dark);
+	QFont font = _lblTitle->font();
+	font.setBold(true);
+	palette.setColor(QPalette::WindowText, textColor);
+	palette.setColor(QPalette::Window, bcgColor);
+	_lblTitle->setPalette(palette);
+	_lblTitle->setAutoFillBackground(true);
+	_lblTitle->setAlignment(Qt::AlignCenter);
+	_lblTitle->setMargin(6);
+	_lblTitle->setFont(font);
+
+	QWidgetAction *waContextMenuTitle = new QWidgetAction(this);
+	waContextMenuTitle->setDefaultWidget(_lblTitle);
+	addAction(waContextMenuTitle);
 }
 
 ContactListItemMenu::~ContactListItemMenu()
@@ -38,13 +64,18 @@ ContactListItem* ContactListItemMenu::item() const
 	return item_;
 }
 
+void ContactListItemMenu::setLabelTitle(const QString &title)
+{
+	_lblTitle->setText(title);
+}
+
 /**
  * Removes all actions which objectNames are present in \param actionNames.
  */
 void ContactListItemMenu::removeActions(QStringList actionNames)
 {
-	foreach(QString actionName, actionNames) {
-		foreach(QAction* action, actions()) {
+	for (const QString &actionName: actionNames) {
+		for (QAction *action: actions()) {
 			if (action->objectName() == actionName) {
 				delete action;
 				break;
@@ -56,7 +87,7 @@ void ContactListItemMenu::removeActions(QStringList actionNames)
 QList<QAction*> ContactListItemMenu::availableActions() const
 {
 	QList<QAction*> result;
-	foreach(QAction* action, actions())
+	for (QAction* action: actions())
 		if (!action->isSeparator())
 			result << action;
 	return result;

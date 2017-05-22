@@ -18,328 +18,280 @@
  *
  */
 
-#include "contactlistgroupmenu.h"
+#include "contactlistgroupmenu_p.h"
 
-#include <QPointer>
-#include <QMimeData>
+#include <QMessageBox>
 
-#include "iconaction.h"
-#include "iconset.h"
-#include "contactlistgroup.h"
-#include "psioptions.h"
-#include "shortcutmanager.h"
-#include "psicontactlist.h"
-#include "iconaction.h"
-#include "psicontact.h"
-#include "psiaccount.h"
-#include "statusdlg.h"
-#include "xmpp_tasks.h"
+/*********************************/
+/* ContactListGroupMenu::Private */
+/*********************************/
 
-#include "groupchatdlg.h"
 
-class ContactListGroupMenu::Private : public QObject
+ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListItem *item)
+	: QObject(0)
+	, q(menu)
+	, group(item)
 {
-	Q_OBJECT
+	q->setLabelTitle(item->name());
 
-	QPointer<ContactListGroup> group;
-	QAction* renameAction_;
-	QAction* removeGroupAndContactsAction_;
-#ifdef YAPSI
-	QAction* addGroupAction_;
-#endif
-	QAction* sendMessageAction_;
-	QAction* removeGroupWithoutContactsAction_;
-	QMenu* authMenu_;
-	QAction* actionAuth_;
-	QAction* actionAuthRequest_;
-	QAction* actionAuthRemove_;
-	QAction* actionCustomStatus_;
-	QAction* actionMucHide_;
-	QAction* actionMucShow_;
-	QAction* actionMucLeave_;
-	QAction* actionHide_;
+	connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
 
-public:
-	Private(ContactListGroupMenu* menu, ContactListGroup* _group)
-		: QObject(0)
-		, group(_group)
-		, menu_(menu)
-	{
-		connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
+	renameAction_ = new IconAction("", tr("Re&name"), menu->shortcuts("contactlist.rename"), this, "act_rename");
+	connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
 
-		renameAction_ = new IconAction("", tr("Re&name"), menu->shortcuts("contactlist.rename"), this, "act_rename");
-		connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
+	actionAuth_ = new QAction(tr("Resend Authorization to Group"), this);
+	connect(actionAuth_, SIGNAL(triggered()), this, SLOT(authResend()));
 
-		actionAuth_ = new QAction(tr("Resend Authorization to Group"), this);
-		connect(actionAuth_, SIGNAL(triggered()), this, SLOT(authResend()));
+	actionAuthRequest_ = new QAction(tr("Request Authorization from Group"), this);
+	connect(actionAuthRequest_, SIGNAL(triggered()), this, SLOT(authRequest()));
 
-		actionAuthRequest_ = new QAction(tr("Request Authorization from Group"), this);
-		connect(actionAuthRequest_, SIGNAL(triggered()), this, SLOT(authRequest()));
+	actionAuthRemove_ = new QAction(tr("Remove Authorization from Group"), this);
+	connect(actionAuthRemove_, SIGNAL(triggered()), this, SLOT(authRemove()));
 
-		actionAuthRemove_ = new QAction(tr("Remove Authorization from Group"), this);
-		connect(actionAuthRemove_, SIGNAL(triggered()), this, SLOT(authRemove()));
+	actionCustomStatus_ = new IconAction(tr("Send Status to Group"), this, "psi/action_direct_presence");
+	connect(actionCustomStatus_, SIGNAL(triggered()), this, SLOT(customStatus()));
 
-		actionCustomStatus_ = new IconAction(tr("Send Status to Group"), this, "psi/action_direct_presence");
-		connect(actionCustomStatus_, SIGNAL(triggered()), this, SLOT(customStatus()));
+	removeGroupAndContactsAction_ = new IconAction(tr("Remove Group and Contacts"), this, "psi/remove");
+	removeGroupAndContactsAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.delete"));
+	connect(removeGroupAndContactsAction_, SIGNAL(triggered()), SLOT(removeGroupAndContacts()));
 
-		removeGroupAndContactsAction_ = new IconAction(tr("Remove Group and Contacts"), this, "psi/remove");
-#ifdef YAPSI
-		removeGroupAndContactsAction_->setText(tr("&Remove"));
-#endif
-		removeGroupAndContactsAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.delete"));
-		connect(removeGroupAndContactsAction_, SIGNAL(triggered()), SLOT(removeGroupAndContacts()));
+	removeGroupWithoutContactsAction_ = new IconAction(tr("Remove Group"), this, "psi/remove");
+	connect(removeGroupWithoutContactsAction_, SIGNAL(triggered()), this, SLOT(removeGroupWithoutContacts()));
 
-		removeGroupWithoutContactsAction_ = new IconAction(tr("Remove Group"), this, "psi/remove");
-		connect(removeGroupWithoutContactsAction_, SIGNAL(triggered()), this, SLOT(removeGroupWithoutContacts()));
+	sendMessageAction_ = new IconAction(tr("Send Message to Group"), this, "psi/sendMessage");
+	connect(sendMessageAction_, SIGNAL(triggered()), SLOT(sendMessage()));
 
-		sendMessageAction_ = new IconAction(tr("Send Message to Group"), this, "psi/sendMessage");
-		connect(sendMessageAction_, SIGNAL(triggered()), SLOT(sendMessage()));
+	actionMucHide_ = new IconAction(tr("Hide All"), this, "psi/action_muc_hide");
+	connect(actionMucHide_, SIGNAL(triggered()), SLOT(mucHide()));
 
-#ifdef YAPSI
-		addGroupAction_ = new QAction(tr("&Add group..."), this);
-		connect(addGroupAction_, SIGNAL(triggered()), SLOT(addGroup()));
-#endif
+	actionMucShow_ = new IconAction(tr("Show All"), this, "psi/action_muc_show");
+	connect(actionMucShow_, SIGNAL(triggered()), SLOT(mucShow()));
 
-		actionMucHide_ = new IconAction(tr("Hide All"), this, "psi/action_muc_hide");
-		connect(actionMucHide_, SIGNAL(triggered()), SLOT(mucHide()));
+	actionMucLeave_ = new IconAction(tr("Leave All"), this, "psi/action_muc_leave");
+	connect(actionMucLeave_, SIGNAL(triggered()), SLOT(mucLeave()));
 
-		actionMucShow_ = new IconAction(tr("Show All"), this, "psi/action_muc_show");
-		connect(actionMucShow_, SIGNAL(triggered()), SLOT(mucShow()));
+	actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, 0, true);
+	connect(actionHide_, SIGNAL(triggered(bool)), SLOT(actHide(bool)));
 
-		actionMucLeave_ = new IconAction(tr("Leave All"), this, "psi/action_muc_leave");
-		connect(actionMucLeave_, SIGNAL(triggered()), SLOT(mucLeave()));
+	authMenu_ = 0;
 
-		actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, 0, true);
-		connect(actionHide_, SIGNAL(triggered(bool)), SLOT(actHide(bool)));
-
-		authMenu_ = 0;
-
-		if (ContactListGroup::SpecialType_Conference != group->specialGroupType()) {
-#ifdef YAPSI
-			menu->addAction(renameAction_);
-			menu->addAction(removeGroupAndContactsAction_);
-			menu->addAction(addGroupAction_);
-#else
-			menu->addAction(renameAction_);
-			menu->addAction(sendMessageAction_);
-			menu->addAction(actionCustomStatus_);
-			menu->addSeparator();
-			menu->addAction(actionHide_);
-			menu_->addSeparator();
-			authMenu_ = menu->addMenu(tr("Authorization"));
-			authMenu_->addAction(actionAuth_);
-			authMenu_->addAction(actionAuthRequest_);
-			authMenu_->addAction(actionAuthRemove_);
-			menu->addAction(removeGroupWithoutContactsAction_);
-			menu->addAction(removeGroupAndContactsAction_);
-		}
-		else {
-			menu->addAction(actionMucHide_);
-			menu->addAction(actionMucShow_);
-			menu->addAction(actionMucLeave_);
-			menu->addSeparator();
-			menu->addAction(actionCustomStatus_);
-		}
-#endif
-		updateActions();
+	if (item->specialGroupType() != ContactListItem::SpecialGroupType::ConferenceSpecialGroupType) {
+		q->addAction(renameAction_);
+		q->addAction(sendMessageAction_);
+		q->addAction(actionCustomStatus_);
+		q->addSeparator();
+		q->addAction(actionHide_);
+		q->addSeparator();
+		authMenu_ = menu->addMenu(tr("Authorization"));
+		authMenu_->addAction(actionAuth_);
+		authMenu_->addAction(actionAuthRequest_);
+		authMenu_->addAction(actionAuthRemove_);
+		menu->addAction(removeGroupWithoutContactsAction_);
+		menu->addAction(removeGroupAndContactsAction_);
 	}
-
-private slots:
-	void updateActions()
-	{
-		if (!group)
-			return;
-
-		sendMessageAction_->setVisible(PsiOptions::instance()->getOption("options.ui.message.enabled").toBool());
-		sendMessageAction_->setEnabled(group->contacts().first()->account()->isAvailable());
-		actionCustomStatus_->setEnabled(group->contacts().first()->account()->isAvailable());
-		if(authMenu_)
-			authMenu_->setEnabled(group->contacts().first()->account()->isAvailable());
-		renameAction_->setEnabled(group->isEditable());
-		removeGroupAndContactsAction_->setEnabled(group->isRemovable());
-		removeGroupWithoutContactsAction_->setEnabled(group->isRemovable());
-		actionHide_->setChecked(group->isHidden());
-#ifdef YAPSI
-		addGroupAction_->setEnabled(group->model()->contactList()->haveAvailableAccounts());
-#endif
+	else {
+		menu->addAction(actionMucHide_);
+		menu->addAction(actionMucShow_);
+		menu->addAction(actionMucLeave_);
+		menu->addSeparator();
+		menu->addAction(actionCustomStatus_);
 	}
+	updateActions();
+}
 
-	void mucHide()
-	{
-		PsiAccount *pa = group->contacts().first()->account();
-		foreach (QString gc, pa->groupchats()) {
-			Jid j(gc);
-			GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
-			if (gcDlg && (gcDlg->isTabbed() || !gcDlg->isHidden()))
-				gcDlg->hideTab();
-		}
-	}
-
-	void mucShow()
-	{
-		PsiAccount *pa = group->contacts().first()->account();
-		foreach (QString gc, pa->groupchats()) {
-			Jid j(gc);
-			GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
-			if (gcDlg) {
-				gcDlg->ensureTabbedCorrectly();
-				gcDlg->bringToFront();
-			}
-		}
-	}
-
-	void mucLeave()
-	{
-		PsiAccount *pa = group->contacts().first()->account();
-		foreach (QString gc, pa->groupchats()) {
-			Jid j(gc);
-			GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
-			if (gcDlg)
-				gcDlg->close();
-		}
-	}
-
-	void rename()
-	{
-		if (!group)
-			return;
-
-		menu_->model()->renameSelectedItem();
-	}
-
-	void removeGroupAndContacts()
-	{
-		if (!group)
-			return;
-
-		emit menu_->removeSelection();
-	}
-
-	void authResend()
-	{
-		if (!group)
-			return;
-
-		QList<PsiContact*> contacts = group->contacts();
-		if (!contacts.isEmpty()) {
-			foreach(PsiContact* contact, contacts) {
-				contact->account()->actionAuth(contact->jid());
-			}
-		}
-	}
-
-	void authRequest()
-	{
-		if (!group)
+void ContactListGroupMenu::Private::updateActions()
+{
+	if (!group || group->contacts().isEmpty())
 		return;
 
-		QList<PsiContact*> contacts = group->contacts();
-		if (!contacts.isEmpty()) {
-			foreach(PsiContact* contact, contacts) {
-				contact->account()->actionAuthRequest(contact->jid());
-			}
+	sendMessageAction_->setVisible(true);
+	sendMessageAction_->setEnabled(group->contacts().first()->account()->isAvailable());
+	actionCustomStatus_->setEnabled(group->contacts().first()->account()->isAvailable());
+	if(authMenu_)
+		authMenu_->setEnabled(group->contacts().first()->account()->isAvailable());
+	renameAction_->setEnabled(group->isEditable());
+	removeGroupAndContactsAction_->setEnabled(group->isRemovable());
+	removeGroupWithoutContactsAction_->setEnabled(group->isRemovable());
+	actionHide_->setChecked(group->isHidden());
+}
+
+void ContactListGroupMenu::Private::mucHide()
+{
+	PsiAccount *pa = group->contacts().first()->account();
+	foreach (QString gc, pa->groupchats()) {
+		Jid j(gc);
+		GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
+		if (gcDlg && (gcDlg->isTabbed() || !gcDlg->isHidden()))
+			gcDlg->hideTab();
+	}
+}
+
+void ContactListGroupMenu::Private::mucShow()
+{
+	PsiAccount *pa = group->contacts().first()->account();
+	foreach (QString gc, pa->groupchats()) {
+		Jid j(gc);
+		GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
+		if (gcDlg) {
+			gcDlg->ensureTabbedCorrectly();
+			gcDlg->bringToFront();
 		}
 	}
+}
 
-	void authRemove()
-	{
-		if (!group)
-			return;
+void ContactListGroupMenu::Private::mucLeave()
+{
+	PsiAccount *pa = group->contacts().first()->account();
+	foreach (QString gc, pa->groupchats()) {
+		Jid j(gc);
+		GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
+		if (gcDlg)
+			gcDlg->close();
+	}
+}
 
-		QList<PsiContact*> contacts = group->contacts();
-		if (!contacts.isEmpty()) {
-			foreach(PsiContact* contact, contacts) {
-				contact->account()->actionAuthRemove(contact->jid());
-			}
+void ContactListGroupMenu::Private::rename()
+{
+	if (!group)
+		return;
+
+	q->model()->renameSelectedItem();
+}
+
+void ContactListGroupMenu::Private::removeGroupAndContacts()
+{
+	if (!group)
+		return;
+
+	emit q->removeSelection();
+}
+
+void ContactListGroupMenu::Private::authResend()
+{
+	if (!group)
+		return;
+
+	QList<PsiContact*> contacts = group->contacts();
+	if (!contacts.isEmpty()) {
+		foreach(PsiContact* contact, contacts) {
+			contact->account()->actionAuth(contact->jid());
 		}
 	}
+}
 
-	void customStatus()
+void ContactListGroupMenu::Private::authRequest()
+{
+	if (!group)
+		return;
+
+	QList<PsiContact*> contacts = group->contacts();
+	if (!contacts.isEmpty()) {
+		foreach(PsiContact* contact, contacts) {
+			contact->account()->actionAuthRequest(contact->jid());
+		}
+	}
+}
+
+void ContactListGroupMenu::Private::authRemove()
+{
+	if (!group)
+		return;
+
+	QList<PsiContact*> contacts = group->contacts();
+	if (!contacts.isEmpty()) {
+		foreach(PsiContact* contact, contacts) {
+			contact->account()->actionAuthRemove(contact->jid());
+		}
+	}
+}
+
+void ContactListGroupMenu::Private::customStatus()
+{
+	if (!group)
+		return;
+
+	PsiAccount *pa = group->contacts().first()->account();
+	StatusSetDlg *w = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
+	QList<XMPP::Jid> list;
+	foreach(PsiContact* contact, group->contacts()) {
+		if(contact->isPrivate()) continue;
+		list << contact->jid();
+	}
+	w->setJidList(list);
+	connect(w, SIGNAL(setJidList(const QList<XMPP::Jid> &, const Status &)), SLOT(setStatusFromDialog(const QList<XMPP::Jid> &, const Status &)));
+	w->show();
+}
+
+void ContactListGroupMenu::Private::setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s)
+{
+	PsiAccount *pa = group->contacts().first()->account();
+	for(QList<Jid>::const_iterator it = j.begin(); it != j.end(); ++it)
 	{
-		if (!group)
-			return;
+		JT_Presence *p = new JT_Presence(pa->client()->rootTask());
+		p->pres(*it,s);
+		p->go(true);
+	}
+}
 
-		PsiAccount *pa = group->contacts().first()->account();
-		StatusSetDlg *w = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
+void ContactListGroupMenu::Private::removeGroupWithoutContacts()
+{
+	if (!group)
+		return;
+
+	QList<PsiContact*> contacts = group->contacts();
+
+	if (contacts.isEmpty())
+		return;
+
+	int res = QMessageBox::information(q, tr("Remove Group"),
+									   tr("This will cause all contacts in this group to be disassociated with it.\n"
+										  "\n"
+										  "Proceed?"),
+									   QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
+
+	if (res == QMessageBox::StandardButton::Yes) {
+		for (PsiContact *contact: contacts) {
+			QStringList groups = contact->groups();
+			groups.removeAll(group->name());
+			contact->setGroups(groups);
+		}
+	}
+}
+
+void ContactListGroupMenu::Private::sendMessage()
+{
+	if (!group)
+		return;
+
+	QList<PsiContact*> contacts = group->contacts();
+	if (!contacts.isEmpty()) {
 		QList<XMPP::Jid> list;
-		foreach(PsiContact* contact, group->contacts()) {
-			if(contact->isPrivate()) continue;
+		foreach(PsiContact* contact, contacts) {
 			list << contact->jid();
 		}
-		w->setJidList(list);
-		connect(w, SIGNAL(setJidList(const QList<XMPP::Jid> &, const Status &)), SLOT(setStatusFromDialog(const QList<XMPP::Jid> &, const Status &)));
-		w->show();
+		contacts.first()->account()->actionSendMessage(list);
 	}
+}
 
-	void setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s)
-	{
-		PsiAccount *pa = group->contacts().first()->account();
-		for(QList<Jid>::const_iterator it = j.begin(); it != j.end(); ++it)
-		{
-			JT_Presence *p = new JT_Presence(pa->client()->rootTask());
-			p->pres(*it,s);
-			p->go(true);
-		}
-	}
-
-	void removeGroupWithoutContacts()
-	{
-		if (!group)
-			return;
-
-		QModelIndexList indexes;
-		indexes += group->model()->groupToIndex(group);
-		QMimeData* data = group->model()->mimeData(indexes);
-		emit menu_->removeGroupWithoutContacts(data);
-		delete data;
-	}
-
-	void sendMessage()
-	{
-		if (!group)
-			return;
-
-		QList<PsiContact*> contacts = group->contacts();
-		if (!contacts.isEmpty()) {
-			QList<XMPP::Jid> list;
-			foreach(PsiContact* contact, contacts) {
-				list << contact->jid();
-			}
-			contacts.first()->account()->actionSendMessage(list);
-		}
-	}
-
-	void actHide(bool hide)
-	{
-		if (!group)
-			return;
-
-		group->setHidden(hide);
-	}
-
-#ifdef YAPSI
-	void addGroup()
-	{
-		if (!group)
-			return;
-
-		emit menu_->addGroup();
-	}
-#endif
-
-private:
-	ContactListGroupMenu* menu_;
-};
-
-ContactListGroupMenu::ContactListGroupMenu(ContactListGroup* group, ContactListModel* model)
-	: ContactListItemMenu(group, model)
+void ContactListGroupMenu::Private::actHide(bool hide)
 {
-	d = new Private(this, group);
+	if (!group)
+		return;
+
+	group->setHidden(hide);
+}
+
+/************************/
+/* ContactListGroupMenu */
+/************************/
+
+ContactListGroupMenu::ContactListGroupMenu(ContactListItem *item, ContactListModel* model)
+	: ContactListItemMenu(item, model)
+{
+	d = new Private(this, item);
 }
 
 ContactListGroupMenu::~ContactListGroupMenu()
 {
 	delete d;
 }
-
-#include "contactlistgroupmenu.moc"

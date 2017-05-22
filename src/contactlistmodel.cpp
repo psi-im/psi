@@ -18,183 +18,497 @@
  *
  */
 
-#include "contactlistmodel.h"
+#include "contactlistmodel_p.h"
 
+#include "debug.h"
+#include "psiaccount.h"
+#include "psicontactlist.h"
+#include "contactlistitem.h"
+#include "userlist.h"
+#include "avatars.h"
+#include "psioptions.h"
+
+#include <QMessageBox>
 #include <QModelIndex>
 #include <QVariant>
 #include <QColor>
-#include <QMessageBox>
+#include <QIcon>
+#include <QTextDocument>
 
-#include "psiaccount.h"
-#include "psicontact.h"
-#include "psicontactlist.h"
-#include "contactlistitem.h"
-#include "contactlistgroup.h"
-#include "contactlistnestedgroup.h"
-#include "contactlistaccountgroup.h"
-#include "contactlistitemproxy.h"
-#include "contactlistgroupstate.h"
-#include "contactlistgroupcache.h"
-#include "contactlistmodelupdater.h"
-#include "contactlistspecialgroup.h"
-#include "userlist.h"
-#include "avatars.h"
-#ifdef YAPSI
-#include "yacommon.h"
-#endif
-#include "activity.h"
+#define MAX_COMMIT_DELAY 30 /* seconds */
+#define COMMIT_INTERVAL 100 /* msecs */
+
+#define COLLAPSED_OPTIONS "options.main-window.contact-list.group-state.collapsed"
+#define HIDDEN_OPTIONS "options.main-window.contact-list.group-state.hidden"
+
+/*****************************/
+/* ContactListModel::Private */
+/*****************************/
+
+ContactListModel::Private::Private(ContactListModel *parent)
+	: QObject()
+	, q(parent)
+	, groupsEnabled(false)
+	, accountsEnabled(false)
+	, contactList(nullptr)
+	, commitTimer(new QTimer(this))
+	, commitTimerStartTime()
+	, monitoredContacts()
+	, operationQueue()
+	, collapsed()
+	, hidden()
+{
+	connect(commitTimer, SIGNAL(timeout()), SLOT(commit()));
+	commitTimer->setSingleShot(true);
+	commitTimer->setInterval(COMMIT_INTERVAL);
+
+	collapsed = PsiOptions::instance()->getOption(COLLAPSED_OPTIONS).toStringList();
+	hidden = PsiOptions::instance()->getOption(HIDDEN_OPTIONS).toStringList();
+}
+
+
+ContactListModel::Private::~Private()
+{
+}
+
+void ContactListModel::Private::realAddContact(PsiContact *contact)
+{
+	ContactListItem *root = static_cast<ContactListItem*>(q->root());;
+	if (accountsEnabled) {
+		PsiAccount *account = contact->account();
+		ContactListItem *accountItem = root->findAccount(account);
+
+		if (!accountItem) {
+			accountItem = new ContactListItem(q, ContactListItem::Type::AccountType);
+			accountItem->setAccount(account);
+			accountItem->setExpanded(!collapsed.contains(accountItem->internalName()));
+
+			connect(account, SIGNAL(destroyed(QObject*)), SLOT(removeAccount(QObject*)));
+			connect(account, SIGNAL(updatedAccount()), SLOT(updateAccount()));
+
+			root->appendChild(accountItem);
+		}
+		root = accountItem;
+	}
+
+	if (!contact->isSelf() && groupsEnabled) {
+		ContactListItem::SpecialGroupType specialGroupType = specialGroupFor(contact);
+		QStringList groups = specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType ? contact->groups() : QStringList{QString()};
+
+		for (const QString &groupName: groups) {
+
+			ContactListItem *groupItem = nullptr;
+			if (specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType)
+				groupItem = root->findGroup(groupName);
+			else
+				groupItem = root->findGroup(specialGroupType);
+
+			// No duplicates
+			if (groupItem && groupItem->findContact(contact)) {
+				continue;
+			}
+
+			ContactListItem *item = new ContactListItem(q, ContactListItem::Type::ContactType);
+			item->setContact(contact);
+
+			if (!groupItem) {
+				groupItem = new ContactListItem(q, ContactListItem::Type::GroupType, specialGroupType);
+				if (specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType)
+					groupItem->setName(groupName);
+
+				root->appendChild(groupItem);
+				groupItem->setExpanded(!collapsed.contains(groupItem->internalName()));
+				groupItem->setHidden(hidden.contains(groupItem->internalName()));
+			}
+			groupItem->appendChild(item);
+
+			monitoredContacts.insertMulti(contact, q->toModelIndex(item));
+		}
+	}
+	else {
+		ContactListItem *item = new ContactListItem(q, ContactListItem::Type::ContactType);
+		item->setContact(contact);
+		root->appendChild(item);
+		monitoredContacts.insertMulti(contact, q->toModelIndex(item));
+	}
+
+	connect(contact, SIGNAL(destroyed(PsiContact*)), SLOT(removeContact(PsiContact*)));
+	connect(contact, SIGNAL(groupsChanged()), SLOT(contactGroupsChanged()));
+	connect(contact, SIGNAL(updated()), SLOT(contactUpdated()));
+	connect(contact, SIGNAL(alert()), SLOT(contactUpdated()));
+	connect(contact, SIGNAL(anim()), SLOT(contactUpdated()));
+}
+
+void ContactListModel::Private::addContacts(const QList<PsiContact*> &contacts)
+{
+	SLOW_TIMER(100);
+
+	if (contacts.isEmpty())
+		return;
+
+	emit q->layoutAboutToBeChanged();
+	for (auto *contact: contacts) {
+		realAddContact(contact);
+	}
+	emit q->layoutChanged();
+}
+
+void ContactListModel::Private::updateContacts(const QList<PsiContact*> &contacts)
+{
+	SLOW_TIMER(100);
+
+	if (contacts.isEmpty())
+		return;
+
+	// prepare ranges for updating to reduce 'emit dataChanged' invoking
+	QHash<QModelIndex, QPair<int, int>> ranges;
+	QModelIndexList indexes;
+	for (const PsiContact *contact: contacts) {
+		QModelIndexList indexes2 = q->indexesFor(contact);
+		indexes += indexes2;
+
+		for (const QModelIndex &index: indexes2) {
+			QModelIndex parent = index.parent();
+			int row = index.row();
+			if (ranges.contains(parent)) {
+				if (index.row() < ranges.value(parent).first)
+					ranges[parent].first = row;
+				else if (index.row() > ranges.value(parent).second)
+					ranges[parent].second = row;
+			}
+			else {
+				ranges.insert(parent, QPair<int, int>(row, row));
+			}
+		}
+	}
+
+
+	QHashIterator<QModelIndex, QPair<int, int>> it(ranges);
+	while (it.hasNext()) {
+		it.next();
+		int row1 = it.value().first;
+		int row2 = it.value().second;
+		QModelIndex index = it.key();
+
+		// update contact
+		emit q->dataChanged(index.child(row1, 0), index.child(row2, 0));
+
+		// Update group
+		emit q->dataChanged(index, index);
+	}
+}
+
+void ContactListModel::Private::addOperation(PsiContact *contact, ContactListModel::Private::Operation operation)
+{
+	if (operation == AddContact && monitoredContacts.contains(contact)) {
+		Q_ASSERT(false);
+	}
+
+	if (!operationQueue.contains(contact)) {
+		operationQueue[contact] = operation;
+	}
+	else {
+		operationQueue[contact] |= operation;
+	}
+
+	if (commitTimerStartTime.isNull())
+		commitTimerStartTime = QDateTime::currentDateTime();
+
+
+	if (commitTimerStartTime.secsTo(QDateTime::currentDateTime()) > MAX_COMMIT_DELAY)
+		commit();
+	else
+		commitTimer->start();
+}
+
+int ContactListModel::Private::simplifiedOperationList(int operations) const
+{
+	return (operations & AddContact)
+			? AddContact
+			: operations;
+}
+
+// Detect special group type for contact
+ContactListItem::SpecialGroupType ContactListModel::Private::specialGroupFor(PsiContact *contact)
+{
+	ContactListItem::SpecialGroupType type = ContactListItem::SpecialGroupType::NoneSpecialGroupType;
+
+	if (contact->isPrivate()) {
+		type = ContactListItem::SpecialGroupType::MucPrivateChatsSpecialGroupType;
+	}
+	else if (!contact->inList()) {
+		type = ContactListItem::SpecialGroupType::NotInListSpecialGroupType;
+	}
+	else if (contact->isAgent()) {
+		type = ContactListItem::SpecialGroupType::TransportsSpecialGroupType;
+	}
+	else if (contact->isConference()) {
+		type = ContactListItem::SpecialGroupType::ConferenceSpecialGroupType;
+	}
+	else if (contact->noGroups()) {
+		type = ContactListItem::SpecialGroupType::GeneralSpecialGroupType;
+	}
+
+	return type;
+}
+
+void ContactListModel::Private::commit()
+{
+	SLOW_TIMER(100);
+
+	commitTimerStartTime = QDateTime();
+
+	commitTimer->stop();
+	if (operationQueue.isEmpty())
+		return;
+
+	QHashIterator<PsiContact*, int> it(operationQueue);
+
+	QList<PsiContact*> contactsForAdding;
+	QList<PsiContact*> contactsForUpdate;
+
+
+	while (it.hasNext()) {
+		it.next();
+		PsiContact *contact = it.key();
+
+		int operations = simplifiedOperationList(it.value());
+		if (operations & AddContact) {
+			Q_ASSERT(!monitoredContacts.contains(contact));
+			if (monitoredContacts.contains(contact))
+				continue;
+
+			contactsForAdding << contact;
+
+		}
+		if (operations & RemoveContact)
+			Q_ASSERT(false);
+		if (operations & UpdateContact)
+			contactsForUpdate << contact;
+		if (operations & ContactGroupsChanged) {
+			removeContact(contact);
+			if (!contactsForAdding.contains(contact)) {
+				contactsForAdding << contact;
+			}
+		}
+	}
+
+	addContacts(contactsForAdding);
+	updateContacts(contactsForUpdate);
+	operationQueue.clear();
+}
+
+void ContactListModel::Private::clear()
+{
+	q->beginResetModel();
+
+	qDeleteAll(q->root()->children());
+
+	operationQueue.clear();
+
+	QHashIterator<PsiContact*, QPersistentModelIndex> it(monitoredContacts);
+	while (it.hasNext()) {
+		it.next();
+		disconnect(it.key(), 0, this, 0);
+	}
+	monitoredContacts.clear();
+
+	q->endResetModel();
+}
+
+void ContactListModel::Private::addContact(PsiContact *contact)
+{
+	Q_ASSERT(!monitoredContacts.contains(contact));
+	if (monitoredContacts.contains(contact))
+		return;
+
+	addOperation(contact, AddContact);
+}
+
+/*!
+ * removeContact() could be called directly by PsiContactList when account is disabled, or
+ * by contact's destructor. We just ensure that the calls are balanced.
+ */
+
+void ContactListModel::Private::removeContact(PsiContact *contact)
+{
+	Q_ASSERT(monitoredContacts.contains(contact));
+	if (!monitoredContacts.contains(contact))
+		return;
+
+	while (monitoredContacts.contains(contact)) {
+		QModelIndex index = monitoredContacts.take(contact);
+		if (!index.isValid())
+			continue;
+
+		q->beginRemoveRows(index.parent(), index.row(), index.row());
+		ContactListItem *item = q->toItem(index);
+		ContactListItem *group = item->parent();
+
+		delete item;
+		q->endRemoveRows();
+
+		index = q->toModelIndex(group);
+		// Delete empty group
+		if (group->isGroup() && !group->childCount()) {
+			q->beginRemoveRows(index.parent(), index.row(), index.row());
+			delete group;
+			q->endRemoveRows();
+
+		}
+		else {
+			// Update group
+			emit q->dataChanged(index, index);
+		}
+	}
+	disconnect(contact, 0, this, 0);
+	operationQueue.remove(contact);
+}
+
+void ContactListModel::Private::contactUpdated()
+{
+	PsiContact *contact = qobject_cast<PsiContact*>(sender());
+	Q_ASSERT(monitoredContacts.contains(contact));
+	if (!monitoredContacts.contains(contact))
+		return;
+
+	// Check for groups changing
+	// Maybe very difficult and should be simplified?
+	QList<ContactListItem*> groupItems;
+	for (const QPersistentModelIndex &index: monitoredContacts.values(contact)) {
+		ContactListItem *item = q->toItem(index);
+		if (item->parent() && item->parent()->isGroup()) {
+			groupItems << item;
+		}
+	}
+
+	Operation operation = Operation::UpdateContact;
+	ContactListItem::SpecialGroupType specialGroupType = specialGroupFor(contact);
+	if (specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType) {
+		QStringList groups1;
+		for (ContactListItem *item: groupItems) {
+			groups1 << item->name();
+		}
+		groups1.sort();
+		QStringList groups2 = contact->groups();
+		groups2.sort();
+		if (groups1 != groups2) {
+			operation = Operation::ContactGroupsChanged;
+		}
+	}
+	else if (groupItems.size() > 1 || (!groupItems.isEmpty() && groupItems.first()->specialGroupType() != specialGroupType)) {
+		operation = Operation::ContactGroupsChanged;
+	}
+
+	addOperation(contact, operation);
+}
+
+void ContactListModel::Private::contactGroupsChanged()
+{
+	PsiContact* contact = qobject_cast<PsiContact*>(sender());
+	Q_ASSERT(monitoredContacts.contains(contact));
+	if (!monitoredContacts.contains(contact))
+		return;
+
+	addOperation(contact, ContactGroupsChanged);
+}
+
+void ContactListModel::Private::removeAccount(QObject *object)
+{
+	PsiAccount *account = qobject_cast<PsiAccount*>(object);
+	ContactListItem *root = static_cast<ContactListItem*>(q->root());
+	ContactListItem *item = root->findAccount(account);
+	QModelIndex index = q->toModelIndex(item);
+	q->beginRemoveRows(index.parent(), index.row(), index.row());
+	delete item;
+	q->endRemoveRows();
+}
+
+void ContactListModel::Private::updateAccount()
+{
+	PsiAccount *account = qobject_cast<PsiAccount*>(sender());
+	ContactListItem *root = static_cast<ContactListItem*>(q->root());;
+	ContactListItem *accountItem = root->findAccount(account);
+	Q_ASSERT(accountItem);
+	q->updateItem(accountItem);
+}
+
+/********************/
+/* ContactListModel */
+/********************/
 
 ContactListModel::ContactListModel(PsiContactList* contactList)
-	: QAbstractItemModel(contactList)
-	, groupsEnabled_(false)
-	, accountsEnabled_(false)
-	, contactList_(contactList)
-	, updater_(0)
-	, rootGroup_(0)
-	, bulkUpdateCount_(0)
-	, emitDeltaSignals_(true)
-	, groupState_(0)
-	, groupCache_(0)
+	: AbstractTreeModel(new ContactListItem(this, ContactListItem::Type::RootType))
+	, d(new Private(this))
 {
-	groupState_ = new ContactListGroupState(this);
-	updater_ = new ContactListModelUpdater(contactList, this);
-	groupCache_ = new ContactListGroupCache(this);
+	d->contactList = contactList;
 
-	connect(groupState_, SIGNAL(orderChanged()), SLOT(orderChanged()));
-	connect(updater_, SIGNAL(addedContact(PsiContact*)), SLOT(addContact(PsiContact*)));
-	connect(updater_, SIGNAL(removedContact(PsiContact*)), SLOT(removeContact(PsiContact*)));
-	connect(updater_, SIGNAL(contactAlert(PsiContact*)), SLOT(contactAlert(PsiContact*)));
-	connect(updater_, SIGNAL(contactAnim(PsiContact*)), SLOT(contactAnim(PsiContact*)));
-	connect(updater_, SIGNAL(contactUpdated(PsiContact*)), SLOT(contactUpdated(PsiContact*)));
-	connect(updater_, SIGNAL(contactGroupsChanged(PsiContact*)), SLOT(contactGroupsChanged(PsiContact*)));
-	connect(updater_, SIGNAL(beginBulkContactUpdate()), SLOT(beginBulkUpdate()));
-	connect(updater_, SIGNAL(endBulkContactUpdate()), SLOT(endBulkUpdate()));
-	connect(contactList_, SIGNAL(destroying()), SLOT(destroyingContactList()));
-	connect(contactList_, SIGNAL(showOfflineChanged(bool)), SIGNAL(showOfflineChanged()));
-	connect(contactList_, SIGNAL(showHiddenChanged(bool)), SIGNAL(showHiddenChanged()));
-	connect(contactList_, SIGNAL(showSelfChanged(bool)), SIGNAL(showSelfChanged()));
-	connect(contactList_, SIGNAL(showAgentsChanged(bool)), SIGNAL(showTransportsChanged()));
-	connect(contactList_, SIGNAL(rosterRequestFinished()), SLOT(rosterRequestFinished()));
-	connect(contactList_, SIGNAL(contactSortStyleChanged(QString)), SIGNAL(contactSortStyleChanged()));
+	connect(contactList, SIGNAL(addedContact(PsiContact*)), d, SLOT(addContact(PsiContact*)));
+	connect(contactList, SIGNAL(removedContact(PsiContact*)), d, SLOT(removeContact(PsiContact*)));
+
+	connect(d->contactList, SIGNAL(destroying()), SLOT(destroyingContactList()));
+	connect(d->contactList, SIGNAL(showOfflineChanged(bool)), SIGNAL(showOfflineChanged()));
+	connect(d->contactList, SIGNAL(showHiddenChanged(bool)), SIGNAL(showHiddenChanged()));
+	connect(d->contactList, SIGNAL(showSelfChanged(bool)), SIGNAL(showSelfChanged()));
+	connect(d->contactList, SIGNAL(showAgentsChanged(bool)), SIGNAL(showTransportsChanged()));
+	connect(d->contactList, SIGNAL(rosterRequestFinished()), SLOT(rosterRequestFinished()));
+	connect(d->contactList, SIGNAL(contactSortStyleChanged(QString)), SIGNAL(contactSortStyleChanged()));
 }
 
 ContactListModel::~ContactListModel()
 {
-	emitDeltaSignals_ = false;
-	delete rootGroup_;
-}
-
-void ContactListModel::storeGroupState(const QString& id)
-{
-	groupState_->load(id);
-}
-
-void ContactListModel::updaterCommit()
-{
-	if (!updater()) {
-		Q_ASSERT(false);
-		return;
-	}
-	updater()->commit();
+	delete d;
 }
 
 void ContactListModel::destroyingContactList()
 {
-	if (updater_) {
-		updater_->commit();
-		delete updater_;
-		updater_ = 0;
+	d->commit();
+
+	// Save groups state
+	d->collapsed.clear();
+	QList<ContactListItem*> list = static_cast<ContactListItem*>(root())->allChildren();
+
+	for (const auto *item: list) {
+		if (!item->expanded())
+			d->collapsed << item->internalName();
+
+		if (item->isHidden())
+			d->hidden << item->internalName();
 	}
 
-	groupState_->updateGroupList(this);
-	groupState_->save();
+	PsiOptions::instance()->setOption(COLLAPSED_OPTIONS, d->collapsed);
+	PsiOptions::instance()->setOption(HIDDEN_OPTIONS, d->hidden);
 
-	contactList_ = 0;
+
+	d->clear();
+
+	d->contactList = nullptr;
 	invalidateLayout();
-}
-
-ContactListGroup* ContactListModel::createRootGroup()
-{
-	if (accountsEnabled_)
-		return new ContactListAccountGroup(this, 0, 0);
-
-	if (!groupsEnabled_)
-		return new ContactListGroup(this, 0);
-
-	return new ContactListNestedGroup(this, 0, QString());
 }
 
 bool ContactListModel::groupsEnabled() const
 {
-	return groupsEnabled_;
+	return d->groupsEnabled;
 }
 
 void ContactListModel::setGroupsEnabled(bool enabled)
 {
-	if (groupsEnabled_ != enabled) {
-		groupsEnabled_ = enabled;
+	if (d->groupsEnabled != enabled) {
+		d->groupsEnabled = enabled;
 		invalidateLayout();
 	}
 }
 
 bool ContactListModel::accountsEnabled() const
 {
-	return accountsEnabled_;
+	return d->accountsEnabled;
 }
 
 void ContactListModel::setAccountsEnabled(bool enabled)
 {
-	if (accountsEnabled_ != enabled) {
-		accountsEnabled_ = enabled;
+	if (d->accountsEnabled != enabled) {
+		d->accountsEnabled = enabled;
 		invalidateLayout();
-	}
-}
-
-void ContactListModel::beginBulkUpdate()
-{
-	Q_ASSERT(bulkUpdateCount_ >= 0);
-	if (bulkUpdateCount_ == 0) {
-		emitDeltaSignals_ = false;
-		doResetAfterBulkUpdate_ = false;
-		doLayoutUpdateAfterBulkUpdate_ = false;
-
-		beginResetModel();
-
-		// blockSignals(true);
-		emit layoutAboutToBeChanged();
-	}
-
-	++bulkUpdateCount_;
-}
-
-void ContactListModel::endBulkUpdate()
-{
-	--bulkUpdateCount_;
-	Q_ASSERT(bulkUpdateCount_ >= 0);
-
-	if (bulkUpdateCount_ == 0) {
-		// blockSignals(false);
-		emitDeltaSignals_ = true;
-
-		// using begin/endResetModel instead
-		/*if (doResetAfterBulkUpdate_) {
-			reset();
-
-			// in Qt 4.3.4 emitting modelReset() leads to QSortFilterProxyModel
-			// calling invalidate() on itself first, then immediately it will emit
-			// modelReset() too.
-			//
-			// It's very easy to reproduce on yapsi r2193 and Qt 4.3.4: enable groups in roster,
-			// then disable them. And all you could see now is blank contacts roster.
-			emit layoutAboutToBeChanged();
-			emit layoutChanged();
-		}
-		else if (doLayoutUpdateAfterBulkUpdate_) {
-			// emit layoutAboutToBeChanged();
-			emit layoutChanged();
-		}*/
-
-		endResetModel();
 	}
 }
 
@@ -209,378 +523,66 @@ void ContactListModel::rosterRequestFinished()
 	}
 }
 
-void ContactListModel::orderChanged()
-{
-	emit layoutAboutToBeChanged();
-	emit layoutChanged();
-}
-
 void ContactListModel::invalidateLayout()
 {
-	beginBulkUpdate();
+	d->clear();
 
-	if (rootGroup_)
-		delete rootGroup_;
-
-	if (updater()) {
-		updater()->clear();
-	}
-
-	rootGroup_ = createRootGroup();
-
-	initializeModel();
-
-	endBulkUpdate();
-}
-
-void ContactListModel::initializeModel()
-{
-	if (contactList_ && updater()) {
-		foreach(PsiContact* contact, contactList_->contacts()) {
-			updater()->addContact(contact);
-		}
-	}
-
-	foreach(PsiContact* contact, additionalContacts()) {
-		addContact(contact);
-	}
-}
-
-QStringList ContactListModel::filterContactGroups(QStringList groups) const
-{
-	return groups;
-}
-
-void ContactListModel::addContact(PsiContact* contact)
-{
-	Q_ASSERT(contact);
-	if (!accountsEnabled() && contact->isSelf())
+	if (!d->contactList)
 		return;
 
-	addContact(contact, contact->groups());
-}
+	beginResetModel();
 
-void ContactListModel::removeContact(PsiContact* contact)
-{
-	Q_ASSERT(contact);
-	if (!accountsEnabled() && contact->isSelf())
-		return;
+	for (PsiContact *contact: d->contactList->contacts()) {
+		Q_ASSERT(!d->monitoredContacts.contains(contact));
+		if (d->monitoredContacts.contains(contact))
+			continue;
 
-	contactGroupsChanged(contact, QStringList());
-}
-
-void ContactListModel::contactGroupsChanged(PsiContact* contact)
-{
-	Q_ASSERT(contact);
-	if (!accountsEnabled() && contact->isSelf())
-		return;
-
-	Q_ASSERT(rootGroup_);
-	contactGroupsChanged(contact, contact->groups());
-}
-
-void ContactListModel::addContact(PsiContact* contact, QStringList contactGroups)
-{
-	Q_ASSERT(rootGroup_);
-	rootGroup_->addContact(contact, rootGroup_->sanitizeGroupNames(filterContactGroups(contactGroups)));
+		d->realAddContact(contact);
+	}
+	endResetModel();
 }
 
 PsiContact* ContactListModel::contactFor(const QModelIndex& index) const
 {
-	if (indexType(index) != ContactType)
-		return 0;
+	ContactListItem *item = static_cast<ContactListItem*>(index.internalPointer());
+	if (item->type() != ContactListItem::Type::ContactType)
+		return nullptr;
 
-	ContactListItemProxy* proxy = static_cast<ContactListItemProxy*>(index.internalPointer());
-	Q_ASSERT(proxy);
-	PsiContact* result = dynamic_cast<PsiContact*>(proxy->item());
-	Q_ASSERT(result);
-	return result;
+	return item->contact();
 }
 
-QModelIndexList ContactListModel::indexesFor(PsiContact* contact) const
+QModelIndexList ContactListModel::indexesFor(const PsiContact *contact) const
 {
 	Q_ASSERT(contact);
 	QModelIndexList result;
-	foreach(ContactListGroup* group, groupCache()->groupsFor(contact)) {
-		result += index(group->indexOf(contact), 0, group->toModelIndex());
+	for (const auto &index: d->monitoredContacts.values(const_cast<PsiContact*>(contact))) {
+		result << index;
 	}
 	return result;
 }
 
-void ContactListModel::contactAlert(PsiContact* contact)
+ContactListItem *ContactListModel::toItem(const QModelIndex &index) const
 {
-	QModelIndexList indexes = indexesFor(contact);
-	if (!indexes.isEmpty()) {
-		emit contactAlert(indexes.first());
+	Q_ASSERT(!index.isValid() || index.model() == this);
+
+	ContactListItem *item = nullptr;
+	bool b = index.isValid();
+	if (!b) {
+		item = static_cast<ContactListItem*>(root());
 	}
+	else {
+		item = static_cast<ContactListItem*>(index.internalPointer());
+	}
+
+	return item;
 }
 
-void ContactListModel::contactAnim(PsiContact* /*contact*/)
+QModelIndex ContactListModel::toModelIndex(ContactListItem *item) const
 {
-}
-
-void ContactListModel::contactUpdated(PsiContact* contact)
-{
-	Q_ASSERT(rootGroup_);
-	// rootGroup_->contactUpdated(contact);
-	foreach(ContactListGroup* group, groupCache()->groupsFor(contact)) {
-		group->contactUpdated(contact);
-	}
-}
-
-void ContactListModel::contactGroupsChanged(PsiContact* contact, QStringList contactGroups)
-{
-	Q_ASSERT(rootGroup_);
-	rootGroup_->contactGroupsChanged(contact, rootGroup_->sanitizeGroupNames(filterContactGroups(contactGroups)));
-}
-
-void ContactListModel::itemAboutToBeInserted(ContactListGroup* group, int index)
-{
-	doResetAfterBulkUpdate_ = true;
-
-	if (!emitDeltaSignals_)
-		return;
-
-	beginInsertRows(group->toModelIndex(), index, index);
-}
-
-void ContactListModel::insertedItem(ContactListGroup* group, int index)
-{
-	Q_ASSERT(doResetAfterBulkUpdate_);
-	Q_UNUSED(group);
-	Q_UNUSED(index);
-
-	if (!emitDeltaSignals_)
-		return;
-
-	endInsertRows();
-}
-
-void ContactListModel::itemAboutToBeRemoved(ContactListGroup* group, int index)
-{
-	doResetAfterBulkUpdate_ = true;
-
-	if (!emitDeltaSignals_)
-		return;
-
-	beginRemoveRows(group->toModelIndex(), index, index);
-}
-
-void ContactListModel::removedItem(ContactListGroup* group, int index)
-{
-	Q_ASSERT(doResetAfterBulkUpdate_);
-	Q_UNUSED(group);
-	Q_UNUSED(index);
-
-	if (!emitDeltaSignals_)
-		return;
-
-	endRemoveRows();
-}
-
-void ContactListModel::updatedItem(ContactListItemProxy* item)
-{
-	doLayoutUpdateAfterBulkUpdate_ = true;
-
-	if (!emitDeltaSignals_)
-		return;
-
-	QModelIndex index = itemProxyToModelIndex(item);
-	emit dataChanged(index, index);
-}
-
-void ContactListModel::updatedGroupVisibility(ContactListGroup* group)
-{
-	doLayoutUpdateAfterBulkUpdate_ = true;
-
-	if (!emitDeltaSignals_)
-		return;
-
-	Q_UNUSED(group);
-	// FIXME: Ideally this should work, but in current Qt it doesn't
-	// updatedItem(group->parent()->findGroup(group));
-	emit layoutAboutToBeChanged();
-	emit layoutChanged();
-}
-
-QVariant ContactListModel::contactListItemData(const ContactListItem* item, int role) const
-{
-	Q_ASSERT(item);
-	if (role == TypeRole) {
-		return QVariant(item->type());
-	}
-	else if ((role == Qt::DisplayRole || role == Qt::EditRole) /*&& index.column() == NameColumn*/) {
-		return QVariant(item->displayName());
-	}
-	else if (role == ExpandedRole) {
-		return QVariant(item->expanded());
-	}
-
-	return QVariant();
-}
-
-QVariant ContactListModel::contactGroupData(const ContactListGroup* group, int role) const
-{
-	Q_ASSERT(group);
-
-	if (role == TotalItemsRole) {
-		return QVariant(group->itemsCount());
-	}
-	else if (role == FullGroupNameRole) {
-		return QVariant(group->fullName());
-	}
-	else if (role == OnlineContactsRole) {
-		return QVariant(group->onlineContactsCount());
-	}
-	else if (role == TotalContactsRole) {
-		return QVariant(group->totalContactsCount());
-	}
-	else if (role == InternalGroupNameRole) {
-		return QVariant(group->internalGroupName());
-	}
-	else if (role == SpecialGroupTypeRole) {
-		return QVariant(group->specialGroupType());
-	}
-
-	return contactListItemData(group, role);
-}
-
-QVariant ContactListModel::accountData(const ContactListAccountGroup* account, int role) const
-{
-	Q_ASSERT(account);
-	if (!account->account()) {
-		return QVariant();
-	}
-
-	if (role == JidRole) {
-		return QVariant(account->account()->jid().full());
-	}
-	// else if (role == PictureRole) {
-	// 	return QVariant(account->account()->picture());
-	// }
-	else if (role == StatusTextRole) {
-		return QVariant(account->account()->status().status().simplified());
-	}
-	else if (role == StatusTypeRole) {
-		return QVariant(account->account()->status().type());
-	}
-	else if (role == OnlineContactsRole) {
-		return QVariant(account->account()->onlineContactsCount());
-	}
-	else if (role == TotalContactsRole) {
-		return QVariant(account->account()->contactList().count());
-	}
-	else if (role == UsingSSLRole) {
-		return QVariant(account->account()->usingSSL());
-	}
-	else if (role == IsAlertingRole) {
-		return QVariant(account->account()->alerting());
-	}
-	else if (role == AlertPictureRole) {
-		return QVariant(account->account()->alertPicture());
-	}
-
-	return contactGroupData(account, role);
-}
-
-QVariant ContactListModel::contactData(const PsiContact* contact, int role) const
-{
-	Q_ASSERT(contact);
-
-	if (role == JidRole) {
-		return QVariant(contact->jid().full());
-	}
-	else if (role == Qt::ToolTipRole) {
-		return QVariant(contact->userListItem().makeTip(true, false));
-	}
-	else if (role == PictureRole) {
-		return QVariant(contact->picture());
-	}
-	else if (role == StatusTextRole) {
-		return QVariant(contact->statusText().simplified());
-	}
-	else if (role == StatusTypeRole) {
-		return QVariant(contact->status().type());
-	}
-	else if (role == PresenceErrorRole) {
-		return QVariant(contact->userListItem().presenceError());
-	}
-	else if (role == IsAgentRole) {
-		return QVariant(contact->isAgent());
-	}
-	else if (role == AuthorizesToSeeStatusRole) {
-		return QVariant(contact->authorizesToSeeStatus());
-	}
-	else if (role == AskingForAuthRole) {
-		return QVariant(contact->askingForAuth());
-	}
-	else if (role == IsAlertingRole) {
-		return QVariant(contact->alerting());
-	}
-	else if (role == AlertPictureRole) {
-		return QVariant(contact->alertPicture());
-	}
-	else if (role == IsAnimRole) {
-		return QVariant(contact->isAnimated());
-	}
-	else if (role == PhaseRole) {
-		return QVariant(false);
-	}
-	else if (role == MoodRole) {
-		const Mood &m = contact->userListItem().mood();
-		if(m.isNull())
-			return QVariant();
-		return QVariant::fromValue(m);
-	}
-	else if (role == ActivityRole) {
-		const Activity &a = contact->userListItem().activity();
-		if (!a.isNull())
-			return QVariant::fromValue(a);
-		return QVariant();
-	}
-	else if (role == GeolocationRole) {
-		return QVariant(!contact->userListItem().geoLocation().isNull());
-	}
-	else if (role == TuneRole) {
-		return QVariant(!contact->userListItem().tune().isEmpty());
-	}
-	else if (role == ClientRole) {
-		return QVariant(contact->userListItem().clients());
-	}
-	else if (role == AvatarRole) {
-		QPixmap pix = contact->isPrivate() ?
-			      contact->account()->avatarFactory()->getMucAvatar(contact->jid()) :
-			      contact->account()->avatarFactory()->getAvatar(contact->jid());
-		return QVariant(pix);
-	}
-	else if (role == IsMucRole) {
-		return QVariant(contact->userListItem().isConference());
-	}
-	else if (role == MucMessagesRole) {
-		return QVariant(contact->userListItem().pending());
-	}
-	else if (role == BlockRole) {
-		return QVariant(contact->isBlocked());
-	}
-	else if (role == IsSecureRole) {
-		return QVariant(contact->userListItem().isSecure());
-	}
-#ifdef YAPSI
-	else if (role == Qt::ForegroundRole) {
-		return QVariant(Ya::statusColor(contact->status().type()));
-	}
-	else if (role == GenderRole) {
-		return QVariant(contact->gender());
-	}
-	else if (role == Qt::DisplayRole || role == Qt::EditRole) {
-		return QVariant(Ya::contactName(
-							contactListItemData(contact, role).toString(),
-							contactData(contact, ContactListModel::JidRole).toString()
-						));
-	}
-#endif
-
-	return contactListItemData(contact, role);
+	if (!item || item == root())
+		return QModelIndex();
+	else
+		return createIndex(item->row(), 0, item);
 }
 
 QVariant ContactListModel::data(const QModelIndex &index, int role) const
@@ -588,41 +590,25 @@ QVariant ContactListModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid())
 		return QVariant();
 
-	ContactListItemProxy* item = itemProxy(index);
-	Q_ASSERT(item);
-	Q_ASSERT(item->item());
-	return itemData(item->item(), role);
+	ContactListItem* item = toItem(index);
+
+	if (role == ContactListItemRole)
+		return QVariant::fromValue(item);
+	else
+		return item->value(role);
 }
 
-QVariant ContactListModel::itemData(const ContactListItem* item, int role) const
-{
-	Q_ASSERT(item);
-	if (const PsiContact* contact = dynamic_cast<const PsiContact*>(item)) {
-		return contactData(contact, role);
-	}
-	else if (const ContactListAccountGroup* accountGroup = dynamic_cast<const ContactListAccountGroup*>(item)) {
-		return accountData(accountGroup, role);
-	}
-	else if (const ContactListGroup* group = dynamic_cast<const ContactListGroup*>(item)) {
-		return contactGroupData(group, role);
-	}
-
-	return contactListItemData(item, role);
-}
-
-bool ContactListModel::setData(const QModelIndex& index, const QVariant& data, int role)
+bool ContactListModel::setData(const QModelIndex &index, const QVariant &data, int role)
 {
 	if (!index.isValid())
 		return false;
 
-	ContactListItemProxy* item = itemProxy(index);
+	ContactListItem *item = toItem(index);
 	if (!item)
 		return false;
-	ContactListGroup*     group   = 0;
-	PsiContact*           contact = 0;
+	PsiContact *contact = item->isContact() ? item->contact() : nullptr;
 
 	if (role == ActivateRole) {
-		PsiContact* contact = dynamic_cast<PsiContact*>(item->item());
 		if (!contact)
 			return false;
 
@@ -631,122 +617,53 @@ bool ContactListModel::setData(const QModelIndex& index, const QVariant& data, i
 	}
 	else if (role == Qt::EditRole) {
 		QString name = data.toString();
-		if ((contact = dynamic_cast<PsiContact*>(item->item()))) {
-			//if (name.isEmpty()) {
-				// QMessageBox::information(0, tr("Error"), tr("You can't set a blank name."));
-			//	return false;
-			//}
-			//else {
-				contact->setName(name);
-			//}
+		if (contact) {
+			item->setName(name);
+			emit dataChanged(index, index);
 		}
-		else if ((group = dynamic_cast<ContactListGroup*>(item->item()))) {
-			if (name.isEmpty()) {
-				QMessageBox::information(0, tr("Error"), tr("You can't set a blank group name."));
-				return false;
+		else if (item->isGroup() && !name.isEmpty()) {
+			QString oldName = item->name();
+			QList<PsiContact*> contacts;
+			for (int i = 0; i < item->childCount(); ++i) {
+				if (item->child(i)->isContact())
+				contacts << item->child(i)->contact();
 			}
-			// else {
-				// // make sure we don't have it already
-				// if (group->account()->groupList().contains(name)) {
-				// 	QMessageBox::information(0, tr("Error"), tr("You already have a group with that name."));
-				// 	return false;
-				// }
-				group->setName(name);
-			// }
+
+			for (PsiContact *contact: contacts) {
+				QStringList groups = contact->groups();
+				groups.removeOne(oldName);
+				groups << name;
+				contact->setGroups(groups);
+			}
+
 		}
-		emit dataChanged(index, index);
+
 		return true;
 	}
 	else if (role == ExpandedRole) {
-		if ((group = dynamic_cast<ContactListGroup*>(item->item()))) {
-			group->setExpanded(data.toBool());
+		if (!item->isContact()) {
+			item->setExpanded(data.toBool());
 		}
 	}
 
 	return true;
 }
 
-QVariant ContactListModel::headerData(int section, Qt::Orientation orientation, int role) const
-{
-	Q_UNUSED(section);
-	Q_UNUSED(orientation);
-	Q_UNUSED(role);
-	return QVariant();
-}
-
-/**
- * Returns the model item index for the item in the \param parent
- * with the given \param row and \param column.
- */
-QModelIndex ContactListModel::index(int row, int column, const QModelIndex &parent) const
-{
-	if (column < 0 || column >= 1 || row < 0 || parent.column() > 0)
-		return QModelIndex();
-
-	ContactListGroup* group = 0;
-	if (!parent.isValid()) {
-		group = rootGroup_;
-	}
-	else {
-		ContactListItemProxy* item = itemProxy(parent);
-		group = dynamic_cast<ContactListGroup*>(item->item());
-	}
-
-	if (group && row < group->itemsCount())
-		return itemProxyToModelIndex(group->item(row), row);
-
-	return QModelIndex();
-}
-
-/**
- * Return the parent of the given \param index model item.
- */
-QModelIndex ContactListModel::parent(const QModelIndex &index) const
-{
-	if (!index.isValid())
-		return QModelIndex();
-
-	ContactListItemProxy* item = itemProxy(index);
-	if (item && item->parent())
-		return item->parent()->toModelIndex();
-
-	return QModelIndex();
-}
-
-/**
- * Returns the number of rows in the \param parent model index.
- */
-int ContactListModel::rowCount(const QModelIndex &parent) const
-{
-	if (parent.column() > 0)
-		return 0;
-
-	ContactListGroup* group = 0;
-	if (parent.isValid()) {
-		ContactListItemProxy* item = itemProxy(parent);
-		group = dynamic_cast<ContactListGroup*>(item->item());
-	}
-	else {
-		group = rootGroup_;
-	}
-
-	return group ? group->itemsCount() : 0;
-}
-
 /**
  * Returns the number of columns in the \param parent model item.
  */
-int ContactListModel::columnCount(const QModelIndex& parent) const
+int ContactListModel::columnCount(const QModelIndex &parent) const
 {
 	if (parent.column() > 0)
 		return 0;
+
 	return 1;
 }
 
 /**
  * Returns the item flags for the given \param index in the model.
  */
-Qt::ItemFlags ContactListModel::flags(const QModelIndex& index) const
+Qt::ItemFlags ContactListModel::flags(const QModelIndex &index) const
 {
 	if (!index.isValid())
 		return Qt::ItemIsDropEnabled;
@@ -754,25 +671,22 @@ Qt::ItemFlags ContactListModel::flags(const QModelIndex& index) const
 	Qt::ItemFlags f = QAbstractItemModel::flags(index);
 	f |= Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
-	ContactListItemProxy* item = itemProxy(index);
-	if ((index.column() == NameColumn) && item && item->item()->isEditable())
+	ContactListItem *item = toItem(index);
+	if ((index.column() == NameColumn) && item && item->isEditable())
 		f |= Qt::ItemIsEditable;
-	return f;
-}
 
-/**
- * Returns true if the \param parent model item has children; otherwise
- * returns false.
- */
-bool ContactListModel::hasChildren(const QModelIndex& parent)
-{
-	return rowCount(parent) > 0;
+#ifdef HAVE_QT5
+	if (!item->isExpandable())
+		f |= Qt::ItemNeverHasChildren;
+#endif
+
+	return f;
 }
 
 /**
  * Call this slot to notify \param index that it's now displayed in the 'expanded' state.
  */
-void ContactListModel::expanded(const QModelIndex& index)
+void ContactListModel::expanded(const QModelIndex &index)
 {
 	setData(index, QVariant(true), ExpandedRole);
 }
@@ -780,32 +694,14 @@ void ContactListModel::expanded(const QModelIndex& index)
 /**
 * Call this slot to notify \param index that it's now displayed in the 'collapsed' state.
  */
-void ContactListModel::collapsed(const QModelIndex& index)
+void ContactListModel::collapsed(const QModelIndex &index)
 {
 	setData(index, QVariant(false), ExpandedRole);
 }
 
 PsiContactList* ContactListModel::contactList() const
 {
-	return contactList_;
-}
-
-ContactListItemProxy* ContactListModel::modelIndexToItemProxy(const QModelIndex& index) const
-{
-	return itemProxy(index);
-}
-
-QModelIndex ContactListModel::itemProxyToModelIndex(ContactListItemProxy* item) const
-{
-	Q_ASSERT(item);
-	int row = item->parent() ? item->parent()->indexOf(item->item()) : 0;
-	return itemProxyToModelIndex(item, row);
-}
-
-QModelIndex ContactListModel::itemProxyToModelIndex(ContactListItemProxy* item, int index) const
-{
-	Q_ASSERT(item);
-	return createIndex(index, 0, item);
+	return d->contactList;
 }
 
 void ContactListModel::renameSelectedItem()
@@ -813,158 +709,45 @@ void ContactListModel::renameSelectedItem()
 	emit inPlaceRename();
 }
 
-ContactListModel::Type ContactListModel::indexType(const QModelIndex& index)
+void ContactListModel::updateItem(ContactListItem *item)
 {
-	QVariant type = index.data(ContactListModel::TypeRole);
-	if (type.isValid())
-		return static_cast<ContactListModel::Type>(type.toInt());
+	Q_ASSERT(item);
 
-	return ContactListModel::InvalidType;
-}
-
-bool ContactListModel::isGroupType(const QModelIndex& index)
-{
-	return indexType(index) == ContactListModel::GroupType ||
-		   indexType(index) == ContactListModel::AccountType;
-}
-
-ContactListItemProxy* ContactListModel::itemProxy(const QModelIndex& index) const
-{
-	if ((index.row() < 0) || (index.column() < 0) || (index.model() != this))
-		return 0;
-	ContactListItemProxy* proxy = static_cast<ContactListItemProxy*>(index.internalPointer());
-#if 0
-	if (contactListItemProxyHash_.contains(proxy) && !contactListItemProxyHash_[proxy].isNull())
-		return proxy;
-	return 0;
-#else
-	return proxy;
-#endif
-}
-
-PsiAccount* ContactListModel::account(const QModelIndex& index) const
-{
-	ContactListItemProxy* item = itemProxy(index);
-	if (item) {
-		PsiContact* contact = dynamic_cast<PsiContact*>(item->item());
-		if (contact)
-			return contact->account();
-	}
-	return 0;
-}
-
-ContactListGroupState* ContactListModel::groupState() const
-{
-	return groupState_;
-}
-
-ContactListModelUpdater* ContactListModel::updater() const
-{
-	return updater_;
-}
-
-ContactListGroupCache* ContactListModel::groupCache() const
-{
-	return groupCache_;
-}
-
-ContactListGroup* ContactListModel::rootGroup() const
-{
-	return rootGroup_;
-}
-
-QList<PsiContact*> ContactListModel::additionalContacts() const
-{
-	return QList<PsiContact*>();
-}
-
-int ContactListModel::groupOrder(const QString& groupFullName) const
-{
-	ContactListGroup* group = groupCache()->findGroup(groupFullName);
-	if (group) {
-		return groupState()->groupOrder(group);
-	}
-	return 0;
-}
-
-void ContactListModel::setGroupOrder(const QString& groupFullName, int order)
-{
-	ContactListGroup* group = groupCache()->findGroup(groupFullName);
-	if (group) {
-		groupState()->setGroupOrder(group, order);
-	}
+	QModelIndex index = toModelIndex(item);
+	emit dataChanged(index, index);
 }
 
 bool ContactListModel::showOffline() const
 {
-	if (!contactList_)
+	if (!d->contactList)
 		return false;
-	return contactList_->showOffline();
+	return d->contactList->showOffline();
 }
 
 bool ContactListModel::showSelf() const
 {
-	if (!contactList_)
+	if (!d->contactList)
 		return false;
-	return contactList_->showSelf();
+	return d->contactList->showSelf();
 }
 
 bool ContactListModel::showTransports() const
 {
-	if (!contactList_)
+	if (!d->contactList)
 		return false;
-	return contactList_->showAgents();
+	return d->contactList->showAgents();
 }
 
 bool ContactListModel::showHidden() const
 {
-	if (!contactList_)
+	if (!d->contactList)
 		return false;
-	return contactList_->showHidden();
+	return d->contactList->showHidden();
 }
 
 QString ContactListModel::contactSortStyle() const
 {
-	if (!contactList_)
+	if (!d->contactList)
 		return QString("alpha");
-	return contactList_->contactSortStyle();
-}
-
-bool ContactListModel::updatesEnabled() const
-{
-	return updater()->updatesEnabled();
-}
-
-void ContactListModel::setUpdatesEnabled(bool updatesEnabled)
-{
-	updater()->setUpdatesEnabled(updatesEnabled);
-}
-
-bool ContactListModel::hasContacts(bool onlineOnly) const
-{
-	return groupCache()->hasContacts(onlineOnly);
-}
-
-QModelIndex ContactListModel::groupToIndex(ContactListGroup* group) const
-{
-	if (group && group->parent()) {
-		int groupIndex = group->parent()->indexOf(group);
-		if (groupIndex >= 0) {
-			ContactListItemProxy* itemProxy = group->parent()->item(groupIndex);
-			if (itemProxy) {
-				QModelIndex index = itemProxyToModelIndex(itemProxy);
-				return index;
-			}
-		}
-	}
-
-	return QModelIndex();
-}
-
-void ContactListModel::contactListItemProxyCreated(ContactListItemProxy* proxy)
-{
-	Q_UNUSED(proxy);
-#if 0
-	contactListItemProxyHash_[proxy] = proxy;
-#endif
+	return d->contactList->contactSortStyle();
 }

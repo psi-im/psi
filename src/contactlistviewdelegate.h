@@ -18,84 +18,44 @@
  *
  */
 
-#ifndef CONTACTLISTVIEWDELEGATE_H
-#define CONTACTLISTVIEWDELEGATE_H
-
-#include <QItemDelegate>
-
-#include "contactlistmodel.h"
+#pragma once
 
 #include "hoverabletreeview.h"
 #include "xmpp_status.h"
 
+#include <QItemDelegate>
+
 class ContactListView;
-class ContactListItemProxy;
 class PsiContact;
-class ContactListGroup;
 class PsiAccount;
 
 class ContactListViewDelegate : public QItemDelegate
 {
+	Q_OBJECT
+
 public:
-	ContactListViewDelegate(ContactListView* parent);
+	ContactListViewDelegate(ContactListView *parent);
 	virtual ~ContactListViewDelegate();
 
-	virtual int avatarSize() const;
-	virtual ContactListView* contactList() const;
+	int avatarSize() const;
+
+	void contactAlert(const QModelIndex &index);
+	void animateContacts(const QModelIndexList &indexes, bool started);
+	void clearAlerts();
 
 	// reimplemented
-	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-	virtual void getEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index, QRect* widgetRect, QRect* lineEditRect) const;
-	virtual void setEditorData(QWidget* editor, const QModelIndex& index) const;
-	virtual void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+	void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+	void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+	void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 
-	virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-	virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
-
-	void doSetOptions(const QStyleOptionViewItem& option, const QModelIndex& index) const;
-
-	virtual int horizontalMargin() const;
-	virtual int verticalMargin() const;
-	virtual void setHorizontalMargin(int margin);
-	virtual void setVerticalMargin(int margin);
+	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
 protected:
-	virtual void drawContact(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-	virtual void drawGroup(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-	virtual void drawAccount(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-
-	virtual void defaultDraw(QPainter* painter, const QStyleOptionViewItem& option) const;
-
-	virtual void drawText(QPainter* painter, const QStyleOptionViewItem& o, const QRect& rect, const QString& text, const QModelIndex& index) const;
-	virtual void drawBackground(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-
-	virtual QRect nameRect(const QStyleOptionViewItem& option, const QModelIndex& index) const = 0;
-	virtual QRect groupNameRect(const QStyleOptionViewItem& option, const QModelIndex& index) const = 0;
-	virtual QRect editorRect(const QRect& nameRect) const = 0;
-	virtual void setEditorCursorPosition(QWidget* editor, int cursorPosition) const;
-	virtual QColor backgroundColor(const QStyleOptionViewItem& option, const QModelIndex& index) const;
-
-	QIcon::Mode iconMode() const;
-	QIcon::State iconState() const;
-	const HoverableStyleOptionViewItem& opt() const;
-
-	virtual QString nameText(const QStyleOptionViewItem& o, const QModelIndex& index) const;
-	virtual QString statusText(const QModelIndex& index) const;
-	virtual XMPP::Status::Type statusType(const QModelIndex& index) const;
-
 	// reimplemented
-	bool eventFilter(QObject* object, QEvent* event);
-
-	// these three are functional only inside paint() call
-	bool hovered() const;
-	QPoint hoveredPosition() const;
-	void setHovered(bool hovered) const;
+	bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
 	class Private;
 	Private* d;
-	int horizontalMargin_;
-	int verticalMargin_;
 };
-
-#endif

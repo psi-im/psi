@@ -18,22 +18,23 @@
  *
  */
 
-#ifndef PSICONTACT_H
-#define PSICONTACT_H
+#pragma once
 
-#include "contactlistitem.h"
 #include "psicontactlist.h"
 #include "xmpp_vcard.h"
+#include "contactlistitemmenu.h"
+
+#include <QObject>
 
 class PsiIcon;
 class PsiAccount;
 class UserListItem;
 class UserResourceList;
-class YaProfile;
 
-class PsiContact : public ContactListItem
+class PsiContact : public QObject
 {
 	Q_OBJECT
+
 private:
 	PsiContact(const PsiContact&);
 	PsiContact& operator=(const PsiContact&);
@@ -42,35 +43,33 @@ protected:
 	PsiContact();
 
 public:
-	PsiContact(const UserListItem& u, PsiAccount* account);
+	PsiContact(const UserListItem& u, PsiAccount* account, bool isSelf = false);
 	~PsiContact();
 
 	PsiAccount* account() const;
 	const UserListItem& userListItem() const;
 	const UserResourceList& userResourceList() const;
-	virtual void update(const UserListItem& u);
+	void update(const UserListItem& u);
 
 	bool isBlocked() const;
-	virtual bool isSelf() const;
-	virtual bool isAgent() const;
-	virtual bool inList() const;
-	virtual bool isPrivate() const;
-	virtual bool isConference() const;
-	virtual bool noGroups() const;
-	virtual bool authorized() const;
-	virtual bool authorizesToSeeStatus() const;
-	virtual bool askingForAuth() const;
-	virtual bool isOnline() const;
-	virtual bool isHidden() const;
-	virtual bool isValid() const;
+	bool isSelf() const;
+	bool isAgent() const;
+	bool inList() const;
+	bool isPrivate() const;
+	bool isConference() const;
+	bool noGroups() const;
+	bool authorized() const;
+	bool authorizesToSeeStatus() const;
+	bool askingForAuth() const;
+	bool isOnline() const;
+	bool isHidden() const;
+	bool isValid() const;
 
-	virtual bool isAnimated() const;
+	bool isAnimated() const;
 
 	bool isActiveContact() const;
 
 	void activate();
-
-	virtual void setEditing(bool editing);
 
 	bool isAlwaysVisible() const;
 	void setAlwaysVisible(bool visible);
@@ -79,48 +78,31 @@ public:
 	bool removeAvailable() const;
 	bool authAvailable() const;
 	bool blockAvailable() const;
-#ifdef YAPSI
-	bool isYaInformer() const;
-	bool isYaJid();
-	bool isYandexTeamJid();
-	bool historyAvailable() const;
-	bool moodNotificationsEnabled() const;
-	void setMoodNotificationsEnabled(bool enabled);
 
-	void showOnlineTemporarily();
-	void setReconnectingState(bool reconnecting);
-
-	void startDelayedMoodUpdate(int timeoutInSecs);
-#endif
-
-	virtual bool isFake() const;
+	bool isFake() const;
 
 	// reimplemented
-	virtual ContactListModel::Type type() const;
-	virtual const QString& name() const;
-	virtual QString comparisonName() const;
-	virtual void setName(const QString& name);
-	virtual ContactListItemMenu* contextMenu(ContactListModel* model);
-	virtual bool isEditable() const;
-	virtual bool isDragEnabled() const;
-	virtual bool compare(const ContactListItem* other) const;
-	virtual bool isRemovable() const;
+	const QString& name() const;
+	QString comparisonName() const;
+	void setName(const QString& name);
+	ContactListItemMenu* contextMenu(ContactListModel* model);
+	bool isEditable() const;
+	bool isDragEnabled() const;
+//	bool compare(const ContactListItem* other) const;
+	bool isRemovable() const;
 
-	virtual XMPP::Jid jid() const;
-	virtual XMPP::Status status() const;
-	virtual QString statusText() const;
-	virtual QString toolTip() const;
-	virtual QIcon picture() const;
-	virtual QIcon alertPicture() const;
+	XMPP::Jid jid() const;
+	XMPP::Status status() const;
+	QString statusText() const;
+	QString toolTip() const;
+	QIcon picture() const;
+	QIcon alertPicture() const;
 
-#ifdef YAPSI
-	XMPP::VCard::Gender gender() const;
-#endif
 	void rereadVCard();
 
 	bool groupOperationPermitted(const QString& oldGroupName, const QString& newGroupName) const;
-	virtual QStringList groups() const;
-	virtual void setGroups(QStringList);
+	QStringList groups() const;
+	void setGroups(QStringList);
 	bool alerting() const;
 	void setAlert(const PsiIcon* icon);
 	void startAnim();
@@ -132,39 +114,32 @@ public:
 	static QString hiddenGroupName();
 
 protected:
-	virtual bool shouldBeVisible() const;
-	// virtual ContactListGroupItem* desiredParent() const;
+	bool shouldBeVisible() const;
+	// ContactListGroupItem* desiredParent() const;
 
 public slots:
-	virtual void receiveIncomingEvent();
-	virtual void sendMessage();
-	virtual void sendMessageTo(QString resource);
-	virtual void openChat();
-	virtual void openChatTo(QString resource);
+	void receiveIncomingEvent();
+	void sendMessage();
+	void sendMessageTo(QString resource);
+	void openChat();
+	void openChatTo(QString resource);
 #ifdef WHITEBOARDING
-	virtual void openWhiteboard();
-	virtual void openWhiteboardTo(QString resource);
+	void openWhiteboard();
+	void openWhiteboardTo(QString resource);
 #endif
-	virtual void executeCommand(QString resource);
-	virtual void openActiveChat(QString resource);
-	virtual void sendFile();
-	virtual void inviteToGroupchat(QString groupChat);
-	virtual void toggleBlockedState();
-	virtual void toggleBlockedStateConfirmation();
-	virtual void rerequestAuthorizationFrom();
-	virtual void removeAuthorizationFrom();
-	virtual void remove();
-	virtual void clearCustomPicture();
-	virtual void userInfo();
-	virtual void history();
-#ifdef YAPSI
-	virtual void yaProfile();
-	virtual void yaPhotos();
-	virtual void yaEmail();
-#endif
-#ifdef YAPSI
-	void moodUpdate();
-#endif
+	void executeCommand(QString resource);
+	void openActiveChat(QString resource);
+	void sendFile();
+	void inviteToGroupchat(QString groupChat);
+	void toggleBlockedState();
+	void toggleBlockedStateConfirmation();
+	void rerequestAuthorizationFrom();
+	void removeAuthorizationFrom();
+	void remove();
+	void assignCustomPicture();
+	void clearCustomPicture();
+	void userInfo();
+	void history();
 
 	void stopAnim();
 
@@ -175,14 +150,13 @@ private slots:
 	void blockContactConfirmation(const QString& id, bool confirmed);
 	void blockContactConfirmationHelper(bool block);
 
+	void updateStatus();
+
 signals:
 	void alert();
 	void anim();
 	void updated();
 	void groupsChanged();
-#ifdef YAPSI
-	void moodChanged(const QString&);
-#endif
 
 	/**
 	 * This signal is emitted when PsiContact has entered its final
@@ -195,9 +169,4 @@ private:
 	Private *d;
 
 	void addRemoveAuthBlockAvailable(bool* add, bool* remove, bool* auth, bool* block) const;
-#ifdef YAPSI
-	YaProfile getYaProfile() const;
-#endif
 };
-
-#endif

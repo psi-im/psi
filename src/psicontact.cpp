@@ -39,67 +39,39 @@
 #include "userlist.h"
 #include "alertable.h"
 #include "avatars.h"
-#ifdef YAPSI
-#include "yaprivacymanager.h"
-#include "yacommon.h"
-#include "yaprofile.h"
-#include "yatoastercentral.h"
-#else
 #include "psiprivacymanager.h"
-#endif
-#include "contactlistgroup.h"
 #include "desktoputil.h"
 #include "vcardfactory.h"
 #include "psicon.h"
 #include "psicontactlist.h"
-#ifdef YAPSI
-#include "yarostertooltip.h"
-#endif
 
-static const int statusTimerInterval = 5000;
+#define STATUS_TIMER_INTERVAL 5000
+#define ANIM_TIMER_INTERVAL 5000
 
 class PsiContact::Private : public Alertable
 {
-	Q_OBJECT
 public:
 	Private(PsiContact* contact)
-		: account_(0)
-		, statusTimer_(0)
+		: Alertable()
+		, q(contact)
+		, account_(0)
+		, statusTimer_(nullptr)
+		, animTimer_(nullptr)
+		, oldStatus_(XMPP::Status::Offline)
 		, isValid_(true)
 		, isAnimated_(false)
 		, isAlwaysVisible_(false)
-		, contact_(contact)
-#ifdef YAPSI
-		, gender_(XMPP::VCard::UnknownGender)
-		, genderCached_(false)
-#endif
+		, isSelf(false)
 	{
-		oldStatus_ = XMPP::Status(XMPP::Status::Offline);
-#ifdef YAPSI
-		showOnlineTemporarily_ = false;
-		reconnecting_ = false;
-
-		delayedMoodUpdateTimer_ = new QTimer(this);
-		delayedMoodUpdateTimer_->setInterval(60 * 1000);
-		delayedMoodUpdateTimer_->setSingleShot(true);
-		connect(delayedMoodUpdateTimer_, SIGNAL(timeout()), contact, SLOT(moodUpdate()));
-#endif
-
-		statusTimer_ = new QTimer(this);
-		statusTimer_->setInterval(statusTimerInterval);
-		statusTimer_->setSingleShot(true);
-		connect(statusTimer_, SIGNAL(timeout()), SLOT(updateStatus()));
-
-		animTimer_ = new QTimer(this);
-		animTimer_->setInterval(5000);
-		animTimer_->setSingleShot(true);
-		connect(animTimer_, SIGNAL(timeout()), contact, SLOT(stopAnim()));
 	}
 
 	~Private()
 	{
+		delete statusTimer_;
+		delete animTimer_;
 	}
 
+	PsiContact* q;
 	PsiAccount* account_;
 	QTimer* statusTimer_;
 	QTimer* animTimer_;
@@ -110,13 +82,7 @@ public:
 	bool isValid_;
 	bool isAnimated_;
 	bool isAlwaysVisible_;
-#ifdef YAPSI
-	bool showOnlineTemporarily_;
-	bool reconnecting_;
-	QTimer* delayedMoodUpdateTimer_;
-	XMPP::VCard::Gender gender_;
-	bool genderCached_;
-#endif
+	bool isSelf;
 
 	XMPP::Status status(const UserListItem& u) const
 	{
@@ -137,36 +103,37 @@ public:
 	void setStatus(XMPP::Status status)
 	{
 		status_ = status;
-#ifdef YAPSI
-		reconnecting_ = false;
-#endif
 		if (account_ && !account_->notifyOnline())
 			oldStatus_ = status_;
-		else
-			statusTimer_->start();
+		else {
+
+			if (!statusTimer_) {
+				statusTimer_ = new QTimer;
+				statusTimer_->setSingleShot(true);
+				connect(statusTimer_, SIGNAL(timeout()), q, SLOT(updateStatus()));
+			}
+
+			statusTimer_->start(STATUS_TIMER_INTERVAL);
+		}
 	}
 
-private slots:
 	void updateStatus()
 	{
-#ifdef YAPSI
-		showOnlineTemporarily_ = false;
-#endif
+		delete statusTimer_;
+		statusTimer_ = nullptr;
 		oldStatus_ = status_;
-		emit contact_->updated();
+		emit q->updated();
 	}
-
-private:
-	PsiContact* contact_;
 };
 
 /**
  * Creates new PsiContact.
  */
-PsiContact::PsiContact(const UserListItem& u, PsiAccount* account)
-	: ContactListItem(account)
+PsiContact::PsiContact(const UserListItem& u, PsiAccount* account, bool isSelf)
+	: QObject(account)
 {
 	d = new Private(this);
+	d->isSelf = isSelf;
 	d->account_ = account;
 	if (d->account_) {
 		connect(d->account_->avatarFactory(), SIGNAL(avatarChanged(const Jid&)), SLOT(avatarChanged(const Jid&)));
@@ -178,7 +145,7 @@ PsiContact::PsiContact(const UserListItem& u, PsiAccount* account)
 }
 
 PsiContact::PsiContact()
-	: ContactListItem(0)
+	: QObject(0)
 {
 	d = new Private(this);
 	d->account_ = 0;
@@ -216,42 +183,16 @@ const UserListItem& PsiContact::userListItem() const
  */
 void PsiContact::update(const UserListItem& u)
 {
+	bool isGroupsChanged = u.groups() != d->u_.groups();
 	d->u_ = u;
 	Status status = d->status(d->u_);
 
 	d->setStatus(status);
 
-	if (isAgent()) {
-		d->u_.setGroups(QStringList());
-	}
 	emit updated();
-	emit groupsChanged();
+	if (isGroupsChanged)
+		emit groupsChanged();
 }
-
-#ifdef YAPSI
-void PsiContact::startDelayedMoodUpdate(int timeoutInSecs)
-{
-	d->delayedMoodUpdateTimer_->setInterval((timeoutInSecs + 1) * 1000);
-	d->delayedMoodUpdateTimer_->start();
-}
-
-void PsiContact::moodUpdate()
-{
-	Status status = d->status(d->u_);
-
-	QString newMood = Ya::processMood(d->u_.yaMood(), status.status(), status.type());
-
-	if (status.isAvailable() &&
-	    // !status.status().isEmpty() &&
-	    newMood != d->u_.yaMood() &&
-	    !d->u_.isSelf() &&
-	    !isYaInformer())
-	{
-		// qWarning("mood changed: %s, '%s' (%s)", qPrintable(jid().full()), qPrintable(status.status()), qPrintable(d->u_.yaMood()));
-		emit moodChanged(newMood);
-	}
-}
-#endif
 
 /**
  * Triggers default action.
@@ -261,11 +202,6 @@ void PsiContact::activate()
 	if (!account())
 		return;
 	account()->actionDefault(jid());
-}
-
-ContactListModel::Type PsiContact::type() const
-{
-	return ContactListModel::ContactType;
 }
 
 /**
@@ -282,15 +218,6 @@ QString PsiContact::comparisonName() const
 	return name() + jid().full() + account()->name();
 }
 
-#ifdef YAPSI
-XMPP::VCard::Gender PsiContact::gender() const
-{
-	if (!d->genderCached_)
-		const_cast<PsiContact*>(this)->vcardChanged(jid());
-	return d->gender_;
-}
-#endif
-
 /**
  * Returns contact's XMPP address.
  */
@@ -304,19 +231,6 @@ XMPP::Jid PsiContact::jid() const
  */
 Status PsiContact::status() const
 {
-#ifdef YAPSI
-	if (isBlocked()) {
-		return XMPP::Status(XMPP::Status::Blocked);
-	}
-
-	if (d->reconnecting_) {
-		return XMPP::Status(XMPP::Status::Reconnecting);
-	}
-
-	if (!authorizesToSeeStatus()) {
-		return XMPP::Status(XMPP::Status::NotAuthorizedToSeeStatus);
-	}
-#endif
 	return d->status_;
 }
 
@@ -367,8 +281,9 @@ bool PsiContact::isFake() const
  */
 bool PsiContact::isEditable() const
 {
-	if (!account())
+	if (d->isSelf || !account())
 		return false;
+
 	return account()->isAvailable() && inList();
 }
 
@@ -516,23 +431,29 @@ QIcon PsiContact::alertPicture() const
  */
 void PsiContact::setAlert(const PsiIcon* icon)
 {
-#ifndef YAPSI
 	d->setAlert(icon);
 	// updateParent();
-#endif
 	emit alert();
 }
 
 void PsiContact::startAnim()
 {
-	d->isAnimated_ = true;
-	d->animTimer_->start();
+	if (!d->animTimer_) {
+		d->animTimer_ = new QTimer;
+		d->animTimer_->setSingleShot(true);
+		connect(d->animTimer_, SIGNAL(timeout()), SLOT(stopAnim()));
+	}
 
-	anim();
+	d->isAnimated_ = true;
+	d->animTimer_->start(ANIM_TIMER_INTERVAL);
+
+	emit anim();
 }
 
 void PsiContact::stopAnim()
 {
+	delete d->animTimer_;
+	d->animTimer_ = nullptr;
 	d->isAnimated_ = false;
 	emit anim();
 }
@@ -558,12 +479,12 @@ bool PsiContact::isActiveContact() const
  */
 bool PsiContact::shouldBeVisible() const
 {
-#ifndef YAPSI
-	if (d->alerting())
-		return true;
-#endif
-	return false;
-	// return ContactListItem::shouldBeVisible();
+	bool res = d->alerting();
+
+	if (d->isSelf && !res)
+		res = d->account_->psi()->contactList()->showSelf() || d->u_.userResourceList().count() > 1;
+
+	return res;
 }
 
 bool PsiContact::isAlwaysVisible() const
@@ -682,20 +603,6 @@ void PsiContact::toggleBlockedState()
 {
 	if (!account())
 		return;
-
-// FIXME
-#ifdef YAPSI
-	YaPrivacyManager* privacyManager = dynamic_cast<YaPrivacyManager*>(account()->privacyManager());
-	Q_ASSERT(privacyManager);
-
-	bool blocked = privacyManager->isContactBlocked(jid());
-	if (!blocked) {
-		emit YaRosterToolTip::instance()->blockContact(this, 0);
-	}
-	else {
-		emit YaRosterToolTip::instance()->unblockContact(this, 0);
-	}
-#endif
 }
 
 void PsiContact::toggleBlockedStateConfirmation()
@@ -703,18 +610,9 @@ void PsiContact::toggleBlockedStateConfirmation()
 	if (!account())
 		return;
 
-// FIXME
-#ifdef YAPSI
-	YaPrivacyManager* privacyManager = dynamic_cast<YaPrivacyManager*>(account()->privacyManager());
-	Q_ASSERT(privacyManager);
-
-	bool blocked = privacyManager->isContactBlocked(jid());
-	blockContactConfirmationHelper(!blocked);
-#else
 	PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
 	bool blocked = privacyManager->isContactBlocked(jid());
 	blockContactConfirmationHelper(!blocked);
-#endif
 }
 
 void PsiContact::blockContactConfirmationHelper(bool block)
@@ -722,15 +620,13 @@ void PsiContact::blockContactConfirmationHelper(bool block)
 	if (!account())
 		return;
 
-#ifdef YAPSI
-	YaPrivacyManager* privacyManager = dynamic_cast<YaPrivacyManager*>(account()->privacyManager());
-	Q_ASSERT(privacyManager);
-
-	privacyManager->setContactBlocked(jid(), block);
-#else
 	PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
 	privacyManager->setContactBlocked(jid(), block);
-#endif
+}
+
+void PsiContact::updateStatus()
+{
+	d->updateStatus();
 }
 
 void PsiContact::blockContactConfirmation(const QString& id, bool confirmed)
@@ -764,6 +660,19 @@ void PsiContact::remove()
 		account()->actionRemove(jid());
 }
 
+void PsiContact::assignCustomPicture()
+{
+	if (!account())
+		return;
+
+	// FIXME: Should check the supported filetypes dynamically
+	// FIXME: parent of QFileDialog is NULL, probably should make it psi->contactList()
+	QString file = QFileDialog::getOpenFileName(0, tr("Choose an image"), "", tr("All files (*.png *.jpg *.gif)"));
+	if (!file.isNull()) {
+		account()->avatarFactory()->importManualAvatar(jid(), file);
+	}
+}
+
 void PsiContact::clearCustomPicture()
 {
 	if (account())
@@ -778,56 +687,9 @@ void PsiContact::userInfo()
 
 void PsiContact::history()
 {
-#ifdef YAPSI
-	if (account())
-		Ya::showHistory(account(), jid());
-#else
 	if (account())
 		account()->actionHistory(jid());
-#endif
 }
-
-#ifdef YAPSI
-bool PsiContact::isYaInformer() const
-{
-	return d->u_.groups().contains(Ya::INFORMERS_GROUP_NAME);
-}
-
-bool PsiContact::isYaJid()
-{
-	return Ya::isYaJid(jid().full());
-}
-
-bool PsiContact::isYandexTeamJid()
-{
-	return Ya::isYandexTeamJid(jid().full());
-}
-
-YaProfile PsiContact::getYaProfile() const
-{
-	return YaProfile(account(), jid());
-}
-
-void PsiContact::yaProfile()
-{
-	if (!account() || !(isYaJid() || isYandexTeamJid()))
-		return;
-	getYaProfile().browse();
-}
-
-void PsiContact::yaPhotos()
-{
-	if (!account() || !isYaJid())
-		return;
-	getYaProfile().browsePhotos();
-}
-
-void PsiContact::yaEmail()
-{
-	// FIXME: use vcard.email()?
-	DesktopUtil::openEMail(jid().bare());
-}
-#endif
 
 void PsiContact::addRemoveAuthBlockAvailable(bool* addButton, bool* deleteButton, bool* authButton, bool* blockButton) const
 {
@@ -853,16 +715,9 @@ void PsiContact::addRemoveAuthBlockAvailable(bool* addButton, bool* deleteButton
 			}
 		}
 
-// FIXME
-#ifdef YAPSI
-		YaPrivacyManager* privacyManager = dynamic_cast<YaPrivacyManager*>(account()->privacyManager());
-		Q_ASSERT(privacyManager);
-		*blockButton = *blockButton && privacyManager->isAvailable();
-#else
 		PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
 		if(privacyManager)
 			*blockButton = *blockButton && privacyManager->isAvailable();
-#endif
 	}
 }
 
@@ -894,13 +749,6 @@ bool PsiContact::blockAvailable() const
 	return blockButton;
 }
 
-#ifdef YAPSI
-bool PsiContact::historyAvailable() const
-{
-	return Ya::historyAvailable(account(), jid());
-}
-#endif
-
 void PsiContact::avatarChanged(const Jid& j)
 {
 	if (!j.compare(jid(), false))
@@ -918,61 +766,39 @@ void PsiContact::vcardChanged(const Jid& j)
 	if (!j.compare(jid(), false))
 		return;
 
-#ifdef YAPSI
-	d->gender_ = XMPP::VCard::UnknownGender;
-	const VCard vcard = VCardFactory::instance()->vcard(jid());
-	if (vcard) {
-		d->gender_ = vcard->gender();
-	}
-	d->genderCached_ = true;
-#endif
 	emit updated();
 }
 
-bool PsiContact::compare(const ContactListItem* other) const
-{
-	const ContactListGroup* group = dynamic_cast<const ContactListGroup*>(other);
-	if (group) {
-		return !group->compare(this);
-	}
+//bool PsiContact::compare(const ContactListItem* other) const
+//{
+//	const ContactListGroup* group = dynamic_cast<const ContactListGroup*>(other);
+//	if (group) {
+//		return !group->compare(this);
+//	}
 
-	const PsiContact* contact = dynamic_cast<const PsiContact*>(other);
-	if (contact) {
-		int rank = rankStatus(d->oldStatus_.type()) - rankStatus(contact->d->oldStatus_.type());
-		if (rank == 0)
-			rank = QString::localeAwareCompare(comparisonName().toLower(), contact->comparisonName().toLower());
-		return rank < 0;
-	}
+//	const PsiContact* contact = dynamic_cast<const PsiContact*>(other);
+//	if (contact) {
+//		int rank = rankStatus(d->oldStatus_.type()) - rankStatus(contact->d->oldStatus_.type());
+//		if (rank == 0)
+//			rank = QString::localeAwareCompare(comparisonName().toLower(), contact->comparisonName().toLower());
+//		return rank < 0;
+//	}
 
-	return ContactListItem::compare(other);
-}
-
-// FIXME
-#ifdef YAPSI
-static YaPrivacyManager* privacyManager(PsiAccount* account)
-{
-	return dynamic_cast<YaPrivacyManager*>(account->privacyManager());
-}
-#endif
+//	return ContactListItem::compare(other);
+//}
 
 bool PsiContact::isBlocked() const
 {
-// FIXME
-#ifdef YAPSI
-	return account() && privacyManager(account()) &&
-	       privacyManager(account())->isContactBlocked(jid());
-#else
 	if(account()) {
 		PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
 		return privacyManager->isContactBlocked(jid());
 	}
 	return false;
-#endif
 }
 
 bool PsiContact::isSelf() const
 {
-	return false;
+	return d->isSelf;
 }
 
 bool PsiContact::isAgent() const
@@ -1037,52 +863,10 @@ bool PsiContact::isOnline() const
 	}
 
 	return d->status_.type()    != XMPP::Status::Offline ||
-	       d->oldStatus_.type() != XMPP::Status::Offline
-#ifdef YAPSI
-	       || d->showOnlineTemporarily_
-	       || d->reconnecting_;
-#endif
-	;
+	       d->oldStatus_.type() != XMPP::Status::Offline;
 }
 
 bool PsiContact::isHidden() const
 {
 	return userListItem().isHidden();
 }
-
-#ifdef YAPSI
-void PsiContact::showOnlineTemporarily()
-{
-	d->showOnlineTemporarily_ = true;
-	d->statusTimer_->start();
-	emit updated();
-}
-
-void PsiContact::setReconnectingState(bool reconnecting)
-{
-	d->reconnecting_ = reconnecting;
-	emit updated();
-}
-#endif
-
-void PsiContact::setEditing(bool editing)
-{
-	if (this->editing() != editing) {
-		ContactListItem::setEditing(editing);
-		emit updated();
-	}
-}
-
-#ifdef YAPSI
-bool PsiContact::moodNotificationsEnabled() const
-{
-	return !account()->psi()->yaToasterCentral()->moodNotificationsDisabled(jid());
-}
-
-void PsiContact::setMoodNotificationsEnabled(bool enabled)
-{
-	account()->psi()->yaToasterCentral()->setMoodNotificationsDisabled(jid(), !enabled);
-}
-#endif
-
-#include "psicontact.moc"

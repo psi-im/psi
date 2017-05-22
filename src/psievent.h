@@ -95,11 +95,6 @@ public:
 
 	virtual QString description() const;
 
-#ifdef YAPSI
-	int id() const;
-	void setId(int id);
-#endif
-
 	virtual PsiEvent *copy() const;
 
 private:
@@ -107,9 +102,6 @@ private:
 	QDateTime v_ts;
 	XMPP::Jid v_jid;
 	PsiAccount *v_account;
-#ifdef YAPSI
-	int v_id;
-#endif
 };
 
 
@@ -118,7 +110,7 @@ class PluginEvent : public PsiEvent
 {
 	Q_OBJECT
 public:
-	PluginEvent(const QString& jid, const QString& descr, PsiAccount *acc);
+	PluginEvent(int account, const QString& jid, const QString& descr, PsiAccount *acc);
 	~PluginEvent();
 
 	typedef QSharedPointer<PluginEvent> Ptr;
@@ -129,11 +121,12 @@ public:
 	void activate();
 
 signals:
-	void activated(QString);
+	void activated(const QString &jid, int account);
 
 private:
 	XMPP::Jid from_;
 	QString descr_;
+	int _account;
 };
 #endif
 
@@ -204,10 +197,14 @@ public:
 
 	virtual PsiEvent *copy() const;
 
+	void setSentToChatWindow(bool b);
+	bool sentToChatWindow() const;
+
 private:
 	XMPP::Jid v_from;
 	QString v_nick;
 	QString v_at;
+	bool v_sentToChatWindow;
 };
 
 #ifdef WHITEBOARDING
@@ -393,6 +390,7 @@ public:
 
 	int nextId() const;
 	int count() const;
+	int contactCount() const;
 	int count(const XMPP::Jid &, bool compareRes=true) const;
 	void enqueue(const PsiEvent::Ptr &);
 	void dequeue(const PsiEvent::Ptr &);
@@ -405,6 +403,7 @@ public:
 	void extractByType(int type, QList<PsiEvent::Ptr> *el);
 	void extractMessages(QList<PsiEvent::Ptr> *list);
 	void extractChats(QList<PsiEvent::Ptr> *list, const XMPP::Jid &, bool compareRes, bool removeEvents);
+	void extractByJid(QList<PsiEvent::Ptr> *list, const XMPP::Jid &jid);
 	void printContent() const;
 	void clear();
 	void clear(const XMPP::Jid &, bool compareRes=true);

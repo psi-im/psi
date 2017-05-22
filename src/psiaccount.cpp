@@ -455,7 +455,7 @@ public:
 	}
 
 	PsiContactList* contactList;
-	PsiSelfContact* selfContact;
+	PsiContact* selfContact;
 	PsiCon *psi;
 	PsiAccount *account;
 	Client *client;
@@ -1243,7 +1243,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 		new IdleServer(this, d->client->rootTask());
 	}
 
-	d->selfContact = new PsiSelfContact(d->self, this);
+	d->selfContact = new PsiContact(d->self, this, true);
 
 	// restore cached roster
 	for(Roster::ConstIterator it = acc.roster.begin(); it != acc.roster.end(); ++it)
@@ -3509,6 +3509,14 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
 	}
 }
 
+void PsiAccount::actionSendStatus(const Jid &jid)
+{
+	StatusSetDlg *w = new StatusSetDlg(psi(), makeLastStatus(status().type()), lastPriorityNotEmpty());
+	w->setJid(jid);
+	connect(w, SIGNAL(setJid(const Jid &, const Status &)), SLOT(setStatusFromDialog(const Jid &, const Status &)));
+	w->show();
+}
+
 void PsiAccount::actionManageBookmarks()
 {
 	BookmarkManageDlg *dlg = findDialog<BookmarkManageDlg*>();
@@ -4983,9 +4991,9 @@ static bool messageListContainsEvent(const QList<PsiEvent::Ptr>& messageList, co
 }
 
 #ifdef PSI_PLUGINS
-void PsiAccount::createNewPluginEvent(const QString &jid, const QString &descr, QObject *receiver, const char *slot)
+void PsiAccount::createNewPluginEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot)
 {
-	PluginEvent::Ptr pe(new PluginEvent(jid, descr, this));
+	PluginEvent::Ptr pe(new PluginEvent(account, jid, descr, this));
 	connect(pe.data(), SIGNAL(activated(QString)), receiver, slot);
 	handleEvent(pe, IncomingStanza);
 }

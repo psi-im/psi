@@ -24,6 +24,7 @@
 #include <QTextStream>
 #include <QList>
 #include <QCoreApplication>
+#include <QSet>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -33,7 +34,6 @@
 #include "applicationinfo.h"
 #include "psicontactlist.h"
 #include "atomicxmlfile/atomicxmlfile.h"
-#include "globaleventqueue.h"
 #include "psioptions.h"
 #include "avcall/avcall.h"
 
@@ -58,9 +58,6 @@ PsiEvent::PsiEvent(PsiAccount *acc)
 	v_originLocal = false;
 	v_late = false;
 	v_account = acc;
-#ifdef YAPSI
-	v_id = -1;
-#endif
 }
 
 PsiEvent::PsiEvent(const PsiEvent &from)
@@ -71,9 +68,6 @@ PsiEvent::PsiEvent(const PsiEvent &from)
 	v_ts = from.v_ts;
 	v_jid = from.v_jid;
 	v_account = from.v_account;
-#ifdef YAPSI
-	v_id = from.v_id;
-#endif
 }
 
 PsiEvent::~PsiEvent()
@@ -134,9 +128,6 @@ QDomElement PsiEvent::toXml(QDomDocument *doc) const
 {
 	QDomElement e = doc->createElement("event");
 	e.setAttribute("type", metaObject()->className());
-#ifdef YAPSI
-	e.setAttribute("id", QString::number(v_id));
-#endif
 
 	e.appendChild( textTag(*doc, "originLocal",	v_originLocal) );
 	e.appendChild( textTag(*doc, "late",		v_late) );
@@ -156,9 +147,6 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 		return false;
 	if ( e->attribute("type") != metaObject()->className() )
 		return false;
-#ifdef YAPSI
-	v_id = e->attribute("id").toInt();
-#endif
 
 	readBoolEntry(*e, "originLocal", &v_originLocal);
 	readBoolEntry(*e, "late", &v_late);
@@ -196,26 +184,14 @@ PsiEvent *PsiEvent::copy() const
 	return 0;
 }
 
-#ifdef YAPSI
-int PsiEvent::id() const
-{
-	return v_id;
-}
-
-void PsiEvent::setId(int id)
-{
-	v_id = id;
-}
-#endif
-
-
 #ifdef PSI_PLUGINS
 //----------------------------------------------------------------------------
 // PluginEvent
 //----------------------------------------------------------------------------
-PluginEvent::PluginEvent(const QString& jid, const QString& descr, PsiAccount *acc)
+PluginEvent::PluginEvent(int account, const QString& jid, const QString& descr, PsiAccount *acc)
 	: PsiEvent(acc)
 	, descr_(descr)
+	, _account(account)
 {
 	from_ = XMPP::Jid(jid);
 }
@@ -242,7 +218,7 @@ void PluginEvent::setFrom(const XMPP::Jid &j)
 
 void PluginEvent::activate()
 {
-	emit activated(from_.full());
+	emit activated(from_.full(), _account);
 }
 
 QString PluginEvent::description() const
@@ -402,10 +378,14 @@ AuthEvent::AuthEvent(const Jid &j, const QString &authType, PsiAccount *acc)
 {
 	v_from = j;
 	v_at = authType;
+	v_sentToChatWindow = false;
 }
 
 AuthEvent::AuthEvent(const AuthEvent &from)
-: PsiEvent(from), v_from(from.v_from), v_at(from.v_at)
+	: PsiEvent(from)
+	, v_from(from.v_from)
+	, v_at(from.v_at)
+	, v_sentToChatWindow(from.v_sentToChatWindow)
 {
 }
 
@@ -489,6 +469,16 @@ QString AuthEvent::description() const
 PsiEvent *AuthEvent::copy() const
 {
 	return new AuthEvent( *this );
+}
+
+void AuthEvent::setSentToChatWindow(bool b)
+{
+	v_sentToChatWindow = b;
+}
+
+bool AuthEvent::sentToChatWindow() const
+{
+	return v_sentToChatWindow;
 }
 
 //----------------------------------------------------------------------------
@@ -697,22 +687,13 @@ static const QString idGeneratorOptionPath = "options.last-event-id";
 EventIdGenerator::EventIdGenerator()
 	: QObject(QCoreApplication::instance())
 {
-#ifdef YAPSI
-	id_ = PsiOptions::instance()->getOption(idGeneratorOptionPath).toInt();
-#else
 	id_ = 0;
-#endif
 }
 
 int EventIdGenerator::getId()
 {
 	int result = id_;
-#ifdef YAPSI
-	// TODO: upgrade to uint64
-	PsiOptions::instance()->setOption(idGeneratorOptionPath, ++id_);
-#else
 	++id_;
-#endif
 
 	if (id_ > 0x7FFFFFFF) {
 		id_ = 0;
@@ -784,19 +765,8 @@ PsiEvent *AvCallEvent::copy() const
 EventItem::EventItem(const PsiEvent::Ptr &_e)
 {
 	e = _e;
-#ifdef YAPSI
-	if (e->id() >= 0) {
-		v_id = e->id();
-	}
-	else {
-		Q_ASSERT(e->account());
-		v_id = EventIdGenerator::instance()->getId();
-		e->setId(v_id);
-	}
-#else
 	Q_ASSERT(e->account());
 	v_id = EventIdGenerator::instance()->getId();
-#endif
 }
 
 EventItem::EventItem(const EventItem &from)
@@ -834,6 +804,7 @@ EventQueue::EventQueue(PsiAccount *account)
 
 EventQueue::EventQueue(const EventQueue &from)
 	: QObject()
+	, list_()
 	, psi_(0)
 	, account_(0)
 	, enabled_(false)
@@ -845,6 +816,8 @@ EventQueue::EventQueue(const EventQueue &from)
 EventQueue::~EventQueue()
 {
 	setEnabled(false);
+	qDeleteAll(list_);
+	list_.clear();
 }
 
 bool EventQueue::enabled() const
@@ -854,15 +827,7 @@ bool EventQueue::enabled() const
 
 void EventQueue::setEnabled(bool enabled)
 {
-	if (enabled_ != enabled) {
-		enabled_ = enabled;
-		foreach(EventItem* i, list_) {
-			if (enabled)
-				GlobalEventQueue::instance()->enqueue(i);
-			else
-				GlobalEventQueue::instance()->dequeue(i);
-		}
-	}
+	enabled_ = enabled;
 }
 
 EventQueue &EventQueue::operator= (const EventQueue &from)
@@ -897,6 +862,15 @@ int EventQueue::count() const
 	return list_.count();
 }
 
+int EventQueue::contactCount() const
+{
+	QSet<QString> set;
+	foreach(EventItem *i, list_) {
+		set.insert(i->event()->jid().bare());
+	}
+	return set.size();
+}
+
 int EventQueue::count(const Jid &j, bool compareRes) const
 {
 	int total = 0;
@@ -911,10 +885,6 @@ int EventQueue::count(const Jid &j, bool compareRes) const
 void EventQueue::enqueue(const PsiEvent::Ptr &e)
 {
 	EventItem *i = new EventItem(e);
-
-	if (enabled_) {
-		GlobalEventQueue::instance()->enqueue(i);
-	}
 
 	int prior  = e->priority();
 	bool found = false;
@@ -942,9 +912,6 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
 
 	foreach(EventItem *i, list_) {
 		if ( e == i->event() ) {
-			if (enabled_) {
-				GlobalEventQueue::instance()->dequeue(i);
-			}
 			list_.removeAll(i);
 			emit queueChanged();
 			delete i;
@@ -959,9 +926,6 @@ PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 		PsiEvent::Ptr e = i->event();
 		Jid j2(e->jid());
 		if(j.compare(j2, compareRes)) {
-			if (enabled_) {
-				GlobalEventQueue::instance()->dequeue(i);
-			}
 			list_.removeAll(i);
 			emit queueChanged();
 			delete i;
@@ -994,9 +958,6 @@ PsiEvent::Ptr EventQueue::dequeueNext()
 	if(!i)
 		return PsiEvent::Ptr();
 	PsiEvent::Ptr e = i->event();
-	if (enabled_) {
-		GlobalEventQueue::instance()->dequeue(i);
-	}
 	list_.removeAll(i);
 	emit queueChanged();
 	delete i;
@@ -1054,9 +1015,6 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
 
 		if (extract && removeEvents) {
 			EventItem* ei = *it;
-			if (enabled_) {
-				GlobalEventQueue::instance()->dequeue(ei);
-			}
 			it = list_.erase(it);
 			delete ei;
 			changed = true;
@@ -1069,6 +1027,17 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
 	if ( changed )
 		emit queueChanged();
 }
+
+void EventQueue::extractByJid(QList<PsiEvent::Ptr> *list, const XMPP::Jid &jid)
+{
+	for (QList<EventItem*>::Iterator it = list_.begin(); it != list_.end(); it++) {
+		PsiEvent::Ptr e = (*it)->event();
+		if (jid.compare(e->from(), false)) {
+			list->append(e);
+		}
+	}
+}
+
 
 // this function extracts all messages from the queue, and returns a list of them
 void EventQueue::extractMessages(QList<PsiEvent::Ptr> *el)
@@ -1086,9 +1055,6 @@ void EventQueue::extractByType(int type, QList<PsiEvent::Ptr> *el)
 		if(e->type() == type) {
 			el->append(e);
 			EventItem* ei = *it;
-			if (enabled_) {
-				GlobalEventQueue::instance()->dequeue(ei);
-			}
 			it = list_.erase(it);
 			delete ei;
 			changed = true;
@@ -1130,9 +1096,6 @@ void EventQueue::clear(const Jid &j, bool compareRes)
 		Jid j2(e->jid());
 		if(j.compare(j2, compareRes)) {
 			EventItem* ei = *it;
-			if (enabled_) {
-				GlobalEventQueue::instance()->dequeue(ei);
-			}
 			it = list_.erase(it);
 			delete ei;
 			changed = true;

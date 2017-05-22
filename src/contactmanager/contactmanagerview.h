@@ -1,6 +1,6 @@
 /*
- * contactlistgroupmenu.h - context menu for contact list groups
- * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
+ * contactmanagerview.h
+ * Copyright (C) 2010 Rion
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,27 +18,21 @@
  *
  */
 
-#ifndef CONTACTLISTGROUPMENU_H
-#define CONTACTLISTGROUPMENU_H
+#ifndef CONTACTMANAGERVIEW_H
+#define CONTACTMANAGERVIEW_H
 
-#include "contactlistitemmenu.h"
+#include <QTableView>
 
-class QMimeData;
-
-class ContactListGroupMenu : public ContactListItemMenu
+class ContactManagerView : public QTableView
 {
 	Q_OBJECT
 public:
-	ContactListGroupMenu(ContactListItem *item, ContactListModel *model);
-	~ContactListGroupMenu();
+	ContactManagerView( QWidget * parent = 0 );
+	void init();
 
-signals:
-	void removeSelection();
-	void removeGroupWithoutContacts(QMimeData*);
-
-private:
-	class Private;
-	Private* d;
+protected:
+	void contextMenuEvent( QContextMenuEvent * e );
+	void keyPressEvent( QKeyEvent * e );
 };
 
-#endif
+#endif // CONTACTMANAGERVIEW_H
