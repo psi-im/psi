@@ -124,6 +124,10 @@
         <file>iconsets/system/default/autojid.png</file>
 	<file>iconsets/system/default/ignore_global_actions.png</file>
         <file>iconsets/system/default/action_direct_presence.png</file>
+        <file>iconsets/system/default/action_contacts_manager.png</file>
+        <file>iconsets/system/default/cm_check.png</file>
+        <file>iconsets/system/default/cm_invertcheck.png</file>
+        <file>iconsets/system/default/cm_uncheck.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
         <file>iconsets/system/default/whiteboarding/select.png</file>

@@ -673,4 +673,24 @@
 		<object mime='image/png'>whiteboarding/ungroup.png</object>
 	</icon>
 	<!-- End whiteboarding -->
+
+	<icon>
+		<x xmlns='name'>psi/action_contacts_manager</x>
+		<object mime='image/png'>action_contacts_manager.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cm_check</x>
+		<object mime='image/png'>cm_check.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cm_invertcheck</x>
+		<object mime='image/png'>cm_invertcheck.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cm_uncheck</x>
+		<object mime='image/png'>cm_uncheck.png</object>
+	</icon>
 </icondef>
