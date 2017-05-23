@@ -86,19 +86,21 @@ QVariant HistoryContactListModel::data(const QModelIndex &index, int role) const
 	{
 	case Qt::DisplayRole:
 	case Qt::ToolTipRole:
-		if (item->type() == TreeItem::Group)
+		if (item->type() == Group)
 			return QString("%1 (%2)").arg(item->text(false)).arg(item->childCount());
 		return item->text(role == Qt::ToolTipRole);
 	case Qt::DecorationRole:
-		if (item->type() == TreeItem::RosterContact)
+		if (item->type() == RosterContact)
 			return PsiIconset::instance()->statusPtr(item->id().section('|', 1, 1), Status::Online)->icon();
-		if (item->type() == TreeItem::NotRosterContact)
+		if (item->type() == NotInRosterContact)
 			return PsiIconset::instance()->statusPtr(item->id().section('|', 1, 1), Status::Offline)->icon();
 		break;
-	case Qt::UserRole:
+	case ItemIdRole:
 		return item->id();
-	case Qt::UserRole + 1:
+	case ItemPosRole:
 		return item->position();
+	case ItemTypeRole:
+		return item->type();
 	default:
 		break;
 	}
@@ -138,7 +140,7 @@ QModelIndex HistoryContactListModel::parent(const QModelIndex &child) const
 
 	TreeItem *childItem = static_cast<TreeItem*>(child.internalPointer());
 	TreeItem *parentItem = childItem->parent();
-	if (parentItem->type() == TreeItem::Root)
+	if (parentItem->type() == Root)
 		return QModelIndex();
 
 	return createIndex(parentItem->row(), 0, parentItem);
@@ -146,8 +148,8 @@ QModelIndex HistoryContactListModel::parent(const QModelIndex &child) const
 
 void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
 {
-	rootItem = new TreeItem(TreeItem::Root, QString());
-	generalGroup = new TreeItem(TreeItem::Group, tr("General"), -1);
+	rootItem = new TreeItem(Root, QString());
+	generalGroup = new TreeItem(Group, tr("General"), "general", -1);
 	rootItem->appendChild(generalGroup);
 
 	QList<PsiContact*> contactList;
@@ -175,7 +177,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
 				groupItem = groups.value(g);
 				if (!groupItem)
 				{
-					groupItem = new TreeItem(TreeItem::Group, g);
+					groupItem = new TreeItem(Group, g);
 					rootItem->appendChild(groupItem);
 					groups[g] = groupItem;
 				}
@@ -184,7 +186,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
 				groupItem = generalGroup;
 		}
 		QString tooltipStr = makeContactToolTip(psi, acc_id, contact->jid(), true);
-		groupItem->appendChild(new TreeItem(TreeItem::RosterContact, contact->name(), tooltipStr, cId));
+		groupItem->appendChild(new TreeItem(RosterContact, contact->name(), tooltipStr, cId));
 		c_list[cId] = true;
 	}
 	// Self contact
@@ -198,14 +200,14 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
 				continue;
 
 			QString tooltipStr = makeContactToolTip(psi, acc_id, self->jid(), true);
-			generalGroup->appendChild(new TreeItem(TreeItem::RosterContact, self->name(), tooltipStr, cId));
+			generalGroup->appendChild(new TreeItem(RosterContact, self->name(), tooltipStr, cId));
 			c_list[cId] = true;
 			if (!acc_id.isEmpty())
 				break;
 		}
 	}
 	// Not in roster list
-	/*foreach (const EDB::ContactItem &ci, psi->edb()->contacts(acc_id, EDB::Contact))
+	foreach (const EDB::ContactItem &ci, psi->edb()->contacts(acc_id, EDB::Contact))
 	{
 		QString cId = ci.accId + "|" + ci.jid.bare();
 		if (c_list.value(cId))
@@ -213,33 +215,57 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
 
 		if (!notInList)
 		{
-			notInList = new TreeItem(TreeItem::Group, tr("Not in list"), 10);
+			notInList = new TreeItem(Group, tr("Not in list"), "not-in-list", 10);
 			rootItem->appendChild(notInList);
 		}
 		QString tooltipStr = makeContactToolTip(psi, acc_id, ci.jid, true);
-		notInList->appendChild(new TreeItem(TreeItem::NotRosterContact, ci.jid.bare(), tooltipStr, cId));
+		notInList->appendChild(new TreeItem(NotInRosterContact, ci.jid.bare(), tooltipStr, cId));
 		c_list[cId] = true;
-	}*/
+	}
 	// Private messages
-	/*if (dispPrivateContacts)
+	if (dispPrivateContacts)
 	{
 		foreach (const EDB::ContactItem &ci, psi->edb()->contacts(acc_id, EDB::GroupChatContact))
 		{
 			if (!confPrivate)
 			{
-				confPrivate = new TreeItem(TreeItem::Group, tr("Private messages"), 11);
+				confPrivate = new TreeItem(Group, tr("Private messages"), "conf-private", 11);
 				rootItem->appendChild(confPrivate);
 			}
 			QString cId = ci.accId + "|" + ci.jid.full();
 			QString tooltipStr = makeContactToolTip(psi, acc_id, ci.jid, false);
-			confPrivate->appendChild(new TreeItem(TreeItem::NotRosterContact, ci.jid.resource(), tooltipStr, cId));
+			confPrivate->appendChild(new TreeItem(NotInRosterContact, ci.jid.resource(), tooltipStr, cId));
 		}
-	}*/
+	}
 	if (dispAllContacts)
 	{
 		QString s = tr("All contacts");
-		rootItem->appendChild(new TreeItem(TreeItem::Other, s, s, "*all", 12));
+		rootItem->appendChild(new TreeItem(Other, s, s, "*all", 12));
 	}
+}
+
+bool HistoryContactListModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+	if (row < 0 || count <= 0)
+		return false;
+
+	TreeItem *parentItem;
+	if (parent.isValid())
+		parentItem = static_cast<TreeItem*>(parent.internalPointer());
+	else
+		parentItem = rootItem;
+	if (!parentItem || row >= parentItem->childCount())
+		return false;
+
+	int childCount = parentItem->childCount();
+	if (row + count > childCount)
+		count = childCount - row;
+
+	beginRemoveRows(parent, row, row + count - 1);
+	for ( ; count > 0; --count)
+		parentItem->removeChild(row);
+	endRemoveRows();
+	return true;
 }
 
 QString HistoryContactListModel::makeContactToolTip(PsiCon *psi, const QString &accId, const XMPP::Jid &jid, bool bare) const
@@ -248,10 +274,11 @@ QString HistoryContactListModel::makeContactToolTip(PsiCon *psi, const QString &
 	return QString("%1 [%2]").arg(JIDUtil::toString(jid, !bare)).arg((pa) ? pa->name() : tr("deleted"));
 }
 
-HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, int pos)
+HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, const QString &id, int pos)
 	: _parent(NULL)
 	, _type(type)
 	, _text(text)
+	, _id(id)
 	, _position(pos)
 {
 }
@@ -275,6 +302,12 @@ void HistoryContactListModel::TreeItem::appendChild(TreeItem *item)
 {
 	child_items.append(item);
 	item->_parent = static_cast<HistoryContactListModel::TreeItem*>(this);
+}
+
+void HistoryContactListModel::TreeItem::removeChild(int row)
+{
+	if (row >= 0 && row < child_items.count())
+		delete child_items.takeAt(row);
 }
 
 int HistoryContactListModel::TreeItem::row() const
@@ -306,8 +339,8 @@ bool HistoryContactListProxyModel::lessThan(const QModelIndex &left, const QMode
 	if (left.isValid() && right.isValid())
 	{
 		QAbstractItemModel *model = sourceModel();
-		lp = model->data(left, Qt::UserRole + 1).toInt();
-		rp = model->data(right, Qt::UserRole + 1).toInt();
+		lp = model->data(left, HistoryContactListModel::ItemPosRole).toInt();
+		rp = model->data(right, HistoryContactListModel::ItemPosRole).toInt();
 		if (lp == rp)
 		{
 			QString ls = model->data(left, Qt::DisplayRole).toString().toLower();
@@ -341,7 +374,7 @@ bool HistoryContactListProxyModel::filterAcceptsRow(int source_row, const QModel
 
 	if (sourceModel()->data(index, Qt::DisplayRole).toString().contains(_pattern, Qt::CaseInsensitive))
 		return true;
-	QString jid = sourceModel()->data(index, Qt::UserRole).toString().section('|', 1, 1);
+	QString jid = sourceModel()->data(index, HistoryContactListModel::ItemIdRole).toString().section('|', 1, 1);
 	if (jid.contains(_pattern, Qt::CaseInsensitive))
 		return true;
 

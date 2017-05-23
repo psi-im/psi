@@ -90,12 +90,13 @@ private:
 	void stopRequest();
 	bool selectContact(const QString &accId, const Jid &jid);
 	bool selectContact(const QStringList &ids);
-	void selectDefaultContact();
+	void selectDefaultContact(const QModelIndex &prefer_parent = QModelIndex(), int prefer_row = 0);
 	void saveFocus();
 	void restoreFocus();
 	EDBHandle* getEDBHandle();
 	QString getCurrentAccountId() const;
 	HistoryContactListModel *contactListModel();
+	QString getNick(PsiAccount *pa, const XMPP::Jid &jid) const;
 
 	class Private;
 	Private *d;

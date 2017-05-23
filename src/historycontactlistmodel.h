@@ -31,6 +31,13 @@ class HistoryContactListModel : public QAbstractItemModel
 	Q_OBJECT
 
 public:
+	enum ItemType { Root, Group, RosterContact, NotInRosterContact, Other };
+	enum {
+		ItemIdRole   = Qt::UserRole,
+		ItemPosRole  = Qt::UserRole + 1,
+		ItemTypeRole = Qt::UserRole + 2
+	};
+
 	HistoryContactListModel(QObject *parent = 0);
 	~HistoryContactListModel();
 	void clear();
@@ -44,16 +51,17 @@ public:
 	Qt::ItemFlags flags(const QModelIndex &index) const;
 	QModelIndex index(int row, int column, const QModelIndex &parent) const;
 	QModelIndex parent(const QModelIndex &child) const;
+	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
 
 private:
 	class TreeItem
 	{
 	public:
-		enum ItemType { Root, Group, RosterContact, NotRosterContact, Other };
-		TreeItem(ItemType type, const QString &text, int pos = 0);
+		TreeItem(ItemType type, const QString &text, const QString &id = QString(), int pos = 0);
 		TreeItem(ItemType type, const QString &text, const QString &tooltip, const QString &id, int pos = 0);
 		~TreeItem();
 		void appendChild(TreeItem *item);
+		void removeChild(int row);
 		int row() const;
 		TreeItem *parent() { return _parent; }
 		TreeItem *child(int row) { return child_items.value(row); }
