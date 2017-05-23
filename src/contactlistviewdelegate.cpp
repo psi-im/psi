@@ -606,13 +606,13 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 		}
 
 		if (showTuneIcons_ && index.data(ContactListModel::TuneRole).toBool()) {
-			const QPixmap &pix = IconsetFactory::iconPixmap("psi/notification_roster_tune");
+			const QPixmap &pix = IconsetFactory::iconPixmap("pep/tune");
 			rightPixs.push_back(pix);
 			rightWidths.push_back(pix.width());
 		}
 
 		if (showGeolocIcons_ && index.data(ContactListModel::GeolocationRole).toBool()) {
-			const QPixmap &pix = IconsetFactory::iconPixmap("system/geolocation");
+			const QPixmap &pix = IconsetFactory::iconPixmap("pep/geolocation");
 			rightPixs.push_back(pix);
 			rightWidths.push_back(pix.width());
 		}

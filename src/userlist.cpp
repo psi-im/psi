@@ -614,7 +614,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 	// User Tune
 	if (!tune().isEmpty())
-		str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/notification_roster_tune") + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
+		str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("pep/tune") + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
 
 	// User Physical Location
 	//if (!physicalLocation().isNull())

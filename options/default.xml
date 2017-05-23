@@ -155,6 +155,58 @@
 				</tooltip>
 				<temp-no-roster-animation comment="Disable animated icons. This option will be removed as soon as the contactlist code is optimized enough" type="bool">false</temp-no-roster-animation>
 				<account-sort-style type="QString">alpha</account-sort-style>
+				<css type="QString">/* frame of avatar - general settings */
+/* фрейм с аватаром - общие настройки */
+RosterAvatarFrame * {
+	margin: 1px;
+}
+
+/* frame of avatar - avatar */
+/* фрейм с аватаром - аватар */
+QLabel#lb_avatar {
+	margin-left: 0px;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	border: 1px solid #949494;
+	border-radius: 3px;
+}
+
+/* frame of avatar - nick */
+/* фрейм с аватаром - ник */
+QLabel#lb_nick {
+	margin: 2px;
+	margin-right: 1px;
+	margin-bottom: 3px;
+	border: 1px solid #949494;
+	border-radius: 3px;
+}
+
+/* frame of avatar - buttons of PEP and status */
+/* фрейм с аватаром - кнопки PEP и статуса */
+QToolButton#tb_status, #tb_mood, #tb_activity {
+	margin-left: 1px;
+	margin-right: 1px;
+	margin-bottom: 2px;
+	width: 100%;
+}
+
+QToolButton#tb_status {
+	margin-top: 0px;
+	margin-bottom: 1px;
+}
+
+/* frame of avatar - button of status, arrow */
+/* фрейм с аватаром - кнопка статуса, стрелка */
+QToolButton#tb_status::menu-indicator {
+	background: argb(0,0,0,0);
+}
+
+/* frame of avatar - field of status message */
+/* фрейм с аватаром - строка статусного сообщения */
+QLineEdit#le_status_text {
+	margin-right: 0px;
+	margin-bottom: 2px;
+}</css>
 				<always-on-top type="bool">false</always-on-top>
 				<automatically-resize-roster type="bool">false</automatically-resize-roster>
 				<grow-roster-upwards type="bool">true</grow-roster-upwards>
@@ -229,6 +281,7 @@
 					<active-chats comment="Show the 'active chats' menu" type="bool">true</active-chats>
 					<custom-picture comment="Show the 'picture' menu" type="bool">true</custom-picture>
 					<custom-pgp-key comment="Show the 'assign pgp key' menu" type="bool">true</custom-pgp-key>
+					<send-status comment="Show the 'send status' menu" type="bool">false</send-status>
 				</contact>
 				<main comment="Options for the main menu">
 					<change-profile comment="Show the 'change profile' menu" type="bool">true</change-profile>
@@ -356,6 +409,7 @@
 				<contactlist>
 					<use-outlined-group-headings type="bool">false</use-outlined-group-headings>
 					<use-slim-group-headings type="bool">false</use-slim-group-headings>
+					<nick-indent type="int">0</nick-indent>
 				</contactlist>
 				<font>
 					<chat type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</chat>
