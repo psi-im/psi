@@ -51,8 +51,9 @@ ContactListView::ContactListView(QWidget* parent)
 	header()->hide();
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-	verticalScrollBar()->setSingleStep(1);
-
+#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+	verticalScrollBar()->setSingleStep(1); // makes scrolling really slow with qt>=5.7. w/o it Qt has some adaptive algo
+#endif
 	// setItemDelegate(new PsiContactListViewDelegate(this));
 
 #ifdef Q_OS_MAC
