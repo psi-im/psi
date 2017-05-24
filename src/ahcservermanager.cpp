@@ -109,7 +109,7 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
 			item.setNode(q.attribute("node"));
 			item.setIdentities(XMPP::DiscoItem::Identity("automation", "command-node"));
 			item.setFeatures(Features(QStringList() << AHC_NS << "jabber:x:data"));
-			iq.query.appendChild(item.toDiscoInfoResult(doc())).toElement();
+			iq.appendChild(item.toDiscoInfoResult(doc())).toElement();
 
 			send(iq);
 			return true;
