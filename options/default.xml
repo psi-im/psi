@@ -272,6 +272,7 @@ QLineEdit#le_status_text {
 						<margin type="int">0</margin>
 					</avatar>
 				</roster-avatar-frame>
+				<menu-titles comment="Show menu title as a first line" type="bool">false</menu-titles>
 			</contactlist>
 			<menu comment="Options for the menu">
 				<account comment="Options for the account-specific menu">

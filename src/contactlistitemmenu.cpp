@@ -30,29 +30,32 @@ ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel
 	: QMenu(0)
 	, item_(item)
 	, model_(model)
-	, _lblTitle(new QLabel)
+	, _lblTitle(nullptr)
 {
 	const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
 	if (!css.isEmpty()) {
 		setStyleSheet(css);
 	}
 
-	QPalette palette = _lblTitle->palette();
-	QColor textColor = palette.color(QPalette::BrightText);
-	QColor bcgColor = palette.color(QPalette::Dark);
-	QFont font = _lblTitle->font();
-	font.setBold(true);
-	palette.setColor(QPalette::WindowText, textColor);
-	palette.setColor(QPalette::Window, bcgColor);
-	_lblTitle->setPalette(palette);
-	_lblTitle->setAutoFillBackground(true);
-	_lblTitle->setAlignment(Qt::AlignCenter);
-	_lblTitle->setMargin(6);
-	_lblTitle->setFont(font);
+	if (PsiOptions::instance()->getOption("options.ui.contactlist.menu-titles", false).toBool()) {
+		_lblTitle = new QLabel;
+		QPalette palette = _lblTitle->palette();
+		QColor textColor = palette.color(QPalette::BrightText);
+		QColor bcgColor = palette.color(QPalette::Dark);
+		QFont font = _lblTitle->font();
+		font.setBold(true);
+		palette.setColor(QPalette::WindowText, textColor);
+		palette.setColor(QPalette::Window, bcgColor);
+		_lblTitle->setPalette(palette);
+		_lblTitle->setAutoFillBackground(true);
+		_lblTitle->setAlignment(Qt::AlignCenter);
+		_lblTitle->setMargin(6);
+		_lblTitle->setFont(font);
 
-	QWidgetAction *waContextMenuTitle = new QWidgetAction(this);
-	waContextMenuTitle->setDefaultWidget(_lblTitle);
-	addAction(waContextMenuTitle);
+		QWidgetAction *waContextMenuTitle = new QWidgetAction(this);
+		waContextMenuTitle->setDefaultWidget(_lblTitle);
+		addAction(waContextMenuTitle);
+	}
 }
 
 ContactListItemMenu::~ContactListItemMenu()
@@ -66,7 +69,9 @@ ContactListItem* ContactListItemMenu::item() const
 
 void ContactListItemMenu::setLabelTitle(const QString &title)
 {
-	_lblTitle->setText(title);
+	if (_lblTitle) {
+		_lblTitle->setText(title);
+	}
 }
 
 /**
