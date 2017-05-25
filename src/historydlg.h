@@ -24,6 +24,7 @@
 #include "eventdb.h"
 #include "ui_history.h"
 #include "advwidget.h"
+#include "historycontactlistmodel.h"
 
 class PsiAccount;
 class PsiContact;
@@ -78,22 +79,31 @@ protected:
 	bool eventFilter(QObject *, QEvent *);
 
 private:
+	void setFilterModeEnabled(bool enable);
 	void setButtons();
 	void setButtons(bool act);
-	void loadContacts();
 	void displayResult(const EDBResult , int, int max=-1);
 	QFont fontForOption(const QString& option);
 	void listAccounts();
 	UserListItem* currentUserListItem() const;
 	void startRequest();
 	void stopRequest();
-
+	bool selectContact(const QString &accId, const Jid &jid);
+	bool selectContact(const QStringList &ids);
+	void selectDefaultContact(const QModelIndex &prefer_parent = QModelIndex(), int prefer_row = 0);
+	void saveFocus();
+	void restoreFocus();
 	EDBHandle* getEDBHandle();
+	QString getCurrentAccountId() const;
+	HistoryContactListModel *contactListModel();
+	QString getNick(PsiAccount *pa, const XMPP::Jid &jid) const;
 
 	class Private;
 	Private *d;
 	Ui::HistoryDlg ui_;
 	QStringList jids_;
+	HistoryContactListModel *_contactListModel;
+	QWidget *lastFocus;
 };
 
 #endif

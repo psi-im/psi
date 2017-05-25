@@ -205,12 +205,14 @@ public:
 
 	QList<EDBHandle*> list;
 	int reqid_base;
+	PsiCon *psi;
 };
 
-EDB::EDB()
+EDB::EDB(PsiCon *psi)
 {
 	d = new Private;
 	d->reqid_base = 0;
+	d->psi = psi;
 }
 
 EDB::~EDB()
@@ -290,4 +292,9 @@ void EDB::writeFinished(int req, bool b)
 			return;
 		}
 	}
+}
+
+PsiCon *EDB::psi()
+{
+	return d->psi;
 }

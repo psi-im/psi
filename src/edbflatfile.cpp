@@ -26,6 +26,9 @@
 #include <QDateTime>
 
 #include "edbflatfile.h"
+#include "psicon.h"
+#include "psiaccount.h"
+#include "psicontactlist.h"
 #include "xmpp_jid.h"
 #include "jidutil.h"
 #include "common.h"
@@ -70,8 +73,8 @@ public:
 	QList<item_file_req*> rlist;
 };
 
-EDBFlatFile::EDBFlatFile()
-:EDB()
+EDBFlatFile::EDBFlatFile(PsiCon *psi)
+	: EDB(psi)
 {
 	d = new Private;
 }
@@ -83,6 +86,11 @@ EDBFlatFile::~EDBFlatFile()
 	d->flist.clear();
 
 	delete d;
+}
+
+int EDBFlatFile::features() const
+{
+	return 0;
 }
 
 int EDBFlatFile::getLatest(const Jid &j, int len)
@@ -186,6 +194,13 @@ int EDBFlatFile::erase(const Jid &j)
 
 	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 	return r->id;
+}
+
+QList<EDB::ContactItem> EDBFlatFile::contacts(const QString &accId, int type)
+{
+	if (!accId.isEmpty())
+		return File::contacts(accId, type);
+	return File::contacts(psi()->contactList()->defaultAccount()->id(), type);
 }
 
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
@@ -414,6 +429,27 @@ EDBFlatFile::File::~File()
 QString EDBFlatFile::File::jidToFileName(const XMPP::Jid &j)
 {
 	return ApplicationInfo::historyDir() + "/" + JIDUtil::encode(j.bare()).toLower() + ".history";
+}
+
+QString EDBFlatFile::File::strToFileName(const QString &s)
+{
+	QFileInfo fi(s);
+	return fi.fileName() + ".history";
+}
+
+QList<EDB::ContactItem> EDBFlatFile::File::contacts(const QString &accId, int type)
+{
+	QList<ContactItem> res;
+	if (type == EDB::Contact) {
+		QDir dir(ApplicationInfo::historyDir() + "/");
+		QFileInfoList flist = dir.entryInfoList(QStringList(strToFileName("*")), QDir::Files);
+		foreach (const QFileInfo &fi, flist) {
+			XMPP::Jid jid(JIDUtil::decode(fi.completeBaseName()));
+			if (jid.isValid())
+				res.append(ContactItem(accId, jid));
+		}
+	}
+	return res;
 }
 
 void EDBFlatFile::File::ensureIndex()

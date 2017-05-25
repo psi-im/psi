@@ -34,9 +34,10 @@ class EDBFlatFile : public EDB
 {
 	Q_OBJECT
 public:
-	EDBFlatFile();
+	EDBFlatFile(PsiCon *psi);
 	~EDBFlatFile();
 
+	int features() const;
 	int getLatest(const XMPP::Jid &, int len);
 	int getOldest(const XMPP::Jid &, int len);
 	int get(const XMPP::Jid &jid, const QString &id, int direction, int len);
@@ -44,6 +45,7 @@ public:
 	int find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	int append(const XMPP::Jid &, const PsiEvent::Ptr&);
 	int erase(const XMPP::Jid &);
+	QList<EDB::ContactItem> contacts(const QString &accId, int type);
 
 	class File;
 
@@ -74,6 +76,8 @@ public:
 	int findNearestDate(const QDateTime &date);
 
 	static QString jidToFileName(const XMPP::Jid &);
+	static QString strToFileName(const QString &s);
+	static QList<EDB::ContactItem> contacts(const QString &accId, int type);
 
 signals:
 	void timeout();

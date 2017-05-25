@@ -23,10 +23,11 @@
 #include <QScrollBar>
 #include <QMenu>
 #include <QProgressDialog>
+#include <QKeyEvent>
 
 #include "historydlg.h"
-#include "psiaccount.h"
 #include "psicon.h"
+#include "psiaccount.h"
 #include "psicontact.h"
 #include "psiiconset.h"
 #include "psioptions.h"
@@ -116,6 +117,7 @@ public:
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	: AdvancedWidget<QDialog>(0, Qt::Window)
+	, lastFocus(NULL)
 {
 	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -131,7 +133,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	int minWidth = ui_.calendar->minimumSizeHint().width();
 	if(minWidth > ui_.calendar->maximumWidth()) {
 		ui_.calendar->setMaximumWidth(minWidth);
-		ui_.jidList->setMaximumWidth(minWidth);
+		ui_.contactList->setMaximumWidth(minWidth);
+		ui_.contactFilterEdit->setMaximumWidth(minWidth);
 		ui_.accountsBox->setMaximumWidth(minWidth);
 		ui_.buttonRefresh->setMaximumWidth(minWidth);
 	}
@@ -142,7 +145,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	ui_.tb_find->setIcon(IconsetFactory::icon("psi/search").icon());
 
 	ui_.msgLog->setFont(fontForOption("options.ui.look.font.chat"));
-	ui_.jidList->setFont(fontForOption("options.ui.look.font.contactlist"));
+	ui_.contactList->setFont(fontForOption("options.ui.look.font.contactlist"));
 
 	ui_.calendar->setFirstDayOfWeek(firstDayOfWeekFromLocale());
 
@@ -151,7 +154,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	connect(ui_.buttonPrevious, SIGNAL(released()), SLOT(getPrevious()));
 	connect(ui_.buttonNext, SIGNAL(released()), SLOT(getNext()));
 	connect(ui_.buttonRefresh, SIGNAL(released()), SLOT(refresh()));
-	connect(ui_.jidList, SIGNAL(itemSelectionChanged()), SLOT(openSelectedContact()));
+	connect(ui_.contactList, SIGNAL(clicked(QModelIndex)), SLOT(openSelectedContact()));
 	connect(ui_.tb_find, SIGNAL(clicked()), SLOT(findMessages()));
 	connect(ui_.buttonLastest, SIGNAL(released()), SLOT(getLatest()));
 	connect(ui_.buttonEarliest, SIGNAL(released()), SLOT(getEarliest()));
@@ -170,14 +173,28 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 
 	connect(d->pa, SIGNAL(removedContact(PsiContact*)), SLOT(removedContact(PsiContact*)));
 
-	ui_.jidList->installEventFilter(this);
-
 	listAccounts();
-	loadContacts();
+
+	ui_.contactList->installEventFilter(this);
+	_contactListModel = new HistoryContactListModel(this);
+	QSortFilterProxyModel *proxy = new HistoryContactListProxyModel(this);
+	proxy->setSourceModel(_contactListModel);
+	ui_.contactList->setModel(proxy);
+	{
+		int f = d->psi->edb()->features();
+		_contactListModel->displayPrivateContacts((f & EDB::PrivateContacts) != 0);
+		_contactListModel->displayAllContacts((f & EDB::AllContacts) != 0);
+	}
+	_contactListModel->updateContacts(pa->psi(), getCurrentAccountId());
+	selectContact(d->pa->id(), d->jid);
+	openSelectedContact();
+	connect(proxy, SIGNAL(layoutChanged()), ui_.contactList, SLOT(expandAll()));
+
+	ui_.contactFilterEdit->setVisible(false);
+	ui_.contactFilterEdit->installEventFilter(this);
+	connect(ui_.contactFilterEdit, SIGNAL(textChanged(QString)), proxy, SLOT(setFilterFixedString(QString)));
 
 	setGeometryOptionPath(geometryOption);
-
-	ui_.jidList->setFocus();
 }
 
 HistoryDlg::~HistoryDlg()
@@ -187,13 +204,65 @@ HistoryDlg::~HistoryDlg()
 
 bool HistoryDlg::eventFilter(QObject *obj, QEvent *e)
 {
-	if(obj == ui_.jidList && e->type() == QEvent::ContextMenu) {
-		e->accept();
-		QTimer::singleShot(0, this, SLOT(doMenu()));
-		return true;
+	if (e->type() == QEvent::ContextMenu)
+	{
+		if(obj == ui_.contactList)
+		{
+			e->accept();
+			QTimer::singleShot(0, this, SLOT(doMenu()));
+			return true;
+		}
+	}
+	else if (e->type() == QEvent::KeyPress)
+	{
+		QKeyEvent *ke = static_cast<QKeyEvent*>(e);
+		if (ke->key() == Qt::Key_Escape)
+		{
+			if (obj == ui_.contactList || obj == ui_.contactFilterEdit)
+			{
+				setFilterModeEnabled(false);
+				ui_.contactFilterEdit->setText("");
+				const QString paId = ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString();
+				selectContact(paId, d->jid);
+				return true;
+			}
+		}
+		else if (ke->key() == Qt::Key_Enter || ke->key() == Qt::Key_Return)
+		{
+			if (obj == ui_.contactFilterEdit)
+			{
+				ui_.contactList->setFocus();
+				return true;
+			}
+			if (obj == ui_.contactList)
+			{
+				openSelectedContact();
+				return true;
+			}
+		}
+		else if (obj == ui_.contactList)
+		{
+			if ((ke->modifiers() & ~Qt::ShiftModifier) == 0)
+			{
+				QString text = ke->text();
+				if (!text.isEmpty() && (text[0].isLetterOrNumber() || text[0].isPrint()))
+				{
+					setFilterModeEnabled(true);
+					ui_.contactFilterEdit->setText(text);
+					return true;
+				}
+			}
+		}
 	}
 
 	return QDialog::eventFilter(obj, e);
+}
+
+void HistoryDlg::setFilterModeEnabled(bool enable)
+{
+	ui_.contactFilterEdit->setVisible(enable);
+	if (enable)
+		ui_.contactFilterEdit->setFocus();
 }
 
 QFont HistoryDlg::fontForOption(const QString &option)
@@ -208,10 +277,71 @@ void HistoryDlg::changeAccount(const QString /*accountName*/)
 	ui_.msgLog->clear();
 	setButtons(false);
 	d->jid = QString();
-	d->pa = d->psi->contactList()->getAccountByJid(ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString());
-	loadContacts();
-	ui_.jidList->setCurrentRow(0);
+	QString paId = ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString();
+	contactListModel()->updateContacts(d->psi, paId);
+	selectDefaultContact();
 	openSelectedContact();
+}
+
+bool HistoryDlg::selectContact(const QString &accId, const Jid &jid)
+{
+	QStringList ids(accId + "|" + jid.full());
+	if (!jid.resource().isEmpty())
+		ids.append(accId + "|" + jid.bare());
+	return selectContact(ids);
+}
+
+bool HistoryDlg::selectContact(const QStringList &ids)
+{
+	QAbstractItemModel *model = ui_.contactList->model();
+	QModelIndex startIndex = model->index(0, 0);
+	foreach (const QString &id, ids)
+	{
+		QModelIndexList ilist = model->match(startIndex, Qt::UserRole, id, -1, Qt::MatchRecursive | Qt::MatchFixedString);
+		if (ilist.count() > 0)
+		{
+			ui_.contactList->selectionModel()->setCurrentIndex(ilist.at(0), QItemSelectionModel::SelectCurrent);
+			return true;
+		}
+	}
+	return false;
+}
+
+void HistoryDlg::selectDefaultContact(const QModelIndex &prefer_parent, int prefer_row)
+{
+	QList<QModelIndex>ilist;
+	ilist.append(prefer_parent);
+	ilist.append(ui_.contactList->model()->index(0, 0));
+	foreach (const QModelIndex &parent, ilist)
+	{
+		if (parent.isValid())
+		{
+			for (int i = 1; i <= 2; ++i)
+			{
+				QModelIndex index = parent.child(prefer_row, 0);
+				if (index.isValid())
+				{
+					ui_.contactList->selectionModel()->clearSelection();
+					ui_.contactList->selectionModel()->setCurrentIndex(index, QItemSelectionModel::SelectCurrent);
+					return;
+				}
+				prefer_row = 0;
+			}
+		}
+	}
+}
+
+void HistoryDlg::saveFocus()
+{
+	lastFocus = ui_.contactList->hasFocus() ? ui_.contactList : NULL;
+}
+
+void HistoryDlg::restoreFocus()
+{
+	if (lastFocus)
+		lastFocus->setFocus();
+	else
+		setFocus();
 }
 
 void HistoryDlg::listAccounts()
@@ -219,62 +349,50 @@ void HistoryDlg::listAccounts()
 	if (d->psi)
 	{
 		foreach (PsiAccount* account, d->psi->contactList()->enabledAccounts())
-			ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(), account->nameWithJid(), QVariant(account->jid().full()));
+			ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(), account->nameWithJid(), QVariant(account->id()));
 	}
 	//select active account
-	ui_.accountsBox->setCurrentIndex(ui_.accountsBox->findData(d->pa->jid().full()));
+	ui_.accountsBox->setCurrentIndex(ui_.accountsBox->findData(d->pa->id()));
 	//connect signal after the list is populated to prevent execution in the middle of the loop
 	connect(ui_.accountsBox, SIGNAL(currentIndexChanged(const QString)), SLOT(changeAccount(const QString)));
 }
 
-void HistoryDlg::loadContacts()
-{
-	jids_.clear();
-	ui_.jidList->clear();
-	ui_.msgLog->clear();
-	foreach (PsiContact* contact, d->pa->contactList())
-	{
-		if(contact->isConference()
-		|| contact->isPrivate()
-		|| jids_.contains(contact->jid().bare()))
-			continue;
-
-		QListWidgetItem *item = new QListWidgetItem(contact->name(), ui_.jidList);
-		item->setToolTip(contact->jid().bare());
-		item->setIcon(PsiIconset::instance()->statusPtr(contact->jid(),Status(Status::Online))->icon());
-		//item->setIcon(PsiIconset::instance()->status(contact->status()).icon());
-		ui_.jidList->addItem(item);
-		jids_.append(item->toolTip());
-	}
-	PsiContact* self = d->pa->selfContact();
-	if(!jids_.contains(self->jid().bare())) {
-		QListWidgetItem *item = new QListWidgetItem(self->name(), ui_.jidList);
-		item->setToolTip(self->jid().bare());
-		//item->setIcon(PsiIconset::instance()->status(self->status()).icon());
-		item->setIcon(PsiIconset::instance()->statusPtr(self->jid(),Status(Status::Online))->icon());
-		ui_.jidList->addItem(item);
-		jids_.append(item->toolTip());
-	}
-
-	ui_.jidList->sortItems();
-	//set contact in jidList to selected jid
-	for (int i = 0; i < ui_.jidList->count(); i++)
-	{
-		if (ui_.jidList->item(i)->toolTip() == d->jid.bare().toLower())
-			ui_.jidList->setCurrentRow(i);  //triggers openSelectedContact()
-	}
-}
-
 void HistoryDlg::openSelectedContact()
 {
-	ui_.msgLog->clear();
-	UserListItem *u = currentUserListItem();
-	if (!u)
-		return;
-
-	setWindowTitle(u->name() + " (" + u->jid().full() + ")");
-	d->jid = u->jid();
-	getLatest();
+	setFilterModeEnabled(false);
+	ui_.contactFilterEdit->setText("");
+	QModelIndex index = ui_.contactList->selectionModel()->currentIndex();
+	if (index.isValid() && index.data(HistoryContactListModel::ItemTypeRole) != HistoryContactListModel::Group)
+	{
+		QString id = ui_.contactList->model()->data(index, Qt::UserRole).toString();
+		if (!id.isEmpty())
+		{
+			ui_.msgLog->clear();
+			QString sTitle;
+			if (id != "*all")
+			{
+				d->pa = d->psi->contactList()->getAccount(id.section('|', 0, 0));
+				d->jid = XMPP::Jid(id.section('|', 1));
+				UserListItem *u = currentUserListItem();
+				if (u)
+					sTitle = u->name() + " (" + u->jid().full() + ")";
+				else
+					sTitle = d->jid.full();
+			}
+			else
+			{
+				d->pa = NULL;
+				d->jid = Jid();
+				QString paId = ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString();
+				if (!paId.isEmpty())
+					d->pa = d->psi->contactList()->getAccount(paId);
+				sTitle = tr("All contacts");
+			}
+			setWindowTitle(sTitle);
+			getLatest();
+		}
+		ui_.contactList->scrollTo(index);
+	}
 }
 
 void HistoryDlg::highlightBlocks(const QString text)
@@ -320,6 +438,13 @@ void HistoryDlg::removeHistory()
 					,QMessageBox::Ok | QMessageBox::Cancel);
 	if(res == QMessageBox::Ok) {
 		getEDBHandle()->erase(d->jid);
+		QModelIndex i_index = ui_.contactList->selectionModel()->currentIndex();
+		QModelIndex p_index = i_index.parent();
+		QString p_id = p_index.data(HistoryContactListModel::ItemIdRole).toString();
+		if (p_id == "not-in-list" || p_id == "conf-private") {
+			ui_.contactList->model()->removeRow(i_index.row(), p_index);
+			selectDefaultContact(p_index, i_index.row());
+		}
 		openSelectedContact();
 	}
 }
@@ -334,10 +459,12 @@ void HistoryDlg::openChat()
 
 void HistoryDlg::exportHistory()
 {
+	QString them;
 	UserListItem *u = currentUserListItem();
-	if(!u)
-		return;
-	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
+	if (u)
+		them = JIDUtil::nickOrJid(u->name(), u->jid().full());
+	else
+		them = d->jid.full();
 	QString s = JIDUtil::encode(them).toLower();
 	QString fname = FileUtil::getSaveFileName(this,
 						  tr("Export message history"),
@@ -353,13 +480,22 @@ void HistoryDlg::exportHistory()
 	}
 	QTextStream stream(&f);
 
-	QString us = d->pa->nick();
+	EDB *edb = NULL;
+	QString us;
+	//PsiAccount *pa = NULL;
+	if (d->pa) {
+		edb = d->pa->edb();
+		us  = d->pa->nick();
+	} else {
+		edb = d->psi->edb();
+		us  = d->psi->contactList()->defaultAccount()->nick();
+	}
 
-	EDBHandle* h;
 	QString id;
+	EDBHandle *h;
 	startRequest();
 	while(1) {
-		h = new EDBHandle(d->pa->edb());
+		h = new EDBHandle(edb);
 		if(id.isEmpty()) {
 			h->getOldest(d->jid, 1000);
 		}
@@ -383,12 +519,12 @@ void HistoryDlg::exportHistory()
 			QString ts = e->timeStamp().toString(Qt::LocalDate);
 
 			QString nick;
-			if(e->originLocal()) {
+			if(e->originLocal())
 				nick = us;
-			}
-			else {
+			else if (them.isEmpty())
+				nick = e->from().full();
+			else
 				nick = them;
-			}
 
 			if(e->type() == PsiEvent::Message) {
 				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
@@ -421,11 +557,29 @@ void HistoryDlg::exportHistory()
 
 void HistoryDlg::doMenu()
 {
-	QMenu *m = new QMenu(ui_.jidList);
-	m->addAction(IconsetFactory::icon("psi/chat").icon(), tr("&Open chat"), this, SLOT(openChat()));
-	m->addAction(IconsetFactory::icon("psi/save").icon(), tr("&Export history"), this, SLOT(exportHistory()));
-	m->addAction(IconsetFactory::icon("psi/clearChat").icon(), tr("&Delete history"), this, SLOT(removeHistory()));
+	QModelIndex index = ui_.contactList->selectionModel()->currentIndex();
+	if (!index.isValid())
+		return;
+	int itype = index.data(HistoryContactListModel::ItemTypeRole).toInt();
+	if (itype != HistoryContactListModel::RosterContact && itype != HistoryContactListModel::NotInRosterContact)
+		return;
+
+	openSelectedContact();
+	QMenu *m = new QMenu();
+	QAction *chat = m->addAction(IconsetFactory::icon("psi/chat").icon(), tr("&Open chat"), this, SLOT(openChat()));
+	QAction *exp  = m->addAction(IconsetFactory::icon("psi/save").icon(), tr("&Export history"), this, SLOT(exportHistory()));
+	QAction *del  =  m->addAction(IconsetFactory::icon("psi/clearChat").icon(), tr("&Delete history"), this, SLOT(removeHistory()));
+
+	if (!d->pa || d->jid.isEmpty()) {
+		chat->setEnabled(false);
+		del->setEnabled(false);
+	}
+	int features = d->psi->edb()->features();
+	if ((!d->pa && !(features & EDB::AllAccounts)) || (d->jid.isEmpty() && !(features & EDB::AllContacts)))
+		exp->setEnabled(false);
+
 	m->exec(QCursor::pos());
+	delete m;
 }
 
 void HistoryDlg::edbFinished()
@@ -567,19 +721,17 @@ void HistoryDlg::getDate()
 
 void HistoryDlg::removedContact(PsiContact *pc)
 {
-	QString jid = pc->jid().bare().toLower();
-	QString curJid  = ui_.jidList->currentItem()->toolTip();
-	for(int i = 0; i < ui_.jidList->count(); i++) {
-		QListWidgetItem *it = ui_.jidList->item(i);
-		if(it && it->toolTip() == jid) {
-			ui_.jidList->removeItemWidget(it);
-			if(jid == curJid) {
-				ui_.jidList->setCurrentRow(0);
-				openSelectedContact();
-			}
-			break;
-		}
-	}
+	Q_UNUSED(pc);
+
+	QString cid;
+	QModelIndex index = ui_.contactList->selectionModel()->currentIndex();
+	if (index.isValid())
+		cid = ui_.contactList->model()->data(index, Qt::UserRole).toString();
+
+	contactListModel()->updateContacts(d->psi, getCurrentAccountId());
+
+	if (!cid.isEmpty() && !selectContact(QStringList(cid)))
+		ui_.msgLog->clear();
 }
 
 void HistoryDlg::optionUpdated(const QString &option)
@@ -611,33 +763,30 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 	int i  = (direction == EDB::Forward) ? r.count() - 1 : 0;
 	int at = 0;
 	ui_.msgLog->clear();
-	QString nick = TextUtil::plain2rich(d->pa->nick());
+	PsiAccount *pa = d->pa ? d->pa : d->psi->contactList()->defaultAccount();
+	QString nick = TextUtil::plain2rich(pa->nick());
 	while (i >= 0 && i <= r.count() - 1 && (max == -1 ? true : at < max))
 	{
 		EDBItemPtr item = r.value(i);
 		PsiEvent::Ptr e(item->event());
-		UserListItem *u = d->pa->findFirstRelevant(e->from().full());
-		if(u) {
-			QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
-			if (e->type() == PsiEvent::Message)
-			{
-				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-				QString msg = me->message().body();
-				msg = TextUtil::linkify(TextUtil::plain2rich(msg));
+		if (e->type() == PsiEvent::Message)
+		{
+			QString from = getNick(e->account(), e->from());
+			MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+			QString msg = me->message().body();
+			msg = TextUtil::linkify(TextUtil::plain2rich(msg));
 
-				if (d->emoticons)
-					msg = TextUtil::emoticonify(msg);
-				if (d->formatting)
-					msg = TextUtil::legacyFormat(msg);
+			if (d->emoticons)
+				msg = TextUtil::emoticonify(msg);
+			if (d->formatting)
+				msg = TextUtil::legacyFormat(msg);
 
-				if (me->originLocal())
-					msg = "<span style='color:"+d->sentColor+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ nick +"&gt; " + msg + "</span>";
-				else
-					msg = "<span style='color:"+d->receivedColor+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
+			if (me->originLocal())
+				msg = "<span style='color:"+d->sentColor+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ nick +"&gt; " + msg + "</span>";
+			else
+				msg = "<span style='color:"+d->receivedColor+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
 
-				ui_.msgLog->appendText(msg);
-
-			}
+			ui_.msgLog->appendText(msg);
 		}
 
 		++at;
@@ -650,11 +799,8 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 UserListItem* HistoryDlg::currentUserListItem() const
 {
 	UserListItem* u = 0;
-	QListWidgetItem *i = ui_.jidList->currentItem();
-	if(!i)
-		return u;
-
-	u = d->pa->findFirstRelevant(i->toolTip());
+	if (d->pa && !d->jid.isEmpty())
+		u = d->pa->findFirstRelevant(d->jid);
 	return u;
 }
 
@@ -663,6 +809,7 @@ void HistoryDlg::startRequest()
 	if(!ui_.busy->isActive()) {
 		ui_.busy->start();
 	}
+	saveFocus();
 	setEnabled(false);
 }
 
@@ -672,6 +819,7 @@ void HistoryDlg::stopRequest()
 		ui_.busy->stop();
 	}
 	setEnabled(true);
+	restoreFocus();
 #ifdef Q_OS_MAC
 	// To workaround a Qt bug
 	// https://bugreports.qt-project.org/browse/QTBUG-26351
@@ -681,7 +829,37 @@ void HistoryDlg::stopRequest()
 
 EDBHandle* HistoryDlg::getEDBHandle()
 {
-	EDBHandle* h = new EDBHandle(d->pa->edb());
+	EDBHandle* h = new EDBHandle(d->psi->edb());
 	connect(h, SIGNAL(finished()), SLOT(edbFinished()));
 	return h;
+}
+
+QString HistoryDlg::getCurrentAccountId() const
+{
+	if (d->pa)
+		return d->pa->id();
+	return QString();
+}
+
+HistoryContactListModel *HistoryDlg::contactListModel()
+{
+	return _contactListModel;
+}
+
+QString HistoryDlg::getNick(PsiAccount *pa, const Jid &jid) const
+{
+	QString from;
+	if (pa)
+	{
+		UserListItem *u = pa->findFirstRelevant(jid);
+		if (u && !u->name().trimmed().isEmpty())
+			from = u->name().trimmed();
+	}
+	if (from.isEmpty())
+	{
+		from = jid.resource().trimmed(); // for offline conferences
+		if (from.isEmpty())
+			from = jid.node();
+	}
+	return from;
 }

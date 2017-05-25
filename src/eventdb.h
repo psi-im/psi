@@ -29,6 +29,7 @@
 
 #include "xmpp_jid.h"
 #include "psievent.h"
+#include "psicon.h"
 
 class EDBItem
 {
@@ -90,8 +91,19 @@ class EDB : public QObject
 	Q_OBJECT
 public:
 	enum { Forward, Backward };
-	EDB();
+	enum { Contact = 1, GroupChatContact = 2 };
+	enum { SeparateAccounts = 1, PrivateContacts = 2, AllContacts = 4, AllAccounts = 8 };
+	struct ContactItem
+	{
+		QString   accId;
+		XMPP::Jid jid;
+		ContactItem(const QString &aId, XMPP::Jid j) { accId = aId; jid = j; }
+	};
+
+	EDB(PsiCon *psi);
 	virtual ~EDB()=0;
+	virtual int features() const = 0;
+	virtual QList<ContactItem> contacts(const QString &accId, int type) = 0;
 
 protected:
 	int genUniqueId() const;
@@ -104,6 +116,7 @@ protected:
 	virtual int erase(const XMPP::Jid &)=0;
 	void resultReady(int, EDBResult);
 	void writeFinished(int, bool);
+	PsiCon *psi();
 
 private:
 	class Private;
