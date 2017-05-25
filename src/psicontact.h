@@ -136,7 +136,6 @@ public slots:
 	void rerequestAuthorizationFrom();
 	void removeAuthorizationFrom();
 	void remove();
-	void assignCustomPicture();
 	void clearCustomPicture();
 	void userInfo();
 	void history();
