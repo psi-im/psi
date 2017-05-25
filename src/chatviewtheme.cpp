@@ -138,9 +138,10 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 
 	qDebug("Starting loading \"%s\" theme at \"%s\"", qPrintable(id), qPrintable(filepath));
 	state = Theme::Loading;
-	if (jsUtil.isNull())
+	if (jsUtil.isNull()) {
 		jsLoader.reset(new ChatViewJSLoader(this));
 		jsUtil.reset(new ChatViewThemeJSUtil(this));
+	}
 	if (wv.isNull()) {
 		wv = new WebView(0);
 	}
