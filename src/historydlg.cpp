@@ -451,10 +451,8 @@ void HistoryDlg::removeHistory()
 
 void HistoryDlg::openChat()
 {
-	UserListItem *u = currentUserListItem();
-	if(u) {
-		d->pa->actionOpenChat2(u->jid().bare());
-	}
+	if (d->pa && !d->jid.isEmpty())
+		d->pa->actionOpenChat2(d->jid);
 }
 
 void HistoryDlg::exportHistory()
@@ -574,6 +572,8 @@ void HistoryDlg::doMenu()
 		chat->setEnabled(false);
 		del->setEnabled(false);
 	}
+	else if (!d->jid.resource().isEmpty()) // Private messages in conferences
+		chat->setEnabled(false);
 	int features = d->psi->edb()->features();
 	if ((!d->pa && !(features & EDB::AllAccounts)) || (d->jid.isEmpty() && !(features & EDB::AllContacts)))
 		exp->setEnabled(false);
