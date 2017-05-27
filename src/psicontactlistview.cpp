@@ -39,6 +39,7 @@
 #include <QTimer>
 
 static const int recalculateTimerTimeout = 2000;
+static const QLatin1String groupIndentOption("options.ui.contactlist.group-indent");
 
 class PsiContactListView::Private : public QObject
 {
@@ -157,11 +158,12 @@ public:
 PsiContactListView::PsiContactListView(QWidget* parent)
 	: ContactListDragView(parent)
 {
-	setIndentation(PsiOptions::instance()->getOption("options.ui.contactlist.group-indent", 4).toInt());
+	setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
 	setItemDelegate(new ContactListViewDelegate(this));
 
 	d = new Private(this);
 
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(optionChanged(QString)));
 	connect(this, SIGNAL(expanded(QModelIndex)), d, SLOT(recalculateSize()));
 	connect(this, SIGNAL(collapsed(QModelIndex)), d, SLOT(recalculateSize()));
 }
@@ -169,6 +171,14 @@ PsiContactListView::PsiContactListView(QWidget* parent)
 ContactListViewDelegate *PsiContactListView::itemDelegate() const
 {
 	return qobject_cast<ContactListViewDelegate*>(ContactListDragView::itemDelegate());
+}
+
+void PsiContactListView::optionChanged(const QString &option)
+{
+	if (option == groupIndentOption) {
+		setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
+		itemDelegate()->recomputeGeometry();
+	}
 }
 
 void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& globalPos) const

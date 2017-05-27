@@ -37,6 +37,7 @@ public:
 	ContactListViewDelegate(ContactListView *parent);
 	virtual ~ContactListViewDelegate();
 
+	void recomputeGeometry();
 	int avatarSize() const;
 
 	void contactAlert(const QModelIndex &index);

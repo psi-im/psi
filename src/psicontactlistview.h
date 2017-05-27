@@ -44,6 +44,7 @@ public:
 protected slots:
 	void alertContacts(const QModelIndexList &indexes);
 	void animateContacts(const QModelIndexList &indexes, bool started);
+	void optionChanged(const QString &option);
 
 protected:
 	// reimplemented

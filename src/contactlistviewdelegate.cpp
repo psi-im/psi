@@ -1165,6 +1165,11 @@ ContactListViewDelegate::~ContactListViewDelegate()
 	delete d;
 }
 
+void ContactListViewDelegate::recomputeGeometry()
+{
+	d->recomputeGeometry();
+}
+
 void ContactListViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
 	d->doSetOptions(option, index);
