@@ -93,7 +93,7 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 		}
 
 		if (psiContact->isSelf()) {
-			return showSelf() || (psiContact->userListItem().userResourceList().count() > 1);
+			return showSelf() && (psiContact->userListItem().userResourceList().count() > 0);
 		}
 		else if (psiContact->isAgent()) {
 			return showTransports();
