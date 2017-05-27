@@ -73,17 +73,9 @@
 #include "psievent.h"
 #include "jidutil.h"
 #include "eventdlg.h"
-#ifdef YAPSI
-#include "yapsi_revision.h"
-#include "yaprivacymanager.h"
-#else
 #include "psiprivacymanager.h"
-#endif
 #include "rosteritemexchangetask.h"
 #include "chatdlg.h"
-#ifndef NEWCONTACTLIST
-# include "contactview.h"
-#endif
 #include "mood.h"
 #include "activity.h"
 #include "tune.h"
@@ -148,9 +140,6 @@
 #include "Certificates/CertificateHelpers.h"
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
-#ifndef NEWCONTACTLIST
-#include "legacypsiaccount.h"
-#endif
 #include "bookmarkmanagedlg.h"
 #include "accountloginpassword.h"
 #include "alertmanager.h"
@@ -1072,11 +1061,8 @@ public:
 
 PsiAccount* PsiAccount::create(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
 {
-#ifdef NEWCONTACTLIST
 	PsiAccount* account = new PsiAccount(acc, parent, tabManager);
-#else
-	PsiAccount* account = new LegacyPsiAccount(acc, parent, tabManager);
-#endif
+
 	account->init();
 	return account;
 }
@@ -1813,12 +1799,8 @@ void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
 	d->loginStatus = Status(Status::Offline);
 	stateChanged();
 
-#ifdef YAPSI
-	disconnect();
-#else
 	// Using 100msecs; See note on disconnect()
 	QTimer::singleShot(100, this, SLOT(disconnect()));
-#endif
 }
 
 // skz note: I had to split logout() because server seem to need some time to store status
@@ -2059,9 +2041,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 			detail = stream->errorText();
 		} else {
 			x = XMPP::Stream::GenericStreamError;
-#ifndef YAPSI
 			reconn = false;
-#endif
 		}
 
 		if(x == XMPP::Stream::GenericStreamError)
@@ -2217,26 +2197,8 @@ void PsiAccount::cs_error(int err)
 	d->client->close();
 	cleanupStream();
 
-#ifdef YAPSI
-	// we could disable an account while 'emit connectionError()'
-	QString bakError = d->currentConnectionError;
-	int bakErrorCond = d->currentConnectionErrorCondition;
-#endif
-
 	emit connectionError(d->currentConnectionError);
 	//printf("Error: [%s]\n", str.latin1());
-
-#ifdef YAPSI
-	d->currentConnectionError = bakError;
-	d->currentConnectionErrorCondition = bakErrorCond;
-#endif
-
-#ifdef YAPSI
-	d->reconnectInfrequently_ = !reconn;
-	if (!d->disableAutoConnect) {
-		reconn = true;
-	}
-#endif
 
 	isDisconnecting = true;
 
@@ -2971,11 +2933,7 @@ Status PsiAccount::status() const
 
 Status PsiAccount::loggedOutStatus()
 {
-#ifdef YAPSI
-	return Status(Status::Offline);
-#else
 	return Status(Status::Offline, tr("Logged out"), 0);
-#endif
 }
 
 void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualStatus)
@@ -3872,10 +3830,6 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 		connect(c, SIGNAL(aVoice(const Jid &)), SLOT(actionVoice(const Jid &)));
 		connect(d->psi, SIGNAL(emitOptionsUpdate()), c, SLOT(optionsUpdate()));
 		connect(this, SIGNAL(updateContact(const Jid &, bool)), c, SLOT(updateContact(const Jid &, bool)));
-
-#ifdef YAPSI
-		processChatsHelper(j, false);
-#endif
 	}
 	else {
 		c->setJid(j);
@@ -4839,33 +4793,10 @@ void PsiAccount::dj_authReq(const Jid &j)
 	d->client->sendSubscription(j, "subscribe", nick());
 }
 
-#ifdef YAPSI
-void PsiAccount::dj_authInternal(const Jid &j, bool doAuthReq)
-{
-	psi()->contactUpdatesManager()->contactAuthorized(this, j);
-
-	d->client->sendSubscription(j, "subscribed");
-	if (doAuthReq) {
-		dj_authReq(j);
-	}
-}
-#endif
-
 void PsiAccount::dj_auth(const Jid &j)
 {
-#ifdef YAPSI
-	UserListItem* u = d->userList.find(j);
-	if (!u || !u->inList()) {
-		// TODO: need some sort of central dispatcher for this kind of stuff
-		emit YaRosterToolTip::instance()->addContact(j, this, QStringList(), QString());
-		return;
-	}
-
-	dj_authInternal(j);
-#else
 	psi()->contactUpdatesManager()->contactAuthorized(this, j);
 	d->client->sendSubscription(j, "subscribed");
-#endif
 }
 
 void PsiAccount::dj_deny(const Jid &j)
@@ -4961,33 +4892,6 @@ void PsiAccount::dj_rosterExchange(const RosterExchangeItems& items)
 void PsiAccount::eventFromXml(const PsiEvent::Ptr &e)
 {
 	handleEvent(e, FromXml);
-}
-
-static bool messageListContainsEvent(const QList<PsiEvent::Ptr>& messageList, const MessageEvent::Ptr me)
-{
-	Q_ASSERT(me);
-#ifdef YAPSI
-	YaDateTime timeStamp = getYaDateTime(me);
-	foreach(const PsiEvent::Ptr &event, messageList) {
-		const MessageEvent::Ptr me2 = event.dynamicCast<MessageEvent>();
-		if (!me2)
-			continue;
-
-		YaDateTime timeStamp2 = getYaDateTime(me2);
-		if (timeStamp2.isNull())
-			continue;
-
-		if (timeStamp == timeStamp2) {
-			return true;
-		}
-	}
-#else
-	// FIXME
-	Q_UNUSED(messageList);
-	Q_UNUSED(me);
-#endif
-
-	return false;
 }
 
 #ifdef PSI_PLUGINS
@@ -5108,13 +5012,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		}
 		//PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
 #endif
-
-		QList<PsiEvent::Ptr> chatList;
-		d->eventQueue->extractChats(&chatList, me->from(), false, false);
-		if (messageListContainsEvent(chatList, me)) {
-			return;
-		}
-		else if (m.messageReceipt() == ReceiptReceived) {
+		if (m.messageReceipt() == ReceiptReceived) {
 			if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
 				foreach (ChatDlg *c, findChatDialogs(e->from(), false)) {
 					if (c->autoSelectContact()  || c->jid().resource().isEmpty() || e->from().resource() == c->jid().resource()) {
@@ -5168,13 +5066,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 			//if the chat exists, and is either open in a tab,
 			//or in a window
-#ifdef YAPSI_ACTIVEX_SERVER
-			// since the event could be deleted later in YaOnline::doToasterIgnored()
-			// we must add the message to the dialog so it will appear in timeline
-			if( c ) {
-#else
 			if( c && ( d->tabManager->isChatTabbed(c) || !c->isHidden() ) ) {
-#endif
 				c->incomingMessage(m);
 				soundType = eChat2;
 				if (m.carbonDirection() != Message::Sent &&
@@ -5186,11 +5078,6 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 				}
 				else {
 					putToQueue = false;
-#ifdef YAPSI
-					if (!d->noPopup(activationType) && o->getOption("options.ui.chat.auto-popup").toBool()) {
-						openChat(e->from(), activationType);
-					}
-#endif
 				}
 			}
 			else {
@@ -5281,22 +5168,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 		AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
 		if(ae->authType() == "subscribe") {
-#ifdef YAPSI
-			UserListItem *userListItem = d->userList.find(ae->from());
-			Q_ASSERT(dynamic_cast<YaPrivacyManager*>(privacyManager()));
-			bool isContactBlocked = dynamic_cast<YaPrivacyManager*>(privacyManager())->isContactBlocked(ae->from());
-			if (!isContactBlocked) {
-				soundType = eSubscribe;
-			}
-
-			if (isContactBlocked) {
-				dj_deny(ae->from());
-				putToQueue = false;
-			}
-			else if (userListItem && userListItem->inList()) {
-#else
 			if(o->getOption("options.subscriptions.automatically-allow-authorization").toBool()) {
-#endif
 				// Check if we want to request auth as well
 				UserListItem *u = d->userList.find(ae->from());
 				if (!u || (u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::To)) {
@@ -5315,12 +5187,6 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		else if(ae->authType() == "unsubscribe") {
 			putToQueue = false;
 		}
-#ifdef YAPSI
-		if (!putToQueue) {
-			playSound(soundType);
-			return;
-		}
-#endif
 	}
 #ifdef PSI_PLUGINS
 	else if (e->type() == PsiEvent::Plugin) {
@@ -5362,45 +5228,12 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		emit startBounce();
 	}
 
-#ifdef YAPSI
-	int id = -1;
-	PsiEvent::Ptr backupEvent = e; // FIXME: temporary workaround for braindead queueEvent
-	if (putToQueue) {
-		QList<int> ids = GlobalEventQueue::instance()->ids();
-		int lastId = ids.isEmpty() ? -1 : ids.last();
-
-		queueEvent(e, activationType);
-
-		// insurance
-		ids = GlobalEventQueue::instance()->ids();
-		int lastId2 = ids.isEmpty() ? -1 : ids.last();
-		if ((lastId2 != lastId) && (lastId2 != -1))
-			id = lastId2;
-	}
-	else {
-		psi()->yaUnreadMessagesManager()->eventRead(e.data());
-	}
-
-	if (activationType != FromXml) {
-		PsiEvent::Ptr notificationEvent = id == -1 ? backupEvent : e;
-		bool shouldPlaySound = true;
-		if (notificationEvent) {
-			shouldPlaySound = !YaPopupNotification::notify(id, notificationEvent, soundType);
-		}
-
-		if (shouldPlaySound) {
-				playSound(soundType);
-		}
-	}
-
-#else
 	if (soundType >= 0 && activationType != FromXml) {
 		playSound(soundType);
 	}
 
 	if ( putToQueue )
 		queueEvent(e, activationType);
-#endif
 }
 
 UserListItem* PsiAccount::addUserListItem(const Jid& jid, const QString& nick)
@@ -5500,7 +5333,6 @@ void PsiAccount::queueEvent(const PsiEvent::Ptr &e, ActivationType activationTyp
 	// update the roster
 	cpUpdate(*u);
 
-#ifndef YAPSI
 	// if we have both (option.popupMsgs || option.popupChats) && option.alertOpenChats,
 	// then option.alertOpenChats will have NO USER-VISIBLE EFFECT as the
 	// events will be immediately deleted from the event queue
@@ -5539,9 +5371,6 @@ void PsiAccount::queueEvent(const PsiEvent::Ptr &e, ActivationType activationTyp
 				openNextEvent(*u, activationType);
 		}
 	}
-#else
-	Q_UNUSED(activationType);
-#endif
 }
 
 // take the next event from the queue and display it
@@ -5712,9 +5541,7 @@ void PsiAccount::processChatsHelper(const Jid& j, bool removeEvents)
 	// extract the chats
 	QList<PsiEvent::Ptr> chatList;
 	bool compareResources = !c->autoSelectContact();
-#ifdef YAPSI
-	compareResources = false;
-#endif
+
 	d->eventQueue->extractChats(&chatList, j, compareResources, removeEvents);
 
 	if(!chatList.isEmpty()) {
@@ -5741,11 +5568,6 @@ void PsiAccount::processChatsHelper(const Jid& j, bool removeEvents)
 		}
 
 		if (removeEvents) {
-#ifdef YAPSI
-			while (!chatList.isEmpty()) {
-				psi()->yaUnreadMessagesManager()->eventRead(chatList.takeFirst().data());
-			}
-#endif
 			QList<UserListItem*> ul = findRelevant(j);
 			if(!ul.isEmpty()) {
 				UserListItem *u = ul.first();

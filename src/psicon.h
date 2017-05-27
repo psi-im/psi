@@ -77,9 +77,6 @@ public:
 	void deinit();
 
 	PsiContactList* contactList() const;
-#ifndef NEWCONTACTLIST
-	ContactView* contactView() const;
-#endif
 	EDB *edb() const;
 	TuneControllerManager* tuneManager() const;
 	FileTransDlg *ftdlg();

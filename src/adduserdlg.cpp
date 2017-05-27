@@ -31,9 +31,6 @@
 #include "xmpp_tasks.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
-#ifndef NEWCONTACTLIST
-# include "contactview.h"
-#endif
 #include "busywidget.h"
 #include "common.h"
 #include "iconwidget.h"

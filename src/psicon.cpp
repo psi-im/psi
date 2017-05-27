@@ -42,9 +42,6 @@
 #include "accountadddlg.h"
 #include "psiiconset.h"
 #include "psithememanager.h"
-#ifndef NEWCONTACTLIST
-# include "contactview.h"
-#endif
 #include "psievent.h"
 #include "passphrasedlg.h"
 #include "common.h"
@@ -561,11 +558,6 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(recvNextEvent()), SLOT(recvNextEvent()));
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
 
-#ifndef NEWCONTACTLIST
-	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
-#endif
-
-
 	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
 
 	if (result &&
@@ -757,9 +749,6 @@ void PsiCon::setShortcuts()
 	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
 	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
 	ShortcutManager::connect("global.boss-key", d->bossKey, SLOT(shortCutActivated()));
-#ifdef YAPSI
-	ShortcutManager::connect("global.filter-contacts", d->mainwin, SLOT(filterContacts()));
-#endif
 #ifdef PSI_PLUGINS
 	PluginManager::instance()->setShortcuts();
 #endif
@@ -1050,7 +1039,6 @@ void PsiCon::setAccountsOrder(QList<PsiAccount*> accounts)
 
 void PsiCon::statusMenuChanged(XMPP::Status::Type x, bool forceDialog)
 {
-#ifndef YAPSI
 	QString optionName;
 	if (!forceDialog)
 	{
@@ -1108,19 +1096,10 @@ void PsiCon::statusMenuChanged(XMPP::Status::Type x, bool forceDialog)
 		}
 		setGlobalStatus(status, false, true);
 	}
-
-#else
-	setGlobalStatus(makeStatus(x, currentStatusMessage()), false, true);
-#endif
 }
 
 XMPP::Status::Type PsiCon::currentStatusType() const
 {
-#ifdef YAPSI
-	if (!d->mainwin)
-		return XMPP::Status::Offline;
-	return d->mainwin->statusType();
-#else
 	//bool active = false;
 	bool loggedIn = false;
 	XMPP::Status::Type state = XMPP::Status::Online;
@@ -1138,16 +1117,10 @@ XMPP::Status::Type PsiCon::currentStatusType() const
 	}
 
 	return state;
-#endif
 }
 
 QString PsiCon::currentStatusMessage() const
 {
-#ifdef YAPSI
-	if (!d->mainwin)
-		return QString();
-	return d->mainwin->statusMessage();
-#else
 	QString message = "";
 	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
 		if(account->loggedIn()) {
@@ -1156,7 +1129,6 @@ QString PsiCon::currentStatusMessage() const
 		}
 	}
 	return message;
-#endif
 }
 
 void PsiCon::setStatusFromCommandline(const QString &status, const QString &message)
@@ -1175,14 +1147,13 @@ void PsiCon::setGlobalStatus(const Status &s, bool withPriority, bool isManualSt
 {
 	// Check whether all accounts are logged off
 	bool allOffline = true;
-#ifndef YAPSI
+
 	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
 		if ( account->isActive() ) {
 			allOffline = false;
 			break;
 		}
 	}
-#endif
 
 	// globally set each account which is logged in
 	foreach(PsiAccount* account, d->contactList->enabledAccounts())
@@ -1286,9 +1257,7 @@ void PsiCon::doFileTransDlg()
 void PsiCon::checkAccountsEmpty()
 {
 	if (d->contactList->accounts().count() == 0) {
-#ifndef YAPSI
 		promptUserToCreateAccount();
-#endif
 	}
 }
 
@@ -1990,15 +1959,5 @@ ContactUpdatesManager* PsiCon::contactUpdatesManager() const
 {
 	return contactUpdatesManager_;
 }
-
-#ifndef NEWCONTACTLIST
-ContactView* PsiCon::contactView() const
-{
-	if(d->mainwin)
-		return d->mainwin->cvlist;
-	else
-		return 0;
-}
-#endif
 
 #include "psicon.moc"

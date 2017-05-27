@@ -71,10 +71,6 @@ public:
 	QStringList actionList;
 	QMap<QString, QAction*> actions;
 
-#ifndef NEWCONTACTLIST
-	ContactView *cvlist;
-#endif
-
 	PsiCon *psiCon() const;
 
 protected:

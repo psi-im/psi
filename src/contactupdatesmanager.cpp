@@ -28,10 +28,6 @@
 #include "psievent.h"
 #include "userlist.h"
 
-#ifdef YAPSI_ACTIVEX_SERVER
-#include "yaonline.h"
-#endif
-
 ContactUpdatesManager::ContactUpdatesManager(PsiCon* parent)
 	: QObject(parent)
 	, controller_(parent)
@@ -91,9 +87,6 @@ void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount* account, cons
 				if (denyAuthRequests) {
 					account->dj_deny(jid);
 				}
-#ifdef YAPSI_ACTIVEX_SERVER
-				controller_->yaOnline()->closeNotify(p.first, e.data());
-#endif
 				account->eventQueue()->dequeue(e);
 			}
 		}
@@ -108,15 +101,7 @@ void ContactUpdatesManager::removeToastersFor(PsiAccount* account, const XMPP::J
 
 	foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
 		PsiEvent::Ptr e = p.second;
-		if (e->type() == PsiEvent::Message
-#ifdef YAPSI
-		    || e->type() == PsiEvent::Mood
-#endif
-		    )
-		{
-#ifdef YAPSI_ACTIVEX_SERVER
-			controller_->yaOnline()->closeNotify(p.first, e.data());
-#endif
+		if (e->type() == PsiEvent::Message) {
 			account->eventQueue()->dequeue(e);
 		}
 	}

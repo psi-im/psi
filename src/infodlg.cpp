@@ -47,9 +47,6 @@
 #include "lastactivitytask.h"
 #include "vcardfactory.h"
 #include "iconwidget.h"
-#ifndef NEWCONTACTLIST
-# include "contactview.h"
-#endif
 #include "psirichtext.h"
 #include "psioptions.h"
 #include "fileutil.h"

@@ -86,26 +86,6 @@ void ResourceMenu::actionActivated()
 	}
 }
 
-#ifndef NEWCONTACTLIST
-// FIXME: Deprecate this function and move to signal-based calls
-void ResourceMenu::addResource(const UserResource &r, int id)
-{
-	addResource(r.status().type(), r.name(), id);
-}
-
-// FIXME: Deprecate this function and move to signal-based calls
-void ResourceMenu::addResource(int status, QString name, int id)
-{
-	QString rname = name;
-	if(rname.isEmpty())
-		rname = tr("[blank]");
-
-	//rname += " (" + status2txt(status) + ")";
-
-	insertItem(PsiIconset::instance()->status(status).icon(), rname, id);
-}
-#endif
-
 void ResourceMenu::contactUpdated()
 {
 	if (!contact_)

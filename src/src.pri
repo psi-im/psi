@@ -452,85 +452,66 @@ mac {
 	include($$PWD/CocoaUtilities/CocoaUtilities.pri)
 }
 
-CONFIG += newcontactlist
-newcontactlist {
-	DEFINES += NEWCONTACTLIST
-	# DEFINES += CONTACTLIST_NESTED_GROUPS
-	HEADERS += \
-		$$PWD/contactlistview.h \
-		$$PWD/contactlistdragview.h \
-		$$PWD/hoverabletreeview.h \
-		$$PWD/contactlistmodel.h \
-		$$PWD/contactlistmodel_p.h \
-		$$PWD/contactlistmodelselection.h \
-		$$PWD/contactlistdragmodel.h \
-		$$PWD/contactlistviewdelegate.h \
-		$$PWD/contactlistviewdelegate_p.h \
-		$$PWD/contactlistproxymodel.h \
-		$$PWD/psicontact.h \
-		$$PWD/psiselfcontact.h \
-		$$PWD/psicontactmenu.h \
-		$$PWD/psicontactmenu_p.h \
-		$$PWD/groupmenu.h \
-		$$PWD/invitetogroupchatmenu.h \
-		$$PWD/contactlistgroupmenu.h \
-		$$PWD/contactlistgroupmenu_p.h \
-		$$PWD/contactlistaccountmenu.h \
-		$$PWD/contactlistitem.h \
-		$$PWD/contactlistitemmenu.h \
-		$$PWD/contactupdatesmanager.h \
-		$$PWD/statusmenu.h \
-		$$PWD/globalstatusmenu.h \
-		$$PWD/accountstatusmenu.h \
-		$$PWD/psirosterwidget.h \
-		$$PWD/psifilteredcontactlistview.h \
-		$$PWD/abstracttreeitem.h \
-		$$PWD/abstracttreemodel.h
+# DEFINES += CONTACTLIST_NESTED_GROUPS
+HEADERS += \
+	$$PWD/contactlistview.h \
+	$$PWD/contactlistdragview.h \
+	$$PWD/hoverabletreeview.h \
+	$$PWD/contactlistmodel.h \
+	$$PWD/contactlistmodel_p.h \
+	$$PWD/contactlistmodelselection.h \
+	$$PWD/contactlistdragmodel.h \
+	$$PWD/contactlistviewdelegate.h \
+	$$PWD/contactlistviewdelegate_p.h \
+	$$PWD/contactlistproxymodel.h \
+	$$PWD/psicontact.h \
+	$$PWD/psiselfcontact.h \
+	$$PWD/psicontactmenu.h \
+	$$PWD/psicontactmenu_p.h \
+	$$PWD/groupmenu.h \
+	$$PWD/invitetogroupchatmenu.h \
+	$$PWD/contactlistgroupmenu.h \
+	$$PWD/contactlistgroupmenu_p.h \
+	$$PWD/contactlistaccountmenu.h \
+	$$PWD/contactlistitem.h \
+	$$PWD/contactlistitemmenu.h \
+	$$PWD/contactupdatesmanager.h \
+	$$PWD/statusmenu.h \
+	$$PWD/globalstatusmenu.h \
+	$$PWD/accountstatusmenu.h \
+	$$PWD/psirosterwidget.h \
+	$$PWD/psifilteredcontactlistview.h \
+	$$PWD/abstracttreeitem.h \
+	$$PWD/abstracttreemodel.h \
+	$$PWD/psicontactlistview.h
 
-	SOURCES += \
-		$$PWD/contactlistview.cpp \
-		$$PWD/contactlistdragview.cpp \
-		$$PWD/hoverabletreeview.cpp \
-		$$PWD/contactlistmodel.cpp \
-		$$PWD/contactlistmodelselection.cpp \
-		$$PWD/contactlistdragmodel.cpp \
-		$$PWD/contactlistviewdelegate.cpp \
-		$$PWD/contactlistproxymodel.cpp \
-		$$PWD/psicontact.cpp \
-		$$PWD/psicontactmenu.cpp \
-		$$PWD/invitetogroupchatmenu.cpp \
-		$$PWD/groupmenu.cpp \
-		$$PWD/contactlistgroupmenu.cpp \
-		$$PWD/contactlistaccountmenu.cpp \
-		$$PWD/contactlistitem.cpp \
-		$$PWD/contactlistitemmenu.cpp \
-		$$PWD/contactupdatesmanager.cpp \
-		$$PWD/statusmenu.cpp \
-		$$PWD/globalstatusmenu.cpp \
-		$$PWD/accountstatusmenu.cpp \
-		$$PWD/psirosterwidget.cpp \
-		$$PWD/psifilteredcontactlistview.cpp \
-		$$PWD/abstracttreeitem.cpp \
-		$$PWD/abstracttreemodel.cpp
+SOURCES += \
+	$$PWD/contactlistview.cpp \
+	$$PWD/contactlistdragview.cpp \
+	$$PWD/hoverabletreeview.cpp \
+	$$PWD/contactlistmodel.cpp \
+	$$PWD/contactlistmodelselection.cpp \
+	$$PWD/contactlistdragmodel.cpp \
+	$$PWD/contactlistviewdelegate.cpp \
+	$$PWD/contactlistproxymodel.cpp \
+	$$PWD/psicontact.cpp \
+	$$PWD/psicontactmenu.cpp \
+	$$PWD/invitetogroupchatmenu.cpp \
+	$$PWD/groupmenu.cpp \
+	$$PWD/contactlistgroupmenu.cpp \
+	$$PWD/contactlistaccountmenu.cpp \
+	$$PWD/contactlistitem.cpp \
+	$$PWD/contactlistitemmenu.cpp \
+	$$PWD/contactupdatesmanager.cpp \
+	$$PWD/statusmenu.cpp \
+	$$PWD/globalstatusmenu.cpp \
+	$$PWD/accountstatusmenu.cpp \
+	$$PWD/psirosterwidget.cpp \
+	$$PWD/psifilteredcontactlistview.cpp \
+	$$PWD/abstracttreeitem.cpp \
+	$$PWD/abstracttreemodel.cpp \
+	$$PWD/psicontactlistview.cpp
 
-	!yapsi {
-		HEADERS += \
-			$$PWD/psicontactlistview.h \
-
-		SOURCES += \
-			$$PWD/psicontactlistview.cpp \
-	}
-}
-!newcontactlist {
-	QT += qt3support
-	HEADERS += \
-		$$PWD/legacypsiaccount.h \
-		$$PWD/contactview.h
-
-	SOURCES += \
-		$$PWD/legacypsiaccount.cpp \
-		$$PWD/contactview.cpp
-}
 
 CONFIG += pgputil
 pgputil {

@@ -244,10 +244,6 @@ public:
 		eSend,
 		eIncomingFT,
 		eFTComplete,
-#ifdef YAPSI
-		eSubscribe,
-		eUnsubscribe,
-#endif
 		eSoundLast
 	};
 	void playSound(SoundType onevent);

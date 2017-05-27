@@ -42,11 +42,6 @@ public:
 	void addResource(const UserResource &r);
 	void addResource(int status, QString name);
 
-#ifndef NEWCONTACTLIST
-	void addResource(const UserResource &r, int id);
-	void addResource(int status, QString name, int id);
-#endif
-
 signals:
 	void resourceActivated(PsiContact* contact, const XMPP::Jid& jid);
 	void resourceActivated(QString resource);
