@@ -100,9 +100,10 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 	connect(openChatAction_, SIGNAL(triggered()), SLOT(openChat()));
 	openChatAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.chat"));
 
+#ifdef WHITEBOARDING
 	openWhiteboardAction_ = new IconAction(tr("Open a &Whiteboard"), this, "psi/whiteboard");
 	connect(openWhiteboardAction_, SIGNAL(triggered()), SLOT(openWhiteboard()));
-
+#endif
 	voiceCallAction_ = new IconAction(tr("Voice Call"), this, "psi/avcall");
 	connect(voiceCallAction_, SIGNAL(triggered()), SLOT(voiceCall()));
 
@@ -158,9 +159,10 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 	openChatToMenu_ = new ResourceMenu(tr("Open Chat &To"), contact_, menu_);
 	connect(openChatToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openChatTo(PsiContact*, const XMPP::Jid&)));
 
+#ifdef WHITEBOARDING
 	openWhiteboardToMenu_ = new ResourceMenu(tr("Open a White&board To"), contact_, menu_);
 	connect(openWhiteboardToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openWhiteboardTo(PsiContact*, const XMPP::Jid&)));
-
+#endif
 	executeCommandMenu_ = new ResourceMenu(tr("E&xecute Command"), contact_, menu_);
 	connect(executeCommandMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(executeCommand(PsiContact*, const XMPP::Jid&)));
 
@@ -214,8 +216,6 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 
 		menu_->addAction(vcardAction_);
 		menu_->addAction(historyAction_);
-		if (!contact_->isPrivate())
-			menu_->addAction(_copyUserJid);
 		menu_->addSeparator();
 
 		menu_->addAction(renameAction_);
@@ -224,9 +224,6 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 		menu_->addSeparator();
 
 		menu_->addAction(blockAction_);
-		if (PsiOptions::instance()->getOption("options.ui.menu.contact.send-status").toBool()) {
-			menu_->addAction(customStatusAction_);
-		}
 		menu_->addSeparator();
 
 		const UserListItem &item = contact_->userListItem();
@@ -253,29 +250,32 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 			break;
 		}
 
-		// Enable Remove Authorization From for test purposes
-		// menu_->addAction(authRemoveAction_);
-
-		menu_->addAction(gpgAssignKeyAction_);
-
 		pictureMenu_ = menu_->addMenu(tr("&Picture"));
 		pictureMenu_->addAction(pictureAssignAction_);
 		pictureMenu_->addAction(pictureClearAction_);
-		menu_->addAction(gpgAssignKeyAction_);
-		menu_->addAction(gpgUnassignKeyAction_);
+
 		menu_->addSeparator();
 		menu_->addMenu(inviteToGroupchatMenu_);
 		menu_->addMenu(executeCommandMenu_);
-
-		// TODO probably useless function. Should be removed here. Maybe should be moved to plugin.
-		// menu_->addAction(openWhiteboardAction_);
-		// menu_->addMenu(openWhiteboardToMenu_);
 		menu_->addMenu(activeChatsMenu_);
 
 		menu_->addSeparator();
 
+		_advancedMenu = menu_->addMenu(tr("Advanc&ed"));
+		if (!contact_->isPrivate())
+			_advancedMenu->addAction(_copyUserJid);
+		_advancedMenu->addAction(customStatusAction_);
+		_advancedMenu->addAction(visibleAction_);
+		_advancedMenu->addAction(authRemoveAction_);
+		_advancedMenu->addAction(gpgAssignKeyAction_);
+		_advancedMenu->addAction(gpgUnassignKeyAction_);
+#ifdef WHITEBOARDING
+		_advancedMenu->addAction(openWhiteboardAction_);
+		_advancedMenu->addMenu(openWhiteboardToMenu_);
+#endif
+
 #ifdef PSI_PLUGINS
-		PluginManager::instance()->addContactMenu(menu, contact_->account(), contact_->jid().full());
+		PluginManager::instance()->addContactMenu(_advancedMenu, contact_->account(), contact_->jid().full());
 #endif
 
 		updateActions();
@@ -285,9 +285,7 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 		menu_->addAction(mucShowAction_);
 		menu_->addAction(mucLeaveAction_);
 		menu_->addSeparator();
-		if (PsiOptions::instance()->getOption("options.ui.menu.contact.send-status").toBool()) {
-			menu_->addAction(customStatusAction_);
-		}
+		menu_->addAction(customStatusAction_);
 		menu_->addAction(_copyMucJid);
 	}
 }
@@ -316,8 +314,8 @@ void PsiContactMenu::Private::updateActions()
 	sendMessageAction_->setEnabled(contact_->account()->isAvailable());
 	sendMessageToMenu_->setEnabled(!sendMessageToMenu_->isEmpty());
 	openChatToMenu_->setEnabled(!openChatToMenu_->isEmpty());
+#ifdef WHITEBOARDING
 	openWhiteboardToMenu_->setEnabled(!openWhiteboardToMenu_->isEmpty());
-#ifndef WHITEBOARDING
 	openWhiteboardAction_->setVisible(false);
 	openWhiteboardToMenu_->menuAction()->setVisible(false);
 #endif
@@ -489,14 +487,15 @@ void PsiContactMenu::Private::openChat()
 	contact_->account()->actionOpenChat(contact_->jid());
 }
 
+#ifdef WHITEBOARDING
 void PsiContactMenu::Private::openWhiteboard()
 {
 	if (!contact_)
 		return;
-#ifdef WHITEBOARDING
+
 	contact_->account()->actionOpenWhiteboard(contact_->jid());
-#endif
 }
+#endif
 
 void PsiContactMenu::Private::voiceCall()
 {
@@ -626,17 +625,15 @@ void PsiContactMenu::Private::openChatTo(PsiContact*, const XMPP::Jid& jid)
 	contact_->account()->actionOpenChatSpecific(jid);
 }
 
+#ifdef WHITEBOARDING
 void PsiContactMenu::Private::openWhiteboardTo(PsiContact*, const XMPP::Jid& jid)
 {
 	if (!contact_)
 		return;
 
-#ifdef WHITEBOARDING
 	contact_->account()->actionOpenWhiteboardSpecific(jid);
-#else
-	Q_UNUSED(jid);
-#endif
 }
+#endif
 
 void PsiContactMenu::Private::executeCommand(PsiContact*, const XMPP::Jid& jid)
 {

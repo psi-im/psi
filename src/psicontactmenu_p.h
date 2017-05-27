@@ -49,7 +49,10 @@ public slots:
 	void receiveIncomingEvent();
 	void sendMessage();
 	void openChat();
+#ifdef WHITEBOARDING
 	void openWhiteboard();
+	void openWhiteboardTo(PsiContact*, const XMPP::Jid &jid);
+#endif
 	void voiceCall();
 	void sendFile();
 	void transportLogon();
@@ -66,7 +69,6 @@ public slots:
 	void history();
 	void sendMessageTo(PsiContact*, const XMPP::Jid &jid);
 	void openChatTo(PsiContact*, const XMPP::Jid &jid);
-	void openWhiteboardTo(PsiContact*, const XMPP::Jid &jid);
 	void executeCommand(PsiContact*, const XMPP::Jid &jid);
 	void openActiveChat(PsiContact*, const XMPP::Jid &jid);
 	void copyJid();
@@ -88,8 +90,10 @@ public:
 	QMenu *sendMessageToMenu_;
 	QAction *openChatAction_;
 	QMenu *openChatToMenu_;
+#ifdef WHITEBOARDING
 	QAction *openWhiteboardAction_;
 	QMenu *openWhiteboardToMenu_;
+#endif
 	ResourceMenu *executeCommandMenu_;
 	ResourceMenu *activeChatsMenu_;
 	QAction *voiceCallAction_;
@@ -117,4 +121,5 @@ public:
 	QAction *_copyMucJid;
 	QAction *_separator1;
 	QAction *_separator2;
+	QMenu *_advancedMenu;
 };
