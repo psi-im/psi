@@ -244,7 +244,6 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
 	}
 	else if(option == avatarAtLeftOptionPath) {
 		avatarAtLeft_ = PsiOptions::instance()->getOption(avatarAtLeftOptionPath).toBool();
-		updateViewport = true;
 		updateGeometry = true;
 	}
 	else if(option == avatarSizeOptionPath) {
@@ -651,24 +650,21 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 			}
 		}
 
-		if (showMoodIcons_ && !index.data(ContactListModel::MoodRole).isNull()) {
-			QVariant v = index.data(ContactListModel::MoodRole);
-			if (!v.isNull()) {
-				Mood m = v.value<Mood>();
-				if (m.type() != Mood::Unknown) {
-					const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(m.typeValue()));
-					if(!pix.isNull()) {
-						rightPixs.push_back(pix);
-						rightWidths.push_back(pix.width());
-					}
+		if (showMoodIcons_) {
+			Mood m = index.data(ContactListModel::MoodRole).value<Mood>();
+			if (m.type() != Mood::Unknown) {
+				const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(m.typeValue()));
+				if(!pix.isNull()) {
+					rightPixs.push_back(pix);
+					rightWidths.push_back(pix.width());
 				}
 			}
 		}
 
-		if (showActivityIcons_ && !index.data(ContactListModel::ActivityRole).isNull()) {
-			QVariant v = index.data(ContactListModel::ActivityRole);
-			if (!v.isNull()) {
-				const QPixmap &pix = IconsetFactory::iconPixmap(activityIconName(v.value<Activity>()));
+		if (showActivityIcons_) {
+			QString icon = activityIconName(index.data(ContactListModel::ActivityRole).value<Activity>());
+			if (!icon.isNull()) {
+				const QPixmap &pix = IconsetFactory::iconPixmap(icon);
 				if(!pix.isNull()) {
 					rightPixs.push_back(pix);
 					rightWidths.push_back(pix.width());

@@ -479,22 +479,10 @@ QVariant ContactListItem::value(int role) const
 				break;
 
 			case ContactListModel::MoodRole:
-				if (!_contact->userListItem().mood().isNull())
-					res = _contact->userListItem().mood().typeValue();
-				break;
+				return QVariant::fromValue(_contact->userListItem().mood());
 
-				case ContactListModel::ActivityRole:
-				if (!_contact->userListItem().activity().isNull()) {
-					QString act = _contact->userListItem().activity().typeValue();
-					if (_contact->userListItem().activity().specificType() != Activity::UnknownSpecific
-						&& _contact->userListItem().activity().specificType() != Activity::Other
-						&& !_contact->userListItem().activity().specificTypeValue().isEmpty()) {
-
-						act += "_" + _contact->userListItem().activity().specificTypeValue();
-					}
-					res = act;
-				}
-
+			case ContactListModel::ActivityRole:
+				return QVariant::fromValue(_contact->userListItem().activity());
 				break;
 
 			default:

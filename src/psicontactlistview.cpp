@@ -157,7 +157,7 @@ public:
 PsiContactListView::PsiContactListView(QWidget* parent)
 	: ContactListDragView(parent)
 {
-	setIndentation(4);
+	setIndentation(0);
 	setItemDelegate(new ContactListViewDelegate(this));
 
 	d = new Private(this);
