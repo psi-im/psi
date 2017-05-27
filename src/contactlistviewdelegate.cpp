@@ -855,6 +855,8 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 	pepIconsRect_.moveTop(firstLineRect_.top() + (firstLineRect_.height() - pepIconsRect_.height()) / 2);
 	nickRect_.moveTop(firstLineRect_.top() + (firstLineRect_.height() - nickRect_.height()) / 2);
 	statusLineRect_.moveTop(secondLineRect_.top() + (secondLineRect_.height() - statusLineRect_.height()) / 2);
+
+	emit geometryUpdated();
 }
 
 QSize ContactListViewDelegate::Private::sizeHint(const QModelIndex &index) const
@@ -1158,6 +1160,7 @@ ContactListViewDelegate::ContactListViewDelegate(ContactListView *parent)
 	: QItemDelegate(parent)
 {
 	d = new Private(this, parent);
+	connect(d, SIGNAL(geometryUpdated()), SIGNAL(geometryUpdated()));
 }
 
 ContactListViewDelegate::~ContactListViewDelegate()

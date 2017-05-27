@@ -23,6 +23,9 @@ public:
     Private(ContactListViewDelegate *parent, ContactListView *contactList);
     ~Private();
 
+signals:
+	void geometryUpdated();
+
 public slots:
 	void optionChanged(const QString &option);
 	void updateAlerts();

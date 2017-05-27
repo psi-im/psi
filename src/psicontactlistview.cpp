@@ -38,7 +38,7 @@
 #include <QMimeData>
 #include <QTimer>
 
-static const int recalculateTimerTimeout = 2000;
+static const int recalculateTimerTimeout = 500;
 static const QLatin1String groupIndentOption("options.ui.contactlist.group-indent");
 
 class PsiContactListView::Private : public QObject
@@ -159,11 +159,13 @@ PsiContactListView::PsiContactListView(QWidget* parent)
 	: ContactListDragView(parent)
 {
 	setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
-	setItemDelegate(new ContactListViewDelegate(this));
+	auto delegate = new ContactListViewDelegate(this);
+	setItemDelegate(delegate);
 
 	d = new Private(this);
 
 	connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(optionChanged(QString)));
+	connect(delegate, SIGNAL(geometryUpdated()), d, SLOT(recalculateSize()));
 	connect(this, SIGNAL(expanded(QModelIndex)), d, SLOT(recalculateSize()));
 	connect(this, SIGNAL(collapsed(QModelIndex)), d, SLOT(recalculateSize()));
 }
