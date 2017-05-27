@@ -316,8 +316,6 @@ void PsiContactMenu::Private::updateActions()
 	openChatToMenu_->setEnabled(!openChatToMenu_->isEmpty());
 #ifdef WHITEBOARDING
 	openWhiteboardToMenu_->setEnabled(!openWhiteboardToMenu_->isEmpty());
-	openWhiteboardAction_->setVisible(false);
-	openWhiteboardToMenu_->menuAction()->setVisible(false);
 #endif
 	if(contact_->account()->isAvailable()
 	   && executeCommandMenu_->isEmpty()
