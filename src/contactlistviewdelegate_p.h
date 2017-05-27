@@ -73,7 +73,6 @@ public:
 	int verticalMargin_;
 	int statusIconSize_;
 	int avatarRadius_;
-	int _nickIndent;
 
 	QTimer *alertTimer_;
 	QTimer *animTimer;

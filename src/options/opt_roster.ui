@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>357</width>
-    <height>503</height>
+    <width>391</width>
+    <height>615</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -128,61 +128,58 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCheckBox" name="ck_showAvatarIcons">
-        <property name="whatsThis">
-         <string>Show avatars in roster</string>
-        </property>
-        <property name="text">
-         <string>Avatars</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="ck_showMoodIcons">
-        <property name="whatsThis">
-         <string>Show moods in roster</string>
-        </property>
-        <property name="text">
-         <string>Moods</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="ck_showActivityIcons">
-        <property name="whatsThis">
-         <string>Show activities in roster</string>
-        </property>
-        <property name="text">
-         <string>Activities</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="ck_showGeoLocationIcons">
-        <property name="whatsThis">
-         <string>Show geolocation in roster</string>
-        </property>
-        <property name="text">
-         <string>GeoLocation</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="ck_showTuneIcons">
-        <property name="whatsThis">
-         <string>Show icon when contact is listening to music</string>
-        </property>
-        <property name="text">
-         <string>Now playing</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout">
-        <property name="spacing">
-         <number>5</number>
-        </property>
-        <item>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="1">
+         <widget class="QCheckBox" name="ck_showGeoLocationIcons">
+          <property name="whatsThis">
+           <string>Show geolocation in roster</string>
+          </property>
+          <property name="text">
+           <string>GeoLocation</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="ck_showMoodIcons">
+          <property name="whatsThis">
+           <string>Show moods in roster</string>
+          </property>
+          <property name="text">
+           <string>Moods</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="ck_showAvatarIcons">
+          <property name="whatsThis">
+           <string>Show avatars in roster</string>
+          </property>
+          <property name="text">
+           <string>Avatars</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="ck_showActivityIcons">
+          <property name="whatsThis">
+           <string>Show activities in roster</string>
+          </property>
+          <property name="text">
+           <string>Activities</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QCheckBox" name="ck_showTuneIcons">
+          <property name="whatsThis">
+           <string>Show icon when contact is listening to music</string>
+          </property>
+          <property name="text">
+           <string>Now playing</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
          <widget class="QCheckBox" name="ck_showClientIcons">
           <property name="whatsThis">
            <string>Show icon of user client</string>
@@ -192,7 +189,7 @@
           </property>
          </widget>
         </item>
-        <item>
+        <item row="3" column="1">
          <widget class="QComboBox" name="cb_showAllClientIcons">
           <item>
            <property name="text">
@@ -294,9 +291,6 @@
   <tabstop>ck_autoRosterSize</tabstop>
   <tabstop>ck_useleft</tabstop>
   <tabstop>ck_showMenubar</tabstop>
-  <tabstop>ck_showAvatarIcons</tabstop>
-  <tabstop>ck_showMoodIcons</tabstop>
-  <tabstop>ck_showTuneIcons</tabstop>
  </tabstops>
  <resources/>
  <connections/>

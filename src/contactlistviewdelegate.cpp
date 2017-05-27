@@ -60,7 +60,6 @@ static const QString statusIconsOverAvatarsPath = "options.ui.contactlist.status
 static const QString allClientsOptionPath = "options.ui.contactlist.show-all-client-icons";
 static const QString enableGroupsOptionPath = "options.ui.contactlist.enable-groups";
 static const QString statusIconsetOptionPath = "options.iconsets.status";
-static const QString nickIndentPath = "options.ui.look.contactlist.nick-indent";
 
 #define AWAY_COLOR QLatin1String("options.ui.look.colors.contactlist.status.away")
 #define DND_COLOR QLatin1String("options.ui.look.colors.contactlist.status.do-not-disturb")
@@ -115,7 +114,6 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
 	, verticalMargin_(3)
     , statusIconSize_(0)
 	, avatarRadius_(0)
-    , _nickIndent(0)
 	, alertTimer_(new QTimer(this))
 	, animTimer(new QTimer(this))
 	, fontMetrics_(QFont())
@@ -181,7 +179,6 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
 	optionChanged(statusIconsOverAvatarsPath);
 	optionChanged(allClientsOptionPath);
 	optionChanged(enableGroupsOptionPath);
-	optionChanged(nickIndentPath);
 	bulkOptUpdate = false;
 	recomputeGeometry();
 	contactList->viewport()->update();
@@ -281,10 +278,6 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
 	}
 	else if(option == statusSingleOptionPath) {
 		statusSingle_ = !PsiOptions::instance()->getOption(statusSingleOptionPath).toBool();
-		updateGeometry = true;
-	}
-	else if(option == nickIndentPath) {
-		_nickIndent = PsiOptions::instance()->getOption(nickIndentPath).toInt();
 		updateGeometry = true;
 	}
 
@@ -880,7 +873,11 @@ int ContactListViewDelegate::Private::avatarSize() const
 
 void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModelIndex &index)
 {
+#ifdef HAVE_QT5
+	QStyleOptionViewItem o = opt;
+#else
 	QStyleOptionViewItemV2 o = opt;
+#endif
 	o.font = font_;
 	o.fontMetrics = fontMetrics_;
 	QPalette palette = o.palette;
@@ -921,7 +918,11 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 
 void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QModelIndex &index)
 {
+#ifdef HAVE_QT5
+	QStyleOptionViewItem o = opt;
+#else
 	QStyleOptionViewItemV2 o = opt;
+#endif
 	o.font = font_;
 	o.fontMetrics = fontMetrics_;
 	QPalette palette = o.palette;
@@ -1070,8 +1071,12 @@ QColor ContactListViewDelegate::Private::backgroundColor(const QStyleOptionViewI
 void ContactListViewDelegate::Private::doSetOptions(const QStyleOptionViewItem &option, const QModelIndex &index)
 {
 	opt = q->setOptions(index, option);
+#ifdef HAVE_QT5
+	opt.features = option.features;
+#else
 	const QStyleOptionViewItemV2 *v2 = qstyleoption_cast<const QStyleOptionViewItemV2 *>(&option);
 	opt.features = v2 ? v2->features : QStyleOptionViewItemV2::ViewItemFeatures(QStyleOptionViewItemV2::None);
+#endif
 
 	const HoverableStyleOptionViewItem *hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem*>(&option);
 	opt.hovered = hoverable ? hoverable->hovered : false;

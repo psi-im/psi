@@ -273,6 +273,7 @@ QLineEdit#le_status_text {
 					</avatar>
 				</roster-avatar-frame>
 				<menu-titles comment="Show menu title as a first line" type="bool">false</menu-titles>
+				<group-indent type="int">4</group-indent>
 			</contactlist>
 			<menu comment="Options for the menu">
 				<account comment="Options for the account-specific menu">
@@ -410,7 +411,6 @@ QLineEdit#le_status_text {
 				<contactlist>
 					<use-outlined-group-headings type="bool">false</use-outlined-group-headings>
 					<use-slim-group-headings type="bool">false</use-slim-group-headings>
-					<nick-indent type="int">0</nick-indent>
 				</contactlist>
 				<font>
 					<chat type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</chat>
