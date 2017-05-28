@@ -894,7 +894,8 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 	if (!slimGroup_ && outlinedGroup_) {
 		painter->setPen(QPen(_headerForegroundColor));
 		QRect gr(r);
-		gr.setLeft(contactList->x());
+		int s = painter->pen().width();
+		gr.adjust(0,0,-s,-s);
 		painter->drawRect(gr);
 	}
 
@@ -936,7 +937,10 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
 
 	if (outlinedGroup_) {
 		painter->setPen(QPen(_headerForegroundColor));
-		painter->drawRect(opt.rect);
+		QRect r(opt.rect);
+		int s = painter->pen().width();
+		r.adjust(0,0,-s,-s);
+		painter->drawRect(r);
 	}
 
 	const QPixmap statusPixmap = this->statusPixmap(index);
