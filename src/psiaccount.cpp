@@ -1307,7 +1307,15 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
 PsiAccount::~PsiAccount()
 {
+	bool logged = isActive();
 	logout(true, loggedOutStatus());
+
+	if (logged) {
+		QEventLoop l; // we need a few cycles to finish sending data in qca on app quit
+		for (int i =0; i < 100; i++) {
+			l.processEvents();
+		}
+	}
 
 	setRCEnabled(false);
 
@@ -2984,7 +2992,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 		// change status
 		else {
 			if (!isConnected()) {
-				disconnect();
+				disconnect(); // a hack to reset connecting stream.
 				login();
 			}
 			if(rosterDone) {
