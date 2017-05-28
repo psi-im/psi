@@ -131,7 +131,12 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 		}
 
 		if (!showOffline()) {
-			return show && (item->value(ContactListModel::OnlineContactsRole).toInt() > 0);
+			return show && ((item->value(ContactListModel::OnlineContactsRole).toInt() > 0) ||
+			                item->shouldBeVisible());
+			// shouldBeVisible is updated during OnlineContactsRole.
+			// So it may have different value here (see above for dup).
+			// OnlineContactsRole counts visible contacts ans also finds always-visible ones.
+			// Kind of bug? maybe..
 		}
 		else {
 			return show;
