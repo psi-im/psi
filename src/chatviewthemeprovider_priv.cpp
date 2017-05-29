@@ -236,9 +236,11 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 
 ChatViewCon::~ChatViewCon()
 {
+#ifdef WEBENGINE
 	QWebEngineProfile::defaultProfile()->setRequestInterceptor(0);
 	delete requestInterceptor;
 	delete themeServer;
+#endif
 }
 
 ChatViewCon *ChatViewCon::instance()
