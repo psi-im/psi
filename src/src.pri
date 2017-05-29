@@ -656,7 +656,7 @@ else {
 }
 
 mac {
-	QMAKE_LFLAGS += -framework Carbon -framework IOKit -framework AppKit
+	QMAKE_LFLAGS += -framework Carbon -framework IOKit -framework AppKit -framework CoreFoundation -lobjc
 }
 
 INCLUDEPATH += $$PWD
