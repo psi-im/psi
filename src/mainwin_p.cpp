@@ -52,7 +52,7 @@ public:
 	PopupActionButton(QWidget *parent = 0, const char *name = 0);
 	~PopupActionButton();
 
-	void setIcon(PsiIcon, bool showText);
+	void setIcon(PsiIcon *, bool showText);
 	void setLabel(QString);
 
 	// reimplemented
@@ -66,13 +66,13 @@ private:
 	void update();
 	void paintEvent(QPaintEvent *);
 	bool hasToolTip;
-	PsiIcon icon;
+	PsiIcon *icon;
 	bool showText;
 	QString label;
 };
 
 PopupActionButton::PopupActionButton(QWidget *parent, const char *name)
-: QPushButton(parent), hasToolTip(false), showText(true)
+: QPushButton(parent), hasToolTip(false), icon(0), showText(true)
 {
 	setObjectName(name);
 }
@@ -97,7 +97,7 @@ QSize PopupActionButton::minimumSizeHint() const
 	return QSize(16, 16);
 }
 
-void PopupActionButton::setIcon(PsiIcon i, bool st)
+void PopupActionButton::setIcon(PsiIcon *i, bool st)
 {
 	if ( icon ) {
 		icon->stop();
@@ -110,7 +110,8 @@ void PopupActionButton::setIcon(PsiIcon i, bool st)
 
 	if ( icon ) {
 		pixmapUpdated();
-		icon.connectPixmapChanged(this, SLOT(pixmapUpdated()));
+
+		connect(icon, SIGNAL(pixmapChanged()), SLOT(pixmapUpdated()));
 		icon->activated();
 	}
 }
@@ -230,7 +231,7 @@ class PopupAction::Private : public QObject
 public:
 	QSizePolicy size;
 	QList<PopupActionButton*> buttons;
-	PsiIcon icon;
+	PsiIcon *icon;
 	bool showText;
 
 	Private (QObject *parent)
@@ -244,7 +245,8 @@ public:
 	{
 		qDeleteAll(buttons);
 		buttons.clear();
-		icon = PsiIcon();
+		if (icon)
+			delete icon;
 	}
 };
 
@@ -260,14 +262,14 @@ void PopupAction::setSizePolicy (const QSizePolicy &p)
 	d->size = p;
 }
 
-void PopupAction::setAlert (const PsiIcon &icon)
+void PopupAction::setAlert (const PsiIcon *icon)
 {
 	setIcon(icon, d->showText, true);
 }
 
-void PopupAction::setIcon (const PsiIcon &icon, bool showText, bool alert)
+void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
 {
-	PsiIcon oldIcon = 0;
+	PsiIcon *oldIcon = 0;
 	if ( d->icon ) {
 		oldIcon = d->icon;
 		d->icon = 0;
@@ -276,9 +278,10 @@ void PopupAction::setIcon (const PsiIcon &icon, bool showText, bool alert)
 	d->showText = showText;
 
 	if ( icon ) {
-		d->icon = icon;
-		if ( alert )
-			d->icon = icon.toAlertIcon();
+		if ( !alert )
+			d->icon = new PsiIcon(*icon);
+		else
+			d->icon = new AlertIcon(icon);
 
 		IconAction::setIcon(icon->icon());
 	}

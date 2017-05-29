@@ -22,7 +22,6 @@
 #define ALERTICON_H
 
 #include "iconset.h"
-#include "psiicon_p.h"
 
 class QPixmap;
 class Impix;
@@ -30,12 +29,12 @@ class QString;
 class QIcon;
 class QImage;
 
-class AlertIconPrivate : public PsiIconPrivate
+class AlertIcon : public PsiIcon
 {
 	Q_OBJECT
 public:
-	AlertIconPrivate(const PsiIcon icon);
-	~AlertIconPrivate();
+	AlertIcon(const PsiIcon *icon);
+	~AlertIcon();
 
 	// reimplemented
 	virtual bool isAnimated() const;
@@ -46,17 +45,17 @@ public:
 	virtual int frameNumber() const;
 	virtual const QString &name() const;
 
-	virtual PsiIcon copy() const;
+	virtual PsiIcon *copy() const;
 
 public slots:
 	void activated(bool playSound = true);
 	void stop();
 
 public:
-	PsiIcon real;
-	bool isActivated;
-	Impix impix;
-	static QString alertStyle;
+	class Private;
+private:
+	Private *d;
+	friend class Private;
 };
 
 void alertIconUpdateAlertStyle();

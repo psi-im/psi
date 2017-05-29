@@ -48,7 +48,7 @@ public:
 
 protected:
 	static QString clipText(QString text);
-	static QString title(PopupManager::PopupType type, bool *doAlertIcon, PsiIcon *icon);
+	static QString title(PopupManager::PopupType type, bool *doAlertIcon, PsiIcon **icon);
 	int duration() const { return duration_; }
 
 private:

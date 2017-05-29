@@ -178,7 +178,7 @@ void PsiGrowlNotifier::popup(PsiAccount* account, PopupManager::PopupType type, 
 			name = QObject::tr("Typing notify");
 			title = QString("%1%2").arg(contact).arg(QObject::tr(" is typing..."));
 			desc = QObject::tr("[Typing notify]");
-			//icon = IconsetFactory::iconPtr("psi/typing");
+			//icon = (PsiIcon *)IconsetFactory::iconPtr("psi/typing");
 			break;
 		case PopupManager::AlertMessage: {
 			name = QObject::tr("Incoming Message");
@@ -244,8 +244,8 @@ void PsiGrowlNotifier::popup(PsiAccount* account, PopupManager::PopupType type, 
 	gn_->notify(name, title, desc, icon, false, this, SLOT(notificationClicked(void*)), SLOT(notificationTimedOut(void*)), context);
 }
 
-void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType/* type*/, const Jid &j, const PsiIcon &titleIcon, const QString &titleText,
-				 const QPixmap *avatar, const PsiIcon &icon, const QString &text)
+void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType/* type*/, const Jid &j, const PsiIcon *titleIcon, const QString &titleText,
+			     const QPixmap *avatar, const PsiIcon *icon, const QString &text)
 {
 	QPixmap pix;
 	if(titleIcon)

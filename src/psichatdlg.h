@@ -99,7 +99,7 @@ private:
 	bool smallChat_;
 	class ChatDlgMCmdProvider;
 
-	static PsiIcon throbber_icon;
+	static PsiIcon *throbber_icon;
 };
 
 #endif

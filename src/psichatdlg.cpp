@@ -55,7 +55,7 @@
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
 
-PsiIcon PsiChatDlg::throbber_icon = 0;
+PsiIcon* PsiChatDlg::throbber_icon = 0;
 
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
 	Q_OBJECT
@@ -268,7 +268,7 @@ void PsiChatDlg::initUi()
 	ui_.mini_prompt->hide();
 
 	if (throbber_icon == 0) {
-		throbber_icon = IconsetFactory::iconPtr("psi/throbber");
+		throbber_icon = (PsiIcon *)IconsetFactory::iconPtr("psi/throbber");
 	}
 #ifdef PSI_PLUGINS
 	PluginManager::instance()->setupChatTab(this, account(), jid().full());

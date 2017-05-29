@@ -239,7 +239,7 @@ private:
 	static const int displayNumIcons;
 #ifndef WIDGET_PLUGIN
 	Iconset iss;
-	QMap<PsiIcon, QRect> iconRects;
+	QMap<PsiIcon*, QRect> iconRects;
 #endif
 	int w, h;
 	mutable int fullW, fullH;
@@ -257,25 +257,25 @@ public:
 
 		int count;
 
-		QListIterator<PsiIcon> it = iss.iterator();
+		QListIterator<PsiIcon *> it = iss.iterator();
 		count = 0;
 		while ( it.hasNext() ) {
 			if ( count++ >= displayNumIcons )
 				break; // display only first displayNumIcons icons
 
-			PsiIcon icon = it.next();
-			QPixmap pix = icon.pixmap();
+			PsiIcon *icon = it.next();
+			QPixmap pix = icon->pixmap();
 
 			iconRects[icon] = QRect( w, margin, pix.width(), pix.height() );
 
 			w += pix.width() + margin;
 			h = qMax( h, pix.height() + 2*margin );
 
-			icon.connectPixmapChanged(this, SLOT(update()));
-			icon.activated(false); // start animation
+			connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
+			icon->activated(false); // start animation
 		}
 
-		QMutableMapIterator<PsiIcon, QRect> it2(iconRects);
+		QMutableMapIterator<PsiIcon*, QRect> it2(iconRects);
 		while (it2.hasNext()) {
 			it2.next();
 			QRect r = it2.value();
@@ -289,9 +289,9 @@ public:
 	~IconsetSelectItem()
 	{
 #ifndef WIDGET_PLUGIN
-		QMap<PsiIcon, QRect>::Iterator it;
+		QMap<PsiIcon*, QRect>::Iterator it;
 		for (it = iconRects.begin(); it != iconRects.end(); it++)
-			it.key().stop();
+			it.key()->stop();
 #endif
 	}
 
@@ -322,11 +322,11 @@ public:
 #ifndef WIDGET_PLUGIN
 		QFontMetrics fm = painter->fontMetrics();
 
-		QMap<PsiIcon, QRect>::ConstIterator it;
+		QMap<PsiIcon*, QRect>::ConstIterator it;
 		for (it = iconRects.begin(); it != iconRects.end(); it++) {
-			PsiIcon icon = it.key();
+			PsiIcon *icon = it.key();
 			QRect r = it.value();
-			painter->drawPixmap(QPoint(10 + r.left(), fm.lineSpacing() + 2 + r.top()), icon.pixmap());
+			painter->drawPixmap(QPoint(10 + r.left(), fm.lineSpacing() + 2 + r.top()), icon->pixmap());
 		}
 #else
 		Q_UNUSED(painter);
@@ -426,14 +426,14 @@ private:
 	int w, h;
 
 public:
-	IconsetDisplayItem(QListWidget *parent, PsiIcon i, int iconW)
+	IconsetDisplayItem(QListWidget *parent, PsiIcon *i, int iconW)
 	: RealIconWidgetItem(parent)
 	{
 #ifndef WIDGET_PLUGIN
-		icon = i;
+		icon = *i;
 		w = iconW;
 
-		icon.connectPixmapChanged(this, SLOT(update()));
+		connect(&icon, SIGNAL(pixmapChanged()), SLOT(update()));
 		icon.activated(false);
 
 		h = icon.pixmap().height();
@@ -502,9 +502,9 @@ void IconsetDisplay::setIconset(const Iconset &iconset)
 {
 #ifndef WIDGET_PLUGIN
 	int w = 0;
-	QListIterator<PsiIcon> it = iconset.iterator();
+	QListIterator<PsiIcon *> it = iconset.iterator();
 	while ( it.hasNext() ) {
-		w = qMax(w, it.next().pixmap().width());
+		w = qMax(w, it.next()->pixmap().width());
 	}
 
 	it = iconset.iterator();
@@ -524,7 +524,7 @@ class IconButton::Private : public QObject
 {
 	Q_OBJECT
 public:
-	PsiIcon icon;
+	PsiIcon *icon;
 	IconButton *button;
 	bool textVisible;
 	bool activate, forced;
@@ -535,6 +535,7 @@ public:
 public:
 	Private(IconButton *b)
 	{
+		icon = 0;
 		button = b;
 		textVisible = true;
 		forced = false;
@@ -545,12 +546,12 @@ public:
 		iconStop();
 	}
 
-	void setIcon(PsiIcon i)
+	void setIcon(PsiIcon *i)
 	{
 #ifndef WIDGET_PLUGIN
 		iconStop();
 		if ( i )
-			icon = i.copy();
+			icon = i->copy();
 		iconStart();
 #else
 		Q_UNUSED(i);
@@ -561,9 +562,9 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			icon.connectPixmapChanged(this, SLOT(iconUpdated()));
+			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
 			if ( activate )
-				icon.activated(true); // FIXME: should icon play sound when it's activated on button?
+				icon->activated(true); // FIXME: should icon play sound when it's activated on button?
 		}
 
 		updateIcon();
@@ -574,11 +575,12 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			icon.disconnectPixmapChanged(this, 0);
+			disconnect(icon, 0, this, 0 );
 			if ( activate )
-				icon.stop();
+				icon->stop();
 
-			icon = PsiIcon();
+			delete icon;
+			icon = 0;
 		}
 #endif
 	}
@@ -628,14 +630,14 @@ void IconButton::setIcon(const QPixmap &p)
 	QPushButton::setIcon(p);
 }
 
-void IconButton::forceSetPsiIcon(const PsiIcon &i, bool activate)
+void IconButton::forceSetPsiIcon(const PsiIcon *i, bool activate)
 {
 	d->activate = activate;
-	d->setIcon(i);
+	d->setIcon((PsiIcon *)i);
 	d->forced = true;
 }
 
-void IconButton::setPsiIcon(const PsiIcon &i, bool activate)
+void IconButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
 #ifndef HAVE_X11
 	if ( !text().isEmpty() )
@@ -660,7 +662,7 @@ QString IconButton::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
 	if ( d->icon )
-		return d->icon.name();
+		return d->icon->name();
 	return QString::null;
 #else
 	return d->iconName;
@@ -697,7 +699,7 @@ class IconToolButton::Private : public QObject
 {
 	Q_OBJECT
 public:
-	PsiIcon icon;
+	PsiIcon *icon;
 	IconToolButton *button;
 	bool activate;
 #ifdef WIDGET_PLUGIN
@@ -707,6 +709,7 @@ public:
 public:
 	Private(IconToolButton *b)
 	{
+		icon = 0;
 		button = b;
 	}
 
@@ -715,12 +718,12 @@ public:
 		iconStop();
 	}
 
-	void setIcon(const PsiIcon &i)
+	void setIcon(const PsiIcon *i)
 	{
 #ifndef WIDGET_PLUGIN
 		iconStop();
 		if ( i )
-			icon = i.copy();
+			icon = new PsiIcon(*i);
 		iconStart();
 #else
 		Q_UNUSED(i);
@@ -793,10 +796,10 @@ void IconToolButton::setIcon(const QIcon &p)
 	QToolButton::setIcon(p);
 }
 
-void IconToolButton::setPsiIcon(const PsiIcon &i, bool activate)
+void IconToolButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
 	d->activate = activate;
-	d->setIcon (i);
+	d->setIcon ((PsiIcon *)i);
 }
 
 void IconToolButton::setPsiIcon(const QString &name)

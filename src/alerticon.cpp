@@ -119,7 +119,11 @@ public slots:
 	void pixmapChanged();
 
 public:
-
+	AlertIcon *ai;
+	PsiIcon *real;
+	bool isActivated;
+	Impix impix;
+	static QString alertStyle;
 };
 
 QString AlertIcon::Private::alertStyle = QString();
@@ -151,7 +155,7 @@ void AlertIcon::Private::init()
 	updateAlertStyle();
 
 	connect(metaAlertIcon, SIGNAL(update()), SLOT(update()));
-	real.connectIconModified(this, SLOT(pixmapChanged()));
+	connect(real, SIGNAL(iconModified()), SLOT(pixmapChanged()));
 
 	if ( alertStyle == "animate" && real->isAnimated() )
 		impix = real->frameImpix();
@@ -169,7 +173,7 @@ void AlertIcon::Private::activated(bool playSound)
 {
 	if ( alertStyle == "animate" && real->isAnimated() ) {
 		if ( !isActivated ) {
-			real.connectPixmapChanged(this, SLOT(pixmapChanged()));
+			connect(real, SIGNAL(pixmapChanged()), SLOT(pixmapChanged()));
 			real->activated(playSound);
 			isActivated = true;
 		}
@@ -188,8 +192,8 @@ void AlertIcon::Private::stop()
 	disconnect(metaAlertIcon, SIGNAL(updateFrame(int)), this, SLOT(updateFrame(int)));
 
 	if ( isActivated ) {
-		real.disconnectPixmapChanged(this, SLOT(pixmapChanged()));
-		real.stop();
+		disconnect(real, SIGNAL(pixmapChanged()), this, SLOT(pixmapChanged()));
+		real->stop();
 		isActivated = false;
 	}
 }
@@ -218,10 +222,14 @@ void AlertIcon::Private::pixmapChanged()
 // AlertIcon
 //----------------------------------------------------------------------------
 
-AlertIcon::AlertIcon(const PsiIcon icon)
+AlertIcon::AlertIcon(const PsiIcon *icon)
 	: d(new Private(this))
 {
-	d->real = icon;
+	if ( icon )
+		d->real = new PsiIcon(*icon);
+	else
+		d->real = new PsiIcon();
+
 	d->init();
 }
 
@@ -232,7 +240,7 @@ AlertIcon::~AlertIcon()
 
 bool AlertIcon::isAnimated() const
 {
-	return d->real.isAnimated();
+	return d->real->isAnimated();
 }
 
 const QPixmap &AlertIcon::pixmap() const
@@ -282,7 +290,7 @@ const QString &AlertIcon::name() const
 	return d->real->name();
 }
 
-PsiIcon AlertIcon::copy() const
+PsiIcon *AlertIcon::copy() const
 {
 	return new AlertIcon(d->real);
 }

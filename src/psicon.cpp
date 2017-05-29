@@ -1482,7 +1482,7 @@ void PsiCon::slotApplyOptions()
 
 void PsiCon::queueChanged()
 {
-	PsiIcon nextAnim;
+	PsiIcon *nextAnim = 0;
 	int nextAmount = d->contactList->queueCount();
 	PsiAccount *pa = d->contactList->queueLowestEventId();
 	if(pa)

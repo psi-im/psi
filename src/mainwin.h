@@ -171,7 +171,7 @@ public slots:
 	void showNoFocus();
 
 	void decorateButton(int);
-	void updateReadNext(PsiIcon &nextAnim, int nextAmount);
+	void updateReadNext(PsiIcon *nextAnim, int nextAmount);
 
 	void optionsUpdate();
 	void setTrayToolTip(const XMPP::Status &, bool usePriority = false, bool isManualStatus = false);

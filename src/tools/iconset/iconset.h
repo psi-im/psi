@@ -94,7 +94,7 @@ private:
 	mutable QSharedDataPointer<Private> d;
 };
 
-class PsiIcon
+class PsiIcon : public QObject
 {
 	Q_OBJECT
 public:
@@ -103,7 +103,6 @@ public:
 	~PsiIcon();
 
 	PsiIcon & operator= (const PsiIcon &);
-	operator bool() const;
 
 	//!
 	//! Returns impix().pixmap().
@@ -132,8 +131,6 @@ public:
 	const Anim *anim() const;
 	void setAnim(const Anim &, bool doDetach = true);
 	void removeAnim(bool doDetach = true);
-
-	PsiIcon toAlertIcon();
 
 	virtual int frameNumber() const;
 
@@ -165,13 +162,12 @@ public:
 
 	void stripFirstAnimFrame();
 
-	virtual PsiIcon copy() const;
+	virtual PsiIcon *copy() const;
 	void detach();
 
-	void connectPixmapChanged(QObject *receiver, const char *slot);
-	void connectIconModified(QObject *receiver, const char *slot);
-	void disconnectPixmapChanged(QObject *receiver, const char *slot);
-	void disconnectIconModified(QObject *receiver, const char *slot);
+signals:
+	void pixmapChanged();
+	void iconModified();
 
 public slots:
 	virtual void activated(bool playSound = true);	// it just has been inserted in the text, or now it's being displayed by
@@ -182,10 +178,7 @@ public slots:
 public:
 	class Private;
 private:
-	friend class Private;
-	PsiIcon(Private *d);
-
-	QExplicitlySharedDataPointer<Private> d;
+	QSharedDataPointer<Private> d;
 };
 
 class Iconset
@@ -203,7 +196,7 @@ public:
 
 	bool load(const QString &dir);
 
-	const PsiIcon icon(const QString &) const;
+	const PsiIcon *icon(const QString &) const;
 	void setIcon(const QString &, const PsiIcon &);
 	void removeIcon(const QString &);
 
@@ -224,8 +217,7 @@ public:
 	const QHash<QString, QString> info() const;
 	void setInfo(const QHash<QString, QString> &);
 
-	QListIterator<PsiIcon> iterator() const;
-	QMutableListIterator<PsiIcon> mutableIterator() const;
+	QListIterator<PsiIcon *> iterator() const;
 
 	void addToFactory() const;
 	void removeFromFactory() const;
@@ -249,7 +241,7 @@ public:
 	static PsiIcon icon(const QString &name);
 	static const QPixmap &iconPixmap(const QString &name);
 
-	static const PsiIcon iconPtr(const QString &name);
+	static const PsiIcon *iconPtr(const QString &name);
 	static const QStringList icons();
 #ifdef WEBKIT
 	static const QByteArray raw(const QString &name);

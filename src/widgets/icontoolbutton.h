@@ -42,7 +42,7 @@ public:
 	void setIcon(const QIcon &);
 
 public slots:
-	void setPsiIcon(const PsiIcon &, bool activate = true);
+	void setPsiIcon(const PsiIcon *, bool activate = true);
 	void setPsiIcon(const QString &);
 	QString psiIconName() const;
 

@@ -44,13 +44,14 @@ class IconAction::Private : public QObject
 	Q_OBJECT
 public:
 	QList<IconToolButton *> buttons;
-	PsiIcon icon;
+	PsiIcon *icon;
 #ifdef WIDGET_PLUGIN
 	QString iconName;
 #endif
 	IconAction *action;
 
 	Private(IconAction *act, QObject *parent) {
+		icon = 0;
 		action = act;
 		Q_ASSERT(action);
 
@@ -64,6 +65,12 @@ public:
 
 	~Private()
 	{
+#ifndef WIDGET_PLUGIN
+		if (icon) {
+			delete icon;
+			icon = 0;
+		}
+#endif
 	}
 
 	void init(const QString &objectName, const QString &statusTip, QKeySequence shortcut, bool checkable) {
@@ -135,30 +142,31 @@ IconAction::~IconAction()
 	delete d;
 }
 
-const PsiIcon IconAction::psiIcon() const
+const PsiIcon *IconAction::psiIcon() const
 {
 	return d->icon;
 }
 
-void IconAction::setPsiIcon(const PsiIcon &i)
+void IconAction::setPsiIcon(const PsiIcon *i)
 {
 #ifdef WIDGET_PLUGIN
 	Q_UNUSED(i);
 #else
 	if ( d->icon ) {
-		d->icon.disconnectIconModified(this, 0);
-		d->icon.stop();
-		d->icon = PsiIcon();
+		disconnect(d->icon, 0, this, 0 );
+		d->icon->stop();
+		delete d->icon;
+		d->icon = 0;
 	}
 
 	QIcon is;
 	if ( i ) {
-		d->icon = i;
-		d->icon.connectIconModified(this, SLOT(iconUpdated()));
+		d->icon = new PsiIcon(*i);
+		connect(d->icon, SIGNAL(iconModified()), SLOT(iconUpdated()));
 		//We newer use animated iconactions
 		//d->icon->activated(true);
 
-		is = d->icon.icon();
+		is = d->icon->icon();
 	}
 
 	QAction::setIcon( is );
@@ -175,7 +183,7 @@ void IconAction::setPsiIcon(const QString &name)
 	d->iconName = name;
 #else
 	if (name.isEmpty()) {
-		setPsiIcon( PsiIcon() );
+		setPsiIcon( 0 );
 		return;
 	}
 	setPsiIcon( IconsetFactory::iconPtr(name) );
@@ -186,7 +194,7 @@ QString IconAction::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
 	if ( d->icon )
-		return d->icon.name();
+		return d->icon->name();
 #else
 	return d->iconName;
 #endif
@@ -282,7 +290,7 @@ QList<IconToolButton *> IconAction::buttonList()
 void IconAction::iconUpdated()
 {
 #ifndef WIDGET_PLUGIN
-	QAction::setIcon(d->icon ? d->icon.icon() : QIcon());
+	QAction::setIcon(d->icon ? d->icon->icon() : QIcon());
 #endif
 }
 

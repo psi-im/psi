@@ -41,7 +41,7 @@ public:
 	void mousePressEvent(QMouseEvent *e);
 
 signals:
-	void iconSelected(const PsiIcon &);
+	void iconSelected(const PsiIcon *);
 	void textSelected(QString);
 
 private:

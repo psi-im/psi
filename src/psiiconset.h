@@ -52,31 +52,31 @@ public:
 	void stripFirstAnimFrame(Iconset *);
 	static void removeAnimation(Iconset *);
 
-	PsiIcon event2icon(const PsiEvent::Ptr &e);
+	PsiIcon *event2icon(const PsiEvent::Ptr &e);
 
 	// these two can possibly fail (and return 0)
-	PsiIcon statusPtr(int);
-	PsiIcon statusPtr(const XMPP::Status &);
+	PsiIcon *statusPtr(int);
+	PsiIcon *statusPtr(const XMPP::Status &);
 
 	// these two return empty PsiIcon on failure and are safe
 	PsiIcon status(int);
 	PsiIcon status(const XMPP::Status &);
 
 	// JID-enabled status functions
-	PsiIcon statusPtr(const XMPP::Jid &, int);
-	PsiIcon statusPtr(const XMPP::Jid &, const XMPP::Status &);
+	PsiIcon *statusPtr(const XMPP::Jid &, int);
+	PsiIcon *statusPtr(const XMPP::Jid &, const XMPP::Status &);
 
 	PsiIcon status(const XMPP::Jid &, int);
 	PsiIcon status(const XMPP::Jid &, const XMPP::Status &);
 
 	// functions to get status icon by transport name
-	PsiIcon transportStatusPtr(QString name, int);
-	PsiIcon transportStatusPtr(QString name, const XMPP::Status &);
+	PsiIcon *transportStatusPtr(QString name, int);
+	PsiIcon *transportStatusPtr(QString name, const XMPP::Status &);
 
 	PsiIcon transportStatus(QString name, int);
 	PsiIcon transportStatus(QString name, const XMPP::Status &);
 
-	PsiIcon statusPtr(UserListItem *);
+	PsiIcon *statusPtr(UserListItem *);
 	PsiIcon status(UserListItem *);
 
 	QString caps2client(const QString &name);

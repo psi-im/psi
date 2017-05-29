@@ -105,8 +105,8 @@ public slots:
 public:
 	PopupAction (const QString &label, QMenu *_menu, QObject *parent, const char *name);
 	void setSizePolicy (const QSizePolicy &p);
-	void setAlert (const PsiIcon &);
-	void setIcon (const PsiIcon &, bool showText = true, bool alert = false);
+	void setAlert (const PsiIcon *);
+	void setIcon (const PsiIcon *, bool showText = true, bool alert = false);
 	void setText (const QString &text);
 	bool addTo (QWidget *w);
 

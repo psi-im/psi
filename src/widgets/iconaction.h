@@ -45,8 +45,8 @@ public:
 
 	virtual bool addTo(QWidget *);
 
-	const PsiIcon psiIcon() const;
-	void setPsiIcon(const PsiIcon &);
+	const PsiIcon *psiIcon() const;
+	void setPsiIcon(const PsiIcon *);
 	void setPsiIcon(const QString &);
 	QString psiIconName() const;
 

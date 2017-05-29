@@ -638,11 +638,11 @@ void TabDlg::updateTab(TabbableWidget* chat)
 
 	if (chat->state() == TabbableWidget::StateComposing) {
 		tabWidget_->setTabTextColor(chat, Qt::darkGreen);
-		tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing").icon());
+		tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing")->icon());
 	}
 	else if (chat->unreadMessageCount()) {
 		tabWidget_->setTabTextColor(chat, Qt::red);
-		tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat").icon());
+		tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat")->icon());
 	}
 	else {
 		tabWidget_->setTabTextColor(chat, palette().windowText().color());
