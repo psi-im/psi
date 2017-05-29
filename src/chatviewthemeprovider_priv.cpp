@@ -29,6 +29,7 @@
 #include "psithemeprovider.h"
 #include "psiiconset.h"
 #ifdef WEBENGINE
+# include <QWebEngineProfile>
 # include "themeserver.h"
 #else
 # include "networkaccessmanager.h"
@@ -225,11 +226,19 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 	themeServer->registerPathHandler("/psiglobal/avatar/", avatarsHandler);
 
 	requestInterceptor = new ChatViewUrlRequestInterceptor(this);
+	QWebEngineProfile::defaultProfile()->setRequestInterceptor(requestInterceptor);
 #else
 	pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new ThemesDirHandler()));
 	pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new IconHandler()));
 	pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new AvatarHandler()));
 #endif
+}
+
+ChatViewCon::~ChatViewCon()
+{
+	QWebEngineProfile::defaultProfile()->setRequestInterceptor(0);
+	delete requestInterceptor;
+	delete themeServer;
 }
 
 ChatViewCon *ChatViewCon::instance()

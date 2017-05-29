@@ -49,6 +49,7 @@ class ChatViewCon : public QObject
 
 	ChatViewCon(PsiCon *pc);
 public:
+	~ChatViewCon();
 #if WEBENGINE
 	ThemeServer *themeServer;
 	ChatViewUrlRequestInterceptor *requestInterceptor;
