@@ -277,7 +277,6 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 	}
 
 	ChatViewThemeProvider *cvProvider = static_cast<ChatViewThemeProvider*>(provider);
-	page->profile()->setRequestInterceptor(cvProvider->requestInterceptor());
 
 	auto server = cvProvider->themeServer();
 	session->server = server;
