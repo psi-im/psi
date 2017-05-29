@@ -26,7 +26,7 @@
 
 #include <QDebug>
 
-#define DEBUG_OUTPUT
+//#define DEBUG_OUTPUT
 
 bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
 {
