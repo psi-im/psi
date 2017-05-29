@@ -46,8 +46,8 @@ public:
 	void setIcon(const QPixmap &);
 
 public slots:
-	void setPsiIcon(const PsiIcon *, bool activate = true);
-	void forceSetPsiIcon(const PsiIcon *, bool activate = true);
+	void setPsiIcon(const PsiIcon &, bool activate = true);
+	void forceSetPsiIcon(const PsiIcon &, bool activate = true);
 	void setPsiIcon(const QString &);
 	QString psiIconName() const;
 

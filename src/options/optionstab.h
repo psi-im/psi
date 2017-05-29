@@ -21,11 +21,11 @@ public:
 	virtual QByteArray parentId() const;	// Identifier of parent tab, i.e. "general"
 
 	virtual QString tabName() const;	// "General"
-	virtual PsiIcon *tabIcon() const;		// default implementation returns 0
+	virtual PsiIcon tabIcon() const;		// default implementation returns 0
 
 	virtual QString name() const;		// "Roster"
 	virtual QString desc() const;		// "You can configure your roster here"
-	virtual PsiIcon *psiIcon() const;		// default implementation returns 0
+	virtual PsiIcon psiIcon() const;		// default implementation returns 0
 
 	virtual QWidget *widget() = 0;		// Actual widget that contains checkboxes, pushbuttons, etc.
 						// the widget is reparented after this call

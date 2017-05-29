@@ -100,7 +100,7 @@ public slots:
 	void popupDestroyed(QObject *);
 
 public:
-	void initContents(QString title, const PsiIcon *icon, bool copyIcon);
+	void initContents(QString title, const PsiIcon &icon, bool copyIcon);
 
 	// parameters
 	static int hideTimeout;
@@ -176,7 +176,7 @@ QPoint FancyPopup::Private::position()
 	return destination;
 }
 
-void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool copyIcon)
+void FancyPopup::Private::initContents(QString title, const PsiIcon &icon, bool copyIcon)
 {
 	// TODO: use darker color on popup borders
 	QPalette backgroundPalette;
@@ -229,7 +229,7 @@ bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
 static const QFlags<Qt::WindowType>
 POPUP_FLAGS = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
 
-FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon)
+FancyPopup::FancyPopup(QString title, const PsiIcon &icon, FancyPopup *prev, bool copyIcon)
 : QFrame( 0, POPUP_FLAGS )
 {
 	QWidget::setAttribute(Qt::WA_DeleteOnClose);

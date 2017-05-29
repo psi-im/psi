@@ -143,7 +143,7 @@ public:
 	QTimer *hideTimer;
 	QSignalMapper* statusMapper;
 
-	PsiIcon* nextAnim;
+	PsiIcon nextAnim;
 	int nextAmount;
 
 	QMap<QAction *, int> statusActions;
@@ -1328,7 +1328,7 @@ void MainWin::decorateButton(int status)
 		else {
 			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
 			d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
-			d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE)->icon());
+			d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE).icon());
 		}
 
 #ifdef Q_OS_LINUX
@@ -1342,7 +1342,7 @@ void MainWin::decorateButton(int status)
 		d->statusButton->setText(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
 		d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(status));
-		d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(status)->icon());
+		d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(status).icon());
 #ifdef Q_OS_LINUX
 		d->statusMenuMB->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
 #endif
@@ -1587,7 +1587,7 @@ void MainWin::trayHide()
 	hide();
 }
 
-void MainWin::updateReadNext(PsiIcon* anim, int amount)
+void MainWin::updateReadNext(PsiIcon &anim, int amount)
 {
 	d->nextAnim = anim;
 	if(anim == 0) {

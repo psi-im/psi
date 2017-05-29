@@ -307,8 +307,8 @@ void PsiDBusNotifier::popup(PsiAccount* account, PopupManager::PopupType type, c
 		lifeTimer_->start(lifeTime);
 }
 
-void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*/, const Jid &j, const PsiIcon *titleIcon, const QString &titleText,
-			    const QPixmap *avatar, const PsiIcon */*icon*/, const QString &text)
+void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*/, const Jid &j, const PsiIcon &titleIcon, const QString &titleText,
+				const QPixmap *avatar, const PsiIcon &/*icon*/, const QString &text)
 {
 	account_ = account;
 	jid_ = j;

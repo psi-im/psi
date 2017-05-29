@@ -705,7 +705,7 @@ void PluginManager::initPopupForJid(int account, const QString &jid, const QStri
 	PsiAccount * pa = accountIds_.account(account);
 	if(pa) {
 		UserListItem *i = pa->findFirstRelevant(j);
-		PsiIcon *statusIco = PsiIconset::instance()->statusPtr(i);
+		PsiIcon statusIco = PsiIconset::instance()->statusPtr(i);
 		const QPixmap pix = pa->avatarFactory()->getAvatar(j);
 		psi_->popupManager()->doPopup(pa, j, ico, title, &pix, statusIco, text, true, (PopupManager::PopupType)type);
 		return;

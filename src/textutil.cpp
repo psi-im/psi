@@ -472,15 +472,15 @@ QString TextUtil::emoticonify(const QString &in)
 		while ( i >= 0 ) {
 			// find closest emoticon
 			int ePos = -1;
-			PsiIcon *closest = 0;
+			PsiIcon closest;
 
 			int foundPos = -1, foundLen = -1;
 
 			foreach(const Iconset* iconset, PsiIconset::instance()->emoticons) {
-				QListIterator<PsiIcon*> it = iconset->iterator();
+				QListIterator<PsiIcon> it = iconset->iterator();
 				while ( it.hasNext()) {
-					PsiIcon *icon = it.next();
-					if ( icon->regExp().isEmpty() )
+					PsiIcon icon(it.next());
+					if ( icon.regExp().isEmpty() )
 						continue;
 
 					// some hackery
@@ -491,7 +491,7 @@ QString TextUtil::emoticonify(const QString &in)
 						searchAgain = false;
 
 						// find the closest match
-						const QRegExp &rx = icon->regExp();
+						const QRegExp &rx = icon.regExp();
 						int n = rx.indexIn(str, iii);
 						if ( n == -1 )
 							continue;
@@ -527,7 +527,7 @@ QString TextUtil::emoticonify(const QString &in)
 			if ( !closest )
 				break;
 
-			p.putRich( QString("<icon name=\"%1\" text=\"%2\">").arg(TextUtil::escape(closest->name())).arg(TextUtil::escape(str.mid(foundPos, foundLen))) );
+			p.putRich( QString("<icon name=\"%1\" text=\"%2\">").arg(TextUtil::escape(closest.name())).arg(TextUtil::escape(str.mid(foundPos, foundLen))) );
 			i = foundPos + foundLen;
 		}
 	}

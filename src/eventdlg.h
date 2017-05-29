@@ -152,7 +152,7 @@ public slots:
 	void closeAfterReply();
 	void updateContact(const Jid &);
 	void updateEvent(const PsiEvent::Ptr &);
-	void updateReadNext(PsiIcon *, int);
+	void updateReadNext(PsiIcon, int);
 	void actionGCJoin(const QString &, const QString&);
 
 private slots:

@@ -66,8 +66,8 @@ public:
 	Private(PsiPopup *p);
 	~Private();
 
-	void init(const PsiIcon *titleIcon, const QString& titleText, PsiAccount *_acc);
-	QBoxLayout *createContactInfo(const QPixmap *avatar, const PsiIcon *icon, const QString& text);
+	void init(const PsiIcon &titleIcon, const QString& titleText, PsiAccount *_acc);
+	QBoxLayout *createContactInfo(const QPixmap *avatar, const PsiIcon &icon, const QString& text);
 
 private slots:
 	void popupDestroyed();
@@ -83,7 +83,7 @@ public:
 	Jid jid;
 	Status status;
 	PsiEvent::Ptr event;
-	PsiIcon *titleIcon;
+	PsiIcon titleIcon;
 	bool display;
 	bool doAlertIcon;
 };
@@ -111,7 +111,7 @@ PsiPopup::Private::~Private()
 	popup = 0;
 }
 
-void PsiPopup::Private::init(const PsiIcon *_titleIcon, const QString& titleText, PsiAccount *acc)
+void PsiPopup::Private::init(const PsiIcon &_titleIcon, const QString& titleText, PsiAccount *acc)
 {
 	if(acc)
 		psi = acc->psi();
@@ -128,10 +128,9 @@ void PsiPopup::Private::init(const PsiIcon *_titleIcon, const QString& titleText
 	if ( psiPopupList->count() && psiPopupList->last() )
 		lastPopup = psiPopupList->last()->popup();
 
+	titleIcon = _titleIcon;
 	if ( doAlertIcon )
-		titleIcon = new AlertIcon(_titleIcon);
-	else if(_titleIcon)
-		titleIcon = new PsiIcon(*_titleIcon);
+		titleIcon = titleIcon.toAlertIcon();
 
 	FancyPopup::setHideTimeout(psiPopup->duration());
 	FancyPopup::setBorderColor(ColorOpt::instance()->color("options.ui.look.colors.passive-popup.border"));
@@ -171,7 +170,7 @@ void PsiPopup::Private::popupClicked(int button)
 	popup->deleteLater();
 }
 
-QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap *avatar, const PsiIcon *icon, const QString& text)
+QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap *avatar, const PsiIcon &icon, const QString& text)
 {
 	QHBoxLayout *dataBox = new QHBoxLayout();
 
@@ -225,14 +224,14 @@ PsiPopup::~PsiPopup()
 void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j, const Resource &r, const UserListItem *item, const PsiEvent::Ptr &event)
 {
 	d->popupType = type;
-	PsiIcon *icon = 0;
+	PsiIcon icon;
 	QString text = title(type, &d->doAlertIcon, &icon);
 	d->init(icon, text, acc);
 	setData(j, r, item, event);
 }
 
-void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon, const QString &titleText,
-		     const QPixmap *avatar, const PsiIcon *icon, const QString &text)
+void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j, const PsiIcon &titleIcon, const QString &titleText,
+			 const QPixmap *avatar, const PsiIcon &icon, const QString &text)
 {
 	d->popupType = type;
 	d->init(titleIcon, titleText, acc);
@@ -245,7 +244,7 @@ void PsiPopup::setJid(const Jid &j)
 	d->jid = j;
 }
 
-void PsiPopup::setData(const QPixmap *avatar, const PsiIcon *icon, const QString& text)
+void PsiPopup::setData(const QPixmap *avatar, const PsiIcon &icon, const QString& text)
 {
 	if ( !d->popup ) {
 		deleteLater();
@@ -274,7 +273,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	if(d->popupType != PopupManager::AlertComposing)
 		d->event  = event;
 
-	PsiIcon *icon = PsiIconset::instance()->statusPtr(j, r.status());
+	PsiIcon icon = PsiIconset::instance()->statusPtr(j, r.status());
 
 	QString jid = j.full();
 	int jidLen = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-jid-length").toInt();
@@ -384,7 +383,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 
 		// update id
 		if ( icon )
-			d->id += icon->name();
+			d->id += icon.name();
 		d->id += contactText;
 		d->id += message;
 

@@ -258,7 +258,7 @@ public:
 	ChatView* te_log() const { return dlg->ui_.log; }
 
 public slots:
-	void addEmoticon(const PsiIcon *icon) {
+	void addEmoticon(const PsiIcon &icon) {
 		addEmoticon(icon->defaultText());
 	}
 

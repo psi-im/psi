@@ -45,7 +45,7 @@ class IconLabel::Private : public QObject
 public:
 
 	IconLabel *label;
-	PsiIcon *icon;
+	PsiIcon icon;
 	bool copyIcon;
 #ifdef WIDGET_PLUGIN
 	QString iconName;
@@ -54,26 +54,20 @@ public:
 	Private(IconLabel *l)
 	{
 		label = l;
-		icon = 0;
 		copyIcon = false;
 	}
 
 	~Private()
 	{
 		stopIcon();
-#ifndef WIDGET_PLUGIN
-		if ( icon && copyIcon )
-			delete icon;
-#endif
 	}
 
-	void setIcon(const PsiIcon *i, bool _copyIcon)
+	void setIcon(const PsiIcon &i, bool _copyIcon)
 	{
 		stopIcon();
 
 		if (copyIcon && icon) {
-			delete icon;
-			icon = 0;
+			icon = PsiIcon();
 		}
 
 		copyIcon = _copyIcon;
@@ -81,12 +75,12 @@ public:
 #ifndef WIDGET_PLUGIN
 		if ( i ) {
 			if (copyIcon)
-				icon = new PsiIcon(*i);
+				icon = i.copy();
 			else
-				icon = (PsiIcon *)i;
+				icon = i;
 		}
 		else {
-			icon = 0;
+			icon = PsiIcon();
 		}
 
 #else
@@ -100,8 +94,8 @@ protected:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			disconnect(icon, 0, this, 0);
-			icon->stop();
+			icon.disconnectPixmapChanged(this, 0);
+			icon.stop();
 		}
 #endif
 	}
@@ -110,8 +104,8 @@ protected:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
-			icon->activated(false); // TODO: should icon play sound when it's activated on icon?
+			icon.connectPixmapChanged(this, SLOT(iconUpdated()));
+			icon.activated(false); // TODO: should icon play sound when it's activated on icon?
 		}
 		iconUpdated();
 #endif
@@ -121,7 +115,7 @@ private slots:
 	void iconUpdated()
 	{
 #ifndef WIDGET_PLUGIN
-		label->setPixmap(icon ? icon->pixmap() : QPixmap());
+		label->setPixmap(icon ? icon.pixmap() : QPixmap());
 #endif
 	}
 };
@@ -137,7 +131,7 @@ IconLabel::~IconLabel()
 	delete d;
 }
 
-const PsiIcon *IconLabel::psiIcon () const
+const PsiIcon IconLabel::psiIcon() const
 {
 	return d->icon;
 }
@@ -146,14 +140,14 @@ QString IconLabel::psiIconName () const
 {
 #ifndef WIDGET_PLUGIN
 	if ( d->icon )
-		return d->icon->name();
+		return d->icon.name();
 	return QString::null;
 #else
 	return d->iconName;
 #endif
 }
 
-void IconLabel::setPsiIcon(const PsiIcon *i, bool copyIcon)
+void IconLabel::setPsiIcon(const PsiIcon &i, bool copyIcon)
 {
 	d->setIcon(i, copyIcon);
 }
@@ -382,7 +376,7 @@ const QColor &FancyLabel::colorFont () const
 	return d->font;
 }
 
-const PsiIcon *FancyLabel::psiIcon () const
+const PsiIcon FancyLabel::psiIcon() const
 {
 	return d->pix->psiIcon();
 }

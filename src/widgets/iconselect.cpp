@@ -52,7 +52,7 @@ class IconSelectButton : public QAbstractButton
 	Q_OBJECT
 
 private:
-	PsiIcon *ic;
+	PsiIcon ic;
 	QSize s;
 	bool animated;
 
@@ -60,7 +60,6 @@ public:
 	IconSelectButton(QWidget *parent)
 	: QAbstractButton(parent)
 	{
-		ic = 0;
 		animated = false;
 		connect (this, SIGNAL(clicked()), SLOT(iconSelected()));
 	}
@@ -68,29 +67,15 @@ public:
 	~IconSelectButton()
 	{
 		iconStop();
-
-		if ( ic ) {
-			delete ic;
-			ic = 0;
-		}
 	}
 
-	void setIcon(const PsiIcon *i)
+	void setIcon(const PsiIcon &i)
 	{
 		iconStop();
-
-		if ( ic ) {
-			delete ic;
-			ic = 0;
-		}
-
-		if ( i )
-			ic = new PsiIcon(*((PsiIcon *)i));
-		else
-			ic = 0;
+		ic = i.copy();
 	}
 
-	const PsiIcon *icon() const
+	const PsiIcon icon() const
 	{
 		return ic;
 	}
@@ -99,23 +84,23 @@ public:
 	void setSizeHint(QSize sh) { s = sh; }
 
 signals:
-	void iconSelected(const PsiIcon *);
+	void iconSelected(const PsiIcon &);
 	void textSelected(QString);
 
 private:
 	void iconStart()
 	{
 		if ( ic ) {
-			connect(ic, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
+			ic.connectPixmapChanged(this, SLOT(iconUpdated()));
 			if ( !animated ) {
-				ic->activated(false);
+				ic.activated(false);
 				animated = true;
 			}
 
-			if ( !ic->text().isEmpty() ) {
+			if ( !ic.text().isEmpty() ) {
 				// and list of possible variants in the ToolTip
 				QStringList toolTip;
-				foreach(PsiIcon::IconText t, ic->text()) {
+				foreach(PsiIcon::IconText t, ic.text()) {
 					toolTip += t.text;
 				}
 
@@ -131,9 +116,9 @@ private:
 	void iconStop()
 	{
 		if ( ic ) {
-			disconnect(ic, 0, this, 0 );
+			ic.disconnectPixmapChanged(this, 0);
 			if ( animated ) {
-				ic->stop();
+				ic.stop();
 				animated = false;
 			}
 		}
@@ -153,7 +138,7 @@ private slots:
 		clearFocus();
 		if ( ic ) {
 			emit iconSelected(ic);
-			emit textSelected(ic->defaultText());
+			emit textSelected(ic.defaultText());
 		}
 	}
 
@@ -175,7 +160,7 @@ private:
 		style()->drawControl(QStyle::CE_MenuItem, &opt, &p, this);
 
 		if ( ic ) {
-			QPixmap pix = ic->pixmap();
+			QPixmap pix = ic.pixmap();
 			p.drawPixmap((width() - pix.width())/2, (height() - pix.height())/2, pix);
 		}
 	}
@@ -288,11 +273,11 @@ void IconSelect::setIconset(const Iconset &iconset)
 	float w = 0, h = 0;
 
 	double count; // the 'double' type is somewhat important for MSVC.NET here
-	QListIterator<PsiIcon *> it = is.iterator();
+	QListIterator<PsiIcon> it = is.iterator();
 	for (count = 0; it.hasNext(); count++) {
-		PsiIcon *icon = it.next();
-		w += icon->pixmap().width();
-		h += icon->pixmap().height();
+		PsiIcon icon(it.next());
+		w += icon.pixmap().width();
+		h += icon.pixmap().height();
 	}
 	w /= count;
 	h /= count;
@@ -327,7 +312,7 @@ void IconSelect::setIconset(const Iconset &iconset)
 		grid->addWidget(b, row, column);
 		b->setIcon( it.next() );
 		b->setSizeHint( QSize(tileSize, tileSize) );
-		connect (b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
+		connect (b, SIGNAL(iconSelected(const PsiIcon &)), menu, SIGNAL(iconSelected(const PsiIcon &)));
 		connect (b, SIGNAL(textSelected(QString)), menu, SIGNAL(textSelected(QString)));
 
 		//connect (menu, SIGNAL(aboutToShow()), b, SLOT(aboutToShow()));

@@ -55,7 +55,7 @@ public:
 	const QColor &colorFrom () const;
 	const QColor &colorTo () const;
 	const QColor &colorFont () const;
-	const PsiIcon *psiIcon () const;
+	const PsiIcon psiIcon () const;
 	QString psiIconName () const;
 	void setText (const QString &);
 	void setHelp (const QString &);

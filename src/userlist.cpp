@@ -647,11 +647,11 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				hr = "<hr/>";
 			str += hr + "<div style='white-space:pre'>";
 
-			PsiIcon *statusIcon = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
+			PsiIcon statusIcon = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
 			if (statusIcon) {
 				QByteArray imageArray;
 				QBuffer buff(&imageArray);
-				statusIcon->image().save(&buff, "png");
+				statusIcon.image().save(&buff, "png");
 				QString imgBase64(QUrl::toPercentEncoding(imageArray.toBase64()));
 				str += QString("<img src=\"data:image/png;base64,%1\" alt=\"img\"/>").arg(imgBase64);
 			}

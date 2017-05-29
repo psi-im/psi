@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QRgb>
 #include <QSystemTrayIcon>
+#include "psiiconset.h"
 
-class PsiIcon;
 class QMenu;
 class QPoint;
 class QPixmap;
@@ -19,8 +19,8 @@ public:
 
 	void setContextMenu(QMenu*);
 	void setToolTip(const QString &);
-	void setIcon(const PsiIcon *, bool alert = false);
-	void setAlert(const PsiIcon *);
+	void setIcon(const PsiIcon &, bool alert = false);
+	void setAlert(const PsiIcon &);
 	bool isAnimating() const;
 
 	bool isWMDock();
@@ -45,9 +45,8 @@ protected:
 	bool eventFilter( QObject *, QEvent * );
 
 private:
-	PsiIcon* icon_;
+	PsiIcon icon_;
 	QSystemTrayIcon* trayicon_;
-	quintptr realIcon_;
 };
 
 

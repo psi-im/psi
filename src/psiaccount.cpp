@@ -5464,7 +5464,7 @@ void PsiAccount::updateReadNext(const Jid &j)
 	// update eventdlg's read-next
 	EventDlg *w = findDialog<EventDlg*>(j);
 	if(w) {
-		PsiIcon *nextAnim = 0;
+		PsiIcon nextAnim;
 		int nextAmount = d->eventQueue->count(j);
 		if(nextAmount > 0)
 			nextAnim = PsiIconset::instance()->event2icon(d->eventQueue->peek(j));

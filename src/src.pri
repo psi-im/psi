@@ -114,6 +114,7 @@ HEADERS += \
 	$$PWD/psievent.h \
 	$$PWD/xmlconsole.h \
 	$$PWD/psiiconset.h \
+	$$PWD/psiicon_p.h \
 	$$PWD/psithememanager.h \
 	$$PWD/psithememodel.h \
 	$$PWD/psithemeprovider.h \

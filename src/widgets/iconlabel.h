@@ -35,9 +35,9 @@ public:
 	IconLabel(QWidget *parent = 0);
 	~IconLabel();
 
-	const PsiIcon *psiIcon () const;
+	const PsiIcon psiIcon () const;
 	QString psiIconName () const;
-	void setPsiIcon (const PsiIcon *, bool copyIcon = true);
+	void setPsiIcon (const PsiIcon &, bool copyIcon = true);
 	void setPsiIcon (const QString &);
 
 	void setScaledContents(int width, int height);

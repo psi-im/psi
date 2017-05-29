@@ -456,17 +456,17 @@ public:
 		setNextAnim(0);
 	}
 
-	void setNextAnim(PsiIcon *anim) {
+	void setNextAnim(PsiIcon anim) {
 		if (nextAnim_) {
 			delete nextAnim_;
 			nextAnim_ = 0;
 		}
 
 		if (anim)
-			nextAnim_ = new AlertIcon(anim);
+			nextAnim_ = anim.toAlertIcon();
 	}
 
-	PsiIcon *nextAnim() const {
+	PsiIcon nextAnim() const {
 		return nextAnim_;
 	}
 
@@ -500,7 +500,7 @@ public:
 	Jid jid, realJid;
 	QString thread;
 	QStringList completionList;
-	PsiIcon *anim;
+	PsiIcon anim;
 	int nextAmount;
 	QWidget *w_http_id;
 	QLineEdit *le_http_id;
@@ -516,7 +516,7 @@ public:
 	QStringList sendLeft;
 
 private:
-	PsiIcon *nextAnim_;
+	PsiIcon nextAnim_;
 
 private slots:
 	void ensureEditPosition() {
@@ -527,7 +527,7 @@ private slots:
 	}
 
 public slots:
-	void addEmoticon(const PsiIcon *icon) {
+	void addEmoticon(const PsiIcon &icon) {
 		addEmoticon(icon->defaultText());
 	}
 
@@ -730,7 +730,7 @@ void EventDlg::init()
 	}
 
 	// icon select
-	//connect(d->psi->iconSelectPopup(), SIGNAL(iconSelected(const PsiIcon *)), d, SLOT(addEmoticon(const PsiIcon *)));
+	//connect(d->psi->iconSelectPopup(), SIGNAL(iconSelected(const PsiIcon &)), d, SLOT(addEmoticon(const PsiIcon &)));
 	connect(d->psi->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 
 	d->tb_icon = new IconToolButton(this);
@@ -1772,7 +1772,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 	d->pb_http_deny->hide();
 	d->xdata_form->hide();
 
-	PsiIcon *oldanim = d->anim;
+	PsiIcon oldanim = d->anim;
 	d->anim = PsiIconset::instance()->event2icon(e);
 
 	if(d->anim != oldanim)
@@ -2022,7 +2022,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 	doWhois();
 }
 
-void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
+void EventDlg::updateReadNext(PsiIcon nextAnim, int nextAmount)
 {
 	int oldAmount = d->nextAmount;
 
