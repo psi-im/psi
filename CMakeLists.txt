@@ -96,7 +96,7 @@ if(WIN32)
 	set(PLUGINS_PATH "/plugins" CACHE STRING "Install suffix for plugins")
 endif()
 
-set(APP_VERSION "0.16")
+set(APP_VERSION "1.0")
 if(NOT PSI_PLUS_VERSION)
 	set(VER_FILE ${PROJECT_SOURCE_DIR}/version)
 	if(EXISTS "${VER_FILE}")
