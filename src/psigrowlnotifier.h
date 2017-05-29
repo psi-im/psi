@@ -84,7 +84,7 @@ class PsiGrowlNotifierPlugin : public QObject, public PsiPopupPluginInterface
 public:
 	virtual QString name() const { return "Growl"; }
 	virtual PsiPopupInterface* popup(QObject* ) { return PsiGrowlNotifier::instance(); }
-	virtual bool isAvailable() { return PsiGrowlNotifier::isAvailable(); }
+	virtual bool isAvailable() const { return PsiGrowlNotifier::isAvailable(); }
 };
 
 #endif
