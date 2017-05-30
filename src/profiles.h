@@ -113,8 +113,6 @@ typedef QList<UserAccount> UserAccountList;
 class OptionsMigration
 {
 public:
-	bool fromFile(const QString &);
-
 	void lateMigration();
 
 	//QString progver;

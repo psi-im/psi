@@ -410,13 +410,13 @@ bool PsiCon::init()
 	d->updatedAccountTimer_->setInterval(1000);
 	connect(d->updatedAccountTimer_, SIGNAL(timeout()), SLOT(saveAccounts()));
 
-	// do some backuping in case we are about to start migration from config.xml+options.xml
-	// to options.xml only.
-	QString backupfile = optionsFile() + "-preOptionsMigration";
-	if (QFile::exists(pathToProfileConfig(activeProfile))
-		&& PsiOptions::exists(optionsFile())
-		&& !QFile::exists(backupfile)) {
-		QFile::copy(optionsFile(), backupfile);
+
+	QString oldConfig = pathToProfileConfig(activeProfile);
+	if(QFile::exists(oldConfig)) {
+		QMessageBox::warning(d->mainwin, tr("Migration is impossible"),
+		                     tr("Found no more supported configuration file from some very old version:\n%1\n\n"
+		                        "Migration is possible with Psi-0.15")
+		                     .arg(oldConfig));
 	}
 
 	// advanced widget
@@ -441,9 +441,6 @@ bool PsiCon::init()
 			qWarning("ERROR: Failed to new profile default options");
 		}
 	}
-
-	// load the old profile
-	d->optionsMigration.fromFile(pathToProfileConfig(activeProfile));
 
 	//load the new profile
 	options->load(optionsFile());
