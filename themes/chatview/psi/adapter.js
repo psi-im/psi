@@ -342,7 +342,7 @@ function psiThemeAdapter(chat) {
             try {
                 window.psiimtheme = startPsiTheme(shared);
             } catch(e) {
-                shared.util.showCriticalError("Failed to start: "+e+" "+e.stack);
+                chat.util.showCriticalError("Failed to start: "+e+" "+e.stack);
             }
         }
 
