@@ -39,6 +39,12 @@ if(USE_QT5)
 		include_directories(${LIBXCB_INCLUDE_DIR})
 		add_definitions(${LIBXCB_DEFINITIONS})
 	endif()
+	
+	if(APPLE)
+		find_package(Qt5MacExtras REQUIRED)
+		find_package(Sparkle REQUIRED)
+		include_directories(${SPARKLE_INCLUDE_DIR})
+	endif()
 
 	add_definitions(-DHAVE_QT5 ${LIBXCB_DEFINITIONS})
 
@@ -75,6 +81,10 @@ if(USE_QT5)
 			${EXTRA_LIBS}
 			qhttp
 		)
+	endif()
+	if(APPLE)
+		list(APPEND QT_LIBRARIES Qt5::MacExtras)
+		list(APPEND EXTRA_LDFLAGS ${SPARKLE_LIBRARY} "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 	endif()
 else()
 	if(LINUX)

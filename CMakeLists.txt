@@ -139,6 +139,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
 if(APPLE)
 	# Force Qt5 build on Mac OS X. Qt4 is not supported
 	set(USE_QT5 ON)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 else()
 # Enable all warnings
 	if(NOT MSVC)
