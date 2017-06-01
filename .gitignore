@@ -63,4 +63,5 @@ checker
 /mac/Info.plist
 /psi.debug
 .qmake.cache
-
+.qmake.stash
+psi.app/
