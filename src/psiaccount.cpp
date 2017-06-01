@@ -1024,7 +1024,7 @@ public slots:
 		account->doReconnect = true;
 
 		reconnectScheduledAt_ = QDateTime::currentDateTime();
-		reconnectScheduledAt_.addSecs(data.delay);
+		reconnectScheduledAt_ = reconnectScheduledAt_.addSecs(data.delay);
 		QTimer::singleShot(delay, account, SLOT(reconnect()));
 		emit account->stateChanged();
 	}
