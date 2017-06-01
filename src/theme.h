@@ -81,12 +81,12 @@ public:
 	QWidget *previewWidget(); // this hack must be replaced with something widget based
 	// end of previously virtual
 
-    static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
-    bool isCompressed();
+	static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
+	bool isCompressed() const;
 	// load file from theme in `themePath`
 	static QByteArray loadData(const QString &fileName, const QString &themePath, bool caseInsensetive = false);
 	QByteArray loadData(const QString &fileName) const;
-    ResourceLoader* resourceLoader();
+	ResourceLoader* resourceLoader() const;
 
 	const QString id() const;
 	void setId(const QString &id);

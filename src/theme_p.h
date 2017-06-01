@@ -53,7 +53,7 @@ public:
 	virtual QWidget* previewWidget(); // this hack must be replaced with something widget based
 
 	QByteArray loadData(const QString &fileName) const;
-	Theme::ResourceLoader *resourceLoader();
+	Theme::ResourceLoader *resourceLoader() const;
 };
 
 #endif // THEME_P_H

@@ -123,7 +123,7 @@ bool Theme::isCompressed(const QFileInfo &fi)
 	                      sfx == QLatin1Literal("theme"));
 }
 
-bool Theme::isCompressed()
+bool Theme::isCompressed() const
 {
 	return isCompressed(QFileInfo(d->filepath));
 }
@@ -196,7 +196,7 @@ QByteArray Theme::loadData(const QString &fileName) const
 	return d->loadData(fileName);
 }
 
-Theme::ResourceLoader *Theme::resourceLoader()
+Theme::ResourceLoader *Theme::resourceLoader() const
 {
 	return d->resourceLoader();
 }

@@ -162,7 +162,7 @@ public:
 };
 #endif
 
-Theme::ResourceLoader *ThemePrivate::resourceLoader()
+Theme::ResourceLoader *ThemePrivate::resourceLoader() const
 {
 	QFileInfo fi(filepath);
 	if ( fi.isDir() ) {

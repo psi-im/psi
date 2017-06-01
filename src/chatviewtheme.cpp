@@ -199,7 +199,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 #endif
 }
 
-bool ChatViewThemePrivate::hasPreview()
+bool ChatViewThemePrivate::hasPreview() const
 {
 	if (id.isNull())
 		return false;

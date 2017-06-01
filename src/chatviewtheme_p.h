@@ -163,7 +163,7 @@ public:
 
 	bool exists();
 	bool load(std::function<void(bool)> loadCallback);
-	bool hasPreview();
+	bool hasPreview() const;
 	QWidget* previewWidget();
 
 	bool isMuc() const;
