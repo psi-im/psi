@@ -1465,7 +1465,7 @@ public:
 		FileTransItem *i = static_cast<FileTransItem*>(itemAt(pos));
 		if(!i)
 			return false;
-		QRect r(visualItemRect(i));
+//		QRect r(visualItemRect(i));
 		PsiToolTip::showText(mapToGlobal(pos), i->makeTip(), this);
 		return true;
 	}

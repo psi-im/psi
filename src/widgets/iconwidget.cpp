@@ -248,6 +248,8 @@ public:
 	IconsetSelectItem(QListWidget *parent, const Iconset &_iconset)
 	: RealIconWidgetItem(parent)
 	{
+		Q_UNUSED(fullW)
+		Q_UNUSED(fullH)
 #ifndef WIDGET_PLUGIN
 		iss = _iconset;
 		setText( iss.name() );

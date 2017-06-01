@@ -538,7 +538,7 @@ bool GCUserView::maybeTip(const QPoint &pos)
 		return false;
 
 	GCUserViewItem *lvi = (GCUserViewItem *) qlvi;
-	QRect r(visualItemRect(lvi));
+//	QRect r(visualItemRect(lvi));
 
 	const QString &nick = lvi->text(0);
 	const Status &s = lvi->s;

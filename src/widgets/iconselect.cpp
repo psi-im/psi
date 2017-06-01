@@ -232,6 +232,8 @@ IconSelect::IconSelect(IconSelectPopup *parentMenu)
 
 	grid = 0;
 	noIcons();
+
+	Q_UNUSED(shown)
 }
 
 IconSelect::~IconSelect()
