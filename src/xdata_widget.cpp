@@ -57,6 +57,7 @@ public:
 		, _size(s)
 		, _type(uri.mimeType)
 	{
+		Q_UNUSED(_xdWidget)
 		if (uri.uri.startsWith("cid:")) {
 			JT_BitsOfBinary *task = new JT_BitsOfBinary(xdw->client()->rootTask());
 			connect(task, SIGNAL(finished()), SLOT(bobReceived()));

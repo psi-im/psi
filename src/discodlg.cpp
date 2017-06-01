@@ -825,7 +825,7 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 	}
 
 	text += "</qt>";
-	QRect r( visualItemRect(i) );
+//	QRect r( visualItemRect(i) );
 	PsiToolTip::showText(pos, text, this);
 	return true;
 }
