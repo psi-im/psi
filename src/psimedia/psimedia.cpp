@@ -22,6 +22,7 @@
 
 #include <QCoreApplication>
 #include <QPluginLoader>
+#include <QMetaMethod>
 
 #ifdef QT_GUI_LIB
 #include <QPainter>
@@ -870,11 +871,11 @@ void RtpChannel::write(const RtpPacket &rtp)
 	}
 }
 
-void RtpChannel::connectNotify(const char *signal)
+void RtpChannel::connectNotify(const QMetaMethod &signal)
 {
 	int oldtotal = d->readyReadListeners;
 
-	if(QLatin1String(signal) == QMetaObject::normalizedSignature(SIGNAL(readyRead())).data())
+	if(signal == QMetaMethod::fromSignal(&RtpChannel::readyRead))
 		++d->readyReadListeners;
 
 	int total = d->readyReadListeners;
@@ -885,11 +886,11 @@ void RtpChannel::connectNotify(const char *signal)
 	}
 }
 
-void RtpChannel::disconnectNotify(const char *signal)
+void RtpChannel::disconnectNotify(const QMetaMethod &signal)
 {
 	int oldtotal = d->readyReadListeners;
 
-	if(QLatin1String(signal) == QMetaObject::normalizedSignature(SIGNAL(readyRead())).data())
+	if(signal == QMetaMethod::fromSignal(&RtpChannel::readyRead))
 		--d->readyReadListeners;
 
 	int total = d->readyReadListeners;

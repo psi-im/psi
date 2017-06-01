@@ -234,13 +234,13 @@ signals:
 	void packetsWritten(int count);
 
 protected:
-	virtual void connectNotify(const char *signal);
-	virtual void disconnectNotify(const char *signal);
+	virtual void connectNotify(const QMetaMethod &signal);
+	virtual void disconnectNotify(const QMetaMethod &signal);
 
 private:
 	RtpChannel();
 	~RtpChannel();
-	Q_DISABLE_COPY(RtpChannel);
+	Q_DISABLE_COPY(RtpChannel)
 
 	friend class RtpSession;
 	friend class RtpSessionPrivate;
