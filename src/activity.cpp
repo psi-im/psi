@@ -91,7 +91,7 @@ QDomElement Activity::toXml(QDomDocument& doc)
 		ActivityCatalog* ac = ActivityCatalog::instance();
 		QDomElement el = doc.createElement(ac->findEntryByType(type()).value());
 
-		if (!specificType() == UnknownSpecific) {
+		if (specificType() != UnknownSpecific) {
 			QDomElement elChild = doc.createElement(ac->findEntryByType(specificType()).value());
 			el.appendChild(elChild);
 		}
