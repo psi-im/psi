@@ -48,7 +48,7 @@ OptionsTree::~OptionsTree()
 /**
  * Returns the value of the specified option
  * \param name 'Path' to the option ("appearance.emoticons.useSmilies")
- * \return value of the option. Will be invalid if non-existant.
+ * \return value of the option. Will be invalid if non-existent.
  */
 QVariant OptionsTree::getOption(const QString& name, const QVariant &defaultValue) const
 {
