@@ -156,8 +156,8 @@ AboutDlg::AboutDlg(QWidget* parent)
 		"&nbsp;&nbsp;Translator<br>\n"
 		"<br>\n"
 		"Join the translation team today! Go to \n"
-		"<a href=\"http://forum.psi-im.org/forum/14\">\n"
-		"http://forum.psi-im.org/forum/14</a> for further details!"
+		"<a href=\"https://github.com/psi-plus/psi-plus-l10n\">\n"
+		"https://github.com/psi-plus/psi-plus-l10n</a> for further details!"
 	);
 	ui_.te_translation->appendText(translation);
 }
