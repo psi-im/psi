@@ -12,6 +12,7 @@ INCLUDEPATH += .ui/
 greaterThan(QT_MAJOR_VERSION, 4) {
   QT += widgets
   DEFINES += HAVE_QT5
+  CONFIG += c++11
 }
 
 target.path = $$(HOME)/.local/share/psi/plugins
