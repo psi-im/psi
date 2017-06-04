@@ -840,7 +840,7 @@ void PsiChatDlg::buildMenu()
 	pm_settings_->addAction(actions_->action("chat_clear"));
 	pm_settings_->addSeparator();
 
-	pm_settings_->addAction(actions_->action("chat_icon_"));
+	pm_settings_->addAction(actions_->action("chat_icon"));
 	pm_settings_->addAction(actions_->action("chat_file"));
 	if (AvCallManager::isSupported()) {
 		pm_settings_->addAction(actions_->action("chat_voice"));
