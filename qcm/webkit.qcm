@@ -1,7 +1,7 @@
 /*
 -----BEGIN QCMOD-----
 name: webkit
-arg: with-webkit=[type],type of webkit QWebkit/QtWebEngine
+arg: with-webkit=[type],type of webkit QtWebKit/QtWebEngine
 -----END QCMOD-----
 */
 
@@ -24,11 +24,11 @@ public:
 
 		QStringList tryList;
 		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
-		if (wt.isEmpty() || !(wt == "qwebkit" || wt == "qtwebengine")) {
+		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-			tryList << "qtwebengine" << "qwebkit";
+			tryList << "qtwebengine" << "qtwebkit";
 #else
-			tryList << "qwebkit";
+			tryList << "qtwebkit";
 #endif
 		} else {
 #if QT_VERSION < QT_VERSION_CHECK(5,7,0)
@@ -46,7 +46,7 @@ public:
 				webkitType = "QtWebEngine";
 				qt = "webenginewidgets webchannel";
 			} else {
-				webkitType = "QWebKit";
+				webkitType = "QtWebKit";
 				qt = "webkit";
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 				qt += " webkitwidgets";
