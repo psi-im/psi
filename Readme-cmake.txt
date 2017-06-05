@@ -49,9 +49,9 @@ or
 
   to build qjdns library as separate library (default ON)
 
->  -DPSI_PLUS_VERSION=${version}
+>  -DPSI_VERSION=${version}
 
-  to set Psi-plus version manually (in format x.xx.xxx.xxx, where x is a decimal digit). Script sets this flag automatically from "version" file if it exists in psi-plus directory
+  to set Psi+ version manually ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ). Script sets this flag automatically from "version" file if it exists in psi+ directory
 
 >  -DCMAKE_BUILD_TYPE=Release (default: Release)
 
