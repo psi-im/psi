@@ -253,7 +253,6 @@ public slots:
 
 	void getUrlHeaders(const QString &tId, const QString url)
 	{
-		//qDebug() << "getUrlHeaders: tId=" << tId << " url=" << url;
 		QNetworkRequest req(QUrl::fromEncoded(url.toLatin1()));
 #if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 		req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
@@ -273,7 +272,16 @@ private slots:
 		msg.insert("id", reply->property("tranId").toString());
 
 		for (auto &p : reply->rawHeaderPairs()) {
-			headers.insert(QString(p.first).toLower(), QString(p.second));
+			QString key(QString(p.first).toLower());
+			QString value;
+			if (key == QLatin1String("content-type")) {
+				// workaround for qt bug #61300 which put headers from origial request and redirect request in one hash
+				// other headers most likely are invalid too, but this one is important for us.
+				value = QString::fromLatin1(p.second).section(',', -1).trimmed();
+			} else {
+				value = QString::fromLatin1(p.second);
+			}
+			headers.insert(key, value);
 		}
 		msg.insert("value", headers);
 		msg.insert("type", "tranend");
