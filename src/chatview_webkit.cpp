@@ -254,7 +254,12 @@ public slots:
 	void getUrlHeaders(const QString &tId, const QString url)
 	{
 		//qDebug() << "getUrlHeaders: tId=" << tId << " url=" << url;
- 		auto reply = _view->d->account_->psi()->networkAccessManager()->head(QNetworkRequest(QUrl::fromEncoded(url.toLatin1())));
+		QNetworkRequest req(QUrl::fromEncoded(url.toLatin1()));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+		req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+		req.setMaximumRedirectsAllowed(2);
+#endif
+ 		auto reply = _view->d->account_->psi()->networkAccessManager()->head(req);
 		reply->setProperty("tranId", tId);
 		connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
 	}
