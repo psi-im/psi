@@ -38,6 +38,8 @@
 #include <QSortFilterProxyModel>
 #include <QMutableSetIterator>
 #include <QSetIterator>
+#include <QApplication>
+#include <QDesktopWidget>
 
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
 static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
@@ -244,12 +246,12 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
 		updateGeometry = true;
 	}
 	else if(option == avatarSizeOptionPath) {
-	    int s = PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt();
-		avatarRect_.setSize(QSize(s, s) * devicePixelRatio(contactList));
+		int s = pointToPixel(PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt());
+		avatarRect_.setSize(QSize(s, s));
 		updateGeometry = true;
 	}
 	else if(option == avatarRadiusOptionPath) {
-		avatarRadius_ = PsiOptions::instance()->getOption(avatarRadiusOptionPath).toInt();
+		avatarRadius_ = pointToPixel(PsiOptions::instance()->getOption(avatarRadiusOptionPath).toInt());
 		updateViewport = true;
 	}
 	else if(option == showStatusIconsPath) {

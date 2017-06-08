@@ -31,6 +31,7 @@
 #include <QUuid>
 #include <QDir>
 #include <QLibrary>
+#include <QDesktopWidget>
 
 #include <stdio.h>
 #ifdef HAVE_X11
@@ -910,6 +911,16 @@ int devicePixelRatio(QWidget *w)
 #if HAVE_QT5
 	return w->devicePixelRatio();
 #else
+	Q_UNUSED(w);
 	return 1; // FIXME?
 #endif
+}
+
+int pointToPixel(int points)
+{
+	// In typography 1 point (also called PostScript point)
+	// is 1/72 of an inch
+	const float postScriptPoint = 1 / 72.;
+
+	return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
 }

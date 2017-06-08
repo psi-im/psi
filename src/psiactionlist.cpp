@@ -512,6 +512,8 @@ void PsiActionList::Private::addPluginsActions(ActionsType type)
 		actions->addAction(pm->shortName(plugin) + "-plugin", action);
 	}
 	list->addList(actions);
+#else
+	Q_UNUSED(type)
 #endif
 }
 
