@@ -41,7 +41,7 @@ unix {
 	# Shared files
 	sharedfiles.path  = $$PSI_DATADIR
 	sharedfiles.files = ../README ../COPYING ../client_icons.txt ../iconsets ../sound ../certs
-	qwebkit|qtwebengine {
+	qtwebkit|qtwebengine {
 		sharedfiles.files += ../themes
 	}
 
