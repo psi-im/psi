@@ -904,3 +904,12 @@ QString macToQtDatetimeFormat(const QString &sys_fmt)
     return result;
 }
 #endif
+
+int devicePixelRatio(QWidget *w)
+{
+#if HAVE_QT5
+	return w->devicePixelRatio();
+#else
+	return 1; // FIXME?
+#endif
+}

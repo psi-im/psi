@@ -153,6 +153,7 @@ void x11wmClass(Display *dsp, WId wid, QString resName);
 #define X11WM_CLASS(x)	/* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
+int devicePixelRatio(QWidget *);
 
 // -----------------------------------------------------------------------------
 // History utilities

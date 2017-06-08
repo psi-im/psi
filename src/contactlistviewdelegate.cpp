@@ -245,7 +245,7 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
 	}
 	else if(option == avatarSizeOptionPath) {
 	    int s = PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt();
-		avatarRect_.setSize(QSize(s, s));
+		avatarRect_.setSize(QSize(s, s) * devicePixelRatio(contactList));
 		updateGeometry = true;
 	}
 	else if(option == avatarRadiusOptionPath) {
