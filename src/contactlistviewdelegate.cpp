@@ -41,6 +41,9 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
+#define PSI_HIDPI devicePixelRatio(contactList)
+//#define PSI_HIDPI (2) // for testing purposes
+
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
 static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
 static const QString outlinedGroupsOptionPath = "options.ui.look.contactlist.use-outlined-group-headings";
@@ -529,9 +532,9 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 
 	// next expand to r.width
 	// first check if we need expand at all
-	if (contactBoundingRect.width() + 2 * ContactHMargin < r.width()) {
+	if (contactBoundingRect.width() + 2 * ContactHMargin*PSI_HIDPI < r.width()) {
 		// our previously computed minimal rect is too small for this roster. so expand
-		int diff = r.width() - (contactBoundingRect.width() + 2 * ContactHMargin);
+		int diff = r.width() - (contactBoundingRect.width() + 2 * ContactHMargin*PSI_HIDPI);
 		if (!avatarAtLeft_) {
 			avatarStatusRect.translate(diff, 0);
 			avatarRect.translate(diff, 0);
@@ -563,11 +566,11 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 		} else {
 			if (opt.direction == Qt::RightToLeft) {
 				statusIconRect.moveRight(firstLineRect.right());
-				nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin);
+				nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin*PSI_HIDPI);
 				secondLineRect.setRight(nickRect.right()); // we don't want status under icon
 			} else {
 				statusIconRect.moveLeft(firstLineRect.left());
-				nickRect.setLeft(statusIconRect.right() + StatusIconToNickHMargin);
+				nickRect.setLeft(statusIconRect.right() + StatusIconToNickHMargin*PSI_HIDPI);
 				secondLineRect.setLeft(nickRect.left()); // we don't want status under icon
 			}
 		}
@@ -696,17 +699,18 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 		foreach (int w, rightWidths) {
 			sumWidth += w;
 		}
-		sumWidth+=rightPixs.count();
+		sumWidth = sumWidth*PSI_HIDPI;
+		sumWidth+=rightPixs.count(); // gap 1px?
 	}
 
 	QRect gradRect(firstLineRect);
 	pepIconsRect.setWidth(sumWidth);
 	if (opt.direction == Qt::RightToLeft) {
 		pepIconsRect.moveLeft(firstLineRect.left());
-		gradRect.setRight(pepIconsRect.right() + NickConcealerWidth);
+		gradRect.setRight(pepIconsRect.right() + NickConcealerWidth*PSI_HIDPI);
 	} else {
 		pepIconsRect.moveRight(firstLineRect.right());
-		gradRect.setLeft(pepIconsRect.left() - NickConcealerWidth);
+		gradRect.setLeft(pepIconsRect.left() - NickConcealerWidth*PSI_HIDPI);
 	}
 	pepIconsRect &= firstLineRect;
 
@@ -715,9 +719,9 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 	tbgc.setAlpha(0);
 	QLinearGradient grad;
 	if (opt.direction == Qt::RightToLeft) {
-		grad = QLinearGradient(gradRect.right(), 0, gradRect.right() - NickConcealerWidth, 0);
+		grad = QLinearGradient(gradRect.right(), 0, gradRect.right() - NickConcealerWidth*PSI_HIDPI, 0);
 	} else {
-		grad = QLinearGradient(gradRect.left(), 0, gradRect.left() + NickConcealerWidth, 0);
+		grad = QLinearGradient(gradRect.left(), 0, gradRect.left() + NickConcealerWidth*PSI_HIDPI, 0);
 	}
 	grad.setColorAt(0, tbgc);
 	grad.setColorAt(1, bgc);
@@ -733,8 +737,9 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 		else {
 			for (int i=0; i<rightPixs.size(); i++) {
 				const QPixmap pix = rightPixs[i];
-				pepIconsRect.setRight(pepIconsRect.right() - pix.width() -1);
-				painter->drawPixmap(pepIconsRect.topRight(), pix);
+				pepIconsRect.setRight(pepIconsRect.right() - pix.width()*PSI_HIDPI -1); // 1 pep gap?
+				QRect targetRect(pepIconsRect.topRight(),pix.size()*PSI_HIDPI);
+				painter->drawPixmap(targetRect, pix, pix.rect());
 				//qDebug() << r << pepIconsRect.topRight() << pix.size();
 			}
 		}
@@ -765,20 +770,20 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 	if ((showGeolocIcons_ || showTuneIcons_)  && PsiIconset::instance()->system().iconSize() > pepSize) {
 		pepSize = PsiIconset::instance()->system().iconSize();
 	}
-	pepIconsRect_.setSize(QSize(0, pepSize)); // no icons for offline. so 0-width y default
-	statusIconRect_.setSize(QSize(statusIconSize_, statusIconSize_));
+	pepIconsRect_.setSize(QSize(0, pepSize*PSI_HIDPI)); // no icons for offline. so 0-width y default
+	statusIconRect_.setSize(QSize(statusIconSize_, statusIconSize_)*PSI_HIDPI);
 
 	// .. and sizes of a little more complex stuff
 	firstLineRect_.setSize(QSize(
-	    pepIconsRect_.width() + nickRect_.width() + (statusIconsOverAvatars_? 0 : StatusIconToNickHMargin + statusIconRect_.width()),
+	    pepIconsRect_.width() + nickRect_.width() + (statusIconsOverAvatars_? 0 : StatusIconToNickHMargin*PSI_HIDPI + statusIconRect_.width()),
 	    qMax(qMax(pepSize, nickRect_.height()), statusIconsOverAvatars_? 0: statusIconRect_.height())
 	));
 
 	if (haveSecondLine) {
-		statusLineRect_.setSize(QSize(16, statusFontMetrics_.height()));
+		statusLineRect_.setSize(QSize(16, statusFontMetrics_.height())); // 16? I forgot why
 		secondLineRect_.setHeight(statusLineRect_.height());
 		secondLineRect_.setWidth(firstLineRect_.width()); // first line is wider y algo above. so use it
-		linesRect_.setSize(QSize(firstLineRect_.width(), firstLineRect_.height() + NickToStatusLinesVMargin + secondLineRect_.height()));
+		linesRect_.setSize(QSize(firstLineRect_.width(), firstLineRect_.height() + NickToStatusLinesVMargin*PSI_HIDPI + secondLineRect_.height()));
 	} else {
 		secondLineRect_.setSize(QSize(0, 0));
 		linesRect_.setSize(firstLineRect_.size());
@@ -786,11 +791,11 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 
 	if (showAvatars_) {
 		if (statusIconsOverAvatars_) {
-			statusIconRect_.setSize(QSize(12, 12));
+			statusIconRect_.setSize(QSize(12, 12)*PSI_HIDPI);
 		}
 		avatarStatusRect_.setSize(avatarRect_.size());
 		// if we want status icon to a little go beyond the avatar then use QRect::united instead for avatarStatusRect_
-		contactBoundingRect_.setSize(QSize(avatarStatusRect_.width() + AvatarToNickHMargin + linesRect_.width(),
+		contactBoundingRect_.setSize(QSize(avatarStatusRect_.width() + AvatarToNickHMargin*PSI_HIDPI + linesRect_.width(),
 		                                 avatarStatusRect_.height() > linesRect_.height()? avatarStatusRect_.height() : linesRect_.height()));
 	} else {
 		avatarStatusRect_.setSize(QSize(0, 0));
@@ -799,9 +804,10 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 	// all minimal sizes a known now
 
 	// align everything vertical
-	contactBoundingRect_.setTopLeft(QPoint(ContactHMargin, ContactVMargin));
+	contactBoundingRect_.setTopLeft(QPoint(ContactHMargin*PSI_HIDPI,
+	                                       ContactVMargin*PSI_HIDPI));
 	int firstLineTop = 0;
-	int secondLineGap = NickToStatusLinesVMargin;
+	int secondLineGap = NickToStatusLinesVMargin*PSI_HIDPI;
 	if (showAvatars_) {
 		// we have to do some vertical align for avatar and lines to look nice
 		int avatarStatusTop = 0;
@@ -810,7 +816,7 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 			firstLineTop = (avatarStatusRect_.height() - linesRect_.height()) / 2;
 			if (haveSecondLine) {
 				int m = (avatarStatusRect_.height() - linesRect_.height()) / 3;
-				if (m > NickToStatusLinesVMargin) { // if too much free space slide apart the lines as well
+				if (m > NickToStatusLinesVMargin*PSI_HIDPI) { // if too much free space slide apart the lines as well
 					firstLineTop = m;
 					secondLineGap = m;
 					linesRect_.setHeight(firstLineRect_.height() + m + secondLineRect_.height());
@@ -863,16 +869,25 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 
 QSize ContactListViewDelegate::Private::sizeHint(const QModelIndex &index) const
 {
-	if (qvariant_cast<ContactListItem::Type>(index.data(ContactListModel::TypeRole)) == ContactListItem::Type::ContactType) {
-		return contactBoundingRect_.size() + QSize(2*ContactHMargin, 2*ContactVMargin);
+	auto role = qvariant_cast<ContactListItem::Type>(index.data(ContactListModel::TypeRole));
+	if (role == ContactListItem::Type::ContactType) {
+		return contactBoundingRect_.size() + QSize(2*ContactHMargin, 2*ContactVMargin)*PSI_HIDPI;
 	}
-	return QSize(16, qMax(showStatusIcons_? statusIconSize_ : 0, nickRect_.height()) + 2 * ContactVMargin);
+	int contentHeight;
+	if (role == ContactListItem::Type::GroupType) {
+		contentHeight = qMax(IconsetFactory::iconPtr("psi/groupOpen")->pixmap().height() * PSI_HIDPI,
+		                     nickRect_.height());
+	} else {
+		contentHeight = qMax(showStatusIcons_? statusIconSize_ * PSI_HIDPI : 0, nickRect_.height());
+	}
+	return QSize(16, contentHeight + 2 * ContactVMargin*PSI_HIDPI);
 }
 
 int ContactListViewDelegate::Private::avatarSize() const
 {
 	return showAvatars_ ?
-			qMax(avatarRect_.height() + 2 * ContactVMargin, firstLineRect_.height()) : firstLineRect_.height();
+			qMax(avatarRect_.height() + 2 * ContactVMargin*PSI_HIDPI,
+	             firstLineRect_.height()) : firstLineRect_.height();
 }
 
 void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModelIndex &index)
@@ -905,10 +920,11 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 							? IconsetFactory::iconPtr("psi/groupOpen")->pixmap()
 							: IconsetFactory::iconPtr("psi/groupClosed")->pixmap();
 
-	QSize pixmapSize = pixmap.size();
+	QSize pixmapSize = pixmap.size()*PSI_HIDPI;
 	QRect pixmapRect = relativeRect(opt, pixmapSize, QRect());
 	r = relativeRect(opt, QSize(), pixmapRect, 3);
-	painter->drawPixmap(pixmapRect.topLeft(), pixmap);
+	pixmapRect.moveTop(opt.rect.top() + (opt.rect.height() - pixmapRect.height()) / 2);
+	painter->drawPixmap(pixmapRect, pixmap);
 
 	QString text = index.data(ContactListModel::DisplayGroupRole).toString();
 	drawText(painter, o, r, text);
@@ -946,11 +962,12 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
 	}
 
 	const QPixmap statusPixmap = this->statusPixmap(index);
-	const QSize pixmapSize = statusPixmap.size();
-	const QRect avatarRect = relativeRect(o, pixmapSize, QRect());
+	const QSize pixmapSize = statusPixmap.size() * PSI_HIDPI;
+	QRect statusIconRect = relativeRect(o, pixmapSize, QRect());
+	statusIconRect.moveTop(opt.rect.top() + (opt.rect.height() - statusIconRect.height()) / 2);
 	QString text = index.data(Qt::DisplayRole).toString();
-	QRect r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), avatarRect, 3);
-	painter->drawPixmap(avatarRect.topLeft(), statusPixmap);
+	QRect r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), statusIconRect, 3);
+	painter->drawPixmap(statusIconRect, statusPixmap);
 
 	drawText(painter, o, r, text);
 
@@ -958,9 +975,10 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
 						? IconsetFactory::iconPixmap("psi/cryptoYes")
 						: IconsetFactory::iconPixmap("psi/cryptoNo");
 
-	QSize sslPixmapSize = statusPixmap.size();
+	QSize sslPixmapSize = statusPixmap.size() * PSI_HIDPI;
 	QRect sslRect = relativeRect(o, sslPixmapSize, r, 3);
-	painter->drawPixmap(sslRect.topLeft(), sslPixmap);
+	sslRect.moveTop(opt.rect.top() + (opt.rect.height() - sslRect.height()) / 2);
+	painter->drawPixmap(sslRect, sslPixmap);
 	r = relativeRect(opt, QSize(), sslRect, 3);
 
 	text = QString("(%1/%2)")
