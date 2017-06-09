@@ -294,7 +294,7 @@ prepare_sources() {
 		die "preparing plugins requires prepared psi sources"
 
 	cd "${PSI_DIR}/psi"
-	local rev=$(git rev-parse --short HEAD)
+	local rev=$(./admin/git_revnumber.sh)
 	local rev_date=$(git log -n1 --date=short --pretty=format:'%ad')
 
         cd ${PSI_DIR}/build
