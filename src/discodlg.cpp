@@ -485,6 +485,7 @@ void DiscoListItem::autoItemsChildren() const
 void DiscoListItem::updateInfo()
 {
 	JT_DiscoInfo *jt = new JT_DiscoInfo(d->pa->client()->rootTask());
+	jt->setAllowCache(false); // Workaround for a bug https://github.com/hanzz/spectrum2/issues/205 (invalid caps from transport)
 	connect(jt, SIGNAL(finished()), SLOT(discoInfoFinished()));
 	jt->get(di.jid(), di.node());
 	jt->go(true);
