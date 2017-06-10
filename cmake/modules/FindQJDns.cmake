@@ -63,7 +63,7 @@ find_path(
 
 find_library(
 	QJDns_LIBRARY
-	NAMES qjdns${QJDns_SUFFIX}
+	NAMES qjdns qjdns${QJDns_SUFFIX}
 	HINTS 
 	${PC_QJDns_LIBDIR}
 	${PC_QJDns_LIBRARY_DIRS}
