@@ -62,14 +62,14 @@ PsiIcon category2icon(const QString &category, const QString &type, int status=S
 	if ( category == "service" || category == "gateway" ) {
 		QString trans;
 
-		if (type == "aim")
-			trans = "aim";
+		if (type == "facebook")
+			trans = "facebook";
 		else if (type == "icq")
 			trans = "icq";
-		else if (type == "msn")
-			trans = "msn";
-		else if (type == "yahoo")
-			trans = "yahoo";
+		else if (type == "skype")
+			trans = "skype";
+		else if (type == "vkontakte")
+			trans = "vkontakte";
 		else if (type == "gadu-gadu" || type == "x-gadugadu")
 			trans = "gadugadu";
 		else if (type == "sms")
@@ -158,15 +158,6 @@ struct DiscoData {
 	PsiAccount *pa;
 	TaskList *tasks;
 	DiscoConnector *d;
-
-	enum Protocol {
-		Auto,
-
-		Disco,
-		Browse,
-		Agents
-	};
-	Protocol protocol;
 };
 
 //----------------------------------------------------------------------------
@@ -194,11 +185,6 @@ public slots: // the two are used internally by class, and also called by DiscoD
 private slots:
 	void discoItemsFinished();
 	void discoInfoFinished();
-
-	void doBrowse(bool parentAutoItems = false);
-	void doAgents(bool parentAutoItems = false);
-	void browseFinished();
-	void agentsFinished();
 
 private:
 	DiscoItem di;
@@ -401,17 +387,11 @@ void DiscoListItem::updateItems(bool parentAutoItems)
 	if ( !autoItemsEnabled() )
 		autoItems = false;
 
-	if ( d->protocol == DiscoData::Auto || d->protocol == DiscoData::Disco ) {
-		JT_DiscoItems *jt = new JT_DiscoItems(d->pa->client()->rootTask());
-		connect(jt, SIGNAL(finished()), SLOT(discoItemsFinished()));
-		jt->get(di.jid(), di.node());
-		jt->go(true);
-		d->tasks->append(jt);
-	}
-	else if ( d->protocol == DiscoData::Browse )
-		doBrowse(parentAutoItems);
-	else if ( d->protocol == DiscoData::Agents )
-		doAgents(parentAutoItems);
+	JT_DiscoItems *jt = new JT_DiscoItems(d->pa->client()->rootTask());
+	connect(jt, SIGNAL(finished()), SLOT(discoItemsFinished()));
+	jt->get(di.jid(), di.node());
+	jt->go(true);
+	d->tasks->append(jt);
 }
 
 void DiscoListItem::discoItemsFinished()
@@ -421,140 +401,9 @@ void DiscoListItem::discoItemsFinished()
 	if ( jt->success() ) {
 		updateItemsFinished(jt->items());
 	}
-	else if ( d->protocol == DiscoData::Auto ) {
-		doBrowse();
-		return;
-	}
 	else if ( !autoItems ) {
 		QString error = jt->statusString();
 		QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting items for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error).replace('\n', "<br>")));
-	}
-
-	alreadyItems = true;
-}
-
-void DiscoListItem::doBrowse(bool parentAutoItems)
-{
-	if ( parentAutoItems ) {
-		// save traffic
-		if ( alreadyItems )
-			return;
-
-		if ( item().identities().size() ) {
-			DiscoItem::Identity id = item().identities().first();
-			if ( id.category == "service" && id.type == "jud" )
-				return;
-		}
-	}
-
-	autoItems = !parentAutoItems;
-	if ( !autoItemsEnabled() )
-		autoItems = false;
-
-	JT_Browse *jt = new JT_Browse(d->pa->client()->rootTask());
-	connect(jt, SIGNAL(finished()), SLOT(browseFinished()));
-	jt->get(di.jid());
-	jt->go(true);
-	d->tasks->append(jt);
-}
-
-void DiscoListItem::browseFinished()
-{
-	JT_Browse *jt = (JT_Browse *)sender();
-
-	if ( jt->success() ) {
-		// update info
-		DiscoItem root;
-		root.fromAgentItem( jt->root() );
-		updateInfo(root);
-		alreadyInfo = true;
-		autoInfo = false;
-
-		// update items
-		AgentList from = jt->agents();
-		DiscoList to;
-		AgentList::Iterator it = from.begin();
-		for ( ; it != from.end(); ++it) {
-			DiscoItem item;
-			item.fromAgentItem( *it );
-
-			to.append( item );
-		}
-
-		updateItemsFinished(to);
-	}
-	else if ( d->protocol == DiscoData::Auto ) {
-		doAgents();
-		return;
-	}
-	else if ( !autoItems ) {
-		QString error = jt->statusString();
-		QMessageBox::critical(dlg(), tr("Error"), tr("There was an error browsing items for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error).replace('\n', "<br>")));
-	}
-
-	alreadyItems = true;
-}
-
-void DiscoListItem::doAgents(bool parentAutoItems)
-{
-	/* TODO remove jabber:iq:agents. it's obsoleted ince 2003 */
-	if ( parentAutoItems ) {
-		// save traffic
-		if ( alreadyItems )
-			return;
-
-		if ( item().identities().size() ) {
-			DiscoItem::Identity id = item().identities().first();
-			if ( id.category == "service" && id.type == "jud" )
-				return;
-		}
-	}
-
-	autoItems = !parentAutoItems;
-	if ( !autoItemsEnabled() )
-		autoItems = false;
-
-	JT_GetServices *jt = new JT_GetServices(d->pa->client()->rootTask());
-	connect(jt, SIGNAL(finished()), SLOT(agentsFinished()));
-	jt->get(di.jid());
-	jt->go(true);
-	d->tasks->append(jt);
-}
-
-void DiscoListItem::agentsFinished()
-{
-	JT_GetServices *jt = (JT_GetServices *)sender();
-
-	if ( jt->success() ) {
-		// update info
-		DiscoItem root;
-		DiscoItem::Identity id;
-		id.name     = tr("XMPP Service");
-		id.category = "service";
-		id.type     = "jabber";
-		DiscoItem::Identities ids;
-		ids.append(id);
-		root.setIdentities(ids);
-		updateInfo(root);
-		alreadyInfo = true;
-		autoInfo = false;
-
-		// update items
-		AgentList from = jt->agents();
-		DiscoList to;
-		AgentList::Iterator it = from.begin();
-		for ( ; it != from.end(); ++it) {
-			DiscoItem item;
-			item.fromAgentItem( *it );
-
-			to.append( item );
-		}
-
-		updateItemsFinished(to);
-	}
-	else if ( !autoItems ) {
-		QString error = jt->statusString();
-		QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting agents for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error).replace('\n', "<br>")));
 	}
 
 	alreadyItems = true;
@@ -635,9 +484,6 @@ void DiscoListItem::autoItemsChildren() const
 
 void DiscoListItem::updateInfo()
 {
-	if ( d->protocol != DiscoData::Auto && d->protocol != DiscoData::Disco )
-		return;
-
 	JT_DiscoInfo *jt = new JT_DiscoInfo(d->pa->client()->rootTask());
 	connect(jt, SIGNAL(finished()), SLOT(discoInfoFinished()));
 	jt->get(di.jid(), di.node());
@@ -681,7 +527,7 @@ void DiscoListItem::discoInfoFinished()
 
 		errorInfo=QString("%1").arg(QString(error_str).replace('\n', "<br>"));
 
-		if ( !autoInfo && d->protocol != DiscoData::Auto ) {
+		if ( !autoInfo ) {
 			QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting item's info for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error_str).replace('\n', "<br>")));
 		}
 	}
@@ -881,21 +727,6 @@ class DiscoDlg::Private : public QObject
 	Q_OBJECT
 
 private:
-	class ProtocolAction : public QAction
-	{
-	public:
-		ProtocolAction(QString text, QString toolTip, QObject *parent, QSignalMapper *sm, int parm)
-			: QAction(text, parent)
-		{
-			setText(text);
-			setIconText(text);
-
-			setCheckable(true);
-			setToolTip(toolTip);
-			connect(this, SIGNAL(triggered()), sm, SLOT(map()));
-			sm->setMapping(this, parm);
-		}
-	};
 
 	// helper class to store browser history
 	class History {
@@ -955,8 +786,6 @@ public slots:
 	void itemDoubleclicked (QTreeWidgetItem *);
 	bool eventFilter (QObject *, QEvent *);
 
-	void setProtocol(int);
-
 	// features...
 	void actionActivated(int);
 
@@ -975,7 +804,6 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	connect(data.tasks, SIGNAL(finished()), SLOT(itemUpdateFinished()));
 	data.d = new DiscoConnector(this);
 	connect(data.d, SIGNAL(itemUpdated(QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));
-	data.protocol = DiscoData::Auto;
 
 	// mess with widgets
 	busy = parent->busy;
@@ -991,21 +819,6 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	connect(dlg->lv_disco, SIGNAL(itemExpanded (QTreeWidgetItem *)), SLOT(itemExpanded (QTreeWidgetItem *)));
 	connect(dlg->lv_disco, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), SLOT(itemDoubleclicked (QTreeWidgetItem *)));
 	connect(dlg->le_filter, SIGNAL(textChanged(QString)), dlg->lv_disco, SLOT(updateItemsVisibility(QString)));
-
-	// protocol actions
-	QSignalMapper *pm = new QSignalMapper(this);
-	connect(pm, SIGNAL(mapped(int)), SLOT(setProtocol(int)));
-	QActionGroup *protocolActions = new QActionGroup (this);
-	protocolActions->setExclusive(true);
-
-	ProtocolAction *autoProtocol = NULL, *discoProtocol = NULL, *browseProtocol = NULL, *agentsProtocol = NULL;
-	if (PsiOptions::instance()->getOption("options.ui.show-deprecated.service-discovery.protocol-selector").toBool()) {
-		autoProtocol = new ProtocolAction (tr("Auto"), tr("Automatically determine protocol"), protocolActions, pm, DiscoData::Auto);
-		discoProtocol = new ProtocolAction ("D", tr("Service Discovery"), protocolActions, pm, DiscoData::Disco);
-		browseProtocol = new ProtocolAction ("B", tr("Browse Services"), protocolActions, pm, DiscoData::Browse);
-		agentsProtocol = new ProtocolAction ("A", tr("Browse Agents"), protocolActions, pm, DiscoData::Agents);
-		autoProtocol->setChecked(true);
-	}
 
 	// create actions
 	actBrowse = new IconAction (tr("Browse"), "psi/jabber", tr("&Browse"), 0, dlg);
@@ -1074,15 +887,6 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	toolBar->addAction(actVCard);
 	toolBar->addAction(actAHCommand);
 	toolBar->addAction(actQueryVersion);
-
-	// select protocol
-	if (PsiOptions::instance()->getOption("options.ui.show-deprecated.service-discovery.protocol-selector").toBool()) {
-		toolBar->addSeparator();
-		toolBar->addAction(autoProtocol);
-		toolBar->addAction(discoProtocol);
-		toolBar->addAction(browseProtocol);
-		toolBar->addAction(agentsProtocol);
-	}
 
 	toolBar->addWidget(new StretchWidget(toolBar));
 	AccountLabel* lb_ident = new AccountLabel(toolBar);
@@ -1427,11 +1231,6 @@ void DiscoDlg::Private::objectDestroyed(QObject *obj)
 {
 	if ( obj == busy )
 		busy = 0;
-}
-
-void DiscoDlg::Private::setProtocol(int p)
-{
-	data.protocol = (DiscoData::Protocol)p;
 }
 
 //----------------------------------------------------------------------------
