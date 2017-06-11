@@ -191,6 +191,16 @@ else()
 	endif()
 endif()
 
+message(STATUS "CXX flags: ${CMAKE_CXX_FLAGS}")
+message(STATUS "C flags: ${CMAKE_C_FLAGS}")
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+	message(STATUS "CXX debug flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+	message(STATUS "C debug flags: ${CMAKE_C_FLAGS_DEBUG}")
+endif()
+
 if(USE_QT5)
 	option( QT4_BUILD "Build with Qt4 support" OFF )
 else()

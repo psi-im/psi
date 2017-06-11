@@ -7,8 +7,6 @@ set(CMAKE_AUTOMOC OFF)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
 	set(D "d")
 	add_definitions(-DALLOW_QT_PLUGINS_DIR)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
 endif()
 
 set( LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
