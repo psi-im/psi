@@ -327,11 +327,6 @@ QLineEdit#le_status_text {
 				<use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring><use-hash-nick-coloring type="bool">true</use-hash-nick-coloring><colored-history type="bool">true</colored-history>
 				<allow-highlight-events type="bool">false</allow-highlight-events>
 			</muc>
-			<show-deprecated comment="Deprecated functionality or protocols">
-				<service-discovery comment="Service discovery dialog">
-					<protocol-selector comment="Show the iq:browse and iq:agents service discovery protocol selector." type="bool">false</protocol-selector>
-				</service-discovery>
-			</show-deprecated>
 			<spell-check comment="Options related to the spell checker">
 				<enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
 				<langs type="QString"></langs>

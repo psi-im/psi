@@ -41,9 +41,6 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-#define PSI_HIDPI devicePixelRatio(contactList)
-//#define PSI_HIDPI (2) // for testing purposes
-
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
 static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
 static const QString outlinedGroupsOptionPath = "options.ui.look.contactlist.use-outlined-group-headings";
@@ -78,6 +75,24 @@ static const QString statusIconsetOptionPath = "options.iconsets.status";
 
 #define ALERT_INTERVAL 100 /* msecs */
 #define ANIM_INTERVAL 300 /* msecs */
+
+#define PSI_HIDPI computeScaleFactor(contactList)
+//#define PSI_HIDPI (2) // for testing purposes
+
+int computeScaleFactor(ContactListView *contactList) {
+	static int factor = 0;
+	if (!factor) {
+		if (devicePixelRatio(contactList) > 1) {
+			factor = 1; // It's autodetected by Qt. it will scale everything on it's own.
+		} else {
+			factor = qRound(pointToPixel(100)/100.0);
+			if (!factor) {
+				factor = 1;
+			}
+		}
+	}
+	return factor;
+}
 
 static QRect relativeRect(const QStyleOption &option, const QSize &size, const QRect &prevRect, int padding = 0)
 {

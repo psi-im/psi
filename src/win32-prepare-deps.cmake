@@ -262,6 +262,15 @@ if(WIN32)
                 )
 	endif()
 
+	if(SEPARATE_QJDNS)
+		#copy(${QJDNS_DIR}/libqjdns${D}.dll "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+		#copy(${QJDNS_DIR}/libjdns${D}.dll "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+		list(APPEND LIBRARIES_LIST
+			libqjdns.dll
+			libjdns.dll
+		)
+	endif()
+
 	if(EXISTS "${SDK_PATH}")
 		set(PATHES
 			"${IDN_ROOT}bin"
@@ -274,13 +283,13 @@ if(WIN32)
 			"${ZLIB_ROOT}bin"
 			"${SDK_PATH}/openssl/bin"
 		)
+		if(SEPARATE_QJDNS)
+			list(APPEND PATHES
+				"${QJDNS_DIR}bin"
+			)
+		endif()
 	endif()
 	find_psi_lib("${LIBRARIES_LIST}" "${PATHES}")
-
-	if(SEPARATE_QJDNS)
-		copy(${QJDNS_DIR}/libqjdns${D}.dll "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy(${QJDNS_DIR}/libjdns${D}.dll "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-	endif()
 
 	# qca and plugins
 	find_file( QCA_LIB_FILE libqca${QCA_LIB_SUFF}${D}.dll PATHES ${QCA_DIR}/bin ${QT_BIN_DIR}/)

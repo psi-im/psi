@@ -7,8 +7,6 @@ set(CMAKE_AUTOMOC OFF)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
 	set(D "d")
 	add_definitions(-DALLOW_QT_PLUGINS_DIR)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
 endif()
 
 set( LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
@@ -70,9 +68,7 @@ if(USE_QT5)
 
 	set(QT_LUPDATE_EXECUTABLE ${Qt5_LUPDATE_EXECUTABLE})
 	set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5::Concurrent Qt5::Multimedia Qt5::Svg ${SQL_LIBS})
-	find_package( Qca-qt5 REQUIRED )
-	set(QCA_INCLUDES ${Qca-qt5_INCLUDE_DIR})
-	set(qca_LIB ${Qca-qt5_LIBRARY})
+	set(Qca_SUFFIX -qt5)
 	if(LINUX)
 		list(APPEND QT_LIBRARIES Qt5::DBus Qt5::X11Extras ${LIBXCB_LIBRARIES})
 	endif()
@@ -101,9 +97,9 @@ else()
 	unset(QT_EXTRA_MODULES)
 
 	include(${QT_USE_FILE})
-	find_package( Qca REQUIRED )
-	set(QCA_INCLUDES ${Qca_INCLUDE_DIR})
-	set(qca_LIB ${Qca_LIBRARY})
+	#find_package( Qca REQUIRED )
+	#set(QCA_INCLUDES ${Qca_INCLUDE_DIR})
+	#set(qca_LIB ${Qca_LIBRARY})
 	if(ENABLE_SQL)
 		find_package(QJSON REQUIRED)
 		set(EXTRA_LIBS
@@ -116,6 +112,8 @@ else()
 		endif()
 	endif()
 endif()
+
+find_package( Qca REQUIRED )
 
 if(LINUX)
 	find_package(X11 REQUIRED)
@@ -165,7 +163,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
 	${PROJECT_SOURCE_DIR}
-	${QCA_INCLUDES}
+	${Qca_INCLUDE_DIR}
 )
 
 if( BUNDLED_IRIS )
@@ -191,14 +189,14 @@ endif()
 if(ENABLE_SQL)
 	set( PSI_VER_SUFFIX "${PSI_VER_SUFFIX}, sql" )
 endif()
-#set(PSI_PLUS_VERSION "${APP_VERSION}" CACHE STRING "Version string of Psi")
-if( NOT PSI_VERSION AND ( NOT IS_PSIPLUS ) )
-	set(PSI_VERSION "${APP_VERSION}-dev \(${PSI_COMPILATION_DATE}${PSI_VER_SUFFIX}\)")
-endif()
-if( NOT PSI_VERSION AND ( PSI_REVISION AND PSI_PLUS_REVISION ) )
+
+if( IS_PSIPLUS AND ( NOT PSI_VERSION AND ( PSI_REVISION AND PSI_PLUS_REVISION ) ) )
 	set(PSI_VERSION "${APP_VERSION} \(${PSI_COMPILATION_DATE}, Psi:${PSI_REVISION}, Psi+:${PSI_PLUS_REVISION}${PSI_VER_SUFFIX}\)")
+	message(STATUS "Psi+ version set: ${PSI_VERSION}")
+elseif( NOT IS_PSIPLUS AND ( NOT PSI_VERSION AND APP_VERSION ) )
+	set(PSI_VERSION "${APP_VERSION}-dev \(${PSI_COMPILATION_DATE}${PSI_VER_SUFFIX}\)")
+	message(STATUS "Psi version set: ${PSI_VERSION}")
 endif()
-message(STATUS "Compilation date: ${PSI_COMPILATION_DATE}")
 
 #add_definitions(-DPSI_VERSION=${PSI_VERSION})
 
@@ -382,7 +380,7 @@ target_link_libraries(${PROJECT_NAME}
 	${X11_LIBRARIES}
 	${EXTRA_LIBS}
 	iris
-	${qca_LIB}
+	${Qca_LIBRARY}
 	)
 target_link_libraries(${PROJECT_NAME}
 	options

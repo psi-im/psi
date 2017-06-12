@@ -184,6 +184,11 @@ PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	mCmdManager_.registerProvider(new ChatDlgMCmdProvider(this));
 }
 
+PsiChatDlg::~PsiChatDlg()
+{
+	delete actions_;
+}
+
 void PsiChatDlg::initUi()
 {
 	ui_.setupUi(this);
