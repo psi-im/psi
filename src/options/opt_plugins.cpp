@@ -151,7 +151,6 @@ void OptionsTabPlugins::listPlugins()
 		aboutbutton->resize(buttonSize);
 		aboutbutton->setObjectName("ab_" + shortName);
 		aboutbutton->setToolTip(tr("Show information about plugin"));
-		connect(aboutbutton, SIGNAL(clicked()), this, SLOT(showPluginInfo()));
 		d->tw_Plugins->setItemWidget(item, C_ABOUT, aboutbutton);
 		connect(aboutbutton, SIGNAL(clicked(bool)), info, SLOT(map()));
 		info->setMapping(aboutbutton, index);
@@ -161,7 +160,6 @@ void OptionsTabPlugins::listPlugins()
 		settsbutton->resize(buttonSize);
 		settsbutton->setObjectName("sb_" + shortName);
 		settsbutton->setToolTip(tr("Open plugin settings dialog"));
-		connect(settsbutton, SIGNAL(clicked()), this, SLOT(settingsClicked()));
 		settsbutton->setEnabled(enabled);
 		d->tw_Plugins->setItemWidget(item, C_SETTS, settsbutton);
 		connect(settsbutton, SIGNAL(clicked(bool)), settings, SLOT(map()));
