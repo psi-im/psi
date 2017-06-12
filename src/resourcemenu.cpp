@@ -71,6 +71,9 @@ void ResourceMenu::addResource(int status, QString name)
 	QAction* action = new QAction(PsiIconset::instance()->status(status).icon(), rname, this);
 	addAction(action);
 	action->setProperty("resource", QVariant(name));
+#if defined (Q_OS_MAC) && defined (HAVE_QT5)
+	action->setIconVisibleInMenu(true);
+#endif
 	connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 }
 
