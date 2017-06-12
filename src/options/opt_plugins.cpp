@@ -4,6 +4,7 @@
 #include <QWhatsThis>
 #include <QToolButton>
 #include <QHeaderView>
+#include <QSignalMapper>
 
 #include "common.h"
 #include "iconwidget.h"
@@ -121,6 +122,10 @@ void OptionsTabPlugins::listPlugins()
 	QStringList plugins = pm->availablePlugins();
 	plugins.sort();
 	const QSize buttonSize = QSize(21,21);
+	QSignalMapper *info = new QSignalMapper(d);
+	QSignalMapper *settings = new QSignalMapper(d);
+	connect(info, SIGNAL(mapped(int)), this, SLOT(showPluginInfo(int)));
+	connect(settings, SIGNAL(mapped(int)), this, SLOT(settingsClicked(int)));
 	foreach ( const QString& plugin, plugins ){
 		QIcon icon = pm->icon(plugin);
 		bool enabled = pm->isEnabled(plugin);
@@ -139,6 +144,7 @@ void OptionsTabPlugins::listPlugins()
 		}
 		item->setIcon(C_NAME,icon);
 		QString shortName = PluginManager::instance()->shortName(plugin);
+		const int index = d->tw_Plugins->indexOfTopLevelItem(item);
 
 		QToolButton *aboutbutton = new QToolButton(d->tw_Plugins);
 		aboutbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/info")));
@@ -147,6 +153,8 @@ void OptionsTabPlugins::listPlugins()
 		aboutbutton->setToolTip(tr("Show information about plugin"));
 		connect(aboutbutton, SIGNAL(clicked()), this, SLOT(showPluginInfo()));
 		d->tw_Plugins->setItemWidget(item, C_ABOUT, aboutbutton);
+		connect(aboutbutton, SIGNAL(clicked(bool)), info, SLOT(map()));
+		info->setMapping(aboutbutton, index);
 
 		QToolButton *settsbutton = new QToolButton(d->tw_Plugins);
 		settsbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/options")));
@@ -156,6 +164,8 @@ void OptionsTabPlugins::listPlugins()
 		connect(settsbutton, SIGNAL(clicked()), this, SLOT(settingsClicked()));
 		settsbutton->setEnabled(enabled);
 		d->tw_Plugins->setItemWidget(item, C_SETTS, settsbutton);
+		connect(settsbutton, SIGNAL(clicked(bool)), settings, SLOT(map()));
+		settings->setMapping(settsbutton, index);
 	}
 	if ( d->tw_Plugins->topLevelItemCount() > 0 ) {
 #ifdef HAVE_QT5
@@ -195,14 +205,14 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
 	d->tw_Plugins->blockSignals(false); //Release signals blocking
 }
 
-void OptionsTabPlugins::showPluginInfo()
+void OptionsTabPlugins::showPluginInfo(int item)
 {
-	if ( !w || !sender()->inherits("QToolButton") )
+	if ( !w )
 		return;
+
 	OptPluginsUI *d = (OptPluginsUI *)w;
-	QToolButton *btn = static_cast<QToolButton*>(sender());
-	const QPoint coords(btn->x(),btn->y());
-	d->tw_Plugins->setCurrentItem(d->tw_Plugins->itemAt(coords));
+	d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
+
 	if ( d->tw_Plugins->selectedItems().size() > 0 ) {
 		if( infoDialog )
 			delete(infoDialog);
@@ -218,15 +228,14 @@ void OptionsTabPlugins::showPluginInfo()
 	}
 }
 
-void OptionsTabPlugins::settingsClicked()
+void OptionsTabPlugins::settingsClicked(int item)
 {
-	if ( !w || !sender()->inherits("QToolButton") )
+	if ( !w )
 		return;
 
 	OptPluginsUI *d = (OptPluginsUI *)w;
-	QToolButton *btn = static_cast<QToolButton*>(sender());
-	const QPoint coords(btn->x(),btn->y());
-	d->tw_Plugins->setCurrentItem(d->tw_Plugins->itemAt(coords));
+	d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
+
 	if ( d->tw_Plugins->selectedItems().size() > 0 ) {
 		const QString pluginName = d->tw_Plugins->currentItem()->text(C_NAME);
 		const QString shortName = PluginManager::instance()->shortName(pluginName);
