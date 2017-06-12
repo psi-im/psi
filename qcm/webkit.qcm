@@ -25,13 +25,13 @@ public:
 		QStringList tryList;
 		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
 		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
 			tryList << "qtwebengine" << "qtwebkit";
 #else
 			tryList << "qtwebkit";
 #endif
 		} else {
-#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(5,6,0)
 			if (wt == "qtwebengine") {
 				webkitType = "unsupported";
 				return false;
