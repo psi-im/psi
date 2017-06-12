@@ -331,6 +331,7 @@ src_compile() {
 
 	if [ ! -z "${MAC_SDK_VER}" ]; then
 		echo "QMAKE_MAC_SDK = macosx${MAC_SDK_VER}" >> conf.pri
+		echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_SDK_VER}" >> conf.pri
 	fi
 
         $MAKE $MAKEOPT || die "make failed"
@@ -495,6 +496,7 @@ copy_resources() {
 	cp -r ${PSI_DIR}/build/sound .
 	cp -r ${PSI_DIR}/build/themes .
         cp -r ${PSI_DIR}/build/iconsets .
+	cp -r ${PSI_DIR}/resources/sound .
         cp -f ${PSI_DIR}/build/client_icons.txt .
 }
 
