@@ -29,9 +29,9 @@ if(APPLE)
 	list(APPEND SOURCES
 		SparkleAutoUpdater.mm
 	)
-	#set(EXTRA_LIB
-	#	Sparkle
-	#)
+	set(EXTRA_LIB
+		${SPARKLE_LIBRARY}
+	)
 endif()
 
 if(USE_QDCHECKER)
@@ -61,5 +61,5 @@ add_library(AutoUpdater STATIC ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOU
 if(USE_QDCHECKER)
 	add_dependencies(AutoUpdater build_ui_files tools widgets)
 endif()
-target_link_libraries(AutoUpdater ${EXTRA_STATIC_LIBS} ${QT_LIBRARIES})
+target_link_libraries(AutoUpdater ${EXTRA_STATIC_LIBS} ${QT_LIBRARIES} ${EXTRA_LIB})
 target_include_directories(AutoUpdater PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
 	set(D "d")
-	add_definitions(-DALLOW_QT_PLUGINS_DIR)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
 endif()
 if(WIN32)
 	# Get Qt installation path
@@ -253,6 +250,7 @@ if(WIN32)
 			liblzo2-2.dll
 			libmng-2.dll
 			libpcre16-0.dll
+			libpcre2-16-0.dll
 			libpcre-1.dll
 			libpng16-16.dll
 			libssp-0.dll
@@ -265,8 +263,6 @@ if(WIN32)
 	endif()
 
 	if(SEPARATE_QJDNS)
-		#copy(${QJDNS_DIR}/libqjdns${D}.dll "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		#copy(${QJDNS_DIR}/libjdns${D}.dll "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
 		list(APPEND LIBRARIES_LIST
 			libqjdns.dll
 			libjdns.dll
