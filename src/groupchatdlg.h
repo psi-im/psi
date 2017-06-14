@@ -142,6 +142,7 @@ private slots:
 	void action_error(MUCManager::Action, int, const QString&);
 	void updateMucName();
 	void updateGCVCard();
+	void discoInfoFinished();
 	void updateIdentityVisibility();
 	void updateBookmarkIcon();
 #ifdef WHITEBOARDING

@@ -186,6 +186,15 @@ int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
 	return -1;
 }
 
+QString BookmarkManager::conferenceName(const Jid &j) const
+{
+	int index = indexOfConference(j);
+	if (index >= 0) {
+		return conferences_[index].name();
+	}
+	return QString();
+}
+
 void BookmarkManager::accountStateChanged()
 {
 	if (!account_->isAvailable()) {
