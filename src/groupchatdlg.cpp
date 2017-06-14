@@ -216,6 +216,7 @@ public:
 	int state;
 	MUCManager *mucManager;
 	QString self, prev_self;
+	QString mucName;
 	QString password;
 	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
@@ -661,6 +662,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this);
 	d->self = d->prev_self = j.resource();
+	d->mucName = j.full();
 	account()->dialogRegister(this, jid());
 	connect(account(), SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	d->mucManager = new MUCManager(account(), jid());
@@ -799,6 +801,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	}
 	connect(bm, SIGNAL(availabilityChanged()), SLOT(updateBookmarkIcon()));
 	connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateBookmarkIcon()));
+	connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateMucName()));
 	connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
 
 	int s = PsiIconset::instance()->system().iconSize();
@@ -872,6 +875,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
 	connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
 
+	updateMucName();
 	updateGCVCard();
 	VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), this, SLOT(updateGCVCard()), true);
 
@@ -1083,6 +1087,24 @@ void GCMainDlg::unsetConnecting()
 void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 {
 	appendSysMsg(err, false);
+}
+
+void GCMainDlg::updateMucName()
+{
+	QString newName;
+	auto bm = account()->bookmarkManager();
+	int index = bm->indexOfConference(jid());
+	auto mucs = bm->conferences();
+	if (index < 0 || mucs[index].name().isEmpty()) {
+		newName = jid().full();
+		// TODO try to get from VCard or from muc manager or from disco#info
+	} else {
+		newName = mucs[index].name();
+	}
+	if (newName != d->mucName) {
+		d->mucName = newName;
+		invalidateTab();
+	}
 }
 
 void GCMainDlg::updateGCVCard()
@@ -1964,6 +1986,11 @@ void GCMainDlg::doAlert()
 			doFlash(true);
 }
 
+const QString &GCMainDlg::getDisplayName()
+{
+	return d->mucName;
+}
+
 QString GCMainDlg::desiredCaption() const
 {
 	QString cap = "";
@@ -1974,15 +2001,7 @@ QString GCMainDlg::desiredCaption() const
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
-
-	auto bm = account()->bookmarkManager();
-	int index = bm->indexOfConference(jid());
-	auto mucs = bm->conferences();
-	if (index < 0 || mucs[index].name().isEmpty()) {
-		cap += jid().full();
-	} else {
-		cap += mucs[index].name();
-	}
+	cap += d->mucName;
 
 	return cap;
 }
