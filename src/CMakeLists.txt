@@ -253,9 +253,8 @@ if(USE_WEBENGINE)
 	)
 endif()
 
-
-if(EXISTS "${PROJECT_SOURCE_DIR}/translations")
-	set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
+set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
+if(EXISTS "${TRANSLATIONS_DIR}")
 	set(LANGS_EXISTS ON)
 	set(TRANSLATIONS
 		${TRANSLATIONS_DIR}/psi_be.ts
@@ -293,7 +292,8 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/translations")
 		${TRANSLATIONS_DIR}/psi_zh_TW.ts
 	)
 
-	set_property(SOURCE ${TRANSLATIONS} PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations)
+	set_property(SOURCE ${TRANSLATIONS}
+		PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations)
 
 	add_custom_target(lupdate)
 	foreach(_LANG ${TRANSLATIONS})
@@ -301,8 +301,11 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/translations")
 			get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
 			string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
 			add_custom_target(${_SHORT_LANG}
-			COMMAND ${QT_LUPDATE_EXECUTABLE} "-no-obsolete" "-recursive" "." "../iris" "-ts" ${_LANG}
-			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)
+				COMMAND ${QT_LUPDATE_EXECUTABLE}
+				ARGS -no-obsolete -recursive . ../iris -ts ${_LANG}
+				WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+				VERBATIM
+			)
 			add_dependencies(lupdate ${_SHORT_LANG})
 		endif()
 	endforeach()
@@ -322,22 +325,33 @@ add_custom_target(build_ui_files DEPENDS "${UI_FORMS}" SOURCES "${FORMS}")
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 
 if(WIN32)
-	# resource compilation for MinGW
+	# win resource compilation
 	if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
 		set(RC_SUFFIX "32")
 	else()
 		set(RC_SUFFIX "64")
 	endif()
+	set(WINRC_FILE_NAME ${PROJECT_SOURCE_DIR}/win32/psi_win${RC_SUFFIX}.rc)
+	set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
 	if(NOT MSVC)
 		set(CMD_ARG
-		-I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_SOURCE_DIR}/win32/psi_win${RC_SUFFIX}.rc -o ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
+			--include=${CMAKE_CURRENT_SOURCE_DIR}
+			--input=${WINRC_FILE_NAME}
+			--output=${RC_FILE}
+		)
 	else()
 		set(CMD_ARG
-		/fo ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o ${CMAKE_SOURCE_DIR}/win32/psi_win${RC_SUFFIX}.rc)
+			/fo
+			${RC_FILE}
+			${WINRC_FILE_NAME}
+		)
 	endif()
-	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o
-			COMMAND ${CMAKE_RC_COMPILER} ${CMD_ARG})
-	set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
+	add_custom_command(OUTPUT ${RC_FILE}
+			COMMAND ${CMAKE_RC_COMPILER}
+			ARGS ${CMD_ARG}
+			WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
+			VERBATIM
+	)
 endif()
 
 add_executable(${PROJECT_NAME}
