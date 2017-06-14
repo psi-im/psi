@@ -215,7 +215,9 @@ public:
 	void groupChatChangeNick(const QString &host, const QString &room, const QString& nick, const Status &);
 	void groupChatLeave(const QString &host, const QString &room);
 	void setLocalMucBookmarks(const QStringList &sl);
+	void setIgnoreMucBookmarks(const QStringList &sl);
 	QStringList localMucBookmarks() const;
+	QStringList ignoreMucBookmarks() const;
 
 	Jid realJid(const Jid &j) const;
 	PsiContact* selfContact() const;
