@@ -1974,7 +1974,15 @@ QString GCMainDlg::desiredCaption() const
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
-	cap += jid().full();
+
+	auto bm = account()->bookmarkManager();
+	int index = bm->indexOfConference(jid());
+	auto mucs = bm->conferences();
+	if (index < 0 || mucs[index].name().isEmpty()) {
+		cap += jid().full();
+	} else {
+		cap += mucs[index].name();
+	}
 
 	return cap;
 }
