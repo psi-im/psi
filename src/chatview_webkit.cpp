@@ -386,6 +386,14 @@ ChatView::ChatView(QWidget *parent) :
 
 ChatView::~ChatView()
 {
+#ifdef WEBENGINE
+	// next two lines is a workaround to some Qt(?) bug very similar to
+	// QTBUG-48014 and bunch of others (deletes QWidget twice).
+	// The bug was last time reproduced with Qt-5.9. algo is pretty simple:
+	// Connect to any conference and quit Psi.
+	d->webView->setParent(0);
+	d->webView->deleteLater();
+#endif
 }
 
 // something after we know isMuc and dialog is set. kind of final step
