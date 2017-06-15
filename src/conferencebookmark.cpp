@@ -70,6 +70,11 @@ ConferenceBookmark::JoinType ConferenceBookmark::autoJoin() const
 	return auto_join_;
 }
 
+bool ConferenceBookmark::needJoin() const
+{
+	return auto_join_ == ConferenceBookmark::Always || auto_join_ == ConferenceBookmark::OnlyThisComputer;
+}
+
 const QString& ConferenceBookmark::nick() const
 {
 	return nick_;
