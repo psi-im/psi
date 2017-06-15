@@ -39,6 +39,7 @@ public:
 	~DiscoDlg();
 
 	void doDisco(QString host = QString::null, QString node = QString::null);
+	PsiAccount *account();
 
 signals:
 	void featureActivated(QString feature, Jid jid, QString node);

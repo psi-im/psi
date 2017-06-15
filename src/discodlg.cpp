@@ -38,6 +38,7 @@
 #include <QEvent>
 #include <QList>
 #include <QContextMenuEvent>
+#include <QPainter>
 
 #include "xmpp_tasks.h"
 
@@ -51,10 +52,11 @@
 #include "stretchwidget.h"
 #include "psioptions.h"
 #include "accountlabel.h"
+#include "bookmarkmanager.h"
 
 //----------------------------------------------------------------------------
 
-PsiIcon category2icon(const QString &category, const QString &type, int status=STATUS_ONLINE)
+PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, const QString &type, int status=STATUS_ONLINE)
 {
 	// TODO: update this to http://www.jabber.org/registrar/disco-categories.html#gateway
 
@@ -87,8 +89,20 @@ PsiIcon category2icon(const QString &category, const QString &type, int status=S
 		// smtp
 	}
 	else if ( category == "conference" ) {
-		if (type == "public" || type == "private" || type == "text" || type == "irc")
-			return IconsetFactory::icon("psi/groupChat");
+		if (type == "public" || type == "private" || type == "text" || type == "irc") {
+			PsiIcon icon = IconsetFactory::icon("psi/groupChat");
+			if (acc->bookmarkManager()->isBookmarked(jid)) {
+				static QImage img;
+				if (img.isNull()) {
+					img = icon.pixmap().toImage();
+					QPainter p(&img);
+					PsiIcon bicon = IconsetFactory::icon("psi/bookmark_remove");
+					p.drawImage(QRect(img.rect().center(),img.rect().bottomRight()), bicon.image());
+				}
+				icon.setImpix(Impix(img));
+			}
+			return icon;
+		}
 		else if (type == "url")
 			return IconsetFactory::icon("psi/www");
 		// irc
@@ -305,7 +319,7 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 		DiscoItem::Identity id = di.identities().first();
 
 		if ( !id.category.isEmpty() ) {
-			QIcon icon = category2icon(id.category, id.type).icon();
+			QIcon icon = category2icon(d->pa, di.jid(), id.category, id.type).icon();
 
 			if ( !icon.isNull() ) {
 				setIcon(0, icon);
@@ -514,7 +528,7 @@ void DiscoListItem::discoInfoFinished()
 			if ( !di.identities().isEmpty() ) {
 				DiscoItem::Identity id = di.identities().first();
 				if ( !id.category.isEmpty() ) {
-					QIcon icon = category2icon(id.category, id.type, STATUS_ERROR).icon();
+					QIcon icon = category2icon(d->pa, di.jid(), id.category, id.type, STATUS_ERROR).icon();
 
 					if ( !icon.isNull() ) {
 						setIcon (0, icon);
@@ -552,8 +566,10 @@ void DiscoListItem::updateInfo(const DiscoItem &item)
 class DiscoListView : public QTreeWidget
 {
 	Q_OBJECT
+
+	DiscoDlg *dlg;
 public:
-	DiscoListView(QWidget *parent);
+	DiscoListView(DiscoDlg *parent);
 
 public slots:
 	void updateItemsVisibility(const QString& filter);
@@ -566,9 +582,10 @@ protected:
 	void resizeEvent(QResizeEvent*);
 };
 
-DiscoListView::DiscoListView(QWidget *parent)
+DiscoListView::DiscoListView(DiscoDlg *parent)
 : QTreeWidget(parent)
 {
+	dlg = parent;
 	installEventFilter(this);
 	setHeaderLabels( QStringList() << tr( "Name" ) << tr( "JID" ) << tr( "Node" ) );
 //	header()->setResizeMode(0, QHeaderView::Stretch);
@@ -637,7 +654,7 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 		DiscoItem::Identities::ConstIterator it = item.identities().begin();
 		for ( ; it != item.identities().end(); ++it) {
 			text += "<br>";
-			PsiIcon icon( category2icon((*it).category, (*it).type) );
+			PsiIcon icon( category2icon(dlg->account(), item.jid(), (*it).category, (*it).type) );
 			if ( !icon.name().isEmpty() )
 				text += "<icon name=\"" + icon.name() + "\"> ";
 			text += (*it).name;
@@ -1292,6 +1309,11 @@ DiscoDlg::~DiscoDlg()
 void DiscoDlg::doDisco(QString host, QString node)
 {
 	d->doDisco(host, node);
+}
+
+PsiAccount *DiscoDlg::account()
+{
+	return d->data.pa;
 }
 
 #include "discodlg.moc"
