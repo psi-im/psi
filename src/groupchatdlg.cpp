@@ -1312,7 +1312,7 @@ void GCMainDlg::doBookmark()
 	QList<ConferenceBookmark> confs =  bm->conferences();
 	int confInd = bm->indexOfConference(jid());
 	if (confInd < 0) { // not found
-		ConferenceBookmark conf(jid().bare(), jid(), ConferenceBookmark::Never, nick(), d->password);
+		ConferenceBookmark conf(getDisplayName(), jid(), ConferenceBookmark::Never, nick(), d->password);
 		confs.push_back(conf);
 		bm->setBookmarks(confs);
 		return;
