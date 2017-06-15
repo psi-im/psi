@@ -64,10 +64,10 @@ set(FORMS
 	)
 
 if(IS_PSIPLUS)
-	set(SOURCES
-		${SOURCES}
-		tabbar.cpp
-	)
+#	set(SOURCES
+#		${SOURCES}
+#		tabbar.cpp
+#	)
 	set(PLAIN_SOURCES
 		${PLAIN_SOURCES}
 		psiwindowheader.cpp
@@ -75,8 +75,9 @@ if(IS_PSIPLUS)
 	set(HEADERS
 		${HEADERS}
 		psiwindowheader.h
-		tabbar.h
 	)
+#		tabbar.h
+#	)
 	set(FORMS
 		${FORMS}
 		psiwindowheader.ui
