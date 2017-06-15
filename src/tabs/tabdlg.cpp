@@ -374,6 +374,11 @@ void TabDlg::setLooks()
 		tabWidget_->setTabPosition(QTabWidget::South);
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
+
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+	}
 }
 
 void TabDlg::tabSelected(QWidget* _selected)

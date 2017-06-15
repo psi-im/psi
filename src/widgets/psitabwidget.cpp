@@ -74,6 +74,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 	stacked_ = new QStackedLayout(layout_);
 
 	setTabPosition(QTabWidget::North);
+	setLooks();
 
 	if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-close-buttons").toBool()){
 		tabBar_->setTabsClosable(false);
@@ -173,7 +174,16 @@ void PsiTabWidget::addTab(QWidget *widget, QString name, const QIcon &icon)
 		tabBar_->addTab(icon, name);
 	else
 		tabBar_->addTab(name);
+	setLooks();
 	showPage(currentPage());
+}
+
+void PsiTabWidget::setLooks()
+{
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+	}
 }
 
 /**

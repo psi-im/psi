@@ -294,6 +294,11 @@ void PsiChatDlg::setLooks()
 {
 	ChatDlg::setLooks();
 
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+		chatEdit()->setCssString(css);
+	}
 	ui_.splitter->optionsChanged();
 	ui_.mle->optionsChanged();
 

@@ -741,6 +741,10 @@ void GCUserView::doContextMenu(QTreeWidgetItem *i)
 	pm->addAction(act);
 	act->setData(3);
 
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		pm->setStyleSheet(css);
+	}
 	int x = -1;
 	bool enabled = false;
 	act = pm->exec(QCursor::pos());

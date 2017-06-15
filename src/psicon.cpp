@@ -505,6 +505,10 @@ bool PsiCon::init()
 	d->iconSelect = new IconSelectPopup(0);
 	connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
 
+	const QString css = options->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty())
+		d->iconSelect->setStyleSheet(css);
+
 	// first thing, try to load the iconset
 	bool result = true;;
 	if( !PsiIconset::instance()->loadAll() ) {
@@ -1397,6 +1401,13 @@ void PsiCon::optionChanged(const QString& option)
 	// update s5b
 	if (option == "options.p2p.bytestreams.listen-port") {
 		s5b_init();
+	}
+
+	if (option == "options.ui.chat.css") {
+		QString css = PsiOptions::instance()->getOption(option).toString();
+		if (!css.isEmpty())
+			d->iconSelect->setStyleSheet(css);
+		return;
 	}
 
 	if (option == "options.ui.spell-check.langs") {

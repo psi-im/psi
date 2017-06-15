@@ -55,6 +55,10 @@ void PsiTipLabel::init(const QString& text)
 			enableColoring_ = false;
 		}
 	}
+	const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+	}
 }
 
 void PsiTipLabel::setText(const QString& text)

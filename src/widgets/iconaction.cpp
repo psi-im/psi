@@ -30,6 +30,8 @@ class PsiIcon;
 class Iconset;
 #endif
 
+#include "psioptions.h"
+
 #include <QLayout>
 #include <QMenu>
 #include <QTimer>
@@ -441,6 +443,11 @@ IconActionGroup::IconActionGroup(QObject *parent, const char *name, bool exclusi
 	d->updatePopup();
 
 	d->exclusive = exclusive;
+
+	const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
+	if (!css.isEmpty()) {
+		d->popup->setStyleSheet(css);
+	}
 }
 
 IconActionGroup::~IconActionGroup()

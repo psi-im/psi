@@ -122,6 +122,7 @@
 				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<show-status-changes type="bool">true</show-status-changes>
 				<warn-before-clear type="bool">true</warn-before-clear>
+				<css type="QString" />
 				<hide-when-closing type="bool">false</hide-when-closing>
 				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
 				<default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
@@ -146,6 +147,7 @@
 					<show comment="Show status messages" type="bool">false</show>
 				</status-messages>
 				<tooltip comment="Display options for the contact list tooltips">
+					<css type="QString"></css>
 					<avatar comment="Display avatar" type="bool">true</avatar>
 					<client-version comment="Display client version information" type="bool">true</client-version>
 					<geolocation comment="Display geolocation information" type="bool">true</geolocation>
@@ -411,6 +413,7 @@ QLineEdit#le_status_text {
 					<message type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</message>
 					<passive-popup type="QString">Sans Serif,7,-1,5,50,0,0,0,0,0</passive-popup>
 				</font>
+				<css type="QString" />
 			</look>
 			<notifications>
 				<send-receipts type="bool" >true</send-receipts>
@@ -427,6 +430,7 @@ QLineEdit#le_status_text {
 						<status type="int">2000</status>
 					</delays>
 					<enabled type="bool">false</enabled>
+					<css type="QString"></css>
 					<top-to-bottom type="bool">false</top-to-bottom>
 					<at-left-corner type="bool">false</at-left-corner>
 					<incoming-chat type="bool">true</incoming-chat>

@@ -2037,6 +2037,11 @@ QString GCMainDlg::desiredCaption() const
 
 void GCMainDlg::setLooks()
 {
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+		d->mle()->setCssString(css);
+	}
 	ui_.vsplitter->optionsChanged();
 	ui_.mle->optionsChanged();
 
