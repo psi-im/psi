@@ -86,7 +86,7 @@ public:
 	// reimplemented
 	virtual TabbableWidget::State state() const;
 	virtual int unreadMessageCount() const;
-	const QString & getDisplayName();
+	const QString & getDisplayName() const;
 	virtual QString desiredCaption() const;
 
 protected:

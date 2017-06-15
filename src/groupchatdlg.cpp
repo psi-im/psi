@@ -196,6 +196,7 @@ class GCMainDlg::Private : public QObject, public MCmdProviderIface
 	Q_OBJECT
 public:
 	enum { Connecting, Connected, Idle, ForcedLeave };
+	enum { TitleBM, TitleDisco, TitleVCard, TitleJid, TitleNone };
 	Private(GCMainDlg *d) : mCmdManager(&mCmdSite), tabCompletion(this) {
 		dlg = d;
 		nickSeparator = ":";
@@ -214,6 +215,7 @@ public:
 
 	GCMainDlg *dlg;
 	int state;
+	int mucNameSource;
 	MUCManager *mucManager;
 	QString self, prev_self;
 	QString mucName, discoMucName, vcardMucName;
@@ -662,6 +664,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this);
 	d->self = d->prev_self = j.resource();
+	d->mucNameSource = Private::TitleNone;
 	account()->dialogRegister(this, jid());
 	connect(account(), SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	d->mucManager = new MUCManager(account(), jid());
@@ -1095,11 +1098,18 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 void GCMainDlg::updateMucName()
 {
 	QString newName = account()->bookmarkManager()->conferenceName(jid());
+	d->mucNameSource = Private::TitleBM;
 	if (newName.isEmpty()) {
 		newName = d->discoMucName;
+		d->mucNameSource = Private::TitleDisco;
 	}
 	if (newName.isEmpty()) {
 		newName = d->vcardMucName;
+		d->mucNameSource = Private::TitleVCard;
+	}
+	if (newName.isEmpty()) {
+		newName = jid().bare();
+		d->mucNameSource = Private::TitleJid;
 	}
 	if (newName != d->mucName) {
 		d->mucName = newName;
@@ -1114,7 +1124,9 @@ void GCMainDlg::discoInfoFinished()
 	if (i.count() > 0) {
 		d->discoMucName = i.first().name;
 	}
-	updateMucName();
+	if (d->mucNameSource >= Private::TitleDisco) {
+		updateMucName();
+	}
 }
 
 void GCMainDlg::updateGCVCard()
@@ -1125,7 +1137,9 @@ void GCMainDlg::updateGCVCard()
 		if (d->vcardMucName.isEmpty()) {
 			d->vcardMucName = vcard.fullName();
 		}
-		updateMucName();
+		if (d->mucNameSource >= Private::TitleVCard) {
+			updateMucName();
+		}
 		QImage avatar = QImage::fromData(vcard.photo());
 		if (!avatar.isNull()) {
 			ui_.lblAvatar->show();
@@ -2001,10 +2015,9 @@ void GCMainDlg::doAlert()
 			doFlash(true);
 }
 
-const QString &GCMainDlg::getDisplayName()
+const QString &GCMainDlg::getDisplayName() const
 {
-	return d->mucName.isEmpty()?
-	            jid().full() : d->mucName;
+	return d->mucName;
 }
 
 QString GCMainDlg::desiredCaption() const
@@ -2017,9 +2030,7 @@ QString GCMainDlg::desiredCaption() const
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
-	QString name = d->mucName.isEmpty()?
-	            jid().full() : d->mucName; // FIXME a dup because it's const func.
-	cap += name;
+	cap += getDisplayName();
 
 	return cap;
 }

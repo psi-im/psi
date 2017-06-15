@@ -73,7 +73,7 @@ public:
 
 	// reimplemented
 	void setJid(const Jid &);
-	const QString & getDisplayName();
+	const QString & getDisplayName() const;
 
 	// reimplemented
 	virtual bool readyToHide();
