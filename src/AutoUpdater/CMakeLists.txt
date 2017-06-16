@@ -14,7 +14,7 @@ include_directories(
 	../
 )
 
-list(APPEND HEADERS
+list(APPEND PLAIN_HEADERS
 	AutoUpdater.h
 )
 

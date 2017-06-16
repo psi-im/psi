@@ -17,20 +17,20 @@ set(PLAIN_SOURCES
 	sxerecordedit.cpp
 	sxeremoveedit.cpp
 	sxesession.cpp
-	)
+)
 
 set(HEADERS
 	sxemanager.h
 	sxerecord.h
 	sxesession.h
-	)
+)
 
 set(PLAIN_HEADERS
 	sxeedit.h
 	sxenewedit.h
 	sxerecordedit.h
 	sxeremoveedit.h
-	)
+)
 
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
 add_library(sxe STATIC ${HEADERS} ${MOC_SOURCES} ${PLAIN_SOURCES} ${PLAIN_HEADERS})

@@ -11,18 +11,18 @@ list(APPEND HEADERS
 	privacymanager.h
 	privacyruledlg.h
 	psiprivacymanager.h
-	)
+)
 
 list(APPEND PLAIN_HEADERS
 	privacylist.h
 	privacylistblockedmodel.h
 	privacylistitem.h
 	privacylistmodel.h
-	)
+)
 
 list(APPEND SOURCES
 	psiprivacymanager.cpp
-	)
+)
 
 list(APPEND PLAIN_SOURCES
 	privacydlg.cpp
@@ -31,12 +31,12 @@ list(APPEND PLAIN_SOURCES
 	privacylistitem.cpp
 	privacylistmodel.cpp
 	privacyruledlg.cpp
-	)
+)
 
 list(APPEND FORMS
 	privacy.ui
 	privacyrule.ui
-	)
+)
 
 qt4_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})

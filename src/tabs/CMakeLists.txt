@@ -10,13 +10,13 @@ set(HEADERS
 	tabdlg.h
 	tabmanager.h
 	tabbablewidget.h
-	)
+)
 
 set(PLAIN_SOURCES
 	tabdlg.cpp
 	tabmanager.cpp
 	tabbablewidget.cpp
-	)
+)
 
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
 add_library(tabs STATIC  ${HEADERS} ${MOC_SOURCES} ${PLAIN_SOURCES})

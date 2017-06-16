@@ -1,6 +1,6 @@
 include_directories(
 	plugins/include
-	)
+)
 
 list(APPEND PLAIN_HEADERS
 	plugins/include/accountinfoaccessinghost.h
@@ -40,4 +40,4 @@ list(APPEND PLAIN_HEADERS
 	plugins/include/stanzasender.h
 	plugins/include/stanzasendinghost.h
 	plugins/include/toolbariconaccessor.h
-	)
+)

@@ -13,17 +13,17 @@ list(APPEND HEADERS
 	contactmanagerdlg.h
 	contactmanagermodel.h
 	contactmanagerview.h
-	)
+)
 
 list(APPEND PLAIN_SOURCES
 	contactmanagerdlg.cpp
 	contactmanagermodel.cpp
 	contactmanagerview.cpp
-	)
+)
 
 list(APPEND FORMS
 	contactmanagerdlg.ui
-	)
+)
 
 qt4_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})

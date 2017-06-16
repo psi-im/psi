@@ -32,14 +32,14 @@ list(APPEND HEADERS
 	opt_plugins.h
 	opt_statusgeneral.h
 	opt_theme.h
-	)
+)
 
 list(APPEND SOURCES
 
 	optionsdlgbase.cpp
 	optionstab.cpp
 	opt_plugins.cpp
-	)
+)
 
 list(APPEND PLAIN_SOURCES
 	optionsdlg.cpp
@@ -62,7 +62,7 @@ list(APPEND PLAIN_SOURCES
 	opt_theme.cpp
 	opt_toolbars.cpp
 	opt_tree.cpp
-	)
+)
 
 list(APPEND FORMS 
 	opt_advanced.ui
@@ -93,7 +93,7 @@ list(APPEND FORMS
 	plugininfodialog.ui
 	ui_isdetails.ui
 	ui_options.ui
-	)
+)
 
 qt4_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})

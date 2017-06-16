@@ -9,26 +9,26 @@ unset(UI_FORMS)
 include_directories(
 	${PROJECT_SOURCE_DIR}/iris/include/iris
 	${PROJECT_SOURCE_DIR}/iris/src
-	)
+)
 
 list(APPEND FORMS
 	CertificateDisplay.ui
-	)
+)
 
 list(APPEND HEADERS
 	CertificateDisplayDialog.h
 	CertificateErrorDialog.h
-	)
+)
 
 list(APPEND PLAIN_HEADERS
 	CertificateHelpers.h
-	)
+)
 
 list(APPEND PLAIN_SOURCES
 	CertificateDisplayDialog.cpp
 	CertificateErrorDialog.cpp
 	CertificateHelpers.cpp
-	)
+)
 
 qt4_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
