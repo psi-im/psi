@@ -1142,8 +1142,20 @@ public:
 	qc_qjdns(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QJDns"; }
 	QString shortname() const { return "qjdns"; }
+	QString resultString() const
+	{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+		return "Disabled for Qt5 and above";
+#else
+		return ConfObj::resultString();
+#endif
+	}
 	bool exec()
 	{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+		return true; // hack. TODO: figure out how to force jdns
+#endif
+		conf->addExtra("CONFIG += need_jdns");
 #if defined Q_OS_WIN || defined Q_OS_MAC
 		// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
 		conf->addExtra("CONFIG += iris-qjdns");
@@ -1177,9 +1189,7 @@ public:
 				conf->addIncludePath(inc);
 			}
 			conf->addLib(libs);
-		}
-		else {
-			conf->addExtra("CONFIG += iris-qjdns");
+			conf->addExtra("CONFIG += ext-qjdns");
 		}
 
 		return true;
@@ -1375,13 +1385,13 @@ public:
 		QStringList tryList;
 		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
 		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
 			tryList << "qtwebengine" << "qtwebkit";
 #else
 			tryList << "qtwebkit";
 #endif
 		} else {
-#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(5,6,0)
 			if (wt == "qtwebengine") {
 				webkitType = "unsupported";
 				return false;
