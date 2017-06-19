@@ -9,7 +9,7 @@
 
 # Qt5 Settings
 MAC_SDK_VER=10.9
-QTDIR="${HOME}/Qt5.8.0/5.8/clang_64"
+QTDIR="${HOME}/Qt5.6.2/5.6/clang_64"
 QT_FRAMEWORK_VERSION=5
 
 QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets"  #QtDBus QtWebEngine 
@@ -86,12 +86,19 @@ get_qconf() {
 check_env() {
 	log "Testing environment..."
 
+	if [ ! -d "${PSI_DIR}" ]
+	then
+		mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"	
+	fi
+
 	MAKEOPT=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1)) -s }
 	STAT_USER_ID='stat -f %u'
 	STAT_USER_NAME='stat -f %Su'
 	SED_INPLACE_ARG=".bak"
 
-	v=`gmake --version 2>/dev/null`
+	v=`cmake --version 2>/dev/null` || \
+		die "You should install CMake first. / Сначала установите CMake"
+
 	v=`git --version 2>/dev/null` || \
 		die "You should install Git first. / Сначала установите Git (http://git-scm.com/download)"
 
@@ -182,10 +189,6 @@ cleanup_framework() {
 
 prepare_workspace() {
 	log "Init directories..."
-	if [ ! -d "${PSI_DIR}" ]
-	then
-		mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"	
-	fi
 
 	fetch_sources
 	fetch_deps
