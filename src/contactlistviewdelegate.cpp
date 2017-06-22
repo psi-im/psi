@@ -85,7 +85,7 @@ int computeScaleFactor(ContactListView *contactList) {
 		if (devicePixelRatio(contactList) > 1) {
 			factor = 1; // It's autodetected by Qt. it will scale everything on it's own.
 		} else {
-			factor = qRound(pointToPixel(100)/100.0);
+			factor = qApp->desktop()->logicalDpiX() / 90;
 			if (!factor) {
 				factor = 1;
 			}
