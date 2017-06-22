@@ -227,6 +227,9 @@ if(WIN32)
 		libidn-11.dll
 		libhunspell.dll
 		libhunspell-1.3-0.dll
+		libhunspell-1.4-0.dll
+		libhunspell-1.5-0.dll
+		libhunspell-1.6-0.dll
 		libeay32.dll
 		ssleay32.dll
 	)

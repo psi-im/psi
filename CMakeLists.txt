@@ -3,6 +3,21 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
 endif()
 
+#Common options
+option( BUNDLED_IRIS "Build iris library bundled" ON )
+option( ONLY_PLUGINS "Build psi-plus plugins only" OFF )
+option( USE_HUNSPELL "Build psi-plus with hunspell spellcheck" ON )
+option( USE_ENCHANT "Build psi-plus with enchant spellcheck" OFF )
+option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
+option( USE_QT5 "Use Qt5 to build psi-plus" ON )
+option( ENABLE_PLUGINS "Enable plugins" OFF )
+option( ENABLE_WEBKIT "Enable webkit support" ON )
+option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
+option( USE_CCACHE "Use ccache utility if found" ON )
+#Windows or MXE only
+option( USE_MXE "Use MXE cross-compilation" OFF )
+option( PRODUCTION "Build production version" OFF )
+
 set( IS_PSIPLUS ON CACHE BOOL "Build Psi+ client")
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/psiwindowheader.cpp")
@@ -18,17 +33,6 @@ endif()
 set(GLOBAL_DEPENDS_DEBUG_MODE ON)
 
 set( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
-option( BUNDLED_IRIS "Build iris library bundled" ON )
-option( ONLY_PLUGINS "Build psi-plus plugins only" OFF )
-option( USE_HUNSPELL "Build psi-plus with hunspell spellcheck" ON )
-option( USE_ENCHANT "Build psi-plus with enchant spellcheck" OFF )
-option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
-option( USE_QT5 "Use Qt5 to build psi-plus" ON )
-option( ENABLE_PLUGINS "Enable plugins" OFF )
-option( ENABLE_WEBKIT "Enable webkit support" ON )
-option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
-option( USE_CCACHE "Use ccache utility if found" ON )
-option( USE_MXE "Use MXE cross-compilation" OFF)
 
 set( ENABLE_SQL OFF CACHE BOOL "Enable SQL history support")
 
@@ -146,8 +150,6 @@ if(EXISTS "${VER_FILE}")
 		endif()
 	endif()
 endif()
-
-option(PRODUCTION "Build production version" OFF)
 
 # Define LINUX on Linux like as WIN32 on Windows and APPLE on Mac OS X
 if(UNIX AND NOT APPLE)
