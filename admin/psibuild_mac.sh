@@ -254,6 +254,8 @@ build_qca() {
 	export CXX="/usr/bin/clang++"
         
 	log "Compiling QCA..."
+
+	sed -ie "s/target_link_libraries(qca-ossl crypto)/target_link_libraries(qca-ossl)/" "${PSI_DIR}/qca/plugins/qca-ossl/CMakeLists.txt"
 	
 	local opts="-DBUILD_TESTS=OFF -DOPENSSL_ROOT_DIR=${SSL_PATH} -DOPENSSL_LIBRARIES=${SSL_PATH}/lib -DLIBGCRYPT_LIBRARIES=${DEPS_PREFIX}/lib"
         cmake -DCMAKE_INSTALL_PREFIX="${QCA_PREFIX}" $opts  ../qca 2>/dev/null || die "QCA configuring error"
