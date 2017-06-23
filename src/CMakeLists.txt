@@ -9,10 +9,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
 	add_definitions(-DALLOW_QT_PLUGINS_DIR)
 endif()
 
-set( LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
+set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
+set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 
 if(USE_QT5)
-	find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg LinguistTools REQUIRED)
+	find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg REQUIRED)
 	if(ENABLE_WEBKIT)
 		if(NOT USE_WEBENGINE)
 			find_package(Qt5 COMPONENTS WebKit WebKitWidgets REQUIRED)
@@ -45,14 +46,20 @@ if(USE_QT5)
 	endif()
 
 	add_definitions(-DHAVE_QT5 ${LIBXCB_DEFINITIONS})
+	
+	if(EXISTS "${TRANSLATIONS_DIR}")
+		set(LANGS_EXISTS ON)
 
-	macro(QT4_CREATE_TRANSLATION)
-		QT5_CREATE_TRANSLATION(${ARGN})
-	endmacro()
+		find_package(Qt5 COMPONENTS LinguistTools REQUIRED)
 
-	macro(QT4_ADD_TRANSLATION)
-		qt5_add_translation(${ARGN})
-	endmacro()
+		macro(QT4_CREATE_TRANSLATION)
+			QT5_CREATE_TRANSLATION(${ARGN})
+		endmacro()
+
+		macro(QT4_ADD_TRANSLATION)
+			qt5_add_translation(${ARGN})
+		endmacro()
+	endif()
 
 	macro(qt4_add_resources)
 		qt5_add_resources(${ARGN})
@@ -253,9 +260,7 @@ if(USE_WEBENGINE)
 	)
 endif()
 
-set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 if(EXISTS "${TRANSLATIONS_DIR}")
-	set(LANGS_EXISTS ON)
 	set(TRANSLATIONS
 		${TRANSLATIONS_DIR}/psi_be.ts
 		${TRANSLATIONS_DIR}/psi_bg.ts
