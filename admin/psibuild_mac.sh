@@ -8,8 +8,9 @@
 
 
 # Qt5 Settings
-MAC_SDK_VER=10.9
-QTDIR="${HOME}/Qt5.6.2/5.6/clang_64"
+MAC_SDK_VER=10.12
+MAC_DEPLOYMENT_TARGET=10.9
+QTDIR="${HOME}/Qt5.9.0/5.9/clang_64"
 QT_FRAMEWORK_VERSION=5
 
 QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets"  #QtDBus QtWebEngine 
@@ -52,9 +53,10 @@ WORK_OFFLINE="0"
 
 SSL_PATH="${DEPS_PREFIX}"
 LIBS_PATH="${DEPS_PREFIX}"
-QCA_PREFIX="${DEPS_PREFIX}"
+QCA_PREFIX="${QTDIR}" #"${DEPS_PREFIX}"
 QCA_PATH="${PSI_DIR}/qca-build"
 QCA_VER="2.2.0"
+QCA_PLUGINS_PATH=${QCA_PREFIX}/plguins/crypto #${QCA_PATH}/lib/qca-qt5/crypto
 
 
 export PATH="$QTDIR/bin:$PATH"
@@ -202,7 +204,7 @@ prepare_workspace() {
 	cd "${PSI_DIR}"
 	get_framework $GROWL_URL $GROWL_FILE Growl.framework
 
-	if [ ! -f "${QCA_PATH}/lib/qca-qt5.framework/qca-qt5" ]
+	if [ ! -f "${QCA_PREFIX}/lib/qca-qt5.framework/qca-qt5" ]
 	then
 		build_qca
 	fi
@@ -248,7 +250,7 @@ fetch_deps() {
 }
 
 build_qca() {
-	mkdir -p "${QCA_PATH}" && cd "${QCA_PATH}" || die "Can't create QCA buld folder"
+	mkdir -p "${QCA_PATH}" && cd "${QCA_PATH}" || die "Can't create QCA build folder"
 	
 	export CC="/usr/bin/clang"
 	export CXX="/usr/bin/clang++"
@@ -258,17 +260,18 @@ build_qca() {
 	sed -ie "s/target_link_libraries(qca-ossl crypto)/target_link_libraries(qca-ossl)/" "${PSI_DIR}/qca/plugins/qca-ossl/CMakeLists.txt"
 	
 	local opts="-DBUILD_TESTS=OFF -DOPENSSL_ROOT_DIR=${SSL_PATH} -DOPENSSL_LIBRARIES=${SSL_PATH}/lib -DLIBGCRYPT_LIBRARIES=${DEPS_PREFIX}/lib"
-        cmake -DCMAKE_INSTALL_PREFIX="${QCA_PREFIX}" $opts  ../qca 2>/dev/null || die "QCA configuring error"
-        make ${MAKEOPT} || die "QCA build error"
+	#opts=$opts -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="-stdlib=libc++ -std=gnu++11 -arch x86_64"
+	cmake -DCMAKE_INSTALL_PREFIX="${QCA_PREFIX}" -DQCA_PLUGINS_INSTALL_DIR="${QCA_PLUGINS_PATH}/.." $opts ${PSI_DIR}/qca 2>/dev/null || die "QCA configuring error"
+	make ${MAKEOPT} || die "QCA build error"
 	
-	install_name_tool -id @rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5 "${QCA_PATH}/lib/qca-qt5.framework/qca-qt5"
-	QCA_PLUGINS=`ls ${QCA_PATH}/lib/qca-qt5/crypto | grep "dylib"`
+	make install || die "Can't install QCA"
+
+	install_name_tool -id @rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5 "${QCA_PREFIX}/lib/qca-qt5.framework/qca-qt5"
+	QCA_PLUGINS=`ls ${QCA_PLUGINS_PATH} | grep "dylib"`
 
 	for p in $QCA_PLUGINS; do
-               install_name_tool  -change "${QCA_PREFIX}/lib/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5" "@rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5" "${QCA_PATH}/lib/qca-qt5/crypto/$p"
+               install_name_tool  -change "${QCA_PREFIX}/lib/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5" "@rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5" "${QCA_PLUGINS_PATH}/$p"
 	done
-	
-	#make install || die "Can't install QCA"
 }
 
 prepare_sources() {
@@ -326,17 +329,17 @@ src_compile() {
 		CONF_OPTS=" --enable-webkit $CONF_OPTS"
 	fi
 
-        CONF_OPTS=" --with-idn-lib=${LIBS_PATH}/lib --with-idn-inc=${LIBS_PATH}/include --with-qca-lib=${QCA_PATH}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
+        CONF_OPTS=" --with-idn-lib=${LIBS_PATH}/lib --with-idn-inc=${LIBS_PATH}/include --with-qca-lib=${QCA_PREFIX}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
 
 	${QCONF} || die "QConf failed"
 
-	export DYLD_FRAMEWORK_PATH=$DYLD_FRAMEWORK_PATH:${QCA_PATH}/lib:${PSI_DIR}
+	export DYLD_FRAMEWORK_PATH=${QCA_PREFIX}/lib:${PSI_DIR}:$DYLD_FRAMEWORK_PATH
 
 	./configure  ${CONF_OPTS} || die "configure failed"
 
 	if [ ! -z "${MAC_SDK_VER}" ]; then
 		echo "QMAKE_MAC_SDK = macosx${MAC_SDK_VER}" >> conf.pri
-		echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_SDK_VER}" >> conf.pri
+		echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_DEPLOYMENT_TARGET}" >> conf.pri
 	fi
 
         $MAKE $MAKEOPT || die "make failed"
@@ -353,6 +356,7 @@ prep_otr_plugin() {
 plugins_compile() {
 	cd "${PSI_DIR}/build/src/plugins"
 	echo "QMAKE_MAC_SDK = macosx${MAC_SDK_VER}" >> psiplugin.pri
+	echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_DEPLOYMENT_TARGET}" >> psiplugin.pri
 	
         log "List plugins for compiling..."
 	echo ${PLUGINS}
@@ -370,19 +374,19 @@ plugins_compile() {
 
 copy_qca() {
         #QCA staff
-        cp -a "${QCA_PATH}/lib/qca-qt5.framework" "$contentsdir/Frameworks"
+        cp -a "${QCA_PREFIX}/lib/qca-qt5.framework" "$contentsdir/Frameworks"
         cleanup_framework "$contentsdir/Frameworks/qca-qt5.framework" qca-qt5 ${QCA_VER}
 	mkdir -p "$contentsdir/PlugIns/crypto/"
 
-	local QCA_PLUGINS=`ls ${QCA_PATH}/lib/qca-qt5/crypto | grep "dylib"`
+	local QCA_PLUGINS=`ls ${QCA_PLUGINS_PATH} | grep "dylib"`
 
 	for p in $QCA_PLUGINS; do
-		cp -f "${QCA_PATH}/lib/qca-qt5/crypto/$p" "$contentsdir/PlugIns/crypto/$p"
+		cp -f "${QCA_PLUGINS_PATH}/$p" "$contentsdir/PlugIns/crypto/$p"
 
-                install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"    "$contentsdir/PlugIns/crypto/$p"
-                install_name_tool -change "${SSL_PATH}/lib/libssl.1.0.0.dylib"    "@executable_path/../Frameworks/libssl.dylib"       "$contentsdir/PlugIns/crypto/$p"
+		install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"    "$contentsdir/PlugIns/crypto/$p"
+		install_name_tool -change "${SSL_PATH}/lib/libssl.1.0.0.dylib"    "@executable_path/../Frameworks/libssl.dylib"       "$contentsdir/PlugIns/crypto/$p"
 		install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "$contentsdir/PlugIns/crypto/$p"
-                install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/PlugIns/crypto/$p"
+		install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/PlugIns/crypto/$p"
 	done
 }
 
