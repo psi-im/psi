@@ -185,14 +185,20 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 	os_name_str_ = os_str_;
 
 	os_version_str_ = lsbRelease(QStringList() << "--release" << "--short");
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+#if QT_VERSION >= QT_VERSION_CHECK(5,4,0)
 	if(os_version_str_.isEmpty()) {
 		os_version_str_ = QSysInfo::productVersion();
 	}
 #endif
 
-	if (!os_version_str_.isEmpty() && os_name_str_.endsWith(os_version_str_)) {
-		os_name_str_ = os_name_str_.left(os_name_str_.size() - os_version_str_.size()).trimmed();
+	if (!os_version_str_.isEmpty() && os_name_str_.contains(os_version_str_)) {
+		os_version_str_.clear();
+	}
+	
+	if (os_version_str_.isEmpty()) {
+		os_str_ = os_name_str_;
+	} else {
+		os_str_ = os_name_str_ + " " + os_version_str_;
 	}
 
 #elif defined(Q_OS_MAC)
