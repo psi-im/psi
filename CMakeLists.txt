@@ -14,8 +14,10 @@ option( ENABLE_PLUGINS "Enable plugins" OFF )
 option( ENABLE_WEBKIT "Enable webkit support" ON )
 option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
+option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 #Windows or MXE only
 option( USE_MXE "Use MXE cross-compilation" OFF )
+option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF)
 option( PRODUCTION "Build production version" OFF )
 
 set( IS_PSIPLUS ON CACHE BOOL "Build Psi+ client")
@@ -204,6 +206,18 @@ if(USE_QT5)
 else()
 	set( USE_QT5 OFF)
 	option( QT4_BUILD "Build with Qt4 support" ON )
+endif()
+
+if(NOT WIN32 AND PRODUCTION)
+	message(WARNING "PRODUCTION flag only for Windows OS")
+	set(PRODUCTION OFF)
+endif()
+
+if(NOT WIN32 AND ENABLE_PORTABLE)
+	message(WARNING "Portable version creation possible only for Windows OS")
+	set(ENABLE_PORTABLE OFF)
+elseif(WIN32 AND ENABLE_PORTABLE)
+	set(PRODUCTION ON)
 endif()
 
 # Copy a list of files from one directory to another. Only full paths.
