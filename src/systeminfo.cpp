@@ -201,16 +201,10 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 	if (v < QSysInfo::MV_10_7) {
 		os_name_str_ = "Mac OS X";
 	}
+	else if(v >= QSysInfo::MV_10_12) {
+		os_name_str_ = "macOS";
+	}
 	switch (v) {
-		case QSysInfo::MV_10_3:
-			os_version_str_ = "10.3 (Panther)";
-			break;
-		case QSysInfo::MV_10_4:
-			os_version_str_ = "10.4 (Tiger)";
-			break;
-		case QSysInfo::MV_10_5:
-			os_version_str_ = "10.5 (Leopard)";
-			break;
 		case QSysInfo::MV_10_6:
 			os_version_str_ = "10.6 (Snow Leopard)";
 			break;
@@ -229,11 +223,17 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		case 0x000D: // QSysInfo::MV_10_11 should not be used for compatibility reasons
 			os_version_str_ = "10.11 (El Capitan)";
 			break;
+		case 0x000E: // QSysInfo::MV_10_12 should not be used for compatibility reasons
+			os_version_str_ = "10.12 (Sierra)";
+			break;
+		case 0x000F: // QSysInfo::MV_10_13 should not be used for compatibility reasons
+			os_version_str_ = "10.13 (High Sierra)";
+			break;
 		default:
 			os_version_str_ = "";
 	}
 	if (os_version_str_.isEmpty()) {
-		os_str_ = "Mac OS X";
+		os_str_ = "macOS";
 	} else {
 		os_str_ = os_name_str_ + " " + os_version_str_;
 	}
@@ -287,13 +287,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		case QSysInfo::WV_NT_based:
 			os_version_str_ = "NT";
 			break;
-		// make compiler happy with unsupported Windows versions
-		case QSysInfo::WV_32s:
-		case QSysInfo::WV_CE:
-		case QSysInfo::WV_CENET:
-		case QSysInfo::WV_CE_5:
-		case QSysInfo::WV_CE_6:
-		case QSysInfo::WV_CE_based:
+		default: // make compiler happy with unsupported Windows versions
 			break;
 	}
 
