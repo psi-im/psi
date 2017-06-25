@@ -387,10 +387,13 @@ endif()
 #
 
 if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
+	if(ENABLE_PORTABLE)
+		set(PORTABLE_SUFFIX "-portable")
+	endif()
 	set_target_properties(${PROJECT_NAME}
 				PROPERTIES
 				OUTPUT_NAME
-				"${PROJECT_NAME}${VERBOSE_SUFFIX}-portable"
+				"${PROJECT_NAME}${VERBOSE_SUFFIX}${PORTABLE_SUFFIX}"
 	)
 endif()
 
