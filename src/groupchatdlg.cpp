@@ -1108,7 +1108,7 @@ void GCMainDlg::updateMucName()
 		d->mucNameSource = Private::TitleVCard;
 	}
 	if (newName.isEmpty()) {
-		newName = jid().bare();
+		newName = jid().node();
 		d->mucNameSource = Private::TitleJid;
 	}
 	if (newName != d->mucName) {
