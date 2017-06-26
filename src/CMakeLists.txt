@@ -373,6 +373,30 @@ add_executable(${PROJECT_NAME}
 	${RC_FILE}
 )
 
+#Experimental feature
+if(VERBOSE_PROGRAM_NAME)
+	if(ENABLE_WEBKIT AND (NOT USE_WEBENGINE))
+		set(VERBOSE_SUFFIX "-webkit")
+	elseif(USE_WEBENGINE)
+		set(VERBOSE_SUFFIX "-webengine")
+	endif()
+	if(ENABLE_SQL)
+		set(VERBOSE_SUFFIX "${VERBOSE_SUFFIX}-sql")
+	endif()
+endif()
+#
+
+if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
+	if(ENABLE_PORTABLE)
+		set(PORTABLE_SUFFIX "-portable")
+	endif()
+	set_target_properties(${PROJECT_NAME}
+				PROPERTIES
+				OUTPUT_NAME
+				"${PROJECT_NAME}${VERBOSE_SUFFIX}${PORTABLE_SUFFIX}"
+	)
+endif()
+
 if(USE_WEBENGINE)
 	set(STANDARD_NUM 14)
 else()

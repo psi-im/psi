@@ -304,7 +304,7 @@ chat.util.updateObject(adapter, function(chat){
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
                 var initScripts;
                 if (chat.async) {
-                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
 <script src=\"/psithemes/chatview/util.js\"></script>\n \
 <script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
 <script src=\"/psiglobal/qwebchannel.js\"></script>\n \
@@ -320,7 +320,7 @@ chat.util.updateObject(adapter, function(chat){
     });\n \
 </script>";
                 } else {
-                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
                         <script type=\"text/javascript\"> \
                             window.addEventListener(\"load\", \
                                                       function() { \

@@ -1,4 +1,4 @@
-# Howto build Psi using cmake utility
+# Howto build Psi/Psi+ using cmake utility
 
 ## Prepare sources:
 
@@ -15,13 +15,25 @@ or
 
 > $ make
 
-## Install Psi+:
+## Install Psi/Psi+:
 
 > $ cmake --build . --target install --
 
 or
 
 > $ make install
+
+## To run Psi/Psi+ without installation:
+
+> $ cmake --build . --target prepare-bin
+
+or
+
+> $ make prepare-bin
+
+> $ cd psi && ./psi && cd .. #For Psi
+
+> $ cd psi && ./psi-plus && cd .. #For Psi+
 
 ## Usefull CMAKE FLAGS:
 
@@ -47,7 +59,7 @@ or
 
 >  -DSEPARATE_QJDNS=ON
 
-  to build qjdns library as separate library (default ON)
+  to build qjdns library as separate library (default OFF)
 
 >  -DPSI_VERSION=${version}
 
@@ -57,21 +69,26 @@ or
 
   to set build type. Possible values: DEBUG, RELEASE, RELWITHDEBINFO, MINSIZEREL
 
-> -USE_CCACHE=ON (default: ON)
+>  -USE_CCACHE=ON (default: ON)
 
   to enable ccache utility support
 
 >  -DUSE_MXE=ON (default: OFF)
 
-  Enables MXE (M cross environment) support. Disables USE_CCACHE, adds new dependencies if PRODUCTION flag is enabled
+  Enables MXE (M cross environment) support. Disables USE_CCACHE, adds new dependencies if PRODUCTION flag is enabled. Script can automatically detect MXE.
+
+> -DVERBOSE_PROGRAM_NAME=ON
+
+  Verbose output program name. (default OFF)
+  Experimental flag. Exmaple of output name: psi-plus-webkit-sql
 
 > -DENABLE_PLUGINS=ON
 
-  to build psi-plus plugins (default OFF)
+  to build psi plugins (default OFF)
 
 >  -DONLY_PLUGINS=ON
 
-  to build only psi-plus plugins (default OFF). On enabling this flag ENABLE_PLUGINS flag turns on automatically
+  to build only psi plugins (default OFF). On enabling this flag ENABLE_PLUGINS flag turns on automatically
 
 ## Work with plugins:
 
@@ -130,11 +147,11 @@ or
 
 >  -DPRODUCTION=ON
 
-  to install needed libs to run Psi+. When you running cmake from MXE you also need to enable USE_MXE flag
+  to install needed libs to run Psi/Psi+. When you running cmake from MXE you also need to enable USE_MXE flag
 
-> -DBUILD_ARCH=i386 (default: i386 for MinGW and win32 for MSVC)
+>  -DENABLE_PORTABLE=ON
 
-  to set build architecture. Possible values: i386, x86_64 for MinGW and win32, win64 for MSVC
+  to build portable version (not need to rename binary)
 
 ### To build OTRPLUGIN in OS WINDOWS you need to set additional variables
 
@@ -161,6 +178,3 @@ or
 ### If you using Psi+ SDK you need to set SDK_PATH:
 
 >  -DSDK_PATH=path
-
-# TODO LIST:
-- [ ] Add MacOSX support

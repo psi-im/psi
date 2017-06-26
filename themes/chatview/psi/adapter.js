@@ -27,7 +27,7 @@ function psiThemeAdapter(chat) {
             srvLoader.getFileContents("index.html", function(html){
                 // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
                 // probably it's a good idea if adapter will send to Psi a list of required scripts
-                html = html.replace("%scripts%", "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                html = html.replace("%scripts%", "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
 <script src=\"/psithemes/chatview/util.js\"></script>\n \
 <script src=\"/psithemes/chatview/psi/adapter.js\"></script>\n \
 <script src=\"/psiglobal/qwebchannel.js\"></script>\n \
