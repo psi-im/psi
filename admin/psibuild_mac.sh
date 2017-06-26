@@ -56,7 +56,7 @@ LIBS_PATH="${DEPS_PREFIX}"
 QCA_PREFIX="${QTDIR}" #"${DEPS_PREFIX}"
 QCA_PATH="${PSI_DIR}/qca-build"
 QCA_VER="2.2.0"
-QCA_PLUGINS_PATH=${QCA_PREFIX}/plguins/crypto #${QCA_PATH}/lib/qca-qt5/crypto
+QCA_PLUGINS_PATH=${QCA_PREFIX}/plugins/crypto #${QCA_PATH}/lib/qca-qt5/crypto
 
 
 export PATH="$QTDIR/bin:$PATH"
