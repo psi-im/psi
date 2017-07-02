@@ -153,6 +153,10 @@ if(EXISTS "${VER_FILE}")
 	endif()
 endif()
 
+if(APP_VERSION OR (PSI_REVISION AND PSI_PLUS_REVISION))
+	set(VERSION_OBTAINED ON)
+endif()
+
 # Define LINUX on Linux like as WIN32 on Windows and APPLE on Mac OS X
 if(UNIX AND NOT APPLE)
 	set(LINUX ON)
