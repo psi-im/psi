@@ -40,7 +40,6 @@ class PsiToolTipHandler : public QObject
 public:
 	static PsiToolTipHandler *getInstance()
 	{
-		static PsiToolTipHandler *instance = 0;
 		if (!instance)
 			instance = new PsiToolTipHandler();
 
@@ -49,8 +48,10 @@ public:
 
 	void install(QWidget *widget)
 	{
+		if(!watchedWidgets_.contains(widget)) {
+			connect(widget, SIGNAL(destroyed(QObject*)), SLOT(widgetDestroyed(QObject*)));
+		}
 		watchedWidgets_[widget] = true;
-		connect(widget, SIGNAL(destroyed(QObject*)), SLOT(widgetDestroyed(QObject*)));
 	}
 
 private slots:
@@ -58,10 +59,15 @@ private slots:
 	{
 		QWidget* widget = static_cast<QWidget*>(obj);
 		watchedWidgets_.remove(widget);
+		if(watchedWidgets_.isEmpty()) {
+			instance->deleteLater();
+			instance = 0;
+		}
 	}
 
 private:
 	QHash<QWidget*, bool> watchedWidgets_;
+	static PsiToolTipHandler *instance;
 
 	PsiToolTipHandler()
 		: QObject(qApp)
@@ -86,6 +92,8 @@ private:
 		return false;
 	}
 };
+
+PsiToolTipHandler* PsiToolTipHandler::instance = 0;
 
 //----------------------------------------------------------------------------
 // ToolTipPosition

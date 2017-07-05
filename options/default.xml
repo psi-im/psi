@@ -112,6 +112,7 @@
 				<alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>
 				<auto-popup type="bool">false</auto-popup>
 				<auto-capitalize type="bool">false</auto-capitalize>
+				<auto-scroll-to-bottom type="bool">true</auto-scroll-to-bottom>
 				<delete-contents-after type="QString">hour</delete-contents-after>
 				<raise-chat-windows-on-new-messages type="bool">false</raise-chat-windows-on-new-messages>
 				<switch-tab-on-new-messages type="bool">false</switch-tab-on-new-messages>
