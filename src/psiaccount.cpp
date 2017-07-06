@@ -674,7 +674,6 @@ public:
 	{
 		PsiContact* contact = findContact(jid);
 		if (contact) {
-			Q_ASSERT(contact);
 			delete contact;
 			emit account->removeContact(jid);
 		}
@@ -1331,10 +1330,7 @@ PsiAccount::~PsiAccount()
 #endif
 
 	delete d->avCallManager;
-
-	if (d->voiceCaller)
-		delete d->voiceCaller;
-
+	delete d->voiceCaller;
 	delete d->ahcManager;
 	delete d->privacyManager;
 	delete d->pepManager;
@@ -1364,9 +1360,7 @@ PsiAccount::~PsiAccount()
 void PsiAccount::cleanupStream()
 {
 	// GSOC: Get SM state out of stream
-	if (d->stream) {
-		delete d->stream;
-	}
+	delete d->stream;
 
 	delete d->tls;
 	d->tls = 0;
