@@ -1673,17 +1673,34 @@ void PsiAccount::login()
 	if(isActive() && !doReconnect)
 		return;
 
-	if((d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) && !QCA::isSupported("tls")) {
-		QString title;
-		if (d->psi->contactList()->enabledAccounts().count() > 1) {
-			title = QString("%1: ").arg(name());
-		}
-		title +=  tr("Encryption Error");
-		QString message = tr("Cannot connect: Encryption is enabled but no QCA2 SSL/TLS plugin is available.");
+	const bool tlsSupported = QCA::isSupported("tls");
+	const bool keyStoreManagerAvailable = !QCA::KeyStoreManager().isBusy();
+	if(d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) {
+		if(!tlsSupported) {
+			QString title;
+			if (d->psi->contactList()->enabledAccounts().count() > 1) {
+				title = QStringLiteral("%1: ").arg(name());
+			}
+			title += tr("Encryption Error");
+			QString message = tr("Cannot connect: Encryption is enabled but no QCA2 SSL/TLS plugin is available.");
 
-		psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError,
-			QMessageBox::Information, title, message);
-		return;
+			psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError,
+				QMessageBox::Information, title, message);
+			return;
+		}
+		if(!keyStoreManagerAvailable) {
+			// setTrustedCertificates() requires keystore manager
+			QString title;
+			if (d->psi->contactList()->enabledAccounts().count() > 1) {
+				title = QStringLiteral("%1: ").arg(name());
+			}
+			title += tr("Encryption Error");
+			QString message = tr("Cannot connect: Encryption is enabled but no QCA keystore manager is not available.");
+
+			psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError,
+				QMessageBox::Information, title, message);
+			return;
+		}
 	}
 
 	if(d->acc.legacy_ssl_probe) {
@@ -1728,7 +1745,7 @@ void PsiAccount::login()
 
 	// stream
 	d->conn = new AdvancedConnector;
-	if(d->acc.ssl != UserAccount::SSL_No && QCA::isSupported("tls")) {
+	if(d->acc.ssl != UserAccount::SSL_No && tlsSupported && keyStoreManagerAvailable) {
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
 		d->tlsHandler = new QCATLSHandler(d->tls);

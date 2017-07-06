@@ -121,7 +121,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 	}
 
 	conn = new AdvancedConnector;
-	if (QCA::isSupported("tls")) {
+	if (QCA::isSupported("tls") && !QCA::KeyStoreManager().isBusy()) {
 		tls = new QCA::TLS;
 		tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
 		tlsHandler = new QCATLSHandler(tls);
