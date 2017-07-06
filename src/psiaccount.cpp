@@ -1323,8 +1323,6 @@ PsiAccount::~PsiAccount()
 	// nuke all related dialogs
 	deleteAllDialogs();
 
-	QString str = name();
-
 	while (!d->messageQueue.isEmpty())
 		delete d->messageQueue.takeFirst();
 
