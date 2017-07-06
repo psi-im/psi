@@ -15,12 +15,9 @@ PGPUtil::PGPUtil() : qcaEventHandler_(NULL), passphraseDlg_(NULL), cache_no_pgp_
 	qcaEventHandler_ = new QCA::EventHandler(this);
 	connect(qcaEventHandler_,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(handleEvent(int,const QCA::Event&)));
 	qcaEventHandler_->start();
-	qcaKeyStoreManager_.waitForBusyFinished(); // FIXME get rid of this
 	connect(&qcaKeyStoreManager_, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
-	foreach(QString k, qcaKeyStoreManager_.keyStores()) {
-		QCA::KeyStore* ks = new QCA::KeyStore(k, &qcaKeyStoreManager_);
-		connect(ks, SIGNAL(updated()), SIGNAL(pgpKeysUpdated()));
-		keystores_ += ks;
+	foreach(const QString& k, qcaKeyStoreManager_.keyStores()) {
+		keyStoreAvailable(k);
 	}
 
 	connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
