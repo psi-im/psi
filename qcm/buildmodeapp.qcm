@@ -15,6 +15,37 @@ bool qc_buildmode_release = false;
 bool qc_buildmode_debug = false;
 bool qc_buildmode_separate_debug_info = false;
 
+#define PSI_DIR_NAME "psi"
+
+static QString sourceDir;
+
+// this is a utility function required by few other modules
+static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
+{
+	QFile fin(inFile);
+	QFile fout(outFile);
+	if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
+		return false;
+
+	QTextStream tin(&fin);
+	QTextStream tout(&fout);
+	while(!tin.atEnd())
+	{
+		QString line = tin.readLine();
+
+		QHashIterator<QString,QString> it(vars);
+		while(it.hasNext())
+		{
+			it.next();
+			line.replace("@@" + it.key() + "@@", it.value());
+		}
+
+		tout << line << endl;
+	}
+
+	return true;
+}
+
 class qc_buildmodeapp : public ConfObj
 {
 public:
@@ -27,6 +58,9 @@ public:
 
 	bool exec()
 	{
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
+		sourceDir = fi.absolutePath();
+
 		// first, parse out the options
 		bool opt_release = false;
 		bool opt_debug = false;

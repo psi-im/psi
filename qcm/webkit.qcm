@@ -5,6 +5,8 @@ arg: with-webkit=[type],type of webkit QtWebKit/QtWebEngine
 -----END QCMOD-----
 */
 
+QString qc_webkit_type;
+
 //----------------------------------------------------------------------------
 // qc_webkit
 //----------------------------------------------------------------------------
@@ -70,6 +72,7 @@ public:
 				continue;
 
 			conf->addExtra("CONFIG += " + wt);
+			qc_webkit_type = wt;
 			return true;
 		}
 

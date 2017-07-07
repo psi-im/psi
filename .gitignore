@@ -5,6 +5,7 @@
 /psi
 /psi.exe
 /src/psi_resource.rc
+/pluginsconf.pri
 ._*
 .DS_Store
 .AppleDouble

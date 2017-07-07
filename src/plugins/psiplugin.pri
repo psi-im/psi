@@ -1,3 +1,4 @@
+include($$PWD/pluginsconf.pri)
 TEMPLATE = lib
 CONFIG += plugin
 QT += xml
@@ -15,7 +16,10 @@ greaterThan(QT_MAJOR_VERSION, 4) {
   CONFIG += c++11
 }
 
-target.path = $$(HOME)/.local/share/psi/plugins
+qtwebengine:DEFINES+=HAVE_WEBENGINE
+qtwebkit:DEFINES+=HAVE_WEBKIT
+
+target.path = $$psi_plugins_dir
 INSTALLS += target
 
 include(plugins.pri)
