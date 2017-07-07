@@ -16,8 +16,8 @@ greaterThan(QT_MAJOR_VERSION, 4) {
   CONFIG += c++11
 }
 
-qtwebengine:DEFINES+=HAVE_WEBENGINE
-qtwebkit:DEFINES+=HAVE_WEBKIT
+contains(psi_features, qtwebengine):DEFINES+=HAVE_WEBENGINE
+contains(psi_features, qtwebkit):DEFINES+=HAVE_WEBKIT
 
 target.path = $$psi_plugins_dir
 INSTALLS += target
