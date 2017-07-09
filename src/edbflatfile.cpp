@@ -45,21 +45,18 @@ struct item_file_req
 {
 	Jid j;
 	int type; // 0 = latest, 1 = oldest, 2 = random, 3 = write
+	int start;
 	int len;
 	int dir;
 	int id;
-	int eventId;
+	QDateTime date;
 	QString findStr;
 	PsiEvent::Ptr event;
 
-	QDateTime first, last;
 	enum Type {
-		Type_getLatest = 0,
-		Type_getOldest,
 		Type_get,
 		Type_append,
 		Type_find,
-		Type_getByDate,
 		Type_erase
 	};
 };
@@ -93,40 +90,15 @@ int EDBFlatFile::features() const
 	return 0;
 }
 
-int EDBFlatFile::getLatest(const Jid &j, int len)
-{
-	item_file_req *r = new item_file_req;
-	r->j = j;
-	r->type = item_file_req::Type_getLatest;
-	r->len = len < 1 ? 1: len;
-	r->id = genUniqueId();
-	d->rlist.append(r);
-
-	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
-	return r->id;
-}
-
-int EDBFlatFile::getOldest(const Jid &j, int len)
-{
-	item_file_req *r = new item_file_req;
-	r->j = j;
-	r->type = item_file_req::Type_getOldest;
-	r->len = len < 1 ? 1: len;
-	r->id = genUniqueId();
-	d->rlist.append(r);
-
-	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
-	return r->id;
-}
-
-int EDBFlatFile::get(const Jid &j, const QString &id, int direction, int len)
+int EDBFlatFile::get(const QString &/*accId*/, const Jid &j, const QDateTime date, int direction, int start, int len)
 {
 	item_file_req *r = new item_file_req;
 	r->j = j;
 	r->type = item_file_req::Type_get;
+	r->start = start;
 	r->len = len < 1 ? 1: len;
 	r->dir = direction;
-	r->eventId = id.toInt();
+	r->date = date;
 	r->id = genUniqueId();
 	d->rlist.append(r);
 
@@ -134,23 +106,7 @@ int EDBFlatFile::get(const Jid &j, const QString &id, int direction, int len)
 	return r->id;
 }
 
-
-int EDBFlatFile::getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last)
-{
-	item_file_req *r = new item_file_req;
-	r->j = jid;
-	r->type = item_file_req::Type_getByDate;
-	r->len = 1;
-	r->id = genUniqueId();
-	d->rlist.append(r);
-	r->first = first;
-	r->last = last;
-
-	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
-	return r->id;
-}
-
-int EDBFlatFile::find(const QString &str, const Jid &j, const QString &id, int direction)
+int EDBFlatFile::find(const QString &/*accId*/, const QString &str, const Jid &j, const QDateTime date, int direction)
 {
 	item_file_req *r = new item_file_req;
 	r->j = j;
@@ -158,7 +114,7 @@ int EDBFlatFile::find(const QString &str, const Jid &j, const QString &id, int d
 	r->len = 1;
 	r->dir = direction;
 	r->findStr = str;
-	r->eventId = id.toInt();
+	r->date = date;
 	r->id = genUniqueId();
 	d->rlist.append(r);
 
@@ -166,8 +122,10 @@ int EDBFlatFile::find(const QString &str, const Jid &j, const QString &id, int d
 	return r->id;
 }
 
-int EDBFlatFile::append(const Jid &j, const PsiEvent::Ptr &e)
+int EDBFlatFile::append(const QString &/*accId*/, const Jid &j, const PsiEvent::Ptr &e, int type)
 {
+	if (type != EDB::Contact)
+		return 0;
 	item_file_req *r = new item_file_req;
 	r->j = j;
 	r->type = item_file_req::Type_append;
@@ -184,7 +142,7 @@ int EDBFlatFile::append(const Jid &j, const PsiEvent::Ptr &e)
 	return r->id;
 }
 
-int EDBFlatFile::erase(const Jid &j)
+int EDBFlatFile::erase(const QString &/*accId*/, const Jid &j)
 {
 	item_file_req *r = new item_file_req;
 	r->j = j;
@@ -201,6 +159,17 @@ QList<EDB::ContactItem> EDBFlatFile::contacts(const QString &accId, int type)
 	if (!accId.isEmpty())
 		return File::contacts(accId, type);
 	return File::contacts(psi()->contactList()->defaultAccount()->id(), type);
+}
+
+quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
+{
+	quint64 res = 0;
+	if (!jid.isEmpty())
+		res = ensureFile(jid)->total();
+	else
+		foreach (const ContactItem &ci, contacts(accId, Contact))
+			res += ensureFile(ci.jid)->total();
+	return res;
 }
 
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
@@ -256,26 +225,9 @@ void EDBFlatFile::performRequests()
 
 	File *f = ensureFile(r->j);
 	int type = r->type;
-	if(type >= item_file_req::Type_getLatest && type <= item_file_req::Type_get) {
-		int id, direction;
-
-		if(type == item_file_req::Type_getLatest) {
-			direction = Backward;
-			id = f->total()-1;
-		}
-		else if(type == item_file_req::Type_getOldest) {
-			direction = Forward;
-			id = 0;
-		}
-		else if(type == item_file_req::Type_get) {
-			direction = r->dir;
-			id = r->eventId;
-		}
-		else {
-			qWarning("EDBFlatFile::performRequests(): Invalid type.");
-			return;
-		}
-
+	if(type == item_file_req::Type_get) {
+		int direction = r->dir;
+		int id = f->getId(r->date, direction, r->start);
 		int len;
 		if(direction == Forward) {
 			if(id + r->len > f->total())
@@ -291,89 +243,61 @@ void EDBFlatFile::performRequests()
 		}
 
 		EDBResult result;
-		for(int n = 0; n < len; ++n) {
-			PsiEvent::Ptr e(f->get(id));
-			if(e) {
-				QString prevId, nextId;
-				if(id > 0)
-					prevId = QString::number(id-1);
-				if(id < f->total()-1)
-					nextId = QString::number(id+1);
-				EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
-				result.append(ei);
-			}
+		int startId = 0;
+		if (id != -1) {
+			startId = id;
+			for(int n = 0; n < len; ++n) {
+				PsiEvent::Ptr e(f->get(id));
+				if(e) {
+					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id)));
+					result.append(ei);
+				}
 
-			if(direction == Forward)
-				++id;
-			else
-				--id;
+				if(direction == Forward)
+					++id;
+				else
+					--id;
+			}
+			if (direction == Backward)
+				startId = id + 1;
 		}
-		resultReady(r->id, result);
+		resultReady(r->id, result, startId);
 	}
 	else if(type == item_file_req::Type_append) {
 		writeFinished(r->id, f->append(r->event));
 	}
 	else if(type == item_file_req::Type_find) {
-		int id = r->eventId;
+		int id = f->getId(r->date, r->dir, 0);
 		EDBResult result;
-		while(1) {
-			PsiEvent::Ptr e(f->get(id));
-			if(!e)
-				break;
+		if (id != -1) {
+			while (1) {
+				PsiEvent::Ptr e(f->get(id));
+				if (!e)
+					break;
 
-			QString prevId, nextId;
-			if(id > 0)
-				prevId = QString::number(id-1);
-			if(id < f->total()-1)
-				nextId = QString::number(id+1);
-
-			if(e->type() == PsiEvent::Message) {
-				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-				const Message &m = me->message();
-				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
-					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
-					result.append(ei);
-					//commented line below to return ALL(instead of just first) messages that contain findStr
-					//break;
+				if(e->type() == PsiEvent::Message) {
+					MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+					const Message &m = me->message();
+					if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
+						EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id)));
+						result.append(ei);
+						//commented line below to return ALL(instead of just first) messages that contain findStr
+						//break;
+					}
 				}
-			}
-
-			if(r->dir == Forward)
-				++id;
-			else
-				--id;
-		}
-		resultReady(r->id, result);
-	}
-	else if(type == item_file_req::Type_getByDate ) {
-		EDBResult result;
-		for (int id = f->findNearestDate(r->first); id < f->total(); ++id) {
-			PsiEvent::Ptr e(f->get(id));
-			if(!e)
-				continue;
-
-			QString prevId, nextId;
-			if(id > 0)
-				prevId = QString::number(id-1);
-			if(id < f->total()-1)
-				nextId = QString::number(id+1);
-
-			if(e->type() == PsiEvent::Message) {
-				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-				const Message &m = me->message();
-				if(m.timeStamp() > r->first) {
-					if (m.timeStamp() >= r->last )
-						break;
-					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
-					result.append(ei);
-				}
+				if(r->dir == Forward)
+					++id;
+				else
+					--id;
 			}
 		}
-		resultReady(r->id, result);
+		resultReady(r->id, result, 0);
 	}
-
 	else if(type == item_file_req::Type_erase) {
 		writeFinished(r->id, deleteFile(f->j));
+	}
+	else {
+		qWarning("EDBFlatFile::performRequests(): Invalid type.");
 	}
 
 	delete r;
@@ -428,7 +352,7 @@ EDBFlatFile::File::~File()
 
 QString EDBFlatFile::File::jidToFileName(const XMPP::Jid &j)
 {
-	return ApplicationInfo::historyDir() + "/" + JIDUtil::encode(j.bare()).toLower() + ".history";
+	return ApplicationInfo::historyDir() + "/" + strToFileName(JIDUtil::encode(j.bare()).toLower());
 }
 
 QString EDBFlatFile::File::strToFileName(const QString &s)
@@ -499,6 +423,43 @@ int EDBFlatFile::File::total() const
 {
 	((EDBFlatFile::File *)this)->ensureIndex();
 	return d->index.size();
+}
+
+int EDBFlatFile::File::getId(QDateTime &date, int dir, int offset)
+{
+	if (date.isNull()) {
+		if (dir == EDBFlatFile::Forward)
+			return offset;
+		if (offset >= total())
+			return 0;
+		return total() - offset - 1;
+	}
+	ensureIndex();
+	if (total() == 0)
+		return 0;
+	int id = findNearestDate(date);
+	if (id == -1)
+		return -1;
+
+	QDateTime fDate = getDate(id);
+	if (!fDate.isValid())
+		return -1;
+
+	if (dir == EDBFlatFile::Forward) {
+		if (fDate < date)
+			++id;
+		id += offset;
+	}
+	else {
+		if (fDate > date)
+			--id;
+		id -= offset;
+	}
+	if (id >= total())
+		id = total() - 1;
+	else if (id < 0)
+		id = 0;
+	return id;
 }
 
 /*
