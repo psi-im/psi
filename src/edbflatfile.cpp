@@ -226,25 +226,25 @@ void EDBFlatFile::performRequests()
 	File *f = ensureFile(r->j);
 	int type = r->type;
 	if(type == item_file_req::Type_get) {
-		int direction = r->dir;
-		int id = f->getId(r->date, direction, r->start);
-		int len;
-		if(direction == Forward) {
-			if(id + r->len > f->total())
-				len = f->total() - id;
-			else
-				len = r->len;
-		}
-		else {
-			if((id+1) - r->len < 0)
-				len = id+1;
-			else
-				len = r->len;
-		}
-
 		EDBResult result;
 		int startId = 0;
+		int direction = r->dir;
+		int id = f->getId(r->date, direction, r->start);
 		if (id != -1) {
+			int len;
+			if(direction == Forward) {
+				if(id + r->len > f->total())
+					len = f->total() - id;
+				else
+					len = r->len;
+			}
+			else {
+				if((id+1) - r->len < 0)
+					len = id+1;
+				else
+					len = r->len;
+			}
+
 			startId = id;
 			for(int n = 0; n < len; ++n) {
 				PsiEvent::Ptr e(f->get(id));
@@ -479,6 +479,8 @@ int EDBFlatFile::File::findNearestDate(const QDateTime &date)
 	while (right - left > 0) {
 		int idx = left + (right - left) / 2;
 		const QDateTime mid = getDate(idx);
+		if (!mid.isValid())
+			return -1;
 		if (date <= mid)
 			right = idx;
 		else
@@ -489,11 +491,22 @@ int EDBFlatFile::File::findNearestDate(const QDateTime &date)
 		return cnt - 1;
 
 	// Now `right` is pointing to the index with an identical or later date
-	while (right > 0 && getDate(right - 1) == date) // in case of there are more than one identical date
+	while (right > 0) { // in case of there are more than one identical date
+		const QDateTime dt = getDate(right - 1);
+		if (!dt.isValid())
+			return -1;
+		if (dt != date)
+			break;
 		--right;
+	}
 	if (right == 0)
 		return 0;
-	if (getDate(right - 1).secsTo(date) <= date.secsTo(getDate(right))) // compares with earlier one
+
+	const QDateTime dt1 = getDate(right - 1);
+	const QDateTime dt2 = getDate(right);
+	if (!dt1.isValid() || !dt2.isValid())
+		return -1;
+	if (dt1.secsTo(date) <= date.secsTo(dt2)) // compares with earlier one
 		--right;
 	return right;
 }
@@ -513,7 +526,10 @@ PsiEvent::Ptr EDBFlatFile::File::get(int id)
 	QString line = getLine(id);
 	if (line.isNull())
 		return PsiEvent::Ptr();
-	return lineToEvent(line);
+	PsiEvent::Ptr res = lineToEvent(line);
+	if (!res)
+		qWarning("EDBFlatFile::File::get() Failed to parse file %s, line %d", fname.toLatin1().data(), id + 1);
+	return res;
 }
 
 bool EDBFlatFile::File::append(const PsiEvent::Ptr &e)
@@ -547,57 +563,56 @@ bool EDBFlatFile::File::append(const PsiEvent::Ptr &e)
 
 PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
 {
-	// -- read the line --
-	QString sTime, sType, sOrigin, sFlags, sText, sSubj, sUrl, sUrlDesc;
-	int x1, x2;
-	x1 = line.indexOf('|') + 1;
-
-	x2 = line.indexOf('|', x1);
-	sTime = line.mid(x1, x2-x1);
-	x1 = x2 + 1;
-
-	x2 = line.indexOf('|', x1);
-	sType = line.mid(x1, x2-x1);
-	x1 = x2 + 1;
-
-	x2 = line.indexOf('|', x1);
-	sOrigin = line.mid(x1, x2-x1);
-	x1 = x2 + 1;
-
-	x2 = line.indexOf('|', x1);
-	sFlags = line.mid(x1, x2-x1);
-	x1 = x2 + 1;
-
-	// check for extra fields
-	if(sFlags[1] != '-') {
-		int subflags = QString(sFlags[1]).toInt(NULL,16);
-
-		// have subject?
-		if(subflags & 1) {
-			x2 = line.indexOf('|', x1);
-			sSubj = line.mid(x1, x2-x1);
+	// -- parse the line --
+	enum { Time = 0, Type = 1, Origin = 2, Flags = 3, Subj = 4, UrlAddr = 5, UrlDesc = 6 };
+	QStringList strData;
+	int x1  = line.indexOf('|');
+	if (x1 != -1) {
+		++x1;
+		for (int i = 0; i <= UrlDesc; ++i) // Filing default data
+			strData << QString();
+		int max = Flags;
+		for (int idx = 0; idx <= max; ) {
+			int x2 = line.indexOf('|', x1);
+			if (x2 == -1) {
+				x1 = -1;
+				break;
+			}
+			QString s = line.mid(x1, x2 - x1);
+			strData[idx] = s;
 			x1 = x2 + 1;
-		}
-		// have url?
-		if(subflags & 2) {
-			x2 = line.indexOf('|', x1);
-			sUrl = line.mid(x1, x2-x1);
-			x1 = x2 + 1;
-			x2 = line.indexOf('|', x1);
-			sUrlDesc = line.mid(x1, x2-x1);
-			x1 = x2 + 1;
+
+			if (idx == Flags) { // check for extra fields
+				if (s.length() < 2) {
+					x1 = -1;
+					break;
+				}
+				if (s.at(1) != '-') {
+					int subflag = QString(s.at(1)).toInt(NULL, 16);
+					if (subflag & 1) // have subject?
+						max = Subj;
+					else // Skip subject
+						++idx;
+					if (subflag & 2) // have url?
+						max = UrlDesc;
+				}
+			}
+			++idx;
 		}
 	}
 
+	if (x1 == -1)
+		return PsiEvent::Ptr();
+
 	// body text is last
-	sText = line.mid(x1);
+	QString sText = line.mid(x1);
 
 	// -- read end --
 
-	int type = sType.toInt();
+	int type = strData.at(Type).toInt();
 	if(type == 0 || type == 1 || type == 4 || type == 5) {
 		Message m;
-		m.setTimeStamp(QDateTime::fromString(sTime, Qt::ISODate));
+		m.setTimeStamp(QDateTime::fromString(strData.at(Time), Qt::ISODate));
 		if(type == 1)
 			m.setType("chat");
 		else if(type == 4)
@@ -607,17 +622,17 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
 		else
 			m.setType("");
 
-		bool originLocal = (sOrigin == "to") ? true: false;
+		bool originLocal = (strData.at(Origin) == "to") ? true: false;
 		m.setFrom(j);
-		if(sFlags[0] == 'N')
+		if (strData.at(Flags).at(0) == 'N')
 			m.setBody(logdecode(sText));
 		else
 			m.setBody(logdecode(QString::fromUtf8(sText.toLatin1())));
-		m.setSubject(logdecode(sSubj));
+		m.setSubject(logdecode(strData.at(Subj)));
 
-		QString url = logdecode(sUrl);
+		QString url = logdecode(strData.at(UrlAddr));
 		if(!url.isEmpty())
-			m.urlAdd(Url(url, logdecode(sUrlDesc)));
+			m.urlAdd(Url(url, logdecode(strData.at(UrlDesc))));
 		m.setSpooled(true);
 
 		MessageEvent::Ptr me(new MessageEvent(m, 0));
@@ -645,7 +660,7 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
 			subType = "unsubscribed";
 
 		AuthEvent::Ptr ae(new AuthEvent(j, subType, 0));
-		ae->setTimeStamp(QDateTime::fromString(sTime, Qt::ISODate));
+		ae->setTimeStamp(QDateTime::fromString(strData.at(Time), Qt::ISODate));
 		return ae.staticCast<PsiEvent>();
 	}
 
