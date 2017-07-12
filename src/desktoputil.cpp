@@ -30,6 +30,7 @@
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#include <shellapi.h>
 
 QString defaultBrowser()
 {

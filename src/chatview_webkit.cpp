@@ -652,7 +652,9 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
 		}
     });
 	return false;
+#ifdef __GNUC__
 #warning "TODO: make search asynchronous in all cases"
+#endif
 #else
 	bool found = d->webView->page()->findText(str, startFromBeginning ?
 				 QWebPage::FindWrapsAroundDocument : (QWebPage::FindFlag)0);
