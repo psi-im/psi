@@ -1867,8 +1867,9 @@ public:
 		QStringList libnames;
 		libnames += "hunspell-1.3";
 		libnames += "hunspell";
+		libnames += "libhunspell";
 
-		bool success;
+		bool success = false;
 		QString libname_success;
 		foreach(const QString &libname, libnames) {
 			conf->debug(QString("Trying %1").arg(libname));
@@ -1883,6 +1884,9 @@ public:
 			return false;
 
 		qc_hunspell_defs += "HAVE_HUNSPELL";
+#ifdef _MSC_VER
+		qc_hunspell_defs += "HUNSPELL_STATIC"; // at least it's static by default when their msvc sln is in use.
+#endif
 		qc_hunspell_libs += QString("-L") + a_lib;
 		qc_hunspell_libs += QString("-l") + libname_success;
 		qc_hunspell_have = true;
@@ -2836,6 +2840,10 @@ public:
 			conf->addLib(libs);
 		//if(!other.isEmpty())
 		//	conf->addExtra(QString("QMAKE_CFLAGS += %1\\n").arg(other));
+
+		if(!required)
+			conf->addDefine("HAVE_PKG_" + qc_escapeArg(pkgname).toUpper());
+
 		return true;
 	}
 };
