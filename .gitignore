@@ -4,6 +4,8 @@
 /tmtags
 /psi
 /psi.exe
+/psi.exp
+/psi.lib
 /src/psi_resource.rc
 /pluginsconf.pri
 ._*
