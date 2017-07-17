@@ -239,6 +239,7 @@ if(WIN32)
 
 	if(USE_MXE)
 		list(APPEND LIBRARIES_LIST
+			libgpg-error6-0.dll
 			libbz2.dll
 			libfreetype-6.dll
 			libglib-2.0-0.dll
