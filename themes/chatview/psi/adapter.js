@@ -341,6 +341,7 @@ function psiThemeAdapter(chat) {
         function start() {
             try {
                 window.psiimtheme = startPsiTheme(shared);
+                chat.util.rereadOptions();
             } catch(e) {
                 chat.util.showCriticalError("Failed to start: "+e+" "+e.stack);
             }

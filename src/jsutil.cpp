@@ -54,6 +54,17 @@ QString JSUtil::variant2js(const QVariant &value)
 				strVal = QString("[%1]").arg(sl.join(","));
 			}
 			break;
+		case QVariant::List:
+			{
+				QStringList sl;
+				auto vl = value.toList();
+				sl.reserve(vl.size());
+				for (auto &item: vl) {
+					sl.append(variant2js(item));
+				}
+				strVal = QString("[%1]").arg(sl.join(","));
+			}
+			break;
 		case QVariant::DateTime:
 			strVal = QString("new Date(%1)").arg(value.toDateTime().toString("yyyy,M-1,d,h,m,s"));
 			break;

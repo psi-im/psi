@@ -603,6 +603,23 @@ ChatViewThemeJSUtil::ChatViewThemeJSUtil(Theme theme, QObject *parent) :
 {
 	psiDefaultAvatarUrl = "psiglobal/avatar/default.png"; // relative to session url
 	// may be in the future we can make different defaults. per transport for example
+
+	optChangeTimer.setSingleShot(true);
+	optChangeTimer.setInterval(0);
+	connect(&optChangeTimer, SIGNAL(timeout()), SLOT(sendOptionsChanges()));
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged(const QString&)));
+}
+
+void ChatViewThemeJSUtil::sendOptionsChanges()
+{
+	emit optionsChanged(changedOptions);
+	changedOptions.clear();
+}
+
+void ChatViewThemeJSUtil::optionsChanged(const QString &option)
+{
+	changedOptions.append(option);
+	optChangeTimer.start();
 }
 
 void ChatViewThemeJSUtil::putToCache(const QString &key, const QVariant &data)
@@ -623,6 +640,16 @@ QVariant ChatViewThemeJSUtil::cache(const QString &name) const
 QString ChatViewThemeJSUtil::psiOption(const QString &option) const
 {
 	return JSUtil::variant2js(PsiOptions::instance()->getOption(option));
+}
+
+QString ChatViewThemeJSUtil::psiOptions(const QStringList &options) const
+{
+	QVariantList ret;
+	for (auto &option: options) {
+		ret.append(PsiOptions::instance()->getOption(option));
+	}
+	QString retStr = JSUtil::variant2js(ret);
+	return retStr;
 }
 
 QString ChatViewThemeJSUtil::colorOption(const QString &option) const

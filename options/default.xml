@@ -18,9 +18,9 @@
 		<account comment="Default account options">
 			<domain comment="Always use the same domain to register with. Leave this empty to allow the user to choose his server." type="QString"/>
 		</account>
-    <auto-update comment="Auto updater">
-      <check-on-startup comment="Check for available updates on startup" type="bool">true</check-on-startup>
-    </auto-update>
+		<auto-update comment="Auto updater">
+			<check-on-startup comment="Check for available updates on startup" type="bool">true</check-on-startup>
+		</auto-update>
 		<enable-multicast comment="Enable multicasting messages to multiple recipients" type="bool">false</enable-multicast>
 		<html comment="Hypertext markup options">
 			<chat comment="HTML in chats">
@@ -122,6 +122,7 @@
 				<use-message-icons type="bool">true</use-message-icons>
 				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<show-status-changes type="bool">true</show-status-changes>
+				<show-previews type="bool">true</show-previews>
 				<warn-before-clear type="bool">true</warn-before-clear>
 				<css type="QString" />
 				<hide-when-closing type="bool">false</hide-when-closing>

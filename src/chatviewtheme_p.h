@@ -21,6 +21,7 @@
 #ifndef CHATVIEWTHEME_P_H
 #define CHATVIEWTHEME_P_H
 
+#include <QTimer>
 #include <QScopedPointer>
 #include <QPointer>
 #ifdef WEBENGINE
@@ -106,6 +107,8 @@ class ChatViewThemeJSUtil : public QObject {
 
 	Theme theme;
 	QString psiDefaultAvatarUrl;
+	QStringList changedOptions;
+	QTimer optChangeTimer;
 
 #ifdef HAVE_QT5
 	Q_PROPERTY(QString psiDefaultAvatarUrl MEMBER psiDefaultAvatarUrl CONSTANT)
@@ -113,6 +116,9 @@ class ChatViewThemeJSUtil : public QObject {
 	Q_PROPERTY(QString psiDefaultAvatarUrl READ getPsiDefaultAvatarUrl CONSTANT)
 	QString getPsiDefaultAvatarUrl() const { return psiDefaultAvatarUrl; }
 #endif
+
+signals:
+	void optionsChanged(const QStringList &);
 
 public:
 	ChatViewThemeJSUtil(Theme theme, QObject *parent = 0);
@@ -122,12 +128,16 @@ public slots:
 	QVariantMap loadFromCacheMulti(const QVariantList &list);
 	QVariant cache(const QString &name) const;
 	QString psiOption(const QString &option) const;
+	QString psiOptions(const QStringList &options) const;
 	QString colorOption(const QString &option) const;
 	QString formatDate(const QDateTime &dt, const QString &format) const;
 	QString strftime(const QDateTime &dt, const QString &format) const;
 	void console(const QString &text) const;
 	QString status2text(int status) const;
 	QString hex2rgba(const QString &hex, float opacity);
+private slots:
+	void sendOptionsChanges();
+	void optionsChanged(const QString &option);
 };
 
 class ChatViewThemePrivate : public ThemePrivate

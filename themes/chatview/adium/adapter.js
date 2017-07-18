@@ -274,10 +274,6 @@ chat.util.updateObject(adapter, function(chat){
         "part" : "contact_left"
     }
 
-    function psiOption(name) {
-        return eval("[" + server.psiOption(name) + "][0]")
-    }
-
     return {
         generateSessionHtml : function(sessionId, serverSession, basePath) {
 
@@ -552,6 +548,7 @@ chat.util.updateObject(adapter, function(chat){
                 session.localUserAvatarChanged.connect(printAvatar);
 
                 session.newMessage.connect(chat.receiveObject);
+                chat.util.rereadOptions();
                 session.signalInited();
             }
 
