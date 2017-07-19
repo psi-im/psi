@@ -1,6 +1,6 @@
-Psi 1.0.1
+Psi 1.1
 -------
-Date: September 12th, 2012
+Date: July 19th, 2017
 
 Maintainers:
   Sergey Ilinykh (2010 (Psi+) - 2017 (Psi/Psi+))
@@ -53,6 +53,16 @@ Notes
 
 Changes
 -------
+  New in 1.1
+  - Fixed a few crashes. Seems to be pretty stable now.
+  - Contact list was rewritten once again
+  - Improved stream management (no more disconnects)
+  - Better support for HIDPI displays
+  - More Psi+ patches merged
+  - JDNS was replaced with QDnsLookup for Qt5 builds
+  - CMake support
+  - A lot of minor UI fixes
+
   New in 1.0
   - Almost all Psi+ patches were merged (a lot of features).
   - Plugins support is enabled by default.
