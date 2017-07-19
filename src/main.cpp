@@ -555,7 +555,22 @@ int main(int argc, char *argv[])
 	QCA::setProperty("pgp-always-trust", true);
 	QCA::KeyStoreManager keystoremgr;
 	QCA::KeyStoreManager::start();
-	keystoremgr.waitForBusyFinished(); // FIXME get rid of this
+	QTimer keystoremgrTimeout;
+	if(keystoremgr.isBusy()) {
+		keystoremgrTimeout.setTimerType(Qt::VeryCoarseTimer);
+		keystoremgrTimeout.setSingleShot(true);
+		keystoremgrTimeout.setInterval(7500);
+		keystoremgrTimeout.start();
+		QObject::connect(&keystoremgr, &QCA::KeyStoreManager::busyFinished, &keystoremgrTimeout, &QTimer::stop);
+		QObject::connect(&keystoremgrTimeout, &QTimer::timeout, [] {
+			QMessageBox::warning(nullptr,
+								 QApplication::applicationName(),
+								 QApplication::translate("main",
+														 "The keystore manager provided by QCA takes longer to load than usual."
+														 " Maybe <i>gpg</i> hangs.<br><br>"
+														 "Note that login via TLS and OpenPGP related features require the keystore manager."));
+		});
+	}
 
 #ifdef USE_CRASH
 	int useCrash = !cmdline.contains("nocrash");
