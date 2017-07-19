@@ -103,6 +103,7 @@ public:
 	void displayPrevious();
 	bool moveSearchCursor(int dir, int n);
 	void displayWithSearchCursor(const QString &acc_id, const XMPP::Jid &jid, QDateTime start, int dir, const QString &s_str, int num);
+	bool isMessage(const QTextCursor &cursor) const;
 
 private slots:
 	void handleResult();

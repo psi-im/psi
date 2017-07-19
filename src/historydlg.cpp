@@ -24,6 +24,7 @@
 #include <QMenu>
 #include <QProgressDialog>
 #include <QKeyEvent>
+#include <QTextBlock>
 
 #include "historydlg.h"
 #include "psicon.h"
@@ -382,7 +383,7 @@ bool DisplayProxy::moveSearchCursor(int dir, int n)
 
 	// moving the text cursor
 	bool res = true;
-	for (; n != 0; --n)
+	do
 	{
 		if (shiftCursor)
 		{
@@ -395,7 +396,9 @@ bool DisplayProxy::moveSearchCursor(int dir, int n)
 
 		if (!(res = viewWid->find(searchParams.searchString, find_opt)))
 			break;
-	}
+		if (isMessage(viewWid->textCursor()))
+			--n;
+	} while (n != 0);
 
 	t_cursor = viewWid->textCursor();
 	t_cursor.setPosition(t_cursor.selectionStart());
@@ -424,6 +427,15 @@ void DisplayProxy::displayWithSearchCursor(const QString &acc_id, const Jid &jid
 
 	reqType = ReqDate;
 	getEDBHandle()->get(acc_id, jid, queryParams.date, queryParams.direction, 0, DISPLAY_PAGE_SIZE);
+}
+
+bool DisplayProxy::isMessage(const QTextCursor &cursor) const
+{
+	int pos = cursor.positionInBlock();
+	if (pos > 22) // the timestamp length
+		if (cursor.block().text().leftRef(pos-1).indexOf("> ") != -1) // skip nickname
+			return true;
+	return false;
 }
 
 void DisplayProxy::handleResult()
@@ -940,7 +952,8 @@ void HistoryDlg::highlightBlocks()
 	while (found)
 	{
 		highlight.cursor = ui_.msgLog->textCursor();
-		extras << highlight;
+		if (displayProxy->isMessage(highlight.cursor))
+			extras << highlight;
 		found = ui_.msgLog->find(text);
 	}
 
