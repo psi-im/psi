@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ref_commit=2812a0af876f47b9001fcd3a4af9ad89e2ccb1ea # change version file to 1.0
+ref_commit=000473ebfd463c910ee81d599a7982d8753b83dc # change version file to 1.1
 
 cd $(dirname "$0")
 git rev-list --count ${ref_commit}..HEAD
