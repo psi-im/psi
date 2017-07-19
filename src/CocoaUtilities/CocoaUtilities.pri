@@ -8,5 +8,7 @@ HEADERS += \
 
 OBJECTIVE_SOURCES += \
 	$$PWD/CocoaInitializer.mm \
-	$$PWD/cocoacommon.mm \
-	$$PWD/CocoaTrayClick.mm
+        $$PWD/cocoacommon.mm
+
+SOURCES += \
+        $$PWD/CocoaTrayClick.cpp

@@ -106,12 +106,12 @@ bool TabDlgDelegate::changeEvent(QWidget *, QEvent *)
 	return false;
 }
 
-bool TabDlgDelegate::event(QWidget *, QEvent *)
+bool TabDlgDelegate::tabEvent(QWidget *, QEvent *)
 {
 	return false;
 }
 
-bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *)
+bool TabDlgDelegate::tabEventFilter(QWidget *, QObject *, QEvent *)
 {
 	return false;
 }
@@ -374,6 +374,11 @@ void TabDlg::setLooks()
 		tabWidget_->setTabPosition(QTabWidget::South);
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
+
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+	}
 }
 
 void TabDlg::tabSelected(QWidget* _selected)
@@ -796,7 +801,7 @@ void TabDlg::changeEvent(QEvent *event)
 bool TabDlg::event(QEvent *event)
 {
 	// delegate if possible, otherwise use default
-	if (delegate_ && delegate_->event(this, event)) {
+	if (delegate_ && delegate_->tabEvent(this, event)) {
 		return true;
 	} else {
 		return AdvancedWidget<QWidget>::event(event);
@@ -806,7 +811,7 @@ bool TabDlg::event(QEvent *event)
 bool TabDlg::eventFilter(QObject *obj, QEvent *event)
 {
 	// delegate if possible, otherwise use default
-	if (delegate_ && delegate_->eventFilter(this, obj, event)) {
+	if (delegate_ && delegate_->tabEventFilter(this, obj, event)) {
 		return true;
 	} else {
 		return AdvancedWidget<QWidget>::eventFilter(obj, event);

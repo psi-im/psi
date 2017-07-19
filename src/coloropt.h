@@ -45,6 +45,9 @@ public:
 	QColor color(const QString &opt, const QColor &defaultColor = QColor()) const;
 	QPalette::ColorRole colorRole(const QString &opt) const;
 
+signals:
+	void changed();
+
 private:
 	ColorOpt();
 

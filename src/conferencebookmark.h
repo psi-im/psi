@@ -48,6 +48,7 @@ public:
 	const QString& name() const;
 	const XMPP::Jid& jid() const;
 	JoinType autoJoin() const;
+	bool needJoin() const;
 	void setAutoJoin(JoinType type);
 	const QString& nick() const;
 	const QString& password() const;

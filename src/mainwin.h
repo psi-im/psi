@@ -166,6 +166,8 @@ private slots:
 
 	void hideTimerTimeout();
 
+	void optionChanged(const QString&);
+
 public slots:
 	void setWindowIcon(const QPixmap&);
 	void showNoFocus();

@@ -43,10 +43,13 @@ ColorOpt::ColorOpt()
 		{"contactlist.status-change-animation1", QPalette::Text},
 		{"contactlist.status-change-animation2", QPalette::Base},
 		{"contactlist.status-messages", QPalette::Text},
+		{"tooltip.background", QPalette::Base},
+		{"tooltip.text", QPalette::Text},
 		{"messages.received", QPalette::Text},
 		{"messages.sent", QPalette::Text},
 		{"messages.informational", QPalette::Text},
 		{"messages.usertext", QPalette::Text},
+		{"messages.highlighting", QPalette::Text},
 		{"passive-popup.border", QPalette::Window}
 	};
 	for (unsigned int i = 0; i < sizeof(source) / sizeof(SourceType); i++) {
@@ -75,9 +78,10 @@ QPalette::ColorRole ColorOpt::colorRole(const QString &opt) const
 
 void ColorOpt::optionChanged(const QString &opt)
 {
-	if (opt.startsWith("options.ui.look.colors") && colors.contains(opt)) {
+	if (opt.startsWith(QLatin1String("options.ui.look.colors")) && colors.contains(opt)) {
 		colors[opt].color = PsiOptions::instance()->getOption(opt).value<QColor>();
 		//qDebug("%s changed to %s", qPrintable(opt), qPrintable(colors[opt].color.isValid()? colors[opt].color.name() : "Invalid " + colors[opt].color.name()));
+		emit changed();
 	}
 }
 

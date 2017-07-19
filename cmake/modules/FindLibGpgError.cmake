@@ -60,7 +60,13 @@ find_path(
 
 find_library(
 	LIBGPGERROR_LIBRARY
-	NAMES gpg-error libgpg-error gpg-error-0 libgpg-error-0
+	NAMES
+	gpg-error
+	libgpg-error
+	gpg-error-0
+	libgpg-error-0
+	gpg-error6-0
+	libgpg-error6-0
 	HINTS 
 	${PC_LIBGPGERROR_LIBDIR}
 	${PC_LIBGPGERROR_LIBRARY_DIRS}

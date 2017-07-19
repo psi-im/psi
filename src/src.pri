@@ -616,7 +616,7 @@ unix:!dbus {
 	SOURCES += $$PWD/activeprofiles_stub.cpp
 }
 
-qtwebengine|qwebkit {
+qtwebengine|qtwebkit {
 	HEADERS += 	$$PWD/chatview_webkit.h \
 			$$PWD/webview.h \
 			$$PWD/jsutil.h \
@@ -656,7 +656,7 @@ else {
 }
 
 mac {
-	QMAKE_LFLAGS += -framework Carbon -framework IOKit -framework AppKit
+	QMAKE_LFLAGS += -framework Carbon -framework IOKit -framework AppKit -framework CoreFoundation -lobjc
 }
 
 INCLUDEPATH += $$PWD

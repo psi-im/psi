@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 2.8.12 )
 set_directory_properties(PROPERTIES
 	INCLUDE_DIRECTORIES ""
 	COMPILE_DEFINITIONS ""
-	)
+)
 
 if(USE_QT5)
 	add_definitions(-DHAVE_QT5)

@@ -618,7 +618,7 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
 	if(children.length() > 0) {
 		// find the child with the smallest weight greater than the weight of the node itself
 		// if any, insert the node before that node
-		for(uint i=0; i < children.length(); i++) {
+		for(int i=0; i < children.length(); i++) {
 			if(children.item(i) != node) {
 				SxeRecord* siblingMeta = record(children.item(i));
 				if(siblingMeta && *meta < *siblingMeta) {

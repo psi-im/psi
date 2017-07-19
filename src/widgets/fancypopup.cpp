@@ -213,6 +213,11 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	ui_.closeButton->setIcon( popup->style()->standardPixmap(QStyle::SP_TitleBarCloseButton) );
 	ui_.closeButton->setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT);
 	connect(ui_.closeButton, SIGNAL(clicked()), popup, SLOT(hide()));
+
+	const QString css = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.css").toString();
+	if (!css.isEmpty()) {
+		popup->setStyleSheet(css);
+	}
 }
 
 bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)

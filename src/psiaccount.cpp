@@ -1024,7 +1024,7 @@ public slots:
 		account->doReconnect = true;
 
 		reconnectScheduledAt_ = QDateTime::currentDateTime();
-		reconnectScheduledAt_.addSecs(data.delay);
+		reconnectScheduledAt_ = reconnectScheduledAt_.addSecs(data.delay);
 		QTimer::singleShot(delay, account, SLOT(reconnect()));
 		emit account->stateChanged();
 	}
@@ -2386,9 +2386,12 @@ void PsiAccount::bookmarksAvailabilityChanged()
 
 #ifdef GROUPCHAT
 	foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
-		if (!findDialog<GCMainDlg*>(Jid(c.jid().bare())) &&
-				(c.autoJoin() == ConferenceBookmark::Always || c.autoJoin() == ConferenceBookmark::OnlyThisComputer)) {
-			actionJoin(c, true, MUCJoinDlg::MucAutoJoin);
+		Jid cj = c.jid().withResource(QString());
+		if (!findDialog<GCMainDlg*>(cj) && c.needJoin()) {
+			auto ul = findRelevant(Jid(QString(),cj.domain()));
+			if (ul.isEmpty() || !ul[0]->isTransport() || !ul[0]->resourceList().isEmpty()) { // don't join to MUCs on disconnected transports
+				actionJoin(c, true, MUCJoinDlg::MucAutoJoin);
+			}
 		}
 	}
 #endif
@@ -2538,6 +2541,17 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 		if(doAnim && PsiOptions::instance()->getOption("options.ui.contactlist.use-status-change-animation").toBool())
 			profileAnimateNick(u->jid());
 
+#ifdef GROUPCHAT
+		if (u->isTransport()) {
+			foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
+				Jid cj = c.jid().withResource(QString());
+				if (u->jid().domain() == cj.domain() && !findDialog<GCMainDlg*>(cj) && c.needJoin()) {
+					// now join MUCs on connected transport
+					actionJoin(c, true, MUCJoinDlg::MucAutoJoin);
+				}
+			}
+		}
+#endif
 	}
 
 	if(doSound)
@@ -5706,9 +5720,19 @@ void PsiAccount::setLocalMucBookmarks(const QStringList &sl)
 	d->acc.localMucBookmarks = sl;
 }
 
+void PsiAccount::setIgnoreMucBookmarks(const QStringList &sl)
+{
+	d->acc.ignoreMucBookmarks = sl;
+}
+
 QStringList PsiAccount::localMucBookmarks() const
 {
 	return d->acc.localMucBookmarks;
+}
+
+QStringList PsiAccount::ignoreMucBookmarks() const
+{
+	return d->acc.ignoreMucBookmarks;
 }
 
 GCContact *PsiAccount::findGCContact(const Jid &j) const

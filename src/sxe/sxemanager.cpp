@@ -260,7 +260,7 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
 				&& negotiation->state == SxeNegotiation::NotStarted) {
 
 		// copy the feature strings to negotiation-features
-		for(uint k = 0; k < negotiationElement.childNodes().length(); k++) {
+		for(int k = 0; k < negotiationElement.childNodes().length(); k++) {
 			if(negotiationElement.childNodes().at(k).nodeName() == "feature") {
 				negotiation->features += negotiationElement.childNodes().at(k).toElement().text();
 			}

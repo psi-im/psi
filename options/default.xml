@@ -18,9 +18,9 @@
 		<account comment="Default account options">
 			<domain comment="Always use the same domain to register with. Leave this empty to allow the user to choose his server." type="QString"/>
 		</account>
-    <auto-update comment="Auto updater">
-      <check-on-startup comment="Check for available updates on startup" type="bool">true</check-on-startup>
-    </auto-update>
+		<auto-update comment="Auto updater">
+			<check-on-startup comment="Check for available updates on startup" type="bool">true</check-on-startup>
+		</auto-update>
 		<enable-multicast comment="Enable multicasting messages to multiple recipients" type="bool">false</enable-multicast>
 		<html comment="Hypertext markup options">
 			<chat comment="HTML in chats">
@@ -42,7 +42,6 @@
 		<muc comment="Multi-User Chat options">
 			<bookmarks comment="Options for bookmarked conference rooms">
 				<auto-join comment="Automatically join bookmarked conference rooms that are configured for auto-joining." type="bool">true</auto-join>
-				<ignore-join type="QStringList" />
 			</bookmarks>
 			<show-joins comment="Display notices of users joining and leaving conferences" type="bool">true</show-joins>
 			<show-role-affiliation comment="Include role and affiliation changes in join messages, and display notices of changes" type="bool">true</show-role-affiliation>
@@ -107,12 +106,13 @@
 				<opacity comment="Opacity percentage of chat dialogs" type="int">100</opacity>
 				<legacy-formatting comment="This enables legacy usenet-style formatting (// ** __)" type="bool">true</legacy-formatting>
 				<avatars comment="Avatar options">
-					<size comment="Maximum size of the avatar" type="int">32</size>
+					<size comment="Maximum size of the avatar" type="int">24</size>
 					<show comment="Show avatars in the chat dialog" type="bool">true</show>
 				</avatars>
 				<alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>
 				<auto-popup type="bool">false</auto-popup>
 				<auto-capitalize type="bool">false</auto-capitalize>
+				<auto-scroll-to-bottom type="bool">true</auto-scroll-to-bottom>
 				<delete-contents-after type="QString">hour</delete-contents-after>
 				<raise-chat-windows-on-new-messages type="bool">false</raise-chat-windows-on-new-messages>
 				<switch-tab-on-new-messages type="bool">false</switch-tab-on-new-messages>
@@ -122,7 +122,9 @@
 				<use-message-icons type="bool">true</use-message-icons>
 				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<show-status-changes type="bool">true</show-status-changes>
+				<show-previews type="bool">true</show-previews>
 				<warn-before-clear type="bool">true</warn-before-clear>
+				<css type="QString" />
 				<hide-when-closing type="bool">false</hide-when-closing>
 				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
 				<default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
@@ -147,6 +149,7 @@
 					<show comment="Show status messages" type="bool">false</show>
 				</status-messages>
 				<tooltip comment="Display options for the contact list tooltips">
+					<css type="QString"></css>
 					<avatar comment="Display avatar" type="bool">true</avatar>
 					<client-version comment="Display client version information" type="bool">true</client-version>
 					<geolocation comment="Display geolocation information" type="bool">true</geolocation>
@@ -327,11 +330,6 @@ QLineEdit#le_status_text {
 				<use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring><use-hash-nick-coloring type="bool">true</use-hash-nick-coloring><colored-history type="bool">true</colored-history>
 				<allow-highlight-events type="bool">false</allow-highlight-events>
 			</muc>
-			<show-deprecated comment="Deprecated functionality or protocols">
-				<service-discovery comment="Service discovery dialog">
-					<protocol-selector comment="Show the iq:browse and iq:agents service discovery protocol selector." type="bool">false</protocol-selector>
-				</service-discovery>
-			</show-deprecated>
 			<spell-check comment="Options related to the spell checker">
 				<enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
 				<langs type="QString"></langs>
@@ -417,6 +415,7 @@ QLineEdit#le_status_text {
 					<message type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</message>
 					<passive-popup type="QString">Sans Serif,7,-1,5,50,0,0,0,0,0</passive-popup>
 				</font>
+				<css type="QString" />
 			</look>
 			<notifications>
 				<send-receipts type="bool" >true</send-receipts>
@@ -433,6 +432,7 @@ QLineEdit#le_status_text {
 						<status type="int">2000</status>
 					</delays>
 					<enabled type="bool">false</enabled>
+					<css type="QString"></css>
 					<top-to-bottom type="bool">false</top-to-bottom>
 					<at-left-corner type="bool">false</at-left-corner>
 					<incoming-chat type="bool">true</incoming-chat>

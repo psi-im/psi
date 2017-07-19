@@ -14,7 +14,7 @@ list(APPEND SOURCES
 
 	# advwidget
 	advwidget/advwidget.cpp
-	)
+)
 
 list(APPEND PLAIN_SOURCES
 	# optionstree
@@ -29,7 +29,7 @@ list(APPEND PLAIN_SOURCES
 	tunecontroller/pollingtunecontroller.cpp
 	tunecontroller/tunecontrollermanager.cpp
 	tunecontroller/plugins/psifile/psifileplugin.cpp
-	)
+)
 
 list(APPEND HEADERS
 	# iconset
@@ -51,7 +51,7 @@ list(APPEND HEADERS
 	# psifile
 	tunecontroller/tunecontrollermanager.h
 	tunecontroller/plugins/psifile/psifileplugin.h
-	)
+)
 
 list(APPEND PLAIN_HEADERS
 	# iconset
@@ -65,25 +65,25 @@ list(APPEND PLAIN_HEADERS
 	tunecontroller/tune.h
 	tunecontroller/tunecontrollerinterface.h
 	tunecontroller/tunecontrollerplugin.h
-	)
+)
 
 list(APPEND PLAIN_HEADERS
 	crash/crash.h
-	)
+)
 
 if(LINUX)
 	list(APPEND PLAIN_SOURCES
 		crash/crash_sigsegv.cpp
 		crash/crash.cpp
-		)
+	)
 	list(APPEND PLAIN_HEADERS
 		crash/crash_sigsegv.h
-		)
+	)
 endif()
 if(WIN32)
 	list(APPEND PLAIN_SOURCES
 		crash/crash_dummy.cpp
-		)
+	)
 endif()
 	
 include_directories(tunecontroller)
@@ -91,7 +91,7 @@ include_directories(tunecontroller)
 add_definitions(-DTC_PSIFILE)
 include_directories(
 	tunecontroller/plugins/psifile
-	)
+)
 
 if(APPLE)
 	list(APPEND EXTRA_LDFLAGS -framework CoreFoundation)
@@ -100,48 +100,48 @@ if(APPLE)
 	list(APPEND SOURCES
 		tunecontroller/itunestunecontroller.cpp
 		tunecontroller/plugins/itunes/itunesplugin.cpp
-		)
+	)
 
 	list(APPEND HEADERS
 		tunecontroller/itunestunecontroller.h
-		)
+	)
 elseif(WIN32)
 	list(APPEND EXTRA_LDFLAGS -luser32)
 	include_directories(
 		tunecontroller/plugins/winamp
 		tunecontroller/plugins/aimp
-		)
+	)
 	add_definitions(-DTC_WINAMP -DTC_AIMP)
 	list(APPEND SOURCES
 		tunecontroller/plugins/aimp/aimpplugin.cpp
-		)
+	)
 
 	list(APPEND PLAIN_SOURCES
 		tunecontroller/aimptunecontroller.cpp
 		tunecontroller/winamptunecontroller.cpp
 		tunecontroller/plugins/winamp/winampplugin.cpp
-		)
+	)
 
 	list(APPEND HEADERS
 		tunecontroller/aimptunecontroller.h
 		tunecontroller/winamptunecontroller.h
 		tunecontroller/plugins/winamp/winampplugin.h
-		)
+	)
 elseif(LINUX)  
 	include_directories(tunecontroller/plugins/mpris)
 	add_definitions(-DTC_MPRIS)
 	list(APPEND SOURCES
 		tunecontroller/plugins/mpris/mprisplugin.cpp
-		)
+	)
 
 	list(APPEND PLAIN_SOURCES
 		tunecontroller/mpristunecontroller.cpp
 		tunecontroller/plugins/mpris/mprisplugin.cpp
-		)
+	)
 
 	list(APPEND HEADERS
 		tunecontroller/mpristunecontroller.h
-		)
+	)
 endif()
 
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
@@ -155,4 +155,4 @@ target_include_directories(tools PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/advwidget
 	${CMAKE_CURRENT_SOURCE_DIR}/iconset
 	${CMAKE_CURRENT_SOURCE_DIR}/tunecontroller
-	)
+)

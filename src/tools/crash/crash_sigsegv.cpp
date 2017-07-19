@@ -88,10 +88,14 @@ static int dump_pid_son(pid_t pid, const char *binary, int full_bt,
 		char cmd[128];
 		FILE *fp;
 
+		ssize_t w = 0;
 		if( full_bt )
-			write(fd, gdb_cmd_full, strlen(gdb_cmd_full));
+			w = write(fd, gdb_cmd_full, strlen(gdb_cmd_full));
 		else
-			write(fd, gdb_cmd, strlen(gdb_cmd));
+			w = write(fd, gdb_cmd, strlen(gdb_cmd));
+		if(w == -1) {
+			(*myprint)("Write failed at crash_sigsegv.cpp:92(94)");
+		}
 		close(fd);
 
 		sprintf(cmd, "gdb -nw -n -batch -x \"%s\" %s %d", tmp, binary,
@@ -156,8 +160,9 @@ static int dump_pid(pid_t pid, const char *binary, int full_bt )
 
 		alarm(0);
 		waitpid(0, &status, 0);
-		if( WIFEXITED(status) && WEXITSTATUS(status)==0 )
-			;
+		if( WIFEXITED(status) && WEXITSTATUS(status)==0 ) {
+			//
+		}
 	}
 
 	return 0;
@@ -213,6 +218,7 @@ static void sigsegv_libc_dump( int (* myprint)(const char *format, ...) )
 
 static void sigsegv_handler_generic(int signal, int full_bt)
 {
+	(void)signal;
 	char binary[2048];
 	int pid = getpid();
 	int (* myprint)(const char *format, ...);

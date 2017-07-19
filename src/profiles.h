@@ -88,7 +88,7 @@ public:
 	bool ibbOnly;
 
 	QStringList alwaysVisibleContacts;
-	QStringList localMucBookmarks;
+	QStringList localMucBookmarks, ignoreMucBookmarks;
 
 	QString optionsBase;
 
@@ -113,8 +113,6 @@ typedef QList<UserAccount> UserAccountList;
 class OptionsMigration
 {
 public:
-	bool fromFile(const QString &);
-
 	void lateMigration();
 
 	//QString progver;

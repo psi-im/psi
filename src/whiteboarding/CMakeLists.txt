@@ -18,7 +18,7 @@ set(PLAIN_SOURCES
 	wbnewpath.cpp
 	wbscene.cpp
 	wbwidget.cpp
-	)
+)
 
 set(HEADERS
 	wbdlg.h
@@ -26,13 +26,13 @@ set(HEADERS
 	wbmanager.h
 	wbscene.h
 	wbwidget.h
-	)
+)
 
 set(PLAIN_HEADERS
 	wbnewimage.h
 	wbnewitem.h
 	wbnewpath.h
-	)
+)
 
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
 add_library(whiteboarding STATIC ${HEADERS} ${MOC_SOURCES} ${PLAIN_SOURCES} ${PLAIN_HEADERS})

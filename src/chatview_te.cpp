@@ -416,7 +416,7 @@ void ChatView::renderMucMessage(const MessageView &mv)
 		}
 	}
 
-	if(mv.isLocal()) {
+	if(mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool() ) {
 		scrollToBottom();
 	}
 }
@@ -447,7 +447,7 @@ void ChatView::renderMessage(const MessageView &mv)
 		}
 	}
 
-	if (mv.isLocal()) {
+	if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool() ) {
 		deferredScroll();
 	}
 }

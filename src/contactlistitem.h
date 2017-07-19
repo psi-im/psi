@@ -25,6 +25,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
+#include <QPointer>
 
 class PsiContact;
 class PsiAccount;
@@ -55,6 +56,7 @@ public:
 	};
 
 	ContactListItem(ContactListModel *model, Type type = Type::InvalidType, SpecialGroupType specialGropType = SpecialGroupType::NoneSpecialGroupType);
+	~ContactListItem();
 
 	ContactListModel *model() const;
 
@@ -121,7 +123,8 @@ private:
 	Type _type;
 	SpecialGroupType _specialGroupType;
 	bool _editing;
-	PsiContact *_contact;
+	bool _selfValid; // hack hack! just to find one crash in roster. remove this and QPointer wrapper below when fixed
+	QPointer<PsiContact> _contact;
 	PsiAccount *_account;
 	bool _expanded;
 	QString _internalName;

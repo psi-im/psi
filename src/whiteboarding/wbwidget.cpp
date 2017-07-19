@@ -60,7 +60,7 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
 
 	// add the initial items
 	const QDomNodeList children = session_->document().documentElement().childNodes();
-	for(uint i = 0; i < children.length(); i++) {
+	for(int i = 0; i < (int)children.length(); i++) {
 		const QDomNode node = children.at(i);
 		if(node.isElement()) {
 			queueNodeInspection(node.toElement());

@@ -156,7 +156,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 	//QString themeServer = ChatViewThemeProvider::serverAddr();
 	wv->page()->setHtml(QString(
 	    "<html><head>\n"
-	    "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n"
+	    "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n"
 	    "<script src=\"/psithemes/chatview/util.js\"></script>\n"
 	    "<script src=\"/psithemes/chatview/%1/adapter.js\"></script>\n"
 	    "<script src=\"/psiglobal/qwebchannel.js\"></script>\n"
@@ -174,7 +174,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 #else
 	wv->page()->setNetworkAccessManager(nam);
 	QStringList scriptPaths = QStringList()
-	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.min.js"))
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
 
@@ -199,7 +199,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 #endif
 }
 
-bool ChatViewThemePrivate::hasPreview()
+bool ChatViewThemePrivate::hasPreview() const
 {
 	if (id.isNull())
 		return false;
@@ -247,7 +247,7 @@ void ChatViewThemePrivate::embedSessionJsObject(ChatViewThemeSession *session)
 	wf->addToJavaScriptWindowObject("srvSession", session);
 
 	QStringList scriptPaths = QStringList()
-	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.min.js"))
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + id.section('/', 0, 0) + QLatin1String("/adapter.js"));
 
@@ -603,6 +603,23 @@ ChatViewThemeJSUtil::ChatViewThemeJSUtil(Theme theme, QObject *parent) :
 {
 	psiDefaultAvatarUrl = "psiglobal/avatar/default.png"; // relative to session url
 	// may be in the future we can make different defaults. per transport for example
+
+	optChangeTimer.setSingleShot(true);
+	optChangeTimer.setInterval(0);
+	connect(&optChangeTimer, SIGNAL(timeout()), SLOT(sendOptionsChanges()));
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged(const QString&)));
+}
+
+void ChatViewThemeJSUtil::sendOptionsChanges()
+{
+	emit optionsChanged(changedOptions);
+	changedOptions.clear();
+}
+
+void ChatViewThemeJSUtil::optionsChanged(const QString &option)
+{
+	changedOptions.append(option);
+	optChangeTimer.start();
 }
 
 void ChatViewThemeJSUtil::putToCache(const QString &key, const QVariant &data)
@@ -623,6 +640,16 @@ QVariant ChatViewThemeJSUtil::cache(const QString &name) const
 QString ChatViewThemeJSUtil::psiOption(const QString &option) const
 {
 	return JSUtil::variant2js(PsiOptions::instance()->getOption(option));
+}
+
+QString ChatViewThemeJSUtil::psiOptions(const QStringList &options) const
+{
+	QVariantList ret;
+	for (auto &option: options) {
+		ret.append(PsiOptions::instance()->getOption(option));
+	}
+	QString retStr = JSUtil::variant2js(ret);
+	return retStr;
 }
 
 QString ChatViewThemeJSUtil::colorOption(const QString &option) const

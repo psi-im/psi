@@ -41,7 +41,7 @@ Dependency options:
                                 support
   --disable-qdbus               Disable use of QDBUS
   --enable-webkit               Enable use of webkit
-  --with-webkit=[type]          type of webkit QWebkit/QtWebEngine
+  --with-webkit=[type]          type of webkit QtWebKit/QtWebEngine
   --disable-growl               Disable use of Growl
   --with-growl=[path]           Path to the Growl framework
   --enable-whiteboarding        Enable use of White Board support
@@ -629,6 +629,37 @@ bool qc_buildmode_release = false;
 bool qc_buildmode_debug = false;
 bool qc_buildmode_separate_debug_info = false;
 
+#define PSI_DIR_NAME "psi"
+
+static QString sourceDir;
+
+// this is a utility function required by few other modules
+static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
+{
+	QFile fin(inFile);
+	QFile fout(outFile);
+	if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
+		return false;
+
+	QTextStream tin(&fin);
+	QTextStream tout(&fout);
+	while(!tin.atEnd())
+	{
+		QString line = tin.readLine();
+
+		QHashIterator<QString,QString> it(vars);
+		while(it.hasNext())
+		{
+			it.next();
+			line.replace("@@" + it.key() + "@@", it.value());
+		}
+
+		tout << line << endl;
+	}
+
+	return true;
+}
+
 class qc_buildmodeapp : public ConfObj
 {
 public:
@@ -641,6 +672,9 @@ public:
 
 	bool exec()
 	{
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
+		sourceDir = fi.absolutePath();
+
 		// first, parse out the options
 		bool opt_release = false;
 		bool opt_debug = false;
@@ -1142,8 +1176,20 @@ public:
 	qc_qjdns(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QJDns"; }
 	QString shortname() const { return "qjdns"; }
+	QString resultString() const
+	{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+		return "Disabled for Qt5 and above";
+#else
+		return ConfObj::resultString();
+#endif
+	}
 	bool exec()
 	{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+		return true; // hack. TODO: figure out how to force jdns
+#endif
+		conf->addExtra("CONFIG += need_jdns");
 #if defined Q_OS_WIN || defined Q_OS_MAC
 		// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
 		conf->addExtra("CONFIG += iris-qjdns");
@@ -1177,9 +1223,7 @@ public:
 				conf->addIncludePath(inc);
 			}
 			conf->addLib(libs);
-		}
-		else {
-			conf->addExtra("CONFIG += iris-qjdns");
+			conf->addExtra("CONFIG += ext-qjdns");
 		}
 
 		return true;
@@ -1351,9 +1395,11 @@ public:
 /*
 -----BEGIN QCMOD-----
 name: webkit
-arg: with-webkit=[type],type of webkit QWebkit/QtWebEngine
+arg: with-webkit=[type],type of webkit QtWebKit/QtWebEngine
 -----END QCMOD-----
 */
+
+QString qc_webkit_type;
 
 //----------------------------------------------------------------------------
 // qc_webkit
@@ -1374,14 +1420,14 @@ public:
 
 		QStringList tryList;
 		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
-		if (wt.isEmpty() || !(wt == "qwebkit" || wt == "qtwebengine")) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-			tryList << "qtwebengine" << "qwebkit";
+		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
+			tryList << "qtwebengine" << "qtwebkit";
 #else
-			tryList << "qwebkit";
+			tryList << "qtwebkit";
 #endif
 		} else {
-#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(5,6,0)
 			if (wt == "qtwebengine") {
 				webkitType = "unsupported";
 				return false;
@@ -1396,7 +1442,7 @@ public:
 				webkitType = "QtWebEngine";
 				qt = "webenginewidgets webchannel";
 			} else {
-				webkitType = "QWebKit";
+				webkitType = "QtWebKit";
 				qt = "webkit";
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 				qt += " webkitwidgets";
@@ -1420,6 +1466,7 @@ public:
 				continue;
 
 			conf->addExtra("CONFIG += " + wt);
+			qc_webkit_type = wt;
 			return true;
 		}
 
@@ -1820,8 +1867,9 @@ public:
 		QStringList libnames;
 		libnames += "hunspell-1.3";
 		libnames += "hunspell";
+		libnames += "libhunspell";
 
-		bool success;
+		bool success = false;
 		QString libname_success;
 		foreach(const QString &libname, libnames) {
 			conf->debug(QString("Trying %1").arg(libname));
@@ -1836,6 +1884,9 @@ public:
 			return false;
 
 		qc_hunspell_defs += "HAVE_HUNSPELL";
+#ifdef _MSC_VER
+		qc_hunspell_defs += "HUNSPELL_STATIC"; // at least it's static by default when their msvc sln is in use.
+#endif
 		qc_hunspell_libs += QString("-L") + a_lib;
 		qc_hunspell_libs += QString("-l") + libname_success;
 		qc_hunspell_have = true;
@@ -1960,10 +2011,28 @@ public:
 	QString shortname() const { return "plugins"; }
 	bool exec()
 	{
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
+		QString sourceDir = fi.absolutePath();
+
 		conf->addDefine("PSI_PLUGINS");
 
 		// Finish
 		conf->addExtra("CONFIG += psi_plugins");
+
+		QHash<QString,QString> vars;
+#ifdef Q_OS_WIN
+		vars["plugins_dir"] = "";
+		vars["data_dir"] = "";
+#else
+		vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
+		vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
+#endif
+		QStringList psiFeatures;
+		if (!qc_webkit_type.isEmpty()) {
+			psiFeatures << qc_webkit_type;
+		}
+		vars["features"] = psiFeatures.join(" ");
+		psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf.pri", vars);
 
 		return true;
 	}
@@ -1976,34 +2045,6 @@ name: Psi Configuration
 */
 
 #include <QDateTime>
-
-static QString sourceDir;
-
-static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
-{
-	QFile fin(inFile);
-	QFile fout(outFile);
-	if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
-		return false;
-
-	QTextStream tin(&fin);
-	QTextStream tout(&fout);
-	while(!tin.atEnd())
-	{
-		QString line = tin.readLine();
-
-		QHashIterator<QString,QString> it(vars);
-		while(it.hasNext())
-		{
-			it.next();
-			line.replace("@@" + it.key() + "@@", it.value());
-		}
-
-		tout << line << endl;
-	}
-
-	return true;
-}
 
 static QString psiGetVersion()
 {
@@ -2036,9 +2077,6 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
-		QFileInfo fi(qc_getenv("QC_COMMAND"));
-		sourceDir = fi.absolutePath();
-
 		QString version = psiGetVersion();
 		QHash<QString,QString> vars;
 		vars["VERSION"] = version;
@@ -2052,8 +2090,8 @@ public:
 		psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
-		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
-		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
+		conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
+		conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
 #endif
 
 		QDir(".").mkdir("src");
@@ -2061,8 +2099,8 @@ public:
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
 #ifndef Q_OS_WIN
-			stream << "#define PSI_LIBDIR \\"" << conf->getenv("LIBDIR") << "/psi\\"" << endl;
-			stream << "#define PSI_DATADIR \\"" << conf->getenv("DATADIR") << "/psi\\"" << endl;
+			stream << "#define PSI_LIBDIR \\"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\\"" << endl;
+			stream << "#define PSI_DATADIR \\"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\\"" << endl;
 #endif
 			stream << "#define PSI_VERSION \\"" << version << "\\"" << endl;
 		}
@@ -2802,6 +2840,10 @@ public:
 			conf->addLib(libs);
 		//if(!other.isEmpty())
 		//	conf->addExtra(QString("QMAKE_CFLAGS += %1\\n").arg(other));
+
+		if(!required)
+			conf->addDefine("HAVE_PKG_" + qc_escapeArg(pkgname).toUpper());
+
 		return true;
 	}
 };

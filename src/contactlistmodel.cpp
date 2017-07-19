@@ -325,6 +325,26 @@ void ContactListModel::Private::addContact(PsiContact *contact)
 	addOperation(contact, AddContact);
 }
 
+QModelIndex ContactListModel::Private::findItemRecursvive(PsiContact *contact, QModelIndex index)
+{
+	for (int i = 0; i < q->rowCount(index); i++) {
+		QModelIndex childIndex = q->index(i, 0, index);
+		auto clitem = static_cast<ContactListItem*>(childIndex.internalPointer());
+
+		if (clitem->isContact() && clitem->contact() == contact) {
+			return childIndex;
+		}
+
+		if (clitem->children().count()) {
+			childIndex = findItemRecursvive(contact, childIndex);
+			if (childIndex.isValid()) {
+				return childIndex;
+			}
+		}
+	}
+	return QModelIndex();
+}
+
 /*!
  * removeContact() could be called directly by PsiContactList when account is disabled, or
  * by contact's destructor. We just ensure that the calls are balanced.
@@ -338,8 +358,14 @@ void ContactListModel::Private::removeContact(PsiContact *contact)
 
 	while (monitoredContacts.contains(contact)) {
 		QModelIndex index = monitoredContacts.take(contact);
-		if (!index.isValid())
-			continue;
+
+		if (!index.isValid()) {
+			// crap! how?? gotta check them all.. ugly workaround for a crash
+			index = findItemRecursvive(contact);
+		}
+		if (!index.isValid()) {
+			continue; // hmm.. that's strange
+		}
 
 		q->beginRemoveRows(index.parent(), index.row(), index.row());
 		ContactListItem *item = q->toItem(index);

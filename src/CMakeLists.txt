@@ -7,14 +7,13 @@ set(CMAKE_AUTOMOC OFF)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
 	set(D "d")
 	add_definitions(-DALLOW_QT_PLUGINS_DIR)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 ${EXTRA_FLAG}")
 endif()
 
-set( LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
+set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
+set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 
 if(USE_QT5)
-	find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg LinguistTools REQUIRED)
+	find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg REQUIRED)
 	if(ENABLE_WEBKIT)
 		if(NOT USE_WEBENGINE)
 			find_package(Qt5 COMPONENTS WebKit WebKitWidgets REQUIRED)
@@ -39,16 +38,28 @@ if(USE_QT5)
 		include_directories(${LIBXCB_INCLUDE_DIR})
 		add_definitions(${LIBXCB_DEFINITIONS})
 	endif()
+	
+	if(APPLE)
+		find_package(Qt5MacExtras REQUIRED)
+		find_package(Sparkle REQUIRED)
+		include_directories(${SPARKLE_INCLUDE_DIR})
+	endif()
 
 	add_definitions(-DHAVE_QT5 ${LIBXCB_DEFINITIONS})
+	
+	if(EXISTS "${TRANSLATIONS_DIR}")
+		set(LANGS_EXISTS ON)
 
-	macro(QT4_CREATE_TRANSLATION)
-		QT5_CREATE_TRANSLATION(${ARGN})
-	endmacro()
+		find_package(Qt5 COMPONENTS LinguistTools REQUIRED)
 
-	macro(QT4_ADD_TRANSLATION)
-		qt5_add_translation(${ARGN})
-	endmacro()
+		macro(QT4_CREATE_TRANSLATION)
+			QT5_CREATE_TRANSLATION(${ARGN})
+		endmacro()
+
+		macro(QT4_ADD_TRANSLATION)
+			qt5_add_translation(${ARGN})
+		endmacro()
+	endif()
 
 	macro(qt4_add_resources)
 		qt5_add_resources(${ARGN})
@@ -64,9 +75,7 @@ if(USE_QT5)
 
 	set(QT_LUPDATE_EXECUTABLE ${Qt5_LUPDATE_EXECUTABLE})
 	set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5::Concurrent Qt5::Multimedia Qt5::Svg ${SQL_LIBS})
-	find_package( Qca-qt5 REQUIRED )
-	set(QCA_INCLUDES ${Qca-qt5_INCLUDE_DIR})
-	set(qca_LIB ${Qca-qt5_LIBRARY})
+	set(Qca_SUFFIX -qt5)
 	if(LINUX)
 		list(APPEND QT_LIBRARIES Qt5::DBus Qt5::X11Extras ${LIBXCB_LIBRARIES})
 	endif()
@@ -75,6 +84,10 @@ if(USE_QT5)
 			${EXTRA_LIBS}
 			qhttp
 		)
+	endif()
+	if(APPLE)
+		list(APPEND QT_LIBRARIES Qt5::MacExtras)
+		list(APPEND EXTRA_LDFLAGS ${SPARKLE_LIBRARY} "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 	endif()
 else()
 	if(LINUX)
@@ -89,11 +102,7 @@ else()
 	endif()
 
 	unset(QT_EXTRA_MODULES)
-
 	include(${QT_USE_FILE})
-	find_package( Qca REQUIRED )
-	set(QCA_INCLUDES ${Qca_INCLUDE_DIR})
-	set(qca_LIB ${Qca_LIBRARY})
 	if(ENABLE_SQL)
 		find_package(QJSON REQUIRED)
 		set(EXTRA_LIBS
@@ -106,6 +115,8 @@ else()
 		endif()
 	endif()
 endif()
+
+find_package( Qca REQUIRED )
 
 if(LINUX)
 	find_package(X11 REQUIRED)
@@ -155,7 +166,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
 	${PROJECT_SOURCE_DIR}
-	${QCA_INCLUDES}
+	${Qca_INCLUDE_DIR}
 )
 
 if( BUNDLED_IRIS )
@@ -168,18 +179,35 @@ else()
 	include_directories(${Iris_INCLUDE_DIR})
 endif()
 
-include(getdate.cmake)
+string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d")
+string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S")
+
 if(ENABLE_WEBKIT)
-	#if(NOT USE_WEBENGINE)
-		set(PSI_VER_SUFFIX -webkit)
-	#else()
-	#	set(PSI_VER_SUFFIX -webengine)
-	#endif()
+	if(NOT USE_WEBENGINE)
+		set(PSI_VER_SUFFIX ", webkit")
+	else()
+		set(PSI_VER_SUFFIX ", webengine")
+	endif()
 endif()
-if(NOT PSI_PLUS_VERSION)
-	set(PSI_PLUS_VERSION "${APP_VERSION}-dev" CACHE STRING "Version string of Psi")
+if(ENABLE_SQL)
+	set( PSI_VER_SUFFIX "${PSI_VER_SUFFIX}, sql" )
 endif()
-add_definitions(-DPSI_VERSION="${PSI_PLUS_VERSION}${PSI_VER_SUFFIX} \(${PSI_COMPILATION_DATE}\)")
+
+if( NOT IS_PSIPLUS )
+	set(CLIENT_NAME "Psi")
+else()
+	set(CLIENT_NAME "Psi+")
+endif()
+
+if(NOT PSI_VERSION)
+	if( PSIPLUS_VERSION_OBTAINED )
+		set(PSI_VERSION "${APP_VERSION} \(${PSI_COMPILATION_DATE}, Psi:${PSI_REVISION}, Psi+:${PSI_PLUS_REVISION}${PSI_VER_SUFFIX}\)")
+	elseif( PSI_VERSION_OBTAINED OR APP_VERSION )
+		set(PSI_VERSION "${APP_VERSION}-dev \(${PSI_COMPILATION_DATE}${PSI_VER_SUFFIX}\)")
+	endif()
+endif()
+
+message(STATUS "${CLIENT_NAME} version set: ${PSI_VERSION}")
 
 if(LINUX)
 	if(LIB_INSTALL_DIR)
@@ -200,13 +228,13 @@ configure_file(config.h.in config.h @ONLY)
 add_definitions(
 	-DQT_STATICPLUGIN
 	-DHAVE_CONFIG
-	)
+)
 
 if(WIN32)
 	add_definitions(
 		-DUNICODE
 		-D_UNICODE
-		)
+	)
 endif()
 
 include(src.cmake)
@@ -240,61 +268,68 @@ if(USE_WEBENGINE)
 	)
 endif()
 
-
-if(EXISTS "${PROJECT_SOURCE_DIR}/translations")
-	set(LANGS_EXISTS ON)
+if(EXISTS "${TRANSLATIONS_DIR}")
 	set(TRANSLATIONS
-		../translations/psi_be.ts
-		../translations/psi_bg.ts
-		../translations/psi_ca.ts
-		../translations/psi_cs.ts
-		../translations/psi_de.ts
-		../translations/psi_en.ts
-		../translations/psi_eo.ts
-		../translations/psi_es.ts
-		../translations/psi_et.ts
-		../translations/psi_fa.ts
-		../translations/psi_fi.ts
-		../translations/psi_fr.ts
-		../translations/psi_he.ts
-		../translations/psi_hu.ts
-		../translations/psi_it.ts
-		../translations/psi_ja.ts
-		../translations/psi_kk.ts
-		../translations/psi_mk.ts
-		../translations/psi_nl.ts
-		../translations/psi_pl.ts
-		../translations/psi_pt_BR.ts
-		../translations/psi_pt.ts
-		../translations/psi_ru.ts
-		../translations/psi_sk.ts
-		../translations/psi_sl.ts
-		../translations/psi_sr@latin.ts
-		../translations/psi_sv.ts
-		../translations/psi_sw.ts
-		../translations/psi_uk.ts
-		../translations/psi_ur_PK.ts
-		../translations/psi_vi.ts
-		../translations/psi_zh_CN.ts
-		../translations/psi_zh_TW.ts
-		)
+		${TRANSLATIONS_DIR}/psi_be.ts
+		${TRANSLATIONS_DIR}/psi_bg.ts
+		${TRANSLATIONS_DIR}/psi_ca.ts
+		${TRANSLATIONS_DIR}/psi_cs.ts
+		${TRANSLATIONS_DIR}/psi_de.ts
+		${TRANSLATIONS_DIR}/psi_en.ts
+		${TRANSLATIONS_DIR}/psi_eo.ts
+		${TRANSLATIONS_DIR}/psi_es.ts
+		${TRANSLATIONS_DIR}/psi_et.ts
+		${TRANSLATIONS_DIR}/psi_fa.ts
+		${TRANSLATIONS_DIR}/psi_fi.ts
+		${TRANSLATIONS_DIR}/psi_fr.ts
+		${TRANSLATIONS_DIR}/psi_he.ts
+		${TRANSLATIONS_DIR}/psi_hu.ts
+		${TRANSLATIONS_DIR}/psi_it.ts
+		${TRANSLATIONS_DIR}/psi_ja.ts
+		${TRANSLATIONS_DIR}/psi_kk.ts
+		${TRANSLATIONS_DIR}/psi_mk.ts
+		${TRANSLATIONS_DIR}/psi_nl.ts
+		${TRANSLATIONS_DIR}/psi_pl.ts
+		${TRANSLATIONS_DIR}/psi_pt_BR.ts
+		${TRANSLATIONS_DIR}/psi_pt.ts
+		${TRANSLATIONS_DIR}/psi_ru.ts
+		${TRANSLATIONS_DIR}/psi_sk.ts
+		${TRANSLATIONS_DIR}/psi_sl.ts
+		${TRANSLATIONS_DIR}/psi_sr@latin.ts
+		${TRANSLATIONS_DIR}/psi_sv.ts
+		${TRANSLATIONS_DIR}/psi_sw.ts
+		${TRANSLATIONS_DIR}/psi_uk.ts
+		${TRANSLATIONS_DIR}/psi_ur_PK.ts
+		${TRANSLATIONS_DIR}/psi_vi.ts
+		${TRANSLATIONS_DIR}/psi_zh_CN.ts
+		${TRANSLATIONS_DIR}/psi_zh_TW.ts
+	)
 
-	set_property(SOURCE ${TRANSLATIONS} PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations)
+	set_property(SOURCE ${TRANSLATIONS}
+		PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations)
 
 	add_custom_target(lupdate)
 	foreach(_LANG ${TRANSLATIONS})
-		get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
-		string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
-		add_custom_target(${_SHORT_LANG}
-			COMMAND ${QT_LUPDATE_EXECUTABLE} "-no-obsolete" "-recursive" "." "../iris" "-ts" ${_LANG}
-			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" VERBATIM)
-		add_dependencies(lupdate ${_SHORT_LANG})
+		if(EXISTS "${_LANG}")
+			get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
+			string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
+			add_custom_target(${_SHORT_LANG}
+				COMMAND ${QT_LUPDATE_EXECUTABLE}
+				ARGS -no-obsolete -recursive . ../iris -ts ${_LANG}
+				WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+				VERBATIM
+			)
+			add_dependencies(lupdate ${_SHORT_LANG})
+		endif()
 	endforeach()
 
 	QT4_ADD_TRANSLATION(QM ${TRANSLATIONS})
 endif()
 
-set(RESOURCES ../psi.qrc ../iconsets.qrc)
+set(RESOURCES
+	${PROJECT_SOURCE_DIR}/psi.qrc
+	${PROJECT_SOURCE_DIR}/iconsets.qrc
+)
 qt4_add_resources(QRC_SOURCES ${RESOURCES})
 
 qt4_wrap_ui(UI_FORMS ${FORMS})
@@ -303,27 +338,33 @@ add_custom_target(build_ui_files DEPENDS "${UI_FORMS}" SOURCES "${FORMS}")
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 
 if(WIN32)
-	# resource compilation for MinGW
-	if(NOT MSVC)
-		if(BUILD_ARCH STREQUAL "i386")
-			add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o
-				COMMAND ${CMAKE_RC_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_SOURCE_DIR}/win32/psi_win32.rc
-				-o ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
-		else()
-			add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o
-				COMMAND ${CMAKE_RC_COMPILER} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_SOURCE_DIR}/win32/psi_win64.rc
-				-o ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
-		endif()
+	# win resource compilation
+	if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
+		set(RC_SUFFIX "32")
 	else()
-		if(BUILD_ARCH STREQUAL "win32")
-			add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o
-				COMMAND ${CMAKE_RC_COMPILER} /fo ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o ${CMAKE_SOURCE_DIR}/win32/psi_win32.rc)
-		else()
-			add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o
-				COMMAND ${CMAKE_RC_COMPILER} /fo ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o ${CMAKE_SOURCE_DIR}/win32/psi_win64.rc)
-		endif()
+		set(RC_SUFFIX "64")
 	endif()
+	set(WINRC_FILE_NAME ${PROJECT_SOURCE_DIR}/win32/psi_win${RC_SUFFIX}.rc)
 	set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
+	if(NOT MSVC)
+		set(CMD_ARG
+			--include=${CMAKE_CURRENT_SOURCE_DIR}
+			--input=${WINRC_FILE_NAME}
+			--output=${RC_FILE}
+		)
+	else()
+		set(CMD_ARG
+			/fo
+			${RC_FILE}
+			${WINRC_FILE_NAME}
+		)
+	endif()
+	add_custom_command(OUTPUT ${RC_FILE}
+			COMMAND ${CMAKE_RC_COMPILER}
+			ARGS ${CMD_ARG}
+			WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
+			VERBATIM
+	)
 endif()
 
 add_executable(${PROJECT_NAME}
@@ -338,7 +379,31 @@ add_executable(${PROJECT_NAME}
 	${QRC_SOURCES}
 	${QM}
 	${RC_FILE}
+)
+
+#Experimental feature
+if(VERBOSE_PROGRAM_NAME)
+	if(ENABLE_WEBKIT AND (NOT USE_WEBENGINE))
+		set(VERBOSE_SUFFIX "-webkit")
+	elseif(USE_WEBENGINE)
+		set(VERBOSE_SUFFIX "-webengine")
+	endif()
+	if(ENABLE_SQL)
+		set(VERBOSE_SUFFIX "${VERBOSE_SUFFIX}-sql")
+	endif()
+endif()
+#
+
+if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
+	if(ENABLE_PORTABLE)
+		set(PORTABLE_SUFFIX "-portable")
+	endif()
+	set_target_properties(${PROJECT_NAME}
+				PROPERTIES
+				OUTPUT_NAME
+				"${PROJECT_NAME}${VERBOSE_SUFFIX}${PORTABLE_SUFFIX}"
 	)
+endif()
 
 if(USE_WEBENGINE)
 	set(STANDARD_NUM 14)
@@ -361,8 +426,8 @@ target_link_libraries(${PROJECT_NAME}
 	${X11_LIBRARIES}
 	${EXTRA_LIBS}
 	iris
-	${qca_LIB}
-	)
+	${Qca_LIBRARY}
+)
 target_link_libraries(${PROJECT_NAME}
 	options
 	Certificates
@@ -378,35 +443,41 @@ target_link_libraries(${PROJECT_NAME}
 	privacy
 	tabs
 	AutoUpdater
-	)
+)
 
 set(OTHER_FILES
-	../certs
-	../iconsets
-	../sound
-	)
-#INSTALL SECTION
+	${PROJECT_SOURCE_DIR}/certs
+	${PROJECT_SOURCE_DIR}/iconsets
+	${PROJECT_SOURCE_DIR}/sound
+)
+#PREPARE SECTION
+copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
 copy("${PROJECT_SOURCE_DIR}/iconsets/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconsets/" prepare-bin)
-copy("${PROJECT_SOURCE_DIR}/themes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/themes/" prepare-bin)
+if(ENABLE_WEBKIT)
+	copy("${PROJECT_SOURCE_DIR}/themes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/themes/" prepare-bin)
+endif()
 copy("${PROJECT_SOURCE_DIR}/sound/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sound/" prepare-bin)
-copy("${PROJECT_SOURCE_DIR}/skins/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/skins/" prepare-bin)
+if(ENABLE_PLUGINS)
+	copy("${PROJECT_SOURCE_DIR}/skins/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/skins/" prepare-bin)
+endif()
 copy("${PROJECT_SOURCE_DIR}/client_icons.txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin)
 
+#INSTALL SECTION
 if(LINUX)
 	if(IS_PSIPLUS)
 		set(SHARE_SUFF "share/psi-plus")
-		install(FILES ../psi.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications RENAME psi-plus.desktop)
-		install(FILES ../iconsets/system/default/psiplus/logo_128.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pixmaps RENAME psi-plus.png)
+		install(FILES ${PROJECT_SOURCE_DIR}/psi.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications RENAME psi-plus.desktop)
+		install(FILES ${PROJECT_SOURCE_DIR}/iconsets/system/default/psiplus/logo_128.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pixmaps RENAME psi-plus.png)
 	else()
 		set(SHARE_SUFF "share/psi")
-		install(FILES ../psi.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
-		install(FILES ../iconsets/system/default/logo_128.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pixmaps RENAME psi.png)
+		install(FILES ${PROJECT_SOURCE_DIR}/psi.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+		install(FILES ${PROJECT_SOURCE_DIR}/iconsets/system/default/logo_128.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pixmaps RENAME psi.png)
 	endif()
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-	install(FILES ../client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
+	install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
 	install(DIRECTORY ${OTHER_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
 	if(ENABLE_WEBKIT)
-		install(DIRECTORY ../themes DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
+		install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
 	endif()
 	if(LANGS_EXISTS)
 		install(FILES ${QM} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF}/translations)
@@ -415,10 +486,10 @@ endif()
 
 if(WIN32)
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
-	install(FILES ../client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX})
+	install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX})
 	install(DIRECTORY ${OTHER_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
 	if(ENABLE_WEBKIT)
-		install(DIRECTORY ../themes DESTINATION ${CMAKE_INSTALL_PREFIX})
+		install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION ${CMAKE_INSTALL_PREFIX})
 	endif()
 	if(LANGS_EXISTS)
 		install(FILES ${QM} DESTINATION ${CMAKE_INSTALL_PREFIX}/translations)

@@ -9,7 +9,7 @@ unset(UI_FORMS)
 include_directories(
 	${PROJECT_SOURCE_DIR}/iris/include/iris
 	${PROJECT_SOURCE_DIR}/iris/src
-	)
+)
 
 add_definitions(-DDEBUG_POSTFIX="")
 
@@ -18,21 +18,21 @@ set(HEADERS
 	jinglertp.h
 	avcall.h
 	calldlg.h
-	)
+)
 
 set(SOURCES
 	jinglertp.cpp
 	avcall.cpp
 	calldlg.cpp
-	)
+)
 
 set(PLAIN_SOURCES
 	jinglertptasks.cpp
-	)
+)
 
 set(FORMS
 	call.ui
-	)
+)
 
 qt4_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})

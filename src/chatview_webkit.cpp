@@ -205,13 +205,9 @@ public slots:
 			case QFont::Black: weight = "900"; break;
 		}
 
-		// In typography 1 point (also called PostScript point)
-		// is 1/72 of an inch
-		const float postScriptPoint = 1 / 72.;
-
 		// Workaround.  WebKit works only with 96dpi
 		// Need to convert point size to pixel size
-		int pixelSize = qRound(f.pointSize() * qApp->desktop()->logicalDpiX() * postScriptPoint);
+		int pixelSize = pointToPixel(f.pointSize());
 
 		return QString("{fontFamily:'%1',fontSize:'%2px',fontStyle:'%3',fontVariant:'%4',fontWeight:'%5'}")
 						 .arg(f.family())
@@ -253,8 +249,12 @@ public slots:
 
 	void getUrlHeaders(const QString &tId, const QString url)
 	{
-		//qDebug() << "getUrlHeaders: tId=" << tId << " url=" << url;
- 		auto reply = _view->d->account_->psi()->networkAccessManager()->head(QNetworkRequest(QUrl::fromEncoded(url.toLatin1())));
+		QNetworkRequest req(QUrl::fromEncoded(url.toLatin1()));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+		req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+		req.setMaximumRedirectsAllowed(2);
+#endif
+ 		auto reply = _view->d->account_->psi()->networkAccessManager()->head(req);
 		reply->setProperty("tranId", tId);
 		connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
 	}
@@ -268,7 +268,16 @@ private slots:
 		msg.insert("id", reply->property("tranId").toString());
 
 		for (auto &p : reply->rawHeaderPairs()) {
-			headers.insert(QString(p.first).toLower(), QString(p.second));
+			QString key(QString(p.first).toLower());
+			QString value;
+			if (key == QLatin1String("content-type")) {
+				// workaround for qt bug #61300 which put headers from origial request and redirect request in one hash
+				// other headers most likely are invalid too, but this one is important for us.
+				value = QString::fromLatin1(p.second).section(',', -1).trimmed();
+			} else {
+				value = QString::fromLatin1(p.second);
+			}
+			headers.insert(key, value);
 		}
 		msg.insert("value", headers);
 		msg.insert("type", "tranend");
@@ -377,6 +386,14 @@ ChatView::ChatView(QWidget *parent) :
 
 ChatView::~ChatView()
 {
+#ifdef WEBENGINE
+	// next two lines is a workaround to some Qt(?) bug very similar to
+	// QTBUG-48014 and bunch of others (deletes QWidget twice).
+	// The bug was last time reproduced with Qt-5.9. algo is pretty simple:
+	// Connect to any conference and quit Psi.
+	d->webView->setParent(0);
+	d->webView->deleteLater();
+#endif
 }
 
 // something after we know isMuc and dialog is set. kind of final step
@@ -635,7 +652,9 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
 		}
     });
 	return false;
+#ifdef __GNUC__
 #warning "TODO: make search asynchronous in all cases"
+#endif
 #else
 	bool found = d->webView->page()->findText(str, startFromBeginning ?
 				 QWebPage::FindWrapsAroundDocument : (QWebPage::FindFlag)0);

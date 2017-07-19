@@ -153,6 +153,7 @@ void x11wmClass(Display *dsp, WId wid, QString resName);
 #define X11WM_CLASS(x)	/* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
+int devicePixelRatio(QWidget *);
 
 // -----------------------------------------------------------------------------
 // History utilities
@@ -174,7 +175,7 @@ QString decodePassword(const QString &, const QString &);
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 
 bool fileCopy(const QString &src, const QString &dest);
-
+int pointToPixel(int points);
 
 // used in option migration
 QString soundDetectPlayer();

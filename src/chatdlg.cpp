@@ -391,7 +391,7 @@ void ChatDlg::setJid(const Jid &j)
 	}
 }
 
-const QString& ChatDlg::getDisplayName()
+const QString& ChatDlg::getDisplayName() const
 {
 	return dispNick_;
 }

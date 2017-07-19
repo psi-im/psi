@@ -410,13 +410,13 @@ bool PsiCon::init()
 	d->updatedAccountTimer_->setInterval(1000);
 	connect(d->updatedAccountTimer_, SIGNAL(timeout()), SLOT(saveAccounts()));
 
-	// do some backuping in case we are about to start migration from config.xml+options.xml
-	// to options.xml only.
-	QString backupfile = optionsFile() + "-preOptionsMigration";
-	if (QFile::exists(pathToProfileConfig(activeProfile))
-		&& PsiOptions::exists(optionsFile())
-		&& !QFile::exists(backupfile)) {
-		QFile::copy(optionsFile(), backupfile);
+
+	QString oldConfig = pathToProfileConfig(activeProfile);
+	if(QFile::exists(oldConfig)) {
+		QMessageBox::warning(d->mainwin, tr("Migration is impossible"),
+		                     tr("Found no more supported configuration file from some very old version:\n%1\n\n"
+		                        "Migration is possible with Psi-0.15")
+		                     .arg(oldConfig));
 	}
 
 	// advanced widget
@@ -441,9 +441,6 @@ bool PsiCon::init()
 			qWarning("ERROR: Failed to new profile default options");
 		}
 	}
-
-	// load the old profile
-	d->optionsMigration.fromFile(pathToProfileConfig(activeProfile));
 
 	//load the new profile
 	options->load(optionsFile());
@@ -507,6 +504,10 @@ bool PsiCon::init()
 
 	d->iconSelect = new IconSelectPopup(0);
 	connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
+
+	const QString css = options->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty())
+		d->iconSelect->setStyleSheet(css);
 
 	// first thing, try to load the iconset
 	bool result = true;;
@@ -1400,6 +1401,13 @@ void PsiCon::optionChanged(const QString& option)
 	// update s5b
 	if (option == "options.p2p.bytestreams.listen-port") {
 		s5b_init();
+	}
+
+	if (option == "options.ui.chat.css") {
+		QString css = PsiOptions::instance()->getOption(option).toString();
+		if (!css.isEmpty())
+			d->iconSelect->setStyleSheet(css);
+		return;
 	}
 
 	if (option == "options.ui.spell-check.langs") {

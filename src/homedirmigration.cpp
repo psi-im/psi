@@ -1,6 +1,6 @@
 /*
  * homedirmigration.cpp
- * Copyright (C) 2011  Romanov Ivan <drizt@land.ru>
+ * Copyright (C) 2011  Ivan Romanov <drizt@land.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

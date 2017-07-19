@@ -687,7 +687,6 @@ void ContactListDragView::removeSelection()
 		if (!contact->isPrivate() && contact->inList()) {
 			contactNames << QString("<b>%1</b>").arg(TextUtil::escape(name));
 		}
-		contacts << contact;
 	}
 
 	bool doRemove = true;
@@ -703,9 +702,10 @@ void ContactListDragView::removeSelection()
 		doRemove = static_cast<QMessageBox::StandardButton>(box.exec()) == QMessageBox::StandardButton::Yes;
 	}
 
-	if (doRemove)
+	if (doRemove) {
 		for (PsiContact *contact: contacts) {
 			contact->remove();
+		}
 	}
 }
 

@@ -47,7 +47,7 @@ public:
 	const QIcon &icon() const;
 
 	virtual Jid jid() const;
-	virtual const QString & getDisplayName();
+	virtual const QString & getDisplayName() const;
 
 	virtual bool readyToHide();
 	TabDlg* getManagingTabDlg();

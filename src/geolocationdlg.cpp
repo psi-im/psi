@@ -1,6 +1,6 @@
 /*
  * geolocationdlg.cpp
- * Copyright (C) 2009  Khryukin Evgeny
+ * Copyright (C) 2009  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

@@ -21,6 +21,7 @@ class PsiChatDlg : public ChatDlg
 	Q_OBJECT
 public:
 	PsiChatDlg(const Jid& jid, PsiAccount* account, TabManager* tabManager);
+	~PsiChatDlg();
 
 protected:
 	// reimplemented

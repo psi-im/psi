@@ -22,6 +22,7 @@
 
 #include <QCoreApplication>
 #include <QPluginLoader>
+#include <QMetaMethod>
 
 #ifdef QT_GUI_LIB
 #include <QPainter>
@@ -870,6 +871,37 @@ void RtpChannel::write(const RtpPacket &rtp)
 	}
 }
 
+#ifdef HAVE_QT5
+void RtpChannel::connectNotify(const QMetaMethod &signal)
+{
+	int oldtotal = d->readyReadListeners;
+
+	if(signal == QMetaMethod::fromSignal(&RtpChannel::readyRead))
+		++d->readyReadListeners;
+
+	int total = d->readyReadListeners;
+	if(d->c && oldtotal == 0 && total > 0)
+	{
+		d->enabled = true;
+		d->c->setEnabled(true);
+	}
+}
+
+void RtpChannel::disconnectNotify(const QMetaMethod &signal)
+{
+	int oldtotal = d->readyReadListeners;
+
+	if(signal == QMetaMethod::fromSignal(&RtpChannel::readyRead))
+		--d->readyReadListeners;
+
+	int total = d->readyReadListeners;
+	if(d->c && oldtotal > 0 && total == 0)
+	{
+		d->enabled = false;
+		d->c->setEnabled(false);
+	}
+}
+#else
 void RtpChannel::connectNotify(const char *signal)
 {
 	int oldtotal = d->readyReadListeners;
@@ -899,7 +931,7 @@ void RtpChannel::disconnectNotify(const char *signal)
 		d->c->setEnabled(false);
 	}
 }
-
+#endif
 //----------------------------------------------------------------------------
 // PayloadInfo
 //----------------------------------------------------------------------------

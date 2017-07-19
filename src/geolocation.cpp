@@ -308,7 +308,7 @@ bool GeoLocation::operator==(const GeoLocation& o) const
 	equal = equal && (alt_.hasValue() ? alt_.value() == o.alt().value() : !o.alt().hasValue());
 	equal = equal && (bearing_.hasValue() ? bearing_.value() == o.bearing().value() : !o.bearing().hasValue());
 	equal = equal && (error_.hasValue() ? error_.value() == o.error().value() : !o.error().hasValue());
-	equal == equal && country() == o.country() && region() == o.region() && locality() == o.locality()
+	equal = equal && country() == o.country() && region() == o.region() && locality() == o.locality()
 			&& area() == o.area() && street() == o.street() && datum() == o.datum() && building() == o.building()
 			&& floor() == o.floor() && room() == o.room() && postalcode() == o.postalcode() && text() == o.text()
 			&& description() == o.description();

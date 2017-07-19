@@ -34,17 +34,30 @@ set ( LIBINCS
 	qca.h
 )
 
+if(NOT Qca_SUFFIX)
+	set(Qca_SUFFIX "")
+endif()
+
+if("${Qca_SUFFIX}" STREQUAL "-qt5")
+	set(EXTRA_PATH_SUFFIXES
+		qt5/Qca-qt5/QtCrypto
+		Qca-qt5/QtCrypto
+		qt5/QtCrypto
+	)
+endif()
+
 find_path(
 	Qca_INCLUDE_DIR ${LIBINCS}
 	HINTS
 	${QCA_DIR}/include
 	PATH_SUFFIXES
 	QtCrypto
+	${EXTRA_PATH_SUFFIXES}
 )
 
 find_library(
 	Qca_LIBRARY
-	NAMES qca
+	NAMES qca${Qca_SUFFIX}
 	HINTS 
 	${QCA_DIR}/lib
 	${QCA_DIR}/bin

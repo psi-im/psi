@@ -19,6 +19,7 @@
  */
 
 #include "urlobject.h"
+#include "psioptions.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -231,6 +232,7 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 	}
 
 	m->addAction(d->act_copy);
+	m->setStyleSheet(PsiOptions::instance()->getOption("options.ui.look.css").toString());
 	return m;
 }
 

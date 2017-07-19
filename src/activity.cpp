@@ -87,11 +87,11 @@ QDomElement Activity::toXml(QDomDocument& doc)
 	QDomElement activity = doc.createElement(PEP_ACTIVITY_TN);
 	activity.setAttribute("xmlns", PEP_ACTIVITY_NS);
 
-	if (!type() == Unknown) {
+	if (type() != Unknown) {
 		ActivityCatalog* ac = ActivityCatalog::instance();
 		QDomElement el = doc.createElement(ac->findEntryByType(type()).value());
 
-		if (!specificType() == UnknownSpecific) {
+		if (specificType() != UnknownSpecific) {
 			QDomElement elChild = doc.createElement(ac->findEntryByType(specificType()).value());
 			el.appendChild(elChild);
 		}

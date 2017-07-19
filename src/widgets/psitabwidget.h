@@ -67,6 +67,7 @@ public:
 public slots:
 	void setCurrentPage(int);
 	void removeCurrentPage();
+	void setLooks();
 
 signals:
 	void mouseDoubleClickTab(QWidget *tab);

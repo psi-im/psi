@@ -17,6 +17,7 @@ class CocoaInitializer::Private
 
 CocoaInitializer::CocoaInitializer()
 {
+	Q_UNUSED(d)
 #if 0
 	d = new CocoaInitializer::Private();
 	NSApplicationLoad();

@@ -196,6 +196,7 @@ class GCMainDlg::Private : public QObject, public MCmdProviderIface
 	Q_OBJECT
 public:
 	enum { Connecting, Connected, Idle, ForcedLeave };
+	enum { TitleBM, TitleDisco, TitleVCard, TitleJid, TitleNone };
 	Private(GCMainDlg *d) : mCmdManager(&mCmdSite), tabCompletion(this) {
 		dlg = d;
 		nickSeparator = ":";
@@ -214,8 +215,10 @@ public:
 
 	GCMainDlg *dlg;
 	int state;
+	int mucNameSource;
 	MUCManager *mucManager;
 	QString self, prev_self;
+	QString mucName, discoMucName, vcardMucName;
 	QString password;
 	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
@@ -661,6 +664,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this);
 	d->self = d->prev_self = j.resource();
+	d->mucNameSource = Private::TitleNone;
 	account()->dialogRegister(this, jid());
 	connect(account(), SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	d->mucManager = new MUCManager(account(), jid());
@@ -712,8 +716,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	ui_.lv_users->setMainDlg(this);
 #ifdef _MSC_VER
-#pragma NOTE("FIXME: In Qt5 setSupportedDragActions is obsoleted.")
-#pragma NOTE("QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView.")
+#pragma message ("FIXME: In Qt5 setSupportedDragActions is obsoleted.")
+#pragma message ("QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView.")
 #else
 #warning "FIXME: In Qt5 setSupportedDragActions is obsoleted."
 #warning "QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView."
@@ -799,6 +803,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	}
 	connect(bm, SIGNAL(availabilityChanged()), SLOT(updateBookmarkIcon()));
 	connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateBookmarkIcon()));
+	connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateMucName()));
 	connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
 
 	int s = PsiIconset::instance()->system().iconSize();
@@ -872,7 +877,12 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
 	connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
 
+	updateMucName();
 	updateGCVCard();
+	JT_DiscoInfo* disco = new JT_DiscoInfo(account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
+	connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished()));     // but we need this just for name for now.
+	disco->get(jid());                                             // From other side we could provide the name outside.
+	disco->go(true);
 	VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), this, SLOT(updateGCVCard()), true);
 
 	setLooks();
@@ -1085,10 +1095,51 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 	appendSysMsg(err, false);
 }
 
+void GCMainDlg::updateMucName()
+{
+	QString newName = account()->bookmarkManager()->conferenceName(jid());
+	d->mucNameSource = Private::TitleBM;
+	if (newName.isEmpty()) {
+		newName = d->discoMucName;
+		d->mucNameSource = Private::TitleDisco;
+	}
+	if (newName.isEmpty()) {
+		newName = d->vcardMucName;
+		d->mucNameSource = Private::TitleVCard;
+	}
+	if (newName.isEmpty()) {
+		newName = jid().node();
+		d->mucNameSource = Private::TitleJid;
+	}
+	if (newName != d->mucName) {
+		d->mucName = newName;
+		invalidateTab();
+	}
+}
+
+void GCMainDlg::discoInfoFinished()
+{
+	JT_DiscoInfo *t = static_cast<JT_DiscoInfo *>(sender());
+	const DiscoItem::Identities& i = t->item().identities();
+	if (i.count() > 0) {
+		d->discoMucName = i.first().name;
+	}
+	if (d->mucNameSource >= Private::TitleDisco) {
+		updateMucName();
+	}
+}
+
 void GCMainDlg::updateGCVCard()
 {
 	const VCard vcard = VCardFactory::instance()->vcard(jid());
 	if (vcard) {
+		d->vcardMucName = vcard.nickName();
+		if (d->vcardMucName.isEmpty()) {
+			d->vcardMucName = vcard.fullName();
+		}
+		if (d->mucNameSource >= Private::TitleVCard) {
+			updateMucName();
+		}
 		QImage avatar = QImage::fromData(vcard.photo());
 		if (!avatar.isNull()) {
 			ui_.lblAvatar->show();
@@ -1261,7 +1312,7 @@ void GCMainDlg::doBookmark()
 	QList<ConferenceBookmark> confs =  bm->conferences();
 	int confInd = bm->indexOfConference(jid());
 	if (confInd < 0) { // not found
-		ConferenceBookmark conf(jid().bare(), jid(), ConferenceBookmark::Never, nick(), d->password);
+		ConferenceBookmark conf(getDisplayName(), jid(), ConferenceBookmark::Never, nick(), d->password);
 		confs.push_back(conf);
 		bm->setBookmarks(confs);
 		return;
@@ -1964,6 +2015,11 @@ void GCMainDlg::doAlert()
 			doFlash(true);
 }
 
+const QString &GCMainDlg::getDisplayName() const
+{
+	return d->mucName;
+}
+
 QString GCMainDlg::desiredCaption() const
 {
 	QString cap = "";
@@ -1974,13 +2030,18 @@ QString GCMainDlg::desiredCaption() const
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
-	cap += jid().full();
+	cap += getDisplayName();
 
 	return cap;
 }
 
 void GCMainDlg::setLooks()
 {
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+		d->mle()->setCssString(css);
+	}
 	ui_.vsplitter->optionsChanged();
 	ui_.mle->optionsChanged();
 
@@ -2030,7 +2091,8 @@ void GCMainDlg::setToolbuttons()
 #ifdef PSI_PLUGINS
 		if (actionName.endsWith("-plugin")) {
 			QString name = PluginManager::instance()->nameByShortName(actionName.mid(0, actionName.length() - 7));
-			PluginManager::instance()->addGCToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
+			if(!name.isEmpty())
+				PluginManager::instance()->addGCToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
 			continue;
 		}
 #endif

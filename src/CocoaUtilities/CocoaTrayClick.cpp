@@ -1,6 +1,6 @@
 /*
  * CocoaTrayClick
- * Copyright (C) 2012  Khryukin Evgeny
+ * Copyright (C) 2012, 2017  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,16 +19,19 @@
  */
 
 #include "CocoaUtilities/CocoaTrayClick.h"
-#include <objc/runtime.h>
-#include <QApplication>
-#include <QDebug>
-#ifdef HAVE_QT5
-#include <AppKit/NSApplication.h>
-#endif
 
-void dockClickHandler(id /*self*/, SEL /*_cmd*/)
+#include <objc/runtime.h>
+#include <objc/message.h>
+#include <QApplication>
+
+#include <QDebug>
+
+//#define DEBUG_OUTPUT
+
+bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
 {
 	CocoaTrayClick::instance()->emitTrayClicked();
+	return true;
 }
 
 
@@ -43,9 +46,34 @@ CocoaTrayClick * CocoaTrayClick::instance()
 CocoaTrayClick::CocoaTrayClick()
 	: QObject(qApp)
 {
-	Class cls = [[[NSApplication sharedApplication] delegate] class];
-	if (!class_addMethod(cls, @selector(applicationShouldHandleReopen:hasVisibleWindows:), (IMP) dockClickHandler, "v@:"))
-		qDebug() << "CocoaTrayClick::Private : class_addMethod failed!";
+	Class cls = objc_getClass("NSApplication");
+	objc_object *appInst = objc_msgSend((objc_object*)cls, sel_registerName("sharedApplication"));
+
+	if(appInst != NULL) {
+		objc_object* delegate = objc_msgSend(appInst, sel_registerName("delegate"));
+		Class delClass = (Class)objc_msgSend(delegate,  sel_registerName("class"));
+		SEL shouldHandle = sel_registerName("applicationShouldHandleReopen:hasVisibleWindows:");
+		if (class_getInstanceMethod(delClass, shouldHandle)) {
+			if (class_replaceMethod(delClass, shouldHandle, (IMP)dockClickHandler, "B@:")) {
+#ifdef DEBUG_OUTPUT
+				qDebug() << "Registered dock click handler (replaced original method)";
+#endif
+			}
+			else {
+				qWarning() << "Failed to replace method for dock click handler";
+			}
+		}
+		else {
+			if (class_addMethod(delClass, shouldHandle, (IMP)dockClickHandler,"B@:")) {
+#ifdef DEBUG_OUTPUT
+				qDebug() << "Registered dock click handler";
+#endif
+			}
+			else {
+				qWarning() << "Failed to register dock click handler";
+			}
+		}
+	}
 }
 
 CocoaTrayClick::~CocoaTrayClick()

@@ -9,6 +9,8 @@ function initPsiTheme() {
     var nextServerTransaction = 0;
     var serverTransctions = {};
     var uniqReplId = Number(0);
+    var previewsEnabled = true;
+    var optionChangeHandlers = {}
 
     var chat =  {
         async : async,
@@ -91,6 +93,15 @@ function initPsiTheme() {
             colorOption : function(option, cb) { chat.util._remoteCallEval(server.colorOption, [option], cb); },
             getFont : function(cb) { chat.util._remoteCallEval(session.getFont, [], cb); },
             getPaletteColor : function(name, cb) { chat.util._remoteCall(session.getPaletteColor, [name], cb); },
+            connectOptionChange: function(option, cb) {
+                if (typeof optionChangeHandlers[option] == 'undefined') {
+                    optionChangeHandlers[option] = {value: undefined, handlers:[]};
+                }
+                optionChangeHandlers[option].handlers.push(cb);
+            },
+            rereadOptions: function() {
+                onOptionsChanged(Object.getOwnPropertyNames(optionChangeHandlers));
+            },
 
             // replaces <icon name="icon_name" text="icon_text" />
             // with <img src="/psiicon/icon_name" title="icon_text" />
@@ -214,7 +225,8 @@ function initPsiTheme() {
 
             handleLinks : function(el)
             {
-                //var links = el.getElementsByTagName("a");
+                if (!previewsEnabled)
+                    return;
                 var links = el.querySelectorAll("a");
                 var youtube = ["youtu.be", "www.youtube.com", "m.youtube.com"];
                 for (var li = 0; li < links.length; li++) {
@@ -522,8 +534,33 @@ function initPsiTheme() {
         }
     }
 
+    function onOptionsChanged(changed)
+    {
+        var options = [];
+        for (var i = 0; i < changed.length; i++) {
+            if (optionChangeHandlers.hasOwnProperty(changed[i])) {
+                options.push(changed[i]);
+            }
+        }
+        chat.util._remoteCallEval(server.psiOptions, [options], function(values) {
+            for (var i=0; i < options.length; i++) {
+                var optDesc = optionChangeHandlers[options[i]];
+                var newValue = values[i];
+                if (optDesc && optDesc.value !== newValue) {
+                    //server.console("Value of " + options[i] + " is changed to " + values[i]);
+                    optDesc.value = newValue;
+                    for (var j=0; j < optDesc.handlers.length; j++) {
+                        optDesc.handlers[j](newValue);
+                    }
+                }
+            }
+        });
+    }
+
     try {
         chat.adapter = window.psiThemeAdapter(chat);
+        server.optionsChanged.connect(onOptionsChanged)
+        chat.util.connectOptionChange("options.ui.chat.show-previews", function(value){ previewsEnabled = value; })
     } catch(e) {
         server.console("Failed to initialize adapter:" + e + "(Line:" + e.line + ")");
         chat.adapter = {

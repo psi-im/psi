@@ -338,6 +338,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	} else
 		setCentralWidget(rosterBar);
 
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+
 	d->vb_roster = new QVBoxLayout(rosterBar);
 	d->rosterWidget_ = new PsiRosterWidget(rosterBar);
 	d->rosterWidget_->setContactList(psi->contactList());
@@ -515,6 +517,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
 		/*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
 		connect(sp_ss, SIGNAL(triggered()), SLOT(avcallConfig()));*/
+	optionChanged("options.ui.contactlist.css");
 
 	reinitAutoHide();
 }
@@ -541,6 +544,19 @@ void MainWin::splitterMoved()
 	QList<int> list = d->splitter->sizes();
 	d->rosterSize = !d->isLeftRoster ? list.last() : list.first();
 	d->tabsSize = d->isLeftRoster ? list.last() : list.first();
+}
+
+void MainWin::optionChanged(const QString& option)
+{
+	if (option == toolbarsStateOptionPath) {
+		loadToolbarsState();
+	}
+	else if (option == "options.ui.contactlist.css") {
+		const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
+		if (!css.isEmpty()) {
+			setStyleSheet(css);
+		}
+	}
 }
 
 void MainWin::registerAction( IconAction* action )
@@ -1530,6 +1546,8 @@ void MainWin::toggleVisible()
 
 void MainWin::setTrayToolTip(const Status& status, bool, bool)
 {
+	Q_UNUSED(status)
+
 	if (!d->tray) {
 		return;
 	}

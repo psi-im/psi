@@ -274,10 +274,6 @@ chat.util.updateObject(adapter, function(chat){
         "part" : "contact_left"
     }
 
-    function psiOption(name) {
-        return eval("[" + server.psiOption(name) + "][0]")
-    }
-
     return {
         generateSessionHtml : function(sessionId, serverSession, basePath) {
 
@@ -304,7 +300,7 @@ chat.util.updateObject(adapter, function(chat){
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
                 var initScripts;
                 if (chat.async) {
-                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
 <script src=\"/psithemes/chatview/util.js\"></script>\n \
 <script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
 <script src=\"/psiglobal/qwebchannel.js\"></script>\n \
@@ -320,7 +316,7 @@ chat.util.updateObject(adapter, function(chat){
     });\n \
 </script>";
                 } else {
-                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
                         <script type=\"text/javascript\"> \
                             window.addEventListener(\"load\", \
                                                       function() { \
@@ -552,6 +548,7 @@ chat.util.updateObject(adapter, function(chat){
                 session.localUserAvatarChanged.connect(printAvatar);
 
                 session.newMessage.connect(chat.receiveObject);
+                chat.util.rereadOptions();
                 session.signalInited();
             }
 

@@ -35,6 +35,10 @@ public:
 	}
 
 	void set(const QList<URLBookmark>& urls, const QList<ConferenceBookmark>& conferences) {
+		// Store it here to take back if necessary
+		urls_ = urls;
+		conferences_ = conferences;
+
 		iq_ = createIQ(doc(), "set", "", id());
 
 		QDomElement prvt = doc()->createElement("query");
@@ -72,7 +76,6 @@ public:
 			return false;
 
 		if(x.attribute("type") == "result") {
-			QStringList mucIgnore = PsiOptions::instance()->getOption("options.muc.bookmarks.ignore-join").toStringList();
 			QDomElement q = queryTag(x);
 			for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement e = n.toElement();
@@ -90,9 +93,6 @@ public:
 						else if (f.tagName() == "conference") {
 							ConferenceBookmark c(f);
 							if (!c.isNull()) {
-								if (mucIgnore.contains(c.jid().bare())) {
-									c.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
-								}
 								conferences_ += c;
 							}
 						}
@@ -186,6 +186,15 @@ int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
 	return -1;
 }
 
+QString BookmarkManager::conferenceName(const Jid &j) const
+{
+	int index = indexOfConference(j);
+	if (index >= 0) {
+		return conferences_[index].name();
+	}
+	return QString();
+}
+
 void BookmarkManager::accountStateChanged()
 {
 	if (!account_->isAvailable()) {
@@ -209,28 +218,9 @@ void BookmarkManager::getBookmarks()
 
 void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls, const QList<ConferenceBookmark>& conferences)
 {
-	urls_ = urls;
-	conferences_ = conferences;
-
-	QStringList localMucs;
-	QList<ConferenceBookmark> remoteMucs;
-	QStringList ignoreMucs;
-
-	foreach (const ConferenceBookmark &cb, conferences) {
-		if (cb.autoJoin() == ConferenceBookmark::OnlyThisComputer) {
-			localMucs.append(cb.jid().withResource(cb.nick()).full());
-		} else {
-			if (cb.autoJoin() == ConferenceBookmark::ExceptThisComputer) {
-				ignoreMucs.append(cb.jid().bare());
-			}
-			remoteMucs.append(cb);
-		}
-	}
-	account_->setLocalMucBookmarks(localMucs);
-	PsiOptions::instance()->setOption("options.muc.bookmarks.ignore-join", ignoreMucs);
 	BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
-	t->set(urls,remoteMucs);
+	t->set(urls,conferences);
 	t->go(true);
 }
 
@@ -252,13 +242,22 @@ void BookmarkManager::getBookmarks_finished()
 		bool conferencesWereChanged = conferences_ != t->conferences();
 		urls_ = t->urls();
 		QStringList localMucs = account_->localMucBookmarks();
-		conferences_ = t->conferences();
-		foreach (const QString &lmuc, localMucs) {
-			Jid j(lmuc);
+		QStringList mucIgnore = account_->ignoreMucBookmarks();
+		QSet<QString> strippedMucs;
+		for (const QString &m: localMucs) {
+			Jid j(m);
 			if (j.isValid()) {
-				conferences_.append(ConferenceBookmark(j.node(), Jid(j.bare()),
-													   ConferenceBookmark::OnlyThisComputer,
-													   j.resource()));
+				strippedMucs.insert(j.bare());
+			}
+		}
+
+		conferences_ = t->conferences();
+		for (auto &muc: conferences_) {
+			if (strippedMucs.contains(muc.jid().bare())) {
+				muc.setAutoJoin(ConferenceBookmark::OnlyThisComputer);
+			}
+			if (mucIgnore.contains(muc.jid().bare())) {
+				muc.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
 			}
 		}
 
@@ -277,6 +276,32 @@ void BookmarkManager::getBookmarks_finished()
 void BookmarkManager::setBookmarks_finished()
 {
 	BookmarkTask* t = static_cast<BookmarkTask*>(sender());
-	Q_UNUSED(t);
-	emit bookmarksSaved();
+	if (t->success()) {
+		bool conferencesWereChanged = conferences_ != t->conferences();
+		bool urlsWereChanged = urls_ != t->urls();
+		conferences_ = t->conferences();
+		urls_ = t->urls();
+
+		QStringList localMucs;
+		QStringList ignoreMucs;
+
+		for (const ConferenceBookmark &cb: conferences_) {
+			if (cb.autoJoin() == ConferenceBookmark::OnlyThisComputer) {
+				localMucs.append(cb.jid().withResource(cb.nick()).full());
+			}
+			if (cb.autoJoin() == ConferenceBookmark::ExceptThisComputer) {
+				ignoreMucs.append(cb.jid().bare());
+			}
+		}
+
+		account_->setLocalMucBookmarks(localMucs);
+		account_->setIgnoreMucBookmarks(ignoreMucs);
+
+		if (urlsWereChanged)
+			emit urlsChanged(urls_);
+		if (conferencesWereChanged)
+			emit conferencesChanged(conferences_);
+
+		emit bookmarksSaved();
+	}
 }

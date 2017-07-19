@@ -37,6 +37,7 @@ ContactListItem::ContactListItem(ContactListModel *model, Type type, SpecialGrou
 	, _type(type)
 	, _specialGroupType(specialGropType)
 	, _editing(false)
+	, _selfValid(true)
 	, _contact(nullptr)
 	, _account(nullptr)
 	, _expanded(true)
@@ -76,6 +77,11 @@ ContactListItem::ContactListItem(ContactListModel *model, Type type, SpecialGrou
 	default:
 		break;
 	}
+}
+
+ContactListItem::~ContactListItem()
+{
+	_selfValid = false; // just for a check for already freed but still mapped memory. though does not give any guarantee
 }
 
 ContactListModel *ContactListItem::model() const
@@ -434,7 +440,7 @@ void ContactListItem::setValue(int role, const QVariant &value)
 QVariant ContactListItem::value(int role) const
 {
 	QVariant res;
-
+	Q_ASSERT(_selfValid);
 	// Common roles first
 	switch (role) {
 	case ContactListModel::TypeRole:      res = QVariant::fromValue(_type);  break;

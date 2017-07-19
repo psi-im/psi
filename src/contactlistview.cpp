@@ -211,6 +211,7 @@ void ContactListView::resizeEvent(QResizeEvent* e)
 
 void ContactListView::rowsInserted(const QModelIndex &parent, int start, int end)
 {
+	HoverableTreeView::rowsInserted(parent, start, end);
 	for (int i = start; i <= end; ++i) {
 		QModelIndex index = parent.child(i, 0);
 		if (realIndex(index).data(ContactListModel::ExpandedRole).toBool())

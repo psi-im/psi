@@ -25,6 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+
 if (QJDns_INCLUDE_DIR AND QJDns_LIBRARY)
 	# in cache already
 	set(QJDns_FIND_QUIETLY TRUE)
@@ -43,6 +44,10 @@ set ( LIBINCS
 	qjdns.h
 )
 
+if(NOT QJDns_SUFFIX)
+	set( QJDns_SUFFIX "")
+endif()
+
 find_path(
 	QJDns_INCLUDE_DIR ${LIBINCS}
 	HINTS
@@ -52,13 +57,13 @@ find_path(
 	PATH_SUFFIXES
 	""
 	if( NOT WIN32 )
-	jdns
-    endif( NOT WIN32 )
+		jdns
+	endif( NOT WIN32 )
 )
 
 find_library(
 	QJDns_LIBRARY
-	NAMES qjdns
+	NAMES qjdns qjdns${QJDns_SUFFIX}
 	HINTS 
 	${PC_QJDns_LIBDIR}
 	${PC_QJDns_LIBRARY_DIRS}
@@ -78,4 +83,3 @@ if ( QJDns_FOUND )
 endif ( QJDns_FOUND )
 
 mark_as_advanced( QJDns_INCLUDE_DIR QJDns_LIBRARY )
-

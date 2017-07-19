@@ -18,7 +18,7 @@ set(SOURCES
 	psitextview.cpp
 	psitooltip.cpp
 	urlobject.cpp
-	)
+)
 
 set(PLAIN_SOURCES
 	actionlineedit.cpp
@@ -27,7 +27,7 @@ set(PLAIN_SOURCES
 	psitiplabel.cpp
 	typeaheadfind.cpp
 	urllabel.cpp
-	)
+)
 
 set(HEADERS
 	actionlineedit.h
@@ -51,36 +51,37 @@ set(HEADERS
 	updatingcombobox.h
 	urllabel.h
 	urlobject.h
-	)
+)
 
 set(PLAIN_HEADERS
 	psirichtext.h
 	psitooltip.h
 	stretchwidget.h
-	)
+)
 
 set(FORMS
 	fancypopup.ui
-	)
+)
 
 if(IS_PSIPLUS)
-	set(SOURCES
-		${SOURCES}
-		tabbar.cpp
-	)
-	set(PLAIN_SOURCES
-		${PLAIN_SOURCES}
+	list(APPEND PLAIN_SOURCES
 		psiwindowheader.cpp
 	)
-	set(HEADERS
-		${HEADERS}
+	list(APPEND HEADERS
 		psiwindowheader.h
-		tabbar.h
 	)
-	set(FORMS
-		${FORMS}
+	list(APPEND FORMS
 		psiwindowheader.ui
 	)
+	#check for 0280 patch
+	if(EXISTS "${PROJECT_SOURCE_DIR}/src/widgets/tabbar.cpp")
+		list(APPEND SOURCES
+			tabbar.cpp
+		)
+		list(APPEND HEADERS
+			tabbar.h
+		)
+	endif()
 endif()
 
 qt4_wrap_ui(UI_FORMS ${FORMS})

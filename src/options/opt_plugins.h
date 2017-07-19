@@ -38,9 +38,9 @@ private:
 
 private slots:
 	void listPlugins();
-	void showPluginInfo();
+	void showPluginInfo(int item);
 	void itemChanged(QTreeWidgetItem *item, int column);
-	void settingsClicked();
+	void settingsClicked(int item);
 };
 
 #endif

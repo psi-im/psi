@@ -4,7 +4,10 @@
 /tmtags
 /psi
 /psi.exe
+/psi.exp
+/psi.lib
 /src/psi_resource.rc
+/pluginsconf.pri
 ._*
 .DS_Store
 .AppleDouble
@@ -63,4 +66,5 @@ checker
 /mac/Info.plist
 /psi.debug
 .qmake.cache
-
+.qmake.stash
+psi.app/

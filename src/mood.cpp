@@ -68,7 +68,7 @@ QDomElement Mood::toXml(QDomDocument& doc)
 	QDomElement mood = doc.createElement("mood");
 	mood.setAttribute("xmlns", PEP_MOOD_NS);
 
-	if (!type() == Unknown) {
+	if (type() != Unknown) {
 		QDomElement el = doc.createElement(MoodCatalog::instance()->findEntryByType(type()).value());
 		mood.appendChild(el);
 	}

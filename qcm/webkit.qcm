@@ -1,9 +1,11 @@
 /*
 -----BEGIN QCMOD-----
 name: webkit
-arg: with-webkit=[type],type of webkit QWebkit/QtWebEngine
+arg: with-webkit=[type],type of webkit QtWebKit/QtWebEngine
 -----END QCMOD-----
 */
+
+QString qc_webkit_type;
 
 //----------------------------------------------------------------------------
 // qc_webkit
@@ -24,14 +26,14 @@ public:
 
 		QStringList tryList;
 		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
-		if (wt.isEmpty() || !(wt == "qwebkit" || wt == "qtwebengine")) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-			tryList << "qtwebengine" << "qwebkit";
+		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
+			tryList << "qtwebengine" << "qtwebkit";
 #else
-			tryList << "qwebkit";
+			tryList << "qtwebkit";
 #endif
 		} else {
-#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION < QT_VERSION_CHECK(5,6,0)
 			if (wt == "qtwebengine") {
 				webkitType = "unsupported";
 				return false;
@@ -46,7 +48,7 @@ public:
 				webkitType = "QtWebEngine";
 				qt = "webenginewidgets webchannel";
 			} else {
-				webkitType = "QWebKit";
+				webkitType = "QtWebKit";
 				qt = "webkit";
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 				qt += " webkitwidgets";
@@ -70,6 +72,7 @@ public:
 				continue;
 
 			conf->addExtra("CONFIG += " + wt);
+			qc_webkit_type = wt;
 			return true;
 		}
 

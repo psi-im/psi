@@ -75,6 +75,8 @@ WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanage
 	pa_ = pa;
 	sxemanager_ = sxemanager;
 
+	Q_UNUSED(client)
+
 	connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession*)), SLOT(createWbDlg(SxeSession*)));
 	//sxemanager_->addInvitationCallback(WbManager::checkInvitation);
 	connect(sxemanager, SIGNAL(invitationCallback(Jid,QList<QString>,bool*)), this, SLOT(checkInvitation(Jid,QList<QString>,bool*)));

@@ -5,9 +5,9 @@
   <style type="text/css" media="screen,print">
 body {padding:0 0 2px 0; margin:0; width:100%;}
 body > div {
-	margin:0px 3px 0px 3px;
-	word-wrap:break-word !important;
-	overflow:hidden;
+    margin:0px 3px 0px 3px;
+    word-wrap:break-word !important;
+    overflow:hidden;
 }
 body > div img { vertical-align:bottom; }
 body > div > img:first-child { vertical-align:text-bottom; }
@@ -24,17 +24,17 @@ body > div > img:first-child { vertical-align:text-bottom; }
 <script type="text/javascript">
 
 function startPsiTheme(shared) {
-	var util = shared.chat.util;
+    var util = shared.chat.util;
 
-	var cssBody = util.findStyleSheet(document.styleSheets[0], "body").style;
-	var cssSentMsg = util.findStyleSheet(document.styleSheets[0], ".sent").style;
-	var cssReceivedMsg = util.findStyleSheet(document.styleSheets[0], ".received").style;
-	var cssInfMsg = util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
-	var cssUserText = util.findStyleSheet(document.styleSheets[0], ".usertext").style;
-	var cssChatSays = util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
-	var cssAlertMsg = util.findStyleSheet(document.styleSheets[0], ".alert").style;
-	var useMessageIcons, messageIconsSize = 0;
-	var colorMap = {
+    var cssBody = util.findStyleSheet(document.styleSheets[0], "body").style;
+    var cssSentMsg = util.findStyleSheet(document.styleSheets[0], ".sent").style;
+    var cssReceivedMsg = util.findStyleSheet(document.styleSheets[0], ".received").style;
+    var cssInfMsg = util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
+    var cssUserText = util.findStyleSheet(document.styleSheets[0], ".usertext").style;
+    var cssChatSays = util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
+    var cssAlertMsg = util.findStyleSheet(document.styleSheets[0], ".alert").style;
+    var useMessageIcons, messageIconsSize = 0;
+    var colorMap = {
         "options.ui.look.colors.messages.sent" : cssSentMsg,
         "options.ui.look.colors.messages.received" : cssReceivedMsg,
         "options.ui.look.colors.messages.informational" : cssInfMsg,
@@ -42,7 +42,7 @@ function startPsiTheme(shared) {
         "options.ui.look.colors.messages.highlighting" : cssAlertMsg
     }
 
-	var applyPsiSettings = function() {
+    var applyPsiSettings = function() {
         util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
         util.getPaletteColor("Base", function(color){cssBody.backgroundColor = color});
         util.getPaletteColor("Text", function(color){cssBody.color = color});
@@ -54,7 +54,7 @@ function startPsiTheme(shared) {
         }
 
         util.psiOption("options.ui.chat.use-message-icons", function(val){useMessageIcons = val;});
-		util.psiOption("options.ui.chat.scaled-message-icons", function(val) {
+        util.psiOption("options.ui.chat.scaled-message-icons", function(val) {
             if (val) {
                 var d = document.createElement("div");
                 d.style.position = "absolute";
@@ -65,114 +65,114 @@ function startPsiTheme(shared) {
                 messageIconsSize = parseInt(document.defaultView.getComputedStyle(d, null).height);
                 shared.chatElement.removeChild(d);
             }
-		});
-	}
+        });
+    }
 
-	shared.initTheme({
-		chatElement : document.body,
-		templates : {
-			message: shared.isMuc?
-				"<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
-				: "<div class='msg'>%icon%<span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
-			messageNC: shared.isMuc?
-				"<div style='color:%nickcolor%'%alertedemote%>%icon%[%time%] %sender% %message%</div>"
-				: "<div class='%sentrec%'>%icon%[%time%] %sender% %message%</div>",
-			receivedMessage: shared.isMuc?
-				"<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
-				: null,
-			spooledMessage: "<div class='infmsg'>%icon%[%time%] %sender% %message%</div>",
-			sys: "<div class='infmsg'>%icon%%message%</div>",
-			sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
-			sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
-			lastMsgDate: "<div class='infmsg'>%icon%*** %date%</div>",
-			subject: shared.isMuc?
-				"<div class='infmsg'>%icon%[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
-				: "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
-			trackbar: '<hr class="trackbar" />'
-		},
-		dateFormat : "HH:mm:ss",
-		proxy : function() { //optional
-			if (shared.cdata.type == "settings") {
-				applyPsiSettings();
-				return false;
-			} else if (shared.cdata.type == "receipt") {
-				var img = document.getElementById("receipt"+shared.cdata.id);
-				if (img) {
-					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-					img.src = (shared.cdata.encrypted?"/psiicon/psi/notification_chat_delivery_ok_pgp":"/psiicon/psi/notification_chat_delivery_ok")+sizeUri;
-				}
-			}
-			if (shared.cdata.mtype == "message") {
-				var template = shared.cdata.emote && shared.templates.messageNC ||
-					(shared.cdata.spooled && shared.templates.message || null);
-				if (template) {
-					shared.appendHtml(template.toString(), shared.cdata.local?true:null);
-					return false;
-				}
-			}
-		},
-		varHandlers : {
-			alertedemote : function() {
-				return shared.cdata.emote && shared.cdata.alert?" class='alert'":"";
-			},
-			sender : function() {
-				var nick = util.escapeHtml(shared.cdata.sender);
-				nick = shared.cdata.mtype == "message" && shared.isMuc?
-					'<a onclick="psiimtheme.addNick(this)"'+
-					' class="nicklink">'+nick+'</a>' : nick;
-				return shared.cdata.emote?"*"+nick:"&lt;"+nick+"&gt;";
-			},
-			alertedmessage : function() {
-				var msg = shared.cdata.alert?"<span class='alert'>"+
-					shared.cdata.message+"</span>":shared.cdata.message;
-				return shared.cdata.id? util.replaceableMessage(shared.isMuc, shared.cdata.local, shared.cdata.sender, shared.cdata.id, msg) : msg;
-			},
-			sentrec : function() {return shared.cdata.spooled?"infmsg":
-				(shared.cdata.local?"sent":"received");},
-			nickcolor : function() {
-				return util.nickColor(shared.cdata.sender);
-			},
-			icon : function() {
-				var icon = "";
-				if (useMessageIcons) {
-					switch (shared.cdata.mtype) {
-						case "message":
-							icon = shared.cdata.local?(shared.cdata.awaitingReceipt?
-								"psi/notification_chat_send":"psi/notification_chat_delivery_ok")
-								: "psi/notification_chat_receive";
-							if(shared.cdata.encrypted) {
-								icon += "_pgp"
-							}
-							break;
-						case "system":
-						case "subject":
-						case "join":
-						case "part":
-						case "status":
-						case "urls":
-							icon = "psi/notification_chat_info";
-							break;
-						case "lastDate":
-							icon = "psi/notification_chat_time";
-							break;
-					}
-					var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
-					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-					var id = shared.cdata.awaitingReceipt?" id='receipt"+shared.cdata.id+"'":"";
-					icon = icon?"<img src='/psiicon/"+icon+sizeUri+"'"+sizeStyle+id+" />":"";
-				}
-				return icon;
- 			}
-		}
-	});
+    shared.initTheme({
+        chatElement : document.body,
+        templates : {
+            message: shared.isMuc?
+                "<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
+                : "<div class='msg'>%icon%<span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
+            messageNC: shared.isMuc?
+                "<div style='color:%nickcolor%'%alertedemote%>%icon%[%time%] %sender% %message%</div>"
+                : "<div class='%sentrec%'>%icon%[%time%] %sender% %message%</div>",
+            receivedMessage: shared.isMuc?
+                "<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
+                : null,
+            spooledMessage: "<div class='infmsg'>%icon%[%time%] %sender% %message%</div>",
+            sys: "<div class='infmsg'>%icon%%message%</div>",
+            sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
+            sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
+            lastMsgDate: "<div class='infmsg'>%icon%*** %date%</div>",
+            subject: shared.isMuc?
+                "<div class='infmsg'>%icon%[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
+                : "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
+            trackbar: '<hr class="trackbar" />'
+        },
+        dateFormat : "HH:mm:ss",
+        proxy : function() { //optional
+            if (shared.cdata.type == "settings") {
+                applyPsiSettings();
+                return false;
+            } else if (shared.cdata.type == "receipt") {
+                var img = document.getElementById("receipt"+shared.cdata.id);
+                if (img) {
+                    var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
+                    img.src = (shared.cdata.encrypted?"/psiicon/psi/notification_chat_delivery_ok_pgp":"/psiicon/psi/notification_chat_delivery_ok")+sizeUri;
+                }
+            }
+            if (shared.cdata.mtype == "message") {
+                var template = shared.cdata.emote && shared.templates.messageNC ||
+                    (shared.cdata.spooled && shared.templates.message || null);
+                if (template) {
+                    shared.appendHtml(template.toString(), shared.cdata.local?true:null);
+                    return false;
+                }
+            }
+        },
+        varHandlers : {
+            alertedemote : function() {
+                return shared.cdata.emote && shared.cdata.alert?" class='alert'":"";
+            },
+            sender : function() {
+                var nick = util.escapeHtml(shared.cdata.sender);
+                nick = shared.cdata.mtype == "message" && shared.isMuc?
+                    '<a onclick="psiimtheme.addNick(this)"'+
+                    ' class="nicklink">'+nick+'</a>' : nick;
+                return shared.cdata.emote?"*"+nick:"&lt;"+nick+"&gt;";
+            },
+            alertedmessage : function() {
+                var msg = shared.cdata.alert?"<span class='alert'>"+
+                    shared.cdata.message+"</span>":shared.cdata.message;
+                return shared.cdata.id? util.replaceableMessage(shared.isMuc, shared.cdata.local, shared.cdata.sender, shared.cdata.id, msg) : msg;
+            },
+            sentrec : function() {return shared.cdata.spooled?"infmsg":
+                (shared.cdata.local?"sent":"received");},
+            nickcolor : function() {
+                return util.nickColor(shared.cdata.sender);
+            },
+            icon : function() {
+                var icon = "";
+                if (useMessageIcons) {
+                    switch (shared.cdata.mtype) {
+                        case "message":
+                            icon = shared.cdata.local?(shared.cdata.awaitingReceipt?
+                                "psi/notification_chat_send":"psi/notification_chat_delivery_ok")
+                                : "psi/notification_chat_receive";
+                            if(shared.cdata.encrypted) {
+                                icon += "_pgp"
+                            }
+                            break;
+                        case "system":
+                        case "subject":
+                        case "join":
+                        case "part":
+                        case "status":
+                        case "urls":
+                            icon = "psi/notification_chat_info";
+                            break;
+                        case "lastDate":
+                            icon = "psi/notification_chat_time";
+                            break;
+                    }
+                    var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
+                    var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
+                    var id = shared.cdata.awaitingReceipt?" id='receipt"+shared.cdata.id+"'":"";
+                    icon = icon?"<img src='/psiicon/"+icon+sizeUri+"'"+sizeStyle+id+" />":"";
+                }
+                return icon;
+            }
+        }
+    });
 
-	applyPsiSettings();
+    applyPsiSettings();
 
-	shared.session.signalInited();
+    shared.session.signalInited();
 
-	return {
-		addNick : function(e) { shared.addNick(e.text); }
-	};
+    return {
+        addNick : function(e) { shared.addNick(e.text); }
+    };
 }
 
 </script>

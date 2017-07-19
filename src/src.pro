@@ -41,7 +41,7 @@ unix {
 	# Shared files
 	sharedfiles.path  = $$PSI_DATADIR
 	sharedfiles.files = ../README ../COPYING ../client_icons.txt ../iconsets ../sound ../certs
-	qwebkit|qtwebengine {
+	qtwebkit|qtwebengine {
 		sharedfiles.files += ../themes
 	}
 
@@ -71,12 +71,9 @@ unix {
 
 	psi_plugins {
 		pluginsfiles.path  = $$PSI_DATADIR/plugins
-		pluginsfiles.files = plugins/plugins.pri plugins/include
+		pluginsfiles.files = plugins/plugins.pri plugins/psiplugin.pri plugins/include $$top_builddir/pluginsconf.pri
 
-		plugin.path = $$PSI_DATADIR/plugins
-		plugin.extra = sed -e \"s:target.path.*:target.path = $$PSI_LIBDIR/plugins:\" $$top_srcdir/src/plugins/psiplugin.pri > $(INSTALL_ROOT)$$plugin.path/psiplugin.pri
-
-		INSTALLS += pluginsfiles plugin
+		INSTALLS += pluginsfiles
 	}
 }
 

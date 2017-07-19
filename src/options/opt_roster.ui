@@ -235,7 +235,7 @@
            </size>
           </property>
           <property name="suffix">
-           <string>px</string>
+           <string>pt</string>
           </property>
           <property name="prefix">
            <string/>
@@ -271,7 +271,7 @@
            </size>
           </property>
           <property name="suffix">
-           <string>px</string>
+           <string>pt</string>
           </property>
           <property name="value">
            <number>5</number>

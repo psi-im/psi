@@ -184,6 +184,11 @@ PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	mCmdManager_.registerProvider(new ChatDlgMCmdProvider(this));
 }
 
+PsiChatDlg::~PsiChatDlg()
+{
+	delete actions_;
+}
+
 void PsiChatDlg::initUi()
 {
 	ui_.setupUi(this);
@@ -289,6 +294,11 @@ void PsiChatDlg::setLooks()
 {
 	ChatDlg::setLooks();
 
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		setStyleSheet(css);
+		chatEdit()->setCssString(css);
+	}
 	ui_.splitter->optionsChanged();
 	ui_.mle->optionsChanged();
 
@@ -840,7 +850,7 @@ void PsiChatDlg::buildMenu()
 	pm_settings_->addAction(actions_->action("chat_clear"));
 	pm_settings_->addSeparator();
 
-	pm_settings_->addAction(actions_->action("chat_icon_"));
+	pm_settings_->addAction(actions_->action("chat_icon"));
 	pm_settings_->addAction(actions_->action("chat_file"));
 	if (AvCallManager::isSupported()) {
 		pm_settings_->addAction(actions_->action("chat_voice"));

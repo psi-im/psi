@@ -1,3 +1,4 @@
+include($$PWD/pluginsconf.pri)
 TEMPLATE = lib
 CONFIG += plugin
 QT += xml
@@ -12,9 +13,13 @@ INCLUDEPATH += .ui/
 greaterThan(QT_MAJOR_VERSION, 4) {
   QT += widgets
   DEFINES += HAVE_QT5
+  CONFIG += c++11
 }
 
-target.path = $$(HOME)/.local/share/psi/plugins
+contains(psi_features, qtwebengine):DEFINES+=HAVE_WEBENGINE
+contains(psi_features, qtwebkit):DEFINES+=HAVE_WEBKIT
+
+target.path = $$psi_plugins_dir
 INSTALLS += target
 
 include(plugins.pri)

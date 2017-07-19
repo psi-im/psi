@@ -1,7 +1,7 @@
 /*
  * gcuserview.cpp - groupchat roster
  * Copyright (C) 2001, 2002  Justin Karneges
- * 2011 Khryukin Evgeny
+ * 2011 Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -538,7 +538,7 @@ bool GCUserView::maybeTip(const QPoint &pos)
 		return false;
 
 	GCUserViewItem *lvi = (GCUserViewItem *) qlvi;
-	QRect r(visualItemRect(lvi));
+//	QRect r(visualItemRect(lvi));
 
 	const QString &nick = lvi->text(0);
 	const Status &s = lvi->s;
@@ -741,6 +741,10 @@ void GCUserView::doContextMenu(QTreeWidgetItem *i)
 	pm->addAction(act);
 	act->setData(3);
 
+	const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+	if (!css.isEmpty()) {
+		pm->setStyleSheet(css);
+	}
 	int x = -1;
 	bool enabled = false;
 	act = pm->exec(QCursor::pos());
