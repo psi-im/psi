@@ -104,8 +104,6 @@ private slots:
 	void qlv_doubleClicked(const QModelIndex& index);
 
 private:
-	void contextMenuRequested(const QPoint& p);
-
 	GCMainDlg* gcDlg_;
 };
 
