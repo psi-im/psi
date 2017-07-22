@@ -83,7 +83,7 @@ void ContactListModel::Private::realAddContact(PsiContact *contact)
 			accountItem->setAccount(account);
 			accountItem->setExpanded(!collapsed.contains(accountItem->internalName()));
 
-			connect(account, SIGNAL(destroyed(QObject*)), SLOT(removeAccount(QObject*)));
+			connect(account, SIGNAL(accountDestroyed()), SLOT(onAccountDestroyed()));
 			connect(account, SIGNAL(updatedAccount()), SLOT(updateAccount()));
 
 			root->appendChild(accountItem);
@@ -439,11 +439,15 @@ void ContactListModel::Private::contactGroupsChanged()
 	addOperation(contact, ContactGroupsChanged);
 }
 
-void ContactListModel::Private::removeAccount(QObject *object)
+void ContactListModel::Private::onAccountDestroyed()
 {
-	PsiAccount *account = qobject_cast<PsiAccount*>(object);
+	PsiAccount *account = qobject_cast<PsiAccount*>(sender());
 	ContactListItem *root = static_cast<ContactListItem*>(q->root());
 	ContactListItem *item = root->findAccount(account);
+	if (!item) {
+		qCritical("BUG: account was already removed from the list");
+		return;
+	}
 	QModelIndex index = q->toModelIndex(item);
 	q->beginRemoveRows(index.parent(), index.row(), index.row());
 	delete item;

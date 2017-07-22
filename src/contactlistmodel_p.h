@@ -40,8 +40,10 @@ public slots:
 	void removeContact(PsiContact *contact);
 	void contactUpdated();
 	void contactGroupsChanged();
-	void removeAccount(QObject *object);
 	void updateAccount();
+
+private slots:
+	void onAccountDestroyed();
 
 public:
 	ContactListModel *q;
