@@ -4700,13 +4700,14 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 	if(m.invite().isEmpty() && !m.body().isEmpty())
 		toggleSecurity(m.to(), m.wasEncrypted());
 
-	// don't log groupchat, private messages, or encrypted messages
+	// don't log groupchat or encrypted messages
 	if(log) {
-		if(m.type() != "groupchat" && m.xencrypted().isEmpty() && !findGCContact(m.to())) {
+		if(m.type() != "groupchat" && m.xencrypted().isEmpty()) {
+			int type = findGCContact(m.to()) ? EDB::GroupChatContact : EDB::Contact;
 			MessageEvent::Ptr me(new MessageEvent(m, this));
 			me->setOriginLocal(true);
 			me->setTimeStamp(QDateTime::currentDateTime());
-			logEvent(m.to(), me);
+			logEvent(m.to(), me, type);
 		}
 	}
 
@@ -5001,7 +5002,6 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 			// don't log private messages
 			if (!found &&
-				!findGCContact(e->from()) &&
 				!(e->type() == PsiEvent::Message &&
 				 e.staticCast<MessageEvent>()->message().body().isEmpty()))
 			{
@@ -5023,7 +5023,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 						}
 					}
 
-					logEvent(chatJid, e);
+					int type = findGCContact(chatJid) ? EDB::GroupChatContact : EDB::Contact;
+					logEvent(chatJid, e, type);
 				}
 			}
 		}
@@ -5653,14 +5654,17 @@ void PsiAccount::groupChatMessagesRead(const Jid &j)
 }
 #endif
 
-void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e)
+void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e, int type)
 {
 	if (!d->acc.opt_log)
 		return;
 
+	if (type == EDB::GroupChatContact && !PsiOptions::instance()->getOption("options.history.store-muc-private").toBool())
+		return;
+
 	EDBHandle *h = new EDBHandle(d->psi->edb());
 	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
-	h->append(j, e);
+	h->append(id(), j, e, type);
 }
 
 void PsiAccount::edb_finished()
@@ -6129,7 +6133,7 @@ void PsiAccount::pgp_encryptFinished()
 			MessageEvent::Ptr me(new MessageEvent(m, this));
 			me->setOriginLocal(true);
 			me->setTimeStamp(QDateTime::currentDateTime());
-			logEvent(m.to(), me);
+			logEvent(m.to(), me, EDB::Contact);
 		}
 
 		Message mwrap;

@@ -528,7 +528,7 @@ private:
 	void simulateRosterOffline();
 	void cpUpdate(const UserListItem &, const QString &rname="", bool fromPresence=false);
 	UserListItem* addUserListItem(const Jid& jid, const QString& nick="");
-	void logEvent(const Jid &, const PsiEvent::Ptr &);
+	void logEvent(const Jid &, const PsiEvent::Ptr &, int);
 	void queueEvent(const PsiEvent::Ptr &e, ActivationType activationType);
 	void openNextEvent(const UserListItem &, ActivationType activationType);
 	void updateReadNext(const Jid &);

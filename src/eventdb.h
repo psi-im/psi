@@ -34,16 +34,14 @@
 class EDBItem
 {
 public:
-	EDBItem(const PsiEvent::Ptr &, const QString &id, const QString &nextId, const QString &prevId);
+	EDBItem(const PsiEvent::Ptr &, const QString &id);
 	~EDBItem();
 
 	PsiEvent::Ptr event() const;
 	const QString & id() const;
-	const QString & nextId() const;
-	const QString & prevId() const;
 
 private:
-	QString v_id, v_prevId, v_nextId;
+	QString v_id;
 	PsiEvent::Ptr e;
 };
 
@@ -60,18 +58,16 @@ public:
 	~EDBHandle();
 
 	// operations
-	void getLatest(const XMPP::Jid &, int len);
-	void getOldest(const XMPP::Jid &, int len);
-	void get(const XMPP::Jid &jid, const QString &id, int direction, int len);
-	void getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
-	void find(const QString &, const XMPP::Jid &, const QString &id, int direction);
-	void append(const XMPP::Jid &, const PsiEvent::Ptr &);
-	void erase(const XMPP::Jid &);
+	void get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int begin, int len);
+	void find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction);
+	void append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
+	void erase(const QString &accId, const XMPP::Jid &);
 
 	bool busy() const;
 	const EDBResult result() const;
 	bool writeSuccess() const;
 	int lastRequestType() const;
+	int beginRow() const;
 
 signals:
 	void finished();
@@ -104,17 +100,17 @@ public:
 	virtual ~EDB()=0;
 	virtual int features() const = 0;
 	virtual QList<ContactItem> contacts(const QString &accId, int type) = 0;
+	virtual quint64 eventsCount(const QString &accId, const XMPP::Jid &jid) = 0;
+	virtual QString getStorageParam(const QString &key) = 0;
+	virtual void setStorageParam(const QString &key, const QString &val) = 0;
 
 protected:
 	int genUniqueId() const;
-	virtual int getLatest(const XMPP::Jid &, int len)=0;
-	virtual int getOldest(const XMPP::Jid &, int len)=0;
-	virtual int get(const XMPP::Jid &jid, const QString &id, int direction, int len)=0;
-	virtual int getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last) = 0;
-	virtual int append(const XMPP::Jid &, const PsiEvent::Ptr &)=0;
-	virtual int find(const QString &, const XMPP::Jid &, const QString &id, int direction)=0;
-	virtual int erase(const XMPP::Jid &)=0;
-	void resultReady(int, EDBResult);
+	virtual int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len)=0;
+	virtual int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int)=0;
+	virtual int find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction)=0;
+	virtual int erase(const QString &accId, const XMPP::Jid &)=0;
+	void resultReady(int, EDBResult, int);
 	void writeFinished(int, bool);
 	PsiCon *psi();
 
@@ -126,13 +122,10 @@ private:
 	void reg(EDBHandle *);
 	void unreg(EDBHandle *);
 
-	int op_getLatest(const XMPP::Jid &, int len);
-	int op_getOldest(const XMPP::Jid &, int len);
-	int op_get(const XMPP::Jid &, const QString &id, int direction, int len);
-	int op_getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
-	int op_find(const QString &, const XMPP::Jid &, const QString &id, int direction);
-	int op_append(const XMPP::Jid &, const PsiEvent::Ptr&);
-	int op_erase(const XMPP::Jid &);
+	int op_get(const QString &accId, const XMPP::Jid &, const QDateTime date, int direction, int start, int len);
+	int op_find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction);
+	int op_append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
+	int op_erase(const QString &accId, const XMPP::Jid &);
 };
 
 #endif

@@ -38,14 +38,14 @@ public:
 	~EDBFlatFile();
 
 	int features() const;
-	int getLatest(const XMPP::Jid &, int len);
-	int getOldest(const XMPP::Jid &, int len);
-	int get(const XMPP::Jid &jid, const QString &id, int direction, int len);
-	int getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
-	int find(const QString &, const XMPP::Jid &, const QString &id, int direction);
-	int append(const XMPP::Jid &, const PsiEvent::Ptr&);
-	int erase(const XMPP::Jid &);
+	int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len);
+	int find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction);
+	int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
+	int erase(const QString &accId, const XMPP::Jid &);
 	QList<EDB::ContactItem> contacts(const QString &accId, int type);
+	quint64 eventsCount(const QString &accId, const XMPP::Jid &jid);
+	QString getStorageParam(const QString &) { return QString(); }
+	void setStorageParam(const QString &, const QString &) {}
 
 	class File;
 
@@ -70,6 +70,7 @@ public:
 	~File();
 
 	int total() const;
+	int getId(QDateTime &date, int dir, int offset);
 	void touch();
 	PsiEvent::Ptr get(int);
 	bool append(const PsiEvent::Ptr &);
