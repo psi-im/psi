@@ -40,7 +40,7 @@
 
 static QPointer<ChatViewCon> cvCon;
 
-#if WEBENGINE
+#ifdef WEBENGINE
 
 ChatViewUrlRequestInterceptor::ChatViewUrlRequestInterceptor(QObject *parent) :
 	QWebEngineUrlRequestInterceptor(parent) {}
@@ -154,7 +154,7 @@ public:
 
 ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 {
-#if WEBENGINE
+#ifdef WEBENGINE
 	// init something here?
 	themeServer = new ThemeServer(this);
 

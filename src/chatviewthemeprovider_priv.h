@@ -21,7 +21,7 @@
 #ifndef CHATVIEWTHEMEPROVIDER_PRIV_H
 #define CHATVIEWTHEMEPROVIDER_PRIV_H
 
-#if WEBENGINE
+#ifdef WEBENGINE
 #include <QWebEngineUrlRequestInterceptor>
 #else
 #include <QObject> // at least
@@ -30,7 +30,7 @@
 class PsiCon;
 class ThemeServer;
 
-#if WEBENGINE
+#ifdef WEBENGINE
 class ChatViewUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor
 {
 	Q_OBJECT
@@ -50,7 +50,7 @@ class ChatViewCon : public QObject
 	ChatViewCon(PsiCon *pc);
 public:
 	~ChatViewCon();
-#if WEBENGINE
+#ifdef WEBENGINE
 	ThemeServer *themeServer;
 	ChatViewUrlRequestInterceptor *requestInterceptor;
 #endif

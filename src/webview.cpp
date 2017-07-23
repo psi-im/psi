@@ -126,7 +126,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 	} else {
 		menu = new QMenu(this);
 		if (!page()->selectedText().isEmpty()) {
-#if WEBENGINE
+#ifdef WEBENGINE
 			menu->addAction(pageAction(QWebEnginePage::Copy));
 		} else {
 			if (!menu->isEmpty()) {
@@ -224,7 +224,7 @@ void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 void WebView::evaluateJS(const QString &scriptSource)
 {
 	//qDebug()<< "EVALUATE: " << (scriptSource.size()>200?scriptSource.mid(0,200)+"...":scriptSource);
-#if WEBENGINE
+#ifdef WEBENGINE
 	page()->runJavaScript(scriptSource);
 #else
 	page()->mainFrame()->evaluateJavaScript(scriptSource);
@@ -242,7 +242,7 @@ void WebView::copySelected()
 {
 	// use native selectedText w/o clipboard hacks.
 	if (page()->hasSelection() && !page()->selectedText().isEmpty()) {
-#if WEBENGINE
+#ifdef WEBENGINE
 		page()->triggerAction(QWebEnginePage::Copy);
 #else
 		page()->triggerAction(QWebPage::Copy);

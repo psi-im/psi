@@ -31,7 +31,7 @@
 #include <QMetaProperty>
 #include <QJsonDocument>
 #endif
-#if WEBENGINE
+#ifdef WEBENGINE
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 #include <QWebEngineContextMenuData>
 #endif

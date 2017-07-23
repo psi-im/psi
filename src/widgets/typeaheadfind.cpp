@@ -71,7 +71,7 @@ public:
 				te->setTextCursor(cursor);
 			}
 		}
-#if WEBENGINE
+#ifdef WEBENGINE
 		find(text, options);
 #else
 		updateFoundStyle(find(text, options));
