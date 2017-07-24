@@ -1,13 +1,12 @@
-cmake_minimum_required( VERSION 2.8.12 )
+cmake_minimum_required( VERSION 3.1.0 )
 set_directory_properties(PROPERTIES
 	INCLUDE_DIRECTORIES ""
 	COMPILE_DEFINITIONS ""
 )
 
-if(USE_QT5)
-	add_definitions(-DHAVE_QT5)
-	set(QT5_BUILD ON)
-endif()
+add_definitions(-DHAVE_QT5)
+set(QT5_BUILD ON)
+
 
 option( BUILD_DEV_PLUGINS "Build plugins from dev directory" OFF )
 

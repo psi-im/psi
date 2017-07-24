@@ -84,7 +84,7 @@ if(IS_PSIPLUS)
 	endif()
 endif()
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 add_library(widgets STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES} ${PLAIN_HEADERS})
 target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} libpsi_tools)

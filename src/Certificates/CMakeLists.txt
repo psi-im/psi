@@ -30,7 +30,7 @@ list(APPEND PLAIN_SOURCES
 	CertificateHelpers.cpp
 )
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
 add_library(Certificates STATIC ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
 target_link_libraries(Certificates ${QT_LIBRARIES} ${iris_LIB})

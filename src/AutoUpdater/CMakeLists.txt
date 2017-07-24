@@ -55,7 +55,7 @@ if(USE_QDCHECKER)
 	)
 endif()
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
 add_library(AutoUpdater STATIC ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
 if(USE_QDCHECKER)

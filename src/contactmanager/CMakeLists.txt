@@ -25,7 +25,7 @@ list(APPEND FORMS
 	contactmanagerdlg.ui
 )
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})
 add_library(contactmanager STATIC ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
 target_link_libraries(contactmanager ${QT_LIBRARIES} widgets)

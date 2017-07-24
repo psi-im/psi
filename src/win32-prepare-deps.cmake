@@ -27,128 +27,90 @@ if(WIN32)
 	set(QT_PLUGINS_DIR ${QT_DIR}/plugins)
 	set(QT_TRANSLATIONS_DIR ${QT_DIR}/translations)
 
-	if(USE_QT5)
-		set(SDK_PREFIX "Qt5/")
-		set(QCA_LIB_SUFF "-qt5")
-		# required libraries
-		set( ICU_LIBS_PREFIXES
-			icudt5
-			icuin5
-			icuuc5
-		)
-		set( ICU_LIBS "" )
-		foreach( icu_prefix ${ICU_LIBS_PREFIXES} )
-			foreach( icu_counter RANGE 9 )
-				find_file( ${icu_prefix}${icu_counter} "${icu_prefix}${icu_counter}.dll" )
-				if( NOT "${${icu_prefix}${icu_counter}}" STREQUAL "${icu_prefix}${icu_counter}-NOTFOUND" )
-					copy("${${icu_prefix}${icu_counter}}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-				endif()
-			endforeach()
-		endforeach()
-
-		# Qt5 libraries
-		copy("${QT_BIN_DIR}/Qt5Core${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Gui${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Widgets${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Svg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Network${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Svg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Script${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Xml${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5XmlPatterns${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Sql${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5WebKit${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5WebKitWidgets${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Qml${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Quick${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Positioning${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5WebChannel${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Multimedia${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5MultimediaWidgets${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Concurrent${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5Sensors${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5OpenGL${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/Qt5PrintSupport${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-
-		#audio
-		copy("${QT_PLUGINS_DIR}/audio/qtaudio_windows${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/audio/" prepare-bin-libs)
-		# platforms
-		copy("${QT_PLUGINS_DIR}/platforms/qminimal${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/platforms/qoffscreen${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/platforms/qwindows${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/" prepare-bin-libs)
-
-		# bearer
-		copy("${QT_PLUGINS_DIR}/bearer/qgenericbearer${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/bearer/qnativewifibearer${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/" prepare-bin-libs)
-
-		# imageformats
-		copy("${QT_PLUGINS_DIR}/imageformats/qdds${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qgif${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qicns${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qico${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qjp2${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qjpeg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qmng${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qsvg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qtga${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qtiff${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qwbmp${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qwebp${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-
-		# printsupport
-		copy("${QT_PLUGINS_DIR}/printsupport/windowsprintersupport${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/" prepare-bin-libs)
-
-		# sqldrivers
-		copy("${QT_PLUGINS_DIR}/sqldrivers/qsqlite${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/" prepare-bin-libs)
-
-		# Qt translations
-		file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qt_*.qm")
-		foreach(FILE ${QT_TRANSLATIONS})
-			if(NOT FILE MATCHES "_help_")
-				copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" prepare-bin-libs)
+	set(SDK_PREFIX "")
+	set(QCA_LIB_SUFF "-qt5")
+	# required libraries
+	set( ICU_LIBS_PREFIXES
+		icudt5
+		icuin5
+		icuuc5
+	)
+	set( ICU_LIBS "" )
+	foreach( icu_prefix ${ICU_LIBS_PREFIXES} )
+		foreach( icu_counter RANGE 9 )
+		find_file( ${icu_prefix}${icu_counter} "${icu_prefix}${icu_counter}.dll" )
+			if( NOT "${${icu_prefix}${icu_counter}}" STREQUAL "${icu_prefix}${icu_counter}-NOTFOUND" )
+				copy("${${icu_prefix}${icu_counter}}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
 			endif()
 		endforeach()
+	endforeach()
 
-		file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qtbase_*.qm")
-		foreach(FILE ${QT_TRANSLATIONS})
+	# Qt5 libraries
+	copy("${QT_BIN_DIR}/Qt5Core${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Gui${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Widgets${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Svg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Network${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Svg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Script${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Xml${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5XmlPatterns${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Sql${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5WebKit${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5WebKitWidgets${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Qml${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Quick${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Positioning${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5WebChannel${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Multimedia${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5MultimediaWidgets${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Concurrent${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5Sensors${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5OpenGL${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	copy("${QT_BIN_DIR}/Qt5PrintSupport${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+	#audio
+	copy("${QT_PLUGINS_DIR}/audio/qtaudio_windows${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/audio/" prepare-bin-libs)
+	# platforms
+	copy("${QT_PLUGINS_DIR}/platforms/qminimal${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/platforms/qoffscreen${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/platforms/qwindows${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/" prepare-bin-libs)
+
+	# bearer
+	copy("${QT_PLUGINS_DIR}/bearer/qgenericbearer${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/bearer/qnativewifibearer${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/" prepare-bin-libs)
+
+	# imageformats
+	copy("${QT_PLUGINS_DIR}/imageformats/qdds${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qgif${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qicns${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qico${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qjp2${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qjpeg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qmng${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qsvg${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qtga${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qtiff${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qwbmp${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+	copy("${QT_PLUGINS_DIR}/imageformats/qwebp${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
+
+	# printsupport
+	copy("${QT_PLUGINS_DIR}/printsupport/windowsprintersupport${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/" prepare-bin-libs)
+
+	# sqldrivers
+	copy("${QT_PLUGINS_DIR}/sqldrivers/qsqlite${D}.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/" prepare-bin-libs)
+
+	# Qt translations
+	file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qt_*.qm")
+	foreach(FILE ${QT_TRANSLATIONS})
+		if(NOT FILE MATCHES "_help_")
 			copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" prepare-bin-libs)
-		endforeach()
-	else()
-		# Qt4 libs
-		copy("${QT_BIN_DIR}/QtCore${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/QtGui${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/QtNetwork${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/QtSvg${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/QtXml${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/QtSql${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
-		copy("${QT_BIN_DIR}/QtWebKit${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+		endif()
+	endforeach()
 
-		# bearer
-		copy("${QT_PLUGINS_DIR}/bearer/qgenericbearer${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/bearer/qnativewifibearer${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/" prepare-bin-libs)
-
-		# plugins
-		copy("${QT_PLUGINS_DIR}/imageformats/qgif${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qico${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qjpeg${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qmng${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qtga4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qtiff${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-		copy("${QT_PLUGINS_DIR}/imageformats/qsvg${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/" prepare-bin-libs)
-
-		# sqldrivers
-		copy("${QT_PLUGINS_DIR}/sqldrivers/qsqlite${D}4.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/" prepare-bin-libs)
-
-		# Qt translations
-		file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qt_*.qm")
-		foreach(FILE ${QT_TRANSLATIONS})
-			if(NOT FILE MATCHES "_help_")
-				copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" prepare-bin-libs)
-			endif()
-		endforeach()
-
-	endif()
-
+	file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qtbase_*.qm")
+	foreach(FILE ${QT_TRANSLATIONS})
+		copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" prepare-bin-libs)
+	endforeach()
 	# psimedia
 	if(EXISTS "${PSIMEDIA_DIR}")
 		find_program(PSIMEDIA_PATH libgstprovider${D}.dll PATHS ${PSIMEDIA_DIR}/plugins )
@@ -233,9 +195,6 @@ if(WIN32)
 		libeay32.dll
 		ssleay32.dll
 	)
-	if(NOT USE_QT5)
-		list(APPEND LIBRARIES_LIST libqjson.dll)
-	endif()
 
 	if(USE_MXE)
 		list(APPEND LIBRARIES_LIST

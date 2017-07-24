@@ -38,7 +38,7 @@ list(APPEND FORMS
 	privacyrule.ui
 )
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 add_library(privacy STATIC ${SOURCES} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
 target_link_libraries(privacy ${QT_LIBRARIES} ${iris_LIB} libpsi_tools widgets tabs)

@@ -8,7 +8,7 @@ unset(UI_FORMS)
 
 include_directories(..)
 
-list(APPEND HEADERS 
+list(APPEND HEADERS
 	optionsdlg.h
 	opt_status.h
 	opt_statuspep.h
@@ -64,7 +64,7 @@ list(APPEND PLAIN_SOURCES
 	opt_tree.cpp
 )
 
-list(APPEND FORMS 
+list(APPEND FORMS
 	opt_advanced.ui
 	opt_appearance.ui
 	opt_appearance_misc.ui
@@ -95,7 +95,7 @@ list(APPEND FORMS
 	ui_options.ui
 )
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 add_library(options STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
 target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs libpsi_dialogs)

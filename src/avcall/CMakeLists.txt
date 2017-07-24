@@ -34,7 +34,7 @@ set(FORMS
 	call.ui
 )
 
-qt4_wrap_ui(UI_FORMS ${FORMS})
+qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 add_library(avcall STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
 target_link_libraries(avcall ${QT_LIBRARIES} ${iris_LIB} libpsi_tools widgets)
