@@ -4930,6 +4930,7 @@ void PsiAccount::eventFromXml(const PsiEvent::Ptr &e)
 void PsiAccount::createNewPluginEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot)
 {
 	PluginEvent::Ptr pe(new PluginEvent(account, jid, descr, this));
+	connect(pe.data(), SIGNAL(activated(QString,int)), receiver, slot);
 	connect(pe.data(), SIGNAL(activated(QString)), receiver, slot);
 	handleEvent(pe, IncomingStanza);
 }
