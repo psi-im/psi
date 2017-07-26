@@ -920,7 +920,7 @@ int pointToPixel(int points)
 {
 	// In typography 1 point (also called PostScript point)
 	// is 1/72 of an inch
-	const float postScriptPoint = 1 / 72.;
+	static const double postScriptPoint = 1 / 72.;
 
 	return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
 }

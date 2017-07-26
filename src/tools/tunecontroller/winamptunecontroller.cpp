@@ -70,7 +70,7 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
 	// Get WinAmp window title. It always contains name of the track
 	SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
 	// Now, waTitle contains WinAmp window title
-	title = QString ((const QChar *) waTitle, length<TCHAR> ((const TCHAR *) waTitle));
+	title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle));
 	if (title[0] == '*' || (title.length () && title[title.length() - 1] == '*')) {
 		// request to be called again soon.
 		return QPair<bool, QString>(false, QString());
@@ -97,7 +97,7 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
 		}
 	}
 	else {
-		title = QString ((const QChar *) waTitle, length<TCHAR> ((const TCHAR *) waTitle)); // Title is not scrolling
+		title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle)); // Title is not scrolling
 	}
 
 	// Remove leading and trailing spaces
