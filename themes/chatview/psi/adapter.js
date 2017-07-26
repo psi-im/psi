@@ -271,7 +271,11 @@ function psiThemeAdapter(chat) {
                             }
                             if (!template) {
                                 data.nextOfGroup = false; //can't group w/o template
-                                template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
+                                if (data.spooled) {
+                                    template = shared.templates.spooledMessage;
+                                } else {
+                                    template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
+				}
                             }
                             break;
                         case "join":

@@ -80,7 +80,9 @@ function startPsiTheme(shared) {
             receivedMessage: shared.isMuc?
                 "<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
                 : null,
-            spooledMessage: "<div class='infmsg'>%icon%[%time%] %sender% %message%</div>",
+            spooledMessage: shared.isMuc?
+                "<div class='usertext'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
+                : "<div class='usertext'>%icon%<span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
             sys: "<div class='infmsg'>%icon%%message%</div>",
             sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
             sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
@@ -104,7 +106,7 @@ function startPsiTheme(shared) {
             }
             if (shared.cdata.mtype == "message") {
                 var template = shared.cdata.emote && shared.templates.messageNC ||
-                    (shared.cdata.spooled && shared.templates.message || null);
+                    (shared.cdata.spooled && shared.templates.spooledMessage || null);
                 if (template) {
                     shared.appendHtml(template.toString(), shared.cdata.local?true:null);
                     return false;
@@ -127,8 +129,7 @@ function startPsiTheme(shared) {
                     shared.cdata.message+"</span>":shared.cdata.message;
                 return shared.cdata.id? util.replaceableMessage(shared.isMuc, shared.cdata.local, shared.cdata.sender, shared.cdata.id, msg) : msg;
             },
-            sentrec : function() {return shared.cdata.spooled?"infmsg":
-                (shared.cdata.local?"sent":"received");},
+            sentrec : function() {return shared.cdata.local?"sent":"received";},
             nickcolor : function() {
                 return util.nickColor(shared.cdata.sender);
             },
@@ -137,6 +138,10 @@ function startPsiTheme(shared) {
                 if (useMessageIcons) {
                     switch (shared.cdata.mtype) {
                         case "message":
+                            if (shared.cdata.spooled) {
+                                icon = "psi/history";
+                                break;
+                            }
                             icon = shared.cdata.local?(shared.cdata.awaitingReceipt?
                                 "psi/notification_chat_send":"psi/notification_chat_delivery_ok")
                                 : "psi/notification_chat_receive";

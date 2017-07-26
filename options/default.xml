@@ -129,6 +129,9 @@
 				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
 				<default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
 				<default-jid-mode-ignorelist comment="Default autojid mode ignore list: jid1,jid2,..." type="QString"></default-jid-mode-ignorelist>
+				<history comment="Message history options">
+					<preload-history-size comment="The number of preloaded messages" type="int">5</preload-history-size>
+				</history>
 			</chat>
 			<save>
 				<toolbars-state type="QByteArray"/>
@@ -673,6 +676,9 @@ QLineEdit#le_status_text {
 			</devices>
 			<video-support type="bool">false</video-support>
 		</media>
+		<history comment="General history options">
+			<store-muc-private comment="Keep a history of correspondence for MUC private" type="bool">false</store-muc-private>
+		</history>
 	</options>
 	<accounts comment="Account definitions and options"/>
 	<plugins comment="Plugin options"/>
