@@ -81,6 +81,7 @@ ChatView::ChatView(QWidget *parent)
 			logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
 			logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
 			logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+			logIconHistory = IconsetFactory::iconPixmap("psi/history").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
 		} else {
 			logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive");
 			logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send");
@@ -91,6 +92,7 @@ ChatView::ChatView(QWidget *parent)
 			logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time");
 			logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info");
 			logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit");
+			logIconHistory = IconsetFactory::iconPixmap("psi/history");
 		}
 		addLogIconsResources();
 	}
@@ -160,6 +162,7 @@ void ChatView::addLogIconsResources()
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered"), logIconDelivered);
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered_pgp"), logIconDeliveredPgp);
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_corrected"), logIconCorrected);
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_history"), logIconHistory);
 }
 
 void ChatView::markReceived(QString id)
@@ -424,28 +427,51 @@ void ChatView::renderMucMessage(const MessageView &mv)
 void ChatView::renderMessage(const MessageView &mv)
 {
 	QString timestr = formatTimeStamp(mv.dateTime());
-	QString color = colorString(mv.isLocal(), mv.isSpooled());
+	QString color = colorString(mv.isLocal(), false);
 	if (useMessageIcons_ && mv.isAwaitingReceipt()) {
 		document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + mv.messageId()),
 					isEncryptionEnabled_ ? logIconSendPgp : logIconSend);
 	}
-	QString icon = useMessageIcons_ ?
-		(QString("<img src=\"%1\" />").arg(mv.isLocal()?
-		(mv.isAwaitingReceipt() ? QString("icon:delivery") + mv.messageId()
-			: isEncryptionEnabled_ ? "icon:log_icon_send_pgp" : "icon:log_icon_send")
-		: isEncryptionEnabled_ ? "icon:log_icon_receive_pgp" : "icon:log_icon_receive")) : "";
+	QString icon;
+	if (useMessageIcons_) {
+		QString sRes;
+		if (mv.isSpooled())
+			sRes = "icon:log_icon_history";
+		else if (mv.isLocal()) {
+			if (mv.isAwaitingReceipt())
+				sRes = QString("icon:delivery") + mv.messageId();
+			else if (isEncryptionEnabled_)
+				sRes = "icon:log_icon_receive_pgp";
+			else
+				sRes = "icon:log_icon_send";
+		}
+		else {
+			if (isEncryptionEnabled_)
+				sRes = "icon:log_icon_receive_pgp";
+			else
+				sRes = "icon:log_icon_receive";
+		}
+		icon = QString("<img src=\"%1\" />").arg(sRes);
+	}
+	QString str;
 
 	QString inner = mv.formattedText() + replaceMarker(mv);
 	if (mv.isEmote()) {
-		appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>");
-	} else {
+		str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>";
+	}
+	else {
 		if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>" + inner);
+			str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>";
 		}
 		else {
-			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ") + inner);
+			str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ");
 		}
+		if (mv.isSpooled())
+			str.append(QString("<span style=\"color: %1\">%2</span>").arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name()).arg(inner));
+		else
+			str.append(inner);
 	}
+	appendText(str);
 
 	if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool() ) {
 		deferredScroll();

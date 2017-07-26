@@ -33,6 +33,7 @@
 #include "advwidget.h"
 
 #include "tabbablewidget.h"
+#include "messageview.h"
 
 
 namespace XMPP
@@ -88,6 +89,7 @@ public:
 	Jid realJid() const;
 	bool autoSelectContact() const {return autoSelectContact_;};
 	static UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource);
+	void preloadHistory();
 
 signals:
 	void aInfo(const Jid &);
@@ -148,6 +150,7 @@ private slots:
 	void addEmoticon(QString text);
 	void initComposing();
 	void setComposing();
+	void getHistory();
 
 protected slots:
 	void checkComposing();
@@ -159,6 +162,9 @@ protected:
 	void updateRealJid();
 	void resetComposing();
 	void doneSend();
+	void holdMessages(bool hold);
+	void dispatchMessage(const MessageView &mv);
+	void displayMessage(const MessageView &mv);
 	virtual void setLooks();
 	void setSelfDestruct(int);
 	virtual void chatEditCreated();
@@ -214,9 +220,11 @@ private:
 	QTimer* composingTimer_;
 	bool isComposing_;
 	bool sendComposingEvents_;
+	bool historyState;
 	QString eventId_;
 	ChatState contactChatState_;
 	ChatState lastChatState_;
+	QList<MessageView> *delayedMessages;
 };
 
 #endif
