@@ -1,6 +1,6 @@
 Psi 1.1
 -------
-Date: July 19th, 2017
+Date: July 26th, 2017
 
 Maintainers:
   Sergey Ilinykh (2010 (Psi+) - 2017 (Psi/Psi+))
@@ -53,6 +53,16 @@ Notes
 
 Changes
 -------
+  New in 1.2
+  - Removed AIM and MSN icons
+  - Fixed debug build on Visual Studio
+  - Font and windows sizes adjusted for regular fullhd displays
+  - Fixed crashes online account remove and contact delete from another resource
+  - History DB and dialog improvements
+  - Fixed crash on unrecginzed dictionaty encodings in hunspell checker
+  - Added option to disable previews in webkit builds
+  - Fixed Youtube links recongition
+
   New in 1.1
   - Fixed a few crashes. Seems to be pretty stable now.
   - Contact list was rewritten once again
