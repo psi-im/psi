@@ -83,6 +83,9 @@ QWidget *OptionsTabChat::widget()
 		tr("Makes Psi open chats in a tabbed window."));
 	QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
 		" chat window is closed.</P>");
+	d->ck_showPreviews->setWhatsThis(
+		tr("Show under links to some media content preview of the content."
+		" It's also possible to play audio and video right in chat."));
 	d->rb_delChatsClose->setWhatsThis(s +
 		tr("<P>This option does not keep the chat log in memory.</P>"));
 	d->rb_delChatsHour->setWhatsThis(s +
@@ -156,6 +159,8 @@ void OptionsTabChat::applyOptions()
 
 	PsiOptions::instance()->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
 
+	PsiOptions::instance()->setOption("options.ui.chat.show-previews", d->ck_showPreviews->isChecked());
+
 	// Soft return.
 	// Only update this if the value actually changed, or else custom presets
 	// might go lost.
@@ -211,6 +216,7 @@ void OptionsTabChat::restoreOptions()
 	}
 	d->ck_autoResize->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() );
 	d->ck_tabShortcuts->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tab-shortcuts").toBool() );
+	d->ck_showPreviews->setChecked( PsiOptions::instance()->getOption("options.ui.chat.show-previews").toBool() );
 	QString delafter = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
 	if (delafter == "instant") {
 		d->rb_delChatsClose->setChecked(true);

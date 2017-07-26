@@ -20,7 +20,8 @@ OTHER_FILES += options/default.xml \
 	options/windows.xml \
 	client_icons.txt \
 	version \
-	TODO
+	TODO \
+	qcm/*.qcm
 
 webkit {
 	OTHER_FILES += themes/chatview/util.js \

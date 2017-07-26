@@ -126,8 +126,8 @@ QList<PluginHost*> PluginManager::updatePluginsList()
 
 	foreach (const QString& d, pluginDirs()) {
 		QDir dir(d);
-		foreach (QString file, dir.entryList(QDir::Files)) {
-			file = dir.absoluteFilePath(file);
+		foreach (QFileInfo fileInfo, dir.entryInfoList(QDir::Files)) {
+			QString file = fileInfo.canonicalFilePath();
 			if (QLibrary::isLibrary(file)) {
 #ifndef PLUGINS_NO_DEBUG
 				qDebug("Found plugin: %s", qPrintable(file));

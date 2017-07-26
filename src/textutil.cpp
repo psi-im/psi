@@ -217,7 +217,7 @@ QString TextUtil::resolveEntities(const QString &in)
 			else if(type == "apos")
 				out += '\'';
 			else if(type == "nbsp")
-				out += 0xa0;
+				out += (char)0xa0;
 		}
 		else {
 			out += in[i];

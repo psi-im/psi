@@ -674,7 +674,6 @@ public:
 	{
 		PsiContact* contact = findContact(jid);
 		if (contact) {
-			Q_ASSERT(contact);
 			delete contact;
 			emit account->removeContact(jid);
 		}
@@ -1323,8 +1322,6 @@ PsiAccount::~PsiAccount()
 	// nuke all related dialogs
 	deleteAllDialogs();
 
-	QString str = name();
-
 	while (!d->messageQueue.isEmpty())
 		delete d->messageQueue.takeFirst();
 
@@ -1333,10 +1330,7 @@ PsiAccount::~PsiAccount()
 #endif
 
 	delete d->avCallManager;
-
-	if (d->voiceCaller)
-		delete d->voiceCaller;
-
+	delete d->voiceCaller;
 	delete d->ahcManager;
 	delete d->privacyManager;
 	delete d->pepManager;
@@ -1366,9 +1360,7 @@ PsiAccount::~PsiAccount()
 void PsiAccount::cleanupStream()
 {
 	// GSOC: Get SM state out of stream
-	if (d->stream) {
-		delete d->stream;
-	}
+	delete d->stream;
 
 	delete d->tls;
 	d->tls = 0;
@@ -4691,13 +4683,14 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 	if(m.invite().isEmpty() && !m.body().isEmpty())
 		toggleSecurity(m.to(), m.wasEncrypted());
 
-	// don't log groupchat, private messages, or encrypted messages
+	// don't log groupchat or encrypted messages
 	if(log) {
-		if(m.type() != "groupchat" && m.xencrypted().isEmpty() && !findGCContact(m.to())) {
+		if(m.type() != "groupchat" && m.xencrypted().isEmpty()) {
+			int type = findGCContact(m.to()) ? EDB::GroupChatContact : EDB::Contact;
 			MessageEvent::Ptr me(new MessageEvent(m, this));
 			me->setOriginLocal(true);
 			me->setTimeStamp(QDateTime::currentDateTime());
-			logEvent(m.to(), me);
+			logEvent(m.to(), me, type);
 		}
 	}
 
@@ -4920,7 +4913,7 @@ void PsiAccount::eventFromXml(const PsiEvent::Ptr &e)
 void PsiAccount::createNewPluginEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot)
 {
 	PluginEvent::Ptr pe(new PluginEvent(account, jid, descr, this));
-	connect(pe.data(), SIGNAL(activated(QString)), receiver, slot);
+	connect(pe.data(), SIGNAL(activated(QString,int)), receiver, slot);
 	handleEvent(pe, IncomingStanza);
 }
 #endif
@@ -4992,7 +4985,6 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 			// don't log private messages
 			if (!found &&
-				!findGCContact(e->from()) &&
 				!(e->type() == PsiEvent::Message &&
 				 e.staticCast<MessageEvent>()->message().body().isEmpty()))
 			{
@@ -5014,7 +5006,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 						}
 					}
 
-					logEvent(chatJid, e);
+					int type = findGCContact(chatJid) ? EDB::GroupChatContact : EDB::Contact;
+					logEvent(chatJid, e, type);
 				}
 			}
 		}
@@ -5644,14 +5637,17 @@ void PsiAccount::groupChatMessagesRead(const Jid &j)
 }
 #endif
 
-void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e)
+void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e, int type)
 {
 	if (!d->acc.opt_log)
 		return;
 
+	if (type == EDB::GroupChatContact && !PsiOptions::instance()->getOption("options.history.store-muc-private").toBool())
+		return;
+
 	EDBHandle *h = new EDBHandle(d->psi->edb());
 	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
-	h->append(j, e);
+	h->append(id(), j, e, type);
 }
 
 void PsiAccount::edb_finished()
@@ -6120,7 +6116,7 @@ void PsiAccount::pgp_encryptFinished()
 			MessageEvent::Ptr me(new MessageEvent(m, this));
 			me->setOriginLocal(true);
 			me->setTimeStamp(QDateTime::currentDateTime());
-			logEvent(m.to(), me);
+			logEvent(m.to(), me, EDB::Contact);
 		}
 
 		Message mwrap;

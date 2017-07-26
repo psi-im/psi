@@ -133,7 +133,7 @@
 			<save>
 				<toolbars-state type="QByteArray"/>
 				<log-width type="int">500</log-width>
-				<roster-width type="int">180</roster-width>
+				<roster-width type="int">220</roster-width>
 			</save>
 			<history comment="History dialog options">
 				<size comment="Remembered window size" type="QSize">
@@ -257,7 +257,7 @@ QLineEdit#le_status_text {
 				<saved-window-geometry type="QRect" >
 					<x>64</x>
 					<y>64</y>
-					<width>150</width>
+					<width>220</width>
 					<height>360</height>
 				</saved-window-geometry>
 				<saved-window-geometry-frame type="QRect" >
@@ -319,7 +319,7 @@ QLineEdit#le_status_text {
 				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
 				<show-initial-joins comment="Show joins on your MUC join (with status and priority, depends on options)" type="bool">false</show-initial-joins>
 				<log-width type="int">500</log-width>
-				<roster-width type="int">80</roster-width>
+				<roster-width type="int">150</roster-width>
 				<roster-at-left type="bool">false</roster-at-left>
 				<theme comment="The theme used for groupchat messages rendering" type="QString">psi/classic</theme>
 				<highlight-words type="QStringList" />
@@ -410,10 +410,10 @@ QLineEdit#le_status_text {
 					<use-slim-group-headings type="bool">false</use-slim-group-headings>
 				</contactlist>
 				<font>
-					<chat type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</chat>
-					<contactlist type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</contactlist>
-					<message type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</message>
-					<passive-popup type="QString">Sans Serif,7,-1,5,50,0,0,0,0,0</passive-popup>
+					<chat type="QString">Sans Serif,11,-1,5,50,0,0,0,0,0</chat>
+					<contactlist type="QString">Sans Serif,11,-1,5,50,0,0,0,0,0</contactlist>
+					<message type="QString">Sans Serif,11,-1,5,50,0,0,0,0,0</message>
+					<passive-popup type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</passive-popup>
 				</font>
 				<css type="QString" />
 			</look>

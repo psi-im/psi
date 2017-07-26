@@ -35,12 +35,10 @@ using namespace XMPP;
 //----------------------------------------------------------------------------
 // EDBItem
 //----------------------------------------------------------------------------
-EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id, const QString &prevId, const QString &nextId)
+EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id)
 {
 	e = event;
 	v_id = id;
-	v_prevId = prevId;
-	v_nextId = nextId;
 }
 
 EDBItem::~EDBItem()
@@ -57,16 +55,6 @@ const QString & EDBItem::id() const
 	return v_id;
 }
 
-const QString & EDBItem::nextId() const
-{
-	return v_nextId;
-}
-
-const QString & EDBItem::prevId() const
-{
-	return v_prevId;
-}
-
 
 //----------------------------------------------------------------------------
 // EDBHandle
@@ -77,6 +65,7 @@ public:
 	Private() {}
 
 	EDB *edb;
+	int beginRow_;
 	EDBResult r;
 	bool busy;
 	bool writeSuccess;
@@ -89,6 +78,7 @@ EDBHandle::EDBHandle(EDB *edb)
 {
 	d = new Private;
 	d->edb = edb;
+	d->beginRow_ = 0;
 	d->busy = false;
 	d->writeSuccess = false;
 	d->listeningFor = -1;
@@ -104,53 +94,32 @@ EDBHandle::~EDBHandle()
 	delete d;
 }
 
-void EDBHandle::getLatest(const Jid &j, int len)
+void EDBHandle::get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int begin, int len)
 {
 	d->busy = true;
 	d->lastRequestType = Read;
-	d->listeningFor = d->edb->op_getLatest(j, len);
+	d->listeningFor = d->edb->op_get(accId, jid, date, direction, begin, len);
 }
 
-void EDBHandle::getOldest(const Jid &j, int len)
+void EDBHandle::find(const QString &accId, const QString &str, const XMPP::Jid &jid, const QDateTime date, int direction)
 {
 	d->busy = true;
 	d->lastRequestType = Read;
-	d->listeningFor = d->edb->op_getOldest(j, len);
+	d->listeningFor = d->edb->op_find(accId, str, jid, date, direction);
 }
 
-void EDBHandle::get(const Jid &j, const QString &id, int direction, int len)
-{
-	d->busy = true;
-	d->lastRequestType = Read;
-	d->listeningFor = d->edb->op_get(j, id, direction, len);
-}
-
-void EDBHandle::getByDate(const Jid &j, QDateTime first, QDateTime last)
-{
-	d->busy = true;
-	d->lastRequestType = Read;
-	d->listeningFor = d->edb->op_getByDate(j, first, last);
-}
-
-void EDBHandle::find(const QString &str, const Jid &j, const QString &id, int direction)
-{
-	d->busy = true;
-	d->lastRequestType = Read;
-	d->listeningFor = d->edb->op_find(str, j, id, direction);
-}
-
-void EDBHandle::append(const Jid &j, const PsiEvent::Ptr &e)
+void EDBHandle::append(const QString &accId, const Jid &j, const PsiEvent::Ptr &e, int type)
 {
 	d->busy = true;
 	d->lastRequestType = Write;
-	d->listeningFor = d->edb->op_append(j, e);
+	d->listeningFor = d->edb->op_append(accId, j, e, type);
 }
 
-void EDBHandle::erase(const Jid &j)
+void EDBHandle::erase(const QString &accId, const Jid &j)
 {
 	d->busy = true;
 	d->lastRequestType = Erase;
-	d->listeningFor = d->edb->op_erase(j);
+	d->listeningFor = d->edb->op_erase(accId, j);
 }
 
 bool EDBHandle::busy() const
@@ -192,6 +161,11 @@ int EDBHandle::listeningFor() const
 int EDBHandle::lastRequestType() const
 {
 	return d->lastRequestType;
+}
+
+int EDBHandle::beginRow() const
+{
+	return d->beginRow_;
 }
 
 
@@ -237,46 +211,32 @@ void EDB::unreg(EDBHandle *h)
 	d->list.removeAll(h);
 }
 
-int EDB::op_getLatest(const Jid &j, int len)
+int EDB::op_get(const QString &accId, const Jid &jid, const QDateTime date, int direction, int start, int len)
 {
-	return getLatest(j, len);
+	return get(accId, jid, date, direction, start, len);
 }
 
-int EDB::op_getOldest(const Jid &j, int len)
+int EDB::op_find(const QString &accId, const QString &str, const Jid &j, const QDateTime date, int direction)
 {
-	return getOldest(j, len);
+	return find(accId, str, j, date, direction);
 }
 
-int EDB::op_get(const Jid &jid, const QString &id, int direction, int len)
+int EDB::op_append(const QString &accId, const Jid &j, const PsiEvent::Ptr &e, int type)
 {
-	return get(jid, id, direction, len);
+	return append(accId, j, e, type);
 }
 
-int EDB::op_getByDate(const Jid &j, QDateTime first, QDateTime last)
+int EDB::op_erase(const QString &accId, const Jid &j)
 {
-	return getByDate(j, first, last);
+	return erase(accId, j);
 }
 
-int EDB::op_find(const QString &str, const Jid &j, const QString &id, int direction)
-{
-	return find(str, j, id, direction);
-}
-
-int EDB::op_append(const Jid &j, const PsiEvent::Ptr &e)
-{
-	return append(j, e);
-}
-
-int EDB::op_erase(const Jid &j)
-{
-	return erase(j);
-}
-
-void EDB::resultReady(int req, EDBResult r)
+void EDB::resultReady(int req, EDBResult r, int begin_row)
 {
 	// deliver
 	foreach(EDBHandle* h, d->list) {
 		if(h->listeningFor() == req) {
+			h->d->beginRow_ = begin_row;
 			h->edb_resultReady(r);
 			return;
 		}

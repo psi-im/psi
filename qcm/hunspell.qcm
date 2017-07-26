@@ -42,7 +42,7 @@ public:
 		s = conf->getenv("QC_WITH_HUNSPELL_INC");
 		if(!s.isEmpty()) {
 			if(!conf->checkHeader(s, "hunspell.hxx")) {
-				conf->debug("Hunspell includes not found!");
+				conf->debug(QString("Hunspell includes not found at %1!").arg(s));
 				return false;
 			}
 			qc_hunspell_incs += s;
@@ -57,7 +57,13 @@ public:
 		QStringList libnames;
 		libnames += "hunspell-1.3";
 		libnames += "hunspell";
+#ifdef _MSC_VER
+# ifdef QC_BUILDMODE
+		libnames += (qc_buildmode_debug? "libhunspelld" : "libhunspell");
+# else
 		libnames += "libhunspell";
+# endif
+#endif
 
 		bool success = false;
 		QString libname_success;

@@ -1852,7 +1852,7 @@ public:
 		s = conf->getenv("QC_WITH_HUNSPELL_INC");
 		if(!s.isEmpty()) {
 			if(!conf->checkHeader(s, "hunspell.hxx")) {
-				conf->debug("Hunspell includes not found!");
+				conf->debug(QString("Hunspell includes not found at %1!").arg(s));
 				return false;
 			}
 			qc_hunspell_incs += s;
@@ -1867,7 +1867,13 @@ public:
 		QStringList libnames;
 		libnames += "hunspell-1.3";
 		libnames += "hunspell";
+#ifdef _MSC_VER
+# ifdef QC_BUILDMODE
+		libnames += (qc_buildmode_debug? "libhunspelld" : "libhunspell");
+# else
 		libnames += "libhunspell";
+# endif
+#endif
 
 		bool success = false;
 		QString libname_success;
@@ -2078,9 +2084,15 @@ public:
 	bool exec()
 	{
 		QString version = psiGetVersion();
+		QRegExp verre("^\\\\d+(?:\\\\.\\\\d+)+");
+		if (verre.indexIn(version) == -1) {
+			conf->debug("Failed to parse version file");
+			return false;
+		}
+		conf->addExtra(QString("PSI_VERSION = %1").arg(verre.cap(0)));
+		
 		QHash<QString,QString> vars;
 		vars["VERSION"] = version;
-		
 		QDir::current().mkpath("mac");
 		psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
 		

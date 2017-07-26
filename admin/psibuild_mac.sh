@@ -306,15 +306,18 @@ prepare_sources() {
 	local rev_date=$(git log -n1 --date=short --pretty=format:'%ad')
 
         cd ${PSI_DIR}/build
+	local cur_ver=$(cat ./version | grep -Eoe "^[^\-]+")
 
         if [ -z $VERSION ];
         then
-            VERSION=$(echo "1.0.${rev}$([ "$ENABLE_WEBKIT" = 1 ] && echo "-webkit") ($(echo ${rev_date}))")
+            VERSION=$(echo "${cur_ver}.${rev}$([ "$ENABLE_WEBKIT" = 1 ] && echo "-webkit") ($(echo ${rev_date}))")
         else
 		if [ $ENABLE_WEBKIT != 0 ]; then
             		VERSION="${VERSION}-webkit"
         	fi
 	fi
+
+	log "Psi version is ${VERSION}"
 
         echo "${VERSION}" > version
 }

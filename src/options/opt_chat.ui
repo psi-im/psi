@@ -1,111 +1,128 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>OptChat</class>
- <widget class="QWidget" name="OptChat" >
-  <property name="geometry" >
+ <widget class="QWidget" name="OptChat">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>346</width>
-    <height>421</height>
+    <width>517</width>
+    <height>531</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>OptChatUI</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>6</number>
    </property>
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
    <item>
-    <widget class="QCheckBox" name="ck_chatSoftReturn" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_chatSoftReturn">
+     <property name="text">
       <string>Enter key sends chat messages</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_alertOpenChats" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_alertOpenChats">
+     <property name="text">
       <string>Alert chat messages even if chat window is open</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_raiseChatWindow" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_raiseChatWindow">
+     <property name="text">
       <string>Raise chat window on receiving new messages</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_switchTabOnMessage" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_switchTabOnMessage">
+     <property name="text">
       <string>Switch tab on receiving new messages</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_smallChats" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_smallChats">
+     <property name="text">
       <string>Open chats in compact mode</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
      <item>
-      <widget class="QCheckBox" name="ck_tabChats" >
-       <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>0</hsizetype>
-         <vsizetype>0</vsizetype>
+      <widget class="QCheckBox" name="ck_tabChats">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="text" >
+       <property name="text">
         <string>Use tabbed mode:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="cb_tabGrouping" >
+      <widget class="QComboBox" name="cb_tabGrouping">
        <item>
-        <property name="text" >
+        <property name="text">
          <string>for chats only</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>for mucs only</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>for chats and mucs separately</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>for mucs and chats in one window</string>
         </property>
        </item>
-	   <item>
-		<property name="text" >
-		 <string>for mucs, chats and roster in one window</string>
-		</property>
-	   </item>
        <item>
-        <property name="text" >
+        <property name="text">
+         <string>for mucs, chats and roster in one window</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>[customized]</string>
         </property>
        </item>
@@ -113,10 +130,10 @@
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>0</width>
          <height>0</height>
@@ -127,42 +144,58 @@
     </layout>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_autoResize" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_autoResize">
+     <property name="text">
       <string>Auto-resize text input field</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_tabShortcuts" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_tabShortcuts">
+     <property name="text">
       <string>Enable Alt-[0-9] tab shortcuts</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox18" >
-     <property name="title" >
+    <widget class="QCheckBox" name="ck_showPreviews">
+     <property name="text">
+      <string>Show previews for links</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox18">
+     <property name="title">
       <string>Default action</string>
      </property>
-     <layout class="QHBoxLayout" >
-      <property name="margin" >
-       <number>9</number>
-      </property>
-      <property name="spacing" >
+     <layout class="QHBoxLayout">
+      <property name="spacing">
        <number>6</number>
       </property>
+      <property name="leftMargin">
+       <number>9</number>
+      </property>
+      <property name="topMargin">
+       <number>9</number>
+      </property>
+      <property name="rightMargin">
+       <number>9</number>
+      </property>
+      <property name="bottomMargin">
+       <number>9</number>
+      </property>
       <item>
-       <widget class="QRadioButton" name="rb_defActMsg" >
-        <property name="text" >
-         <string>Message</string>
+       <widget class="QRadioButton" name="rb_defActMsg">
+        <property name="text">
+         <string>&amp;Message</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="rb_defActChat" >
-        <property name="text" >
-         <string>Chat</string>
+       <widget class="QRadioButton" name="rb_defActChat">
+        <property name="text">
+         <string>&amp;Chat</string>
         </property>
        </widget>
       </item>
@@ -170,42 +203,51 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox17" >
-     <property name="title" >
+    <widget class="QGroupBox" name="groupBox17">
+     <property name="title">
       <string>Delete chat window contents</string>
      </property>
-     <layout class="QVBoxLayout" >
-      <property name="margin" >
-       <number>10</number>
-      </property>
-      <property name="spacing" >
+     <layout class="QVBoxLayout">
+      <property name="spacing">
        <number>6</number>
       </property>
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
       <item>
-       <widget class="QRadioButton" name="rb_delChatsClose" >
-        <property name="text" >
-         <string>When chat window is closed</string>
+       <widget class="QRadioButton" name="rb_delChatsClose">
+        <property name="text">
+         <string>&amp;When chat window is closed</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="rb_delChatsHour" >
-        <property name="text" >
-         <string>One hour after chat window was closed</string>
+       <widget class="QRadioButton" name="rb_delChatsHour">
+        <property name="text">
+         <string>&amp;One hour after chat window was closed</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="rb_delChatsDay" >
-        <property name="text" >
-         <string>One day after chat window was closed</string>
+       <widget class="QRadioButton" name="rb_delChatsDay">
+        <property name="text">
+         <string>One &amp;day after chat window was closed</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="rb_delChatsNever" >
-        <property name="text" >
-         <string>Never</string>
+       <widget class="QRadioButton" name="rb_delChatsNever">
+        <property name="text">
+         <string>&amp;Never</string>
         </property>
        </widget>
       </item>
@@ -214,6 +256,7 @@
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <resources/>
+ <connections/>
 </ui>

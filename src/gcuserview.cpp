@@ -759,16 +759,6 @@ void GCUserView::doContextMenu(QTreeWidgetItem *i)
 	action(lvi->text(0), lvi->s, x);
 }
 
-void GCUserView::contextMenuRequested(const QPoint &p)
-{
-	QTreeWidgetItem *i = itemAt(p);
-
-	if(!i || !i->parent() || !gcDlg_)
-		return;
-
-	doContextMenu(i);
-}
-
 void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
 {
 	QTreeWidgetItem *i = 0;

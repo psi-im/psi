@@ -151,35 +151,44 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
-          <widget class="QLineEdit" name="searchField">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Search:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="tb_find">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>27</width>
-             <height>27</height>
-            </size>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <item>
+              <widget class="QLineEdit" name="searchField">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+		 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="tbFindForward"/>
+             </item>
+             <item>
+              <widget class="QToolButton" name="tbFindBackward"/>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="searchResult">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
@@ -296,6 +305,16 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QProgressBar" name="progressBar">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
@@ -316,13 +335,11 @@
  <tabstops>
   <tabstop>contactList</tabstop>
   <tabstop>calendar</tabstop>
-  <tabstop>searchField</tabstop>
   <tabstop>buttonEarliest</tabstop>
   <tabstop>buttonPrevious</tabstop>
   <tabstop>buttonNext</tabstop>
   <tabstop>buttonLastest</tabstop>
   <tabstop>accountsBox</tabstop>
-  <tabstop>tb_find</tabstop>
   <tabstop>msgLog</tabstop>
  </tabstops>
  <resources/>

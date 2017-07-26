@@ -147,7 +147,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 	}
 
 	QString themeType = id.section('/', 0, 0);
-#if WEBENGINE
+#ifdef WEBENGINE
 	QWebChannel * channel = new QWebChannel(wv->page());
 	wv->page()->setWebChannel(channel);
 	channel->registerObject(QLatin1String("srvLoader"), jsLoader.data());
@@ -259,7 +259,7 @@ void ChatViewThemePrivate::embedSessionJsObject(ChatViewThemeSession *session)
 
 bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 {
-#if WEBENGINE
+#ifdef WEBENGINE
 	QWebEnginePage *page = session->webView()->page();
 	if (transparentBackground) {
 		page->setBackgroundColor(Qt::transparent);
@@ -414,7 +414,7 @@ bool ChatViewJSLoader::isMuc() const
 
 QString ChatViewJSLoader::serverUrl() const
 {
-#if WEBENGINE
+#ifdef WEBENGINE
 	ChatViewThemeProvider *cvProvider = static_cast<ChatViewThemeProvider*>(theme->provider);
 	auto server = cvProvider->themeServer();
 	QUrl url = server->serverUrl();
