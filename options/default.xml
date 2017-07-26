@@ -575,6 +575,9 @@ QLineEdit#le_status_text {
 				</set>
 			</status>
 			<service-discovery comment="Shortcuts in the service discovery dialog"/>
+			<history comment="Shortcuts in the history dialog">
+				<find type="QKeySequence" comment="Find text">Ctrl+F</find>
+			</history>
 		</shortcuts>
 		<contactlist>
 			<hide-on-start type="bool">false</hide-on-start>

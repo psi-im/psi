@@ -38,6 +38,7 @@
 #include "fileutil.h"
 #include "userlist.h"
 #include "common.h"
+#include "shortcutmanager.h"
 
 #define SEARCH_PADDING_SIZE 20
 #define DISPLAY_PAGE_SIZE   200
@@ -722,6 +723,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	connect(ui_.contactFilterEdit, SIGNAL(textChanged(QString)), proxy, SLOT(setFilterFixedString(QString)));
 
 	setGeometryOptionPath(geometryOption);
+	setShortcuts();
 }
 
 HistoryDlg::~HistoryDlg()
@@ -1334,4 +1336,13 @@ QString HistoryDlg::getCurrentAccountId() const
 HistoryContactListModel *HistoryDlg::contactListModel()
 {
 	return _contactListModel;
+}
+
+void HistoryDlg::setShortcuts()
+{
+	QAction *act = new QAction(this);
+	act->setShortcuts(ShortcutManager::instance()->shortcuts("history.find"));
+	connect(act, SIGNAL(triggered(bool)), ui_.searchField, SLOT(setFocus()));
+	connect(act, SIGNAL(triggered(bool)), ui_.searchField, SLOT(selectAll()));
+	addAction(act);
 }

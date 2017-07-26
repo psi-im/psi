@@ -201,6 +201,7 @@ private:
 	EDBHandle* getEDBHandle();
 	QString getCurrentAccountId() const;
 	HistoryContactListModel *contactListModel();
+	void setShortcuts();
 
 	class Private;
 	Private *d;
