@@ -59,9 +59,9 @@ Changes
   - Font and windows sizes adjusted for regular fullhd displays
   - Fixed crashes online account remove and contact delete from another resource
   - History DB and dialog improvements
-  - Fixed crash on unrecginzed dictionaty encodings in hunspell checker
+  - Fixed crash on unrecognized dictionary encodings in hunspell checker
   - Added option to disable previews in webkit builds
-  - Fixed Youtube links recongition
+  - Fixed Youtube links recognition
 
   New in 1.1
   - Fixed a few crashes. Seems to be pretty stable now.
