@@ -38,9 +38,15 @@ public:
 	bool exec()
 	{
 		QString version = psiGetVersion();
+		QRegExp verre("^\\d+(?:\\.\\d+)+");
+		if (verre.indexIn(version) == -1) {
+			conf->debug("Failed to parse version file");
+			return false;
+		}
+		conf->addExtra(QString("PSI_VERSION = %1").arg(verre.cap(0)));
+		
 		QHash<QString,QString> vars;
 		vars["VERSION"] = version;
-		
 		QDir::current().mkpath("mac");
 		psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
 		
