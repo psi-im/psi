@@ -37,5 +37,6 @@ set(FORMS
 qt5_wrap_ui(UI_FORMS ${FORMS})
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 add_library(avcall STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
+add_dependencies(avcall build_ui_files)
 target_link_libraries(avcall ${QT_LIBRARIES} ${iris_LIB} libpsi_tools widgets)
 target_include_directories(avcall PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

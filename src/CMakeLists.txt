@@ -371,6 +371,19 @@ if(USE_WEBENGINE)
 endif()
 add_dependencies(${PROJECT_NAME} build_ui_files)
 
+if(WIN32 AND MSVC)
+	list(APPEND EXTRA_LIBS
+		WSock32
+		User32
+		Shell32
+		Gdi32
+		AdvAPI32
+	)
+	add_definitions(
+		-DQT_STATICPLUGIN
+	)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
 	${QT_LIBRARIES}
 	${EXTRA_LDFLAGS}
