@@ -35,6 +35,15 @@ GROWL_FILE="Growl-2.0.1"
 
 DEPS_URL="https://drive.google.com/uc?export=download&id=0B9THQ10qg_RSaXplUDlXNEZ3ZDQ"
 DEPS_FILE="deps_170602"
+DEPS_DIR="deps"
+
+GST_URL="https://drive.google.com/uc?export=download&id=0B9THQ10qg_RSa0hTWWJydDdoN1k"
+GST_FILE="gstbundle-0.10.36-mac"
+GST_DIR=$GST_FILE
+
+PSIMEDIA_URL="https://drive.google.com/uc?export=download&id=0B9THQ10qg_RSYmtWbk1zN2JJems"
+PSIMEDIA_FILE="psimedia-1.0.5-mac"
+PSIMEDIA_DIR=$PSIMEDIA_FILE
 
 # official repository
 GIT_REPO="https://github.com/psi-im/psi.git"
@@ -233,20 +242,31 @@ fetch_sources() {
 	git_fetch "${QCA_REPO_URI}" qca "QCA"
 }
 
+get_deps() {
+	local deps_file=$1
+	local deps_url=$2
+	local deps_dir=$3
+
+	if [ ! -d ${deps_dir} ]
+	then
+		if [ ! -f ${deps_file}.tar.bz2 ]
+        	then
+			log "Downloading ${deps_file}"
+			curl -L -o ${deps_file}.tar.bz2 ${deps_url} || die "can't download url ${deps_url}"
+		fi
+		
+		log "Extracting ${deps_file}"
+		tar jxvf ${deps_file}.tar.bz2 2>/dev/null || die "can't extract file ${deps_file}"
+	fi
+
+}
+
 fetch_deps() {
 	cd ${PSI_DIR}
 
-	if [ ! -d "deps" ]
-	then
-		if [ ! -f ${DEPS_FILE}.tar.bz2 ]
-        	then
-			log "Downloading ${DEPS_FILE}"
-			curl -L -o ${DEPS_FILE}.tar.bz2 ${DEPS_URL} || die "can't download url ${DEPS_URL}"
-		fi
-		
-		log "Extracting ${DEPS_FILE}"
-		tar jxvf ${DEPS_FILE}.tar.bz2 2>/dev/null || die "can't extract file ${DEPS_FILE}"
-	fi
+	get_deps $DEPS_FILE $DEPS_URL $DESP_DIR
+	get_deps $GST_FILE $GST_URL $GST_DIR
+	get_deps $PSIMEDIA_FILE $PSIMEDIA_URL $PSIMEDIA_DIR
 }
 
 build_qca() {
@@ -280,10 +300,10 @@ prepare_sources() {
 	cd "${PSI_DIR}"
 	cp -a "psi/" "build/"
 
-        TRANSLATIONS=`ls ${PSI_DIR}/translations/translations | grep -v en | sed s/psi_// | sed s/.ts//`
+	TRANSLATIONS=`ls ${PSI_DIR}/translations/translations | grep -v en | sed s/psi_// | sed s/.ts//`
 
 	local actual_translations=""
-        LANGS_DIR="${PSI_DIR}/build/langs"
+	LANGS_DIR="${PSI_DIR}/build/langs"
 	[ -n "$TRANSLATIONS" ] && {
 		mkdir -p $LANGS_DIR
 		for l in $TRANSLATIONS; do
@@ -295,7 +315,7 @@ prepare_sources() {
 		[ -z "${actual_translations}" ] && warning "Translations not found"
 	}
 
-        log "Copying plugins..."
+	log "Copying plugins..."
 	cd "${PSI_DIR}/plugins/generic"
 	PLUGINS=`find . -maxdepth 1 -name '*plugin' | cut -d"/" -f2 | grep -v "videostatusplugin"`
 	cp -a "${PSI_DIR}/plugins/generic" "${PSI_DIR}/build/src/plugins" || \
@@ -305,7 +325,7 @@ prepare_sources() {
 	local rev=$(./admin/git_revnumber.sh)
 	local rev_date=$(git log -n1 --date=short --pretty=format:'%ad')
 
-        cd ${PSI_DIR}/build
+	cd ${PSI_DIR}/build
 	local cur_ver=$(cat ./version | grep -Eoe "^[^\-]+")
 
         if [ -z $VERSION ];
@@ -319,20 +339,20 @@ prepare_sources() {
 
 	log "Psi version is ${VERSION}"
 
-        echo "${VERSION}" > version
+	echo "${VERSION}" > version
 }
 
 src_compile() {
 	log "All ready. Now run make..."
 	cd "${PSI_DIR}"/build
 
-        CONF_OPTS="--disable-qdbus --enable-whiteboarding --disable-xss --release"
+	CONF_OPTS="--disable-qdbus --enable-whiteboarding --disable-xss --release"
 
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		CONF_OPTS=" --enable-webkit $CONF_OPTS"
 	fi
 
-        CONF_OPTS=" --with-idn-lib=${LIBS_PATH}/lib --with-idn-inc=${LIBS_PATH}/include --with-qca-lib=${QCA_PREFIX}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
+	CONF_OPTS=" --with-idn-lib=${LIBS_PATH}/lib --with-idn-inc=${LIBS_PATH}/include --with-qca-lib=${QCA_PREFIX}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
 
 	${QCONF} || die "QConf failed"
 
@@ -345,9 +365,11 @@ src_compile() {
 		echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_DEPLOYMENT_TARGET}" >> conf.pri
 	fi
 
-        $MAKE $MAKEOPT || die "make failed"
+	echo "QMAKE_CXXFLAGS += -Wno-inconsistent-missing-override" >> conf.pri
 
-        plugins_compile
+	$MAKE $MAKEOPT || die "make failed"
+
+	plugins_compile
 }
 
 prep_otr_plugin() {
@@ -361,7 +383,7 @@ plugins_compile() {
 	echo "QMAKE_MAC_SDK = macosx${MAC_SDK_VER}" >> psiplugin.pri
 	echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_DEPLOYMENT_TARGET}" >> psiplugin.pri
 	
-        log "List plugins for compiling..."
+	log "List plugins for compiling..."
 	echo ${PLUGINS}
 	log "Compiling plugins..."
 	for pl in ${PLUGINS}; do
@@ -376,123 +398,179 @@ plugins_compile() {
 }
 
 copy_qca() {
-        #QCA staff
-        cp -a "${QCA_PREFIX}/lib/qca-qt5.framework" "$contentsdir/Frameworks"
-        cleanup_framework "$contentsdir/Frameworks/qca-qt5.framework" qca-qt5 ${QCA_VER}
-	mkdir -p "$contentsdir/PlugIns/crypto/"
+	log "\tCopying qca..."
+
+	cp -a "${QCA_PREFIX}/lib/qca-qt5.framework" "$CONTENTSDIR/Frameworks"
+	cleanup_framework "$CONTENTSDIR/Frameworks/qca-qt5.framework" qca-qt5 ${QCA_VER}
+	mkdir -p "$BUNDLE_PLUGINS_DIR/crypto/"
 
 	local QCA_PLUGINS=`ls ${QCA_PLUGINS_PATH} | grep "dylib"`
 
 	for p in $QCA_PLUGINS; do
-		cp -f "${QCA_PLUGINS_PATH}/$p" "$contentsdir/PlugIns/crypto/$p"
+		cp -f "${QCA_PLUGINS_PATH}/$p" "$BUNDLE_PLUGINS_DIR/crypto/$p"
 
-		install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"    "$contentsdir/PlugIns/crypto/$p"
-		install_name_tool -change "${SSL_PATH}/lib/libssl.1.0.0.dylib"    "@executable_path/../Frameworks/libssl.dylib"       "$contentsdir/PlugIns/crypto/$p"
-		install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "$contentsdir/PlugIns/crypto/$p"
-		install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/PlugIns/crypto/$p"
+		install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"    "$BUNDLE_PLUGINS_DIR/crypto/$p"
+		install_name_tool -change "${SSL_PATH}/lib/libssl.1.0.0.dylib"    "@executable_path/../Frameworks/libssl.dylib"       "$BUNDLE_PLUGINS_DIR/crypto/$p"
+		install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "$BUNDLE_PLUGINS_DIR/crypto/$p"
+		install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$BUNDLE_PLUGINS_DIR/crypto/$p"
+	done
+}
+
+copy_gst_bundle() {
+	log "\tCopying psimedia..."
+
+	local build_base=${PSI_DIR}/build/admin/build
+	local gst_base=${PSI_DIR}/${GST_FILE}/x86_64
+	local psimedia_base=${PSI_DIR}/${PSIMEDIA_FILE}
+
+	GSTBUNDLE_LIB_FILES=
+	for n in `cat $build_base/gstbundle_libs_mac`; do
+		for l in `find $gst_base/lib -maxdepth 1 -type f -name $n`; do
+			base_l=`basename $l`
+			GSTBUNDLE_LIB_FILES="$GSTBUNDLE_LIB_FILES $base_l"
+		done
+	done
+
+	GSTBUNDLE_LIB_SUBS=
+	for n in `cat $build_base/gstbundle_libs_mac`; do
+		for l in `find $gst_base/lib -maxdepth 1 -name $n`; do
+			base_l=`basename $l`
+			GSTBUNDLE_LIB_SUBS="$GSTBUNDLE_LIB_SUBS $base_l"
+		done
+	done
+
+	GSTBUNDLE_LIB_GST_FILES=
+	for n in `cat $build_base/gstbundle_gstplugins_mac`; do
+		for l in `find $gst_base/lib/gstreamer-0.10 -type f -name $n`; do
+			base_l=`basename $l`
+			if [ "$base_l" != "libgstosxaudio.so" ]; then
+				GSTBUNDLE_LIB_GST_FILES="$GSTBUNDLE_LIB_GST_FILES $base_l"
+			fi
+		done
+	done
+
+	# subs are files we need to copy, in addition to being what we attempt to substitute via install_name_tool
+	for l in $GSTBUNDLE_LIB_SUBS; do
+		cp -a $gst_base/lib/$l $CONTENTSDIR/Frameworks
+	done
+
+	# now to substitutions on the regular files only
+	for l in $GSTBUNDLE_LIB_FILES; do
+		for g in $GSTBUNDLE_LIB_SUBS; do
+			install_name_tool -change $g @executable_path/../Frameworks/$g $CONTENTSDIR/Frameworks/$l
+		done
+	done
+
+	mkdir -p $CONTENTSDIR/Frameworks/gstreamer-0.10
+	for p in $GSTBUNDLE_LIB_GST_FILES; do
+		cp $gst_base/lib/gstreamer-0.10/$p $CONTENTSDIR/Frameworks/gstreamer-0.10
+		for g in $GSTBUNDLE_LIB_SUBS; do
+			install_name_tool -change $g @executable_path/../Frameworks/$g $CONTENTSDIR/Frameworks/gstreamer-0.10/$p
+		done
+	done
+
+	cp $psimedia_base/plugins/libgstprovider.dylib $BUNDLE_PLUGINS_DIR
+	for g in $GSTBUNDLE_LIB_SUBS; do
+		install_name_tool -change $g @executable_path/../Frameworks/$g $BUNDLE_PLUGINS_DIR/libgstprovider.dylib
 	done
 }
 
 copy_qt() {
+	log "\tCopying Qt libs..."
+
+	local plugins_dir_name=Plugins
+	BUNDLE_PLUGINS_DIR=$CONTENTSDIR/$plugins_dir_name
+
 	for f in $QT_FRAMEWORKS; do
-		cp -a ${QTDIR}/lib/$f.framework $contentsdir/Frameworks
-		cleanup_framework $contentsdir/Frameworks/$f.framework $f ${QT_FRAMEWORK_VERSION}
+		cp -a ${QTDIR}/lib/$f.framework $CONTENTSDIR/Frameworks
+		cleanup_framework $CONTENTSDIR/Frameworks/$f.framework $f ${QT_FRAMEWORK_VERSION}
 	done
 
 	for p in $QT_PLUGINS; do
-		mkdir -p $contentsdir/PlugIns/$(dirname $p);
-		cp -a ${QTDIR}/plugins/$p $contentsdir/PlugIns/$p
+		mkdir -p $BUNDLE_PLUGINS_DIR/$(dirname $p);
+		cp -a ${QTDIR}/plugins/$p $BUNDLE_PLUGINS_DIR/$p
 	done
 
-	qt_conf_file="$contentsdir/Resources/qt.conf"
+	qt_conf_file="$CONTENTSDIR/Resources/qt.conf"
 	touch ${qt_conf_file}
 	echo "[Paths]" >> ${qt_conf_file}
-	echo "Plugins = PlugIns" >> ${qt_conf_file}
+	echo "Plugins = ${plugins_dir_name}" >> ${qt_conf_file}
 
-	install_name_tool -add_rpath "@executable_path/../Frameworks"  "$contentsdir/MacOS/psi"
+	install_name_tool -add_rpath "@executable_path/../Frameworks"  "$CONTENTSDIR/MacOS/psi"
 }
 
 copy_main_libs() {
-        cp -f "${LIBS_PATH}/lib/libz.dylib"     "$contentsdir/Frameworks/"
-        cp -f "${LIBS_PATH}/lib/libidn.dylib"   "$contentsdir/Frameworks/"
-        cp -f "${SSL_PATH}/lib/libssl.dylib"    "$contentsdir/Frameworks/"
-        cp -f "${SSL_PATH}/lib/libcrypto.dylib" "$contentsdir/Frameworks/"
-        chmod +w "$contentsdir/Frameworks/libssl.dylib"
-        chmod +w "$contentsdir/Frameworks/libcrypto.dylib"
+	log "\tCopying libs..."
 
-        install_name_tool -id "@executable_path/../Frameworks/libz.dylib" "$contentsdir/Frameworks/libz.dylib"
-        install_name_tool -id "@executable_path/../Frameworks/libidn.dylib" "$contentsdir/Frameworks/libidn.dylib"
-        install_name_tool -id "@executable_path/../Frameworks/libssl.dylib" "$contentsdir/Frameworks/libssl.dylib"
-        install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "$contentsdir/Frameworks/libssl.dylib"
-        install_name_tool -id "@executable_path/../Frameworks/libcrypto.dylib" "$contentsdir/Frameworks/libcrypto.dylib"
+        cp -f "${LIBS_PATH}/lib/libz.dylib"     "$CONTENTSDIR/Frameworks/"
+        cp -f "${LIBS_PATH}/lib/libidn.dylib"   "$CONTENTSDIR/Frameworks/"
+        cp -f "${SSL_PATH}/lib/libssl.dylib"    "$CONTENTSDIR/Frameworks/"
+        cp -f "${SSL_PATH}/lib/libcrypto.dylib" "$CONTENTSDIR/Frameworks/"
+        chmod +w "$CONTENTSDIR/Frameworks/libssl.dylib"
+        chmod +w "$CONTENTSDIR/Frameworks/libcrypto.dylib"
 
-        install_name_tool -change "${LIBS_PATH}/lib/libz.1.dylib"    "@executable_path/../Frameworks/libz.dylib"   "$contentsdir/MacOS/psi"
-        install_name_tool -change "${LIBS_PATH}/lib/libidn.11.dylib" "@executable_path/../Frameworks/libidn.dylib" "$contentsdir/MacOS/psi"
+        install_name_tool -id "@executable_path/../Frameworks/libz.dylib" "$CONTENTSDIR/Frameworks/libz.dylib"
+        install_name_tool -id "@executable_path/../Frameworks/libidn.dylib" "$CONTENTSDIR/Frameworks/libidn.dylib"
+        install_name_tool -id "@executable_path/../Frameworks/libssl.dylib" "$CONTENTSDIR/Frameworks/libssl.dylib"
+        install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "$CONTENTSDIR/Frameworks/libssl.dylib"
+        install_name_tool -id "@executable_path/../Frameworks/libcrypto.dylib" "$CONTENTSDIR/Frameworks/libcrypto.dylib"
+
+        install_name_tool -change "${LIBS_PATH}/lib/libz.1.dylib"    "@executable_path/../Frameworks/libz.dylib"   "$CONTENTSDIR/MacOS/psi"
+        install_name_tool -change "${LIBS_PATH}/lib/libidn.11.dylib" "@executable_path/../Frameworks/libidn.dylib" "$CONTENTSDIR/MacOS/psi"
 }
 
 copy_otrplugins_libs() {
-        cp -f "${LIBS_PATH}/lib/libgpg-error.dylib" "$contentsdir/Frameworks/"
-        cp -f "${LIBS_PATH}/lib/libgcrypt.dylib"    "$contentsdir/Frameworks/"
-        cp -f "${LIBS_PATH}/lib/libotr.dylib"       "$contentsdir/Frameworks/"
-        cp -f "${LIBS_PATH}/lib/libtidy.dylib"      "$contentsdir/Frameworks/"
+	log "\tCopying otr libs..."
 
-        install_name_tool -id "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/Frameworks/libgpg-error.dylib"
-        
-	install_name_tool -id "@executable_path/../Frameworks/libgcrypt.dylib" "$contentsdir/Frameworks/libgcrypt.dylib"
-	install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/Frameworks/libgcrypt.dylib"
-        
-	install_name_tool -id "@executable_path/../Frameworks/libotr.dylib" "$contentsdir/Frameworks/libotr.dylib"
-        install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib" "@executable_path/../Frameworks/libgcrypt.dylib" "$contentsdir/Frameworks/libotr.dylib"
-	install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/Frameworks/libotr.dylib"
-        
-	install_name_tool -id "@executable_path/../Frameworks/libtidy.dylib" "$contentsdir/Frameworks/libtidy.dylib"
+        cp -f "${LIBS_PATH}/lib/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/"
+        cp -f "${LIBS_PATH}/lib/libgcrypt.dylib"    "$CONTENTSDIR/Frameworks/"
+        cp -f "${LIBS_PATH}/lib/libotr.dylib"       "$CONTENTSDIR/Frameworks/"
+        cp -f "${LIBS_PATH}/lib/libtidy.dylib"      "$CONTENTSDIR/Frameworks/"
 
-        install_name_tool -change "${LIBS_PATH}/lib/libotr.5.dylib"       "@executable_path/../Frameworks/libotr.dylib"       "$contentsdir/Resources/plugins/libotrplugin.dylib"
-	install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "$contentsdir/Resources/plugins/libotrplugin.dylib"
-	install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$contentsdir/Resources/plugins/libotrplugin.dylib"
-	install_name_tool -change "${LIBS_PATH}/lib/libtidy.5.dylib"      "@executable_path/../Frameworks/libtidy.dylib"      "$contentsdir/Resources/plugins/libotrplugin.dylib"
-	install_name_tool -change "libtidy.5.dylib"      "@executable_path/../Frameworks/libtidy.dylib"      "$contentsdir/Resources/plugins/libotrplugin.dylib" #can be this path
+        install_name_tool -id "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/libgpg-error.dylib"
+        
+	install_name_tool -id "@executable_path/../Frameworks/libgcrypt.dylib" "$CONTENTSDIR/Frameworks/libgcrypt.dylib"
+	install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/libgcrypt.dylib"
+        
+	install_name_tool -id "@executable_path/../Frameworks/libotr.dylib" "$CONTENTSDIR/Frameworks/libotr.dylib"
+        install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib" "@executable_path/../Frameworks/libgcrypt.dylib" "$CONTENTSDIR/Frameworks/libotr.dylib"
+	install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/libotr.dylib"
+        
+	install_name_tool -id "@executable_path/../Frameworks/libtidy.dylib" "$CONTENTSDIR/Frameworks/libtidy.dylib"
+
+        install_name_tool -change "${LIBS_PATH}/lib/libotr.5.dylib"       "@executable_path/../Frameworks/libotr.dylib"       "$CONTENTSDIR/Resources/plugins/libotrplugin.dylib"
+	install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "$CONTENTSDIR/Resources/plugins/libotrplugin.dylib"
+	install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Resources/plugins/libotrplugin.dylib"
+	install_name_tool -change "${LIBS_PATH}/lib/libtidy.5.dylib"      "@executable_path/../Frameworks/libtidy.dylib"      "$CONTENTSDIR/Resources/plugins/libotrplugin.dylib"
+	install_name_tool -change "libtidy.5.dylib"      "@executable_path/../Frameworks/libtidy.dylib"      "$CONTENTSDIR/Resources/plugins/libotrplugin.dylib" #can be this path
 }
 
-copy_resources() {	
-	cd "${PSI_DIR}"/build/
+copy_plugins() {
+	log "\tCopying plugins..."
 
-	contentsdir=${PSI_DIR}/build/${PSI_APP}/Contents
-	mkdir "$contentsdir/Frameworks"	
-
-	copy_qt
-	copy_qca
-
-	cp -a "${PSI_DIR}/Growl.framework" "$contentsdir/Frameworks"
-
-	cleanup_framework "$contentsdir/Frameworks/Growl.framework" Growl A
-
-	copy_main_libs
-
-        log "Copying plugins..."
-	if [ ! -d $contentsdir/Resources/plugins ]; then
-    		mkdir -p "$contentsdir/Resources/plugins"
+	if [ ! -d $CONTENTSDIR/Resources/plugins ]; then
+    		mkdir -p "$CONTENTSDIR/Resources/plugins"
 	fi
 
 	for pl in ${PLUGINS}; do
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl}
-                if [ -f "lib${pl}.dylib" ]; then
- 			cp "lib${pl}.dylib" "$contentsdir/Resources/plugins"
+		if [ -f "lib${pl}.dylib" ]; then
+ 			cp "lib${pl}.dylib" "$CONTENTSDIR/Resources/plugins"
 		fi
 	done
+}
 
-	copy_otrplugins_libs
+copy_resources() {
+	log "\tCopying langpack, web, skins..."
 
+	cd "${PSI_DIR}/build"
 
-        log "Copying langpack, web, skins..."
-        cd "${PSI_DIR}/build"
-
-	app_bundl_tr_dir="$contentsdir/Resources/translations"
+	app_bundl_tr_dir="$CONTENTSDIR/Resources/translations"
 	mkdir "$app_bundl_tr_dir"
 	cd "$app_bundl_tr_dir"
-	for l in $TRANSLATIONS; do
-
-                f="$LANGS_DIR/$l/psi_$l"
+	for l in $TRANSLATIONS
+	do
+		f="$LANGS_DIR/$l/psi_$l"
 		[ -n "${LRELEASE}" -a -f "${f}.ts" ] && "${LRELEASE}" -silent "${f}.ts" 2>/dev/null
 		[ -f "${f}.qm" ] && cp "${f}.qm" . && {
 			log "Copy translations files for ${l}"
@@ -504,12 +582,37 @@ copy_resources() {
 		}
 	done
 
-        cd "$contentsdir/Resources/"
+	cd "$CONTENTSDIR/Resources/"
 	cp -r ${PSI_DIR}/build/sound .
 	cp -r ${PSI_DIR}/build/themes .
-        cp -r ${PSI_DIR}/build/iconsets .
+	cp -r ${PSI_DIR}/build/iconsets .
 	cp -r ${PSI_DIR}/resources/sound .
-        cp -f ${PSI_DIR}/build/client_icons.txt .
+	cp -f ${PSI_DIR}/build/client_icons.txt .
+}
+
+copy_growl() {
+	log "\tCopying Growl..."
+
+	cp -a "${PSI_DIR}/Growl.framework" "$CONTENTSDIR/Frameworks"
+	cleanup_framework "$CONTENTSDIR/Frameworks/Growl.framework" Growl A
+}
+
+prepeare_bundle() {	
+	log "Copying dependencies..."
+
+	cd "${PSI_DIR}/build"
+
+	CONTENTSDIR=${PSI_DIR}/build/${PSI_APP}/Contents
+	mkdir "$CONTENTSDIR/Frameworks"	
+
+	copy_qt
+	copy_qca
+	copy_plugins
+	copy_growl
+	copy_main_libs
+	copy_otrplugins_libs
+	copy_gst_bundle
+	copy_resources
 }
 
 make_bundle() {
@@ -577,7 +680,7 @@ prepare_workspace
 prepare_sources
 src_compile
 
-copy_resources
+prepeare_bundle
 make_bundle
 
 finishtime=`date "+Finish time: %H:%M:%S"`
