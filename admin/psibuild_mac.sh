@@ -264,7 +264,7 @@ get_deps() {
 fetch_deps() {
 	cd ${PSI_DIR}
 
-	get_deps $DEPS_FILE $DEPS_URL $DESP_DIR
+	get_deps $DEPS_FILE $DEPS_URL $DEPS_DIR
 	get_deps $GST_FILE $GST_URL $GST_DIR
 	get_deps $PSIMEDIA_FILE $PSIMEDIA_URL $PSIMEDIA_DIR
 }
