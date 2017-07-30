@@ -106,7 +106,7 @@ if(APPLE)
 		tunecontroller/itunestunecontroller.h
 	)
 elseif(WIN32)
-	list(APPEND EXTRA_LDFLAGS -luser32)
+	list(APPEND EXTRA_LDFLAGS user32)
 	include_directories(
 		tunecontroller/plugins/winamp
 		tunecontroller/plugins/aimp
