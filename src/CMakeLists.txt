@@ -332,6 +332,10 @@ add_executable(${PROJECT_NAME}
 	${RC_FILE}
 )
 
+if(MSVC)
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LTCG")
+endif()
+
 #Experimental feature
 if(VERBOSE_PROGRAM_NAME)
 	if(ENABLE_WEBKIT AND (NOT USE_WEBENGINE))
@@ -373,11 +377,11 @@ add_dependencies(${PROJECT_NAME} build_ui_files)
 
 if(WIN32 AND MSVC)
 	list(APPEND EXTRA_LIBS
-		WSock32
-		User32
-		Shell32
-		Gdi32
-		AdvAPI32
+		wsock32
+		user32
+		shell32
+		gdi32
+		advapi32
 	)
 	add_definitions(
 		-DQT_STATICPLUGIN
