@@ -462,6 +462,9 @@ TabbableWidget* findActiveTab()
 
 void x11wmClass(Display *dsp, WId wid, QString resName)
 {
+	if (!QX11Info::isPlatformX11())
+		return;
+
 	//Display *dsp = x11Display();				 // get the display
 	//WId win = winId();						   // get the window
 	XClassHint classhint;						  // class hints
@@ -483,6 +486,9 @@ void x11wmClass(Display *dsp, WId wid, QString resName)
 // Helper function
 bool getCardinal32Prop(Display *display, Window win, char *propName, long *value)
 {
+	if (!QX11Info::isPlatformX11())
+		return false;
+
 	Atom nameAtom, typeAtom, actual_type_return;
 	int actual_format_return, result;
 	unsigned long nitems_return, bytes_after_return;
