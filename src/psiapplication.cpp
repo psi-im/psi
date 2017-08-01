@@ -265,7 +265,7 @@ void PsiApplication::init(bool GUIenabled)
 #endif
 
 #ifdef HAVE_X11
-	if ( GUIenabled ) {
+	if ( GUIenabled && QX11Info::isPlatformX11() ) {
 		const int max = 20;
 		char* names[max];
 		int n = 0;
@@ -276,7 +276,6 @@ void PsiApplication::init(bool GUIenabled)
 #ifdef HAVE_QT5
 		xcb_atom_t* atoms[max];
 		xcb_intern_atom_cookie_t cookies[max];
-
 
 		_xcbEventFilter = new XcbEventFiter(this);
 		// get the selection type we'll use to locate the notification tray
@@ -351,7 +350,8 @@ void PsiApplication::init(bool GUIenabled)
 bool PsiApplication::notify(QObject *receiver, QEvent *event)
 {
 #ifdef HAVE_X11
-	if( event->type() == QEvent::Show && receiver->isWidgetType())
+	if( event->type() == QEvent::Show && receiver->isWidgetType()
+			&& QX11Info::isPlatformX11())
 	{
 		QWidget* w = static_cast< QWidget* >( receiver );
 		if( w->isTopLevel() && qt_x_last_input_time != CurrentTime ) // CurrentTime means no input event yet
@@ -364,7 +364,8 @@ bool PsiApplication::notify(QObject *receiver, QEvent *event)
 					 32, PropModeReplace, (unsigned char*)&qt_x_last_input_time, 1 );
 #endif
 	}
-	if( event->type() == QEvent::Hide && receiver->isWidgetType())
+	if( event->type() == QEvent::Hide && receiver->isWidgetType()
+			&& QX11Info::isPlatformX11())
 	{
 		QWidget* w = static_cast< QWidget* >( receiver );
 		if( w->isTopLevel() && w->winId() != 0 )
