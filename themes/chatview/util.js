@@ -145,7 +145,7 @@ function initPsiTheme() {
                 var link;
 
                 if (linkEl.hostname == "youtu.be") {
-                    link = baseLink + linkEl.hostname.slice(1);
+                    link = baseLink + linkEl.pathname.slice(1);
                 } else if (linkEl.pathname.indexOf("/embed/") != 0) {
                     var m = linkEl.href.match(/^.*[?&]v=([a-zA-Z0-9_-]+).*$/);
                     var code = m && m[1];
