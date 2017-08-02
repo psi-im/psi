@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if( LIBGPGERROR_INCLUDE_DIR AND LIBGPGERROR_LIBRARY )
 	# in cache already
 	set(LIBGPGERROR_FIND_QUIETLY TRUE)
@@ -57,16 +60,17 @@ find_path(
 	${PC_LIBGPGERROR_INCLUDE_DIRS}
 	${LIBGPGERROR_INCLUDE_HINT}
 )
-
-find_library(
-	LIBGPGERROR_LIBRARY
-	NAMES
-	gpg-error
-	libgpg-error
+set(LIBGPGERROR_NAMES
+	gpg-error${D}
+	libgpg-error${D}
 	gpg-error-0
 	libgpg-error-0
 	gpg-error6-0
 	libgpg-error6-0
+)
+find_library(
+	LIBGPGERROR_LIBRARY
+	NAMES ${LIBGPGERROR_NAMES}
 	HINTS 
 	${PC_LIBGPGERROR_LIBDIR}
 	${PC_LIBGPGERROR_LIBRARY_DIRS}

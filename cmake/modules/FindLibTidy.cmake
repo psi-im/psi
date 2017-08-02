@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if( LIBTIDY_INCLUDE_DIR AND LIBTIDY_LIBRARY )
 	# in cache already
 	set(LIBTIDY_FIND_QUIETLY TRUE)
@@ -58,10 +61,15 @@ else()
 	message("-- Tidy-html legacy detected")
 	set( LIBTIDY_DEFINITIONS "${LIBTIDY_DEFINITIONS} -DLEGACY_TIDY" )
 endif()
-
+set(LIBTIDY_NAMES
+	tidy${D}
+	libtidy${D}
+	libtidy-0-99-0
+	tidy-0-99-0
+)
 find_library(
 	LIBTIDY_LIBRARY
-	NAMES tidy libtidy libtidy-0-99-0 tidy-0-99-0
+	NAMES ${LIBTIDY_NAMES}
 	HINTS
 	${PC_LIBTIDY_LIBDIR}
 	${PC_LIBTIDY_LIBRARY_DIRS}

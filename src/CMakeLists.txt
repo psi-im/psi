@@ -332,10 +332,6 @@ add_executable(${PROJECT_NAME}
 	${RC_FILE}
 )
 
-if(MSVC)
-	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/LTCG")
-endif()
-
 #Experimental feature
 if(VERBOSE_PROGRAM_NAME)
 	if(ENABLE_WEBKIT AND (NOT USE_WEBENGINE))

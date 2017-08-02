@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if( LIBGCRYPT_INCLUDE_DIR AND LIBGCRYPT_LIBRARY )
 	# in cache already
 	set(libgcrypt_FIND_QUIETLY TRUE)
@@ -57,10 +60,17 @@ find_path(
 	${PC_LIBGCRYPT_INCLUDE_DIRS}
 	${LIBGCRYPT_INCLUDE_HINT}
 )
-
+set(LIBGCRYPT_NAMES
+	gcrypt${D}
+	libgcrypt${D}
+	gcrypt-11
+	libgcrypt-11
+	gcrypt-20
+	libgcrypt-20
+)
 find_library(
 	LIBGCRYPT_LIBRARY
-	NAMES gcrypt libgcrypt gcrypt-11 libgcrypt-11 gcrypt-20 libgcrypt-20
+	NAMES ${LIBGCRYPT_NAMES}
 	HINTS 
 	${PC_LIBGCRYPT_LIBDIR}
 	${PC_LIBGCRYPT_LIBRARY_DIRS}

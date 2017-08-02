@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if( ZLIB_INCLUDE_DIR AND ZLIB_LIBRARY )
 	# in cache already
 	set(ZLIB_FIND_QUIETLY TRUE)
@@ -47,10 +50,15 @@ find_path(
 	${PC_ZLIB_INCLUDEDIR}
 	${PC_ZLIB_INCLUDE_DIRS}
 )
-
+set(ZLIB_NAMES
+	z${D}
+	lz${D}
+	zlib${D}
+	zlib1
+)
 find_library(
 	ZLIB_LIBRARY
-	NAMES z lz zlib zlib1
+	NAMES ${ZLIB_NAMES}
 	HINTS
 	${PC_ZLIB_LIBDIR}
 	${PC_ZLIB_LIBRARY_DIRS}

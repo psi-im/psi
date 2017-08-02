@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if (Qca_INCLUDE_DIR AND Qca_LIBRARY)
 	# in cache already
 	set(Qca_FIND_QUIETLY TRUE)
@@ -54,10 +57,12 @@ find_path(
 	QtCrypto
 	${EXTRA_PATH_SUFFIXES}
 )
-
+set(Qca_NAMES
+	qca${Qca_SUFFIX}${D}
+)
 find_library(
 	Qca_LIBRARY
-	NAMES qca${Qca_SUFFIX}
+	NAMES ${Qca_NAMES}
 	HINTS 
 	${QCA_DIR}/lib
 	${QCA_DIR}/bin

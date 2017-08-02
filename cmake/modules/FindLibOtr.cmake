@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if( LIBOTR_INCLUDE_DIR AND LIBOTR_LIBRARY )
 	# in cache already
 	set(LIBOTR_FIND_QUIETLY TRUE)
@@ -50,10 +53,14 @@ find_path(
 	""
 	libotr
 )
-
+set(LIBOTR_NAMES
+	otr${D}
+	libotr${D}
+	otr-5
+)
 find_library(
 	LIBOTR_LIBRARY
-	NAMES otr libotr otr-5
+	NAMES ${LIBOTR_NAMES}
 	HINTS 
 	${PC_LIBOTR_LIBDIR}
 	${PC_LIBOTR_LIBRARY_DIRS}
