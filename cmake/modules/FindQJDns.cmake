@@ -25,7 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
-
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if (QJDns_INCLUDE_DIR AND QJDns_LIBRARY)
 	# in cache already
 	set(QJDns_FIND_QUIETLY TRUE)
@@ -60,10 +62,13 @@ find_path(
 		jdns
 	endif( NOT WIN32 )
 )
-
+set(QJDns_NAMES
+	qjdns${D}
+	qjdns${QJDns_SUFFIX}${D}
+)
 find_library(
 	QJDns_LIBRARY
-	NAMES qjdns qjdns${QJDns_SUFFIX}
+	NAMES ${QJDns_NAMES}
 	HINTS 
 	${PC_QJDns_LIBDIR}
 	${PC_QJDns_LIBRARY_DIRS}

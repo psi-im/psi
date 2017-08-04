@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if( IDN_INCLUDE_DIR AND IDN_LIBRARY )
 	# in cache already
 	set(IDN_FIND_QUIETLY TRUE)
@@ -47,10 +50,15 @@ find_path(
 	${PC_IDN_INCLUDEDIR}
 	${PC_IDN_INCLUDE_DIRS}
 )
-
+set(IDN_NAMES
+	idn${D}
+	libidn${D}
+	idn-11${D}
+	libidn-11${D}
+)
 find_library(
 	IDN_LIBRARY
-	NAMES idn libidn idn-11 libidn-11
+	NAMES ${IDN_NAMES}
 	HINTS
 	${PC_IDN_LIBDIR}
 	${PC_IDN_LIBRARY_DIRS}

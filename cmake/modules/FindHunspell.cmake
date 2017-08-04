@@ -25,6 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
+	set(D "d")
+endif()
 if (HUNSPELL_INCLUDE_DIR AND HUNSPELL_LIBRARY)
 	# in cache already
 	set(HUNSPELL_FIND_QUIETLY TRUE)
@@ -55,15 +58,17 @@ find_path(
 	hunspell
 	endif ( NOT ${WIN32} )
 )
-
-find_library(
-	HUNSPELL_LIBRARY
-	NAMES hunspell
+set(HUNSPELL_NAMES
+	hunspell${d}
 	hunspell-1.3
 	hunspell-1.4
 	hunspell-1.5
 	hunspell-1.6
-	libhunspell
+	libhunspell${d}
+)
+find_library(
+	HUNSPELL_LIBRARY
+	NAMES ${HUNSPELL_NAMES}
 	HINTS 
 	${PC_HUNSPELL_LIBDIR}
 	${PC_HUNSPELL_LIBRARY_DIRS}
