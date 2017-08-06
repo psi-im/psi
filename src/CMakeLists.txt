@@ -289,33 +289,52 @@ add_custom_target(build_ui_files DEPENDS "${UI_FORMS}" SOURCES "${FORMS}")
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 
 if(WIN32)
-	# win resource compilation
+	set(APP_COPYRIGHT "GNU GPL v2")
+	set(APP_DESCRIPTION "A cross-platform XMPP client designed for the power user.")
+	if(IS_PSIPLUS)
+		set(COMPANY_NAME "Psi+ project")
+	else()
+		set(COMPANY_NAME "psi-im.org")
+	endif()
+	set(APP_NAME "${PROJECT_NAME}")
+	string(REPLACE "\." "," FILE_VERSION ${APP_VERSION})
 	if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
-		set(RC_SUFFIX "32")
+		set(RC_SUFFIX "win32")
 	else()
-		set(RC_SUFFIX "64")
+		set(RC_SUFFIX "win64")
 	endif()
-	set(WINRC_FILE_NAME ${PROJECT_SOURCE_DIR}/win32/psi_win${RC_SUFFIX}.rc)
-	set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win32.o)
-	if(NOT MSVC)
-		set(CMD_ARG
-			--include=${CMAKE_CURRENT_SOURCE_DIR}
-			--input=${WINRC_FILE_NAME}
-			--output=${RC_FILE}
+	# win resource creation
+	configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
+	# win resource compilation
+	function(compile_rc_file RC_FILE_NAME RC_OUTPUT_NAME)
+		set(_RC_FILE_NAME ${RC_FILE_NAME})
+		set(_RC_OUTPUT_NAME ${RC_OUTPUT_NAME})
+		if(NOT MSVC)
+			set(CMD_ARG
+				--include=${CMAKE_CURRENT_SOURCE_DIR}
+				--input=${_RC_FILE_NAME}
+				--output=${_RC_OUTPUT_NAME}
 		)
-	else()
-		set(CMD_ARG
-			/fo
-			${RC_FILE}
-			${WINRC_FILE_NAME}
-		)
-	endif()
-	add_custom_command(OUTPUT ${RC_FILE}
+		else()
+			set(CMD_ARG
+				/fo
+				${_RC_OUTPUT_NAME}
+				${_RC_FILE_NAME}
+			)
+		endif()
+		add_custom_command(OUTPUT ${_RC_OUTPUT_NAME}
 			COMMAND ${CMAKE_RC_COMPILER}
 			ARGS ${CMD_ARG}
 			WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/win32
 			VERBATIM
-	)
+		)
+		set(_RC_FILE_NAME "")
+		set(_RC_OUTPUT_NAME "")
+	endfunction()
+
+	set(DECS_RC_NAME ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc)
+	set(RC_FILE ${CMAKE_CURRENT_BINARY_DIR}/psi_win.o)
+	compile_rc_file(${DECS_RC_NAME} ${RC_FILE})
 endif()
 
 add_executable(${PROJECT_NAME}
