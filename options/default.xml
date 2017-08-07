@@ -275,6 +275,7 @@ QLineEdit#le_status_text {
 						<margin type="int">0</margin>
 					</avatar>
 				</roster-avatar-frame>
+				<autohide-contact-filter comment="Hide contacts filter on contact ativate" type="bool">true</autohide-contact-filter>
 				<menu-titles comment="Show menu title as a first line" type="bool">false</menu-titles>
 				<group-indent type="int">4</group-indent>
 			</contactlist>
