@@ -67,25 +67,27 @@ list(APPEND PLAIN_HEADERS
 	tunecontroller/tunecontrollerplugin.h
 )
 
-list(APPEND PLAIN_HEADERS
-	crash/crash.h
-)
-
-if(LINUX)
-	list(APPEND PLAIN_SOURCES
-		crash/crash_sigsegv.cpp
-		crash/crash.cpp
-	)
+if(USE_CRASH)
 	list(APPEND PLAIN_HEADERS
-		crash/crash_sigsegv.h
+		crash/crash.h
 	)
+
+	if(LINUX)
+		list(APPEND PLAIN_SOURCES
+			crash/crash_sigsegv.cpp
+			crash/crash.cpp
+		)
+		list(APPEND PLAIN_HEADERS
+			crash/crash_sigsegv.h
+		)
+	endif()
+	if(WIN32)
+		list(APPEND PLAIN_SOURCES
+			crash/crash_dummy.cpp
+		)
+	endif()
 endif()
-if(WIN32)
-	list(APPEND PLAIN_SOURCES
-		crash/crash_dummy.cpp
-	)
-endif()
-	
+
 include_directories(tunecontroller)
 
 add_definitions(-DTC_PSIFILE)
