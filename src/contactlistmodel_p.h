@@ -31,7 +31,6 @@ public:
 	int simplifiedOperationList(int operations) const;
 
 	ContactListItem::SpecialGroupType specialGroupFor(PsiContact *contact);
-	QModelIndex findItemRecursvive(PsiContact *contact, QModelIndex index = QModelIndex());
 
 public slots:
 	void commit();
