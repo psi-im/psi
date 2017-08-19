@@ -302,6 +302,14 @@ void ContactListModel::Private::clear()
 {
 	q->beginResetModel();
 
+	// disconnect accounts. they have nothing to update here after clear
+	for (const auto &child : q->root()->children()) {
+		ContactListItem *item = static_cast<ContactListItem*>(child);
+		if (item->isAccount()) {
+			disconnect(item->account(), 0, 0, NULL);
+		}
+	}
+
 	qDeleteAll(q->root()->children());
 
 	operationQueue.clear();
