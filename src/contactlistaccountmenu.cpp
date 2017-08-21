@@ -85,14 +85,12 @@ public:
 		connect(statusMenu_, SIGNAL(statusPresetDialogForced(const QString &)), account, SLOT(showStatusDialog(const QString &)));
 		connect(statusMenu_, SIGNAL(reconnectActivated()), account, SLOT(reconnectOnce()));
 
-		moodAction_ = new IconAction(tr("Mood"), this, QString(("mood/%1")).arg(account->mood().typeValue()));
+		auto mood = account->mood();
+		moodAction_ = new IconAction(tr("Mood"), this, mood.type() == Mood::Unknown? QString() :
+		                                                                             QString(("mood/%1")).arg(mood.typeValue()));
 		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
 
-		QString act = account->activity().typeValue();
-		if (account->activity().specificType() != Activity::UnknownSpecific && account->activity().specificType() != Activity::Other) {
-			act += "_" + account->activity().specificTypeValue();
-		}
-		activityAction_ = new IconAction(tr("Activity"), this, QString(("activities/%1")).arg(act));
+		activityAction_ = new IconAction(tr("Activity"), this, activityIconName(account->activity()));
 		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
 		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "pep/geolocation");
