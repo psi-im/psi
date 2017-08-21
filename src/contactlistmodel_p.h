@@ -44,6 +44,9 @@ public slots:
 private slots:
 	void onAccountDestroyed();
 
+private:
+	void cleanUpAccount(PsiAccount *account);
+
 public:
 	ContactListModel *q;
 	bool groupsEnabled;

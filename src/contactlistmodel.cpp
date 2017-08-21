@@ -306,7 +306,7 @@ void ContactListModel::Private::clear()
 	for (const auto &child : q->root()->children()) {
 		ContactListItem *item = static_cast<ContactListItem*>(child);
 		if (item->isAccount()) {
-			disconnect(item->account(), 0, 0, NULL);
+			cleanUpAccount(item->account());
 		}
 	}
 
@@ -425,6 +425,25 @@ void ContactListModel::Private::contactGroupsChanged()
 void ContactListModel::Private::onAccountDestroyed()
 {
 	PsiAccount *account = qobject_cast<PsiAccount*>(sender());
+	cleanUpAccount(account);
+}
+
+void ContactListModel::Private::updateAccount()
+{
+	PsiAccount *account = qobject_cast<PsiAccount*>(sender());
+	if (account->enabled()) {
+		ContactListItem *root = static_cast<ContactListItem*>(q->root());;
+		ContactListItem *accountItem = root->findAccount(account);
+		Q_ASSERT(accountItem);
+		q->updateItem(accountItem);
+	} else {
+		cleanUpAccount(account);
+	}
+}
+
+void ContactListModel::Private::cleanUpAccount(PsiAccount *account)
+{
+	disconnect(account, 0, this, NULL);
 	ContactListItem *root = static_cast<ContactListItem*>(q->root());
 	ContactListItem *item = root->findAccount(account);
 	if (!item) {
@@ -435,15 +454,6 @@ void ContactListModel::Private::onAccountDestroyed()
 	q->beginRemoveRows(index.parent(), index.row(), index.row());
 	delete item;
 	q->endRemoveRows();
-}
-
-void ContactListModel::Private::updateAccount()
-{
-	PsiAccount *account = qobject_cast<PsiAccount*>(sender());
-	ContactListItem *root = static_cast<ContactListItem*>(q->root());;
-	ContactListItem *accountItem = root->findAccount(account);
-	Q_ASSERT(accountItem);
-	q->updateItem(accountItem);
 }
 
 /********************/
