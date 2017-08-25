@@ -63,7 +63,7 @@ or
 
 >  -DPSI_VERSION=${version}
 
-  to set Psi+ version manually ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ). Script sets this flag automatically from "version" file if it exists in psi+ directory
+  to set Psi/Psi+ version manually ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ). Script sets this flag automatically from "version" file if it exists in sources directory
 
 >  -DCMAKE_BUILD_TYPE=Release (default: Release)
 
@@ -75,12 +75,16 @@ or
 
 >  -DUSE_MXE=ON (default: OFF)
 
-  Enables MXE (M cross environment) support. Disables USE_CCACHE, adds new dependencies if PRODUCTION flag is enabled. Script can automatically detect MXE.
+  Enables MXE (M cross environment) support. Disables USE_CCACHE. Script can automatically detect MXE.
 
 > -DVERBOSE_PROGRAM_NAME=ON
 
   Verbose output program name. (default OFF)
   Experimental flag. Exmaple of output name: psi-plus-webkit-sql
+
+> -DPRODUCTION=ON
+
+  to build release version of Psi/Psi+
 
 > -DENABLE_PLUGINS=ON
 
@@ -145,13 +149,13 @@ or
 
   to set Hunspell library root directory
 
->  -DPRODUCTION=ON
+>  -DDEV_MODE=ON
 
-  to install needed libs to run Psi/Psi+. When you running cmake from MXE you also need to enable USE_MXE flag
+  to enable prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
 
 >  -DENABLE_PORTABLE=ON
 
-  to build portable version (not need to rename binary)
+  to build portable version (not need to rename binary). Enables prepare-bin-libs target
 
 ### To build OTRPLUGIN in OS WINDOWS you need to set additional variables
 

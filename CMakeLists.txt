@@ -3,6 +3,18 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
 endif()
 
+#Psi or Psi+ detection
+set( IS_PSIPLUS ON CACHE BOOL "Build Psi+ client")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/psiwindowheader.cpp")
+	message(STATUS "Psi+ features - FOUND")
+	set(IS_PSIPLUS ON)
+	project(psi-plus)
+else()
+	message(STATUS "Psi+ features - NOT FOUND")
+	set(IS_PSIPLUS OFF)
+	project(psi)
+endif()
+
 #Common options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( ONLY_PLUGINS "Build psi-plus plugins only" OFF )
@@ -15,23 +27,17 @@ option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
+if( IS_PSIPLUS )
+	option( PRODUCTION "Build production version" OFF )
+else()
+	option( PRODUCTION "Build production version" ON )
+endif()
 #Windows or MXE only
 option( USE_MXE "Use MXE cross-compilation" OFF )
-option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF)
-option( PRODUCTION "Build production version" OFF )
+option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
+option( DEV_MODE "Enable prepare-bin-libs target for Windows OS" OFF )
 
-set( IS_PSIPLUS ON CACHE BOOL "Build Psi+ client")
 set( QT4_BUILD OFF )
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/psiwindowheader.cpp")
-	message(STATUS "Psi+ features - FOUND")
-	set(IS_PSIPLUS ON)
-	project(psi-plus)
-else()
-	message(STATUS "Psi+ features - NOT FOUND")
-	set(IS_PSIPLUS OFF)
-	project(psi)
-endif()
 
 set(GLOBAL_DEPENDS_DEBUG_MODE ON)
 
@@ -240,16 +246,19 @@ else()
 	message(STATUS "C flags: ${CMAKE_C_FLAGS}")
 endif()
 
-if(NOT WIN32 AND PRODUCTION)
-	message(WARNING "PRODUCTION flag only for Windows OS")
-	set(PRODUCTION OFF)
-endif()
-
 if(NOT WIN32 AND ENABLE_PORTABLE)
 	message(WARNING "Portable version creation possible only for Windows OS")
 	set(ENABLE_PORTABLE OFF)
 elseif(WIN32 AND ENABLE_PORTABLE)
-	set(PRODUCTION ON)
+	message(STATUS "Portable version - ENABLED")
+endif()
+
+if( PRODUCTION )
+	message(STATUS "Production version - ENABLED")
+endif()
+
+if( DEV_MODE OR ENABLE_PORTABLE )
+	message(STATUS "prepare-bin-libs target - ENABLED")
 endif()
 
 # Copy a list of files from one directory to another. Only full paths.
