@@ -547,7 +547,7 @@ private:
 	void processChatsHelper(const Jid& jid, bool removeEvents);
 	void processChats(const Jid &);
 	ChatDlg *openChat(const Jid &, ActivationType activationType);
-	EventDlg *ensureEventDlg(const Jid &);
+	EventDlg *createEventDlg(const Jid &);
 	friend class PsiCon;
 
 	bool isDisconnecting, notifyOnlineOk, doReconnect, rosterDone, presenceSent, v_isActive;

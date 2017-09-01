@@ -3822,13 +3822,9 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 	d->psi->updateContactGlobal(this, j);
 }
 
-EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
+EventDlg *PsiAccount::createEventDlg(const Jid &j)
 {
-	EventDlg *w = findDialog<EventDlg*>(j);
-	if (w)
-		return w;
-
-	w = new EventDlg(j, this, true);
+	EventDlg *w = new EventDlg(j, this, true);
 	connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
 	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
 	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));

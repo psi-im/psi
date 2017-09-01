@@ -1776,7 +1776,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 
 		if ( !w ) {
 			// create the eventdlg
-			w = e->account()->ensureEventDlg(u->jid());
+			w = e->account()->createEventDlg(u->jid());
 
 			// load next message
 			e->account()->processReadNext(*u);
