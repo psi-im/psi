@@ -3825,24 +3825,22 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 {
 	EventDlg *w = findDialog<EventDlg*>(j);
-	if (!w)
-		w = new EventDlg(j, this, true);
+	if (w)
+		return w;
 
-	if (w) {
-		connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
-		connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
-		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
-		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(ed_addAuth(const Jid &)));
-		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(ed_deny(const Jid &)));
-		connect(w, SIGNAL(aHttpConfirm(const PsiHttpAuthRequest &)), SLOT(dj_confirmHttpAuth(const PsiHttpAuthRequest &)));
-		connect(w, SIGNAL(aHttpDeny(const PsiHttpAuthRequest &)), SLOT(dj_denyHttpAuth(const PsiHttpAuthRequest &)));
-		connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
-		connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
-		connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
-		connect(w, SIGNAL(aFormSubmit(const XData&, const QString&, const Jid&)), SLOT(dj_formSubmit(const XData&, const QString&, const Jid&)));
-		connect(w, SIGNAL(aFormCancel(const XData&, const QString&, const Jid&)), SLOT(dj_formCancel(const XData&, const QString&, const Jid&)));
-	}
-
+	w = new EventDlg(j, this, true);
+	connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
+	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
+	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
+	connect(w, SIGNAL(aAuth(const Jid &)), SLOT(ed_addAuth(const Jid &)));
+	connect(w, SIGNAL(aDeny(const Jid &)), SLOT(ed_deny(const Jid &)));
+	connect(w, SIGNAL(aHttpConfirm(const PsiHttpAuthRequest &)), SLOT(dj_confirmHttpAuth(const PsiHttpAuthRequest &)));
+	connect(w, SIGNAL(aHttpDeny(const PsiHttpAuthRequest &)), SLOT(dj_denyHttpAuth(const PsiHttpAuthRequest &)));
+	connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
+	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
+	connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
+	connect(w, SIGNAL(aFormSubmit(const XData&, const QString&, const Jid&)), SLOT(dj_formSubmit(const XData&, const QString&, const Jid&)));
+	connect(w, SIGNAL(aFormCancel(const XData&, const QString&, const Jid&)), SLOT(dj_formCancel(const XData&, const QString&, const Jid&)));
 	return w;
 }
 
