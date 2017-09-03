@@ -402,6 +402,11 @@ if(WIN32 AND MSVC)
 		gdi32
 		advapi32
 	)
+	if(USE_WEBENGINE)
+		list(APPEND EXTRA_LIBS
+			imm32
+		)
+	endif()
 	add_definitions(
 		-DQT_STATICPLUGIN
 	)
