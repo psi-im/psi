@@ -483,6 +483,12 @@ QStringList getQtPluginPathEnvVar()
 
 int main(int argc, char *argv[])
 {
+	// Disable Input Method Editor to fix bug with
+	//   third-party keyboard layout switching tools
+#if defined(Q_OS_WIN) && defined(WEBENGINE)
+	ImmDisableIME(-1);
+#endif
+
 	// If Psi runs as uri handler the commandline might contain
 	// almost arbitary network supplied data after the "--uri" argument.
 	// To prevent any potentially dangerous options in Psi or
