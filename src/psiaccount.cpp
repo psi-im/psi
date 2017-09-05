@@ -4701,7 +4701,14 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 			MessageEvent::Ptr me(new MessageEvent(m, this));
 			me->setOriginLocal(true);
 			me->setTimeStamp(QDateTime::currentDateTime());
-			logEvent(m.to(), me, type);
+			const AddressList al = m.addresses();
+			if (al.isEmpty())
+				logEvent(m.to(), me, type);
+			else {
+				foreach (const Address &a, al) {
+					logEvent(a.jid(), me, type);
+				}
+			}
 		}
 	}
 

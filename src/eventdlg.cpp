@@ -1467,12 +1467,12 @@ void EventDlg::doSend()
 				foreach(QString recipient, list) {
 					m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
 				}
-				d->pa->dj_sendMessage(m, false);
+				d->pa->dj_sendMessage(m, true);
 		}
 		else {
 			for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
 				m.setTo(Jid(*it));
-				d->pa->dj_sendMessage(m, false);
+				d->pa->dj_sendMessage(m, true);
 			}
 		}
 		doneSend();
