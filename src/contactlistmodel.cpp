@@ -386,8 +386,9 @@ void ContactListModel::Private::contactUpdated()
 	QList<ContactListItem*> groupItems;
 	for (const QPersistentModelIndex &index: monitoredContacts.values(contact)) {
 		ContactListItem *item = q->toItem(index);
-		if (item->parent() && item->parent()->isGroup()) {
-			groupItems << item;
+		ContactListItem *parent = item->parent();
+		if (parent && parent->isGroup()) {
+			groupItems << parent;
 		}
 	}
 
