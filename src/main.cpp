@@ -61,7 +61,14 @@
 #endif
 
 #ifdef Q_OS_WIN
-#	include <qt_windows.h> // for RegDeleteKey
+# include <qt_windows.h> // for RegDeleteKey
+
+# ifdef HAVE_QT5
+#  include <windows.h>
+#  include <tchar.h>
+#  include <string.h>
+# endif
+
 #endif
 
 #ifdef Q_OS_WIN
@@ -544,6 +551,24 @@ int main(int argc, char *argv[])
 #else
 	qInstallMsgHandler(psiMessageOutput);
 #endif
+
+	// Must be set correct plugin path to create QApplication instance.
+	// Can't use QCoreApplication::dirPath() here. It will be filled after QApplication instanciance.
+	// So use WinAPI to get application directory path.
+#if defined HAVE_QT5 && defined Q_OS_WIN
+	{
+		TCHAR curDir[MAX_PATH];
+		GetModuleFileName(NULL, curDir, sizeof(curDir));
+# ifdef UNICODE
+		QString curDirStr = QString::fromStdWString(curDir);
+# else
+		QString curDirStr = QString::fromStdString(curDir);
+# endif
+		curDirStr = curDirStr.section('\\', 0, -2);
+		QCoreApplication::addLibraryPath(curDirStr);
+	}
+#endif
+
 	PsiApplication app(argc, argv);
 	QApplication::setApplicationName(ApplicationInfo::name());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
