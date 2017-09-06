@@ -294,7 +294,7 @@ qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 
 if(WIN32)
 	set(APP_COPYRIGHT "GNU GPL v2")
-	set(APP_DESCRIPTION "A cross-platform XMPP client designed for the power user.")
+	set(APP_DESCRIPTION "A cross-platform XMPP client designed for the power user")
 	if(IS_PSIPLUS)
 		set(COMPANY_NAME "Psi+ project")
 	else()
