@@ -167,7 +167,7 @@ windows {
 	VERSION = $$PSI_VERSION
 	QMAKE_TARGET_PRODUCT = "Psi"
 	QMAKE_TARGET_COMPANY = psi-im.org
-	QMAKE_TARGET_DESCRIPTION = "A cross-platform XMPP client designed for the power user."
+	QMAKE_TARGET_DESCRIPTION = "A cross-platform XMPP client designed for the power user"
 	QMAKE_TARGET_COPYRIGHT = "GNU GPL v2"
 }
 mac {
