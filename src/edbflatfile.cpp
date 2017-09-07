@@ -269,12 +269,10 @@ void EDBFlatFile::performRequests()
 	else if(type == item_file_req::Type_find) {
 		int id = f->getId(r->date, r->dir, 0);
 		EDBResult result;
-		if (id != -1) {
-			while (1) {
-				PsiEvent::Ptr e(f->get(id));
-				if (!e)
-					break;
-
+		int total = f->total();
+		while (id >= 0 && id < total) {
+			PsiEvent::Ptr e(f->get(id));
+			if (e) {
 				if(e->type() == PsiEvent::Message) {
 					MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 					const Message &m = me->message();
@@ -285,11 +283,11 @@ void EDBFlatFile::performRequests()
 						//break;
 					}
 				}
-				if(r->dir == Forward)
-					++id;
-				else
-					--id;
 			}
+			if(r->dir == Forward)
+				++id;
+			else
+				--id;
 		}
 		resultReady(r->id, result, 0);
 	}
