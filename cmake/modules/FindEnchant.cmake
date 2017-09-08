@@ -75,7 +75,14 @@ find_package_handle_standard_args(
 if ( Enchant_FOUND )
 	set ( Enchant_LIBRARIES ${Enchant_LIBRARY} )
 	set ( Enchant_INCLUDE_DIRS ${Enchant_INCLUDE_DIR} )
+	if(PC_Enchant_FOUND)
+		set ( Enchant_VERSION ${PC_Enchant_VERSION} )
+	endif()
 endif ( Enchant_FOUND )
 
-mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY )
+if( Enchant_VERSION )
+	mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY Enchant_VERSION )
+else ()
+	mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY )
+endif()
 
