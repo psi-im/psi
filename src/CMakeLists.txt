@@ -306,6 +306,11 @@ if(WIN32)
 		set(COMPANY_NAME "psi-im.org")
 	endif()
 	string(REPLACE "\." "," FILE_VERSION ${APP_VERSION})
+	if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
+		set(RC_SUFFIX "win32")
+	else()
+		set(RC_SUFFIX "win64")
+	endif()
 	# win resource creation
 	configure_file(${PROJECT_SOURCE_DIR}/win32/psi_win.rc.in ${CMAKE_CURRENT_BINARY_DIR}/psi_win.rc @ONLY)
 	# win resource compilation
