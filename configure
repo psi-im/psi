@@ -1798,6 +1798,8 @@ public:
 		QString version, libs, other;
 		if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
                         return false;
+		if(conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other))
+                        qc_enchant_defs += "HAVE_ENCHANT2";
 
 		qc_enchant_defs += "HAVE_ENCHANT";
 		qc_enchant_incs += incs;
