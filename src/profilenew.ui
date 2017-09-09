@@ -1,207 +1,265 @@
-<ui version="4.0" stdsetdef="1" >
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
-  <class>ProfileNew</class>
-  <widget class="QDialog" name="ProfileNew" >
-    <property name="geometry" >
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>459</width>
-        <height>311</height>
-      </rect>
-    </property>
-    <property name="windowTitle" >
-      <string>New Profile</string>
-    </property>
-    <layout class="QHBoxLayout" >
-      <property name="margin" >
-        <number>11</number>
-      </property>
-      <property name="spacing" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProfileNew</class>
+ <widget class="QDialog" name="ProfileNew">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>459</width>
+    <height>311</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>New Profile</string>
+  </property>
+  <layout class="QHBoxLayout">
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <property name="leftMargin">
+    <number>11</number>
+   </property>
+   <property name="topMargin">
+    <number>11</number>
+   </property>
+   <property name="rightMargin">
+    <number>11</number>
+   </property>
+   <property name="bottomMargin">
+    <number>11</number>
+   </property>
+   <item>
+    <widget class="PsiTextView" name="te_desc" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>32767</height>
+      </size>
+     </property>
+     <property name="text" stdset="0">
+      <string>Keep your&lt;i&gt; Profile Name&lt;/i&gt; simple. It should be a single word comprised of only letters or numbers.&lt;br&gt;
+&lt;br&gt;
+The&lt;i&gt; Default Action&lt;/i&gt; is what happens when you double click a contact in your list. The choices are&lt;b&gt; Message&lt;/b&gt; (ICQ style) and&lt;b&gt; Chat&lt;/b&gt; (AIM style). You can change this later from the Options menu.&lt;br&gt;
+&lt;br&gt;
+Check the &lt;i&gt;Enable Emoticons&lt;/i&gt; checkbox if you'd like text such as &lt;b&gt;:-)&lt;/b&gt; to be turned into graphics like &lt;icon name=&quot;psi/smile&quot;&gt;.</string>
+     </property>
+     <property name="readOnly" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <layout class="QHBoxLayout">
+       <property name="spacing">
         <number>6</number>
-      </property>
-      <item>
-        <widget class="PsiTextView" name="te_desc" >
-          <property name="sizePolicy" >
-            <sizepolicy>
-              <hsizetype>0</hsizetype>
-              <vsizetype>7</vsizetype>
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-            </sizepolicy>
-          </property>
-          <property name="minimumSize" >
-            <size>
-              <width>200</width>
-              <height>0</height>
-            </size>
-          </property>
-          <property name="maximumSize" >
-            <size>
-              <width>200</width>
-              <height>32767</height>
-            </size>
-          </property>
-          <property name="text" >
-            <string>Keep your&lt;i> Profile Name&lt;/i> simple. It should be a single word comprised of only letters or numbers.&lt;br>
-&lt;br>
-The&lt;i> Default Action&lt;/i> is what happens when you double click a contact in your list. The choices are&lt;b> Message&lt;/b> (ICQ style) and&lt;b> Chat&lt;/b> (AIM style). You can change this later from the Options menu.&lt;br>
-&lt;br>
-Check the &lt;i>Enable Emoticons&lt;/i> checkbox if you'd like text such as &lt;b>:-)&lt;/b> to be turned into graphics like &lt;icon name=&quot;psi/smile&quot;>.</string>
-          </property>
-          <property name="readOnly" >
-            <bool>true</bool>
-          </property>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="TextLabel1">
+         <property name="text">
+          <string>Profile Name:</string>
+         </property>
         </widget>
-      </item>
-      <item>
-        <layout class="QVBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="le_name"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="bg_defAct">
+       <property name="title">
+        <string>Default Action</string>
+       </property>
+       <layout class="QHBoxLayout">
+        <property name="spacing">
+         <number>6</number>
+        </property>
+        <property name="leftMargin">
+         <number>11</number>
+        </property>
+        <property name="topMargin">
+         <number>11</number>
+        </property>
+        <property name="rightMargin">
+         <number>11</number>
+        </property>
+        <property name="bottomMargin">
+         <number>11</number>
+        </property>
+        <item>
+         <widget class="QRadioButton" name="rb_message">
+          <property name="text">
+           <string>&amp;Message</string>
           </property>
-          <item>
-            <layout class="QHBoxLayout" >
-              <property name="margin" >
-                <number>0</number>
-              </property>
-              <property name="spacing" >
-                <number>6</number>
-              </property>
-              <item>
-                <widget class="QLabel" name="TextLabel1" >
-                  <property name="text" >
-                    <string>Profile Name:</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <widget class="QLineEdit" name="le_name" />
-              </item>
-            </layout>
-          </item>
-          <item>
-            <widget class="QGroupBox" name="bg_defAct" >
-              <property name="title" >
-                <string>Default Action</string>
-              </property>
-              <layout class="QHBoxLayout" >
-                <property name="margin" >
-                  <number>11</number>
-                </property>
-                <property name="spacing" >
-                  <number>6</number>
-                </property>
-                <item>
-                  <widget class="QRadioButton" name="rb_message" >
-                    <property name="text" >
-                      <string>Message</string>
-                    </property>
-                  </widget>
-                </item>
-                <item>
-                  <widget class="QRadioButton" name="rb_chat" >
-                    <property name="text" >
-                      <string>Chat</string>
-                    </property>
-                  </widget>
-                </item>
-              </layout>
-            </widget>
-          </item>
-          <item>
-            <widget class="QCheckBox" name="ck_useEmoticons" >
-              <property name="text" >
-                <string>Enable Emoticons</string>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <spacer name="Spacer1" >
-              <property name="sizeHint" >
-                <size>
-                  <width>20</width>
-                  <height>131</height>
-                </size>
-              </property>
-              <property name="sizeType" >
-                <enum>Expanding</enum>
-              </property>
-              <property name="orientation" >
-                <enum>Vertical</enum>
-              </property>
-            </spacer>
-          </item>
-          <item>
-            <widget class="Line" name="Line1" >
-              <property name="frameShape" >
-                <enum>QFrame::HLine</enum>
-              </property>
-              <property name="frameShadow" >
-                <enum>QFrame::Sunken</enum>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <layout class="QHBoxLayout" >
-              <property name="margin" >
-                <number>0</number>
-              </property>
-              <item>
-                <spacer name="Spacer2" >
-                  <property name="sizeHint" >
-                    <size>
-                      <width>95</width>
-                      <height>20</height>
-                    </size>
-                  </property>
-                  <property name="sizeType" >
-                    <enum>Expanding</enum>
-                  </property>
-                  <property name="orientation" >
-                    <enum>Horizontal</enum>
-                  </property>
-                </spacer>
-              </item>
-              <item>
-                <widget class="IconButton" name="pb_close" >
-                  <property name="text" >
-                    <string>&amp;Close</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <widget class="IconButton" name="pb_create" >
-                  <property name="text" >
-                    <string>&amp;Create</string>
-                  </property>
-                  <property name="shortcut" >
-                    <string>Alt+C</string>
-                  </property>
-                  <property name="autoDefault" >
-                    <bool>false</bool>
-                  </property>
-                  <property name="default" >
-                    <bool>true</bool>
-                  </property>
-                  <property name="psiIconName" stdset="0" >
-                    <string>psi/addContact</string>
-                  </property>
-                </widget>
-              </item>
-            </layout>
-          </item>
-        </layout>
-      </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="rb_chat">
+          <property name="text">
+           <string>&amp;Chat</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="ck_useEmoticons">
+       <property name="text">
+        <string>Enable Emoticons</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="Spacer1">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>131</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="Line" name="Line1">
+       <property name="frameShape">
+        <enum>QFrame::HLine</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Sunken</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <spacer name="Spacer2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>95</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="IconButton" name="pb_close" native="true">
+         <property name="text" stdset="0">
+          <string>&amp;Close</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="IconButton" name="pb_create" native="true">
+         <property name="text" stdset="0">
+          <string>&amp;Create</string>
+         </property>
+         <property name="shortcut" stdset="0">
+          <string>Alt+C</string>
+         </property>
+         <property name="autoDefault" stdset="0">
+          <bool>false</bool>
+         </property>
+         <property name="default" stdset="0">
+          <bool>true</bool>
+         </property>
+         <property name="psiIconName" stdset="0">
+          <string>psi/addContact</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
-  </widget>
-  <layoutdefault spacing="6" margin="11" />
-  <tabstops>
-    <tabstop>le_name</tabstop>
-    <tabstop>rb_message</tabstop>
-    <tabstop>rb_chat</tabstop>
-    <tabstop>ck_useEmoticons</tabstop>
-    <tabstop>te_desc</tabstop>
-  </tabstops>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>PsiTextView</class>
+   <extends>QWidget</extends>
+   <header>psitextview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>IconButton</class>
+   <extends>QWidget</extends>
+   <header>iconbutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>le_name</tabstop>
+  <tabstop>rb_message</tabstop>
+  <tabstop>rb_chat</tabstop>
+  <tabstop>ck_useEmoticons</tabstop>
+  <tabstop>te_desc</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
 </ui>
