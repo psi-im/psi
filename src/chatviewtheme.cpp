@@ -136,7 +136,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 		return true;
 	}
 
-	qDebug("Starting loading \"%s\" theme at \"%s\"", qPrintable(id), qPrintable(filepath));
+	qDebug("Starting loading \"%s\" theme at \"%s\" for %s", qPrintable(id), qPrintable(filepath), isMuc()? "muc": "chat");
 	state = Theme::Loading;
 	if (jsUtil.isNull()) {
 		jsLoader.reset(new ChatViewJSLoader(this));
@@ -472,7 +472,7 @@ void ChatViewJSLoader::setMetaData(const QVariantMap &map)
 
 void ChatViewJSLoader::finishThemeLoading()
 {
-	qDebug("%s theme is successfully loaded", qPrintable(theme->id));
+	qDebug("%s theme is successfully loaded for %s", qPrintable(theme->id), theme->isMuc()? "muc": "chat");
 	Theme(theme).setState(Theme::Loaded);
 #ifdef WEBENGINE
 	_callFinishLoadCalbacks();
