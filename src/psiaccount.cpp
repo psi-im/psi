@@ -81,6 +81,7 @@
 #include "tune.h"
 #ifdef GROUPCHAT
 #include "groupchatdlg.h"
+#include "mucjoindlg.h"
 #endif
 #include "statusdlg.h"
 #include "infodlg.h"
@@ -2399,7 +2400,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
 		if (!findDialog<GCMainDlg*>(cj) && c.needJoin()) {
 			auto ul = findRelevant(Jid(QString(),cj.domain()));
 			if (ul.isEmpty() || !ul[0]->isTransport() || !ul[0]->resourceList().isEmpty()) { // don't join to MUCs on disconnected transports
-				actionJoin(c, true, MUCJoinDlg::MucAutoJoin);
+				actionJoin(c, true, MucAutoJoin);
 			}
 		}
 	}
@@ -2556,7 +2557,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 				Jid cj = c.jid().withResource(QString());
 				if (u->jid().domain() == cj.domain() && !findDialog<GCMainDlg*>(cj) && c.needJoin()) {
 					// now join MUCs on connected transport
-					actionJoin(c, true, MUCJoinDlg::MucAutoJoin);
+					actionJoin(c, true, MucAutoJoin);
 				}
 			}
 		}
@@ -3523,7 +3524,7 @@ void PsiAccount::actionJoin(const Jid& mucJid, const QString& password)
 			   false);
 }
 
-void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately, MUCJoinDlg::MucJoinReason reason)
+void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately, MucJoinReason reason)
 {
 #ifdef GROUPCHAT
 	MUCJoinDlg* w = new MUCJoinDlg(psi(), this);
@@ -3532,7 +3533,7 @@ void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImme
 	w->setNick(bookmark.nick().isEmpty() ? JIDUtil::nickOrJid(this->nick(), d->jid.node()) : bookmark.nick());
 	w->setPassword(bookmark.password());
 
-	if(reason != MUCJoinDlg::MucAutoJoin
+	if(reason != MucAutoJoin
 	   || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool())
 		w->show();
 	if (connectImmediately) {
@@ -3858,29 +3859,6 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 	}
 	else {
 		c->setJid(j);
-		// on X11, do a special reparent to open on the right desktop
-#ifdef HAVE_X11
-		/* KIS added an exception for tabs here. We do *not* want chats flying
-		 * randomlyi, it pulls them out of tabsets. So instead, we move the
-		 * tabset instead. It's just as filthy, unfortunately, but it's the
-		 * only way */
-		//TODO: This doesn't work as expected atm, it doesn't seem to reparent the tabset
-		QWidget *window=c;
-		if ( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() )
-			window = d->tabManager->getManagingTabs(c);
-		if(window && window->isHidden()) {
-			QPixmap pp = c->windowIcon().pixmap(16,16); // FIXME: 16x16 is just a guess of what size old QWidget::icon() used
-			QPixmap p;
-			if(!pp.isNull())
-				p = pp;
-#ifdef __GNUC__
-#warning "Removed reparenting call from qwextend"
-#endif
-			//reparent_good(window, 0, false);
-			if(!p.isNull())
-				c->setWindowIcon(p);
-		}
-#endif
 	}
 
 	Q_ASSERT(c);
@@ -5674,7 +5652,7 @@ void PsiAccount::edb_finished()
 	delete h;
 }
 
-void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MUCJoinDlg::MucJoinReason reason)
+void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MucJoinReason reason)
 {
 #ifdef GROUPCHAT
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
@@ -5682,7 +5660,7 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MUCJ
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(w, SIGNAL(messagesRead(const Jid &)), SLOT(groupChatMessagesRead(const Jid &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
-	if(reason != MUCJoinDlg::MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
+	if(reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
 		w->ensureTabbedCorrectly();
 		if (activationType == UserAction)
 			w->bringToFront();
@@ -5787,7 +5765,7 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 	MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
 	if(!w)
 		return;
-	MUCJoinDlg::MucJoinReason r = w->getReason();
+	MucJoinReason r = w->getReason();
 	w->joined();
 
 	openGroupChat(j, UserAction, r);

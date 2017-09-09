@@ -36,7 +36,6 @@
 #include "mood.h"
 #include "activity.h"
 #include "geolocation.h"
-#include "mucjoindlg.h"
 
 namespace XMPP
 {
@@ -152,6 +151,11 @@ public:
 		AutoAway_Offline
 	};
 
+	enum MucJoinReason {
+		MucAutoJoin,
+		MucCustomJoin
+	};
+
 	void setAutoAwayStatus(AutoAway status);
 
 	bool noPopup() const;
@@ -209,7 +213,7 @@ public:
 	void showXmlConsole();
 	void openAddUserDlg();
 	void openAddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group);
-	void openGroupChat(const Jid &, ActivationType activationType, MUCJoinDlg::MucJoinReason reason = MUCJoinDlg::MucCustomJoin);
+	void openGroupChat(const Jid &, ActivationType activationType, MucJoinReason reason = MucCustomJoin);
 	bool groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString& pass, bool nohistory = false);
 	void groupChatSetStatus(const QString &host, const QString &room, const Status &);
 	void groupChatChangeNick(const QString &host, const QString &room, const QString& nick, const Status &);
@@ -377,7 +381,7 @@ public slots:
 	void actionSearch(const Jid &);
 	void actionManageBookmarks();
 	void actionJoin(const Jid& mucJid, const QString& password = QString());
-	void actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately, MUCJoinDlg::MucJoinReason reason = MUCJoinDlg::MucCustomJoin);
+	void actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately, MucJoinReason reason = MucCustomJoin);
 	void actionDisco(const Jid &, const QString &);
 	void actionInvite(const Jid &, const QString &);
 	void actionVoice(const Jid&);

@@ -27,20 +27,15 @@
 
 class PsiCon;
 class QString;
-class PsiAccount;
 
 #include "xmpp_jid.h"
+#include "psiaccount.h"
 
 class MUCJoinDlg : public QDialog
 {
 	Q_OBJECT
 
 public:
-
-	enum MucJoinReason {
-		MucAutoJoin,
-		MucCustomJoin
-	};
 
 	MUCJoinDlg(PsiCon *, PsiAccount *);
 	~MUCJoinDlg();
@@ -54,13 +49,13 @@ public:
 
 public slots:
 	void done(int);
-	void doJoin(MucJoinReason reason = MucCustomJoin);
+	void doJoin(PsiAccount::MucJoinReason reason = PsiAccount::MucCustomJoin);
 
 	// reimplemented
 	void accept();
 
 public:
-	MucJoinReason getReason() const { return reason_; };
+	PsiAccount::MucJoinReason getReason() const { return reason_; }
 
 
 private slots:
@@ -75,7 +70,7 @@ private:
 	PsiAccount* account_;
 	QPushButton* joinButton_;
 	XMPP::Jid jid_;
-	MucJoinReason reason_;
+	PsiAccount::MucJoinReason reason_;
 	bool nickAlreadyCompleted_;
 
 	void disableWidgets();

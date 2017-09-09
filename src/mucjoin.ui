@@ -7,20 +7,33 @@
     <x>0</x>
     <y>0</y>
     <width>410</width>
-    <height>362</height>
+    <height>386</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Join Groupchat</string>
   </property>
   <layout class="QGridLayout" name="_2">
-   <item row="0" column="0">
-    <widget class="QLabel" name="lb_identity">
-     <property name="text">
-      <string>Identity:</string>
+   <item row="3" column="0" colspan="2">
+    <spacer>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <property name="sizeType">
+      <enum>QSizePolicy::Expanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>331</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="5" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel</set>
      </property>
     </widget>
    </item>
@@ -37,6 +50,32 @@
      </property>
     </widget>
    </item>
+   <item row="5" column="0">
+    <widget class="BusyWidget" name="busy" native="true"/>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="lb_identity">
+     <property name="text">
+      <string>Identity:</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="Line" name="Line1">
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="1">
     <widget class="QComboBox" name="cb_recent">
      <property name="sizePolicy">
@@ -44,6 +83,12 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+     </property>
+     <property name="minimumContentsLength">
+      <number>35</number>
      </property>
     </widget>
    </item>
@@ -117,45 +162,6 @@
        </widget>
       </item>
      </layout>
-    </widget>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <spacer>
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>331</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="Line" name="Line1">
-     <property name="frameShape">
-      <enum>QFrame::HLine</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="BusyWidget" name="busy" native="true"/>
-   </item>
-   <item row="5" column="1">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel</set>
-     </property>
     </widget>
    </item>
   </layout>

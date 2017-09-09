@@ -49,7 +49,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	joinButton_ = ui_.buttonBox->addButton(tr("&Join"), QDialogButtonBox::AcceptRole);
 	joinButton_->setDefault(true);
 
-	reason_ = MucCustomJoin;
+	reason_ = PsiAccount::MucCustomJoin;
 
 	updateIdentity(pa);
 
@@ -142,7 +142,7 @@ void MUCJoinDlg::recent_activated(int x)
 	ui_.le_nick->setText(jid.resource());
 }
 
-void MUCJoinDlg::doJoin(MucJoinReason r)
+void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
 {
 	if (!account_ || !account_->checkConnected(this))
 		return;
@@ -220,7 +220,7 @@ void MUCJoinDlg::error(int error, const QString &str)
 	account_->dialogUnregister(this);
 	controller_->dialogRegister(this);
 
-	if(!nickAlreadyCompleted_ && reason_ == MucAutoJoin && error == nickConflictCode) {
+	if(!nickAlreadyCompleted_ && reason_ == PsiAccount::MucAutoJoin && error == nickConflictCode) {
 		nickAlreadyCompleted_ = true;
 		ui_.le_nick->setText(ui_.le_nick->text() + additionalSymbol);
 		doJoin(reason_);
