@@ -38,8 +38,8 @@
 #define MAX_COMMIT_DELAY 30 /* seconds */
 #define COMMIT_INTERVAL 100 /* msecs */
 
-#define COLLAPSED_OPTIONS "options.main-window.contact-list.group-state.collapsed"
-#define HIDDEN_OPTIONS "options.main-window.contact-list.group-state.hidden"
+#define COLLAPSED_OPTIONS "options.contactlist.group-state.collapsed"
+#define HIDDEN_OPTIONS "options.contactlist.group-state.hidden"
 
 /*****************************/
 /* ContactListModel::Private */
@@ -62,8 +62,8 @@ ContactListModel::Private::Private(ContactListModel *parent)
 	commitTimer->setSingleShot(true);
 	commitTimer->setInterval(COMMIT_INTERVAL);
 
-	collapsed = PsiOptions::instance()->getOption(COLLAPSED_OPTIONS).toStringList();
-	hidden = PsiOptions::instance()->getOption(HIDDEN_OPTIONS).toStringList();
+	collapsed = PsiOptions::instance()->getOption(COLLAPSED_OPTIONS, QStringList()).toStringList();
+	hidden = PsiOptions::instance()->getOption(HIDDEN_OPTIONS, QStringList()).toStringList();
 }
 
 

@@ -195,11 +195,7 @@ void PluginManager::loadEnabledPlugins()
 void PluginManager::loadPluginIfEnabled(PluginHost *plugin)
 {
 	const QString option = QString("%1.%2").arg(loadOptionPrefix).arg(plugin->shortName());
-	QVariant load = PsiOptions::instance()->getOption(option);
-	if(!load.isValid()) {
-		PsiOptions::instance()->setOption(option, false);
-		load = QVariant(false);
-	}
+	QVariant load = PsiOptions::instance()->getOption(option, false);
 	if (load.toBool()) {
 #ifndef PLUGINS_NO_DEBUG
 		qDebug("Plugin %s is enabled in config: loading", qPrintable(plugin->shortName()));

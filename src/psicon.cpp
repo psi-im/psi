@@ -598,7 +598,7 @@ bool PsiCon::init()
 			ua.fromOptions(&d->accountTree, base);
 			accs += ua;
 		}
-		QStringList order = d->accountTree.getOption("order").toStringList();
+		QStringList order = d->accountTree.getOption("order", QStringList()).toStringList();
 		int start = 0;
 		foreach (const QString &id, order) {
 			for (int i = start; i < accs.size(); ++i) {

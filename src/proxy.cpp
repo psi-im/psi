@@ -481,9 +481,9 @@ void ProxyForObject::currentItemChanged(int index)
 
 void ProxyForObject::loadItem(const QString& obj)
 {
-	QVariant v = ot_->getOption(("proxy." + obj));
+	QVariant v = ot_->getOption(QLatin1String("proxy.") + obj, QString());
 	if(!v.isValid())
-		v = ot_->getOption(("proxy." + defaultItemName));
+		v = ot_->getOption(QLatin1String("proxy.") + defaultItemName, QString());
 	items_[obj] = v.toString();
 }
 
