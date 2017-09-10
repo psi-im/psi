@@ -501,6 +501,7 @@ QLineEdit#le_status_text {
 				<group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
 				<tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
 				<use-tab-shortcuts type="bool">true</use-tab-shortcuts>
+				<show-tab-buttons type="bool">true</show-tab-buttons>
 			</tabs>
 		</ui>
 		<shortcuts comment="Shortcuts">

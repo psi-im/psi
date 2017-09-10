@@ -144,6 +144,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_showTabButtons" >
+     <property name="text" >
+      <string>Show tab buttons</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_autoResize">
      <property name="text">
       <string>Auto-resize text input field</string>

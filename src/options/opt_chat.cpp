@@ -110,6 +110,7 @@ void OptionsTabChat::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
+	PsiOptions::instance()->setOption("options.ui.tabs.show-tab-buttons", d->ck_showTabButtons->isChecked());
 
 	QString delafter;
 	switch (bg_delChats->buttons().indexOf( bg_delChats->checkedButton() )) {
@@ -189,6 +190,7 @@ void OptionsTabChat::restoreOptions()
 	d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
 	d->ck_switchTabOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
 	d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
+	d->ck_showTabButtons->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.show-tab-buttons").toBool() );
 	d->ck_tabChats->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() );
 	d->cb_tabGrouping->setEnabled(PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool());
 	QString tabGrouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();

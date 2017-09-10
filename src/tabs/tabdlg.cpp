@@ -830,7 +830,7 @@ void TabDlg::setUserManagementEnabled(bool enabled)
 	}
 
 	userManagement_ = enabled;
-	tabWidget_->setTabButtonsShown(enabled);
+	tabWidget_->setTabButtonsShown(PsiOptions::instance()->getOption("options.ui.tabs.show-tab-buttons").toBool());
 	tabWidget_->setDragsEnabled(enabled);
 }
 
