@@ -57,12 +57,12 @@ public slots:
 public:
 	PsiAccount::MucJoinReason getReason() const { return reason_; }
 
-
 private slots:
 	void updateIdentity(PsiAccount *);
 	void updateIdentityVisibility();
 	void pa_disconnected();
-	void recent_activated(int);
+	void favoritesCurrentRowChanged(int);
+	void favoritesItemDoubleClicked(QListWidgetItem *lwi);
 
 private:
 	Ui::MUCJoin ui_;
@@ -76,6 +76,7 @@ private:
 	void disableWidgets();
 	void enableWidgets();
 	void setWidgetsEnabled(bool enabled);
+	void updateFavorites();
 };
 
 #endif
