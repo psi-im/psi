@@ -24,6 +24,7 @@
 
 #include <QDebug>
 #include <QMessageBox>
+#include <QEventLoop>
 
 #include "wbmanager.h"
 #include "psipopup.h"
