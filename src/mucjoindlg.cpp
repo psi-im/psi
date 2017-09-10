@@ -127,6 +127,9 @@ void MUCJoinDlg::updateFavorites()
 	QHash<QString, QListWidgetItem *> bmMap;
 	if (account_ && account_->bookmarkManager()->isAvailable()) {
 		foreach(ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
+			if (!c.jid().isValid()) {
+				continue;
+			}
 			QString jidBare(c.jid().bare());
 			QString name = c.name();
 			if (name.isEmpty()) {
@@ -144,6 +147,9 @@ void MUCJoinDlg::updateFavorites()
 
 	foreach(QString j, controller_->recentGCList()) {
 		Jid jid(j);
+		if (!jid.isValid()) {
+			continue;
+		}
 		QString bareJid = jid.bare();
 		lwi = bmMap.value(bareJid);
 		if (!lwi) {
