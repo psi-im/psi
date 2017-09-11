@@ -20,13 +20,16 @@ option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( ONLY_PLUGINS "Build psi-plus plugins only" OFF )
 option( USE_HUNSPELL "Build psi-plus with hunspell spellcheck" ON )
 option( USE_ENCHANT "Build psi-plus with enchant spellcheck" OFF )
-option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
 option( ENABLE_PLUGINS "Enable plugins" OFF )
 option( ENABLE_WEBKIT "Enable webkit support" ON )
 option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
+#Iris options
+option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
+option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
+
 if( IS_PSIPLUS )
 	option( PRODUCTION "Build production version" OFF )
 else()
@@ -37,9 +40,13 @@ option( USE_MXE "Use MXE cross-compilation" OFF )
 option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS" OFF )
 
+if( USE_HUNSPELL AND USE_ENCHANT )
+	message(FATAL_ERROR "Both flags USE_HUNSPELL and USE_ENCHANT cannot be enabled at the same time. Please disable one of them")
+endif()
+
 set( QT4_BUILD OFF )
 
-set(GLOBAL_DEPENDS_DEBUG_MODE ON)
+set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 
 set( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
