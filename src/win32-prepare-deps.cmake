@@ -267,6 +267,7 @@ if(WIN32)
 			libwebp-5.dll
 			libwebpdecoder-1.dll
 			libwebpdemux-1.dll
+			libxml2-2.dll
                 )
 	endif()
 	if(SEPARATE_QJDNS)
