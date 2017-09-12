@@ -2328,6 +2328,10 @@ void PsiAccount::serverFeaturesChanged()
 {
 	setPEPAvailable(d->serverInfoManager->hasPEP());
 
+	if (isDisconnecting) {
+		return;
+	}
+
 	if (d->serverInfoManager->canMessageCarbons()) {
 		JT_MessageCarbons *j = new JT_MessageCarbons(d->client->rootTask());
 		j->enable();
@@ -2337,8 +2341,11 @@ void PsiAccount::serverFeaturesChanged()
 	if (d->serverInfoManager->features().haveVCard() && !d->vcardChecked) {
 		// Get the vcard
 		const VCard vcard = VCardFactory::instance()->vcard(d->jid);
-		if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty() || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty()))
+		if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() ||
+		        vcard.isEmpty() || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty()))
+		{
 			VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
+		}
 		else {
 			d->nickFromVCard = true;
 			// if we get here, one of these fields is non-empty
