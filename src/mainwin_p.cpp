@@ -53,7 +53,7 @@ public:
 	~PopupActionButton();
 
 	void setIcon(PsiIcon *, bool showText);
-	void setLabel(QString);
+	void setLabel(const QString &);
 
 	// reimplemented
 	QSize sizeHint() const;
@@ -63,16 +63,17 @@ private slots:
 	void pixmapUpdated();
 
 private:
-	void update();
+	void updateText();
 	void paintEvent(QPaintEvent *);
-	bool hasToolTip;
+
+private:
 	PsiIcon *icon;
 	bool showText;
 	QString label;
 };
 
 PopupActionButton::PopupActionButton(QWidget *parent, const char *name)
-: QPushButton(parent), hasToolTip(false), icon(0), showText(true)
+: QPushButton(parent), icon(0), showText(true)
 {
 	setObjectName(name);
 }
@@ -106,7 +107,10 @@ void PopupActionButton::setIcon(PsiIcon *i, bool st)
 	}
 
 	icon = i;
-	showText = st;
+	if (showText != st) {
+		showText = st;
+		updateText();
+	}
 
 	if ( icon ) {
 		pixmapUpdated();
@@ -116,28 +120,29 @@ void PopupActionButton::setIcon(PsiIcon *i, bool st)
 	}
 }
 
-void PopupActionButton::setLabel(QString lbl)
+void PopupActionButton::setLabel(const QString &lbl)
 {
-	label = lbl;
-	update();
+	if (label != lbl) {
+		label = lbl;
+		updateText();
+	}
 }
 
-void PopupActionButton::update()
+void PopupActionButton::updateText()
 {
-	if(qVersionInt() >= 0x040300)
-	{
-		if((showText && !label.isEmpty()) && styleSheet().isEmpty()) {
-			setStyleSheet("text-align: center");
-		}
-		else if((!showText || label.isEmpty()) && styleSheet() == "text-align: center") {
-			setStyleSheet(QString());
-		}
+	if((showText && !label.isEmpty()) && styleSheet().isEmpty()) {
+		setStyleSheet("text-align: center");
+	}
+	else if((!showText || label.isEmpty()) && styleSheet() == "text-align: center") {
+		setStyleSheet(QString());
 	}
 
 	if (showText) {
 		QPushButton::setText(label);
+		QPushButton::setToolTip(label);
 	} else {
-		QPushButton::setText("");
+		QPushButton::setText(QString());
+		QPushButton::setToolTip(QString());
 	}
 }
 
@@ -146,7 +151,6 @@ void PopupActionButton::pixmapUpdated()
 	QPixmap pix = icon ? icon->pixmap() : QPixmap();
 	QPushButton::setIcon(pix);
 	QPushButton::setIconSize(pix.size());
-	update();
 }
 
 void PopupActionButton::paintEvent(QPaintEvent *p)
@@ -178,10 +182,6 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
 
 		// button text larger than what will fit?
 		if(w1 > w2) {
-			if( !hasToolTip ) {
-				setToolTip(label);
-				hasToolTip = true;
-			}
 
 			// make a string that fits
 			bool found = false;
@@ -210,11 +210,6 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
 				setUpdatesEnabled(false);
 				QPushButton::setText(oldtext);
 				setUpdatesEnabled(true);
-			}
-
-			if( hasToolTip ) {
-				setToolTip("");
-				hasToolTip = false;
 			}
 		}
 	}
