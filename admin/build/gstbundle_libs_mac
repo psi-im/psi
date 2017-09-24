@@ -29,3 +29,5 @@ libtheoraenc*.dylib
 libvorbis*.dylib
 libvorbisenc*.dylib
 libvorbisfile*.dylib
+libffi*.dylib
+libpcre*.dylib
