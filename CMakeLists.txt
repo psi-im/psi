@@ -137,7 +137,7 @@ if(WIN32)
 endif()
 
 set(VER_FILE ${PROJECT_SOURCE_DIR}/version)
-set(DEFAULT_VER "1.2")
+set(DEFAULT_VER "1.3")
 if(EXISTS "${VER_FILE}")
 	message(STATUS "Found Psi version file: ${VER_FILE}")
 	file(STRINGS "${VER_FILE}" VER_LINES)

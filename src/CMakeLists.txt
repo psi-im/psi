@@ -57,10 +57,7 @@ if(LINUX)
 	list(APPEND QT_LIBRARIES Qt5::DBus Qt5::X11Extras ${LIBXCB_LIBRARIES})
 endif()
 if(USE_WEBENGINE)
-	set(EXTRA_LIBS
-		${EXTRA_LIBS}
-		qhttp
-	)
+	list(APPEND EXTRA_LIBS qhttp)
 endif()
 if(APPLE)
 	list(APPEND QT_LIBRARIES Qt5::MacExtras)
@@ -76,18 +73,12 @@ endif()
 
 if(USE_ENCHANT)
 	find_package(Enchant REQUIRED)
-	set(EXTRA_LIBS
-		${EXTRA_LIBS}
-		${Enchant_LIBRARY}
-		)
+	list(APPEND EXTRA_LIBS ${Enchant_LIBRARY})
 	include_directories(${Enchant_INCLUDE_DIR})
 endif()
 if(USE_HUNSPELL)
 	find_package(Hunspell REQUIRED)
-	set(EXTRA_LIBS
-		${EXTRA_LIBS}
-		${HUNSPELL_LIBRARY}
-		)
+	list(APPEND EXTRA_LIBS ${HUNSPELL_LIBRARY})
 	include_directories(${HUNSPELL_INCLUDE_DIR})
 	if( WIN32 )
 		include_directories( ${HUNSPELL_INCLUDE_DIR}/../ )
