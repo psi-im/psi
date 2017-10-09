@@ -232,8 +232,31 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	flashing_ = yes;
 	if (parentWidget_->window() != parentWidget_)
 		return;
-
+	
+#ifdef Q_OS_WIN
+	
+	FLASHWINFO fwi;
+	
+	fwi.cbSize = sizeof(fwi);
+	fwi.hwnd = (HWND)parentWidget_->winId();
+	
+	if (yes) {
+		fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
+		fwi.dwTimeout = 0;
+		fwi.uCount = 5;
+	}
+	else {
+		fwi.dwFlags = FLASHW_STOP;
+		fwi.uCount = 0;
+	}
+	
+	FlashWindowEx(&fwi);
+	
+#else
+	
 	QApplication::alert(parentWidget_, yes ? 0 : 1);
+	
+#endif
 }
 
 void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
