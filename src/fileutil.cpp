@@ -103,11 +103,16 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
 	return QString();
 }
 
-QString FileUtil::getImageFileName(QWidget* parent)
+QString FileUtil::getImageFileName(QWidget* parent, QString caption)
 {
 	// double extenstions because of QTBUG-51712
-	return FileUtil::getOpenFileName(parent, tr("Choose a file"),
+	return FileUtil::getOpenFileName(parent, caption.isEmpty()? tr("Choose a file") : caption,
 	                                 tr("Images (*.png *.xpm *.jpg *.jpeg *.webp *.PNG *.XPM *.JPG *.JPEG *.WEBP)"));
+}
+
+QString FileUtil::getInbandImageFileName(QWidget* parent)
+{
+	return getImageFileName(parent, QString("%1 (<50KB)").arg(tr("Choose a file")));
 }
 
 QString FileUtil::mimeToFileExt(const QString &mime)

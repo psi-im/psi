@@ -699,7 +699,7 @@ void InfoWidget::textChanged()
 */
 void InfoWidget::selectPhoto()
 {
-	QString str = FileUtil::getImageFileName(this);
+	QString str = FileUtil::getInbandImageFileName(this);
 	if (!str.isEmpty()) {
 		setPreviewPhoto(str);
 	}
