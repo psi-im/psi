@@ -37,9 +37,15 @@ or
 
 ## Usefull CMAKE FLAGS:
 
->  -DUSE_QT5=ON
+> -DPSI_LIBDIR=${path}
 
-  to build psi-plus with Qt5 support (default ON)
+  Path to Psi/Psi+ libraries directory. Path to the directory
+  where Psi/Psi+ will search plugins.
+
+> -DPSI_DATADIR=${path}
+
+  Path to Psi/Psi+ data directory. Path to the directory
+  where Psi/Psi+ will search datafiles (iconpacks, themes etc)
 
 > -DCMAKE_INSTALL_PREFIX=prefix
 
@@ -116,6 +122,10 @@ or
 
   > -DBUILD_PLUGINS="chessplugin;otrplugin;gnome3supportplugin"
 
+>  -DPLUGINS_ROOT_DIR=${path}
+
+  Path to the include directory to build plugins outside of Psi/Psi+
+  sources (path to the plugins.cmake file)
 
 >  -DPLUGINS_PATH=${path} 
 

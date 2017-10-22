@@ -9,7 +9,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
 	add_definitions(-DALLOW_QT_PLUGINS_DIR)
 endif()
 
-set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
+if(LINUX)
+	set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
+	set(PSI_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ libraries directory")
+	set(PSI_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ data directory")
+endif()
+
 set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 
 find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg REQUIRED)
@@ -156,17 +161,8 @@ endif()
 message(STATUS "${CLIENT_NAME} version set: ${PSI_VERSION}")
 
 if(LINUX)
-	if(LIB_INSTALL_DIR)
-		set(PSI_LIBDIR "${LIB_INSTALL_DIR}/${PROJECT_NAME}")
-	else()
-		set(PSI_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/${PROJECT_NAME}")
-	endif()
-
-	if(SHARE_INSTALL_PREFIX)
-		set(PSI_DATADIR "${SHARE_INSTALL_PREFIX}/${PROJECT_NAME}")
-	else()
-		set(PSI_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}")
-	endif()
+	message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
+	message(STATUS "${CLIENT_NAME} data directory: ${PSI_DATADIR}")
 endif()
 
 configure_file(config.h.in config.h @ONLY)

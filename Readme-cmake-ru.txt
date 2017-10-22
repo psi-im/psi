@@ -32,9 +32,15 @@
 
 ## Полезные CMAKE флаги:
 
->  -DUSE_QT5=ON
+> -DPSI_LIBDIR=${path}
 
-  собирать Psi/Psi+ используя Qt5 (по-умолчанию - ON)
+  Путь к каталогу библиотек Psi/Psi+. Путь по которому
+  Psi/Psi+ будет искать плагины
+
+> -DPSI_DATADIR=${path}
+
+  Путь к каталогу данных программы Psi/Psi+. Путь по
+  которому Psi/Psi+ будет искать данные (иконпаки, темы и.т.д.)
 
 > -DCMAKE_INSTALL_PREFIX=prefix
 
@@ -113,6 +119,10 @@
 
   > -DBUILD_PLUGINS="chessplugin;otrplugin;gnome3supportplugin"
 
+>  -DPLUGINS_ROOT_DIR=${path}
+
+  Путь к каталогу include для сборки плагинов в отрыве от исходников
+  Psi/Psi+ (каталог где лежит файл plugins.cmake)
 
 >  -DPLUGINS_PATH=${path} 
 
