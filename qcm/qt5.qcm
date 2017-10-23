@@ -1,0 +1,80 @@
+/*
+-----BEGIN QCMOD-----
+name: Qt >= 5.0.0
+-----END QCMOD-----
+*/
+class qc_qt5 : public ConfObj
+{
+public:
+	qc_qt5(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Qt >= 5.0.0"; }
+	QString shortname() const { return "qt5"; }
+	bool exec()
+	{
+		return(QT_VERSION >= 0x050000);
+	}
+
+	QString resultString() const
+	{
+		return QT_VERSION_STR;
+	}
+};
+
+class QtCompFinder : public ConfObj
+{
+protected:
+	QString compId;
+	QString compShortName;
+	QString compName;
+	QString extraConfIfFound;
+
+public:
+	QtCompFinder(const QString &id,const QString &shortName, const QString &name,
+		     const QString &extraConfIfFound, Conf *c) :
+		ConfObj(c), compId(id), compShortName(shortName), compName(name),
+		extraConfIfFound(extraConfIfFound)
+	{}
+
+	QString name() const { return compName; }
+	QString shortname() const { return compShortName; }
+	bool exec()
+	{
+		QString proextra =
+		"CONFIG += qt\n"
+		"QT -= gui\n";
+		"QT += ";
+		
+		proextra += compId;
+		proextra += "multimedia\n";
+
+		QString str =
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	return 0;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		if (!extraConfIfFound.isEmpty()) {
+			conf->addExtra("CONFIG += dbus");
+		}
+
+		return true;
+	}
+};
+
+#define QC_AS_STR(s) #s
+
+#define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) \
+class qc_##shortname : public QtCompFinder \
+{ \
+public: \
+	qc_##shortname(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \
+};
+
+#define QC_FIND_QT_COMP(id, shortname, name) QC_FIND_QT_COMP_E(id, shortname, name, "")

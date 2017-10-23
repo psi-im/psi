@@ -1,11 +1,11 @@
 /*
 -----BEGIN QCMOD-----
-name: QDBUS
+name: QtWidgets
 -----END QCMOD-----
 */
 
 //----------------------------------------------------------------------------
-// qc_qdbus
+// qc_qtwidgets
 //----------------------------------------------------------------------------
-// id, shortname, name, extraConfIfFound
-QC_FIND_QT_COMP_E(dbus, qdbus, QtDbus, "CONFIG += dbus")
+// id, shortname, name
+QC_FIND_QT_COMP(widgets, qtwidgets, QtWidgets)

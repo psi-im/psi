@@ -5,7 +5,7 @@
   <moddir>qcm</moddir>
   <libdir/>
   <datadir/>
-  <dep type='qt4'>
+  <dep type='qt5'>
     <required/>
   </dep>
   <dep type='buildmodeapp'>
@@ -31,6 +31,12 @@
   </dep>
   <dep type='qdbus'/>
   <dep type='qtmultimedia'>
+    <required/>
+  </dep>
+  <dep type='qtconcurrent'>
+    <required/>
+  </dep>
+  <dep type='qtwidgets'>
     <required/>
   </dep>
   <dep type='webkit'>

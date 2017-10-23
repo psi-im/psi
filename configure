@@ -589,21 +589,21 @@ fi
 
 gen_files() {
 cat >"$1/modules.cpp" <<EOT
-#line 1 "qt4.qcm"
+#line 1 "qt5.qcm"
 /*
 -----BEGIN QCMOD-----
-name: Qt >= 4.7.0
+name: Qt >= 5.0.0
 -----END QCMOD-----
 */
-class qc_qt4 : public ConfObj
+class qc_qt5 : public ConfObj
 {
 public:
-	qc_qt4(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Qt >= 4.7.0"; }
-	QString shortname() const { return "qt4"; }
+	qc_qt5(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Qt >= 5.0.0"; }
+	QString shortname() const { return "qt5"; }
 	bool exec()
 	{
-		return(QT_VERSION >= 0x040700);
+		return(QT_VERSION >= 0x050000);
 	}
 
 	QString resultString() const
@@ -611,6 +611,65 @@ public:
 		return QT_VERSION_STR;
 	}
 };
+
+class QtCompFinder : public ConfObj
+{
+protected:
+	QString compId;
+	QString compShortName;
+	QString compName;
+	QString extraConfIfFound;
+
+public:
+	QtCompFinder(const QString &id,const QString &shortName, const QString &name,
+		     const QString &extraConfIfFound, Conf *c) :
+		ConfObj(c), compId(id), compShortName(shortName), compName(name),
+		extraConfIfFound(extraConfIfFound)
+	{}
+
+	QString name() const { return compName; }
+	QString shortname() const { return compShortName; }
+	bool exec()
+	{
+		QString proextra =
+		"CONFIG += qt\\n"
+		"QT -= gui\\n";
+		"QT += ";
+		
+		proextra += compId;
+		proextra += "multimedia\\n";
+
+		QString str =
+		"\\n"
+		"int main()\\n"
+		"{\\n"
+		"	return 0;\\n"
+		"}\\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		if (!extraConfIfFound.isEmpty()) {
+			conf->addExtra("CONFIG += dbus");
+		}
+
+		return true;
+	}
+};
+
+#define QC_AS_STR(s) #s
+
+#define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) \\
+class qc_##shortname : public QtCompFinder \\
+{ \\
+public: \\
+	qc_##shortname(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \\
+};
+
+#define QC_FIND_QT_COMP(id, shortname, name) QC_FIND_QT_COMP_E(id, shortname, name, "")
 #line 1 "buildmodeapp.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1299,49 +1358,8 @@ name: QDBUS
 //----------------------------------------------------------------------------
 // qc_qdbus
 //----------------------------------------------------------------------------
-class qc_qdbus : public ConfObj
-{
-public:
-	qc_qdbus(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QDBUS"; }
-	QString shortname() const { return "qdbus"; }
-#ifdef Q_OS_WIN
-	QString checkString() const { return QString(); }
-#endif
-	bool exec()
-	{
-#ifdef Q_OS_WIN
-		// skip dbus support on windows
-		return false;
-#else
-		if (!conf->getenv("QC_DISABLE_qdbus").isEmpty())
-			return false;
-
-		// test for "qdbus" feature
-
-		QString proextra =
-		"CONFIG += qt\\n"
-		"QT -= gui\\n";
-		"QT += dbus\\n";
-
-		QString str =
-		"\\n"
-		"int main()\\n"
-		"{\\n"
-		"	return 0;\\n"
-		"}\\n";
-
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
-
-		conf->addExtra("CONFIG += dbus");
-		return true;
-#endif
-	}
-};
+// id, shortname, name, extraConfIfFound
+QC_FIND_QT_COMP_E(dbus, qdbus, QtDbus, "CONFIG += dbus")
 #line 1 "qtmultimedia.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1352,45 +1370,32 @@ name: QtMultimedia
 //----------------------------------------------------------------------------
 // qc_qtmultimedia
 //----------------------------------------------------------------------------
-class qc_qtmultimedia : public ConfObj
-{
-public:
-	qc_qtmultimedia(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QtMultimedia"; }
-	QString shortname() const { return "qtmultimedia"; }
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-	QString checkString() const { return QString(); }
-#endif
-	bool exec()
-	{
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-		// was not required with qt4
-		return true;
-#else
-		// test for "qtmultimedia" feature
+// id, shortname, name
+QC_FIND_QT_COMP(multimedia, qtmultimedia, QtMultimedia)
+#line 1 "qtconcurrent.qcm"
+/*
+-----BEGIN QCMOD-----
+name: QtConcurrent
+-----END QCMOD-----
+*/
 
-		QString proextra =
-		"CONFIG += qt\\n"
-		"QT -= gui\\n";
-		"QT += multimedia\\n";
+//----------------------------------------------------------------------------
+// qc_qtconcurrent
+//----------------------------------------------------------------------------
+// id, shortname, name
+QC_FIND_QT_COMP(concurrent, qtconcurrent, QtConcurrent)
+#line 1 "qtwidgets.qcm"
+/*
+-----BEGIN QCMOD-----
+name: QtWidgets
+-----END QCMOD-----
+*/
 
-		QString str =
-		"\\n"
-		"int main()\\n"
-		"{\\n"
-		"	return 0;\\n"
-		"}\\n";
-
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
-
-		return true;
-#endif
-	}
-};
+//----------------------------------------------------------------------------
+// qc_qtwidgets
+//----------------------------------------------------------------------------
+// id, shortname, name
+QC_FIND_QT_COMP(widgets, qtwidgets, QtWidgets)
 #line 1 "webkit.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2236,7 +2241,7 @@ public:
 
 EOT
 cat >"$1/modules_new.cpp" <<EOT
-    o = new qc_qt4(conf);
+    o = new qc_qt5(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_buildmodeapp(conf);
@@ -2264,6 +2269,12 @@ cat >"$1/modules_new.cpp" <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_qtmultimedia(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_qtconcurrent(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_qtwidgets(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_webkit(conf);
