@@ -7,14 +7,26 @@ name: White Board support
 //----------------------------------------------------------------------------
 // qc_whiteboarding
 //----------------------------------------------------------------------------
-class qc_whiteboarding : public ConfObj
+static bool qc_qtsvg_found = false;
+class qc_whiteboarding : public QtCompFinder
 {
 public:
-	qc_whiteboarding(Conf *c) : ConfObj(c) {}
-	QString name() const { return "White Board support"; }
-	QString shortname() const { return "whiteboarding"; }
+	qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
+	QString resultString() const
+	{
+		if (!qc_qtsvg_found) {
+			return "QtSVG is not found";
+		}
+		return ConfObj::resultString();
+	}
+
 	bool exec()
 	{
+		if (!QtCompFinder::exec()) {
+			return false;
+		}
+		qc_qtsvg_found = true;
+
 		conf->addDefine("WHITEBOARDING");
 
 		// Finish

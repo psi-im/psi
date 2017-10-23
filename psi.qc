@@ -39,6 +39,12 @@
   <dep type='qtwidgets'>
     <required/>
   </dep>
+  <dep type='qtnetwork'>
+    <required/>
+  </dep>
+  <dep type='qtxml'>
+    <required/>
+  </dep>
   <dep type='webkit'>
     <disabled/>
   </dep>
