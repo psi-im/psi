@@ -345,6 +345,8 @@ void ChatDlg::deactivated()
     TabbableWidget::deactivated();
 
     trackBar_ = true;
+
+    setChatState(XMPP::StateInactive);
 }
 
 void ChatDlg::activated()
@@ -361,6 +363,8 @@ void ChatDlg::activated()
     chatEdit()->setFocus();
 
     trackBar_ = false;
+
+    setChatState(XMPP::StateActive);
 }
 
 void ChatDlg::dropEvent(QDropEvent* event)
@@ -1102,7 +1106,7 @@ void ChatDlg::setChatState(ChatState state)
         }
 
         // Check if we should send a message
-        if (state == lastChatState_ || state == XMPP::StateActive || (lastChatState_ == XMPP::StateActive && state == XMPP::StatePaused)) {
+        if (state == lastChatState_ || (lastChatState_ == XMPP::StateActive && state == XMPP::StatePaused)) {
             lastChatState_ = state;
             return;
         }
@@ -1120,18 +1124,16 @@ void ChatDlg::setChatState(ChatState state)
                 }
             }
             if (contactChatState_ != XMPP::StateNone) {
-                if (lastChatState_ != XMPP::StateGone) {
-                    if ((state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing) || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
-                        // First go to the paused state
-                        Message tm(jid());
-                        m.setType("chat");
-                        m.setChatState(XMPP::StatePaused);
-                        if (account()->isAvailable()) {
+                if ( (state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing) || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
+                    // First go to the paused state
+                    Message tm(jid());
+                    m.setType("chat");
+                    m.setChatState(XMPP::StatePaused);
+                    if (account()->isAvailable()) {
                             account()->dj_sendMessage(m, false);
-                        }
                     }
-                    m.setChatState(state);
                 }
+                m.setChatState(state);
             }
 
             // Send event message
@@ -1155,12 +1157,7 @@ void ChatDlg::setContactChatState(ChatState state)
     if (state == XMPP::StateGone) {
         appendSysMsg(tr("%1 ended the conversation").arg(TextUtil::escape(dispNick_)));
     }
-    else {
-        // Activate ourselves
-        if (lastChatState_ == XMPP::StateGone) {
-            setChatState(XMPP::StateActive);
-        }
-    }
+
     invalidateTab();
 }
 
