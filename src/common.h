@@ -191,4 +191,8 @@ class Activity;
 QString activityIconName(const Activity &);
 
 QString macToQtDatetimeFormat(const QString &sys_fmt);
+
+//
+QLocale preferredXmlLocale();
+
 #endif

@@ -1823,7 +1823,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
 	PsiOptions *options = PsiOptions::instance();
 	if(!m.subject().isNull()) {
-		QString subject = m.subject();
+		QString subject = m.subject(preferredXmlLocale());
+		if (subject.isEmpty())
+			subject = m.subject();
 		d->topic = subject;
 		QString subjectTooltip = TextUtil::plain2rich(subject);
 		subjectTooltip = TextUtil::linkify(subjectTooltip);

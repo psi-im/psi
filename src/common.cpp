@@ -930,3 +930,15 @@ int pointToPixel(int points)
 
 	return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
 }
+
+QLocale preferredXmlLocale()
+{
+	static bool init = false;
+	static QLocale preferred;
+	if (!init) {
+		preferred = QLocale(QLocale().uiLanguages().value(0));
+		// TODO may be it's better to match with real Psi UI interface language
+		init = true;
+	}
+	return preferred;
+}
