@@ -402,7 +402,7 @@ qmake_check() {
 		fi
 		vout=`/bin/sh -c "$cmd" 2>&1`
 		case "${vout}" in
-			?.?.?)
+			*.*.*)
 				vmaj="${vout%%.*}"
 				if [ ! -z "$QC_QTSELECT" ]; then
 					if [ "$vmaj" = "$QC_QTSELECT" ]; then
