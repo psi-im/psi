@@ -15,9 +15,9 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QPlainTextEdit" name="pte_topic">
-     <property name="whatsThis">
-      <string>Text of topic</string>
+    <widget class="QTabWidget" name="twLang">
+     <property name="currentIndex">
+      <number>-1</number>
      </property>
     </widget>
    </item>

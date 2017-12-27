@@ -93,6 +93,7 @@
 #include "mcmdsimplesite.h"
 #include "tabcompletion.h"
 #include "vcardfactory.h"
+#include "languagemanager.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -220,7 +221,7 @@ public:
 	QString self, prev_self;
 	QString mucName, discoMucName, vcardMucName;
 	QString password;
-	QString topic;
+	QMap<LanguageManager::LangId, QString> subjectMap;
 	bool nonAnonymous;		 // got status code 100 ?
 	ActionList *actions;
 	IconAction *act_bookmark;
@@ -426,7 +427,10 @@ join <channel>{,<channel>} [pass{,<pass>}
 			} else if(cmd == "topic" && command.count() > 1) {
 				command.removeFirst();
 				const QString topic = command.join(" ").trimmed();
-				dlg->setTopic(topic);
+				LanguageManager::LangId id; // no language identifier
+				auto topicMap = dlg->d->subjectMap;
+				topicMap.insert(id, topic);
+				dlg->sendNewTopic(topicMap);
 			} else if (cmd == "version" && command.count() > 1) {
 				QString nick = command[1].trimmed();
 				Jid target = dlg->jid().withResource(nick);
@@ -472,7 +476,8 @@ join <channel>{,<channel>} [pass{,<pass>}
 				if (partcommand[0] == "version" || partcommand[0] == "idle" || partcommand[0] == "kick" || partcommand[0] == "ban") {
 					all = dlg->ui_.lv_users->nickList();
 				} else if (partcommand[0] == "topic") {
-					all << dlg->topic();
+					LanguageManager::LangId id;
+					all << dlg->d->subjectMap.value(id);
 				}
 			} else if (item == 2) {
 				if (partcommand[0] == "kick" || partcommand[0] == "ban") {
@@ -1259,17 +1264,22 @@ void GCMainDlg::openTopic()
 		::bringToFront(d->topicDlg);
 	} else {
 		d->topicDlg = new GroupchatTopicDlg(this);
+		d->topicDlg->setSubjectMap(d->subjectMap);
 		d->topicDlg->setAttribute(Qt::WA_DeleteOnClose);
 		d->topicDlg->show();
-		connect(d->topicDlg, SIGNAL(topicAccepted(const QString)), this, SLOT(setTopic(const QString)));
+		QObject::connect(d->topicDlg, &GroupchatTopicDlg::accepted, this, [=] () {
+			sendNewTopic(d->topicDlg->subjectMap());
+        });
 	}
 }
 
-void GCMainDlg::setTopic(const QString &topic)
+void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics)
 {
 	Message m(jid());
 	m.setType("groupchat");
-	m.setSubject(topic);
+	for (auto it = topics.constBegin(); it !=topics.constEnd(); ++it) {
+		m.setSubject(it.value(), LanguageManager::toString(it.key()));
+	}
 	m.setTimeStamp(QDateTime::currentDateTime());
 	aSend(m);
 }
@@ -1823,33 +1833,40 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
 	PsiOptions *options = PsiOptions::instance();
 	if(!m.subject().isNull()) {
-		QString subject = m.subject(preferredXmlLocale());
-		if (subject.isEmpty())
-			subject = m.subject();
-		d->topic = subject;
-		QString subjectTooltip = TextUtil::plain2rich(subject);
+
+		d->subjectMap.clear();
+		auto sm = m.subjectMap();
+		for (auto l = sm.constBegin(); l != sm.constEnd(); ++l) {
+			d->subjectMap.insert(LanguageManager::fromString(l.key()), l.value());
+		}
+		LanguageManager::LangId preferredSubject = LanguageManager::bestUiMatch(d->subjectMap.keys());
+
+		QString topic = d->subjectMap.value(preferredSubject);
+		QString subjectTooltip = TextUtil::plain2rich(topic);
 		subjectTooltip = TextUtil::linkify(subjectTooltip);
 		if(options->getOption("options.ui.emoticons.use-emoticons").toBool()) {
 			subjectTooltip = TextUtil::emoticonify(subjectTooltip);
 		}
-		ui_.le_topic->setText(subject.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
-		ui_.le_topic->setCursorPosition(0);
-		ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(subjectTooltip));
 
 		QString sysMsg;
 		if (from.isEmpty()) {
 			// The topic was set by the server
 			// ugly trick
-			int btStart = m.body().indexOf(d->topic);
+			int btStart = m.body().indexOf(topic);
 			sysMsg = btStart > 0?m.body().left(btStart).remove(": "):tr("The topic has been set to");
 		} else {
-			sysMsg = QString(from) + (d->topic.isEmpty()?
+			sysMsg = QString(from) + (topic.isEmpty()?
 						 tr(" has unset the topic"):tr(" has set the topic to"));
 		}
-		MessageView tv = MessageView::subjectMessage(d->topic, sysMsg);
+		MessageView tv = MessageView::subjectMessage(topic, sysMsg);
 		tv.setDateTime(m.timeStamp());
+
+
+		ui_.le_topic->setText(topic.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
+		ui_.le_topic->setCursorPosition(0);
+		ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(subjectTooltip));
+
 		appendSysMsg(tv);
-		//ui_.log->dispatchMessage(tv);
 		return;
 	}
 
@@ -1919,11 +1936,6 @@ void GCMainDlg::setPassword(const QString& p)
 const QString& GCMainDlg::nick() const
 {
 	return d->self;
-}
-
-const QString& GCMainDlg::topic() const
-{
-	return d->topic;
 }
 
 const QDateTime & GCMainDlg::lastMsgTime() const

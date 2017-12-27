@@ -94,6 +94,7 @@ QVariant ContactManagerModel::data(const QModelIndex &index, int role) const
 				if (role == Qt::TextAlignmentRole) {
 					return (int)(Qt::AlignRight | Qt::AlignVCenter);
 				}
+				break;
 			default:
 				if (role == Qt::DisplayRole) {
 					return userFieldString(u, columnRole);

@@ -27,11 +27,11 @@
 
 #include "advwidget.h"
 #include "tabbablewidget.h"
-
 #include "ui_groupchatdlg.h"
 #include "mucmanager.h"
 #include "advwidget.h"
 #include "psievent.h"
+#include "languagemanager.h"
 
 using namespace XMPP;
 
@@ -75,7 +75,6 @@ public:
 	void joined();
 	void setPassword(const QString&);
 	const QString& nick() const;
-	const QString& topic() const;
 	const QDateTime& lastMsgTime() const;
 	bool isLastMessageAlert() const;
 
@@ -121,7 +120,7 @@ private slots:
 	void scrollDown();
 	void mle_returnPressed();
 	void openTopic();
-	void setTopic(const QString &);
+	void sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics);
 	//void openFind();
 	void configureRoom();
 	//void doFind(const QString &);

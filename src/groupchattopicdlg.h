@@ -1,6 +1,8 @@
 #ifndef GROUPCHATTOPICDLG_H
 #define GROUPCHATTOPICDLG_H
 
+#include "languagemanager.h"
+
 #include <QDialog>
 
 namespace Ui {
@@ -14,19 +16,14 @@ class GroupchatTopicDlg : public QDialog {
 public:
 	GroupchatTopicDlg(GCMainDlg *parent = 0);
 	~GroupchatTopicDlg();
-	QString topic() const;
+	QMap<LanguageManager::LangId,QString> subjectMap() const;
+	void setSubjectMap(const QMap<LanguageManager::LangId,QString> &topics);
 
 protected:
 	void changeEvent(QEvent *e);
 
 private:
 	Ui::GroupchatTopicDlg *m_ui;
-
-public slots:
-	void accept();
-
-signals:
-	void topicAccepted(const QString &);
 };
 
 #endif // GROUPCHATTOPICDLG_H
