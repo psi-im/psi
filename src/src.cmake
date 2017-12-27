@@ -42,6 +42,7 @@ list(APPEND FORMS
 	geolocation.ui
 	groupchatdlg.ui
 	groupchattopicdlg.ui
+	groupchattopicaddlang.ui
 	history.ui
 	homedirmigration.ui
 	infodlg.ui
@@ -133,7 +134,7 @@ list(APPEND HEADERS
 	httpauthmanager.h
 	infodlg.h
 	invitetogroupchatmenu.h
-	languagemodel.h
+	languagemanager.h
 	main.h
 	mainwin.h
 	mainwin_p.h
@@ -395,7 +396,7 @@ list(APPEND PLAIN_SOURCES
 	infodlg.cpp
 	invitetogroupchatmenu.cpp
 	jidutil.cpp
-	languagemodel.cpp
+	languagemanager.cpp
 	lastactivitytask.cpp
 	main.cpp
 	mainwin.cpp
