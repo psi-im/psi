@@ -578,7 +578,8 @@ FORMS += \
 	$$PWD/ahcformdlg.ui \
 	$$PWD/geolocation.ui \
 	$$PWD/rosteravatarframe.ui \
-	$$PWD/captchadlg.ui
+	$$PWD/captchadlg.ui \
+    $$PWD/groupchattopicaddlang.ui
 
 # options dialog
 include($$PWD/options/options.pri)

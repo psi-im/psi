@@ -28,6 +28,12 @@ inline bool operator<(const LanguageManager::LangId &a, const LanguageManager::L
 	}
 	return a.script < b.script;
 }
+
+inline bool operator==(const LanguageManager::LangId &a, const LanguageManager::LangId &b)
+{
+	return a.language == b.language && a.country == b.country && a.script == b.script;
+}
+
 Q_DECLARE_METATYPE(LanguageManager::LangId)
 
 class LanguageModel : public QAbstractTableModel

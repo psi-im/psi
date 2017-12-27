@@ -208,7 +208,10 @@ QString LanguageManager::languageName(const LanguageManager::LangId &id)
 	}
 	QLocale loc((QLocale::Language)id.language, (QLocale::Script)id.script, (QLocale::Country)id.country);
 	QString name = loc.nativeLanguageName();
-	if (loc.script() != QLocale::LatinScript && loc.script() != QLocale().script()) { // if not latin and not deafuls, then probaby it's somethingunreadable
+	if (name.isEmpty()) {
+		name = QLocale::languageToString(loc.language());
+	}
+	else if (loc.script() != QLocale::LatinScript && loc.script() != QLocale().script()) { // if not latin and not deafuls, then probaby it's somethingunreadable
 		name += (" [" + QLocale::languageToString(loc.language()) + "]");
 	}
 	if (id.script) {

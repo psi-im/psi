@@ -3,10 +3,12 @@
 
 #include "languagemanager.h"
 
+#include <QPointer>
 #include <QDialog>
 
 namespace Ui {
 	class GroupchatTopicDlg;
+	class GroupChatTopicAddLangDlg;
 }
 
 class GCMainDlg;
@@ -21,9 +23,13 @@ public:
 
 protected:
 	void changeEvent(QEvent *e);
-
 private:
 	Ui::GroupchatTopicDlg *m_ui;
+	Ui::GroupChatTopicAddLangDlg *m_addLangUi;
+	QPointer<QDialog> addLangDlg;
+
+	void addLanguage(const LanguageManager::LangId &id, const QString &text = QString());
+	void populateCountryAndScript();
 };
 
 #endif // GROUPCHATTOPICDLG_H
