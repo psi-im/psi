@@ -28,33 +28,33 @@ class PsiAccount;
 
 class AccountsComboBox : public QComboBox
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	AccountsComboBox(QWidget* parent);
-	~AccountsComboBox();
+    AccountsComboBox(QWidget* parent);
+    ~AccountsComboBox();
 
-	PsiAccount* account() const;
-	void setAccount(PsiAccount* account);
+    PsiAccount* account() const;
+    void setAccount(PsiAccount* account);
 
-	PsiCon* controller() const;
-	void setController(PsiCon* controller);
+    PsiCon* controller() const;
+    void setController(PsiCon* controller);
 
-	bool onlineOnly() const;
-	void setOnlineOnly(bool onlineOnly);
+    bool onlineOnly() const;
+    void setOnlineOnly(bool onlineOnly);
 
 signals:
-	void activated(PsiAccount* account);
+    void activated(PsiAccount* account);
 
 private slots:
-	void changeAccount();
-	void updateAccounts();
+    void changeAccount();
+    void updateAccounts();
 
 private:
-	PsiCon* controller_;
-	PsiAccount* account_;
-	bool onlineOnly_;
+    PsiCon* controller_;
+    PsiAccount* account_;
+    bool onlineOnly_;
 
-	QList<PsiAccount*> accounts() const;
+    QList<PsiAccount*> accounts() const;
 };
 
 #endif

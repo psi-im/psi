@@ -5,19 +5,19 @@
 #include "statusmenu.h"
 
 class GlobalStatusMenu : public StatusMenu {
-	Q_OBJECT
+    Q_OBJECT
 private:
-	void addChoose();
-	void addReconnect();
+    void addChoose();
+    void addReconnect();
 
 public:
-	GlobalStatusMenu(QWidget* parent, PsiCon* _psi)
-		: StatusMenu(parent, _psi) { };
+    GlobalStatusMenu(QWidget* parent, PsiCon* _psi)
+        : StatusMenu(parent, _psi) { };
 
-	void fill();
+    void fill();
 
 public slots:
-	void preventStateChange(bool checked);
+    void preventStateChange(bool checked);
 };
 
 #endif // GLOBALSTATUSMENU_H

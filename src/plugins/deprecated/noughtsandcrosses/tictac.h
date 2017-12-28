@@ -35,14 +35,14 @@ public:
     enum Type { Blank, Circle, Cross };
     Type        type() const            { return t; }
     void        setType( Type type )
-	{
-		t = type;
-		QString mark="";
-		if (t==Circle)
-			mark="0";
-		if (t==Cross)
-			mark="X";
-		setText(mark); repaint(); }
+    {
+        t = type;
+        QString mark="";
+        if (t==Circle)
+            mark="0";
+        if (t==Cross)
+            mark="X";
+        setText(mark); repaint(); }
     QSizePolicy sizePolicy() const
     { return QSizePolicy( QSizePolicy::Preferred, QSizePolicy::Preferred ); }
     QSize sizeHint() const { return QSize( 32, 32 ); }
@@ -79,10 +79,10 @@ public:
 
 signals:
     void        finished();                     // game finished
-	void myMove(int space);
-	void stateChanged();
+    void myMove(int space);
+    void stateChanged();
 public slots:
-	void theirMove(int space);
+    void theirMove(int space);
 private slots:
     void        buttonClicked();
 private:
@@ -111,11 +111,11 @@ public:
     TicTacToe( bool meFirst, int boardSize=3, QWidget *parent=0, const char *name=0 );
 
 signals:
-	void	closing();
-	void myMove(int space);
-	void gameOverSignal(TicTacGameBoard::State state);
+    void    closing();
+    void myMove(int space);
+    void gameOverSignal(TicTacGameBoard::State state);
 public slots:
-	void theirMove(int space);
+    void theirMove(int space);
 private slots:
     void        newGameClicked();
     void        gameOver();

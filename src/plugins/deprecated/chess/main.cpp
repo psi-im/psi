@@ -21,37 +21,37 @@
 #include "mainwindow.h"
 
 const int
-	XSize = 800,
-	YSize = 600;
+    XSize = 800,
+    YSize = 600;
 
 int
 main(int argc, const char *argv[])
 {
-	QApplication	*app;
-	MainWindow	*mw;
-	QTranslator	*qt;
-	int		result = 0;
+    QApplication    *app;
+    MainWindow    *mw;
+    QTranslator    *qt;
+    int        result = 0;
 
-	app = new QApplication(argc, (char **)argv);
-	/*qt = new QTranslator();
-	if (qt->load(LOCALE_FILE))
-		app->installTranslator(qt);*/
-	mw = new MainWindow();
+    app = new QApplication(argc, (char **)argv);
+    /*qt = new QTranslator();
+    if (qt->load(LOCALE_FILE))
+        app->installTranslator(qt);*/
+    mw = new MainWindow();
 
-	if (mw->sockOk()) {
-		app->setMainWidget(mw);
-		mw->show();
-		mw->resize(XSize, YSize);
-		mw->setMinimumSize(mw->size());
-		result = app->exec();
-	} else
-		QMessageBox::critical(NULL, QObject::tr("Socket Error"),
-			QObject::tr("Cannot create a server socket!"));
+    if (mw->sockOk()) {
+        app->setMainWidget(mw);
+        mw->show();
+        mw->resize(XSize, YSize);
+        mw->setMinimumSize(mw->size());
+        result = app->exec();
+    } else
+        QMessageBox::critical(NULL, QObject::tr("Socket Error"),
+            QObject::tr("Cannot create a server socket!"));
 
-	delete mw;
-	delete qt;
-	delete app;
+    delete mw;
+    delete qt;
+    delete app;
 
-	return (result);
+    return (result);
 }
 

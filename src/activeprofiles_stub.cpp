@@ -26,19 +26,19 @@
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {
-	Q_UNUSED(profile);
-	return false;
+    Q_UNUSED(profile);
+    return false;
 }
 
 bool ActiveProfiles::isAnyActive() const
 {
-	return false;
+    return false;
 }
 
 bool ActiveProfiles::setThisProfile(const QString &profile)
 {
-	Q_UNUSED(profile);
-	return true;
+    Q_UNUSED(profile);
+    return true;
 }
 
 void ActiveProfiles::unsetThisProfile()
@@ -47,11 +47,11 @@ void ActiveProfiles::unsetThisProfile()
 
 QString ActiveProfiles::thisProfile() const
 {
-	return QString();
+    return QString();
 }
 
 ActiveProfiles::ActiveProfiles()
-	: QObject(QCoreApplication::instance())
+    : QObject(QCoreApplication::instance())
 {
 }
 
@@ -61,22 +61,22 @@ ActiveProfiles::~ActiveProfiles()
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {
-	Q_UNUSED(profile);
-	Q_UNUSED(status);
-	Q_UNUSED(message);
-	return true;
+    Q_UNUSED(profile);
+    Q_UNUSED(status);
+    Q_UNUSED(message);
+    return true;
 }
 
 bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
-	Q_UNUSED(uri);
-	Q_UNUSED(profile);
-	return true;
+    Q_UNUSED(uri);
+    Q_UNUSED(profile);
+    return true;
 }
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
-	Q_UNUSED(profile);
-	Q_UNUSED(withUI);
-	return true;
+    Q_UNUSED(profile);
+    Q_UNUSED(withUI);
+    return true;
 }

@@ -32,198 +32,198 @@
 static const QString psiRosterSelectionMimeType = "application/psi-roster-selection";
 
 ContactListModelSelection::ContactListModelSelection(QList<ContactListItem*> items)
-	: QMimeData()
-	, mimeData_(0)
+    : QMimeData()
+    , mimeData_(0)
 {
-	QDomDocument doc;
-	QDomElement root = doc.createElement("items");
-	root.setAttribute("version", "2.0");
-	doc.appendChild(root);
+    QDomDocument doc;
+    QDomElement root = doc.createElement("items");
+    root.setAttribute("version", "2.0");
+    doc.appendChild(root);
 
-	QStringList jids;
+    QStringList jids;
 
-	for (auto *item: items) {
-		Q_ASSERT(item);
+    for (auto *item: items) {
+        Q_ASSERT(item);
 
-		switch (item->type()) {
-		case ContactListItem::Type::ContactType: {
-			PsiContact* contact = item->contact();
-			QDomElement tag = textTag(&doc, "contact", contact->jid().full());
-			tag.setAttribute("account", contact->account()->id());
-			tag.setAttribute("group", item->parent()->isGroup() ? item->parent()->internalName() : "");
-			root.appendChild(tag);
+        switch (item->type()) {
+        case ContactListItem::Type::ContactType: {
+            PsiContact* contact = item->contact();
+            QDomElement tag = textTag(&doc, "contact", contact->jid().full());
+            tag.setAttribute("account", contact->account()->id());
+            tag.setAttribute("group", item->parent()->isGroup() ? item->parent()->internalName() : "");
+            root.appendChild(tag);
 
-			jids << contact->jid().full();
-			break; }
+            jids << contact->jid().full();
+            break; }
 
-		case ContactListItem::Type::GroupType: {
-			// if group->fullName() consists only of whitespace when we'll try
-			// to read it back we'll get an empty string, so we're using CDATA
-			// QDomElement tag = textTag(&doc, "group", group->fullName());
-			QDomElement tag = doc.createElement("group");
-			QDomText text = doc.createCDATASection(TextUtil::escape(item->internalName()));
-			tag.appendChild(text);
+        case ContactListItem::Type::GroupType: {
+            // if group->fullName() consists only of whitespace when we'll try
+            // to read it back we'll get an empty string, so we're using CDATA
+            // QDomElement tag = textTag(&doc, "group", group->fullName());
+            QDomElement tag = doc.createElement("group");
+            QDomText text = doc.createCDATASection(TextUtil::escape(item->internalName()));
+            tag.appendChild(text);
 
-			root.appendChild(tag);
+            root.appendChild(tag);
 
-			jids << item->name();
-			break; }
+            jids << item->name();
+            break; }
 
-		case ContactListItem::Type::AccountType: {
-			QDomElement tag = doc.createElement("account");
-			tag.setAttribute("id", item->account()->id());
-			root.appendChild(tag);
+        case ContactListItem::Type::AccountType: {
+            QDomElement tag = doc.createElement("account");
+            tag.setAttribute("id", item->account()->id());
+            root.appendChild(tag);
 
-			jids << item->name();
-			break; }
+            jids << item->name();
+            break; }
 
-		default:
-			break;
-		}
-	}
+        default:
+            break;
+        }
+    }
 
-	setText(jids.join(", "));
-	setData(psiRosterSelectionMimeType, doc.toByteArray());
+    setText(jids.join(", "));
+    setData(psiRosterSelectionMimeType, doc.toByteArray());
 }
 
 ContactListModelSelection::ContactListModelSelection(const QMimeData *mimeData)
-	: QMimeData()
-	, mimeData_(mimeData)
+    : QMimeData()
+    , mimeData_(mimeData)
 {
-	const ContactListModelSelection* other = qobject_cast<const ContactListModelSelection*>(mimeData_);
-	if (other) {
-		mimeData_ = other->mimeData();
-	}
+    const ContactListModelSelection* other = qobject_cast<const ContactListModelSelection*>(mimeData_);
+    if (other) {
+        mimeData_ = other->mimeData();
+    }
 }
 
 const QString &ContactListModelSelection::mimeType()
 {
-	return psiRosterSelectionMimeType;
+    return psiRosterSelectionMimeType;
 }
 
 QDomElement ContactListModelSelection::rootElementFor(const QMimeData* mimeData) const
 {
-	QDomDocument doc;
-	if (!doc.setContent(mimeData->data(psiRosterSelectionMimeType)))
-		return QDomElement();
+    QDomDocument doc;
+    if (!doc.setContent(mimeData->data(psiRosterSelectionMimeType)))
+        return QDomElement();
 
-	QDomElement root = doc.documentElement();
-	if (root.tagName() != "items" || root.attribute("version") != "2.0")
-		return QDomElement();
+    QDomElement root = doc.documentElement();
+    if (root.tagName() != "items" || root.attribute("version") != "2.0")
+        return QDomElement();
 
-	return root;
+    return root;
 }
 
 bool ContactListModelSelection::haveRosterSelectionIn(const QMimeData* mimeData) const
 {
-	return !rootElementFor(mimeData).isNull();
+    return !rootElementFor(mimeData).isNull();
 }
 
 QList<ContactListModelSelection::Contact> ContactListModelSelection::contactsFor(const QMimeData* mimeData) const
 {
-	QList<Contact> result;
-	QDomElement root = rootElementFor(mimeData);
-	if (root.isNull())
-		return result;
+    QList<Contact> result;
+    QDomElement root = rootElementFor(mimeData);
+    if (root.isNull())
+        return result;
 
-	for (QDomNode n = root.firstChild(); !n.isNull(); n = n.nextSibling()) {
-		QDomElement e = n.toElement();
-		if (e.isNull())
-			continue;
+    for (QDomNode n = root.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        QDomElement e = n.toElement();
+        if (e.isNull())
+            continue;
 
-		if (e.tagName() == "contact") {
-			Jid jid = tagContent(e);
-			result << Contact(jid.full(),
-			                  e.attribute("account"),
-			                  e.attribute("group"));
-		}
-	}
+        if (e.tagName() == "contact") {
+            Jid jid = tagContent(e);
+            result << Contact(jid.full(),
+                              e.attribute("account"),
+                              e.attribute("group"));
+        }
+    }
 
-	return result;
+    return result;
 }
 
 QList<ContactListModelSelection::Group> ContactListModelSelection::groupsFor(const QMimeData* mimeData) const
 {
-	QList<Group> result;
-	QDomElement root = rootElementFor(mimeData);
-	if (root.isNull())
-		return result;
+    QList<Group> result;
+    QDomElement root = rootElementFor(mimeData);
+    if (root.isNull())
+        return result;
 
-	for (QDomNode n = root.firstChild(); !n.isNull(); n = n.nextSibling()) {
-		QDomElement e = n.toElement();
-		if (e.isNull())
-			continue;
+    for (QDomNode n = root.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        QDomElement e = n.toElement();
+        if (e.isNull())
+            continue;
 
-		if (e.tagName() == "group") {
-			QString groupName = TextUtil::unescape(tagContent(e));
-			result << Group(groupName);
-		}
-	}
+        if (e.tagName() == "group") {
+            QString groupName = TextUtil::unescape(tagContent(e));
+            result << Group(groupName);
+        }
+    }
 
-	return result;
+    return result;
 }
 
 QList<ContactListModelSelection::Account> ContactListModelSelection::accountsFor(const QMimeData* mimeData) const
 {
-	QList<Account> result;
-	QDomElement root = rootElementFor(mimeData);
-	if (root.isNull())
-		return result;
+    QList<Account> result;
+    QDomElement root = rootElementFor(mimeData);
+    if (root.isNull())
+        return result;
 
-	for (QDomNode n = root.firstChild(); !n.isNull(); n = n.nextSibling()) {
-		QDomElement e = n.toElement();
-		if (e.isNull())
-			continue;
+    for (QDomNode n = root.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        QDomElement e = n.toElement();
+        if (e.isNull())
+            continue;
 
-		if (e.tagName() == "account") {
-			result << Account(e.attribute("id"));
-		}
-	}
+        if (e.tagName() == "account") {
+            result << Account(e.attribute("id"));
+        }
+    }
 
-	return result;
+    return result;
 }
 
 const QMimeData* ContactListModelSelection::mimeData() const
 {
-	return mimeData_ ? mimeData_ : this;
+    return mimeData_ ? mimeData_ : this;
 }
 
 bool ContactListModelSelection::haveRosterSelection() const
 {
-	return haveRosterSelectionIn(mimeData());
+    return haveRosterSelectionIn(mimeData());
 }
 
 QList<ContactListModelSelection::Contact> ContactListModelSelection::contacts() const
 {
-	return contactsFor(mimeData());
+    return contactsFor(mimeData());
 }
 
 QList<ContactListModelSelection::Group> ContactListModelSelection::groups() const
 {
-	return groupsFor(mimeData());
+    return groupsFor(mimeData());
 }
 
 QList<ContactListModelSelection::Account> ContactListModelSelection::accounts() const
 {
-	return accountsFor(mimeData());
+    return accountsFor(mimeData());
 }
 
 bool ContactListModelSelection::isMultiSelection() const
 {
-	return (contacts().count() + groups().count()) > 1;
+    return (contacts().count() + groups().count()) > 1;
 }
 
 void ContactListModelSelection::debugSelection(const QMimeData* data, const QString& name)
 {
-	qWarning("*** debugSelection %s", qPrintable(name));
-	ContactListModelSelection selection(data);
-	foreach(const ContactListModelSelection::Contact& c, selection.contacts()) {
-		qWarning("\tc: '%s' group: '%s' account: '%s'", qPrintable(c.jid), qPrintable(c.group), qPrintable(c.account));
-	}
-	foreach(const ContactListModelSelection::Group& g, selection.groups()) {
-		qWarning("\tg: '%s'", qPrintable(g.fullName));
-	}
-	foreach(const ContactListModelSelection::Account& a, selection.accounts()) {
-		qWarning("\ta: '%s'", qPrintable(a.id));
-	}
+    qWarning("*** debugSelection %s", qPrintable(name));
+    ContactListModelSelection selection(data);
+    foreach(const ContactListModelSelection::Contact& c, selection.contacts()) {
+        qWarning("\tc: '%s' group: '%s' account: '%s'", qPrintable(c.jid), qPrintable(c.group), qPrintable(c.account));
+    }
+    foreach(const ContactListModelSelection::Group& g, selection.groups()) {
+        qWarning("\tg: '%s'", qPrintable(g.fullName));
+    }
+    foreach(const ContactListModelSelection::Account& a, selection.accounts()) {
+        qWarning("\ta: '%s'", qPrintable(a.id));
+    }
 }

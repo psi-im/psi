@@ -31,16 +31,16 @@
  * in both QSplitter mode, and QSplitter-less mode.
  */
 ChatSplitter::ChatSplitter(QWidget* parent)
-	: QWidget(parent)
-	, splitterEnabled_(true)
-	, splitter_(0)
-	, layout_(0)
+    : QWidget(parent)
+    , splitterEnabled_(true)
+    , splitter_(0)
+    , layout_(0)
 {
-	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
-	optionsChanged();
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+    optionsChanged();
 
-	if (!layout_)
-		updateLayout();
+    if (!layout_)
+        updateLayout();
 }
 
 /**
@@ -48,8 +48,8 @@ ChatSplitter::ChatSplitter(QWidget* parent)
  */
 void ChatSplitter::setOrientation(Qt::Orientation orientation)
 {
-	Q_ASSERT(orientation == Qt::Vertical);
-	Q_UNUSED(orientation);
+    Q_ASSERT(orientation == Qt::Vertical);
+    Q_UNUSED(orientation);
 }
 
 /**
@@ -59,10 +59,10 @@ void ChatSplitter::setOrientation(Qt::Orientation orientation)
  */
 void ChatSplitter::addWidget(QWidget* widget)
 {
-	Q_ASSERT(!children_.contains(widget));
-	children_ << widget;
-	connect(widget, SIGNAL(destroyed(QObject*)), SLOT(childDestroyed(QObject*)));
-	updateChildLayout(widget);
+    Q_ASSERT(!children_.contains(widget));
+    children_ << widget;
+    connect(widget, SIGNAL(destroyed(QObject*)), SLOT(childDestroyed(QObject*)));
+    updateChildLayout(widget);
 }
 
 /**
@@ -71,8 +71,8 @@ void ChatSplitter::addWidget(QWidget* widget)
  */
 void ChatSplitter::setSizes(const QList<int>& list)
 {
-	if (splitter_)
-		splitter_->setSizes(list);
+    if (splitter_)
+        splitter_->setSizes(list);
 }
 
 /**
@@ -81,12 +81,12 @@ void ChatSplitter::setSizes(const QList<int>& list)
  */
 void ChatSplitter::updateChildLayout(QWidget* child)
 {
-	if (splitterEnabled() && splitter_) {
-		splitter_->addWidget(child);
-	}
-	else {
-		layout_->addWidget(child);
-	}
+    if (splitterEnabled() && splitter_) {
+        splitter_->addWidget(child);
+    }
+    else {
+        layout_->addWidget(child);
+    }
 }
 
 /**
@@ -94,8 +94,8 @@ void ChatSplitter::updateChildLayout(QWidget* child)
  */
 void ChatSplitter::childDestroyed(QObject* obj)
 {
-	Q_ASSERT(obj->isWidgetType());
-	children_.removeAll(static_cast<QWidget*>(obj));
+    Q_ASSERT(obj->isWidgetType());
+    children_.removeAll(static_cast<QWidget*>(obj));
 }
 
 /**
@@ -104,11 +104,11 @@ void ChatSplitter::childDestroyed(QObject* obj)
  */
 void ChatSplitter::setSplitterEnabled(bool enable)
 {
-	if (splitterEnabled_ == enable)
-		return;
+    if (splitterEnabled_ == enable)
+        return;
 
-	splitterEnabled_ = enable;
-	updateLayout();
+    splitterEnabled_ = enable;
+    updateLayout();
 }
 
 /**
@@ -116,20 +116,20 @@ void ChatSplitter::setSplitterEnabled(bool enable)
  */
 void ChatSplitter::updateLayout()
 {
-	foreach(QWidget* child, children_)
-		child->setParent(this);
+    foreach(QWidget* child, children_)
+        child->setParent(this);
 
-	delete splitter_;
-	delete layout_;
-	splitter_ = new QSplitter(this);
-	layout_ = new QVBoxLayout(this);
-	layout_->setMargin(0);
-	layout_->addWidget(splitter_);
-	splitter_->setOrientation(Qt::Vertical);
-	splitter_->setVisible(splitterEnabled());
+    delete splitter_;
+    delete layout_;
+    splitter_ = new QSplitter(this);
+    layout_ = new QVBoxLayout(this);
+    layout_->setMargin(0);
+    layout_->addWidget(splitter_);
+    splitter_->setOrientation(Qt::Vertical);
+    splitter_->setVisible(splitterEnabled());
 
-	foreach(QWidget* child, children_)
-		updateChildLayout(child);
+    foreach(QWidget* child, children_)
+        updateChildLayout(child);
 }
 
 /**
@@ -139,5 +139,5 @@ void ChatSplitter::updateLayout()
  */
 void ChatSplitter::optionsChanged()
 {
-	setSplitterEnabled(!PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
+    setSplitterEnabled(!PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
 }

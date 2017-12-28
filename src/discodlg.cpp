@@ -58,95 +58,95 @@
 
 PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, const QString &type, int status=STATUS_ONLINE)
 {
-	// TODO: update this to http://www.jabber.org/registrar/disco-categories.html#gateway
+    // TODO: update this to http://www.jabber.org/registrar/disco-categories.html#gateway
 
-	// still have to add more options...
-	if ( category == "service" || category == "gateway" ) {
-		QString trans;
+    // still have to add more options...
+    if ( category == "service" || category == "gateway" ) {
+        QString trans;
 
-		if (type == "facebook")
-			trans = "facebook";
-		else if (type == "icq")
-			trans = "icq";
-		else if (type == "skype")
-			trans = "skype";
-		else if (type == "vkontakte")
-			trans = "vkontakte";
-		else if (type == "gadu-gadu" || type == "x-gadugadu")
-			trans = "gadugadu";
-		else if (type == "sms")
-			trans = "sms";
-		else
-			trans = "transport";
+        if (type == "facebook")
+            trans = "facebook";
+        else if (type == "icq")
+            trans = "icq";
+        else if (type == "skype")
+            trans = "skype";
+        else if (type == "vkontakte")
+            trans = "vkontakte";
+        else if (type == "gadu-gadu" || type == "x-gadugadu")
+            trans = "gadugadu";
+        else if (type == "sms")
+            trans = "sms";
+        else
+            trans = "transport";
 
-		return PsiIconset::instance()->transportStatus(trans, status);
+        return PsiIconset::instance()->transportStatus(trans, status);
 
-		// irc
-		// jud
-		// pager
-		// jabber
-		// serverlist
-		// smtp
-	}
-	else if ( category == "conference" ) {
-		if (type == "public" || type == "private" || type == "text" || type == "irc") {
-			PsiIcon icon = IconsetFactory::icon("psi/groupChat");
-			if (acc->bookmarkManager()->isBookmarked(jid)) {
-				static QImage img;
-				if (img.isNull()) {
-					img = icon.pixmap().toImage();
-					QPainter p(&img);
-					PsiIcon bicon = IconsetFactory::icon("psi/bookmark_remove");
-					p.drawImage(QRect(img.rect().center(),img.rect().bottomRight()), bicon.image());
-				}
-				icon.setImpix(Impix(img));
-			}
-			return icon;
-		}
-		else if (type == "url")
-			return IconsetFactory::icon("psi/www");
-		// irc
-		// list
-		// topic
-	}
-	else if ( category == "validate" ) {
-		if (type == "xml")
-			return IconsetFactory::icon("psi/xml");
-		// grammar
-		// spell
-	}
-	else if ( category == "user" || category == "client" ) {
-		// client
-		// forward
-		// inbox
-		// portable
-		// voice
-		return PsiIconset::instance()->status(STATUS_ONLINE);
-	}
-	// application
-	   // bot
-	   // calendar
-	   // editor
-	   // fileserver
-	   // game
-	   // whiteboard
-	// headline
-	   // logger
-	   // notice
-	   // rss
-	   // stock
-	// keyword
-	   // dictionary
-	   // dns
-	   // software
-	   // thesaurus
-	   // web
-	   // whois
-	// render
-	   // en2ru
-	   // ??2??
-	   // tts
-	return PsiIcon();
+        // irc
+        // jud
+        // pager
+        // jabber
+        // serverlist
+        // smtp
+    }
+    else if ( category == "conference" ) {
+        if (type == "public" || type == "private" || type == "text" || type == "irc") {
+            PsiIcon icon = IconsetFactory::icon("psi/groupChat");
+            if (acc->bookmarkManager()->isBookmarked(jid)) {
+                static QImage img;
+                if (img.isNull()) {
+                    img = icon.pixmap().toImage();
+                    QPainter p(&img);
+                    PsiIcon bicon = IconsetFactory::icon("psi/bookmark_remove");
+                    p.drawImage(QRect(img.rect().center(),img.rect().bottomRight()), bicon.image());
+                }
+                icon.setImpix(Impix(img));
+            }
+            return icon;
+        }
+        else if (type == "url")
+            return IconsetFactory::icon("psi/www");
+        // irc
+        // list
+        // topic
+    }
+    else if ( category == "validate" ) {
+        if (type == "xml")
+            return IconsetFactory::icon("psi/xml");
+        // grammar
+        // spell
+    }
+    else if ( category == "user" || category == "client" ) {
+        // client
+        // forward
+        // inbox
+        // portable
+        // voice
+        return PsiIconset::instance()->status(STATUS_ONLINE);
+    }
+    // application
+       // bot
+       // calendar
+       // editor
+       // fileserver
+       // game
+       // whiteboard
+    // headline
+       // logger
+       // notice
+       // rss
+       // stock
+    // keyword
+       // dictionary
+       // dns
+       // software
+       // thesaurus
+       // web
+       // whois
+    // render
+       // en2ru
+       // ??2??
+       // tts
+    return PsiIcon();
 }
 
 //----------------------------------------------------------------------------
@@ -156,22 +156,22 @@ PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, 
 class DiscoListItem;
 class DiscoConnector : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	DiscoConnector(QObject *parent)
-	: QObject(parent) {}
+    DiscoConnector(QObject *parent)
+    : QObject(parent) {}
 
 signals:
-	void itemUpdated(QTreeWidgetItem *);
+    void itemUpdated(QTreeWidgetItem *);
 
 private:
-	friend class DiscoListItem;
+    friend class DiscoListItem;
 };
 
 struct DiscoData {
-	PsiAccount *pa;
-	TaskList *tasks;
-	DiscoConnector *d;
+    PsiAccount *pa;
+    TaskList *tasks;
+    DiscoConnector *d;
 };
 
 //----------------------------------------------------------------------------
@@ -180,66 +180,66 @@ struct DiscoData {
 
 class DiscoListItem : public QObject, public QTreeWidgetItem
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidget *parent);
-	DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidgetItem *parent);
-	~DiscoListItem();
+    DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidget *parent);
+    DiscoListItem(DiscoItem it, DiscoData *d, QTreeWidgetItem *parent);
+    ~DiscoListItem();
 
-	void setExpanded(bool expand);
-	const DiscoItem &item() const;
+    void setExpanded(bool expand);
+    const DiscoItem &item() const;
 
-	void itemSelected();
+    void itemSelected();
 
 public slots: // the two are used internally by class, and also called by DiscoDlg::Private::refresh()
-	void updateInfo();
-	void updateItems(bool parentAutoItems = false);
-	QString getErrorInfo() const;
+    void updateInfo();
+    void updateItems(bool parentAutoItems = false);
+    QString getErrorInfo() const;
 
 private slots:
-	void discoItemsFinished();
-	void discoInfoFinished();
+    void discoItemsFinished();
+    void discoInfoFinished();
 
 private:
-	DiscoItem di;
-	DiscoData *d;
-	bool isRoot;
-	bool alreadyItems, alreadyInfo;
-	bool autoItems; // used in updateItemsFinished
-	bool autoInfo;
-	QString errorInfo;
+    DiscoItem di;
+    DiscoData *d;
+    bool isRoot;
+    bool alreadyItems, alreadyInfo;
+    bool autoItems; // used in updateItemsFinished
+    bool autoInfo;
+    QString errorInfo;
 
-	void copyItem(const DiscoItem &);
-	void updateInfo(const DiscoItem &);
-	void updateItemsFinished(const DiscoList &);
-	void autoItemsChildren() const; // automatically call disco#items for children :-)
-	QString hash() { return computeHash( item().jid().full(), item().node() ); }
-	QString computeHash( QString jid, QString node );
+    void copyItem(const DiscoItem &);
+    void updateInfo(const DiscoItem &);
+    void updateItemsFinished(const DiscoList &);
+    void autoItemsChildren() const; // automatically call disco#items for children :-)
+    QString hash() { return computeHash( item().jid().full(), item().node() ); }
+    QString computeHash( QString jid, QString node );
 
-	// helper functions
-	void init(DiscoItem it, DiscoData *dd);
+    // helper functions
+    void init(DiscoItem it, DiscoData *dd);
 
-	void hideChildIndicator();
+    void hideChildIndicator();
 
-	bool autoItemsEnabled() const;
-	bool autoInfoEnabled() const;
-	DiscoDlg *dlg() const;
+    bool autoItemsEnabled() const;
+    bool autoInfoEnabled() const;
+    DiscoDlg *dlg() const;
 };
 
 DiscoListItem::DiscoListItem(DiscoItem it, DiscoData *_d, QTreeWidget *parent)
 : QTreeWidgetItem (parent)
 {
-	isRoot = true;
+    isRoot = true;
 
-	init(it, _d);
+    init(it, _d);
 }
 
 DiscoListItem::DiscoListItem(DiscoItem it, DiscoData *_d, QTreeWidgetItem *parent)
 : QTreeWidgetItem (parent)
 {
-	isRoot = false;
+    isRoot = false;
 
-	init(it, _d);
+    init(it, _d);
 }
 
 DiscoListItem::~DiscoListItem()
@@ -248,315 +248,315 @@ DiscoListItem::~DiscoListItem()
 
 void DiscoListItem::init(DiscoItem _item, DiscoData *_d)
 {
-	d = _d;
-	di = _item;
-	copyItem(_item);
+    d = _d;
+    di = _item;
+    copyItem(_item);
 
-	alreadyItems = alreadyInfo = false;
+    alreadyItems = alreadyInfo = false;
 
-	if ( !autoItemsEnabled() )
-		setChildIndicatorPolicy(ShowIndicator);
+    if ( !autoItemsEnabled() )
+        setChildIndicatorPolicy(ShowIndicator);
 
-	autoInfo = false;
-	if ( autoInfoEnabled() || isRoot ) {
-		updateInfo();
-		if ( !isRoot )
-			autoInfo = true;
-	}
+    autoInfo = false;
+    if ( autoInfoEnabled() || isRoot ) {
+        updateInfo();
+        if ( !isRoot )
+            autoInfo = true;
+    }
 }
 
 void DiscoListItem::copyItem(const DiscoItem &it)
 {
-	if ( !(!di.jid().full().isEmpty() && it.jid().full().isEmpty()) )
-		di.setJid ( it.jid() );
-	if ( !(!di.node().isEmpty() && it.node().isEmpty()) )
-		di.setNode ( it.node() );
-	if ( !(!di.name().isEmpty() && it.name().isEmpty()) )
-		di.setName ( it.name() );
+    if ( !(!di.jid().full().isEmpty() && it.jid().full().isEmpty()) )
+        di.setJid ( it.jid() );
+    if ( !(!di.node().isEmpty() && it.node().isEmpty()) )
+        di.setNode ( it.node() );
+    if ( !(!di.name().isEmpty() && it.name().isEmpty()) )
+        di.setName ( it.name() );
 
-	if ( di.name().isEmpty() && !di.jid().full().isEmpty() ) // use JID in the Name column
-		di.setName ( di.jid().full() );
+    if ( di.name().isEmpty() && !di.jid().full().isEmpty() ) // use JID in the Name column
+        di.setName ( di.jid().full() );
 
-	di.setAction ( it.action() );
+    di.setAction ( it.action() );
 
-	if ( !(!di.features().list().isEmpty() && it.features().list().isEmpty()) )
-		di.setFeatures ( it.features() );
-	if ( !(!di.identities().isEmpty() && it.identities().isEmpty()) )
-		di.setIdentities ( it.identities() );
+    if ( !(!di.features().list().isEmpty() && it.features().list().isEmpty()) )
+        di.setFeatures ( it.features() );
+    if ( !(!di.identities().isEmpty() && it.identities().isEmpty()) )
+        di.setIdentities ( it.identities() );
 
-	if ( di.jid().bare().left(4) == "jud." || di.jid().bare().left(6) == "users." ) {
-		// nasty hack for the nasty (and outdated) JUD service :-/
-		if ( !di.features().canSearch() ) {
-			QStringList features = di.features().list();
-			features << "jabber:iq:search";
-			di.setFeatures( features );
-		}
+    if ( di.jid().bare().left(4) == "jud." || di.jid().bare().left(6) == "users." ) {
+        // nasty hack for the nasty (and outdated) JUD service :-/
+        if ( !di.features().canSearch() ) {
+            QStringList features = di.features().list();
+            features << "jabber:iq:search";
+            di.setFeatures( features );
+        }
 
-		bool found = false;
-		DiscoItem::Identities::ConstIterator it = di.identities().begin();
-		for ( ; it != di.identities().end(); ++it) {
-			if ( (*it).category == "service" && (*it).type == "jud" ) {
-				found = true;
-				break;
-			}
-		}
-		if ( !found ) {
-			DiscoItem::Identity id;
-			id.category = "service";
-			id.type     = "jud";
-			DiscoItem::Identities ids;
-			ids << id;
-			di.setIdentities( ids );
-		}
-	}
+        bool found = false;
+        DiscoItem::Identities::ConstIterator it = di.identities().begin();
+        for ( ; it != di.identities().end(); ++it) {
+            if ( (*it).category == "service" && (*it).type == "jud" ) {
+                found = true;
+                break;
+            }
+        }
+        if ( !found ) {
+            DiscoItem::Identity id;
+            id.category = "service";
+            id.type     = "jud";
+            DiscoItem::Identities ids;
+            ids << id;
+            di.setIdentities( ids );
+        }
+    }
 
-	setText(0, di.name().simplified());
-	setText(1, di.jid().full());
-	setText(2, di.node().simplified());
+    setText(0, di.name().simplified());
+    setText(1, di.jid().full());
+    setText(2, di.node().simplified());
 
-	bool iconOk = false;
-	if ( !di.identities().isEmpty() ) {
-		DiscoItem::Identity id = di.identities().first();
+    bool iconOk = false;
+    if ( !di.identities().isEmpty() ) {
+        DiscoItem::Identity id = di.identities().first();
 
-		if ( !id.category.isEmpty() ) {
-			QIcon icon = category2icon(d->pa, di.jid(), id.category, id.type).icon();
+        if ( !id.category.isEmpty() ) {
+            QIcon icon = category2icon(d->pa, di.jid(), id.category, id.type).icon();
 
-			if ( !icon.isNull() ) {
-				setIcon(0, icon);
-				iconOk = true;
-			}
-		}
-	}
+            if ( !icon.isNull() ) {
+                setIcon(0, icon);
+                iconOk = true;
+            }
+        }
+    }
 
-	if ( !iconOk )
-		setIcon(0, PsiIconset::instance()->status(di.jid(), STATUS_ONLINE).icon());
+    if ( !iconOk )
+        setIcon(0, PsiIconset::instance()->status(di.jid(), STATUS_ONLINE).icon());
 
-	if ( isSelected() ) // update actions
-		emit d->d->itemUpdated( this );
+    if ( isSelected() ) // update actions
+        emit d->d->itemUpdated( this );
 }
 
 QString DiscoListItem::getErrorInfo() const
 {
-	return errorInfo;
+    return errorInfo;
 }
 
 const DiscoItem &DiscoListItem::item() const
 {
-	return di;
+    return di;
 }
 
 DiscoDlg *DiscoListItem::dlg() const
 {
-	return (DiscoDlg *)treeWidget()->parent();
+    return (DiscoDlg *)treeWidget()->parent();
 }
 
 bool DiscoListItem::autoItemsEnabled() const
 {
-	return dlg()->ck_autoItems->isChecked();
+    return dlg()->ck_autoItems->isChecked();
 }
 
 bool DiscoListItem::autoInfoEnabled() const
 {
-	return dlg()->ck_autoInfo->isChecked();
+    return dlg()->ck_autoInfo->isChecked();
 }
 
 void DiscoListItem::setExpanded (bool expand)
 {
-	if ( expand ) {
-		if ( !alreadyItems )
-			updateItems();
-		else
-			autoItemsChildren();
-	}
+    if ( expand ) {
+        if ( !alreadyItems )
+            updateItems();
+        else
+            autoItemsChildren();
+    }
 
-	QTreeWidgetItem::setExpanded(expand);
+    QTreeWidgetItem::setExpanded(expand);
 }
 
 void DiscoListItem::itemSelected()
 {
-	if ( !alreadyInfo )
-		updateInfo();
+    if ( !alreadyInfo )
+        updateInfo();
 }
 
 void DiscoListItem::updateItems(bool parentAutoItems)
 {
-	if ( parentAutoItems ) {
-		// save traffic
-		if ( alreadyItems )
-			return;
+    if ( parentAutoItems ) {
+        // save traffic
+        if ( alreadyItems )
+            return;
 
-		// FIXME: currently, JUD doesn't seem to answer to browsing requests
-		if ( item().identities().size() ) {
-			DiscoItem::Identity id = item().identities().first();
-			if ( id.category == "service" && id.type == "jud" )
-				return;
-		}
-		QString j = item().jid().domain(); // just another method to discover if we're gonna to browse JUD
-		if ( item().jid().node().isEmpty() && (j.left(4) == "jud." || j.left(6) == "users.") )
-			return;
-	}
+        // FIXME: currently, JUD doesn't seem to answer to browsing requests
+        if ( item().identities().size() ) {
+            DiscoItem::Identity id = item().identities().first();
+            if ( id.category == "service" && id.type == "jud" )
+                return;
+        }
+        QString j = item().jid().domain(); // just another method to discover if we're gonna to browse JUD
+        if ( item().jid().node().isEmpty() && (j.left(4) == "jud." || j.left(6) == "users.") )
+            return;
+    }
 
-	autoItems = !parentAutoItems;
+    autoItems = !parentAutoItems;
 
-	if ( !autoItemsEnabled() )
-		autoItems = false;
+    if ( !autoItemsEnabled() )
+        autoItems = false;
 
-	JT_DiscoItems *jt = new JT_DiscoItems(d->pa->client()->rootTask());
-	connect(jt, SIGNAL(finished()), SLOT(discoItemsFinished()));
-	jt->get(di.jid(), di.node());
-	jt->go(true);
-	d->tasks->append(jt);
+    JT_DiscoItems *jt = new JT_DiscoItems(d->pa->client()->rootTask());
+    connect(jt, SIGNAL(finished()), SLOT(discoItemsFinished()));
+    jt->get(di.jid(), di.node());
+    jt->go(true);
+    d->tasks->append(jt);
 }
 
 void DiscoListItem::discoItemsFinished()
 {
-	JT_DiscoItems *jt = (JT_DiscoItems *)sender();
+    JT_DiscoItems *jt = (JT_DiscoItems *)sender();
 
-	if ( jt->success() ) {
-		updateItemsFinished(jt->items());
-	}
-	else if ( !autoItems ) {
-		QString error = jt->statusString();
-		QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting items for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error).replace('\n', "<br>")));
-	}
+    if ( jt->success() ) {
+        updateItemsFinished(jt->items());
+    }
+    else if ( !autoItems ) {
+        QString error = jt->statusString();
+        QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting items for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error).replace('\n', "<br>")));
+    }
 
-	alreadyItems = true;
+    alreadyItems = true;
 }
 
 QString DiscoListItem::computeHash( QString jid, QString node )
 {
-	QString ret = jid.replace( '@', "\\@" );
-	ret += "@";
-	ret += node.replace( '@', "\\@" );
-	return ret;
+    QString ret = jid.replace( '@', "\\@" );
+    ret += "@";
+    ret += node.replace( '@', "\\@" );
+    return ret;
 }
 
 void DiscoListItem::hideChildIndicator()
 {
-	setChildIndicatorPolicy(DontShowIndicator);
-	emitDataChanged();
+    setChildIndicatorPolicy(DontShowIndicator);
+    emitDataChanged();
 }
 
 void DiscoListItem::updateItemsFinished(const DiscoList &list)
 {
-	treeWidget()->setUpdatesEnabled(false);
+    treeWidget()->setUpdatesEnabled(false);
 
-	QHash<QString, DiscoListItem*> children;
-	DiscoListItem *child = (DiscoListItem *)QTreeWidgetItem::child(0);
-	for ( int i = 1; child; ++i ) {
-		children.insert( child->hash(), child );
+    QHash<QString, DiscoListItem*> children;
+    DiscoListItem *child = (DiscoListItem *)QTreeWidgetItem::child(0);
+    for ( int i = 1; child; ++i ) {
+        children.insert( child->hash(), child );
 
-		child = (DiscoListItem *)QTreeWidgetItem::child(i);
-	}
+        child = (DiscoListItem *)QTreeWidgetItem::child(i);
+    }
 
-	// add/update items
-	for(DiscoList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-		const DiscoItem a = *it;
+    // add/update items
+    for(DiscoList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+        const DiscoItem a = *it;
 
-		QString key = computeHash(a.jid().full(), a.node());
-		child = children[ key ];
+        QString key = computeHash(a.jid().full(), a.node());
+        child = children[ key ];
 
-		if ( child ) {
-			child->copyItem ( a );
-			children.remove( key );
-		}
-		else {
-			new DiscoListItem (a, d, this);
-		}
-	}
+        if ( child ) {
+            child->copyItem ( a );
+            children.remove( key );
+        }
+        else {
+            new DiscoListItem (a, d, this);
+        }
+    }
 
-	// remove all items that are not on new DiscoList
-	qDeleteAll(children);
-	children.clear();
+    // remove all items that are not on new DiscoList
+    qDeleteAll(children);
+    children.clear();
 
-	if ( autoItems && isExpanded() )
-		autoItemsChildren();
+    if ( autoItems && isExpanded() )
+        autoItemsChildren();
 
-	if (list.isEmpty()) {
-		hideChildIndicator();
-	}
+    if (list.isEmpty()) {
+        hideChildIndicator();
+    }
 
-	// root item is initially hidden
-	if ( isRoot && isHidden() )
-		setHidden(false);
+    // root item is initially hidden
+    if ( isRoot && isHidden() )
+        setHidden(false);
 
-	treeWidget()->setUpdatesEnabled(true);
+    treeWidget()->setUpdatesEnabled(true);
 }
 
 void DiscoListItem::autoItemsChildren() const
 {
-	if ( !autoItemsEnabled() )
-		return;
+    if ( !autoItemsEnabled() )
+        return;
 
-	DiscoListItem *child = (DiscoListItem *)QTreeWidgetItem::child(0);
-	for ( int i = 1; child; ++i ) {
-		child->updateItems(true);
+    DiscoListItem *child = (DiscoListItem *)QTreeWidgetItem::child(0);
+    for ( int i = 1; child; ++i ) {
+        child->updateItems(true);
 
-		child = (DiscoListItem *)QTreeWidgetItem::child(i);
-	}
+        child = (DiscoListItem *)QTreeWidgetItem::child(i);
+    }
 }
 
 void DiscoListItem::updateInfo()
 {
-	JT_DiscoInfo *jt = new JT_DiscoInfo(d->pa->client()->rootTask());
-	jt->setAllowCache(false); // Workaround for a bug https://github.com/hanzz/spectrum2/issues/205 (invalid caps from transport)
-	connect(jt, SIGNAL(finished()), SLOT(discoInfoFinished()));
-	jt->get(di.jid(), di.node());
-	jt->go(true);
-	d->tasks->append(jt);
+    JT_DiscoInfo *jt = new JT_DiscoInfo(d->pa->client()->rootTask());
+    jt->setAllowCache(false); // Workaround for a bug https://github.com/hanzz/spectrum2/issues/205 (invalid caps from transport)
+    connect(jt, SIGNAL(finished()), SLOT(discoInfoFinished()));
+    jt->get(di.jid(), di.node());
+    jt->go(true);
+    d->tasks->append(jt);
 }
 
 void DiscoListItem::discoInfoFinished()
 {
-	JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
+    JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
 
-	if ( jt->success() ) {
-		updateInfo( jt->item() );
-	}
-	else {
-		QString error_str = jt->statusString();
-		int error_code = jt->statusCode();
-		hideChildIndicator();
+    if ( jt->success() ) {
+        updateInfo( jt->item() );
+    }
+    else {
+        QString error_str = jt->statusString();
+        int error_code = jt->statusCode();
+        hideChildIndicator();
 
-		// we change the icon for the items with disco#info returning type=="cancel" || type=="wait" error codes
-		// based on XEP-0086
+        // we change the icon for the items with disco#info returning type=="cancel" || type=="wait" error codes
+        // based on XEP-0086
 
-		// FIXME: use another method for checking XMPP error-types when Iris will provide one
-		if ( error_code==400 || error_code==404 || error_code==405 || error_code==409 ||
-			 error_code==500 || error_code==501 || error_code==503 || error_code==504 ) {
-			bool iconOk = false;
-			if ( !di.identities().isEmpty() ) {
-				DiscoItem::Identity id = di.identities().first();
-				if ( !id.category.isEmpty() ) {
-					QIcon icon = category2icon(d->pa, di.jid(), id.category, id.type, STATUS_ERROR).icon();
+        // FIXME: use another method for checking XMPP error-types when Iris will provide one
+        if ( error_code==400 || error_code==404 || error_code==405 || error_code==409 ||
+             error_code==500 || error_code==501 || error_code==503 || error_code==504 ) {
+            bool iconOk = false;
+            if ( !di.identities().isEmpty() ) {
+                DiscoItem::Identity id = di.identities().first();
+                if ( !id.category.isEmpty() ) {
+                    QIcon icon = category2icon(d->pa, di.jid(), id.category, id.type, STATUS_ERROR).icon();
 
-					if ( !icon.isNull() ) {
-						setIcon (0, icon);
-						iconOk = true;
-					}
-				}
-			}
-			if ( !iconOk )
-				setIcon(0, PsiIconset::instance()->status(di.jid(), STATUS_ERROR).icon());
-		}
+                    if ( !icon.isNull() ) {
+                        setIcon (0, icon);
+                        iconOk = true;
+                    }
+                }
+            }
+            if ( !iconOk )
+                setIcon(0, PsiIconset::instance()->status(di.jid(), STATUS_ERROR).icon());
+        }
 
-		errorInfo=QString("%1").arg(QString(error_str).replace('\n', "<br>"));
+        errorInfo=QString("%1").arg(QString(error_str).replace('\n', "<br>"));
 
-		if ( !autoInfo ) {
-			QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting item's info for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error_str).replace('\n', "<br>")));
-		}
-	}
+        if ( !autoInfo ) {
+            QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting item's info for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error_str).replace('\n', "<br>")));
+        }
+    }
 
-	alreadyInfo = true;
-	autoInfo = false;
+    alreadyInfo = true;
+    autoInfo = false;
 }
 
 void DiscoListItem::updateInfo(const DiscoItem &item)
 {
-	copyItem( item );
+    copyItem( item );
 
-	if ( isRoot && isHidden() )
-		setHidden(false);
+    if ( isRoot && isHidden() )
+        setHidden(false);
 }
 
 //----------------------------------------------------------------------------
@@ -565,50 +565,50 @@ void DiscoListItem::updateInfo(const DiscoItem &item)
 
 class DiscoListView : public QTreeWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	DiscoDlg *dlg;
+    DiscoDlg *dlg;
 public:
-	DiscoListView(DiscoDlg *parent);
+    DiscoListView(DiscoDlg *parent);
 
 public slots:
-	void updateItemsVisibility(const QString& filter);
+    void updateItemsVisibility(const QString& filter);
 
 protected:
-	bool maybeTip(const QPoint &);
+    bool maybeTip(const QPoint &);
 
-	// reimplemented
-	bool eventFilter(QObject* o, QEvent* e);
-	void resizeEvent(QResizeEvent*);
+    // reimplemented
+    bool eventFilter(QObject* o, QEvent* e);
+    void resizeEvent(QResizeEvent*);
 };
 
 DiscoListView::DiscoListView(DiscoDlg *parent)
 : QTreeWidget(parent)
 {
-	dlg = parent;
-	installEventFilter(this);
-	setHeaderLabels( QStringList() << tr( "Name" ) << tr( "JID" ) << tr( "Node" ) );
-//	header()->setResizeMode(0, QHeaderView::Stretch);
-//	header()->setResizeMode(1, QHeaderView::ResizeToContents);
-//	header()->setResizeMode(2, QHeaderView::ResizeToContents);
-	header()->setStretchLastSection(false);
-	setRootIsDecorated(false);
-	setSortingEnabled(true);
-	sortByColumn(1, Qt::AscendingOrder);
+    dlg = parent;
+    installEventFilter(this);
+    setHeaderLabels( QStringList() << tr( "Name" ) << tr( "JID" ) << tr( "Node" ) );
+//    header()->setResizeMode(0, QHeaderView::Stretch);
+//    header()->setResizeMode(1, QHeaderView::ResizeToContents);
+//    header()->setResizeMode(2, QHeaderView::ResizeToContents);
+    header()->setStretchLastSection(false);
+    setRootIsDecorated(false);
+    setSortingEnabled(true);
+    sortByColumn(1, Qt::AscendingOrder);
 
 }
 
 void DiscoListView::resizeEvent(QResizeEvent* e)
 {
-	QTreeWidget::resizeEvent(e);
+    QTreeWidget::resizeEvent(e);
 
-	QHeaderView* h = header();
-	h->resizeSection(2, h->fontMetrics().width(headerItem()->text(2)) * 2);
-	float remainingWidth = viewport()->width() - h->sectionSize(2);
-	h->resizeSection(1, int(remainingWidth * 0.3));
-	h->resizeSection(0, int(remainingWidth * 0.7));
+    QHeaderView* h = header();
+    h->resizeSection(2, h->fontMetrics().width(headerItem()->text(2)) * 2);
+    float remainingWidth = viewport()->width() - h->sectionSize(2);
+    h->resizeSection(1, int(remainingWidth * 0.3));
+    h->resizeSection(0, int(remainingWidth * 0.7));
 
-	//h->adjustHeaderSize();
+    //h->adjustHeaderSize();
 }
 
 /**
@@ -616,124 +616,124 @@ void DiscoListView::resizeEvent(QResizeEvent* e)
  */
 bool DiscoListView::maybeTip(const QPoint &pos)
 {
-	DiscoListItem* i = (DiscoListItem*)itemAt(viewport()->mapFromGlobal(pos));
-	if(!i)
-		return false;
+    DiscoListItem* i = (DiscoListItem*)itemAt(viewport()->mapFromGlobal(pos));
+    if(!i)
+        return false;
 
-	// NAME <JID> (Node "NODE")
-	//
-	// Identities:
-	// (icon) NAME (Category "CATEGORY"; Type "TYPE")
-	// (icon) NAME (Category "CATEGORY"; Type "TYPE")
-	//
-	// Features:
-	// NAME (http://jabber.org/feature)
-	// NAME (http://jabber.org/feature)
+    // NAME <JID> (Node "NODE")
+    //
+    // Identities:
+    // (icon) NAME (Category "CATEGORY"; Type "TYPE")
+    // (icon) NAME (Category "CATEGORY"; Type "TYPE")
+    //
+    // Features:
+    // NAME (http://jabber.org/feature)
+    // NAME (http://jabber.org/feature)
 
-	// top row
-	QString text = "<qt><nobr>";
-	DiscoItem item = i->item();
+    // top row
+    QString text = "<qt><nobr>";
+    DiscoItem item = i->item();
 
-	if ( item.name()!=item.jid().full() )
-		text += item.name() + " ";
+    if ( item.name()!=item.jid().full() )
+        text += item.name() + " ";
 
-	text += "&lt;" + item.jid().full() + "&gt;";
+    text += "&lt;" + item.jid().full() + "&gt;";
 
-	if ( !item.node().isEmpty() )
-		text += " (" + tr("Node") + " \"" + item.node() + "\")";
+    if ( !item.node().isEmpty() )
+        text += " (" + tr("Node") + " \"" + item.node() + "\")";
 
-	text += "</nobr>";
+    text += "</nobr>";
 
-	if ( !item.identities().isEmpty() || !item.features().list().isEmpty() )
-		text += "<br>\n";
+    if ( !item.identities().isEmpty() || !item.features().list().isEmpty() )
+        text += "<br>\n";
 
-	// identities
-	if ( !item.identities().isEmpty() ) {
-		text += "<br>\n<b>" + tr("Identities:") + "</b>\n";
+    // identities
+    if ( !item.identities().isEmpty() ) {
+        text += "<br>\n<b>" + tr("Identities:") + "</b>\n";
 
-		DiscoItem::Identities::ConstIterator it = item.identities().begin();
-		for ( ; it != item.identities().end(); ++it) {
-			text += "<br>";
-			PsiIcon icon( category2icon(dlg->account(), item.jid(), (*it).category, (*it).type) );
-			if ( !icon.name().isEmpty() )
-				text += "<icon name=\"" + icon.name() + "\"> ";
-			text += (*it).name;
-			text += " (" + tr("Category") + " \"" + (*it).category + "\"; " + tr("Type") + " \"" + (*it).type + "\")\n";
-		}
+        DiscoItem::Identities::ConstIterator it = item.identities().begin();
+        for ( ; it != item.identities().end(); ++it) {
+            text += "<br>";
+            PsiIcon icon( category2icon(dlg->account(), item.jid(), (*it).category, (*it).type) );
+            if ( !icon.name().isEmpty() )
+                text += "<icon name=\"" + icon.name() + "\"> ";
+            text += (*it).name;
+            text += " (" + tr("Category") + " \"" + (*it).category + "\"; " + tr("Type") + " \"" + (*it).type + "\")\n";
+        }
 
-		if ( !item.features().list().isEmpty() )
-			text += "<br>\n";
-	}
+        if ( !item.features().list().isEmpty() )
+            text += "<br>\n";
+    }
 
-	// features
-	if ( !item.features().list().isEmpty() ) {
-		text += "<br>\n<b>" + tr("Features:") + "</b>\n";
+    // features
+    if ( !item.features().list().isEmpty() ) {
+        text += "<br>\n<b>" + tr("Features:") + "</b>\n";
 
-		QStringList features = item.features().list();
-		QStringList::ConstIterator it = features.begin();
-		for ( ; it != features.end(); ++it) {
-			Features f( *it );
-			text += "\n<br>";
-			if ( f.id() > Features::FID_None )
-				text += f.name() + " (";
-			text += *it;
-			if ( f.id() > Features::FID_None )
-				text += ")";
-		}
-	}
+        QStringList features = item.features().list();
+        QStringList::ConstIterator it = features.begin();
+        for ( ; it != features.end(); ++it) {
+            Features f( *it );
+            text += "\n<br>";
+            if ( f.id() > Features::FID_None )
+                text += f.name() + " (";
+            text += *it;
+            if ( f.id() > Features::FID_None )
+                text += ")";
+        }
+    }
 
-	QString errorInfo=i->getErrorInfo();
-	if ( !errorInfo.isEmpty() ) {
-		text += "<br>\n<br>\n<b>" + tr("Error:") + "</b>\n";
-		text += errorInfo;
-	}
+    QString errorInfo=i->getErrorInfo();
+    if ( !errorInfo.isEmpty() ) {
+        text += "<br>\n<br>\n<b>" + tr("Error:") + "</b>\n";
+        text += errorInfo;
+    }
 
-	text += "</qt>";
-//	QRect r( visualItemRect(i) );
-	PsiToolTip::showText(pos, text, this);
-	return true;
+    text += "</qt>";
+//    QRect r( visualItemRect(i) );
+    PsiToolTip::showText(pos, text, this);
+    return true;
 }
 
 bool DiscoListView::eventFilter(QObject* o, QEvent* e)
 {
-	if (e->type() == QEvent::ToolTip && o->isWidgetType()) {
-		QWidget*    w  = static_cast<QWidget*>(o);
-		QHelpEvent* he = static_cast<QHelpEvent*>(e);
-		maybeTip(w->mapToGlobal(he->pos()));
-		return true;
-	}
-	return QTreeWidget::eventFilter(o, e);
+    if (e->type() == QEvent::ToolTip && o->isWidgetType()) {
+        QWidget*    w  = static_cast<QWidget*>(o);
+        QHelpEvent* he = static_cast<QHelpEvent*>(e);
+        maybeTip(w->mapToGlobal(he->pos()));
+        return true;
+    }
+    return QTreeWidget::eventFilter(o, e);
 }
 
 // returns false if parent item should not be hidden (it has visible children)
 static bool updateItemsRecursively(QTreeWidgetItem* parent, const QString& filter)
 {
-	bool hidden = true;
-	for(int j = 0; j < parent->childCount(); j++) {
-		QTreeWidgetItem *i = parent->child(j);
-		if(filter.isEmpty()) {
-			i->setHidden(false);
-			updateItemsRecursively(i, filter);
-		}
-		else {
-			bool v = true;
-			if(i->isExpanded()) {
-				v = updateItemsRecursively(i, filter);
-			}
-			v &= !(i->text(0).contains(filter, Qt::CaseInsensitive) || i->text(1).contains(filter, Qt::CaseInsensitive));
-			i->setHidden(v);
-			hidden &= v;
-		}
-	}
-	return hidden;
+    bool hidden = true;
+    for(int j = 0; j < parent->childCount(); j++) {
+        QTreeWidgetItem *i = parent->child(j);
+        if(filter.isEmpty()) {
+            i->setHidden(false);
+            updateItemsRecursively(i, filter);
+        }
+        else {
+            bool v = true;
+            if(i->isExpanded()) {
+                v = updateItemsRecursively(i, filter);
+            }
+            v &= !(i->text(0).contains(filter, Qt::CaseInsensitive) || i->text(1).contains(filter, Qt::CaseInsensitive));
+            i->setHidden(v);
+            hidden &= v;
+        }
+    }
+    return hidden;
 }
 
 void DiscoListView::updateItemsVisibility(const QString& filter)
 {
-	for(int n = 0; n < topLevelItemCount(); n++) {
-		QTreeWidgetItem *it = topLevelItem(n);
-		updateItemsRecursively(it, filter);
-	}
+    for(int n = 0; n < topLevelItemCount(); n++) {
+        QTreeWidgetItem *it = topLevelItem(n);
+        updateItemsRecursively(it, filter);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -742,513 +742,513 @@ void DiscoListView::updateItemsVisibility(const QString& filter)
 
 class DiscoDlg::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 private:
 
-	// helper class to store browser history
-	class History {
-	public:
-		History(const XMPP::Jid& _jid, const QString& _node)
-			: jid(_jid)
-			, node(_node)
-		{}
+    // helper class to store browser history
+    class History {
+    public:
+        History(const XMPP::Jid& _jid, const QString& _node)
+            : jid(_jid)
+            , node(_node)
+        {}
 
-		XMPP::Jid jid;
-		QString node;
-	};
+        XMPP::Jid jid;
+        QString node;
+    };
 
 public: // data
-	DiscoDlg *dlg;
-	Jid jid;
-	QString node;
+    DiscoDlg *dlg;
+    Jid jid;
+    QString node;
 
-	DiscoData data;
+    DiscoData data;
 
-	QToolBar *toolBar;
-	IconAction *actBrowse, *actBack, *actForward, *actRefresh, *actStop;
+    QToolBar *toolBar;
+    IconAction *actBrowse, *actBack, *actForward, *actRefresh, *actStop;
 
-	// custom actions, that will be added to toolbar and context menu
-	IconAction *actRegister, *actUnregister, *actSearch, *actJoin, *actAHCommand, *actVCard, *actAdd, *actQueryVersion;
+    // custom actions, that will be added to toolbar and context menu
+    IconAction *actRegister, *actUnregister, *actSearch, *actJoin, *actAHCommand, *actVCard, *actAdd, *actQueryVersion;
 
-	typedef QList<History*> HistoryList;
-	HistoryList backHistory, forwardHistory;
+    typedef QList<History*> HistoryList;
+    HistoryList backHistory, forwardHistory;
 
-	BusyWidget *busy;
+    BusyWidget *busy;
 
 public: // functions
-	Private(DiscoDlg *parent, PsiAccount *pa);
-	~Private();
+    Private(DiscoDlg *parent, PsiAccount *pa);
+    ~Private();
 
 public slots:
-	void doDisco(QString host = QString::null, QString node = QString::null, bool doHistory = true);
+    void doDisco(QString host = QString::null, QString node = QString::null, bool doHistory = true);
 
-	void actionStop();
-	void actionRefresh();
-	void actionBrowse();
+    void actionStop();
+    void actionRefresh();
+    void actionBrowse();
 
-	void actionBack();
-	void actionForward();
-	void updateBackForward();
+    void actionBack();
+    void actionForward();
+    void updateBackForward();
 
-	void updateComboBoxes(Jid j, QString node);
+    void updateComboBoxes(Jid j, QString node);
 
-	void itemUpdateStarted();
-	void itemUpdateFinished();
+    void itemUpdateStarted();
+    void itemUpdateFinished();
 
-	void disableButtons();
-	void enableButtons(const DiscoItem &);
+    void disableButtons();
+    void enableButtons(const DiscoItem &);
 
-	void itemSelected (QTreeWidgetItem *);
-	void itemExpanded (QTreeWidgetItem *);
-	void itemDoubleclicked (QTreeWidgetItem *);
-	bool eventFilter (QObject *, QEvent *);
+    void itemSelected (QTreeWidgetItem *);
+    void itemExpanded (QTreeWidgetItem *);
+    void itemDoubleclicked (QTreeWidgetItem *);
+    bool eventFilter (QObject *, QEvent *);
 
-	// features...
-	void actionActivated(int);
+    // features...
+    void actionActivated(int);
 
-	void objectDestroyed(QObject *);
+    void objectDestroyed(QObject *);
 
 private:
-	friend class DiscoListItem;
+    friend class DiscoListItem;
 };
 
 DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 {
-	dlg = parent;
-	data.pa = pa;
-	data.tasks = new TaskList;
-	connect(data.tasks, SIGNAL(started()),  SLOT(itemUpdateStarted()));
-	connect(data.tasks, SIGNAL(finished()), SLOT(itemUpdateFinished()));
-	data.d = new DiscoConnector(this);
-	connect(data.d, SIGNAL(itemUpdated(QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));
+    dlg = parent;
+    data.pa = pa;
+    data.tasks = new TaskList;
+    connect(data.tasks, SIGNAL(started()),  SLOT(itemUpdateStarted()));
+    connect(data.tasks, SIGNAL(finished()), SLOT(itemUpdateFinished()));
+    data.d = new DiscoConnector(this);
+    connect(data.d, SIGNAL(itemUpdated(QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));
 
-	// mess with widgets
-	busy = parent->busy;
-	connect(busy, SIGNAL(destroyed(QObject *)), SLOT(objectDestroyed(QObject *)));
+    // mess with widgets
+    busy = parent->busy;
+    connect(busy, SIGNAL(destroyed(QObject *)), SLOT(objectDestroyed(QObject *)));
 
-	QTreeWidget *lv_discoOld = dlg->lv_disco;
-	dlg->lv_disco = new DiscoListView(dlg);
-	replaceWidget(lv_discoOld, dlg->lv_disco);
+    QTreeWidget *lv_discoOld = dlg->lv_disco;
+    dlg->lv_disco = new DiscoListView(dlg);
+    replaceWidget(lv_discoOld, dlg->lv_disco);
 
-	dlg->lv_disco->installEventFilter (this);
-	dlg->le_filter->installEventFilter(this);
-	connect(dlg->lv_disco, SIGNAL(currentItemChanged (QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));
-	connect(dlg->lv_disco, SIGNAL(itemExpanded (QTreeWidgetItem *)), SLOT(itemExpanded (QTreeWidgetItem *)));
-	connect(dlg->lv_disco, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), SLOT(itemDoubleclicked (QTreeWidgetItem *)));
-	connect(dlg->le_filter, SIGNAL(textChanged(QString)), dlg->lv_disco, SLOT(updateItemsVisibility(QString)));
+    dlg->lv_disco->installEventFilter (this);
+    dlg->le_filter->installEventFilter(this);
+    connect(dlg->lv_disco, SIGNAL(currentItemChanged (QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));
+    connect(dlg->lv_disco, SIGNAL(itemExpanded (QTreeWidgetItem *)), SLOT(itemExpanded (QTreeWidgetItem *)));
+    connect(dlg->lv_disco, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), SLOT(itemDoubleclicked (QTreeWidgetItem *)));
+    connect(dlg->le_filter, SIGNAL(textChanged(QString)), dlg->lv_disco, SLOT(updateItemsVisibility(QString)));
 
-	// create actions
-	actBrowse = new IconAction (tr("Browse"), "psi/jabber", tr("&Browse"), 0, dlg);
-	connect (actBrowse, SIGNAL(triggered()), SLOT(actionBrowse()));
-	actRefresh = new IconAction (tr("Refresh Item"), "psi/reload", tr("&Refresh Item"), 0, dlg);
-	connect (actRefresh, SIGNAL(triggered()), SLOT(actionRefresh()));
-	actStop = new IconAction (tr("Stop"), "psi/stop", tr("Sto&p"), 0, dlg);
-	connect (actStop, SIGNAL(triggered()), SLOT(actionStop()));
-	actBack = new IconAction (tr("Back"), "psi/arrowLeft", tr("&Back"), 0, dlg);
-	connect (actBack, SIGNAL(triggered()), SLOT(actionBack()));
-	actForward = new IconAction (tr("Forward"), "psi/arrowRight", tr("&Forward"), 0, dlg);
-	connect (actForward, SIGNAL(triggered()), SLOT(actionForward()));
+    // create actions
+    actBrowse = new IconAction (tr("Browse"), "psi/jabber", tr("&Browse"), 0, dlg);
+    connect (actBrowse, SIGNAL(triggered()), SLOT(actionBrowse()));
+    actRefresh = new IconAction (tr("Refresh Item"), "psi/reload", tr("&Refresh Item"), 0, dlg);
+    connect (actRefresh, SIGNAL(triggered()), SLOT(actionRefresh()));
+    actStop = new IconAction (tr("Stop"), "psi/stop", tr("Sto&p"), 0, dlg);
+    connect (actStop, SIGNAL(triggered()), SLOT(actionStop()));
+    actBack = new IconAction (tr("Back"), "psi/arrowLeft", tr("&Back"), 0, dlg);
+    connect (actBack, SIGNAL(triggered()), SLOT(actionBack()));
+    actForward = new IconAction (tr("Forward"), "psi/arrowRight", tr("&Forward"), 0, dlg);
+    connect (actForward, SIGNAL(triggered()), SLOT(actionForward()));
 
-	// custom actions
-	QSignalMapper *sm = new QSignalMapper(this);
-	connect(sm, SIGNAL(mapped(int)), SLOT(actionActivated(int)));
-	actRegister = new IconAction (tr("Register"), "psi/register", tr("&Register"), 0, dlg);
-	connect (actRegister, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actRegister, Features::FID_Register);
-	actUnregister = new IconAction (tr("Unregister"), "psi/cancel", tr("&Unregister"), 0, dlg);
-	connect (actUnregister, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actUnregister, Features::FID_Gateway);
-	actSearch = new IconAction (tr("Search"), "psi/search", tr("&Search"), 0, dlg);
-	connect (actSearch, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actSearch, Features::FID_Search);
-	actJoin = new IconAction (tr("Join"), "psi/groupChat", tr("&Join"), 0, dlg);
-	connect (actJoin, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actJoin, Features::FID_Groupchat);
-	actAHCommand = new IconAction (tr("Execute command"), "psi/command", tr("&Execute command"), 0, dlg);
-	connect (actAHCommand, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actAHCommand, Features::FID_AHCommand);
-	actVCard = new IconAction (tr("vCard"), "psi/vCard", tr("&vCard"), 0, dlg);
-	connect (actVCard, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actVCard, Features::FID_VCard);
-	actAdd = new IconAction (tr("Add to roster"), "psi/addContact", tr("&Add to roster"), 0, dlg);
-	connect (actAdd, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actAdd, Features::FID_Add);
-	actQueryVersion = new IconAction (tr("Query version"), "psi/info", tr("&Query version"), 0, dlg);
-	connect (actQueryVersion, SIGNAL(triggered()), sm, SLOT(map()));
-	sm->setMapping(actQueryVersion, Features::FID_QueryVersion);
+    // custom actions
+    QSignalMapper *sm = new QSignalMapper(this);
+    connect(sm, SIGNAL(mapped(int)), SLOT(actionActivated(int)));
+    actRegister = new IconAction (tr("Register"), "psi/register", tr("&Register"), 0, dlg);
+    connect (actRegister, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actRegister, Features::FID_Register);
+    actUnregister = new IconAction (tr("Unregister"), "psi/cancel", tr("&Unregister"), 0, dlg);
+    connect (actUnregister, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actUnregister, Features::FID_Gateway);
+    actSearch = new IconAction (tr("Search"), "psi/search", tr("&Search"), 0, dlg);
+    connect (actSearch, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actSearch, Features::FID_Search);
+    actJoin = new IconAction (tr("Join"), "psi/groupChat", tr("&Join"), 0, dlg);
+    connect (actJoin, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actJoin, Features::FID_Groupchat);
+    actAHCommand = new IconAction (tr("Execute command"), "psi/command", tr("&Execute command"), 0, dlg);
+    connect (actAHCommand, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actAHCommand, Features::FID_AHCommand);
+    actVCard = new IconAction (tr("vCard"), "psi/vCard", tr("&vCard"), 0, dlg);
+    connect (actVCard, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actVCard, Features::FID_VCard);
+    actAdd = new IconAction (tr("Add to roster"), "psi/addContact", tr("&Add to roster"), 0, dlg);
+    connect (actAdd, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actAdd, Features::FID_Add);
+    actQueryVersion = new IconAction (tr("Query version"), "psi/info", tr("&Query version"), 0, dlg);
+    connect (actQueryVersion, SIGNAL(triggered()), sm, SLOT(map()));
+    sm->setMapping(actQueryVersion, Features::FID_QueryVersion);
 
-	// create toolbar
-	toolBar = new QToolBar(tr("Service Discovery toolbar"), dlg);
-	int s = PsiIconset::instance()->system().iconSize();
-	toolBar->setIconSize(QSize(s,s));
-	toolBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-	replaceWidget(dlg->toolBarPlaceholder, toolBar);
+    // create toolbar
+    toolBar = new QToolBar(tr("Service Discovery toolbar"), dlg);
+    int s = PsiIconset::instance()->system().iconSize();
+    toolBar->setIconSize(QSize(s,s));
+    toolBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    replaceWidget(dlg->toolBarPlaceholder, toolBar);
 
-	toolBar->addAction(actBack);
-	toolBar->addAction(actBrowse);
-	toolBar->addAction(actForward);
+    toolBar->addAction(actBack);
+    toolBar->addAction(actBrowse);
+    toolBar->addAction(actForward);
 
-	toolBar->addSeparator();
-	toolBar->addAction(actRefresh);
-	toolBar->addAction(actStop);
+    toolBar->addSeparator();
+    toolBar->addAction(actRefresh);
+    toolBar->addAction(actStop);
 
-	// custom actions
-	toolBar->addSeparator();
-	toolBar->addAction(actRegister);
-	toolBar->addAction(actUnregister);
-	toolBar->addAction(actSearch);
-	toolBar->addAction(actJoin);
+    // custom actions
+    toolBar->addSeparator();
+    toolBar->addAction(actRegister);
+    toolBar->addAction(actUnregister);
+    toolBar->addAction(actSearch);
+    toolBar->addAction(actJoin);
 
-	toolBar->addSeparator();
-	toolBar->addAction(actAdd);
-	toolBar->addAction(actVCard);
-	toolBar->addAction(actAHCommand);
-	toolBar->addAction(actQueryVersion);
+    toolBar->addSeparator();
+    toolBar->addAction(actAdd);
+    toolBar->addAction(actVCard);
+    toolBar->addAction(actAHCommand);
+    toolBar->addAction(actQueryVersion);
 
-	toolBar->addWidget(new StretchWidget(toolBar));
-	AccountLabel* lb_ident = new AccountLabel(toolBar);
-	lb_ident->setAccount(pa);
-	lb_ident->setShowJid(false);
-	toolBar->addWidget(lb_ident);
+    toolBar->addWidget(new StretchWidget(toolBar));
+    AccountLabel* lb_ident = new AccountLabel(toolBar);
+    lb_ident->setAccount(pa);
+    lb_ident->setShowJid(false);
+    toolBar->addWidget(lb_ident);
 
-	// misc stuff
-	disableButtons();
-	actStop->setEnabled(false);	// stop action is not handled by disableButtons()
-	updateBackForward();		// same applies to back & forward
+    // misc stuff
+    disableButtons();
+    actStop->setEnabled(false);    // stop action is not handled by disableButtons()
+    updateBackForward();        // same applies to back & forward
 }
 
 DiscoDlg::Private::~Private()
 {
-	qDeleteAll(backHistory);
-	qDeleteAll(forwardHistory);
-	delete data.tasks;
+    qDeleteAll(backHistory);
+    qDeleteAll(forwardHistory);
+    delete data.tasks;
 }
 
 void DiscoDlg::Private::doDisco(QString _host, QString _node, bool doHistory)
 {
-	PsiAccount *pa = data.pa;
-	if ( !pa->checkConnected(dlg) )
-		return;
+    PsiAccount *pa = data.pa;
+    if ( !pa->checkConnected(dlg) )
+        return;
 
-	// Strip whitespace
-	Jid j;
-	QString host = _host;
-	if ( host.isEmpty() )
-		host = dlg->cb_address->currentText();
-	j = host.trimmed();
-	if ( !j.isValid() )
-		return;
+    // Strip whitespace
+    Jid j;
+    QString host = _host;
+    if ( host.isEmpty() )
+        host = dlg->cb_address->currentText();
+    j = host.trimmed();
+    if ( !j.isValid() )
+        return;
 
-	QString n = _node.trimmed();
-	if ( n.isEmpty() )
-		n = dlg->cb_node->currentText().trimmed();
+    QString n = _node.trimmed();
+    if ( n.isEmpty() )
+        n = dlg->cb_node->currentText().trimmed();
 
-	// check, whether we need to update history
-	if ( (jid.full() != j.full()) || (node != n) ) {
-		if (doHistory) {
-			backHistory.append(new History(jid, node));
-			qDeleteAll(forwardHistory);
-			forwardHistory.clear();
-		}
-	}
+    // check, whether we need to update history
+    if ( (jid.full() != j.full()) || (node != n) ) {
+        if (doHistory) {
+            backHistory.append(new History(jid, node));
+            qDeleteAll(forwardHistory);
+            forwardHistory.clear();
+        }
+    }
 
-	jid  = j;
-	node = n;
+    jid  = j;
+    node = n;
 
-	updateComboBoxes(jid, node);
+    updateComboBoxes(jid, node);
 
-	data.tasks->clear(); // also will call all all necessary functions
-	disableButtons();
-	updateBackForward();
+    data.tasks->clear(); // also will call all all necessary functions
+    disableButtons();
+    updateBackForward();
 
-	dlg->lv_disco->clear();
+    dlg->lv_disco->clear();
 
-	// create new root item
-	DiscoItem di;
-	di.setJid( jid );
-	di.setNode( node );
+    // create new root item
+    DiscoItem di;
+    di.setJid( jid );
+    di.setNode( node );
 
-	DiscoListItem *root = new DiscoListItem (di, &data, dlg->lv_disco);
-	root->setHidden (false); // don't confuse users with empty root
+    DiscoListItem *root = new DiscoListItem (di, &data, dlg->lv_disco);
+    root->setHidden (false); // don't confuse users with empty root
 
-//	DiscoListItem::setExpanded(true); will be called from
-//	DiscoDlg::Private::itemExpanded(QTreeWidgetItem *item)
-//	So we preventing disco#items request sends twice
-	static_cast<QTreeWidgetItem*>(root)->setExpanded(true); // begin browsing;
+//    DiscoListItem::setExpanded(true); will be called from
+//    DiscoDlg::Private::itemExpanded(QTreeWidgetItem *item)
+//    So we preventing disco#items request sends twice
+    static_cast<QTreeWidgetItem*>(root)->setExpanded(true); // begin browsing;
 }
 
 void DiscoDlg::Private::updateComboBoxes(Jid j, QString n)
 {
-	data.pa->psi()->recentBrowseAdd( j.full() );
-	dlg->cb_address->clear();
-	dlg->cb_address->addItems(data.pa->psi()->recentBrowseList());
+    data.pa->psi()->recentBrowseAdd( j.full() );
+    dlg->cb_address->clear();
+    dlg->cb_address->addItems(data.pa->psi()->recentBrowseList());
 
-	data.pa->psi()->recentNodeAdd( n );
-	dlg->cb_node->clear();
-	dlg->cb_node->addItems(data.pa->psi()->recentNodeList());
+    data.pa->psi()->recentNodeAdd( n );
+    dlg->cb_node->clear();
+    dlg->cb_node->addItems(data.pa->psi()->recentNodeList());
 }
 
 void DiscoDlg::Private::actionStop()
 {
-	data.tasks->clear();
+    data.tasks->clear();
 }
 
 void DiscoDlg::Private::actionRefresh()
 {
-	DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
-	if ( !it )
-		return;
+    DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
+    if ( !it )
+        return;
 
-	it->updateItems();
-	it->updateInfo();
+    it->updateItems();
+    it->updateInfo();
 }
 
 void DiscoDlg::Private::actionBrowse()
 {
-	DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
-	if ( !it )
-		return;
+    DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
+    if ( !it )
+        return;
 
-	doDisco(it->item().jid().full(), it->item().node());
+    doDisco(it->item().jid().full(), it->item().node());
 }
 
 void DiscoDlg::Private::actionBack()
 {
-	forwardHistory.append(new History(jid, node));
-	History *h = backHistory.takeLast();
-	doDisco(h->jid.full(), h->node, false);
-	delete h;
+    forwardHistory.append(new History(jid, node));
+    History *h = backHistory.takeLast();
+    doDisco(h->jid.full(), h->node, false);
+    delete h;
 }
 
 void DiscoDlg::Private::actionForward()
 {
-	backHistory.append(new History(jid, node));
-	History *h = forwardHistory.takeLast();
-	doDisco(h->jid.full(), h->node, false);
-	delete h;
+    backHistory.append(new History(jid, node));
+    History *h = forwardHistory.takeLast();
+    doDisco(h->jid.full(), h->node, false);
+    delete h;
 }
 
 void DiscoDlg::Private::updateBackForward()
 {
-	actBack->setEnabled ( !backHistory.isEmpty() );
-	actForward->setEnabled ( !forwardHistory.isEmpty() );
+    actBack->setEnabled ( !backHistory.isEmpty() );
+    actForward->setEnabled ( !forwardHistory.isEmpty() );
 }
 
 void DiscoDlg::Private::itemUpdateStarted()
 {
-	actStop->setEnabled(true);
-	if ( busy )
-		busy->start();
+    actStop->setEnabled(true);
+    if ( busy )
+        busy->start();
 }
 
 void DiscoDlg::Private::itemUpdateFinished()
 {
-	actStop->setEnabled(false);
-	if ( busy )
-		busy->stop();
+    actStop->setEnabled(false);
+    if ( busy )
+        busy->stop();
 }
 
 void DiscoDlg::Private::disableButtons()
 {
-	DiscoItem di;
-	enableButtons ( di );
+    DiscoItem di;
+    enableButtons ( di );
 }
 
 void DiscoDlg::Private::enableButtons(const DiscoItem &it)
 {
-	bool itemSelected = !it.jid().full().isEmpty();
-	actRefresh->setEnabled( itemSelected );
-	actBrowse->setEnabled( itemSelected );
+    bool itemSelected = !it.jid().full().isEmpty();
+    actRefresh->setEnabled( itemSelected );
+    actBrowse->setEnabled( itemSelected );
 
-	// custom actions
-	Features f = it.features();
-	actRegister->setEnabled( f.canRegister() );
-	actUnregister->setEnabled( f.canRegister() );
-	actSearch->setEnabled( f.canSearch() );
-	actJoin->setEnabled( f.canGroupchat() );
-	actAdd->setEnabled( itemSelected );
-	actVCard->setEnabled( f.haveVCard() );
-	actAHCommand->setEnabled( f.canCommand() );
-	actQueryVersion->setEnabled( f.hasVersion() );
+    // custom actions
+    Features f = it.features();
+    actRegister->setEnabled( f.canRegister() );
+    actUnregister->setEnabled( f.canRegister() );
+    actSearch->setEnabled( f.canSearch() );
+    actJoin->setEnabled( f.canGroupchat() );
+    actAdd->setEnabled( itemSelected );
+    actVCard->setEnabled( f.haveVCard() );
+    actAHCommand->setEnabled( f.canCommand() );
+    actQueryVersion->setEnabled( f.hasVersion() );
 }
 
 void DiscoDlg::Private::itemSelected (QTreeWidgetItem *item)
 {
-	DiscoListItem *it = (DiscoListItem *)item;
-	if ( !it ) {
-		disableButtons();
-		return;
-	}
+    DiscoListItem *it = (DiscoListItem *)item;
+    if ( !it ) {
+        disableButtons();
+        return;
+    }
 
-	it->itemSelected();
+    it->itemSelected();
 
-	const DiscoItem di = it->item();
-	enableButtons ( di );
+    const DiscoItem di = it->item();
+    enableButtons ( di );
 }
 
 void DiscoDlg::Private::itemExpanded (QTreeWidgetItem *item)
 {
-	DiscoListItem *it = (DiscoListItem *)item;
-	if (it)
-		it->setExpanded(true);
+    DiscoListItem *it = (DiscoListItem *)item;
+    if (it)
+        it->setExpanded(true);
 }
 
 void DiscoDlg::Private::itemDoubleclicked (QTreeWidgetItem *item)
 {
-	DiscoListItem *it = (DiscoListItem *)item;
-	if ( !it )
-		return;
+    DiscoListItem *it = (DiscoListItem *)item;
+    if ( !it )
+        return;
 
-	const DiscoItem d = it->item();
-	const Features &f = d.features();
+    const DiscoItem d = it->item();
+    const Features &f = d.features();
 
-	// set the prior state of item
-	// FIXME: causes minor flickering
-	long id = 0;
+    // set the prior state of item
+    // FIXME: causes minor flickering
+    long id = 0;
 
-	// trigger default action
-	if (f.canCommand() ) {
-		id = Features::FID_AHCommand;
-	}
-	if (!d.identities().isEmpty()) {
-		// FIXME: check the category and type for JUD!
-		DiscoItem::Identity ident = d.identities().first();
-		bool searchFirst = ident.category == "service" && ident.type == "jud";
+    // trigger default action
+    if (f.canCommand() ) {
+        id = Features::FID_AHCommand;
+    }
+    if (!d.identities().isEmpty()) {
+        // FIXME: check the category and type for JUD!
+        DiscoItem::Identity ident = d.identities().first();
+        bool searchFirst = ident.category == "service" && ident.type == "jud";
 
-		if ( searchFirst && f.canSearch() ) {
-			id = Features::FID_Search;
-		}
-		else if ( ident.category == "conference" &&  f.canGroupchat() ) {
-			id = Features::FID_Groupchat;
-		}
-		else if ( f.canRegister() ) {
-				id = Features::FID_Register;
-		}
-	}
+        if ( searchFirst && f.canSearch() ) {
+            id = Features::FID_Search;
+        }
+        else if ( ident.category == "conference" &&  f.canGroupchat() ) {
+            id = Features::FID_Groupchat;
+        }
+        else if ( f.canRegister() ) {
+                id = Features::FID_Register;
+        }
+    }
 
-	if ( id > 0 ) {
-		if ( !it->isExpanded() ) {
-			if ( it->childCount() )
-				it->setExpanded( true );
-		}
-		else {
-			it->setExpanded( false );
-		}
-		emit dlg->featureActivated( Features::feature(id), d.jid(), d.node() );
-	}
+    if ( id > 0 ) {
+        if ( !it->isExpanded() ) {
+            if ( it->childCount() )
+                it->setExpanded( true );
+        }
+        else {
+            it->setExpanded( false );
+        }
+        emit dlg->featureActivated( Features::feature(id), d.jid(), d.node() );
+    }
 }
 
 bool DiscoDlg::Private::eventFilter (QObject *object, QEvent *event)
 {
-	if ( object == dlg->lv_disco ) {
-		if ( event->type() == QEvent::ContextMenu ) {
-			QContextMenuEvent *e = (QContextMenuEvent *)event;
+    if ( object == dlg->lv_disco ) {
+        if ( event->type() == QEvent::ContextMenu ) {
+            QContextMenuEvent *e = (QContextMenuEvent *)event;
 
-			DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
-			if ( !it )
-				return true;
+            DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
+            if ( !it )
+                return true;
 
-			// prepare features list
-			QList<long> idFeatures;
-			QStringList features = it->item().features().list();
-			{	// convert all features to their IDs
-				QStringList::Iterator it = features.begin();
-				for ( ; it != features.end(); ++it) {
-					Features f( *it );
-					if ( f.id() > Features::FID_None )
-						idFeatures.append( Features::id(*it) );
-				}
-				//qHeapSort(idFeatures);
-			}
+            // prepare features list
+            QList<long> idFeatures;
+            QStringList features = it->item().features().list();
+            {    // convert all features to their IDs
+                QStringList::Iterator it = features.begin();
+                for ( ; it != features.end(); ++it) {
+                    Features f( *it );
+                    if ( f.id() > Features::FID_None )
+                        idFeatures.append( Features::id(*it) );
+                }
+                //qHeapSort(idFeatures);
+            }
 
-			QList<long> ids;
-			{	// ensure, that there's in no duplicated IDs inside. FIXME: optimize this, anyone?
-				long id = 0, count = 0;
-				QList<long>::Iterator it;
-				while ( count < (long)idFeatures.count() ) {
-					bool found = false;
+            QList<long> ids;
+            {    // ensure, that there's in no duplicated IDs inside. FIXME: optimize this, anyone?
+                long id = 0, count = 0;
+                QList<long>::Iterator it;
+                while ( count < (long)idFeatures.count() ) {
+                    bool found = false;
 
-					for (it = idFeatures.begin(); it != idFeatures.end(); ++it) {
-						if ( id == *it ) {
-							if ( !found ) {
-								found = true;
-								ids.append( id );
-							}
-							count++;
-						}
-					}
-					id++;
-				}
-			}
+                    for (it = idFeatures.begin(); it != idFeatures.end(); ++it) {
+                        if ( id == *it ) {
+                            if ( !found ) {
+                                found = true;
+                                ids.append( id );
+                            }
+                            count++;
+                        }
+                    }
+                    id++;
+                }
+            }
 
-			// prepare popup menu
-			QMenu p;
+            // prepare popup menu
+            QMenu p;
 
-			actBrowse->addTo (&p);
-			actRefresh->addTo (&p);
-			actStop->addTo (&p);
+            actBrowse->addTo (&p);
+            actRefresh->addTo (&p);
+            actStop->addTo (&p);
 
-			// custom actions
-			p.addSeparator();
-			actRegister->addTo(&p);
-			actUnregister->addTo(&p);
-			actSearch->addTo(&p);
-			actJoin->addTo(&p);
+            // custom actions
+            p.addSeparator();
+            actRegister->addTo(&p);
+            actUnregister->addTo(&p);
+            actSearch->addTo(&p);
+            actJoin->addTo(&p);
 
-			p.addSeparator();
-			actAdd->addTo(&p);
-			actVCard->addTo(&p);
-			actAHCommand->addTo(&p);
-			actQueryVersion->addTo(&p);
+            p.addSeparator();
+            actAdd->addTo(&p);
+            actVCard->addTo(&p);
+            actAHCommand->addTo(&p);
+            actQueryVersion->addTo(&p);
 
-			// popup with all available features
-			QMenu *fm = new QMenu(&p);
-			QHash<QAction*, int> actions;
-			{
-				QList<long>::Iterator it = ids.begin();
-				for ( ; it != ids.end(); ++it)
-					actions.insert(fm->addAction(Features::name(*it)), *it + 10000); // TODO: add pixmap
-			}
+            // popup with all available features
+            QMenu *fm = new QMenu(&p);
+            QHash<QAction*, int> actions;
+            {
+                QList<long>::Iterator it = ids.begin();
+                for ( ; it != ids.end(); ++it)
+                    actions.insert(fm->addAction(Features::name(*it)), *it + 10000); // TODO: add pixmap
+            }
 
-			//p.insertSeparator();
-			//int menuId = p.insertItem(tr("Activate &Feature"), fm);
-			//p.setItemEnabled(menuId, !ids.isEmpty());
+            //p.insertSeparator();
+            //int menuId = p.insertItem(tr("Activate &Feature"), fm);
+            //p.setItemEnabled(menuId, !ids.isEmpty());
 
-			// display popup
-			e->accept();
-			int r = actions.value(p.exec ( e->globalPos() ));
+            // display popup
+            e->accept();
+            int r = actions.value(p.exec ( e->globalPos() ));
 
-			if ( r > 10000 )
-				actionActivated(r-10000);
+            if ( r > 10000 )
+                actionActivated(r-10000);
 
-			return true;
-		}
-	}
-	else if(object == dlg->le_filter && event->type() == QEvent::KeyPress) {
-		QKeyEvent *ke = static_cast<QKeyEvent*>(event);
-		if(ke->key() == Qt::Key_Escape) {
-			dlg->le_filter->clear();
-			return true;
-		}
-	}
+            return true;
+        }
+    }
+    else if(object == dlg->le_filter && event->type() == QEvent::KeyPress) {
+        QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+        if(ke->key() == Qt::Key_Escape) {
+            dlg->le_filter->clear();
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 void DiscoDlg::Private::actionActivated(int id)
 {
-	DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
-	if ( !it )
-		return;
+    DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
+    if ( !it )
+        return;
 
-	emit dlg->featureActivated(Features::feature(id), it->item().jid(), it->item().node());
+    emit dlg->featureActivated(Features::feature(id), it->item().jid(), it->item().node());
 }
 
 void DiscoDlg::Private::objectDestroyed(QObject *obj)
 {
-	if ( obj == busy )
-		busy = 0;
+    if ( obj == busy )
+        busy = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1256,64 +1256,64 @@ void DiscoDlg::Private::objectDestroyed(QObject *obj)
 //----------------------------------------------------------------------------
 
 DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
-	: QDialog(0)
+    : QDialog(0)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
-	setupUi(this);
-	// restore options
-	ck_autoItems->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-items").toBool());
-	ck_autoInfo->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-info").toBool());
+    setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setupUi(this);
+    // restore options
+    ck_autoItems->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-items").toBool());
+    ck_autoInfo->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-info").toBool());
 
-	// initialize
-	d = new Private(this, pa);
-	d->jid  = jid;
-	d->node = node;
-	d->data.pa->dialogRegister(this);
+    // initialize
+    d = new Private(this, pa);
+    d->jid  = jid;
+    d->node = node;
+    d->data.pa->dialogRegister(this);
 
-	//setWindowTitle(CAP(caption()));
-	setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE).icon());
-	X11WM_CLASS("disco");
+    //setWindowTitle(CAP(caption()));
+    setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE).icon());
+    X11WM_CLASS("disco");
 
-	connect (pb_browse, SIGNAL(clicked()), d, SLOT(doDisco()));
-	pb_browse->setDefault(false);
-	pb_browse->setAutoDefault(false);
+    connect (pb_browse, SIGNAL(clicked()), d, SLOT(doDisco()));
+    pb_browse->setDefault(false);
+    pb_browse->setAutoDefault(false);
 
-	connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
-	pb_close->setDefault(false);
-	pb_close->setAutoDefault(false);
+    connect(pb_close, SIGNAL(clicked()), this, SLOT(close()));
+    pb_close->setDefault(false);
+    pb_close->setAutoDefault(false);
 
-	cb_address->addItems(pa->psi()->recentBrowseList()); // FIXME
-	cb_address->setFocus();
-	connect(cb_address, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
-	cb_address->setEditText(d->jid.full());
+    cb_address->addItems(pa->psi()->recentBrowseList()); // FIXME
+    cb_address->setFocus();
+    connect(cb_address, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
+    cb_address->setEditText(d->jid.full());
 
-	cb_node->addItems(pa->psi()->recentNodeList());
-	connect(cb_node, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
-	cb_node->setCurrentIndex(cb_node->findText(node));
+    cb_node->addItems(pa->psi()->recentNodeList());
+    connect(cb_node, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
+    cb_node->setCurrentIndex(cb_node->findText(node));
 
-	if ( pa->loggedIn() )
-		doDisco();
+    if ( pa->loggedIn() )
+        doDisco();
 }
 
 DiscoDlg::~DiscoDlg()
 {
-	d->data.pa->dialogUnregister(this);
-	delete d;
+    d->data.pa->dialogUnregister(this);
+    delete d;
 
-	// save options
-	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-items", (bool) ck_autoItems->isChecked());
-	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-info", (bool) ck_autoInfo->isChecked());
+    // save options
+    PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-items", (bool) ck_autoItems->isChecked());
+    PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-info", (bool) ck_autoInfo->isChecked());
 }
 
 void DiscoDlg::doDisco(QString host, QString node)
 {
-	d->doDisco(host, node);
+    d->doDisco(host, node);
 }
 
 PsiAccount *DiscoDlg::account()
 {
-	return d->data.pa;
+    return d->data.pa;
 }
 
 #include "discodlg.moc"

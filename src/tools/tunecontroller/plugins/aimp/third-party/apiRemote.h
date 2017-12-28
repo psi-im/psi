@@ -22,22 +22,22 @@ const int  AIMPRemoteAccessMapFileSize = 2048;
 #pragma pack(push, 1)
 struct TAIMPRemoteFileInfo
 {
-	DWORD Deprecated1;
-	BOOL Active;
-	DWORD BitRate;
-	DWORD Channels;
-	DWORD Duration;
-	INT64 FileSize;
-	DWORD FileMark;
-	DWORD SampleRate;
-	DWORD TrackNumber;
-	DWORD AlbumLength;
-	DWORD ArtistLength;
-	DWORD DateLength;
-	DWORD FileNameLength;
-	DWORD GenreLength;
-	DWORD TitleLength;
-	DWORD Deprecated2[6];
+    DWORD Deprecated1;
+    BOOL Active;
+    DWORD BitRate;
+    DWORD Channels;
+    DWORD Duration;
+    INT64 FileSize;
+    DWORD FileMark;
+    DWORD SampleRate;
+    DWORD TrackNumber;
+    DWORD AlbumLength;
+    DWORD ArtistLength;
+    DWORD DateLength;
+    DWORD FileNameLength;
+    DWORD GenreLength;
+    DWORD TitleLength;
+    DWORD Deprecated2[6];
 };
 #pragma pack(pop)
 typedef TAIMPRemoteFileInfo *PAIMPRemoteFileInfo;

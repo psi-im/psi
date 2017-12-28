@@ -49,34 +49,34 @@ class ChatViewThemeProvider;
 ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) :
     PsiThemeProvider(psi)
 {
-	ChatViewCon::init((PsiCon*)parent());
+    ChatViewCon::init((PsiCon*)parent());
 }
 
 const QStringList ChatViewThemeProvider::themeIds() const
 {
-	QStringList dirs;
-	dirs << ":";
-	dirs << ".";
-	dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
-	dirs << ApplicationInfo::resourcesDir();
+    QStringList dirs;
+    dirs << ":";
+    dirs << ".";
+    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
+    dirs << ApplicationInfo::resourcesDir();
 
-	QSet<QString> ret;
-	foreach (QString dir, dirs) {
-		foreach (QFileInfo tDirInfo, QDir(dir+"/themes/chatview/")
-			.entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
-			QString typeName = tDirInfo.fileName();
-			foreach (QFileInfo themeInfo,
-					QDir(tDirInfo.absoluteFilePath())
-						.entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot) +
-					QDir(tDirInfo.absoluteFilePath())
-						.entryInfoList(QStringList("*.theme"), QDir::Files)) {
-				ret<<(QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
-				//qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
-			}
-		}
-	}
+    QSet<QString> ret;
+    foreach (QString dir, dirs) {
+        foreach (QFileInfo tDirInfo, QDir(dir+"/themes/chatview/")
+            .entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
+            QString typeName = tDirInfo.fileName();
+            foreach (QFileInfo themeInfo,
+                    QDir(tDirInfo.absoluteFilePath())
+                        .entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot) +
+                    QDir(tDirInfo.absoluteFilePath())
+                        .entryInfoList(QStringList("*.theme"), QDir::Files)) {
+                ret<<(QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
+                //qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
+            }
+        }
+    }
 
-	return ret.values();
+    return ret.values();
 }
 
 /**
@@ -88,9 +88,9 @@ const QStringList ChatViewThemeProvider::themeIds() const
  */
 Theme ChatViewThemeProvider::theme(const QString &id)
 {
-	Theme theme(new ChatViewThemePrivate(this));
-	theme.setId(id);
-	return theme;
+    Theme theme(new ChatViewThemePrivate(this));
+    theme.setId(id);
+    return theme;
 }
 
 /**
@@ -101,63 +101,63 @@ Theme ChatViewThemeProvider::theme(const QString &id)
  */
 bool ChatViewThemeProvider::loadCurrent()
 {
-	QString loadedId = curTheme.id();
-	QString themeName = PsiOptions::instance()->getOption(optionString()).toString();
-	if (!loadedId.isEmpty() && loadedId == themeName) {
-		return true; // already loaded. nothing todo
-	}
-	Theme t(theme(themeName));
-	if (!t.exists()) {
-		if (themeName != QLatin1String("psi/classic")) {
-			qDebug("Invalid theme id: %s", qPrintable(themeName));
-			qDebug("fallback to classic chatview theme");
-			PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
-			return loadCurrent();
-		}
-		qDebug("Classic theme failed to load. No fallback..");
-		return false;
-	}
+    QString loadedId = curTheme.id();
+    QString themeName = PsiOptions::instance()->getOption(optionString()).toString();
+    if (!loadedId.isEmpty() && loadedId == themeName) {
+        return true; // already loaded. nothing todo
+    }
+    Theme t(theme(themeName));
+    if (!t.exists()) {
+        if (themeName != QLatin1String("psi/classic")) {
+            qDebug("Invalid theme id: %s", qPrintable(themeName));
+            qDebug("fallback to classic chatview theme");
+            PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
+            return loadCurrent();
+        }
+        qDebug("Classic theme failed to load. No fallback..");
+        return false;
+    }
 
-	bool startedLoading = t.load([this, t, loadedId](bool success){
-		if (!success && t.id() != QLatin1String("psi/classic")) {
-			qDebug("Failed to load theme \"%s\"", qPrintable(t.id()));
-			qDebug("fallback to classic chatview theme");
-			PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
-			loadCurrent();
-		} else if (success) {
-			curTheme = t;
-			if (t.id() != loadedId) {
-				emit themeChanged();
-			}
-		} // else it was already classic
-	});
+    bool startedLoading = t.load([this, t, loadedId](bool success){
+        if (!success && t.id() != QLatin1String("psi/classic")) {
+            qDebug("Failed to load theme \"%s\"", qPrintable(t.id()));
+            qDebug("fallback to classic chatview theme");
+            PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
+            loadCurrent();
+        } else if (success) {
+            curTheme = t;
+            if (t.id() != loadedId) {
+                emit themeChanged();
+            }
+        } // else it was already classic
+    });
 
-	return startedLoading; // does not really matter. may fail later on loading
+    return startedLoading; // does not really matter. may fail later on loading
 }
 
 Theme ChatViewThemeProvider::current() const
 {
-	return curTheme;
+    return curTheme;
 }
 
 void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 {
-	PsiOptions::instance()->setOption(optionString(), id);
-	if (!curTheme.isValid() || curTheme.id() != id) {
-		loadCurrent();
-	}
+    PsiOptions::instance()->setOption(optionString(), id);
+    if (!curTheme.isValid() || curTheme.id() != id) {
+        loadCurrent();
+    }
 }
 
 #ifdef WEBENGINE
 ThemeServer *ChatViewThemeProvider::themeServer()
 {
-	Q_ASSERT(ChatViewCon::isReady());
-	return ChatViewCon::instance()->themeServer;
+    Q_ASSERT(ChatViewCon::isReady());
+    return ChatViewCon::instance()->themeServer;
 }
 
 QWebEngineUrlRequestInterceptor *ChatViewThemeProvider::requestInterceptor()
 {
-	Q_ASSERT(ChatViewCon::isReady());
-	return ChatViewCon::instance()->requestInterceptor;
+    Q_ASSERT(ChatViewCon::isReady());
+    return ChatViewCon::instance()->requestInterceptor;
 }
 #endif

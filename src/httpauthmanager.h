@@ -25,27 +25,27 @@
 
 class HttpAuthListener;
 namespace XMPP {
-	class Task;
+    class Task;
 }
 class PsiHttpAuthRequest;
 
 class HttpAuthManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	HttpAuthManager(XMPP::Task *);
-	~HttpAuthManager();
+    HttpAuthManager(XMPP::Task *);
+    ~HttpAuthManager();
 
 public slots:
-	void confirm(const PsiHttpAuthRequest &req);
-	void deny(const PsiHttpAuthRequest &req);
+    void confirm(const PsiHttpAuthRequest &req);
+    void deny(const PsiHttpAuthRequest &req);
 
 signals:
-	void confirmationRequest(const PsiHttpAuthRequest &);
+    void confirmationRequest(const PsiHttpAuthRequest &);
 
 private:
-	HttpAuthListener *listener_;
+    HttpAuthListener *listener_;
 };
 
 #endif

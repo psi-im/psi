@@ -34,90 +34,90 @@ class ChatEdit;
 class ChatViewBase;
 class MessageView;
 namespace XMPP {
-	class Jid;
+    class Jid;
 }
 
 class ChatView : public PsiTextView, public ChatViewCommon
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ChatView(QWidget* parent);
-	~ChatView();
+    ChatView(QWidget* parent);
+    ~ChatView();
 
-	void addLogIconsResources();
-	void markReceived(QString id);
+    void addLogIconsResources();
+    void markReceived(QString id);
 
-	// reimplemented
-	QSize sizeHint() const;
-	void clear();
-	void contextMenuEvent(QContextMenuEvent *e);
+    // reimplemented
+    QSize sizeHint() const;
+    void clear();
+    void contextMenuEvent(QContextMenuEvent *e);
 
-	void init();
-	void setDialog(QWidget* dialog);
-	void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
+    void init();
+    void setDialog(QWidget* dialog);
+    void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
 
-	void appendText(const QString &text);
-	void dispatchMessage(const MessageView &);
-	bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
+    void appendText(const QString &text);
+    void dispatchMessage(const MessageView &);
+    bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
-	void deferredScroll();
-	void doTrackBar();
-	bool internalFind(QString str, bool startFromBeginning = false);
-	ChatView *textWidget();
-	QWidget *realTextWidget();
+    void deferredScroll();
+    void doTrackBar();
+    bool internalFind(QString str, bool startFromBeginning = false);
+    ChatView *textWidget();
+    QWidget *realTextWidget();
 
-	void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
+    void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
 public slots:
-	void scrollUp();
-	void scrollDown();
+    void scrollUp();
+    void scrollDown();
 
-	void setEncryptionEnabled(bool enabled);
+    void setEncryptionEnabled(bool enabled);
 
 protected:
-	// override the tab/esc behavior
-	bool focusNextPrevChild(bool next);
-	void keyPressEvent(QKeyEvent *);
+    // override the tab/esc behavior
+    bool focusNextPrevChild(bool next);
+    void keyPressEvent(QKeyEvent *);
 
-	QString formatTimeStamp(const QDateTime &time);
-	QString colorString(bool local, bool spooled) const;
+    QString formatTimeStamp(const QDateTime &time);
+    QString colorString(bool local, bool spooled) const;
 
-	QString replaceMarker(const MessageView &mv) const;
-	void renderMucMessage(const MessageView &);
-	void renderMessage(const MessageView &);
-	void renderSysMessage(const MessageView &);
-	void renderSubject(const MessageView &);
-	void renderMucSubject(const MessageView &);
-	void renderUrls(const MessageView &);
+    QString replaceMarker(const MessageView &mv) const;
+    void renderMucMessage(const MessageView &);
+    void renderMessage(const MessageView &);
+    void renderSysMessage(const MessageView &);
+    void renderSubject(const MessageView &);
+    void renderMucSubject(const MessageView &);
+    void renderUrls(const MessageView &);
 
 protected slots:
-	void autoCopy();
+    void autoCopy();
 
 private slots:
-	void slotScroll();
+    void slotScroll();
 
 signals:
-	void showNM(const QString&);
-	void nickInsertClick(const QString &nick);
+    void showNM(const QString&);
+    void nickInsertClick(const QString &nick);
 
 private:
-	bool isMuc_;
-	bool isEncryptionEnabled_;
-	XMPP::Jid jid_;
-	QString name_;
-	int  oldTrackBarPosition;
-	QPointer<QWidget> dialog_;
-	bool useMessageIcons_;
+    bool isMuc_;
+    bool isEncryptionEnabled_;
+    XMPP::Jid jid_;
+    QString name_;
+    int  oldTrackBarPosition;
+    QPointer<QWidget> dialog_;
+    bool useMessageIcons_;
 
-	QPixmap logIconSend;
-	QPixmap logIconReceive;
-	QPixmap logIconDelivered;
-	QPixmap logIconSendPgp;
-	QPixmap logIconReceivePgp;
-	QPixmap logIconDeliveredPgp;
-	QPixmap logIconTime;
-	QPixmap logIconInfo;
-	QPixmap logIconCorrected;
-	QPixmap logIconHistory;
+    QPixmap logIconSend;
+    QPixmap logIconReceive;
+    QPixmap logIconDelivered;
+    QPixmap logIconSendPgp;
+    QPixmap logIconReceivePgp;
+    QPixmap logIconDeliveredPgp;
+    QPixmap logIconTime;
+    QPixmap logIconInfo;
+    QPixmap logIconCorrected;
+    QPixmap logIconHistory;
 };
 
 #endif

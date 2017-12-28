@@ -27,21 +27,21 @@
 
 class StatusComboBox : public QComboBox
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	StatusComboBox(QWidget* parent, XMPP::Status::Type type = XMPP::Status::Offline);
+    StatusComboBox(QWidget* parent, XMPP::Status::Type type = XMPP::Status::Offline);
 
-	void setStatus(XMPP::Status::Type type);
-	XMPP::Status::Type status() const;
+    void setStatus(XMPP::Status::Type type);
+    XMPP::Status::Type status() const;
 
 signals:
-	void statusChanged(XMPP::Status::Type type);
+    void statusChanged(XMPP::Status::Type type);
 
 private:
-	void addStatus(XMPP::Status::Type type);
+    void addStatus(XMPP::Status::Type type);
 
 private slots:
-	void onCurrentIndexChanged(int);
+    void onCurrentIndexChanged(int);
 };
 
 #endif

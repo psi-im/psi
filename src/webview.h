@@ -19,7 +19,7 @@
  */
 
 #ifndef _WEBVIEW_H
-#define	_WEBVIEW_H
+#define    _WEBVIEW_H
 
 #ifdef WEBENGINE
 #include <QWebEngineView>
@@ -56,44 +56,44 @@ class WebView : public QWebView {
     Q_OBJECT
 public:
 
-	WebView(QWidget* parent);
+    WebView(QWidget* parent);
 
-	/** Evaluates JavaScript code */
-	void evaluateJS(const QString &scriptSource = "");
+    /** Evaluates JavaScript code */
+    void evaluateJS(const QString &scriptSource = "");
 
 #ifndef WEBENGINE
-	QString selectedText();
+    QString selectedText();
 #endif
-	bool isLoading() { return isLoading_; }
+    bool isLoading() { return isLoading_; }
 
 public slots:
-	void copySelected();
+    void copySelected();
 
 protected:
     /** Creates menu with Copy actions */
-	void contextMenuEvent(QContextMenuEvent* event);
+    void contextMenuEvent(QContextMenuEvent* event);
 #ifndef WEBENGINE
-	void mousePressEvent ( QMouseEvent * event );
-	void mouseReleaseEvent ( QMouseEvent * event );
-	void mouseMoveEvent(QMouseEvent *event);
+    void mousePressEvent ( QMouseEvent * event );
+    void mouseReleaseEvent ( QMouseEvent * event );
+    void mouseMoveEvent(QMouseEvent *event);
 #endif
-	//QAction* copyAction, *copyLinkAction;
+    //QAction* copyAction, *copyLinkAction;
 
 private:
 #ifndef WEBENGINE
-	void convertClipboardHtmlImages(QClipboard::Mode);
+    void convertClipboardHtmlImages(QClipboard::Mode);
 #endif
-	bool possibleDragging;
-	bool isLoading_;
-	QStringList jsBuffer_;
-	QPoint dragStartPosition;
+    bool possibleDragging;
+    bool isLoading_;
+    QStringList jsBuffer_;
+    QPoint dragStartPosition;
 
 
 protected slots:
-	void linkClickedEvent(const QUrl& url);
-	void textCopiedEvent();
-	void loadStartedEvent();
-	void loadFinishedEvent(bool);
+    void linkClickedEvent(const QUrl& url);
+    void textCopiedEvent();
+    void loadStartedEvent();
+    void loadFinishedEvent(bool);
 };
 
 

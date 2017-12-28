@@ -33,30 +33,30 @@ class ThemeServer;
 #ifdef WEBENGINE
 class ChatViewUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor
 {
-	Q_OBJECT
-	Q_DISABLE_COPY(ChatViewUrlRequestInterceptor)
+    Q_OBJECT
+    Q_DISABLE_COPY(ChatViewUrlRequestInterceptor)
 public:
-	explicit ChatViewUrlRequestInterceptor(QObject *parent = Q_NULLPTR);
-	void interceptRequest(QWebEngineUrlRequestInfo &info);
+    explicit ChatViewUrlRequestInterceptor(QObject *parent = Q_NULLPTR);
+    void interceptRequest(QWebEngineUrlRequestInfo &info);
 };
 #endif
 
 class ChatViewCon : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	PsiCon *pc;
+    PsiCon *pc;
 
-	ChatViewCon(PsiCon *pc);
+    ChatViewCon(PsiCon *pc);
 public:
-	~ChatViewCon();
+    ~ChatViewCon();
 #ifdef WEBENGINE
-	ThemeServer *themeServer;
-	ChatViewUrlRequestInterceptor *requestInterceptor;
+    ThemeServer *themeServer;
+    ChatViewUrlRequestInterceptor *requestInterceptor;
 #endif
-	static ChatViewCon* instance();
-	static void init(PsiCon *pc);
-	static bool isReady();
+    static ChatViewCon* instance();
+    static void init(PsiCon *pc);
+    static bool isReady();
 };
 
 #endif // CHATVIEWTHEMEPROVIDER_PRIV_H

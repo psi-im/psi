@@ -30,29 +30,29 @@ class QWidget;
 class ChatViewCommon
 {
 public:
-	enum UserType {
-		LocalParty,
-		RemoteParty,
-		Participant
-	};
+    enum UserType {
+        LocalParty,
+        RemoteParty,
+        Participant
+    };
 
 
-	ChatViewCommon() : _nickNumber(0) { }
-	void setLooks(QWidget *);
-	inline const QDateTime& lastMsgTime() const { return _lastMsgTime; }
-	bool updateLastMsgTime(QDateTime t);
-	QString getMucNickColor(const QString &, bool,
-							QStringList validList = QStringList());
-	QList<QColor> getPalette();
+    ChatViewCommon() : _nickNumber(0) { }
+    void setLooks(QWidget *);
+    inline const QDateTime& lastMsgTime() const { return _lastMsgTime; }
+    bool updateLastMsgTime(QDateTime t);
+    QString getMucNickColor(const QString &, bool,
+                            QStringList validList = QStringList());
+    QList<QColor> getPalette();
 
 protected:
-	QDateTime _lastMsgTime;
+    QDateTime _lastMsgTime;
 
 private:
-	QList<QColor> &generatePalette();
-	bool compatibleColors(const QColor &, const QColor &);
-	int _nickNumber;
-	QMap<QString,int> _nicks;
+    QList<QColor> &generatePalette();
+    bool compatibleColors(const QColor &, const QColor &);
+    int _nickNumber;
+    QMap<QString,int> _nicks;
 };
 
 #endif

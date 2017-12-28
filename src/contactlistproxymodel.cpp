@@ -29,160 +29,160 @@
 #include "debug.h"
 
 ContactListProxyModel::ContactListProxyModel(QObject* parent)
-	: QSortFilterProxyModel(parent)
+    : QSortFilterProxyModel(parent)
 {
-	sort(0, Qt::AscendingOrder);
+    sort(0, Qt::AscendingOrder);
 
-	// False by default on Qt4
-	setDynamicSortFilter(true);
+    // False by default on Qt4
+    setDynamicSortFilter(true);
 }
 
 void ContactListProxyModel::setSourceModel(QAbstractItemModel* model)
 {
-	Q_ASSERT(qobject_cast<ContactListModel*>(model));
-	QSortFilterProxyModel::setSourceModel(model);
-	connect(model, SIGNAL(showOfflineChanged()), SLOT(filterParametersChanged()));
-	connect(model, SIGNAL(showSelfChanged()), SLOT(filterParametersChanged()));
-	connect(model, SIGNAL(showTransportsChanged()), SLOT(filterParametersChanged()));
-	connect(model, SIGNAL(showHiddenChanged()), SLOT(filterParametersChanged()));
-	connect(model, SIGNAL(contactSortStyleChanged()), SLOT(updateSorting()));
+    Q_ASSERT(qobject_cast<ContactListModel*>(model));
+    QSortFilterProxyModel::setSourceModel(model);
+    connect(model, SIGNAL(showOfflineChanged()), SLOT(filterParametersChanged()));
+    connect(model, SIGNAL(showSelfChanged()), SLOT(filterParametersChanged()));
+    connect(model, SIGNAL(showTransportsChanged()), SLOT(filterParametersChanged()));
+    connect(model, SIGNAL(showHiddenChanged()), SLOT(filterParametersChanged()));
+    connect(model, SIGNAL(contactSortStyleChanged()), SLOT(updateSorting()));
 }
 
 bool ContactListProxyModel::showOffline() const
 {
-	return qobject_cast<ContactListModel*>(sourceModel())->showOffline();
+    return qobject_cast<ContactListModel*>(sourceModel())->showOffline();
 }
 
 bool ContactListProxyModel::showSelf() const
 {
-	return qobject_cast<ContactListModel*>(sourceModel())->showSelf();
+    return qobject_cast<ContactListModel*>(sourceModel())->showSelf();
 }
 
 bool ContactListProxyModel::showTransports() const
 {
-	return qobject_cast<ContactListModel*>(sourceModel())->showTransports();
+    return qobject_cast<ContactListModel*>(sourceModel())->showTransports();
 }
 
 bool ContactListProxyModel::showHidden() const
 {
-	return qobject_cast<ContactListModel*>(sourceModel())->showHidden();
+    return qobject_cast<ContactListModel*>(sourceModel())->showHidden();
 }
 
 bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
 {
-	QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
-	if (!index.isValid())
-		return false;
+    QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+    if (!index.isValid())
+        return false;
 
-	ContactListItem *item = static_cast<ContactListItem*>(index.internalPointer());
-	if (!item) {
-		Q_ASSERT(false);
-		return false;
-	}
+    ContactListItem *item = static_cast<ContactListItem*>(index.internalPointer());
+    if (!item) {
+        Q_ASSERT(false);
+        return false;
+    }
 
-	if (item->editing()) {
-		return true;
-	}
+    if (item->editing()) {
+        return true;
+    }
 
-	switch (item->type()) {
-	case ContactListItem::Type::ContactType: {
-		PsiContact* psiContact = item->contact();
+    switch (item->type()) {
+    case ContactListItem::Type::ContactType: {
+        PsiContact* psiContact = item->contact();
 
-		if (psiContact->alerting()) {
-			return true;
-		}
+        if (psiContact->alerting()) {
+            return true;
+        }
 
-		if (psiContact->isSelf()) {
-			return showSelf() && (psiContact->userListItem().userResourceList().count() > 0);
-		}
-		else if (psiContact->isAgent()) {
-			return showTransports();
-		}
-		else if (psiContact->isAlwaysVisible()) {
-			return true;
-		}
+        if (psiContact->isSelf()) {
+            return showSelf() && (psiContact->userListItem().userResourceList().count() > 0);
+        }
+        else if (psiContact->isAgent()) {
+            return showTransports();
+        }
+        else if (psiContact->isAlwaysVisible()) {
+            return true;
+        }
 
-		bool show = true;
-		if (psiContact->isHidden()) {
-			show = showHidden();
-		}
+        bool show = true;
+        if (psiContact->isHidden()) {
+            show = showHidden();
+        }
 
 
-		if (!showOffline()) {
-			return show && psiContact->isOnline();
-		}
-		else {
-			return show;
-		}
-	}
-	case ContactListItem::Type::GroupType: {
-		ContactListItem::SpecialGroupType type = item->specialGroupType();
+        if (!showOffline()) {
+            return show && psiContact->isOnline();
+        }
+        else {
+            return show;
+        }
+    }
+    case ContactListItem::Type::GroupType: {
+        ContactListItem::SpecialGroupType type = item->specialGroupType();
 
-		if (type == ContactListItem::SpecialGroupType::TransportsSpecialGroupType) {
-			return showTransports();
-		}
+        if (type == ContactListItem::SpecialGroupType::TransportsSpecialGroupType) {
+            return showTransports();
+        }
 
-		if (item->shouldBeVisible())
-			return true;
+        if (item->shouldBeVisible())
+            return true;
 
-		bool show = true;
-		if (item->name() == PsiContact::hiddenGroupName() || item->isHidden()) {
-			show = showHidden();
-		}
+        bool show = true;
+        if (item->name() == PsiContact::hiddenGroupName() || item->isHidden()) {
+            show = showHidden();
+        }
 
-		if (!showOffline()) {
-			return show && ((item->value(ContactListModel::OnlineContactsRole).toInt() > 0) ||
-			                item->shouldBeVisible());
-			// shouldBeVisible is updated during OnlineContactsRole.
-			// So it may have different value here (see above for dup).
-			// OnlineContactsRole counts visible contacts ans also finds always-visible ones.
-			// Kind of bug? maybe..
-		}
-		else {
-			return show;
-		}
-	}
-		break;
+        if (!showOffline()) {
+            return show && ((item->value(ContactListModel::OnlineContactsRole).toInt() > 0) ||
+                            item->shouldBeVisible());
+            // shouldBeVisible is updated during OnlineContactsRole.
+            // So it may have different value here (see above for dup).
+            // OnlineContactsRole counts visible contacts ans also finds always-visible ones.
+            // Kind of bug? maybe..
+        }
+        else {
+            return show;
+        }
+    }
+        break;
 
-	case ContactListItem::Type::AccountType: {
-		PsiAccount *account = item->account();
-		Q_ASSERT(account);
-		return account->enabled();
-	}
+    case ContactListItem::Type::AccountType: {
+        PsiAccount *account = item->account();
+        Q_ASSERT(account);
+        return account->enabled();
+    }
 
-	case ContactListItem::Type::InvalidType:
-		return true;
+    case ContactListItem::Type::InvalidType:
+        return true;
 
-	default:
-		Q_ASSERT(false);
-	}
+    default:
+        Q_ASSERT(false);
+    }
 
-	return true;
+    return true;
 }
 
 bool ContactListProxyModel::lessThan(const QModelIndex& left, const QModelIndex& right) const
 {
-	ContactListItem* item1 = qvariant_cast<ContactListItem*>(left.data(ContactListModel::ContactListItemRole));
-	ContactListItem* item2 = qvariant_cast<ContactListItem*>(right.data(ContactListModel::ContactListItemRole));
-	if (!item1 || !item2)
-		return false;
+    ContactListItem* item1 = qvariant_cast<ContactListItem*>(left.data(ContactListModel::ContactListItemRole));
+    ContactListItem* item2 = qvariant_cast<ContactListItem*>(right.data(ContactListModel::ContactListItemRole));
+    if (!item1 || !item2)
+        return false;
 
-	ContactListModel *model = qobject_cast<ContactListModel*>(sourceModel());
-	if (model->contactSortStyle() == "status" || !item1->isContact() || !item2->isContact()) {
-		return item1->lessThan(item2);
-	}
-	else {
-		return item1->name().toLower() < item2->name().toLower();
-	}
+    ContactListModel *model = qobject_cast<ContactListModel*>(sourceModel());
+    if (model->contactSortStyle() == "status" || !item1->isContact() || !item2->isContact()) {
+        return item1->lessThan(item2);
+    }
+    else {
+        return item1->name().toLower() < item2->name().toLower();
+    }
 }
 
 void ContactListProxyModel::filterParametersChanged()
 {
-	invalidate();
-	emit recalculateSize();
+    invalidate();
+    emit recalculateSize();
 }
 
 void ContactListProxyModel::updateSorting()
 {
-	invalidate();
+    invalidate();
 }

@@ -27,25 +27,25 @@
 
 void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
 {
-	if (!open) mini_msg_swap = inputWidget->toPlainText();
-	open = true;
-	promptWidget->setText(prompt);
+    if (!open) mini_msg_swap = inputWidget->toPlainText();
+    open = true;
+    promptWidget->setText(prompt);
     inputWidget->setText(def);
     inputWidget->setPalette(cmdPalette);
     promptWidget->show();
 }
 
 void MCmdSimpleSite::mCmdClose() {
-	open = false;
-	inputWidget->setText(mini_msg_swap);
-	inputWidget->setPalette(palette);
-	promptWidget->hide();
+    open = false;
+    inputWidget->setText(mini_msg_swap);
+    inputWidget->setPalette(palette);
+    promptWidget->hide();
 }
 
 void MCmdSimpleSite::setInput(QTextEdit *i) {
-	inputWidget = i;
-	palette = inputWidget->palette();
-	cmdPalette = palette;
-	cmdPalette.setBrush(QPalette::Base, QToolTip::palette().brush(QPalette::ToolTipBase));
-	cmdPalette.setBrush(QPalette::Text, QToolTip::palette().brush(QPalette::ToolTipText));
+    inputWidget = i;
+    palette = inputWidget->palette();
+    cmdPalette = palette;
+    cmdPalette.setBrush(QPalette::Base, QToolTip::palette().brush(QPalette::ToolTipBase));
+    cmdPalette.setBrush(QPalette::Text, QToolTip::palette().brush(QPalette::ToolTipText));
 }

@@ -6,22 +6,22 @@
 class PrivacyRuleDlgTest : public GUITest
 {
 public:
-	PrivacyRuleDlgTest();
+    PrivacyRuleDlgTest();
 
-	QString name() { return "PrivacyRuleDlgTest"; }
-	bool run();
+    QString name() { return "PrivacyRuleDlgTest"; }
+    bool run();
 };
 
 PrivacyRuleDlgTest::PrivacyRuleDlgTest()
 {
-	GUITestManager::instance()->registerTest(this);
+    GUITestManager::instance()->registerTest(this);
 }
 
 bool PrivacyRuleDlgTest::run()
 {
-	PrivacyRuleDlg dlg;
-	dlg.exec();
-	return false;
+    PrivacyRuleDlg dlg;
+    dlg.exec();
+    return false;
 }
 
 static PrivacyRuleDlgTest* privacyRuleDlgTestInstance = new PrivacyRuleDlgTest();

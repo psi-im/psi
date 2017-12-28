@@ -31,35 +31,35 @@ AHCExecuteTask::AHCExecuteTask(const Jid& j, const AHCommand& command, Task* t) 
 
 void AHCExecuteTask::onGo()
 {
-	QDomElement e = createIQ(doc(), "set", receiver_.full(), id());
-	e.appendChild(command_.toXml(doc(),true));
-	send(e);
+    QDomElement e = createIQ(doc(), "set", receiver_.full(), id());
+    e.appendChild(command_.toXml(doc(),true));
+    send(e);
 }
 
 bool AHCExecuteTask::take(const QDomElement& e)
 {
-	if(!iqVerify(e, receiver_, id())) {
-		return false;
-	}
+    if(!iqVerify(e, receiver_, id())) {
+        return false;
+    }
 
-	// Result of a command
-	if (e.attribute("type") == "result") {
-		QDomElement i = e.firstChildElement("command");
-		if (!i.isNull()) {
-			resultCommand_ = AHCommand(i);
-			hasPayload_ = i.childNodes().count() > 0;
-			setSuccess();
-			return true;
-		}
-	}
-	// Error
-	/*else if (e.attribute("type") == "set") {
-		AHCError err(e);
-		if (err.type() != None) {
-			QMessageBox::critical(0, tr("Error"), AHCommand::error2description(err.type()), QMessageBox::Ok, QMessageBox::NoButton);
-		}
-		return true;
-	}*/
-	setError(e);
-	return false;
+    // Result of a command
+    if (e.attribute("type") == "result") {
+        QDomElement i = e.firstChildElement("command");
+        if (!i.isNull()) {
+            resultCommand_ = AHCommand(i);
+            hasPayload_ = i.childNodes().count() > 0;
+            setSuccess();
+            return true;
+        }
+    }
+    // Error
+    /*else if (e.attribute("type") == "set") {
+        AHCError err(e);
+        if (err.type() != None) {
+            QMessageBox::critical(0, tr("Error"), AHCommand::error2description(err.type()), QMessageBox::Ok, QMessageBox::NoButton);
+        }
+        return true;
+    }*/
+    setError(e);
+    return false;
 }

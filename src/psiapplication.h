@@ -30,34 +30,34 @@ class QEvent;
 
 class PsiApplication : public QApplication
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiApplication(int &argc, char **argv, bool GUIenabled = true);
-	~PsiApplication();
+    PsiApplication(int &argc, char **argv, bool GUIenabled = true);
+    ~PsiApplication();
 
-	bool notify(QObject *receiver, QEvent *event);
+    bool notify(QObject *receiver, QEvent *event);
 #ifdef HAVE_X11
 # ifdef HAVE_QT5
-	bool xcbEventFilter(void *event);
+    bool xcbEventFilter(void *event);
 # else
-	bool x11EventFilter(XEvent *event);
+    bool x11EventFilter(XEvent *event);
 # endif
 #endif
 #ifdef Q_OS_MAC
-	bool macEventFilter(EventHandlerCallRef, EventRef);
+    bool macEventFilter(EventHandlerCallRef, EventRef);
 #endif
 
-	// reimplemented
-	void commitData(QSessionManager& manager);
+    // reimplemented
+    void commitData(QSessionManager& manager);
 
 signals:
-	void forceSavePreferences();
-	void dockActivated();
-	void newTrayOwner();
-	void trayOwnerDied();
+    void forceSavePreferences();
+    void dockActivated();
+    void newTrayOwner();
+    void trayOwnerDied();
 
 private:
-	void init(bool GUIenabled);
+    void init(bool GUIenabled);
 };
 
 #endif

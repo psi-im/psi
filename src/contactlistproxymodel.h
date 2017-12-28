@@ -27,29 +27,29 @@ class PsiContactList;
 
 class ContactListProxyModel : public QSortFilterProxyModel
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ContactListProxyModel(QObject* parent);
+    ContactListProxyModel(QObject* parent);
 
-	void setSourceModel(QAbstractItemModel* model);
+    void setSourceModel(QAbstractItemModel* model);
 
 public slots:
-	void updateSorting();
+    void updateSorting();
 
 signals:
-	void recalculateSize();
+    void recalculateSize();
 
 protected:
-	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
-	bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
+    bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
+    bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
 
-	bool showOffline() const;
-	bool showSelf() const;
-	bool showTransports() const;
-	bool showHidden() const;
+    bool showOffline() const;
+    bool showSelf() const;
+    bool showTransports() const;
+    bool showHidden() const;
 
 private slots:
-	void filterParametersChanged();
+    void filterParametersChanged();
 };
 
 #endif

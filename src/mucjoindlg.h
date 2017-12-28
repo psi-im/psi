@@ -33,50 +33,50 @@ class QString;
 
 class MUCJoinDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
 
-	MUCJoinDlg(PsiCon *, PsiAccount *);
-	~MUCJoinDlg();
+    MUCJoinDlg(PsiCon *, PsiAccount *);
+    ~MUCJoinDlg();
 
-	void setJid(const XMPP::Jid& jid);
-	void setNick(const QString& nick);
-	void setPassword(const QString& password);
+    void setJid(const XMPP::Jid& jid);
+    void setNick(const QString& nick);
+    void setPassword(const QString& password);
 
-	void joined();
-	void error(int, const QString &);
+    void joined();
+    void error(int, const QString &);
 
 public slots:
-	void done(int);
-	void doJoin(PsiAccount::MucJoinReason reason = PsiAccount::MucCustomJoin);
+    void done(int);
+    void doJoin(PsiAccount::MucJoinReason reason = PsiAccount::MucCustomJoin);
 
-	// reimplemented
-	void accept();
+    // reimplemented
+    void accept();
 
 public:
-	PsiAccount::MucJoinReason getReason() const { return reason_; }
+    PsiAccount::MucJoinReason getReason() const { return reason_; }
 
 private slots:
-	void updateIdentity(PsiAccount *);
-	void updateIdentityVisibility();
-	void pa_disconnected();
-	void favoritesCurrentRowChanged(int);
-	void favoritesItemDoubleClicked(QListWidgetItem *lwi);
+    void updateIdentity(PsiAccount *);
+    void updateIdentityVisibility();
+    void pa_disconnected();
+    void favoritesCurrentRowChanged(int);
+    void favoritesItemDoubleClicked(QListWidgetItem *lwi);
 
 private:
-	Ui::MUCJoin ui_;
-	PsiCon* controller_;
-	PsiAccount* account_;
-	QPushButton* joinButton_;
-	XMPP::Jid jid_;
-	PsiAccount::MucJoinReason reason_;
-	bool nickAlreadyCompleted_;
+    Ui::MUCJoin ui_;
+    PsiCon* controller_;
+    PsiAccount* account_;
+    QPushButton* joinButton_;
+    XMPP::Jid jid_;
+    PsiAccount::MucJoinReason reason_;
+    bool nickAlreadyCompleted_;
 
-	void disableWidgets();
-	void enableWidgets();
-	void setWidgetsEnabled(bool enabled);
-	void updateFavorites();
+    void disableWidgets();
+    void enableWidgets();
+    void setWidgetsEnabled(bool enabled);
+    void updateFavorites();
 };
 
 #endif

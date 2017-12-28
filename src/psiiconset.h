@@ -28,84 +28,84 @@
 
 class UserListItem;
 namespace XMPP {
-	class Status;
-	class Jid;
+    class Status;
+    class Jid;
 }
 
 class PsiIconset : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static PsiIconset* instance();
+    static PsiIconset* instance();
 
-	bool loadSystem();
-	void reloadRoster();
-	bool loadAll();
+    bool loadSystem();
+    void reloadRoster();
+    bool loadAll();
 
-	QHash<QString, Iconset*> roster;
-	QList<Iconset*> emoticons;
-	Iconset moods;
-	Iconset activities;
-	Iconset clients;
-	Iconset affiliations;
-	const Iconset &system() const;
-	void stripFirstAnimFrame(Iconset *);
-	static void removeAnimation(Iconset *);
+    QHash<QString, Iconset*> roster;
+    QList<Iconset*> emoticons;
+    Iconset moods;
+    Iconset activities;
+    Iconset clients;
+    Iconset affiliations;
+    const Iconset &system() const;
+    void stripFirstAnimFrame(Iconset *);
+    static void removeAnimation(Iconset *);
 
-	PsiIcon *event2icon(const PsiEvent::Ptr &e);
+    PsiIcon *event2icon(const PsiEvent::Ptr &e);
 
-	// these two can possibly fail (and return 0)
-	PsiIcon *statusPtr(int);
-	PsiIcon *statusPtr(const XMPP::Status &);
+    // these two can possibly fail (and return 0)
+    PsiIcon *statusPtr(int);
+    PsiIcon *statusPtr(const XMPP::Status &);
 
-	// these two return empty PsiIcon on failure and are safe
-	PsiIcon status(int);
-	PsiIcon status(const XMPP::Status &);
+    // these two return empty PsiIcon on failure and are safe
+    PsiIcon status(int);
+    PsiIcon status(const XMPP::Status &);
 
-	// JID-enabled status functions
-	PsiIcon *statusPtr(const XMPP::Jid &, int);
-	PsiIcon *statusPtr(const XMPP::Jid &, const XMPP::Status &);
+    // JID-enabled status functions
+    PsiIcon *statusPtr(const XMPP::Jid &, int);
+    PsiIcon *statusPtr(const XMPP::Jid &, const XMPP::Status &);
 
-	PsiIcon status(const XMPP::Jid &, int);
-	PsiIcon status(const XMPP::Jid &, const XMPP::Status &);
+    PsiIcon status(const XMPP::Jid &, int);
+    PsiIcon status(const XMPP::Jid &, const XMPP::Status &);
 
-	// functions to get status icon by transport name
-	PsiIcon *transportStatusPtr(QString name, int);
-	PsiIcon *transportStatusPtr(QString name, const XMPP::Status &);
+    // functions to get status icon by transport name
+    PsiIcon *transportStatusPtr(QString name, int);
+    PsiIcon *transportStatusPtr(QString name, const XMPP::Status &);
 
-	PsiIcon transportStatus(QString name, int);
-	PsiIcon transportStatus(QString name, const XMPP::Status &);
+    PsiIcon transportStatus(QString name, int);
+    PsiIcon transportStatus(QString name, const XMPP::Status &);
 
-	PsiIcon *statusPtr(UserListItem *);
-	PsiIcon status(UserListItem *);
+    PsiIcon *statusPtr(UserListItem *);
+    PsiIcon status(UserListItem *);
 
-	QString caps2client(const QString &name);
+    QString caps2client(const QString &name);
 signals:
-	void emoticonsChanged();
-	void systemIconsSizeChanged(int);
-	void rosterIconsSizeChanged(int);
+    void emoticonsChanged();
+    void systemIconsSizeChanged(int);
+    void rosterIconsSizeChanged(int);
 
 public slots:
-	static void reset();
+    static void reset();
 
 private slots:
-	void optionChanged(const QString& option);
+    void optionChanged(const QString& option);
 
 private:
-	PsiIconset();
-	~PsiIconset();
+    PsiIconset();
+    ~PsiIconset();
 
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	static PsiIconset* instance_;
+    static PsiIconset* instance_;
 
-	bool loadRoster();
-	void loadEmoticons();
-	bool loadMoods();
-	bool loadActivity();
-	bool loadClients();
-	bool loadAffiliations();
+    bool loadRoster();
+    void loadEmoticons();
+    bool loadMoods();
+    bool loadActivity();
+    bool loadClients();
+    bool loadAffiliations();
 
 };
 

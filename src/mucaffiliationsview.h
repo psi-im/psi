@@ -25,20 +25,20 @@
 
 class MUCAffiliationsView : public QTreeView
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MUCAffiliationsView(QWidget* parent = 0);
+    MUCAffiliationsView(QWidget* parent = 0);
 
 public slots:
-	void removeCurrent();
+    void removeCurrent();
 
 signals:
-	void addEnabled(bool);
-	void removeEnabled(bool);
+    void addEnabled(bool);
+    void removeEnabled(bool);
 
 protected:
-	virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous);
+    virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous);
 };
 
 #endif

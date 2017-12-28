@@ -30,62 +30,62 @@
 
 // FIXME: combine to common init function
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
-	: QDialog(parent)
+    : QDialog(parent)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	QString text;
+    setAttribute(Qt::WA_DeleteOnClose);
+    QString text;
 
-	QFile f(fname);
-	if(f.open(QIODevice::ReadOnly)) {
-		QTextStream t(&f);
-		while(!t.atEnd())
-			text += t.readLine() + '\n';
-		f.close();
-	}
+    QFile f(fname);
+    if(f.open(QIODevice::ReadOnly)) {
+        QTextStream t(&f);
+        while(!t.atEnd())
+            text += t.readLine() + '\n';
+        f.close();
+    }
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this);
-	vb1->setMargin(8);
-	QTextEdit *te = new QTextEdit(this);
-	te->setReadOnly(true);
-	te->setAcceptRichText(rich);
-	te->setText(text);
+    QVBoxLayout *vb1 = new QVBoxLayout(this);
+    vb1->setMargin(8);
+    QTextEdit *te = new QTextEdit(this);
+    te->setReadOnly(true);
+    te->setAcceptRichText(rich);
+    te->setText(text);
 
-	vb1->addWidget(te);
+    vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout;
-	vb1->addLayout(hb1);
-	hb1->addStretch(1);
-	QPushButton *pb = new QPushButton(tr("&OK"), this);
-	connect(pb, SIGNAL(clicked()), SLOT(accept()));
-	hb1->addWidget(pb);
-	hb1->addStretch(1);
+    QHBoxLayout *hb1 = new QHBoxLayout;
+    vb1->addLayout(hb1);
+    hb1->addStretch(1);
+    QPushButton *pb = new QPushButton(tr("&OK"), this);
+    connect(pb, SIGNAL(clicked()), SLOT(accept()));
+    hb1->addWidget(pb);
+    hb1->addStretch(1);
 
-	resize(560, 384);
+    resize(560, 384);
 }
 
 ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent)
-	: QDialog(parent)
+    : QDialog(parent)
 {
-	Q_UNUSED(nonfile);
+    Q_UNUSED(nonfile);
 
-	setAttribute(Qt::WA_DeleteOnClose);
+    setAttribute(Qt::WA_DeleteOnClose);
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this);
-	vb1->setMargin(8);
-	QTextEdit *te = new QTextEdit(this);
-	te->setReadOnly(true);
-	te->setAcceptRichText(rich);
-	te->setText(text);
+    QVBoxLayout *vb1 = new QVBoxLayout(this);
+    vb1->setMargin(8);
+    QTextEdit *te = new QTextEdit(this);
+    te->setReadOnly(true);
+    te->setAcceptRichText(rich);
+    te->setText(text);
 
-	vb1->addWidget(te);
+    vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout;
-	vb1->addLayout(hb1);
-	hb1->addStretch(1);
-	QPushButton *pb = new QPushButton(tr("&OK"), this);
-	connect(pb, SIGNAL(clicked()), SLOT(accept()));
-	hb1->addWidget(pb);
-	hb1->addStretch(1);
+    QHBoxLayout *hb1 = new QHBoxLayout;
+    vb1->addLayout(hb1);
+    hb1->addStretch(1);
+    QPushButton *pb = new QPushButton(tr("&OK"), this);
+    connect(pb, SIGNAL(clicked()), SLOT(accept()));
+    hb1->addWidget(pb);
+    hb1->addStretch(1);
 
-	resize(560, 384);
+    resize(560, 384);
 }

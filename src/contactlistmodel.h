@@ -33,113 +33,113 @@ class ContactListItem;
 
 class ContactListModel : public AbstractTreeModel
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum {
-		// generic
-		TypeRole = Qt::UserRole,
-		ActivateRole,
-		ContactListItemRole,
+    enum {
+        // generic
+        TypeRole = Qt::UserRole,
+        ActivateRole,
+        ContactListItemRole,
 
-		// contacts
-		JidRole,
-		PictureRole,
-		StatusTextRole,
-		StatusTypeRole,
-		PresenceErrorRole,
-		IsAgentRole,
-		AuthorizesToSeeStatusRole,
-		AskingForAuthRole,
-		IsAlertingRole,
-		AlertPictureRole,
-		IsAnimRole,
-		PhaseRole,
-		MoodRole,
-		ActivityRole,
-		GeolocationRole,
-		ClientRole,
-		TuneRole,
-		AvatarRole,
-		IsMucRole,
-		MucMessagesRole,
-		BlockRole,
-		IsSecureRole,
+        // contacts
+        JidRole,
+        PictureRole,
+        StatusTextRole,
+        StatusTypeRole,
+        PresenceErrorRole,
+        IsAgentRole,
+        AuthorizesToSeeStatusRole,
+        AskingForAuthRole,
+        IsAlertingRole,
+        AlertPictureRole,
+        IsAnimRole,
+        PhaseRole,
+        MoodRole,
+        ActivityRole,
+        GeolocationRole,
+        ClientRole,
+        TuneRole,
+        AvatarRole,
+        IsMucRole,
+        MucMessagesRole,
+        BlockRole,
+        IsSecureRole,
 
-		// groups
-		ExpandedRole,
-		TotalItemsRole,
-		FullGroupNameRole,
-		OnlineContactsRole,
-		TotalContactsRole,
-		InternalGroupNameRole,
-		SpecialGroupTypeRole,
-		DisplayGroupRole,
+        // groups
+        ExpandedRole,
+        TotalItemsRole,
+        FullGroupNameRole,
+        OnlineContactsRole,
+        TotalContactsRole,
+        InternalGroupNameRole,
+        SpecialGroupTypeRole,
+        DisplayGroupRole,
 
-		// accounts
-		UsingSSLRole,
-	};
+        // accounts
+        UsingSSLRole,
+    };
 
-	enum {
-		NameColumn = 0
-	};
+    enum {
+        NameColumn = 0
+    };
 
-	ContactListModel(PsiContactList *contactList);
-	virtual ~ContactListModel();
+    ContactListModel(PsiContactList *contactList);
+    virtual ~ContactListModel();
 
-	virtual PsiContactList *contactList() const;
+    virtual PsiContactList *contactList() const;
 
-	void invalidateLayout();
+    void invalidateLayout();
 
-	bool groupsEnabled() const;
-	void setGroupsEnabled(bool enabled);
+    bool groupsEnabled() const;
+    void setGroupsEnabled(bool enabled);
 
-	bool accountsEnabled() const;
-	void setAccountsEnabled(bool enabled);
+    bool accountsEnabled() const;
+    void setAccountsEnabled(bool enabled);
 
-	bool showOffline() const;
-	bool showSelf() const;
-	bool showTransports() const;
-	bool showHidden() const;
-	QString contactSortStyle() const;
+    bool showOffline() const;
+    bool showSelf() const;
+    bool showTransports() const;
+    bool showHidden() const;
+    QString contactSortStyle() const;
 
-	void renameSelectedItem();
+    void renameSelectedItem();
 
-	PsiContact *contactFor(const QModelIndex &index) const;
-	QModelIndexList indexesFor(const PsiContact *contact) const;
+    PsiContact *contactFor(const QModelIndex &index) const;
+    QModelIndexList indexesFor(const PsiContact *contact) const;
 
-	// reimplemented
-	QVariant data(const QModelIndex& index, int role) const;
-	virtual int columnCount(const QModelIndex &parent) const;
-	Qt::ItemFlags flags(const QModelIndex &index) const;
-	virtual bool setData(const QModelIndex &index, const QVariant &data, int role);
+    // reimplemented
+    QVariant data(const QModelIndex& index, int role) const;
+    virtual int columnCount(const QModelIndex &parent) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const;
+    virtual bool setData(const QModelIndex &index, const QVariant &data, int role);
 
-	ContactListItem *toItem(const QModelIndex &index) const;
+    ContactListItem *toItem(const QModelIndex &index) const;
     QModelIndex toModelIndex(ContactListItem *item) const;
 
 signals:
-	void showOfflineChanged();
-	void showSelfChanged();
-	void showTransportsChanged();
-	void showHiddenChanged();
-	void inPlaceRename();
-	void contactSortStyleChanged();
+    void showOfflineChanged();
+    void showSelfChanged();
+    void showTransportsChanged();
+    void showHiddenChanged();
+    void inPlaceRename();
+    void contactSortStyleChanged();
 
 public slots:
-	void expanded(const QModelIndex &index);
-	void collapsed(const QModelIndex &index);
+    void expanded(const QModelIndex &index);
+    void collapsed(const QModelIndex &index);
 
 protected slots:
-	void destroyingContactList();
+    void destroyingContactList();
 
 protected slots:
-	void rosterRequestFinished();
+    void rosterRequestFinished();
 
 private:
-	void updateItem(ContactListItem *item);
+    void updateItem(ContactListItem *item);
 
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	friend class ContactListItem;
+    friend class ContactListItem;
 };

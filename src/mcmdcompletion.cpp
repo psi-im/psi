@@ -22,24 +22,24 @@
 #include "minicmd.h"
 
 void MCmdTabCompletion::setup(QString str, int pos, int &start, int &end) {
-	if (mgr_->isActive()) {
-		mCmdList_ = mgr_->completeCommand(str, pos, start, end);
-	} else {
-		TabCompletion::setup(str, pos, start, end);
-	}
+    if (mgr_->isActive()) {
+        mCmdList_ = mgr_->completeCommand(str, pos, start, end);
+    } else {
+        TabCompletion::setup(str, pos, start, end);
+    }
 }
 
 QStringList MCmdTabCompletion::possibleCompletions() {
-	if (mgr_->isActive()) {
-		return mCmdList_;
-	}
-	return QStringList();
+    if (mgr_->isActive()) {
+        return mCmdList_;
+    }
+    return QStringList();
 }
 
 QStringList MCmdTabCompletion::allChoices(QString &guess) {
-	if (mgr_->isActive()) {
-		guess = QString();
-		return mCmdList_;
-	}
-	return QStringList();
+    if (mgr_->isActive()) {
+        guess = QString();
+        return mCmdList_;
+    }
+    return QStringList();
 }

@@ -34,42 +34,42 @@ class AHCommand;
 class XDataWidget;
 class PsiCon;
 namespace XMPP {
-	class Client;
+    class Client;
 }
 
 #include "ui_ahcformdlg.h"
 
 class AHCFormDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	AHCFormDlg(PsiCon *psi, const AHCommand& r, const XMPP::Jid& receiver, XMPP::Client* client, bool final = false);
+    AHCFormDlg(PsiCon *psi, const AHCommand& r, const XMPP::Jid& receiver, XMPP::Client* client, bool final = false);
 
 protected:
-	XMPP::XData data() const;
+    XMPP::XData data() const;
 
 protected slots:
-	void doPrev();
-	void doNext();
-	void doComplete();
-	void doExecute();
-	void doCancel();
-	void commandExecuted();
+    void doPrev();
+    void doNext();
+    void doComplete();
+    void doExecute();
+    void doCancel();
+    void commandExecuted();
 
 private:
-	Ui::AHCFormDlg _ui;
-	PsiCon *_psi;
-	QPushButton* _pb_prev;
-	QPushButton* _pb_next;
-	QPushButton* _pb_complete;
-	QPushButton* _pb_cancel;
-	XDataWidget* _xdata;
+    Ui::AHCFormDlg _ui;
+    PsiCon *_psi;
+    QPushButton* _pb_prev;
+    QPushButton* _pb_next;
+    QPushButton* _pb_complete;
+    QPushButton* _pb_cancel;
+    XDataWidget* _xdata;
 
-	XMPP::Jid _receiver;
-	QString node_;
-	XMPP::Client* _client;
-	QString sessionId_;
+    XMPP::Jid _receiver;
+    QString node_;
+    XMPP::Client* _client;
+    QString sessionId_;
 };
 
 #endif

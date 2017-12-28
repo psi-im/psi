@@ -3,10 +3,10 @@
 
 class OptionsDlgIface : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsDlgIface(QObject *parent, const char *name);
-	~OptionsDlgIface();
+    OptionsDlgIface(QObject *parent, const char *name);
+    ~OptionsDlgIface();
 
 public slots:
 

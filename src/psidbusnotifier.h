@@ -38,47 +38,47 @@ class QTimer;
 
 class PsiDBusNotifier : public QObject, public PsiPopupInterface
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PsiDBusNotifier(QObject* parent = 0);
-	~PsiDBusNotifier();
-	static bool isAvailable();
+    PsiDBusNotifier(QObject* parent = 0);
+    ~PsiDBusNotifier();
+    static bool isAvailable();
 
-	virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr());
-	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
-			   const QPixmap* avatar, const PsiIcon* icon, const QString& text);
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr());
+    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
+               const QPixmap* avatar, const PsiIcon* icon, const QString& text);
 
 private slots:
-	void popupClosed(uint id, uint reason);
-	void asyncCallFinished(QDBusPendingCallWatcher*);
-	void readyToDie();
+    void popupClosed(uint id, uint reason);
+    void asyncCallFinished(QDBusPendingCallWatcher*);
+    void readyToDie();
 
 private:
-	static bool checkServer();
-	static QStringList capabilities();
+    static bool checkServer();
+    static QStringList capabilities();
 
 private:
-	Jid jid_;
-	uint id_;
-	PsiAccount *account_;
-	PsiEvent::Ptr event_;
-	QTimer *lifeTimer_;
-	static QStringList caps_;
+    Jid jid_;
+    uint id_;
+    PsiAccount *account_;
+    PsiEvent::Ptr event_;
+    QTimer *lifeTimer_;
+    static QStringList caps_;
 };
 
 class PsiDBusNotifierPlugin : public QObject, public PsiPopupPluginInterface
 {
-	Q_OBJECT
+    Q_OBJECT
 #ifdef HAVE_QT5
-	Q_PLUGIN_METADATA(IID "org.psi-im.Psi.PsiPopupPluginInterface")
+    Q_PLUGIN_METADATA(IID "org.psi-im.Psi.PsiPopupPluginInterface")
 #endif
-	Q_INTERFACES(PsiPopupPluginInterface)
+    Q_INTERFACES(PsiPopupPluginInterface)
 
 public:
-	virtual QString name() const { return "DBus"; }
-	virtual PsiPopupInterface* popup(QObject* p) { return new PsiDBusNotifier(p); }
-	virtual bool isAvailable() { return PsiDBusNotifier::isAvailable(); }
+    virtual QString name() const { return "DBus"; }
+    virtual PsiPopupInterface* popup(QObject* p) { return new PsiDBusNotifier(p); }
+    virtual bool isAvailable() { return PsiDBusNotifier::isAvailable(); }
 };
 
 #endif

@@ -32,21 +32,21 @@
  */
 
 ResourceMenu::ResourceMenu(QWidget *parent)
-	: QMenu(parent)
-	, activeChatsMode_(false)
+    : QMenu(parent)
+    , activeChatsMode_(false)
 {
 }
 
 ResourceMenu::ResourceMenu(const QString& title, PsiContact* contact, QWidget* parent)
-	: QMenu(parent)
-	, contact_(contact)
-	, activeChatsMode_(false)
+    : QMenu(parent)
+    , contact_(contact)
+    , activeChatsMode_(false)
 {
-	setTitle(title);
+    setTitle(title);
 
-	Q_ASSERT(contact);
-	connect(contact_, SIGNAL(updated()), SLOT(contactUpdated()));
-	contactUpdated();
+    Q_ASSERT(contact);
+    connect(contact_, SIGNAL(updated()), SLOT(contactUpdated()));
+    contactUpdated();
 }
 
 /**
@@ -54,7 +54,7 @@ ResourceMenu::ResourceMenu(const QString& title, PsiContact* contact, QWidget* p
  */
 void ResourceMenu::addResource(const UserResource &r)
 {
-	addResource(r.status().type(), r.name());
+    addResource(r.status().type(), r.name());
 }
 
 /**
@@ -62,66 +62,66 @@ void ResourceMenu::addResource(const UserResource &r)
  */
 void ResourceMenu::addResource(int status, QString name)
 {
-	QString rname = name;
-	if(rname.isEmpty())
-		rname = tr("[blank]");
+    QString rname = name;
+    if(rname.isEmpty())
+        rname = tr("[blank]");
 
-	//rname += " (" + status2txt(status) + ")";
+    //rname += " (" + status2txt(status) + ")";
 
-	QAction* action = new QAction(PsiIconset::instance()->status(status).icon(), rname, this);
-	addAction(action);
-	action->setProperty("resource", QVariant(name));
+    QAction* action = new QAction(PsiIconset::instance()->status(status).icon(), rname, this);
+    addAction(action);
+    action->setProperty("resource", QVariant(name));
 #if defined (Q_OS_MAC) && defined (HAVE_QT5)
-	action->setIconVisibleInMenu(true);
+    action->setIconVisibleInMenu(true);
 #endif
-	connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
+    connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 }
 
 void ResourceMenu::actionActivated()
 {
-	QAction* action = static_cast<QAction*>(sender());
-	emit resourceActivated(action->property("resource").toString());
+    QAction* action = static_cast<QAction*>(sender());
+    emit resourceActivated(action->property("resource").toString());
 
-	if (contact_) {
-		XMPP::Jid jid(contact_->jid());
-		jid = jid.withResource(action->property("resource").toString());
-		emit resourceActivated(contact_, jid);
-	}
+    if (contact_) {
+        XMPP::Jid jid(contact_->jid());
+        jid = jid.withResource(action->property("resource").toString());
+        emit resourceActivated(contact_, jid);
+    }
 }
 
 void ResourceMenu::contactUpdated()
 {
-	if (!contact_)
-		return;
-	if (isVisible())
-		return;
-	clear();
+    if (!contact_)
+        return;
+    if (isVisible())
+        return;
+    clear();
 
-	if (!activeChatsMode_) {
-		foreach(const UserResource& resource, contact_->userResourceList())
-			addResource(resource);
-	}
-	else {
-		foreach(QString resourceName, contact_->account()->hiddenChats(contact_->jid())) {
-			XMPP::Status::Type status;
-			const UserResourceList &rl = contact_->userResourceList();
-			UserResourceList::ConstIterator uit = rl.find(resourceName);
-			if (uit != rl.end() || (uit = rl.priority()) != rl.end())
-				status = makeSTATUS((*uit).status());
-			else
-				status = XMPP::Status::Offline;
-			addResource(status, resourceName);
-		}
-	}
+    if (!activeChatsMode_) {
+        foreach(const UserResource& resource, contact_->userResourceList())
+            addResource(resource);
+    }
+    else {
+        foreach(QString resourceName, contact_->account()->hiddenChats(contact_->jid())) {
+            XMPP::Status::Type status;
+            const UserResourceList &rl = contact_->userResourceList();
+            UserResourceList::ConstIterator uit = rl.find(resourceName);
+            if (uit != rl.end() || (uit = rl.priority()) != rl.end())
+                status = makeSTATUS((*uit).status());
+            else
+                status = XMPP::Status::Offline;
+            addResource(status, resourceName);
+        }
+    }
 }
 
 bool ResourceMenu::activeChatsMode() const
 {
-	return activeChatsMode_;
+    return activeChatsMode_;
 }
 
 void ResourceMenu::setActiveChatsMode(bool activeChatsMode)
 {
-	activeChatsMode_ = activeChatsMode;
-	contactUpdated();
+    activeChatsMode_ = activeChatsMode;
+    contactUpdated();
 }

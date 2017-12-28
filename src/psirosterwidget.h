@@ -36,42 +36,42 @@ class PsiFilteredContactListView;
 
 class PsiRosterWidget : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiRosterWidget(QWidget* parent);
-	~PsiRosterWidget();
+    PsiRosterWidget(QWidget* parent);
+    ~PsiRosterWidget();
 
-	void setContactList(PsiContactList* contactList);
+    void setContactList(PsiContactList* contactList);
 
 public slots:
-	void filterEditTextChanged(const QString&);
-	void quitFilteringMode();
-	void updateFilterMode();
-	void setFilterModeEnabled(bool enabled);
-	void clearFilterEdit();
+    void filterEditTextChanged(const QString&);
+    void quitFilteringMode();
+    void updateFilterMode();
+    void setFilterModeEnabled(bool enabled);
+    void clearFilterEdit();
 
 private slots:
-	void optionChanged(const QString& option);
-	void showAgentsChanged(bool);
-	void showHiddenChanged(bool);
-	void showSelfChanged(bool);
-	void showOfflineChanged(bool);
-	void setShowStatusMsg(bool);
+    void optionChanged(const QString& option);
+    void showAgentsChanged(bool);
+    void showHiddenChanged(bool);
+    void showSelfChanged(bool);
+    void showOfflineChanged(bool);
+    void setShowStatusMsg(bool);
 
 protected:
-	bool eventFilter(QObject* obj, QEvent* e);
+    bool eventFilter(QObject* obj, QEvent* e);
 
 private:
-	QPointer<PsiContactList> contactList_;
-	QStackedWidget* stackedWidget_;
-	QWidget* contactListPage_;
-	QWidget* filterPage_;
-	PsiContactListView* contactListPageView_;
-	PsiFilteredContactListView* filterPageView_;
-	QLineEdit* filterEdit_;
+    QPointer<PsiContactList> contactList_;
+    QStackedWidget* stackedWidget_;
+    QWidget* contactListPage_;
+    QWidget* filterPage_;
+    PsiContactListView* contactListPageView_;
+    PsiFilteredContactListView* filterPageView_;
+    QLineEdit* filterEdit_;
 
-	ContactListDragModel* contactListModel_;
-	QSortFilterProxyModel* filterModel_;
+    ContactListDragModel* contactListModel_;
+    QSortFilterProxyModel* filterModel_;
 };
 
 #endif

@@ -26,9 +26,9 @@
 
 namespace XMPP
 {
-	class Jid;
-	class VCard;
-	class Resource;
+    class Jid;
+    class VCard;
+    class Resource;
 }
 
 using namespace XMPP;
@@ -37,85 +37,85 @@ class PsiAccount;
 
 class InfoWidget : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	enum { Self, Contact, MucContact, MucAdm };
-	InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
-	~InfoWidget();
-	bool aboutToClose(); /* call this when you are going to close parent dialog */
-	PsiAccount *account() const;
-	const Jid &jid() const;
+    enum { Self, Contact, MucContact, MucAdm };
+    InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
+    ~InfoWidget();
+    bool aboutToClose(); /* call this when you are going to close parent dialog */
+    PsiAccount *account() const;
+    const Jid &jid() const;
 
 protected:
-	// reimplemented
-	//void closeEvent(QCloseEvent *);
-	void showEvent ( QShowEvent * event );
-	bool updatePhoto();
+    // reimplemented
+    //void closeEvent(QCloseEvent *);
+    void showEvent ( QShowEvent * event );
+    bool updatePhoto();
 
 public slots:
-	void doRefresh();
-	void updateStatus();
-	void setStatusVisibility(bool visible);
-	void publish();
+    void doRefresh();
+    void updateStatus();
+    void setStatusVisibility(bool visible);
+    void publish();
 
 private slots:
-	void contactAvailable(const Jid &, const Resource &);
-	void contactUnavailable(const Jid &, const Resource &);
-	void contactUpdated(const Jid &);
-	void clientVersionFinished();
-	void entityTimeFinished();
-	void requestLastActivityFinished();
-	void jt_finished();
-	void doShowCal();
-	void doUpdateFromCalendar(const QDate &);
-	void doClearBirthDate();
-	void textChanged();
-	void selectPhoto();
-	void clearPhoto();
-	void showPhoto();
-	void goHomepage();
+    void contactAvailable(const Jid &, const Resource &);
+    void contactUnavailable(const Jid &, const Resource &);
+    void contactUpdated(const Jid &);
+    void clientVersionFinished();
+    void entityTimeFinished();
+    void requestLastActivityFinished();
+    void jt_finished();
+    void doShowCal();
+    void doUpdateFromCalendar(const QDate &);
+    void doClearBirthDate();
+    void textChanged();
+    void selectPhoto();
+    void clearPhoto();
+    void showPhoto();
+    void goHomepage();
 
 private:
-	class Private;
-	Private *d;
-	Ui::Info ui_;
-	//QPushButton* pb_refresh_;
-	//QPushButton* pb_close_;
-	//QPushButton* pb_submit_;
+    class Private;
+    Private *d;
+    Ui::Info ui_;
+    //QPushButton* pb_refresh_;
+    //QPushButton* pb_close_;
+    //QPushButton* pb_submit_;
 
-	void setData(const XMPP::VCard &);
-	XMPP::VCard makeVCard();
-	void fieldsEnable(bool);
-	void setReadOnly(bool);
-	bool edited();
-	void setEdited(bool);
-	void setPreviewPhoto(const QString& str);
-	void requestResourceInfo(const XMPP::Jid& j);
-	void requestLastActivity();
+    void setData(const XMPP::VCard &);
+    XMPP::VCard makeVCard();
+    void fieldsEnable(bool);
+    void setReadOnly(bool);
+    bool edited();
+    void setEdited(bool);
+    void setPreviewPhoto(const QString& str);
+    void requestResourceInfo(const XMPP::Jid& j);
+    void requestLastActivity();
 
 signals:
-	void busy();
-	void released();
+    void busy();
+    void released();
 };
 
 class InfoDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
-	inline InfoWidget *infoWidget() const { return iw; }
+    InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
+    inline InfoWidget *infoWidget() const { return iw; }
 
 protected:
-	void closeEvent(QCloseEvent * e);
+    void closeEvent(QCloseEvent * e);
 
 private slots:
-	void doDisco();
-	void doBusy();
-	void release();
+    void doDisco();
+    void doBusy();
+    void release();
 
 private:
-	Ui::InfoDlg ui_;
-	InfoWidget *iw;
+    Ui::InfoDlg ui_;
+    InfoWidget *iw;
 };
 
 #endif

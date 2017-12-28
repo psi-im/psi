@@ -43,296 +43,296 @@ static const QLatin1String groupIndentOption("options.ui.contactlist.group-inden
 
 class PsiContactListView::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	Private(PsiContactListView* p)
-		: QObject(p)
-		, allowAutoresize(false)
-		, lv(p)
-	{
-		recalculateSizeTimer = new QTimer(this);
-		recalculateSizeTimer->setInterval(recalculateTimerTimeout);
-		connect(recalculateSizeTimer, SIGNAL(timeout()), SLOT(doRecalculateSize()));
-	}
+    Private(PsiContactListView* p)
+        : QObject(p)
+        , allowAutoresize(false)
+        , lv(p)
+    {
+        recalculateSizeTimer = new QTimer(this);
+        recalculateSizeTimer->setInterval(recalculateTimerTimeout);
+        connect(recalculateSizeTimer, SIGNAL(timeout()), SLOT(doRecalculateSize()));
+    }
 
-	bool allowResize() const
-	{
-		if ( !allowAutoresize )
-			return false;
+    bool allowResize() const
+    {
+        if ( !allowAutoresize )
+            return false;
 
-		if ( lv->window()->isMaximized() )
-			return false;
+        if ( lv->window()->isMaximized() )
+            return false;
 
-		return true;
-	}
+        return true;
+    }
 
-	int calculateHeight(const QModelIndex &parent) const
-	{
-		int height = 0;
-		int count = lv->model()->rowCount(parent);
-		for(int i = 0; i < count; i++) {
-			QModelIndex in = lv->model()->index(i, 0, parent);
-			if(!lv->isIndexHidden(in)) {
-				height += lv->sizeHintForIndex(in).height();
-				if(lv->isExpanded(in)) {
-					height += calculateHeight(in);
-				}
-			}
-		}
-		return height;
-	}
+    int calculateHeight(const QModelIndex &parent) const
+    {
+        int height = 0;
+        int count = lv->model()->rowCount(parent);
+        for(int i = 0; i < count; i++) {
+            QModelIndex in = lv->model()->index(i, 0, parent);
+            if(!lv->isIndexHidden(in)) {
+                height += lv->sizeHintForIndex(in).height();
+                if(lv->isExpanded(in)) {
+                    height += calculateHeight(in);
+                }
+            }
+        }
+        return height;
+    }
 
 private slots:
-	void doRecalculateSize()
-	{
-		recalculateSizeTimer->stop();
+    void doRecalculateSize()
+    {
+        recalculateSizeTimer->stop();
 
-		if( !allowResize() || !lv->updatesEnabled() || !lv->isVisible() ) {
-			return;
-		}
+        if( !allowResize() || !lv->updatesEnabled() || !lv->isVisible() ) {
+            return;
+        }
 
-		int dh = lv->sizeHint().height() - lv->size().height();
+        int dh = lv->sizeHint().height() - lv->size().height();
 
-		if ( dh != 0 ) {
-			QWidget *topParent = lv->window();
-			topParent->layout()->setEnabled( false ); // try to reduce some flicker
+        if ( dh != 0 ) {
+            QWidget *topParent = lv->window();
+            topParent->layout()->setEnabled( false ); // try to reduce some flicker
 
-			const QRect topParentRect = topParent->frameGeometry();
-			const QRect desktop = qApp->desktop()->availableGeometry(topParent);
+            const QRect topParentRect = topParent->frameGeometry();
+            const QRect desktop = qApp->desktop()->availableGeometry(topParent);
 
-			int newHeight = topParent->height() + dh;
-			if( newHeight > desktop.height() ) {
-				const int diff = newHeight - desktop.height();
-				newHeight -= diff;
-				dh -= diff;
-			}
+            int newHeight = topParent->height() + dh;
+            if( newHeight > desktop.height() ) {
+                const int diff = newHeight - desktop.height();
+                newHeight -= diff;
+                dh -= diff;
+            }
 
-			if ( (topParentRect.bottom() + dh) > desktop.bottom() ) {
-				int dy = desktop.bottom() - topParentRect.height() - dh;
-				if ( dy < desktop.top() ) {
-					newHeight -= abs( dy - desktop.top() );
-					topParent->move( topParent->x(), desktop.top() );
-				}
-			}
-			if ( determineAutoRosterSizeGrowSide()
-				 && topParentRect.top() > desktop.top()
-				 && topParentRect.bottom() < desktop.bottom() ) {
-				topParent->move( topParent->x(), topParent->y() - dh );
-			}
-			if ( topParent->frameGeometry().top() < desktop.top() ) {
-				topParent->move(topParent->x(), desktop.top());
-			}
-			topParent->resize( topParent->width(), newHeight );
+            if ( (topParentRect.bottom() + dh) > desktop.bottom() ) {
+                int dy = desktop.bottom() - topParentRect.height() - dh;
+                if ( dy < desktop.top() ) {
+                    newHeight -= abs( dy - desktop.top() );
+                    topParent->move( topParent->x(), desktop.top() );
+                }
+            }
+            if ( determineAutoRosterSizeGrowSide()
+                 && topParentRect.top() > desktop.top()
+                 && topParentRect.bottom() < desktop.bottom() ) {
+                topParent->move( topParent->x(), topParent->y() - dh );
+            }
+            if ( topParent->frameGeometry().top() < desktop.top() ) {
+                topParent->move(topParent->x(), desktop.top());
+            }
+            topParent->resize( topParent->width(), newHeight );
 
-			topParent->layout()->setEnabled( true );
+            topParent->layout()->setEnabled( true );
 
-			// issue a layout update
-			lv->parentWidget()->layout()->update();
-		}
-	}
+            // issue a layout update
+            lv->parentWidget()->layout()->update();
+        }
+    }
 
 public slots:
-	void recalculateSize()
-	{
-		recalculateSizeTimer->start();
-	}
+    void recalculateSize()
+    {
+        recalculateSizeTimer->start();
+    }
 
 private:
-	bool determineAutoRosterSizeGrowSide()
-	{
-		const QRect topParent = lv->window()->frameGeometry();
-		const QRect desktop = qApp->desktop()->availableGeometry(lv->window());
+    bool determineAutoRosterSizeGrowSide()
+    {
+        const QRect topParent = lv->window()->frameGeometry();
+        const QRect desktop = qApp->desktop()->availableGeometry(lv->window());
 
-		int top_offs    = abs( desktop.top()    - topParent.top() );
-		int bottom_offs = abs( desktop.bottom() - topParent.bottom() );
+        int top_offs    = abs( desktop.top()    - topParent.top() );
+        int bottom_offs = abs( desktop.bottom() - topParent.bottom() );
 
-		return (bottom_offs < top_offs);
-	}
+        return (bottom_offs < top_offs);
+    }
 
 public:
-	bool allowAutoresize;
-	PsiContactListView* lv;
-	QTimer* recalculateSizeTimer;
+    bool allowAutoresize;
+    PsiContactListView* lv;
+    QTimer* recalculateSizeTimer;
 };
 
 PsiContactListView::PsiContactListView(QWidget* parent)
-	: ContactListDragView(parent)
+    : ContactListDragView(parent)
 {
-	setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
-	auto delegate = new ContactListViewDelegate(this);
-	setItemDelegate(delegate);
+    setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
+    auto delegate = new ContactListViewDelegate(this);
+    setItemDelegate(delegate);
 
-	d = new Private(this);
+    d = new Private(this);
 
-	connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(optionChanged(QString)));
-	connect(delegate, SIGNAL(geometryUpdated()), d, SLOT(recalculateSize()));
-	connect(this, SIGNAL(expanded(QModelIndex)), d, SLOT(recalculateSize()));
-	connect(this, SIGNAL(collapsed(QModelIndex)), d, SLOT(recalculateSize()));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(optionChanged(QString)));
+    connect(delegate, SIGNAL(geometryUpdated()), d, SLOT(recalculateSize()));
+    connect(this, SIGNAL(expanded(QModelIndex)), d, SLOT(recalculateSize()));
+    connect(this, SIGNAL(collapsed(QModelIndex)), d, SLOT(recalculateSize()));
 }
 
 ContactListViewDelegate *PsiContactListView::itemDelegate() const
 {
-	return qobject_cast<ContactListViewDelegate*>(ContactListDragView::itemDelegate());
+    return qobject_cast<ContactListViewDelegate*>(ContactListDragView::itemDelegate());
 }
 
 void PsiContactListView::optionChanged(const QString &option)
 {
-	if (option == groupIndentOption) {
-		setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
-		itemDelegate()->recomputeGeometry();
-	}
+    if (option == groupIndentOption) {
+        setIndentation(PsiOptions::instance()->getOption(groupIndentOption, 4).toInt());
+        itemDelegate()->recomputeGeometry();
+    }
 }
 
 void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& globalPos) const
 {
-	Q_UNUSED(globalPos);
-	QString text = index.data(Qt::ToolTipRole).toString();
-	PsiToolTip::showText(globalPos, text, this);
+    Q_UNUSED(globalPos);
+    QString text = index.data(Qt::ToolTipRole).toString();
+    PsiToolTip::showText(globalPos, text, this);
 }
 
 bool PsiContactListView::acceptableDragOperation(QDropEvent *e)
 {
-	ContactListItem *item = itemProxy(indexAt(e->pos()));
+    ContactListItem *item = itemProxy(indexAt(e->pos()));
 
-	if (!item)
-		return false;
+    if (!item)
+        return false;
 
-	PsiContact *contact = item->contact();
+    PsiContact *contact = item->contact();
 
-	if (!contact)
-		return false;
+    if (!contact)
+        return false;
 
-	for (const QUrl& url: e->mimeData()->urls()) {
-		const QFileInfo fi(url.toLocalFile());
-		if (!fi.isDir() && fi.exists()) {
-			return true;
-		}
-	}
+    for (const QUrl& url: e->mimeData()->urls()) {
+        const QFileInfo fi(url.toLocalFile());
+        if (!fi.isDir() && fi.exists()) {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 void PsiContactListView::dragEnterEvent(QDragEnterEvent *e)
 {
-	if(acceptableDragOperation(e)) {
-		setCurrentIndex(indexAt(e->pos()));
-		e->acceptProposedAction();
-		return;
-	}
+    if(acceptableDragOperation(e)) {
+        setCurrentIndex(indexAt(e->pos()));
+        e->acceptProposedAction();
+        return;
+    }
 
-	ContactListDragView::dragEnterEvent(e);
+    ContactListDragView::dragEnterEvent(e);
 }
 
 void PsiContactListView::dragMoveEvent(QDragMoveEvent *e)
 {
-	if(acceptableDragOperation(e)) {
-		setCurrentIndex(indexAt(e->pos()));
-		e->acceptProposedAction();
-		return;
-	}
+    if(acceptableDragOperation(e)) {
+        setCurrentIndex(indexAt(e->pos()));
+        e->acceptProposedAction();
+        return;
+    }
 
-	ContactListDragView::dragMoveEvent(e);
+    ContactListDragView::dragMoveEvent(e);
 }
 
 void PsiContactListView::dropEvent(QDropEvent *e)
 {
-	ContactListItem *item = itemProxy(indexAt(e->pos()));
+    ContactListItem *item = itemProxy(indexAt(e->pos()));
 
-	if (!item)
-		return;
+    if (!item)
+        return;
 
-	PsiContact *contact = item->contact();
+    PsiContact *contact = item->contact();
 
-	if (!contact)
-		return;
+    if (!contact)
+        return;
 
-	QStringList files;
-	foreach(const QUrl& url, e->mimeData()->urls()) {
-		const QFileInfo fi(url.toLocalFile());
-		if (!fi.isDir() && fi.exists()) {
-			const QString fileName = QFileInfo(fi.isSymLink() ?
-												   fi.symLinkTarget() : fi.absoluteFilePath()
-												   ).canonicalFilePath();
-			files.append(fileName);
-		}
-	}
+    QStringList files;
+    foreach(const QUrl& url, e->mimeData()->urls()) {
+        const QFileInfo fi(url.toLocalFile());
+        if (!fi.isDir() && fi.exists()) {
+            const QString fileName = QFileInfo(fi.isSymLink() ?
+                                                   fi.symLinkTarget() : fi.absoluteFilePath()
+                                                   ).canonicalFilePath();
+            files.append(fileName);
+        }
+    }
 
-	if(!files.isEmpty()) {
-		e->acceptProposedAction();
-		contact->account()->sendFiles(contact->jid(), files, true);
-		return;
-	}
+    if(!files.isEmpty()) {
+        e->acceptProposedAction();
+        contact->account()->sendFiles(contact->jid(), files, true);
+        return;
+    }
 
-	ContactListDragView::dropEvent(e);
+    ContactListDragView::dropEvent(e);
 }
 
 void PsiContactListView::setModel(QAbstractItemModel *model)
 {
-	ContactListDragView::setModel(model);
+    ContactListDragView::setModel(model);
 
-	if (qobject_cast<ContactListProxyModel*>(model)) {
-		connect(model, SIGNAL(recalculateSize()), d, SLOT(recalculateSize()));
-	}
+    if (qobject_cast<ContactListProxyModel*>(model)) {
+        connect(model, SIGNAL(recalculateSize()), d, SLOT(recalculateSize()));
+    }
 }
 
 void PsiContactListView::alertContacts(const QModelIndexList &indexes)
 {
-	SLOW_TIMER(100);
+    SLOW_TIMER(100);
 
-	QModelIndex alertingIndex;
+    QModelIndex alertingIndex;
 
-	for (const auto &index: indexes) {
-		QModelIndex proxyIndex = this->proxyIndex(index);
+    for (const auto &index: indexes) {
+        QModelIndex proxyIndex = this->proxyIndex(index);
 
-		itemDelegate()->contactAlert(proxyIndex);
+        itemDelegate()->contactAlert(proxyIndex);
 
-		if (index.data(ContactListModel::IsAlertingRole).toBool()) {
-			alertingIndex = proxyIndex;
-		}
-	}
+        if (index.data(ContactListModel::IsAlertingRole).toBool()) {
+            alertingIndex = proxyIndex;
+        }
+    }
 
-	if (alertingIndex.isValid() && PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
-		ensureVisible(alertingIndex);
-	}
+    if (alertingIndex.isValid() && PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
+        ensureVisible(alertingIndex);
+    }
 }
 
 void PsiContactListView::animateContacts(const QModelIndexList &indexes, bool started)
 {
-	SLOW_TIMER(100);
+    SLOW_TIMER(100);
 
-	QModelIndexList proxyIndexes;
-	for (const auto &index: indexes) {
-		proxyIndexes << proxyIndex(index);
-	}
+    QModelIndexList proxyIndexes;
+    for (const auto &index: indexes) {
+        proxyIndexes << proxyIndex(index);
+    }
 
-	itemDelegate()->animateContacts(proxyIndexes, started);
+    itemDelegate()->animateContacts(proxyIndexes, started);
 }
 
 void PsiContactListView::setAutoResizeEnabled(bool enabled)
 {
-	d->allowAutoresize = enabled;
+    d->allowAutoresize = enabled;
 }
 
 QSize PsiContactListView::minimumSizeHint() const
 {
-	return QSize( minimumWidth(), minimumHeight() );
+    return QSize( minimumWidth(), minimumHeight() );
 }
 
 QSize PsiContactListView::sizeHint() const
 {
-	// save some CPU
-	if ( !d->allowResize() )
-		return minimumSizeHint();
+    // save some CPU
+    if ( !d->allowResize() )
+        return minimumSizeHint();
 
-	QSize s(QTreeView::sizeHint().width(), 0);
-	const int border = 8;
-	int h = border + d->calculateHeight(rootIndex());
+    QSize s(QTreeView::sizeHint().width(), 0);
+    const int border = 8;
+    int h = border + d->calculateHeight(rootIndex());
 
-	int minH = minimumSizeHint().height();
-	if ( h < minH )
-		h = minH + border;
-	s.setHeight( h );
-	return s;
+    int minH = minimumSizeHint().height();
+    if ( h < minH )
+        h = minH + border;
+    s.setHeight( h );
+    return s;
 }
 
 #include "psicontactlistview.moc"

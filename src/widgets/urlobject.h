@@ -34,24 +34,24 @@ class QMenu;
 
 class URLObject : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 protected:
-	URLObject();
+    URLObject();
 
 public:
-	static URLObject *getInstance();
-	QMenu *createPopupMenu(const QString &lnk);
+    static URLObject *getInstance();
+    QMenu *createPopupMenu(const QString &lnk);
 
-	void popupAction(QString lnk);
+    void popupAction(QString lnk);
 
 signals:
-	void openURL(QString);
+    void openURL(QString);
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 #endif

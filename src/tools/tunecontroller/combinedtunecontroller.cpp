@@ -30,27 +30,27 @@
 
 CombinedTuneController::CombinedTuneController()
 {
-	foreach(QString name, TuneControllerManager::instance()->controllerNames()) {
-		TuneController* c = TuneControllerManager::instance()->createController(name);
-		connect(c,SIGNAL(stopped()),SIGNAL(stopped()));
-		connect(c,SIGNAL(playing(const Tune&)),SIGNAL(playing(const Tune&)));
-		controllers_ += c;
-	}
+    foreach(QString name, TuneControllerManager::instance()->controllerNames()) {
+        TuneController* c = TuneControllerManager::instance()->createController(name);
+        connect(c,SIGNAL(stopped()),SIGNAL(stopped()));
+        connect(c,SIGNAL(playing(const Tune&)),SIGNAL(playing(const Tune&)));
+        controllers_ += c;
+    }
 }
 
 CombinedTuneController::~CombinedTuneController()
 {
-	while (!controllers_.isEmpty()) {
-		delete controllers_.takeFirst();
-	}
+    while (!controllers_.isEmpty()) {
+        delete controllers_.takeFirst();
+    }
 }
 
 Tune CombinedTuneController::currentTune()
 {
-	foreach(TuneController* c, controllers_) {
-		Tune t = c->currentTune();
-		if (!t.isNull())
-			return t;
-	}
-	return Tune();
+    foreach(TuneController* c, controllers_) {
+        Tune t = c->currentTune();
+        if (!t.isNull())
+            return t;
+    }
+    return Tune();
 }

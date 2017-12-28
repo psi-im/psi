@@ -79,178 +79,178 @@ bool useSound;
 
 QString CAP(const QString &str)
 {
-	return QString("%1: %2").arg(ApplicationInfo::name()).arg(str);
+    return QString("%1: %2").arg(ApplicationInfo::name()).arg(str);
 }
 
 
 // clips plain text
 QString clipStatus(const QString &str, int width, int height)
 {
-	QString out = "";
-	int at = 0;
-	int len = str.length();
-	if(len == 0)
-		return out;
+    QString out = "";
+    int at = 0;
+    int len = str.length();
+    if(len == 0)
+        return out;
 
-	// only take the first "height" lines
-	for(int n2 = 0; n2 < height; ++n2) {
-		// only take the first "width" chars
-		QString line;
-		bool hasNewline = false;
-		for(int n = 0; at < len; ++n, ++at) {
-			if(str.at(at) == '\n') {
-				hasNewline = true;
-				break;
-			}
-			line += str.at(at);
-		}
-		++at;
-		if((int)line.length() > width) {
-			line.truncate(width-3);
-			line += "...";
-		}
-		out += line;
-		if(hasNewline) {
-			out += '\n';
-		}
+    // only take the first "height" lines
+    for(int n2 = 0; n2 < height; ++n2) {
+        // only take the first "width" chars
+        QString line;
+        bool hasNewline = false;
+        for(int n = 0; at < len; ++n, ++at) {
+            if(str.at(at) == '\n') {
+                hasNewline = true;
+                break;
+            }
+            line += str.at(at);
+        }
+        ++at;
+        if((int)line.length() > width) {
+            line.truncate(width-3);
+            line += "...";
+        }
+        out += line;
+        if(hasNewline) {
+            out += '\n';
+        }
 
-		if(at >= len) {
-			break;
-		}
-	}
+        if(at >= len) {
+            break;
+        }
+    }
 
-	return out;
+    return out;
 }
 
 QString encodePassword(const QString &pass, const QString &key)
 {
-	QString result;
-	int n1, n2;
+    QString result;
+    int n1, n2;
 
-	if (key.length() == 0) {
-		return pass;
-	}
+    if (key.length() == 0) {
+        return pass;
+    }
 
-	for (n1 = 0, n2 = 0; n1 < pass.length(); ++n1) {
-		ushort x = pass.at(n1).unicode() ^ key.at(n2++).unicode();
-		QString hex;
-		hex.sprintf("%04x", x);
-		result += hex;
-		if(n2 >= key.length()) {
-			n2 = 0;
-		}
-	}
-	return result;
+    for (n1 = 0, n2 = 0; n1 < pass.length(); ++n1) {
+        ushort x = pass.at(n1).unicode() ^ key.at(n2++).unicode();
+        QString hex;
+        hex.sprintf("%04x", x);
+        result += hex;
+        if(n2 >= key.length()) {
+            n2 = 0;
+        }
+    }
+    return result;
 }
 
 QString decodePassword(const QString &pass, const QString &key)
 {
-	QString result;
-	int n1, n2;
+    QString result;
+    int n1, n2;
 
-	if (key.length() == 0) {
-		return pass;
-	}
+    if (key.length() == 0) {
+        return pass;
+    }
 
-	for(n1 = 0, n2 = 0; n1 < pass.length(); n1 += 4) {
-		ushort x = 0;
-		if(n1 + 4 > pass.length()) {
-			break;
-		}
-		x += QString(pass.at(n1)).toInt(NULL,16)*4096;
-		x += QString(pass.at(n1+1)).toInt(NULL,16)*256;
-		x += QString(pass.at(n1+2)).toInt(NULL,16)*16;
-		x += QString(pass.at(n1+3)).toInt(NULL,16);
-		QChar c(x ^ key.at(n2++).unicode());
-		result += c;
-		if(n2 >= key.length()) {
-			n2 = 0;
-		}
-	}
-	return result;
+    for(n1 = 0, n2 = 0; n1 < pass.length(); n1 += 4) {
+        ushort x = 0;
+        if(n1 + 4 > pass.length()) {
+            break;
+        }
+        x += QString(pass.at(n1)).toInt(NULL,16)*4096;
+        x += QString(pass.at(n1+1)).toInt(NULL,16)*256;
+        x += QString(pass.at(n1+2)).toInt(NULL,16)*16;
+        x += QString(pass.at(n1+3)).toInt(NULL,16);
+        QChar c(x ^ key.at(n2++).unicode());
+        result += c;
+        if(n2 >= key.length()) {
+            n2 = 0;
+        }
+    }
+    return result;
 }
 
 QString status2txt(int status)
 {
-	switch(status) {
-		case STATUS_OFFLINE:	return QObject::tr("Offline");
-		case STATUS_AWAY:		return QObject::tr("Away");
-		case STATUS_XA:			return QObject::tr("Not Available");
-		case STATUS_DND:		return QObject::tr("Do not Disturb");
-		case STATUS_CHAT:		return QObject::tr("Free for Chat");
-		case STATUS_INVISIBLE:	return QObject::tr("Invisible");
+    switch(status) {
+        case STATUS_OFFLINE:    return QObject::tr("Offline");
+        case STATUS_AWAY:        return QObject::tr("Away");
+        case STATUS_XA:            return QObject::tr("Not Available");
+        case STATUS_DND:        return QObject::tr("Do not Disturb");
+        case STATUS_CHAT:        return QObject::tr("Free for Chat");
+        case STATUS_INVISIBLE:    return QObject::tr("Invisible");
 
-		case STATUS_ONLINE:
-		default:				return QObject::tr("Online");
-	}
+        case STATUS_ONLINE:
+        default:                return QObject::tr("Online");
+    }
 }
 
 
 QString logencode(QString str)
 {
-	str.replace(QRegExp("\\\\"), "\\\\");   // backslash to double-backslash
-	str.replace(QRegExp("\\|"), "\\p");	 // pipe to \p
-	str.replace(QRegExp("\n"), "\\n");	  // newline to \n
-	return str;
+    str.replace(QRegExp("\\\\"), "\\\\");   // backslash to double-backslash
+    str.replace(QRegExp("\\|"), "\\p");     // pipe to \p
+    str.replace(QRegExp("\n"), "\\n");      // newline to \n
+    return str;
 }
 
 QString logdecode(const QString &str)
 {
-	QString ret;
+    QString ret;
 
-	for(int n = 0; n < str.length(); ++n) {
-		if(str.at(n) == '\\') {
-			++n;
-			if(n >= str.length()) {
-				break;
-			}
-			if(str.at(n) == 'n') {
-				ret.append('\n');
-			}
-			if(str.at(n) == 'p') {
-				ret.append('|');
-			}
-			if(str.at(n) == '\\') {
-				ret.append('\\');
-			}
-		}
-		else {
-			ret.append(str.at(n));
-		}
-	}
+    for(int n = 0; n < str.length(); ++n) {
+        if(str.at(n) == '\\') {
+            ++n;
+            if(n >= str.length()) {
+                break;
+            }
+            if(str.at(n) == 'n') {
+                ret.append('\n');
+            }
+            if(str.at(n) == 'p') {
+                ret.append('|');
+            }
+            if(str.at(n) == '\\') {
+                ret.append('\\');
+            }
+        }
+        else {
+            ret.append(str.at(n));
+        }
+    }
 
-	return ret;
+    return ret;
 }
 
 
 bool fileCopy(const QString &src, const QString &dest)
 {
-	QFile in(src);
-	QFile out(dest);
+    QFile in(src);
+    QFile out(dest);
 
-	if (!in.open(QIODevice::ReadOnly)) {
-		return false;
-	}
-	if (!out.open(QIODevice::WriteOnly)) {
-		return false;
-	}
+    if (!in.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+    if (!out.open(QIODevice::WriteOnly)) {
+        return false;
+    }
 
-	char *dat = new char[16384];
-	int n = 0;
-	while (!in.atEnd()) {
-		n = in.read(dat, 16384);
-		if (n == -1) {
-			delete[] dat;
-			return false;
-		}
-		out.write(dat, n);
-	}
-	delete[] dat;
+    char *dat = new char[16384];
+    int n = 0;
+    while (!in.atEnd()) {
+        n = in.read(dat, 16384);
+        if (n == -1) {
+            delete[] dat;
+            return false;
+        }
+        out.write(dat, n);
+    }
+    delete[] dat;
 
-	out.close();
-	in.close();
+    out.close();
+    in.close();
 
-	return true;
+    return true;
 }
 
 
@@ -258,202 +258,202 @@ bool fileCopy(const QString &src, const QString &dest)
  */
 QString soundDetectPlayer()
 {
-	// prefer ALSA on linux
-	if (QFile("/proc/asound").exists()) {
-		return "aplay -q";
-	}
-	// fallback to "play"
-	return "play";
+    // prefer ALSA on linux
+    if (QFile("/proc/asound").exists()) {
+        return "aplay -q";
+    }
+    // fallback to "play"
+    return "play";
 
 }
 
 void soundPlay(const QString &s)
 {
-	if(s.isEmpty())
-		return;
+    if(s.isEmpty())
+        return;
 
-	QString str = s;
-	if (str == "!beep") {
-		QApplication::beep();
-		return;
-	}
+    QString str = s;
+    if (str == "!beep") {
+        QApplication::beep();
+        return;
+    }
 
-	if (QDir::isRelativePath(str)) {
-		str = ApplicationInfo::resourcesDir() + '/' + str;
-	}
+    if (QDir::isRelativePath(str)) {
+        str = ApplicationInfo::resourcesDir() + '/' + str;
+    }
 
-	if (!QFile::exists(str)) {
-		return;
-	}
+    if (!QFile::exists(str)) {
+        return;
+    }
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
-	QSound::play(str);
+    QSound::play(str);
 #else
-	QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
-	if (player == "") player = soundDetectPlayer();
-	QStringList args = player.split(' ');
-	args += str;
-	QString prog = args.takeFirst();
-	QProcess::startDetached(prog, args);
+    QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
+    if (player == "") player = soundDetectPlayer();
+    QStringList args = player.split(' ');
+    args += str;
+    QString prog = args.takeFirst();
+    QProcess::startDetached(prog, args);
 #endif
 }
 
 bool lastPriorityNotEmpty()
 {
-	QString lastPriority = PsiOptions::instance()->getOption("options.status.last-priority").toString();
-	return (lastPriority != "");
+    QString lastPriority = PsiOptions::instance()->getOption("options.status.last-priority").toString();
+    return (lastPriority != "");
 }
 
 XMPP::Status makeLastStatus(int x)
 {
-	PsiOptions* o = PsiOptions::instance();
-	if (lastPriorityNotEmpty()) {
-		return makeStatus(x, o->getOption("options.status.last-message").toString(), o->getOption("options.status.last-priority").toInt());
-	}
-	else {
-		return makeStatus(x, o->getOption("options.status.last-message").toString());
-	}
+    PsiOptions* o = PsiOptions::instance();
+    if (lastPriorityNotEmpty()) {
+        return makeStatus(x, o->getOption("options.status.last-message").toString(), o->getOption("options.status.last-priority").toInt());
+    }
+    else {
+        return makeStatus(x, o->getOption("options.status.last-message").toString());
+    }
 }
 
 XMPP::Status makeStatus(int x, const QString &str, int priority)
 {
-	XMPP::Status s = makeStatus(x,str);
-	if (priority > 127) {
-		s.setPriority(127);
-	}
-	else if (priority < -128) {
-		s.setPriority(-128);
-	}
-	else {
-		s.setPriority(priority);
-	}
-	return s;
+    XMPP::Status s = makeStatus(x,str);
+    if (priority > 127) {
+        s.setPriority(127);
+    }
+    else if (priority < -128) {
+        s.setPriority(-128);
+    }
+    else {
+        s.setPriority(priority);
+    }
+    return s;
 }
 
 XMPP::Status makeStatus(int x, const QString &str)
 {
-	return XMPP::Status(static_cast<XMPP::Status::Type>(x), str);
+    return XMPP::Status(static_cast<XMPP::Status::Type>(x), str);
 }
 
 XMPP::Status::Type makeSTATUS(const XMPP::Status &s)
 {
-	return s.type();
+    return s.type();
 }
 
 #include <QLayout>
 QLayout *rw_recurseFindLayout(QLayout *lo, QWidget *w)
 {
-	//printf("scanning layout: %p\n", lo);
-	for (int index = 0; index < lo->count(); ++index) {
-		QLayoutItem* i = lo->itemAt(index);
-		//printf("found: %p,%p\n", i->layout(), i->widget());
-		QLayout *slo = i->layout();
-		if(slo) {
-			QLayout *tlo = rw_recurseFindLayout(slo, w);
-			if(tlo) {
-				return tlo;
-			}
-		}
-		else if(i->widget() == w) {
-			return lo;
-		}
-	}
-	return 0;
+    //printf("scanning layout: %p\n", lo);
+    for (int index = 0; index < lo->count(); ++index) {
+        QLayoutItem* i = lo->itemAt(index);
+        //printf("found: %p,%p\n", i->layout(), i->widget());
+        QLayout *slo = i->layout();
+        if(slo) {
+            QLayout *tlo = rw_recurseFindLayout(slo, w);
+            if(tlo) {
+                return tlo;
+            }
+        }
+        else if(i->widget() == w) {
+            return lo;
+        }
+    }
+    return 0;
 }
 
 QLayout *rw_findLayoutOf(QWidget *w)
 {
-	return rw_recurseFindLayout(w->parentWidget()->layout(), w);
+    return rw_recurseFindLayout(w->parentWidget()->layout(), w);
 }
 
 void replaceWidget(QWidget *a, QWidget *b)
 {
-	if(!a) {
-		return;
-	}
+    if(!a) {
+        return;
+    }
 
-	QLayout *lo = rw_findLayoutOf(a);
-	if(!lo) {
-		return;
-	}
-	//printf("decided on this: %p\n", lo);
+    QLayout *lo = rw_findLayoutOf(a);
+    if(!lo) {
+        return;
+    }
+    //printf("decided on this: %p\n", lo);
 
-	if(lo->inherits("QBoxLayout")) {
-		QBoxLayout *bo = (QBoxLayout *)lo;
-		int n = bo->indexOf(a);
-		bo->insertWidget(n+1, b);
-		delete a;
-	}
+    if(lo->inherits("QBoxLayout")) {
+        QBoxLayout *bo = (QBoxLayout *)lo;
+        int n = bo->indexOf(a);
+        bo->insertWidget(n+1, b);
+        delete a;
+    }
 }
 
 void closeDialogs(QWidget *w)
 {
-	// close qmessagebox?
-	QList<QDialog*> dialogs;
-	QObjectList list = w->children();
-	for (QObjectList::Iterator it = list.begin() ; it != list.end(); ++it) {
-		if((*it)->inherits("QDialog")) {
-			dialogs.append((QDialog *)(*it));
-		}
-	}
-	foreach (QDialog *w, dialogs) {
-		w->close();
-	}
+    // close qmessagebox?
+    QList<QDialog*> dialogs;
+    QObjectList list = w->children();
+    for (QObjectList::Iterator it = list.begin() ; it != list.end(); ++it) {
+        if((*it)->inherits("QDialog")) {
+            dialogs.append((QDialog *)(*it));
+        }
+    }
+    foreach (QDialog *w, dialogs) {
+        w->close();
+    }
 }
 
 void reorderGridLayout(QGridLayout* layout, int maxCols)
 {
-	QList<QLayoutItem*> items;
-	for (int i = 0; i < layout->rowCount(); i++) {
-		for (int j = 0; j < layout->columnCount(); j++) {
-			QLayoutItem* item = layout->itemAtPosition(i, j);
-			if (item) {
-				layout->removeItem(item);
-				if (item->isEmpty()) {
-					delete item;
-				}
-				else {
-					items.append(item);
-				}
-			}
-		}
-	}
-	int col = 0, row = 0;
-	while (!items.isEmpty()) {
-		QLayoutItem* item = items.takeAt(0);
-		layout->addItem(item, row, col);
-		col++;
-		if (col >= maxCols) {
-			col = 0;
-			row++;
-		}
-	}
+    QList<QLayoutItem*> items;
+    for (int i = 0; i < layout->rowCount(); i++) {
+        for (int j = 0; j < layout->columnCount(); j++) {
+            QLayoutItem* item = layout->itemAtPosition(i, j);
+            if (item) {
+                layout->removeItem(item);
+                if (item->isEmpty()) {
+                    delete item;
+                }
+                else {
+                    items.append(item);
+                }
+            }
+        }
+    }
+    int col = 0, row = 0;
+    while (!items.isEmpty()) {
+        QLayoutItem* item = items.takeAt(0);
+        layout->addItem(item, row, col);
+        col++;
+        if (col >= maxCols) {
+            col = 0;
+            row++;
+        }
+    }
 }
 
 TabbableWidget* findActiveTab()
 {
-	QWidget* chat = QApplication::activeWindow();
-	TabbableWidget* tw = 0;
-	if(chat) {
-		TabDlg* td = qobject_cast<TabDlg*>(chat);
-		if(td) {
-			tw = td->getCurrentTab();
-		}
-		else {
-			tw = qobject_cast<TabbableWidget*>(chat);
-			if (!tw) {
-				QList<TabDlg*> tmp = chat->findChildren<TabDlg*>(); // all-in-one
-				while(!tmp.isEmpty()) {
-					TabDlg* td = tmp.takeFirst();
-					tw = td->getCurrentTab();
-					if(tw) {
-						break;
-					}
-				}
-			}
-		}
-	}
-	return tw;
+    QWidget* chat = QApplication::activeWindow();
+    TabbableWidget* tw = 0;
+    if(chat) {
+        TabDlg* td = qobject_cast<TabDlg*>(chat);
+        if(td) {
+            tw = td->getCurrentTab();
+        }
+        else {
+            tw = qobject_cast<TabbableWidget*>(chat);
+            if (!tw) {
+                QList<TabDlg*> tmp = chat->findChildren<TabDlg*>(); // all-in-one
+                while(!tmp.isEmpty()) {
+                    TabDlg* td = tmp.takeFirst();
+                    tw = td->getCurrentTab();
+                    if(tw) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return tw;
 }
 
 #ifdef HAVE_X11
@@ -462,21 +462,21 @@ TabbableWidget* findActiveTab()
 
 void x11wmClass(Display *dsp, WId wid, QString resName)
 {
-	if (!QX11Info::isPlatformX11())
-		return;
+    if (!QX11Info::isPlatformX11())
+        return;
 
-	//Display *dsp = x11Display();				 // get the display
-	//WId win = winId();						   // get the window
-	XClassHint classhint;						  // class hints
-	// Get old class hint. It is important to save old class name
-	XGetClassHint(dsp, wid, &classhint);
-	XFree(classhint.res_name);
+    //Display *dsp = x11Display();                 // get the display
+    //WId win = winId();                           // get the window
+    XClassHint classhint;                          // class hints
+    // Get old class hint. It is important to save old class name
+    XGetClassHint(dsp, wid, &classhint);
+    XFree(classhint.res_name);
 
-	const QByteArray latinResName = resName.toLatin1();
-	classhint.res_name = (char *)latinResName.data(); // res_name
-	XSetClassHint(dsp, wid, &classhint);		   // set the class hints
+    const QByteArray latinResName = resName.toLatin1();
+    classhint.res_name = (char *)latinResName.data(); // res_name
+    XSetClassHint(dsp, wid, &classhint);           // set the class hints
 
-	XFree(classhint.res_class);
+    XFree(classhint.res_class);
 }
 
 //>>>-- Nathaniel Gray -- Caltech Computer Science ------>
@@ -486,156 +486,156 @@ void x11wmClass(Display *dsp, WId wid, QString resName)
 // Helper function
 bool getCardinal32Prop(Display *display, Window win, char *propName, long *value)
 {
-	if (!QX11Info::isPlatformX11())
-		return false;
+    if (!QX11Info::isPlatformX11())
+        return false;
 
-	Atom nameAtom, typeAtom, actual_type_return;
-	int actual_format_return, result;
-	unsigned long nitems_return, bytes_after_return;
-	long *result_array=NULL;
+    Atom nameAtom, typeAtom, actual_type_return;
+    int actual_format_return, result;
+    unsigned long nitems_return, bytes_after_return;
+    long *result_array=NULL;
 
-	nameAtom = XInternAtom(display, propName, False);
-	typeAtom = XInternAtom(display, "CARDINAL", False);
-	if (nameAtom == None || typeAtom == None) {
-		//qDebug("Atoms not interned!");
-		return false;
-	}
+    nameAtom = XInternAtom(display, propName, False);
+    typeAtom = XInternAtom(display, "CARDINAL", False);
+    if (nameAtom == None || typeAtom == None) {
+        //qDebug("Atoms not interned!");
+        return false;
+    }
 
 
-	// Try to get the property
-	result = XGetWindowProperty(display, win, nameAtom, 0, 1, False,
-		typeAtom, &actual_type_return, &actual_format_return,
-		&nitems_return, &bytes_after_return,
-		(unsigned char **)&result_array);
+    // Try to get the property
+    result = XGetWindowProperty(display, win, nameAtom, 0, 1, False,
+        typeAtom, &actual_type_return, &actual_format_return,
+        &nitems_return, &bytes_after_return,
+        (unsigned char **)&result_array);
 
-	if( result != Success ) {
-		//qDebug("not Success");
-		return false;
-	}
-	if( actual_type_return == None || actual_format_return == 0 ) {
-		//qDebug("Prop not found");
-		return false;
-	}
-	if( actual_type_return != typeAtom ) {
-		//qDebug("Wrong type atom");
-	}
-	*value = result_array[0];
-	XFree(result_array);
-	return true;
+    if( result != Success ) {
+        //qDebug("not Success");
+        return false;
+    }
+    if( actual_type_return == None || actual_format_return == 0 ) {
+        //qDebug("Prop not found");
+        return false;
+    }
+    if( actual_type_return != typeAtom ) {
+        //qDebug("Wrong type atom");
+    }
+    *value = result_array[0];
+    XFree(result_array);
+    return true;
 }
 
 
 // Get the desktop number that a window is on
 bool desktopOfWindow(Window *window, long *desktop)
 {
-	Display *display = QX11Info::display();
-	bool result = getCardinal32Prop(display, *window, (char *)"_NET_WM_DESKTOP", desktop);
-	//if( result )
-	//	qDebug("Desktop: " + QString::number(*desktop));
-	return result;
+    Display *display = QX11Info::display();
+    bool result = getCardinal32Prop(display, *window, (char *)"_NET_WM_DESKTOP", desktop);
+    //if( result )
+    //    qDebug("Desktop: " + QString::number(*desktop));
+    return result;
 }
 
 
 // Get the current desktop the WM is displaying
 bool currentDesktop(long *desktop)
 {
-	Window rootWin;
-	Display *display = QX11Info::display();
-	bool result;
+    Window rootWin;
+    Display *display = QX11Info::display();
+    bool result;
 
-	rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
-	result = getCardinal32Prop(display, rootWin, (char *)"_NET_CURRENT_DESKTOP", desktop);
-	//if( result )
-	//	qDebug("Current Desktop: " + QString::number(*desktop));
-	return result;
+    rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
+    result = getCardinal32Prop(display, rootWin, (char *)"_NET_CURRENT_DESKTOP", desktop);
+    //if( result )
+    //    qDebug("Current Desktop: " + QString::number(*desktop));
+    return result;
 }
 #endif
 
 void clearMenu(QMenu *m)
 {
-	m->clear();
-	QObjectList l = m->children();
-	foreach(QObject* obj, l) {
-		QMenu* child = dynamic_cast<QMenu*>(obj);
-		if(child) {
-			delete child;
-		}
-	}
+    m->clear();
+    QObjectList l = m->children();
+    foreach(QObject* obj, l) {
+        QMenu* child = dynamic_cast<QMenu*>(obj);
+        if(child) {
+            delete child;
+        }
+    }
 }
 
 bool isKde()
 {
-	return qgetenv("XDG_SESSION_DESKTOP") == "KDE" ||
-	       qgetenv("DESKTOP_SESSION").endsWith("plasma") ||
-	       qgetenv("DESKTOP_SESSION").endsWith("plasma5");
+    return qgetenv("XDG_SESSION_DESKTOP") == "KDE" ||
+           qgetenv("DESKTOP_SESSION").endsWith("plasma") ||
+           qgetenv("DESKTOP_SESSION").endsWith("plasma5");
 }
 
 void bringToFront(QWidget *widget, bool)
 {
-	Q_ASSERT(widget);
-	QWidget* w = widget->window();
+    Q_ASSERT(widget);
+    QWidget* w = widget->window();
 
 #ifdef HAVE_X11
-	// If we're not on the current desktop, do the hide/show trick
-	long dsk, curr_dsk;
-	Window win = w->winId();
-	if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
-		//qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
-		if((dsk != curr_dsk) && (dsk != -1)) {  // second condition for sticky windows
-			w->hide();
-		}
-	}
+    // If we're not on the current desktop, do the hide/show trick
+    long dsk, curr_dsk;
+    Window win = w->winId();
+    if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
+        //qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
+        if((dsk != curr_dsk) && (dsk != -1)) {  // second condition for sticky windows
+            w->hide();
+        }
+    }
 
-	// FIXME: multi-desktop hacks for Win and Mac required
+    // FIXME: multi-desktop hacks for Win and Mac required
 #endif
 
-	if(w->isMaximized()) {
-		w->showMaximized();
-	}
-	else {
-		w->showNormal();
-	}
+    if(w->isMaximized()) {
+        w->showMaximized();
+    }
+    else {
+        w->showNormal();
+    }
 
-	//if(grabFocus)
-	//	w->setActiveWindow();
-	w->raise();
-	w->activateWindow();
+    //if(grabFocus)
+    //    w->setActiveWindow();
+    w->raise();
+    w->activateWindow();
 
 #if 0
-	// hack to real bring to front in kde. kde (at least 4.8.5) forbids stilling
-	// focus from other applications. this may be fixed on more recent versions.
-	// should be removed some day. preferable way for such hacks is plugins.
-	// probably works only with gcc.
-	//
-	// with kde5 this code just crashes. so should be reimpented as a plugin
-	if (isKde()) {
-		typedef int (*ActWinFunction)(WId, long);
-		ActWinFunction kwinActivateWindow = (ActWinFunction)QLibrary::resolve(
-					"libkdeui", 5, "_ZN13KWindowSystem17forceActiveWindowEml");
-		if (kwinActivateWindow) {
-			kwinActivateWindow(widget->winId(), 0);
-		}
-	}
+    // hack to real bring to front in kde. kde (at least 4.8.5) forbids stilling
+    // focus from other applications. this may be fixed on more recent versions.
+    // should be removed some day. preferable way for such hacks is plugins.
+    // probably works only with gcc.
+    //
+    // with kde5 this code just crashes. so should be reimpented as a plugin
+    if (isKde()) {
+        typedef int (*ActWinFunction)(WId, long);
+        ActWinFunction kwinActivateWindow = (ActWinFunction)QLibrary::resolve(
+                    "libkdeui", 5, "_ZN13KWindowSystem17forceActiveWindowEml");
+        if (kwinActivateWindow) {
+            kwinActivateWindow(widget->winId(), 0);
+        }
+    }
 #endif
 }
 
 bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &m2)
 {
-	if ( m1.size() != m2.size() )
-		return true;
+    if ( m1.size() != m2.size() )
+        return true;
 
-	QMap<QString, QString>::ConstIterator it = m1.begin(), it2;
-	for ( ; it != m1.end(); ++it) {
-		it2 = m2.find( it.key() );
-		if ( it2 == m2.end() ) {
-			return true;
-		}
-		if ( it.value() != it2.value() ) {
-			return true;
-		}
-	}
+    QMap<QString, QString>::ConstIterator it = m1.begin(), it2;
+    for ( ; it != m1.end(); ++it) {
+        it2 = m2.find( it.key() );
+        if ( it2 == m2.end() ) {
+            return true;
+        }
+        if ( it.value() != it2.value() ) {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 //----------------------------------------------------------------------------
@@ -643,105 +643,105 @@ bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &
 //----------------------------------------------------------------------------
 
 ToolbarPrefs::ToolbarPrefs()
-	: dock(Qt3Dock_Top)
-	// , dirty(true)
-	, on(false)
-	, locked(false)
-	// , stretchable(false)
-	// , index(0)
-	, nl(true)
-	// , extraOffset(0)
+    : dock(Qt3Dock_Top)
+    // , dirty(true)
+    , on(false)
+    , locked(false)
+    // , stretchable(false)
+    // , index(0)
+    , nl(true)
+    // , extraOffset(0)
 {
-	id = QUuid::createUuid().toString();
+    id = QUuid::createUuid().toString();
 }
 
 bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
 {
-	return id == other.id &&
-		   name == other.name &&
-		   keys == other.keys &&
-		   dock == other.dock &&
-		   // dirty == other.dirty &&
-		   on == other.on &&
-		   locked == other.locked &&
-		   // stretchable == other.stretchable &&
-		   // index == other.index &&
-		   nl == other.nl;
-		   // extraOffset == other.extraOffset;
+    return id == other.id &&
+           name == other.name &&
+           keys == other.keys &&
+           dock == other.dock &&
+           // dirty == other.dirty &&
+           on == other.on &&
+           locked == other.locked &&
+           // stretchable == other.stretchable &&
+           // index == other.index &&
+           nl == other.nl;
+           // extraOffset == other.extraOffset;
 }
 
 
 int versionStringToInt(const char* version)
 {
-	QString str = QString::fromLatin1(version);
-	QStringList parts = str.split('.', QString::KeepEmptyParts);
-	if (parts.count() != 3) {
-		return 0;
-	}
+    QString str = QString::fromLatin1(version);
+    QStringList parts = str.split('.', QString::KeepEmptyParts);
+    if (parts.count() != 3) {
+        return 0;
+    }
 
-	int versionInt = 0;
-	for (int n = 0; n < 3; ++n) {
-		bool ok;
-		int x = parts[n].toInt(&ok);
-		if (ok && x >= 0 && x <= 0xff) {
-			versionInt <<= 8;
-			versionInt += x;
-		} else {
-			return 0;
-		}
-	}
-	return versionInt;
+    int versionInt = 0;
+    for (int n = 0; n < 3; ++n) {
+        bool ok;
+        int x = parts[n].toInt(&ok);
+        if (ok && x >= 0 && x <= 0xff) {
+            versionInt <<= 8;
+            versionInt += x;
+        } else {
+            return 0;
+        }
+    }
+    return versionInt;
 }
 
 int qVersionInt()
 {
-	static int out = -1;
-	if (out == -1) {
-		out = versionStringToInt(qVersion());
-	}
-	return out;
+    static int out = -1;
+    if (out == -1) {
+        out = versionStringToInt(qVersion());
+    }
+    return out;
 }
 
 Qt::DayOfWeek firstDayOfWeekFromLocale()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(4, 8, 0)
-	return QLocale().firstDayOfWeek();
+    return QLocale().firstDayOfWeek();
 #else
-	Qt::DayOfWeek firstDay = Qt::Monday;
+    Qt::DayOfWeek firstDay = Qt::Monday;
 # ifdef Q_OS_WIN
-	WCHAR wsDay[4];
+    WCHAR wsDay[4];
 #  if defined(_WIN32_WINNT_VISTA) && WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
-	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
+    if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
 #  else
-	if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
+    if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
 #  endif
-		bool ok;
-		int wfd = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
-		if (ok) {
-			firstDay = (Qt::DayOfWeek)(unsigned char)wfd;
-		}
-	}
+        bool ok;
+        int wfd = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
+        if (ok) {
+            firstDay = (Qt::DayOfWeek)(unsigned char)wfd;
+        }
+    }
 # elif defined(__GLIBC__)
-	firstDay = (Qt::DayOfWeek)(unsigned char)((*nl_langinfo(_NL_TIME_FIRST_WEEKDAY) + 5) % 7 + 1);
+    firstDay = (Qt::DayOfWeek)(unsigned char)((*nl_langinfo(_NL_TIME_FIRST_WEEKDAY) + 5) % 7 + 1);
 # elif defined(Q_OS_MAC)
-	firstDay = (Qt::DayOfWeek)(unsigned char)macosCommonFirstWeekday();
+    firstDay = (Qt::DayOfWeek)(unsigned char)macosCommonFirstWeekday();
 # endif
-	return firstDay;
+    return firstDay;
 #endif
 }
 
 QString activityIconName(const Activity &activity)
 {
-	if (activity.type() == Activity::Unknown) {
-		return QString();
-	}
-	if (activity.specificType() == Activity::Other) {
-		return QLatin1String("pep/activities");
-	}
-	if (activity.specificType() == Activity::UnknownSpecific || activity.specificTypeValue().isEmpty()) {
-		return QLatin1String("activities/") + activity.typeValue();
-	}
-	return QLatin1String("activities/") + activity.typeValue() + QLatin1Char('_') + activity.specificTypeValue();
+    if (activity.type() == Activity::Unknown) {
+        return QString();
+    }
+    if (activity.specificType() == Activity::Other) {
+        return QLatin1String("pep/activities");
+    }
+    if (activity.specificType() == Activity::UnknownSpecific || activity.specificTypeValue().isEmpty()) {
+        return QLatin1String("activities/") + activity.typeValue();
+    }
+    return QLatin1String("activities/") + activity.typeValue() + QLatin1Char('_') + activity.specificTypeValue();
 }
 
 #ifdef WEBKIT
@@ -915,18 +915,18 @@ QString macToQtDatetimeFormat(const QString &sys_fmt)
 int devicePixelRatio(QWidget *w)
 {
 #if HAVE_QT5
-	return w->devicePixelRatio();
+    return w->devicePixelRatio();
 #else
-	Q_UNUSED(w);
-	return 1; // FIXME?
+    Q_UNUSED(w);
+    return 1; // FIXME?
 #endif
 }
 
 int pointToPixel(int points)
 {
-	// In typography 1 point (also called PostScript point)
-	// is 1/72 of an inch
-	static const double postScriptPoint = 1 / 72.;
+    // In typography 1 point (also called PostScript point)
+    // is 1/72 of an inch
+    static const double postScriptPoint = 1 / 72.;
 
-	return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
+    return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
 }

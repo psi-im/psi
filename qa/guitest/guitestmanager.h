@@ -8,17 +8,17 @@
 class GUITestManager
 {
 public:
-	static GUITestManager* instance();
+    static GUITestManager* instance();
 
-	void registerTest(GUITest* test);
-	bool runTest(const QString& name);
-	QStringList getTestNames() const;
+    void registerTest(GUITest* test);
+    bool runTest(const QString& name);
+    QStringList getTestNames() const;
 
 private:
-	GUITestManager();
+    GUITestManager();
 
-	static GUITestManager* instance_;
-	QList<GUITest*> tests_;
+    static GUITestManager* instance_;
+    QList<GUITest*> tests_;
 };
 
 #endif

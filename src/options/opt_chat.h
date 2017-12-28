@@ -8,18 +8,18 @@ class QButtonGroup;
 
 class OptionsTabChat : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabChat(QObject *parent);
-	~OptionsTabChat();
+    OptionsTabChat(QObject *parent);
+    ~OptionsTabChat();
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
 private:
-	QWidget *w;
-	QButtonGroup *bg_defAct, *bg_delChats;
+    QWidget *w;
+    QButtonGroup *bg_defAct, *bg_delChats;
 };
 
 #endif

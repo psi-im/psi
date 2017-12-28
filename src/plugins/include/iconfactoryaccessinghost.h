@@ -7,10 +7,10 @@ class QString;
 class IconFactoryAccessingHost
 {
 public:
-	virtual ~IconFactoryAccessingHost() {}
+    virtual ~IconFactoryAccessingHost() {}
 
-	virtual void addIcon(const QString& name, const QByteArray& icon) = 0;
-	virtual QIcon getIcon(const QString& name) = 0;
+    virtual void addIcon(const QString& name, const QByteArray& icon) = 0;
+    virtual QIcon getIcon(const QString& name) = 0;
 };
 
 Q_DECLARE_INTERFACE(IconFactoryAccessingHost, "org.psi-im.IconFactoryAccessingHost/0.1");

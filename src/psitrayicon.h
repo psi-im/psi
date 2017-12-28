@@ -12,42 +12,42 @@ class QPixmap;
 
 class PsiTrayIcon : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent=0);
-	~PsiTrayIcon();
+    PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent=0);
+    ~PsiTrayIcon();
 
-	void setContextMenu(QMenu*);
-	void setToolTip(const QString &);
-	void setIcon(const PsiIcon *, bool alert = false);
-	void setAlert(const PsiIcon *);
-	bool isAnimating() const;
+    void setContextMenu(QMenu*);
+    void setToolTip(const QString &);
+    void setIcon(const PsiIcon *, bool alert = false);
+    void setAlert(const PsiIcon *);
+    bool isAnimating() const;
 
-	bool isWMDock();
+    bool isWMDock();
 
 signals:
-	void clicked(const QPoint &, int);
-	void doubleClicked(const QPoint &);
-	void closed();
-	void doToolTip(QObject *, QPoint);
+    void clicked(const QPoint &, int);
+    void doubleClicked(const QPoint &);
+    void closed();
+    void doToolTip(QObject *, QPoint);
 
 public slots:
-	void show();
-	void hide();
+    void show();
+    void hide();
 
 private slots:
-	void animate();
-	void trayicon_activated(QSystemTrayIcon::ActivationReason);
+    void animate();
+    void trayicon_activated(QSystemTrayIcon::ActivationReason);
 
 protected:
-	QPixmap makeIcon();
-	QRgb pixelBlend(QRgb p1, QRgb p2);
-	bool eventFilter( QObject *, QEvent * );
+    QPixmap makeIcon();
+    QRgb pixelBlend(QRgb p1, QRgb p2);
+    bool eventFilter( QObject *, QEvent * );
 
 private:
-	PsiIcon* icon_;
-	QSystemTrayIcon* trayicon_;
-	quintptr realIcon_;
+    PsiIcon* icon_;
+    QSystemTrayIcon* trayicon_;
+    quintptr realIcon_;
 };
 
 

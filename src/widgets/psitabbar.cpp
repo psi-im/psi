@@ -32,14 +32,14 @@
  * Constructor
  */
 PsiTabBar::PsiTabBar(PsiTabWidget *parent)
-		: QTabBar(parent)
-		, dragsEnabled_(true) {
-	//setAcceptDrops(true);
+        : QTabBar(parent)
+        , dragsEnabled_(true) {
+    //setAcceptDrops(true);
 
-	setMovable(true);
-	setTabsClosable(true);
-	setSelectionBehaviorOnRemove ( QTabBar::SelectPreviousTab );
-	currTab=-1;
+    setMovable(true);
+    setTabsClosable(true);
+    setSelectionBehaviorOnRemove ( QTabBar::SelectPreviousTab );
+    currTab=-1;
 }
 
 /**
@@ -52,103 +52,103 @@ PsiTabBar::~PsiTabBar() {
  * Returns the parent PsiTabWidget.
  */
 PsiTabWidget* PsiTabBar::psiTabWidget() {
-	return dynamic_cast<PsiTabWidget*> (parent());
+    return dynamic_cast<PsiTabWidget*> (parent());
 }
 
 /**
  * Overriding this allows us to emit signals for double clicks
  */
 void PsiTabBar::mouseDoubleClickEvent(QMouseEvent *event) {
-	const QPoint pos = event->pos();
-	int tab = findTabUnder(pos);
-	if (tab >= 0 && tab < count()) {
-		emit mouseDoubleClickTab(tab);
-	}
+    const QPoint pos = event->pos();
+    int tab = findTabUnder(pos);
+    if (tab >= 0 && tab < count()) {
+        emit mouseDoubleClickTab(tab);
+    }
 }
 
 /*
  * Returns the index of the tab at a position, or -1 if out of bounds.
  */
 int PsiTabBar::findTabUnder(const QPoint &pos) {
-	for (int i = 0; i < count(); i++) {
-		if (tabRect(i).contains(pos)) {
-			return i;
-		}
-	}
-	return -1;
+    for (int i = 0; i < count(); i++) {
+        if (tabRect(i).contains(pos)) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 void PsiTabBar::mousePressEvent(QMouseEvent *event) {
-	QTabBar::mousePressEvent(event);
-	event->accept();
+    QTabBar::mousePressEvent(event);
+    event->accept();
 }
 
 void PsiTabBar::mouseReleaseEvent ( QMouseEvent * event )
 {
-	if (event->button() == Qt::MidButton && findTabUnder(event->pos())!=-1) {
-		emit mouseMiddleClickTab(findTabUnder(event->pos()));
-		event->accept();
-	}
-	QTabBar::mouseReleaseEvent(event);
+    if (event->button() == Qt::MidButton && findTabUnder(event->pos())!=-1) {
+        emit mouseMiddleClickTab(findTabUnder(event->pos()));
+        event->accept();
+    }
+    QTabBar::mouseReleaseEvent(event);
 
-	if ((dragTab_ != -1) && (event->button() != Qt::MidButton)) {
-		this->setCurrentIndex(currentIndex());
-	}
+    if ((dragTab_ != -1) && (event->button() != Qt::MidButton)) {
+        this->setCurrentIndex(currentIndex());
+    }
 };
 
 /*
  * Used for starting drags of tabs
  */
 void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
-	if (!dragsEnabled_) {
-		return;
-	}
-	if (!(event->buttons() & Qt::LeftButton)) {
-		currTab=-1;
-		return;
-	}
-	if ((event->pos() - dragStartPosition_).manhattanLength()
-		< QApplication::startDragDistance()) {
-		return;
-	}
+    if (!dragsEnabled_) {
+        return;
+    }
+    if (!(event->buttons() & Qt::LeftButton)) {
+        currTab=-1;
+        return;
+    }
+    if ((event->pos() - dragStartPosition_).manhattanLength()
+        < QApplication::startDragDistance()) {
+        return;
+    }
 
-	QTabBar::mouseMoveEvent(event);
+    QTabBar::mouseMoveEvent(event);
 }
 
 void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
-	event->accept();
-	emit contextMenu(event, findTabUnder(event->pos()));
+    event->accept();
+    emit contextMenu(event, findTabUnder(event->pos()));
 }
 
 void PsiTabBar::wheelEvent(QWheelEvent *event) {
-	int numDegrees = event->delta() / 8;
-	int numSteps = numDegrees / 15;
+    int numDegrees = event->delta() / 8;
+    int numSteps = numDegrees / 15;
 
-	int newIndex = currentIndex() - numSteps;
+    int newIndex = currentIndex() - numSteps;
 
-	while (newIndex < 0) {
-		newIndex += count();
-	}
-	newIndex = newIndex % count();
+    while (newIndex < 0) {
+        newIndex += count();
+    }
+    newIndex = newIndex % count();
 
-	setCurrentIndex(newIndex);
+    setCurrentIndex(newIndex);
 
-	event->accept();
+    event->accept();
 }
 
 /*
  * Enable/disable dragging of tabs
  */
 void PsiTabBar::setDragsEnabled(bool enabled) {
-	dragsEnabled_ = enabled;
+    dragsEnabled_ = enabled;
 }
 
 void PsiTabBar::paintEvent(QPaintEvent *event)
 {
-	QTabBar::paintEvent(event);
+    QTabBar::paintEvent(event);
 };
 
 void PsiTabBar::resizeEvent(QResizeEvent * event)
 {
-	QTabBar::resizeEvent(event);
+    QTabBar::resizeEvent(event);
 };

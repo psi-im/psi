@@ -6,10 +6,10 @@ class ShortcutAccessingHost;
 class ShortcutAccessor
 {
 public:
-	virtual ~ShortcutAccessor() {}
+    virtual ~ShortcutAccessor() {}
 
-	virtual void setShortcutAccessingHost(ShortcutAccessingHost* host) = 0;
-	virtual void setShortcuts() = 0;
+    virtual void setShortcutAccessingHost(ShortcutAccessingHost* host) = 0;
+    virtual void setShortcuts() = 0;
 
 };
 

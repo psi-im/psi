@@ -23,72 +23,72 @@
 #include <QDebug>
 
 AbstractTreeModel::AbstractTreeModel(AbstractTreeItem *root, QObject *parent)
-	: QAbstractItemModel(parent)
-	, _root(root)
+    : QAbstractItemModel(parent)
+    , _root(root)
 {
 }
 
 AbstractTreeModel::~AbstractTreeModel()
 {
-	delete _root;
+    delete _root;
 }
 
 QModelIndex AbstractTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
-	if (!hasIndex(row, column, parent))
-		return QModelIndex();
+    if (!hasIndex(row, column, parent))
+        return QModelIndex();
 
-	AbstractTreeItem *parentItem;
+    AbstractTreeItem *parentItem;
 
-	if (!parent.isValid())
-		parentItem = _root;
-	else
-		parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
+    if (!parent.isValid())
+        parentItem = _root;
+    else
+        parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
 
-	AbstractTreeItem *childItem = 0;
-	if (row >= 0 && row < parentItem->childCount())
-		childItem = parentItem->children().at(row);
+    AbstractTreeItem *childItem = 0;
+    if (row >= 0 && row < parentItem->childCount())
+        childItem = parentItem->children().at(row);
 
-	if (childItem)
-		return createIndex(row, column, childItem);
-	else
-		return QModelIndex();
+    if (childItem)
+        return createIndex(row, column, childItem);
+    else
+        return QModelIndex();
 
 }
 
-QModelIndex	AbstractTreeModel::parent(const QModelIndex &index) const
+QModelIndex    AbstractTreeModel::parent(const QModelIndex &index) const
 {
-	if (!index.isValid())
-		return QModelIndex();
+    if (!index.isValid())
+        return QModelIndex();
 
-	AbstractTreeItem *childItem = static_cast<AbstractTreeItem*>(index.internalPointer());
-	AbstractTreeItem *parentItem = childItem->parent();
+    AbstractTreeItem *childItem = static_cast<AbstractTreeItem*>(index.internalPointer());
+    AbstractTreeItem *parentItem = childItem->parent();
 
-	if (parentItem == _root)
-		return QModelIndex();
+    if (parentItem == _root)
+        return QModelIndex();
 
-	int row = 0;
-	if (parentItem->parent())
-		row = parentItem->row();
+    int row = 0;
+    if (parentItem->parent())
+        row = parentItem->row();
 
-	return createIndex(row, 0, parentItem);
+    return createIndex(row, 0, parentItem);
 }
 
-int	AbstractTreeModel::rowCount(const QModelIndex &parent) const
+int    AbstractTreeModel::rowCount(const QModelIndex &parent) const
 {
-	if (parent.column() > 0)
-		return 0;
+    if (parent.column() > 0)
+        return 0;
 
-	AbstractTreeItem *parentItem;
-	if (!parent.isValid())
-		parentItem = _root;
-	else
-		parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
+    AbstractTreeItem *parentItem;
+    if (!parent.isValid())
+        parentItem = _root;
+    else
+        parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
 
-	return parentItem->children().size();
+    return parentItem->children().size();
 }
 
 AbstractTreeItem *AbstractTreeModel::root() const
 {
-	return _root;
+    return _root;
 }

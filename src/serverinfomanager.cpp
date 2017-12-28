@@ -25,68 +25,68 @@
 using namespace XMPP;
 
 ServerInfoManager::ServerInfoManager(Client* client)
-	: client_(client)
-	, _canMessageCarbons(false)
+    : client_(client)
+    , _canMessageCarbons(false)
 {
-	deinitialize();
-	connect(client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
-	connect(client_, SIGNAL(disconnected()), SLOT(deinitialize()));
+    deinitialize();
+    connect(client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
+    connect(client_, SIGNAL(disconnected()), SLOT(deinitialize()));
 }
 
 void ServerInfoManager::reset()
 {
-	hasPEP_ = false;
-	multicastService_ = QString();
-	disconnect(CapsRegistry::instance());
+    hasPEP_ = false;
+    multicastService_ = QString();
+    disconnect(CapsRegistry::instance());
 }
 
 void ServerInfoManager::initialize()
 {
-	JT_DiscoInfo *jt = new JT_DiscoInfo(client_->rootTask());
-	connect(jt, SIGNAL(finished()), SLOT(disco_finished()));
-	jt->get(client_->jid().domain());
-	jt->go(true);
+    JT_DiscoInfo *jt = new JT_DiscoInfo(client_->rootTask());
+    connect(jt, SIGNAL(finished()), SLOT(disco_finished()));
+    jt->get(client_->jid().domain());
+    jt->go(true);
 }
 
 void ServerInfoManager::deinitialize()
 {
-	reset();
-	emit featuresChanged();
+    reset();
+    emit featuresChanged();
 }
 
 const QString& ServerInfoManager::multicastService() const
 {
-	return multicastService_;
+    return multicastService_;
 }
 
 bool ServerInfoManager::hasPEP() const
 {
-	return hasPEP_;
+    return hasPEP_;
 }
 
 bool ServerInfoManager::canMessageCarbons() const
 {
-	return _canMessageCarbons;
+    return _canMessageCarbons;
 }
 
 void ServerInfoManager::disco_finished()
 {
-	JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
-	if (jt->success()) {
-		features_ = jt->item().features();
+    JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
+    if (jt->success()) {
+        features_ = jt->item().features();
 
-		if (features_.canMulticast())
-			multicastService_ = client_->jid().domain();
+        if (features_.canMulticast())
+            multicastService_ = client_->jid().domain();
 
-		_canMessageCarbons = features_.canMessageCarbons();
+        _canMessageCarbons = features_.canMessageCarbons();
 
-		// Identities
-		DiscoItem::Identities is = jt->item().identities();
-		foreach(DiscoItem::Identity i, is) {
-			if (i.category == "pubsub" && i.type == "pep")
-				hasPEP_ = true;
-		}
+        // Identities
+        DiscoItem::Identities is = jt->item().identities();
+        foreach(DiscoItem::Identity i, is) {
+            if (i.category == "pubsub" && i.type == "pep")
+                hasPEP_ = true;
+        }
 
-		emit featuresChanged();
-	}
+        emit featuresChanged();
+    }
 }

@@ -26,8 +26,8 @@
 #include "im.h" // ChatState
 
 namespace XMPP {
-	class Jid;
-	class Message;
+    class Jid;
+    class Message;
 }
 using namespace XMPP;
 
@@ -37,60 +37,60 @@ class TabDlg;
 
 class TabbableWidget : public AdvancedWidget<QWidget>
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
-	~TabbableWidget();
+    TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
+    ~TabbableWidget();
 
-	PsiAccount* account() const;
-	void setTabIcon(const QIcon &);
-	const QIcon &icon() const;
+    PsiAccount* account() const;
+    void setTabIcon(const QIcon &);
+    const QIcon &icon() const;
 
-	virtual Jid jid() const;
-	virtual const QString & getDisplayName() const;
+    virtual Jid jid() const;
+    virtual const QString & getDisplayName() const;
 
-	virtual bool readyToHide();
-	TabDlg* getManagingTabDlg();
+    virtual bool readyToHide();
+    TabDlg* getManagingTabDlg();
 
-	bool isTabbed();
-	bool isActiveTab();
+    bool isTabbed();
+    bool isActiveTab();
 
-	// reimplemented
-	virtual void doFlash(bool on);
+    // reimplemented
+    virtual void doFlash(bool on);
 
-	virtual void invalidateTab();
+    virtual void invalidateTab();
 
-	enum State {
-		StateNone = 0,
-		StateComposing
-	};
-	virtual State state() const = 0;
-	virtual int unreadMessageCount() const = 0;
-	virtual QString desiredCaption() const = 0;
+    enum State {
+        StateNone = 0,
+        StateComposing
+    };
+    virtual State state() const = 0;
+    virtual int unreadMessageCount() const = 0;
+    virtual QString desiredCaption() const = 0;
 
 signals:
-	void invalidateTabInfo();
-	void updateFlashState();
-	void eventsRead(const Jid &);
+    void invalidateTabInfo();
+    void updateFlashState();
+    void eventsRead(const Jid &);
 
 public slots:
-	virtual void deactivated();
-	virtual void activated();
-	void bringToFront(bool raiseWindow = true);
-	virtual void ensureTabbedCorrectly();
-	void hideTab();
+    virtual void deactivated();
+    virtual void activated();
+    void bringToFront(bool raiseWindow = true);
+    virtual void ensureTabbedCorrectly();
+    void hideTab();
 
 protected:
-	virtual void setJid(const Jid&);
+    virtual void setJid(const Jid&);
 
-	// reimplemented
-	void changeEvent(QEvent* e);
+    // reimplemented
+    void changeEvent(QEvent* e);
 
 private:
-	Jid jid_;
-	PsiAccount *pa_;
-	TabManager *tabManager_;
-	QIcon icon_;
+    Jid jid_;
+    PsiAccount *pa_;
+    TabManager *tabManager_;
+    QIcon icon_;
 };
 
 #endif

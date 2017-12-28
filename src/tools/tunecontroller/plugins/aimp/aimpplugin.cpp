@@ -32,16 +32,16 @@
 class AIMPPlugin : public QObject, public TuneControllerPlugin
 {
 
-	Q_OBJECT
+    Q_OBJECT
 
-	Q_INTERFACES(TuneControllerPlugin)
+    Q_INTERFACES(TuneControllerPlugin)
 #ifdef HAVE_QT5
-	Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
+    Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 #endif
 
 public:
-	virtual QString name();
-	virtual TuneController* createController();
+    virtual QString name();
+    virtual TuneController* createController();
 };
 
 #ifndef HAVE_QT5
@@ -50,7 +50,7 @@ Q_EXPORT_PLUGIN2(aimpplugin, AIMPPlugin);
 
 QString AIMPPlugin::name()
 {
-	return "AIMP3";
+    return "AIMP3";
 }
 
 TuneController* AIMPPlugin::createController()

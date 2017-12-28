@@ -61,113 +61,113 @@ using namespace XMPP;
  */
 class WbDlg : public AdvancedWidget<QWidget>
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	/*! \brief Constructor.
-	*  Creates a new dialog for the specified jid and session.
-	*/
-	WbDlg(SxeSession* session, PsiAccount* pa);
-	/*! \brief Destructor.
-	*  Emits sessionEnded()
-	*/
-	~WbDlg();
+    /*! \brief Constructor.
+    *  Creates a new dialog for the specified jid and session.
+    */
+    WbDlg(SxeSession* session, PsiAccount* pa);
+    /*! \brief Destructor.
+    *  Emits sessionEnded()
+    */
+    ~WbDlg();
 
-	/*! \brief Returns the session identifier.*/
-	SxeSession* session() const;
-	/*! \brief Returns whether further edits to the session are allowed.*/
-		bool allowEdits() const;
-	/*! \brief Sets whether further edits to the session are allowed.*/
-	void setAllowEdits(bool);
+    /*! \brief Returns the session identifier.*/
+    SxeSession* session() const;
+    /*! \brief Returns whether further edits to the session are allowed.*/
+        bool allowEdits() const;
+    /*! \brief Sets whether further edits to the session are allowed.*/
+    void setAllowEdits(bool);
 
 public slots:
-	/*! \brief Ends the session.
-	 *  Asks for confirmation if invoked by user's action.
-	 */
-	void endSession();
-	/*! \brief Removes indicators of new edits.*/
-	void activated();
-	/*! \brief Notifies the user that \a peer left the session.*/
-	void peerLeftSession(const Jid &peer);
+    /*! \brief Ends the session.
+     *  Asks for confirmation if invoked by user's action.
+     */
+    void endSession();
+    /*! \brief Removes indicators of new edits.*/
+    void activated();
+    /*! \brief Notifies the user that \a peer left the session.*/
+    void peerLeftSession(const Jid &peer);
 
 signals:
-	/*! \brief Signals that the session ended and the dialog is to be deleted.*/
-	void sessionEnded(WbDlg* dialog);
+    /*! \brief Signals that the session ended and the dialog is to be deleted.*/
+    void sessionEnded(WbDlg* dialog);
 
 protected:
-	// reimplemented
-	/*! \brief Catches keyboard shortcuts.*/
-	void keyPressEvent(QKeyEvent *);
-	/*! \brief Sets the destruction times as specified by options.*/
-	void closeEvent(QCloseEvent *);
-	/*! \brief Removes the destruction timer.*/
-	void showEvent(QShowEvent *);
-	/*! \brief Invokes activated() if activated.*/
-	void changeEvent(QEvent *e);
+    // reimplemented
+    /*! \brief Catches keyboard shortcuts.*/
+    void keyPressEvent(QKeyEvent *);
+    /*! \brief Sets the destruction times as specified by options.*/
+    void closeEvent(QCloseEvent *);
+    /*! \brief Removes the destruction timer.*/
+    void showEvent(QShowEvent *);
+    /*! \brief Invokes activated() if activated.*/
+    void changeEvent(QEvent *e);
 
 private slots:
-	/*! \brief Popsup a dialog for saving the contents of the whiteboard to an SVG file. */
-	void save();
-	/*! \brief Popsup a dialog asking for a new viewBox for the whiteboard.*/
-	void setGeometry();
-	/*! \brief Popsup a color dialog and sets the selected color as the default stroke color for new items.*/
-	void setStrokeColor();
-	/*! \brief Popsup a color dialog and sets the selected color as the default fill color for new items.*/
-	void setFillColor(bool);
-	/*! \brief Sets the stroke width for new elements based on the invoker.*/
-	void setStrokeWidth(QAction *);
-	/*! \brief Sets the WbWidget's mode based on the invoker.*/
-	void setMode(QAction *);
-	/*! \brief Sets keep open false.*/
-	void setKeepOpenFalse();
-	/*! \brief Constructs the context menu.*/
-	void buildMenu();
+    /*! \brief Popsup a dialog for saving the contents of the whiteboard to an SVG file. */
+    void save();
+    /*! \brief Popsup a dialog asking for a new viewBox for the whiteboard.*/
+    void setGeometry();
+    /*! \brief Popsup a color dialog and sets the selected color as the default stroke color for new items.*/
+    void setStrokeColor();
+    /*! \brief Popsup a color dialog and sets the selected color as the default fill color for new items.*/
+    void setFillColor(bool);
+    /*! \brief Sets the stroke width for new elements based on the invoker.*/
+    void setStrokeWidth(QAction *);
+    /*! \brief Sets the WbWidget's mode based on the invoker.*/
+    void setMode(QAction *);
+    /*! \brief Sets keep open false.*/
+    void setKeepOpenFalse();
+    /*! \brief Constructs the context menu.*/
+    void buildMenu();
 
 private:
-	/*! \brief Pops up the context menu.*/
-	void contextMenuEvent(QContextMenuEvent *);
-	/*! \brief Set a timer for self destruction in the give n number of minutes.*/
-	void setSelfDestruct(int);
-	/*! \brief Update the caption to indicate the number of unseen whiteboard messages.*/
-	void updateCaption();
+    /*! \brief Pops up the context menu.*/
+    void contextMenuEvent(QContextMenuEvent *);
+    /*! \brief Set a timer for self destruction in the give n number of minutes.*/
+    void setSelfDestruct(int);
+    /*! \brief Update the caption to indicate the number of unseen whiteboard messages.*/
+    void updateCaption();
 
-	/*! \brief The main widget.*/
-	WbWidget *wbWidget_;
+    /*! \brief The main widget.*/
+    WbWidget *wbWidget_;
 
-	/*! \brief The label showing own identity.*/
-	AccountLabel *lb_ident_;
-	/*! \brief The line edit showing target JID.*/
-	QLineEdit *le_jid_;
-	/*! \brief The context menu.*/
-	QMenu *pm_settings_;
+    /*! \brief The label showing own identity.*/
+    AccountLabel *lb_ident_;
+    /*! \brief The line edit showing target JID.*/
+    QLineEdit *le_jid_;
+    /*! \brief The context menu.*/
+    QMenu *pm_settings_;
 
-	/*! \brief The main toolbar.*/
-	QToolBar *toolbar_;
-	/*! \brief The action group for colors.*/
-	QActionGroup *group_colors_;
-	/*! \brief The action group for widths.*/
-	QActionGroup *group_widths_;
-	/*! \brief The action group for modes.*/
-	QActionGroup *group_modes_;
-	/*! \brief The menu for colors.*/
-	QMenu *menu_colors_;
-	/*! \brief The menu for widths.*/
-	QMenu *menu_widths_;
-	/*! \brief The menu for modes.*/
-	QMenu *menu_modes_;
-	QAction *act_color_, *act_fill_;
-	IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
-	/*! \brief True if the target is a groupchat.*/
-	bool groupChat_;
-	/*! \brief The number of whiteboard messages since last activation.*/
-	uint pending_;
-	/*! \brief Boolean set true if a new edit was just received.*/
-	bool keepOpen_;
-	/*! \brief Boolean about whether further edits to the session are allowed.*/
-	bool allowEdits_;
+    /*! \brief The main toolbar.*/
+    QToolBar *toolbar_;
+    /*! \brief The action group for colors.*/
+    QActionGroup *group_colors_;
+    /*! \brief The action group for widths.*/
+    QActionGroup *group_widths_;
+    /*! \brief The action group for modes.*/
+    QActionGroup *group_modes_;
+    /*! \brief The menu for colors.*/
+    QMenu *menu_colors_;
+    /*! \brief The menu for widths.*/
+    QMenu *menu_widths_;
+    /*! \brief The menu for modes.*/
+    QMenu *menu_modes_;
+    QAction *act_color_, *act_fill_;
+    IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
+    /*! \brief True if the target is a groupchat.*/
+    bool groupChat_;
+    /*! \brief The number of whiteboard messages since last activation.*/
+    uint pending_;
+    /*! \brief Boolean set true if a new edit was just received.*/
+    bool keepOpen_;
+    /*! \brief Boolean about whether further edits to the session are allowed.*/
+    bool allowEdits_;
 
-	/*! \brief Pointer to the timer that will invoke destruction.*/
-	QTimer *selfDestruct_;
+    /*! \brief Pointer to the timer that will invoke destruction.*/
+    QTimer *selfDestruct_;
 };
 
 #endif

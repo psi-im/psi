@@ -37,22 +37,22 @@
 //! \if _hide_doc_
 class PsiTextView::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	Private(QObject *parent)
-	: QObject(parent)
-	{
-		anchorOnMousePress = QString();
-		hadSelectionOnMousePress = false;
-	}
+    Private(QObject *parent)
+    : QObject(parent)
+    {
+        anchorOnMousePress = QString();
+        hadSelectionOnMousePress = false;
+    }
 
-	QString anchorOnMousePress;
-	bool hadSelectionOnMousePress;
+    QString anchorOnMousePress;
+    bool hadSelectionOnMousePress;
 
-	QString fragmentToPlainText(const QTextFragment &fragment);
-	QString blockToPlainText(const QTextBlock &block);
-	QString documentFragmentToPlainText(const QTextDocument &doc, QTextFrame::Iterator frameIt);
+    QString fragmentToPlainText(const QTextFragment &fragment);
+    QString blockToPlainText(const QTextBlock &block);
+    QString documentFragmentToPlainText(const QTextDocument &doc, QTextFrame::Iterator frameIt);
 };
 //!endif
 
@@ -71,12 +71,12 @@ public:
 PsiTextView::PsiTextView(QWidget *parent)
 : QTextEdit(parent)
 {
-	d = new Private(this);
+    d = new Private(this);
 
-	setReadOnly(true);
-	PsiRichText::install(document());
+    setReadOnly(true);
+    PsiRichText::install(document());
 
-	viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
+    viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
 }
 
 /**
@@ -85,8 +85,8 @@ PsiTextView::PsiTextView(QWidget *parent)
  */
 bool PsiTextView::atBottom()
 {
-	// '32' is 32 pixels margin, which was used in the old code
-	return (verticalScrollBar()->maximum() - verticalScrollBar()->value()) <= 32;
+    // '32' is 32 pixels margin, which was used in the old code
+    return (verticalScrollBar()->maximum() - verticalScrollBar()->value()) <= 32;
 }
 
 /**
@@ -94,7 +94,7 @@ bool PsiTextView::atBottom()
  */
 void PsiTextView::scrollToBottom()
 {
-	verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 }
 
 /**
@@ -102,7 +102,7 @@ void PsiTextView::scrollToBottom()
  */
 void PsiTextView::scrollToTop()
 {
-	verticalScrollBar()->setValue(verticalScrollBar()->minimum());
+    verticalScrollBar()->setValue(verticalScrollBar()->minimum());
 }
 
 /**
@@ -111,52 +111,52 @@ void PsiTextView::scrollToTop()
  */
 void PsiTextView::appendText(const QString &text)
 {
-	QTextCursor cursor = textCursor();
-	PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
+    QTextCursor cursor = textCursor();
+    PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
 
-	PsiRichText::appendText(document(), cursor, text);
+    PsiRichText::appendText(document(), cursor, text);
 
-	PsiRichText::restoreSelection(this, cursor, selection);
-	setTextCursor(cursor);
+    PsiRichText::restoreSelection(this, cursor, selection);
+    setTextCursor(cursor);
 }
 
 QString PsiTextView::getTextHelper(bool html) const
 {
-	PsiTextView *ptv = (PsiTextView *)this;
-	QTextCursor cursor = ptv->textCursor();
-	int position = ptv->verticalScrollBar()->value();
+    PsiTextView *ptv = (PsiTextView *)this;
+    QTextCursor cursor = ptv->textCursor();
+    int position = ptv->verticalScrollBar()->value();
 
-	bool unselectAll = false;
-	if (!textCursor().hasSelection()) {
+    bool unselectAll = false;
+    if (!textCursor().hasSelection()) {
 #if QT_VERSION == 0x040701
-		// workaround for crash when deleting last character with backspace (qt-4.7.1)
-		// http://bugreports.qt.nokia.com/browse/QTBUG-15857
-		QTextCursor tempCursor = QTextCursor(ptv->document());
-		tempCursor.movePosition(QTextCursor::Start);
-		ptv->setTextCursor(tempCursor);
+        // workaround for crash when deleting last character with backspace (qt-4.7.1)
+        // http://bugreports.qt.nokia.com/browse/QTBUG-15857
+        QTextCursor tempCursor = QTextCursor(ptv->document());
+        tempCursor.movePosition(QTextCursor::Start);
+        ptv->setTextCursor(tempCursor);
 #endif
-		ptv->selectAll();
-		unselectAll = true;
-	}
+        ptv->selectAll();
+        unselectAll = true;
+    }
 
-	QMimeData *mime = createMimeDataFromSelection();
-	QString result;
-	if (html)
-		result = mime->html();
-	else
-		result = mime->text();
-	delete mime;
+    QMimeData *mime = createMimeDataFromSelection();
+    QString result;
+    if (html)
+        result = mime->html();
+    else
+        result = mime->text();
+    delete mime;
 
-	// we need to restore original position if selectAll()
-	// was called, because setTextCursor() (which is necessary
-	// to clear selection) will move vertical scroll bar
-	if (unselectAll) {
-		cursor.clearSelection();
-		ptv->setTextCursor(cursor);
-		ptv->verticalScrollBar()->setValue(position);
-	}
+    // we need to restore original position if selectAll()
+    // was called, because setTextCursor() (which is necessary
+    // to clear selection) will move vertical scroll bar
+    if (unselectAll) {
+        cursor.clearSelection();
+        ptv->setTextCursor(cursor);
+        ptv->verticalScrollBar()->setValue(position);
+    }
 
-	return result;
+    return result;
 }
 
 /**
@@ -165,70 +165,70 @@ QString PsiTextView::getTextHelper(bool html) const
  */
 QString PsiTextView::getHtml() const
 {
-	return getTextHelper(true);
+    return getTextHelper(true);
 }
 
 QString PsiTextView::getPlainText() const
 {
-	return getTextHelper(false);
+    return getTextHelper(false);
 }
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {
-	QMenu *menu;
-	if (!anchorAt(e->pos()).isEmpty())
-		menu = URLObject::getInstance()->createPopupMenu(anchorAt(e->pos()));
-	else
-		menu = createStandardContextMenu();
-	menu->exec(e->globalPos());
-	e->accept();
-	delete menu;
+    QMenu *menu;
+    if (!anchorAt(e->pos()).isEmpty())
+        menu = URLObject::getInstance()->createPopupMenu(anchorAt(e->pos()));
+    else
+        menu = createStandardContextMenu();
+    menu->exec(e->globalPos());
+    e->accept();
+    delete menu;
 }
 
 // Copied (with modifications) from QTextBrowser
 void PsiTextView::mouseMoveEvent(QMouseEvent *e)
 {
-	QTextEdit::mouseMoveEvent(e);
+    QTextEdit::mouseMoveEvent(e);
 
-	QString anchor = anchorAt(e->pos());
-	viewport()->setCursor(anchor.isEmpty() ? Qt::ArrowCursor : Qt::PointingHandCursor);
+    QString anchor = anchorAt(e->pos());
+    viewport()->setCursor(anchor.isEmpty() ? Qt::ArrowCursor : Qt::PointingHandCursor);
 }
 
 // Copied (with modifications) from QTextBrowser
 void PsiTextView::mousePressEvent(QMouseEvent *e)
 {
-	d->anchorOnMousePress = anchorAt(e->pos());
-	if (!textCursor().hasSelection() && !d->anchorOnMousePress.isEmpty()) {
-		QTextCursor cursor = textCursor();
-		QPoint mapped = QPoint(e->pos().x() + horizontalScrollBar()->value(),
-							   e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
-		const int cursorPos = document()->documentLayout()->hitTest(mapped, Qt::FuzzyHit);
-		if (cursorPos != -1)
-			cursor.setPosition(cursorPos);
-		setTextCursor(cursor);
-	}
+    d->anchorOnMousePress = anchorAt(e->pos());
+    if (!textCursor().hasSelection() && !d->anchorOnMousePress.isEmpty()) {
+        QTextCursor cursor = textCursor();
+        QPoint mapped = QPoint(e->pos().x() + horizontalScrollBar()->value(),
+                               e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
+        const int cursorPos = document()->documentLayout()->hitTest(mapped, Qt::FuzzyHit);
+        if (cursorPos != -1)
+            cursor.setPosition(cursorPos);
+        setTextCursor(cursor);
+    }
 
-	QTextEdit::mousePressEvent(e);
+    QTextEdit::mousePressEvent(e);
 
-	d->hadSelectionOnMousePress = textCursor().hasSelection();
+    d->hadSelectionOnMousePress = textCursor().hasSelection();
 }
 
 // Copied (with modifications) from QTextBrowser
 void PsiTextView::mouseReleaseEvent(QMouseEvent *e)
 {
-	QTextEdit::mouseReleaseEvent(e);
+    QTextEdit::mouseReleaseEvent(e);
 
-	if (!(e->button() & Qt::LeftButton))
-		return;
+    if (!(e->button() & Qt::LeftButton))
+        return;
 
-	const QString anchor = anchorAt(e->pos());
+    const QString anchor = anchorAt(e->pos());
 
-	if (anchor.isEmpty())
-		return;
+    if (anchor.isEmpty())
+        return;
 
-	if (!textCursor().hasSelection()
-		|| (anchor == d->anchorOnMousePress && d->hadSelectionOnMousePress))
-		URLObject::getInstance()->popupAction(anchor);
+    if (!textCursor().hasSelection()
+        || (anchor == d->anchorOnMousePress && d->hadSelectionOnMousePress))
+        URLObject::getInstance()->popupAction(anchor);
 }
 
 /**
@@ -237,16 +237,16 @@ void PsiTextView::mouseReleaseEvent(QMouseEvent *e)
  */
 QMimeData *PsiTextView::createMimeDataFromSelection() const
 {
-	QTextDocument *doc = new QTextDocument();
-	QTextCursor cursor(doc);
-	cursor.insertFragment(textCursor().selection());
-	QString text = PsiRichText::convertToPlainText(doc);
-	delete doc;
+    QTextDocument *doc = new QTextDocument();
+    QTextCursor cursor(doc);
+    cursor.insertFragment(textCursor().selection());
+    QString text = PsiRichText::convertToPlainText(doc);
+    delete doc;
 
-	QMimeData *data = new QMimeData;
-	data->setText(text);
-	data->setHtml(Qt::convertFromPlainText(text));
-	return data;
+    QMimeData *data = new QMimeData;
+    data->setText(text);
+    data->setHtml(Qt::convertFromPlainText(text));
+    return data;
 }
 
 /**
@@ -255,21 +255,21 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
  */
 void PsiTextView::resizeEvent(QResizeEvent *e)
 {
-	bool atEnd = verticalScrollBar()->value() ==
-				 verticalScrollBar()->maximum();
-	bool atStart = verticalScrollBar()->value() ==
-				   verticalScrollBar()->minimum();
-	double value = 0;
-	if (!atEnd && !atStart)
-		value = (double)verticalScrollBar()->maximum() /
-				(double)verticalScrollBar()->value();
+    bool atEnd = verticalScrollBar()->value() ==
+                 verticalScrollBar()->maximum();
+    bool atStart = verticalScrollBar()->value() ==
+                   verticalScrollBar()->minimum();
+    double value = 0;
+    if (!atEnd && !atStart)
+        value = (double)verticalScrollBar()->maximum() /
+                (double)verticalScrollBar()->value();
 
-	QTextEdit::resizeEvent(e);
+    QTextEdit::resizeEvent(e);
 
-	if (atEnd)
-		verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-	else if (value != 0)
-		verticalScrollBar()->setValue((int) ((double)verticalScrollBar()->maximum() / value));
+    if (atEnd)
+        verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+    else if (value != 0)
+        verticalScrollBar()->setValue((int) ((double)verticalScrollBar()->maximum() / value));
 }
 
 #include "psitextview.moc"

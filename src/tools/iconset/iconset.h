@@ -39,212 +39,212 @@ class Anim;
 class Impix
 {
 public:
-	Impix();
-	Impix(const QPixmap &);
-	Impix(const QImage &);
+    Impix();
+    Impix(const QPixmap &);
+    Impix(const QImage &);
 
-	void unload();
-	bool isNull() const;
+    void unload();
+    bool isNull() const;
 
-	const QPixmap & pixmap() const;
-	const QImage & image() const;
-	void setPixmap(const QPixmap &);
-	void setImage(const QImage &);
+    const QPixmap & pixmap() const;
+    const QImage & image() const;
+    void setPixmap(const QPixmap &);
+    void setImage(const QImage &);
 
-	operator const QPixmap &() const { return pixmap(); }
-	operator const QImage &() const { return image(); }
-	Impix & operator=(const QPixmap &from) { setPixmap(from); return *this; }
-	Impix & operator=(const QImage &from) { setImage(from); return *this; }
+    operator const QPixmap &() const { return pixmap(); }
+    operator const QImage &() const { return image(); }
+    Impix & operator=(const QPixmap &from) { setPixmap(from); return *this; }
+    Impix & operator=(const QImage &from) { setImage(from); return *this; }
 
-	bool loadFromData(const QByteArray &);
+    bool loadFromData(const QByteArray &);
 
 private:
-	class Private : public QSharedData
-	{
-	public:
-		QPixmap* pixmap;
-		QImage image;
+    class Private : public QSharedData
+    {
+    public:
+        QPixmap* pixmap;
+        QImage image;
 
-		Private()
-		{
-			pixmap = 0;
-		}
+        Private()
+        {
+            pixmap = 0;
+        }
 
-		Private(const Private& from)
-			: QSharedData(from)
-		{
-			pixmap = from.pixmap ? new QPixmap(*from.pixmap) : 0;
-			image  = from.image;
-		}
+        Private(const Private& from)
+            : QSharedData(from)
+        {
+            pixmap = from.pixmap ? new QPixmap(*from.pixmap) : 0;
+            image  = from.image;
+        }
 
-		~Private()
-		{
-			unload();
-		}
+        ~Private()
+        {
+            unload();
+        }
 
-		void unload()
-		{
-			if (pixmap)
-				delete pixmap;
-			pixmap = 0;
-			image  = QImage();
-		}
-	};
+        void unload()
+        {
+            if (pixmap)
+                delete pixmap;
+            pixmap = 0;
+            image  = QImage();
+        }
+    };
 
-	mutable QSharedDataPointer<Private> d;
+    mutable QSharedDataPointer<Private> d;
 };
 
 class PsiIcon : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiIcon();
-	PsiIcon(const PsiIcon &);
-	~PsiIcon();
+    PsiIcon();
+    PsiIcon(const PsiIcon &);
+    ~PsiIcon();
 
-	PsiIcon & operator= (const PsiIcon &);
+    PsiIcon & operator= (const PsiIcon &);
 
-	//!
-	//! Returns impix().pixmap().
-	// operator const QPixmap &() const { return impix().pixmap(); }
+    //!
+    //! Returns impix().pixmap().
+    // operator const QPixmap &() const { return impix().pixmap(); }
 
-	//!
-	//! Returns impix().image().
-	// operator const QImage &() const { return impix().image(); }
+    //!
+    //! Returns impix().image().
+    // operator const QImage &() const { return impix().image(); }
 
-	//!
-	//! see icon().
-	// operator const QIcon &() const { return icon(); }
+    //!
+    //! see icon().
+    // operator const QIcon &() const { return icon(); }
 
-	virtual bool isAnimated() const;
-	virtual const QPixmap &pixmap() const;
-	virtual const QImage &image() const;
-	virtual const QIcon & icon() const;
+    virtual bool isAnimated() const;
+    virtual const QPixmap &pixmap() const;
+    virtual const QImage &image() const;
+    virtual const QIcon & icon() const;
 #ifdef WEBKIT
-	virtual const QByteArray & raw() const;
+    virtual const QByteArray & raw() const;
 #endif
 
-	virtual const Impix &impix() const;
-	virtual const Impix &frameImpix() const;
-	void setImpix(const Impix &, bool doDetach = true);
+    virtual const Impix &impix() const;
+    virtual const Impix &frameImpix() const;
+    void setImpix(const Impix &, bool doDetach = true);
 
-	const Anim *anim() const;
-	void setAnim(const Anim &, bool doDetach = true);
-	void removeAnim(bool doDetach = true);
+    const Anim *anim() const;
+    void setAnim(const Anim &, bool doDetach = true);
+    void removeAnim(bool doDetach = true);
 
-	virtual int frameNumber() const;
+    virtual int frameNumber() const;
 
-	virtual const QString &name() const;
-	void setName(const QString &);
+    virtual const QString &name() const;
+    void setName(const QString &);
 
-	const QRegExp &regExp() const;
-	void setRegExp(const QRegExp &);
+    const QRegExp &regExp() const;
+    void setRegExp(const QRegExp &);
 
-	struct IconText {
-		IconText(QString _lang, QString _text)
-			: lang(_lang), text(_text)
-		{}
+    struct IconText {
+        IconText(QString _lang, QString _text)
+            : lang(_lang), text(_text)
+        {}
 
-		QString lang;
-		QString text;
-	};
+        QString lang;
+        QString text;
+    };
 
-	const QList<IconText> &text() const;
-	void setText(const QList<IconText> &);
+    const QList<IconText> &text() const;
+    void setText(const QList<IconText> &);
 
-	QString defaultText() const;
+    QString defaultText() const;
 
-	const QString &sound() const;
-	void setSound(const QString &);
+    const QString &sound() const;
+    void setSound(const QString &);
 
-	bool blockSignals(bool);
-	bool loadFromData(const QByteArray &, bool isAnimation);
+    bool blockSignals(bool);
+    bool loadFromData(const QByteArray &, bool isAnimation);
 
-	void stripFirstAnimFrame();
+    void stripFirstAnimFrame();
 
-	virtual PsiIcon *copy() const;
-	void detach();
+    virtual PsiIcon *copy() const;
+    void detach();
 
 signals:
-	void pixmapChanged();
-	void iconModified();
+    void pixmapChanged();
+    void iconModified();
 
 public slots:
-	virtual void activated(bool playSound = true);	// it just has been inserted in the text, or now it's being displayed by
-	                                                // some widget. icon should play sound and start animation
+    virtual void activated(bool playSound = true);    // it just has been inserted in the text, or now it's being displayed by
+                                                    // some widget. icon should play sound and start animation
 
-	virtual void stop();	// this icon is no more displaying. stop animation
+    virtual void stop();    // this icon is no more displaying. stop animation
 
 public:
-	class Private;
+    class Private;
 private:
-	QSharedDataPointer<Private> d;
+    QSharedDataPointer<Private> d;
 };
 
 class Iconset
 {
 public:
-	Iconset();
-	Iconset(const Iconset &);
-	~Iconset();
+    Iconset();
+    Iconset(const Iconset &);
+    ~Iconset();
 
-	Iconset &operator=(const Iconset &);
-	Iconset &operator+=(const Iconset &);
+    Iconset &operator=(const Iconset &);
+    Iconset &operator+=(const Iconset &);
 
-	void clear();
-	int count() const;
+    void clear();
+    int count() const;
 
-	bool load(const QString &dir);
+    bool load(const QString &dir);
 
-	const PsiIcon *icon(const QString &) const;
-	void setIcon(const QString &, const PsiIcon &);
-	void removeIcon(const QString &);
+    const PsiIcon *icon(const QString &) const;
+    void setIcon(const QString &, const PsiIcon &);
+    void removeIcon(const QString &);
 
-	const QString &id() const;
-	const QString &name() const;
-	const QString &version() const;
-	const QString &description() const;
-	const QStringList &authors() const;
-	const QString &creation() const;
-	const QString &homeUrl() const;
-	const int &iconSize() const;
+    const QString &id() const;
+    const QString &name() const;
+    const QString &version() const;
+    const QString &description() const;
+    const QStringList &authors() const;
+    const QString &creation() const;
+    const QString &homeUrl() const;
+    const int &iconSize() const;
 
-	const QString &fileName() const;
-	void setFileName(const QString &);
+    const QString &fileName() const;
+    void setFileName(const QString &);
 
-	void setInformation(const Iconset &from);
+    void setInformation(const Iconset &from);
 
-	const QHash<QString, QString> info() const;
-	void setInfo(const QHash<QString, QString> &);
+    const QHash<QString, QString> info() const;
+    void setInfo(const QHash<QString, QString> &);
 
-	QListIterator<PsiIcon *> iterator() const;
+    QListIterator<PsiIcon *> iterator() const;
 
-	void addToFactory() const;
-	void removeFromFactory() const;
+    void addToFactory() const;
+    void removeFromFactory() const;
 
-	static bool isSourceAllowed(const QFileInfo &fi);
-	static void setSoundPrefs(QString unpackPath, QObject *receiver, const char *slot);
+    static bool isSourceAllowed(const QFileInfo &fi);
+    static void setSoundPrefs(QString unpackPath, QObject *receiver, const char *slot);
 
-	Iconset copy() const;
-	void detach();
+    Iconset copy() const;
+    void detach();
 
 private:
-	class Private;
-	QSharedDataPointer<Private> d;
+    class Private;
+    QSharedDataPointer<Private> d;
 };
 
 class IconsetFactory
 {
 public:
-	static void reset();
+    static void reset();
 
-	static PsiIcon icon(const QString &name);
-	static const QPixmap &iconPixmap(const QString &name);
+    static PsiIcon icon(const QString &name);
+    static const QPixmap &iconPixmap(const QString &name);
 
-	static const PsiIcon *iconPtr(const QString &name);
-	static const QStringList icons();
+    static const PsiIcon *iconPtr(const QString &name);
+    static const QStringList icons();
 #ifdef WEBKIT
-	static const QByteArray raw(const QString &name);
+    static const QByteArray raw(const QString &name);
 #endif
 };
 

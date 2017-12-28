@@ -27,43 +27,43 @@
 #include "xmpp_caps.h"
 
 namespace XMPP {
-	class Client;
-	class Features;
-	class Jid;
-	class DiscoItem;
+    class Client;
+    class Features;
+    class Jid;
+    class DiscoItem;
 }
 
 using namespace XMPP;
 
 class ServerInfoManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ServerInfoManager(XMPP::Client* client);
+    ServerInfoManager(XMPP::Client* client);
 
-	const QString& multicastService() const;
-	bool hasPEP() const;
-	inline const Features &features() const { return features_; }
-	bool canMessageCarbons() const;
+    const QString& multicastService() const;
+    bool hasPEP() const;
+    inline const Features &features() const { return features_; }
+    bool canMessageCarbons() const;
 
 signals:
-	void featuresChanged();
+    void featuresChanged();
 
 private slots:
-	void disco_finished();
-	void initialize();
-	void deinitialize();
-	void reset();
+    void disco_finished();
+    void initialize();
+    void deinitialize();
+    void reset();
 
 private:
-	XMPP::Client* client_;
-	CapsSpec caps_;
-	Features features_;
-	QString multicastService_;
-	bool featuresRequested_;
-	bool hasPEP_;
-	bool _canMessageCarbons;
+    XMPP::Client* client_;
+    CapsSpec caps_;
+    Features features_;
+    QString multicastService_;
+    bool featuresRequested_;
+    bool hasPEP_;
+    bool _canMessageCarbons;
 };
 
 #endif

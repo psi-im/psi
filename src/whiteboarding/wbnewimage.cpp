@@ -1,6 +1,6 @@
 /*
  * wbnewimage.cpp - a class used for representing an image on the whiteboard
- *			  while it's being added.
+ *              while it's being added.
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -26,47 +26,47 @@
 #include <QFile>
 
 WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename) : WbNewItem(s),
-					   graphicsitem_(QPixmap(filename)) {
-	filename_ = filename;
-	graphicsitem_.setZValue(std::numeric_limits<double>::max());
-	graphicsitem_.setPos(startPos);
+                       graphicsitem_(QPixmap(filename)) {
+    filename_ = filename;
+    graphicsitem_.setZValue(std::numeric_limits<double>::max());
+    graphicsitem_.setPos(startPos);
 
-	scene->addItem(&graphicsitem_);
+    scene->addItem(&graphicsitem_);
 }
 
 
 QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
-	// TODO: Should we perhaps scale large images?
+    // TODO: Should we perhaps scale large images?
 
-	if(graphicsitem_.pixmap().isNull()) {
-		return QDomNode();
-	}
+    if(graphicsitem_.pixmap().isNull()) {
+        return QDomNode();
+    }
 
-	QFile file(filename_);
-	if (file.open(QIODevice::ReadOnly)) {
-		QDomElement image = doc->createElement("image");
-		image.setAttribute("id", "e" + SxeSession::generateUUID());
-		image.setAttribute("x", graphicsitem_.x());
-		image.setAttribute("y", graphicsitem_.y());
-		image.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-		image.setAttribute("xlink:href", QString("data:image/%1;base64,%2")
-											.arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower())
-											.arg(file.readAll().toBase64().constData()));
+    QFile file(filename_);
+    if (file.open(QIODevice::ReadOnly)) {
+        QDomElement image = doc->createElement("image");
+        image.setAttribute("id", "e" + SxeSession::generateUUID());
+        image.setAttribute("x", graphicsitem_.x());
+        image.setAttribute("y", graphicsitem_.y());
+        image.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        image.setAttribute("xlink:href", QString("data:image/%1;base64,%2")
+                                            .arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower())
+                                            .arg(file.readAll().toBase64().constData()));
 
-		// QDomElement g = QDomDocument().createElement("g");
-		// g.setAttribute("id", "e" + SxeSession::generateUUID());
-		// g.appendChild(image);
+        // QDomElement g = QDomDocument().createElement("g");
+        // g.setAttribute("id", "e" + SxeSession::generateUUID());
+        // g.appendChild(image);
 
-		return image;
-	}
+        return image;
+    }
 
-	return QDomNode();
+    return QDomNode();
 }
 
 void WbNewImage::parseCursorMove(QPointF newPos) {
-	Q_UNUSED(newPos);
+    Q_UNUSED(newPos);
 }
 
 QGraphicsItem* WbNewImage::graphicsItem() {
-	return &graphicsitem_;
+    return &graphicsitem_;
 }

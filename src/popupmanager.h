@@ -31,8 +31,8 @@ class PsiIcon;
 class QPixmap;
 
 namespace XMPP {
-	class Jid;
-	class Resource;
+    class Jid;
+    class Resource;
 }
 using namespace XMPP;
 
@@ -40,44 +40,44 @@ class PopupManager
 {
 
 public:
-	PopupManager(PsiCon* psi);
-	virtual ~PopupManager();
+    PopupManager(PsiCon* psi);
+    virtual ~PopupManager();
 
-	enum PopupType {
-		AlertNone = 0,
+    enum PopupType {
+        AlertNone = 0,
 
-		AlertOnline = 1,
-		AlertOffline = 2,
-		AlertStatusChange = 3,
+        AlertOnline = 1,
+        AlertOffline = 2,
+        AlertStatusChange = 3,
 
-		AlertMessage = 4,
-		AlertComposing = 5,
-		AlertChat = 6,
-		AlertHeadline = 7,
-		AlertFile = 8,
-		AlertAvCall = 9,
-		AlertGcHighlight = 10,
-		AlertCustom = 11
-	};
+        AlertMessage = 4,
+        AlertComposing = 5,
+        AlertChat = 6,
+        AlertHeadline = 7,
+        AlertFile = 8,
+        AlertAvCall = 9,
+        AlertGcHighlight = 10,
+        AlertCustom = 11
+    };
 
-	int registerOption(const QString& name, int initValue = 5, const QString& path = QString());
-	void unregisterOption(const QString& name);
-	void setValue(const QString& name, int value);
-	int value(const QString& name) const;
-	const QString optionPath(const QString& name) const;
-	const QStringList optionsNamesList() const;
+    int registerOption(const QString& name, int initValue = 5, const QString& path = QString());
+    void unregisterOption(const QString& name);
+    void setValue(const QString& name, int value);
+    int value(const QString& name) const;
+    const QString optionPath(const QString& name) const;
+    const QStringList optionsNamesList() const;
 
-	QStringList availableTypes() const;
-	QString currentType() const;
+    QStringList availableTypes() const;
+    QString currentType() const;
 
-	void doPopup(PsiAccount* account, PopupType type, const Jid& j, const Resource& r,
-			    UserListItem* u = 0, const PsiEvent::Ptr &e = PsiEvent::Ptr(), bool checkNoPopup = true);
-	void doPopup(PsiAccount *account, const Jid &j, const PsiIcon *titleIcon, const QString& titleText,
-			    const QPixmap *avatar, const PsiIcon *icon, const QString& text, bool checkNoPopup = true, PopupType type = AlertNone);
+    void doPopup(PsiAccount* account, PopupType type, const Jid& j, const Resource& r,
+                UserListItem* u = 0, const PsiEvent::Ptr &e = PsiEvent::Ptr(), bool checkNoPopup = true);
+    void doPopup(PsiAccount *account, const Jid &j, const PsiIcon *titleIcon, const QString& titleText,
+                const QPixmap *avatar, const PsiIcon *icon, const QString& text, bool checkNoPopup = true, PopupType type = AlertNone);
 
 private:
-	class Private;
-	Private* d;
+    class Private;
+    Private* d;
 };
 
 #endif

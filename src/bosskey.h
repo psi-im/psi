@@ -26,22 +26,22 @@ class MainWin;
 
 class BossKey : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	BossKey(QObject *p = 0);
-	~BossKey() {};
+    BossKey(QObject *p = 0);
+    ~BossKey() {};
 
 public slots:
-	void shortCutActivated();
+    void shortCutActivated();
 
 private:
-	void doHide();
-	void doShow();
+    void doHide();
+    void doShow();
 
 private:
-	bool isHidden_;
-	QList< QPointer<QWidget> > hiddenWidgets_;
-	QVariantHash tmpOptions_;
-	PsiOptions *psiOptions;
-	MainWin* win_;
+    bool isHidden_;
+    QList< QPointer<QWidget> > hiddenWidgets_;
+    QVariantHash tmpOptions_;
+    PsiOptions *psiOptions;
+    MainWin* win_;
 };

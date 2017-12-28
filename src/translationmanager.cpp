@@ -30,156 +30,156 @@
 
 TranslationManager::TranslationManager()
 {
-	// Initialize
-	currentLanguage_ = "en";
-	QString currentLanguageName = QT_TR_NOOP("language_name");
+    // Initialize
+    currentLanguage_ = "en";
+    QString currentLanguageName = QT_TR_NOOP("language_name");
 
-	// The application translator
-	translator_ = new QTranslator(0);
+    // The application translator
+    translator_ = new QTranslator(0);
 
-	// The qt translator
-	qt_translator_ = new QTranslator(0);
+    // The qt translator
+    qt_translator_ = new QTranslator(0);
 
-	// Self-destruct
-	connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
+    // Self-destruct
+    connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
 }
 
 TranslationManager::~TranslationManager()
 {
-	QCoreApplication::instance()->removeTranslator(translator_);
-	delete translator_;
-	translator_ = 0;
+    QCoreApplication::instance()->removeTranslator(translator_);
+    delete translator_;
+    translator_ = 0;
 
-	QCoreApplication::instance()->removeTranslator(qt_translator_);
-	delete qt_translator_;
-	qt_translator_ = 0;
+    QCoreApplication::instance()->removeTranslator(qt_translator_);
+    delete qt_translator_;
+    qt_translator_ = 0;
 }
 
 TranslationManager* TranslationManager::instance()
 {
-	if (!instance_) {
-		instance_ = new TranslationManager();
-	}
-	return instance_;
+    if (!instance_) {
+        instance_ = new TranslationManager();
+    }
+    return instance_;
 }
 
 const QString& TranslationManager::currentLanguage() const
 {
-	return currentLanguage_;
+    return currentLanguage_;
 }
 
 QString TranslationManager::currentXMLLanguage() const
 {
-	QString xmllang = currentLanguage_;
-	xmllang.replace('_',"-");
-	int at_index = xmllang.indexOf('@');
-	if (at_index > 0)
-		xmllang = xmllang.left(at_index);
-	return xmllang;
+    QString xmllang = currentLanguage_;
+    xmllang.replace('_',"-");
+    int at_index = xmllang.indexOf('@');
+    if (at_index > 0)
+        xmllang = xmllang.left(at_index);
+    return xmllang;
 }
 
 static bool loadQtTranslationHelper(const QString& language, const QString& dir, QTranslator* qt_translator)
 {
-	return qt_translator->load("qt_" + language, dir);
+    return qt_translator->load("qt_" + language, dir);
 }
 
 bool TranslationManager::loadQtTranslation(const QString& language)
 {
-	foreach(QString dir, translationDirs()) {
-		if (loadQtTranslationHelper(language, dir, qt_translator_)) {
-			return true;
-		}
-	}
+    foreach(QString dir, translationDirs()) {
+        if (loadQtTranslationHelper(language, dir, qt_translator_)) {
+            return true;
+        }
+    }
 
-	return loadQtTranslationHelper(language,
-	                               QLibraryInfo::location(QLibraryInfo::TranslationsPath),
-	                               qt_translator_);
+    return loadQtTranslationHelper(language,
+                                   QLibraryInfo::location(QLibraryInfo::TranslationsPath),
+                                   qt_translator_);
 }
 
 void TranslationManager::loadTranslation(const QString& language)
 {
-	// The default translation
-	if(language == "en") {
-		currentLanguage_ = language;
-		//currentLanguageName_ = "English";
-		QCoreApplication::instance()->removeTranslator(translator_);
-		QCoreApplication::instance()->removeTranslator(qt_translator_);
-		return;
-	}
+    // The default translation
+    if(language == "en") {
+        currentLanguage_ = language;
+        //currentLanguageName_ = "English";
+        QCoreApplication::instance()->removeTranslator(translator_);
+        QCoreApplication::instance()->removeTranslator(qt_translator_);
+        return;
+    }
 
-	// Try loading the translation file
-	foreach(QString dir, translationDirs()) {
-		if(!QFile::exists(dir))
-			continue;
-		if (translator_->load("psi_" + language, dir)) {
-			loadQtTranslation(language);
+    // Try loading the translation file
+    foreach(QString dir, translationDirs()) {
+        if(!QFile::exists(dir))
+            continue;
+        if (translator_->load("psi_" + language, dir)) {
+            loadQtTranslation(language);
 
-			if (currentLanguage_ == "en") {
-				QCoreApplication::instance()->installTranslator(translator_);
-				QCoreApplication::instance()->installTranslator(qt_translator_);
-			}
-			currentLanguage_ = language;
-			break;
-		}
-	}
+            if (currentLanguage_ == "en") {
+                QCoreApplication::instance()->installTranslator(translator_);
+                QCoreApplication::instance()->installTranslator(qt_translator_);
+            }
+            currentLanguage_ = language;
+            break;
+        }
+    }
 }
 
 VarList TranslationManager::availableTranslations()
 {
-	VarList langs;
+    VarList langs;
 
-	// We always support english
-	langs.set("en", "English");
+    // We always support english
+    langs.set("en", "English");
 
-	// Search the paths
-	foreach(QString dirName, translationDirs()) {
-		if(!QFile::exists(dirName))
-			continue;
+    // Search the paths
+    foreach(QString dirName, translationDirs()) {
+        if(!QFile::exists(dirName))
+            continue;
 
-		QDir d(dirName);
-		foreach(QString str, d.entryList()) {
-			// verify that it is a language file
-			if(str.left(4) != "psi_")
-				continue;
-			int n = str.indexOf('.', 4);
-			if(n == -1)
-				continue;
-			if(str.mid(n) != ".qm")
-				continue;
-			QString lang = str.mid(4, n-4);
+        QDir d(dirName);
+        foreach(QString str, d.entryList()) {
+            // verify that it is a language file
+            if(str.left(4) != "psi_")
+                continue;
+            int n = str.indexOf('.', 4);
+            if(n == -1)
+                continue;
+            if(str.mid(n) != ".qm")
+                continue;
+            QString lang = str.mid(4, n-4);
 
-			//printf("found [%s], lang=[%s]\n", str.latin1(), lang.latin1());
+            //printf("found [%s], lang=[%s]\n", str.latin1(), lang.latin1());
 
-			// get the language_name
-			QString name = QString("[") + str + "]";
-			QTranslator t(0);
-			if(!t.load(str, dirName))
-				continue;
+            // get the language_name
+            QString name = QString("[") + str + "]";
+            QTranslator t(0);
+            if(!t.load(str, dirName))
+                continue;
 
-			//Is translate equivalent to the old findMessage? I hope so
-			//Qt4 conversion
-			QString s = t.translate("@default", "language_name");
-			if(!s.isEmpty())
-				name = s;
+            //Is translate equivalent to the old findMessage? I hope so
+            //Qt4 conversion
+            QString s = t.translate("@default", "language_name");
+            if(!s.isEmpty())
+                name = s;
 
-			langs.set(lang, name);
-		}
-	}
+            langs.set(lang, name);
+        }
+    }
 
-	return langs;
+    return langs;
 }
 
 QStringList TranslationManager::translationDirs() const
 {
-	QStringList dirs;
-	dirs += ".";
-	dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
-	dirs += ApplicationInfo::resourcesDir();
-	QString subdir = "/translations";
-	dirs += "." + subdir;
-	dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir;
-	dirs += ApplicationInfo::resourcesDir() + subdir;
-	return dirs;
+    QStringList dirs;
+    dirs += ".";
+    dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
+    dirs += ApplicationInfo::resourcesDir();
+    QString subdir = "/translations";
+    dirs += "." + subdir;
+    dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir;
+    dirs += ApplicationInfo::resourcesDir() + subdir;
+    return dirs;
 }
 
 

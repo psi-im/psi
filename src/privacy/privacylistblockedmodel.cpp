@@ -29,15 +29,15 @@ PrivacyListBlockedModel::PrivacyListBlockedModel(QObject* parent) : QSortFilterP
 
 bool PrivacyListBlockedModel::lessThan(const QModelIndex & left, const QModelIndex & right ) const
 {
-	return left.row() < right.row();
+    return left.row() < right.row();
 }
 
 bool PrivacyListBlockedModel::filterAcceptsColumn(int source_column, const QModelIndex &) const
 {
-	return source_column == PrivacyListModel::ValueColumn;
+    return source_column == PrivacyListModel::ValueColumn;
 }
 
 bool PrivacyListBlockedModel::filterAcceptsRow(int source_row, const QModelIndex & source_parent ) const
 {
-	return sourceModel()->data(sourceModel()->index(source_row,0,source_parent),PrivacyListModel::BlockedRole).toBool();
+    return sourceModel()->data(sourceModel()->index(source_row,0,source_parent),PrivacyListModel::BlockedRole).toBool();
 }

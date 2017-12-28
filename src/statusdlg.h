@@ -31,7 +31,7 @@ class PsiAccount;
 class UserListItem;
 class QKeyEvent;
 namespace XMPP {
-	class Status;
+    class Status;
 }
 
 using namespace XMPP;
@@ -40,39 +40,39 @@ enum setStatusEnum{setStatusForAccount = 0, setStatusForJid, setStatusForJidList
 
 class StatusShowDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	StatusShowDlg(const UserListItem &);
+    StatusShowDlg(const UserListItem &);
 };
 
 class StatusSetDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	StatusSetDlg(PsiCon *, const Status &, bool withPriority = true);
-	StatusSetDlg(PsiAccount *, const Status &, bool withPriority = true);
-	~StatusSetDlg();
+    StatusSetDlg(PsiCon *, const Status &, bool withPriority = true);
+    StatusSetDlg(PsiAccount *, const Status &, bool withPriority = true);
+    ~StatusSetDlg();
 
-	void setJid(const Jid &);
-	void setJidList(const QList<XMPP::Jid> &);
+    void setJid(const Jid &);
+    void setJidList(const QList<XMPP::Jid> &);
 
 signals:
-	void set(const XMPP::Status &, bool withPriority, bool isManualStatus);
-	void cancelled();
-	void setJid(const Jid &, const Status &);
-	void setJidList(const QList<XMPP::Jid> &, const Status &);
+    void set(const XMPP::Status &, bool withPriority, bool isManualStatus);
+    void cancelled();
+    void setJid(const Jid &, const Status &);
+    void setJidList(const QList<XMPP::Jid> &, const Status &);
 
 private slots:
-	void doButton();
-	void cancel();
-	void reject();
-	void chooseStatusPreset(int);
+    void doButton();
+    void cancel();
+    void reject();
+    void chooseStatusPreset(int);
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	void init();
+    void init();
 };
 
 #endif

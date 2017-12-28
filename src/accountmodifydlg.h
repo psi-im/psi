@@ -36,64 +36,64 @@ class ProxyChooser;
 
 class AccountModifyDlg : public QDialog, public Ui::AccountModify
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	AccountModifyDlg(PsiCon *,QWidget *parent=0);
-	AccountModifyDlg(PsiAccount *, QWidget *parent=0);
-	~AccountModifyDlg();
+    AccountModifyDlg(PsiCon *,QWidget *parent=0);
+    AccountModifyDlg(PsiAccount *, QWidget *parent=0);
+    ~AccountModifyDlg();
 
-	void setPassword(const QString &);
-	const UserAccount& account() const { return acc; }
+    void setPassword(const QString &);
+    const UserAccount& account() const { return acc; }
 
 protected:
-	void init();
+    void init();
 
 private slots:
-	void hostToggled(bool);
-	void ibbOnlyToggled(bool);
-	void sslActivated(int);
+    void hostToggled(bool);
+    void ibbOnlyToggled(bool);
+    void sslActivated(int);
 
-	void detailsVCard();
-	void detailsChangePW();
+    void detailsVCard();
+    void detailsChangePW();
 
-	void removeStunHost();
+    void removeStunHost();
 
-	void save();
+    void save();
 
-	//void pgpToggled(bool);
-	void chooseKey();
-	void clearKey();
- 	void tabChanged(int);
+    //void pgpToggled(bool);
+    void chooseKey();
+    void clearKey();
+     void tabChanged(int);
 
-	// Privacy
- 	void privacyClicked();
- 	void updatePrivacyTab();
- 	void setPrivacyTabEnabled(bool b);
- 	void addBlockClicked();
- 	void removeBlockClicked();
- 	void updateBlockedContacts(const PrivacyList&);
- 	void getDefaultList_error();
- 	void changeList_error();
+    // Privacy
+     void privacyClicked();
+     void updatePrivacyTab();
+     void setPrivacyTabEnabled(bool b);
+     void addBlockClicked();
+     void removeBlockClicked();
+     void updateBlockedContacts(const PrivacyList&);
+     void getDefaultList_error();
+     void changeList_error();
 
-	void resourceCbChanged(int index);
-	void priorityCbChanged(int index);
-	void autoconnectCksChanged();
+    void resourceCbChanged(int index);
+    void priorityCbChanged(int index);
+    void autoconnectCksChanged();
 
 private:
-	PsiCon *psi;
-	PsiAccount *pa;
-	ProxyChooser *pc;
-	QCA::PGPKey key;
-	UserAccount acc;
+    PsiCon *psi;
+    PsiAccount *pa;
+    ProxyChooser *pc;
+    QCA::PGPKey key;
+    UserAccount acc;
 
-	// Privacy
- 	PrivacyListModel privacyModel;
- 	PrivacyListBlockedModel privacyBlockedModel;
- 	bool privacyInitialized;
+    // Privacy
+     PrivacyListModel privacyModel;
+     PrivacyListBlockedModel privacyBlockedModel;
+     bool privacyInitialized;
 
-	void updateUserID();
-	void setKeyID(bool b, const QString &s="");
-	bool checkSSL();
+    void updateUserID();
+    void setKeyID(bool b, const QString &s="");
+    bool checkSSL();
 };
 
 #endif

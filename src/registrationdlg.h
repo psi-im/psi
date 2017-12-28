@@ -27,36 +27,36 @@ class QDomElement;
 class JT_XRegister;
 class PsiAccount;
 namespace XMPP {
-	class Jid;
-	class Form;
-	class XData;
+    class Jid;
+    class Form;
+    class XData;
 }
 
 class RegistrationDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	RegistrationDlg(const XMPP::Jid &, PsiAccount *);
-	~RegistrationDlg();
+    RegistrationDlg(const XMPP::Jid &, PsiAccount *);
+    ~RegistrationDlg();
 
 public slots:
-	void done(int);
+    void done(int);
 
 private slots:
-	void doRegGet();
-	void doRegSet();
-	void jt_finished();
+    void doRegGet();
+    void doRegSet();
+    void jt_finished();
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	void setData(JT_XRegister* jt);
-	void updateData(JT_XRegister* jt);
-	void setInstructions(const QString& jid, const QString& instructions);
-	void processXData(const XMPP::XData& form);
-	void processLegacyForm(const XMPP::Form& form);
+    void setData(JT_XRegister* jt);
+    void updateData(JT_XRegister* jt);
+    void setInstructions(const QString& jid, const QString& instructions);
+    void processXData(const XMPP::XData& form);
+    void processLegacyForm(const XMPP::Form& form);
 };
 
 #endif

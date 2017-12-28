@@ -31,45 +31,45 @@ class PsiAccount;
 
 class BookmarkManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	BookmarkManager(PsiAccount* account);
+    BookmarkManager(PsiAccount* account);
 
-	bool isAvailable() const;
-	bool isBookmarked(const XMPP::Jid &);
+    bool isAvailable() const;
+    bool isBookmarked(const XMPP::Jid &);
 
-	QList<URLBookmark> urls() const;
-	QList<ConferenceBookmark> conferences() const;
-	int indexOfConference(const XMPP::Jid &) const;
-	QString conferenceName(const XMPP::Jid &) const; // convenient method
+    QList<URLBookmark> urls() const;
+    QList<ConferenceBookmark> conferences() const;
+    int indexOfConference(const XMPP::Jid &) const;
+    QString conferenceName(const XMPP::Jid &) const; // convenient method
 
-	void setBookmarks(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
-	void setBookmarks(const QList<URLBookmark>&);
-	void setBookmarks(const QList<ConferenceBookmark>&);
-	void removeConference(const XMPP::Jid &);
+    void setBookmarks(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
+    void setBookmarks(const QList<URLBookmark>&);
+    void setBookmarks(const QList<ConferenceBookmark>&);
+    void removeConference(const XMPP::Jid &);
 
 signals:
-	void availabilityChanged();
-	void urlsChanged(const QList<URLBookmark>&);
-	void conferencesChanged(const QList<ConferenceBookmark>&);
-	void bookmarksSaved();
+    void availabilityChanged();
+    void urlsChanged(const QList<URLBookmark>&);
+    void conferencesChanged(const QList<ConferenceBookmark>&);
+    void bookmarksSaved();
 
 private slots:
-	void getBookmarks_finished();
-	void setBookmarks_finished();
-	void accountStateChanged();
+    void getBookmarks_finished();
+    void setBookmarks_finished();
+    void accountStateChanged();
 
 private:
-	void getBookmarks();
-	void setIsAvailable(bool available);
+    void getBookmarks();
+    void setIsAvailable(bool available);
 
 private:
-	PsiAccount* account_;
-	bool accountAvailable_;
-	bool isAvailable_;
-	QList<URLBookmark> urls_;
-	QList<ConferenceBookmark> conferences_;
+    PsiAccount* account_;
+    bool accountAvailable_;
+    bool isAvailable_;
+    QList<URLBookmark> urls_;
+    QList<ConferenceBookmark> conferences_;
 };
 
 #endif

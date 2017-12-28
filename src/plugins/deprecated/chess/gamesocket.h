@@ -12,29 +12,29 @@
  * Hacked by:
  */
 
-#ifndef	__GAME_SOCKET_H__
-#define	__GAME_SOCKET_H__
+#ifndef    __GAME_SOCKET_H__
+#define    __GAME_SOCKET_H__
 
 #include <Q3ServerSocket>
 #include <stdlib.h>
 
-#define	GAME_PORT	1345
-#define	GAME_BACKLOG	5
+#define    GAME_PORT    1345
+#define    GAME_BACKLOG    5
 
 class GameSocket:public Q3ServerSocket
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	GameSocket(QWidget *parent = NULL, const char *name = NULL);
-	~GameSocket();
+    GameSocket(QWidget *parent = NULL, const char *name = NULL);
+    ~GameSocket();
 
 private:
 
 protected:
-	void	newConnection(int);
+    void    newConnection(int);
 
 signals:
-	void	acceptConnection(int);
+    void    acceptConnection(int);
 };
 
-#endif	/* __GAME_SOCKET_H__ */
+#endif    /* __GAME_SOCKET_H__ */

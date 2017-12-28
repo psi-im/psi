@@ -35,133 +35,133 @@
 //! \if _hide_doc_
 class URLObject::Private : QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	QString link;
-	IconAction *act_xmpp, *act_mailto, *act_join_groupchat, *act_send_message, *act_chat, *act_browser, *act_add_to_roster, *act_copy, *act_info;
-	URLObject *urlObject;
-	QSignalMapper xmppActionMapper;
+    QString link;
+    IconAction *act_xmpp, *act_mailto, *act_join_groupchat, *act_send_message, *act_chat, *act_browser, *act_add_to_roster, *act_copy, *act_info;
+    URLObject *urlObject;
+    QSignalMapper xmppActionMapper;
 
-	void connectXmppAction(QAction* action, const QString& query)
-	{
-		connect(action, SIGNAL(triggered()), &xmppActionMapper, SLOT(map()));
-		xmppActionMapper.setMapping(action, query);
-	}
+    void connectXmppAction(QAction* action, const QString& query)
+    {
+        connect(action, SIGNAL(triggered()), &xmppActionMapper, SLOT(map()));
+        xmppActionMapper.setMapping(action, query);
+    }
 
-	Private(URLObject *parent)
-		: QObject(parent)
-	{
-		urlObject = parent;
-		QString tr;
+    Private(URLObject *parent)
+        : QObject(parent)
+    {
+        urlObject = parent;
+        QString tr;
 
-		tr = qApp->translate("URLLabel", "Open");
-		act_xmpp = new IconAction(tr, "psi/jabber", tr, 0, this);
-		connectXmppAction(act_xmpp, "");
+        tr = qApp->translate("URLLabel", "Open");
+        act_xmpp = new IconAction(tr, "psi/jabber", tr, 0, this);
+        connectXmppAction(act_xmpp, "");
 
-		tr = qApp->translate("URLLabel", "Open mail composer");
-		act_mailto = new IconAction(tr, "psi/email", tr, 0, this);
-		connect(act_mailto, SIGNAL(triggered()), SLOT(popupAction()));
+        tr = qApp->translate("URLLabel", "Open mail composer");
+        act_mailto = new IconAction(tr, "psi/email", tr, 0, this);
+        connect(act_mailto, SIGNAL(triggered()), SLOT(popupAction()));
 
-		tr = qApp->translate("URLLabel", "Open web browser");
-		act_browser = new IconAction(tr, "psi/www", tr, 0, this);
-		connect(act_browser, SIGNAL(triggered()), SLOT(popupAction()));
+        tr = qApp->translate("URLLabel", "Open web browser");
+        act_browser = new IconAction(tr, "psi/www", tr, 0, this);
+        connect(act_browser, SIGNAL(triggered()), SLOT(popupAction()));
 
-		tr = qApp->translate("URLLabel", "Add to Roster");
-		act_add_to_roster = new IconAction(tr, "psi/addContact", tr, 0, this);
-		connectXmppAction(act_add_to_roster, "roster");
+        tr = qApp->translate("URLLabel", "Add to Roster");
+        act_add_to_roster = new IconAction(tr, "psi/addContact", tr, 0, this);
+        connectXmppAction(act_add_to_roster, "roster");
 
-		tr = qApp->translate("URLLabel", "Send message to");
-		act_send_message = new IconAction(tr, "psi/message", tr, 0, this);
-		connectXmppAction(act_send_message, "message");
+        tr = qApp->translate("URLLabel", "Send message to");
+        act_send_message = new IconAction(tr, "psi/message", tr, 0, this);
+        connectXmppAction(act_send_message, "message");
 
-		tr = qApp->translate("URLLabel", "Chat with");
-		act_chat = new IconAction(tr, "psi/chat", tr, 0, this);
-		connectXmppAction(act_chat, "message;type=chat");
+        tr = qApp->translate("URLLabel", "Chat with");
+        act_chat = new IconAction(tr, "psi/chat", tr, 0, this);
+        connectXmppAction(act_chat, "message;type=chat");
 
-		tr = qApp->translate("URLLabel", "Join groupchat");
-		act_join_groupchat = new IconAction(tr, "psi/groupChat", tr, 0, this);
-		connectXmppAction(act_join_groupchat, "join");
+        tr = qApp->translate("URLLabel", "Join groupchat");
+        act_join_groupchat = new IconAction(tr, "psi/groupChat", tr, 0, this);
+        connectXmppAction(act_join_groupchat, "join");
 
-		tr = qApp->translate("URLLabel", "Copy location");
-		act_copy = new IconAction(tr, tr, 0, this);
-		connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
+        tr = qApp->translate("URLLabel", "Copy location");
+        act_copy = new IconAction(tr, tr, 0, this);
+        connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
 
-		tr = qApp->translate("URLLabel", "User Info");
-		act_info = new IconAction(tr, "psi/vCard", tr, 0, this);
-		connectXmppAction(act_info, "vcard");
+        tr = qApp->translate("URLLabel", "User Info");
+        act_info = new IconAction(tr, "psi/vCard", tr, 0, this);
+        connectXmppAction(act_info, "vcard");
 
-		connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
-	}
+        connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
+    }
 
-	QString copyString(QString from)
-	{
-		QString l = from;
+    QString copyString(QString from)
+    {
+        QString l = from;
 
-		int colon = l.indexOf(':');
-		if ( colon == -1 )
-			colon = 0;
-		QString service = l.left( colon );
+        int colon = l.indexOf(':');
+        if ( colon == -1 )
+            colon = 0;
+        QString service = l.left( colon );
 
-		if ( service == "mailto" || service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
-			if ( colon > -1 )
-				l = l.mid( colon + 1 );
+        if ( service == "mailto" || service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
+            if ( colon > -1 )
+                l = l.mid( colon + 1 );
 
-			while ( l[0] == '/' )
-				l = l.mid( 1 );
-		}
+            while ( l[0] == '/' )
+                l = l.mid( 1 );
+        }
 
-		return l;
-	}
+        return l;
+    }
 
 public slots:
-	void popupAction(QString lnk) {
-		if (lnk.startsWith("x-psi-atstyle:")) {
-			lnk.replace(0, 13, "mailto");
-		}
-		emit urlObject->openURL(lnk);
-	}
+    void popupAction(QString lnk) {
+        if (lnk.startsWith("x-psi-atstyle:")) {
+            lnk.replace(0, 13, "mailto");
+        }
+        emit urlObject->openURL(lnk);
+    }
 
-	void popupAction() {
-		popupAction(link);
-	}
+    void popupAction() {
+        popupAction(link);
+    }
 
-	void popupCopy(QString lnk) {
-		QApplication::clipboard()->setText( copyString(lnk), QClipboard::Clipboard );
-		if(QApplication::clipboard()->supportsSelection())
-			QApplication::clipboard()->setText( copyString(lnk), QClipboard::Selection );
-	}
+    void popupCopy(QString lnk) {
+        QApplication::clipboard()->setText( copyString(lnk), QClipboard::Clipboard );
+        if(QApplication::clipboard()->supportsSelection())
+            QApplication::clipboard()->setText( copyString(lnk), QClipboard::Selection );
+    }
 
-	void popupCopy() {
-		popupCopy(link);
-	}
+    void popupCopy() {
+        popupCopy(link);
+    }
 
-	void xmppAction(const QString& lnk, const QString& query) {
-		QUrl uri(lnk);
-		if (!query.isEmpty()) {
-			QString queryType = query.left(query.indexOf(';'));
+    void xmppAction(const QString& lnk, const QString& query) {
+        QUrl uri(lnk);
+        if (!query.isEmpty()) {
+            QString queryType = query.left(query.indexOf(';'));
 #ifdef HAVE_QT5
-			QUrlQuery q;
-			q.setQueryDelimiters('=', ';');
-			q.setQuery(uri.query(QUrl::FullyEncoded));
+            QUrlQuery q;
+            q.setQueryDelimiters('=', ';');
+            q.setQuery(uri.query(QUrl::FullyEncoded));
 
-			if (q.queryItems().value(0).first != queryType) {
-				q.setQuery(query);
-			}
-			uri.setQuery(q);
+            if (q.queryItems().value(0).first != queryType) {
+                q.setQuery(query);
+            }
+            uri.setQuery(q);
 #else
-			uri.setQueryDelimiters('=', ';');
-			if (uri.queryItems().value(0).first != queryType) {
-				uri.setEncodedQuery(query.toLatin1());
-			}
+            uri.setQueryDelimiters('=', ';');
+            if (uri.queryItems().value(0).first != queryType) {
+                uri.setEncodedQuery(query.toLatin1());
+            }
 #endif
-		}
-		uri.setScheme("xmpp");
-		emit urlObject->openURL(uri.toString());
-	}
+        }
+        uri.setScheme("xmpp");
+        emit urlObject->openURL(uri.toString());
+    }
 
-	void xmppAction(const QString& query) {
-		xmppAction(link, query);
-	}
+    void xmppAction(const QString& query) {
+        xmppAction(link, query);
+    }
 };
 //! \endif
 
@@ -174,9 +174,9 @@ public slots:
  * Default constructor.
  */
 URLObject::URLObject()
-	: QObject(qApp)
+    : QObject(qApp)
 {
-	d = new Private(this);
+    d = new Private(this);
 }
 
 /**
@@ -184,10 +184,10 @@ URLObject::URLObject()
  */
 URLObject *URLObject::getInstance()
 {
-	static URLObject *urlObject = 0;
-	if (!urlObject)
-		urlObject = new URLObject();
-	return urlObject;
+    static URLObject *urlObject = 0;
+    if (!urlObject)
+        urlObject = new URLObject();
+    return urlObject;
 }
 
 /**
@@ -196,44 +196,44 @@ URLObject *URLObject::getInstance()
  */
 QMenu *URLObject::createPopupMenu(const QString &lnk)
 {
-	d->link = lnk;
-	if ( d->link.isEmpty() )
-		return 0;
+    d->link = lnk;
+    if ( d->link.isEmpty() )
+        return 0;
 
-	int colon = d->link.indexOf(':');
-	if ( colon == -1 )
-		colon = 0;
-	QString service = d->link.left( colon );
+    int colon = d->link.indexOf(':');
+    if ( colon == -1 )
+        colon = 0;
+    QString service = d->link.left( colon );
 
-	QMenu *m = new QMenu;
+    QMenu *m = new QMenu;
 
-	bool needGenericOpen = true;
-	if (service == "mailto" || service == "x-psi-atstyle") {
-		needGenericOpen = false;
-		m->addAction(d->act_mailto);
-	}
-	if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
-		needGenericOpen = false;
-		if (service == "x-psi-atstyle") {
-			m->addSeparator();
-		}
-		m->addAction(d->act_info);
-		m->addAction(d->act_xmpp);
-		m->addAction(d->act_chat);
-		m->addAction(d->act_send_message);
-		m->addAction(d->act_join_groupchat);
-		//m->addAction(d->act_add_to_roster);
-		if (service == "x-psi-atstyle") {
-			m->addSeparator();
-		}
-	}
-	if (needGenericOpen) {
-		m->addAction(d->act_browser);
-	}
+    bool needGenericOpen = true;
+    if (service == "mailto" || service == "x-psi-atstyle") {
+        needGenericOpen = false;
+        m->addAction(d->act_mailto);
+    }
+    if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
+        needGenericOpen = false;
+        if (service == "x-psi-atstyle") {
+            m->addSeparator();
+        }
+        m->addAction(d->act_info);
+        m->addAction(d->act_xmpp);
+        m->addAction(d->act_chat);
+        m->addAction(d->act_send_message);
+        m->addAction(d->act_join_groupchat);
+        //m->addAction(d->act_add_to_roster);
+        if (service == "x-psi-atstyle") {
+            m->addSeparator();
+        }
+    }
+    if (needGenericOpen) {
+        m->addAction(d->act_browser);
+    }
 
-	m->addAction(d->act_copy);
-	m->setStyleSheet(PsiOptions::instance()->getOption("options.ui.look.css").toString());
-	return m;
+    m->addAction(d->act_copy);
+    m->setStyleSheet(PsiOptions::instance()->getOption("options.ui.look.css").toString());
+    return m;
 }
 
 /**
@@ -242,7 +242,7 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
  */
 void URLObject::popupAction(QString lnk)
 {
-	d->popupAction(lnk);
+    d->popupAction(lnk);
 }
 
 #include "urlobject.moc"

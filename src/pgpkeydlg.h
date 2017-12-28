@@ -35,30 +35,30 @@ class QSortFilterProxyModel;
 
 class PGPKeyDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum Type { Public, Secret };
+    enum Type { Public, Secret };
 
-	PGPKeyDlg(Type, const QString& defaultKeyID, QWidget *parent = 0);
-	const QCA::KeyStoreEntry& keyStoreEntry() const;
+    PGPKeyDlg(Type, const QString& defaultKeyID, QWidget *parent = 0);
+    const QCA::KeyStoreEntry& keyStoreEntry() const;
 
 private slots:
-	void doubleClicked(const QModelIndex& index);
-	void filterTextChanged();
-	void do_accept();
-	void show_ksm_dtext();
+    void doubleClicked(const QModelIndex& index);
+    void filterTextChanged();
+    void do_accept();
+    void show_ksm_dtext();
 
 protected:
-	// reimplemented
-	bool eventFilter(QObject* watched, QEvent* event);
+    // reimplemented
+    bool eventFilter(QObject* watched, QEvent* event);
 
 private:
-	Ui::PGPKey ui_;
-	QCA::KeyStoreEntry entry_;
-	QPushButton* pb_dtext_;
-	QStandardItemModel* model_;
-	QSortFilterProxyModel* proxy_;
+    Ui::PGPKey ui_;
+    QCA::KeyStoreEntry entry_;
+    QPushButton* pb_dtext_;
+    QStandardItemModel* model_;
+    QSortFilterProxyModel* proxy_;
 };
 
 #endif

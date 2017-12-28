@@ -33,58 +33,58 @@ class MUCAffiliationsModel;
 class MUCAffiliationsProxyModel;
 class InfoWidget;
 namespace XMPP {
-	class XData;
+    class XData;
 }
 
 using namespace XMPP;
 
 class MUCConfigDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MUCConfigDlg(MUCManager*, QWidget*);
-	~MUCConfigDlg();
+    MUCConfigDlg(MUCManager*, QWidget*);
+    ~MUCConfigDlg();
 
-	void setRoleAffiliation(MUCItem::Role, MUCItem::Affiliation);
+    void setRoleAffiliation(MUCItem::Role, MUCItem::Affiliation);
 
 protected:
-	void setRole(MUCItem::Role);
-	void setAffiliation(MUCItem::Affiliation);
-	void refreshGeneral();
-	void refreshAffiliations();
-	void refreshVcard();
-	void removePendingRequest(MUCItem::Affiliation);
+    void setRole(MUCItem::Role);
+    void setAffiliation(MUCItem::Affiliation);
+    void refreshGeneral();
+    void refreshAffiliations();
+    void refreshVcard();
+    void removePendingRequest(MUCItem::Affiliation);
 
 protected slots:
-	void add();
-	void apply();
-	void destroy();
-	void currentTabChanged(int);
-	void applyFilter(const QString&);
+    void add();
+    void apply();
+    void destroy();
+    void currentTabChanged(int);
+    void applyFilter(const QString&);
 
-	void getConfiguration_success( const XData&);
-	void getConfiguration_error(int, const QString&);
-	void setConfiguration_success();
-	void setConfiguration_error(int, const QString&);
-	void setItems_success();
-	void setItems_error(int, const QString&);
-	void getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem>&);
-	void getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString&);
-	void destroy_success();
-	void destroy_error(int, const QString&);
+    void getConfiguration_success( const XData&);
+    void getConfiguration_error(int, const QString&);
+    void setConfiguration_success();
+    void setConfiguration_error(int, const QString&);
+    void setItems_success();
+    void setItems_error(int, const QString&);
+    void getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem>&);
+    void getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString&);
+    void destroy_success();
+    void destroy_error(int, const QString&);
 
 private:
-	Ui::MUCConfig ui_;
-	MUCItem::Role role_;
-	MUCItem::Affiliation affiliation_;
-	MUCManager* manager_;
-	QScrollArea* data_container_;
-	XDataWidget* data_;
-	InfoWidget* vcard_;
-	MUCAffiliationsModel* affiliations_model_;
-	MUCAffiliationsProxyModel* affiliations_proxy_model_;
-	QList<MUCItem::Affiliation> pending_requests_;
+    Ui::MUCConfig ui_;
+    MUCItem::Role role_;
+    MUCItem::Affiliation affiliation_;
+    MUCManager* manager_;
+    QScrollArea* data_container_;
+    XDataWidget* data_;
+    InfoWidget* vcard_;
+    MUCAffiliationsModel* affiliations_model_;
+    MUCAffiliationsProxyModel* affiliations_proxy_model_;
+    QList<MUCItem::Affiliation> pending_requests_;
 };
 
 #endif

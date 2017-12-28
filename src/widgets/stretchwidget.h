@@ -4,10 +4,10 @@
 class StretchWidget: public QWidget
 {
 public:
-	StretchWidget(QWidget *parent) : QWidget( parent )
-	{
-		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-	}
+    StretchWidget(QWidget *parent) : QWidget( parent )
+    {
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    }
 };
 
 #endif

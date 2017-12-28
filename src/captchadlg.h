@@ -14,22 +14,22 @@ class XDataWidget;
 
 class CaptchaDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	explicit CaptchaDlg(QWidget *parent, const XMPP::CaptchaChallenge &challenge, PsiAccount *pa);
-	~CaptchaDlg();
+    explicit CaptchaDlg(QWidget *parent, const XMPP::CaptchaChallenge &challenge, PsiAccount *pa);
+    ~CaptchaDlg();
 
 public slots:
-	void done(int r);
+    void done(int r);
 
 private slots:
-	void captchaFinished();
+    void captchaFinished();
 
 private:
-	Ui::CaptchaDlg *ui;
-	XMPP::CaptchaChallenge challenge;
-	XDataWidget *dataWidget;
+    Ui::CaptchaDlg *ui;
+    XMPP::CaptchaChallenge challenge;
+    XDataWidget *dataWidget;
 };
 
 #endif // CAPTCHADLG_H

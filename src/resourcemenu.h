@@ -31,28 +31,28 @@ class PsiContact;
 
 class ResourceMenu : public QMenu
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ResourceMenu(QWidget *parent);
-	ResourceMenu(const QString& title, PsiContact* contact, QWidget* parent);
+    ResourceMenu(QWidget *parent);
+    ResourceMenu(const QString& title, PsiContact* contact, QWidget* parent);
 
-	bool activeChatsMode() const;
-	void setActiveChatsMode(bool activeChatsMode);
+    bool activeChatsMode() const;
+    void setActiveChatsMode(bool activeChatsMode);
 
-	void addResource(const UserResource &r);
-	void addResource(int status, QString name);
+    void addResource(const UserResource &r);
+    void addResource(int status, QString name);
 
 signals:
-	void resourceActivated(PsiContact* contact, const XMPP::Jid& jid);
-	void resourceActivated(QString resource);
+    void resourceActivated(PsiContact* contact, const XMPP::Jid& jid);
+    void resourceActivated(QString resource);
 
 private slots:
-	void actionActivated();
-	void contactUpdated();
+    void actionActivated();
+    void contactUpdated();
 
 private:
-	QPointer<PsiContact> contact_;
-	bool activeChatsMode_;
+    QPointer<PsiContact> contact_;
+    bool activeChatsMode_;
 };
 
 #endif

@@ -29,13 +29,13 @@
 class CombinedTuneController : public TuneController
 {
 public:
-	CombinedTuneController();
-	~CombinedTuneController();
+    CombinedTuneController();
+    ~CombinedTuneController();
 
-	virtual Tune currentTune();
+    virtual Tune currentTune();
 
 private:
-	QList<TuneController*> controllers_;
+    QList<TuneController*> controllers_;
 };
 
 #endif

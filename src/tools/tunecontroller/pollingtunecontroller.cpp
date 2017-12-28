@@ -37,8 +37,8 @@
  */
 PollingTuneController::PollingTuneController()
 {
-	connect(&_timer, SIGNAL(timeout()), SLOT(check()));
-	_timer.setInterval(DefaultInterval);
+    connect(&_timer, SIGNAL(timeout()), SLOT(check()));
+    _timer.setInterval(DefaultInterval);
 }
 
 /**
@@ -46,14 +46,14 @@ PollingTuneController::PollingTuneController()
  */
 void PollingTuneController::check()
 {
-	Tune tune = currentTune();
-	if (_prevTune != tune) {
-		_prevTune = tune;
-		if (tune.isNull()) {
-			emit stopped();
-		}
-		else {
-			emit playing(tune);
-		}
-	}
+    Tune tune = currentTune();
+    if (_prevTune != tune) {
+        _prevTune = tune;
+        if (tune.isNull()) {
+            emit stopped();
+        }
+        else {
+            emit playing(tune);
+        }
+    }
 }

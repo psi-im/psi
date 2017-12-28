@@ -35,70 +35,70 @@ class PsiAccount;
 class ChatViewTheme;
 class ChatViewPrivate;
 namespace XMPP {
-	class Jid;
+    class Jid;
 }
 
 class ChatView : public QFrame, public ChatViewCommon
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ChatView(QWidget* parent);
-	~ChatView();
+    ChatView(QWidget* parent);
+    ~ChatView();
 
-	void markReceived(QString id);
+    void markReceived(QString id);
 
-	// reimplemented
-	QSize sizeHint() const;
+    // reimplemented
+    QSize sizeHint() const;
 
-	void setDialog(QWidget* dialog);
-	void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
-	void setAccount(PsiAccount *acc);
+    void setDialog(QWidget* dialog);
+    void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
+    void setAccount(PsiAccount *acc);
 
-	void contextMenuEvent(QContextMenuEvent* event);
-	void sendJsObject(const QVariantMap &);
-	bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
+    void contextMenuEvent(QContextMenuEvent* event);
+    void sendJsObject(const QVariantMap &);
+    bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
-	void dispatchMessage(const MessageView &m);
+    void dispatchMessage(const MessageView &m);
 
-	void clear();
-	void doTrackBar();
-	bool internalFind(QString str, bool startFromBeginning = false);
-	WebView * textWidget();
-	QWidget * realTextWidget();
-	QObject * jsBridge();
+    void clear();
+    void doTrackBar();
+    bool internalFind(QString str, bool startFromBeginning = false);
+    WebView * textWidget();
+    QWidget * realTextWidget();
+    QObject * jsBridge();
 
 public slots:
-	void scrollUp();
-	void scrollDown();
-	void updateAvatar(const XMPP::Jid &jid, UserType utype);
+    void scrollUp();
+    void scrollDown();
+    void updateAvatar(const XMPP::Jid &jid, UserType utype);
 
-	void setEncryptionEnabled(bool enabled);
+    void setEncryptionEnabled(bool enabled);
 
 protected:
-	// override the tab/esc behavior
-	bool focusNextPrevChild(bool next);
-	void changeEvent(QEvent * event);
-	//void keyPressEvent(QKeyEvent *);
+    // override the tab/esc behavior
+    bool focusNextPrevChild(bool next);
+    void changeEvent(QEvent * event);
+    //void keyPressEvent(QKeyEvent *);
 
 protected slots:
-	void psiOptionChanged(const QString &);
-	//void autoCopy();
+    void psiOptionChanged(const QString &);
+    //void autoCopy();
 
 public slots:
-	void init();
+    void init();
 
 private slots:
-	void checkJsBuffer();
-	void sessionInited();
+    void checkJsBuffer();
+    void sessionInited();
 
 signals:
-	void showNM(const QString&);
-	void nickInsertClick(const QString &nick);
+    void showNM(const QString&);
+    void nickInsertClick(const QString &nick);
 
 private:
-	friend class ChatViewPrivate;
-	friend class ChatViewJSObject;
-	QScopedPointer<ChatViewPrivate> d;
+    friend class ChatViewPrivate;
+    friend class ChatViewJSObject;
+    QScopedPointer<ChatViewPrivate> d;
 };
 
 #endif

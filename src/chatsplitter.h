@@ -28,35 +28,35 @@ class QSplitter;
 
 class ChatSplitter : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ChatSplitter(QWidget* parent);
+    ChatSplitter(QWidget* parent);
 
-	void setOrientation(Qt::Orientation orientation);
-	void addWidget(QWidget* widget);
-	void setSizes(const QList<int>& list);
+    void setOrientation(Qt::Orientation orientation);
+    void addWidget(QWidget* widget);
+    void setSizes(const QList<int>& list);
 
 protected:
-	/**
-	 * Returns true if all child widgets are managed by QLayout.
-	 */
-	bool splitterEnabled() const { return splitterEnabled_; }
-	void setSplitterEnabled(bool enable);
+    /**
+     * Returns true if all child widgets are managed by QLayout.
+     */
+    bool splitterEnabled() const { return splitterEnabled_; }
+    void setSplitterEnabled(bool enable);
 
 public slots:
-	void optionsChanged();
+    void optionsChanged();
 
 private slots:
-	void childDestroyed(QObject* obj);
+    void childDestroyed(QObject* obj);
 
 private:
-	void updateChildLayout(QWidget* child);
-	void updateLayout();
+    void updateChildLayout(QWidget* child);
+    void updateLayout();
 
-	bool splitterEnabled_;
-	QList<QWidget*> children_;
-	QSplitter* splitter_;
-	QLayout* layout_;
+    bool splitterEnabled_;
+    QList<QWidget*> children_;
+    QSplitter* splitter_;
+    QLayout* layout_;
 };
 
 #endif

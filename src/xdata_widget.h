@@ -34,45 +34,45 @@ class PsiCon;
 class XDataField;
 
 namespace XMPP {
-	class Client;
+    class Client;
 }
 
 class XDataWidget : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client* client, XMPP::Jid owner);
-	~XDataWidget();
+    XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client* client, XMPP::Jid owner);
+    ~XDataWidget();
 
-	PsiCon *psi() const;
-	XMPP::Client* client() const;
-	QString registrarType() const;
-	XMPP::Jid owner() const;
-	XMPP::Stanza::Error consistencyError() const;
+    PsiCon *psi() const;
+    XMPP::Client* client() const;
+    QString registrarType() const;
+    XMPP::Jid owner() const;
+    XMPP::Stanza::Error consistencyError() const;
 
-	void setForm(const XMPP::XData&, bool withInstructions = true);
+    void setForm(const XMPP::XData&, bool withInstructions = true);
 
-	XMPP::XData::FieldList fields() const;
-	XDataField* fieldByVar(const QString &) const;
+    XMPP::XData::FieldList fields() const;
+    XDataField* fieldByVar(const QString &) const;
 
 protected slots:
-	void linkActivated(const QString&);
+    void linkActivated(const QString&);
 
 private:
-	void setInstructions(const QString&);
-	void setFields(const XMPP::XData::FieldList &);
+    void setInstructions(const QString&);
+    void setFields(const XMPP::XData::FieldList &);
 
 private:
-	typedef QList<XDataField*> XDataFieldList;
-	XDataFieldList fields_;
-	QString registrarType_;
-	QVBoxLayout* layout_;
-	PsiCon *psi_;
-	XMPP::Client* client_;
-	XMPP::Jid owner_;
-	bool consistent_;
-	XMPP::Stanza::Error consistencyError_;
+    typedef QList<XDataField*> XDataFieldList;
+    XDataFieldList fields_;
+    QString registrarType_;
+    QVBoxLayout* layout_;
+    PsiCon *psi_;
+    XMPP::Client* client_;
+    XMPP::Jid owner_;
+    bool consistent_;
+    XMPP::Stanza::Error consistencyError_;
 };
 
 #endif

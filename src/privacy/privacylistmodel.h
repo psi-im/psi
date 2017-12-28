@@ -30,31 +30,31 @@ class QObject;
 class PrivacyListModel : public QAbstractListModel
 {
 public:
-	enum { TextColumn = 0, ValueColumn };
-	enum {
-		BlockedRole = Qt::UserRole + 0
-	};
+    enum { TextColumn = 0, ValueColumn };
+    enum {
+        BlockedRole = Qt::UserRole + 0
+    };
 
-	PrivacyListModel(const PrivacyList& list = PrivacyList(""), QObject* parent = NULL);
+    PrivacyListModel(const PrivacyList& list = PrivacyList(""), QObject* parent = NULL);
 
-	// Overridden from QAbstractListModel
-	int rowCount(const QModelIndex &parent = QModelIndex()) const;
-	int columnCount(const QModelIndex &parent = QModelIndex()) const;
-	QVariant data(const QModelIndex &index, int role) const;
-	bool removeRows(int row, int count, const QModelIndex & parent = QModelIndex());
-	//void reset() { QAbstractListModel::reset(); } // Not really clean
+    // Overridden from QAbstractListModel
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role) const;
+    bool removeRows(int row, int count, const QModelIndex & parent = QModelIndex());
+    //void reset() { QAbstractListModel::reset(); } // Not really clean
 
-	// Own functions
-	PrivacyList& list() { return list_; }
-	void setList(const PrivacyList& list);
-	bool moveUp(const QModelIndex& index);
-	bool moveDown(const QModelIndex& index);
-	bool edit(const QModelIndex& index);
-	bool add();
-	void insertItem(int pos, const PrivacyListItem &item);
+    // Own functions
+    PrivacyList& list() { return list_; }
+    void setList(const PrivacyList& list);
+    bool moveUp(const QModelIndex& index);
+    bool moveDown(const QModelIndex& index);
+    bool edit(const QModelIndex& index);
+    bool add();
+    void insertItem(int pos, const PrivacyListItem &item);
 
 private:
-	PrivacyList list_;
+    PrivacyList list_;
 };
 
 #endif

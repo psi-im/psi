@@ -28,25 +28,25 @@ class Iconset;
 
 class IconSelectPopup : public QMenu
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	IconSelectPopup(QWidget *parent = 0);
-	~IconSelectPopup();
+    IconSelectPopup(QWidget *parent = 0);
+    ~IconSelectPopup();
 
-	void setIconset(const Iconset &);
-	const Iconset &iconset() const;
+    void setIconset(const Iconset &);
+    const Iconset &iconset() const;
 
-	// reimplemented
-	void mousePressEvent(QMouseEvent *e);
+    // reimplemented
+    void mousePressEvent(QMouseEvent *e);
 
 signals:
-	void iconSelected(const PsiIcon *);
-	void textSelected(QString);
+    void iconSelected(const PsiIcon *);
+    void textSelected(QString);
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 #endif

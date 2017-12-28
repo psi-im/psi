@@ -28,12 +28,12 @@ class Iconset;
 
 class IconWidgetItem : public QObject, public QListWidgetItem
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconWidgetItem(QListWidget *parent = 0)
-	: QListWidgetItem(parent) {}
+    IconWidgetItem(QListWidget *parent = 0)
+    : QListWidgetItem(parent) {}
 
-	virtual const Iconset *iconset() const { return 0; }
+    virtual const Iconset *iconset() const { return 0; }
 };
 
 #endif

@@ -25,83 +25,83 @@
 
 QString PsiPopupInterface::clipText(QString text)
 {
-	int len = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-text-length").toInt();
-	if (len > 0) {
-		// richtext will give us trouble here
-		if (((int)text.length()) > len) {
-			text = text.left(len);
+    int len = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-text-length").toInt();
+    if (len > 0) {
+        // richtext will give us trouble here
+        if (((int)text.length()) > len) {
+            text = text.left(len);
 
-			// delete last unclosed tag
-			/*if ( text.find("</") > text.find(">") ) {
+            // delete last unclosed tag
+            /*if ( text.find("</") > text.find(">") ) {
 
-				text = text.left( text.find("</") );
-			}*/
+                text = text.left( text.find("</") );
+            }*/
 
-			text += "...";
-		}
-	}
+            text += "...";
+        }
+    }
 
-	return text;
+    return text;
 }
 
 QString PsiPopupInterface::title(PopupManager::PopupType type, bool *doAlertIcon, PsiIcon **icon)
 {
-	QString text;
+    QString text;
 
-	switch(type) {
-	case PopupManager::AlertOnline:
-		text = QObject::tr("Contact online");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
-		*doAlertIcon = false;
-		break;
-	case PopupManager::AlertOffline:
-		text = QObject::tr("Contact offline");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("status/offline");
-		*doAlertIcon = false;
-		break;
-	case PopupManager::AlertStatusChange:
-		text = QObject::tr("Status change");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
-		*doAlertIcon = false;
-		break;
-	case PopupManager::AlertMessage:
-		text = QObject::tr("Incoming message");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/message");
-		*doAlertIcon = true;
-		break;
-	case PopupManager::AlertComposing:
-		text = QObject::tr("Typing notify");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/typing");
-		*doAlertIcon = false;
-		break;
-	case PopupManager::AlertChat:
-		text = QObject::tr("Incoming chat message");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/chat");
-		*doAlertIcon = true;
-		break;
-	case PopupManager::AlertHeadline:
-		text = QObject::tr("Headline");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
-		*doAlertIcon = true;
-		break;
-	case PopupManager::AlertFile:
-		text = QObject::tr("Incoming file");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/file");
-		*doAlertIcon = true;
-		break;
-	case PopupManager::AlertAvCall:
-		text = QObject::tr("Incoming call");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/call");
-		*doAlertIcon = true;
-		break;
-	case PopupManager::AlertGcHighlight:
-		text = QObject::tr("Groupchat highlight");
-		*icon = (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
-		*doAlertIcon = true;
-		break;
-	default:
-		break;
-	}
+    switch(type) {
+    case PopupManager::AlertOnline:
+        text = QObject::tr("Contact online");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
+        *doAlertIcon = false;
+        break;
+    case PopupManager::AlertOffline:
+        text = QObject::tr("Contact offline");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("status/offline");
+        *doAlertIcon = false;
+        break;
+    case PopupManager::AlertStatusChange:
+        text = QObject::tr("Status change");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
+        *doAlertIcon = false;
+        break;
+    case PopupManager::AlertMessage:
+        text = QObject::tr("Incoming message");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/message");
+        *doAlertIcon = true;
+        break;
+    case PopupManager::AlertComposing:
+        text = QObject::tr("Typing notify");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/typing");
+        *doAlertIcon = false;
+        break;
+    case PopupManager::AlertChat:
+        text = QObject::tr("Incoming chat message");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/chat");
+        *doAlertIcon = true;
+        break;
+    case PopupManager::AlertHeadline:
+        text = QObject::tr("Headline");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
+        *doAlertIcon = true;
+        break;
+    case PopupManager::AlertFile:
+        text = QObject::tr("Incoming file");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/file");
+        *doAlertIcon = true;
+        break;
+    case PopupManager::AlertAvCall:
+        text = QObject::tr("Incoming call");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/call");
+        *doAlertIcon = true;
+        break;
+    case PopupManager::AlertGcHighlight:
+        text = QObject::tr("Groupchat highlight");
+        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
+        *doAlertIcon = true;
+        break;
+    default:
+        break;
+    }
 
-	return CAP(text);
+    return CAP(text);
 }

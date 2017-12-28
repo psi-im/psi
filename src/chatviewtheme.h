@@ -33,35 +33,35 @@ class ThemeServer;
 
 
 class ChatViewThemeSession : public QObject {
-	Q_OBJECT
+    Q_OBJECT
 
-	friend class ChatViewThemePrivate;
+    friend class ChatViewThemePrivate;
 #ifndef WEBENGINE
-	friend class SessionRequestHandler;
+    friend class SessionRequestHandler;
 #endif
 
-	Theme theme;
-	QString sessId; // unique id of session
+    Theme theme;
+    QString sessId; // unique id of session
 
 #ifdef WEBENGINE
-	ThemeServer *server = 0;
+    ThemeServer *server = 0;
 #endif
 
 public:
-	ChatViewThemeSession(QObject *parent = 0);
-	virtual ~ChatViewThemeSession();
+    ChatViewThemeSession(QObject *parent = 0);
+    virtual ~ChatViewThemeSession();
 
-	inline const QString &sessionId() const { return sessId; }
-	virtual WebView* webView() = 0;
-	// returns: data, content-type
-	virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
-	QString propsAsJsonString();
+    inline const QString &sessionId() const { return sessId; }
+    virtual WebView* webView() = 0;
+    // returns: data, content-type
+    virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
+    QString propsAsJsonString();
 
-	void init(const Theme &theme);
-	bool isTransparentBackground() const;
+    void init(const Theme &theme);
+    bool isTransparentBackground() const;
 private slots:
 #ifndef WEBENGINE
-	void embedJsObject();
+    void embedJsObject();
 #endif
 };
 

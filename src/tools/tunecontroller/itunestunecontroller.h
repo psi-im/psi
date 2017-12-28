@@ -9,14 +9,14 @@
 class ITunesController : public TuneController
 {
 public:
-	ITunesController();
-	~ITunesController();
+    ITunesController();
+    ~ITunesController();
 
-	virtual Tune currentTune() const;
+    virtual Tune currentTune() const;
 
 private:
-	static void iTunesCallback(CFNotificationCenterRef,void*,CFStringRef,const void*, CFDictionaryRef info);
-	Tune currentTune_;
+    static void iTunesCallback(CFNotificationCenterRef,void*,CFStringRef,const void*, CFDictionaryRef info);
+    Tune currentTune_;
 };
 
 #endif

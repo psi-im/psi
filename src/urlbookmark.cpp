@@ -29,43 +29,43 @@ URLBookmark::URLBookmark(const QString& name, const QString& url) : name_(name),
 
 URLBookmark::URLBookmark(const QDomElement& el)
 {
-	fromXml(el);
+    fromXml(el);
 }
 
 const QString& URLBookmark::name() const
 {
-	return name_;
+    return name_;
 }
 
 const QString& URLBookmark::url() const
 {
-	return url_;
+    return url_;
 }
 
 bool URLBookmark::isNull() const
 {
-	return name_.isEmpty() && url_.isEmpty();
+    return name_.isEmpty() && url_.isEmpty();
 }
 
 void URLBookmark::fromXml(const QDomElement& e)
 {
-	name_ = e.attribute("name");
-	url_ = e.attribute("url");
+    name_ = e.attribute("name");
+    url_ = e.attribute("url");
 }
 
 QDomElement URLBookmark::toXml(QDomDocument& doc) const
 {
-	QDomElement e = doc.createElement("url");
-	if (!name_.isEmpty())
-		e.setAttribute("name",name_);
-	if (!url_.isEmpty())
-		e.setAttribute("url",url_);
-	return e;
+    QDomElement e = doc.createElement("url");
+    if (!name_.isEmpty())
+        e.setAttribute("name",name_);
+    if (!url_.isEmpty())
+        e.setAttribute("url",url_);
+    return e;
 }
 
 bool URLBookmark::operator==(const URLBookmark & other) const
 {
-	return
-	    name_ == other.name_ &&
-	    url_  == other.url_;
+    return
+        name_ == other.name_ &&
+        url_  == other.url_;
 }

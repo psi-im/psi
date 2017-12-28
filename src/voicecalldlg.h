@@ -32,42 +32,42 @@ class VoiceCaller;
 
 class VoiceCallDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum CallStatus {
-		Default,
-		Calling, Accepting, Rejecting, Terminating,
-		Accepted, Rejected, InProgress, Terminated, Incoming
-	};
+    enum CallStatus {
+        Default,
+        Calling, Accepting, Rejecting, Terminating,
+        Accepted, Rejected, InProgress, Terminated, Incoming
+    };
 
-	VoiceCallDlg(const Jid&, VoiceCaller*);
+    VoiceCallDlg(const Jid&, VoiceCaller*);
 
 public slots:
-	void incoming();
-	void call();
+    void incoming();
+    void call();
 
-	void terminate_call();
-	void accept_call();
-	void reject_call();
+    void terminate_call();
+    void accept_call();
+    void reject_call();
 
-	void accepted(const Jid&);
-	void rejected(const Jid&);
-	void in_progress(const Jid&);
-	void terminated(const Jid&);
+    void accepted(const Jid&);
+    void rejected(const Jid&);
+    void in_progress(const Jid&);
+    void terminated(const Jid&);
 
 protected slots:
-	void reject();
+    void reject();
 
 protected:
-	void finalize();
-	void setStatus(CallStatus);
+    void finalize();
+    void setStatus(CallStatus);
 
 private:
-	Jid jid_;
-	CallStatus status_;
-	VoiceCaller* voiceCaller_;
-	Ui::VoiceCall ui_;
+    Jid jid_;
+    CallStatus status_;
+    VoiceCaller* voiceCaller_;
+    Ui::VoiceCall ui_;
 };
 
 #endif

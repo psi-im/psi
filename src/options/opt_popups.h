@@ -28,22 +28,22 @@ class PopupManager;
 
 class OptionsTabPopups : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabPopups(QObject *parent);
+    OptionsTabPopups(QObject *parent);
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
-	virtual bool stretchable() const { return true; }
+    virtual bool stretchable() const { return true; }
 
 public slots:
-	virtual void setData(PsiCon *psi, QWidget *);
+    virtual void setData(PsiCon *psi, QWidget *);
 
 private:
-	QWidget *w;
-	PopupManager* popup_;
+    QWidget *w;
+    PopupManager* popup_;
 };
 
 #endif

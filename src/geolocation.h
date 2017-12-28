@@ -34,62 +34,62 @@ class QDomDocument;
 class GeoLocation
 {
 public:
-	GeoLocation();
-	GeoLocation(const QDomElement&);
+    GeoLocation();
+    GeoLocation(const QDomElement&);
 
-	const Maybe<float>& alt() const;
-	const Maybe<float>& bearing() const;
-	const Maybe<float>& error() const;
-	const Maybe<float>& lat() const;
-	const Maybe<float>& lon() const;
-	const QString& datum() const;
-	const QString& description() const;
+    const Maybe<float>& alt() const;
+    const Maybe<float>& bearing() const;
+    const Maybe<float>& error() const;
+    const Maybe<float>& lat() const;
+    const Maybe<float>& lon() const;
+    const QString& datum() const;
+    const QString& description() const;
 
-	bool isNull() const;
+    bool isNull() const;
 
-	void setAlt(float);
-	void setBearing(float);
-	void setError(float);
-	void setLat(float);
-	void setLon(float);
-	void setDatum(const QString&);
-	void setDescription(const QString&);
+    void setAlt(float);
+    void setBearing(float);
+    void setError(float);
+    void setLat(float);
+    void setLon(float);
+    void setDatum(const QString&);
+    void setDescription(const QString&);
 
-	const QString& country() const;
-	const QString& region() const;
-	const QString& locality() const;
-	const QString& area() const;
-	const QString& street() const;
-	const QString& building() const;
-	const QString& floor() const;
-	const QString& room() const;
-	const QString& postalcode() const;
-	const QString& text() const;
+    const QString& country() const;
+    const QString& region() const;
+    const QString& locality() const;
+    const QString& area() const;
+    const QString& street() const;
+    const QString& building() const;
+    const QString& floor() const;
+    const QString& room() const;
+    const QString& postalcode() const;
+    const QString& text() const;
 
-	void setCountry(const QString& s);
- 	void setRegion(const QString& s);
-	void setLocality(const QString& s);
-	void setArea(const QString& s);
-	void setStreet(const QString& s);
-	void setBuilding(const QString& s);
-	void setFloor(const QString& s);
-	void setRoom(const QString& s);
-	void setPostalcode(const QString& s);
-	void setText(const QString& s);
+    void setCountry(const QString& s);
+     void setRegion(const QString& s);
+    void setLocality(const QString& s);
+    void setArea(const QString& s);
+    void setStreet(const QString& s);
+    void setBuilding(const QString& s);
+    void setFloor(const QString& s);
+    void setRoom(const QString& s);
+    void setPostalcode(const QString& s);
+    void setText(const QString& s);
 
-	QDomElement toXml(QDomDocument&);
-	QString toString() const;
+    QDomElement toXml(QDomDocument&);
+    QString toString() const;
 
-	bool operator==(const GeoLocation&) const;
-	bool operator!=(const GeoLocation&) const;
+    bool operator==(const GeoLocation&) const;
+    bool operator!=(const GeoLocation&) const;
 
 protected:
-	void fromXml(const QDomElement&);
+    void fromXml(const QDomElement&);
 
 private:
-	Maybe<float> alt_, bearing_, error_, lat_, lon_;
-	QString datum_, description_;
-	QString country_, region_, locality_, area_, street_, building_, floor_, room_, postalcode_, text_;
+    Maybe<float> alt_, bearing_, error_, lat_, lon_;
+    QString datum_, description_;
+    QString country_, region_, locality_, area_, street_, building_, floor_, room_, postalcode_, text_;
 };
 
 #endif

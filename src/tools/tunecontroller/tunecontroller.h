@@ -31,22 +31,22 @@
  */
 class TuneController : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	virtual Tune currentTune() const = 0;
+    virtual Tune currentTune() const = 0;
 
 signals:
-	/**
-	 * This signal is emitted when the media player started playing a tune.
-	 * \param tune the playing tune
-	 */
-	void playing(const Tune& tune);
+    /**
+     * This signal is emitted when the media player started playing a tune.
+     * \param tune the playing tune
+     */
+    void playing(const Tune& tune);
 
-	/**
-	 * This signal is emitted when the media player stopped playing tunes.
-	 */
-	void stopped();
+    /**
+     * This signal is emitted when the media player stopped playing tunes.
+     */
+    void stopped();
 };
 
 #endif

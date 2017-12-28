@@ -14,29 +14,29 @@ class QPushButton;
 
 class CertificateErrorDialog : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-		CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert);
-		~CertificateErrorDialog();
+        CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert);
+        ~CertificateErrorDialog();
 
-		int exec();
+        int exec();
 
 public slots:
-		void reject();
+        void reject();
 
 private:
-		QMessageBox* messageBox_;
-		QPushButton* detailsButton_;
-		QPushButton* continueButton_;
-		QPushButton* cancelButton_;
-		QPushButton* saveButton_;
-		QCA::Certificate certificate_;
-		int result_;
-		QCA::Validity validity_;
-		QString &tlsOverrideDomain_;
-		QByteArray &tlsOverrideCert_;
-		QString domainOverride_;
-		QString host_;
+        QMessageBox* messageBox_;
+        QPushButton* detailsButton_;
+        QPushButton* continueButton_;
+        QPushButton* cancelButton_;
+        QPushButton* saveButton_;
+        QCA::Certificate certificate_;
+        int result_;
+        QCA::Validity validity_;
+        QString &tlsOverrideDomain_;
+        QByteArray &tlsOverrideCert_;
+        QString domainOverride_;
+        QString host_;
 };
 
 #endif

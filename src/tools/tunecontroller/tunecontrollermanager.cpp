@@ -37,9 +37,9 @@
 
 TuneControllerManager::TuneControllerManager()
 {
-	foreach(QObject* plugin,QPluginLoader::staticInstances()) {
-		loadPlugin(plugin);
-	}
+    foreach(QObject* plugin,QPluginLoader::staticInstances()) {
+        loadPlugin(plugin);
+    }
 }
 
 TuneControllerManager::~TuneControllerManager()
@@ -48,39 +48,39 @@ TuneControllerManager::~TuneControllerManager()
 
 void TuneControllerManager::updateControllers(const QStringList &blacklist)
 {
-	bool isInBlacklist;
-	foreach(const QString &name, plugins_.keys()) {
-		TuneControllerPtr c = controllers_.value(name);
-		isInBlacklist = blacklist.contains(name);
-		if (!c && !isInBlacklist) {
-			c = TuneControllerPtr(plugins_[name]->createController());
-			connect(c.data(),SIGNAL(stopped()),SIGNAL(stopped()));
-			connect(c.data(),SIGNAL(playing(const Tune&)),SLOT(sendTune(const Tune&)));
-			controllers_.insert(name, c);
-		}
-		else if (c && isInBlacklist) {
-			emit stopped();
-			controllers_.remove(name);
-		}
-	}
+    bool isInBlacklist;
+    foreach(const QString &name, plugins_.keys()) {
+        TuneControllerPtr c = controllers_.value(name);
+        isInBlacklist = blacklist.contains(name);
+        if (!c && !isInBlacklist) {
+            c = TuneControllerPtr(plugins_[name]->createController());
+            connect(c.data(),SIGNAL(stopped()),SIGNAL(stopped()));
+            connect(c.data(),SIGNAL(playing(const Tune&)),SLOT(sendTune(const Tune&)));
+            controllers_.insert(name, c);
+        }
+        else if (c && isInBlacklist) {
+            emit stopped();
+            controllers_.remove(name);
+        }
+    }
 }
 
 Tune TuneControllerManager::currentTune() const
 {
-	foreach(const TuneControllerPtr &c, controllers_.values()) {
-		Tune t = c->currentTune();
-		if (!t.isNull() && checkTune(t)) {
-			return t;
-		}
-	}
-	return Tune();
+    foreach(const TuneControllerPtr &c, controllers_.values()) {
+        Tune t = c->currentTune();
+        if (!t.isNull() && checkTune(t)) {
+            return t;
+        }
+    }
+    return Tune();
 }
 
 void TuneControllerManager::sendTune(const Tune &tune)
 {
-	if (checkTune(tune)) {
-		emit playing(tune);
-	}
+    if (checkTune(tune)) {
+        emit playing(tune);
+    }
 }
 
 
@@ -89,7 +89,7 @@ void TuneControllerManager::sendTune(const Tune &tune)
  */
 QList<QString> TuneControllerManager::controllerNames() const
 {
-	return plugins_.keys();
+    return plugins_.keys();
 }
 
 
@@ -98,7 +98,7 @@ QList<QString> TuneControllerManager::controllerNames() const
  */
 TuneController* TuneControllerManager::createController(const QString& name) const
 {
-	return plugins_[name]->createController();
+    return plugins_[name]->createController();
 }
 
 
@@ -107,51 +107,51 @@ TuneController* TuneControllerManager::createController(const QString& name) con
  */
 bool TuneControllerManager::loadPlugin(const QString& file)
 {
-	//return QPluginLoader(file).load();
-	return loadPlugin(QPluginLoader(file).instance());
+    //return QPluginLoader(file).load();
+    return loadPlugin(QPluginLoader(file).instance());
 }
 
 
 bool TuneControllerManager::loadPlugin(QObject* plugin)
 {
-	if (!plugin)
-		return false;
+    if (!plugin)
+        return false;
 
-	TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin*>(plugin));
-	if (tcplugin) {
-		if(!plugins_.contains(tcplugin->name())) {
-			//qDebug() << "Registering plugin " << tcplugin->name();
-			plugins_[tcplugin->name()] = tcplugin;
-		}
-		return true;
-	}
-	return false;
+    TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin*>(plugin));
+    if (tcplugin) {
+        if(!plugins_.contains(tcplugin->name())) {
+            //qDebug() << "Registering plugin " << tcplugin->name();
+            plugins_[tcplugin->name()] = tcplugin;
+        }
+        return true;
+    }
+    return false;
 }
 
 void TuneControllerManager::setTuneFilters(const QStringList &filters, const QString &pattern)
 {
-	tuneUrlFilters_ = filters;
-	tuneTitleFilterPattern_ = pattern;
+    tuneUrlFilters_ = filters;
+    tuneTitleFilterPattern_ = pattern;
 }
 
 bool TuneControllerManager::checkTune(const Tune &tune) const
 {
-	if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
-		QRegExp tuneTitleFilter(tuneTitleFilterPattern_);
-		if (tuneTitleFilter.isValid() && tuneTitleFilter.exactMatch(tune.name())) {
-			return false;
-		}
-	}
-	if (!tune.url().isEmpty()) {
-		int index = tune.url().lastIndexOf(".");
-		if (index != -1) {
-			QString extension = tune.url().right(tune.url().length() - (index+1)).toLower();
-			if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
-				return false;
-			}
-		}
-	}
-	return true;
+    if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
+        QRegExp tuneTitleFilter(tuneTitleFilterPattern_);
+        if (tuneTitleFilter.isValid() && tuneTitleFilter.exactMatch(tune.name())) {
+            return false;
+        }
+    }
+    if (!tune.url().isEmpty()) {
+        int index = tune.url().lastIndexOf(".");
+        if (index != -1) {
+            QString extension = tune.url().right(tune.url().length() - (index+1)).toLower();
+            if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 // ----------------------------------------------------------------------------

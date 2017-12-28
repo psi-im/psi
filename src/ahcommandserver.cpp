@@ -27,12 +27,12 @@
 
 AHCommandServer::AHCommandServer(AHCServerManager* manager) : manager_(manager)
 {
-	manager_->addServer(this);
+    manager_->addServer(this);
 }
 
 AHCommandServer::~AHCommandServer()
 {
-	manager_->removeServer(this);
+    manager_->removeServer(this);
 }
 
 

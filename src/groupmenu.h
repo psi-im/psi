@@ -27,26 +27,26 @@ class PsiContact;
 
 class GroupMenu : public QMenu
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	GroupMenu(QWidget* parent);
-	void updateMenu(PsiContact* contact);
+    GroupMenu(QWidget* parent);
+    void updateMenu(PsiContact* contact);
 
 signals:
-	void groupActivated(QString groupName);
+    void groupActivated(QString groupName);
 
 private:
-	QPointer<PsiContact> contact_;
-	QAction* createNewGroupAction_;
+    QPointer<PsiContact> contact_;
+    QAction* createNewGroupAction_;
 
-	/**
-	 * \param text will be shown on screen, and \param groupName is the
-	 * actual group name. Specify true as \param current when group is
-	 * currently selected for a contact.
-	 */
-	void addGroup(QString text, QString groupName, bool selected);
+    /**
+     * \param text will be shown on screen, and \param groupName is the
+     * actual group name. Specify true as \param current when group is
+     * currently selected for a contact.
+     */
+    void addGroup(QString text, QString groupName, bool selected);
 
 private slots:
-	void actionActivated();
-	void createNewGroup();
+    void actionActivated();
+    void createNewGroup();
 };

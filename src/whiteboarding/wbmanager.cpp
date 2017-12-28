@@ -37,179 +37,179 @@ using namespace XMPP;
 class WbRequest
 {
 public:
-	WbRequest() : loop_(new QEventLoop), id_(lastRequetsId++)
-	{}
+    WbRequest() : loop_(new QEventLoop), id_(lastRequetsId++)
+    {}
 
-	~WbRequest()
-	{
-		if(loop_->isRunning())
-			loop_->exit();
-		delete loop_;
-	}
+    ~WbRequest()
+    {
+        if(loop_->isRunning())
+            loop_->exit();
+        delete loop_;
+    }
 
-	void startLoop()
-	{
-		loop_->exec();
-	}
+    void startLoop()
+    {
+        loop_->exec();
+    }
 
-	void stopLoop()
-	{
-		loop_->exit();
-	}
+    void stopLoop()
+    {
+        loop_->exit();
+    }
 
-	int id() const
-	{
-		return id_;
-	}
+    int id() const
+    {
+        return id_;
+    }
 
 private:
-	QEventLoop *loop_;
-	int id_;
+    QEventLoop *loop_;
+    int id_;
 
-	static int lastRequetsId;
+    static int lastRequetsId;
 };
 
 int WbRequest::lastRequetsId = 0;
 
 // -----------------------------------------------------------------------------
 WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager) {
-	pa_ = pa;
-	sxemanager_ = sxemanager;
+    pa_ = pa;
+    sxemanager_ = sxemanager;
 
-	Q_UNUSED(client)
+    Q_UNUSED(client)
 
-	connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession*)), SLOT(createWbDlg(SxeSession*)));
-	//sxemanager_->addInvitationCallback(WbManager::checkInvitation);
-	connect(sxemanager, SIGNAL(invitationCallback(Jid,QList<QString>,bool*)), this, SLOT(checkInvitation(Jid,QList<QString>,bool*)));
+    connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession*)), SLOT(createWbDlg(SxeSession*)));
+    //sxemanager_->addInvitationCallback(WbManager::checkInvitation);
+    connect(sxemanager, SIGNAL(invitationCallback(Jid,QList<QString>,bool*)), this, SLOT(checkInvitation(Jid,QList<QString>,bool*)));
 }
 
 WbManager::~WbManager()
 {
-	qDeleteAll(dialogs_);
-	qDeleteAll(requests_);
+    qDeleteAll(dialogs_);
+    qDeleteAll(requests_);
 }
 
 void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupChat, bool promptInitialDoc) {
 
-	// check that the target supports whiteboarding via SXE
-	QList<QString> features;
-	features += WBNS;
-	if(!sxemanager_->checkSupport(target, features)) {
-		QMessageBox::information(NULL, tr("Unsupported"), tr("The contact does not support whiteboarding."));
-		return;
-	}
+    // check that the target supports whiteboarding via SXE
+    QList<QString> features;
+    features += WBNS;
+    if(!sxemanager_->checkSupport(target, features)) {
+        QMessageBox::information(NULL, tr("Unsupported"), tr("The contact does not support whiteboarding."));
+        return;
+    }
 
 
-	// See if we have a session for the JID
-	WbDlg* w = findWbDlg(target);
-	if(!w) {
-		// else negotiate a new session and return null
+    // See if we have a session for the JID
+    WbDlg* w = findWbDlg(target);
+    if(!w) {
+        // else negotiate a new session and return null
 
-		QDomDocument doc;
+        QDomDocument doc;
 
-		if(promptInitialDoc) {
-			bool openExisting = (QMessageBox::Yes == QMessageBox::question(NULL,
-														tr("Open Existing SVG?"),
-														tr("Would you like to open an existing SVG document in the whitebaord?"),
-														QMessageBox::Yes | QMessageBox::No,
-														QMessageBox::No));
+        if(promptInitialDoc) {
+            bool openExisting = (QMessageBox::Yes == QMessageBox::question(NULL,
+                                                        tr("Open Existing SVG?"),
+                                                        tr("Would you like to open an existing SVG document in the whitebaord?"),
+                                                        QMessageBox::Yes | QMessageBox::No,
+                                                        QMessageBox::No));
 
-			if(openExisting) {
-				// prompt for an existing file
-				QString fileName = QFileDialog::getOpenFileName(NULL, tr("Initial SVG Document for the Whiteboard"),
-																 QDir::homePath(),
-																 tr("Scalable Vector Graphics (*.svg)"));
+            if(openExisting) {
+                // prompt for an existing file
+                QString fileName = QFileDialog::getOpenFileName(NULL, tr("Initial SVG Document for the Whiteboard"),
+                                                                 QDir::homePath(),
+                                                                 tr("Scalable Vector Graphics (*.svg)"));
 
-				QFile file(fileName);
-				if(file.open(QIODevice::ReadOnly)) {
-					doc.setContent(file.readAll(), true);
-					file.close();
-				}
-			}
-		}
+                QFile file(fileName);
+                if(file.open(QIODevice::ReadOnly)) {
+                    doc.setContent(file.readAll(), true);
+                    file.close();
+                }
+            }
+        }
 
-		if(doc.documentElement().nodeName() != "svg") {
+        if(doc.documentElement().nodeName() != "svg") {
 
-			// initialize with an empty whiteboarding document
-			doc = QDomDocument();
-			doc.setContent(QString(EMPTYWB), true);
+            // initialize with an empty whiteboarding document
+            doc = QDomDocument();
+            doc.setContent(QString(EMPTYWB), true);
 
-		}
+        }
 
 
-		// negotiate the session
-		sxemanager_->startNewSession(target, ownJid, groupChat, doc, features);
-	}
-	else
-		bringToFront(w);
+        // negotiate the session
+        sxemanager_->startNewSession(target, ownJid, groupChat, doc, features);
+    }
+    else
+        bringToFront(w);
 }
 
 void WbManager::removeDialog(WbDlg* dialog)
 {
-	dialogs_.removeAt(dialogs_.indexOf(dialog));
-	delete dialog;
+    dialogs_.removeAt(dialogs_.indexOf(dialog));
+    delete dialog;
 }
 
 WbDlg* WbManager::findWbDlg(const Jid &jid) {
-	// find if a dialog for the jid already exists
-	foreach(WbDlg* w, dialogs_) {
-		// does the jid match?
-		if(w->session()->target().compare(jid)) {
-			return w;
-		}
-	}
-	return 0;
+    // find if a dialog for the jid already exists
+    foreach(WbDlg* w, dialogs_) {
+        // does the jid match?
+        if(w->session()->target().compare(jid)) {
+            return w;
+        }
+    }
+    return 0;
 }
 
 void WbManager::createWbDlg(SxeSession* session) {
-	// check if the session is a whiteboarding session
-	bool whiteboarding = false;
-	foreach(QString feature, session->features()) {
-		if(feature == WBNS)
-			whiteboarding = true;
-	}
+    // check if the session is a whiteboarding session
+    bool whiteboarding = false;
+    foreach(QString feature, session->features()) {
+        if(feature == WBNS)
+            whiteboarding = true;
+    }
 
-	if(whiteboarding) {
-		// create the WbDlg
-		WbDlg* w = new WbDlg(session, pa_);
+    if(whiteboarding) {
+        // create the WbDlg
+        WbDlg* w = new WbDlg(session, pa_);
 
-		// connect the signals
-		connect(w, SIGNAL(sessionEnded(WbDlg*)), SLOT(removeDialog(WbDlg*)));
-		connect(session, SIGNAL(peerLeftSession(Jid)), w, SLOT(peerLeftSession(Jid)));
+        // connect the signals
+        connect(w, SIGNAL(sessionEnded(WbDlg*)), SLOT(removeDialog(WbDlg*)));
+        connect(session, SIGNAL(peerLeftSession(Jid)), w, SLOT(peerLeftSession(Jid)));
 
-		dialogs_.append(w);
+        dialogs_.append(w);
 
-		bringToFront(w);
-	}
+        bringToFront(w);
+    }
 }
 
 void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features, bool* result) {
-	if(*result)
-		return;
+    if(*result)
+        return;
 
-	if(!features.contains(WBNS)) {
-		*result = false;
-		return;
-	}
+    if(!features.contains(WBNS)) {
+        *result = false;
+        return;
+    }
 
-	WbRequest* wr = new WbRequest();
-	requests_.append(wr);
-	emit wbRequest(peer, wr->id());
-	wr->startLoop();
-	requests_.removeAll(wr);
-	delete wr;
-	*result = (QMessageBox::Yes == QMessageBox::question(NULL,
-									tr("Whiteboarding Invitation?"),
-									tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
-									QMessageBox::Yes | QMessageBox::No,
-									QMessageBox::No));
+    WbRequest* wr = new WbRequest();
+    requests_.append(wr);
+    emit wbRequest(peer, wr->id());
+    wr->startLoop();
+    requests_.removeAll(wr);
+    delete wr;
+    *result = (QMessageBox::Yes == QMessageBox::question(NULL,
+                                    tr("Whiteboarding Invitation?"),
+                                    tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
+                                    QMessageBox::Yes | QMessageBox::No,
+                                    QMessageBox::No));
 }
 
 void WbManager::requestActivated(int id) {
-	foreach(WbRequest* wr, requests_) {
-		if(wr->id() == id) {
-			wr->stopLoop();
-			return;
-		}
-	}
+    foreach(WbRequest* wr, requests_) {
+        if(wr->id() == id) {
+            wr->stopLoop();
+            return;
+        }
+    }
 }

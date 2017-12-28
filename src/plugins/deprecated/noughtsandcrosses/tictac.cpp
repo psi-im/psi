@@ -75,7 +75,7 @@ TicTacGameBoard::TicTacGameBoard( bool meFirst, int n, QWidget *parent, const ch
     buttons = new TicTacButtons(n);             // create real buttons
     btArray = new TicTacArray(n);               // create button model
     Q3GridLayout * grid = new Q3GridLayout( this, nBoard, nBoard, 4 );
-	qDebug("added grid");
+    qDebug("added grid");
     QPalette p( Qt::blue );
     for ( int i=0; i<n; i++ ) {                 // create and connect buttons
         TicTacButton *ttb = new TicTacButton( this );
@@ -88,7 +88,7 @@ TicTacGameBoard::TicTacGameBoard( bool meFirst, int n, QWidget *parent, const ch
     }
     QTime t = QTime::currentTime();             // set random seed
     srand( t.hour()*12+t.minute()*60+t.second()*60 );
-	computerStarts(!meFirst);
+    computerStarts(!meFirst);
 }
 
 TicTacGameBoard::~TicTacGameBoard()
@@ -122,7 +122,7 @@ void TicTacGameBoard::newGame()
     for ( int i=0; i<nBoard*nBoard; i++ )
         btArray->at(i) = TicTacButton::Blank;
     if ( comp_starts )
-		st = ComputersTurn;
+        st = ComputersTurn;
         //computerMove();
     //else
     updateButtons();
@@ -144,8 +144,8 @@ void TicTacGameBoard::buttonClicked()
     TicTacButton *b = buttons->at(i);           // get piece that was pressed
     if ( b->type() == TicTacButton::Blank ) {   // empty piece?
         btArray->at(i) = TicTacButton::Circle;
-		emit myMove(i);
-		st = ComputersTurn;
+        emit myMove(i);
+        st = ComputersTurn;
         updateButtons();
         //if ( checkBoard( btArray ) == 0 )       // not a winning move?
             //computerMove();
@@ -159,26 +159,26 @@ void TicTacGameBoard::buttonClicked()
 
 void TicTacGameBoard::theirMove(int space)
 {
-	if (st != ComputersTurn)
-		return;
-	qDebug() << (qPrintable(QString("they moved to %1 of %2").arg(space).arg(nBoard*nBoard)));
-	if (space>=nBoard*nBoard)
-		return;
-	qDebug() << (qPrintable(QString("Space %1 was %2").arg(space).arg((int)(btArray->at(space)))));
-	(*btArray)[space] = TicTacButton::Cross;
-	qDebug() << (qPrintable(QString("Set %1 to %2 in btArray").arg(space).arg((int)(btArray->at(space)))));
-	updateButtons();
+    if (st != ComputersTurn)
+        return;
+    qDebug() << (qPrintable(QString("they moved to %1 of %2").arg(space).arg(nBoard*nBoard)));
+    if (space>=nBoard*nBoard)
+        return;
+    qDebug() << (qPrintable(QString("Space %1 was %2").arg(space).arg((int)(btArray->at(space)))));
+    (*btArray)[space] = TicTacButton::Cross;
+    qDebug() << (qPrintable(QString("Set %1 to %2 in btArray").arg(space).arg((int)(btArray->at(space)))));
+    updateButtons();
 
-	qDebug("buttons updated");
-	int s = checkBoard( btArray );
-	st = HumansTurn;
-	qDebug("board checked");
+    qDebug("buttons updated");
+    int s = checkBoard( btArray );
+    st = HumansTurn;
+    qDebug("board checked");
     if ( s ) {                              // any winners yet?
         st = s == TicTacButton::Circle ? HumanWon : ComputerWon;
         emit finished();
     }
 
-	qDebug("thoir move finished");
+    qDebug("thoir move finished");
 }
 
 // --------------------------------------------------------------------------
@@ -195,7 +195,7 @@ void TicTacGameBoard::updateButtons()
         buttons->at(i)->setEnabled( buttons->at(i)->type() ==
                                     TicTacButton::Blank );
     }
-	emit stateChanged();
+    emit stateChanged();
 }
 
 
@@ -354,16 +354,16 @@ TicTacToe::TicTacToe( bool meFirst, int boardSize, QWidget *parent, const char *
     whoStarts->insertItem( "You start" );
     l->addWidget( whoStarts );
 
-	whoStarts->setEnabled(false);
-	whoStarts->setCurrentIndex(meFirst);
+    whoStarts->setEnabled(false);
+    whoStarts->setCurrentIndex(meFirst);
     // Create the push buttons and connect their clicked() signals
     // to this right slots.
 
-	connect( board, SIGNAL(myMove(int)), this, SIGNAL(myMove(int)));
-	connect( board, SIGNAL(stateChanged()), this, SLOT(newState()));
+    connect( board, SIGNAL(myMove(int)), this, SIGNAL(myMove(int)));
+    connect( board, SIGNAL(stateChanged()), this, SLOT(newState()));
     newGame = new QPushButton( "Play!", this );
     connect( newGame, SIGNAL(clicked()), SLOT(newGameClicked()) );
-	newGame->setEnabled(false);
+    newGame->setEnabled(false);
     quit = new QPushButton( "Quit", this );
     connect( quit, SIGNAL(clicked()), this, SIGNAL(closing()) );
     Q3HBoxLayout * b = new Q3HBoxLayout;
@@ -372,13 +372,13 @@ TicTacToe::TicTacToe( bool meFirst, int boardSize, QWidget *parent, const char *
     b->addWidget( quit );
 
     newState();
-	//board->newGame();
-	newGameClicked();
+    //board->newGame();
+    newGameClicked();
 }
 
 void TicTacToe::theirMove(int space)
 {
-	board->theirMove(space);
+    board->theirMove(space);
 }
 
 // --------------------------------------------------------------------------
@@ -405,7 +405,7 @@ void TicTacToe::newGameClicked()
 void TicTacToe::gameOver()
 {
     newState();                                 // update text box
-	emit gameOverSignal(board->state());
+    emit gameOverSignal(board->state());
 }
 
 

@@ -27,39 +27,39 @@ using namespace XMPP;
 
 
 BoBFileCache::BoBFileCache()
-	: BoBCache(0)
+    : BoBCache(0)
 {
-	setParent(QApplication::instance());
-	_fileCache = new FileCache(ApplicationInfo::bobDir(), this);
+    setParent(QApplication::instance());
+    _fileCache = new FileCache(ApplicationInfo::bobDir(), this);
 }
 
 BoBFileCache* BoBFileCache::instance()
 {
-	if (!_instance) {
-		_instance = new BoBFileCache;
-	}
-	return _instance;
+    if (!_instance) {
+        _instance = new BoBFileCache;
+    }
+    return _instance;
 }
 
 void BoBFileCache::put(const BoBData &data)
 {
-	QVariantMap md;
-	md.insert(QLatin1String("type"), data.type());
-	_fileCache->append(data.cid(), data.data(), md, data.maxAge());
+    QVariantMap md;
+    md.insert(QLatin1String("type"), data.type());
+    _fileCache->append(data.cid(), data.data(), md, data.maxAge());
 }
 
 BoBData BoBFileCache::get(const QString &cid)
 {
-	FileCacheItem *item = _fileCache->get(cid);
-	BoBData bd;
-	if (item) {
-		bd.setCid(item->id());
-		bd.setData(item->data());
-		bd.setMaxAge(item->maxAge());
-		QVariantMap md = item->metadata();
-		bd.setType(md[QLatin1String("type")].toString());
-	}
-	return bd;
+    FileCacheItem *item = _fileCache->get(cid);
+    BoBData bd;
+    if (item) {
+        bd.setCid(item->id());
+        bd.setData(item->data());
+        bd.setMaxAge(item->maxAge());
+        QVariantMap md = item->metadata();
+        bd.setType(md[QLatin1String("type")].toString());
+    }
+    return bd;
 }
 
 BoBFileCache* BoBFileCache::_instance = 0;

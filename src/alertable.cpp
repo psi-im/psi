@@ -29,9 +29,9 @@
  * alertFrameUpdated() in your subclass.
  */
 Alertable::Alertable(QObject* parent)
-	: QObject(parent)
+    : QObject(parent)
 {
-	alert_ = 0;
+    alert_ = 0;
 }
 
 /**
@@ -39,7 +39,7 @@ Alertable::Alertable(QObject* parent)
  */
 Alertable::~Alertable()
 {
-	setAlert(0);
+    setAlert(0);
 }
 
 /**
@@ -47,7 +47,7 @@ Alertable::~Alertable()
  */
 bool Alertable::alerting() const
 {
-	return alert_ != 0;
+    return alert_ != 0;
 }
 
 /**
@@ -56,10 +56,10 @@ bool Alertable::alerting() const
  */
 QIcon Alertable::currentAlertFrame() const
 {
-	if (!alert_)
-		return QIcon();
+    if (!alert_)
+        return QIcon();
 
-	return alert_->impix().pixmap();
+    return alert_->impix().pixmap();
 }
 
 /**
@@ -68,17 +68,17 @@ QIcon Alertable::currentAlertFrame() const
  */
 void Alertable::setAlert(const PsiIcon* icon)
 {
-	if (alert_) {
-		alert_->stop();
-		delete alert_;
-		alert_ = 0;
-	}
+    if (alert_) {
+        alert_->stop();
+        delete alert_;
+        alert_ = 0;
+    }
 
-	if (icon) {
-		alert_ = new AlertIcon(icon);
-		alert_->activated(false);
+    if (icon) {
+        alert_ = new AlertIcon(icon);
+        alert_->activated(false);
 
-		// connect(alert_, SIGNAL(pixmapChanged()), SLOT(alertFrameUpdated()));
-		// alertFrameUpdated();
-	}
+        // connect(alert_, SIGNAL(pixmapChanged()), SLOT(alertFrameUpdated()));
+        // alertFrameUpdated();
+    }
 }

@@ -30,48 +30,48 @@
 
 
 PassDialog::PassDialog(const QString& jid, QWidget *parent)
-	: QDialog(parent)
+    : QDialog(parent)
 {
-	setWindowTitle(tr("Wrong Account Password"));
+    setWindowTitle(tr("Wrong Account Password"));
 
-	QVBoxLayout *mainLayout = new QVBoxLayout(this);
-	mainLayout->setMargin(6);
-	mainLayout->setSpacing(6);
-	QHBoxLayout *botLayout = new QHBoxLayout();
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setMargin(6);
+    mainLayout->setSpacing(6);
+    QHBoxLayout *botLayout = new QHBoxLayout();
 
-	le_password = new QLineEdit();
-	le_password->setEchoMode(QLineEdit::Password);
+    le_password = new QLineEdit();
+    le_password->setEchoMode(QLineEdit::Password);
 
-	cb_savePassword = new QCheckBox(tr("Save Password"));
-	botLayout->addWidget(cb_savePassword);
-	botLayout->addStretch(1);
+    cb_savePassword = new QCheckBox(tr("Save Password"));
+    botLayout->addWidget(cb_savePassword);
+    botLayout->addStretch(1);
 
-	QPushButton *pb_ok = new QPushButton(tr("OK"));
-	pb_ok->setDefault(true);
-	botLayout->addWidget(pb_ok);
+    QPushButton *pb_ok = new QPushButton(tr("OK"));
+    pb_ok->setDefault(true);
+    botLayout->addWidget(pb_ok);
 
-	QPushButton *pb_cancel = new QPushButton(tr("Cancel"));
-	botLayout->addWidget(pb_cancel);
+    QPushButton *pb_cancel = new QPushButton(tr("Cancel"));
+    botLayout->addWidget(pb_cancel);
 
-	mainLayout->addWidget(new QLabel(tr("Please enter your password for %1:").arg(jid)));
-	mainLayout->addWidget(le_password);
-	mainLayout->addLayout(botLayout);
+    mainLayout->addWidget(new QLabel(tr("Please enter your password for %1:").arg(jid)));
+    mainLayout->addWidget(le_password);
+    mainLayout->addLayout(botLayout);
 
-	connect(pb_cancel, SIGNAL(clicked()), this, SLOT(reject()));
-	connect(pb_ok, SIGNAL(clicked()), this, SLOT(accept()));
+    connect(pb_cancel, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(pb_ok, SIGNAL(clicked()), this, SLOT(accept()));
 }
 
 bool PassDialog::savePassword() const
 {
-	return cb_savePassword->isChecked();
+    return cb_savePassword->isChecked();
 }
 
 void PassDialog::setSavePassword(bool save)
 {
-	cb_savePassword->setChecked(save);
+    cb_savePassword->setChecked(save);
 }
 
 QString PassDialog::password() const
 {
-	return le_password->text();
+    return le_password->text();
 }

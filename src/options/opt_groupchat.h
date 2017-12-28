@@ -8,30 +8,30 @@ class QListWidgetItem;
 
 class OptionsTabGroupchat : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabGroupchat(QObject *parent);
+    OptionsTabGroupchat(QObject *parent);
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
-	void setData(PsiCon *, QWidget *);
-	bool stretchable() const { return true; }
+    void setData(PsiCon *, QWidget *);
+    bool stretchable() const { return true; }
 
 private slots:
-	void addNickColor(QString);
-	void addGCHighlight();
-	void removeGCHighlight();
-	void addGCNickColor();
-	void removeGCNickColor();
-	void chooseGCNickColor();
-	void displayGCNickColor();
-	void selectedGCNickColor(QListWidgetItem *item);
-	void updateWidgetsState();
+    void addNickColor(QString);
+    void addGCHighlight();
+    void removeGCHighlight();
+    void addGCNickColor();
+    void removeGCNickColor();
+    void chooseGCNickColor();
+    void displayGCNickColor();
+    void selectedGCNickColor(QListWidgetItem *item);
+    void updateWidgetsState();
 
 private:
-	QWidget *w, *dlg;
+    QWidget *w, *dlg;
 };
 
 #endif

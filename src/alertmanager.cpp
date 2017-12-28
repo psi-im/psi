@@ -27,96 +27,96 @@
 
 
 static bool itemCompare(AlertManager::Item* a, AlertManager::Item* b) {
-	return a->priority > b->priority;
+    return a->priority > b->priority;
 }
 
 QWidget* AlertManager::findDialog(const QMetaObject& mo) const {
-	foreach(Item* i, list_) {
-		if (mo.cast(i->widget)) {
-			return i->widget;
-		}
-	}
-	return 0;
+    foreach(Item* i, list_) {
+        if (mo.cast(i->widget)) {
+            return i->widget;
+        }
+    }
+    return 0;
 }
 
 void AlertManager::findDialogs(const QMetaObject& mo, QList<void*>* list) const
 {
-	foreach(Item* i, list_) {
-		if (mo.cast(i->widget)) {
-			list->append(i->widget);
-		}
-	}
+    foreach(Item* i, list_) {
+        if (mo.cast(i->widget)) {
+            list->append(i->widget);
+        }
+    }
 }
 
 void AlertManager::dialogRegister(QWidget* w, int prio)
 {
-	qDebug() << "registered dialog";
-	connect(w, SIGNAL(destroyed(QObject*)), SLOT(forceDialogUnregister(QObject*)));
-	Item* i = new Item();
-	i->widget = w;
-	i->priority = prio;
-	list_.append(i);
-	std::push_heap(list_.begin(), list_.end(), itemCompare);
+    qDebug() << "registered dialog";
+    connect(w, SIGNAL(destroyed(QObject*)), SLOT(forceDialogUnregister(QObject*)));
+    Item* i = new Item();
+    i->widget = w;
+    i->priority = prio;
+    list_.append(i);
+    std::push_heap(list_.begin(), list_.end(), itemCompare);
 
 }
 
 void AlertManager::dialogUnregister(QWidget* w)
 {
-	if (list_.at(0)->widget == w) {
-		std::pop_heap(list_.begin(), list_.end(), itemCompare);
-		list_.removeLast();
-		if (!list_.isEmpty()) {
-			list_.at(0)->widget->show();
-		}
-		return;
-	}
+    if (list_.at(0)->widget == w) {
+        std::pop_heap(list_.begin(), list_.end(), itemCompare);
+        list_.removeLast();
+        if (!list_.isEmpty()) {
+            list_.at(0)->widget->show();
+        }
+        return;
+    }
 
-	foreach(Item* i, list_) {
-		if (i->widget == w) {
-			list_.removeAll(i);
-			delete i;
-			break;
-		}
-	}
-	std::make_heap(list_.begin(), list_.end(), itemCompare);
+    foreach(Item* i, list_) {
+        if (i->widget == w) {
+            list_.removeAll(i);
+            delete i;
+            break;
+        }
+    }
+    std::make_heap(list_.begin(), list_.end(), itemCompare);
 
 }
 
 void AlertManager::forceDialogUnregister(QObject* obj)
 {
-	dialogUnregister(static_cast<QWidget*>(obj));
+    dialogUnregister(static_cast<QWidget*>(obj));
 }
 
 
 void AlertManager::deleteDialogList()
 {
-	while (!list_.isEmpty()) {
-		Item* i = list_.takeLast();
-		i->widget->disconnect(); // ensure forceDialogUnregister won't be called
-		delete i->widget;
-		delete i;
-	}
+    while (!list_.isEmpty()) {
+        Item* i = list_.takeLast();
+        i->widget->disconnect(); // ensure forceDialogUnregister won't be called
+        delete i->widget;
+        delete i;
+    }
 }
 
 
 
 bool AlertManager::raiseDialog(QWidget* w, int prio) {
-	dialogRegister(w, prio);
-	if (list_.at(0)->widget == w) {
-		w->show();
-		return true;
-	}
-	return false;
+    dialogRegister(w, prio);
+    if (list_.at(0)->widget == w) {
+        w->show();
+        return true;
+    }
+    return false;
 }
 
 void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QString& title,
-								   const QString& text)
+                                   const QString& text)
 {
-	QMessageBox* msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok);
-	msgBox->setAttribute(Qt::WA_DeleteOnClose);
-	msgBox->setModal(false);
+    QMessageBox* msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok);
+    msgBox->setAttribute(Qt::WA_DeleteOnClose);
+    msgBox->setModal(false);
 
-	raiseDialog(msgBox, prio);
+    raiseDialog(msgBox, prio);
 }
 
 
@@ -125,10 +125,10 @@ void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QStri
 
 
 AlertManager::AlertManager(PsiCon *psi) {
-	psi_ = psi;
+    psi_ = psi;
 }
 
 
 AlertManager::~AlertManager() {
-	deleteDialogList();
+    deleteDialogList();
 }

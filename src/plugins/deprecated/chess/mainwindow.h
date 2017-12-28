@@ -12,8 +12,8 @@
  * Hacked by:
  */
 
-#ifndef	__MAIN_WINDOW_H__
-#define	__MAIN_WINDOW_H__
+#ifndef    __MAIN_WINDOW_H__
+#define    __MAIN_WINDOW_H__
 
 #include <Q3MainWindow>
 #include <Q3PopupMenu>
@@ -34,59 +34,59 @@
 
 class MainWindow:public Q3MainWindow
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	MainWindow(QWidget *parent = NULL, const char *name = NULL);
-	~MainWindow();
+    MainWindow(QWidget *parent = NULL, const char *name = NULL);
+    ~MainWindow();
 
-	bool	sockOk()const{return (sock->ok());}
+    bool    sockOk()const{return (sock->ok());}
 
 private:
-	int		id;
-	QString		ready_txt;
-	Q3PopupMenu	*game, *help;
-	QWorkspace	*wrk;
-	GameSocket	*sock;
-	QStringList	hosts;
+    int        id;
+    QString        ready_txt;
+    Q3PopupMenu    *game, *help;
+    QWorkspace    *wrk;
+    GameSocket    *sock;
+    QStringList    hosts;
 
 private slots:
-	void	showStatus(const QString&);
-	void	newGame();
-	void	newGame(int);
-	void	about();
-	void	activated(QWidget *);
-	void	saveImage();
+    void    showStatus(const QString&);
+    void    newGame();
+    void    newGame(int);
+    void    about();
+    void    activated(QWidget *);
+    void    saveImage();
 };
 
 //-----------------------------------------------------------------------------
 
 class SelectGame:public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	SelectGame(QWidget *parent = NULL, const char *name = NULL);
-	~SelectGame();
+    SelectGame(QWidget *parent = NULL, const char *name = NULL);
+    ~SelectGame();
 
-	void		setHosts(const QStringList &);
+    void        setHosts(const QStringList &);
 
-	QString		host();
-	QStringList	hosts();
-	GameBoard::GameType	gameType();
+    QString        host();
+    QStringList    hosts();
+    GameBoard::GameType    gameType();
 
 private:
-	QLabel		*l1;
-	QComboBox	*hst;
-	Q3ButtonGroup	*btn;
-	QRadioButton	*wg, *bg;
-	Q3GroupBox	*box;
-	QPushButton	*Ok, *Cancel;
+    QLabel        *l1;
+    QComboBox    *hst;
+    Q3ButtonGroup    *btn;
+    QRadioButton    *wg, *bg;
+    Q3GroupBox    *box;
+    QPushButton    *Ok, *Cancel;
 
 protected:
-	void	resizeEvent(QResizeEvent *);
+    void    resizeEvent(QResizeEvent *);
 
 private slots:
-	void	checkParams();
-	void	checkParams(const QString&);
+    void    checkParams();
+    void    checkParams(const QString&);
 };
 
-#endif	/* __MAIN_WINDOW_H__ */
+#endif    /* __MAIN_WINDOW_H__ */

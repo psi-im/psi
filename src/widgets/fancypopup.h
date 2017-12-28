@@ -28,31 +28,31 @@ class QTimer;
 
 class FancyPopup : public QFrame
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	FancyPopup(QString title, const PsiIcon *icon = 0, FancyPopup *prev = 0, bool copyIcon = true);
-	~FancyPopup();
+    FancyPopup(QString title, const PsiIcon *icon = 0, FancyPopup *prev = 0, bool copyIcon = true);
+    ~FancyPopup();
 
-	void addLayout(QLayout *layout, int stretch = 0);
+    void addLayout(QLayout *layout, int stretch = 0);
 
-	static void setHideTimeout(int);
-	static void setBorderColor(QColor);
+    static void setHideTimeout(int);
+    static void setBorderColor(QColor);
 
-	void show();
-	void restartHideTimer();
+    void show();
+    void restartHideTimer();
 
 signals:
-	void clicked(int);
+    void clicked(int);
 
 protected:
-	void hideEvent(QHideEvent *);
-	void mouseReleaseEvent(QMouseEvent *);
+    void hideEvent(QHideEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
-	friend class Private;
+    Private *d;
+    friend class Private;
 };
 
 #endif

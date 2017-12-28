@@ -38,417 +38,417 @@
 
 class ContactListAccountMenu::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	PsiAccount *account;
-	AccountStatusMenu* statusMenu_;
-	QAction* moodAction_;
-	QAction* activityAction_;
-	QAction* geolocationAction_;
-	QAction* setAvatarAction_;
-	QMenu* avatarMenu_;
-	QAction* unsetAvatarAction_;
-	QAction* contactManagerAction_;
-	QMenu* bookmarksMenu_;
-	QAction* bookmarksManageAction_;
-	QList<QAction*> bookmarksJoinActions_;
-	QAction* addContactAction_;
-	QAction* serviceDiscoveryAction_;
-	QAction* newMessageAction_;
-	QAction* xmlConsoleAction_;
-	QAction* privacyListsAction_;
-	QAction* modifyAccountAction_;
-	QMenu* adminMenu_;
-	QAction* adminOnlineUsersAction_;
-	QAction* adminSendServerMessageAction_;
-	QAction* adminSetMotdAction_;
-	QAction* adminUpdateMotdAction_;
-	QAction* adminDeleteMotdAction_;
-	QAction *doGroupChatAction_;
-	QMenu* pluginsMenu_;
+    PsiAccount *account;
+    AccountStatusMenu* statusMenu_;
+    QAction* moodAction_;
+    QAction* activityAction_;
+    QAction* geolocationAction_;
+    QAction* setAvatarAction_;
+    QMenu* avatarMenu_;
+    QAction* unsetAvatarAction_;
+    QAction* contactManagerAction_;
+    QMenu* bookmarksMenu_;
+    QAction* bookmarksManageAction_;
+    QList<QAction*> bookmarksJoinActions_;
+    QAction* addContactAction_;
+    QAction* serviceDiscoveryAction_;
+    QAction* newMessageAction_;
+    QAction* xmlConsoleAction_;
+    QAction* privacyListsAction_;
+    QAction* modifyAccountAction_;
+    QMenu* adminMenu_;
+    QAction* adminOnlineUsersAction_;
+    QAction* adminSendServerMessageAction_;
+    QAction* adminSetMotdAction_;
+    QAction* adminUpdateMotdAction_;
+    QAction* adminDeleteMotdAction_;
+    QAction *doGroupChatAction_;
+    QMenu* pluginsMenu_;
 
 public:
-	Private(ContactListAccountMenu *menu, PsiAccount *_account)
-		: QObject(0)
-		, account(_account)
-	{
-		connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
-		connect(account, SIGNAL(updatedActivity()), SLOT(updateActions()));
-		connect(account, SIGNAL(updatedAccount()), SLOT(updateActions()));
+    Private(ContactListAccountMenu *menu, PsiAccount *_account)
+        : QObject(0)
+        , account(_account)
+    {
+        connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
+        connect(account, SIGNAL(updatedActivity()), SLOT(updateActions()));
+        connect(account, SIGNAL(updatedAccount()), SLOT(updateActions()));
 
-		statusMenu_ = new AccountStatusMenu(0, account->psi(), account);
-		statusMenu_->fill();
-		statusMenu_->setTitle(tr("&Status"));
-		statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->status())).icon());
-		connect(statusMenu_, SIGNAL(statusSelected(XMPP::Status::Type, bool)), SLOT(statusChanged(XMPP::Status::Type, bool)));
-		connect(statusMenu_, SIGNAL(statusPresetSelected(const XMPP::Status &, bool, bool)), account, SLOT(setStatus(const XMPP::Status &, bool, bool)));
-		connect(statusMenu_, SIGNAL(statusPresetDialogForced(const QString &)), account, SLOT(showStatusDialog(const QString &)));
-		connect(statusMenu_, SIGNAL(reconnectActivated()), account, SLOT(reconnectOnce()));
+        statusMenu_ = new AccountStatusMenu(0, account->psi(), account);
+        statusMenu_->fill();
+        statusMenu_->setTitle(tr("&Status"));
+        statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->status())).icon());
+        connect(statusMenu_, SIGNAL(statusSelected(XMPP::Status::Type, bool)), SLOT(statusChanged(XMPP::Status::Type, bool)));
+        connect(statusMenu_, SIGNAL(statusPresetSelected(const XMPP::Status &, bool, bool)), account, SLOT(setStatus(const XMPP::Status &, bool, bool)));
+        connect(statusMenu_, SIGNAL(statusPresetDialogForced(const QString &)), account, SLOT(showStatusDialog(const QString &)));
+        connect(statusMenu_, SIGNAL(reconnectActivated()), account, SLOT(reconnectOnce()));
 
-		auto mood = account->mood();
-		moodAction_ = new IconAction(tr("Mood"), this, mood.type() == Mood::Unknown? QString() :
-		                                                                             QString(("mood/%1")).arg(mood.typeValue()));
-		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
+        auto mood = account->mood();
+        moodAction_ = new IconAction(tr("Mood"), this, mood.type() == Mood::Unknown? QString() :
+                                                                                     QString(("mood/%1")).arg(mood.typeValue()));
+        connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
 
-		activityAction_ = new IconAction(tr("Activity"), this, activityIconName(account->activity()));
-		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
+        activityAction_ = new IconAction(tr("Activity"), this, activityIconName(account->activity()));
+        connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
-		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "pep/geolocation");
-		connect(geolocationAction_, SIGNAL(triggered()), SLOT(setGeolocation()));
+        geolocationAction_ = new IconAction(tr("GeoLocation"), this, "pep/geolocation");
+        connect(geolocationAction_, SIGNAL(triggered()), SLOT(setGeolocation()));
 
-		setAvatarAction_ = new QAction(tr("Set Avatar"), this);
-		connect(setAvatarAction_, SIGNAL(triggered()), SLOT(setAvatar()));
+        setAvatarAction_ = new QAction(tr("Set Avatar"), this);
+        connect(setAvatarAction_, SIGNAL(triggered()), SLOT(setAvatar()));
 
-		unsetAvatarAction_ = new QAction(tr("Unset Avatar"), this);
-		connect(unsetAvatarAction_, SIGNAL(triggered()), SLOT(unsetAvatar()));
+        unsetAvatarAction_ = new QAction(tr("Unset Avatar"), this);
+        connect(unsetAvatarAction_, SIGNAL(triggered()), SLOT(unsetAvatar()));
 
-		contactManagerAction_ = new IconAction(tr("&Contacts Manager"), this, "psi/action_contacts_manager");
-		connect(contactManagerAction_, SIGNAL(triggered()), SLOT(contactManager()));
+        contactManagerAction_ = new IconAction(tr("&Contacts Manager"), this, "psi/action_contacts_manager");
+        connect(contactManagerAction_, SIGNAL(triggered()), SLOT(contactManager()));
 
-		bookmarksManageAction_ = new QAction(tr("Manage Bookmarks"), this);
-		connect(bookmarksManageAction_, SIGNAL(triggered()), SLOT(bookmarksManage()));
+        bookmarksManageAction_ = new QAction(tr("Manage Bookmarks"), this);
+        connect(bookmarksManageAction_, SIGNAL(triggered()), SLOT(bookmarksManage()));
 
-		doGroupChatAction_ = new IconAction(tr("Join Groupchat"), this, "psi/groupChat");
-		connect(doGroupChatAction_, SIGNAL(triggered()), SLOT(doGroupChat()));
+        doGroupChatAction_ = new IconAction(tr("Join Groupchat"), this, "psi/groupChat");
+        connect(doGroupChatAction_, SIGNAL(triggered()), SLOT(doGroupChat()));
 
-		addContactAction_ = new IconAction(tr("&Add a Contact"), this, "psi/addContact");
-		connect(addContactAction_, SIGNAL(triggered()), SLOT(addContact()));
+        addContactAction_ = new IconAction(tr("&Add a Contact"), this, "psi/addContact");
+        connect(addContactAction_, SIGNAL(triggered()), SLOT(addContact()));
 
-		serviceDiscoveryAction_ = new IconAction(tr("Service &Discovery"), this, "psi/disco");
-		connect(serviceDiscoveryAction_, SIGNAL(triggered()), SLOT(serviceDiscovery()));
+        serviceDiscoveryAction_ = new IconAction(tr("Service &Discovery"), this, "psi/disco");
+        connect(serviceDiscoveryAction_, SIGNAL(triggered()), SLOT(serviceDiscovery()));
 
-		newMessageAction_ = new IconAction(tr("New &Blank Message"), this, "psi/sendMessage");
-		connect(newMessageAction_, SIGNAL(triggered()), SLOT(newMessage()));
+        newMessageAction_ = new IconAction(tr("New &Blank Message"), this, "psi/sendMessage");
+        connect(newMessageAction_, SIGNAL(triggered()), SLOT(newMessage()));
 
-		privacyListsAction_ = new IconAction(tr("Privacy Lists"), this, "psi/eye");
-		connect(privacyListsAction_, SIGNAL(triggered()), SLOT(privacyLists()));
+        privacyListsAction_ = new IconAction(tr("Privacy Lists"), this, "psi/eye");
+        connect(privacyListsAction_, SIGNAL(triggered()), SLOT(privacyLists()));
 
-		xmlConsoleAction_ = new IconAction(tr("&XML Console"), this, "psi/xml");
-		connect(xmlConsoleAction_, SIGNAL(triggered()), SLOT(xmlConsole()));
+        xmlConsoleAction_ = new IconAction(tr("&XML Console"), this, "psi/xml");
+        connect(xmlConsoleAction_, SIGNAL(triggered()), SLOT(xmlConsole()));
 
-		modifyAccountAction_ = new IconAction(tr("&Modify Account..."), this, "psi/account");
-		connect(modifyAccountAction_, SIGNAL(triggered()), SLOT(modifyAccount()));
+        modifyAccountAction_ = new IconAction(tr("&Modify Account..."), this, "psi/account");
+        connect(modifyAccountAction_, SIGNAL(triggered()), SLOT(modifyAccount()));
 
-		adminOnlineUsersAction_ = new IconAction(tr("Online Users"), this, "psi/disco");
-		connect(adminOnlineUsersAction_, SIGNAL(triggered()), SLOT(adminOnlineUsers()));
+        adminOnlineUsersAction_ = new IconAction(tr("Online Users"), this, "psi/disco");
+        connect(adminOnlineUsersAction_, SIGNAL(triggered()), SLOT(adminOnlineUsers()));
 
-		adminSendServerMessageAction_ = new IconAction(tr("Send Server Message"), this, "psi/sendMessage");
-		connect(adminSendServerMessageAction_, SIGNAL(triggered()), SLOT(adminSendServerMessage()));
+        adminSendServerMessageAction_ = new IconAction(tr("Send Server Message"), this, "psi/sendMessage");
+        connect(adminSendServerMessageAction_, SIGNAL(triggered()), SLOT(adminSendServerMessage()));
 
-		adminSetMotdAction_ = new QAction(tr("Set MOTD"), this);
-		connect(adminSetMotdAction_, SIGNAL(triggered()), SLOT(adminSetMotd()));
+        adminSetMotdAction_ = new QAction(tr("Set MOTD"), this);
+        connect(adminSetMotdAction_, SIGNAL(triggered()), SLOT(adminSetMotd()));
 
-		adminUpdateMotdAction_ = new QAction(tr("Update MOTD"), this);
-		connect(adminUpdateMotdAction_, SIGNAL(triggered()), SLOT(adminUpdateMotd()));
+        adminUpdateMotdAction_ = new QAction(tr("Update MOTD"), this);
+        connect(adminUpdateMotdAction_, SIGNAL(triggered()), SLOT(adminUpdateMotd()));
 
-		adminDeleteMotdAction_ = new IconAction(tr("Delete MOTD"), this, "psi/remove");
-		connect(adminDeleteMotdAction_, SIGNAL(triggered()), SLOT(adminDeleteMotd()));
+        adminDeleteMotdAction_ = new IconAction(tr("Delete MOTD"), this, "psi/remove");
+        connect(adminDeleteMotdAction_, SIGNAL(triggered()), SLOT(adminDeleteMotd()));
 
-		menu->addMenu(statusMenu_);
-		menu->addAction(moodAction_);
-		menu->addAction(activityAction_);
-		menu->addAction(geolocationAction_);
-		avatarMenu_ = menu->addMenu(IconsetFactory::icon("psi/vCard").icon(), tr("Avatar"));
-		avatarMenu_->addAction(setAvatarAction_);
-		avatarMenu_->addAction(unsetAvatarAction_);
-		bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Groupchat"));
-		bookmarksMenu_->addAction(doGroupChatAction_);
-		bookmarksMenu_->addSeparator();
-		bookmarksMenu_->addAction(bookmarksManageAction_);
-		menu->addSeparator();
-		menu->addAction(addContactAction_);
-		menu->addAction(serviceDiscoveryAction_);
-		menu->addAction(newMessageAction_);
-		menu->addAction(contactManagerAction_);
-		menu->addAction(privacyListsAction_);
-		menu->addSeparator();
-		menu->addAction(xmlConsoleAction_);
-		menu->addSeparator();
-		menu->addAction(modifyAccountAction_);
+        menu->addMenu(statusMenu_);
+        menu->addAction(moodAction_);
+        menu->addAction(activityAction_);
+        menu->addAction(geolocationAction_);
+        avatarMenu_ = menu->addMenu(IconsetFactory::icon("psi/vCard").icon(), tr("Avatar"));
+        avatarMenu_->addAction(setAvatarAction_);
+        avatarMenu_->addAction(unsetAvatarAction_);
+        bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Groupchat"));
+        bookmarksMenu_->addAction(doGroupChatAction_);
+        bookmarksMenu_->addSeparator();
+        bookmarksMenu_->addAction(bookmarksManageAction_);
+        menu->addSeparator();
+        menu->addAction(addContactAction_);
+        menu->addAction(serviceDiscoveryAction_);
+        menu->addAction(newMessageAction_);
+        menu->addAction(contactManagerAction_);
+        menu->addAction(privacyListsAction_);
+        menu->addSeparator();
+        menu->addAction(xmlConsoleAction_);
+        menu->addSeparator();
+        menu->addAction(modifyAccountAction_);
 
 #ifdef PSI_PLUGINS
-		pluginsMenu_ = menu->addMenu(IconsetFactory::icon("psi/plugins").icon(), tr("Plugins"));
-		PluginManager::instance()->addAccountMenu(pluginsMenu_, account);
+        pluginsMenu_ = menu->addMenu(IconsetFactory::icon("psi/plugins").icon(), tr("Plugins"));
+        PluginManager::instance()->addAccountMenu(pluginsMenu_, account);
 #endif
 
-		adminMenu_ = menu->addMenu(tr("&Admin"));
-		adminMenu_->addAction(adminOnlineUsersAction_);
-		adminMenu_->addAction(adminSendServerMessageAction_);
-		adminMenu_->addAction(adminSetMotdAction_);
-		adminMenu_->addAction(adminUpdateMotdAction_);
-		adminMenu_->addAction(adminDeleteMotdAction_);
+        adminMenu_ = menu->addMenu(tr("&Admin"));
+        adminMenu_->addAction(adminOnlineUsersAction_);
+        adminMenu_->addAction(adminSendServerMessageAction_);
+        adminMenu_->addAction(adminSetMotdAction_);
+        adminMenu_->addAction(adminUpdateMotdAction_);
+        adminMenu_->addAction(adminDeleteMotdAction_);
 
-		updateActions();
-	}
+        updateActions();
+    }
 
-	~Private()
-	{
-		delete statusMenu_;
-	}
+    ~Private()
+    {
+        delete statusMenu_;
+    }
 
 private slots:
-	void updateActions()
-	{
-		if (!account)
-			return;
+    void updateActions()
+    {
+        if (!account)
+            return;
 
-		statusMenu_->statusChanged(account->status());
+        statusMenu_->statusChanged(account->status());
 #ifndef USE_PEP
-		moodAction_->setVisible(false);
-		activityAction_->setVisible(false);
-		geolocationAction_->setVisible(false);
-		avatarMenu_->setVisible(false);
+        moodAction_->setVisible(false);
+        activityAction_->setVisible(false);
+        geolocationAction_->setVisible(false);
+        avatarMenu_->setVisible(false);
 #else
-		moodAction_->setEnabled(account->serverInfoManager()->hasPEP());
-		activityAction_->setEnabled(account->serverInfoManager()->hasPEP());
-		geolocationAction_->setEnabled(account->serverInfoManager()->hasPEP());
-		avatarMenu_->setEnabled(account->serverInfoManager()->hasPEP());
+        moodAction_->setEnabled(account->serverInfoManager()->hasPEP());
+        activityAction_->setEnabled(account->serverInfoManager()->hasPEP());
+        geolocationAction_->setEnabled(account->serverInfoManager()->hasPEP());
+        avatarMenu_->setEnabled(account->serverInfoManager()->hasPEP());
 #endif
-		bookmarksMenu_->clear();
-		qDeleteAll(bookmarksJoinActions_);
-		bookmarksJoinActions_.clear();
-		bookmarksMenu_->addAction(doGroupChatAction_);
-		bookmarksMenu_->addSeparator();
-		bookmarksMenu_->addAction(bookmarksManageAction_);
-		bookmarksMenu_->setEnabled(true);
-		if (account->bookmarkManager()->isAvailable()) {
-			bookmarksManageAction_->setEnabled(true);
-			bookmarksMenu_->addSeparator();
-			foreach(ConferenceBookmark c, account->bookmarkManager()->conferences()) {
-				QAction* joinAction = new QAction(QString(tr("Join %1")).arg(c.name()), this);
-				joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
-				connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));
-				bookmarksMenu_->addAction(joinAction);
-				bookmarksJoinActions_ << joinAction;
-			}
-		}
-		else {
-			bookmarksManageAction_->setEnabled(false);
-		}
+        bookmarksMenu_->clear();
+        qDeleteAll(bookmarksJoinActions_);
+        bookmarksJoinActions_.clear();
+        bookmarksMenu_->addAction(doGroupChatAction_);
+        bookmarksMenu_->addSeparator();
+        bookmarksMenu_->addAction(bookmarksManageAction_);
+        bookmarksMenu_->setEnabled(true);
+        if (account->bookmarkManager()->isAvailable()) {
+            bookmarksManageAction_->setEnabled(true);
+            bookmarksMenu_->addSeparator();
+            foreach(ConferenceBookmark c, account->bookmarkManager()->conferences()) {
+                QAction* joinAction = new QAction(QString(tr("Join %1")).arg(c.name()), this);
+                joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
+                connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));
+                bookmarksMenu_->addAction(joinAction);
+                bookmarksJoinActions_ << joinAction;
+            }
+        }
+        else {
+            bookmarksManageAction_->setEnabled(false);
+        }
 
-		newMessageAction_->setVisible(true);
-		newMessageAction_->setEnabled(account->isAvailable());
-		addContactAction_->setEnabled(account->isAvailable());
-		serviceDiscoveryAction_->setEnabled(account->isAvailable());
-		contactManagerAction_->setEnabled(account->isAvailable());
-		privacyListsAction_->setEnabled(account->isAvailable());
-		if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
-			adminMenu_->menuAction()->setVisible(false);
-		}
-		adminMenu_->setEnabled(account->isAvailable());
-		adminSendServerMessageAction_->setVisible(newMessageAction_->isVisible());
-		adminSetMotdAction_->setVisible(newMessageAction_->isVisible());
-		adminUpdateMotdAction_->setVisible(newMessageAction_->isVisible());
-		adminDeleteMotdAction_->setVisible(newMessageAction_->isVisible());
+        newMessageAction_->setVisible(true);
+        newMessageAction_->setEnabled(account->isAvailable());
+        addContactAction_->setEnabled(account->isAvailable());
+        serviceDiscoveryAction_->setEnabled(account->isAvailable());
+        contactManagerAction_->setEnabled(account->isAvailable());
+        privacyListsAction_->setEnabled(account->isAvailable());
+        if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
+            adminMenu_->menuAction()->setVisible(false);
+        }
+        adminMenu_->setEnabled(account->isAvailable());
+        adminSendServerMessageAction_->setVisible(newMessageAction_->isVisible());
+        adminSetMotdAction_->setVisible(newMessageAction_->isVisible());
+        adminUpdateMotdAction_->setVisible(newMessageAction_->isVisible());
+        adminDeleteMotdAction_->setVisible(newMessageAction_->isVisible());
 
 #ifdef PSI_PLUGINS
-		if(pluginsMenu_->isEmpty())
-			pluginsMenu_->menuAction()->setVisible(false);
-		pluginsMenu_->setEnabled(account->isAvailable() && !pluginsMenu_->isEmpty());
+        if(pluginsMenu_->isEmpty())
+            pluginsMenu_->menuAction()->setVisible(false);
+        pluginsMenu_->setEnabled(account->isAvailable() && !pluginsMenu_->isEmpty());
 #endif
-	}
+    }
 
-	void statusChanged(XMPP::Status::Type statusType, bool forceDialog)
-	{
-		if (!account)
-			return;
+    void statusChanged(XMPP::Status::Type statusType, bool forceDialog)
+    {
+        if (!account)
+            return;
 
-		account->changeStatus(static_cast<int>(statusType), forceDialog);
-	}
+        account->changeStatus(static_cast<int>(statusType), forceDialog);
+    }
 
-	void setMood()
-	{
-		if (!account)
-			return;
+    void setMood()
+    {
+        if (!account)
+            return;
 
-		account->actionSetMood();
-	}
+        account->actionSetMood();
+    }
 
-	void setActivity()
-	{
-		if (!account)
-			return;
+    void setActivity()
+    {
+        if (!account)
+            return;
 
-		account->actionSetActivity();
-	}
+        account->actionSetActivity();
+    }
 
-	void setGeolocation()
-	{
-		if (!account)
-			return;
+    void setGeolocation()
+    {
+        if (!account)
+            return;
 
-		account->actionSetGeoLocation();
-	}
+        account->actionSetGeoLocation();
+    }
 
-	void setAvatar()
-	{
-		if (!account)
-			return;
+    void setAvatar()
+    {
+        if (!account)
+            return;
 
-		account->actionSetAvatar();
-	}
+        account->actionSetAvatar();
+    }
 
-	void unsetAvatar()
-	{
-		if (!account)
-			return;
+    void unsetAvatar()
+    {
+        if (!account)
+            return;
 
-		account->actionUnsetAvatar();
-	}
+        account->actionUnsetAvatar();
+    }
 
-	void bookmarksManage()
-	{
-		if (!account)
-			return;
+    void bookmarksManage()
+    {
+        if (!account)
+            return;
 
-		account->actionManageBookmarks();
-	}
+        account->actionManageBookmarks();
+    }
 
-	void doGroupChat()
-	{
-		if (!account)
-			return;
+    void doGroupChat()
+    {
+        if (!account)
+            return;
 
-		MUCJoinDlg *w = new MUCJoinDlg(account->psi(), account);
-		w->show();
-	}
+        MUCJoinDlg *w = new MUCJoinDlg(account->psi(), account);
+        w->show();
+    }
 
-	void bookmarksJoin()
-	{
-		if (!account)
-			return;
+    void bookmarksJoin()
+    {
+        if (!account)
+            return;
 
-		QAction* joinAction = static_cast<QAction*>(sender());
-		ConferenceBookmark c = account->bookmarkManager()->conferences()[joinAction->property("bookmark").toInt()];
-		account->actionJoin(c, true);
-	}
+        QAction* joinAction = static_cast<QAction*>(sender());
+        ConferenceBookmark c = account->bookmarkManager()->conferences()[joinAction->property("bookmark").toInt()];
+        account->actionJoin(c, true);
+    }
 
-	void addContact()
-	{
-		if (!account)
-			return;
+    void addContact()
+    {
+        if (!account)
+            return;
 
-		account->openAddUserDlg();
-	}
+        account->openAddUserDlg();
+    }
 
-	void serviceDiscovery()
-	{
-		if (!account)
-			return;
+    void serviceDiscovery()
+    {
+        if (!account)
+            return;
 
-		XMPP::Jid j = account->jid().domain();
-		account->actionDisco(j, "");
-	}
+        XMPP::Jid j = account->jid().domain();
+        account->actionDisco(j, "");
+    }
 
-	void newMessage()
-	{
-		if (!account)
-			return;
+    void newMessage()
+    {
+        if (!account)
+            return;
 
-		account->actionSendMessage("");
-	}
+        account->actionSendMessage("");
+    }
 
-	void privacyLists()
-	{
-		if (!account)
-			return;
+    void privacyLists()
+    {
+        if (!account)
+            return;
 
-		PrivacyDlg *dlg = account->findDialog<PrivacyDlg*>();
-		if(!dlg) {
-			dlg = new PrivacyDlg(account->name(), account->privacyManager());
-			account->dialogRegister(dlg);
-			dlg->show();
-		} else
-			bringToFront(dlg);
-	}
+        PrivacyDlg *dlg = account->findDialog<PrivacyDlg*>();
+        if(!dlg) {
+            dlg = new PrivacyDlg(account->name(), account->privacyManager());
+            account->dialogRegister(dlg);
+            dlg->show();
+        } else
+            bringToFront(dlg);
+    }
 
-	void contactManager()
-	{
-		if (!account)
-			return;
+    void contactManager()
+    {
+        if (!account)
+            return;
 
-		ContactManagerDlg *dlg = account->findDialog<ContactManagerDlg*>();
-		if(!dlg) {
-			dlg = new ContactManagerDlg(account);
-			dlg->show();
-		} else
-			bringToFront(dlg);
-	}
+        ContactManagerDlg *dlg = account->findDialog<ContactManagerDlg*>();
+        if(!dlg) {
+            dlg = new ContactManagerDlg(account);
+            dlg->show();
+        } else
+            bringToFront(dlg);
+    }
 
-	void xmlConsole()
-	{
-		if (!account)
-			return;
+    void xmlConsole()
+    {
+        if (!account)
+            return;
 
-		account->showXmlConsole();
-	}
+        account->showXmlConsole();
+    }
 
-	void modifyAccount()
-	{
-		if (!account)
-			return;
+    void modifyAccount()
+    {
+        if (!account)
+            return;
 
-		account->modify();
-	}
+        account->modify();
+    }
 
-	void adminOnlineUsers()
-	{
-		if (!account)
-			return;
+    void adminOnlineUsers()
+    {
+        if (!account)
+            return;
 
-		// FIXME: will it still work on XMPP servers?
-		XMPP::Jid j = account->jid().domain() + '/' + "admin";
-		account->actionDisco(j, "");
-	}
+        // FIXME: will it still work on XMPP servers?
+        XMPP::Jid j = account->jid().domain() + '/' + "admin";
+        account->actionDisco(j, "");
+    }
 
-	void adminSendServerMessage()
-	{
-		if (!account)
-			return;
+    void adminSendServerMessage()
+    {
+        if (!account)
+            return;
 
-		XMPP::Jid j = account->jid().domain() + '/' + "announce/online";
-		account->actionSendMessage(j);
-	}
+        XMPP::Jid j = account->jid().domain() + '/' + "announce/online";
+        account->actionSendMessage(j);
+    }
 
-	void adminSetMotd()
-	{
-		if (!account)
-			return;
+    void adminSetMotd()
+    {
+        if (!account)
+            return;
 
-		XMPP::Jid j = account->jid().domain() + '/' + "announce/motd";
-		account->actionSendMessage(j);
-	}
+        XMPP::Jid j = account->jid().domain() + '/' + "announce/motd";
+        account->actionSendMessage(j);
+    }
 
-	void adminUpdateMotd()
-	{
-		if (!account)
-			return;
+    void adminUpdateMotd()
+    {
+        if (!account)
+            return;
 
-		XMPP::Jid j = account->jid().domain() + '/' + "announce/motd/update";
-		account->actionSendMessage(j);
-	}
+        XMPP::Jid j = account->jid().domain() + '/' + "announce/motd/update";
+        account->actionSendMessage(j);
+    }
 
-	void adminDeleteMotd()
-	{
-		if (!account)
-			return;
+    void adminDeleteMotd()
+    {
+        if (!account)
+            return;
 
-		XMPP::Jid j = account->jid().domain() + '/' + "announce/motd/delete";
-		account->actionSendMessage(j);
-	}
+        XMPP::Jid j = account->jid().domain() + '/' + "announce/motd/delete";
+        account->actionSendMessage(j);
+    }
 
 };
 
 ContactListAccountMenu::ContactListAccountMenu(PsiAccount *account, ContactListModel *model)
-	: ContactListItemMenu(nullptr, model)
+    : ContactListItemMenu(nullptr, model)
 {
-	d = new Private(this, account);
-	setLabelTitle(account->name());
+    d = new Private(this, account);
+    setLabelTitle(account->name());
 }
 
 ContactListAccountMenu::~ContactListAccountMenu()
 {
-	delete d;
+    delete d;
 }
 
 #include "contactlistaccountmenu.moc"

@@ -26,7 +26,7 @@
 
 Mood::Mood()
 {
-	type_ = Unknown;
+    type_ = Unknown;
 }
 
 Mood::Mood(Mood::Type type, const QString& text) : type_(type), text_(text)
@@ -35,71 +35,71 @@ Mood::Mood(Mood::Type type, const QString& text) : type_(type), text_(text)
 
 Mood::Mood(const QDomElement& e)
 {
-	fromXml(e);
+    fromXml(e);
 }
 
 Mood::Type Mood::type() const
 {
-	return type_;
+    return type_;
 }
 
 QString Mood::typeText() const
 {
-	return MoodCatalog::instance()->findEntryByType(type_).text();
+    return MoodCatalog::instance()->findEntryByType(type_).text();
 }
 
 QString Mood::typeValue() const
 {
-	return MoodCatalog::instance()->findEntryByType(type_).value();
+    return MoodCatalog::instance()->findEntryByType(type_).value();
 }
 
 const QString& Mood::text() const
 {
-	return text_;
+    return text_;
 }
 
 bool Mood::isNull() const
 {
-	return type_ == Unknown && text().isEmpty();
+    return type_ == Unknown && text().isEmpty();
 }
 
 QDomElement Mood::toXml(QDomDocument& doc)
 {
-	QDomElement mood = doc.createElement("mood");
-	mood.setAttribute("xmlns", PEP_MOOD_NS);
+    QDomElement mood = doc.createElement("mood");
+    mood.setAttribute("xmlns", PEP_MOOD_NS);
 
-	if (type() != Unknown) {
-		QDomElement el = doc.createElement(MoodCatalog::instance()->findEntryByType(type()).value());
-		mood.appendChild(el);
-	}
+    if (type() != Unknown) {
+        QDomElement el = doc.createElement(MoodCatalog::instance()->findEntryByType(type()).value());
+        mood.appendChild(el);
+    }
 
-	if (!text().isEmpty()) {
-		QDomElement el = doc.createElement("text");
-		QDomText t = doc.createTextNode(text());
-		el.appendChild(t);
-		mood.appendChild(el);
-	}
+    if (!text().isEmpty()) {
+        QDomElement el = doc.createElement("text");
+        QDomText t = doc.createTextNode(text());
+        el.appendChild(t);
+        mood.appendChild(el);
+    }
 
-	return mood;
+    return mood;
 }
 
 void Mood::fromXml(const QDomElement& e)
 {
-	text_.clear();
-	type_ = Unknown;
-	if (e.tagName() != "mood")
-		return;
+    text_.clear();
+    type_ = Unknown;
+    if (e.tagName() != "mood")
+        return;
 
-	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
-		QDomElement m = n.toElement();
-		if(m.isNull()) {
-			continue;
-		}
-		if (m.tagName() == "text") {
-			text_ = m.text();
-		}
-		else {
-			type_ = MoodCatalog::instance()->findEntryByValue(m.tagName()).type();
-		}
-	}
+    for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        QDomElement m = n.toElement();
+        if(m.isNull()) {
+            continue;
+        }
+        if (m.tagName() == "text") {
+            text_ = m.text();
+        }
+        else {
+            type_ = MoodCatalog::instance()->findEntryByValue(m.tagName()).type();
+        }
+    }
 }

@@ -7,25 +7,25 @@
 
 class ShowPhotoDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ShowPhotoDlg(QWidget *parent, QPixmap &pixmap);
+    ShowPhotoDlg(QWidget *parent, QPixmap &pixmap);
 private:
-	QDialog *showPhotoDlg;
-	QLabel *label;
-	QPixmap photoPixmap;
-	QToolBar *toolbar;
-	QAction *saveAct;
-	QAction *restoreAct;
-	bool initSize;
-	void createActions();
-	void updatePhoto(const QSize size);
+    QDialog *showPhotoDlg;
+    QLabel *label;
+    QPixmap photoPixmap;
+    QToolBar *toolbar;
+    QAction *saveAct;
+    QAction *restoreAct;
+    bool initSize;
+    void createActions();
+    void updatePhoto(const QSize size);
 protected:
-	void resizeEvent(QResizeEvent *event);
-	void wheelEvent(QWheelEvent * event);
+    void resizeEvent(QResizeEvent *event);
+    void wheelEvent(QWheelEvent * event);
 private slots:
-	void save();
-	void restore();
+    void save();
+    void restore();
 };
 
 #endif

@@ -42,41 +42,41 @@
 
 class ContactListGroupMenu::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	Private(ContactListGroupMenu *menu, ContactListItem *item);
+    Private(ContactListGroupMenu *menu, ContactListItem *item);
 
 public slots:
-	void updateActions();
-	void mucHide();
-	void mucShow();
-	void mucLeave();
-	void rename();
-	void removeGroupAndContacts();
-	void authResend();
-	void authRequest();
-	void authRemove();
-	void customStatus();
-	void setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s);
-	void removeGroupWithoutContacts();
-	void sendMessage();
-	void actHide(bool hide);
+    void updateActions();
+    void mucHide();
+    void mucShow();
+    void mucLeave();
+    void rename();
+    void removeGroupAndContacts();
+    void authResend();
+    void authRequest();
+    void authRemove();
+    void customStatus();
+    void setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s);
+    void removeGroupWithoutContacts();
+    void sendMessage();
+    void actHide(bool hide);
 
 public:
-	ContactListGroupMenu *q;
-	ContactListItem *group;
-	QAction *renameAction_;
-	QAction *removeGroupAndContactsAction_;
-	QAction *sendMessageAction_;
-	QAction *removeGroupWithoutContactsAction_;
-	QMenu *authMenu_;
-	QAction *actionAuth_;
-	QAction *actionAuthRequest_;
-	QAction *actionAuthRemove_;
-	QAction *actionCustomStatus_;
-	QAction *actionMucHide_;
-	QAction *actionMucShow_;
-	QAction *actionMucLeave_;
-	QAction *actionHide_;
+    ContactListGroupMenu *q;
+    ContactListItem *group;
+    QAction *renameAction_;
+    QAction *removeGroupAndContactsAction_;
+    QAction *sendMessageAction_;
+    QAction *removeGroupWithoutContactsAction_;
+    QMenu *authMenu_;
+    QAction *actionAuth_;
+    QAction *actionAuthRequest_;
+    QAction *actionAuthRemove_;
+    QAction *actionCustomStatus_;
+    QAction *actionMucHide_;
+    QAction *actionMucShow_;
+    QAction *actionMucLeave_;
+    QAction *actionHide_;
 };

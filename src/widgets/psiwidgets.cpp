@@ -60,72 +60,72 @@ static const char *psiwidget_data[] = {
 //----------------------------------------------------------------------------
 
 PsiWidgetPlugin::PsiWidgetPlugin( QObject *parent )
-	: QObject( parent )
+    : QObject( parent )
 {
-	initialized = false;
+    initialized = false;
 }
 
 QWidget *PsiWidgetPlugin::createWidget(QWidget */* parent */)
 {
-	return 0;
+    return 0;
 }
 
 QString PsiWidgetPlugin::name() const
 {
-	return "Psi Plugin";
+    return "Psi Plugin";
 }
 
 QString PsiWidgetPlugin::group() const
 {
-	return "Psi";
+    return "Psi";
 }
 
 QString PsiWidgetPlugin::toolTip() const
 {
-	return name();
+    return name();
 }
 
 QString PsiWidgetPlugin::whatsThis() const
 {
-	return "Psi Widget";
+    return "Psi Widget";
 }
 
 QString PsiWidgetPlugin::includeFile() const
 {
-	return "psiwidget.h";
+    return "psiwidget.h";
 }
 
 QString PsiWidgetPlugin::codeTemplate() const
 {
-	return QString();
+    return QString();
 }
 
 QString PsiWidgetPlugin::domXml() const
 {
-	return QString();
+    return QString();
 }
 
 QIcon PsiWidgetPlugin::icon() const
 {
-	return QIconSet( QPixmap( (const char **)psiwidget_data ) );
+    return QIconSet( QPixmap( (const char **)psiwidget_data ) );
 }
 
 bool PsiWidgetPlugin::isContainer() const
 {
-	return false;
+    return false;
 }
 
 void PsiWidgetPlugin::initialize( QDesignerFormEditorInterface * )
 {
-	if ( initialized )
-		return;
+    if ( initialized )
+        return;
 
-	initialized = true;
+    initialized = true;
 }
 
 bool PsiWidgetPlugin::isInitialized() const
 {
-	return initialized;
+    return initialized;
 }
 
 //----------------------------------------------------------------------------
@@ -134,39 +134,39 @@ bool PsiWidgetPlugin::isInitialized() const
 
 class BusyWidgetPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	BusyWidgetPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    BusyWidgetPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new BusyWidget( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new BusyWidget( parent );
+    }
 
-	QString name() const
-	{
-		return "BusyWidget";
-	}
+    QString name() const
+    {
+        return "BusyWidget";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"BusyWidget\" name=\"busyWidget\">\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"BusyWidget\" name=\"busyWidget\">\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Widget for indicating that program is doing something.";
-	}
+    QString whatsThis() const
+    {
+        return "Widget for indicating that program is doing something.";
+    }
 
-	QString includeFile() const
-	{
-		return "busywidget.h";
-	}
+    QString includeFile() const
+    {
+        return "busywidget.h";
+    }
 };
 
 
@@ -176,47 +176,47 @@ public:
 
 class IconLabelPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconLabelPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    IconLabelPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new IconLabel( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new IconLabel( parent );
+    }
 
-	QString name() const
-	{
-		return "IconLabel";
-	}
+    QString name() const
+    {
+        return "IconLabel";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"IconLabel\" name=\"iconLabel\">\n"
-		       " <property name=\"geometry\">\n"
-		       "  <rect>\n"
-		       "   <x>0</x>\n"
-		       "   <y>0</y>\n"
-		       "   <width>100</width>\n"
-		       "   <height>100</height>\n"
-		       "  </rect>\n"
-		       " </property>\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"IconLabel\" name=\"iconLabel\">\n"
+               " <property name=\"geometry\">\n"
+               "  <rect>\n"
+               "   <x>0</x>\n"
+               "   <y>0</y>\n"
+               "   <width>100</width>\n"
+               "   <height>100</height>\n"
+               "  </rect>\n"
+               " </property>\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Label that can contain animated PsiIcon.";
-	}
+    QString whatsThis() const
+    {
+        return "Label that can contain animated PsiIcon.";
+    }
 
-	QString includeFile() const
-	{
-		return "iconlabel.h";
-	}
+    QString includeFile() const
+    {
+        return "iconlabel.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -225,47 +225,47 @@ public:
 
 class FancyLabelPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	FancyLabelPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    FancyLabelPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new FancyLabel( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new FancyLabel( parent );
+    }
 
-	QString name() const
-	{
-		return "FancyLabel";
-	}
+    QString name() const
+    {
+        return "FancyLabel";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"FancyLabel\" name=\"fancyLabel\">\n"
-		       " <property name=\"geometry\">\n"
-		       "  <rect>\n"
-		       "   <x>0</x>\n"
-		       "   <y>0</y>\n"
-		       "   <width>100</width>\n"
-		       "   <height>100</height>\n"
-		       "  </rect>\n"
-		       " </property>\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"FancyLabel\" name=\"fancyLabel\">\n"
+               " <property name=\"geometry\">\n"
+               "  <rect>\n"
+               "   <x>0</x>\n"
+               "   <y>0</y>\n"
+               "   <width>100</width>\n"
+               "   <height>100</height>\n"
+               "  </rect>\n"
+               " </property>\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Just a Fancy Label. Use it for decoration of dialogs. ;-)";
-	}
+    QString whatsThis() const
+    {
+        return "Just a Fancy Label. Use it for decoration of dialogs. ;-)";
+    }
 
-	QString includeFile() const
-	{
-		return "fancylabel.h";
-	}
+    QString includeFile() const
+    {
+        return "fancylabel.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -274,39 +274,39 @@ public:
 
 class IconsetSelectPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconsetSelectPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    IconsetSelectPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new IconsetSelect( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new IconsetSelect( parent );
+    }
 
-	QString name() const
-	{
-		return "IconsetSelect";
-	}
+    QString name() const
+    {
+        return "IconsetSelect";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"IconsetSelect\" name=\"iconsetSelect\">\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"IconsetSelect\" name=\"iconsetSelect\">\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Widget for Iconset selection.";
-	}
+    QString whatsThis() const
+    {
+        return "Widget for Iconset selection.";
+    }
 
-	QString includeFile() const
-	{
-		return "iconsetselect.h";
-	}
+    QString includeFile() const
+    {
+        return "iconsetselect.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -315,39 +315,39 @@ public:
 
 class IconsetDisplayPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconsetDisplayPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    IconsetDisplayPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new IconsetDisplay( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new IconsetDisplay( parent );
+    }
 
-	QString name() const
-	{
-		return "IconsetDisplay";
-	}
+    QString name() const
+    {
+        return "IconsetDisplay";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"IconsetDisplay\" name=\"iconsetDisplay\">\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"IconsetDisplay\" name=\"iconsetDisplay\">\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Displays all icons in Iconset.";
-	}
+    QString whatsThis() const
+    {
+        return "Displays all icons in Iconset.";
+    }
 
-	QString includeFile() const
-	{
-		return "iconsetdisplay.h";
-	}
+    QString includeFile() const
+    {
+        return "iconsetdisplay.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -356,39 +356,39 @@ public:
 
 class IconButtonPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconButtonPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    IconButtonPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new IconButton( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new IconButton( parent );
+    }
 
-	QString name() const
-	{
-		return "IconButton";
-	}
+    QString name() const
+    {
+        return "IconButton";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"IconButton\" name=\"iconButton\">\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"IconButton\" name=\"iconButton\">\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "PushButton that can contain animated PsiIcon.";
-	}
+    QString whatsThis() const
+    {
+        return "PushButton that can contain animated PsiIcon.";
+    }
 
-	QString includeFile() const
-	{
-		return "iconbutton.h";
-	}
+    QString includeFile() const
+    {
+        return "iconbutton.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -397,39 +397,39 @@ public:
 
 class IconToolButtonPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconToolButtonPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    IconToolButtonPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new IconToolButton( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new IconToolButton( parent );
+    }
 
-	QString name() const
-	{
-		return "IconToolButton";
-	}
+    QString name() const
+    {
+        return "IconToolButton";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"IconToolButton\" name=\"iconToolButton\">\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"IconToolButton\" name=\"iconToolButton\">\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "ToolButton that can contain animated PsiIcon.";
-	}
+    QString whatsThis() const
+    {
+        return "ToolButton that can contain animated PsiIcon.";
+    }
 
-	QString includeFile() const
-	{
-		return "icontoolbutton.h";
-	}
+    QString includeFile() const
+    {
+        return "icontoolbutton.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -438,39 +438,39 @@ public:
 
 class PsiTextViewPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiTextViewPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    PsiTextViewPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new PsiTextView( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new PsiTextView( parent );
+    }
 
-	QString name() const
-	{
-		return "PsiTextView";
-	}
+    QString name() const
+    {
+        return "PsiTextView";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"PsiTextView\" name=\"PsiTextView\">\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"PsiTextView\" name=\"PsiTextView\">\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Widget for displaying rich-text data, with inline Icons.";
-	}
+    QString whatsThis() const
+    {
+        return "Widget for displaying rich-text data, with inline Icons.";
+    }
 
-	QString includeFile() const
-	{
-		return "psitextview.h";
-	}
+    QString includeFile() const
+    {
+        return "psitextview.h";
+    }
 };
 
 
@@ -480,45 +480,45 @@ public:
 
 class URLLabelPlugin : public PsiWidgetPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	URLLabelPlugin( QObject *parent = 0 )
-		: PsiWidgetPlugin( parent )
-	{
-		// nothing to do
-	}
+    URLLabelPlugin( QObject *parent = 0 )
+        : PsiWidgetPlugin( parent )
+    {
+        // nothing to do
+    }
 
-	QWidget *createWidget(QWidget *parent)
-	{
-		return new URLLabel( parent );
-	}
+    QWidget *createWidget(QWidget *parent)
+    {
+        return new URLLabel( parent );
+    }
 
-	QString name() const
-	{
-		return "URLLabel";
-	}
+    QString name() const
+    {
+        return "URLLabel";
+    }
 
-	QString domXml() const
-	{
-		return "<widget class=\"URLLabel\" name=\"URLLabel\">\n"
-		       " <property name=\"url\">\n"
-		       "  <string>http://host</string>\n"
-		       " </property>\n"
-		       " <property name=\"title\">\n"
-		       "  <string>The Title</string>\n"
-		       " </property>\n"
-		       "</widget>\n";
-	}
+    QString domXml() const
+    {
+        return "<widget class=\"URLLabel\" name=\"URLLabel\">\n"
+               " <property name=\"url\">\n"
+               "  <string>http://host</string>\n"
+               " </property>\n"
+               " <property name=\"title\">\n"
+               "  <string>The Title</string>\n"
+               " </property>\n"
+               "</widget>\n";
+    }
 
-	QString whatsThis() const
-	{
-		return "Widget for displaying clickable URLs.";
-	}
+    QString whatsThis() const
+    {
+        return "Widget for displaying clickable URLs.";
+    }
 
-	QString includeFile() const
-	{
-		return "urllabel.h";
-	}
+    QString includeFile() const
+    {
+        return "urllabel.h";
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -527,30 +527,30 @@ public:
 
 class AllPsiWidgetsPlugin : public QObject, public QDesignerCustomWidgetCollectionInterface
 {
-	Q_OBJECT
-	Q_INTERFACES(QDesignerCustomWidgetCollectionInterface)
+    Q_OBJECT
+    Q_INTERFACES(QDesignerCustomWidgetCollectionInterface)
 public:
-	AllPsiWidgetsPlugin(QObject *parent = 0)
-		: QObject( parent )
-	{
-		plugins.append( new BusyWidgetPlugin( this ) );
-		plugins.append( new IconLabelPlugin( this ) );
-		plugins.append( new FancyLabelPlugin( this ) );
-		plugins.append( new IconsetSelectPlugin( this ) );
-		plugins.append( new IconsetDisplayPlugin( this ) );
-		plugins.append( new IconButtonPlugin( this ) );
-		plugins.append( new IconToolButtonPlugin( this ) );
-		plugins.append( new PsiTextViewPlugin( this ) );
-		plugins.append( new URLLabelPlugin( this ) );
-	}
+    AllPsiWidgetsPlugin(QObject *parent = 0)
+        : QObject( parent )
+    {
+        plugins.append( new BusyWidgetPlugin( this ) );
+        plugins.append( new IconLabelPlugin( this ) );
+        plugins.append( new FancyLabelPlugin( this ) );
+        plugins.append( new IconsetSelectPlugin( this ) );
+        plugins.append( new IconsetDisplayPlugin( this ) );
+        plugins.append( new IconButtonPlugin( this ) );
+        plugins.append( new IconToolButtonPlugin( this ) );
+        plugins.append( new PsiTextViewPlugin( this ) );
+        plugins.append( new URLLabelPlugin( this ) );
+    }
 
-	virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const
-	{
-		return plugins;
-	}
+    virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const
+    {
+        return plugins;
+    }
 
 private:
-	QList<QDesignerCustomWidgetInterface*> plugins;
+    QList<QDesignerCustomWidgetInterface*> plugins;
 };
 
 Q_EXPORT_PLUGIN( AllPsiWidgetsPlugin );

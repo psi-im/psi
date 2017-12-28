@@ -5,13 +5,13 @@
 
 class PsiCapsRegistry : public XMPP::CapsRegistry
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PsiCapsRegistry(QObject *parent = 0);
+    PsiCapsRegistry(QObject *parent = 0);
 
-	void saveData(const QByteArray &data);
-	QByteArray loadData();
+    void saveData(const QByteArray &data);
+    QByteArray loadData();
 };
 
 #endif // PSICAPSREGSITRY_H

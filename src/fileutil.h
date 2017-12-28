@@ -27,21 +27,21 @@ class QWidget;
 
 class FileUtil : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	static QString lastUsedOpenPath();
-	static void setLastUsedOpenPath(const QString& path);
+    static QString lastUsedOpenPath();
+    static void setLastUsedOpenPath(const QString& path);
 
-	static QString lastUsedSavePath();
-	static void setLastUsedSavePath(const QString& path);
+    static QString lastUsedSavePath();
+    static void setLastUsedSavePath(const QString& path);
 
-	static QString getImageFileName(QWidget* parent, QString caption = QString());
-	static QString getInbandImageFileName(QWidget* parent);
-	static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
-	static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& defaultFileName = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
+    static QString getImageFileName(QWidget* parent, QString caption = QString());
+    static QString getInbandImageFileName(QWidget* parent);
+    static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
+    static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& defaultFileName = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
 
-	static QString mimeToFileExt(const QString &mime);
+    static QString mimeToFileExt(const QString &mime);
 };
 
 #endif

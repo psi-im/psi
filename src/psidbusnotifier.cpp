@@ -51,27 +51,27 @@ static const QString markupCaps = "body-markup";
 class iiibiiay
 {
 public:
-	iiibiiay(QImage* img)
-	{
-		if(img->format() != QImage::Format_ARGB32)
-			*img = img->convertToFormat(QImage::Format_ARGB32);
-		width = img->width();
-		height = img->height();
-		rowstride = img->bytesPerLine();
-		hasAlpha = img->hasAlphaChannel();
-		channels = img->isGrayscale()?1:hasAlpha?4:3;
-		bitsPerSample = img->depth()/channels;
-		image.append((char*)img->rgbSwapped().bits(),img->byteCount());
-	}
-	iiibiiay(){}
-	static const int id;
-	int width;
-	int height;
-	int rowstride;
-	bool hasAlpha;
-	int bitsPerSample;
-	int channels;
-	QByteArray image;
+    iiibiiay(QImage* img)
+    {
+        if(img->format() != QImage::Format_ARGB32)
+            *img = img->convertToFormat(QImage::Format_ARGB32);
+        width = img->width();
+        height = img->height();
+        rowstride = img->bytesPerLine();
+        hasAlpha = img->hasAlphaChannel();
+        channels = img->isGrayscale()?1:hasAlpha?4:3;
+        bitsPerSample = img->depth()/channels;
+        image.append((char*)img->rgbSwapped().bits(),img->byteCount());
+    }
+    iiibiiay(){}
+    static const int id;
+    int width;
+    int height;
+    int rowstride;
+    bool hasAlpha;
+    int bitsPerSample;
+    int channels;
+    QByteArray image;
 };
 Q_DECLARE_METATYPE(iiibiiay)
 
@@ -79,40 +79,40 @@ const int iiibiiay::id(qDBusRegisterMetaType<iiibiiay>());
 
 QDBusArgument &operator<<(QDBusArgument &a, const iiibiiay &i)
 {
-	a.beginStructure();
-	a << i.width << i.height << i.rowstride << i.hasAlpha << i.bitsPerSample << i.channels << i.image;
-	a.endStructure();
-	return a;
+    a.beginStructure();
+    a << i.width << i.height << i.rowstride << i.hasAlpha << i.bitsPerSample << i.channels << i.image;
+    a.endStructure();
+    return a;
 }
 const QDBusArgument & operator >>(const QDBusArgument &a,  iiibiiay &i)
 {
-	a.beginStructure();
-	a >> i.width >> i.height >> i.rowstride >> i.hasAlpha >> i.bitsPerSample >> i.channels >> i.image;
-	a.endStructure();
-	return a;
+    a.beginStructure();
+    a >> i.width >> i.height >> i.rowstride >> i.hasAlpha >> i.bitsPerSample >> i.channels >> i.image;
+    a.endStructure();
+    return a;
 }
 
 static QDBusMessage createMessage(const QString& method)
 {
-	return QDBusMessage::createMethodCall("org.freedesktop.Notifications",
-					     "/org/freedesktop/Notifications",
-					    "org.freedesktop.Notifications",
-					    method);
+    return QDBusMessage::createMethodCall("org.freedesktop.Notifications",
+                         "/org/freedesktop/Notifications",
+                        "org.freedesktop.Notifications",
+                        method);
 }
 
 
 PsiDBusNotifier::PsiDBusNotifier(QObject *parent)
-	: QObject(parent)
-	, id_(0)
-	, account_(0)
-	, lifeTimer_(new QTimer(this))
+    : QObject(parent)
+    , id_(0)
+    , account_(0)
+    , lifeTimer_(new QTimer(this))
 {
-	QDBusConnection::sessionBus().connect("org.freedesktop.Notifications",
-					      "/org/freedesktop/Notifications",
-					      "org.freedesktop.Notifications",
-					      "NotificationClosed", this, SLOT(popupClosed(uint,uint)));
-	lifeTimer_->setSingleShot(true);
-	connect(lifeTimer_, SIGNAL(timeout()), SLOT(readyToDie()));
+    QDBusConnection::sessionBus().connect("org.freedesktop.Notifications",
+                          "/org/freedesktop/Notifications",
+                          "org.freedesktop.Notifications",
+                          "NotificationClosed", this, SLOT(popupClosed(uint,uint)));
+    lifeTimer_->setSingleShot(true);
+    connect(lifeTimer_, SIGNAL(timeout()), SLOT(readyToDie()));
 }
 
 PsiDBusNotifier::~PsiDBusNotifier()
@@ -121,280 +121,280 @@ PsiDBusNotifier::~PsiDBusNotifier()
 
 bool PsiDBusNotifier::isAvailable()
 {
-	static bool ret = checkServer();
-	return ret;
+    static bool ret = checkServer();
+    return ret;
 }
 
 bool PsiDBusNotifier::checkServer()
 {
-	QDBusInterface i("org.freedesktop.Notifications",
-			"/org/freedesktop/Notifications",
-			"org.freedesktop.Notifications",
-			QDBusConnection::sessionBus());
-	if(!i.isValid())
-		return false;
+    QDBusInterface i("org.freedesktop.Notifications",
+            "/org/freedesktop/Notifications",
+            "org.freedesktop.Notifications",
+            QDBusConnection::sessionBus());
+    if(!i.isValid())
+        return false;
 
-	//We'll need caps in the future
-	QDBusMessage m = createMessage("GetCapabilities");
-	QDBusMessage ret = QDBusConnection::sessionBus().call(m);
-	if(ret.type() != QDBusMessage::InvalidMessage && !ret.arguments().isEmpty()) {
-		QVariant v = ret.arguments().first();
-		if(v.type() == QVariant::StringList)
-			caps_ = v.toStringList();
-	}
+    //We'll need caps in the future
+    QDBusMessage m = createMessage("GetCapabilities");
+    QDBusMessage ret = QDBusConnection::sessionBus().call(m);
+    if(ret.type() != QDBusMessage::InvalidMessage && !ret.arguments().isEmpty()) {
+        QVariant v = ret.arguments().first();
+        if(v.type() == QVariant::StringList)
+            caps_ = v.toStringList();
+    }
 
-	return true;
+    return true;
 }
 
 QStringList PsiDBusNotifier::capabilities()
 {
-	return caps_;
+    return caps_;
 }
 
 void PsiDBusNotifier::popup(PsiAccount* account, PopupManager::PopupType type, const Jid& jid, const Resource& r, const UserListItem* uli, const PsiEvent::Ptr &event)
 {
-	account_ = account;
-	jid_ = jid;
-	if(event) {
-		event_ = event;
-	}
+    account_ = account;
+    jid_ = jid;
+    if(event) {
+        event_ = event;
+    }
 
-	QString title, desc, contact, text, statusMsg;
-	QString statusTxt = status2txt(makeSTATUS(r.status()));
-	int len = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-status-length").toInt();
-	if (len != 0)
-		statusMsg = r.status().status();
-	if (len > 0)
-		if (((int)statusMsg.length()) > len)
-			statusMsg = statusMsg.left(len) + "...";
-	bool doAlert = false;
-	PsiIcon* ico = 0;
+    QString title, desc, contact, text, statusMsg;
+    QString statusTxt = status2txt(makeSTATUS(r.status()));
+    int len = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-status-length").toInt();
+    if (len != 0)
+        statusMsg = r.status().status();
+    if (len > 0)
+        if (((int)statusMsg.length()) > len)
+            statusMsg = statusMsg.left(len) + "...";
+    bool doAlert = false;
+    PsiIcon* ico = 0;
 
-	if (uli && !uli->name().isEmpty()) {
-		contact = uli->name();
-	}
-	else if (event && event->type() == PsiEvent::Auth) {
-		contact = event.staticCast<AuthEvent>()->nick();
-	}
-	else if (event && event->type() == PsiEvent::Message) {
-		contact = event.staticCast<MessageEvent>()->nick();
-	}
+    if (uli && !uli->name().isEmpty()) {
+        contact = uli->name();
+    }
+    else if (event && event->type() == PsiEvent::Auth) {
+        contact = event.staticCast<AuthEvent>()->nick();
+    }
+    else if (event && event->type() == PsiEvent::Message) {
+        contact = event.staticCast<MessageEvent>()->nick();
+    }
 
-	QString j = jid.full();
-	int jidLen = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-jid-length").toInt();
-	if (jidLen > 0 && ((int)j.length()) > jidLen)
-		j = j.left(jidLen) + "...";
+    QString j = jid.full();
+    int jidLen = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-jid-length").toInt();
+    if (jidLen > 0 && ((int)j.length()) > jidLen)
+        j = j.left(jidLen) + "...";
 
-	if(contact.isEmpty()) {
-		contact = j;
-	}
-	else {
-		contact = QString("%1(%2)").arg(contact, j);
-	}
+    if(contact.isEmpty()) {
+        contact = j;
+    }
+    else {
+        contact = QString("%1(%2)").arg(contact, j);
+    }
 
-	title = this->title(type, &doAlert, &ico);
+    title = this->title(type, &doAlert, &ico);
 
-	QVariantMap hints;
-	if(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.dbus.transient-hint").toBool() ||
-	   type == PopupManager::AlertComposing || type == PopupManager::AlertOffline ||
-	   type == PopupManager::AlertOnline || type == PopupManager::AlertStatusChange || type == PopupManager::AlertNone)
-	{
-		hints.insert("transient", QVariant(true));
-	}
-//	if(doAlert) {
-//		hints.insert("urgency", QVariant(2));
-//	}
-	QImage im;
-	if(account) {
-		if(uli && uli->isPrivate())
-			im = account->avatarFactory()->getMucAvatar(jid).toImage();
-		else
-			im = account->avatarFactory()->getAvatar(jid).toImage();
+    QVariantMap hints;
+    if(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.dbus.transient-hint").toBool() ||
+       type == PopupManager::AlertComposing || type == PopupManager::AlertOffline ||
+       type == PopupManager::AlertOnline || type == PopupManager::AlertStatusChange || type == PopupManager::AlertNone)
+    {
+        hints.insert("transient", QVariant(true));
+    }
+//    if(doAlert) {
+//        hints.insert("urgency", QVariant(2));
+//    }
+    QImage im;
+    if(account) {
+        if(uli && uli->isPrivate())
+            im = account->avatarFactory()->getMucAvatar(jid).toImage();
+        else
+            im = account->avatarFactory()->getAvatar(jid).toImage();
 
-		if(!im.isNull()) {
-			int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
-			im = im.scaledToWidth(size, Qt::SmoothTransformation);
-		}
-	}
+        if(!im.isNull()) {
+            int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
+            im = im.scaledToWidth(size, Qt::SmoothTransformation);
+        }
+    }
 
-	if(im.isNull() && ico) {
-		im = ico->pixmap().toImage();
-	}
+    if(im.isNull() && ico) {
+        im = ico->pixmap().toImage();
+    }
 
-	if(!im.isNull()) {
-		iiibiiay i(&im);
-		hints.insert("icon_data", QVariant(iiibiiay::id, &i));
-	}
+    if(!im.isNull()) {
+        iiibiiay i(&im);
+        hints.insert("icon_data", QVariant(iiibiiay::id, &i));
+    }
 
-	bool showMessage = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.showMessage").toBool();
+    bool showMessage = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.showMessage").toBool();
 
-	switch(type) {
-	case PopupManager::AlertOnline:
-		text = QString("%1 (%2)").arg(contact).arg(statusTxt);
-		desc = statusMsg;
-		break;
-	case PopupManager::AlertOffline:
-		text = QString("%1 (%2)").arg(contact).arg(statusTxt);
-		desc = statusMsg;
-		break;
-	case PopupManager::AlertStatusChange:
-		text = QString("%1 (%2)").arg(contact).arg(statusTxt);
-		desc = statusMsg;
-		break;
-	case PopupManager::AlertComposing:
-		text = QString("%1%2").arg(contact).arg(QObject::tr(" is typing..."));
-		desc = "";
-		break;
-	case PopupManager::AlertMessage:
-	case PopupManager::AlertChat:
-	case PopupManager::AlertGcHighlight:
-		{
-			text = QObject::tr("%1 says:").arg(contact);
-			if(showMessage) {
-				const Message* jmessage = &event.staticCast<MessageEvent>()->message();
-				desc = jmessage->body();
-			}
-			break;
-		}
-	case PopupManager::AlertHeadline: {
-			text = QObject::tr("Headline from %1").arg(contact);
-			if(showMessage) {
-				const Message* jmessage = &event.staticCast<MessageEvent>()->message();
-				if ( !jmessage->subject().isEmpty())
-					title = jmessage->subject();
-				desc = jmessage->body();
-			}
-			break;
-		}
-	case PopupManager::AlertFile:
-		text = QObject::tr("Incoming file from %1").arg(contact);
-		break;
-	case PopupManager::AlertAvCall:
-		text = QObject::tr("Incoming call from %1").arg(contact);
-		break;
-	default:
-		break;
-	}
+    switch(type) {
+    case PopupManager::AlertOnline:
+        text = QString("%1 (%2)").arg(contact).arg(statusTxt);
+        desc = statusMsg;
+        break;
+    case PopupManager::AlertOffline:
+        text = QString("%1 (%2)").arg(contact).arg(statusTxt);
+        desc = statusMsg;
+        break;
+    case PopupManager::AlertStatusChange:
+        text = QString("%1 (%2)").arg(contact).arg(statusTxt);
+        desc = statusMsg;
+        break;
+    case PopupManager::AlertComposing:
+        text = QString("%1%2").arg(contact).arg(QObject::tr(" is typing..."));
+        desc = "";
+        break;
+    case PopupManager::AlertMessage:
+    case PopupManager::AlertChat:
+    case PopupManager::AlertGcHighlight:
+        {
+            text = QObject::tr("%1 says:").arg(contact);
+            if(showMessage) {
+                const Message* jmessage = &event.staticCast<MessageEvent>()->message();
+                desc = jmessage->body();
+            }
+            break;
+        }
+    case PopupManager::AlertHeadline: {
+            text = QObject::tr("Headline from %1").arg(contact);
+            if(showMessage) {
+                const Message* jmessage = &event.staticCast<MessageEvent>()->message();
+                if ( !jmessage->subject().isEmpty())
+                    title = jmessage->subject();
+                desc = jmessage->body();
+            }
+            break;
+        }
+    case PopupManager::AlertFile:
+        text = QObject::tr("Incoming file from %1").arg(contact);
+        break;
+    case PopupManager::AlertAvCall:
+        text = QObject::tr("Incoming call from %1").arg(contact);
+        break;
+    default:
+        break;
+    }
 
-	if(!desc.isEmpty()) {
-		desc = clipText(desc);
-		text += "\n" + desc;
-	}
+    if(!desc.isEmpty()) {
+        desc = clipText(desc);
+        text += "\n" + desc;
+    }
 
-	int lifeTime = duration();
-	bool bodyMarkup = capabilities().contains(markupCaps);
-	text = TextUtil::rich2plain(text);
-	text = bodyMarkup ? TextUtil::escape(text) : text;
-	QDBusMessage m = createMessage("Notify");
-	QVariantList args;
-	args << QString(ApplicationInfo::name());
-	args << QVariant(QVariant::UInt);
-	args << QVariant("");
-	args << QString(title);
-	args << QString(text);
-	args << QStringList();
-	args << hints;
-	args << lifeTime;
-	m.setArguments(args);
-	QDBusPendingCall call = QDBusConnection::sessionBus().asyncCall(m);
-	QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
+    int lifeTime = duration();
+    bool bodyMarkup = capabilities().contains(markupCaps);
+    text = TextUtil::rich2plain(text);
+    text = bodyMarkup ? TextUtil::escape(text) : text;
+    QDBusMessage m = createMessage("Notify");
+    QVariantList args;
+    args << QString(ApplicationInfo::name());
+    args << QVariant(QVariant::UInt);
+    args << QVariant("");
+    args << QString(title);
+    args << QString(text);
+    args << QStringList();
+    args << hints;
+    args << lifeTime;
+    m.setArguments(args);
+    QDBusPendingCall call = QDBusConnection::sessionBus().asyncCall(m);
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
 
-	connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
-			 this, SLOT(asyncCallFinished(QDBusPendingCallWatcher*)));
+    connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+             this, SLOT(asyncCallFinished(QDBusPendingCallWatcher*)));
 
-	lifeTime = (lifeTime < 0) ? lifeTime : qMax(minLifeTime, lifeTime);
-	if(lifeTime >= 0)
-		lifeTimer_->start(lifeTime);
+    lifeTime = (lifeTime < 0) ? lifeTime : qMax(minLifeTime, lifeTime);
+    if(lifeTime >= 0)
+        lifeTimer_->start(lifeTime);
 }
 
 void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*/, const Jid &j, const PsiIcon *titleIcon, const QString &titleText,
-			    const QPixmap *avatar, const PsiIcon */*icon*/, const QString &text)
+                const QPixmap *avatar, const PsiIcon */*icon*/, const QString &text)
 {
-	account_ = account;
-	jid_ = j;
+    account_ = account;
+    jid_ = j;
 
-	QVariantMap hints;
-	if(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.dbus.transient-hint").toBool()) {
-		hints.insert("transient", QVariant(true));
-	}
-	if(avatar || titleIcon) {
-		int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
-		QImage im = avatar ? avatar->toImage().scaledToWidth(size, Qt::SmoothTransformation) : titleIcon->pixmap().toImage();
-		iiibiiay i(&im);
-		hints.insert("icon_data", QVariant(iiibiiay::id, &i));
-	}
+    QVariantMap hints;
+    if(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.dbus.transient-hint").toBool()) {
+        hints.insert("transient", QVariant(true));
+    }
+    if(avatar || titleIcon) {
+        int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
+        QImage im = avatar ? avatar->toImage().scaledToWidth(size, Qt::SmoothTransformation) : titleIcon->pixmap().toImage();
+        iiibiiay i(&im);
+        hints.insert("icon_data", QVariant(iiibiiay::id, &i));
+    }
 
-	int lifeTime = duration();
-	bool bodyMarkup = capabilities().contains(markupCaps);
-	QString plainText = TextUtil::rich2plain(text);
-	plainText = bodyMarkup ? TextUtil::escape(plainText) : plainText;
-	QDBusMessage m = createMessage("Notify");
-	QVariantList args;
-	args << QString(ApplicationInfo::name());
-	args << QVariant(QVariant::UInt);
-	args << QVariant("");
-	args << QString(titleText);
-	args << QString(plainText);
-	args << QStringList();
-	args << hints;
-	args << lifeTime;
-	m.setArguments(args);
-	QDBusPendingCall call = QDBusConnection::sessionBus().asyncCall(m);
-	QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
+    int lifeTime = duration();
+    bool bodyMarkup = capabilities().contains(markupCaps);
+    QString plainText = TextUtil::rich2plain(text);
+    plainText = bodyMarkup ? TextUtil::escape(plainText) : plainText;
+    QDBusMessage m = createMessage("Notify");
+    QVariantList args;
+    args << QString(ApplicationInfo::name());
+    args << QVariant(QVariant::UInt);
+    args << QVariant("");
+    args << QString(titleText);
+    args << QString(plainText);
+    args << QStringList();
+    args << hints;
+    args << lifeTime;
+    m.setArguments(args);
+    QDBusPendingCall call = QDBusConnection::sessionBus().asyncCall(m);
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call, this);
 
-	connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
-			 this, SLOT(asyncCallFinished(QDBusPendingCallWatcher*)));
+    connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+             this, SLOT(asyncCallFinished(QDBusPendingCallWatcher*)));
 
-	lifeTime = (lifeTime < 0) ? lifeTime : qMax(minLifeTime, lifeTime);
-	if(lifeTime >= 0)
-		lifeTimer_->start(lifeTime);
+    lifeTime = (lifeTime < 0) ? lifeTime : qMax(minLifeTime, lifeTime);
+    if(lifeTime >= 0)
+        lifeTimer_->start(lifeTime);
 }
 
 void PsiDBusNotifier::asyncCallFinished(QDBusPendingCallWatcher *watcher)
 {
-	QDBusMessage m = watcher->reply();
-	if(m.type() == QDBusMessage::InvalidMessage || m.arguments().isEmpty()) {
-		readyToDie();
-		return;
-	}
+    QDBusMessage m = watcher->reply();
+    if(m.type() == QDBusMessage::InvalidMessage || m.arguments().isEmpty()) {
+        readyToDie();
+        return;
+    }
 
-	QVariant repl = m.arguments().first();
-	if(repl.type() != QVariant::UInt || repl.toUInt() == 0) {
-		readyToDie();
-	}
-	else {
-		id_ = repl.toUInt();
-	}
+    QVariant repl = m.arguments().first();
+    if(repl.type() != QVariant::UInt || repl.toUInt() == 0) {
+        readyToDie();
+    }
+    else {
+        id_ = repl.toUInt();
+    }
 }
 
 void PsiDBusNotifier::popupClosed(uint id, uint reason)
 {
-	if(id_ != 0 && id_ == id) {
-		if(reason == 2) {
-			if(account_) {
-				if(event_) {
-					account_->psi()->processEvent(event_, UserAction);
-				}
-				else if(jid_.isValid()) {
-					account_->actionDefault(Jid(jid_.bare()));
-				}
-			}
-		}
-		readyToDie();
-	}
+    if(id_ != 0 && id_ == id) {
+        if(reason == 2) {
+            if(account_) {
+                if(event_) {
+                    account_->psi()->processEvent(event_, UserAction);
+                }
+                else if(jid_.isValid()) {
+                    account_->actionDefault(Jid(jid_.bare()));
+                }
+            }
+        }
+        readyToDie();
+    }
 }
 
 void PsiDBusNotifier::readyToDie()
 {
-	if(lifeTimer_->isActive()) {
-		lifeTimer_->stop();
-	}
+    if(lifeTimer_->isActive()) {
+        lifeTimer_->stop();
+    }
 
-	QDBusConnection::sessionBus().disconnect("org.freedesktop.Notifications",
-						 "/org/freedesktop/Notifications",
-						 "org.freedesktop.Notifications",
-						 "NotificationClosed", this, SLOT(popupClosed(uint,uint)));
-	deleteLater();
+    QDBusConnection::sessionBus().disconnect("org.freedesktop.Notifications",
+                         "/org/freedesktop/Notifications",
+                         "org.freedesktop.Notifications",
+                         "NotificationClosed", this, SLOT(popupClosed(uint,uint)));
+    deleteLater();
 }
 
 QStringList PsiDBusNotifier::caps_ = QStringList();

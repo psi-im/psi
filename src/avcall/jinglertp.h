@@ -29,136 +29,136 @@ class JingleRtpManagerPrivate;
 
 class JingleRtp : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum Error
-	{
-		ErrorGeneric,
-		ErrorTimeout,
-		ErrorICE
-	};
+    enum Error
+    {
+        ErrorGeneric,
+        ErrorTimeout,
+        ErrorICE
+    };
 
-	enum Type
-	{
-		Audio = 0x01,
-		Video = 0x02
-	};
+    enum Type
+    {
+        Audio = 0x01,
+        Video = 0x02
+    };
 
-	class RtpPacket
-	{
-	public:
-		Type type;
-		int portOffset;
-		QByteArray value;
-	};
+    class RtpPacket
+    {
+    public:
+        Type type;
+        int portOffset;
+        QByteArray value;
+    };
 
-	~JingleRtp();
+    ~JingleRtp();
 
-	XMPP::Jid jid() const;
-	QList<JingleRtpPayloadType> remoteAudioPayloadTypes() const;
-	QList<JingleRtpPayloadType> remoteVideoPayloadTypes() const;
-	int remoteMaximumBitrate() const;
+    XMPP::Jid jid() const;
+    QList<JingleRtpPayloadType> remoteAudioPayloadTypes() const;
+    QList<JingleRtpPayloadType> remoteVideoPayloadTypes() const;
+    int remoteMaximumBitrate() const;
 
-	void setLocalAudioPayloadTypes(const QList<JingleRtpPayloadType> &types);
-	void setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types);
-	void setLocalMaximumBitrate(int kbps);
+    void setLocalAudioPayloadTypes(const QList<JingleRtpPayloadType> &types);
+    void setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types);
+    void setLocalMaximumBitrate(int kbps);
 
-	void connectToJid(const XMPP::Jid &jid);
-	void accept(int types); // intended types, so ICE knows what to do
-	void reject();
+    void connectToJid(const XMPP::Jid &jid);
+    void accept(int types); // intended types, so ICE knows what to do
+    void reject();
 
-	// indicates that local media settings have changed.  note that for
-	//   incoming sessions, this MUST be called.  local media settings
-	//   are not assumed to be ready when accept() is called (basically
-	//   this allows ICE negotiation to run in parallel to the RTP engine
-	//   initialization).
-	void localMediaUpdate();
+    // indicates that local media settings have changed.  note that for
+    //   incoming sessions, this MUST be called.  local media settings
+    //   are not assumed to be ready when accept() is called (basically
+    //   this allows ICE negotiation to run in parallel to the RTP engine
+    //   initialization).
+    void localMediaUpdate();
 
-	Error errorCode() const;
+    Error errorCode() const;
 
-	// this object is valid at construction time and initially lives in
-	//   JingleRtp's thread.  it can be moved to another thread as long
-	//   it is moved back to JingleRtp's thread before destructing
-	//   JingleRtp.
-	JingleRtpChannel *rtpChannel();
+    // this object is valid at construction time and initially lives in
+    //   JingleRtp's thread.  it can be moved to another thread as long
+    //   it is moved back to JingleRtp's thread before destructing
+    //   JingleRtp.
+    JingleRtpChannel *rtpChannel();
 
 signals:
-	void rejected();
-	void error();
-	void activated();
+    void rejected();
+    void error();
+    void activated();
 
-	// indicates that remote media settings have changed.  note that for
-	//   outgoing sessions, this must be listened to in order to get the
-	//   initial values.
-	void remoteMediaUpdated();
+    // indicates that remote media settings have changed.  note that for
+    //   outgoing sessions, this must be listened to in order to get the
+    //   initial values.
+    void remoteMediaUpdated();
 
 private:
-	Q_DISABLE_COPY(JingleRtp);
+    Q_DISABLE_COPY(JingleRtp);
 
-	friend class JingleRtpPrivate;
-	friend class JingleRtpManager;
-	friend class JingleRtpManagerPrivate;
-	JingleRtp();
+    friend class JingleRtpPrivate;
+    friend class JingleRtpManager;
+    friend class JingleRtpManagerPrivate;
+    JingleRtp();
 
-	JingleRtpPrivate *d;
+    JingleRtpPrivate *d;
 };
 
 class JingleRtpChannel : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	bool packetsAvailable() const;
-	JingleRtp::RtpPacket read();
-	void write(const JingleRtp::RtpPacket &packet);
+    bool packetsAvailable() const;
+    JingleRtp::RtpPacket read();
+    void write(const JingleRtp::RtpPacket &packet);
 
 signals:
-	void readyRead();
+    void readyRead();
 
-	// note: this says nothing about the order packets were written
-	void packetsWritten(int count);
+    // note: this says nothing about the order packets were written
+    void packetsWritten(int count);
 
 private:
-	Q_DISABLE_COPY(JingleRtpChannel);
+    Q_DISABLE_COPY(JingleRtpChannel);
 
-	friend class JingleRtpChannelPrivate;
-	friend class JingleRtpPrivate;
-	JingleRtpChannel();
-	~JingleRtpChannel();
+    friend class JingleRtpChannelPrivate;
+    friend class JingleRtpPrivate;
+    JingleRtpChannel();
+    ~JingleRtpChannel();
 
-	JingleRtpChannelPrivate *d;
+    JingleRtpChannelPrivate *d;
 };
 
 class JingleRtpManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	JingleRtpManager(XMPP::Client *client);
-	~JingleRtpManager();
+    JingleRtpManager(XMPP::Client *client);
+    ~JingleRtpManager();
 
-	JingleRtp *createOutgoing();
-	JingleRtp *takeIncoming();
+    JingleRtp *createOutgoing();
+    JingleRtp *takeIncoming();
 
-	void setSelfAddress(const QHostAddress &addr);
-	void setExternalAddress(const QString &host); // resolved locally
-	void setStunBindService(const QString &host, int port);
-	void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
-	void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
-	void setBasePort(int port);
+    void setSelfAddress(const QHostAddress &addr);
+    void setExternalAddress(const QString &host); // resolved locally
+    void setStunBindService(const QString &host, int port);
+    void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
+    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
+    void setBasePort(int port);
 
 signals:
-	void incomingReady();
+    void incomingReady();
 
 private:
-	Q_DISABLE_COPY(JingleRtpManager);
+    Q_DISABLE_COPY(JingleRtpManager);
 
-	friend class JingleRtpManagerPrivate;
-	friend class JingleRtp;
-	friend class JingleRtpPrivate;
+    friend class JingleRtpManagerPrivate;
+    friend class JingleRtp;
+    friend class JingleRtpPrivate;
 
-	JingleRtpManagerPrivate *d;
+    JingleRtpManagerPrivate *d;
 };
 
 #endif

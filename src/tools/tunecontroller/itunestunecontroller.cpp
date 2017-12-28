@@ -34,80 +34,80 @@
 
 static QString CFStringToQString(CFStringRef s)
 {
-	QString result;
+    QString result;
 
-	if (s != NULL) {
-		CFIndex length = CFStringGetMaximumSizeForEncoding(CFStringGetLength(s), kCFStringEncodingUTF8) + 1;
-		char* buffer = new char[length];
-		if (CFStringGetCString(s, buffer, length, kCFStringEncodingUTF8)) {
-			result = QString::fromUtf8(buffer);
-		}
-		else {
-			qWarning("itunesplayer.cpp: CFString conversion failed.");
-		}
-		delete[] buffer;
-	}
+    if (s != NULL) {
+        CFIndex length = CFStringGetMaximumSizeForEncoding(CFStringGetLength(s), kCFStringEncodingUTF8) + 1;
+        char* buffer = new char[length];
+        if (CFStringGetCString(s, buffer, length, kCFStringEncodingUTF8)) {
+            result = QString::fromUtf8(buffer);
+        }
+        else {
+            qWarning("itunesplayer.cpp: CFString conversion failed.");
+        }
+        delete[] buffer;
+    }
     return result;
 }
 
 
 ITunesController::ITunesController()
 {
-	// TODO: Poll iTunes for current playing tune
-	CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
-	CFNotificationCenterAddObserver(center, this, ITunesController::iTunesCallback, CFSTR("com.apple.iTunes.playerInfo"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+    // TODO: Poll iTunes for current playing tune
+    CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterAddObserver(center, this, ITunesController::iTunesCallback, CFSTR("com.apple.iTunes.playerInfo"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 }
 
 ITunesController::~ITunesController()
 {
-	CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
-	CFNotificationCenterRemoveObserver(center, this, CFSTR("com.apple.iTunes.playerInfo"), NULL);
+    CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterRemoveObserver(center, this, CFSTR("com.apple.iTunes.playerInfo"), NULL);
 }
 
 Tune ITunesController::currentTune() const
 {
-	return currentTune_;
+    return currentTune_;
 }
 
 void ITunesController::iTunesCallback(CFNotificationCenterRef,void* observer,CFStringRef,const void*, CFDictionaryRef info)
 {
-	Tune tune;
-	ITunesController* controller = (ITunesController*) observer;
+    Tune tune;
+    ITunesController* controller = (ITunesController*) observer;
 
-	CFStringRef cf_state = (CFStringRef) CFDictionaryGetValue(info, CFSTR("Player State"));
-	if (CFStringCompare(cf_state,CFSTR("Paused"),0) == kCFCompareEqualTo) {
-		//qDebug() << "itunesplayer.cpp: Paused";
-		emit controller->stopped();
-	}
-	else if (CFStringCompare(cf_state,CFSTR("Stopped"),0) == kCFCompareEqualTo) {
-		//qDebug() << "itunesplayer.cpp: Stopped";
-		emit controller->stopped();
-	}
-	else if (CFStringCompare(cf_state,CFSTR("Playing"),0) == kCFCompareEqualTo) {
-		//qDebug() << "itunesplayer.cpp: Playing";
-		tune.setArtist(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Artist"))));
-		tune.setName(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Name"))));
-		tune.setAlbum(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Album"))));
+    CFStringRef cf_state = (CFStringRef) CFDictionaryGetValue(info, CFSTR("Player State"));
+    if (CFStringCompare(cf_state,CFSTR("Paused"),0) == kCFCompareEqualTo) {
+        //qDebug() << "itunesplayer.cpp: Paused";
+        emit controller->stopped();
+    }
+    else if (CFStringCompare(cf_state,CFSTR("Stopped"),0) == kCFCompareEqualTo) {
+        //qDebug() << "itunesplayer.cpp: Stopped";
+        emit controller->stopped();
+    }
+    else if (CFStringCompare(cf_state,CFSTR("Playing"),0) == kCFCompareEqualTo) {
+        //qDebug() << "itunesplayer.cpp: Playing";
+        tune.setArtist(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Artist"))));
+        tune.setName(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Name"))));
+        tune.setAlbum(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Album"))));
 
-		CFNumberRef cf_track = (CFNumberRef) CFDictionaryGetValue(info, CFSTR("Track Number"));
-		if (cf_track) {
-			int tracknr;
-			if (!CFNumberGetValue(cf_track,kCFNumberIntType,&tracknr)) {
-				qWarning("itunesplayer.cpp: Number value conversion failed.");
-			}
-			tune.setTrack(QString::number(tracknr));
-		}
+        CFNumberRef cf_track = (CFNumberRef) CFDictionaryGetValue(info, CFSTR("Track Number"));
+        if (cf_track) {
+            int tracknr;
+            if (!CFNumberGetValue(cf_track,kCFNumberIntType,&tracknr)) {
+                qWarning("itunesplayer.cpp: Number value conversion failed.");
+            }
+            tune.setTrack(QString::number(tracknr));
+        }
 
-		CFNumberRef cf_time = (CFNumberRef) CFDictionaryGetValue(info, CFSTR("Total Time"));
-		int time = 0;
-		if (cf_time && !CFNumberGetValue(cf_time,kCFNumberIntType,&time)) {
-			qWarning("itunesplayer.cpp: Number value conversion failed.");
-		}
-		tune.setTime((unsigned int) (time / 1000));
-		controller->currentTune_ = tune;
-		emit controller->playing(tune);
-	}
-	else {
-		qWarning("itunesplayer.cpp: Unknown state.");
-	}
+        CFNumberRef cf_time = (CFNumberRef) CFDictionaryGetValue(info, CFSTR("Total Time"));
+        int time = 0;
+        if (cf_time && !CFNumberGetValue(cf_time,kCFNumberIntType,&time)) {
+            qWarning("itunesplayer.cpp: Number value conversion failed.");
+        }
+        tune.setTime((unsigned int) (time / 1000));
+        controller->currentTune_ = tune;
+        emit controller->playing(tune);
+    }
+    else {
+        qWarning("itunesplayer.cpp: Unknown state.");
+    }
 }

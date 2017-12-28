@@ -25,28 +25,28 @@
 
 class PsiFilteredContactListView : public PsiContactListView
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiFilteredContactListView(QWidget* parent);
+    PsiFilteredContactListView(QWidget* parent);
 
-	bool handleKeyPressEvent(QKeyEvent* e);
+    bool handleKeyPressEvent(QKeyEvent* e);
 
 signals:
-	void quitFilteringMode();
+    void quitFilteringMode();
 
 private:
-	enum Direction {
-		Forward,
-		Backward
-	};
-	void moveSelection(uint delta, Direction direction);
-	void selectIndex(int row);
+    enum Direction {
+        Forward,
+        Backward
+    };
+    void moveSelection(uint delta, Direction direction);
+    void selectIndex(int row);
 
-	bool extendSelection() const;
+    bool extendSelection() const;
 
 protected:
-	// reimplemented
-	virtual void itemActivated(const QModelIndex& index);
+    // reimplemented
+    virtual void itemActivated(const QModelIndex& index);
 };
 
 #endif

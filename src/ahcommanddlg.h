@@ -27,7 +27,7 @@
 #include "xmpp_jid.h"
 
 namespace XMPP {
-	class Client;
+    class Client;
 }
 
 class PsiCon;
@@ -43,25 +43,25 @@ typedef struct { QString jid, node, name; } AHCommandItem;
 
 class AHCommandDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	AHCommandDlg(PsiAccount*, const XMPP::Jid& receiver);
-	static void executeCommand(PsiCon*, XMPP::Client*, const XMPP::Jid& j, const QString &node);
+    AHCommandDlg(PsiAccount*, const XMPP::Jid& receiver);
+    static void executeCommand(PsiCon*, XMPP::Client*, const XMPP::Jid& j, const QString &node);
 
 protected slots:
-	void refreshCommands();
-	void listReceived();
-	void executeCommand();
-	void commandExecuted();
+    void refreshCommands();
+    void listReceived();
+    void executeCommand();
+    void commandExecuted();
 
 private:
-	Ui::AHCommandDlg ui_;
-	PsiAccount* pa_;
-	XMPP::Jid receiver_;
-	QList<AHCommandItem> commands_;
-	QPushButton* pb_close;
-	QPushButton* pb_execute;
+    Ui::AHCommandDlg ui_;
+    PsiAccount* pa_;
+    XMPP::Jid receiver_;
+    QList<AHCommandItem> commands_;
+    QPushButton* pb_close;
+    QPushButton* pb_execute;
 };
 
 #endif

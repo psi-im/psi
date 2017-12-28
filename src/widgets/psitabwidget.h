@@ -38,67 +38,67 @@ class QMenu;
  */
 class PsiTabWidget : public QWidget //: public QTabWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiTabWidget(QWidget *parent = 0);
-	~PsiTabWidget();
+    PsiTabWidget(QWidget *parent = 0);
+    ~PsiTabWidget();
 
-	void setTabTextColor(QWidget *tab, const QColor &color);
-	int count();
-	QWidget *currentPage();
-	int currentPageIndex();
-	QWidget *widget(int index);
-	void addTab(QWidget *, QString, const QIcon &icon = QIcon());
-	void showPage(QWidget *);
-	void showPageDirectly(QWidget *);
+    void setTabTextColor(QWidget *tab, const QColor &color);
+    int count();
+    QWidget *currentPage();
+    int currentPageIndex();
+    QWidget *widget(int index);
+    void addTab(QWidget *, QString, const QIcon &icon = QIcon());
+    void showPage(QWidget *);
+    void showPageDirectly(QWidget *);
 
-	void removePage(QWidget *);
-	QWidget* page(int index);
-	int getIndex(QWidget *);
-	void setTabText(QWidget *, const QString &);
-	void setTabIcon(QWidget *, const QIcon &);
-	void setTabPosition(QTabWidget::TabPosition pos);
-	void setCloseIcon(const QIcon &);
+    void removePage(QWidget *);
+    QWidget* page(int index);
+    int getIndex(QWidget *);
+    void setTabText(QWidget *, const QString &);
+    void setTabIcon(QWidget *, const QIcon &);
+    void setTabPosition(QTabWidget::TabPosition pos);
+    void setCloseIcon(const QIcon &);
 
-	void setTabBarShown(bool shown);     // default shown
-	void setTabButtonsShown(bool shown); // default shown
-	void setDragsEnabled(bool enabled);  // default enabled
+    void setTabBarShown(bool shown);     // default shown
+    void setTabButtonsShown(bool shown); // default shown
+    void setDragsEnabled(bool enabled);  // default enabled
 
 public slots:
-	void setCurrentPage(int);
-	void removeCurrentPage();
-	void setLooks();
+    void setCurrentPage(int);
+    void removeCurrentPage();
+    void setLooks();
 
 signals:
-	void mouseDoubleClickTab(QWidget *tab);
-	void mouseMiddleClickTab(QWidget *tab);
-	void currentChanged(QWidget *selected);
-	void closeButtonClicked();
-	void aboutToShowMenu(QMenu *);
-	void tabCloseRequested(int i);
+    void mouseDoubleClickTab(QWidget *tab);
+    void mouseMiddleClickTab(QWidget *tab);
+    void currentChanged(QWidget *selected);
+    void closeButtonClicked();
+    void aboutToShowMenu(QMenu *);
+    void tabCloseRequested(int i);
 
-	// context menu on the blank space will have tab==-1
-	void tabContextMenu(int tab, QPoint pos, QContextMenuEvent *event);
+    // context menu on the blank space will have tab==-1
+    void tabContextMenu(int tab, QPoint pos, QContextMenuEvent *event);
 
 private slots:
-	void mouseDoubleClickTab(int tab);
-	void mouseMiddleClickTab(int tab);
-	void tab_currentChanged(int tab);
-	void tab_contextMenu(QContextMenuEvent *event, int tab);
-	void menu_aboutToShow();
-	void menu_triggered(QAction *act);
-	void widgetMoved(int from, int to);
+    void mouseDoubleClickTab(int tab);
+    void mouseMiddleClickTab(int tab);
+    void tab_currentChanged(int tab);
+    void tab_contextMenu(QContextMenuEvent *event, int tab);
+    void menu_aboutToShow();
+    void menu_triggered(QAction *act);
+    void widgetMoved(int from, int to);
 
 private:
-	QVector<QWidget*> widgets_;
-	QTabBar *tabBar_;
-	QVBoxLayout *layout_;
-	QHBoxLayout *barLayout_;
-	QStackedLayout *stacked_;
-	QToolButton *closeButton_;
-	QToolButton *downButton_;
-	QTabWidget::TabPosition tabsPosition_;
-	QMenu *menu_;
+    QVector<QWidget*> widgets_;
+    QTabBar *tabBar_;
+    QVBoxLayout *layout_;
+    QHBoxLayout *barLayout_;
+    QStackedLayout *stacked_;
+    QToolButton *closeButton_;
+    QToolButton *downButton_;
+    QTabWidget::TabPosition tabsPosition_;
+    QMenu *menu_;
 };
 
 

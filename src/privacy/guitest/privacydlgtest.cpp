@@ -8,22 +8,22 @@
 class PrivacyDlgTest : public GUITest
 {
 public:
-	PrivacyDlgTest();
+    PrivacyDlgTest();
 
-	QString name() { return "PrivacyDlgTest"; }
-	bool run();
+    QString name() { return "PrivacyDlgTest"; }
+    bool run();
 };
 
 PrivacyDlgTest::PrivacyDlgTest()
 {
-	GUITestManager::instance()->registerTest(this);
+    GUITestManager::instance()->registerTest(this);
 }
 
 bool PrivacyDlgTest::run()
 {
-	PrivacyDlg* dlg = new PrivacyDlg("MyAccount", new MockPrivacyManager());
-	dlg->exec();
-	return false;
+    PrivacyDlg* dlg = new PrivacyDlg("MyAccount", new MockPrivacyManager());
+    dlg->exec();
+    return false;
 }
 
 static PrivacyDlgTest* privacyDlgTestInstance = new PrivacyDlgTest();

@@ -50,97 +50,97 @@ WinAmpTuneController::WinAmpTuneController()
 : PollingTuneController(),
   antiscrollCounter_(0)
 {
-	startPoll();
-	setInterval(NormInterval);
+    startPoll();
+    setInterval(NormInterval);
 }
 
 template <typename char_type> const size_t length (const char_type * begin)
 {
-	const char_type * end = begin;
-	for (; *end; ++end);
-	return end - begin;
+    const char_type * end = begin;
+    for (; *end; ++end);
+    return end - begin;
 }
 
 // Returns a title of a track currently being played by WinAmp with given HWND (passed in waWnd)
 QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) const
 {
-	TCHAR waTitle[2048];
-	QString title;
+    TCHAR waTitle[2048];
+    QString title;
 
-	// Get WinAmp window title. It always contains name of the track
-	SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
-	// Now, waTitle contains WinAmp window title
-	title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle));
-	if (title[0] == '*' || (title.length () && title[title.length() - 1] == '*')) {
-		// request to be called again soon.
-		return QPair<bool, QString>(false, QString());
-	}
+    // Get WinAmp window title. It always contains name of the track
+    SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
+    // Now, waTitle contains WinAmp window title
+    title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle));
+    if (title[0] == '*' || (title.length () && title[title.length() - 1] == '*')) {
+        // request to be called again soon.
+        return QPair<bool, QString>(false, QString());
+    }
 
-	// Check whether there is a need to do the all stuff
-	if (!title.length()) {
-		return QPair<bool, QString>(true,title);
-	}
+    // Check whether there is a need to do the all stuff
+    if (!title.length()) {
+        return QPair<bool, QString>(true,title);
+    }
 
-	QString winamp (" - Winamp ***");
-	int winampLength = winamp.length();
+    QString winamp (" - Winamp ***");
+    int winampLength = winamp.length();
 
-	// Is title scrolling on the taskbar enabled?
-	title += title + title;
-	int waLast = title.indexOf (winamp, -1);
-	if (waLast != -1) {
-		if (title.length()) {
-			title.remove (waLast, title.length () - waLast);
-		}
-		int waFirst;
-		while ((waFirst = title.indexOf (winamp)) != -1) {
-			title.remove (0, waFirst + winampLength);
-		}
-	}
-	else {
-		title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle)); // Title is not scrolling
-	}
+    // Is title scrolling on the taskbar enabled?
+    title += title + title;
+    int waLast = title.indexOf (winamp, -1);
+    if (waLast != -1) {
+        if (title.length()) {
+            title.remove (waLast, title.length () - waLast);
+        }
+        int waFirst;
+        while ((waFirst = title.indexOf (winamp)) != -1) {
+            title.remove (0, waFirst + winampLength);
+        }
+    }
+    else {
+        title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle)); // Title is not scrolling
+    }
 
-	// Remove leading and trailing spaces
-	title  = title.trimmed();
+    // Remove leading and trailing spaces
+    title  = title.trimmed();
 
-	// Remove trailing " - Winamp" from title
-	if (title.length ()) {
-		winamp = " - Winamp";
-		winampLength = winamp.length ();
-		int waFirst = title.indexOf (winamp);
-		if (waFirst != -1)
-		{
-			title.remove (waFirst, waFirst + winampLength);
-		}
-	}
+    // Remove trailing " - Winamp" from title
+    if (title.length ()) {
+        winamp = " - Winamp";
+        winampLength = winamp.length ();
+        int waFirst = title.indexOf (winamp);
+        if (waFirst != -1)
+        {
+            title.remove (waFirst, waFirst + winampLength);
+        }
+    }
 
-	// Remove track number from title
-	if (title.length ()) {
-		QString dot(". ");
-		int dotFirst = title.indexOf (dot);
-		if (dotFirst != -1) {
-			// All symbols before the dot are digits?
-			bool allDigits = true;
-			for (int pos = dotFirst; pos > 0; --pos) {
-				allDigits = allDigits && title[pos].isNumber();
-			}
-			if (allDigits) {
-				title.remove(0, dotFirst + dot.length ());
-			}
-		}
-	}
+    // Remove track number from title
+    if (title.length ()) {
+        QString dot(". ");
+        int dotFirst = title.indexOf (dot);
+        if (dotFirst != -1) {
+            // All symbols before the dot are digits?
+            bool allDigits = true;
+            for (int pos = dotFirst; pos > 0; --pos) {
+                allDigits = allDigits && title[pos].isNumber();
+            }
+            if (allDigits) {
+                title.remove(0, dotFirst + dot.length ());
+            }
+        }
+    }
 
-	// Remove leading and trailing spaces
-	if (title.length ()) {
-		while (title.length () && title[0] == ' ') {
-			title.remove (0, 1);
-		}
-		while (title.length () && title[title.length () - 1] == ' ') {
-			title.remove (title.length () - 1, 1);
-		}
-	}
+    // Remove leading and trailing spaces
+    if (title.length ()) {
+        while (title.length () && title[0] == ' ') {
+            title.remove (0, 1);
+        }
+        while (title.length () && title[title.length () - 1] == ' ') {
+            title.remove (title.length () - 1, 1);
+        }
+    }
 
-	return QPair<bool, QString>(true,title);
+    return QPair<bool, QString>(true,title);
 }
 
 
@@ -150,48 +150,48 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
 void WinAmpTuneController::check()
 {
 
-	Tune tune;
+    Tune tune;
 #ifdef UNICODE
-	HWND h = FindWindow(L"Winamp v1.x", NULL);
+    HWND h = FindWindow(L"Winamp v1.x", NULL);
 #else
-	HWND h = FindWindow("Winamp v1.x", NULL);
+    HWND h = FindWindow("Winamp v1.x", NULL);
 #endif
-	if (h && SendMessage(h, WM_WA_IPC, 0, IPC_ISPLAYING) == 1) {
-		tune = getTune(h);
-	}
-	prevTune_ = tune;
-	setInterval(NormInterval);
-	PollingTuneController::check();
+    if (h && SendMessage(h, WM_WA_IPC, 0, IPC_ISPLAYING) == 1) {
+        tune = getTune(h);
+    }
+    prevTune_ = tune;
+    setInterval(NormInterval);
+    PollingTuneController::check();
 }
 
 Tune WinAmpTuneController::getTune(const HWND &hWnd)
 {
-	Tune tune = Tune();
-	int position = (int)SendMessage(hWnd, WM_WA_IPC, 0, IPC_GETLISTPOS);
-	if (position != -1) {
-		if (hWnd && SendMessage(hWnd,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
-			QPair<bool, QString> trackpair(getTrackTitle(hWnd));
-			if (!trackpair.first) {
-				// getTrackTitle wants us to retry in a few ms...
-				int interval = AntiscrollInterval;
-				if (++antiscrollCounter_ > 10) {
-					antiscrollCounter_ = 0;
-					interval = NormInterval;
-				}
-				setInterval(interval);
-				return Tune();
-			}
-			antiscrollCounter_ = 0;
-			tune.setName(trackpair.second);
-			tune.setURL(trackpair.second);
-			tune.setTrack(QString::number(position + 1));
-			tune.setTime(SendMessage(hWnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME));
-		}
-	}
-	return tune;
+    Tune tune = Tune();
+    int position = (int)SendMessage(hWnd, WM_WA_IPC, 0, IPC_GETLISTPOS);
+    if (position != -1) {
+        if (hWnd && SendMessage(hWnd,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
+            QPair<bool, QString> trackpair(getTrackTitle(hWnd));
+            if (!trackpair.first) {
+                // getTrackTitle wants us to retry in a few ms...
+                int interval = AntiscrollInterval;
+                if (++antiscrollCounter_ > 10) {
+                    antiscrollCounter_ = 0;
+                    interval = NormInterval;
+                }
+                setInterval(interval);
+                return Tune();
+            }
+            antiscrollCounter_ = 0;
+            tune.setName(trackpair.second);
+            tune.setURL(trackpair.second);
+            tune.setTrack(QString::number(position + 1));
+            tune.setTime(SendMessage(hWnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME));
+        }
+    }
+    return tune;
 }
 
 Tune WinAmpTuneController::currentTune() const
 {
-	return prevTune_;
+    return prevTune_;
 }

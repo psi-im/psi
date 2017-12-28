@@ -33,41 +33,41 @@ class QThread;
 class Anim
 {
 public:
-	Anim();
-	Anim(const QByteArray &data);
-	Anim(const Anim &anim);
-	~Anim();
+    Anim();
+    Anim(const QByteArray &data);
+    Anim(const Anim &anim);
+    ~Anim();
 
-	const QPixmap &framePixmap() const;
-	const QImage &frameImage() const;
-	const Impix &frameImpix() const;
-	bool isNull() const;
+    const QPixmap &framePixmap() const;
+    const QImage &frameImage() const;
+    const Impix &frameImpix() const;
+    bool isNull() const;
 
-	int frameNumber() const;
-	int numFrames() const;
-	const Impix &frame(int n) const;
+    int frameNumber() const;
+    int numFrames() const;
+    const Impix &frame(int n) const;
 
-	bool paused() const;
-	void unpause();
-	void pause();
+    bool paused() const;
+    void unpause();
+    void pause();
 
-	void restart();
+    void restart();
 
-	void stripFirstFrame();
+    void stripFirstFrame();
 
-	static QThread *mainThread();
-	static void setMainThread(QThread *);
+    static QThread *mainThread();
+    static void setMainThread(QThread *);
 
-	void connectUpdate(QObject *receiver, const char *member);
-	void disconnectUpdate(QObject *receiver, const char *member = 0);
+    void connectUpdate(QObject *receiver, const char *member);
+    void disconnectUpdate(QObject *receiver, const char *member = 0);
 
-	Anim & operator= (const Anim &);
-	Anim copy() const;
-	void detach();
+    Anim & operator= (const Anim &);
+    Anim copy() const;
+    void detach();
 
-	class Private;
+    class Private;
 private:
-	QSharedDataPointer<Private> d;
+    QSharedDataPointer<Private> d;
 };
 
 #endif

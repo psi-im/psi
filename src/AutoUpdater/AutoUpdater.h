@@ -8,10 +8,10 @@
 
 class AutoUpdater
 {
-	public:
-		virtual ~AutoUpdater();
+    public:
+        virtual ~AutoUpdater();
 
-		virtual void checkForUpdates() = 0;
+        virtual void checkForUpdates() = 0;
 };
 
 #endif

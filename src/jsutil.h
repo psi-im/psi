@@ -29,17 +29,17 @@ class QVariant;
 class JSUtil
 {
 public:
-	static QString map2json(const QVariantMap &);
-	static QString variant2js(const QVariant &);
-	/** Escapes " and \n  (for JS evaluation) */
-	static void escapeString(QString &str);
+    static QString map2json(const QVariantMap &);
+    static QString variant2js(const QVariant &);
+    /** Escapes " and \n  (for JS evaluation) */
+    static void escapeString(QString &str);
 
-	/** Escapes " and \n  (for JS evaluation) [overload] */
-	static inline QString escapeStringCopy(QString str)
-	{
-		escapeString(str);
-		return str;
-	}
+    /** Escapes " and \n  (for JS evaluation) [overload] */
+    static inline QString escapeStringCopy(QString str)
+    {
+        escapeString(str);
+        return str;
+    }
 };
 
 

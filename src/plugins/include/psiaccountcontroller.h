@@ -6,9 +6,9 @@ class PsiAccountControllingHost;
 class PsiAccountController
 {
 public:
-	virtual ~PsiAccountController() {}
+    virtual ~PsiAccountController() {}
 
-	virtual void setPsiAccountControllingHost(PsiAccountControllingHost* host) = 0;
+    virtual void setPsiAccountControllingHost(PsiAccountControllingHost* host) = 0;
 
 };
 

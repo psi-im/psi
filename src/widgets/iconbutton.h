@@ -32,34 +32,34 @@ class PsiIcon;
 
 class IconButton : public QPushButton
 {
-	Q_OBJECT
-	Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
-	Q_PROPERTY( bool textVisible READ textVisible WRITE setTextVisible )
+    Q_OBJECT
+    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
+    Q_PROPERTY( bool textVisible READ textVisible WRITE setTextVisible )
 
-	Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
-	Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
 
 public:
-	IconButton(QWidget *parent = 0);
-	~IconButton();
+    IconButton(QWidget *parent = 0);
+    ~IconButton();
 
-	void setIcon(const QPixmap &);
+    void setIcon(const QPixmap &);
 
 public slots:
-	void setPsiIcon(const PsiIcon *, bool activate = true);
-	void forceSetPsiIcon(const PsiIcon *, bool activate = true);
-	void setPsiIcon(const QString &);
-	QString psiIconName() const;
+    void setPsiIcon(const PsiIcon *, bool activate = true);
+    void forceSetPsiIcon(const PsiIcon *, bool activate = true);
+    void setPsiIcon(const QString &);
+    QString psiIconName() const;
 
-	void setText(const QString &);
+    void setText(const QString &);
 
-	bool textVisible() const;
-	void setTextVisible(bool);
+    bool textVisible() const;
+    void setTextVisible(bool);
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 #endif

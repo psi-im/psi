@@ -32,51 +32,51 @@ class QButtonGroup;
 
 class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent=0);
-	~ProfileOpenDlg();
+    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent=0);
+    ~ProfileOpenDlg();
 
-	QString newLang;
+    QString newLang;
 
 private slots:
-	void manageProfiles();
-	void langChange(int);
+    void manageProfiles();
+    void langChange(int);
 
 private:
-	void reload(const QString &);
+    void reload(const QString &);
 
-	VarList langs;
-	int langSel;
+    VarList langs;
+    int langSel;
 };
 
 class ProfileManageDlg : public QDialog, public Ui::ProfileManage
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ProfileManageDlg(const QString &, QWidget *parent=0);
+    ProfileManageDlg(const QString &, QWidget *parent=0);
 
 private slots:
-	void slotProfileNew();
-	void slotProfileRename();
-	void slotProfileDelete();
-	void updateSelection();
+    void slotProfileNew();
+    void slotProfileRename();
+    void slotProfileDelete();
+    void updateSelection();
 };
 
 class ProfileNewDlg : public QDialog, public Ui::ProfileNew
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ProfileNewDlg(QWidget *parent=0);
+    ProfileNewDlg(QWidget *parent=0);
 
-	QString name;
+    QString name;
 
 private slots:
-	void slotCreate();
-	void nameModified();
+    void slotCreate();
+    void nameModified();
 
 private:
-	QButtonGroup* buttonGroup_;
+    QButtonGroup* buttonGroup_;
 };
 
 #endif

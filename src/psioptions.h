@@ -27,40 +27,40 @@
 #define MINIMUM_OPACITY 10
 
 namespace XMPP {
-	class Client;
+    class Client;
 }
 class QString;
 class QTimer;
 
 class PsiOptions : public OptionsTree//, QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static PsiOptions* instance();
-	static const PsiOptions* defaults();
-	static void reset();
+    static PsiOptions* instance();
+    static const PsiOptions* defaults();
+    static void reset();
 
-	static bool exists(QString fileName);
-	~PsiOptions();
-	bool load(QString file);
-	void load(XMPP::Client* client);
-	bool newProfile();
-	bool save(QString file);
-	void autoSave(bool autoSave, QString autoFile = "");
-	void resetOption(const QString &name);
+    static bool exists(QString fileName);
+    ~PsiOptions();
+    bool load(QString file);
+    void load(XMPP::Client* client);
+    bool newProfile();
+    bool save(QString file);
+    void autoSave(bool autoSave, QString autoFile = "");
+    void resetOption(const QString &name);
 
 // don't call this normally
-	PsiOptions();
+    PsiOptions();
 
 private slots:
-	void saveToAutoFile();
-	void getOptionsStorage_finished();
+    void saveToAutoFile();
+    void getOptionsStorage_finished();
 
 private:
-	QString autoFile_;
-	QTimer *autoSaveTimer_;
-	static PsiOptions* instance_;
-	static PsiOptions* defaults_;
+    QString autoFile_;
+    QTimer *autoSaveTimer_;
+    static PsiOptions* instance_;
+    static PsiOptions* defaults_;
 };
 
 #endif /* _PSIOPTIONS_H_ */

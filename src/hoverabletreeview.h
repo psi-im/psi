@@ -34,47 +34,47 @@ typedef QStyleOptionViewItemV4 HoverableStyleOptionViewItemBaseClass;
 class HoverableStyleOptionViewItem : public HoverableStyleOptionViewItemBaseClass
 {
 public:
-	enum StyleOptionVersion { Version = HoverableStyleOptionViewItemBaseClass::Version+1 };
+    enum StyleOptionVersion { Version = HoverableStyleOptionViewItemBaseClass::Version+1 };
 
-	bool hovered;
-	QPoint hoveredPosition;
+    bool hovered;
+    QPoint hoveredPosition;
 
-	HoverableStyleOptionViewItem();
-	HoverableStyleOptionViewItem(const HoverableStyleOptionViewItem &other)
-		: HoverableStyleOptionViewItemBaseClass(Version)
-	{
-		*this = other;
-	}
-	HoverableStyleOptionViewItem(const QStyleOptionViewItem &other);
-	HoverableStyleOptionViewItem &operator = (const QStyleOptionViewItem &other);
+    HoverableStyleOptionViewItem();
+    HoverableStyleOptionViewItem(const HoverableStyleOptionViewItem &other)
+        : HoverableStyleOptionViewItemBaseClass(Version)
+    {
+        *this = other;
+    }
+    HoverableStyleOptionViewItem(const QStyleOptionViewItem &other);
+    HoverableStyleOptionViewItem &operator = (const QStyleOptionViewItem &other);
 
 protected:
-	HoverableStyleOptionViewItem(int version);
+    HoverableStyleOptionViewItem(int version);
 };
 
 class HoverableTreeView : public QTreeView
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	HoverableTreeView(QWidget* parent = 0);
+    HoverableTreeView(QWidget* parent = 0);
 
-	enum HoverableItemFeature {
-		Hovered = 0x8000
-	};
+    enum HoverableItemFeature {
+        Hovered = 0x8000
+    };
 
-	void repairMouseTracking();
+    void repairMouseTracking();
 
 protected:
-	// reimplemented
-	void mouseMoveEvent(QMouseEvent* event);
-	void drawRow(QPainter* painter, const QStyleOptionViewItem& options, const QModelIndex& index) const;
-	void startDrag(Qt::DropActions supportedActions);
+    // reimplemented
+    void mouseMoveEvent(QMouseEvent* event);
+    void drawRow(QPainter* painter, const QStyleOptionViewItem& options, const QModelIndex& index) const;
+    void startDrag(Qt::DropActions supportedActions);
 
-	QPoint mousePosition() const;
+    QPoint mousePosition() const;
 
 private:
-	QPoint mousePosition_;
+    QPoint mousePosition_;
 };
 
 #endif

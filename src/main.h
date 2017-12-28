@@ -29,31 +29,31 @@ class PsiCon;
 
 class PsiMain : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiMain(const QHash<QString, QString>& commandline, QObject *parent=0);
-	~PsiMain();
+    PsiMain(const QHash<QString, QString>& commandline, QObject *parent=0);
+    ~PsiMain();
 
-	bool useActiveInstance();
-	void useLocalInstance();
+    bool useActiveInstance();
+    void useLocalInstance();
 
 signals:
-	void quit();
+    void quit();
 
 private slots:
-	void chooseProfile();
-	void sessionStart();
-	void sessionQuit(int);
-	void bail();
+    void chooseProfile();
+    void sessionStart();
+    void sessionQuit(int);
+    void bail();
 
 private:
-	QString lastProfile, lastLang;
-	bool autoOpen;
-	QHash<QString, QString> cmdline;
+    QString lastProfile, lastLang;
+    bool autoOpen;
+    QHash<QString, QString> cmdline;
 
-	PsiCon *pcon;
+    PsiCon *pcon;
 
-	void saveSettings();
+    void saveSettings();
 };
 
 #endif

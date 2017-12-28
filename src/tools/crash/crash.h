@@ -5,7 +5,7 @@
 
 namespace Crash {
 
-	void registerSigsegvHandler(QString progname);
+    void registerSigsegvHandler(QString progname);
 
 };
 

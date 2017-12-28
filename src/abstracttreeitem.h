@@ -29,28 +29,28 @@ typedef QList<AbstractTreeItem*> AbstractTreeItemList;
 class AbstractTreeItem
 {
 public:
-	explicit AbstractTreeItem(AbstractTreeItem *parent = nullptr);
-	virtual ~AbstractTreeItem();
+    explicit AbstractTreeItem(AbstractTreeItem *parent = nullptr);
+    virtual ~AbstractTreeItem();
 
-	void setRow(int row);
-	int row() const;
+    void setRow(int row);
+    int row() const;
 
-	void setParent(AbstractTreeItem *newParent);
-	AbstractTreeItem *parent() const;
+    void setParent(AbstractTreeItem *newParent);
+    AbstractTreeItem *parent() const;
 
-	void insertChild(int row, AbstractTreeItem *child);
-	void appendChild(AbstractTreeItem *child);
-	void removeChild(AbstractTreeItem *child);
+    void insertChild(int row, AbstractTreeItem *child);
+    void appendChild(AbstractTreeItem *child);
+    void removeChild(AbstractTreeItem *child);
 
-	AbstractTreeItem *child(int row) const;
-	int childCount() const;
-	AbstractTreeItemList children() const;
+    AbstractTreeItem *child(int row) const;
+    int childCount() const;
+    AbstractTreeItemList children() const;
 
-	virtual AbstractTreeItem *clone() const { return nullptr; /* no default implementation */ }
-	void dump(int indent = 0) const;
-	virtual QString toString() const { return QString(); /* no default implementation */ }
+    virtual AbstractTreeItem *clone() const { return nullptr; /* no default implementation */ }
+    void dump(int indent = 0) const;
+    virtual QString toString() const { return QString(); /* no default implementation */ }
 
 private:
-	AbstractTreeItem *_parent;
-	AbstractTreeItemList _children;
+    AbstractTreeItem *_parent;
+    AbstractTreeItemList _children;
 };

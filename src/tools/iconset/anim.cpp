@@ -44,178 +44,178 @@ static QThread *animMainThread = 0;
 //! \if _hide_doc_
 class Anim::Private : public QObject, public QSharedData
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	QTimer *frametimer;
+    QTimer *frametimer;
 
-	bool empty;
-	bool paused;
+    bool empty;
+    bool paused;
 
-	int speed;
-	int lasttimerinterval;
+    int speed;
+    int lasttimerinterval;
 
-	int looping, loop;
+    int looping, loop;
 
-	class Frame {
-	public:
-		Impix impix;
-		int period;
-	};
+    class Frame {
+    public:
+        Impix impix;
+        int period;
+    };
 
-	QList<Frame> frames;
-	int frame;
+    QList<Frame> frames;
+    int frame;
 
 public:
-	void init()
-	{
-		frametimer = new QTimer();
-		if (animMainThread && animMainThread != QThread::currentThread()) {
-			frametimer->moveToThread(animMainThread);
-			moveToThread(animMainThread);
-		}
-		QObject::connect(frametimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    void init()
+    {
+        frametimer = new QTimer();
+        if (animMainThread && animMainThread != QThread::currentThread()) {
+            frametimer->moveToThread(animMainThread);
+            moveToThread(animMainThread);
+        }
+        QObject::connect(frametimer, SIGNAL(timeout()), this, SLOT(refresh()));
 
-		speed = 120;
-		lasttimerinterval = -1;
+        speed = 120;
+        lasttimerinterval = -1;
 
-		looping = 0; // MNG movies doesn't have loop flag?
-		loop = 0;
-		frame = 0;
-		paused = true;
-	}
+        looping = 0; // MNG movies doesn't have loop flag?
+        loop = 0;
+        frame = 0;
+        paused = true;
+    }
 
-	Private()
-	{
-		init();
-	}
+    Private()
+    {
+        init();
+    }
 
-	Private(const Private &from)
-		: QObject(), QSharedData()
-	{
-		init();
+    Private(const Private &from)
+        : QObject(), QSharedData()
+    {
+        init();
 
-		speed = from.speed;
-		lasttimerinterval = from.lasttimerinterval;
-		looping = from.looping;
-		loop = from.loop;
-		frame = from.frame;
-		paused = from.paused;
-		frames = from.frames;
+        speed = from.speed;
+        lasttimerinterval = from.lasttimerinterval;
+        looping = from.looping;
+        loop = from.loop;
+        frame = from.frame;
+        paused = from.paused;
+        frames = from.frames;
 
-		if ( !paused )
-			unpause();
-	}
+        if ( !paused )
+            unpause();
+    }
 
-	Private(const QByteArray *ba)
-	{
-		init();
+    Private(const QByteArray *ba)
+    {
+        init();
 
-		QBuffer buffer((QByteArray *)ba);
-		buffer.open(QBuffer::ReadOnly);
-		QImageReader reader(&buffer);
+        QBuffer buffer((QByteArray *)ba);
+        buffer.open(QBuffer::ReadOnly);
+        QImageReader reader(&buffer);
 
-		while ( reader.canRead() ) {
-			QImage image = reader.read();
-			if ( !image.isNull() ) {
-				Frame newFrame;
-				frames.append( newFrame );
-				frames.last().impix  = Impix(image);
-				frames.last().period = reader.nextImageDelay();
-			}
-			else {
-				break;
-			}
-		}
+        while ( reader.canRead() ) {
+            QImage image = reader.read();
+            if ( !image.isNull() ) {
+                Frame newFrame;
+                frames.append( newFrame );
+                frames.last().impix  = Impix(image);
+                frames.last().period = reader.nextImageDelay();
+            }
+            else {
+                break;
+            }
+        }
 
-		looping = reader.loopCount();
+        looping = reader.loopCount();
 
-		if ( !reader.supportsAnimation() && (frames.count() == 1) ) {
-			QImage frame = frames[0].impix.image();
+        if ( !reader.supportsAnimation() && (frames.count() == 1) ) {
+            QImage frame = frames[0].impix.image();
 
-			// we're gonna slice the single image we've got if we're absolutely sure
-			// that it's can be cut into multiple frames
-			if ((frame.width() / frame.height() > 0) && !(frame.width() % frame.height())) {
-				int h = frame.height();
-				QList<Frame> newFrames;
+            // we're gonna slice the single image we've got if we're absolutely sure
+            // that it's can be cut into multiple frames
+            if ((frame.width() / frame.height() > 0) && !(frame.width() % frame.height())) {
+                int h = frame.height();
+                QList<Frame> newFrames;
 
-				for (int i = 0; i < frame.width() / frame.height(); i++) {
-					Frame newFrame;
-					newFrames.append( newFrame );
-					newFrames.last().impix  = Impix(frame.copy(i * h, 0, h, h));
-					newFrames.last().period = 120;
-				}
+                for (int i = 0; i < frame.width() / frame.height(); i++) {
+                    Frame newFrame;
+                    newFrames.append( newFrame );
+                    newFrames.last().impix  = Impix(frame.copy(i * h, 0, h, h));
+                    newFrames.last().period = 120;
+                }
 
-				frames  = newFrames;
-				looping = 0;
-			}
-		}
-	}
+                frames  = newFrames;
+                looping = 0;
+            }
+        }
+    }
 
-	~Private()
-	{
-		if ( frametimer )
-			delete frametimer;
-	}
+    ~Private()
+    {
+        if ( frametimer )
+            delete frametimer;
+    }
 
-	void pause()
-	{
-		paused = true;
-		frametimer->stop();
-	}
+    void pause()
+    {
+        paused = true;
+        frametimer->stop();
+    }
 
-	void unpause()
-	{
-		paused = false;
-		restartTimer();
-	}
+    void unpause()
+    {
+        paused = false;
+        restartTimer();
+    }
 
-	void restart()
-	{
-		frame = 0;
-		if ( !paused )
-			restartTimer();
-	}
+    void restart()
+    {
+        frame = 0;
+        if ( !paused )
+            restartTimer();
+    }
 
-	int numFrames() const
-	{
-		return frames.count();
-	}
+    int numFrames() const
+    {
+        return frames.count();
+    }
 
-	void restartTimer()
-	{
-		if ( !paused && speed > 0 ) {
-			int frameperiod = frames[frame].period;
-			int i = frameperiod >= 0 ? frameperiod * 100/speed : 0;
-			if ( i != lasttimerinterval || !frametimer->isActive() ) {
-				lasttimerinterval = i;
-				frametimer->start( i );
-			}
-		} else {
-			frametimer->stop();
-		}
-	}
+    void restartTimer()
+    {
+        if ( !paused && speed > 0 ) {
+            int frameperiod = frames[frame].period;
+            int i = frameperiod >= 0 ? frameperiod * 100/speed : 0;
+            if ( i != lasttimerinterval || !frametimer->isActive() ) {
+                lasttimerinterval = i;
+                frametimer->start( i );
+            }
+        } else {
+            frametimer->stop();
+        }
+    }
 
 signals:
-	void areaChanged();
+    void areaChanged();
 
 public slots:
-	void refresh()
-	{
-		frame++;
-		if ( frame >= numFrames() ) {
-			frame = 0;
+    void refresh()
+    {
+        frame++;
+        if ( frame >= numFrames() ) {
+            frame = 0;
 
-			loop++;
-			if ( looping > 0 && loop >= looping ) {
-				frame = numFrames() - 1;
-				pause();
-				restart();
-			}
-		}
+            loop++;
+            if ( looping > 0 && loop >= looping ) {
+                frame = numFrames() - 1;
+                pause();
+                restart();
+            }
+        }
 
-		emit areaChanged();
-		restartTimer();
-	}
+        emit areaChanged();
+        restartTimer();
+    }
 };
 //! \endif
 
@@ -224,7 +224,7 @@ public slots:
  */
 Anim::Anim()
 {
-	d = new Private();
+    d = new Private();
 }
 
 /**
@@ -232,7 +232,7 @@ Anim::Anim()
  */
 Anim::Anim(const QByteArray &data)
 {
-	d = new Private(&data);
+    d = new Private(&data);
 }
 
 /**
@@ -240,7 +240,7 @@ Anim::Anim(const QByteArray &data)
  */
 Anim::Anim(const Anim &anim)
 {
-	d = anim.d;
+    d = anim.d;
 }
 
 /**
@@ -255,7 +255,7 @@ Anim::~Anim()
  */
 const QPixmap &Anim::framePixmap() const
 {
-	return d->frames[d->frame].impix.pixmap();
+    return d->frames[d->frame].impix.pixmap();
 }
 
 /**
@@ -263,7 +263,7 @@ const QPixmap &Anim::framePixmap() const
  */
 const QImage &Anim::frameImage() const
 {
-	return d->frames[d->frame].impix.image();
+    return d->frames[d->frame].impix.image();
 }
 
 /**
@@ -271,7 +271,7 @@ const QImage &Anim::frameImage() const
  */
 const Impix &Anim::frameImpix() const
 {
-	return d->frames[d->frame].impix;
+    return d->frames[d->frame].impix;
 }
 
 /**
@@ -279,7 +279,7 @@ const Impix &Anim::frameImpix() const
  */
 int Anim::numFrames() const
 {
-	return d->numFrames();
+    return d->numFrames();
 }
 
 /**
@@ -287,7 +287,7 @@ int Anim::numFrames() const
  */
 int Anim::frameNumber() const
 {
-	return d->frame;
+    return d->frame;
 }
 
 /**
@@ -295,7 +295,7 @@ int Anim::frameNumber() const
  */
 const Impix &Anim::frame(int n) const
 {
-	return d->frames[n].impix;
+    return d->frames[n].impix;
 }
 
 /**
@@ -303,7 +303,7 @@ const Impix &Anim::frame(int n) const
  */
 bool Anim::isNull() const
 {
-	return !numFrames();
+    return !numFrames();
 }
 
 /**
@@ -311,7 +311,7 @@ bool Anim::isNull() const
  */
 bool Anim::paused() const
 {
-	return d->paused;
+    return d->paused;
 }
 
 /**
@@ -319,8 +319,8 @@ bool Anim::paused() const
  */
 void Anim::unpause()
 {
-	if ( !isNull() && paused() )
-		d->unpause();
+    if ( !isNull() && paused() )
+        d->unpause();
 }
 
 /**
@@ -328,8 +328,8 @@ void Anim::unpause()
  */
 void Anim::pause()
 {
-	if ( !isNull() && !paused() )
-		d->pause();
+    if ( !isNull() && !paused() )
+        d->pause();
 }
 
 /**
@@ -337,8 +337,8 @@ void Anim::pause()
  */
 void Anim::restart()
 {
-	if ( !isNull() )
-		d->restart();
+    if ( !isNull() )
+        d->restart();
 }
 
 /**
@@ -364,7 +364,7 @@ void Anim::restart()
  */
 void Anim::connectUpdate(QObject *receiver, const char *member)
 {
-	QObject::connect(d, SIGNAL(areaChanged()), receiver, member);
+    QObject::connect(d, SIGNAL(areaChanged()), receiver, member);
 }
 
 /**
@@ -373,27 +373,27 @@ void Anim::connectUpdate(QObject *receiver, const char *member)
  */
 void Anim::disconnectUpdate(QObject *receiver, const char *member)
 {
-	QObject::disconnect(d, SIGNAL(areaChanged()), receiver, member);
+    QObject::disconnect(d, SIGNAL(areaChanged()), receiver, member);
 }
 
 Anim & Anim::operator= (const Anim &from)
 {
-	d = from.d;
+    d = from.d;
 
-	return *this;
+    return *this;
 }
 
 Anim Anim::copy() const
 {
-	Anim anim( *this );
-	anim.d = new Private( *this->d.data() );
+    Anim anim( *this );
+    anim.d = new Private( *this->d.data() );
 
-	return anim;
+    return anim;
 }
 
 void Anim::detach()
 {
-	d.detach();
+    d.detach();
 }
 
 /**
@@ -401,13 +401,13 @@ void Anim::detach()
  */
 void Anim::stripFirstFrame()
 {
-	detach();
-	if ( numFrames() > 1 ) {
-		d->frames.takeFirst();
+    detach();
+    if ( numFrames() > 1 ) {
+        d->frames.takeFirst();
 
-		if ( !paused() )
-			restart();
-	}
+        if ( !paused() )
+            restart();
+    }
 }
 
 /**
@@ -416,7 +416,7 @@ void Anim::stripFirstFrame()
  */
 void Anim::setMainThread(QThread *thread)
 {
-	animMainThread = thread;
+    animMainThread = thread;
 }
 
 /**
@@ -424,7 +424,7 @@ void Anim::setMainThread(QThread *thread)
  */
 QThread *Anim::mainThread()
 {
-	return animMainThread;
+    return animMainThread;
 }
 
 #include "anim.moc"

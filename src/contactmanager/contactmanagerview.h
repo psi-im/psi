@@ -25,14 +25,14 @@
 
 class ContactManagerView : public QTableView
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ContactManagerView( QWidget * parent = 0 );
-	void init();
+    ContactManagerView( QWidget * parent = 0 );
+    void init();
 
 protected:
-	void contextMenuEvent( QContextMenuEvent * e );
-	void keyPressEvent( QKeyEvent * e );
+    void contextMenuEvent( QContextMenuEvent * e );
+    void keyPressEvent( QKeyEvent * e );
 };
 
 #endif // CONTACTMANAGERVIEW_H

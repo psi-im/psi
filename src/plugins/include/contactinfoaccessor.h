@@ -6,9 +6,9 @@ class ContactInfoAccessingHost;
 class ContactInfoAccessor
 {
 public:
-	virtual ~ContactInfoAccessor() {}
+    virtual ~ContactInfoAccessor() {}
 
-	virtual void setContactInfoAccessingHost(ContactInfoAccessingHost* host) = 0;
+    virtual void setContactInfoAccessingHost(ContactInfoAccessingHost* host) = 0;
 
 };
 

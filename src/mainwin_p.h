@@ -35,133 +35,133 @@ class QMenu;
 
 class SeparatorAction : public IconAction
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	SeparatorAction(QObject *parent, const char *name = 0);
-	~SeparatorAction();
+    SeparatorAction(QObject *parent, const char *name = 0);
+    ~SeparatorAction();
 
-	virtual bool addTo(QWidget *w);
+    virtual bool addTo(QWidget *w);
 
-	virtual IconAction *copy() const;
+    virtual IconAction *copy() const;
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 class SpacerAction : public IconAction
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	SpacerAction(QObject *parent, const char *name = 0);
-	~SpacerAction();
+    SpacerAction(QObject *parent, const char *name = 0);
+    ~SpacerAction();
 
-	virtual bool addTo (QWidget *w);
+    virtual bool addTo (QWidget *w);
 
-	virtual IconAction *copy() const;
+    virtual IconAction *copy() const;
 };
 
 class EventNotifierAction : public IconAction
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	EventNotifierAction(QObject *parent, const char *name = 0);
-	~EventNotifierAction();
+    EventNotifierAction(QObject *parent, const char *name = 0);
+    ~EventNotifierAction();
 
-	void setMessage(const QString &);
-	bool addTo (QWidget *w);
+    void setMessage(const QString &);
+    bool addTo (QWidget *w);
 
-	void hide();
-	void show();
-	void updateVisibility();
+    void hide();
+    void show();
+    void updateVisibility();
 
-	virtual IconAction *copy() const;
-	virtual EventNotifierAction &operator=( const EventNotifierAction & );
+    virtual IconAction *copy() const;
+    virtual EventNotifierAction &operator=( const EventNotifierAction & );
 
 signals:
-	void clicked(int);
+    void clicked(int);
 
 private slots:
-	void objectDestroyed ();
+    void objectDestroyed ();
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 class PopupAction : public IconAction
 {
-	Q_OBJECT
+    Q_OBJECT
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
 private slots:
-	void objectDestroyed ();
+    void objectDestroyed ();
 
 public slots:
-	void setEnabled (bool);
+    void setEnabled (bool);
 
 public:
-	PopupAction (const QString &label, QMenu *_menu, QObject *parent, const char *name);
-	void setSizePolicy (const QSizePolicy &p);
-	void setAlert (const PsiIcon *);
-	void setIcon (const PsiIcon *, bool showText = true, bool alert = false);
-	void setText (const QString &text);
-	bool addTo (QWidget *w);
+    PopupAction (const QString &label, QMenu *_menu, QObject *parent, const char *name);
+    void setSizePolicy (const QSizePolicy &p);
+    void setAlert (const PsiIcon *);
+    void setIcon (const PsiIcon *, bool showText = true, bool alert = false);
+    void setText (const QString &text);
+    bool addTo (QWidget *w);
 
-	virtual IconAction *copy() const;
-	virtual PopupAction &operator=( const PopupAction & );
+    virtual IconAction *copy() const;
+    virtual PopupAction &operator=( const PopupAction & );
 };
 
 class MLabel : public QLabel
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	MLabel(QWidget *parent=0, const char *name=0);
+    MLabel(QWidget *parent=0, const char *name=0);
 
 protected:
-	// reimplemented
-	void mouseReleaseEvent(QMouseEvent *);
-	void mouseDoubleClickEvent(QMouseEvent *);
+    // reimplemented
+    void mouseReleaseEvent(QMouseEvent *);
+    void mouseDoubleClickEvent(QMouseEvent *);
 
 signals:
-	void clicked(int);
-	void doubleClicked();
+    void clicked(int);
+    void doubleClicked();
 };
 
 class MAction : public IconActionGroup
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MAction(PsiIcon, const QString &, int id, PsiCon *, QObject *parent);
-	MAction(const QString &, int id, PsiCon *, QObject *parent);
+    MAction(PsiIcon, const QString &, int id, PsiCon *, QObject *parent);
+    MAction(const QString &, int id, PsiCon *, QObject *parent);
 
-	// reimplemented
-	virtual bool addTo(QWidget *);
+    // reimplemented
+    virtual bool addTo(QWidget *);
 
-	virtual IconAction *copy() const;
-	virtual MAction &operator=( const MAction & );
+    virtual IconAction *copy() const;
+    virtual MAction &operator=( const MAction & );
 
 signals:
-	void activated(PsiAccount *, int);
+    void activated(PsiAccount *, int);
 
 private slots:
-	void numAccountsChanged();
-	void actionActivated();
-	void slotActivated();
+    void numAccountsChanged();
+    void actionActivated();
+    void slotActivated();
 
 protected:
-	// reimplemented
-	virtual void doSetMenu(QMenu* menu);
+    // reimplemented
+    virtual void doSetMenu(QMenu* menu);
 
 private:
-	int id_;
-	PsiCon* controller_;
+    int id_;
+    PsiCon* controller_;
 
-	void init(const QString& name, PsiIcon, int id, PsiCon* psi);
-	QList<PsiAccount*> accounts() const;
+    void init(const QString& name, PsiIcon, int id, PsiCon* psi);
+    QList<PsiAccount*> accounts() const;
 };
 
 #endif

@@ -33,22 +33,22 @@ using namespace XMPP;
 
 class DiscoDlg : public QDialog, public Ui::Disco
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	DiscoDlg(PsiAccount *, const Jid &, const QString &node = QString::null);
-	~DiscoDlg();
+    DiscoDlg(PsiAccount *, const Jid &, const QString &node = QString::null);
+    ~DiscoDlg();
 
-	void doDisco(QString host = QString::null, QString node = QString::null);
-	PsiAccount *account();
+    void doDisco(QString host = QString::null, QString node = QString::null);
+    PsiAccount *account();
 
 signals:
-	void featureActivated(QString feature, Jid jid, QString node);
+    void featureActivated(QString feature, Jid jid, QString node);
 
 public:
-	class Private;
-	friend class Private;
+    class Private;
+    friend class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 

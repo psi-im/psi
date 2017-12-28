@@ -6,9 +6,9 @@ class IconFactoryAccessingHost;
 class IconFactoryAccessor
 {
 public:
-	virtual ~IconFactoryAccessor() {}
+    virtual ~IconFactoryAccessor() {}
 
-	virtual void setIconFactoryAccessingHost(IconFactoryAccessingHost* host) = 0;
+    virtual void setIconFactoryAccessingHost(IconFactoryAccessingHost* host) = 0;
 
 };
 

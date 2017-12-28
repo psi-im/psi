@@ -29,14 +29,14 @@
 #include "userlist.h"
 
 ContactUpdatesManager::ContactUpdatesManager(PsiCon* parent)
-	: QObject(parent)
-	, controller_(parent)
+    : QObject(parent)
+    , controller_(parent)
 {
-	Q_ASSERT(controller_);
-	updateTimer_ = new QTimer(this);
-	updateTimer_->setSingleShot(false);
-	updateTimer_->setInterval(0);
-	connect(updateTimer_, SIGNAL(timeout()), SLOT(update()));
+    Q_ASSERT(controller_);
+    updateTimer_ = new QTimer(this);
+    updateTimer_->setSingleShot(false);
+    updateTimer_->setInterval(0);
+    connect(updateTimer_, SIGNAL(timeout()), SLOT(update()));
 }
 
 ContactUpdatesManager::~ContactUpdatesManager()
@@ -45,106 +45,106 @@ ContactUpdatesManager::~ContactUpdatesManager()
 
 void ContactUpdatesManager::contactBlocked(PsiAccount* account, const XMPP::Jid& jid)
 {
-	Q_ASSERT(account);
-	updates_ << ContactUpdateAction(ContactBlocked, account, jid);
-	updateTimer_->start();
+    Q_ASSERT(account);
+    updates_ << ContactUpdateAction(ContactBlocked, account, jid);
+    updateTimer_->start();
 }
 
 void ContactUpdatesManager::contactDeauthorized(PsiAccount* account, const XMPP::Jid& jid)
 {
-	Q_ASSERT(account);
-	updates_ << ContactUpdateAction(ContactDeauthorized, account, jid);
-	updateTimer_->start();
+    Q_ASSERT(account);
+    updates_ << ContactUpdateAction(ContactDeauthorized, account, jid);
+    updateTimer_->start();
 }
 
 void ContactUpdatesManager::contactAuthorized(PsiAccount* account, const XMPP::Jid& jid)
 {
-	Q_ASSERT(account);
-	updates_ << ContactUpdateAction(ContactAuthorized, account, jid);
-	updateTimer_->start();
+    Q_ASSERT(account);
+    updates_ << ContactUpdateAction(ContactAuthorized, account, jid);
+    updateTimer_->start();
 }
 
 void ContactUpdatesManager::contactRemoved(PsiAccount* account, const XMPP::Jid& jid)
 {
-	Q_ASSERT(account);
-	// we must act immediately, since otherwise all corresponding events
-	// will be simply deleted
-	removeAuthRequestEventsFor(account, jid, true);
-	removeToastersFor(account, jid);
+    Q_ASSERT(account);
+    // we must act immediately, since otherwise all corresponding events
+    // will be simply deleted
+    removeAuthRequestEventsFor(account, jid, true);
+    removeToastersFor(account, jid);
 }
 
 void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount* account, const XMPP::Jid& jid, bool denyAuthRequests)
 {
-	Q_ASSERT(account);
-	if (!account || !controller_)
-		return;
+    Q_ASSERT(account);
+    if (!account || !controller_)
+        return;
 
-	foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
-		PsiEvent::Ptr e = p.second;
-		if (e->type() == PsiEvent::Auth) {
-			AuthEvent::Ptr authEvent = e.staticCast<AuthEvent>();
-			if (authEvent->authType() == "subscribe") {
-				if (denyAuthRequests) {
-					account->dj_deny(jid);
-				}
-				account->eventQueue()->dequeue(e);
-			}
-		}
-	}
+    foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
+        PsiEvent::Ptr e = p.second;
+        if (e->type() == PsiEvent::Auth) {
+            AuthEvent::Ptr authEvent = e.staticCast<AuthEvent>();
+            if (authEvent->authType() == "subscribe") {
+                if (denyAuthRequests) {
+                    account->dj_deny(jid);
+                }
+                account->eventQueue()->dequeue(e);
+            }
+        }
+    }
 }
 
 void ContactUpdatesManager::removeToastersFor(PsiAccount* account, const XMPP::Jid& jid)
 {
-	Q_ASSERT(account);
-	if (!account || !controller_)
-		return;
+    Q_ASSERT(account);
+    if (!account || !controller_)
+        return;
 
-	foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
-		PsiEvent::Ptr e = p.second;
-		if (e->type() == PsiEvent::Message) {
-			account->eventQueue()->dequeue(e);
-		}
-	}
+    foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
+        PsiEvent::Ptr e = p.second;
+        if (e->type() == PsiEvent::Message) {
+            account->eventQueue()->dequeue(e);
+        }
+    }
 }
 
 void ContactUpdatesManager::removeNotInListContacts(PsiAccount* account, const XMPP::Jid& jid)
 {
-	Q_ASSERT(account);
-	if (!account)
-		return;
+    Q_ASSERT(account);
+    if (!account)
+        return;
 
-	foreach(UserListItem* u, account->findRelevant(jid)) {
-		if (u && !u->inList()) {
-			account->actionRemove(u->jid());
-		}
-	}
+    foreach(UserListItem* u, account->findRelevant(jid)) {
+        if (u && !u->inList()) {
+            account->actionRemove(u->jid());
+        }
+    }
 }
 
 void ContactUpdatesManager::update()
 {
-	while (!updates_.isEmpty()) {
-		ContactUpdateAction action = updates_.takeFirst();
-		if (!action.account)
-			continue;
+    while (!updates_.isEmpty()) {
+        ContactUpdateAction action = updates_.takeFirst();
+        if (!action.account)
+            continue;
 
-		if (action.type == ContactBlocked) {
-			removeAuthRequestEventsFor(action.account, action.jid, true);
-			removeNotInListContacts(action.account, action.jid);
-		}
-		else if (action.type == ContactAuthorized) {
-			removeAuthRequestEventsFor(action.account, action.jid, false);
-		}
-		else if (action.type == ContactDeauthorized) {
-			removeAuthRequestEventsFor(action.account, action.jid, false);
-			removeNotInListContacts(action.account, action.jid);
-		}
-		else if (action.type == ContactRemoved) {
-			Q_ASSERT(false);
-		}
-	}
+        if (action.type == ContactBlocked) {
+            removeAuthRequestEventsFor(action.account, action.jid, true);
+            removeNotInListContacts(action.account, action.jid);
+        }
+        else if (action.type == ContactAuthorized) {
+            removeAuthRequestEventsFor(action.account, action.jid, false);
+        }
+        else if (action.type == ContactDeauthorized) {
+            removeAuthRequestEventsFor(action.account, action.jid, false);
+            removeNotInListContacts(action.account, action.jid);
+        }
+        else if (action.type == ContactRemoved) {
+            Q_ASSERT(false);
+        }
+    }
 
-	if (updates_.isEmpty())
-		updateTimer_->stop();
-	else
-		updateTimer_->start();
+    if (updates_.isEmpty())
+        updateTimer_->stop();
+    else
+        updateTimer_->start();
 }

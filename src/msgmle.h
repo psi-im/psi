@@ -39,96 +39,96 @@ class CapitalLettersController;
 
 class ChatEdit : public QTextEdit
 {
-	void updateBackground();
+    void updateBackground();
 
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ChatEdit(QWidget* parent);
-	~ChatEdit();
+    ChatEdit(QWidget* parent);
+    ~ChatEdit();
 
-	void setDialog(QWidget* dialog);
+    void setDialog(QWidget* dialog);
 
-	// reimplemented
-	QSize sizeHint() const;
-	void setFont(const QFont &);
+    // reimplemented
+    QSize sizeHint() const;
+    void setFont(const QFont &);
 
-	static bool checkSpellingGloballyEnabled();
-	void setCheckSpelling(bool);
-	XMPP::HTMLElement toHTMLElement();
-	bool isCorrection() { return correction; }
-	void setLastMessageId(const QString& id) { lastId = id; }
-	const QString& lastMessageId() { return lastId; }
-	void resetCorrection() { correction = false; updateBackground(); };
-	CapitalLettersController * capitalizer();
+    static bool checkSpellingGloballyEnabled();
+    void setCheckSpelling(bool);
+    XMPP::HTMLElement toHTMLElement();
+    bool isCorrection() { return correction; }
+    void setLastMessageId(const QString& id) { lastId = id; }
+    const QString& lastMessageId() { return lastId; }
+    void resetCorrection() { correction = false; updateBackground(); };
+    CapitalLettersController * capitalizer();
 
 public slots:
-	void appendMessageHistory(const QString& text);
-	void clearMessageHistory();
-	void doHTMLTextMenu();
-	void setCssString(const QString& css);
+    void appendMessageHistory(const QString& text);
+    void clearMessageHistory();
+    void doHTMLTextMenu();
+    void setCssString(const QString& css);
 
 protected slots:
- 	void applySuggestion();
- 	void addToDictionary();
-	void optionsChanged();
-	void showHistoryMessageNext();
-	void showHistoryMessagePrev();
-	void showHistoryMessageFirst();
-	void showHistoryMessageLast();
+     void applySuggestion();
+     void addToDictionary();
+    void optionsChanged();
+    void showHistoryMessageNext();
+    void showHistoryMessagePrev();
+    void showHistoryMessageFirst();
+    void showHistoryMessageLast();
 
 protected:
-	// override the tab/esc behavior
-	bool focusNextPrevChild(bool next);
-	void keyPressEvent(QKeyEvent *);
-	bool event(QEvent * event);
-	void contextMenuEvent(QContextMenuEvent *e);
-	void showMessageHistory();
-	void initActions();
-	void setShortcuts();
-	void setEditText(const QString& text);
+    // override the tab/esc behavior
+    bool focusNextPrevChild(bool next);
+    void keyPressEvent(QKeyEvent *);
+    bool event(QEvent * event);
+    void contextMenuEvent(QContextMenuEvent *e);
+    void showMessageHistory();
+    void initActions();
+    void setShortcuts();
+    void setEditText(const QString& text);
 
 private:
-	QWidget	*dialog_;
-	bool check_spelling_;
-	SpellHighlighter* spellhighlighter_;
-	QPoint last_click_;
-	int previous_position_;
-	QStringList typedMsgsHistory;
-	long typedMsgsIndex;
-	QAction* act_showMessagePrev;
-	QAction* act_showMessageNext;
-	QAction* act_showMessageFirst;
-	QAction* act_showMessageLast;
-	QAction *act_changeCase;
-	QString currentText;
-	HTMLTextController *controller_;
-	CapitalLettersController *capitalizer_;
-	bool correction;
-	QString lastId;
-	QPalette palOriginal;
-	QPalette palCorrection;
+    QWidget    *dialog_;
+    bool check_spelling_;
+    SpellHighlighter* spellhighlighter_;
+    QPoint last_click_;
+    int previous_position_;
+    QStringList typedMsgsHistory;
+    long typedMsgsIndex;
+    QAction* act_showMessagePrev;
+    QAction* act_showMessageNext;
+    QAction* act_showMessageFirst;
+    QAction* act_showMessageLast;
+    QAction *act_changeCase;
+    QString currentText;
+    HTMLTextController *controller_;
+    CapitalLettersController *capitalizer_;
+    bool correction;
+    QString lastId;
+    QPalette palOriginal;
+    QPalette palCorrection;
 };
 
 
 class LineEdit : public ChatEdit
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	LineEdit(QWidget* parent);
-	~LineEdit();
+    LineEdit(QWidget* parent);
+    ~LineEdit();
 
-	// reimplemented
-	QSize minimumSizeHint() const;
-	QSize sizeHint() const;
+    // reimplemented
+    QSize minimumSizeHint() const;
+    QSize sizeHint() const;
 
 protected:
-	// reimplemented
-	void resizeEvent(QResizeEvent*);
+    // reimplemented
+    void resizeEvent(QResizeEvent*);
 
 private slots:
-	void recalculateSize();
-	void updateScrollBar();
+    void recalculateSize();
+    void updateScrollBar();
 };
 
 #endif

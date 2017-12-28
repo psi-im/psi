@@ -26,115 +26,115 @@
 
 Activity::Activity()
 {
-	type_ = Unknown;
-	specificType_ = UnknownSpecific;
+    type_ = Unknown;
+    specificType_ = UnknownSpecific;
 }
 
 Activity::Activity(Activity::Type type, Activity::SpecificType specificType, const QString& text)
 {
-	type_ = type;
-	specificType_ = specificType;
-	text_ = text;
+    type_ = type;
+    specificType_ = specificType;
+    text_ = text;
 }
 
 Activity::Activity(const QDomElement& e)
 {
-	fromXml(e);
+    fromXml(e);
 }
 
 Activity::Type Activity::type() const
 {
-	return type_;
+    return type_;
 }
 
 QString Activity::typeText() const
 {
-	return ActivityCatalog::instance()->findEntryByType(type_).text();
+    return ActivityCatalog::instance()->findEntryByType(type_).text();
 }
 
 Activity::SpecificType Activity::specificType() const
 {
-	return specificType_;
+    return specificType_;
 }
 
 QString Activity::specificTypeText() const
 {
-	return ActivityCatalog::instance()->findEntryByType(specificType_).text();
+    return ActivityCatalog::instance()->findEntryByType(specificType_).text();
 }
 
 const QString& Activity::text() const
 {
-	return text_;
+    return text_;
 }
 
 QString Activity::typeValue() const
 {
-	return ActivityCatalog::instance()->findEntryByType(type_).value();
+    return ActivityCatalog::instance()->findEntryByType(type_).value();
 }
 
 QString Activity::specificTypeValue() const
 {
-	return ActivityCatalog::instance()->findEntryByType(specificType_).value();
+    return ActivityCatalog::instance()->findEntryByType(specificType_).value();
 }
 
 bool Activity::isNull() const
 {
-	return type_ == Unknown && text().isEmpty();
+    return type_ == Unknown && text().isEmpty();
 }
 
 QDomElement Activity::toXml(QDomDocument& doc)
 {
-	QDomElement activity = doc.createElement(PEP_ACTIVITY_TN);
-	activity.setAttribute("xmlns", PEP_ACTIVITY_NS);
+    QDomElement activity = doc.createElement(PEP_ACTIVITY_TN);
+    activity.setAttribute("xmlns", PEP_ACTIVITY_NS);
 
-	if (type() != Unknown) {
-		ActivityCatalog* ac = ActivityCatalog::instance();
-		QDomElement el = doc.createElement(ac->findEntryByType(type()).value());
+    if (type() != Unknown) {
+        ActivityCatalog* ac = ActivityCatalog::instance();
+        QDomElement el = doc.createElement(ac->findEntryByType(type()).value());
 
-		if (specificType() != UnknownSpecific) {
-			QDomElement elChild = doc.createElement(ac->findEntryByType(specificType()).value());
-			el.appendChild(elChild);
-		}
+        if (specificType() != UnknownSpecific) {
+            QDomElement elChild = doc.createElement(ac->findEntryByType(specificType()).value());
+            el.appendChild(elChild);
+        }
 
-		activity.appendChild(el);
-	}
+        activity.appendChild(el);
+    }
 
-	if (!text().isEmpty()) {
-		QDomElement el = doc.createElement("text");
-		QDomText t = doc.createTextNode(text());
-		el.appendChild(t);
-		activity.appendChild(el);
-	}
+    if (!text().isEmpty()) {
+        QDomElement el = doc.createElement("text");
+        QDomText t = doc.createTextNode(text());
+        el.appendChild(t);
+        activity.appendChild(el);
+    }
 
-	return activity;
+    return activity;
 }
 
 void Activity::fromXml(const QDomElement& element)
 {
-	type_ = Activity::Unknown;
-	specificType_ = Activity::UnknownSpecific;
+    type_ = Activity::Unknown;
+    specificType_ = Activity::UnknownSpecific;
 
-	if (element.tagName() != PEP_ACTIVITY_TN)
-		return;
+    if (element.tagName() != PEP_ACTIVITY_TN)
+        return;
 
-	for (QDomNode node = element.firstChild(); !node.isNull(); node = node.nextSibling()) {
-		QDomElement child = node.toElement();
-		if(child.isNull()) {
-			continue;
-		}
-		if (child.tagName() == "text") {
-			text_ = child.text();
-		}
-		else {
-			ActivityCatalog* ac = ActivityCatalog::instance();
-			type_ = ac->findEntryByValue(child.tagName()).type();
+    for (QDomNode node = element.firstChild(); !node.isNull(); node = node.nextSibling()) {
+        QDomElement child = node.toElement();
+        if(child.isNull()) {
+            continue;
+        }
+        if (child.tagName() == "text") {
+            text_ = child.text();
+        }
+        else {
+            ActivityCatalog* ac = ActivityCatalog::instance();
+            type_ = ac->findEntryByValue(child.tagName()).type();
 
-			if (child.hasChildNodes()) {
-				QDomElement specificTypeElement = child.firstChildElement();
-				if (!specificTypeElement.isNull()) {
-					specificType_ = ac->findEntryByValue(specificTypeElement.tagName()).specificType();
-				}
-			}
-		}
-	}
+            if (child.hasChildNodes()) {
+                QDomElement specificTypeElement = child.firstChildElement();
+                if (!specificTypeElement.isNull()) {
+                    specificType_ = ac->findEntryByValue(specificTypeElement.tagName()).specificType();
+                }
+            }
+        }
+    }
 }

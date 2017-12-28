@@ -29,31 +29,31 @@ class PrivacyList;
 
 class PrivacyManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	virtual void requestListNames() = 0;
-	virtual void changeDefaultList(const QString& name) = 0;
-	virtual void changeActiveList(const QString& name) = 0;
-	virtual void changeList(const PrivacyList& list) = 0;
-	virtual void getDefaultList() = 0;
-	virtual void requestList(const QString& name) = 0;
+    virtual void requestListNames() = 0;
+    virtual void changeDefaultList(const QString& name) = 0;
+    virtual void changeActiveList(const QString& name) = 0;
+    virtual void changeList(const PrivacyList& list) = 0;
+    virtual void getDefaultList() = 0;
+    virtual void requestList(const QString& name) = 0;
 
 signals:
-	void changeDefaultList_success(QString);
-	void changeDefaultList_error();
-	void changeActiveList_success(QString);
-	void changeActiveList_error();
-	void changeList_success(QString);
-	void changeList_error();
-	void defaultListAvailable(const PrivacyList&);
-	void defaultListError();
-	void listChangeSuccess();
-	void listChangeError();
-	void listReceived(const PrivacyList& p);
-	void listError();
-	void listsReceived(const QString& defaultList, const QString& activeList, const QStringList& lists);
-	void listsError();
+    void changeDefaultList_success(QString);
+    void changeDefaultList_error();
+    void changeActiveList_success(QString);
+    void changeActiveList_error();
+    void changeList_success(QString);
+    void changeList_error();
+    void defaultListAvailable(const PrivacyList&);
+    void defaultListError();
+    void listChangeSuccess();
+    void listChangeError();
+    void listReceived(const PrivacyList& p);
+    void listError();
+    void listsReceived(const QString& defaultList, const QString& activeList, const QStringList& lists);
+    void listsError();
 };
 
 #endif

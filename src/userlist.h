@@ -34,51 +34,51 @@
 
 class AvatarFactory;
 namespace XMPP {
-	class Jid;
+    class Jid;
 }
 
 class UserResource : public XMPP::Resource
 {
 public:
-	UserResource();
-	UserResource(const XMPP::Resource &);
-	~UserResource();
+    UserResource();
+    UserResource(const XMPP::Resource &);
+    ~UserResource();
 
-	void setResource(const XMPP::Resource &);
+    void setResource(const XMPP::Resource &);
 
-	const QString& versionString() const;
-	const QString& clientVersion() const;
-	const QString& clientName() const;
-	const QString& clientOS() const;
-	void setClient(const QString& name, const QString& version, const QString& os);
+    const QString& versionString() const;
+    const QString& clientVersion() const;
+    const QString& clientName() const;
+    const QString& clientOS() const;
+    void setClient(const QString& name, const QString& version, const QString& os);
 
-	Maybe<int> timezoneOffset() const;
-	const QString& timezoneOffsetString() const;
-	void setTimezone(Maybe<int> tzo);
+    Maybe<int> timezoneOffset() const;
+    const QString& timezoneOffsetString() const;
+    void setTimezone(Maybe<int> tzo);
 
-	const QString & publicKeyID() const;
-	int pgpVerifyStatus() const;
-	QDateTime sigTimestamp() const;
-	void setPublicKeyID(const QString &);
-	void setPGPVerifyStatus(int);
-	void setSigTimestamp(const QDateTime &);
+    const QString & publicKeyID() const;
+    int pgpVerifyStatus() const;
+    QDateTime sigTimestamp() const;
+    void setPublicKeyID(const QString &);
+    void setPGPVerifyStatus(int);
+    void setSigTimestamp(const QDateTime &);
 
-	void setTune(const QString&);
-	const QString& tune() const;
-	void setGeoLocation(const GeoLocation&);
-	const GeoLocation& geoLocation() const;
-	//void setPhysicalLocation(const PhysicalLocation&);
-	//const PhysicalLocation& physicalLocation() const;
+    void setTune(const QString&);
+    const QString& tune() const;
+    void setGeoLocation(const GeoLocation&);
+    const GeoLocation& geoLocation() const;
+    //void setPhysicalLocation(const PhysicalLocation&);
+    //const PhysicalLocation& physicalLocation() const;
 
 private:
-	QString v_ver, v_clientName, v_clientVersion, v_clientOS, v_keyID;
-	Maybe<int> v_tzo;
-	QString v_tzoString;
-	QString v_tune;
-	GeoLocation v_geoLocation;
-	//PhysicalLocation v_physicalLocation;
-	int v_pgpVerifyStatus;
-	QDateTime sigts;
+    QString v_ver, v_clientName, v_clientVersion, v_clientOS, v_keyID;
+    Maybe<int> v_tzo;
+    QString v_tzoString;
+    QString v_tune;
+    GeoLocation v_geoLocation;
+    //PhysicalLocation v_physicalLocation;
+    int v_pgpVerifyStatus;
+    QDateTime sigts;
 };
 
 bool operator<(const UserResource &r1, const UserResource &r2);
@@ -90,91 +90,91 @@ bool operator>=(const UserResource &r1, const UserResource &r2);
 class UserResourceList : public QList<UserResource>
 {
 public:
-	UserResourceList();
-	~UserResourceList();
+    UserResourceList();
+    ~UserResourceList();
 
-	void sort();
+    void sort();
 
-	UserResourceList::Iterator find(const QString &);
-	UserResourceList::Iterator priority();
+    UserResourceList::Iterator find(const QString &);
+    UserResourceList::Iterator priority();
 
-	UserResourceList::ConstIterator find(const QString &) const;
-	UserResourceList::ConstIterator priority() const;
+    UserResourceList::ConstIterator find(const QString &) const;
+    UserResourceList::ConstIterator priority() const;
 };
 
 class UserListItem : public XMPP::LiveRosterItem
 {
 public:
-	UserListItem(bool self=false);
-	~UserListItem();
+    UserListItem(bool self=false);
+    ~UserListItem();
 
-	bool inList() const;
-	bool isTransport() const;
-	bool isConference() const;
-	bool isAvailable() const;
-	bool isHidden() const;
-	bool isAway() const;
-	QDateTime lastAvailable() const;
-	int lastMessageType() const;
-	void setLastMessageType(const int mtype);
-	const QString & presenceError() const;
-	bool isSelf() const;
-	QString makeTip(bool trim = true, bool doLinkify = true) const;
-	QString makeBareTip(bool trim, bool doLinkify) const;
-	QString makeDesc() const;
-	bool isPrivate() const;
-	const Mood& mood() const;
-	QStringList clients() const;
-	QString findClient(const UserResource &ur) const;
-	const Activity& activity() const;
-	QString pending() const;
+    bool inList() const;
+    bool isTransport() const;
+    bool isConference() const;
+    bool isAvailable() const;
+    bool isHidden() const;
+    bool isAway() const;
+    QDateTime lastAvailable() const;
+    int lastMessageType() const;
+    void setLastMessageType(const int mtype);
+    const QString & presenceError() const;
+    bool isSelf() const;
+    QString makeTip(bool trim = true, bool doLinkify = true) const;
+    QString makeBareTip(bool trim, bool doLinkify) const;
+    QString makeDesc() const;
+    bool isPrivate() const;
+    const Mood& mood() const;
+    QStringList clients() const;
+    QString findClient(const UserResource &ur) const;
+    const Activity& activity() const;
+    QString pending() const;
 
-	void setJid(const XMPP::Jid &);
-	void setInList(bool);
-	void setLastAvailable(const QDateTime &);
-	void setPresenceError(const QString &);
-	void setPrivate(bool);
-	void setMood(const Mood&);
-	void setActivity(const Activity&);
-	void setTune(const QString&);
-	void setConference(bool);
-	void setPending(int p, int h);
-	const QString& tune() const;
-	void setGeoLocation(const GeoLocation&);
-	const GeoLocation& geoLocation() const;
-	//void setPhysicalLocation(const PhysicalLocation&);
-	//const PhysicalLocation& physicalLocation() const;
-	void setAvatarFactory(AvatarFactory*);
+    void setJid(const XMPP::Jid &);
+    void setInList(bool);
+    void setLastAvailable(const QDateTime &);
+    void setPresenceError(const QString &);
+    void setPrivate(bool);
+    void setMood(const Mood&);
+    void setActivity(const Activity&);
+    void setTune(const QString&);
+    void setConference(bool);
+    void setPending(int p, int h);
+    const QString& tune() const;
+    void setGeoLocation(const GeoLocation&);
+    const GeoLocation& geoLocation() const;
+    //void setPhysicalLocation(const PhysicalLocation&);
+    //const PhysicalLocation& physicalLocation() const;
+    void setAvatarFactory(AvatarFactory*);
 
-	UserResourceList & userResourceList();
-	UserResourceList::Iterator priority();
-	const UserResourceList & userResourceList() const;
-	UserResourceList::ConstIterator priority() const;
+    UserResourceList & userResourceList();
+    UserResourceList::Iterator priority();
+    const UserResourceList & userResourceList() const;
+    UserResourceList::ConstIterator priority() const;
 
-	bool isSecure() const;
-	bool isSecure(const QString &rname) const;
-	void setSecure(const QString &rname, bool);
+    bool isSecure() const;
+    bool isSecure(const QString &rname) const;
+    void setSecure(const QString &rname, bool);
 
-	const QString & publicKeyID() const;
-	void setPublicKeyID(const QString &);
+    const QString & publicKeyID() const;
+    void setPublicKeyID(const QString &);
 
 private:
-	int lastmsgtype, v_pending, v_hPending;
-	bool v_inList;
-	QDateTime v_t;
-	UserResourceList v_url;
-	QString v_perr;
-	bool v_self, v_isTransport, v_isConference;
-	bool v_private;
-	QStringList secList;
-	QString v_keyID;
-	QPixmap v_avatar;
-	Mood v_mood;
-	Activity v_activity;
-	QString v_tune;
-	GeoLocation v_geoLocation;
-	//PhysicalLocation v_physicalLocation;
-	AvatarFactory* v_avatarFactory;
+    int lastmsgtype, v_pending, v_hPending;
+    bool v_inList;
+    QDateTime v_t;
+    UserResourceList v_url;
+    QString v_perr;
+    bool v_self, v_isTransport, v_isConference;
+    bool v_private;
+    QStringList secList;
+    QString v_keyID;
+    QPixmap v_avatar;
+    Mood v_mood;
+    Activity v_activity;
+    QString v_tune;
+    GeoLocation v_geoLocation;
+    //PhysicalLocation v_physicalLocation;
+    AvatarFactory* v_avatarFactory;
 };
 
 typedef QListIterator<UserListItem*> UserListIt;
@@ -182,10 +182,10 @@ typedef QListIterator<UserListItem*> UserListIt;
 class UserList : public QList<UserListItem*>
 {
 public:
-	UserList();
-	~UserList();
+    UserList();
+    ~UserList();
 
-	UserListItem *find(const XMPP::Jid &);
+    UserListItem *find(const XMPP::Jid &);
 };
 
 #endif

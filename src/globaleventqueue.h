@@ -27,30 +27,30 @@
 
 class GlobalEventQueue : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	static GlobalEventQueue* instance();
+    static GlobalEventQueue* instance();
 
-	int count() const;
+    int count() const;
 
-	const QList<int>& ids() const;
-	PsiEvent::Ptr peek(int id) const;
+    const QList<int>& ids() const;
+    PsiEvent::Ptr peek(int id) const;
 
 protected:
-	void enqueue(EventItem* item);
-	void dequeue(EventItem* item);
+    void enqueue(EventItem* item);
+    void dequeue(EventItem* item);
 
 signals:
-	void queueChanged();
+    void queueChanged();
 
 private:
-	GlobalEventQueue();
+    GlobalEventQueue();
 
-	static GlobalEventQueue* instance_;
-	QList<int> ids_;
-	QList<EventItem*> items_;
-	friend class EventQueue;
+    static GlobalEventQueue* instance_;
+    QList<int> ids_;
+    QList<EventItem*> items_;
+    friend class EventQueue;
 };
 
 #endif

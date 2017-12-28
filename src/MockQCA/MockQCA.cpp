@@ -6,7 +6,7 @@ CertificateCollection gSystemStore;
 
 CertificateCollection systemStore()
 {
-	return gSystemStore;
+    return gSystemStore;
 }
 
 }

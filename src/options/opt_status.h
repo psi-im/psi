@@ -5,9 +5,9 @@
 
 class OptionsTabStatus : public MetaOptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabStatus(QObject *parent);
+    OptionsTabStatus(QObject *parent);
 };
 
 #endif

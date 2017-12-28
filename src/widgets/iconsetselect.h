@@ -28,25 +28,25 @@ class IconsetSelectItem;
 
 class IconsetSelect : public QListWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	IconsetSelect(QWidget *parent = 0);
-	~IconsetSelect();
+    IconsetSelect(QWidget *parent = 0);
+    ~IconsetSelect();
 
-	void insert(const Iconset &); // iconsets must be inserted in following order: most prioritent first
+    void insert(const Iconset &); // iconsets must be inserted in following order: most prioritent first
 
-	const Iconset *iconset() const;
+    const Iconset *iconset() const;
 
-	QListWidgetItem *lastItem() const;
+    QListWidgetItem *lastItem() const;
 
-	QStyleOptionViewItem viewOptions() const;
+    QStyleOptionViewItem viewOptions() const;
 
 public slots:
-	void moveItemUp();
-	void moveItemDown();
+    void moveItemUp();
+    void moveItemDown();
 
 private:
-	friend class IconsetSelectItem;
+    friend class IconsetSelectItem;
 };
 
 #endif

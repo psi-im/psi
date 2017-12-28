@@ -35,19 +35,19 @@
  */
 class WbScene : public QGraphicsScene
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	/*! \brief Constructor
-	 *  Constructs a new scene with parent \a parent.
-	 */
-	WbScene(SxeSession* session, QObject * parent = 0);
+    /*! \brief Constructor
+     *  Constructs a new scene with parent \a parent.
+     */
+    WbScene(SxeSession* session, QObject * parent = 0);
 
-	/*! \brief Appends the item to a list of items whose "transform" attribute is to be regenerated.*/
-	void queueTransformationRegeneration(WbItem* item);
-	/*! \brief Regenerate the SVG transformation matrices for items queued by queueTransformationRegeneration(WbItem* item) since last regeneration.*/
-	void regenerateTransformations();
-	/*! \brief Returns the coordinates of the center of all selected items. */
+    /*! \brief Appends the item to a list of items whose "transform" attribute is to be regenerated.*/
+    void queueTransformationRegeneration(WbItem* item);
+    /*! \brief Regenerate the SVG transformation matrices for items queued by queueTransformationRegeneration(WbItem* item) since last regeneration.*/
+    void regenerateTransformations();
+    /*! \brief Returns the coordinates of the center of all selected items. */
     QPointF selectionCenter() const;
 
 public slots:

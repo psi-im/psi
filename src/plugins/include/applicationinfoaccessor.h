@@ -6,9 +6,9 @@ class ApplicationInfoAccessingHost;
 class ApplicationInfoAccessor
 {
 public:
-	virtual ~ApplicationInfoAccessor() {}
+    virtual ~ApplicationInfoAccessor() {}
 
-	virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) = 0;
+    virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) = 0;
 
 };
 

@@ -26,20 +26,20 @@
 #include "psioptions.h"
 
 ChatEditProxy::ChatEditProxy(QWidget* parent)
-	: QWidget(parent)
-	, lineEditEnabled_(false)
-	, textEdit_(0)
-	, layout_(0)
+    : QWidget(parent)
+    , lineEditEnabled_(false)
+    , textEdit_(0)
+    , layout_(0)
 {
-	layout_ = new QVBoxLayout(this);
-	layout_->setMargin(0);
-	layout_->setSpacing(0);
+    layout_ = new QVBoxLayout(this);
+    layout_->setMargin(0);
+    layout_->setSpacing(0);
 
-	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
-	optionsChanged();
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+    optionsChanged();
 
-	if (!textEdit_)
-		updateLayout();
+    if (!textEdit_)
+        updateLayout();
 }
 
 /**
@@ -48,11 +48,11 @@ ChatEditProxy::ChatEditProxy(QWidget* parent)
  */
 void ChatEditProxy::setLineEditEnabled(bool enable)
 {
-	if (lineEditEnabled_ == enable)
-		return;
+    if (lineEditEnabled_ == enable)
+        return;
 
-	lineEditEnabled_ = enable;
-	updateLayout();
+    lineEditEnabled_ = enable;
+    updateLayout();
 }
 
 /**
@@ -60,9 +60,9 @@ void ChatEditProxy::setLineEditEnabled(bool enable)
  */
 ChatEdit* ChatEditProxy::createTextEdit()
 {
-	if (lineEditEnabled())
-		return new LineEdit(this);
-	return new ChatEdit(this);
+    if (lineEditEnabled())
+        return new LineEdit(this);
+    return new ChatEdit(this);
 }
 
 /**
@@ -74,14 +74,14 @@ ChatEdit* ChatEditProxy::createTextEdit()
  */
 void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const
 {
-	QTextDocument* doc = oldTextEdit->document();
-	QTextCursor cursor = oldTextEdit->textCursor();
+    QTextDocument* doc = oldTextEdit->document();
+    QTextCursor cursor = oldTextEdit->textCursor();
 
-	doc->setParent(newTextEdit);
-	oldTextEdit->setDocument(0);
+    doc->setParent(newTextEdit);
+    oldTextEdit->setDocument(0);
 
-	newTextEdit->setDocument(doc);
-	newTextEdit->setTextCursor(cursor);
+    newTextEdit->setDocument(doc);
+    newTextEdit->setTextCursor(cursor);
 }
 
 /**
@@ -90,23 +90,23 @@ void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) con
  */
 void ChatEditProxy::updateLayout()
 {
-	ChatEdit* newEdit = createTextEdit();
+    ChatEdit* newEdit = createTextEdit();
 
-	if (textEdit_) {
-		// all syntaxhighlighters should be removed while we move
-		// the documents around, and should be reattached afterwards
-		textEdit_->setCheckSpelling(false);
-		newEdit->setCheckSpelling(false);
+    if (textEdit_) {
+        // all syntaxhighlighters should be removed while we move
+        // the documents around, and should be reattached afterwards
+        textEdit_->setCheckSpelling(false);
+        newEdit->setCheckSpelling(false);
 
-		moveData(newEdit, textEdit_);
+        moveData(newEdit, textEdit_);
 
-		newEdit->setCheckSpelling(ChatEdit::checkSpellingGloballyEnabled());
-	}
+        newEdit->setCheckSpelling(ChatEdit::checkSpellingGloballyEnabled());
+    }
 
-	delete textEdit_;
-	textEdit_ = newEdit;
-	layout_->addWidget(textEdit_);
-	emit textEditCreated(textEdit_);
+    delete textEdit_;
+    textEdit_ = newEdit;
+    layout_->addWidget(textEdit_);
+    emit textEditCreated(textEdit_);
 }
 
 /**
@@ -116,5 +116,5 @@ void ChatEditProxy::updateLayout()
  */
 void ChatEditProxy::optionsChanged()
 {
-	setLineEditEnabled(PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
+    setLineEditEnabled(PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
 }

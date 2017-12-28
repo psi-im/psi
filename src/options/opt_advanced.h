@@ -7,17 +7,17 @@ class QWidget;
 
 class OptionsTabAdvanced : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabAdvanced(QObject *parent);
-	~OptionsTabAdvanced();
+    OptionsTabAdvanced(QObject *parent);
+    ~OptionsTabAdvanced();
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
 private:
-	QWidget *w;
+    QWidget *w;
 };
 
 #endif

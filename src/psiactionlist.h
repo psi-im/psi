@@ -28,21 +28,21 @@ class PsiCon;
 class PsiActionList : public MetaActionList
 {
 public:
-	PsiActionList(PsiCon *psi);
-	~PsiActionList();
+    PsiActionList(PsiCon *psi);
+    ~PsiActionList();
 
-	enum ActionsType {
-		Actions_Common    = (1 << 0),
-		Actions_MainWin   = (1 << 1),
-		// Actions_Message   = (1 << 2),
-		Actions_Chat      = (1 << 3),
-		Actions_Groupchat = (1 << 4)
-	};
+    enum ActionsType {
+        Actions_Common    = (1 << 0),
+        Actions_MainWin   = (1 << 1),
+        // Actions_Message   = (1 << 2),
+        Actions_Chat      = (1 << 3),
+        Actions_Groupchat = (1 << 4)
+    };
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 #endif

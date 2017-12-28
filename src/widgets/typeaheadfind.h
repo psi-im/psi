@@ -32,38 +32,38 @@ class QString;
 
 class TypeAheadFindBar : public QToolBar
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	enum Type {
-		TextEditType,
-		WebViewType
-	};
+    enum Type {
+        TextEditType,
+        WebViewType
+    };
 
-	TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = 0);
+    TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = 0);
 #ifdef WEBKIT
-	TypeAheadFindBar(WebView *webView, const QString &title, QWidget *parent = 0);
+    TypeAheadFindBar(WebView *webView, const QString &title, QWidget *parent = 0);
 #endif
-	~TypeAheadFindBar();
-	void init();
+    ~TypeAheadFindBar();
+    void init();
 
 public slots:
-	void open();
-	void close();
-	void toggleVisibility();
-	void optionsUpdate();
+    void open();
+    void close();
+    void toggleVisibility();
+    void optionsUpdate();
 
 signals:
-	void visibilityChanged(bool visible);
+    void visibilityChanged(bool visible);
 
 private slots:
-	void textChanged(const QString &);
-	void findNext();
-	void findPrevious();
-	void caseToggled(int);
+    void textChanged(const QString &);
+    void findNext();
+    void findPrevious();
+    void caseToggled(int);
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 #endif

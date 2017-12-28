@@ -83,42 +83,42 @@ static const QString geometryOption = "options.ui.message.size";
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
-	// scan backward for the beginning of a Jid
-	int n1 = x;
-	if(n1 >= (int)s.length())
-		n1 = s.length()-1;
-	for(; n1 >= 0; --n1) {
-		if(s.at(n1) == ',') {
-			++n1;
-			break;
-		}
-	}
-	if(n1 < 0)
-		n1 = 0;
-	// go forward, skipping whitespace
-	for(; n1 < (int)s.length(); ++n1) {
-		if(!s.at(n1).isSpace())
-			break;
-	}
+    // scan backward for the beginning of a Jid
+    int n1 = x;
+    if(n1 >= (int)s.length())
+        n1 = s.length()-1;
+    for(; n1 >= 0; --n1) {
+        if(s.at(n1) == ',') {
+            ++n1;
+            break;
+        }
+    }
+    if(n1 < 0)
+        n1 = 0;
+    // go forward, skipping whitespace
+    for(; n1 < (int)s.length(); ++n1) {
+        if(!s.at(n1).isSpace())
+            break;
+    }
 
-	// now find the end of the Jid
-	int n2 = n1;
-	for(; n2 < (int)s.length(); ++n2) {
-		if(s.at(n2) == ',')
-			break;
-	}
-	--n2;
-	// scan backwards from the end, skipping whitespace
-	for(; n2 > n1; --n2) {
-		if(!s.at(n2).isSpace())
-			break;
-	}
-	++n2;
+    // now find the end of the Jid
+    int n2 = n1;
+    for(; n2 < (int)s.length(); ++n2) {
+        if(s.at(n2) == ',')
+            break;
+    }
+    --n2;
+    // scan backwards from the end, skipping whitespace
+    for(; n2 > n1; --n2) {
+        if(!s.at(n2).isSpace())
+            break;
+    }
+    ++n2;
 
-	*p1 = n1;
-	*p2 = n2;
+    *p1 = n1;
+    *p2 = n2;
 
-	return s.mid(n1, n2-n1);
+    return s.mid(n1, n2-n1);
 }
 
 //----------------------------------------------------------------------------
@@ -127,60 +127,60 @@ static QString findJid(const QString &s, int x, int *p1, int *p2)
 ELineEdit::ELineEdit(EventDlg *parent, const char *name)
 :QLineEdit(parent)
 {
-	setObjectName(name);
-	setAcceptDrops(true);
+    setObjectName(name);
+    setAcceptDrops(true);
 }
 
 void ELineEdit::dragEnterEvent(QDragEnterEvent *e)
 {
-	if (e->mimeData()->hasText())
-		e->accept();
-	else
-		e->ignore();
+    if (e->mimeData()->hasText())
+        e->accept();
+    else
+        e->ignore();
 }
 
 void ELineEdit::dropEvent(QDropEvent *e)
 {
-	QString str = e->mimeData()->text();
+    QString str = e->mimeData()->text();
 
-	if(!str.isEmpty()) {
-		Jid jid(str);
-		if(!jid.isValid())
-			setText(str);
-		else {
-			EventDlg *e = (EventDlg *)parent();
-			QString name = e->jidToString(jid);
+    if(!str.isEmpty()) {
+        Jid jid(str);
+        if(!jid.isValid())
+            setText(str);
+        else {
+            EventDlg *e = (EventDlg *)parent();
+            QString name = e->jidToString(jid);
 
-			bool hasComma = false, hasText = false;
-			int len = text().length();
-			while ( --len >= 0 ) {
-				QChar c = text().at( len );
-				if ( c == ',' ) {
-					hasComma = true;
-					break;
-				}
-				else if ( !c.isSpace() ) {
-					hasText = true;
-					break;
-				}
-			}
+            bool hasComma = false, hasText = false;
+            int len = text().length();
+            while ( --len >= 0 ) {
+                QChar c = text().at( len );
+                if ( c == ',' ) {
+                    hasComma = true;
+                    break;
+                }
+                else if ( !c.isSpace() ) {
+                    hasText = true;
+                    break;
+                }
+            }
 
-			if ( hasComma || !hasText )
-				setText(text() + ' ' + name);
-			else
-				setText(text() + ", " + name);
-		}
-		setCursorPosition(text().length());
+            if ( hasComma || !hasText )
+                setText(text() + ' ' + name);
+            else
+                setText(text() + ", " + name);
+        }
+        setCursorPosition(text().length());
 
-		repaint();
-	}
+        repaint();
+    }
 }
 
 void ELineEdit::keyPressEvent(QKeyEvent *e)
 {
-	QLineEdit::keyPressEvent(e);
-	if(e->text().length() == 1 && e->text()[0].isLetterOrNumber())
-		tryComplete();
+    QLineEdit::keyPressEvent(e);
+    if(e->text().length() == 1 && e->text()[0].isLetterOrNumber())
+        tryComplete();
 }
 
 #ifdef __GNUC__
@@ -189,61 +189,61 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 
 //QMenu *ELineEdit::createPopupMenu()
 //{
-//	EventDlg *e = (EventDlg *)parent();
-//	int xoff = mapFromGlobal(QCursor::pos()).x();
-//	int x = characterAt(d->hscroll + xoff, 0);
-//	QString str = text();
-//	int p1, p2;
-//	QString j = findJid(str, x, &p1, &p2);
-//	if(j.isEmpty())
-//		return QLineEdit::createPopupMenu();
+//    EventDlg *e = (EventDlg *)parent();
+//    int xoff = mapFromGlobal(QCursor::pos()).x();
+//    int x = characterAt(d->hscroll + xoff, 0);
+//    QString str = text();
+//    int p1, p2;
+//    QString j = findJid(str, x, &p1, &p2);
+//    if(j.isEmpty())
+//        return QLineEdit::createPopupMenu();
 //
-//	UserResourceList list = e->getResources(j);
+//    UserResourceList list = e->getResources(j);
 //
-//	setCursorPosition(p1);
-//	setSelection(p1, p2-p1);
+//    setCursorPosition(p1);
+//    setSelection(p1, p2-p1);
 //
-//	url = list;
-//	url.sort();
+//    url = list;
+//    url.sort();
 //
-//	int n = 100;
-//	QMenu *rm = new QMenu(this);
-//	connect(rm, SIGNAL(triggered(QAction*)), SLOT(resourceMenuActivated(QAction*)));
+//    int n = 100;
+//    QMenu *rm = new QMenu(this);
+//    connect(rm, SIGNAL(triggered(QAction*)), SLOT(resourceMenuActivated(QAction*)));
 //
-//	rm->addAction(tr("Recipient Default"));
+//    rm->addAction(tr("Recipient Default"));
 //
-//	if(!list.isEmpty()) {
-//		rm->addSeparator();
+//    if(!list.isEmpty()) {
+//        rm->addSeparator();
 //
-//		for(UserResourceList::ConstIterator it = url.begin(); it != url.end(); ++it) {
-//			const UserResource &r = *it;
-//			QString name;
-//			QString data;
-//			if(r.name().isEmpty())
-//				name = QObject::tr("[blank]");
-//				data = "";
-//			else
-//				name = r.name();
-//				data = name;
+//        for(UserResourceList::ConstIterator it = url.begin(); it != url.end(); ++it) {
+//            const UserResource &r = *it;
+//            QString name;
+//            QString data;
+//            if(r.name().isEmpty())
+//                name = QObject::tr("[blank]");
+//                data = "";
+//            else
+//                name = r.name();
+//                data = name;
 //
-//			QAction *a = rm->addAction(PsiIconset::instance()->status(r.status()), name);
-//			a.setData(data);
-//		}
-//	}
+//            QAction *a = rm->addAction(PsiIconset::instance()->status(r.status()), name);
+//            a.setData(data);
+//        }
+//    }
 //
-//	//pm->insertItem("Change Resource", rm, -1, 0);
-//	//pm->insertSeparator(1);
+//    //pm->insertItem("Change Resource", rm, -1, 0);
+//    //pm->insertSeparator(1);
 //
-//	return rm;
+//    return rm;
 //}
 
 void ELineEdit::resourceMenuActivated(QAction *x)
 {
-	if(x->data().toString().isNull())
-		return;
+    if(x->data().toString().isNull())
+        return;
 
-	url.clear();
-	changeResource(x->data().toString());
+    url.clear();
+    changeResource(x->data().toString());
 }
 
 
@@ -253,56 +253,56 @@ void ELineEdit::resourceMenuActivated(QAction *x)
 class AttachViewItem : public QListWidgetItem
 {
 public:
-	AttachViewItem(const QString &_url, const QString &_desc, AttachView *par)
-	:QListWidgetItem(par)
-	{
-		type = 0;
-		url = _url;
-		desc = _desc;
+    AttachViewItem(const QString &_url, const QString &_desc, AttachView *par)
+    :QListWidgetItem(par)
+    {
+        type = 0;
+        url = _url;
+        desc = _desc;
 
-		setIcon(IconsetFactory::icon("psi/www").icon());
-		setText(url + " (" + desc + ')');
-		// setMultiLinesEnabled(true);
-	}
+        setIcon(IconsetFactory::icon("psi/www").icon());
+        setText(url + " (" + desc + ')');
+        // setMultiLinesEnabled(true);
+    }
 
-	AttachViewItem(const QString &_gc, const QString& from, const QString& reason, const QString& _password, AttachView *par)
-	:QListWidgetItem(par)
-	{
-		type = 1;
-		gc = _gc;
-		password = _password;
+    AttachViewItem(const QString &_gc, const QString& from, const QString& reason, const QString& _password, AttachView *par)
+    :QListWidgetItem(par)
+    {
+        type = 1;
+        gc = _gc;
+        password = _password;
 
-		setIcon(IconsetFactory::icon("psi/groupChat").icon());
-		QString text;
-		if (!from.isEmpty())
-			text = QObject::tr("Invitation to %1 from %2").arg(gc).arg(from);
-		else
-			text = QObject::tr("Invitation to %1").arg(gc);
-		if (!reason.isEmpty()) {
-			text += QString(" (%1)").arg(reason);
-		}
-		setText(text);
-		// setMultiLinesEnabled(true);
-	}
+        setIcon(IconsetFactory::icon("psi/groupChat").icon());
+        QString text;
+        if (!from.isEmpty())
+            text = QObject::tr("Invitation to %1 from %2").arg(gc).arg(from);
+        else
+            text = QObject::tr("Invitation to %1").arg(gc);
+        if (!reason.isEmpty()) {
+            text += QString(" (%1)").arg(reason);
+        }
+        setText(text);
+        // setMultiLinesEnabled(true);
+    }
 
-	int rtti() const
-	{
-		return 9100;
-	}
+    int rtti() const
+    {
+        return 9100;
+    }
 
-	QString url, desc;
-	QString gc, password;
-	int type;
+    QString url, desc;
+    QString gc, password;
+    int type;
 };
 
 AttachView::AttachView(QWidget* parent)
-	: QListWidget(parent)
+    : QListWidget(parent)
 {
-	v_readOnly = false;
-	// addColumn(tr("Attachments"));
-	// setResizeMode(QListWidget::AllColumns);
+    v_readOnly = false;
+    // addColumn(tr("Attachments"));
+    // setResizeMode(QListWidget::AllColumns);
 
-	connect(this, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
+    connect(this, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
 };
 
 AttachView::~AttachView()
@@ -311,111 +311,111 @@ AttachView::~AttachView()
 
 void AttachView::setReadOnly(bool b)
 {
-	v_readOnly = b;
+    v_readOnly = b;
 }
 
 void AttachView::urlAdd(const QString &url, const QString &desc)
 {
-	new AttachViewItem(url, desc, this);
-	childCountChanged();
+    new AttachViewItem(url, desc, this);
+    childCountChanged();
 }
 
 void AttachView::gcAdd(const QString &gc, const QString& from, const QString& reason, const QString& password)
 {
-	new AttachViewItem(gc, from, reason, password, this);
-	childCountChanged();
+    new AttachViewItem(gc, from, reason, password, this);
+    childCountChanged();
 }
 
 void AttachView::contextMenuEvent(QContextMenuEvent* e)
 {
-	AttachViewItem* i = !selectedItems().isEmpty() ? static_cast<AttachViewItem*>(selectedItems().first()) : 0;
-	if(!i)
-		return;
+    AttachViewItem* i = !selectedItems().isEmpty() ? static_cast<AttachViewItem*>(selectedItems().first()) : 0;
+    if(!i)
+        return;
 
-	QAction* goToUrlAction = 0;
-	QAction* copyLocationAction = 0;
-	QAction* joinGroupChatAction = 0;
-	QAction* removeAction = 0;
+    QAction* goToUrlAction = 0;
+    QAction* copyLocationAction = 0;
+    QAction* joinGroupChatAction = 0;
+    QAction* removeAction = 0;
 
-	QMenu pm(this);
-	if(i->type == 0) {
-		goToUrlAction = pm.addAction(tr("Go to &URL..."));
-		copyLocationAction = pm.addAction(tr("Copy location"));
-	}
-	else {
-		joinGroupChatAction = pm.addAction(tr("Join &Groupchat..."));
-	}
-	pm.addSeparator();
-	removeAction = pm.addAction(tr("Remove"));
+    QMenu pm(this);
+    if(i->type == 0) {
+        goToUrlAction = pm.addAction(tr("Go to &URL..."));
+        copyLocationAction = pm.addAction(tr("Copy location"));
+    }
+    else {
+        joinGroupChatAction = pm.addAction(tr("Join &Groupchat..."));
+    }
+    pm.addSeparator();
+    removeAction = pm.addAction(tr("Remove"));
 
-	if(v_readOnly) {
-		removeAction->setEnabled(false);
-	}
+    if(v_readOnly) {
+        removeAction->setEnabled(false);
+    }
 
-	QAction* n = pm.exec(e->globalPos());
-	if(!n)
-		return;
+    QAction* n = pm.exec(e->globalPos());
+    if(!n)
+        return;
 
-	if(n == goToUrlAction) {
-		goURL(i->url);
-	}
-	else if(n == joinGroupChatAction) {
-		actionGCJoin(i->gc, i->password);
-	}
-	else if(n == copyLocationAction) {
-		QApplication::clipboard()->setText(i->url, QClipboard::Clipboard);
-		if(QApplication::clipboard()->supportsSelection())
-			QApplication::clipboard()->setText(i->url, QClipboard::Selection);
-	}
-	else if(n == removeAction) {
-		takeItem(row(i));
-		delete i;
-		childCountChanged();
-	}
+    if(n == goToUrlAction) {
+        goURL(i->url);
+    }
+    else if(n == joinGroupChatAction) {
+        actionGCJoin(i->gc, i->password);
+    }
+    else if(n == copyLocationAction) {
+        QApplication::clipboard()->setText(i->url, QClipboard::Clipboard);
+        if(QApplication::clipboard()->supportsSelection())
+            QApplication::clipboard()->setText(i->url, QClipboard::Selection);
+    }
+    else if(n == removeAction) {
+        takeItem(row(i));
+        delete i;
+        childCountChanged();
+    }
 }
 
 void AttachView::qlv_doubleClicked(QListWidgetItem *lvi)
 {
-	AttachViewItem *i = (AttachViewItem *)lvi;
-	if(!i)
-		return;
+    AttachViewItem *i = (AttachViewItem *)lvi;
+    if(!i)
+        return;
 
-	if(i->type == 0)
-		goURL(i->url);
-	else
-		actionGCJoin(i->gc, i->password);
+    if(i->type == 0)
+        goURL(i->url);
+    else
+        actionGCJoin(i->gc, i->password);
 }
 
 void AttachView::goURL(const QString &_url)
 {
-	if(_url.isEmpty())
-		return;
+    if(_url.isEmpty())
+        return;
 
-	QString url = _url;
-	if(url.indexOf("://") == -1)
-		url.insert(0, "http://");
+    QString url = _url;
+    if(url.indexOf("://") == -1)
+        url.insert(0, "http://");
 
-	DesktopUtil::openUrl(url);
+    DesktopUtil::openUrl(url);
 }
 
 UrlList AttachView::urlList() const
 {
-	UrlList list;
+    UrlList list;
 
-	for (int index = 0; index < count(); ++index) {
-		AttachViewItem* i = static_cast<AttachViewItem*>(item(index));
-		list += Url(i->url, i->desc);
-	}
+    for (int index = 0; index < count(); ++index) {
+        AttachViewItem* i = static_cast<AttachViewItem*>(item(index));
+        list += Url(i->url, i->desc);
+    }
 
-	return list;
+    return list;
 }
 
 void AttachView::addUrlList(const UrlList &list)
 {
-	for(QList<Url>::ConstIterator it = list.begin(); it != list.end(); ++it) {
-		const Url &u = *it;
-		urlAdd(u.url(), u.desc());
-	}
+    for(QList<Url>::ConstIterator it = list.begin(); it != list.end(); ++it) {
+        const Url &u = *it;
+        urlAdd(u.url(), u.desc());
+    }
 }
 
 
@@ -425,14 +425,14 @@ void AttachView::addUrlList(const UrlList &list)
 AddUrlDlg::AddUrlDlg(QWidget *parent)
 :QDialog(parent)
 {
-	setupUi(this);
+    setupUi(this);
 #ifndef Q_OS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/www").icon());
+    setWindowIcon(IconsetFactory::icon("psi/www").icon());
 #endif
-	setModal(true);
+    setModal(true);
 
-	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
-	connect(pb_ok, SIGNAL(clicked()), SLOT(accept()));
+    connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
+    connect(pb_ok, SIGNAL(clicked()), SLOT(accept()));
 }
 
 AddUrlDlg::~AddUrlDlg()
@@ -445,1682 +445,1682 @@ AddUrlDlg::~AddUrlDlg()
 //----------------------------------------------------------------------------
 class EventDlg::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	Private(EventDlg *d) {
-		dlg = d;
-		nextAnim_ = 0;
-	}
+    Private(EventDlg *d) {
+        dlg = d;
+        nextAnim_ = 0;
+    }
 
-	~Private() {
-		setNextAnim(0);
-	}
+    ~Private() {
+        setNextAnim(0);
+    }
 
-	void setNextAnim(PsiIcon *anim) {
-		if (nextAnim_) {
-			delete nextAnim_;
-			nextAnim_ = 0;
-		}
+    void setNextAnim(PsiIcon *anim) {
+        if (nextAnim_) {
+            delete nextAnim_;
+            nextAnim_ = 0;
+        }
 
-		if (anim)
-			nextAnim_ = new AlertIcon(anim);
-	}
+        if (anim)
+            nextAnim_ = new AlertIcon(anim);
+    }
 
-	PsiIcon *nextAnim() const {
-		return nextAnim_;
-	}
+    PsiIcon *nextAnim() const {
+        return nextAnim_;
+    }
 
-	EventDlg *dlg;
-	PsiCon *psi;
-	PsiAccount *pa;
+    EventDlg *dlg;
+    PsiCon *psi;
+    PsiAccount *pa;
 
-	bool composing;
+    bool composing;
 
-	QLabel *lb_identity;
-	AccountsComboBox *cb_ident;
-	QComboBox *cb_type;
-	AccountLabel *lb_ident;
-	QLabel *lb_time;
-	IconLabel *lb_status;
-	ELineEdit *le_to;
-	QLineEdit *le_from, *le_subj;
-	QLabel *lb_count;
-	IconToolButton *tb_url, *tb_info, *tb_history, *tb_pgp, *tb_icon;
-	IconLabel *lb_pgp;
-	bool enc;
-	int transid;
-	IconButton *pb_next;
-	IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
-	IconButton *pb_form_submit, *pb_form_cancel;
-	QCheckBox *ck_all_auth;
-	PsiTextView *mle;
-	AttachView *attachView;
-	QTimer *whois;
-	QString lastWhois;
-	Jid jid, realJid;
-	QString thread;
-	QStringList completionList;
-	PsiIcon *anim;
-	int nextAmount;
-	QWidget *w_http_id;
-	QLineEdit *le_http_id;
-	PsiHttpAuthRequest httpAuthRequest;
-	QWidget *xdata_form;
-	XDataWidget* xdata;
-	QLabel* xdata_instruction;
-	RosterExchangeItems rosterExchangeItems;
+    QLabel *lb_identity;
+    AccountsComboBox *cb_ident;
+    QComboBox *cb_type;
+    AccountLabel *lb_ident;
+    QLabel *lb_time;
+    IconLabel *lb_status;
+    ELineEdit *le_to;
+    QLineEdit *le_from, *le_subj;
+    QLabel *lb_count;
+    IconToolButton *tb_url, *tb_info, *tb_history, *tb_pgp, *tb_icon;
+    IconLabel *lb_pgp;
+    bool enc;
+    int transid;
+    IconButton *pb_next;
+    IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
+    IconButton *pb_form_submit, *pb_form_cancel;
+    QCheckBox *ck_all_auth;
+    PsiTextView *mle;
+    AttachView *attachView;
+    QTimer *whois;
+    QString lastWhois;
+    Jid jid, realJid;
+    QString thread;
+    QStringList completionList;
+    PsiIcon *anim;
+    int nextAmount;
+    QWidget *w_http_id;
+    QLineEdit *le_http_id;
+    PsiHttpAuthRequest httpAuthRequest;
+    QWidget *xdata_form;
+    XDataWidget* xdata;
+    QLabel* xdata_instruction;
+    RosterExchangeItems rosterExchangeItems;
 
-	bool urlOnShow;
+    bool urlOnShow;
 
-	Message m;
-	QStringList sendLeft;
+    Message m;
+    QStringList sendLeft;
 
 private:
-	PsiIcon *nextAnim_;
+    PsiIcon *nextAnim_;
 
 private slots:
-	void ensureEditPosition() {
-		QTextCursor cursor = mle->textCursor();
-		cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-		cursor.clearSelection();
-		mle->setTextCursor(cursor);
-	}
+    void ensureEditPosition() {
+        QTextCursor cursor = mle->textCursor();
+        cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+        cursor.clearSelection();
+        mle->setTextCursor(cursor);
+    }
 
 public slots:
-	void addEmoticon(const PsiIcon *icon) {
-		addEmoticon(icon->defaultText());
-	}
+    void addEmoticon(const PsiIcon *icon) {
+        addEmoticon(icon->defaultText());
+    }
 
-	void addEmoticon(QString text) {
-		if (!dlg->isActiveWindow()) {
-			return;
-		}
+    void addEmoticon(QString text) {
+        if (!dlg->isActiveWindow()) {
+            return;
+        }
 
-		PsiRichText::addEmoticon(mle, text);
-	}
+        PsiRichText::addEmoticon(mle, text);
+    }
 
-	void updateCounter() {
-		lb_count->setNum(mle->getPlainText().length());
-	}
+    void updateCounter() {
+        lb_count->setNum(mle->getPlainText().length());
+    }
 };
 
 EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
-	: AdvancedWidget<QWidget>(0)
+    : AdvancedWidget<QWidget>(0)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	d = new Private(this);
-	d->composing = true;
-	d->psi = psi;
-	d->pa = 0;
-	d->psi->dialogRegister(this);
+    setAttribute(Qt::WA_DeleteOnClose);
+    d = new Private(this);
+    d->composing = true;
+    d->psi = psi;
+    d->pa = 0;
+    d->psi->dialogRegister(this);
 
-	d->anim = 0;
-	d->nextAmount = 0;
-	d->urlOnShow = false;
+    d->anim = 0;
+    d->nextAmount = 0;
+    d->urlOnShow = false;
 
-	setAccount(pa);
+    setAccount(pa);
 
-	d->whois = new QTimer;
-	d->whois->setSingleShot(true);
-	connect(d->whois, SIGNAL(timeout()), SLOT(doWhois()));
+    d->whois = new QTimer;
+    d->whois->setSingleShot(true);
+    connect(d->whois, SIGNAL(timeout()), SLOT(doWhois()));
 
-	init();
+    init();
 
-	d->cb_ident->setAccount(pa);
+    d->cb_ident->setAccount(pa);
 
-	d->pb_send->show();
-	d->le_to->setText(expandAddresses(to, false));
-	d->le_to->setCursorPosition(0);
+    d->pb_send->show();
+    d->le_to->setText(expandAddresses(to, false));
+    d->le_to->setCursorPosition(0);
 
-	if(PsiOptions::instance()->getOption("options.ui.message.auto-grab-urls-from-clipboard").toBool()) {
-		// url in clipboard?
-		QClipboard *cb = QApplication::clipboard();
-		QString text = cb->text(QClipboard::Clipboard);
-		if(text.isEmpty() && cb->supportsSelection()) {
-			text = cb->text(QClipboard::Selection);
-		}
-		if(!text.isEmpty()) {
-			if(text.left(7) == "http://") {
-				d->attachView->urlAdd(text, "");
-				cb->clear(QClipboard::Selection);
-				cb->clear(QClipboard::Clipboard);
-			}
-		}
-	}
+    if(PsiOptions::instance()->getOption("options.ui.message.auto-grab-urls-from-clipboard").toBool()) {
+        // url in clipboard?
+        QClipboard *cb = QApplication::clipboard();
+        QString text = cb->text(QClipboard::Clipboard);
+        if(text.isEmpty() && cb->supportsSelection()) {
+            text = cb->text(QClipboard::Selection);
+        }
+        if(!text.isEmpty()) {
+            if(text.left(7) == "http://") {
+                d->attachView->urlAdd(text, "");
+                cb->clear(QClipboard::Selection);
+                cb->clear(QClipboard::Clipboard);
+            }
+        }
+    }
 
-	updateIdentity(pa);
+    updateIdentity(pa);
 
-	X11WM_CLASS("event");
+    X11WM_CLASS("event");
 
-	if(d->le_to->text().isEmpty())
-		d->le_to->setFocus();
-	else
-		d->mle->setFocus();
+    if(d->le_to->text().isEmpty())
+        d->le_to->setFocus();
+    else
+        d->mle->setFocus();
 
-	if(d->tb_pgp) {
-		UserListItem *u = d->pa->findFirstRelevant(d->jid);
-		if(u && u->isSecure(d->jid.resource()))
-			d->tb_pgp->setChecked(true);
-	}
+    if(d->tb_pgp) {
+        UserListItem *u = d->pa->findFirstRelevant(d->jid);
+        if(u && u->isSecure(d->jid.resource()))
+            d->tb_pgp->setChecked(true);
+    }
 }
 
 EventDlg::EventDlg(const Jid &j, PsiAccount *pa, bool unique)
-	: AdvancedWidget<QWidget>(0)
+    : AdvancedWidget<QWidget>(0)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	d = new Private(this);
-	d->composing = false;
-	d->psi = pa->psi();
-	d->pa = pa;
-	d->jid = j;
-	d->realJid = j;
+    setAttribute(Qt::WA_DeleteOnClose);
+    d = new Private(this);
+    d->composing = false;
+    d->psi = pa->psi();
+    d->pa = pa;
+    d->jid = j;
+    d->realJid = j;
 
-	if(unique)
-		d->pa->dialogRegister(this, j);
-	else
-		d->pa->dialogRegister(this);
+    if(unique)
+        d->pa->dialogRegister(this, j);
+    else
+        d->pa->dialogRegister(this);
 
-	d->anim = 0;
-	d->nextAmount = 0;
-	d->urlOnShow = false;
+    d->anim = 0;
+    d->nextAmount = 0;
+    d->urlOnShow = false;
 
-	init();
+    init();
 
-	d->le_from->setText(expandAddresses(d->jid.full(), false));
-	d->le_from->setCursorPosition(0);
+    d->le_from->setText(expandAddresses(d->jid.full(), false));
+    d->le_from->setCursorPosition(0);
 
-	doWhois();
+    doWhois();
 
-	d->pb_next->show();
+    d->pb_next->show();
 
-	d->pb_close->setFocus();
+    d->pb_close->setFocus();
 
-	X11WM_CLASS("event");
+    X11WM_CLASS("event");
 
-	setTime(QDateTime::currentDateTime(), true);
+    setTime(QDateTime::currentDateTime(), true);
 }
 
 EventDlg::~EventDlg()
 {
-	if(d->composing) {
-		delete d->whois;
-		d->psi->dialogUnregister(this);
-	}
-	else {
-		d->pa->dialogUnregister(this);
-	}
-	delete d;
+    if(d->composing) {
+        delete d->whois;
+        d->psi->dialogUnregister(this);
+    }
+    else {
+        d->pa->dialogUnregister(this);
+    }
+    delete d;
 }
 
 void EventDlg::init()
 {
-	QVBoxLayout *vb1 = new QVBoxLayout(this);
-	vb1->setMargin(4);
-	vb1->setSpacing(4);
+    QVBoxLayout *vb1 = new QVBoxLayout(this);
+    vb1->setMargin(4);
+    vb1->setSpacing(4);
 
-	// first row
-	QHBoxLayout *hb1 = new QHBoxLayout;
-	hb1->setSpacing(4);
-	vb1->addLayout(hb1);
-	d->lb_identity = new QLabel(tr("Identity:"), this);
-	hb1->addWidget(d->lb_identity);
+    // first row
+    QHBoxLayout *hb1 = new QHBoxLayout;
+    hb1->setSpacing(4);
+    vb1->addLayout(hb1);
+    d->lb_identity = new QLabel(tr("Identity:"), this);
+    hb1->addWidget(d->lb_identity);
 
-	d->enc = false;
-	d->transid = -1;
+    d->enc = false;
+    d->transid = -1;
 
-	if(d->composing) {
-		d->lb_ident = 0;
-		d->cb_ident = d->psi->accountsComboBox(this);
-		connect(d->cb_ident, SIGNAL(activated(PsiAccount *)), SLOT(updateIdentity(PsiAccount *)));
-		hb1->addWidget(d->cb_ident);
-	}
-	else {
-		d->cb_ident = 0;
-		d->lb_ident = new AccountLabel(this);
-		d->lb_ident->setAccount(d->pa);
-		d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
-		hb1->addWidget(d->lb_ident);
-	}
-	connect(d->psi, SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
-	updateIdentityVisibility();
+    if(d->composing) {
+        d->lb_ident = 0;
+        d->cb_ident = d->psi->accountsComboBox(this);
+        connect(d->cb_ident, SIGNAL(activated(PsiAccount *)), SLOT(updateIdentity(PsiAccount *)));
+        hb1->addWidget(d->cb_ident);
+    }
+    else {
+        d->cb_ident = 0;
+        d->lb_ident = new AccountLabel(this);
+        d->lb_ident->setAccount(d->pa);
+        d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
+        hb1->addWidget(d->lb_ident);
+    }
+    connect(d->psi, SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
+    updateIdentityVisibility();
 
-	// second row
-	QHBoxLayout *hb2 = new QHBoxLayout;
-	hb2->setSpacing(4);
-	vb1->addLayout(hb2);
+    // second row
+    QHBoxLayout *hb2 = new QHBoxLayout;
+    hb2->setSpacing(4);
+    vb1->addLayout(hb2);
 
-	d->lb_status = new IconLabel(this);
-	PsiToolTip::install(d->lb_status);
-	d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
+    d->lb_status = new IconLabel(this);
+    PsiToolTip::install(d->lb_status);
+    d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 
-	QLabel *l;
-	if(d->composing) {
-		l = new QLabel(tr("To:"), this);
-		hb2->addWidget(l);
-		hb2->addWidget(d->lb_status);
-		d->le_to = new ELineEdit(this);
-		connect(d->le_to, SIGNAL(textChanged(const QString &)), SLOT(to_textChanged(const QString &)));
-		connect(d->le_to, SIGNAL(changeResource(const QString &)), SLOT(to_changeResource(const QString &)));
-		connect(d->le_to, SIGNAL(tryComplete()), SLOT(to_tryComplete()));
-		hb2->addWidget(d->le_to);
-	}
-	else {
-		l = new QLabel(tr("From:"), this);
-		hb2->addWidget(l);
-		hb2->addWidget(d->lb_status);
-		d->le_from = new QLineEdit(this);
-		d->le_from->setReadOnly(true);
-		hb2->addWidget(d->le_from);
-	}
+    QLabel *l;
+    if(d->composing) {
+        l = new QLabel(tr("To:"), this);
+        hb2->addWidget(l);
+        hb2->addWidget(d->lb_status);
+        d->le_to = new ELineEdit(this);
+        connect(d->le_to, SIGNAL(textChanged(const QString &)), SLOT(to_textChanged(const QString &)));
+        connect(d->le_to, SIGNAL(changeResource(const QString &)), SLOT(to_changeResource(const QString &)));
+        connect(d->le_to, SIGNAL(tryComplete()), SLOT(to_tryComplete()));
+        hb2->addWidget(d->le_to);
+    }
+    else {
+        l = new QLabel(tr("From:"), this);
+        hb2->addWidget(l);
+        hb2->addWidget(d->lb_status);
+        d->le_from = new QLineEdit(this);
+        d->le_from->setReadOnly(true);
+        hb2->addWidget(d->le_from);
+    }
 
-	if(d->composing) {
-		l = new QLabel(tr("Type:"), this);
-		hb2->addWidget(l);
-		d->cb_type = new QComboBox(this);
-		d->cb_type->addItem(tr("Normal"));
-		d->cb_type->addItem(tr("Chat"));
-		hb2->addWidget(d->cb_type);
-	}
-	else {
-		l = new QLabel(tr("Time:"), this);
-		hb2->addWidget(l);
-		d->lb_time = new QLabel(this);
-		d->lb_time->setFrameStyle( QFrame::Panel | QFrame::Sunken );
-		hb2->addWidget(d->lb_time);
-	}
+    if(d->composing) {
+        l = new QLabel(tr("Type:"), this);
+        hb2->addWidget(l);
+        d->cb_type = new QComboBox(this);
+        d->cb_type->addItem(tr("Normal"));
+        d->cb_type->addItem(tr("Chat"));
+        hb2->addWidget(d->cb_type);
+    }
+    else {
+        l = new QLabel(tr("Time:"), this);
+        hb2->addWidget(l);
+        d->lb_time = new QLabel(this);
+        d->lb_time->setFrameStyle( QFrame::Panel | QFrame::Sunken );
+        hb2->addWidget(d->lb_time);
+    }
 
-	// icon select
-	//connect(d->psi->iconSelectPopup(), SIGNAL(iconSelected(const PsiIcon *)), d, SLOT(addEmoticon(const PsiIcon *)));
-	connect(d->psi->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
+    // icon select
+    //connect(d->psi->iconSelectPopup(), SIGNAL(iconSelected(const PsiIcon *)), d, SLOT(addEmoticon(const PsiIcon *)));
+    connect(d->psi->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 
-	d->tb_icon = new IconToolButton(this);
-	d->tb_icon->setPsiIcon(IconsetFactory::iconPtr("psi/smile"));
-	d->tb_icon->setMenu(d->psi->iconSelectPopup());
-	d->tb_icon->setPopupMode(QToolButton::InstantPopup);
-	// d->tb_icon->setPopupDelay(1);
-	d->tb_icon->setToolTip(tr("Select icon"));
-	if ( !d->composing )
-		d->tb_icon->setEnabled(false);
+    d->tb_icon = new IconToolButton(this);
+    d->tb_icon->setPsiIcon(IconsetFactory::iconPtr("psi/smile"));
+    d->tb_icon->setMenu(d->psi->iconSelectPopup());
+    d->tb_icon->setPopupMode(QToolButton::InstantPopup);
+    // d->tb_icon->setPopupDelay(1);
+    d->tb_icon->setToolTip(tr("Select icon"));
+    if ( !d->composing )
+        d->tb_icon->setEnabled(false);
 
-	// message length counter
-	d->le_subj = new QLineEdit(this);
-	d->lb_count = new QLabel(this);
-	d->lb_count->setToolTip(tr("Message length"));
-	d->lb_count->setFixedWidth(40);
-	d->lb_count->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-	d->lb_count->setNum(0);
+    // message length counter
+    d->le_subj = new QLineEdit(this);
+    d->lb_count = new QLabel(this);
+    d->lb_count->setToolTip(tr("Message length"));
+    d->lb_count->setFixedWidth(40);
+    d->lb_count->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    d->lb_count->setNum(0);
 
-	if(d->composing) {
-		d->tb_pgp = new IconToolButton(this);
-		d->tb_pgp->setCheckable(true);
-		d->tb_pgp->setToolTip(tr("Toggle encryption"));
-		d->lb_pgp = 0;
-	}
-	else {
-		d->lb_pgp = new IconLabel(this);
-		d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr("psi/cryptoNo"));
-		d->tb_pgp = 0;
-	}
+    if(d->composing) {
+        d->tb_pgp = new IconToolButton(this);
+        d->tb_pgp->setCheckable(true);
+        d->tb_pgp->setToolTip(tr("Toggle encryption"));
+        d->lb_pgp = 0;
+    }
+    else {
+        d->lb_pgp = new IconLabel(this);
+        d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr("psi/cryptoNo"));
+        d->tb_pgp = 0;
+    }
 
-	d->tb_url = new IconToolButton(this);
-	connect(d->tb_url, SIGNAL(clicked()), SLOT(addUrl()));
-	d->tb_url->setToolTip(tr("Add URL"));
-	d->tb_info = new IconToolButton(this);
-	connect(d->tb_info, SIGNAL(clicked()), SLOT(doInfo()));
-	d->tb_info->setToolTip(tr("User info"));
-	d->tb_history = new IconToolButton(this);
-	connect(d->tb_history, SIGNAL(clicked()), SLOT(doHistory()));
-	d->tb_history->setToolTip(tr("Message history"));
+    d->tb_url = new IconToolButton(this);
+    connect(d->tb_url, SIGNAL(clicked()), SLOT(addUrl()));
+    d->tb_url->setToolTip(tr("Add URL"));
+    d->tb_info = new IconToolButton(this);
+    connect(d->tb_info, SIGNAL(clicked()), SLOT(doInfo()));
+    d->tb_info->setToolTip(tr("User info"));
+    d->tb_history = new IconToolButton(this);
+    connect(d->tb_history, SIGNAL(clicked()), SLOT(doHistory()));
+    d->tb_history->setToolTip(tr("Message history"));
 
-	QList<IconToolButton*> toolButtons;
-	toolButtons << d->tb_url << d->tb_info << d->tb_history;
-	if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
-		toolButtons << d->tb_pgp;
-	toolButtons << d->tb_icon;
-	foreach (IconToolButton *toolButton, toolButtons)
-		if (toolButton)
-			toolButton->setFocusPolicy(Qt::NoFocus);
+    QList<IconToolButton*> toolButtons;
+    toolButtons << d->tb_url << d->tb_info << d->tb_history;
+    if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
+        toolButtons << d->tb_pgp;
+    toolButtons << d->tb_icon;
+    foreach (IconToolButton *toolButton, toolButtons)
+        if (toolButton)
+            toolButton->setFocusPolicy(Qt::NoFocus);
 
-	QHBoxLayout *hb3 = new QHBoxLayout;
-	hb3->setSpacing(4);
-	vb1->addLayout(hb3);
+    QHBoxLayout *hb3 = new QHBoxLayout;
+    hb3->setSpacing(4);
+    vb1->addLayout(hb3);
 
-//	if(d->composing /* && config->showsubject */) {
-	if(PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool()) {
-		// third row
-		l = new QLabel(tr("Subject:"), this);
-		hb3->addWidget(l);
-		hb3->addWidget(d->le_subj);
-		hb3->addWidget(d->lb_count);
-		hb3->addWidget(d->tb_icon);
-		hb3->addWidget(d->tb_url);
-		hb3->addWidget(d->tb_info);
-		hb3->addWidget(d->tb_history);
+//    if(d->composing /* && config->showsubject */) {
+    if(PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool()) {
+        // third row
+        l = new QLabel(tr("Subject:"), this);
+        hb3->addWidget(l);
+        hb3->addWidget(d->le_subj);
+        hb3->addWidget(d->lb_count);
+        hb3->addWidget(d->tb_icon);
+        hb3->addWidget(d->tb_url);
+        hb3->addWidget(d->tb_info);
+        hb3->addWidget(d->tb_history);
 
-		if(!d->composing) {
-			d->le_subj->setReadOnly(true);
-			d->tb_url->setEnabled(false);
-			hb3->addWidget(d->lb_pgp);
-		} else
-			hb3->addWidget(d->tb_pgp);
+        if(!d->composing) {
+            d->le_subj->setReadOnly(true);
+            d->tb_url->setEnabled(false);
+            hb3->addWidget(d->lb_pgp);
+        } else
+            hb3->addWidget(d->tb_pgp);
 
-	} else {
-		d->le_subj->hide();
-		hb2->addWidget(d->lb_count);
-		hb2->addWidget(d->tb_icon);
-		hb2->addWidget(d->tb_url);
-		hb2->addWidget(d->tb_info);
-		hb2->addWidget(d->tb_history);
-		if(d->composing)
-			hb2->addWidget(d->tb_pgp);
-		else
-			hb2->addWidget(d->lb_pgp);
-	}
+    } else {
+        d->le_subj->hide();
+        hb2->addWidget(d->lb_count);
+        hb2->addWidget(d->tb_icon);
+        hb2->addWidget(d->tb_url);
+        hb2->addWidget(d->tb_info);
+        hb2->addWidget(d->tb_history);
+        if(d->composing)
+            hb2->addWidget(d->tb_pgp);
+        else
+            hb2->addWidget(d->lb_pgp);
+    }
 
-	// text area
-	d->mle = new PsiTextView(this);
-	//d->mle->setDialog(this);
-	d->mle->setReadOnly(false);
-	d->mle->setUndoRedoEnabled(true);
-	d->mle->setMinimumHeight(50);
-	vb1->addWidget(d->mle);
+    // text area
+    d->mle = new PsiTextView(this);
+    //d->mle->setDialog(this);
+    d->mle->setReadOnly(false);
+    d->mle->setUndoRedoEnabled(true);
+    d->mle->setMinimumHeight(50);
+    vb1->addWidget(d->mle);
 
-	connect(d->mle, SIGNAL(textChanged()), d, SLOT(updateCounter()));
+    connect(d->mle, SIGNAL(textChanged()), d, SLOT(updateCounter()));
 
-	if (d->composing) {
-		d->mle->setAcceptRichText(false);
-	}
-	else {
-		d->mle->setReadOnly(true);
-		d->mle->setUndoRedoEnabled(false);
-	}
+    if (d->composing) {
+        d->mle->setAcceptRichText(false);
+    }
+    else {
+        d->mle->setReadOnly(true);
+        d->mle->setUndoRedoEnabled(false);
+    }
 
-	// attachment view
-	d->attachView = new AttachView(this);
-	d->attachView->setFixedHeight(80);
-	d->attachView->hide();
-	connect(d->attachView, SIGNAL(childCountChanged()), SLOT(showHideAttachView()));
-	connect(d->attachView, SIGNAL(actionGCJoin(const QString &, const QString&)), SLOT(actionGCJoin(const QString &, const QString&)));
-	vb1->addWidget(d->attachView);
+    // attachment view
+    d->attachView = new AttachView(this);
+    d->attachView->setFixedHeight(80);
+    d->attachView->hide();
+    connect(d->attachView, SIGNAL(childCountChanged()), SLOT(showHideAttachView()));
+    connect(d->attachView, SIGNAL(actionGCJoin(const QString &, const QString&)), SLOT(actionGCJoin(const QString &, const QString&)));
+    vb1->addWidget(d->attachView);
 
-	if(!d->composing)
-		d->attachView->setReadOnly(true);
-	else
-		QTimer::singleShot(0, d, SLOT(ensureEditPosition()));
+    if(!d->composing)
+        d->attachView->setReadOnly(true);
+    else
+        QTimer::singleShot(0, d, SLOT(ensureEditPosition()));
 
-	// http auth transaction id
-	d->w_http_id = new QWidget(this);
-	QHBoxLayout *hb_http_id = new QHBoxLayout(d->w_http_id);
-	hb_http_id->setMargin(0);
-	hb_http_id->setSpacing(4);
-	d->le_http_id = new QLineEdit(d->w_http_id);
-	l = new QLabel(tr("Transaction &identifier:"), d->w_http_id);
-	l->setBuddy(d->le_http_id);
-	hb_http_id->addWidget(l);
-	hb_http_id->addWidget(d->le_http_id);
+    // http auth transaction id
+    d->w_http_id = new QWidget(this);
+    QHBoxLayout *hb_http_id = new QHBoxLayout(d->w_http_id);
+    hb_http_id->setMargin(0);
+    hb_http_id->setSpacing(4);
+    d->le_http_id = new QLineEdit(d->w_http_id);
+    l = new QLabel(tr("Transaction &identifier:"), d->w_http_id);
+    l->setBuddy(d->le_http_id);
+    hb_http_id->addWidget(l);
+    hb_http_id->addWidget(d->le_http_id);
 
-	vb1->addWidget(d->w_http_id);
-	d->w_http_id->hide();
+    vb1->addWidget(d->w_http_id);
+    d->w_http_id->hide();
 
-	// data form
-	d->xdata = new XDataWidget(d->psi, this, d->pa->client(), d->jid);
-	d->xdata_form = new QWidget(this);
-	QVBoxLayout *vb_xdata = new QVBoxLayout(d->xdata_form);
-	d->xdata_instruction = new QLabel(d->xdata_form);
-	vb_xdata->addWidget(d->xdata_instruction);
-	vb_xdata->addWidget(d->xdata);
-	vb1->addWidget(d->xdata_form);
-	d->xdata_form->hide();
+    // data form
+    d->xdata = new XDataWidget(d->psi, this, d->pa->client(), d->jid);
+    d->xdata_form = new QWidget(this);
+    QVBoxLayout *vb_xdata = new QVBoxLayout(d->xdata_form);
+    d->xdata_instruction = new QLabel(d->xdata_form);
+    vb_xdata->addWidget(d->xdata_instruction);
+    vb_xdata->addWidget(d->xdata);
+    vb1->addWidget(d->xdata_form);
+    d->xdata_form->hide();
 
-	// bottom row
-	QHBoxLayout *hb4 = new QHBoxLayout;
-	vb1->addLayout(hb4);
+    // bottom row
+    QHBoxLayout *hb4 = new QHBoxLayout;
+    vb1->addLayout(hb4);
 
-	d->pb_close = new IconButton(this);
-	d->pb_close->setText(tr("&Close"));
-	connect(d->pb_close, SIGNAL(clicked()), SLOT(close()));
-	d->pb_close->setMinimumWidth(80);
-	hb4->addWidget(d->pb_close);
+    d->pb_close = new IconButton(this);
+    d->pb_close->setText(tr("&Close"));
+    connect(d->pb_close, SIGNAL(clicked()), SLOT(close()));
+    d->pb_close->setMinimumWidth(80);
+    hb4->addWidget(d->pb_close);
 
-	hb4->addStretch(1);
+    hb4->addStretch(1);
 
-	d->pb_next = new IconButton(this);
-	connect(d->pb_next, SIGNAL(clicked()), SLOT(doReadNext()));
-	d->pb_next->setText(tr("&Next"));
-	d->pb_next->hide();
-	d->pb_next->setMinimumWidth(96);
-	d->pb_next->setEnabled(false);
-	hb4->addWidget(d->pb_next);
+    d->pb_next = new IconButton(this);
+    connect(d->pb_next, SIGNAL(clicked()), SLOT(doReadNext()));
+    d->pb_next->setText(tr("&Next"));
+    d->pb_next->hide();
+    d->pb_next->setMinimumWidth(96);
+    d->pb_next->setEnabled(false);
+    hb4->addWidget(d->pb_next);
 
-	d->pb_quote = new IconButton(this);
-	d->pb_quote->setText(tr("&Quote"));
-	connect(d->pb_quote, SIGNAL(clicked()), SLOT(doQuote()));
-	d->pb_quote->hide();
-	d->pb_quote->setMinimumWidth(96);
-	hb4->addWidget(d->pb_quote);
+    d->pb_quote = new IconButton(this);
+    d->pb_quote->setText(tr("&Quote"));
+    connect(d->pb_quote, SIGNAL(clicked()), SLOT(doQuote()));
+    d->pb_quote->hide();
+    d->pb_quote->setMinimumWidth(96);
+    hb4->addWidget(d->pb_quote);
 
-	d->ck_all_auth = new QCheckBox(tr("For all"), this);
-	d->ck_all_auth->hide();
-	hb4->addWidget(d->ck_all_auth);
+    d->ck_all_auth = new QCheckBox(tr("For all"), this);
+    d->ck_all_auth->hide();
+    hb4->addWidget(d->ck_all_auth);
 
-	d->pb_deny = new IconButton(this);
-	d->pb_deny->setText(tr("&Deny"));
-	connect(d->pb_deny, SIGNAL(clicked()), SLOT(doDeny()));
-	d->pb_deny->hide();
-	d->pb_deny->setMinimumWidth(96);
-	hb4->addWidget(d->pb_deny);
+    d->pb_deny = new IconButton(this);
+    d->pb_deny->setText(tr("&Deny"));
+    connect(d->pb_deny, SIGNAL(clicked()), SLOT(doDeny()));
+    d->pb_deny->hide();
+    d->pb_deny->setMinimumWidth(96);
+    hb4->addWidget(d->pb_deny);
 
-	d->pb_auth = new IconButton(this);
-	d->pb_auth->setText(tr("&Add/Auth"));
-	connect(d->pb_auth, SIGNAL(clicked()), SLOT(doAuth()));
-	d->pb_auth->setPsiIcon(IconsetFactory::iconPtr("psi/addContact"));
-	d->pb_auth->hide();
-	d->pb_auth->setMinimumWidth(96);
-	hb4->addWidget(d->pb_auth);
+    d->pb_auth = new IconButton(this);
+    d->pb_auth->setText(tr("&Add/Auth"));
+    connect(d->pb_auth, SIGNAL(clicked()), SLOT(doAuth()));
+    d->pb_auth->setPsiIcon(IconsetFactory::iconPtr("psi/addContact"));
+    d->pb_auth->hide();
+    d->pb_auth->setMinimumWidth(96);
+    hb4->addWidget(d->pb_auth);
 
-	d->pb_send = new IconButton(this);
-	d->pb_send->setText(tr("&Send"));
-	connect(d->pb_send, SIGNAL(clicked()), SLOT(doSend()));
-	d->pb_send->hide();
-	d->pb_send->setMinimumWidth(96);
-	hb4->addWidget(d->pb_send);
+    d->pb_send = new IconButton(this);
+    d->pb_send->setText(tr("&Send"));
+    connect(d->pb_send, SIGNAL(clicked()), SLOT(doSend()));
+    d->pb_send->hide();
+    d->pb_send->setMinimumWidth(96);
+    hb4->addWidget(d->pb_send);
 
-	d->pb_chat = new IconButton(this);
-	d->pb_chat->setText(tr("&Chat"));
-	connect(d->pb_chat, SIGNAL(clicked()), SLOT(doChat()));
-	d->pb_chat->hide();
-	d->pb_chat->setMinimumWidth(96);
-	hb4->addWidget(d->pb_chat);
+    d->pb_chat = new IconButton(this);
+    d->pb_chat->setText(tr("&Chat"));
+    connect(d->pb_chat, SIGNAL(clicked()), SLOT(doChat()));
+    d->pb_chat->hide();
+    d->pb_chat->setMinimumWidth(96);
+    hb4->addWidget(d->pb_chat);
 
-	d->pb_reply = new IconButton(this);
-	d->pb_reply->setText(tr("&Reply"));
-	connect(d->pb_reply, SIGNAL(clicked()), SLOT(doReply()));
-	d->pb_reply->hide();
-	d->pb_reply->setMinimumWidth(96);
-	hb4->addWidget(d->pb_reply);
+    d->pb_reply = new IconButton(this);
+    d->pb_reply->setText(tr("&Reply"));
+    connect(d->pb_reply, SIGNAL(clicked()), SLOT(doReply()));
+    d->pb_reply->hide();
+    d->pb_reply->setMinimumWidth(96);
+    hb4->addWidget(d->pb_reply);
 
-	d->pb_http_confirm = new IconButton(this);
-	d->pb_http_confirm->setText(tr("C&onfirm"));
-	connect(d->pb_http_confirm, SIGNAL(clicked()), SLOT(doHttpConfirm()));
-	d->pb_http_confirm->hide();
-	d->pb_http_confirm->setMinimumWidth(96);
-	hb4->addWidget(d->pb_http_confirm);
+    d->pb_http_confirm = new IconButton(this);
+    d->pb_http_confirm->setText(tr("C&onfirm"));
+    connect(d->pb_http_confirm, SIGNAL(clicked()), SLOT(doHttpConfirm()));
+    d->pb_http_confirm->hide();
+    d->pb_http_confirm->setMinimumWidth(96);
+    hb4->addWidget(d->pb_http_confirm);
 
-	d->pb_http_deny = new IconButton(this);
-	d->pb_http_deny->setText(tr("&Deny"));
-	connect(d->pb_http_deny, SIGNAL(clicked()), SLOT(doHttpDeny()));
-	d->pb_http_deny->hide();
-	d->pb_http_deny->setMinimumWidth(96);
-	hb4->addWidget(d->pb_http_deny);
+    d->pb_http_deny = new IconButton(this);
+    d->pb_http_deny->setText(tr("&Deny"));
+    connect(d->pb_http_deny, SIGNAL(clicked()), SLOT(doHttpDeny()));
+    d->pb_http_deny->hide();
+    d->pb_http_deny->setMinimumWidth(96);
+    hb4->addWidget(d->pb_http_deny);
 
-	// data form submit button
-	d->pb_form_submit = new IconButton(this);
-	d->pb_form_submit->setText(tr("&Submit"));
-	connect(d->pb_form_submit, SIGNAL(clicked()), SLOT(doFormSubmit()));
-	d->pb_form_submit->hide();
-	d->pb_form_submit->setMinimumWidth(96);
-	hb4->addWidget(d->pb_form_submit);
+    // data form submit button
+    d->pb_form_submit = new IconButton(this);
+    d->pb_form_submit->setText(tr("&Submit"));
+    connect(d->pb_form_submit, SIGNAL(clicked()), SLOT(doFormSubmit()));
+    d->pb_form_submit->hide();
+    d->pb_form_submit->setMinimumWidth(96);
+    hb4->addWidget(d->pb_form_submit);
 
-	// data form cancel button
-	d->pb_form_cancel = new IconButton(this);
-	d->pb_form_cancel->setText(tr("&Cancel"));
-	connect(d->pb_form_cancel, SIGNAL(clicked()), SLOT(doFormCancel()));
-	d->pb_form_cancel->hide();
-	d->pb_form_cancel->setMinimumWidth(96);
-	hb4->addWidget(d->pb_form_cancel);
+    // data form cancel button
+    d->pb_form_cancel = new IconButton(this);
+    d->pb_form_cancel->setText(tr("&Cancel"));
+    connect(d->pb_form_cancel, SIGNAL(clicked()), SLOT(doFormCancel()));
+    d->pb_form_cancel->hide();
+    d->pb_form_cancel->setMinimumWidth(96);
+    hb4->addWidget(d->pb_form_cancel);
 
-	if (d->composing)
-		setTabOrder(d->le_to, d->le_subj);
-	else
-		setTabOrder(d->le_from, d->le_subj);
-	setTabOrder(d->le_subj, d->mle);
+    if (d->composing)
+        setTabOrder(d->le_to, d->le_subj);
+    else
+        setTabOrder(d->le_from, d->le_subj);
+    setTabOrder(d->le_subj, d->mle);
 
-	updatePGP();
-	connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
-	connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
+    updatePGP();
+    connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
+    connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
-	setGeometryOptionPath(geometryOption);
+    setGeometryOptionPath(geometryOption);
 
-	optionsUpdate();
+    optionsUpdate();
 
-	//ShortcutManager::connect("common.close", this, SLOT(close()));
-	ShortcutManager::connect("common.user-info", this, SLOT(doInfo()));
-	ShortcutManager::connect("common.history", this, SLOT(doHistory()));
-	//ShortcutManager::connect("message.send", this, SLOT(doSend()));
+    //ShortcutManager::connect("common.close", this, SLOT(close()));
+    ShortcutManager::connect("common.user-info", this, SLOT(doInfo()));
+    ShortcutManager::connect("common.history", this, SLOT(doHistory()));
+    //ShortcutManager::connect("message.send", this, SLOT(doSend()));
 }
 
 bool EventDlg::messagingEnabled()
 {
-	return PsiOptions::instance()->getOption("options.ui.message.enabled").toBool();
+    return PsiOptions::instance()->getOption("options.ui.message.enabled").toBool();
 }
 
 void EventDlg::setAccount(PsiAccount *pa)
 {
-	if(d->pa)
-		disconnect(d->pa, SIGNAL(updatedActivity()), this, SLOT(accountUpdatedActivity()));
+    if(d->pa)
+        disconnect(d->pa, SIGNAL(updatedActivity()), this, SLOT(accountUpdatedActivity()));
 
-	d->pa = pa;
-	connect(d->pa, SIGNAL(updatedActivity()), this, SLOT(accountUpdatedActivity()));
+    d->pa = pa;
+    connect(d->pa, SIGNAL(updatedActivity()), this, SLOT(accountUpdatedActivity()));
 }
 
 void EventDlg::updateIdentity(PsiAccount *pa)
 {
-	if(!pa) {
-		close();
-		return;
-	}
+    if(!pa) {
+        close();
+        return;
+    }
 
-	setAccount(pa);
+    setAccount(pa);
 
-	buildCompletionList();
-	doWhois(true);
+    buildCompletionList();
+    doWhois(true);
 }
 
 void EventDlg::updateIdentityVisibility()
 {
-	bool visible = d->psi->contactList()->enabledAccounts().count() > 1;
-	if (d->cb_ident)
-		d->cb_ident->setVisible(visible);
-	if (d->lb_ident)
-		d->lb_ident->setVisible(visible);
-	d->lb_identity->setVisible(visible);
+    bool visible = d->psi->contactList()->enabledAccounts().count() > 1;
+    if (d->cb_ident)
+        d->cb_ident->setVisible(visible);
+    if (d->lb_ident)
+        d->lb_ident->setVisible(visible);
+    d->lb_identity->setVisible(visible);
 }
 
 void EventDlg::accountUpdatedActivity()
 {
-	// TODO: act on account activity change
+    // TODO: act on account activity change
 }
 
 QString EventDlg::text() const
 {
-	return d->mle->getPlainText();
+    return d->mle->getPlainText();
 }
 
 bool EventDlg::isForAll() const
 {
-	return d->ck_all_auth->isChecked();
+    return d->ck_all_auth->isChecked();
 }
 
 void EventDlg::setHtml(const QString &s)
 {
-	d->mle->clear();
-	d->mle->appendText(s);
+    d->mle->clear();
+    d->mle->appendText(s);
 }
 
 void EventDlg::setSubject(const QString &s)
 {
-	d->le_subj->setText(s);
+    d->le_subj->setText(s);
 }
 
 void EventDlg::setThread(const QString &t)
 {
-	d->thread = t;
+    d->thread = t;
 }
 
 void EventDlg::setUrlOnShow()
 {
-	d->urlOnShow = true;
+    d->urlOnShow = true;
 }
 
 PsiAccount *EventDlg::psiAccount()
 {
-	return d->pa;
+    return d->pa;
 }
 
 QStringList EventDlg::stringToList(const QString &s, bool enc) const
 {
-	QStringList list;
+    QStringList list;
 
-	int x1, x2;
-	x1 = 0;
-	x2 = 0;
-	while(1) {
-		// scan along for a comma
-		bool found = false;
-		for(int n = x1; n < (int)s.length(); ++n) {
-			if(s.at(n) == ',') {
-				found = true;
-				x2 = n;
-				break;
-			}
-		}
-		if(!found)
-			x2 = s.length();
+    int x1, x2;
+    x1 = 0;
+    x2 = 0;
+    while(1) {
+        // scan along for a comma
+        bool found = false;
+        for(int n = x1; n < (int)s.length(); ++n) {
+            if(s.at(n) == ',') {
+                found = true;
+                x2 = n;
+                break;
+            }
+        }
+        if(!found)
+            x2 = s.length();
 
-		QString c = s.mid(x1, (x2-x1));
-		QString j;
-		if(enc)
-			j = findJidInString(c);
-		else
-			j = c;
-		if(j.isEmpty())
-			j = c;
+        QString c = s.mid(x1, (x2-x1));
+        QString j;
+        if(enc)
+            j = findJidInString(c);
+        else
+            j = c;
+        if(j.isEmpty())
+            j = c;
 
-		j = j.trimmed();
-		//printf("j=[%s]\n", j.latin1());
-		if(!j.isEmpty())
-			list += j;
+        j = j.trimmed();
+        //printf("j=[%s]\n", j.latin1());
+        if(!j.isEmpty())
+            list += j;
 
-		if(!found)
-			break;
-		x1 = x2+1;
-	}
+        if(!found)
+            break;
+        x1 = x2+1;
+    }
 
-	return list;
+    return list;
 }
 
 QString EventDlg::findJidInString(const QString &s) const
 {
-	int a = s.indexOf('<');
-	if(a != -1) {
-		++a;
-		int b = s.indexOf('>', a);
-		if(b != -1)
-			return s.mid(a, b-a); // disabled JIDUtil::decode822 since jids already stringpreped
-	}
-	return "";
+    int a = s.indexOf('<');
+    if(a != -1) {
+        ++a;
+        int b = s.indexOf('>', a);
+        if(b != -1)
+            return s.mid(a, b-a); // disabled JIDUtil::decode822 since jids already stringpreped
+    }
+    return "";
 }
 
 QString EventDlg::expandAddresses(const QString &in, bool enc) const
 {
-	//printf("in: [%s]\n", in.latin1());
-	QString str;
-	QStringList list = stringToList(in, enc);
-	bool first = true;
-	for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-		if(!first)
-			str += ", ";
-		first = false;
+    //printf("in: [%s]\n", in.latin1());
+    QString str;
+    QStringList list = stringToList(in, enc);
+    bool first = true;
+    for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+        if(!first)
+            str += ", ";
+        first = false;
 
-		Jid j(*it);
-		QList<UserListItem*> ul = d->pa->findRelevant(j);
-		if(ul.isEmpty()) {
-			str += j.full();
-			continue;
-		}
-		UserListItem *u = ul.first();
+        Jid j(*it);
+        QList<UserListItem*> ul = d->pa->findRelevant(j);
+        if(ul.isEmpty()) {
+            str += j.full();
+            continue;
+        }
+        UserListItem *u = ul.first();
 
-		Jid jid;
-		if(j.resource().isEmpty())
-			jid = u->jid().full();
-		else
-			jid = u->jid().withResource(j.resource());
+        Jid jid;
+        if(j.resource().isEmpty())
+            jid = u->jid().full();
+        else
+            jid = u->jid().withResource(j.resource());
 
-		QString name;
-		if(!u->name().isEmpty())
-			name += u->name() + QString(" <%1>").arg(jid.full()); // disabled JIDUtil::encode822 since jid is aready stringpreped
-		else
-			name = jid.full();  // disabled JIDUtil::encode822 since jid is aready stringpreped
-		str += name;
-	}
+        QString name;
+        if(!u->name().isEmpty())
+            name += u->name() + QString(" <%1>").arg(jid.full()); // disabled JIDUtil::encode822 since jid is aready stringpreped
+        else
+            name = jid.full();  // disabled JIDUtil::encode822 since jid is aready stringpreped
+        str += name;
+    }
 
-	//printf("expanding: [%s]\n", str.latin1());
-	return str;
+    //printf("expanding: [%s]\n", str.latin1());
+    return str;
 }
 
 void EventDlg::to_textChanged(const QString &)
 {
-	d->whois->start(250);
+    d->whois->start(250);
 }
 
 void EventDlg::to_changeResource(const QString &r)
 {
-	QString str = d->le_to->text();
-	int start = d->le_to->selectionStart();
-	// int len = d->le_to->selectedText().length();
-	if(start == -1) {
-		//printf("bad selection\n");
-		return;
-	}
-	//printf("selection: [%d,%d]\n", start, len);
+    QString str = d->le_to->text();
+    int start = d->le_to->selectionStart();
+    // int len = d->le_to->selectedText().length();
+    if(start == -1) {
+        //printf("bad selection\n");
+        return;
+    }
+    //printf("selection: [%d,%d]\n", start, len);
 
-	int p1, p2;
-	QString s = findJid(str, start, &p1, &p2);
-	QString j = findJidInString(s);
-	if(j.isEmpty())
-		j = s;
-	Jid jid(j);
-	if(!jid.isValid()) {
-		//printf("invalid jid\n");
-		return;
-	}
-	//printf("s=[%s], j=[%s], p: [%d,%d]\n", s.latin1(), j.latin1(), p1, p2);
+    int p1, p2;
+    QString s = findJid(str, start, &p1, &p2);
+    QString j = findJidInString(s);
+    if(j.isEmpty())
+        j = s;
+    Jid jid(j);
+    if(!jid.isValid()) {
+        //printf("invalid jid\n");
+        return;
+    }
+    //printf("s=[%s], j=[%s], p: [%d,%d]\n", s.latin1(), j.latin1(), p1, p2);
 
-	QString js = jidToString(jid, r);
-	//printf("js=[%s]\n", js.latin1());
-	/*str.remove(start, len);
-	str.insert(start, js);
-	d->le_to->deselect();
-	d->le_to->setCursorPosition(0);
-	d->le_to->setText(str);
-	//d->le_to->setCursorPosition(start + js.length());*/
-	d->le_to->insert(js);
+    QString js = jidToString(jid, r);
+    //printf("js=[%s]\n", js.latin1());
+    /*str.remove(start, len);
+    str.insert(start, js);
+    d->le_to->deselect();
+    d->le_to->setCursorPosition(0);
+    d->le_to->setText(str);
+    //d->le_to->setCursorPosition(start + js.length());*/
+    d->le_to->insert(js);
 }
 
 void EventDlg::to_tryComplete()
 {
-	if(!PsiOptions::instance()->getOption("options.ui.message.use-jid-auto-completion").toBool())
-		return;
+    if(!PsiOptions::instance()->getOption("options.ui.message.use-jid-auto-completion").toBool())
+        return;
 
-	QString str = d->le_to->text();
-	int x = d->le_to->cursorPosition();
+    QString str = d->le_to->text();
+    int x = d->le_to->cursorPosition();
 
-	int p1, p2;
-	QString s = findJid(str, x, &p1, &p2);
-	if(s.length() < 1 || x != p2)
-		return;
+    int p1, p2;
+    QString s = findJid(str, x, &p1, &p2);
+    if(s.length() < 1 || x != p2)
+        return;
 
-	for(QStringList::ConstIterator it = d->completionList.begin(); it != d->completionList.end(); ++it) {
-		QString name = *it;
-		if(s.length() > name.length())
-			continue;
+    for(QStringList::ConstIterator it = d->completionList.begin(); it != d->completionList.end(); ++it) {
+        QString name = *it;
+        if(s.length() > name.length())
+            continue;
 
-		bool ok = true;
-		int n;
-		for(n = 0; n < (int)s.length(); ++n) {
-			if(s.at(n).toLower() != name.at(n).toLower()) {
-				ok = false;
-				break;
-			}
-		}
-		name = name.mid(n);
-		if(ok) {
-			d->le_to->insert(name);
-			d->le_to->setCursorPosition(x);
-			d->le_to->setSelection(x, name.length());
-			break;
-		}
-	}
+        bool ok = true;
+        int n;
+        for(n = 0; n < (int)s.length(); ++n) {
+            if(s.at(n).toLower() != name.at(n).toLower()) {
+                ok = false;
+                break;
+            }
+        }
+        name = name.mid(n);
+        if(ok) {
+            d->le_to->insert(name);
+            d->le_to->setCursorPosition(x);
+            d->le_to->setSelection(x, name.length());
+            break;
+        }
+    }
 }
 
 void EventDlg::buildCompletionList()
 {
-	d->completionList.clear();
+    d->completionList.clear();
 
-	d->completionList += d->pa->jid().full();
+    d->completionList += d->pa->jid().full();
 
-	foreach(UserListItem* u, *d->pa->userList()) {
-		QString j = u->jid().full();
-		if(!u->name().isEmpty())
-			d->completionList += u->name() + " <"+j+'>';
-		d->completionList += j;
-	}
+    foreach(UserListItem* u, *d->pa->userList()) {
+        QString j = u->jid().full();
+        if(!u->name().isEmpty())
+            d->completionList += u->name() + " <"+j+'>';
+        d->completionList += j;
+    }
 }
 
 QString EventDlg::jidToString(const Jid &jid, const QString &r) const
 {
-	QString name;
+    QString name;
 
-	QList<UserListItem*> ul = d->pa->findRelevant(jid);
-	if(!ul.isEmpty()) {
-		UserListItem *u = ul.first();
+    QList<UserListItem*> ul = d->pa->findRelevant(jid);
+    if(!ul.isEmpty()) {
+        UserListItem *u = ul.first();
 
-		QString j;
-		if(r.isEmpty())
-			j = u->jid().full();
-		else
-			j = Jid(u->jid().bare()).withResource(r).full();
+        QString j;
+        if(r.isEmpty())
+            j = u->jid().full();
+        else
+            j = Jid(u->jid().bare()).withResource(r).full();
 
-		if(!u->name().isEmpty())
-			name = u->name() + QString(" <%1>").arg(JIDUtil::encode822(j));
-		else
-			name = JIDUtil::encode822(j);
-	}
-	else
-		name = JIDUtil::encode822(jid.full());
+        if(!u->name().isEmpty())
+            name = u->name() + QString(" <%1>").arg(JIDUtil::encode822(j));
+        else
+            name = JIDUtil::encode822(j);
+    }
+    else
+        name = JIDUtil::encode822(jid.full());
 
-	return name;
+    return name;
 }
 
 void EventDlg::doWhois(bool force)
 {
-	QString str;
-	if(d->composing) {
-		str = d->le_to->text();
-		if(str == d->lastWhois && !force)
-			return;
-	}
-	else {
-		str = d->le_from->text();
-	}
+    QString str;
+    if(d->composing) {
+        str = d->le_to->text();
+        if(str == d->lastWhois && !force)
+            return;
+    }
+    else {
+        str = d->le_from->text();
+    }
 
-	//printf("whois: [%s]\n", str.latin1());
-	d->lastWhois = str;
-	QStringList list = stringToList(str);
-	bool found = false;
-	if(list.count() == 1) {
-		Jid j(list[0]);
-		d->jid = j;
-		QList<UserListItem*> ul = d->pa->findRelevant(j);
-		if(!ul.isEmpty()) {
-			d->tb_info->setEnabled(true);
-			d->tb_history->setEnabled(true);
-			found = true;
-		}
-		updateContact(d->jid);
-	}
-	if(!found) {
-		d->jid = "";
+    //printf("whois: [%s]\n", str.latin1());
+    d->lastWhois = str;
+    QStringList list = stringToList(str);
+    bool found = false;
+    if(list.count() == 1) {
+        Jid j(list[0]);
+        d->jid = j;
+        QList<UserListItem*> ul = d->pa->findRelevant(j);
+        if(!ul.isEmpty()) {
+            d->tb_info->setEnabled(true);
+            d->tb_history->setEnabled(true);
+            found = true;
+        }
+        updateContact(d->jid);
+    }
+    if(!found) {
+        d->jid = "";
 
-		d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
-		d->tb_info->setEnabled(false);
-		d->tb_history->setEnabled(false);
-		setWindowTitle(tr("Send Message"));
-		d->lb_status->setToolTip(QString());
-	}
+        d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
+        d->tb_info->setEnabled(false);
+        d->tb_history->setEnabled(false);
+        setWindowTitle(tr("Send Message"));
+        d->lb_status->setToolTip(QString());
+    }
 }
 
 UserResourceList EventDlg::getResources(const QString &s) const
 {
-	UserResourceList list;
+    UserResourceList list;
 
-	QString j = findJidInString(s);
-	if(j.isEmpty())
-		j = s;
-	Jid jid(j);
-	if(!jid.isValid())
-		return list;
+    QString j = findJidInString(s);
+    if(j.isEmpty())
+        j = s;
+    Jid jid(j);
+    if(!jid.isValid())
+        return list;
 
-	QList<UserListItem*> ul = d->pa->findRelevant(jid);
-	if(!ul.isEmpty()) {
-		UserListItem *u = ul.first();
-		if(u->isAvailable())
-			return u->userResourceList();
-	}
+    QList<UserListItem*> ul = d->pa->findRelevant(jid);
+    if(!ul.isEmpty()) {
+        UserListItem *u = ul.first();
+        if(u->isAvailable())
+            return u->userResourceList();
+    }
 
-	return list;
+    return list;
 }
 
 void EventDlg::optionsUpdate()
 {
-	// update the font
-	QFont f;
-	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.message").toString());
-	d->mle->setFont(f);
+    // update the font
+    QFont f;
+    f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.message").toString());
+    d->mle->setFont(f);
 
-	// update status icon
-	doWhois(true);
+    // update status icon
+    doWhois(true);
 
-	if ( PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() && d->composing )
-		d->lb_count->show();
-	else
-		d->lb_count->hide();
+    if ( PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() && d->composing )
+        d->lb_count->show();
+    else
+        d->lb_count->hide();
 
-	if ( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() )
-		d->tb_icon->show();
-	else
-		d->tb_icon->hide();
+    if ( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() )
+        d->tb_icon->show();
+    else
+        d->tb_icon->hide();
 
-	// tool buttons: not required
-	d->tb_url->setPsiIcon(IconsetFactory::iconPtr("psi/www"));
-	d->tb_info->setPsiIcon(IconsetFactory::iconPtr("psi/vCard"));
-	d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
-	if(d->tb_pgp) {
-		QIcon i;
-		i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
-		i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
-		d->tb_pgp->setPsiIcon(0);
-		d->tb_pgp->setIcon(i);
-	}
-	if(d->lb_pgp)
-		d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo"));
+    // tool buttons: not required
+    d->tb_url->setPsiIcon(IconsetFactory::iconPtr("psi/www"));
+    d->tb_info->setPsiIcon(IconsetFactory::iconPtr("psi/vCard"));
+    d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
+    if(d->tb_pgp) {
+        QIcon i;
+        i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
+        i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
+        d->tb_pgp->setPsiIcon(0);
+        d->tb_pgp->setIcon(i);
+    }
+    if(d->lb_pgp)
+        d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo"));
 
-	// update the readnext icon
-	if(d->nextAmount > 0)
-		d->pb_next->forceSetPsiIcon(d->nextAnim());
+    // update the readnext icon
+    if(d->nextAmount > 0)
+        d->pb_next->forceSetPsiIcon(d->nextAnim());
 
-	// update the widget icon
+    // update the widget icon
 #ifndef Q_OS_MAC
-	if(d->composing) {
-		setWindowIcon(IconsetFactory::icon("psi/sendMessage").icon());
-	}
-	else {
-		if(d->anim)
-			setWindowIcon(d->anim->icon());
-	}
+    if(d->composing) {
+        setWindowIcon(IconsetFactory::icon("psi/sendMessage").icon());
+    }
+    else {
+        if(d->anim)
+            setWindowIcon(d->anim->icon());
+    }
 #endif
 }
 
 void EventDlg::showEvent(QShowEvent *e)
 {
-	QWidget::showEvent(e);
+    QWidget::showEvent(e);
 
-	if(d->urlOnShow) {
-		d->urlOnShow = false;
-		QTimer::singleShot(1, this, SLOT(addUrl()));
-	}
+    if(d->urlOnShow) {
+        d->urlOnShow = false;
+        QTimer::singleShot(1, this, SLOT(addUrl()));
+    }
 }
 
 void EventDlg::keyPressEvent(QKeyEvent *e)
 {
-	// FIXMEKEY
-	QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier);
-	if(ShortcutManager::instance()->shortcuts("common.close").contains(key))
-		close();
-	else if(ShortcutManager::instance()->shortcuts("message.send").contains(key))
-		doSend();
-	else if(ShortcutManager::instance()->shortcuts("common.hide").contains(key))
-		hide();
-	else
-		e->ignore();
+    // FIXMEKEY
+    QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier);
+    if(ShortcutManager::instance()->shortcuts("common.close").contains(key))
+        close();
+    else if(ShortcutManager::instance()->shortcuts("message.send").contains(key))
+        doSend();
+    else if(ShortcutManager::instance()->shortcuts("common.hide").contains(key))
+        hide();
+    else
+        e->ignore();
 }
 
 void EventDlg::closeEvent(QCloseEvent *e)
 {
-	// really lame way of checking if we are encrypting
-	if(!d->mle->isEnabled())
-		return;
+    // really lame way of checking if we are encrypting
+    if(!d->mle->isEnabled())
+        return;
 
-	e->accept();
+    e->accept();
 }
 
 void EventDlg::doSend()
 {
-	if(!d->composing)
-		return;
+    if(!d->composing)
+        return;
 
-	if(!d->pb_send->isEnabled())
-		return;
+    if(!d->pb_send->isEnabled())
+        return;
 
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	if(d->mle->getPlainText().isEmpty() && d->attachView->count() == 0) {
-		QMessageBox::information(this, tr("Warning"), tr("Please type in a message first."));
-		return;
-	}
+    if(d->mle->getPlainText().isEmpty() && d->attachView->count() == 0) {
+        QMessageBox::information(this, tr("Warning"), tr("Please type in a message first."));
+        return;
+    }
 
-	QStringList list = stringToList(d->le_to->text());
-	if(list.isEmpty()) {
-		QMessageBox::warning(this, tr("Warning"), tr("No recipients have been specified!"));
-		return;
-	}
+    QStringList list = stringToList(d->le_to->text());
+    if(list.isEmpty()) {
+        QMessageBox::warning(this, tr("Warning"), tr("No recipients have been specified!"));
+        return;
+    }
 
-	Message m;
-	if(d->cb_type->currentIndex() == 0)
-		m.setType("");
-	else
-		m.setType("chat");
+    Message m;
+    if(d->cb_type->currentIndex() == 0)
+        m.setType("");
+    else
+        m.setType("chat");
 
-	m.setBody(d->mle->getPlainText());
-	m.setSubject(d->le_subj->text());
-	m.setUrlList(d->attachView->urlList());
-	m.setTimeStamp(QDateTime::currentDateTime());
-	m.setThread(d->thread);
-	if(d->tb_pgp->isChecked())
-		m.setWasEncrypted(true);
-	d->m = m;
+    m.setBody(d->mle->getPlainText());
+    m.setSubject(d->le_subj->text());
+    m.setUrlList(d->attachView->urlList());
+    m.setTimeStamp(QDateTime::currentDateTime());
+    m.setThread(d->thread);
+    if(d->tb_pgp->isChecked())
+        m.setWasEncrypted(true);
+    d->m = m;
 
-	d->enc = false;
-	if(d->tb_pgp->isChecked()) {
-		d->le_to->setEnabled(false);
-		d->mle->setEnabled(false);
-		d->enc = true;
-		d->sendLeft = list;
+    d->enc = false;
+    if(d->tb_pgp->isChecked()) {
+        d->le_to->setEnabled(false);
+        d->mle->setEnabled(false);
+        d->enc = true;
+        d->sendLeft = list;
 
-		trySendEncryptedNext();
-	}
-	else {
-		if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty() && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
-				m.setTo(d->pa->serverInfoManager()->multicastService());
-				foreach(QString recipient, list) {
-					m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
-				}
-				d->pa->dj_sendMessage(m, true);
-		}
-		else {
-			for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-				m.setTo(Jid(*it));
-				d->pa->dj_sendMessage(m, true);
-			}
-		}
-		doneSend();
-	}
+        trySendEncryptedNext();
+    }
+    else {
+        if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty() && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
+                m.setTo(d->pa->serverInfoManager()->multicastService());
+                foreach(QString recipient, list) {
+                    m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
+                }
+                d->pa->dj_sendMessage(m, true);
+        }
+        else {
+            for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+                m.setTo(Jid(*it));
+                d->pa->dj_sendMessage(m, true);
+            }
+        }
+        doneSend();
+    }
 }
 
 void EventDlg::doneSend()
 {
-	close();
+    close();
 }
 
 void EventDlg::doReadNext()
 {
-	aReadNext(d->realJid);
+    aReadNext(d->realJid);
 }
 
 void EventDlg::doChat()
 {
-	QStringList list = stringToList(d->le_from->text());
-	if(list.isEmpty())
-		return;
+    QStringList list = stringToList(d->le_from->text());
+    if(list.isEmpty())
+        return;
 
-	Jid j(list[0]);
-	aChat(j);
+    Jid j(list[0]);
+    aChat(j);
 }
 
 void EventDlg::doReply()
 {
-	QStringList list = stringToList(d->le_from->text());
-	if(list.isEmpty())
-		return;
-	Jid j(list[0]);
-	aReply(j, "", d->le_subj->text(), d->thread);
+    QStringList list = stringToList(d->le_from->text());
+    if(list.isEmpty())
+        return;
+    Jid j(list[0]);
+    aReply(j, "", d->le_subj->text(), d->thread);
 }
 
 void EventDlg::doQuote()
 {
-	QStringList list = stringToList(d->le_from->text());
-	if(list.isEmpty())
-		return;
-	Jid j(list[0]);
+    QStringList list = stringToList(d->le_from->text());
+    if(list.isEmpty())
+        return;
+    Jid j(list[0]);
 
-	QString body = TextUtil::rich2plain(d->mle->getHtml());
-	aReply(j, body, d->le_subj->text(), d->thread);
+    QString body = TextUtil::rich2plain(d->mle->getHtml());
+    aReply(j, body, d->le_subj->text(), d->thread);
 }
 
 void EventDlg::doDeny()
 {
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	if (d->rosterExchangeItems.isEmpty()) {
-		QStringList list = stringToList(d->le_from->text());
-		if(list.isEmpty())
-			return;
-		Jid j(list[0]);
-		emit aDeny(j);
-	}
-	else {
-		d->rosterExchangeItems.clear();
-	}
-	close();
+    if (d->rosterExchangeItems.isEmpty()) {
+        QStringList list = stringToList(d->le_from->text());
+        if(list.isEmpty())
+            return;
+        Jid j(list[0]);
+        emit aDeny(j);
+    }
+    else {
+        d->rosterExchangeItems.clear();
+    }
+    close();
 }
 
 void EventDlg::doAuth()
 {
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	if (d->rosterExchangeItems.isEmpty()) {
-		QStringList list = stringToList(d->le_from->text());
-		if(list.isEmpty())
-			return;
-		Jid j(list[0]);
-		aAuth(j);
-	}
-	else {
-		aRosterExchange(d->rosterExchangeItems);
-		d->rosterExchangeItems.clear();
-	}
-	d->pb_auth->setEnabled(false);
-	closeAfterReply();
+    if (d->rosterExchangeItems.isEmpty()) {
+        QStringList list = stringToList(d->le_from->text());
+        if(list.isEmpty())
+            return;
+        Jid j(list[0]);
+        aAuth(j);
+    }
+    else {
+        aRosterExchange(d->rosterExchangeItems);
+        d->rosterExchangeItems.clear();
+    }
+    d->pb_auth->setEnabled(false);
+    closeAfterReply();
 }
 
 /*!
-	Executed when user wants to confirm a HTTP request.
+    Executed when user wants to confirm a HTTP request.
 */
 void EventDlg::doHttpConfirm()
 {
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	if(!d->httpAuthRequest.hasId()) {
-		const QString id = d->le_http_id->text();
-		if(id.isEmpty()) {
-			QMessageBox::information(this, tr("Warning"), tr("Please type in a transaction identifier first."));
-			d->le_http_id->setFocus();
-			return;
-		}
-		else {
-			d->httpAuthRequest.setId(id);
-		}
-	}
+    if(!d->httpAuthRequest.hasId()) {
+        const QString id = d->le_http_id->text();
+        if(id.isEmpty()) {
+            QMessageBox::information(this, tr("Warning"), tr("Please type in a transaction identifier first."));
+            d->le_http_id->setFocus();
+            return;
+        }
+        else {
+            d->httpAuthRequest.setId(id);
+        }
+    }
 
-	aHttpConfirm(d->httpAuthRequest);
+    aHttpConfirm(d->httpAuthRequest);
 
-	d->le_http_id->setEnabled(false);
-	d->pb_http_confirm->setEnabled(false);
-	d->pb_http_deny->setEnabled(false);
-	closeAfterReply();
+    d->le_http_id->setEnabled(false);
+    d->pb_http_confirm->setEnabled(false);
+    d->pb_http_deny->setEnabled(false);
+    closeAfterReply();
 }
 
 /*!
-	Executed when user wants to deny a HTTP request.
+    Executed when user wants to deny a HTTP request.
 */
 void EventDlg::doHttpDeny()
 {
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	QStringList list = stringToList(d->le_from->text());
-	if(list.isEmpty())
-		return;
-	Jid j(list[0]);
+    QStringList list = stringToList(d->le_from->text());
+    if(list.isEmpty())
+        return;
+    Jid j(list[0]);
 
-	aHttpDeny(d->httpAuthRequest);
+    aHttpDeny(d->httpAuthRequest);
 
-	d->le_http_id->setEnabled(false);
-	d->pb_http_confirm->setEnabled(false);
-	d->pb_http_deny->setEnabled(false);
-	closeAfterReply();
+    d->le_http_id->setEnabled(false);
+    d->pb_http_confirm->setEnabled(false);
+    d->pb_http_deny->setEnabled(false);
+    closeAfterReply();
 }
 
 /*!
-	Executed when user wants to submit a completed form
+    Executed when user wants to submit a completed form
 */
 void EventDlg::doFormSubmit()
 {
-	//get original sender
-	QStringList list = stringToList(d->le_from->text());
-	if(list.isEmpty())
-		return;
-	Jid j(list[0]);
+    //get original sender
+    QStringList list = stringToList(d->le_from->text());
+    if(list.isEmpty())
+        return;
+    Jid j(list[0]);
 
-	//populate the data fields
-	XData data;
-	data.setFields(d->xdata->fields());
+    //populate the data fields
+    XData data;
+    data.setFields(d->xdata->fields());
 
-	//ensure that the user completed all required fields
-	if(!data.isValid()) {
-		QMessageBox::information(this, tr("Warning"), tr("Please complete all required fields (marked with a '*')."));
-		d->xdata_form->setFocus();
-		return;
-	}
+    //ensure that the user completed all required fields
+    if(!data.isValid()) {
+        QMessageBox::information(this, tr("Warning"), tr("Please complete all required fields (marked with a '*')."));
+        d->xdata_form->setFocus();
+        return;
+    }
 
-	data.setType(XData::Data_Submit);
-	aFormSubmit(data, d->thread, j);
+    data.setType(XData::Data_Submit);
+    aFormSubmit(data, d->thread, j);
 
-	d->pb_form_submit->setEnabled(false);
-	d->pb_form_cancel->setEnabled(false);
+    d->pb_form_submit->setEnabled(false);
+    d->pb_form_cancel->setEnabled(false);
 
-	closeAfterReply();
+    closeAfterReply();
 }
 
 /*!
-	Executed when user wants to cancel a form
+    Executed when user wants to cancel a form
 */
 void EventDlg::doFormCancel()
 {
-	//get original sender
-	QStringList list = stringToList(d->le_from->text());
-	if(list.isEmpty())
-		return;
-	Jid j(list[0]);
+    //get original sender
+    QStringList list = stringToList(d->le_from->text());
+    if(list.isEmpty())
+        return;
+    Jid j(list[0]);
 
-	XData data;
-	data.setType(XData::Data_Cancel);
-	aFormCancel(data, d->thread, j);
+    XData data;
+    data.setType(XData::Data_Cancel);
+    aFormCancel(data, d->thread, j);
 
-	d->pb_form_submit->setEnabled(false);
-	d->pb_form_cancel->setEnabled(false);
+    d->pb_form_submit->setEnabled(false);
+    d->pb_form_cancel->setEnabled(false);
 
-	closeAfterReply();
+    closeAfterReply();
 }
 
 void EventDlg::doHistory()
 {
-	d->pa->actionHistory(d->jid.withResource(""));
+    d->pa->actionHistory(d->jid.withResource(""));
 }
 
 void EventDlg::doInfo()
 {
-	d->pa->actionInfo(d->jid);
+    d->pa->actionInfo(d->jid);
 }
 
 void EventDlg::closeAfterReply()
 {
-	if(d->nextAmount == 0)
-		close();
+    if(d->nextAmount == 0)
+        close();
 }
 
 void EventDlg::addUrl()
 {
-	AddUrlDlg *w = new AddUrlDlg(this);
-	int n = w->exec();
-	if(n != QDialog::Accepted) {
-		delete w;
-		return;
-	}
+    AddUrlDlg *w = new AddUrlDlg(this);
+    int n = w->exec();
+    if(n != QDialog::Accepted) {
+        delete w;
+        return;
+    }
 
-	QString url = w->le_url->text();
-	QString desc = w->le_desc->text();
-	delete w;
+    QString url = w->le_url->text();
+    QString desc = w->le_desc->text();
+    delete w;
 
-	d->attachView->urlAdd(url, desc);
+    d->attachView->urlAdd(url, desc);
 }
 
 void EventDlg::showHideAttachView()
 {
-	if(d->attachView->count()) {
-		if(d->attachView->isHidden())
-			d->attachView->show();
-	}
-	else {
-		if(!d->attachView->isHidden())
-			d->attachView->hide();
-	}
+    if(d->attachView->count()) {
+        if(d->attachView->isHidden())
+            d->attachView->show();
+    }
+    else {
+        if(!d->attachView->isHidden())
+            d->attachView->hide();
+    }
 }
 
 void EventDlg::updateContact(const Jid &jid)
 {
-	if(d->jid.compare(jid, false)) {
-		QString rname = d->jid.resource();
-		QList<UserListItem*> ul = d->pa->findRelevant(d->jid);
-		UserListItem *u = 0;
-		int status = -1;
-		if(!ul.isEmpty()) {
-			u = ul.first();
-			if(rname.isEmpty()) {
-				// use priority
-				if(!u->isAvailable())
-					status = STATUS_OFFLINE;
-				else
-					status = makeSTATUS((*u->userResourceList().priority()).status());
-			}
-			else {
-				// use specific
-				UserResourceList::ConstIterator rit = u->userResourceList().find(rname);
-				if(rit != u->userResourceList().end())
-					status = makeSTATUS((*rit).status());
-				else
-					status = STATUS_OFFLINE;
-			}
-		}
+    if(d->jid.compare(jid, false)) {
+        QString rname = d->jid.resource();
+        QList<UserListItem*> ul = d->pa->findRelevant(d->jid);
+        UserListItem *u = 0;
+        int status = -1;
+        if(!ul.isEmpty()) {
+            u = ul.first();
+            if(rname.isEmpty()) {
+                // use priority
+                if(!u->isAvailable())
+                    status = STATUS_OFFLINE;
+                else
+                    status = makeSTATUS((*u->userResourceList().priority()).status());
+            }
+            else {
+                // use specific
+                UserResourceList::ConstIterator rit = u->userResourceList().find(rname);
+                if(rit != u->userResourceList().end())
+                    status = makeSTATUS((*rit).status());
+                else
+                    status = STATUS_OFFLINE;
+            }
+        }
 
-		if(status == -1 || !u)
-			d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
-		else
-			d->lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid, status));
+        if(status == -1 || !u)
+            d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
+        else
+            d->lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid, status));
 
-		if(u)
-			d->lb_status->setToolTip(u->makeTip(true, false));
-		else
-			d->lb_status->setToolTip(QString());
+        if(u)
+            d->lb_status->setToolTip(u->makeTip(true, false));
+        else
+            d->lb_status->setToolTip(QString());
 
-		if(u)
-			setWindowTitle(JIDUtil::nickOrJid(u->name(), u->jid().full()));
-	}
+        if(u)
+            setWindowTitle(JIDUtil::nickOrJid(u->name(), u->jid().full()));
+    }
 }
 
 void EventDlg::setTime(const QDateTime &t, bool late)
 {
-	QString str;
-	//str.sprintf("<nobr>%02d/%02d %02d:%02d:%02d</nobr>", t.date().month(), t.date().day(), t.time().hour(), t.time().minute(), t.time().second());
-	str = QString("<nobr>") + t.toString(Qt::LocalDate) + "</nobr>";
-	if(late)
-		str = QString("<font color=\"red\">") + str + "</font>";
+    QString str;
+    //str.sprintf("<nobr>%02d/%02d %02d:%02d:%02d</nobr>", t.date().month(), t.date().day(), t.time().hour(), t.time().minute(), t.time().second());
+    str = QString("<nobr>") + t.toString(Qt::LocalDate) + "</nobr>";
+    if(late)
+        str = QString("<font color=\"red\">") + str + "</font>";
 
-	d->lb_time->setText(str);
+    d->lb_time->setText(str);
 }
 
 void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 {
-	// Default buttons setup
-	d->pb_next->show();
-	d->pb_chat->show();
-	d->pb_reply->show();
-	d->pb_quote->show();
-	d->pb_close->show();
-	d->mle->show();
-	d->ck_all_auth->hide();
-	d->pb_auth->hide();
-	d->pb_deny->hide();
-	d->pb_form_submit->hide();
-	d->pb_form_cancel->hide();
-	d->pb_http_confirm->hide();
-	d->pb_http_deny->hide();
-	d->xdata_form->hide();
+    // Default buttons setup
+    d->pb_next->show();
+    d->pb_chat->show();
+    d->pb_reply->show();
+    d->pb_quote->show();
+    d->pb_close->show();
+    d->mle->show();
+    d->ck_all_auth->hide();
+    d->pb_auth->hide();
+    d->pb_deny->hide();
+    d->pb_form_submit->hide();
+    d->pb_form_cancel->hide();
+    d->pb_http_confirm->hide();
+    d->pb_http_deny->hide();
+    d->xdata_form->hide();
 
-	PsiIcon *oldanim = d->anim;
-	d->anim = PsiIconset::instance()->event2icon(e);
+    PsiIcon *oldanim = d->anim;
+    d->anim = PsiIconset::instance()->event2icon(e);
 
-	if(d->anim != oldanim)
-		setWindowIcon(d->anim->icon());
+    if(d->anim != oldanim)
+        setWindowIcon(d->anim->icon());
 
-	d->le_from->setText(expandAddresses(e->from().full(), false));
-	d->le_from->setCursorPosition(0);
-	d->le_from->setToolTip(e->from().full());
-	setTime(e->timeStamp(), e->late());
+    d->le_from->setText(expandAddresses(e->from().full(), false));
+    d->le_from->setCursorPosition(0);
+    d->le_from->setToolTip(e->from().full());
+    setTime(e->timeStamp(), e->late());
 
-	d->enc = false;
+    d->enc = false;
 
-	bool showHttpId = false;
+    bool showHttpId = false;
 
-	if (e->type() == PsiEvent::HttpAuth) {
+    if (e->type() == PsiEvent::HttpAuth) {
 
-		HttpAuthEvent::Ptr hae = e.staticCast<HttpAuthEvent>();
-		const HttpAuthRequest &confirm = hae->request();
+        HttpAuthEvent::Ptr hae = e.staticCast<HttpAuthEvent>();
+        const HttpAuthRequest &confirm = hae->request();
 
-		QString body(tr(
-				"Someone (maybe you) has requested access to the following resource:\n"
-				"URL: %1\n"
-				"Method: %2\n").arg(confirm.url()).arg(confirm.method()));
+        QString body(tr(
+                "Someone (maybe you) has requested access to the following resource:\n"
+                "URL: %1\n"
+                "Method: %2\n").arg(confirm.url()).arg(confirm.method()));
 
-		if (!confirm.hasId()) {
-			body += tr("\n"
-				"If you wish to confirm this request, please provide transaction identifier and press Confirm button. Otherwise press Deny button.");
+        if (!confirm.hasId()) {
+            body += tr("\n"
+                "If you wish to confirm this request, please provide transaction identifier and press Confirm button. Otherwise press Deny button.");
 
-			showHttpId = true;
-		}
-		else {
-			body += tr("Transaction identifier: %1\n"
-				"\n"
-				"If you wish to confirm this request, please press Confirm button. "
-				"Otherwise press Deny button.").arg(confirm.id());
-		}
-		Message m(hae->message());
-		m.setBody(body);
-		hae->setMessage(m);
+            showHttpId = true;
+        }
+        else {
+            body += tr("Transaction identifier: %1\n"
+                "\n"
+                "If you wish to confirm this request, please press Confirm button. "
+                "Otherwise press Deny button.").arg(confirm.id());
+        }
+        Message m(hae->message());
+        m.setBody(body);
+        hae->setMessage(m);
 
-		d->httpAuthRequest = hae->request();
-	}
+        d->httpAuthRequest = hae->request();
+    }
 
-	if (showHttpId) {
-		d->le_http_id->clear();
-		d->le_http_id->setEnabled(true);
-		d->w_http_id->show();
-		d->le_http_id->setFocus();
-	}
-	else {
-		d->w_http_id->hide();
-	}
+    if (showHttpId) {
+        d->le_http_id->clear();
+        d->le_http_id->setEnabled(true);
+        d->w_http_id->show();
+        d->le_http_id->setFocus();
+    }
+    else {
+        d->w_http_id->hide();
+    }
 
-	if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
-		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-		const Message &m = me->message();
+    if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
+        MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+        const Message &m = me->message();
 
-		d->enc = m.wasEncrypted();
+        d->enc = m.wasEncrypted();
 
-		// HTTP auth request buttons
-		if ( e->type() == PsiEvent::HttpAuth ) {
-			d->pb_chat->hide();
-			d->pb_reply->hide();
-			d->pb_quote->hide();
+        // HTTP auth request buttons
+        if ( e->type() == PsiEvent::HttpAuth ) {
+            d->pb_chat->hide();
+            d->pb_reply->hide();
+            d->pb_quote->hide();
 
-			d->pb_http_confirm->setEnabled(true);
-			d->pb_http_confirm->show();
-			d->pb_http_deny->setEnabled(true);
-			d->pb_http_deny->show();
-		}
+            d->pb_http_confirm->setEnabled(true);
+            d->pb_http_confirm->show();
+            d->pb_http_deny->setEnabled(true);
+            d->pb_http_deny->show();
+        }
 
-		bool xhtml = m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty();
-		QString txt = xhtml ? m.html().toString("div") : TextUtil::plain2rich(m.body());
+        bool xhtml = m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty();
+        QString txt = xhtml ? m.html().toString("div") : TextUtil::plain2rich(m.body());
 
-		// show subject line if the incoming message has one
-		if(!m.subject().isEmpty() && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
-			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
+        // show subject line if the incoming message has one
+        if(!m.subject().isEmpty() && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
+            txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
-		if (!xhtml) {
-			txt = TextUtil::linkify(txt);
-			txt = TextUtil::emoticonify(txt);
-			txt = TextUtil::legacyFormat(txt);
-		}
+        if (!xhtml) {
+            txt = TextUtil::linkify(txt);
+            txt = TextUtil::emoticonify(txt);
+            txt = TextUtil::legacyFormat(txt);
+        }
 
-		if ( e->type() == PsiEvent::HttpAuth )
-			txt = "<big>[HTTP Request Confirmation]</big><br>" + txt;
+        if ( e->type() == PsiEvent::HttpAuth )
+            txt = "<big>[HTTP Request Confirmation]</big><br>" + txt;
 
-		setHtml("<qt>" + txt + "</qt>");
+        setHtml("<qt>" + txt + "</qt>");
 
-		d->le_subj->setText(m.subject());
-		d->le_subj->setCursorPosition(0);
+        d->le_subj->setText(m.subject());
+        d->le_subj->setCursorPosition(0);
 
-		d->thread = m.thread();
+        d->thread = m.thread();
 
-		// Form buttons
-		if (!m.getForm().fields().empty()) {
-			d->pb_chat->hide();
-			d->pb_reply->hide();
-			d->pb_quote->hide();
-			d->pb_close->hide();
-			d->mle->hide();
+        // Form buttons
+        if (!m.getForm().fields().empty()) {
+            d->pb_chat->hide();
+            d->pb_reply->hide();
+            d->pb_quote->hide();
+            d->pb_close->hide();
+            d->mle->hide();
 
-			//show/enable controls we want
-			d->pb_form_submit->show();
-			d->pb_form_cancel->show();
-			d->pb_form_submit->setEnabled(true);
-			d->pb_form_cancel->setEnabled(true);
-			//set title if specified
-			const XData& form = m.getForm();
-			if ( !form.title().isEmpty() )
-				setWindowTitle( form.title() );
+            //show/enable controls we want
+            d->pb_form_submit->show();
+            d->pb_form_cancel->show();
+            d->pb_form_submit->setEnabled(true);
+            d->pb_form_cancel->setEnabled(true);
+            //set title if specified
+            const XData& form = m.getForm();
+            if ( !form.title().isEmpty() )
+                setWindowTitle( form.title() );
 
-			//show data form
-			d->xdata->setForm( form, false );
-			d->xdata_form->show();
+            //show data form
+            d->xdata->setForm( form, false );
+            d->xdata_form->show();
 
-			//set instructions
-			QString str = TextUtil::plain2rich( form.instructions() );
-			d->xdata_instruction->setText(str);
-		}
+            //set instructions
+            QString str = TextUtil::plain2rich( form.instructions() );
+            d->xdata_instruction->setText(str);
+        }
 
-		d->attachView->clear();
-		d->attachView->addUrlList(m.urlList());
+        d->attachView->clear();
+        d->attachView->addUrlList(m.urlList());
 
-		if(!m.mucInvites().isEmpty()) {
-			MUCInvite i = m.mucInvites().first();
-			d->attachView->gcAdd(m.from().full(),i.from().bare(),i.reason(),m.mucPassword());
-		}
-		else if(!m.invite().isEmpty())
-			d->attachView->gcAdd(m.invite());
-		showHideAttachView();
-	}
-	else if(e->type() == PsiEvent::Auth) {
-		AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
-		QString type = ae->authType();
+        if(!m.mucInvites().isEmpty()) {
+            MUCInvite i = m.mucInvites().first();
+            d->attachView->gcAdd(m.from().full(),i.from().bare(),i.reason(),m.mucPassword());
+        }
+        else if(!m.invite().isEmpty())
+            d->attachView->gcAdd(m.invite());
+        showHideAttachView();
+    }
+    else if(e->type() == PsiEvent::Auth) {
+        AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
+        QString type = ae->authType();
 
-		d->le_subj->setText("");
-		if(type == "subscribe") {
-			QString body(tr("<big>[System Message]</big><br>This user wants to subscribe to your presence.  Click the button labelled \"Add/Auth\" to authorize the subscription.  This will also add the person to your contact list if it is not already there."));
-			setHtml("<qt>" + body + "</qt>");
+        d->le_subj->setText("");
+        if(type == "subscribe") {
+            QString body(tr("<big>[System Message]</big><br>This user wants to subscribe to your presence.  Click the button labelled \"Add/Auth\" to authorize the subscription.  This will also add the person to your contact list if it is not already there."));
+            setHtml("<qt>" + body + "</qt>");
 
-			d->pb_chat->show();
-			d->pb_reply->hide();
-			d->pb_quote->hide();
+            d->pb_chat->show();
+            d->pb_reply->hide();
+            d->pb_quote->hide();
 
-			d->ck_all_auth->show();
-			d->pb_auth->setEnabled(true);
-			d->pb_auth->show();
-			d->pb_deny->show();
+            d->ck_all_auth->show();
+            d->pb_auth->setEnabled(true);
+            d->pb_auth->show();
+            d->pb_deny->show();
 
-			d->pb_http_confirm->hide();
-			d->pb_http_deny->hide();
+            d->pb_http_confirm->hide();
+            d->pb_http_deny->hide();
 
-		}
-		else if(type == "subscribed") {
-			QString body(tr("<big>[System Message]</big><br>You are now authorized."));
-			setHtml("<qt>" + body + "</qt>");
+        }
+        else if(type == "subscribed") {
+            QString body(tr("<big>[System Message]</big><br>You are now authorized."));
+            setHtml("<qt>" + body + "</qt>");
 
-			d->ck_all_auth->hide();
-			d->pb_auth->hide();
-			d->pb_deny->hide();
-			d->pb_chat->show();
-			d->pb_reply->show();
-			d->pb_quote->show();
-			d->pb_http_confirm->hide();
-			d->pb_http_deny->hide();
-		}
-		else if(type == "unsubscribed") {
-			QString body(tr("<big>[System Message]</big><br>Your authorization has been removed!"));
-			setHtml("<qt>" + body + "</qt>");
+            d->ck_all_auth->hide();
+            d->pb_auth->hide();
+            d->pb_deny->hide();
+            d->pb_chat->show();
+            d->pb_reply->show();
+            d->pb_quote->show();
+            d->pb_http_confirm->hide();
+            d->pb_http_deny->hide();
+        }
+        else if(type == "unsubscribed") {
+            QString body(tr("<big>[System Message]</big><br>Your authorization has been removed!"));
+            setHtml("<qt>" + body + "</qt>");
 
-			d->ck_all_auth->hide();
-			d->pb_auth->hide();
-			d->pb_deny->hide();
-			d->pb_chat->show();
-			d->pb_reply->show();
-			d->pb_quote->show();
-			d->pb_http_confirm->hide();
-			d->pb_http_deny->hide();
-		}
-	}
-	else if (e->type() == PsiEvent::RosterExchange) {
-		RosterExchangeEvent::Ptr re = e.staticCast<RosterExchangeEvent>();
-		int additions = 0, deletions = 0, modifications = 0;
-		foreach(RosterExchangeItem item, re->rosterExchangeItems()) {
-			switch(item.action()) {
-				case RosterExchangeItem::Add:
-					additions++;
-					break;
-				case RosterExchangeItem::Delete:
-					deletions++;
-					break;
-				case RosterExchangeItem::Modify:
-					modifications++;
-					break;
-			}
-		}
-		QString action;
-		if (additions > 0) {
-			if (additions > 1)
-				action += QString(tr("%1 additions")).arg(additions);
-			else
-				action += QString(tr("1 addition"));
-			if (deletions > 0 || modifications > 0)
-				action += ", ";
-		}
-		if (deletions > 0) {
-			if (deletions > 1)
-				action += QString(tr("%1 deletions")).arg(deletions);
-			else
-				action += QString(tr("1 deletion"));
-			if (modifications > 0)
-				action += ", ";
-		}
-		if (modifications > 0) {
-			if (modifications > 1)
-				action += QString(tr("%1 modifications")).arg(modifications);
-			else
-				action += QString(tr("1 modification"));
-		}
+            d->ck_all_auth->hide();
+            d->pb_auth->hide();
+            d->pb_deny->hide();
+            d->pb_chat->show();
+            d->pb_reply->show();
+            d->pb_quote->show();
+            d->pb_http_confirm->hide();
+            d->pb_http_deny->hide();
+        }
+    }
+    else if (e->type() == PsiEvent::RosterExchange) {
+        RosterExchangeEvent::Ptr re = e.staticCast<RosterExchangeEvent>();
+        int additions = 0, deletions = 0, modifications = 0;
+        foreach(RosterExchangeItem item, re->rosterExchangeItems()) {
+            switch(item.action()) {
+                case RosterExchangeItem::Add:
+                    additions++;
+                    break;
+                case RosterExchangeItem::Delete:
+                    deletions++;
+                    break;
+                case RosterExchangeItem::Modify:
+                    modifications++;
+                    break;
+            }
+        }
+        QString action;
+        if (additions > 0) {
+            if (additions > 1)
+                action += QString(tr("%1 additions")).arg(additions);
+            else
+                action += QString(tr("1 addition"));
+            if (deletions > 0 || modifications > 0)
+                action += ", ";
+        }
+        if (deletions > 0) {
+            if (deletions > 1)
+                action += QString(tr("%1 deletions")).arg(deletions);
+            else
+                action += QString(tr("1 deletion"));
+            if (modifications > 0)
+                action += ", ";
+        }
+        if (modifications > 0) {
+            if (modifications > 1)
+                action += QString(tr("%1 modifications")).arg(modifications);
+            else
+                action += QString(tr("1 modification"));
+        }
 
-		d->le_subj->setText("");
-		QString body = QString(tr("<big>[System Message]</big><br>This user wants to modify your roster (%1). Click the button labelled \"Add/Auth\" to authorize the modification.")).arg(action);
-		setHtml("<qt>" + body + "</qt>");
-		d->rosterExchangeItems = re->rosterExchangeItems();
+        d->le_subj->setText("");
+        QString body = QString(tr("<big>[System Message]</big><br>This user wants to modify your roster (%1). Click the button labelled \"Add/Auth\" to authorize the modification.")).arg(action);
+        setHtml("<qt>" + body + "</qt>");
+        d->rosterExchangeItems = re->rosterExchangeItems();
 
-		d->pb_chat->show();
-		d->pb_reply->hide();
-		d->pb_quote->hide();
+        d->pb_chat->show();
+        d->pb_reply->hide();
+        d->pb_quote->hide();
 
-		d->ck_all_auth->show();
-		d->pb_auth->setEnabled(true);
-		d->pb_auth->show();
-		d->pb_deny->show();
-	}
+        d->ck_all_auth->show();
+        d->pb_auth->setEnabled(true);
+        d->pb_auth->show();
+        d->pb_deny->show();
+    }
 
-	d->mle->scrollToTop();
+    d->mle->scrollToTop();
 
-	if(d->lb_pgp)
-		d->lb_pgp->setPsiIcon( IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo") );
+    if(d->lb_pgp)
+        d->lb_pgp->setPsiIcon( IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo") );
 
-	if(!d->le_subj->text().isEmpty())
-		d->le_subj->setToolTip(d->le_subj->text());
-	else
-		d->le_subj->setToolTip(QString());
+    if(!d->le_subj->text().isEmpty())
+        d->le_subj->setToolTip(d->le_subj->text());
+    else
+        d->le_subj->setToolTip(QString());
 
-	doWhois();
+    doWhois();
 }
 
 void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
 {
-	int oldAmount = d->nextAmount;
+    int oldAmount = d->nextAmount;
 
-	d->setNextAnim(nextAnim);
-	d->nextAmount = nextAmount;
+    d->setNextAnim(nextAnim);
+    d->nextAmount = nextAmount;
 
-	if(nextAmount == 0) {
-		d->setNextAnim(0);
-		d->pb_next->forceSetPsiIcon(0);
-		d->pb_next->setEnabled(false);
-		d->pb_next->setText(tr("&Next"));
+    if(nextAmount == 0) {
+        d->setNextAnim(0);
+        d->pb_next->forceSetPsiIcon(0);
+        d->pb_next->setEnabled(false);
+        d->pb_next->setText(tr("&Next"));
 
-		if(d->pb_reply->isVisibleTo(this) && d->pb_reply->isEnabled())
-			d->pb_reply->setFocus();
-		else if(d->pb_auth->isVisibleTo(this))
-			d->pb_auth->setFocus();
-		else if(d->w_http_id->isVisibleTo(this))
-			d->le_http_id->setFocus();
-		else if(d->pb_http_deny->isVisibleTo(this))
-			d->pb_http_deny->setFocus();
-	}
-	else {
-		d->pb_next->setEnabled(true);
-		QString str(tr("&Next"));
-		str += QString(" - %1").arg(nextAmount);
-		d->pb_next->setText(str);
+        if(d->pb_reply->isVisibleTo(this) && d->pb_reply->isEnabled())
+            d->pb_reply->setFocus();
+        else if(d->pb_auth->isVisibleTo(this))
+            d->pb_auth->setFocus();
+        else if(d->w_http_id->isVisibleTo(this))
+            d->le_http_id->setFocus();
+        else if(d->pb_http_deny->isVisibleTo(this))
+            d->pb_http_deny->setFocus();
+    }
+    else {
+        d->pb_next->setEnabled(true);
+        QString str(tr("&Next"));
+        str += QString(" - %1").arg(nextAmount);
+        d->pb_next->setText(str);
 
-		d->pb_next->forceSetPsiIcon(d->nextAnim());
+        d->pb_next->forceSetPsiIcon(d->nextAnim());
 
-		if(d->nextAmount > oldAmount)
-			d->pb_next->setFocus();
-	}
+        if(d->nextAmount > oldAmount)
+            d->pb_next->setFocus();
+    }
 }
 
 void EventDlg::actionGCJoin(const QString &gc, const QString &passw)
 {
-	Jid j(gc);
-	d->pa->actionJoin(j.withResource(""), passw);
+    Jid j(gc);
+    d->pa->actionJoin(j.withResource(""), passw);
 }
 
 void EventDlg::updatePGP()
 {
-	if(d->tb_pgp) {
-		d->tb_pgp->setEnabled(d->pa->hasPGP());
-		if(!d->pa->hasPGP()) {
-			d->tb_pgp->setChecked(false);
-		}
-	}
+    if(d->tb_pgp) {
+        d->tb_pgp->setEnabled(d->pa->hasPGP());
+        if(!d->pa->hasPGP()) {
+            d->tb_pgp->setChecked(false);
+        }
+    }
 }
 
 void EventDlg::trySendEncryptedNext()
 {
-	if(d->sendLeft.isEmpty())
-		return;
-	Message m = d->m;
-	m.setTo(Jid(d->sendLeft.first()));
-	d->transid = d->pa->sendMessageEncrypted(m);
-	if(d->transid == -1) {
-		d->le_to->setEnabled(true);
-		d->mle->setEnabled(true);
-		d->mle->setFocus();
-		return;
-	}
+    if(d->sendLeft.isEmpty())
+        return;
+    Message m = d->m;
+    m.setTo(Jid(d->sendLeft.first()));
+    d->transid = d->pa->sendMessageEncrypted(m);
+    if(d->transid == -1) {
+        d->le_to->setEnabled(true);
+        d->mle->setEnabled(true);
+        d->mle->setFocus();
+        return;
+    }
 }
 
 void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
 #ifdef HAVE_PGPUTIL
-	if(d->transid == -1)
-		return;
-	if(d->transid != x)
-		return;
-	d->transid = -1;
-	if(b) {
-		// remove the item
-		Jid j(d->sendLeft.takeFirst());
+    if(d->transid == -1)
+        return;
+    if(d->transid != x)
+        return;
+    d->transid = -1;
+    if(b) {
+        // remove the item
+        Jid j(d->sendLeft.takeFirst());
 
-		//d->pa->toggleSecurity(j, d->enc);
+        //d->pa->toggleSecurity(j, d->enc);
 
-		if(d->sendLeft.isEmpty()) {
-			d->le_to->setEnabled(true);
-			d->mle->setEnabled(true);
-			doneSend();
-		}
-		else {
-			trySendEncryptedNext();
-			return;
-		}
-	}
-	else {
-		PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
-	}
+        if(d->sendLeft.isEmpty()) {
+            d->le_to->setEnabled(true);
+            d->mle->setEnabled(true);
+            doneSend();
+        }
+        else {
+            trySendEncryptedNext();
+            return;
+        }
+    }
+    else {
+        PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
+    }
 
-	d->le_to->setEnabled(true);
-	d->mle->setEnabled(true);
-	d->mle->setFocus();
+    d->le_to->setEnabled(true);
+    d->mle->setEnabled(true);
+    d->mle->setFocus();
 #else
-	Q_ASSERT(false);
+    Q_ASSERT(false);
 #endif
 }
 

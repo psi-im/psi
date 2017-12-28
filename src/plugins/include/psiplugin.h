@@ -37,81 +37,81 @@ class QWidget;
 class PsiPlugin
 {
 public:
-	// Priorities allows plugins to make processing more ordered. For example
-	// some plugins may require process stanzas as early as possible, others
-	// may want to do some work at the end. So here here are 5 levels of
-	// priority which plugin may choose from. If plugin is not aware about
-	// priority then Normal will be choosed for it.
-	// While writing plugins its desirable to think twice before choosing
-	// Lowest or Highest priority, since your plugin may be not the only which
-	// need it. Think about for example stopspam plugin which is known to be
-	// highest prioroty blocker/processor. Are you writing stopspam? If not
-	// choose High if you want something more then Normal.
-	enum Priority
-	{
-		PriorityLowest	= 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
-		PriorityLow		= 1,
-		PriorityNormal	= 2, // default
-		PriorityHigh	= 3,
-		PriorityHighest	= 4, // always in the start. last loaded Highest plugin moves others to High side
-	};
+    // Priorities allows plugins to make processing more ordered. For example
+    // some plugins may require process stanzas as early as possible, others
+    // may want to do some work at the end. So here here are 5 levels of
+    // priority which plugin may choose from. If plugin is not aware about
+    // priority then Normal will be choosed for it.
+    // While writing plugins its desirable to think twice before choosing
+    // Lowest or Highest priority, since your plugin may be not the only which
+    // need it. Think about for example stopspam plugin which is known to be
+    // highest prioroty blocker/processor. Are you writing stopspam? If not
+    // choose High if you want something more then Normal.
+    enum Priority
+    {
+        PriorityLowest    = 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
+        PriorityLow        = 1,
+        PriorityNormal    = 2, // default
+        PriorityHigh    = 3,
+        PriorityHighest    = 4, // always in the start. last loaded Highest plugin moves others to High side
+    };
 
-	virtual ~PsiPlugin() {}
+    virtual ~PsiPlugin() {}
 
-	virtual Priority priority() { return PriorityNormal; }
+    virtual Priority priority() { return PriorityNormal; }
 
-	/**
-	 * \brief Plugin Name
-	 * The full name of the plugin.
-	 * \return Plugin name
-	 */
-	virtual QString name() const = 0;
+    /**
+     * \brief Plugin Name
+     * The full name of the plugin.
+     * \return Plugin name
+     */
+    virtual QString name() const = 0;
 
-	/**
-	 * \brief Short name for the plugin
-	 * This is the short name of the plugin, used for options structures.
-	 * It must consist of only alphanumerics (no spaces or punctuation).
-	 * \return Short plugin name
-	*/
-	virtual QString shortName() const = 0;
+    /**
+     * \brief Short name for the plugin
+     * This is the short name of the plugin, used for options structures.
+     * It must consist of only alphanumerics (no spaces or punctuation).
+     * \return Short plugin name
+    */
+    virtual QString shortName() const = 0;
 
-	/**
-	 * \brief Plugin version
-	 * Free-form string of the plugin version. Human readable
-	 * \return Plugin version string
-	 */
-	virtual QString version() const = 0;
+    /**
+     * \brief Plugin version
+     * Free-form string of the plugin version. Human readable
+     * \return Plugin version string
+     */
+    virtual QString version() const = 0;
 
-	/**
-	 * \brief Plugin options widget
-	 * This method is called by the Psi options system to retrieve
-	 * a widget containing the options for this plugin.
-	 * This will then be embedded in the options dialog, so this
-	 * should be considered when designing the widget. Should return
-	 * NULL when there are no user-configurable options. The calling method
-	 * is responsible for deleting the options.
-	 *
-	 * TODO: make sure this is really deleted, etc
-	 */
-	virtual QWidget* options() = 0;
+    /**
+     * \brief Plugin options widget
+     * This method is called by the Psi options system to retrieve
+     * a widget containing the options for this plugin.
+     * This will then be embedded in the options dialog, so this
+     * should be considered when designing the widget. Should return
+     * NULL when there are no user-configurable options. The calling method
+     * is responsible for deleting the options.
+     *
+     * TODO: make sure this is really deleted, etc
+     */
+    virtual QWidget* options() = 0;
 
-	/**
-	 * \brief Enable plugin
-	 * \return true if plugin was successfully enabled
-	 */
+    /**
+     * \brief Enable plugin
+     * \return true if plugin was successfully enabled
+     */
 
-	virtual bool enable() = 0;
+    virtual bool enable() = 0;
 
-	/**
-	 * \brief Disable plugin
-	 * \return true if plugin was successfully disabled
-	 */
-	virtual bool disable() = 0;
+    /**
+     * \brief Disable plugin
+     * \return true if plugin was successfully disabled
+     */
+    virtual bool disable() = 0;
 
-	virtual void applyOptions() = 0;
-	virtual void restoreOptions() = 0;
+    virtual void applyOptions() = 0;
+    virtual void restoreOptions() = 0;
 
-	virtual QPixmap icon() const = 0;
+    virtual QPixmap icon() const = 0;
 };
 
 Q_DECLARE_INTERFACE(PsiPlugin, "org.psi-im.PsiPlugin/0.4");

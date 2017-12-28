@@ -28,39 +28,39 @@
 
 
 PsiThemeProvider::PsiThemeProvider(PsiCon *parent) :
-	QObject(parent),
+    QObject(parent),
     _psi(parent)
 {
 
 }
 
 QString PsiThemeProvider::themePath(const QString &name) {
-	QStringList dirs;
-	dirs << ":";
-	dirs << ".";
-	dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
-	dirs << ApplicationInfo::resourcesDir();
+    QStringList dirs;
+    dirs << ":";
+    dirs << ".";
+    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
+    dirs << ApplicationInfo::resourcesDir();
 
-	foreach (QString dir, dirs) {
-		QString fileName = dir + "/themes/" + name;
+    foreach (QString dir, dirs) {
+        QString fileName = dir + "/themes/" + name;
 
-		QFileInfo fi(fileName);
-		if ( fi.exists() )
-			return fileName;
-	}
+        QFileInfo fi(fileName);
+        if ( fi.exists() )
+            return fileName;
+    }
 
-	qWarning("PsiThemeManager::Private::themePath(\"%s\"): not found", qPrintable(name));
-	return QString();
+    qWarning("PsiThemeManager::Private::themePath(\"%s\"): not found", qPrintable(name));
+    return QString();
 }
 
 
 // says where theme is able to load in separate thread
 bool PsiThemeProvider::threadedLoading() const
 {
-	return false;
+    return false;
 }
 
 int PsiThemeProvider::screenshotWidth() const
 {
-	return 0;
+    return 0;
 }

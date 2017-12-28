@@ -25,17 +25,17 @@
 
 class PassphraseDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PassphraseDlg(QWidget* parent = 0);
+    PassphraseDlg(QWidget* parent = 0);
 
-	void promptPassphrase(const QString& name);
+    void promptPassphrase(const QString& name);
 
-	QString getPassphrase() const;
-	bool rememberPassPhrase() const;
+    QString getPassphrase() const;
+    bool rememberPassPhrase() const;
 
 private:
-	Ui::Passphrase ui_;
+    Ui::Passphrase ui_;
 };
 
 #endif

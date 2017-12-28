@@ -27,47 +27,47 @@
 
 class FancyPopupList : public QObject, public QList<FancyPopup *>
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	FancyPopupList()
-	{
-	}
+    FancyPopupList()
+    {
+    }
 
-	~FancyPopupList()
-	{
-		while ( !isEmpty() )
-			delete takeFirst();
-	}
+    ~FancyPopupList()
+    {
+        while ( !isEmpty() )
+            delete takeFirst();
+    }
 
-	FancyPopup *last()
-	{
-		if ( !count() )
-			return 0;
-		return QList<FancyPopup *>::first();
-	}
+    FancyPopup *last()
+    {
+        if ( !count() )
+            return 0;
+        return QList<FancyPopup *>::first();
+    }
 
-	void prepend(const FancyPopup *d)
-	{
-		if ( isEmpty() )
-			emit started();
+    void prepend(const FancyPopup *d)
+    {
+        if ( isEmpty() )
+            emit started();
 
-		connect(d, SIGNAL(destroyed(QObject *)), SLOT(popupDestroyed(QObject *)));
-		QList<FancyPopup *>::prepend((FancyPopup *)d);
-	}
+        connect(d, SIGNAL(destroyed(QObject *)), SLOT(popupDestroyed(QObject *)));
+        QList<FancyPopup *>::prepend((FancyPopup *)d);
+    }
 
 signals:
-	void started();
-	void finished();
+    void started();
+    void finished();
 
 private slots:
-	void popupDestroyed(QObject *p)
-	{
-		removeAll((FancyPopup *)p);
+    void popupDestroyed(QObject *p)
+    {
+        removeAll((FancyPopup *)p);
 
-		if ( isEmpty() )
-			emit finished();
-	}
+        if ( isEmpty() )
+            emit finished();
+    }
 };
 
 #endif

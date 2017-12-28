@@ -33,74 +33,74 @@ class ContactListModel;
 
 class ContactListView : public HoverableTreeView
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ContactListView(QWidget *parent = nullptr);
+    ContactListView(QWidget *parent = nullptr);
 
-	ContactListModel *realModel() const;
-	QModelIndexList realIndexes(const QModelIndexList &indexes) const;
-	QModelIndex realIndex(const QModelIndex &index) const;
-	QModelIndexList proxyIndexes(const QModelIndexList &indexes) const;
-	QModelIndex proxyIndex(const QModelIndex &index) const;
-	ContactListItem *itemProxy(const QModelIndex &index) const;
-	void setEditingIndex(const QModelIndex &index, bool editing) const;
+    ContactListModel *realModel() const;
+    QModelIndexList realIndexes(const QModelIndexList &indexes) const;
+    QModelIndex realIndex(const QModelIndex &index) const;
+    QModelIndexList proxyIndexes(const QModelIndexList &indexes) const;
+    QModelIndex proxyIndex(const QModelIndex &index) const;
+    ContactListItem *itemProxy(const QModelIndex &index) const;
+    void setEditingIndex(const QModelIndex &index, bool editing) const;
 
-	void activate(const QModelIndex &index);
-	void toggleExpandedState(const QModelIndex &index);
-	void ensureVisible(const QModelIndex &index);
+    void activate(const QModelIndex &index);
+    void toggleExpandedState(const QModelIndex &index);
+    void ensureVisible(const QModelIndex &index);
 
-	// reimplemented
-	void setModel(QAbstractItemModel *model);
+    // reimplemented
+    void setModel(QAbstractItemModel *model);
 
 public slots:
-	virtual void rename();
+    virtual void rename();
 
 signals:
-	void realExpanded(const QModelIndex&);
-	void realCollapsed(const QModelIndex&);
+    void realExpanded(const QModelIndex&);
+    void realCollapsed(const QModelIndex&);
 
 protected:
-	// reimplemented
-	bool viewportEvent(QEvent *event);
-	void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
+    // reimplemented
+    bool viewportEvent(QEvent *event);
+    void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
 
-	virtual void showToolTip(const QModelIndex &index, const QPoint &globalPos) const;
+    virtual void showToolTip(const QModelIndex &index, const QPoint &globalPos) const;
 
 protected slots:
-	virtual void itemActivated(const QModelIndex &index);
+    virtual void itemActivated(const QModelIndex &index);
 
-	virtual void showOfflineChanged();
-	void updateGroupExpandedState();
-	virtual void itemExpanded(const QModelIndex&);
-	virtual void itemCollapsed(const QModelIndex&);
+    virtual void showOfflineChanged();
+    void updateGroupExpandedState();
+    virtual void itemExpanded(const QModelIndex&);
+    virtual void itemCollapsed(const QModelIndex&);
 
-	// reimplamented
-	virtual void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
-	virtual void focusInEvent(QFocusEvent *event);
-	virtual void focusOutEvent(QFocusEvent *event);
+    // reimplamented
+    virtual void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+    virtual void focusInEvent(QFocusEvent *event);
+    virtual void focusOutEvent(QFocusEvent *event);
 
 protected:
-	// reimplamented
-	void contextMenuEvent(QContextMenuEvent*);
-	void drawBranches(QPainter*, const QRect&, const QModelIndex&) const;
-	void keyPressEvent(QKeyEvent*);
-	void resizeEvent(QResizeEvent*);
-	void rowsInserted(const QModelIndex &parent, int start, int end) override;
+    // reimplamented
+    void contextMenuEvent(QContextMenuEvent*);
+    void drawBranches(QPainter*, const QRect&, const QModelIndex&) const;
+    void keyPressEvent(QKeyEvent*);
+    void resizeEvent(QResizeEvent*);
+    void rowsInserted(const QModelIndex &parent, int start, int end) override;
 
-	QLineEdit *currentEditor() const;
+    QLineEdit *currentEditor() const;
 
-	bool isContextMenuVisible();
-	virtual ContactListItemMenu *createContextMenuFor(ContactListItem *item) const;
+    bool isContextMenuVisible();
+    virtual ContactListItemMenu *createContextMenuFor(ContactListItem *item) const;
 
-	virtual void addContextMenuActions();
-	virtual void removeContextMenuActions();
-	virtual void addContextMenuAction(QAction *action);
-	virtual void updateContextMenu();
+    virtual void addContextMenuActions();
+    virtual void removeContextMenuActions();
+    virtual void addContextMenuAction(QAction *action);
+    virtual void updateContextMenu();
 
 private:
-	QPointer<ContactListItemMenu> contextMenu_;
-	bool contextMenuActive_;
+    QPointer<ContactListItemMenu> contextMenu_;
+    bool contextMenuActive_;
 };
 
 #endif

@@ -29,83 +29,83 @@
 
 ActivityDlg::ActivityDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	if(pa_.isEmpty())
-		close();
-	ui_.setupUi(this);
-	setModal(false);
-	connect(ui_.cb_general_type, SIGNAL(currentIndexChanged(const QString&)), SLOT(loadSpecificActivities(const QString&)));
-	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
-	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));
+    setAttribute(Qt::WA_DeleteOnClose);
+    if(pa_.isEmpty())
+        close();
+    ui_.setupUi(this);
+    setModal(false);
+    connect(ui_.cb_general_type, SIGNAL(currentIndexChanged(const QString&)), SLOT(loadSpecificActivities(const QString&)));
+    connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
+    connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));
 
-	ui_.cb_general_type->addItem(tr("<unset>"));
-	PsiAccount* pa = pa_.first();
-	Activity::Type at = pa->activity().type();
-	int i=1;
-	foreach(ActivityCatalog::Entry e, ActivityCatalog::instance()->entries()) {
-		if (e.specificType() == Activity::UnknownSpecific) {
-			// The entry e is for a 'general' type.
-			ui_.cb_general_type->addItem(IconsetFactory::icon("activities/"+e.value()).icon(), e.text());
-			if (e.type() == at) {
-				ui_.cb_general_type->setCurrentIndex(i);
-				loadSpecificActivities(ui_.cb_general_type->currentText());
-			}
-			i++;
-		}
-	}
-	ui_.le_description->setText(pa->activity().text());
+    ui_.cb_general_type->addItem(tr("<unset>"));
+    PsiAccount* pa = pa_.first();
+    Activity::Type at = pa->activity().type();
+    int i=1;
+    foreach(ActivityCatalog::Entry e, ActivityCatalog::instance()->entries()) {
+        if (e.specificType() == Activity::UnknownSpecific) {
+            // The entry e is for a 'general' type.
+            ui_.cb_general_type->addItem(IconsetFactory::icon("activities/"+e.value()).icon(), e.text());
+            if (e.type() == at) {
+                ui_.cb_general_type->setCurrentIndex(i);
+                loadSpecificActivities(ui_.cb_general_type->currentText());
+            }
+            i++;
+        }
+    }
+    ui_.le_description->setText(pa->activity().text());
 }
 
 void ActivityDlg::loadSpecificActivities(const QString& generalActivityStr)
 {
-	ui_.cb_specific_type->clear();
+    ui_.cb_specific_type->clear();
 
-	if (generalActivityStr == tr("<unset>")) {
-		return;
-	}
-	else {
-		ui_.cb_specific_type->addItem(tr("<unset>"));
-		PsiAccount* pa = pa_.first();
-		Activity::SpecificType at = pa->activity().specificType();
-		int i=1;
-		ActivityCatalog* ac = ActivityCatalog::instance();
-		foreach(ActivityCatalog::Entry e, ac->entries()) {
-			if (e.specificType() != Activity::UnknownSpecific) {
-				// The entry e is for a 'specific' type.
-				ActivityCatalog::Entry ge = ac->findEntryByText(generalActivityStr);
-				if (e.type() == ge.type()) {
-					ui_.cb_specific_type->addItem(IconsetFactory::icon("activities/"+ge.value()+"_"+e.value()).icon(), e.text());
-					if (e.specificType() == at) {
-						ui_.cb_specific_type->setCurrentIndex(i);
-					}
-					i++;
-				}
-			}
-		}
-	}
+    if (generalActivityStr == tr("<unset>")) {
+        return;
+    }
+    else {
+        ui_.cb_specific_type->addItem(tr("<unset>"));
+        PsiAccount* pa = pa_.first();
+        Activity::SpecificType at = pa->activity().specificType();
+        int i=1;
+        ActivityCatalog* ac = ActivityCatalog::instance();
+        foreach(ActivityCatalog::Entry e, ac->entries()) {
+            if (e.specificType() != Activity::UnknownSpecific) {
+                // The entry e is for a 'specific' type.
+                ActivityCatalog::Entry ge = ac->findEntryByText(generalActivityStr);
+                if (e.type() == ge.type()) {
+                    ui_.cb_specific_type->addItem(IconsetFactory::icon("activities/"+ge.value()+"_"+e.value()).icon(), e.text());
+                    if (e.specificType() == at) {
+                        ui_.cb_specific_type->setCurrentIndex(i);
+                    }
+                    i++;
+                }
+            }
+        }
+    }
 
-	ui_.cb_specific_type->addItem(tr("Other"));
+    ui_.cb_specific_type->addItem(tr("Other"));
 }
 
 void ActivityDlg::setActivity()
 {
-	QString generalActivityStr  = ui_.cb_general_type->currentText();
-	QString specificActivityStr = ui_.cb_specific_type->currentText();
+    QString generalActivityStr  = ui_.cb_general_type->currentText();
+    QString specificActivityStr = ui_.cb_specific_type->currentText();
 
-	foreach(PsiAccount *pa, pa_) {
-		if (generalActivityStr == tr("<unset>")) {
-			pa->pepManager()->disable(PEP_ACTIVITY_TN, PEP_ACTIVITY_NS, "current");
-		}
-		else {
-			ActivityCatalog* ac = ActivityCatalog::instance();
-			Activity::Type generalType = ac->findEntryByText(generalActivityStr).type();
+    foreach(PsiAccount *pa, pa_) {
+        if (generalActivityStr == tr("<unset>")) {
+            pa->pepManager()->disable(PEP_ACTIVITY_TN, PEP_ACTIVITY_NS, "current");
+        }
+        else {
+            ActivityCatalog* ac = ActivityCatalog::instance();
+            Activity::Type generalType = ac->findEntryByText(generalActivityStr).type();
 
-			Activity::SpecificType specificType = Activity::UnknownSpecific;
-			if (specificActivityStr != tr("<unset>")) {
-				specificType = ac->findEntryByText(specificActivityStr).specificType();
-			}
-			pa->pepManager()->publish(PEP_ACTIVITY_NS, PubSubItem("current",Activity(generalType,specificType,ui_.le_description->text()).toXml(*pa->client()->rootTask()->doc())));
-		}
-	}
-	close();
+            Activity::SpecificType specificType = Activity::UnknownSpecific;
+            if (specificActivityStr != tr("<unset>")) {
+                specificType = ac->findEntryByText(specificActivityStr).specificType();
+            }
+            pa->pepManager()->publish(PEP_ACTIVITY_NS, PubSubItem("current",Activity(generalType,specificType,ui_.le_description->text()).toXml(*pa->client()->rootTask()->doc())));
+        }
+    }
+    close();
 }

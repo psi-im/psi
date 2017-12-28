@@ -7,17 +7,17 @@ class QWidget;
 
 class OptionsTabTree : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabTree(QObject *parent);
-	~OptionsTabTree();
+    OptionsTabTree(QObject *parent);
+    ~OptionsTabTree();
 
-	QWidget *widget();
+    QWidget *widget();
 
-	bool stretchable() const {return true;};
+    bool stretchable() const {return true;};
 
 private:
-	QWidget *w;
+    QWidget *w;
 };
 
 #endif

@@ -6,9 +6,9 @@ class AccountInfoAccessingHost;
 class AccountInfoAccessor
 {
 public:
-	virtual ~AccountInfoAccessor() {}
+    virtual ~AccountInfoAccessor() {}
 
-	virtual void setAccountInfoAccessingHost(AccountInfoAccessingHost* host) = 0;
+    virtual void setAccountInfoAccessingHost(AccountInfoAccessingHost* host) = 0;
 
 };
 

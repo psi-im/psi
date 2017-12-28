@@ -24,35 +24,35 @@
 
 class HTMLTextController : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	enum TextEditState {
-		StateNone = 0,
-		StateBold = 1,
-		StateItalic = 2,
-		StateUnderline = 4,
-		StateTextStyleChanged = 8,
-		StateTextColorChanged = 16,
-		StateBackgroundColorChanged = 32,
-		StateStrikeOut = 64
-	};
+    enum TextEditState {
+        StateNone = 0,
+        StateBold = 1,
+        StateItalic = 2,
+        StateUnderline = 4,
+        StateTextStyleChanged = 8,
+        StateTextColorChanged = 16,
+        StateBackgroundColorChanged = 32,
+        StateStrikeOut = 64
+    };
 
-	HTMLTextController(QTextEdit *parent);
-	void doMenu();
-	void setFont(const QFont &);
-	void setCssString(const QString& css) { cssString_ = css; };
-
-private:
-	void addState(TextEditState state);
-	void removeState(TextEditState state);
-	QList<TextEditState> state();
-	QString cssString_;
+    HTMLTextController(QTextEdit *parent);
+    void doMenu();
+    void setFont(const QFont &);
+    void setCssString(const QString& css) { cssString_ = css; };
 
 private:
-	QTextEdit *te_;
-	QFont font_, currentFont_;
-	QBrush background_ ,currentBackground_;
-	QBrush foreground_, currentForeground_;
+    void addState(TextEditState state);
+    void removeState(TextEditState state);
+    QList<TextEditState> state();
+    QString cssString_;
+
+private:
+    QTextEdit *te_;
+    QFont font_, currentFont_;
+    QBrush background_ ,currentBackground_;
+    QBrush foreground_, currentForeground_;
 };
 
 #endif // HTMLTEXTCONTROLLER_H

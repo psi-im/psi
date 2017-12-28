@@ -25,70 +25,70 @@
 
 RTParse::RTParse(const QString &_in)
 {
-	in = _in;
-	v_atEnd = in.length() == 0;
-	v_at = 0;
-	//printf("rtparse:\n");
+    in = _in;
+    v_atEnd = in.length() == 0;
+    v_at = 0;
+    //printf("rtparse:\n");
 }
 
 const QString &RTParse::output() const
 {
-	//printf("final: [%s]\n", out.latin1());
-	return out;
+    //printf("final: [%s]\n", out.latin1());
+    return out;
 }
 
 QString RTParse::next()
 {
-	if(v_atEnd)
-		return "";
+    if(v_atEnd)
+        return "";
 
-	// if we're at a tag, append it to the output
-	if(in.at(v_at) == '<') {
-		QString s;
-		int n = in.indexOf('>', v_at);
-		if(n == -1) {
-			s = in.mid(v_at);
-		}
-		else {
-			++n;
-			s = in.mid(v_at, n-v_at);
-		}
-		v_at += s.length();
-		out += s;
-	}
+    // if we're at a tag, append it to the output
+    if(in.at(v_at) == '<') {
+        QString s;
+        int n = in.indexOf('>', v_at);
+        if(n == -1) {
+            s = in.mid(v_at);
+        }
+        else {
+            ++n;
+            s = in.mid(v_at, n-v_at);
+        }
+        v_at += s.length();
+        out += s;
+    }
 
-	// now find the next tag, and grab the text in between
-	QString s;
-	int x = in.indexOf('<', v_at);
-	if(x == -1) {
-		s = in.mid(v_at);
-		v_atEnd = true;
-	}
-	else {
-		s = in.mid(v_at, x-v_at);
-	}
-	v_at += s.length();
-	//printf("chunk = '%s'\n", s.latin1());
-	s = TextUtil::resolveEntities(s);
-	//printf("resolved = '%s'\n", s.latin1());
-	return s;
+    // now find the next tag, and grab the text in between
+    QString s;
+    int x = in.indexOf('<', v_at);
+    if(x == -1) {
+        s = in.mid(v_at);
+        v_atEnd = true;
+    }
+    else {
+        s = in.mid(v_at, x-v_at);
+    }
+    v_at += s.length();
+    //printf("chunk = '%s'\n", s.latin1());
+    s = TextUtil::resolveEntities(s);
+    //printf("resolved = '%s'\n", s.latin1());
+    return s;
 }
 
 bool RTParse::atEnd() const
 {
-	return v_atEnd;
+    return v_atEnd;
 }
 
 void RTParse::putPlain(const QString &s)
 {
-	//printf("got this: [%s]\n", s.latin1());
-	out += TextUtil::escape(s); // hm. does not convert 0xa0 back to &nbsp;
-	//printf("changed to this: [%s]\n", expandEntities(s).latin1());
+    //printf("got this: [%s]\n", s.latin1());
+    out += TextUtil::escape(s); // hm. does not convert 0xa0 back to &nbsp;
+    //printf("changed to this: [%s]\n", expandEntities(s).latin1());
 }
 
 void RTParse::putRich(const QString &s)
 {
-	out += s;
-	//printf("+ '%s'\n", s.latin1());
+    out += s;
+    //printf("+ '%s'\n", s.latin1());
 }
 

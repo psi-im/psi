@@ -27,48 +27,48 @@
 
 class NullPlugin : public QObject, public PsiPlugin
 {
-	Q_OBJECT
-	Q_INTERFACES(PsiPlugin)
+    Q_OBJECT
+    Q_INTERFACES(PsiPlugin)
 
 public:
-	virtual QString name() const;
-	virtual QString shortName() const;
-	virtual QString version() const;
-	virtual QWidget* options() const;
-	virtual bool enable();
-	virtual bool disable();
+    virtual QString name() const;
+    virtual QString shortName() const;
+    virtual QString version() const;
+    virtual QWidget* options() const;
+    virtual bool enable();
+    virtual bool disable();
 };
 
 Q_EXPORT_PLUGIN(NullPlugin);
 
 QString NullPlugin::name() const
 {
-	return "Null Plugin";
+    return "Null Plugin";
 }
 
 QString NullPlugin::shortName() const
 {
-	return "null";
+    return "null";
 }
 
 QString NullPlugin::version() const
 {
-	return "0.1";
+    return "0.1";
 }
 
 QWidget* NullPlugin::options() const
 {
-	return 0;
+    return 0;
 }
 
 bool NullPlugin::enable()
 {
-	return true;
+    return true;
 }
 
 bool NullPlugin::disable()
 {
-	return true;
+    return true;
 }
 
 #include "nullplugin.moc"

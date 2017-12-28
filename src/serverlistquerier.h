@@ -28,23 +28,23 @@ class QNetworkAccessManager;
 
 class ServerListQuerier : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ServerListQuerier(QObject* parent = NULL);
-	void getList();
+    ServerListQuerier(QObject* parent = NULL);
+    void getList();
 
 signals:
-	void listReceived(const QStringList&);
-	void error(const QString&);
+    void listReceived(const QStringList&);
+    void error(const QString&);
 
 protected slots:
-	void get_finished();
+    void get_finished();
 
 private:
-	QNetworkAccessManager* http_;
-	QUrl url_;
-	int redirectCount_;
+    QNetworkAccessManager* http_;
+    QUrl url_;
+    int redirectCount_;
 };
 
 #endif

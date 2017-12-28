@@ -41,58 +41,58 @@ using namespace XMPP;
 
 class JT_XSearch : public JT_Search
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	JT_XSearch(Task *parent);
+    JT_XSearch(Task *parent);
 
-	void setForm(const Form &frm, const XData &_form);
+    void setForm(const Form &frm, const XData &_form);
 
-	bool take(const QDomElement &);
-	QDomElement iq() const;
+    bool take(const QDomElement &);
+    QDomElement iq() const;
 
-	void onGo();
+    void onGo();
 
 private:
-	QDomElement _iq;
+    QDomElement _iq;
 };
 
 JT_XSearch::JT_XSearch( Task *parent )
-	: JT_Search( parent )
+    : JT_Search( parent )
 {
 }
 
 bool JT_XSearch::take( const QDomElement &x )
 {
-	_iq = x;
+    _iq = x;
 
-	return JT_Search::take( x );
+    return JT_Search::take( x );
 }
 
 QDomElement JT_XSearch::iq() const
 {
-	return _iq;
+    return _iq;
 }
 
 void JT_XSearch::setForm(const Form &frm, const XData &_form)
 {
-	JT_Search::set( frm );
+    JT_Search::set( frm );
 
-	_iq = createIQ(doc(), "set", frm.jid().full(), id());
-	QDomElement query = doc()->createElement("query");
-	query.setAttribute("xmlns", "jabber:iq:search");
-	_iq.appendChild(query);
+    _iq = createIQ(doc(), "set", frm.jid().full(), id());
+    QDomElement query = doc()->createElement("query");
+    query.setAttribute("xmlns", "jabber:iq:search");
+    _iq.appendChild(query);
 
-	XData form( _form );
-	form.setType( XData::Data_Submit );
-	query.appendChild( form.toXml( doc() ) );
+    XData form( _form );
+    form.setType( XData::Data_Submit );
+    query.appendChild( form.toXml( doc() ) );
 }
 
 void JT_XSearch::onGo()
 {
-	if ( !_iq.isNull() )
-		send( _iq );
-	else
-		JT_Search::onGo();
+    if ( !_iq.isNull() )
+        send( _iq );
+    else
+        JT_Search::onGo();
 }
 
 //----------------------------------------------------------------------------
@@ -101,417 +101,417 @@ void JT_XSearch::onGo()
 class SearchDlg::Private
 {
 public:
-	Private(SearchDlg* _dlg)
-		: dlg(_dlg)
-	{}
+    Private(SearchDlg* _dlg)
+        : dlg(_dlg)
+    {}
 
-	struct NickAndJid {
-		QString nick;
-		XMPP::Jid jid;
-	};
+    struct NickAndJid {
+        QString nick;
+        XMPP::Jid jid;
+    };
 
-	QList<NickAndJid> selectedNicksAndJids() const
-	{
-		QList<NickAndJid> result;
+    QList<NickAndJid> selectedNicksAndJids() const
+    {
+        QList<NickAndJid> result;
 
-		int jid;
-		int nick;
-		if (!xdata) {
-			jid  = 4;
-			nick = 0;
-		}
-		else {
-			jid  = 0;
-			nick = 0;
+        int jid;
+        int nick;
+        if (!xdata) {
+            jid  = 4;
+            nick = 0;
+        }
+        else {
+            jid  = 0;
+            nick = 0;
 
-			int i = 0;
-			QList<XData::ReportField>::ConstIterator it = xdata_form.report().begin();
-			for (; it != xdata_form.report().end(); ++it, ++i) {
-				QString name = (*it).name;
-				if (name == "jid")
-					jid = i;
+            int i = 0;
+            QList<XData::ReportField>::ConstIterator it = xdata_form.report().begin();
+            for (; it != xdata_form.report().end(); ++it, ++i) {
+                QString name = (*it).name;
+                if (name == "jid")
+                    jid = i;
 
-				if (name == "nickname" || name == "nick" || name == "title")
-					nick = i;
-			}
-		}
+                if (name == "nickname" || name == "nick" || name == "title")
+                    nick = i;
+            }
+        }
 
-		foreach(QTreeWidgetItem* i, dlg->lv_results->selectedItems()) {
-			NickAndJid nickJid;
-			nickJid.jid  = XMPP::Jid(i->text(jid));
-			nickJid.nick = i->text(nick);
-			result << nickJid;
-		}
+        foreach(QTreeWidgetItem* i, dlg->lv_results->selectedItems()) {
+            NickAndJid nickJid;
+            nickJid.jid  = XMPP::Jid(i->text(jid));
+            nickJid.nick = i->text(nick);
+            result << nickJid;
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	SearchDlg* dlg;
-	PsiAccount *pa;
-	Jid jid;
-	Form form;
-	BusyWidget *busy;
-	QPointer<JT_XSearch> jt;
-	QWidget *gr_form;
-	QGridLayout *gr_form_layout;
-	int type;
+    SearchDlg* dlg;
+    PsiAccount *pa;
+    Jid jid;
+    Form form;
+    BusyWidget *busy;
+    QPointer<JT_XSearch> jt;
+    QWidget *gr_form;
+    QGridLayout *gr_form_layout;
+    int type;
 
-	QList<QLabel*> lb_field;
-	QList<QLineEdit*> le_field;
-	XDataWidget *xdata;
-	XData xdata_form;
-	QScrollArea *scrollArea;
+    QList<QLabel*> lb_field;
+    QList<QLineEdit*> le_field;
+    XDataWidget *xdata;
+    XData xdata_form;
+    QScrollArea *scrollArea;
 
 };
 
 SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
-	: QDialog(0)
+    : QDialog(0)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	d = new Private(this);
-	setupUi(this);
-	setModal(false);
-	d->pa = pa;
-	d->jid = jid;
-	d->pa->dialogRegister(this, d->jid);
-	d->jt = 0;
-	d->xdata = 0;
-	d->scrollArea = scrollArea;
+    setAttribute(Qt::WA_DeleteOnClose);
+    d = new Private(this);
+    setupUi(this);
+    setModal(false);
+    d->pa = pa;
+    d->jid = jid;
+    d->pa->dialogRegister(this, d->jid);
+    d->jt = 0;
+    d->xdata = 0;
+    d->scrollArea = scrollArea;
 
 
-	setWindowTitle(windowTitle().arg(d->jid.full()));
+    setWindowTitle(windowTitle().arg(d->jid.full()));
 
-	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
-	d->busy = busy;
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    d->busy = busy;
 
-	d->gr_form = new QWidget(gb_search);
-	d->gr_form_layout = new QGridLayout(d->gr_form);
-	d->gr_form_layout->setSpacing(0);
-	d->scrollArea->setWidget(d->gr_form);
-	d->gr_form->hide();
+    d->gr_form = new QWidget(gb_search);
+    d->gr_form_layout = new QGridLayout(d->gr_form);
+    d->gr_form_layout->setSpacing(0);
+    d->scrollArea->setWidget(d->gr_form);
+    d->gr_form->hide();
 
-	pb_add->setEnabled(false);
-	pb_info->setEnabled(false);
-	pb_stop->setEnabled(false);
-	pb_search->setEnabled(false);
+    pb_add->setEnabled(false);
+    pb_info->setEnabled(false);
+    pb_stop->setEnabled(false);
+    pb_search->setEnabled(false);
 
-	connect(lv_results, SIGNAL(itemSelectionChanged()), SLOT(selectionChanged()));
-	connect(lv_results, SIGNAL(itemActivated(QTreeWidgetItem*, int)), SLOT(itemActivated(QTreeWidgetItem*, int)));
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	connect(pb_search, SIGNAL(clicked()), SLOT(doSearchSet()));
-	connect(pb_stop, SIGNAL(clicked()), SLOT(doStop()));
-	connect(pb_add, SIGNAL(clicked()), SLOT(doAdd()));
-	connect(pb_info, SIGNAL(clicked()), SLOT(doInfo()));
+    connect(lv_results, SIGNAL(itemSelectionChanged()), SLOT(selectionChanged()));
+    connect(lv_results, SIGNAL(itemActivated(QTreeWidgetItem*, int)), SLOT(itemActivated(QTreeWidgetItem*, int)));
+    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
+    connect(pb_search, SIGNAL(clicked()), SLOT(doSearchSet()));
+    connect(pb_stop, SIGNAL(clicked()), SLOT(doStop()));
+    connect(pb_add, SIGNAL(clicked()), SLOT(doAdd()));
+    connect(pb_info, SIGNAL(clicked()), SLOT(doInfo()));
 
-	resize(600,440);
+    resize(600,440);
 
-	doSearchGet();
+    doSearchGet();
 }
 
 SearchDlg::~SearchDlg()
 {
-	delete d->jt;
-	d->pa->dialogUnregister(this);
-	delete d;
+    delete d->jt;
+    d->pa->dialogUnregister(this);
+    delete d;
 }
 
 /*void SearchDlg::localUpdate(const JabRosterEntry &e)
 {
-	int oldstate = localStatus;
-	localStatus = e.localStatus();
+    int oldstate = localStatus;
+    localStatus = e.localStatus();
 
-	if(localStatus == STATUS_OFFLINE) {
-		if(isBusy) {
-			busy->stop();
-			isBusy = FALSE;
-		}
+    if(localStatus == STATUS_OFFLINE) {
+        if(isBusy) {
+            busy->stop();
+            isBusy = FALSE;
+        }
 
-		pb_search->setEnabled(FALSE);
-		pb_stop->setEnabled(FALSE);
-		clear();
-	}
-	else {
-		// coming online?
-		if(oldstate == STATUS_OFFLINE) {
-			pb_search->setEnabled(TRUE);
-		}
-	}
+        pb_search->setEnabled(FALSE);
+        pb_stop->setEnabled(FALSE);
+        clear();
+    }
+    else {
+        // coming online?
+        if(oldstate == STATUS_OFFLINE) {
+            pb_search->setEnabled(TRUE);
+        }
+    }
 }*/
 
 void SearchDlg::addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last, const QString &email)
 {
-	QTreeWidgetItem* lvi = new QTreeWidgetItem(lv_results);
-	lvi->setText(0, nick);
-	lvi->setText(1, first);
-	lvi->setText(2, last);
-	lvi->setText(3, email);
-	lvi->setText(4, jid);
+    QTreeWidgetItem* lvi = new QTreeWidgetItem(lv_results);
+    lvi->setText(0, nick);
+    lvi->setText(1, first);
+    lvi->setText(2, last);
+    lvi->setText(3, email);
+    lvi->setText(4, jid);
 }
 
 void SearchDlg::doSearchGet()
 {
-	lb_instructions->setText(tr("<qt>Fetching search form for %1 ...</qt>").arg(d->jid.full()));
-	d->busy->start();
+    lb_instructions->setText(tr("<qt>Fetching search form for %1 ...</qt>").arg(d->jid.full()));
+    d->busy->start();
 
-	d->type = 0;
-	d->jt = new JT_XSearch(d->pa->client()->rootTask());
-	connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
-	d->jt->get(d->jid);
-	d->jt->go(true);
+    d->type = 0;
+    d->jt = new JT_XSearch(d->pa->client()->rootTask());
+    connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
+    d->jt->get(d->jid);
+    d->jt->go(true);
 }
 
 void SearchDlg::doSearchSet()
 {
-	if(d->busy->isActive())
-		return;
+    if(d->busy->isActive())
+        return;
 
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	d->jt = new JT_XSearch(d->pa->client()->rootTask());
+    d->jt = new JT_XSearch(d->pa->client()->rootTask());
 
-	if ( !d->xdata ) {
-		Form submitForm = d->form;
+    if ( !d->xdata ) {
+        Form submitForm = d->form;
 
-		Q_ASSERT(submitForm.count() == d->le_field.count());
-		// import the changes back into the form.
-		// the QPtrList of QLineEdits should be in the same order
-		for (int i = 0; i < submitForm.count(); ++i) {
-			submitForm[i].setValue(d->le_field[i]->text());
-		}
+        Q_ASSERT(submitForm.count() == d->le_field.count());
+        // import the changes back into the form.
+        // the QPtrList of QLineEdits should be in the same order
+        for (int i = 0; i < submitForm.count(); ++i) {
+            submitForm[i].setValue(d->le_field[i]->text());
+        }
 
-		d->jt->set(submitForm);
-	}
-	else {
-		XData form;
-		form.setFields( d->xdata->fields() );
+        d->jt->set(submitForm);
+    }
+    else {
+        XData form;
+        form.setFields( d->xdata->fields() );
 
-		d->jt->setForm( d->form, form );
-	}
+        d->jt->setForm( d->form, form );
+    }
 
-	clear();
+    clear();
 
-	pb_search->setEnabled(false);
-	pb_stop->setEnabled(true);
-	d->gr_form->setEnabled(false);
-	d->busy->start();
+    pb_search->setEnabled(false);
+    pb_stop->setEnabled(true);
+    d->gr_form->setEnabled(false);
+    d->busy->start();
 
-	d->type = 1;
-	connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
-	d->jt->go(true);
+    d->type = 1;
+    connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
+    d->jt->go(true);
 }
 
 void SearchDlg::jt_finished()
 {
-	d->busy->stop();
-	JT_XSearch *jt = d->jt;
-	d->jt = 0;
+    d->busy->stop();
+    JT_XSearch *jt = d->jt;
+    d->jt = 0;
 
-	if(d->type == 1) {
-		d->gr_form->setEnabled(true);
-		pb_search->setEnabled(true);
-		pb_stop->setEnabled(false);
-	}
+    if(d->type == 1) {
+        d->gr_form->setEnabled(true);
+        pb_search->setEnabled(true);
+        pb_stop->setEnabled(false);
+    }
 
-	if(jt->success()) {
-		if(d->type == 0) {
-			d->form = jt->form();
+    if(jt->success()) {
+        if(d->type == 0) {
+            d->form = jt->form();
 
-			bool useXData = false;
-			{
-				QDomNode n = queryTag( jt->iq() ).firstChild();
-				for( ; !n.isNull(); n = n.nextSibling()) {
-					QDomElement i = n.toElement();
-					if(i.isNull())
-						continue;
+            bool useXData = false;
+            {
+                QDomNode n = queryTag( jt->iq() ).firstChild();
+                for( ; !n.isNull(); n = n.nextSibling()) {
+                    QDomElement i = n.toElement();
+                    if(i.isNull())
+                        continue;
 
-					if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
-						useXData = true;
+                    if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
+                        useXData = true;
 
-						XData form;
-						form.fromXml( i );
+                        XData form;
+                        form.fromXml( i );
 
-						//if ( !form.title().isEmpty() )
-						//	setWindowTitle( form.title() );
+                        //if ( !form.title().isEmpty() )
+                        //    setWindowTitle( form.title() );
 
-						QString str = TextUtil::plain2rich( form.instructions() );
-						lb_instructions->setText(str);
+                        QString str = TextUtil::plain2rich( form.instructions() );
+                        lb_instructions->setText(str);
 
-						d->xdata = new XDataWidget(d->pa->psi(), d->gr_form, d->pa->client(), d->form.jid() );
-						d->gr_form_layout->addWidget(d->xdata); // FIXME
-						d->xdata->setForm( form, false );
+                        d->xdata = new XDataWidget(d->pa->psi(), d->gr_form, d->pa->client(), d->form.jid() );
+                        d->gr_form_layout->addWidget(d->xdata); // FIXME
+                        d->xdata->setForm( form, false );
 
-						d->xdata->show();
+                        d->xdata->show();
 
-						break;
-					}
-				}
-			}
+                        break;
+                    }
+                }
+            }
 
-			if ( !useXData ) {
-				QString str = TextUtil::plain2rich(d->form.instructions());
-				lb_instructions->setText(str);
+            if ( !useXData ) {
+                QString str = TextUtil::plain2rich(d->form.instructions());
+                lb_instructions->setText(str);
 
-				for(Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
-					const FormField &f = *it;
+                for(Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
+                    const FormField &f = *it;
 
-					QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
-					QLineEdit *le = new QLineEdit(d->gr_form);
-					d->gr_form_layout->addWidget(lb); // FIXME
-					d->gr_form_layout->addWidget(le); // FIXME
-					if(f.isSecret())
-						le->setEchoMode(QLineEdit::Password);
-					le->setText(f.value());
+                    QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
+                    QLineEdit *le = new QLineEdit(d->gr_form);
+                    d->gr_form_layout->addWidget(lb); // FIXME
+                    d->gr_form_layout->addWidget(le); // FIXME
+                    if(f.isSecret())
+                        le->setEchoMode(QLineEdit::Password);
+                    le->setText(f.value());
 
-					d->lb_field.append(lb);
-					d->le_field.append(le);
+                    d->lb_field.append(lb);
+                    d->le_field.append(le);
 
-					connect(le, SIGNAL(returnPressed()), this, SLOT(doSearchSet()));
-				}
-			}
+                    connect(le, SIGNAL(returnPressed()), this, SLOT(doSearchSet()));
+                }
+            }
 
-			d->gr_form->show();
-			pb_search->setEnabled(true);
-			show();
+            d->gr_form->show();
+            pb_search->setEnabled(true);
+            show();
 
-			qApp->processEvents();
-			resize(sizeHint());
-		}
-		else {
-			lv_results->setUpdatesEnabled(false);
+            qApp->processEvents();
+            resize(sizeHint());
+        }
+        else {
+            lv_results->setUpdatesEnabled(false);
 
-			if ( !d->xdata ) {
-				const QList<SearchResult> &list = jt->results();
-				if(list.isEmpty())
-					QMessageBox::information(this, tr("Search Results"), tr("Search returned 0 results."));
-				else {
-					for(QList<SearchResult>::ConstIterator it = list.begin(); it != list.end(); ++it) {
-						const SearchResult &r = *it;
-						addEntry(r.jid().full(), r.nick(), r.first(), r.last(), r.email());
-					}
-				}
-			}
-			else {
-				XData form;
-				QDomNode n = queryTag( jt->iq() ).firstChild();
-				for( ; !n.isNull(); n = n.nextSibling()) {
-					QDomElement i = n.toElement();
-					if(i.isNull())
-						continue;
+            if ( !d->xdata ) {
+                const QList<SearchResult> &list = jt->results();
+                if(list.isEmpty())
+                    QMessageBox::information(this, tr("Search Results"), tr("Search returned 0 results."));
+                else {
+                    for(QList<SearchResult>::ConstIterator it = list.begin(); it != list.end(); ++it) {
+                        const SearchResult &r = *it;
+                        addEntry(r.jid().full(), r.nick(), r.first(), r.last(), r.email());
+                    }
+                }
+            }
+            else {
+                XData form;
+                QDomNode n = queryTag( jt->iq() ).firstChild();
+                for( ; !n.isNull(); n = n.nextSibling()) {
+                    QDomElement i = n.toElement();
+                    if(i.isNull())
+                        continue;
 
-					if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
-						form.fromXml( i );
-						break;
-					}
-				}
+                    if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
+                        form.fromXml( i );
+                        break;
+                    }
+                }
 
-				QStringList header_labels;
-				foreach(XData::ReportField report, form.report()) {
-					header_labels << report.label;
-				}
+                QStringList header_labels;
+                foreach(XData::ReportField report, form.report()) {
+                    header_labels << report.label;
+                }
 
-				lv_results->clear();
-				lv_results->setColumnCount(0);
-				lv_results->setHeaderLabels(header_labels);
+                lv_results->clear();
+                lv_results->setColumnCount(0);
+                lv_results->setHeaderLabels(header_labels);
 
-				foreach(XData::ReportItem ri, form.reportItems()) {
-					int i = 0;
-					QTreeWidgetItem* lvi = new QTreeWidgetItem(lv_results);
-					foreach(XData::ReportField report, form.report()) {
-						lvi->setText(i++, ri[report.name]);
-					}
-				}
+                foreach(XData::ReportItem ri, form.reportItems()) {
+                    int i = 0;
+                    QTreeWidgetItem* lvi = new QTreeWidgetItem(lv_results);
+                    foreach(XData::ReportField report, form.report()) {
+                        lvi->setText(i++, ri[report.name]);
+                    }
+                }
 
-				d->xdata_form = form;
-			}
+                d->xdata_form = form;
+            }
 
-			for (int i = 0; i < lv_results->columnCount(); ++i) {
-				lv_results->resizeColumnToContents(i);
-				lv_results->setColumnWidth(i, qMin(lv_results->columnWidth(i), 300));
-			}
+            for (int i = 0; i < lv_results->columnCount(); ++i) {
+                lv_results->resizeColumnToContents(i);
+                lv_results->setColumnWidth(i, qMin(lv_results->columnWidth(i), 300));
+            }
 
-			lv_results->sortByColumn(0, Qt::AscendingOrder);
-			lv_results->setUpdatesEnabled(true);
-		}
-	}
-	else {
-		if(d->type == 0) {
-			QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve search form.\nReason: %1").arg(jt->statusString()));
-			close();
-		}
-		else {
-			QMessageBox::critical(this, tr("Error"), tr("Error retrieving search results.\nReason: %1").arg(jt->statusString()));
-		}
-	}
+            lv_results->sortByColumn(0, Qt::AscendingOrder);
+            lv_results->setUpdatesEnabled(true);
+        }
+    }
+    else {
+        if(d->type == 0) {
+            QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve search form.\nReason: %1").arg(jt->statusString()));
+            close();
+        }
+        else {
+            QMessageBox::critical(this, tr("Error"), tr("Error retrieving search results.\nReason: %1").arg(jt->statusString()));
+        }
+    }
 }
 
 void SearchDlg::clear()
 {
-	lv_results->clear();
-	pb_add->setEnabled(false);
-	pb_info->setEnabled(false);
+    lv_results->clear();
+    pb_add->setEnabled(false);
+    pb_info->setEnabled(false);
 }
 
 void SearchDlg::doStop()
 {
-	if(!d->busy->isActive())
-		return;
+    if(!d->busy->isActive())
+        return;
 
-	delete d->jt;
-	d->jt = 0;
+    delete d->jt;
+    d->jt = 0;
 
-	d->busy->stop();
-	d->gr_form->setEnabled(true);
-	pb_search->setEnabled(true);
-	pb_stop->setEnabled(false);
+    d->busy->stop();
+    d->gr_form->setEnabled(true);
+    pb_search->setEnabled(true);
+    pb_stop->setEnabled(false);
 }
 
 void SearchDlg::selectionChanged()
 {
-	bool enable = !lv_results->selectedItems().isEmpty();
-	pb_add->setEnabled(enable);
-	pb_info->setEnabled(enable);
+    bool enable = !lv_results->selectedItems().isEmpty();
+    pb_add->setEnabled(enable);
+    pb_info->setEnabled(enable);
 }
 
 void SearchDlg::itemActivated(QTreeWidgetItem* item, int column)
 {
-	Q_UNUSED(item);
-	Q_UNUSED(column);
-	doInfo();
+    Q_UNUSED(item);
+    Q_UNUSED(column);
+    doInfo();
 }
 
 void SearchDlg::doAdd()
 {
-	QList<Private::NickAndJid> nicksAndJids = d->selectedNicksAndJids();
-	if (nicksAndJids.isEmpty())
-		return;
+    QList<Private::NickAndJid> nicksAndJids = d->selectedNicksAndJids();
+    if (nicksAndJids.isEmpty())
+        return;
 
-	foreach(Private::NickAndJid nickJid, nicksAndJids)
-		emit add(nickJid.jid, nickJid.nick, QStringList(), true);
+    foreach(Private::NickAndJid nickJid, nicksAndJids)
+        emit add(nickJid.jid, nickJid.nick, QStringList(), true);
 
-	if (nicksAndJids.count() > 1) {
-		QMessageBox::information(this,
-		                         tr("Add User: Success"),
-		                         tr("Added %n users to your roster.", "", nicksAndJids.count()));
-	}
-	else {
-		QMessageBox::information(this,
-		                         tr("Add User: Success"),
-		                         tr("Added %1 to your roster.").arg(
-		                             JIDUtil::nickOrJid(nicksAndJids.first().nick,
-		                                                nicksAndJids.first().jid.full()
-		                                               )));
-	}
+    if (nicksAndJids.count() > 1) {
+        QMessageBox::information(this,
+                                 tr("Add User: Success"),
+                                 tr("Added %n users to your roster.", "", nicksAndJids.count()));
+    }
+    else {
+        QMessageBox::information(this,
+                                 tr("Add User: Success"),
+                                 tr("Added %1 to your roster.").arg(
+                                     JIDUtil::nickOrJid(nicksAndJids.first().nick,
+                                                        nicksAndJids.first().jid.full()
+                                                       )));
+    }
 }
 
 void SearchDlg::doInfo()
 {
-	QList<Private::NickAndJid> nicksAndJids = d->selectedNicksAndJids();
-	if (nicksAndJids.isEmpty())
-		return;
+    QList<Private::NickAndJid> nicksAndJids = d->selectedNicksAndJids();
+    if (nicksAndJids.isEmpty())
+        return;
 
-	foreach(Private::NickAndJid nickJid, nicksAndJids)
-		emit aInfo(nickJid.jid);
+    foreach(Private::NickAndJid nickJid, nicksAndJids)
+        emit aInfo(nickJid.jid);
 }
 
 #include "searchdlg.moc"

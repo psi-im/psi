@@ -36,242 +36,242 @@ extern void options_avcall_update();
 //   options screen to select it, and then starts a call, it'll get used
 static void prep_device_opts()
 {
-	options_avcall_update();
-	AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-	AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-	AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+    options_avcall_update();
+    AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+    AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+    AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
 }
 
 class CallDlg::Private : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	CallDlg *q;
-	Ui::Call ui;
-	PsiAccount *pa;
-	bool incoming;
-	bool active;
-	bool activated;
-	AvCall *sess;
-	PsiMedia::VideoWidget *vw_remote;
-	QTimer *timer;
-	QTime call_duration;
+    CallDlg *q;
+    Ui::Call ui;
+    PsiAccount *pa;
+    bool incoming;
+    bool active;
+    bool activated;
+    AvCall *sess;
+    PsiMedia::VideoWidget *vw_remote;
+    QTimer *timer;
+    QTime call_duration;
 
-	Private(CallDlg *_q) :
-		QObject(_q),
-		q(_q),
-		active(false),
-		activated(false),
-		sess(0),
-		timer(0)
-	{
-		ui.setupUi(q);
-		q->setWindowTitle(tr("Voice Call"));
+    Private(CallDlg *_q) :
+        QObject(_q),
+        q(_q),
+        active(false),
+        activated(false),
+        sess(0),
+        timer(0)
+    {
+        ui.setupUi(q);
+        q->setWindowTitle(tr("Voice Call"));
 
-		ui.lb_bandwidth->setEnabled(false);
-		ui.cb_bandwidth->setEnabled(false);
-		connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.lb_bandwidth, SLOT(setEnabled(bool)));
-		connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.cb_bandwidth, SLOT(setEnabled(bool)));
+        ui.lb_bandwidth->setEnabled(false);
+        ui.cb_bandwidth->setEnabled(false);
+        connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.lb_bandwidth, SLOT(setEnabled(bool)));
+        connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.cb_bandwidth, SLOT(setEnabled(bool)));
 
-		ui.cb_bandwidth->addItem(tr("High (1Mbps)"), 1000);
-		ui.cb_bandwidth->addItem(tr("Average (400Kbps)"), 400);
-		ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
-		ui.cb_bandwidth->setCurrentIndex(1);
+        ui.cb_bandwidth->addItem(tr("High (1Mbps)"), 1000);
+        ui.cb_bandwidth->addItem(tr("Average (400Kbps)"), 400);
+        ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
+        ui.cb_bandwidth->setCurrentIndex(1);
 
-		if(!AvCallManager::isVideoSupported())
-		{
-			ui.ck_useVideo->hide();
-			ui.lb_bandwidth->hide();
-			ui.cb_bandwidth->hide();
-		}
+        if(!AvCallManager::isVideoSupported())
+        {
+            ui.ck_useVideo->hide();
+            ui.lb_bandwidth->hide();
+            ui.cb_bandwidth->hide();
+        }
 
-		connect(ui.pb_accept, SIGNAL(clicked()), SLOT(ok_clicked()));
-		connect(ui.pb_reject, SIGNAL(clicked()), SLOT(cancel_clicked()));
+        connect(ui.pb_accept, SIGNAL(clicked()), SLOT(ok_clicked()));
+        connect(ui.pb_reject, SIGNAL(clicked()), SLOT(cancel_clicked()));
 
-		ui.pb_accept->setDefault(true);
-		ui.pb_accept->setFocus();
+        ui.pb_accept->setDefault(true);
+        ui.pb_accept->setFocus();
 
-		timer = new QTimer(q);
-		connect(timer, SIGNAL(timeout()), SLOT(update_call_duration()));
+        timer = new QTimer(q);
+        connect(timer, SIGNAL(timeout()), SLOT(update_call_duration()));
 
-		q->resize(q->minimumSizeHint());
-	}
+        q->resize(q->minimumSizeHint());
+    }
 
-	~Private()
-	{
-		if(sess)
-		{
-			if(active)
-				sess->reject();
+    ~Private()
+    {
+        if(sess)
+        {
+            if(active)
+                sess->reject();
 
-			sess->setIncomingVideo(0);
-			sess->disconnect(this);
-			sess->unlink();
-			sess->deleteLater();
-		}
-	}
+            sess->setIncomingVideo(0);
+            sess->disconnect(this);
+            sess->unlink();
+            sess->deleteLater();
+        }
+    }
 
-	void setOutgoing(const XMPP::Jid &jid)
-	{
-		incoming = false;
+    void setOutgoing(const XMPP::Jid &jid)
+    {
+        incoming = false;
 
-		ui.le_to->setText(jid.full());
+        ui.le_to->setText(jid.full());
 
-		ui.pb_reject->setText(tr("&Close"));
-		ui.pb_accept->setText(tr("C&all"));
-		ui.lb_status->setText(tr("Ready"));
-	}
+        ui.pb_reject->setText(tr("&Close"));
+        ui.pb_accept->setText(tr("C&all"));
+        ui.lb_status->setText(tr("Ready"));
+    }
 
-	void setIncoming(AvCall *_sess)
-	{
-		incoming = true;
-		sess = _sess;
-		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-		connect(sess, SIGNAL(error()), SLOT(sess_error()));
+    void setIncoming(AvCall *_sess)
+    {
+        incoming = true;
+        sess = _sess;
+        connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
+        connect(sess, SIGNAL(error()), SLOT(sess_error()));
 
-		ui.lb_to->setText(tr("From:"));
-		ui.le_to->setText(sess->jid().full());
-		ui.le_to->setReadOnly(true);
+        ui.lb_to->setText(tr("From:"));
+        ui.le_to->setText(sess->jid().full());
+        ui.le_to->setReadOnly(true);
 
-		if(sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)
-		{
-			ui.ck_useVideo->setChecked(true);
+        if(sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)
+        {
+            ui.ck_useVideo->setChecked(true);
 
-			// video-only session, don't allow deselecting video
-			if(sess->mode() == AvCall::Video)
-				ui.ck_useVideo->setEnabled(false);
-		}
+            // video-only session, don't allow deselecting video
+            if(sess->mode() == AvCall::Video)
+                ui.ck_useVideo->setEnabled(false);
+        }
 
-		ui.lb_status->setText(tr("Accept call?"));
-	}
+        ui.lb_status->setText(tr("Accept call?"));
+    }
 
 private slots:
-	void ok_clicked()
-	{
-		AvCall::Mode mode = AvCall::Audio;
-		int kbps = -1;
-		if(ui.ck_useVideo->isChecked())
-		{
-			mode = AvCall::Both;
-			kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
-		}
+    void ok_clicked()
+    {
+        AvCall::Mode mode = AvCall::Audio;
+        int kbps = -1;
+        if(ui.ck_useVideo->isChecked())
+        {
+            mode = AvCall::Both;
+            kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
+        }
 
-		if(!incoming)
-		{
-			ui.le_to->setReadOnly(true);
-			ui.le_to->setEnabled(false);
-			ui.ck_useVideo->setEnabled(false);
-			ui.cb_bandwidth->setEnabled(false);
+        if(!incoming)
+        {
+            ui.le_to->setReadOnly(true);
+            ui.le_to->setEnabled(false);
+            ui.ck_useVideo->setEnabled(false);
+            ui.cb_bandwidth->setEnabled(false);
 
-			ui.pb_accept->setEnabled(false);
-			ui.pb_reject->setText(tr("&Cancel"));
-			ui.pb_reject->setFocus();
-			ui.busy->start();
-			ui.lb_status->setText(tr("Calling..."));
+            ui.pb_accept->setEnabled(false);
+            ui.pb_reject->setText(tr("&Cancel"));
+            ui.pb_reject->setFocus();
+            ui.busy->start();
+            ui.lb_status->setText(tr("Calling..."));
 
-			sess = pa->avCallManager()->createOutgoing();
-			connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-			connect(sess, SIGNAL(error()), SLOT(sess_error()));
+            sess = pa->avCallManager()->createOutgoing();
+            connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
+            connect(sess, SIGNAL(error()), SLOT(sess_error()));
 
-			active = true;
-			sess->connectToJid(ui.le_to->text(), mode, kbps);
-		}
-		else
-		{
-			ui.le_to->setEnabled(false);
-			ui.ck_useVideo->setEnabled(false);
-			ui.cb_bandwidth->setEnabled(false);
+            active = true;
+            sess->connectToJid(ui.le_to->text(), mode, kbps);
+        }
+        else
+        {
+            ui.le_to->setEnabled(false);
+            ui.ck_useVideo->setEnabled(false);
+            ui.cb_bandwidth->setEnabled(false);
 
-			ui.pb_accept->setEnabled(false);
-			ui.pb_reject->setText(tr("&Cancel"));
-			ui.pb_reject->setFocus();
-			ui.busy->start();
-			ui.lb_status->setText(tr("Accepting..."));
+            ui.pb_accept->setEnabled(false);
+            ui.pb_reject->setText(tr("&Cancel"));
+            ui.pb_reject->setFocus();
+            ui.busy->start();
+            ui.lb_status->setText(tr("Accepting..."));
 
-			active = true;
-			sess->accept(mode, kbps);
-		}
-	}
+            active = true;
+            sess->accept(mode, kbps);
+        }
+    }
 
-	void cancel_clicked()
-	{
-		if(sess && incoming && !active)
-			sess->reject();
-		q->close();
-	}
+    void cancel_clicked()
+    {
+        if(sess && incoming && !active)
+            sess->reject();
+        q->close();
+    }
 
-	void sess_activated()
-	{
-		ui.le_to->setEnabled(true);
-		ui.lb_bandwidth->hide();
-		ui.cb_bandwidth->hide();
+    void sess_activated()
+    {
+        ui.le_to->setEnabled(true);
+        ui.lb_bandwidth->hide();
+        ui.cb_bandwidth->hide();
 
-		if(sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)
-		{
-			vw_remote = new PsiMedia::VideoWidget(q);
-			replaceWidget(ui.ck_useVideo, vw_remote);
-			sess->setIncomingVideo(vw_remote);
-			vw_remote->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-			vw_remote->setMinimumSize(320, 240);
-			ui.fake_spacer->hide();
-		}
-		else
-			ui.ck_useVideo->hide();
+        if(sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)
+        {
+            vw_remote = new PsiMedia::VideoWidget(q);
+            replaceWidget(ui.ck_useVideo, vw_remote);
+            sess->setIncomingVideo(vw_remote);
+            vw_remote->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+            vw_remote->setMinimumSize(320, 240);
+            ui.fake_spacer->hide();
+        }
+        else
+            ui.ck_useVideo->hide();
 
-		ui.busy->stop();
-		ui.busy->hide();
-		ui.pb_accept->hide();
-		ui.pb_reject->setText(tr("&Hang up"));
-		ui.lb_status->setText(tr("Call active"));
+        ui.busy->stop();
+        ui.busy->hide();
+        ui.pb_accept->hide();
+        ui.pb_reject->setText(tr("&Hang up"));
+        ui.lb_status->setText(tr("Call active"));
 
-		call_duration = QTime(0, 0, 0, 0);
-		timer->start(1000);
-		activated = true;
-	}
+        call_duration = QTime(0, 0, 0, 0);
+        timer->start(1000);
+        activated = true;
+    }
 
-	void sess_error()
-	{
-		if(!activated)
-			ui.busy->stop();
+    void sess_error()
+    {
+        if(!activated)
+            ui.busy->stop();
 
-		if(timer->isActive())
-			timer->stop();
+        if(timer->isActive())
+            timer->stop();
 
-		QMessageBox::information(q, tr("Call is ended"), sess->errorString());
-		q->close();
-	}
+        QMessageBox::information(q, tr("Call is ended"), sess->errorString());
+        q->close();
+    }
 
-	void update_call_duration()
-	{
-		call_duration = call_duration.addSecs(1);
-		ui.lb_status->setText(tr("Call duration: %1").arg(call_duration.toString("mm:ss")));
-	}
+    void update_call_duration()
+    {
+        call_duration = call_duration.addSecs(1);
+        ui.lb_status->setText(tr("Call duration: %1").arg(call_duration.toString("mm:ss")));
+    }
 };
 
 CallDlg::CallDlg(PsiAccount *pa, QWidget *parent) :
-	QDialog(parent)
+    QDialog(parent)
 {
-	d = new Private(this);
-	d->pa = pa;
-	d->pa->dialogRegister(this);
-	prep_device_opts();
+    d = new Private(this);
+    d->pa = pa;
+    d->pa->dialogRegister(this);
+    prep_device_opts();
 }
 
 CallDlg::~CallDlg()
 {
-	d->pa->dialogUnregister(this);
-	delete d;
+    d->pa->dialogUnregister(this);
+    delete d;
 }
 
 void CallDlg::setOutgoing(const XMPP::Jid &jid)
 {
-	d->setOutgoing(jid);
+    d->setOutgoing(jid);
 }
 
 void CallDlg::setIncoming(AvCall *sess)
 {
-	d->setIncoming(sess);
+    d->setIncoming(sess);
 }
 
 #include "calldlg.moc"

@@ -29,135 +29,135 @@
 
 PrivacyList::PrivacyList(const QString& name, const QList<PrivacyListItem>& items) : name_(name), items_(items)
 {
-	qSort(items_);
+    qSort(items_);
 };
 
 PrivacyList::PrivacyList(const QDomElement& e)
 {
-	fromXml(e);
+    fromXml(e);
 }
 
 void PrivacyList::updateItem(int index, const PrivacyListItem& item)
 {
-	unsigned int order = items_[index].order();
-	items_[index] = item;
-	items_[index].setOrder(order);
+    unsigned int order = items_[index].order();
+    items_[index] = item;
+    items_[index].setOrder(order);
 }
 
 void PrivacyList::insertItem(int index, const PrivacyListItem& item)
 {
-	items_.insert(index,item);
+    items_.insert(index,item);
 
-	reNumber();
+    reNumber();
 }
 
 void PrivacyList::appendItem(const PrivacyListItem& item)
 {
-	insertItem(items_.count(), item);
+    insertItem(items_.count(), item);
 }
 
 
 void PrivacyList::reNumber()
 {
-	unsigned int order = 100;
-	for (int i = 0; i < items_.size(); ++i) {
-    	items_[i].setOrder(order);
-		order += ORDER_INCREMENT;
-	}
+    unsigned int order = 100;
+    for (int i = 0; i < items_.size(); ++i) {
+        items_[i].setOrder(order);
+        order += ORDER_INCREMENT;
+    }
 }
 
 
 bool PrivacyList::moveItemUp(int index)
 {
-	if (index < items().count() && index > 0) {
-		unsigned int order =items_[index].order();
-		if (order == items_[index-1].order()) {
-			reNumber();
-			return true;
-		}
-		items_[index].setOrder(items_[index-1].order());
-		items_[index-1].setOrder(order);
-		items_.swap(index,index-1);
-		return true;
-	}
-	else {
-		return false;
-	}
+    if (index < items().count() && index > 0) {
+        unsigned int order =items_[index].order();
+        if (order == items_[index-1].order()) {
+            reNumber();
+            return true;
+        }
+        items_[index].setOrder(items_[index-1].order());
+        items_[index-1].setOrder(order);
+        items_.swap(index,index-1);
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool PrivacyList::moveItemDown(int index)
 {
-	if (index >= 0 && index < items().count()-1) {
-		unsigned int order =items_[index].order();
-		if (order == items_[index+1].order()) {
-			reNumber();
-			return true;
-		}
-		items_[index].setOrder(items_[index+1].order());
-		items_[index+1].setOrder(order);
-		items_.swap(index,index+1);
-		return true;
-	}
-	else {
-		return false;
-	}
+    if (index >= 0 && index < items().count()-1) {
+        unsigned int order =items_[index].order();
+        if (order == items_[index+1].order()) {
+            reNumber();
+            return true;
+        }
+        items_[index].setOrder(items_[index+1].order());
+        items_[index+1].setOrder(order);
+        items_.swap(index,index+1);
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool PrivacyList::onlyBlockItems() const
 {
-	bool allBlocked = true;
-	bool fallThrough = false;
-	QList<PrivacyListItem>::ConstIterator it;
+    bool allBlocked = true;
+    bool fallThrough = false;
+    QList<PrivacyListItem>::ConstIterator it;
     for (it = items_.begin(); it != items_.end() && allBlocked; ++it ) {
-		if ((*it).type() == PrivacyListItem::FallthroughType && (*it).action() == PrivacyListItem::Allow && (*it).all()) {
-			fallThrough = true;
-		}
-		else if ((*it).isBlock()) {
-			if (fallThrough)
-				allBlocked = false;
-		}
-		else {
-			allBlocked = false;
-		}
-	}
-	return allBlocked;
+        if ((*it).type() == PrivacyListItem::FallthroughType && (*it).action() == PrivacyListItem::Allow && (*it).all()) {
+            fallThrough = true;
+        }
+        else if ((*it).isBlock()) {
+            if (fallThrough)
+                allBlocked = false;
+        }
+        else {
+            allBlocked = false;
+        }
+    }
+    return allBlocked;
 }
 
 QDomElement PrivacyList::toXml(QDomDocument& doc) const
 {
-	QDomElement list = doc.createElement("list");
-	list.setAttribute("name",name());
+    QDomElement list = doc.createElement("list");
+    list.setAttribute("name",name());
 
-	for (QList<PrivacyListItem>::ConstIterator it = items_.begin() ; it != items_.end(); it++) {
-		list.appendChild((*it).toXml(doc));
-	}
+    for (QList<PrivacyListItem>::ConstIterator it = items_.begin() ; it != items_.end(); it++) {
+        list.appendChild((*it).toXml(doc));
+    }
 
-	return list;
+    return list;
 }
 
 void PrivacyList::fromXml(const QDomElement& el)
 {
-	//qDebug("privacy.cpp: Parsing privacy list");
-	if (el.isNull() || el.tagName() != "list") {
-		qWarning("privacy.cpp: Invalid root tag for privacy list.");
-		return;
-	}
+    //qDebug("privacy.cpp: Parsing privacy list");
+    if (el.isNull() || el.tagName() != "list") {
+        qWarning("privacy.cpp: Invalid root tag for privacy list.");
+        return;
+    }
 
-	setName(el.attribute("name"));
-	for(QDomNode n = el.firstChild(); !n.isNull(); n = n.nextSibling()) {
-		QDomElement e = n.toElement();
-		if (!e.isNull())
-			items_.append(PrivacyListItem(e));
-	}
+    setName(el.attribute("name"));
+    for(QDomNode n = el.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        QDomElement e = n.toElement();
+        if (!e.isNull())
+            items_.append(PrivacyListItem(e));
+    }
 
-	qSort(items_);
+    qSort(items_);
 }
 
 QString PrivacyList::toString() const
 {
-	QString s;
-	for (QList<PrivacyListItem>::ConstIterator it = items_.begin() ; it != items_.end(); it++) {
-		s += QString("%1 (%2)\n").arg((*it).toString()).arg((*it).order());
-	}
-	return s;
+    QString s;
+    for (QList<PrivacyListItem>::ConstIterator it = items_.begin() ; it != items_.end(); it++) {
+        s += QString("%1 (%2)\n").arg((*it).toString()).arg((*it).order());
+    }
+    return s;
 }

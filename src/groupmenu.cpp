@@ -27,43 +27,43 @@
 #include <QInputDialog>
 
 GroupMenu::GroupMenu(QWidget* parent)
-	: QMenu(parent)
+    : QMenu(parent)
 {
 }
 
 void GroupMenu::updateMenu(PsiContact* contact)
 {
-	if (isVisible())
-		return;
-	contact_ = contact;
-	Q_ASSERT(contact_);
-	clear();
+    if (isVisible())
+        return;
+    contact_ = contact;
+    Q_ASSERT(contact_);
+    clear();
 
-	addGroup(tr("&None"), "", contact->userListItem().groups().isEmpty());
-	addSeparator();
+    addGroup(tr("&None"), "", contact->userListItem().groups().isEmpty());
+    addSeparator();
 
-	int n = 0;
-	QStringList groupList = contact->account()->groupList();
-	groupList.removeAll(PsiContact::hiddenGroupName());
-	foreach(QString groupName, groupList) {
-		QString displayName = groupName;
-		if (displayName.isEmpty())
-			displayName = PsiContact::generalGroupName();
+    int n = 0;
+    QStringList groupList = contact->account()->groupList();
+    groupList.removeAll(PsiContact::hiddenGroupName());
+    foreach(QString groupName, groupList) {
+        QString displayName = groupName;
+        if (displayName.isEmpty())
+            displayName = PsiContact::generalGroupName();
 
-		QString accelerator;
-		if (n++ < 9)
-			accelerator = "&";
-		QString text = QString("%1%2. %3").arg(accelerator).arg(n).arg(displayName);
-		addGroup(text, groupName, contact->userListItem().groups().contains(groupName));
-	}
+        QString accelerator;
+        if (n++ < 9)
+            accelerator = "&";
+        QString text = QString("%1%2. %3").arg(accelerator).arg(n).arg(displayName);
+        addGroup(text, groupName, contact->userListItem().groups().contains(groupName));
+    }
 
-	addSeparator();
-	addGroup(tr("&Hidden"), PsiContact::hiddenGroupName(), contact->isHidden());
-	addSeparator();
+    addSeparator();
+    addGroup(tr("&Hidden"), PsiContact::hiddenGroupName(), contact->isHidden());
+    addSeparator();
 
-	QAction* createNewGroupAction = new QAction(tr("&Create New..."), this);
-	connect(createNewGroupAction, SIGNAL(triggered()), SLOT(createNewGroup()));
-	addAction(createNewGroupAction);
+    QAction* createNewGroupAction = new QAction(tr("&Create New..."), this);
+    connect(createNewGroupAction, SIGNAL(triggered()), SLOT(createNewGroup()));
+    addAction(createNewGroupAction);
 }
 
 /**
@@ -73,37 +73,37 @@ void GroupMenu::updateMenu(PsiContact* contact)
  */
 void GroupMenu::addGroup(QString text, QString groupName, bool selected)
 {
-	QAction* action = new QAction(text, this);
-	addAction(action);
-	action->setCheckable(true);
-	action->setChecked(selected);
-	action->setProperty("groupName", QVariant(groupName));
-	connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
+    QAction* action = new QAction(text, this);
+    addAction(action);
+    action->setCheckable(true);
+    action->setChecked(selected);
+    action->setProperty("groupName", QVariant(groupName));
+    connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 }
 
 void GroupMenu::actionActivated()
 {
-	QAction* action = static_cast<QAction*>(sender());
-	emit groupActivated(action->property("groupName").toString());
+    QAction* action = static_cast<QAction*>(sender());
+    emit groupActivated(action->property("groupName").toString());
 }
 
 void GroupMenu::createNewGroup()
 {
-	while (contact_) {
-		bool ok = false;
-		QString newgroup = QInputDialog::getText(0, tr("Create New Group"),
-												 tr("Enter the new group name:"),
-												 QLineEdit::Normal,
-												 QString::null,
-												 &ok, 0);
-		if (!ok)
-			break;
-		if (newgroup.isEmpty())
-			continue;
+    while (contact_) {
+        bool ok = false;
+        QString newgroup = QInputDialog::getText(0, tr("Create New Group"),
+                                                 tr("Enter the new group name:"),
+                                                 QLineEdit::Normal,
+                                                 QString::null,
+                                                 &ok, 0);
+        if (!ok)
+            break;
+        if (newgroup.isEmpty())
+            continue;
 
-		if (!contact_->userListItem().groups().contains(newgroup)) {
-			emit groupActivated(newgroup);
-			break;
-		}
-	}
+        if (!contact_->userListItem().groups().contains(newgroup)) {
+            emit groupActivated(newgroup);
+            break;
+        }
+    }
 }

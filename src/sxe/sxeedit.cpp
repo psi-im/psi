@@ -26,8 +26,8 @@
 //----------------------------------------------------------------------------
 
 SxeEdit::SxeEdit(const QString rid, bool remote) {
-	rid_ = rid;
-	remote_ = remote;
+    rid_ = rid;
+    remote_ = remote;
 };
 
 SxeEdit::~SxeEdit() {
@@ -35,62 +35,62 @@ SxeEdit::~SxeEdit() {
 };
 
 bool SxeEdit::remote() const {
-	return remote_;
+    return remote_;
 };
 
 QString SxeEdit::rid() const {
-	return rid_;
+    return rid_;
 };
 
 bool SxeEdit::isNull() {
-	return null_;
+    return null_;
 }
 
 void SxeEdit::nullify() {
-	null_ = true;
+    null_ = true;
 }
 
 
 bool SxeEdit::overridenBy(const SxeEdit &e) const {
-	if(e.rid() == rid()) {
-		if(e.type() == SxeEdit::Remove)
-			return true;
-		else if(type() == SxeEdit::Record && e.type() == SxeEdit::Record) {
-			const SxeRecordEdit* ep = dynamic_cast<const SxeRecordEdit*>(&e);
-			const SxeRecordEdit* tp = dynamic_cast<const SxeRecordEdit*>(this);
-			return (ep->version() <= tp->version());
-		}
-	}
+    if(e.rid() == rid()) {
+        if(e.type() == SxeEdit::Remove)
+            return true;
+        else if(type() == SxeEdit::Record && e.type() == SxeEdit::Record) {
+            const SxeRecordEdit* ep = dynamic_cast<const SxeRecordEdit*>(&e);
+            const SxeRecordEdit* tp = dynamic_cast<const SxeRecordEdit*>(this);
+            return (ep->version() <= tp->version());
+        }
+    }
 
-	return false;
+    return false;
 }
 
 bool SxeEdit::operator<(const SxeEdit &other) const {
 
-	// Can't compare edits to different records
-	if(rid() != other.rid())  {
-		qDebug("Comparing SxeEdits to %s an %s.", qPrintable(rid()), qPrintable(other.rid()));
-		return false;
-	}
+    // Can't compare edits to different records
+    if(rid() != other.rid())  {
+        qDebug("Comparing SxeEdits to %s an %s.", qPrintable(rid()), qPrintable(other.rid()));
+        return false;
+    }
 
-	if(type() == other.type()) {
+    if(type() == other.type()) {
 
-		// Only Record edits can be unequal with other edits of the same type
-		if(type() == SxeEdit::Record) {
-			const SxeRecordEdit* thisp = dynamic_cast<const SxeRecordEdit*>(this);
-			const SxeRecordEdit* otherp = dynamic_cast<const SxeRecordEdit*>(&other);
-			return (thisp->version() < otherp->version());
-		}
+        // Only Record edits can be unequal with other edits of the same type
+        if(type() == SxeEdit::Record) {
+            const SxeRecordEdit* thisp = dynamic_cast<const SxeRecordEdit*>(this);
+            const SxeRecordEdit* otherp = dynamic_cast<const SxeRecordEdit*>(&other);
+            return (thisp->version() < otherp->version());
+        }
 
-		return false;
+        return false;
 
-	} else {
+    } else {
 
-		// New < Record, Record < Remove
-		if(type() == SxeEdit::New)		   return true;
-		if(other.type() == SxeEdit::Remove)  return true;
+        // New < Record, Record < Remove
+        if(type() == SxeEdit::New)           return true;
+        if(other.type() == SxeEdit::Remove)  return true;
 
-		return false;
+        return false;
 
-	}
+    }
 }

@@ -7,9 +7,9 @@
 class GUITest
 {
 public:
-	virtual ~GUITest() { }
-	virtual bool run() = 0;
-	virtual QString name() = 0;
+    virtual ~GUITest() { }
+    virtual bool run() = 0;
+    virtual QString name() = 0;
 };
 
 #endif

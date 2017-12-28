@@ -32,17 +32,17 @@ class TuneController;
 class TuneControllerPlugin
 {
 public:
-	virtual ~TuneControllerPlugin() { }
+    virtual ~TuneControllerPlugin() { }
 
-	/**
-	 * \brief Returns the name of the tune controller.
-	 */
-	virtual QString name() = 0;
+    /**
+     * \brief Returns the name of the tune controller.
+     */
+    virtual QString name() = 0;
 
-	/**
-	 * \brief Creates a new controller.
-	 */
-	virtual TuneController* createController() = 0;
+    /**
+     * \brief Creates a new controller.
+     */
+    virtual TuneController* createController() = 0;
 };
 
 Q_DECLARE_INTERFACE(TuneControllerPlugin, "be.el-tramo.TuneController/0.0-20060129");

@@ -68,11 +68,11 @@ ActiveProfiles* ActiveProfiles::instance_ = 0;
  */
 ActiveProfiles* ActiveProfiles::instance()
 {
-	if (!instance_) {
-		instance_ = new ActiveProfiles();
-	}
+    if (!instance_) {
+        instance_ = new ActiveProfiles();
+    }
 
-	return instance_;
+    return instance_;
 }
 
 /**

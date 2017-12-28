@@ -24,13 +24,13 @@
 #include "psicontactlist.h"
 
 AccountsComboBox::AccountsComboBox(QWidget* parent)
-	: QComboBox(parent)
-	, controller_(0)
-	, account_(0)
-	, onlineOnly_(false)
+    : QComboBox(parent)
+    , controller_(0)
+    , account_(0)
+    , onlineOnly_(false)
 {
-	setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
-	connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
+    setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
+    connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
 }
 
 AccountsComboBox::~AccountsComboBox()
@@ -39,82 +39,82 @@ AccountsComboBox::~AccountsComboBox()
 
 PsiAccount* AccountsComboBox::account() const
 {
-	return account_;
+    return account_;
 }
 
 void AccountsComboBox::setAccount(PsiAccount* account)
 {
-	account_ = account;
-	updateAccounts();
+    account_ = account;
+    updateAccounts();
 }
 
 PsiCon* AccountsComboBox::controller() const
 {
-	return controller_;
+    return controller_;
 }
 
 void AccountsComboBox::setController(PsiCon* controller)
 {
-	if (controller_) {
-		disconnect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
-		disconnect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
-	}
+    if (controller_) {
+        disconnect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
+        disconnect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
+    }
 
-	controller_ = controller;
+    controller_ = controller;
 
-	if (controller_) {
-		connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
-		connect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
-	}
+    if (controller_) {
+        connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
+        connect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
+    }
 
-	if (controller_->contactList()->haveEnabledAccounts()) {
-		setAccount(controller_->contactList()->enabledAccounts().first());
-	}
+    if (controller_->contactList()->haveEnabledAccounts()) {
+        setAccount(controller_->contactList()->enabledAccounts().first());
+    }
 
-	updateAccounts();
+    updateAccounts();
 }
 
 bool AccountsComboBox::onlineOnly() const
 {
-	return onlineOnly_;
+    return onlineOnly_;
 }
 
 void AccountsComboBox::setOnlineOnly(bool onlineOnly)
 {
-	onlineOnly_ = onlineOnly;
-	updateAccounts();
+    onlineOnly_ = onlineOnly;
+    updateAccounts();
 }
 
 void AccountsComboBox::changeAccount()
 {
-	account_ = 0;
-	if (currentIndex() >= 0 && currentIndex() < accounts().count())
-		account_ = accounts().at(currentIndex());
-	emit activated(account_);
+    account_ = 0;
+    if (currentIndex() >= 0 && currentIndex() < accounts().count())
+        account_ = accounts().at(currentIndex());
+    emit activated(account_);
 }
 
 void AccountsComboBox::updateAccounts()
 {
-	clear();
+    clear();
 
-	foreach(PsiAccount* account, accounts())
-		addItem(account->nameWithJid());
+    foreach(PsiAccount* account, accounts())
+        addItem(account->nameWithJid());
 
-	if (accounts().indexOf(account_) == -1) {
-		account_ = accounts().isEmpty() ? 0 : accounts().first();
-		emit activated(account_);
-	}
-	setCurrentIndex(accounts().indexOf(account_));
+    if (accounts().indexOf(account_) == -1) {
+        account_ = accounts().isEmpty() ? 0 : accounts().first();
+        emit activated(account_);
+    }
+    setCurrentIndex(accounts().indexOf(account_));
 }
 
 QList<PsiAccount*> AccountsComboBox::accounts() const
 {
-	QList<PsiAccount*> result;
-	if (controller_) {
-		foreach(PsiAccount* account, controller_->contactList()->enabledAccounts())
-			if (!onlineOnly_ || account->isAvailable())
-				result << account;
-	}
+    QList<PsiAccount*> result;
+    if (controller_) {
+        foreach(PsiAccount* account, controller_->contactList()->enabledAccounts())
+            if (!onlineOnly_ || account->isAvailable())
+                result << account;
+    }
 
-	return result;
+    return result;
 }

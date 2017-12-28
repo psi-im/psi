@@ -1,6 +1,6 @@
 /*
  * adhoc_fileserver.h - Implementation of a personal file server using ad-hoc
- *		commands
+ *        commands
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -27,12 +27,12 @@
 class AHFileServer : public AHCommandServer
 {
 public:
-	AHFileServer(AHCServerManager* m) : AHCommandServer(m) { }
-	virtual QString node() const
-		{ return QString("http://psi.affinix.com/commands/files"); }
-	virtual bool isAllowed(const Jid&) const;
-	virtual QString name() const { return QString("Send file"); }
-	virtual AHCommand execute(const AHCommand& c, const Jid&);
+    AHFileServer(AHCServerManager* m) : AHCommandServer(m) { }
+    virtual QString node() const
+        { return QString("http://psi.affinix.com/commands/files"); }
+    virtual bool isAllowed(const Jid&) const;
+    virtual QString name() const { return QString("Send file"); }
+    virtual AHCommand execute(const AHCommand& c, const Jid&);
 };
 
 #endif

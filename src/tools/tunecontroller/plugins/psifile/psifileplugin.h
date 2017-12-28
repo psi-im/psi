@@ -40,15 +40,15 @@
  */
 class PsiFilePlugin : public QObject, public TuneControllerPlugin
 {
-	Q_OBJECT
+    Q_OBJECT
 #ifdef HAVE_QT5
-	Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
+    Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 #endif
-	Q_INTERFACES(TuneControllerPlugin)
+    Q_INTERFACES(TuneControllerPlugin)
 
 public:
-	virtual QString name();
-	virtual TuneController* createController();
+    virtual QString name();
+    virtual TuneController* createController();
 };
 
 #endif

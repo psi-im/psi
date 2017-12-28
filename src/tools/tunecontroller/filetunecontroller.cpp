@@ -43,62 +43,62 @@
 /**
  * \brief Constructs the controller.
  * \param songFile the filename from which the currently playing song is
- *		read.
+ *        read.
  */
 FileTuneController::FileTuneController(const QString& songFile)
-	: PollingTuneController()
-	, _songFile(songFile)
-	, _waitForCreated(true)
-	, _watchFunctional(false)
+    : PollingTuneController()
+    , _songFile(songFile)
+    , _waitForCreated(true)
+    , _watchFunctional(false)
 {
-	// old mechanism of work with tune file
-	startPoll();
-	// new mechanism of work with tune file
-	// let's consider the directory _songFile resides exists. other cases should be solved by reconfiguration is restarting.
-	// in cases when directory does not exist polling will work as expected. we will not try turn on the watching.
-	// on the other hand if watch is recognized as functional polling will be disabled, so the user
-	// should understand if he suddenly removed the directory with watched file tunes won't work at all.
-	_tuneFileWatcher = new QCA::FileWatch(_songFile, this); // qca watch works on non-existing files ;)
-	connect(_tuneFileWatcher, SIGNAL(changed()), this, SLOT(onFileChanged()));
+    // old mechanism of work with tune file
+    startPoll();
+    // new mechanism of work with tune file
+    // let's consider the directory _songFile resides exists. other cases should be solved by reconfiguration is restarting.
+    // in cases when directory does not exist polling will work as expected. we will not try turn on the watching.
+    // on the other hand if watch is recognized as functional polling will be disabled, so the user
+    // should understand if he suddenly removed the directory with watched file tunes won't work at all.
+    _tuneFileWatcher = new QCA::FileWatch(_songFile, this); // qca watch works on non-existing files ;)
+    connect(_tuneFileWatcher, SIGNAL(changed()), this, SLOT(onFileChanged()));
 }
 
 Tune FileTuneController::currentTune() const
 {
-	return _currentTune;
+    return _currentTune;
 }
 
 void FileTuneController::onFileChanged() // this will never happen if _songFile's directory doesn't exist
 {
-	_watchFunctional = true;
-	check();
+    _watchFunctional = true;
+    check();
 }
 
 void FileTuneController::check()
 {
-	Tune existedTune = _currentTune;
-	_currentTune = Tune(); // just a reset
-	if (QFile::exists(_songFile)) {
-		if (_waitForCreated && _watchFunctional) {
-			if (isPolling()) {
-				stopPoll();
-			}
-			_waitForCreated = false;
-		}
-		QFile file(_songFile);
-		if (file.open(QIODevice::ReadOnly)) {
-			QTextStream stream( &file );
-			stream.setCodec("UTF-8");
-			stream.setAutoDetectUnicode(true);
-			_currentTune.setName(stream.readLine());
-			_currentTune.setArtist(stream.readLine());
-			_currentTune.setAlbum(stream.readLine());
-			_currentTune.setTrack(stream.readLine());
-			_currentTune.setTime(stream.readLine().toUInt());
-		}
-	}
-	else if (!_waitForCreated && existedTune.isNull()) {
-		_waitForCreated = true;
-		return; // we will return to this function when file created. just exit for now.
-	}
-	PollingTuneController::check();
+    Tune existedTune = _currentTune;
+    _currentTune = Tune(); // just a reset
+    if (QFile::exists(_songFile)) {
+        if (_waitForCreated && _watchFunctional) {
+            if (isPolling()) {
+                stopPoll();
+            }
+            _waitForCreated = false;
+        }
+        QFile file(_songFile);
+        if (file.open(QIODevice::ReadOnly)) {
+            QTextStream stream( &file );
+            stream.setCodec("UTF-8");
+            stream.setAutoDetectUnicode(true);
+            _currentTune.setName(stream.readLine());
+            _currentTune.setArtist(stream.readLine());
+            _currentTune.setAlbum(stream.readLine());
+            _currentTune.setTrack(stream.readLine());
+            _currentTune.setTime(stream.readLine().toUInt());
+        }
+    }
+    else if (!_waitForCreated && existedTune.isNull()) {
+        _waitForCreated = true;
+        return; // we will return to this function when file created. just exit for now.
+    }
+    PollingTuneController::check();
 }

@@ -37,38 +37,38 @@
 
 Qt::ToolBarArea dockPositionToToolBarArea(Qt3Dock dock)
 {
-	switch (dock) {
-	case Qt3Dock_Top:
-		return Qt::TopToolBarArea;
-	case Qt3Dock_Bottom:
-		return Qt::BottomToolBarArea;
-	case Qt3Dock_Right:
-		return Qt::RightToolBarArea;
-	case Qt3Dock_Left:
-		return Qt::LeftToolBarArea;
+    switch (dock) {
+    case Qt3Dock_Top:
+        return Qt::TopToolBarArea;
+    case Qt3Dock_Bottom:
+        return Qt::BottomToolBarArea;
+    case Qt3Dock_Right:
+        return Qt::RightToolBarArea;
+    case Qt3Dock_Left:
+        return Qt::LeftToolBarArea;
 
-	case Qt3Dock_Unmanaged:
-	case Qt3Dock_TornOff:
-	case Qt3Dock_Minimized:
-		;
-	}
+    case Qt3Dock_Unmanaged:
+    case Qt3Dock_TornOff:
+    case Qt3Dock_Minimized:
+        ;
+    }
 
-	return Qt::NoToolBarArea;
+    return Qt::NoToolBarArea;
 }
 
 PsiToolBar::PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList* actionList)
-	: QToolBar(mainWindow)
-	, actionList_(actionList)
-	, base_(base)
+    : QToolBar(mainWindow)
+    , actionList_(actionList)
+    , base_(base)
 {
-	Q_ASSERT(mainWindow);
-	Q_ASSERT(actionList_);
+    Q_ASSERT(mainWindow);
+    Q_ASSERT(actionList_);
 
-	int s = PsiIconset::instance()->system().iconSize();
-	setIconSize(QSize(s, s));
+    int s = PsiIconset::instance()->system().iconSize();
+    setIconSize(QSize(s, s));
 
-	customizeAction_ = new QAction(tr("&Configure Toolbar..."), this);
-	connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));
+    customizeAction_ = new QAction(tr("&Configure Toolbar..."), this);
+    connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));
 }
 
 PsiToolBar::~PsiToolBar()
@@ -77,87 +77,87 @@ PsiToolBar::~PsiToolBar()
 
 void PsiToolBar::contextMenuEvent(QContextMenuEvent* e)
 {
-	e->accept();
+    e->accept();
 
-	QMenu menu;
-	menu.addAction(customizeAction_);
-	menu.exec(e->globalPos());
+    QMenu menu;
+    menu.addAction(customizeAction_);
+    menu.exec(e->globalPos());
 }
 
 QString PsiToolBar::base() const
 {
-	return base_;
+    return base_;
 }
 
 void PsiToolBar::initialize()
 {
-	PsiOptions* o = PsiOptions::instance();
-	if (o->getOption(base_ + ".key").toString().isEmpty()) {
-		o->setOption(base_ + ".key", ToolbarPrefs().id);
-	}
-	setObjectName(QString("mainwin-toolbar-%1").arg(o->getOption(base_ + ".key").toString()));
-	setMovable(!o->getOption(base_ + ".locked").toBool());
-	setWindowTitle(o->getOption(base_ + ".name").toString());
+    PsiOptions* o = PsiOptions::instance();
+    if (o->getOption(base_ + ".key").toString().isEmpty()) {
+        o->setOption(base_ + ".key", ToolbarPrefs().id);
+    }
+    setObjectName(QString("mainwin-toolbar-%1").arg(o->getOption(base_ + ".key").toString()));
+    setMovable(!o->getOption(base_ + ".locked").toBool());
+    setWindowTitle(o->getOption(base_ + ".name").toString());
 
-	ActionList actions = actionList_->suitableActions(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
-	QList<QString> skipList;
-	skipList << "button_options" << "button_status" << "event_notifier" << "spacer";
+    ActionList actions = actionList_->suitableActions(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
+    QList<QString> skipList;
+    skipList << "button_options" << "button_status" << "event_notifier" << "spacer";
 
-	foreach(QString actionName, o->getOption(base_ + ".actions").toStringList()) {
-		IconAction* action = actions.action(actionName);
+    foreach(QString actionName, o->getOption(base_ + ".actions").toStringList()) {
+        IconAction* action = actions.action(actionName);
 
-		if (action) {
-			if (action->isSeparator()) {
-				addSeparator();
-			}
-			else if (!skipList.contains(actionName)) {
-				QToolButton *button = new QToolButton;
-				button->setDefaultAction(action);
-				button->setPopupMode(QToolButton::InstantPopup);
-				addWidget(button);
-			}
-			else {
-				action->addTo(this);
-			}
-		}
-		else {
-			qWarning("PsiToolBar::initialize(): action %s not found!", qPrintable(actionName));
-		}
-	}
+        if (action) {
+            if (action->isSeparator()) {
+                addSeparator();
+            }
+            else if (!skipList.contains(actionName)) {
+                QToolButton *button = new QToolButton;
+                button->setDefaultAction(action);
+                button->setPopupMode(QToolButton::InstantPopup);
+                addWidget(button);
+            }
+            else {
+                action->addTo(this);
+            }
+        }
+        else {
+            qWarning("PsiToolBar::initialize(): action %s not found!", qPrintable(actionName));
+        }
+    }
 
-	if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
-		QMainWindow* mainWindow = dynamic_cast<QMainWindow*>(parentWidget());
-		if (mainWindow) {
-			mainWindow->addToolBar(dockPositionToToolBarArea((Qt3Dock)o->getOption(base_ + ".dock.position").toInt()), this);
-			if (o->getOption(base_ + ".dock.nl").toBool())
-				mainWindow->insertToolBarBreak(this);
-		}
-	}
+    if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
+        QMainWindow* mainWindow = dynamic_cast<QMainWindow*>(parentWidget());
+        if (mainWindow) {
+            mainWindow->addToolBar(dockPositionToToolBarArea((Qt3Dock)o->getOption(base_ + ".dock.position").toInt()), this);
+            if (o->getOption(base_ + ".dock.nl").toBool())
+                mainWindow->insertToolBarBreak(this);
+        }
+    }
 
-	updateVisibility();
+    updateVisibility();
 }
 
 void PsiToolBar::updateVisibility()
 {
-	if (PsiOptions::instance()->getOption(base_ + ".visible").toBool()) {
-		show();
-	}
-	else {
-		hide();
-	}
+    if (PsiOptions::instance()->getOption(base_ + ".visible").toBool()) {
+        show();
+    }
+    else {
+        hide();
+    }
 }
 
 void PsiToolBar::structToOptions(PsiOptions* options, const ToolbarPrefs& tb)
 {
-	Q_ASSERT(!tb.id.isEmpty());
-	QString base = options->mapPut("options.ui.contactlist.toolbars", tb.id);
-	options->setOption(base + ".name", tb.name);
-	options->setOption(base + ".visible", tb.on);
-	options->setOption(base + ".locked", tb.locked);
-	// options->setOption(base + ".stretchable", tb.stretchable);
-	options->setOption(base + ".actions", tb.keys);
-	options->setOption(base + ".dock.position", tb.dock);
-	// options->setOption(base + ".dock.index", tb.index);
-	options->setOption(base + ".dock.nl", tb.nl);
-	// options->setOption(base + ".dock.extra-offset", tb.extraOffset);
+    Q_ASSERT(!tb.id.isEmpty());
+    QString base = options->mapPut("options.ui.contactlist.toolbars", tb.id);
+    options->setOption(base + ".name", tb.name);
+    options->setOption(base + ".visible", tb.on);
+    options->setOption(base + ".locked", tb.locked);
+    // options->setOption(base + ".stretchable", tb.stretchable);
+    options->setOption(base + ".actions", tb.keys);
+    options->setOption(base + ".dock.position", tb.dock);
+    // options->setOption(base + ".dock.index", tb.index);
+    options->setOption(base + ".dock.nl", tb.nl);
+    // options->setOption(base + ".dock.extra-offset", tb.extraOffset);
 }

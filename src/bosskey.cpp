@@ -26,73 +26,73 @@
 #include "psitrayicon.h"
 
 BossKey::BossKey(QObject* p)
-	: QObject(p)
-	, isHidden_(false)
-	, psiOptions(PsiOptions::instance())
-	, win_(dynamic_cast<MainWin*>(p))
+    : QObject(p)
+    , isHidden_(false)
+    , psiOptions(PsiOptions::instance())
+    , win_(dynamic_cast<MainWin*>(p))
 {
 }
 
 void BossKey::shortCutActivated()
 {
-	if(isHidden_) {
-		doShow();
-		isHidden_ = false;
-	}
-	else {
-		doHide();
-		isHidden_ = true;
-	}
+    if(isHidden_) {
+        doShow();
+        isHidden_ = false;
+    }
+    else {
+        doHide();
+        isHidden_ = true;
+    }
 }
 
 void BossKey::doHide()
 {
-	QWidgetList l = qApp->topLevelWidgets();
-	foreach(QWidget* w, l) {
-		w = w->window();
-		if(!w->isHidden()) {
-			hiddenWidgets_.push_back(QPointer<QWidget>(w));
-			w->hide();
-		}
-	}
-	if(win_) {
-		PsiTrayIcon *ico = win_->psiTrayIcon();
-		if(ico) {
-			ico->hide();
-		}
-	}
+    QWidgetList l = qApp->topLevelWidgets();
+    foreach(QWidget* w, l) {
+        w = w->window();
+        if(!w->isHidden()) {
+            hiddenWidgets_.push_back(QPointer<QWidget>(w));
+            w->hide();
+        }
+    }
+    if(win_) {
+        PsiTrayIcon *ico = win_->psiTrayIcon();
+        if(ico) {
+            ico->hide();
+        }
+    }
 
-	static const QString soundOption = "options.ui.notifications.sounds.enable";
-	static const QString popupOption = "options.ui.notifications.passive-popups.enabled";
-	static const QString messageOption = "options.ui.message.auto-popup";
-	static const QString headLineOption = "options.ui.message.auto-popup-headlines";
-	static const QString chatOption = "options.ui.chat.auto-popup";
-	static const QString fileOption = "options.ui.file-transfer.auto-popup";
-	static const QStringList opt = QStringList() << soundOption << popupOption
-				       << messageOption << headLineOption << chatOption
-				       << fileOption;
-	foreach(const QString& option, opt) {
-		tmpOptions_[option] = psiOptions->getOption(option);
-		psiOptions->setOption(option, false);
-	}
+    static const QString soundOption = "options.ui.notifications.sounds.enable";
+    static const QString popupOption = "options.ui.notifications.passive-popups.enabled";
+    static const QString messageOption = "options.ui.message.auto-popup";
+    static const QString headLineOption = "options.ui.message.auto-popup-headlines";
+    static const QString chatOption = "options.ui.chat.auto-popup";
+    static const QString fileOption = "options.ui.file-transfer.auto-popup";
+    static const QStringList opt = QStringList() << soundOption << popupOption
+                       << messageOption << headLineOption << chatOption
+                       << fileOption;
+    foreach(const QString& option, opt) {
+        tmpOptions_[option] = psiOptions->getOption(option);
+        psiOptions->setOption(option, false);
+    }
 }
 
 void BossKey::doShow()
 {
-	foreach(QPointer<QWidget> p, hiddenWidgets_) {
-		if(p) {
-			p->show();
-		}
-	}
-	hiddenWidgets_.clear();
-	if(win_) {
-		PsiTrayIcon *ico = win_->psiTrayIcon();
-		if(ico) {
-			ico->show();
-		}
-	}
-	foreach(const QString& key, tmpOptions_.keys()) {
-		psiOptions->setOption(key, tmpOptions_.value(key));
-	}
-	tmpOptions_.clear();
+    foreach(QPointer<QWidget> p, hiddenWidgets_) {
+        if(p) {
+            p->show();
+        }
+    }
+    hiddenWidgets_.clear();
+    if(win_) {
+        PsiTrayIcon *ico = win_->psiTrayIcon();
+        if(ico) {
+            ico->show();
+        }
+    }
+    foreach(const QString& key, tmpOptions_.keys()) {
+        psiOptions->setOption(key, tmpOptions_.value(key));
+    }
+    tmpOptions_.clear();
 }

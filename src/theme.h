@@ -63,60 +63,60 @@ public:
         Loaded
     };
 
-	Theme();
-	Theme(ThemePrivate *priv);
-	Theme(const Theme &other);
-	Theme &operator=(const Theme &other);
-	virtual ~Theme();
+    Theme();
+    Theme(ThemePrivate *priv);
+    Theme(const Theme &other);
+    Theme &operator=(const Theme &other);
+    virtual ~Theme();
 
-	bool isValid() const;
-	State state() const;
+    bool isValid() const;
+    State state() const;
 
-	// previously virtual
-	bool exists();
-	bool load(); // synchronous load
-	bool load(std::function<void(bool)> loadCallback);  // asynchronous load
+    // previously virtual
+    bool exists();
+    bool load(); // synchronous load
+    bool load(std::function<void(bool)> loadCallback);  // asynchronous load
 
-	bool hasPreview() const;
-	QWidget *previewWidget(); // this hack must be replaced with something widget based
-	// end of previously virtual
+    bool hasPreview() const;
+    QWidget *previewWidget(); // this hack must be replaced with something widget based
+    // end of previously virtual
 
-	static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
-	bool isCompressed() const;
-	// load file from theme in `themePath`
-	static QByteArray loadData(const QString &fileName, const QString &themePath, bool caseInsensetive = false);
-	QByteArray loadData(const QString &fileName) const;
-	ResourceLoader* resourceLoader() const;
+    static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
+    bool isCompressed() const;
+    // load file from theme in `themePath`
+    static QByteArray loadData(const QString &fileName, const QString &themePath, bool caseInsensetive = false);
+    QByteArray loadData(const QString &fileName) const;
+    ResourceLoader* resourceLoader() const;
 
-	const QString id() const;
-	void setId(const QString &id);
-	const QString &name() const;
-	void setName(const QString &name);
-	const QString &version() const;
-	const QString &description() const;
-	const QStringList &authors() const;
-	const QString &creation() const;
-	const QString &homeUrl() const;
+    const QString id() const;
+    void setId(const QString &id);
+    const QString &name() const;
+    void setName(const QString &name);
+    const QString &version() const;
+    const QString &description() const;
+    const QStringList &authors() const;
+    const QString &creation() const;
+    const QString &homeUrl() const;
 
-	PsiThemeProvider* themeProvider() const;
-	const QString &filePath() const;
-	void setFilePath(const QString &f);
-	const QHash<QString, QString> info() const;
-	void setInfo(const QHash<QString, QString> &i);
+    PsiThemeProvider* themeProvider() const;
+    const QString &filePath() const;
+    void setFilePath(const QString &f);
+    const QHash<QString, QString> info() const;
+    void setInfo(const QHash<QString, QString> &i);
 
-	void setCaseInsensitiveFS(bool state);
-	bool caseInsensitiveFS() const;
+    void setCaseInsensitiveFS(bool state);
+    bool caseInsensitiveFS() const;
 
-	QString title() const; // helper function to remove name or id when name is not set
+    QString title() const; // helper function to remove name or id when name is not set
 
-	// for internal use
-	template<class T>
-	T* priv() const { return static_cast<T*>(d.data()); }
-	void setState(State state);
+    // for internal use
+    template<class T>
+    T* priv() const { return static_cast<T*>(d.data()); }
+    void setState(State state);
 
 private:
-	friend class ThemePrivate;
-	QExplicitlySharedDataPointer<ThemePrivate> d;
+    friend class ThemePrivate;
+    QExplicitlySharedDataPointer<ThemePrivate> d;
 };
 
 

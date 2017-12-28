@@ -47,104 +47,104 @@
  */
 class WbWidget : public QGraphicsView
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	/*! \brief Mode
-	 *  Indicates the mode the widget is in.
-	 */
-	enum Mode { Select, Translate, Rotate, Scale, Scroll, Erase, DrawPath, DrawLine, DrawRectangle, DrawEllipse, DrawCircle, DrawPolyline, DrawText, DrawImage };
+    /*! \brief Mode
+     *  Indicates the mode the widget is in.
+     */
+    enum Mode { Select, Translate, Rotate, Scale, Scroll, Erase, DrawPath, DrawLine, DrawRectangle, DrawEllipse, DrawCircle, DrawPolyline, DrawText, DrawImage };
 
-	/*! \brief Constructor
-	 *  Constructs a new widget with \a session and parent \a parent.
-	 */
-	WbWidget(SxeSession* session, QWidget* parent = 0);
-	/*! \brief Returns the session this widget is visualizing.*/
-	SxeSession* session();
-	/*! \brief Returns the mode this widget is in.*/
-	Mode mode();
-	/*! \brief Sets the mode which determines how to react to user interaction.*/
-	void setMode(Mode mode);
-	/*! \brief Sets the size of the whiteboard.*/
-	void setSize(const QSize &s);
-	/*! \brief Sets the stroke color of new items.*/
-	void setStrokeColor(const QColor &color);
-	/*! \brief Sets the stroke color of new items.*/
-	void setFillColor(const QColor &color);
-	/*! \brief Sets the stroke width of new items.*/
-	void setStrokeWidth(int width);
+    /*! \brief Constructor
+     *  Constructs a new widget with \a session and parent \a parent.
+     */
+    WbWidget(SxeSession* session, QWidget* parent = 0);
+    /*! \brief Returns the session this widget is visualizing.*/
+    SxeSession* session();
+    /*! \brief Returns the mode this widget is in.*/
+    Mode mode();
+    /*! \brief Sets the mode which determines how to react to user interaction.*/
+    void setMode(Mode mode);
+    /*! \brief Sets the size of the whiteboard.*/
+    void setSize(const QSize &s);
+    /*! \brief Sets the stroke color of new items.*/
+    void setStrokeColor(const QColor &color);
+    /*! \brief Sets the stroke color of new items.*/
+    void setFillColor(const QColor &color);
+    /*! \brief Sets the stroke width of new items.*/
+    void setStrokeWidth(int width);
 
-	/*! \brief Returns the size set by setSize().*/
-	virtual QSize sizeHint() const;
+    /*! \brief Returns the size set by setSize().*/
+    virtual QSize sizeHint() const;
 
 public slots:
-	/*! \brief Clears the whiteboard. */
-	void clear();
+    /*! \brief Clears the whiteboard. */
+    void clear();
 
 protected:
-	/*! \brief Makes sure that area outside the whiteboard is not shown by zooming if necessary.*/
-	virtual void resizeEvent(QResizeEvent * event);
-	/*! \brief Passes events to items as specified by the mode.*/
-	virtual void mousePressEvent(QMouseEvent * event);
-	/*! \brief Passes events to items as specified by the mode.*/
-	virtual void mouseMoveEvent(QMouseEvent * event);
-	/*! \brief Passes events to items as specified by the mode.*/
-	virtual void mouseReleaseEvent(QMouseEvent * event);
+    /*! \brief Makes sure that area outside the whiteboard is not shown by zooming if necessary.*/
+    virtual void resizeEvent(QResizeEvent * event);
+    /*! \brief Passes events to items as specified by the mode.*/
+    virtual void mousePressEvent(QMouseEvent * event);
+    /*! \brief Passes events to items as specified by the mode.*/
+    virtual void mouseMoveEvent(QMouseEvent * event);
+    /*! \brief Passes events to items as specified by the mode.*/
+    virtual void mouseReleaseEvent(QMouseEvent * event);
 
 private:
-	/*! \brief Returns the item representing the node (if any).*/
-	WbItem* wbItem(const QDomNode &node);
+    /*! \brief Returns the item representing the node (if any).*/
+    WbItem* wbItem(const QDomNode &node);
 
-	/*! \brief The SxeSession synchronizing the document.*/
-	SxeSession* session_;
-	/*! \brief The WbScene used for visualizing the document.*/
-	WbScene* scene_;
-	/*! \brief The user interaction mode the widget is in.*/
-	Mode mode_;
-	/*! \brief The stroke color used for new items.*/
-	QColor strokeColor_;
-	/*! \brief The fill color used for new items.*/
-	QColor fillColor_;
-	/*! \brief The stroke width used for new items.*/
-	int strokeWidth_;
+    /*! \brief The SxeSession synchronizing the document.*/
+    SxeSession* session_;
+    /*! \brief The WbScene used for visualizing the document.*/
+    WbScene* scene_;
+    /*! \brief The user interaction mode the widget is in.*/
+    Mode mode_;
+    /*! \brief The stroke color used for new items.*/
+    QColor strokeColor_;
+    /*! \brief The fill color used for new items.*/
+    QColor fillColor_;
+    /*! \brief The stroke width used for new items.*/
+    int strokeWidth_;
 
-	/*! \brief A list of existing WbItems */
+    /*! \brief A list of existing WbItems */
     QList<WbItem*> items_;
     // /*! \brief A list of WbItems to be deleted. */
     //     QList<WbItem*> deletionQueue_;
-	/*! \brief A list of QDomNode's that were added since last documentUpdated() signal received. */
+    /*! \brief A list of QDomNode's that were added since last documentUpdated() signal received. */
     QList<QDomNode> recentlyRelocatedNodes_;
-	/*! \brief A list of WbItem's whose nodes don't have 'id' attributes. */
+    /*! \brief A list of WbItem's whose nodes don't have 'id' attributes. */
     QList<WbItem*> idlessItems_;
-	/*! \brief Pointer to a new item that is being drawn.*/
+    /*! \brief Pointer to a new item that is being drawn.*/
     WbNewItem* newWbItem_;
-	/*! \brief Boolean used to force adding a vertex to a path being drawn.*/
-	bool addVertex_;
-	/*! \brief Timer used for forcing the addition of a new vertex.*/
-	QTimer* adding_;
-	/*! \brief The primary renderer used for rendering the document.*/
+    /*! \brief Boolean used to force adding a vertex to a path being drawn.*/
+    bool addVertex_;
+    /*! \brief Timer used for forcing the addition of a new vertex.*/
+    QTimer* adding_;
+    /*! \brief The primary renderer used for rendering the document.*/
     QSvgRenderer renderer_;
 
 private slots:
-	/*! \brief Tries to add 'id' attributes to nodes in deletionQueue_ if they still don't have them.*/
+    /*! \brief Tries to add 'id' attributes to nodes in deletionQueue_ if they still don't have them.*/
     void handleDocumentUpdated(bool remote);
-	/*! \brief Ensures that an item for the nodes in the inspection queue exist
-	 *      iff they're children of the root <svg/>.*/
-	void inspectNodes();
-	/*! \brief Adds a node to the list of nodes that will be processed by inspectNodes() at next documentUpdated().*/
-	void queueNodeInspection(const QDomNode &node);
-	/*! \brief Removes the item representing the node (if any).
-	 *  Doesn't affect \a node.
-	 */
-	void removeWbItem(const QDomNode &node);
-	/*! \brief Removes the item from the scene.
+    /*! \brief Ensures that an item for the nodes in the inspection queue exist
+     *      iff they're children of the root <svg/>.*/
+    void inspectNodes();
+    /*! \brief Adds a node to the list of nodes that will be processed by inspectNodes() at next documentUpdated().*/
+    void queueNodeInspection(const QDomNode &node);
+    /*! \brief Removes the item representing the node (if any).
+     *  Doesn't affect \a node.
+     */
+    void removeWbItem(const QDomNode &node);
+    /*! \brief Removes the item from the scene.
      *  Doesn't affect the underlying node.
      */
-	void removeWbItem(WbItem *wbitem);
-	/*! \brief Tries to add 'id' attributes to nodes in idlessItems_ if they still don't have them.*/
-	void addIds();
-	/*! \brief Adds the item associated with node to idlessItems_. */
-	void addToIdLess(const QDomElement &element);
-	/*! \brief If node is an 'id' attribute node, adds the ownerElement to idlessItems_. */
+    void removeWbItem(WbItem *wbitem);
+    /*! \brief Tries to add 'id' attributes to nodes in idlessItems_ if they still don't have them.*/
+    void addIds();
+    /*! \brief Adds the item associated with node to idlessItems_. */
+    void addToIdLess(const QDomElement &element);
+    /*! \brief If node is an 'id' attribute node, adds the ownerElement to idlessItems_. */
     void checkForRemovalOfId(QDomNode node);
     /*! \brief Checks if \a node is the 'viewBox' attribute of the <svg/> element.
      *  If so, the scene size is adjusted accordingly.
@@ -154,8 +154,8 @@ private slots:
     // void flushDeletionQueue();
 
 
-	/*! \brief Rerenders the contents of the document.*/
-	void rerender();
+    /*! \brief Rerenders the contents of the document.*/
+    void rerender();
 };
 
 #endif

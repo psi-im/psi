@@ -28,46 +28,46 @@ class QTextCursor;
 
 class PsiTextView : public QTextEdit
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	PsiTextView(QWidget *parent = 0);
+    PsiTextView(QWidget *parent = 0);
 
-	bool atBottom();
+    bool atBottom();
 
-	virtual void appendText(const QString &text);
+    virtual void appendText(const QString &text);
 
-	QString getHtml() const;
-	QString getPlainText() const;
+    QString getHtml() const;
+    QString getPlainText() const;
 
 public slots:
-	void scrollToBottom();
-	void scrollToTop();
+    void scrollToBottom();
+    void scrollToTop();
 
 protected:
-	// make these functions unusable, because they modify
-	// document structure and we can't override them to
-	// handle Icons correctly
-	void append(const QString &) { }
-	void toHtml() const { }
-	void toPlainText() const { }
-	void insertHtml(const QString &) { }
-	void insertPlainText(const QString &) { }
-	void setHtml(const QString &) { }
-	void setPlainText(const QString &) { }
+    // make these functions unusable, because they modify
+    // document structure and we can't override them to
+    // handle Icons correctly
+    void append(const QString &) { }
+    void toHtml() const { }
+    void toPlainText() const { }
+    void insertHtml(const QString &) { }
+    void insertPlainText(const QString &) { }
+    void setHtml(const QString &) { }
+    void setPlainText(const QString &) { }
 
-	// reimplemented
-	void contextMenuEvent(QContextMenuEvent *e);
-	void mouseMoveEvent(QMouseEvent *e);
-	void mousePressEvent(QMouseEvent *e);
-	void mouseReleaseEvent(QMouseEvent *e);
-	QMimeData *createMimeDataFromSelection() const;
-	void resizeEvent(QResizeEvent *);
+    // reimplemented
+    void contextMenuEvent(QContextMenuEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+    QMimeData *createMimeDataFromSelection() const;
+    void resizeEvent(QResizeEvent *);
 
-	QString getTextHelper(bool html) const;
+    QString getTextHelper(bool html) const;
 
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 #endif

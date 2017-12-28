@@ -31,20 +31,20 @@
 class LastActivityTask : public XMPP::Task
 {
 public:
-	LastActivityTask(const XMPP::Jid&, Task*);
+    LastActivityTask(const XMPP::Jid&, Task*);
 
-	void onGo();
-	bool take(const QDomElement &);
-	const XMPP::Jid & jid() const;
+    void onGo();
+    bool take(const QDomElement &);
+    const XMPP::Jid & jid() const;
 
-	const QString& status() const;
-	const QDateTime& time() const;
+    const QString& status() const;
+    const QDateTime& time() const;
 
 private:
-	QDomElement iq_;
-	XMPP::Jid jid_;
-	QDateTime last_time_;
-	QString last_status_;
+    QDomElement iq_;
+    XMPP::Jid jid_;
+    QDateTime last_time_;
+    QString last_status_;
 };
 
 #endif

@@ -26,57 +26,57 @@
 
 
 MUCReasonsEditor::MUCReasonsEditor(QWidget* parent)
-	: QDialog(parent)
-	, ui_(new Ui::MUCReasonsEditor)
+    : QDialog(parent)
+    , ui_(new Ui::MUCReasonsEditor)
 {
-	ui_->setupUi(this);
-	ui_->lstReasons->addItems(PsiOptions::instance()->getOption("options.muc.reasons").toStringList());
+    ui_->setupUi(this);
+    ui_->lstReasons->addItems(PsiOptions::instance()->getOption("options.muc.reasons").toStringList());
 
-	connect(ui_->btnAdd, SIGNAL(clicked()), SLOT(addButtonClicked()));
-	connect(ui_->btnRemove, SIGNAL(clicked()), SLOT(removeButtonClicked()));
-	connect(ui_->lstReasons, SIGNAL(currentTextChanged(QString)), SLOT(currentChanged(QString)));
+    connect(ui_->btnAdd, SIGNAL(clicked()), SLOT(addButtonClicked()));
+    connect(ui_->btnRemove, SIGNAL(clicked()), SLOT(removeButtonClicked()));
+    connect(ui_->lstReasons, SIGNAL(currentTextChanged(QString)), SLOT(currentChanged(QString)));
 }
 
 MUCReasonsEditor::~MUCReasonsEditor()
 {
-	delete ui_;
+    delete ui_;
 }
 
 void MUCReasonsEditor::accept()
 {
-	save();
-	reason_ = ui_->txtReason->text();
-	QDialog::accept();
+    save();
+    reason_ = ui_->txtReason->text();
+    QDialog::accept();
 }
 
 void MUCReasonsEditor::currentChanged(const QString &r)
 {
-	ui_->txtReason->setText(r);
+    ui_->txtReason->setText(r);
 }
 
 void MUCReasonsEditor::addButtonClicked()
 {
-	reason_ = ui_->txtReason->text().trimmed();
-	if (reason_.isEmpty())
-		return;
-	ui_->lstReasons->addItem(reason_);
+    reason_ = ui_->txtReason->text().trimmed();
+    if (reason_.isEmpty())
+        return;
+    ui_->lstReasons->addItem(reason_);
 }
 
 void MUCReasonsEditor::removeButtonClicked()
 {
-	int idx = ui_->lstReasons->currentRow();
-	if (idx >= 0) {
-		QListWidgetItem *item =ui_->lstReasons->takeItem(idx);
-		if (item)
-			delete item;
-	}
+    int idx = ui_->lstReasons->currentRow();
+    if (idx >= 0) {
+        QListWidgetItem *item =ui_->lstReasons->takeItem(idx);
+        if (item)
+            delete item;
+    }
 }
 
 void MUCReasonsEditor::save()
 {
-	QStringList reasons;
-	int cnt = ui_->lstReasons->count();
-	for (int i = 0; i < cnt; ++i)
-		reasons.append(ui_->lstReasons->item(i)->text());
-	PsiOptions::instance()->setOption("options.muc.reasons", reasons);
+    QStringList reasons;
+    int cnt = ui_->lstReasons->count();
+    for (int i = 0; i < cnt; ++i)
+        reasons.append(ui_->lstReasons->item(i)->text());
+    PsiOptions::instance()->setOption("options.muc.reasons", reasons);
 }

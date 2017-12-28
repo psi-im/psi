@@ -7,11 +7,11 @@ class QKeySequence;
 class ShortcutAccessingHost
 {
 public:
-	virtual ~ShortcutAccessingHost() {}
+    virtual ~ShortcutAccessingHost() {}
 
-	virtual void connectShortcut(const QKeySequence& shortcut, QObject *receiver, const char* slot) = 0;
-	virtual void disconnectShortcut(const QKeySequence& shortcut, QObject *receiver, const char* slot) = 0;
-	virtual void requestNewShortcut(QObject *receiver, const char* slot) = 0;
+    virtual void connectShortcut(const QKeySequence& shortcut, QObject *receiver, const char* slot) = 0;
+    virtual void disconnectShortcut(const QKeySequence& shortcut, QObject *receiver, const char* slot) = 0;
+    virtual void requestNewShortcut(QObject *receiver, const char* slot) = 0;
 
 };
 

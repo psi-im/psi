@@ -8,19 +8,19 @@ class QWidget;
 
 class OptionsTabStatusAuto : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabStatusAuto(QObject *parent);
-	~OptionsTabStatusAuto();
+    OptionsTabStatusAuto(QObject *parent);
+    ~OptionsTabStatusAuto();
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
-	void setData(PsiCon *, QWidget *parentDialog);
+    void setData(PsiCon *, QWidget *parentDialog);
 
 private:
-	QWidget *w, *parentWidget;
+    QWidget *w, *parentWidget;
 };
 
 #endif // OPT_STATUSAUTO_H

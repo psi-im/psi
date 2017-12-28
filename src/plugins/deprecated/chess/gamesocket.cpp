@@ -17,7 +17,7 @@
 #include "gamesocket.h"
 
 GameSocket::GameSocket(QWidget *parent, const char *name)
-	:Q3ServerSocket(GAME_PORT, GAME_BACKLOG, (QObject *)parent, name)
+    :Q3ServerSocket(GAME_PORT, GAME_BACKLOG, (QObject *)parent, name)
 {
 }
 
@@ -30,6 +30,6 @@ void
 GameSocket::newConnection(int sock)
 {
 
-	emit acceptConnection(sock);
+    emit acceptConnection(sock);
 }
 

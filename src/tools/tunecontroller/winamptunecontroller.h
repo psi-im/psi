@@ -28,21 +28,21 @@
 
 class WinAmpTuneController : public PollingTuneController
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	WinAmpTuneController();
-	virtual Tune currentTune() const;
+    WinAmpTuneController();
+    virtual Tune currentTune() const;
 
 private:
-	Tune getTune(const HWND &hWnd);
-	QPair<bool, QString> getTrackTitle(const HWND &waWnd) const;
+    Tune getTune(const HWND &hWnd);
+    QPair<bool, QString> getTrackTitle(const HWND &waWnd) const;
 
 protected slots:
-	void check();
+    void check();
 
 private:
-	Tune prevTune_;
-	int antiscrollCounter_;
+    Tune prevTune_;
+    int antiscrollCounter_;
 };
 
 #endif

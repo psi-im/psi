@@ -33,139 +33,139 @@ class UserResourceList;
 
 class PsiContact : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 private:
-	PsiContact(const PsiContact&);
-	PsiContact& operator=(const PsiContact&);
+    PsiContact(const PsiContact&);
+    PsiContact& operator=(const PsiContact&);
 
 protected:
-	PsiContact();
+    PsiContact();
 
 public:
-	PsiContact(const UserListItem& u, PsiAccount* account, bool isSelf = false);
-	~PsiContact();
+    PsiContact(const UserListItem& u, PsiAccount* account, bool isSelf = false);
+    ~PsiContact();
 
-	PsiAccount* account() const;
-	const UserListItem& userListItem() const;
-	const UserResourceList& userResourceList() const;
-	void update(const UserListItem& u);
+    PsiAccount* account() const;
+    const UserListItem& userListItem() const;
+    const UserResourceList& userResourceList() const;
+    void update(const UserListItem& u);
 
-	bool isBlocked() const;
-	bool isSelf() const;
-	bool isAgent() const;
-	bool inList() const;
-	bool isPrivate() const;
-	bool isConference() const;
-	bool noGroups() const;
-	bool authorized() const;
-	bool authorizesToSeeStatus() const;
-	bool askingForAuth() const;
-	bool isOnline() const;
-	bool isHidden() const;
-	bool isValid() const;
+    bool isBlocked() const;
+    bool isSelf() const;
+    bool isAgent() const;
+    bool inList() const;
+    bool isPrivate() const;
+    bool isConference() const;
+    bool noGroups() const;
+    bool authorized() const;
+    bool authorizesToSeeStatus() const;
+    bool askingForAuth() const;
+    bool isOnline() const;
+    bool isHidden() const;
+    bool isValid() const;
 
-	bool isAnimated() const;
+    bool isAnimated() const;
 
-	bool isActiveContact() const;
+    bool isActiveContact() const;
 
-	void activate();
+    void activate();
 
-	bool isAlwaysVisible() const;
-	void setAlwaysVisible(bool visible);
+    bool isAlwaysVisible() const;
+    void setAlwaysVisible(bool visible);
 
-	bool addAvailable() const;
-	bool removeAvailable() const;
-	bool authAvailable() const;
-	bool blockAvailable() const;
+    bool addAvailable() const;
+    bool removeAvailable() const;
+    bool authAvailable() const;
+    bool blockAvailable() const;
 
-	bool isFake() const;
+    bool isFake() const;
 
-	// reimplemented
-	const QString& name() const;
-	QString comparisonName() const;
-	void setName(const QString& name);
-	ContactListItemMenu* contextMenu(ContactListModel* model);
-	bool isEditable() const;
-	bool isDragEnabled() const;
-//	bool compare(const ContactListItem* other) const;
-	bool isRemovable() const;
+    // reimplemented
+    const QString& name() const;
+    QString comparisonName() const;
+    void setName(const QString& name);
+    ContactListItemMenu* contextMenu(ContactListModel* model);
+    bool isEditable() const;
+    bool isDragEnabled() const;
+//    bool compare(const ContactListItem* other) const;
+    bool isRemovable() const;
 
-	XMPP::Jid jid() const;
-	XMPP::Status status() const;
-	QString statusText() const;
-	QString toolTip() const;
-	QIcon picture() const;
-	QIcon alertPicture() const;
+    XMPP::Jid jid() const;
+    XMPP::Status status() const;
+    QString statusText() const;
+    QString toolTip() const;
+    QIcon picture() const;
+    QIcon alertPicture() const;
 
-	void rereadVCard();
+    void rereadVCard();
 
-	bool groupOperationPermitted(const QString& oldGroupName, const QString& newGroupName) const;
-	QStringList groups() const;
-	void setGroups(QStringList);
-	bool alerting() const;
-	void setAlert(const PsiIcon* icon);
-	void startAnim();
-	bool find(const Jid& jid) const;
-	// PsiContactList* contactList() const;
+    bool groupOperationPermitted(const QString& oldGroupName, const QString& newGroupName) const;
+    QStringList groups() const;
+    void setGroups(QStringList);
+    bool alerting() const;
+    void setAlert(const PsiIcon* icon);
+    void startAnim();
+    bool find(const Jid& jid) const;
+    // PsiContactList* contactList() const;
 
-	static QString generalGroupName();
-	static QString notInListGroupName();
-	static QString hiddenGroupName();
+    static QString generalGroupName();
+    static QString notInListGroupName();
+    static QString hiddenGroupName();
 
 protected:
-	bool shouldBeVisible() const;
-	// ContactListGroupItem* desiredParent() const;
+    bool shouldBeVisible() const;
+    // ContactListGroupItem* desiredParent() const;
 
 public slots:
-	void receiveIncomingEvent();
-	void sendMessage();
-	void sendMessageTo(QString resource);
-	void openChat();
-	void openChatTo(QString resource);
+    void receiveIncomingEvent();
+    void sendMessage();
+    void sendMessageTo(QString resource);
+    void openChat();
+    void openChatTo(QString resource);
 #ifdef WHITEBOARDING
-	void openWhiteboard();
-	void openWhiteboardTo(QString resource);
+    void openWhiteboard();
+    void openWhiteboardTo(QString resource);
 #endif
-	void executeCommand(QString resource);
-	void openActiveChat(QString resource);
-	void sendFile();
-	void inviteToGroupchat(QString groupChat);
-	void toggleBlockedState();
-	void toggleBlockedStateConfirmation();
-	void rerequestAuthorizationFrom();
-	void removeAuthorizationFrom();
-	void remove();
-	void clearCustomPicture();
-	void userInfo();
-	void history();
+    void executeCommand(QString resource);
+    void openActiveChat(QString resource);
+    void sendFile();
+    void inviteToGroupchat(QString groupChat);
+    void toggleBlockedState();
+    void toggleBlockedStateConfirmation();
+    void rerequestAuthorizationFrom();
+    void removeAuthorizationFrom();
+    void remove();
+    void clearCustomPicture();
+    void userInfo();
+    void history();
 
-	void stopAnim();
+    void stopAnim();
 
 private slots:
-	void avatarChanged(const Jid&);
-	void vcardChanged(const Jid&);
+    void avatarChanged(const Jid&);
+    void vcardChanged(const Jid&);
 
-	void blockContactConfirmation(const QString& id, bool confirmed);
-	void blockContactConfirmationHelper(bool block);
+    void blockContactConfirmation(const QString& id, bool confirmed);
+    void blockContactConfirmationHelper(bool block);
 
-	void updateStatus();
+    void updateStatus();
 
 signals:
-	void alert();
-	void anim();
-	void updated();
-	void groupsChanged();
+    void alert();
+    void anim();
+    void updated();
+    void groupsChanged();
 
-	/**
-	 * This signal is emitted when PsiContact has entered its final
-	 * destruction stage.
-	 */
-	void destroyed(PsiContact*);
+    /**
+     * This signal is emitted when PsiContact has entered its final
+     * destruction stage.
+     */
+    void destroyed(PsiContact*);
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	void addRemoveAuthBlockAvailable(bool* add, bool* remove, bool* auth, bool* block) const;
+    void addRemoveAuthBlockAvailable(bool* add, bool* remove, bool* auth, bool* block) const;
 };

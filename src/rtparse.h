@@ -26,19 +26,19 @@
 class RTParse
 {
 public:
-	RTParse(const QString &);
+    RTParse(const QString &);
 
-	const QString &output() const;
+    const QString &output() const;
 
-	QString next();
-	bool atEnd() const;
-	void putPlain(const QString &);
-	void putRich(const QString &);
+    QString next();
+    bool atEnd() const;
+    void putPlain(const QString &);
+    void putRich(const QString &);
 
 private:
-	QString in, out;
-	int v_at;
-	bool v_atEnd;
+    QString in, out;
+    int v_at;
+    bool v_atEnd;
 };
 
 #endif

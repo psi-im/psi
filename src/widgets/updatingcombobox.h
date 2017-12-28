@@ -5,18 +5,18 @@
 
 class UpdatingComboBox : public QComboBox
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	UpdatingComboBox(QWidget* parent) : QComboBox(parent) {}
+    UpdatingComboBox(QWidget* parent) : QComboBox(parent) {}
 
-	virtual void showPopup() {
-		emit popup();
-		QComboBox::showPopup();
-	}
+    virtual void showPopup() {
+        emit popup();
+        QComboBox::showPopup();
+    }
 
 signals:
-	void popup();
+    void popup();
 };
 
 #endif

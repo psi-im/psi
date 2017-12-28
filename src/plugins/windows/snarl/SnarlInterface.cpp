@@ -7,7 +7,7 @@ using namespace std;
 
 
 SnarlInterface::SnarlInterface() {
-	SNARL_GLOBAL_MESSAGE = "SnarlGlobalMessage";
+    SNARL_GLOBAL_MESSAGE = "SnarlGlobalMessage";
 }
 
 SnarlInterface::~SnarlInterface() {
@@ -56,7 +56,7 @@ bool SnarlInterface::snIsMessageVisible(long id) {
 }
 
 bool SnarlInterface::snUpdateMessage(long id, std::string title, std::string text) {
-	SNARLSTRUCT snarlStruct;
+    SNARLSTRUCT snarlStruct;
     snarlStruct.id = id;
     snarlStruct.cmd = SNARL_UPDATE;
     if (title.length() > SNARL_STRING_LENGTH) {
@@ -89,43 +89,43 @@ bool SnarlInterface::snRegisterConfig(HWND hWnd, std::string appName, long reply
 }
 
 bool SnarlInterface::snRevokeConfig(HWND hWnd) {
-	SNARLSTRUCT snarlStruct;
+    SNARLSTRUCT snarlStruct;
     snarlStruct.cmd = SNARL_REVOKE_CONFIG_WINDOW;
     snarlStruct.lngData2 = reinterpret_cast<long>(hWnd);
     return static_cast<bool>(send(snarlStruct));
 }
 
 bool SnarlInterface::snGetVersion(int* major, int* minor) {
-	SNARLSTRUCT snarlStruct;
+    SNARLSTRUCT snarlStruct;
     snarlStruct.cmd = SNARL_GET_VERSION;
     long versionInfo = send(snarlStruct);
-	if (versionInfo) {
-		int maj = static_cast<int>(HIWORD(versionInfo));
-		*major = maj;
-		int min = static_cast<int>(LOWORD(versionInfo));
-		*minor = min;
+    if (versionInfo) {
+        int maj = static_cast<int>(HIWORD(versionInfo));
+        *major = maj;
+        int min = static_cast<int>(LOWORD(versionInfo));
+        *minor = min;
         return true;
-	}
-	return false;
+    }
+    return false;
 }
 
 long SnarlInterface::snGetGlobalMsg() {
-	std::wstring tmp;
-	tmp= QString(SNARL_GLOBAL_MESSAGE.c_str()).toStdWString();
-	return RegisterWindowMessage(tmp.c_str());
+    std::wstring tmp;
+    tmp= QString(SNARL_GLOBAL_MESSAGE.c_str()).toStdWString();
+    return RegisterWindowMessage(tmp.c_str());
 }
 
 long SnarlInterface::send(SNARLSTRUCT snarlStruct) {
-	HWND hWnd = FindWindow(NULL, QString("Snarl").toStdWString().c_str());
-	if (IsWindow(hWnd)) {
-		COPYDATASTRUCT cds;
-		cds.dwData = 2;
-		cds.cbData = sizeof(snarlStruct);
-		cds.lpData = &snarlStruct;
-		LRESULT lr = SendMessage(hWnd, WM_COPYDATA, 0, (LPARAM)&cds);
-		if (lr) {
+    HWND hWnd = FindWindow(NULL, QString("Snarl").toStdWString().c_str());
+    if (IsWindow(hWnd)) {
+        COPYDATASTRUCT cds;
+        cds.dwData = 2;
+        cds.cbData = sizeof(snarlStruct);
+        cds.lpData = &snarlStruct;
+        LRESULT lr = SendMessage(hWnd, WM_COPYDATA, 0, (LPARAM)&cds);
+        if (lr) {
             return lr;
-		}
-	}
-	return 0;
+        }
+    }
+    return 0;
 }

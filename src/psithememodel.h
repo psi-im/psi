@@ -29,52 +29,52 @@ class Theme;
 
 struct ThemeItemInfo
 {
-	QString id;
-	QString title;
-	QString version;
-	QString description;
-	QStringList authors;
-	QString creation;
-	QString homeUrl;
+    QString id;
+    QString title;
+    QString version;
+    QString description;
+    QStringList authors;
+    QString creation;
+    QString homeUrl;
 
-	bool hasPreview;
-	bool isValid = false;
-	bool isCurrent = false;
+    bool hasPreview;
+    bool isValid = false;
+    bool isCurrent = false;
 };
 
 
 class PsiThemeModel : public QAbstractListModel
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum ThemeRoles {
-		IdRole = Qt::UserRole + 1,
-		HasPreviewRole,
-		TitleRole,
-		IsCurrent
-	};
+    enum ThemeRoles {
+        IdRole = Qt::UserRole + 1,
+        HasPreviewRole,
+        TitleRole,
+        IsCurrent
+    };
 
-	PsiThemeModel(QObject *parent);
-	~PsiThemeModel();
-	void setType(const QString &type);
+    PsiThemeModel(QObject *parent);
+    ~PsiThemeModel();
+    void setType(const QString &type);
 
-	int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
-	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-	int themeRow(const QString &id);
+    int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
+    QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
+    int themeRow(const QString &id);
 
-	bool setData(const QModelIndex &index, const QVariant &value, int role);
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
 private slots:
-	void onThreadedResultReadyAt(int index);
-	void loadComplete();
+    void onThreadedResultReadyAt(int index);
+    void loadComplete();
 
 private:
-	struct Loader;
-	Loader *loader = nullptr;
-	QFutureWatcher<ThemeItemInfo> themeWatcher;
-	QFuture<ThemeItemInfo> themesFuture;
-	QList<ThemeItemInfo> themesInfo;
-	QString providerType;
+    struct Loader;
+    Loader *loader = nullptr;
+    QFutureWatcher<ThemeItemInfo> themeWatcher;
+    QFuture<ThemeItemInfo> themesFuture;
+    QList<ThemeItemInfo> themesInfo;
+    QString providerType;
 };
 
 #endif

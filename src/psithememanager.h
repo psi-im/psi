@@ -28,23 +28,23 @@
 //class ChatViewTheme;
 
 class PsiThemeManager : public QObject {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static PsiThemeManager* instance();
+    static PsiThemeManager* instance();
 
-	void registerProvider(PsiThemeProvider *provider, bool required = false);
-	PsiThemeProvider *provider(const QString &type);
-	QList<PsiThemeProvider *> registeredProviders() const;
-	bool loadAll();
+    void registerProvider(PsiThemeProvider *provider, bool required = false);
+    PsiThemeProvider *provider(const QString &type);
+    QList<PsiThemeProvider *> registeredProviders() const;
+    bool loadAll();
 
 private:
-	PsiThemeManager();
-	~PsiThemeManager();
+    PsiThemeManager();
+    ~PsiThemeManager();
 
-	static PsiThemeManager* instance_;
+    static PsiThemeManager* instance_;
 
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 

@@ -27,39 +27,39 @@
 
 class ActiveProfiles: public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static ActiveProfiles* instance();
+    static ActiveProfiles* instance();
 
-	bool setThisProfile(const QString &profile);
-	void unsetThisProfile();
-	QString thisProfile() const;
+    bool setThisProfile(const QString &profile);
+    void unsetThisProfile();
+    QString thisProfile() const;
 
-	bool isActive(const QString &profile) const;
-	bool isAnyActive() const;
+    bool isActive(const QString &profile) const;
+    bool isAnyActive() const;
 
-	bool setStatus(const QString &profile, const QString &status, const QString &message) const;
-	bool openUri(const QString &profile, const QString &uri) const;
-	bool raise(const QString &profile, bool withUI) const;
+    bool setStatus(const QString &profile, const QString &status, const QString &message) const;
+    bool openUri(const QString &profile, const QString &uri) const;
+    bool raise(const QString &profile, bool withUI) const;
 
-	~ActiveProfiles();
+    ~ActiveProfiles();
 
 signals:
-	void setStatusRequested(const QString &status, const QString &message);
-	void openUriRequested(const QString &uri);
-	void raiseRequested();
+    void setStatusRequested(const QString &status, const QString &message);
+    void openUriRequested(const QString &uri);
+    void raiseRequested();
 
 protected:
-	static ActiveProfiles *instance_;
+    static ActiveProfiles *instance_;
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	ActiveProfiles();
+    ActiveProfiles();
 
-	friend class PsiConAdapter;
-	friend class PsiMain;
+    friend class PsiConAdapter;
+    friend class PsiMain;
 };
 
 #endif

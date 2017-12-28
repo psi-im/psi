@@ -39,134 +39,134 @@ typedef QList<ProxyItem> ProxyItemList;
 class ProxySettings
 {
 public:
-	ProxySettings();
+    ProxySettings();
 
-	QString host, user, pass;
-	int port;
-	bool useAuth;
-	QString url;
+    QString host, user, pass;
+    int port;
+    bool useAuth;
+    QString url;
 
 
-	void toOptions(OptionsTree* o, QString base) const;
-	void fromOptions(OptionsTree* o, QString base);
-	QDomElement toXml(QDomDocument *) const;
-	bool fromXml(const QDomElement &);
+    void toOptions(OptionsTree* o, QString base) const;
+    void fromOptions(OptionsTree* o, QString base);
+    QDomElement toXml(QDomDocument *) const;
+    bool fromXml(const QDomElement &);
 };
 
 class ProxyDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=0);
-	~ProxyDlg();
+    ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=0);
+    ~ProxyDlg();
 
 signals:
-	void applyList(const ProxyItemList &, int cur);
+    void applyList(const ProxyItemList &, int cur);
 
 public:
-	class Private;
-	friend class Private;
+    class Private;
+    friend class Private;
 private:
-	Private *d;
-	Ui::Proxy ui_;
+    Private *d;
+    Ui::Proxy ui_;
 };
 
 class ProxyChooser : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ProxyChooser(ProxyManager*, QWidget* parent);
-	~ProxyChooser();
+    ProxyChooser(ProxyManager*, QWidget* parent);
+    ~ProxyChooser();
 
-	QString currentItem() const;
-	void setCurrentItem(const QString &item);
+    QString currentItem() const;
+    void setCurrentItem(const QString &item);
 
 private slots:
-	void pm_settingsChanged();
-	void pm_settingsChangedApply();
-	void doOpen();
+    void pm_settingsChanged();
+    void pm_settingsChangedApply();
+    void doOpen();
 
 signals:
-	void itemChanged();
+    void itemChanged();
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	void buildComboBox();
+    void buildComboBox();
 };
 
 class ProxyItem
 {
 public:
-	ProxyItem() {}
+    ProxyItem() {}
 
-	QString id;
-	QString name;
-	QString type;
-	ProxySettings settings;
+    QString id;
+    QString name;
+    QString type;
+    ProxySettings settings;
 };
 
 class ProxyForObject : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ProxyForObject(OptionsTree *o, QObject *parent = 0);
-	~ProxyForObject();
+    ProxyForObject(OptionsTree *o, QObject *parent = 0);
+    ~ProxyForObject();
 
-	QString itemForObject(const QString& obj);
-	void save();
-	QComboBox* getComboBox(ProxyChooser* pc, QWidget* p = 0);
+    QString itemForObject(const QString& obj);
+    void save();
+    QComboBox* getComboBox(ProxyChooser* pc, QWidget* p = 0);
 
 private slots:
-	void currentItemChanged(int);
-	void updateCurrentItem();
+    void currentItemChanged(int);
+    void updateCurrentItem();
 
 private:
-	void loadItem(const QString& obj);
+    void loadItem(const QString& obj);
 
-	OptionsTree* ot_;
-	ProxyChooser* pc_;
-	QPointer<QComboBox> cb_;
-	QMap<QString, QString> items_;
-	QMap<QString, QString> tmp_;
+    OptionsTree* ot_;
+    ProxyChooser* pc_;
+    QPointer<QComboBox> cb_;
+    QMap<QString, QString> items_;
+    QMap<QString, QString> tmp_;
 };
 
 class ProxyManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static ProxyManager* instance();
+    static ProxyManager* instance();
 
-	void init(OptionsTree *o);
-	~ProxyManager();
+    void init(OptionsTree *o);
+    ~ProxyManager();
 
-	ProxyChooser *createProxyChooser(QWidget *parent=0);
-	ProxyItemList itemList() const;
-	ProxyItem getItem(const QString &id) const;
-	QString lastEdited() const;
-	void migrateItemList(const ProxyItemList &);
-//	int findOldIndex(int) const;
-	ProxyForObject* proxyForObject();
-	ProxyItem getItemForObject(const QString& obj);
+    ProxyChooser *createProxyChooser(QWidget *parent=0);
+    ProxyItemList itemList() const;
+    ProxyItem getItem(const QString &id) const;
+    QString lastEdited() const;
+    void migrateItemList(const ProxyItemList &);
+//    int findOldIndex(int) const;
+    ProxyForObject* proxyForObject();
+    ProxyItem getItemForObject(const QString& obj);
 
 signals:
-	void settingsChanged();
-	void proxyRemoved(QString);
+    void settingsChanged();
+    void proxyRemoved(QString);
 
 public slots:
-	void openDialog(QString);
+    void openDialog(QString);
 
 private slots:
-	void pd_applyList(const ProxyItemList &, int cur);
+    void pd_applyList(const ProxyItemList &, int cur);
 
 private:
-	ProxyManager();
-	class Private;
-	Private *d;
+    ProxyManager();
+    class Private;
+    Private *d;
 
-	static ProxyManager* instance_;
+    static ProxyManager* instance_;
 };
 
 #endif

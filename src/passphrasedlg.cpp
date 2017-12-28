@@ -25,24 +25,24 @@
 
 PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
 {
-	ui_.setupUi(this);
-	setModal(false);
-	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(accept()));
-	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
+    ui_.setupUi(this);
+    setModal(false);
+    connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(accept()));
+    connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
 }
 
 void PassphraseDlg::promptPassphrase(const QString& name)
 {
-	setWindowTitle(tr("%1: OpenPGP Passphrase").arg(name));
-	resize(minimumSizeHint());
+    setWindowTitle(tr("%1: OpenPGP Passphrase").arg(name));
+    resize(minimumSizeHint());
 }
 
 QString PassphraseDlg::getPassphrase() const
 {
-	return ui_.le_pass->text();
+    return ui_.le_pass->text();
 }
 
 bool PassphraseDlg::rememberPassPhrase() const
 {
-	return ui_.cb_savePass->isChecked();
+    return ui_.cb_savePass->isChecked();
 }

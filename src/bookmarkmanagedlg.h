@@ -35,51 +35,51 @@ class ConferenceBookmark;
 
 class BookmarkManageDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	BookmarkManageDlg(PsiAccount* account);
-	~BookmarkManageDlg();
+    BookmarkManageDlg(PsiAccount* account);
+    ~BookmarkManageDlg();
 
 public slots:
-	// reimplemented
-	void reject();
-	void accept();
+    // reimplemented
+    void reject();
+    void accept();
 
 private:
-	enum Role {
-		// DisplayRole / EditRole
-		JidRole      = Qt::UserRole + 0,
-		AutoJoinRole = Qt::UserRole + 1,
-		NickRole     = Qt::UserRole + 2,
-		PasswordRole = Qt::UserRole + 3
-	};
+    enum Role {
+        // DisplayRole / EditRole
+        JidRole      = Qt::UserRole + 0,
+        AutoJoinRole = Qt::UserRole + 1,
+        NickRole     = Qt::UserRole + 2,
+        PasswordRole = Qt::UserRole + 3
+    };
 
-	void loadBookmarks();
-	void saveBookmarks();
+    void loadBookmarks();
+    void saveBookmarks();
 
-	void appendItem(QStandardItem* item);
-	XMPP::Jid jid() const;
-	QModelIndex currentIndex() const;
+    void appendItem(QStandardItem* item);
+    XMPP::Jid jid() const;
+    QModelIndex currentIndex() const;
 
 private slots:
-	void addBookmark();
-	void removeBookmark();
-	void updateCurrentItem();
-	void joinCurrentRoom();
-	void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
-	void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
-	void importBookmarks();
-	void exportBookmarks();
+    void addBookmark();
+    void removeBookmark();
+    void updateCurrentItem();
+    void joinCurrentRoom();
+    void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
+    void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+    void importBookmarks();
+    void exportBookmarks();
 
 private:
-	Ui::BookmarkManage ui_;
-	PsiAccount* account_;
-	QStandardItemModel* model_;
-	QPushButton* addButton_;
-	QPushButton* removeButton_;
-	QPushButton* joinButton_;
+    Ui::BookmarkManage ui_;
+    PsiAccount* account_;
+    QStandardItemModel* model_;
+    QPushButton* addButton_;
+    QPushButton* removeButton_;
+    QPushButton* joinButton_;
 
-	ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
+    ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
 };
 
 #endif

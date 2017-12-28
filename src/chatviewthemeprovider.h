@@ -31,54 +31,54 @@ class PsiCon;
 
 class ChatViewThemeProvider : public PsiThemeProvider
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ChatViewThemeProvider(PsiCon *);
+    ChatViewThemeProvider(PsiCon *);
 
-	const char* type() const { return "chatview"; }
-	const QStringList themeIds() const;
-	Theme theme(const QString &id);
+    const char* type() const { return "chatview"; }
+    const QStringList themeIds() const;
+    Theme theme(const QString &id);
 
-	bool loadCurrent();
-	Theme current() const; // currently loaded theme
+    bool loadCurrent();
+    Theme current() const; // currently loaded theme
 
-	void setCurrentTheme(const QString &);
-	virtual int screenshotWidth() const { return 512; } // hack
+    void setCurrentTheme(const QString &);
+    virtual int screenshotWidth() const { return 512; } // hack
 
 #ifdef WEBENGINE
-	ThemeServer *themeServer();
-	QWebEngineUrlRequestInterceptor *requestInterceptor();
+    ThemeServer *themeServer();
+    QWebEngineUrlRequestInterceptor *requestInterceptor();
 #endif
 
-	QString optionsName() const { return tr("Chat Message Style"); }
-	QString optionsDescription() const { return tr("Configure your chat theme here"); }
+    QString optionsName() const { return tr("Chat Message Style"); }
+    QString optionsDescription() const { return tr("Configure your chat theme here"); }
 
 protected:
-	virtual const char* optionString() const { return "options.ui.chat.theme"; }
+    virtual const char* optionString() const { return "options.ui.chat.theme"; }
 
 signals:
-	void themeChanged();
+    void themeChanged();
 
 private:
-	PsiCon *_psi;
-	Theme curTheme; // FIXME it does not make sense to keep it as pointer
+    PsiCon *_psi;
+    Theme curTheme; // FIXME it does not make sense to keep it as pointer
 };
 
 class GroupChatViewThemeProvider : public ChatViewThemeProvider
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	GroupChatViewThemeProvider(PsiCon *psi) :
-		ChatViewThemeProvider(psi) {}
+    GroupChatViewThemeProvider(PsiCon *psi) :
+        ChatViewThemeProvider(psi) {}
 
-	const char* type() const { return "groupchatview"; }
-	QString optionsName() const { return tr("Groupchat Message Style"); }
-	QString optionsDescription() const { return tr("Configure your groupchat theme here"); }
+    const char* type() const { return "groupchatview"; }
+    QString optionsName() const { return tr("Groupchat Message Style"); }
+    QString optionsDescription() const { return tr("Configure your groupchat theme here"); }
 
 protected:
-	const char* optionString() const { return "options.ui.muc.theme"; }
+    const char* optionString() const { return "options.ui.muc.theme"; }
 };
 
 #endif // CHATVIEWTHEMEPROVIDER_H

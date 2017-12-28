@@ -27,10 +27,10 @@
 #include <QStringList>
 
 namespace XMPP {
-	class VCard;
-	class Jid;
-	class Task;
-	class JT_VCard;
+    class VCard;
+    class Jid;
+    class Task;
+    class JT_VCard;
 }
 using namespace XMPP;
 
@@ -38,41 +38,41 @@ class PsiAccount;
 
 class VCardFactory : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	static VCardFactory* instance();
-	VCard vcard(const Jid &);
-	const VCard mucVcard(const Jid &j) const;
-	void setVCard(const Jid &, const VCard &, bool notifyPhoto = true);
-	void setVCard(const PsiAccount* account, const VCard &v, QObject* obj = 0, const char* slot = 0);
-	void setTargetVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot);
-	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot,
-	                   bool cacheVCard = true, bool isMuc = false, bool notifyPhoto = true);
+    static VCardFactory* instance();
+    VCard vcard(const Jid &);
+    const VCard mucVcard(const Jid &j) const;
+    void setVCard(const Jid &, const VCard &, bool notifyPhoto = true);
+    void setVCard(const PsiAccount* account, const VCard &v, QObject* obj = 0, const char* slot = 0);
+    void setTargetVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot);
+    JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot,
+                       bool cacheVCard = true, bool isMuc = false, bool notifyPhoto = true);
 
 signals:
-	void vcardChanged(const Jid&);
-	void vcardPhotoAvailable(const Jid&, bool isMuc); // dedicated for AvatarFactory. it will almost always work except requests from AvatarFactory
+    void vcardChanged(const Jid&);
+    void vcardPhotoAvailable(const Jid&, bool isMuc); // dedicated for AvatarFactory. it will almost always work except requests from AvatarFactory
 
 protected:
-	void checkLimit(const QString &jid, const VCard &vcard);
+    void checkLimit(const QString &jid, const VCard &vcard);
 
 private slots:
-	void updateVCardFinished();
-	void taskFinished();
-	void mucTaskFinished();
+    void updateVCardFinished();
+    void taskFinished();
+    void mucTaskFinished();
 
 private:
-	VCardFactory();
-	~VCardFactory();
+    VCardFactory();
+    ~VCardFactory();
 
-	static VCardFactory* instance_;
-	const int dictSize_;
-	QStringList vcardList_;
-	QMap<QString,VCard> vcardDict_;
-	QMap<QString, QHash<QString,VCard> > mucVcardDict_; // QHash in case of big mucs
+    static VCardFactory* instance_;
+    const int dictSize_;
+    QStringList vcardList_;
+    QMap<QString,VCard> vcardDict_;
+    QMap<QString, QHash<QString,VCard> > mucVcardDict_; // QHash in case of big mucs
 
-	void saveVCard(const Jid &, const VCard &, bool notifyPhoto);
+    void saveVCard(const Jid &, const VCard &, bool notifyPhoto);
 };
 
 #endif

@@ -29,19 +29,19 @@ class PrivacyListItem;
 
 class PrivacyRuleDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PrivacyRuleDlg();
+    PrivacyRuleDlg();
 
-	void setRule(const PrivacyListItem&);
-	PrivacyListItem rule() const;
+    void setRule(const PrivacyListItem&);
+    PrivacyListItem rule() const;
 
 protected slots:
-	void type_selected(const QString&);
+    void type_selected(const QString&);
 
 private:
-	Ui::PrivacyRule ui_;
+    Ui::PrivacyRule ui_;
 };
 
 #endif

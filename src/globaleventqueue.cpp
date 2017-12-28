@@ -24,60 +24,60 @@
 
 GlobalEventQueue* GlobalEventQueue::instance()
 {
-	if (!instance_)
-		instance_ = new GlobalEventQueue();
-	return instance_;
+    if (!instance_)
+        instance_ = new GlobalEventQueue();
+    return instance_;
 }
 
 int GlobalEventQueue::count() const
 {
-	return items_.count();
+    return items_.count();
 }
 
 const QList<int>& GlobalEventQueue::ids() const
 {
-	return ids_;
+    return ids_;
 }
 
 PsiEvent::Ptr GlobalEventQueue::peek(int id) const
 {
-	Q_ASSERT(ids_.contains(id));
-	foreach(EventItem* item, items_)
-		if (item->id() == id)
-			return item->event();
-	return PsiEvent::Ptr();
+    Q_ASSERT(ids_.contains(id));
+    foreach(EventItem* item, items_)
+        if (item->id() == id)
+            return item->event();
+    return PsiEvent::Ptr();
 }
 
 void GlobalEventQueue::enqueue(EventItem* item)
 {
-	Q_ASSERT(item);
-	Q_ASSERT(!ids_.contains(item->id()));
-	if (!item || ids_.contains(item->id()))
-		return;
+    Q_ASSERT(item);
+    Q_ASSERT(!ids_.contains(item->id()));
+    if (!item || ids_.contains(item->id()))
+        return;
 
-	ids_.append(item->id());
-	items_.append(item);
-	Q_ASSERT(ids_.contains(item->id()));
+    ids_.append(item->id());
+    items_.append(item);
+    Q_ASSERT(ids_.contains(item->id()));
 
-	emit queueChanged();
+    emit queueChanged();
 }
 
 void GlobalEventQueue::dequeue(EventItem* item)
 {
-	Q_ASSERT(item);
-	Q_ASSERT(ids_.contains(item->id()));
-	if (!item || !ids_.contains(item->id()))
-		return;
+    Q_ASSERT(item);
+    Q_ASSERT(ids_.contains(item->id()));
+    if (!item || !ids_.contains(item->id()))
+        return;
 
-	ids_.removeAll(item->id());
-	items_.removeAll(item);
-	Q_ASSERT(!ids_.contains(item->id()));
+    ids_.removeAll(item->id());
+    items_.removeAll(item);
+    Q_ASSERT(!ids_.contains(item->id()));
 
-	emit queueChanged();
+    emit queueChanged();
 }
 
 GlobalEventQueue::GlobalEventQueue()
-	: QObject(QCoreApplication::instance())
+    : QObject(QCoreApplication::instance())
 {}
 
 GlobalEventQueue* GlobalEventQueue::instance_ = NULL;

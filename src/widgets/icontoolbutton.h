@@ -29,31 +29,31 @@ class Iconset;
 
 class IconToolButton : public QToolButton
 {
-	Q_OBJECT
-	Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
+    Q_OBJECT
+    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
 
-	Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
-	Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
 
 public:
-	IconToolButton(QWidget *parent = 0);
-	~IconToolButton();
+    IconToolButton(QWidget *parent = 0);
+    ~IconToolButton();
 
-	void setIcon(const QIcon &);
+    void setIcon(const QIcon &);
 
 public slots:
-	void setPsiIcon(const PsiIcon *, bool activate = true);
-	void setPsiIcon(const QString &);
-	QString psiIconName() const;
+    void setPsiIcon(const PsiIcon *, bool activate = true);
+    void setPsiIcon(const QString &);
+    QString psiIconName() const;
 
 protected:
-	// reimplemented
-	void paintEvent(QPaintEvent* event);
+    // reimplemented
+    void paintEvent(QPaintEvent* event);
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 #endif

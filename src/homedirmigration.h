@@ -30,41 +30,41 @@ class Thread;
 
 class HomeDirMigration : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum Choice {
-		Copy,
-		Move,
-		Nothing
-	};
+    enum Choice {
+        Copy,
+        Move,
+        Nothing
+    };
 
-	explicit HomeDirMigration(QWidget *parent = 0);
-	~HomeDirMigration();
+    explicit HomeDirMigration(QWidget *parent = 0);
+    ~HomeDirMigration();
 
-	bool checkOldHomeDir();
-	QString oldHomeDir() const;
+    bool checkOldHomeDir();
+    QString oldHomeDir() const;
 
 public slots:
-	void threadFinish();
-	int exec();
+    void threadFinish();
+    int exec();
 
 protected:
-	void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event);
 
 private slots:
-	void accept();
-	void setChoice(int choose);
+    void accept();
+    void setChoice(int choose);
 
 private:
-	Ui::HomeDirMigration *ui;
-	QDir oldHomeDir_;
-	QDir configDir_;
-	QDir dataDir_;
-	QDir cacheDir_;
+    Ui::HomeDirMigration *ui;
+    QDir oldHomeDir_;
+    QDir configDir_;
+    QDir dataDir_;
+    QDir cacheDir_;
 
-	Choice choice_;
-	Thread *thread_;
+    Choice choice_;
+    Thread *thread_;
 };
 
 #endif // HOMEDIRMIGRATION_H

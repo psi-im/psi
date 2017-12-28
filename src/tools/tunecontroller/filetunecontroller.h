@@ -23,7 +23,7 @@
 #define FILEPLAYERCONTROLLER_H
 
 namespace QCA {
-	class FileWatch;
+    class FileWatch;
 }
 
 #include "tune.h"
@@ -31,27 +31,27 @@ namespace QCA {
 
 class FileTuneController : public PollingTuneController
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	enum Mode {
-		ModeWatch,
-		ModeBoth
-	};
+    enum Mode {
+        ModeWatch,
+        ModeBoth
+    };
 
 public:
-	FileTuneController(const QString& file);
-	Tune currentTune() const;
+    FileTuneController(const QString& file);
+    Tune currentTune() const;
 
 protected slots:
-	void onFileChanged();
-	void check();
+    void onFileChanged();
+    void check();
 
 private:
-	QString _songFile;
-	QCA::FileWatch *_tuneFileWatcher;
-	Tune _currentTune;
-	bool _waitForCreated;
-	bool _watchFunctional; // is able to work at all (for example it is known NFS doesn't support fs notifications)
+    QString _songFile;
+    QCA::FileWatch *_tuneFileWatcher;
+    Tune _currentTune;
+    bool _waitForCreated;
+    bool _watchFunctional; // is able to work at all (for example it is known NFS doesn't support fs notifications)
 };
 
 #endif

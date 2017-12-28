@@ -31,17 +31,17 @@
 
 class SnarlPlugin : public QObject, public PsiPlugin
 {
-	Q_OBJECT
-	Q_INTERFACES(PsiPlugin)
+    Q_OBJECT
+    Q_INTERFACES(PsiPlugin)
 
 public:
-	SnarlPlugin();
-	~SnarlPlugin();
-	virtual QString name() const;
-	virtual QString shortName() const;
-	virtual void message( const QString& message, const QString& fromJid, const QString& fromDisplay);
+    SnarlPlugin();
+    ~SnarlPlugin();
+    virtual QString name() const;
+    virtual QString shortName() const;
+    virtual void message( const QString& message, const QString& fromJid, const QString& fromDisplay);
 private:
-	SnarlInterface* snarl_;
+    SnarlInterface* snarl_;
 
 };
 
@@ -49,35 +49,35 @@ Q_EXPORT_PLUGIN(SnarlPlugin);
 
 SnarlPlugin::SnarlPlugin() : PsiPlugin()
 {
-	snarl_ = new SnarlInterface();
-	int major=0;
-	int minor=0;
-	snarl_->snGetVersion(&major, &minor);
-	if (major==0 && minor==0)
-		QMessageBox::information(0,"Snarl",QString("Snarl is not running, so notifications are disabled until it is started"));
+    snarl_ = new SnarlInterface();
+    int major=0;
+    int minor=0;
+    snarl_->snGetVersion(&major, &minor);
+    if (major==0 && minor==0)
+        QMessageBox::information(0,"Snarl",QString("Snarl is not running, so notifications are disabled until it is started"));
 }
 
 SnarlPlugin::~SnarlPlugin()
 {
-	delete snarl_;
+    delete snarl_;
 }
 
 QString SnarlPlugin::name() const
 {
-	return "Snarl Plugin";
+    return "Snarl Plugin";
 }
 
 QString SnarlPlugin::shortName() const
 {
-	return "snarl";
+    return "snarl";
 }
 
 void SnarlPlugin::message( const QString& message, const QString& fromJid, const QString& fromDisplay)
 {
-	QString text=QString("%1 says\n %2").arg(fromDisplay).arg(message);
-	QString caption=QString("Received message");
-	QString icon= "D:\\devel\\psi-plugins\\win32\\psi\\iconsets\\system\\default\\icon_48.png";
-	snarl_->snShowMessage(caption.toStdString(), text.toStdString(), 10, icon.toStdString(), 0, 0);
+    QString text=QString("%1 says\n %2").arg(fromDisplay).arg(message);
+    QString caption=QString("Received message");
+    QString icon= "D:\\devel\\psi-plugins\\win32\\psi\\iconsets\\system\\default\\icon_48.png";
+    snarl_->snShowMessage(caption.toStdString(), text.toStdString(), 10, icon.toStdString(), 0, 0);
 }
 
 #include "snarlplugin.moc"

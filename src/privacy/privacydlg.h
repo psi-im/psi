@@ -34,50 +34,50 @@ class PrivacyManager;
 
 class PrivacyDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PrivacyDlg(const QString&, PrivacyManager* manager, QWidget* parent = NULL);
-	~PrivacyDlg() { };
+    PrivacyDlg(const QString&, PrivacyManager* manager, QWidget* parent = NULL);
+    ~PrivacyDlg() { };
 
 protected:
-	void rememberSettings();
-	void revertSettings();
-	void listChanged();
+    void rememberSettings();
+    void revertSettings();
+    void listChanged();
 
 protected slots:
-	void setWidgetsEnabled(bool);
-	void setEditRuleEnabled(bool);
-	void updateLists(const QString&, const QString&, const QStringList&);
-	void refreshList(const PrivacyList&);
-	void active_selected(int);
-	void default_selected(int);
-	void list_selected(int i);
-	void list_changed(int);
-	void list_failed();
-	void changeList_succeeded(QString);
-	void changeList_failed();
-	void change_succeeded();
-	void changeActiveList_succeeded(QString);
-	void changeDefaultList_succeeded(QString);
-	void change_failed();
-	void close();
-	void addRule();
-	void editCurrentRule();
-	void removeCurrentRule();
-	void moveCurrentRuleUp();
-	void moveCurrentRuleDown();
-	void applyList();
-	void newList();
-	void removeList();
-	void renameList();
+    void setWidgetsEnabled(bool);
+    void setEditRuleEnabled(bool);
+    void updateLists(const QString&, const QString&, const QStringList&);
+    void refreshList(const PrivacyList&);
+    void active_selected(int);
+    void default_selected(int);
+    void list_selected(int i);
+    void list_changed(int);
+    void list_failed();
+    void changeList_succeeded(QString);
+    void changeList_failed();
+    void change_succeeded();
+    void changeActiveList_succeeded(QString);
+    void changeDefaultList_succeeded(QString);
+    void change_failed();
+    void close();
+    void addRule();
+    void editCurrentRule();
+    void removeCurrentRule();
+    void moveCurrentRuleUp();
+    void moveCurrentRuleDown();
+    void applyList();
+    void newList();
+    void removeList();
+    void renameList();
 
 private:
-	Ui::Privacy ui_;
-	int previousActive_, previousDefault_, previousList_;
-	QPointer<PrivacyManager> manager_;
-	PrivacyListModel model_;
-	bool newList_;
+    Ui::Privacy ui_;
+    int previousActive_, previousDefault_, previousList_;
+    QPointer<PrivacyManager> manager_;
+    PrivacyListModel model_;
+    bool newList_;
 };
 
 #endif

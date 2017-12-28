@@ -22,10 +22,10 @@
 #include "psiaccount.h"
 
 AccountLabel::AccountLabel(QWidget* parent)
-	: QLabel(parent)
-	, showJid_(true)
+    : QLabel(parent)
+    , showJid_(true)
 {
-	setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    setFrameStyle(QFrame::Panel | QFrame::Sunken);
 }
 
 AccountLabel::~AccountLabel()
@@ -34,38 +34,38 @@ AccountLabel::~AccountLabel()
 
 PsiAccount* AccountLabel::account() const
 {
-	return account_;
+    return account_;
 }
 
 bool AccountLabel::showJid() const
 {
-	return showJid_;
+    return showJid_;
 }
 
 void AccountLabel::setAccount(PsiAccount* account)
 {
-	account_ = account;
-	if (account) {
-		connect(account, SIGNAL(updatedAccount()), SLOT(updateName()));
-		connect(account, SIGNAL(destroyed()), SLOT(deleteLater()));
-	}
-	updateName();
+    account_ = account;
+    if (account) {
+        connect(account, SIGNAL(updatedAccount()), SLOT(updateName()));
+        connect(account, SIGNAL(destroyed()), SLOT(deleteLater()));
+    }
+    updateName();
 }
 
 void AccountLabel::setShowJid(bool showJid)
 {
-	showJid_ = showJid;
-	updateName();
+    showJid_ = showJid;
+    updateName();
 }
 
 void AccountLabel::updateName()
 {
-	QString text = "...";
-	if (!account_.isNull()) {
-		if (showJid_)
-			text = account_->nameWithJid();
-		else
-			text = account_->name();
-	}
-	setText(text);
+    QString text = "...";
+    if (!account_.isNull()) {
+        if (showJid_)
+            text = account_->nameWithJid();
+        else
+            text = account_->name();
+    }
+    setText(text);
 }

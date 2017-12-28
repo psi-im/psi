@@ -24,19 +24,19 @@
 #include <QObject>
 class CocoaTrayClick : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static CocoaTrayClick* instance();
-	~CocoaTrayClick();
+    static CocoaTrayClick* instance();
+    ~CocoaTrayClick();
 
-	void emitTrayClicked();
+    void emitTrayClicked();
 
 signals:
-	void trayClicked();
+    void trayClicked();
 
 private:
-	CocoaTrayClick();
-	static CocoaTrayClick* instance_;
+    CocoaTrayClick();
+    static CocoaTrayClick* instance_;
 };
 
 #endif // COCOATRAYCLICK_H

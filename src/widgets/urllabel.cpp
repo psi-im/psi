@@ -29,8 +29,8 @@
 class URLLabel::Private
 {
 public:
-	QString url;
-	QString title;
+    QString url;
+    QString title;
 };
 //! \endif
 
@@ -45,13 +45,13 @@ public:
 URLLabel::URLLabel(QWidget *parent)
 : QLabel(parent)
 {
-	d = new Private;
-	setCursor( Qt::PointingHandCursor );
+    d = new Private;
+    setCursor( Qt::PointingHandCursor );
 }
 
 URLLabel::~URLLabel()
 {
-	delete d;
+    delete d;
 }
 
 /**
@@ -59,7 +59,7 @@ URLLabel::~URLLabel()
  */
 const QString &URLLabel::url() const
 {
-	return d->url;
+    return d->url;
 }
 
 /**
@@ -68,8 +68,8 @@ const QString &URLLabel::url() const
  */
 void URLLabel::setUrl(const QString &url)
 {
-	d->url = url;
-	updateText();
+    d->url = url;
+    updateText();
 }
 
 /**
@@ -77,7 +77,7 @@ void URLLabel::setUrl(const QString &url)
  */
 const QString &URLLabel::title() const
 {
-	return d->title;
+    return d->title;
 }
 
 /**
@@ -86,36 +86,36 @@ const QString &URLLabel::title() const
  */
 void URLLabel::setTitle(const QString &t)
 {
-	d->title = t;
-	updateText();
+    d->title = t;
+    updateText();
 }
 
 void URLLabel::updateText()
 {
-	setText( QString("<a href=\"%1\">%2</a>").arg(d->url).arg(d->title) );
+    setText( QString("<a href=\"%1\">%2</a>").arg(d->url).arg(d->title) );
 
-	if ( d->url != d->title )
-		setToolTip(d->url);
-	else
-		setToolTip(QString());
+    if ( d->url != d->title )
+        setToolTip(d->url);
+    else
+        setToolTip(QString());
 }
 
 void URLLabel::contextMenuEvent(QContextMenuEvent *e)
 {
-	QMenu *m = URLObject::getInstance()->createPopupMenu(d->url);
+    QMenu *m = URLObject::getInstance()->createPopupMenu(d->url);
 
-	if ( m ) {
-		m->exec( e->globalPos() );
-		delete m;
-	}
+    if ( m ) {
+        m->exec( e->globalPos() );
+        delete m;
+    }
 
-	e->accept();
+    e->accept();
 }
 
 void URLLabel::mouseReleaseEvent(QMouseEvent *e)
 {
-	if (e->button() == Qt::LeftButton)
-		URLObject::getInstance()->popupAction(url());
+    if (e->button() == Qt::LeftButton)
+        URLObject::getInstance()->popupAction(url());
 
-	QLabel::mouseReleaseEvent(e);
+    QLabel::mouseReleaseEvent(e);
 }

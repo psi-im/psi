@@ -32,18 +32,18 @@ class QString;
 
 class AccountAddDlg : public QDialog, public Ui::AccountAdd
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	AccountAddDlg(PsiCon *, QWidget *parent=0);
-	~AccountAddDlg();
+    AccountAddDlg(PsiCon *, QWidget *parent=0);
+    ~AccountAddDlg();
 
 private slots:
-	void add();
-	void setAddButton(const QString &);
+    void add();
+    void setAddButton(const QString &);
 
 private:
-	PsiCon *psi;
-	QString createNewAccountName(QString def);
+    PsiCon *psi;
+    QString createNewAccountName(QString def);
 };
 
 #endif

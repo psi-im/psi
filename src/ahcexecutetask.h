@@ -30,20 +30,20 @@ class QDomElement;
 class AHCExecuteTask : public XMPP::Task
 {
 public:
-	AHCExecuteTask(const XMPP::Jid& j, const AHCommand&, XMPP::Task* t);
+    AHCExecuteTask(const XMPP::Jid& j, const AHCommand&, XMPP::Task* t);
 
-	void onGo();
-	bool take(const QDomElement &x);
+    void onGo();
+    bool take(const QDomElement &x);
 
-	inline const XMPP::Jid &receiver() const { return receiver_; }
-	inline const AHCommand &resultCommand() const { return resultCommand_; }
-	inline bool hasCommandPayload() const { return hasPayload_; } // true if result command has children
+    inline const XMPP::Jid &receiver() const { return receiver_; }
+    inline const AHCommand &resultCommand() const { return resultCommand_; }
+    inline bool hasCommandPayload() const { return hasPayload_; } // true if result command has children
 
 private:
-	bool hasPayload_;
-	XMPP::Jid receiver_;
-	AHCommand command_;
-	AHCommand resultCommand_;
+    bool hasPayload_;
+    XMPP::Jid receiver_;
+    AHCommand command_;
+    AHCommand resultCommand_;
 };
 
 #endif

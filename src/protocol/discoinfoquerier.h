@@ -4,8 +4,8 @@
 #include <QObject>
 
 namespace XMPP {
-	class Jid;
-	class DiscoItem;
+    class Jid;
+    class DiscoItem;
 };
 
 namespace Protocol {
@@ -15,33 +15,33 @@ namespace Protocol {
  */
 class DiscoInfoQuerier : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	/**
-	 * Retrieves Disco information of a jid on a specific node.
-	 */
-	virtual void getDiscoInfo(const XMPP::Jid& jid, const QString& node) = 0;
+    /**
+     * Retrieves Disco information of a jid on a specific node.
+     */
+    virtual void getDiscoInfo(const XMPP::Jid& jid, const QString& node) = 0;
 
 signals:
-	/**
-	 * Signals that a disco information request was succesful.
-	 *
-	 * @param jid the jid on which the request was done
-	 * @param node the node on which the request was done
-	 * @param item the resulting disco item.
-	 */
-	void getDiscoInfo_success(const XMPP::Jid& jid, const QString& node, const XMPP::DiscoItem& item);
+    /**
+     * Signals that a disco information request was succesful.
+     *
+     * @param jid the jid on which the request was done
+     * @param node the node on which the request was done
+     * @param item the resulting disco item.
+     */
+    void getDiscoInfo_success(const XMPP::Jid& jid, const QString& node, const XMPP::DiscoItem& item);
 
-	/**
-	 * Signals that a disco information request returned an error.
-	 *
-	 * @param jid the jid on which the request was done
-	 * @param node the node on which the request was done
-	 * @param error_code the error code of the error
-	 * @param error_string the error text of the error
-	 */
-	void getDiscoInfo_error(const XMPP::Jid& jid, const QString& node, int error_code, const QString& error_string);
+    /**
+     * Signals that a disco information request returned an error.
+     *
+     * @param jid the jid on which the request was done
+     * @param node the node on which the request was done
+     * @param error_code the error code of the error
+     * @param error_string the error text of the error
+     */
+    void getDiscoInfo_error(const XMPP::Jid& jid, const QString& node, int error_code, const QString& error_string);
 };
 };
 

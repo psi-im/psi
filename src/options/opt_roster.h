@@ -8,17 +8,17 @@ class QButtonGroup;
 
 class OptionsTabRoster : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabRoster(QObject *parent);
-	~OptionsTabRoster();
+    OptionsTabRoster(QObject *parent);
+    ~OptionsTabRoster();
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
 private:
-	QWidget *w;
+    QWidget *w;
 };
 
 #endif

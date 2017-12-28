@@ -35,30 +35,30 @@
 
 class PGPTransaction : public QCA::SecureMessage
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PGPTransaction(QCA::SecureMessageSystem*);
-	~PGPTransaction();
+    PGPTransaction(QCA::SecureMessageSystem*);
+    ~PGPTransaction();
 
-	int id() const;
+    int id() const;
 
-	const XMPP::Message& message() const;
-	void setMessage(const XMPP::Message&);
+    const XMPP::Message& message() const;
+    void setMessage(const XMPP::Message&);
 
-	const QDomElement & xml() const;
-	void setXml(const QDomElement &);
+    const QDomElement & xml() const;
+    void setXml(const QDomElement &);
 
-	XMPP::Jid jid() const;
-	void setJid(const XMPP::Jid &);
+    XMPP::Jid jid() const;
+    void setJid(const XMPP::Jid &);
 
 private:
-	QCA::SecureMessageSystem* system_;
-	XMPP::Message message_;
-	QDomElement xml_;
-	XMPP::Jid jid_;
-	int id_;
-	static int idCounter_;
+    QCA::SecureMessageSystem* system_;
+    XMPP::Message message_;
+    QDomElement xml_;
+    XMPP::Jid jid_;
+    int id_;
+    static int idCounter_;
 };
 
 #endif

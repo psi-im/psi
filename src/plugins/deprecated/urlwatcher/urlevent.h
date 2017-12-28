@@ -28,19 +28,19 @@
 
 class URLEvent : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	URLEvent(QString sender, QString url, QObject *parent = 0): QObject(parent)
-	{
-		sender_=sender;
-		url_=url;
-		viewed_=false;
-	}
-	~URLEvent(){};
+    URLEvent(QString sender, QString url, QObject *parent = 0): QObject(parent)
+    {
+        sender_=sender;
+        url_=url;
+        viewed_=false;
+    }
+    ~URLEvent(){};
 
-	QString sender_;
-	QString url_;
-	bool viewed_;
+    QString sender_;
+    QString url_;
+    bool viewed_;
 };
 
 #endif /* _URLEVENT_H_ */

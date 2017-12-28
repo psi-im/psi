@@ -37,26 +37,26 @@ class PsiCon;
 
 class TipDlg : public QDialog, public Ui::Tip
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static void show(PsiCon* psi);
+    static void show(PsiCon* psi);
 
 private:
-	TipDlg(PsiCon* psi);
-	~TipDlg();
+    TipDlg(PsiCon* psi);
+    ~TipDlg();
 
 public slots:
-	void showTipsChanged(bool);
-	void next();
-	void previous();
+    void showTipsChanged(bool);
+    void next();
+    void previous();
 
 protected:
-	void updateTip();
-	void addTip(const QString& tip, const QString& author);
+    void updateTip();
+    void addTip(const QString& tip, const QString& author);
 
 private:
-	PsiCon* psi_;
-	QStringList tips;
+    PsiCon* psi_;
+    QStringList tips;
 };
 
 #endif

@@ -23,32 +23,32 @@
 #include <QTimer>
 
 ByteArrayReply::ByteArrayReply(const QNetworkRequest &request,
-							   const QByteArray &ba, const QString& mimeType,
-							   QObject *parent) :
-	QNetworkReply(parent),
-	origLen(ba.size()),
+                               const QByteArray &ba, const QString& mimeType,
+                               QObject *parent) :
+    QNetworkReply(parent),
+    origLen(ba.size()),
     data(ba),
-	buffer(&data)
+    buffer(&data)
 {
-	setRequest(request);
-	setOpenMode(QIODevice::ReadOnly);
-	buffer.open(QIODevice::ReadOnly);
+    setRequest(request);
+    setOpenMode(QIODevice::ReadOnly);
+    buffer.open(QIODevice::ReadOnly);
 
-	if (ba.isNull()) {
-		setError(QNetworkReply::ContentNotFoundError, "Not found");
-		QTimer::singleShot(0, this, SIGNAL(metaDataChanged()));
-		QTimer::singleShot(0, this, SLOT(signalError()));
-		QTimer::singleShot(0, this, SIGNAL(finished()));
-	} else {
-		if (mimeType.isEmpty()) {
-			setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-		} else {
-			setHeader(QNetworkRequest::ContentTypeHeader, mimeType);
-		}
-		setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(origLen));
-		QTimer::singleShot(0, this, SIGNAL(metaDataChanged()));
-		QTimer::singleShot(0, this, SIGNAL(readyRead()));
-	}
+    if (ba.isNull()) {
+        setError(QNetworkReply::ContentNotFoundError, "Not found");
+        QTimer::singleShot(0, this, SIGNAL(metaDataChanged()));
+        QTimer::singleShot(0, this, SLOT(signalError()));
+        QTimer::singleShot(0, this, SIGNAL(finished()));
+    } else {
+        if (mimeType.isEmpty()) {
+            setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+        } else {
+            setHeader(QNetworkRequest::ContentTypeHeader, mimeType);
+        }
+        setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number(origLen));
+        QTimer::singleShot(0, this, SIGNAL(metaDataChanged()));
+        QTimer::singleShot(0, this, SIGNAL(readyRead()));
+    }
 }
 
 ByteArrayReply::~ByteArrayReply() {
@@ -56,30 +56,30 @@ ByteArrayReply::~ByteArrayReply() {
 }
 
 void ByteArrayReply::abort() {
-	// its ok for abort here. webkit calls it in any case on finish
+    // its ok for abort here. webkit calls it in any case on finish
 }
 
 qint64 ByteArrayReply::bytesAvailable() const
 {
-	return data.length() - buffer.pos() + QNetworkReply::bytesAvailable();
+    return data.length() - buffer.pos() + QNetworkReply::bytesAvailable();
 }
 
 
 qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
 {
-	auto len = buffer.read(buf, maxlen);
-	if (buffer.atEnd())
-		QTimer::singleShot(0, this, SIGNAL(finished()));
-	return len;
+    auto len = buffer.read(buf, maxlen);
+    if (buffer.atEnd())
+        QTimer::singleShot(0, this, SIGNAL(finished()));
+    return len;
 }
 
 
 bool ByteArrayReply::open(OpenMode mode) {
-	Q_ASSERT(0); // we don't come here
-	return buffer.open(mode);
+    Q_ASSERT(0); // we don't come here
+    return buffer.open(mode);
 }
 
 void ByteArrayReply::signalError()
 {
-	emit error(error());
+    emit error(error());
 }

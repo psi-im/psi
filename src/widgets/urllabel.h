@@ -28,34 +28,34 @@ class QObject;
 
 class URLLabel : public QLabel
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	Q_PROPERTY( QString url READ url WRITE setUrl )
-	Q_PROPERTY( QString title READ title WRITE setTitle )
+    Q_PROPERTY( QString url READ url WRITE setUrl )
+    Q_PROPERTY( QString title READ title WRITE setTitle )
 
-	Q_OVERRIDE( QString text DESIGNABLE false SCRIPTABLE false )
-	//Q_OVERRIDE( TextFormat DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QString text DESIGNABLE false SCRIPTABLE false )
+    //Q_OVERRIDE( TextFormat DESIGNABLE false SCRIPTABLE false )
 
 public:
-	URLLabel(QWidget *parent = 0);
-	~URLLabel();
+    URLLabel(QWidget *parent = 0);
+    ~URLLabel();
 
-	const QString &url() const;
-	void setUrl(const QString &);
+    const QString &url() const;
+    void setUrl(const QString &);
 
-	const QString &title() const;
-	void setTitle(const QString &);
+    const QString &title() const;
+    void setTitle(const QString &);
 
 protected:
-	virtual void contextMenuEvent(QContextMenuEvent *);
-	virtual void mouseReleaseEvent(QMouseEvent *);
+    virtual void contextMenuEvent(QContextMenuEvent *);
+    virtual void mouseReleaseEvent(QMouseEvent *);
 
-	void updateText();
+    void updateText();
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 #endif

@@ -33,47 +33,47 @@ using namespace XMPP;
 
 class TaskList : public QObject, public QList<Task*>
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	TaskList()
-	{
-	}
+    TaskList()
+    {
+    }
 
-	~TaskList()
-	{
-		for(QList<Task*>::Iterator i = begin(); i != end(); i++) {
-			(*i)->safeDelete();
-		}
-	}
+    ~TaskList()
+    {
+        for(QList<Task*>::Iterator i = begin(); i != end(); i++) {
+            (*i)->safeDelete();
+        }
+    }
 
-	void append(Task *d)
-	{
-		if ( isEmpty() )
-			emit started();
+    void append(Task *d)
+    {
+        if ( isEmpty() )
+            emit started();
 
-		connect(d, SIGNAL(destroyed(QObject *)), SLOT(taskDestroyed(QObject *)));
-		QList<Task*>::append(d);
-	}
+        connect(d, SIGNAL(destroyed(QObject *)), SLOT(taskDestroyed(QObject *)));
+        QList<Task*>::append(d);
+    }
 
 signals:
-	// started() is emitted, when TaskList doesn't have any tasks in it,
-	// and append() is called, indicating, that TaskList contains at least one
-	// running Task
-	void started();
+    // started() is emitted, when TaskList doesn't have any tasks in it,
+    // and append() is called, indicating, that TaskList contains at least one
+    // running Task
+    void started();
 
-	// finished() is emitted when TaskList contains one Task, and it suddenly
-	// terminates, indicating, that TaskList is empty now
-	void finished();
+    // finished() is emitted when TaskList contains one Task, and it suddenly
+    // terminates, indicating, that TaskList is empty now
+    void finished();
 
 private slots:
-	void taskDestroyed(QObject *p)
-	{
-		removeAll(static_cast<Task*>(p));
+    void taskDestroyed(QObject *p)
+    {
+        removeAll(static_cast<Task*>(p));
 
-		if ( isEmpty() )
-			emit finished();
-	}
+        if ( isEmpty() )
+            emit finished();
+    }
 };
 
 #endif

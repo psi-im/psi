@@ -38,74 +38,74 @@
 
 ServerListQuerier::ServerListQuerier(QObject* parent) : QObject(parent)
 {
-	http_ = new QNetworkAccessManager(this);
-	url_ = QUrl("https://xmpp.net/directory.php");
+    http_ = new QNetworkAccessManager(this);
+    url_ = QUrl("https://xmpp.net/directory.php");
 }
 
 void ServerListQuerier::getList()
 {
-	redirectCount_ = 0;
-	QNetworkReply *reply = http_->get(QNetworkRequest(url_));
-	connect(reply, SIGNAL(finished()), SLOT(get_finished()));
+    redirectCount_ = 0;
+    QNetworkReply *reply = http_->get(QNetworkRequest(url_));
+    connect(reply, SIGNAL(finished()), SLOT(get_finished()));
 }
 
 void ServerListQuerier::get_finished()
 {
-	QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
+    QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
 
-	if (reply->error()) {
-		emit error(reply->errorString());
-	}
-	else {
-		int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-		if(status == 200) {
+    if (reply->error()) {
+        emit error(reply->errorString());
+    }
+    else {
+        int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if(status == 200) {
 #ifdef XML_SERVER_LIST
-			// Parse the XML file
-			QDomDocument doc;
-			if (!doc.setContent(reply->readAll())) {
-				emit error(tr("Unable to parse server list"));
-				return;
-			}
+            // Parse the XML file
+            QDomDocument doc;
+            if (!doc.setContent(reply->readAll())) {
+                emit error(tr("Unable to parse server list"));
+                return;
+            }
 
-			// Fill the list
-			QStringList servers;
-			QDomNodeList items = doc.elementsByTagName("item");
-			for (int i = 0; i < items.count(); i++) {
-				QString jid = items.item(i).toElement().attribute("jid");
-				if (!jid.isEmpty()) {
-					servers.push_back(jid);
-				}
-			}
+            // Fill the list
+            QStringList servers;
+            QDomNodeList items = doc.elementsByTagName("item");
+            for (int i = 0; i < items.count(); i++) {
+                QString jid = items.item(i).toElement().attribute("jid");
+                if (!jid.isEmpty()) {
+                    servers.push_back(jid);
+                }
+            }
 #else
-			QStringList servers;
-			QString contents = QString::fromUtf8(reply->readAll());
-			int index = 0;
-			QRegExp re("data-original-title=\"([^\"]+)\"");
-			while ((index = contents.indexOf(re, index + 1)) != -1) {
-				servers.append(re.cap(1));
-			}
+            QStringList servers;
+            QString contents = QString::fromUtf8(reply->readAll());
+            int index = 0;
+            QRegExp re("data-original-title=\"([^\"]+)\"");
+            while ((index = contents.indexOf(re, index + 1)) != -1) {
+                servers.append(re.cap(1));
+            }
 #endif
-			emit listReceived(servers);
-		}
-		else if(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
-			if (redirectCount_ >= SERVERLIST_MAX_REDIRECT) {
-				emit error(tr("Maximum redirect count reached"));
-				return;
-			}
+            emit listReceived(servers);
+        }
+        else if(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
+            if (redirectCount_ >= SERVERLIST_MAX_REDIRECT) {
+                emit error(tr("Maximum redirect count reached"));
+                return;
+            }
 
-			url_ = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).value<QUrl>().resolved(url_);
-			if (url_.isValid()) {
-				QNetworkReply *newReply = http_->get(QNetworkRequest(url_));
-				connect(newReply, SIGNAL(finished()),SLOT(get_finished()));
-				++redirectCount_;
-			} else {
-				emit error(tr("Invalid redirect URL %1").arg(url_.toString()));
-				return;
-			}
-		}
-		else {
-			emit error(tr("Unexpected HTTP status code: %1").arg(status));
-		}
-	}
-	reply->deleteLater();
+            url_ = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).value<QUrl>().resolved(url_);
+            if (url_.isValid()) {
+                QNetworkReply *newReply = http_->get(QNetworkRequest(url_));
+                connect(newReply, SIGNAL(finished()),SLOT(get_finished()));
+                ++redirectCount_;
+            } else {
+                emit error(tr("Invalid redirect URL %1").arg(url_.toString()));
+                return;
+            }
+        }
+        else {
+            emit error(tr("Unexpected HTTP status code: %1").arg(status));
+        }
+    }
+    reply->deleteLater();
 }

@@ -27,25 +27,25 @@
 
 class AimpTuneController : public PollingTuneController
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	AimpTuneController();
-	Tune currentTune() const;
+    AimpTuneController();
+    Tune currentTune() const;
 
 protected slots:
-	void check();
+    void check();
 
 private:
-	Tune getTune() const;
-	HWND findAimp() const;
-	int getAimpStatus(const HWND &aimp) const;
-	void sendTune(const Tune &tune);
-	void clearTune();
+    Tune getTune() const;
+    HWND findAimp() const;
+    int getAimpStatus(const HWND &aimp) const;
+    void sendTune(const Tune &tune);
+    void clearTune();
 
 private:
-	Tune _currentTune;
-	bool _tuneSent;
+    Tune _currentTune;
+    bool _tuneSent;
 };
 
 #endif

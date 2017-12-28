@@ -28,104 +28,104 @@
 AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
 {
-	setupUi(this);
-	setModal(false);
-	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
-	psi = _psi;
-	psi->dialogRegister(this);
+    setupUi(this);
+    setModal(false);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    psi = _psi;
+    psi->dialogRegister(this);
 
-	setWindowTitle(CAP(windowTitle()));
+    setWindowTitle(CAP(windowTitle()));
 
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	connect(pb_add, SIGNAL(clicked()), SLOT(add()));
-	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(setAddButton(const QString &)));
+    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
+    connect(pb_add, SIGNAL(clicked()), SLOT(add()));
+    connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(setAddButton(const QString &)));
 
-	ck_reg->setWhatsThis(
-		tr("Check this option if you don't yet have an XMPP account "
-		"and you want to register one.  Note that this will only work "
-		"on servers that allow anonymous registration."));
+    ck_reg->setWhatsThis(
+        tr("Check this option if you don't yet have an XMPP account "
+        "and you want to register one.  Note that this will only work "
+        "on servers that allow anonymous registration."));
 
-	QString aname = createNewAccountName(tr("Default"));
+    QString aname = createNewAccountName(tr("Default"));
 
-	if (PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
-		le_name->setText("account");
-		lb_name->hide();
-		le_name->hide();
-	}
-	else {
-		le_name->setText(aname);
-		le_name->setFocus();
-	}
+    if (PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
+        le_name->setText("account");
+        lb_name->hide();
+        le_name->hide();
+    }
+    else {
+        le_name->setText(aname);
+        le_name->setFocus();
+    }
 }
 
 AccountAddDlg::~AccountAddDlg()
 {
-	psi->dialogUnregister(this);
+    psi->dialogUnregister(this);
 }
 
 QString AccountAddDlg::createNewAccountName(QString def)
 {
-	QString aname = def;
-	int n = 0;
-	while(1) {
-		bool taken = false;
-		foreach(PsiAccount* pa, psi->contactList()->accounts()) {
-			if(aname == pa->name()) {
-				taken = true;
-				break;
-			}
-		}
+    QString aname = def;
+    int n = 0;
+    while(1) {
+        bool taken = false;
+        foreach(PsiAccount* pa, psi->contactList()->accounts()) {
+            if(aname == pa->name()) {
+                taken = true;
+                break;
+            }
+        }
 
-		if(!taken)
-			break;
-		aname = def + '_' + QString::number(++n);
-	}
+        if(!taken)
+            break;
+        aname = def + '_' + QString::number(++n);
+    }
 
-	return aname;
+    return aname;
 }
 
 void AccountAddDlg::add()
 {
-	QString aname = createNewAccountName(le_name->text());
-	le_name->setText( aname );
+    QString aname = createNewAccountName(le_name->text());
+    le_name->setText( aname );
 
-	PsiAccount* newAccount = 0;
-	if(ck_reg->isChecked()) {
-		AccountRegDlg *w = new AccountRegDlg(psi, this);
-		int n = w->exec();
-		if(n != QDialog::Accepted) {
-			delete w;
-			return;
-		}
+    PsiAccount* newAccount = 0;
+    if(ck_reg->isChecked()) {
+        AccountRegDlg *w = new AccountRegDlg(psi, this);
+        int n = w->exec();
+        if(n != QDialog::Accepted) {
+            delete w;
+            return;
+        }
 
-		Jid jid = w->jid();
-		QString pass = w->pass();
-		bool opt_host = w->useHost();
-		QString host = w->host();
-		int port = w->port();
-		bool legacy_ssl_probe = w->legacySSLProbe();
-		UserAccount::SSLFlag ssl = w->ssl();
-		QString proxy = w->proxy();
-		QString tlsOverrideDomain = w->tlsOverrideDomain();
-		QByteArray tlsOverrideCert = w->tlsOverrideCert();
+        Jid jid = w->jid();
+        QString pass = w->pass();
+        bool opt_host = w->useHost();
+        QString host = w->host();
+        int port = w->port();
+        bool legacy_ssl_probe = w->legacySSLProbe();
+        UserAccount::SSLFlag ssl = w->ssl();
+        QString proxy = w->proxy();
+        QString tlsOverrideDomain = w->tlsOverrideDomain();
+        QByteArray tlsOverrideCert = w->tlsOverrideCert();
 
-		delete w;
+        delete w;
 
-		newAccount = psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy, tlsOverrideDomain, tlsOverrideCert);
-	}
-	else {
-		newAccount = psi->createAccount(le_name->text());
-	}
+        newAccount = psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy, tlsOverrideDomain, tlsOverrideCert);
+    }
+    else {
+        newAccount = psi->createAccount(le_name->text());
+    }
 
-	close();
-	if (newAccount) {
-		newAccount->modify();
-	}
+    close();
+    if (newAccount) {
+        newAccount->modify();
+    }
 }
 
 void AccountAddDlg::setAddButton(const QString &s)
 {
-	pb_add->setEnabled(!s.isEmpty());
+    pb_add->setEnabled(!s.isEmpty());
 }
 
 

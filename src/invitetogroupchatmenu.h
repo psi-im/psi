@@ -30,18 +30,18 @@ class PsiCon;
 
 class InviteToGroupChatMenu : public QMenu
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	InviteToGroupChatMenu(QWidget *parent = 0);
-	void updateMenu(PsiContact *contact);
+    InviteToGroupChatMenu(QWidget *parent = 0);
+    void updateMenu(PsiContact *contact);
 
 signals:
-	void inviteToGroupchat(PsiAccount *account, const QString &groupChat);
+    void inviteToGroupchat(PsiAccount *account, const QString &groupChat);
 
 private slots:
-	void actionActivated();
+    void actionActivated();
 
 private:
-	PsiCon* controller_;
+    PsiCon* controller_;
 };

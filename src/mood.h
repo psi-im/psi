@@ -32,38 +32,38 @@ class QDomDocument;
 class Mood
 {
 public:
-	enum Type {
-		Unknown,
-		Afraid, Amazed, Angry, Amorous, Annoyed, Anxious, Aroused, Ashamed, Bored,
-		Brave, Calm, Cautious, Cold, Confident, Confused, Contemplative, Contented,
-		Cranky, Crazy, Creative, Curious, Dejected, Depressed, Disappointed,
-		Disgusted, Dismayed, Distracted, Embarrassed, Envious, Excited, Flirtatious,
-		Frustrated, Grumpy, Guilty, Happy, Hopeful, Hot, Humbled, Humiliated, Hungry,
-		Hurt, Impressed, In_awe, In_love, Indignant, Interested, Intoxicated,
-		Invincible, Jealous, Lonely, Lucky, Mean, Moody, Nervous, Neutral, Offended,
-		Outraged, Playful, Proud, Relaxed, Relieved, Remorseful, Restless, Sad,
-		Sarcastic, Serious, Shocked, Shy, Sick, Sleepy, Spontaneous, Stressed, Strong,
-		Surprised, Thankful, Thirsty, Tired, Undefined, Weak, Worried
-	};
+    enum Type {
+        Unknown,
+        Afraid, Amazed, Angry, Amorous, Annoyed, Anxious, Aroused, Ashamed, Bored,
+        Brave, Calm, Cautious, Cold, Confident, Confused, Contemplative, Contented,
+        Cranky, Crazy, Creative, Curious, Dejected, Depressed, Disappointed,
+        Disgusted, Dismayed, Distracted, Embarrassed, Envious, Excited, Flirtatious,
+        Frustrated, Grumpy, Guilty, Happy, Hopeful, Hot, Humbled, Humiliated, Hungry,
+        Hurt, Impressed, In_awe, In_love, Indignant, Interested, Intoxicated,
+        Invincible, Jealous, Lonely, Lucky, Mean, Moody, Nervous, Neutral, Offended,
+        Outraged, Playful, Proud, Relaxed, Relieved, Remorseful, Restless, Sad,
+        Sarcastic, Serious, Shocked, Shy, Sick, Sleepy, Spontaneous, Stressed, Strong,
+        Surprised, Thankful, Thirsty, Tired, Undefined, Weak, Worried
+    };
 
-	Mood();
-	Mood(Type, const QString& = QString());
-	Mood(const QDomElement&);
+    Mood();
+    Mood(Type, const QString& = QString());
+    Mood(const QDomElement&);
 
-	Type type() const;
-	QString typeText() const;
-	QString typeValue() const;
-	const QString& text() const;
-	bool isNull() const;
+    Type type() const;
+    QString typeText() const;
+    QString typeValue() const;
+    const QString& text() const;
+    bool isNull() const;
 
-	QDomElement toXml(QDomDocument&);
+    QDomElement toXml(QDomDocument&);
 
 protected:
-	void fromXml(const QDomElement&);
+    void fromXml(const QDomElement&);
 
 private:
-	Type type_;
-	QString text_;
+    Type type_;
+    QString text_;
 };
 
 Q_DECLARE_METATYPE(Mood)

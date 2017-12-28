@@ -27,10 +27,10 @@ using namespace XMPP;
 
 LastActivityTask::LastActivityTask(const Jid& jid, Task* parent) : Task(parent), jid_(jid)
 {
-	iq_ = createIQ(doc(), "get", jid_.full(), id());
-	QDomElement query = doc()->createElement("query");
-	query.setAttribute("xmlns", "jabber:iq:last");
-	iq_.appendChild(query);
+    iq_ = createIQ(doc(), "get", jid_.full(), id());
+    QDomElement query = doc()->createElement("query");
+    query.setAttribute("xmlns", "jabber:iq:last");
+    iq_.appendChild(query);
 }
 
 /**
@@ -38,42 +38,42 @@ LastActivityTask::LastActivityTask(const Jid& jid, Task* parent) : Task(parent),
  */
 const Jid & LastActivityTask::jid() const
 {
-	return jid_;
+    return jid_;
 }
 
 void LastActivityTask::onGo()
 {
-	send(iq_);
+    send(iq_);
 }
 
 bool LastActivityTask::take(const QDomElement &x)
 {
-	if(!iqVerify(x, jid_, id()))
-		return false;
+    if(!iqVerify(x, jid_, id()))
+        return false;
 
-	if(x.attribute("type") == "result") {
-		bool ok = false;
-		QDomElement q = queryTag(x);
-		int seconds = q.attribute("seconds").toInt(&ok);
-		if (ok) {
-			last_time_ = QDateTime::currentDateTime().addSecs(-seconds);
-		}
-		last_status_ = q.text();
-		setSuccess();
-	}
-	else {
-		setError(x);
-	}
+    if(x.attribute("type") == "result") {
+        bool ok = false;
+        QDomElement q = queryTag(x);
+        int seconds = q.attribute("seconds").toInt(&ok);
+        if (ok) {
+            last_time_ = QDateTime::currentDateTime().addSecs(-seconds);
+        }
+        last_status_ = q.text();
+        setSuccess();
+    }
+    else {
+        setError(x);
+    }
 
-	return true;
+    return true;
 }
 
 const QString& LastActivityTask::status() const
 {
-	return last_status_;
+    return last_status_;
 }
 
 const QDateTime& LastActivityTask::time() const
 {
-	return last_time_;
+    return last_time_;
 }

@@ -29,31 +29,31 @@ class QWidget;
 class ThemePrivate : public QSharedData
 {
 public:
-	PsiThemeProvider *provider;
-	Theme::State state = Theme::NotLoaded;
+    PsiThemeProvider *provider;
+    Theme::State state = Theme::NotLoaded;
 
-	// metadata
-	QString id, name, version, description, creation, homeUrl;
-	QStringList authors;
-	QHash<QString, QString> info;
+    // metadata
+    QString id, name, version, description, creation, homeUrl;
+    QStringList authors;
+    QHash<QString, QString> info;
 
-	// runtime info
-	QString filepath;
-	bool caseInsensitiveFS;
+    // runtime info
+    QString filepath;
+    bool caseInsensitiveFS;
 
 public:
-	ThemePrivate(PsiThemeProvider *provider);
-	virtual ~ThemePrivate();
+    ThemePrivate(PsiThemeProvider *provider);
+    virtual ~ThemePrivate();
 
-	virtual bool exists() = 0;
-	virtual bool load(); // synchronous load
-	virtual bool load(std::function<void(bool)> loadCallback);  // asynchronous load
+    virtual bool exists() = 0;
+    virtual bool load(); // synchronous load
+    virtual bool load(std::function<void(bool)> loadCallback);  // asynchronous load
 
-	virtual bool hasPreview() const;
-	virtual QWidget* previewWidget(); // this hack must be replaced with something widget based
+    virtual bool hasPreview() const;
+    virtual QWidget* previewWidget(); // this hack must be replaced with something widget based
 
-	QByteArray loadData(const QString &fileName) const;
-	Theme::ResourceLoader *resourceLoader() const;
+    QByteArray loadData(const QString &fileName) const;
+    Theme::ResourceLoader *resourceLoader() const;
 };
 
 #endif // THEME_P_H

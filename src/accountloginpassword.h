@@ -33,19 +33,19 @@ class PsiAccount;
 class PsiCon;
 
 class AccountLoginPassword : public QDialog {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	AccountLoginPassword(PsiAccount *account);
+    AccountLoginPassword(PsiAccount *account);
 
 
 private slots:
-	void accept();
-	void reject();
+    void accept();
+    void reject();
 
 private:
-	QPointer<PsiAccount> account_;
-	PsiCon *psi_;
-	QLineEdit le_;
+    QPointer<PsiAccount> account_;
+    PsiCon *psi_;
+    QLineEdit le_;
 };
 
 

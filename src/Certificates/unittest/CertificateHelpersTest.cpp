@@ -16,14 +16,14 @@ using namespace QCA;
 
 class CertificateHelpersTest : public QObject
 {
-		 Q_OBJECT
+         Q_OBJECT
 
-	private slots:
-		void initTestCase() {
-		}
+    private slots:
+        void initTestCase() {
+        }
 
-		void cleanupTestCase() {
-		}
+        void cleanupTestCase() {
+        }
 };
 
 QTTESTUTIL_REGISTER_TEST(CertificateHelpersTest);

@@ -28,23 +28,23 @@
 
 class PollingTuneController : public TuneController
 {
-	Q_OBJECT
+    Q_OBJECT
 
 private:
-	static const int DefaultInterval = 10000;
-	QTimer _timer;
+    static const int DefaultInterval = 10000;
+    QTimer _timer;
 public:
-	PollingTuneController();
-	inline bool isPolling() const { return _timer.isActive(); }
-	inline void startPoll() { _timer.start(DefaultInterval); }
-	inline void stopPoll() { _timer.stop(); }
-	inline void setInterval(int interval) { _timer.setInterval(interval); }
+    PollingTuneController();
+    inline bool isPolling() const { return _timer.isActive(); }
+    inline void startPoll() { _timer.start(DefaultInterval); }
+    inline void stopPoll() { _timer.stop(); }
+    inline void setInterval(int interval) { _timer.setInterval(interval); }
 
 protected slots:
-	virtual void check();
+    virtual void check();
 
 private:
-	Tune _prevTune;
+    Tune _prevTune;
 };
 
 #endif

@@ -26,12 +26,12 @@ class QHostAddress;
 
 namespace XMPP
 {
-	class Jid;
+    class Jid;
 }
 
 namespace PsiMedia
 {
-	class VideoWidget;
+    class VideoWidget;
 }
 
 class PsiAccount;
@@ -41,83 +41,83 @@ class AvCallManagerPrivate;
 
 class AvCall : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	enum Mode
-	{
-		Audio,
-		Video,
-		Both
-	};
+    enum Mode
+    {
+        Audio,
+        Video,
+        Both
+    };
 
-	AvCall(const AvCall &from);
-	~AvCall();
+    AvCall(const AvCall &from);
+    ~AvCall();
 
-	XMPP::Jid jid() const;
-	Mode mode() const;
+    XMPP::Jid jid() const;
+    Mode mode() const;
 
-	void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
-	void accept(Mode mode, int kbps = -1);
-	void reject();
+    void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
+    void accept(Mode mode, int kbps = -1);
+    void reject();
 
-	void setIncomingVideo(PsiMedia::VideoWidget *widget);
+    void setIncomingVideo(PsiMedia::VideoWidget *widget);
 
-	QString errorString() const;
+    QString errorString() const;
 
-	// if we use deleteLater() on a call, then it won't detach from the
-	//   manager until the deletion resolves.  use unlink() to immediately
-	//   detach, and then call deleteLater().
-	void unlink();
+    // if we use deleteLater() on a call, then it won't detach from the
+    //   manager until the deletion resolves.  use unlink() to immediately
+    //   detach, and then call deleteLater().
+    void unlink();
 
 signals:
-	void activated();
-	void error();
+    void activated();
+    void error();
 
 private:
-	friend class AvCallPrivate;
-	friend class AvCallManager;
-	friend class AvCallManagerPrivate;
-	AvCall();
+    friend class AvCallPrivate;
+    friend class AvCallManager;
+    friend class AvCallManagerPrivate;
+    AvCall();
 
-	AvCallPrivate *d;
+    AvCallPrivate *d;
 };
 
 class AvCallManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	AvCallManager(PsiAccount *pa);
-	~AvCallManager();
+    AvCallManager(PsiAccount *pa);
+    ~AvCallManager();
 
-	AvCall *createOutgoing();
-	AvCall *takeIncoming();
+    AvCall *createOutgoing();
+    AvCall *takeIncoming();
 
-	static void config();
-	static bool isSupported();
-	static bool isVideoSupported();
+    static void config();
+    static bool isSupported();
+    static bool isVideoSupported();
 
-	void setSelfAddress(const QHostAddress &addr);
-	void setStunBindService(const QString &host, int port);
-	void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
-	void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
+    void setSelfAddress(const QHostAddress &addr);
+    void setStunBindService(const QString &host, int port);
+    void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
+    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
 
-	static void setBasePort(int port);
-	static void setExternalAddress(const QString &host);
-	static void setAudioOutDevice(const QString &id);
-	static void setAudioInDevice(const QString &id);
-	static void setVideoInDevice(const QString &id);
+    static void setBasePort(int port);
+    static void setExternalAddress(const QString &host);
+    static void setAudioOutDevice(const QString &id);
+    static void setAudioInDevice(const QString &id);
+    static void setVideoInDevice(const QString &id);
 
 signals:
-	void incomingReady();
+    void incomingReady();
 
 private:
-	friend class AvCallManagerPrivate;
-	friend class AvCall;
-	friend class AvCallPrivate;
+    friend class AvCallManagerPrivate;
+    friend class AvCall;
+    friend class AvCallPrivate;
 
-	AvCallManagerPrivate *d;
+    AvCallManagerPrivate *d;
 };
 
 #endif

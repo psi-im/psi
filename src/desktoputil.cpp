@@ -34,12 +34,12 @@
 
 QString defaultBrowser()
 {
-	QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
-	QString command = settings.value(".").toString();
-	QRegExp rx("\"(.+)\"");
-	if (rx.indexIn(command) != -1)
-		return rx.capturedTexts()[1];
-	return command;
+    QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
+    QString command = settings.value(".").toString();
+    QRegExp rx("\"(.+)\"");
+    if (rx.indexIn(command) != -1)
+        return rx.capturedTexts()[1];
+    return command;
 }
 #endif
 
@@ -51,54 +51,54 @@ static bool doOpenUrl(const QUrl& url)
 #if QT_VERSION >= 0x050000
 #define QT_WA(unicode, ansi) unicode
 #endif
-	if (!handlers.contains(url.scheme())) {
-		// on Vista it always returns iexplore.exe as default browser
-		bool oldStyleDefaultBrowserInfo = QSysInfo::WindowsVersion < QSysInfo::WV_VISTA;
+    if (!handlers.contains(url.scheme())) {
+        // on Vista it always returns iexplore.exe as default browser
+        bool oldStyleDefaultBrowserInfo = QSysInfo::WindowsVersion < QSysInfo::WV_VISTA;
 
-		QFileInfo browserFileInfo(defaultBrowser());
-		if (oldStyleDefaultBrowserInfo && browserFileInfo.fileName() == "iexplore.exe") {
-			return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
-				QStringList() << "-new" << url.toEncoded());
-		}
-		else {
-			// FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
-			QT_WA(
-				ShellExecuteW(0, 0, (WCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
-			,
-				QByteArray a = QString(url.toEncoded()).toLocal8Bit();	// must not call constData() of a temp object
-				ShellExecuteA(0, 0, (CHAR *)a.constData(), 0, 0, SW_SHOWNORMAL);
-			)
-			return true;
-		}
-	}
+        QFileInfo browserFileInfo(defaultBrowser());
+        if (oldStyleDefaultBrowserInfo && browserFileInfo.fileName() == "iexplore.exe") {
+            return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
+                QStringList() << "-new" << url.toEncoded());
+        }
+        else {
+            // FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
+            QT_WA(
+                ShellExecuteW(0, 0, (WCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
+            ,
+                QByteArray a = QString(url.toEncoded()).toLocal8Bit();    // must not call constData() of a temp object
+                ShellExecuteA(0, 0, (CHAR *)a.constData(), 0, 0, SW_SHOWNORMAL);
+            )
+            return true;
+        }
+    }
 #endif
-	return QDesktopServices::openUrl(url);
+    return QDesktopServices::openUrl(url);
 }
 
 /**
- *	\brief Opens URL using OS default handler
- *	\param url the url to open
+ *    \brief Opens URL using OS default handler
+ *    \param url the url to open
  *
- *	\a url may be either percent encoded or not.
- *	If it contains only ASCII characters, it is decoded,
- *	else it is converted to QUrl in QUrl::TolerantMode mode.
- *	Resulting QUrl object is passed to QDesktopServices::openUrl().
+ *    \a url may be either percent encoded or not.
+ *    If it contains only ASCII characters, it is decoded,
+ *    else it is converted to QUrl in QUrl::TolerantMode mode.
+ *    Resulting QUrl object is passed to QDesktopServices::openUrl().
  *
- *	\sa QDesktopServices::openUrl()
+ *    \sa QDesktopServices::openUrl()
  */
 bool DesktopUtil::openUrl(const QString& url)
 {
-	if (url.startsWith("addnick://")) return true;
-	QByteArray ascii = url.toLatin1();
-	if (ascii == url)
-		return doOpenUrl(QUrl::fromEncoded(ascii));
-	else
-		return doOpenUrl(QUrl(url, QUrl::TolerantMode));
+    if (url.startsWith("addnick://")) return true;
+    QByteArray ascii = url.toLatin1();
+    if (ascii == url)
+        return doOpenUrl(QUrl::fromEncoded(ascii));
+    else
+        return doOpenUrl(QUrl(url, QUrl::TolerantMode));
 }
 
 bool DesktopUtil::openUrl(const QUrl& url)
 {
-	return doOpenUrl(url);
+    return doOpenUrl(url);
 }
 
 /**
@@ -110,8 +110,8 @@ bool DesktopUtil::openUrl(const QUrl& url)
  */
 void DesktopUtil::setUrlHandler(const QString& scheme, QObject* receiver, const char* method)
 {
-	QDesktopServices::setUrlHandler(scheme, receiver, method);
-	handlers.insert(scheme);
+    QDesktopServices::setUrlHandler(scheme, receiver, method);
+    handlers.insert(scheme);
 }
 
 /**
@@ -123,6 +123,6 @@ void DesktopUtil::setUrlHandler(const QString& scheme, QObject* receiver, const 
  */
 void DesktopUtil::unsetUrlHandler(const QString& scheme)
 {
-	handlers.remove(scheme);
-	QDesktopServices::unsetUrlHandler(scheme);
+    handlers.remove(scheme);
+    QDesktopServices::unsetUrlHandler(scheme);
 }

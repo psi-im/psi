@@ -27,31 +27,31 @@
 
 class ByteArrayReply : public QNetworkReply {
 
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	ByteArrayReply(const QNetworkRequest &request,
-				   const QByteArray &ba = QByteArray(),
-				   const QString &mimeType = QString(),
-				   QObject * parent = 0);
+    ByteArrayReply(const QNetworkRequest &request,
+                   const QByteArray &ba = QByteArray(),
+                   const QString &mimeType = QString(),
+                   QObject * parent = 0);
 
-	/** Construct IconReply that fails with ContentAccessDenied error */
-	//ByteArrayReply();
-	~ByteArrayReply();
+    /** Construct IconReply that fails with ContentAccessDenied error */
+    //ByteArrayReply();
+    ~ByteArrayReply();
 
-	//reimplemented
-	void abort();
-	qint64 readData(char *buffer, qint64 maxlen);
-	qint64 bytesAvailable() const;
-	bool open(OpenMode mode);
+    //reimplemented
+    void abort();
+    qint64 readData(char *buffer, qint64 maxlen);
+    qint64 bytesAvailable() const;
+    bool open(OpenMode mode);
 
 private slots:
-	void signalError();
+    void signalError();
 
 private:
-	int origLen;
-	QByteArray data;
-	QBuffer buffer;
+    int origLen;
+    QByteArray data;
+    QBuffer buffer;
 };
 
 #endif

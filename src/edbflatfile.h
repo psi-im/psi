@@ -32,76 +32,76 @@
 
 class EDBFlatFile : public EDB
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	EDBFlatFile(PsiCon *psi);
-	~EDBFlatFile();
+    EDBFlatFile(PsiCon *psi);
+    ~EDBFlatFile();
 
-	int features() const;
-	int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len);
-	int find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction);
-	int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
-	int erase(const QString &accId, const XMPP::Jid &);
-	QList<EDB::ContactItem> contacts(const QString &accId, int type);
-	quint64 eventsCount(const QString &accId, const XMPP::Jid &jid);
-	QString getStorageParam(const QString &) { return QString(); }
-	void setStorageParam(const QString &, const QString &) {}
+    int features() const;
+    int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len);
+    int find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction);
+    int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
+    int erase(const QString &accId, const XMPP::Jid &);
+    QList<EDB::ContactItem> contacts(const QString &accId, int type);
+    quint64 eventsCount(const QString &accId, const XMPP::Jid &jid);
+    QString getStorageParam(const QString &) { return QString(); }
+    void setStorageParam(const QString &, const QString &) {}
 
-	class File;
+    class File;
 
 private slots:
-	void performRequests();
-	void file_timeout();
+    void performRequests();
+    void file_timeout();
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
-	File *findFile(const XMPP::Jid &) const;
-	File *ensureFile(const XMPP::Jid &);
-	bool deleteFile(const XMPP::Jid &);
+    File *findFile(const XMPP::Jid &) const;
+    File *ensureFile(const XMPP::Jid &);
+    bool deleteFile(const XMPP::Jid &);
 };
 
 class EDBFlatFile::File : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	File(const XMPP::Jid &_j);
-	~File();
+    File(const XMPP::Jid &_j);
+    ~File();
 
-	int total() const;
-	int getId(QDateTime &date, int dir, int offset);
-	void touch();
-	PsiEvent::Ptr get(int);
-	bool append(const PsiEvent::Ptr &);
-	int findNearestDate(const QDateTime &date);
+    int total() const;
+    int getId(QDateTime &date, int dir, int offset);
+    void touch();
+    PsiEvent::Ptr get(int);
+    bool append(const PsiEvent::Ptr &);
+    int findNearestDate(const QDateTime &date);
 
-	static QString jidToFileName(const XMPP::Jid &);
-	static QString strToFileName(const QString &s);
-	static QList<EDB::ContactItem> contacts(const QString &accId, int type);
+    static QString jidToFileName(const XMPP::Jid &);
+    static QString strToFileName(const QString &s);
+    static QList<EDB::ContactItem> contacts(const QString &accId, int type);
 
 signals:
-	void timeout();
+    void timeout();
 
 private slots:
-	void timer_timeout();
+    void timer_timeout();
 
 public:
-	XMPP::Jid j;
-	QString fname;
-	QFile f;
-	bool valid;
-	QTimer *t;
+    XMPP::Jid j;
+    QString fname;
+    QFile f;
+    bool valid;
+    QTimer *t;
 
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 
 private:
-	PsiEvent::Ptr lineToEvent(const QString &);
-	QString eventToLine(const PsiEvent::Ptr&);
-	void ensureIndex();
-	QString getLine(int id);
-	QDateTime getDate(int id);
+    PsiEvent::Ptr lineToEvent(const QString &);
+    QString eventToLine(const PsiEvent::Ptr&);
+    void ensureIndex();
+    QString getLine(int id);
+    QDateTime getDate(int id);
 };
 
 #endif // EDBFLATFILE_H

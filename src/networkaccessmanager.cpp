@@ -32,36 +32,36 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent) :
 QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest & req,
                                                    QIODevice * outgoingData = 0)
 {
-	if (req.url().host() != QLatin1String("psi")) {
-		return QNetworkAccessManager::createRequest(op, req, outgoingData);
+    if (req.url().host() != QLatin1String("psi")) {
+        return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
 
-	QNetworkReply *reply = nullptr;
-	QByteArray data;
-	QByteArray mime;
+    QNetworkReply *reply = nullptr;
+    QByteArray data;
+    QByteArray mime;
 
-	for (auto &handler : _pathHandlers) {
-		if (handler->data(req, data, mime)) {
-			reply = new ByteArrayReply(req, data, mime, this);
-			break;
-		}
-	}
+    for (auto &handler : _pathHandlers) {
+        if (handler->data(req, data, mime)) {
+            reply = new ByteArrayReply(req, data, mime, this);
+            break;
+        }
+    }
 
-	if (!reply) {
+    if (!reply) {
 #ifdef HAVE_QT5
-		QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
+        QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
 #else
-		QString ua = QString(req.rawHeader("User-Agent"));
+        QString ua = QString(req.rawHeader("User-Agent"));
 #endif
-		auto handler = _sessionHandlers.value(ua);
-		if (handler && handler->data(req, data, mime)) {
-			reply = new ByteArrayReply(req, data, mime, this);
-		}
-	}
+        auto handler = _sessionHandlers.value(ua);
+        if (handler && handler->data(req, data, mime)) {
+            reply = new ByteArrayReply(req, data, mime, this);
+        }
+    }
 
-	if (!reply) {
-		reply = new ByteArrayReply(req); //finishes with error
-	}
+    if (!reply) {
+        reply = new ByteArrayReply(req); //finishes with error
+    }
     connect(reply, SIGNAL(finished()), SLOT(callFinished()));
 
     return reply;
@@ -77,16 +77,16 @@ void NetworkAccessManager::callFinished() {
 
 QString NetworkAccessManager::registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler)
 {
-	QString s;
-	s.sprintf("t%x", _handlerSeed);
-	_handlerSeed += 0x10;
+    QString s;
+    s.sprintf("t%x", _handlerSeed);
+    _handlerSeed += 0x10;
 
-	_sessionHandlers.insert(s, handler);
+    _sessionHandlers.insert(s, handler);
 
-	return s;
+    return s;
 }
 
 void NetworkAccessManager::unregisterSessionHandler(const QString &id)
 {
-	_sessionHandlers.remove(id);
+    _sessionHandlers.remove(id);
 }

@@ -36,88 +36,88 @@ class WbWidget;
  *  \sa WbItem
  */
 class WbItemMenu : public QMenu {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	/*! \brief Constructor
-	 *  Constructs a new empty menu.
-	 */
-	WbItemMenu(QWidget* parent);
-	/*! \brief Destructor
-	 *  Deletes all the actiongroups and their actions.
-	 */
-	~WbItemMenu();
-	/*! \brief Add actiongroup to the menu.*/
-	void addActionGroup(QActionGroup*);
+    /*! \brief Constructor
+     *  Constructs a new empty menu.
+     */
+    WbItemMenu(QWidget* parent);
+    /*! \brief Destructor
+     *  Deletes all the actiongroups and their actions.
+     */
+    ~WbItemMenu();
+    /*! \brief Add actiongroup to the menu.*/
+    void addActionGroup(QActionGroup*);
 
 private slots:
-	/*! \brief Destruct self.*/
-	void destructSelf();
+    /*! \brief Destruct self.*/
+    void destructSelf();
 
 private:
-	/*! \brief The actiongroups that the menu shows.*/
-	QList<QActionGroup*> groups_;
+    /*! \brief The actiongroups that the menu shows.*/
+    QList<QActionGroup*> groups_;
 };
 
 class WbItem : public QGraphicsSvgItem {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	/*! \brief Constructor
-	 *  Constructs a new whiteboard item that visualized \a node.
-	 */
-	WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, WbScene* scene, WbWidget* widget);
-	/*! \brief Destructor
-	 *  Makes sure that the item gets deleted from the underlying <svg/> document
-	 */
-	~WbItem();
+    /*! \brief Constructor
+     *  Constructs a new whiteboard item that visualized \a node.
+     */
+    WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, WbScene* scene, WbWidget* widget);
+    /*! \brief Destructor
+     *  Makes sure that the item gets deleted from the underlying <svg/> document
+     */
+    ~WbItem();
 
-	/*! \brief Returns the xml:id of the node.*/
-	QString id();
-	/*! \brief Returns the underlying node.*/
-	QDomNode node();
+    /*! \brief Returns the xml:id of the node.*/
+    QString id();
+    /*! \brief Returns the underlying node.*/
+    QDomNode node();
 
-	/*! \brief Regenerates the SVG transformation matrix.*/
-	void regenerateTransform();
+    /*! \brief Regenerates the SVG transformation matrix.*/
+    void regenerateTransform();
 
-	/*! \brief Adds the item to the scene.
-		Generates an 'id' attribute for the node if none exists. */
-	void addToScene();
-	/*! \brief Removes the item from the scene. */
-	void removeFromScene();
+    /*! \brief Adds the item to the scene.
+        Generates an 'id' attribute for the node if none exists. */
+    void addToScene();
+    /*! \brief Removes the item from the scene. */
+    void removeFromScene();
 
-	/*! \brief Resets the position of the item according to the SVG and clears any QGraphicsItem transformations.*/
-	void resetPos();
+    /*! \brief Resets the position of the item according to the SVG and clears any QGraphicsItem transformations.*/
+    void resetPos();
 
-	/*! \brief Returns a QTransform based on \a string provided in the SVG 'transform' attribute format.*/
-	static QMatrix parseSvgTransform(QString string);
-	/*! \brief Returns a QString in the SVG 'transform' attribute format based on \a matrix.*/
-	static QString toSvgTransform(const QMatrix &matrix);
+    /*! \brief Returns a QTransform based on \a string provided in the SVG 'transform' attribute format.*/
+    static QMatrix parseSvgTransform(QString string);
+    /*! \brief Returns a QString in the SVG 'transform' attribute format based on \a matrix.*/
+    static QString toSvgTransform(const QMatrix &matrix);
 
 protected:
-	 /*! \brief Constructs and popsup the default context menu.*/
-	 virtual void contextMenuEvent (QGraphicsSceneContextMenuEvent *);
-	 /*! \brief Implements the default item interaction behaviour.
-	 *  The action depends on the mode of widget_;
-	  */
-	 virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *);
-	 /*! \brief Implements the default item interaction behaviour.
-	  *  The action depends on the mode of widget_;
-	  */
-	 virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *);
+     /*! \brief Constructs and popsup the default context menu.*/
+     virtual void contextMenuEvent (QGraphicsSceneContextMenuEvent *);
+     /*! \brief Implements the default item interaction behaviour.
+     *  The action depends on the mode of widget_;
+      */
+     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *);
+     /*! \brief Implements the default item interaction behaviour.
+      *  The action depends on the mode of widget_;
+      */
+     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *);
 
 private:
-	 /*! \brief Construct a context menu with the default items.*/
-	 WbItemMenu* constructContextMenu();
-	 /*! \brief Return the center of the item in item coordinates.*/
-	 QPointF center();
+     /*! \brief Construct a context menu with the default items.*/
+     WbItemMenu* constructContextMenu();
+     /*! \brief Return the center of the item in item coordinates.*/
+     QPointF center();
 
-	// The session that the item belongs to
-	SxeSession* session_;
-	// The WbScene that the item belongs to
-	WbScene* scene_;
-	// The WbWidget that shows the item
-	WbWidget* widget_;
-	// The node SVG node that's being visualized
-	QDomElement node_;
+    // The session that the item belongs to
+    SxeSession* session_;
+    // The WbScene that the item belongs to
+    WbScene* scene_;
+    // The WbWidget that shows the item
+    WbWidget* widget_;
+    // The node SVG node that's being visualized
+    QDomElement node_;
 
 };
 

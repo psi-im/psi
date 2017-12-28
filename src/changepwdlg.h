@@ -27,29 +27,29 @@ class PsiAccount;
 
 class ChangePasswordDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ChangePasswordDlg(PsiAccount *, QWidget *parent=0);
-	~ChangePasswordDlg();
+    ChangePasswordDlg(PsiAccount *, QWidget *parent=0);
+    ~ChangePasswordDlg();
 
 protected:
-	//void closeEvent(QCloseEvent *e);
+    //void closeEvent(QCloseEvent *e);
 
 public slots:
-	void done(int);
+    void done(int);
 
 private slots:
-	void apply();
-	void finished();
-	void disc();
+    void apply();
+    void finished();
+    void disc();
 
 private:
-	void blockWidgets();
-	void restoreWidgets();
-	void setWidgetsEnabled(bool enabled);
+    void blockWidgets();
+    void restoreWidgets();
+    void setWidgetsEnabled(bool enabled);
 
-	Ui::ChangePassword ui_;
-	PsiAccount* pa;
+    Ui::ChangePassword ui_;
+    PsiAccount* pa;
 };
 
 #endif

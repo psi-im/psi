@@ -34,46 +34,46 @@ class XmlPrompt;
 
 class XmlConsole : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	XmlConsole(PsiAccount *);
-	~XmlConsole();
-	void enable();
+    XmlConsole(PsiAccount *);
+    ~XmlConsole();
+    void enable();
 
 private slots:
-	void clear();
-	void updateCaption();
-	void insertXml();
-	void dumpRingbuf();
-	void client_xmlIncoming(const QString &);
-	void client_xmlOutgoing(const QString &);
-	void xml_textReady(const QString &);
+    void clear();
+    void updateCaption();
+    void insertXml();
+    void dumpRingbuf();
+    void client_xmlIncoming(const QString &);
+    void client_xmlOutgoing(const QString &);
+    void xml_textReady(const QString &);
 
 protected:
-	bool filtered(const QString&) const;
-	void addRecord(bool incoming, const QString &str);
+    bool filtered(const QString&) const;
+    void addRecord(bool incoming, const QString &str);
 
 private:
-	Ui::XMLConsole ui_;
-	PsiAccount *pa;
-	QPointer<XmlPrompt> prompt;
+    Ui::XMLConsole ui_;
+    PsiAccount *pa;
+    QPointer<XmlPrompt> prompt;
 };
 
 class XmlPrompt : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	XmlPrompt(QWidget *parent=0);
-	~XmlPrompt();
+    XmlPrompt(QWidget *parent=0);
+    ~XmlPrompt();
 
 signals:
-	void textReady(const QString &);
+    void textReady(const QString &);
 
 private slots:
-	void doTransmit();
+    void doTransmit();
 
 private:
-	QTextEdit *te;
+    QTextEdit *te;
 };
 
 #endif

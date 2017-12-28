@@ -27,14 +27,14 @@ class PsiAccount;
 
 class ContactListAccountMenu : public ContactListItemMenu
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ContactListAccountMenu(PsiAccount *account, ContactListModel *model);
-	~ContactListAccountMenu();
+    ContactListAccountMenu(PsiAccount *account, ContactListModel *model);
+    ~ContactListAccountMenu();
 
 private:
-	class Private;
-	Private* d;
+    class Private;
+    Private* d;
 };
 
 #endif

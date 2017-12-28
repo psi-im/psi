@@ -25,29 +25,29 @@
 #include <QDialog>
 
 namespace Ui {
-	class MUCReasonsEditor;
+    class MUCReasonsEditor;
 }
 
 class MUCReasonsEditor: public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	MUCReasonsEditor(QWidget* parent = 0);
-	~MUCReasonsEditor();
-	QString reason() const { return reason_; }
+    MUCReasonsEditor(QWidget* parent = 0);
+    ~MUCReasonsEditor();
+    QString reason() const { return reason_; }
 
 private:
-	Ui::MUCReasonsEditor *ui_;
-	QString reason_;
+    Ui::MUCReasonsEditor *ui_;
+    QString reason_;
 
 private slots:
-	void addButtonClicked();
-	void removeButtonClicked();
-	void save();
-	void currentChanged(const QString&);
+    void addButtonClicked();
+    void removeButtonClicked();
+    void save();
+    void currentChanged(const QString&);
 
 protected slots:
-	void accept();
+    void accept();
 };
 
 #endif

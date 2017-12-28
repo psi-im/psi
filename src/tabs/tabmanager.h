@@ -30,104 +30,104 @@ class TabDlgDelegate;
 
 class TabManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	TabManager(PsiCon *psiCon, QObject *parent = 0);
-	~TabManager();
+    TabManager(PsiCon *psiCon, QObject *parent = 0);
+    ~TabManager();
 
-	PsiCon* psiCon() const;
+    PsiCon* psiCon() const;
 
-	/**
-	 * Get the default tabset for this widget (created if needed).
-	 */
-	TabDlg* getTabs(QWidget *widget);
+    /**
+     * Get the default tabset for this widget (created if needed).
+     */
+    TabDlg* getTabs(QWidget *widget);
 
-	/**
-	 * Return a new tabset (for this widget).
-	 */
-	TabDlg*	newTabs(QWidget *widget=0);
+    /**
+     * Return a new tabset (for this widget).
+     */
+    TabDlg*    newTabs(QWidget *widget=0);
 
-	/**
-	 * Checks if a tabset manages this widget.
-	 */
-	bool isChatTabbed(const TabbableWidget*) const;
+    /**
+     * Checks if a tabset manages this widget.
+     */
+    bool isChatTabbed(const TabbableWidget*) const;
 
-	/**
-	 * Returns the tab dialog that owns the supplied widget.
-	 */
-	TabDlg* getManagingTabs(const TabbableWidget*) const;
+    /**
+     * Returns the tab dialog that owns the supplied widget.
+     */
+    TabDlg* getManagingTabs(const TabbableWidget*) const;
 
-	/**
-	 * Returns all active tabsets (could be empty).
-	 */
-	const QList<TabDlg*>& tabSets();
+    /**
+     * Returns all active tabsets (could be empty).
+     */
+    const QList<TabDlg*>& tabSets();
 
-	/**
-	 * Checks if a given widget should be in a tabset
-	 * (depends on set options and widget type).
-	 */
-	bool shouldBeTabbed(QWidget *widget);
+    /**
+     * Checks if a given widget should be in a tabset
+     * (depends on set options and widget type).
+     */
+    bool shouldBeTabbed(QWidget *widget);
 
-	/**
-	 * removes and deletes all tabsets
-	 */
-	void deleteAll();
+    /**
+     * removes and deletes all tabsets
+     */
+    void deleteAll();
 
 
-	/**
-	 * Returns the Kind of the given widget.
-	 */
-	QChar tabKind(QWidget *widget);
+    /**
+     * Returns the Kind of the given widget.
+     */
+    QChar tabKind(QWidget *widget);
 
-	/**
-	 * return the preferred tabset for a given kind of tabs(0 for none).
-	 */
-	TabDlg *preferredTabsForKind(QChar kind);
+    /**
+     * return the preferred tabset for a given kind of tabs(0 for none).
+     */
+    TabDlg *preferredTabsForKind(QChar kind);
 
-	/**
-	 * set the preferred tabset for a given kind of tabs
-	 */
-	void setPreferredTabsForKind(QChar kind, TabDlg *tabs);
+    /**
+     * set the preferred tabset for a given kind of tabs
+     */
+    void setPreferredTabsForKind(QChar kind, TabDlg *tabs);
 
-	/**
-	 * set the delegate to be used for all created TabDlgs
-	 */
-	void setTabDlgDelegate(TabDlgDelegate *delegate);
+    /**
+     * set the delegate to be used for all created TabDlgs
+     */
+    void setTabDlgDelegate(TabDlgDelegate *delegate);
 
-	/**
-	 * enable/disable user dragging/detach/assignment of tabs
-	 *
-	 * the default is enabled
-	 */
-	void setUserManagementEnabled(bool enabled);
+    /**
+     * enable/disable user dragging/detach/assignment of tabs
+     *
+     * the default is enabled
+     */
+    void setUserManagementEnabled(bool enabled);
 
-	/**
-	 * enable/disable display of PsiTabBar when there is only one tab
-	 *
-	 * the default is enabled
-	 */
-	void setTabBarShownForSingles(bool enabled);
+    /**
+     * enable/disable display of PsiTabBar when there is only one tab
+     *
+     * the default is enabled
+     */
+    void setTabBarShownForSingles(bool enabled);
 
-	/**
-	 * enable/disable simplified caption mode
-	 *
-	 * the default is disabled
-	 */
-	void setSimplifiedCaptionEnabled(bool enabled);
+    /**
+     * enable/disable simplified caption mode
+     *
+     * the default is disabled
+     */
+    void setSimplifiedCaptionEnabled(bool enabled);
 
 public slots:
-	void tabDestroyed(QObject*);
+    void tabDestroyed(QObject*);
 
 private:
-	QMap<QChar, TabDlg*> preferedTabsetForKind_;
-	QMap<TabDlg*, QString> tabsetToKinds_;
- 	QList<TabDlg*> tabs_;
-	QList<TabbableWidget*> tabControlledChats_;
-	PsiCon *psiCon_;
-	TabDlgDelegate *tabDlgDelegate_;
-	bool userManagement_;
-	bool tabSingles_;
-	bool simplifiedCaption_;
+    QMap<QChar, TabDlg*> preferedTabsetForKind_;
+    QMap<TabDlg*, QString> tabsetToKinds_;
+     QList<TabDlg*> tabs_;
+    QList<TabbableWidget*> tabControlledChats_;
+    PsiCon *psiCon_;
+    TabDlgDelegate *tabDlgDelegate_;
+    bool userManagement_;
+    bool tabSingles_;
+    bool simplifiedCaption_;
 };
 
 #endif /* _TABMANAGER_H_ */

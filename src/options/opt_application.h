@@ -8,27 +8,27 @@ class QButtonGroup;
 
 class OptionsTabApplication : public OptionsTab
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OptionsTabApplication(QObject *parent);
-	~OptionsTabApplication();
+    OptionsTabApplication(QObject *parent);
+    ~OptionsTabApplication();
 
-	void setHaveAutoUpdater(bool);
+    void setHaveAutoUpdater(bool);
 
-	QWidget *widget();
-	void applyOptions();
-	void restoreOptions();
+    QWidget *widget();
+    void applyOptions();
+    void restoreOptions();
 
 private slots:
-	void updatePortLabel();
+    void updatePortLabel();
 
 private:
-	QWidget *w;
-	bool haveAutoUpdater_;
-	QString configPath_;
+    QWidget *w;
+    bool haveAutoUpdater_;
+    QString configPath_;
 
 private slots:
-	void doEnableQuitOnClose(int);
+    void doEnableQuitOnClose(int);
 };
 
 #endif

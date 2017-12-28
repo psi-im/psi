@@ -6,9 +6,9 @@ class ContactStateAccessingHost;
 class ContactStateAccessor
 {
 public:
-	virtual ~ContactStateAccessor() {}
+    virtual ~ContactStateAccessor() {}
 
-	virtual void setContactStateAccessingHost(ContactStateAccessingHost* host) = 0;
+    virtual void setContactStateAccessingHost(ContactStateAccessingHost* host) = 0;
 
 };
 

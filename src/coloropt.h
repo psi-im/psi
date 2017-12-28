@@ -26,38 +26,38 @@
 class ColorData
 {
 public:
-	ColorData() : role(QPalette::NoRole), valid(false) {}
-	ColorData(const QColor &color, QPalette::ColorRole role)
-		: color(color)
-		, role(role)
-		, valid(true) { }
+    ColorData() : role(QPalette::NoRole), valid(false) {}
+    ColorData(const QColor &color, QPalette::ColorRole role)
+        : color(color)
+        , role(role)
+        , valid(true) { }
 
-	QColor color;
-	QPalette::ColorRole role;
-	bool valid;
+    QColor color;
+    QPalette::ColorRole role;
+    bool valid;
 };
 
 class ColorOpt : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static ColorOpt* instance();
-	QColor color(const QString &opt, const QColor &defaultColor = QColor()) const;
-	QPalette::ColorRole colorRole(const QString &opt) const;
+    static ColorOpt* instance();
+    QColor color(const QString &opt, const QColor &defaultColor = QColor()) const;
+    QPalette::ColorRole colorRole(const QString &opt) const;
 
 signals:
-	void changed();
+    void changed();
 
 private:
-	ColorOpt();
+    ColorOpt();
 
 public slots:
-	static void reset();
+    static void reset();
 
 private slots:
-	void optionChanged(const QString &opt);
+    void optionChanged(const QString &opt);
 
 private:
-	static QScopedPointer<ColorOpt> instance_;
-	QHash<QString, ColorData> colors;
+    static QScopedPointer<ColorOpt> instance_;
+    QHash<QString, ColorData> colors;
 };

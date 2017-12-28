@@ -27,8 +27,8 @@
 
 class PsiThemeManager::Private {
 public:
-	QMap<QString, PsiThemeProvider *> providers;
-	QSet<QString> required;
+    QMap<QString, PsiThemeProvider *> providers;
+    QSet<QString> required;
 };
 
 
@@ -37,50 +37,50 @@ public:
 // PsiThemeManager
 //---------------------------------------------------------
 PsiThemeManager::PsiThemeManager()
-	: QObject(QCoreApplication::instance())
+    : QObject(QCoreApplication::instance())
 {
-	d = new Private;//(this);
+    d = new Private;//(this);
 }
 
 PsiThemeManager::~PsiThemeManager()
 {
-	delete d;
+    delete d;
 }
 
 PsiThemeManager* PsiThemeManager::instance()
 {
-	if (!instance_)
-		instance_ = new PsiThemeManager();
-	return instance_;
+    if (!instance_)
+        instance_ = new PsiThemeManager();
+    return instance_;
 }
 
 void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
-									   bool required)
+                                       bool required)
 {
-	d->providers[provider->type()] = provider;
-	if (required) {
-		d->required.insert(provider->type());
-	}
+    d->providers[provider->type()] = provider;
+    if (required) {
+        d->required.insert(provider->type());
+    }
 }
 
 PsiThemeProvider *PsiThemeManager::provider(const QString &type)
 {
-	return d->providers.value(type);
+    return d->providers.value(type);
 }
 
 QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const
 {
-	return d->providers.values();
+    return d->providers.values();
 }
 
 bool PsiThemeManager::loadAll()
 {
-	foreach (const QString &type, d->providers.keys()) {
-		if (!d->providers[type]->loadCurrent() && d->required.contains(type)) {
-			return false;
-		}
-	}
-	return true;
+    foreach (const QString &type, d->providers.keys()) {
+        if (!d->providers[type]->loadCurrent() && d->required.contains(type)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 PsiThemeManager* PsiThemeManager::instance_ = NULL;

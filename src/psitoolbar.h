@@ -32,28 +32,28 @@ class PsiOptions;
 
 class PsiToolBar : public QToolBar
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList* actionList);
-	~PsiToolBar();
+    PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList* actionList);
+    ~PsiToolBar();
 
-	void initialize();
-	void updateVisibility();
-	QString base() const;
+    void initialize();
+    void updateVisibility();
+    QString base() const;
 
-	static void structToOptions(PsiOptions* options, const ToolbarPrefs& s);
+    static void structToOptions(PsiOptions* options, const ToolbarPrefs& s);
 
 signals:
-	void customize();
+    void customize();
 
 protected:
-	void contextMenuEvent(QContextMenuEvent* e);
+    void contextMenuEvent(QContextMenuEvent* e);
 
 private:
-	MetaActionList* actionList_;
-	QAction* customizeAction_;
-	QString base_;
+    MetaActionList* actionList_;
+    QAction* customizeAction_;
+    QString base_;
 };
 
 #endif

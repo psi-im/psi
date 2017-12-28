@@ -29,40 +29,40 @@ class ChatEdit;
 
 class ChatEditProxy : public QWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ChatEditProxy(QWidget* parent);
+    ChatEditProxy(QWidget* parent);
 
-	/**
-	 * Returns encapsulated QTextEdit widget.
-	 */
-	ChatEdit* chatEdit() const { return textEdit_; }
+    /**
+     * Returns encapsulated QTextEdit widget.
+     */
+    ChatEdit* chatEdit() const { return textEdit_; }
 
 signals:
-	/**
-	 * Emitted when internal QTextEdit gets replaced with
-	 * another one.
-	 */
-	void textEditCreated(QTextEdit* textEdit);
+    /**
+     * Emitted when internal QTextEdit gets replaced with
+     * another one.
+     */
+    void textEditCreated(QTextEdit* textEdit);
 
 protected:
-	/**
-	 * Returns true if line edit mode is enabled.
-	 */
-	bool lineEditEnabled() const { return lineEditEnabled_; }
-	void setLineEditEnabled(bool enable);
+    /**
+     * Returns true if line edit mode is enabled.
+     */
+    bool lineEditEnabled() const { return lineEditEnabled_; }
+    void setLineEditEnabled(bool enable);
 
 public slots:
-	void optionsChanged();
+    void optionsChanged();
 
 private:
-	virtual ChatEdit* createTextEdit();
-	void moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const;
-	void updateLayout();
+    virtual ChatEdit* createTextEdit();
+    void moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const;
+    void updateLayout();
 
-	bool lineEditEnabled_;
-	ChatEdit* textEdit_;
-	QLayout* layout_;
+    bool lineEditEnabled_;
+    ChatEdit* textEdit_;
+    QLayout* layout_;
 };
 
 #endif

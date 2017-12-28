@@ -30,25 +30,25 @@
  * \param type, selected status type just after creation
  */
 StatusComboBox::StatusComboBox(QWidget* parent, XMPP::Status::Type type)
-	: QComboBox(parent)
+    : QComboBox(parent)
 {
-	addStatus(XMPP::Status::Online);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
-		addStatus(XMPP::Status::FFC);
-	}
-	addStatus(XMPP::Status::Away);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
-		addStatus(XMPP::Status::XA);
-	}
-	addStatus(XMPP::Status::DND);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
-		addStatus(XMPP::Status::Invisible);
-	}
-	addStatus(XMPP::Status::Offline);
+    addStatus(XMPP::Status::Online);
+    if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
+        addStatus(XMPP::Status::FFC);
+    }
+    addStatus(XMPP::Status::Away);
+    if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
+        addStatus(XMPP::Status::XA);
+    }
+    addStatus(XMPP::Status::DND);
+    if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
+        addStatus(XMPP::Status::Invisible);
+    }
+    addStatus(XMPP::Status::Offline);
 
-	connect(this, SIGNAL(currentIndexChanged(int)), SLOT(onCurrentIndexChanged(int)));
+    connect(this, SIGNAL(currentIndexChanged(int)), SLOT(onCurrentIndexChanged(int)));
 
-	setStatus(type);
+    setStatus(type);
 }
 
 /**
@@ -56,19 +56,19 @@ StatusComboBox::StatusComboBox(QWidget* parent, XMPP::Status::Type type)
  */
 void StatusComboBox::setStatus(XMPP::Status::Type type)
 {
-	if (type == XMPP::Status::FFC && !PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
-		type = XMPP::Status::Online;
-	else if (type == XMPP::Status::XA && !PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
-		type = XMPP::Status::Away;
-	else if (type == XMPP::Status::Invisible && !PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool())
-		type = XMPP::Status::Offline;
+    if (type == XMPP::Status::FFC && !PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
+        type = XMPP::Status::Online;
+    else if (type == XMPP::Status::XA && !PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
+        type = XMPP::Status::Away;
+    else if (type == XMPP::Status::Invisible && !PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool())
+        type = XMPP::Status::Offline;
 
-	for (int i = 0; i < count(); ++i) {
-		if (static_cast<XMPP::Status::Type>(itemData(i).toInt()) == type) {
-			setCurrentIndex(i);
-			break;
-		}
-	}
+    for (int i = 0; i < count(); ++i) {
+        if (static_cast<XMPP::Status::Type>(itemData(i).toInt()) == type) {
+            setCurrentIndex(i);
+            break;
+        }
+    }
 }
 
 /**
@@ -76,20 +76,20 @@ void StatusComboBox::setStatus(XMPP::Status::Type type)
  */
 XMPP::Status::Type StatusComboBox::status() const
 {
-	return static_cast<XMPP::Status::Type>(itemData(currentIndex()).toInt());
+    return static_cast<XMPP::Status::Type>(itemData(currentIndex()).toInt());
 }
 
 // private
 
 void StatusComboBox::addStatus(XMPP::Status::Type status){
 #ifdef Q_OS_MAC
-	addItem(status2txt(status), status);
+    addItem(status2txt(status), status);
 #else
-	addItem(PsiIconset::instance()->status(status).icon(), status2txt(status), status);
+    addItem(PsiIconset::instance()->status(status).icon(), status2txt(status), status);
 #endif
 }
 
 void StatusComboBox::onCurrentIndexChanged(int index)
 {
-	emit statusChanged(static_cast<XMPP::Status::Type>(itemData(index).toInt()));
+    emit statusChanged(static_cast<XMPP::Status::Type>(itemData(index).toInt()));
 }

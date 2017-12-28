@@ -28,39 +28,39 @@ class ContactListViewDelegate;
 
 class PsiContactListView : public ContactListDragView
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PsiContactListView(QWidget* parent);
+    PsiContactListView(QWidget* parent);
 
-	// reimplemented
-	void setModel(QAbstractItemModel* model);
+    // reimplemented
+    void setModel(QAbstractItemModel* model);
 
-	QSize minimumSizeHint() const;
-	QSize sizeHint() const;
+    QSize minimumSizeHint() const;
+    QSize sizeHint() const;
 
-	void setAutoResizeEnabled(bool enabled);
+    void setAutoResizeEnabled(bool enabled);
 
 protected slots:
-	void alertContacts(const QModelIndexList &indexes);
-	void animateContacts(const QModelIndexList &indexes, bool started);
-	void optionChanged(const QString &option);
+    void alertContacts(const QModelIndexList &indexes);
+    void animateContacts(const QModelIndexList &indexes, bool started);
+    void optionChanged(const QString &option);
 
 protected:
-	// reimplemented
-	void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
-	void dragEnterEvent(QDragEnterEvent *e);
-	void dropEvent(QDropEvent *e);
-	void dragMoveEvent(QDragMoveEvent *e);
+    // reimplemented
+    void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
+    void dragEnterEvent(QDragEnterEvent *e);
+    void dropEvent(QDropEvent *e);
+    void dragMoveEvent(QDragMoveEvent *e);
 
-	ContactListViewDelegate *itemDelegate() const;
-
-private:
-	bool acceptableDragOperation(QDropEvent *e);
+    ContactListViewDelegate *itemDelegate() const;
 
 private:
-	class Private;
-	Private* d;
+    bool acceptableDragOperation(QDropEvent *e);
+
+private:
+    class Private;
+    Private* d;
 };
 
 #endif

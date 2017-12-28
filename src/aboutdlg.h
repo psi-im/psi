@@ -27,17 +27,17 @@
 
 class AboutDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	AboutDlg(QWidget* parent = NULL);
+    AboutDlg(QWidget* parent = NULL);
 
 protected:
-	QString loadText( const QString & fileName );
-	QString details( QString name, QString email, QString jabber, QString www, QString desc );
+    QString loadText( const QString & fileName );
+    QString details( QString name, QString email, QString jabber, QString www, QString desc );
 
 private:
-	Ui::AboutDlg ui_;
+    Ui::AboutDlg ui_;
 };
 
 #endif

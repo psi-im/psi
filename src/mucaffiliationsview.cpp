@@ -25,40 +25,40 @@
 
 MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
 {
-	setRootIsDecorated(false);
+    setRootIsDecorated(false);
 #ifdef HAVE_QT5
-	header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 #else
-	header()->setResizeMode(QHeaderView::ResizeToContents);;
+    header()->setResizeMode(QHeaderView::ResizeToContents);;
 #endif
-	setItemsExpandable(false);
-	setItemsExpandable(false);
-	setDragEnabled(true);
-	setAcceptDrops(true);
-	setDropIndicatorShown(true);
-	setSelectionBehavior(QAbstractItemView::SelectRows);
+    setItemsExpandable(false);
+    setItemsExpandable(false);
+    setDragEnabled(true);
+    setAcceptDrops(true);
+    setDropIndicatorShown(true);
+    setSelectionBehavior(QAbstractItemView::SelectRows);
 }
 
 void MUCAffiliationsView::removeCurrent()
 {
-	QModelIndex index = currentIndex();
-	if (index.isValid() && index.parent().isValid()) {
-		model()->removeRows(index.row(),1,index.parent());
-	}
+    QModelIndex index = currentIndex();
+    if (index.isValid() && index.parent().isValid()) {
+        model()->removeRows(index.row(),1,index.parent());
+    }
 }
 
 void MUCAffiliationsView::currentChanged(const QModelIndex& current, const QModelIndex& previous)
 {
-	Q_UNUSED(previous);
-	// Commenting these optimizations, since they cause too much trouble
-	//bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
-	//bool remove_before = previous.isValid() && previous.parent().isValid();
-	bool add_after = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
-	bool remove_after = current.isValid() && current.parent().isValid();
+    Q_UNUSED(previous);
+    // Commenting these optimizations, since they cause too much trouble
+    //bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
+    //bool remove_before = previous.isValid() && previous.parent().isValid();
+    bool add_after = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
+    bool remove_after = current.isValid() && current.parent().isValid();
 
-	//if (add_before != add_after)
-		emit addEnabled(add_after);
-	//if (remove_before != remove_after)
-		emit removeEnabled(remove_after);
+    //if (add_before != add_after)
+        emit addEnabled(add_after);
+    //if (remove_before != remove_after)
+        emit removeEnabled(remove_after);
 }
 

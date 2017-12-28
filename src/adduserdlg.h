@@ -27,42 +27,42 @@ class QString;
 class QStringList;
 class PsiAccount;
 namespace XMPP {
-	class Jid;
+    class Jid;
 }
 
 class AddUserDlg : public QDialog, public Ui::AddUser
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *);
-	AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *);
-	~AddUserDlg();
+    AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *);
+    AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *);
+    ~AddUserDlg();
 
 signals:
-	void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
+    void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
 
 private slots:
-	void ok();
-	void cancel();
-	void serviceActivated(int);
-	void getTransID();
-	void jt_getFinished();
-	void jt_setFinished();
-	void le_transPromptChanged(const QString &);
+    void ok();
+    void cancel();
+    void serviceActivated(int);
+    void getTransID();
+    void jt_getFinished();
+    void jt_setFinished();
+    void le_transPromptChanged(const QString &);
 
-	void getVCardActivated();
-	void resolveNickActivated();
-	void resolveNickFinished();
+    void getVCardActivated();
+    void resolveNickActivated();
+    void resolveNickFinished();
 
-	void jid_Changed();
+    void jid_Changed();
 
 private:
-	void init(const QStringList &groups, PsiAccount *);
-	class Private;
-	Private *d;
+    void init(const QStringList &groups, PsiAccount *);
+    class Private;
+    Private *d;
 
-	XMPP::Jid jid() const;
-	void errorGateway(const QString &str, const QString &err);
+    XMPP::Jid jid() const;
+    void errorGateway(const QString &str, const QString &err);
 };
 
 #endif

@@ -6,9 +6,9 @@ class QString;
 class PluginInfoProvider
 {
 public:
-	virtual ~PluginInfoProvider() {}
+    virtual ~PluginInfoProvider() {}
 
-	virtual QString pluginInfo() = 0;
+    virtual QString pluginInfo() = 0;
 
 };
 

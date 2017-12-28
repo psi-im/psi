@@ -33,26 +33,26 @@ class Theme;
 
 class ThemeServer : public qhttp::server::QHttpServer
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	int handlerSeed;
+    int handlerSeed;
 public:
 
-	typedef std::function<bool(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)> Handler;
+    typedef std::function<bool(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)> Handler;
 
-	ThemeServer(QObject *parent = 0);
-	quint16 serverPort() const;
-	QHostAddress serverAddress() const;
+    ThemeServer(QObject *parent = 0);
+    quint16 serverPort() const;
+    QHostAddress serverAddress() const;
 
-	QUrl serverUrl();
+    QUrl serverUrl();
 
-	QString registerSessionHandler(const Handler &handler);
-	void unregisterSessionHandler(const QString &path);
-	void registerPathHandler(const char *path, const Handler &handler);
+    QString registerSessionHandler(const Handler &handler);
+    void unregisterSessionHandler(const QString &path);
+    void registerPathHandler(const char *path, const Handler &handler);
 private:
 
-	QHash<QString,Handler> sessionHandlers;
-	QList<QPair<QString,Handler>> pathHandlers;
+    QHash<QString,Handler> sessionHandlers;
+    QList<QPair<QString,Handler>> pathHandlers;
 
 };
 

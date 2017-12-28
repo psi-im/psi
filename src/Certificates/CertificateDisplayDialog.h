@@ -26,18 +26,18 @@
 
 class CertificateDisplayDialog : public QDialog
 {
-		Q_OBJECT
+        Q_OBJECT
 
-	public:
-		CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=0);
+    public:
+        CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=0);
 
-	protected:
-		static void setLabelStatus(QLabel& l, bool ok);
-		static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
-		QString makePropTable(const QString &heading, const QCA::CertificateInfo &props);
+    protected:
+        static void setLabelStatus(QLabel& l, bool ok);
+        static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
+        QString makePropTable(const QString &heading, const QCA::CertificateInfo &props);
 
-	private:
-		Ui::CertificateDisplay ui_;
+    private:
+        Ui::CertificateDisplay ui_;
 };
 
 #endif

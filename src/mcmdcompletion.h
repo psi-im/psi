@@ -31,18 +31,18 @@ class MCmdManagerIface;
   */
 class MCmdTabCompletion : public TabCompletion {
 public:
-	/** Constructs an MCmdTabCompletion for getting completions from mini command
-	  * manager \a mgr.
-	  */
-	MCmdTabCompletion(MCmdManagerIface *mgr) : mgr_(mgr) {};
+    /** Constructs an MCmdTabCompletion for getting completions from mini command
+      * manager \a mgr.
+      */
+    MCmdTabCompletion(MCmdManagerIface *mgr) : mgr_(mgr) {};
 
 protected:
-	virtual void setup(QString str, int pos, int &start, int &end);
-	virtual QStringList possibleCompletions();
-	virtual QStringList allChoices(QString &guess);
+    virtual void setup(QString str, int pos, int &start, int &end);
+    virtual QStringList possibleCompletions();
+    virtual QStringList allChoices(QString &guess);
 
-	QStringList mCmdList_;
-	MCmdManagerIface *mgr_;
+    QStringList mCmdList_;
+    MCmdManagerIface *mgr_;
 };
 
 

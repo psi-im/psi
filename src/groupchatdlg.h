@@ -43,156 +43,156 @@ class GCMainDlg;
 class MessageView;
 class QColorGroup;
 namespace XMPP {
-	class Message;
+    class Message;
 }
 
 /*class GCLineEdit : public QLineEdit
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	GCLineEdit(QWidget *parent=0, const char *name=0);
+    GCLineEdit(QWidget *parent=0, const char *name=0);
 
 signals:
-	void upPressed();
-	void downPressed();
+    void upPressed();
+    void downPressed();
 
 protected:
-	void keyPressEvent(QKeyEvent *);
+    void keyPressEvent(QKeyEvent *);
 };*/
 
 class GCMainDlg : public TabbableWidget
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	GCMainDlg(PsiAccount *, const Jid &, TabManager *tabManager);
-	~GCMainDlg();
+    GCMainDlg(PsiAccount *, const Jid &, TabManager *tabManager);
+    ~GCMainDlg();
 
-	PsiAccount* account() const;
+    PsiAccount* account() const;
 
-	void error(int, const QString &);
-	void presence(const QString &, const Status &);
-	void message(const Message &, const PsiEvent::Ptr &e = PsiEvent::Ptr());
-	void joined();
-	void setPassword(const QString&);
-	const QString& nick() const;
-	const QDateTime& lastMsgTime() const;
-	bool isLastMessageAlert() const;
+    void error(int, const QString &);
+    void presence(const QString &, const Status &);
+    void message(const Message &, const PsiEvent::Ptr &e = PsiEvent::Ptr());
+    void joined();
+    void setPassword(const QString&);
+    const QString& nick() const;
+    const QDateTime& lastMsgTime() const;
+    bool isLastMessageAlert() const;
 
-	bool isInactive() const;
-	void reactivate();
-	void setJid(const Jid &j);
+    bool isInactive() const;
+    void reactivate();
+    void setJid(const Jid &j);
 
-	// reimplemented
-	virtual TabbableWidget::State state() const;
-	virtual int unreadMessageCount() const;
-	const QString & getDisplayName() const;
-	virtual QString desiredCaption() const;
+    // reimplemented
+    virtual TabbableWidget::State state() const;
+    virtual int unreadMessageCount() const;
+    const QString & getDisplayName() const;
+    virtual QString desiredCaption() const;
 
 protected:
-	void setShortcuts();
+    void setShortcuts();
 
-	// reimplemented
-	void resizeEvent(QResizeEvent *e);
-	void dragEnterEvent(QDragEnterEvent *);
-	void dropEvent(QDropEvent *);
-	void closeEvent(QCloseEvent *);
-	void mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason);
-	void setStatusTabIcon(int status);
+    // reimplemented
+    void resizeEvent(QResizeEvent *e);
+    void dragEnterEvent(QDragEnterEvent *);
+    void dropEvent(QDropEvent *);
+    void closeEvent(QCloseEvent *);
+    void mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason);
+    void setStatusTabIcon(int status);
 
 signals:
-	void aSend(const Message &);
-	void messagesRead(const Jid &);
-	void messageAppended(const QString &, QWidget*);
+    void aSend(const Message &);
+    void messagesRead(const Jid &);
+    void messageAppended(const QString &, QWidget*);
 
 public slots:
-	// reimplemented
-	virtual void deactivated();
-	virtual void activated();
-	virtual void ensureTabbedCorrectly();
+    // reimplemented
+    virtual void deactivated();
+    virtual void activated();
+    virtual void ensureTabbedCorrectly();
 
-	void optionsUpdate();
+    void optionsUpdate();
 
 private slots:
-	void showNM(const QString&);
-	void openURL(const QString&);
-	void onNickInsertClick(const QString &nick);
-	void scrollUp();
-	void scrollDown();
-	void mle_returnPressed();
-	void openTopic();
-	void sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics);
-	//void openFind();
-	void configureRoom();
-	//void doFind(const QString &);
-	void pa_updatedActivity();
-	void goDisc();
-	void goConn();
-	void goForcedLeave();
-	void lv_action(const QString &, const Status &, int);
-	void doClear();
-	void doClearButton();
-	void doBookmark();
-	void copyMucJid();
-	void doRemoveBookmark();
-	void buildMenu();
-	void logSelectionChanged();
-	void setConnecting();
-	void unsetConnecting();
-	void action_error(MUCManager::Action, int, const QString&);
-	void updateMucName();
-	void updateGCVCard();
-	void discoInfoFinished();
-	void updateIdentityVisibility();
-	void updateBookmarkIcon();
+    void showNM(const QString&);
+    void openURL(const QString&);
+    void onNickInsertClick(const QString &nick);
+    void scrollUp();
+    void scrollDown();
+    void mle_returnPressed();
+    void openTopic();
+    void sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics);
+    //void openFind();
+    void configureRoom();
+    //void doFind(const QString &);
+    void pa_updatedActivity();
+    void goDisc();
+    void goConn();
+    void goForcedLeave();
+    void lv_action(const QString &, const Status &, int);
+    void doClear();
+    void doClearButton();
+    void doBookmark();
+    void copyMucJid();
+    void doRemoveBookmark();
+    void buildMenu();
+    void logSelectionChanged();
+    void setConnecting();
+    void unsetConnecting();
+    void action_error(MUCManager::Action, int, const QString&);
+    void updateMucName();
+    void updateGCVCard();
+    void discoInfoFinished();
+    void updateIdentityVisibility();
+    void updateBookmarkIcon();
 #ifdef WHITEBOARDING
-	void openWhiteboard();
+    void openWhiteboard();
 #endif
-	void chatEditCreated();
-	void horizSplitterMoved();
-	void avatarUpdated(const Jid& jid);
+    void chatEditCreated();
+    void horizSplitterMoved();
+    void avatarUpdated(const Jid& jid);
 
 public:
-	class Private;
-	friend class Private;
+    class Private;
+    friend class Private;
 private:
-	Private *d;
-	Ui::GroupChatDlg ui_;
+    Private *d;
+    Ui::GroupChatDlg ui_;
 
-	void doAlert();
-	void appendSysMsg(const QString &, bool alert=false, const QDateTime &ts=QDateTime());
-	void appendSysMsg(const MessageView &);
-	void appendMessage(const Message &, bool);
-	void setLooks();
-	void setToolbuttons();
+    void doAlert();
+    void appendSysMsg(const QString &, bool alert=false, const QDateTime &ts=QDateTime());
+    void appendSysMsg(const MessageView &);
+    void appendMessage(const Message &, bool);
+    void setLooks();
+    void setToolbuttons();
 
-	void mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
-			const QString &youSimple, const QString &youBy, const QString &someoneSimple,
-			const QString &someoneBy);
+    void mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
+            const QString &youSimple, const QString &youBy, const QString &someoneSimple,
+            const QString &someoneBy);
 
-	void contextMenuEvent(QContextMenuEvent *);
+    void contextMenuEvent(QContextMenuEvent *);
 
-	inline XMPP::Jid jidForNick(const QString &nick) const;
+    inline XMPP::Jid jidForNick(const QString &nick) const;
 
 };
 
 class GCFindDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	GCFindDlg(const QString&, QWidget* parent);
-	~GCFindDlg();
+    GCFindDlg(const QString&, QWidget* parent);
+    ~GCFindDlg();
 
-	void found();
-	void error(const QString &);
+    void found();
+    void error(const QString &);
 
 signals:
-	void find(const QString &);
+    void find(const QString &);
 
 private slots:
-	void doFind();
+    void doFind();
 
 private:
-	QLineEdit *le_input;
+    QLineEdit *le_input;
 };
 
 #endif

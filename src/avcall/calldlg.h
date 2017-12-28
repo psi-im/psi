@@ -23,7 +23,7 @@
 
 namespace XMPP
 {
-	class Jid;
+    class Jid;
 }
 
 class PsiAccount;
@@ -31,18 +31,18 @@ class AvCall;
 
 class CallDlg : public QDialog
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	CallDlg(PsiAccount *pa, QWidget *parent = 0);
-	~CallDlg();
+    CallDlg(PsiAccount *pa, QWidget *parent = 0);
+    ~CallDlg();
 
-	void setOutgoing(const XMPP::Jid &jid);
-	void setIncoming(AvCall *sess);
+    void setOutgoing(const XMPP::Jid &jid);
+    void setIncoming(AvCall *sess);
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 #endif

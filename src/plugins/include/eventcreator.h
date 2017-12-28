@@ -6,9 +6,9 @@ class EventCreatingHost;
 class EventCreator
 {
 public:
-	virtual ~EventCreator() {}
+    virtual ~EventCreator() {}
 
-	virtual void setEventCreatingHost(EventCreatingHost* host) = 0;
+    virtual void setEventCreatingHost(EventCreatingHost* host) = 0;
 
 };
 

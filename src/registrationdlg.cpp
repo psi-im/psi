@@ -48,74 +48,74 @@ using namespace XMPP;
 
 class JT_XRegister : public JT_Register
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	JT_XRegister(Task *parent);
+    JT_XRegister(Task *parent);
 
-	void setXForm(const Form &frm, const XData &_form);
+    void setXForm(const Form &frm, const XData &_form);
 
-	bool take(const QDomElement &);
-	QDomElement iq() const;
-	QDomElement xdataElement() const;
+    bool take(const QDomElement &);
+    QDomElement iq() const;
+    QDomElement xdataElement() const;
 
-	void onGo();
+    void onGo();
 
 private:
-	QDomElement _iq;
+    QDomElement _iq;
 };
 
 JT_XRegister::JT_XRegister( Task *parent )
-	: JT_Register( parent )
+    : JT_Register( parent )
 {
 }
 
 bool JT_XRegister::take( const QDomElement &x )
 {
-	_iq = x;
+    _iq = x;
 
-	return JT_Register::take( x );
+    return JT_Register::take( x );
 }
 
 QDomElement JT_XRegister::iq() const
 {
-	return _iq;
+    return _iq;
 }
 
 void JT_XRegister::setXForm(const Form &frm, const XData &_form)
 {
-	JT_Register::setForm( frm );
+    JT_Register::setForm( frm );
 
-	_iq = createIQ(doc(), "set", frm.jid().full(), id());
-	QDomElement query = doc()->createElement("query");
-	query.setAttribute("xmlns", "jabber:iq:register");
-	_iq.appendChild(query);
+    _iq = createIQ(doc(), "set", frm.jid().full(), id());
+    QDomElement query = doc()->createElement("query");
+    query.setAttribute("xmlns", "jabber:iq:register");
+    _iq.appendChild(query);
 
-	XData form( _form );
-	form.setType( XData::Data_Submit );
-	query.appendChild( form.toXml( doc() ) );
+    XData form( _form );
+    form.setType( XData::Data_Submit );
+    query.appendChild( form.toXml( doc() ) );
 }
 
 void JT_XRegister::onGo()
 {
-	if ( !_iq.isNull() )
-		send( _iq );
-	else
-		JT_Register::onGo();
+    if ( !_iq.isNull() )
+        send( _iq );
+    else
+        JT_Register::onGo();
 }
 
 QDomElement JT_XRegister::xdataElement() const
 {
-	QDomNode n = queryTag(iq()).firstChild();
-	for (; !n.isNull(); n = n.nextSibling()) {
-		QDomElement i = n.toElement();
-		if (i.isNull())
-			continue;
+    QDomNode n = queryTag(iq()).firstChild();
+    for (; !n.isNull(); n = n.nextSibling()) {
+        QDomElement i = n.toElement();
+        if (i.isNull())
+            continue;
 
-		if (i.attribute("xmlns") == "jabber:x:data")
-			return i;
-	}
+        if (i.attribute("xmlns") == "jabber:x:data")
+            return i;
+    }
 
-	return QDomElement();
+    return QDomElement();
 }
 
 //----------------------------------------------------------------------------
@@ -124,151 +124,151 @@ QDomElement JT_XRegister::xdataElement() const
 class RegistrationDlg::Private
 {
 public:
-	Private() {}
+    Private() {}
 
-	Jid jid;
-	PsiAccount *pa;
+    Jid jid;
+    PsiAccount *pa;
 
-	QPushButton *pb_close, *pb_reg;
-	QPointer<JT_XRegister> jt;
-	int type;
-	BusyWidget *busy;
-	QLabel *lb_top;
-	QWidget *gr_form;
-	QGridLayout *gr_form_layout;
-	Form form;
+    QPushButton *pb_close, *pb_reg;
+    QPointer<JT_XRegister> jt;
+    int type;
+    BusyWidget *busy;
+    QLabel *lb_top;
+    QWidget *gr_form;
+    QGridLayout *gr_form_layout;
+    Form form;
 
-	QList<QLabel*> lb_field;
-	QList<QLineEdit*> le_field;
-	XDataWidget *xdata;
+    QList<QLabel*> lb_field;
+    QList<QLineEdit*> le_field;
+    XDataWidget *xdata;
 };
 
 RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
-	: QDialog(0)
+    : QDialog(0)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	d = new Private;
-	d->jid = jid;
-	d->pa = pa;
-	d->pa->dialogRegister(this, d->jid);
-	d->jt = 0;
-	d->xdata = 0;
+    setAttribute(Qt::WA_DeleteOnClose);
+    d = new Private;
+    d->jid = jid;
+    d->pa = pa;
+    d->pa->dialogRegister(this, d->jid);
+    d->jt = 0;
+    d->xdata = 0;
 
-	setWindowTitle(tr("Registration: %1").arg(d->jid.full()));
+    setWindowTitle(tr("Registration: %1").arg(d->jid.full()));
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this);
-	vb1->setMargin(4);
-	d->lb_top = new QLabel(this);
-	d->lb_top->setWordWrap(true);
-	d->lb_top->setFrameStyle( QFrame::Panel | QFrame::Sunken );
-	d->lb_top->hide();
-	vb1->addWidget(d->lb_top);
+    QVBoxLayout *vb1 = new QVBoxLayout(this);
+    vb1->setMargin(4);
+    d->lb_top = new QLabel(this);
+    d->lb_top->setWordWrap(true);
+    d->lb_top->setFrameStyle( QFrame::Panel | QFrame::Sunken );
+    d->lb_top->hide();
+    vb1->addWidget(d->lb_top);
 
-	d->gr_form = new QWidget(this);
-	d->gr_form_layout = new QGridLayout(d->gr_form);
-	d->gr_form_layout->setSpacing(4);
-	vb1->addWidget(d->gr_form);
-	d->gr_form->hide();
+    d->gr_form = new QWidget(this);
+    d->gr_form_layout = new QGridLayout(d->gr_form);
+    d->gr_form_layout->setSpacing(4);
+    vb1->addWidget(d->gr_form);
+    d->gr_form->hide();
 
-	QFrame *line = new QFrame(this);
-	line->setFixedHeight(2);
-	line->setFrameStyle(QFrame::HLine | QFrame::Sunken);
-	vb1->addWidget(line);
+    QFrame *line = new QFrame(this);
+    line->setFixedHeight(2);
+    line->setFrameStyle(QFrame::HLine | QFrame::Sunken);
+    vb1->addWidget(line);
 
-	QHBoxLayout *hb1 = new QHBoxLayout;
-	vb1->addLayout(hb1);
-	d->busy = new BusyWidget(this);
-	hb1->addWidget(d->busy);
-	hb1->addStretch(1);
-	d->pb_reg = new QPushButton(tr("&Register"), this);
-	d->pb_reg->setDefault(true);
-	connect(d->pb_reg, SIGNAL(clicked()), SLOT(doRegSet()));
-	hb1->addWidget(d->pb_reg);
-	d->pb_close = new QPushButton(tr("&Close"), this);
-	connect(d->pb_close, SIGNAL(clicked()), SLOT(close()));
-	hb1->addWidget(d->pb_close);
+    QHBoxLayout *hb1 = new QHBoxLayout;
+    vb1->addLayout(hb1);
+    d->busy = new BusyWidget(this);
+    hb1->addWidget(d->busy);
+    hb1->addStretch(1);
+    d->pb_reg = new QPushButton(tr("&Register"), this);
+    d->pb_reg->setDefault(true);
+    connect(d->pb_reg, SIGNAL(clicked()), SLOT(doRegSet()));
+    hb1->addWidget(d->pb_reg);
+    d->pb_close = new QPushButton(tr("&Close"), this);
+    connect(d->pb_close, SIGNAL(clicked()), SLOT(close()));
+    hb1->addWidget(d->pb_close);
 
-	d->pb_reg->hide();
+    d->pb_reg->hide();
 
-	doRegGet();
+    doRegGet();
 }
 
 RegistrationDlg::~RegistrationDlg()
 {
-	delete d->jt;
-	d->pa->dialogUnregister(this);
-	delete d;
+    delete d->jt;
+    d->pa->dialogUnregister(this);
+    delete d;
 }
 
 /*void RegistrationDlg::closeEvent(QCloseEvent *e)
 {
-	e->ignore();
-	reject();
+    e->ignore();
+    reject();
 }*/
 
 void RegistrationDlg::done(int r)
 {
-	if(d->busy->isActive() && d->type == 1) {
-		int n = QMessageBox::information(this, tr("Busy"), tr("<qt>Registration has already been submitted, so closing this window will not prevent the registration from happening.  Do you still wish to close?</qt>"), tr("&Yes"), tr("&No"));
-		if(n != 0)
-			return;
-	}
-	QDialog::done(r);
+    if(d->busy->isActive() && d->type == 1) {
+        int n = QMessageBox::information(this, tr("Busy"), tr("<qt>Registration has already been submitted, so closing this window will not prevent the registration from happening.  Do you still wish to close?</qt>"), tr("&Yes"), tr("&No"));
+        if(n != 0)
+            return;
+    }
+    QDialog::done(r);
 }
 
 void RegistrationDlg::doRegGet()
 {
-	d->lb_top->setText(tr("Fetching registration form for %1 ...").arg(d->jid.full()));
-	d->lb_top->show();
-	d->busy->start();
+    d->lb_top->setText(tr("Fetching registration form for %1 ...").arg(d->jid.full()));
+    d->lb_top->show();
+    d->busy->start();
 
-	d->type = 0;
-	d->jt = new JT_XRegister(d->pa->client()->rootTask());
-	connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
-	d->jt->getForm(d->jid);
-	d->jt->go(true);
+    d->type = 0;
+    d->jt = new JT_XRegister(d->pa->client()->rootTask());
+    connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
+    d->jt->getForm(d->jid);
+    d->jt->go(true);
 }
 
 void RegistrationDlg::doRegSet()
 {
-	if(!d->pa->checkConnected(this))
-		return;
+    if(!d->pa->checkConnected(this))
+        return;
 
-	d->jt = new JT_XRegister(d->pa->client()->rootTask());
+    d->jt = new JT_XRegister(d->pa->client()->rootTask());
 
-	if ( !d->xdata ) {
-		Form submitForm = d->form;
+    if ( !d->xdata ) {
+        Form submitForm = d->form;
 
-		Q_ASSERT(d->le_field.count() == submitForm.count());
-		// import the changes back into the form.
-		// the QPtrList of QLineEdits should be in the same order
-		for (int i = 0; i < submitForm.count(); ++i) {
-			submitForm[i].setValue(d->le_field[i]->text());
-		}
+        Q_ASSERT(d->le_field.count() == submitForm.count());
+        // import the changes back into the form.
+        // the QPtrList of QLineEdits should be in the same order
+        for (int i = 0; i < submitForm.count(); ++i) {
+            submitForm[i].setValue(d->le_field[i]->text());
+        }
 
-		d->jt->setForm(submitForm);
-	}
-	else {
-		XData form;
-		form.setFields( d->xdata->fields() );
+        d->jt->setForm(submitForm);
+    }
+    else {
+        XData form;
+        form.setFields( d->xdata->fields() );
 
-		d->jt->setXForm( d->form, form );
-	}
+        d->jt->setXForm( d->form, form );
+    }
 
-	d->gr_form->setEnabled(false);
-	d->pb_reg->setEnabled(false);
-	d->busy->start();
+    d->gr_form->setEnabled(false);
+    d->pb_reg->setEnabled(false);
+    d->busy->start();
 
-	d->type = 1;
-	connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
-	d->jt->go(true);
+    d->type = 1;
+    connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
+    d->jt->go(true);
 }
 
 void RegistrationDlg::setInstructions(const QString& jid, const QString& instructions)
 {
-	QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(jid);
-	str += TextUtil::plain2rich(instructions);
-	d->lb_top->setText(str);
+    QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(jid);
+    str += TextUtil::plain2rich(instructions);
+    d->lb_top->setText(str);
 }
 
 /**
@@ -276,19 +276,19 @@ void RegistrationDlg::setInstructions(const QString& jid, const QString& instruc
  */
 void RegistrationDlg::processXData(const XData& form)
 {
-	if (!form.title().isEmpty())
-		setWindowTitle(form.title());
+    if (!form.title().isEmpty())
+        setWindowTitle(form.title());
 
-	setInstructions(d->jid.full(), form.instructions());
+    setInstructions(d->jid.full(), form.instructions());
 
-	if (d->xdata)
-		delete d->xdata;
+    if (d->xdata)
+        delete d->xdata;
 
-	d->xdata = new XDataWidget(d->pa->psi(), d->gr_form, d->pa->client(), d->jid);
-	d->gr_form_layout->addWidget(d->xdata); // FIXME
-	d->xdata->setForm(form, false);
+    d->xdata = new XDataWidget(d->pa->psi(), d->gr_form, d->pa->client(), d->jid);
+    d->gr_form_layout->addWidget(d->xdata); // FIXME
+    d->xdata->setForm(form, false);
 
-	d->xdata->show();
+    d->xdata->show();
 }
 
 /**
@@ -296,90 +296,90 @@ void RegistrationDlg::processXData(const XData& form)
  */
 void RegistrationDlg::processLegacyForm(const XMPP::Form& form)
 {
-	setInstructions(d->jid.full(), form.instructions());
+    setInstructions(d->jid.full(), form.instructions());
 
-	for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
-		const FormField &f = *it;
+    for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
+        const FormField &f = *it;
 
-		QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
-		QLineEdit *le = new QLineEdit(d->gr_form);
-		d->gr_form_layout->addWidget(lb); // FIXME
-		d->gr_form_layout->addWidget(le); // FIXME
-		if (f.isSecret())
-			le->setEchoMode(QLineEdit::Password);
-		le->setText(f.value());
+        QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
+        QLineEdit *le = new QLineEdit(d->gr_form);
+        d->gr_form_layout->addWidget(lb); // FIXME
+        d->gr_form_layout->addWidget(le); // FIXME
+        if (f.isSecret())
+            le->setEchoMode(QLineEdit::Password);
+        le->setText(f.value());
 
-		d->lb_field.append(lb);
-		d->le_field.append(le);
-	}
+        d->lb_field.append(lb);
+        d->le_field.append(le);
+    }
 
-	if (!d->le_field.isEmpty())
-		d->le_field.first()->setFocus();
+    if (!d->le_field.isEmpty())
+        d->le_field.first()->setFocus();
 }
 
 void RegistrationDlg::setData(JT_XRegister* jt)
 {
-	d->form = jt->form();
-	if (jt->hasXData()) {
-		processXData(jt->xdata());
-	} else {
-		processLegacyForm(jt->form());
-	}
+    d->form = jt->form();
+    if (jt->hasXData()) {
+        processXData(jt->xdata());
+    } else {
+        processLegacyForm(jt->form());
+    }
 }
 
 void RegistrationDlg::updateData(JT_XRegister* jt)
 {
-	if (d->xdata) {
-		QDomElement iq = jt->xdataElement();
-		if (!iq.isNull()) {
-			XData form;
-			form.fromXml(iq);
-			d->xdata->setForm(form, false);
-		}
-	}
+    if (d->xdata) {
+        QDomElement iq = jt->xdataElement();
+        if (!iq.isNull()) {
+            XData form;
+            form.fromXml(iq);
+            d->xdata->setForm(form, false);
+        }
+    }
 }
 
 void RegistrationDlg::jt_finished()
 {
-	d->busy->stop();
-	d->gr_form->setEnabled(true);
-	d->pb_reg->setEnabled(true);
-	JT_XRegister *jt = d->jt;
-	d->jt = 0;
+    d->busy->stop();
+    d->gr_form->setEnabled(true);
+    d->pb_reg->setEnabled(true);
+    JT_XRegister *jt = d->jt;
+    d->jt = 0;
 
-	if(jt->success()) {
-		if(d->type == 0) {
-			setData(jt);
+    if(jt->success()) {
+        if(d->type == 0) {
+            setData(jt);
 
-			d->gr_form->show();
-			d->pb_reg->show();
-			show();
+            d->gr_form->show();
+            d->pb_reg->show();
+            show();
 
-			qApp->processEvents();
-			resize(sizeHint());
-		}
-		else {
-			closeDialogs(this);
-			QMessageBox::information(this, tr("Success"), tr("Registration successful."));
-			close();
-		}
-	}
-	else {
-		if(d->type == 0) {
-			QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve registration form.\nReason: %1").arg(jt->statusString()));
-			close();
-		}
-		else {
-			QMessageBox::critical(this, tr("Error"), tr("Error submitting registration form.\nReason: %1").arg(jt->statusString()));
-			if (jt->statusCode() == 406) {
-				// updateData(jt);
-			}
-			else {
-				closeDialogs(this);
-				close();
-			}
-		}
-	}
+            qApp->processEvents();
+            resize(sizeHint());
+        }
+        else {
+            closeDialogs(this);
+            QMessageBox::information(this, tr("Success"), tr("Registration successful."));
+            close();
+        }
+    }
+    else {
+        if(d->type == 0) {
+            QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve registration form.\nReason: %1").arg(jt->statusString()));
+            close();
+        }
+        else {
+            QMessageBox::critical(this, tr("Error"), tr("Error submitting registration form.\nReason: %1").arg(jt->statusString()));
+            if (jt->statusCode() == 406) {
+                // updateData(jt);
+            }
+            else {
+                closeDialogs(this);
+                close();
+            }
+        }
+    }
 }
 
 #include "registrationdlg.moc"

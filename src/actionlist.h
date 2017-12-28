@@ -30,48 +30,48 @@ class IconAction;
 
 class ActionList : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ActionList(const QString &name, int id, bool autoDelete = true);
-	ActionList(const ActionList &);
-	~ActionList();
+    ActionList(const QString &name, int id, bool autoDelete = true);
+    ActionList(const ActionList &);
+    ~ActionList();
 
-	QString name() const;
-	int id() const;
+    QString name() const;
+    int id() const;
 
-	IconAction *action( const QString &name ) const;
-	QStringList actions() const;
+    IconAction *action( const QString &name ) const;
+    QStringList actions() const;
 
-	void addAction( const QString &name, IconAction *action );
+    void addAction( const QString &name, IconAction *action );
 
-	void clear();
+    void clear();
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
+    Private *d;
 };
 
 class MetaActionList : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	MetaActionList();
-	~MetaActionList();
+    MetaActionList();
+    ~MetaActionList();
 
-	ActionList *actionList( const QString &name ) const;
-	QList<ActionList*> actionLists( int id ) const;
-	QStringList actionLists() const;
+    ActionList *actionList( const QString &name ) const;
+    QList<ActionList*> actionLists( int id ) const;
+    QStringList actionLists() const;
 
-	ActionList suitableActions( int id ) const;
+    ActionList suitableActions( int id ) const;
 
-	void addList( ActionList * );
+    void addList( ActionList * );
 
-	void clear();
+    void clear();
 
 private:
-	class Private;
-	Private *d;
+    class Private;
+    Private *d;
 };
 
 #endif

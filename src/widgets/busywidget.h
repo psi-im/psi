@@ -29,38 +29,38 @@ class CPanel;
 
 class BusyWidget : public QWidget
 {
-	Q_OBJECT
-	Q_PROPERTY( bool active READ isActive WRITE setActive )
+    Q_OBJECT
+    Q_PROPERTY( bool active READ isActive WRITE setActive )
 
-	Q_OVERRIDE( QSize minimumSize DESIGNABLE false SCRIPTABLE false )
-	Q_OVERRIDE( QSize maximumSize DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QSize minimumSize DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE( QSize maximumSize DESIGNABLE false SCRIPTABLE false )
 
 public:
-	BusyWidget(QWidget *parent=0);
-	~BusyWidget();
+    BusyWidget(QWidget *parent=0);
+    ~BusyWidget();
 
-	bool isActive() const;
+    bool isActive() const;
 
-	QSize minimumSizeHint() const;
-	QSize sizeHint() const;
+    QSize minimumSizeHint() const;
+    QSize sizeHint() const;
 
 public slots:
-	void start();
-	void stop();
-	void setActive(bool);
+    void start();
+    void stop();
+    void setActive(bool);
 
 protected:
-	void paintEvent(QPaintEvent *);
-	void resizeEvent(QResizeEvent *);
+    void paintEvent(QPaintEvent *);
+    void resizeEvent(QResizeEvent *);
 
 private slots:
-	void animate();
+    void animate();
 
 public:
-	class Private;
+    class Private;
 private:
-	Private *d;
-	friend class Private;
+    Private *d;
+    friend class Private;
 };
 
 #endif

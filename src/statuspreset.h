@@ -33,32 +33,32 @@ class QDomElement;
 class StatusPreset
 {
 public:
-	StatusPreset();
-	StatusPreset(QString name, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
-	StatusPreset(QString name, int priority, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
-	StatusPreset(const QDomElement&);
+    StatusPreset();
+    StatusPreset(QString name, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
+    StatusPreset(QString name, int priority, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
+    StatusPreset(const QDomElement&);
 
-	QString name() const;
-	void setName(const QString&);
-	QString message() const;
-	void setMessage(const QString&);
-	XMPP::Status::Type status() const;
-	void setStatus(XMPP::Status::Type);
-	Maybe<int> priority() const;
-	void setPriority(int priority);
-	void setPriority(const QString& priority);
-	void clearPriority();
-	void filterStatus();
+    QString name() const;
+    void setName(const QString&);
+    QString message() const;
+    void setMessage(const QString&);
+    XMPP::Status::Type status() const;
+    void setStatus(XMPP::Status::Type);
+    Maybe<int> priority() const;
+    void setPriority(int priority);
+    void setPriority(const QString& priority);
+    void clearPriority();
+    void filterStatus();
 
-	void toOptions(OptionsTree *o);
-	void fromOptions(OptionsTree *o, QString name);
-	QDomElement toXml(QDomDocument&) const;
-	void fromXml(const QDomElement&);
+    void toOptions(OptionsTree *o);
+    void fromOptions(OptionsTree *o, QString name);
+    QDomElement toXml(QDomDocument&) const;
+    void fromXml(const QDomElement&);
 
 private:
-	QString name_, message_;
-	XMPP::Status::Type status_;
-	Maybe<int> priority_;
+    QString name_, message_;
+    XMPP::Status::Type status_;
+    Maybe<int> priority_;
 };
 
 #endif

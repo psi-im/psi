@@ -28,30 +28,30 @@ class QTranslator;
 
 class TranslationManager : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	static TranslationManager* instance();
+    static TranslationManager* instance();
 
-	VarList availableTranslations();
-	const QString& currentLanguage() const;
-	QString currentXMLLanguage() const;
-	void loadTranslation(const QString& language);
+    VarList availableTranslations();
+    const QString& currentLanguage() const;
+    QString currentXMLLanguage() const;
+    void loadTranslation(const QString& language);
 
 protected:
-	QStringList translationDirs() const;
-	bool loadQtTranslation(const QString& language);
+    QStringList translationDirs() const;
+    bool loadQtTranslation(const QString& language);
 
 private:
-	TranslationManager();
-	~TranslationManager();
+    TranslationManager();
+    ~TranslationManager();
 
-	QString currentLanguage_;
-	//QString currentLanguageName_;
-	QTranslator* translator_;
-	QTranslator* qt_translator_;
+    QString currentLanguage_;
+    //QString currentLanguageName_;
+    QTranslator* translator_;
+    QTranslator* qt_translator_;
 
-	static TranslationManager* instance_;
+    static TranslationManager* instance_;
 };
 
 #endif

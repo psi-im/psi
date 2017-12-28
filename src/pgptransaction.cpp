@@ -31,47 +31,47 @@ using namespace XMPP;
 
 PGPTransaction::PGPTransaction(QCA::SecureMessageSystem* system) : QCA::SecureMessage(system), system_(system)
 {
-	id_ = idCounter_++;
+    id_ = idCounter_++;
 }
 
 PGPTransaction::~PGPTransaction()
 {
-	delete system_;
+    delete system_;
 }
 
 int PGPTransaction::id() const
 {
-	return id_;
+    return id_;
 }
 
 void PGPTransaction::setMessage(const XMPP::Message &m)
 {
-	message_ = m;
+    message_ = m;
 }
 
 const XMPP::Message & PGPTransaction::message() const
 {
-	return message_;
+    return message_;
 }
 
 const QDomElement & PGPTransaction::xml() const
 {
-	return xml_;
+    return xml_;
 }
 
 void PGPTransaction::setXml(const QDomElement &xml)
 {
-	xml_ = xml;
+    xml_ = xml;
 }
 
 Jid PGPTransaction::jid() const
 {
-	return jid_;
+    return jid_;
 }
 
 void PGPTransaction::setJid(const Jid &j)
 {
-	jid_ = j;
+    jid_ = j;
 }
 
 int PGPTransaction::idCounter_ = 0;

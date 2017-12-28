@@ -776,15 +776,15 @@ typedef struct
 class VideoOutput;
 class SubsItem;
 
-typedef	struct {
-	unsigned char*	baseAddr;
-	long			rowBytes;
+typedef    struct {
+    unsigned char*    baseAddr;
+    long            rowBytes;
 } YV12_PLANE;
 
-typedef	struct {
-	YV12_PLANE	y;
-	YV12_PLANE	u;
-	YV12_PLANE	v;
+typedef    struct {
+    YV12_PLANE    y;
+    YV12_PLANE    u;
+    YV12_PLANE    v;
 } YV12_PLANES;
 
 class IVideoOutput

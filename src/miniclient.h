@@ -27,13 +27,13 @@
 #include "xmpp_jid.h"
 
 namespace XMPP {
-	class Client;
-	class ClientStream;
-	class AdvancedConnector;
-	class QCATLSHandler;
+    class Client;
+    class ClientStream;
+    class AdvancedConnector;
+    class QCATLSHandler;
 }
 namespace QCA {
-	class TLS;
+    class TLS;
 }
 class ProxyManager;
 class QString;
@@ -41,45 +41,45 @@ class QByteArray;
 
 class MiniClient : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	MiniClient(QObject *parent=0);
-	~MiniClient();
+    MiniClient(QObject *parent=0);
+    ~MiniClient();
 
-	void reset();
-	void connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool legacy_ssl, bool force_ssl, const QString &host, int port, QString proxy, QString *pass = NULL);
-	void close();
-	XMPP::Client *client();
-	void setErrorOnDisconnect(bool);
+    void reset();
+    void connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool legacy_ssl, bool force_ssl, const QString &host, int port, QString proxy, QString *pass = NULL);
+    void close();
+    XMPP::Client *client();
+    void setErrorOnDisconnect(bool);
 
-	QString tlsOverrideDomain;
-	QByteArray tlsOverrideCert;
+    QString tlsOverrideDomain;
+    QByteArray tlsOverrideCert;
 signals:
-	void handshaken();
-	void error();
-	void disconnected();
+    void handshaken();
+    void error();
+    void disconnected();
 
 private slots:
-	void tls_handshaken();
-	void cs_connected();
-	void cs_securityLayerActivated(int);
-	void cs_needAuthParams(bool, bool, bool);
-	void cs_authenticated();
-	void cs_connectionClosed();
-	void cs_delayedCloseFinished();
-	void cs_warning(int);
-	void cs_error(int);
-	void sessionStart_finished();
+    void tls_handshaken();
+    void cs_connected();
+    void cs_securityLayerActivated(int);
+    void cs_needAuthParams(bool, bool, bool);
+    void cs_authenticated();
+    void cs_connectionClosed();
+    void cs_delayedCloseFinished();
+    void cs_warning(int);
+    void cs_error(int);
+    void sessionStart_finished();
 
 private:
-	XMPP::AdvancedConnector *conn;
-	XMPP::ClientStream *stream;
-	QCA::TLS *tls;
-	XMPP::QCATLSHandler *tlsHandler;
-	XMPP::Client *_client;
-	XMPP::Jid j;
-	QString pass;
-	bool auth, force_ssl, error_disconnect;
+    XMPP::AdvancedConnector *conn;
+    XMPP::ClientStream *stream;
+    QCA::TLS *tls;
+    XMPP::QCATLSHandler *tlsHandler;
+    XMPP::Client *_client;
+    XMPP::Jid j;
+    QString pass;
+    bool auth, force_ssl, error_disconnect;
 };
 
 

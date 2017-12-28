@@ -41,47 +41,47 @@ class TabbableWidget;
 enum { dcClose, dcHour, dcDay, dcNever };
 
 enum Qt3Dock {
-	Qt3Dock_Unmanaged = 0,
-	Qt3Dock_TornOff = 1,
-	Qt3Dock_Top = 2,
-	Qt3Dock_Bottom = 3,
-	Qt3Dock_Right = 4,
-	Qt3Dock_Left = 5,
-	Qt3Dock_Minimized = 6
+    Qt3Dock_Unmanaged = 0,
+    Qt3Dock_TornOff = 1,
+    Qt3Dock_Top = 2,
+    Qt3Dock_Bottom = 3,
+    Qt3Dock_Right = 4,
+    Qt3Dock_Left = 5,
+    Qt3Dock_Minimized = 6
 };
 
 class ToolbarPrefs
 {
 public:
-	ToolbarPrefs();
+    ToolbarPrefs();
 
-	QString id;
-	QString name;
-	QStringList keys;
-	Qt3Dock dock;
+    QString id;
+    QString name;
+    QStringList keys;
+    Qt3Dock dock;
 
-	bool dirty;
-	bool on;
-	bool locked;
-	// bool stretchable;
+    bool dirty;
+    bool on;
+    bool locked;
+    // bool stretchable;
 
-	// int index;
-	bool nl;
-	// int extraOffset;
+    // int index;
+    bool nl;
+    // int extraOffset;
 
-	bool operator==(const ToolbarPrefs& other);
+    bool operator==(const ToolbarPrefs& other);
 };
 
 
 struct lateMigrationOptions
 {
 
-	QMap<QString, QString> serviceRosterIconset;
-	QMap<QString, QString> customRosterIconset;
+    QMap<QString, QString> serviceRosterIconset;
+    QMap<QString, QString> customRosterIconset;
 
-	QMap<QString,StatusPreset> sp; // Status message presets.
+    QMap<QString,StatusPreset> sp; // Status message presets.
 
-	QMap< QString, QList<ToolbarPrefs> > toolbars;
+    QMap< QString, QList<ToolbarPrefs> > toolbars;
 };
 
 // used to be part of the global options struct.
@@ -108,9 +108,9 @@ enum { EventPriorityDontCare = -1 };
 #define STATUS_INVISIBLE XMPP::Status::Invisible
 #define STATUS_CHAT      XMPP::Status::FFC
 
-#define STATUS_ASK	 100
-#define STATUS_NOAUTH	 101
-#define STATUS_ERROR	 102
+#define STATUS_ASK     100
+#define STATUS_NOAUTH     101
+#define STATUS_ERROR     102
 
 QString status2txt(int status);
 bool lastPriorityNotEmpty();
@@ -121,17 +121,17 @@ XMPP::Status::Type makeSTATUS(const XMPP::Status &);
 QString clipStatus(const QString &str, int width, int height);
 inline int rankStatus(int status)
 {
-	switch (status) {
-		case XMPP::Status::FFC:       return 0;
-		case XMPP::Status::Online:    return 1;
-		case XMPP::Status::Away:      return 2;
-		case XMPP::Status::XA:        return 3;
-		case XMPP::Status::DND:       return 4;
-		case XMPP::Status::Invisible: return 5;
-		default:
-			return 6;
-	}
-	return 0;
+    switch (status) {
+        case XMPP::Status::FFC:       return 0;
+        case XMPP::Status::Online:    return 1;
+        case XMPP::Status::Away:      return 2;
+        case XMPP::Status::XA:        return 3;
+        case XMPP::Status::DND:       return 4;
+        case XMPP::Status::Invisible: return 5;
+        default:
+            return 6;
+    }
+    return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -148,9 +148,9 @@ TabbableWidget* findActiveTab();
 #include <QWidget>
 #include <QX11Info>
 void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)	x11wmClass(QX11Info::display(), winId(), (x));
+#define X11WM_CLASS(x)    x11wmClass(QX11Info::display(), winId(), (x));
 #else
-#define X11WM_CLASS(x)	/* dummy */
+#define X11WM_CLASS(x)    /* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
 int devicePixelRatio(QWidget *);

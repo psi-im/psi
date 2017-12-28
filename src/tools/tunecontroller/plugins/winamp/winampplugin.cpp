@@ -23,12 +23,12 @@
 
 QString WinAmpPlugin::name()
 {
-	return "WinAmp";
+    return "WinAmp";
 }
 
 TuneController* WinAmpPlugin::createController()
 {
-	return new WinAmpTuneController();
+    return new WinAmpTuneController();
 }
 
 #ifndef HAVE_QT5

@@ -29,47 +29,47 @@ class TabCompletion : public QObject
 {
 Q_OBJECT
 public:
-	TabCompletion(QObject *parent = 0);
-	~TabCompletion();
+    TabCompletion(QObject *parent = 0);
+    ~TabCompletion();
 
-	void setTextEdit(QTextEdit* mle);
-	QTextEdit* getTextEdit();
+    void setTextEdit(QTextEdit* mle);
+    QTextEdit* getTextEdit();
 
-	virtual void reset();
-	void tryComplete();
+    virtual void reset();
+    void tryComplete();
 
 protected:
-	QString toComplete_;
-	bool atStart_;
+    QString toComplete_;
+    bool atStart_;
 
-	virtual void setup(QString str, int pos, int &start, int &end);
-	virtual QStringList possibleCompletions()=0;
-	virtual QStringList allChoices(QString &guess)=0;
+    virtual void setup(QString str, int pos, int &start, int &end);
+    virtual QStringList possibleCompletions()=0;
+    virtual QStringList allChoices(QString &guess)=0;
 
-	virtual void highlight(bool set);
-	QColor highlight_;
+    virtual void highlight(bool set);
+    QColor highlight_;
 
 private:
 
 
-	QString longestCommonPrefix(QStringList list);
-	QString suggestCompletion(bool *replaced);
+    QString longestCommonPrefix(QStringList list);
+    QString suggestCompletion(bool *replaced);
 
-	void moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor::MoveMode mode = QTextCursor::MoveAnchor);
+    void moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor::MoveMode mode = QTextCursor::MoveAnchor);
 
-	enum TypingStatus {
-		Typing_Normal,
-		Typing_TabPressed,	// initial completion
-		Typing_TabbingCompletions, // switch to tab through multiple
-		Typing_MultipleSuggestions
-	};
+    enum TypingStatus {
+        Typing_Normal,
+        Typing_TabPressed,    // initial completion
+        Typing_TabbingCompletions, // switch to tab through multiple
+        Typing_MultipleSuggestions
+    };
 
-	QTextCursor replacementCursor_;
-	TypingStatus typingStatus_;
-	QStringList suggestedCompletion_;
-	int  suggestedIndex_;
+    QTextCursor replacementCursor_;
+    TypingStatus typingStatus_;
+    QStringList suggestedCompletion_;
+    int  suggestedIndex_;
 
-	QTextEdit* textEdit_;
+    QTextEdit* textEdit_;
 };
 
 #endif

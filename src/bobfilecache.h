@@ -29,18 +29,18 @@ class FileCache;
 
 class BoBFileCache : public BoBCache
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	static BoBFileCache *instance();
+    static BoBFileCache *instance();
 
-	virtual void put(const BoBData &);
-	virtual BoBData get(const QString &);
+    virtual void put(const BoBData &);
+    virtual BoBData get(const QString &);
 
 private:
-	BoBFileCache();
+    BoBFileCache();
 
-	FileCache *_fileCache;
-	static BoBFileCache *_instance;
+    FileCache *_fileCache;
+    static BoBFileCache *_instance;
 };
 
 #endif

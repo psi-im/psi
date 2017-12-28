@@ -25,26 +25,26 @@ class AHCServerManager;
 class QString;
 class AHCommand;
 namespace XMPP {
-	class Jid;
+    class Jid;
 }
 
 class AHCommandServer
 {
 public:
-	AHCommandServer(AHCServerManager*);
-	virtual ~AHCommandServer();
+    AHCommandServer(AHCServerManager*);
+    virtual ~AHCommandServer();
 
-	virtual QString name() const = 0;
-	virtual QString node() const = 0;
-	virtual bool isAllowed(const XMPP::Jid&) const { return true; }
-	virtual AHCommand execute(const AHCommand&, const XMPP::Jid& requester) = 0;
-	virtual void cancel(const AHCommand&) { }
+    virtual QString name() const = 0;
+    virtual QString node() const = 0;
+    virtual bool isAllowed(const XMPP::Jid&) const { return true; }
+    virtual AHCommand execute(const AHCommand&, const XMPP::Jid& requester) = 0;
+    virtual void cancel(const AHCommand&) { }
 
 protected:
-	AHCServerManager* manager() const { return manager_; }
+    AHCServerManager* manager() const { return manager_; }
 
 private:
-	AHCServerManager* manager_;
+    AHCServerManager* manager_;
 };
 
 #endif

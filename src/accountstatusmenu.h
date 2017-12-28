@@ -6,28 +6,28 @@
 #include "psicon.h"
 
 class AccountStatusMenu : public StatusMenu {
-	Q_OBJECT
+    Q_OBJECT
 private:
-	PsiAccount* account;
+    PsiAccount* account;
 
 public:
-	AccountStatusMenu(QWidget* parent, PsiCon* _psi, PsiAccount* _account)
-		: StatusMenu(parent, _psi), account(_account) {};
+    AccountStatusMenu(QWidget* parent, PsiCon* _psi, PsiAccount* _account)
+        : StatusMenu(parent, _psi), account(_account) {};
 
-	void fill();
+    void fill();
 
 protected:
-	void addChoose();
-	void addReconnect();
+    void addChoose();
+    void addReconnect();
 
 private:
-	void addIgnoreGlobalActions();
+    void addIgnoreGlobalActions();
 
 private slots:
-	void chooseStatusActivated();
+    void chooseStatusActivated();
 
 signals:
-	void reconnectActivated();
+    void reconnectActivated();
 
 };
 
