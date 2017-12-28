@@ -211,7 +211,7 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
         case MUCJoin:
         case MUCPart:
             m["nopartjoin"] = isJoinLeaveHidden();
-            __attribute__((fallthrough));
+            PSI_FALLSTHROUGH; // falls through
         case Status:
             m["sender"] = _nick;
             m["status"] = _status;

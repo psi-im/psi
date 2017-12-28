@@ -498,7 +498,7 @@ void DisplayProxy::handleResult()
         break;
     case ReqLatest:
         can_forward = false;
-        __attribute__((fallthrough));
+        PSI_FALLSTHROUGH; // falls through
     case ReqNext:
     case ReqPrevious:
         displayResult(r, queryParams.direction);

@@ -12,6 +12,7 @@
 
 #include "psirichtext.h"
 #include "psioptions.h"
+#include "common.h"
 
 PsiTipLabel *PsiTipLabel::instance_ = 0;
 
@@ -244,7 +245,7 @@ bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
             || (key == Qt::Key_Shift || key == Qt::Key_Control
             || key == Qt::Key_Alt || key == Qt::Key_Meta))
             break;
-        __attribute__((fallthrough));
+        PSI_FALLSTHROUGH; // falls through
     }
     case QEvent::Leave:
     case QEvent::WindowActivate:

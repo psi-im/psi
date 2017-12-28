@@ -29,6 +29,12 @@
 #include <QColor>
 #include <QGridLayout>
 
+#if __cplusplus < 201703L
+# define PSI_FALLSTHROUGH
+#else
+# define PSI_FALLSTHROUGH [[fallthrough]]
+#endif
+
 class QMenu;
 class TabbableWidget;
 
