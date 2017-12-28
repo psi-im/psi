@@ -1,11 +1,11 @@
 <!DOCTYPE psi>
 <psi version="defaults" >
-	<options comment="Client options">
-		<ui comment="User interface options">
-			<systemtray comment="Options related to the system tray">
-				<enable type="bool">true</enable>
-				<use-double-click type="bool">true</use-double-click>
-			</systemtray>
-		</ui>
-	</options>
+    <options comment="Client options">
+        <ui comment="User interface options">
+            <systemtray comment="Options related to the system tray">
+                <enable type="bool">true</enable>
+                <use-double-click type="bool">true</use-double-click>
+            </systemtray>
+        </ui>
+    </options>
 </psi>

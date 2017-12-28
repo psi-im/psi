@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE psi>
 <!--
-	This file is used for one time merge defaults on account creating.
-	This is mostly for composite options (maps/lists) that are composed
-	of multiple options.
-	-->
+    This file is used for one time merge defaults on account creating.
+    This is mostly for composite options (maps/lists) that are composed
+    of multiple options.
+    -->
 <psi version="defaults">
   <options>
     <iconsets>
