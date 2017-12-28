@@ -245,8 +245,9 @@ bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
             || (key == Qt::Key_Shift || key == Qt::Key_Control
             || key == Qt::Key_Alt || key == Qt::Key_Meta))
             break;
-        PSI_FALLSTHROUGH; // falls through
+
     }
+        PSI_FALLSTHROUGH; // falls through
     case QEvent::Leave:
     case QEvent::WindowActivate:
     case QEvent::WindowDeactivate:
