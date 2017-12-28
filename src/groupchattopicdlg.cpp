@@ -6,6 +6,7 @@
 #include "psioptions.h"
 #include "groupchatdlg.h"
 #include "shortcutmanager.h"
+#include "iconset.h"
 
 GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 	QDialog(parent),
@@ -60,7 +61,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 				bool found = false;
 				for (int i = 0; i < m_ui->twLang->count(); i++) {
 					QPlainTextEdit *edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
-					LanguageManager::LangId tabId = edit->property("lngId").value<LanguageManager::LangId>();
+                    LanguageManager::LangId tabId = edit->property("langId").value<LanguageManager::LangId>();
 					if (id == tabId) {
 						m_ui->twLang->setCurrentIndex(i);
 						found = true;
@@ -71,6 +72,35 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 					addLanguage(id);
 				}
 			});
+
+            QObject::connect(m_addLangUi->cmbLang, static_cast<void(QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, [=](int index) {
+                Q_UNUSED(index)
+                QLocale::Language lang = static_cast<QLocale::Language>(m_addLangUi->cmbLang->currentData().toInt());
+                QMap<QString,QLocale::Script> scripts;
+                QMap<QString,QLocale::Country> countries;
+                m_addLangUi->cmbCountry->clear();
+                m_addLangUi->cmbScript->clear();
+                m_addLangUi->cmbCountry->addItem(tr("Any Country"));
+                m_addLangUi->cmbScript->addItem(tr("Any Script"));
+                if (lang) {
+                    for (auto const &loc : QLocale::matchingLocales(lang, QLocale::AnyScript, QLocale::AnyCountry)) {
+                        if (loc != QLocale::c()) {
+                            scripts.insert(QLocale::scriptToString(loc.script()), loc.script());
+                            countries.insert(QLocale::countryToString(loc.country()), loc.country());
+                        }
+                    }
+                    if (scripts.count() > 1) {
+                        for (auto it = scripts.constBegin(); it != scripts.constEnd(); ++it) {
+                            m_addLangUi->cmbScript->addItem(it.key(), it.value());
+                        }
+                    }
+                    if (countries.count() > 1) {
+                        for (auto it = countries.constBegin(); it != countries.constEnd(); ++it) {
+                            m_addLangUi->cmbCountry->addItem(it.key(), it.value());
+                        }
+                    }
+                }
+            });
 		} else {
 			addLangDlg->setFocus();
 		}

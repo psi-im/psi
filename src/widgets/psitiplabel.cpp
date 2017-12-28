@@ -244,6 +244,7 @@ bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
 		    || (key == Qt::Key_Shift || key == Qt::Key_Control
 		    || key == Qt::Key_Alt || key == Qt::Key_Meta))
 			break;
+        __attribute__((fallthrough));
 	}
 	case QEvent::Leave:
 	case QEvent::WindowActivate:

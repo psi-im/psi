@@ -46,19 +46,11 @@ public:
 		ScriptDiff  = 2
 	};
 
-	struct LangId {
-		quint16 language;
-		quint16 country;
-		quint8  script; // in qt-5.9.2 it's less than 256
-		quint8  flags;  // ListFlags
-	};
-
 	LanguageModel(QObject *parent = Q_NULLPTR);
 
 	void setAllLanguages();
 	void setLanguages(const QList<QLocale> &list);
 	void setLanguages(const QStringList &list);
-	void setSelectedLanguages(const QStringList &list);
 
 	// reimplemented
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -68,7 +60,7 @@ public:
 private:
 
 	bool limitedMode;
-	QList<LangId> langs;
+    QList<LanguageManager::LangId> langs;
 };
 
 #endif // LANGUAGEMANAGER_H

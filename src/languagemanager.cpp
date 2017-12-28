@@ -39,7 +39,7 @@ void LanguageModel::setLanguages(const QList<QLocale> &list)
 	int firstDupInd = 0, curInd = 0;
 	quint8 flags = 0;
 	for (const auto &n : sortedList) {
-		LangId id;
+        LanguageManager::LangId id;
 		id.country  = static_cast<quint16>(n.country());
 		id.language = static_cast<quint16>(n.language());
 		id.script   = static_cast<quint16>(n.script());
@@ -78,23 +78,6 @@ void LanguageModel::setLanguages(const QStringList &list)
 	setLanguages(locs);
 }
 
-void LanguageModel::setSelectedLanguages(const QStringList &list)
-{
-	/*for (auto &l : list) {
-		QString language = l.section(QRegExp('-|_'), 0,0);
-		QLocale l(s);
-		bool hasCountry = l.size() > language.size();
-		if (l != QLocale::c()) {
-			for (auto &id : langs) {
-				if (id.language == l.language() && !(id.flags & CountryDiff) || )
-			}
-			LangId id;
-			id.country = l.country();
-			id.
-		}
-	}*/
-}
-
 int LanguageModel::rowCount(const QModelIndex &parent) const
 {
 	if (!parent.isValid())
@@ -115,16 +98,8 @@ QVariant LanguageModel::data(const QModelIndex &index, int role) const
 		return QVariant();
 	}
 	if (role == Qt::DisplayRole) {
-		const LangId &l = langs[index.row()];
-		QLocale loc((QLocale::Language)l.language, (QLocale::Script)l.script, (QLocale::Country)l.country);
-		QString name = loc.nativeLanguageName() + " [" + QLocale::languageToString(loc.language()) + "]";
-		if (l.flags & ScriptDiff) {
-			name += " - " + QLocale::scriptToString(loc.script());
-		}
-		if (l.flags & CountryDiff) {
-			name += " - " + loc.nativeCountryName();
-		}
-		return name;
+        const LanguageManager::LangId &l = langs[index.row()];
+        return LanguageManager::languageName(l);
 	}
 
 	return QVariant();
@@ -203,11 +178,25 @@ LanguageManager::LangId LanguageManager::bestUiMatch(const QList<LanguageManager
 
 QString LanguageManager::languageName(const LanguageManager::LangId &id)
 {
+    bool needCountry = true;
 	if (id.language == QLocale::AnyLanguage) {
 		return QObject::tr("Any Language");
 	}
 	QLocale loc((QLocale::Language)id.language, (QLocale::Script)id.script, (QLocale::Country)id.country);
-	QString name = loc.nativeLanguageName();
+
+    QString name;
+    if (loc.language() == QLocale::English || loc.language() == QLocale::Spanish) {
+        // english and espanol use country in language name
+        if (id.country) {
+            needCountry = false;
+        } else {
+            name = loc.language() == QLocale::English? QStringLiteral("English") : QStringLiteral("Español");
+        }
+    }
+
+    if (name.isEmpty()) {
+        name = loc.nativeLanguageName();
+    }
 	if (name.isEmpty()) {
 		name = QLocale::languageToString(loc.language());
 	}
@@ -217,7 +206,7 @@ QString LanguageManager::languageName(const LanguageManager::LangId &id)
 	if (id.script) {
 		name += " - " + QLocale::scriptToString(loc.script());
 	}
-	if (id.country) {
+    if (needCountry && id.country) {
 		name += " - " + loc.nativeCountryName();
 	}
 	return name;
