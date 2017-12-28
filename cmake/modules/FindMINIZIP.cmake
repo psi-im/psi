@@ -26,55 +26,55 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 if (MINIZIP_INCLUDE_DIR AND MINIZIP_LIBRARY)
-	# in cache already
-	set(MINIZIP_FIND_QUIETLY TRUE)
+    # in cache already
+    set(MINIZIP_FIND_QUIETLY TRUE)
 endif ()
 
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
-	find_package( PkgConfig QUIET )
-	pkg_check_modules( PC_MINIZIP QUIET minizip )
-	set ( MINIZIP_DEFINITIONS 
-		${PC_MINIZIP_CFLAGS}
-		${PC_MINIZIP_CFLAGS_OTHER}
-	)
+    find_package( PkgConfig QUIET )
+    pkg_check_modules( PC_MINIZIP QUIET minizip )
+    set ( MINIZIP_DEFINITIONS 
+        ${PC_MINIZIP_CFLAGS}
+        ${PC_MINIZIP_CFLAGS_OTHER}
+    )
 endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
 
 set ( LIBINCS 
-	unzip.h
+    unzip.h
 )
 
 find_path(
-	MINIZIP_INCLUDE_DIR ${LIBINCS}
-	HINTS
-	${MINIZIP_ROOT}/include
-	${PC_MINIZIP_INCLUDEDIR}
-	${PC_MINIZIP_INCLUDE_DIRS}
-	PATH_SUFFIXES
-	""
-	if ( NOT ${WIN32} )
-	minizip
-	endif ( NOT ${WIN32} )
+    MINIZIP_INCLUDE_DIR ${LIBINCS}
+    HINTS
+    ${MINIZIP_ROOT}/include
+    ${PC_MINIZIP_INCLUDEDIR}
+    ${PC_MINIZIP_INCLUDE_DIRS}
+    PATH_SUFFIXES
+    ""
+    if ( NOT ${WIN32} )
+    minizip
+    endif ( NOT ${WIN32} )
 )
 
 find_library(
-	MINIZIP_LIBRARY
-	NAMES minizip
-	HINTS 
-	${PC_MINIZIP_LIBDIR}
-	${PC_MINIZIP_LIBRARY_DIRS}
-	${MINIZIP_ROOT}/lib
-	${MINIZIP_ROOT}/bin
+    MINIZIP_LIBRARY
+    NAMES minizip
+    HINTS 
+    ${PC_MINIZIP_LIBDIR}
+    ${PC_MINIZIP_LIBRARY_DIRS}
+    ${MINIZIP_ROOT}/lib
+    ${MINIZIP_ROOT}/bin
 )
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-				MINIZIP
-				DEFAULT_MSG
-				MINIZIP_LIBRARY
-				MINIZIP_INCLUDE_DIR
+                MINIZIP
+                DEFAULT_MSG
+                MINIZIP_LIBRARY
+                MINIZIP_INCLUDE_DIR
 )
 if ( MINIZIP_FOUND )
-	set ( MINIZIP_LIBRARIES ${MINIZIP_LIBRARY} )
-	set ( MINIZIP_INCLUDE_DIRS ${MINIZIP_INCLUDE_DIR} )
+    set ( MINIZIP_LIBRARIES ${MINIZIP_LIBRARY} )
+    set ( MINIZIP_INCLUDE_DIRS ${MINIZIP_INCLUDE_DIR} )
 endif ( MINIZIP_FOUND )
 
 mark_as_advanced( MINIZIP_INCLUDE_DIR MINIZIP_LIBRARY )

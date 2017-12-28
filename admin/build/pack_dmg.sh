@@ -2,8 +2,8 @@
 set -e
 
 if [ $# != 3 ]; then
-	echo "usage: $0 [dmg file] [volume name] [content dir]"
-	exit 1
+    echo "usage: $0 [dmg file] [volume name] [content dir]"
+    exit 1
 fi
 
 VOLUME_NAME=$2
@@ -15,15 +15,15 @@ MASTER_DMG=$1
 
 # generate empty template
 if [ ! -f "$TEMPLATE_DMG.bz2" ]; then
-	echo generating empty template
-	mkdir template
-	hdiutil create -size 160m "$TEMPLATE_DMG" -srcfolder template -format UDRW -volname "$VOLUME_NAME" -quiet
-	rmdir template
-	bzip2 "$TEMPLATE_DMG"
+    echo generating empty template
+    mkdir template
+    hdiutil create -size 160m "$TEMPLATE_DMG" -srcfolder template -format UDRW -volname "$VOLUME_NAME" -quiet
+    rmdir template
+    bzip2 "$TEMPLATE_DMG"
 fi
 
 if [ ! -f "$TEMPLATE_DMG" ]; then
-	bunzip2 -k $TEMPLATE_DMG.bz2
+    bunzip2 -k $TEMPLATE_DMG.bz2
 fi
 
 # fill in with psi
