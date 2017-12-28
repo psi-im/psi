@@ -1,5 +1,5 @@
 HEADERS += \
-	$$PWD/iris_discoinfoquerier.h
+    $$PWD/iris_discoinfoquerier.h
 
 SOURCES += \
-	$$PWD/iris_discoinfoquerier.cpp
+    $$PWD/iris_discoinfoquerier.cpp

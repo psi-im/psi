@@ -7,31 +7,31 @@ unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 include_directories(
-	${PROJECT_SOURCE_DIR}/iris/include/iris
-	${PROJECT_SOURCE_DIR}/iris/src
+    ${PROJECT_SOURCE_DIR}/iris/include/iris
+    ${PROJECT_SOURCE_DIR}/iris/src
 )
 
 add_definitions(-DDEBUG_POSTFIX="")
 
 set(HEADERS
-	jinglertptasks.h
-	jinglertp.h
-	avcall.h
-	calldlg.h
+    jinglertptasks.h
+    jinglertp.h
+    avcall.h
+    calldlg.h
 )
 
 set(SOURCES
-	jinglertp.cpp
-	avcall.cpp
-	calldlg.cpp
+    jinglertp.cpp
+    avcall.cpp
+    calldlg.cpp
 )
 
 set(PLAIN_SOURCES
-	jinglertptasks.cpp
+    jinglertptasks.cpp
 )
 
 set(FORMS
-	call.ui
+    call.ui
 )
 
 qt5_wrap_ui(UI_FORMS ${FORMS})

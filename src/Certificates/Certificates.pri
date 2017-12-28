@@ -2,14 +2,14 @@ INCLUDEPATH *= $$PWD/..
 DEPENDPATH *= $$PWD/.. $$PWD
 
 FORMS += \
-	$$PWD/CertificateDisplay.ui
+    $$PWD/CertificateDisplay.ui
 
 HEADERS += \
-	$$PWD/CertificateDisplayDialog.h \
-	$$PWD/CertificateErrorDialog.h \
-	$$PWD/CertificateHelpers.h
+    $$PWD/CertificateDisplayDialog.h \
+    $$PWD/CertificateErrorDialog.h \
+    $$PWD/CertificateHelpers.h
 
 SOURCES += \
-	$$PWD/CertificateDisplayDialog.cpp \
-	$$PWD/CertificateErrorDialog.cpp \
-	$$PWD/CertificateHelpers.cpp
+    $$PWD/CertificateDisplayDialog.cpp \
+    $$PWD/CertificateErrorDialog.cpp \
+    $$PWD/CertificateHelpers.cpp

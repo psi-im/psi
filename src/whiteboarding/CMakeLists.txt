@@ -10,28 +10,28 @@ unset(EXTRA_LDFLAGS)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 set(PLAIN_SOURCES
-	wbdlg.cpp
-	wbitem.cpp
-	wbmanager.cpp
-	wbnewimage.cpp
-	wbnewitem.cpp
-	wbnewpath.cpp
-	wbscene.cpp
-	wbwidget.cpp
+    wbdlg.cpp
+    wbitem.cpp
+    wbmanager.cpp
+    wbnewimage.cpp
+    wbnewitem.cpp
+    wbnewpath.cpp
+    wbscene.cpp
+    wbwidget.cpp
 )
 
 set(HEADERS
-	wbdlg.h
-	wbitem.h
-	wbmanager.h
-	wbscene.h
-	wbwidget.h
+    wbdlg.h
+    wbitem.h
+    wbmanager.h
+    wbscene.h
+    wbwidget.h
 )
 
 set(PLAIN_HEADERS
-	wbnewimage.h
-	wbnewitem.h
-	wbnewpath.h
+    wbnewimage.h
+    wbnewitem.h
+    wbnewpath.h
 )
 
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})

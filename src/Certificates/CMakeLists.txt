@@ -7,27 +7,27 @@ unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 include_directories(
-	${PROJECT_SOURCE_DIR}/iris/include/iris
-	${PROJECT_SOURCE_DIR}/iris/src
+    ${PROJECT_SOURCE_DIR}/iris/include/iris
+    ${PROJECT_SOURCE_DIR}/iris/src
 )
 
 list(APPEND FORMS
-	CertificateDisplay.ui
+    CertificateDisplay.ui
 )
 
 list(APPEND HEADERS
-	CertificateDisplayDialog.h
-	CertificateErrorDialog.h
+    CertificateDisplayDialog.h
+    CertificateErrorDialog.h
 )
 
 list(APPEND PLAIN_HEADERS
-	CertificateHelpers.h
+    CertificateHelpers.h
 )
 
 list(APPEND PLAIN_SOURCES
-	CertificateDisplayDialog.cpp
-	CertificateErrorDialog.cpp
-	CertificateHelpers.cpp
+    CertificateDisplayDialog.cpp
+    CertificateErrorDialog.cpp
+    CertificateHelpers.cpp
 )
 
 qt5_wrap_ui(UI_FORMS ${FORMS})

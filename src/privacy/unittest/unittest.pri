@@ -1,2 +1,2 @@
 SOURCES += \
-	$$PWD/privacylistitemtest.cpp
+    $$PWD/privacylistitemtest.cpp

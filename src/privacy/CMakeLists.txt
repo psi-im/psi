@@ -7,35 +7,35 @@ unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 list(APPEND HEADERS
-	privacydlg.h
-	privacymanager.h
-	privacyruledlg.h
-	psiprivacymanager.h
+    privacydlg.h
+    privacymanager.h
+    privacyruledlg.h
+    psiprivacymanager.h
 )
 
 list(APPEND PLAIN_HEADERS
-	privacylist.h
-	privacylistblockedmodel.h
-	privacylistitem.h
-	privacylistmodel.h
+    privacylist.h
+    privacylistblockedmodel.h
+    privacylistitem.h
+    privacylistmodel.h
 )
 
 list(APPEND SOURCES
-	psiprivacymanager.cpp
+    psiprivacymanager.cpp
 )
 
 list(APPEND PLAIN_SOURCES
-	privacydlg.cpp
-	privacylist.cpp
-	privacylistblockedmodel.cpp
-	privacylistitem.cpp
-	privacylistmodel.cpp
-	privacyruledlg.cpp
+    privacydlg.cpp
+    privacylist.cpp
+    privacylistblockedmodel.cpp
+    privacylistitem.cpp
+    privacylistmodel.cpp
+    privacyruledlg.cpp
 )
 
 list(APPEND FORMS
-	privacy.ui
-	privacyrule.ui
+    privacy.ui
+    privacyrule.ui
 )
 
 qt5_wrap_ui(UI_FORMS ${FORMS})

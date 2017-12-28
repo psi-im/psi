@@ -11,8 +11,8 @@ include(../../conf.pri)
 include(../../src/src.pri)
 
 SOURCES += \
-	guitest.cpp \
-	guitestmanager.cpp
+    guitest.cpp \
+    guitestmanager.cpp
 
 include(../../src/privacy/guitest/guitest.pri)
 

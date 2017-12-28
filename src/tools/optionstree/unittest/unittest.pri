@@ -4,4 +4,4 @@ include(../optionstree.pri)
 include(../../atomicxmlfile/atomicxmlfile.pri)
 
 SOURCES += \
-	$$PWD/OptionsTreeMainTest.cpp
+    $$PWD/OptionsTreeMainTest.cpp

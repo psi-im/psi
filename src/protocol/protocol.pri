@@ -1,2 +1,2 @@
 HEADERS += \
-	$$PWD/discoinfoquerier.h
+    $$PWD/discoinfoquerier.h

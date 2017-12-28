@@ -1,2 +1,2 @@
 SOURCES += \
-	$$PWD/CertificateHelpersTest.cpp
+    $$PWD/CertificateHelpersTest.cpp

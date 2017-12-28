@@ -11,14 +11,14 @@ INCLUDEPATH += ../..
 DEPENDPATH  += ../..
 
 SOURCES += \
-	testiconaction.cpp \
-	../../iconaction.cpp \
-	../../iconwidget.cpp
+    testiconaction.cpp \
+    ../../iconaction.cpp \
+    ../../iconwidget.cpp
 
 HEADERS += \
-	../../iconaction.h \
-	../../iconwidget.h \
-	../../icontoolbutton.h \
-	../../iconbutton.h \
-	../../iconsetdisplay.h \
-	../../iconsetselect.h
+    ../../iconaction.h \
+    ../../iconwidget.h \
+    ../../icontoolbutton.h \
+    ../../iconbutton.h \
+    ../../iconsetdisplay.h \
+    ../../iconsetselect.h

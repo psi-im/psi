@@ -2,11 +2,11 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-	../src/tools/iconset/unittest \
-	../src/widgets/unittest/iconaction \
-	../src/widgets/unittest/richtext \
-	../src/unittest/psiiconset \
-	../src/unittest/psipopup
+    ../src/tools/iconset/unittest \
+    ../src/widgets/unittest/iconaction \
+    ../src/widgets/unittest/richtext \
+    ../src/unittest/psiiconset \
+    ../src/unittest/psipopup
 
 QMAKE_EXTRA_TARGETS += check
 check.commands = sh ./checkall

@@ -2,4 +2,4 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 SOURCES += \
-	MockQCA.cpp
+    MockQCA.cpp

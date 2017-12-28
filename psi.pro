@@ -11,22 +11,22 @@ sub_src.subdir = src
 sub_src.depends += sub_iris
 
 SUBDIRS += \
-	sub_iris \
-	sub_src
+    sub_iris \
+    sub_src
 
 OTHER_FILES += options/default.xml \
-	options/macosx.xml \
-	options/newprofile.xml \
-	options/windows.xml \
-	client_icons.txt \
-	version \
-	TODO \
-	qcm/*.qcm
+    options/macosx.xml \
+    options/newprofile.xml \
+    options/windows.xml \
+    client_icons.txt \
+    version \
+    TODO \
+    qcm/*.qcm
 
 webkit {
-	OTHER_FILES += themes/chatview/util.js \
-		themes/chatview/psi/adapter.js \
-		themes/chatview/adium/adapter.js
+    OTHER_FILES += themes/chatview/util.js \
+        themes/chatview/psi/adapter.js \
+        themes/chatview/adium/adapter.js
 }
 
 # Import useful Makefile targets for testing program using valgrind.

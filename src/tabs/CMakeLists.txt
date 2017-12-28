@@ -7,15 +7,15 @@ unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 set(HEADERS
-	tabdlg.h
-	tabmanager.h
-	tabbablewidget.h
+    tabdlg.h
+    tabmanager.h
+    tabbablewidget.h
 )
 
 set(PLAIN_SOURCES
-	tabdlg.cpp
-	tabmanager.cpp
-	tabbablewidget.cpp
+    tabdlg.cpp
+    tabmanager.cpp
+    tabbablewidget.cpp
 )
 
 qt_wrap_cpp(MOC_SOURCES ${HEADERS})

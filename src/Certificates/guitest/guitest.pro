@@ -4,6 +4,6 @@ include(../../../conf.pri)
 include(../Certificates.pri)
 
 SOURCES += \
-	$$PWD/main.cpp
+    $$PWD/main.cpp
 
 RESOURCES += guitest.qrc

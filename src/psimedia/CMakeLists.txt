@@ -7,15 +7,15 @@ unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 list(APPEND HEADERS
-	psimedia.h
+    psimedia.h
 )
 
 list(APPEND PLAIN_HEADERS
-	psimediaprovider.h
+    psimediaprovider.h
 )
 
 list(APPEND SOURCES
-	psimedia.cpp
+    psimedia.cpp
 )
 
 add_definitions( -DQT_GUI_LIB )

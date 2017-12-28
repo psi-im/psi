@@ -1,2 +1,2 @@
 SOURCES += \
-	$$PWD/commontest.cpp
+    $$PWD/commontest.cpp

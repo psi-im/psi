@@ -9,11 +9,11 @@ MOC_DIR = .moc
 OBJECTS_DIR = .obj
 
 unix {
-	include(../conf.pri)
+    include(../conf.pri)
 }
 
 mac {
-	CONFIG += tc_itunes
+    CONFIG += tc_itunes
 }
 
 TUNECONTROLLER_PATH = .
