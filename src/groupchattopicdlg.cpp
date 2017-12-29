@@ -23,6 +23,10 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
     auto cw = new QToolButton();
     cw->setIcon(IconsetFactory::icon("psi/add").icon());
     m_ui->twLang->setCornerWidget(cw);
+    QObject::connect(m_ui->twLang, &QTabWidget::tabCloseRequested, this, [=](int index) {
+        m_ui->twLang->widget(index)->deleteLater();
+        m_ui->twLang->removeTab(index);
+    });
     QObject::connect(cw, &QToolButton::clicked, this, [=](bool checked) {
         Q_UNUSED(checked);
         if (!addLangDlg) {
