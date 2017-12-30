@@ -211,3 +211,13 @@ QString LanguageManager::languageName(const LanguageManager::LangId &id)
     }
     return name;
 }
+
+QString LanguageManager::countryName(const LanguageManager::LangId &id)
+{
+    QLocale loc((QLocale::Language)id.language, (QLocale::Script)id.script, (QLocale::Country)id.country);
+    QString ret = loc.nativeCountryName();
+    if (loc.language() != QLocale().language() && loc.script() != QLocale::LatinScript) {
+        ret += " (" + loc.countryToString(loc.country()) + ")";
+    }
+    return ret;
+}

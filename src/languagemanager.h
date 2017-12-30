@@ -18,6 +18,7 @@ public:
     static QString toString(const LangId &id);
     static LangId bestUiMatch(const QList<LangId> &avail);
     static QString languageName(const LangId &id);
+    static QString countryName(const LangId &id);
 };
 
 // weird sorting operator

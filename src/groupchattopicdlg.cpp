@@ -79,31 +79,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 
             QObject::connect(m_addLangUi->cmbLang, static_cast<void(QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, [=](int index) {
                 Q_UNUSED(index)
-                QLocale::Language lang = static_cast<QLocale::Language>(m_addLangUi->cmbLang->currentData().toInt());
-                QMap<QString,QLocale::Script> scripts;
-                QMap<QString,QLocale::Country> countries;
-                m_addLangUi->cmbCountry->clear();
-                m_addLangUi->cmbScript->clear();
-                m_addLangUi->cmbCountry->addItem(tr("Any Country"));
-                m_addLangUi->cmbScript->addItem(tr("Any Script"));
-                if (lang) {
-                    for (auto const &loc : QLocale::matchingLocales(lang, QLocale::AnyScript, QLocale::AnyCountry)) {
-                        if (loc != QLocale::c()) {
-                            scripts.insert(QLocale::scriptToString(loc.script()), loc.script());
-                            countries.insert(QLocale::countryToString(loc.country()), loc.country());
-                        }
-                    }
-                    if (scripts.count() > 1) {
-                        for (auto it = scripts.constBegin(); it != scripts.constEnd(); ++it) {
-                            m_addLangUi->cmbScript->addItem(it.key(), it.value());
-                        }
-                    }
-                    if (countries.count() > 1) {
-                        for (auto it = countries.constBegin(); it != countries.constEnd(); ++it) {
-                            m_addLangUi->cmbCountry->addItem(it.key(), it.value());
-                        }
-                    }
-                }
+                populateCountryAndScript();
             });
         } else {
             addLangDlg->setFocus();
@@ -149,7 +125,39 @@ void GroupchatTopicDlg::addLanguage(const LanguageManager::LangId &id, const QSt
 
 void GroupchatTopicDlg::populateCountryAndScript()
 {
-
+    QLocale::Language lang = static_cast<QLocale::Language>(m_addLangUi->cmbLang->currentData().toInt());
+    QMap<QString,QLocale::Script> scripts;
+    QMap<QString,QLocale::Country> countries;
+    m_addLangUi->cmbCountry->clear();
+    m_addLangUi->cmbScript->clear();
+    m_addLangUi->cmbCountry->addItem(tr("Any Country"), 0);
+    m_addLangUi->cmbScript->addItem(tr("Any Script"), 0);
+    if (lang) {
+        for (auto const &loc : QLocale::matchingLocales(lang, QLocale::AnyScript, QLocale::AnyCountry)) {
+            if (loc != QLocale::c()) {
+                scripts.insert(QLocale::scriptToString(loc.script()), loc.script());
+                countries.insert(QLocale::countryToString(loc.country()), loc.country());
+            }
+        }
+        m_addLangUi->cmbScript->setVisible(scripts.count() > 1);
+        m_addLangUi->lblScript->setVisible(scripts.count() > 1);
+        if (scripts.count() > 1) {
+            for (auto it = scripts.constBegin(); it != scripts.constEnd(); ++it) {
+                m_addLangUi->cmbScript->addItem(it.key(), it.value());
+            }
+        }
+        m_addLangUi->cmbCountry->setVisible(countries.count() > 1);
+        m_addLangUi->lblCountry->setVisible(countries.count() > 1);
+        if (countries.count() > 1) {
+            for (auto it = countries.constBegin(); it != countries.constEnd(); ++it) {
+                LanguageManager::LangId id;
+                id.language = lang;
+                id.country = it.value();
+                QString country = LanguageManager::countryName(id);
+                m_addLangUi->cmbCountry->addItem(country, it.value());
+            }
+        }
+    }
 }
 
 void GroupchatTopicDlg::changeEvent(QEvent *e)

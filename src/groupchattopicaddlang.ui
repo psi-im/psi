@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>GroupChatTopicAddLangDlg</class>
  <widget class="QDialog" name="GroupChatTopicAddLangDlg">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>301</width>
+    <height>154</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Add Language</string>
   </property>
@@ -9,34 +17,55 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="lblLang">
        <property name="text">
         <string>Language</string>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="lblScript">
        <property name="text">
         <string>Script</string>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="lblCountry">
        <property name="text">
         <string>Country</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="cmbLang"/>
+      <widget class="QComboBox" name="cmbLang">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QComboBox" name="cmbScript"/>
+      <widget class="QComboBox" name="cmbScript">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QComboBox" name="cmbCountry"/>
+      <widget class="QComboBox" name="cmbCountry">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
