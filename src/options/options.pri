@@ -23,6 +23,9 @@ HEADERS += \
     $$PWD/opt_statusauto.h \
     $$PWD/opt_appearance.h \
     $$PWD/opt_iconset.h \
+    $$PWD/opt_input.h \
+    $$PWD/opt_messages.h \
+    $$PWD/opt_messages_common.h \
     $$PWD/opt_theme.h \
     $$PWD/opt_groupchat.h \
     $$PWD/opt_sound.h \
@@ -45,6 +48,9 @@ SOURCES += \
     $$PWD/opt_statusauto.cpp \
     $$PWD/opt_appearance.cpp \
     $$PWD/opt_iconset.cpp \
+    $$PWD/opt_input.cpp \
+    $$PWD/opt_messages.cpp \
+    $$PWD/opt_messages_common.cpp \
     $$PWD/opt_theme.cpp \
     $$PWD/opt_groupchat.cpp \
     $$PWD/opt_sound.cpp \
@@ -71,6 +77,7 @@ FORMS += \
     $$PWD/opt_avcall.ui \
     $$PWD/opt_advanced.ui \
     $$PWD/opt_lookfeel_toolbars.ui \
+    $$PWD/opt_messages_common.ui \
     $$PWD/ui_isdetails.ui \
     $$PWD/opt_iconset_emo.ui \
     $$PWD/opt_iconset_mood.ui \
@@ -79,6 +86,7 @@ FORMS += \
     $$PWD/opt_iconset_affiliation.ui \
     $$PWD/opt_iconset_system.ui \
     $$PWD/opt_iconset_roster.ui \
+    $$PWD/opt_input.ui \
     $$PWD/opt_general_groupchat.ui \
     $$PWD/opt_shortcuts.ui \
     $$PWD/opt_statuspep.ui \

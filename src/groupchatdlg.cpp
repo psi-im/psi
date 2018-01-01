@@ -1832,16 +1832,21 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     }
 
     PsiOptions *options = PsiOptions::instance();
-    if(!m.subject().isNull()) {
 
+    QString topic;
+    if (!m.subjectMap().isEmpty()) {
         d->subjectMap.clear();
         auto sm = m.subjectMap();
         for (auto l = sm.constBegin(); l != sm.constEnd(); ++l) {
             d->subjectMap.insert(LanguageManager::fromString(l.key()), l.value());
         }
-        LanguageManager::LangId preferredSubject = LanguageManager::bestUiMatch(d->subjectMap.keys());
+        auto preferredSubject = LanguageManager::bestUiMatch(d->subjectMap.keys().toSet(), true);
+        if (preferredSubject.count()) {
+            topic = d->subjectMap.value(preferredSubject.first());
+        }
+    }
 
-        QString topic = d->subjectMap.value(preferredSubject);
+    if(!topic.isNull()) {
         QString subjectTooltip = TextUtil::plain2rich(topic);
         subjectTooltip = TextUtil::linkify(subjectTooltip);
         if(options->getOption("options.ui.emoticons.use-emoticons").toBool()) {

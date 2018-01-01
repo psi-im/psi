@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>517</width>
-    <height>531</height>
+    <height>576</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -61,113 +61,6 @@
     <widget class="QCheckBox" name="ck_smallChats">
      <property name="text">
       <string>Open chats in compact mode</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout">
-     <property name="spacing">
-      <number>6</number>
-     </property>
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QCheckBox" name="ck_tabChats">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Use tabbed mode:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="cb_tabGrouping">
-       <item>
-        <property name="text">
-         <string>for chats only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for mucs only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for chats and mucs separately</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for mucs and chats in one window</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for mucs, chats and roster in one window</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>[customized]</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <spacer>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_showTabButtons" >
-     <property name="text" >
-      <string>Show tab buttons</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_autoResize">
-     <property name="text">
-      <string>Auto-resize text input field</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_tabShortcuts">
-     <property name="text">
-      <string>Enable Alt-[0-9] tab shortcuts</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_showPreviews">
-     <property name="text">
-      <string>Show previews for links</string>
      </property>
     </widget>
    </item>

@@ -25,11 +25,14 @@ list(APPEND HEADERS
     opt_groupchat.h
     opt_sound.h
     opt_avcall.h
+    opt_messages.h
+    opt_messages_common.h
     opt_chat.h
     optionstab.h
     opt_tree.h
     opt_application.h
     opt_plugins.h
+    opt_input.h
     opt_statusgeneral.h
     opt_theme.h
 )
@@ -51,10 +54,13 @@ list(APPEND PLAIN_SOURCES
     opt_events.cpp
     opt_groupchat.cpp
     opt_iconset.cpp
+    opt_messages.cpp
+    opt_messages_common.cpp
     opt_popups.cpp
     opt_roster.cpp
     opt_shortcuts.cpp
     opt_sound.cpp
+    opt_input.cpp
     opt_status.cpp
     opt_statusauto.cpp
     opt_statusgeneral.cpp
@@ -80,7 +86,9 @@ list(APPEND FORMS
     opt_iconset_mood.ui
     opt_iconset_roster.ui
     opt_iconset_system.ui
+    opt_input.ui
     opt_lookfeel_toolbars.ui
+    opt_messages_common.ui
     opt_plugins.ui
     opt_popups.ui
     opt_roster.ui

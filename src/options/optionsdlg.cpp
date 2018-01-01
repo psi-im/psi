@@ -8,12 +8,12 @@
 #include "opt_application.h"
 #include "opt_roster.h"
 #include "opt_appearance.h"
-#include "opt_chat.h"
+#include "opt_messages.h"
 #include "opt_events.h"
 #include "opt_popups.h"
 #include "opt_status.h"
 #include "opt_iconset.h"
-#include "opt_groupchat.h"
+//#include "opt_groupchat.h"
 #include "opt_sound.h"
 #include "opt_avcall.h"
 #include "opt_advanced.h"
@@ -50,7 +50,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
     applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
     tabs.append( applicationTab );
     tabs.append( new OptionsTabRoster(this) );
-    tabs.append( new OptionsTabChat(this) );
+    tabs.append( new OptionsTabMessages(this) );
     tabs.append( new OptionsTabEvents(this) );
     tabs.append( new OptionsTabPopups(this) );
     tabs.append( new OptionsTabStatus(this) );
@@ -58,7 +58,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
     //tabs.append( new OptionsTabIconsetSystem(this) );
     //tabs.append( new OptionsTabIconsetRoster(this) );
     //tabs.append( new OptionsTabIconsetEmoticons(this) );
-    tabs.append( new OptionsTabGroupchat(this) );
+    //tabs.append( new OptionsTabGroupchat(this) );
     tabs.append( new OptionsTabSound(this) );
     if(AvCallManager::isSupported())
         tabs.append( new OptionsTabAvCall(this) );

@@ -1413,17 +1413,14 @@ void PsiCon::optionChanged(const QString& option)
     }
 
     if (option == "options.ui.spell-check.langs") {
-        QStringList langs = PsiOptions::instance()->getOption(option).toString().split(QRegExp("\\s+"), QString::SkipEmptyParts);
-        if(langs.isEmpty()) {
-            langs = SpellChecker::instance()->getAllLanguages();
-            QString lang_env = getenv("LANG");
-            if(!lang_env.isEmpty()) {
-                lang_env = lang_env.split("_").first();
-                if(langs.contains(lang_env, Qt::CaseInsensitive))
-                    langs = QStringList(lang_env);
+        if(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool()) {
+            auto langs = LanguageManager::deserializeLanguageSet(PsiOptions::instance()->getOption(option).toString());
+            if(langs.isEmpty()) {
+                langs = SpellChecker::instance()->getAllLanguages();
+                langs = LanguageManager::bestUiMatch(langs).toSet();
             }
+            SpellChecker::instance()->setActiveLanguages(langs);
         }
-        SpellChecker::instance()->setActiveLanguages(langs);
         return;
     }
 

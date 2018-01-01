@@ -134,7 +134,6 @@ list(APPEND HEADERS
     httpauthmanager.h
     infodlg.h
     invitetogroupchatmenu.h
-    languagemanager.h
     main.h
     mainwin.h
     mainwin_p.h
@@ -396,7 +395,6 @@ list(APPEND PLAIN_SOURCES
     infodlg.cpp
     invitetogroupchatmenu.cpp
     jidutil.cpp
-    languagemanager.cpp
     lastactivitytask.cpp
     main.cpp
     mainwin.cpp

@@ -57,7 +57,6 @@ QWidget *OptionsTabChat::widget()
     bg_delChats->addButton( d->rb_delChatsDay);
     bg_delChats->addButton( d->rb_delChatsNever);
 
-    connect(d->ck_tabChats, SIGNAL(toggled(bool)), d->cb_tabGrouping, SLOT(setEnabled(bool)));
 
     d->rb_defActMsg->setWhatsThis(
         tr("Make the default action open a normal message window."));
@@ -79,13 +78,8 @@ QWidget *OptionsTabChat::widget()
         " It does not take the keyboard focus, so it will not interfere with your work."));
     d->ck_smallChats->setWhatsThis(
         tr("Makes Psi open chat windows in compact mode."));
-    d->ck_tabChats->setWhatsThis(
-        tr("Makes Psi open chats in a tabbed window."));
     QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
         " chat window is closed.</P>");
-    d->ck_showPreviews->setWhatsThis(
-        tr("Show under links to some media content preview of the content."
-        " It's also possible to play audio and video right in chat."));
     d->rb_delChatsClose->setWhatsThis(s +
         tr("<P>This option does not keep the chat log in memory.</P>"));
     d->rb_delChatsHour->setWhatsThis(s +
@@ -110,7 +104,6 @@ void OptionsTabChat::applyOptions()
     PsiOptions::instance()->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
     PsiOptions::instance()->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
     PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
-    PsiOptions::instance()->setOption("options.ui.tabs.show-tab-buttons", d->ck_showTabButtons->isChecked());
 
     QString delafter;
     switch (bg_delChats->buttons().indexOf( bg_delChats->checkedButton() )) {
@@ -128,39 +121,6 @@ void OptionsTabChat::applyOptions()
             break;
     }
     PsiOptions::instance()->setOption("options.ui.chat.delete-contents-after", delafter);
-    PsiOptions::instance()->setOption("options.ui.tabs.use-tabs", d->ck_tabChats->isChecked());
-    QString tabGrouping;
-    int idx = d->cb_tabGrouping->currentIndex();
-    switch (idx) {
-        case 0:
-            tabGrouping = "C";
-            break;
-        case 1:
-            tabGrouping = "M";
-            break;
-        case 2:
-            tabGrouping = "C:M";
-            break;
-        case 3:
-            tabGrouping = "CM";
-            break;
-        case 4:
-            tabGrouping = "ACM";
-            break;
-    }
-    if (!tabGrouping.isEmpty()) {
-        PsiOptions::instance()->setOption("options.ui.tabs.grouping", tabGrouping);
-    } else {
-        if (d->cb_tabGrouping->count() == 6) {
-            d->cb_tabGrouping->removeItem(5);
-        }
-    }
-
-    PsiOptions::instance()->setOption("options.ui.chat.use-expanding-line-edit", d->ck_autoResize->isChecked());
-
-    PsiOptions::instance()->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
-
-    PsiOptions::instance()->setOption("options.ui.chat.show-previews", d->ck_showPreviews->isChecked());
 
     // Soft return.
     // Only update this if the value actually changed, or else custom presets
@@ -190,35 +150,7 @@ void OptionsTabChat::restoreOptions()
     d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
     d->ck_switchTabOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
     d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
-    d->ck_showTabButtons->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.show-tab-buttons").toBool() );
-    d->ck_tabChats->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() );
-    d->cb_tabGrouping->setEnabled(PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool());
-    QString tabGrouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
-    bool custom = false;
-    if (tabGrouping == "C") {
-        d->cb_tabGrouping->setCurrentIndex(0);
-    } else if (tabGrouping == "M") {
-        d->cb_tabGrouping->setCurrentIndex(1);
-    } else if (tabGrouping == "C:M") {
-        d->cb_tabGrouping->setCurrentIndex(2);
-    } else if (tabGrouping == "CM") {
-        d->cb_tabGrouping->setCurrentIndex(3);
-    } else if (tabGrouping == "ACM") {
-        d->cb_tabGrouping->setCurrentIndex(4);
-    } else {
-        if (d->cb_tabGrouping->count() == 6) {
-            d->cb_tabGrouping->setCurrentIndex(5);
-        } else {
-            d->cb_tabGrouping->setCurrentIndex(-1);
-        }
-        custom = true;
-    }
-    if (!custom && d->cb_tabGrouping->count() == 6) {
-        d->cb_tabGrouping->removeItem(5);
-    }
-    d->ck_autoResize->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() );
-    d->ck_tabShortcuts->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tab-shortcuts").toBool() );
-    d->ck_showPreviews->setChecked( PsiOptions::instance()->getOption("options.ui.chat.show-previews").toBool() );
+
     QString delafter = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
     if (delafter == "instant") {
         d->rb_delChatsClose->setChecked(true);

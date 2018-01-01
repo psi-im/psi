@@ -1,48 +1,58 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>OptAdvanced</class>
- <widget class="QWidget" name="OptAdvanced" >
-  <property name="geometry" >
+ <widget class="QWidget" name="OptAdvanced">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>509</width>
-    <height>429</height>
+    <height>594</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>OptAdvancedUI</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>6</number>
    </property>
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
    <item>
-    <widget class="QCheckBox" name="ck_messageevents" >
-     <property name="text" >
-      <string>Enable "Contact is typing ..." events</string>
+    <widget class="QCheckBox" name="ck_messageevents">
+     <property name="text">
+      <string>Enable &quot;Contact is typing ...&quot; events</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_inactiveevents" >
-     <property name="text" >
-      <string>Enable "Inactivity" events (end/suspend conversation)</string>
+    <widget class="QCheckBox" name="ck_inactiveevents">
+     <property name="text">
+      <string>Enable &quot;Inactivity&quot; events (end/suspend conversation)</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_requestReceipts" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_requestReceipts">
+     <property name="text">
       <string>Request receipts</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_sendReceipts" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_sendReceipts">
+     <property name="text">
       <string>Send receipts</string>
      </property>
     </widget>
@@ -58,130 +68,118 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_rc" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_rc">
+     <property name="text">
       <string>Enable remote controlling from other locations</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_spell" >
-     <property name="text" >
-      <string>Check spelling</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_contactsMessageFormatting" >
-     <property name="text" >
-      <string>Use contacts' message formatting</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_singleclick" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_singleclick">
+     <property name="text">
       <string>Single-click triggers default action</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_autocopy" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_autocopy">
+     <property name="text">
       <string>Automatically copy selected text to clipboard</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_grabUrls" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_grabUrls">
+     <property name="text">
       <string>Grab URLs from clipboard</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_jidComplete" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_jidComplete">
+     <property name="text">
       <string>XMPP address completion</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_showSubjects" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_showSubjects">
+     <property name="text">
       <string>Show subject line in events</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_showCounter" >
-     <property name="text" >
-      <string>Show character counter</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_autoVCardOnLogin" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_autoVCardOnLogin">
+     <property name="text">
       <string>Automatically get vCard when becoming online</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_rosterAnim" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_rosterAnim">
+     <property name="text">
       <string>Animate the roster when a contact comes online</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_scrollTo" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_scrollTo">
+     <property name="text">
       <string>Scroll roster to contact on event</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_ignoreHeadline" >
-     <property name="text" >
-      <string>Ignore "Headline" events (e.g. MSN alerts)</string>
+    <widget class="QCheckBox" name="ck_ignoreHeadline">
+     <property name="text">
+      <string>Ignore &quot;Headline&quot; events (e.g. MSN alerts)</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
      <item>
-      <widget class="QLabel" name="TextLabel2" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel2">
+       <property name="text">
         <string>Treat incoming messages and chats as:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="cb_incomingAs" >
+      <widget class="QComboBox" name="cb_incomingAs">
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Determined by sender</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Messages</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Chats</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Messages (Chats if Chatting)</string>
         </property>
        </item>
@@ -191,7 +189,7 @@
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <resources/>
  <connections/>
 </ui>
