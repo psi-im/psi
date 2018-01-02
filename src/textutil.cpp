@@ -4,6 +4,7 @@
 #include "psiiconset.h"
 #include "rtparse.h"
 #include "psioptions.h"
+#include "coloropt.h"
 
 QString TextUtil::escape(const QString &plain)
 {
@@ -418,7 +419,14 @@ QString TextUtil::linkify(const QString &in)
             href = escape(href);
             href = linkify_htmlsafe(href);
             //printf("link: [%s], href=[%s]\n", link.latin1(), href.latin1());
-            linked = QString("<a href=\"%1\">").arg(href) + escape(link) + "</a>" + escape(pre.mid(cutoff));
+#ifdef WEBKIT
+            linked = QString("<a href=\"%1\">").arg(href);
+#else
+            auto linkColor = ColorOpt::instance()->color("options.ui.look.colors.messages.link");
+            // we have visited link as well but it's no applicable to QTextEdit or we have to track visited manually
+            linked = QString("<a href=\"%1\" style=\"color:%2\">").arg(href, linkColor.name());
+#endif
+            linked += (escape(link) + "</a>" + escape(pre.mid(cutoff)));
             out.replace(x1, len, linked);
             n = x1 + linked.length() - 1;
         }

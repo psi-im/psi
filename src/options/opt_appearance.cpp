@@ -253,7 +253,9 @@ QWidget *OptionsTabAppearanceGeneral::widget()
         {d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", ""},
         {d->ck_cSysMsg,          d->pb_cSysMsg,          "messages.informational", ""},
         {d->ck_cUserText,        d->pb_cUserText,        "messages.usertext", ""},
-        {d->ck_highlight,        d->pb_highlight,        "messages.highlighting", ""}
+        {d->ck_highlight,        d->pb_highlight,        "messages.highlighting", ""},
+        {d->ck_cLink,            d->pb_cLink,            "messages.link", ""},
+        {d->ck_cLinkVisited,     d->pb_cLinkVisited,     "messages.link-visited", ""}
     };
 
     bg_color = new QButtonGroup(this);
