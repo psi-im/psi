@@ -5,8 +5,6 @@
 #include <QTreeWidgetItem>
 #include <QCheckBox>
 #include <QLocale>
-//#include <QDebug>
-#include <QStringLiteral>
 
 #include "psioptions.h"
 #include "spellchecker/spellchecker.h"
