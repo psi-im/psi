@@ -119,6 +119,7 @@ public:
     QAction *visibleAction_;
     QAction *_copyUserJid;
     QAction *_copyMucJid;
+    QAction *mucAddToBookmarks;
     QAction *_separator1;
     QAction *_separator2;
     QMenu *_advancedMenu;

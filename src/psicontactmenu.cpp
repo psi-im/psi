@@ -44,10 +44,9 @@
 #include "pgputil.h"
 #endif
 #include "invitetogroupchatmenu.h"
-
 #include "psiprivacymanager.h"
-
 #include "groupchatdlg.h"
+#include "bookmarkmanager.h"
 
 //----------------------------------------------------------------------------
 // GroupMenu
@@ -194,6 +193,13 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
     _copyMucJid = new IconAction(tr("Copy Groupchat JID"), "", tr("Copy Groupchat JID"), 0 , this);
     connect(_copyMucJid, SIGNAL(triggered(bool)), SLOT(copyJid()));
 
+    mucAddToBookmarks = new IconAction(tr("Add To Bookmarks"), this, "psi/bookmark_add");
+    QObject::connect(mucAddToBookmarks, &QAction::triggered, this, [=](bool){
+        GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+        if (gc)
+            gc->doBookmark();
+    });
+
     if (!contact_->isConference()) {
         menu_->addAction(addAuthAction_);
         menu_->addAction(transportLogonAction_);
@@ -285,6 +291,7 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
         menu_->addAction(mucShowAction_);
         menu_->addAction(mucLeaveAction_);
         menu_->addSeparator();
+        menu_->addAction(mucAddToBookmarks);
         menu_->addAction(customStatusAction_);
         menu_->addAction(_copyMucJid);
     }
@@ -296,6 +303,8 @@ void PsiContactMenu::Private::updateActions()
         return;
 
     if(contact_->isConference()) {
+        auto bm = contact_->account()->bookmarkManager();
+        mucAddToBookmarks->setVisible(bm->isAvailable() && bm->indexOfConference(contact_->jid()) == -1);
         updateBlockActionState();
         return;
     }

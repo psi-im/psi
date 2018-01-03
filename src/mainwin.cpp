@@ -1565,6 +1565,10 @@ void MainWin::trayClicked(const QPoint &, int button)
         return;
     }
 
+    // if we widget is obscured by other widgets then hiding is not that expected
+    // some interesting info about the problem
+    // http://www.qtcentre.org/threads/56573-Get-the-Window-Visible-State-when-it-is-partially-visible
+    // But currently now really good cross-platform solution.
     if(!isHidden()) {
         trayHide();
     }

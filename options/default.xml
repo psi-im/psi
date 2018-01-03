@@ -405,7 +405,7 @@ QLineEdit#le_status_text {
                         <usertext type="QColor" comment="Color used to indicate additional text for informational messages.">#606060</usertext>
                         <highlighting type="QColor">#FF0000</highlighting>
                         <link type="QColor">#000080</link>
-                        <link-visited type="QColor">#400080</link>
+                        <link-visited type="QColor">#400080</link-visited>
                     </messages>
                     <passive-popup>
                         <border type="QColor">#5297f9</border>

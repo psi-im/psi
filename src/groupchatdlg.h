@@ -111,6 +111,7 @@ public slots:
     virtual void ensureTabbedCorrectly();
 
     void optionsUpdate();
+    void doBookmark();
 
 private slots:
     void showNM(const QString&);
@@ -131,7 +132,6 @@ private slots:
     void lv_action(const QString &, const Status &, int);
     void doClear();
     void doClearButton();
-    void doBookmark();
     void copyMucJid();
     void doRemoveBookmark();
     void buildMenu();
