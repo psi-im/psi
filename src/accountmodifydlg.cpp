@@ -35,6 +35,9 @@
 #include "psicontactlist.h"
 #include "iconaction.h"
 #include "actionlineedit.h"
+#ifdef HAVE_KEYCHAIN
+# include <qt5keychain/keychain.h>
+#endif
 
 AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
@@ -619,8 +622,26 @@ void AccountModifyDlg::save()
     else {
         psi->contactList()->createAccount(acc);
     }
-
+#if HAVE_KEYCHAIN
+    QKeychain::Job *pwJob;
+    if (acc.opt_pass) {
+        pwJob = new QKeychain::WritePasswordJob(QLatin1String("xmpp"), this);
+        static_cast<QKeychain::WritePasswordJob*>(pwJob)->setTextData(acc.pass);
+    } else {
+        pwJob = new QKeychain::DeletePasswordJob(QLatin1String("xmpp"), this);
+    }
+    pwJob->setKey(acc.jid);
+    pwJob->setAutoDelete(true);
+    QObject::connect(pwJob, &QKeychain::Job::finished, this, [this](QKeychain::Job *job){
+        if (job->error() != QKeychain::NoError) {
+            qWarning("Failed to save password in keyring manager");
+        }
+        accept();
+    });
+    pwJob->start();
+#else
     accept();
+#endif
 }
 
 void AccountModifyDlg::tabChanged(int)

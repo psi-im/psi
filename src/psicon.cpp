@@ -643,10 +643,6 @@ bool PsiCon::init()
 
     d->edb = new EDBFlatFile(this);
 
-    // try autologin if needed
-    foreach(PsiAccount* account, d->contactList->accounts()) {
-        account->autoLogin();
-    }
     if(d->contactList->defaultAccount())
         emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
 
@@ -684,6 +680,11 @@ bool PsiCon::init()
 
     //init spellchecker
     optionChanged("options.ui.spell-check.langs");
+
+    // try autologin if needed
+    foreach(PsiAccount* account, d->contactList->accounts()) {
+        account->autoLogin();
+    }
 
     return result;
 }

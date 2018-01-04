@@ -8,6 +8,11 @@ greaterThan(QT_MAJOR_VERSION, 4) {
     LIBS += -lxcb
     QT += x11extras
   }
+
+  keychain {
+    QT += Qt5Keychain
+    DEFINES += HAVE_KEYCHAIN
+  }
 }
 unix:!mac {
   DEFINES += HAVE_X11
@@ -229,7 +234,6 @@ HEADERS += \
     $$PWD/psicapsregsitry.h \
     $$PWD/tabcompletion.h \
     $$PWD/alertmanager.h \
-    $$PWD/accountloginpassword.h \
     $$PWD/mcmdcompletion.h \
     $$PWD/captchadlg.h
 
@@ -363,7 +367,6 @@ SOURCES += \
     $$PWD/tabcompletion.cpp \
     $$PWD/psicapsregsitry.cpp \
     $$PWD/alertmanager.cpp \
-    $$PWD/accountloginpassword.cpp \
     $$PWD/mcmdcompletion.cpp \
     $$PWD/captchadlg.cpp
 

@@ -117,6 +117,9 @@ void ChangePasswordDlg::finished()
     if(ok) {
         UserAccount acc = pa->userAccount();
         acc.pass = ui_.le_pwnew->text();
+#ifdef HAVE_KEYCHAIN
+        pa->savePassword();
+#endif
         pa->setUserAccount(acc);
         AccountModifyDlg *amd = pa->findDialog<AccountModifyDlg*>();
         if(amd)

@@ -353,11 +353,17 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".scram.store-salted-password", storeSaltedHashedPassword);
     o->setOption(base + ".scram.salted-password", scramSaltedHashPassword);
 
+#ifdef HAVE_KEYCHAIN
+    // Erase password from options, since we are going to keep it in keychain only
+    // TODO move this to the migration code
+    o->removeOption(base + ".password");
+#else
     if(opt_pass) {
         o->setOption(base + ".password", encodePassword(pass, jid));
     } else {
         o->setOption(base + ".password", "");
     }
+#endif
     o->setOption(base + ".use-host", opt_host);
     o->setOption(base + ".security-level", security_level);
     switch (ssl) {
@@ -462,161 +468,6 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".always-visible-contacts", alwaysVisibleContacts);
     o->setOption(base + ".muc-bookmarks", localMucBookmarks);
     o->setOption(base + ".muc-bookmarks-ignore", ignoreMucBookmarks);
-}
-
-void UserAccount::fromXml(const QDomElement &a)
-{
-    reset();
-
-    readEntry(a, "id", &id);
-    readEntry(a, "name", &name);
-    readBoolAttribute(a, "enabled", &opt_enabled);
-    readBoolAttribute(a, "auto", &opt_auto);
-    readBoolAttribute(a, "showOffline", &tog_offline);
-    readBoolAttribute(a, "showAway", &tog_away);
-    readBoolAttribute(a, "showHidden", &tog_hidden);
-    readBoolAttribute(a, "showAgents", &tog_agents);
-    readBoolAttribute(a, "showSelf", &tog_self);
-    readBoolAttribute(a, "keepAlive", &opt_keepAlive);
-    readBoolAttribute(a, "enableSM", &opt_sm);
-    readBoolAttribute(a, "compress", &opt_compress);
-    readBoolAttribute(a, "require-mutual-auth", &req_mutual_auth);
-    readBoolAttribute(a, "legacy-ssl-probe", &legacy_ssl_probe);
-    readBoolAttribute(a, "log", &opt_log);
-    readBoolAttribute(a, "reconn", &opt_reconn);
-    readBoolAttribute(a, "ignoreSSLWarnings", &opt_ignoreSSLWarnings);
-    //readBoolAttribute(a, "gpg", &opt_gpg);
-    readBoolAttribute(a, "automatic-resource", &opt_automatic_resource);
-    readBoolAttribute(a, "priority-depends-on-status", &priority_dep_on_status);
-    readBoolAttribute(a, "ignore-global-actions", &ignore_global_actions);
-
-    // Will be overwritten if there is a new option
-    bool opt_plain = false;
-    readBoolAttribute(a, "plain", &opt_plain);
-    allow_plain = (opt_plain ? XMPP::ClientStream::AllowPlain : XMPP::ClientStream::NoAllowPlain);
-    readNumEntry(a, "allow-plain", (int*) &allow_plain);
-
-    // Will be overwritten if there is a new option
-    bool opt_ssl = true;
-    readBoolAttribute(a, "ssl", &opt_ssl);
-    if (opt_ssl)
-        ssl = UserAccount::SSL_Legacy;
-
-    readNumEntry(a, "security-level", &security_level);
-    readNumEntry(a, "ssl", (int*) &ssl);
-    readEntry(a, "host", &host);
-    readNumEntry(a, "port", &port);
-
-    // 0.8.6 and >= 0.9
-    QDomElement j = a.firstChildElement("jid");
-    if(!j.isNull()) {
-        readBoolAttribute(j, "manual", &opt_host);
-        jid = tagContent(j);
-    }
-    // 0.8.7
-    else {
-        QString user, vhost;
-        readEntry(a, "username", &user);
-        QDomElement j = a.firstChildElement("vhost");
-        if(!j.isNull()) {
-            readBoolAttribute(j, "manual", &opt_host);
-            vhost = tagContent(j);
-        }
-        else {
-            opt_host = false;
-            vhost = host;
-            host = "";
-            port = 0;
-        }
-        jid = user + '@' + vhost;
-    }
-
-    readBoolEntry(a, "useHost", &opt_host);
-
-    // read password (we must do this after reading the jid, to decode properly)
-    readEntry(a, "password", &pass);
-    if(!pass.isEmpty()) {
-        opt_pass = true;
-        pass = decodePassword(pass, jid);
-    }
-
-    QDomElement ca = a.firstChildElement("custom-auth");
-    if(!ca.isNull()) {
-        readBoolAttribute(ca, "use", &customAuth);
-        QDomElement authid_el = ca.firstChildElement("authid");
-        if (!authid_el.isNull())
-            authid = tagContent(authid_el);
-        QDomElement realm_el = ca.firstChildElement("realm");
-        if (!realm_el.isNull())
-            realm = tagContent(realm_el);
-    }
-
-    readEntry(a, "resource", &resource);
-    readNumEntry(a, "priority", &priority);
-    QString pgpSecretKeyID;
-    readEntry(a, "pgpSecretKeyID", &pgpSecretKeyID);
-#ifdef HAVE_PGPUTIL
-    if (!pgpSecretKeyID.isEmpty()) {
-        QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(pgpSecretKeyID);
-        if (!e.isNull())
-            pgpSecretKey = e.pgpSecretKey();
-
-        readEntry(a, "passphrase", &pgpPassPhrase);
-        if(!pgpPassPhrase.isEmpty()) {
-            pgpPassPhrase = decodePassword(pgpPassPhrase, pgpSecretKeyID);
-        }
-    }
-#endif
-
-    QDomElement r = a.firstChildElement("roster");
-    if(!r.isNull()) {
-        for(QDomNode n = r.firstChild(); !n.isNull(); n = n.nextSibling()) {
-            QDomElement i = n.toElement();
-            if(i.isNull())
-                continue;
-
-            if(i.tagName() == "item") {
-                RosterItem ri;
-                if(!ri.fromXml(i))
-                    continue;
-                roster += ri;
-            }
-        }
-    }
-
-    groupState.clear();
-    QDomElement gs = a.firstChildElement("groupState");
-    if (!gs.isNull()) {
-        for (QDomNode n = gs.firstChild(); !n.isNull(); n = n.nextSibling()) {
-            QDomElement i = n.toElement();
-            if (i.isNull())
-                continue;
-
-            if (i.tagName() == "group") {
-                GroupData gd;
-                gd.open = i.attribute("open") == "true";
-                gd.rank = i.attribute("rank").toInt();
-                groupState.insert(i.attribute("name"), gd);
-            }
-        }
-    }
-
-    readNumEntry(a, "proxyindex", &proxy_index);
-    readNumEntry(a, "proxytype", &proxy_type);
-    readEntry(a, "proxyhost", &proxy_host);
-    readNumEntry(a, "proxyport", &proxy_port);
-    readEntry(a, "proxyuser", &proxy_user);
-    readEntry(a, "proxypass", &proxy_pass);
-    if(!proxy_pass.isEmpty())
-        proxy_pass = decodePassword(proxy_pass, jid);
-
-    r = a.firstChildElement("pgpkeybindings");
-    if(!r.isNull())
-        keybind.fromXml(r);
-
-    QString str;
-    readEntry(a, "dtProxy", &str);
-    dtProxy = str;
 }
 
 int UserAccount::defaultPriority(const XMPP::Status &s)

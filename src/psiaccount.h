@@ -168,7 +168,6 @@ public:
     void forceDisconnect(bool fast, const XMPP::Status &s);
     bool hasPGP() const;
     QHostAddress *localAddress() const;
-    void passwordReady(QString password);
 
     ChatDlg* findChatDialog(const Jid& jid, bool compareResource = true) const;
     ChatDlg* findChatDialogEx(const Jid& jid, bool ignoreResource = false) const;
@@ -510,6 +509,9 @@ public:
     void updateEntry(const UserListItem& u);
 
     void resetLastManualStatusSafeGuard();
+#ifdef HAVE_KEYCHAIN
+    void savePassword();
+#endif
 
 signals:
     void addedContact(PsiContact*);
@@ -544,7 +546,7 @@ private:
     void processEncryptedMessageNext();
     void processEncryptedMessageDone();
     void verifyStatus(const Jid &j, const Status &s);
-    inline void passwordPrompt();
+    void passwordPrompt();
     void sentInitialPresence();
     void requestAvatarsForAllContacts();
 

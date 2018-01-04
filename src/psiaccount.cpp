@@ -44,6 +44,9 @@
 #include <QQueue>
 #include <QHostInfo>
 #include <QtCrypto>
+#ifdef HAVE_KEYCHAIN
+# include <qt5keychain/keychain.h>
+#endif
 
 #include "psiaccount.h"
 #include "psiiconset.h"
@@ -142,7 +145,6 @@
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
 #include "bookmarkmanagedlg.h"
-#include "accountloginpassword.h"
 #include "alertmanager.h"
 #include "popupmanager.h"
 
@@ -1922,7 +1924,29 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 
     if(d->acc.customAuth)
         d->stream->setAuthzid(d->jid.bare());
+
+    if(pass) {
+        if (d->acc.storeSaltedHashedPassword) d->stream->setSCRAMStoredSaltedHash(d->acc.scramSaltedHashPassword);
+#ifdef HAVE_KEYCHAIN
+        auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"), this); // qApp is kind of wrong, but "this" is not QObject
+        pwJob->setKey(d->jid.bare());
+        pwJob->setAutoDelete(true);
+        QObject::connect(pwJob, &QKeychain::WritePasswordJob::finished, this, [=](QKeychain::Job *job) {
+            if (job->error() == QKeychain::NoError) {
+                d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob*>(job)->textData());
+            } else {
+                qWarning("KeyChain error=%d", job->error());
+                passwordPrompt();
+            }
+            d->stream->continueAfterParams();
+        });
+        pwJob->start();
+    }
+#else
+        d->stream->setPassword(d->acc.pass);
+    }
     d->stream->continueAfterParams();
+#endif
 }
 
 void PsiAccount::cs_authenticated()
@@ -3013,10 +3037,11 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 
         // if client is not active then attempt to login
         if(!isActive()) {
-            if (!d->acc.opt_pass && !d->acc.storeSaltedHashedPassword) {
+            // iris will anyway ask for credentials. no need to ask eplicitly.
+            /*if (!d->acc.opt_pass && !d->acc.storeSaltedHashedPassword) {
                 passwordPrompt();
             }
-            else
+            else*/
                 login();
         }
 
@@ -3058,11 +3083,6 @@ void PsiAccount::showStatusDialog(const QString& presetName)
     w->show();
 }
 
-void PsiAccount::passwordReady(QString password) {
-    d->acc.pass = password;
-    login();
-}
-
 int PsiAccount::defaultPriority(const XMPP::Status &s)
 {
     return d->acc.defaultPriority(s);
@@ -3076,10 +3096,28 @@ void PsiAccount::passwordPrompt()
     if(dialog.exec() == QDialog::Accepted && !dialog.password().isEmpty()) {
         d->acc.pass = dialog.password();
         d->acc.opt_pass = dialog.savePassword();
+#if HAVE_KEYCHAIN
+        savePassword();
+#endif
         login();
     }
 }
 
+#if HAVE_KEYCHAIN
+void PsiAccount::savePassword()
+{
+    auto pwJob = new QKeychain::WritePasswordJob(QLatin1String("xmpp"), this);
+    static_cast<QKeychain::WritePasswordJob*>(pwJob)->setTextData(d->acc.pass);
+    pwJob->setKey(d->jid.bare());
+    pwJob->setAutoDelete(true);
+    QObject::connect(pwJob, &QKeychain::Job::finished, this, [](QKeychain::Job *job) {
+        if (job->error() != QKeychain::NoError) {
+            qWarning("Failed to save password in keyring manager");
+        }
+    });
+    pwJob->start();
+}
+#endif
 
 void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
 {
