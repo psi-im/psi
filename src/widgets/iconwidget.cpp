@@ -424,7 +424,9 @@ class IconsetDisplayItem : public RealIconWidgetItem
     Q_OBJECT
 private:
     static const int margin;
+#ifndef WIDGET_PLUGIN
     PsiIcon icon;
+#endif
     int w, h;
 
 public:

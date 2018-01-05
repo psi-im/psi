@@ -211,6 +211,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/keys64</x>
+		<object mime='image/png'>keys_64.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/pgp</x>
 		<object mime='image/png'>pgp.png</object>
 	</icon>

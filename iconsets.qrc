@@ -24,7 +24,7 @@
         <file>iconsets/system/default/account.png</file>
         <file>iconsets/system/default/add.png</file>
         <file>iconsets/system/default/addx.png</file>
-	<file>iconsets/system/default/plugins.png</file>
+        <file>iconsets/system/default/plugins.png</file>
         <file>iconsets/system/default/advanced.png</file>
         <file>iconsets/system/default/advanced-plus.png</file>
         <file>iconsets/system/default/avcall.png</file>
@@ -112,7 +112,7 @@
         <file>iconsets/system/default/notification_chat_receive_pgp.png</file>
         <file>iconsets/system/default/notification_chat_send_pgp.png</file>
         <file>iconsets/system/default/throbber.png</file>
-	<file>iconsets/system/default/text.png</file>
+        <file>iconsets/system/default/text.png</file>
         <file>iconsets/system/default/enable-groups.png</file>
         <file>iconsets/system/default/bookmark_add.png</file>
         <file>iconsets/system/default/bookmark_remove.png</file>
@@ -123,7 +123,7 @@
         <file>iconsets/system/default/action_templates.png</file>
         <file>iconsets/system/default/action_button_send.png</file>
         <file>iconsets/system/default/autojid.png</file>
-	<file>iconsets/system/default/ignore_global_actions.png</file>
+        <file>iconsets/system/default/ignore_global_actions.png</file>
         <file>iconsets/system/default/action_direct_presence.png</file>
         <file>iconsets/system/default/action_contacts_manager.png</file>
         <file>iconsets/system/default/cm_check.png</file>
@@ -268,7 +268,7 @@
         <file>iconsets/moods/default/Undefined.png</file>
         <file>iconsets/moods/default/Weak.png</file>
         <file>iconsets/moods/default/Worried.png</file>
-	<file>iconsets/moods/default/icondef.xml</file>
+        <file>iconsets/moods/default/icondef.xml</file>
         <file>iconsets/activities/default/doing_chores.png</file>
         <file>iconsets/activities/default/doing_chores_buying_groceries.png</file>
         <file>iconsets/activities/default/doing_chores_cleaning.png</file>
@@ -348,7 +348,7 @@
         <file>iconsets/activities/default/working_in_a_meeting.png</file>
         <file>iconsets/activities/default/working_studying.png</file>
         <file>iconsets/activities/default/working_writing.png</file>
-	<file>iconsets/activities/default/icondef.xml</file>
+        <file>iconsets/activities/default/icondef.xml</file>
         <file>iconsets/affiliations/default/owner.png</file>
         <file>iconsets/affiliations/default/admin.png</file>
         <file>iconsets/affiliations/default/member.png</file>
@@ -382,5 +382,6 @@
         <file>iconsets/clients/default/vk4xmpp.png</file>
         <file>iconsets/clients/default/xabber.png</file>
         <file>iconsets/clients/default/yaxim.png</file>
+        <file>iconsets/system/default/keys_64.png</file>
     </qresource>
 </RCC>

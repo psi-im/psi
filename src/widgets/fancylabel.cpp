@@ -30,6 +30,8 @@
 
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
+#else
+class PsiIcon;
 #endif
 
 #include "iconlabel.h"
@@ -72,7 +74,9 @@ public:
         stopIcon();
 
         if (copyIcon && icon) {
+#ifndef WIDGET_PLUGIN
             delete icon;
+#endif
             icon = 0;
         }
 

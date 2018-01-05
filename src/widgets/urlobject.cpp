@@ -19,14 +19,15 @@
  */
 
 #include "urlobject.h"
+#ifndef WIDGET_PLUGIN
 #include "psioptions.h"
-
+#endif
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>
 #include <QSignalMapper>
 #include <QUrl>
-#ifdef HAVE_QT5
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 # include <QUrlQuery>
 #endif
 
@@ -139,7 +140,7 @@ public slots:
         QUrl uri(lnk);
         if (!query.isEmpty()) {
             QString queryType = query.left(query.indexOf(';'));
-#ifdef HAVE_QT5
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
             QUrlQuery q;
             q.setQueryDelimiters('=', ';');
             q.setQuery(uri.query(QUrl::FullyEncoded));
@@ -232,7 +233,9 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
     }
 
     m->addAction(d->act_copy);
+#ifndef WIDGET_PLUGIN
     m->setStyleSheet(PsiOptions::instance()->getOption("options.ui.look.css").toString());
+#endif
     return m;
 }
 

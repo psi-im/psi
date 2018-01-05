@@ -33,6 +33,7 @@ psi/jabber         - Jabber icon
 psi/options        - Options
 psi/toolbars       - Configure Toolbars
 psi/pgp            - PGP
+psi/keys64         - 64px keys icon (for example for pgp dialog)
 psi/keySingle      - Single (public) PGP key
 psi/keyBad         - Bad PGP key
 psi/keyDouble      - Double (public + private) PGP key

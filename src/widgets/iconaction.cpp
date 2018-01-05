@@ -25,12 +25,11 @@
 
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
+#include "psioptions.h"
 #else
 class PsiIcon;
 class Iconset;
 #endif
-
-#include "psioptions.h"
 
 #include <QLayout>
 #include <QMenu>
@@ -443,11 +442,12 @@ IconActionGroup::IconActionGroup(QObject *parent, const char *name, bool exclusi
     d->updatePopup();
 
     d->exclusive = exclusive;
-
+#ifndef WIDGET_PLUGIN
     const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
     if (!css.isEmpty()) {
         d->popup->setStyleSheet(css);
     }
+#endif
 }
 
 IconActionGroup::~IconActionGroup()

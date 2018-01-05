@@ -37,10 +37,9 @@
 #include <QUrl>
 #include <QFileInfo>
 
-#include "textutil.h"
-
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
+#include "textutil.h"
 #else
 class PsiIcon;
 class Iconset;
@@ -240,12 +239,16 @@ static QString convertIconsToObjectReplacementCharacters(QString text, TextIconF
 
         QString fragment = work.mid(start, end - start);
         if (rxName.indexIn(fragment) != -1) {
+#ifndef WIDGET_PLUGIN
             QString iconName = TextUtil::unescape(rxName.capturedTexts()[1]);
             QString iconText;
             if (rxText.indexIn(fragment) != -1) {
                 iconText = TextUtil::unescape(rxText.capturedTexts()[1]);
             }
-
+#else
+            QString iconName = rxName.capturedTexts()[1];
+            QString iconText = rxText.capturedTexts()[1];
+#endif
             queue->enqueue(new TextIconFormat(iconName, iconText));
             result += QChar::ObjectReplacementCharacter;
         }

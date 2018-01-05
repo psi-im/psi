@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
-    <height>159</height>
+    <width>476</width>
+    <height>168</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,12 +43,9 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="pixmapLabel1">
-         <property name="pixmap">
-          <pixmap>image0</pixmap>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
+        <widget class="IconLabel" name="iconLabel">
+         <property name="psiIconName" stdset="0">
+          <string>psi/keys64</string>
          </property>
         </widget>
        </item>
@@ -141,18 +138,18 @@ Please enter your passphrase below:</string>
       </spacer>
      </item>
      <item>
-      <widget class="IconButton" name="pb_cancel" native="true">
-       <property name="text" stdset="0">
+      <widget class="IconButton" name="pb_cancel">
+       <property name="text">
         <string>&amp;Cancel</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="IconButton" name="pb_ok" native="true">
-       <property name="text" stdset="0">
+      <widget class="IconButton" name="pb_ok">
+       <property name="text">
         <string>&amp;OK</string>
        </property>
-       <property name="default" stdset="0">
+       <property name="default">
         <bool>true</bool>
        </property>
       </widget>
@@ -164,8 +161,13 @@ Please enter your passphrase below:</string>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
+   <class>IconLabel</class>
+   <extends>QLabel</extends>
+   <header>iconlabel.h</header>
+  </customwidget>
+  <customwidget>
    <class>IconButton</class>
-   <extends>QWidget</extends>
+   <extends>QPushButton</extends>
    <header>iconbutton.h</header>
   </customwidget>
  </customwidgets>

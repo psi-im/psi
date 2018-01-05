@@ -1,9 +1,10 @@
 TEMPLATE    = lib
-CONFIG        += designer plugin release
-TARGET        = psiwidgets
+QT         += widgets uiplugin
+CONFIG     += plugin release
+TARGET      = psiwidgets
 
 target.path    = $$[QT_INSTALL_PLUGINS]/designer
-INSTALLS    += target
+INSTALLS   += target
 
 # don't litter main dir
 MOC_DIR     = .moc

@@ -72,12 +72,12 @@ QWidget *PsiWidgetPlugin::createWidget(QWidget */* parent */)
 
 QString PsiWidgetPlugin::name() const
 {
-    return "Psi Plugin";
+    return QStringLiteral("Psi Plugin");
 }
 
 QString PsiWidgetPlugin::group() const
 {
-    return "Psi";
+    return QStringLiteral("Psi");
 }
 
 QString PsiWidgetPlugin::toolTip() const
@@ -87,12 +87,12 @@ QString PsiWidgetPlugin::toolTip() const
 
 QString PsiWidgetPlugin::whatsThis() const
 {
-    return "Psi Widget";
+    return QStringLiteral("Psi Widget");
 }
 
 QString PsiWidgetPlugin::includeFile() const
 {
-    return "psiwidget.h";
+    return QStringLiteral("psiwidget.h");
 }
 
 QString PsiWidgetPlugin::codeTemplate() const
@@ -107,7 +107,7 @@ QString PsiWidgetPlugin::domXml() const
 
 QIcon PsiWidgetPlugin::icon() const
 {
-    return QIconSet( QPixmap( (const char **)psiwidget_data ) );
+    return QIcon( QPixmap( (const char **)psiwidget_data ) );
 }
 
 bool PsiWidgetPlugin::isContainer() const
@@ -132,7 +132,7 @@ bool PsiWidgetPlugin::isInitialized() const
 // BusyWidgetPlugin
 //----------------------------------------------------------------------------
 
-class BusyWidgetPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT BusyWidgetPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -174,7 +174,7 @@ public:
 // IconLabelPlugin
 //----------------------------------------------------------------------------
 
-class IconLabelPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT IconLabelPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -223,7 +223,7 @@ public:
 // FancyLabelPlugin
 //----------------------------------------------------------------------------
 
-class FancyLabelPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT FancyLabelPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -272,7 +272,7 @@ public:
 // IconsetSelectPlugin
 //----------------------------------------------------------------------------
 
-class IconsetSelectPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT IconsetSelectPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -313,7 +313,7 @@ public:
 // IconsetDisplayPlugin
 //----------------------------------------------------------------------------
 
-class IconsetDisplayPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT IconsetDisplayPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -354,7 +354,7 @@ public:
 // IconButtonPlugin
 //----------------------------------------------------------------------------
 
-class IconButtonPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT IconButtonPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -395,7 +395,7 @@ public:
 // IconToolButtonPlugin
 //----------------------------------------------------------------------------
 
-class IconToolButtonPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT IconToolButtonPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -436,7 +436,7 @@ public:
 // PsiTextViewPlugin
 //----------------------------------------------------------------------------
 
-class PsiTextViewPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT PsiTextViewPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -478,7 +478,7 @@ public:
 // URLLabelPlugin
 //----------------------------------------------------------------------------
 
-class URLLabelPlugin : public PsiWidgetPlugin
+class QDESIGNER_WIDGET_EXPORT URLLabelPlugin : public PsiWidgetPlugin
 {
     Q_OBJECT
 public:
@@ -528,6 +528,7 @@ public:
 class AllPsiWidgetsPlugin : public QObject, public QDesignerCustomWidgetCollectionInterface
 {
     Q_OBJECT
+    Q_PLUGIN_METADATA(IID "com.psi-plus.QDesignerPlugins")
     Q_INTERFACES(QDesignerCustomWidgetCollectionInterface)
 public:
     AllPsiWidgetsPlugin(QObject *parent = 0)
@@ -544,7 +545,7 @@ public:
         plugins.append( new URLLabelPlugin( this ) );
     }
 
-    virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const
+    virtual QList<QDesignerCustomWidgetInterface*> customWidgets() const Q_DECL_OVERRIDE
     {
         return plugins;
     }
@@ -553,6 +554,6 @@ private:
     QList<QDesignerCustomWidgetInterface*> plugins;
 };
 
-Q_EXPORT_PLUGIN( AllPsiWidgetsPlugin );
+//Q_EXPORT_PLUGIN( AllPsiWidgetsPlugin );
 
 #include "psiwidgets.moc"

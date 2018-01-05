@@ -21,12 +21,12 @@
 #ifndef PSIWIDGETSPLUGIN_H
 #define PSIWIDGETSPLUGIN_H
 
-#include <QtDesigner/QDesignerCustomWidgetInterface>
-
+#include <QtUiPlugin/QDesignerExportWidget>
+#include <QtUiPlugin/QDesignerCustomWidgetInterface>
 #include <QtCore/qplugin.h>
 #include <QIcon>
 
-class PsiWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
+class QDESIGNER_WIDGET_EXPORT PsiWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
 {
     Q_OBJECT
     Q_INTERFACES( QDesignerCustomWidgetInterface )
