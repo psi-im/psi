@@ -34,6 +34,7 @@ class RosterAvatarFrame : public QFrame
         void setStatusIcon(const QIcon &ico);
         void setNick(const QString &nick);
         void setStatusMenu(QMenu *menu);
+        void setTuneAction(QAction *action);
 
     signals:
         void statusMessageChanged(QString);

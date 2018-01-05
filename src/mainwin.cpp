@@ -128,7 +128,7 @@ public:
     bool isLeftRoster;
 
     PopupAction* optionsButton, *statusButton;
-    IconActionGroup* statusGroup;
+    IconActionGroup* statusGroup, *viewGroups;
     IconAction* statusSmallerAlt;
     EventNotifierAction* eventNotifier;
     PsiCon* psi;
@@ -170,6 +170,7 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTa
 {
 
     statusGroup   = (IconActionGroup *)getAction("status_group");
+    viewGroups    = (IconActionGroup *)getAction("view_groups");
     eventNotifier = (EventNotifierAction *)getAction("event_notifier");
 
     optionsButton = (PopupAction *)getAction("button_options");
@@ -637,6 +638,7 @@ void MainWin::registerAction( IconAction* action )
             // Check before connecting, otherwise we get a loop
             if ( aName == "publish_tune") {
                 action->setChecked( PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() );
+                d->rosterAvatar->setTuneAction(action);
             }
 #endif
 
@@ -793,10 +795,6 @@ void MainWin::buildStatusMenu(GlobalStatusMenu *statusMenu)
 {
     statusMenu->clear();
     statusMenu->fill();
-#ifdef USE_PEP
-    statusMenu->addSeparator();
-    d->getAction("publish_tune")->addTo(statusMenu);
-#endif
 }
 
 void MainWin::activatedStatusAction(int id)
@@ -897,6 +895,7 @@ void MainWin::buildOptionsMenu()
 {
     buildGeneralMenu( d->optionsMenu );
     d->optionsMenu->addSeparator();
+    d->optionsMenu->addAction(d->viewGroups);
 
     // help menu
     QMenu* helpMenu = new QMenu(tr("&Help"), d->optionsMenu);

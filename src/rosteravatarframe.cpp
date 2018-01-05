@@ -124,6 +124,11 @@ void RosterAvatarFrame::setStatusMenu(QMenu *menu)
     ui_.tb_status->setPopupMode(QToolButton::InstantPopup);
 }
 
+void RosterAvatarFrame::setTuneAction(QAction *action)
+{
+    ui_.tb_tune->setDefaultAction(action);
+}
+
 void RosterAvatarFrame::keyPressEvent(QKeyEvent *e)
 {
     if(e->key() == Qt::Key_Escape) {
