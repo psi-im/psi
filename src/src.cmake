@@ -70,7 +70,6 @@ list(APPEND HEADERS
     abstracttreemodel.h
     accountadddlg.h
     accountlabel.h
-    accountloginpassword.h
     accountmanagedlg.h
     accountmodifydlg.h
     accountregdlg.h
@@ -331,7 +330,6 @@ list(APPEND PLAIN_SOURCES
     abstracttreemodel.cpp
     accountadddlg.cpp
     accountlabel.cpp
-    accountloginpassword.cpp
     accountmodifydlg.cpp
     accountregdlg.cpp
     accountscombobox.cpp
