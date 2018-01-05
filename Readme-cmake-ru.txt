@@ -87,6 +87,10 @@
 > -DPRODUCTION=ON (по-умолчанию для Psi - ON, для Psi+ - OFF)
 
   собрать релизную версию Psi/Psi+
+
+> -DUSE_KEYCHAIN=ON
+
+  собрать с поддержкой Qt5Keychain
   
 > -DENABLE_PLUGINS=ON
 

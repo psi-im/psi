@@ -26,6 +26,7 @@ option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
+option( USE_KEYCHAIN "Enable Qt5Keychain support" OFF )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
@@ -86,6 +87,10 @@ endif()
 
 if(USE_CRASH)
     add_definitions(-DUSE_CRASH)
+endif()
+
+if(USE_KEYCHAIN)
+    add_definitions(-DHAVE_KEYCHAIN)
 endif()
 
 if(WIN32)

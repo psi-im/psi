@@ -92,6 +92,10 @@ or
 
   to build release version of Psi/Psi+
 
+> -DUSE_KEYCHAIN=ON
+
+  to enable Qt5Keychain library support
+
 > -DENABLE_PLUGINS=ON
 
   to build psi plugins (default OFF)
