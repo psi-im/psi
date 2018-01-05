@@ -1931,12 +1931,13 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
         auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"), this); // qApp is kind of wrong, but "this" is not QObject
         pwJob->setKey(d->jid.bare());
         pwJob->setAutoDelete(true);
-        QObject::connect(pwJob, &QKeychain::WritePasswordJob::finished, this, [=](QKeychain::Job *job) {
+        QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [=](QKeychain::Job *job) {
             if (job->error() == QKeychain::NoError) {
                 d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob*>(job)->textData());
             } else {
                 qWarning("KeyChain error=%d", job->error());
                 passwordPrompt();
+                d->stream->setPassword(d->acc.pass);
             }
             d->stream->continueAfterParams();
         });
@@ -3097,7 +3098,9 @@ void PsiAccount::passwordPrompt()
         d->acc.pass = dialog.password();
         d->acc.opt_pass = dialog.savePassword();
 #if HAVE_KEYCHAIN
-        savePassword();
+        if (d->acc.opt_pass) {
+            savePassword();
+        }
 #endif
         login();
     }
@@ -3106,16 +3109,7 @@ void PsiAccount::passwordPrompt()
 #if HAVE_KEYCHAIN
 void PsiAccount::savePassword()
 {
-    auto pwJob = new QKeychain::WritePasswordJob(QLatin1String("xmpp"), this);
-    static_cast<QKeychain::WritePasswordJob*>(pwJob)->setTextData(d->acc.pass);
-    pwJob->setKey(d->jid.bare());
-    pwJob->setAutoDelete(true);
-    QObject::connect(pwJob, &QKeychain::Job::finished, this, [](QKeychain::Job *job) {
-        if (job->error() != QKeychain::NoError) {
-            qWarning("Failed to save password in keyring manager");
-        }
-    });
-    pwJob->start();
+    saveXMPPPasswordToKeyring(d->jid.bare(), d->acc.pass, this);
 }
 #endif
 

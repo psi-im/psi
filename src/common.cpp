@@ -32,6 +32,9 @@
 #include <QDir>
 #include <QLibrary>
 #include <QDesktopWidget>
+#ifdef HAVE_KEYCHAIN
+# include <qt5keychain/keychain.h>
+#endif
 
 #include <stdio.h>
 #ifdef HAVE_X11
@@ -169,6 +172,22 @@ QString decodePassword(const QString &pass, const QString &key)
     }
     return result;
 }
+
+#ifdef HAVE_KEYCHAIN
+void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent)
+{
+    auto pwJob = new QKeychain::WritePasswordJob(QLatin1String("xmpp"), parent);
+    pwJob->setTextData(pass);
+    pwJob->setKey(jid);
+    pwJob->setAutoDelete(true);
+    QObject::connect(pwJob, &QKeychain::Job::finished, parent, [](QKeychain::Job *job) {
+        if (job->error() != QKeychain::NoError) {
+            qWarning("Failed to save password in keyring manager");
+        }
+    });
+    pwJob->start();
+}
+#endif
 
 QString status2txt(int status)
 {
