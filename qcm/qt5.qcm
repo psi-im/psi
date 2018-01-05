@@ -29,6 +29,13 @@ protected:
 	QString extraConfIfFound;
 
 public:
+	/**
+	 * id - (QT += <id>)
+	 * shortName - used with QC_ENABLE_<shortName> | QC_DISABLE_<shortName> env vars
+	 *             MUST MATCH with qcm module name without extension
+	 * name - something visible in the log
+	 * extraConfIfFound - extra string added to conf.pri if found
+	 */
 	QtCompFinder(const QString &id,const QString &shortName, const QString &name,
 		     const QString &extraConfIfFound, Conf *c) :
 		ConfObj(c), compId(id), compShortName(shortName), compName(name),
@@ -61,7 +68,7 @@ public:
 			return false;
 
 		if (!extraConfIfFound.isEmpty()) {
-			conf->addExtra("CONFIG += dbus");
+			conf->addExtra(extraConfIfFound);
 		}
 
 		return true;

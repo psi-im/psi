@@ -40,6 +40,7 @@ Dependency options:
   --enable-universal            Enable use of Mac OS X universal binary
                                 support
   --disable-qdbus               Disable use of QDBUS
+  --disable-keychain            Disable use of Qt Keychain
   --enable-webkit               Enable use of webkit
   --with-webkit=[type]          type of webkit QtWebKit/QtWebEngine
   --disable-growl               Disable use of Growl
@@ -252,6 +253,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-keychain)
+			QC_DISABLE_keychain="Y"
+			shift
+			;;
+
 		--enable-webkit)
 			QC_ENABLE_webkit="Y"
 			shift
@@ -364,6 +370,7 @@ echo QC_WITH_QJDNS_INC=$QC_WITH_QJDNS_INC
 echo QC_WITH_QJDNS_LIB=$QC_WITH_QJDNS_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
+echo QC_DISABLE_keychain=$QC_DISABLE_keychain
 echo QC_ENABLE_webkit=$QC_ENABLE_webkit
 echo QC_WITH_WEBKIT=$QC_WITH_WEBKIT
 echo QC_DISABLE_growl=$QC_DISABLE_growl
@@ -621,6 +628,13 @@ protected:
 	QString extraConfIfFound;
 
 public:
+	/**
+	 * id - (QT += <id>)
+	 * shortName - used with QC_ENABLE_<shortName> | QC_DISABLE_<shortName> env vars
+	 *             MUST MATCH with qcm module name without extension
+	 * name - something visible in the log
+	 * extraConfIfFound - extra string added to conf.pri if found
+	 */
 	QtCompFinder(const QString &id,const QString &shortName, const QString &name,
 		     const QString &extraConfIfFound, Conf *c) :
 		ConfObj(c), compId(id), compShortName(shortName), compName(name),
@@ -653,7 +667,7 @@ public:
 			return false;
 
 		if (!extraConfIfFound.isEmpty()) {
-			conf->addExtra("CONFIG += dbus");
+			conf->addExtra(extraConfIfFound);
 		}
 
 		return true;
@@ -1361,6 +1375,18 @@ name: QDBUS
 //----------------------------------------------------------------------------
 // id, shortname, name, extraConfIfFound
 QC_FIND_QT_COMP_E(dbus, qdbus, QtDbus, "CONFIG += dbus")
+#line 1 "keychain.qcm"
+/*
+-----BEGIN QCMOD-----
+name: Qt Keychain
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_keychain
+//----------------------------------------------------------------------------
+// id, shortname, name, extraConfIfFound
+QC_FIND_QT_COMP_E(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain")
 #line 1 "qtmultimedia.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2303,6 +2329,9 @@ cat >"$1/modules_new.cpp" <<EOT
     o->required = false;
     o->disabled = true;
     o = new qc_qdbus(conf);
+    o->required = false;
+    o->disabled = false;
+    o = new qc_keychain(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_qtmultimedia(conf);
@@ -3591,6 +3620,7 @@ export QC_WITH_QJDNS_INC
 export QC_WITH_QJDNS_LIB
 export QC_ENABLE_universal
 export QC_DISABLE_qdbus
+export QC_DISABLE_keychain
 export QC_ENABLE_webkit
 export QC_WITH_WEBKIT
 export QC_DISABLE_growl

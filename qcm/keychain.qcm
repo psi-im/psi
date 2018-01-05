@@ -1,0 +1,11 @@
+/*
+-----BEGIN QCMOD-----
+name: Qt Keychain
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_keychain
+//----------------------------------------------------------------------------
+// id, shortname, name, extraConfIfFound
+QC_FIND_QT_COMP_E(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain")

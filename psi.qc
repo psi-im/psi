@@ -30,6 +30,7 @@
     <disabled/>
   </dep>
   <dep type='qdbus'/>
+  <dep type='keychain'/>
   <dep type='qtmultimedia'>
     <required/>
   </dep>
