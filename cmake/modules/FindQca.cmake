@@ -46,6 +46,7 @@ if("${Qca_SUFFIX}" STREQUAL "-qt5")
         qt5/Qca-qt5/QtCrypto
         Qca-qt5/QtCrypto
         qt5/QtCrypto
+        qt/Qca-qt5/QtCrypto
     )
 endif()
 
