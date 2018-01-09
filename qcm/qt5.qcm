@@ -48,11 +48,10 @@ public:
 	{
 		QString proextra =
 		"CONFIG += qt\n"
-		"QT -= gui\n";
+		"QT -= gui\n"
 		"QT += ";
 		
 		proextra += compId;
-		proextra += "multimedia\n";
 
 		QString str =
 		"\n"
