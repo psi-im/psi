@@ -75,8 +75,6 @@ Extra
   save presence changes to history?
   win32: docking (all optional)
     grapple to edge of screen, like ICQ for windows
-    auto hide: after a certain period of inactivity, "slide" the window off the screen
-    auto hide delay: time to wait before sliding off
   right-click in chat/eventdlg should have options to paste your current URL or IP address
   KDE-enhanced mode
   "previous" button in the eventdlg?

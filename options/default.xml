@@ -687,7 +687,7 @@ QLineEdit#le_status_text {
             <store-muc-private comment="Keep a history of correspondence for MUC private" type="bool">false</store-muc-private>
         </history>
         <keychain comment="Keyring manager options">
-            <enabled comment="Store passwords in keyring manager only" type="bool">true</enabed>
+            <enabled comment="Store passwords in keyring manager only" type="bool">true</enabled>
         </keychain>
     </options>
     <accounts comment="Account definitions and options"/>

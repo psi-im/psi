@@ -168,7 +168,7 @@ PsiAccount* PsiContactList::createAccount(const QString& name, const Jid& j, con
 
     PsiAccount *pa = loadAccount(acc);
 #if HAVE_KEYCHAIN
-    if (PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
+    if (PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool()) {
         pa->savePassword();
     }
 #endif

@@ -200,7 +200,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
         opt_pass = true;
         pass = decodePassword(tmp, jid);
 #ifdef HAVE_KEYCHAIN
-        if (PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
+        if (PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool()) {
             // Erase password from options, since we are going to keep it in keychain only
             // TODO move this to the migration code. Added in Psi 2.0 2018-01-05
             o->removeOption(base + ".password");
@@ -362,7 +362,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".scram.salted-password", scramSaltedHashPassword);
 
 #ifdef HAVE_KEYCHAIN
-    if (!PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
+    if (!PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool()) {
 #endif
         if(opt_pass) {
             o->setOption(base + ".password", encodePassword(pass, jid));
