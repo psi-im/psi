@@ -27,7 +27,7 @@
 #include "accountadddlg.h"
 #include "serverinfomanager.h"
 #include "psicon.h"
-#include <QDebug>
+#include "psioptions.h"
 
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.

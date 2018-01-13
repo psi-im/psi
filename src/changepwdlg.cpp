@@ -33,6 +33,7 @@
 #include "xmpp_tasks.h"
 #include "accountmodifydlg.h"
 #include "iconwidget.h"
+#include "psioptions.h"
 
 using namespace XMPP;
 
