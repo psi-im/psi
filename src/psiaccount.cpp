@@ -1927,23 +1927,34 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 
     if(pass) {
         if (d->acc.storeSaltedHashedPassword) d->stream->setSCRAMStoredSaltedHash(d->acc.scramSaltedHashPassword);
+    }
 #ifdef HAVE_KEYCHAIN
-        auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"), this); // qApp is kind of wrong, but "this" is not QObject
-        pwJob->setKey(d->jid.bare());
-        pwJob->setAutoDelete(true);
-        QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [=](QKeychain::Job *job) {
-            if (job->error() == QKeychain::NoError) {
-                d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob*>(job)->textData());
-            } else {
-                qWarning("KeyChain error=%d", job->error());
-                passwordPrompt();
-                d->stream->setPassword(d->acc.pass);
-            }
-            d->stream->continueAfterParams();
-        });
-        pwJob->start();
+    bool useKeyring = PsiOptions::instance()->getOption("options.keychain.enabled").toBool();
+    if (pass) {
+        if (useKeyring) {
+            auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"), this); // qApp is kind of wrong, but "this" is not QObject
+            pwJob->setKey(d->jid.bare());
+            pwJob->setAutoDelete(true);
+            QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [=](QKeychain::Job *job) {
+                if (job->error() == QKeychain::NoError) {
+                    d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob*>(job)->textData());
+                } else {
+                    qWarning("KeyChain error=%d", job->error());
+                    passwordPrompt();
+                    d->stream->setPassword(d->acc.pass);
+                }
+                d->stream->continueAfterParams();
+            });
+            pwJob->start();
+        } else {
+            d->stream->setPassword(d->acc.pass);
+        }
+    }
+    if (!useKeyring) { // in case of keyring we do this from callback
+        d->stream->continueAfterParams();
     }
 #else
+    if (pass) {
         d->stream->setPassword(d->acc.pass);
     }
     d->stream->continueAfterParams();
@@ -3098,7 +3109,7 @@ void PsiAccount::passwordPrompt()
         d->acc.pass = dialog.password();
         d->acc.opt_pass = dialog.savePassword();
 #if HAVE_KEYCHAIN
-        if (d->acc.opt_pass) {
+        if (d->acc.opt_pass && PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
             savePassword();
         }
 #endif

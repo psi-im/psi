@@ -27,6 +27,7 @@ protected:
 	QString compShortName;
 	QString compName;
 	QString extraConfIfFound;
+    QString finderResult;
 
 public:
 	/**
@@ -44,8 +45,21 @@ public:
 
 	QString name() const { return compName; }
 	QString shortname() const { return compShortName; }
+    QString resultString() const
+	{
+        if (!finderResult.isEmpty())
+            return finderResult;
+
+        return ConfObj::resultString();
+	}
+
 	bool exec()
 	{
+        if (!conf->getenv("QC_DISABLE_" + compShortName).isEmpty()) {
+            finderResult = "disabled";
+            return false;
+        }
+
 		QString proextra =
 		"CONFIG += qt\n"
 		"QT -= gui\n"

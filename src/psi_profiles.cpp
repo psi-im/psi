@@ -200,10 +200,12 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
         opt_pass = true;
         pass = decodePassword(tmp, jid);
 #ifdef HAVE_KEYCHAIN
-        // Erase password from options, since we are going to keep it in keychain only
-        // TODO move this to the migration code. Added in Psi 2.0 2018-01-05
-        o->removeOption(base + ".password");
-        saveXMPPPasswordToKeyring(jid, pass, qApp);
+        if (PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
+            // Erase password from options, since we are going to keep it in keychain only
+            // TODO move this to the migration code. Added in Psi 2.0 2018-01-05
+            o->removeOption(base + ".password");
+            saveXMPPPasswordToKeyring(jid, pass, qApp);
+        }
 #endif
     }
 
@@ -359,11 +361,15 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".scram.store-salted-password", storeSaltedHashedPassword);
     o->setOption(base + ".scram.salted-password", scramSaltedHashPassword);
 
-#ifndef HAVE_KEYCHAIN
-    if(opt_pass) {
-        o->setOption(base + ".password", encodePassword(pass, jid));
-    } else {
-        o->setOption(base + ".password", "");
+#ifdef HAVE_KEYCHAIN
+    if (!PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
+#endif
+        if(opt_pass) {
+            o->setOption(base + ".password", encodePassword(pass, jid));
+        } else {
+            o->setOption(base + ".password", "");
+        }
+#ifdef HAVE_KEYCHAIN
     }
 #endif
     o->setOption(base + ".use-host", opt_host);

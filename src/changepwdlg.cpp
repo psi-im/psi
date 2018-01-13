@@ -118,7 +118,9 @@ void ChangePasswordDlg::finished()
         UserAccount acc = pa->userAccount();
         acc.pass = ui_.le_pwnew->text();
 #ifdef HAVE_KEYCHAIN
-        pa->savePassword();
+        if (PsiOptions::instance()->getOption("options.keychain.enabled").toBool()) {
+            pa->savePassword();
+        }
 #endif
         pa->setUserAccount(acc);
         AccountModifyDlg *amd = pa->findDialog<AccountModifyDlg*>();
