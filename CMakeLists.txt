@@ -26,7 +26,7 @@ option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
-option( USE_KEYCHAIN "Enable Qt5Keychain support" OFF )
+option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
@@ -73,7 +73,6 @@ if(ENABLE_WEBKIT)
     endif()
     message(STATUS "Webkit - enabled")
 endif()
-
 
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/historyimp.cpp")
     message(STATUS "SQL history - enabled")
