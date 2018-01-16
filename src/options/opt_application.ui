@@ -1,19 +1,20 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>OptApplication</class>
- <widget class="QWidget" name="OptApplication" >
-  <property name="geometry" >
+ <widget class="QWidget" name="OptApplication">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>304</width>
-    <height>402</height>
+    <width>359</width>
+    <height>416</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>OptApplicationUI</string>
   </property>
-  <layout class="QVBoxLayout" >
-  <item>
+  <layout class="QVBoxLayout">
+   <item>
     <widget class="QCheckBox" name="ck_auto_load">
      <property name="text">
       <string>Automatically launch application when OS starts</string>
@@ -21,54 +22,54 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_docklet" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_docklet">
+     <property name="text">
       <string>Enable docklet</string>
      </property>
-     <property name="checked" >
+     <property name="checked">
       <bool>true</bool>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="gb_docklet" >
-     <property name="title" >
+    <widget class="QGroupBox" name="gb_docklet">
+     <property name="title">
       <string>Docklet</string>
      </property>
-     <layout class="QVBoxLayout" >
-      <property name="spacing" >
+     <layout class="QVBoxLayout">
+      <property name="spacing">
        <number>6</number>
       </property>
-      <property name="leftMargin" >
+      <property name="leftMargin">
        <number>10</number>
       </property>
-      <property name="topMargin" >
+      <property name="topMargin">
        <number>10</number>
       </property>
-      <property name="rightMargin" >
+      <property name="rightMargin">
        <number>10</number>
       </property>
-      <property name="bottomMargin" >
+      <property name="bottomMargin">
        <number>10</number>
       </property>
       <item>
-       <widget class="QCheckBox" name="ck_dockDCstyle" >
-        <property name="text" >
-         <string>Use "double-click" style (like ICQ)</string>
+       <widget class="QCheckBox" name="ck_dockDCstyle">
+        <property name="text">
+         <string>Use &quot;double-click&quot; style (like ICQ)</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="ck_dockHideMW" >
-        <property name="text" >
+       <widget class="QCheckBox" name="ck_dockHideMW">
+        <property name="text">
          <string>Start minimized</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="ck_dockToolMW" >
-        <property name="text" >
-         <string>Make roster window a "tool window"</string>
+       <widget class="QCheckBox" name="ck_dockToolMW">
+        <property name="text">
+         <string>Make roster window a &quot;tool window&quot;</string>
         </property>
        </widget>
       </item>
@@ -76,69 +77,79 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_autoUpdate" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_autoUpdate">
+     <property name="text">
       <string>Check for updates on startup</string>
      </property>
-     <property name="checked" >
+     <property name="checked">
       <bool>true</bool>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_quitOnClose" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_quitOnClose">
+     <property name="text">
       <string>Quit when closing the roster window</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
+    <widget class="QCheckBox" name="ck_useKeychain">
+     <property name="toolTip">
+      <string>Keep accounts' passwords in more secure system keyring manager instead of profile settings.</string>
+     </property>
+     <property name="text">
+      <string>Use system keyring manager</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout">
      <item>
-      <widget class="QLabel" name="textLabel1" >
-       <property name="text" >
+      <widget class="QLabel" name="textLabel1">
+       <property name="text">
         <string>Data transfer base port:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="le_dtPort" >
-       <property name="minimumSize" >
+      <widget class="QLineEdit" name="le_dtPort">
+       <property name="minimumSize">
         <size>
          <width>56</width>
          <height>0</height>
         </size>
        </property>
-       <property name="inputMask">
-        <string>99999; </string>
-       </property>
-       <property name="maxLength">
-        <number>5</number>
-       </property>
-       <property name="maximumSize" >
+       <property name="maximumSize">
         <size>
          <width>56</width>
          <height>32767</height>
         </size>
        </property>
+       <property name="inputMask">
+        <string>99999</string>
+       </property>
+       <property name="maxLength">
+        <number>5</number>
+       </property>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label" >
-       <property name="text" >
+      <widget class="QLabel" name="label">
+       <property name="text">
         <string>(1 TCP, 4 UDP)</string>
        </property>
       </widget>
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeType" >
+       <property name="sizeType">
         <enum>QSizePolicy::Expanding</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>20</width>
          <height>20</height>
@@ -149,31 +160,31 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
-     <property name="leftMargin" >
+     <property name="leftMargin">
       <number>0</number>
      </property>
-     <property name="topMargin" >
+     <property name="topMargin">
       <number>0</number>
      </property>
-     <property name="rightMargin" >
+     <property name="rightMargin">
       <number>0</number>
      </property>
-     <property name="bottomMargin" >
+     <property name="bottomMargin">
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="textLabel2" >
-       <property name="text" >
+      <widget class="QLabel" name="textLabel2">
+       <property name="text">
         <string>Data transfer external address:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="le_dtExternal" />
+      <widget class="QLineEdit" name="le_dtExternal"/>
      </item>
     </layout>
    </item>
@@ -214,10 +225,10 @@
    </item>
    <item>
     <spacer>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <property name="sizeHint" >
+     <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
        <height>40</height>
@@ -227,7 +238,7 @@
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>ck_docklet</tabstop>
   <tabstop>ck_dockDCstyle</tabstop>

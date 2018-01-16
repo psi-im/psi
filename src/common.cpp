@@ -187,6 +187,12 @@ void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject 
     });
     pwJob->start();
 }
+
+bool isKeychainEnabled()
+{
+    return !ApplicationInfo::isPortable() &&
+           PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool();
+}
 #endif
 
 QString status2txt(int status)

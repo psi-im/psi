@@ -179,6 +179,7 @@ QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
 #ifdef HAVE_KEYCHAIN
 void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent);
+bool isKeychainEnabled();
 #endif
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);

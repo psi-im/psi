@@ -119,7 +119,7 @@ void ChangePasswordDlg::finished()
         UserAccount acc = pa->userAccount();
         acc.pass = ui_.le_pwnew->text();
 #ifdef HAVE_KEYCHAIN
-        if (PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool()) {
+        if (isKeychainEnabled()) {
             pa->savePassword();
         }
 #endif

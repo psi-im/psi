@@ -208,9 +208,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 
         if (configDir_.isEmpty()) {
 #if defined Q_OS_WIN
-            QString base = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
-                    .toLower().indexOf("portable") == -1?
-                        "" : QCoreApplication::applicationDirPath();
+            QString base = ApplicationInfo::isPortable()? QCoreApplication::applicationDirPath() : "";
             if (base.isEmpty()) {
                 wchar_t path[MAX_PATH];
                 if (SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path) == S_OK) {
@@ -397,4 +395,11 @@ QString ApplicationInfo::desktopFile()
         dFile = QString::fromUtf8(f.readAll());
     }
     return dFile;
+}
+
+bool ApplicationInfo::isPortable()
+{
+    static bool portable = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
+                           .toLower().indexOf("portable") != -1;
+    return portable;
 }

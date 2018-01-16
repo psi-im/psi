@@ -120,7 +120,7 @@ void AccountModifyDlg::init()
     if (acc.opt_pass)
         le_pass->setText(acc.pass);
 #if HAVE_KEYCHAIN
-    if (PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool()) {
+    if (isKeychainEnabled()) {
         auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"), this);
         pwJob->setKey(acc.jid);
         pwJob->setAutoDelete(true);
@@ -636,7 +636,7 @@ void AccountModifyDlg::save()
         psi->contactList()->createAccount(acc);
     }
 #if HAVE_KEYCHAIN
-    if (!PsiOptions::instance()->getOption("options.keychain.enabled", true).toBool()) {
+    if (!isKeychainEnabled()) {
         accept();
         return;
     }

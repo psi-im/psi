@@ -237,9 +237,7 @@ bool HomeDirMigration::checkOldHomeDir()
         oldHomeDir_.setPath(base + "/.psi");
     }
 #elif defined Q_OS_WIN
-    QString base = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
-            .toLower().indexOf("portable") == -1?
-                "" : QCoreApplication::applicationDirPath();
+    QString base = ApplicationInfo::isPortable()? QCoreApplication::applicationDirPath() : "";
     if (base.isEmpty()) {
         // Windows 9x
         if(QDir::homePath() == QDir::rootPath()) {

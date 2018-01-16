@@ -111,6 +111,9 @@ void OptionsTabApplication::applyOptions()
     OptApplicationUI *d = (OptApplicationUI *)w;
 
     PsiOptions::instance()->setOption("options.ui.contactlist.quit-on-close", d->ck_quitOnClose->isChecked());
+    if (!ApplicationInfo::isPortable()) {
+        PsiOptions::instance()->setOption("options.keychain.enabled", d->ck_useKeychain->isChecked());
+    }
 
     // Auto-update
     PsiOptions::instance()->setOption("options.auto-update.check-on-startup", d->ck_autoUpdate->isChecked());
@@ -178,6 +181,9 @@ void OptionsTabApplication::restoreOptions()
 
     d->ck_autoUpdate->setChecked(PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool());
     d->ck_quitOnClose->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.quit-on-close").toBool());
+    if (!ApplicationInfo::isPortable()) {
+        d->ck_useKeychain->setChecked(PsiOptions::instance()->getOption("options.keychain.enabled").toBool());
+    }
 
     // docklet
     d->ck_docklet->setChecked( PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() );
@@ -219,6 +225,7 @@ void OptionsTabApplication::restoreOptions()
         d->ck_auto_load->setChecked(true);
     }
 #endif
+    d->ck_useKeychain->setVisible(!ApplicationInfo::isPortable());
 }
 
 void OptionsTabApplication::doEnableQuitOnClose(int state)
