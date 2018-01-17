@@ -89,10 +89,6 @@ if(USE_CRASH)
     add_definitions(-DUSE_CRASH)
 endif()
 
-if(USE_KEYCHAIN)
-    add_definitions(-DHAVE_KEYCHAIN)
-endif()
-
 if(WIN32)
     if(MSVC)
         set(BUILD_ARCH "win64" CACHE STRING "CPU architecture win32/win64")
