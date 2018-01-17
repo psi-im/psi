@@ -83,7 +83,7 @@ void ColorOpt::optionChanged(const QString &opt)
     if (opt.startsWith(QLatin1String("options.ui.look.colors")) && colors.contains(opt)) {
         colors[opt].color = PsiOptions::instance()->getOption(opt).value<QColor>();
         //qDebug("%s changed to %s", qPrintable(opt), qPrintable(colors[opt].color.isValid()? colors[opt].color.name() : "Invalid " + colors[opt].color.name()));
-        emit changed();
+        emit changed(opt);
     }
 }
 

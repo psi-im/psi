@@ -28,6 +28,7 @@ signals:
 
 public slots:
     void optionChanged(const QString &option);
+    void colorOptionChanged(const QString &option);
     void updateAlerts();
     void updateAnim();
     void rosterIconsSizeChanged(int size);
@@ -86,7 +87,6 @@ public:
     bool showAvatars_, useDefaultAvatar_, avatarAtLeft_, showStatusIcons_, statusIconsOverAvatars_;
     bool enableGroups_, allClients_;
     bool animPhase;
-    bool bulkOptUpdate = false;
     mutable QSet<QPersistentModelIndex> alertingIndexes;
     mutable QSet<QPersistentModelIndex> animIndexes;
 

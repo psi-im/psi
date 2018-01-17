@@ -63,15 +63,15 @@ static const QString allClientsOptionPath = "options.ui.contactlist.show-all-cli
 static const QString enableGroupsOptionPath = "options.ui.contactlist.enable-groups";
 static const QString statusIconsetOptionPath = "options.iconsets.status";
 
-#define AWAY_COLOR QLatin1String("options.ui.look.colors.contactlist.status.away")
-#define DND_COLOR QLatin1String("options.ui.look.colors.contactlist.status.do-not-disturb")
-#define OFFLINE_COLOR QLatin1String("options.ui.look.colors.contactlist.status.offline")
-#define ONLINE_COLOR QLatin1String("options.ui.look.colors.contactlist.status.online")
-#define ANIMATION1_COLOR QLatin1String("options.ui.look.colors.contactlist.status-change-animation1")
-#define ANIMATION2_COLOR QLatin1String("options.ui.look.colors.contactlist.status-change-animation2")
-#define STATUS_MESSAGE_COLOR QLatin1String("options.ui.look.colors.contactlist.status-messages")
-#define HEADER_BACKGROUND_COLOR QLatin1String("options.ui.look.colors.contactlist.grouping.header-background")
-#define HEADER_FOREGROUND_COLOR QLatin1String("options.ui.look.colors.contactlist.grouping.header-foreground")
+static const QString awayColorPath = "options.ui.look.colors.contactlist.status.away";
+static const QString dndColorPath = "options.ui.look.colors.contactlist.status.do-not-disturb";
+static const QString offlineColorPath = "options.ui.look.colors.contactlist.status.offline";
+static const QString onlineColorPath = "options.ui.look.colors.contactlist.status.online";
+static const QString animation1ColorPath = "options.ui.look.colors.contactlist.status-change-animation1";
+static const QString animation2ColorPath = "options.ui.look.colors.contactlist.status-change-animation2";
+static const QString statusMessageColorPath = "options.ui.look.colors.contactlist.status-messages";
+static const QString headerBackgroungColorPath = "options.ui.look.colors.contactlist.grouping.header-background";
+static const QString headerForegroungColorPath = "options.ui.look.colors.contactlist.grouping.header-foreground";
 
 #define ALERT_INTERVAL 100 /* msecs */
 #define ANIM_INTERVAL 300 /* msecs */
@@ -155,15 +155,15 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     , enableGroups_(false)
     , allClients_(false)
     , animPhase(false)
-    , _awayColor(ColorOpt::instance()->color(AWAY_COLOR))
-    , _dndColor(ColorOpt::instance()->color(DND_COLOR))
-    , _offlineColor(ColorOpt::instance()->color(OFFLINE_COLOR))
-    , _onlineColor(ColorOpt::instance()->color(ONLINE_COLOR))
-    , _animation1Color(ColorOpt::instance()->color(ANIMATION1_COLOR))
-    , _animation2Color(ColorOpt::instance()->color(ANIMATION2_COLOR))
-    , _statusMessageColor(ColorOpt::instance()->color(STATUS_MESSAGE_COLOR))
-    , _headerBackgroundColor(ColorOpt::instance()->color(HEADER_BACKGROUND_COLOR))
-    , _headerForegroundColor(ColorOpt::instance()->color(HEADER_FOREGROUND_COLOR))
+    , _awayColor(QColor())
+    , _dndColor(QColor())
+    , _offlineColor(QColor())
+    , _onlineColor(QColor())
+    , _animation1Color(QColor())
+    , _animation2Color(QColor())
+    , _statusMessageColor(QColor())
+    , _headerBackgroundColor(QColor())
+    , _headerForegroundColor(QColor())
 {
     alertTimer_->setInterval(ALERT_INTERVAL);
     alertTimer_->setSingleShot(false);
@@ -175,31 +175,14 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
 
 
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+    connect(ColorOpt::instance(), SIGNAL(changed(const QString&)), SLOT(colorOptionChanged(const QString&)));
     connect(PsiIconset::instance(), SIGNAL(rosterIconsSizeChanged(int)), SLOT(rosterIconsSizeChanged(int)));
 
     statusIconSize_ = PsiIconset::instance()->roster.value(PsiOptions::instance()->getOption(statusIconsetOptionPath).toString())->iconSize();
-    bulkOptUpdate = true;
-    optionChanged(slimGroupsOptionPath);
-    optionChanged(outlinedGroupsOptionPath);
-    optionChanged(contactListFontOptionPath);
-    optionChanged(contactListBackgroundOptionPath);
-    optionChanged(showStatusMessagesOptionPath);
-    optionChanged(statusSingleOptionPath);
-    optionChanged(showClientIconsPath);
-    optionChanged(showMoodIconsPath);
-    optionChanged(showGeolocIconsPath);
-    optionChanged(showActivityIconsPath);
-    optionChanged(showTuneIconsPath);
-    optionChanged(avatarSizeOptionPath);
-    optionChanged(avatarRadiusOptionPath);
-    optionChanged(showAvatarsPath);
-    optionChanged(useDefaultAvatarPath);
-    optionChanged(avatarAtLeftOptionPath);
-    optionChanged(showStatusIconsPath);
-    optionChanged(statusIconsOverAvatarsPath);
-    optionChanged(allClientsOptionPath);
-    optionChanged(enableGroupsOptionPath);
-    bulkOptUpdate = false;
+
+    optionChanged("*");
+    colorOptionChanged("*");
+
     recomputeGeometry();
     contactList->viewport()->update();
 }
@@ -210,98 +193,119 @@ ContactListViewDelegate::Private::~Private()
 
 void ContactListViewDelegate::Private::optionChanged(const QString &option)
 {
+    bool bulkUpdate = (option == "*");
     bool updateGeometry = false;
     bool updateViewport = false;
+    bool updated = false;
 
-    if (option == contactListFontOptionPath) {
+    if (bulkUpdate || (!updated && option == contactListFontOptionPath)) {
         font_.fromString(PsiOptions::instance()->getOption(contactListFontOptionPath).toString());
         fontMetrics_ = QFontMetrics(font_);
         statusFont_.setPointSize(qMax(font_.pointSize()-2, 7));
         statusFontMetrics_ = QFontMetrics(statusFont_);
-
+        updated = true;
         updateGeometry = true;
     }
-    else if (option == contactListBackgroundOptionPath) {
+    if (bulkUpdate || (!updated && option == contactListBackgroundOptionPath)) {
         QPalette p = contactList->palette();
         p.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
         contactList->setPalette(p);
+        updated = true;
         updateViewport = true;
     }
-    else if (option == showStatusMessagesOptionPath) {
+    if (bulkUpdate || (!updated && option == showStatusMessagesOptionPath)) {
         showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == showClientIconsPath) {
+    if(bulkUpdate || (!updated && option == showClientIconsPath)) {
         showClientIcons_ = PsiOptions::instance()->getOption(showClientIconsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == showMoodIconsPath) {
+    if(bulkUpdate || (!updated && option == showMoodIconsPath)) {
         showMoodIcons_ = PsiOptions::instance()->getOption(showMoodIconsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == showActivityIconsPath) {
+    if(bulkUpdate || (!updated && option == showActivityIconsPath)) {
         showActivityIcons_ = PsiOptions::instance()->getOption(showActivityIconsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == showTuneIconsPath) {
+    if(bulkUpdate || (!updated && option == showTuneIconsPath)) {
         showTuneIcons_ = PsiOptions::instance()->getOption(showTuneIconsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == showGeolocIconsPath) {
+    if(bulkUpdate || (!updated && option == showGeolocIconsPath)) {
         showGeolocIcons_ = PsiOptions::instance()->getOption(showGeolocIconsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == showAvatarsPath) {
+    if(bulkUpdate || (!updated && option == showAvatarsPath)) {
         showAvatars_ = PsiOptions::instance()->getOption(showAvatarsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == useDefaultAvatarPath) {
+    if(bulkUpdate || (!updated && option == useDefaultAvatarPath)) {
         useDefaultAvatar_ = PsiOptions::instance()->getOption(useDefaultAvatarPath).toBool();
+        updated = true;
         updateViewport = true;
     }
-    else if(option == avatarAtLeftOptionPath) {
+    if(bulkUpdate || (!updated && option == avatarAtLeftOptionPath)) {
         avatarAtLeft_ = PsiOptions::instance()->getOption(avatarAtLeftOptionPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == avatarSizeOptionPath) {
+    if(bulkUpdate || (!updated && option == avatarSizeOptionPath)) {
         int s = pointToPixel(PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt());
         avatarRect_.setSize(QSize(s, s));
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == avatarRadiusOptionPath) {
+    if(bulkUpdate || (!updated && option == avatarRadiusOptionPath)) {
         avatarRadius_ = pointToPixel(PsiOptions::instance()->getOption(avatarRadiusOptionPath).toInt());
+        updated = true;
         updateViewport = true;
     }
-    else if(option == showStatusIconsPath) {
+    if(bulkUpdate || (!updated && option == showStatusIconsPath)) {
         showStatusIcons_ = PsiOptions::instance()->getOption(showStatusIconsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == statusIconsOverAvatarsPath) {
+    if(bulkUpdate || (!updated && option == statusIconsOverAvatarsPath)) {
         statusIconsOverAvatars_ = PsiOptions::instance()->getOption(statusIconsOverAvatarsPath).toBool();
+        updated = true;
         updateGeometry = true;
     }
-    else if(option == allClientsOptionPath) {
+    if(bulkUpdate || (!updated && option == allClientsOptionPath)) {
         allClients_= PsiOptions::instance()->getOption(allClientsOptionPath).toBool();
+        updated = true;
         updateViewport = true;
     }
-    else if(option == enableGroupsOptionPath) {
+    if(bulkUpdate || (!updated && option == enableGroupsOptionPath)) {
         enableGroups_ = PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool();
+        updated = true;
         updateViewport = true;
     }
-    else if(option == slimGroupsOptionPath) {
+    if(bulkUpdate || (!updated && option == slimGroupsOptionPath)) {
         slimGroup_ = PsiOptions::instance()->getOption(slimGroupsOptionPath).toBool();
+        updated = true;
         updateViewport = true;
     }
-    else if(option == outlinedGroupsOptionPath) {
+    if(bulkUpdate || (!updated && option == outlinedGroupsOptionPath)) {
         outlinedGroup_ = PsiOptions::instance()->getOption(outlinedGroupsOptionPath).toBool();
+        updated = true;
         updateViewport = true;
     }
-    else if(option == statusSingleOptionPath) {
+    if(bulkUpdate || (!updated && option == statusSingleOptionPath)) {
         statusSingle_ = !PsiOptions::instance()->getOption(statusSingleOptionPath).toBool();
+        //updated = true;
         updateGeometry = true;
     }
 
-    if (!bulkOptUpdate) {
+    if (!bulkUpdate) {
         if (updateGeometry) {
             recomputeGeometry();
             updateViewport = true;
@@ -310,6 +314,60 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
             contactList->viewport()->update();
         }
     }
+}
+
+void ContactListViewDelegate::Private::colorOptionChanged(const QString &option)
+{
+    bool bulkUpdate = (option == "*");
+    bool updateViewPort = false;
+    bool updated = false;
+
+    if (bulkUpdate || (!updated && option == awayColorPath)) {
+        _awayColor = ColorOpt::instance()->color(awayColorPath);
+        updated = true;
+        updateViewPort = true;
+    }
+    if (bulkUpdate || (!updated && option == dndColorPath)) {
+        _dndColor = ColorOpt::instance()->color(dndColorPath);
+        updated = true;
+        updateViewPort = true;
+    }
+    if (bulkUpdate || (!updated && option == offlineColorPath)) {
+        _offlineColor = ColorOpt::instance()->color(offlineColorPath);
+        updated = true;
+        updateViewPort = true;
+    }
+    if (bulkUpdate || (!updated && option == onlineColorPath)) {
+        _onlineColor = ColorOpt::instance()->color(onlineColorPath);
+        updated = true;
+        updateViewPort = true;
+    }
+    if (bulkUpdate || (!updated && option == animation1ColorPath)) {
+        _animation1Color = ColorOpt::instance()->color(animation1ColorPath);
+        updated = true;
+    }
+    if (bulkUpdate || (!updated && option == animation2ColorPath)) {
+        _animation2Color = ColorOpt::instance()->color(animation2ColorPath);
+        updated = true;
+    }
+    if (bulkUpdate || (!updated && option == statusMessageColorPath)) {
+        _statusMessageColor = ColorOpt::instance()->color(statusMessageColorPath);
+        updated = true;
+        if (showStatusMessages_ && statusSingle_)
+            updateViewPort = true;
+    }
+    if (bulkUpdate || (!updated && option == headerBackgroungColorPath)) {
+        _headerBackgroundColor = ColorOpt::instance()->color(headerBackgroungColorPath);
+        updated = true;
+        updateViewPort = true;
+    }
+    if (bulkUpdate || (!updated && option == headerForegroungColorPath)) {
+        _headerForegroundColor = ColorOpt::instance()->color(headerForegroungColorPath);
+        //updated = true;
+        updateViewPort = true;
+    }
+    if (!bulkUpdate && updateViewPort)
+        contactList->viewport()->update();
 }
 
 void ContactListViewDelegate::Private::updateAlerts()
@@ -634,7 +692,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
     drawText(painter, opt, nickRect, text);
 
     if (showStatusMessages_ && !statusText.isEmpty() && statusSingle_) {
-        palette.setColor(QPalette::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-messages"));
+        palette.setColor(QPalette::Text, _statusMessageColor);
         opt.palette = palette;
         opt.font = statusFont_;
         opt.fontMetrics = statusFontMetrics_;

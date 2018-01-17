@@ -46,7 +46,7 @@ public:
     QPalette::ColorRole colorRole(const QString &opt) const;
 
 signals:
-    void changed();
+    void changed(const QString &opt);
 
 private:
     ColorOpt();
