@@ -185,7 +185,6 @@ void PsiContactListView::optionChanged(const QString &option)
 
 void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& globalPos) const
 {
-    Q_UNUSED(globalPos);
     QString text = index.data(Qt::ToolTipRole).toString();
     PsiToolTip::showText(globalPos, text, this);
 }
