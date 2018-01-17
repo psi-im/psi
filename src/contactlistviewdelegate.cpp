@@ -1386,8 +1386,8 @@ void ContactListViewDelegate::setModelData(QWidget *editor, QAbstractItemModel *
 // adapted from QItemDelegate::eventFilter()
 bool ContactListViewDelegate::eventFilter(QObject *object, QEvent *event)
 {
-    QWidget *editor = qobject_cast<QWidget*>(object);
     if (event->type() == QEvent::KeyPress) {
+        QWidget *editor = qobject_cast<QWidget*>(object);
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
         if (keyEvent->key() == Qt::Key_Up) {
             d->setEditorCursorPosition(editor, 0);
