@@ -113,26 +113,26 @@ static QString unixHeuristicDetect() {
         QString name;
     } osInfo[] = {
         { LinuxMandrake,    OsUseFile,    "/etc/mandrake-release",    "Mandrake Linux"    },
-        { LinuxDebian,        OsAppendFile,    "/etc/debian_version",        "Debian GNU/Linux"    },
-        { LinuxGentoo,        OsUseFile,    "/etc/gentoo-release",        "Gentoo Linux"        },
-        { LinuxExherbo,        OsUseName,    "/etc/exherbo-release",        "Exherbo Linux"        },
+        { LinuxDebian,      OsAppendFile, "/etc/debian_version",      "Debian GNU/Linux"  },
+        { LinuxGentoo,      OsUseFile,    "/etc/gentoo-release",      "Gentoo Linux"      },
+        { LinuxExherbo,     OsUseName,    "/etc/exherbo-release",     "Exherbo Linux"     },
         { LinuxArch,        OsUseName,    "/etc/arch-release",        "Arch Linux"        },
-        { LinuxSlackware,    OsAppendFile,    "/etc/slackware-version",    "Slackware Linux"    },
-        { LinuxPLD,        OsUseFile,    "/etc/pld-release",        "PLD Linux"        },
-        { LinuxAurox,        OsUseName,    "/etc/aurox-release",        "Aurox Linux"        },
+        { LinuxSlackware,   OsAppendFile, "/etc/slackware-version",   "Slackware Linux"   },
+        { LinuxPLD,         OsUseFile,    "/etc/pld-release",         "PLD Linux"         },
+        { LinuxAurox,       OsUseName,    "/etc/aurox-release",       "Aurox Linux"       },
         { LinuxArch,        OsUseFile,    "/etc/arch-release",        "Arch Linux"        },
-        { LinuxLFS,        OsAppendFile,    "/etc/lfs-release",        "LFS Linux"        },
-        { LinuxRFRemix,        OsUseFile,    "/etc/rfremix-release",        "RFRemix Linux"        },
+        { LinuxLFS,         OsAppendFile, "/etc/lfs-release",         "LFS Linux"         },
+        { LinuxRFRemix,     OsUseFile,    "/etc/rfremix-release",     "RFRemix Linux"     },
 
         // untested
         { LinuxSuSE,        OsUseFile,    "/etc/SuSE-release",        "SuSE Linux"        },
-        { LinuxConectiva,    OsUseFile,    "/etc/conectiva-release",    "Conectiva Linux"    },
-        { LinuxCaldera,        OsUseFile,    "/etc/.installed",        "Caldera Linux"        },
+        { LinuxConectiva,   OsUseFile,    "/etc/conectiva-release",   "Conectiva Linux"   },
+        { LinuxCaldera,     OsUseFile,    "/etc/.installed",          "Caldera Linux"     },
 
         // many distros use the /etc/redhat-release for compatibility, so RedHat will be the last :)
-        { LinuxRedHat,        OsUseFile,    "/etc/redhat-release",        "RedHat Linux"        },
+        { LinuxRedHat,      OsUseFile,    "/etc/redhat-release",      "RedHat Linux"      },
 
-        { LinuxNone,        OsUseName,    "",                ""            }
+        { LinuxNone,        OsUseName,    "",                         ""                  }
     };
 
     for (int i = 0; osInfo[i].id != LinuxNone; i++) {
@@ -188,6 +188,9 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 #if QT_VERSION >= QT_VERSION_CHECK(5,4,0)
     if(os_version_str_.isEmpty()) {
         os_version_str_ = QSysInfo::productVersion();
+    }
+    if (os_version_str_ == QLatin1String("unknown")) {
+        os_version_str_.clear();
     }
 #endif
 
