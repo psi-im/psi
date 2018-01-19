@@ -41,37 +41,37 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
-static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
-static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
-static const QString outlinedGroupsOptionPath = "options.ui.look.contactlist.use-outlined-group-headings";
-static const QString contactListBackgroundOptionPath = "options.ui.look.colors.contactlist.background";
-static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
-static const QString statusSingleOptionPath = "options.ui.contactlist.status-messages.single-line";
-static const QString showClientIconsPath = "options.ui.contactlist.show-client-icons";
-static const QString showMoodIconsPath = "options.ui.contactlist.show-mood-icons";
-static const QString showGeolocIconsPath = "options.ui.contactlist.show-geolocation-icons";
-static const QString showActivityIconsPath = "options.ui.contactlist.show-activity-icons";
-static const QString showTuneIconsPath = "options.ui.contactlist.show-tune-icons";
-static const QString avatarSizeOptionPath = "options.ui.contactlist.avatars.size";
-static const QString avatarRadiusOptionPath = "options.ui.contactlist.avatars.radius";
-static const QString showAvatarsPath = "options.ui.contactlist.avatars.show";
-static const QString useDefaultAvatarPath = "options.ui.contactlist.avatars.use-default-avatar";
-static const QString avatarAtLeftOptionPath = "options.ui.contactlist.avatars.avatars-at-left";
-static const QString showStatusIconsPath = "options.ui.contactlist.show-status-icons";
-static const QString statusIconsOverAvatarsPath = "options.ui.contactlist.status-icon-over-avatar";
-static const QString allClientsOptionPath = "options.ui.contactlist.show-all-client-icons";
-static const QString enableGroupsOptionPath = "options.ui.contactlist.enable-groups";
-static const QString statusIconsetOptionPath = "options.iconsets.status";
+static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
+static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
+static const QString outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
+static const QString contactListBackgroundOptionPath(QStringLiteral("options.ui.look.colors.contactlist.background"));
+static const QString showStatusMessagesOptionPath(QStringLiteral("options.ui.contactlist.status-messages.show"));
+static const QString statusSingleOptionPath(QStringLiteral("options.ui.contactlist.status-messages.single-line"));
+static const QString showClientIconsPath(QStringLiteral("options.ui.contactlist.show-client-icons"));
+static const QString showMoodIconsPath(QStringLiteral("options.ui.contactlist.show-mood-icons"));
+static const QString showGeolocIconsPath(QStringLiteral("options.ui.contactlist.show-geolocation-icons"));
+static const QString showActivityIconsPath(QStringLiteral("options.ui.contactlist.show-activity-icons"));
+static const QString showTuneIconsPath(QStringLiteral("options.ui.contactlist.show-tune-icons"));
+static const QString avatarSizeOptionPath(QStringLiteral("options.ui.contactlist.avatars.size"));
+static const QString avatarRadiusOptionPath(QStringLiteral("options.ui.contactlist.avatars.radius"));
+static const QString showAvatarsPath(QStringLiteral("options.ui.contactlist.avatars.show"));
+static const QString useDefaultAvatarPath(QStringLiteral("options.ui.contactlist.avatars.use-default-avatar"));
+static const QString avatarAtLeftOptionPath(QStringLiteral("options.ui.contactlist.avatars.avatars-at-left"));
+static const QString showStatusIconsPath(QStringLiteral("options.ui.contactlist.show-status-icons"));
+static const QString statusIconsOverAvatarsPath(QStringLiteral("options.ui.contactlist.status-icon-over-avatar"));
+static const QString allClientsOptionPath(QStringLiteral("options.ui.contactlist.show-all-client-icons"));
+static const QString enableGroupsOptionPath(QStringLiteral("options.ui.contactlist.enable-groups"));
+static const QString statusIconsetOptionPath(QStringLiteral("options.iconsets.status"));
 
-static const QString awayColorPath = "options.ui.look.colors.contactlist.status.away";
-static const QString dndColorPath = "options.ui.look.colors.contactlist.status.do-not-disturb";
-static const QString offlineColorPath = "options.ui.look.colors.contactlist.status.offline";
-static const QString onlineColorPath = "options.ui.look.colors.contactlist.status.online";
-static const QString animation1ColorPath = "options.ui.look.colors.contactlist.status-change-animation1";
-static const QString animation2ColorPath = "options.ui.look.colors.contactlist.status-change-animation2";
-static const QString statusMessageColorPath = "options.ui.look.colors.contactlist.status-messages";
-static const QString headerBackgroungColorPath = "options.ui.look.colors.contactlist.grouping.header-background";
-static const QString headerForegroungColorPath = "options.ui.look.colors.contactlist.grouping.header-foreground";
+static const QString awayColorPath(QStringLiteral("options.ui.look.colors.contactlist.status.away"));
+static const QString dndColorPath(QStringLiteral("options.ui.look.colors.contactlist.status.do-not-disturb"));
+static const QString offlineColorPath(QStringLiteral("options.ui.look.colors.contactlist.status.offline"));
+static const QString onlineColorPath(QStringLiteral("options.ui.look.colors.contactlist.status.online"));
+static const QString animation1ColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-change-animation1"));
+static const QString animation2ColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-change-animation2"));
+static const QString statusMessageColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-messages"));
+static const QString headerBackgroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
+static const QString headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
 
 #define ALERT_INTERVAL 100 /* msecs */
 #define ANIM_INTERVAL 300 /* msecs */
