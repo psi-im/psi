@@ -79,6 +79,10 @@
 #include "rosteravatarframe.h"
 #include "avatars.h"
 
+#ifdef HAVE_X11
+#include <x11windowsystem.h>
+#endif
+
 using namespace XMPP;
 
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
@@ -153,6 +157,10 @@ public:
     bool squishEnabled;
 
     PsiRosterWidget* rosterWidget_;
+
+#ifdef Q_OS_WIN
+    DWORD deactivationTickCount;
+#endif
 
     void registerActions();
     IconAction* getAction( QString name );
@@ -1413,6 +1421,22 @@ void MainWin::closeEvent(QCloseEvent* e)
 
 void MainWin::changeEvent(QEvent *event)
 {
+#ifdef Q_OS_WIN
+    if (event->type() == QEvent::ActivationChange
+        && PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool()
+        && PsiOptions::instance()->getOption("options.ui.contactlist.raise-inactive").toBool()) {
+        //On Windows app window loose active state when you
+        //  click on tray icon. Workaround is to use timer:
+        //  we'll keep activated == true within 300 msec
+        //  (+ doubleClickInterval, if double click is enabled)
+        //  after deactivation.
+        if (!isActiveWindow())
+        {
+            d->deactivationTickCount = GetTickCount();
+        }
+    }
+#endif
+
     if (event->type() == QEvent::ActivationChange ||
         event->type() == QEvent::WindowStateChange)
     {
@@ -1533,14 +1557,37 @@ void MainWin::optionsUpdate()
     updateTray();
 }
 
-void MainWin::toggleVisible()
+void MainWin::toggleVisible(bool fromTray)
 {
-    if(!isHidden()) {
-        trayHide();
+    if (PsiOptions::instance()->getOption("options.ui.contactlist.raise-inactive").toBool())
+    {
+        bool hidden = false;
+#ifdef Q_OS_WIN
+        if (fromTray) {
+            int timeout = 300;
+            if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool())
+                timeout += qApp->doubleClickInterval();
+            hidden = isHidden() || (GetTickCount() - d->deactivationTickCount > timeout);
+        }
+        else {
+            hidden = isHidden() || !isActiveWindow();
+        }
+#elif defined(HAVE_X11)
+        Q_UNUSED(fromTray);
+        hidden = isHidden() || X11WindowSystem::instance()->isWindowObscured(this, PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool());
+#else
+        Q_UNUSED(fromTray);
+        hidden = isHidden() || !isActiveWindow();
+#endif
+        if(hidden) {
+            trayShow();
+        }
+        else {
+            trayHide();
+        }
     }
-    else {
-        trayShow();
-    }
+    else
+        isHidden() ? trayShow() : trayHide();
 }
 
 void MainWin::setTrayToolTip(const Status& status, bool, bool)
@@ -1568,32 +1615,20 @@ void MainWin::trayClicked(const QPoint &, int button)
     // some interesting info about the problem
     // http://www.qtcentre.org/threads/56573-Get-the-Window-Visible-State-when-it-is-partially-visible
     // But currently now really good cross-platform solution.
-    if(!isHidden()) {
-        trayHide();
-    }
-    else {
-        trayShow();
-    }
+    toggleVisible(true);
 }
 
 void MainWin::trayDoubleClicked()
 {
-    if(!PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
-        return;
-    }
+     //Double click works like second single click now if "double-click" style is disabled
 
-    if(d->nextAmount > 0) {
-        doRecvNextEvent();
-        return;
+    if(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
+        if(d->nextAmount > 0) {
+            doRecvNextEvent();
+            return;
+        }
     }
-
-
-    if(!isHidden()) {
-        trayHide();
-    }
-    else {
-        trayShow();
-    }
+    toggleVisible(true);
 }
 
 void MainWin::trayShow()

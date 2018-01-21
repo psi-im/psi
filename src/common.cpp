@@ -38,10 +38,7 @@
 
 #include <stdio.h>
 #ifdef HAVE_X11
-#include <QX11Info>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
+#include "x11windowsystem.h"
 #endif
 
 #ifdef Q_OS_WIN
@@ -481,101 +478,6 @@ TabbableWidget* findActiveTab()
     return tw;
 }
 
-#ifdef HAVE_X11
-#include <X11/Xlib.h>
-#include <X11/Xutil.h> // needed for WM_CLASS hinting
-
-void x11wmClass(Display *dsp, WId wid, QString resName)
-{
-    if (!QX11Info::isPlatformX11())
-        return;
-
-    //Display *dsp = x11Display();                 // get the display
-    //WId win = winId();                           // get the window
-    XClassHint classhint;                          // class hints
-    // Get old class hint. It is important to save old class name
-    XGetClassHint(dsp, wid, &classhint);
-    XFree(classhint.res_name);
-
-    const QByteArray latinResName = resName.toLatin1();
-    classhint.res_name = (char *)latinResName.data(); // res_name
-    XSetClassHint(dsp, wid, &classhint);           // set the class hints
-
-    XFree(classhint.res_class);
-}
-
-//>>>-- Nathaniel Gray -- Caltech Computer Science ------>
-//>>>-- Mojave Project -- http://mojave.cs.caltech.edu -->
-// Copied from http://www.nedit.org/archives/discuss/2002-Aug/0386.html
-
-// Helper function
-bool getCardinal32Prop(Display *display, Window win, char *propName, long *value)
-{
-    if (!QX11Info::isPlatformX11())
-        return false;
-
-    Atom nameAtom, typeAtom, actual_type_return;
-    int actual_format_return, result;
-    unsigned long nitems_return, bytes_after_return;
-    long *result_array=NULL;
-
-    nameAtom = XInternAtom(display, propName, False);
-    typeAtom = XInternAtom(display, "CARDINAL", False);
-    if (nameAtom == None || typeAtom == None) {
-        //qDebug("Atoms not interned!");
-        return false;
-    }
-
-
-    // Try to get the property
-    result = XGetWindowProperty(display, win, nameAtom, 0, 1, False,
-        typeAtom, &actual_type_return, &actual_format_return,
-        &nitems_return, &bytes_after_return,
-        (unsigned char **)&result_array);
-
-    if( result != Success ) {
-        //qDebug("not Success");
-        return false;
-    }
-    if( actual_type_return == None || actual_format_return == 0 ) {
-        //qDebug("Prop not found");
-        return false;
-    }
-    if( actual_type_return != typeAtom ) {
-        //qDebug("Wrong type atom");
-    }
-    *value = result_array[0];
-    XFree(result_array);
-    return true;
-}
-
-
-// Get the desktop number that a window is on
-bool desktopOfWindow(Window *window, long *desktop)
-{
-    Display *display = QX11Info::display();
-    bool result = getCardinal32Prop(display, *window, (char *)"_NET_WM_DESKTOP", desktop);
-    //if( result )
-    //    qDebug("Desktop: " + QString::number(*desktop));
-    return result;
-}
-
-
-// Get the current desktop the WM is displaying
-bool currentDesktop(long *desktop)
-{
-    Window rootWin;
-    Display *display = QX11Info::display();
-    bool result;
-
-    rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
-    result = getCardinal32Prop(display, rootWin, (char *)"_NET_CURRENT_DESKTOP", desktop);
-    //if( result )
-    //    qDebug("Current Desktop: " + QString::number(*desktop));
-    return result;
-}
-#endif
-
 void clearMenu(QMenu *m)
 {
     m->clear();
@@ -604,7 +506,7 @@ void bringToFront(QWidget *widget, bool)
     // If we're not on the current desktop, do the hide/show trick
     long dsk, curr_dsk;
     Window win = w->winId();
-    if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
+    if(X11WindowSystem::instance()->desktopOfWindow(&win, &dsk) && X11WindowSystem::instance()->currentDesktop(&curr_dsk)) {
         //qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
         if((dsk != curr_dsk) && (dsk != -1)) {  // second condition for sticky windows
             w->hide();

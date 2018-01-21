@@ -615,6 +615,10 @@ win32:!dbus {
     LIBS += -lUser32
 }
 
+unix:!macx:!haiku {
+    HEADERS += $$PWD/x11windowsystem.h
+    SOURCES += $$PWD/x11windowsystem.cpp
+}
 
 unix:!dbus {
     SOURCES += $$PWD/activeprofiles_stub.cpp

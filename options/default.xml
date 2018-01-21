@@ -225,6 +225,7 @@ QLineEdit#le_status_text {
                 <lockdown-roster type="bool">false</lockdown-roster>
                 <raise-on-new-event type="bool">false</raise-on-new-event>
                 <quit-on-close type="bool">false</quit-on-close>
+                <raise-inactive type="bool">true</raise-inactive>
                 <show-avatar-frame type="bool">true</show-avatar-frame>
                 <show>
                     <agent-contacts type="bool">true</agent-contacts>

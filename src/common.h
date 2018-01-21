@@ -151,12 +151,10 @@ void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 TabbableWidget* findActiveTab();
 #ifdef HAVE_X11
-#include <QWidget>
-#include <QX11Info>
-void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)    x11wmClass(QX11Info::display(), winId(), (x));
+# include "x11windowsystem.h"
+# define X11WM_CLASS(x)    X11WindowSystem::instance()->x11wmClass(winId(), (x));
 #else
-#define X11WM_CLASS(x)    /* dummy */
+# define X11WM_CLASS(x)    /* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
 int devicePixelRatio(QWidget *);

@@ -178,7 +178,7 @@ public slots:
     void optionsUpdate();
     void setTrayToolTip(const XMPP::Status &, bool usePriority = false, bool isManualStatus = false);
 
-    void toggleVisible();
+    void toggleVisible(bool fromTray = false);
 
     void avcallConfig();
 
