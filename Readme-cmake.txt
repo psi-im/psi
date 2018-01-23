@@ -196,3 +196,14 @@ or
 ### If you using Psi+ SDK you need to set SDK_PATH:
 
 >  -DSDK_PATH=path
+
+### Linux-only flags:
+
+>  -DONLY_BINARY=OFF
+
+  If ON - only binary file will be installed
+
+>  -DINSTALL_EXTRA_FILES=ON
+
+  If OFF - sounds, certificates, iconsets, themes and cilent_icons.txt file will not be installed
+ 

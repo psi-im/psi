@@ -30,7 +30,9 @@ option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
 option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
+#Linux-only options
 option( ONLY_BINARY "Build and install only binary file" OFF )
+option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
