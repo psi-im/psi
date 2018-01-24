@@ -225,7 +225,11 @@ void OptionsTabApplication::restoreOptions()
         d->ck_auto_load->setChecked(true);
     }
 #endif
+#ifdef HAVE_KEYCHAIN
     d->ck_useKeychain->setVisible(!ApplicationInfo::isPortable());
+#else
+    d->ck_useKeychain->setVisible(false);
+#endif
 }
 
 void OptionsTabApplication::doEnableQuitOnClose(int state)
