@@ -246,7 +246,6 @@ bool ContactListDragView::updateCursor(const QModelIndex& index, UpdateCursorOri
             clearSelection();
     }
 
-    viewport()->update();
     return true;
 }
 
