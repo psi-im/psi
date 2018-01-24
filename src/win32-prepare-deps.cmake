@@ -111,6 +111,10 @@ if(WIN32)
 			qwindows${D}.dll
 		)
 		find_psi_lib("${PLATFORM_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/")
+		set(STYLE_PLUGS
+			qwindowsvistastyle{D}.dll
+		)
+		find_psi_lib("${STYLE_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/styles/")
 		set(BEARER_PLUGS
 			qgenericbearer${D}.dll
 			qnativewifibearer${D}.dll
