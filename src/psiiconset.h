@@ -106,6 +106,7 @@ private:
     bool loadActivity();
     bool loadClients();
     bool loadAffiliations();
+    void loadStatusIconDefinitions();
 
 };
 

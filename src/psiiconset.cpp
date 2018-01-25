@@ -57,6 +57,16 @@ public:
     QStringList cur_emoticons;
     QMap<QString, QString> cur_service_status;
     QMap<QString, QString> cur_custom_status;
+    struct StatusIconsets {
+        struct IconsetItem {
+            QRegExp regexp;
+            QString iconset;
+        };
+        bool useServicesIcons;
+        QList<IconsetItem> list;
+        QList<IconsetItem> customList;
+    } status_icons;
+
 
     Private(PsiIconset *_psi) {
         psi = _psi;
@@ -139,72 +149,28 @@ public:
         PsiIcon *icon = (PsiIcon *)IconsetFactory::iconPtr(iconName);
 
         // second level -- transport icon
-        if ( jid.node().isEmpty() || PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() ) {
-            QMap<QString, QRegExp> services;
-            services["aim"]        = QRegExp("^aim");
-            services["disk"]        = QRegExp("^disk");
-            services["gadugadu"]    = QRegExp("^gg");
-            services["icq"]        = QRegExp("^icq|^jit");
-            services["irc"]        = QRegExp("^irc");
-            services["xmpp"]        = QRegExp("^j2j|^xmpp\\.[a-z1-9]+\\..*");
-            services["mrim"]        = QRegExp("^mrim");
-            services["msn"]        = QRegExp("^msn");
-            services["muc"]        = QRegExp("^conference|^rooms");
-            services["rss"]        = QRegExp("^rss");
-            services["sms"]        = QRegExp("^sms");
-            services["smtp"]        = QRegExp("^smtp");
-            services["vkontakte"]        = QRegExp("^vk.com|^vkontakte|^vk-t");
-            services["weather"]        = QRegExp("^weather|^gism");
-            services["yahoo"]    = QRegExp("^yahoo");
-
-            bool found = false;
-
-
-            foreach(const QVariant& serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
-                QString service = serviceV.toString();
-                if (services.contains(service)) {
-                    if (services[service].indexIn(jid.domain()) != -1 ) {
-                        const Iconset *is = psi->roster.value(
-                                PsiOptions::instance()->getOption(
-                                PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)+".iconset").toString());
-                        if ( is ) {
-                            PsiIcon *i = (PsiIcon *)is->icon(iconName);
-                            if ( i ) {
-                                icon = i;
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            // let's try the default transport iconset then...
-            if ( !found && jid.node().isEmpty() ) {
-                if (PsiOptions::instance()->mapKeyList("options.iconsets.service-status").contains("transport")) {
-                    const Iconset *is = psi->roster.value(
-                                PsiOptions::instance()->getOption(
-                                PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport")+".iconset").toString());
-                    if ( is ) {
+        if (jid.node().isEmpty() || status_icons.useServicesIcons) {
+            foreach (const StatusIconsets::IconsetItem &item, status_icons.list) {
+                if (item.regexp.isEmpty() ? jid.node().isEmpty() : (item.regexp.indexIn(jid.domain()) != -1)) {
+                    const Iconset *is = psi->roster.value(item.iconset);
+                    if (is) {
                         PsiIcon *i = (PsiIcon *)is->icon(iconName);
-                        if ( i )
+                        if (i) {
                             icon = i;
+                            break;
+                        }
                     }
                 }
             }
         }
 
         // third level -- custom icons
-
-        QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-        foreach(const QString& base, customicons) {
-            QRegExp rx = QRegExp(PsiOptions::instance()->getOption(base + ".regexp").toString());
-            if ( rx.indexIn(jid.bare()) != -1 ) {
-                const Iconset *is = psi->roster.value(PsiOptions::instance()->getOption(base + ".iconset").toString());
-                if ( is ) {
+        foreach (const StatusIconsets::IconsetItem &item, status_icons.customList) {
+            if (item.regexp.indexIn(jid.bare())) {
+                const Iconset *is = psi->roster.value(item.iconset);
+                if (is) {
                     PsiIcon *i = (PsiIcon *)is->icon(iconName);
-                    if ( i ) {
+                    if (i) {
                         icon = i;
                         break;
                     }
@@ -340,6 +306,7 @@ PsiIconset::PsiIconset()
     : QObject(QCoreApplication::instance())
 {
     d = new Private(this);
+    d->status_icons.useServicesIcons = PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool();
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
     connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
 }
@@ -558,6 +525,58 @@ bool PsiIconset::loadAffiliations()
     return ok;
 }
 
+void PsiIconset::loadStatusIconDefinitions()
+{
+    d->status_icons.list.clear();
+    d->status_icons.customList.clear();
+    foreach(const QVariant& serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+        QString service = serviceV.toString();
+        PsiIconset::Private::StatusIconsets::IconsetItem item;
+        bool find = true;
+        if (service == "aim")            item.regexp = QRegExp("^aim");
+        else if (service == "disk")      item.regexp = QRegExp("^disk");
+        else if (service == "gadugadu")  item.regexp = QRegExp("^gg");
+        else if (service == "icq")       item.regexp = QRegExp("^icq|^jit");
+        else if (service == "irc")       item.regexp = QRegExp("^irc");
+        else if (service == "xmpp")      item.regexp = QRegExp("^j2j|^xmpp\\.[a-z1-9]+\\..*");
+        else if (service == "mrim")      item.regexp = QRegExp("^mrim");
+        else if (service == "msn")       item.regexp = QRegExp("^msn");
+        else if (service == "muc")       item.regexp = QRegExp("^conference|^rooms");
+        else if (service == "rss")       item.regexp = QRegExp("^rss");
+        else if (service == "sms")       item.regexp = QRegExp("^sms");
+        else if (service == "smtp")      item.regexp = QRegExp("^smtp");
+        else if (service == "vkontakte") item.regexp = QRegExp("^vk.com|^vkontakte|^vk-t");
+        else if (service == "weather")   item.regexp = QRegExp("^weather|^gism");
+        else if (service == "yahoo")     item.regexp = QRegExp("^yahoo");
+        else
+            find = false;
+
+        if (find) {
+            item.iconset = PsiOptions::instance()->getOption(
+                        PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
+                        + ".iconset").toString();
+            d->status_icons.list.append(item);
+        }
+    }
+    // default transport icon set
+    if (PsiOptions::instance()->mapKeyList("options.iconsets.service-status").contains("transport")) {
+        PsiIconset::Private::StatusIconsets::IconsetItem item;
+        item.iconset = PsiOptions::instance()->getOption(
+                    PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport")
+                    + ".iconset").toString();
+        d->status_icons.list.append(item);
+    }
+    // custom icon sets
+    foreach (const QString &base, PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true)) {
+        PsiIconset::Private::StatusIconsets::IconsetItem item;
+        item.regexp = QRegExp(PsiOptions::instance()->getOption(base + ".regexp").toString());
+        if (item.regexp.isValid()) {
+            item.iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
+            d->status_icons.customList.append(item);
+        }
+    }
+}
+
 bool PsiIconset::loadAll()
 {
     if (!loadSystem() || !loadRoster())
@@ -568,6 +587,7 @@ bool PsiIconset::loadAll()
     loadActivity();
     loadClients();
     loadAffiliations();
+    loadStatusIconDefinitions();
     return true;
 }
 
@@ -590,6 +610,9 @@ void PsiIconset::optionChanged(const QString& option)
     }
     else if (option == "options.iconsets.affiliations") {
         loadAffiliations();
+    }
+    else if (option == "options.ui.contactlist.use-transport-icons") {
+        d->status_icons.useServicesIcons = PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool();
     }
 
     // currently we rely on PsiCon calling reloadRoster() when
