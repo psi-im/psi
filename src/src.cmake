@@ -255,14 +255,12 @@ if(UNIX AND NOT APPLE)
     list(APPEND PLAIN_HEADERS
         dbus.h
         )
-    if(IS_PSIPLUS)
-        list(APPEND PLAIN_SOURCES
-            x11windowsystem.cpp
-            )
-        list(APPEND PLAIN_HEADERS
-            x11windowsystem.h
-            )
-    endif()
+    list(APPEND PLAIN_SOURCES
+        x11windowsystem.cpp
+        )
+    list(APPEND PLAIN_HEADERS
+        x11windowsystem.h
+        )
 elseif(APPLE)
     list(APPEND SOURCES
         psigrowlnotifier.cpp
