@@ -1610,13 +1610,17 @@ QString PsiAccount::nameWithJid() const
 void PsiAccount::updateFeatures()
 {
     QStringList features = d->psi->xmppFatures();
-    // TODO update features depending on account settings and plugins' features
+    // TODO update features depending on account settings
 
     if (d->voiceCaller) {
         features << "http://www.google.com/xmpp/protocol/voice/v1"; // isn't obsoleted?
     }
 #ifdef WHITEBOARDING
     features << SXENS << WBNS;
+#endif
+
+#ifdef PSI_PLUGINS
+    features << PluginManager::instance()->pluginFeatures();
 #endif
 
     // TODO reset hash
@@ -2934,6 +2938,10 @@ void PsiAccount::processIncomingMessage(const Message &_m)
         }
     }
 
+#ifdef PSI_PLUGINS
+    m.setWasEncrypted(PluginManager::instance()->stanzaWasEncrypted(m.id()));
+#endif
+
     MessageEvent::Ptr me(new MessageEvent(m, this));
     me->setOriginLocal(false);
     handleEvent(me, IncomingStanza);
@@ -3905,7 +3913,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
     if(!c) {
         // create the chatbox
         c = ChatDlg::create(j, this, d->tabManager);
-        connect(c, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
+        connect(c, SIGNAL(aSend(Message &)), SLOT(dj_sendMessage(Message &)));
         connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
         connect(c, SIGNAL(aInfo(const Jid &)), SLOT(actionInfo(const Jid &)));
         connect(c, SIGNAL(aHistory(const Jid &)), SLOT(actionHistory(const Jid &)));
@@ -4686,7 +4694,7 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
     }
 }
 
-void PsiAccount::dj_sendMessage(const Message &m, bool log)
+void PsiAccount::dj_sendMessage(Message &m, bool log)
 {
     UserListItem *u = findFirstRelevant(m.to());
     Message nm = m;
@@ -4699,7 +4707,7 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
             }
         }
     }
-    
+
 #ifdef PSI_PLUGINS
     if (!nm.body().isEmpty()) {
         QString body = nm.body();
@@ -4760,6 +4768,10 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
                 e->closeAfterReply();
         }
     }
+
+#ifdef PSI_PLUGINS
+    m.setWasEncrypted(PluginManager::instance()->stanzaWasEncrypted(m.id()));
+#endif
 }
 
 void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
@@ -4968,6 +4980,15 @@ void PsiAccount::createNewPluginEvent(int account, const QString &jid, const QSt
     PluginEvent::Ptr pe(new PluginEvent(account, jid, descr, this));
     connect(pe.data(), SIGNAL(activated(QString,int)), receiver, slot);
     handleEvent(pe, IncomingStanza);
+}
+
+void PsiAccount::createNewMessageEvent(const QDomElement &element)
+{
+    Stanza stanza = client()->stream().createStanza(addCorrectNS(element));
+
+    XMPP::Message message;
+    message.fromStanza(stanza, client()->manualTimeZoneOffset(), client()->timeZoneOffset());
+    processIncomingMessage(message);
 }
 #endif
 
@@ -5714,7 +5735,7 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MucJ
 #ifdef GROUPCHAT
     GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
     w->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
-    connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
+    connect(w, SIGNAL(aSend(Message &)), SLOT(dj_sendMessage(Message &)));
     connect(w, SIGNAL(messagesRead(const Jid &)), SLOT(groupChatMessagesRead(const Jid &)));
     connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
     if(reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {

@@ -819,7 +819,7 @@ void ChatDlg::doSend()
         }
     }
     else {
-        aSend(m);
+        aSend(m_);
         doneSend();
     }
 

@@ -63,6 +63,8 @@ public:
     int priority() const;
     const QIcon& icon() const;
 
+    QStringList pluginFeatures() const;
+
     // loading
     bool load();
     bool unload();
@@ -76,6 +78,7 @@ public:
     // for StanzaFilter and IqNamespaceFilter
     bool incomingXml(int account, const QDomElement& e);
     bool outgoingXml(int account, QDomElement &e);
+    bool stanzaWasEncrypted(const QString &stanzaId);
 
     // for EventFilter
     bool processEvent(int account, QDomElement& e);
@@ -200,6 +203,7 @@ public:
     bool appendMsg(int account, const QString& jid, const QString& message, const QString& id);
 
     void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
+    void createNewMessageEvent(int account, QDomElement const &element);
 
     void playSound(const QString& fileName);
 
