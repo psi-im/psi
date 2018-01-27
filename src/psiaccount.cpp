@@ -1939,8 +1939,9 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
                     d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob*>(job)->textData());
                 } else {
                     qWarning("KeyChain error=%d", job->error());
-                    passwordPrompt();
-                    d->stream->setPassword(d->acc.pass);
+                    if (passwordPrompt()) {
+                        d->stream->setPassword(d->acc.pass);
+                    }
                 }
                 d->stream->continueAfterParams();
             });
@@ -2269,16 +2270,18 @@ void PsiAccount::cs_error(int err)
     }
 
     v_isActive = false;
+
+    //If a password failure, prompt for correct password
+    if (badPass && passwordPrompt()) {
+        isDisconnecting = false;
+        login();
+        return;
+    }
+
     d->loginStatus = Status(Status::Offline);
     stateChanged();
     emit disconnected();
     isDisconnecting = false;
-
-    //If a password failure, prompt for correct password
-    if (badPass) {
-            passwordPrompt();
-            return;
-    }
 
     QString title;
     if (d->psi->contactList()->enabledAccounts().count() > 1) {
@@ -3032,7 +3035,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
         for ( ; rit != d->acc.roster.end(); ++rit) {
             const RosterItem &i = *rit;
             if ( i.jid().node().isEmpty() /*&& i.jid().resource() == "registered"*/ ) // it is very likely then, that it's transport
-                new BlockTransportPopup(d->blockTransportPopupList, i.jid());
+                new BlockTransportPopup(d->blockTransportPopupList, i.jid()); //FIXME this code looks like a source for memory leak
         }
     }
 
@@ -3099,7 +3102,11 @@ int PsiAccount::defaultPriority(const XMPP::Status &s)
     return d->acc.defaultPriority(s);
 }
 
-void PsiAccount::passwordPrompt()
+/**
+ * @brief PsiAccount::passwordPrompt
+ * @return true if proceeded with login.
+ */
+bool PsiAccount::passwordPrompt()
 {
     PassDialog dialog(d->jid.full());
     dialog.setSavePassword(d->acc.opt_pass);
@@ -3112,8 +3119,9 @@ void PsiAccount::passwordPrompt()
             savePassword();
         }
 #endif
-        login();
+        return true;
     }
+    return false;
 }
 
 #if HAVE_KEYCHAIN

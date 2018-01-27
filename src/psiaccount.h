@@ -546,7 +546,7 @@ private:
     void processEncryptedMessageNext();
     void processEncryptedMessageDone();
     void verifyStatus(const Jid &j, const Status &s);
-    void passwordPrompt();
+    bool passwordPrompt();
     void sentInitialPresence();
     void requestAvatarsForAllContacts();
 
