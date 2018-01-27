@@ -15,9 +15,9 @@ if(UNIX AND NOT APPLE)
         )
 endif()
 
-if(APPLE)
-    add_definitions(-DHAVE_GROWL)
-endif()
+#if(APPLE)
+#    add_definitions(-DHAVE_GROWL)
+#endif()
 
 include_directories(.)
 
@@ -262,13 +262,16 @@ if(UNIX AND NOT APPLE)
         x11windowsystem.h
         )
 elseif(APPLE)
-    list(APPEND SOURCES
-        psigrowlnotifier.cpp
+    list(APPEND PLAIN_SOURCES
+        activeprofiles_stub.cpp
         )
-
-    list(APPEND HEADERS
-        psigrowlnotifier.h
-        )
+#    list(APPEND SOURCES
+#        psigrowlnotifier.cpp
+#        )
+#
+#    list(APPEND HEADERS
+#        psigrowlnotifier.h
+#        )
 elseif(WIN32)
     list(APPEND PLAIN_SOURCES
         activeprofiles_win.cpp

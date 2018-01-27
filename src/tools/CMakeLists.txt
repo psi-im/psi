@@ -96,7 +96,7 @@ include_directories(
 )
 
 if(APPLE)
-    list(APPEND EXTRA_LDFLAGS -framework CoreFoundation)
+    list(APPEND EXTRA_LDFLAGS "-framework CoreFoundation")
     include_directories(tunecontroller/plugins/itunes)
     add_definitions(-DTC_ITUNES)
     list(APPEND SOURCES

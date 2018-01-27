@@ -211,6 +211,9 @@ add_subdirectory(libpsi/tools)
 add_subdirectory(widgets)
 add_subdirectory(sxe)
 add_subdirectory(whiteboarding)
+if(APPLE)
+    add_subdirectory(CocoaUtilities)
+endif()
 
 if(USE_WEBENGINE)
     include_directories(
@@ -439,6 +442,9 @@ target_link_libraries(${PROJECT_NAME}
     tabs
     AutoUpdater
 )
+if(APPLE)
+    target_link_libraries(${PROJECT_NAME} CocoaUtilities)
+endif()
 
 set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/certs
