@@ -100,7 +100,7 @@ protected:
     void setStatusTabIcon(int status);
 
 signals:
-    void aSend(const Message &);
+    void aSend(Message &);
     void messagesRead(const Jid &);
     void messageAppended(const QString &, QWidget*);
 
