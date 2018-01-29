@@ -96,7 +96,7 @@ signals:
     void aHistory(const Jid &);
     void aVoice(const Jid &);
     void messagesRead(const Jid &);
-    void aSend(const Message &);
+    void aSend(Message &);
     void aFile(const Jid &);
     void messageAppended(const QString &, QWidget*);
 

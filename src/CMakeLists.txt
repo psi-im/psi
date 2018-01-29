@@ -17,7 +17,7 @@ endif()
 
 set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 
-find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg Sql REQUIRED)
 if(ENABLE_WEBKIT)
     if(NOT USE_WEBENGINE)
         find_package(Qt5 COMPONENTS WebKit WebKitWidgets REQUIRED)
@@ -26,10 +26,6 @@ if(ENABLE_WEBKIT)
         find_package(Qt5 COMPONENTS WebEngine WebEngineWidgets WebChannel REQUIRED)
         set(WEBKIT_LIBS Qt5::WebEngine Qt5::WebEngineWidgets Qt5::WebChannel)
     endif()
-endif()
-if(ENABLE_SQL)
-    find_package(Qt5 COMPONENTS Sql REQUIRED)
-    set(SQL_LIBS Qt5::Sql)
 endif()
 if(USE_KEYCHAIN)
     find_package( Qt5 COMPONENTS Keychain QUIET )
@@ -67,7 +63,7 @@ if(NOT ONLY_BINARY AND (EXISTS "${TRANSLATIONS_DIR}"))
     set(QT_LUPDATE_EXECUTABLE ${Qt5_LUPDATE_EXECUTABLE})
 endif()
 
-set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5::Concurrent Qt5::Multimedia Qt5::Svg ${SQL_LIBS} ${KEYCHAIN_LIBS})
+set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5::Concurrent Qt5::Multimedia Qt5::Svg Qt5::Sql ${KEYCHAIN_LIBS})
 set(Qca_SUFFIX -qt5)
 if(LINUX)
     list(APPEND QT_LIBRARIES Qt5::DBus Qt5::X11Extras ${LIBXCB_LIBRARIES})
@@ -211,6 +207,9 @@ add_subdirectory(libpsi/tools)
 add_subdirectory(widgets)
 add_subdirectory(sxe)
 add_subdirectory(whiteboarding)
+if(APPLE)
+    add_subdirectory(CocoaUtilities)
+endif()
 
 if(USE_WEBENGINE)
     include_directories(
@@ -439,6 +438,9 @@ target_link_libraries(${PROJECT_NAME}
     tabs
     AutoUpdater
 )
+if(APPLE)
+    target_link_libraries(${PROJECT_NAME} CocoaUtilities)
+endif()
 
 set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/certs

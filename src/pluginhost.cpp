@@ -165,6 +165,14 @@ const QIcon& PluginHost::icon() const
     return icon_;
 }
 
+QStringList PluginHost::pluginFeatures() const
+{
+    if (plugin_) {
+        return qobject_cast<PsiPlugin*>(plugin_)->pluginFeatures();
+    }
+    return QStringList();
+}
+
 /**
  * \brief Returns plugin options widget.
  *
@@ -558,6 +566,15 @@ bool PluginHost::outgoingXml(int account, QDomElement &e)
         handled = true;
     }
     return handled;
+}
+
+bool PluginHost::stanzaWasEncrypted(const QString &stanzaId)
+{
+    StanzaFilter *ef = qobject_cast<StanzaFilter*>(plugin_);
+    if (ef && ef->stanzaWasEncrypted(stanzaId)) {
+        return true;
+    }
+    return false;
 }
 
 //-- for EventFilter ------------------------------------------------
@@ -1319,6 +1336,11 @@ bool PluginHost::appendMsg(int account, const QString& jid, const QString& messa
 void PluginHost::createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot)
 {
     manager_->createNewEvent(account, jid, descr, receiver, slot);
+}
+
+void PluginHost::createNewMessageEvent(int account, QDomElement const &element)
+{
+    manager_->createNewMessageEvent(account, element);
 }
 
 void PluginHost::playSound(const QString &fileName)

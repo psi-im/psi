@@ -255,6 +255,7 @@ public:
 
 #ifdef PSI_PLUGINS
     void createNewPluginEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
+    void createNewMessageEvent(const QDomElement& element);
 #endif
 
     QStringList hiddenChats(const Jid &) const;
@@ -328,7 +329,7 @@ public slots:
     void openUri(const QUrl &uri);
 
     //dj_ originally referred to 'direct jabber', if you care
-    void dj_sendMessage(const Message &, bool log=true);
+    void dj_sendMessage(Message &, bool log=true);
     void dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void dj_replyMessage(const Jid &jid, const QString &body);
     void dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);

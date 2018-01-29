@@ -112,6 +112,8 @@ public:
     virtual void restoreOptions() = 0;
 
     virtual QPixmap icon() const = 0;
+
+    virtual QStringList pluginFeatures() { return QStringList(); }
 };
 
 Q_DECLARE_INTERFACE(PsiPlugin, "org.psi-im.PsiPlugin/0.4");
