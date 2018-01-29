@@ -4770,6 +4770,7 @@ void PsiAccount::dj_sendMessage(Message &m, bool log)
     }
 
 #ifdef PSI_PLUGINS
+    // this flag will be checked in ChatDlg::appendMessage
     m.setWasEncrypted(PluginManager::instance()->stanzaWasEncrypted(m.id()));
 #endif
 }
