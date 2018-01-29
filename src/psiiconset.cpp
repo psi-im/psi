@@ -166,7 +166,7 @@ public:
 
         // third level -- custom icons
         foreach (const StatusIconsets::IconsetItem &item, status_icons.customList) {
-            if (item.regexp.indexIn(jid.bare())) {
+            if (item.regexp.indexIn(jid.bare()) != -1) {
                 const Iconset *is = psi->roster.value(item.iconset);
                 if (is) {
                     PsiIcon *i = (PsiIcon *)is->icon(iconName);
