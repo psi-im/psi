@@ -37,6 +37,9 @@
   <dep type='qtconcurrent'>
     <required/>
   </dep>
+  <dep type='qtsql'>
+    <required/>
+  </dep>
   <dep type='qtwidgets'>
     <required/>
   </dep>

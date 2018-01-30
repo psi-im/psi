@@ -1424,6 +1424,18 @@ name: QtConcurrent
 //----------------------------------------------------------------------------
 // id, shortname, name
 QC_FIND_QT_COMP(concurrent, qtconcurrent, QtConcurrent)
+#line 1 "qtsql.qcm"
+/*
+-----BEGIN QCMOD-----
+name: QtSql
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qtsql
+//----------------------------------------------------------------------------
+// id, shortname, name
+QC_FIND_QT_COMP(sql, qtsql, QtSql)
 #line 1 "qtwidgets.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2351,6 +2363,9 @@ cat >"$1/modules_new.cpp" <<EOT
     o->required = true;
     o->disabled = false;
     o = new qc_qtconcurrent(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_qtsql(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_qtwidgets(conf);
