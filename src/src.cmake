@@ -518,3 +518,15 @@ if(ENABLE_SQL)
         historyimp.cpp
         )
 endif()
+
+if(IS_PSIPLUS)
+    list(APPEND FORMS
+        sendbuttontemplateseditor.ui
+    )
+    list(APPEND HEADERS
+        sendbuttonmenu.h
+    )
+    list(APPEND PLAIN_SOURCES
+        sendbuttonmenu.cpp
+    )
+endif()
