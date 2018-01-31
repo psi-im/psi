@@ -67,6 +67,18 @@ or
 
   to build qjdns library as separate library (default OFF)
 
+>  -DENABLE_WEBKIT = ON
+
+   enable support of QtWebKit or QtWebengine. If the flag is enabled and both libraries qtwebkit and qtwebengine are installed the qtwebengine script automatically selects qtwebengine. (default is ON)
+
+>  -DUSE_WEBKIT = OFF
+
+   use QtWebKit instead of QtWebengine with the ENABLE_WEBKIT flag turned on (default is OFF)
+
+>  -DUSE_WEBENGINE = OFF
+
+   use QtWebengine instead of QtWebKit. This flag is set automatically if the USE_WEBKIT flag is disabled and the Qt5Webengine>=5.6.0 library is installed. (default is OFF)
+
 >  -DPSI_VERSION=${version}
 
   to set Psi/Psi+ version manually ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ). Script sets this flag automatically from "version" file if it exists in sources directory
