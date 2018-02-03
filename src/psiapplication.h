@@ -37,11 +37,7 @@ public:
 
     bool notify(QObject *receiver, QEvent *event);
 #ifdef HAVE_X11
-# ifdef HAVE_QT5
     bool xcbEventFilter(void *event);
-# else
-    bool x11EventFilter(XEvent *event);
-# endif
 #endif
 #ifdef Q_OS_MAC
     bool macEventFilter(EventHandlerCallRef, EventRef);
@@ -53,8 +49,6 @@ public:
 signals:
     void forceSavePreferences();
     void dockActivated();
-    void newTrayOwner();
-    void trayOwnerDied();
 
 private:
     void init(bool GUIenabled);

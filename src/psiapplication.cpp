@@ -39,22 +39,13 @@
 #include <QDesktopWidget>
 #include <QEvent>
 #include <QX11Info>
-#ifdef HAVE_QT5
-# include <xcb/xcb.h>
-# include <QAbstractNativeEventFilter>
-#endif
+#include <xcb/xcb.h>
+#include <QAbstractNativeEventFilter>
 
 // Atoms required for monitoring the freedesktop.org notification area
-#ifdef HAVE_QT5
-static xcb_atom_t manager_atom = 0;
-static xcb_atom_t tray_selection_atom = 0;
 xcb_window_t root_window = 0;
-xcb_window_t tray_owner = None;
-//static Atom atom_KdeNetUserTime;
 static xcb_atom_t kde_net_wm_user_time = 0;
 QAbstractNativeEventFilter *_xcbEventFilter = 0;
-#endif
-
 
 
 Time   qt_x_last_input_time = CurrentTime;
@@ -76,7 +67,7 @@ const int KeyPress = XKeyPress;
 #endif
 
 // mblsha:
-// currently this file contains some Anti-"focus steling prevention" code by
+// currently this file contains some Anti-"focus stealing prevention" code by
 // Lubos Lunak (l.lunak@kde.org)
 //
 // This should resolve all bugs with KWin3 and old Qt, but maybe it'll be useful for
@@ -98,41 +89,6 @@ public:
         return false;
     }
 };
-
-void setTrayOwnerWindow()
-{
-    /* This code is basically trying to mirror what happens in
-     * eggtrayicon.c:egg_tray_icon_update_manager_window()
-     */
-
-    uint32_t events = 0;
-    // ignore events from the old tray owner
-    if (tray_owner != None)
-    {
-        xcb_change_window_attributes(QX11Info::connection(), tray_owner, XCB_CW_EVENT_MASK, &events);
-    }
-
-    // obtain the Window handle for the new tray owner
-    xcb_grab_server(QX11Info::connection());
-    xcb_get_selection_owner_cookie_t tray_owner_cookie =
-            xcb_get_selection_owner(QX11Info::connection(), tray_selection_atom);
-    xcb_get_selection_owner_reply_t *tray_owner_reply =
-            xcb_get_selection_owner_reply(QX11Info::connection(), tray_owner_cookie, 0);
-    tray_owner = tray_owner_reply? tray_owner_reply->owner :  0;
-    if (tray_owner) {
-        events = XCB_EVENT_MASK_STRUCTURE_NOTIFY|XCB_EVENT_MASK_PROPERTY_CHANGE;
-        xcb_change_window_attributes(QX11Info::connection(), tray_owner, XCB_CW_EVENT_MASK,
-            &events);
-    }
-
-
-    // we have to be able to spot DestroyNotify messages on the tray owner
-    if (tray_owner != None) {
-
-    }
-    xcb_ungrab_server(QX11Info::connection());
-    xcb_flush(QX11Info::connection());
-}
 #endif
 
 //----------------------------------------------------------------------------
@@ -167,7 +123,6 @@ void PsiApplication::init(bool GUIenabled)
         const int max = 20;
         char* names[max];
         int n = 0;
-        char buf[32];
         // make a note of the window handle for the root window
         root_window = QX11Info::appRootWindow();
 
@@ -175,19 +130,10 @@ void PsiApplication::init(bool GUIenabled)
         xcb_intern_atom_cookie_t cookies[max];
 
         _xcbEventFilter = new XcbEventFiter(this);
-        // get the selection type we'll use to locate the notification tray
-        snprintf(buf, sizeof(buf), "_NET_SYSTEM_TRAY_S%d", QX11Info::appScreen());
         xcb_connection_t *xcb = QX11Info::connection();
-
-        //atoms[n] = &atom_KdeNetUserTime;
-        //names[n++] = (char *) "_KDE_NET_USER_TIME";
 
         atoms[n] = &kde_net_wm_user_time;
         names[n++] = (char *) "_NET_WM_USER_TIME";
-        atoms[n] = &manager_atom;
-        names[n++] = (char *) "MANAGER";
-        atoms[n] = &tray_selection_atom;
-        names[n++] = buf;
 
         for (int i = 0; i < n; i++ ) {
             cookies[i] = xcb_intern_atom(xcb, 0, strlen(names[i]), names[i]);
@@ -197,7 +143,6 @@ void PsiApplication::init(bool GUIenabled)
             *atoms[i] = reply? reply->atom : 0;
         }
 
-
         xcb_get_window_attributes_cookie_t wa_cookie = xcb_get_window_attributes(xcb, root_window);
         xcb_get_window_attributes_reply_t *wa_reply = xcb_get_window_attributes_reply(xcb, wa_cookie, 0);
         if (wa_reply) {
@@ -206,7 +151,6 @@ void PsiApplication::init(bool GUIenabled)
             xcb_change_window_attributes(xcb, root_window, XCB_CW_EVENT_MASK,
                 &event_mask);
         }
-        setTrayOwnerWindow();
         installNativeEventFilter(_xcbEventFilter);
     }
 #endif
@@ -241,33 +185,6 @@ bool PsiApplication::xcbEventFilter(void *event)
 {
     xcb_generic_event_t* ev = static_cast<xcb_generic_event_t *>(event);
     switch (ev->response_type) {
-    case XCB_CLIENT_MESSAGE:
-    {
-        xcb_client_message_event_t *msg = static_cast<xcb_client_message_event_t *>(event);
-        if (msg->window == root_window && msg->type == manager_atom)
-        {
-            // A new notification area application has
-            // announced its presence
-            setTrayOwnerWindow();
-            newTrayOwner();
-        }
-        break;
-    }
-    case XCB_DESTROY_NOTIFY:
-    {
-        xcb_destroy_notify_event_t *dn = static_cast<xcb_destroy_notify_event_t *>(event);
-        if (dn->event == tray_owner)
-        {
-            // there is now no known notification area.
-            // We're still looking out for the MANAGER
-            // message sent to the root window, at which
-            // point we'll have another look to see
-            // whether a notification area is available.
-            tray_owner = 0;
-            trayOwnerDied();
-        }
-        break;
-    }
     case XCB_BUTTON_PRESS:
     case XCB_KEY_PRESS:
     {
