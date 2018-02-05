@@ -291,6 +291,49 @@ public:
         return size;
     }
 
+    bool helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option, const QModelIndex &index)
+    {
+        Q_UNUSED(option);
+        GCUserView *uv;
+        GCUserViewItem *lvi;
+        QTreeWidgetItem *twi;
+        if (event->type() != QEvent::ToolTip || !(uv = dynamic_cast<GCUserView*>(view)) ||
+                !(twi = uv->findEntry(index)) || !(lvi = dynamic_cast<GCUserViewItem*>(twi)))
+        {
+            return false;
+        }
+        const QString &nick = lvi->text(0);
+        const Status &s = lvi->s;
+        UserListItem u;
+        // SICK SICK SICK SICK
+        GCMainDlg* dlg = uv->gcDialog();
+        if (!dlg) {
+            qDebug("Calling maybetip on an entity without an owning dialog");
+            return false;
+        }
+        u.setJid(dlg->jid().withResource(nick));
+        u.setName(nick);
+
+        // Find out capabilities info
+        Jid caps_jid(dlg->jid().withResource(nick));
+        CapsManager *cm = dlg->account()->client()->capsManager();
+        QString client_name = cm->clientName(caps_jid);
+        QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
+
+        // make a resource so the contact appears online
+        UserResource ur;
+        ur.setName(nick);
+        ur.setStatus(s);
+        ur.setClient(client_name,client_version,"");
+        //ur.setClient(QString(),QString(),"");
+        u.userResourceList().append(ur);
+        u.setPrivate(true);
+        u.setAvatarFactory(dlg->account()->avatarFactory());
+
+        PsiToolTip::showText(event->globalPos(), u.makeTip(), uv);
+        return true;
+    }
+
 private:
     QColor colorForeground_, colorBackground_, colorModerator_, colorParticipant_, colorVisitor_, colorNoRole_;
     bool showGroups_, slimGroups_, nickColoring_, showClients_, showAffiliations_, showStatusIcons_, showAvatar_, avatarAtLeft_;
@@ -531,57 +574,6 @@ void GCUserView::removeEntry(const QString &nick)
     }
 }
 
-bool GCUserView::maybeTip(const QPoint &pos)
-{
-    QTreeWidgetItem *qlvi = itemAt(pos);
-    if(!qlvi || !qlvi->parent())
-        return false;
-
-    GCUserViewItem *lvi = (GCUserViewItem *) qlvi;
-//    QRect r(visualItemRect(lvi));
-
-    const QString &nick = lvi->text(0);
-    const Status &s = lvi->s;
-    UserListItem u;
-    // SICK SICK SICK SICK
-    GCMainDlg* dlg = gcDlg_;
-    if (!dlg) {
-        qDebug("Calling maybetip on an entity without an owning dialog");
-        return false;
-    }
-    u.setJid(dlg->jid().withResource(nick));
-    u.setName(nick);
-
-    // Find out capabilities info
-    Jid caps_jid(dlg->jid().withResource(nick));
-    CapsManager *cm = dlg->account()->client()->capsManager();
-    QString client_name = cm->clientName(caps_jid);
-    QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
-
-    // make a resource so the contact appears online
-    UserResource ur;
-    ur.setName(nick);
-    ur.setStatus(s);
-    ur.setClient(client_name,client_version,"");
-    //ur.setClient(QString(),QString(),"");
-    u.userResourceList().append(ur);
-    u.setPrivate(true);
-    u.setAvatarFactory(dlg->account()->avatarFactory());
-
-    PsiToolTip::showText(mapToGlobal(pos), u.makeTip(), this);
-    return true;
-}
-
-bool GCUserView::event(QEvent* e)
-{
-    if (e->type() == QEvent::ToolTip) {
-        QPoint pos = ((QHelpEvent*) e)->pos();
-        e->setAccepted(maybeTip(pos));
-        return true;
-    }
-    return QTreeWidget::event(e);
-}
-
 void GCUserView::mousePressEvent(QMouseEvent *event)
 {
     QTreeWidgetItem *item = itemAt(event->pos());
@@ -774,6 +766,11 @@ void GCUserView::setLooks()
 {
     ((GCUserViewDelegate*)itemDelegate())->updateSettings();
     viewport()->update();
+}
+
+GCMainDlg *GCUserView::gcDialog()
+{
+    return gcDlg_;
 }
 
 #include "gcuserview.moc"

@@ -23,6 +23,7 @@ qrc_*
 ui_*
 moc_*
 object_script.*
+callgrind.out.*
 mocinclude.tmp
 release/
 debug/

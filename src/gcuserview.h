@@ -40,9 +40,9 @@ class GCUserViewItem : public QObject, public QTreeWidgetItem
 public:
     GCUserViewItem(GCUserViewGroupItem *);
     void setAvatar(const QPixmap& pix);
-    QPixmap avatar() const { return avatar_; };
+    QPixmap avatar() const { return avatar_; }
     void setIcon(const QPixmap &icon);
-    QPixmap icon() const { return icon_; };
+    QPixmap icon() const { return icon_; }
 
     Status s;
 
@@ -59,7 +59,7 @@ public:
     GCUserViewGroupItem(GCUserView *, const QString&, int);
 
     void updateText();
-    int key() const { return key_; };
+    int key() const { return key_; }
 
 private:
     int key_;
@@ -74,7 +74,7 @@ public:
     ~GCUserView();
 
     void setMainDlg(GCMainDlg* mainDlg);
-    GCMainDlg* mainDlg() const { return gcDlg_; };
+    GCMainDlg* mainDlg() const { return gcDlg_; }
     virtual QMimeData* mimeData(const QList<QTreeWidgetItem*>items) const;
     void clear();
     void updateAll();
@@ -91,8 +91,6 @@ protected:
     enum Role { Moderator = 0, Participant = 1, Visitor = 2 };
 
     GCUserViewGroupItem* findGroup(XMPP::MUCItem::Role a) const;
-    bool maybeTip(const QPoint &);
-    bool event(QEvent* e);
     void mousePressEvent(QMouseEvent *event);
     void contextMenuEvent(QContextMenuEvent *cm);
 
@@ -104,7 +102,18 @@ private slots:
     void qlv_doubleClicked(const QModelIndex& index);
 
 private:
+    friend class GCUserViewDelegate;
+    GCMainDlg* gcDialog();
+
     GCMainDlg* gcDlg_;
 };
 
+/*class GCUserViewX : public QAbstractItemView
+{
+    Q_OBJECT
+public:
+    GCUserView(QWidget* parent);
+    ~GCUserView();
+}
+*/
 #endif
