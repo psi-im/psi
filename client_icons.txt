@@ -111,7 +111,7 @@ osiris osiris
 ovi-chat chat.ovi.com,chat.nokia.com,nokiachat,ovi#contacts
 pandion pandion
 palringo palringo
-poezio sleekxmpp.com
+poezio http://slixmpp.com
 psiplus psi+,psi-dev
 psi psi,psi-im
 pidgin pidgin,d0bfd0b8d0b4d0b6d0b8d0bd 
