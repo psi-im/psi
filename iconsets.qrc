@@ -129,6 +129,7 @@
         <file>iconsets/system/default/cm_check.png</file>
         <file>iconsets/system/default/cm_invertcheck.png</file>
         <file>iconsets/system/default/cm_uncheck.png</file>
+        <file>iconsets/system/default/keys_64.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
         <file>iconsets/system/default/whiteboarding/select.png</file>
@@ -369,6 +370,7 @@
         <file>iconsets/clients/default/mcabber.png</file>
         <file>iconsets/clients/default/miranda-ng.png</file>
         <file>iconsets/clients/default/miranda.png</file>
+        <file>iconsets/clients/default/movim.png</file>
         <file>iconsets/clients/default/pidgin.png</file>
         <file>iconsets/clients/default/poezio.png</file>
         <file>iconsets/clients/default/psiplus.png</file>
@@ -382,6 +384,5 @@
         <file>iconsets/clients/default/vk4xmpp.png</file>
         <file>iconsets/clients/default/xabber.png</file>
         <file>iconsets/clients/default/yaxim.png</file>
-        <file>iconsets/system/default/keys_64.png</file>
     </qresource>
 </RCC>

@@ -80,6 +80,11 @@ Based on the huge on from Psi+ repository.
         </icon>
 
         <icon>
+                <x xmlns='name'>clients/movim</x>
+                <object mime='image/png'>movim.png</object>
+        </icon>
+
+        <icon>
                 <x xmlns='name'>clients/pidgin</x>
                 <object mime='image/png'>pidgin.png</object>
         </icon>

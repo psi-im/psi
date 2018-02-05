@@ -101,6 +101,7 @@ miranda-ng nightly.miranda.im,miranda-ng.org
 mirandahotcoffee hotcoffee
 monal monal.im
 movamessenger.sis movamessenge
+movim movim
 nekbot sleekxmpp.com#1.1.10
 nimbuzz nimbuzz
 omnipresence omnipresence,home.gna.org
@@ -111,7 +112,7 @@ osiris osiris
 ovi-chat chat.ovi.com,chat.nokia.com,nokiachat,ovi#contacts
 pandion pandion
 palringo palringo
-poezio http://slixmpp.com
+poezio slixmpp.com,poezio
 psiplus psi+,psi-dev
 psi psi,psi-im
 pidgin pidgin,d0bfd0b8d0b4d0b6d0b8d0bd 
