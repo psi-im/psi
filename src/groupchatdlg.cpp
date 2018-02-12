@@ -101,6 +101,7 @@
 
 #include "popupmanager.h"
 #include "psievent.h"
+#include "avcall/avcall.h"
 
 #define MCMDMUC        "http://psi-im.org/ids/mcmd#mucmain"
 #define MCMDMUCNICK    "http://psi-im.org/ids/mcmd#mucnick"
@@ -218,6 +219,7 @@ public:
     int state;
     int mucNameSource;
     MUCManager *mucManager;
+    GCUserModel *usersModel;
     QString self, prev_self;
     QString mucName, discoMucName, vcardMucName;
     QString password;
@@ -413,9 +415,9 @@ join <channel>{,<channel>} [pass{,<pass>}
             } else if(cmd == "ban" && command.count() > 1) {
                 command.removeFirst();
                 QString nick = command.takeFirst().trimmed();
-                GCUserViewItem *contact = dynamic_cast<GCUserViewItem*>( dlg->ui_.lv_users->findEntry(nick) );
-                if(contact && !contact->s.mucItem().jid().isEmpty()) {
-                    nick = contact->s.mucItem().jid().bare();
+                GCUserModel::MUCContact *contact = dlg->d->usersModel->findEntry(nick);
+                if(contact && !contact->status.mucItem().jid().isEmpty()) {
+                    nick = contact->status.mucItem().jid().bare();
                 }
                 QString reason;
                 if(!command.isEmpty()) {
@@ -474,7 +476,7 @@ join <channel>{,<channel>} [pass{,<pass>}
                 << "idle" + spaceAtEnd << "quote" + spaceAtEnd  << "topic" + spaceAtEnd;
             } else if (item == 1) {
                 if (partcommand[0] == "version" || partcommand[0] == "idle" || partcommand[0] == "kick" || partcommand[0] == "ban") {
-                    all = dlg->ui_.lv_users->nickList();
+                    all = usersModel->nickList();
                 } else if (partcommand[0] == "topic") {
                     LanguageManager::LangId id;
                     all << dlg->d->subjectMap.value(id);
@@ -623,7 +625,7 @@ public:
         };
 
         QStringList allNicks() {
-            return p_->dlg->ui_.lv_users->nickList();
+            return p_->dlg->d->usersModel->nickList();
         }
 
         QStringList mCmdList_;
@@ -655,12 +657,159 @@ void GCMainDlg::onNickInsertClick(const QString &nick)
     ui_.mle->chatEdit()->setFocus();
 }
 
-void GCMainDlg::showNM(const QString& nick)
+void GCMainDlg::doContactContextMenu(const QString &nick)
 {
-    QTreeWidgetItem* itm = ui_.lv_users->findEntry(nick);
-    if (itm) {
-        ui_.lv_users->doContextMenu(itm);
+    auto itm = d->usersModel->findEntry(nick);
+    if (!itm) {
+        return;
     }
+
+    if (!d->usersModel->selfContact()) {
+        qWarning() << QString("groupchatdlg.cpp: Self ('%1') not found in contactlist").arg(d->self);
+        return;
+    }
+
+    const MUCItem &smi = d->usersModel->selfContact()->status.mucItem();
+    const MUCItem &lmi = itm->status.mucItem();
+
+    bool self = d->self == itm->name;
+    QAction* act;
+    QMenu *pm = new QMenu();
+    act = new QAction(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"), pm);
+    pm->addAction(act);
+    act->setData(0);
+    act = new QAction(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), pm);
+    pm->addAction(act);
+    act->setData(1);
+    if (AvCallManager::isSupported()) {
+        act = new QAction(IconsetFactory::icon("psi/avcall").icon(), tr("Voice Call"), pm);
+        pm->addAction(act);
+        act->setData(5);
+    }
+
+    act = new QAction(tr("E&xecute Command"), pm);
+    pm->addAction(act);
+    act->setData(6);
+
+    pm->addSeparator();
+
+    // Kick and Ban submenus
+    QStringList reasons = PsiOptions::instance()->getOption("options.muc.reasons").toStringList();
+    int cntReasons = reasons.count();
+    if (cntReasons > 99)
+        cntReasons = 99; // Only first 99 reasons
+
+    QMenu *kickMenu = new QMenu(tr("&Kick"), pm);
+    act = new QAction(tr("No reason"), kickMenu);
+    kickMenu->addAction(act);
+    act->setData(10);
+    act = new QAction(tr("Custom reason"), kickMenu);
+    kickMenu->addAction(act);
+    act->setData(100);
+    kickMenu->addSeparator();
+    bool canKick = MUCManager::canKick(smi, lmi);
+    for (int i = 0; i < cntReasons; ++i) {
+        act = new QAction(reasons[i], kickMenu);
+        kickMenu->addAction(act);
+        act->setData(101+i);
+    }
+    kickMenu->setEnabled(canKick);
+
+    QMenu *banMenu = new QMenu(tr("&Ban"), pm);
+    act = new QAction(tr("No reason"), banMenu);
+    banMenu->addAction(act);
+    act->setData(11);
+    act = new QAction(tr("Custom reason"), banMenu);
+    banMenu->addAction(act);
+    act->setData(200);
+    banMenu->addSeparator();
+    bool canBan = MUCManager::canBan(smi, lmi);
+    for (int i = 0; i < cntReasons; ++i) {
+        act = new QAction(reasons[i], banMenu);
+        banMenu->addAction(act);
+        act->setData(201+i);
+    }
+    banMenu->setEnabled(canBan);
+
+    pm->addMenu(kickMenu);
+    kickMenu->menuAction()->setEnabled(canKick);
+    pm->addMenu(banMenu);
+    banMenu->menuAction()->setEnabled(canBan);
+
+    QMenu* rm = new QMenu(tr("Change Role"), pm);
+    act = new QAction(tr("Visitor"), rm);
+    rm->addAction(act);
+    act->setData(12);
+    act->setCheckable(true);
+    act->setChecked(lmi.role() == MUCItem::Visitor);
+    act->setEnabled( (!self || lmi.role() == MUCItem::Visitor) && MUCManager::canSetRole(smi,lmi,MUCItem::Visitor) );
+
+    act = new QAction(tr("Participant"), rm);
+    rm->addAction(act);
+    act->setData(13);
+    act->setCheckable(true);
+    act->setChecked(lmi.role() == MUCItem::Participant);
+    act->setEnabled( (!self || lmi.role() == MUCItem::Participant) && MUCManager::canSetRole(smi,lmi,MUCItem::Participant));
+
+    act = new QAction(tr("Moderator"), rm);
+    rm->addAction(act);
+    act->setData(14);
+    act->setCheckable(true);
+    act->setChecked( lmi.role() == MUCItem::Moderator);
+    act->setEnabled( (!self || lmi.role() == MUCItem::Moderator) && MUCManager::canSetRole(smi,lmi,MUCItem::Moderator));
+    pm->addMenu(rm);
+
+    QMenu* am = new QMenu(tr("Change Affiliation"), pm);
+    act = am->addAction(tr("Unaffiliated"));
+    act->setData(15);
+    act->setCheckable(true);
+    act->setChecked(lmi.affiliation() == MUCItem::NoAffiliation);
+    act->setEnabled((!self || lmi.affiliation() == MUCItem::NoAffiliation) && MUCManager::canSetAffiliation(smi,lmi,MUCItem::NoAffiliation));
+
+    act = am->addAction(tr("Member"));
+    act->setData(16);
+    act->setCheckable(true);
+    act->setChecked(lmi.affiliation() == MUCItem::Member);
+    act->setEnabled((!self || lmi.affiliation() == MUCItem::Member) && MUCManager::canSetAffiliation(smi,lmi,MUCItem::Member));
+
+    act = am->addAction(tr("Administrator"));
+    act->setData(17);
+    act->setCheckable(true);
+    act->setChecked(lmi.affiliation() == MUCItem::Admin);
+    act->setEnabled((!self || lmi.affiliation() == MUCItem::Admin) && MUCManager::canSetAffiliation(smi,lmi,MUCItem::Admin));
+
+    act = am->addAction(tr("Owner"));
+    act->setData(18);
+    act->setCheckable(true);
+    act->setChecked(lmi.affiliation() == MUCItem::Owner);
+    act->setEnabled((!self || lmi.affiliation() == MUCItem::Owner) && MUCManager::canSetAffiliation(smi,lmi,MUCItem::Owner));
+
+    pm->addMenu(am);
+    pm->addSeparator();
+    //pm->insertItem(tr("Send &File"), 4);
+    //pm->insertSeparator();
+    //pm->insertItem(tr("Check &Status"), 2);
+
+    act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), pm);
+    pm->addAction(act);
+    act->setData(3);
+
+    const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
+    if (!css.isEmpty()) {
+        pm->setStyleSheet(css);
+    }
+    int x = -1;
+    bool enabled = false;
+    act = pm->exec(QCursor::pos());
+    if(act) {
+        x = act->data().toInt();
+        enabled = act->isEnabled();
+    }
+    delete pm;
+
+    if(x == -1 || !enabled)
+        return;
+    lv_action(itm->name, itm->status, x);
 }
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
@@ -681,6 +830,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     d->histAt = 0;
     //d->findDlg = 0;
     d->configDlg = 0;
+    d->usersModel = new GCUserModel(pa, j, this);
 
     d->state = Private::Connected;
 
@@ -698,7 +848,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     ui_.log->setAccount(account());
 #endif
 
-    connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(showNM(QString)));
+    connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(doContactContextMenu(QString)));
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
     connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
 
@@ -719,22 +869,16 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     //connect(ui_.log, SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
 
-    ui_.lv_users->setMainDlg(this);
-#ifdef _MSC_VER
-#pragma message ("FIXME: In Qt5 setSupportedDragActions is obsoleted.")
-#pragma message ("QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView.")
-#else
-#warning "FIXME: In Qt5 setSupportedDragActions is obsoleted."
-#warning "QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView."
-#endif
-#ifndef HAVE_QT5
-    ui_.lv_users->model()->setSupportedDragActions(Qt::CopyAction);
-#endif
+    ui_.lv_users->setModel(d->usersModel);
     if (PsiOptions::instance()->getOption("options.ui.contactlist.disable-scrollbar").toBool() ) {
         ui_.lv_users->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
+    connect(ui_.lv_users, SIGNAL(contextMenuRequested(const QString&)), SLOT(doContactContextMenu(const QString&)));
     connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
     connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
+    for (int i = 0; i < GCUserModel::LastGroupRole; i++) {
+        ui_.lv_users->setExpanded(d->usersModel->index(i, 0), true);
+    }
 
     // typeahead find bar
     QHBoxLayout *hb3a = new QHBoxLayout();
@@ -880,7 +1024,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
     // Connect signals from MUC manager
     connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
-    connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
+    connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), d->usersModel, SLOT(updateAll()));
 
     updateMucName();
     updateGCVCard();
@@ -1402,9 +1546,9 @@ void GCMainDlg::configureRoom()
     if(d->configDlg)
         ::bringToFront(d->configDlg);
     else {
-        GCUserViewItem* c = (GCUserViewItem*)ui_.lv_users->findEntry(d->self);
-        MUCItem::Role role = c ? c->s.mucItem().role() : MUCItem::UnknownRole;
-        MUCItem::Affiliation affiliation = c ? c->s.mucItem().affiliation() : MUCItem::UnknownAffiliation;
+        auto c = d->usersModel->selfContact();
+        MUCItem::Role role = c ? c->status.mucItem().role() : MUCItem::UnknownRole;
+        MUCItem::Affiliation affiliation = c ? c->status.mucItem().affiliation() : MUCItem::UnknownAffiliation;
         d->configDlg = new MUCConfigDlg(d->mucManager, this);
         d->configDlg->setRoleAffiliation(role, affiliation);
         d->configDlg->show();
@@ -1481,7 +1625,7 @@ void GCMainDlg::dragEnterEvent(QDragEnterEvent *e)
 void GCMainDlg::dropEvent(QDropEvent *e)
 {
     Jid jid(e->mimeData()->text());
-    if (jid.isValid() && !jid.node().isEmpty() && !ui_.lv_users->hasJid(jid)) {
+    if (jid.isValid() && !jid.node().isEmpty() && !d->usersModel->hasJid(jid)) {
         Message m;
         m.setTo(this->jid());
         m.addMUCInvite(MUCInvite(jid));
@@ -1603,7 +1747,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             }
         }
 
-        GCUserViewItem* contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
+        auto contact = d->usersModel->findEntry(nick);
         if (contact == NULL) {
             //contact joining
             //ui_.log->updateAvatar(jid().withResource(nick), isSelf? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
@@ -1650,8 +1794,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             if ( !d->connecting && options_->getOption("options.muc.show-role-affiliation").toBool() ) {
                 QString message;
                 QString reason;
-                if (contact->s.mucItem().role() != s.mucItem().role() && s.mucItem().role() != MUCItem::NoRole) {
-                    if (contact->s.mucItem().affiliation() != s.mucItem().affiliation()) {
+                if (contact->status.mucItem().role() != s.mucItem().role() && s.mucItem().role() != MUCItem::NoRole) {
+                    if (contact->status.mucItem().affiliation() != s.mucItem().affiliation()) {
                         message = tr("%1 is now %2 and %3").arg(nick).arg(MUCManager::roleToString(s.mucItem().role(),true)).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
                     }
                     else {
@@ -1659,7 +1803,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                     }
                     reason = s.mucItem().reason();
                 }
-                else if (contact->s.mucItem().affiliation() != s.mucItem().affiliation()) {
+                else if (contact->status.mucItem().affiliation() != s.mucItem().affiliation()) {
                     message += tr("%1 is now %2").arg(nick).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
                     reason = s.mucItem().reason();
                 }
@@ -1674,14 +1818,14 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             }
             if ( !d->connecting && options_->getOption("options.muc.show-status-changes").toBool() ) {
                 bool statusWithPriority = options_->getOption("options.ui.muc.status-with-priority").toBool();
-                if (s.status() != contact->s.status() || s.show() != contact->s.show() ||
-                        (statusWithPriority && s.priority() != contact->s.priority())) {
+                if (s.status() != contact->status.status() || s.show() != contact->status.show() ||
+                        (statusWithPriority && s.priority() != contact->status.priority())) {
                     ui_.log->dispatchMessage(MessageView::statusMessage(
                                                  nick, (int)s.type(), s.status(), s.priority()));
                 }
             }
         }
-        ui_.lv_users->updateEntry(nick, s);
+        d->usersModel->updateEntry(nick, s);
         //if(!nick.isEmpty())
         //    avatarUpdated(jidForNick(nick)); // only by event from AvatarFactory we should do this
     }
@@ -1714,9 +1858,9 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 
         QString message;
         QString nickJid;
-        GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-        if (contact && !contact->s.mucItem().jid().isEmpty()) {
-            nickJid = QString("%1 (%2)").arg(nick).arg(contact->s.mucItem().jid().full());
+        auto contact = d->usersModel->findEntry(nick);
+        if (contact && !contact->status.mucItem().jid().isEmpty()) {
+            nickJid = QString("%1 (%2)").arg(nick).arg(contact->status.mucItem().jid().full());
         } else {
             nickJid = nick;
         }
@@ -1760,7 +1904,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         if ( !d->connecting && !suppressDefault && options_->getOption("options.muc.show-joins").toBool() ) {
             if (s.getMUCStatuses().contains(303)) {
                 message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
-                ui_.lv_users->updateEntry(s.mucItem().nick(), s);
+                d->usersModel->updateEntry(s.mucItem().nick(), s);
                 appendSysMsg(MessageView::nickChangeMessage(nick, s.mucItem().nick()));
             } else {
                 //contact leaving
@@ -1775,7 +1919,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
             mv.setJoinLeaveHidden();
             appendSysMsg(mv);
         }
-        ui_.lv_users->removeEntry(nick);
+        d->usersModel->removeEntry(nick);
     }
 
     if (s.caps().isValid()) {
@@ -1799,12 +1943,8 @@ void GCMainDlg::avatarUpdated(const Jid &jid_)
             ui_.log->updateAvatar(jid_, ChatViewCommon::RemoteParty);
             return;
         }
-
-        GCUserViewItem *it = dynamic_cast<GCUserViewItem*>(ui_.lv_users->findEntry(jid_.resource()));
-        if(it) {
-            it->setAvatar(account()->avatarFactory()->getMucAvatar(jid_));
-            ui_.log->updateAvatar(jid_, jid_.resource() == d->self? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
-        }
+        d->usersModel->updateAvatar(jid_.resource());
+        ui_.log->updateAvatar(jid_, jid_.resource() == d->self? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
     }
 }
 
@@ -1922,7 +2062,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 void GCMainDlg::joined()
 {
     if(d->state == Private::Connecting) {
-        ui_.lv_users->clear();
+        d->usersModel->clear();
         d->state = Private::Connected;
         ui_.pb_topic->setEnabled(true);
         setStatusTabIcon(STATUS_ONLINE);
@@ -2143,7 +2283,7 @@ void GCMainDlg::optionsUpdate()
     setShortcuts();
     d->typeahead->optionsUpdate();
     // update status icons
-    ui_.lv_users->updateAll();
+    d->usersModel->updateAll();
 }
 
 void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
@@ -2184,8 +2324,8 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
         d->mucManager->kick(nick);
     }
     else if(x == 11) {
-        GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-        d->mucManager->ban(contact->s.mucItem().jid());
+        auto contact = d->usersModel->findEntry(nick);
+        d->mucManager->ban(contact->status.mucItem().jid());
     }
     else if(x > 11 && x < 19) {
         MUCReasonsEditor editor(this);
@@ -2193,37 +2333,37 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
         if (editor.exec())
             reason = editor.reason();
         else return;
-        GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
+        auto contact = d->usersModel->findEntry(nick);
         if (!contact)
             return;
         switch(x) {
         case 12:
-            if (contact->s.mucItem().role() != MUCItem::Visitor)
+            if (contact->status.mucItem().role() != MUCItem::Visitor)
                 d->mucManager->setRole(nick, MUCItem::Visitor, reason);
             break;
         case 13:
-            if (contact->s.mucItem().role() != MUCItem::Participant)
+            if (contact->status.mucItem().role() != MUCItem::Participant)
                 d->mucManager->setRole(nick, MUCItem::Participant, reason);
             break;
         case 14:
-            if (contact->s.mucItem().role() != MUCItem::Moderator)
+            if (contact->status.mucItem().role() != MUCItem::Moderator)
                 d->mucManager->setRole(nick, MUCItem::Moderator, reason);
             break;
         case 15:
-            if (contact->s.mucItem().affiliation() != MUCItem::NoAffiliation)
-                d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::NoAffiliation, reason);
+            if (contact->status.mucItem().affiliation() != MUCItem::NoAffiliation)
+                d->mucManager->setAffiliation(contact->status.mucItem().jid(), MUCItem::NoAffiliation, reason);
             break;
         case 16:
-            if (contact->s.mucItem().affiliation() != MUCItem::Member)
-                d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Member, reason);
+            if (contact->status.mucItem().affiliation() != MUCItem::Member)
+                d->mucManager->setAffiliation(contact->status.mucItem().jid(), MUCItem::Member, reason);
             break;
         case 17:
-            if (contact->s.mucItem().affiliation() != MUCItem::Admin)
-                d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Admin, reason);
+            if (contact->status.mucItem().affiliation() != MUCItem::Admin)
+                d->mucManager->setAffiliation(contact->status.mucItem().jid(), MUCItem::Admin, reason);
             break;
         case 18:
-            if (contact->s.mucItem().affiliation() != MUCItem::Owner)
-                d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Owner, reason);
+            if (contact->status.mucItem().affiliation() != MUCItem::Owner)
+                d->mucManager->setAffiliation(contact->status.mucItem().jid(), MUCItem::Owner, reason);
             break;
         }
     }
@@ -2246,9 +2386,9 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
             if (x<200)
                 d->mucManager->kick(nick, reason);
             else {
-                GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
+                auto contact = d->usersModel->findEntry(nick);
                 if (!contact) return;
-                d->mucManager->ban(contact->s.mucItem().jid(), reason);
+                d->mucManager->ban(contact->status.mucItem().jid(), reason);
             }
         }
 

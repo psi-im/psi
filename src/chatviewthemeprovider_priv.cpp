@@ -201,7 +201,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
             QPixmap p;
             QBuffer buffer(&ba);
             buffer.open(QIODevice::WriteOnly);
-            p = IconsetFactory::icon(QLatin1String("psi/default_avatar")).pixmap();
+            p = IconsetFactory::icon("psi/default_avatar").pixmap();
             if (p.save(&buffer, "PNG")) {
                 res->setStatusCode(qhttp::ESTATUS_OK);
                 res->headers().insert("Content-Type", "image/png");

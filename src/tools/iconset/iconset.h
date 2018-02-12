@@ -239,6 +239,7 @@ public:
     static void reset();
 
     static PsiIcon icon(const QString &name);
+    static inline PsiIcon icon(const char *name) { return icon(QString(QLatin1String(name))); } // optimization
     static const QPixmap &iconPixmap(const QString &name);
 
     static const PsiIcon *iconPtr(const QString &name);

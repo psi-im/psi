@@ -203,11 +203,6 @@
           <property name="horizontalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
-          <column>
-           <property name="text">
-            <string notr="true">1</string>
-           </property>
-          </column>
          </widget>
         </widget>
        </item>
@@ -337,11 +332,6 @@
    <header>accountlabel.h</header>
   </customwidget>
   <customwidget>
-   <class>GCUserView</class>
-   <extends>QTreeWidget</extends>
-   <header>gcuserview.h</header>
-  </customwidget>
-  <customwidget>
    <class>ChatSplitter</class>
    <extends>QSplitter</extends>
    <header>chatsplitter.h</header>
@@ -357,6 +347,11 @@
    <class>ChatEditProxy</class>
    <extends>QTextEdit</extends>
    <header>chateditproxy.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GCUserView</class>
+   <extends>QTreeView</extends>
+   <header>gcuserview.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

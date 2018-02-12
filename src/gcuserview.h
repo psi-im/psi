@@ -22,98 +22,105 @@
 #ifndef GCUSERVIEW_H
 #define GCUSERVIEW_H
 
-#include <QTreeWidget>
+#include <QAbstractItemModel>
+#include <QTreeView>
 
 #include "xmpp_status.h"
 
 using namespace XMPP;
 
-class GCMainDlg;
 class GCUserView;
-class GCUserViewGroupItem;
+class PsiAccount;
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class GCUserViewItem : public QObject, public QTreeWidgetItem
+class GCUserModel : public QAbstractItemModel
 {
+    Q_OBJECT
+
 public:
-    GCUserViewItem(GCUserViewGroupItem *);
-    void setAvatar(const QPixmap& pix);
-    QPixmap avatar() const { return avatar_; }
-    void setIcon(const QPixmap &icon);
-    QPixmap icon() const { return icon_; }
+    enum Role { Moderator = 0, Participant = 1, Visitor = 2, LastGroupRole };
 
-    Status s;
+    enum {
+        StatusRole = Qt::UserRole,
+        AvatarRole,
+        ClientIconRole,
+        AffilationIconRole,
+    };
 
-    virtual bool operator<  (const QTreeWidgetItem& it) const;
+    class MUCContact {
+    public:
+        typedef QSharedPointer<MUCContact> Ptr;
+        QString name;
+        Status  status;
+        QPixmap avatar;
+    };
+
+    GCUserModel(PsiAccount *account, const Jid selfJid, QObject *parent);
+
+
+
+    // added
+    void removeEntry(const QString &nick);
+    void updateEntry(const QString &nick, const Status &);
+    GCUserModel::MUCContact *findEntry(const QString &) const;
+
+    void clear();
+    bool hasJid(const Jid&);
+    QStringList nickList() const;
+    MUCContact *selfContact() const;
+    void updateAvatar(const QString &nick);
+
+    // reimplemented
+    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    QMimeData* mimeData(const QModelIndexList &indexes) const;
+    Qt::DropActions supportedDragActions() const;
+    QModelIndex parent(const QModelIndex &child) const;
+    int rowCount(const QModelIndex &parent) const;
+    int columnCount(const QModelIndex &parent) const;
+
+public slots:
+    void updateAll();
+
+signals:
+    void contextMenuRequested(const QString &nick);
 
 private:
-    QPixmap avatar_;
-    QPixmap icon_;
-};
-
-class GCUserViewGroupItem : public QTreeWidgetItem
-{
-public:
-    GCUserViewGroupItem(GCUserView *, const QString&, int);
-
-    void updateText();
-    int key() const { return key_; }
+    QModelIndex findIndex(const QString &nick) const;
+    QString makeToolTip(const MUCContact &contact) const;
+    static Role groupRole(const Status &s);
 
 private:
-    int key_;
-    QString baseText_;
+    QList<MUCContact::Ptr> contacts[LastGroupRole]; // splitted into groups
+
+    PsiAccount *_account;
+    Jid _selfJid;
+    QString _selfNick;
+    MUCContact::Ptr _selfContact;
 };
 
-class GCUserView : public QTreeWidget
+class GCUserView : public QTreeView
 {
     Q_OBJECT
 public:
     GCUserView(QWidget* parent);
     ~GCUserView();
 
-    void setMainDlg(GCMainDlg* mainDlg);
-    GCMainDlg* mainDlg() const { return gcDlg_; }
-    virtual QMimeData* mimeData(const QList<QTreeWidgetItem*>items) const;
-    void clear();
-    void updateAll();
-    bool hasJid(const Jid&);
-    QTreeWidgetItem *findEntry(const QString &);
-    QTreeWidgetItem *findEntry(const QModelIndex& index);
-    void updateEntry(const QString &, const Status &);
-    void removeEntry(const QString &);
-    QStringList nickList() const;
-    void doContextMenu(QTreeWidgetItem* it);
     void setLooks();
 
 protected:
-    enum Role { Moderator = 0, Participant = 1, Visitor = 2 };
-
-    GCUserViewGroupItem* findGroup(XMPP::MUCItem::Role a) const;
     void mousePressEvent(QMouseEvent *event);
     void contextMenuEvent(QContextMenuEvent *cm);
 
 signals:
     void action(const QString &nick, const Status &, int actionType);
     void insertNick(const QString& nick);
+    void contextMenuRequested(const QString &nick);
 
 private slots:
     void qlv_doubleClicked(const QModelIndex& index);
-
-private:
-    friend class GCUserViewDelegate;
-    GCMainDlg* gcDialog();
-
-    GCMainDlg* gcDlg_;
 };
 
-/*class GCUserViewX : public QAbstractItemView
-{
-    Q_OBJECT
-public:
-    GCUserView(QWidget* parent);
-    ~GCUserView();
-}
-*/
 #endif

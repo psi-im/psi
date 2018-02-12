@@ -35,15 +35,14 @@
 #include "common.h"
 #include "psioptions.h"
 #include "coloropt.h"
-#include "avcall/avcall.h"
 #include "xmpp_muc.h"
 #include "xmpp_caps.h"
 #include "avatars.h"
 
-static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
-{
-    return s1.toLower() < s2.toLower();
-}
+//static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
+//{
+//    return s1.toLower() < s2.toLower();
+//}
 
 
 //----------------------------------------------------------------------------
@@ -86,20 +85,14 @@ public:
 
     void paint(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index) const
     {
-        GCUserView *uv = dynamic_cast<GCUserView*>(parent());
-        if(uv) {
-            QTreeWidgetItem *i = uv->findEntry(index);
-            GCUserViewGroupItem *gi = dynamic_cast<GCUserViewGroupItem*>(i);
-            if(gi) {
-                paintGroup(mp, option, gi);
-            }
-            else {
-                paintContact(mp, option, index, (GCUserViewItem*)i);
-            }
+        if (index.parent().isValid()) {
+            paintContact(mp, option, index);
+        } else {
+            paintGroup(mp, option, index);
         }
     }
 
-    void paintGroup(QPainter* p, const QStyleOptionViewItem& o, GCUserViewGroupItem* gi) const
+    void paintGroup(QPainter* p, const QStyleOptionViewItem& o, const QModelIndex& index) const
     {
         if(!showGroups_)
             return;
@@ -113,11 +106,18 @@ public:
 
         p->setPen(QPen(colorForeground_));
         rect.translate(2, (rect.height() - o.fontMetrics.height())/2);
-        p->drawText(rect, gi->text(0));
+
+        QString groupName = index.data().toString();
+        int c = index.model()->rowCount(index);
+        if (c) {
+            groupName += QString("  (%1)").arg(c);
+        }
+
+        p->drawText(rect, groupName);
         if (slimGroups_    && !(o.state & QStyle::State_Selected))
         {
             QFontMetrics fm(f);
-            int x = fm.width(gi->text(0)) + 8;
+            int x = fm.width(groupName) + 8;
             int width = rect.width();
             if(x < width - 8) {
                 int h = rect.y() + (rect.height() / 2) - 1;
@@ -130,12 +130,12 @@ public:
         }
     }
 
-    void paintContact(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index, GCUserViewItem* item) const
+    void paintContact(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index) const
     {
         mp->save();
         QStyleOptionViewItem o = option;
         QPalette palette = o.palette;
-        MUCItem::Role r = item->s.mucItem().role();
+        MUCItem::Role r = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
         QRect rect = o.rect;
 
         if(nickColoring_) {
@@ -152,7 +152,7 @@ public:
         mp->fillRect(rect, (o.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base));
 
         if(showAvatar_) {
-            QPixmap ava = item->avatar();
+            QPixmap ava = index.data(GCUserModel::AvatarRole).value<QPixmap>();
             if(ava.isNull()) {
                 ava = IconsetFactory::iconPixmap("psi/default_avatar");
             }
@@ -172,7 +172,7 @@ public:
             mp->drawPixmap(avaRect, ava);
         }
 
-        QPixmap status = showStatusIcons_ ? item->icon() : QPixmap();
+        QPixmap status = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
         int h = rect.height();
         int sh = status.isNull() ? 0 : status.height();
         rect.setHeight(qMax(sh, fontHeight_));
@@ -198,41 +198,13 @@ public:
         QList<QPixmap> rightPixs;
 
         if(showAffiliations_) {
-            MUCItem::Affiliation a = item->s.mucItem().affiliation();
-            QPixmap pix;
-            if(a == MUCItem::Owner)
-                pix = IconsetFactory::iconPixmap("affiliation/owner");
-            else if(a == MUCItem::Admin)
-                pix = IconsetFactory::iconPixmap("affiliation/admin");
-            else if(a == MUCItem::Member)
-                pix = IconsetFactory::iconPixmap("affiliation/member");
-            else if(a == MUCItem::Outcast)
-                pix = IconsetFactory::iconPixmap("affiliation/outcast");
-            else
-                pix = IconsetFactory::iconPixmap("affiliation/noaffiliation");
+            QPixmap pix = index.data(GCUserModel::AffilationIconRole).value<QPixmap>();;
             if(!pix.isNull())
                 rightPixs.push_back(pix);
         }
 
         if(showClients_) {
-            GCUserView *gcuv = (GCUserView*)item->treeWidget();
-            GCMainDlg* dlg = gcuv->mainDlg();
-            QPixmap clientPix;
-            if(dlg) {
-                UserListItem u;
-                const QString &nick = item->text(0);
-                Jid caps_jid(/*s.mucItem().jid().isEmpty() ? */ dlg->jid().withResource(nick) /* : s.mucItem().jid()*/);
-                CapsManager *cm = dlg->account()->client()->capsManager();
-                QString client_name = cm->clientName(caps_jid);
-                QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
-                UserResource ur;
-                ur.setStatus(item->s);
-                ur.setClient(client_name,client_version,"");
-                u.userResourceList().append(ur);
-                QStringList clients = u.clients();
-                if(!clients.isEmpty())
-                    clientPix = IconsetFactory::iconPixmap("clients/" + clients.takeFirst());
-            }
+            QPixmap clientPix = index.data(GCUserModel::ClientIconRole).value<QPixmap>();
             if(!clientPix.isNull())
                 rightPixs.push_back(clientPix);
         }
@@ -274,18 +246,14 @@ public:
             return QSize(0,0);
 
         QSize size = QItemDelegate::sizeHint(option, index);
-        GCUserView *uv = static_cast<GCUserView*>(parent());
-        if(uv) {
-            QTreeWidgetItem *i = uv->findEntry(index);
-            GCUserViewItem *vi = dynamic_cast<GCUserViewItem*>(i);
-            if(vi) {
-                int rowH = qMax(fontHeight_, vi->icon().height() + 2);
-                int h = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
-                size.setHeight(h);
-            }
-            else {
-                size.setHeight(showGroups_ ? fontHeight_ : 0);
-            }
+        if (index.parent().isValid()) {
+            QPixmap statusIcon = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
+            int rowH = qMax(fontHeight_, statusIcon.height() + 2);
+            int h = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
+            size.setHeight(h);
+        }
+        else {
+            size.setHeight(showGroups_ ? fontHeight_ : 0);
         }
 
         return size;
@@ -294,44 +262,12 @@ public:
     bool helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option, const QModelIndex &index)
     {
         Q_UNUSED(option);
-        GCUserView *uv;
-        GCUserViewItem *lvi;
-        QTreeWidgetItem *twi;
-        if (event->type() != QEvent::ToolTip || !(uv = dynamic_cast<GCUserView*>(view)) ||
-                !(twi = uv->findEntry(index)) || !(lvi = dynamic_cast<GCUserViewItem*>(twi)))
-        {
-            return false;
+        QString toolTip = index.data(Qt::ToolTipRole).toString();
+        if (toolTip.size()) {
+            PsiToolTip::showText(event->globalPos(), toolTip, view);
+            return true;
         }
-        const QString &nick = lvi->text(0);
-        const Status &s = lvi->s;
-        UserListItem u;
-        // SICK SICK SICK SICK
-        GCMainDlg* dlg = uv->gcDialog();
-        if (!dlg) {
-            qDebug("Calling maybetip on an entity without an owning dialog");
-            return false;
-        }
-        u.setJid(dlg->jid().withResource(nick));
-        u.setName(nick);
-
-        // Find out capabilities info
-        Jid caps_jid(dlg->jid().withResource(nick));
-        CapsManager *cm = dlg->account()->client()->capsManager();
-        QString client_name = cm->clientName(caps_jid);
-        QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
-
-        // make a resource so the contact appears online
-        UserResource ur;
-        ur.setName(nick);
-        ur.setStatus(s);
-        ur.setClient(client_name,client_version,"");
-        //ur.setClient(QString(),QString(),"");
-        u.userResourceList().append(ur);
-        u.setPrivate(true);
-        u.setAvatarFactory(dlg->account()->avatarFactory());
-
-        PsiToolTip::showText(event->globalPos(), u.makeTip(), uv);
-        return true;
+        return false;
     }
 
 private:
@@ -342,58 +278,353 @@ private:
 
 
 //----------------------------------------------------------------------------
-// GCUserViewItem
+// GCUserModel
 //----------------------------------------------------------------------------
 
-GCUserViewItem::GCUserViewItem(GCUserViewGroupItem *par)
-    : QObject()
-    , QTreeWidgetItem(par)
+
+GCUserModel::GCUserModel(PsiAccount *account, const Jid selfJid, QObject *parent) :
+    QAbstractItemModel(parent),
+    _account(account),
+    _selfJid(selfJid),
+    _selfContact(nullptr)
 {
+
 }
 
-void GCUserViewItem::setAvatar(const QPixmap &pix)
+QModelIndex GCUserModel::index(int row, int column, const QModelIndex &parent) const
 {
-    avatar_ = pix;
-    treeWidget()->viewport()->update();
-}
-
-void GCUserViewItem::setIcon(const QPixmap &icon)
-{
-    icon_ = icon;
-}
-
-bool GCUserViewItem::operator<(const QTreeWidgetItem& it) const
-{
-    GCUserViewItem *item = (GCUserViewItem*)(&it);
-    if(PsiOptions::instance()->getOption("options.ui.muc.userlist.contact-sort-style").toString() == "status") {
-        int rank = rankStatus(s.type()) - rankStatus(item->s.type());
-        if (rank == 0)
-            rank = QString::localeAwareCompare(text(0).toLower(), it.text(0).toLower());
-        return rank < 0;
+    if (!column) {
+        if (parent.isValid()) { // contact
+            if (parent.row() < LastGroupRole && row < contacts[parent.row()].size()) {
+                //qDebug("Create contact index row=%d column=%d, data=%p", row, column, contacts[parent.row()][row].data());
+                return createIndex(row, column, contacts[parent.row()][row].data());
+            }
+        } else {
+            if (row < LastGroupRole) {
+                return createIndex(row, column);
+            }
+        }
     }
-    else {
-        return text(0).toLower() < it.text(0).toLower();
+    return QModelIndex();
+}
+
+QVariant GCUserModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid() || index.column() > 0) return QVariant();
+
+    if (index.parent().isValid()) {
+        // contact
+
+        Role groupRole = (Role)index.parent().row();
+        const auto &cs = contacts[groupRole];
+        if (index.row() >= cs.size()) {
+            return QVariant();
+        }
+        const MUCContact &contact = *(cs.at(index.row()));
+
+        switch (role) {
+        case Qt::DisplayRole:
+            return contact.name;
+            break;
+        case Qt::ToolTipRole:
+            return makeToolTip(contact);
+        case StatusRole:
+            return QVariant::fromValue<Status>(contact.status);
+        case AvatarRole:
+            return contact.avatar;
+        case ClientIconRole:
+        {
+            UserListItem u;
+            Jid jid = _selfJid.withResource(contact.name);
+            Jid caps_jid(/*s.mucItem().jid().isEmpty() ? */ jid /* : s.mucItem().jid()*/); // TODO review caching of such caps
+            CapsManager *cm = _account->client()->capsManager();
+            QString client_name = cm->clientName(caps_jid);
+            QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
+            UserResource ur;
+            ur.setStatus(contact.status);
+            ur.setClient(client_name,client_version,"");
+            u.userResourceList().append(ur);
+            QStringList clients = u.clients();
+            if(!clients.isEmpty())
+                return IconsetFactory::iconPixmap("clients/" + clients.takeFirst());
+            break;
+        }
+        case AffilationIconRole:
+        {
+            MUCItem::Affiliation a = contact.status.mucItem().affiliation();
+
+            if(a == MUCItem::Owner)
+                return IconsetFactory::iconPixmap("affiliation/owner");
+            else if(a == MUCItem::Admin)
+                return IconsetFactory::iconPixmap("affiliation/admin");
+            else if(a == MUCItem::Member)
+                return IconsetFactory::iconPixmap("affiliation/member");
+            else if(a == MUCItem::Outcast)
+                return IconsetFactory::iconPixmap("affiliation/outcast");
+            else
+                return IconsetFactory::iconPixmap("affiliation/noaffiliation");
+        }
+        }
+    } else {
+        // group
+        // next list MUST match index to index with GCUserModel::Role
+        static QStringList groupNames = QStringList() << tr("Moderators") << tr("Participants") << tr("Visitors");
+        switch (role) {
+        case Qt::DisplayRole:
+            if (index.row() < groupNames.size()) {
+                return groupNames[index.row()];
+            }
+            break;
+        }
+    }
+
+    return QVariant();
+}
+
+GCUserModel::MUCContact *GCUserModel::selfContact() const
+{
+    return _selfContact.data();
+}
+
+void GCUserModel::updateAvatar(const QString &nick)
+{
+    QModelIndex index = findIndex(nick);
+    if (index.isValid()) {
+        contacts[index.parent().row()][index.row()]->avatar = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
+        emit dataChanged(index, index);
     }
 }
 
-
-//----------------------------------------------------------------------------
-// GCUserViewGroupItem
-//----------------------------------------------------------------------------
-
-GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t, int k)
-    : QTreeWidgetItem(par, QStringList(t))
-    , key_(k)
-    , baseText_(t)
+QString GCUserModel::makeToolTip(const MUCContact &contact) const
 {
-    updateText();
-    setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    const QString &nick = contact.name;
+    UserListItem u;
+
+    Jid contactJid = _selfJid.withResource(nick);
+    u.setJid(contactJid);
+    u.setName(nick);
+
+    // Find out capabilities info
+    Jid caps_jid(contactJid);
+    CapsManager *cm = _account->client()->capsManager();
+    QString client_name = cm->clientName(caps_jid);
+    QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
+
+    // make a resource so the contact appears online
+    UserResource ur;
+    ur.setName(nick);
+    ur.setStatus(contact.status);
+    ur.setClient(client_name,client_version,"");
+    //ur.setClient(QString(),QString(),"");
+    u.userResourceList().append(ur);
+    u.setPrivate(true);
+    u.setAvatarFactory(_account->avatarFactory());
+
+    return u.makeTip();
 }
 
-void GCUserViewGroupItem::updateText()
+QMimeData* GCUserModel::mimeData(const QModelIndexList &indexes) const
 {
-    int c = childCount();
-    setText(0, baseText_ + (c ? QString("  (%1)").arg(c) : ""));
+    QMimeData* data = 0;
+    if(!indexes.isEmpty()) {
+        data = new QMimeData();
+        data->setText(_selfJid.withResource(indexes.first().data().toString()).full());
+    }
+
+    return data;
+}
+
+Qt::DropActions GCUserModel::supportedDragActions() const
+{
+    return Qt::CopyAction;
+}
+
+QModelIndex GCUserModel::parent(const QModelIndex &child) const
+{
+    if (child.internalPointer()) { // contact
+        auto c = static_cast<MUCContact*>(child.internalPointer());
+        return index(groupRole(c->status), 0);
+    }
+    return QModelIndex();
+}
+
+int GCUserModel::rowCount(const QModelIndex &parent) const
+{
+    if (!parent.isValid()) { // amount of up-level groups
+        return LastGroupRole;
+    } else if (!parent.internalPointer() && parent.column() == 0) { // group
+        if (parent.row() < LastGroupRole) {
+            return contacts[parent.row()].size();
+        }
+    }
+    return 0;
+}
+
+int GCUserModel::columnCount(const QModelIndex &parent) const
+{
+    if (parent.internalPointer()) { // contact
+        return 0;
+    }
+    return 1;
+}
+
+void GCUserModel::removeEntry(const QString &nick)
+{
+    QModelIndex index = findIndex(nick);
+    if (index.isValid()) {
+        beginRemoveRows(index.parent(), index.row(), index.row());
+        contacts[index.parent().row()].removeAt(index.row());
+        endRemoveRows();
+    }
+    // TODO don't remove groups. just set display text to "" in data() (ex GCUserViewGroupItem::updateText)
+}
+
+GCUserModel::Role GCUserModel::groupRole(const Status &s)
+{
+    Role newGroupRole = Visitor;
+    switch (s.mucItem().role()) {
+    case MUCItem::Participant:
+        newGroupRole = Participant;
+        break;
+    case MUCItem::Moderator:
+        newGroupRole = Moderator;
+        break;
+    default:
+        ;
+    }
+    return newGroupRole;
+}
+
+void GCUserModel::updateEntry(const QString &nick, const Status &s)
+{
+    if (nick.isEmpty()) { // MUC self-presence? It should not come here
+        return;
+    }
+    QModelIndex contactIndex = findIndex(nick);
+
+    Role newGroupRole = groupRole(s);
+
+    if (!contactIndex.isValid() || newGroupRole != contactIndex.parent().row()) {
+        // either new contact or move between groups. we need to find destination position
+
+        bool doStatusSort = PsiOptions::instance()->getOption("options.ui.muc.userlist.contact-sort-style").toString() == QLatin1String("status");
+        int insertRowNum = 0;
+        if (contacts[newGroupRole].size()) {
+            // TODO use sorting filter model instad of code below.
+            QString lowerNick = QLocale().toLower(nick);
+            int left = 0, right = contacts[newGroupRole].size();
+            while (right - left > 0) { // std::lower_bound doesn't work here since we need index and not iterator
+                int mid = (right + left) >> 1;
+
+                int rank;
+                const MUCContact &contact = *(contacts[newGroupRole][mid]);
+                if (doStatusSort) {
+                    rank = rankStatus(s.type()) - rankStatus(contact.status.type());
+                    if (rank == 0)
+                        rank = QString::localeAwareCompare(lowerNick, QLocale().toLower(contact.name));
+                } else {
+                    rank = QString::localeAwareCompare(lowerNick, QLocale().toLower(contact.name));
+                }
+
+                if (rank <= 0) {
+                    right = mid;
+                } else {
+                    left = mid + 1;
+                }
+            }
+            insertRowNum = left;
+        }
+
+        QModelIndex newParentIndex = index(newGroupRole, 0);
+        if (contactIndex.isValid()) { // move between group
+            beginMoveRows(contactIndex.parent(), contactIndex.row(), contactIndex.row(), newParentIndex, insertRowNum);
+            auto contact = contacts[contactIndex.parent().row()].takeAt(contactIndex.row());
+            contact->status = s;
+            contacts[newGroupRole].insert(insertRowNum, contact);
+            endMoveRows();
+            // now report we want to change text of groups
+            emit dataChanged(contactIndex.parent(), contactIndex.parent(), QVector<int>() << Qt::DisplayRole); // TODO check if necessary
+            emit dataChanged(newParentIndex, newParentIndex, QVector<int>() << Qt::DisplayRole); // TODO check if necessary
+        } else { // new contact
+            emit beginInsertRows(newParentIndex, insertRowNum, insertRowNum);
+            auto contact = MUCContact::Ptr(new MUCContact);
+            contact->name = nick;
+            contact->status = s;
+            contact->avatar = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
+            contacts[newGroupRole].insert(insertRowNum, contact);
+            if (nick == _selfJid.resource()) {
+                _selfContact = contact;
+            }
+            emit endInsertRows();
+        }
+    } else {
+        // just changed status. delegate will decide how to redraw properly
+        emit dataChanged(contactIndex, contactIndex);
+    }
+}
+
+void GCUserModel::clear()
+{
+    beginResetModel();
+    for(int gr = 0; gr < LastGroupRole; gr++) {
+        contacts[gr].clear();
+    }
+    endResetModel();
+}
+
+void GCUserModel::updateAll()
+{
+    beginResetModel();
+    // TODO sort contacts here? convert all icons to pixmaps for caching purposes?
+    endResetModel();
+}
+
+bool GCUserModel::hasJid(const Jid& jid)
+{
+    for(int gr = 0; gr < LastGroupRole; gr++) {
+        for (auto const &c : contacts[gr]) {
+            auto const &cj = c->status.mucItem().jid();
+            if (!cj.isEmpty() && cj.compare(jid, false)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+QModelIndex GCUserModel::findIndex(const QString &nick) const
+{
+    for (int gr = 0; gr < LastGroupRole; gr++) {
+        const QList<MUCContact::Ptr> &cs = contacts[gr];
+        // it's possible to use binary search here since contacts are sorted by default.
+        // but sorting algo is going to change to QString::localeAwareCompare and for binary search it's
+        // quite heavy operation until we have really many contacts (maybe 200+).
+        // so let's try plain search.
+        for (int ci = 0; ci < cs.size(); ci++) {
+            if (cs[ci]->name == nick) {
+                return index(ci, 0, index(gr, 0));
+            }
+        }
+    }
+
+    return QModelIndex();
+}
+
+GCUserModel::MUCContact *GCUserModel::findEntry(const QString &nick) const
+{
+    return static_cast<GCUserModel::MUCContact*>(findIndex(nick).internalPointer());
+}
+
+QStringList GCUserModel::nickList() const
+{
+    QStringList nicks;
+    for(int gr = 0; gr < LastGroupRole; gr++) {
+        for (auto const &c : contacts[gr]) {
+            nicks << c->name;
+        }
+    }
+    nicks.sort(Qt::CaseInsensitive);
+    return nicks;
 }
 
 //----------------------------------------------------------------------------
@@ -401,8 +632,7 @@ void GCUserViewGroupItem::updateText()
 //----------------------------------------------------------------------------
 
 GCUserView::GCUserView(QWidget* parent)
-    : QTreeWidget(parent)
-    , gcDlg_(0)
+    : QTreeView(parent)
 {
     header()->hide();
     setRootIsDecorated(false);
@@ -413,13 +643,6 @@ GCUserView::GCUserView(QWidget* parent)
     setDragDropMode(QAbstractItemView::DragOnly);
 
     setItemDelegate(new GCUserViewDelegate(this));
-    QTreeWidgetItem* i;
-    i = new GCUserViewGroupItem(this, tr("Moderators"), Moderator);
-    i->setExpanded(true);
-    i = new GCUserViewGroupItem(this, tr("Participants"), Participant);
-    i->setExpanded(true);
-    i = new GCUserViewGroupItem(this, tr("Visitors"), Visitor);
-    i->setExpanded(true);
 
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(qlv_doubleClicked(QModelIndex)));
 }
@@ -428,349 +651,48 @@ GCUserView::~GCUserView()
 {
 }
 
-void GCUserView::setMainDlg(GCMainDlg* mainDlg)
-{
-    gcDlg_ = mainDlg;
-}
-
-QMimeData* GCUserView::mimeData(QList<QTreeWidgetItem *>items) const
-{
-    QMimeData* data = 0;
-    if(!items.isEmpty()) {
-        data = new QMimeData();
-        data->setText(items.first()->text(0));
-    }
-
-    return data;
-}
-
-void GCUserView::clear()
-{
-    int topCount = topLevelItemCount();
-    for(int num = 0; num < topCount; num++) {
-        GCUserViewGroupItem *j = (GCUserViewGroupItem*)topLevelItem(num);
-        qDeleteAll(j->takeChildren());
-    }
-}
-
-void GCUserView::updateAll()
-{
-    int topCount = topLevelItemCount();
-    for(int num = 0; num < topCount; num++) {
-        GCUserViewGroupItem *j = (GCUserViewGroupItem*)topLevelItem(num);
-        int count = j->childCount();
-        for(int num = 0; num < count; num++) {
-            GCUserViewItem *i = (GCUserViewItem*)j->child(num);
-            i->setIcon(PsiIconset::instance()->status(i->s).pixmap());
-        }
-        j->sortChildren(0, Qt::AscendingOrder);
-    }
-}
-
-QStringList GCUserView::nickList() const
-{
-    QStringList list;
-
-    int topCount = topLevelItemCount();
-    for(int num = 0; num < topCount; num++) {
-        GCUserViewGroupItem *j = (GCUserViewGroupItem*)topLevelItem(num);
-        int count = j->childCount();
-        for(int num = 0; num < count; num++) {
-            QTreeWidgetItem *lvi = j->child(num);
-            list << lvi->text(0);
-        }
-    }
-
-    qSort(list.begin(), list.end(), caseInsensitiveLessThan);
-    return list;
-}
-
-bool GCUserView::hasJid(const Jid& jid)
-{
-    int topCount = topLevelItemCount();
-    for(int num = 0; num < topCount; num++) {
-        GCUserViewGroupItem *j = (GCUserViewGroupItem*)topLevelItem(num);
-        int count = j->childCount();
-        for(int num = 0; num < count; num++) {
-            GCUserViewItem *lvi = (GCUserViewItem*) j->child(num);
-            if(!lvi->s.mucItem().jid().isEmpty() && lvi->s.mucItem().jid().compare(jid,false))
-                return true;
-        }
-    }
-
-    return false;
-}
-
-QTreeWidgetItem *GCUserView::findEntry(const QString &nick)
-{
-    int topCount = topLevelItemCount();
-    for(int num = 0; num < topCount; num++) {
-        GCUserViewGroupItem *j = (GCUserViewGroupItem*)topLevelItem(num);
-        int count = j->childCount();
-        for(int num = 0; num < count; num++) {
-            QTreeWidgetItem *lvi = j->child(num);
-            if(lvi->text(0) == nick)
-                return lvi;
-        }
-    }
-
-    return 0;
-}
-
-QTreeWidgetItem *GCUserView::findEntry(const QModelIndex &index)
-{
-    return itemFromIndex(index);
-}
-
-void GCUserView::updateEntry(const QString &nick, const Status &s)
-{
-    GCUserViewGroupItem* gr;
-    GCUserViewItem *lvi = (GCUserViewItem *)findEntry(nick);
-    if (lvi && lvi->s.mucItem().role() != s.mucItem().role()) {
-        gr = findGroup(lvi->s.mucItem().role());
-        delete lvi;
-        gr->updateText();
-        lvi = NULL;
-    }
-
-    gr = findGroup(s.mucItem().role());
-    if(!lvi) {
-        lvi = new GCUserViewItem(gr);
-        lvi->setAvatar(gcDlg_->account()->avatarFactory()->getMucAvatar(gcDlg_->jid().withResource(nick)));
-        lvi->setText(0, nick);
-        gr->updateText();
-    }
-
-    lvi->s = s;
-    lvi->setIcon(PsiIconset::instance()->status(lvi->s).pixmap());
-    gr->sortChildren(0, Qt::AscendingOrder);
-}
-
-GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
-{
-    Role r = Visitor;
-    if (a == MUCItem::Moderator)
-        r = Moderator;
-    else if (a == MUCItem::Participant)
-        r = Participant;
-
-    int topCount = topLevelItemCount();
-    for(int num = 0; num < topCount; num++) {
-        GCUserViewGroupItem *j = (GCUserViewGroupItem*)topLevelItem(num);
-        if ((Role)j->key() == r)
-            return (GCUserViewGroupItem*) j;
-    }
-
-    return 0;
-}
-
-void GCUserView::removeEntry(const QString &nick)
-{
-    GCUserViewItem *lvi = (GCUserViewItem *)findEntry(nick);
-    if(lvi) {
-        GCUserViewGroupItem* gr = findGroup(lvi->s.mucItem().role());
-        delete lvi;
-        gr->updateText();
-    }
-}
-
 void GCUserView::mousePressEvent(QMouseEvent *event)
 {
-    QTreeWidgetItem *item = itemAt(event->pos());
-    if (item && item->parent() && gcDlg_) {
+    QModelIndex index = currentIndex();
+    if (index.parent().isValid()) {
         if (event->button() == Qt::MidButton ||
             (event->button() == Qt::LeftButton &&
             qApp->keyboardModifiers() == Qt::ShiftModifier))
         {
-            emit insertNick(item->text(0));
+            emit insertNick(index.data().toString());
             return;
         }
     }
-    QTreeWidget::mousePressEvent(event);
+    QTreeView::mousePressEvent(event);
 }
 
 void GCUserView::qlv_doubleClicked(const QModelIndex &index)
 {
-    if(!index.isValid())
+    if(!index.isValid() || !index.parent().isValid())
         return;
 
-    GCUserViewItem *lvi = dynamic_cast<GCUserViewItem*>(itemFromIndex(index));
-    if(lvi) {
-        if(PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message")
-            action(lvi->text(0), lvi->s, 0);
-        else
-            action(lvi->text(0), lvi->s, 1);
-    }
-}
-
-void GCUserView::doContextMenu(QTreeWidgetItem *i)
-{
-    QPointer<GCUserViewItem> lvi = (GCUserViewItem *)i;
-    bool self = gcDlg_->nick() == i->text(0);
-    GCUserViewItem* c = (GCUserViewItem*) findEntry(gcDlg_->nick());
-    if (!c) {
-        qWarning() << QString("groupchatdlg.cpp: Self ('%1') not found in contactlist").arg(gcDlg_->nick());
-        return;
-    }
-    QAction* act;
-    QMenu *pm = new QMenu();
-    act = new QAction(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"), pm);
-    pm->addAction(act);
-    act->setData(0);
-    act = new QAction(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), pm);
-    pm->addAction(act);
-    act->setData(1);
-    if (AvCallManager::isSupported()) {
-        act = new QAction(IconsetFactory::icon("psi/avcall").icon(), tr("Voice Call"), pm);
-        pm->addAction(act);
-        act->setData(5);
-    }
-
-    act = new QAction(tr("E&xecute Command"), pm);
-    pm->addAction(act);
-    act->setData(6);
-
-    pm->addSeparator();
-
-    // Kick and Ban submenus
-    QStringList reasons = PsiOptions::instance()->getOption("options.muc.reasons").toStringList();
-    int cntReasons = reasons.count();
-    if (cntReasons > 99)
-        cntReasons = 99; // Only first 99 reasons
-
-    QMenu *kickMenu = new QMenu(tr("&Kick"), pm);
-    act = new QAction(tr("No reason"), kickMenu);
-    kickMenu->addAction(act);
-    act->setData(10);
-    act = new QAction(tr("Custom reason"), kickMenu);
-    kickMenu->addAction(act);
-    act->setData(100);
-    kickMenu->addSeparator();
-    bool canKick = MUCManager::canKick(c->s.mucItem(), lvi->s.mucItem());
-    for (int i = 0; i < cntReasons; ++i) {
-        act = new QAction(reasons[i], kickMenu);
-        kickMenu->addAction(act);
-        act->setData(101+i);
-    }
-    kickMenu->setEnabled(canKick);
-
-    QMenu *banMenu = new QMenu(tr("&Ban"), pm);
-    act = new QAction(tr("No reason"), banMenu);
-    banMenu->addAction(act);
-    act->setData(11);
-    act = new QAction(tr("Custom reason"), banMenu);
-    banMenu->addAction(act);
-    act->setData(200);
-    banMenu->addSeparator();
-    bool canBan = MUCManager::canBan(c->s.mucItem(), lvi->s.mucItem());
-    for (int i = 0; i < cntReasons; ++i) {
-        act = new QAction(reasons[i], banMenu);
-        banMenu->addAction(act);
-        act->setData(201+i);
-    }
-    banMenu->setEnabled(canBan);
-
-    pm->addMenu(kickMenu);
-    kickMenu->menuAction()->setEnabled(canKick);
-    pm->addMenu(banMenu);
-    banMenu->menuAction()->setEnabled(canBan);
-
-    QMenu* rm = new QMenu(tr("Change Role"), pm);
-    act = new QAction(tr("Visitor"), rm);
-    rm->addAction(act);
-    act->setData(12);
-    act->setCheckable(true);
-    act->setChecked(lvi->s.mucItem().role() == MUCItem::Visitor);
-    act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Visitor) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Visitor) );
-
-    act = new QAction(tr("Participant"), rm);
-    rm->addAction(act);
-    act->setData(13);
-    act->setCheckable(true);
-    act->setChecked(lvi->s.mucItem().role() == MUCItem::Participant);
-    act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Participant) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Participant));
-
-    act = new QAction(tr("Moderator"), rm);
-    rm->addAction(act);
-    act->setData(14);
-    act->setCheckable(true);
-    act->setChecked( lvi->s.mucItem().role() == MUCItem::Moderator);
-    act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Moderator) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Moderator));
-    pm->addMenu(rm);
-
-    QMenu* am = new QMenu(tr("Change Affiliation"), pm);
-    act = am->addAction(tr("Unaffiliated"));
-    act->setData(15);
-    act->setCheckable(true);
-    act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::NoAffiliation);
-    act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::NoAffiliation) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::NoAffiliation));
-
-    act = am->addAction(tr("Member"));
-    act->setData(16);
-    act->setCheckable(true);
-    act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::Member);
-    act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Member) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Member));
-
-    act = am->addAction(tr("Administrator"));
-    act->setData(17);
-    act->setCheckable(true);
-    act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::Admin);
-    act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Admin) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Admin));
-
-    act = am->addAction(tr("Owner"));
-    act->setData(18);
-    act->setCheckable(true);
-    act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::Owner);
-    act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Owner) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Owner));
-
-    pm->addMenu(am);
-    pm->addSeparator();
-    //pm->insertItem(tr("Send &File"), 4);
-    //pm->insertSeparator();
-    //pm->insertItem(tr("Check &Status"), 2);
-
-    act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), pm);
-    pm->addAction(act);
-    act->setData(3);
-
-    const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
-    if (!css.isEmpty()) {
-        pm->setStyleSheet(css);
-    }
-    int x = -1;
-    bool enabled = false;
-    act = pm->exec(QCursor::pos());
-    if(act) {
-        x = act->data().toInt();
-        enabled = act->isEnabled();
-    }
-    delete pm;
-
-    if(x == -1 || !enabled || lvi.isNull())
-        return;
-    action(lvi->text(0), lvi->s, x);
+    QString nick = index.data().toString();
+    Status status = index.data(GCUserModel::StatusRole).value<Status>();
+    if(PsiOptions::instance()->getOption(QLatin1String("options.messages.default-outgoing-message-type")).toString() == QLatin1String("message"))
+        action(nick, status, 0); // message
+    else
+        action(nick, status, 1); // chat
 }
 
 void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
 {
-    QTreeWidgetItem *i = 0;
-    i = currentItem();
-    if (i && i->parent() && gcDlg_) {
-        doContextMenu(i);
+    auto i = currentIndex();
+    if (!i.isValid() || !i.parent().isValid()) { // not a contact
+        QTreeView::contextMenuEvent(cm);
         return;
     }
-    QTreeWidget::contextMenuEvent(cm);
+    emit contextMenuRequested(i.data().toString());
 }
 
 void GCUserView::setLooks()
 {
     ((GCUserViewDelegate*)itemDelegate())->updateSettings();
     viewport()->update();
-}
-
-GCMainDlg *GCUserView::gcDialog()
-{
-    return gcDlg_;
 }
 
 #include "gcuserview.moc"
