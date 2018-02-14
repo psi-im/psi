@@ -19,7 +19,10 @@ public:
 
     bool exec()
     {
-        if (qc_keychain_base::exec()) return true;
+        if (qc_keychain_base::exec()) {
+            conf->addExtra("CONFIG += keychain_with_qtmodule");
+            return true;
+        }
 
         // try to find by path
         QString s;
@@ -35,7 +38,6 @@ public:
 
         // header and library were found by default paths. lets just add extra
         conf->addExtra(extraConfIfFound);
-        conf->addExtra("CONFIG += keychain_wo_qtmodule");
         return true;
     }
 };
