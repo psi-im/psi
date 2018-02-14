@@ -90,11 +90,12 @@ public:
 
 #define QC_AS_STR(s) #s
 
-#define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) \
-class qc_##shortname : public QtCompFinder \
+#define QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound, suffix) \
+class qc_##shortname##suffix : public QtCompFinder \
 { \
 public: \
-	qc_##shortname(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \
+	qc_##shortname##suffix(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \
 };
 
+#define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound,)
 #define QC_FIND_QT_COMP(id, shortname, name) QC_FIND_QT_COMP_E(id, shortname, name, "")

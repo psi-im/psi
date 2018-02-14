@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
   }
 
   keychain {
-    QT += Qt5Keychain
+    keychain_with_qtmodule:QT += Qt5Keychain # if w/o module let's suppose configure added all paths
     DEFINES += HAVE_KEYCHAIN
   }
 }

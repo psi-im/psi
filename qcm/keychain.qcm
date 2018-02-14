@@ -8,4 +8,34 @@ name: Qt Keychain
 // qc_keychain
 //----------------------------------------------------------------------------
 // id, shortname, name, extraConfIfFound
-QC_FIND_QT_COMP_E(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain")
+QC_FIND_QT_COMP_BASE(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain", _base)
+
+class qc_keychain : public qc_keychain_base
+{
+public:
+    qc_keychain(Conf *c) :
+        qc_keychain_base(c)
+    {}
+
+    bool exec()
+    {
+        if (qc_keychain_base::exec()) return true;
+
+        // try to find by path
+        QString s;
+        if (!conf->findHeader("qt5keychain/keychain.h", QStringList(), &s)) {
+            qWarning("keychain header qt5keychain/keychain.h is not found");
+            return false;
+        }
+        
+        if(!conf->checkLibrary(s, "qt5keychain")) {
+            qWarning("keychain library qt5keychain is not found");
+            return false;
+        }
+
+        // header and library were found by default paths. lets just add extra
+        conf->addExtra(extraConfIfFound);
+        conf->addExtra("CONFIG += keychain_wo_qtmodule");
+        return true;
+    }
+};

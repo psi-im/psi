@@ -337,7 +337,7 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 		--help) show_usage; exit ;;
-		*) echo "configure: WARNING: unrecognized options: $1" >&2; shift; ;;
+		*) show_usage; exit 1;;
 	esac
 done
 
@@ -409,7 +409,7 @@ qmake_check() {
 		fi
 		vout=`/bin/sh -c "$cmd" 2>&1`
 		case "${vout}" in
-			*.*.*)
+			?.?.?)
 				vmaj="${vout%%.*}"
 				if [ ! -z "$QC_QTSELECT" ]; then
 					if [ "$vmaj" = "$QC_QTSELECT" ]; then
@@ -689,13 +689,14 @@ public:
 
 #define QC_AS_STR(s) #s
 
-#define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) \\
-class qc_##shortname : public QtCompFinder \\
+#define QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound, suffix) \\
+class qc_##shortname##suffix : public QtCompFinder \\
 { \\
 public: \\
-	qc_##shortname(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \\
+	qc_##shortname##suffix(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \\
 };
 
+#define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound,)
 #define QC_FIND_QT_COMP(id, shortname, name) QC_FIND_QT_COMP_E(id, shortname, name, "")
 #line 1 "buildmodeapp.qcm"
 /*
@@ -1399,7 +1400,37 @@ name: Qt Keychain
 // qc_keychain
 //----------------------------------------------------------------------------
 // id, shortname, name, extraConfIfFound
-QC_FIND_QT_COMP_E(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain")
+QC_FIND_QT_COMP_BASE(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain", _base)
+
+class qc_keychain : public qc_keychain_base
+{
+public:
+    qc_keychain(Conf *c) :
+        qc_keychain_base(c)
+    {}
+
+    bool exec()
+    {
+        if (qc_keychain_base::exec()) return true;
+
+        // try to find by path
+        QString s;
+        if (!conf->findHeader("qt5keychain/keychain.h", QStringList(), &s)) {
+            qWarning("keychain header qt5keychain/keychain.h is not found");
+            return false;
+        }
+        
+        if(!conf->checkLibrary(s, "qt5keychain")) {
+            qWarning("keychain library qt5keychain is not found");
+            return false;
+        }
+
+        // header and library were found by default paths. lets just add extra
+        conf->addExtra(extraConfIfFound);
+        conf->addExtra("CONFIG += keychain_wo_qtmodule");
+        return true;
+    }
+};
 #line 1 "qtmultimedia.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2965,10 +2996,6 @@ public:
 			conf->addLib(libs);
 		//if(!other.isEmpty())
 		//	conf->addExtra(QString("QMAKE_CFLAGS += %1\\n").arg(other));
-
-		if(!required)
-			conf->addDefine("HAVE_PKG_" + qc_escapeArg(pkgname).toUpper());
-
 		return true;
 	}
 };
