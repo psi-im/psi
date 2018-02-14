@@ -85,7 +85,7 @@ public slots:
     void updateAll();
 
 signals:
-    void contextMenuRequested(const QString &nick);
+    void firstAdded();
 
 private:
     QModelIndex findIndex(const QString &nick) const;
@@ -121,6 +121,12 @@ signals:
 
 private slots:
     void qlv_doubleClicked(const QModelIndex& index);
+
+public slots:
+    void ensureExpandedProperly();
+
+private:
+    QMap<int,bool> expandState;
 };
 
 #endif

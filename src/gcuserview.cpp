@@ -556,6 +556,9 @@ void GCUserModel::updateEntry(const QString &nick, const Status &s)
                 _selfContact = contact;
             }
             emit endInsertRows();
+            if (contacts[newGroupRole].size() == 1) {
+                emit firstAdded();
+            }
         }
     } else {
         // just changed status. delegate will decide how to redraw properly
@@ -643,8 +646,16 @@ GCUserView::GCUserView(QWidget* parent)
     setDragDropMode(QAbstractItemView::DragOnly);
 
     setItemDelegate(new GCUserViewDelegate(this));
+    //expandAll(); // doesn't work here
 
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(qlv_doubleClicked(QModelIndex)));
+
+    QObject::connect(this, &GCUserView::expanded, this, [this](const QModelIndex &i) {
+        if (!i.parent().isValid()) expandState.insert(i.row(), true);
+    });
+    QObject::connect(this, &GCUserView::collapsed, this, [this](const QModelIndex &i) {
+        if (!i.parent().isValid()) expandState.insert(i.row(), true);
+    });
 }
 
 GCUserView::~GCUserView()
@@ -677,6 +688,15 @@ void GCUserView::qlv_doubleClicked(const QModelIndex &index)
         action(nick, status, 0); // message
     else
         action(nick, status, 1); // chat
+}
+
+void GCUserView::ensureExpandedProperly()
+{
+    QMapIterator<int,bool> it(expandState);
+    while (it.hasNext()) {
+        it.next();
+        setExpanded(model()->index(it.key(), 0), it.value());
+    }
 }
 
 void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
