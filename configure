@@ -1427,6 +1427,7 @@ public:
             qWarning("keychain library qt5keychain is not found");
             return false;
         }
+        conf->addLib("-lqt5keychain");
 
         // header and library were found by default paths. lets just add extra
         conf->addExtra(extraConfIfFound);
