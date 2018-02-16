@@ -28,6 +28,7 @@
 #include "common.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "iconset.h"
 
 // from opt_avcall.cpp
 extern void options_avcall_update();
@@ -68,6 +69,7 @@ public:
     {
         ui.setupUi(q);
         q->setWindowTitle(tr("Voice Call"));
+        q->setWindowIcon(IconsetFactory::icon("psi/avcall").icon());
 
         ui.lb_bandwidth->setEnabled(false);
         ui.cb_bandwidth->setEnabled(false);

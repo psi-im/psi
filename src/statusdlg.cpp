@@ -72,6 +72,7 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
     te->setText(u.makeDesc());
 
     setWindowTitle(tr("Status for %1").arg(JIDUtil::nickOrJid(u.name(), u.jid().full())));
+    setWindowIcon(IconsetFactory::icon("psi/action_direct_presence").icon());
     resize(400,240);
 
     pb->setFocus();
@@ -113,6 +114,7 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority)
     d->withPriority = withPriority;
 
     setWindowTitle(CAP(tr("Set Status: All accounts")));
+    setWindowIcon(IconsetFactory::icon("psi/action_direct_presence").icon());
     d->setStatusMode = setStatusForAccount;
     init();
 }
@@ -129,6 +131,7 @@ StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s, bool withPriority)
     d->withPriority = withPriority;
 
     setWindowTitle(CAP(tr("Set Status: %1").arg(d->pa->name())));
+    setWindowIcon(IconsetFactory::icon("psi/action_direct_presence").icon());
     d->setStatusMode = setStatusForAccount;
     init();
 }

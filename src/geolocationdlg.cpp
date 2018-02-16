@@ -27,6 +27,7 @@
 #include "pepmanager.h"
 #include "geolocation.h"
 #include <QLineEdit>
+#include "iconset.h"
 
 GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
 {
@@ -34,7 +35,9 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
     if(pa_.isEmpty())
         close();
     ui_.setupUi(this);
+    setWindowIcon(IconsetFactory::icon("system/geolocation").icon());
     setModal(false);
+
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
      connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setGeoLocation()));
     connect(ui_.pb_reset, SIGNAL(clicked()), SLOT(reset()));

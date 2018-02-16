@@ -184,6 +184,9 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
         pb_detach->setToolTip(tr("Open a detached option editor window."));
         buttonLine->addWidget(pb_detach);
         connect(pb_detach, SIGNAL(clicked()), SLOT(detach()));
+    } else {
+        setWindowIcon(IconsetFactory::icon("psi/advanced-plus").icon());
+        setWindowTitle(CAP(tr("Advanced")));
     }
 
 

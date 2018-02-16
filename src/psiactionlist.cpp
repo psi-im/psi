@@ -381,7 +381,7 @@ void PsiActionList::Private::createMainWin()
         IconAction *actBugReport = new IconAction (tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);
         actBugReport->setWhatsThis (tr("Report a Bug (Online)"));
 
-        IconAction *actAbout = new IconAction (tr("About"), "psi/logo_16", tr("&About"), 0, this);
+        IconAction *actAbout = new IconAction (tr("About"), "psi/logo_32", tr("&About"), 0, this);
         actAbout->setMenuRole(QAction::AboutRole);
 
         IconAction *actAboutQt = new IconAction (tr("About Qt"), tr("About &Qt"), 0, this);

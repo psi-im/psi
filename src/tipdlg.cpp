@@ -27,6 +27,7 @@
 
 #include "psioptions.h"
 #include "psicon.h"
+#include "iconset.h"
 
 void TipDlg::show(PsiCon* psi)
 {
@@ -48,6 +49,7 @@ TipDlg::TipDlg(PsiCon* psi)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setupUi(this);
+    setWindowIcon(IconsetFactory::icon("psi/tip").icon());
     setModal(false);
 
     psi_->dialogRegister(this);

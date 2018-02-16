@@ -33,7 +33,9 @@ ActivityDlg::ActivityDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
     if(pa_.isEmpty())
         close();
     ui_.setupUi(this);
+    setWindowIcon(IconsetFactory::icon("activities/other").icon());
     setModal(false);
+
     connect(ui_.cb_general_type, SIGNAL(currentIndexChanged(const QString&)), SLOT(loadSpecificActivities(const QString&)));
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
     connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));

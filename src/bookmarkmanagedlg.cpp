@@ -39,6 +39,8 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
     setAttribute(Qt::WA_DeleteOnClose, true);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     ui_.setupUi(this);
+    setWindowIcon(IconsetFactory::icon("psi/bookmarks").icon());
+
     account_->dialogRegister(this);
 
     QAction* removeBookmarkAction = new QAction(this);

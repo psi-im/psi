@@ -836,10 +836,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
     setAcceptDrops(true);
 
-#ifndef Q_OS_MAC
-    setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
-#endif
-
     ui_.setupUi(this);
     ui_.lb_ident->setAccount(account());
     ui_.lb_ident->setShowJid(false);
@@ -1498,6 +1494,7 @@ void GCMainDlg::doBookmark()
     formLayout->addRow(tr("&Auto join:"), cbAutoJoin);
     layout->addLayout(formLayout);
     layout->addLayout(blayout);
+    dlg->setWindowIcon(IconsetFactory::icon("psi/bookmark_remove").icon());
     dlg->setLayout(layout);
     dlg->setMinimumWidth(300);
     dlg->connect(saveBtn, SIGNAL(clicked()), dlg, SLOT(accept()));
@@ -2235,7 +2232,7 @@ void GCMainDlg::setLooks()
 
     // update the widget icon
 #ifndef Q_OS_MAC
-    setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
+    setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
 
     ui_.lv_users->setLooks();

@@ -81,6 +81,7 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
     setupUi(this);
     setModal(true);
     setWindowTitle(CAP(windowTitle()));
+    setWindowIcon(IconsetFactory::icon("psi/profile").icon());
     pb_open->setDefault(true);
 
     langs = _langs;
