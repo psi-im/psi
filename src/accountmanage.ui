@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>XMPP Accounts</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/account.png</normaloff>:/iconsets/system/default/account.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="_2">
    <item>
     <layout class="QHBoxLayout">
@@ -127,7 +131,9 @@
    <header>accountmanagedlg.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

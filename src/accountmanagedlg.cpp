@@ -42,6 +42,7 @@
 #include "psicontactlist.h"
 #include "iconaction.h"
 #include "shortcutmanager.h"
+#include "psiiconset.h"
 
 using namespace XMPP;
 
@@ -97,6 +98,9 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
     setupUi(this);
     setModal(false);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+#ifndef Q_OS_MAC
+    setWindowIcon(IconsetFactory::icon("psi/account").icon());
+#endif
     d = new Private;
     d->acc = acc;
 

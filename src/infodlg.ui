@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>InfoDlg</class>
- <widget class="QDialog" name="Info">
+ <widget class="QDialog" name="InfoDlg">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -12,6 +12,10 @@
   </property>
   <property name="windowTitle">
    <string>User Info</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../iconsets.qrc">
+    <normaloff>:/iconsets/system/default/vcard.png</normaloff>:/iconsets/system/default/vcard.png</iconset>
   </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>
@@ -128,15 +132,15 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
+   <class>IconButton</class>
+   <extends>QWidget</extends>
+   <header>iconbutton.h</header>
+  </customwidget>
+  <customwidget>
    <class>BusyWidget</class>
    <extends>QWidget</extends>
    <header>busywidget.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>IconButton</class>
-   <extends>QWidget</extends>
-   <header>iconbutton.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -144,6 +148,8 @@
   <tabstop>pb_refresh</tabstop>
   <tabstop>pb_close</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../iconsets.qrc"/>
+ </resources>
  <connections/>
 </ui>
