@@ -84,9 +84,6 @@ public:
 public slots:
     void updateAll();
 
-signals:
-    void firstAdded();
-
 private:
     QModelIndex findIndex(const QString &nick) const;
     QString makeToolTip(const MUCContact &contact) const;
@@ -121,12 +118,6 @@ signals:
 
 private slots:
     void qlv_doubleClicked(const QModelIndex& index);
-
-public slots:
-    void ensureExpandedProperly();
-
-private:
-    QMap<int,bool> expandState;
 };
 
 #endif

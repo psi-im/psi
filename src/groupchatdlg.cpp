@@ -876,7 +876,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     connect(ui_.lv_users, SIGNAL(contextMenuRequested(const QString&)), SLOT(doContactContextMenu(const QString&)));
     connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
     connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
-    connect(d->usersModel, SIGNAL(firstAdded()), ui_.lv_users, SLOT(ensureExpandedProperly()));
     for (int i = 0; i < GCUserModel::LastGroupRole; i++) {
         ui_.lv_users->setExpanded(d->usersModel->index(i, 0), true);
     }
