@@ -248,9 +248,6 @@ public:
     QStringList hist;
     int histAt;
 
-    //QPointer<GCFindDlg> findDlg;
-    //QString lastSearch;
-
     QPointer<MUCConfigDlg> configDlg;
     QPointer<GroupchatTopicDlg> topicDlg;
 
@@ -1526,18 +1523,7 @@ void GCMainDlg::doRemoveBookmark()
         bm->removeConference(jid());
     }
 }
-/*
-void GCMainDlg::openFind()
-{
-    if(d->findDlg)
-        ::bringToFront(d->findDlg);
-    else {
-        d->findDlg = new GCFindDlg(d->lastSearch, this);
-        connect(d->findDlg, SIGNAL(find(const QString &)), SLOT(doFind(const QString &)));
-        d->findDlg->show();
-    }
-}
-*/
+
 void GCMainDlg::configureRoom()
 {
     if(d->configDlg)
@@ -2473,69 +2459,6 @@ void GCMainDlg::resizeEvent(QResizeEvent *e)
 
     ui_.hsplitter->setSizes(sizes);
     QTimer::singleShot(0, this, SLOT(horizSplitterMoved()));
-}
-
-//----------------------------------------------------------------------------
-// GCFindDlg
-//----------------------------------------------------------------------------
-GCFindDlg::GCFindDlg(const QString& str, QWidget* parent)
-    : QDialog(parent)
-{
-    setAttribute(Qt::WA_DeleteOnClose);
-        setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
-    setWindowTitle(tr("Find"));
-    QVBoxLayout *vb = new QVBoxLayout(this);
-    vb->setMargin(4);
-    QHBoxLayout *hb = new QHBoxLayout;
-    vb->addLayout(hb);
-    QLabel *l = new QLabel(tr("Find:"), this);
-    hb->addWidget(l);
-    le_input = new QLineEdit(this);
-    hb->addWidget(le_input);
-    vb->addStretch(1);
-
-    QFrame *Line1 = new QFrame(this);
-    Line1->setFrameShape( QFrame::HLine );
-    Line1->setFrameShadow( QFrame::Sunken );
-    Line1->setFrameShape( QFrame::HLine );
-    vb->addWidget(Line1);
-
-    hb = new QHBoxLayout;
-    vb->addLayout(hb);
-    hb->addStretch(1);
-    QPushButton *pb_close = new QPushButton(tr("&Close"), this);
-    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-    QPushButton *pb_find = new QPushButton(tr("&Find"), this);
-    pb_find->setDefault(true);
-    connect(pb_find, SIGNAL(clicked()), SLOT(doFind()));
-    hb->addWidget(pb_find);
-    hb->addWidget(pb_close);
-    pb_find->setAutoDefault(true);
-
-    resize(200, minimumSizeHint().height());
-
-    le_input->setText(str);
-    le_input->setFocus();
-}
-
-GCFindDlg::~GCFindDlg()
-{
-}
-
-void GCFindDlg::found()
-{
-    // nothing here to do...
-}
-
-void GCFindDlg::error(const QString &str)
-{
-    QMessageBox::warning(this, tr("Find"), tr("Search string '%1' not found.").arg(str));
-    le_input->setFocus();
-}
-
-void GCFindDlg::doFind()
-{
-    emit find(le_input->text());
 }
 
 #include "groupchatdlg.moc"

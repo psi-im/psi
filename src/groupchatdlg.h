@@ -46,20 +46,6 @@ namespace XMPP {
     class Message;
 }
 
-/*class GCLineEdit : public QLineEdit
-{
-    Q_OBJECT
-public:
-    GCLineEdit(QWidget *parent=0, const char *name=0);
-
-signals:
-    void upPressed();
-    void downPressed();
-
-protected:
-    void keyPressEvent(QKeyEvent *);
-};*/
-
 class GCMainDlg : public TabbableWidget
 {
     Q_OBJECT
@@ -173,26 +159,6 @@ private:
 
     inline XMPP::Jid jidForNick(const QString &nick) const;
 
-};
-
-class GCFindDlg : public QDialog
-{
-    Q_OBJECT
-public:
-    GCFindDlg(const QString&, QWidget* parent);
-    ~GCFindDlg();
-
-    void found();
-    void error(const QString &);
-
-signals:
-    void find(const QString &);
-
-private slots:
-    void doFind();
-
-private:
-    QLineEdit *le_input;
 };
 
 #endif

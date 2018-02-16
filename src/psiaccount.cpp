@@ -1833,13 +1833,15 @@ void PsiAccount::disconnect()
     if (isDisconnecting) {
         // disconnect
         d->client->close();
-        cleanupStream();
+        QTimer::singleShot(0,[this]() { // delayed close to let stream close tag to be written (this fix is rather has to be in iris)
+            cleanupStream();
 
-        emit disconnected();
-        isDisconnecting = false;
+            emit disconnected();
+            isDisconnecting = false;
 
-        if(d->loginStatus.isAvailable())
-            login();
+            if(d->loginStatus.isAvailable())
+                login();
+        });
     }
 }
 
