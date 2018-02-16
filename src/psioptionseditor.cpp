@@ -40,7 +40,7 @@ OptionEditor::supportedType OptionEditor::supportedTypes[] = {
     {"QSize", QVariant::Size},
     {"QString", QVariant::String},
     {"QColor", QVariant::Color},
-//    {"QStringList", QVariant::StringList},  does't work
+//    {"QStringList", QVariant::StringList},  doesn't work
     {0, QVariant::Invalid}};
 
 
