@@ -31,7 +31,6 @@
 #include "psioptions.h"
 #include "iconaction.h"
 #include "privacy/privacydlg.h"
-#include "psiiconset.h"
 #include "common.h"
 #include "contactmanager/contactmanagerdlg.h"
 #include "mucjoindlg.h"
