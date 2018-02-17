@@ -37,10 +37,23 @@
 
 TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
     : AdvancedWidget<QWidget>(0)
+    , state_(Deactivated)
     , jid_(jid)
     , pa_(pa)
     , tabManager_(tabManager)
 {
+    stateCommitTimer_.setInterval(100);
+    stateCommitTimer_.setSingleShot(true);
+    connect(&stateCommitTimer_, &QTimer::timeout, this, [this](){
+        // the idea is to not call activated/deactivated virtual methods immediatelly
+        // what makes trackbar working better in some cases
+        if(state_ == Activated) {
+            activated();
+        }
+        else {
+            deactivated();
+        }
+    });
     //QTimer::singleShot(0, this, SLOT(ensureTabbedCorrectly()));
 }
 
@@ -205,11 +218,12 @@ void TabbableWidget::changeEvent(QEvent* event)
         event->type() == QEvent::WindowStateChange)
     {
         if (isActiveTab()) {
-            activated();
+            state_ = Activated;
         }
         else {
-            deactivated();
+            state_ = Deactivated;
         }
+        stateCommitTimer_.start();
     }
 }
 

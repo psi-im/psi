@@ -386,12 +386,12 @@ void TabDlg::tabSelected(QWidget* _selected)
     // _selected could be null when TabDlg is closing and deleting all its tabs
     TabbableWidget* selected = _selected ? qobject_cast<TabbableWidget*>(_selected) : 0;
     if (!selectedTab_.isNull()) {
-        selectedTab_->deactivated();
+        QCoreApplication::postEvent(selectedTab_, new QEvent(QEvent::ActivationChange));
     }
 
     selectedTab_ = selected;
     if (selected) {
-        selected->activated();
+        QCoreApplication::postEvent(selected, new QEvent(QEvent::ActivationChange));
     }
 
     updateCaption();
@@ -507,7 +507,7 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
     chat->hide();
     removeTabWithNoChecks(chat);
     chat->setParent(0);
-    chat->deactivated();
+    QCoreApplication::postEvent(chat, new QEvent(QEvent::ActivationChange));
     if (tabWidget_->count() > 0) {
         updateCaption();
     }
@@ -642,15 +642,15 @@ void TabDlg::updateTab(TabbableWidget* chat)
     //now set text colour based upon whether there are new messages/composing etc
 
     if (chat->state() == TabbableWidget::StateComposing) {
-        tabWidget_->setTabTextColor(chat, Qt::darkGreen);
+        tabWidget_->setTabTextColor(chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.composing-color").value<QColor>());
         tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing")->icon());
     }
     else if (chat->unreadMessageCount()) {
-        tabWidget_->setTabTextColor(chat, Qt::red);
+        tabWidget_->setTabTextColor(chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.unread-message-color").value<QColor>());
         tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat")->icon());
     }
     else {
-        tabWidget_->setTabTextColor(chat, palette().windowText().color());
+        tabWidget_->setTabTextColor(chat, palette().color(QPalette::Text));
         tabWidget_->setTabIcon(chat, chat->icon());
     }
     updateCaption();

@@ -16,14 +16,25 @@
         </ui>
         <shortcuts comment="Shortcuts">
             <contactlist comment="Shortcuts in the contactlist">
-                <delete type="QVariantList" comment="Delete the selected contact">
-                    <item type="QKeySequence">Backspace</item>
-                    <item type="QKeySequence">Del</item>
-                </delete>
+                <delete type="QKeySequence" comment="Delete the selected contact">Shift+Del</delete>
             </contactlist>
             <common comment="Common actions" >
                 <history type="QKeySequence" comment="Open the message history">Ctrl+Shift+H</history>
             </common>
+            <chat comment="Shortcuts in the chat dialog">
+                <quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+7</quick-command>
+            </chat>
         </shortcuts>
+        <ui comment="User interface options">
+            <disable-send-button type="bool">true</disable-send-button>
+            <look>
+                <font>
+                    <chat type="QString">Lucida Grande,11,-1,5,50,0,0,0,0,0</chat>
+                    <contactlist type="QString">Lucida Grande,11,-1,5,50,0,0,0,0,0</contactlist>
+                    <message type="QString">Lucida Grande,11,-1,5,50,0,0,0,0,0</message>
+                    <passive-popup type="QString">Lucida Grande,9,-1,5,50,0,0,0,0,0</passive-popup>
+                </font>
+            </look>
+        </ui>
     </options>
 </psi>

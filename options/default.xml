@@ -257,7 +257,7 @@ QLineEdit#le_status_text {
                 <use-single-click type="bool">false</use-single-click>
                 <use-status-change-animation type="bool">true</use-status-change-animation>
                 <aio-left-roster type="bool">false</aio-left-roster>
-                <use-transport-icons type="bool">false</use-transport-icons>
+                <use-transport-icons type="bool">true</use-transport-icons>
                 <saved-window-geometry type="QRect" >
                     <x>64</x>
                     <y>64</y>
@@ -408,6 +408,10 @@ QLineEdit#le_status_text {
                         <link type="QColor">#000080</link>
                         <link-visited type="QColor">#400080</link-visited>
                     </messages>
+                    <chat>
+                        <composing-color type="QColor">darkGreen</composing-color>
+                        <unread-message-color type="QColor">red</unread-message-color>
+                    </chat>
                     <passive-popup>
                         <border type="QColor">#5297f9</border>
                     </passive-popup>
@@ -496,7 +500,7 @@ QLineEdit#le_status_text {
                 <can-close-inactive-tab type="bool">true</can-close-inactive-tab>
                 <show-tab-close-buttons type="bool">true</show-tab-close-buttons>
                 <put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
-                <use-tabs type="bool">false</use-tabs>
+                <use-tabs type="bool">true</use-tabs>
                 <mouse-middle-button type="QString">close</mouse-middle-button> <!-- hide|close|detach -->
                 <mouse-doubleclick-action type="QString">detach</mouse-doubleclick-action>
                 <size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
@@ -525,7 +529,7 @@ QLineEdit#le_status_text {
                     <item type="QKeySequence">Enter</item>
                 </send>
                 <clear type="QKeySequence" comment="Clear the text"/>
-                <quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+7</quick-command>
+                <quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+Space</quick-command>
                 <show-messageLast type="QKeySequence" comment="Show last message" >Alt+Home</show-messageLast>
                 <show-messageFirst type="QKeySequence" comment="Show first message" >Alt+End</show-messageFirst>
                 <show-messageNext type="QKeySequence" comment="Show next message" >Ctrl+Down</show-messageNext>
@@ -535,7 +539,7 @@ QLineEdit#le_status_text {
             <contactlist comment="Shortcuts in the contactlist">
                 <assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>
                 <clear-custom-avatar type="QKeySequence" comment="Remove custom avatar from the selected contact"/>
-                <delete type="QKeySequence" comment="Delete the selected contact">Del</delete>
+                <delete type="QKeySequence" comment="Delete the selected contact">Shift+Del</delete>
                 <chat type="QKeySequence" comment="Open a chat to the selected contact">Ctrl+C</chat>
                 <message type="QKeySequence" comment="Send a message to the selected contact">Ctrl+M</message>
                 <event type="QKeySequence" comment="Receive incoming event">Ctrl+R</event>
@@ -586,7 +590,7 @@ QLineEdit#le_status_text {
         </shortcuts>
         <contactlist>
             <hide-on-start type="bool">false</hide-on-start>
-            <resolve-nicks-on-contact-add type="bool">false</resolve-nicks-on-contact-add>
+            <resolve-nicks-on-contact-add type="bool">true</resolve-nicks-on-contact-add>
             <use-toolwindow type="bool">false</use-toolwindow>
             <autohide-interval type="int">0</autohide-interval>
         </contactlist>

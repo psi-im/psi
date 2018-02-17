@@ -444,6 +444,11 @@ public:
         reconnectTimeoutTimer_ = new QTimer(this);
         reconnectTimeoutTimer_->setSingleShot(true);
         connect(reconnectTimeoutTimer_, SIGNAL(timeout()), SLOT(reconnectTimerTimeout()));
+
+        updateOnlineContactsCountTimer_ = new QTimer(this);
+        updateOnlineContactsCountTimer_->setInterval(500);
+        updateOnlineContactsCountTimer_->setSingleShot(true);
+        connect(updateOnlineContactsCountTimer_, SIGNAL(timeout()), SLOT(updateOnlineContactsCountTimeout()));
     }
 
     PsiContactList* contactList;
@@ -471,6 +476,7 @@ public:
     RosterItemExchangeTask* rosterItemExchangeTask;
     QString currentConnectionError;
     int currentConnectionErrorCondition;
+    QTimer *updateOnlineContactsCountTimer_;
 
     // Tune
     Tune lastTune;
@@ -637,7 +643,8 @@ public:
         return pathToProfile(activeProfile, ApplicationInfo::DataLocation) + "/events-" + JIDUtil::encode(acc.id).toLower() + ".xml";
     }
 
-    void updateOnlineContactsCount()
+private slots:
+    void updateOnlineContactsCountTimeout()
     {
         int newOnlineContactsCount = 0;
         foreach(const PsiContact* c, contacts) {
@@ -650,6 +657,12 @@ public:
         if (newOnlineContactsCount != onlineContactsCount) {
             onlineContactsCount = newOnlineContactsCount;
         }
+    }
+
+public:
+    void updateOnlineContactsCount()
+    {
+        updateOnlineContactsCountTimer_->start(); // a little delay to not load cpu when bunch of contacts change their state
     }
 
     // FIXME: Rename updateEntry -> updateContact

@@ -1022,7 +1022,7 @@ void MainWin::actJoinPsiMUCActivated()
         return;
     }
 
-    account->actionJoin("psi@conference.psi-im.org");
+    account->actionJoin("psi-dev@conference.jabber.ru");
 }
 
 void MainWin::actBugReportActivated ()

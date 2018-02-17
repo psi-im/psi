@@ -92,14 +92,14 @@ void UserAccount::reset()
     priority_dep_on_status = true;
     ignore_global_actions = false;
     resource = ApplicationInfo::name();
-    priority = 5;
+    priority = 55;
     ibbOnly = false;
     opt_keepAlive = true;
     opt_sm = true;
     allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
-    opt_compress = false;
+    opt_compress = true;
     opt_log = true;
-    opt_reconn = false;
+    opt_reconn = true;
     opt_connectAfterSleep = false;
     opt_autoSameStatus = true;
     lastStatusWithPriority = false;

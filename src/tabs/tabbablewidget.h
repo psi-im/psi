@@ -22,6 +22,7 @@
 #define TABBABLE_H
 
 #include <QIcon>
+#include <QTimer>
 #include "advwidget.h"
 #include "im.h" // ChatState
 
@@ -74,19 +75,23 @@ signals:
     void eventsRead(const Jid &);
 
 public slots:
-    virtual void deactivated();
-    virtual void activated();
     void bringToFront(bool raiseWindow = true);
     virtual void ensureTabbedCorrectly();
     void hideTab();
 
 protected:
     virtual void setJid(const Jid&);
+    virtual void deactivated();
+    virtual void activated();
 
     // reimplemented
     void changeEvent(QEvent* e);
 
 private:
+    enum ActivationState { Activated, Deactivated };
+    ActivationState state_;
+    QTimer stateCommitTimer_;
+
     Jid jid_;
     PsiAccount *pa_;
     TabManager *tabManager_;
