@@ -39,7 +39,7 @@
           </sizepolicy>
          </property>
          <property name="text" stdset="0">
-          <string>&lt;a href=&quot;http://psi-im.org&quot;&gt;psi-im.org&lt;/a&gt;</string>
+          <string>&lt;a href=&quot;https://psi-im.org&quot;&gt;psi-im.org&lt;/a&gt;</string>
          </property>
         </widget>
        </item>
@@ -233,14 +233,14 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>URLLabel</class>
-   <extends></extends>
-   <header>urllabel.h</header>
-  </customwidget>
-  <customwidget>
    <class>PsiTextView</class>
    <extends></extends>
    <header>psitextview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>URLLabel</class>
+   <extends></extends>
+   <header>urllabel.h</header>
   </customwidget>
   <customwidget>
    <class>IconsetDisplay</class>

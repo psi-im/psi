@@ -64,7 +64,7 @@ public:
         output += '\n';
         output += optionsHelp(textWidth);
         output += '\n';
-        output += tr("Go to <http://psi-im.org/> for more information about Psi.");
+        output += tr("Go to <https://psi-im.org/> for more information about Psi.");
         show(output);
     }
 

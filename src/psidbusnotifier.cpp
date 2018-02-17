@@ -43,6 +43,7 @@
 #include "psioptions.h"
 #include "psicon.h"
 #include "textutil.h"
+#include "iconset.h"
 
 
 static const int minLifeTime = 5000;

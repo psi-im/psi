@@ -997,7 +997,7 @@ void MainWin::actReadmeActivated ()
 
 void MainWin::actOnlineHelpActivated ()
 {
-    DesktopUtil::openUrl("http://psi-im.org/wiki/User_Guide");
+    DesktopUtil::openUrl("https://psi-im.org/wiki/User_Guide");
 }
 
 void MainWin::actOnlineWikiActivated ()
@@ -1007,12 +1007,12 @@ void MainWin::actOnlineWikiActivated ()
 
 void MainWin::actOnlineHomeActivated ()
 {
-    DesktopUtil::openUrl("http://psi-im.org");
+    DesktopUtil::openUrl("https://psi-im.org");
 }
 
 void MainWin::actOnlineForumActivated ()
 {
-    DesktopUtil::openUrl("http://forum.psi-im.org");
+    DesktopUtil::openUrl("https://forum.psi-im.org");
 }
 
 void MainWin::actJoinPsiMUCActivated()

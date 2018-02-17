@@ -49,6 +49,7 @@
 #include "pepmanager.h"
 #include "pixmaputil.h"
 #include "filecache.h"
+#include "iconset.h"
 
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
 // it would be better to scale images according to monitor properties
@@ -119,8 +120,8 @@ public:
 
     // design of the structure is matter of priority, not possible ways of avatars receiving.
     struct JidIcons {
-        FileCacheItem *vcard = nullptr;  // sha1 of avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
-        FileCacheItem *avatar = nullptr; // sha1 of pubsub or vcard avatar (64x64 or less. TODO consider retina)
+        FileCacheItem *vcard = nullptr;  // avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
+        FileCacheItem *avatar = nullptr; // pubsub or vcard avatar (64x64 or less. TODO consider retina)
         FileCacheItem *customAvatar = nullptr; // set by you
         bool avatarFromVCard = false;
     };
@@ -560,23 +561,59 @@ AvatarCache* AvatarCache::_instance = 0;
 // Avatar factory
 //------------------------------------------------------------------------------
 
-AvatarFactory::AvatarFactory(PsiAccount* pa) : pa_(pa)
+class AvatarFactory::Private
 {
+public:
+    QByteArray selfAvatarData_;
+    QString selfAvatarHash_;
+
+    PsiAccount* pa_;
+    Iconset iconset_;
+
+    QQueue<std::tuple<Jid,QString,bool>> vcardReqQueue_;
+    QTimer vcardReqTimer_;
+};
+
+AvatarFactory::AvatarFactory(PsiAccount* pa) :
+    d(new Private)
+{
+    d->pa_ = pa;
     // Register iconset
-    iconset_.addToFactory();
+    d->iconset_.addToFactory();
+
+    d->vcardReqTimer_.setSingleShot(false);
+    d->vcardReqTimer_.setInterval(VcardReqInterval);
+    QObject::connect(&d->vcardReqTimer_, &QTimer::timeout, this, [this](){
+        Jid j;
+        QString hash;
+        bool isMuc;
+        std::tie(j, hash, isMuc) = d->vcardReqQueue_.dequeue();
+        if (d->vcardReqQueue_.isEmpty()) {
+            d->vcardReqTimer_.stop();
+        }
+        auto task = VCardFactory::instance()->getVCard(j,
+                    d->pa_->client()->rootTask(), this, SLOT(onVcardTaskFinsihed()),
+                    !isMuc, isMuc, false);
+        task->setProperty("hash", hash);
+    });
 
     // Connect signals
     connect(VCardFactory::instance(),SIGNAL(vcardPhotoAvailable(Jid,bool)),this,SLOT(vcardUpdated(Jid,bool)));
-    connect(pa_->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(resourceAvailable(const Jid &, const Resource &)));
+    connect(d->pa_->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(resourceAvailable(const Jid &, const Resource &)));
 
     // PEP
-    connect(pa_->pepManager(),SIGNAL(itemPublished(const Jid&, const QString&, const PubSubItem&)),SLOT(itemPublished(const Jid&, const QString&, const PubSubItem&)));
-    connect(pa_->pepManager(),SIGNAL(publish_success(const QString&, const PubSubItem&)),SLOT(publish_success(const QString&,const PubSubItem&)));
+    connect(d->pa_->pepManager(),SIGNAL(itemPublished(const Jid&, const QString&, const PubSubItem&)),SLOT(itemPublished(const Jid&, const QString&, const PubSubItem&)));
+    connect(d->pa_->pepManager(),SIGNAL(publish_success(const QString&, const PubSubItem&)),SLOT(publish_success(const QString&,const PubSubItem&)));
+}
+
+AvatarFactory::~AvatarFactory()
+{
+    delete d;
 }
 
 PsiAccount* AvatarFactory::account() const
 {
-    return pa_;
+    return d->pa_;
 }
 
 inline static QPixmap ensureSquareAvatar(const QPixmap& original)
@@ -596,6 +633,11 @@ inline static QPixmap ensureSquareAvatar(const QPixmap& original)
 QPixmap AvatarFactory::getAvatar(const Jid& _jid)
 {
     QString bareJid = _jid.bare();
+    QString iconName = QString("avatars/%1").arg(bareJid);
+    auto iconp = d->iconset_.icon(iconName);
+    if (iconp) {
+        return iconp->pixmap();
+    }
 
     auto icons = AvatarCache::instance()->icons(bareJid);
 
@@ -628,11 +670,12 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
     // Update iconset
     PsiIcon icon;
     icon.setImpix(pm);
-    iconset_.setIcon(QString("avatars/%1").arg(bareJid),icon);
+    d->iconset_.setIcon(iconName, icon);
 
     return pm;
 }
 
+#if 0
 QPixmap AvatarFactory::getAvatarByHash(const QString &hash)
 {
     FileCacheItem *item = AvatarCache::instance()->get(hash, true);
@@ -642,7 +685,7 @@ QPixmap AvatarFactory::getAvatarByHash(const QString &hash)
     }
     return QPixmap();
 }
-
+#endif
 AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QString &hash)
 {
     FileCacheItem *item = AvatarCache::instance()->get(hash, true);
@@ -690,6 +733,12 @@ QPixmap AvatarFactory::getMucAvatar(const Jid& _jid)
 {
     QString fullJid = _jid.full();
 
+    QString iconName = QString("avatars/%1").arg(fullJid);
+    auto iconp = d->iconset_.icon(iconName);
+    if (iconp) {
+        return iconp->pixmap();
+    }
+
     auto icons = AvatarCache::instance()->icons(fullJid);
     QByteArray data;
     if (icons.avatar) {
@@ -716,7 +765,7 @@ QPixmap AvatarFactory::getMucAvatar(const Jid& _jid)
     // Update iconset
     PsiIcon icon;
     icon.setImpix(pm);
-    iconset_.setIcon(QString("avatars/%1").arg(fullJid),icon); // FIXME do we ever release it?
+    d->iconset_.setIcon(QString("avatars/%1").arg(fullJid),icon); // FIXME do we ever release it?
 
     return pm;
 }
@@ -737,8 +786,8 @@ void AvatarFactory::setSelfAvatar(const QString& fileName)
             QDomElement el = doc->createElement(PEP_AVATAR_DATA_TN);
             el.setAttribute("xmlns",PEP_AVATAR_DATA_NS);
             el.appendChild(doc->createTextNode(QString::fromLatin1(avatar_data.toBase64())));
-            selfAvatarData_ = avatar_data;
-            selfAvatarHash_ = hash;
+            d->selfAvatarData_ = avatar_data;
+            d->selfAvatarHash_ = hash;
             account()->pepManager()->publish(PEP_AVATAR_DATA_NS,PubSubItem(hash,el));
         }
     }
@@ -753,13 +802,16 @@ void AvatarFactory::importManualAvatar(const Jid& j, const QString& fileName)
     if (!(f.open(QIODevice::ReadOnly) && AvatarCache::instance()->setIcon(AvatarCache::CustomType, j.bare(), f.readAll()))) {
         qWarning("Failed to set manual avatar");
     }
+    d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
     emit avatarChanged(j);
 }
 
 void AvatarFactory::removeManualAvatar(const Jid& j)
 {
-    AvatarCache::instance()->removeIcon(AvatarCache::CustomType, j.bare());
-    emit avatarChanged(j);
+    if (AvatarCache::instance()->removeIcon(AvatarCache::CustomType, j.bare()) == AvatarCache::UserUpdateRequired) {
+        d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
+        emit avatarChanged(j);
+    }
 }
 
 bool AvatarFactory::hasManualAvatar(const Jid& j)
@@ -789,17 +841,19 @@ void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status)
 
         if (hash.isEmpty()) { // photo removal
             if (AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid) == AvatarCache::UserUpdateRequired) {
+                d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(jid);
             }
         } else {
             auto result = AvatarCache::instance()->appendUser(hash, AvatarCache::VCardType, fullJid);
             if (result == AvatarCache::UserUpdateRequired) {
+                d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(jid);
             } else if (result == AvatarCache::NoData) {
-                auto task = VCardFactory::instance()->getVCard(
-                            jid, pa_->client()->rootTask(), this, SLOT(onVcardTaskFinsihed()),
-                            !isMuc, isMuc, false);
-                task->setProperty("hash", hash);
+                d->vcardReqQueue_.enqueue({jid,hash,isMuc});
+                if (!d->vcardReqTimer_.isActive()) {
+                    d->vcardReqTimer_.start();
+                }
             }
         }
     }
@@ -820,6 +874,13 @@ int AvatarFactory::maxAvatarSize()
     return MAX_AVATAR_SIZE;
 }
 
+/**
+ * @brief Scales input pixmap and rounds its corners with given radius
+ * @param pix Input pixmap
+ * @param rad Radius in pixels
+ * @param avSize max height or width
+ * @return rounded pixmap
+ */
 QPixmap AvatarFactory::roundedAvatar(const QPixmap &pix, int rad, int avSize)
 {
     QPixmap avatar_icon;
@@ -859,8 +920,9 @@ void AvatarFactory::onVcardTaskFinsihed()
     if (task->success() && !task->vcard().isNull()) {
         QByteArray ba = task->vcard().photo();
         if (!ba.isNull()) {
-            QString fullJid = task->jid().full();
+            QString fullJid = task->jid().full(); // jids for regular contacts are already without resource
             if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba, hash) == AvatarCache::UserUpdateRequired) {
+                d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(task->jid().full()));
                 emit avatarChanged(task->jid());
             }
         }
@@ -880,6 +942,7 @@ void AvatarFactory::vcardUpdated(const Jid &j, bool isMuc)
     }
     if (!ba.isEmpty()) {
         if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba) == AvatarCache::UserUpdateRequired) {
+            d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
             emit avatarChanged(j);
         }
     }
@@ -888,7 +951,7 @@ void AvatarFactory::vcardUpdated(const Jid &j, bool isMuc)
 void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSubItem& item)
 {
     AvatarCache *cache = AvatarCache::instance();
-    QString jidFull = jid.full();
+    QString jidFull = jid.full(); // it's always bare
     AvatarCache::OpResult result = AvatarCache::Changed;
 
     if (n == PEP_AVATAR_DATA_NS) {
@@ -918,34 +981,35 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
             result = cache->appendUser(item.id(), AvatarCache::AvatarType,
                                             jidFull);
             if (result == AvatarCache::NoData) {
-                pa_->pepManager()->get(jid, PEP_AVATAR_DATA_NS, hash);
+                d->pa_->pepManager()->get(jid, PEP_AVATAR_DATA_NS, hash);
                 return;
             }
         }
     }
 
     if (result == AvatarCache::UserUpdateRequired) {
+        d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(jidFull));
         emit avatarChanged(jid);
     }
 }
 
 void AvatarFactory::publish_success(const QString& n, const PubSubItem& item)
 {
-    if (n == PEP_AVATAR_DATA_NS && item.id() == selfAvatarHash_) {
+    if (n == PEP_AVATAR_DATA_NS && item.id() == d->selfAvatarHash_) {
         // Publish metadata
         QDomDocument* doc = account()->client()->doc();
-        QImage avatar_image = QImage::fromData(selfAvatarData_);
+        QImage avatar_image = QImage::fromData(d->selfAvatarData_);
         QDomElement meta_el = doc->createElement(PEP_AVATAR_METADATA_TN);
         meta_el.setAttribute("xmlns",PEP_AVATAR_METADATA_NS);
         QDomElement info_el = doc->createElement("info");
-        info_el.setAttribute("id",selfAvatarHash_);
+        info_el.setAttribute("id",d->selfAvatarHash_);
         info_el.setAttribute("bytes",avatar_image.byteCount());
         info_el.setAttribute("height",avatar_image.height());
         info_el.setAttribute("width",avatar_image.width());
-        info_el.setAttribute("type",image2type(selfAvatarData_));
+        info_el.setAttribute("type",image2type(d->selfAvatarData_));
         meta_el.appendChild(info_el);
-        account()->pepManager()->publish(PEP_AVATAR_METADATA_NS,PubSubItem(selfAvatarHash_,meta_el));
-        selfAvatarData_.clear(); // we don't need it anymore
+        account()->pepManager()->publish(PEP_AVATAR_METADATA_NS,PubSubItem(d->selfAvatarHash_,meta_el));
+        d->selfAvatarData_.clear(); // we don't need it anymore
     }
 }
 

@@ -70,7 +70,8 @@ private:
     const int dictSize_;
     QStringList vcardList_;
     QMap<QString,VCard> vcardDict_;
-    QMap<QString, QHash<QString,VCard> > mucVcardDict_; // QHash in case of big mucs
+    QMap<QString, QHash<QString,VCard> > mucVcardDict_; // QHash in case of big mucs mucBareJid => {resoure => vcard}
+    QMap<QString, QQueue<QString>> lastMucVcards_; // to limit the hash above. this one keeps ordered resource. mucBareJid => resource_list
 
     void saveVCard(const Jid &, const VCard &, bool notifyPhoto);
 };

@@ -1085,9 +1085,10 @@ public:
 
     void remove(QString name)
     {
-        if ( dict.contains(name) ) {
-            PsiIcon *i = dict[name];
-            dict.erase( dict.find(name) );
+        auto it = dict.find(name);
+        if (it != dict.end()) {
+            PsiIcon *i = it.value();
+            dict.erase(it);
             list.removeAll(i);
             delete i;
         }

@@ -25,8 +25,8 @@
 #include <QMap>
 #include <QByteArray>
 #include <QString>
-
-#include "iconset.h"
+#include <QQueue>
+#include <QTimer>
 
 #define PEP_AVATAR_DATA_TN     "data"
 #define PEP_AVATAR_DATA_NS     "urn:xmpp:avatar:data"
@@ -57,6 +57,8 @@ class AvatarFactory : public QObject
 {
     Q_OBJECT
 
+    static const int VcardReqInterval = 1000; // query vcard avatars once per second
+
 public:
     struct UserHashes {
         QString avatar; // current active avatar
@@ -69,9 +71,10 @@ public:
     };
 
     AvatarFactory(PsiAccount* pa);
+    ~AvatarFactory();
 
     QPixmap getAvatar(const Jid& jid);
-    QPixmap getAvatarByHash(const QString& hash);
+    //QPixmap getAvatarByHash(const QString& hash);
     static AvatarData avatarDataByHash(const QString& hash);
     UserHashes userHashes(const Jid& jid) const;
     PsiAccount* account() const;
@@ -101,12 +104,8 @@ private slots:
     void onVcardTaskFinsihed();
     void vcardUpdated(const Jid&, bool isMuc);
 private:
-
-    QByteArray selfAvatarData_;
-    QString selfAvatarHash_;
-
-    PsiAccount* pa_;
-    Iconset iconset_;
+    class Private;
+    Private *d;
 };
 
 

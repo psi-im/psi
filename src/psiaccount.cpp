@@ -4446,11 +4446,9 @@ void PsiAccount::actionAgentSetStatus(const Jid &j, const Status &s)
 
 void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 {
-    bool useCache = true;
     bool isMucMember = false;
     Jid j;
     if(findGCContact(_j)) {
-        useCache = false;
         isMucMember = true;
         j = _j;
     }
@@ -4473,7 +4471,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
         }
 
         w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self : isMucMember? InfoWidget::MucContact : InfoWidget::Contact,
-                        j, vcard, this, 0, useCache);
+                        j, vcard, this, 0, true);
 
         w->infoWidget()->setStatusVisibility(showStatusInfo);
         w->show();
