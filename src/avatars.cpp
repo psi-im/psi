@@ -850,7 +850,7 @@ void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status)
                 d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(jid);
             } else if (result == AvatarCache::NoData) {
-                d->vcardReqQueue_.enqueue({jid,hash,isMuc});
+                d->vcardReqQueue_.enqueue(std::tuple<Jid,QString,bool>{jid,hash,isMuc});
                 if (!d->vcardReqTimer_.isActive()) {
                     d->vcardReqTimer_.start();
                 }
