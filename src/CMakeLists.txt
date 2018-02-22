@@ -64,7 +64,7 @@ if(NOT ONLY_BINARY AND (EXISTS "${TRANSLATIONS_DIR}"))
 endif()
 
 set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5::Concurrent Qt5::Multimedia Qt5::Svg Qt5::Sql ${KEYCHAIN_LIBS})
-set(Qca_SUFFIX -qt5)
+
 if(LINUX)
     list(APPEND QT_LIBRARIES Qt5::DBus Qt5::X11Extras ${LIBXCB_LIBRARIES})
 endif()

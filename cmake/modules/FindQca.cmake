@@ -33,37 +33,25 @@ if (Qca_INCLUDE_DIR AND Qca_LIBRARY)
     set(Qca_FIND_QUIETLY TRUE)
 endif ()
 
-set ( LIBINCS 
-    qca.h
+set(EXTRA_PATH_SUFFIXES
+    qt5/Qca-qt5/QtCrypto
+    Qca-qt5/QtCrypto
+    qt5/QtCrypto
+    qt/Qca-qt5/QtCrypto
 )
 
-if(NOT Qca_SUFFIX)
-    set(Qca_SUFFIX "")
-endif()
-
-if("${Qca_SUFFIX}" STREQUAL "-qt5")
-    set(EXTRA_PATH_SUFFIXES
-        qt5/Qca-qt5/QtCrypto
-        Qca-qt5/QtCrypto
-        qt5/QtCrypto
-        qt/Qca-qt5/QtCrypto
-    )
-endif()
-
 find_path(
-    Qca_INCLUDE_DIR ${LIBINCS}
+    Qca_INCLUDE_DIR qca.h
     HINTS
     ${QCA_DIR}/include
     PATH_SUFFIXES
     QtCrypto
     ${EXTRA_PATH_SUFFIXES}
 )
-set(Qca_NAMES
-    qca${Qca_SUFFIX}${D}
-)
+
 find_library(
     Qca_LIBRARY
-    NAMES ${Qca_NAMES}
+    NAMES qca-qt5${D}
     HINTS 
     ${QCA_DIR}/lib
     ${QCA_DIR}/bin
@@ -75,10 +63,10 @@ find_package_handle_standard_args(
                 Qca_LIBRARY
                 Qca_INCLUDE_DIR
 )
-if ( Qca_FOUND )
+if (Qca_FOUND)
     set ( Qca_LIBRARIES ${Qca_LIBRARY} )
     set ( Qca_INCLUDE_DIRS ${Qca_INCLUDE_DIR} )
-endif ( Qca_FOUND )
+endif(Qca_FOUND)
 
 mark_as_advanced( Qca_INCLUDE_DIR Qca_LIBRARY )
 
