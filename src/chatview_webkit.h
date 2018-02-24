@@ -51,7 +51,7 @@ public:
     QSize sizeHint() const;
 
     void setDialog(QWidget* dialog);
-    void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
+    void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
     void setAccount(PsiAccount *acc);
 
     void contextMenuEvent(QContextMenuEvent* event);

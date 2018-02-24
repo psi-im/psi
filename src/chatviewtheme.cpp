@@ -288,68 +288,73 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
         if (!weakSession) {
             return false;
         }
-        auto pair = session->getContents(req->url());
-        if (pair.first.isNull()) {
-            // not handled by chat. try handle by theme
-            QString path = req->url().path(); // fully decoded
-            if (path.isEmpty() || path == QLatin1String("/")) {
-                res->setStatusCode(qhttp::ESTATUS_OK);
-                res->headers().insert("Content-Type", "text/html;charset=utf-8");
-
-
-                if (prepareSessionHtml) { // html should be prepared for ech individual session
-                    // Even crazier stuff starts here.
-                    // Basically we send to theme's webview instance a signal to
-                    // generate html for specific session. It does it async.
-                    // Then javascript sends a signal the html is ready,
-                    // indicating sessionId and html contents.
-                    // And only then we close the request with hot html.
-
-                    jsLoader->connect(jsLoader.data(),
-                                      &ChatViewJSLoader::sessionHtmlReady,
-                                      session,
-                    [weakSession, res, this](const QString &sessionId, const QString &html)
-                    {
-                        auto session = weakSession.data();
-                        if (!weakSession) {
-                            return;
-                        }
-                        if (session->sessId == sessionId) {
-                            res->end(html.toUtf8()); // return html to client
-                            // and disconnect from loader
-                            jsLoader->disconnect(
-                                        jsLoader.data(),
-                                        &ChatViewJSLoader::sessionHtmlReady,
-                                        session, nullptr);
-                            jsLoader->unregisterSession(session->sessId);
-                        }
-                    });
-                    jsLoader->registerSession(session);
-                    QString basePath = req->property("basePath").toString();
-                    wv->page()->runJavaScript(
-                                QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
-                                .arg(session->sessId, session->propsAsJsonString(), basePath));
-
-                } else {
-                    res->end(html.toUtf8());
-                }
-                return true;
+        bool handled = session->getContents(req->url(), [res](const QByteArray &data, const QByteArray &ctype){
+            if (data.isNull()) {
+                res->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
             } else {
-                QByteArray data = Theme(this).loadData(httpRelPath + path);
-                if (!data.isNull()) {
-                    res->setStatusCode(qhttp::ESTATUS_OK);
-                    res->end(data);
-                    return true;
-                }
+                res->setStatusCode(qhttp::ESTATUS_OK);
+                res->headers().insert("Content-Type", ctype);
             }
-            return false;
+            res->end(data);
+        });
+        if(handled) {
+            return true;
         }
-        res->setStatusCode(qhttp::ESTATUS_OK);
-        res->headers().insert("Content-Type", pair.second);
-        res->end(pair.first);
-        return true;
-        // there is a chance the windows is closed already when we come here..
+        // not handled by chat. try handle by theme
+        QString path = req->url().path(); // fully decoded
+        if (path.isEmpty() || path == QLatin1String("/")) {
+            res->setStatusCode(qhttp::ESTATUS_OK);
+            res->headers().insert("Content-Type", "text/html;charset=utf-8");
+
+
+            if (prepareSessionHtml) { // html should be prepared for ech individual session
+                // Even crazier stuff starts here.
+                // Basically we send to theme's webview instance a signal to
+                // generate html for specific session. It does it async.
+                // Then javascript sends a signal the html is ready,
+                // indicating sessionId and html contents.
+                // And only then we close the request with hot html.
+
+                jsLoader->connect(jsLoader.data(),
+                                  &ChatViewJSLoader::sessionHtmlReady,
+                                  session,
+                [weakSession, res, this](const QString &sessionId, const QString &html)
+                {
+                    auto session = weakSession.data();
+                    if (!weakSession) {
+                        return;
+                    }
+                    if (session->sessId == sessionId) {
+                        res->end(html.toUtf8()); // return html to client
+                        // and disconnect from loader
+                        jsLoader->disconnect(
+                                    jsLoader.data(),
+                                    &ChatViewJSLoader::sessionHtmlReady,
+                                    session, nullptr);
+                        jsLoader->unregisterSession(session->sessId);
+                    }
+                });
+                jsLoader->registerSession(session);
+                QString basePath = req->property("basePath").toString();
+                wv->page()->runJavaScript(
+                            QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
+                            .arg(session->sessId, session->propsAsJsonString(), basePath));
+
+            } else {
+                res->end(html.toUtf8());
+            }
+            return true;
+        } else {
+            QByteArray data = Theme(this).loadData(httpRelPath + path);
+            if (!data.isNull()) {
+                res->setStatusCode(qhttp::ESTATUS_OK);
+                res->end(data);
+                return true;
+            }
+        }
+        return false;
     };
+
     session->sessId = server->registerSessionHandler(handler);
     QUrl url = server->serverUrl();
     QUrlQuery q;

@@ -120,6 +120,15 @@ function initPsiTheme() {
                 }
             },
 
+            replaceBob : function(el) {
+                var els = el.querySelectorAll("img"); // frozen list
+                for (var i=0; i < els.length; i++) {
+                    if (els[i].src.indexOf('cid:') == 0) {
+                        els[i].src = "/psibob/" + els[i].src.slice(4);
+                    }
+                }
+            },
+
             updateObject : function(object, update) {
                 for (var i in update) {
                     object[i] = update[i]
@@ -241,6 +250,7 @@ function initPsiTheme() {
 
             appendHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
+                chat.util.replaceBob(htmlSource);
                 chat.util.handleLinks(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);

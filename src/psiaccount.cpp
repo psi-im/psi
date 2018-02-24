@@ -3154,6 +3154,26 @@ void PsiAccount::savePassword()
 }
 #endif
 
+/**
+ * @brief Loads bits of binary either from babManager cache or from remote entity if no in cache
+ * @param jid - jid of remote entity
+ * @param cid - cache item id / bob hash
+ * @param callback - accepts data and content-type. null data means failure
+ */
+void PsiAccount::loadBob(const Jid &jid, const QString &cid, std::function<void (const QByteArray &, const QByteArray &)> callback)
+{
+    JT_BitsOfBinary *task = new JT_BitsOfBinary(d->client->rootTask());
+    QObject::connect(task, &JT_BitsOfBinary::finished, this, [task,callback]() {
+        if (task->success()) {
+            callback(task->data().data(), task->data().type().toLatin1());
+        } else {
+            callback(QByteArray(), QByteArray());
+        }
+    });
+    task->get(jid, cid);
+    task->go(true);
+}
+
 void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
 {
     Status s = _s;

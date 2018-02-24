@@ -836,7 +836,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     ui_.setupUi(this);
     ui_.lb_ident->setAccount(account());
     ui_.lb_ident->setShowJid(false);
-    ui_.log->setSessionData(true, jid(), jid().full()); //FIXME change conference name
+    ui_.log->setSessionData(true, false, jid(), jid().full()); //FIXME change conference name
 #ifdef WEBKIT
     ui_.log->setAccount(account());
 #endif

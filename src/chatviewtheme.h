@@ -54,7 +54,7 @@ public:
     inline const QString &sessionId() const { return sessId; }
     virtual WebView* webView() = 0;
     // returns: data, content-type
-    virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
+    virtual bool getContents(const QUrl &url, std::function<void(const QByteArray &,const QByteArray &)> callback) = 0;
     QString propsAsJsonString();
 
     void init(const Theme &theme);

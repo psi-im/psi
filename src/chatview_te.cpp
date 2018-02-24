@@ -125,9 +125,10 @@ void ChatView::setEncryptionEnabled(bool enabled)
     isEncryptionEnabled_ = enabled;
 }
 
-void ChatView::setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name)
+void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name)
 {
     isMuc_ = isMuc;
+    isMucPrivate_ = isMucPrivate;
     jid_ = jid;
     name_ = name;
 }

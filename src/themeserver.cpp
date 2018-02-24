@@ -67,7 +67,7 @@ ThemeServer::ThemeServer(QObject *parent) :
         // For example it could be currently opened chat window for some jid.
         // This id should be the same for all requests of the element.
         // As fallback url path is also checked for the id, but it's not
-        // reliable and it also means PsiId should looks like a path.
+        // reliable and it also means PsiId should look like a path.
         // If PsiId is not set (handle not found) then it's an invalid request.
         // HTTP referer header is even less reliable so it's not used here.
 

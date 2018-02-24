@@ -64,6 +64,7 @@
 #include "avatars.h"
 #include "desktoputil.h"
 #include "psicon.h"
+#include "xmpp_tasks.h"
 
 
 class ChatViewThemeSessionBridge;
@@ -81,6 +82,7 @@ public:
     bool sessionReady_ = false;
     QPointer<QWidget> dialog_ = 0;
     bool isMuc_ = false;
+    bool isMucPrivate_ = false;
     bool isEncryptionEnabled_ = false;
     Jid jid_;
     QString name_;
@@ -133,11 +135,18 @@ public:
 
     }
 
-    // returns: data, content-type for http requests
-    QPair<QByteArray,QByteArray> getContents(const QUrl &url)
+    // accepts url of http request from chatlog.
+    // returns to callback data and content-type.
+    // if data is null then it's 404
+    bool getContents(const QUrl &url, std::function<void(const QByteArray &,const QByteArray &)> callback)
     {
-        Q_UNUSED(url)
-        return QPair<QByteArray,QByteArray>();
+        if (url.path().startsWith("/psibob/")) {
+            QString cid = url.path().mid(sizeof("/psibob/") - 1);
+            _view->d->account_->loadBob(_view->d->jid_, cid, callback);
+            return true;
+        }
+        //qDebug("Unhandled url: %s", qPrintable(url.toString()));
+        return false;
     }
 
     WebView* webView()
@@ -443,9 +452,10 @@ void ChatView::setDialog(QWidget* dialog)
     d->dialog_ = dialog;
 }
 
-void ChatView::setSessionData(bool isMuc, const Jid &jid, const QString name)
+void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const Jid &jid, const QString name)
 {
     d->isMuc_ = isMuc;
+    d->isMucPrivate_ = isMucPrivate;
     d->jid_ = jid;
     d->name_ = name;
 
@@ -455,7 +465,7 @@ void ChatView::setSessionData(bool isMuc, const Jid &jid, const QString name)
 void ChatView::setAccount(PsiAccount *acc)
 {
     d->account_ = acc;
-    d->remoteIcons = acc->avatarFactory()->userHashes(d->jid_);
+    d->remoteIcons = acc->avatarFactory()->userHashes((d->isMuc_ || d->isMucPrivate_)? d->jid_ : d->jid_.withResource(QString()));
     d->localIcons = acc->avatarFactory()->userHashes(acc->jid());
 }
 

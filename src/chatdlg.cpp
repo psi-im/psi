@@ -140,7 +140,7 @@ void ChatDlg::init()
     chatEdit()->installEventFilter(this);
     chatView()->setDialog(this);
     bool isPrivate = account()->groupchats().contains(jid().bare());
-    chatView()->setSessionData(false, isPrivate? jid() : jid().withResource(QString()), jid().full()); //FIXME fix nick updating
+    chatView()->setSessionData(false, isPrivate, jid(), jid().full()); //FIXME fix nick updating
 #ifdef WEBKIT
     chatView()->setAccount(account());
 #endif

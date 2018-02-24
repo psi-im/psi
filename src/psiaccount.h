@@ -28,6 +28,7 @@
 
 #include <QList>
 #include <QUrl>
+#include <functional>
 
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
@@ -290,6 +291,14 @@ public:
     QList< xmlRingElem > dumpRingbuf();
     void clearRingbuf();
     void addMucItem(const Jid&);
+    QStringList groupList() const;
+    void updateEntry(const UserListItem& u);
+
+    void resetLastManualStatusSafeGuard();
+#ifdef HAVE_KEYCHAIN
+    void savePassword();
+#endif
+    void loadBob(const Jid &jid, const QString &cid, std::function<void(const QByteArray &,const QByteArray &)> callback);
 
 signals:
     void accountDestroyed();
@@ -308,6 +317,12 @@ signals:
     void encryptedMessageSent(int, bool, int, const QString &);
     void enabledChanged();
     void startBounce();
+    void addedContact(PsiContact*);
+    void removedContact(PsiContact*);
+
+    void beginBulkContactUpdate();
+    void endBulkContactUpdate();
+    void rosterRequestFinished();
 
 public slots:
     void setStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
@@ -503,29 +518,11 @@ private slots:
     void newPgpPassPhase(const QString& id, const QString& pass);
 
 private:
-    void handleEvent(const PsiEvent::Ptr &e, ActivationType activationType);
-
-public:
-    QStringList groupList() const;
-    void updateEntry(const UserListItem& u);
-
-    void resetLastManualStatusSafeGuard();
-#ifdef HAVE_KEYCHAIN
-    void savePassword();
-#endif
-
-signals:
-    void addedContact(PsiContact*);
-    void removedContact(PsiContact*);
-
-    void beginBulkContactUpdate();
-    void endBulkContactUpdate();
-    void rosterRequestFinished();
-
-public:
     class Private;
-private:
+    friend class Private;
     Private *d;
+
+    void handleEvent(const PsiEvent::Ptr &e, ActivationType activationType);
 
     void login();
     void logout(bool fast, const Status &s);
@@ -563,8 +560,6 @@ private:
     QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const;
     void findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const;
     void findDialogs(const QMetaObject& mo, QList<void*>* list) const;
-
-    friend class Private;
 };
 
 #endif
