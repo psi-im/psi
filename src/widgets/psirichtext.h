@@ -35,6 +35,9 @@ public:
     static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
     static void setAllowedImageDirs(const QStringList &);
 
+    static void insertMarker(QTextCursor &cursor, const QString &uniqueId);
+    static QTextCursor findMarker(const QTextCursor &cursor, const QString &uniqueId); // will modify cursor to stay right after marker.
+
     struct Selection {
         int start, end;
     };

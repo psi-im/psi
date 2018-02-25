@@ -259,7 +259,7 @@ QString ChatView::colorString(bool local, bool spooled) const
     return ColorOpt::instance()->color("options.ui.look.colors.messages.received").name();
 }
 
-void ChatView::appendText(const QString &text)
+void ChatView::insertText(const QString &text, QTextCursor &insertCursor)
 {
     bool doScrollToBottom = atBottom();
 
@@ -267,7 +267,11 @@ void ChatView::appendText(const QString &text)
     // restoring selection
     int scrollbarValue = verticalScrollBar()->value();
 
-    PsiTextView::appendText(text);
+    if (insertCursor.isNull()) {
+        PsiTextView::appendText(text);
+    } else {
+        PsiTextView::insertText(text, insertCursor);
+    }
 
     if (doScrollToBottom)
         scrollToBottom();
@@ -275,93 +279,72 @@ void ChatView::appendText(const QString &text)
         verticalScrollBar()->setValue(scrollbarValue);
 }
 
+void ChatView::appendText(const QString &text)
+{
+    QTextCursor c;
+    insertText(text, c);
+}
+
 void ChatView::dispatchMessage(const MessageView &mv)
 {
+    const QString& replaceId = mv.replaceId();
     if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
-            && ChatViewCommon::updateLastMsgTime(mv.dateTime()))
+            && ChatViewCommon::updateLastMsgTime(mv.dateTime()) && replaceId.isEmpty())
     {
         QString color = ColorOpt::instance()->color(informationalColorOpt).name();
         appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_time\" />":"") +
                    QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
     }
-    const QString& replaceId = mv.replaceId();
+
     switch (mv.type()) {
         case MessageView::Message:
-            if (!replaceId.isEmpty()) {
-                QTextCursor saved = textCursor();
-                QRegExp msgRE;
-                int capIndex;
-                QString msgid = QRegExp::escape(TextUtil::escape("msgid_" + replaceId + "_" + mv.userId()));
-                // regexp for private chats without clickable nicks, empty brackets are for group index compatibility
-                QRegExp msgPrivRE("(<img src=[^<]*<span[^<]*</span>())(\\s*)?()(.*)<a name=\"" + msgid + "\"></a>.*</p>");
-#ifdef CORRECTION_DEBUG
-                qDebug() << "Replacing" << msgid << "with" << mv.formattedText();
-#endif
-                if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-                    msgRE.setPattern("(<br />)(.*)<a name=\"" + msgid + "\"></a>.*</p>");
-                    capIndex = 2;
-                } else {
-                    msgRE.setPattern(
-                            "(<a href=\"addnick://psi/[^\"]*\"><span [^<]*</span></a>"
-                            "(<span [^>]*>&gt;</span>\\s*)?"
-                            "(<span [^>]*>)?)(\\s*)?(.*)<a name=\""
-                                    + msgid + "\"></a>.*</p>");
-                    capIndex = 5;
-                }
-                moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
-                while (!textCursor().atStart()) {
-                    moveCursor(QTextCursor::EndOfBlock, QTextCursor::MoveAnchor);
-                    moveCursor(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
-                    QTextBlockFormat format = textCursor().blockFormat();
-                    QTextBlockFormat savedFormat(format);
-                    // remove the track bar to see the actual HTML, probably a Qt bug
-                    if (format.property(QTextBlockFormat::BlockTrailingHorizontalRulerWidth).toBool()) {
-                        format.clearProperty(QTextBlockFormat::BlockTrailingHorizontalRulerWidth);
-                        textCursor().setBlockFormat(format);
-                    }
-                    QString srcHtml = textCursor().selection().toHtml();
-#ifdef CORRECTION_DEBUG
-                    qDebug() << "HTML:" << srcHtml;
-#endif
-                    QString oldText;
-                    QRegExp replaceRE;
-                    if (msgRE.indexIn(srcHtml) >= 0) {
-#ifdef CORRECTION_DEBUG
-                        qDebug() << "msgRE matched";
-#endif
-                        oldText = msgRE.cap(capIndex);
-                        replaceRE = msgRE;
-                    } else if (msgPrivRE.indexIn(srcHtml) >= 0) {
-#ifdef CORRECTION_DEBUG
-                        qDebug() << "msgPrivRE matched";
-#endif
-                        oldText = msgPrivRE.cap(capIndex);
-                        replaceRE = msgPrivRE;
-                    }
-                    if (!oldText.isEmpty()) {
-                        oldText.replace(removeTagsRE, "");
-                        srcHtml.replace(replaceRE, "\\1\\3" +
-                                mv.formattedText()
-                                        + "<img src=\"icon:log_icon_corrected\" title=\""
-                                        + oldText + "\" /></p>");
-                        srcHtml.replace(underlineFixRE, "\\1text-decoration: none;");
-                        QTextCursor cur = textCursor();
-                        PsiRichText::appendText(document(), cur, srcHtml, false);
-                        textCursor().setBlockFormat(savedFormat);
-                        break;
-                    }
-                    textCursor().setBlockFormat(savedFormat);
-                    moveCursor(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
-                }
-                setTextCursor(saved);
-            } else {
-                if (isMuc_) {
-                    renderMucMessage(mv);
-                } else {
-                    renderMessage(mv);
-                }
+        {
+            bool isReplace = !replaceId.isEmpty();
+            QTextCursor cursor = textCursor(), replaceCursor;
+            auto sel = PsiRichText::saveSelection(this, cursor);
+            cursor.clearSelection();
+            setTextCursor(cursor);
+            if (isReplace) {
+                cursor.setPosition(0);
+                replaceCursor = PsiRichText::findMarker(cursor, replaceId + "_" + mv.userId());
+                isReplace = !replaceCursor.isNull(); // marker not found
             }
+            if (isReplace) {
+                cursor = replaceCursor;
+                auto fin = PsiRichText::findMarker(cursor, QString()); // empty marker means end. it's iserted after each regular message
+                // the anchor is already on valid position, we only to move the end of selection quite a bit
+                if (fin.isNull()) {
+                    cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+                } else {
+                    cursor.setPosition(fin.anchor(), QTextCursor::KeepAnchor); // returne cursor is a selection of marker. so we need anchor
+                }
+                //qDebug("text to remove: %s", qPrintable(cursor.selectedText()));
+            } else {
+                cursor.movePosition(QTextCursor::End); // no luck with replace, then insert into the end of doc
+            }
+            PsiRichText::insertMarker(cursor, mv.messageId() + "_" + mv.userId());
+            setTextCursor(cursor); // make sure the message is rendered here and nowhere else
+            if (isMuc_) {
+                renderMucMessage(mv, cursor);
+            } else {
+                renderMessage(mv, cursor);
+            }
+            cursor = textCursor(); // take it again. since render function do not modify it
+            if (isReplace) {
+                QTextImageFormat imageFormat;
+                imageFormat.setName("icon:log_icon_corrected");
+                imageFormat.setToolTip(tr("The message was corrected"));
+                cursor.insertImage(imageFormat);
+                //PsiRichText::insertIcon(cursor, QLatin1String("psi/action_templates_edit"), tr("The message was corrected"));
+            } else {
+                //qDebug("end marker at %d", cursor.position());
+                PsiRichText::insertMarker(cursor, QString()); // end marker
+            }
+            cursor.movePosition(QTextCursor::End); // ensure everything else is inserted into the end
+            PsiRichText::restoreSelection(this, cursor, sel);
+            setTextCursor(cursor);
             break;
+        }
         case MessageView::Subject:
             if (isMuc_) {
                 renderMucSubject(mv);
@@ -386,7 +369,7 @@ QString ChatView::replaceMarker(const MessageView &mv) const
     return "<a name=\"msgid_" + TextUtil::escape(mv.messageId() + "_" + mv.userId()) + "\"> </a>";
 }
 
-void ChatView::renderMucMessage(const MessageView &mv)
+void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor)
 {
     const QString timestr = formatTimeStamp(mv.dateTime());
     QString alerttagso, alerttagsc, nickcolor;
@@ -409,14 +392,14 @@ void ChatView::renderMucMessage(const MessageView &mv)
 
     QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
     if(mv.isEmote()) {
-        appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>");
+        insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>", insertCursor);
     }
     else {
         if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-            appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>");
+            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>", insertCursor);
         }
         else {
-            appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>");
+            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>", insertCursor);
         }
     }
 
@@ -425,7 +408,7 @@ void ChatView::renderMucMessage(const MessageView &mv)
     }
 }
 
-void ChatView::renderMessage(const MessageView &mv)
+void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
 {
     QString timestr = formatTimeStamp(mv.dateTime());
     QString color = colorString(mv.isLocal(), false);
@@ -472,7 +455,7 @@ void ChatView::renderMessage(const MessageView &mv)
         else
             str.append(inner);
     }
-    appendText(str);
+    insertText(str, insertCursor);
 
     if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool() ) {
         deferredScroll();

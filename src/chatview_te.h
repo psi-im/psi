@@ -56,6 +56,7 @@ public:
     void setDialog(QWidget* dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
 
+    void insertText(const QString &text, QTextCursor &insertCursor);
     void appendText(const QString &text);
     void dispatchMessage(const MessageView &);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
@@ -82,8 +83,8 @@ protected:
     QString colorString(bool local, bool spooled) const;
 
     QString replaceMarker(const MessageView &mv) const;
-    void renderMucMessage(const MessageView &);
-    void renderMessage(const MessageView &);
+    void renderMucMessage(const MessageView &, QTextCursor &insertCursor);
+    void renderMessage(const MessageView &, QTextCursor &insertCursor);
     void renderSysMessage(const MessageView &);
     void renderSubject(const MessageView &);
     void renderMucSubject(const MessageView &);

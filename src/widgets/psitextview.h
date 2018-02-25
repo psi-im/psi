@@ -35,6 +35,7 @@ public:
     bool atBottom();
 
     virtual void appendText(const QString &text);
+    virtual void insertText(const QString &text, QTextCursor &cursor);
 
     QString getHtml() const;
     QString getPlainText() const;

@@ -45,7 +45,8 @@ class PsiIcon;
 class Iconset;
 #endif
 
-static const int IconFormatType = 0x1000;
+static const int IconFormatType = QTextFormat::UserObject;
+static const int MarkerFormatType = QTextFormat::UserObject + 1;
 static QStringList allowedImageDirs;
 
 //----------------------------------------------------------------------------
@@ -115,8 +116,28 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
 
     painter->drawPixmap(rect, pixmap, pixmap.rect());
 }
-
 #endif // WIDGET_PLUGIN
+
+//----------------------------------------------------------------------------
+// TextMarkerFormat
+//----------------------------------------------------------------------------
+
+class TextMarkerFormat : public QTextCharFormat
+{
+public:
+    TextMarkerFormat(const QString &id);
+
+    enum Property {
+        MarkerId = QTextFormat::UserProperty + 3
+    };
+};
+
+TextMarkerFormat::TextMarkerFormat(const QString &id)
+    : QTextCharFormat()
+{
+    setObjectType(MarkerFormatType);
+    QTextFormat::setProperty(MarkerId, id);
+}
 
 //----------------------------------------------------------------------------
 // PsiRichText
@@ -401,7 +422,14 @@ void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QStr
 
     cursor.endEditBlock();
 }
-
+#if 0
+void PsiRichText::insertText(QTextDocument *doc, QTextCursor &cursor, const QString &text)
+{
+    cursor.beginEditBlock();
+    appendTextHelper(doc, text, cursor);
+    cursor.endEditBlock();
+}
+#endif
 /**
  * Call this function on your QTextDocument to get plain text
  * representation, and all Icons will be replaced by their
@@ -465,6 +493,27 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
 void PsiRichText::setAllowedImageDirs(const QStringList &dirs)
 {
     allowedImageDirs = dirs;
+}
+
+void PsiRichText::insertMarker(QTextCursor &cursor, const QString &uniqueId)
+{
+    cursor.insertText(QString(QChar::ObjectReplacementCharacter), TextMarkerFormat(uniqueId));
+}
+
+// returns cursor with selection on marker
+QTextCursor PsiRichText::findMarker(const QTextCursor &cursor, const QString &uniqueId)
+{
+    QString obrepl = QString(QChar::ObjectReplacementCharacter);
+    auto doc = cursor.document();
+    QTextCursor nc = doc->find(obrepl, cursor);
+
+    while (!nc.isNull()) {
+        if (nc.charFormat().objectType() == MarkerFormatType && nc.charFormat().stringProperty(TextMarkerFormat::MarkerId) == uniqueId) {
+            break;
+        }
+        nc = doc->find(obrepl, nc);
+    }
+    return nc;
 }
 
 /**
