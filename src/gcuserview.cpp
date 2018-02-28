@@ -172,7 +172,7 @@ public:
             mp->drawPixmap(avaRect, ava);
         }
 
-        QPixmap status = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
+        QPixmap status = showStatusIcons_? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap() : QPixmap();
         int h = rect.height();
         int sh = status.isNull() ? 0 : status.height();
         rect.setHeight(qMax(sh, fontHeight_));
@@ -656,7 +656,7 @@ GCUserView::~GCUserView()
 
 void GCUserView::mousePressEvent(QMouseEvent *event)
 {
-    QModelIndex index = currentIndex();
+    QModelIndex index = indexAt(event->pos());
     if (index.parent().isValid()) {
         if (event->button() == Qt::MidButton ||
             (event->button() == Qt::LeftButton &&

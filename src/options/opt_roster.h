@@ -3,22 +3,11 @@
 
 #include "optionstab.h"
 
-class QWidget;
-class QButtonGroup;
-
-class OptionsTabRoster : public OptionsTab
+class OptionsTabRoster: public MetaOptionsTab
 {
     Q_OBJECT
 public:
     OptionsTabRoster(QObject *parent);
-    ~OptionsTabRoster();
-
-    QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
-
-private:
-    QWidget *w;
 };
 
-#endif
+#endif // OPT_ROSTER_H
