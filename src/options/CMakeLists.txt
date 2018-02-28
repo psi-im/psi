@@ -22,6 +22,8 @@ list(APPEND HEADERS
     opt_events.h
     opt_popups.h
     opt_roster.h
+    opt_roster_main.h
+    opt_roster_muc.h
     opt_groupchat.h
     opt_sound.h
     opt_avcall.h
@@ -58,6 +60,8 @@ list(APPEND PLAIN_SOURCES
     opt_messages_common.cpp
     opt_popups.cpp
     opt_roster.cpp
+    opt_roster_main.cpp
+    opt_roster_muc.cpp
     opt_shortcuts.cpp
     opt_sound.cpp
     opt_input.cpp
@@ -91,7 +95,8 @@ list(APPEND FORMS
     opt_messages_common.ui
     opt_plugins.ui
     opt_popups.ui
-    opt_roster.ui
+    opt_roster_main.ui
+    opt_roster_muc.ui
     opt_shortcuts.ui
     opt_sound.ui
     opt_statusauto.ui
