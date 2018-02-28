@@ -863,9 +863,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #endif
 
     ui_.lv_users->setModel(d->usersModel);
-    if (PsiOptions::instance()->getOption("options.ui.contactlist.disable-scrollbar").toBool() ) {
-        ui_.lv_users->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    }
     connect(ui_.lv_users, SIGNAL(contextMenuRequested(const QString&)), SLOT(doContactContextMenu(const QString&)));
     connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
     connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
@@ -2221,6 +2218,8 @@ void GCMainDlg::setLooks()
     setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
 
+    ui_.lv_users->setVerticalScrollBarPolicy(PsiOptions::instance()->getOption("options.ui.muc.userlist.disable-scrollbar").toBool() ?
+                                                 Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
     ui_.lv_users->setLooks();
 }
 

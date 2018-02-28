@@ -314,6 +314,7 @@ QLineEdit#le_status_text {
                     <show-affiliation-icons type = "bool">true</show-affiliation-icons>
                     <contact-sort-style type = "QString">alpha</contact-sort-style>
                     <show-status-icons type = "bool">true</show-status-icons>
+                    <disable-scrollbar type = "bool">true</disable-scrollbar>
                     <avatars>
                         <show type="bool">false</show>
                         <size type="int">24</size>
