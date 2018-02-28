@@ -216,6 +216,7 @@ if(WIN32)
         libgcrypt-20.dll
         libotr.dll
         libotr-5.dll
+        libsignal-protocol-c.dll
         libtidy.dll
         libzlib.dll
         zlib1.dll
