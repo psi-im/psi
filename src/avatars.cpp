@@ -192,7 +192,7 @@ public:
         }
 
         QString hash(_hash);
-        if (newData != data || hash.isEmpty()) {
+        if (hash.isEmpty()) { // ignore "newData != data ||" since we need hashing by original hash
             hash = QString::fromLatin1(QCryptographicHash::hash(newData, QCryptographicHash::Sha1).toHex());
         }
 
@@ -972,6 +972,9 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
     }
     else if (n == PEP_AVATAR_METADATA_NS) {
         QString hash = item.id().toLower();
+        if (hash.size() < 40) {
+            return; // doesn't look like sha1 hash. just ignore it
+        }
 
         if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN) && item.payload().firstChildElement().isNull()) {
             // user wants to stop publishing avatar
