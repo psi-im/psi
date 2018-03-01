@@ -559,6 +559,9 @@ void GCUserModel::updateEntry(const QString &nick, const Status &s)
         }
     } else {
         // just changed status. delegate will decide how to redraw properly
+        auto contact = contacts[contactIndex.parent().row()].at(contactIndex.row());
+        contact->status = s;
+        contact->avatar = _account->avatarFactory()->getMucAvatar(_selfJid.withResource(nick));
         emit dataChanged(contactIndex, contactIndex);
     }
 }
