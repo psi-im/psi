@@ -34,6 +34,7 @@
 #include <QFile>
 #include <QBuffer>
 #include <QPainter>
+#include <QImageReader>
 
 #include "xmpp_xmlcommon.h"
 #include "xmpp_vcard.h"
@@ -981,11 +982,25 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
             // previously we used "stop" element. now specs are changed
             result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
         } else {
-            result = cache->appendUser(item.id(), AvatarCache::AvatarType,
-                                            jidFull);
-            if (result == AvatarCache::NoData) {
-                d->pa_->pepManager()->get(jid, PEP_AVATAR_DATA_NS, hash);
-                return;
+            auto mimes = QImageReader::supportedMimeTypes();
+
+            for (QDomElement e = item.payload().firstChildElement(QLatin1String("info")); !e.isNull(); e = e.nextSiblingElement(QLatin1String("info"))) {
+                if (!mimes.contains(e.attribute(QLatin1String("type")).toLower().toLatin1())) {
+                    continue; // unsupported mime
+                }
+                if (!e.attribute(QLatin1String("url")).isEmpty()) {
+                    continue; // web avatars are not currently supported. TODO but their support is highly expected
+                }
+                if (e.attribute(QLatin1String("id")) != hash) {
+                    continue; // that's something totally unexpected
+                }
+                // found in-band png (by xep84 hash is for png) avatar. So we can make request
+                result = cache->appendUser(item.id(), AvatarCache::AvatarType, jidFull);
+                if (result == AvatarCache::NoData) {
+                    d->pa_->pepManager()->get(jid, PEP_AVATAR_DATA_NS, hash);
+                    return;
+                }
+                break;
             }
         }
     }
