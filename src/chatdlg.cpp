@@ -111,8 +111,12 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 
     status_ = -1;
 
-    historyState = false;
-    preloadHistory();
+    if (!pa->findGCContact(jid) || ((pa->edb()->features() & EDB::PrivateContacts) != 0)) {
+        historyState = false;
+        preloadHistory();
+    }
+    else
+        historyState = true;
 
     autoSelectContact_ = false;
     if (PsiOptions::instance()->getOption("options.ui.chat.default-jid-mode").toString() == "auto") {
