@@ -657,7 +657,7 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
         }
         QByteArray data = vcard.photo();
         if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, bareJid, data) != AvatarCache::NoData) {
-            img = QImage::fromData(data);
+            img = QImage::fromData(AvatarCache::instance()->icons(bareJid).avatar->data()); // from scaled avatar
         }
     }
 
@@ -742,15 +742,18 @@ QPixmap AvatarFactory::getMucAvatar(const Jid& _jid)
 
     auto icons = AvatarCache::instance()->icons(fullJid);
     QByteArray data;
-    if (icons.avatar) {
-        data = icons.avatar->data();
-    } else {
+    if (!icons.avatar) {
         auto vcard = VCardFactory::instance()->mucVcard(_jid);
         if (vcard.isNull() || vcard.photo().isNull()) {
             return QPixmap();
         }
         data = vcard.photo();
         AvatarCache::instance()->setIcon(AvatarCache::VCardType, _jid.full(), data);
+        icons = AvatarCache::instance()->icons(fullJid); // should return scaled copy
+    }
+
+    if (icons.avatar) {
+        data = icons.avatar->data();
     }
 
     // for mucs icons.avatar is always made of vcard and anything else is not supported. at least for now.
