@@ -135,6 +135,7 @@ endif()
 
 string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d")
 string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S")
+include(get-version.cmake)
 
 if(ENABLE_WEBKIT)
     if(NOT USE_WEBENGINE)

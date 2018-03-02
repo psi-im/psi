@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.1.0)
 if(WIN32)
+    set(LIBS_TARGET prepare-bin-libs)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(D "d")
     endif()
@@ -26,7 +27,7 @@ if(WIN32)
             find_file( _library ${_liba} PATHS ${FIXED_PATHES} ${ADDITTIONAL_FLAG})
             if( NOT "${_library}" STREQUAL "_library-NOTFOUND" )
                 message("library found ${_library}")
-                copy("${_library}" "${_OUTPUT_PATH}" prepare-bin-libs)
+                copy("${_library}" "${_OUTPUT_PATH}" "${LIBS_TARGET}")
             endif()
         endforeach()
         set(_LIBS "")
@@ -34,10 +35,15 @@ if(WIN32)
         set(_OUTPUT_PATH "")
     endfunction()
     set(SDK_PREFIX "")
-    set(QCA_LIB_SUFF "-qt5")
     get_filename_component(QT_DIR ${QT_BIN_DIR} DIRECTORY)
     set(QT_PLUGINS_DIR ${QT_DIR}/plugins)
     set(QT_TRANSLATIONS_DIR ${QT_DIR}/translations)
+    if(USE_MXE)
+        list(APPEND PATHES
+            ${CMAKE_PREFIX_PATH}/bin
+            ${CMAKE_PREFIX_PATH}/lib
+        )
+    endif()
     find_program(WINDEPLOYQTBIN windeployqt ${QT_BIN_DIR})
     if(NOT "${WINDEPLOYQTBIN}" STREQUAL "WINDEPLOYQTBIN-NOTFOUND")
         message(STATUS "WinDeployQt utility - FOUND")
@@ -135,22 +141,32 @@ if(WIN32)
         find_psi_lib("${IMAGE_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/")
         find_psi_lib("windowsprintersupport${D}.dll" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/")
         find_psi_lib("qsqlite${D}.dll" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/")
+        list(APPEND PATHES
+            ${QT_BIN_DIR}
+        )
+        if(KEYCHAIN_LIBS)
+            set(KEYCHAIN_LIBS
+                qt5keychain.dll
+                libqt5keychain.dll
+            )
+            find_psi_lib("${KEYCHAIN_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        endif()
         # Qt translations
         file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qt_*.qm")
         foreach(FILE ${QT_TRANSLATIONS})
             if(NOT FILE MATCHES "_help_")
-                copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" prepare-bin-libs)
+                copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" ${LIBS_TARGET})
             endif()
         endforeach()
         file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/qtbase_*.qm")
         foreach(FILE ${QT_TRANSLATIONS})
-            copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" prepare-bin-libs)
+            copy(${FILE} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations/" ${LIBS_TARGET})
         endforeach()
     endif()
     # psimedia
     if(EXISTS "${PSIMEDIA_DIR}")
         find_program(PSIMEDIA_PATH libgstprovider${D}.dll PATHS ${PSIMEDIA_DIR}/plugins )
-        copy(${PSIMEDIA_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin-libs)
+        copy(${PSIMEDIA_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" ${LIBS_TARGET})
     endif()
     # psimedia deps
     find_program(PSIMEDIA_DEPS_PATH libgstvideo-0.10-0.dll PATHS ${GST_SDK}/bin )
@@ -205,13 +221,13 @@ if(WIN32)
     file(GLOB GSTREAMER_PLUGINS "${GSTREAMER_PLUGINS_DIR}/*.dll")
     find_psi_lib("${GSTREAMER_PLUGINS}" "${GSTREAMER_PLUGINS_DIR}/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gstreamer-0.10/")
     # other libs and executables
-        set( LIBRARIES_LIST
-                libgcc_s_sjlj-1.dll
-                libgcc_s_dw2-1.dll
-                libgcc_s_seh-1.dll
-                libstdc++-6.dll
-                libwinpthread-1.dll
-                gpg.exe
+    set( LIBRARIES_LIST
+        libgcc_s_sjlj-1.dll
+        libgcc_s_dw2-1.dll
+        libgcc_s_seh-1.dll
+        libstdc++-6.dll
+        libwinpthread-1.dll
+        gpg.exe
         libgcrypt-11.dll
         libgcrypt-20.dll
         libotr.dll
@@ -229,23 +245,28 @@ if(WIN32)
         libhunspell-1.6-0.dll
         libeay32.dll
         ssleay32.dll
+        libqca-qt5${D}.dll
     )
-    set(QCA_PATHES
-        "${QT_BIN_DIR}"
-        "${QCA_DIR}bin"
-        "${QT_PLUGINS_DIR}/crypto"
-        "${QCA_DIR}lib/qca${QCA_LIB_SUFF}/crypto"
+    list(APPEND PATHES
+        ${QCA_DIR}bin
+        ${QCA_DIR}/bin
+        ${QT_PLUGINS_DIR}/crypto
+        ${QCA_DIR}lib/qca-qt5/crypto
+        ${QCA_DIR}lib/Qca-qt5/crypto
     )
-    find_psi_lib("libqca${QCA_LIB_SUFF}${D}.dll" "${QCA_PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
     if(MSVC)
         list(APPEND LIBRARIES_LIST
             otr${D}.dll
             tidy${D}.dll
             zlib${D}.dll
             idn${D}.dll
+            qca-qt5${D}.dll
         )
-        find_psi_lib("qca${QCA_LIB_SUFF}${D}.dll" "${QCA_PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        list(APPEND PATHES
+            ${SDK_PATH}/bin
+        )
     endif()
+
     if(USE_MXE)
         list(APPEND LIBRARIES_LIST
             libgpg-error6-0.dll
@@ -273,7 +294,7 @@ if(WIN32)
             libwebpdecoder-1.dll
             libwebpdemux-1.dll
             libxml2-2.dll
-                )
+        )
     endif()
     if(SEPARATE_QJDNS)
         list(APPEND LIBRARIES_LIST
@@ -282,7 +303,7 @@ if(WIN32)
         )
     endif()
     if(EXISTS "${SDK_PATH}")
-        set(PATHES
+        list(APPEND PATHES
             "${IDN_ROOT}bin"
             "${HUNSPELL_ROOT}bin"
             "${LIBGCRYPT_ROOT}bin"
@@ -315,5 +336,5 @@ if(WIN32)
             qca-gnupg${D}.dll
         )
     endif()
-    find_psi_lib("${QCA_PLUGINS}" "${QCA_PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crypto/")
+    find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crypto/")
 endif()
