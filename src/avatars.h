@@ -57,7 +57,7 @@ class AvatarFactory : public QObject
 {
     Q_OBJECT
 
-    static const int VcardReqInterval = 500; // query vcard avatars once per second
+    static const int VcardReqInterval = 500; // query vcard avatars once per half second
 
 public:
     struct UserHashes {
