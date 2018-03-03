@@ -262,9 +262,6 @@ if(WIN32)
             idn${D}.dll
             qca-qt5${D}.dll
         )
-        list(APPEND PATHES
-            ${SDK_PATH}/bin
-        )
     endif()
 
     if(USE_MXE)
@@ -312,11 +309,13 @@ if(WIN32)
             "${LIBTIDY_ROOT}bin"
             "${QJSON_ROOT}bin"
             "${ZLIB_ROOT}bin"
+            "${SDK_PATH}openssl/bin"
         )
         if(MSVC)
-            list(APPEND PATHES "${SDK_PATH}/bin")
-        else()
-            list(APPEND PATHES "${SDK_PATH}/openssl/bin")
+            list(APPEND PATHES
+                "${SDK_PATH}bin"
+                "${SDK_PATH}lib/qca-qt5/crypto"
+            )
         endif()
         if(SEPARATE_QJDNS)
             list(APPEND PATHES
