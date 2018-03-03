@@ -34,6 +34,7 @@
 #include <QImageReader>
 #include <QMessageBox>
 #include <QDir>
+#include <QSessionManager>
 
 #include "s5b.h"
 #include "xmpp_caps.h"
@@ -388,7 +389,10 @@ bool PsiCon::init()
     if (!ActiveProfiles::instance()->setThisProfile(activeProfile))
         return false;
 
-    connect(qApp, SIGNAL(forceSavePreferences()), SLOT(forceSavePreferences()));
+#if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
+    qApp->setFallbackSessionManagementEnabled(false);
+#endif
+    connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)), SLOT(forceSavePreferences(QSessionManager&)));
 
 #ifdef HAVE_PGPUTIL
     // PGP initialization (needs to be before any gpg usage!)
@@ -1919,8 +1923,9 @@ QString PsiCon::optionsFile() const
     return pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/options.xml";
 }
 
-void PsiCon::forceSavePreferences()
+void PsiCon::forceSavePreferences(QSessionManager &session)
 {
+    session.setRestartHint(QSessionManager::RestartIfRunning);
     PsiOptions::instance()->save(optionsFile());
 }
 

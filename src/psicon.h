@@ -179,7 +179,7 @@ public slots:
 private slots:
     void saveAccounts();
     void optionChanged(const QString& option);
-    void forceSavePreferences();
+    void forceSavePreferences(QSessionManager &);
     void startBounce();
     void aboutToQuit();
     void secondsIdle(int);

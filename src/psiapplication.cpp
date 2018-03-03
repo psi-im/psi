@@ -227,9 +227,3 @@ bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
     return false;
 }
 #endif
-
-void PsiApplication::commitData(QSessionManager& manager)
-{
-    Q_UNUSED(manager);
-    emit forceSavePreferences();
-}

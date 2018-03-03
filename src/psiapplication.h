@@ -43,11 +43,7 @@ public:
     bool macEventFilter(EventHandlerCallRef, EventRef);
 #endif
 
-    // reimplemented
-    void commitData(QSessionManager& manager);
-
 signals:
-    void forceSavePreferences();
     void dockActivated();
 
 private:
