@@ -119,7 +119,8 @@ if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     message(STATUS "MXE environment detected")
     set(USE_MXE ON)
     message(STATUS "MXE root path: ${CMAKE_PREFIX_PATH}")
-    set(Qt5Keychain_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/Qt5Keychain" CACHE STRING "Path to Qt5Keychain cmake files")
+    # TODO: Check why this breaks build with GCC >= 6.0:
+    #set(Qt5Keychain_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/Qt5Keychain" CACHE STRING "Path to Qt5Keychain cmake files")
 endif()
 
 
