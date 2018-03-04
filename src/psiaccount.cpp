@@ -5750,8 +5750,12 @@ void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e, int type)
     if (!d->acc.opt_log)
         return;
 
-    if (type == EDB::GroupChatContact && !PsiOptions::instance()->getOption("options.history.store-muc-private").toBool())
-        return;
+    if (type == EDB::GroupChatContact) {
+        if (!PsiOptions::instance()->getOption("options.history.store-muc-private").toBool())
+            return;
+        if ((edb()->features() & EDB::PrivateContacts) == 0)
+            return;
+    }
 
     EDBHandle *h = new EDBHandle(d->psi->edb());
     connect(h, SIGNAL(finished()), SLOT(edb_finished()));
