@@ -1321,15 +1321,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
 PsiAccount::~PsiAccount()
 {
-    bool logged = isActive();
     logout(true, loggedOutStatus());
-
-    if (logged) {
-        QEventLoop l; // we need a few cycles to finish sending data in qca on app quit
-        for (int i =0; i < 100; i++) {
-            l.processEvents();
-        }
-    }
 
     setRCEnabled(false);
 
@@ -1795,7 +1787,14 @@ void PsiAccount::login()
     d->client->connectToServer(d->stream, j);
 }
 
+void PsiAccount::fastLogout()
+{
+    logout(true, loggedOutStatus());
+}
+
 // disconnect or stop reconnecting
+// fast - drop all meesage queues. send offline presense immediately and
+//        finalize connection as fast as possible. Even so xmpp connection must be closed properly.
 void PsiAccount::logout(bool fast, const Status &s)
 {
     if(!isActive())
@@ -1808,15 +1807,10 @@ void PsiAccount::logout(bool fast, const Status &s)
 
     d->stopReconnect();
 
-    forceDisconnect(fast, s);
-}
-
-void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
-{
-    if(!isActive())
-        return;
-
     if(loggedIn()) {
+        if (fast) {
+            d->client->clearSendQueue(); // clears pending send items
+        }
         // Extended Presence
         if (PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() && !d->lastTune.isNull())
             publishTune(Tune());
@@ -1835,27 +1829,17 @@ void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
     d->loginStatus = Status(Status::Offline);
     stateChanged();
 
-    // Using 100msecs; See note on disconnect()
-    QTimer::singleShot(100, this, SLOT(disconnect()));
-}
+    d->client->close(fast);
+    QPointer<PsiAccount> protector(this);
+    QTimer::singleShot(1000,[this,protector]() { // delayed close to let stream close tag to be written (this fix is rather has to be in iris)
+        if (!protector)
+            return;
 
-// skz note: I had to split logout() because server seem to need some time to store status
-// before stream is closed (weird, I know)
-void PsiAccount::disconnect()
-{
-    if (isDisconnecting) {
-        // disconnect
-        d->client->close();
-        QTimer::singleShot(0,[this]() { // delayed close to let stream close tag to be written (this fix is rather has to be in iris)
-            cleanupStream();
+        cleanupStream();
 
-            emit disconnected();
-            isDisconnecting = false;
-
-            if(d->loginStatus.isAvailable())
-                login();
-        });
-    }
+        emit disconnected();
+        isDisconnecting = false;
+    });
 }
 
 // TODO: search through the Psi and replace most of loggedIn() calls with isAvailable()
@@ -3085,7 +3069,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
         // change status
         else {
             if (!isConnected()) {
-                disconnect(); // a hack to reset connecting stream.
+                cleanupStream();
                 login();
             }
             if(rosterDone) {

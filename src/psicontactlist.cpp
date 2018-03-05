@@ -62,6 +62,39 @@ PsiContactList::~PsiContactList()
         delete account;
 }
 
+void PsiContactList::gracefulDeinit()
+{
+    deinitAccCounter_ = 0;
+    decltype(accounts_) loggedAccs;
+
+    for(auto account : enabledAccounts_) {
+        if (account->isAvailable()) {
+            deinitAccCounter_++;
+            loggedAccs.append(account);
+        } else if (account->isActive()) {
+            account->fastLogout();
+        }
+    }
+    if (!deinitAccCounter_) {
+        emit gracefulDeinitFinished();
+        return;
+    }
+
+    for (auto account : loggedAccs) {
+        connect(account, &PsiAccount::disconnected, this, &PsiContactList::gracefulDeinitOnDisconnected);
+        account->fastLogout();
+    }
+}
+
+void PsiContactList::gracefulDeinitOnDisconnected()
+{
+    disconnect(reinterpret_cast<PsiAccount*>(sender()), &PsiAccount::disconnected, this, &PsiContactList::gracefulDeinitOnDisconnected);
+    deinitAccCounter_--;
+    if (!deinitAccCounter_) {
+        emit gracefulDeinitFinished();
+    }
+}
+
 /**
  * Returns pointer to the global Psi Controller.
  */

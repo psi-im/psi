@@ -22,6 +22,7 @@
 #define PSICONTACTLIST_H
 
 #include <QList>
+#include <functional>
 
 #include "profiles.h"
 
@@ -38,6 +39,7 @@ class PsiContactList : public QObject
 public:
     PsiContactList(PsiCon* psi);
     ~PsiContactList();
+    void gracefulDeinit();
 
     PsiCon* psi() const;
 
@@ -92,6 +94,7 @@ signals:
     void showSelfChanged(bool);
     void showOfflineChanged(bool);
     void contactSortStyleChanged(QString);
+    void gracefulDeinitFinished();
 
 signals:
     void addedContact(PsiContact*);
@@ -153,7 +156,7 @@ private slots:
     void accountEnabledChanged();
     void accountAddedContact(PsiContact*);
     void accountRemovedContact(PsiContact*);
-
+    void gracefulDeinitOnDisconnected();
 private:
     PsiAccount *loadAccount(const UserAccount &);
     PsiAccount *tryQueueLowestEventId(bool includeDND);
@@ -168,6 +171,7 @@ private:
     bool showOffline_;
     bool accountsLoaded_;
     QString contactSortStyle_;
+    int deinitAccCounter_;
 
     void addEnabledAccount(PsiAccount* account);
     void removeEnabledAccount(PsiAccount* account);

@@ -716,7 +716,7 @@ void PsiCon::deinit()
     UserAccountList acc;
     if(d->contactList) {
         acc = d->contactList->getUserAccountList();
-        delete d->contactList;
+        delete d->contactList; // also deletes all accounts
     }
     d->nam->releaseHandlers();
 
@@ -747,6 +747,16 @@ void PsiCon::deinit()
     DesktopUtil::unsetUrlHandler("xmpp");
 }
 
+// will gracefully finish all network activity and other async stuff
+void PsiCon::gracefulDeinit(std::function<void ()> callback)
+{
+    if(d->contactList) {
+        connect(d->contactList, &PsiContactList::gracefulDeinitFinished, this, callback);
+        d->contactList->gracefulDeinit();
+    } else {
+        callback();
+    }
+}
 
 void PsiCon::setShortcuts()
 {

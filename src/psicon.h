@@ -22,6 +22,7 @@
 #define PSICON_H
 
 #include <QList>
+#include <functional>
 
 #include "profiles.h"
 #include "psiactions.h"
@@ -75,6 +76,7 @@ public:
 
     bool init();
     void deinit();
+    void gracefulDeinit(std::function<void()> callback);
 
     PsiContactList* contactList() const;
     EDB *edb() const;

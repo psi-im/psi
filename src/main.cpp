@@ -323,10 +323,15 @@ void PsiMain::sessionQuit(int x)
 void PsiMain::bail()
 {
     if(pcon) {
-        delete pcon;
-        pcon = 0;
+        pcon->gracefulDeinit([this](){
+            delete pcon;
+            pcon = 0;
+            quit();
+        });
     }
-    quit();
+    else {
+        quit();
+    }
 }
 
 void PsiMain::saveSettings()

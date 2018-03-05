@@ -166,7 +166,6 @@ public:
     const Mood &mood() const;
     const Activity &activity() const;
     const GeoLocation &geolocation() const;
-    void forceDisconnect(bool fast, const XMPP::Status &s);
     bool hasPGP() const;
     QHostAddress *localAddress() const;
 
@@ -325,6 +324,7 @@ signals:
     void rosterRequestFinished();
 
 public slots:
+    void fastLogout();
     void setStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
     void showStatusDialog(const QString& presetName);
 
@@ -462,7 +462,6 @@ private slots:
 
     void reconnectOncePhase2();
     void reconnect();
-    void disconnect();
     void enableNotifyOnline();
 
 #ifdef WHITEBOARDING
