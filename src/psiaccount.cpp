@@ -1831,7 +1831,7 @@ void PsiAccount::logout(bool fast, const Status &s)
 
     d->client->close(fast);
     QPointer<PsiAccount> protector(this);
-    QTimer::singleShot(1000,[this,protector]() { // delayed close to let stream close tag to be written (this fix is rather has to be in iris)
+    QTimer::singleShot(500,[this,protector]() { // delayed close to let stream close tag to be written (this fix is rather has to be in iris)
         if (!protector)
             return;
 
@@ -5909,6 +5909,10 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
     if(!w)
         return;
 
+    if (j.resource().isEmpty()) {
+        w->gcSelfPresence(s);
+        return;
+    }
     GCContact *c = findGCContact(j);
     if(!c) {
         c = new GCContact;

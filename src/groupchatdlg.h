@@ -56,6 +56,7 @@ public:
     PsiAccount* account() const;
 
     void error(int, const QString &);
+    void gcSelfPresence(const Status &s);
     void presence(const QString &, const Status &);
     void message(const Message &, const PsiEvent::Ptr &e = PsiEvent::Ptr());
     void joined();
@@ -159,6 +160,7 @@ private:
 
     inline XMPP::Jid jidForNick(const QString &nick) const;
 
+    void setMucSelfAvatar(const QPixmap &p);
 };
 
 #endif
