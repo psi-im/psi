@@ -15,10 +15,31 @@ Maintainers:
   kismith@psi-im.org
   https://psi-im.org/
 
-  For installation or compiling instructions, see the INSTALL file.
-
   This program is licensed under the GNU General Public License. See the
   COPYING file for more information.
+
+  For installation or compiling instructions, see the INSTALL file.
+
+  List of changes is in CHANELOG file.
+
+Description
+-----------
+
+  Psi is a capable XMPP client aimed at experienced users. Its design goals
+  are simplicity and stability. Psi is highly portable and runs on MS Windows,
+  GNU/Linux and macOS.
+
+  The interface is very ICQ-like. Alerts appear in the contact list when
+  events are received, and things like subscriptions requests appear as
+  "system messages" (ICQ users know these well).  Even "Chats" are queued in
+  the contact list. Also, chats are "remembered" by default, so that you don't
+  have to keep a bunch of windows open for each person. Just close the
+  chat window. If you open it again it will all be there.
+
+  Psi is minimal but powerful. There are keybindings for just about
+  everything, Unicode is supported throughout, and contacts are cached
+  offline. Security is also a major consideration, and Psi provides it for
+  both client-to-server (SSL) and client-to-client (GnuPG, OTR, OMEMO).
 
 
 Notes
@@ -48,101 +69,6 @@ Notes
     * Ensure 'gpg' actually works, by testing it from the command-line.
     * You must have a public and secret keyring. Psi cannot operate
       without them, and they must be there when you start it.
-
-
-Changes
--------
-  New in 2.0 (UNRELEASED)
-  - Rewritten code related to spell checkers support (hunspell, aspell)
-  - Improved saving of program settings on exit
-  - Partially reorganized options dialog
-  - Multiple fixes and optimizations in UI
-  - Added system keychain support
-  - Added HTTP File Upload (XEP-0363) implementation
-  - Added Result Set Management (XEP-0059) implementation
-  - Fixed crashes on Wayland due to usage of X11 specific calls
-  - Fixed CMake build on macOS
-  - Code refactoring
-
-  New in 1.3
-  - Fixed connection to Openfire server
-  - Fixed connections by IP (fixes socks file transfer as well)
-  - Fixed compilation with new version of Enchant
-  - Fixed broken file transfer after reconnection
-  - Minor UI fixes
-
-  New in 1.2
-  - Removed AIM and MSN icons.
-  - Fixed debug build on Visual Studio.
-  - Font and windows sizes adjusted for regular fullhd displays.
-  - Fixed crashes online account remove and contact delete from another resource.
-  - History DB and dialog improvements.
-  - Fixed crash on unrecognized dictionary encodings in hunspell checker.
-  - Added option to disable previews in webkit builds.
-  - Fixed Youtube links recognition.
-
-  New in 1.1
-  - Fixed a few crashes. Seems to be pretty stable now.
-  - Contact list was rewritten once again.
-  - Improved stream management (no more disconnects).
-  - Better support for HIDPI displays.
-  - More Psi+ patches merged.
-  - JDNS was replaced with QDnsLookup for Qt5 builds.
-  - CMake support.
-  - A lot of minor UI fixes.
-
-  New in 1.0
-  - Almost all Psi+ patches were merged (a lot of features).
-  - Plugins support is enabled by default.
-
-  New in 0.15
-  - Merge many changes from Psi+.
-  - New message history browser.
-  - New, fast contact list window.
-  - TURN proxying for voice calls.
-  - Store data in more standardized locations based on the platform.
-  - No longer dependent on the Qt3Support library.
-  - Domains ending in .local now always work, whether via DNS server or mdns.
-  - Windows 64-bit and Mac 64-bit now supported. Mac PPC deprecated.
-  - Legacy SSL port probe feature removed.
-  - Various small features and bugfixes.
-
-  New in 0.14
-  - Added color options to the chat window.
-  - Can now specify a reason for kick/ban in groupchat.
-  - Improved User Info window, to show more fields and photo view/save.
-  - Support for Enchant as an alternative to Aspell.
-  - Commandline interface now supports choosing profile and setting status.
-  - D-BUS interface now supports setting status and indicating sleep/wake.
-  - Fixed voice calling compatibility bugs with Pidgin and Empathy.
-  - Various other minor improvements and bugfixes.
-
-  New in 0.13
-  - Voice calls (Jingle RTP).
-  - Basic XMPP URI handler.
-  - Ability to permanently trust certificates at connect time.
-  - Mini command system (Ctrl+7 in chat window).
-  - Various bugfixes.
-
-
-Description
------------
-
-  Psi is a capable XMPP client aimed at experienced users. Its design goals
-  are simplicity and stability. Psi is highly portable and runs on Windows,
-  Unix/X11, and Mac OS X.
-
-  The interface is very ICQ-like. Alerts appear in the contact list when
-  events are received, and things like subscriptions requests appear as
-  "system messages" (ICQ users know these well).  Even "Chats" are queued in
-  the contact list. Also, chats are "remembered" by default, so that you don't
-  have to keep a bunch of windows open for each person. Just close the
-  chat window. If you open it again it will all be there.
-
-  Psi is minimal but powerful. There are keybindings for just about
-  everything, Unicode is supported throughout, and contacts are cached
-  offline. Security is also a major consideration, and Psi provides it for
-  both client-to-server (SSL) and client-to-client (GnuPG).
 
 
 How you can help
