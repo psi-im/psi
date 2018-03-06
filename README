@@ -53,13 +53,23 @@ Notes
 
 Changes
 -------
+  New in 2.0 (UNRELEASED)
+  - Rewritten code related to spell checkers support (hunspell, aspell)
+  - Improved saving of program settings on exit
+  - Partially reorganized options dialog
+  - Multiple fixes and optimizations in UI
+  - Added HTTP File Upload (XEP-0363)
+  - Fixed crashes on Wayland due to usage of X11 specific calls
+  - Fixed CMake build on macOS
+  - Code refactoring
+
   New in 1.3
   - Fixed connection to Openfire server
   - Fixed connections by IP (fixes socks file transfer as well)
   - Fixed compilation with new version of Enchant
   - Fixed broken file transfer after reconnection
   - Minor UI fixes
-  
+
   New in 1.2
   - Removed AIM and MSN icons.
   - Fixed debug build on Visual Studio.
