@@ -28,7 +28,7 @@ See [INSTALL](INSTALL) file.
 
 ## Development
 
-In 2009 a Psi fork named [Psi+](https://github.com/psi-plus) was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM client which is hosted at separate git repositories and for which rolling release development model is used.
+In 2009 a Psi fork named [Psi+](https://psi-plus.com/) was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM client which is hosted at separate git repositories and for which rolling release development model is used.
 
 Currently the development model looks like this:
 * Psi IM versions should look like: `X.Y` (where `X` and `Y` are not digits but numbers).
@@ -96,7 +96,7 @@ If you want to donate some money for development of Psi IM and Psi+ project, it 
 * [Psi IM plugins](https://github.com/psi-im/plugins) (sources)
 * [Psi IM plugin for VoIP and video-calls](https://github.com/psi-im/psimedia) (sources)
 * [Psi IM translations](https://github.com/psi-im/psi-l10n) (sources)
-* [Psi+ project](https://github.com/psi-plus) (official website)
+* [Psi+ project](https://psi-plus.com/) (official website)
 * [Psi+ builds for end users](https://sourceforge.net/projects/psiplus/files/) (executables)
 * [Psi+ extra resources](https://github.com/psi-plus/resources) (iconsets, sounds, skins, themes, etc.)
 * [Psi+ snapshots](https://github.com/psi-plus/psi-plus-snapshots) (sources)
