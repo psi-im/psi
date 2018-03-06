@@ -13,8 +13,7 @@ Maintainers:
 
   Kevin Smith (2004-2009)
   kismith@psi-im.org
-  http://www.kismith.co.uk/
-
+  https://psi-im.org/
 
   For installation or compiling instructions, see the INSTALL file.
 
@@ -58,7 +57,9 @@ Changes
   - Improved saving of program settings on exit
   - Partially reorganized options dialog
   - Multiple fixes and optimizations in UI
-  - Added HTTP File Upload (XEP-0363)
+  - Added system keychain support
+  - Added HTTP File Upload (XEP-0363) implementation
+  - Added Result Set Management (XEP-0059) implementation
   - Fixed crashes on Wayland due to usage of X11 specific calls
   - Fixed CMake build on macOS
   - Code refactoring
