@@ -46,9 +46,9 @@ Currently the development model looks like this:
 ### Lead developers
 * 2017-now,  Sergey Ilinykh <<rion4ik@gmail.com>>, Psi IM and Psi+ projects
 * 2010-2017, Sergey Ilinykh <<rion4ik@gmail.com>>, Psi+ project
-* 2009-2010, Justin Karneges <<justin@affinix.com>>, Psi IM project
-* 2004-2009, Kevin Smith <<kismith@psi-im.org>>, Psi IM project
-* 2001-2004, Justin Karneges <<justin@affinix.com>>, Psi IM project
+* 2009-2010, [Justin Karneges](http://andbit.net/) <<justin@affinix.com>>, Psi IM project
+* 2004-2009, [Kevin Smith](http://doomsong.co.uk/) <<kevin@kismith.co.uk>>, Psi IM project
+* 2001-2004, [Justin Karneges](http://andbit.net/) <<justin@affinix.com>>, Psi IM project
 
 ### Other contributors
 
@@ -58,7 +58,7 @@ There are a lot of people who were involved into Psi IM and Psi+ development. So
 
 ### Bug reports
 
-If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](psi-dev@conference.jabber.ru) (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
+If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) <<psi-dev@conference.jabber.ru>> (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
 
 ### Beta testing
 
@@ -66,7 +66,7 @@ As we (intentionally) do not have nor beta versions of Psi, nor daily build buil
 
 ### Comments and wishes
 
-We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](psi-dev@conference.jabber.ru) for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
+We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) <<psi-dev@conference.jabber.ru>> for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
 
 ### Translations
 
