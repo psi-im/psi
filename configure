@@ -29,32 +29,35 @@ Project options:
                               file (default for non-mac).
 
 Dependency options:
-  --with-idn-inc=[path]         Path to libidn include files
-  --with-idn-lib=[path]         Path to libidn library or framework files
-  --with-qca-inc=[path]         Path to QCA include files
-  --with-qca-lib=[path]         Path to QCA library or framework files
-  --with-zlib-inc=[path]        Path to zlib include files
-  --with-zlib-lib=[path]        Path to zlib library files
-  --with-qjdns-inc=[path]       Path to QJDns include files
-  --with-qjdns-lib=[path]       Path to QJDns library files
-  --enable-universal            Enable use of Mac OS X universal binary
-                                support
-  --disable-qdbus               Disable use of QDBUS
-  --disable-keychain            Disable use of Qt Keychain
-  --enable-webkit               Enable use of webkit
-  --with-webkit=[type]          type of webkit QtWebKit/QtWebEngine
-  --disable-growl               Disable use of Growl
-  --with-growl=[path]           Path to the Growl framework
-  --enable-whiteboarding        Enable use of White Board support
-  --disable-xss                 Disable use of the XScreenSaver extension
-  --disable-aspell              Disable use of aspell
-  --with-aspell-inc=[path]      Path to Aspell include files
-  --with-aspell-lib=[path]      Path to Aspell library files
-  --disable-enchant             Disable use of enchant
-  --disable-hunspell            Disable use of hunspell
-  --with-hunspell-inc=[path]    Path to Hunspell include files
-  --with-hunspell-lib=[path]    Path to Hunspell library files
-  --disable-plugins             Disable use of Psi Plugin support
+  --with-idn-inc=[path]            Path to libidn include files
+  --with-idn-lib=[path]            Path to libidn library or framework files
+  --with-qca-inc=[path]            Path to QCA include files
+  --with-qca-lib=[path]            Path to QCA library or framework files
+  --with-zlib-inc=[path]           Path to zlib include files
+  --with-zlib-lib=[path]           Path to zlib library files
+  --with-qjdns-inc=[path]          Path to QJDns include files
+  --with-qjdns-lib=[path]          Path to QJDns library files
+  --enable-universal               Enable use of Mac OS X universal binary
+                                   support
+  --disable-qdbus                  Disable use of QDBUS
+  --disable-keychain               Disable use of Qt Keychain
+  --enable-webkit                  Enable use of webkit
+  --with-webkit=[type]             type of webkit QtWebKit/QtWebEngine
+  --with-http-parser-inc=[path]    Path to HTTP Parser include files
+  --with-http-parser-lib=[path]    Path to HTTP Parser library files
+  --bundled-http-parser            Build with bundled HTTP Parser
+  --disable-growl                  Disable use of Growl
+  --with-growl=[path]              Path to the Growl framework
+  --enable-whiteboarding           Enable use of White Board support
+  --disable-xss                    Disable use of the XScreenSaver extension
+  --disable-aspell                 Disable use of aspell
+  --with-aspell-inc=[path]         Path to Aspell include files
+  --with-aspell-lib=[path]         Path to Aspell library files
+  --disable-enchant                Disable use of enchant
+  --disable-hunspell               Disable use of hunspell
+  --with-hunspell-inc=[path]       Path to Hunspell include files
+  --with-hunspell-lib=[path]       Path to Hunspell library files
+  --disable-plugins                Disable use of Psi Plugin support
 
 EOT
 }
@@ -268,6 +271,21 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--with-http-parser-inc=*)
+			QC_WITH_HTTP_PARSER_INC=$optarg
+			shift
+			;;
+
+		--with-http-parser-lib=*)
+			QC_WITH_HTTP_PARSER_LIB=$optarg
+			shift
+			;;
+
+		--bundled-http-parser)
+			QC_BUNDLED_HTTP_PARSER="Y"
+			shift
+			;;
+
 		--disable-growl)
 			QC_DISABLE_growl="Y"
 			shift
@@ -337,7 +355,7 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 		--help) show_usage; exit ;;
-		*) show_usage; exit 1;;
+		*) echo "configure: WARNING: unrecognized options: $1" >&2; shift; ;;
 	esac
 done
 
@@ -373,6 +391,9 @@ echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_keychain=$QC_DISABLE_keychain
 echo QC_ENABLE_webkit=$QC_ENABLE_webkit
 echo QC_WITH_WEBKIT=$QC_WITH_WEBKIT
+echo QC_WITH_HTTP_PARSER_INC=$QC_WITH_HTTP_PARSER_INC
+echo QC_WITH_HTTP_PARSER_LIB=$QC_WITH_HTTP_PARSER_LIB
+echo QC_BUNDLED_HTTP_PARSER=$QC_BUNDLED_HTTP_PARSER
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_ENABLE_whiteboarding=$QC_ENABLE_whiteboarding
@@ -409,7 +430,7 @@ qmake_check() {
 		fi
 		vout=`/bin/sh -c "$cmd" 2>&1`
 		case "${vout}" in
-			?.?.?)
+			*.*.*)
 				vmaj="${vout%%.*}"
 				if [ ! -z "$QC_QTSELECT" ]; then
 					if [ "$vmaj" = "$QC_QTSELECT" ]; then
@@ -1595,6 +1616,100 @@ public:
 		return webkitType;
 	}
 };
+#line 1 "http-parser.qcm"
+/*
+-----BEGIN QCMOD-----
+name: hunspell
+arg: with-http-parser-inc=[path],Path to HTTP Parser include files
+arg: with-http-parser-lib=[path],Path to HTTP Parser library files
+arg: bundled-http-parser,Build with bundled HTTP Parser
+-----END QCMOD-----
+*/
+
+#define QC_HTTP_PARSER
+bool qc_use_http_parser = false;
+
+//----------------------------------------------------------------------------
+// qc_http_parser
+//----------------------------------------------------------------------------
+class qc_http_parser : public ConfObj
+{
+	bool use_bundled;
+public:
+	qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
+	QString name() const { return "HTTP Parser"; }
+	QString shortname() const { return "httpparser"; }
+
+	QString resultString() const
+	{
+		if (qc_use_http_parser) {
+			if (use_bundled)
+				return "bundled";
+			return ConfObj::resultString();
+		}
+		return "Not needed w/o webengine";
+	}
+
+	bool exec()
+	{
+		qc_use_http_parser = (qc_webkit_type == "qtwebengine");
+		if (!qc_use_http_parser)
+			return true; // http parser is not needed. success.
+
+		QString s;
+		if(conf->getenv("QC_BUNDLED_HTTP_PARSER") == "Y") {
+			goto use_bundled_lbl;
+		}
+
+#if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
+		s = conf->getenv("QC_WITH_HTTP_PARSER_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "http_parser.h")) {
+				qWarning("HTTP Parser includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include";
+			sl += "/usr/local/include";
+			sl += "/sw/include";
+			if(!conf->findHeader("http_parser.h", sl, &s)) {
+				qWarning("HTTP Parser includes not found. Use bundled");
+				goto use_bundled_lbl;
+			}
+			conf->addIncludePath(s);
+		}
+
+		s = conf->getenv("QC_WITH_HTTP_PARSER_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "http_parser")) {
+				qWarning("HTTP Parser libraries not found!");
+				return false;
+			}
+			conf->addLib(QString("-L") + s);
+		}
+		else {
+			if(!conf->findLibrary("http_parser", &s)) {
+				qWarning("HTTP Parser libraries not found. Use bundled");
+				goto use_bundled_lbl;
+			}
+			if (!s.isEmpty())
+				conf->addLib(QString("-L") + s);
+		}
+
+		conf->addLib("-lhttp_parser");
+
+		return true;
+#endif
+use_bundled_lbl:
+		use_bundled = true;
+		conf->addExtra("CONFIG += bundled_http_parser");
+		return true;
+
+	}
+};
 #line 1 "growl.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2414,6 +2529,9 @@ cat >"$1/modules_new.cpp" <<EOT
     o = new qc_webkit(conf);
     o->required = false;
     o->disabled = true;
+    o = new qc_http_parser(conf);
+    o->required = true;
+    o->disabled = false;
     o = new qc_growl(conf);
     o->required = false;
     o->disabled = false;
@@ -2999,6 +3117,10 @@ public:
 			conf->addLib(libs);
 		//if(!other.isEmpty())
 		//	conf->addExtra(QString("QMAKE_CFLAGS += %1\\n").arg(other));
+
+		if(!required)
+			conf->addDefine("HAVE_PKG_" + qc_escapeArg(pkgname).toUpper());
+
 		return true;
 	}
 };
@@ -3681,6 +3803,9 @@ export QC_DISABLE_qdbus
 export QC_DISABLE_keychain
 export QC_ENABLE_webkit
 export QC_WITH_WEBKIT
+export QC_WITH_HTTP_PARSER_INC
+export QC_WITH_HTTP_PARSER_LIB
+export QC_BUNDLED_HTTP_PARSER
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_ENABLE_whiteboarding

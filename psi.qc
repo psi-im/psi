@@ -52,6 +52,9 @@
   <dep type='webkit'>
     <disabled/>
   </dep>
+  <dep type='http-parser'>
+    <required/>
+  </dep>
   <dep type='growl'/>
   <dep type='whiteboarding'>
     <disabled/>

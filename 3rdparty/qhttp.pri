@@ -12,9 +12,13 @@ win32:DEFINES *= QHTTP_EXPORT
 # To enable client
 # DEFINES     *= QHTTP_HAS_CLIENT
 
+include($$top_builddir/conf.pri)
 # Joyent http_parser
-SOURCES  += $$PWD/http-parser/http_parser.c
-HEADERS  += $$PWD/http-parser/http_parser.h
+bundled_http_parser {
+    SOURCES  += $$PWD/http-parser/http_parser.c
+    HEADERS  += $$PWD/http-parser/http_parser.h
+    INCLUDEPATH += $$PWD/http-parser
+}
 
 SOURCES  += \
     $$QHTTPSRC/qhttpabstracts.cpp \
