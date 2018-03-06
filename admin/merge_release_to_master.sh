@@ -13,7 +13,7 @@ MAIN_DIR="$(realpath -s $(dirname ${0})/..)"
 cd "${MAIN_DIR}"
 
 git checkout master
-git merge "origin/${1}" --no-ff 2>&1 > /dev/null || true
+git merge "origin/${1}" --no-ff --no-commit 2>&1 > /dev/null || true
 git checkout master . 2>&1 > /dev/null
 git commit -a -m "Merge remote-tracking branch 'origin/${1}'"
 
