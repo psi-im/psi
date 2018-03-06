@@ -58,7 +58,7 @@ There are a lot of people who were involved into Psi IM and Psi+ development. So
 
 ### Bug reports
 
-If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) <<psi-dev@conference.jabber.ru>> (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
+If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) \<psi-dev@conference.jabber.ru\> (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
 
 ### Beta testing
 
@@ -66,7 +66,7 @@ As we (intentionally) do not have nor beta versions of Psi, nor daily build buil
 
 ### Comments and wishes
 
-We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) <<psi-dev@conference.jabber.ru>> for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
+We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) \<psi-dev@conference.jabber.ru\> for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
 
 ### Translations
 
