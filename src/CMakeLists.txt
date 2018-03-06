@@ -135,7 +135,6 @@ endif()
 
 string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d")
 string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S")
-include(get-version.cmake)
 
 if(ENABLE_WEBKIT)
     if(NOT USE_WEBENGINE)
@@ -154,19 +153,7 @@ else()
     set(CLIENT_NAME "Psi+")
 endif()
 
-if(NOT PSI_VERSION)
-    if( PSIPLUS_VERSION_OBTAINED )
-        set(PSI_VERSION "${APP_VERSION} \(${PSI_COMPILATION_DATE}, Psi:${PSI_REVISION}, Psi+:${PSI_PLUS_REVISION}${PSI_VER_SUFFIX}\)")
-    elseif( PSI_VERSION_OBTAINED OR APP_VERSION )
-        if( PRODUCTION )
-            set(PSI_VERSION "${APP_VERSION}")
-        else()
-            set(PSI_VERSION "${APP_VERSION} \(${PSI_COMPILATION_DATE}${PSI_VER_SUFFIX}\)")
-        endif()
-    endif()
-endif()
-
-message(STATUS "${CLIENT_NAME} version set: ${PSI_VERSION}")
+include(get-version.cmake)
 
 if(LINUX)
     message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
