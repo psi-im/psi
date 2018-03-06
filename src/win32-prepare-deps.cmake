@@ -38,12 +38,47 @@ if(WIN32)
     get_filename_component(QT_DIR ${QT_BIN_DIR} DIRECTORY)
     set(QT_PLUGINS_DIR ${QT_DIR}/plugins)
     set(QT_TRANSLATIONS_DIR ${QT_DIR}/translations)
+    #Set paths
+    list(APPEND PATHES
+        ${QT_BIN_DIR}
+        ${QCA_DIR}bin
+        ${QCA_DIR}/bin
+        ${QT_PLUGINS_DIR}/crypto
+        ${QCA_DIR}lib/qca-qt5/crypto
+        ${QCA_DIR}lib/Qca-qt5/crypto
+    )
     if(USE_MXE)
         list(APPEND PATHES
             ${CMAKE_PREFIX_PATH}/bin
             ${CMAKE_PREFIX_PATH}/lib
         )
     endif()
+    if(EXISTS "${SDK_PATH}")
+        list(APPEND PATHES
+            "${IDN_ROOT}bin"
+            "${HUNSPELL_ROOT}bin"
+            "${LIBGCRYPT_ROOT}bin"
+            "${LIBGPGERROR_ROOT}bin"
+            "${LIBOTR_ROOT}bin"
+            "${LIBTIDY_ROOT}bin"
+            "${QJSON_ROOT}bin"
+            "${ZLIB_ROOT}bin"
+            "${SDK_PATH}openssl/bin"
+        )
+        if(MSVC)
+            list(APPEND PATHES
+                "${SDK_PATH}bin"
+                "${SDK_PATH}lib/qca-qt5/crypto"
+                "${SDK_PATH}/lib/qca-qt5/crypto"
+            )
+        endif()
+        if(SEPARATE_QJDNS)
+            list(APPEND PATHES
+                "${QJDNS_DIR}bin"
+            )
+        endif()
+    endif()
+    #Find windeployqt prorgam
     find_program(WINDEPLOYQTBIN windeployqt ${QT_BIN_DIR})
     if(NOT "${WINDEPLOYQTBIN}" STREQUAL "WINDEPLOYQTBIN-NOTFOUND")
         message(STATUS "WinDeployQt utility - FOUND")
@@ -63,7 +98,7 @@ if(WIN32)
             "Preparing Qt runtime dependencies"
         )
     else()
-
+    #if windeployqt not found search libs manually
         # required libraries
         set( ICU_LIBS_PREFIXES
             icudt5
@@ -73,15 +108,12 @@ if(WIN32)
         set( ICU_LIBS "" )
         foreach( icu_prefix ${ICU_LIBS_PREFIXES} )
             foreach( icu_counter RANGE 9 )
-            find_file( ${icu_prefix}${icu_counter} "${icu_prefix}${icu_counter}.dll" )
-                if( NOT "${${icu_prefix}${icu_counter}}" STREQUAL "${icu_prefix}${icu_counter}-NOTFOUND" )
                     list(APPEND ICU_LIBS
                         "${icu_prefix}${icu_counter}.dll"
                     )
-                endif()
             endforeach()
         endforeach()
-        find_psi_lib("${ICU_LIBS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        find_psi_lib("${ICU_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         # Qt5 libraries
         set(QT_LIBAS
             Qt5Core${D}.dll
@@ -141,9 +173,7 @@ if(WIN32)
         find_psi_lib("${IMAGE_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/")
         find_psi_lib("windowsprintersupport${D}.dll" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/")
         find_psi_lib("qsqlite${D}.dll" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/")
-        list(APPEND PATHES
-            ${QT_BIN_DIR}
-        )
+
         if(KEYCHAIN_LIBS)
             set(KEYCHAIN_LIBS
                 qt5keychain.dll
@@ -247,13 +277,7 @@ if(WIN32)
         ssleay32.dll
         libqca-qt5${D}.dll
     )
-    list(APPEND PATHES
-        ${QCA_DIR}bin
-        ${QCA_DIR}/bin
-        ${QT_PLUGINS_DIR}/crypto
-        ${QCA_DIR}lib/qca-qt5/crypto
-        ${QCA_DIR}lib/Qca-qt5/crypto
-    )
+
     if(MSVC)
         list(APPEND LIBRARIES_LIST
             otr${D}.dll
@@ -298,30 +322,6 @@ if(WIN32)
             libqjdns.dll
             libjdns.dll
         )
-    endif()
-    if(EXISTS "${SDK_PATH}")
-        list(APPEND PATHES
-            "${IDN_ROOT}bin"
-            "${HUNSPELL_ROOT}bin"
-            "${LIBGCRYPT_ROOT}bin"
-            "${LIBGPGERROR_ROOT}bin"
-            "${LIBOTR_ROOT}bin"
-            "${LIBTIDY_ROOT}bin"
-            "${QJSON_ROOT}bin"
-            "${ZLIB_ROOT}bin"
-            "${SDK_PATH}openssl/bin"
-        )
-        if(MSVC)
-            list(APPEND PATHES
-                "${SDK_PATH}bin"
-                "${SDK_PATH}lib/qca-qt5/crypto"
-            )
-        endif()
-        if(SEPARATE_QJDNS)
-            list(APPEND PATHES
-                "${QJDNS_DIR}bin"
-            )
-        endif()
     endif()
     find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
     # qca and plugins
