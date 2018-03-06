@@ -1,9 +1,9 @@
 # Psi IM — Qt-based XMPP client
 
-Stable version: 1.3
+Stable version: 1.3\
 Release date: September 25th, 2017
 
-Website: https://psi-im.org/
+Website: https://psi-im.org/\
 Sources: https://github.com/psi-im
 
 ## License
@@ -20,7 +20,7 @@ Psi is minimal but powerful. There are keybindings for just about everything, Un
 
 ## Versions history
 
-See [CHANELOG](CHANELOG) file.
+See [CHANGELOG](CHANGELOG) file.
 
 ## Installation
 
@@ -34,7 +34,7 @@ Currently the development model looks like this:
 * Psi IM versions should look like: `X.Y` (where `X` and `Y` are not digits but numbers).
 * Psi+ versions should look like: `X.Y.Z` (where `X`, `Y` and `Z` are not digits but numbers).
 * All development of Psi (bug fixes, new features from Psi+ project) are done in `master` branch of [psi](https://github.com/psi-im/psi) repository and its submodules. Each commit to it increases `Z` part of Psi+ version to one.
-* At some point of time new release branch is detouched from `master` branch (for example, `release-1.x`, `release-2.x`, etc.). All new releases (git tags) will be done in it. Necessary changes from master branch to stable branches should be cherry-picked or moved manually. Do not forget to [merge release branch](admin/merge_release_to_master.sh) into `master` after adding of new git tags.
+* At some point of time new release branch is detouched from `master` branch (for example, `release-1.x`, `release-2.x`, etc.). All new releases (git tags) will be done in it. Necessary changes from `master` branch to stable branches should be cherry-picked or moved manually. Do not forget to [merge release branch](admin/merge_release_to_master.sh) into `master` after adding of new git tags.
 * All new features are come into master branch of [main](https://github.com/psi-plus/main) Psi+ repo. Each commit increases `Z` part of Psi+ version to one. Sometime later they will be moved to Psi. It may require different amount of time.
 * All patches in [main](https://github.com/psi-plus/main) Psi+ repo should be prepared against `master` branch of [psi](https://github.com/psi-im/psi) repo.
 * After each new release of Psi new git tag with the same version should be created in [main](https://github.com/psi-plus/main) Psi+ repo.
@@ -44,11 +44,11 @@ Currently the development model looks like this:
 ## Developers
 
 ### Lead developers
-* 2017-now, Sergey Ilinykh <rion4ik@gmail.com>, Psi IM and Psi+ projects
-* 2010-2017, Sergey Ilinykh <rion4ik@gmail.com>, Psi+ project
-* 2009-2010, Justin Karneges <justin@affinix.com>, Psi IM project
-* 2004-2009, Kevin Smith <kismith@psi-im.org>, Psi IM project
-* 2001-2004, Justin Karneges <justin@affinix.com>, Psi IM project
+* 2017-now,  [Sergey Ilinykh](rion4ik@gmail.com), Psi IM and Psi+ projects
+* 2010-2017, [Sergey Ilinykh](rion4ik@gmail.com), Psi+ project
+* 2009-2010, [Justin Karneges](justin@affinix.com), Psi IM project
+* 2004-2009, [Kevin Smith](kismith@psi-im.org), Psi IM project
+* 2001-2004, [Justin Karneges](justin@affinix.com), Psi IM project
 
 ### Other contributors
 
@@ -66,7 +66,7 @@ As we (intentionally) do not have nor beta versions of Psi, nor daily build buil
 
 ### Comments and wishes
 
-We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](psi-dev@conference.jabber.ru) for descussing of your ideas. Some of them will be drawed up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
+We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](psi-dev@conference.jabber.ru) for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
 
 ### Translations
 
