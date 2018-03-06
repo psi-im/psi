@@ -44,11 +44,11 @@ Currently the development model looks like this:
 ## Developers
 
 ### Lead developers
-* 2017-now,  [Sergey Ilinykh](rion4ik@gmail.com), Psi IM and Psi+ projects
-* 2010-2017, [Sergey Ilinykh](rion4ik@gmail.com), Psi+ project
-* 2009-2010, [Justin Karneges](justin@affinix.com), Psi IM project
-* 2004-2009, [Kevin Smith](kismith@psi-im.org), Psi IM project
-* 2001-2004, [Justin Karneges](justin@affinix.com), Psi IM project
+* 2017-now,  Sergey Ilinykh <<rion4ik@gmail.com>>, Psi IM and Psi+ projects
+* 2010-2017, Sergey Ilinykh <<rion4ik@gmail.com>>, Psi+ project
+* 2009-2010, Justin Karneges <<justin@affinix.com>>, Psi IM project
+* 2004-2009, Kevin Smith <<kismith@psi-im.org>>, Psi IM project
+* 2001-2004, Justin Karneges <<justin@affinix.com>>, Psi IM project
 
 ### Other contributors
 
@@ -74,7 +74,7 @@ The work of translators is quite routine and boring. People who do it usually lo
 
 ### Graphics
 
-There are many ways to contribute to the Psi project, if you think you can do a better job with any of the Psi graphics, then go right ahead!https://github.com/psi-im/psi-l10n
+There are many ways to contribute to the Psi project, if you think you can do a better job with any of the Psi graphics, then go right ahead!
 
 ### Programming
 
