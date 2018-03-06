@@ -1,9 +1,9 @@
 # Psi IM — Qt-based XMPP client
 
-Stable version: 1.3\
+Stable version: 1.3 \
 Release date: September 25th, 2017
 
-Website: https://psi-im.org/\
+Website: https://psi-im.org/ \
 Sources: https://github.com/psi-im
 
 ## License
