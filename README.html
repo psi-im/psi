@@ -1,0 +1,111 @@
+<h1>Psi IM — Qt-based XMPP client</h1>
+
+<p>Stable version: 1.3 \
+Release date: September 25th, 2017</p>
+
+<p>Website: https://psi-im.org/ \
+Sources: https://github.com/psi-im</p>
+
+<h2>License</h2>
+
+<p>This program is licensed under the GNU General Public License. See the <a href="COPYING">COPYING</a> file for more information.</p>
+
+<h2>Description</h2>
+
+<p>Psi is a capable XMPP client aimed at experienced users. Its design goals are simplicity and stability. Psi is highly portable and runs on MS Windows, GNU/Linux and macOS.</p>
+
+<p>The interface is very ICQ-like. Alerts appear in the contact list when events are received, and things like subscriptions requests appear as "system messages" (ICQ users know these well). Even "Chats" are queued in the contact list. Also, chats are "remembered" by default, so that you don't have to keep a bunch of windows open for each person. Just close the chat window. If you open it again it will all be there.</p>
+
+<p>Psi is minimal but powerful. There are keybindings for just about everything, Unicode is supported throughout, and contacts are cached offline. Security is also a major consideration, and Psi provides it for both client-to-server (SSL) and client-to-client (GnuPG, OTR, OMEMO).</p>
+
+<h2>Versions history</h2>
+
+<p>See <a href="CHANGELOG">CHANGELOG</a> file.</p>
+
+<h2>Installation</h2>
+
+<p>See <a href="INSTALL">INSTALL</a> file.</p>
+
+<h2>Development</h2>
+
+<p>In 2009 a Psi fork named <a href="https://psi-plus.com/">Psi+</a> was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM client which is hosted at separate git repositories and for which rolling release development model is used.</p>
+
+<p>Currently the development model looks like this:
+* Psi IM versions should look like: <code>X.Y</code> (where <code>X</code> and <code>Y</code> are not digits but numbers).
+* Psi+ versions should look like: <code>X.Y.Z</code> (where <code>X</code>, <code>Y</code> and <code>Z</code> are not digits but numbers).
+* All development of Psi (bug fixes, new features from Psi+ project) are done in <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repository and its submodules. Each commit to it increases <code>Z</code> part of Psi+ version to one.
+* At some point of time new release branch is detouched from <code>master</code> branch (for example, <code>release-1.x</code>, <code>release-2.x</code>, etc.). All new releases (git tags) will be done in it. Necessary changes from <code>master</code> branch to stable branches should be cherry-picked or moved manually. Do not forget to <a href="admin/merge_release_to_master.sh">merge release branch</a> into <code>master</code> after adding of new git tags.
+* All new features are come into master branch of <a href="https://github.com/psi-plus/main">main</a> Psi+ repo. Each commit increases <code>Z</code> part of Psi+ version to one. Sometime later they will be moved to Psi. It may require different amount of time.
+* All patches in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo should be prepared against <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repo.
+* After each new release of Psi new git tag with the same version should be created in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo.
+* Psi <a href="https://github.com/psi-im/plugins">plugins</a> are developed separately. Plugin API in <code>master</code> branches of <a href="https://github.com/psi-im/psi">psi</a> and <a href="https://github.com/psi-im/plugins">plugin</a> repos should be in sync.
+* All <a href="https://github.com/psi-plus/psi-plus-l10n">translations</a> are prepared for <code>master</code> branch of Psi+ and are (semi-automatically) <a href="https://github.com/psi-im/psi-l10n">adapted</a> for Psi.</p>
+
+<h2>Developers</h2>
+
+<h3>Lead developers</h3>
+
+<ul>
+<li>2017-now,  Sergey Ilinykh &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;">&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;</a>>, Psi IM and Psi+ projects</li>
+<li>2010-2017, Sergey Ilinykh &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;">&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;</a>>, Psi+ project</li>
+<li>2009-2010, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m">&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m</a>>, Psi IM project</li>
+<li>2004-2009, <a href="http://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#107;&#x65;&#x76;&#x69;&#x6E;&#64;&#x6B;&#x69;&#115;&#x6D;&#x69;&#x74;&#x68;&#x2E;c&#x6F;&#x2E;uk">&#107;&#x65;&#x76;&#x69;&#x6E;&#64;&#x6B;&#x69;&#115;&#x6D;&#x69;&#x74;&#x68;&#x2E;c&#x6F;&#x2E;uk</a>>, Psi IM project</li>
+<li>2001-2004, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m">&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m</a>>, Psi IM project</li>
+</ul>
+
+<h3>Other contributors</h3>
+
+<p>There are a lot of people who were involved into Psi IM and Psi+ development. Some of them are listed in license headers in source files, some of them might be found only in the history of commits in our git repositories. Also there are <a href="https://github.com/psi-plus/psi-plus-l10n/blob/master/AUTHORS">translators</a>, makers of graphics and just active users. We are thankful to all them.</p>
+
+<h2>How you can help</h2>
+
+<h3>Bug reports</h3>
+
+<p>If you found a bug please report about it in our <a href="https://github.com/psi-im/psi/issues">Bug Tracker</a>. If you have doubts contact with us in <a href="https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru">XMPP Conference</a> \<psi-dev@conference.jabber.ru\> (preferable) or in a <a href="https://groups.google.com/forum/#!forum/psi-users">Mailing List</a>.</p>
+
+<h3>Beta testing</h3>
+
+<p>As we (intentionally) do not have nor beta versions of Psi, nor daily build builds for it, you are invited to use <a href="https://psi-plus.com/">Psi+ program</a> for suggesting and testing of new features, and for reporting about new bugs (if they happen).</p>
+
+<h3>Comments and wishes</h3>
+
+<p>We like constructive comments and wishes to functions of program. You may contact with us in <a href="https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru">XMPP Conference</a> \<psi-dev@conference.jabber.ru\> for discussing of your ideas. Some of them will be drawn up as feature requests in our <a href="https://github.com/psi-im/psi/issues">Bug Tracker</a>.</p>
+
+<h3>Translations</h3>
+
+<p>The work of translators is quite routine and boring. People who do it usually lose interests and their translations become incomplete. If you see such situation for translation to your native language, please join to our <a href="https://www.transifex.com/tehnick/psi-plus/">translations team</a>. It is extremely welcome!</p>
+
+<h3>Graphics</h3>
+
+<p>There are many ways to contribute to the Psi project, if you think you can do a better job with any of the Psi graphics, then go right ahead!</p>
+
+<h3>Programming</h3>
+
+<p>Patches are welcome!  Contact to Psi+ team if you are working on them.</p>
+
+<h3>Packaging</h3>
+
+<p>If you want to prepare personal builds of Psi IM and/or Psi+ for MS Windows and macOS systems, it is very welcome! We may distribute them via our official projects on SouceForge.net: <a href="https://sourceforge.net/projects/psi/">psi</a>, <a href="https://sourceforge.net/projects/psiplus/">psiplus</a>. Becoming an official maintaner for these systems is more complicated, but also possible.</p>
+
+<p>For GNU/Linux and *BSD systems the situation is quite clear: just update packages (pkgbuilds, ebuild, etc.) in official repositories of your favorite distributions or make a Personal Package Archive (PPA) with them. We will add links to it into our documentation.</p>
+
+<h3>Donations</h3>
+
+<p>If you want to donate some money for development of Psi IM and Psi+ project, it is possible. See related info at official websites. Thanks!</p>
+
+<h2>Extra links</h2>
+
+<ul>
+<li><a href="https://sourceforge.net/projects/psi/files/">Psi IM builds for end users</a> (executables)</li>
+<li><a href="https://github.com/psi-im/plugins">Psi IM plugins</a> (sources)</li>
+<li><a href="https://github.com/psi-im/psimedia">Psi IM plugin for VoIP and video-calls</a> (sources)</li>
+<li><a href="https://github.com/psi-im/psi-l10n">Psi IM translations</a> (sources)</li>
+<li><a href="https://psi-plus.com/">Psi+ project</a> (official website)</li>
+<li><a href="https://sourceforge.net/projects/psiplus/files/">Psi+ builds for end users</a> (executables)</li>
+<li><a href="https://github.com/psi-plus/resources">Psi+ extra resources</a> (iconsets, sounds, skins, themes, etc.)</li>
+<li><a href="https://github.com/psi-plus/psi-plus-snapshots">Psi+ snapshots</a> (sources)</li>
+<li><a href="https://github.com/psi-plus/psi-plus-l10n">Psi+ translations</a> (sources)</li>
+<li><a href="https://github.com/psi-plus/qconf">Qt configuration tool</a> (sources)</li>
+</ul>
+
+<p>Have fun!</p>
