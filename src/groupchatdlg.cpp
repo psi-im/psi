@@ -73,6 +73,7 @@
 #include "xmpp_tasks.h"
 #include "xmpp_caps.h"
 #include "iconaction.h"
+#include "pixmapratiolabel.h"
 #include "psitooltip.h"
 #include "avatars.h"
 #include "psioptions.h"
@@ -1269,11 +1270,22 @@ void GCMainDlg::discoInfoFinished()
     }
 }
 
-void GCMainDlg::setMucSelfAvatar(const QPixmap &p)
+// this one is called as result of avatarChanged event from avatar factory or
+void GCMainDlg::setMucSelfAvatar()
 {
-    ui_.lblAvatar->setVisible(!p.isNull());
-    if (!p.isNull()) {
-         ui_.lblAvatar->setPixmap(p.scaled(QSize(64,64), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    bool enabled = PsiOptions::instance()->getOption("options.ui.chat.avatars.show").toBool();
+    QPixmap p;
+    if (enabled) {
+        p = account()->avatarFactory()->getAvatar(jid().withResource(QString()));
+        enabled = !p.isNull();
+    }
+    ui_.lblAvatar->setVisible(enabled);
+    if (enabled) {
+        ui_.lblAvatar->setResizePolicy(PixmapRatioLabel::FitVertical);
+        ui_.lblAvatar->setMaxPixmapSize(QSize(64,64) * devicePixelRatio());
+        ui_.lblAvatar->setPixmap(p);
+    } else {
+        ui_.lblAvatar->resize(0, 0);
     }
 }
 
@@ -1291,7 +1303,7 @@ void GCMainDlg::updateGCVCard()
         }
         avatar.loadFromData(vcard.photo());
     }
-    setMucSelfAvatar(avatar);
+    //setMucSelfAvatar(avatar);
 }
 
 void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2) {
@@ -1938,7 +1950,7 @@ void GCMainDlg::avatarUpdated(const Jid &jid_)
     if(jid_.compare(jid(), false)) {
         if (jid_.resource().isEmpty()) {
             ui_.log->updateAvatar(jid_, ChatViewCommon::RemoteParty);
-            setMucSelfAvatar(account()->avatarFactory()->getAvatar(jid_));
+            setMucSelfAvatar();
             return;
         }
         d->usersModel->updateAvatar(jid_.resource());
@@ -2242,6 +2254,7 @@ void GCMainDlg::setLooks()
     ui_.lv_users->setVerticalScrollBarPolicy(PsiOptions::instance()->getOption("options.ui.muc.userlist.disable-scrollbar").toBool() ?
                                                  Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
     ui_.lv_users->setLooks();
+    setMucSelfAvatar();
 }
 
 void GCMainDlg::setToolbuttons()

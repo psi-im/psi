@@ -240,18 +240,6 @@
        <item>
         <layout class="QHBoxLayout">
          <property name="spacing">
-          <number>6</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -300,12 +288,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="lblAvatar">
-           <property name="minimumSize">
-            <size>
-             <width>40</width>
-             <height>40</height>
-            </size>
+          <widget class="PixmapRatioLabel" name="lblAvatar">
+           <property name="text">
+            <string notr="true"/>
            </property>
           </widget>
          </item>
@@ -319,14 +304,10 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ActionLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>actionlineedit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>AccountLabel</class>
-   <extends>QLabel</extends>
-   <header>accountlabel.h</header>
+   <class>ChatView</class>
+   <extends>QFrame</extends>
+   <header>chatview.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>ChatSplitter</class>
@@ -335,20 +316,29 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>ChatView</class>
-   <extends>QFrame</extends>
-   <header>chatview.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ChatEditProxy</class>
    <extends>QTextEdit</extends>
    <header>chateditproxy.h</header>
   </customwidget>
   <customwidget>
+   <class>AccountLabel</class>
+   <extends>QLabel</extends>
+   <header>accountlabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ActionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>actionlineedit.h</header>
+  </customwidget>
+  <customwidget>
    <class>GCUserView</class>
    <extends>QTreeView</extends>
    <header>gcuserview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PixmapRatioLabel</class>
+   <extends>QLabel</extends>
+   <header>pixmapratiolabel.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
