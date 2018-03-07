@@ -5,6 +5,6 @@
         <file>options/windows.xml</file>
         <file>options/macosx.xml</file>
         <file>options/newprofile.xml</file>
-        <file>README.md</file>
+        <file>README.html</file>
     </qresource>
 </RCC>

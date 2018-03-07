@@ -990,7 +990,7 @@ void MainWin::buildGeneralMenu(QMenu* menu)
 
 void MainWin::actReadmeActivated ()
 {
-    ShowTextDlg* w = new ShowTextDlg(":/README.md"); // unreadable stuff?
+    ShowTextDlg* w = new ShowTextDlg(":/README.html", true);
     w->setWindowTitle(CAP(tr("ReadMe")));
     w->show();
 }
