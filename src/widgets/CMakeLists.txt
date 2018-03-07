@@ -14,7 +14,6 @@ set(SOURCES
     iconaction.cpp
     iconselect.cpp
     iconwidget.cpp
-    pixmapratiolabel.cpp
     psirichtext.cpp
     psitextview.cpp
     psitooltip.cpp
@@ -23,6 +22,7 @@ set(SOURCES
 
 set(PLAIN_SOURCES
     actionlineedit.cpp
+    pixmapratiolabel.cpp
     psitabbar.cpp
     psitabwidget.cpp
     psitiplabel.cpp
