@@ -31,6 +31,7 @@ See [INSTALL](INSTALL) file.
 In 2009 a Psi fork named [Psi+](https://psi-plus.com/) was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM client which is hosted at separate git repositories and for which rolling release development model is used.
 
 Currently the development model looks like this:
+
 * Psi IM versions should look like: `X.Y` (where `X` and `Y` are not digits but numbers).
 * Psi+ versions should look like: `X.Y.Z` (where `X`, `Y` and `Z` are not digits but numbers).
 * All development of Psi (bug fixes, new features from Psi+ project) are done in `master` branch of [psi](https://github.com/psi-im/psi) repository and its submodules. Each commit to it increases `Z` part of Psi+ version to one.
@@ -44,6 +45,7 @@ Currently the development model looks like this:
 ## Developers
 
 ### Lead developers
+
 * 2017-now,  Sergey Ilinykh <<rion4ik@gmail.com>>, Psi IM and Psi+ projects
 * 2010-2017, Sergey Ilinykh <<rion4ik@gmail.com>>, Psi+ project
 * 2009-2010, [Justin Karneges](http://andbit.net/) <<justin@affinix.com>>, Psi IM project
@@ -58,7 +60,7 @@ There are a lot of people who were involved into Psi IM and Psi+ development. So
 
 ### Bug reports
 
-If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) \<psi-dev@conference.jabber.ru\> (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
+If you found a bug please report about it in our [Bug Tracker](https://github.com/psi-im/psi/issues). If you have doubts contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) &lt;psi-dev@conference.jabber.ru&gt; (preferable) or in a [Mailing List](https://groups.google.com/forum/#!forum/psi-users).
 
 ### Beta testing
 
@@ -66,7 +68,7 @@ As we (intentionally) do not have nor beta versions of Psi, nor daily build buil
 
 ### Comments and wishes
 
-We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) \<psi-dev@conference.jabber.ru\> for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
+We like constructive comments and wishes to functions of program. You may contact with us in [XMPP Conference](https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru) &lt;psi-dev@conference.jabber.ru&gt; for discussing of your ideas. Some of them will be drawn up as feature requests in our [Bug Tracker](https://github.com/psi-im/psi/issues).
 
 ### Translations
 

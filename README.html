@@ -30,27 +30,30 @@ Sources: https://github.com/psi-im</p>
 
 <p>In 2009 a Psi fork named <a href="https://psi-plus.com/">Psi+</a> was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM client which is hosted at separate git repositories and for which rolling release development model is used.</p>
 
-<p>Currently the development model looks like this:
-* Psi IM versions should look like: <code>X.Y</code> (where <code>X</code> and <code>Y</code> are not digits but numbers).
-* Psi+ versions should look like: <code>X.Y.Z</code> (where <code>X</code>, <code>Y</code> and <code>Z</code> are not digits but numbers).
-* All development of Psi (bug fixes, new features from Psi+ project) are done in <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repository and its submodules. Each commit to it increases <code>Z</code> part of Psi+ version to one.
-* At some point of time new release branch is detouched from <code>master</code> branch (for example, <code>release-1.x</code>, <code>release-2.x</code>, etc.). All new releases (git tags) will be done in it. Necessary changes from <code>master</code> branch to stable branches should be cherry-picked or moved manually. Do not forget to <a href="admin/merge_release_to_master.sh">merge release branch</a> into <code>master</code> after adding of new git tags.
-* All new features are come into master branch of <a href="https://github.com/psi-plus/main">main</a> Psi+ repo. Each commit increases <code>Z</code> part of Psi+ version to one. Sometime later they will be moved to Psi. It may require different amount of time.
-* All patches in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo should be prepared against <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repo.
-* After each new release of Psi new git tag with the same version should be created in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo.
-* Psi <a href="https://github.com/psi-im/plugins">plugins</a> are developed separately. Plugin API in <code>master</code> branches of <a href="https://github.com/psi-im/psi">psi</a> and <a href="https://github.com/psi-im/plugins">plugin</a> repos should be in sync.
-* All <a href="https://github.com/psi-plus/psi-plus-l10n">translations</a> are prepared for <code>master</code> branch of Psi+ and are (semi-automatically) <a href="https://github.com/psi-im/psi-l10n">adapted</a> for Psi.</p>
+<p>Currently the development model looks like this:</p>
+
+<ul>
+<li>Psi IM versions should look like: <code>X.Y</code> (where <code>X</code> and <code>Y</code> are not digits but numbers).</li>
+<li>Psi+ versions should look like: <code>X.Y.Z</code> (where <code>X</code>, <code>Y</code> and <code>Z</code> are not digits but numbers).</li>
+<li>All development of Psi (bug fixes, new features from Psi+ project) are done in <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repository and its submodules. Each commit to it increases <code>Z</code> part of Psi+ version to one.</li>
+<li>At some point of time new release branch is detouched from <code>master</code> branch (for example, <code>release-1.x</code>, <code>release-2.x</code>, etc.). All new releases (git tags) will be done in it. Necessary changes from <code>master</code> branch to stable branches should be cherry-picked or moved manually. Do not forget to <a href="admin/merge_release_to_master.sh">merge release branch</a> into <code>master</code> after adding of new git tags.</li>
+<li>All new features are come into master branch of <a href="https://github.com/psi-plus/main">main</a> Psi+ repo. Each commit increases <code>Z</code> part of Psi+ version to one. Sometime later they will be moved to Psi. It may require different amount of time.</li>
+<li>All patches in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo should be prepared against <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repo.</li>
+<li>After each new release of Psi new git tag with the same version should be created in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo.</li>
+<li>Psi <a href="https://github.com/psi-im/plugins">plugins</a> are developed separately. Plugin API in <code>master</code> branches of <a href="https://github.com/psi-im/psi">psi</a> and <a href="https://github.com/psi-im/plugins">plugin</a> repos should be in sync.</li>
+<li>All <a href="https://github.com/psi-plus/psi-plus-l10n">translations</a> are prepared for <code>master</code> branch of Psi+ and are (semi-automatically) <a href="https://github.com/psi-im/psi-l10n">adapted</a> for Psi.</li>
+</ul>
 
 <h2>Developers</h2>
 
 <h3>Lead developers</h3>
 
 <ul>
-<li>2017-now,  Sergey Ilinykh &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;">&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;</a>>, Psi IM and Psi+ projects</li>
-<li>2010-2017, Sergey Ilinykh &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;">&#114;&#x69;&#x6F;&#x6E;&#x34;&#x69;&#x6B;&#64;&#103;&#x6D;&#x61;&#x69;&#x6C;&#x2E;c&#x6F;&#x6D;</a>>, Psi+ project</li>
-<li>2009-2010, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m">&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m</a>>, Psi IM project</li>
-<li>2004-2009, <a href="http://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#107;&#x65;&#x76;&#x69;&#x6E;&#64;&#x6B;&#x69;&#115;&#x6D;&#x69;&#x74;&#x68;&#x2E;c&#x6F;&#x2E;uk">&#107;&#x65;&#x76;&#x69;&#x6E;&#64;&#x6B;&#x69;&#115;&#x6D;&#x69;&#x74;&#x68;&#x2E;c&#x6F;&#x2E;uk</a>>, Psi IM project</li>
-<li>2001-2004, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#x6D;&#97;&#x69;&#108;&#x74;o:&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m">&#106;&#x75;&#x73;&#x74;&#x69;&#x6E;&#64;&#x61;&#102;&#x66;&#x69;&#x6E;&#x69;&#x78;.&#x63;&#x6F;m</a>>, Psi IM project</li>
+<li>2017-now,  Sergey Ilinykh &lt;<a href="&#109;&#x61;&#x69;&#108;t&#111;:&#114;i&#111;&#110;4&#105;&#x6B;&#64;&#x67;&#109;&#x61;&#x69;&#x6C;&#46;c&#111;&#x6D;">&#114;i&#111;&#110;4&#105;&#x6B;&#64;&#x67;&#109;&#x61;&#x69;&#x6C;&#46;c&#111;&#x6D;</a>>, Psi IM and Psi+ projects</li>
+<li>2010-2017, Sergey Ilinykh &lt;<a href="&#109;&#x61;&#x69;&#108;t&#111;:&#114;i&#111;&#110;4&#105;&#x6B;&#64;&#x67;&#109;&#x61;&#x69;&#x6C;&#46;c&#111;&#x6D;">&#114;i&#111;&#110;4&#105;&#x6B;&#64;&#x67;&#109;&#x61;&#x69;&#x6C;&#46;c&#111;&#x6D;</a>>, Psi+ project</li>
+<li>2009-2010, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#109;&#x61;&#x69;&#108;t&#111;:&#106;u&#115;&#116;i&#110;&#64;&#x61;&#x66;&#102;&#x69;&#x6E;&#x69;&#120;.&#99;&#x6F;&#x6D;">&#106;u&#115;&#116;i&#110;&#64;&#x61;&#x66;&#102;&#x69;&#x6E;&#x69;&#120;.&#99;&#x6F;&#x6D;</a>>, Psi IM project</li>
+<li>2004-2009, <a href="http://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="&#109;&#x61;&#x69;&#108;t&#111;:&#107;e&#118;&#105;n&#64;&#x6B;&#x69;&#x73;&#109;&#x69;&#x74;&#x68;&#46;c&#111;&#x2E;&#x75;&#x6B;">&#107;e&#118;&#105;n&#64;&#x6B;&#x69;&#x73;&#109;&#x69;&#x74;&#x68;&#46;c&#111;&#x2E;&#x75;&#x6B;</a>>, Psi IM project</li>
+<li>2001-2004, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#109;&#x61;&#x69;&#108;t&#111;:&#106;u&#115;&#116;i&#110;&#64;&#x61;&#x66;&#102;&#x69;&#x6E;&#x69;&#120;.&#99;&#x6F;&#x6D;">&#106;u&#115;&#116;i&#110;&#64;&#x61;&#x66;&#102;&#x69;&#x6E;&#x69;&#120;.&#99;&#x6F;&#x6D;</a>>, Psi IM project</li>
 </ul>
 
 <h3>Other contributors</h3>
@@ -61,7 +64,7 @@ Sources: https://github.com/psi-im</p>
 
 <h3>Bug reports</h3>
 
-<p>If you found a bug please report about it in our <a href="https://github.com/psi-im/psi/issues">Bug Tracker</a>. If you have doubts contact with us in <a href="https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru">XMPP Conference</a> \<psi-dev@conference.jabber.ru\> (preferable) or in a <a href="https://groups.google.com/forum/#!forum/psi-users">Mailing List</a>.</p>
+<p>If you found a bug please report about it in our <a href="https://github.com/psi-im/psi/issues">Bug Tracker</a>. If you have doubts contact with us in <a href="https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru">XMPP Conference</a> &lt;psi-dev@conference.jabber.ru&gt; (preferable) or in a <a href="https://groups.google.com/forum/#!forum/psi-users">Mailing List</a>.</p>
 
 <h3>Beta testing</h3>
 
@@ -69,7 +72,7 @@ Sources: https://github.com/psi-im</p>
 
 <h3>Comments and wishes</h3>
 
-<p>We like constructive comments and wishes to functions of program. You may contact with us in <a href="https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru">XMPP Conference</a> \<psi-dev@conference.jabber.ru\> for discussing of your ideas. Some of them will be drawn up as feature requests in our <a href="https://github.com/psi-im/psi/issues">Bug Tracker</a>.</p>
+<p>We like constructive comments and wishes to functions of program. You may contact with us in <a href="https://chatlogs.jabber.ru/psi-dev@conference.jabber.ru">XMPP Conference</a> &lt;psi-dev@conference.jabber.ru&gt; for discussing of your ideas. Some of them will be drawn up as feature requests in our <a href="https://github.com/psi-im/psi/issues">Bug Tracker</a>.</p>
 
 <h3>Translations</h3>
 
