@@ -14,6 +14,7 @@ set(SOURCES
     iconaction.cpp
     iconselect.cpp
     iconwidget.cpp
+    pixmapratiolabel.cpp
     psirichtext.cpp
     psitextview.cpp
     psitooltip.cpp
@@ -43,6 +44,7 @@ set(HEADERS
     iconsetselect.h
     icontoolbutton.h
     iconwidget.h
+    pixmapratiolabel.h
     psitabbar.h
     psitabwidget.h
     psitextview.h
