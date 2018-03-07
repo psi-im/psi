@@ -1,11 +1,10 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
-	<qresource>
-		<file>README</file>
-		<file>COPYING</file>
-		<file>options/default.xml</file>
-		<file>options/windows.xml</file>
-		<file>options/macosx.xml</file>
-		<file>options/newprofile.xml</file>
-	</qresource>
+<RCC>
+    <qresource prefix="/">
+        <file>COPYING</file>
+        <file>options/default.xml</file>
+        <file>options/windows.xml</file>
+        <file>options/macosx.xml</file>
+        <file>options/newprofile.xml</file>
+        <file>README.md</file>
+    </qresource>
 </RCC>
