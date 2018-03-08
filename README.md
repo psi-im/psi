@@ -1,4 +1,4 @@
-# Psi IM — Qt-based XMPP client
+# Psi IM &ndash; Qt-based XMPP client
 
 Stable version: 1.3 <br>
 Release date: September 25th, 2017
@@ -8,7 +8,7 @@ Sources: https://github.com/psi-im
 
 ## License
 
-This program is licensed under the GNU General Public License. See the [COPYING](COPYING) file for more information.
+This program is licensed under the GNU General Public License. See the [COPYING](https://github.com/psi-im/psi/blob/master/COPYING) file for more information.
 
 ## Description
 
@@ -20,11 +20,11 @@ Psi is minimal but powerful. There are keybindings for just about everything, Un
 
 ## Versions history
 
-See [CHANGELOG](CHANGELOG) file.
+See [CHANGELOG](https://github.com/psi-im/psi/blob/master/CHANGELOG) file.
 
 ## Installation
 
-See [INSTALL](INSTALL) file.
+See [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL) file.
 
 ## Development
 
