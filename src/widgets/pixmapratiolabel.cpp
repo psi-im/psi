@@ -12,7 +12,6 @@ PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent)
 void PixmapRatioLabel::setPixmap(const QPixmap &pix)
 {
     _origPix = pix;
-    _scaledPix = pix;
     update();
 }
 
@@ -23,6 +22,7 @@ void PixmapRatioLabel::setMaxPixmapSize(const QSize &size)
 
 void PixmapRatioLabel::paintEvent(QPaintEvent *event)
 {
+    bool needAdjust = false;
     QSize ms = _maxPixSize.isEmpty()? _origPix.size() : _maxPixSize;
 
     if (_policy == FitBoth) {
@@ -34,9 +34,16 @@ void PixmapRatioLabel::paintEvent(QPaintEvent *event)
     if (_policy == FitHorizontal) {
         ms.setWidth(qMin(ms.width(), event->rect().width()));
     }
+    if (_scaledPix.isNull()) {
+        _scaledPix = _origPix;
+        needAdjust = true;
+    }
     QSize newPixSize = _scaledPix.size().scaled(ms, Qt::KeepAspectRatio);
     if (_scaledPix.size() != newPixSize) {
         _scaledPix = _origPix.scaled(ms, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        needAdjust = true;
+    }
+    if (needAdjust) {
         QTimer::singleShot(0, [this]() {
             // setMinWidth/Height invalidates layout. so all the widgets are resized
             if(_policy == FitVertical) {
