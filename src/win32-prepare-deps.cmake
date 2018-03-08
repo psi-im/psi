@@ -189,6 +189,7 @@ if(WIN32)
         set(MEDIASERVICE_PLUGS
             dsengine${D}.dll
             qtmedia_audioengine${D}.dll
+            wmfengine${D}.dll
         )
         find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mediaservice/")
         #
