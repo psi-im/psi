@@ -30,7 +30,6 @@ ServerInfoManager::ServerInfoManager(Client* client)
 {
     deinitialize();
     connect(client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
-    connect(client_, SIGNAL(disconnected()), SLOT(deinitialize()));
 }
 
 void ServerInfoManager::reset()
@@ -38,10 +37,12 @@ void ServerInfoManager::reset()
     hasPEP_ = false;
     multicastService_ = QString();
     disconnect(CapsRegistry::instance());
+    disconnect(client_, SIGNAL(disconnected()), this, SLOT(deinitialize()));
 }
 
 void ServerInfoManager::initialize()
 {
+    connect(client_, SIGNAL(disconnected()), SLOT(deinitialize()));
     JT_DiscoInfo *jt = new JT_DiscoInfo(client_->rootTask());
     connect(jt, SIGNAL(finished()), SLOT(disco_finished()));
     jt->get(client_->jid().domain());
