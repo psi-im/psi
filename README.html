@@ -12,13 +12,13 @@ Sources: https://github.com/psi-im</p>
 
 <h2>Description</h2>
 
-<p>Psi is a capable XMPP client aimed at experienced users. Its design goals are simplicity and stability. Psi is highly portable and runs on MS Windows, GNU/Linux and macOS.</p>
+<p>Psi IM is a capable XMPP client aimed at experienced users. Its design goals are simplicity and stability. Psi IM is highly portable and runs on MS Windows, GNU/Linux and macOS.</p>
 
-<p>Psi is minimal but powerful. There are keybindings for just about everything, Unicode is supported throughout, and contacts are cached offline. Security is also a major consideration, and Psi provides it for both client-to-server (TLS) and client-to-client (GnuPG, OTR, OMEMO).</p>
+<p>Psi IM is minimal but powerful. There are keybindings for just about everything, Unicode is supported throughout, and contacts are cached offline. Security is also a major consideration, and Psi IM provides it for both client-to-server (TLS) and client-to-client (GnuPG, OTR, OMEMO).</p>
 
-<p>Webkit version of Psi has few additional features (in comparing with basic version of Psi): support of animated emoticons, support of (adium) themes in private chats and group chats, support of previewing of images and videos in private chats and group chats, etc.. But if you prefer old fashioned plain text chats from era of IRC heyday, then basic version of Psi is your obvious choice.</p>
+<p>WebKit version of Psi IM has few additional features (in comparing with basic version of Psi): support of animated emoticons, support of (adium) themes in private chats and group chats, support of previewing of images and videos in private chats and group chats, etc.. But if you prefer old fashioned plain text chats from era of IRC heyday, then basic version of Psi IM is your obvious choice.</p>
 
-<p>Webengine version of Psi is identical to Webkit version of Psi in supporting of extra features, but it has some pros and cons:</p>
+<p>WebEngine version of Psi IM is identical to WebKit version of Psi IM in supporting of extra features, but it has some pros and cons:</p>
 
 <ul>
 <li>Better work with embedded video (in chats) in MS Windows.</li>
@@ -37,19 +37,19 @@ Sources: https://github.com/psi-im</p>
 
 <h2>Development</h2>
 
-<p>In 2009 a Psi fork named <a href="https://psi-plus.com/">Psi+</a> was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM client which is hosted at separate git repositories and for which rolling release development model is used.</p>
+<p>In 2009 a Psi IM fork named <a href="https://psi-plus.com/">Psi+</a> was started. Project purposes are: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi IM developers, but Psi+ still has a number of unique features. From developers point of view Psi+ is just a development branch of Psi IM which is hosted at separate git repositories and for which rolling release development model is used.</p>
 
 <p>Currently the development model looks like this:</p>
 
 <ul>
 <li>Psi IM versions should look like: <code>X.Y</code> (where <code>X</code> and <code>Y</code> are not digits but numbers).</li>
 <li>Psi+ versions should look like: <code>X.Y.Z</code> (where <code>X</code>, <code>Y</code> and <code>Z</code> are not digits but numbers).</li>
-<li>All development of Psi (bug fixes, new features from Psi+ project) are done in <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repository and its submodules. Each commit to it increases <code>Z</code> part of Psi+ version to one.</li>
+<li>All development of Psi IM (bug fixes, new features from Psi+ project) are done in <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repository and its submodules. Each commit to it increases <code>Z</code> part of Psi+ version to one.</li>
 <li>At some point of time new release branch is detouched from <code>master</code> branch (for example, <code>release-1.x</code>, <code>release-2.x</code>, etc.). All new releases (git tags) will be done in it. Necessary changes from <code>master</code> branch to stable branches should be cherry-picked or moved manually. Do not forget to <a href="admin/merge_release_to_master.sh">merge release branch</a> into <code>master</code> after adding of new git tags.</li>
 <li>All new features are come into master branch of <a href="https://github.com/psi-plus/main">main</a> Psi+ repo. Each commit increases <code>Z</code> part of Psi+ version to one. Sometime later they will be moved to Psi. It may require different amount of time.</li>
 <li>All patches in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo should be prepared against <code>master</code> branch of <a href="https://github.com/psi-im/psi">psi</a> repo.</li>
-<li>After each new release of Psi new git tag with the same version should be created in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo.</li>
-<li>Psi <a href="https://github.com/psi-im/plugins">plugins</a> are developed separately. Plugin API in <code>master</code> branches of <a href="https://github.com/psi-im/psi">psi</a> and <a href="https://github.com/psi-im/plugins">plugin</a> repos should be in sync.</li>
+<li>After each new release of Psi IM new git tag with the same version should be created in <a href="https://github.com/psi-plus/main">main</a> Psi+ repo.</li>
+<li>Psi IM <a href="https://github.com/psi-im/plugins">plugins</a> are developed separately. Plugin API in <code>master</code> branches of <a href="https://github.com/psi-im/psi">psi</a> and <a href="https://github.com/psi-im/plugins">plugin</a> repos should be in sync.</li>
 <li>All <a href="https://github.com/psi-plus/psi-plus-l10n">translations</a> are prepared for <code>master</code> branch of Psi+ and are (semi-automatically) <a href="https://github.com/psi-im/psi-l10n">adapted</a> for Psi.</li>
 </ul>
 
@@ -58,11 +58,11 @@ Sources: https://github.com/psi-im</p>
 <h3>Lead developers</h3>
 
 <ul>
-<li>2017-now,  Sergey Ilinykh &lt;<a href="&#109;&#97;&#x69;l&#x74;&#111;:&#114;&#x69;&#x6F;&#x6E;&#52;&#x69;&#107;&#64;&#103;&#x6D;&#97;&#x69;&#108;&#x2E;&#99;&#x6F;&#x6D;">&#114;&#x69;&#x6F;&#x6E;&#52;&#x69;&#107;&#64;&#103;&#x6D;&#97;&#x69;&#108;&#x2E;&#99;&#x6F;&#x6D;</a>>, Psi IM and Psi+ projects</li>
-<li>2010-2017, Sergey Ilinykh &lt;<a href="&#109;&#97;&#x69;l&#x74;&#111;:&#114;&#x69;&#x6F;&#x6E;&#52;&#x69;&#107;&#64;&#103;&#x6D;&#97;&#x69;&#108;&#x2E;&#99;&#x6F;&#x6D;">&#114;&#x69;&#x6F;&#x6E;&#52;&#x69;&#107;&#64;&#103;&#x6D;&#97;&#x69;&#108;&#x2E;&#99;&#x6F;&#x6D;</a>>, Psi+ project</li>
-<li>2009-2010, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#109;&#97;&#x69;l&#x74;&#111;:&#106;&#x75;&#x73;&#x74;&#105;&#x6E;&#64;&#97;&#102;&#x66;&#105;&#x6E;&#105;&#x78;&#46;&#x63;&#x6F;&#109;">&#106;&#x75;&#x73;&#x74;&#105;&#x6E;&#64;&#97;&#102;&#x66;&#105;&#x6E;&#105;&#x78;&#46;&#x63;&#x6F;&#109;</a>>, Psi IM project</li>
-<li>2004-2009, <a href="http://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="&#109;&#97;&#x69;l&#x74;&#111;:&#107;&#x65;&#x76;&#x69;&#110;&#64;&#107;&#105;&#115;&#x6D;&#105;&#x74;&#104;&#x2E;&#99;&#x6F;&#x2E;&#117;&#107;">&#107;&#x65;&#x76;&#x69;&#110;&#64;&#107;&#105;&#115;&#x6D;&#105;&#x74;&#104;&#x2E;&#99;&#x6F;&#x2E;&#117;&#107;</a>>, Psi IM project</li>
-<li>2001-2004, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="&#109;&#97;&#x69;l&#x74;&#111;:&#106;&#x75;&#x73;&#x74;&#105;&#x6E;&#64;&#97;&#102;&#x66;&#105;&#x6E;&#105;&#x78;&#46;&#x63;&#x6F;&#109;">&#106;&#x75;&#x73;&#x74;&#105;&#x6E;&#64;&#97;&#102;&#x66;&#105;&#x6E;&#105;&#x78;&#46;&#x63;&#x6F;&#109;</a>>, Psi IM project</li>
+<li>2017-now,  Sergey Ilinykh &lt;<a href="m&#97;i&#108;&#116;&#x6F;:&#x72;&#x69;&#111;&#110;&#x34;&#x69;&#x6B;&#64;g&#109;&#x61;i&#108;&#x2E;&#x63;&#x6F;&#x6D;">&#x72;&#x69;&#111;&#110;&#x34;&#x69;&#x6B;&#64;g&#109;&#x61;i&#108;&#x2E;&#x63;&#x6F;&#x6D;</a>>, Psi IM and Psi+ projects</li>
+<li>2010-2017, Sergey Ilinykh &lt;<a href="m&#97;i&#108;&#116;&#x6F;:&#x72;&#x69;&#111;&#110;&#x34;&#x69;&#x6B;&#64;g&#109;&#x61;i&#108;&#x2E;&#x63;&#x6F;&#x6D;">&#x72;&#x69;&#111;&#110;&#x34;&#x69;&#x6B;&#64;g&#109;&#x61;i&#108;&#x2E;&#x63;&#x6F;&#x6D;</a>>, Psi+ project</li>
+<li>2009-2010, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="m&#97;i&#108;&#116;&#x6F;:&#x6A;&#x75;&#115;&#116;&#x69;&#x6E;&#64;&#97;f&#102;&#x69;n&#105;&#x78;&#x2E;&#x63;&#x6F;&#109;">&#x6A;&#x75;&#115;&#116;&#x69;&#x6E;&#64;&#97;f&#102;&#x69;n&#105;&#x78;&#x2E;&#x63;&#x6F;&#109;</a>>, Psi IM project</li>
+<li>2004-2009, <a href="http://doomsong.co.uk/">Kevin Smith</a> &lt;<a href="m&#97;i&#108;&#116;&#x6F;:&#x6B;&#x65;&#118;&#105;&#x6E;&#64;&#x6B;&#105;s&#109;&#x69;t&#104;&#x2E;&#x63;&#x6F;&#x2E;&#117;&#x6B;">&#x6B;&#x65;&#118;&#105;&#x6E;&#64;&#x6B;&#105;s&#109;&#x69;t&#104;&#x2E;&#x63;&#x6F;&#x2E;&#117;&#x6B;</a>>, Psi IM project</li>
+<li>2001-2004, <a href="http://andbit.net/">Justin Karneges</a> &lt;<a href="m&#97;i&#108;&#116;&#x6F;:&#x6A;&#x75;&#115;&#116;&#x69;&#x6E;&#64;&#97;f&#102;&#x69;n&#105;&#x78;&#x2E;&#x63;&#x6F;&#109;">&#x6A;&#x75;&#115;&#116;&#x69;&#x6E;&#64;&#97;f&#102;&#x69;n&#105;&#x78;&#x2E;&#x63;&#x6F;&#109;</a>>, Psi IM project</li>
 </ul>
 
 <h3>Other contributors</h3>
@@ -89,7 +89,7 @@ Sources: https://github.com/psi-im</p>
 
 <h3>Graphics</h3>
 
-<p>There are many ways to contribute to the Psi project, if you think you can do a better job with any of the Psi graphics, then go right ahead!</p>
+<p>There are many ways to contribute to the Psi IM project, if you think you can do a better job with any of the Psi IM graphics, then go right ahead!</p>
 
 <h3>Programming</h3>
 
