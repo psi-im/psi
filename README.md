@@ -14,9 +14,16 @@ This program is licensed under the GNU General Public License. See the [COPYING]
 
 Psi is a capable XMPP client aimed at experienced users. Its design goals are simplicity and stability. Psi is highly portable and runs on MS Windows, GNU/Linux and macOS.
 
-The interface is very ICQ-like. Alerts appear in the contact list when events are received, and things like subscriptions requests appear as "system messages" (ICQ users know these well). Even "Chats" are queued in the contact list. Also, chats are "remembered" by default, so that you don't have to keep a bunch of windows open for each person. Just close the chat window. If you open it again it will all be there.
-
 Psi is minimal but powerful. There are keybindings for just about everything, Unicode is supported throughout, and contacts are cached offline. Security is also a major consideration, and Psi provides it for both client-to-server (SSL) and client-to-client (GnuPG, OTR, OMEMO).
+
+Webkit version of Psi has few additional features (in comparing with basic version of Psi): support of animated emoticons, support of (adium) themes in private chats and group chats, support of previewing of images and videos in private chats and group chats, etc.. But if you prefer old fashioned plain text chats from era of IRC heyday, then basic version of Psi is your obvious choice.
+
+Webengine version of Psi is identical to Webkit version of Psi in supporting of extra features, but it has some pros and cons:
+
+* Better work with embedded video (in chats) in MS Windows.
+* Worse integration to system. (It does not use system theme in GNU/Linux.)
+* Support less amount of compilers, systems and CPU architectures.
+* Stability issues in macOS.
 
 ## Versions history
 
