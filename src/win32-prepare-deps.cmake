@@ -140,23 +140,37 @@ if(WIN32)
             Qt5PrintSupport${D}.dll
         )
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        #
         find_psi_lib(qtaudio_windows${D}.dll ${QT_PLUGINS_DIR}/audio/ ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/audio/)
-        set(PLATFORM_PLUGS
+        set(PLATFORMS_PLUGS
             qminimal${D}.dll
             qoffscreen${D}.dll
             qwindows${D}.dll
         )
-        find_psi_lib("${PLATFORM_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/")
-        set(STYLE_PLUGS
+        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/")
+        #
+        set(STYLES_PLUGS
             qwindowsvistastyle${D}.dll
         )
-        find_psi_lib("${STYLE_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/styles/")
+        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/styles/")
+        #
         set(BEARER_PLUGS
             qgenericbearer${D}.dll
             qnativewifibearer${D}.dll
         )
         find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/")
-        set(IMAGE_PLUGS
+        #
+        set(GENERIC_PLUGS
+            qtuiotouchplugin${D}.dll
+        )
+        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/generic/")
+        #
+        set(ICONENGINES_PLUGS
+            qsvgicon${D}.dll
+        )
+        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconengines/")
+        #
+        set(IMAGEFORMATS_PLUGS
             qdds${D}.dll
             qgif${D}.dll
             qicns${D}.dll
@@ -170,10 +184,29 @@ if(WIN32)
             qwbmp${D}.dll
             qwebp${D}.dll
         )
-        find_psi_lib("${IMAGE_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/")
-        find_psi_lib("windowsprintersupport${D}.dll" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/")
-        find_psi_lib("qsqlite${D}.dll" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/")
-
+        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/")
+        #
+        set(MEDIASERVICE_PLUGS
+            dsengine${D}.dll
+            qtmedia_audioengine${D}.dll
+        )
+        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mediaservice/")
+        #
+        set(PLAYLISTFORMATS_PLUGS
+            qtmultimedia_m3u${D}.dll
+        )
+        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/playlistformats/")
+        #
+        set(PRINTSUPPORT_PLUGS
+            windowsprintersupport${D}.dll
+        )
+        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/")
+        #
+        set(SQLDRIVERS_PLUGS
+            qsqlite${D}.dll
+        )
+        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/")
+        #
         if(KEYCHAIN_LIBS)
             set(KEYCHAIN_LIBS
                 qt5keychain.dll
