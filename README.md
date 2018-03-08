@@ -16,7 +16,7 @@ Psi IM is a capable XMPP client aimed at experienced users. Its design goals are
 
 Psi IM is minimal but powerful. There are keybindings for just about everything, Unicode is supported throughout, and contacts are cached offline. Security is also a major consideration, and Psi IM provides it for both client-to-server (TLS) and client-to-client (GnuPG, OTR, OMEMO).
 
-WebKit version of Psi IM has few additional features (in comparing with basic version of Psi): support of animated emoticons, support of (adium) themes in private chats and group chats, support of previewing of images and videos in private chats and group chats, etc.. But if you prefer old fashioned plain text chats from era of IRC heyday, then basic version of Psi IM is your obvious choice.
+WebKit version of Psi IM has few additional features (in comparing with basic version of Psi): support of animated emoticons, support of (adium) themes in private chats and group chats, support of previewing of images and videos in private chats and group chats, etc. But if you prefer old fashioned plain text chats from era of IRC heyday, then basic version of Psi IM is your obvious choice.
 
 WebEngine version of Psi IM is identical to WebKit version of Psi IM in supporting of extra features, but it has some pros and cons:
 
