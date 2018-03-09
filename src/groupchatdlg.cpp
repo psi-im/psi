@@ -1884,6 +1884,14 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                          tr("%1 has been banned by %2"));
             suppressDefault = true;
         }
+        if (s.getMUCStatuses().contains(333)) {
+            mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
+                         tr("You have been removed from the room due to technical problem"),
+                         tr("You have been removed from the room by %1 due to technical problem"),
+                         tr("%1 has been removed from the room due to technical problem"),
+                         tr("%1 has been removed from the room by %2 due to technical problem"));
+            suppressDefault = true;
+        } else // 333 and 307 can come together. so "else" is here
         if (s.getMUCStatuses().contains(307)) {
             // Kick
             mucKickMsgHelper(nick, s, nickJid, tr("Kicked"), tr("You have been kicked from the room"),
