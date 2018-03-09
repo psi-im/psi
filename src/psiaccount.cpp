@@ -2218,6 +2218,10 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
     else if(err == XMPP::ClientStream::ErrSecurityLayer) {
         str = tr("Broken security layer (SASL)");
     }
+    else if(err == XMPP::ClientStream::ErrSmResume) {
+        str = tr("Server refused to resume the session (SM)");
+        reconn = true;
+    }
     else {
         str = tr("None");
         reconn = true;
