@@ -126,6 +126,14 @@ QStringList ApplicationInfo::dataDirs()
     return  dirs;
 }
 
+QStringList ApplicationInfo::pluginDirs()
+{
+    QStringList l;
+    l += homeDir(ApplicationInfo::DataLocation) + "/plugins";
+    l += libDir() + "/plugins";
+    return l;
+}
+
 QString ApplicationInfo::getCertificateStoreSaveDir()
 {
     QDir certsave(homeDir(DataLocation) + "/certs");
@@ -188,7 +196,7 @@ QString ApplicationInfo::libDir()
 #if defined(Q_OS_UNIX)
     return PSI_LIBDIR;
 #else
-    return QString();
+    return QCoreApplication::applicationDirPath();
 #endif
 }
 
@@ -218,11 +226,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
                 }
                 dataDir_ = configDir_;
                 // prefer non-roaming data location for cache which is default for qds:DataLocation
-#ifdef HAVE_QT5
                 cacheDir_ = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-#else
-                cacheDir_ = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
-#endif
             } else {
                 configDir_ = dataDir_ = cacheDir_ = base + "/" + name();
             }
@@ -235,15 +239,11 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QDir cacheDir(QDir::homePath() + "/Library/Caches/" + name());
             QDir dataDir(configDir);
 #elif defined HAVE_FREEDESKTOP
-#ifndef HAVE_QT5
-            QString XdgConfigHome = QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME"));
-            QString XdgDataHome = QString::fromLocal8Bit(getenv("XDG_DATA_HOME"));
-            QString XdgCacheHome = QString::fromLocal8Bit(getenv("XDG_CACHE_HOME"));
-#else
+
             QString XdgConfigHome(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
             QString XdgDataHome(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
             QString XdgCacheHome(QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation));
-#endif
+
             if (XdgConfigHome.isEmpty()) {
                 XdgConfigHome = QDir::homePath() + "/.config";
             }

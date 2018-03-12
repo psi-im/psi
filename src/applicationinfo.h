@@ -39,6 +39,7 @@ public:
     static QStringList getCertificateStoreDirs();
     static QString getCertificateStoreSaveDir();
     static QStringList dataDirs();
+    static QStringList pluginDirs();
 
     // Namespaces
     static QString optionsNS();

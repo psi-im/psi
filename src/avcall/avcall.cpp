@@ -117,7 +117,11 @@ static void ensureLoaded()
             pluginFile = findPlugin("../Plugins", "gstprovider" DEBUG_POSTFIX);
             resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-0.10";
 #else
-            pluginFile = findPlugin(ApplicationInfo::libDir() + "/plugins", "gstprovider" DEBUG_POSTFIX);
+            foreach(const QString& path, ApplicationInfo::pluginDirs()) {
+                pluginFile = findPlugin(path, "gstprovider" DEBUG_POSTFIX);
+                if(!pluginFile.isEmpty())
+                    break;
+            }
 #endif
         }
 
