@@ -253,9 +253,9 @@ private slots:
         {
             JingleRtp::RtpPacket jpacket = transport->read();
 
-            if(jpacket.type == JingleRtp::Audio)
+            if(jpacket.type == JingleRtp::Audio && audio) // FIXME why audio could null but we still receive packets? (the check was added to fix a crash)
                 audio->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
-            else if(jpacket.type == JingleRtp::Video)
+            else if(jpacket.type == JingleRtp::Video && video) //  FIXME see above
                 video->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
         }
     }
