@@ -129,6 +129,7 @@ QStringList ApplicationInfo::dataDirs()
 QStringList ApplicationInfo::pluginDirs()
 {
     QStringList l;
+    l += ApplicationInfo::resourcesDir() + "/plugins";
     l += homeDir(ApplicationInfo::DataLocation) + "/plugins";
     l += libDir() + "/plugins";
     return l;
