@@ -404,7 +404,6 @@ public:
         , psi(0)
         , account(parent)
         , client(0)
-        , reconnectingOnce(false)
         , eventQueue(0)
         , xmlConsole(0)
         , blockTransportPopupList(0)
@@ -459,8 +458,9 @@ public:
     UserAccount acc;
     Jid jid, nextJid;
     Status loginStatus;
+    QMetaObject::Connection reconnectConnection;
     bool loginWithPriority;
-    bool reconnectingOnce;
+    //bool reconnectingOnce;
     bool nickFromVCard;
     bool pepAvailable;
     bool vcardChecked;
@@ -1651,22 +1651,15 @@ void PsiAccount::autoLogin()
 void PsiAccount::reconnectOnce()
 {
     if (isActive()) {
-        if (d->reconnectingOnce) {
-            //To be sure phase2 will be called just once
-            QObject::disconnect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+        if (d->reconnectConnection) {
+            return; // wa are already reconnecting
         }
-        d->reconnectingOnce = true;
-        connect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+        d->reconnectConnection = QObject::connect(this, &PsiAccount::disconnected, this, [this](){
+            QObject::disconnect(d->reconnectConnection);
+            isDisconnecting = false;
+            setStatus(d->lastManualStatus(), d->loginWithPriority, false);
+        });
         logout(false, Status(Status::Offline, tr("Reconnecting"), 0));
-    }
-}
-
-void PsiAccount::reconnectOncePhase2()
-{
-    if (d->reconnectingOnce) {
-        d->reconnectingOnce = false;
-        QObject::disconnect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
-        setStatus(d->lastManualStatus(), d->loginWithPriority, false);
     }
 }
 
@@ -3168,10 +3161,10 @@ void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
     if (!withPriority)
         s.setPriority(defaultPriority(s));
 
-    if (d->reconnectingOnce) {
+    if (d->reconnectConnection) {
         //If we reconnect once and got here, user chosen status and we must stop reconnecting
-        d->reconnectingOnce = false;
-        QObject::disconnect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+        QObject::disconnect(d->reconnectConnection);
+        d->reconnectConnection = QMetaObject::Connection();
     }
 
     // using pgp?

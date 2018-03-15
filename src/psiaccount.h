@@ -460,7 +460,6 @@ private slots:
 
     void incomingHttpAuthRequest(const PsiHttpAuthRequest &);
 
-    void reconnectOncePhase2();
     void reconnect();
     void enableNotifyOnline();
 
