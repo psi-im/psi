@@ -210,7 +210,7 @@ void MiniClient::cs_authenticated()
 {
     _client->start(j.domain(), j.node(), "", "");
 
-    if (!stream->old() && auth) {
+    if (_client->isSessionRequired()) {
         JT_Session *j = new JT_Session(_client->rootTask());
         connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
         j->go(true);

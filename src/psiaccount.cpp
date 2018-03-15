@@ -1980,7 +1980,7 @@ void PsiAccount::cs_authenticated()
     QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
 
     d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
-    if (!d->stream->old()) {
+    if (d->client->isSessionRequired()) {
         JT_Session *j = new JT_Session(d->client->rootTask());
         connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
         j->go(true);
