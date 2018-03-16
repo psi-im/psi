@@ -271,7 +271,9 @@ public:
     bool ensureKey(const Jid &);
     void tryVerify(UserListItem *, UserResource *);
 
-    static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure);
+    static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler,
+                             QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect,
+                             bool *_isTemporaryAuthFailure, bool *_needAlert);
 
     void deleteQueueFile();
     void sendFiles(const Jid&, const QStringList&, bool direct = false);

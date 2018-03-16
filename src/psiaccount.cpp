@@ -1937,6 +1937,8 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
                     qWarning("KeyChain error=%d", job->error());
                     if (passwordPrompt()) {
                         d->stream->setPassword(d->acc.pass);
+                    } else {
+                        d->stream->abortAuth();
                     }
                 }
                 d->stream->continueAfterParams();
@@ -2061,14 +2063,29 @@ void PsiAccount::cs_warning(int w)
     }
 }
 
-void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure)
+void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler,
+                              QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect,
+                              bool *_isTemporaryAuthFailure, bool *_needAlert)
 {
     QString str;
     bool reconn = false;
     bool badPass = false;
     bool disableAutoConnect = false;
-    bool isAuthError = false;
     bool isTemporaryAuthFailure = false;
+    bool needAlert = true;
+
+    QString detail;
+    if (stream) { // Stream can apparently be gone if you disconnect in time
+        QString localizedDetail = LanguageManager::bestUiMatch(stream->errorLangText());
+        detail = stream->errorText();
+        if (!localizedDetail.isEmpty()) {
+            if (detail.isEmpty()) {
+                detail = localizedDetail;
+            } else {
+                detail += (QLatin1Char('\n') + localizedDetail);
+            }
+        }
+    }
 
     if(err == -1) {
         str = tr("Disconnected");
@@ -2084,11 +2101,10 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
     }
     else if(err == XMPP::ClientStream::ErrStream) {
         int x;
-        QString s, detail;
+        QString s;
         reconn = true;
         if (stream) { // Stream can apparently be gone if you disconnect in time
             x = stream->errorCondition();
-            detail = stream->errorText();
         } else {
             x = XMPP::Stream::GenericStreamError;
             reconn = false;
@@ -2105,6 +2121,8 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
             s = tr("Timed out from inactivity");
         else if(x == XMPP::ClientStream::InternalServerError)
             s = tr("Internal server error");
+        else if(x == XMPP::ClientStream::InvalidFrom)
+            s = tr("Invalid From");
         else if(x == XMPP::ClientStream::InvalidXml)
             s = tr("Invalid XML");
         else if(x == XMPP::ClientStream::PolicyViolation) {
@@ -2117,6 +2135,9 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
         }
         else if(x == XMPP::ClientStream::SystemShutdown) {
             s = tr("Server is shutting down");
+        }
+        else if(x == XMPP::ClientStream::StreamReset) {
+            s = tr("Stream reset (security implications)");
         }
         str = tr("XMPP Stream Error: %1").arg(s) + "\n" + detail;
     }
@@ -2135,16 +2156,14 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
         else if(x == XMPP::AdvancedConnector::ErrProxyAuth) {
             s = tr("Proxy authentication failed");
             reconn = false;
-            isAuthError = true;
         }
         else if(x == XMPP::AdvancedConnector::ErrStream)
             s = tr("Socket/stream error");
         str = tr("Connection Error: %1").arg(s);
     }
     else if(err == XMPP::ClientStream::ErrNeg) {
-        QString s, detail;
+        QString s;
         int x = stream->errorCondition();
-        detail = stream->errorText();
         if(x == XMPP::ClientStream::HostGone)
             s = tr("Host no longer hosted");
         else if(x == XMPP::ClientStream::HostUnknown)
@@ -2178,35 +2197,36 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
         QString s;
         if(x == XMPP::ClientStream::GenericAuthError) {
             s = tr("Unable to login");
-            isAuthError = true;
         } else if(x == XMPP::ClientStream::NoMech) {
             s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak, or plaintext authentication not enabled)");
             s += "\n" + stream->errorText();
-        } else if(x == XMPP::ClientStream::BadProto) {
-            s = tr("Bad server response");
-        } else if(x == XMPP::ClientStream::BadServ) {
-            s = tr("Server failed mutual authentication");
+        } else if(x == XMPP::ClientStream::Aborted) {
+            s = tr("Authentication aborted");
+            needAlert = false;
+        } else if(x == XMPP::ClientStream::AccountDisabled) {
+            s = tr("Account disabled");
+        } else if(x == XMPP::ClientStream::CredentialsExpired) {
+            s = tr("Credentials expired");
         } else if(x == XMPP::ClientStream::EncryptionRequired) {
             s = tr("Encryption required for chosen SASL mechanism");
         } else if(x == XMPP::ClientStream::InvalidAuthzid) {
             s = tr("Invalid account information");
-            isAuthError = true;
         } else if(x == XMPP::ClientStream::InvalidMech) {
             s = tr("Invalid SASL mechanism");
-        } else if(x == XMPP::ClientStream::InvalidRealm) {
-            s = tr("Invalid realm");
+        } else if(x == XMPP::ClientStream::MalformedRequest) {
+            s = tr("Malfromed request");
         } else if(x == XMPP::ClientStream::MechTooWeak) {
             s = tr("SASL mechanism too weak for this account");
         } else if(x == XMPP::ClientStream::NotAuthorized) {
             s = tr("Wrong Password");
             badPass = true;
-//            isAuthError = true;
         } else if(x == XMPP::ClientStream::TemporaryAuthFailure) {
             s = tr("Temporary auth failure");
-            isAuthError = true;
             isTemporaryAuthFailure = true;
+        } else if(x == XMPP::ClientStream::BadServ) {
+            s = tr("Server failed mutual authentication");
         }
-        str = tr("Authentication error: %1").arg(s);
+        str = tr("Authentication error: %1").arg(s) + "\n" + detail;
     }
     else if(err == XMPP::ClientStream::ErrSecurityLayer) {
         str = tr("Broken security layer (SASL)");
@@ -2224,8 +2244,8 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
     *_reconn = reconn;
     *_badPass = badPass;
     *_disableAutoConnect = disableAutoConnect;
-    *_isAuthError = isAuthError;
     *_isTemporaryAuthFailure = isTemporaryAuthFailure;
+    *_needAlert = needAlert;
 }
 
 void PsiAccount::cs_error(int err)
@@ -2233,13 +2253,14 @@ void PsiAccount::cs_error(int err)
     QString str;
     bool reconn;
     bool badPass;
-    bool isAuthError;
     bool isTemporaryAuthFailure;
+    bool needAlert;
 
     if (!isActive()) return; // all cleaned up already
 
     bool disableAutoConnect;
-    getErrorInfo(err, d->conn, d->stream, d->tlsHandler, &str, &reconn, &badPass, &disableAutoConnect, &isAuthError, &isTemporaryAuthFailure);
+    getErrorInfo(err, d->conn, d->stream, d->tlsHandler, &str, &reconn, &badPass, &disableAutoConnect, &isTemporaryAuthFailure, &needAlert);
+    d->currentConnectionError.clear();
     if (err != RECONNECT_TIMEOUT_ERROR) {
         d->currentConnectionError = str;
         d->currentConnectionErrorCondition = -1;
@@ -2272,10 +2293,13 @@ void PsiAccount::cs_error(int err)
     v_isActive = false;
 
     //If a password failure, prompt for correct password
-    if (badPass && passwordPrompt()) {
-        isDisconnecting = false;
-        login();
-        return;
+    if (badPass) {
+        if (passwordPrompt()) {
+            isDisconnecting = false;
+            login();
+            return;
+        }
+        needAlert = false;
     }
 
     d->loginStatus = Status(Status::Offline);
@@ -2283,13 +2307,15 @@ void PsiAccount::cs_error(int err)
     emit disconnected();
     isDisconnecting = false;
 
-    QString title;
-    if (d->psi->contactList()->enabledAccounts().count() > 1) {
-        title = QString("%1: ").arg(name());
+    if (needAlert) {
+        QString title;
+        if (d->psi->contactList()->enabledAccounts().count() > 1) {
+            title = QString("%1: ").arg(name());
+        }
+        title += tr("Server Error");
+        QString message = tr("There was an error communicating with the server.\nDetails: %1").arg(str);
+        psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError, QMessageBox::Critical, title, message);
     }
-    title += tr("Server Error");
-    QString message = tr("There was an error communicating with the server.\nDetails: %1").arg(str);
-    psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError, QMessageBox::Critical, title, message);
 }
 
 void PsiAccount::clearCurrentConnectionError()

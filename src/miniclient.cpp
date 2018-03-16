@@ -260,13 +260,14 @@ void MiniClient::cs_error(int err)
     bool reconn;
     bool badPass;
     bool disableAutoConnect;
-    bool isAuthError;
     bool isTemporaryAuthFailure;
+    bool needAlert;
 
-    PsiAccount::getErrorInfo(err, conn, stream, tlsHandler, &str, &reconn, &badPass, &disableAutoConnect, &isAuthError, &isTemporaryAuthFailure);
+    PsiAccount::getErrorInfo(err, conn, stream, tlsHandler, &str, &reconn, &badPass, &disableAutoConnect, &isTemporaryAuthFailure, &needAlert);
     close();
 
-    QMessageBox::critical(0, tr("Server Error"), tr("There was an error communicating with the XMPP server.\nDetails: %1").arg(str));
+    if (needAlert)
+        QMessageBox::critical(0, tr("Server Error"), tr("There was an error communicating with the XMPP server.\nDetails: %1").arg(str));
     error();
 }
 
