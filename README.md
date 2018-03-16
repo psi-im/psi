@@ -55,9 +55,9 @@ Currently the development model looks like this:
 
 * 2017-now,  Sergey Ilinykh <<rion4ik@gmail.com>>, Psi IM and Psi+ projects
 * 2010-2017, Sergey Ilinykh <<rion4ik@gmail.com>>, Psi+ project
-* 2009-2010, [Justin Karneges](http://andbit.net/) <<justin@affinix.com>>, Psi IM project
+* 2009-2010, [Justin Karneges](http://andbit.net/) <<justin@karneges.com>>, Psi IM project
 * 2004-2009, [Kevin Smith](http://doomsong.co.uk/) <<kevin@kismith.co.uk>>, Psi IM project
-* 2001-2004, [Justin Karneges](http://andbit.net/) <<justin@affinix.com>>, Psi IM project
+* 2001-2004, [Justin Karneges](http://andbit.net/) <<justin@karneges.com>>, Psi IM project
 
 ### Other contributors
 
