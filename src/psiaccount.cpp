@@ -2214,7 +2214,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
         } else if(x == XMPP::ClientStream::InvalidMech) {
             s = tr("Invalid SASL mechanism");
         } else if(x == XMPP::ClientStream::MalformedRequest) {
-            s = tr("Malfromed request");
+            s = tr("Malformed request");
         } else if(x == XMPP::ClientStream::MechTooWeak) {
             s = tr("SASL mechanism too weak for this account");
         } else if(x == XMPP::ClientStream::NotAuthorized) {
