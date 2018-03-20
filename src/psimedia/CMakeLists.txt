@@ -8,6 +8,7 @@ unset(UI_FORMS)
 
 list(APPEND HEADERS
     psimedia.h
+    psimedia_p.h
 )
 
 list(APPEND PLAIN_HEADERS

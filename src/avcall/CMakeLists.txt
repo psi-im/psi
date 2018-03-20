@@ -18,12 +18,14 @@ set(HEADERS
     jinglertp.h
     avcall.h
     calldlg.h
+    mediadevicewatcher.h
 )
 
 set(SOURCES
     jinglertp.cpp
     avcall.cpp
     calldlg.cpp
+    mediadevicewatcher.cpp
 )
 
 set(PLAIN_SOURCES
