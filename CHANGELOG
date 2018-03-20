@@ -9,6 +9,8 @@ New in 2.0 (UNRELEASED)
 - Added Result Set Management (XEP-0059) implementation
 - Fixed crashes on Wayland due to usage of X11 specific calls
 - Fixed CMake build on macOS
+- Rewritten API for PsiMedia (https://github.com/psi-im/psimedia),
+  PsiMedia versions older than 1.0.6 are not supported anymore
 - Code refactoring
 
 New in 1.3
