@@ -30,46 +30,27 @@
 #include "applicationinfo.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "mediadevicewatcher.h"
 
 #define USE_THREAD
 
-class Configuration
-{
-public:
-    bool liveInput;
-    QString audioOutDeviceId, audioInDeviceId, videoInDeviceId;
-    QString file;
-    bool loopFile;
-    PsiMedia::AudioParams audioParams;
-    PsiMedia::VideoParams videoParams;
-
-    int basePort;
-    QString extHost;
-
-    Configuration() :
-        liveInput(false),
-        loopFile(false),
-        basePort(-1)
-    {
-    }
-};
 
 // get default settings
-static Configuration getDefaultConfiguration()
+static MediaConfiguration getDefaultConfiguration()
 {
-    Configuration config;
+    MediaConfiguration config;
     config.liveInput = true;
     config.loopFile = true;
     return config;
 }
 
-static Configuration *g_config = 0;
+static MediaConfiguration *g_config = 0;
 
 static void ensureConfig()
 {
     if(!g_config)
     {
-        g_config = new Configuration;
+        g_config = new MediaConfiguration;
         *g_config = getDefaultConfiguration();
     }
 }
@@ -520,7 +501,7 @@ private:
 
     void start_rtp()
     {
-        Configuration &config = *g_config;
+        MediaConfiguration &config = *g_config;
 
         transmitAudio = false;
         transmitVideo = false;

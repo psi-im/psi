@@ -25,22 +25,20 @@
 #include "avcall.h"
 #include "xmpp_client.h"
 #include "../psimedia/psimedia.h"
+#include "../avcall/mediadevicewatcher.h"
 #include "common.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "iconset.h"
 
-// from opt_avcall.cpp
-extern void options_avcall_update();
-
 // we have this so if the user plugs in a device, but never goes to the
 //   options screen to select it, and then starts a call, it'll get used
 static void prep_device_opts()
 {
-    options_avcall_update();
-    AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-    AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-    AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+    auto config = MediaDeviceWatcher::instance()->configuration();
+    AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
+    AvCallManager::setAudioInDevice(config.audioInDeviceId);
+    AvCallManager::setVideoInDevice(config.videoInDeviceId);
 }
 
 class CallDlg::Private : public QObject

@@ -21,6 +21,7 @@
 #ifndef PSIMEDIA_H
 #define PSIMEDIA_H
 
+#include <QMetaType>
 #include <QSize>
 #include <QStringList>
 #include <QSharedDataPointer>
@@ -28,6 +29,8 @@
 #ifdef QT_GUI_LIB
 #include <QWidget>
 #endif
+
+class QMetaMethod;
 
 namespace PsiMedia {
 
@@ -69,6 +72,7 @@ public:
     Type type() const;
     QString name() const;
     QString id() const;
+    bool isDefault() const;
 
 private:
     class Private;
@@ -116,6 +120,7 @@ public:
     int sampleRate() const;
     int sampleSize() const;
     int channels() const;
+    QString toString() const;
 
     void setCodec(const QString &s);
     void setSampleRate(int n);
@@ -145,6 +150,7 @@ public:
     QString codec() const;
     QSize size() const;
     int fps() const;
+    QString toString() const;
 
     void setCodec(const QString &s);
     void setSize(const QSize &s);
@@ -180,9 +186,6 @@ public:
     Features(QObject *parent = 0);
     ~Features();
 
-    void lookup(int types = All);
-    bool waitForFinished(int msecs = -1);
-
     QList<Device> audioOutputDevices();
     QList<Device> audioInputDevices();
     QList<Device> videoInputDevices();
@@ -191,7 +194,7 @@ public:
     QList<VideoParams> supportedVideoModes();
 
 signals:
-    void finished();
+    void updated();
 
 private:
     class Private;
@@ -234,13 +237,9 @@ signals:
     void packetsWritten(int count);
 
 protected:
-#ifdef HAVE_QT5
-    virtual void connectNotify(const QMetaMethod &signal);
-    virtual void disconnectNotify(const QMetaMethod &signal);
-#else
-    virtual void connectNotify(const char *signal);
-    virtual void disconnectNotify(const char *signal);
-#endif
+    virtual void connectNotify(const QMetaMethod &signal) Q_DECL_OVERRIDE;
+    virtual void disconnectNotify(const QMetaMethod &signal) Q_DECL_OVERRIDE;
+
 private:
     RtpChannel();
     ~RtpChannel();
@@ -498,12 +497,15 @@ signals:
     void error();
 
 private:
-    Q_DISABLE_COPY(RtpSession);
+    Q_DISABLE_COPY(RtpSession)
 
     friend class RtpSessionPrivate;
     RtpSessionPrivate *d;
 };
 
 }
+
+Q_DECLARE_METATYPE(PsiMedia::AudioParams)
+Q_DECLARE_METATYPE(PsiMedia::VideoParams)
 
 #endif

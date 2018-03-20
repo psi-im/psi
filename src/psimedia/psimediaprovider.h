@@ -67,14 +67,15 @@ class PDevice
 public:
     enum Type
     {
-        AudioOut,
-        AudioIn,
-        VideoIn
+        AudioOut, // output hw to play stuff
+        AudioIn,  // input hw to get audio packets from
+        VideoIn   // video hw to get video packets from
     };
 
     Type type;
     QString name;
     QString id;
+    bool isDefault;
 };
 
 class PAudioParams
@@ -160,11 +161,15 @@ class Provider : public QObjectInterface
 {
 public:
     virtual bool init(const QString &resourcePath) = 0;
+    virtual bool isInitialized() const = 0;
     virtual QString creditName() = 0;
     virtual QString creditText() = 0;
 
     virtual FeaturesContext *createFeatures() = 0;
     virtual RtpSessionContext *createRtpSession() = 0;
+
+    HINT_SIGNALS:
+    HINT_METHOD(initialized())
 };
 
 class FeaturesContext : public QObjectInterface
@@ -183,8 +188,10 @@ public:
     virtual bool waitForFinished(int msecs) = 0; // -1 = no timeout
     virtual PFeatures results() const = 0;
 
-HINT_SIGNALS:
-    HINT_METHOD(finished())
+    HINT_SIGNALS:
+    HINT_METHOD(updated())
+    // TODO one day this should be converted to something more dynamic.
+    // For example we attach a camera and now we want to enable video button.
 };
 
 class RtpChannelContext : public QObjectInterface
@@ -196,7 +203,7 @@ public:
     virtual PRtpPacket read() = 0;
     virtual void write(const PRtpPacket &rtp) = 0;
 
-HINT_SIGNALS:
+    HINT_SIGNALS:
     HINT_METHOD(readyRead())
     HINT_METHOD(packetsWritten(int count))
 };
@@ -210,7 +217,7 @@ public:
     // this function causes VideoWidget::videoSizeChanged() to be emitted
     virtual void setVideoSize(const QSize &size) = 0;
 
-HINT_SIGNALS:
+    HINT_SIGNALS:
     HINT_METHOD(resized(const QSize &newSize))
 
     // listener must use a direct connection and paint during the signal
@@ -283,7 +290,7 @@ public:
     virtual RtpChannelContext *audioRtpChannel() = 0;
     virtual RtpChannelContext *videoRtpChannel() = 0;
 
-HINT_SIGNALS:
+    HINT_SIGNALS:
     HINT_METHOD(started())
     HINT_METHOD(preferencesUpdated())
     HINT_METHOD(audioOutputIntensityChanged(int intensity))
@@ -296,10 +303,10 @@ HINT_SIGNALS:
 
 }
 
-Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.0")
-Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.0")
-Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.0")
-Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.0")
-Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.0")
+Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.4")
 
 #endif

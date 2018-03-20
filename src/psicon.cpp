@@ -111,6 +111,7 @@
 #include "contactupdatesmanager.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
+#include "avcall/mediadevicewatcher.h"
 #include "alertmanager.h"
 #include "bosskey.h"
 #include "popupmanager.h"
@@ -126,9 +127,6 @@
 #ifdef Q_OS_MAC
 #include "mac_dock/mac_dock.h"
 #endif
-
-// from opt_avcall.cpp
-extern void options_avcall_update();
 
 static const char *tunePublishOptionPath = "options.extended-presence.tune.publish";
 static const char *tuneUrlFilterOptionPath = "options.extended-presence.tune.url-filter";
@@ -670,10 +668,10 @@ bool PsiCon::init()
     DesktopUtil::setUrlHandler("x-psi-atstyle", this, "openAtStyleUri");
 
     if(AvCallManager::isSupported()) {
-        options_avcall_update();
-        AvCallManager::setAudioOutDevice(options->getOption("options.media.devices.audio-output").toString());
-        AvCallManager::setAudioInDevice(options->getOption("options.media.devices.audio-input").toString());
-        AvCallManager::setVideoInDevice(options->getOption("options.media.devices.video-input").toString());
+        auto config = MediaDeviceWatcher::instance()->configuration();
+        AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
+        AvCallManager::setAudioInDevice(config.audioInDeviceId);
+        AvCallManager::setVideoInDevice(config.videoInDeviceId);
         AvCallManager::setBasePort(options->getOption("options.p2p.bytestreams.listen-port").toInt());
         AvCallManager::setExternalAddress(options->getOption("options.p2p.bytestreams.external-address").toString());
     }

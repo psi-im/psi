@@ -18,17 +18,9 @@
  *
  */
 
-#include "psimedia.h"
+#include "psimedia_p.h"
 
-#include <QCoreApplication>
-#include <QPluginLoader>
 #include <QMetaMethod>
-
-#ifdef QT_GUI_LIB
-#include <QPainter>
-#endif
-
-#include "psimediaprovider.h"
 
 namespace PsiMedia {
 
@@ -120,7 +112,7 @@ static QPluginLoader *g_pluginLoader = 0;
 
 static void cleanupProvider();
 
-static Provider *provider()
+Provider *provider()
 {
     if(!g_provider)
     {
@@ -240,6 +232,7 @@ public:
     Device::Type type;
     QString id;
     QString name;
+    bool isDefault;
 };
 
 class Global
@@ -252,6 +245,7 @@ public:
         dev.d->type = (Device::Type)pd.type;
         dev.d->id = pd.id;
         dev.d->name = pd.name;
+        dev.d->isDefault = pd.isDefault;
         return dev;
     }
 };
@@ -276,6 +270,9 @@ Device::~Device()
 
 Device & Device::operator=(const Device &other)
 {
+    if(this == &other)
+        return *this;
+
     if(d)
     {
         if(other.d)
@@ -317,46 +314,15 @@ QString Device::id() const
     return d->id;
 }
 
+bool Device::isDefault() const
+{
+    return d->isDefault;
+}
+
 #ifdef QT_GUI_LIB
 //----------------------------------------------------------------------------
 // VideoWidget
 //----------------------------------------------------------------------------
-class VideoWidgetPrivate : public QObject, public VideoWidgetContext
-{
-    Q_OBJECT
-
-public:
-    friend class VideoWidget;
-
-    VideoWidget *q;
-    QSize videoSize;
-
-    VideoWidgetPrivate(VideoWidget *_q) :
-        QObject(_q),
-        q(_q)
-    {
-    }
-
-    virtual QObject *qobject()
-    {
-        return this;
-    }
-
-    virtual QWidget *qwidget()
-    {
-        return q;
-    }
-
-    virtual void setVideoSize(const QSize &size)
-    {
-        videoSize = size;
-        emit q->videoSizeChanged();
-    }
-
-signals:
-    void resized(const QSize &newSize);
-    void paintEvent(QPainter *p);
-};
 
 VideoWidget::VideoWidget(QWidget *parent) :
     QWidget(parent)
@@ -448,6 +414,12 @@ int AudioParams::channels() const
     return d->channels;
 }
 
+QString AudioParams::toString() const
+{
+    return QString("%1 %2 %3 %4").arg(d->codec, QString::number(d->sampleRate),
+                                      QString::number(d->sampleSize), QString::number(d->channels));
+}
+
 void AudioParams::setCodec(const QString &s)
 {
     d->codec = s;
@@ -471,9 +443,9 @@ void AudioParams::setChannels(int n)
 bool AudioParams::operator==(const AudioParams &other) const
 {
     if(d->codec == other.d->codec &&
-        d->sampleRate == other.d->sampleRate &&
-        d->sampleSize == other.d->sampleSize &&
-        d->channels == other.d->channels)
+            d->sampleRate == other.d->sampleRate &&
+            d->sampleSize == other.d->sampleSize &&
+            d->channels == other.d->channels)
     {
         return true;
     }
@@ -551,8 +523,8 @@ void VideoParams::setFps(int n)
 bool VideoParams::operator==(const VideoParams &other) const
 {
     if(d->codec == other.d->codec &&
-        d->size == other.d->size &&
-        d->fps == other.d->fps)
+            d->size == other.d->size &&
+            d->fps == other.d->fps)
     {
         return true;
     }
@@ -560,10 +532,16 @@ bool VideoParams::operator==(const VideoParams &other) const
         return false;
 }
 
+QString VideoParams::toString() const
+{
+    return QString("%1 %2 %3").arg(d->codec, QString::number(d->size.width())+"x"+QString::number(d->size.height()),
+                                   QString::number(d->fps));
+}
+
 //----------------------------------------------------------------------------
 // Features
 //----------------------------------------------------------------------------
-static QList<Device> importDevices(const QList<PDevice> &in)
+QList<Device> importDevices(const QList<PDevice> &in)
 {
     QList<Device> out;
     foreach(const PDevice &pd, in)
@@ -571,7 +549,7 @@ static QList<Device> importDevices(const QList<PDevice> &in)
     return out;
 }
 
-static QList<AudioParams> importAudioModes(const QList<PAudioParams> &in)
+QList<AudioParams> importAudioModes(const QList<PAudioParams> &in)
 {
     QList<AudioParams> out;
     foreach(const PAudioParams &pp, in)
@@ -579,67 +557,13 @@ static QList<AudioParams> importAudioModes(const QList<PAudioParams> &in)
     return out;
 }
 
-static QList<VideoParams> importVideoModes(const QList<PVideoParams> &in)
+QList<VideoParams> importVideoModes(const QList<PVideoParams> &in)
 {
     QList<VideoParams> out;
     foreach(const PVideoParams &pp, in)
         out += importVideoParams(pp);
     return out;
 }
-
-class Features::Private : public QObject
-{
-    Q_OBJECT
-
-public:
-    Features *q;
-    FeaturesContext *c;
-
-    QList<Device> audioOutputDevices;
-    QList<Device> audioInputDevices;
-    QList<Device> videoInputDevices;
-    QList<AudioParams> supportedAudioModes;
-    QList<VideoParams> supportedVideoModes;
-
-    Private(Features *_q) :
-        QObject(_q),
-        q(_q)
-    {
-        c = provider()->createFeatures();
-        c->qobject()->setParent(this);
-        connect(c->qobject(), SIGNAL(finished()), SLOT(c_finished()));
-    }
-
-    ~Private()
-    {
-        delete c;
-    }
-
-    void clearResults()
-    {
-        audioOutputDevices.clear();
-        audioInputDevices.clear();
-        videoInputDevices.clear();
-        supportedAudioModes.clear();
-        supportedVideoModes.clear();
-    }
-
-    void importResults(const PFeatures &in)
-    {
-        audioOutputDevices = importDevices(in.audioOutputDevices);
-        audioInputDevices = importDevices(in.audioInputDevices);
-        videoInputDevices = importDevices(in.videoInputDevices);
-        supportedAudioModes = importAudioModes(in.supportedAudioModes);
-        supportedVideoModes = importVideoModes(in.supportedVideoModes);
-    }
-
-private slots:
-    void c_finished()
-    {
-        importResults(c->results());
-        emit q->finished();
-    }
-};
 
 Features::Features(QObject *parent) :
     QObject(parent)
@@ -650,32 +574,6 @@ Features::Features(QObject *parent) :
 Features::~Features()
 {
     delete d;
-}
-
-void Features::lookup(int types)
-{
-    int ptypes = 0;
-    if(types & AudioOut)
-        ptypes |= FeaturesContext::AudioOut;
-    if(types & AudioIn)
-        ptypes |= FeaturesContext::AudioIn;
-    if(types & VideoIn)
-        ptypes |= FeaturesContext::VideoIn;
-    if(types & AudioModes)
-        ptypes |= FeaturesContext::AudioModes;
-    if(types & VideoModes)
-        ptypes |= FeaturesContext::VideoModes;
-
-    d->clearResults();
-    d->c->lookup(ptypes);
-}
-
-bool Features::waitForFinished(int msecs)
-{
-    bool ok = d->c->waitForFinished(msecs);
-    if(ok)
-        d->importResults(d->c->results());
-    return ok;
 }
 
 QList<Device> Features::audioOutputDevices()
@@ -762,69 +660,6 @@ int RtpPacket::portOffset() const
 //----------------------------------------------------------------------------
 // RtpChannel
 //----------------------------------------------------------------------------
-class RtpChannelPrivate : public QObject
-{
-    Q_OBJECT
-
-public:
-    RtpChannel *q;
-    RtpChannelContext *c;
-    bool enabled;
-    int readyReadListeners;
-
-    RtpChannelPrivate(RtpChannel *_q) :
-        QObject(_q),
-        q(_q),
-        c(0),
-        enabled(false),
-        readyReadListeners(0)
-    {
-    }
-
-    void setContext(RtpChannelContext *_c)
-    {
-        if(c)
-        {
-            c->qobject()->disconnect(this);
-            c->qobject()->setParent(0);
-            enabled = false;
-            c = 0;
-        }
-
-        if(!_c)
-            return;
-
-        c = _c;
-        c->qobject()->setParent(this);
-        connect(c->qobject(), SIGNAL(readyRead()), SLOT(c_readyRead()));
-        connect(c->qobject(), SIGNAL(packetsWritten(int)), SLOT(c_packetsWritten(int)));
-        connect(c->qobject(), SIGNAL(destroyed()), SLOT(c_destroyed()));
-
-        if(readyReadListeners > 0)
-        {
-            enabled = true;
-            c->setEnabled(true);
-        }
-    }
-
-private slots:
-    void c_readyRead()
-    {
-        emit q->readyRead();
-    }
-
-    void c_packetsWritten(int count)
-    {
-        emit q->packetsWritten(count);
-    }
-
-    void c_destroyed()
-    {
-        enabled = false;
-        c = 0;
-    }
-};
-
 RtpChannel::RtpChannel()
 {
     d = new RtpChannelPrivate(this);
@@ -871,7 +706,6 @@ void RtpChannel::write(const RtpPacket &rtp)
     }
 }
 
-#ifdef HAVE_QT5
 void RtpChannel::connectNotify(const QMetaMethod &signal)
 {
     int oldtotal = d->readyReadListeners;
@@ -901,37 +735,7 @@ void RtpChannel::disconnectNotify(const QMetaMethod &signal)
         d->c->setEnabled(false);
     }
 }
-#else
-void RtpChannel::connectNotify(const char *signal)
-{
-    int oldtotal = d->readyReadListeners;
 
-    if(QLatin1String(signal) == QMetaObject::normalizedSignature(SIGNAL(readyRead())).data())
-        ++d->readyReadListeners;
-
-    int total = d->readyReadListeners;
-    if(d->c && oldtotal == 0 && total > 0)
-    {
-        d->enabled = true;
-        d->c->setEnabled(true);
-    }
-}
-
-void RtpChannel::disconnectNotify(const char *signal)
-{
-    int oldtotal = d->readyReadListeners;
-
-    if(QLatin1String(signal) == QMetaObject::normalizedSignature(SIGNAL(readyRead())).data())
-        --d->readyReadListeners;
-
-    int total = d->readyReadListeners;
-    if(d->c && oldtotal > 0 && total == 0)
-    {
-        d->enabled = false;
-        d->c->setEnabled(false);
-    }
-}
-#endif
 //----------------------------------------------------------------------------
 // PayloadInfo
 //----------------------------------------------------------------------------
@@ -968,12 +772,12 @@ public:
     {
         // according to xep-167, parameters are unordered
         if(id == other.id &&
-            name.compare(other.name, Qt::CaseInsensitive) &&
-            clockrate == other.clockrate &&
-            channels == other.channels &&
-            ptime == other.ptime &&
-            maxptime == other.maxptime &&
-            compareUnordered(parameters, other.parameters))
+                name.compare(other.name, Qt::CaseInsensitive) &&
+                clockrate == other.clockrate &&
+                channels == other.channels &&
+                ptime == other.ptime &&
+                maxptime == other.maxptime &&
+                compareUnordered(parameters, other.parameters))
         {
             return true;
         }
@@ -1102,86 +906,6 @@ bool PayloadInfo::operator==(const PayloadInfo &other) const
 //----------------------------------------------------------------------------
 // RtpSession
 //----------------------------------------------------------------------------
-class RtpSessionPrivate : public QObject
-{
-    Q_OBJECT
-
-public:
-    RtpSession *q;
-    RtpSessionContext *c;
-    RtpChannel audioRtpChannel;
-    RtpChannel videoRtpChannel;
-
-    RtpSessionPrivate(RtpSession *_q) :
-        QObject(_q),
-        q(_q)
-    {
-        c = provider()->createRtpSession();
-        c->qobject()->setParent(this);
-        connect(c->qobject(), SIGNAL(started()), SLOT(c_started()));
-        connect(c->qobject(), SIGNAL(preferencesUpdated()), SLOT(c_preferencesUpdated()));
-        connect(c->qobject(), SIGNAL(audioOutputIntensityChanged(int)), SLOT(c_audioOutputIntensityChanged(int)));
-        connect(c->qobject(), SIGNAL(audioInputIntensityChanged(int)), SLOT(c_audioInputIntensityChanged(int)));
-        connect(c->qobject(), SIGNAL(stoppedRecording()), SLOT(c_stoppedRecording()));
-        connect(c->qobject(), SIGNAL(stopped()), SLOT(c_stopped()));
-        connect(c->qobject(), SIGNAL(finished()), SLOT(c_finished()));
-        connect(c->qobject(), SIGNAL(error()), SLOT(c_error()));
-    }
-
-    ~RtpSessionPrivate()
-    {
-        delete c;
-    }
-
-private slots:
-    void c_started()
-    {
-        audioRtpChannel.d->setContext(c->audioRtpChannel());
-        videoRtpChannel.d->setContext(c->videoRtpChannel());
-        emit q->started();
-    }
-
-    void c_preferencesUpdated()
-    {
-        emit q->preferencesUpdated();
-    }
-
-    void c_audioOutputIntensityChanged(int intensity)
-    {
-        emit q->audioOutputIntensityChanged(intensity);
-    }
-
-    void c_audioInputIntensityChanged(int intensity)
-    {
-        emit q->audioInputIntensityChanged(intensity);
-    }
-
-    void c_stoppedRecording()
-    {
-        emit q->stoppedRecording();
-    }
-
-    void c_stopped()
-    {
-        audioRtpChannel.d->setContext(0);
-        videoRtpChannel.d->setContext(0);
-        emit q->stopped();
-    }
-
-    void c_finished()
-    {
-        audioRtpChannel.d->setContext(0);
-        videoRtpChannel.d->setContext(0);
-        emit q->finished();
-    }
-
-    void c_error()
-    {
-        audioRtpChannel.d->setContext(0);
-        videoRtpChannel.d->setContext(0);
-        emit q->error();
-    }
-};
 
 RtpSession::RtpSession(QObject *parent) :
     QObject(parent)
@@ -1420,5 +1144,3 @@ RtpChannel *RtpSession::videoRtpChannel()
 }
 
 }
-
-#include "psimedia.moc"
