@@ -294,6 +294,10 @@ if(WIN32)
         gpg.exe
         libgcrypt-11.dll
         libgcrypt-20.dll
+        libcrypto-1_1.dll
+        libcrypto-1_1-x64.dll
+        libssl-1_1.dll
+        libssl-1_1-x64.dll
         libotr.dll
         libotr-5.dll
         libsignal-protocol-c.dll
@@ -308,8 +312,8 @@ if(WIN32)
         libhunspell-1.5-0.dll
         libhunspell-1.6-0.dll
         libeay32.dll
-        ssleay32.dll
         libqca-qt5${D}.dll
+        ssleay32.dll
     )
 
     if(MSVC)
