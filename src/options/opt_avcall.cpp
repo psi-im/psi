@@ -93,7 +93,4 @@ void OptionsTabAvCall::restoreOptions()
     d->cb_audioInDevice->setCurrentIndex(d->cb_audioInDevice->findData(config.audioInDeviceId));
     d->cb_videoInDevice->setCurrentIndex(d->cb_videoInDevice->findData(config.videoInDeviceId));
     d->cb_videoSupport->setChecked(PsiOptions::instance()->getOption("options.media.video-support").toBool());
-
-    d->lb_videoInDevice->setVisible(AvCallManager::isVideoSupported());
-    d->cb_videoInDevice->setVisible(AvCallManager::isVideoSupported());
 }
