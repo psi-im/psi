@@ -25,11 +25,11 @@ set(SOURCES
     jinglertp.cpp
     avcall.cpp
     calldlg.cpp
-    mediadevicewatcher.cpp
 )
 
 set(PLAIN_SOURCES
     jinglertptasks.cpp
+    mediadevicewatcher.cpp
 )
 
 set(FORMS
