@@ -31,18 +31,25 @@ public:
 			}
 
 #ifdef Q_OS_WIN
-			QString libName = qc_buildmode_debug? "idnd" : "idn";
+            QString staticLibName = qc_buildmode_debug? "libidnd" : "libidn";
+            QString dynamicLibName = qc_buildmode_debug? "idnd" : "idn";
+            QStringList libNames = QStringList() << staticLibName << dynamicLibName;
 #else
-			QString libName("idn");
+            QStringList libNames = QStringList() << "idn";
 #endif
-			if((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName)) ||
-			   (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
-				conf->addLib(idn_libdir.isEmpty()? QString("-l") + libName : QString("-L%1 -l%2").arg(idn_libdir, libName));
-			} else {
-				printf("Libraries not found!\n");
-				return false;
-			}
-			return true;
+            bool libFound = false;
+            foreach (const QString &libName, libNames) {
+                if((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName)) ||
+                   (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
+                    conf->addLib(idn_libdir.isEmpty()? QString("-l") + libName : QString("-L%1 -l%2").arg(idn_libdir, libName));
+                    libFound = true;
+                    break;
+                }
+            }
+            if (!libFound) {
+                printf("Libraries not found!\n");
+            }
+            return libFound;
 		}
 
 		QStringList incs;
