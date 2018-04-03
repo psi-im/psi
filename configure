@@ -3407,6 +3407,15 @@ bool Conf::findHeader(const QString &h, const QStringList &ext, QString *inc)
 	QStringList dirs;
 	dirs += "/usr/local/include";
 	dirs += ext;
+
+	QString prefix = qc_getenv("PREFIX");
+	if (!prefix.isEmpty()) {
+		prefix += "/include";
+		prefix = qc_normalize_path(prefix);
+		if (!dirs.contains(prefix))
+			dirs << prefix;
+	}
+
 	for(QStringList::ConstIterator it = dirs.begin(); it != dirs.end(); ++it)
 	{
 		if(checkHeader(*it, h))
@@ -3449,6 +3458,18 @@ bool Conf::findLibrary(const QString &name, QString *lib)
 		*lib = "/usr/local/lib";
 		return true;
 	}
+
+	QString prefix = qc_getenv("PREFIX");
+	if (!prefix.isEmpty()) {
+		prefix += "/lib";
+		prefix = qc_normalize_path(prefix);
+		if(checkLibrary(prefix, name))
+		{
+			*lib = prefix;
+			return true;
+		}
+	}
+
 	return false;
 }
 
