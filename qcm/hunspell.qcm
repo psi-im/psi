@@ -55,14 +55,15 @@ public:
 			return false;
 
 		QStringList libnames;
-		libnames += "hunspell-1.3";
-		libnames += "hunspell";
 #ifdef _MSC_VER
 # ifdef QC_BUILDMODE
-		libnames += (qc_buildmode_debug? "libhunspelld" : "libhunspell");
+		libnames += (qc_buildmode_debug? "libhunspelld" : "libhunspell"); // possibly static
+        libnames += (qc_buildmode_debug? "hunspelld" : "hunspell"); // possibly dynamic
 # else
-		libnames += "libhunspell";
+		libnames << "libhunspell" << "hunspell";
 # endif
+#else
+        libnames << "hunspell-1.3" << "hunspell";
 #endif
 
 		bool success = false;
