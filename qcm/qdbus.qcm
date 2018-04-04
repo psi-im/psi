@@ -7,5 +7,10 @@ name: QDBUS
 //----------------------------------------------------------------------------
 // qc_qdbus
 //----------------------------------------------------------------------------
+
+#ifdef Q_OS_WIN
+QC_SILENT_NOT_FOUND(qdbus)
+#else
 // id, shortname, name, extraConfIfFound
 QC_FIND_QT_COMP_E(dbus, qdbus, QtDbus, "CONFIG += dbus")
+#endif

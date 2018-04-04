@@ -710,6 +710,17 @@ public:
 
 #define QC_AS_STR(s) #s
 
+#define QC_SILENT_NOT_FOUND(modname) \\
+class qc_##modname : public ConfObj \\
+{ \\
+public: \\
+    qc_##modname(Conf *c) : ConfObj(c) {} \\
+    QString name() const { return QC_AS_STR(modname); } \\
+    QString shortname() const { return QC_AS_STR(modname); } \\
+    QString checkString() const { return QString(); } \\
+    bool exec() { return false; } \\
+};
+
 #define QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound, suffix) \\
 class qc_##shortname##suffix : public QtCompFinder \\
 { \\
@@ -1414,8 +1425,13 @@ name: QDBUS
 //----------------------------------------------------------------------------
 // qc_qdbus
 //----------------------------------------------------------------------------
+
+#ifdef Q_OS_WIN
+QC_SILENT_NOT_FOUND(qdbus)
+#else
 // id, shortname, name, extraConfIfFound
 QC_FIND_QT_COMP_E(dbus, qdbus, QtDbus, "CONFIG += dbus")
+#endif
 #line 1 "keychain.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1472,7 +1488,7 @@ public:
             qWarning("keychain library qt5keychain is not found");
             return false;
         }
-        conf->addLib(QString("-L %1 -l%2").arg(s, libName));
+        conf->addLib(QString("-L%1 -l%2").arg(s, libName));
 
         // header and library were found by default paths. lets just add extra
         conf->addExtra(extraConfIfFound);
@@ -3478,7 +3494,7 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	QString inc, lib;
 	QString s;
 
-	s = getenv(incvar);
+	s = getenv(incvar).trimmed();
 	if(!s.isEmpty()) {
 		if(!checkHeader(s, incname)) {
 			if(debug_enabled)
@@ -3496,7 +3512,7 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 		inc = s;
 	}
 
-	s = getenv(libvar);
+	s = getenv(libvar).trimmed();
 	if(!s.isEmpty()) {
 		if(!checkLibrary(s, libname)) {
 			if(debug_enabled)
@@ -3516,7 +3532,7 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 
 	QString lib_out;
 	if(!lib.isEmpty())
-		lib_out += QString("-L") + s;
+		lib_out += QString("-L") + s + " ";
 	lib_out += QString("-l") + libname;
 
 	*incpath = inc;

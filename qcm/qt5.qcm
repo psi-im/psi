@@ -90,6 +90,17 @@ public:
 
 #define QC_AS_STR(s) #s
 
+#define QC_SILENT_NOT_FOUND(modname) \
+class qc_##modname : public ConfObj \
+{ \
+public: \
+    qc_##modname(Conf *c) : ConfObj(c) {} \
+    QString name() const { return QC_AS_STR(modname); } \
+    QString shortname() const { return QC_AS_STR(modname); } \
+    QString checkString() const { return QString(); } \
+    bool exec() { return false; } \
+};
+
 #define QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound, suffix) \
 class qc_##shortname##suffix : public QtCompFinder \
 { \
