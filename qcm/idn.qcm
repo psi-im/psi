@@ -32,6 +32,7 @@ public:
     		}
 
 #ifdef Q_OS_WIN
+            conf->addDefine("LIBIDN_STATIC"); // it's need only for iris anyway
             QString staticLibName = qc_buildmode_debug? "libidnd" : "libidn";
             QString dynamicLibName = qc_buildmode_debug? "idnd" : "idn";
             QStringList libNames = QStringList() << staticLibName << dynamicLibName;
