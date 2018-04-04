@@ -11,54 +11,54 @@ arg: with-growl=[path],Path to the Growl framework
 class qc_growl : public ConfObj
 {
 public:
-	qc_growl(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Growl"; }
-	QString shortname() const { return "growl"; }
+    qc_growl(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Growl"; }
+    QString shortname() const { return "growl"; }
 #ifndef Q_OS_MAC
-	QString checkString() const { return QString(); }
+    QString checkString() const { return QString(); }
 #endif
 
-	// TODO: This should go into ConfObj
-	bool checkFramework(const QString &path, const QString &name)
-	{
-		QString str =
-		"int main()\n"
-		"{\n"
-		"    return 0;\n"
-		"}\n";
+    // TODO: This should go into ConfObj
+    bool checkFramework(const QString &path, const QString &name)
+    {
+    	QString str =
+    	"int main()\n"
+    	"{\n"
+    	"    return 0;\n"
+    	"}\n";
 
-		QString extra;
-		if(!path.isEmpty())
-			extra += QString("-F") + path + ' ';
-		extra += QString("-framework ") + name;
-		if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
-			return false;
-		return true;
-	}
+    	QString extra;
+    	if(!path.isEmpty())
+    		extra += QString("-F") + path + ' ';
+    	extra += QString("-framework ") + name;
+    	if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
+    		return false;
+    	return true;
+    }
 
-	// TODO: This should go into ConfObj
-	void addFrameworkPath(const QString& str)
-	{
-		conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
-		conf->addExtra("QMAKE_OBJECTIVE_CFLAGS += -F" + str);
-		conf->addLib("-F" + str);
-	}
+    // TODO: This should go into ConfObj
+    void addFrameworkPath(const QString& str)
+    {
+    	conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
+    	conf->addExtra("QMAKE_OBJECTIVE_CFLAGS += -F" + str);
+    	conf->addLib("-F" + str);
+    }
 
-	bool exec()
-	{
+    bool exec()
+    {
 #ifdef Q_OS_MAC
-		QString growl_path = conf->getenv("QC_WITH_GROWL");
-		if(!checkFramework(growl_path, "Growl"))
-			return false;
+    	QString growl_path = conf->getenv("QC_WITH_GROWL");
+    	if(!checkFramework(growl_path, "Growl"))
+    		return false;
 
-		if(!growl_path.isEmpty())
-			addFrameworkPath(growl_path);
-		conf->addLib("-framework Growl");
-		conf->addDefine("HAVE_GROWL");
+    	if(!growl_path.isEmpty())
+    		addFrameworkPath(growl_path);
+    	conf->addLib("-framework Growl");
+    	conf->addDefine("HAVE_GROWL");
 
-		return true;
+    	return true;
 #else
-		return false;
+    	return false;
 #endif
-	}
+    }
 };

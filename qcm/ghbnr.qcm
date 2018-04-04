@@ -6,25 +6,25 @@ name: gethostbyname_r()
 class qc_ghbnr : public ConfObj
 {
 public:
-	qc_ghbnr(Conf *c) : ConfObj(c) { }
+    qc_ghbnr(Conf *c) : ConfObj(c) { }
 
-	QString name() const { return "gethostbyname_r()"; }
-	QString shortname() const { return "ghbnr"; }
+    QString name() const { return "gethostbyname_r()"; }
+    QString shortname() const { return "ghbnr"; }
 
-	bool exec()
-	{
-		QString str =
-			"#include<netdb.h>\n"
-			"\n"
-			"int main()\n"
-			"{\n"
-			"    gethostbyname_r(\"\", 0, 0, 0, 0, 0);\n"
-			"    return 0;\n"
-			"}\n";
-		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
-			return false;
+    bool exec()
+    {
+    	QString str =
+    		"#include<netdb.h>\n"
+    		"\n"
+    		"int main()\n"
+    		"{\n"
+    		"    gethostbyname_r(\"\", 0, 0, 0, 0, 0);\n"
+    		"    return 0;\n"
+    		"}\n";
+    	if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
+    		return false;
 
-		conf->addDefine("HAVE_GETHOSTBYNAME_R");
-		return true;
-	}
+    	conf->addDefine("HAVE_GETHOSTBYNAME_R");
+    	return true;
+    }
 };

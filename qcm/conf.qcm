@@ -8,71 +8,71 @@ name: Psi Configuration
 
 static QString psiGetVersion()
 {
-	QString str;
+    QString str;
 
-	{
-		QFile file(sourceDir + "/version");
-		if(file.open(QIODevice::ReadOnly | QIODevice::Text))
-		{
-			QTextStream ts(&file);
-			if(!ts.atEnd())
-				str = ts.readLine();
-		}
+    {
+    	QFile file(sourceDir + "/version");
+    	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
+    	{
+    		QTextStream ts(&file);
+    		if(!ts.atEnd())
+    			str = ts.readLine();
+    	}
 
-		if(str.isEmpty())
-			str = "UnknownVersion";
-	}
+    	if(str.isEmpty())
+    		str = "UnknownVersion";
+    }
 
-	QString nowstr = QDateTime::currentDateTime().toString("yyyyMMdd");
-	str.replace("@@DATE@@", nowstr);
-	return str;
+    QString nowstr = QDateTime::currentDateTime().toString("yyyyMMdd");
+    str.replace("@@DATE@@", nowstr);
+    return str;
 }
 
 class qc_conf : public ConfObj
 {
 public:
-	qc_conf(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Psi Configuration"; }
-	QString shortname() const { return "conf"; }
-	QString checkString() const { return QString(); }
-	bool exec()
-	{
-		QString version = psiGetVersion();
-		QRegExp verre("^\\d+(?:\\.\\d+)+");
-		if (verre.indexIn(version) == -1) {
-			conf->debug("Failed to parse version file");
-			return false;
-		}
-		conf->addExtra(QString("PSI_VERSION = %1").arg(verre.cap(0)));
-		
-		QHash<QString,QString> vars;
-		vars["VERSION"] = version;
-		QDir::current().mkpath("mac");
-		psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
-		
-		vars.clear();
-		vars["source_dir"] = sourceDir;
-		vars["build_dir"] = QDir::currentPath();
-		psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
+    qc_conf(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Psi Configuration"; }
+    QString shortname() const { return "conf"; }
+    QString checkString() const { return QString(); }
+    bool exec()
+    {
+    	QString version = psiGetVersion();
+    	QRegExp verre("^\\d+(?:\\.\\d+)+");
+    	if (verre.indexIn(version) == -1) {
+    		conf->debug("Failed to parse version file");
+    		return false;
+    	}
+    	conf->addExtra(QString("PSI_VERSION = %1").arg(verre.cap(0)));
+    	
+    	QHash<QString,QString> vars;
+    	vars["VERSION"] = version;
+    	QDir::current().mkpath("mac");
+    	psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
+    	
+    	vars.clear();
+    	vars["source_dir"] = sourceDir;
+    	vars["build_dir"] = QDir::currentPath();
+    	psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
-		conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
-		conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
+    	conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
+    	conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
 #endif
 
-		QDir(".").mkdir("src");
-		QFile file("src/config.h");
-		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
-			QTextStream stream( &file );
+    	QDir(".").mkdir("src");
+    	QFile file("src/config.h");
+    	if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
+    		QTextStream stream( &file );
 #ifndef Q_OS_WIN
-			stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\"" << endl;
-			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\"" << endl;
+    		stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\"" << endl;
+    		stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\"" << endl;
 #endif
-			stream << "#define PSI_VERSION \"" << version << "\"" << endl;
-		}
+    		stream << "#define PSI_VERSION \"" << version << "\"" << endl;
+    	}
 
-		conf->addDefine("HAVE_CONFIG");
+    	conf->addDefine("HAVE_CONFIG");
 
-		return true;
-	}
+    	return true;
+    }
 };

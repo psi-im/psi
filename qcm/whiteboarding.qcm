@@ -11,33 +11,33 @@ static bool qc_qtsvg_found = false;
 class qc_whiteboarding : public QtCompFinder
 {
 public:
-	qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
-	QString resultString() const
-	{
-		if (!qc_qtsvg_found) {
-			return "QtSVG is not found";
-		}
-		return ConfObj::resultString();
-	}
+    qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
+    QString resultString() const
+    {
+    	if (!qc_qtsvg_found) {
+    		return "QtSVG is not found";
+    	}
+    	return ConfObj::resultString();
+    }
 
-	bool exec()
-	{
-		if (!QtCompFinder::exec()) {
-			return false;
-		}
-		qc_qtsvg_found = true;
+    bool exec()
+    {
+    	if (!QtCompFinder::exec()) {
+    		return false;
+    	}
+    	qc_qtsvg_found = true;
 
-		conf->addDefine("WHITEBOARDING");
+    	conf->addDefine("WHITEBOARDING");
 
-		// Finish
-		conf->addExtra("CONFIG += whiteboarding");
+    	// Finish
+    	conf->addExtra("CONFIG += whiteboarding");
 
-		qWarning("");
-		qWarning("");
-		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
-		qWarning("        WHITEBOARDING SUPPORT IS STILL UNFINISHED !!!");
-		qWarning("        USE AT YOUR OWN RISK !!!");
+    	qWarning("");
+    	qWarning("");
+    	qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
+    	qWarning("        WHITEBOARDING SUPPORT IS STILL UNFINISHED !!!");
+    	qWarning("        USE AT YOUR OWN RISK !!!");
 
-		return true;
-	}
+    	return true;
+    }
 };

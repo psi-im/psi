@@ -15,79 +15,79 @@ bool qc_use_http_parser = false;
 //----------------------------------------------------------------------------
 class qc_http_parser : public ConfObj
 {
-	bool use_bundled;
+    bool use_bundled;
 public:
-	qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
-	QString name() const { return "HTTP Parser"; }
-	QString shortname() const { return "httpparser"; }
+    qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
+    QString name() const { return "HTTP Parser"; }
+    QString shortname() const { return "httpparser"; }
 
-	QString resultString() const
-	{
-		if (qc_use_http_parser) {
-			if (use_bundled)
-				return "bundled";
-			return ConfObj::resultString();
-		}
-		return "Not needed w/o webengine";
-	}
+    QString resultString() const
+    {
+    	if (qc_use_http_parser) {
+    		if (use_bundled)
+    			return "bundled";
+    		return ConfObj::resultString();
+    	}
+    	return "Not needed w/o webengine";
+    }
 
-	bool exec()
-	{
-		qc_use_http_parser = (qc_webkit_type == "qtwebengine");
-		if (!qc_use_http_parser)
-			return true; // http parser is not needed. success.
+    bool exec()
+    {
+    	qc_use_http_parser = (qc_webkit_type == "qtwebengine");
+    	if (!qc_use_http_parser)
+    		return true; // http parser is not needed. success.
 
-		QString s;
-		if(conf->getenv("QC_BUNDLED_HTTP_PARSER") == "Y") {
-			goto use_bundled_lbl;
-		}
+    	QString s;
+    	if(conf->getenv("QC_BUNDLED_HTTP_PARSER") == "Y") {
+    		goto use_bundled_lbl;
+    	}
 
 #if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
-		s = conf->getenv("QC_WITH_HTTP_PARSER_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "http_parser.h")) {
-				qWarning("HTTP Parser includes not found!");
-				return false;
-			}
-			conf->addIncludePath(s);
-		}
-		else {
-			QStringList sl;
-			sl += "/usr/include";
-			sl += "/usr/local/include";
-			sl += "/sw/include";
-			if(!conf->findHeader("http_parser.h", sl, &s)) {
-				qWarning("HTTP Parser includes not found. Use bundled");
-				goto use_bundled_lbl;
-			}
-			conf->addIncludePath(s);
-		}
+    	s = conf->getenv("QC_WITH_HTTP_PARSER_INC");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkHeader(s, "http_parser.h")) {
+    			qWarning("HTTP Parser includes not found!");
+    			return false;
+    		}
+    		conf->addIncludePath(s);
+    	}
+    	else {
+    		QStringList sl;
+    		sl += "/usr/include";
+    		sl += "/usr/local/include";
+    		sl += "/sw/include";
+    		if(!conf->findHeader("http_parser.h", sl, &s)) {
+    			qWarning("HTTP Parser includes not found. Use bundled");
+    			goto use_bundled_lbl;
+    		}
+    		conf->addIncludePath(s);
+    	}
 
-		s = conf->getenv("QC_WITH_HTTP_PARSER_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "http_parser")) {
-				qWarning("HTTP Parser libraries not found!");
-				return false;
-			}
-			conf->addLib(QString("-L") + s);
-		}
-		else {
-			if(!conf->findLibrary("http_parser", &s)) {
-				qWarning("HTTP Parser libraries not found. Use bundled");
-				goto use_bundled_lbl;
-			}
-			if (!s.isEmpty())
-				conf->addLib(QString("-L") + s);
-		}
+    	s = conf->getenv("QC_WITH_HTTP_PARSER_LIB");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkLibrary(s, "http_parser")) {
+    			qWarning("HTTP Parser libraries not found!");
+    			return false;
+    		}
+    		conf->addLib(QString("-L") + s);
+    	}
+    	else {
+    		if(!conf->findLibrary("http_parser", &s)) {
+    			qWarning("HTTP Parser libraries not found. Use bundled");
+    			goto use_bundled_lbl;
+    		}
+    		if (!s.isEmpty())
+    			conf->addLib(QString("-L") + s);
+    	}
 
-		conf->addLib("-lhttp_parser");
+    	conf->addLib("-lhttp_parser");
 
-		return true;
+    	return true;
 #endif
 use_bundled_lbl:
-		use_bundled = true;
-		conf->addExtra("CONFIG += bundled_http_parser");
-		return true;
+    	use_bundled = true;
+    	conf->addExtra("CONFIG += bundled_http_parser");
+    	return true;
 
-	}
+    }
 };

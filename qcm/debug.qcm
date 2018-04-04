@@ -11,17 +11,17 @@ arg: enable-debug,Enable debugging support
 class qc_debug : public ConfObj
 {
 public:
-	qc_debug(Conf *c) : ConfObj(c) {}
-	QString name() const { return "debugging support"; }
-	QString shortname() const { return "debug"; }
-	QString checkString() const { return QString(); }
+    qc_debug(Conf *c) : ConfObj(c) {}
+    QString name() const { return "debugging support"; }
+    QString shortname() const { return "debug"; }
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
-		if (conf->getenv("QC_ENABLE_DEBUG").isEmpty())
-			conf->addExtra("CONFIG += release");
-		else
-			conf->addExtra("CONFIG += debug");
-		return true;
-	}
+    bool exec()
+    {
+    	if (conf->getenv("QC_ENABLE_DEBUG").isEmpty())
+    		conf->addExtra("CONFIG += release");
+    	else
+    		conf->addExtra("CONFIG += debug");
+    	return true;
+    }
 };

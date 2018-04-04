@@ -12,77 +12,77 @@ QString qc_webkit_type;
 //----------------------------------------------------------------------------
 class qc_webkit : public ConfObj
 {
-	QString webkitType;
+    QString webkitType;
 public:
-	qc_webkit(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QtWebKit"; }
-	QString shortname() const { return "webkit"; }
-	bool exec()
-	{
-		if (!conf->getenv("QC_DISABLE_webkit").isEmpty()) {
-			webkitType = "disabled";
-			return false;
-		}
+    qc_webkit(Conf *c) : ConfObj(c) {}
+    QString name() const { return "QtWebKit"; }
+    QString shortname() const { return "webkit"; }
+    bool exec()
+    {
+    	if (!conf->getenv("QC_DISABLE_webkit").isEmpty()) {
+    		webkitType = "disabled";
+    		return false;
+    	}
 
-		QStringList tryList;
-		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
-		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
+    	QStringList tryList;
+    	QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
+    	if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
 #if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
-			tryList << "qtwebengine" << "qtwebkit";
+    		tryList << "qtwebengine" << "qtwebkit";
 #else
-			tryList << "qtwebkit";
+    		tryList << "qtwebkit";
 #endif
-		} else {
+    	} else {
 #if QT_VERSION < QT_VERSION_CHECK(5,6,0)
-			if (wt == "qtwebengine") {
-				webkitType = "unsupported";
-				return false;
-			}
+    		if (wt == "qtwebengine") {
+    			webkitType = "unsupported";
+    			return false;
+    		}
 #endif
-			tryList << wt;
-		}
+    		tryList << wt;
+    	}
 
-		QString qt;
-		foreach (const QString &wt, tryList) {
-			if (wt == "qtwebengine") {
-				webkitType = "QtWebEngine";
-				qt = "webenginewidgets webchannel";
-			} else {
-				webkitType = "QtWebKit";
-				qt = "webkit";
+    	QString qt;
+    	foreach (const QString &wt, tryList) {
+    		if (wt == "qtwebengine") {
+    			webkitType = "QtWebEngine";
+    			qt = "webenginewidgets webchannel";
+    		} else {
+    			webkitType = "QtWebKit";
+    			qt = "webkit";
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-				qt += " webkitwidgets";
+    			qt += " webkitwidgets";
 #endif
-			}
+    		}
 
-			QString proextra = "CONFIG += qt webkit\n";
-			proextra += "QT += " + qt + "\n";
+    		QString proextra = "CONFIG += qt webkit\n";
+    		proextra += "QT += " + qt + "\n";
 
-			QString str =
-			"\n"
-			"int main()\n"
-			"{\n"
-			"	return 0;\n"
-			"}\n";
+    		QString str =
+    		"\n"
+    		"int main()\n"
+    		"{\n"
+    		"	return 0;\n"
+    		"}\n";
 
-			int ret;
-			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-				continue;
-			if(ret != 0)
-				continue;
+    		int ret;
+    		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+    			continue;
+    		if(ret != 0)
+    			continue;
 
-			conf->addExtra("CONFIG += " + wt);
-			qc_webkit_type = wt;
-			return true;
-		}
+    		conf->addExtra("CONFIG += " + wt);
+    		qc_webkit_type = wt;
+    		return true;
+    	}
 
-		webkitType = "not found";
+    	webkitType = "not found";
 
-		return false;
-	}
+    	return false;
+    }
 
-	QString resultString() const
-	{
-		return webkitType;
-	}
+    QString resultString() const
+    {
+    	return webkitType;
+    }
 };

@@ -34,10 +34,10 @@ public:
         QStringList libnames;
 #ifdef _MSC_VER
 # ifdef QC_BUILDMODE
-		libnames += (qc_buildmode_debug? "libqt5keychaind" : "libqt5keychain"); // possibly static
+    	libnames += (qc_buildmode_debug? "libqt5keychaind" : "libqt5keychain"); // possibly static
         libnames += (qc_buildmode_debug? "qt5keychaind" : "qt5keychain"); // possibly dynamic
 # else
-		libnames << "libqt5keychain" << "qt5keychain";
+    	libnames << "libqt5keychain" << "qt5keychain";
 # endif
 #else
         libnames << "qt5keychain";

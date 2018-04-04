@@ -6,86 +6,86 @@ name: Qt >= 5.0.0
 class qc_qt5 : public ConfObj
 {
 public:
-	qc_qt5(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Qt >= 5.0.0"; }
-	QString shortname() const { return "qt5"; }
-	bool exec()
-	{
-		return(QT_VERSION >= 0x050000);
-	}
+    qc_qt5(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Qt >= 5.0.0"; }
+    QString shortname() const { return "qt5"; }
+    bool exec()
+    {
+    	return(QT_VERSION >= 0x050000);
+    }
 
-	QString resultString() const
-	{
-		return QT_VERSION_STR;
-	}
+    QString resultString() const
+    {
+    	return QT_VERSION_STR;
+    }
 };
 
 class QtCompFinder : public ConfObj
 {
 protected:
-	QString compId;
-	QString compShortName;
-	QString compName;
-	QString extraConfIfFound;
+    QString compId;
+    QString compShortName;
+    QString compName;
+    QString extraConfIfFound;
     QString finderResult;
 
 public:
-	/**
-	 * id - (QT += <id>)
-	 * shortName - used with QC_ENABLE_<shortName> | QC_DISABLE_<shortName> env vars
-	 *             MUST MATCH with qcm module name without extension
-	 * name - something visible in the log
-	 * extraConfIfFound - extra string added to conf.pri if found
-	 */
-	QtCompFinder(const QString &id,const QString &shortName, const QString &name,
-		     const QString &extraConfIfFound, Conf *c) :
-		ConfObj(c), compId(id), compShortName(shortName), compName(name),
-		extraConfIfFound(extraConfIfFound)
-	{}
+    /**
+     * id - (QT += <id>)
+     * shortName - used with QC_ENABLE_<shortName> | QC_DISABLE_<shortName> env vars
+     *             MUST MATCH with qcm module name without extension
+     * name - something visible in the log
+     * extraConfIfFound - extra string added to conf.pri if found
+     */
+    QtCompFinder(const QString &id,const QString &shortName, const QString &name,
+    	     const QString &extraConfIfFound, Conf *c) :
+    	ConfObj(c), compId(id), compShortName(shortName), compName(name),
+    	extraConfIfFound(extraConfIfFound)
+    {}
 
-	QString name() const { return compName; }
-	QString shortname() const { return compShortName; }
+    QString name() const { return compName; }
+    QString shortname() const { return compShortName; }
     QString resultString() const
-	{
+    {
         if (!finderResult.isEmpty())
             return finderResult;
 
         return ConfObj::resultString();
-	}
+    }
 
-	bool exec()
-	{
+    bool exec()
+    {
         if (!conf->getenv("QC_DISABLE_" + compShortName).isEmpty()) {
             finderResult = "disabled";
             return false;
         }
 
-		QString proextra =
-		"CONFIG += qt\n"
-		"QT -= gui\n"
-		"QT += ";
-		
-		proextra += compId;
+    	QString proextra =
+    	"CONFIG += qt\n"
+    	"QT -= gui\n"
+    	"QT += ";
+    	
+    	proextra += compId;
 
-		QString str =
-		"\n"
-		"int main()\n"
-		"{\n"
-		"	return 0;\n"
-		"}\n";
+    	QString str =
+    	"\n"
+    	"int main()\n"
+    	"{\n"
+    	"	return 0;\n"
+    	"}\n";
 
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
+    	int ret;
+    	if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+    		return false;
+    	if(ret != 0)
+    		return false;
 
-		if (!extraConfIfFound.isEmpty()) {
-			conf->addExtra(extraConfIfFound);
-		}
+    	if (!extraConfIfFound.isEmpty()) {
+    		conf->addExtra(extraConfIfFound);
+    	}
 
-		return true;
-	}
+    	return true;
+    }
 };
 
 #define QC_AS_STR(s) #s
@@ -94,7 +94,7 @@ public:
 class qc_##shortname##suffix : public QtCompFinder \
 { \
 public: \
-	qc_##shortname##suffix(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \
+    qc_##shortname##suffix(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \
 };
 
 #define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound,)

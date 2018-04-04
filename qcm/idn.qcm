@@ -12,23 +12,23 @@ arg: with-idn-lib=[path],Path to libidn library or framework files
 class qc_idn : public ConfObj
 {
 public:
-	qc_idn(Conf *c) : ConfObj(c) {}
-	QString name() const { return "LibIDN"; }
-	QString shortname() const { return "libidn"; }
-	bool exec()
-	{
-		QString idn_incdir, idn_libdir;
-		idn_incdir = conf->getenv("QC_WITH_IDN_INC");
-		idn_libdir = conf->getenv("QC_WITH_IDN_LIB");
+    qc_idn(Conf *c) : ConfObj(c) {}
+    QString name() const { return "LibIDN"; }
+    QString shortname() const { return "libidn"; }
+    bool exec()
+    {
+    	QString idn_incdir, idn_libdir;
+    	idn_incdir = conf->getenv("QC_WITH_IDN_INC");
+    	idn_libdir = conf->getenv("QC_WITH_IDN_LIB");
 
-		if (!idn_incdir.isEmpty() || !idn_libdir.isEmpty()) { // prefer this if given
-			if ((!idn_incdir.isEmpty() && conf->checkHeader(idn_incdir, "stringprep.h")) ||
-			    (idn_incdir.isEmpty() && conf->findHeader("stringprep.h", QStringList(), &idn_incdir))) {
-				conf->addIncludePath(idn_incdir);
-			} else {
-				printf("Headers not found!\n");
-				return false;
-			}
+    	if (!idn_incdir.isEmpty() || !idn_libdir.isEmpty()) { // prefer this if given
+    		if ((!idn_incdir.isEmpty() && conf->checkHeader(idn_incdir, "stringprep.h")) ||
+    		    (idn_incdir.isEmpty() && conf->findHeader("stringprep.h", QStringList(), &idn_incdir))) {
+    			conf->addIncludePath(idn_incdir);
+    		} else {
+    			printf("Headers not found!\n");
+    			return false;
+    		}
 
 #ifdef Q_OS_WIN
             QString staticLibName = qc_buildmode_debug? "libidnd" : "libidn";
@@ -50,19 +50,19 @@ public:
                 printf("Libraries not found!\n");
             }
             return libFound;
-		}
+    	}
 
-		QStringList incs;
-		QString version, libs, other;
-		if(conf->findPkgConfig("libidn", VersionAny, QString::null, &version, &incs, &libs, &other))
-		{
-			for(int n = 0; n < incs.count(); ++n)
-				conf->addIncludePath(incs[n]);
-			if(!libs.isEmpty())
-				conf->addLib(libs);
-			return true;
-		}
+    	QStringList incs;
+    	QString version, libs, other;
+    	if(conf->findPkgConfig("libidn", VersionAny, QString::null, &version, &incs, &libs, &other))
+    	{
+    		for(int n = 0; n < incs.count(); ++n)
+    			conf->addIncludePath(incs[n]);
+    		if(!libs.isEmpty())
+    			conf->addLib(libs);
+    		return true;
+    	}
 
-		return false;
-	}
+    	return false;
+    }
 };

@@ -10,24 +10,24 @@ name: Xorg X11
 class qc_x11 : public ConfObj
 {
 public:
-	qc_x11(Conf *c) : ConfObj(c) {}
+    qc_x11(Conf *c) : ConfObj(c) {}
 
-	QString name() const { return "Xorg X11"; }
-	QString shortname() const { return "x11"; }
-	QString checkString() const { return QString(); }
+    QString name() const { return "Xorg X11"; }
+    QString shortname() const { return "x11"; }
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
-		QString str =
-			"int main()\n"
-			"{\n"
-			"    return 0;\n"
-			"}\n";
-		QString proextra = "CONFIG += x11\n";
+    bool exec()
+    {
+    	QString str =
+    		"int main()\n"
+    		"{\n"
+    		"    return 0;\n"
+    		"}\n";
+    	QString proextra = "CONFIG += x11\n";
 #if QT_VERSION >= 0x050000 && defined Q_OS_LINUX
-		proextra += "LIBS += -lxcb\n";
-		proextra += "QT += x11extras\n";
+    	proextra += "LIBS += -lxcb\n";
+    	proextra += "QT += x11extras\n";
 #endif
-		return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
-	}
+    	return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
+    }
 };

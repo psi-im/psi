@@ -10,34 +10,34 @@ name: Psi Plugin support
 class qc_plugins : public ConfObj
 {
 public:
-	qc_plugins(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Psi Plugin support"; }
-	QString shortname() const { return "plugins"; }
-	bool exec()
-	{
-		QFileInfo fi(qc_getenv("QC_COMMAND"));
-		QString sourceDir = fi.absolutePath();
+    qc_plugins(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Psi Plugin support"; }
+    QString shortname() const { return "plugins"; }
+    bool exec()
+    {
+    	QFileInfo fi(qc_getenv("QC_COMMAND"));
+    	QString sourceDir = fi.absolutePath();
 
-		conf->addDefine("PSI_PLUGINS");
+    	conf->addDefine("PSI_PLUGINS");
 
-		// Finish
-		conf->addExtra("CONFIG += psi_plugins");
+    	// Finish
+    	conf->addExtra("CONFIG += psi_plugins");
 
-		QHash<QString,QString> vars;
+    	QHash<QString,QString> vars;
 #ifdef Q_OS_WIN
-		vars["plugins_dir"] = "";
-		vars["data_dir"] = "";
+    	vars["plugins_dir"] = "";
+    	vars["data_dir"] = "";
 #else
-		vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
-		vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
+    	vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
+    	vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
 #endif
-		QStringList psiFeatures;
-		if (!qc_webkit_type.isEmpty()) {
-			psiFeatures << qc_webkit_type;
-		}
-		vars["features"] = psiFeatures.join(" ");
-		psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf.pri", vars);
+    	QStringList psiFeatures;
+    	if (!qc_webkit_type.isEmpty()) {
+    		psiFeatures << qc_webkit_type;
+    	}
+    	vars["features"] = psiFeatures.join(" ");
+    	psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf.pri", vars);
 
-		return true;
-	}
+    	return true;
+    }
 };

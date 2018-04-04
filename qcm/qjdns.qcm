@@ -12,60 +12,60 @@ arg: with-qjdns-lib=[path],Path to QJDns library files
 class qc_qjdns : public ConfObj
 {
 public:
-	qc_qjdns(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QJDns"; }
-	QString shortname() const { return "qjdns"; }
-	QString resultString() const
-	{
+    qc_qjdns(Conf *c) : ConfObj(c) {}
+    QString name() const { return "QJDns"; }
+    QString shortname() const { return "qjdns"; }
+    QString resultString() const
+    {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-		return "Disabled for Qt5 and above";
+    	return "Disabled for Qt5 and above";
 #else
-		return ConfObj::resultString();
+    	return ConfObj::resultString();
 #endif
-	}
-	bool exec()
-	{
+    }
+    bool exec()
+    {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-		return true; // hack. TODO: figure out how to force jdns
+    	return true; // hack. TODO: figure out how to force jdns
 #endif
-		conf->addExtra("CONFIG += need_jdns");
+    	conf->addExtra("CONFIG += need_jdns");
 #if defined Q_OS_WIN || defined Q_OS_MAC
-		// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
-		conf->addExtra("CONFIG += iris-qjdns");
-		return true;
+    	// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
+    	conf->addExtra("CONFIG += iris-qjdns");
+    	return true;
 #else
-		QStringList incs;
-		QString version, libs, other;
-		QString s;
+    	QStringList incs;
+    	QString version, libs, other;
+    	QString s;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-		bool found = conf->findPkgConfig("qjdns-qt5", VersionMin, "2.0.3", &version, &incs, &libs, &other);
+    	bool found = conf->findPkgConfig("qjdns-qt5", VersionMin, "2.0.3", &version, &incs, &libs, &other);
 #else
-		bool found = conf->findPkgConfig("qjdns-qt4", VersionMin, "2.0.3", &version, &incs, &libs, &other);
+    	bool found = conf->findPkgConfig("qjdns-qt4", VersionMin, "2.0.3", &version, &incs, &libs, &other);
 #endif
-		if(!found && !conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
-			s = conf->getenv("QC_WITH_QJDNS_INC");
-			if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
-				(s.isEmpty() && conf->findHeader("qjdns.h", QStringList(), &s))) {
-				incs.append(s);
-			}
+    	if(!found && !conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
+    		s = conf->getenv("QC_WITH_QJDNS_INC");
+    		if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
+    			(s.isEmpty() && conf->findHeader("qjdns.h", QStringList(), &s))) {
+    			incs.append(s);
+    		}
 
-			s = conf->getenv("QC_WITH_QJDNS_LIB");
-			if((!s.isEmpty() && conf->checkLibrary(s, "qjdns")) ||
-			   (s.isEmpty() && conf->findLibrary("qjdns", &s))) {
-				libs = s.isEmpty()? "-lqjdns -ljdns" : QString("-L%1 -lqjdns -ljdns").arg(s);
-			}
-		}
+    		s = conf->getenv("QC_WITH_QJDNS_LIB");
+    		if((!s.isEmpty() && conf->checkLibrary(s, "qjdns")) ||
+    		   (s.isEmpty() && conf->findLibrary("qjdns", &s))) {
+    			libs = s.isEmpty()? "-lqjdns -ljdns" : QString("-L%1 -lqjdns -ljdns").arg(s);
+    		}
+    	}
 
-		if (!incs.isEmpty() && !libs.isEmpty()) {
-			foreach(const QString &inc, incs) {
-				conf->addIncludePath(inc);
-			}
-			conf->addLib(libs);
-			conf->addExtra("CONFIG += ext-qjdns");
-		}
+    	if (!incs.isEmpty() && !libs.isEmpty()) {
+    		foreach(const QString &inc, incs) {
+    			conf->addIncludePath(inc);
+    		}
+    		conf->addLib(libs);
+    		conf->addExtra("CONFIG += ext-qjdns");
+    	}
 
-		return true;
+    	return true;
 #endif
-	}
+    }
 };

@@ -16,37 +16,37 @@ QStringList qc_enchant_libs;
 class qc_enchant : public ConfObj
 {
 public:
-	qc_enchant(Conf *c) : ConfObj(c) {}
-	QString name() const { return "enchant"; }
-	QString shortname() const { return "enchant"; }
+    qc_enchant(Conf *c) : ConfObj(c) {}
+    QString name() const { return "enchant"; }
+    QString shortname() const { return "enchant"; }
 
-	// no output
-	QString checkString() const { return QString(); }
+    // no output
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
+    bool exec()
+    {
                 // on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-		return false;
+    	return false;
 #endif
 
-		qc_enchant_have = false;
-		qc_enchant_defs.clear();
-		qc_enchant_incs.clear();
-		qc_enchant_libs.clear();
+    	qc_enchant_have = false;
+    	qc_enchant_defs.clear();
+    	qc_enchant_incs.clear();
+    	qc_enchant_libs.clear();
 
-		QStringList incs;
-		QString version, libs, other;
-		if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
+    	QStringList incs;
+    	QString version, libs, other;
+    	if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
                         return false;
-		if(conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other))
+    	if(conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other))
                         qc_enchant_defs += "HAVE_ENCHANT2";
 
-		qc_enchant_defs += "HAVE_ENCHANT";
-		qc_enchant_incs += incs;
-		qc_enchant_libs += libs;
-		qc_enchant_have = true;
+    	qc_enchant_defs += "HAVE_ENCHANT";
+    	qc_enchant_incs += incs;
+    	qc_enchant_libs += libs;
+    	qc_enchant_have = true;
 
-		return true;
-	}
+    	return true;
+    }
 };
