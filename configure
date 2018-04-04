@@ -626,86 +626,86 @@ name: Qt >= 5.0.0
 class qc_qt5 : public ConfObj
 {
 public:
-	qc_qt5(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Qt >= 5.0.0"; }
-	QString shortname() const { return "qt5"; }
-	bool exec()
-	{
-		return(QT_VERSION >= 0x050000);
-	}
+    qc_qt5(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Qt >= 5.0.0"; }
+    QString shortname() const { return "qt5"; }
+    bool exec()
+    {
+    	return(QT_VERSION >= 0x050000);
+    }
 
-	QString resultString() const
-	{
-		return QT_VERSION_STR;
-	}
+    QString resultString() const
+    {
+    	return QT_VERSION_STR;
+    }
 };
 
 class QtCompFinder : public ConfObj
 {
 protected:
-	QString compId;
-	QString compShortName;
-	QString compName;
-	QString extraConfIfFound;
+    QString compId;
+    QString compShortName;
+    QString compName;
+    QString extraConfIfFound;
     QString finderResult;
 
 public:
-	/**
-	 * id - (QT += <id>)
-	 * shortName - used with QC_ENABLE_<shortName> | QC_DISABLE_<shortName> env vars
-	 *             MUST MATCH with qcm module name without extension
-	 * name - something visible in the log
-	 * extraConfIfFound - extra string added to conf.pri if found
-	 */
-	QtCompFinder(const QString &id,const QString &shortName, const QString &name,
-		     const QString &extraConfIfFound, Conf *c) :
-		ConfObj(c), compId(id), compShortName(shortName), compName(name),
-		extraConfIfFound(extraConfIfFound)
-	{}
+    /**
+     * id - (QT += <id>)
+     * shortName - used with QC_ENABLE_<shortName> | QC_DISABLE_<shortName> env vars
+     *             MUST MATCH with qcm module name without extension
+     * name - something visible in the log
+     * extraConfIfFound - extra string added to conf.pri if found
+     */
+    QtCompFinder(const QString &id,const QString &shortName, const QString &name,
+    	     const QString &extraConfIfFound, Conf *c) :
+    	ConfObj(c), compId(id), compShortName(shortName), compName(name),
+    	extraConfIfFound(extraConfIfFound)
+    {}
 
-	QString name() const { return compName; }
-	QString shortname() const { return compShortName; }
+    QString name() const { return compName; }
+    QString shortname() const { return compShortName; }
     QString resultString() const
-	{
+    {
         if (!finderResult.isEmpty())
             return finderResult;
 
         return ConfObj::resultString();
-	}
+    }
 
-	bool exec()
-	{
+    bool exec()
+    {
         if (!conf->getenv("QC_DISABLE_" + compShortName).isEmpty()) {
             finderResult = "disabled";
             return false;
         }
 
-		QString proextra =
-		"CONFIG += qt\\n"
-		"QT -= gui\\n"
-		"QT += ";
-		
-		proextra += compId;
+    	QString proextra =
+    	"CONFIG += qt\\n"
+    	"QT -= gui\\n"
+    	"QT += ";
+    	
+    	proextra += compId;
 
-		QString str =
-		"\\n"
-		"int main()\\n"
-		"{\\n"
-		"	return 0;\\n"
-		"}\\n";
+    	QString str =
+    	"\\n"
+    	"int main()\\n"
+    	"{\\n"
+    	"	return 0;\\n"
+    	"}\\n";
 
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
+    	int ret;
+    	if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+    		return false;
+    	if(ret != 0)
+    		return false;
 
-		if (!extraConfIfFound.isEmpty()) {
-			conf->addExtra(extraConfIfFound);
-		}
+    	if (!extraConfIfFound.isEmpty()) {
+    		conf->addExtra(extraConfIfFound);
+    	}
 
-		return true;
-	}
+    	return true;
+    }
 };
 
 #define QC_AS_STR(s) #s
@@ -714,7 +714,7 @@ public:
 class qc_##shortname##suffix : public QtCompFinder \\
 { \\
 public: \\
-	qc_##shortname##suffix(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \\
+    qc_##shortname##suffix(Conf *c) : QtCompFinder(QC_AS_STR(id), QC_AS_STR(shortname), QC_AS_STR(name), extraConfIfFound, c) {} \\
 };
 
 #define QC_FIND_QT_COMP_E(id, shortname, name, extraConfIfFound) QC_FIND_QT_COMP_BASE(id, shortname, name, extraConfIfFound,)
@@ -744,161 +744,161 @@ static QString sourceDir;
 // this is a utility function required by few other modules
 static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
 {
-	QFile fin(inFile);
-	QFile fout(outFile);
-	if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
-		return false;
+    QFile fin(inFile);
+    QFile fout(outFile);
+    if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    	return false;
 
-	QTextStream tin(&fin);
-	QTextStream tout(&fout);
-	while(!tin.atEnd())
-	{
-		QString line = tin.readLine();
+    QTextStream tin(&fin);
+    QTextStream tout(&fout);
+    while(!tin.atEnd())
+    {
+    	QString line = tin.readLine();
 
-		QHashIterator<QString,QString> it(vars);
-		while(it.hasNext())
-		{
-			it.next();
-			line.replace("@@" + it.key() + "@@", it.value());
-		}
+    	QHashIterator<QString,QString> it(vars);
+    	while(it.hasNext())
+    	{
+    		it.next();
+    		line.replace("@@" + it.key() + "@@", it.value());
+    	}
 
-		tout << line << endl;
-	}
+    	tout << line << endl;
+    }
 
-	return true;
+    return true;
 }
 
 class qc_buildmodeapp : public ConfObj
 {
 public:
-	qc_buildmodeapp(Conf *c) : ConfObj(c) {}
-	QString name() const { return "buildmodeapp"; }
-	QString shortname() const { return "buildmodeapp"; }
+    qc_buildmodeapp(Conf *c) : ConfObj(c) {}
+    QString name() const { return "buildmodeapp"; }
+    QString shortname() const { return "buildmodeapp"; }
 
-	// no output
-	QString checkString() const { return QString(); }
+    // no output
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
-		QFileInfo fi(qc_getenv("QC_COMMAND"));
-		sourceDir = fi.absolutePath();
+    bool exec()
+    {
+    	QFileInfo fi(qc_getenv("QC_COMMAND"));
+    	sourceDir = fi.absolutePath();
 
-		// first, parse out the options
-		bool opt_release = false;
-		bool opt_debug = false;
-		bool opt_debug_and_release = false;
-		bool opt_no_separate_debug_info = false;
-		bool opt_separate_debug_info = false;
+    	// first, parse out the options
+    	bool opt_release = false;
+    	bool opt_debug = false;
+    	bool opt_debug_and_release = false;
+    	bool opt_no_separate_debug_info = false;
+    	bool opt_separate_debug_info = false;
 
-		if(conf->getenv("QC_RELEASE") == "Y")
-			opt_release = true;
-		if(conf->getenv("QC_DEBUG") == "Y")
-			opt_debug = true;
-		if(conf->getenv("QC_DEBUG_AND_RELEASE") == "Y")
-			opt_debug_and_release = true;
-		if(conf->getenv("QC_NO_SEPARATE_DEBUG_INFO") == "Y")
-			opt_no_separate_debug_info = true;
-		if(conf->getenv("QC_SEPARATE_DEBUG_INFO") == "Y")
-			opt_separate_debug_info = true;
+    	if(conf->getenv("QC_RELEASE") == "Y")
+    		opt_release = true;
+    	if(conf->getenv("QC_DEBUG") == "Y")
+    		opt_debug = true;
+    	if(conf->getenv("QC_DEBUG_AND_RELEASE") == "Y")
+    		opt_debug_and_release = true;
+    	if(conf->getenv("QC_NO_SEPARATE_DEBUG_INFO") == "Y")
+    		opt_no_separate_debug_info = true;
+    	if(conf->getenv("QC_SEPARATE_DEBUG_INFO") == "Y")
+    		opt_separate_debug_info = true;
 
-		bool staticmode = false;
-		if(conf->getenv("QC_STATIC") == "Y")
-			staticmode = true;
+    	bool staticmode = false;
+    	if(conf->getenv("QC_STATIC") == "Y")
+    		staticmode = true;
 
 #ifndef Q_OS_MAC
-		if(opt_debug_and_release)
-		{
-			printf("\\nError: The --debug-and-release option is for mac only.\\n");
-			exit(1);
-		}
+    	if(opt_debug_and_release)
+    	{
+    		printf("\\nError: The --debug-and-release option is for mac only.\\n");
+    		exit(1);
+    	}
 #endif
 
-		// sanity check exclusive options
-		int x;
+    	// sanity check exclusive options
+    	int x;
 
-		// build mode
-		x = 0;
-		if(opt_release)
-			++x;
-		if(opt_debug)
-			++x;
-		if(opt_debug_and_release)
-			++x;
-		if(x > 1)
-		{
-			printf("\\nError: Use only one of --release, --debug, or --debug-and-release.\\n");
-			exit(1);
-		}
+    	// build mode
+    	x = 0;
+    	if(opt_release)
+    		++x;
+    	if(opt_debug)
+    		++x;
+    	if(opt_debug_and_release)
+    		++x;
+    	if(x > 1)
+    	{
+    		printf("\\nError: Use only one of --release, --debug, or --debug-and-release.\\n");
+    		exit(1);
+    	}
 
-		// debug info
-		x = 0;
-		if(opt_no_separate_debug_info)
-			++x;
-		if(opt_separate_debug_info)
-			++x;
-		if(x > 1)
-		{
-			printf("\\nError: Use only one of --separate-debug-info or --no-separate-debug-info\\n");
-			exit(1);
-		}
+    	// debug info
+    	x = 0;
+    	if(opt_no_separate_debug_info)
+    		++x;
+    	if(opt_separate_debug_info)
+    		++x;
+    	if(x > 1)
+    	{
+    		printf("\\nError: Use only one of --separate-debug-info or --no-separate-debug-info\\n");
+    		exit(1);
+    	}
 
-		// now process the options
+    	// now process the options
 
-		if(opt_release)
-			qc_buildmode_release = true;
-		else if(opt_debug)
-			qc_buildmode_debug = true;
-		else if(opt_debug_and_release)
-		{
-			qc_buildmode_release = true;
-			qc_buildmode_debug = true;
-		}
-		else // default
-			qc_buildmode_release = true;
+    	if(opt_release)
+    		qc_buildmode_release = true;
+    	else if(opt_debug)
+    		qc_buildmode_debug = true;
+    	else if(opt_debug_and_release)
+    	{
+    		qc_buildmode_release = true;
+    		qc_buildmode_debug = true;
+    	}
+    	else // default
+    		qc_buildmode_release = true;
 
-		if(opt_separate_debug_info)
-			qc_buildmode_separate_debug_info = true;
-		else if(opt_no_separate_debug_info)
-		{
-			// nothing to do
-		}
-		else // default
-		{
+    	if(opt_separate_debug_info)
+    		qc_buildmode_separate_debug_info = true;
+    	else if(opt_no_separate_debug_info)
+    	{
+    		// nothing to do
+    	}
+    	else // default
+    	{
 #ifndef Q_OS_MAC
-			qc_buildmode_separate_debug_info = true;
+    		qc_buildmode_separate_debug_info = true;
 #endif
-		}
+    	}
 
-		// make the string
-		QStringList opts;
-		QString other;
+    	// make the string
+    	QStringList opts;
+    	QString other;
 
-		if(qc_buildmode_release && qc_buildmode_debug)
-		{
-			opts += "debug_and_release";
-			opts += "build_all";
-		}
-		else if(qc_buildmode_release)
-			opts += "release";
-		else // qc_buildmode_debug
-			opts += "debug";
+    	if(qc_buildmode_release && qc_buildmode_debug)
+    	{
+    		opts += "debug_and_release";
+    		opts += "build_all";
+    	}
+    	else if(qc_buildmode_release)
+    		opts += "release";
+    	else // qc_buildmode_debug
+    		opts += "debug";
 
-		if(qc_buildmode_separate_debug_info)
-		{
-			opts += "separate_debug_info";
-			other += "*-g++*:QMAKE_CFLAGS += -g\\n";
-			other += "*-g++*:QMAKE_CXXFLAGS += -g\\n";
-		}
+    	if(qc_buildmode_separate_debug_info)
+    	{
+    		opts += "separate_debug_info";
+    		other += "*-g++*:QMAKE_CFLAGS += -g\\n";
+    		other += "*-g++*:QMAKE_CXXFLAGS += -g\\n";
+    	}
 
-		QString str = "CONFIG -= debug_and_release debug release\\n";
-		str += QString("CONFIG += ") + opts.join(" ") + '\\n';
-		conf->addExtra(str);
+    	QString str = "CONFIG -= debug_and_release debug release\\n";
+    	str += QString("CONFIG += ") + opts.join(" ") + '\\n';
+    	conf->addExtra(str);
 
-		if(!other.isEmpty())
-			conf->addExtra(other);
+    	if(!other.isEmpty())
+    		conf->addExtra(other);
 
-		return true;
-	}
+    	return true;
+    }
 };
 #line 1 "idn.qcm"
 /*
@@ -915,23 +915,24 @@ arg: with-idn-lib=[path],Path to libidn library or framework files
 class qc_idn : public ConfObj
 {
 public:
-	qc_idn(Conf *c) : ConfObj(c) {}
-	QString name() const { return "LibIDN"; }
-	QString shortname() const { return "libidn"; }
-	bool exec()
-	{
-		QString idn_incdir, idn_libdir;
-		idn_incdir = conf->getenv("QC_WITH_IDN_INC");
-		idn_libdir = conf->getenv("QC_WITH_IDN_LIB");
+    qc_idn(Conf *c) : ConfObj(c) {}
+    QString name() const { return "LibIDN"; }
+    QString shortname() const { return "libidn"; }
+    bool exec()
+    {
+        QString idn_incdir, idn_libdir, idn_prefixdir;
+    	idn_incdir = conf->getenv("QC_WITH_IDN_INC");
+    	idn_libdir = conf->getenv("QC_WITH_IDN_LIB");
+        idn_prefixdir = conf->getenv("PREFIX");
 
-		if (!idn_incdir.isEmpty() || !idn_libdir.isEmpty()) { // prefer this if given
-			if ((!idn_incdir.isEmpty() && conf->checkHeader(idn_incdir, "stringprep.h")) ||
-			    (idn_incdir.isEmpty() && conf->findHeader("stringprep.h", QStringList(), &idn_incdir))) {
-				conf->addIncludePath(idn_incdir);
-			} else {
-				printf("Headers not found!\\n");
-				return false;
-			}
+        if (!idn_incdir.isEmpty() || !idn_libdir.isEmpty() || !idn_prefixdir.isEmpty()) { // prefer this if given
+    		if ((!idn_incdir.isEmpty() && conf->checkHeader(idn_incdir, "stringprep.h")) ||
+    		    (idn_incdir.isEmpty() && conf->findHeader("stringprep.h", QStringList(), &idn_incdir))) {
+    			conf->addIncludePath(idn_incdir);
+    		} else {
+    			printf("Headers not found!\\n");
+    			return false;
+    		}
 
 #ifdef Q_OS_WIN
             QString staticLibName = qc_buildmode_debug? "libidnd" : "libidn";
@@ -953,21 +954,21 @@ public:
                 printf("Libraries not found!\\n");
             }
             return libFound;
-		}
+    	}
 
-		QStringList incs;
-		QString version, libs, other;
-		if(conf->findPkgConfig("libidn", VersionAny, QString::null, &version, &incs, &libs, &other))
-		{
-			for(int n = 0; n < incs.count(); ++n)
-				conf->addIncludePath(incs[n]);
-			if(!libs.isEmpty())
-				conf->addLib(libs);
-			return true;
-		}
+    	QStringList incs;
+    	QString version, libs, other;
+    	if(conf->findPkgConfig("libidn", VersionAny, QString::null, &version, &incs, &libs, &other))
+    	{
+    		for(int n = 0; n < incs.count(); ++n)
+    			conf->addIncludePath(incs[n]);
+    		if(!libs.isEmpty())
+    			conf->addLib(libs);
+    		return true;
+    	}
 
-		return false;
-	}
+    	return false;
+    }
 };
 #line 1 "qca.qcm"
 /*
@@ -981,7 +982,7 @@ arg: with-qca-lib=[path],Path to QCA library or framework files
 // adapted from crypto.prf
 static QString internal_crypto_prf(const QString &incdir, const QString &libdir, const QString &frameworkdir)
 {
-	QString out = QString(
+    QString out = QString(
 "QCA_INCDIR = %1\\n"
 "QCA_LIBDIR = %2\\n"
 "QMAKE_RPATHDIR = %2\\n"
@@ -990,95 +991,93 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 "CONFIG *= qt\\n"
 "\\n"
 "LINKAGE =\\n"
-"QCA_NAME = qca\\n"
-"greaterThan(QT_MAJOR_VERSION, 4) {\\n"
-"	QCA_NAME = qca-qt5\\n"
-"}\\n"
+"QCA_NAME = qca-qt5\\n"
 "\\n"
 "!isEmpty(QCA_FRAMEWORKDIR): {\\n"
-"	framework_dir = \$\$QCA_FRAMEWORKDIR\\n"
-"	exists(\$\$framework_dir/\$\${QCA_NAME}.framework) {\\n"
-"		#QMAKE_FRAMEWORKPATH *= \$\$framework_dir\\n"
-"		LIBS *= -F\$\$framework_dir\\n"
-"		INCLUDEPATH += \$\$framework_dir/\$\${QCA_NAME}.framework/Headers\\n"
-"		LINKAGE = -framework \$\${QCA_NAME}\\n"
-"	}\\n"
+"    framework_dir = \$\$QCA_FRAMEWORKDIR\\n"
+"    exists(\$\$framework_dir/\$\${QCA_NAME}.framework) {\\n"
+"    	#QMAKE_FRAMEWORKPATH *= \$\$framework_dir\\n"
+"    	LIBS *= -F\$\$framework_dir\\n"
+"    	INCLUDEPATH += \$\$framework_dir/\$\${QCA_NAME}.framework/Headers\\n"
+"    	LINKAGE = -framework \$\${QCA_NAME}\\n"
+"    }\\n"
 "}\\n"
 "\\n"
 "# else, link normally\\n"
 "isEmpty(LINKAGE) {\\n"
-"	!isEmpty(QCA_INCDIR):INCLUDEPATH += \$\$QCA_INCDIR/QtCrypto\\n"
-"	!isEmpty(QCA_LIBDIR):LIBS += -L\$\$QCA_LIBDIR\\n"
-"	LINKAGE = -l\$\${QCA_NAME}\\n"
-"	CONFIG(debug, debug|release) {\\n"
-"		windows:LINKAGE = -l\$\${QCA_NAME}d\\n"
-"		mac:LINKAGE = -l\$\${QCA_NAME}_debug\\n"
-"	}\\n"
+"    !isEmpty(QCA_INCDIR):INCLUDEPATH += \$\$QCA_INCDIR/QtCrypto\\n"
+"    !isEmpty(QCA_LIBDIR):LIBS += -L\$\$QCA_LIBDIR\\n"
+"    LINKAGE = -l\$\${QCA_NAME}\\n"
+"    CONFIG(debug, debug|release) {\\n"
+"    	windows:LINKAGE = -l\$\${QCA_NAME}d\\n"
+"    	mac:LINKAGE = -l\$\${QCA_NAME}_debug\\n"
+"    }\\n"
 "}\\n"
 "\\n"
 "LIBS += \$\$LINKAGE\\n"
-	).arg(incdir, libdir, frameworkdir);
-	return out;
+    ).arg(incdir, libdir, frameworkdir);
+    return out;
 }
 
 // set either libdir or frameworkdir, but not both
 static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, const QString &frameworkdir, bool release, bool debug, QString *_prf)
 {
-	QString proextra;
-	QString prf;
-	if (!incdir.isEmpty() || !libdir.isEmpty() || !frameworkdir.isEmpty()) {
-		prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
-	} else {
-		prf = "CONFIG += crypto\\n";
-	}
-	proextra =
-	"CONFIG += qt\\n"
-	"CONFIG -= debug_and_release debug release\\n"
-	"QT -= gui\\n";
-	proextra += prf;
+    QString proextra;
+    QString prf;
+    if (!incdir.isEmpty() || !libdir.isEmpty() || !frameworkdir.isEmpty()) {
+    	prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
+    } else {
+    	prf = "CONFIG += crypto\\n";
+    }
+    proextra =
+    "CONFIG += qt\\n"
+    "CONFIG -= debug_and_release debug release\\n"
+    "QT -= gui\\n";
+    proextra += prf;
 
-	QString str =
-	"#include <QtCrypto>\\n"
-	"\\n"
-	"int main()\\n"
-	"{\\n"
-	"	unsigned long x = QCA_VERSION;\\n"
-	"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\\n"
-	"}\\n";
+    QString str =
+    "#include <QtCrypto>\\n"
+    "\\n"
+    "int main()\\n"
+    "{\\n"
+    "	unsigned long x = QCA_VERSION;\\n"
+    "	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\\n"
+    "}\\n";
 
-	// test desired versions, potentially both release and debug
+    // test desired versions, potentially both release and debug
 
-	if(release)
-	{
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\\n", &ret) || ret != 0)
-			return false;
-	}
+    if(release)
+    {
+    	int ret;
+    	if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\\n", &ret) || ret != 0)
+    		return false;
+    }
 
-	if(debug)
-	{
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\\n", &ret) || ret != 0)
-			return false;
-	}
+    if(debug)
+    {
+    	int ret;
+    	if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\\n", &ret) || ret != 0)
+    		return false;
+    }
 
-	*_prf = prf;
-	return true;
+    *_prf = prf;
+    return true;
 }
 
 static bool qca_try_lib(Conf *conf, const QString &incdir, const QString &libdir, bool release, bool debug, QString *prf)
 {
-	return qca_try(conf, incdir, libdir, QString(), release, debug, prf);
+    return qca_try(conf, incdir, libdir, QString(), release, debug, prf) ||
+            qca_try(conf, incdir + "/Qca-qt5", libdir, QString(), release, debug, prf);
 }
 
 static bool qca_try_framework(Conf *conf, const QString &frameworkdir, bool release, bool debug, QString *prf)
 {
-	return qca_try(conf, QString(), QString(), frameworkdir, release, debug, prf);
+    return qca_try(conf, QString(), QString(), frameworkdir, release, debug, prf);
 }
 
 static bool qca_try_ext_prf(Conf *conf, bool release, bool debug, QString *prf)
 {
-	return qca_try(conf, QString(), QString(), QString(), release, debug, prf);
+    return qca_try(conf, QString(), QString(), QString(), release, debug, prf);
 }
 
 //----------------------------------------------------------------------------
@@ -1087,79 +1086,79 @@ static bool qca_try_ext_prf(Conf *conf, bool release, bool debug, QString *prf)
 class qc_qca : public ConfObj
 {
 public:
-	qc_qca(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QCA >= 2.0"; }
-	QString shortname() const { return "qca"; }
-	bool exec()
-	{
-		// get the build mode
+    qc_qca(Conf *c) : ConfObj(c) {}
+    QString name() const { return "QCA >= 2.0"; }
+    QString shortname() const { return "qca"; }
+    bool exec()
+    {
+    	// get the build mode
 #ifdef QC_BUILDMODE
-		bool release = qc_buildmode_release;
-		bool debug = qc_buildmode_debug;
+    	bool release = qc_buildmode_release;
+    	bool debug = qc_buildmode_debug;
 #else
-		// else, default to just release mode
-		bool release = true;
-		bool debug = false;
+    	// else, default to just release mode
+    	bool release = true;
+    	bool debug = false;
 #endif
 
-		QString qca_incdir, qca_libdir, qca_crypto_prf;
-		qca_incdir = conf->getenv("QC_WITH_QCA_INC");
-		qca_libdir = conf->getenv("QC_WITH_QCA_LIB");
+    	QString qca_incdir, qca_libdir, qca_crypto_prf;
+    	qca_incdir = conf->getenv("QC_WITH_QCA_INC");
+    	qca_libdir = conf->getenv("QC_WITH_QCA_LIB");
 
 #if defined(Q_OS_MAC)
-		if(!qca_libdir.isEmpty() && qca_try_framework(conf, qca_libdir, release, debug, &qca_crypto_prf))
-		{
-			conf->addExtra(qca_crypto_prf);
-			return true;
-		}
+    	if(!qca_libdir.isEmpty() && qca_try_framework(conf, qca_libdir, release, debug, &qca_crypto_prf))
+    	{
+    		conf->addExtra(qca_crypto_prf);
+    		return true;
+    	}
 #endif
 
-		if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
-		{
-			conf->addExtra(qca_crypto_prf);
-			return true;
-		}
-		
-		if (qca_try_ext_prf(conf, release, debug, &qca_crypto_prf))
-		{
-			conf->addExtra(qca_crypto_prf);
-			return true;
-		}
+    	if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
+    	{
+    		conf->addExtra(qca_crypto_prf);
+    		return true;
+    	}
+    	
+    	if (qca_try_ext_prf(conf, release, debug, &qca_crypto_prf))
+    	{
+    		conf->addExtra(qca_crypto_prf);
+    		return true;
+    	}
 
-		QStringList incs;
-		QString version, libs, other;
-		QStringList pkgConfigNames;
-#if QT_VERSION >= 0x050000
-		pkgConfigNames << "qca2-qt5";
-#else
-		pkgConfigNames << "qca2 qca2-qt4";
+    	QStringList incs;
+    	QString version, libs, other;
+
+        if(conf->findPkgConfig("qca2-qt5", VersionMin, "2.0.0", &version, &incs, &libs, &other))
+        {
+            for(int n = 0; n < incs.count(); ++n)
+                conf->addIncludePath(incs[n]);
+            if(!libs.isEmpty())
+                conf->addLib(libs);
+            return true;
+        }
+
+    	QStringList prefixes;
+#ifndef Q_OS_WIN
+        prefixes += "/usr";
+    	prefixes += "/usr/local";
 #endif
-		foreach (const QString &pcn, pkgConfigNames)
-			if(conf->findPkgConfig(pcn, VersionMin, "2.0.0", &version, &incs, &libs, &other))
-			{	
-				for(int n = 0; n < incs.count(); ++n)
-					conf->addIncludePath(incs[n]);
-				if(!libs.isEmpty())
-					conf->addLib(libs);
-				return true;
-			}
+        QString prefix = conf->getenv("PREFIX");
+        if (!prefix.isEmpty()) {
+            prefixes += prefix;
+        }
 
-		QStringList prefixes;
-		prefixes += "/usr";
-		prefixes += "/usr/local";
+    	for(int n = 0; n < prefixes.count(); ++n)
+    	{
+    		const QString &prefix = prefixes[n];
+    		if(qca_try_lib(conf, prefix + "/include", prefix + "/lib", release, debug, &qca_crypto_prf))
+    		{
+    			conf->addExtra(qca_crypto_prf);
+    			return true;
+    		}
+    	}
 
-		for(int n = 0; n < prefixes.count(); ++n)
-		{
-			const QString &prefix = prefixes[n];
-			if(qca_try_lib(conf, prefix + "/include", prefix + "/lib", release, debug, &qca_crypto_prf))
-			{
-				conf->addExtra(qca_crypto_prf);
-				return true;
-			}
-		}
-
-		return false;
-	}
+    	return false;
+    }
 };
 #line 1 "zlib.qcm"
 /*
@@ -1176,102 +1175,102 @@ arg: with-zlib-lib=[path],Path to zlib library files
 class qc_zlib : public ConfObj
 {
 public:
-	qc_zlib(Conf *c) : ConfObj(c) {}
-	QString name() const { return "zlib"; }
-	QString shortname() const { return "zlib"; }
+    qc_zlib(Conf *c) : ConfObj(c) {}
+    QString name() const { return "zlib"; }
+    QString shortname() const { return "zlib"; }
 
-	bool exec()
-	{
-		QStringList incs;
-		QString version, libs, other;
-		QString s;
-		
-		
+    bool exec()
+    {
+    	QStringList incs;
+    	QString version, libs, other;
+    	QString s;
+    	
+    	
 
-		if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
+    	if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
 
-			s = conf->getenv("QC_WITH_ZLIB_INC");
-			if(!s.isEmpty()) {
-				if(!conf->checkHeader(s, "zlib.h"))
-					return false;
-			}
-			else {
-				if(!conf->findHeader("zlib.h", QStringList(), &s))
-					return false;
-			}
+    		s = conf->getenv("QC_WITH_ZLIB_INC");
+    		if(!s.isEmpty()) {
+    			if(!conf->checkHeader(s, "zlib.h"))
+    				return false;
+    		}
+    		else {
+    			if(!conf->findHeader("zlib.h", QStringList(), &s))
+    				return false;
+    		}
 
-			QStringList libNames = QStringList() << "z";
-			QString libName;
+    		QStringList libNames = QStringList() << "z";
+    		QString libName;
 #ifdef Q_OS_WIN
-			libNames << (qc_buildmode_debug? "zlibd" : "zlib");
+    		libNames << (qc_buildmode_debug? "zlibd" : "zlib");
 #endif
-			for (;;) {
-				s = conf->getenv("QC_WITH_ZLIB_LIB");
-				if(!s.isEmpty()) {
-					foreach (const QString l, libNames) 
-						if(conf->checkLibrary(s, l)) {
-							libName = l;
-							break;
-						}
-				} else {
-					foreach (const QString l, libNames) 
-						if(conf->findLibrary(l, &s)) {
-							libName = l;
-							break;
-						}
-				}
-				
-				if(!libName.isEmpty())
-					break;
-						
-				return false;
-			}
-			if (!s.isEmpty()) {
-				libs = QString("-L%1 -l%2").arg(s, libName);
-			} else {
-				libs = s.isEmpty()? QString("-l")+libName : QString("-L%1 -l%2").arg(s, libName);
-			}
-		}
+    		for (;;) {
+    			s = conf->getenv("QC_WITH_ZLIB_LIB");
+    			if(!s.isEmpty()) {
+    				foreach (const QString l, libNames) 
+    					if(conf->checkLibrary(s, l)) {
+    						libName = l;
+    						break;
+    					}
+    			} else {
+    				foreach (const QString l, libNames) 
+    					if(conf->findLibrary(l, &s)) {
+    						libName = l;
+    						break;
+    					}
+    			}
+    			
+    			if(!libName.isEmpty())
+    				break;
+    					
+    			return false;
+    		}
+    		if (!s.isEmpty()) {
+    			libs = QString("-L%1 -l%2").arg(s, libName);
+    		} else {
+    			libs = s.isEmpty()? QString("-l")+libName : QString("-L%1 -l%2").arg(s, libName);
+    		}
+    	}
 
-		foreach(const QString &inc, incs) {
-			conf->addIncludePath(inc);
-		}
-		conf->addLib(libs);
+    	foreach(const QString &inc, incs) {
+    		conf->addIncludePath(inc);
+    	}
+    	conf->addLib(libs);
 
 #ifdef Q_OS_WIN
-		// HACK: on windows, always use psi's bundled minizip
-		conf->addExtra("CONFIG += psi-minizip");
-		return true;
+    	// HACK: on windows, always use psi's bundled minizip
+    	conf->addExtra("CONFIG += psi-minizip");
+    	return true;
 #else
-		incs.clear();
-		libs.clear();
-		if(!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {
+    	incs.clear();
+    	libs.clear();
+    	if(!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {
 
-			s = conf->getenv("QC_WITH_MINIZIP_INC");
-			if ((!s.isEmpty() && conf->checkHeader(s, "unzip.h")) ||
-			    (s.isEmpty() && conf->findHeader("unzip.h", QStringList(), &s))) {
-				incs.append(s);
-			}
+    		s = conf->getenv("QC_WITH_MINIZIP_INC");
+    		if ((!s.isEmpty() && conf->checkHeader(s, "unzip.h")) ||
+    		    (s.isEmpty() && conf->findHeader("unzip.h", QStringList(), &s))) {
+    			incs.append(s);
+    		}
 
-			s = conf->getenv("QC_WITH_MINIZIP_LIB");
-			if((!s.isEmpty() && conf->checkLibrary(s, "minizip")) ||
-			   (s.isEmpty() && conf->findLibrary("minizip", &s))) {
-				libs = s.isEmpty()? "-lminizip" : QString("-L%1 -lminizip").arg(s);
-			}
-		}
+    		s = conf->getenv("QC_WITH_MINIZIP_LIB");
+    		if((!s.isEmpty() && conf->checkLibrary(s, "minizip")) ||
+    		   (s.isEmpty() && conf->findLibrary("minizip", &s))) {
+    			libs = s.isEmpty()? "-lminizip" : QString("-L%1 -lminizip").arg(s);
+    		}
+    	}
 
-		if (!incs.isEmpty() && !libs.isEmpty()) {
-			foreach(const QString &inc, incs) {
-				conf->addIncludePath(inc);
-			}
-			conf->addLib(libs);
-		} else {
-			conf->addExtra("CONFIG += psi-minizip");
-		}
+    	if (!incs.isEmpty() && !libs.isEmpty()) {
+    		foreach(const QString &inc, incs) {
+    			conf->addIncludePath(inc);
+    		}
+    		conf->addLib(libs);
+    	} else {
+    		conf->addExtra("CONFIG += psi-minizip");
+    	}
 
-		return true;
+    	return true;
 #endif
-	}
+    }
 };
 #line 1 "qjdns.qcm"
 /*
@@ -1288,62 +1287,62 @@ arg: with-qjdns-lib=[path],Path to QJDns library files
 class qc_qjdns : public ConfObj
 {
 public:
-	qc_qjdns(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QJDns"; }
-	QString shortname() const { return "qjdns"; }
-	QString resultString() const
-	{
+    qc_qjdns(Conf *c) : ConfObj(c) {}
+    QString name() const { return "QJDns"; }
+    QString shortname() const { return "qjdns"; }
+    QString resultString() const
+    {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-		return "Disabled for Qt5 and above";
+    	return "Disabled for Qt5 and above";
 #else
-		return ConfObj::resultString();
+    	return ConfObj::resultString();
 #endif
-	}
-	bool exec()
-	{
+    }
+    bool exec()
+    {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-		return true; // hack. TODO: figure out how to force jdns
+    	return true; // hack. TODO: figure out how to force jdns
 #endif
-		conf->addExtra("CONFIG += need_jdns");
+    	conf->addExtra("CONFIG += need_jdns");
 #if defined Q_OS_WIN || defined Q_OS_MAC
-		// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
-		conf->addExtra("CONFIG += iris-qjdns");
-		return true;
+    	// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
+    	conf->addExtra("CONFIG += iris-qjdns");
+    	return true;
 #else
-		QStringList incs;
-		QString version, libs, other;
-		QString s;
+    	QStringList incs;
+    	QString version, libs, other;
+    	QString s;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-		bool found = conf->findPkgConfig("qjdns-qt5", VersionMin, "2.0.3", &version, &incs, &libs, &other);
+    	bool found = conf->findPkgConfig("qjdns-qt5", VersionMin, "2.0.3", &version, &incs, &libs, &other);
 #else
-		bool found = conf->findPkgConfig("qjdns-qt4", VersionMin, "2.0.3", &version, &incs, &libs, &other);
+    	bool found = conf->findPkgConfig("qjdns-qt4", VersionMin, "2.0.3", &version, &incs, &libs, &other);
 #endif
-		if(!found && !conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
-			s = conf->getenv("QC_WITH_QJDNS_INC");
-			if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
-				(s.isEmpty() && conf->findHeader("qjdns.h", QStringList(), &s))) {
-				incs.append(s);
-			}
+    	if(!found && !conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
+    		s = conf->getenv("QC_WITH_QJDNS_INC");
+    		if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
+    			(s.isEmpty() && conf->findHeader("qjdns.h", QStringList(), &s))) {
+    			incs.append(s);
+    		}
 
-			s = conf->getenv("QC_WITH_QJDNS_LIB");
-			if((!s.isEmpty() && conf->checkLibrary(s, "qjdns")) ||
-			   (s.isEmpty() && conf->findLibrary("qjdns", &s))) {
-				libs = s.isEmpty()? "-lqjdns -ljdns" : QString("-L%1 -lqjdns -ljdns").arg(s);
-			}
-		}
+    		s = conf->getenv("QC_WITH_QJDNS_LIB");
+    		if((!s.isEmpty() && conf->checkLibrary(s, "qjdns")) ||
+    		   (s.isEmpty() && conf->findLibrary("qjdns", &s))) {
+    			libs = s.isEmpty()? "-lqjdns -ljdns" : QString("-L%1 -lqjdns -ljdns").arg(s);
+    		}
+    	}
 
-		if (!incs.isEmpty() && !libs.isEmpty()) {
-			foreach(const QString &inc, incs) {
-				conf->addIncludePath(inc);
-			}
-			conf->addLib(libs);
-			conf->addExtra("CONFIG += ext-qjdns");
-		}
+    	if (!incs.isEmpty() && !libs.isEmpty()) {
+    		foreach(const QString &inc, incs) {
+    			conf->addIncludePath(inc);
+    		}
+    		conf->addLib(libs);
+    		conf->addExtra("CONFIG += ext-qjdns");
+    	}
 
-		return true;
+    	return true;
 #endif
-	}
+    }
 };
 #line 1 "x11.qcm"
 /*
@@ -1358,26 +1357,26 @@ name: Xorg X11
 class qc_x11 : public ConfObj
 {
 public:
-	qc_x11(Conf *c) : ConfObj(c) {}
+    qc_x11(Conf *c) : ConfObj(c) {}
 
-	QString name() const { return "Xorg X11"; }
-	QString shortname() const { return "x11"; }
-	QString checkString() const { return QString(); }
+    QString name() const { return "Xorg X11"; }
+    QString shortname() const { return "x11"; }
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
-		QString str =
-			"int main()\\n"
-			"{\\n"
-			"    return 0;\\n"
-			"}\\n";
-		QString proextra = "CONFIG += x11\\n";
+    bool exec()
+    {
+    	QString str =
+    		"int main()\\n"
+    		"{\\n"
+    		"    return 0;\\n"
+    		"}\\n";
+    	QString proextra = "CONFIG += x11\\n";
 #if QT_VERSION >= 0x050000 && defined Q_OS_LINUX
-		proextra += "LIBS += -lxcb\\n";
-		proextra += "QT += x11extras\\n";
+    	proextra += "LIBS += -lxcb\\n";
+    	proextra += "QT += x11extras\\n";
 #endif
-		return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
-	}
+    	return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
+    }
 };
 #line 1 "universal.qcm"
 /*
@@ -1392,18 +1391,18 @@ name: Mac OS X universal binary support
 class qc_universal : public ConfObj
 {
 public:
-	qc_universal(Conf *c) : ConfObj(c) {}
-	QString name() const { return "universal binary support"; }
-	QString shortname() const { return "universal"; }
-	QString checkString() const { return QString(); }
+    qc_universal(Conf *c) : ConfObj(c) {}
+    QString name() const { return "universal binary support"; }
+    QString shortname() const { return "universal"; }
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
+    bool exec()
+    {
 #ifdef Q_OS_MAC
-		conf->addExtra("CONFIG += qc_universal");
+    	conf->addExtra("CONFIG += qc_universal");
 #endif
-		return true;
-	}
+    	return true;
+    }
 };
 #line 1 "qdbus.qcm"
 /*
@@ -1454,10 +1453,10 @@ public:
         QStringList libnames;
 #ifdef _MSC_VER
 # ifdef QC_BUILDMODE
-		libnames += (qc_buildmode_debug? "libqt5keychaind" : "libqt5keychain"); // possibly static
+    	libnames += (qc_buildmode_debug? "libqt5keychaind" : "libqt5keychain"); // possibly static
         libnames += (qc_buildmode_debug? "qt5keychaind" : "qt5keychain"); // possibly dynamic
 # else
-		libnames << "libqt5keychain" << "qt5keychain";
+    	libnames << "libqt5keychain" << "qt5keychain";
 # endif
 #else
         libnames << "qt5keychain";
@@ -1567,79 +1566,79 @@ QString qc_webkit_type;
 //----------------------------------------------------------------------------
 class qc_webkit : public ConfObj
 {
-	QString webkitType;
+    QString webkitType;
 public:
-	qc_webkit(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QtWebKit"; }
-	QString shortname() const { return "webkit"; }
-	bool exec()
-	{
-		if (!conf->getenv("QC_DISABLE_webkit").isEmpty()) {
-			webkitType = "disabled";
-			return false;
-		}
+    qc_webkit(Conf *c) : ConfObj(c) {}
+    QString name() const { return "QtWebKit"; }
+    QString shortname() const { return "webkit"; }
+    bool exec()
+    {
+    	if (!conf->getenv("QC_DISABLE_webkit").isEmpty()) {
+    		webkitType = "disabled";
+    		return false;
+    	}
 
-		QStringList tryList;
-		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
-		if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
+    	QStringList tryList;
+    	QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
+    	if (wt.isEmpty() || !(wt == "qtwebkit" || wt == "qtwebengine")) {
 #if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
-			tryList << "qtwebengine" << "qtwebkit";
+    		tryList << "qtwebengine" << "qtwebkit";
 #else
-			tryList << "qtwebkit";
+    		tryList << "qtwebkit";
 #endif
-		} else {
+    	} else {
 #if QT_VERSION < QT_VERSION_CHECK(5,6,0)
-			if (wt == "qtwebengine") {
-				webkitType = "unsupported";
-				return false;
-			}
+    		if (wt == "qtwebengine") {
+    			webkitType = "unsupported";
+    			return false;
+    		}
 #endif
-			tryList << wt;
-		}
+    		tryList << wt;
+    	}
 
-		QString qt;
-		foreach (const QString &wt, tryList) {
-			if (wt == "qtwebengine") {
-				webkitType = "QtWebEngine";
-				qt = "webenginewidgets webchannel";
-			} else {
-				webkitType = "QtWebKit";
-				qt = "webkit";
+    	QString qt;
+    	foreach (const QString &wt, tryList) {
+    		if (wt == "qtwebengine") {
+    			webkitType = "QtWebEngine";
+    			qt = "webenginewidgets webchannel";
+    		} else {
+    			webkitType = "QtWebKit";
+    			qt = "webkit";
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-				qt += " webkitwidgets";
+    			qt += " webkitwidgets";
 #endif
-			}
+    		}
 
-			QString proextra = "CONFIG += qt webkit\\n";
-			proextra += "QT += " + qt + "\\n";
+    		QString proextra = "CONFIG += qt webkit\\n";
+    		proextra += "QT += " + qt + "\\n";
 
-			QString str =
-			"\\n"
-			"int main()\\n"
-			"{\\n"
-			"	return 0;\\n"
-			"}\\n";
+    		QString str =
+    		"\\n"
+    		"int main()\\n"
+    		"{\\n"
+    		"	return 0;\\n"
+    		"}\\n";
 
-			int ret;
-			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-				continue;
-			if(ret != 0)
-				continue;
+    		int ret;
+    		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+    			continue;
+    		if(ret != 0)
+    			continue;
 
-			conf->addExtra("CONFIG += " + wt);
-			qc_webkit_type = wt;
-			return true;
-		}
+    		conf->addExtra("CONFIG += " + wt);
+    		qc_webkit_type = wt;
+    		return true;
+    	}
 
-		webkitType = "not found";
+    	webkitType = "not found";
 
-		return false;
-	}
+    	return false;
+    }
 
-	QString resultString() const
-	{
-		return webkitType;
-	}
+    QString resultString() const
+    {
+    	return webkitType;
+    }
 };
 #line 1 "http-parser.qcm"
 /*
@@ -1659,81 +1658,81 @@ bool qc_use_http_parser = false;
 //----------------------------------------------------------------------------
 class qc_http_parser : public ConfObj
 {
-	bool use_bundled;
+    bool use_bundled;
 public:
-	qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
-	QString name() const { return "HTTP Parser"; }
-	QString shortname() const { return "httpparser"; }
+    qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
+    QString name() const { return "HTTP Parser"; }
+    QString shortname() const { return "httpparser"; }
 
-	QString resultString() const
-	{
-		if (qc_use_http_parser) {
-			if (use_bundled)
-				return "bundled";
-			return ConfObj::resultString();
-		}
-		return "Not needed w/o webengine";
-	}
+    QString resultString() const
+    {
+    	if (qc_use_http_parser) {
+    		if (use_bundled)
+    			return "bundled";
+    		return ConfObj::resultString();
+    	}
+    	return "Not needed w/o webengine";
+    }
 
-	bool exec()
-	{
-		qc_use_http_parser = (qc_webkit_type == "qtwebengine");
-		if (!qc_use_http_parser)
-			return true; // http parser is not needed. success.
+    bool exec()
+    {
+    	qc_use_http_parser = (qc_webkit_type == "qtwebengine");
+    	if (!qc_use_http_parser)
+    		return true; // http parser is not needed. success.
 
-		QString s;
-		if(conf->getenv("QC_BUNDLED_HTTP_PARSER") == "Y") {
-			goto use_bundled_lbl;
-		}
+    	QString s;
+    	if(conf->getenv("QC_BUNDLED_HTTP_PARSER") == "Y") {
+    		goto use_bundled_lbl;
+    	}
 
 #if !(defined(Q_OS_WIN) || defined(Q_OS_MAC))
-		s = conf->getenv("QC_WITH_HTTP_PARSER_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "http_parser.h")) {
-				qWarning("HTTP Parser includes not found!");
-				return false;
-			}
-			conf->addIncludePath(s);
-		}
-		else {
-			QStringList sl;
-			sl += "/usr/include";
-			sl += "/usr/local/include";
-			sl += "/sw/include";
-			if(!conf->findHeader("http_parser.h", sl, &s)) {
-				qWarning("HTTP Parser includes not found. Use bundled");
-				goto use_bundled_lbl;
-			}
-			conf->addIncludePath(s);
-		}
+    	s = conf->getenv("QC_WITH_HTTP_PARSER_INC");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkHeader(s, "http_parser.h")) {
+    			qWarning("HTTP Parser includes not found!");
+    			return false;
+    		}
+    		conf->addIncludePath(s);
+    	}
+    	else {
+    		QStringList sl;
+    		sl += "/usr/include";
+    		sl += "/usr/local/include";
+    		sl += "/sw/include";
+    		if(!conf->findHeader("http_parser.h", sl, &s)) {
+    			qWarning("HTTP Parser includes not found. Use bundled");
+    			goto use_bundled_lbl;
+    		}
+    		conf->addIncludePath(s);
+    	}
 
-		s = conf->getenv("QC_WITH_HTTP_PARSER_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "http_parser")) {
-				qWarning("HTTP Parser libraries not found!");
-				return false;
-			}
-			conf->addLib(QString("-L") + s);
-		}
-		else {
-			if(!conf->findLibrary("http_parser", &s)) {
-				qWarning("HTTP Parser libraries not found. Use bundled");
-				goto use_bundled_lbl;
-			}
-			if (!s.isEmpty())
-				conf->addLib(QString("-L") + s);
-		}
+    	s = conf->getenv("QC_WITH_HTTP_PARSER_LIB");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkLibrary(s, "http_parser")) {
+    			qWarning("HTTP Parser libraries not found!");
+    			return false;
+    		}
+    		conf->addLib(QString("-L") + s);
+    	}
+    	else {
+    		if(!conf->findLibrary("http_parser", &s)) {
+    			qWarning("HTTP Parser libraries not found. Use bundled");
+    			goto use_bundled_lbl;
+    		}
+    		if (!s.isEmpty())
+    			conf->addLib(QString("-L") + s);
+    	}
 
-		conf->addLib("-lhttp_parser");
+    	conf->addLib("-lhttp_parser");
 
-		return true;
+    	return true;
 #endif
 use_bundled_lbl:
-		use_bundled = true;
-		conf->addExtra("CONFIG += bundled_http_parser");
-		return true;
+    	use_bundled = true;
+    	conf->addExtra("CONFIG += bundled_http_parser");
+    	return true;
 
-	}
+    }
 };
 #line 1 "growl.qcm"
 /*
@@ -1749,56 +1748,56 @@ arg: with-growl=[path],Path to the Growl framework
 class qc_growl : public ConfObj
 {
 public:
-	qc_growl(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Growl"; }
-	QString shortname() const { return "growl"; }
+    qc_growl(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Growl"; }
+    QString shortname() const { return "growl"; }
 #ifndef Q_OS_MAC
-	QString checkString() const { return QString(); }
+    QString checkString() const { return QString(); }
 #endif
 
-	// TODO: This should go into ConfObj
-	bool checkFramework(const QString &path, const QString &name)
-	{
-		QString str =
-		"int main()\\n"
-		"{\\n"
-		"    return 0;\\n"
-		"}\\n";
+    // TODO: This should go into ConfObj
+    bool checkFramework(const QString &path, const QString &name)
+    {
+    	QString str =
+    	"int main()\\n"
+    	"{\\n"
+    	"    return 0;\\n"
+    	"}\\n";
 
-		QString extra;
-		if(!path.isEmpty())
-			extra += QString("-F") + path + ' ';
-		extra += QString("-framework ") + name;
-		if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
-			return false;
-		return true;
-	}
+    	QString extra;
+    	if(!path.isEmpty())
+    		extra += QString("-F") + path + ' ';
+    	extra += QString("-framework ") + name;
+    	if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
+    		return false;
+    	return true;
+    }
 
-	// TODO: This should go into ConfObj
-	void addFrameworkPath(const QString& str)
-	{
-		conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
-		conf->addExtra("QMAKE_OBJECTIVE_CFLAGS += -F" + str);
-		conf->addLib("-F" + str);
-	}
+    // TODO: This should go into ConfObj
+    void addFrameworkPath(const QString& str)
+    {
+    	conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
+    	conf->addExtra("QMAKE_OBJECTIVE_CFLAGS += -F" + str);
+    	conf->addLib("-F" + str);
+    }
 
-	bool exec()
-	{
+    bool exec()
+    {
 #ifdef Q_OS_MAC
-		QString growl_path = conf->getenv("QC_WITH_GROWL");
-		if(!checkFramework(growl_path, "Growl"))
-			return false;
+    	QString growl_path = conf->getenv("QC_WITH_GROWL");
+    	if(!checkFramework(growl_path, "Growl"))
+    		return false;
 
-		if(!growl_path.isEmpty())
-			addFrameworkPath(growl_path);
-		conf->addLib("-framework Growl");
-		conf->addDefine("HAVE_GROWL");
+    	if(!growl_path.isEmpty())
+    		addFrameworkPath(growl_path);
+    	conf->addLib("-framework Growl");
+    	conf->addDefine("HAVE_GROWL");
 
-		return true;
+    	return true;
 #else
-		return false;
+    	return false;
 #endif
-	}
+    }
 };
 #line 1 "whiteboarding.qcm"
 /*
@@ -1814,35 +1813,35 @@ static bool qc_qtsvg_found = false;
 class qc_whiteboarding : public QtCompFinder
 {
 public:
-	qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
-	QString resultString() const
-	{
-		if (!qc_qtsvg_found) {
-			return "QtSVG is not found";
-		}
-		return ConfObj::resultString();
-	}
+    qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
+    QString resultString() const
+    {
+    	if (!qc_qtsvg_found) {
+    		return "QtSVG is not found";
+    	}
+    	return ConfObj::resultString();
+    }
 
-	bool exec()
-	{
-		if (!QtCompFinder::exec()) {
-			return false;
-		}
-		qc_qtsvg_found = true;
+    bool exec()
+    {
+    	if (!QtCompFinder::exec()) {
+    		return false;
+    	}
+    	qc_qtsvg_found = true;
 
-		conf->addDefine("WHITEBOARDING");
+    	conf->addDefine("WHITEBOARDING");
 
-		// Finish
-		conf->addExtra("CONFIG += whiteboarding");
+    	// Finish
+    	conf->addExtra("CONFIG += whiteboarding");
 
-		qWarning("");
-		qWarning("");
-		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
-		qWarning("        WHITEBOARDING SUPPORT IS STILL UNFINISHED !!!");
-		qWarning("        USE AT YOUR OWN RISK !!!");
+    	qWarning("");
+    	qWarning("");
+    	qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
+    	qWarning("        WHITEBOARDING SUPPORT IS STILL UNFINISHED !!!");
+    	qWarning("        USE AT YOUR OWN RISK !!!");
 
-		return true;
-	}
+    	return true;
+    }
 };
 #line 1 "xss.qcm"
 /*
@@ -1857,45 +1856,45 @@ name: the XScreenSaver extension
 class qc_xss : public ConfObj
 {
 public:
-	qc_xss(Conf *c) : ConfObj(c) {}
+    qc_xss(Conf *c) : ConfObj(c) {}
 
-	QString name() const { return "the XScreenSaver extension"; }
-	QString shortname() const { return "xss"; }
+    QString name() const { return "the XScreenSaver extension"; }
+    QString shortname() const { return "xss"; }
 #ifdef Q_OS_WIN
-	QString checkString() const { return QString(); }
+    QString checkString() const { return QString(); }
 #endif
 
-	bool exec()
-	{
+    bool exec()
+    {
 #ifdef Q_OS_WIN
-		// skip XSS support on windows
-		return false;
+    	// skip XSS support on windows
+    	return false;
 #else
-		QString str =
-			"#include<X11/Xlib.h>\\n"
-			"#include<X11/Xutil.h>\\n"
-			"#include<X11/extensions/scrnsaver.h>\\n"
-			"\\n"
-			"int main()\\n"
-			"{\\n"
-			"    XScreenSaverQueryExtension(NULL, NULL, NULL);\\n"
-			"    return 0;\\n"
-			"}\\n";
-		QString proextra = "CONFIG += x11\\n";
+    	QString str =
+    		"#include<X11/Xlib.h>\\n"
+    		"#include<X11/Xutil.h>\\n"
+    		"#include<X11/extensions/scrnsaver.h>\\n"
+    		"\\n"
+    		"int main()\\n"
+    		"{\\n"
+    		"    XScreenSaverQueryExtension(NULL, NULL, NULL);\\n"
+    		"    return 0;\\n"
+    		"}\\n";
+    	QString proextra = "CONFIG += x11\\n";
 
-		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
-			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
-				return false;
-			}
-		}
-		else {
-			conf->addLib("-lXss");
-		}
+    	if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
+    		if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
+    			return false;
+    		}
+    	}
+    	else {
+    		conf->addLib("-lXss");
+    	}
 
-		conf->addDefine("HAVE_XSS");
-		return true;
+    	conf->addDefine("HAVE_XSS");
+    	return true;
 #endif
-	}
+    }
 };
 #line 1 "aspell.qcm"
 /*
@@ -1918,110 +1917,110 @@ QStringList qc_aspell_libs;
 class qc_aspell : public ConfObj
 {
 public:
-	qc_aspell(Conf *c) : ConfObj(c) {}
-	QString name() const { return "aspell"; }
-	QString shortname() const { return "aspell"; }
+    qc_aspell(Conf *c) : ConfObj(c) {}
+    QString name() const { return "aspell"; }
+    QString shortname() const { return "aspell"; }
 
-	// no output
-	QString checkString() const { return QString(); }
+    // no output
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
-		// on mac, always use built-in spell check
+    bool exec()
+    {
+    	// on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-		return false;
+    	return false;
 #else
-		qc_aspell_have = false;
-		qc_aspell_defs.clear();
-		qc_aspell_incs.clear();
-		qc_aspell_libs.clear();
+    	qc_aspell_have = false;
+    	qc_aspell_defs.clear();
+    	qc_aspell_incs.clear();
+    	qc_aspell_libs.clear();
 
-		QString s;
+    	QString s;
 
 #ifdef Q_OS_WIN
-		s = conf->getenv("QC_WITH_ASPELL_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "aspell.h")) {
-				conf->debug("Aspell includes not found!");
-				return false;
-			}
-			qc_aspell_incs += s;
-		}
-		else
-			return false;
+    	s = conf->getenv("QC_WITH_ASPELL_INC");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkHeader(s, "aspell.h")) {
+    			conf->debug("Aspell includes not found!");
+    			return false;
+    		}
+    		qc_aspell_incs += s;
+    	}
+    	else
+    		return false;
 
-		QString a_lib = conf->getenv("QC_WITH_ASPELL_LIB");
-		if(a_lib.isEmpty())
-			return false;
+    	QString a_lib = conf->getenv("QC_WITH_ASPELL_LIB");
+    	if(a_lib.isEmpty())
+    		return false;
 
-		QStringList libnames;
-		libnames += "aspell-15";
-		libnames += "aspell";
+    	QStringList libnames;
+    	libnames += "aspell-15";
+    	libnames += "aspell";
 
-		bool success;
-		QString libname_success;
-		foreach(const QString &libname, libnames) {
-			conf->debug(QString("Trying %1").arg(libname));
-			if(conf->checkLibrary(a_lib, libname)) {
-				success = true;
-				libname_success = libname;
-				break;
-			}
-		}
+    	bool success;
+    	QString libname_success;
+    	foreach(const QString &libname, libnames) {
+    		conf->debug(QString("Trying %1").arg(libname));
+    		if(conf->checkLibrary(a_lib, libname)) {
+    			success = true;
+    			libname_success = libname;
+    			break;
+    		}
+    	}
 
-		if(!success)
-			return false;
+    	if(!success)
+    		return false;
 
-		qc_aspell_defs += "HAVE_ASPELL";
-		qc_aspell_libs += QString("-L") + a_lib;
-		qc_aspell_libs += QString("-l") + libname_success;
-		qc_aspell_have = true;
+    	qc_aspell_defs += "HAVE_ASPELL";
+    	qc_aspell_libs += QString("-L") + a_lib;
+    	qc_aspell_libs += QString("-l") + libname_success;
+    	qc_aspell_have = true;
 #else
-		s = conf->getenv("QC_WITH_ASPELL_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "aspell.h")) {
-				conf->debug("Aspell includes not found!");
-				return false;
-			}
-			qc_aspell_incs += s;
-		}
-		else {
-			QStringList sl;
-			sl += "/usr/include";
-			sl += "/usr/local/include";
-			sl += "/sw/include";
-			if(!conf->findHeader("aspell.h", sl, &s)) {
-				conf->debug("Aspell includes not found!");
-				return false;
-			}
-			qc_aspell_incs += s;
-		}
+    	s = conf->getenv("QC_WITH_ASPELL_INC");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkHeader(s, "aspell.h")) {
+    			conf->debug("Aspell includes not found!");
+    			return false;
+    		}
+    		qc_aspell_incs += s;
+    	}
+    	else {
+    		QStringList sl;
+    		sl += "/usr/include";
+    		sl += "/usr/local/include";
+    		sl += "/sw/include";
+    		if(!conf->findHeader("aspell.h", sl, &s)) {
+    			conf->debug("Aspell includes not found!");
+    			return false;
+    		}
+    		qc_aspell_incs += s;
+    	}
 
-		s = conf->getenv("QC_WITH_ASPELL_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "aspell")) {
-				conf->debug("Aspell libraries not found!");
-				return false;
-			}
-			qc_aspell_libs += QString("-L") + s;
-		}
-		else {
-			if(!conf->findLibrary("aspell", &s)) {
-				conf->debug("Aspell libraries not found!");
-				return false;
-			}
-			if (!s.isEmpty())
-				qc_aspell_libs += QString("-L") + s;
-		}
+    	s = conf->getenv("QC_WITH_ASPELL_LIB");
+    	if(!s.isEmpty()) {
+    		if(!conf->checkLibrary(s, "aspell")) {
+    			conf->debug("Aspell libraries not found!");
+    			return false;
+    		}
+    		qc_aspell_libs += QString("-L") + s;
+    	}
+    	else {
+    		if(!conf->findLibrary("aspell", &s)) {
+    			conf->debug("Aspell libraries not found!");
+    			return false;
+    		}
+    		if (!s.isEmpty())
+    			qc_aspell_libs += QString("-L") + s;
+    	}
 
-		qc_aspell_defs += "HAVE_ASPELL";
-		qc_aspell_libs += "-laspell";
-		qc_aspell_have = true;
+    	qc_aspell_defs += "HAVE_ASPELL";
+    	qc_aspell_libs += "-laspell";
+    	qc_aspell_have = true;
 #endif
 
-		return true;
+    	return true;
 #endif
-	}
+    }
 };
 #line 1 "enchant.qcm"
 /*
@@ -2042,39 +2041,39 @@ QStringList qc_enchant_libs;
 class qc_enchant : public ConfObj
 {
 public:
-	qc_enchant(Conf *c) : ConfObj(c) {}
-	QString name() const { return "enchant"; }
-	QString shortname() const { return "enchant"; }
+    qc_enchant(Conf *c) : ConfObj(c) {}
+    QString name() const { return "enchant"; }
+    QString shortname() const { return "enchant"; }
 
-	// no output
-	QString checkString() const { return QString(); }
+    // no output
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
+    bool exec()
+    {
                 // on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-		return false;
+    	return false;
 #endif
 
-		qc_enchant_have = false;
-		qc_enchant_defs.clear();
-		qc_enchant_incs.clear();
-		qc_enchant_libs.clear();
+    	qc_enchant_have = false;
+    	qc_enchant_defs.clear();
+    	qc_enchant_incs.clear();
+    	qc_enchant_libs.clear();
 
-		QStringList incs;
-		QString version, libs, other;
-		if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
+    	QStringList incs;
+    	QString version, libs, other;
+    	if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
                         return false;
-		if(conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other))
+    	if(conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other))
                         qc_enchant_defs += "HAVE_ENCHANT2";
 
-		qc_enchant_defs += "HAVE_ENCHANT";
-		qc_enchant_incs += incs;
-		qc_enchant_libs += libs;
-		qc_enchant_have = true;
+    	qc_enchant_defs += "HAVE_ENCHANT";
+    	qc_enchant_incs += incs;
+    	qc_enchant_libs += libs;
+    	qc_enchant_have = true;
 
-		return true;
-	}
+    	return true;
+    }
 };
 #line 1 "hunspell.qcm"
 /*
@@ -2097,95 +2096,73 @@ QStringList qc_hunspell_libs;
 class qc_hunspell : public ConfObj
 {
 public:
-	qc_hunspell(Conf *c) : ConfObj(c) {}
-	QString name() const { return "hunspell"; }
-	QString shortname() const { return "hunspell"; }
+    qc_hunspell(Conf *c) : ConfObj(c) {}
+    QString name() const { return "hunspell"; }
+    QString shortname() const { return "hunspell"; }
 
-	// no output
-	QString checkString() const { return QString(); }
+    // no output
+    QString checkString() const { return QString(); }
 
-	bool exec()
-	{
-		// on mac, always use built-in spell check
+    bool exec()
+    {
+    	// on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-		return false;
+    	return false;
 #else
-		qc_hunspell_have = false;
-		qc_hunspell_defs.clear();
-		qc_hunspell_incs.clear();
-		qc_hunspell_libs.clear();
-
-		QString s;
+    	qc_hunspell_have = false;
+    	qc_hunspell_defs.clear();
+    	qc_hunspell_incs.clear();
+    	qc_hunspell_libs.clear();
 
 #ifdef Q_OS_WIN
-		s = conf->getenv("QC_WITH_HUNSPELL_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "hunspell.hxx")) {
-				conf->debug(QString("Hunspell includes not found at %1!").arg(s));
-				return false;
-			}
-			qc_hunspell_incs += s;
-		}
-		else
-			return false;
-
-		QString a_lib = conf->getenv("QC_WITH_HUNSPELL_LIB");
-		if(a_lib.isEmpty())
-			return false;
-
-		QStringList libnames;
-#ifdef _MSC_VER
-# ifdef QC_BUILDMODE
-		libnames += (qc_buildmode_debug? "libhunspelld" : "libhunspell"); // possibly static
+    	QStringList libnames;
+# ifdef _MSC_VER
+        qc_hunspell_defs += "HUNSPELL_STATIC"; // at least it's static by default when their msvc sln is in use.
+#  ifdef QC_BUILDMODE
+    	libnames += (qc_buildmode_debug? "libhunspelld" : "libhunspell"); // possibly static
         libnames += (qc_buildmode_debug? "hunspelld" : "hunspell"); // possibly dynamic
-# else
-		libnames << "libhunspell" << "hunspell";
-# endif
-#else
+#  else
+    	libnames << "libhunspell" << "hunspell";
+#  endif
+# else // mingw?
         libnames << "hunspell-1.3" << "hunspell";
-#endif
+# endif
+        QString libs, incs;
+        foreach (const QString libname, libnames)
+            if(conf->findSimpleLibrary("QC_WITH_HUNSPELL_INC", "QC_WITH_HUNSPELL_LIB", "hunspell/hunspell.hxx", libname, &incs, &libs)) {
+                break;
+            }
 
-		bool success = false;
-		QString libname_success;
-		foreach(const QString &libname, libnames) {
-			conf->debug(QString("Trying %1").arg(libname));
-			if(conf->checkLibrary(a_lib, libname)) {
-				success = true;
-				libname_success = libname;
-				break;
-			}
-		}
+        if(libs.isEmpty()) {
+            printf("hunspell library is not found");
+            return false;
+        }
+        conf->addLib(libs);
 
-		if(!success)
-			return false;
+    	qc_hunspell_defs += "HAVE_HUNSPELL";
+        qc_hunspell_libs += libs;
+        qc_hunspell_incs += incs + "/hunspell";
+    	qc_hunspell_have = true;
+#else // Q_OS_WIN. unix below
+    	qc_hunspell_have = false;
+    	qc_hunspell_defs.clear();
+    	qc_hunspell_incs.clear();
+    	qc_hunspell_libs.clear();
 
-		qc_hunspell_defs += "HAVE_HUNSPELL";
-#ifdef _MSC_VER
-		qc_hunspell_defs += "HUNSPELL_STATIC"; // at least it's static by default when their msvc sln is in use.
-#endif
-		qc_hunspell_libs += QString("-L") + a_lib;
-		qc_hunspell_libs += QString("-l") + libname_success;
-		qc_hunspell_have = true;
-#else
-		qc_hunspell_have = false;
-		qc_hunspell_defs.clear();
-		qc_hunspell_incs.clear();
-		qc_hunspell_libs.clear();
-
-		QStringList incs;
-		QString version, libs, other;
-		if(!conf->findPkgConfig("hunspell", VersionMin, "1.3.0", &version, &incs, &libs, &other))
+    	QStringList incs;
+    	QString version, libs, other;
+    	if(!conf->findPkgConfig("hunspell", VersionMin, "1.3.0", &version, &incs, &libs, &other))
                         return false;
 
-		qc_hunspell_defs += "HAVE_HUNSPELL";
-		qc_hunspell_incs += incs;
-		qc_hunspell_libs += libs;
-		qc_hunspell_have = true;
-#endif
+    	qc_hunspell_defs += "HAVE_HUNSPELL";
+    	qc_hunspell_incs += incs;
+    	qc_hunspell_libs += libs;
+    	qc_hunspell_have = true;
+#endif // Q_OS_WIN
 
-		return true;
-#endif
-	}
+    	return true;
+#endif // Q_OS_MAC
+    }
 };
 #line 1 "spell.qcm"
 /*
@@ -2200,74 +2177,74 @@ name: spellcheck engine
 class qc_spell : public ConfObj
 {
 public:
-	QString engine;
+    QString engine;
 
-	qc_spell(Conf *c) : ConfObj(c) {}
-	QString name() const { return "spellcheck engine"; }
-	QString shortname() const { return "spell"; }
+    qc_spell(Conf *c) : ConfObj(c) {}
+    QString name() const { return "spellcheck engine"; }
+    QString shortname() const { return "spell"; }
 
-	bool exec()
-	{
-		// on mac, always use built-in spell check
+    bool exec()
+    {
+    	// on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-		engine = "using Mac built-in";
-		return true;
+    	engine = "using Mac built-in";
+    	return true;
 #endif
 
-		bool have = false;
-		QStringList defs, incs, libs;
+    	bool have = false;
+    	QStringList defs, incs, libs;
 
 #ifdef QC_ENCHANT
-		if(!have && qc_enchant_have)
-		{
-			defs = qc_enchant_defs;
-			incs = qc_enchant_incs;
-			libs = qc_enchant_libs;
-			engine = "enchant";
-			have = true;
-		}
+    	if(!have && qc_enchant_have)
+    	{
+    		defs = qc_enchant_defs;
+    		incs = qc_enchant_incs;
+    		libs = qc_enchant_libs;
+    		engine = "enchant";
+    		have = true;
+    	}
 #endif
 #ifdef QC_ASPELL
-		if(!have && qc_aspell_have)
-		{
-			defs = qc_aspell_defs;
-			incs = qc_aspell_incs;
-			libs = qc_aspell_libs;
-			engine = "aspell";
-			have = true;
-		}
+    	if(!have && qc_aspell_have)
+    	{
+    		defs = qc_aspell_defs;
+    		incs = qc_aspell_incs;
+    		libs = qc_aspell_libs;
+    		engine = "aspell";
+    		have = true;
+    	}
 #endif
 #ifdef QC_HUNSPELL
-		if(!have && qc_hunspell_have)
-		{
-			defs = qc_hunspell_defs;
-			incs = qc_hunspell_incs;
-			libs = qc_hunspell_libs;
-			engine = "hunspell";
-			have = true;
-		}
+    	if(!have && qc_hunspell_have)
+    	{
+    		defs = qc_hunspell_defs;
+    		incs = qc_hunspell_incs;
+    		libs = qc_hunspell_libs;
+    		engine = "hunspell";
+    		have = true;
+    	}
 #endif
 
-		if(!have)
-			return true;
+    	if(!have)
+    		return true;
 
-		for(int n = 0; n < defs.count(); ++n)
-			conf->addDefine(defs[n]);
-		for(int n = 0; n < incs.count(); ++n)
-			conf->addIncludePath(incs[n]);
-		for(int n = 0; n < libs.count(); ++n)
-			conf->addLib(libs[n]);
+    	for(int n = 0; n < defs.count(); ++n)
+    		conf->addDefine(defs[n]);
+    	for(int n = 0; n < incs.count(); ++n)
+    		conf->addIncludePath(incs[n]);
+    	for(int n = 0; n < libs.count(); ++n)
+    		conf->addLib(libs[n]);
 
-		return true;
-	}
+    	return true;
+    }
 
-	QString resultString() const
-	{
-		if(!engine.isEmpty())
-			return engine;
-		else
-			return "no";
-	}
+    QString resultString() const
+    {
+    	if(!engine.isEmpty())
+    		return engine;
+    	else
+    		return "no";
+    }
 };
 #line 1 "plugins.qcm"
 /*
@@ -2282,36 +2259,36 @@ name: Psi Plugin support
 class qc_plugins : public ConfObj
 {
 public:
-	qc_plugins(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Psi Plugin support"; }
-	QString shortname() const { return "plugins"; }
-	bool exec()
-	{
-		QFileInfo fi(qc_getenv("QC_COMMAND"));
-		QString sourceDir = fi.absolutePath();
+    qc_plugins(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Psi Plugin support"; }
+    QString shortname() const { return "plugins"; }
+    bool exec()
+    {
+    	QFileInfo fi(qc_getenv("QC_COMMAND"));
+    	QString sourceDir = fi.absolutePath();
 
-		conf->addDefine("PSI_PLUGINS");
+    	conf->addDefine("PSI_PLUGINS");
 
-		// Finish
-		conf->addExtra("CONFIG += psi_plugins");
+    	// Finish
+    	conf->addExtra("CONFIG += psi_plugins");
 
-		QHash<QString,QString> vars;
+    	QHash<QString,QString> vars;
 #ifdef Q_OS_WIN
-		vars["plugins_dir"] = "";
-		vars["data_dir"] = "";
+    	vars["plugins_dir"] = "";
+    	vars["data_dir"] = "";
 #else
-		vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
-		vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
+    	vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
+    	vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
 #endif
-		QStringList psiFeatures;
-		if (!qc_webkit_type.isEmpty()) {
-			psiFeatures << qc_webkit_type;
-		}
-		vars["features"] = psiFeatures.join(" ");
-		psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf.pri", vars);
+    	QStringList psiFeatures;
+    	if (!qc_webkit_type.isEmpty()) {
+    		psiFeatures << qc_webkit_type;
+    	}
+    	vars["features"] = psiFeatures.join(" ");
+    	psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf.pri", vars);
 
-		return true;
-	}
+    	return true;
+    }
 };
 #line 1 "conf.qcm"
 /*
@@ -2324,73 +2301,73 @@ name: Psi Configuration
 
 static QString psiGetVersion()
 {
-	QString str;
+    QString str;
 
-	{
-		QFile file(sourceDir + "/version");
-		if(file.open(QIODevice::ReadOnly | QIODevice::Text))
-		{
-			QTextStream ts(&file);
-			if(!ts.atEnd())
-				str = ts.readLine();
-		}
+    {
+    	QFile file(sourceDir + "/version");
+    	if(file.open(QIODevice::ReadOnly | QIODevice::Text))
+    	{
+    		QTextStream ts(&file);
+    		if(!ts.atEnd())
+    			str = ts.readLine();
+    	}
 
-		if(str.isEmpty())
-			str = "UnknownVersion";
-	}
+    	if(str.isEmpty())
+    		str = "UnknownVersion";
+    }
 
-	QString nowstr = QDateTime::currentDateTime().toString("yyyyMMdd");
-	str.replace("@@DATE@@", nowstr);
-	return str;
+    QString nowstr = QDateTime::currentDateTime().toString("yyyyMMdd");
+    str.replace("@@DATE@@", nowstr);
+    return str;
 }
 
 class qc_conf : public ConfObj
 {
 public:
-	qc_conf(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Psi Configuration"; }
-	QString shortname() const { return "conf"; }
-	QString checkString() const { return QString(); }
-	bool exec()
-	{
-		QString version = psiGetVersion();
-		QRegExp verre("^\\\\d+(?:\\\\.\\\\d+)+");
-		if (verre.indexIn(version) == -1) {
-			conf->debug("Failed to parse version file");
-			return false;
-		}
-		conf->addExtra(QString("PSI_VERSION = %1").arg(verre.cap(0)));
-		
-		QHash<QString,QString> vars;
-		vars["VERSION"] = version;
-		QDir::current().mkpath("mac");
-		psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
-		
-		vars.clear();
-		vars["source_dir"] = sourceDir;
-		vars["build_dir"] = QDir::currentPath();
-		psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
+    qc_conf(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Psi Configuration"; }
+    QString shortname() const { return "conf"; }
+    QString checkString() const { return QString(); }
+    bool exec()
+    {
+    	QString version = psiGetVersion();
+    	QRegExp verre("^\\\\d+(?:\\\\.\\\\d+)+");
+    	if (verre.indexIn(version) == -1) {
+    		conf->debug("Failed to parse version file");
+    		return false;
+    	}
+    	conf->addExtra(QString("PSI_VERSION = %1").arg(verre.cap(0)));
+    	
+    	QHash<QString,QString> vars;
+    	vars["VERSION"] = version;
+    	QDir::current().mkpath("mac");
+    	psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
+    	
+    	vars.clear();
+    	vars["source_dir"] = sourceDir;
+    	vars["build_dir"] = QDir::currentPath();
+    	psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
-		conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
-		conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
+    	conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
+    	conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
 #endif
 
-		QDir(".").mkdir("src");
-		QFile file("src/config.h");
-		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
-			QTextStream stream( &file );
+    	QDir(".").mkdir("src");
+    	QFile file("src/config.h");
+    	if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
+    		QTextStream stream( &file );
 #ifndef Q_OS_WIN
-			stream << "#define PSI_LIBDIR \\"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\\"" << endl;
-			stream << "#define PSI_DATADIR \\"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\\"" << endl;
+    		stream << "#define PSI_LIBDIR \\"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\\"" << endl;
+    		stream << "#define PSI_DATADIR \\"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\\"" << endl;
 #endif
-			stream << "#define PSI_VERSION \\"" << version << "\\"" << endl;
-		}
+    		stream << "#define PSI_VERSION \\"" << version << "\\"" << endl;
+    	}
 
-		conf->addDefine("HAVE_CONFIG");
+    	conf->addDefine("HAVE_CONFIG");
 
-		return true;
-	}
+    	return true;
+    }
 };
 #line 1 "recursiveprl.qcm"
 /*
@@ -2405,101 +2382,101 @@ name: Generate .prl files
 class qc_recursiveprl : public ConfObj
 {
 public:
-	bool success;
+    bool success;
 
-	qc_recursiveprl(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Generate .prl files"; }
-	QString shortname() const { return "recursiveprl"; }
+    qc_recursiveprl(Conf *c) : ConfObj(c) {}
+    QString name() const { return "Generate .prl files"; }
+    QString shortname() const { return "recursiveprl"; }
 
-	QString checkString() const
-	{
-		return "Generating .prl files ...";
-	}
+    QString checkString() const
+    {
+    	return "Generating .prl files ...";
+    }
 
-	QString resultString() const
-	{
-		if(success)
-			return "ok";
-		else
-			return "fail";
-	}
+    QString resultString() const
+    {
+    	if(success)
+    		return "ok";
+    	else
+    		return "fail";
+    }
 
-	bool exec()
-	{
-		success = true;
+    bool exec()
+    {
+    	success = true;
 
-		if(!writeConf())
-		{
-			success = false;
-			return false;
-		}
+    	if(!writeConf())
+    	{
+    		success = false;
+    		return false;
+    	}
 
-		QFileInfo fi(qc_getenv("QC_COMMAND"));
-		QStringList args;
-		args += "-prl";
-		args += "-r";
-		args += fi.dir().filePath(qc_getenv("QC_PROFILE"));
-		if(conf->doCommand(conf->qmake_path, args) != 0)
-		{
-			success = false;
-			return false;
-		}
+    	QFileInfo fi(qc_getenv("QC_COMMAND"));
+    	QStringList args;
+    	args += "-prl";
+    	args += "-r";
+    	args += fi.dir().filePath(qc_getenv("QC_PROFILE"));
+    	if(conf->doCommand(conf->qmake_path, args) != 0)
+    	{
+    		success = false;
+    		return false;
+    	}
 
-		return true;
-	}
+    	return true;
+    }
 
-	bool writeConf()
-	{
-		// adapted from conf4.cpp.  probably a future version of qconf
-		//   should just have a function to do this so we don't have
-		//   to copy code
-		QFile f("conf.pri");
-		if(!f.open(QFile::WriteOnly | QFile::Truncate))
-		{
-			conf->debug(QString("Error writing %1").arg(f.fileName()));
-			return false;
+    bool writeConf()
+    {
+    	// adapted from conf4.cpp.  probably a future version of qconf
+    	//   should just have a function to do this so we don't have
+    	//   to copy code
+    	QFile f("conf.pri");
+    	if(!f.open(QFile::WriteOnly | QFile::Truncate))
+    	{
+    		conf->debug(QString("Error writing %1").arg(f.fileName()));
+    		return false;
                 }
 
-		QString str;
-		str += "# qconf\\n\\n";
+    	QString str;
+    	str += "# qconf\\n\\n";
 
-		QString var;
-		var = qc_getenv("PREFIX");
-		if(!var.isEmpty())
-			str += QString("PREFIX = %1\\n").arg(var);
-		var = qc_getenv("BINDIR");
-		if(!var.isEmpty())
-			str += QString("BINDIR = %1\\n").arg(var);
-		var = qc_getenv("INCDIR");
-		if(!var.isEmpty())
-			str += QString("INCDIR = %1\\n").arg(var);
-		var = qc_getenv("LIBDIR");
-		if(!var.isEmpty())
-			str += QString("LIBDIR = %1\\n").arg(var);
-		var = qc_getenv("DATADIR");
-		if(!var.isEmpty())
-			str += QString("DATADIR = %1\\n").arg(var);
-		str += '\\n';
+    	QString var;
+    	var = qc_getenv("PREFIX");
+    	if(!var.isEmpty())
+    		str += QString("PREFIX = %1\\n").arg(var);
+    	var = qc_getenv("BINDIR");
+    	if(!var.isEmpty())
+    		str += QString("BINDIR = %1\\n").arg(var);
+    	var = qc_getenv("INCDIR");
+    	if(!var.isEmpty())
+    		str += QString("INCDIR = %1\\n").arg(var);
+    	var = qc_getenv("LIBDIR");
+    	if(!var.isEmpty())
+    		str += QString("LIBDIR = %1\\n").arg(var);
+    	var = qc_getenv("DATADIR");
+    	if(!var.isEmpty())
+    		str += QString("DATADIR = %1\\n").arg(var);
+    	str += '\\n';
 
-		if(qc_getenv("QC_STATIC") == "Y")
-			str += "CONFIG += staticlib\\n";
+    	if(qc_getenv("QC_STATIC") == "Y")
+    		str += "CONFIG += staticlib\\n";
 
-		if(!conf->DEFINES.isEmpty())
-			str += "DEFINES += " + conf->DEFINES + '\\n';
-		if(!conf->INCLUDEPATH.isEmpty())
-			str += "INCLUDEPATH += " + conf->escapedIncludes() + '\\n';
-		if(!conf->LIBS.isEmpty())
-			str += "LIBS += " + conf->escapedLibs() + '\\n';
-		if(!conf->extra.isEmpty())
-			str += conf->extra;
-		str += '\\n';
+    	if(!conf->DEFINES.isEmpty())
+    		str += "DEFINES += " + conf->DEFINES + '\\n';
+    	if(!conf->INCLUDEPATH.isEmpty())
+    		str += "INCLUDEPATH += " + conf->escapedIncludes() + '\\n';
+    	if(!conf->LIBS.isEmpty())
+    		str += "LIBS += " + conf->escapedLibs() + '\\n';
+    	if(!conf->extra.isEmpty())
+    		str += conf->extra;
+    	str += '\\n';
 
                 QByteArray cs = str.toLatin1();
                 f.write(cs);
                 f.close();
 
-		return true;
-	}
+    	return true;
+    }
 };
 
 EOT
@@ -3503,25 +3480,37 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 
 	s = getenv(incvar);
 	if(!s.isEmpty()) {
-		if(!checkHeader(s, incname))
+		if(!checkHeader(s, incname)) {
+			if(debug_enabled)
+				printf("%s is not found in \\"%s\\"\\n", qPrintable(incname), qPrintable(s));
 			return false;
+		}
 		inc = s;
 	}
 	else {
-		if(!findHeader(incname, QStringList(), &s))
+		if(!findHeader(incname, QStringList(), &s)) {
+			if(debug_enabled)
+				printf("%s is not found in anywhere\\n", qPrintable(incname));
 			return false;
+		}
 		inc = s;
 	}
 
 	s = getenv(libvar);
 	if(!s.isEmpty()) {
-		if(!checkLibrary(s, libname))
+		if(!checkLibrary(s, libname)) {
+			if(debug_enabled)
+				printf("%s is not found in \\"%s\\"\\n", qPrintable(libname), qPrintable(s));
 			return false;
+		}
 		lib = s;
 	}
 	else {
-		if(!findLibrary(libname, &s))
+		if(!findLibrary(libname, &s)) {
+			if(debug_enabled)
+				printf("%s is not found in anywhere\\n", qPrintable(libname));
 			return false;
+		}
 		lib = s;
 	}
 

@@ -21,6 +21,7 @@ OTHER_FILES += options/default.xml \
     client_icons.txt \
     version \
     TODO \
+    psi.qc \
     qcm/*.qcm
 
 webkit {

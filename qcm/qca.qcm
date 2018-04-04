@@ -18,10 +18,7 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 "CONFIG *= qt\n"
 "\n"
 "LINKAGE =\n"
-"QCA_NAME = qca\n"
-"greaterThan(QT_MAJOR_VERSION, 4) {\n"
-"    QCA_NAME = qca-qt5\n"
-"}\n"
+"QCA_NAME = qca-qt5\n"
 "\n"
 "!isEmpty(QCA_FRAMEWORKDIR): {\n"
 "    framework_dir = $$QCA_FRAMEWORKDIR\n"
@@ -96,7 +93,8 @@ static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, co
 
 static bool qca_try_lib(Conf *conf, const QString &incdir, const QString &libdir, bool release, bool debug, QString *prf)
 {
-    return qca_try(conf, incdir, libdir, QString(), release, debug, prf);
+    return qca_try(conf, incdir, libdir, QString(), release, debug, prf) ||
+            qca_try(conf, incdir + "/Qca-qt5", libdir, QString(), release, debug, prf);
 }
 
 static bool qca_try_framework(Conf *conf, const QString &frameworkdir, bool release, bool debug, QString *prf)
@@ -156,25 +154,25 @@ public:
 
     	QStringList incs;
     	QString version, libs, other;
-    	QStringList pkgConfigNames;
-#if QT_VERSION >= 0x050000
-    	pkgConfigNames << "qca2-qt5";
-#else
-    	pkgConfigNames << "qca2 qca2-qt4";
-#endif
-    	foreach (const QString &pcn, pkgConfigNames)
-    		if(conf->findPkgConfig(pcn, VersionMin, "2.0.0", &version, &incs, &libs, &other))
-    		{	
-    			for(int n = 0; n < incs.count(); ++n)
-    				conf->addIncludePath(incs[n]);
-    			if(!libs.isEmpty())
-    				conf->addLib(libs);
-    			return true;
-    		}
+
+        if(conf->findPkgConfig("qca2-qt5", VersionMin, "2.0.0", &version, &incs, &libs, &other))
+        {
+            for(int n = 0; n < incs.count(); ++n)
+                conf->addIncludePath(incs[n]);
+            if(!libs.isEmpty())
+                conf->addLib(libs);
+            return true;
+        }
 
     	QStringList prefixes;
-    	prefixes += "/usr";
+#ifndef Q_OS_WIN
+        prefixes += "/usr";
     	prefixes += "/usr/local";
+#endif
+        QString prefix = conf->getenv("PREFIX");
+        if (!prefix.isEmpty()) {
+            prefixes += prefix;
+        }
 
     	for(int n = 0; n < prefixes.count(); ++n)
     	{
