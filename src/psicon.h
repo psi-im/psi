@@ -184,8 +184,8 @@ private slots:
     void forceSavePreferences(QSessionManager &);
     void startBounce();
     void aboutToQuit();
-    void secondsIdle(int);
-
+    void secondsIdle(int);    
+    void proceedWithSleep();
 private:
     class Private;
     Private *d;

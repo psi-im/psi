@@ -1038,6 +1038,7 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
     connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
     connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
     connect(pa, SIGNAL(startBounce()), SLOT(startBounce()));
+    connect(pa, SIGNAL(disconnected()), SLOT(proceedWithSleep()));
     if (d->s5bServer) {
         pa->client()->s5bManager()->setServer(d->s5bServer);
     }
@@ -1535,6 +1536,16 @@ void PsiCon::startBounce()
         }
     }
 #endif
+}
+
+void PsiCon::proceedWithSleep()
+{
+    foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+        if(account->loggedIn()) {
+            return; // we need all disconnedted to proceed with sleep
+        }
+    }
+    SystemWatch::instance()->proceedWithSleep();
 }
 
 void PsiCon::recvNextEvent()

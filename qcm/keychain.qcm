@@ -30,12 +30,30 @@ public:
             qWarning("keychain header qt5keychain/keychain.h is not found");
             return false;
         }
-        
-        if(!conf->checkLibrary(s, "qt5keychain")) {
+
+        QStringList libnames;
+#ifdef _MSC_VER
+# ifdef QC_BUILDMODE
+		libnames += (qc_buildmode_debug? "libqt5keychaind" : "libqt5keychain"); // possibly static
+        libnames += (qc_buildmode_debug? "qt5keychaind" : "qt5keychain"); // possibly dynamic
+# else
+		libnames << "libqt5keychain" << "qt5keychain";
+# endif
+#else
+        libnames << "qt5keychain";
+#endif
+        QString libName;
+        foreach (const QString l, libnames) 
+            if(conf->findLibrary(l, &s)) {
+                libName = l;
+                break;
+            }
+
+        if(libName.isEmpty()) {
             qWarning("keychain library qt5keychain is not found");
             return false;
         }
-        conf->addLib("-lqt5keychain");
+        conf->addLib(QString("-L %1 -l%2").arg(s, libName));
 
         // header and library were found by default paths. lets just add extra
         conf->addExtra(extraConfIfFound);

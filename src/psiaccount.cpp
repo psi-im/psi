@@ -1971,6 +1971,8 @@ void PsiAccount::cs_authenticated()
         d->acc.pass = "";
     }
 
+    d->reconnectConnection = QMetaObject::Connection();
+
     //printf("PsiAccount: [%s] authenticated\n", name().latin1());
     d->conn->changePollInterval(10); // for http poll, slow down after login
 
