@@ -281,9 +281,9 @@ bool ChatDlg::readyToHide()
 
     // Reset 'contact is composing' & cancel own composing event
     resetComposing();
-    setChatState(StateGone);
+    setChatState(XMPP::StateGone);
     if (contactChatState_ == XMPP::StateComposing || contactChatState_ == XMPP::StateInactive) {
-        setContactChatState(StatePaused);
+        setContactChatState(XMPP::StatePaused);
     }
 
     if (pending_ > 0) {
@@ -312,7 +312,7 @@ void ChatDlg::hideEvent(QHideEvent* e)
 {
     if (isMinimized()) {
         resetComposing();
-        setChatState(StateInactive);
+        setChatState(XMPP::StateInactive);
     }
     TabbableWidget::hideEvent(e);
 }
@@ -704,7 +704,7 @@ QString ChatDlg::desiredCaption() const
     if (contactChatState_ == XMPP::StateComposing) {
         cap = tr("%1 (Composing ...)").arg(cap);
     }
-    else if (contactChatState_ == XMPP::StateInactive) {
+    else if (contactChatState_ == XMPP::StateInactive || contactChatState_ == XMPP::StateGone) {
         cap = tr("%1 (Inactive)").arg(cap);
     }
 
@@ -1250,9 +1250,15 @@ void ChatDlg::chatEditCreated()
 
 TabbableWidget::State ChatDlg::state() const
 {
-    return contactChatState_ == XMPP::StateComposing ?
-           TabbableWidget::StateComposing :
-           TabbableWidget::StateNone;
+    switch (contactChatState_) {
+        case XMPP::StateComposing:
+            return TabbableWidget::StateComposing;
+        case XMPP::StateInactive:
+        case XMPP::StateGone:
+            return TabbableWidget::StateInactive;
+        default:
+            return TabbableWidget::StateNone;
+    }
 }
 
 int ChatDlg::unreadMessageCount() const

@@ -63,7 +63,8 @@ public:
 
     enum State {
         StateNone = 0,
-        StateComposing
+        StateComposing,
+        StateInactive
     };
     virtual State state() const = 0;
     virtual int unreadMessageCount() const = 0;
