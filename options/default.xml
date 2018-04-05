@@ -412,6 +412,7 @@ QLineEdit#le_status_text {
                     <chat>
                         <composing-color type="QColor">darkGreen</composing-color>
                         <unread-message-color type="QColor">red</unread-message-color>
+                        <inactive-color type="QColor">grey</inactive-color>
                     </chat>
                     <passive-popup>
                         <border type="QColor">#5297f9</border>
