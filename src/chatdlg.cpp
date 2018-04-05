@@ -1105,6 +1105,11 @@ void ChatDlg::setChatState(ChatState state)
             return;
         }
 
+        if (lastChatState_ == XMPP::StateGone && state == XMPP::StateInactive) {
+            // same here
+            return;
+        }
+
         // Check if we should send a message
         if (state == lastChatState_ || (lastChatState_ == XMPP::StateActive && state == XMPP::StatePaused)) {
             lastChatState_ = state;
