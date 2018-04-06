@@ -216,7 +216,7 @@ function initPsiTheme() {
                         var imageExts = ["png", "jpg", "jpeg", "gif"];
                         var audioExts = ["mp3", "ogg", "aac", "flac", "wav"];
                         var videoExts = ["mp4", "webm", "mkv", "mov", "avi"];
-                        var lpath = linkEl.pathname.toLowerCase();
+                        var lpath = linkEl.pathname.toLowerCase().split('#')[0].split('?')[0];
                         function checkExt(exts, replacer) {
                             for (var i = 0; i < exts.length; i++) {
                                 if (lpath.slice(lpath.length - exts[i].length - 1) == ("." + exts[i])) {
