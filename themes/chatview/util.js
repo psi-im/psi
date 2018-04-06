@@ -198,7 +198,7 @@ function initPsiTheme() {
                 },function(result) {
                     //chat.console("result ready " + chat.util.props(result, true));
                     var ct = result['content-type'];
-                    if (typeof(ct) == "string") {
+                    if ((typeof(ct) == "string") && (ct != "application/octet-stream")) {
                         ct = ct.split("/")[0].trim();
                         switch (ct) {
                         case "image":
