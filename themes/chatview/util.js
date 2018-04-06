@@ -237,7 +237,7 @@ function initPsiTheme() {
                 if (!previewsEnabled)
                     return;
                 var links = el.querySelectorAll("a");
-                var youtube = ["youtu.be", "www.youtube.com", "m.youtube.com"];
+                var youtube = ["youtu.be", "www.youtube.com", "youtube.com", "m.youtube.com"];
                 for (var li = 0; li < links.length; li++) {
                     var linkEl = links[li];
                     if (youtube.indexOf(linkEl.hostname) != -1) {
