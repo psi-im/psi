@@ -22,7 +22,7 @@
 #include "psioptions.h"
 #include "iconset.h"
 #include "qpainter.h"
-
+#include "common.h"
 
 RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
     : QFrame(parent)
@@ -66,12 +66,12 @@ void RosterAvatarFrame::setActivityIcon(const QString &activity)
 
 void RosterAvatarFrame::drawAvatar()
 {
-    int avSize = PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.size").toInt();
+    int avSize = PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.size").toInt() * ::devicePixelRatio(this);
     QPixmap av = avatarPixmap;
     if(!av.isNull()) {
-        int radius = PsiOptions::instance()->getOption("options.ui.contactlist.avatars.radius").toInt();
+        int radius = PsiOptions::instance()->getOption("options.ui.contactlist.avatars.radius").toInt() * ::devicePixelRatio(this);
         if(!radius)
-            av = av.scaled(avSize,avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            av = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         else {
             avSize = qMax(avSize, radius*2);
             av = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -87,8 +87,9 @@ void RosterAvatarFrame::drawAvatar()
             av = avatar_icon;
         }
     }
+    av.setDevicePixelRatio(::devicePixelRatio(this));
     ui_.lb_avatar->setPixmap(av);
-    ui_.lb_avatar->setFixedSize(avSize,avSize);
+    ui_.lb_avatar->setFixedSize(avSize / ::devicePixelRatio(this), avSize / ::devicePixelRatio(this));
 }
 
 void RosterAvatarFrame::setStatusIcon(const QIcon &ico)

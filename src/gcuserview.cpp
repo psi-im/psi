@@ -52,8 +52,9 @@ class GCUserViewDelegate : public QItemDelegate
 {
     Q_OBJECT
 public:
-    GCUserViewDelegate(QObject* p)
+    GCUserViewDelegate(QWidget* p)
         : QItemDelegate(p)
+        , list_(p)
     {
         updateSettings();
     }
@@ -156,10 +157,10 @@ public:
             if(ava.isNull()) {
                 ava = IconsetFactory::iconPixmap("psi/default_avatar");
             }
-            ava = AvatarFactory::roundedAvatar(ava, avatarRadius_, avatarSize_);
+            ava = AvatarFactory::roundedAvatar(ava, avatarRadius_ * devicePixelRatio(list_), avatarSize_ * devicePixelRatio(list_));
             QRect avaRect(rect);
-            avaRect.setWidth(ava.width());
-            avaRect.setHeight(ava.height());
+            avaRect.setWidth(ava.width() / devicePixelRatio(list_));
+            avaRect.setHeight(ava.height() / devicePixelRatio(list_));
             if(!avatarAtLeft_) {
                 avaRect.moveTopRight(rect.topRight());
                 avaRect.translate(-1, 1);
@@ -274,6 +275,7 @@ private:
     QColor colorForeground_, colorBackground_, colorModerator_, colorParticipant_, colorVisitor_, colorNoRole_;
     bool showGroups_, slimGroups_, nickColoring_, showClients_, showAffiliations_, showStatusIcons_, showAvatar_, avatarAtLeft_;
     int avatarSize_, fontHeight_, avatarRadius_;
+    QWidget *list_;
 };
 
 

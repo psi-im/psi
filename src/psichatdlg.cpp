@@ -749,7 +749,9 @@ void PsiChatDlg::updateAvatar()
     int avatarSize = p.width(); //qMax(p.width(), p.height());
     if (avatarSize > optSize)
         avatarSize = optSize;
-    ui_.avatar->setPixmap(p.scaled(QSize(avatarSize, avatarSize), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    QPixmap scaled = p.scaled(QSize(avatarSize * ::devicePixelRatio(this), avatarSize * ::devicePixelRatio(this)), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    scaled.setDevicePixelRatio(::devicePixelRatio(this));
+    ui_.avatar->setPixmap(scaled);
     ui_.avatar->show();
 }
 

@@ -180,7 +180,9 @@ QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap *avatar, const Ps
         int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
         QLabel *avatarLabel = new QLabel(popup);
         avatarLabel->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-        avatarLabel->setPixmap(avatar->scaled(QSize(size, size), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        QPixmap av = avatar->scaled(QSize(size * devicePixelRatio(avatarLabel), size * devicePixelRatio(avatarLabel)), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        av.setDevicePixelRatio(devicePixelRatio(avatarLabel));
+        avatarLabel->setPixmap(av);
         dataBox->addWidget(avatarLabel);
         dataBox->addSpacing(5);
     }

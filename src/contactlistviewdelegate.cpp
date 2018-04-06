@@ -546,7 +546,7 @@ QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
     if(av.isNull() && useDefaultAvatar_)
         av = IconsetFactory::iconPixmap("psi/default_avatar");
 
-    return AvatarFactory::roundedAvatar(av, avatarRadius_, avSize);
+    return AvatarFactory::roundedAvatar(av, avatarRadius_ * devicePixelRatio(contactList), avSize * devicePixelRatio(contactList));
 
 }
 
