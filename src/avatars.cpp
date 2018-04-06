@@ -329,7 +329,7 @@ protected:
 
 private:
     AvatarCache()
-        : FileCache(AvatarFactory::getCacheDir(), QApplication::instance())
+        : FileCache(AvatarFactory::getCacheDir())
     {
         updateJids();
     }

@@ -1564,7 +1564,7 @@ void MainWin::toggleVisible(bool fromTray)
         bool hidden = false;
 #ifdef Q_OS_WIN
         if (fromTray) {
-            int timeout = 300;
+            unsigned timeout = 300;
             if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool())
                 timeout += qApp->doubleClickInterval();
             hidden = isHidden() || (GetTickCount() - d->deactivationTickCount > timeout);
