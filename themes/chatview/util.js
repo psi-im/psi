@@ -213,9 +213,9 @@ function initPsiTheme() {
                         }
                     } else { // fallback when no content type
                         //chat.console("fallback")
-                        var imageExts = ["png", "jpg", "jpeg", "gif"];
-                        var audioExts = ["mp3", "ogg", "aac", "flac", "wav"];
-                        var videoExts = ["mp4", "webm", "mkv", "mov", "avi"];
+                        var imageExts = ["png", "jpg", "jpeg", "gif", "webp"];
+                        var audioExts = ["mp3", "ogg", "aac", "flac", "wav", "m4a"];
+                        var videoExts = ["mp4", "webm", "mkv", "mov", "avi", "ogv"];
                         var lpath = linkEl.pathname.toLowerCase().split('#')[0].split('?')[0];
                         function checkExt(exts, replacer) {
                             for (var i = 0; i < exts.length; i++) {
