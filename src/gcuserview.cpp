@@ -74,9 +74,9 @@ public:
         showAffiliations_ = o->getOption("options.ui.muc.userlist.show-affiliation-icons").toBool();
         showStatusIcons_  = o->getOption("options.ui.muc.userlist.show-status-icons").toBool();
         showAvatar_       = o->getOption("options.ui.muc.userlist.avatars.show").toBool();
-        avatarSize_       = o->getOption("options.ui.muc.userlist.avatars.size").toInt();
+        avatarSize_       = pointToPixel(o->getOption("options.ui.muc.userlist.avatars.size").toInt());
         avatarAtLeft_     = o->getOption("options.ui.muc.userlist.avatars.avatars-at-left").toBool();
-        avatarRadius_     = o->getOption("options.ui.muc.userlist.avatars.radius").toInt();
+        avatarRadius_     = pointToPixel(o->getOption("options.ui.muc.userlist.avatars.radius").toInt());
 
         QFont font;
         font.fromString(o->getOption("options.ui.look.font.contactlist").toString());
