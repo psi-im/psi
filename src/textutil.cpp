@@ -349,6 +349,11 @@ QString TextUtil::linkify(const QString &in)
             isUrl = true;
             href = "";
         }
+        else if(linkify_pmatch(out, n, "file://")) {
+            n += 7;
+            isUrl = true;
+            href = "";
+        }
         else if (linkify_pmatch(out, n, "magnet:")) {
             n += 7;
             isUrl = true;
