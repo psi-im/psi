@@ -324,7 +324,7 @@ void PsiMain::bail()
 {
     if(pcon) {
         pcon->gracefulDeinit([this](){
-            delete pcon;
+            pcon->deleteLater();
             pcon = 0;
             quit();
         });

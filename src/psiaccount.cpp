@@ -448,6 +448,11 @@ public:
         updateOnlineContactsCountTimer_->setInterval(500);
         updateOnlineContactsCountTimer_->setSingleShot(true);
         connect(updateOnlineContactsCountTimer_, SIGNAL(timeout()), SLOT(updateOnlineContactsCountTimeout()));
+
+        logoutTimer = new QTimer(this);
+        logoutTimer->setInterval(500);
+        logoutTimer->setSingleShot(true);
+        connect(logoutTimer, SIGNAL(timeout()), SLOT(finishLogout()));
     }
 
     PsiContactList* contactList;
@@ -477,6 +482,7 @@ public:
     QString currentConnectionError;
     int currentConnectionErrorCondition;
     QTimer *updateOnlineContactsCountTimer_;
+    QTimer *logoutTimer;
 
     // Tune
     Tune lastTune;
@@ -755,6 +761,13 @@ public slots:
         // signals
         emit account->enabledChanged();
         emit account->updatedAccount();
+    }
+
+    void finishLogout()
+    {
+        account->cleanupStream();
+        account->isDisconnecting = false;
+        emit account->disconnected();
     }
 
     void client_xmlIncoming(const QString &s)
@@ -1823,16 +1836,11 @@ void PsiAccount::logout(bool fast, const Status &s)
     stateChanged();
 
     d->client->close(fast);
-    QPointer<PsiAccount> protector(this);
-    QTimer::singleShot(500,[this,protector]() { // delayed close to let stream close tag to be written (this fix is rather has to be in iris)
-        if (!protector)
-            return;
-
-        cleanupStream();
-
-        emit disconnected();
-        isDisconnecting = false;
-    });
+    if (fast) {
+        d->finishLogout();
+    } else { // let iris queue write all the stuff
+        d->logoutTimer->start();
+    }
 }
 
 // TODO: search through the Psi and replace most of loggedIn() calls with isAvailable()
