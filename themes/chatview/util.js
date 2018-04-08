@@ -242,7 +242,7 @@ function initPsiTheme() {
                     var linkEl = links[li];
                     if (youtube.indexOf(linkEl.hostname) != -1) {
                         chat.util.replaceYoutube(linkEl);
-                    } else if ((linkEl.protocol == "http:" || linkEl.protocol == "https:") && linkEl.hostname != "psi") {
+                    } else if ((linkEl.protocol == "http:" || linkEl.protocol == "https:" || linkEl.protocol == "file:") && linkEl.hostname != "psi") {
                         chat.util.replaceLinkAsync(linkEl);
                     }
                 }
