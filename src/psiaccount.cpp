@@ -1943,7 +1943,14 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
                     d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob*>(job)->textData());
                 } else {
                     qWarning("KeyChain error=%d", job->error());
-                    if (passwordPrompt()) {
+                    bool accepted = passwordPrompt();
+                    if (!d->stream) {
+                        // tcp socket reports failure RemoteHostClosedError.
+                        // baically we have to reestablish connection if it's lost here.
+                        qWarning("fixme: stream was cleaned up while waiting for password input");
+                        return;
+                    }
+                    if (accepted) {
                         d->stream->setPassword(d->acc.pass);
                     } else {
                         d->stream->abortAuth();
