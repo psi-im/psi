@@ -1897,18 +1897,11 @@ void PsiCon::doWakeup()
     //setGlobalStatus(Status());
 
     foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
-        if (account->userAccount().opt_connectAfterSleep) {
-            // Should we do this when the network comes up ?
-            if (account->accountOptions().opt_autoSameStatus) {
-                Status s = account->accountOptions().lastStatus;
-                account->setStatus(s, account->accountOptions().lastStatusWithPriority, true);
-                emit statusMessageChanged(s.status());
-            }
-            else {
-                account->setStatus(makeStatus(XMPP::Status::Online, ""), false, true);
-            }
-        }
+        account->doWakeup();
     }
+
+    if(d->contactList && d->contactList->defaultAccount())
+        emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
 }
 
 PsiActionList *PsiCon::actionList() const

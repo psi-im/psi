@@ -3585,6 +3585,21 @@ void PsiAccount::doDisco()
     actionDisco(d->jid.domain(), "");
 }
 
+void PsiAccount::doWakeup()
+{
+    if (userAccount().opt_connectAfterSleep) {
+        // Should we do this when the network comes up ?
+        cleanupStream();
+        if (accountOptions().opt_autoSameStatus) {
+            Status s = accountOptions().lastStatus;
+            setStatus(s, accountOptions().lastStatusWithPriority, true);
+        }
+        else {
+            setStatus(makeStatus(XMPP::Status::Online, ""), false, true);
+        }
+    }
+}
+
 void PsiAccount::actionDisco(const Jid &j, const QString &node)
 {
     DiscoDlg *w = new DiscoDlg(this, j, node);

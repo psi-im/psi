@@ -208,6 +208,7 @@ public:
     void changePW();
     void changeStatus(int, bool forceDialog = false);
     void doDisco();
+    void doWakeup();
 
     void showXmlConsole();
     void openAddUserDlg();
