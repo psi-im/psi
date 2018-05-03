@@ -241,7 +241,7 @@ void PsiChatDlg::initUi()
     PsiToolTip::install(ui_.avatar);
 
     UserListItem* u = account()->findFirstRelevant(jid());
-    if (u && u->isSecure(jid().resource())) {
+    if (u && u->isSecure(jid().resource()) && account()->hasPGP()) {
         setPGPEnabled(true);
     }
 
