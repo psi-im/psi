@@ -827,17 +827,17 @@ void ChatDlg::doSend()
         }
     }
     else {
-        aSend(m);
-        doneSend(m);
+        aSend(m_);
+        doneSend();
     }
 
     chatEdit()->setFocus();
 }
 
-void ChatDlg::doneSend(const Message &m)
+void ChatDlg::doneSend()
 {
     historyState = false;
-    appendMessage(m, true);
+    appendMessage(m_, true);
     disconnect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     chatEdit()->clear();
 
@@ -854,7 +854,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
     }
     transid_ = -1;
     if (b) {
-        doneSend(m_);
+        doneSend();
     }
     else {
         PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);

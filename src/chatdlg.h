@@ -161,7 +161,7 @@ protected:
 
     void updateRealJid();
     void resetComposing();
-    void doneSend(const Message &m);
+    void doneSend();
     void holdMessages(bool hold);
     void dispatchMessage(const MessageView &mv);
     void displayMessage(const MessageView &mv);
