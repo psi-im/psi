@@ -1998,7 +1998,7 @@ void PsiAccount::cs_authenticated()
 
     QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
 
-    d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
+    d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource, this);
     if (d->client->isSessionRequired()) {
         JT_Session *j = new JT_Session(d->client->rootTask());
         connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -2976,10 +2976,6 @@ void PsiAccount::processIncomingMessage(const Message &_m)
             }
         }
     }
-
-#ifdef PSI_PLUGINS
-    m.setWasEncrypted(PluginManager::instance()->stanzaWasEncrypted(m.id()));
-#endif
 
     MessageEvent::Ptr me(new MessageEvent(m, this));
     me->setOriginLocal(false);
@@ -4769,41 +4765,40 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 void PsiAccount::dj_sendMessage(Message &m, bool log)
 {
     UserListItem *u = findFirstRelevant(m.to());
-    Message nm = m;
 
     if(PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString() == "current-open") {
         if(u) {
             switch(u->lastMessageType()) {
-                case 0: nm.setType(""); break;
-                case 1: nm.setType("chat"); break;
+                case 0: m.setType(""); break;
+                case 1: m.setType("chat"); break;
             }
         }
     }
 
 #ifdef PSI_PLUGINS
-    if (!nm.body().isEmpty()) {
-        QString body = nm.body();
-        QString subject = nm.subject();
+    if (!m.body().isEmpty()) {
+        QString body = m.body();
+        QString subject = m.subject();
 
-        if(PluginManager::instance()->processOutgoingMessage(this, nm.to().full(), body, nm.type(), subject))
+        if(PluginManager::instance()->processOutgoingMessage(this, m.to().full(), body, m.type(), subject))
             return;
-        if (body != nm.body()) {
-            nm.setBody(body);
+        if (body != m.body()) {
+            m.setBody(body);
         }
-        if (subject != nm.subject()) {
-            nm.setSubject(subject);
+        if (subject != m.subject()) {
+            m.setSubject(subject);
         }
     }
 #endif
 
-    if (!nm.body().isEmpty()) {
+    if (!m.body().isEmpty()) {
         UserListItem *u = findFirstRelevant(m.to());
         if (!u || (!u->isConference() && u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::From)) {
-            nm.setNick(nick());
+            m.setNick(nick());
         }
     }
 
-    d->client->sendMessage(nm);
+    d->client->sendMessage(m, this);
 
     // only toggle if not an invite or body is not empty
     if(m.invite().isEmpty() && !m.body().isEmpty())
@@ -4840,11 +4835,6 @@ void PsiAccount::dj_sendMessage(Message &m, bool log)
                 e->closeAfterReply();
         }
     }
-
-#ifdef PSI_PLUGINS
-    // this flag will be checked in ChatDlg::appendMessage
-    m.setWasEncrypted(PluginManager::instance()->stanzaWasEncrypted(m.id()));
-#endif
 }
 
 void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
@@ -6736,5 +6726,14 @@ void PsiAccount::ed_deny(const Jid &j)
     }
 }
 
+bool PsiAccount::decryptMessageElement(QDomElement &element)
+{
+    return PluginManager::instance()->decryptMessageElement(this, element);
+}
+
+bool PsiAccount::encryptMessageElement(QDomElement &element)
+{
+    return PluginManager::instance()->encryptMessageElement(this, element);
+}
 
 #include "psiaccount.moc"

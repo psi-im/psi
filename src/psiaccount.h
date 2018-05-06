@@ -32,6 +32,7 @@
 
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
+#include "xmpp_encryptionhandler.h"
 #include "psiactions.h"
 #include "psievent.h"
 #include "mood.h"
@@ -98,7 +99,7 @@ struct GCContact;
 
 class AvCallManager;
 
-class PsiAccount : public QObject
+class PsiAccount : public QObject, EncryptionHandler
 {
     Q_OBJECT
 protected:
@@ -561,6 +562,9 @@ private:
     QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const;
     void findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const;
     void findDialogs(const QMetaObject& mo, QList<void*>* list) const;
+
+    bool decryptMessageElement(QDomElement &element) override;
+    bool encryptMessageElement(QDomElement &element) override;
 };
 
 #endif

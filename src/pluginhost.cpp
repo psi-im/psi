@@ -568,15 +568,6 @@ bool PluginHost::outgoingXml(int account, QDomElement &e)
     return handled;
 }
 
-bool PluginHost::stanzaWasEncrypted(const QString &stanzaId)
-{
-    StanzaFilter *ef = qobject_cast<StanzaFilter*>(plugin_);
-    if (ef && ef->stanzaWasEncrypted(stanzaId)) {
-        return true;
-    }
-    return false;
-}
-
 //-- for EventFilter ------------------------------------------------
 
 /**
@@ -1346,6 +1337,22 @@ void PluginHost::createNewMessageEvent(int account, QDomElement const &element)
 void PluginHost::playSound(const QString &fileName)
 {
     soundPlay(fileName);
+}
+
+/**
+ * EncryptionSupport
+ */
+
+bool PluginHost::decryptMessageElement(int account, QDomElement &message)
+{
+    EncryptionSupport *es = qobject_cast<EncryptionSupport*>(plugin_);
+    return es && es->decryptMessageElement(account, message);
+}
+
+bool PluginHost::encryptMessageElement(int account, QDomElement &message)
+{
+    EncryptionSupport *es = qobject_cast<EncryptionSupport*>(plugin_);
+    return es && es->encryptMessageElement(account, message);
 }
 
 //-- helpers --------------------------------------------------------

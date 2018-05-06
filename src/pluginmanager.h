@@ -73,7 +73,6 @@ public:
     bool processMessage(PsiAccount* account, const QString& jidFrom, const QString& body, const QString& subject);
     bool processOutgoingMessage(PsiAccount* account, const QString& jidTo, QString& body, const QString& type, QString& subject);
     void processOutgoingStanza(PsiAccount* account, QDomElement &stanza);
-    bool stanzaWasEncrypted(const QString &stanzaId);
     void logout(PsiAccount* account);
 
     void applyOptions(const QString& plugin);
@@ -94,6 +93,9 @@ public:
     bool hasInfoProvider(const QString& plugin) const;
     QIcon icon(const QString& plugin) const;
     QStringList pluginFeatures() const;
+
+    bool decryptMessageElement(PsiAccount *account, QDomElement &message) const;
+    bool encryptMessageElement(PsiAccount *account, QDomElement &message) const;
 
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;

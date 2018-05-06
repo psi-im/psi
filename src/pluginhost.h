@@ -32,6 +32,7 @@
 #include "eventcreatinghost.h"
 #include "contactinfoaccessinghost.h"
 #include "soundaccessinghost.h"
+#include "encryptionsupport.h"
 
 class QWidget;
 class QPluginLoader;
@@ -41,12 +42,12 @@ class IqNamespaceFilter;
 
 class PluginHost: public QObject, public StanzaSendingHost, public IqFilteringHost, public OptionAccessingHost, public ShortcutAccessingHost, public IconFactoryAccessingHost,
     public ActiveTabAccessingHost, public ApplicationInfoAccessingHost, public AccountInfoAccessingHost, public PopupAccessingHost, public ContactStateAccessingHost
-    , public PsiAccountControllingHost, public EventCreatingHost, public ContactInfoAccessingHost, public SoundAccessingHost
+    , public PsiAccountControllingHost, public EventCreatingHost, public ContactInfoAccessingHost, public SoundAccessingHost, public EncryptionSupport
 {
     Q_OBJECT
     Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost ShortcutAccessingHost IconFactoryAccessingHost
         ActiveTabAccessingHost ApplicationInfoAccessingHost AccountInfoAccessingHost PopupAccessingHost ContactStateAccessingHost
-        PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost SoundAccessingHost)
+        PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost SoundAccessingHost EncryptionSupport)
 
 public:
     PluginHost(PluginManager* manager, const QString& pluginFile);
@@ -78,7 +79,6 @@ public:
     // for StanzaFilter and IqNamespaceFilter
     bool incomingXml(int account, const QDomElement& e);
     bool outgoingXml(int account, QDomElement &e);
-    bool stanzaWasEncrypted(const QString &stanzaId);
 
     // for EventFilter
     bool processEvent(int account, QDomElement& e);
@@ -206,6 +206,10 @@ public:
     void createNewMessageEvent(int account, QDomElement const &element);
 
     void playSound(const QString& fileName);
+
+    // EncryptionSupport
+    bool decryptMessageElement(int account, QDomElement &message);
+    bool encryptMessageElement(int account, QDomElement &message);
 
 private:
     PluginManager* manager_;
