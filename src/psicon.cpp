@@ -35,6 +35,7 @@
 #include <QMessageBox>
 #include <QDir>
 #include <QSessionManager>
+#include <QNetworkConfigurationManager>
 
 #include "iris/processquit.h"
 #include "s5b.h"
@@ -223,6 +224,7 @@ public:
         , contactList(0)
         , iconSelect(0)
         , quitting(false)
+        , wakeupPending(false)
         , alertManager(parent)
         , bossKey(0)
         , popupManager(0)
@@ -303,11 +305,13 @@ public:
     QMenuBar* defaultMenuBar;
     TabManager *tabManager;
     bool quitting;
+    bool wakeupPending;
     QTimer* updatedAccountTimer_;
     AutoUpdater *autoUpdater;
     AlertManager alertManager;
     BossKey *bossKey;
     PopupManager * popupManager;
+    QNetworkConfigurationManager netConfMng;
 
     struct IdleSettings
     {
@@ -398,6 +402,8 @@ bool PsiCon::init()
     // PGP initialization (needs to be before any gpg usage!)
     PGPUtil::instance();
 #endif
+
+    connect(&d->netConfMng, &QNetworkConfigurationManager::onlineStateChanged, this, &PsiCon::networkOnlineChanged);
 
     d->contactList = new PsiContactList(this);
 
@@ -1896,12 +1902,23 @@ void PsiCon::doWakeup()
     // TODO: Restore the status from before the log out. Make it an (hidden) option for people with a bad wireless connection.
     //setGlobalStatus(Status());
 
-    foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
-        account->doWakeup();
-    }
+    d->wakeupPending = true;
+    if (d->netConfMng.isOnline()) {
+        networkOnlineChanged(true);
+    } // else will be called by signal
+}
 
-    if(d->contactList && d->contactList->defaultAccount())
-        emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
+void PsiCon::networkOnlineChanged(bool online)
+{
+    if (d->wakeupPending && online) {
+        d->wakeupPending = false;
+        foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+            account->doWakeup();
+        }
+
+        if(d->contactList && d->contactList->defaultAccount())
+            emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
+    }
 }
 
 PsiActionList *PsiCon::actionList() const
