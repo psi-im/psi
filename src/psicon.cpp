@@ -312,6 +312,7 @@ public:
     BossKey *bossKey;
     PopupManager * popupManager;
     QNetworkConfigurationManager netConfMng;
+    QNetworkSession *netSession = nullptr;
 
     struct IdleSettings
     {
@@ -403,7 +404,9 @@ bool PsiCon::init()
     PGPUtil::instance();
 #endif
 
-    connect(&d->netConfMng, &QNetworkConfigurationManager::onlineStateChanged, this, &PsiCon::networkOnlineChanged);
+    d->netSession = new QNetworkSession(d->netConfMng.defaultConfiguration(), this);
+    connect(d->netSession, &QNetworkSession::opened, this, &PsiCon::networkSessionOpened);
+    d->netSession->open();
 
     d->contactList = new PsiContactList(this);
 
@@ -1902,15 +1905,12 @@ void PsiCon::doWakeup()
     // TODO: Restore the status from before the log out. Make it an (hidden) option for people with a bad wireless connection.
     //setGlobalStatus(Status());
 
-    d->wakeupPending = true;
-    if (d->netConfMng.isOnline()) {
-        networkOnlineChanged(true);
-    } // else will be called by signal
+    d->wakeupPending = true; // and wait for signal till network session is opened (proved to work on gentoo+nm+xfce)
 }
 
-void PsiCon::networkOnlineChanged(bool online)
+void PsiCon::networkSessionOpened()
 {
-    if (d->wakeupPending && online) {
+    if (d->wakeupPending) {
         d->wakeupPending = false;
         foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
             account->doWakeup();

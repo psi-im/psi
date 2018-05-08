@@ -186,7 +186,7 @@ private slots:
     void aboutToQuit();
     void secondsIdle(int);    
     void proceedWithSleep();
-    void networkOnlineChanged(bool online);
+    void networkSessionOpened();
 private:
     class Private;
     Private *d;
