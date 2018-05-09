@@ -58,7 +58,9 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
 
     // XData form
     _xdata = new XDataWidget(_psi, this, _client, receiver);
-    _xdata->setForm(r.data(), false);
+    _xdata->setForm(r.data());
+    //_xdata->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    _xdata->layout()->setSizeConstraint(QLayout::SetFixedSize);
     _ui.scrollArea->setWidget(_xdata);
     if (!r.hasData() && (r.hasNote() || !r.data().instructions().isEmpty()))
         _ui.scrollArea->setVisible(false);
@@ -186,7 +188,12 @@ void AHCFormDlg::doCancel()
 void AHCFormDlg::commandExecuted()
 {
     _ui.busy->stop();
-    close();
+    AHCExecuteTask *t = dynamic_cast<AHCExecuteTask *>(sender());
+    if (t && t->hasCommandPayload()) {
+        _xdata->setForm(t->resultCommand().data());
+    } else {
+        close();
+    }
 }
 
 XData AHCFormDlg::data() const
