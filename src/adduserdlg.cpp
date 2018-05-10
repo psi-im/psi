@@ -57,7 +57,7 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
     init(groups, pa);
     d->services = services;
 
-
+    cb_service->setItemIcon(0,  IconsetFactory::icon("psi/xmpp").icon());
     QStringList::ConstIterator it1 = services.begin();
     QStringList::ConstIterator it2 = names.begin();
     for(; it1 != services.end(); ++it1, ++it2)
