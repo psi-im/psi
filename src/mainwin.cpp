@@ -1048,6 +1048,12 @@ void MainWin::actAboutQtActivated ()
 
 void MainWin::actAboutPsiMediaActivated ()
 {
+    if (!PsiMedia::isSupported()) {
+        QMessageBox::warning(this, tr("psimedia is unavailable"),
+                             tr("Psi media library is not loaded or not initialized.<br>"
+                                "Please check <a href=\"https://github.com/psi-im/psimedia\">https://github.com/psi-im/psimedia</a> for more details."));
+        return;
+    }
     QString creditText = PsiMedia::creditText();
     QString gstVersion = extract_gst_version(creditText);
 
