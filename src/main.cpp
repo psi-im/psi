@@ -554,6 +554,9 @@ int main(int argc, char *argv[])
     QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
     QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
     QApplication::setQuitOnLastWindowClosed(false);
+#if QT_VERSION >= 0x051000
+    QCoreApplication::setAttribute( Qt::AA_DisableWindowContextHelpButton, true );
+#endif
 
 #ifdef Q_OS_MAC
     QDir dir(QApplication::applicationDirPath());

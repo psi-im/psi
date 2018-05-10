@@ -301,6 +301,7 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QString &def, QWidget *paren
     ui_.setupUi(this);
 
     setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlags(windowFlags() | Qt::WindowContextHelpButtonHint);
     d = new Private(this);
     d->list = list;
 
