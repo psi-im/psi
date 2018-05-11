@@ -345,8 +345,24 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
             }
             return true;
         } else {
-            QByteArray data = Theme(this).loadData(httpRelPath + path);
-            if (!data.isNull()) {
+            bool loaded;
+            QByteArray data = Theme(this).loadData(httpRelPath + path, &loaded);
+            if (loaded) {
+                if (!data.isNull() && path.endsWith(QLatin1String(".tiff"))) {
+                    // seems like we are loading tiff image which is supported by safari only.
+                    // let's convert it
+                    QImage image(QImage::fromData(data));
+                    QByteArray ba;
+                    QBuffer buffer(&ba);
+                    buffer.open(QIODevice::WriteOnly);
+                    image.save(&buffer, "PNG");
+                    if (!ba.isNull()) {
+                        data = ba;
+                    }
+                }
+                if (path.endsWith(QLatin1String(".css"))) {
+                    res->headers().insert("Content-Type", "text/css;charset=utf-8");
+                }
                 res->setStatusCode(qhttp::ESTATUS_OK);
                 res->end(data);
                 return true;

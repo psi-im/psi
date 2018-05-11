@@ -57,9 +57,9 @@ QWidget *ThemePrivate::previewWidget()
     return nullptr;
 }
 
-QByteArray ThemePrivate::loadData(const QString &fileName) const
+QByteArray ThemePrivate::loadData(const QString &fileName, bool *loaded) const
 {
-    return Theme::loadData(fileName, filepath, caseInsensitiveFS);
+    return Theme::loadData(fileName, filepath, caseInsensitiveFS, loaded);
 }
 
 

@@ -128,9 +128,12 @@ bool Theme::isCompressed() const
     return isCompressed(QFileInfo(d->filepath));
 }
 
-QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bool caseInsensetive)
+QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bool caseInsensetive, bool *loaded)
 {
     QByteArray ba;
+    if (loaded) {
+        *loaded = false;
+    }
     //qDebug("loading %s from %s", qPrintable(fileName), qPrintable(dir));
     QFileInfo fi(themePath);
     if ( fi.isDir() ) {
@@ -170,6 +173,9 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
         }
 
         ba = file.readAll();
+        if (loaded) {
+            *loaded = true;
+        }
     }
 #ifdef Theme_ZIP
     else if ( fi.suffix() == "jisp" || fi.suffix() == "zip" || fi.suffix() == "theme" ) {
@@ -183,7 +189,11 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
         QString n = fi.completeBaseName() + '/' + fileName;
         if ( !z.readFile(n, &ba) ) {
             n = "/" + fileName;
-            z.readFile(n, &ba);
+            if (loaded) {
+                *loaded = z.readFile(n, &ba);
+            } else {
+                z.readFile(n, &ba);
+            }
         }
     }
 #endif
@@ -191,9 +201,9 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
     return ba;
 }
 
-QByteArray Theme::loadData(const QString &fileName) const
+QByteArray Theme::loadData(const QString &fileName, bool *loaded) const
 {
-    return d->loadData(fileName);
+    return d->loadData(fileName, loaded);
 }
 
 Theme::ResourceLoader *Theme::resourceLoader() const

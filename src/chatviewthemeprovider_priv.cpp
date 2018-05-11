@@ -172,6 +172,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
                 if (fn.endsWith(QLatin1String(".js"))) {
                     res->headers().insert("Content-Type", "application/javascript;charset=utf-8");
                 }
+                if (fn.endsWith(QLatin1String(".css"))) {
+                    res->headers().insert("Content-Type", "text/css;charset=utf-8");
+                }
                 res->end(f.readAll());
                 f.close();
                 return true;
