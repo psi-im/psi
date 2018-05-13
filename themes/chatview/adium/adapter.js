@@ -179,11 +179,11 @@ chat.util.updateObject(adapter, function(chat){
         toString : function() {
             //chat.console("DEBUG: TemplateVar.prototype.toString " + session);
             var d = cdata[this.name];
-            if (this.name == "sender") { //may not be html
+            if (this.name === "sender") { //may not be html
                 d = chat.util.escapeHtml(d);
             } else if (d instanceof Date) {
                 d = server.formatDate(d, "yyyy-MM-dd");
-            } else if (this.name == "userIconPath") { // associated with message
+            } else if (this.name === "userIconPath") { // associated with message
                 var url;
                 if (cdata.local) {
                     url = session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
@@ -198,14 +198,14 @@ chat.util.updateObject(adapter, function(chat){
                 //chat.console((cdata.local? "local " : "remote ") + "avatar: " + url)
                 return url;
 
-            } else if (this.name == "incomingIconPath") { // associated with chat
+            } else if (this.name === "incomingIconPath") { // associated with chat
                 return session.remoteUserImage? session.remoteUserImage : defaultAvatars.incomingImage;
-            } else if (this.name == "outgoingIconPath") { // associated with chat
+            } else if (this.name === "outgoingIconPath") { // associated with chat
                 return session.localUserImage? session.localUserImage : defaultAvatars.ougoingImage;
 
-            } else if (this.name == "senderColor") {
+            } else if (this.name === "senderColor") {
                 return session.mucNickColor(cdata.sender, cdata.local);
-            } else if (this.name == "message" && cdata.id) {
+            } else if (this.name === "message" && cdata.id) {
                 return chat.util.replaceableMessage(session.isMuc, cdata.local, cdata.sender, cdata.id, d);
             }
 

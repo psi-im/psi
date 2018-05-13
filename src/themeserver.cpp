@@ -36,6 +36,7 @@ ThemeServer::ThemeServer(QObject *parent) :
     {
         // very global stuff first
         QString path = req->url().path();
+        //qDebug() << "LOADING: " << path << serverPort();
 
         foreach (auto &h, pathHandlers) {
             if (path.startsWith(h.first)) {

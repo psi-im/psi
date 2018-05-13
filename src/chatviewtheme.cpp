@@ -230,6 +230,8 @@ QVariantMap ChatViewThemePrivate::loadFromCacheMulti(const QVariantList &list)
     for (auto &item : list) {
         QString key = item.toString();
         ret[key] = cache.value(key);
+        //if (key.endsWith("html"))
+        //    qDebug() << "Loaded from cache" << key << ret[key].toString().left(50) << "priv=" << (void*)this;
     }
     return ret;
 }
@@ -266,15 +268,15 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     }
 
     QWebChannel *channel = page->webChannel();
-    if (!channel) {
-        channel = new QWebChannel(session->webView());
-
-        channel->registerObject(QLatin1String("srvUtil"), new ChatViewThemeJSUtil(this, session->webView()));
-        channel->registerObject(QLatin1String("srvSession"), session);
-
-        page->setWebChannel(channel);
-        // channel is kept on F5 but all objects are cleared, so will be added later
+    QObject *oldUtil = nullptr;
+    if (channel) {
+        oldUtil = channel->registeredObjects()[QLatin1String("srvUtil")];
+        oldUtil->deleteLater();
     }
+    channel = new QWebChannel(session->webView());
+    channel->registerObject(QLatin1String("srvUtil"), new ChatViewThemeJSUtil(this, session->webView()));
+    channel->registerObject(QLatin1String("srvSession"), session);
+    page->setWebChannel(channel);
 
     ChatViewThemeProvider *cvProvider = static_cast<ChatViewThemeProvider*>(provider);
 
@@ -532,9 +534,12 @@ void ChatViewJSLoader::saveFilesToCache(const QVariantMap &map)
 {
     auto it = map.constBegin();
     while (it != map.constEnd()) {
-        QByteArray ba = Theme(theme).loadData(it.value().toString());
-        if (!ba.isNull()) {
+        bool loaded;
+        QByteArray ba = Theme(theme).loadData(it.value().toString(), &loaded);
+        if (loaded) {
             theme->cache.insert(it.key(), QString::fromUtf8(ba));
+            //qDebug() << "Caching" << it.value() << "from" << Theme(theme).filePath()
+            //         << theme->cache[it.key()] << "priv=" << (void*)theme;
         }
         ++it;
     }

@@ -409,11 +409,12 @@ ChatView::~ChatView()
 void ChatView::init()
 {
     Theme curTheme = d->themeProvider()->current();
+    //qDebug() << "Init chatview with theme" << curTheme.name();
     if (curTheme.state() != Theme::Loaded) {
         qDebug("ChatView theme is not loaded. this is fatal");
         return;
     }
-    d->theme = curTheme;// TODO rewrite this pointer magic
+    d->theme = curTheme;
 
 #ifndef WEBENGINE
     ((ChatViewPage*)d->webView->page())->setCVPrivate(d.data());
