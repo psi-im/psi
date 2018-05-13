@@ -421,12 +421,13 @@ void ChatView::init()
 #endif
     d->jsObject->init(d->theme);
 
+    /* this commented out code is broken. try to fix it if you can.
     bool tbg = d->jsObject->isTransparentBackground();
     QWidget *w = this;
     while (w) {
         w->setAttribute(Qt::WA_TranslucentBackground, tbg);
         w = w->parentWidget();
-    }
+    }*/
 }
 
 void ChatView::setEncryptionEnabled(bool enabled)
