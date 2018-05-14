@@ -596,8 +596,13 @@ QString ChatViewJSLoader::getFileContents(const QString &name) const
 
 QString ChatViewJSLoader::getFileContentsFromAdapterDir(const QString &name) const
 {
-    QString adapterPath = theme->provider->themePath(QLatin1String("chatview/") + theme->id.split('/').first());
-    QFile file(adapterPath + "/" + name);
+    QString relPath = QLatin1String("chatview/") + theme->id.split('/').first() + QLatin1Char('/') + name;
+    QString filePath = theme->provider->themePath(relPath);
+    if (filePath.isEmpty()) {
+        qDebug("%s is not found", qPrintable(relPath));
+        return QString();
+    }
+    QFile file(filePath);
     if (file.open(QIODevice::ReadOnly)) {
         QByteArray result = file.readAll();
         file.close();
