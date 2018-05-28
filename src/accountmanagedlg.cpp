@@ -28,6 +28,7 @@
 #include <QTimer>
 #include <QHeaderView>
 #include <QDropEvent>
+#include <QButtonGroup>
 
 #include "psicon.h"
 #include "psiaccount.h"
