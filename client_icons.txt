@@ -32,6 +32,7 @@ coccinella  coccinella
 conversations conversations
 dictbot dictbot
 digsby digsby
+dino dino.im
 ekg2 ekg2
 emess emess
 emess-old emess.eqx.su
