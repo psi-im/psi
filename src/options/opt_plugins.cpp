@@ -242,7 +242,7 @@ void OptionsTabPlugins::settingsClicked(int item)
             sw = new PluginsOptionsDlg(pluginName, psi, d);
             sw->setObjectName(shortName);
         }
-        bringToFront(sw);
+        sw->open();
     }
 }
 
