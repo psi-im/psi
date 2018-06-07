@@ -685,8 +685,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
     connect(ui_.contactList, SIGNAL(clicked(QModelIndex)), SLOT(openSelectedContact()));
     connect(ui_.tbFindForward, SIGNAL(clicked()), SLOT(findMessages()));
     connect(ui_.tbFindBackward, SIGNAL(clicked()), SLOT(findMessages()));
-    connect(ui_.buttonLastest, SIGNAL(released()), SLOT(getLatest()));
-    connect(ui_.buttonEarliest, SIGNAL(released()), SLOT(getEarliest()));
+    connect(ui_.buttonLast, SIGNAL(released()), SLOT(getLatest()));
+    connect(ui_.buttonFirst, SIGNAL(released()), SLOT(getEarliest()));
     connect(ui_.calendar, SIGNAL(selectionChanged()), SLOT(getDate()));
     connect(ui_.calendar, SIGNAL(activated(QDate)), SLOT(getDate()));
 #ifndef HAVE_X11    // linux has this feature built-in
@@ -1162,8 +1162,8 @@ void HistoryDlg::setButtons()
     bool can_forward  = displayProxy->canForward();
     ui_.buttonPrevious->setEnabled(can_backward);
     ui_.buttonNext->setEnabled(can_forward);
-    ui_.buttonEarliest->setEnabled(can_backward);
-    ui_.buttonLastest->setEnabled(can_forward);
+    ui_.buttonFirst->setEnabled(can_backward);
+    ui_.buttonLast->setEnabled(can_forward);
 }
 
 void HistoryDlg::setLooks(QWidget *w)
