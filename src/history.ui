@@ -220,12 +220,12 @@
           <enum>QLayout::SetDefaultConstraint</enum>
          </property>
          <item>
-          <widget class="QPushButton" name="buttonEarliest">
+          <widget class="QPushButton" name="buttonFirst">
            <property name="focusPolicy">
             <enum>Qt::NoFocus</enum>
            </property>
            <property name="text">
-            <string>&amp;Earliest</string>
+            <string>&amp;First</string>
            </property>
           </widget>
          </item>
@@ -272,12 +272,12 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="buttonLastest">
+          <widget class="QPushButton" name="buttonLast">
            <property name="focusPolicy">
             <enum>Qt::NoFocus</enum>
            </property>
            <property name="text">
-            <string>&amp;Lastest</string>
+            <string>&amp;Last</string>
            </property>
           </widget>
          </item>
@@ -335,10 +335,10 @@
  <tabstops>
   <tabstop>contactList</tabstop>
   <tabstop>calendar</tabstop>
-  <tabstop>buttonEarliest</tabstop>
+  <tabstop>buttonFirst</tabstop>
   <tabstop>buttonPrevious</tabstop>
   <tabstop>buttonNext</tabstop>
-  <tabstop>buttonLastest</tabstop>
+  <tabstop>buttonLast</tabstop>
   <tabstop>accountsBox</tabstop>
   <tabstop>msgLog</tabstop>
  </tabstops>
