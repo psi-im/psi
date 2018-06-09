@@ -1142,7 +1142,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->usingSSL = false;
 
     // create XMPP::Client
-    d->client = new Client;
+    d->client = new Client(nullptr, this);
 
     // Plugins
 #ifdef PSI_PLUGINS
@@ -1998,7 +1998,7 @@ void PsiAccount::cs_authenticated()
 
     QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
 
-    d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource, this);
+    d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
     if (d->client->isSessionRequired()) {
         JT_Session *j = new JT_Session(d->client->rootTask());
         connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -4798,7 +4798,7 @@ void PsiAccount::dj_sendMessage(Message &m, bool log)
         }
     }
 
-    d->client->sendMessage(m, this);
+    d->client->sendMessage(m);
 
     // only toggle if not an invite or body is not empty
     if(m.invite().isEmpty() && !m.body().isEmpty())
