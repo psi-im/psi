@@ -1142,7 +1142,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->usingSSL = false;
 
     // create XMPP::Client
-    d->client = new Client(nullptr, this);
+    d->client = new Client;
 
     // Plugins
 #ifdef PSI_PLUGINS
@@ -1154,6 +1154,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->client->setClientVersion(ApplicationInfo::version());
     d->client->setCaps(CapsSpec(ApplicationInfo::capsNode(), QCryptographicHash::Sha1));
     d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
+    d->client->setEncryptionHandler(this);
 
     DiscoItem::Identity identity;
     identity.category = "client";
@@ -6728,12 +6729,20 @@ void PsiAccount::ed_deny(const Jid &j)
 
 bool PsiAccount::decryptMessageElement(QDomElement &element)
 {
+#ifdef PSI_PLUGINS
     return PluginManager::instance()->decryptMessageElement(this, element);
+#else
+    return false;
+#endif
 }
 
 bool PsiAccount::encryptMessageElement(QDomElement &element)
 {
+#ifdef PSI_PLUGINS
     return PluginManager::instance()->encryptMessageElement(this, element);
+#else
+  return false;
+#endif
 }
 
 #include "psiaccount.moc"
