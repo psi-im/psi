@@ -33,6 +33,7 @@
 #include "contactinfoaccessinghost.h"
 #include "soundaccessinghost.h"
 #include "encryptionsupport.h"
+#include "pluginaccessinghost.h"
 
 class QWidget;
 class QPluginLoader;
@@ -42,12 +43,12 @@ class IqNamespaceFilter;
 
 class PluginHost: public QObject, public StanzaSendingHost, public IqFilteringHost, public OptionAccessingHost, public ShortcutAccessingHost, public IconFactoryAccessingHost,
     public ActiveTabAccessingHost, public ApplicationInfoAccessingHost, public AccountInfoAccessingHost, public PopupAccessingHost, public ContactStateAccessingHost
-    , public PsiAccountControllingHost, public EventCreatingHost, public ContactInfoAccessingHost, public SoundAccessingHost, public EncryptionSupport
+    , public PsiAccountControllingHost, public EventCreatingHost, public ContactInfoAccessingHost, public SoundAccessingHost, public EncryptionSupport, public PluginAccessingHost
 {
     Q_OBJECT
     Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost ShortcutAccessingHost IconFactoryAccessingHost
         ActiveTabAccessingHost ApplicationInfoAccessingHost AccountInfoAccessingHost PopupAccessingHost ContactStateAccessingHost
-        PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost SoundAccessingHost EncryptionSupport)
+        PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost SoundAccessingHost EncryptionSupport PluginAccessingHost)
 
 public:
     PluginHost(PluginManager* manager, const QString& pluginFile);
@@ -200,7 +201,7 @@ public:
     void setStatus(int account, const QString& status, const QString& statusMessage);
 
     bool appendSysMsg(int account, const QString& jid, const QString& message);
-    bool appendMsg(int account, const QString& jid, const QString& message, const QString& id);
+    bool appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted);
 
     void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
     void createNewMessageEvent(int account, QDomElement const &element);
@@ -210,6 +211,10 @@ public:
     // EncryptionSupport
     bool decryptMessageElement(int account, QDomElement &message);
     bool encryptMessageElement(int account, QDomElement &message);
+
+    // PluginAccessingHost
+
+    QObject* getPlugin(const QString &name);
 
 private:
     PluginManager* manager_;

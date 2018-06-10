@@ -895,7 +895,7 @@ bool PluginManager::appendSysMsg(int account, const QString& jid, const QString&
     return false;
 }
 
-bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id)
+bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
 {
     PsiAccount *acc = accountIds_.account(account);
     if(acc) {
@@ -912,6 +912,7 @@ bool PluginManager::appendMsg(int account, const QString& jid, const QString& me
             msg.setMessageReceipt(ReceiptRequest);
             msg.setId(id);
             msg.setTimeStamp(QDateTime::currentDateTime(), true);
+            msg.setWasEncrypted(wasEncrypted);
             chatDlg->appendMessage(msg, true);
             return true;
         }

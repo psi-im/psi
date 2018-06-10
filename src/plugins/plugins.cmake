@@ -10,6 +10,7 @@ list(APPEND PLAIN_HEADERS
     plugins/include/applicationinfoaccessinghost.h
     plugins/include/applicationinfoaccessor.h
     plugins/include/chattabaccessor.h
+    plugins/include/commandexecutor.h
     plugins/include/contactinfoaccessinghost.h
     plugins/include/contactinfoaccessor.h
     plugins/include/contactstateaccessinghost.h
@@ -27,6 +28,8 @@ list(APPEND PLAIN_HEADERS
     plugins/include/menuaccessor.h
     plugins/include/optionaccessinghost.h
     plugins/include/optionaccessor.h
+    plugins/include/pluginaccessinghost.h
+    plugins/include/pluginaccessor.h
     plugins/include/plugininfoprovider.h
     plugins/include/popupaccessinghost.h
     plugins/include/popupaccessor.h

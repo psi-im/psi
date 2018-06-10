@@ -52,6 +52,7 @@
 #include "soundaccessor.h"
 #include "textutil.h"
 #include "chattabaccessor.h"
+#include "pluginaccessor.h"
 
 /**
  * \brief Constructs a host/wrapper for a plugin.
@@ -451,6 +452,13 @@ bool PluginHost::enable()
                 qDebug("connecting sound accessor");
 #endif
                 soa->setSoundAccessingHost(this);
+            }
+            PluginAccessor *pla = qobject_cast<PluginAccessor*>(plugin_);
+            if(pla) {
+#ifndef PLUGINS_NO_DEBUG
+                qDebug("connecting plugin accessor");
+#endif
+              pla->setPluginAccessingHost(this);
             }
 
             connected_ = true;
@@ -1319,9 +1327,9 @@ bool PluginHost::appendSysMsg(int account, const QString& jid, const QString& me
     return manager_->appendSysMsg(account, jid, message);
 }
 
-bool PluginHost::appendMsg(int account, const QString& jid, const QString& message, const QString& id)
+bool PluginHost::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
 {
-    return manager_->appendMsg(account, jid, message, id);
+    return manager_->appendMsg(account, jid, message, id, wasEncrypted);
 }
 
 void PluginHost::createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot)
@@ -1353,6 +1361,20 @@ bool PluginHost::encryptMessageElement(int account, QDomElement &message)
 {
     EncryptionSupport *es = qobject_cast<EncryptionSupport*>(plugin_);
     return es && es->encryptMessageElement(account, message);
+}
+
+/**
+ * PluginAccessingHost
+ */
+
+QObject* PluginHost::getPlugin(const QString &name)
+{
+  foreach (PluginHost *plugin, manager_->pluginsByPriority_) {
+      if (plugin->name() == name || plugin->shortName() == name) {
+          return plugin->plugin_;
+      }
+  }
+  return nullptr;
 }
 
 //-- helpers --------------------------------------------------------
