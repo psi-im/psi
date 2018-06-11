@@ -175,6 +175,8 @@ private:
     void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
     void createNewMessageEvent(int account, QDomElement const &element);
 
+    void updateFeatures();
+
     friend class PluginHost;
 
 private slots:

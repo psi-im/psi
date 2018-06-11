@@ -210,14 +210,31 @@ void PluginManager::optionChanged(const QString& option)
     foreach (PluginHost* plugin, pluginByFile_.values()) {
         plugin->optionChanged(option);
         if(pluginOpt && plugin->shortName() == shortName) {
+            bool shouldUpdateFeatures;
             if(PsiOptions::instance()->getOption(option).toBool()) {
                 plugin->enable();
+                shouldUpdateFeatures = !plugin->pluginFeatures().isEmpty();
             }
             else {
+                shouldUpdateFeatures = !plugin->pluginFeatures().isEmpty();
                 if(optionsWidget_)
                     delete optionsWidget_;
                 plugin->unload();
             }
+            if (shouldUpdateFeatures) {
+                updateFeatures();
+            }
+        }
+    }
+}
+
+void PluginManager::updateFeatures()
+{
+    for (int acc_id = 0; accountIds_.isValidRange(acc_id); ++acc_id) {
+        PsiAccount *pa = accountIds_.account(acc_id);
+        pa->updateFeatures();
+        if (pa->isConnected()) {
+            pa->setStatusActual(pa->status());
         }
     }
 }
