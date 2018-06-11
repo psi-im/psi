@@ -14,6 +14,7 @@ list(APPEND PLAIN_HEADERS
     plugins/include/contactinfoaccessor.h
     plugins/include/contactstateaccessinghost.h
     plugins/include/contactstateaccessor.h
+    plugins/include/encryptionsupport.h
     plugins/include/eventcreatinghost.h
     plugins/include/eventcreator.h
     plugins/include/eventfilter.h

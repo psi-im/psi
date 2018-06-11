@@ -437,16 +437,6 @@ void PluginManager::processOutgoingStanza(PsiAccount* account, QDomElement &stan
     }
 }
 
-bool PluginManager::stanzaWasEncrypted(const QString &stanzaId)
-{
-    foreach (PluginHost* host, pluginByFile_.values()) {
-        if (host->stanzaWasEncrypted(stanzaId)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 /**
  * Notify to plugins that an account will go offline now.
  */
@@ -1047,6 +1037,26 @@ QStringList PluginManager::resources(int account, const QString& jid) const
         }
     }
     return l;
+}
+
+bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &message) const
+{
+    foreach (PluginHost* host, pluginByFile_.values()) {
+        if (host->decryptMessageElement(accountIds_.id(account), message)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool PluginManager::encryptMessageElement(PsiAccount *account, QDomElement &message) const
+{
+    foreach (PluginHost* host, pluginByFile_.values()) {
+        if (host->encryptMessageElement(accountIds_.id(account), message)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int AccountIds::appendAccount(PsiAccount *acc)

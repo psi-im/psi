@@ -659,8 +659,10 @@ void SxeManager::sendSxe(QDomElement sxe, const Jid & receiver, bool groupChat) 
 
     if(client_->isActive()) {
         // send queued messages first
-        while(!queuedMessages_.isEmpty())
-            client_->sendMessage(queuedMessages_.takeFirst());
+        while(!queuedMessages_.isEmpty()) {
+            Message message = queuedMessages_.takeFirst();
+            client_->sendMessage(message);
+        }
 
         client_->sendMessage(m);
     } else {
