@@ -474,7 +474,7 @@ public:
     UserList userList;
     UserListItem self;
     QCA::PGPKey cur_pgpSecretKey;
-    QList<Message*> messageQueue;
+    QList<Message> messageQueue;
     BlockTransportPopupList *blockTransportPopupList;
     int userCounter;
     PsiPrivacyManager* privacyManager;
@@ -1343,8 +1343,7 @@ PsiAccount::~PsiAccount()
     // nuke all related dialogs
     deleteAllDialogs();
 
-    while (!d->messageQueue.isEmpty())
-        delete d->messageQueue.takeFirst();
+    d->messageQueue.clear();
 
 #ifdef FILETRANSFER
     d->psi->ftdlg()->killTransfers(this);
@@ -2779,10 +2778,9 @@ void PsiAccount::client_messageReceived(const Message &m)
     }
 
     // if the sender is already in the queue, then queue this message also
-    foreach(Message* mi, d->messageQueue) {
-        if(mi->from().compare(_m.from())) {
-            Message *m = new Message(_m);
-            d->messageQueue.append(m);
+    foreach(Message mi, d->messageQueue) {
+        if(mi.from().compare(_m.from())) {
+            d->messageQueue.append(_m);
             return;
         }
     }
@@ -2802,8 +2800,7 @@ void PsiAccount::client_messageReceived(const Message &m)
 #ifdef HAVE_PGPUTIL
     // encrypted message?
     if(PGPUtil::instance().pgpAvailable() && !_m.xencrypted().isEmpty()) {
-        Message *m = new Message(_m);
-        d->messageQueue.append(m);
+        d->messageQueue.append(_m);
         processMessageQueue();
         return;
     }
@@ -6343,34 +6340,32 @@ void PsiAccount::pgp_decryptFinished()
 void PsiAccount::processMessageQueue()
 {
     while(!d->messageQueue.isEmpty()) {
-        Message *mp = d->messageQueue.first();
+        Message mp = d->messageQueue.first();
 
 #ifdef HAVE_PGPUTIL
         // encrypted?
-        if(PGPUtil::instance().pgpAvailable() && !mp->xencrypted().isEmpty()) {
+        if(PGPUtil::instance().pgpAvailable() && !mp.xencrypted().isEmpty()) {
             processEncryptedMessageNext();
             break;
         }
 #endif
 
-        processIncomingMessage(*mp);
+        processIncomingMessage(mp);
         d->messageQueue.removeAll(mp);
-        delete mp;
     }
 }
 
 void PsiAccount::processEncryptedMessageNext()
 {
     // 'peek' and try to process it
-    Message *mp = d->messageQueue.first();
-    processEncryptedMessage(*mp);
+    processEncryptedMessage(d->messageQueue.first());
 }
 
 void PsiAccount::processEncryptedMessageDone()
 {
     // 'pop' the message
     if (!d->messageQueue.isEmpty())
-        delete d->messageQueue.takeFirst();
+        d->messageQueue.removeFirst();
 
     // do the rest of the queue
     processMessageQueue();
