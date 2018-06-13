@@ -15,8 +15,6 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QTextCodec>
-//Added by qt3to4:
-#include <QTranslator>
 
 #include "mainwindow.h"
 
@@ -29,13 +27,9 @@ main(int argc, const char *argv[])
 {
     QApplication    *app;
     MainWindow    *mw;
-    QTranslator    *qt;
     int        result = 0;
 
     app = new QApplication(argc, (char **)argv);
-    /*qt = new QTranslator();
-    if (qt->load(LOCALE_FILE))
-        app->installTranslator(qt);*/
     mw = new MainWindow();
 
     if (mw->sockOk()) {
@@ -49,7 +43,6 @@ main(int argc, const char *argv[])
             QObject::tr("Cannot create a server socket!"));
 
     delete mw;
-    delete qt;
     delete app;
 
     return (result);
