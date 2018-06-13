@@ -135,9 +135,7 @@ IconAction::IconAction(const QString &text, QObject *parent, const QString &icon
 IconAction::~IconAction()
 {
     // delete the buttons list before our own destruction
-    IconToolButton *button;
-    foreach ( button, d->buttons )
-        delete button;
+    qDeleteAll(d->buttons);
     d->buttons.clear();
 
     delete d;
@@ -172,8 +170,7 @@ void IconAction::setPsiIcon(const PsiIcon *i)
 
     QAction::setIcon( is );
 
-    IconToolButton *btn;
-    foreach ( btn, d->buttons )
+    foreach ( IconToolButton *btn, d->buttons )
         btn->setPsiIcon ( d->icon );
 #endif
 }
@@ -257,8 +254,7 @@ void IconAction::objectDestroyed()
 void IconAction::setChecked(bool b)
 {
     QAction::setChecked(b);
-    IconToolButton *btn;
-    foreach ( btn, d->buttons )
+    foreach ( IconToolButton *btn, d->buttons )
         btn->setChecked(b);
 }
 
@@ -270,16 +266,14 @@ void IconAction::toolButtonToggled(bool b)
 void IconAction::setEnabled(bool e)
 {
     QAction::setEnabled(e);
-    IconToolButton *btn;
-    foreach ( btn, d->buttons )
+    foreach ( IconToolButton *btn, d->buttons )
         btn->setEnabled (e);
 }
 
 void IconAction::setText(const QString &t)
 {
     QAction::setText(t);
-    IconToolButton *btn;
-    foreach ( btn, d->buttons )
+    foreach ( IconToolButton *btn, d->buttons )
         btn->setText(t);
 }
 
@@ -329,8 +323,7 @@ void IconAction::setIcon( const QIcon &ic )
 {
     QAction::setIcon( ic );
 
-    IconToolButton *btn;
-    foreach ( btn, d->buttons )
+    foreach ( IconToolButton *btn, d->buttons )
         btn->setIcon( ic );
 }
 
@@ -338,8 +331,7 @@ void IconAction::setVisible( bool b )
 {
     QAction::setVisible( b );
 
-    IconToolButton *btn;
-    foreach ( btn, d->buttons ) {
+    foreach ( IconToolButton *btn, d->buttons ) {
         if ( b )
             btn->show();
         else
@@ -482,8 +474,7 @@ bool IconActionGroup::addTo( QWidget *w )
         QMenu *popup = (QMenu *)w;
 
         QList<QAction *> list = findChildren<QAction *>();
-        QAction *action;
-        foreach ( action, list )
+        foreach ( QAction *action, list )
             popup->addAction(action);
 
         return true;

@@ -853,8 +853,7 @@ public:
     {
         QStringList list;
 
-        Iconset* iconset;
-        foreach(iconset, *iconsets_) {
+        foreach(const Iconset *iconset, *iconsets_) {
             QListIterator<PsiIcon*> it = iconset->iterator();
             while (it.hasNext()) {
                 list << it.next()->name();
