@@ -26,13 +26,19 @@ class SnarlInterface {
         };
 
         struct SNARLSTRUCT {
-            SNARL_COMMANDS cmd;
-            long id;
-            long timeout;
-            long lngData2;
+            SNARL_COMMANDS cmd  = SNARL_COMMANDS::SNARL_SHOW;
+            long id             = 0;
+            long timeout        = 0;
+            long lngData2       = 0;
             char title[SNARL_STRING_LENGTH];
             char text[SNARL_STRING_LENGTH];
             char icon[SNARL_STRING_LENGTH];
+
+            SNARLSTRUCT() {
+                memset(title, 0, SNARL_STRING_LENGTH);
+                memset(text,  0, SNARL_STRING_LENGTH);
+                memset(icon,  0, SNARL_STRING_LENGTH);
+            }
         };
 
         SnarlInterface();

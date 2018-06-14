@@ -33,10 +33,10 @@
 
 struct PlayerStatus
 {
-    int playStatus;
-    int playOrder;
-    int playRepeat;
-    int stopOnce;
+    int playStatus  = 0;
+    int playOrder   = 0;
+    int playRepeat  = 0;
+    int stopOnce    = 0;
 };
 
 Q_DECLARE_METATYPE(PlayerStatus)
