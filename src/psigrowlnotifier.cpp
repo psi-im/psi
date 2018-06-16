@@ -37,6 +37,7 @@
 #include "userlist.h"
 #include "psioptions.h"
 #include "textutil.h"
+#include "iconset.h"
 
 /**
  * A class representing the notification context, which will be passed to
