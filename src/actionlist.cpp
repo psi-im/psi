@@ -160,7 +160,7 @@ ActionList *MetaActionList::actionList( const QString &name ) const
     return 0;
 }
 
-QList<ActionList*> MetaActionList::actionLists( int id ) const
+QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const
 {
     QList<ActionList*> list;
 

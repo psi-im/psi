@@ -60,7 +60,7 @@ public:
     ~MetaActionList();
 
     ActionList *actionList( const QString &name ) const;
-    QList<ActionList*> actionLists( int id ) const;
+    QList<ActionList*> actionLists( const unsigned int id ) const;
     QStringList actionLists() const;
 
     ActionList suitableActions( int id ) const;
