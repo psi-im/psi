@@ -310,8 +310,7 @@ void IconAction::doSetMenu(QMenu* p)
 {
     QAction::setMenu(p);
 
-    IconToolButton* btn;
-    foreach(btn, d->buttons) {
+    foreach(IconToolButton* btn, d->buttons) {
         btn->setMenu(0);
 
         if (menu())
