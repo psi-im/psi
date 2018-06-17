@@ -383,19 +383,17 @@ class IconActionGroup::Private : public QObject
 {
     Q_OBJECT
 public:
-    Private(IconActionGroup *_group) {
+    explicit Private(IconActionGroup *_group) {
         group = _group;
-        dirty = false;
     }
 
-    IconActionGroup *group;
+    IconActionGroup *group = nullptr;
+    QMenu *popup = nullptr;
 
-    QMenu *popup;
+    bool exclusive = false;
+    bool usesDropDown = false;
 
-    bool exclusive;
-    bool usesDropDown;
-
-    bool dirty;
+    bool dirty = false;
 
 public slots:
     void updatePopup();
