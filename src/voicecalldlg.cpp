@@ -52,19 +52,19 @@ VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller)
 
 void VoiceCallDlg::call()
 {
-    setStatus(Calling);
+    setStatus(CallStatus::Calling);
     voiceCaller_->call(jid_);
 }
 
 void VoiceCallDlg::accept_call()
 {
-    setStatus(Accepting);
+    setStatus(CallStatus::Accepting);
     voiceCaller_->accept(jid_);
 }
 
 void VoiceCallDlg::reject_call()
 {
-    setStatus(Rejecting);
+    setStatus(CallStatus::Rejecting);
     voiceCaller_->reject(jid_);
     finalize();
     close();
@@ -72,7 +72,7 @@ void VoiceCallDlg::reject_call()
 
 void VoiceCallDlg::terminate_call()
 {
-    setStatus(Terminating);
+    setStatus(CallStatus::Terminating);
     voiceCaller_->terminate(jid_);
     finalize();
     close();
@@ -81,14 +81,14 @@ void VoiceCallDlg::terminate_call()
 void VoiceCallDlg::accepted(const Jid& j)
 {
     if (jid_.compare(j)) {
-        setStatus(Accepted);
+        setStatus(CallStatus::Accepted);
     }
 }
 
 void VoiceCallDlg::rejected(const Jid& j)
 {
     if (jid_.compare(j)) {
-        setStatus(Rejected);
+        setStatus(CallStatus::Rejected);
         finalize();
     }
 }
@@ -96,14 +96,14 @@ void VoiceCallDlg::rejected(const Jid& j)
 void VoiceCallDlg::in_progress(const Jid& j)
 {
     if (jid_.compare(j)) {
-        setStatus(InProgress);
+        setStatus(CallStatus::InProgress);
     }
 }
 
 void VoiceCallDlg::terminated(const Jid& j)
 {
     if (jid_.compare(j)) {
-        setStatus(Terminated);
+        setStatus(CallStatus::Terminated);
         finalize();
     }
 }
@@ -111,70 +111,70 @@ void VoiceCallDlg::terminated(const Jid& j)
 
 void VoiceCallDlg::incoming()
 {
-    setStatus(Incoming);
+    setStatus(CallStatus::Incoming);
 }
 
 void VoiceCallDlg::setStatus(CallStatus s)
 {
     status_ = s;
     switch (s) {
-        case Calling:
+        case CallStatus::Calling:
             ui_.lb_status->setText(tr("Calling"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(true);
             break;
 
-        case Accepting:
+        case CallStatus::Accepting:
             ui_.lb_status->setText(tr("Accepting"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(true);
             break;
 
-        case Rejecting:
+        case CallStatus::Rejecting:
             ui_.lb_status->setText(tr("Rejecting"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(false);
             break;
 
-        case Terminating:
+        case CallStatus::Terminating:
             ui_.lb_status->setText(tr("Hanging up"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(false);
             break;
 
-        case Accepted:
+        case CallStatus::Accepted:
             ui_.lb_status->setText(tr("Accepted"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(true);
             break;
 
-        case Rejected:
+        case CallStatus::Rejected:
             ui_.lb_status->setText(tr("Rejected"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(false);
             break;
 
-        case InProgress:
+        case CallStatus::InProgress:
             ui_.lb_status->setText(tr("In progress"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(true);
             break;
 
-        case Terminated:
+        case CallStatus::Terminated:
             ui_.lb_status->setText(tr("Terminated"));
             ui_.pb_accept->setEnabled(false);
             ui_.pb_reject->setEnabled(false);
             ui_.pb_hangup->setEnabled(false);
             break;
 
-        case Incoming:
+        case CallStatus::Incoming:
             ui_.lb_status->setText(tr("Incoming Call"));
             ui_.pb_accept->setEnabled(true);
             ui_.pb_reject->setEnabled(true);
@@ -195,10 +195,13 @@ void VoiceCallDlg::reject()
 void VoiceCallDlg::finalize()
 {
     // Close connection
-    if (status_ == Incoming) {
+    if (status_ == CallStatus::Incoming) {
         reject_call();
     }
-    else if (status_ == InProgress || status_ == Calling || status_ == Accepting || status_ == Accepted) {
+    else if (status_ == CallStatus::InProgress ||
+             status_ == CallStatus::Calling ||
+             status_ == CallStatus::Accepting ||
+             status_ == CallStatus::Accepted) {
         terminate_call();
     }
 

@@ -1281,7 +1281,7 @@ void GCMainDlg::setMucSelfAvatar()
     }
     ui_.lblAvatar->setVisible(enabled);
     if (enabled) {
-        ui_.lblAvatar->setResizePolicy(PixmapRatioLabel::FitVertical);
+        ui_.lblAvatar->setResizePolicy(PixmapRatioLabel::Policy::FitVertical);
         ui_.lblAvatar->setMaxPixmapSize(QSize(64,64) * devicePixelRatio());
         ui_.lblAvatar->setPixmap(p);
     } else {
@@ -2462,7 +2462,7 @@ void GCMainDlg::chatEditCreated()
 
 TabbableWidget::State GCMainDlg::state() const
 {
-    return TabbableWidget::StateNone;
+    return TabbableWidget::State::None;
 }
 
 int GCMainDlg::unreadMessageCount() const

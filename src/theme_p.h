@@ -30,7 +30,7 @@ class ThemePrivate : public QSharedData
 {
 public:
     PsiThemeProvider *provider;
-    Theme::State state = Theme::NotLoaded;
+    Theme::State state = Theme::State::NotLoaded;
 
     // metadata
     QString id, name, version, description, creation, homeUrl;

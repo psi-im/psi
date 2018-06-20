@@ -36,7 +36,7 @@ namespace XMPP {
 
 using namespace XMPP;
 
-enum setStatusEnum{setStatusForAccount = 0, setStatusForJid, setStatusForJidList};
+enum setStatusEnum {setStatusForAccount = 0, setStatusForJid, setStatusForJidList};
 
 class StatusShowDlg : public QDialog
 {

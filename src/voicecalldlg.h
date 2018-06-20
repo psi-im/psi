@@ -35,7 +35,7 @@ class VoiceCallDlg : public QDialog
     Q_OBJECT
 
 public:
-    enum CallStatus {
+    enum class CallStatus : char {
         Default,
         Calling, Accepting, Rejecting, Terminating,
         Accepted, Rejected, InProgress, Terminated, Incoming

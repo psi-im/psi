@@ -24,7 +24,7 @@
 TabCompletion::TabCompletion(QObject *parent)
  : QObject(parent)
 {
-    typingStatus_ = Typing_Normal;
+    typingStatus_ = TypingStatus::Normal;
     textEdit_ = 0;
 }
 
@@ -143,7 +143,7 @@ QString TabCompletion::suggestCompletion(bool *replaced) {
             return toComplete_; // FIXME is this right?
         }
 
-        typingStatus_ = Typing_MultipleSuggestions;
+        typingStatus_ = TypingStatus::MultipleSuggestions;
         // TODO: display a tooltip that will contain all suggestedCompletion
         *replaced = true;
     }
@@ -155,7 +155,7 @@ QString TabCompletion::suggestCompletion(bool *replaced) {
 
 
 void TabCompletion::reset() {
-    typingStatus_ = Typing_Normal;
+    typingStatus_ = TypingStatus::Normal;
     highlight(false);
 }
 
@@ -167,11 +167,11 @@ void TabCompletion::reset() {
     */
 void TabCompletion::tryComplete() {
     switch (typingStatus_) {
-        case Typing_Normal:
-            typingStatus_ = Typing_TabPressed;
+        case TypingStatus::Normal:
+            typingStatus_ = TypingStatus::TabPressed;
             break;
-        case Typing_TabPressed:
-            typingStatus_ = Typing_TabbingCompletions;
+        case TypingStatus::TabPressed:
+            typingStatus_ = TypingStatus::TabbingCompletions;
             break;
         default:
             break;
@@ -181,7 +181,7 @@ void TabCompletion::tryComplete() {
     QString newText;
     bool replaced = false;
 
-    if (typingStatus_ == Typing_MultipleSuggestions) {
+    if (typingStatus_ == TypingStatus::MultipleSuggestions) {
         if (!suggestedCompletion_.isEmpty()) {
             suggestedIndex_++;
             if (suggestedIndex_ >= (int)suggestedCompletion_.count()) {
@@ -200,8 +200,8 @@ void TabCompletion::tryComplete() {
         moveCursorToOffset(replacementCursor_, begin);
         moveCursorToOffset(replacementCursor_, end, QTextCursor::KeepAnchor);
 
-        if (toComplete_.isEmpty() && typingStatus_ == Typing_TabbingCompletions) {
-            typingStatus_ = Typing_MultipleSuggestions;
+        if (toComplete_.isEmpty() && typingStatus_ == TypingStatus::TabbingCompletions) {
+            typingStatus_ = TypingStatus::MultipleSuggestions;
 
             QString guess;
             suggestedCompletion_ = allChoices(guess);
@@ -241,6 +241,6 @@ void TabCompletion::tryComplete() {
         textEdit_->setUpdatesEnabled(true);
         textEdit_->viewport()->update();
     }
-    highlight(typingStatus_ == Typing_MultipleSuggestions);
+    highlight(typingStatus_ == TypingStatus::MultipleSuggestions);
 }
 

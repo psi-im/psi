@@ -34,9 +34,9 @@ class TypeAheadFindBar : public QToolBar
 {
     Q_OBJECT
 public:
-    enum Type {
-        TextEditType,
-        WebViewType
+    enum class Type : char {
+        TextEdit,
+        WebView
     };
 
     TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = 0);

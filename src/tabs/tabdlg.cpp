@@ -562,9 +562,9 @@ QString TabDlg::desiredCaption() const
             cap += tr("%1 Conversations").arg(tabs_.count());
         } else {
             cap += qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
-            if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing) {
+            if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::State::Composing) {
                 cap += tr(" is composing");
-            } else if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateInactive) {
+            } else if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::State::Inactive) {
                 cap = tr("%1 (Inactive)").arg(cap);
             }
         }
@@ -643,7 +643,7 @@ void TabDlg::updateTab(TabbableWidget* chat)
     tabWidget_->setTabText(chat, captionForTab(chat));
     //now set text colour based upon whether there are new messages/composing etc
 
-    if (chat->state() == TabbableWidget::StateComposing) {
+    if (chat->state() == TabbableWidget::State::Composing) {
         tabWidget_->setTabTextColor(chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.composing-color").value<QColor>());
         tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing")->icon());
     }
@@ -651,7 +651,7 @@ void TabDlg::updateTab(TabbableWidget* chat)
         tabWidget_->setTabTextColor(chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.unread-message-color").value<QColor>());
         tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat")->icon());
     }
-    else if (chat->state() == TabbableWidget::StateInactive) {
+    else if (chat->state() == TabbableWidget::State::Inactive) {
         tabWidget_->setTabTextColor(chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.inactive-color").value<QColor>());
         tabWidget_->setTabIcon(chat, chat->icon());
     }

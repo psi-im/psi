@@ -1256,12 +1256,12 @@ TabbableWidget::State ChatDlg::state() const
 {
     switch (contactChatState_) {
         case XMPP::StateComposing:
-            return TabbableWidget::StateComposing;
+            return TabbableWidget::State::Composing;
         case XMPP::StateInactive:
         case XMPP::StateGone:
-            return TabbableWidget::StateInactive;
+            return TabbableWidget::State::Inactive;
         default:
-            return TabbableWidget::StateNone;
+            return TabbableWidget::State::None;
     }
 }
 

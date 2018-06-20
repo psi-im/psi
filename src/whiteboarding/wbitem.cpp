@@ -111,7 +111,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
     event->accept();
 
     if(isSelected()) {
-        if(widget_->mode() == WbWidget::Translate) {
+        if(widget_->mode() == WbWidget::Mode::Translate) {
 
             // Translate each selected item
             foreach(QGraphicsItem* graphicsitem, scene()->selectedItems()) {
@@ -127,7 +127,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
                 }
             }
 
-        } else if(widget_->mode() == WbWidget::Rotate) {
+        } else if(widget_->mode() == WbWidget::Mode::Rotate) {
 
             // Rotate each selected item
             // get center coordinates of selected items in scene coordinates
@@ -165,7 +165,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
                 }
             }
 
-        } else if(widget_->mode() == WbWidget::Scale) {
+        } else if(widget_->mode() == WbWidget::Mode::Scale) {
 
             // Scale each selected item
             foreach(QGraphicsItem* graphicsitem, scene()->selectedItems()) {
@@ -536,7 +536,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
             ++str;
             continue;
         }
-        enum State {
+        enum class State : char {
             Matrix,
             Translate,
             Rotate,
@@ -544,7 +544,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
             SkewX,
             SkewY
         };
-        State state = Matrix;
+        State state = State::Matrix;
         if (*str == QLatin1Char('m')) {  //matrix
             const char *ident = "atrix";
             for (int i = 0; i < 5; ++i) {
@@ -553,7 +553,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
                 }
             }
             ++str;
-            state = Matrix;
+            state = State::Matrix;
         }
         else if (*str == QLatin1Char('t')) { //translate
             const char *ident = "ranslate";
@@ -561,7 +561,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
                 if (*(++str) != QLatin1Char(ident[i]))
                     goto error;
             ++str;
-            state = Translate;
+            state = State::Translate;
         }
         else if (*str == QLatin1Char('r')) { //rotate
             const char *ident = "otate";
@@ -569,7 +569,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
                 if (*(++str) != QLatin1Char(ident[i]))
                     goto error;
             ++str;
-            state = Rotate;
+            state = State::Rotate;
         }
         else if (*str == QLatin1Char('s')) { //scale, skewX, skewY
             ++str;
@@ -579,7 +579,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
                     if (*(++str) != QLatin1Char(ident[i]))
                         goto error;
                 ++str;
-                state = Scale;
+                state = State::Scale;
             } else if (*str == QLatin1Char('k')) {
                 if (*(++str) != QLatin1Char('e'))
                     goto error;
@@ -587,9 +587,9 @@ static QMatrix parseTransformationMatrix(const QString &value)
                     goto error;
                 ++str;
                 if (*str == QLatin1Char('X'))
-                    state = SkewX;
+                    state = State::SkewX;
                 else if (*str == QLatin1Char('Y'))
-                    state = SkewY;
+                    state = State::SkewY;
                 else
                     goto error;
                 ++str;
@@ -615,7 +615,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
         }
         ++str;
 
-        if(state == Matrix) {
+        if(state == State::Matrix) {
             if(points.count() != 6) {
                 goto error;
             }
@@ -623,7 +623,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
                                       points[2], points[3],
                                       points[4], points[5]);
         }
-        else if (state == Translate) {
+        else if (state == State::Translate) {
             if (points.count() == 1)
                 matrix.translate(points[0], 0);
             else if (points.count() == 2)
@@ -631,7 +631,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
             else
                 goto error;
         }
-        else if (state == Rotate) {
+        else if (state == State::Rotate) {
             if(points.count() == 1) {
                 matrix.rotate(points[0]);
             } else if (points.count() == 3) {
@@ -642,7 +642,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
                 goto error;
             }
         }
-        else if (state == Scale) {
+        else if (state == State::Scale) {
             if (points.count() < 1 || points.count() > 2)
                 goto error;
             qreal sx = points[0];
@@ -651,13 +651,13 @@ static QMatrix parseTransformationMatrix(const QString &value)
                 sy = points[1];
             matrix.scale(sx, sy);
         }
-        else if (state == SkewX) {
+        else if (state == State::SkewX) {
             if (points.count() != 1)
                 goto error;
             const qreal deg2rad = qreal(0.017453292519943295769);
             matrix.shear(tan(points[0]*deg2rad), 0);
         }
-        else if (state == SkewY) {
+        else if (state == State::SkewY) {
             if (points.count() != 1)
                 goto error;
             const qreal deg2rad = qreal(0.017453292519943295769);

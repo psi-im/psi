@@ -82,7 +82,7 @@ bool Theme::isValid() const
 Theme::State Theme::state() const
 {
     if (!d) {
-        return Invalid;
+        return State::Invalid;
     }
     return d->state;
 }

@@ -52,7 +52,7 @@ public:
     /*! \brief Mode
      *  Indicates the mode the widget is in.
      */
-    enum Mode { Select, Translate, Rotate, Scale, Scroll, Erase, DrawPath, DrawLine, DrawRectangle, DrawEllipse, DrawCircle, DrawPolyline, DrawText, DrawImage };
+    enum class Mode : char { Select, Translate, Rotate, Scale, Scroll, Erase, DrawPath, DrawLine, DrawRectangle, DrawEllipse, DrawCircle, DrawPolyline, DrawText, DrawImage };
 
     /*! \brief Constructor
      *  Constructs a new widget with \a session and parent \a parent.

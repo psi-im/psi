@@ -25,13 +25,13 @@ void PixmapRatioLabel::paintEvent(QPaintEvent *event)
     bool needAdjust = false;
     QSize ms = _maxPixSize.isEmpty()? _origPix.size() : _maxPixSize;
 
-    if (_policy == FitBoth) {
+    if (_policy == Policy::FitBoth) {
         ms = ms.boundedTo(event->rect().size());
     } else
-    if (_policy == FitVertical) {
+    if (_policy == Policy::FitVertical) {
         ms.setHeight(qMin(ms.height(), event->rect().height()));
     } else
-    if (_policy == FitHorizontal) {
+    if (_policy == Policy::FitHorizontal) {
         ms.setWidth(qMin(ms.width(), event->rect().width()));
     }
     if (_scaledPix.isNull()) {
@@ -46,9 +46,9 @@ void PixmapRatioLabel::paintEvent(QPaintEvent *event)
     if (needAdjust) {
         QTimer::singleShot(0, [this]() {
             // setMinWidth/Height invalidates layout. so all the widgets are resized
-            if(_policy == FitVertical) {
+            if(_policy == Policy::FitVertical) {
                 setMinimumWidth(_scaledPix.width());
-            } else if (_policy == FitHorizontal) {
+            } else if (_policy == Policy::FitHorizontal) {
                 setMinimumHeight(_scaledPix.height());
             }
         });

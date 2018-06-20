@@ -57,11 +57,11 @@ private:
 
     void moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor::MoveMode mode = QTextCursor::MoveAnchor);
 
-    enum TypingStatus {
-        Typing_Normal,
-        Typing_TabPressed,    // initial completion
-        Typing_TabbingCompletions, // switch to tab through multiple
-        Typing_MultipleSuggestions
+    enum class TypingStatus : char {
+        Normal,
+        TabPressed,    // initial completion
+        TabbingCompletions, // switch to tab through multiple
+        MultipleSuggestions
     };
 
     QTextCursor replacementCursor_;

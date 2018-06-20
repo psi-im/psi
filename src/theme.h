@@ -56,7 +56,7 @@ public:
         virtual bool fileExists(const QString &fileName) = 0;
     };
 
-    enum State {
+    enum class State : char {
         Invalid,
         NotLoaded,
         Loading,

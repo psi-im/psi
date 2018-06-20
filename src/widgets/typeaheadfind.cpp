@@ -60,7 +60,7 @@ public:
         if (backward) {
             options |= QTextDocument::FindBackward;
 
-            if (widgetType == TypeAheadFindBar::WebViewType) {
+            if (widgetType == TypeAheadFindBar::Type::WebView) {
                 //FIXME make it work with web
             } else {
                 // move cursor before currect selection
@@ -82,7 +82,7 @@ public:
 
     bool find(const QString &str, QTextDocument::FindFlags options, QTextCursor::MoveOperation start = QTextCursor::NoMove)
     {
-        if (widgetType == TypeAheadFindBar::WebViewType) {
+        if (widgetType == TypeAheadFindBar::Type::WebView) {
 #ifdef WEBKIT
 #ifdef WEBENGINE
             QWebEnginePage::FindFlags wkOptions;
@@ -143,7 +143,7 @@ TypeAheadFindBar::TypeAheadFindBar(QTextEdit *textedit, const QString &title, QW
 : QToolBar(title, parent)
 {
     d = new Private();
-    d->widgetType = TextEditType;
+    d->widgetType = Type::TextEdit;
     d->te = textedit;
     init();
 }
@@ -252,7 +252,7 @@ void TypeAheadFindBar::toggleVisibility()
 void TypeAheadFindBar::textChanged(const QString &str)
 {
     QTextCursor cursor;
-    if (d->widgetType == TextEditType) {
+    if (d->widgetType == Type::TextEdit) {
         cursor = d->te->textCursor();
     }
 
@@ -260,7 +260,7 @@ void TypeAheadFindBar::textChanged(const QString &str)
         d->act_next->setEnabled(false);
         d->act_prev->setEnabled(false);
         d->le_find->setStyleSheet("");
-        if (d->widgetType == WebViewType) {
+        if (d->widgetType == Type::WebView) {
 #ifdef WEBKIT
             d->wv->page()->findText(""); //its buggy in qt-4.6.0
 #endif
@@ -274,7 +274,7 @@ void TypeAheadFindBar::textChanged(const QString &str)
         d->act_next->setEnabled(true);
         d->act_prev->setEnabled(true);
 
-        if (d->widgetType == TextEditType) {
+        if (d->widgetType == Type::TextEdit) {
             // don't jump to next word occurence after appending new charater
             cursor.setPosition(cursor.selectionStart());
             d->te->setTextCursor(cursor);

@@ -38,7 +38,7 @@ typedef QList<ContactListItem*> ContactListItemList;
 class ContactListItem : public AbstractTreeItem
 {
 public:
-    enum class Type {
+    enum class Type : unsigned char {
         InvalidType = 0,
         RootType    = 1,
         AccountType = 2,
@@ -46,7 +46,7 @@ public:
         ContactType = 4
     };
 
-    enum class SpecialGroupType {
+    enum class SpecialGroupType : unsigned char {
         GeneralSpecialGroupType         = 0,
         NoneSpecialGroupType            = 1,
         MucPrivateChatsSpecialGroupType = 2,

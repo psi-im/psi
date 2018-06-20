@@ -81,7 +81,7 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
     connect(session_, SIGNAL(chdataChanged(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
 
     // set the default mode to select
-    setMode(Select);
+    setMode(Mode::Select);
 
     // set the initial size
     if(session_->document().documentElement().hasAttribute("viewBox"))
@@ -109,14 +109,14 @@ WbWidget::Mode WbWidget::mode() {
 void WbWidget::setMode(Mode mode) {
      mode_ = mode;
 
-     if(mode_ < DrawPath) {
+     if(mode_ < Mode::DrawPath) {
              if(newWbItem_) {
                      delete newWbItem_;
                      newWbItem_ = 0;
              }
      }
 
-     if(mode_ >= Erase) {
+     if(mode_ >= Mode::Erase) {
              setDragMode(QGraphicsView::NoDrag);
              setInteractive(false);
              setCursor(Qt::CrossCursor);
@@ -124,20 +124,20 @@ void WbWidget::setMode(Mode mode) {
              setInteractive(true);
      }
 
-     if(mode_ == Select) {
+     if(mode_ == Mode::Select) {
              setDragMode(QGraphicsView::RubberBandDrag);
              setCursor(Qt::ArrowCursor);
-     } else if(mode_ == Translate) {
+     } else if(mode_ == Mode::Translate) {
              setDragMode(QGraphicsView::RubberBandDrag);
              setCursor(Qt::SizeAllCursor);
-     } else if(mode_ == Rotate) {
+     } else if(mode_ == Mode::Rotate) {
             setDragMode(QGraphicsView::RubberBandDrag);
              unsetCursor();
              // TODO: load cursor from image
-     } else if(mode_ == Scale) {
+     } else if(mode_ == Mode::Scale) {
             setDragMode(QGraphicsView::RubberBandDrag);
              setCursor(Qt::SizeBDiagCursor);
-     } else if(mode_ == Scroll) {
+     } else if(mode_ == Mode::Scroll) {
              setDragMode(QGraphicsView::ScrollHandDrag);
      }
 }
@@ -227,7 +227,7 @@ void WbWidget::resizeEvent(QResizeEvent * event) {
 
 void WbWidget::mousePressEvent(QMouseEvent * event) {
     // ignore non-leftclicks when not in Select mode
-    if(event->button() != Qt::LeftButton && mode_ != Select)
+    if(event->button() != Qt::LeftButton && mode_ != Mode::Select)
         return;
 
     // delete any temporary item being drawn
@@ -237,23 +237,23 @@ void WbWidget::mousePressEvent(QMouseEvent * event) {
     }
 
     QPointF startPoint = mapToScene(mapFromGlobal(event->globalPos()));
-    if(mode_ == DrawPath) {
+    if(mode_ == Mode::DrawPath) {
         // // Create the element with starting position
         // QPointF sp = mapToScene(mapFromGlobal(event->globalPos()));
         // qDebug() << QString("1: (%1, %2)").arg(sp.x()).arg(sp.y());
         newWbItem_ = new WbNewPath(scene_, startPoint, strokeWidth_, strokeColor_, fillColor_);
         return;
-    } else if(mode_ == DrawText) {
+    } else if(mode_ == Mode::DrawText) {
 
-    } else if(mode_ == DrawRectangle) {
+    } else if(mode_ == Mode::DrawRectangle) {
 
-    } else if(mode_ == DrawEllipse) {
+    } else if(mode_ == Mode::DrawEllipse) {
 
-    } else if(mode_ == DrawCircle) {
+    } else if(mode_ == Mode::DrawCircle) {
 
-    } else if(mode_ == DrawLine) {
+    } else if(mode_ == Mode::DrawLine) {
 
-    } else if(mode_ == DrawImage) {
+    } else if(mode_ == Mode::DrawImage) {
         QString filename = QFileDialog::getOpenFileName(this, "Choose an image", QString(), "Images (*.png *.jpg)");
         if(!filename.isEmpty()) {
             newWbItem_ = new WbNewImage(scene_, startPoint, filename);
@@ -269,7 +269,7 @@ void WbWidget::mousePressEvent(QMouseEvent * event) {
 }
 
 void WbWidget::mouseMoveEvent(QMouseEvent * event) {
-    if(mode_ < Erase) {
+    if(mode_ < Mode::Erase) {
         QGraphicsView::mouseMoveEvent(event);
         return;
     }
@@ -282,7 +282,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
         return;
     }
 
-    if(mode_ == Erase) {
+    if(mode_ == Mode::Erase) {
          if(event->buttons() != Qt::MouseButtons(Qt::LeftButton))
              return;
          // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
@@ -298,17 +298,17 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 
          event->ignore();
          return;
-    } else if(mode_ >= DrawPath && newWbItem_) {
+    } else if(mode_ >= Mode::DrawPath && newWbItem_) {
         newWbItem_->parseCursorMove(mapToScene(mapFromGlobal(event->globalPos())));
     }
 }
 
 void WbWidget::mouseReleaseEvent(QMouseEvent * event) {
 
-    if(event->button() != Qt::LeftButton && mode_ >= Erase)
+    if(event->button() != Qt::LeftButton && mode_ >= Mode::Erase)
         return;
 
-    if (newWbItem_ && mode_ >= DrawPath && mode_ != DrawImage) {
+    if (newWbItem_ && mode_ >= Mode::DrawPath && mode_ != Mode::DrawImage) {
         QDomDocument tempDoc;
         session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
         session_->flush();

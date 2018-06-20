@@ -61,10 +61,10 @@ public:
 
     virtual void invalidateTab();
 
-    enum State {
-        StateNone = 0,
-        StateComposing,
-        StateInactive
+    enum class State : char {
+        None = 0,
+        Composing,
+        Inactive
     };
     virtual State state() const = 0;
     virtual int unreadMessageCount() const = 0;
@@ -89,7 +89,7 @@ protected:
     void changeEvent(QEvent* e);
 
 private:
-    enum ActivationState { Activated, Deactivated };
+    enum class ActivationState : char { Activated, Deactivated };
     ActivationState state_;
     QTimer stateCommitTimer_;
 

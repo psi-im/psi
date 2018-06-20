@@ -10,7 +10,7 @@ class PixmapRatioLabel : public QLabel
     Q_OBJECT
 
 public:
-    enum Policy {
+    enum class Policy : char {
         FitVertical,
         FitHorizontal,
         FitBoth
@@ -33,7 +33,7 @@ private:
     QPixmap _origPix;
     QPixmap _scaledPix;
     QSize _maxPixSize;
-    Policy _policy = FitBoth;
+    Policy _policy = Policy::FitBoth;
 };
 
 #endif // PIXMAPRATIOLABEL_H
