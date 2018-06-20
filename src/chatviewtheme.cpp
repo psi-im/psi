@@ -127,17 +127,17 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
         return false;
     }
 
-    if (state == Theme::Loaded) {
+    if (state == Theme::State::Loaded) {
         loadCallback(true);
         return true;
     }
     loadCallbacks.push_back(loadCallback);
-    if (state == Theme::Loading) {
+    if (state == Theme::State::Loading) {
         return true;
     }
 
     qDebug("Starting loading \"%s\" theme at \"%s\" for %s", qPrintable(id), qPrintable(filepath), isMuc()? "muc": "chat");
-    state = Theme::Loading;
+    state = Theme::State::Loading;
     if (jsUtil.isNull()) {
         jsLoader.reset(new ChatViewJSLoader(this));
         jsUtil.reset(new ChatViewThemeJSUtil(this));
@@ -461,7 +461,7 @@ void ChatViewJSLoader::unregisterSession(const QString &sessId)
 void ChatViewJSLoader::_callFinishLoadCalbacks()
 {
     for (auto &cb : theme->loadCallbacks) {
-        cb(theme->state == Theme::Loaded);
+        cb(theme->state == Theme::State::Loaded);
     }
 }
 
@@ -496,7 +496,7 @@ void ChatViewJSLoader::setMetaData(const QVariantMap &map)
 void ChatViewJSLoader::finishThemeLoading()
 {
     qDebug("%s theme is successfully loaded for %s", qPrintable(theme->id), theme->isMuc()? "muc": "chat");
-    Theme(theme).setState(Theme::Loaded);
+    Theme(theme).setState(Theme::State::Loaded);
 #ifdef WEBENGINE
     _callFinishLoadCalbacks();
 #else
@@ -507,7 +507,7 @@ void ChatViewJSLoader::finishThemeLoading()
 void ChatViewJSLoader::errorThemeLoading(const QString &error)
 {
     _loadError = error;
-    Theme(theme).setState(Theme::NotLoaded);
+    Theme(theme).setState(Theme::State::NotLoaded);
 #ifdef WEBENGINE
     _callFinishLoadCalbacks();
 #else

@@ -152,7 +152,7 @@ TypeAheadFindBar::TypeAheadFindBar(QTextEdit *textedit, const QString &title, QW
 TypeAheadFindBar::TypeAheadFindBar(WebView *webView, const QString &/*title*/, QWidget */*parent*/)
 {
     d = new Private();
-    d->widgetType = WebViewType;
+    d->widgetType = Type::WebView;
     d->wv = webView;
     init();
 }
