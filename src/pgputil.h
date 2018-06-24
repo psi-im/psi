@@ -35,7 +35,7 @@ public:
     QString stripHeaderFooter(const QString &);
     QString addHeaderFooter(const QString &, int);
 
-    QString messageErrorString(enum QCA::SecureMessage::Error);
+    QString messageErrorString(QCA::SecureMessage::Error);
 
     bool equals(QCA::PGPKey, QCA::PGPKey);
 

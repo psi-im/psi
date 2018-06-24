@@ -231,7 +231,7 @@ QCA::KeyStoreEntry PGPUtil::getPublicKeyStoreEntry(const QString& keyID)
     return QCA::KeyStoreEntry();
 }
 
-QString PGPUtil::messageErrorString(enum QCA::SecureMessage::Error e)
+QString PGPUtil::messageErrorString(QCA::SecureMessage::Error e)
 {
     QString msg;
     switch(e) {
