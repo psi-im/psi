@@ -19,7 +19,7 @@ public:
     explicit PixmapRatioLabel(QWidget *parent = nullptr);
     void setPixmap(const QPixmap &pix);
     void setMaxPixmapSize(const QSize &size);
-    inline void setResizePolicy(enum Policy policy) { _policy = policy; }
+    inline void setResizePolicy(Policy policy) { _policy = policy; }
     inline QSize scaledSize() const { return _scaledPix.size(); }
 
 protected:
