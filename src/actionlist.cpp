@@ -165,11 +165,11 @@ QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const
     QList<ActionList*> list;
 
     for ( int i = 0; i < 32; i++ ) {
-        if ( !(id & ( 1 << i )) )
+        if ( !(id & ( 1u << i )) )
             continue;
 
         foreach(ActionList* a, d->lists) {
-            if ( a->id() & ( 1 << i ) )
+            if ( a->id() & ( 1u << i ) )
                 list.append(a);
         }
     }
