@@ -316,8 +316,12 @@ void ContactListItem::setAccount(PsiAccount *account)
 PsiAccount *ContactListItem::account() const
 {
     const ContactListItem *item = this;
-    while (item && item->_type != Type::AccountType)
-        item = item->parent();
+    while (item->_type != Type::AccountType) {
+        if (item->parent())
+            item = item->parent();
+        else
+            break;
+    }
     return item->_account;
 }
 
