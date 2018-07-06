@@ -38,6 +38,7 @@ if(WIN32)
     get_filename_component(QT_DIR ${QT_BIN_DIR} DIRECTORY)
     set(QT_PLUGINS_DIR ${QT_DIR}/plugins)
     set(QT_TRANSLATIONS_DIR ${QT_DIR}/translations)
+    set(PSIMEDIA_FOUND OFF)
     #Set paths
     list(APPEND PATHES
         ${QT_BIN_DIR}
@@ -229,61 +230,202 @@ if(WIN32)
     endif()
     # psimedia
     if(EXISTS "${PSIMEDIA_DIR}")
-        find_program(PSIMEDIA_PATH libgstprovider${D}.dll PATHS ${PSIMEDIA_DIR}/plugins )
-        copy(${PSIMEDIA_DIR} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" ${LIBS_TARGET})
+        set(PSIMEDIA_LIB_NAME "libgstprovider${D}.dll")
+        if(MSVC)
+            set(PSIMEDIA_LIB_NAME "gstprovider${D}.dll")
+        endif()
+        find_program(PSIMEDIA_PLUGIN ${PSIMEDIA_LIB_NAME} PATHS "${PSIMEDIA_DIR}")
+        if(NOT "${PSIMEDIA_PLUGIN}" STREQUAL "PSIMEDIA_PLUGIN-NOTFOUND")
+            get_filename_component(PSIMEDIA_PATH "${PSIMEDIA_PLUGIN}" DIRECTORY)
+            message("library found ${PSIMEDIA_PLUGIN}")
+            copy(${PSIMEDIA_PLUGIN} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" ${LIBS_TARGET})
+            set(PSIMEDIA_FOUND ON)
+        endif()
     endif()
     # psimedia deps
-    find_program(PSIMEDIA_DEPS_PATH libgstvideo-0.10-0.dll PATHS ${GST_SDK}/bin )
-    get_filename_component(PSIMEDIA_DEPS_DIR ${PSIMEDIA_DEPS_PATH} DIRECTORY)
-    set(PSIMEDIA_DEPS
-        libjpeg-9.dll
-        libgettextlib-0-19-6.dll
-        libogg-0.dll
-        libtheoradec-1.dll
-        libgettextpo-0.dll
-        liborc-0.4-0.dll
-        libtheoraenc-1.dll
-        libasprintf-0.dll
-        libgettextsrc-0-19-6.dll
-        liborc-test-0.4-0.dll
-        libvorbis-0.dll
-        libcharset-1.dll
-        libgio-2.0-0.dll
-        libspeex-1.dll
-        libvorbisenc-2.dll
-        libglib-2.0-0.dll
-        libgthread-2.0-0.dll
-        libspeexdsp-1.dll
-        libvorbisfile-3.dll
-        libffi-6.dll
-        libgmodule-2.0-0.dll
-        libgobject-2.0-0.dll
-        libintl-8.dll
-        libtheora-0.dll
-        libgstapp-0.10-0.dll
-        libgstaudio-0.10-0.dll
-        libgstbase-0.10-0.dll
-        libgstcdda-0.10-0.dll
-        libgstcontroller-0.10-0.dll
-        libgstdataprotocol-0.10-0.dll
-        libgstfft-0.10-0.dll
-        libgstinterfaces-0.10-0.dll
-        libgstnet-0.10-0.dll
-        libgstnetbuffer-0.10-0.dll
-        libgstpbutils-0.10-0.dll
-        libgstreamer-0.10-0.dll
-        libgstriff-0.10-0.dll
-        libgstrtp-0.10-0.dll
-        libgstrtsp-0.10-0.dll
-        libgstsdp-0.10-0.dll
-        libgsttag-0.10-0.dll
-        libgstvideo-0.10-0.dll
-    )
-    find_psi_lib("${PSIMEDIA_DEPS}" "${PSIMEDIA_DEPS_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
-    # streamer plugins
-    set(GSTREAMER_PLUGINS_DIR "${PSIMEDIA_DIR}/gstreamer-0.10")
-    file(GLOB GSTREAMER_PLUGINS "${GSTREAMER_PLUGINS_DIR}/*.dll")
-    find_psi_lib("${GSTREAMER_PLUGINS}" "${GSTREAMER_PLUGINS_DIR}/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gstreamer-0.10/")
+    if(PSIMEDIA_FOUND)
+        if(NOT MSVC)
+            find_program(PSIMEDIA_DEPS_PATH "libgstvideo-0.10-0.dll" PATHS ${GST_SDK}/bin )
+            if(NOT "${PSIMEDIA_DEPS_PATH}" STREQUAL "PSIMEDIA_DEPS_PATH-NOTFOUND")
+                get_filename_component(PSIMEDIA_DEPS_DIR ${PSIMEDIA_DEPS_PATH} DIRECTORY)
+            endif()
+        endif()
+
+        set(PSIMEDIA_DEPS
+            libjpeg-9.dll
+            libgettextlib-0-19-6.dll
+            libogg-0.dll
+            libtheoradec-1.dll
+            libgettextpo-0.dll
+            liborc-0.4-0.dll
+            libtheoraenc-1.dll
+            libasprintf-0.dll
+            libgettextsrc-0-19-6.dll
+            liborc-test-0.4-0.dll
+            libvorbis-0.dll
+            libcharset-1.dll
+            libgio-2.0-0.dll
+            libspeex-1.dll
+            libvorbisenc-2.dll
+            libglib-2.0-0.dll
+            libgthread-2.0-0.dll
+            libspeexdsp-1.dll
+            libvorbisfile-3.dll
+            libffi-6.dll
+            libgmodule-2.0-0.dll
+            libgobject-2.0-0.dll
+            libintl-8.dll
+            libtheora-0.dll
+            libgstapp-0.10-0.dll
+            libgstaudio-0.10-0.dll
+            libgstbase-0.10-0.dll
+            libgstcdda-0.10-0.dll
+            libgstcontroller-0.10-0.dll
+            libgstdataprotocol-0.10-0.dll
+            libgstfft-0.10-0.dll
+            libgstinterfaces-0.10-0.dll
+            libgstnet-0.10-0.dll
+            libgstnetbuffer-0.10-0.dll
+            libgstpbutils-0.10-0.dll
+            libgstreamer-0.10-0.dll
+            libgstriff-0.10-0.dll
+            libgstrtp-0.10-0.dll
+            libgstrtsp-0.10-0.dll
+            libgstsdp-0.10-0.dll
+            libgsttag-0.10-0.dll
+            libgstvideo-0.10-0.dll
+        )
+        if(MSVC)
+            set(PSIMEDIA_DEPS
+                libffi-7.dll
+                libgio-2.0-0.dll
+                libglib-2.0-0.dll
+                libgmodule-2.0-0.dll
+                libgobject-2.0-0.dll
+                libgstapp-1.0-0.dll
+                libgstaudio-1.0-0.dll
+                libgstbadaudio-1.0-0.dll
+                libgstbadbase-1.0-0.dll
+                libgstbase-1.0-0.dll
+                libgstnet-1.0-0.dll
+                libgstpbutils-1.0-0.dll
+                libgstreamer-1.0-0.dll
+                libgstriff-1.0-0.dll
+                libgstrtp-1.0-0.dll
+                libgsttag-1.0-0.dll
+                libgstvideo-1.0-0.dll
+                libgthread-2.0-0.dll
+                libharfbuzz-0.dll
+                libiconv-2.dll
+                libintl-8.dll
+                libjpeg-8.dll
+                libogg-0.dll
+                libopus-0.dll
+                liborc-0.4-0.dll
+                libpng16-16.dll
+                libtheora-0.dll
+                libtheoradec-1.dll
+                libtheoraenc-1.dll
+                libvorbis-0.dll
+                libvorbisenc-2.dll
+                libwinpthread-1.dll
+                libxml2-2.dll
+                libz.dll
+            )
+            set(GSTREAMER_PLUGINS
+                libgstapp.dll
+                libgstaudioconvert.dll
+                libgstaudiomixer.dll
+                libgstaudioresample.dll
+                libgstcoreelements.dll
+                libgstdirectsoundsink.dll
+                libgstdirectsoundsrc.dll
+                libgstjpeg.dll
+                libgstlevel.dll
+                libgstogg.dll
+                libgstopus.dll
+                libgstopusparse.dll
+                libgstplayback.dll
+                libgstrtp.dll
+                libgstrtpmanager.dll
+                libgsttheora.dll
+                libgstvideoconvert.dll
+                libgstvideorate.dll
+                libgstvideoscale.dll
+                libgstvolume.dll
+                libgstvorbis.dll
+                libgstwasapi.dll
+                libgstwinks.dll
+            )
+            set(PSIMEDIA_DEPS_DIR "${GST_SDK}/bin")
+            set(GSTREAMER_PLUGINS_DIR "${GST_SDK}/lib/gstreamer-1.0")
+            set(GST_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib/gstreamer-1.0/")
+        else()
+            set(GSTREAMER_PLUGINS_DIR "${PSIMEDIA_DIR}/gstreamer-0.10")
+            file(GLOB GSTREAMER_PLUGINS "${GSTREAMER_PLUGINS_DIR}/*.dll")
+            set(GST_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/gstreamer-0.10/")
+        endif()
+        if(USE_MXE)
+            set(PSIMEDIA_DEPS
+                libffi-6.dll
+                libfontconfig-1.dll
+                libgio-2.0-0.dll
+                libgmodule-2.0-0.dll
+                libgobject-2.0-0.dll
+                libgstapp-1.0-0.dll
+                libgstaudio-1.0-0.dll
+                libgstbadaudio-1.0-0.dll
+                libgstbadbase-1.0-0.dll
+                libgstbase-1.0-0.dll
+                libgstnet-1.0-0.dll
+                libgstpbutils-1.0-0.dll
+                libgstreamer-1.0-0.dll
+                libgstriff-1.0-0.dll
+                libgstrtp-1.0-0.dll
+                libgsttag-1.0-0.dll
+                libgstvideo-1.0-0.dll
+                libgthread-2.0-0.dll
+                libogg-0.dll
+                libopus-0.dll
+                libtheora-0.dll
+                libtheoradec-1.dll
+                libtheoraenc-1.dll
+                libvorbis-0.dll
+                libvorbisenc-2.dll
+            )
+            set(GSTREAMER_PLUGINS
+                libgstapp.dll
+                libgstdirectsoundsrc.dll
+                libgstplayback.dll
+                libgstvideoscale.dll
+                libgstaudioconvert.dll
+                libgstjpeg.dll
+                libgstrtp.dll
+                libgstvolume.dll
+                libgstaudiomixer.dll
+                libgstlevel.dll
+                libgstrtpmanager.dll
+                libgstvorbis.dll
+                libgstaudioresample.dll
+                libgstogg.dll
+                libgsttheora.dll
+                libgstwasapi.dll
+                libgstcoreelements.dll
+                libgstopus.dll
+                libgstvideoconvert.dll
+                libgstwinks.dll
+                libgstdirectsoundsink.dll
+                libgstopusparse.dll
+                libgstvideorate.dll
+            )
+            set(PSIMEDIA_DEPS_DIR "${CMAKE_PREFIX_PATH}/bin")
+            set(GSTREAMER_PLUGINS_DIR "${CMAKE_PREFIX_PATH}/bin/gstreamer-1.0")
+            set(GST_PLUGINS_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lib/gstreamer-1.0/")
+        endif()
+        find_psi_lib("${PSIMEDIA_DEPS}" "${PSIMEDIA_DEPS_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        # streamer plugins
+        find_psi_lib("${GSTREAMER_PLUGINS}" "${GSTREAMER_PLUGINS_DIR}/" "${GST_PLUGINS_OUTPUT}")
+    endif()
     # other libs and executables
     set( LIBRARIES_LIST
         libgcc_s_sjlj-1.dll
