@@ -20,6 +20,8 @@ public:
     virtual QString status(int account, const QString& jid) = 0;
     virtual QString statusMessage(int account, const QString& jid) = 0;
     virtual QStringList resources(int account, const QString& jid) = 0;
+    virtual QString realJid(int account, const QString& jid) = 0;
+    virtual QStringList mucNicks(int account, const QString& mucJid) = 0;
 };
 
 Q_DECLARE_INTERFACE(ContactInfoAccessingHost, "org.psi-im.ContactInfoAccessingHost/0.1");

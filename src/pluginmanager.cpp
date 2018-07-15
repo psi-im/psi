@@ -33,6 +33,7 @@
 #include "popupmanager.h"
 
 #include "chatdlg.h"
+#include "groupchatdlg.h"
 
 
 //TODO(mck)
@@ -908,6 +909,11 @@ bool PluginManager::appendSysMsg(int account, const QString& jid, const QString&
             chatDlg->appendSysMsg(message);
             return true;
         }
+        auto gcDlg = acc->findDialog<GCMainDlg*>(jid);
+        if(gcDlg) {
+            gcDlg->appendSysMsg(message);
+            return true;
+        }
     }
     return false;
 }
@@ -1055,6 +1061,28 @@ QStringList PluginManager::resources(int account, const QString& jid) const
         }
     }
     return l;
+}
+
+QString PluginManager::realJid(int account, const QString& jid) const
+{
+    PsiAccount *acc = accountIds_.account(account);
+    if (acc) {
+      Jid realJid = acc->realJid(XMPP::Jid(jid));
+      return realJid.isNull() ? jid : realJid.full();
+    }
+    return jid;
+}
+
+QStringList PluginManager::mucNicks(int account, const QString &mucJid) const
+{
+    PsiAccount *acc = accountIds_.account(account);
+    if (acc) {
+        auto gcDlg = acc->findDialog<GCMainDlg*>(mucJid);
+        if(gcDlg) {
+            return gcDlg->mucRosterContent();
+        }
+    }
+    return {};
 }
 
 bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &message) const

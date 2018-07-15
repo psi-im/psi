@@ -1307,6 +1307,16 @@ QStringList PluginHost::resources(int account, const QString& jid)
     return manager_->resources(account, jid);
 }
 
+QString PluginHost::realJid(int account, const QString& jid)
+{
+    return manager_->realJid(account, jid);
+}
+
+QStringList PluginHost::mucNicks(int account, const QString &mucJid)
+{
+    return manager_->mucNicks(account, mucJid);
+}
+
 bool PluginHost::hasInfoProvider()
 {
     return hasInfo_;

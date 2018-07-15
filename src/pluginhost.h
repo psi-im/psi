@@ -160,6 +160,8 @@ public:
     QString status(int account, const QString& jid);
     QString statusMessage(int account, const QString& jid);
     QStringList resources(int account, const QString& jid);
+    QString realJid(int account, const QString& jid);
+    QStringList mucNicks(int account, const QString& mucJid);
 
     //ContactStateAccessor
     bool setActivity(int account, const QString& Jid, QDomElement xml);

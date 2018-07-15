@@ -68,6 +68,8 @@ public:
     bool isInactive() const;
     void reactivate();
     void setJid(const Jid &j);
+    void appendSysMsg(const QString &, bool alert=false, const QDateTime &ts=QDateTime());
+    QStringList mucRosterContent() const;
 
     // reimplemented
     virtual TabbableWidget::State state() const;
@@ -146,7 +148,6 @@ private:
     Ui::GroupChatDlg ui_;
 
     void doAlert();
-    void appendSysMsg(const QString &, bool alert=false, const QDateTime &ts=QDateTime());
     void appendSysMsg(const MessageView &);
     void appendMessage(const Message &, bool);
     void setLooks();

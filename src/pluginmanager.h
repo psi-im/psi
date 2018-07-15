@@ -155,6 +155,8 @@ private:
     QString status(int account, const QString& jid) const;
     QString statusMessage(int account, const QString& jid) const;
     QStringList resources(int account, const QString& jid) const;
+    QString realJid(int account, const QString& jid) const;
+    QStringList mucNicks(int account, const QString& mucJid) const;
 
     bool setActivity(int account, const QString& Jid, QDomElement xml);
     bool setMood(int account, const QString& Jid, QDomElement xml);
