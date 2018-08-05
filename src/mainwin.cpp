@@ -1050,7 +1050,7 @@ void MainWin::actAboutPsiMediaActivated ()
 {
     if (!PsiMedia::isSupported()) {
         QMessageBox::warning(this, tr("psimedia is unavailable"),
-                             tr("Psi media library is not loaded or not initialized.<br>"
+                             tr("PsiMedia plugin is not loaded or not initialized.<br>"
                                 "Please check <a href=\"https://github.com/psi-im/psimedia\">https://github.com/psi-im/psimedia</a> for more details."));
         return;
     }
