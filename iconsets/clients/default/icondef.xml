@@ -119,6 +119,11 @@ Based on the huge on from Psi+ repository.
                 <object mime='image/png'>sawim.png</object>
         </icon>
 
+		<icon>
+                <x xmlns='name'>clients/spark</x>
+                <object mime='image/png'>spark.png</object>
+        </icon>
+
         <icon>
                 <x xmlns='name'>clients/swift</x>
                 <object mime='image/png'>swift.png</object>
