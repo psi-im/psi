@@ -134,7 +134,7 @@ sip-communicator sip-communicator,sip#communicator,jitsi
 smack-api igniterealtime.org#smack
 snapi-snup-bot snapi-bot.googlecode.comgithub.com 
 sonic-revolution sonicrevolution
-spark spark
+spark spark,igniterealtime.org
 spectrum spectrum,binarytransport
 swift swift
 talisman-bot jabber-net.ru#talisman-bot,j-tmb.ru
