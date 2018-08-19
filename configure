@@ -3419,15 +3419,6 @@ bool Conf::findHeader(const QString &h, const QStringList &ext, QString *inc)
 	QStringList dirs;
 	dirs += "/usr/local/include";
 	dirs += ext;
-
-	QString prefix = qc_getenv("PREFIX");
-	if (!prefix.isEmpty()) {
-		prefix += "/include";
-		prefix = qc_normalize_path(prefix);
-		if (!dirs.contains(prefix))
-			dirs << prefix;
-	}
-
 	for(QStringList::ConstIterator it = dirs.begin(); it != dirs.end(); ++it)
 	{
 		if(checkHeader(*it, h))
@@ -3470,18 +3461,6 @@ bool Conf::findLibrary(const QString &name, QString *lib)
 		*lib = "/usr/local/lib";
 		return true;
 	}
-
-	QString prefix = qc_getenv("PREFIX");
-	if (!prefix.isEmpty()) {
-		prefix += "/lib";
-		prefix = qc_normalize_path(prefix);
-		if(checkLibrary(prefix, name))
-		{
-			*lib = prefix;
-			return true;
-		}
-	}
-
 	return false;
 }
 
@@ -3495,45 +3474,33 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	QString inc, lib;
 	QString s;
 
-	s = getenv(incvar).trimmed();
+	s = getenv(incvar);
 	if(!s.isEmpty()) {
-		if(!checkHeader(s, incname)) {
-			if(debug_enabled)
-				printf("%s is not found in \\"%s\\"\\n", qPrintable(incname), qPrintable(s));
+		if(!checkHeader(s, incname))
 			return false;
-		}
 		inc = s;
 	}
 	else {
-		if(!findHeader(incname, QStringList(), &s)) {
-			if(debug_enabled)
-				printf("%s is not found in anywhere\\n", qPrintable(incname));
+		if(!findHeader(incname, QStringList(), &s))
 			return false;
-		}
 		inc = s;
 	}
 
-	s = getenv(libvar).trimmed();
+	s = getenv(libvar);
 	if(!s.isEmpty()) {
-		if(!checkLibrary(s, libname)) {
-			if(debug_enabled)
-				printf("%s is not found in \\"%s\\"\\n", qPrintable(libname), qPrintable(s));
+		if(!checkLibrary(s, libname))
 			return false;
-		}
 		lib = s;
 	}
 	else {
-		if(!findLibrary(libname, &s)) {
-			if(debug_enabled)
-				printf("%s is not found in anywhere\\n", qPrintable(libname));
+		if(!findLibrary(libname, &s))
 			return false;
-		}
 		lib = s;
 	}
 
 	QString lib_out;
 	if(!lib.isEmpty())
-		lib_out += QString("-L") + s + " ";
+		lib_out += QString("-L") + s;
 	lib_out += QString("-l") + libname;
 
 	*incpath = inc;
