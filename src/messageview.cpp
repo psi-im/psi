@@ -32,9 +32,11 @@ MessageView::MessageView(Type t) :
     _flags(0),
     _status(0),
     _statusPriority(0),
-    _dateTime(QDateTime::currentDateTime()),
-    _carbon(XMPP::Message::NoCarbon)
+    _dateTime(QDateTime::currentDateTime())
 {
+    if (t == Message || t == Urls || t == FileTransferRequest) {
+        _flags |= PendingRead; // requires attention
+    }
 }
 
 MessageView MessageView::fromPlainText(const QString &text, Type type)

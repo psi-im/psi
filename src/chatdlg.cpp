@@ -99,7 +99,6 @@ ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabMan
 ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
     : TabbableWidget(jid, pa, tabManager)
     , highlightersInstalled_(false)
-    , delayedMessages(0)
 {
     pending_ = 0;
     keepOpen_ = false;
@@ -112,12 +111,10 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 
     status_ = -1;
 
+    // if it's not groupchat contact or it's groupchat contact and db can hve history for it
     if (!pa->findGCContact(jid) || ((pa->edb()->features() & EDB::PrivateContacts) != 0)) {
-        historyState = false;
         preloadHistory();
     }
-    else
-        historyState = true;
 
     autoSelectContact_ = false;
     if (PsiOptions::instance()->getOption("options.ui.chat.default-jid-mode").toString() == "auto") {
@@ -180,7 +177,6 @@ void ChatDlg::init()
 
 ChatDlg::~ChatDlg()
 {
-    delete delayedMessages;
     account()->dialogUnregister(this);
 }
 
@@ -454,37 +450,33 @@ void ChatDlg::preloadHistory()
 {
     int cnt =PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
     if (cnt > 0) {
-        holdMessages(true);
+        historyState = true;
         if (cnt > 100) // This is limit, just in case.
             cnt = 100;
         EDBHandle *h = new EDBHandle(account()->edb());
-        connect(h, SIGNAL(finished()), this, SLOT(getHistory()));
+        QObject::connect(h, &EDBHandle::finished, this, [this,h](){
+            const EDBResult &r = h->result();
+            for (int i = r.count() - 1; i >= 0; --i) {
+                const EDBItemPtr &item = r.at(i);
+                PsiEvent::Ptr e = item->event();
+                if (e->type() == PsiEvent::Message) {
+                    MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+                    appendMessage(me->message(), me->originLocal()); // the message is already spooled=true
+                }
+            }
+            historyState = false;
+            // dump regular messages to chat log
+            for (const Message &m : delayedMessages) {
+                incomingMessageDirect(m);
+            }
+            delayedMessages.clear();
+        });
         Jid j = jid();
         if (!account()->findGCContact(j))
             j = jid().bare();
         int start = account()->eventQueue()->count(jid(), false);
         h->get(account()->id(), j, QDateTime(), EDB::Backward, start, cnt);
     }
-}
-
-void ChatDlg::getHistory()
-{
-    EDBHandle *h = qobject_cast<EDBHandle *>(sender());
-    if (!h)
-        return;
-
-    historyState = true;
-    const EDBResult &r = h->result();
-    for (int i = r.count() - 1; i >= 0; --i) {
-        const EDBItemPtr &item = r.at(i);
-        PsiEvent::Ptr e = item->event();
-        if (e->type() == PsiEvent::Message) {
-            MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            appendMessage(me->message(), me->originLocal());
-        }
-    }
-    delete h;
-    holdMessages(false);
 }
 
 void ChatDlg::ensureTabbedCorrectly()
@@ -840,7 +832,6 @@ void ChatDlg::doSend()
 
 void ChatDlg::doneSend()
 {
-    historyState = false;
     appendMessage(m_, true);
     disconnect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     chatEdit()->clear();
@@ -869,7 +860,16 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 
 void ChatDlg::incomingMessage(const Message &m)
 {
-    historyState = false;
+    if (historyState) {
+        delayedMessages.append(m);
+        return;
+    } else {
+        incomingMessageDirect(m);
+    }
+}
+
+void ChatDlg::incomingMessageDirect(const Message &m)
+{
     if (m.body().isEmpty() && m.subject().isEmpty() && m.urlList().isEmpty()) {
         // Event message
         if (m.containsEvent(CancelEvent)) {
@@ -930,13 +930,12 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     // figure out the encryption state
     bool encChanged = false;
     bool encEnabled = false;
-    if (!historyState) {
-        if (lastWasEncrypted_ != m.wasEncrypted()) {
-            encChanged = true;
-        }
-        lastWasEncrypted_ = m.wasEncrypted();
-        encEnabled = lastWasEncrypted_;
+
+    if (lastWasEncrypted_ != m.wasEncrypted()) {
+        encChanged = true;
     }
+    lastWasEncrypted_ = m.wasEncrypted();
+    encEnabled = lastWasEncrypted_;
 
     if (encChanged) {
         dispatchMessage(MessageView::fromHtml(
@@ -955,9 +954,9 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     }
 
     if (!m.subject().isEmpty()) {
-        MessageView smv = MessageView::subjectMessage(m.subject());
-        smv.setSpooled(historyState);
-        dispatchMessage(smv);
+        MessageView subjectView = MessageView::subjectMessage(m.subject());
+        subjectView.setSpooled(m.spooled());
+        dispatchMessage(subjectView);
     }
 
     MessageView mv(MessageView::Message);
@@ -987,10 +986,12 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     mv.setNick(whoNick(local));
     mv.setUserId(local?account()->jid().full():jid().full()); // theoretically, this can be inferred from the chat dialog properties
     mv.setDateTime(m.timeStamp());
-    mv.setSpooled(historyState);
+    mv.setSpooled(m.spooled());
     mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
     mv.setReplaceId(m.replaceId());
-    mv.setCarbonDirection(m.carbonDirection());
+    if (m.carbonDirection() == Message::Sent) {
+        mv.setPendingRead(false);
+    }
     dispatchMessage(mv);
 
     if (!m.urlList().isEmpty()) {
@@ -1003,48 +1004,19 @@ void ChatDlg::appendMessage(const Message &m, bool local)
         // It's convenient to show only body if OOB data brings no additional information.
         if (!(urlsMap.size() == 1 && urlsMap.contains(body) && urlsMap.value(body).isEmpty())) {
             MessageView umv = MessageView::urlsMessage(urlsMap);
-            umv.setSpooled(historyState);
+            umv.setSpooled(m.spooled());
             dispatchMessage(umv);
         }
     }
     emit messageAppended(body, chatView()->textWidget());
 }
 
-void ChatDlg::holdMessages(bool hold)
-{
-    if (hold) {
-        if (!delayedMessages)
-            delayedMessages = new QList<MessageView>();
-    }
-    else if (delayedMessages) {
-        foreach (const MessageView &mv, *delayedMessages) {
-             if (mv.isSpooled())
-                 displayMessage(mv);
-        }
-        foreach (const MessageView &mv, *delayedMessages) {
-            if (!mv.isSpooled())
-                displayMessage(mv);
-        }
-        delete delayedMessages;
-        delayedMessages = 0;
-    }
-}
-
 void ChatDlg::dispatchMessage(const MessageView &mv)
-{
-    if (delayedMessages)
-        delayedMessages->append(mv);
-    else
-        displayMessage(mv);
-}
-
-void ChatDlg::displayMessage(const MessageView &mv)
 {
     chatView()->dispatchMessage(mv);
 
     // if we're not active, notify the user by changing the title
-    MessageView::Type type = mv.type();
-    if (type != MessageView::System && type != MessageView::Status && !mv.isSpooled() && !isActiveTab() && mv.carbonDirection() != Message::Sent) {
+    if (mv.isPendingRead() && !isActiveTab()) {
         ++pending_;
         invalidateTab();
         if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {
