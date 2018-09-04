@@ -108,6 +108,10 @@ or
 
   to enable Qt5Keychain library support
 
+> -DBUILD_PSIMEDIA=ON
+
+  build psimedia plugin if sources found in project folder
+
 >  -DONLY_BINARY=OFF
 
   If ON - only binary file will be installed
