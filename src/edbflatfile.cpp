@@ -315,10 +315,10 @@ void EDBFlatFile::file_timeout()
 class EDBFlatFile::File::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
     QVector<quint64> index;
-    bool indexed;
+    bool indexed = false;
 };
 
 EDBFlatFile::File::File(const Jid &_j)

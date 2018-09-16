@@ -122,8 +122,9 @@ public:
 int  FancyPopup::Private::hideTimeout = 5 * 1000; // 5 seconds
 QColor FancyPopup::Private::backgroundColor = QColor (0x52, 0x97, 0xF9);
 
-FancyPopup::Private::Private(FancyPopup *p)
-: QObject(p)
+FancyPopup::Private::Private(FancyPopup *p) :
+    QObject(p),
+    popupLayout(TopToBottom)
 {
     popup = p;
 
@@ -149,7 +150,7 @@ QPoint FancyPopup::Private::position()
     bool topToBottom = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.top-to-bottom").toBool();
     bool atLeft = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.at-left-corner").toBool();
     QPoint destination(geom.x() + (atLeft ? 0 : geom.width()),
-               geom.y() + (topToBottom ? 0 : geom.height()) ); // in which corner popup should appear
+                       geom.y() + (topToBottom ? 0 : geom.height()) ); // in which corner popup should appear
 
     /*if ( destination.y() > (qApp->desktop()->screenGeometry().height()/2) )
         popupLayout = Private::BottomToTop;
@@ -235,7 +236,7 @@ static const QFlags<Qt::WindowType>
 POPUP_FLAGS = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
 
 FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon)
-: QFrame( 0, POPUP_FLAGS )
+    : QFrame( 0, POPUP_FLAGS )
 {
     QWidget::setAttribute(Qt::WA_DeleteOnClose);
     setWindowModality(Qt::NonModal);

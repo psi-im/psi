@@ -115,22 +115,20 @@ private:
 public:
     Private(BusyWidget *b)
     {
-        t = 0;
         busy = b;
-        stopInProgress = false;
     }
 
-    bool stopInProgress;
-    bool isActive;
-    int frame;
-    int at;
+    bool stopInProgress = false;
+    bool isActive = false;
+    int frame = 0;
+    int at = 0;
     QPixmap pix;
-    QTimer *t;
+    QTimer *t = nullptr;
 
     // data
     CPanel panel[5];
-    int  pcountdown;
-    int  ocountdown;
+    int pcountdown = 0;
+    int ocountdown = 0;
 
     void render()
     {

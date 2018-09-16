@@ -59,17 +59,17 @@ using namespace XMPP;
 class InfoWidget::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
-    int type;
+    int type = 0;
     Jid jid;
     VCard vcard;
-    PsiAccount *pa;
-    bool busy;
-    bool te_edited;
-    int actionType;
-    JT_VCard *jt;
-    bool cacheVCard;
+    PsiAccount *pa = nullptr;
+    bool busy = false;
+    bool te_edited = false;
+    int actionType = 0;
+    JT_VCard *jt = nullptr;
+    bool cacheVCard = false;
     QByteArray photo;
     QDate bday;
     QString dateTextFormat;
@@ -79,10 +79,10 @@ public:
     QPointer<QPushButton> noBdayButton;
     QPointer<QFrame> bdayPopup;
     QPointer<QCalendarWidget> calendar;
-    QLineEdit *le_givenname;
-    QLineEdit *le_middlename;
-    QLineEdit *le_familyname;
-    QAction *homepageAction;
+    QLineEdit *le_givenname = nullptr;
+    QLineEdit *le_middlename = nullptr;
+    QLineEdit *le_familyname = nullptr;
+    QAction *homepageAction = nullptr;
 
     // Fake UserListItem for groupchat contacts.
     // One day this dialog should be rewritten not to talk directly to psiaccount,

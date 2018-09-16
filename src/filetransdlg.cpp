@@ -1119,9 +1119,13 @@ public:
         rate = FileTransDlg::tr("N/A");
         sent = 0;
         progress = 0;
+        bps = 0;
+        timeRemaining = 0;
+        id = 0;
         dist = -1;
+        height = 5;
         margin = 4;
-        cm = 0;
+        cm = nullptr;
     }
 
     void niceUnit(qlonglong n, qlonglong *div, QString *unit)
@@ -1596,7 +1600,10 @@ public:
 
     TransferMapping()
     {
-        h = 0;
+        h = nullptr;
+        id = 0;
+        p = 0;
+        sent = 0;
         at = 0;
     }
 
@@ -1626,10 +1633,11 @@ public:
     QList<TransferMapping*> transferList;
     QTimer t;
 
-    Private(FileTransDlg *_parent)
-    {
-        parent = _parent;
-    }
+    Private(FileTransDlg *_parent) :
+        parent(_parent),
+        psi(nullptr),
+        lv(nullptr)
+    { }
 
     ~Private()
     {

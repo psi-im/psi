@@ -359,6 +359,8 @@ public:
     Private(IconSelectPopup *parent)
         : QObject(parent)
         , parent_(parent)
+        , icsel_(nullptr)
+        , widgetAction_(nullptr)
     {}
 
     IconSelectPopup* parent_;

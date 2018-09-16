@@ -124,35 +124,35 @@ QDomElement JT_XRegister::xdataElement() const
 class RegistrationDlg::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
     Jid jid;
-    PsiAccount *pa;
+    PsiAccount *pa = nullptr;
 
-    QPushButton *pb_close, *pb_reg;
+    QPushButton *pb_close = nullptr, *pb_reg = nullptr;
     QPointer<JT_XRegister> jt;
-    int type;
-    BusyWidget *busy;
-    QLabel *lb_top;
-    QWidget *gr_form;
-    QGridLayout *gr_form_layout;
+    int type = 0;
+    BusyWidget *busy = nullptr;
+    QLabel *lb_top = nullptr;
+    QWidget *gr_form = nullptr;
+    QGridLayout *gr_form_layout = nullptr;
     Form form;
 
     QList<QLabel*> lb_field;
     QList<QLineEdit*> le_field;
-    XDataWidget *xdata;
+    XDataWidget *xdata = nullptr;
 };
 
 RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private;
     d->jid = jid;
     d->pa = pa;
     d->pa->dialogRegister(this, d->jid);
-    d->jt = 0;
-    d->xdata = 0;
+    d->jt = nullptr;
+    d->xdata = nullptr;
 
     setWindowTitle(tr("Registration: %1").arg(d->jid.full()));
 
@@ -345,7 +345,7 @@ void RegistrationDlg::jt_finished()
     d->gr_form->setEnabled(true);
     d->pb_reg->setEnabled(true);
     JT_XRegister *jt = d->jt;
-    d->jt = 0;
+    d->jt = nullptr;
 
     if(jt->success()) {
         if(d->type == 0) {

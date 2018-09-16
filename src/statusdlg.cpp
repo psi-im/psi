@@ -86,17 +86,17 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
 class StatusSetDlg::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
-    PsiCon *psi;
-    PsiAccount *pa;
+    PsiCon *psi = nullptr;
+    PsiAccount *pa = nullptr;
     Status s;
-    bool withPriority;
-    ChatEdit *te;
-    StatusComboBox *cb_type;
-    QComboBox *cb_preset;
-    QLineEdit *le_priority;
-    QCheckBox *save;
+    bool withPriority = false;
+    ChatEdit *te = nullptr;
+    StatusComboBox *cb_type = nullptr;
+    QComboBox *cb_preset = nullptr;
+    QLineEdit *le_priority = nullptr;
+    QCheckBox *save = nullptr;
     Jid j;
     QList<XMPP::Jid> jl;
     setStatusEnum setStatusMode;

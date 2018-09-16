@@ -125,7 +125,7 @@ static QString findJid(const QString &s, int x, int *p1, int *p2)
 // ELineEdit - a line edit that handles advanced Jid entry
 //----------------------------------------------------------------------------
 ELineEdit::ELineEdit(EventDlg *parent, const char *name)
-:QLineEdit(parent)
+    :QLineEdit(parent)
 {
     setObjectName(name);
     setAcceptDrops(true);
@@ -254,7 +254,7 @@ class AttachViewItem : public QListWidgetItem
 {
 public:
     AttachViewItem(const QString &_url, const QString &_desc, AttachView *par)
-    :QListWidgetItem(par)
+        :QListWidgetItem(par)
     {
         type = 0;
         url = _url;
@@ -266,7 +266,7 @@ public:
     }
 
     AttachViewItem(const QString &_gc, const QString& from, const QString& reason, const QString& _password, AttachView *par)
-    :QListWidgetItem(par)
+        :QListWidgetItem(par)
     {
         type = 1;
         gc = _gc;
@@ -423,7 +423,7 @@ void AttachView::addUrlList(const UrlList &list)
 // AddUrlDlg
 //----------------------------------------------------------------------------
 AddUrlDlg::AddUrlDlg(QWidget *parent)
-:QDialog(parent)
+    :QDialog(parent)
 {
     setupUi(this);
 #ifndef Q_OS_MAC
@@ -449,74 +449,87 @@ class EventDlg::Private : public QObject
 public:
     Private(EventDlg *d) {
         dlg = d;
-        nextAnim_ = 0;
     }
 
     ~Private() {
-        setNextAnim(0);
+        setNextAnim(nullptr);
     }
 
     void setNextAnim(PsiIcon *anim) {
         if (nextAnim_) {
             delete nextAnim_;
-            nextAnim_ = 0;
+            nextAnim_ = nullptr;
         }
 
-        if (anim)
+        if (anim) {
             nextAnim_ = new AlertIcon(anim);
+        }
     }
 
     PsiIcon *nextAnim() const {
         return nextAnim_;
     }
 
-    EventDlg *dlg;
-    PsiCon *psi;
-    PsiAccount *pa;
+    EventDlg *dlg = nullptr;
+    PsiCon *psi = nullptr;
+    PsiAccount *pa = nullptr;
 
-    bool composing;
+    QLabel *lb_identity = nullptr;
+    QLabel *lb_time = nullptr;
+    QLabel *lb_count = nullptr;
+    AccountsComboBox *cb_ident = nullptr;
+    QComboBox *cb_type = nullptr;
+    AccountLabel *lb_ident = nullptr;
+    IconLabel *lb_status = nullptr;
+    IconLabel *lb_pgp = nullptr;
+    ELineEdit *le_to = nullptr;
+    QLineEdit *le_from = nullptr;
+    QLineEdit *le_subj = nullptr;
+    IconToolButton *tb_url = nullptr,
+    *tb_info = nullptr,
+    *tb_history = nullptr,
+    *tb_pgp = nullptr,
+    *tb_icon = nullptr;
+    IconButton *pb_next = nullptr,
+    *pb_close = nullptr,
+    *pb_quote = nullptr,
+    *pb_deny = nullptr,
+    *pb_send = nullptr,
+    *pb_reply = nullptr,
+    *pb_chat = nullptr,
+    *pb_auth = nullptr,
+    *pb_http_confirm = nullptr,
+    *pb_http_deny = nullptr,
+    *pb_form_submit = nullptr,
+    *pb_form_cancel = nullptr;
+    QCheckBox *ck_all_auth = nullptr;
+    PsiTextView *mle = nullptr;
+    AttachView *attachView = nullptr;
+    QTimer *whois = nullptr;
+    PsiIcon *anim = nullptr;
+    QWidget *w_http_id = nullptr;
+    QLineEdit *le_http_id = nullptr;
+    QWidget *xdata_form = nullptr;
+    XDataWidget *xdata = nullptr;
+    QLabel *xdata_instruction = nullptr;
 
-    QLabel *lb_identity;
-    AccountsComboBox *cb_ident;
-    QComboBox *cb_type;
-    AccountLabel *lb_ident;
-    QLabel *lb_time;
-    IconLabel *lb_status;
-    ELineEdit *le_to;
-    QLineEdit *le_from, *le_subj;
-    QLabel *lb_count;
-    IconToolButton *tb_url, *tb_info, *tb_history, *tb_pgp, *tb_icon;
-    IconLabel *lb_pgp;
-    bool enc;
-    int transid;
-    IconButton *pb_next;
-    IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
-    IconButton *pb_form_submit, *pb_form_cancel;
-    QCheckBox *ck_all_auth;
-    PsiTextView *mle;
-    AttachView *attachView;
-    QTimer *whois;
+    PsiHttpAuthRequest httpAuthRequest;
+    RosterExchangeItems rosterExchangeItems;
     QString lastWhois;
     Jid jid, realJid;
+    Message m;
     QString thread;
     QStringList completionList;
-    PsiIcon *anim;
-    int nextAmount;
-    QWidget *w_http_id;
-    QLineEdit *le_http_id;
-    PsiHttpAuthRequest httpAuthRequest;
-    QWidget *xdata_form;
-    XDataWidget* xdata;
-    QLabel* xdata_instruction;
-    RosterExchangeItems rosterExchangeItems;
-
-    bool urlOnShow;
-
-    Message m;
     QStringList sendLeft;
 
+    bool composing = false;
+    bool enc = false;
+    bool urlOnShow = false;
+    int transid = 0;
+    int nextAmount = 0;
+
 private:
-    PsiIcon *nextAnim_;
+    PsiIcon *nextAnim_ = nullptr;
 
 private slots:
     void ensureEditPosition() {
@@ -786,7 +799,7 @@ void EventDlg::init()
     hb3->setSpacing(4);
     vb1->addLayout(hb3);
 
-//    if(d->composing /* && config->showsubject */) {
+    //    if(d->composing /* && config->showsubject */) {
     if(PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool()) {
         // third row
         l = new QLabel(tr("Subject:"), this);
@@ -1463,11 +1476,11 @@ void EventDlg::doSend()
     }
     else {
         if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty() && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
-                m.setTo(d->pa->serverInfoManager()->multicastService());
-                foreach(QString recipient, list) {
-                    m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
-                }
-                d->pa->dj_sendMessage(m, true);
+            m.setTo(d->pa->serverInfoManager()->multicastService());
+            foreach(QString recipient, list) {
+                m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
+            }
+            d->pa->dj_sendMessage(m, true);
         }
         else {
             for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
@@ -1793,21 +1806,21 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
         const HttpAuthRequest &confirm = hae->request();
 
         QString body(tr(
-                "Someone (maybe you) has requested access to the following resource:\n"
-                "URL: %1\n"
-                "Method: %2\n").arg(confirm.url()).arg(confirm.method()));
+                         "Someone (maybe you) has requested access to the following resource:\n"
+                         "URL: %1\n"
+                         "Method: %2\n").arg(confirm.url()).arg(confirm.method()));
 
         if (!confirm.hasId()) {
             body += tr("\n"
-                "If you wish to confirm this request, please provide transaction identifier and press Confirm button. Otherwise press Deny button.");
+                       "If you wish to confirm this request, please provide transaction identifier and press Confirm button. Otherwise press Deny button.");
 
             showHttpId = true;
         }
         else {
             body += tr("Transaction identifier: %1\n"
-                "\n"
-                "If you wish to confirm this request, please press Confirm button. "
-                "Otherwise press Deny button.").arg(confirm.id());
+                       "\n"
+                       "If you wish to confirm this request, please press Confirm button. "
+                       "Otherwise press Deny button.").arg(confirm.id());
         }
         Message m(hae->message());
         m.setBody(body);
@@ -1959,15 +1972,15 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
         int additions = 0, deletions = 0, modifications = 0;
         foreach(RosterExchangeItem item, re->rosterExchangeItems()) {
             switch(item.action()) {
-                case RosterExchangeItem::Add:
-                    additions++;
-                    break;
-                case RosterExchangeItem::Delete:
-                    deletions++;
-                    break;
-                case RosterExchangeItem::Modify:
-                    modifications++;
-                    break;
+            case RosterExchangeItem::Add:
+                additions++;
+                break;
+            case RosterExchangeItem::Delete:
+                deletions++;
+                break;
+            case RosterExchangeItem::Modify:
+                modifications++;
+                break;
             }
         }
         QString action;

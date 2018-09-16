@@ -42,17 +42,18 @@
 class AddUserDlg::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
-    PsiAccount *pa;
-    BusyWidget *busy;
+    PsiAccount *pa = nullptr;
+    BusyWidget *busy = nullptr;
+    JT_Gateway *jt = nullptr;
+    TaskList *tasks = nullptr;
+
     QStringList services;
-    JT_Gateway *jt;
-    TaskList *tasks;
 };
 
 AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *pa)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     init(groups, pa);
     d->services = services;

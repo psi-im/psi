@@ -57,7 +57,7 @@ struct UserStatus {
     UserListItem* userListItem;
     XMPP::Status::Type statusType;
     QString status;
-    int priority;
+    int priority = 0;
     QString publicKeyID;
 };
 

@@ -87,10 +87,10 @@ private:
 class AccountRemoveDlg::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
     UserAccount acc;
-    QButtonGroup *bg;
+    QButtonGroup *bg = nullptr;
 };
 
 AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)

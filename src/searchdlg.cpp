@@ -146,26 +146,26 @@ public:
         return result;
     }
 
-    SearchDlg* dlg;
-    PsiAccount *pa;
+    SearchDlg *dlg;
+    PsiAccount *pa = nullptr;
     Jid jid;
     Form form;
-    BusyWidget *busy;
+    BusyWidget *busy = nullptr;
     QPointer<JT_XSearch> jt;
-    QWidget *gr_form;
-    QGridLayout *gr_form_layout;
-    int type;
+    QWidget *gr_form = nullptr;
+    QGridLayout *gr_form_layout = nullptr;
+    int type = 0;
 
     QList<QLabel*> lb_field;
     QList<QLineEdit*> le_field;
-    XDataWidget *xdata;
+    XDataWidget *xdata = nullptr;
     XData xdata_form;
-    QScrollArea *scrollArea;
+    QScrollArea *scrollArea = nullptr;
 
 };
 
 SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private(this);

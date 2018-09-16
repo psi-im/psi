@@ -62,19 +62,18 @@ const QString & EDBItem::id() const
 class EDBHandle::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
-    EDB *edb;
-    int beginRow_;
+    EDB *edb = nullptr;
+    int beginRow_ = 0;
     EDBResult r;
-    bool busy;
-    bool writeSuccess;
-    int listeningFor;
-    int lastRequestType;
+    bool busy = false;
+    bool writeSuccess = false;
+    int listeningFor = 0;
+    int lastRequestType = 0;
 };
 
-EDBHandle::EDBHandle(EDB *edb)
-:QObject(0)
+EDBHandle::EDBHandle(EDB *edb) : QObject(nullptr)
 {
     d = new Private;
     d->edb = edb;
@@ -175,11 +174,11 @@ int EDBHandle::beginRow() const
 class EDB::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
     QList<EDBHandle*> list;
-    int reqid_base;
-    PsiCon *psi;
+    int reqid_base = 0;
+    PsiCon *psi = nullptr;
 };
 
 EDB::EDB(PsiCon *psi)

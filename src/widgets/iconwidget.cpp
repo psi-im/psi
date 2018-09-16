@@ -539,9 +539,10 @@ public:
 public:
     Private(IconButton *b)
     {
-        icon = 0;
+        icon = nullptr;
         button = b;
         textVisible = true;
+        activate = false;
         forced = false;
     }
 
@@ -713,8 +714,9 @@ public:
 public:
     Private(IconToolButton *b)
     {
-        icon = 0;
+        icon = nullptr;
         button = b;
+        activate = false;
     }
 
     ~Private()

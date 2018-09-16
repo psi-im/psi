@@ -342,11 +342,11 @@ ProxyDlg::~ProxyDlg()
 class ProxyChooser::Private
 {
 public:
-    Private() {}
+    Private() = default;
 
-    QComboBox *cb_proxy;
-    QPushButton *pb_edit;
-    ProxyManager *m;
+    QComboBox *cb_proxy = nullptr;
+    QPushButton *pb_edit = nullptr;
+    ProxyManager *m = nullptr;
 };
 
 ProxyChooser::ProxyChooser(ProxyManager* m, QWidget* parent)
@@ -499,13 +499,13 @@ void ProxyForObject::updateCurrentItem()
 class ProxyManager::Private
 {
 public:
-    Private() : po(0) {}
+    Private() = default;
 
     QPointer<ProxyDlg> pd;
     QList<int> prevMap;
     QString lastEdited;
-    OptionsTree *o;
-    ProxyForObject* po;
+    OptionsTree *o = nullptr;
+    ProxyForObject *po = nullptr;
 
     void itemToOptions(ProxyItem pi) {
         QString base = "proxies." + pi.id;

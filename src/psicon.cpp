@@ -221,13 +221,25 @@ class PsiCon::Private : public QObject
 public:
     Private(PsiCon *parent)
         : QObject(parent)
-        , contactList(0)
-        , iconSelect(0)
+        , contactList(nullptr)
+        , mainwin(nullptr)
+        , eventId(0)
+        , edb(nullptr)
+        , s5bServer(nullptr)
+        , iconSelect(nullptr)
+        , nam(nullptr)
+        , actionList(nullptr)
+        , tuneManager(nullptr)
+        , defaultMenuBar(nullptr)
+        , tabManager(nullptr)
         , quitting(false)
         , wakeupPending(false)
+        , updatedAccountTimer_(nullptr)
+        , autoUpdater(nullptr)
         , alertManager(parent)
-        , bossKey(0)
-        , popupManager(0)
+        , bossKey(nullptr)
+        , popupManager(nullptr)
+        , netSession(nullptr)
     {
         psi = parent;
     }
@@ -283,8 +295,8 @@ private slots:
     }
 
 public:
-    PsiCon* psi;
-    PsiContactList* contactList;
+    PsiCon *psi;
+    PsiContactList *contactList;
     OptionsMigration optionsMigration;
     OptionsTree accountTree;
     MainWin *mainwin;
@@ -297,7 +309,7 @@ public:
     IconSelectPopup *iconSelect;
     NetworkAccessManager *nam;
 #ifdef FILETRANSFER
-    FileTransDlg *ftwin;
+    FileTransDlg *ftwin = nullptr;
 #endif
     PsiActionList *actionList;
     //GlobalAccelManager *globalAccelManager;
@@ -306,18 +318,17 @@ public:
     TabManager *tabManager;
     bool quitting;
     bool wakeupPending;
-    QTimer* updatedAccountTimer_;
+    QTimer *updatedAccountTimer_;
     AutoUpdater *autoUpdater;
     AlertManager alertManager;
     BossKey *bossKey;
     PopupManager * popupManager;
     QNetworkConfigurationManager netConfMng;
-    QNetworkSession *netSession = nullptr;
+    QNetworkSession *netSession;
 
     struct IdleSettings
     {
-        IdleSettings() : secondsIdle(0)
-        {}
+        IdleSettings() = default;
 
         void update()
         {
@@ -332,10 +343,10 @@ public:
             useIdleServer = o->getOption("options.service-discovery.last-activity").toBool();
         }
 
-        bool useOffline, useNotAvailable, useAway, menuXA;
-        int offlineAfter, notAvailableAfter, awayAfter;
-        int secondsIdle;
-        bool useIdleServer;
+        bool useOffline = false, useNotAvailable = false, useAway = false, menuXA = false;
+        int offlineAfter = 0, notAvailableAfter = 0, awayAfter = 0;
+        int secondsIdle = 0;
+        bool useIdleServer = false;
     };
 
     IdleSettings idleSettings_;

@@ -152,6 +152,11 @@ X11WindowSystem::X11WindowSystem()
         ignoredWindowStates.insert(net_wm_state_hidden);
 }
 
+X11WindowSystem &X11WindowSystem::operator=(const X11WindowSystem &)
+{
+    return *this;
+}
+
 X11WindowSystem* X11WindowSystem::instance()
 {
     if (!_instance)

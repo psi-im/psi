@@ -546,10 +546,10 @@ IconAction *SeparatorAction::copy() const
 class EventNotifierAction::Private
 {
 public:
-    Private() { }
+    Private() = default;
 
     QList<MLabel*> labels;
-    bool hide;
+    bool hide = false;
     QString message;
 };
 

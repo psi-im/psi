@@ -34,14 +34,14 @@ class ActionList::Private : public QObject
 {
     Q_OBJECT
 public:
-    Private() { }
+    Private() = default;
     Private( const Private & );
 
     QString name;
-    int id;
+    int id = 0;
     QStringList sortedActions;
     QHash<QString, IconAction*> actions;
-    bool autoDeleteActions;
+    bool autoDeleteActions = false;
 
 public slots:
     void actionDestroyed(QObject *);

@@ -111,17 +111,17 @@ public:
     ~Private();
 
     bool onTop, asTool;
-    QMenu* mainMenu, *optionsMenu, *toolsMenu;
+    QMenu *mainMenu, *optionsMenu, *toolsMenu;
     GlobalStatusMenu *statusMenu;
 #ifdef Q_OS_LINUX
     // Status menu for MenuBar.
     // Workaround a Unity bug.
-    GlobalStatusMenu *statusMenuMB;
+    GlobalStatusMenu *statusMenuMB = nullptr;
 #endif
     int sbState;
     QString nickname;
-    PsiTrayIcon* tray;
-    QMenu* trayMenu;
+    PsiTrayIcon *tray;
+    QMenu *trayMenu;
     QVBoxLayout *vb_roster;
     QSplitter *splitter;
     TabDlg *mainTabs;
@@ -131,23 +131,23 @@ public:
     int rosterSize;
     bool isLeftRoster;
 
-    PopupAction* optionsButton, *statusButton;
-    IconActionGroup* statusGroup, *viewGroups;
-    IconAction* statusSmallerAlt;
-    EventNotifierAction* eventNotifier;
-    PsiCon* psi;
-    MainWin* mainWin;
-    RosterAvatarFrame* rosterAvatar;
+    PopupAction *optionsButton, *statusButton;
+    IconActionGroup *statusGroup, *viewGroups;
+    IconAction *statusSmallerAlt;
+    EventNotifierAction *eventNotifier;
+    PsiCon *psi;
+    MainWin *mainWin;
+    RosterAvatarFrame *rosterAvatar;
     QPointer<PsiAccount> defaultAccount;
 
-    QLineEdit* searchText;
-    QToolButton* searchPb;
-    QWidget* searchWidget;
+    QLineEdit *searchText;
+    QToolButton *searchPb;
+    QWidget *searchWidget;
 
     QTimer *hideTimer;
-    QSignalMapper* statusMapper;
+    QSignalMapper *statusMapper;
 
-    PsiIcon* nextAnim;
+    PsiIcon *nextAnim;
     int nextAmount;
 
     QMap<QAction *, int> statusActions;
@@ -173,8 +173,34 @@ public:
     QPointer<GeoLocationDlg> geolocationDlg;
 };
 
-MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTabs(0), viewToolBar(0),
-    isLeftRoster(false), psi(_psi), mainWin(_mainWin), hideTimer(0)
+MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
+    onTop(false),
+    asTool(false),
+    mainMenu(nullptr),
+    optionsMenu(nullptr),
+    toolsMenu(nullptr),
+    statusMenu(nullptr),
+    sbState(0),
+    tray(nullptr),
+    trayMenu(nullptr),
+    vb_roster(nullptr),
+    splitter(nullptr),
+    mainTabs(nullptr),
+    viewToolBar(nullptr),
+    tabsSize(0),
+    rosterSize(0),
+    isLeftRoster(false),
+    psi(_psi),
+    mainWin(_mainWin),
+    rosterAvatar(nullptr),
+    searchText(nullptr),
+    searchPb(nullptr),
+    searchWidget(nullptr),
+    hideTimer(nullptr),
+    nextAnim(nullptr),
+    nextAmount(0),
+    lastStatus(0),
+    rosterWidget_(nullptr)
 {
 
     statusGroup   = (IconActionGroup *)getAction("status_group");

@@ -62,7 +62,7 @@ public:
             QRegExp regexp;
             QString iconset;
         };
-        bool useServicesIcons;
+        bool useServicesIcons = false;
         QList<IconsetItem> list;
         QList<IconsetItem> customList;
     } status_icons;

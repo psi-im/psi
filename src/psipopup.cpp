@@ -89,12 +89,13 @@ public:
 };
 
 PsiPopup::Private::Private(PsiPopup *p)
-    : psi(0)
-    , account(0)
-    , popup(0)
+    : psi(nullptr)
+    , account(nullptr)
+    , popup(nullptr)
     , psiPopup(p)
     , popupType(PopupManager::AlertNone)
-    , titleIcon(0)
+    , titleIcon(nullptr)
+    , display(false)
     , doAlertIcon(false)
 {
 }
