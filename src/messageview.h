@@ -24,6 +24,8 @@
 #include <QDateTime>
 #include <QVariantMap>
 
+#include "xmpp_message.h"
+
 #if QT_VERSION < QT_VERSION_CHECK(5,7,0)
 # define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag
 #else
@@ -54,7 +56,6 @@ public:
         AwaitingReceipt  = 0x10,
         HideStatusChange = 0x20,
         HideJoinLeave    = 0x40,
-        PendingRead      = 0x80  // where the message requires some attention
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -99,7 +100,7 @@ public:
     inline bool isLocal() const { return _flags & Local; }
     inline void setEmote(bool state = true) { SET_QFLAG(_flags, Emote, state); }
     inline bool isEmote() const { return _flags & Emote; }
-    inline void setSpooled(bool state = true) { SET_QFLAG(_flags, Spooled, state); setPendingRead(false); }
+    inline void setSpooled(bool state = true) { SET_QFLAG(_flags, Spooled, state); }
     inline bool isSpooled() const { return _flags & Spooled; }
     inline void setAwaitingReceipt(bool b = true) { SET_QFLAG(_flags, AwaitingReceipt, b); }
     inline bool isAwaitingReceipt() const { return _flags & AwaitingReceipt; }
@@ -107,8 +108,6 @@ public:
     inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
     inline void setJoinLeaveHidden(bool b = true) { SET_QFLAG(_flags, HideJoinLeave, b); }
     inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
-    inline void setPendingRead(bool b = true) { SET_QFLAG(_flags, PendingRead, b); }
-    inline bool isPendingRead() const { return _flags & PendingRead; }
 
     inline void setStatus(int s) { _status = s; }
     inline int status() const { return _status; }
@@ -126,6 +125,8 @@ public:
     inline QMap<QString, QString> urls() const { return _urls; }
     inline void setReplaceId(const QString &id) { _replaceId = id; }
     inline const QString &replaceId() const { return _replaceId; }
+    inline void setCarbonDirection(XMPP::Message::CarbonDir c) {_carbon = c; }
+    inline XMPP::Message::CarbonDir carbonDirection() const { return _carbon; }
 
     QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
@@ -142,6 +143,7 @@ private:
     QDateTime _dateTime;
     QMap<QString, QString> _urls;
     QString _replaceId;
+    XMPP::Message::CarbonDir _carbon;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

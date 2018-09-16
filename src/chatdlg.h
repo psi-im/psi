@@ -150,6 +150,7 @@ private slots:
     void addEmoticon(QString text);
     void initComposing();
     void setComposing();
+    void getHistory();
 
 protected slots:
     void checkComposing();
@@ -161,7 +162,9 @@ protected:
     void updateRealJid();
     void resetComposing();
     void doneSend();
+    void holdMessages(bool hold);
     void dispatchMessage(const MessageView &mv);
+    void displayMessage(const MessageView &mv);
     virtual void setLooks();
     void setSelfDestruct(int);
     virtual void chatEditCreated();
@@ -172,7 +175,6 @@ protected:
     virtual void contactUpdated(UserListItem* u, int status, const QString& statusString);
 
     virtual bool isEncryptionEnabled() const;
-    void incomingMessageDirect(const Message &m);
 
 public:
     virtual void appendSysMsg(const QString& txt) = 0;
@@ -199,7 +201,7 @@ private:
     QAction* act_close_;
     QAction* act_hide_;
 
-    int pending_; // unread messages
+    int pending_;
     bool keepOpen_;
     bool warnSend_;
 
@@ -218,11 +220,11 @@ private:
     QTimer* composingTimer_;
     bool isComposing_;
     bool sendComposingEvents_;
-    bool historyState = false; // the dialog is in history preloading state
+    bool historyState;
     QString eventId_;
     ChatState contactChatState_;
     ChatState lastChatState_;
-    QList<Message> delayedMessages;
+    QList<MessageView> *delayedMessages;
 };
 
 #endif
