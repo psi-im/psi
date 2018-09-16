@@ -59,7 +59,7 @@ public:
     class Frame {
     public:
         Impix impix;
-        int period;
+        int period = 100;
     };
 
     QList<Frame> frames;
@@ -118,9 +118,9 @@ public:
             QImage image = reader.read();
             if ( !image.isNull() ) {
                 Frame newFrame;
+                newFrame.impix  = Impix(image);
+                newFrame.period = reader.nextImageDelay();
                 frames.append( newFrame );
-                frames.last().impix  = Impix(image);
-                frames.last().period = reader.nextImageDelay();
             }
             else {
                 break;
@@ -140,9 +140,9 @@ public:
 
                 for (int i = 0; i < frame.width() / frame.height(); i++) {
                     Frame newFrame;
+                    newFrame.impix  = Impix(frame.copy(i * h, 0, h, h));
+                    newFrame.period = 120;
                     newFrames.append( newFrame );
-                    newFrames.last().impix  = Impix(frame.copy(i * h, 0, h, h));
-                    newFrames.last().period = 120;
                 }
 
                 frames  = newFrames;
