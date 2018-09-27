@@ -36,7 +36,9 @@
 // https://list.jabber.at/api/?format=services-full.xml
 // original http://xmpp.org/services/services.xml does not work anymore (checked on 2016-03-27)
 
-ServerListQuerier::ServerListQuerier(QObject* parent) : QObject(parent)
+ServerListQuerier::ServerListQuerier(QObject* parent)
+    : QObject(parent)
+    , redirectCount_(0)
 {
     http_ = new QNetworkAccessManager(this);
     url_ = QUrl("https://xmpp.net/directory.php");

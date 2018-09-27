@@ -42,7 +42,7 @@ class UserResource : public XMPP::Resource
 public:
     UserResource();
     UserResource(const XMPP::Resource &);
-    ~UserResource();
+    ~UserResource() = default;
 
     void setResource(const XMPP::Resource &);
 

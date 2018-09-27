@@ -374,7 +374,7 @@ PsiEvent *MessageEvent::copy() const
 //----------------------------------------------------------------------------
 
 AuthEvent::AuthEvent(const Jid &j, const QString &authType, PsiAccount *acc)
-: PsiEvent(acc)
+    : PsiEvent(acc)
 {
     v_from = j;
     v_at = authType;
@@ -384,6 +384,7 @@ AuthEvent::AuthEvent(const Jid &j, const QString &authType, PsiAccount *acc)
 AuthEvent::AuthEvent(const AuthEvent &from)
     : PsiEvent(from)
     , v_from(from.v_from)
+    , v_nick(from.v_nick)
     , v_at(from.v_at)
     , v_sentToChatWindow(from.v_sentToChatWindow)
 {

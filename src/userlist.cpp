@@ -52,17 +52,13 @@ static QString dot_truncate(const QString &in, int clip)
 // UserResource
 //----------------------------------------------------------------------------
 UserResource::UserResource()
-:Resource()
+    : v_pgpVerifyStatus(0)
 {
 }
 
 UserResource::UserResource(const Resource &r)
 {
     setResource(r);
-}
-
-UserResource::~UserResource()
-{
 }
 
 void UserResource::setResource(const Resource &r)

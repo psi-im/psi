@@ -25,33 +25,40 @@
 // SxeEdit
 //----------------------------------------------------------------------------
 
-SxeEdit::SxeEdit(const QString rid, bool remote) {
-    rid_ = rid;
-    remote_ = remote;
+SxeEdit::SxeEdit(const QString rid, bool remote)
+    : rid_(rid)
+    , remote_(remote)
+    , null_(false)
+{
 };
 
-SxeEdit::~SxeEdit() {
-
+SxeEdit::~SxeEdit()
+{
 };
 
-bool SxeEdit::remote() const {
+bool SxeEdit::remote() const
+{
     return remote_;
 };
 
-QString SxeEdit::rid() const {
+QString SxeEdit::rid() const
+{
     return rid_;
 };
 
-bool SxeEdit::isNull() {
+bool SxeEdit::isNull()
+{
     return null_;
 }
 
-void SxeEdit::nullify() {
+void SxeEdit::nullify()
+{
     null_ = true;
 }
 
 
-bool SxeEdit::overridenBy(const SxeEdit &e) const {
+bool SxeEdit::overridenBy(const SxeEdit &e) const
+{
     if(e.rid() == rid()) {
         if(e.type() == SxeEdit::Remove)
             return true;
@@ -65,7 +72,8 @@ bool SxeEdit::overridenBy(const SxeEdit &e) const {
     return false;
 }
 
-bool SxeEdit::operator<(const SxeEdit &other) const {
+bool SxeEdit::operator<(const SxeEdit &other) const
+{
 
     // Can't compare edits to different records
     if(rid() != other.rid())  {

@@ -22,16 +22,14 @@
 #include "tabcompletion.h"
 
 TabCompletion::TabCompletion(QObject *parent)
- : QObject(parent)
-{
-    typingStatus_ = TypingStatus::Normal;
-    textEdit_ = 0;
-}
-
-
-TabCompletion::~TabCompletion()
+    : QObject(parent)
+    , atStart_(true)
+    , typingStatus_(TypingStatus::Normal)
+    , suggestedIndex_(0)
+    , textEdit_(nullptr)
 {
 }
+
 
 void TabCompletion::setTextEdit(QTextEdit* textEdit) {
     textEdit_ = textEdit;

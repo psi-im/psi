@@ -28,18 +28,24 @@ static bool referencedEditLessThan(const SxeEdit* e1, const SxeEdit* e2) { retur
 // SxeRecord
 //----------------------------------------------------------------------------
 
-SxeRecord::SxeRecord(QString rid) {
-    rid_ = rid;
+SxeRecord::SxeRecord(QString rid)
+    : rid_(rid)
+    , version_(0)
+    , primaryWeight_(0.)
+    , lastPrimaryWeight_(0.)
+{
 };
 
-SxeRecord::~SxeRecord() {
+SxeRecord::~SxeRecord()
+{
     qDebug("destruct SxeRecord");
     while(!edits_.isEmpty()) {
         delete edits_.takeFirst();
     }
 };
 
-QDomNode SxeRecord::node() const {
+QDomNode SxeRecord::node() const
+{
     return node_;
 }
 

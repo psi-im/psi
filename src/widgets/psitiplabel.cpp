@@ -14,7 +14,7 @@
 #include "psioptions.h"
 #include "common.h"
 
-PsiTipLabel *PsiTipLabel::instance_ = 0;
+PsiTipLabel *PsiTipLabel::instance_ = nullptr;
 
 PsiTipLabel* PsiTipLabel::instance()
 {
@@ -23,7 +23,10 @@ PsiTipLabel* PsiTipLabel::instance()
 
 PsiTipLabel::PsiTipLabel(QWidget* parent)
     : QFrame(parent, Qt::ToolTip)
-    , doc(0)
+    , doc(nullptr)
+    , isRichText(true)
+    , margin(5)
+    , enableColoring_(true)
 {
     delete instance_;
     instance_ = this;

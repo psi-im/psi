@@ -33,13 +33,13 @@
  */
 PsiTabBar::PsiTabBar(PsiTabWidget *parent)
         : QTabBar(parent)
-        , dragsEnabled_(true) {
+        , dragsEnabled_(true)
+{
     //setAcceptDrops(true);
 
     setMovable(true);
     setTabsClosable(true);
     setSelectionBehaviorOnRemove ( QTabBar::SelectPreviousTab );
-    currTab=-1;
 }
 
 /**
@@ -91,7 +91,7 @@ void PsiTabBar::mouseReleaseEvent ( QMouseEvent * event )
     }
     QTabBar::mouseReleaseEvent(event);
 
-    if ((dragTab_ != -1) && (event->button() != Qt::MidButton)) {
+    if (event->button() != Qt::MidButton) {
         this->setCurrentIndex(currentIndex());
     }
 };
@@ -104,7 +104,6 @@ void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
         return;
     }
     if (!(event->buttons() & Qt::LeftButton)) {
-        currTab=-1;
         return;
     }
     if ((event->pos() - dragStartPosition_).manhattanLength()

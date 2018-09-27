@@ -30,7 +30,7 @@ class TabCompletion : public QObject
 Q_OBJECT
 public:
     TabCompletion(QObject *parent = 0);
-    ~TabCompletion();
+    ~TabCompletion() = default;
 
     void setTextEdit(QTextEdit* mle);
     QTextEdit* getTextEdit();
@@ -69,7 +69,7 @@ private:
     QStringList suggestedCompletion_;
     int  suggestedIndex_;
 
-    QTextEdit* textEdit_;
+    QTextEdit *textEdit_;
 };
 
 #endif

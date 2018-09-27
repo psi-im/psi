@@ -41,6 +41,7 @@ PsiContactList::PsiContactList(PsiCon* psi)
     , showOffline_(false)
     , accountsLoaded_(false)
     , contactSortStyle_("")
+    , deinitAccCounter_(0)
 {
 }
 

@@ -241,12 +241,12 @@ private:
     Iconset iss;
     QMap<PsiIcon*, QRect> iconRects;
 #endif
-    int w, h;
+    int w = 16, h = 16;
     mutable int fullW, fullH;
 
 public:
     IconsetSelectItem(QListWidget *parent, const Iconset &_iconset)
-    : RealIconWidgetItem(parent)
+        : RealIconWidgetItem(parent)
     {
         Q_UNUSED(fullW)
         Q_UNUSED(fullH)
@@ -427,11 +427,11 @@ private:
 #ifndef WIDGET_PLUGIN
     PsiIcon icon;
 #endif
-    int w, h;
+    int w = 16, h = 16;
 
 public:
     IconsetDisplayItem(QListWidget *parent, PsiIcon *i, int iconW)
-    : RealIconWidgetItem(parent)
+        : RealIconWidgetItem(parent)
     {
 #ifndef WIDGET_PLUGIN
         icon = *i;

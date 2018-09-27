@@ -59,9 +59,6 @@ protected:
 private:
     int findTabUnder(const QPoint &pos);
     QPoint dragStartPosition_;
-    int dragTab_;
-    int currTab;
-    bool isOnTheLeft;
     bool dragsEnabled_;
 };
 

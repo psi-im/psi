@@ -36,7 +36,7 @@ protected:
     // QSize sizeForWidth(int w) const;
 
 private:
-    QTextDocument* doc;
+    QTextDocument *doc;
     QString theText_;
     bool isRichText;
     int margin;
