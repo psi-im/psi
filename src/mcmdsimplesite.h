@@ -31,22 +31,20 @@ class QString;
 
 class MCmdSimpleSite : public MCmdUiSiteIface {
 public:
-    MCmdSimpleSite(QLabel *p, QTextEdit *i) : promptWidget(p), inputWidget(i), open(false) {};
-    MCmdSimpleSite() : promptWidget(0), inputWidget(0), open(false) {};
-    ~MCmdSimpleSite() {};
+    MCmdSimpleSite(QLabel *p, QTextEdit *i);
+    MCmdSimpleSite();
+    ~MCmdSimpleSite() = default;
     virtual void mCmdReady(const QString prompt, const QString preset);
     virtual void mCmdClose();
-    bool isActive() { return open; };
-    void setPrompt(QLabel *p) {promptWidget = p;};
+    bool isActive() const;
+    void setPrompt(QLabel *p);
     void setInput(QTextEdit *i);
 protected:
     QLabel *promptWidget;
     QTextEdit *inputWidget;
     bool open;
     QString mini_msg_swap;
-    int cursorPos;  // FIXME save cursor position...
     QPalette palette, cmdPalette;
 };
-
 
 #endif

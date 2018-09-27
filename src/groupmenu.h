@@ -37,7 +37,6 @@ signals:
 
 private:
     QPointer<PsiContact> contact_;
-    QAction* createNewGroupAction_;
 
     /**
      * \param text will be shown on screen, and \param groupName is the

@@ -23,15 +23,18 @@
 #include "mcmdmanager.h"
 
 
-MCmdSimpleState::MCmdSimpleState(QString name, QString prompt) {
-    name_ = name;
-    prompt_ = prompt;
+MCmdSimpleState::MCmdSimpleState(QString name, QString prompt)
+    : name_(name)
+    , prompt_(prompt)
+    , flags_(0)
+{
 }
 
-MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags) {
-    name_ = name;
-    prompt_ = prompt;
-    flags_ = flags;
+MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags)
+    : name_(name)
+    , prompt_(prompt)
+    , flags_(flags)
+{
 }
 
 

@@ -66,7 +66,7 @@ public:
     QStringList keys;
     Qt3Dock dock;
 
-    bool dirty;
+    // bool dirty;
     bool on;
     bool locked;
     // bool stretchable;

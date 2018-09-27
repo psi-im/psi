@@ -257,9 +257,10 @@ public:
     AvTransmit *avTransmit;
     QThread *previousThread;
 
-    AvTransmitHandler(QObject *parent = 0) :
+    AvTransmitHandler(QObject *parent = nullptr) :
         QObject(parent),
-        avTransmit(0)
+        avTransmit(nullptr),
+        previousThread(nullptr)
     {
     }
 

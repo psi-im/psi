@@ -301,7 +301,7 @@ void OptionsTabToolbars::toolbarAdd()
     tb.nl = true;
     // tb.extraOffset = 0;
 
-    tb.dirty = true;
+    //tb.dirty = true;
 
     p->toolbars << tb;
 
@@ -600,7 +600,7 @@ void OptionsTabToolbars::toolbarDataChanged()
 
     ToolbarPrefs tb = p->toolbars[n];
 
-    tb.dirty = true;
+    //tb.dirty = true;
     if (n > 1) {
         tb.name = d->le_toolbarName->text();
         tb.locked = d->ck_toolbarLocked->isChecked();

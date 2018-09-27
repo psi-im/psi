@@ -61,8 +61,7 @@ signals:
     void themeChanged();
 
 private:
-    PsiCon *_psi;
-    Theme curTheme; // FIXME it does not make sense to keep it as pointer
+    Theme curTheme;
 };
 
 class GroupChatViewThemeProvider : public ChatViewThemeProvider

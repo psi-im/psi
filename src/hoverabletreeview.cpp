@@ -67,6 +67,7 @@ HoverableStyleOptionViewItem &HoverableStyleOptionViewItem::operator=(const QSty
 
 HoverableStyleOptionViewItem::HoverableStyleOptionViewItem(int version)
     : HoverableStyleOptionViewItemBaseClass(version)
+    , hovered(false)
 {
 }
 

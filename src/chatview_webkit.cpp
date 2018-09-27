@@ -72,12 +72,12 @@ class ChatViewJSObject;
 class ChatViewPrivate
 {
 public:
-    ChatViewPrivate() {}
+    ChatViewPrivate() = default;
 
     Theme theme;
 
-    WebView *webView;
-    ChatViewJSObject *jsObject;
+    WebView *webView = nullptr;
+    ChatViewJSObject *jsObject = nullptr;
     QList<QVariantMap> jsBuffer_;
     bool sessionReady_ = false;
     QPointer<QWidget> dialog_ = 0;
@@ -86,7 +86,7 @@ public:
     bool isEncryptionEnabled_ = false;
     Jid jid_;
     QString name_;
-    PsiAccount *account_;
+    PsiAccount *account_ = nullptr;
     AvatarFactory::UserHashes remoteIcons;
     AvatarFactory::UserHashes localIcons;
 

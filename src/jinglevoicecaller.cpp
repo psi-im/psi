@@ -195,7 +195,11 @@ void JingleClientSlots::stateChanged(cricket::Call *call, cricket::Session *sess
  * \brief A Voice Calling implementation using libjingle.
  */
 
-JingleVoiceCaller::JingleVoiceCaller(PsiAccount* acc) : VoiceCaller(acc)
+JingleVoiceCaller::JingleVoiceCaller(PsiAccount* acc)
+    : VoiceCaller(acc)
+    , session_manager_(nullptr)
+    , phone_client_(nullptr)
+    , slots_(nullptr)
 {
     initialized_ = false;
 }

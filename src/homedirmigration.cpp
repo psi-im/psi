@@ -43,6 +43,7 @@ public:
         , configDir_(configDir)
         , dataDir_(dataDir)
         , cacheDir_(cacheDir)
+        , result_(false)
         , stop_(false)
     {
     }

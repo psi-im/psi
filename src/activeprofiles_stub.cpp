@@ -52,6 +52,7 @@ QString ActiveProfiles::thisProfile() const
 
 ActiveProfiles::ActiveProfiles()
     : QObject(QCoreApplication::instance())
+    , d(nullptr)
 {
 }
 

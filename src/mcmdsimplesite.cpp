@@ -25,6 +25,20 @@
 #include <QToolTip>
 #include "mcmdsimplesite.h"
 
+MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i)
+    : promptWidget(p)
+    , inputWidget(i)
+    , open(false)
+{
+}
+
+MCmdSimpleSite::MCmdSimpleSite()
+    : promptWidget(0)
+    , inputWidget(0)
+    , open(false)
+{
+}
+
 void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
 {
     if (!open) mini_msg_swap = inputWidget->toPlainText();
@@ -40,6 +54,16 @@ void MCmdSimpleSite::mCmdClose() {
     inputWidget->setText(mini_msg_swap);
     inputWidget->setPalette(palette);
     promptWidget->hide();
+}
+
+bool MCmdSimpleSite::isActive() const
+{
+    return open;
+}
+
+void MCmdSimpleSite::setPrompt(QLabel *p)
+{
+    promptWidget = p;
 }
 
 void MCmdSimpleSite::setInput(QTextEdit *i) {
