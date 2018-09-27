@@ -17,6 +17,7 @@ set(SOURCES
     psirichtext.cpp
     psitextview.cpp
     psitooltip.cpp
+    tabbar.cpp
     urlobject.cpp
 )
 
@@ -49,6 +50,7 @@ set(HEADERS
     psitabwidget.h
     psitextview.h
     psitiplabel.h
+    tabbar.h
     typeaheadfind.h
     updatingcombobox.h
     urllabel.h
@@ -75,15 +77,6 @@ if(IS_PSIPLUS)
     list(APPEND FORMS
         psiwindowheader.ui
     )
-    #check for 0280 patch
-    if(EXISTS "${PROJECT_SOURCE_DIR}/src/widgets/tabbar.cpp")
-        list(APPEND SOURCES
-            tabbar.cpp
-        )
-        list(APPEND HEADERS
-            tabbar.h
-        )
-    endif()
 endif()
 
 qt5_wrap_ui(UI_FORMS ${FORMS})

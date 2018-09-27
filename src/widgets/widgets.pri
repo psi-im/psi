@@ -17,6 +17,7 @@ SOURCES += \
     $$PWD/psitabwidget.cpp \
     $$PWD/psitabbar.cpp \
     $$PWD/actionlineedit.cpp \
+    $$PWD/tabbar.cpp \
     $$PWD/typeaheadfind.cpp \
     $$PWD/pixmapratiolabel.cpp
 
@@ -45,6 +46,7 @@ HEADERS += \
     $$PWD/psitabwidget.h \
     $$PWD/psitabbar.h \
     $$PWD/actionlineedit.h \
+    $$PWD/tabbar.h \
     $$PWD/typeaheadfind.h \
     $$PWD/pixmapratiolabel.h
 
