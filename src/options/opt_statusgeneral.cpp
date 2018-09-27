@@ -22,7 +22,6 @@ public:
 
 OptionsTabStatusGeneral::OptionsTabStatusGeneral(QObject *parent)
     : OptionsTab(parent, "status_general", "", tr("General"), tr("General status preferences"))
-    , w(0)
 {
 }
 

@@ -84,7 +84,6 @@ public:
 OptionsTabToolbars::OptionsTabToolbars(QObject *parent)
     : OptionsTab(parent, "toolbars", "", tr("Toolbars"), tr("Configure Psi toolbars"), "psi/toolbars")
 {
-    w = 0;
     p = new Private();
     p->q = this;
 

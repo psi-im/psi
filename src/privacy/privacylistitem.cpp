@@ -26,7 +26,14 @@
 #include "xmpp_jid.h"
 
 
-PrivacyListItem::PrivacyListItem() : message_(true), presenceIn_(true), presenceOut_(true), iq_(true)
+PrivacyListItem::PrivacyListItem()
+    : type_(Type::FallthroughType)
+    , action_(Action::Allow)
+    , message_(true)
+    , presenceIn_(true)
+    , presenceOut_(true)
+    , iq_(true)
+    , order_(0u)
 {
 }
 

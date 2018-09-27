@@ -19,7 +19,6 @@ public:
 
 OptionsTabStatusAuto::OptionsTabStatusAuto(QObject *parent)
     : OptionsTab(parent, "status_auto", "", tr("Auto status and priority"), tr("Auto status and priority preferences"))
-    , w(0)
 {
 }
 

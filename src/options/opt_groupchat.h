@@ -31,7 +31,7 @@ private slots:
     void updateWidgetsState();
 
 private:
-    QWidget *w, *dlg;
+    QWidget *w = nullptr, *dlg = nullptr;
 };
 
 #endif

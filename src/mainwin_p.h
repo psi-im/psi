@@ -43,10 +43,6 @@ public:
     virtual bool addTo(QWidget *w);
 
     virtual IconAction *copy() const;
-
-private:
-    class Private;
-    Private *d;
 };
 
 class SpacerAction : public IconAction

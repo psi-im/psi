@@ -28,11 +28,11 @@ private slots:
     void setData(PsiCon *, QWidget *);
 
 private:
-    QWidget *w, *parentWidget;
+    QWidget *w = nullptr, *parentWidget = nullptr;
     QList<QLineEdit*> sounds_;
     QMap<QAbstractButton*,QLineEdit*> modify_buttons_;
     QMap<QAbstractButton*,QLineEdit*> play_buttons_;
-    QButtonGroup *bg_se, *bg_sePlay;
+    QButtonGroup *bg_se = nullptr, *bg_sePlay = nullptr;
 };
 
 #endif

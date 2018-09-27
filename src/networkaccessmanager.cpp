@@ -24,8 +24,9 @@
 #include "bytearrayreply.h"
 #include <QCoreApplication>
 
-NetworkAccessManager::NetworkAccessManager(QObject *parent) :
-    QNetworkAccessManager(parent)
+NetworkAccessManager::NetworkAccessManager(QObject *parent)
+    : QNetworkAccessManager(parent)
+    , _handlerSeed(0)
 {
 }
 
@@ -82,7 +83,6 @@ QString NetworkAccessManager::registerSessionHandler(const QSharedPointer<NAMDat
     _handlerSeed += 0x10;
 
     _sessionHandlers.insert(s, handler);
-
     return s;
 }
 

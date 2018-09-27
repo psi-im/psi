@@ -65,7 +65,6 @@ public:
 
 OptionsTabPlugins::OptionsTabPlugins(QObject *parent)
     : OptionsTab(parent, "plugins", "", tr("Plugins"), tr("Options for Psi plugins"), "psi/plugins")
-    , w(0)
 {
 }
 

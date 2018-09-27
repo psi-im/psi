@@ -40,9 +40,8 @@ public:
 //----------------------------------------------------------------------------
 
 OptionsTabApplication::OptionsTabApplication(QObject *parent)
-: OptionsTab(parent, "application", "", tr("Application"), tr("General application options"), "psi/logo_32")
+    : OptionsTab(parent, "application", "", tr("Application"), tr("General application options"), "psi/logo_32")
 {
-    w = 0;
 #ifdef HAVE_FREEDESKTOP
 #ifndef HAVE_QT5
     configPath_ = QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME"));

@@ -27,9 +27,8 @@ public:
 //----------------------------------------------------------------------------
 
 OptionsTabGroupchat::OptionsTabGroupchat(QObject *parent)
-: OptionsTab(parent, "groupchat", "", tr("Groupchat"), tr("Configure the groupchat"), "psi/groupChat")
+    : OptionsTab(parent, "groupchat", "", tr("Groupchat"), tr("Configure the groupchat"), "psi/groupChat")
 {
-    w = 0;
 }
 
 void OptionsTabGroupchat::setData(PsiCon *, QWidget *_dlg)

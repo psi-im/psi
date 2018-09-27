@@ -20,7 +20,7 @@ public:
     void setData(PsiCon *, QWidget *parentDialog);
 
 private:
-    QWidget *w, *parentWidget;
+    QWidget *w = nullptr, *parentWidget = nullptr;
 };
 
 #endif // OPT_STATUSAUTO_H

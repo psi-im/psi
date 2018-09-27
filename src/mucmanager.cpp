@@ -43,7 +43,10 @@ using namespace XMPP;
 class MUCItemsTask : public Task
 {
 public:
-    MUCItemsTask(const Jid& room, Task* parent) : Task(parent), room_(room)
+    MUCItemsTask(const Jid& room, Task* parent)
+        : Task(parent)
+        , room_(room)
+        , action_(MUCManager::Action::Unknown)
     {
     }
 

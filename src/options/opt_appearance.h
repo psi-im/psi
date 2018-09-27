@@ -58,7 +58,7 @@ private slots:
     void setData(PsiCon *, QWidget *);
 
 private:
-    QWidget *w, *parentWidget;
+    QWidget *w = nullptr, *parentWidget = nullptr;
 };
 
 class OptionsTabAppearanceGeneral : public OptionsTab
@@ -79,10 +79,10 @@ private slots:
     void chooseFont(QAbstractButton* button);
 
 private:
-    QWidget *w, *parentWidget;
-    QButtonGroup *bg_color;
-    FontLabel *le_font[4];
-    QButtonGroup *bg_font;
+    QWidget *w = nullptr, *parentWidget = nullptr;
+    QButtonGroup *bg_color = nullptr;
+    FontLabel *le_font[4] = {nullptr, nullptr, nullptr, nullptr};
+    QButtonGroup *bg_font = nullptr;
 
     typedef QHash<QCheckBox*, QPair<QAbstractButton*,QString> > ColorWidgetsMap;
     ColorWidgetsMap colorWidgetsMap;

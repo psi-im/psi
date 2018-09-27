@@ -23,8 +23,8 @@ private slots:
     void updatePortLabel();
 
 private:
-    QWidget *w;
-    bool haveAutoUpdater_;
+    QWidget *w = nullptr;
+    bool haveAutoUpdater_ = false;
     QString configPath_;
 
 private slots:

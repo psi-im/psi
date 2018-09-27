@@ -22,7 +22,6 @@
 
 #include "mcmdmanager.h"
 
-
 MCmdSimpleState::MCmdSimpleState(QString name, QString prompt)
     : name_(name)
     , prompt_(prompt)
