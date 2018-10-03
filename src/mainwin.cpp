@@ -1437,11 +1437,12 @@ void MainWin::closeEvent(QCloseEvent* e)
 
     if(d->tray && !quitOnClose) {
         trayHide();
-        e->accept();
+        e->ignore();
         return;
     }
 
     if(!askQuit()) {
+        e->ignore();
         return;
     }
 
