@@ -22,6 +22,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QButtonGroup>
 #include <QLineEdit>
 #include <QLabel>
 #include <QPointer>
