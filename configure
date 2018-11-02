@@ -402,7 +402,7 @@ qmake_check() {
 		fi
 		vout=`/bin/sh -c "$cmd" 2>&1`
 		case "${vout}" in
-			?.?.?)
+			*.*.*)
 				vmaj="${vout%%.*}"
 				if [ ! -z "$QC_QTSELECT" ]; then
 					if [ "$vmaj" = "$QC_QTSELECT" ]; then
@@ -3136,6 +3136,15 @@ bool Conf::findHeader(const QString &h, const QStringList &ext, QString *inc)
 	QStringList dirs;
 	dirs += "/usr/local/include";
 	dirs += ext;
+
+	QString prefix = qc_getenv("PREFIX");
+	if (!prefix.isEmpty()) {
+		prefix += "/include";
+		prefix = qc_normalize_path(prefix);
+		if (!dirs.contains(prefix))
+			dirs << prefix;
+	}
+
 	for(QStringList::ConstIterator it = dirs.begin(); it != dirs.end(); ++it)
 	{
 		if(checkHeader(*it, h))
@@ -3178,6 +3187,18 @@ bool Conf::findLibrary(const QString &name, QString *lib)
 		*lib = "/usr/local/lib";
 		return true;
 	}
+
+	QString prefix = qc_getenv("PREFIX");
+	if (!prefix.isEmpty()) {
+		prefix += "/lib";
+		prefix = qc_normalize_path(prefix);
+		if(checkLibrary(prefix, name))
+		{
+			*lib = prefix;
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -3191,33 +3212,45 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	QString inc, lib;
 	QString s;
 
-	s = getenv(incvar);
+	s = getenv(incvar).trimmed();
 	if(!s.isEmpty()) {
-		if(!checkHeader(s, incname))
+		if(!checkHeader(s, incname)) {
+			if(debug_enabled)
+				printf("%s is not found in \\"%s\\"\\n", qPrintable(incname), qPrintable(s));
 			return false;
+		}
 		inc = s;
 	}
 	else {
-		if(!findHeader(incname, QStringList(), &s))
+		if(!findHeader(incname, QStringList(), &s)) {
+			if(debug_enabled)
+				printf("%s is not found in anywhere\\n", qPrintable(incname));
 			return false;
+		}
 		inc = s;
 	}
 
-	s = getenv(libvar);
+	s = getenv(libvar).trimmed();
 	if(!s.isEmpty()) {
-		if(!checkLibrary(s, libname))
+		if(!checkLibrary(s, libname)) {
+			if(debug_enabled)
+				printf("%s is not found in \\"%s\\"\\n", qPrintable(libname), qPrintable(s));
 			return false;
+		}
 		lib = s;
 	}
 	else {
-		if(!findLibrary(libname, &s))
+		if(!findLibrary(libname, &s)) {
+			if(debug_enabled)
+				printf("%s is not found in anywhere\\n", qPrintable(libname));
 			return false;
+		}
 		lib = s;
 	}
 
 	QString lib_out;
 	if(!lib.isEmpty())
-		lib_out += QString("-L") + s;
+		lib_out += QString("-L") + s + " ";
 	lib_out += QString("-l") + libname;
 
 	*incpath = inc;
