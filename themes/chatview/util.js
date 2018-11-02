@@ -157,7 +157,7 @@ function initPsiTheme() {
                 }
 
                 if (link) {
-                    var iframe = chat.util.createHtmlNode('<div><iframe width="560" height="315" src="'+ link +
+                    var iframe = chat.util.createHtmlNode('<div class="youtube preview"><iframe width="560" height="315" src="'+ link +
                                                           '" frameborder="0" allowfullscreen="1"></iframe></div>');
                     linkEl.parentNode.insertBefore(iframe, linkEl.nextSibling);
                 }
@@ -165,20 +165,20 @@ function initPsiTheme() {
 
             replaceImage : function(linkEl)
             {
-                var img = chat.util.createHtmlNode('<img style="display:block;max-width:560px; max-height:315px" '+
+                var img = chat.util.createHtmlNode('<div class="image preview"><img style="display:block;max-width:560px; max-height:315px" '+
                                                    'src="'+ linkEl.href +'" border="0">');
                 linkEl.parentNode.insertBefore(img, linkEl.nextSibling);
             },
 
             replaceAudio : function(linkEl)
             {
-                var audio = chat.util.createHtmlNode('<div><audio controls="1"><source src="'+ linkEl.href +'"></audio></div>');
+                var audio = chat.util.createHtmlNode('<div class="audio preview"><audio controls="1"><source src="'+ linkEl.href +'"></audio></div>');
                 linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
             },
 
             replaceVideo : function(linkEl)
             {
-                var audio = chat.util.createHtmlNode('<div><video width="560" height="315" controls="1"><source src="'+ linkEl.href +'"></video></div>');
+                var audio = chat.util.createHtmlNode('<div class="video preview"><video width="560" height="315" controls="1"><source src="'+ linkEl.href +'"></video></div>');
                 linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
             },
 
@@ -189,7 +189,7 @@ function initPsiTheme() {
                 },function(result) {
                     //chat.console("result ready " + chat.util.props(result, true));
                     var ct = result['content-type'];
-                    if (typeof(ct) == "string") {
+                    if ((typeof(ct) == "string") && (ct != "application/octet-stream")) {
                         ct = ct.split("/")[0].trim();
                         switch (ct) {
                         case "image":
@@ -204,10 +204,10 @@ function initPsiTheme() {
                         }
                     } else { // fallback when no content type
                         //chat.console("fallback")
-                        var imageExts = ["png", "jpg", "jpeg", "gif"];
-                        var audioExts = ["mp3", "ogg", "aac", "flac", "wav"];
-                        var videoExts = ["mp4", "webm", "mkv", "mov", "avi"];
-                        var lpath = linkEl.pathname.toLowerCase();
+                        var imageExts = ["png", "jpg", "jpeg", "gif", "webp"];
+                        var audioExts = ["mp3", "ogg", "aac", "flac", "wav", "m4a"];
+                        var videoExts = ["mp4", "webm", "mkv", "mov", "avi", "ogv"];
+                        var lpath = linkEl.pathname.toLowerCase().split('#')[0].split('?')[0];
                         function checkExt(exts, replacer) {
                             for (var i = 0; i < exts.length; i++) {
                                 if (lpath.slice(lpath.length - exts[i].length - 1) == ("." + exts[i])) {
@@ -228,12 +228,12 @@ function initPsiTheme() {
                 if (!previewsEnabled)
                     return;
                 var links = el.querySelectorAll("a");
-                var youtube = ["youtu.be", "www.youtube.com", "m.youtube.com"];
+                var youtube = ["youtu.be", "www.youtube.com", "youtube.com", "m.youtube.com"];
                 for (var li = 0; li < links.length; li++) {
                     var linkEl = links[li];
                     if (youtube.indexOf(linkEl.hostname) != -1) {
                         chat.util.replaceYoutube(linkEl);
-                    } else if ((linkEl.protocol == "http:" || linkEl.protocol == "https:") && linkEl.hostname != "psi") {
+                    } else if ((linkEl.protocol == "http:" || linkEl.protocol == "https:" || linkEl.protocol == "file:") && linkEl.hostname != "psi") {
                         chat.util.replaceLinkAsync(linkEl);
                     }
                 }
