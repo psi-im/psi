@@ -53,6 +53,12 @@ Notes
 
 Changes
 -------
+  New in 1.4
+  - Fixed reconnection on Stream Management resume failure
+  - Fixed compatibility with Qt >= 5.10
+  - Improved media contents previews for WebKit version (YouTube and files)
+  - CMake-based build fixes
+
   New in 1.3
   - Fixed connection to Openfire server
   - Fixed connections by IP (fixes socks file transfer as well)
