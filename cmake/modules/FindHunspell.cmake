@@ -64,6 +64,7 @@ set(HUNSPELL_NAMES
     hunspell-1.4
     hunspell-1.5
     hunspell-1.6
+    hunspell-1.7
     libhunspell${d}
 )
 find_library(
