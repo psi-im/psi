@@ -4,11 +4,6 @@ set( CMAKE_MODULE_PATH
     "${PROJECT_SOURCE_DIR}/cmake/modules" )
 set(CMAKE_AUTOMOC OFF)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
-    set(D "d")
-    add_definitions(-DALLOW_QT_PLUGINS_DIR)
-endif()
-
 if(LINUX)
     set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
     set(PSI_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/${PROJECT_NAME}" CACHE STRING "Path to Psi/Psi+ libraries directory")
@@ -166,13 +161,6 @@ add_definitions(
     -DQT_STATICPLUGIN
     -DHAVE_CONFIG
 )
-
-if(WIN32)
-    add_definitions(
-        -DUNICODE
-        -D_UNICODE
-    )
-endif()
 
 include(src.cmake)
 
