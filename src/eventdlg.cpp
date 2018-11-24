@@ -85,7 +85,7 @@ static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
     // scan backward for the beginning of a Jid
     int n1 = x;
-    if(n1 >= (int)s.length())
+    if(n1 >= int(s.length()))
         n1 = s.length()-1;
     for(; n1 >= 0; --n1) {
         if(s.at(n1) == ',') {
@@ -96,14 +96,14 @@ static QString findJid(const QString &s, int x, int *p1, int *p2)
     if(n1 < 0)
         n1 = 0;
     // go forward, skipping whitespace
-    for(; n1 < (int)s.length(); ++n1) {
+    for(; n1 < int(s.length()); ++n1) {
         if(!s.at(n1).isSpace())
             break;
     }
 
     // now find the end of the Jid
     int n2 = n1;
-    for(; n2 < (int)s.length(); ++n2) {
+    for(; n2 < int(s.length()); ++n2) {
         if(s.at(n2) == ',')
             break;
     }
@@ -148,7 +148,7 @@ void ELineEdit::dropEvent(QDropEvent *e)
         if(!jid.isValid())
             setText(str);
         else {
-            EventDlg *e = (EventDlg *)parent();
+            EventDlg *e = static_cast<EventDlg *>(parent());
             QString name = e->jidToString(jid);
 
             bool hasComma = false, hasText = false;
@@ -328,7 +328,7 @@ void AttachView::gcAdd(const QString &gc, const QString& from, const QString& re
 
 void AttachView::contextMenuEvent(QContextMenuEvent* e)
 {
-    AttachViewItem* i = !selectedItems().isEmpty() ? static_cast<AttachViewItem*>(selectedItems().first()) : 0;
+    AttachViewItem* i = !selectedItems().isEmpty() ? static_cast<AttachViewItem*>(selectedItems().first()) : nullptr;
     if(!i)
         return;
 
