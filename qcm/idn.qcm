@@ -6,6 +6,23 @@ arg: with-idn-lib=[path],Path to libidn library or framework files
 -----END QCMOD-----
 */
 
+/*
+Warning: libidn is somewhat deprecated in favor of libidn2, but we can't just
+drop it since IDNA2008 doesn't include XMPP profiles and has nothing from
+stringprep. This stuff was moved to RFC8264 and RFC8265 and its usage was
+described in RFC7622. There are no known C/C++ implementations of these specs
+at the moment of this writing. A partial and not sufficient implementation can
+be found at https://gitlab.com/gnutls/gnutls/blob/master/lib/str-unicode.c. It
+implements OpaqueString Profile but doesn't implement UsernameCaseMapped
+profile required by RFC7622. Not it may be also desired to implement RFC8266.
+
+Some implementations in other languages:
+Go: https://godoc.org/golang.org/x/text/secure/precis
+Python: https://pypi.org/project/precis-i18n/
+Perl: https://metacpan.org/release/Unicode-Precis
+PHP: https://github.com/tom--/precis
+*/
+
 //----------------------------------------------------------------------------
 // qc_idn
 //----------------------------------------------------------------------------
