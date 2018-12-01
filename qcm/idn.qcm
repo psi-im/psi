@@ -21,6 +21,8 @@ Go: https://godoc.org/golang.org/x/text/secure/precis
 Python: https://pypi.org/project/precis-i18n/
 Perl: https://metacpan.org/release/Unicode-Precis
 PHP: https://github.com/tom--/precis
+
+We can try to use https://github.com/lpereira/gomoku to convert from Go.
 */
 
 //----------------------------------------------------------------------------
