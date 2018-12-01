@@ -14,7 +14,7 @@ described in RFC7622. There are no known C/C++ implementations of these specs
 at the moment of this writing. A partial and not sufficient implementation can
 be found at https://gitlab.com/gnutls/gnutls/blob/master/lib/str-unicode.c. It
 implements OpaqueString Profile but doesn't implement UsernameCaseMapped
-profile required by RFC7622. Not it may be also desired to implement RFC8266.
+profile required by RFC7622. Note it may be also desired to implement RFC8266.
 
 Some implementations in other languages:
 Go: https://godoc.org/golang.org/x/text/secure/precis
