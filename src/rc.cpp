@@ -1,5 +1,5 @@
 /*
- * rc.cpp - Implementation of JEP-146 (Remote Controlling Clients)
+ * rc.cpp - Implementation of XEP-146 (Remote Controlling Clients)
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or

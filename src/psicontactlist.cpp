@@ -25,7 +25,7 @@
 #include "psiaccount.h"
 #include "psievent.h"
 #include "accountadddlg.h"
-#include "serverinfomanager.h"
+#include "xmpp_serverinfomanager.h"
 #include "psicon.h"
 #include "psioptions.h"
 

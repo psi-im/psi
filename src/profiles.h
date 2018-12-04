@@ -56,7 +56,8 @@ public:
     bool customAuth;
     bool storeSaltedHashedPassword;
     QString scramSaltedHashPassword;
-    int port, priority;
+    quint16 port;
+    int priority;
     bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_connectAfterSleep, opt_autoSameStatus, opt_reconn, opt_ignoreSSLWarnings, opt_compress, opt_sm;
     XMPP::ClientStream::AllowPlainType allow_plain;
     bool req_mutual_auth;

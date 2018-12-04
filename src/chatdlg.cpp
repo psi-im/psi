@@ -129,7 +129,7 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 
     // Message events
     contactChatState_ = XMPP::StateNone;
-    if ((PsiOptions::instance()->getOption("options.messages.send-composing-events-at-start").toBool()) && (account()->client()->capsManager()->features(jid).canChatState())) {
+    if ((PsiOptions::instance()->getOption("options.messages.send-composing-events-at-start").toBool()) && (account()->client()->capsManager()->features(jid).hasChatState())) {
         contactChatState_ = XMPP::StateActive;
     }
     lastChatState_ = XMPP::StateNone;

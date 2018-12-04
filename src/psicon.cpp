@@ -219,29 +219,11 @@ class PsiCon::Private : public QObject
 {
     Q_OBJECT
 public:
-    Private(PsiCon *parent)
-        : QObject(parent)
-        , contactList(nullptr)
-        , mainwin(nullptr)
-        , eventId(0)
-        , edb(nullptr)
-        , s5bServer(nullptr)
-        , iconSelect(nullptr)
-        , nam(nullptr)
-        , actionList(nullptr)
-        , tuneManager(nullptr)
-        , defaultMenuBar(nullptr)
-        , tabManager(nullptr)
-        , quitting(false)
-        , wakeupPending(false)
-        , updatedAccountTimer_(nullptr)
-        , autoUpdater(nullptr)
-        , alertManager(parent)
-        , bossKey(nullptr)
-        , popupManager(nullptr)
-        , netSession(nullptr)
+    Private(PsiCon *parent) :
+        QObject(parent),
+        psi(parent),
+        alertManager(parent)
     {
-        psi = parent;
     }
 
     ~Private()
@@ -295,36 +277,36 @@ private slots:
     }
 
 public:
-    PsiCon *psi;
-    PsiContactList *contactList;
+    PsiCon *psi = nullptr;
+    PsiContactList *contactList = nullptr;
     OptionsMigration optionsMigration;
     OptionsTree accountTree;
-    MainWin *mainwin;
+    MainWin *mainwin = nullptr;
     Idle idle;
     QList<item_dialog*> dialogList;
-    int eventId;
+    int eventId = 0;
     QStringList recentNodeList; // FIXME move this to options system?
-    EDB *edb;
-    S5BServer *s5bServer;
-    IconSelectPopup *iconSelect;
-    NetworkAccessManager *nam;
+    EDB *edb = nullptr;
+    S5BServer *s5bServer = nullptr;
+    IconSelectPopup *iconSelect = nullptr;
+    NetworkAccessManager *nam = nullptr;
 #ifdef FILETRANSFER
     FileTransDlg *ftwin = nullptr;
 #endif
-    PsiActionList *actionList;
+    PsiActionList *actionList = nullptr;
     //GlobalAccelManager *globalAccelManager;
-    TuneControllerManager* tuneManager;
-    QMenuBar* defaultMenuBar;
-    TabManager *tabManager;
-    bool quitting;
-    bool wakeupPending;
-    QTimer *updatedAccountTimer_;
-    AutoUpdater *autoUpdater;
+    TuneControllerManager* tuneManager = nullptr;
+    QMenuBar* defaultMenuBar = nullptr;
+    TabManager *tabManager = nullptr;
+    bool quitting = false;
+    bool wakeupPending = false;
+    QTimer *updatedAccountTimer_ = nullptr;
+    AutoUpdater *autoUpdater = nullptr;
     AlertManager alertManager;
-    BossKey *bossKey;
-    PopupManager * popupManager;
+    BossKey *bossKey = nullptr;
+    PopupManager * popupManager = nullptr;
     QNetworkConfigurationManager netConfMng;
-    QNetworkSession *netSession;
+    QNetworkSession *netSession = nullptr;
 
     struct IdleSettings
     {
@@ -357,7 +339,7 @@ public:
 //----------------------------------------------------------------------------
 
 PsiCon::PsiCon()
-    : QObject(0)
+    : QObject(nullptr)
 {
     //pdb(DEBUG_JABCON, QString("%1 v%2\n By Justin Karneges\n    infiniti@affinix.com\n\n").arg(PROG_NAME).arg(PROG_VERSION));
     d = new Private(this);
@@ -365,19 +347,7 @@ PsiCon::PsiCon()
     connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(aboutToQuit()));
     connect(ProcessQuit::instance(), SIGNAL(quit()), SLOT(aboutToQuit()));
 
-
-    d->mainwin = 0;
-#ifdef FILETRANSFER
-    d->ftwin = 0;
-#endif
-
-    d->edb = 0;
-    d->s5bServer = 0;
-    d->tuneManager = 0;
-    d->autoUpdater = 0;
-
-    d->actionList = 0;
-    d->defaultMenuBar = new QMenuBar(0);
+    d->defaultMenuBar = new QMenuBar(nullptr);
 
     XMPP::CapsRegistry::setInstance(new PsiCapsRegistry(this));
     XMPP::CapsRegistry *pcr = XMPP::CapsRegistry::instance();
@@ -525,7 +495,7 @@ bool PsiCon::init()
     QDir profileDir( pathToProfile(activeProfile, ApplicationInfo::DataLocation) );
     profileDir.rmdir( "info" ); // remove unused dir
 
-    d->iconSelect = new IconSelectPopup(0);
+    d->iconSelect = new IconSelectPopup(nullptr);
     connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
 
     const QString css = options->getOption("options.ui.chat.css").toString();
@@ -537,7 +507,7 @@ bool PsiCon::init()
     if( !PsiIconset::instance()->loadAll() ) {
         //LEGOPTS.iconset = "stellar";
         //if(!is.load(LEGOPTS.iconset)) {
-            QMessageBox::critical(0, tr("Error"), tr("Unable to load iconset!  Please make sure Psi is properly installed."));
+            QMessageBox::critical(nullptr, tr("Error"), tr("Unable to load iconset!  Please make sure Psi is properly installed."));
             result = false;
         //}
     }
@@ -551,7 +521,7 @@ bool PsiCon::init()
 #endif
 
     if( !PsiThemeManager::instance()->loadAll() ) {
-        QMessageBox::critical(0, tr("Error"), tr("Unable to load theme!  Please make sure Psi is properly installed."));
+        QMessageBox::critical(nullptr, tr("Error"), tr("Unable to load theme!  Please make sure Psi is properly installed."));
         result = false;
     }
 
@@ -715,7 +685,7 @@ bool PsiCon::init()
 
 bool PsiCon::haveAutoUpdater() const
 {
-    return d->autoUpdater != 0;
+    return d->autoUpdater != nullptr;
 }
 
 void PsiCon::updateStatusPresets()
@@ -743,12 +713,12 @@ void PsiCon::deinit()
 
 #ifdef FILETRANSFER
     delete d->ftwin;
-    d->ftwin = NULL;
+    d->ftwin = nullptr;
 #endif
 
     if(d->mainwin) {
         delete d->mainwin;
-        d->mainwin = 0;
+        d->mainwin = nullptr;
     }
 
     // TuneController
@@ -962,7 +932,7 @@ void PsiCon::doNewBlankMessage()
 EventDlg *PsiCon::createMessageDlg(const QString &to, PsiAccount *pa)
 {
     if (!EventDlg::messagingEnabled())
-        return 0;
+        return nullptr;
 
     return createEventDlg(to, pa);
 }
@@ -1124,7 +1094,7 @@ void PsiCon::statusMenuChanged(XMPP::Status::Type x, bool forceDialog)
             status.setIsInvisible(true);
             break;
         default:
-            status = Status((XMPP::Status::Type)x, "", 0);
+            status = Status(XMPP::Status::Type(x), "", 0);
             break;
         }
         if (o->getOption("options.status.last-overwrite.by-status").toBool()) {
@@ -1432,7 +1402,7 @@ void PsiCon::optionChanged(const QString& option)
     if (option == "options.ui.tabs.use-tabs" ||
         option == "options.ui.tabs.grouping" ||
         option == "options.ui.tabs.show-tab-buttons") {
-        QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
+        QMessageBox::information(nullptr, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
         //notifyRestart = false;
     }
 
@@ -1494,7 +1464,7 @@ void PsiCon::slotApplyOptions()
 
         // Check whether it is legal to disable the menubar
         if ( !toolbarsVisible ) {
-            QMessageBox::warning(0, tr("Warning"),
+            QMessageBox::warning(nullptr, tr("Warning"),
                 tr("You can not disable <i>all</i> toolbars <i>and</i> the menubar. If you do so, you will be unable to enable them back, when you'll change your mind."),
                 tr("I understand"));
             o->setOption("options.ui.contactlist.show-menubar", true);
@@ -1525,7 +1495,7 @@ void PsiCon::slotApplyOptions()
 
 void PsiCon::queueChanged()
 {
-    PsiIcon *nextAnim = 0;
+    PsiIcon *nextAnim = nullptr;
     int nextAmount = d->contactList->queueCount();
     PsiAccount *pa = d->contactList->queueLowestEventId();
     if(pa)

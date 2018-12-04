@@ -179,7 +179,6 @@ HEADERS += \
     $$PWD/filecache.h \
     $$PWD/avatars.h \
     $$PWD/actionlist.h \
-    $$PWD/serverinfomanager.h \
     $$PWD/psiactionlist.h \
     $$PWD/xdata_widget.h \
     $$PWD/statuspreset.h \
@@ -263,7 +262,6 @@ SOURCES += \
     $$PWD/theme_p.cpp \
     $$PWD/applicationinfo.cpp \
     $$PWD/pgptransaction.cpp \
-    $$PWD/serverinfomanager.cpp \
     $$PWD/userlist.cpp \
     $$PWD/mainwin.cpp \
     $$PWD/mainwin_p.cpp \

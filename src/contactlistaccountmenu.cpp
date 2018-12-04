@@ -26,7 +26,7 @@
 #include "psiiconset.h"
 #include "psiaccount.h"
 #include "accountstatusmenu.h"
-#include "serverinfomanager.h"
+#include "xmpp_serverinfomanager.h"
 #include "bookmarkmanager.h"
 #include "psioptions.h"
 #include "iconaction.h"

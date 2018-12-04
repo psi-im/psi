@@ -53,6 +53,7 @@ namespace XMPP
     //class StreamError;
     class Resource;
     class Message;
+    class ServerInfoManager;
 };
 
 using namespace XMPP;
@@ -83,7 +84,6 @@ class QSSLCert;
 class QHostAddress;
 class AvatarFactory;
 class PEPManager;
-class ServerInfoManager;
 class TabManager;
 #ifdef GOOGLE_FT
 class GoogleFileTransfer;

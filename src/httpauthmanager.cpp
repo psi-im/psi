@@ -103,10 +103,10 @@ void HttpAuthListener::reply(bool confirm, const PsiHttpAuthRequest &req)
 
 /*!
     \class HttpAuthManager
-    \brief Manages incoming JEP-0070 requests.
+    \brief Manages incoming XEP-0070 requests.
 
     HttpAuthManager instance sits on your client's root task
-    and intercepts all incoming JEP-0070 confirmation requests.
+    and intercepts all incoming XEP-0070 confirmation requests.
 
     When new requests arrives, 'incoming' signal is raised.
 

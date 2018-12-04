@@ -49,7 +49,7 @@
 #include "psicon.h"
 #include "textutil.h"
 #include "psiiconset.h"
-#include "serverinfomanager.h"
+#include "xmpp_serverinfomanager.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
 #include "psievent.h"

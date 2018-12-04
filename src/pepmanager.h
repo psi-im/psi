@@ -29,10 +29,10 @@ namespace XMPP {
     class Message;
     class PubSubItem;
     class PubSubRetraction;
+    class ServerInfoManager;
 }
 class PubSubSubscription;
 class QString;
-class ServerInfoManager;
 
 using namespace XMPP;
 

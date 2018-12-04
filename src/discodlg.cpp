@@ -286,7 +286,7 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 
     if ( di.jid().bare().left(4) == "jud." || di.jid().bare().left(6) == "users." ) {
         // nasty hack for the nasty (and outdated) JUD service :-/
-        if ( !di.features().canSearch() ) {
+        if ( !di.features().hasSearch() ) {
             QStringList features = di.features().list();
             features << "jabber:iq:search";
             di.setFeatures( features );
@@ -1062,13 +1062,13 @@ void DiscoDlg::Private::enableButtons(const DiscoItem &it)
 
     // custom actions
     Features f = it.features();
-    actRegister->setEnabled( f.canRegister() );
-    actUnregister->setEnabled( f.canRegister() );
-    actSearch->setEnabled( f.canSearch() );
-    actJoin->setEnabled( f.canGroupchat() );
+    actRegister->setEnabled( f.hasRegister() );
+    actUnregister->setEnabled( f.hasRegister() );
+    actSearch->setEnabled( f.hasSearch() );
+    actJoin->setEnabled( f.hasGroupchat() );
     actAdd->setEnabled( itemSelected );
-    actVCard->setEnabled( f.haveVCard() );
-    actAHCommand->setEnabled( f.canCommand() );
+    actVCard->setEnabled( f.hasVCard() );
+    actAHCommand->setEnabled( f.hasCommand() );
     actQueryVersion->setEnabled( f.hasVersion() );
 }
 
@@ -1107,7 +1107,7 @@ void DiscoDlg::Private::itemDoubleclicked (QTreeWidgetItem *item)
     long id = 0;
 
     // trigger default action
-    if (f.canCommand() ) {
+    if (f.hasCommand() ) {
         id = Features::FID_AHCommand;
     }
     if (!d.identities().isEmpty()) {
@@ -1115,13 +1115,13 @@ void DiscoDlg::Private::itemDoubleclicked (QTreeWidgetItem *item)
         DiscoItem::Identity ident = d.identities().first();
         bool searchFirst = ident.category == "service" && ident.type == "jud";
 
-        if ( searchFirst && f.canSearch() ) {
+        if ( searchFirst && f.hasSearch() ) {
             id = Features::FID_Search;
         }
-        else if ( ident.category == "conference" &&  f.canGroupchat() ) {
+        else if ( ident.category == "conference" &&  f.hasGroupchat() ) {
             id = Features::FID_Groupchat;
         }
-        else if ( f.canRegister() ) {
+        else if ( f.hasRegister() ) {
                 id = Features::FID_Register;
         }
     }

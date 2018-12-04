@@ -23,7 +23,7 @@
 #include <QtDebug>
 #include "xmpp_xmlcommon.h"
 #include "xmpp_tasks.h"
-#include "serverinfomanager.h"
+#include "xmpp_serverinfomanager.h"
 
 using namespace XMPP;
 
@@ -582,7 +582,7 @@ void PEPManager::disable(const QString& tagName, const QString& node, const QStr
 
 void PEPManager::publishFinished()
 {
-    PEPPublishTask* task = (PEPPublishTask*) sender();
+    PEPPublishTask* task = static_cast<PEPPublishTask*>(sender());
     if (task->success()) {
         emit publish_success(task->node(),task->item());
     }

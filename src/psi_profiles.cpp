@@ -226,7 +226,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     }
 
     host = o->getOption(base + ".host").toString();
-    port = o->getOption(base + ".port").toInt();
+    port = quint16(o->getOption(base + ".port").toUInt());
 
     resource = o->getOption(base + ".resource").toString();
     priority = o->getOption(base + ".priority").toInt();
@@ -565,7 +565,7 @@ void OptionsMigration::lateMigration()
 
             tb.on = PsiOptions::instance()->getOption(base + ".visible").toBool();
             tb.locked = PsiOptions::instance()->getOption(base + ".locked").toBool();
-            tb.dock = (Qt3Dock)PsiOptions::instance()->getOption(base + ".dock.position").toInt(); //FIXME
+            tb.dock = Qt3Dock(PsiOptions::instance()->getOption(base + ".dock.position").toInt()); //FIXME
             tb.nl = PsiOptions::instance()->getOption(base + ".dock.nl").toBool();
             tb.keys = PsiOptions::instance()->getOption(base + ".actions").toStringList();
 
@@ -654,7 +654,7 @@ bool profileNew(const QString &name)
         return false;
 
     // verify the string is sane
-    for(int n = 0; n < (int)name.length(); ++n) {
+    for(int n = 0; n < int(name.length()); ++n) {
         if(!name.at(n).isLetterOrNumber())
             return false;
     }
@@ -695,7 +695,7 @@ bool profileNew(const QString &name)
 bool profileRename(const QString &oldname, const QString &name)
 {
     // verify the string is sane
-    for(int n = 0; n < (int)name.length(); ++n) {
+    for(int n = 0; n < int(name.length()); ++n) {
         if(!name.at(n).isLetterOrNumber())
             return false;
     }
