@@ -40,6 +40,7 @@
 #include "userlist.h"
 #include "xmpp_vcard.h"
 #include "xmpp_tasks.h"
+#include "xmpp_serverinfomanager.h"
 #include "psiaccount.h"
 #include "busywidget.h"
 #include "iconset.h"
@@ -217,7 +218,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
         ur.setStatus(pa->gcContactStatus(j));
         d->userListItem->userResourceList().append(ur);
     } else {
-        d->userListItem = 0;
+        d->userListItem = nullptr;
     }
 
     // Add a status tab
@@ -745,6 +746,29 @@ void InfoWidget::updateStatus()
     UserListItem *u = d->find(d->jid);
     if(u) {
         PsiRichText::setText(ui_.te_status->document(), u->makeDesc());
+    } else if (d->jid.node().isEmpty() && d->jid.domain() == d->pa->jid().domain()) { // requesting info for our server.
+        // let's add some more stuff..
+        static const QMap<QString,QString> transMap{
+            {"abuse-addresses", tr("Abuse")},
+            {"admin-addresses", tr("Administrators")},
+            {"feedback-addresses", tr("Feedback")},
+            {"sales-addresses", tr("Sales")},
+            {"security-addresses", tr("Security")},
+            {"support-addresses", tr("Support")}
+        };
+        QString info;
+        QMapIterator<QString,QStringList> it(d->pa->serverInfoManager()->extraServerInfo());
+        while (it.hasNext()) {
+            auto l = it.next();
+            auto at = transMap.value(l.key());
+            if (!at.isEmpty()) {
+                info += QLatin1String("<b>") + at + QLatin1String(":</b><br>");
+                for (const auto &a: l.value()) {
+                    info += QLatin1String("  ") + a  + QLatin1String("<br>");
+                }
+            }
+        }
+        PsiRichText::setText(ui_.te_status->document(), info);
     }
     else {
         ui_.te_status->clear();
