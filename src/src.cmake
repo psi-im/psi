@@ -186,7 +186,6 @@ list(APPEND HEADERS
     rosteravatarframe.h
     rosteritemexchangetask.h
     searchdlg.h
-    serverinfomanager.h
     serverlistquerier.h
     showtextdlg.h
     statuscombobox.h
@@ -445,7 +444,6 @@ list(APPEND PLAIN_SOURCES
     rosteravatarframe.cpp
     rosteritemexchangetask.cpp
     rtparse.cpp
-    serverinfomanager.cpp
     serverlistquerier.cpp
     shortcutmanager.cpp
     showtextdlg.cpp
