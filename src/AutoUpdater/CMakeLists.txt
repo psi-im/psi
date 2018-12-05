@@ -7,7 +7,9 @@ unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 if(WIN32 AND IS_PSIPLUS)
-    set(USE_QDCHECKER ON)
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/QDChecker.cpp")
+        set(USE_QDCHECKER ON)
+    endif()
 endif()
 
 include_directories(
