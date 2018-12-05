@@ -23,5 +23,7 @@ add_definitions( -DQT_GUI_LIB )
 
 qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
 add_library(psimedia STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
+set_property(TARGET psimedia PROPERTY CXX_STANDARD 14)
+set_property(TARGET psimedia PROPERTY CXX_STANDARD_REQUIRED ON)
 target_link_libraries(psimedia ${QT_LIBRARIES})
 target_include_directories(psimedia PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
