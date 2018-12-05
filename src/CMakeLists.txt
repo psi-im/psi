@@ -361,9 +361,6 @@ endif()
 
 set(STANDARD_NUM 14)
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD ${STANDARD_NUM})
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
-
 add_dependencies(${PROJECT_NAME} iris)
 if(USE_WEBENGINE)
     add_dependencies(${PROJECT_NAME} qhttp)
