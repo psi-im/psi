@@ -379,7 +379,7 @@ QWidget *OptionsTabIconsetSystem::widget()
         return 0;
 
     w = new IconsetSystemUI;
-    IconsetSystemUI *d = (IconsetSystemUI *)w;
+    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
 
     connect(d->pb_sysDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
@@ -393,7 +393,7 @@ void OptionsTabIconsetSystem::applyOptions()
     if ( !w || thread )
         return;
 
-    IconsetSystemUI *d = (IconsetSystemUI *)w;
+    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
     const Iconset *is = d->iss_system->iconset();
     if ( is ) {
         QFileInfo fi( is->fileName() );
@@ -406,7 +406,7 @@ void OptionsTabIconsetSystem::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetSystemUI *d = (IconsetSystemUI *)w;
+    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
     d->iss_system->clear();
     QStringList loaded;
 
@@ -429,9 +429,9 @@ void OptionsTabIconsetSystem::restoreOptions()
 
 bool OptionsTabIconsetSystem::event(QEvent *e)
 {
-    IconsetSystemUI *d = (IconsetSystemUI *)w;
+    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -473,7 +473,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 
 void OptionsTabIconsetSystem::previewIconset()
 {
-    IconsetSystemUI *d = (IconsetSystemUI *)w;
+    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
     const Iconset *is = d->iss_system->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -519,7 +519,7 @@ QWidget *OptionsTabIconsetEmoticons::widget()
         return 0;
 
     w = new IconsetEmoUI;
-    IconsetEmoUI *d = (IconsetEmoUI *)w;
+    IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
 
     connect(d->pb_emoUp, SIGNAL(clicked()), d->iss_emoticons, SLOT(moveItemUp()));
     connect(d->pb_emoUp, SIGNAL(clicked()), SIGNAL(dataChanged()));
@@ -542,7 +542,7 @@ void OptionsTabIconsetEmoticons::applyOptions()
     if ( !w || thread )
         return;
 
-    IconsetEmoUI *d = (IconsetEmoUI *)w;
+    IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
     PsiOptions::instance()->setOption("options.ui.emoticons.use-emoticons", d->ck_useEmoticons->isChecked());
 
     QStringList list;
@@ -565,7 +565,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetEmoUI *d = (IconsetEmoUI *)w;
+    IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
     d->ck_useEmoticons->setChecked( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() );
 
     // fill in the iconset view
@@ -608,9 +608,9 @@ void OptionsTabIconsetEmoticons::restoreOptions()
 
 bool OptionsTabIconsetEmoticons::event(QEvent *e)
 {
-    IconsetEmoUI *d = (IconsetEmoUI *)w;
+    IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -651,7 +651,7 @@ bool OptionsTabIconsetEmoticons::event(QEvent *e)
 
 void OptionsTabIconsetEmoticons::previewIconset()
 {
-    IconsetEmoUI *d = (IconsetEmoUI *)w;
+    IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
     const Iconset *is = d->iss_emoticons->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -698,7 +698,7 @@ QWidget *OptionsTabIconsetMoods::widget()
         return 0;
 
     w = new IconsetMoodUI;
-    IconsetMoodUI *d = (IconsetMoodUI *)w;
+    IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
 
     connect(d->pb_moodDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
@@ -710,7 +710,7 @@ void OptionsTabIconsetMoods::applyOptions()
     if ( !w || thread )
         return;
 
-    IconsetMoodUI *d = (IconsetMoodUI *)w;
+    IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
 
     const Iconset *is = d->iss_moods->iconset();
     if ( is ) {
@@ -724,7 +724,7 @@ void OptionsTabIconsetMoods::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetMoodUI *d = (IconsetMoodUI *)w;
+    IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
 
     d->iss_moods->clear();
     QStringList loaded;
@@ -753,9 +753,9 @@ void OptionsTabIconsetMoods::restoreOptions()
 
 bool OptionsTabIconsetMoods::event(QEvent *e)
 {
-    IconsetMoodUI *d = (IconsetMoodUI *)w;
+    IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -800,7 +800,7 @@ bool OptionsTabIconsetMoods::event(QEvent *e)
 
 void OptionsTabIconsetMoods::previewIconset()
 {
-    IconsetMoodUI *d = (IconsetMoodUI *)w;
+    IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
     const Iconset *is = d->iss_moods->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -845,7 +845,7 @@ QWidget *OptionsTabIconsetActivity::widget()
         return 0;
 
     w = new IconsetActivityUI;
-    IconsetActivityUI *d = (IconsetActivityUI *)w;
+    IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
 
     connect(d->pb_activityDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
@@ -857,7 +857,7 @@ void OptionsTabIconsetActivity::applyOptions()
     if ( !w || thread )
         return;
 
-    IconsetActivityUI *d = (IconsetActivityUI *)w;
+    IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
 
     const Iconset *is = d->iss_activity->iconset();
     if ( is ) {
@@ -871,7 +871,7 @@ void OptionsTabIconsetActivity::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetActivityUI *d = (IconsetActivityUI *)w;
+    IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
 
     d->iss_activity->clear();
     QStringList loaded;
@@ -900,9 +900,9 @@ void OptionsTabIconsetActivity::restoreOptions()
 
 bool OptionsTabIconsetActivity::event(QEvent *e)
 {
-    IconsetActivityUI *d = (IconsetActivityUI *)w;
+    IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -947,7 +947,7 @@ bool OptionsTabIconsetActivity::event(QEvent *e)
 
 void OptionsTabIconsetActivity::previewIconset()
 {
-    IconsetActivityUI *d = (IconsetActivityUI *)w;
+    IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
     const Iconset *is = d->iss_activity->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -992,7 +992,7 @@ QWidget *OptionsTabIconsetAffiliations::widget()
         return 0;
 
     w = new IconsetAffiliationUI;
-    IconsetAffiliationUI *d = (IconsetAffiliationUI *)w;
+    IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
 
     connect(d->pb_affiliationDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
@@ -1004,7 +1004,7 @@ void OptionsTabIconsetAffiliations::applyOptions()
     if ( !w || thread )
         return;
 
-    IconsetAffiliationUI *d = (IconsetAffiliationUI *)w;
+    IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
 
     const Iconset *is = d->iss_affiliation->iconset();
     if ( is ) {
@@ -1018,7 +1018,7 @@ void OptionsTabIconsetAffiliations::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetAffiliationUI *d = (IconsetAffiliationUI *)w;
+    IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
 
     d->iss_affiliation->clear();
     QStringList loaded;
@@ -1047,9 +1047,9 @@ void OptionsTabIconsetAffiliations::restoreOptions()
 
 bool OptionsTabIconsetAffiliations::event(QEvent *e)
 {
-    IconsetAffiliationUI *d = (IconsetAffiliationUI *)w;
+    IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -1094,7 +1094,7 @@ bool OptionsTabIconsetAffiliations::event(QEvent *e)
 
 void OptionsTabIconsetAffiliations::previewIconset()
 {
-    IconsetAffiliationUI *d = (IconsetAffiliationUI *)w;
+    IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
     const Iconset *is = d->iss_affiliation->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -1140,7 +1140,7 @@ QWidget *OptionsTabIconsetClients::widget()
         return 0;
 
     w = new IconsetClientUI;
-    IconsetClientUI *d = (IconsetClientUI *)w;
+    IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
 
     connect(d->pb_clientDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
@@ -1152,7 +1152,7 @@ void OptionsTabIconsetClients::applyOptions()
     if ( !w || thread )
         return;
 
-    IconsetClientUI *d = (IconsetClientUI *)w;
+    IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
 
     const Iconset *is = d->iss_clients->iconset();
     if ( is ) {
@@ -1166,7 +1166,7 @@ void OptionsTabIconsetClients::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetClientUI *d = (IconsetClientUI *)w;
+    IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
 
     d->iss_clients->clear();
     QStringList loaded;
@@ -1195,9 +1195,9 @@ void OptionsTabIconsetClients::restoreOptions()
 
 bool OptionsTabIconsetClients::event(QEvent *e)
 {
-    IconsetClientUI *d = (IconsetClientUI *)w;
+    IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -1242,7 +1242,7 @@ bool OptionsTabIconsetClients::event(QEvent *e)
 
 void OptionsTabIconsetClients::previewIconset()
 {
-    IconsetClientUI *d = (IconsetClientUI *)w;
+    IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
     const Iconset *is = d->iss_clients->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -1296,7 +1296,7 @@ QWidget *OptionsTabIconsetRoster::widget()
         return 0;
 
     w = new IconsetRosterUI;
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
 
     // Initialize transport iconsets
     addService("aim", "AIM");
@@ -1348,7 +1348,7 @@ void OptionsTabIconsetRoster::applyOptions()
     if (!w || thread)
         return;
 
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     PsiOptions::instance()->setOption("options.ui.contactlist.use-transport-icons", d->ck_useTransportIconsForContacts->isChecked());
 
     // roster - default
@@ -1394,7 +1394,7 @@ void OptionsTabIconsetRoster::restoreOptions()
     if ( !w || thread )
         return;
 
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     d->ck_useTransportIconsForContacts->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() );
 
     d->iss_defRoster->clear();
@@ -1424,9 +1424,9 @@ void OptionsTabIconsetRoster::restoreOptions()
 
 bool OptionsTabIconsetRoster::event(QEvent *e)
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     if ( e->type() == QEvent::User ) { // iconset load event
-        IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+        IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
         if ( thread != le->thread() )
             return false;
@@ -1529,7 +1529,7 @@ void OptionsTabIconsetRoster::setData(PsiCon *psicon, QWidget *p)
 
 void OptionsTabIconsetRoster::defaultDetails()
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     const Iconset *is = d->iss_defRoster->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -1538,7 +1538,7 @@ void OptionsTabIconsetRoster::defaultDetails()
 
 void OptionsTabIconsetRoster::servicesDetails()
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     const Iconset *is = d->iss_servicesRoster->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -1547,7 +1547,7 @@ void OptionsTabIconsetRoster::servicesDetails()
 
 void OptionsTabIconsetRoster::customDetails()
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     const Iconset *is = d->iss_customRoster->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -1561,7 +1561,7 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
     if ( !item )
         return;
 
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *it = d->tw_isServices->currentItem();
     if ( !it )
         return;
@@ -1577,7 +1577,7 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
 
 void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     d->iss_servicesRoster->setEnabled( it != 0 );
     d->pb_servicesDetails->setEnabled( it != 0 );
     d->iss_servicesRoster->clearSelection();
@@ -1614,7 +1614,7 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
     if ( !item )
         return;
 
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *it = d->tw_customRoster->currentItem();
     if ( !it )
         return;
@@ -1630,7 +1630,7 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
 
 void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     d->iss_customRoster->setEnabled( it != 0 );
     d->pb_customRosterDetails->setEnabled( it != 0 );
     //d->pb_customRosterAdd->setEnabled( it != 0 );
@@ -1665,7 +1665,7 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 
 void OptionsTabIconsetRoster::isCustom_textChanged()
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *item = d->tw_customRoster->currentItem();
     if ( !item )
         return;
@@ -1676,7 +1676,7 @@ void OptionsTabIconsetRoster::isCustom_textChanged()
 
 void OptionsTabIconsetRoster::isCustom_add()
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
 
     QString def;
     const Iconset *iconset = d->iss_defRoster->iconset();
@@ -1704,7 +1704,7 @@ void OptionsTabIconsetRoster::isCustom_add()
 
 void OptionsTabIconsetRoster::isCustom_delete()
 {
-    IconsetRosterUI *d = (IconsetRosterUI *)w;
+    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *item = d->tw_customRoster->currentItem();
     if ( !item )
         return;

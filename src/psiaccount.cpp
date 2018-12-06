@@ -2335,7 +2335,7 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 
 void PsiAccount::resolveContactName()
 {
-    JT_VCard *j = (JT_VCard *)sender();
+    JT_VCard *j = static_cast<JT_VCard *>(sender());
     if (j->success()) {
         QString nick = j->vcard().nickName();
         QString full = j->vcard().fullName();
@@ -5733,7 +5733,7 @@ void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e, int type)
 
 void PsiAccount::edb_finished()
 {
-    EDBHandle *h = (EDBHandle *)sender();
+    EDBHandle *h = static_cast<EDBHandle *>(sender());
     delete h;
 }
 
@@ -6191,7 +6191,7 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 void PsiAccount::pgp_encryptFinished()
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *pt = (PGPTransaction *)sender();
+    PGPTransaction *pt = static_cast<PGPTransaction *>(sender());
     int x = pt->id();
 
     if(pt->success()) {

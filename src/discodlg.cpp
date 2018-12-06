@@ -410,7 +410,7 @@ void DiscoListItem::updateItems(bool parentAutoItems)
 
 void DiscoListItem::discoItemsFinished()
 {
-    JT_DiscoItems *jt = (JT_DiscoItems *)sender();
+    JT_DiscoItems *jt = static_cast<JT_DiscoItems *>(sender());
 
     if ( jt->success() ) {
         updateItemsFinished(jt->items());
@@ -507,7 +507,7 @@ void DiscoListItem::updateInfo()
 
 void DiscoListItem::discoInfoFinished()
 {
-    JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
+    JT_DiscoInfo *jt = static_cast<JT_DiscoInfo *>(sender());
 
     if ( jt->success() ) {
         updateInfo( jt->item() );
@@ -1074,7 +1074,7 @@ void DiscoDlg::Private::enableButtons(const DiscoItem &it)
 
 void DiscoDlg::Private::itemSelected (QTreeWidgetItem *item)
 {
-    DiscoListItem *it = (DiscoListItem *)item;
+    DiscoListItem *it = static_cast<DiscoListItem *>(item);
     if ( !it ) {
         disableButtons();
         return;
@@ -1088,14 +1088,14 @@ void DiscoDlg::Private::itemSelected (QTreeWidgetItem *item)
 
 void DiscoDlg::Private::itemExpanded (QTreeWidgetItem *item)
 {
-    DiscoListItem *it = (DiscoListItem *)item;
+    DiscoListItem *it = static_cast<DiscoListItem *>(item);
     if (it)
         it->setExpanded(true);
 }
 
 void DiscoDlg::Private::itemDoubleclicked (QTreeWidgetItem *item)
 {
-    DiscoListItem *it = (DiscoListItem *)item;
+    DiscoListItem *it = static_cast<DiscoListItem *>(item);
     if ( !it )
         return;
 
@@ -1142,7 +1142,7 @@ bool DiscoDlg::Private::eventFilter (QObject *object, QEvent *event)
 {
     if ( object == dlg->lv_disco ) {
         if ( event->type() == QEvent::ContextMenu ) {
-            QContextMenuEvent *e = (QContextMenuEvent *)event;
+            QContextMenuEvent *e = static_cast<QContextMenuEvent *>(event);
 
             DiscoListItem *it = (DiscoListItem *)dlg->lv_disco->currentItem();
             if ( !it )

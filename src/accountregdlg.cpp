@@ -256,7 +256,7 @@ void AccountRegDlg::client_error()
 
 void AccountRegDlg::getFields_finished()
 {
-    JT_Register *reg = (JT_Register *)sender();
+    JT_Register *reg = static_cast<JT_Register *>(sender());
     ui_.busy->stop();
     if (reg->success()) {
         unblock();
@@ -286,7 +286,7 @@ void AccountRegDlg::getFields_finished()
 
 void AccountRegDlg::setFields_finished()
 {
-    JT_Register *reg = (JT_Register *)sender();
+    JT_Register *reg = static_cast<JT_Register *>(sender());
     ui_.busy->stop();
     if (reg->success()) {
         QMessageBox::information(this, tr("Success"), QString(tr("You have successfully registered your account with XMPP address '%1'")).arg(jid_.bare()));

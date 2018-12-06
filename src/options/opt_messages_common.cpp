@@ -33,7 +33,7 @@ QWidget *OptionsTabMsgCommon::widget()
 
     w_ = new OptMsgCommonUI();
 
-    OptMsgCommonUI *d = (OptMsgCommonUI *)w_;
+    OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
 
     connect(d->ck_tabChats, SIGNAL(toggled(bool)), d->cb_tabGrouping, SLOT(setEnabled(bool)));
 
@@ -58,7 +58,7 @@ void OptionsTabMsgCommon::applyOptions()
         return;
     }
 
-    OptMsgCommonUI *d = (OptMsgCommonUI *)w_;
+    OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
     o->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
     o->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
@@ -102,7 +102,7 @@ void OptionsTabMsgCommon::restoreOptions()
         return;
     }
 
-    OptMsgCommonUI *d = (OptMsgCommonUI *)w_;
+    OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
     d->ck_showCounter->setChecked( o->getOption("options.ui.message.show-character-count").toBool() );
     d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render").toBool());

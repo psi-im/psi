@@ -79,7 +79,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
         return 0;
 
     w = new OptAppearanceThemeUI();
-    OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+    OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
 
     unsortedModel = new PsiThemeModel(this);
 
@@ -120,7 +120,7 @@ void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const 
 void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int first, int last)
 {
     if (!parent.isValid() || !w) {
-        OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+        OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
         //const QSize buttonSize = QSize(21,21);
         for (int i = first; i <= last; i++) {
             const QModelIndex index = themesModel->index(i, 0);
@@ -167,7 +167,7 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
 {
     if ( !w || !sender()->inherits("QToolButton") )
         return;
-    OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+    OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
     QToolButton *btn = static_cast<QToolButton*>(sender());
     if ( btn ) {
         if ( screenshotDialog )
@@ -211,7 +211,7 @@ void OptionsTabAppearanceTheme::applyOptions()
     if ( !w )
         return;
 
-    OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+    OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
     themesModel->setData(d->themeView->currentIndex(), true, PsiThemeModel::IsCurrent);
 }
 
@@ -221,6 +221,6 @@ void OptionsTabAppearanceTheme::restoreOptions()
     if ( !w )
         return;
 
-    OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+    OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
 #endif
 }

@@ -318,7 +318,7 @@ void AddUserDlg::resolveNickActivated()
 
 void AddUserDlg::resolveNickFinished()
 {
-    JT_VCard *jt = (JT_VCard *)sender();
+    JT_VCard *jt = static_cast<JT_VCard *>(sender());
 
     if(jt->success()) {
         QString nickname;

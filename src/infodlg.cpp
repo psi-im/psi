@@ -813,7 +813,7 @@ void InfoWidget::requestResourceInfo(const Jid& j)
 
 void InfoWidget::clientVersionFinished()
 {
-    JT_ClientVersion *j = (JT_ClientVersion *)sender();
+    JT_ClientVersion *j = static_cast<JT_ClientVersion *>(sender());
     if(j->success()) {
         foreach(UserListItem* u, d->findRelevant(j->jid())) {
             UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
@@ -831,7 +831,7 @@ void InfoWidget::clientVersionFinished()
 
 void InfoWidget::entityTimeFinished()
 {
-    JT_EntityTime *j = (JT_EntityTime *)sender();
+    JT_EntityTime *j = static_cast<JT_EntityTime *>(sender());
     if(j->success()) {
         foreach(UserListItem* u, d->findRelevant(j->jid())) {
             UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
@@ -855,7 +855,7 @@ void InfoWidget::requestLastActivity()
 
 void InfoWidget::requestLastActivityFinished()
 {
-    LastActivityTask *j = (LastActivityTask *)sender();
+    LastActivityTask *j = static_cast<LastActivityTask *>(sender());
     if(j->success()) {
         foreach(UserListItem* u, d->findRelevant(d->jid)) {
             u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE,j->status()));

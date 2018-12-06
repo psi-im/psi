@@ -37,7 +37,7 @@ QWidget *OptionsTabAdvanced::widget()
         return 0;
 
     w = new OptAdvancedUI();
-    OptAdvancedUI *d = (OptAdvancedUI *)w;
+    OptAdvancedUI *d = static_cast<OptAdvancedUI *>(w);
 
 #ifdef HAVE_X11    // auto-copy is a built-in feature on linux, we don't want user to use our own one
     d->ck_autocopy->hide();
@@ -100,7 +100,7 @@ void OptionsTabAdvanced::applyOptions()
     if ( !w )
         return;
 
-    OptAdvancedUI *d = (OptAdvancedUI *)w;
+    OptAdvancedUI *d = static_cast<OptAdvancedUI *>(w);
 
     PsiOptions::instance()->setOption("options.messages.send-composing-events", d->ck_messageevents->isChecked());
     PsiOptions::instance()->setOption("options.messages.send-inactivity-events", d->ck_inactiveevents->isChecked());
@@ -125,7 +125,7 @@ void OptionsTabAdvanced::restoreOptions()
     if ( !w )
         return;
 
-    OptAdvancedUI *d = (OptAdvancedUI *)w;
+    OptAdvancedUI *d = static_cast<OptAdvancedUI *>(w);
 
     d->ck_messageevents->setChecked( PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool() );
     d->ck_inactiveevents->setChecked( PsiOptions::instance()->getOption("options.messages.send-inactivity-events").toBool() );

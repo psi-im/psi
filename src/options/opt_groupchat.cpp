@@ -42,7 +42,7 @@ QWidget *OptionsTabGroupchat::widget()
         return 0;
 
     w = new GeneralGroupchatUI();
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
 
     connect(d->pb_nickColor,       SIGNAL(clicked()), SLOT(chooseGCNickColor()));
     connect(d->lw_nickColors,       SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(selectedGCNickColor(QListWidgetItem *)));
@@ -67,7 +67,7 @@ void OptionsTabGroupchat::applyOptions()
     if ( !w )
         return;
 
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     PsiOptions::instance()->setOption("options.ui.muc.use-highlighting", d->ck_gcHighlights->isChecked());
     PsiOptions::instance()->setOption("options.ui.muc.use-nick-coloring", d->ck_gcNickColoring->isChecked());
     PsiOptions::instance()->setOption("options.ui.muc.use-hash-nick-coloring", d->ck_gcHashNickColoring->isChecked());
@@ -89,7 +89,7 @@ void OptionsTabGroupchat::restoreOptions()
     if ( !w )
         return;
 
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
 
     // no need to call dataChanged() when these widgets are modified
     disconnect(d->le_newNickColor,     SIGNAL(textChanged(const QString &)), 0, 0);
@@ -117,7 +117,7 @@ void OptionsTabGroupchat::restoreOptions()
 
 void OptionsTabGroupchat::updateWidgetsState()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
 
     {
         bool enableHighlights = d->ck_gcHighlights->isChecked();
@@ -154,13 +154,13 @@ static QPixmap name2color(QString name)
 
 void OptionsTabGroupchat::addNickColor(QString name)
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     d->lw_nickColors->addItem(new QListWidgetItem(name2color(name), name));
 }
 
 void OptionsTabGroupchat::addGCHighlight()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     if ( d->le_newHighlightWord->text().isEmpty() )
         return;
 
@@ -173,7 +173,7 @@ void OptionsTabGroupchat::addGCHighlight()
 
 void OptionsTabGroupchat::removeGCHighlight()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     int id = d->lw_highlightWords->currentRow();
     if ( id == -1 )
         return;
@@ -185,7 +185,7 @@ void OptionsTabGroupchat::removeGCHighlight()
 
 void OptionsTabGroupchat::addGCNickColor()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     if ( d->le_newNickColor->text().isEmpty() )
         return;
 
@@ -198,7 +198,7 @@ void OptionsTabGroupchat::addGCNickColor()
 
 void OptionsTabGroupchat::removeGCNickColor()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     int id = d->lw_nickColors->currentRow();
     if ( id == -1 )
         return;
@@ -210,7 +210,7 @@ void OptionsTabGroupchat::removeGCNickColor()
 
 void OptionsTabGroupchat::chooseGCNickColor()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     QColor c = QColorDialog::getColor(QColor(d->le_newNickColor->text()), dlg);
     if ( c.isValid() ) {
         QString cs = c.name();
@@ -221,12 +221,12 @@ void OptionsTabGroupchat::chooseGCNickColor()
 void OptionsTabGroupchat::selectedGCNickColor(QListWidgetItem * item)
 {
     if (!item) return; // no selection on empty list
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     d->le_newNickColor->setText( item->text() );
 }
 
 void OptionsTabGroupchat::displayGCNickColor()
 {
-    GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+    GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
     d->pb_nickColor->setIcon( name2color(d->le_newNickColor->text()) );
 }

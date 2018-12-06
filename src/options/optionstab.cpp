@@ -279,7 +279,7 @@ void MetaOptionsTab::applyOptions()
 void MetaOptionsTab::restoreOptions()
 {
     if ( w ) {
-        OptionsTabWidget *d = (OptionsTabWidget *)w;
+        OptionsTabWidget *d = static_cast<OptionsTabWidget *>(w);
         d->restoreOptions();
     }
 

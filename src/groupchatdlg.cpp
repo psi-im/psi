@@ -314,7 +314,7 @@ public slots:
 
     void lastactivity_finished()
     {
-        LastActivityTask *idle = (LastActivityTask *)sender();
+        LastActivityTask *idle = static_cast<LastActivityTask *>(sender());
 
         if (!idle->success()) {
             dlg->appendSysMsg(QString("Can't determine last activity time for %1.").arg(idle->jid().resource()), false);
@@ -559,7 +559,7 @@ public:
             return true;
 
         if ( obj == mle() && ev->type() == QEvent::KeyPress ) {
-            QKeyEvent *e = (QKeyEvent *)ev;
+            QKeyEvent *e = static_cast<QKeyEvent *>(ev);
 
             if ( e->key() == Qt::Key_Tab ) {
                 tabCompletion.tryComplete();

@@ -1927,7 +1927,7 @@ void FileTransDlg::clearFinished()
 
 void FileTransDlg::ft_progress(int p, qlonglong sent)
 {
-    TransferMapping *i = d->findMapping((FileTransferHandler *)sender());
+    TransferMapping *i = d->findMapping(static_cast<FileTransferHandler *>(sender()));
     i->p = p;
     i->sent = sent;
     if(p == i->h->totalSteps())
@@ -1938,7 +1938,7 @@ void FileTransDlg::ft_progress(int p, qlonglong sent)
 
 void FileTransDlg::ft_error(int x, int, const QString &s)
 {
-    TransferMapping *i = d->findMapping((FileTransferHandler *)sender());
+    TransferMapping *i = d->findMapping(static_cast<FileTransferHandler *>(sender()));
     int id = i->id;
     d->transferList.removeAll(i);
     delete i;

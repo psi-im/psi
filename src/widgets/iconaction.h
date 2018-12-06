@@ -89,7 +89,7 @@ class IconActionGroup : public IconAction
 {
     Q_OBJECT
 public:
-    IconActionGroup(QObject *parent, const char *name = 0, bool exclusive = false);
+    IconActionGroup(QObject *parent, const char *name = nullptr, bool exclusive = false);
     ~IconActionGroup();
 
     void setExclusive( bool );

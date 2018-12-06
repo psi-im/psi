@@ -35,7 +35,7 @@ QWidget *OptionsTabStatusGeneral::widget()
         return 0;
 
     w = new OptStatusGeneralUI();
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     connect(d->lw_presets, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(currentItemChanged(QListWidgetItem *, QListWidgetItem *)));
     connect(d->lw_presets, SIGNAL(doubleClicked(const QModelIndex &)), SLOT(presetDoubleClicked(const QModelIndex &)));
@@ -100,7 +100,7 @@ void OptionsTabStatusGeneral::applyOptions()
     if ( !w )
         return;
 
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     OptionsTree* o = PsiOptions::instance();
 
     if (d->gbSelectedPreset->isEnabled())
@@ -145,7 +145,7 @@ void OptionsTabStatusGeneral::restoreOptions()
     if ( !w )
         return;
 
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     OptionsTree* o = PsiOptions::instance();
 
     //TODO: Restore function is calling 3 times! Do something with it! Or maybe it's normal?
@@ -206,7 +206,7 @@ void OptionsTabStatusGeneral::currentItemChanged(QListWidgetItem * current, QLis
 
 void OptionsTabStatusGeneral::loadStatusPreset()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     QListWidgetItem* item = d->lw_presets->currentItem();
     if (!item)
@@ -226,7 +226,7 @@ void OptionsTabStatusGeneral::loadStatusPreset()
 
 void OptionsTabStatusGeneral::saveStatusPreset()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     QListWidgetItem* item = d->lw_presets->currentItem();
     if (!item)
@@ -253,7 +253,7 @@ void OptionsTabStatusGeneral::saveStatusPreset()
 
 void OptionsTabStatusGeneral::newStatusPreset()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     presets[""] = StatusPreset();
     d->lw_presets->addItem("");
@@ -266,7 +266,7 @@ void OptionsTabStatusGeneral::newStatusPreset()
 
 void OptionsTabStatusGeneral::deleteStatusPreset()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     int current = d->lw_presets->currentRow();
     if (current == -1)
         return;
@@ -290,7 +290,7 @@ void OptionsTabStatusGeneral::deleteStatusPreset()
 
 void OptionsTabStatusGeneral::statusMenusIndexChanged ( int index )
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     if (index == -1 || d->cb_presetsMenus->itemData(d->cb_presetsMenus->currentIndex()).toString() == "no")
         d->ck_showEditPresets->setEnabled(false);
     else
@@ -299,7 +299,7 @@ void OptionsTabStatusGeneral::statusMenusIndexChanged ( int index )
 
 void OptionsTabStatusGeneral::showMenuForPreset(const QPoint &point)
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     QListWidgetItem* item = d->lw_presets->itemAt(point);
     if (item)
     {
@@ -313,7 +313,7 @@ void OptionsTabStatusGeneral::showMenuForPreset(const QPoint &point)
 
 void OptionsTabStatusGeneral::editStatusPreset()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     int current = d->lw_presets->currentRow();
     if (current == -1)
         return;
@@ -325,7 +325,7 @@ void OptionsTabStatusGeneral::editStatusPreset()
 
 void OptionsTabStatusGeneral::cleanupSelectedPresetGroup()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     d->le_spName->setText("");
     d->te_sp->setPlainText("");
     d->le_sp_priority->setText("");
@@ -334,7 +334,7 @@ void OptionsTabStatusGeneral::cleanupSelectedPresetGroup()
 
 void OptionsTabStatusGeneral::statusPresetAccepted()
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     QListWidgetItem* item = d->lw_presets->currentItem();
     if (!item)
         return;
@@ -360,7 +360,7 @@ void OptionsTabStatusGeneral::statusPresetAccepted()
 void OptionsTabStatusGeneral::statusPresetRejected()
 {
     //TODO almost all functions have this line, GET RID OF IT
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     switchPresetMode(false);
     QListWidgetItem* item = d->lw_presets->currentItem();
@@ -381,7 +381,7 @@ void OptionsTabStatusGeneral::statusPresetRejected()
 
 void OptionsTabStatusGeneral::switchPresetMode(bool toEdit)
 {
-    OptStatusGeneralUI *d = (OptStatusGeneralUI *)w;
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     d->gbSelectedPreset->setEnabled(toEdit);
     d->gbPresets->setEnabled(!toEdit);

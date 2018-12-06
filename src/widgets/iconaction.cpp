@@ -181,7 +181,7 @@ void IconAction::setPsiIcon(const QString &name)
     d->iconName = name;
 #else
     if (name.isEmpty()) {
-        setPsiIcon( 0 );
+        setPsiIcon( nullptr );
         return;
     }
     setPsiIcon( IconsetFactory::iconPtr(name) );
@@ -311,7 +311,7 @@ void IconAction::doSetMenu(QMenu* p)
     QAction::setMenu(p);
 
     foreach(IconToolButton* btn, d->buttons) {
-        btn->setMenu(0);
+        btn->setMenu(nullptr);
 
         if (menu())
             btn->setMenu(menu());
@@ -468,7 +468,7 @@ void IconActionGroup::addSeparator()
 bool IconActionGroup::addTo( QWidget *w )
 {
     if ( w->inherits("Q3PopupMenu") || w->inherits("QMenu") ) {
-        QMenu *popup = (QMenu *)w;
+        QMenu *popup = static_cast<QMenu *>(w);
 
         QList<QAction *> list = findChildren<QAction *>();
         foreach ( QAction *action, list )
@@ -484,7 +484,7 @@ bool IconActionGroup::addTo( QWidget *w )
 IconAction *IconActionGroup::copy() const
 {
     qWarning("IconActionGroup::copy() doesn't work!");
-    return (IconAction *)this;
+    return static_cast<IconAction *>(const_cast<IconActionGroup*>(this));
 }
 
 void IconActionGroup::setExclusive( bool e )

@@ -47,7 +47,7 @@ QWidget *OptionsTabSound::widget()
         return 0;
 
     w = new OptSoundUI();
-    OptSoundUI *d = (OptSoundUI *)w;
+    OptSoundUI *d = static_cast<OptSoundUI *>(w);
 
     sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeGroupChat << d->le_oeHeadline << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT << d->le_oeFTComplete;
 
@@ -138,7 +138,7 @@ void OptionsTabSound::applyOptions()
     if ( !w )
         return;
 
-    OptSoundUI *d = (OptSoundUI *)w;
+    OptSoundUI *d = static_cast<OptSoundUI *>(w);
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.unix-sound-player", d->le_player->text());
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.silent-while-away", !d->ck_awaySound->isChecked());
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.notify-every-muc-message", d->ck_gcSound->isChecked());
@@ -162,7 +162,7 @@ void OptionsTabSound::restoreOptions()
     if ( !w )
         return;
 
-    OptSoundUI *d = (OptSoundUI *)w;
+    OptSoundUI *d = static_cast<OptSoundUI *>(w);
 
 #if defined(Q_OS_WIN)
     d->le_player->setText(tr("Windows Sound"));
@@ -211,7 +211,7 @@ void OptionsTabSound::previewSoundEvent(QAbstractButton* b)
 
 void OptionsTabSound::soundReset()
 {
-    OptSoundUI *d = (OptSoundUI *)w;
+    OptSoundUI *d = static_cast<OptSoundUI *>(w);
 
     d->le_oeMessage->setText("sound/chat2.wav");
     d->le_oeChat1->setText("sound/chat1.wav");

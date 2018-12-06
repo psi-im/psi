@@ -43,7 +43,7 @@ void OptionsTabStatusPep::applyOptions()
         return;
     }
 
-    OptStatusPepUI *d = (OptStatusPepUI *)w_;
+    OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
     QStringList newTuneFilters = d->tuneExtensions->text().split(QRegExp("\\W+"));
     QString tuneExstensionsFilter;
@@ -68,7 +68,7 @@ void OptionsTabStatusPep::restoreOptions()
         return;
     }
 
-    OptStatusPepUI *d = (OptStatusPepUI *)w_;
+    OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
     tuneFilters_ = o->getOption(tuneUrlFilterOptionPath).toString();
     d->tuneExtensions->setText(tuneFilters_);

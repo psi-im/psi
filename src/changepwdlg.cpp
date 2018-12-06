@@ -111,7 +111,7 @@ void ChangePasswordDlg::finished()
 {
     ui_.busy->stop();
 
-    JT_Register *reg = (JT_Register *)sender();
+    JT_Register *reg = static_cast<JT_Register *>(sender());
     QString err = reg->statusString();
     int code = reg->statusCode();
     bool ok = reg->success();

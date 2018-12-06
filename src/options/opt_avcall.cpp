@@ -41,7 +41,7 @@ QWidget *OptionsTabAvCall::widget()
         return 0;
 
     w = new OptAvCallUI();
-    //OptAvCallUI *d = (OptAvCallUI *)w;
+    //OptAvCallUI *d = static_cast<OptAvCallUI *>(w);
 
     return w;
 }
@@ -51,7 +51,7 @@ void OptionsTabAvCall::applyOptions()
     if ( !w )
         return;
 
-    OptAvCallUI *d = (OptAvCallUI *)w;
+    OptAvCallUI *d = static_cast<OptAvCallUI *>(w);
 
     PsiOptions::instance()->setOption("options.media.devices.audio-output", d->cb_audioOutDevice->itemData(d->cb_audioOutDevice->currentIndex()).toString());
     PsiOptions::instance()->setOption("options.media.devices.audio-input", d->cb_audioInDevice->itemData(d->cb_audioInDevice->currentIndex()).toString());
@@ -66,7 +66,7 @@ void OptionsTabAvCall::restoreOptions()
     if ( !w )
         return;
 
-    OptAvCallUI *d = (OptAvCallUI *)w;
+    OptAvCallUI *d = static_cast<OptAvCallUI *>(w);
 
     auto dw = MediaDeviceWatcher::instance();
     d->cb_audioOutDevice->clear();

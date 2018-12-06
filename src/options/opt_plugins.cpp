@@ -85,7 +85,7 @@ QWidget *OptionsTabPlugins::widget()
         return 0;
 
     w = new OptPluginsUI();
-    OptPluginsUI *d = (OptPluginsUI *)w;
+    OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
 
     listPlugins();
     connect(d->tw_Plugins, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemChanged(QTreeWidgetItem*,int)));
@@ -112,7 +112,7 @@ void OptionsTabPlugins::listPlugins()
     if ( !w )
         return;
 
-    OptPluginsUI *d = (OptPluginsUI *)w;
+    OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
 
     d->tw_Plugins->clear();
 
@@ -181,7 +181,7 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
     Q_UNUSED(column);
     if ( !w )
         return;
-    OptPluginsUI *d = (OptPluginsUI *)w;
+    OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
     bool enabled = item->checkState(C_NAME) == Qt::Checked;
     d->tw_Plugins->setCurrentItem(item);
 
@@ -207,7 +207,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
     if ( !w )
         return;
 
-    OptPluginsUI *d = (OptPluginsUI *)w;
+    OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
     d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
     if ( d->tw_Plugins->selectedItems().size() > 0 ) {
@@ -230,7 +230,7 @@ void OptionsTabPlugins::settingsClicked(int item)
     if ( !w )
         return;
 
-    OptPluginsUI *d = (OptPluginsUI *)w;
+    OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
     d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
     if ( d->tw_Plugins->selectedItems().size() > 0 ) {

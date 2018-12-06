@@ -606,7 +606,7 @@ void EventNotifierAction::setMessage(const QString &m)
 
 void EventNotifierAction::objectDestroyed()
 {
-    MLabel *label = (MLabel *)sender();
+    MLabel *label = static_cast<MLabel *>(sender());
     d->labels.removeAll(label);
 }
 

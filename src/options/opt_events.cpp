@@ -34,7 +34,7 @@ QWidget *OptionsTabEvents::widget()
         return 0;
 
     w = new OptEventsUI();
-    OptEventsUI *d = (OptEventsUI *)w;
+    OptEventsUI *d = static_cast<OptEventsUI *>(w);
 
     d->ck_popupMsgs->setWhatsThis(
         tr("Makes new incoming message windows pop up automatically when received."));
@@ -92,7 +92,7 @@ void OptionsTabEvents::applyOptions()
     if ( !w )
         return;
 
-    OptEventsUI *d = (OptEventsUI *)w;
+    OptEventsUI *d = static_cast<OptEventsUI *>(w);
     PsiOptions::instance()->setOption("options.ui.message.auto-popup", d->ck_popupMsgs->isChecked());
     PsiOptions::instance()->setOption("options.ui.chat.auto-popup", d->ck_popupMsgs->isChecked());
     PsiOptions::instance()->setOption("options.ui.message.auto-popup-headlines", d->ck_popupHeadlines->isChecked());
@@ -112,7 +112,7 @@ void OptionsTabEvents::restoreOptions()
     if ( !w )
         return;
 
-    OptEventsUI *d = (OptEventsUI *)w;
+    OptEventsUI *d = static_cast<OptEventsUI *>(w);
     d->ck_popupMsgs->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() || PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool() );
     d->ck_popupHeadlines->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-popup-headlines").toBool() );
     d->ck_popupFiles->setChecked( PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool() );

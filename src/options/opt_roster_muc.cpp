@@ -31,7 +31,7 @@ void OptionsTabRosterMuc::changeEvent(QEvent *e)
     if ( !w )
         return;
 
-    OptRosterMucUI *d = (OptRosterMucUI *)w;
+    OptRosterMucUI *d = static_cast<OptRosterMucUI *>(w);
 
     switch (e->type()) {
     case QEvent::LanguageChange:
@@ -48,7 +48,7 @@ QWidget *OptionsTabRosterMuc::widget()
         return 0;
 
     w = new OptRosterMucUI();
-    OptRosterMucUI *d = (OptRosterMucUI *)w;
+    OptRosterMucUI *d = static_cast<OptRosterMucUI *>(w);
     QObject::connect(d->ck_showAvatarIcons, &QCheckBox::toggled, this, [d](bool checked) {
         d->gb_avatarsSettings->setEnabled(checked);
     });
@@ -61,7 +61,7 @@ void OptionsTabRosterMuc::applyOptions()
     if ( !w )
         return;
 
-    OptRosterMucUI *d = (OptRosterMucUI *)w;
+    OptRosterMucUI *d = static_cast<OptRosterMucUI *>(w);
 
     PsiOptions::instance()->setOption("options.ui.muc.userlist.disable-scrollbar", d->ck_disableScrollbar->isChecked());
 
@@ -82,7 +82,7 @@ void OptionsTabRosterMuc::restoreOptions()
     if ( !w )
         return;
 
-    OptRosterMucUI *d = (OptRosterMucUI *)w;
+    OptRosterMucUI *d = static_cast<OptRosterMucUI *>(w);
 
     d->ck_disableScrollbar->setChecked( PsiOptions::instance()->getOption("options.ui.muc.userlist.disable-scrollbar").toBool() );
 

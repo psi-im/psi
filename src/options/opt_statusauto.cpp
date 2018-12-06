@@ -32,7 +32,7 @@ QWidget *OptionsTabStatusAuto::widget()
         return 0;
 
     w = new OptStatusAutoUI();
-    OptStatusAutoUI *d = (OptStatusAutoUI *)w;
+    OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
 
     PriorityValidator* prValidator = new PriorityValidator(d->le_asPriority);
     d->le_asPriority->setValidator(prValidator);
@@ -95,7 +95,7 @@ void OptionsTabStatusAuto::applyOptions()
     if ( !w )
         return;
 
-    OptStatusAutoUI *d = (OptStatusAutoUI *)w;
+    OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
     PsiOptions* o = PsiOptions::instance();
 
     o->setOption("options.status.auto-away.away-after", d->sb_asAway->value());
@@ -125,7 +125,7 @@ void OptionsTabStatusAuto::restoreOptions()
     if ( !w )
         return;
 
-    OptStatusAutoUI *d = (OptStatusAutoUI *)w;
+    OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
     PsiOptions* o = PsiOptions::instance();
 
     d->sb_asAway->setMinimum(0);

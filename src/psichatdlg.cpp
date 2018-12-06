@@ -151,7 +151,7 @@ public slots:
 
     void lastactivity_finished()
     {
-        LastActivityTask *idle = (LastActivityTask *)sender();
+        LastActivityTask *idle = static_cast<LastActivityTask *>(sender());
 
         if (!idle->success()) {
             dlg_->appendSysMsg("Could not determine time of last activity.");
@@ -934,7 +934,7 @@ void PsiChatDlg::addContact()
 bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
     if ( obj == chatEdit() ) {
         if ( ev->type() == QEvent::KeyPress ) {
-            QKeyEvent *e = (QKeyEvent *)ev;
+            QKeyEvent *e = static_cast<QKeyEvent *>(ev);
 
             if ( e->key() == Qt::Key_Tab ) {
                 tabCompletion.tryComplete();

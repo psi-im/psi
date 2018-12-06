@@ -53,7 +53,7 @@ void CaptchaDlg::done(int r)
 
 void CaptchaDlg::captchaFinished()
 {
-    JT_CaptchaSender *t = (JT_CaptchaSender *)sender();
+    JT_CaptchaSender *t = static_cast<JT_CaptchaSender *>(sender());
     if (t->success()) {
         qDebug("captcha passed");
     } else {

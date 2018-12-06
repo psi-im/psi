@@ -183,7 +183,7 @@ void OptionsTabToolbars::setData(PsiCon * psi_, QWidget *parent_)
 
 /*void OptionsTabToolbars::setCurrentToolbar(PsiToolBar *t)
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
 
     if ( pb_apply->isEnabled() )
         return;
@@ -215,7 +215,7 @@ void OptionsTabToolbars::restoreOptions()
     if (!w)
         return;
 
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
 
     PsiOptions *o = PsiOptions::instance();
 
@@ -273,7 +273,7 @@ void OptionsTabToolbars::restoreOptions()
 
 void OptionsTabToolbars::toolbarAdd()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
 
     ToolbarPrefs tb;
     int j = 0;
@@ -314,7 +314,7 @@ void OptionsTabToolbars::toolbarAdd()
 
 void OptionsTabToolbars::toolbarDelete()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     int n = d->cb_toolbars->currentIndex();
 
     noDirty = true;
@@ -363,7 +363,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
     bool customizeable = true;
     bool moveable      = true;
 
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     bool enable = (item == -1) ? false : true;
     d->le_toolbarName->setEnabled(enable);
     // d->pb_toolbarPosition->setEnabled(enable && moveable);
@@ -448,7 +448,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
 void OptionsTabToolbars::rebuildToolbarKeys()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     if (!d->cb_toolbars->count())
         return;
     int n = d->cb_toolbars->currentIndex();
@@ -467,7 +467,7 @@ void OptionsTabToolbars::rebuildToolbarKeys()
 
 void OptionsTabToolbars::updateArrows()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     bool up = false, down = false, left = false, right = false;
 
     if (d->tw_availActions->currentItem() && !d->tw_availActions->currentItem()->data(0, Qt::UserRole).toString().isEmpty())
@@ -504,7 +504,7 @@ void OptionsTabToolbars::updateArrows()
 
 void OptionsTabToolbars::toolbarNameChanged()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     if (!d->cb_toolbars->count())
         return;
 
@@ -520,7 +520,7 @@ void OptionsTabToolbars::toolbarNameChanged()
 
 void OptionsTabToolbars::toolbarActionUp()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     QListWidgetItem *item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
@@ -542,7 +542,7 @@ void OptionsTabToolbars::toolbarActionUp()
 
 void OptionsTabToolbars::toolbarActionDown()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     QListWidgetItem *item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
@@ -564,7 +564,7 @@ void OptionsTabToolbars::toolbarActionDown()
 
 void OptionsTabToolbars::toolbarAddAction()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     QTreeWidgetItem *item = d->tw_availActions->currentItem();
     if (!item || item->data(0, Qt::UserRole).toString().isEmpty())
         return;
@@ -576,7 +576,7 @@ void OptionsTabToolbars::toolbarAddAction()
 
 void OptionsTabToolbars::toolbarRemoveAction()
 {
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     QListWidgetItem *item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
@@ -592,7 +592,7 @@ void OptionsTabToolbars::toolbarDataChanged()
     if (noDirty)
         return;
 
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     if (!d->cb_toolbars->count())
         return;
     int n = d->cb_toolbars->currentIndex();
@@ -631,7 +631,7 @@ void OptionsTabToolbars::toolbarPosition()
 {
 #if 0
     LEGOPTFIXME
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
     if (!d->cb_toolbars->count())
         return;
     int n = d->cb_toolbars->currentIndex();

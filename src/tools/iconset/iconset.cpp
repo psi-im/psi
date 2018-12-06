@@ -938,7 +938,7 @@ void IconsetFactory::reset()
 const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 {
     if (name.isEmpty()) {
-        return 0;
+        return nullptr;
     }
 
     const PsiIcon *i = IconsetFactoryPrivate::instance()->icon(name);

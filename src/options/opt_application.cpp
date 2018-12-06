@@ -61,7 +61,7 @@ QWidget *OptionsTabApplication::widget()
         return 0;
 
     w = new OptApplicationUI();
-    OptApplicationUI *d = (OptApplicationUI *)w;
+    OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
 
     // docklet
     d->ck_docklet->setWhatsThis(
@@ -107,7 +107,7 @@ void OptionsTabApplication::applyOptions()
     if ( !w )
         return;
 
-    OptApplicationUI *d = (OptApplicationUI *)w;
+    OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
 
     PsiOptions::instance()->setOption("options.ui.contactlist.quit-on-close", d->ck_quitOnClose->isChecked());
     if (!ApplicationInfo::isPortable()) {
@@ -176,7 +176,7 @@ void OptionsTabApplication::restoreOptions()
     if ( !w )
         return;
 
-    OptApplicationUI *d = (OptApplicationUI *)w;
+    OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
 
     d->ck_autoUpdate->setChecked(PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool());
     d->ck_quitOnClose->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.quit-on-close").toBool());
@@ -233,7 +233,7 @@ void OptionsTabApplication::restoreOptions()
 
 void OptionsTabApplication::doEnableQuitOnClose(int state)
 {
-    OptApplicationUI *d = (OptApplicationUI *)w;
+    OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
     d->ck_quitOnClose->setEnabled(state>0);
     d->ck_dockToolMW->setEnabled(state>0);
     d->ck_dockDCstyle->setEnabled(state>0);
@@ -245,7 +245,7 @@ void OptionsTabApplication::updatePortLabel()
     if ( !w )
         return;
 
-    OptApplicationUI *d = (OptApplicationUI *)w;
+    OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
 
     if ( d->le_dtPort->text().isEmpty() ) {
         d->label->clear();

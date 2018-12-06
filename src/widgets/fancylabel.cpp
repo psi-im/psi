@@ -87,7 +87,7 @@ public:
             if (copyIcon)
                 icon = new PsiIcon(*i);
             else
-                icon = (PsiIcon *)i;
+                icon = const_cast<PsiIcon *>(i);
         }
         else {
             icon = 0;

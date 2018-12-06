@@ -54,7 +54,7 @@ void OptionsTabPopups::applyOptions()
     if ( !w )
         return;
 
-    OptPopupsUI *d = (OptPopupsUI *)w;
+    OptPopupsUI *d = static_cast<OptPopupsUI *>(w);
 
     PsiOptions *o = PsiOptions::instance();
 
@@ -104,7 +104,7 @@ void OptionsTabPopups::restoreOptions()
     if ( !w )
         return;
 
-    OptPopupsUI *d = (OptPopupsUI *)w;
+    OptPopupsUI *d = static_cast<OptPopupsUI *>(w);
 
     PsiOptions *o = PsiOptions::instance();
 

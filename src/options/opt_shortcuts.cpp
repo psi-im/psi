@@ -71,7 +71,7 @@ QWidget *OptionsTabShortcuts::widget()
         return 0;
 
     w = new OptShortcutsUI();
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
 
     d->treeShortcuts->setColumnWidth(0, 320);
 
@@ -96,7 +96,7 @@ void OptionsTabShortcuts::applyOptions() {
     if ( !w )
         return;
 
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
     PsiOptions *options = PsiOptions::instance();
 
     int toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
@@ -163,7 +163,7 @@ void OptionsTabShortcuts::restoreOptions()
  */
 void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
 
     QTreeWidgetItem *topLevelItem;
     QList<QString> shortcutGroups = options->getChildOptionNames("options.shortcuts", true, true);
@@ -241,7 +241,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
  * \brief    Button Add pressed, creates a new Key entry
  */
 void OptionsTabShortcuts::onAdd() {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
 
     QTreeWidgetItem    *shortcutItem;
 
@@ -275,7 +275,7 @@ void OptionsTabShortcuts::onAdd() {
  */
 void OptionsTabShortcuts::addTo(QTreeWidgetItem *shortcutItem)
 {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 
     QTreeWidgetItem *newKeyItem = new QTreeWidgetItem(shortcutItem);
@@ -294,7 +294,7 @@ void OptionsTabShortcuts::addTo(QTreeWidgetItem *shortcutItem)
  * \brief Button Remove pressed, removes the currently selected item, if it is a Keyitem
  */
 void OptionsTabShortcuts::onRemove() {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 
     if(selectedItems.count() == 0)
@@ -326,7 +326,7 @@ void OptionsTabShortcuts::onRemove() {
  * \brief Button Edit pressed, edits the currently selected item if it is a key
  */
 void OptionsTabShortcuts::onEdit() {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 
     if(selectedItems.count() == 0)
@@ -347,7 +347,7 @@ void OptionsTabShortcuts::onRestoreDefaults() {
                    QMessageBox::Yes | QMessageBox::No,
                    QMessageBox::No) == QMessageBox::Yes) {
 
-        OptShortcutsUI *d = (OptShortcutsUI *)w;
+        OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
         d->treeShortcuts->clear();
         readShortcuts(PsiOptions::defaults());
         emit dataChanged();
@@ -369,7 +369,7 @@ void OptionsTabShortcuts::grep()
  *             enabled or disabled, depening on the selected item type
  */
 void OptionsTabShortcuts::onItemSelectionChanged() {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
     Kind itemKind;
 
@@ -427,7 +427,7 @@ void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
  * \param    the new KeySequence for the keyitem
  */
 void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence& key) {
-    OptShortcutsUI *d = (OptShortcutsUI *)w;
+    OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);
     QTreeWidgetItem    *keyItem;
     QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
     QString    optionsPath;

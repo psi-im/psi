@@ -401,7 +401,7 @@ void replaceWidget(QWidget *a, QWidget *b)
     //printf("decided on this: %p\n", lo);
 
     if(lo->inherits("QBoxLayout")) {
-        QBoxLayout *bo = (QBoxLayout *)lo;
+        QBoxLayout *bo = static_cast<QBoxLayout *>(lo);
         int n = bo->indexOf(a);
         bo->insertWidget(n+1, b);
         delete a;

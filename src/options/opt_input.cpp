@@ -41,7 +41,7 @@ QWidget *OptionsTabInput::widget()
     }
 
     w_ = new OptInputUI();
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
 
     availableDicts_ = SpellChecker::instance()->getAllLanguages();
     defaultLangs_ = LanguageManager::bestUiMatch(availableDicts_).toSet();
@@ -62,7 +62,7 @@ void OptionsTabInput::applyOptions()
         return;
     }
 
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
     SpellChecker *s = SpellChecker::instance();
 
@@ -91,7 +91,7 @@ void OptionsTabInput::restoreOptions()
         return;
     }
 
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
 
     updateDictLists();
@@ -145,7 +145,7 @@ void OptionsTabInput::fillList()
         return;
     }
 
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
 
     if(!availableDicts_.isEmpty()) {
         d->availDicts->disconnect();
@@ -173,7 +173,7 @@ void OptionsTabInput::setChecked()
         return;
     }
 
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
     QTreeWidgetItemIterator it(d->availDicts);
     while(*it) {
         QTreeWidgetItem *item = *it;
@@ -192,7 +192,7 @@ void OptionsTabInput::itemToggled(bool toggled)
         return;
     }
 
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
 
     if(toggled) {
         updateDictLists();
@@ -222,7 +222,7 @@ bool OptionsTabInput::isTreeViewEmpty()
 {
     if ( !w_ )
         return true;
-    OptInputUI *d = (OptInputUI *)w_;
+    OptInputUI *d = static_cast<OptInputUI *>(w_);
     QTreeWidgetItemIterator it(d->availDicts);
     return !bool(*it);
 }

@@ -131,7 +131,7 @@ void OptionsTabAppearanceMisc::applyOptions()
     if ( !w )
         return;
 
-    OptAppearanceMiscUI *d = (OptAppearanceMiscUI *)w;
+    OptAppearanceMiscUI *d = static_cast<OptAppearanceMiscUI *>(w);
 
     PsiOptions::instance()->setOption("options.ui.look.contactlist.use-slim-group-headings", d->ck_newHeadings->isChecked());
     PsiOptions::instance()->setOption("options.ui.look.contactlist.use-outlined-group-headings", d->ck_outlineHeadings->isChecked());
@@ -144,7 +144,7 @@ void OptionsTabAppearanceMisc::restoreOptions()
     if ( !w )
         return;
 
-    OptAppearanceMiscUI *d = (OptAppearanceMiscUI *)w;
+    OptAppearanceMiscUI *d = static_cast<OptAppearanceMiscUI *>(w);
 
     d->ck_newHeadings->setChecked(PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool());
     d->ck_outlineHeadings->setChecked(PsiOptions::instance()->getOption("options.ui.look.contactlist.use-outlined-group-headings").toBool());
@@ -194,7 +194,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
         return 0;
 
     w = new OptAppearanceUI();
-    OptAppearanceUI *d = (OptAppearanceUI *)w;
+    OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);
 
     le_font[0] = d->le_fRoster;
     le_font[1] = d->le_fMessage;
@@ -288,7 +288,7 @@ void OptionsTabAppearanceGeneral::applyOptions()
     if ( !w )
         return;
 
-    OptAppearanceUI *d = (OptAppearanceUI *)w;
+    OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);
     //LEGOPTS.avatarsChatdlgEnabled = d->ck_avatarsChatdlg->isChecked(); // Avatars
 
     PsiOptions::instance()->setOption("options.ui.look.font.contactlist", d->le_fRoster->fontName());
@@ -315,7 +315,7 @@ void OptionsTabAppearanceGeneral::restoreOptions()
     if ( !w )
         return;
 
-    OptAppearanceUI *d = (OptAppearanceUI *)w;
+    OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);
     //d->ck_avatarsChatdlg->setChecked( LEGOPTS.avatarsChatdlgEnabled ); // Avatars
 
     d->le_fRoster->setFont(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());

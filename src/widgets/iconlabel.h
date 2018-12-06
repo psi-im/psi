@@ -32,7 +32,7 @@ class IconLabel : public QLabel
     Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
 
 public:
-    IconLabel(QWidget *parent = 0);
+    IconLabel(QWidget *parent = nullptr);
     ~IconLabel();
 
     const PsiIcon *psiIcon () const;

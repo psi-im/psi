@@ -82,7 +82,7 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 
 void VCardFactory::taskFinished()
 {
-    JT_VCard *task = (JT_VCard *)sender();
+    JT_VCard *task = static_cast<JT_VCard *>(sender());
     bool notifyPhoto = task->property("phntf").toBool();
     if ( task->success() ) {
         Jid j = task->jid();
@@ -93,7 +93,7 @@ void VCardFactory::taskFinished()
 
 void VCardFactory::mucTaskFinished()
 {
-    JT_VCard *task = (JT_VCard *)sender();
+    JT_VCard *task = static_cast<JT_VCard *>(sender());
     bool notifyPhoto = task->property("phntf").toBool();
     if ( task->success() ) {
         Jid j = task->jid();

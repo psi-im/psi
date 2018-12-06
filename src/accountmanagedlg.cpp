@@ -221,7 +221,7 @@ void AccountRemoveDlg::client_error()
 
 void AccountRemoveDlg::unreg_finished()
 {
-    JT_Register *reg = (JT_Register *)sender();
+    JT_Register *reg = static_cast<JT_Register *>(sender());
 
     client->close();
     busy->stop();
@@ -372,7 +372,7 @@ AccountManageDlg::~AccountManageDlg()
 
 void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetItem *)
 {
-    AccountManageItem *i = (AccountManageItem *)lvi;
+    AccountManageItem *i = static_cast<AccountManageItem *>(lvi);
     bool ok = i ? true: false;
 
     pb_modify->setEnabled(ok);
@@ -393,7 +393,7 @@ void AccountManageDlg::modify()
 
 void AccountManageDlg::modify(QTreeWidgetItem *lvi)
 {
-    AccountManageItem *i = (AccountManageItem *)lvi;
+    AccountManageItem *i = static_cast<AccountManageItem *>(lvi);
     if(!i)
         return;
 

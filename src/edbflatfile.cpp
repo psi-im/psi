@@ -303,7 +303,7 @@ void EDBFlatFile::performRequests()
 
 void EDBFlatFile::file_timeout()
 {
-    File *i = (File *)sender();
+    File *i = static_cast<File *>(sender());
     d->flist.removeAll(i);
     i->deleteLater();
 }

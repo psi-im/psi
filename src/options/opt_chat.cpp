@@ -43,7 +43,7 @@ QWidget *OptionsTabChat::widget()
         return 0;
 
     w = new OptChatUI();
-    OptChatUI *d = (OptChatUI *)w;
+    OptChatUI *d = static_cast<OptChatUI *>(w);
 
     bg_defAct = new QButtonGroup;
     bg_defAct->setExclusive( true );
@@ -97,7 +97,7 @@ void OptionsTabChat::applyOptions()
     if ( !w )
         return;
 
-    OptChatUI *d = (OptChatUI *)w;
+    OptChatUI *d = static_cast<OptChatUI *>(w);
 
     PsiOptions::instance()->setOption("options.messages.default-outgoing-message-type", bg_defAct->buttons().indexOf(bg_defAct->checkedButton()) == 0 ? "message" : "chat");
     PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
@@ -143,7 +143,7 @@ void OptionsTabChat::restoreOptions()
     if ( !w )
         return;
 
-    OptChatUI *d = (OptChatUI *)w;
+    OptChatUI *d = static_cast<OptChatUI *>(w);
 
     bg_defAct->buttons()[PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]->setChecked(true);
     d->ck_alertOpenChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() );

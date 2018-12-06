@@ -376,7 +376,7 @@ void AttachView::contextMenuEvent(QContextMenuEvent* e)
 
 void AttachView::qlv_doubleClicked(QListWidgetItem *lvi)
 {
-    AttachViewItem *i = (AttachViewItem *)lvi;
+    AttachViewItem *i = static_cast<AttachViewItem *>(lvi);
     if(!i)
         return;
 

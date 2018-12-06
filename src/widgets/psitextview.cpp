@@ -137,7 +137,7 @@ void PsiTextView::insertText(const QString &text, QTextCursor &cursor)
 
 QString PsiTextView::getTextHelper(bool html) const
 {
-    PsiTextView *ptv = (PsiTextView *)this;
+    PsiTextView *ptv = const_cast<PsiTextView *>(this);
     QTextCursor cursor = ptv->textCursor();
     int position = ptv->verticalScrollBar()->value();
 

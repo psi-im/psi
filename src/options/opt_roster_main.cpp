@@ -31,7 +31,7 @@ QWidget *OptionsTabRosterMain::widget()
         return 0;
 
     w = new OptRosterMainUI();
-    OptRosterMainUI *d = (OptRosterMainUI *)w;
+    OptRosterMainUI *d = static_cast<OptRosterMainUI *>(w);
 
     d->ck_alwaysOnTop->setWhatsThis(
         tr("Makes the main Psi window always be in front of other windows."));
@@ -57,7 +57,7 @@ void OptionsTabRosterMain::applyOptions()
     if ( !w )
         return;
 
-    OptRosterMainUI *d = (OptRosterMainUI *)w;
+    OptRosterMainUI *d = static_cast<OptRosterMainUI *>(w);
 
     PsiOptions::instance()->setOption("options.ui.contactlist.always-on-top", d->ck_alwaysOnTop->isChecked());
     PsiOptions::instance()->setOption("options.ui.contactlist.automatically-resize-roster", d->ck_autoRosterSize->isChecked());
@@ -86,7 +86,7 @@ void OptionsTabRosterMain::restoreOptions()
     if ( !w )
         return;
 
-    OptRosterMainUI *d = (OptRosterMainUI *)w;
+    OptRosterMainUI *d = static_cast<OptRosterMainUI *>(w);
 
     d->ck_alwaysOnTop->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool() );
     d->ck_autoRosterSize->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool() );
