@@ -699,10 +699,8 @@ Qt::ItemFlags ContactListModel::flags(const QModelIndex &index) const
     if ((index.column() == NameColumn) && item && item->isEditable())
         f |= Qt::ItemIsEditable;
 
-#ifdef HAVE_QT5
     if (!item->isExpandable())
         f |= Qt::ItemNeverHasChildren;
-#endif
 
     return f;
 }

@@ -49,11 +49,7 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     }
 
     if (!reply) {
-#ifdef HAVE_QT5
         QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
-#else
-        QString ua = QString(req.rawHeader("User-Agent"));
-#endif
         auto handler = _sessionHandlers.value(ua);
         if (handler && handler->data(req, data, mime)) {
             reply = new ByteArrayReply(req, data, mime, this);

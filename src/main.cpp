@@ -441,27 +441,6 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 }
 #endif
 
-#ifndef HAVE_QT5
-void psiMessageOutput(QtMsgType type, const char *msg)
-{
-    QString time = QTime::currentTime().toString();
-    switch (type) {
-    case QtDebugMsg:
-        fprintf(stderr, "[%s] %s\n", qPrintable(time), msg);
-        break;
-    case QtWarningMsg:
-        fprintf(stderr, "[%s] W:%s\n", qPrintable(time), msg);
-        break;
-    case QtCriticalMsg:
-        fprintf(stderr, "[%s] C:%s\n", qPrintable(time), msg);
-        break;
-    case QtFatalMsg:
-        fprintf(stderr, "[%s] F:%s\n", qPrintable(time), msg);
-        abort();
-    }
-}
-#endif
-
 QStringList getQtPluginPathEnvVar()
 {
     QStringList out;
@@ -503,7 +482,7 @@ int main(int argc, char *argv[])
     // version.
     // see http://www.mozilla.org/security/announce/2007/mfsa2007-23.html
     // for how this problem affected firefox on windows.
-#if defined(HAVE_QT5) && defined(Q_OS_WIN)
+#if defined(Q_OS_WIN)
     const QString appPath = QFileInfo(QString::fromLocal8Bit(argv[0])).absoluteDir().absolutePath();
 #endif
 
@@ -540,15 +519,11 @@ int main(int argc, char *argv[])
 #endif
 
     // it must be initialized first in order for ApplicationInfo::resourcesDir() to work
-#ifdef HAVE_QT5
     qSetMessagePattern("[%{time yyyyMMdd h:mm:ss}] %{if-info}I:%{endif}%{if-warning}W:%{endif}%{if-critical}C:%{endif}%{if-fatal}F:%{endif}"
                        "%{message} (%{file}:%{line}, %{function})");
 # ifdef Q_OS_WIN
     QCoreApplication::addLibraryPath(appPath);
 # endif
-#else
-    qInstallMsgHandler(psiMessageOutput);
-#endif
     PsiApplication app(argc, argv);
     QApplication::setApplicationName(ApplicationInfo::name());
     QApplication::addLibraryPath(ApplicationInfo::resourcesDir());

@@ -70,9 +70,7 @@ private:
 class PsiDBusNotifierPlugin : public QObject, public PsiPopupPluginInterface
 {
     Q_OBJECT
-#ifdef HAVE_QT5
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.PsiPopupPluginInterface")
-#endif
     Q_INTERFACES(PsiPopupPluginInterface)
 
 public:

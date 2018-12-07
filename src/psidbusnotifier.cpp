@@ -399,7 +399,3 @@ void PsiDBusNotifier::readyToDie()
 }
 
 QStringList PsiDBusNotifier::caps_ = QStringList();
-
-#ifndef HAVE_QT5
-Q_EXPORT_PLUGIN2(psidbusnotifier, PsiDBusNotifierPlugin)
-#endif

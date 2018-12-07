@@ -346,11 +346,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
     connect(lv_accs, SIGNAL(orderChanged(QList<PsiAccount*>)), psi, SLOT(setAccountsOrder(QList<PsiAccount*>)));
     connect(psi, SIGNAL(accountAdded(PsiAccount *)), SLOT(accountAdded(PsiAccount *)));
     connect(psi, SIGNAL(accountRemoved(PsiAccount *)), SLOT(accountRemoved(PsiAccount *)));
-#ifdef HAVE_QT5
     lv_accs->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#else
-    lv_accs->header()->setResizeMode(QHeaderView::ResizeToContents);
-#endif
     lv_accs->setDragDropMode(QAbstractItemView::InternalMove);
     lv_accs->setDragDropOverwriteMode(false);
     lv_accs->setSortingEnabled(true);

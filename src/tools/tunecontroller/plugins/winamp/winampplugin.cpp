@@ -30,7 +30,3 @@ TuneController* WinAmpPlugin::createController()
 {
     return new WinAmpTuneController();
 }
-
-#ifndef HAVE_QT5
-Q_EXPORT_PLUGIN2(winampplugin, WinAmpPlugin);
-#endif

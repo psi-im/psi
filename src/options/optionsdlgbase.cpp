@@ -51,11 +51,7 @@ public:
     // reimplemented
     virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
     {
-#ifdef HAVE_QT5
         QStyleOptionViewItem opt(option);
-#else
-        QStyleOptionViewItemV4 opt(option);
-#endif
         opt.showDecorationSelected = true;
         opt.rect.adjust(0, 0, 0, -1);
 

@@ -25,21 +25,19 @@
 #include "textutil.h"
 
 #include <QWidget>
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QJsonObject>
 #include <QMetaObject>
 #include <QMetaProperty>
 #include <QJsonDocument>
-#endif
 #ifdef WEBENGINE
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-#include <QWebEngineContextMenuData>
-#endif
-#include <QWebEngineSettings>
+# if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#  include <QWebEngineContextMenuData>
+# endif
+# include <QWebEngineSettings>
 #else
-#include <QWebPage>
-#include <QWebFrame>
-#include <QNetworkRequest>
+# include <QWebPage>
+# include <QWebFrame>
+# include <QNetworkRequest>
 #endif
 #include <QFile>
 #include <QFileInfo>

@@ -33,10 +33,6 @@
 #    include "zip/zip.h"
 #endif
 
-#ifndef HAVE_QT5
-# define QLatin1Literal QLatin1String
-#endif
-
 #include "psithemeprovider.h"
 #include "theme_p.h"
 

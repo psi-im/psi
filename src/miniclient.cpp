@@ -21,9 +21,7 @@
 #include <QtCrypto>
 #include <QMessageBox>
 #include <QUrl>
-#ifdef HAVE_QT5
 #include <QUrlQuery>
-#endif
 
 #include "applicationinfo.h"
 #include "miniclient.h"
@@ -92,7 +90,6 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
             p.setSocks(pi.settings.host, pi.settings.port);
         else if(pi.type == "poll") { // HTTP Poll
             QUrl u = pi.settings.url;
-#ifdef HAVE_QT5
             QUrlQuery q(u.query(QUrl::FullyEncoded));
             if (q.queryItems().isEmpty()) {
                 if (useHost) {
@@ -102,15 +99,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
                 }
                 u.setQuery(q);
             }
-#else
-            if(u.queryItems().isEmpty()) {
-                if (useHost) {
-                    u.addQueryItem("server",host + ':' + QString::number(port));
-                } else {
-                    u.addQueryItem("server",jid.domain());
-                }
-            }
-#endif
+
             p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
             p.setPollInterval(2);
         }

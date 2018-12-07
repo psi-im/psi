@@ -82,7 +82,7 @@ static const QString headerForegroungColorPath(QStringLiteral("options.ui.look.c
 int computeScaleFactor(ContactListView *contactList) {
     static int factor = 0;
     if (!factor) {
-        if (devicePixelRatio(contactList) > 1) {
+        if (contactList->devicePixelRatio() > 1) {
             factor = 1; // It's autodetected by Qt. it will scale everything on it's own.
         } else {
             factor = qApp->desktop()->logicalDpiX() / 90;
@@ -965,11 +965,7 @@ int ContactListViewDelegate::Private::avatarSize() const
 
 void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModelIndex &index)
 {
-#ifdef HAVE_QT5
     QStyleOptionViewItem o = opt;
-#else
-    QStyleOptionViewItemV2 o = opt;
-#endif
     o.font = font_;
     o.fontMetrics = fontMetrics_;
     QPalette palette = o.palette;
@@ -1012,11 +1008,7 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 
 void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QModelIndex &index)
 {
-#ifdef HAVE_QT5
     QStyleOptionViewItem o = opt;
-#else
-    QStyleOptionViewItemV2 o = opt;
-#endif
     o.font = font_;
     o.fontMetrics = fontMetrics_;
     QPalette palette = o.palette;
@@ -1152,11 +1144,7 @@ QColor ContactListViewDelegate::Private::backgroundColor(const QStyleOptionViewI
     }
     else {
         QVariant value = index.data(Qt::BackgroundRole);
-#ifdef HAVE_QT5
         if (value.canConvert<QBrush>()) {
-#else
-        if (qVariantCanConvert<QBrush>(value)) {
-#endif
             return qvariant_cast<QBrush>(value).color();
         }
         else {
@@ -1170,12 +1158,7 @@ QColor ContactListViewDelegate::Private::backgroundColor(const QStyleOptionViewI
 void ContactListViewDelegate::Private::doSetOptions(const QStyleOptionViewItem &option, const QModelIndex &index)
 {
     opt = q->setOptions(index, option);
-#ifdef HAVE_QT5
     opt.features = option.features;
-#else
-    const QStyleOptionViewItemV2 *v2 = qstyleoption_cast<const QStyleOptionViewItemV2 *>(&option);
-    opt.features = v2 ? v2->features : QStyleOptionViewItemV2::ViewItemFeatures(QStyleOptionViewItemV2::None);
-#endif
 
     const HoverableStyleOptionViewItem *hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem*>(&option);
     opt.hovered = hoverable ? hoverable->hovered : false;

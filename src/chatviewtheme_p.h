@@ -110,12 +110,7 @@ class ChatViewThemeJSUtil : public QObject {
     QStringList changedOptions;
     QTimer optChangeTimer;
 
-#ifdef HAVE_QT5
     Q_PROPERTY(QString psiDefaultAvatarUrl MEMBER psiDefaultAvatarUrl CONSTANT)
-#else
-    Q_PROPERTY(QString psiDefaultAvatarUrl READ getPsiDefaultAvatarUrl CONSTANT)
-    QString getPsiDefaultAvatarUrl() const { return psiDefaultAvatarUrl; }
-#endif
 
 signals:
     void optionsChanged(const QStringList &);

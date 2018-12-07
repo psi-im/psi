@@ -165,11 +165,7 @@ void OptionsTabPlugins::listPlugins()
         settings->setMapping(settsbutton, index);
     }
     if ( d->tw_Plugins->topLevelItemCount() > 0 ) {
-#ifdef HAVE_QT5
         d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);
-#else
-        d->tw_Plugins->header()->setResizeMode(C_NAME, QHeaderView::Stretch);
-#endif
         d->tw_Plugins->resizeColumnToContents(C_VERSION);
         d->tw_Plugins->resizeColumnToContents(C_ABOUT);
         d->tw_Plugins->resizeColumnToContents(C_SETTS);
