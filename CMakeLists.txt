@@ -49,6 +49,10 @@ endif()
 option( USE_MXE "Use MXE cross-compilation" OFF )
 option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS" OFF )
+#Apple only
+if(APPLE)
+    option( USE_SPARKLE "Use Sparkle for APPLE builds" ON )
+endif()
 
 if( USE_HUNSPELL AND USE_ENCHANT )
     message(FATAL_ERROR "Both flags USE_HUNSPELL and USE_ENCHANT cannot be enabled at the same time. Please disable one of them")

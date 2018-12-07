@@ -24,7 +24,7 @@ list(APPEND PLAIN_SOURCES
     AutoUpdater.cpp
 )
 
-if(APPLE)
+if(APPLE AND USE_SPARKLE)
     list(APPEND HEADERS
         SparkleAutoUpdater.h
     )
