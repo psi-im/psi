@@ -407,12 +407,28 @@ function initPsiTheme() {
                 }
             }
 
-            //timeout to be sure content rerendered correctly
-            window.addEventListener("resize", function() {setTimeout(function(){
-                if (o.atBottom) { //immediatelly scroll to bottom if we wish it
-                    window.scrollTo(0, document.body.clientHeight - window.innerHeight);
-                }
-            }, 0);}, false);
+            // ensure we at bottom on window resize
+            if (typeof ResizeObserver !== 'undefined') {
+                const ro = new ResizeObserver(entries => {
+                    if (o.atBottom) {
+                        document.scrollingElement.scrollTop =
+                            document.scrollingElement.scrollHeight;
+                    }
+                });
+
+                // Observe the scrollingElement for when the window gets resized
+                ro.observe(document.scrollingElement);
+                // Observe the timeline to process new messages
+                // ro.observe(timeline);
+                
+            } else {
+                //timeout to be sure content rerendered correctly
+                window.addEventListener("resize", function() {setTimeout(function(){
+                    if (o.atBottom) { //immediatelly scroll to bottom if we wish it
+                        window.scrollTo(0, document.body.clientHeight - window.innerHeight);
+                    }
+                }, 0);}, false);
+            }
 
             //let's consider scroll may happen only by user action
             window.addEventListener("scroll", function(){
