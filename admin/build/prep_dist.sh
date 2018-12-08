@@ -45,8 +45,8 @@ if [ "$platform" == "mac" ]; then
 
     mkdir -p $target_dist_base
 
-    QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui"
-    QT_PLUGINS="imageformats/libqjpeg.dylib imageformats/libqgif.dylib imageformats/libqmng.dylib"
+    QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtSql"
+    QT_PLUGINS="imageformats/libqjpeg.dylib imageformats/libqgif.dylib imageformats/libqmng.dylib sqldrivers/libqsqlite.dylib"
     QCA_PLUGINS="crypto/libqca-ossl.dylib crypto/libqca-gnupg.dylib"
 
     cp -a $psi_base/psi.app $target_dist_base/Psi.app

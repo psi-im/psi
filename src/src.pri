@@ -2,7 +2,6 @@ QT += xml network sql
 
 greaterThan(QT_MAJOR_VERSION, 4) {
   QT += widgets multimedia concurrent
-  DEFINES += HAVE_QT5
 
   unix:!mac {
     LIBS += -lxcb
@@ -160,7 +159,9 @@ HEADERS += \
     $$PWD/translationmanager.h \
     $$PWD/eventdb.h \
     $$PWD/edbflatfile.h \
+    $$PWD/edbsqlite.h \
     $$PWD/historydlg.h \
+    $$PWD/historyimp.h \
     $$PWD/historycontactlistmodel.h \
     $$PWD/tipdlg.h \
     $$PWD/searchdlg.h \
@@ -296,7 +297,9 @@ SOURCES += \
     $$PWD/translationmanager.cpp \
     $$PWD/eventdb.cpp \
     $$PWD/edbflatfile.cpp \
+    $$PWD/edbsqlite.cpp \
     $$PWD/historydlg.cpp \
+    $$PWD/historyimp.cpp \
     $$PWD/historycontactlistmodel.cpp \
     $$PWD/searchdlg.cpp \
     $$PWD/registrationdlg.cpp \

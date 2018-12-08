@@ -62,7 +62,7 @@
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
-#include "edbflatfile.h"
+#include "edbsqlite.h"
 #include "proxy.h"
 #ifdef PSIMNG
 #include "psimng.h"
@@ -635,7 +635,11 @@ bool PsiCon::init()
 
     checkAccountsEmpty();
 
-    d->edb = new EDBFlatFile(this);
+    // Import for SQLite history
+    EDBSqLite *edb = new EDBSqLite(this);
+    d->edb = edb;
+    if (!edb->init())
+        return false;
 
     if(d->contactList->defaultAccount())
         emit statusMessageChanged(d->contactList->defaultAccount()->status().status());

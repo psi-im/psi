@@ -55,7 +55,7 @@ if(APPLE)
     endif()
 endif()
 
-add_definitions(-DHAVE_QT5 ${LIBXCB_DEFINITIONS})
+add_definitions(${LIBXCB_DEFINITIONS})
 
 if(NOT ONLY_BINARY AND (EXISTS "${TRANSLATIONS_DIR}"))
     set(LANGS_EXISTS ON)

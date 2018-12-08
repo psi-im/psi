@@ -82,10 +82,13 @@ build_package_psi() {
         cp $mqtdir/bin/QtNetwork4.dll $arch_prefix
         cp $mqtdir/bin/QtXml4.dll $arch_prefix
         cp $mqtdir/bin/QtGui4.dll $arch_prefix
+        cp $mqtdir/bin/QtSql4.dll $arch_prefix
         mkdir -p $arch_prefix/imageformats
         cp $mqtdir/plugins/imageformats/qgif4.dll $arch_prefix/imageformats
         cp $mqtdir/plugins/imageformats/qjpeg4.dll $arch_prefix/imageformats
         cp $mqtdir/plugins/imageformats/qmng4.dll $arch_prefix/imageformats
+        mkdir -p $arch_prefix/sqldrivers
+        cp $mqtdir/plugins/sqldrivers/qsqlite4.dll
         cp $deps_base/$qca_win_dir/$target_arch/bin/qca2.dll $arch_prefix
         mkdir -p $arch_prefix/crypto
         cp $deps_base/$qca_win_dir/$target_arch/plugins/crypto/qca-gnupg2.dll $arch_prefix/crypto
