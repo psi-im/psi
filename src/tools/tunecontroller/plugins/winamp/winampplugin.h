@@ -36,9 +36,7 @@ class WinAmpPlugin : public QObject, public TuneControllerPlugin
 {
     Q_OBJECT
     Q_INTERFACES(TuneControllerPlugin)
-#ifdef HAVE_QT5
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
-#endif
 
 public:
     virtual QString name();

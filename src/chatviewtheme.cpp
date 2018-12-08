@@ -30,10 +30,8 @@
 #include <QWebFrame>
 #include <QNetworkRequest>
 #endif
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QJsonObject>
 #include <QJsonDocument>
-#endif
 #include <QMetaProperty>
 #include <QFileInfo>
 #include <QApplication>
@@ -57,15 +55,6 @@
 #include "psicon.h"
 #include "theme_p.h"
 #include "jsutil.h"
-
-#ifndef WEBENGINE
-# ifdef HAVE_QT5
-#  define QT_JS_QTOWNERSHIP QWebFrame::QtOwnership
-# else
-#  define QT_JS_QTOWNERSHIP QScriptEngine::QtOwnership
-# endif
-#endif
-
 
 #ifndef WEBENGINE
 class SessionRequestHandler : public NAMDataHandler
@@ -179,8 +168,8 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
             << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
 
 
-    wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", jsLoader.data(), QT_JS_QTOWNERSHIP);
-    wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", jsUtil.data(), QT_JS_QTOWNERSHIP);
+    wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", jsLoader.data(), QWebFrame::QtOwnership);
+    wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", jsUtil.data(), QWebFrame::QtOwnership);
 
     foreach (const QString &sp, scriptPaths) {
         evaluateFromFile(sp, wv->page()->mainFrame());
@@ -744,31 +733,19 @@ ChatViewThemeSession::~ChatViewThemeSession()
 
 QString ChatViewThemeSession::propsAsJsonString()
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
     QJsonObject jsObj;
-#else
-    QVariantMap jsObj;
-#endif
     int pc = metaObject()->propertyCount();
     for (int i = 0; i < pc; i++) {
         QMetaProperty p = metaObject()->property(i);
         if (p.isReadable()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
             QJsonValue v = QJsonValue::fromVariant(property(p.name()));
-#else
-            QVariant v = property(p.name());
-#endif
             if (!v.isNull()) {
                 jsObj.insert(p.name(), v);
             }
         }
     }
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
     QJsonDocument doc(jsObj);
     return QString(doc.toJson(QJsonDocument::Compact));
-#else
-    return JSUtil::map2json(jsObj);
-#endif
 }
 
 void ChatViewThemeSession::init(const Theme &theme)

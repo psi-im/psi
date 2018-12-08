@@ -27,9 +27,7 @@
 #include <QMenu>
 #include <QSignalMapper>
 #include <QUrl>
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-# include <QUrlQuery>
-#endif
+#include <QUrlQuery>
 
 #include "iconaction.h"
 
@@ -140,7 +138,6 @@ public slots:
         QUrl uri(lnk);
         if (!query.isEmpty()) {
             QString queryType = query.left(query.indexOf(';'));
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
             QUrlQuery q;
             q.setQueryDelimiters('=', ';');
             q.setQuery(uri.query(QUrl::FullyEncoded));
@@ -149,12 +146,6 @@ public slots:
                 q.setQuery(query);
             }
             uri.setQuery(q);
-#else
-            uri.setQueryDelimiters('=', ';');
-            if (uri.queryItems().value(0).first != queryType) {
-                uri.setEncodedQuery(query.toLatin1());
-            }
-#endif
         }
         uri.setScheme("xmpp");
         emit urlObject->openURL(uri.toString());

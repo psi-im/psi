@@ -29,7 +29,6 @@ class QVariant;
 class JSUtil
 {
 public:
-    static QString map2json(const QVariantMap &);
     static QString variant2js(const QVariant &);
     /** Escapes " and \n  (for JS evaluation) */
     static void escapeString(QString &str);

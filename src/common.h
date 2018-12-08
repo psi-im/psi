@@ -157,7 +157,6 @@ TabbableWidget* findActiveTab();
 # define X11WM_CLASS(x)    /* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
-int devicePixelRatio(QWidget *);
 
 // -----------------------------------------------------------------------------
 // History utilities

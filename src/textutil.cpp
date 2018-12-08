@@ -8,11 +8,7 @@
 
 QString TextUtil::escape(const QString &plain)
 {
-#ifdef HAVE_QT5
     return plain.toHtmlEscaped();
-#else
-    return Qt::escape(plain);
-#endif
 }
 
 QString TextUtil::unescape(const QString& escaped)

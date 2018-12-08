@@ -27,11 +27,7 @@
 #include "fileutil.h"
 #include "applicationinfo.h"
 
-#ifdef HAVE_QT5
-# define FC_META_PERSISTENT QStringLiteral("fc_persistent")
-#else
-# define FC_META_PERSISTENT QLatin1String("fc_persistent")
-#endif
+#define FC_META_PERSISTENT QStringLiteral("fc_persistent")
 
 FileCacheItem::FileCacheItem(FileCache *parent, const QString &itemId,
                              const QVariantMap &metadata, const QDateTime &dt,

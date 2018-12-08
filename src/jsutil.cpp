@@ -22,18 +22,6 @@
 #include <QStringList>
 #include <QDateTime>
 
-QString JSUtil::map2json(const QVariantMap &map)
-{
-    QStringList ret;
-    QMapIterator<QString, QVariant> i(map);
-    while (i.hasNext()) {
-        i.next();
-        ret.append(QString("\"%1\":").arg(escapeStringCopy(i.key())) +
-                   variant2js(i.value()));
-    }
-    return QString("{%1}").arg(ret.join(","));
-}
-
 QString JSUtil::variant2js(const QVariant &value)
 {
     QString strVal;

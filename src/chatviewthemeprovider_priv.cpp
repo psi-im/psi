@@ -20,9 +20,7 @@
 
 #include <QPointer>
 #include <QBuffer>
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-# include <QUrlQuery>
-#endif
+#include <QUrlQuery>
 
 #include "psicon.h"
 #include "chatviewthemeprovider_priv.h"
@@ -95,13 +93,8 @@ public:
             return false;
         }
         QString iconId = path.mid(sizeof("/psiicon/") - 1);
-#ifdef HAVE_QT5
         int w = QUrlQuery(url.query()).queryItemValue("w").toInt();
         int h = QUrlQuery(url.query()).queryItemValue("h").toInt();
-#else
-        int w = url.queryItemValue("w").toInt();
-        int h = url.queryItemValue("h").toInt();
-#endif
         PsiIcon icon = IconsetFactory::icon(iconId);
         if (w && h && !icon.isAnimated()) {
             QBuffer buffer(&data);

@@ -1272,11 +1272,7 @@ void PsiCon::checkAccountsEmpty()
 void PsiCon::openUri(const QString &uri)
 {
     QUrl url;
-#ifdef HAVE_QT5
     url.setUrl(uri, QUrl::StrictMode);
-#else
-    url.setEncodedUrl(uri.toLatin1());
-#endif
     openUri(url);
 }
 

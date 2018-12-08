@@ -253,7 +253,6 @@ QString PopupManager::currentType() const
 }
 
 
-#ifdef HAVE_QT5
 Q_IMPORT_PLUGIN(PsiPopupPlugin)
 
 # if defined(Q_OS_MAC) && defined(HAVE_GROWL)
@@ -263,16 +262,3 @@ Q_IMPORT_PLUGIN(PsiGrowlNotifierPlugin)
 # ifdef USE_DBUS
 Q_IMPORT_PLUGIN(PsiDBusNotifierPlugin)
 # endif
-
-#else
-Q_IMPORT_PLUGIN(psipopup)
-
-# if defined(Q_OS_MAC) && defined(HAVE_GROWL)
-Q_IMPORT_PLUGIN(psigrowlnotifier)
-# endif
-
-# ifdef USE_DBUS
-Q_IMPORT_PLUGIN(psidbusnotifier)
-# endif
-
-#endif

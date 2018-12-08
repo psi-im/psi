@@ -194,7 +194,6 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid 
             p.setSocks(pi.settings.host, pi.settings.port);
         else if(pi.type == "poll") { // HTTP Poll
             QUrl u = pi.settings.url;
-#ifdef HAVE_QT5
             QUrlQuery q(u.query(QUrl::FullyEncoded));
             if(q.queryItems().isEmpty()) {
                 if (useHost)
@@ -203,14 +202,6 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid 
                     q.addQueryItem("server",jid.domain());
                 u.setQuery(q);
             }
-#else
-            if(u.queryItems().isEmpty()) {
-                if (useHost)
-                    u.addQueryItem("server",host + ':' + QString::number(port));
-                else
-                    u.addQueryItem("server",jid.domain());
-            }
-#endif
             p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
             p.setPollInterval(2);
         }
@@ -4628,14 +4619,9 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
     Jid entity = JIDUtil::fromString(path);
 
     // query
-#ifdef HAVE_QT5
     QUrlQuery uri;
     uri.setQueryDelimiters('=', ';');
     uri.setQuery(uriToOpen.query(QUrl::FullyEncoded));
-#else
-    QUrl uri(uriToOpen);    // got to copy, because setQueryDelimiters() is not const
-    uri.setQueryDelimiters('=', ';');
-#endif
 
     QString querytype = uri.queryItems().value(0).first;    // defaults to empty string
 
@@ -4651,13 +4637,8 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
     } else if (querytype == "join") {
         actionJoin(entity, uri.queryItemValue("password"));
     } else if (querytype == "message") {
-#ifdef HAVE_QT5
         QString subject = uri.queryItemValue("subject", QUrl::FullyDecoded);
         QString body = uri.queryItemValue("body", QUrl::FullyDecoded);
-#else
-        QString subject = uri.queryItemValue("subject");
-        QString body = uri.queryItemValue("body");
-#endif
         QString type = uri.queryItemValue("type");
         if (type == "chat" && subject.isEmpty()) {
             if (!find(entity.bare())) {

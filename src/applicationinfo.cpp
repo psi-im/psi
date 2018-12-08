@@ -6,9 +6,7 @@
 #include <QLocale>
 #include <QDesktopServices>
 #include <QMessageBox>
-#ifdef HAVE_QT5
 #include <QStandardPaths>
-#endif
 
 #ifdef Q_OS_UNIX
 #include <sys/stat.h> // chmod

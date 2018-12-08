@@ -37,20 +37,12 @@
 // Do not count invisible &
 //#define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)
 
-#ifdef HAVE_QT5
-typedef QStyleOptionTab PsiStyleOptionTab;
-typedef QStyleOptionTabBarBase PsiStyleOptionTabBarBase;
-#else
-typedef QStyleOptionTabV3 PsiStyleOptionTab;
-typedef QStyleOptionTabBarBaseV2 PsiStyleOptionTabBarBase;
-#endif
-
 class CloseButton : public QAbstractButton
 {
     Q_OBJECT
 
 public:
-    CloseButton(QWidget *parent = 0);
+    CloseButton(QWidget *parent = nullptr);
 
     QSize sizeHint() const;
     inline QSize minimumSizeHint() const
@@ -77,12 +69,12 @@ public:
 
     void layoutTabs();
     int pinnedTabWidthHint() const;
-    QSize tabSizeHint(PsiStyleOptionTab tab) const;
+    QSize tabSizeHint(QStyleOptionTab tab) const;
     void balanseCloseButtons();
     bool indexAtBottom(int index) const;
 
     TabBar *q;
-    QList<PsiStyleOptionTab> hackedTabs;
+    QList<QStyleOptionTab> hackedTabs;
     QList<CloseButton*> closeButtons;
     bool tabsClosable;
     bool multiRow;
@@ -288,7 +280,7 @@ void TabBar::Private::layoutTabs()
 
     // Prepare hacked tabs
     for (int i = 0; i < q->count(); i++) {
-        PsiStyleOptionTab tab;
+        QStyleOptionTab tab;
         q->initStyleOption(&tab, i);
         if (i == 0) {
             tab.rect.setLeft(0);
@@ -412,7 +404,7 @@ void TabBar::Private::layoutTabs()
             bottom = (rows - i - 1) * (hackedTabs[0].rect.height() - 2);
 
         for (int j = row.number; j < endTab; j++) {
-            PsiStyleOptionTab &tab = hackedTabs[j];
+            QStyleOptionTab &tab = hackedTabs[j];
             int tabWidth = tab.rect.width();
             if (rows > 1 && (j < firstNormalTab || j >= pinnedTabs)) {
                 tabWidth *= row.sf;
@@ -470,7 +462,7 @@ inline static bool verticalTabs(QTabBar::Shape shape)
 
 int TabBar::Private::pinnedTabWidthHint() const
 {
-    PsiStyleOptionTab opt;
+    QStyleOptionTab opt;
     q->initStyleOption(&opt, 0);
     opt.leftButtonSize = QSize();
     opt.rightButtonSize = QSize();
@@ -505,7 +497,7 @@ int TabBar::Private::pinnedTabWidthHint() const
 
 }
 
-QSize TabBar::Private::tabSizeHint(PsiStyleOptionTab opt) const
+QSize TabBar::Private::tabSizeHint(QStyleOptionTab opt) const
 {
     QSize iconSize = opt.iconSize;
     int hframe = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
@@ -848,7 +840,7 @@ QSize TabBar::sizeHint() const
         return QTabBar::sizeHint();
     }
 
-    QList<PsiStyleOptionTab> tabs = d->hackedTabs;
+    QList<QStyleOptionTab> tabs = d->hackedTabs;
 
     QRect rect;
     for (int i=0; i < tabs.size(); i++) {
@@ -871,7 +863,7 @@ QSize TabBar::tabSizeHint(int index) const
         return QSize();
     }
 
-    PsiStyleOptionTab opt = d->hackedTabs.at(index);
+    QStyleOptionTab opt = d->hackedTabs.at(index);
     return d->tabSizeHint(opt);
 }
 
@@ -897,7 +889,7 @@ bool TabBar::tabsClosable() const
 }
 
 // stealed from qtabbar_p.h
-static void initStyleBaseOption(PsiStyleOptionTabBarBase *optTabBase, QTabBar *tabbar, QSize size)
+static void initStyleBaseOption(QStyleOptionTabBarBase *optTabBase, QTabBar *tabbar, QSize size)
 {
     QStyleOptionTab tabOverlap;
     tabOverlap.shape = tabbar->shape();
@@ -939,7 +931,7 @@ void TabBar::paintEvent(QPaintEvent *event)
     }
 
     QStylePainter p(this);
-    QList<PsiStyleOptionTab> tabs = d->hackedTabs;
+    QList<QStyleOptionTab> tabs = d->hackedTabs;
 
     for (int i = 0; i < tabs.size() && i < d->pinnedTabs; ++i) {
         tabs[i].leftButtonSize = QSize();
@@ -948,7 +940,7 @@ void TabBar::paintEvent(QPaintEvent *event)
 
     int selected = currentIndex();
     if (drawBase()) {
-        PsiStyleOptionTabBarBase optTabBase;
+        QStyleOptionTabBarBase optTabBase;
         initStyleBaseOption(&optTabBase, this, size());
 
         if (selected >= 0) {
@@ -977,7 +969,7 @@ void TabBar::paintEvent(QPaintEvent *event)
     bool drawSelected = false;
     QPixmap pinPixmap = IconsetFactory::iconPixmap("psi/pin");
     for (int i = 0; i < tabs.size(); i++) {
-        PsiStyleOptionTab tab = tabs[i];
+        QStyleOptionTab tab = tabs[i];
         if (i != selected) {
             if (i == d->hoverTab)
                 tab.state |= QStyle::State_MouseOver;
@@ -1041,7 +1033,7 @@ void TabBar::paintEvent(QPaintEvent *event)
     QStyle::SubElement se = (closeSide == LeftSide ? QStyle::SE_TabBarTabLeftButton : QStyle::SE_TabBarTabRightButton);
     if (d->tabsClosable) {
         for (int i = 0; i < tabs.size(); i++) {
-            PsiStyleOptionTab opt;
+            QStyleOptionTab opt;
             opt = tabs.at(i);
 
             QRect rect = style()->subElementRect(se, &opt, this);
@@ -1138,7 +1130,7 @@ void TabBar::mouseMoveEvent(QMouseEvent *event)
             }
         }
         if (d->dragTab > -1) {
-            PsiStyleOptionTab tab = d->hackedTabs[d->dragTab];
+            QStyleOptionTab tab = d->hackedTabs[d->dragTab];
             QPixmap pixmap(tab.rect.size());
             tab.rect.moveTo(0, 0);
             tab.state = QStyle::State_Active | QStyle::State_Enabled | QStyle::State_Selected;

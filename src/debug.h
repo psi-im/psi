@@ -25,45 +25,24 @@
 
 // history
 
-#ifdef HAVE_QT5
 # define EDB_DEBUG() qDebug().noquote() << "[edb]"
 # define EDB_CRITICAL() qCritical().noquote() << "[edb]"
 # define EDB_WARNING() qWarning().noquote() << "[edb]"
 # define EDB_FATAL() QDebug(QtMsgType::QtFatalMsg).noquote() << "[edb]"
-#else
-# define EDB_DEBUG() qDebug() << "[edb]"
-# define EDB_CRITICAL() qCritical() << "[edb]"
-# define EDB_WARNING() qWarning() << "[edb]"
-# define EDB_FATAL() QDebug(QtMsgType::QtFatalMsg) << "[edb]"
-#endif
 
 // contact list
 
-#ifdef HAVE_QT5
 # define CL_DEBUG() qDebug().noquote() << "[cl]"
 # define CL_CRITICAL() qCritical().noquote() << "[cl]"
 # define CL_WARNING() qWarning().noquote() << "[cl]"
 # define CL_FATAL() QDebug(QtMsgType::QtFatalMsg).noquote() << "[cl]"
-#else
-# define CL_DEBUG() qDebug() << "[cl]"
-# define CL_CRITICAL() qCritical() << "[cl]"
-# define CL_WARNING() qWarning() << "[cl]"
-# define CL_FATAL() QDebug(QtMsgType::QtFatalMsg) << "[cl]"
-#endif
 
 // Common
 
-#ifdef HAVE_QT5
 # define DEBUG() qDebug().noquote()
 # define CRITICAL() qCritical().noquote()
 # define WARNING() qWarning().noquote()
 # define FATAL() QDebug(QtMsgType::QtFatalMsg).noquote()
-#else
-# define DEBUG() qDebug()
-# define CRITICAL() qCritical()
-# define WARNING() qWarning()
-# define FATAL() QDebug(QtMsgType::QtFatalMsg)
-#endif
 
 class SlowTimer
 {

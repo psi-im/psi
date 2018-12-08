@@ -14,9 +14,7 @@
 #include <QList>
 #include <QMessageBox>
 #include <QDir>
-#ifdef HAVE_QT5
 #include <QStandardPaths>
-#endif
 
 #include "ui_opt_application.h"
 
@@ -43,11 +41,7 @@ OptionsTabApplication::OptionsTabApplication(QObject *parent)
     : OptionsTab(parent, "application", "", tr("Application"), tr("General application options"), "psi/logo_32")
 {
 #ifdef HAVE_FREEDESKTOP
-#ifndef HAVE_QT5
-    configPath_ = QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME"));
-#else
     configPath_ = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
-#endif
 #endif
 }
 

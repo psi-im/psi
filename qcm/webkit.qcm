@@ -49,10 +49,7 @@ public:
     			qt = "webenginewidgets webchannel";
     		} else {
     			webkitType = "QtWebKit";
-    			qt = "webkit";
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-    			qt += " webkitwidgets";
-#endif
+    			qt = "webkit webkitwidgets";
     		}
 
     		QString proextra = "CONFIG += qt webkit\n";

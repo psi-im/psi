@@ -31,9 +31,7 @@
 #include <QContextMenuEvent>
 #include <QClipboard>
 #include <QBuffer>
-#ifdef HAVE_QT5
 #include <QUrlQuery>
-#endif
 
 #include "networkaccessmanager.h"
 #include "iconset.h"

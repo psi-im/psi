@@ -526,11 +526,7 @@ QVariant ContactListItem::value(int role) const
             case Qt::DisplayRole:                       res = name();  break;
             case Qt::ToolTipRole: {
                 QString text = name();
-#ifdef HAVE_QT5
                 text = text.toHtmlEscaped();
-#else
-                text = Qt::escape(text);
-#endif
                 res = text + QString(" (%1/%2)").arg(_onlineContacts).arg(_totalContacts);
             } break;
 

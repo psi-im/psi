@@ -94,11 +94,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent)
     proxy_->setSourceModel(model_);
     ui_.lv_keys->setModel(proxy_);
 
-#ifdef HAVE_QT5
     ui_.lv_keys->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#else
-    ui_.lv_keys->header()->setResizeMode(QHeaderView::ResizeToContents);
-#endif
 
     connect(ui_.lv_keys, SIGNAL(doubleClicked(const QModelIndex&)), SLOT(doubleClicked(const QModelIndex&)));
     connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));

@@ -839,16 +839,6 @@ QString macToQtDatetimeFormat(const QString &sys_fmt)
 }
 #endif
 
-int devicePixelRatio(QWidget *w)
-{
-#if HAVE_QT5
-    return w->devicePixelRatio();
-#else
-    Q_UNUSED(w);
-    return 1; // FIXME?
-#endif
-}
-
 int pointToPixel(int points)
 {
     // In typography 1 point (also called PostScript point)

@@ -207,12 +207,6 @@ TabDlg::~TabDlg()
     }
 }
 
-#ifndef HAVE_QT5
-// FIXME: This is a bad idea to store pointers in QMimeData
-Q_DECLARE_METATYPE(TabDlg*);
-Q_DECLARE_METATYPE(TabbableWidget*);
-#endif
-
 void TabDlg::setShortcuts()
 {
     act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));

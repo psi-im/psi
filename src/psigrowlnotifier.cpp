@@ -304,7 +304,3 @@ bool  PsiGrowlNotifier::isAvailable()
 }
 
 PsiGrowlNotifier* PsiGrowlNotifier::instance_ = 0;
-
-#ifndef HAVE_QT5
-Q_EXPORT_PLUGIN2(psigrowlnotifier, PsiGrowlNotifierPlugin)
-#endif
