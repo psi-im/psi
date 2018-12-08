@@ -506,16 +506,14 @@ else()
         )
 endif()
 
-if(ENABLE_SQL)
-    list(APPEND HEADERS
-        edbsqlite.h
-        historyimp.h
-        )
-    list(APPEND PLAIN_SOURCES
-        edbsqlite.cpp
-        historyimp.cpp
-        )
-endif()
+list(APPEND HEADERS
+    edbsqlite.h
+    historyimp.h
+    )
+list(APPEND PLAIN_SOURCES
+    edbsqlite.cpp
+    historyimp.cpp
+    )
 
 if(IS_PSIPLUS)
     list(APPEND FORMS
