@@ -60,7 +60,7 @@ QString JSUtil::variant2js(const QVariant &value)
             strVal = QString("new Date(%1)").arg(value.toDate().toString("yyyy,M-1,d"));
             break;
         case QVariant::Map:
-            strVal = map2json(value.toMap());
+            strVal = QString::fromUtf8(QJsonDocument::fromVariant(value).toJson(QJsonDocument::Compact));
             break;
         default:
             strVal = value.toString();
