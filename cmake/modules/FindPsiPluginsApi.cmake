@@ -28,12 +28,14 @@
 
 if(PsiPluginsApi_INCLUDE_DIR)
     # in cache already
-    set(PsiSdk_FIND_QUIETLY TRUE)
+    set(PsiPluginsApi_FIND_QUIETLY TRUE)
 endif()
 
 find_path(
     PsiPluginsApi_DIR variables.cmake
     HINTS
+    "${CMAKE_CURRENT_LIST_DIR}"
+    PATH_SUFFIXES
     share/psi/plugins
     share/psi-plus/plugins
 )
@@ -41,6 +43,8 @@ find_path(
 find_path(
     PsiPluginsApi_INCLUDE_DIR applicationinfoaccessor.h
     HINTS
+    "${CMAKE_CURRENT_LIST_DIR}/../../include"
+    PATH_SUFFIXES
     share/psi/plugins/include
     share/psi-plus/plugins/include
 )
@@ -49,8 +53,8 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
                 PsiPluginsApi
                 DEFAULT_MSG
-                PluginsApi_DIR
-                PluginsApi_INCLUDE_DIR
+                PsiPluginsApi_DIR
+                PsiPluginsApi_INCLUDE_DIR
 )
 
 mark_as_advanced( PsiPluginsApi_DIR PsiPluginsApi_INCLUDE_DIR )
