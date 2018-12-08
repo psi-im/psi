@@ -2,7 +2,7 @@ include_directories(
     plugins/include
 )
 
-list(APPEND PLAIN_HEADERS
+list(APPEND PLUGINS_INCLUDES
     plugins/include/accountinfoaccessinghost.h
     plugins/include/accountinfoaccessor.h
     plugins/include/activetabaccessinghost.h
@@ -44,4 +44,7 @@ list(APPEND PLAIN_HEADERS
     plugins/include/stanzasender.h
     plugins/include/stanzasendinghost.h
     plugins/include/toolbariconaccessor.h
+)
+list(APPEND PLAIN_HEADERS
+    ${PLUGINS_INCLUDES}
 )

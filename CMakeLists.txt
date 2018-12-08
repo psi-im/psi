@@ -36,6 +36,7 @@ option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
 option( BUILD_PSIMEDIA "Build psimedia plugin if sources found" ON )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
+option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
