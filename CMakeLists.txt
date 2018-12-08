@@ -67,8 +67,6 @@ set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 
 set( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
-set( ENABLE_SQL OFF CACHE BOOL "Enable SQL history support")
-
 #Detect QtWebEngine if enabled
 if(ENABLE_WEBKIT)
     add_definitions(
@@ -90,6 +88,8 @@ if(ENABLE_WEBKIT)
     message(STATUS "Webkit - enabled")
 endif()
 
+message(STATUS "SQL history - enabled since 1.4.444 version")
+
 if(USE_WEBENGINE AND USE_WEBKIT)
     message(FATAL_ERROR "Both flags USE_WEBENGINE and USE_WEBKIT cannot be enabled at the same time. Please disable one of them")
 endif()
@@ -100,14 +100,6 @@ endif()
 
 if(USE_WEBKIT AND (NOT ENABLE_WEBKIT))
     message(FATAL_ERROR "USE_WEBKIT flag is enabled but ENABLE_WEBKIT flag is disabled. Please disable USE_WEBKIT or enable ENABLE_WEBKIT")
-endif()
-
-#Detect SQL history patch
-if(EXISTS "${PROJECT_SOURCE_DIR}/src/historyimp.cpp")
-    message(STATUS "SQL history - enabled")
-    set(ENABLE_SQL ON)
-else()
-    set(ENABLE_SQL OFF)
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
