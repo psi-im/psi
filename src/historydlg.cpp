@@ -675,7 +675,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
     setLooks(ui_.msgLog);
     ui_.contactList->setFont(fontForOption("options.ui.look.font.contactlist"));
 
-    ui_.calendar->setFirstDayOfWeek(firstDayOfWeekFromLocale());
+    ui_.calendar->setFirstDayOfWeek(QLocale().firstDayOfWeek());
 
     connect(ui_.searchField, SIGNAL(returnPressed()), SLOT(findMessages()));
     connect(ui_.searchField, SIGNAL(textChanged(const QString)), SLOT(highlightBlocks()));

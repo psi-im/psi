@@ -27,9 +27,7 @@
 #include <QTimer>
 #include <windows.h>
 
-#if QT_VERSION >= 0x050000
 #define QT_WA(unicode, ansi) unicode
-#endif
 /*
     Implementor notes:
 

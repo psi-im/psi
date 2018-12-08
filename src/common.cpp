@@ -73,10 +73,6 @@ Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxB
 // FIXME find it a new home!
 int common_smallFontSize=0;
 
-
-bool useSound;
-
-
 QString CAP(const QString &str)
 {
     return QString("%1: %2").arg(ApplicationInfo::name()).arg(str);
@@ -105,7 +101,7 @@ QString clipStatus(const QString &str, int width, int height)
             line += str.at(at);
         }
         ++at;
-        if((int)line.length() > width) {
+        if(int(line.length()) > width) {
             line.truncate(width-3);
             line += "...";
         }
@@ -157,10 +153,10 @@ QString decodePassword(const QString &pass, const QString &key)
         if(n1 + 4 > pass.length()) {
             break;
         }
-        x += QString(pass.at(n1)).toInt(NULL,16)*4096;
-        x += QString(pass.at(n1+1)).toInt(NULL,16)*256;
-        x += QString(pass.at(n1+2)).toInt(NULL,16)*16;
-        x += QString(pass.at(n1+3)).toInt(NULL,16);
+        x += QString(pass.at(n1)).toInt(nullptr,16)*4096;
+        x += QString(pass.at(n1+1)).toInt(nullptr,16)*256;
+        x += QString(pass.at(n1+2)).toInt(nullptr,16)*16;
+        x += QString(pass.at(n1+3)).toInt(nullptr,16);
         QChar c(x ^ key.at(n2++).unicode());
         result += c;
         if(n2 >= key.length()) {
@@ -260,7 +256,7 @@ bool fileCopy(const QString &src, const QString &dest)
     char *dat = new char[16384];
     int n = 0;
     while (!in.atEnd()) {
-        n = in.read(dat, 16384);
+        n = int(in.read(dat, 16384));
         if (n == -1) {
             delete[] dat;
             return false;
@@ -627,34 +623,6 @@ int qVersionInt()
         out = versionStringToInt(qVersion());
     }
     return out;
-}
-
-Qt::DayOfWeek firstDayOfWeekFromLocale()
-{
-#if QT_VERSION >= QT_VERSION_CHECK(4, 8, 0)
-    return QLocale().firstDayOfWeek();
-#else
-    Qt::DayOfWeek firstDay = Qt::Monday;
-# ifdef Q_OS_WIN
-    WCHAR wsDay[4];
-#  if defined(_WIN32_WINNT_VISTA) && WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
-    if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
-#  else
-    if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
-#  endif
-        bool ok;
-        int wfd = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
-        if (ok) {
-            firstDay = (Qt::DayOfWeek)(unsigned char)wfd;
-        }
-    }
-# elif defined(__GLIBC__)
-    firstDay = (Qt::DayOfWeek)(unsigned char)((*nl_langinfo(_NL_TIME_FIRST_WEEKDAY) + 5) % 7 + 1);
-# elif defined(Q_OS_MAC)
-    firstDay = (Qt::DayOfWeek)(unsigned char)macosCommonFirstWeekday();
-# endif
-    return firstDay;
-#endif
 }
 
 QString activityIconName(const Activity &activity)

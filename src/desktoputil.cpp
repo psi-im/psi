@@ -48,9 +48,7 @@ static QSet<QString> handlers;
 static bool doOpenUrl(const QUrl& url)
 {
 #ifdef Q_OS_WIN
-#if QT_VERSION >= 0x050000
-#define QT_WA(unicode, ansi) unicode
-#endif
+# define QT_WA(unicode, ansi) unicode
     if (!handlers.contains(url.scheme())) {
         // on Vista it always returns iexplore.exe as default browser
         bool oldStyleDefaultBrowserInfo = QSysInfo::WindowsVersion < QSysInfo::WV_VISTA;

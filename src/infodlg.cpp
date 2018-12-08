@@ -175,7 +175,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
         QVBoxLayout* vbox = new QVBoxLayout(d->bdayPopup);
 
         d->calendar = new QCalendarWidget(d->bdayPopup);
-        d->calendar->setFirstDayOfWeek(firstDayOfWeekFromLocale());
+        d->calendar->setFirstDayOfWeek(QLocale().firstDayOfWeek());
         d->calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
         vbox->addWidget(d->calendar);
 
