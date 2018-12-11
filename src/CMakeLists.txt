@@ -418,6 +418,12 @@ set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/iconsets
     ${PROJECT_SOURCE_DIR}/sound
 )
+
+set(DOC_FILES
+    ${PROJECT_SOURCE_DIR)/COPYING
+    ${PROJECT_SOURCE_DIR)/README.html
+)
+
 #PREPARE SECTION
 copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
 copy("${PROJECT_SOURCE_DIR}/iconsets/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconsets/" prepare-bin)
@@ -466,6 +472,7 @@ if(LINUX)
             if(LANGS_EXISTS)
                 install(FILES ${QM} DESTINATION ${PROJECT_OUTPUT_DATA_DIR}/translations)
             endif()
+            install(FILES ${DOC_FILES} DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
         endif()
         if(INSTALL_PLUGINS_SDK)
             set(plugins_dir "${PSI_LIBDIR}/plugins")
