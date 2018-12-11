@@ -484,7 +484,7 @@ function initPsiTheme() {
                     }
                 });
             } else {
-                const ro = new ResizeObserver(entries => {
+                const ro = new ResizeObserver(function(entries) {
                     if (o.atBottom) {
                         document.scrollingElement.scrollTop =
                             document.scrollingElement.scrollHeight;
