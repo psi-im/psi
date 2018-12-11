@@ -35,10 +35,6 @@ public:
     PsiApplication(int &argc, char **argv, bool GUIenabled = true);
     ~PsiApplication();
 
-    bool notify(QObject *receiver, QEvent *event);
-#ifdef HAVE_X11
-    bool xcbEventFilter(void *event);
-#endif
 #ifdef Q_OS_MAC
     bool macEventFilter(EventHandlerCallRef, EventRef);
 #endif
