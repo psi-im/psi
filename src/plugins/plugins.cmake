@@ -44,6 +44,8 @@ list(APPEND PLUGINS_INCLUDES
     plugins/include/stanzasender.h
     plugins/include/stanzasendinghost.h
     plugins/include/toolbariconaccessor.h
+    plugins/include/webkitaccessor.h
+    plugins/include/webkitaccessinghost.h
 )
 list(APPEND PLAIN_HEADERS
     ${PLUGINS_INCLUDES}
