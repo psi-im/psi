@@ -34,6 +34,7 @@
 #include "soundaccessinghost.h"
 #include "encryptionsupport.h"
 #include "pluginaccessinghost.h"
+#include "webkitaccessinghost.h"
 
 class QWidget;
 class QPluginLoader;
@@ -41,14 +42,43 @@ class QPluginLoader;
 class PluginManager;
 class IqNamespaceFilter;
 
-class PluginHost: public QObject, public StanzaSendingHost, public IqFilteringHost, public OptionAccessingHost, public ShortcutAccessingHost, public IconFactoryAccessingHost,
-    public ActiveTabAccessingHost, public ApplicationInfoAccessingHost, public AccountInfoAccessingHost, public PopupAccessingHost, public ContactStateAccessingHost
-    , public PsiAccountControllingHost, public EventCreatingHost, public ContactInfoAccessingHost, public SoundAccessingHost, public EncryptionSupport, public PluginAccessingHost
+class PluginHost: public QObject,
+        public StanzaSendingHost,
+        public IqFilteringHost,
+        public OptionAccessingHost,
+        public ShortcutAccessingHost,
+        public IconFactoryAccessingHost,
+        public ActiveTabAccessingHost,
+        public ApplicationInfoAccessingHost,
+        public AccountInfoAccessingHost,
+        public PopupAccessingHost,
+        public ContactStateAccessingHost,
+        public PsiAccountControllingHost,
+        public EventCreatingHost,
+        public ContactInfoAccessingHost,
+        public SoundAccessingHost,
+        public EncryptionSupport,
+        public PluginAccessingHost,
+        public WebkitAccessingHost
 {
     Q_OBJECT
-    Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost ShortcutAccessingHost IconFactoryAccessingHost
-        ActiveTabAccessingHost ApplicationInfoAccessingHost AccountInfoAccessingHost PopupAccessingHost ContactStateAccessingHost
-        PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost SoundAccessingHost EncryptionSupport PluginAccessingHost)
+    Q_INTERFACES(StanzaSendingHost
+                 IqFilteringHost
+                 OptionAccessingHost
+                 ShortcutAccessingHost
+                 IconFactoryAccessingHost
+                 ActiveTabAccessingHost
+                 ApplicationInfoAccessingHost
+                 AccountInfoAccessingHost
+                 PopupAccessingHost
+                 ContactStateAccessingHost
+                 PsiAccountControllingHost
+                 EventCreatingHost
+                 ContactInfoAccessingHost
+                 SoundAccessingHost
+                 EncryptionSupport
+                 PluginAccessingHost
+                 WebkitAccessingHost)
 
 public:
     PluginHost(PluginManager* manager, const QString& pluginFile);
@@ -218,6 +248,9 @@ public:
 
     QObject* getPlugin(const QString &name);
 
+    // WebkitAccessingHost
+    QString installMessageViewJSFilter(const QString& js);
+    void uninstallMessageViewJSFilter(const QString &id);
 private:
     PluginManager* manager_;
     QPointer<QObject> plugin_;

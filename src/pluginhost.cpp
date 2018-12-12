@@ -1387,6 +1387,16 @@ QObject* PluginHost::getPlugin(const QString &name)
   return nullptr;
 }
 
+QString PluginHost::installMessageViewJSFilter(const QString &js)
+{
+    return manager_->installMessageViewJSFilter(js);
+}
+
+void PluginHost::uninstallMessageViewJSFilter(const QString &id)
+{
+    manager_->uninstallMessageViewJSFilter(id);
+}
+
 //-- helpers --------------------------------------------------------
 
 static bool operator<(const QRegExp &a, const QRegExp &b)

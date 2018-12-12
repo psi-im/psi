@@ -179,6 +179,9 @@ private:
 
     void updateFeatures();
 
+    QString installMessageViewJSFilter(const QString& js);
+    void uninstallMessageViewJSFilter(const QString &id);
+
     friend class PluginHost;
 
 private slots:

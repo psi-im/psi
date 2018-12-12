@@ -37,6 +37,8 @@ HEADERS += \
     $$PWD/include/contactinfoaccessinghost.h \
     $$PWD/include/soundaccessor.h \
     $$PWD/include/soundaccessinghost.h \
-    $$PWD/include/chattabaccessor.h
+    $$PWD/include/chattabaccessor.h \
+    $$PWD/include/webkitaccessor.h \
+    $$PWD/include/webkitaccessinghost.h
 
 OTHER_FILES += $$PWD/psiplugin.pri

@@ -959,6 +959,17 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
     }
 }
 
+QString PluginManager::installMessageViewJSFilter(const QString &js)
+{
+    //return psi_->installMessageViewJSFilter(js);
+    return QString(); // remove me
+}
+
+void PluginManager::uninstallMessageViewJSFilter(const QString &id)
+{
+    // psi_->uninstallMessageViewJSFilter(id);
+}
+
 bool PluginManager::isSelf(int account, const QString& jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
