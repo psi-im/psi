@@ -44,7 +44,6 @@ list(APPEND FORMS
     groupchattopicdlg.ui
     groupchattopicaddlang.ui
     history.ui
-    homedirmigration.ui
     infodlg.ui
     info.ui
     mood.ui
@@ -127,7 +126,6 @@ list(APPEND HEADERS
     groupmenu.h
     historycontactlistmodel.h
     historydlg.h
-    homedirmigration.h
     hoverabletreeview.h
     htmltextcontroller.h
     httpauthmanager.h
@@ -387,7 +385,6 @@ list(APPEND PLAIN_SOURCES
     groupmenu.cpp
     historycontactlistmodel.cpp
     historydlg.cpp
-    homedirmigration.cpp
     hoverabletreeview.cpp
     infodlg.cpp
     infodlg.cpp

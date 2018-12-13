@@ -27,7 +27,6 @@
 #include "applicationinfo.h"
 #include "systeminfo.h"
 #include "profiles.h"
-#include "homedirmigration.h"
 #include "activeprofiles.h"
 #include "translationmanager.h"
 #ifdef HAVE_CONFIG
@@ -256,56 +255,11 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QDir dataDir(XdgDataHome + "/" + sname());
             QDir cacheDir(XdgCacheHome + "/" + sname());
 
-            // migrate mix-cased to lowercase, if needed
-
-            QDir configDirOld(XdgConfigHome + "/" + name());
-            QDir dataDirOld(XdgDataHome + "/" + name());
-            QDir cacheDirOld(XdgCacheHome + "/" + name());
-
-            bool ok = true;
-            if (ok && !configDir.exists() && configDirOld.exists()) {
-                configDirOld = QDir(XdgConfigHome);
-                ok = configDirOld.rename(name(), sname());
-            }
-            if (ok && !dataDir.exists() && dataDirOld.exists()) {
-                dataDirOld = QDir(XdgDataHome);
-                ok = dataDirOld.rename(name(), sname());
-            }
-            if (ok && !cacheDir.exists() && cacheDirOld.exists()) {
-                cacheDirOld = QDir(XdgCacheHome);
-                ok = cacheDirOld.rename(name(), sname());
-            }
-
-            if(!ok)
-            {
-                QMessageBox::information(0, QObject::tr("Conversion Error"), QObject::tr("Configuration data for a previous version of Psi was found, but it was not possible to convert it to work with the current version. Ensure you have appropriate permission and that another copy of Psi is not running, and try again."));
-                exit(0);
-            }
 #endif
             configDir_ = configDir.path();
             cacheDir_ = cacheDir.path();
             dataDir_ = dataDir.path();
 
-            // To prevent from multiple startup of import  wizard
-            if (ActiveProfiles::instance()->isActive("import_wizard")) {
-                exit(0);
-            }
-
-            if (!configDir.exists() && !dataDir.exists() && !cacheDir.exists()) {
-                HomeDirMigration dlg;
-
-                if (dlg.checkOldHomeDir()) {
-                    ActiveProfiles::instance()->setThisProfile("import_wizard");
-                    QSettings s(dlg.oldHomeDir() + "/psirc", QSettings::IniFormat);
-                    QString lastLang = s.value("last_lang", QString()).toString();
-                    if(lastLang.isEmpty()) {
-                        lastLang = QLocale().name().section('_', 0, 0);
-                    }
-                    TranslationManager::instance()->loadTranslation(lastLang);
-                    dlg.exec();
-                    ActiveProfiles::instance()->unsetThisProfile();
-                }
-            }
             if (!dataDir.exists()) {
                 dataDir.mkpath(".");
             }
