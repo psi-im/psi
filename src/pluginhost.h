@@ -249,7 +249,7 @@ public:
     QObject* getPlugin(const QString &name);
 
     // WebkitAccessingHost
-    QString installMessageViewJSFilter(const QString& js);
+    QString installMessageViewJSFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
     void uninstallMessageViewJSFilter(const QString &id);
 private:
     PluginManager* manager_;

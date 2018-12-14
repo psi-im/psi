@@ -307,6 +307,7 @@ public:
     PopupManager * popupManager = nullptr;
     QNetworkConfigurationManager netConfMng;
     QNetworkSession *netSession = nullptr;
+    QMap<QString,std::pair<QString,PsiPlugin::Priority>> messageViewJSFilters; // uuid -> <js, priority>
 
     struct IdleSettings
     {
@@ -842,6 +843,21 @@ QStringList PsiCon::xmppFatures() const
 
     return features;
 }
+
+#ifdef PSI_PLUGINS
+QString PsiCon::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
+{
+    QString uuid = QUuid::createUuid().toString();
+    d->messageViewJSFilters.insert(uuid, std::make_pair(js, priority));
+    return uuid;
+}
+
+void PsiCon::uninstallMessageViewJSFilter(const QString &id)
+{
+    d->messageViewJSFilters.remove(id);
+    // TODO remove from running chats
+}
+#endif
 
 TabManager *PsiCon::tabManager() const
 {

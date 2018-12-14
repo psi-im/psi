@@ -68,11 +68,11 @@
  */
 PluginHost::PluginHost(PluginManager* manager, const QString& pluginFile)
     : manager_(manager)
-    , plugin_(0)
+    , plugin_(nullptr)
     , file_(pluginFile)
     , priority_(PsiPlugin::PriorityNormal)
-    , loader_(0)
-    , iconset_(0)
+    , loader_(nullptr)
+    , iconset_(nullptr)
     , valid_(false)
     , connected_(false)
     , enabled_(false)
@@ -94,7 +94,7 @@ PluginHost::~PluginHost()
     unload();
     if (loader_) {
         delete loader_;
-        loader_ = 0;
+        loader_ = nullptr;
     }
 }
 
@@ -181,7 +181,7 @@ QStringList PluginHost::pluginFeatures() const
  */
 QWidget* PluginHost::optionsWidget() const
 {
-    QWidget* widget = 0;
+    QWidget* widget = nullptr;
     if (plugin_) {
         widget = qobject_cast<PsiPlugin*>(plugin_)->options();
     }
@@ -224,7 +224,7 @@ bool PluginHost::load()
             qDebug() << "Error loading plugin:" << loader_->errorString();
 #endif
             delete loader_;
-            loader_ = 0;
+            loader_ = nullptr;
         }
         else if (plugin) {
 #ifndef PLUGINS_NO_DEBUG
@@ -256,13 +256,13 @@ bool PluginHost::load()
                     loader_->unload();
                 }
                 delete loader_;
-                loader_ = 0;
+                loader_ = nullptr;
                 valid_ = false;
             }
         }
     }
 
-    return plugin_ != 0;
+    return plugin_ != nullptr;
 }
 
 /**
@@ -290,14 +290,14 @@ bool PluginHost::unload()
             // we can delete the loader;
             delete plugin_;
             delete loader_;
-            plugin_ = 0;
-            loader_ = 0;
+            plugin_ = nullptr;
+            loader_ = nullptr;
             delete iconset_;
-            iconset_ = 0;
+            iconset_ = nullptr;
             connected_ = false;
         }
     }
-    return plugin_ == 0;
+    return plugin_ == nullptr;
 }
 
 /**
@@ -305,7 +305,7 @@ bool PluginHost::unload()
  */
 bool PluginHost::isLoaded() const
 {
-    return plugin_ != 0;
+    return plugin_ != nullptr;
 }
 
 /**
@@ -1387,9 +1387,9 @@ QObject* PluginHost::getPlugin(const QString &name)
   return nullptr;
 }
 
-QString PluginHost::installMessageViewJSFilter(const QString &js)
+QString PluginHost::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
 {
-    return manager_->installMessageViewJSFilter(js);
+    return manager_->installMessageViewJSFilter(js, priority);
 }
 
 void PluginHost::uninstallMessageViewJSFilter(const QString &id)

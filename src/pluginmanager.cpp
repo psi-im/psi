@@ -959,15 +959,14 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
     }
 }
 
-QString PluginManager::installMessageViewJSFilter(const QString &js)
+QString PluginManager::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
 {
-    //return psi_->installMessageViewJSFilter(js);
-    return QString(); // remove me
+    return psi_->installMessageViewJSFilter(js, priority);
 }
 
 void PluginManager::uninstallMessageViewJSFilter(const QString &id)
 {
-    // psi_->uninstallMessageViewJSFilter(id);
+    psi_->uninstallMessageViewJSFilter(id);
 }
 
 bool PluginManager::isSelf(int account, const QString& jid) const

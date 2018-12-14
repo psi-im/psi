@@ -1,6 +1,8 @@
 #ifndef WEBKITACCESSINGHOST_H
 #define WEBKITACCESSINGHOST_H
 
+#include "psiplugin.h"
+
 class QString;
 
 class WebkitAccessingHost
@@ -8,7 +10,7 @@ class WebkitAccessingHost
 public:
     virtual ~WebkitAccessingHost() {}
 
-    virtual QString installMessageViewJSFilter(const QString& js) = 0;
+    virtual QString installMessageViewJSFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal) = 0;
     virtual void uninstallMessageViewJSFilter(const QString &id) = 0;
 };
 

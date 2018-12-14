@@ -49,11 +49,11 @@ public:
     // choose High if you want something more then Normal.
     enum Priority
     {
-        PriorityLowest    = 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
-        PriorityLow        = 1,
-        PriorityNormal    = 2, // default
+        PriorityLowest  = 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
+        PriorityLow     = 1,
+        PriorityNormal  = 2, // default
         PriorityHigh    = 3,
-        PriorityHighest    = 4, // always in the start. last loaded Highest plugin moves others to High side
+        PriorityHighest = 4, // always in the start. last loaded Highest plugin moves others to High side
     };
 
     virtual ~PsiPlugin() {}

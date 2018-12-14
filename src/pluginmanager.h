@@ -13,6 +13,8 @@
 #include <QDomElement>
 #include <QMenu>
 
+#include "psiplugin.h"
+
 class QPluginLoader;
 
 class PsiAccount;
@@ -179,7 +181,7 @@ private:
 
     void updateFeatures();
 
-    QString installMessageViewJSFilter(const QString& js);
+    QString installMessageViewJSFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
     void uninstallMessageViewJSFilter(const QString &id);
 
     friend class PluginHost;
