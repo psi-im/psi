@@ -10,7 +10,7 @@ endif()
 
 #Psi or Psi+ detection
 set( IS_PSIPLUS ON CACHE BOOL "Build Psi+ client")
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/widgets/psiwindowheader.cpp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/sendbuttonmenu.cpp")
     message(STATUS "Psi+ features - FOUND")
     set(IS_PSIPLUS ON)
     project(psi-plus)

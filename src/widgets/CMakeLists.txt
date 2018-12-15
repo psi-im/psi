@@ -67,7 +67,7 @@ set(FORMS
     fancypopup.ui
 )
 
-if(IS_PSIPLUS)
+if(IS_PSIPLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
     list(APPEND PLAIN_SOURCES
         psiwindowheader.cpp
     )
