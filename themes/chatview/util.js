@@ -414,7 +414,7 @@ function initPsiTheme() {
                 (function(){
                   var attachEvent = document.attachEvent;
                   var isIE = navigator.userAgent.match(/Trident/);
-                  console.log(isIE);
+                  //console.log(isIE);
                   var requestFrame = (function(){
                     var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
                         function(fn){ return window.setTimeout(fn, 20); };
@@ -622,6 +622,17 @@ function initPsiTheme() {
                     delete serverTransctions[data.id];
                 }
                 return;
+            } else if (data.type == "receivehooks") {
+                var hooks = [];
+                for (var i = 0; i < data.hooks.length; i++) {
+                    try {
+                        var func = new Function("server, session, data", data.hooks[i]); /*jshint -W053 */
+                        hooks.push(func);
+                    } catch(e) {
+                        server.console("Failed to evalute receive hook: " + e + "\n" + data.hooks[i]);
+                    }
+                }
+                data.hooks = hooks;
             }
 
             chat.adapter.receiveObject(data)

@@ -102,6 +102,11 @@ PluginManager::PluginManager() : QObject(NULL), psi_(nullptr)
         dirWatchers_.append(dw);
     }
 
+    _messageViewJSFiltersTimer = new QTimer(this);
+    _messageViewJSFiltersTimer->setSingleShot(true);
+    _messageViewJSFiltersTimer->setInterval(10); // to be able to restart in case of batch events
+    connect(_messageViewJSFiltersTimer, &QTimer::timeout, this, &PluginManager::jsFiltersUpdated);
+
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), this, SLOT(optionChanged(const QString&)));
 }
 
@@ -964,20 +969,38 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
 QString PluginManager::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
 {
     QString uuid = QUuid::createUuid().toString();
-    _messageViewJSFilters.insert(uuid, std::make_pair(js, priority));
-    QMetaObject::invokeMethod(this, "jsFiltersUpdated", Qt::QueuedConnection);
+    _messageViewJSFilters.insert(priority, {uuid, js});
+    _messageViewJSFiltersTimer->start();
     return uuid;
 }
 
 void PluginManager::uninstallMessageViewJSFilter(const QString &id)
 {
-    _messageViewJSFilters.remove(id);
-    QMetaObject::invokeMethod(this, "jsFiltersUpdated", Qt::QueuedConnection);
+    QMutableMapIterator<PsiPlugin::Priority,std::pair<QString,QString>> it(_messageViewJSFilters);
+
+    while (it.hasNext()) {
+        if (it.next().value().first == id) {
+            it.remove();
+            _messageViewJSFiltersTimer->start();
+            return;
+        }
+    }
 }
 
 QStringList PluginManager::messageViewJSFilters() const
 {
-    return QStringList(); // TODO populate
+    if (_messageViewJSFilters.isEmpty()) {
+        return QStringList();
+    }
+    QStringList ret;
+    ret.reserve(_messageViewJSFilters.size());
+    for (int i = PsiPlugin::PriorityHighest; i >= PsiPlugin::PriorityLowest; i--) {
+        auto values = _messageViewJSFilters.values(PsiPlugin::Priority(i));
+        for (const auto &p: values) {
+            ret.append(p.second);
+        }
+    }
+    return ret;
 }
 
 bool PluginManager::isSelf(int account, const QString& jid) const

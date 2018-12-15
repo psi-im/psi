@@ -275,7 +275,7 @@ function psiThemeAdapter(chat) {
                                     template = shared.templates.spooledMessage;
                                 } else {
                                     template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
-				}
+                                }
                             }
                             break;
                         case "join":

@@ -63,6 +63,9 @@
 #include "desktoputil.h"
 #include "psicon.h"
 #include "xmpp_tasks.h"
+#ifdef PSI_PLUGINS
+# include "pluginmanager.h"
+#endif
 
 
 class ChatViewThemeSessionBridge;
@@ -78,7 +81,7 @@ public:
     ChatViewJSObject *jsObject = nullptr;
     QList<QVariantMap> jsBuffer_;
     bool sessionReady_ = false;
-    QPointer<QWidget> dialog_ = 0;
+    QPointer<QWidget> dialog_;
     bool isMuc_ = false;
     bool isMucPrivate_ = false;
     bool isEncryptionEnabled_ = false;
@@ -90,8 +93,8 @@ public:
 
     inline ChatViewThemeProvider* themeProvider() const
     {
-        return (ChatViewThemeProvider *)PsiThemeManager::instance()->
-                            provider(isMuc_?"groupchatview":"chatview");
+        return static_cast<ChatViewThemeProvider *>(PsiThemeManager::instance()->
+                            provider(isMuc_?"groupchatview":"chatview"));
     }
 
     static QString closeIconTags(const QString &richText)
@@ -389,6 +392,19 @@ ChatView::ChatView(QWidget *parent) :
     psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy connection
 #endif
     connect(d->jsObject, SIGNAL(inited()), SLOT(sessionInited()));
+
+#ifdef PSI_PLUGINS
+    QVariantMap m;
+    m["type"] = "receivehooks";
+    m["hooks"] = PluginManager::instance()->messageViewJSFilters();
+    sendJsObject(m);
+    connect(PluginManager::instance(), &PluginManager::jsFiltersUpdated, this, [this](){
+        QVariantMap m;
+        m["type"] = "receivehooks";
+        m["hooks"] = PluginManager::instance()->messageViewJSFilters();
+        sendJsObject(m);
+    });
+#endif
 }
 
 ChatView::~ChatView()

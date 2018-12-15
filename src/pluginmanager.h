@@ -99,6 +99,8 @@ public:
     bool decryptMessageElement(PsiAccount *account, QDomElement &message) const;
     bool encryptMessageElement(PsiAccount *account, QDomElement &message) const;
 
+    QStringList messageViewJSFilters() const;
+
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;
 
@@ -134,7 +136,8 @@ private:
     // Options widget provides by plugin on opt_plugins
     QPointer<QWidget> optionsWidget_;
 
-    QMap<QString,std::pair<QString,PsiPlugin::Priority>> _messageViewJSFilters; // uuid -> <js, priority>
+    QMultiMap<PsiPlugin::Priority,std::pair<QString,QString>> _messageViewJSFilters; // priority -> <js, uuid>
+    QTimer *_messageViewJSFiltersTimer = nullptr;
 
     class StreamWatcher;
     bool incomingXml(int account, const QDomElement &eventXml);
@@ -188,7 +191,6 @@ private:
 
     QString installMessageViewJSFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
     void uninstallMessageViewJSFilter(const QString &id);
-    QStringList messageViewJSFilters() const;
 
     friend class PluginHost;
 
