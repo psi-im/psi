@@ -9,6 +9,7 @@
 #include <QtCrypto>
 #include <QPluginLoader>
 #include <QLabel>
+#include <QMetaObject>
 
 #include "xmpp_client.h"
 #include "xmpp_task.h"
@@ -92,7 +93,7 @@ PluginManager* PluginManager::instance()
  * Default constructor. Locates all plugins, sets watchers on those directories to
  * locate new ones and loads those enabled in the config.
  */
-PluginManager::PluginManager() : QObject(NULL), psi_(0)
+PluginManager::PluginManager() : QObject(NULL), psi_(nullptr)
 {
     updatePluginsList();
     foreach (QString path, pluginDirs()) {
@@ -100,6 +101,7 @@ PluginManager::PluginManager() : QObject(NULL), psi_(0)
         connect(dw, SIGNAL(changed()), SLOT(dirsChanged()));
         dirWatchers_.append(dw);
     }
+
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), this, SLOT(optionChanged(const QString&)));
 }
 
@@ -703,7 +705,7 @@ bool PluginManager::setTune(int account, const QString& jid, const QString& tune
 void PluginManager::initPopup(const QString& text, const QString& title, const QString& icon, int type)
 {
     const PsiIcon* ico = IconsetFactory::iconPtr(icon);
-    psi_->popupManager()->doPopup(0, Jid(), ico, title, 0, 0, text, true, (PopupManager::PopupType)type);
+    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, (PopupManager::PopupType)type);
 }
 
 void PluginManager::initPopupForJid(int account, const QString &jid, const QString &text, const QString &title, const QString &icon, int type)
@@ -718,7 +720,7 @@ void PluginManager::initPopupForJid(int account, const QString &jid, const QStri
         psi_->popupManager()->doPopup(pa, j, ico, title, &pix, statusIco, text, true, (PopupManager::PopupType)type);
         return;
     }
-    psi_->popupManager()->doPopup(0, Jid(), ico, title, 0, 0, text, true, (PopupManager::PopupType)type);
+    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, (PopupManager::PopupType)type);
 }
 
 int PluginManager::registerOption(const QString& name, int initValue, const QString& path)
@@ -961,12 +963,21 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
 
 QString PluginManager::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
 {
-    return psi_->installMessageViewJSFilter(js, priority);
+    QString uuid = QUuid::createUuid().toString();
+    _messageViewJSFilters.insert(uuid, std::make_pair(js, priority));
+    QMetaObject::invokeMethod(this, "jsFiltersUpdated", Qt::QueuedConnection);
+    return uuid;
 }
 
 void PluginManager::uninstallMessageViewJSFilter(const QString &id)
 {
-    psi_->uninstallMessageViewJSFilter(id);
+    _messageViewJSFilters.remove(id);
+    QMetaObject::invokeMethod(this, "jsFiltersUpdated", Qt::QueuedConnection);
+}
+
+QStringList PluginManager::messageViewJSFilters() const
+{
+    return QStringList(); // TODO populate
 }
 
 bool PluginManager::isSelf(int account, const QString& jid) const
@@ -1131,7 +1142,7 @@ void AccountIds::removeAccount(PsiAccount *acc)
     int id = acc_keys.value(acc, -1);
     if (id != -1) {
         acc_keys.remove(acc);
-        id_keys[id] = 0;
+        id_keys[id] = nullptr;
     }
 }
 
@@ -1143,7 +1154,7 @@ void AccountIds::clear()
 
 PsiAccount *AccountIds::account(int id) const
 {
-    return id_keys.value(id, 0);
+    return id_keys.value(id, nullptr);
 }
 
 int AccountIds::id(PsiAccount *acc) const
@@ -1151,6 +1162,6 @@ int AccountIds::id(PsiAccount *acc) const
     return acc_keys.value(acc, -1);
 }
 
-PluginManager* PluginManager::instance_ = NULL;
+PluginManager* PluginManager::instance_ = nullptr;
 const QString PluginManager::loadOptionPrefix = "plugins.auto-load";
 const QString PluginManager::pluginOptionPrefix = "plugins.options";

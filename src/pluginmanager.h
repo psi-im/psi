@@ -102,6 +102,9 @@ public:
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;
 
+signals:
+    void jsFiltersUpdated();
+
 private:
     PluginManager();
     PsiCon *psi_;
@@ -130,6 +133,8 @@ private:
 
     // Options widget provides by plugin on opt_plugins
     QPointer<QWidget> optionsWidget_;
+
+    QMap<QString,std::pair<QString,PsiPlugin::Priority>> _messageViewJSFilters; // uuid -> <js, priority>
 
     class StreamWatcher;
     bool incomingXml(int account, const QDomElement &eventXml);
@@ -183,6 +188,7 @@ private:
 
     QString installMessageViewJSFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
     void uninstallMessageViewJSFilter(const QString &id);
+    QStringList messageViewJSFilters() const;
 
     friend class PluginHost;
 

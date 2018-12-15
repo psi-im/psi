@@ -29,7 +29,6 @@
 #include "psievent.h"
 #include "tabbablewidget.h"
 #include "tunecontrollermanager.h"
-#include "psiplugin.h"
 
 using namespace XMPP;
 
@@ -133,10 +132,6 @@ public:
 
     PopupManager* popupManager() const;
     QStringList xmppFatures() const;
-#ifdef PSI_PLUGINS
-    QString installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
-    void uninstallMessageViewJSFilter(const QString &id);
-#endif
 
 signals:
     void quit(int);
