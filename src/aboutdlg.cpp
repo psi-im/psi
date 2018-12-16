@@ -52,7 +52,7 @@ AboutDlg::AboutDlg(QWidget* parent)
                "rion4ik@gmail.com", "", "",
                tr("Lead Developer and Current Maintainer"));
     authors += details(QString::fromUtf8("Kevin Smith"),
-               "kismith@psi-im.org", "", "",
+               "", "", "",
                tr("Past Lead Developer and Maintainer"));
     authors += details(QString::fromUtf8("Remko Tronçon"),
                "", "", "http://el-tramo.be",
