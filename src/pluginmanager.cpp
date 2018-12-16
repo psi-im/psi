@@ -966,7 +966,7 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
     }
 }
 
-QString PluginManager::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
+QString PluginManager::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
 {
     QString uuid = QUuid::createUuid().toString();
     _messageViewJSFilters.insert(priority, {uuid, js});
@@ -974,7 +974,7 @@ QString PluginManager::installMessageViewJSFilter(const QString &js, PsiPlugin::
     return uuid;
 }
 
-void PluginManager::uninstallMessageViewJSFilter(const QString &id)
+void PluginManager::uninstallChatLogJSDataFilter(const QString &id)
 {
     QMutableMapIterator<PsiPlugin::Priority,std::pair<QString,QString>> it(_messageViewJSFilters);
 

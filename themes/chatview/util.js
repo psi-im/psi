@@ -16,6 +16,8 @@ function initPsiTheme() {
         async : async,
         console : server.console,
         server : server,
+        session : session,
+        hooks: [],
 
         util: {
             console : server.console,
@@ -602,6 +604,14 @@ function initPsiTheme() {
         },
 
         receiveObject : function(data) {
+            for(var i=0; i < chat.hooks.length; i++) {
+                try {
+                    chat.hooks[i](chat, data);
+                } catch (e) {
+                    chat.console("hook failed");
+                }
+            }
+
             if (data.type == "message") {
                 if (data.mtype == "join") {
                     usersMap[data.sender] = {avatar:data.avatar, nickcolor:data.nickcolor, msgs:{}};
@@ -626,13 +636,14 @@ function initPsiTheme() {
                 var hooks = [];
                 for (var i = 0; i < data.hooks.length; i++) {
                     try {
-                        var func = new Function("server, session, data", data.hooks[i]); /*jshint -W053 */
+                        // same chat object as everywhere
+                        var func = new Function("chat, data", data.hooks[i]); /*jshint -W053 */
                         hooks.push(func);
                     } catch(e) {
                         server.console("Failed to evalute receive hook: " + e + "\n" + data.hooks[i]);
                     }
                 }
-                data.hooks = hooks;
+                chat.hooks = hooks;
             }
 
             chat.adapter.receiveObject(data)

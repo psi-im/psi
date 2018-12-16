@@ -189,8 +189,8 @@ private:
 
     void updateFeatures();
 
-    QString installMessageViewJSFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
-    void uninstallMessageViewJSFilter(const QString &id);
+    QString installChatLogJSDataFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
+    void uninstallChatLogJSDataFilter(const QString &id);
 
     friend class PluginHost;
 

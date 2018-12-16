@@ -1387,14 +1387,42 @@ QObject* PluginHost::getPlugin(const QString &name)
   return nullptr;
 }
 
-QString PluginHost::installMessageViewJSFilter(const QString &js, PsiPlugin::Priority priority)
+WebkitAccessingHost::RenderType PluginHost::chatLogRenderType() const
 {
-    return manager_->installMessageViewJSFilter(js, priority);
+#ifdef WEBKIT
+# ifdef WEBENGINE
+    return WebkitAccessingHost::RT_WebEngine;
+# else
+    return WebkitAccessingHost::RT_WebKit;
+# endif
+#else
+    return WebkitAccessingHost::RT_TextEdit;
+#endif
 }
 
-void PluginHost::uninstallMessageViewJSFilter(const QString &id)
+void PluginHost::embedChatLogJavaScriptObject(QWidget *log, QObject *object)
 {
-    manager_->uninstallMessageViewJSFilter(id);
+    Q_UNUSED(log)
+    Q_UNUSED(object)
+    // TODO implement me
+    return;
+}
+
+QString PluginHost::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
+{
+    return manager_->installChatLogJSDataFilter(js, priority);
+}
+
+void PluginHost::uninstallChatLogJSDataFilter(const QString &id)
+{
+    manager_->uninstallChatLogJSDataFilter(id);
+}
+
+void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
+{
+    Q_UNUSED(log)
+    Q_UNUSED(js)
+    return; // TODO impement me
 }
 
 //-- helpers --------------------------------------------------------
