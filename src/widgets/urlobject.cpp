@@ -214,7 +214,7 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
         m->addAction(d->act_chat);
         m->addAction(d->act_send_message);
         m->addAction(d->act_join_groupchat);
-        //m->addAction(d->act_add_to_roster);
+        m->addAction(d->act_add_to_roster);
         if (service == "x-psi-atstyle") {
             m->addSeparator();
         }
