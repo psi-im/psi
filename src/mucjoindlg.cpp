@@ -254,8 +254,8 @@ void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
             gc->ensureTabbedCorrectly();
         gc->bringToFront();
         if (gc->isInactive()) {
-            if(gc->jid() != j)
-                gc->setJid(j);
+            if(gc->jid() != j.bare())
+                gc->setJid(j.bare());
             gc->reactivate();
         }
         joined();

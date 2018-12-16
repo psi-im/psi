@@ -3360,8 +3360,8 @@ ChatDlg* PsiAccount::findChatDialog(const Jid& jid, bool compareResource) const
 
 ChatDlg* PsiAccount::findChatDialogEx(const Jid& jid, bool ignoreResource) const
 {
-    ChatDlg* cm1 = NULL;
-    ChatDlg* cm2 = NULL;
+    ChatDlg* cm1 = nullptr;
+    ChatDlg* cm2 = nullptr;
     foreach (ChatDlg *cl, findChatDialogs(jid, false)) {
         if (cl->autoSelectContact() || ignoreResource)
             return cl;
