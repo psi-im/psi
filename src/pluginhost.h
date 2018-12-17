@@ -250,7 +250,6 @@ public:
 
     // WebkitAccessingHost
     RenderType chatLogRenderType() const;
-    void embedChatLogJavaScriptObject(QWidget *log, QObject *object);
     QString installChatLogJSDataFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
     void uninstallChatLogJSDataFilter(const QString &id);
     void executeChatLogJavaScript(QWidget *log, const QString &js);

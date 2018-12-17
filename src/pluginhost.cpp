@@ -53,6 +53,8 @@
 #include "textutil.h"
 #include "chattabaccessor.h"
 #include "pluginaccessor.h"
+#include "chatview.h"
+#include "webkitaccessor.h"
 
 /**
  * \brief Constructs a host/wrapper for a plugin.
@@ -459,6 +461,10 @@ bool PluginHost::enable()
                 qDebug("connecting plugin accessor");
 #endif
               pla->setPluginAccessingHost(this);
+            }
+            auto wka = qobject_cast<WebkitAccessor*>(plugin_);
+            if (wka) {
+                wka->setWebkitAccessingHost(this);
             }
 
             connected_ = true;
@@ -1400,14 +1406,6 @@ WebkitAccessingHost::RenderType PluginHost::chatLogRenderType() const
 #endif
 }
 
-void PluginHost::embedChatLogJavaScriptObject(QWidget *log, QObject *object)
-{
-    Q_UNUSED(log)
-    Q_UNUSED(object)
-    // TODO implement me
-    return;
-}
-
 QString PluginHost::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
 {
     return manager_->installChatLogJSDataFilter(js, priority);
@@ -1420,9 +1418,15 @@ void PluginHost::uninstallChatLogJSDataFilter(const QString &id)
 
 void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
 {
-    Q_UNUSED(log)
-    Q_UNUSED(js)
-    return; // TODO impement me
+#ifdef WEBKIT
+    auto cv = qobject_cast<ChatView *>(log);
+    if (!cv) {
+        cv = log->findChild<ChatView *>("log");
+    }
+    if (cv) {
+        cv->sendJsCode(js);
+    }
+#endif
 }
 
 //-- helpers --------------------------------------------------------

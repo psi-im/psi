@@ -280,13 +280,14 @@ private slots:
         for (auto &p : reply->rawHeaderPairs()) {
             QString key(QString(p.first).toLower());
             QString value;
+#if QT_VERSION < QT_VERSION_CHECK(5,9,3)
             if (key == QLatin1String("content-type")) {
                 // workaround for qt bug #61300 which put headers from origial request and redirect request in one hash
                 // other headers most likely are invalid too, but this one is important for us.
                 value = QString::fromLatin1(p.second).section(',', -1).trimmed();
-            } else {
+            } else
+#endif
                 value = QString::fromLatin1(p.second);
-            }
             headers.insert(key, value);
         }
         msg.insert("value", headers);
@@ -414,7 +415,7 @@ ChatView::~ChatView()
     // QTBUG-48014 and bunch of others (deletes QWidget twice).
     // The bug was last time reproduced with Qt-5.9. algo is pretty simple:
     // Connect to any conference and quit Psi.
-    d->webView->setParent(0);
+    d->webView->setParent(nullptr);
     d->webView->deleteLater();
 #endif
 }
@@ -607,6 +608,14 @@ void ChatView::dispatchMessage(const MessageView &mv)
         vm["type"] = "message";
     }
     sendJsObject(vm);
+}
+
+void ChatView::sendJsCode(const QString &js)
+{
+    QVariantMap m;
+    m["type"] = "js";
+    m["js"] = js;
+    sendJsObject(m);
 }
 
 void ChatView::scrollUp()

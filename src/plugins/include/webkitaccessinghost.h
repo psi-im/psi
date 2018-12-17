@@ -20,7 +20,8 @@ public:
     virtual RenderType chatLogRenderType() const = 0;
 
     // embed QObject into specified log widget (note, actual log widget could be a child. it will be found by "log" name)
-    virtual void embedChatLogJavaScriptObject(QWidget *log, QObject *object) = 0;
+    // virtual void embedChatLogJavaScriptObject(QWidget *log, QObject *object) = 0; // to early for this. needs
+    // chatview reinitialization feature (QWebChannel doesn't support embed in runtime) which requires proper history reloading.
 
     // installs global chat log data filter, where data is all the possible message types added to chatlog
     virtual QString installChatLogJSDataFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal) = 0;

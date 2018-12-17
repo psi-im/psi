@@ -644,6 +644,15 @@ function initPsiTheme() {
                     }
                 }
                 chat.hooks = hooks;
+            } else if (data.type == "js") {
+                try {
+                    //server.console("An attempt to execute: " + data.js);
+                    // same chat object as everywhere
+                    var func = new Function("chat", data.js); /*jshint -W053 */
+                    func(chat);
+                } catch(e) {
+                    server.console("Failed to evalute/execute js: " + e + "\n" + data.js);
+                }
             }
 
             chat.adapter.receiveObject(data)

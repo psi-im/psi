@@ -55,10 +55,11 @@ public:
     void setAccount(PsiAccount *acc);
 
     void contextMenuEvent(QContextMenuEvent* event);
-    void sendJsObject(const QVariantMap &);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
+    void sendJsObject(const QVariantMap &);
     void dispatchMessage(const MessageView &m);
+    void sendJsCode(const QString &js);
 
     void clear();
     void doTrackBar();
