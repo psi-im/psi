@@ -10,13 +10,14 @@
 # Qt5 Settings
 MAC_SDK_VER=10.12
 MAC_DEPLOYMENT_TARGET=10.9
-QTDIR="${HOME}/Qt5.9.0/5.9/clang_64"
+QTDIR="${HOME}/Qt/5.9.7/clang_64"
 QT_FRAMEWORK_VERSION=5
 
-QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets"  #QtDBus QtWebEngine 
+QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets QtSql QtDBus"  #QtWebEngine 
 
-QT_PLUGINS="audio/libqtaudio_coreaudio.dylib bearer/libqcorewlanbearer.dylib bearer/libqgenericbearer.dylib platforms/libqcocoa.dylib printsupport/libcocoaprintersupport.dylib iconengines/libqsvgicon.dylib"
-QT_PLUGINS="${QT_PLUGINS} mediaservice/libqtmedia_audioengine.dylib mediaservice/libqavfmediaplayer.dylib imageformats/libqgif.dylib imageformats/libqjpeg.dylib imageformats/libqsvg.dylib  imageformats/libqwbmp.dylib imageformats/libqtiff.dylib imageformats/libqwebp.dylib  imageformats/libqtga.dylib imageformats/libqico.dylib imageformats/libqicns.dylib imageformats/libqmacjp2.dylib"
+QT_PLUGINS="audio/libqtaudio_coreaudio.dylib bearer/libqgenericbearer.dylib platforms/libqcocoa.dylib printsupport/libcocoaprintersupport.dylib iconengines/libqsvgicon.dylib"
+QT_PLUGINS="${QT_PLUGINS} mediaservice/libqtmedia_audioengine.dylib mediaservice/libqavfmediaplayer.dylib styles/libqmacstyle.dylib sqldrivers/libqsqlite.dylib" 
+QT_PLUGINS="${QT_PLUGINS} imageformats/libqgif.dylib imageformats/libqjpeg.dylib imageformats/libqsvg.dylib imageformats/libqwbmp.dylib imageformats/libqtiff.dylib imageformats/libqwebp.dylib  imageformats/libqtga.dylib imageformats/libqico.dylib imageformats/libqicns.dylib imageformats/libqmacjp2.dylib"
 
 export QMAKESPEC="macx-clang"
 
@@ -54,6 +55,8 @@ GIT_REPO_RESOURCES=https://github.com/psi-plus/resources.git
 QCONF_REPO_URI="https://github.com/psi-plus/qconf.git"
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 QCA_REPO_URI="https://github.com/KDE/qca.git"
+QTKEYCHAIN_REPO_URI="https://github.com/frankosterfeld/qtkeychain.git"
+LIBSIGNAL_REPO_URI="https://github.com/signalapp/libsignal-protocol-c.git"
 
 ALL_TRANS="1"
 ENABLE_WEBKIT="0"
@@ -66,6 +69,11 @@ QCA_PREFIX="${QTDIR}" #"${DEPS_PREFIX}"
 QCA_PATH="${PSI_DIR}/qca-build"
 QCA_VER="2.2.0"
 QCA_PLUGINS_PATH=${QCA_PREFIX}/plugins/crypto #${QCA_PATH}/lib/qca-qt5/crypto
+
+QTKEYCHAIN_PATH="${PSI_DIR}/qtkeychain-build"
+QTKEYCHAIN_PREFIX="${QTDIR}" #"${DEPS_PREFIX}"
+
+LIBSIGNAL_PATH="${PSI_DIR}/libsignal-build"
 
 
 export PATH="$QTDIR/bin:$PATH"
@@ -163,29 +171,29 @@ check_env() {
 }
 
 git_fetch() {
-  local remote="$1"
-  local target="$2"
-  local comment="$3"
-  local curd=`pwd`
-  local forcesubmodule=0
-  [ -d "${target}/.git" ] && [ "$(cd "${target}" && git config --get remote.origin.url)" = "${remote}" ] && {
+    local remote="$1"
+    local target="$2"
+    local comment="$3"
+    local curd=`pwd`
+    local forcesubmodule=0
+    [ -d "${target}/.git" ] && [ "$(cd "${target}" && git config --get remote.origin.url)" = "${remote}" ] && {
+        [ $WORK_OFFLINE = 0 ] && {
+            cd "${target}"
+            [ -n "${comment}" ] && log "Update ${comment} .."
+            git pull 2>/dev/null || die "git update failed"
+            cd "${curd}"
+        } || true
+    } || {
+        forcesubmodule=1
+        log "Checkout ${comment} .."
+        [ -d "${target}" ] && rm -rf "$target"
+        git clone "${remote}" "$target" 2>/dev/null || die "git clone failed"
+    }
     [ $WORK_OFFLINE = 0 ] && {
-      cd "${target}"
-      [ -n "${comment}" ] && log "Update ${comment} .."
-      git pull 2>/dev/null || die "git update failed"
-      cd "${curd}"
-    } || true
-  } || {
-    forcesubmodule=1
-    log "Checkout ${comment} .."
-    [ -d "${target}" ] && rm -rf "$target"
-    git clone "${remote}" "$target" 2>/dev/null || die "git clone failed"
-  }
-  [ $WORK_OFFLINE = 0 ] && {
-    cd "${target}"
-    git submodule update --init 2>/dev/null || die "git submodule update failed"
-  }
-  cd "${curd}"
+        cd "${target}"
+        git submodule update --init 2>/dev/null || die "git submodule update failed"
+    }
+    cd "${curd}"
 }
 
 cleanup_framework() {
@@ -217,6 +225,16 @@ prepare_workspace() {
     then
         build_qca
     fi
+
+    if [ ! -f "${QTKEYCHAIN_PREFIX}/lib/libqt5keychain.1.dylib" ]
+    then
+               build_qtkeychain
+        fi
+
+    if [ ! -f "${LIBS_PATH}/lib/libsignal-protocol-c.a" ]
+    then
+               build_libsignal
+        fi
 }
 
 get_framework() {
@@ -240,6 +258,8 @@ fetch_sources() {
     git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi plugins"
     git_fetch "${LANGS_REPO_URI}" translations "Psi+ translations"
     git_fetch "${QCA_REPO_URI}" qca "QCA"
+    git_fetch "${QTKEYCHAIN_REPO_URI}" qtkeychain "QtKeychain"
+    git_fetch "${LIBSIGNAL_REPO_URI}" libsignal "libsignal"
 }
 
 get_deps() {
@@ -272,8 +292,8 @@ fetch_deps() {
 build_qca() {
     mkdir -p "${QCA_PATH}" && cd "${QCA_PATH}" || die "Can't create QCA build folder"
     
-    export CC="/usr/bin/clang"
-    export CXX="/usr/bin/clang++"
+    #export CC="/usr/bin/clang"    
+    #export CXX="/usr/bin/clang++"
         
     log "Compiling QCA..."
 
@@ -281,7 +301,7 @@ build_qca() {
     
     local opts="-DBUILD_TESTS=OFF -DOPENSSL_ROOT_DIR=${SSL_PATH} -DOPENSSL_LIBRARIES=${SSL_PATH}/lib -DLIBGCRYPT_LIBRARIES=${DEPS_PREFIX}/lib"
     #opts=$opts -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="-stdlib=libc++ -std=gnu++11 -arch x86_64"
-    cmake -DCMAKE_INSTALL_PREFIX="${QCA_PREFIX}" -DQCA_PLUGINS_INSTALL_DIR="${QCA_PLUGINS_PATH}/.." $opts ${PSI_DIR}/qca 2>/dev/null || die "QCA configuring error"
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${QCA_PREFIX}" -DQCA_PLUGINS_INSTALL_DIR="${QCA_PLUGINS_PATH}/.." $opts ${PSI_DIR}/qca 2>/dev/null || die "QCA configuring error"
     make ${MAKEOPT} || die "QCA build error"
     
     make install || die "Can't install QCA"
@@ -292,6 +312,35 @@ build_qca() {
     for p in $QCA_PLUGINS; do
                install_name_tool  -change "${QCA_PREFIX}/lib/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5" "@rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5" "${QCA_PLUGINS_PATH}/$p"
     done
+}
+
+function build_libsignal() {
+    mkdir -p "${LIBSIGNAL_PATH}" && cd "${LIBSIGNAL_PATH}" || die "Can't create LIBSIGNAL build folder"
+    
+    #export CC="/usr/bin/clang"    
+    #export CXX="/usr/bin/clang++"
+        
+    log "Compiling LIBSIGNAL..."
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${LIBS_PATH}" -DCMAKE_OSX_DEPLOYMENT_TARGET=${MAC_DEPLOYMENT_TARGET} ../libsignal 2>/dev/null || die "LIBSIGNAL configuring error"
+    make ${MAKEOPT} || die "LIBSIGNAL build error"
+    
+    make install || die "Can't install LIBSIGNAL"
+}
+
+function build_qtkeychain() {
+        mkdir -p "${QTKEYCHAIN_PATH}" && cd "${QTKEYCHAIN_PATH}" || die "Can't create QTKEYCHAIN build folder"
+    
+    #export CC="/usr/bin/clang"    
+    #export CXX="/usr/bin/clang++"
+        
+    log "Compiling QTKEYCHAIN..."
+
+    cmake -DCMAKE_INSTALL_PREFIX="${QTKEYCHAIN_PREFIX}" -DCMAKE_OSX_DEPLOYMENT_TARGET=${MAC_DEPLOYMENT_TARGET} -DCMAKE_BUILD_TYPE=Release ${PSI_DIR}/qtkeychain 2>/dev/null || die "QTKEYCHAIN configuring error"
+    make ${MAKEOPT} || die "QTKEYCHAIN build error"
+    
+    make install || die "Can't install QTKEYCHAIN"
+
+    #install_name_tool -id @rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5 "${QCA_PREFIX}/lib/qca-qt5.framework/qca-qt5"
 }
 
 prepare_sources() {
@@ -374,8 +423,15 @@ src_compile() {
 
 prep_otr_plugin() {
     sed -ie "s/buffio.h/tidybuffio.h/" src/htmltidy.*
+    sed -ie "s/unix {/unix:!mac {/" otrplugin.pro
     echo "INCLUDEPATH += ${DEPS_PREFIX}/include/ ${DEPS_PREFIX}/include/libotr" >> otrplugin.pro
     echo "LIBS += -L${DEPS_PREFIX}/lib" >> otrplugin.pro
+}
+
+prep_omemo_plugin() {
+    sed -ie "s/unix {/unix:!mac {/" omemoplugin.pro
+    echo "INCLUDEPATH += ${DEPS_PREFIX}/include ${DEPS_PREFIX}/include/signal" >> omemoplugin.pro
+    echo "LIBS += -L${DEPS_PREFIX}/lib -lsignal-protocol-c -lcrypto" >> omemoplugin.pro
 }
 
 plugins_compile() {
@@ -391,6 +447,10 @@ plugins_compile() {
 
         if [ $pl = "otrplugin" ]; then
             prep_otr_plugin
+        fi
+
+        if [ $pl = "omemoplugin" ]; then
+            prep_omemo_plugin
         fi
         
         $QMAKE && $MAKE $MAKEOPT || log "make ${pl} plugin failed"
@@ -508,15 +568,18 @@ copy_main_libs() {
         cp -f "${SSL_PATH}/lib/libcrypto.dylib" "$CONTENTSDIR/Frameworks/"
         chmod +w "$CONTENTSDIR/Frameworks/libssl.dylib"
         chmod +w "$CONTENTSDIR/Frameworks/libcrypto.dylib"
+        cp -f "${QTKEYCHAIN_PREFIX}/lib/libqt5keychain.dylib" "$CONTENTSDIR/Frameworks/"
 
         install_name_tool -id "@executable_path/../Frameworks/libz.dylib" "$CONTENTSDIR/Frameworks/libz.dylib"
         install_name_tool -id "@executable_path/../Frameworks/libidn.dylib" "$CONTENTSDIR/Frameworks/libidn.dylib"
         install_name_tool -id "@executable_path/../Frameworks/libssl.dylib" "$CONTENTSDIR/Frameworks/libssl.dylib"
         install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "$CONTENTSDIR/Frameworks/libssl.dylib"
         install_name_tool -id "@executable_path/../Frameworks/libcrypto.dylib" "$CONTENTSDIR/Frameworks/libcrypto.dylib"
+        install_name_tool -id "@executable_path/../Frameworks/libqt5keychain.dylib" "$CONTENTSDIR/Frameworks/libqt5keychain.dylib"
 
         install_name_tool -change "${LIBS_PATH}/lib/libz.1.dylib"    "@executable_path/../Frameworks/libz.dylib"   "$CONTENTSDIR/MacOS/psi"
         install_name_tool -change "${LIBS_PATH}/lib/libidn.11.dylib" "@executable_path/../Frameworks/libidn.dylib" "$CONTENTSDIR/MacOS/psi"
+        install_name_tool -change "${LIBS_PATH}/lib/libqt5keychain.1.dylib" "@executable_path/../Frameworks/libqt5keychain.dylib" "$CONTENTSDIR/MacOS/psi"
 }
 
 copy_otrplugins_libs() {
@@ -558,6 +621,8 @@ copy_plugins() {
              cp "lib${pl}.dylib" "$CONTENTSDIR/Resources/plugins"
         fi
     done
+
+    install_name_tool -change "${LIBS_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"       "$CONTENTSDIR/Resources/plugins/libomemoplugin.dylib"
 }
 
 copy_resources() {
