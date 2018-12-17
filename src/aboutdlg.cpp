@@ -46,7 +46,7 @@ AboutDlg::AboutDlg(QWidget* parent)
     // fill in Authors tab...
     QString authors;
     authors += details(QString::fromUtf8("Justin Karneges"),
-               "justin@affinix.com", "", "",
+               "justin@karneges.com", "", "",
                tr("Original Author"));
     authors += details(QString::fromUtf8("Sergey Ilinykh"),
                "rion4ik@gmail.com", "", "",
