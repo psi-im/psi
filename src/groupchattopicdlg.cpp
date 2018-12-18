@@ -107,6 +107,9 @@ QMap<LanguageManager::LangId, QString> GroupchatTopicDlg::subjectMap() const
 
 void GroupchatTopicDlg::setSubjectMap(const QMap<LanguageManager::LangId, QString> &topics)
 {
+    if (topics.isEmpty()) {
+        addLanguage(LanguageManager::LangId());
+    }
     for (auto it = topics.constBegin(); it != topics.constEnd(); ++it) {
         addLanguage(it.key(), it.value());
     }
