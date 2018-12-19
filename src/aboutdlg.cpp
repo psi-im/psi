@@ -58,13 +58,13 @@ AboutDlg::AboutDlg(QWidget* parent)
                "", "", "http://el-tramo.be",
                tr("Past Lead Developer"));
     authors += details(QString::fromUtf8("Michail Pishchagin"),
-               "mblsha@psi-im.org", "", "",
+               "", "", "",
                tr("Lead Widget Developer"));
     authors += details(QString::fromUtf8("Maciej Niedzielski"),
-               "machekku@psi-im.org", "", "",
+               "", "", "",
                tr("Developer"));
     authors += details(QString::fromUtf8("Martin Hostettler"),
-               "martin@psi-im.org", "", "",
+               "", "", "",
                tr("Developer"));
     authors += details(QString::fromUtf8("Evgeny Khryukin"),
                "wadealer@gmail.com", "", "",
