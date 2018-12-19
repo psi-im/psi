@@ -10,3 +10,6 @@
 [submodule "3rdparty/http-parser"]
 	path = 3rdparty/http-parser
 	url = https://github.com/nodejs/http-parser.git
+[submodule "3rdparty/qite"]
+	path = 3rdparty/qite
+	url = git@github.com:Ri0n/qite.git

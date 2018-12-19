@@ -583,6 +583,9 @@ FORMS += \
 # options dialog
 include($$PWD/options/options.pri)
 
+# interactive text elements
+include(../3rdparty/qite/libqite/libqite.pri)
+
 # Plugins
 psi_plugins {
     DEFINES += PSI_PLUGINS
