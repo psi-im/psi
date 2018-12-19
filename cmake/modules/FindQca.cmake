@@ -38,6 +38,7 @@ set(EXTRA_PATH_SUFFIXES
     Qca-qt5/QtCrypto
     qt5/QtCrypto
     qt/Qca-qt5/QtCrypto
+    lib/qca-qt5.framework/Versions/2/Headers
 )
 
 find_path(
@@ -56,6 +57,7 @@ find_library(
     ${QCA_DIR}/lib
     ${QCA_DIR}/bin
 )
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
                 Qca
@@ -63,6 +65,7 @@ find_package_handle_standard_args(
                 Qca_LIBRARY
                 Qca_INCLUDE_DIR
 )
+
 if (Qca_FOUND)
     set ( Qca_LIBRARIES ${Qca_LIBRARY} )
     set ( Qca_INCLUDE_DIRS ${Qca_INCLUDE_DIR} )
