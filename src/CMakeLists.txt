@@ -106,7 +106,7 @@ macro(qt_wrap_cpp)
     foreach(SOURCE ${_SOURCES})
         if(SOURCE MATCHES "^(.*/|)([^/.]+)\\.h$")
             set(DEST "moc_${CMAKE_MATCH_2}.cpp")
-            qt5_generate_moc(${SOURCE} ${DEST} ${PROJECT_NAME})
+            qt5_generate_moc(${SOURCE} ${DEST} TARGET ${PROJECT_NAME})
             list(APPEND ${ARGV0} ${DEST})
         elseif(SOURCE MATCHES "^(.*/|)([^/.]+)\\.cpp$")
             set(DEST "${CMAKE_MATCH_2}.moc")
@@ -169,6 +169,8 @@ add_definitions(
 
 include(src.cmake)
 include(${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite/libqite.cmake)
+list(APPEND HEADERS ${qite_HEADERS})
+list(APPEND PLAIN_SOURCES ${qite_SOURCES})
 
 # Only headers or very small sources
 include(irisprotocol/irisprotocol.cmake)

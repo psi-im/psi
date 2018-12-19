@@ -5,7 +5,6 @@
     содержит список основных опций;
     определяет тип программы Psi/Psi+
     определяет Webkit/Webengine
-    определяет SQL
     содержит основные определения (definitions)
     обработка переменных SDK
     определение версии программы
@@ -16,6 +15,7 @@
     если в корне есть каталог псимедии - собирает псимедию
 
 ./3rdparty/CMakeLists.txt - собирает статическую библиотеку qhttp
+./3rdparty/qite/libqite/libqite.cmake - содержит список файлов проекта qite
  
 ./cmake/modules - каталог модулей для поиска библиотек:
 ./cmake/modulesCOPYING-CMAKE-SCRIPTS - файл лицензии (для решения проблем
@@ -34,15 +34,12 @@
 ./cmake/modules/FindLibGcrypt.cmake - ищет libgctypt или libgcrypt2
 ./cmake/modules/FindQca.cmake - ищет qca-qt5
 ./cmake/modules/FindZLIB.cmake - ищет zlib
+./cmake/modules/FindPsiPluginsApi.cmake - модуль поиска файлов, необходимых для сборки плагинов
 
 /***
 модули поиска изначально сделаны так, чтобы можно было указать где искать
 для этого введены переменные ИМЯ_ROOT где можно указать путь поиска
 перед подключением модуля
-Для модуля поиска библиотеки QCA сделан хак, который позволяет искать
-библиотеку командой find_package(Qca) независимо от версии Qt,
-для этого достаточно перед подключением модуля указать переменную
-Qca_SUFFIX (для Qt5 - Qca_SUFFIX=-qt5, для Qt4 - Qca_SUFFIX="" )
 ***/
 
 ./iris/CMakeLists.txt - собирает библиотеку iris:
@@ -72,6 +69,7 @@ Qca_SUFFIX (для Qt5 - Qca_SUFFIX=-qt5, для Qt4 - Qca_SUFFIX="" )
     генерирует файл psi_win.rc на основе файла ../win32/psi_win.rc.in и
         компилирует psi_win.o
     подключает файл src.cmake
+    подключает файл ../3rdparty/qite/libqite/libqite.cmake 
     подключает файл irisprotocol/irisprotocol.cmake
     подключает файл protocol/protocol.cmake
     подключает файл plugins/plugins.cmake
@@ -101,6 +99,8 @@ Qca_SUFFIX (для Qt5 - Qca_SUFFIX=-qt5, для Qt4 - Qca_SUFFIX="" )
 ./src/win32-prepare-deps.cmake - генерирует список файлов для установки
     командой make prepare-bin-libs, которая установит библиотеки зависимостей
     в выходной каталог сборки. Если доступно использует windeployqt
+
+./src/get-version.cmake - определяет версию клиента по содержимому файла ../version
 
 ./src/AutoUpdater/CMakeLists.txt - собирает статическую библиотеку AutoUpdater
 
@@ -139,7 +139,9 @@ Qca_SUFFIX (для Qt5 - Qca_SUFFIX=-qt5, для Qt4 - Qca_SUFFIX="" )
 
 ./src/plugins/plugins.cmake - список файлов заголовков оторые подключаются в основные списки сборки
 
-./src/plugins/variables.cmake - основные переменные для сборки плагинов, общие для всех плагинов
+./src/plugins/variables.cmake.in - шаблон файла, который содержит основные переменные для сборки плагинов, общие для всех плагинов
+
+./src/plugins/pluginsconf.pri.cmake.in - шаблон файла pluginsconf.pri, генерируемого при сборке
 
 ./src/plugins/CMakeLists.txt - основной скрипт управляющий плагинами
     содержит основные правила сборки для всех плагинов

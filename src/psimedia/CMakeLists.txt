@@ -15,7 +15,7 @@ list(APPEND PLAIN_HEADERS
     psimediaprovider.h
 )
 
-list(APPEND SOURCES
+list(APPEND PLAIN_SOURCES
     psimedia.cpp
 )
 
