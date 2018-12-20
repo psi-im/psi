@@ -168,9 +168,6 @@ add_definitions(
 )
 
 include(src.cmake)
-include(${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite/libqite.cmake)
-list(APPEND HEADERS ${qite_HEADERS})
-list(APPEND PLAIN_SOURCES ${qite_SOURCES})
 
 # Only headers or very small sources
 include(irisprotocol/irisprotocol.cmake)

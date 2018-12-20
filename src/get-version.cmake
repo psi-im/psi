@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 set(VER_FILE ${PROJECT_SOURCE_DIR}/version)
-set(DEFAULT_VER "1.3") #updated manually
+set(DEFAULT_VER "1.4") #updated manually
 unset(APP_VERSION)
 unset(PSI_REVISION)
 unset(PSI_PLUS_REVISION)

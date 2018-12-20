@@ -69,19 +69,28 @@ or
 
 >  -DENABLE_WEBKIT = ON
 
-   enable support of QtWebKit or QtWebengine. If the flag is enabled and both libraries qtwebkit and qtwebengine are installed the qtwebengine script automatically selects qtwebengine. (default is ON)
+   enable support of QtWebKit or QtWebengine. If the flag is enabled and
+   both libraries qtwebkit and qtwebengine are installed the script 
+   automatically selects qtwebengine. (default is ON)
 
 >  -DUSE_WEBKIT = OFF
 
-   use QtWebKit instead of QtWebengine with the ENABLE_WEBKIT flag turned on (default is OFF)
+   used to force build with QtWebKit instead of QtWebengine 
+   (ENABLE_WEBKIT flag should be set ON)
+   (default is OFF)
 
 >  -DUSE_WEBENGINE = OFF
 
-   use QtWebengine instead of QtWebKit. This flag is set automatically if the USE_WEBKIT flag is disabled and the Qt5Webengine>=5.6.0 library is installed. (default is OFF)
+   use QtWebengine instead of QtWebKit. This flag is set automatically
+   if the USE_WEBKIT flag is disabled and the Qt5Webengine>=5.6.0 library
+   is installed. (ENABLE_WEBKIT flag should be set ON)
+   (default is OFF)
 
 >  -DPSI_VERSION=${version}
 
-  to set Psi/Psi+ version manually ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ). Script sets this flag automatically from "version" file if it exists in sources directory
+  to set Psi/Psi+ version manually 
+  ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ).
+  Script sets this flag automatically from "version" file if it exists in sources directory
 
 >  -DCMAKE_BUILD_TYPE=Release (default: Release)
 
@@ -93,7 +102,8 @@ or
 
 >  -DUSE_MXE=ON (default: OFF)
 
-  Enables MXE (M cross environment) support. Disables USE_CCACHE. Script can automatically detect MXE.
+  Enables MXE (M cross environment) support.
+  Disables USE_CCACHE. Script can automatically detect MXE.
 
 > -DVERBOSE_PROGRAM_NAME=ON
 
@@ -118,7 +128,14 @@ or
 
 >  -DINSTALL_EXTRA_FILES=ON
 
-  If OFF - sounds, certificates, iconsets, themes and cilent_icons.txt file will not be installed
+  If OFF - sounds, certificates, iconsets, themes and cilent_icons.txt
+  file will not be installed
+
+>  -DINSTALL_PLUGINS_SDK=ON
+
+  If this flag ON than with psi will be installed PluginsAPI that needed
+  to build plugins separately of main program sources
+  (default OFF)
 
 > -DENABLE_PLUGINS=ON
 
@@ -126,7 +143,8 @@ or
 
 >  -DONLY_PLUGINS=ON
 
-  to build only psi plugins (default OFF). On enabling this flag ENABLE_PLUGINS flag turns on automatically
+  to build only psi plugins (default OFF). On enabling this flag 
+  ENABLE_PLUGINS flag turns on automatically
 
 ## Work with plugins:
 
@@ -193,7 +211,8 @@ or
 
 >  -DENABLE_PORTABLE=ON
 
-  to build portable version (not need to rename binary). Enables prepare-bin-libs target
+  to build portable version (not need to rename binary). 
+  Enables prepare-bin-libs target.
 
 ### To build OTRPLUGIN in OS WINDOWS you need to set additional variables
 
