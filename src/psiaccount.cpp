@@ -148,6 +148,7 @@
 #include "bookmarkmanagedlg.h"
 #include "alertmanager.h"
 #include "popupmanager.h"
+#include "networkaccessmanager.h"
 
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
