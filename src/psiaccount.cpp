@@ -57,6 +57,7 @@
 #include "xmpp_caps.h"
 #include "xmpp_captcha.h"
 #include "xmpp_serverinfomanager.h"
+#include "httpfileupload.h"
 #include "s5b.h"
 #ifdef FILETRANSFER
 #include "filetransfer.h"
@@ -5791,6 +5792,46 @@ QStringList PsiAccount::localMucBookmarks() const
 QStringList PsiAccount::ignoreMucBookmarks() const
 {
     return d->acc.ignoreMucBookmarks;
+}
+
+void PsiAccount::shareImage(const Jid &target, const QImage &image, const QString &description,
+                            std::function<void(const QString &getUrl)> callback)
+{
+    // this method is intended to use xep-0385. But let's do something simple first. xep-0385 will be implemented later
+    QByteArray ba;
+    QBuffer buffer(&ba);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    buffer.close();
+
+    auto hfu = new HttpFileUpload(d->client, this); // TODO remove discovery stuff to serverinfo
+    connect(hfu, &HttpFileUpload::finished, this, [this, hfu, ba, callback]() {
+        if (hfu->success()) {
+            auto slot = hfu->getHttpSlot();
+            QNetworkRequest req(slot.put.url);
+            for (auto &h: slot.put.headers) {
+                req.setRawHeader(h.name.toLatin1(), h.value.toLatin1());
+            }
+            auto buffer = new QBuffer;
+            buffer->setData(ba);
+            buffer->open(QIODevice::ReadOnly);
+            auto reply = d->psi->networkAccessManager()->put(req, buffer);
+            connect(reply, &QNetworkReply::finished, this, [buffer, reply, callback, slot](){
+                delete buffer;
+                if (reply->error() == QNetworkReply::NoError) {
+                    callback(slot.get.url);
+                } else {
+                    callback("");
+                }
+                reply->deleteLater();
+            });
+        } else {
+            callback("");
+        }
+        hfu->deleteLater();
+    });
+    auto fname = QString("psi-share-%1.png").arg(QString::number(QDateTime::currentMSecsSinceEpoch()));
+    hfu->start(fname, ba.size(), QLatin1String("image/png"));
 }
 
 GCContact *PsiAccount::findGCContact(const Jid &j) const

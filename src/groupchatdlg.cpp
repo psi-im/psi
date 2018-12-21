@@ -95,6 +95,7 @@
 #include "tabcompletion.h"
 #include "vcardfactory.h"
 #include "languagemanager.h"
+#include "filesharedlg.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -2458,6 +2459,20 @@ void GCMainDlg::chatEditCreated()
     ui_.mle->chatEdit()->setDialog(this);
 
     ui_.mle->chatEdit()->installEventFilter(d);
+    connect(ui_.mle->chatEdit(), &ChatEdit::imagePasted, this, [this](const QImage &img) {
+        auto dlg = new FileShareDlg(this);
+        dlg->setImage(img);
+        connect(dlg, &FileShareDlg::accepted, this, [this, img, dlg](){
+            account()->shareImage(jid(), img, dlg->description(), [this](const QString &getUrl) {
+                qDebug("successfully shared: %s", qPrintable(getUrl));
+                Message m(jid());
+                m.setType("groupchat");
+                m.setBody(getUrl);
+                aSend(m);
+            });
+        });
+        dlg->exec();
+    });
 }
 
 TabbableWidget::State GCMainDlg::state() const

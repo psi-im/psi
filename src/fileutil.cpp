@@ -115,6 +115,7 @@ QString FileUtil::getInbandImageFileName(QWidget* parent)
     return getImageFileName(parent, QString("%1 (<50KB)").arg(tr("Choose a file")));
 }
 
+// see also image2type in xmpp_vcard.cpp
 QString FileUtil::mimeToFileExt(const QString &mime)
 {
     static QMap<QString, QString> mimes;

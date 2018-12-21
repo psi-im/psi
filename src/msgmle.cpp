@@ -56,7 +56,7 @@ public:
         connect(te_->document(), SIGNAL(contentsChange(int,int,int)), SLOT(textChanged(int,int,int)));
     }
 
-    virtual ~CapitalLettersController() {};
+    virtual ~CapitalLettersController() {}
 
     void setAutoCapitalizeEnabled(bool enabled)
     {
@@ -164,9 +164,6 @@ private:
 //----------------------------------------------------------------------------
 ChatEdit::ChatEdit(QWidget *parent)
     : QTextEdit(parent)
-    , dialog_(0)
-    , check_spelling_(false)
-    , spellhighlighter_(0)
     , palOriginal(palette())
     , palCorrection(palOriginal)
 {
@@ -194,7 +191,6 @@ ChatEdit::ChatEdit(QWidget *parent)
 ChatEdit::~ChatEdit()
 {
     clearMessageHistory();
-    delete spellhighlighter_;
     delete controller_;
     delete capitalizer_;
 }
@@ -262,11 +258,10 @@ void ChatEdit::setCheckSpelling(bool b)
     check_spelling_ = b;
     if (check_spelling_) {
         if (!spellhighlighter_)
-            spellhighlighter_ = new SpellHighlighter(document());
+            spellhighlighter_.reset(new SpellHighlighter(document()));
     }
     else {
-        delete spellhighlighter_;
-        spellhighlighter_ = 0;
+        spellhighlighter_.reset();
     }
 }
 
@@ -481,6 +476,16 @@ void ChatEdit::setEditText(const QString& text)
 {
     setPlainText(text);
     moveCursor(QTextCursor::End);
+}
+
+void ChatEdit::insertFromMimeData(const QMimeData *source)
+{
+    if (source->hasImage()) {
+        auto img = qvariant_cast<QImage>(source->imageData());
+        if (!img.isNull()) {
+            emit imagePasted(img);
+        }
+    }
 }
 
 void ChatEdit::updateBackground() {

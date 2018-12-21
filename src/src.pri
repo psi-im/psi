@@ -234,7 +234,8 @@ HEADERS += \
     $$PWD/tabcompletion.h \
     $$PWD/alertmanager.h \
     $$PWD/mcmdcompletion.h \
-    $$PWD/captchadlg.h
+    $$PWD/captchadlg.h \
+    $$PWD/filesharedlg.h
 
 # Source files
 SOURCES += \
@@ -367,7 +368,8 @@ SOURCES += \
     $$PWD/psicapsregsitry.cpp \
     $$PWD/alertmanager.cpp \
     $$PWD/mcmdcompletion.cpp \
-    $$PWD/captchadlg.cpp
+    $$PWD/captchadlg.cpp \
+    $$PWD/filesharedlg.cpp
 
 CONFIG += filetransfer
 filetransfer {
@@ -578,7 +580,8 @@ FORMS += \
     $$PWD/geolocation.ui \
     $$PWD/rosteravatarframe.ui \
     $$PWD/captchadlg.ui \
-    $$PWD/groupchattopicaddlang.ui
+    $$PWD/groupchattopicaddlang.ui \
+    $$PWD/filesharedlg.ui
 
 # options dialog
 include($$PWD/options/options.pri)

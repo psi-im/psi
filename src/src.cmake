@@ -39,6 +39,7 @@ list(APPEND FORMS
     chatdlg.ui
     disco.ui
     filetrans.ui
+    filesharedlg.ui
     geolocation.ui
     groupchatdlg.ui
     groupchattopicdlg.ui
@@ -116,6 +117,7 @@ list(APPEND HEADERS
     eventdlg.h
     filecache.h
     filetransdlg.h
+    filesharedlg.h
     fileutil.h
     gcuserview.h
     geolocationdlg.h
@@ -214,6 +216,7 @@ list(APPEND SOURCES
     discodlg.cpp
     eventdlg.cpp
     filetransdlg.cpp
+    filesharedlg.cpp
     gcuserview.cpp
     groupchatdlg.cpp
     htmltextcontroller.cpp

@@ -224,6 +224,9 @@ public:
     QStringList localMucBookmarks() const;
     QStringList ignoreMucBookmarks() const;
 
+    void shareImage(const Jid &target, const QImage &image, const QString &description,
+                    std::function<void(const QString &getUrl)> callback = std::function<void(const QString &getUrl)>());
+
     Jid realJid(const Jid &j) const;
     PsiContact* selfContact() const;
     const QList<PsiContact*>& contactList() const;
