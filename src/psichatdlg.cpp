@@ -882,7 +882,8 @@ bool PsiChatDlg::isEncryptionEnabled() const
 
 void PsiChatDlg::appendSysMsg(const QString &str)
 {
-    dispatchMessage(MessageView::fromHtml(str, MessageView::System));
+    MessageView mv = MessageView::systemMessage(str);
+    dispatchMessage(mv);
 }
 
 ChatView* PsiChatDlg::chatView() const

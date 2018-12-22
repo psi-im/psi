@@ -380,7 +380,7 @@ public:
         auto act = new QAction(tr("Quote"), this);
         act->setShortcut(QKeySequence(tr("Ctrl+S")));
         addContextMenuAction(act);
-        connect(actQuote_, &QAction::triggered, this, [this](bool){ emit quote(selectedText()); });
+        connect(act, &QAction::triggered, this, [this](bool){ emit quote(selectedText()); });
     }
 
 signals:
