@@ -33,6 +33,7 @@
 #include <QTextDocument>
 #include <QTimer>
 #include <QMimeData>
+#include <QClipboard>
 
 #include "shortcutmanager.h"
 #include "spellchecker/spellhighlighter.h"
@@ -221,6 +222,13 @@ void ChatEdit::initActions()
     act_changeCase = new QAction(this);
     addAction(act_changeCase);
     connect(act_changeCase, SIGNAL(triggered()), capitalizer_, SLOT(changeCase()));
+
+    QClipboard *clipboard = QApplication::clipboard();
+    actPasteAsQuote_ = new QAction(tr("Paste as Quotation"), this);
+    actPasteAsQuote_->setEnabled(clipboard->mimeData()->hasText());
+    addAction(actPasteAsQuote_);
+    connect(actPasteAsQuote_, SIGNAL(triggered()), SLOT(pasteAsQuote()));
+    connect(clipboard, SIGNAL(dataChanged()), SLOT(changeActPasteAsQuoteState()));
 }
 
 void ChatEdit::setShortcuts()
@@ -246,6 +254,13 @@ void ChatEdit::setFont(const QFont &f)
 {
     QTextEdit::setFont(f);
     controller_->setFont(f);
+}
+
+QMenu* ChatEdit::createStandardContextMenu(const QPoint &position)
+{
+    QMenu *menu = QTextEdit::createStandardContextMenu(position);
+    menu->addAction(actPasteAsQuote_);
+    return menu;
 }
 
 bool ChatEdit::checkSpellingGloballyEnabled()
@@ -351,8 +366,10 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
         }
     }
 
-    // Do normal menu
-    QTextEdit::contextMenuEvent(e);
+    // Do custom menu
+    QMenu *menu = createStandardContextMenu(e->pos());
+    menu->exec(e->globalPos());
+    delete menu;
     e->accept();
 }
 
@@ -428,6 +445,18 @@ void ChatEdit::showHistoryMessageNext()
             }
         }
     }
+}
+
+void ChatEdit::changeActPasteAsQuoteState()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    actPasteAsQuote_->setEnabled(clipboard->mimeData()->hasText());
+}
+
+void ChatEdit::pasteAsQuote()
+{
+    QString text = QApplication::clipboard()->mimeData()->text();
+    insertAsQuote(text);
 }
 
 void ChatEdit::showHistoryMessagePrev()
@@ -562,6 +591,24 @@ void ChatEdit::doHTMLTextMenu() {
 void ChatEdit::setCssString(const QString &css) {
     controller_->setCssString(css);
 }
+
+void ChatEdit::insertAsQuote(const QString &text)
+{
+    int pos =  textCursor().position();
+    QString prevLine = toPlainText().left(pos - 1);
+    prevLine = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
+
+    QString quote = QString::fromUtf8("» ") + text;
+    quote.replace("\n", QString::fromUtf8("\n» "));
+
+    // Check for previous quote and merge if true
+    if(!prevLine.startsWith(QString::fromUtf8("»"))) {
+        quote.prepend("\n");
+    }
+    quote.append("\n");
+    insertPlainText(quote);
+}
+
 
 //----------------------------------------------------------------------------
 // LineEdit

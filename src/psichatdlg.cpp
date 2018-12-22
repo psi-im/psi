@@ -269,6 +269,8 @@ void PsiChatDlg::initUi()
     connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
     addAction(act_mini_cmd_);
 
+    connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(), SLOT(insertAsQuote(const QString &)));
+
     ui_.log->realTextWidget()->installEventFilter(this);
     ui_.mini_prompt->hide();
 

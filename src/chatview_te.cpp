@@ -36,6 +36,7 @@
 #include <QTimer>
 #include <QKeyEvent>
 #include <QUrl>
+#include <QMenu>
 #include <QTextBlock>
 #include <QTextDocumentFragment>
 //#define CORRECTION_DEBUG
@@ -67,6 +68,14 @@ ChatView::ChatView(QWidget *parent)
     connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
     connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
 #endif
+    actQuote_ = new QAction(tr("Quote"), this);
+    actQuote_->setEnabled(false);
+    actQuote_->setShortcut(QKeySequence(tr("Ctrl+S")));
+    addAction(actQuote_);
+    connect(actQuote_, &QAction::triggered, this, [this](bool){ emit quote(getPlainText()); });
+    connect(this, &ChatView::selectionChanged, this, [this](){
+        actQuote_->setEnabled(textCursor().hasSelection());
+    });
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
     if (useMessageIcons_) {
@@ -148,8 +157,18 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
         e->accept();
     }
     else {
-        PsiTextView::contextMenuEvent(e);
+        QMenu *menu = createStandardContextMenu(e->pos());
+        menu->exec(e->globalPos());
+        delete menu;
+        e->accept();
     }
+}
+
+QMenu* ChatView::createStandardContextMenu(const QPoint &position)
+{
+    QMenu *menu = PsiTextView::createStandardContextMenu(position);
+    menu->addAction(actQuote_);
+    return menu;
 }
 
 void ChatView::addLogIconsResources()

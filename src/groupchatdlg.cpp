@@ -1033,6 +1033,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     invalidateTab();
     setConnecting();
 
+    connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(), SLOT(insertAsQuote(const QString &)));
     connect(pa->avatarFactory(), SIGNAL(avatarChanged(Jid)), SLOT(avatarUpdated(Jid)));
 
 #ifdef PSI_PLUGINS

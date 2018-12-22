@@ -54,6 +54,7 @@ public:
     // reimplemented
     QSize sizeHint() const;
     void setFont(const QFont &);
+    QMenu* createStandardContextMenu(const QPoint &position);
 
     static bool checkSpellingGloballyEnabled();
     void setCheckSpelling(bool);
@@ -69,6 +70,7 @@ public slots:
     void clearMessageHistory();
     void doHTMLTextMenu();
     void setCssString(const QString& css);
+    void insertAsQuote(const QString& text);
 
 protected slots:
     void applySuggestion();
@@ -78,6 +80,8 @@ protected slots:
     void showHistoryMessagePrev();
     void showHistoryMessageFirst();
     void showHistoryMessageLast();
+    void changeActPasteAsQuoteState();
+    void pasteAsQuote();
 
 signals:
     void imagePasted(const QImage &);
@@ -107,6 +111,7 @@ private:
     QAction* act_showMessageFirst = nullptr;
     QAction* act_showMessageLast = nullptr;
     QAction* act_changeCase = nullptr;
+    QAction *actPasteAsQuote_ = nullptr;
     QString currentText;
     HTMLTextController *controller_ = nullptr;
     CapitalLettersController *capitalizer_ = nullptr;

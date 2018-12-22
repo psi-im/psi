@@ -32,6 +32,9 @@ class PsiTextView : public QTextEdit
 public:
     PsiTextView(QWidget *parent = 0);
 
+    // Reimplemented
+    QMenu* createStandardContextMenu(const QPoint &position);
+
     bool atBottom();
 
     virtual void appendText(const QString &text);
@@ -69,6 +72,7 @@ protected:
     class Private;
 private:
     Private *d;
+    bool isSelectedBlock();
 };
 
 #endif

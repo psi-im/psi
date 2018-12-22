@@ -25,6 +25,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
+#include <QRegExp>
 #include <QMimeData>
 
 #include "urlobject.h"
@@ -77,6 +78,54 @@ PsiTextView::PsiTextView(QWidget *parent)
     PsiRichText::install(document());
 
     viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
+}
+
+ /**
+ * Reimplemented createStandardContextMenu(const QPoint &position)
+ * for creating of custom context menu
+ */
+
+QMenu* PsiTextView::createStandardContextMenu(const QPoint &position)
+{
+    QTextCursor textcursor = cursorForPosition(position);
+    QMenu *menu;
+    QString anc = anchorAt(position);
+    if (!anc.isEmpty()) {
+        menu = URLObject::getInstance()->createPopupMenu(anc);
+
+        int posInBlock = textcursor.position() - textcursor.block().position();
+        QString textblock = textcursor.block().text();
+        int begin = textcursor.block().position() + textblock.lastIndexOf(QRegExp("\\s|^"), posInBlock) + 1;
+        int end = textcursor.block().position() + textblock.indexOf(QRegExp("\\s|$"), posInBlock);
+        textcursor.setPosition(begin);
+        textcursor.setPosition(end, QTextCursor::KeepAnchor);
+        setTextCursor(textcursor);
+
+        menu = URLObject::getInstance()->createPopupMenu(anc);
+    }
+    else {
+        if (isSelectedBlock() || !textCursor().hasSelection()) { // only if no selection we select text block
+            int begin = textcursor.block().position();
+            int end = begin + textcursor.block().length() - 1;
+            textcursor.setPosition(begin);
+            textcursor.setPosition(end, QTextCursor::KeepAnchor);
+            setTextCursor(textcursor);
+        }
+        menu = QTextEdit::createStandardContextMenu();
+    }
+    return menu;
+}
+
+bool PsiTextView::isSelectedBlock()
+{
+    if (textCursor().hasSelection()) {
+        const QTextCursor &cursor = textCursor();
+        const QTextBlock  &block  = cursor.block();
+        int start = cursor.selectionStart();
+        if (block.position() == start && block.length() == cursor.selectionEnd() - start + 1)
+            return true;
+    }
+    return false;
 }
 
 /**
@@ -183,11 +232,7 @@ QString PsiTextView::getPlainText() const
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {
-    QMenu *menu;
-    if (!anchorAt(e->pos()).isEmpty())
-        menu = URLObject::getInstance()->createPopupMenu(anchorAt(e->pos()));
-    else
-        menu = createStandardContextMenu();
+    QMenu *menu = createStandardContextMenu(e->pos());
     menu->exec(e->globalPos());
     e->accept();
     delete menu;

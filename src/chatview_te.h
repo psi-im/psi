@@ -51,6 +51,7 @@ public:
     QSize sizeHint() const;
     void clear();
     void contextMenuEvent(QContextMenuEvent *e);
+    QMenu* createStandardContextMenu(const QPoint &position);
 
     void init();
     void setDialog(QWidget* dialog);
@@ -98,6 +99,7 @@ private slots:
 
 signals:
     void showNM(const QString&);
+    void quote(const QString &text);
     void nickInsertClick(const QString &nick);
 
 private:
@@ -120,6 +122,7 @@ private:
     QPixmap logIconInfo;
     QPixmap logIconCorrected;
     QPixmap logIconHistory;
+    QAction *actQuote_;
 };
 
 #endif

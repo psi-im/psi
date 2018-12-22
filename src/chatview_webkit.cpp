@@ -47,6 +47,7 @@
 #include <QApplication>
 #include <QMetaProperty>
 #include <QNetworkReply>
+#include <QAction>
 
 
 #include "webview.h"
@@ -366,6 +367,27 @@ protected:
 #endif
 
 //----------------------------------------------------------------------------
+// ChatWebView
+//----------------------------------------------------------------------------
+class ChatWebView: public WebView
+{
+    Q_OBJECT
+
+public:
+    ChatWebView(QWidget* parent) :
+        WebView(parent)
+    {
+        auto act = new QAction(tr("Quote"), this);
+        act->setShortcut(QKeySequence(tr("Ctrl+S")));
+        addContextMenuAction(act);
+        connect(actQuote_, &QAction::triggered, this, [this](bool){ emit quote(selectedText()); });
+    }
+
+signals:
+    void quote(const QString &text);
+};
+
+//----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
 ChatView::ChatView(QWidget *parent) :
@@ -373,7 +395,7 @@ ChatView::ChatView(QWidget *parent) :
     d(new ChatViewPrivate)
 {
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
-    d->webView = new WebView(this);
+    d->webView = new ChatWebView(this);
     d->webView->setFocusPolicy(Qt::NoFocus);
 #ifdef WEBENGINE
     d->webView->setPage(new ChatViewPage(d->webView));

@@ -128,6 +128,9 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
         if (!page()->selectedText().isEmpty()) {
 #ifdef WEBENGINE
             menu->addAction(pageAction(QWebEnginePage::Copy));
+            for (auto act: contextMenuActions_) {
+                menu->addAction(act);
+            }
         } else {
             if (!menu->isEmpty()) {
                 menu->addSeparator();
@@ -139,6 +142,9 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
     menu->addAction(pageAction(QWebEnginePage::Reload));
 #else
             menu->addAction(pageAction(QWebPage::Copy));
+            for (auto act: contextMenuActions_) {
+                menu->addAction(act);
+            }
         } else {
             if (!menu->isEmpty()) {
                 menu->addSeparator();
@@ -229,6 +235,11 @@ void WebView::evaluateJS(const QString &scriptSource)
 #else
     page()->mainFrame()->evaluateJavaScript(scriptSource);
 #endif
+}
+
+void WebView::addContextMenuAction(QAction *act)
+{
+    contextMenuActions_.append(act);
 }
 
 #ifndef WEBENGINE
