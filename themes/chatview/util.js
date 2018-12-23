@@ -480,17 +480,11 @@ function initPsiTheme() {
                 })();
                 // end of copied code
                 addResizeListener(document.body, function(){
-                    if (o.atBottom) {
-                        document.scrollingElement.scrollTop =
-                            document.scrollingElement.scrollHeight;
-                    }
+                    o.invalidate();
                 });
             } else {
                 const ro = new ResizeObserver(function(entries) {
-                    if (o.atBottom) {
-                        document.scrollingElement.scrollTop =
-                            document.scrollingElement.scrollHeight;
-                    }
+                    o.invalidate();
                 });
 
                 // Observe the scrollingElement for when the window gets resized
