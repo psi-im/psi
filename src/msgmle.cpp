@@ -515,6 +515,7 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
             emit imagePasted(img);
         }
     }
+    QTextEdit::insertFromMimeData(source);
 }
 
 void ChatEdit::updateBackground() {

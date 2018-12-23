@@ -7,7 +7,6 @@ FileShareDlg::FileShareDlg(QWidget *parent) :
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
-    ui->fixedImage->hide();
     ui->pixmapRatioLabel->hide();
 }
 
