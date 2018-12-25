@@ -920,6 +920,25 @@ arg: with-idn-lib=[path],Path to libidn library or framework files
 -----END QCMOD-----
 */
 
+/*
+Warning: libidn is somewhat deprecated in favor of libidn2, but we can't just
+drop it since IDNA2008 doesn't include XMPP profiles and has nothing from
+stringprep. This stuff was moved to RFC8264 and RFC8265 and its usage was
+described in RFC7622. There are no known C/C++ implementations of these specs
+at the moment of this writing. A partial and not sufficient implementation can
+be found at https://gitlab.com/gnutls/gnutls/blob/master/lib/str-unicode.c. It
+implements OpaqueString Profile but doesn't implement UsernameCaseMapped
+profile required by RFC7622. Note it may be also desired to implement RFC8266.
+
+Some implementations in other languages:
+Go: https://godoc.org/golang.org/x/text/secure/precis
+Python: https://pypi.org/project/precis-i18n/
+Perl: https://metacpan.org/release/Unicode-Precis
+PHP: https://github.com/tom--/precis
+
+We can try to use https://github.com/lpereira/gomoku to convert from Go.
+*/
+
 //----------------------------------------------------------------------------
 // qc_idn
 //----------------------------------------------------------------------------
@@ -1325,11 +1344,7 @@ public:
     	QString version, libs, other;
     	QString s;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     	bool found = conf->findPkgConfig("qjdns-qt5", VersionMin, "2.0.3", &version, &incs, &libs, &other);
-#else
-    	bool found = conf->findPkgConfig("qjdns-qt4", VersionMin, "2.0.3", &version, &incs, &libs, &other);
-#endif
     	if(!found && !conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
     		s = conf->getenv("QC_WITH_QJDNS_INC");
     		if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
@@ -1620,10 +1635,7 @@ public:
     			qt = "webenginewidgets webchannel";
     		} else {
     			webkitType = "QtWebKit";
-    			qt = "webkit";
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-    			qt += " webkitwidgets";
-#endif
+    			qt = "webkit webkitwidgets";
     		}
 
     		QString proextra = "CONFIG += qt webkit\\n";
@@ -3419,6 +3431,15 @@ bool Conf::findHeader(const QString &h, const QStringList &ext, QString *inc)
 	QStringList dirs;
 	dirs += "/usr/local/include";
 	dirs += ext;
+
+	QString prefix = qc_getenv("PREFIX");
+	if (!prefix.isEmpty()) {
+		prefix += "/include";
+		prefix = qc_normalize_path(prefix);
+		if (!dirs.contains(prefix))
+			dirs << prefix;
+	}
+
 	for(QStringList::ConstIterator it = dirs.begin(); it != dirs.end(); ++it)
 	{
 		if(checkHeader(*it, h))
@@ -3461,6 +3482,18 @@ bool Conf::findLibrary(const QString &name, QString *lib)
 		*lib = "/usr/local/lib";
 		return true;
 	}
+
+	QString prefix = qc_getenv("PREFIX");
+	if (!prefix.isEmpty()) {
+		prefix += "/lib";
+		prefix = qc_normalize_path(prefix);
+		if(checkLibrary(prefix, name))
+		{
+			*lib = prefix;
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -3474,33 +3507,45 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	QString inc, lib;
 	QString s;
 
-	s = getenv(incvar);
+	s = getenv(incvar).trimmed();
 	if(!s.isEmpty()) {
-		if(!checkHeader(s, incname))
+		if(!checkHeader(s, incname)) {
+			if(debug_enabled)
+				printf("%s is not found in \\"%s\\"\\n", qPrintable(incname), qPrintable(s));
 			return false;
+		}
 		inc = s;
 	}
 	else {
-		if(!findHeader(incname, QStringList(), &s))
+		if(!findHeader(incname, QStringList(), &s)) {
+			if(debug_enabled)
+				printf("%s is not found anywhere\\n", qPrintable(incname));
 			return false;
+		}
 		inc = s;
 	}
 
-	s = getenv(libvar);
+	s = getenv(libvar).trimmed();
 	if(!s.isEmpty()) {
-		if(!checkLibrary(s, libname))
+		if(!checkLibrary(s, libname)) {
+			if(debug_enabled)
+				printf("%s is not found in \\"%s\\"\\n", qPrintable(libname), qPrintable(s));
 			return false;
+		}
 		lib = s;
 	}
 	else {
-		if(!findLibrary(libname, &s))
+		if(!findLibrary(libname, &s)) {
+			if(debug_enabled)
+				printf("%s is not found anywhere\\n", qPrintable(libname));
 			return false;
+		}
 		lib = s;
 	}
 
 	QString lib_out;
 	if(!lib.isEmpty())
-		lib_out += QString("-L") + s;
+		lib_out += QString("-L") + s + " ";
 	lib_out += QString("-l") + libname;
 
 	*incpath = inc;
