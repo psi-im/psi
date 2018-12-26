@@ -97,11 +97,17 @@ void VCardFactory::mucTaskFinished()
     bool notifyPhoto = task->property("phntf").toBool();
     if ( task->success() ) {
         Jid j = task->jid();
-        mucVcardDict_[j.bare()].insert(j.resource(), task->vcard());
-        auto &resQueue = lastMucVcards_[j.bare()];
-        resQueue.enqueue(j.resource());
-        while (resQueue.size() > 3) { // keep max 3 vcards per muc
-            mucVcardDict_[j.bare()].remove(resQueue.dequeue());
+        auto &nick2vcard = mucVcardDict_[j.bare()];
+        auto nickIt = nick2vcard.find(j.resource());
+        if (nickIt == nick2vcard.end()) {
+            nick2vcard.insert(j.resource(), task->vcard());
+            auto &resQueue = lastMucVcards_[j.bare()];
+            resQueue.enqueue(j.resource());
+            while (resQueue.size() > 3) { // keep max 3 vcards per muc
+                nick2vcard.remove(resQueue.dequeue());
+            }
+        } else {
+            *nickIt = task->vcard();
         }
 
         emit vcardChanged(j);
