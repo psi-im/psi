@@ -193,6 +193,7 @@ private:
     friend class Private;
     ContactUpdatesManager* contactUpdatesManager_;
 
+    void initNetSession();
     void deleteAllDialogs();
     void s5b_init();
     void updateS5BServerAddresses();
