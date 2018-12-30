@@ -42,6 +42,7 @@ option( BUILD_PSIMEDIA "Build psimedia plugin if sources found" ON )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
+option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
@@ -54,7 +55,6 @@ endif()
 #Windows or MXE only
 option( USE_MXE "Use MXE cross-compilation" OFF )
 option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
-option( DEV_MODE "Enable prepare-bin-libs target for Windows OS" OFF )
 #Apple only
 if(APPLE)
     option( USE_SPARKLE "Use Sparkle for APPLE builds" ON )
