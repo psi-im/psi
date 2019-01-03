@@ -456,6 +456,7 @@ if(WIN32)
         libeay32.dll
         libqca-qt5${D}.dll
         ssleay32.dll
+        libxslt-1.dll
     )
 
     if(MSVC)
