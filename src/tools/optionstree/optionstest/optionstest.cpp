@@ -53,19 +53,19 @@ int main (int argc, char const* argv[])
         qWarning(qPrintable(tree.getOption(name).toString()));
     }
 
-    tree.saveOptions("options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
+    tree.saveOptions("options.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
 
     OptionsTree tree2;
-    tree2.loadOptions("options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
+    tree2.loadOptions("options.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
     foreach(QString name, tree2.allOptionNames())
     {
         qWarning(qPrintable(name));
         qWarning(qPrintable(tree2.getOption(name).toString()));
     }
-    tree2.saveOptions("options2.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
+    tree2.saveOptions("options2.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
 
     OptionsTree tree3;
-    tree3.loadOptions("options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
-    tree3.saveOptions("options3.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
+    tree3.loadOptions("options.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
+    tree3.saveOptions("options3.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
     return 0;
 }

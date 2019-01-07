@@ -29,7 +29,7 @@ class AHFileServer : public AHCommandServer
 public:
     AHFileServer(AHCServerManager* m) : AHCommandServer(m) { }
     virtual QString node() const
-        { return QString("http://psi.affinix.com/commands/files"); }
+        { return QString("https://psi-im.org/commands/files"); }
     virtual bool isAllowed(const Jid&) const;
     virtual QString name() const { return QString("Send file"); }
     virtual AHCommand execute(const AHCommand& c, const Jid&);

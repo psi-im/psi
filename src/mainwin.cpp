@@ -1033,7 +1033,7 @@ void MainWin::actOnlineWikiActivated ()
 
 void MainWin::actOnlineHomeActivated ()
 {
-    DesktopUtil::openUrl("https://psi-im.org");
+    DesktopUtil::openUrl("https://psi-im.org/");
 }
 
 void MainWin::actOnlineForumActivated ()

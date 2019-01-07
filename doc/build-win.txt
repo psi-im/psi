@@ -6,7 +6,7 @@ MingW32 self-installer. All the instructions below are performed from within
 the Qt command prompt (found in the Start menu)
 
 * You need QCA 2.0 and the QCA OpenSSL plugin, which you can get at
-		http://delta.affinix.com/qca/
+		https://userbase.kde.org/QCA
 Instructions on how to build these packages can be found below.
 
 * If you want to use the QCA OpenSSL plugin on Windows, you will need to

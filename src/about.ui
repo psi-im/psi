@@ -131,10 +131,10 @@ Copyright © 2001-2017 The Psi Team.&lt;br&gt;
        <item>
         <widget class="URLLabel" name="uRLLabel1" native="true">
          <property name="url" stdset="0">
-          <string>https://psi-im.org</string>
+          <string>https://psi-im.org/</string>
          </property>
          <property name="title" stdset="0">
-          <string>https://psi-im.org</string>
+          <string>https://psi-im.org/</string>
          </property>
         </widget>
        </item>
