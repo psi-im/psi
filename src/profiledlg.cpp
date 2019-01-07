@@ -82,7 +82,7 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
     setModal(true);
     setWindowTitle(CAP(windowTitle()));
     setWindowIcon(IconsetFactory::icon("psi/profile").icon());
-    setWindowFlags(windowFlags() | Qt::WindowContextHelpButtonHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     pb_open->setDefault(true);
 
     langs = _langs;

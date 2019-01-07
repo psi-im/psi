@@ -72,8 +72,7 @@ void AccountModifyDlg::init()
 #ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint |
-                   Qt::CustomizeWindowHint | Qt::WindowContextHelpButtonHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 
     le_pass->setEnabled(true);
     le_host->setEnabled(false);
