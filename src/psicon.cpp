@@ -341,7 +341,7 @@ public:
 PsiCon::PsiCon()
     : QObject(nullptr)
 {
-    //pdb(DEBUG_JABCON, QString("%1 v%2\n By Justin Karneges\n    infiniti@affinix.com\n\n").arg(PROG_NAME).arg(PROG_VERSION));
+    //pdb(DEBUG_JABCON, QString("%1 v%2\n By Justin Karneges\n    justin@karneges.com\n\n").arg(PROG_NAME).arg(PROG_VERSION));
     d = new Private(this);
     d->tabManager = new TabManager(this);
     connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(aboutToQuit()));
