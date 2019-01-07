@@ -351,7 +351,7 @@
 	</icon>
 
 	<icon>
-		<x xmlns='name'>psi/psiLogo</x>
+		<x xmlns='name'>psi/logo</x>
 		<object mime='image/png'>psilogo.png</object>
 	</icon>
 
