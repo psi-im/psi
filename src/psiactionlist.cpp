@@ -210,9 +210,6 @@ void PsiActionList::Private::createMainWin()
 //        IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);
 //        actReadme->setWhatsThis (tr("Show ReadMe file"));
 //
-//        IconAction *actOnlineHelp = new IconAction (tr("User Guide (Online)"), tr("User Guide (Online)"), 0, this);
-//        actOnlineHelp->setWhatsThis (tr("User Guide (Online)"));
-//
 //        IconAction *actOnlineWiki = new IconAction (tr("Wiki (Online)"), tr("Wiki (Online)"), 0, this);
 //        actOnlineWiki->setWhatsThis (tr("Wiki (Online)"));
 //
@@ -363,9 +360,6 @@ void PsiActionList::Private::createMainWin()
         IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
         actTip->setWhatsThis (tr("See many useful tips"));
 
-        IconAction *actOnlineHelp = new IconAction (tr("User Guide (Online)"), tr("&User Guide (Online)"), 0, this);
-        actOnlineHelp->setWhatsThis (tr("User Guide (Online)"));
-
         IconAction *actOnlineWiki = new IconAction (tr("Wiki (Online)"), tr("&Wiki (Online)"), 0, this);
         actOnlineWiki->setWhatsThis (tr("Wiki (Online)"));
 
@@ -398,7 +392,6 @@ void PsiActionList::Private::createMainWin()
         ActionNames actions[] = {
             { "help_readme",           actReadme          },
             { "help_tip",              actTip             },
-            { "help_online_help",      actOnlineHelp      },
             { "help_online_wiki",      actOnlineWiki      },
             { "help_online_home",      actOnlineHome      },
             { "help_online_forum",     actOnlineForum     },

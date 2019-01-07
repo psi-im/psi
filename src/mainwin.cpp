@@ -515,7 +515,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     d->getAction("help_readme")->addTo (helpMenu);
     d->getAction("help_tip")->addTo (helpMenu);
     helpMenu->addSeparator();
-    //d->getAction("help_online_help")->addTo (helpMenu);
     d->getAction("help_online_wiki")->addTo (helpMenu);
     d->getAction("help_online_home")->addTo (helpMenu);
     d->getAction("help_online_forum")->addTo (helpMenu);
@@ -649,7 +648,6 @@ void MainWin::registerAction( IconAction* action )
 
         { "help_readme",      activated, this, SLOT( actReadmeActivated() ) },
         { "help_tip",         activated, this, SLOT( actTipActivated() ) },
-        { "help_online_help", activated, this, SLOT( actOnlineHelpActivated() ) },
         { "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
         { "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
         { "help_online_forum", activated, this, SLOT( actOnlineForumActivated() ) },
@@ -939,7 +937,6 @@ void MainWin::buildOptionsMenu()
     actions << "help_readme"
             << "help_tip"
             << "separator"
-            //<< "help_online_help"
             << "help_online_wiki"
             << "help_online_home"
             << "help_online_forum"
@@ -1019,11 +1016,6 @@ void MainWin::actReadmeActivated ()
     ShowTextDlg* w = new ShowTextDlg(":/README.html", true);
     w->setWindowTitle(CAP(tr("ReadMe")));
     w->show();
-}
-
-void MainWin::actOnlineHelpActivated ()
-{
-    DesktopUtil::openUrl("https://psi-im.org/wiki/User_Guide");
 }
 
 void MainWin::actOnlineWikiActivated ()
