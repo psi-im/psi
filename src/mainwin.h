@@ -127,7 +127,6 @@ private slots:
     void activatedAccOption(PsiAccount *, int);
 
     void actReadmeActivated ();
-    void actOnlineHelpActivated ();
     void actOnlineWikiActivated ();
     void actOnlineHomeActivated ();
     void actOnlineForumActivated ();
