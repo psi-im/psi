@@ -3,13 +3,11 @@
 	<meta>
 		<name>silk</name>
 		<version>1.2</version>
-		<description>
-Name: silk
-Author: http://www.famfamfam.com/lab/icons/silk/
-Made for Psi: maksim.maj@gmail.com, ky6uk@jabber.ufanet.ru
-Date: 2010-11-16
-		</description>
-		<creation>2008-12-25</creation>
+		<description>Silk iconset</description>
+		<creation>2010-11-16</creation>
+		<author www='http://www.famfamfam.com/lab/icons/silk/'>Famfamfam (Base icons)</author>
+		<author email='maksim.maj@gmail.com'>maj</author>
+		<author email='ky6uk@jabber.ufanet.ru'>Ky6uk</author>
 	</meta>
 
 	<icon>
