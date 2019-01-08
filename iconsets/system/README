@@ -39,7 +39,7 @@ psi/keyBad         - Bad PGP key
 psi/keyDouble      - Double (public + private) PGP key
 psi/keyUnknown     - Unknown PGP key
 psi/playSounds     - Play sounds
-psi/psiMain        - Psi logo, used in roster and tray context menu
+psi/main           - Psi logo, used in roster and tray context menu
 psi/quit           - Quit
 psi/register       - Register service
 psi/reload         - Reload button
@@ -53,11 +53,11 @@ psi/time           - Time
 psi/www            - URL icon
 psi/email          - Email icon
 psi/xml            - XML icon
-psi/psi16          - 16x16 Psi icon
-psi/psi32          - 32x32 Psi icon
-psi/psi48          - 48x48 Psi icon
-psi/psiMac         - 128x128 Psi MacOS X icon
-psi/psiLogo        - Psi logo. Used in the first dialog. NOTE: the leftmost and the
+psi/logo_16        - 16x16 Psi icon
+psi/logo_32        - 32x32 Psi icon
+psi/logo_48        - 48x48 Psi icon
+psi/logo_128       - 128x128 Psi icon
+psi/logo           - Psi logo. Used in the first dialog. NOTE: the leftmost and the
                      rightmost vertical lines of that icon are used for stretching
 psi/smile          - Used in the profile creation dialog
 psi/ok             - Check icon
