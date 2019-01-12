@@ -139,6 +139,7 @@ if(WIN32)
             Qt5Sensors${D}.dll
             Qt5OpenGL${D}.dll
             Qt5PrintSupport${D}.dll
+            Qt5WinExtras${D}.dll
         )
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         #
