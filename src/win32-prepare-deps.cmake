@@ -480,6 +480,7 @@ if(WIN32)
             libharfbuzz-icu-0.dll
             libiconv-2.dll
             libintl-8.dll
+            libjasper.dll
             libjasper-1.dll
             libjpeg-9.dll
             liblcms2-2.dll
