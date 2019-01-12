@@ -448,6 +448,7 @@ if(WIN32)
         zlib1.dll
         libgpg-error-0.dll
         libidn-11.dll
+        libidn-12.dll
         libhunspell.dll
         libhunspell-1.3-0.dll
         libhunspell-1.4-0.dll
@@ -493,8 +494,11 @@ if(WIN32)
             libsqlite3-0.dll
             libtiff-5.dll
             libwebp-5.dll
+            libwebp-7.dll
             libwebpdecoder-1.dll
             libwebpdemux-1.dll
+            libwebpdecoder-3.dll
+            libwebpdemux-2.dll
             libxml2-2.dll
         )
     endif()
