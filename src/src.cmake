@@ -216,7 +216,6 @@ list(APPEND SOURCES
     discodlg.cpp
     eventdlg.cpp
     filetransdlg.cpp
-    filesharedlg.cpp
     gcuserview.cpp
     groupchatdlg.cpp
     htmltextcontroller.cpp
@@ -378,6 +377,7 @@ list(APPEND PLAIN_SOURCES
     edbflatfile.cpp
     eventdb.cpp
     filecache.cpp
+    filesharedlg.cpp
     fileutil.cpp
     fileutil.cpp
     geolocation.cpp
