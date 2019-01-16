@@ -14,6 +14,7 @@ CaptchaDlg::CaptchaDlg(QWidget *parent, const CaptchaChallenge &challenge, PsiAc
     ui(new Ui::CaptchaDlg),
     challenge(challenge)
 {
+    setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
 
     QVBoxLayout *l = new QVBoxLayout;
@@ -32,32 +33,23 @@ CaptchaDlg::~CaptchaDlg()
 
 void CaptchaDlg::done(int r)
 {
-    if (!challenge.isValid()) {
-        return;
-    }
-
-    if (r == QDialog::Accepted) {
+    if (challenge.isValid() && r == QDialog::Accepted) {
         XData::FieldList fl = dataWidget->fields();
         XData resp;
         resp.setType(XData::Data_Form);
         resp.setFields(fl);
 
         JT_CaptchaSender *t = new JT_CaptchaSender(dataWidget->client()->rootTask());
-        connect(t, SIGNAL(finished()), SLOT(captchaFinished()));
+        connect(t, &JT_CaptchaSender::finished, this, [t](){
+            if (t->success()) {
+                qDebug("captcha passed");
+            } else {
+                qDebug("captcha failed");
+            }
+        });
         t->set(challenge.arbiter(), resp);
         t->go(true);
-    } else {
-        QDialog::done(r);
     }
-}
 
-void CaptchaDlg::captchaFinished()
-{
-    JT_CaptchaSender *t = static_cast<JT_CaptchaSender *>(sender());
-    if (t->success()) {
-        qDebug("captcha passed");
-    } else {
-        qDebug("captcha failed");
-    }
-    QDialog::done(Accepted);
+    QDialog::done(r);
 }

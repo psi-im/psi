@@ -2794,6 +2794,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
             if (!pw) {
                 pw = findChatDialog(_m.from());
             }
+            // it's possible there is no any related dialog. like registration form?
             CaptchaDlg *dlg = new CaptchaDlg(pw, challenge, this);
             dlg->show();
             bringToFront(dlg);

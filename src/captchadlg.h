@@ -23,9 +23,6 @@ public:
 public slots:
     void done(int r);
 
-private slots:
-    void captchaFinished();
-
 private:
     Ui::CaptchaDlg *ui;
     XMPP::CaptchaChallenge challenge;
