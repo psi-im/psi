@@ -65,7 +65,7 @@ bool RosterItemExchangeTask::take(const QDomElement& e)
             send(iq);
 
             emit rosterItemExchange(from,items);
-            setSuccess(true);
+            setSuccess();
             return true;
         }
     }

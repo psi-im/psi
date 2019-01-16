@@ -5812,7 +5812,7 @@ void PsiAccount::shareImage(const Jid &target, const QImage &image, const QStrin
                 QLatin1String("image/png"));
     buffer->setParent(hfu);
 
-    connect(hfu, &HttpFileUpload::finished, this, [this, hfu, callback](){
+    connect(hfu, &HttpFileUpload::finished, this, [hfu, callback](){
         if (hfu->success()) {
             callback(hfu->getHttpSlot().get.url);
         } else {
