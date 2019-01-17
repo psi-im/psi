@@ -2784,11 +2784,13 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     if (_m.getForm().registrarType() == "urn:xmpp:captcha") {
         CaptchaChallenge challenge(_m);
         if (challenge.isValid()) {
-            QWidget *pw = 0;
+            QWidget *pw = nullptr;
+            MUCJoinDlg *joinDlg = nullptr;
             if (_m.from().resource().isEmpty()) {
                 pw = findDialog<GCMainDlg*>(_m.from());
                 if(!pw) {
-                    pw = findDialog<MUCJoinDlg*>(_m.from());
+                    joinDlg = findDialog<MUCJoinDlg*>(_m.from());
+                    pw = joinDlg;
                 }
             }
             if (!pw) {
@@ -2796,6 +2798,9 @@ void PsiAccount::processIncomingMessage(const Message &_m)
             }
             // it's possible there is no any related dialog. like registration form?
             CaptchaDlg *dlg = new CaptchaDlg(pw, challenge, this);
+            if (joinDlg) {
+                connect(dlg, &CaptchaDlg::rejected, joinDlg, &MUCJoinDlg::reject);
+            }
             dlg->show();
             bringToFront(dlg);
             return;
