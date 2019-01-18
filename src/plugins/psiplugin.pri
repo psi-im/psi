@@ -2,7 +2,6 @@ include($$PWD/pluginsconf.pri)
 TEMPLATE = lib
 CONFIG += plugin c++14
 QT += xml widgets
-DEFINES += HAVE_QT5
 
 MOC_DIR = .moc/
 OBJECTS_DIR = .obj/
