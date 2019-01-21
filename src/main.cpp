@@ -68,6 +68,14 @@
 #define URI_RESTART
 #endif
 
+#if defined(Q_OS_WIN) && !defined (_MSC_VER)
+// Fix of vulnerability in MS Windows in builds using mingw-w64
+// See: https://www.kb.cert.org/vuls/id/307144/
+#define PSI_EXPORT_FUNC __declspec(dllexport)
+#else
+#define PSI_EXPORT_FUNC
+#endif
+
 /** \mainpage Psi API Documentation
  *
  *    \section intro_sec Indroduction
@@ -465,7 +473,7 @@ QStringList getQtPluginPathEnvVar()
     return out;
 }
 
-int main(int argc, char *argv[])
+PSI_EXPORT_FUNC int main(int argc, char *argv[])
 {
     // Disable Input Method Editor to fix bug with
     //   third-party keyboard layout switching tools
