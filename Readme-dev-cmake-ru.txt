@@ -35,6 +35,12 @@
 ./cmake/modules/FindQca.cmake - ищет qca-qt5
 ./cmake/modules/FindZLIB.cmake - ищет zlib
 ./cmake/modules/FindPsiPluginsApi.cmake - модуль поиска файлов, необходимых для сборки плагинов
+./cmake/modules/get-version.cmake - определяет версию клиента по содержимому файла ../version
+./cmake/modules/win32-prepare-deps.cmake - генерирует список файлов для установки
+    командой make prepare-bin-libs, которая установит библиотеки зависимостей
+    в выходной каталог сборки. Если доступно использует windeployqt
+./cmake/modules/generate_desktopfile.cmake - генерирует .desktop файл
+./cmake/modules/fix-codestyle.cmake - исправляет стиль кода исходников по make fix-codestyle
 
 /***
 модули поиска изначально сделаны так, чтобы можно было указать где искать
@@ -83,8 +89,6 @@
         библиотек зависимостей в выходной каталог сборки при помощи модуля win32-prepare-deps.cmake
     подключает каталог plugins, если включена опция и скопированы плагины
 
-./src/generate_desktopfile.cmake - генерирует .desktop файл
-
 ./src/config.h.in - файл-шаблон для создания файла config.h
 
 ./src/src.cmake:
@@ -95,12 +99,6 @@
         список SOURCES - содержит исходные файлы для которых будут генерироваться .moc файлы
         список PLAIN_HEADERS - содержит заголовки файлов для которых не будут генерироваться .moc файлы
         список PLAIN_SOURCES - содержит исходные файлы для которых не будут генерироваться .moc файлы
-  
-./src/win32-prepare-deps.cmake - генерирует список файлов для установки
-    командой make prepare-bin-libs, которая установит библиотеки зависимостей
-    в выходной каталог сборки. Если доступно использует windeployqt
-
-./src/get-version.cmake - определяет версию клиента по содержимому файла ../version
 
 ./src/AutoUpdater/CMakeLists.txt - собирает статическую библиотеку AutoUpdater
 

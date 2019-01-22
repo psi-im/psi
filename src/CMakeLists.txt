@@ -158,7 +158,7 @@ else()
     set(CLIENT_NAME "Psi+")
 endif()
 
-include(get-version.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
 
 if(LINUX)
     message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
@@ -342,6 +342,8 @@ add_executable(${PROJECT_NAME}
     ${RC_FILE}
 )
 
+include(${PROJECT_SOURCE_DIR}/cmake/modules/fix-codestyle.cmake)
+
 #Experimental feature
 if(VERBOSE_PROGRAM_NAME)
     if(ENABLE_WEBKIT AND (NOT USE_WEBENGINE))
@@ -454,7 +456,7 @@ if(LINUX)
             set(VERBOSED_NAME ${PROJECT_NAME})
         endif()
         if(VERBOSE_PROGRAM_NAME)
-            include(generate_desktopfile.cmake)
+            include(${PROJECT_SOURCE_DIR}/cmake/modules/generate_desktopfile.cmake)
         else()
             set(OUT_DESK_FILE "${DESKTOP_FILE}")
         endif()
@@ -510,7 +512,7 @@ if(WIN32)
         copy("${PROJECT_SOURCE_DIR}/myspell/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/myspell/" prepare-bin)
     endif()
     if(ENABLE_PORTABLE OR DEV_MODE)
-        include(win32-prepare-deps.cmake)
+        include(${PROJECT_SOURCE_DIR}/cmake/modules/win32-prepare-deps.cmake)
     endif()
 endif()
 #INSTALL SECTION END
