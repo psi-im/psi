@@ -22,7 +22,8 @@ OTHER_FILES += options/default.xml \
     version \
     TODO \
     psi.qc \
-    qcm/*.qcm
+    qcm/*.qcm \
+    psi.astylerc
 
 webkit {
     OTHER_FILES += themes/chatview/util.js \
