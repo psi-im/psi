@@ -634,10 +634,12 @@ bool PsiCon::init()
     checkAccountsEmpty();
 
     // Import for SQLite history
-    EDBSqLite *edb = new EDBSqLite(this);
-    d->edb = edb;
-    if (!edb->init())
-        return false;
+    if (d->contactList->defaultAccount()) {
+        EDBSqLite *edb = new EDBSqLite(this);
+        d->edb = edb;
+        if (!edb->init())
+            return false;
+    }
 
     if(d->contactList->defaultAccount())
         emit statusMessageChanged(d->contactList->defaultAccount()->status().status());

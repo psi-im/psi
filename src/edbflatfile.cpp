@@ -158,7 +158,12 @@ QList<EDB::ContactItem> EDBFlatFile::contacts(const QString &accId, int type)
 {
     if (!accId.isEmpty())
         return File::contacts(accId, type);
-    return File::contacts(psi()->contactList()->defaultAccount()->id(), type);
+
+    PsiAccount *acc = psi()->contactList()->defaultAccount();
+    if (acc)
+        return File::contacts(acc->id(), type);
+
+    return QList<EDB::ContactItem>();
 }
 
 quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
