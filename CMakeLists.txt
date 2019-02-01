@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.1.0)
 #Set automoc and autouic policy
 if(POLICY CMP0071)
     cmake_policy(SET CMP0071 OLD)
+    message(STATUS "CMP0071 policy set to OLD")
+endif()
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+    message(STATUS "CMP0074 policy set to NEW")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
