@@ -694,11 +694,10 @@ EventIdGenerator::EventIdGenerator()
 int EventIdGenerator::getId()
 {
     int result = id_;
-    ++id_;
-
-    if (id_ > 0x7FFFFFFF) {
+    if (id_ == INT_MAX)
         id_ = 0;
-    }
+    else
+        ++id_;
 
     Q_ASSERT(id_ >= 0);
     Q_ASSERT(result >= 0);
