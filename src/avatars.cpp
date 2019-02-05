@@ -757,7 +757,7 @@ QPixmap AvatarFactory::getMucAvatar(const Jid& _jid)
     }
 
     // for mucs icons.avatar is always made of vcard and anything else is not supported. at least for now.
-    QImage img(std::move(QImage::fromData(data)));
+    QImage img(QImage::fromData(data));
 
     if (img.isNull()) {
         return QPixmap();
