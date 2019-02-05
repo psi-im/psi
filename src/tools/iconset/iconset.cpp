@@ -909,21 +909,20 @@ void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
 const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
 {
     if (!iconsets_) {
-        return 0;
+        return nullptr;
     }
 
-    const PsiIcon *i = 0;
-    Iconset *iconset;
-    foreach (iconset, *iconsets_) {
-        if ( iconset ) {
-            i = iconset->icon(name);
+    const PsiIcon *out = nullptr;
+    for (const Iconset * const iconset : *iconsets_) {
+        if (iconset) {
+            out = iconset->icon(name);
         }
 
-        if ( i ) {
+        if (out) {
             break;
         }
     }
-    return i;
+    return out;
 }
 
 void IconsetFactory::reset()
