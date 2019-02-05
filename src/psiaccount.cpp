@@ -5835,6 +5835,9 @@ QStringList PsiAccount::ignoreMucBookmarks() const
 void PsiAccount::shareImage(const Jid &target, const QImage &image, const QString &description,
                             std::function<void(const QString &getUrl)> callback)
 {
+    Q_UNUSED(target)
+    Q_UNUSED(description)
+
     // this method is intended to use xep-0385. But let's do something simple first. xep-0385 will be implemented later
     auto buffer = new QBuffer();
     buffer->open(QIODevice::ReadWrite);
