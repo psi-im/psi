@@ -5127,10 +5127,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         if (m.messageReceipt() == ReceiptReceived) {
             if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
                 foreach (ChatDlg *c, findChatDialogs(e->from(), false)) {
-                    if (c->autoSelectContact()  || c->jid().resource().isEmpty()
+                    if (c->autoSelectContact() || c->jid().resource().isEmpty()
                             || e->from().resource() == c->jid().resource()) {
-                        if (c->autoSelectContact())
-                            c->setJid(e->from());
                         c->incomingMessage(m);
                     }
                 }
