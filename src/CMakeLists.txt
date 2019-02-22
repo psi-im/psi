@@ -494,7 +494,7 @@ if(LINUX)
             install(FILES ${PROJECT_SOURCE_DIR}/cmake/modules/FindPsiPluginsApi.cmake DESTINATION ${DATA_INSTALL_DIR}/cmake/Modules)
         endif()
     endif()
-endif()
+endif(LINUX)
 
 if(WIN32)
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
@@ -514,7 +514,36 @@ if(WIN32)
     if(ENABLE_PORTABLE OR DEV_MODE)
         include(${PROJECT_SOURCE_DIR}/cmake/modules/win32-prepare-deps.cmake)
     endif()
-endif()
+endif(WIN32)
+
+if(APPLE)
+    include("${PROJECT_SOURCE_DIR}/mac/macos_definitions.cmake")
+
+    list(APPEND SOURCES ${MACOSX_ICON})
+    set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${CLIENT_NAME}")
+    install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin" BUNDLE DESTINATION ".")
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
+                          ${PROJECT_SOURCE_DIR}/mac/Info.plist.in)
+    install(CODE "execute_process(COMMAND ${MACDEPLOYQT} ${CLIENT_NAME}.app -verbose=2
+                                  WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX})")
+
+    if(NOT ONLY_BINARY)
+        if(INSTALL_EXTRA_FILES)
+            set(PROJECT_OUTPUT_DATA_DIR "${CLIENT_NAME}.app/Contents/Resources")
+            install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
+            install(DIRECTORY ${OTHER_FILES} DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
+            if(ENABLE_WEBKIT)
+                install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
+            endif()
+            if(LANGS_EXISTS)
+                install(FILES ${QM} DESTINATION ${PROJECT_OUTPUT_DATA_DIR}/translations)
+            endif()
+            install(FILES ${DOC_FILES} DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
+        endif()
+    endif()
+endif(APPLE)
 #INSTALL SECTION END
 
 if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))

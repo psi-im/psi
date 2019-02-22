@@ -153,9 +153,7 @@ include_regular_expression("^.*\\.h$")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
 
 #Set CXX and C Flags
-if(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
-elseif(WIN32)
+if(WIN32)
     include("${CMAKE_CURRENT_SOURCE_DIR}/win32/win32_definitions.cmake")
 endif()
 
