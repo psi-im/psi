@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
-
 if(IS_PSIPLUS)
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.psi-plus")
     set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2001-2019 Psi IM and Psi+ developers")

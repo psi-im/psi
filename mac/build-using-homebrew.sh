@@ -19,7 +19,20 @@
 # Ready to use app bundles built by that scripts are hosted on SourceForge:
 # https://sourceforge.net/projects/psiplus/files/macOS/tehnick/
 # https://sourceforge.net/projects/psi/files/Experimental-Builds/macOS/tehnick/
-
+#
+# Build dependencies of Psi and useful tools:
+# brew install --build-bottle pkg-config htop cmake coreutils gettext
+# brew install --build-bottle openssl pcre pcre2 libunistring libidn libidn2
+# brew install --build-bottle qt qtkeychain qca
+# brew install --build-bottle autoconf automake libtool readline
+# brew install --build-bottle minizip hunspell
+#
+# Additional tools:
+# brew install --build-bottle curl wget git
+#
+# Build dependencies of Psi plugins:
+# brew install --build-bottle tidy-html5 libgpg-error libgcrypt libotr
+# brew install --build-bottle libsignal-protocol-c
 
 set -e
 
@@ -28,16 +41,14 @@ CUR_DIR="$(dirname $(realpath -s ${0}))"
 MAIN_DIR="$(realpath -s ${CUR_DIR}/..)"
 TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
 
-
 [ -d "${MAIN_DIR}/src/plugins/generic" ] && \
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
-               -DPSI_LIBDIR=/Applications/Psi+.app/Contents/Resources/plugins \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DENABLE_WEBKIT=ON \
-               -DUSE_WEBENGINE=ON \
+               -DUSE_WEBENGINE=OFF \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \

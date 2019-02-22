@@ -17,6 +17,14 @@ if(LINUX)
     endif()
 endif()
 
+if(APPLE AND NOT PSI_LIBDIR)
+    if(NOT DEV_MODE)
+        set(PSI_LIBDIR "/Applications/${CLIENT_NAME}.app/Contents/Resources/plugins")
+    else()
+        set(PSI_LIBDIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins")
+    endif()
+endif()
+
 set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 
 find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg Sql REQUIRED)
@@ -163,6 +171,8 @@ include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
 if(LINUX)
     message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
     message(STATUS "${CLIENT_NAME} data directory: ${PSI_DATADIR}")
+elseif(APPLE)
+    message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
 endif()
 
 configure_file(config.h.in config.h @ONLY)
