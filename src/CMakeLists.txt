@@ -537,6 +537,13 @@ if(APPLE)
     set_property(TARGET ${PROJECT_NAME} PROPERTY OUTPUT_NAME "${CLIENT_NAME}")
     install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin" BUNDLE DESTINATION ".")
 
+    # Special hack for qca package from Homebrew
+    if(HOMEBREW)
+        install(DIRECTORY "${HOMEBREW}/opt/qca/lib/qt5/plugins/crypto"
+                DESTINATION "${CLIENT_NAME}.app/Contents/PlugIns")
+    endif()
+    # end of qca hack
+
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
                           ${PROJECT_SOURCE_DIR}/mac/Info.plist.in)
     install(CODE "execute_process(COMMAND ${MACDEPLOYQT} ${CLIENT_NAME}.app -verbose=2
@@ -561,5 +568,4 @@ endif(APPLE)
 if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))
     add_subdirectory(plugins)
 endif()
-
 

@@ -33,6 +33,11 @@
 # Build dependencies of Psi plugins:
 # brew install --build-bottle tidy-html5 libgpg-error libgcrypt libotr
 # brew install --build-bottle libsignal-protocol-c
+#
+# If you were uncareful and have installed Homebrew to /usr/local as suggested
+# by its developers now, then export HOMEBREW environment variable before
+# launching this script or uncomment next string:
+# export HOMEBREW="/usr/local"
 
 set -e
 
