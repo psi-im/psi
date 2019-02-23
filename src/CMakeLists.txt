@@ -530,7 +530,6 @@ if(APPLE)
     include("${PROJECT_SOURCE_DIR}/mac/macos_definitions.cmake")
 
     set(PROJECT_OUTPUT_DATA_DIR "${CLIENT_NAME}.app/Contents/Resources")
-    set(PLUGINS_INSTALL_PATH "${PROJECT_OUTPUT_DATA_DIR}/plugins")
 
     list(APPEND SOURCES ${MACOSX_ICON})
     set_source_files_properties(${MACOSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
@@ -544,10 +543,26 @@ if(APPLE)
     endif()
     # end of qca hack
 
+    # Simple and smart hack for using of macdeployqt to fix Psi plugins
+    if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))
+        install(DIRECTORY "${CMAKE_BINARY_DIR}/psi/plugins"
+                DESTINATION "${CLIENT_NAME}.app/Contents/PlugIns")
+    endif()
+    # end of plugins hack
+
+    # Create a deployable application bundle that contains the all necessary libraries
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
                           ${PROJECT_SOURCE_DIR}/mac/Info.plist.in)
     install(CODE "execute_process(COMMAND ${MACDEPLOYQT} ${CLIENT_NAME}.app -verbose=2
                                   WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX})")
+
+    # Move Psi plugins fixed by macdeployqt to proper place
+    if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))
+        install(CODE "execute_process(COMMAND mv ${CLIENT_NAME}.app/Contents/PlugIns/plugins \
+                                                 ${CLIENT_NAME}.app/Contents/Resources/
+                                      WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX})")
+    endif()
+    # end of plugins hack
 
     if(NOT ONLY_BINARY)
         if(INSTALL_EXTRA_FILES)
