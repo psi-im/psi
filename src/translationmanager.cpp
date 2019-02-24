@@ -78,7 +78,7 @@ QString TranslationManager::currentXMLLanguage() const
     return xmllang;
 }
 
-static bool loadQtTranslationHelper(const QString& language, const QString& dir, QTranslator* qt_translator)
+bool loadQtTranslationHelper(const QString& language, const QString& dir, QTranslator* qt_translator)
 {
     return qt_translator->load("qt_" + language, dir);
 }
@@ -86,6 +86,8 @@ static bool loadQtTranslationHelper(const QString& language, const QString& dir,
 bool TranslationManager::loadQtTranslation(const QString& language)
 {
     foreach(QString dir, translationDirs()) {
+        if(!QFile::exists(dir))
+            continue;
         if (loadQtTranslationHelper(language, dir, qt_translator_)) {
             return true;
         }
@@ -172,15 +174,14 @@ VarList TranslationManager::availableTranslations()
 QStringList TranslationManager::translationDirs() const
 {
     QStringList dirs;
-    dirs += ".";
-    dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
-    dirs += ApplicationInfo::resourcesDir();
-    QString subdir = "/translations";
-    dirs += "." + subdir;
-    dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir;
-    dirs += ApplicationInfo::resourcesDir() + subdir;
+    dirs << ".";
+    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
+    dirs << ApplicationInfo::resourcesDir();
+    const QString subdir = "/translations";
+    dirs << "." + subdir;
+    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir;
+    dirs << ApplicationInfo::resourcesDir() + subdir;
     return dirs;
 }
-
 
 TranslationManager* TranslationManager::instance_ = NULL;
