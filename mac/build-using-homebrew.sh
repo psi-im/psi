@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2019-02-23
+# Updated: 2019-02-25
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -50,10 +50,14 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
+[ "${WITHOUT_WEBKIT}" = "true" ] && \
+    ENABLE_WEBKIT="OFF" || \
+    ENABLE_WEBKIT="ON"
+
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
-               -DENABLE_WEBKIT=ON \
-               -DUSE_WEBENGINE=ON \
+               -DENABLE_WEBKIT=${ENABLE_WEBKIT} \
+               -DUSE_WEBENGINE=${ENABLE_WEBKIT} \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
