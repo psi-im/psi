@@ -55,11 +55,11 @@ AboutDlg::AboutDlg(QWidget* parent)
                "", "", "",
                tr("Past Lead Developer and Maintainer"));
     authors += details(QString::fromUtf8("Remko Tronçon"),
-               "", "", "http://el-tramo.be",
+               "", "", "https://el-tramo.be/",
                tr("Past Lead Developer"));
     authors += details(QString::fromUtf8("Michail Pishchagin"),
                "", "", "",
-               tr("Lead Widget Developer"));
+               tr("Past Lead Widget Developer"));
     authors += details(QString::fromUtf8("Maciej Niedzielski"),
                "", "", "",
                tr("Developer"));
@@ -75,13 +75,19 @@ AboutDlg::AboutDlg(QWidget* parent)
     authors += details(QString::fromUtf8("Vitaly Tonkacheyev"),
                "thetvg@gmail.com", "", "",
                tr("Developer"));
+    authors += details(QString::fromUtf8("Boris Pek"),
+               "tehnick-8@yandex.ru", "", "",
+               tr("Developer and Maintainer"));
     ui_.te_authors->setText( authors );
 
     // fill in Thanks To tab...
     QString thanks;
+    thanks += details(QString::fromUtf8("Boris Pek"),
+              "tehnick-8@yandex.ru", "", "",
+              tr("Language coordinator, macOS port, miscellaneous assistance"));
     thanks += details(QString::fromUtf8("Frederik Schwarzer"),
               "schwarzerf@gmail.com", "", "",
-              tr("Language coordinator, miscellaneous assistance"));
+              tr("Former language coordinator, miscellaneous assistance"));
     thanks += details(QString::fromUtf8("Akito Nozaki"),
               "anpluto@usa.net", "", "",
               tr("Former language coordinator, miscellaneous assistance"));

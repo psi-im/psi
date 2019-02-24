@@ -73,6 +73,9 @@
    </item>
    <item>
     <widget class="QTabWidget" name="tw_tabs">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <widget class="QWidget" name="tab_about">
       <attribute name="title">
        <string>About</string>
@@ -118,10 +121,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>A cross-platform XMPP client designed for the power user.&lt;br&gt;
-&lt;br&gt;
-Copyright © 2001-2019 The Psi Team.&lt;br&gt;
-</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cross-platform XMPP client aimed at experienced users.&lt;br/&gt;&lt;br/&gt;Copyright © 2001-2019 The Psi Team.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat">
           <enum>Qt::RichText</enum>
