@@ -1,0 +1,31 @@
+language: cpp
+
+dist: xenial
+sudo: required
+
+os:
+  - linux
+  - osx
+
+env:
+  - TARGET=linux64 WITHOUT_WEBKIT=true
+  - TARGET=linux64 WITHOUT_WEBKIT=false
+  - TARGET=macos64 WITHOUT_WEBKIT=true
+  - TARGET=macos64 WITHOUT_WEBKIT=false
+
+matrix:
+  exclude:
+    - env: TARGET=linux64 WITHOUT_WEBKIT=true
+      os: osx
+    - env: TARGET=linux64 WITHOUT_WEBKIT=false
+      os: osx
+    - env: TARGET=macos64 WITHOUT_WEBKIT=true
+      os: linux
+    - env: TARGET=macos64 WITHOUT_WEBKIT=false
+      os: linux
+
+install:
+  - ./tests/travis-ci/install-build-depends.sh
+
+script:
+  - ./tests/travis-ci/build-and-test.sh
