@@ -28,6 +28,10 @@
 
 #include "systeminfo.h"
 
+#if QT_VERSION < QT_VERSION_CHECK(5,5,0)
+#error "Minimal supported version of Qt in this file is 5.5.0"
+#endif
+
 #if defined(HAVE_X11)
 static QString lsbRelease(const QStringList& args)
 {
@@ -185,19 +189,18 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     os_name_str_ = os_str_;
 
     os_version_str_ = lsbRelease(QStringList() << "--release" << "--short");
-#if QT_VERSION >= QT_VERSION_CHECK(5,4,0)
+
     if(os_version_str_.isEmpty()) {
         os_version_str_ = QSysInfo::productVersion();
     }
     if (os_version_str_ == QLatin1String("unknown")) {
         os_version_str_.clear();
     }
-#endif
 
     if (!os_version_str_.isEmpty() && os_name_str_.contains(os_version_str_)) {
         os_version_str_.clear();
     }
-    
+
     if (os_version_str_.isEmpty()) {
         os_str_ = os_name_str_;
     } else {
@@ -206,44 +209,38 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 
 #elif defined(Q_OS_MAC)
     QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
-    os_name_str_ = "OS X";
-    if (v < QSysInfo::MV_10_7) {
-        os_name_str_ = "Mac OS X";
-    }
-    else if(v >= QSysInfo::MV_10_12) {
-        os_name_str_ = "macOS";
-    }
+    os_str_.clear();
     switch (v) {
-        case QSysInfo::MV_10_6:
-            os_version_str_ = "10.6 (Snow Leopard)";
-            break;
-        case QSysInfo::MV_10_7:
-            os_version_str_ = "10.7 (Lion)";
-            break;
-        case 0x000A: // QSysInfo::MV_10_8 should not be used for compatibility reasons
-            os_version_str_ = "10.8 (Mountain Lion)";
-            break;
         case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
+            os_name_str_ = "Mac OS X";
             os_version_str_ = "10.9 (Mavericks)";
             break;
-        case 0x000C: // QSysInfo::MV_10_10 should not be used for compatibility reasons
+        case QSysInfo::MV_10_10:
+            os_name_str_ = "Mac OS X";
             os_version_str_ = "10.10 (Yosemite)";
             break;
-        case 0x000D: // QSysInfo::MV_10_11 should not be used for compatibility reasons
+        case QSysInfo::MV_10_11:
+            os_name_str_ = "Mac OS X";
             os_version_str_ = "10.11 (El Capitan)";
             break;
-        case 0x000E: // QSysInfo::MV_10_12 should not be used for compatibility reasons
+        case QSysInfo::MV_10_12:
+            os_name_str_ = "macOS";
             os_version_str_ = "10.12 (Sierra)";
             break;
         case 0x000F: // QSysInfo::MV_10_13 should not be used for compatibility reasons
+            os_name_str_ = "macOS";
             os_version_str_ = "10.13 (High Sierra)";
             break;
+        case 0x0010: // QSysInfo::MV_10_14 should not be used for compatibility reasons
+            os_name_str_ = "macOS";
+            os_version_str_ = "10.14 (Mojave)";
+            break;
         default:
-            os_version_str_ = "";
+            os_version_str_ = QSysInfo::productVersion();
+            os_name_str_ = QSysInfo::productType();
+            os_str_ = QSysInfo::prettyProductName();
     }
-    if (os_version_str_.isEmpty()) {
-        os_str_ = "macOS";
-    } else {
+    if (os_str_.isEmpty()) {
         os_str_ = os_name_str_ + " " + os_version_str_;
     }
 #endif
