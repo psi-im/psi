@@ -245,11 +245,11 @@ if(LANGS_EXISTS AND (WIN32 OR APPLE))
     get_target_property(QtCore_location Qt5::Core LOCATION)
     get_filename_component(QtCore_DIR "${QtCore_location}" PATH)
     set(QT_ROOT_DIR "${QtCore_DIR}/../..")
-    set(QT_TRANSLATIONS_DIR "${QT_ROOT_DIR}/translations/")
-    file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
-    foreach(FILE ${QT_TRANSLATIONS})
-        list (APPEND QM ${FILE})
-    endforeach()
+    set(QT_TRANSLATIONS_DIR "${QT_ROOT_DIR}/translations")
+    if(EXISTS "${QT_TRANSLATIONS_DIR}")
+        file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
+        list(APPEND QM ${QT_TRANSLATIONS})
+    endif()
 endif()
 
 set(RESOURCES
@@ -426,14 +426,15 @@ set(DOC_FILES
 #PREPARE SECTION
 copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
 copy("${PROJECT_SOURCE_DIR}/iconsets/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconsets/" prepare-bin)
+copy("${PROJECT_SOURCE_DIR}/sound/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sound/" prepare-bin)
 if(ENABLE_WEBKIT)
     copy("${PROJECT_SOURCE_DIR}/themes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/themes/" prepare-bin)
 endif()
-copy("${PROJECT_SOURCE_DIR}/sound/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sound/" prepare-bin)
-if(ENABLE_PLUGINS)
+if(ENABLE_PLUGINS AND EXISTS ${PROJECT_SOURCE_DIR}/skins)
     copy("${PROJECT_SOURCE_DIR}/skins/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/skins/" prepare-bin)
 endif()
 copy("${PROJECT_SOURCE_DIR}/client_icons.txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin)
+#PREPARE SECTION END
 
 #INSTALL SECTION
 if(LINUX)
