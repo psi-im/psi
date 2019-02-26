@@ -217,74 +217,39 @@ if(USE_WEBENGINE)
 endif()
 
 if(LANGS_EXISTS)
-    set(TRANSLATIONS
-        ${TRANSLATIONS_DIR}/psi_be.ts
-        ${TRANSLATIONS_DIR}/psi_bg.ts
-        ${TRANSLATIONS_DIR}/psi_ca.ts
-        ${TRANSLATIONS_DIR}/psi_cs.ts
-        ${TRANSLATIONS_DIR}/psi_de.ts
-        ${TRANSLATIONS_DIR}/psi_en.ts
-        ${TRANSLATIONS_DIR}/psi_eo.ts
-        ${TRANSLATIONS_DIR}/psi_es.ts
-        ${TRANSLATIONS_DIR}/psi_et.ts
-        ${TRANSLATIONS_DIR}/psi_fa.ts
-        ${TRANSLATIONS_DIR}/psi_fi.ts
-        ${TRANSLATIONS_DIR}/psi_fr.ts
-        ${TRANSLATIONS_DIR}/psi_he.ts
-        ${TRANSLATIONS_DIR}/psi_hu.ts
-        ${TRANSLATIONS_DIR}/psi_it.ts
-        ${TRANSLATIONS_DIR}/psi_ja.ts
-        ${TRANSLATIONS_DIR}/psi_kk.ts
-        ${TRANSLATIONS_DIR}/psi_mk.ts
-        ${TRANSLATIONS_DIR}/psi_nl.ts
-        ${TRANSLATIONS_DIR}/psi_pl.ts
-        ${TRANSLATIONS_DIR}/psi_pt_BR.ts
-        ${TRANSLATIONS_DIR}/psi_pt.ts
-        ${TRANSLATIONS_DIR}/psi_ru.ts
-        ${TRANSLATIONS_DIR}/psi_sk.ts
-        ${TRANSLATIONS_DIR}/psi_sl.ts
-        ${TRANSLATIONS_DIR}/psi_sr@latin.ts
-        ${TRANSLATIONS_DIR}/psi_sv.ts
-        ${TRANSLATIONS_DIR}/psi_sw.ts
-        ${TRANSLATIONS_DIR}/psi_uk.ts
-        ${TRANSLATIONS_DIR}/psi_ur_PK.ts
-        ${TRANSLATIONS_DIR}/psi_vi.ts
-        ${TRANSLATIONS_DIR}/psi_zh_CN.ts
-        ${TRANSLATIONS_DIR}/psi_zh_TW.ts
+    file(GLOB PSI_TRANSLATIONS "${TRANSLATIONS_DIR}/psi_*.ts")
+
+    set_property(SOURCE ${PSI_TRANSLATIONS}
+        PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations
     )
 
-    set_property(SOURCE ${TRANSLATIONS}
-        PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations)
-
     add_custom_target(lupdate)
-    foreach(_LANG ${TRANSLATIONS})
-        if(EXISTS "${_LANG}")
-            get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
-            string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
-            add_custom_target(${_SHORT_LANG}
-                COMMAND ${QT_LUPDATE_EXECUTABLE}
-                ARGS -no-obsolete -recursive . ../iris -ts ${_LANG}
-                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-                VERBATIM
-            )
-            add_dependencies(lupdate ${_SHORT_LANG})
-        endif()
+    foreach(_LANG ${PSI_TRANSLATIONS})
+        get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
+        string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
+        add_custom_target(${_SHORT_LANG}
+            COMMAND ${QT_LUPDATE_EXECUTABLE}
+            ARGS -no-obsolete -recursive . ../iris -ts ${_LANG}
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            VERBATIM
+        )
+        add_dependencies(lupdate ${_SHORT_LANG})
     endforeach()
 
     # Psi translations
-    qt5_add_translation(QM ${TRANSLATIONS})
+    qt5_add_translation(QM ${PSI_TRANSLATIONS})
 endif()
 
 if(LANGS_EXISTS AND (WIN32 OR APPLE))
     # Qt translations
-#     get_target_property(QtCore_location Qt5::Core LOCATION)
-#     get_filename_component(QtCore_DIR "${QtCore_location}" PATH)
-#     set(QT_ROOT_DIR "${QtCore_DIR}/../..")
-#     set(QT_TRANSLATIONS_DIR "${QT_ROOT_DIR}/translations/")
-#     file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
-#     foreach(FILE ${QT_TRANSLATIONS})
-#         list (APPEND QM ${FILE})
-#     endforeach()
+    get_target_property(QtCore_location Qt5::Core LOCATION)
+    get_filename_component(QtCore_DIR "${QtCore_location}" PATH)
+    set(QT_ROOT_DIR "${QtCore_DIR}/../..")
+    set(QT_TRANSLATIONS_DIR "${QT_ROOT_DIR}/translations/")
+    file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
+    foreach(FILE ${QT_TRANSLATIONS})
+        list (APPEND QM ${FILE})
+    endforeach()
 endif()
 
 set(RESOURCES
