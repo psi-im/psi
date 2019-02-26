@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2019-02-25
+# Updated: 2019-02-27
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -50,33 +50,33 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ "${WITHOUT_WEBKIT}" = "true" ] && \
-    ENABLE_WEBKIT="OFF" || \
-    ENABLE_WEBKIT="ON"
+[ -z "${ENABLE_WEBENGINE}" ] && ENABLE_WEBENGINE="OFF"
 
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
-               -DENABLE_WEBKIT=${ENABLE_WEBKIT} \
-               -DUSE_WEBENGINE=${ENABLE_WEBKIT} \
+               -DENABLE_WEBKIT=${ENABLE_WEBENGINE} \
+               -DUSE_WEBENGINE=${ENABLE_WEBENGINE} \
+               -DUSE_WEBKIT=OFF \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
                -DUSE_QJDNS=OFF \
                -DUSE_CCACHE=OFF \
-               -DBUILD_DEV_PLUGINS=OFF"
+               -DBUILD_DEV_PLUGINS=OFF \
+               -DVERBOSE_PROGRAM_NAME=ON"
 
 mkdir -p "${MAIN_DIR}/builddir"
 cd "${MAIN_DIR}/builddir"
 
-cmake .. -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" ${BUILD_OPTIONS} "$@"
+cmake .. -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" ${BUILD_OPTIONS} ${@}
 cmake --build . --target all -- -j4
 
 [ "${BUILD_ONLY}" = "true" ] && exit 0
 
 cpack -G DragNDrop
 cp -a Psi*.dmg "${MAIN_DIR}/../"
+echo
 
+echo "App bundle is successfully built!"
 echo
-echo "App bundle is built successfully! See:"
-echo "$(realpath -s ${MAIN_DIR}/..)/$(ls Psi*.dmg | sort -V | tail -n1)"
-echo
+

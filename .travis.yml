@@ -8,20 +8,20 @@ os:
   - osx
 
 env:
-  - TARGET=linux64 WITHOUT_WEBKIT=true
-  - TARGET=linux64 WITHOUT_WEBKIT=false
-  - TARGET=macos64 WITHOUT_WEBKIT=true
-  - TARGET=macos64 WITHOUT_WEBKIT=false
+  - TARGET=linux64 ENABLE_WEBENGINE=OFF
+  - TARGET=linux64 ENABLE_WEBENGINE=ON
+  - TARGET=macos64 ENABLE_WEBENGINE=OFF
+  - TARGET=macos64 ENABLE_WEBENGINE=ON
 
 matrix:
   exclude:
-    - env: TARGET=linux64 WITHOUT_WEBKIT=true
+    - env: TARGET=linux64 ENABLE_WEBENGINE=OFF
       os: osx
-    - env: TARGET=linux64 WITHOUT_WEBKIT=false
+    - env: TARGET=linux64 ENABLE_WEBENGINE=ON
       os: osx
-    - env: TARGET=macos64 WITHOUT_WEBKIT=true
+    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
       os: linux
-    - env: TARGET=macos64 WITHOUT_WEBKIT=false
+    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
       os: linux
 
 install:
