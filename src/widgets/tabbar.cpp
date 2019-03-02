@@ -32,10 +32,10 @@
 #include <QMimeData>
 //#include <QDebug>
 
-#define PINNED_CHARS 4
+#define PINNED_CHARS 6
 
 // Do not count invisible &
-//#define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)
+#define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)
 
 class CloseButton : public QAbstractButton
 {
@@ -158,7 +158,7 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
         pLayout += rows;
     }
 
-    int *pGoodLayout = 0;
+    int *pGoodLayout = nullptr;
     double minDSf = 10000.; // Just huge number
 
     for (pPrevLayout = &layouts[0]; pPrevLayout < pLayout; pPrevLayout += rows) {
@@ -183,8 +183,8 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
                     minDSf = sf;
                 }
                 else {
-                    break;
                     addRow = false;
+                    break;
                 }
             }
         }
@@ -263,7 +263,7 @@ void TabBar::Private::layoutTabs()
     pinnedTabs = qMin(pinnedTabs, q->count());
     hackedTabs.clear();
 
-    QTabBar::ButtonPosition closeSide = (QTabBar::ButtonPosition)q->style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, q);
+    QTabBar::ButtonPosition closeSide = static_cast<QTabBar::ButtonPosition>(q->style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, q));
     // Tabs maybe 0 width in all-in-one mode
     int barWidth = qMax(q->width(), 1);
     int tabsWidthHint = 0;
@@ -301,10 +301,10 @@ void TabBar::Private::layoutTabs()
 
         tab.rect.setSize(tabSizeHint(tab));
         // Make pinned tab if need
-        //if (i < pinnedTabs){
-        //    tab.text = PINNED_TEXT(tab.text);
-        //    tab.rect.setWidth(pinnedTabWidth);
-        //}
+        if (i < pinnedTabs){
+            tab.text = PINNED_TEXT(tab.text);
+            tab.rect.setWidth(pinnedTabWidth);
+        }
         hackedTabs << tab;
     }
 
@@ -466,7 +466,7 @@ int TabBar::Private::pinnedTabWidthHint() const
     q->initStyleOption(&opt, 0);
     opt.leftButtonSize = QSize();
     opt.rightButtonSize = QSize();
-    // opt.text = "XXX";
+    opt.text = "XXX";
     opt.text = QString(PINNED_CHARS, 'X');
     QSize iconSize = opt.iconSize;
     int hframe = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
@@ -736,12 +736,12 @@ QRect TabBar::tabRect(int index) const
 
 QWidget *TabBar::tabButton(int index, ButtonPosition position) const
 {
-    ButtonPosition closeButtonPos = static_cast<ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, this));
+    ButtonPosition closeButtonPos = static_cast<ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this));
     if (!d->multiRow || position != closeButtonPos)
         return QTabBar::tabButton(index, position);
 
     Q_ASSERT(index < d->closeButtons.size());
-    return index < d->closeButtons.size() ? d->closeButtons[index] : 0;
+    return index < d->closeButtons.size() ? d->closeButtons[index] : nullptr;
 }
 
 int TabBar::tabAt(const QPoint &position) const
@@ -798,8 +798,13 @@ void TabBar::setDragsEnabled(bool enabled)
 void TabBar::setTabPinned(int index, bool pinned)
 {
     int newPos = d->pinnedTabs + (pinned ? 0 : -1);
-    if (index != newPos)
+    int tempPos = (index+1) < d->hackedTabs.count() ? index + 1 : index - 1; //get nearby tab index
+    if (index != newPos) {
+        if(index == TabBar::currentIndex()) { //Check is this tab active
+            setCurrentIndex(tempPos); // Dirty hack. Set nearby tab as active
+        }
         moveTab(index, newPos);
+    }
 
     d->pinnedTabs += pinned ? +1 : -1;
 
@@ -1029,7 +1034,7 @@ void TabBar::paintEvent(QPaintEvent *event)
         }
     }
 
-    ButtonPosition closeSide = (QTabBar::ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, this);
+    ButtonPosition closeSide = static_cast<QTabBar::ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this));
     QStyle::SubElement se = (closeSide == LeftSide ? QStyle::SE_TabBarTabLeftButton : QStyle::SE_TabBarTabRightButton);
     if (d->tabsClosable) {
         for (int i = 0; i < tabs.size(); i++) {
@@ -1281,8 +1286,8 @@ CloseButton::CloseButton(QWidget *parent)
 QSize CloseButton::sizeHint() const
 {
     ensurePolished();
-    int width = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, 0, this);
-    int height = style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight, 0, this);
+    int width = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, nullptr, this);
+    int height = style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight, nullptr, this);
     return QSize(width, height);
 }
 
@@ -1316,7 +1321,7 @@ void CloseButton::paintEvent(QPaintEvent *)
     if (const TabBar *tb = qobject_cast<const TabBar*>(parent())) {
         int index = tb->currentIndex();
         if (index >= 0) {
-            QTabBar::ButtonPosition position = static_cast<QTabBar::ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, tb));
+            QTabBar::ButtonPosition position = static_cast<QTabBar::ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, tb));
             if (tb->tabButton(index, position) == this)
                 opt.state |= QStyle::State_Selected;
         }

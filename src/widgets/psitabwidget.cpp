@@ -49,7 +49,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
     barLayout_->addWidget(tabBar_, 2);
     barLayout_->setAlignment(Qt::AlignLeft);
 
-    int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, tabBar_),
+    int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, nullptr, tabBar_),
         QApplication::globalStrut().width());
 
     downButton_ = new QToolButton(this);
@@ -145,7 +145,7 @@ int PsiTabWidget::count() {
  */
 QWidget *PsiTabWidget::currentPage() {
     if (currentPageIndex() == -1)
-        return 0;
+        return nullptr;
     return widgets_[currentPageIndex()];
 }
 
@@ -288,8 +288,8 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
     layout_->removeItem(stacked_);
 
     // addLayout sets parent and complains if it's already set
-    barLayout_->setParent(0);
-    stacked_->setParent(0);
+    barLayout_->setParent(nullptr);
+    stacked_->setParent(nullptr);
     if (tabsPosition_ == QTabWidget::North) {
         layout_->addLayout(barLayout_);
         layout_->addLayout(stacked_);
