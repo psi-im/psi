@@ -49,9 +49,9 @@
 //#define PROG_VERSION "0.15";
 #define PROG_CAPS_NODE "https://psi-im.org"
 #define PROG_IPC_NAME "org.psi-im.Psi"    // must not contain '\\' character on Windows
-#define PROG_OPTIONS_NS "https://psi-im.org/options"
-#define PROG_STORAGE_NS "https://psi-im.org/storage"
-#define PROG_FILECACHE_NS "https://psi-im.org/filecache"
+#define PROG_OPTIONS_NS "http://psi-im.org/options"
+#define PROG_STORAGE_NS "http://psi-im.org/storage"
+#define PROG_FILECACHE_NS "http://psi-im.org/filecache"
 #ifdef Q_OS_MAC
 #define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
 #else

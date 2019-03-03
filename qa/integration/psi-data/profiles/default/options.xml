@@ -1,5 +1,5 @@
 <!DOCTYPE options>
-<options version="0.15-dev (Feb  3 2010)" xmlns="https://psi-im.org/options">
+<options version="" xmlns="http://psi-im.org/options">
  <accounts comment="Account definitions and options"/>
  <options comment="Client options">
   <status>
