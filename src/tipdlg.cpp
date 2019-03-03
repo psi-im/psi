@@ -64,7 +64,7 @@ TipDlg::TipDlg(PsiCon* psi)
     // add useful tips here
     addTip( tr("Hello! Thank you for downloading Psi!\nWe hope that you will enjoy using it as we have enjoyed making it!\n"
            "<br><br>If you want to download another language translation, iconset or a new version of Psi, then you need to visit the <a href=\"https://psi-im.org\">Psi HomePage</a>.\n"
-           "<br><br>If you think, that you have found a bug or you just want to chat with other Psi users, then visit the <a href=\"http://forum.psi-im.org/\">Psi Forums</a>.\n"
+           "<br><br>If you think, that you have found a bug or you just want to chat with other Psi users, then visit the <a href=\"https://groups.google.com/forum/#!forum/psi-users\">Psi Forums</a>.\n"
            "<br><br><div align=\"right\"><i>the Psi Team</i></div>"), "" );
     addTip( tr("You can select multiple emoticon iconsets, and assign them priorities using the options dialog."), "" );
     addTip( tr("You can use multiple useful shortcuts while typing chat messages:<br>\n"
@@ -109,7 +109,7 @@ TipDlg::TipDlg(PsiCon* psi)
         "Michail Pishchagin and Kevin Smith" );
 
     // this MUST be the last tip
-    addTip( tr("This is the last tip.\n<br><br>If you want to contribute your own \"tip of the day\", please publish it on the <a href=\"http://forum.psi-im.org\">Psi Forums</a> (or mail it to the one of the developers), and we'll be happy to integrate it for the next release."), "" );
+    addTip( tr("This is the last tip.\n<br><br>If you want to contribute your own \"tip of the day\", please publish it on the <a href=\"https://groups.google.com/forum/#!forum/psi-users\">Psi Forums</a> (or mail it to the one of the developers), and we'll be happy to integrate it for the next release."), "" );
 
     updateTip();
     ck_showTips->setChecked( PsiOptions::instance()->getOption("options.ui.tip.show").toBool());
