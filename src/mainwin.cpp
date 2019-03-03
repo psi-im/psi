@@ -1038,7 +1038,7 @@ void MainWin::actOnlineHomeActivated ()
 
 void MainWin::actOnlineForumActivated ()
 {
-    DesktopUtil::openUrl("https://forum.psi-plus.com/");
+    DesktopUtil::openUrl("https://groups.google.com/forum/#!forum/psi-users");
 }
 
 void MainWin::actJoinPsiMUCActivated()
