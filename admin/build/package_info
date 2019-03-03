@@ -21,7 +21,7 @@ aspell_win_url=https://psi-im.org/files/deps/aspell-0.60.6.1-win.zip
 aspell_win_dir=aspell-0.60.6.1-win
 
 growl_file=Growl-1.3.1-SDK.zip
-growl_url=http://growl.cachefly.net/Growl-1.3.1-SDK.zip
+growl_url=https://growl.cachefly.net/Growl-1.3.1-SDK.zip
 growl_dir=Growl-1.3.1-SDK
 
 gstbundle_win_file=gstbundle-0.10.36-win.zip
