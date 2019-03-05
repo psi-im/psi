@@ -162,13 +162,11 @@
                 <temp-no-roster-animation comment="Disable animated icons. This option will be removed as soon as the contactlist code is optimized enough" type="bool">false</temp-no-roster-animation>
                 <account-sort-style type="QString">alpha</account-sort-style>
                 <css type="QString">/* frame of avatar - general settings */
-/* фрейм с аватаром - общие настройки */
 RosterAvatarFrame * {
     margin: 1px;
 }
 
 /* frame of avatar - avatar */
-/* фрейм с аватаром - аватар */
 QLabel#lb_avatar {
     margin-left: 0px;
     margin-top: 2px;
@@ -178,7 +176,6 @@ QLabel#lb_avatar {
 }
 
 /* frame of avatar - nick */
-/* фрейм с аватаром - ник */
 QLabel#lb_nick {
     margin: 2px;
     margin-right: 1px;
@@ -188,7 +185,6 @@ QLabel#lb_nick {
 }
 
 /* frame of avatar - buttons of PEP and status */
-/* фрейм с аватаром - кнопки PEP и статуса */
 QToolButton#tb_status, #tb_mood, #tb_activity {
     margin-left: 1px;
     margin-right: 1px;
@@ -202,13 +198,11 @@ QToolButton#tb_status {
 }
 
 /* frame of avatar - button of status, arrow */
-/* фрейм с аватаром - кнопка статуса, стрелка */
 QToolButton#tb_status::menu-indicator {
     background: argb(0,0,0,0);
 }
 
 /* frame of avatar - field of status message */
-/* фрейм с аватаром - строка статусного сообщения */
 QLineEdit#le_status_text {
     margin-right: 0px;
     margin-bottom: 2px;
