@@ -587,7 +587,7 @@ void PsiContact::openActiveChat(QString resource)
 void PsiContact::sendFile()
 {
     if (account())
-        account()->actionSendFile(jid());
+        account()->sendFiles(jid());
 }
 
 void PsiContact::inviteToGroupchat(QString groupChat)

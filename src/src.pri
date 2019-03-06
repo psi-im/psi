@@ -235,7 +235,9 @@ HEADERS += \
     $$PWD/alertmanager.h \
     $$PWD/mcmdcompletion.h \
     $$PWD/captchadlg.h \
-    $$PWD/filesharedlg.h
+    $$PWD/filesharedlg.h \
+    $$PWD/multifiletransfermodel.h \
+    $$PWD/multifiletransferview.h
 
 # Source files
 SOURCES += \
@@ -369,7 +371,9 @@ SOURCES += \
     $$PWD/alertmanager.cpp \
     $$PWD/mcmdcompletion.cpp \
     $$PWD/captchadlg.cpp \
-    $$PWD/filesharedlg.cpp
+    $$PWD/filesharedlg.cpp \
+    $$PWD/multifiletransfermodel.cpp \
+    $$PWD/multifiletransferview.cpp
 
 CONFIG += filetransfer
 filetransfer {

@@ -379,7 +379,7 @@ void ChatDlg::dropEvent(QDropEvent* event)
     }
 
     if (!files.isEmpty()) {
-        account()->actionSendFiles(jid(), files);
+        account()->sendFiles(jid(), files);
     }
 }
 

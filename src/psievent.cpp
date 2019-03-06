@@ -36,6 +36,7 @@
 #include "atomicxmlfile/atomicxmlfile.h"
 #include "psioptions.h"
 #include "avcall/avcall.h"
+#include "jingle.h"
 
 // FIXME renames those
 const int eventPriorityHeadline = 0;
@@ -485,11 +486,18 @@ bool AuthEvent::sentToChatWindow() const
 //----------------------------------------------------------------------------
 // FileEvent
 //----------------------------------------------------------------------------
-FileEvent::FileEvent(const Jid &j, FileTransfer *_ft, PsiAccount *acc)
-:PsiEvent(acc)
+FileEvent::FileEvent(const Jid &j, FileTransfer *_ft, PsiAccount *acc) :
+    PsiEvent(acc)
 {
     v_from = j;
     ft = _ft;
+}
+
+FileEvent::FileEvent(const Jid &j, XMPP::Jingle::Session *jingleFt, PsiAccount *acc) :
+    PsiEvent(acc)
+{
+    v_from = j;
+    this->jingleFt = jingleFt;
 }
 
 FileEvent::~FileEvent()
@@ -522,8 +530,15 @@ void FileEvent::setFrom(const Jid &j)
 FileTransfer *FileEvent::takeFileTransfer()
 {
     FileTransfer *_ft = ft;
-    ft = 0;
+    ft = nullptr;
     return _ft;
+}
+
+XMPP::Jingle::Session *FileEvent::takeJingleSession()
+{
+    Jingle::Session *s = jingleFt.data();
+    jingleFt = nullptr;
+    return s;
 }
 
 QString FileEvent::description() const

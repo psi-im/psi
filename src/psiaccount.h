@@ -281,7 +281,6 @@ public:
                              bool *_isTemporaryAuthFailure, bool *_needAlert);
 
     void deleteQueueFile();
-    void sendFiles(const Jid&, const QStringList&, bool direct = false);
 
     PEPManager* pepManager();
     ServerInfoManager* serverInfoManager();
@@ -331,6 +330,7 @@ signals:
     void rosterRequestFinished();
 
 public slots:
+    void sendFiles(const Jid&, const QStringList &fileList = QStringList());
     void fastLogout();
     void setStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
     void showStatusDialog(const QString& presetName);
@@ -407,8 +407,6 @@ public slots:
     void actionDisco(const Jid &, const QString &);
     void actionInvite(const Jid &, const QString &);
     void actionVoice(const Jid&);
-    void actionSendFile(const Jid &);
-    void actionSendFiles(const Jid &, const QStringList&);
     void actionExecuteCommand(const Jid& j, const QString& = QString());
     void actionExecuteCommandSpecific(const Jid&, const QString& = QString());
     void actionSetBlock(bool);
@@ -427,7 +425,6 @@ public slots:
     void invokeGCMessage(const Jid &);
     void invokeGCChat(const Jid &);
     void invokeGCInfo(const Jid &);
-    void invokeGCFile(const Jid &);
 
 private slots:
     void tls_handshaken();
@@ -458,6 +455,7 @@ private slots:
     void incomingGoogleFileTransfer(GoogleFileTransfer* ft);
 #endif
     void client_incomingFileTransfer();
+    void client_incomingJingle(Jingle::Session *session);
     void sessionStart_finished();
 
     void serverFeaturesChanged();
@@ -520,7 +518,7 @@ protected:
 private slots:
     void eventFromXml(const PsiEvent::Ptr &e);
     void simulateContactOffline(const XMPP::Jid& contact);
-    void newPgpPassPhase(const QString& id, const QString& pass);
+    void newPgpPassPhase(const QString& id, const QString& pass);    
 
 private:
     class Private;

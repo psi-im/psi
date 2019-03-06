@@ -515,7 +515,7 @@ void PsiContactMenu::Private::sendFile()
 {
     if (!contact_)
         return;
-    contact_->account()->actionSendFile(contact_->jid());
+    contact_->account()->sendFiles(contact_->jid());
 }
 
 void PsiContactMenu::Private::transportLogon()

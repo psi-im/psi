@@ -39,6 +39,7 @@
 
 #include "iris/processquit.h"
 #include "s5b.h"
+#include "jingle-s5b.h"
 #include "xmpp_caps.h"
 #include "psiaccount.h"
 #include "activeprofiles.h"
@@ -813,7 +814,6 @@ QStringList PsiCon::xmppFatures() const
         << "urn:xmpp:avatar:metadata";
 
     if(AvCallManager::isSupported()) {
-        features << "urn:xmpp:jingle:1";
         features << "urn:xmpp:jingle:transports:ice-udp:1";
         features << "urn:xmpp:jingle:apps:rtp:1";
         features << "urn:xmpp:jingle:apps:rtp:audio";
@@ -1035,6 +1035,7 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
     connect(pa, SIGNAL(disconnected()), SLOT(proceedWithSleep()));
     if (d->s5bServer) {
         pa->client()->s5bManager()->setServer(d->s5bServer);
+        pa->client()->jingleS5BManager()->setServer(d->s5bServer);
     }
     return pa;
 }
@@ -1688,12 +1689,17 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
     if( e->type() == PsiEvent::File ) {
         FileEvent::Ptr fe = e.staticCast<FileEvent>();
         FileTransfer *ft = fe->takeFileTransfer();
+        auto *sess = fe->takeJingleSession();
         e->account()->eventQueue()->dequeue(e);
         e->account()->queueChanged();
         e->account()->cpUpdate(*u);
         if(ft) {
             FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
             bringToFront(w);
+        }
+        if (sess) {
+            // TODO design dialog for Jingle file transfer
+            //w = new FileRequestDlg(fe->timeStamp(), sess, e->account());
         }
         return;
     }

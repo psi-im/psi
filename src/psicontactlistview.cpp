@@ -258,7 +258,7 @@ void PsiContactListView::dropEvent(QDropEvent *e)
 
     if(!files.isEmpty()) {
         e->acceptProposedAction();
-        contact->account()->sendFiles(contact->jid(), files, true);
+        contact->account()->sendFiles(contact->jid(), files);
         return;
     }
 

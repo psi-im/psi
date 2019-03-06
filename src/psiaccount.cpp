@@ -124,6 +124,7 @@
 #include "iconwidget.h"
 #ifdef FILETRANSFER
 #include "filetransdlg.h"
+#include "jingle-ft.h"
 #endif
 #include "systeminfo.h"
 #include "avatars.h"
@@ -1168,7 +1169,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     // Initialize server info stuff
     connect(d->client->serverInfoManager(), SIGNAL(featuresChanged()), SLOT(serverFeaturesChanged()));
 
-    d->client->httpFileUploadManager()->setNetworkAccessManager(d->psi->networkAccessManager());
+    d->client->setNetworkAccessManager(d->psi->networkAccessManager());
 
     // Initialize PubSub stuff
     d->pepManager = new PEPManager(d->client, d->client->serverInfoManager());
@@ -3011,6 +3012,25 @@ void PsiAccount::client_incomingFileTransfer()
 #endif
 }
 
+void PsiAccount::client_incomingJingle(Jingle::Session *session)
+{
+    if (!session)
+        return;
+    QString ns = session->preferredApplication();
+#ifdef FILETRANSFER
+    if (ns == Jingle::FileTransfer::NS) {
+        if (session->allApplicationTypes().size() > 1) {
+            // file transfer dialog understands only file transfers..
+            session->reject(); // TODO reason?
+            return;
+        }
+        FileEvent::Ptr fe(new FileEvent(session->peer().full(), session, this));
+        fe->setTimeStamp(QDateTime::currentDateTime());
+        handleEvent(fe, IncomingStanza);
+    }
+#endif
+}
+
 void PsiAccount::reconnect()
 {
     if (doReconnect && !isConnected()) {
@@ -3963,7 +3983,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
         connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
         connect(c, SIGNAL(aInfo(const Jid &)), SLOT(actionInfo(const Jid &)));
         connect(c, SIGNAL(aHistory(const Jid &)), SLOT(actionHistory(const Jid &)));
-        connect(c, SIGNAL(aFile(const Jid &)), SLOT(actionSendFile(const Jid &)));
+        connect(c, SIGNAL(aFile(const Jid &)), SLOT(sendFiles(const Jid &)));
         connect(c, SIGNAL(aVoice(const Jid &)), SLOT(actionVoice(const Jid &)));
         connect(d->psi, SIGNAL(emitOptionsUpdate()), c, SLOT(optionsUpdate()));
         connect(this, SIGNAL(updateContact(const Jid &, bool)), c, SLOT(updateContact(const Jid &, bool)));
@@ -4076,7 +4096,7 @@ void PsiAccount::actionVoice(const Jid &j)
     */
 }
 
-void PsiAccount::sendFiles(const Jid &j, const QStringList &l, bool direct)
+void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
 {
 #ifdef FILETRANSFER
     Jid j2 = j;
@@ -4088,14 +4108,13 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &l, bool direct)
 
     // Create a dialog for each file in the list. Once the xfer dialog itself
     // supports multiple files, only the 'else' branch needs to stay.
-    if (!l.isEmpty()) {
-        for (QStringList::ConstIterator f = l.begin(); f != l.end(); ++f ) {
-            QStringList fl(*f);
-            FileRequestDlg *w = new FileRequestDlg(j2, d->psi, this, fl, direct);
+    if (!fileList.isEmpty()) {
+        for (auto const &f: fileList) {
+            FileRequestDlg *w = new FileRequestDlg(j2, d->psi, this, QStringList(f));
             w->show();
         }
     } else {
-        FileRequestDlg *w = new FileRequestDlg(j2, d->psi, this, l, direct);
+        FileRequestDlg *w = new FileRequestDlg(j2, d->psi, this, fileList);
         w->show();
     }
 #else
@@ -4103,17 +4122,6 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &l, bool direct)
     Q_UNUSED(l);
     Q_UNUSED(direct);
 #endif
-}
-
-void PsiAccount::actionSendFile(const Jid &j)
-{
-    QStringList l;
-    sendFiles(j, l);
-}
-
-void PsiAccount::actionSendFiles(const Jid &j, const QStringList &l)
-{
-    sendFiles(j, l);
 }
 
 void PsiAccount::actionQueryVersion(const Jid &j)
@@ -6467,11 +6475,6 @@ void PsiAccount::invokeGCChat(const Jid &j)
 void PsiAccount::invokeGCInfo(const Jid &j)
 {
     actionInfo(j);
-}
-
-void PsiAccount::invokeGCFile(const Jid &j)
-{
-    actionSendFile(j);
 }
 
 void PsiAccount::toggleSecurity(const Jid &j, bool b)

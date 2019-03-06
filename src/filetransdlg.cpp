@@ -198,14 +198,14 @@ void FileTransferHandler::send(const XMPP::Jid &to, const QString &fname, const 
 
     // try to make thumbnail
     QImage img(fname);
-    XMPP::FTThumbnail thumb;
+    XMPP::Thumbnail thumb;
     if (!img.isNull()) {
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
         img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         img.save(&buffer, "PNG");
-        thumb = XMPP::FTThumbnail(ba, "image/png", img.width(), img.height());
+        thumb = XMPP::Thumbnail(ba, "image/png", img.width(), img.height());
     }
 
     d->ft->sendFile(d->peer, d->fileName, d->fileSize, desc, thumb);
@@ -701,7 +701,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
     lb_thumbnail->hide();
     tb_browse->hide();
 
-    if (!ft->thumbnail().isNull()) {
+    if (ft->thumbnail().isValid()) {
         lb_thumbnail->resize(ft->thumbnail().width, ft->thumbnail().height);
         JT_BitsOfBinary *task = new JT_BitsOfBinary(pa->client()->rootTask());
         connect(task, SIGNAL(finished()), SLOT(thumbnailReceived()));

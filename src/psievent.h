@@ -35,7 +35,10 @@
 
 namespace XMPP {
     class FileTransfer;
-};
+    namespace Jingle {
+        class Session;
+    }
+}
 
 class PsiCon;
 class PsiAccount;
@@ -249,6 +252,7 @@ class FileEvent : public PsiEvent
     Q_OBJECT
 public:
     FileEvent(const XMPP::Jid &j, XMPP::FileTransfer *ft, PsiAccount *acc);
+    FileEvent(const XMPP::Jid &j, XMPP::Jingle::Session *jingleFt, PsiAccount *acc);
     FileEvent(const FileEvent &from);
     ~FileEvent();
 
@@ -257,6 +261,7 @@ public:
     XMPP::Jid from() const;
     void setFrom(const XMPP::Jid &);
     XMPP::FileTransfer *takeFileTransfer();
+    XMPP::Jingle::Session *takeJingleSession();
 
     virtual int priority() const;
 
@@ -267,6 +272,7 @@ public:
 private:
     XMPP::Jid v_from;
     QPointer<XMPP::FileTransfer> ft;
+    QPointer<XMPP::Jingle::Session> jingleFt;
 };
 
 // roster item exchange event

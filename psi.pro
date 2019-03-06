@@ -23,7 +23,8 @@ OTHER_FILES += options/default.xml \
     TODO \
     psi.qc \
     qcm/*.qcm \
-    psi.astylerc
+    psi.astylerc \
+    CMakeLists.txt
 
 webkit {
     OTHER_FILES += themes/chatview/util.js \
