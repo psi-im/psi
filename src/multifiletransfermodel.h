@@ -22,7 +22,6 @@
 #define MULTIFILETRANSFERMODEL_H
 
 #include <QAbstractListModel>
-#include <QScopedPointer>
 #include <QSet>
 #include <QTimer>
 
@@ -37,7 +36,7 @@ public:
         Outgoing
     };
 
-    enum Status {
+    enum State {
         Pending,
         Active,
         Failed,
@@ -75,47 +74,5 @@ private:
     QSet<MultiFileTransferItem*> updatedTransfers;
     QTimer updateTimer;
 };
-
-
-class MultiFileTransferItem : public QObject
-{
-    Q_OBJECT
-public:
-
-    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize);
-    ~MultiFileTransferItem();
-
-    const QString &displayName() const;
-    quint64 fullSize() const;
-    quint64 currentSize() const;
-    QIcon icon() const;
-    QString mediaType() const;
-    QString description() const;
-    quint32 speed() const;
-    MultiFileTransferModel::Direction direction() const;
-    MultiFileTransferModel::Status status() const;
-    quint32 timeRemaining() const;
-    QString errorString() const;
-    void setCurrentSize(quint64 newCurrentSize);
-    void setThumbnail(const QIcon &img);
-    void setMediaType(const QString &mediaType);
-    void setDescription(const QString &description);
-    void setFailure(const QString &error);
-    void setSuccess();
-signals:
-    void descriptionChanged(); // user changes description
-    void rejectRequested();    // user selects reject in UI
-    void deleteFileRequested();// user selects delete file from context menu
-    void openDirRequested();   // user wants to open directory with file
-    void openFileRequested();  // user wants to open file
-
-    void aboutToBeDeleted();   // just this object. mostly to notify the model
-    void updated();            // to notify model mostly
-private:
-    friend class MultiFileTransferModel;
-    struct Private;
-    QScopedPointer<Private> d;
-};
-
 
 #endif // MULTIFILETRANSFERMODEL_H

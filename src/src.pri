@@ -237,6 +237,7 @@ HEADERS += \
     $$PWD/captchadlg.h \
     $$PWD/filesharedlg.h \
     $$PWD/multifiletransfermodel.h \
+    $$PWD/multifiletransferitem.h \
     $$PWD/multifiletransferview.h
 
 # Source files
@@ -373,6 +374,7 @@ SOURCES += \
     $$PWD/captchadlg.cpp \
     $$PWD/filesharedlg.cpp \
     $$PWD/multifiletransfermodel.cpp \
+    $$PWD/multifiletransferitem.cpp \
     $$PWD/multifiletransferview.cpp
 
 CONFIG += filetransfer
