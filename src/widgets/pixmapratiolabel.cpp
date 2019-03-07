@@ -20,6 +20,16 @@ void PixmapRatioLabel::setMaxPixmapSize(const QSize &size)
     _maxPixSize = size;
 }
 
+void PixmapRatioLabel::setResizePolicy(PixmapRatioLabel::Policy policy)
+{
+    _policy = policy;
+}
+
+PixmapRatioLabel::Policy PixmapRatioLabel::resizePolicy() const
+{
+    return _policy;
+}
+
 void PixmapRatioLabel::paintEvent(QPaintEvent *event)
 {
     bool needAdjust = false;

@@ -9,6 +9,9 @@ class PixmapRatioLabel : public QLabel
 {
     Q_OBJECT
 
+    Q_ENUMS( Policy )
+    Q_PROPERTY( Policy resizePolicy READ resizePolicy WRITE setResizePolicy )
+
 public:
     enum class Policy : char {
         FitVertical,
@@ -19,7 +22,9 @@ public:
     explicit PixmapRatioLabel(QWidget *parent = nullptr);
     void setPixmap(const QPixmap &pix);
     void setMaxPixmapSize(const QSize &size);
-    inline void setResizePolicy(Policy policy) { _policy = policy; }
+    void setResizePolicy(Policy policy);
+    Policy resizePolicy() const;
+
     inline QSize scaledSize() const { return _scaledPix.size(); }
 
 protected:

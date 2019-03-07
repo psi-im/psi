@@ -678,3 +678,5 @@ mac {
 
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
+
+OTHER_FILES += $$PWD/src.cmake

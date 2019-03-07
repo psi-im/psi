@@ -87,8 +87,10 @@ windows {
 include(src.pri)
 
 # don't clash with unittests
-SOURCES += main.cpp
-HEADERS += main.h
+SOURCES += main.cpp \
+    multifiletransferdlg.cpp
+HEADERS += main.h \
+    multifiletransferdlg.h
 
 ################################################################################
 # Translation
@@ -181,3 +183,6 @@ mac {
     RC_FILE = ../mac/application.icns
     QMAKE_POST_LINK = cp -R ../certs ../iconsets ../sound `dirname $(TARGET)`/../Resources ; echo "APPLpsi " > `dirname $(TARGET)`/../PkgInfo
 }
+
+FORMS += \
+    multifiletransferdlg.ui

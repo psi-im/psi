@@ -74,6 +74,7 @@
 #ifdef FILETRANSFER
 #include "filetransfer.h"
 #include "filetransdlg.h"
+#include "multifiletransferdlg.h"
 #endif
 #include "accountmodifydlg.h"
 #include "psiactionlist.h"
@@ -1699,7 +1700,9 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         }
         if (sess) {
             // TODO design dialog for Jingle file transfer
-            //w = new FileRequestDlg(fe->timeStamp(), sess, e->account());
+            auto w = new MultiFileTransferDlg(e->account());
+            w->showIncoming(sess);
+            bringToFront(w);
         }
         return;
     }

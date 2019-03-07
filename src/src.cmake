@@ -40,6 +40,7 @@ list(APPEND FORMS
     disco.ui
     filetrans.ui
     filesharedlg.ui
+    multifiletransferdlg.ui
     geolocation.ui
     groupchatdlg.ui
     groupchattopicdlg.ui
@@ -117,6 +118,10 @@ list(APPEND HEADERS
     eventdlg.h
     filecache.h
     filetransdlg.h
+    multifiletransferitem.h
+    multifiletransfermodel.h
+    multifiletransferview.h
+    multifiletransferdlg.h
     filesharedlg.h
     fileutil.h
     gcuserview.h
@@ -216,6 +221,10 @@ list(APPEND SOURCES
     discodlg.cpp
     eventdlg.cpp
     filetransdlg.cpp
+    multifiletransferitem.cpp
+    multifiletransfermodel.cpp
+    multifiletransferview.cpp
+    multifiletransferdlg.cpp
     gcuserview.cpp
     groupchatdlg.cpp
     htmltextcontroller.cpp
