@@ -1,5 +1,5 @@
 /*
- * multifiletransfermodel.cpp - model for file transfers
+ * multifiletransferitem.h - file transfer item
  * Copyright (C) 2019 Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
