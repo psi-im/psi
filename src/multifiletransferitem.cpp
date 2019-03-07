@@ -1,5 +1,5 @@
 /*
- * multifiletransfermodel.cpp - model for file transfers
+ * multifiletransferitem.cpp - file transfers item
  * Copyright (C) 2019 Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ QString MultiFileTransferItem::description() const
 quint32 MultiFileTransferItem::speed() const
 {
     if (d->lastSpeeds.size()) {
-        quint64 sum;
+        quint64 sum = 0;
         for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
             sum += d->lastSpeeds.at(i);
         }
