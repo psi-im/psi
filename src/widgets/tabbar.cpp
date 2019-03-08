@@ -30,6 +30,7 @@
 #include <QLine>
 #include <QDrag>
 #include <QMimeData>
+#include <memory>
 //#include <QDebug>
 
 #define PINNED_CHARS 6
@@ -121,7 +122,7 @@ TabBar::Private::Private(TabBar *base)
 
 LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double baseSf)
 {
-    int layouts[50 * 10000]; // FIXME
+    std::unique_ptr<int[]> layouts(new int[50 * 10000]);
     for (int i = 0; i < rows; ++i) {
         layouts[i] = i;
     }
@@ -335,7 +336,7 @@ void TabBar::Private::layoutTabs()
         normalRows = rows - pinnedRows;
     }
 
-    double sf = static_cast<float>(barWidth * normalRows) / tabsWidthHint;
+    double sf = static_cast<double>(barWidth * normalRows) / tabsWidthHint;
     LayoutSf layout;
     if (rows == 1 || hackedTabs.size() == 1) {
         // Only one row in bar
@@ -369,7 +370,7 @@ void TabBar::Private::layoutTabs()
                 if (layout.isEmpty()) {
                     normalRows++;
                     rows++;
-                    sf = static_cast<float>(barWidth * normalRows) / tabsWidthHint;
+                    sf = static_cast<double>(barWidth * normalRows) / tabsWidthHint;
                 }
             }
             cachedLayout.layout = layout;
