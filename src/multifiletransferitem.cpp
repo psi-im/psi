@@ -102,7 +102,7 @@ MultiFileTransferModel::Direction MultiFileTransferItem::direction() const
     return d->direction;
 }
 
-MultiFileTransferModel::State MultiFileTransferItem::status() const
+MultiFileTransferModel::State MultiFileTransferItem::state() const
 {
     return d->state;
 }

@@ -51,12 +51,19 @@ MultiFileTransferModel::~MultiFileTransferModel()
 
 int MultiFileTransferModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid()? 0 : transfers.size(); // only for root it's valid
+    return parent.isValid()? 0 : transfers.size() + 1; // only for root it's valid
 }
 
 QVariant MultiFileTransferModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()) {
+        return QVariant();
+    }
+
+    if (index.row() == transfers.size()) { // only possible when we have "+" button as the last item
+        if (role == StateRole) {
+            return AddTemplate;
+        }
         return QVariant();
     }
 
@@ -82,8 +89,8 @@ QVariant MultiFileTransferModel::data(const QModelIndex &index, int role) const
         return item->description();
     case DirectionRole:
         return item->direction();
-    case StatusRole:
-        return item->status();
+    case StateRole:
+        return item->state();
     case TimeRemainingRole:
         return item->timeRemaining();
     case ErrorStringRole:

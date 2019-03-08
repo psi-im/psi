@@ -25,10 +25,11 @@ public:
     explicit MultiFileTransferDlg(PsiAccount *acc, QWidget *parent = nullptr);
     ~MultiFileTransferDlg();
 
-    void showOutgoing(const XMPP::Jid &jid);
+    void showOutgoing(const XMPP::Jid &jid, const QStringList &fileList);
     void showIncoming(XMPP::Jingle::Session *session);
 private:
     void updatePeerVisuals();
+    void updateMyVisuals();
 
 private:
     Ui::MultiFileTransferDlg *ui;

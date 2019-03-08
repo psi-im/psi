@@ -66,6 +66,7 @@
 #include "textutil.h"
 #include "httpauthmanager.h"
 #ifdef HAVE_PGPUTIL
+#include "multifiletransferdlg.h"
 #include "pgpkeydlg.h"
 #include "pgputil.h"
 #endif
@@ -4106,6 +4107,15 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
             j2 = j2.withResource((*u->userResourceList().priority()).name());
     }
 
+    Features f = client()->capsManager()->features(j2);
+#if 0
+    if (f.hasJingleFT()) { // we have to check supported transprts as well. but s5b is mandatory
+        auto w = new MultiFileTransferDlg(this);
+        w->showOutgoing(j2, fileList);
+        w->show();
+        return;
+    }
+#endif
     // Create a dialog for each file in the list. Once the xfer dialog itself
     // supports multiple files, only the 'else' branch needs to stay.
     if (!fileList.isEmpty()) {

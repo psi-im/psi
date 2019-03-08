@@ -106,7 +106,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     quint64 fullSize = index.data(MultiFileTransferModel::FullSizeRole).toULongLong();
     quint64 curSize = index.data(MultiFileTransferModel::CurrentSizeRole).toULongLong();
     int timeRemaining = index.data(MultiFileTransferModel::TimeRemainingRole).toULongLong();
-    auto status = index.data(MultiFileTransferModel::StatusRole).toInt();
+    auto status = index.data(MultiFileTransferModel::StateRole).toInt();
 
     // -----------------------------
     // Transfer current status line
@@ -183,8 +183,8 @@ bool MultiFileTransferDelegate::editorEvent(QEvent *event, QAbstractItemModel *m
         // seems like we need context menu
         QMenu *menu = new QMenu;
         menu->setAttribute(Qt::WA_DeleteOnClose);
-        auto status = model->data(index, MultiFileTransferModel::StatusRole).toInt();
-        if (status == MultiFileTransferModel::Pending || MultiFileTransferModel::Active) {
+        auto status = model->data(index, MultiFileTransferModel::StateRole).toInt();
+        if (status == MultiFileTransferModel::Pending || status == MultiFileTransferModel::Active) {
             connect(menu->addAction(tr("Reject")), &QAction::triggered, this, [model, index](){
                 model->setData(index, 1, MultiFileTransferModel::RejectFileRole);
             });

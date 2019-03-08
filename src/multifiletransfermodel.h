@@ -37,6 +37,7 @@ public:
     };
 
     enum State {
+        AddTemplate,
         Pending,
         Active,
         Failed,
@@ -49,7 +50,7 @@ public:
         SpeedRole,
         DescriptionRole,
         DirectionRole,
-        StatusRole,
+        StateRole,
         TimeRemainingRole,
         ErrorStringRole,
 

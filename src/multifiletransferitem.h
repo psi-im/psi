@@ -41,7 +41,7 @@ public:
     QString description() const;
     quint32 speed() const;
     MultiFileTransferModel::Direction direction() const;
-    MultiFileTransferModel::State status() const;
+    MultiFileTransferModel::State state() const;
     quint32 timeRemaining() const;
     QString errorString() const;
     QString toolTipText() const;

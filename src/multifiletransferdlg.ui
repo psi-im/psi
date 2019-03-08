@@ -30,7 +30,7 @@
       </widget>
      </item>
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
+      <layout class="QVBoxLayout" name="ltNames">
        <item>
         <widget class="QLabel" name="lblMyName">
          <property name="text">
