@@ -236,7 +236,7 @@ bool MultiFileTransferDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *
     Q_UNUSED(option);
     if (index.isValid() && event->type() == QEvent::ToolTip) {
         QString tip = index.data(Qt::ToolTipRole).toString();
-        PsiToolTip::showText(event->pos(), tip, view);
+        PsiToolTip::showText(view->mapToGlobal(event->pos()), tip, view);
         return true;
     }
     return false;
@@ -257,6 +257,7 @@ bool MultiFileTransferDelegate::editorEvent(QEvent *event, QAbstractItemModel *m
                 model->setData(index, 1, MultiFileTransferModel::RejectFileRole);
             });
         }
+        menu->popup(me->globalPos());
         return true;
     }
     return false;

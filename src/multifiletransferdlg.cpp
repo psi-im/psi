@@ -78,7 +78,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
         for (auto const &j: accs) {
             m.addAction(j.first.full())->setData(QVariant::fromValue(j.second));
         }
-        auto act = m.exec(p);
+        auto act = m.exec(mapToGlobal(p));
         if (act) {
             d->account = act->data().value<PsiAccount*>();
             updateMyVisuals();
