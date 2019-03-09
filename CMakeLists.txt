@@ -131,7 +131,6 @@ if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     message(STATUS "MXE root path: ${CMAKE_PREFIX_PATH}")
     # TODO: Check why this breaks build with GCC >= 6.0:
     #set(Qt5Keychain_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/Qt5Keychain" CACHE STRING "Path to Qt5Keychain cmake files")
-    set(USE_CCACHE OFF)
 endif()
 
 # Define LINUX on Linux like as WIN32 on Windows and APPLE on Mac OS X

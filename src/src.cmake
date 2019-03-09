@@ -221,10 +221,6 @@ list(APPEND SOURCES
     discodlg.cpp
     eventdlg.cpp
     filetransdlg.cpp
-    multifiletransferitem.cpp
-    multifiletransfermodel.cpp
-    multifiletransferview.cpp
-    multifiletransferdlg.cpp
     gcuserview.cpp
     groupchatdlg.cpp
     htmltextcontroller.cpp
@@ -420,6 +416,10 @@ list(APPEND PLAIN_SOURCES
     mucjoindlg.cpp
     mucmanager.cpp
     mucreasonseditor.cpp
+    multifiletransferitem.cpp
+    multifiletransfermodel.cpp
+    multifiletransferview.cpp
+    multifiletransferdlg.cpp
     networkaccessmanager.cpp
     passdialog.cpp
     passphrasedlg.cpp
