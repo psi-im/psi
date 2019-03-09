@@ -1,18 +1,39 @@
-#include <QFileInfo>
+/*
+ * multifiletransferdlg.cpp - file transfer dialog
+ * Copyright (C) 2019 Sergey Ilinykh
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ */
 
 #include "multifiletransferdlg.h"
 #include "ui_multifiletransferdlg.h"
 #include "xmpp/jid/jid.h"
 #include "jingle.h"
 #include "multifiletransferview.h"
+#include "multifiletransfermodel.h"
+#include "multifiletransferitem.h"
 #include "psiaccount.h"
 #include "avatars.h"
 #include "psicontact.h"
 #include "psicon.h"
-#include "multifiletransfermodel.h"
 #include "userlist.h"
+#include "iconset.h"
 
-#include <iconset.h>
+#include <QFileIconProvider>
+#include <QFileInfo>
 
 using namespace XMPP;
 
@@ -39,8 +60,6 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     ui->lblMyAvatar->setMinimumWidth(minHeight);
     ui->lblPeerAvatar->setMinimumWidth(minHeight);
 
-
-    ui->listView->setItemDelegate(new MultiFileTransferDelegate(this));
     d->account = acc;
     updateMyVisuals();
 
@@ -67,6 +86,8 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     });
 
     d->model = new MultiFileTransferModel(this);
+    ui->listView->setItemDelegate(new MultiFileTransferDelegate(this));
+    ui->listView->setModel(d->model);
 }
 
 MultiFileTransferDlg::~MultiFileTransferDlg()
@@ -81,9 +102,11 @@ void MultiFileTransferDlg::showOutgoing(const XMPP::Jid &jid, const QStringList 
     for (auto const &fname: fileList) {
         QFileInfo fi(fname);
         if (fi.isFile() && fi.isReadable()) {
-            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.baseName(), fi.size());
+            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
+            mftItem->setThumbnail(QFileIconProvider().icon(fi));
         }
     }
+    updateComonVisuals();
 }
 
 void MultiFileTransferDlg::showIncoming(XMPP::Jingle::Session *session)
@@ -133,4 +156,9 @@ void MultiFileTransferDlg::updatePeerVisuals()
         avatar = IconsetFactory::iconPixmap("psi/default_avatar");
     }
     ui->lblPeerAvatar->setPixmap(avatar);
+}
+
+void MultiFileTransferDlg::updateComonVisuals()
+{
+    ui->lblStatus->setText(tr("%1 File(s)").arg(d->model->rowCount() - 1));
 }

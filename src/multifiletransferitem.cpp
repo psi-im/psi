@@ -31,8 +31,8 @@ struct MultiFileTransferItem::Private
     QString       mediaType;
     QString       description;
     QString       errorString;       // last error
-    quint64       fullSize;
-    quint64       currentSize;       // currently transfered
+    quint64       fullSize = 0;
+    quint64       currentSize = 0;   // currently transfered
     quint32       timeRemaining = 0; // secs
     MultiFileTransferModel::Direction direction;
     MultiFileTransferModel::State    state = MultiFileTransferModel::State::Pending;

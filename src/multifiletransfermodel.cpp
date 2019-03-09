@@ -49,6 +49,14 @@ MultiFileTransferModel::~MultiFileTransferModel()
 
 }
 
+Qt::ItemFlags MultiFileTransferModel::flags(const QModelIndex &index) const
+{
+    if (index.isValid()) {
+        return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren;
+    }
+    return QAbstractListModel::flags(index);
+}
+
 int MultiFileTransferModel::rowCount(const QModelIndex &parent) const
 {
     return parent.isValid()? 0 : transfers.size() + 1; // only for root it's valid
@@ -133,7 +141,26 @@ bool MultiFileTransferModel::setData(const QModelIndex &index, const QVariant &v
 QModelIndex MultiFileTransferModel::index(int row, int column, const QModelIndex &parent) const
 {
     // copied from parent but added internal pointer
-    return hasIndex(row, column, parent) ? createIndex(row, column, transfers[row]) : QModelIndex();
+    return hasIndex(row, column, parent) ?
+                createIndex(row, column, row == transfers.size()? nullptr : transfers[row]) :
+                QModelIndex();
+}
+
+QHash<int, QByteArray> MultiFileTransferModel::roleNames() const
+{
+    return QHash<int, QByteArray>{
+        {Qt::DisplayRole,    "display"},
+        {Qt::DecorationRole, "decoration"},
+        {Qt::ToolTipRole,    "toolTip"},
+        {FullSizeRole,       "fullSize"},
+        {CurrentSizeRole,    "currentSize"},
+        {SpeedRole,          "speed"},
+        {DescriptionRole,    "description"},
+        {DirectionRole,      "direction"},
+        {StateRole,          "stateRole"},
+        {TimeRemainingRole,  "timeRemaining"},
+        {ErrorStringRole,    "errorString"},
+    };
 }
 
 MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,

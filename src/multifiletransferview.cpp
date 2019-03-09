@@ -1,6 +1,27 @@
+/*
+ * multifiletransferview.h - file transfer delegate
+ * Copyright (C) 2019 Sergey Ilinykh
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ */
+
 #include "multifiletransferview.h"
 #include "multifiletransfermodel.h"
 #include "psitooltip.h"
+#include "iconset.h"
 
 #include <QHelpEvent>
 #include <QMenu>
@@ -58,55 +79,88 @@ QSize MultiFileTransferDelegate::sizeHint(const QStyleOptionViewItem &option, co
     if (fontPixelSize != newFontSize) {
         // we need to recompute all relative geometry based on new
         fontPixelSize = newFontSize;
-        itemHeight = fontPixelSize * 3 + 3 * fm.leading(); // 2 inter-line + 2 half-inter-line on top and bottom
-        spacing  = fm.leading() / 2;
+        spacing = fm.leading();
+        if (spacing < 2) {
+            spacing = 2;
+        }
+        itemHeight = fontPixelSize * 3 + 2 * fm.leading() + 2 * spacing; // 2 inter-line + 2 half-inter-line on top and bottom
+        addButtonHeight = fontPixelSize * 2 + fm.leading() + 2 * spacing; // make its height as two lines of text + spacing
         iconRect = QRect(spacing, spacing, itemHeight - 2 * spacing, itemHeight - 2 * spacing);
         textLeft = iconRect.right() + spacing;
-        textTop  = fm.leading() / 2;
-        speedTop = textTop + fontPixelSize + fm.leading();
+        textTop  = spacing;
+        speedTop = textTop + fm.lineSpacing();
         progressHeight = fontPixelSize / 3;
-        if (progressHeight < 4) {
-            progressHeight = 4; // min 4px
+        if (progressHeight < 10) {
+            progressHeight = 10; // min 4px
         }
-        int progressCenter = speedTop + fontPixelSize + fm.leading() + fontPixelSize / 2;
+        int progressCenter = speedTop + fm.lineSpacing() + fontPixelSize / 2;
         progressTop = progressCenter - progressHeight / 2;
 
         // render progressTexture
-        QColor darkProgress(40, 40, 80); // need some setting for this or take QPalette::Highlight
-        QColor lightProgress(70, 70, 110);
+        QColor darkProgress(100, 100, 200); // need some setting for this or take QPalette::Highlight
+        QColor lightProgress(160, 160, 255);
         progressTexture = QPixmap(progressHeight, progressHeight);
         QPainter p(&progressTexture);
+        p.setPen(Qt::NoPen);
+        p.setRenderHint(QPainter::Antialiasing);
         p.fillRect(0, 0, progressHeight, progressHeight, darkProgress);
         p.setBrush(QBrush(lightProgress));
         p.drawPolygon(QPolygon({QPoint(progressHeight / 2, 0), QPoint(progressHeight, 0),
-                                QPoint(progressHeight / 2, progressHeight), QPoint(0, progressHeight)}));
+                                QPoint(progressHeight / 2, progressHeight), QPoint(0, progressHeight)}),Qt::WindingFill);
 
     }
-    return QSize(option.rect.width(), itemHeight);
+
+    if (index.data(MultiFileTransferModel::StateRole) == MultiFileTransferModel::AddTemplate) {
+        return QSize(addButtonHeight, addButtonHeight);
+    }
+    return QSize(itemHeight, itemHeight);
 }
 
 void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    auto pix = index.data(Qt::DecorationRole).value<QPixmap>();
-    if (!pix.isNull()) {
-        pix = pix.scaled(iconRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    auto state = index.data(MultiFileTransferModel::StateRole).toInt();
+
+    if (state == MultiFileTransferModel::AddTemplate) {
+        QRect btnRect(spacing, spacing, option.rect.width() - 2 * spacing, option.rect.height() - 2 * spacing);
+        painter->save();
+        QColor rc = option.palette.color(QPalette::WindowText);
+        rc.setAlpha(128);
+        QPen pen(rc);
+        pen.setWidth(spacing >= 2? spacing / 2 : 1);
+        painter->setPen(rc);
+        painter->drawRoundedRect(btnRect.translated(option.rect.topLeft()), spacing * 2, spacing * 2);
+
+        QRect ir(0, 0, option.rect.height() - 4 * spacing, option.rect.height() - 4 * spacing);
+        ir.moveCenter(option.rect.center());
+        painter->drawPixmap(ir, IconsetFactory::icon("psi/add").pixmap());
+        painter->restore();
+        return;
     }
-    int right = option.rect.right() - spacing;
 
     // translated coords
     int textLeft = this->textLeft + option.rect.left();
     int textTop  = this->textTop + option.rect.top();
     int speedTop = this->speedTop + option.rect.top();
     int progressTop = this->progressTop + option.rect.top();
+    int right = option.rect.right() - spacing;
 
-    painter->drawPixmap(iconRect.translated(option.rect.topLeft()), pix);
+    // draw file icon
+    auto icon = index.data(Qt::DecorationRole).value<QIcon>();
+    painter->drawPixmap(iconRect.translated(option.rect.topLeft()), icon.pixmap(iconRect.size()));
+
+    // draw file name
+    painter->save();
+    auto f = option.font;
+    f.setBold(true);
+    painter->setFont(f);
     painter->drawText(QRect(QPoint(textLeft, textTop),QPoint(right, textTop + fontPixelSize)),
                       option.displayAlignment, index.data(Qt::DisplayRole).toString());
+    painter->restore();
 
+    // generate and draw status line
     quint64 fullSize = index.data(MultiFileTransferModel::FullSizeRole).toULongLong();
     quint64 curSize = index.data(MultiFileTransferModel::CurrentSizeRole).toULongLong();
     int timeRemaining = index.data(MultiFileTransferModel::TimeRemainingRole).toULongLong();
-    auto status = index.data(MultiFileTransferModel::StateRole).toInt();
 
     // -----------------------------
     // Transfer current status line
@@ -120,7 +174,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
         s = roundedNumber(curSize, div) + '/' + roundedNumber(fullSize, div) + unit;
         QString space(" ");
 
-        switch (status) {
+        switch (state) {
         case MultiFileTransferModel::Pending:
             s += (space + tr("[Pending]"));
             break;
@@ -148,19 +202,33 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
             break;
         }
     }
-    painter->drawText(QRect(QPoint(textLeft, speedTop),QPoint(right, speedTop + fontPixelSize)),
-                      option.displayAlignment, s);
+    painter->save();
+    auto spc = painter->pen().color();
+    spc.setAlpha(128);
+    painter->setPen(spc);
+    QFontMetrics fm(option.font);
+    auto str = QRect(QPoint(textLeft, speedTop),QPoint(right, speedTop + fontPixelSize));
+    auto stbr = fm.boundingRect(s);
+    stbr.moveCenter(str.center());
+
+    painter->drawText(stbr, option.displayAlignment, s);
+    painter->restore();
 
     // -----------------------------
     // Transfer progress bar
     // -----------------------------
+    painter->save();
+    painter->setPen(Qt::NoPen);
     QBrush b;
     b.setTexture(progressTexture);
     QPainterPath p;
+    p.setFillRule(Qt::WindingFill);
     p.addEllipse(textLeft, progressTop, progressHeight, progressHeight);
     p.addEllipse(right - progressHeight, progressTop, progressHeight, progressHeight);
-    p.addRect(textLeft + progressHeight / 2, progressTop, right - progressHeight, progressHeight);
+    p.addRect(QRect(QPoint(textLeft + progressHeight / 2, progressTop),
+                    QPoint(right - progressHeight / 2 - 1, progressTop + progressHeight - 1)));
     painter->fillPath(p, b);
+    painter->restore();
 }
 
 bool MultiFileTransferDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option, const QModelIndex &index)

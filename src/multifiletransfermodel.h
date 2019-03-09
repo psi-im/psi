@@ -64,10 +64,12 @@ public:
     MultiFileTransferModel(QObject *parent);
     ~MultiFileTransferModel();
 
-    int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
-    QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-    bool setData(const QModelIndex &index, const QVariant &value, int role);
-    QModelIndex index(int row, int column, const QModelIndex &parent) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    int rowCount ( const QModelIndex & parent = QModelIndex() ) const override;
+    QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
+    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
+    QHash<int, QByteArray> roleNames() const override;
 
     MultiFileTransferItem *addTransfer(Direction direction, const QString &displayName, quint64 fullSize);
 private:
