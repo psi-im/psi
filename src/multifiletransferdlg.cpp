@@ -1,3 +1,5 @@
+#include <QFileInfo>
+
 #include "multifiletransferdlg.h"
 #include "ui_multifiletransferdlg.h"
 #include "xmpp/jid/jid.h"
