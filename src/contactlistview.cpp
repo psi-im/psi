@@ -60,7 +60,7 @@ ContactListView::ContactListView(QWidget* parent)
     setFrameShape(QFrame::NoFrame);
 #endif
 
-    connect(this, SIGNAL(doubleClicked(const QModelIndex&)), SLOT(itemActivated(const QModelIndex&)));
+    connect(this, &ContactListView::doubleClicked, this, &ContactListView::itemActivated);
     // showStatus_ = PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.show").toBool();
 }
 
@@ -116,7 +116,7 @@ void ContactListView::updateContextMenu()
         return;
 
     delete contextMenu_;
-    contextMenu_ = 0;
+    contextMenu_ = nullptr;
 
     // FIXME: need to implement context menu merging
     if (selectedIndexes().count() == 1) {
@@ -187,18 +187,19 @@ void ContactListView::setModel(QAbstractItemModel* model)
 {
     HoverableTreeView::setModel(model);
     QAbstractItemModel* connectToModel = realModel();
-    if (qobject_cast<ContactListModel*>(connectToModel)) {
-        connect(this, SIGNAL(expanded(const QModelIndex&)), SLOT(itemExpanded(const QModelIndex&)));
-        connect(this, SIGNAL(collapsed(const QModelIndex&)), SLOT(itemCollapsed(const QModelIndex&)));
-        connect(this, SIGNAL(realExpanded(const QModelIndex&)), connectToModel, SLOT(expanded(const QModelIndex&)));
-        connect(this, SIGNAL(realCollapsed(const QModelIndex&)), connectToModel, SLOT(collapsed(const QModelIndex&)));
-        connect(connectToModel, SIGNAL(inPlaceRename()), SLOT(rename()));
+    if (ContactListModel *clModel = qobject_cast<ContactListModel*>(connectToModel)) {
+        connect(this, &ContactListView::expanded, [&](const QModelIndex &index){emit realExpanded(realIndex(index));});
+        connect(this, &ContactListView::collapsed, [&](const QModelIndex &index){emit realCollapsed(realIndex(index));});
+        connect(this, &ContactListView::realExpanded, clModel, &ContactListModel::expanded);
+        connect(this, &ContactListView::realCollapsed, clModel, &ContactListModel::collapsed);
+        connect(clModel, &ContactListModel::inPlaceRename, this, &ContactListView::rename);
 
         // connection to showOfflineChanged() should be established after the proxy model does so,
         // otherwise we won't get consistently re-expanded groups. Qt::QueuedConnection could
         // be advised for in such case.
         // connect(connectToModel, SIGNAL(showOfflineChanged()), SLOT(showOfflineChanged()));
-        connect(model, SIGNAL(layoutChanged()), SLOT(showOfflineChanged()));
+        connect(model, &QAbstractItemModel::layoutChanged, this, &ContactListView::showOfflineChanged);
+        connect(model, &QAbstractItemModel::dataChanged, this, &ContactListView::modelItemsUpdated);
     }
 }
 
@@ -217,16 +218,6 @@ void ContactListView::rowsInserted(const QModelIndex &parent, int start, int end
         if (realIndex(index).data(ContactListModel::ExpandedRole).toBool())
             setExpanded(index, true);
     }
-}
-
-void ContactListView::itemExpanded(const QModelIndex& index)
-{
-    emit realExpanded(realIndex(index));
-}
-
-void ContactListView::itemCollapsed(const QModelIndex& index)
-{
-    emit realCollapsed(realIndex(index));
 }
 
 /**
@@ -405,7 +396,7 @@ QModelIndex ContactListView::proxyIndex(const QModelIndex &index) const
 ContactListItem *ContactListView::itemProxy(const QModelIndex& index) const
 {
     if (!index.isValid())
-        return 0;
+        return nullptr;
     return static_cast<ContactListItem*>(realIndex(index).internalPointer());
 }
 

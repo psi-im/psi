@@ -59,6 +59,7 @@ public slots:
 signals:
     void realExpanded(const QModelIndex&);
     void realCollapsed(const QModelIndex&);
+    void modelItemsUpdated();
 
 protected:
     // reimplemented
@@ -72,8 +73,6 @@ protected slots:
 
     virtual void showOfflineChanged();
     void updateGroupExpandedState();
-    virtual void itemExpanded(const QModelIndex&);
-    virtual void itemCollapsed(const QModelIndex&);
 
     // reimplamented
     virtual void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);

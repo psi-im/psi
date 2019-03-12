@@ -168,6 +168,7 @@ PsiContactListView::PsiContactListView(QWidget* parent)
     connect(delegate, SIGNAL(geometryUpdated()), d, SLOT(recalculateSize()));
     connect(this, SIGNAL(expanded(QModelIndex)), d, SLOT(recalculateSize()));
     connect(this, SIGNAL(collapsed(QModelIndex)), d, SLOT(recalculateSize()));
+    connect(this, SIGNAL(modelItemsUpdated()), d, SLOT(recalculateSize()));
 }
 
 ContactListViewDelegate *PsiContactListView::itemDelegate() const
