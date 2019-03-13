@@ -22,6 +22,7 @@
 #include "ui_multifiletransferdlg.h"
 #include "xmpp/jid/jid.h"
 #include "jingle.h"
+#include "jingle-ft.h"
 #include "multifiletransferview.h"
 #include "multifiletransfermodel.h"
 #include "multifiletransferitem.h"
@@ -44,6 +45,7 @@ public:
     Jid peer;
     XMPP::Jingle::Session *session = nullptr;
     MultiFileTransferModel *model = nullptr;
+    bool isOutgoing = false;
 };
 
 MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
@@ -51,6 +53,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     ui(new Ui::MultiFileTransferDlg),
     d(new Private)
 {
+    d->account = acc;
     ui->setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose); // TODO or maybe hide and wait for transfer to be completed?
 
@@ -59,9 +62,6 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     int minHeight = 3 *(fm.height() + fm.leading()) + ui->ltNames->spacing() * 2;
     ui->lblMyAvatar->setMinimumWidth(minHeight);
     ui->lblPeerAvatar->setMinimumWidth(minHeight);
-
-    d->account = acc;
-    updateMyVisuals();
 
     ui->lblMyAvatar->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->lblMyAvatar, &QLabel::customContextMenuRequested, this, [this](const QPoint &p){
@@ -88,6 +88,57 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     d->model = new MultiFileTransferModel(this);
     ui->listView->setItemDelegate(new MultiFileTransferDelegate(this));
     ui->listView->setModel(d->model);
+    ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
+
+    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
+        if (d->isOutgoing) {
+            d->session = d->account->client()->jingleManager()->newSession(d->peer);
+            QMimeDatabase mimeDb;
+            for (int i = 0; i < d->model->rowCount() - 1; ++i) {
+                auto index = d->model->index(i, 0, QModelIndex());
+                auto item = reinterpret_cast<MultiFileTransferItem*>(index.internalPointer());
+                QFileInfo fi(item->filePath());
+                if (!fi.isReadable()) {
+                    delete item;
+                    continue;
+                }
+                auto pad = d->session->applicationPad(Jingle::FileTransfer::NS).staticCast<Jingle::FileTransfer::Pad>();
+
+                // compute file hash
+                XMPP::Hash hash(XMPP::Hash::Blake2b512);
+                QFile f(item->filePath());
+                hash.computeFromDevice(&f); // FIXME it will freeze Psi for awhile on large files
+
+                // take thumbnail
+                QImage img(item->filePath());
+                XMPP::Thumbnail thumb;
+                if (!img.isNull()) {
+                    QByteArray ba;
+                    QBuffer buffer(&ba);
+                    buffer.open(QIODevice::WriteOnly);
+                    img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    img.save(&buffer, "PNG");
+                    thumb = XMPP::Thumbnail(ba, "image/png", img.width(), img.height());
+                }
+
+                Jingle::FileTransfer::File file;
+                file.setDate(fi.lastModified());
+                file.setDescription(item->description());
+                file.setHash(hash);
+                file.setMediaType(mimeDb.mimeTypeForFile(fi).name());
+                file.setName(fi.fileName());
+                file.setRange(); // indicate range support
+                file.setSize(fi.size());
+                file.setThumbnail(thumb);
+
+                pad->addOutgoingOffer(file);
+            }
+
+            d->session->initiate();
+        }
+    });
+
+    updateMyVisuals();
 }
 
 MultiFileTransferDlg::~MultiFileTransferDlg()
@@ -98,15 +149,18 @@ MultiFileTransferDlg::~MultiFileTransferDlg()
 void MultiFileTransferDlg::showOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
 {
     d->peer = jid;
+    d->isOutgoing = true;
     updatePeerVisuals();
     for (auto const &fname: fileList) {
         QFileInfo fi(fname);
         if (fi.isFile() && fi.isReadable()) {
             auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
             mftItem->setThumbnail(QFileIconProvider().icon(fi));
+            mftItem->setFileName(fname);
         }
     }
     updateComonVisuals();
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
 }
 
 void MultiFileTransferDlg::showIncoming(XMPP::Jingle::Session *session)

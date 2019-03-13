@@ -31,6 +31,7 @@ struct MultiFileTransferItem::Private
     QString       mediaType;
     QString       description;
     QString       errorString;       // last error
+    QString       fileName;
     quint64       fullSize = 0;
     quint64       currentSize = 0;   // currently transfered
     quint32       timeRemaining = 0; // secs
@@ -122,6 +123,11 @@ QString MultiFileTransferItem::toolTipText() const
     return QString("<b>%1</b><br><br>%1<br><br>").arg(d->displayName, d->description);
 }
 
+QString MultiFileTransferItem::filePath() const
+{
+    return d->fileName;
+}
+
 void MultiFileTransferItem::setCurrentSize(quint64 newCurrentSize)
 {
     auto diff = newCurrentSize - d->currentSize;
@@ -185,4 +191,9 @@ void MultiFileTransferItem::setState(MultiFileTransferModel::State state, const 
     if (state == MultiFileTransferModel::Active) {
         d->lastTimer.start();
     }
+}
+
+void MultiFileTransferItem::setFileName(const QString &fileName)
+{
+    d->fileName = fileName;
 }

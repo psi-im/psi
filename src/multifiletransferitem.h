@@ -45,6 +45,7 @@ public:
     quint32 timeRemaining() const;
     QString errorString() const;
     QString toolTipText() const;
+    QString filePath() const;
     void setCurrentSize(quint64 newCurrentSize);
     void setThumbnail(const QIcon &img);
     void setMediaType(const QString &mediaType);
@@ -52,6 +53,7 @@ public:
     void setFailure(const QString &error);
     void setSuccess();
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
+    void setFileName(const QString &filePath);
 signals:
     void descriptionChanged(); // user changes description
     void rejectRequested();    // user selects reject in UI
