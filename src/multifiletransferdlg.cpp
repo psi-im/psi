@@ -35,6 +35,8 @@
 
 #include <QFileIconProvider>
 #include <QFileInfo>
+#include <QMimeDatabase>
+#include <QBuffer>
 
 using namespace XMPP;
 
