@@ -4106,12 +4106,12 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
         if (u && u->isAvailable())
             j2 = j2.withResource((*u->userResourceList().priority()).name());
     }
-
-    Features f = client()->capsManager()->features(j2);
 #if 0
+    Features f = client()->capsManager()->features(j2);
+
     if (f.hasJingleFT()) { // we have to check supported transprts as well. but s5b is mandatory
         auto w = new MultiFileTransferDlg(this);
-        w->showOutgoing(j2, fileList);
+        w->initOutgoing(j2, fileList);
         w->show();
         return;
     }

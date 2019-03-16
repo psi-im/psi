@@ -96,6 +96,8 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
         if (d->isOutgoing) {
             d->session = d->account->client()->jingleManager()->newSession(d->peer);
             QMimeDatabase mimeDb;
+            QList<Jingle::Application*> appList;
+
             for (int i = 0; i < d->model->rowCount() - 1; ++i) {
                 auto index = d->model->index(i, 0, QModelIndex());
                 auto item = reinterpret_cast<MultiFileTransferItem*>(index.internalPointer());
@@ -104,8 +106,8 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
                     delete item;
                     continue;
                 }
-                auto pad = d->session->applicationPad(Jingle::FileTransfer::NS).staticCast<Jingle::FileTransfer::Pad>();
 
+                auto app = static_cast<Jingle::FileTransfer::Application*>(d->session->newContent(Jingle::FileTransfer::NS, d->session->role()));
                 // compute file hash
                 XMPP::Hash hash(XMPP::Hash::Blake2b512);
                 QFile f(item->filePath());
@@ -133,10 +135,11 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
                 file.setSize(fi.size());
                 file.setThumbnail(thumb);
 
-                pad->addOutgoingOffer(file);
+                app->setFile(file);
+                appList.append(app);
             }
 
-            d->session->initiate();
+            d->session->initiate(appList);
         }
     });
 
@@ -148,7 +151,7 @@ MultiFileTransferDlg::~MultiFileTransferDlg()
     delete ui;
 }
 
-void MultiFileTransferDlg::showOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
+void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
 {
     d->peer = jid;
     d->isOutgoing = true;
@@ -165,7 +168,7 @@ void MultiFileTransferDlg::showOutgoing(const XMPP::Jid &jid, const QStringList 
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
 }
 
-void MultiFileTransferDlg::showIncoming(XMPP::Jingle::Session *session)
+void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 {
     d->session = session;
     d->peer = session->peer();

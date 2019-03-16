@@ -1701,7 +1701,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         if (sess) {
             // TODO design dialog for Jingle file transfer
             auto w = new MultiFileTransferDlg(e->account());
-            w->showIncoming(sess);
+            w->initIncoming(sess);
             bringToFront(w);
         }
         return;
