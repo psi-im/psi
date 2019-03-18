@@ -92,6 +92,30 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     ui->listView->setModel(d->model);
     ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
 
+    updateMyVisuals();
+}
+
+MultiFileTransferDlg::~MultiFileTransferDlg()
+{
+    delete ui;
+}
+
+void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
+{
+    d->peer = jid;
+    d->isOutgoing = true;
+    updatePeerVisuals();
+    for (auto const &fname: fileList) {
+        QFileInfo fi(fname);
+        if (fi.isFile() && fi.isReadable()) {
+            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
+            mftItem->setThumbnail(QFileIconProvider().icon(fi));
+            mftItem->setFileName(fname);
+        }
+    }
+    updateComonVisuals();
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
+
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
         if (d->isOutgoing) {
             d->session = d->account->client()->jingleManager()->newSession(d->peer);
@@ -136,36 +160,13 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
                 file.setThumbnail(thumb);
 
                 app->setFile(file);
+                app->selectNextTransport();
                 appList.append(app);
             }
 
             d->session->initiate(appList);
         }
     });
-
-    updateMyVisuals();
-}
-
-MultiFileTransferDlg::~MultiFileTransferDlg()
-{
-    delete ui;
-}
-
-void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
-{
-    d->peer = jid;
-    d->isOutgoing = true;
-    updatePeerVisuals();
-    for (auto const &fname: fileList) {
-        QFileInfo fi(fname);
-        if (fi.isFile() && fi.isReadable()) {
-            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
-            mftItem->setThumbnail(QFileIconProvider().icon(fi));
-            mftItem->setFileName(fname);
-        }
-    }
-    updateComonVisuals();
-    ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
 }
 
 void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
