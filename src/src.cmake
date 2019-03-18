@@ -9,7 +9,7 @@ add_definitions(
     -DQT_STATICPLUGIN
     )
 
-if(UNIX AND NOT APPLE)
+if(UNIX AND NOT (APPLE OR HAIKU))
     add_definitions(
         -DUSE_DBUS
         )
@@ -242,7 +242,7 @@ list(APPEND SOURCES
     xdata_widget.cpp
     )
 
-if(UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE AND NOT HAIKU)
     list(APPEND SOURCES
         dbus.cpp
         )
@@ -276,6 +276,10 @@ elseif(APPLE)
 #    list(APPEND HEADERS
 #        psigrowlnotifier.h
 #        )
+elseif(HAIKU)
+    list(APPEND PLAIN_SOURCES
+        activeprofiles_stub.cpp
+        )
 elseif(WIN32)
     list(APPEND PLAIN_SOURCES
         activeprofiles_win.cpp

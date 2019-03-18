@@ -133,8 +133,8 @@ if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     #set(Qt5Keychain_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/Qt5Keychain" CACHE STRING "Path to Qt5Keychain cmake files")
 endif()
 
-# Define LINUX on Linux like as WIN32 on Windows and APPLE on Mac OS X
-if(UNIX AND NOT APPLE)
+# Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
+if(UNIX AND NOT (APPLE OR HAIKU))
     set(LINUX ON)
     add_definitions(
         -DHAVE_X11

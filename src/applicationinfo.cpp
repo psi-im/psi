@@ -145,7 +145,7 @@ QString ApplicationInfo::getCertificateStoreSaveDir()
 
 QString ApplicationInfo::resourcesDir()
 {
-#if defined(Q_OS_WIN)
+#if defined(Q_OS_WIN) || defined(Q_OS_HAIKU)
     return qApp->applicationDirPath();
 #elif defined(Q_OS_MAC)
     // FIXME: Clean this up (remko)
@@ -191,7 +191,7 @@ QString ApplicationInfo::resourcesDir()
 
 QString ApplicationInfo::libDir()
 {
-#if defined(Q_OS_UNIX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_HAIKU)
     return PSI_LIBDIR;
 #else
     return QCoreApplication::applicationDirPath();
@@ -213,7 +213,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
         configDir_ = QString::fromLocal8Bit(getenv("PSIDATADIR"));
 
         if (configDir_.isEmpty()) {
-#if defined Q_OS_WIN
+#if defined(Q_OS_WIN)
             QString base = ApplicationInfo::isPortable()? QCoreApplication::applicationDirPath() : "";
             if (base.isEmpty()) {
                 wchar_t path[MAX_PATH];
@@ -232,11 +232,11 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QDir configDir(configDir_);
             QDir cacheDir(cacheDir_);
             QDir dataDir(dataDir_);
-#elif defined Q_OS_MAC
+#elif defined(Q_OS_MAC)
             QDir configDir(QDir::homePath() + "/Library/Application Support/" + name());
             QDir cacheDir(QDir::homePath() + "/Library/Caches/" + name());
             QDir dataDir(configDir);
-#elif defined HAVE_FREEDESKTOP
+#elif defined(HAVE_FREEDESKTOP)
 
             QString XdgConfigHome(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
             QString XdgDataHome(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
@@ -255,6 +255,10 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QDir dataDir(XdgDataHome + "/" + sname());
             QDir cacheDir(XdgCacheHome + "/" + sname());
 
+#elif defined(Q_OS_HAIKU)
+            QDir configDir(QDir::homePath() + "/config/settings/Qt/.config/" + sname());
+            QDir cacheDir(QDir::homePath() + "/config/cache/" + sname());
+            QDir dataDir(configDir);
 #endif
             configDir_ = configDir.path();
             cacheDir_ = cacheDir.path();

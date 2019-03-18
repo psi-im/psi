@@ -22,8 +22,16 @@
 #include <sys/utsname.h>
 #endif
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN)
 #include <windows.h>
+#endif
+
+#if defined(Q_OS_HAIKU)
+#include <sys/utsname.h>
+#include <Path.h>
+#include <FindDirectory.h>
+#include <AppFileInfo.h>
+#include <File.h>
 #endif
 
 #include "systeminfo.h"
@@ -298,6 +306,20 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     }
 
     if (!os_version_str_.isEmpty()) {
+        os_str_ += (" " + os_version_str_);
+    }
+#endif
+
+#if defined(Q_OS_HAIKU)
+    os_name_str_ = "Haiku";
+    os_str_ = os_name_str_;
+    os_version_str_ = "";
+
+    utsname uname_info;
+    if (uname(&uname_info) == 0) {
+        os_str_ = QLatin1String(uname_info.sysname);
+        os_version_str_ = (QLatin1String(uname_info.machine) + " ");
+        os_version_str_ += QLatin1String(uname_info.version);
         os_str_ += (" " + os_version_str_);
     }
 #endif
