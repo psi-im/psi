@@ -318,6 +318,8 @@ void ChatView::dispatchMessage(const MessageView &mv)
     switch (mv.type()) {
         case MessageView::Message:
         {
+            int scrollPos = verticalScrollBar()->value();
+            bool doScrollBottom = atBottom();
             bool isReplace = !replaceId.isEmpty();
             QTextCursor cursor = textCursor(), replaceCursor;
             auto sel = PsiRichText::saveSelection(this, cursor);
@@ -362,6 +364,11 @@ void ChatView::dispatchMessage(const MessageView &mv)
             cursor.movePosition(QTextCursor::End); // ensure everything else is inserted into the end
             PsiRichText::restoreSelection(this, cursor, sel);
             setTextCursor(cursor);
+            if (doScrollBottom) {
+                scrollToBottom();
+            } else {
+                verticalScrollBar()->setValue(scrollPos);
+            }
             break;
         }
         case MessageView::Subject:
