@@ -120,7 +120,7 @@ QString MultiFileTransferItem::errorString() const
 
 QString MultiFileTransferItem::toolTipText() const
 {
-    return QString("<b>%1</b><br><br>%1<br><br>").arg(d->displayName, d->description);
+    return QString("<b>%1</b><br><br>%2<br><br>").arg(d->displayName, d->description);
 }
 
 QString MultiFileTransferItem::filePath() const

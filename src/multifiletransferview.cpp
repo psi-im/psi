@@ -29,6 +29,11 @@
 #include <QStyledItemDelegate>
 #include <QTime>
 #include <QAbstractItemView>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QTextEdit>
+#include <QPlainTextEdit>
+#include <QLineEdit>
 
 void MultiFileTransferDelegate::niceUnit(qlonglong n, qlonglong *div, QString *unit)
 {
@@ -240,6 +245,47 @@ bool MultiFileTransferDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *
         return true;
     }
     return false;
+}
+
+QWidget *MultiFileTransferDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(option);
+    auto state = index.data(MultiFileTransferModel::StateRole).toInt();
+
+    if (state == MultiFileTransferModel::AddTemplate) {
+        return nullptr;
+    }
+    QWidget *w = new QWidget(parent);
+    w->setFocusPolicy(Qt::StrongFocus);
+    w->setAutoFillBackground(true);
+    w->setLayout(new QVBoxLayout);
+    w->layout()->setSpacing(0);
+    w->layout()->addWidget(new QLabel(QString("<b>%1 %2</b>").arg(tr("Description for"), index.data().toString()), w));
+    auto te = new QLineEdit(w);
+    w->setFocusProxy(te);
+    te->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    w->layout()->addWidget(te);
+    return w;
+}
+
+void MultiFileTransferDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    Q_UNUSED(index);
+    QRect r(option.rect);
+    r.setLeft(textLeft);
+    editor->setGeometry(r);
+}
+
+void MultiFileTransferDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
+{
+    auto te = editor->findChild<QLineEdit*>();
+    te->setText(index.data(MultiFileTransferModel::DescriptionRole).toString());
+}
+
+void MultiFileTransferDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    auto te = editor->findChild<QLineEdit*>();
+    model->setData(index, te->text(), MultiFileTransferModel::DescriptionRole);
 }
 
 bool MultiFileTransferDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index)

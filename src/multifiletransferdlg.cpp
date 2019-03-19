@@ -132,6 +132,11 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
                 }
 
                 auto app = static_cast<Jingle::FileTransfer::Application*>(d->session->newContent(Jingle::FileTransfer::NS, d->session->role()));
+                if (!app) {
+                    qWarning("Nothing registered in Jingle for %s", qPrintable(Jingle::FileTransfer::NS));
+                    return;
+                }
+
                 // compute file hash
                 XMPP::Hash hash(XMPP::Hash::Blake2b512);
                 QFile f(item->filePath());
