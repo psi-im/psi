@@ -1614,6 +1614,12 @@ void PsiAccount::updateFeatures()
     features << PluginManager::instance()->pluginFeatures();
 #endif
 
+#ifdef USE_PEP
+    features << "http://jabber.org/protocol/mood" << "http://jabber.org/protocol/activity";
+    features << "http://jabber.org/protocol/tune" << "http://jabber.org/protocol/geoloc";
+    features << "urn:xmpp:avatar:data" << "urn:xmpp:avatar:metadata";
+#endif
+
     // TODO reset hash
     d->client->setFeatures(Features(features));
 }
@@ -1858,7 +1864,7 @@ void PsiAccount::showCert()
 void PsiAccount::cs_connected()
 {
     // get IP address
-    ByteStream *bs = d->conn ? d->conn->stream() : 0;
+    ByteStream *bs = d->conn ? d->conn->stream() : nullptr;
     if (!bs)
         return;
 
@@ -2410,23 +2416,7 @@ void PsiAccount::setPEPAvailable(bool b)
 
     d->pepAvailable = b;
 
-#ifdef PEP
-    // Publish support
-    if (b && !d->client->extensions().contains("ep")) {
-        QStringList pepNodes;
-        pepNodes += "http://jabber.org/protocol/mood";
-        pepNodes += "http://jabber.org/protocol/activity";
-        pepNodes += "http://jabber.org/protocol/tune";
-        pepNodes += "http://jabber.org/protocol/geoloc";
-        pepNodes += "urn:xmpp:avatar:data";
-        pepNodes += "urn:xmpp:avatar:metadata";
-        d->client->addExtension("ep", Features(pepNodes));
-        setStatusActual(d->loginStatus);
-    } else if (!b && d->client->extensions().contains("ep")) {
-        d->client->removeExtension("ep");
-        setStatusActual(d->loginStatus);
-    }
-
+#ifdef USE_PEP
     // Publish current tune information
     if (b && d->psi->tuneManager()
             && PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool()) {
@@ -2918,7 +2908,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
             else if (type == "chat")
                 m.setType("chat");
             else if (type == "current-open") {
-                c = NULL;
+                c = nullptr;
                 foreach (ChatDlg *cl, findChatDialogs(m.from(), false)) {
                     if (cl->autoSelectContact() || cl->jid().resource().isEmpty()
                             || m.from().resource() == cl->jid().resource()) {
@@ -2926,7 +2916,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
                         break;
                     }
                 }
-                if (c != NULL && !c->isHidden())
+                if (c != nullptr && !c->isHidden())
                     m.setType("chat");
                 else
                     m.setType("");
@@ -3489,7 +3479,7 @@ void PsiAccount::dialogUnregister(QWidget *w)
 void PsiAccount::deleteAllDialogs()
 {
     delete d->xmlConsole;
-    d->xmlConsole = 0;
+    d->xmlConsole = nullptr;
     d->deleteDialogList();
 }
 
@@ -3618,7 +3608,7 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
     else if ( f.hasDisco() )
         actionDisco(jid, node);
     else if ( f.hasGateway() ) {
-        if (QMessageBox::question(0, tr("Unregister from %1").arg(jid.bare()),
+        if (QMessageBox::question(nullptr, tr("Unregister from %1").arg(jid.bare()),
                                   tr("Are you sure?"),
                                   QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
             actionUnregister(jid);
@@ -3893,7 +3883,7 @@ UserListItem *PsiAccount::findFirstRelevant(const Jid &j) const
 {
     QList<UserListItem *> list = findRelevant(j);
     if (list.isEmpty())
-        return 0;
+        return nullptr;
     else
         return list.first();
 }
@@ -4063,7 +4053,7 @@ void PsiAccount::actionVoice(const Jid &j)
             j2 = j2.withResource((*u->userResourceList().priority()).name());
     }
 
-    CallDlg *w = new CallDlg(this, 0);
+    CallDlg *w = new CallDlg(this, nullptr);
     w->setAttribute(Qt::WA_DeleteOnClose);
     w->setOutgoing(j2);
     w->show();
@@ -4150,7 +4140,7 @@ void PsiAccount::queryVersionFinished()
     text += "\n" + tr("Version:\t") + j->version();
     text += "\n" + tr("Os:\t") + j->os();
 
-    QMessageBox::information(NULL, QString(tr("Version Query Information")), text);
+    QMessageBox::information(nullptr, QString(tr("Version Query Information")), text);
 }
 
 void PsiAccount::actionExecuteCommand(const Jid &j, const QString &node)
@@ -4206,7 +4196,7 @@ void PsiAccount::actionSetGeoLocation()
 
 void PsiAccount::actionSetAvatar()
 {
-    QString str = FileUtil::getImageFileName(0);
+    QString str = FileUtil::getImageFileName(nullptr);
     if (!str.isEmpty()) {
         avatarFactory()->setSelfAvatar(str);
     }
@@ -4359,7 +4349,7 @@ ChatDlg *PsiAccount::actionOpenChat(const Jid &j)
     UserListItem *u = (findGCContact(j)) ? find(j) : find(j.bare());
     if (!u) {
         qWarning("[%s] not in userlist\n", qPrintable(j.full()));
-        return 0;
+        return nullptr;
     }
 
     // if 'j' is bare, we might want to switch to a specific resource
@@ -4511,7 +4501,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 
         w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self : isMucMember ? InfoWidget::MucContact :
                         InfoWidget::Contact,
-                        j, vcard, this, 0, true);
+                        j, vcard, this, nullptr, true);
 
         w->infoWidget()->setStatusVisibility(showStatusInfo);
         w->show();
@@ -5345,8 +5335,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
                 psi()->popupManager()->doPopup(this, popupType, j, r, u, e, false);
 #ifdef PSI_PLUGINS
             } else {
-                psi()->popupManager()->doPopup(this, j, IconsetFactory::iconPtr("psi/headline"), tr("Headline"), 0,
-                                               0, e->description(), false, popupType);
+                psi()->popupManager()->doPopup(this, j, IconsetFactory::iconPtr("psi/headline"), tr("Headline"), nullptr,
+                                               nullptr, e->description(), false, popupType);
             }
 #endif
         }
@@ -5579,7 +5569,7 @@ void PsiAccount::updateReadNext(const Jid &j)
     // update eventdlg's read-next
     EventDlg *w = findDialog<EventDlg *>(j);
     if (w) {
-        PsiIcon *nextAnim = 0;
+        PsiIcon *nextAnim = nullptr;
         int nextAmount = d->eventQueue->count(j);
         if (nextAmount > 0)
             nextAnim = PsiIconset::instance()->event2icon(d->eventQueue->peek(j));
@@ -5883,7 +5873,7 @@ GCContact *PsiAccount::findGCContact(const Jid &j) const
         if (c->jid.compare(j))
             return c;
     }
-    return 0;
+    return nullptr;
 }
 
 Status PsiAccount::gcContactStatus(const Jid &j)
@@ -6649,7 +6639,7 @@ void PsiAccount::resetLastManualStatusSafeGuard()
 
 ContactProfile *PsiAccount::contactProfile() const
 {
-    return 0;
+    return nullptr;
 }
 
 bool PsiAccount::usingSSL() const
