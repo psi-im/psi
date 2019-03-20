@@ -482,6 +482,7 @@ bool PsiCon::init()
     }
 
     // proxy
+    QNetworkProxyFactory::setUseSystemConfiguration(false); // we have qca-based own implementation
     ProxyManager *proxy = ProxyManager::instance();
     proxy->init(&d->accountTree);
     if (accountMigration) proxy->migrateItemList(d->optionsMigration.proxyMigration);
