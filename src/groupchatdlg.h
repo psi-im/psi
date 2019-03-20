@@ -68,7 +68,8 @@ public:
     bool isInactive() const;
     void reactivate();
     void setJid(const Jid &j);
-    void appendSysMsg(const QString &, bool alert=false, const QDateTime &ts=QDateTime());
+    void appendSysMsg(const QString &, bool alert=false);
+    void dispatchMessage(const MessageView &mv);
     QStringList mucRosterContent() const;
 
     // reimplemented
@@ -148,7 +149,6 @@ private:
     Ui::GroupChatDlg ui_;
 
     void doAlert();
-    void appendSysMsg(const MessageView &);
     void appendMessage(const Message &, bool);
     void setLooks();
     void setToolbuttons();

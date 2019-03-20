@@ -73,23 +73,26 @@ public:
     ~ChatDlg();
 
     // reimplemented
-    void setJid(const Jid &);
-    const QString & getDisplayName() const;
+    void setJid(const Jid &) override;
+    const QString & getDisplayName() const override;
 
     // reimplemented
-    virtual bool readyToHide();
-    virtual TabbableWidget::State state() const;
-    virtual int unreadMessageCount() const;
-    virtual QString desiredCaption() const;
-    virtual void ensureTabbedCorrectly();
+    bool readyToHide() override;
+    TabbableWidget::State state() const override;
+    int unreadMessageCount() const override;
+    QString desiredCaption() const override;
+    void ensureTabbedCorrectly() override;
 
 public:
     PsiAccount* account() const;
     void setInputText(const QString &text);
     Jid realJid() const;
-    bool autoSelectContact() const {return autoSelectContact_;};
+    bool autoSelectContact() const {return autoSelectContact_;}
     static UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource);
     void preloadHistory();
+    void dispatchMessage(const MessageView &mv);
+    virtual void appendSysMsg(const QString& txt) = 0;
+    void appendMessage(const Message &, bool local = false);
 
 signals:
     void aInfo(const Jid &);
@@ -109,18 +112,18 @@ protected:
     virtual void setShortcuts();
 
     // reimplemented
-    void closeEvent(QCloseEvent *);
-    void hideEvent(QHideEvent *);
-    void showEvent(QShowEvent *);
-    void dropEvent(QDropEvent* event);
-    void dragEnterEvent(QDragEnterEvent* event);
-    bool eventFilter(QObject *obj, QEvent *event);
+    void closeEvent(QCloseEvent *) override;
+    void hideEvent(QHideEvent *) override;
+    void showEvent(QShowEvent *) override;
+    void dropEvent(QDropEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
     bool autoSelectContact_;
 
 public slots:
     // reimplemented
-    virtual void deactivated();
-    virtual void activated();
+    virtual void deactivated() override;
+    virtual void activated() override;
 
     virtual void optionsUpdate();
     void updateContact(const Jid &, bool);
@@ -137,8 +140,6 @@ protected slots:
     void doFile();
 
 private slots:
-    void setKeepOpenFalse();
-    void setWarnSendFalse();
     virtual void updatePGP();
     virtual void setPGPEnabled(bool enabled);
     void encryptedMessageSent(int, bool, int, const QString &);
@@ -163,7 +164,6 @@ protected:
     void resetComposing();
     void doneSend();
     void holdMessages(bool hold);
-    void dispatchMessage(const MessageView &mv);
     void displayMessage(const MessageView &mv);
     virtual void setLooks();
     void setSelfDestruct(int);
@@ -175,10 +175,6 @@ protected:
     virtual void contactUpdated(UserListItem* u, int status, const QString& statusString);
 
     virtual bool isEncryptionEnabled() const;
-
-public:
-    virtual void appendSysMsg(const QString& txt) = 0;
-    void appendMessage(const Message &, bool local = false);
 
 protected:
     virtual void nicksChanged();

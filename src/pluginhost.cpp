@@ -1343,6 +1343,11 @@ bool PluginHost::appendSysMsg(int account, const QString& jid, const QString& me
     return manager_->appendSysMsg(account, jid, message);
 }
 
+bool PluginHost::appendSysHtmlMsg(int account, const QString& jid, const QString& message)
+{
+    return manager_->appendSysHtmlMsg(account, jid, message);
+}
+
 bool PluginHost::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
 {
     return manager_->appendMsg(account, jid, message, id, wasEncrypted);
@@ -1426,6 +1431,9 @@ void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
     if (cv) {
         cv->sendJsCode(js);
     }
+#else
+    Q_UNUSED(log);
+    Q_UNUSED(js)
 #endif
 }
 

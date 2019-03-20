@@ -35,6 +35,7 @@
 
 #include "chatdlg.h"
 #include "groupchatdlg.h"
+#include "messageview.h"
 
 
 //TODO(mck)
@@ -905,6 +906,16 @@ void PluginManager::setStatus(int account, const QString& status, const QString&
 
 bool PluginManager::appendSysMsg(int account, const QString& jid, const QString& message)
 {
+    return appendMsgView(account, jid, MessageView::fromPlainText(message, MessageView::System));
+}
+
+bool PluginManager::appendSysHtmlMsg(int account, const QString& jid, const QString& message)
+{
+    return appendMsgView(account, jid, MessageView::fromHtml(message, MessageView::System));
+}
+
+bool PluginManager::appendMsgView(int account, const QString &jid, const MessageView &message)
+{
     PsiAccount *acc = accountIds_.account(account);
     if(acc) {
         XMPP::Jid j (jid);
@@ -913,17 +924,18 @@ bool PluginManager::appendSysMsg(int account, const QString& jid, const QString&
             chatDlg = acc->findChatDialog(j, false);
         }
         if(chatDlg) {
-            chatDlg->appendSysMsg(message);
+            chatDlg->dispatchMessage(message);
             return true;
         }
         auto gcDlg = acc->findDialog<GCMainDlg*>(jid);
         if(gcDlg) {
-            gcDlg->appendSysMsg(message);
+            gcDlg->dispatchMessage(message);
             return true;
         }
     }
     return false;
 }
+
 
 bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
 {

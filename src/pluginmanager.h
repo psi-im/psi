@@ -21,6 +21,7 @@ class PsiAccount;
 class PsiPlugin;
 class PluginHost;
 class PsiCon;
+class MessageView;
 
 #define PLUGINS_NO_DEBUG
 
@@ -182,6 +183,7 @@ private:
     void setStatus(int account, const QString& status, const QString& statusMessage);
 
     bool appendSysMsg(int account, const QString& jid, const QString& message);
+    bool appendSysHtmlMsg(int account, const QString &jid, const QString &message);
     bool appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted);
 
     void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
@@ -193,6 +195,9 @@ private:
     void uninstallChatLogJSDataFilter(const QString &id);
 
     friend class PluginHost;
+
+private:
+    bool appendMsgView(int account, const QString& jid, const MessageView &message);
 
 private slots:
     void dirsChanged();
