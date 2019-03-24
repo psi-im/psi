@@ -67,7 +67,7 @@
 #include "activity.h"
 #include "tabdlg.h"
 
-Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
+Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
 // used to be part of the global options struct.
 // FIXME find it a new home!
