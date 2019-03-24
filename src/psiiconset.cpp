@@ -38,6 +38,40 @@ struct ClientIconCheck
     QString icon; // icon name w/o client/ part
     QStringList inside; // search for texts inside provided name to be sure
 };
+
+/*
+ * Main client icon search struct.
+ * <left part of caps/clientName> =>  <list of icons with caps/clientName clarifications>
+ *
+ * Example:
+ * client_icons.txt contents:
+ *   psi-plus psi+,psi#fork#plus
+ *   psi-ny psi#ny
+ *
+ * First column is icon name in the iconpack and remaining is a set of caps/clientName search spec.
+ * This mean for clients with caps node starting with: psi+ and also for nodes starting with psi and having
+ *   word "fork" or "plus" somewhere inside, "psi-plus" icons will be used. For psi-ny (New Year edition) icon
+ *   caps whould start with "psi" and have "ny" somewhere in the middle.
+ *
+ * The structire below will look like
+ *
+ * {
+ *   "psi"  => [
+ *                {"psi-plus",["fork", "plus"]}
+ *                {"psi-ny",["ny"]}
+ *             ]
+ *   "psi+" => [{"psi-plus",[]}]
+ * }
+ *
+ * Now for example we need to lookup icon for caps node "psiplus.com". The most still mathing item here is "psi",
+ * (psi+ won't match because psiplus.com doesn't start with psi+). And we don't have anything like "psip" or "psipl"..
+ * So we review just "psi" (all its items consequently)
+ * Both items in "psi" have clarification list. For the first item we take its clarification list ["fork", "plus"]
+ * and review if any item is in "psiplus.com". The "plus" will be found, so the icon "psi-plus" will be returned.
+ *
+ * Note: It's quite regular for caps node to start with "https" but current client_icons.txt almost doesn't have
+ * such records. It just means it heavily rely on detected client names instead of caps.
+ */
 typedef QMap<QString, QList<ClientIconCheck> > ClientIconMap;
 
 
@@ -948,6 +982,7 @@ QString PsiIconset::caps2client(const QString &name)
 {
     ClientIconMap::const_iterator it = d->client2icon.lowerBound(name);
     if (d->client2icon.size()) {
+        // if name starts with found key or with key of previous item
         if ((it != d->client2icon.constEnd() && name.startsWith(it.key())) ||
                 (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
             foreach (const ClientIconCheck &ic, it.value()) {
