@@ -104,8 +104,8 @@
 #include "psievent.h"
 #include "avcall/avcall.h"
 
-#define MCMDMUC        "http://psi-im.org/ids/mcmd#mucmain"
-#define MCMDMUCNICK    "http://psi-im.org/ids/mcmd#mucnick"
+#define MCMDMUC        "https://psi-im.org/ids/mcmd#mucmain"
+#define MCMDMUCNICK    "https://psi-im.org/ids/mcmd#mucnick"
 
 static const QString geometryOption = "options.ui.muc.size";
 

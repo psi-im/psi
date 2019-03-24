@@ -95,12 +95,12 @@ private slots:
         initTree(&tree);
         verifyTree(&tree);
 
-        tree.saveOptions(dir() + "/options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
+        tree.saveOptions(dir() + "/options.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
 
         OptionsTree tree2;
-        tree2.loadOptions(dir() + "/options.xml","OptionsTest","http://psi-im.org/optionstest","0.1", true);
-        // tree2.saveOptions(dir() + "/options2.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
-        tree2.saveOptions(dir() + "/options3.xml","OptionsTest","http://psi-im.org/optionstest","0.1", true);
+        tree2.loadOptions(dir() + "/options.xml","OptionsTest","https://psi-im.org/optionstest","0.1", true);
+        // tree2.saveOptions(dir() + "/options2.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
+        tree2.saveOptions(dir() + "/options3.xml","OptionsTest","https://psi-im.org/optionstest","0.1", true);
         verifyTree(&tree2);
     }
 
@@ -132,20 +132,20 @@ private slots:
         // sleep(1);
         // OptionsTree tree;
         // QBENCHMARK {
-        //     tree.loadOptions(dir() + "/mbl_options.xml", "options", "http://psi-im.org/options", "0.1");
+        //     tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1");
         // }
 
         // for (int i = 0; i < 100; ++i) {
         QBENCHMARK {
         OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_options.xml", "options", "http://psi-im.org/options", "0.1");
+        tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1");
         }
     }
 
     void benchLoadOptionsStream() {
         QBENCHMARK {
         OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_options.xml", "options", "http://psi-im.org/options", "0.1", true);
+        tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1", true);
         }
     }
 
@@ -153,36 +153,36 @@ private slots:
         // sleep(1);
         // OptionsTree tree;
         // QBENCHMARK {
-        //     tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "http://psi-im.org/options", "0.1");
+        //     tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
         // }
 
         // for (int i = 0; i < 100; ++i) {
         QBENCHMARK {
         OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "http://psi-im.org/options", "0.1");
+        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
         }
     }
 
     void benchLoadAccountsStream() {
         QBENCHMARK {
         OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "http://psi-im.org/options", "0.1", true);
+        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1", true);
         }
     }
 
     void benchSaveAccounts() {
         OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "http://psi-im.org/options", "0.1");
+        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
         QBENCHMARK {
-        tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "http://psi-im.org/options", "0.1");
+        tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "https://psi-im.org/options", "0.1");
         }
     }
 
     void benchSaveAccountsStream() {
         OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "http://psi-im.org/options", "0.1");
+        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
         QBENCHMARK {
-        tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "http://psi-im.org/options", "0.1", true);
+        tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "https://psi-im.org/options", "0.1", true);
         }
     }
     // #endif

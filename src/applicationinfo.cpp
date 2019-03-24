@@ -47,13 +47,13 @@
 #define PROG_VERSION PSI_VERSION
 //#define PROG_VERSION "0.15-dev" " (" __DATE__ ")" //CVS Builds are dated
 //#define PROG_VERSION "0.15";
-#define PROG_CAPS_NODE "http://psi-im.org"
+#define PROG_CAPS_NODE "https://psi-im.org"
 #define PROG_IPC_NAME "org.psi-im.Psi"    // must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
 #define PROG_FILECACHE_NS "http://psi-im.org/filecache"
 #ifdef Q_OS_MAC
-#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml"
+#define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
 #else
 #define PROG_APPCAST_URL ""
 #endif
