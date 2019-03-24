@@ -2550,6 +2550,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
             UserResource ur(r);
             //ur.setSecurityEnabled(true);
             if (local) {
+                // TODO populate caps manager with this too
                 ur.setClient(ApplicationInfo::name(), ApplicationInfo::version(), SystemInfo::instance()->os());
             } else {
                 CapsManager *cm = d->client->capsManager();
@@ -2641,8 +2642,10 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
         foreach (UserListItem *u, findRelevant(j)) {
             UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
             if (rit != u->userResourceList().end()) {
-                (*rit).setClient(cm->clientName(j), cm->clientVersion(j),
-                                 cm->osVersion(j)); // FIXME it seems it's impossible if not in cache
+                if (cm->capsSpec(j).isValid()) {
+                    (*rit).setClient(cm->clientName(j), cm->clientVersion(j),
+                                     cm->osVersion(j)); // FIXME it seems it's impossible if not in cache
+                }
                 cpUpdate(*u, (*rit).name());
             }
         }
