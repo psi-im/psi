@@ -451,6 +451,8 @@ if(WIN32)
         libhunspell-1.4-0.dll
         libhunspell-1.5-0.dll
         libhunspell-1.6-0.dll
+        libhunspell-1.7-0.dll
+        libhunspell-1.8-0.dll
         libeay32.dll
         libqca-qt5${D}.dll
         ssleay32.dll
