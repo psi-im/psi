@@ -14,7 +14,7 @@
 
 PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
     : QObject(parent)
-    , icon_(NULL)
+    , icon_(nullptr)
     , trayicon_(new QSystemTrayIcon())
     , realIcon_(0)
 {    

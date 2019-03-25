@@ -31,7 +31,7 @@ public:
     	if(!path.isEmpty())
     		extra += QString("-F") + path + ' ';
     	extra += QString("-framework ") + name;
-    	if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
+    	if(!conf->doCompileAndLink(str, QStringList(), extra, "", nullptr))
     		return false;
     	return true;
     }

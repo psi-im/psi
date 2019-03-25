@@ -590,7 +590,7 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
                     break;
                 }
                 if (s.at(1) != '-') {
-                    int subflag = QString(s.at(1)).toInt(NULL, 16);
+                    int subflag = QString(s.at(1)).toInt(nullptr, 16);
                     if (subflag & 1) // have subject?
                         max = Subj;
                     else // Skip subject

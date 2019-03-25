@@ -1758,7 +1758,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         }
 
         auto contact = d->usersModel->findEntry(nick);
-        if (contact == NULL) {
+        if (contact == nullptr) {
             //contact joining
             //ui_.log->updateAvatar(jid().withResource(nick), isSelf? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
 

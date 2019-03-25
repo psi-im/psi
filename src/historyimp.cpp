@@ -32,15 +32,15 @@
 
 HistoryImport::HistoryImport(PsiCon *psi) : QObject(),
     psi_(psi),
-    srcEdb(NULL),
-    dstEdb(NULL),
-    hErase(NULL),
-    hRead(NULL),
-    hWrite(NULL),
+    srcEdb(nullptr),
+    dstEdb(nullptr),
+    hErase(nullptr),
+    hRead(nullptr),
+    hWrite(nullptr),
     active(false),
     result_(ResultNone),
     recordsCount(0),
-    dlg(NULL)
+    dlg(nullptr)
 {
 }
 
@@ -76,23 +76,23 @@ void HistoryImport::clear()
     }
     if (hErase) {
         delete hErase;
-        hErase = NULL;
+        hErase = nullptr;
     }
     if (hRead) {
         delete hRead;
-        hRead = NULL;
+        hRead = nullptr;
     }
     if (srcEdb) {
         delete srcEdb;
-        srcEdb = NULL;
+        srcEdb = nullptr;
     }
     if (hWrite) {
         delete hWrite;
-        hWrite = NULL;
+        hWrite = nullptr;
     }
     if (dlg) {
         delete dlg;
-        dlg = NULL;
+        dlg = nullptr;
     }
 }
 
@@ -101,7 +101,7 @@ int HistoryImport::exec()
     active = true;
 
     dstEdb = psi_->edb();
-    ((EDBSqLite *)dstEdb)->setMirror(NULL);
+    ((EDBSqLite *)dstEdb)->setMirror(nullptr);
     ((EDBSqLite *)dstEdb)->setInsertingMode(EDBSqLite::Import);
 
     dstEdb->setStorageParam("import_start", "yes");
@@ -165,13 +165,13 @@ void HistoryImport::readFromFiles()
 {
     if (!active)
         return;
-    if (hWrite != NULL) {
+    if (hWrite != nullptr) {
         if (!hWrite->writeSuccess()) {
             stop(ResultError); // Write error
             return;
         }
     }
-    else if (hErase != NULL && !hErase->writeSuccess()) {
+    else if (hErase != nullptr && !hErase->writeSuccess()) {
         stop(ResultError);
         return;
     }
@@ -179,7 +179,7 @@ void HistoryImport::readFromFiles()
         stop(ResultNormal);
         return;
     }
-    if (hRead == NULL) {
+    if (hRead == nullptr) {
         hRead = new EDBHandle(srcEdb);
         connect(hRead, SIGNAL(finished()), this, SLOT(writeToSqlite()));
     }
@@ -210,7 +210,7 @@ void HistoryImport::writeToSqlite()
         QTimer::singleShot(0, this, SLOT(readFromFiles()));
         return;
     }
-    if (hWrite == NULL) {
+    if (hWrite == nullptr) {
         hWrite = new EDBHandle(dstEdb);
         connect(hWrite, SIGNAL(finished()), this, SLOT(readFromFiles()));
     }

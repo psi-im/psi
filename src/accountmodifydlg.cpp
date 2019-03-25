@@ -44,7 +44,7 @@ AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
     acc.name = "";
     setupUi(this);
     setModal(true);
-    pa = NULL;
+    pa = nullptr;
     psi = _psi;
     init();
 }
@@ -670,7 +670,7 @@ void AccountModifyDlg::addBlockClicked()
         return;
 
     bool ok;
-    QString input = QInputDialog::getText(NULL, tr("Block contact"), tr("Enter the XMPP Address of the contact to block:"), QLineEdit::Normal, "", &ok);
+    QString input = QInputDialog::getText(nullptr, tr("Block contact"), tr("Enter the XMPP Address of the contact to block:"), QLineEdit::Normal, "", &ok);
     Jid jid(input);
     if (ok && !jid.isEmpty()) {
         privacyModel.insertItem(0, PrivacyListItem::blockItem(jid.full()));

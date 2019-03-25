@@ -344,7 +344,7 @@ void WbWidget::inspectNodes() {
         WbItem* item = wbItem(node);
 
         // We don't need to do anything iff node is child of <svg/> and item exists or vice versa
-        if((item != NULL) == (node.parentNode() == session_->document().documentElement()))
+        if((item != nullptr) == (node.parentNode() == session_->document().documentElement()))
             continue;
 
         // Otherwise, either item exists and needs to be removed

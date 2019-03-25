@@ -332,4 +332,4 @@ SystemInfo* SystemInfo::instance()
     return instance_;
 }
 
-SystemInfo* SystemInfo::instance_ = NULL;
+SystemInfo* SystemInfo::instance_ = nullptr;

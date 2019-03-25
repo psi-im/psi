@@ -28,7 +28,7 @@ namespace Crash {
 
 /**
  * sets the print function (it is used to print the backtrace)
- * if it isn't set, or it is set to NULL, printf will be used.
+ * if it isn't set, or it is set to nullptr, printf will be used.
  *
  * \param  _need_cr    needs to append an \n at the end?
  */

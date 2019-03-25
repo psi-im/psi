@@ -297,7 +297,7 @@ UserListItem::UserListItem(bool self)
     v_private = false;
     v_isTransport = false;
     v_isConference = false;
-    v_avatarFactory = NULL;
+    v_avatarFactory = nullptr;
     lastmsgtype = -1;
     v_pending = 0;
     v_hPending = 0;

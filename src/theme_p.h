@@ -51,7 +51,7 @@ public:
     virtual bool hasPreview() const;
     virtual QWidget* previewWidget(); // this hack must be replaced with something widget based
 
-    QByteArray loadData(const QString &fileName, bool *loaded = NULL) const;
+    QByteArray loadData(const QString &fileName, bool *loaded = nullptr) const;
     Theme::ResourceLoader *resourceLoader() const;
 };
 

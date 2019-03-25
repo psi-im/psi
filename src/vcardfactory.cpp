@@ -252,4 +252,4 @@ JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *
     return task;
 }
 
-VCardFactory* VCardFactory::instance_ = NULL;
+VCardFactory* VCardFactory::instance_ = nullptr;

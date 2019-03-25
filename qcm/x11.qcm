@@ -28,6 +28,6 @@ public:
     	proextra += "LIBS += -lxcb\n";
     	proextra += "QT += x11extras\n";
 #endif
-    	return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
+    	return conf->doCompileAndLink(str, QStringList(), QString(), proextra, nullptr);
     }
 };

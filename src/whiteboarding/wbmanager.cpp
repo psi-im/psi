@@ -94,7 +94,7 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
     QList<QString> features;
     features += WBNS;
     if(!sxemanager_->checkSupport(target, features)) {
-        QMessageBox::information(NULL, tr("Unsupported"), tr("The contact does not support whiteboarding."));
+        QMessageBox::information(nullptr, tr("Unsupported"), tr("The contact does not support whiteboarding."));
         return;
     }
 
@@ -107,7 +107,7 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
         QDomDocument doc;
 
         if(promptInitialDoc) {
-            bool openExisting = (QMessageBox::Yes == QMessageBox::question(NULL,
+            bool openExisting = (QMessageBox::Yes == QMessageBox::question(nullptr,
                                                         tr("Open Existing SVG?"),
                                                         tr("Would you like to open an existing SVG document in the whitebaord?"),
                                                         QMessageBox::Yes | QMessageBox::No,
@@ -115,7 +115,7 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
             if(openExisting) {
                 // prompt for an existing file
-                QString fileName = QFileDialog::getOpenFileName(NULL, tr("Initial SVG Document for the Whiteboard"),
+                QString fileName = QFileDialog::getOpenFileName(nullptr, tr("Initial SVG Document for the Whiteboard"),
                                                                  QDir::homePath(),
                                                                  tr("Scalable Vector Graphics (*.svg)"));
 
@@ -197,7 +197,7 @@ void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features,
     wr->startLoop();
     requests_.removeAll(wr);
     delete wr;
-    *result = (QMessageBox::Yes == QMessageBox::question(NULL,
+    *result = (QMessageBox::Yes == QMessageBox::question(nullptr,
                                     tr("Whiteboarding Invitation?"),
                                     tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
                                     QMessageBox::Yes | QMessageBox::No,

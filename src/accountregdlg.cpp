@@ -84,7 +84,7 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
     fields_layout->addWidget(fields_container_);
     fields_container_->setWidgetResizable(true);
     fields_layout->addStretch(20);
-    fields_ = NULL;
+    fields_ = nullptr;
 
     ui_.le_port->setText(QString::number(port_));
     ui_.le_host->setFocus();
@@ -248,7 +248,7 @@ void AccountRegDlg::client_error()
     if (ui_.sw_register->currentWidget() == ui_.page_fields) {
         // Start over
         delete fields_;
-        fields_ = NULL;
+        fields_ = nullptr;
         ui_.sw_register->setCurrentWidget(ui_.page_server);
     }
 }

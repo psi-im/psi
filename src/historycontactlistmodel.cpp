@@ -28,10 +28,10 @@
 
 HistoryContactListModel::HistoryContactListModel(QObject *parent)
     : QAbstractItemModel(parent)
-    , rootItem(NULL)
-    , generalGroup(NULL)
-    , notInList(NULL)
-    , confPrivate(NULL)
+    , rootItem(nullptr)
+    , generalGroup(nullptr)
+    , notInList(nullptr)
+    , confPrivate(nullptr)
     , dispPrivateContacts(false)
     , dispAllContacts(false)
 {
@@ -45,10 +45,10 @@ HistoryContactListModel::~HistoryContactListModel()
 void HistoryContactListModel::clear()
 {
     delete rootItem;
-    rootItem     = NULL;
-    generalGroup = NULL;
-    notInList    = NULL;
-    confPrivate  = NULL;
+    rootItem     = nullptr;
+    generalGroup = nullptr;
+    notInList    = nullptr;
+    confPrivate  = nullptr;
 }
 
 void HistoryContactListModel::updateContacts(PsiCon *psi, const QString &id)
@@ -167,7 +167,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
         if (c_list.value(cId))
             continue;
 
-        TreeItem *groupItem = NULL;
+        TreeItem *groupItem = nullptr;
         if (contact->groups().count() > 0)
         {
             QString g = contact->groups().at(0);
@@ -274,7 +274,7 @@ QString HistoryContactListModel::makeContactToolTip(PsiCon *psi, const QString &
 }
 
 HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, const QString &id, int pos)
-    : _parent(NULL)
+    : _parent(nullptr)
     , _type(type)
     , _text(text)
     , _id(id)
@@ -283,7 +283,7 @@ HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, 
 }
 
 HistoryContactListModel::TreeItem::TreeItem(ItemType type, const QString &text, const QString &tooltip, const QString &id, int pos)
-    : _parent(NULL)
+    : _parent(nullptr)
     , _type(type)
     , _text(text)
     , _tooltip(tooltip)

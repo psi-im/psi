@@ -562,7 +562,7 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
         d = -1;
     }
 
-    PsiAccount *acc = NULL;
+    PsiAccount *acc = nullptr;
     if ((psi->edb()->features() & EDB::SeparateAccounts) == 0) {
         acc = psi->contactList()->getAccount(acc_);
         Q_ASSERT(acc);
@@ -636,7 +636,7 @@ public:
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
     : AdvancedWidget<QDialog>(0, Qt::Window)
-    , lastFocus(NULL)
+    , lastFocus(nullptr)
 {
     ui_.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -863,7 +863,7 @@ void HistoryDlg::selectDefaultContact(const QModelIndex &prefer_parent, int pref
 
 void HistoryDlg::saveFocus()
 {
-    lastFocus = ui_.contactList->hasFocus() ? ui_.contactList : NULL;
+    lastFocus = ui_.contactList->hasFocus() ? ui_.contactList : nullptr;
 }
 
 void HistoryDlg::restoreFocus()
@@ -921,7 +921,7 @@ void HistoryDlg::openSelectedContact()
             }
             else
             {
-                d->pa = NULL;
+                d->pa = nullptr;
                 d->jid = Jid();
                 QString paId = ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString();
                 if (!paId.isEmpty())
@@ -1024,9 +1024,9 @@ void HistoryDlg::exportHistory()
     }
     QTextStream stream(&f);
 
-    EDB *edb = NULL;
+    EDB *edb = nullptr;
     QString us;
-    //PsiAccount *pa = NULL;
+    //PsiAccount *pa = nullptr;
     if (d->pa) {
         edb = d->pa->edb();
         us  = d->pa->nick();
@@ -1049,7 +1049,7 @@ void HistoryDlg::exportHistory()
             showProgress(max);
         }
     }
-    PsiAccount *acc = NULL;
+    PsiAccount *acc = nullptr;
     if ((d->psi->edb()->features() & EDB::SeparateAccounts) == 0) {
         Q_ASSERT(d->pa);
         acc = d->pa;

@@ -23,7 +23,7 @@ ShortcutManager::ShortcutManager() : QObject(QCoreApplication::instance())
 /**
  * "The one and only instance" of the ShortcutManager
  */
-ShortcutManager* ShortcutManager::instance_ = NULL;
+ShortcutManager* ShortcutManager::instance_ = nullptr;
 
 /**
  * \brief The Instantiator of the Shortcutmanager
@@ -115,7 +115,7 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
  */
 void ShortcutManager::connect(const QString& path, QObject* parent, const char* slot)
 {
-    if (parent == NULL || slot == NULL)
+    if (parent == nullptr || slot == nullptr)
         return;
 
     if (!path.startsWith("global.")) {

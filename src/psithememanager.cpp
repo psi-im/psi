@@ -82,4 +82,4 @@ bool PsiThemeManager::loadAll()
     return true;
 }
 
-PsiThemeManager* PsiThemeManager::instance_ = NULL;
+PsiThemeManager* PsiThemeManager::instance_ = nullptr;

@@ -158,8 +158,8 @@ QString JIDUtil::decode822(const QString &s)
             if(s[x] != 'x')
                 continue;
             ushort val = 0;
-            val += QString(s[x+1]).toInt(NULL,16);
-            val += QString(s[x+2]).toInt(NULL,16);
+            val += QString(s[x+1]).toInt(nullptr,16);
+            val += QString(s[x+2]).toInt(nullptr,16);
             QChar c(val);
             out += c;
         }

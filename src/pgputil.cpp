@@ -10,7 +10,7 @@
 
 PGPUtil* PGPUtil::instance_ = 0;
 
-PGPUtil::PGPUtil() : qcaEventHandler_(NULL), passphraseDlg_(NULL), cache_no_pgp_(false)
+PGPUtil::PGPUtil() : qcaEventHandler_(nullptr), passphraseDlg_(nullptr), cache_no_pgp_(false)
 {
     qcaEventHandler_ = new QCA::EventHandler(this);
     connect(qcaEventHandler_,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(handleEvent(int,const QCA::Event&)));
@@ -122,7 +122,7 @@ void PGPUtil::passphraseDone(int result)
         }
     }
     passphraseDlg_->deleteLater();
-    passphraseDlg_ = NULL;
+    passphraseDlg_ = nullptr;
 }
 
 bool PGPUtil::pgpAvailable()

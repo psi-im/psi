@@ -819,7 +819,7 @@ void PluginHost::setPluginOption( const QString& option, const QVariant& value)
 {
     // TODO(mck)
 
-    //PsiPlugin* plugin=NULL;
+    //PsiPlugin* plugin=nullptr;
     //
     //if (!plugin)
     //    return;

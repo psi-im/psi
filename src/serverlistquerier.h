@@ -30,7 +30,7 @@ class ServerListQuerier : public QObject
     Q_OBJECT
 
 public:
-    ServerListQuerier(QObject* parent = NULL);
+    ServerListQuerier(QObject* parent = nullptr);
     void getList();
 
 signals:

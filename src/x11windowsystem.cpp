@@ -40,7 +40,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     Atom nameAtom, typeAtom, actual_type_return;
     int actual_format_return, result;
     unsigned long nitems_return, bytes_after_return;
-    long *result_array=NULL;
+    long *result_array=nullptr;
 
     nameAtom = XInternAtom(display, propName, False);
     typeAtom = XInternAtom(display, "CARDINAL", False);

@@ -79,4 +79,4 @@ GlobalEventQueue::GlobalEventQueue()
     : QObject(QCoreApplication::instance())
 {}
 
-GlobalEventQueue* GlobalEventQueue::instance_ = NULL;
+GlobalEventQueue* GlobalEventQueue::instance_ = nullptr;

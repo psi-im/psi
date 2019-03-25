@@ -84,8 +84,8 @@ public:
     bool isCompressed() const;
     // load file from theme in `themePath`
     static QByteArray loadData(const QString &fileName, const QString &themePath,
-                               bool caseInsensetive = false, bool *loaded = NULL);
-    QByteArray loadData(const QString &fileName, bool *loaded = NULL) const;
+                               bool caseInsensetive = false, bool *loaded = nullptr);
+    QByteArray loadData(const QString &fileName, bool *loaded = nullptr) const;
     ResourceLoader* resourceLoader() const;
 
     const QString id() const;

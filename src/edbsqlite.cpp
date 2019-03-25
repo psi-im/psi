@@ -41,8 +41,8 @@ using namespace XMPP;
 EDBSqLite::EDBSqLite(PsiCon *psi) : EDB(psi),
     transactionsCounter(0),
     lastCommitTime(QDateTime::currentDateTime()),
-    commitTimer(NULL),
-    mirror_(NULL)
+    commitTimer(nullptr),
+    mirror_(nullptr)
 {
     status = NotActive;
     QString path = ApplicationInfo::historyDir() + "/history.db";
@@ -761,8 +761,8 @@ EDBSqLite::QueryStorage::~QueryStorage()
 EDBSqLite::PreparedQuery *EDBSqLite::QueryStorage::getPreparedQuery(QueryType type, bool allAccounts, bool allContacts)
 {
     QueryProperty queryProp(type, allAccounts, allContacts);
-    EDBSqLite::PreparedQuery *q = queryList.value(queryProp, NULL);
-    if (q != NULL)
+    EDBSqLite::PreparedQuery *q = queryList.value(queryProp, nullptr);
+    if (q != nullptr)
         return q;
 
     q = new EDBSqLite::PreparedQuery(QSqlDatabase::database("history"));

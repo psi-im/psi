@@ -153,10 +153,10 @@ QString ApplicationInfo::resourcesDir()
     // in the Resources directory.
     QString resourcePath;
     CFBundleRef mainBundle = CFBundleGetMainBundle();
-    CFStringRef resourceCFStringRef = CFStringCreateWithCString(NULL,
+    CFStringRef resourceCFStringRef = CFStringCreateWithCString(nullptr,
                                     "application.icns", kCFStringEncodingASCII);
     CFURLRef resourceURLRef = CFBundleCopyResourceURL(mainBundle,
-                                            resourceCFStringRef, NULL, NULL);
+                                            resourceCFStringRef, nullptr, nullptr);
     if (resourceURLRef) {
         CFStringRef resourcePathStringRef = CFURLCopyFileSystemPath(
                     resourceURLRef, kCFURLPOSIXPathStyle);
@@ -217,7 +217,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QString base = ApplicationInfo::isPortable()? QCoreApplication::applicationDirPath() : "";
             if (base.isEmpty()) {
                 wchar_t path[MAX_PATH];
-                if (SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path) == S_OK) {
+                if (SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, path) == S_OK) {
                     configDir_ = QString::fromWCharArray(path) + "\\" + name();
                 } else {
                     configDir_ = QDir::homePath() + "/" + name();

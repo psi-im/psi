@@ -4060,7 +4060,7 @@ void PsiAccount::actionVoice(const Jid &j)
     w->setOutgoing(j2);
     w->show();
     /*
-    Q_ASSERT(voiceCaller() != NULL);
+    Q_ASSERT(voiceCaller() != nullptr);
 
     Jid jid;
     if (j.resource().isEmpty()) {
@@ -5126,7 +5126,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 #ifdef PSI_PLUGINS
         //TODO(mck): clean up
-        //UserListItem *ulItem=NULL;
+        //UserListItem *ulItem=nullptr;
         //if ( !ul.isEmpty() )
         //    ulItem=ul.first();
         if (PluginManager::instance()->processMessage(this, e->from().full(), m.body(), m.subject())) {

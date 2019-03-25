@@ -636,6 +636,6 @@ ProxyForObject* ProxyManager::proxyForObject()
     return d->po;
 }
 
-ProxyManager* ProxyManager::instance_ = NULL;
+ProxyManager* ProxyManager::instance_ = nullptr;
 
 #include "proxy.moc"

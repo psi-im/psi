@@ -87,7 +87,7 @@ public:
      * a widget containing the options for this plugin.
      * This will then be embedded in the options dialog, so this
      * should be considered when designing the widget. Should return
-     * NULL when there are no user-configurable options. The calling method
+     * nullptr when there are no user-configurable options. The calling method
      * is responsible for deleting the options.
      *
      * TODO: make sure this is really deleted, etc

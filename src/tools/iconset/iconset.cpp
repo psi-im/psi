@@ -885,7 +885,7 @@ public:
 };
 //! \endif
 
-IconsetFactoryPrivate* IconsetFactoryPrivate::instance_ = NULL;
+IconsetFactoryPrivate* IconsetFactoryPrivate::instance_ = nullptr;
 
 void IconsetFactoryPrivate::registerIconset(const Iconset *i)
 {

@@ -54,7 +54,7 @@ MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
     ui_.pb_close->setDefault(true);
 
     // General tab
-    data_ = NULL;
+    data_ = nullptr;
     connect(manager_, SIGNAL(getConfiguration_success(const XData&)), SLOT(getConfiguration_success(const XData&)));
     connect(manager_, SIGNAL(getConfiguration_error(int, const QString&)), SLOT(getConfiguration_error(int, const QString&)));
     connect(manager_, SIGNAL(setConfiguration_success()), SLOT(setConfiguration_success()));
@@ -125,7 +125,7 @@ void MUCConfigDlg::refreshGeneral()
 {
     if (affiliation_ == MUCItem::Owner) {
         delete data_;
-        data_ = NULL;
+        data_ = nullptr;
         ui_.lb_general_message->setText(tr("Requesting room configuration ..."));
         ui_.sw_general->setCurrentWidget(ui_.pg_general_message);
         ui_.busy->start();

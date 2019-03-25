@@ -480,8 +480,8 @@ bool ForceForegroundWindow(HWND hwnd)
             // Published in The Delphi Magazine 55, page 16
 
             Result = false;
-            ForegroundThreadID = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
-            ThisThreadID = GetWindowThreadProcessId(hwnd, NULL);
+            ForegroundThreadID = GetWindowThreadProcessId(GetForegroundWindow(), nullptr);
+            ThisThreadID = GetWindowThreadProcessId(hwnd, nullptr);
             if (AttachThreadInput(ThisThreadID, ForegroundThreadID, true)) {
                 BringWindowToTop(hwnd); // IE 5.5 related hack
                 SetForegroundWindow(hwnd);

@@ -565,7 +565,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 #endif
 
     // seed the random number generator
-    srand(time(NULL));
+    srand(time(nullptr));
 
     //dtcp_port = 8000;
 

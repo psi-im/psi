@@ -209,7 +209,7 @@ void ActionLineEdit::contextMenuEvent(QContextMenuEvent *e)
 {
     QMenu *menu = createStandardContextMenu();
     if (actions().count() > 0) {
-        QAction *before = NULL;
+        QAction *before = nullptr;
         if (menu->actions().count() > 0) {
             before = menu->actions().first();
         }

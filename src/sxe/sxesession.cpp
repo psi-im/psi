@@ -708,7 +708,7 @@ void SxeSession::queueOutgoingEdit(SxeEdit* edit) {
 SxeRecord* SxeSession::createRecord(const QString &id) {
     if(recordByNodeId_.contains(id)) {
         qDebug() << QString("record by id '%1' already exists.").arg(id).toLatin1();
-        return NULL;
+        return nullptr;
     }
 
     SxeRecord* m = new SxeRecord(id);
@@ -737,7 +737,7 @@ SxeRecord* SxeSession::record(const QString &id) {
 
 SxeRecord* SxeSession::record(const QDomNode &node) const {
     if(node.isNull())
-        return NULL;
+        return nullptr;
 
     // go through all the SxeRecord's
     foreach(SxeRecord* meta, recordByNodeId_.values()) {
@@ -746,7 +746,7 @@ SxeRecord* SxeSession::record(const QDomNode &node) const {
             return meta;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void SxeSession::setUUIDPrefix(const QString uuidPrefix) {

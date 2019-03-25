@@ -183,4 +183,4 @@ QStringList TranslationManager::translationDirs() const
     return dirs;
 }
 
-TranslationManager* TranslationManager::instance_ = NULL;
+TranslationManager* TranslationManager::instance_ = nullptr;

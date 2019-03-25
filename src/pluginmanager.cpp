@@ -94,7 +94,7 @@ PluginManager* PluginManager::instance()
  * Default constructor. Locates all plugins, sets watchers on those directories to
  * locate new ones and loads those enabled in the config.
  */
-PluginManager::PluginManager() : QObject(NULL), psi_(nullptr)
+PluginManager::PluginManager() : QObject(nullptr), psi_(nullptr)
 {
     updatePluginsList();
     foreach (QString path, pluginDirs()) {
@@ -357,7 +357,7 @@ QStringList PluginManager::availablePlugins() const
 
 /**
  * Provides a pointer to a QWidget providing the options dialog for the
- * named plugin, if it exists, else NULL.
+ * named plugin, if it exists, else nullptr.
  * \param plugin Name of the plugin.
  * \return Pointer to the options widget for the named plugin.
  */

@@ -127,13 +127,13 @@ public:
 
     void loadIconset(Iconset *to, Iconset *from) {
         if ( !to ) {
-            qWarning("PsiIconset::loadIconset(): 'to' iconset is NULL!");
+            qWarning("PsiIconset::loadIconset(): 'to' iconset is nullptr!");
             if ( from )
                 qWarning("from->name() = '%s'", qPrintable(from->name()));
             return;
         }
         if ( !from ) {
-            qWarning("PsiIconset::loadIconset(): 'from' iconset is NULL!");
+            qWarning("PsiIconset::loadIconset(): 'from' iconset is nullptr!");
             if ( to )
                 qWarning("to->name() = '%s'", qPrintable(to->name()));
             return;
@@ -1012,4 +1012,4 @@ PsiIconset* PsiIconset::instance()
     return instance_;
 }
 
-PsiIconset* PsiIconset::instance_ = NULL;
+PsiIconset* PsiIconset::instance_ = nullptr;

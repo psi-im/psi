@@ -443,7 +443,7 @@ void ContactListModel::Private::updateAccount()
 
 void ContactListModel::Private::cleanUpAccount(PsiAccount *account)
 {
-    disconnect(account, 0, this, NULL);
+    disconnect(account, 0, this, nullptr);
     ContactListItem *root = static_cast<ContactListItem*>(q->root());
     ContactListItem *item = root->findAccount(account);
     if (!item) {

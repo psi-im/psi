@@ -394,5 +394,5 @@ void PsiOptions::resetOption(const QString &name)
 }
 
 
-PsiOptions* PsiOptions::instance_ = NULL;
-PsiOptions* PsiOptions::defaults_ = NULL;
+PsiOptions* PsiOptions::instance_ = nullptr;
+PsiOptions* PsiOptions::defaults_ = nullptr;
