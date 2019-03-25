@@ -28,7 +28,7 @@
 #include "actionlineedit.h"
 
 ActionLineEditButton::ActionLineEditButton( QWidget *parent )
-        : QAbstractButton(parent), action_(0), popup_(0)
+        : QAbstractButton(parent), action_(nullptr), popup_(nullptr)
 {
     setCursor(Qt::PointingHandCursor);
 }
@@ -162,7 +162,7 @@ ActionLineEditButton * ActionLineEdit::widgetForAction ( QAction * action )
             return btn;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 void ActionLineEdit::actionEvent ( QActionEvent * event )

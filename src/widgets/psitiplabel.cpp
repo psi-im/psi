@@ -39,7 +39,7 @@ void PsiTipLabel::init(const QString& text)
     resize(sizeHint());
     qApp->installEventFilter(this);
     startHideTimer();
-    setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, 0, this) / 255.0);
+    setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, nullptr, this) / 255.0);
     setForegroundRole(QPalette::ToolTipText);
     setBackgroundRole(QPalette::ToolTipBase);
     setPalette(QToolTip::palette());
@@ -83,7 +83,7 @@ void PsiTipLabel::setText(const QString& text)
 
 void PsiTipLabel::initUi()
 {
-    margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, 0, this);
+    margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, nullptr, this);
     setFrameStyle(QFrame::NoFrame);
 
     doc = new QTextDocument(this);
@@ -213,7 +213,7 @@ void PsiTipLabel::paintEvent(QPaintEvent *)
 
 PsiTipLabel::~PsiTipLabel()
 {
-    instance_ = 0;
+    instance_ = nullptr;
 }
 
 void PsiTipLabel::hideTip()

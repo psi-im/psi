@@ -66,7 +66,7 @@ static int calcProgressStep(qlonglong big, int complement, int shift)
     return ((big + complement) >> shift);
 }
 
-static QStringList *activeFiles = 0;
+static QStringList *activeFiles = nullptr;
 
 static void active_file_add(const QString &s)
 {
@@ -140,7 +140,7 @@ FileTransferHandler::FileTransferHandler(PsiAccount *pa, FileTransfer *ft)
 {
     d = new Private;
     d->pa = pa;
-    d->c = 0;
+    d->c = nullptr;
 
     if(ft) {
         d->sending = false;
@@ -158,7 +158,7 @@ FileTransferHandler::FileTransferHandler(PsiAccount *pa, FileTransfer *ft)
     }
     else {
         d->sending = true;
-        d->ft = 0;
+        d->ft = nullptr;
     }
 }
 
@@ -373,7 +373,7 @@ void FileTransferHandler::ft_connected()
         }
         if(!ok) {
             delete d->ft;
-            d->ft = 0;
+            d->ft = nullptr;
             error(ErrFile, 0, d->f.errorString());
             return;
         }
@@ -400,7 +400,7 @@ void FileTransferHandler::ft_connected()
         }
         if(!ok) {
             delete d->ft;
-            d->ft = 0;
+            d->ft = nullptr;
             error(ErrFile, 0, d->f.errorString());
             return;
         }
@@ -424,7 +424,7 @@ void FileTransferHandler::ft_readyRead(const QByteArray &a)
         if(r < 0) {
             d->f.close();
             delete d->ft;
-            d->ft = 0;
+            d->ft = nullptr;
             error(ErrFile, 0, d->f.errorString());
             return;
         }
@@ -441,7 +441,7 @@ void FileTransferHandler::ft_bytesWritten(qint64 x)
         if(d->sent == d->fileSize) {
             d->f.close();
             delete d->ft;
-            d->ft = 0;
+            d->ft = nullptr;
         }
         else
             QTimer::singleShot(0, this, SLOT(trySend()));
@@ -454,7 +454,7 @@ void FileTransferHandler::ft_error(int x)
     if(d->f.isOpen())
         d->f.close();
     delete d->ft;
-    d->ft = 0;
+    d->ft = nullptr;
 
     if(x == FileTransfer::ErrReject)
         error(ErrReject, x, "");
@@ -495,7 +495,7 @@ void FileTransferHandler::trySend()
     if(r < 0) {
         d->f.close();
         delete d->ft;
-        d->ft = 0;
+        d->ft = nullptr;
         error(ErrFile, 0, d->f.errorString());
         return;
     }
@@ -509,7 +509,7 @@ void FileTransferHandler::doFinish()
     if(d->sent == d->fileSize) {
         d->f.close();
         delete d->ft;
-        d->ft = 0;
+        d->ft = nullptr;
     }
     progress(calcProgressStep(d->sent, d->complement, d->shift), d->sent);
 }
@@ -547,7 +547,7 @@ public:
 
 
 FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
-    : QDialog(0, psi_dialog_flags)
+    : QDialog(nullptr, psi_dialog_flags)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setModal(false);
@@ -558,18 +558,18 @@ FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
 
 
 FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, const QStringList& files, bool direct)
-    : QDialog(0, psi_dialog_flags)
+    : QDialog(nullptr, psi_dialog_flags)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private;
     setModal(false);
     setupUi(this);
     d->psi = psi;
-    d->pa = 0;
+    d->pa = nullptr;
     d->jid = jid;
-    d->ft = 0;
+    d->ft = nullptr;
     d->sending = true;
-    d->lb_ident = 0;
+    d->lb_ident = nullptr;
     updateIdentity(pa);
 
     QFrame *hb = new QFrame(this);
@@ -643,14 +643,14 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 }
 
 FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount *pa)
-    : QDialog(0, psi_dialog_flags)
+    : QDialog(nullptr, psi_dialog_flags)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private;
     setModal(false);
     setupUi(this);
-    d->psi = 0;
-    d->pa = 0;
+    d->psi = nullptr;
+    d->pa = nullptr;
     d->jid = ft->peer();
     d->ft = new FileTransferHandler(pa, ft);
     d->sending = false;
@@ -659,7 +659,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
     d->fileName = ft->fileName();
     d->fileSize = ft->fileSize();
 
-    d->cb_ident = 0;
+    d->cb_ident = nullptr;
     QFrame *hb = new QFrame(this);
     QHBoxLayout *hbLayout = new QHBoxLayout(hb);
     hbLayout->setMargin(0);
@@ -740,7 +740,7 @@ void FileRequestDlg::done(int r)
         // close/reject FT if there is one
         if(d->ft) {
             delete d->ft;
-            d->ft = 0;
+            d->ft = nullptr;
         }
     }
 
@@ -926,7 +926,7 @@ void FileRequestDlg::ft_connected()
     busy->stop();
     FileTransDlg *w = d->pa->psi()->ftdlg();
     FileTransferHandler *h = d->ft;
-    d->ft = 0;
+    d->ft = nullptr;
     closeDialogs(this);
     close();
     w->showWithoutActivation();
@@ -940,7 +940,7 @@ void FileRequestDlg::ft_error(int x, int fx, const QString &)
     busy->stop();
 
     delete d->ft;
-    d->ft = 0;
+    d->ft = nullptr;
 
     closeDialogs(this);
 
@@ -986,7 +986,7 @@ void FileRequestDlg::ft_error(int x, int fx, const QString &)
 void FileRequestDlg::t_timeout()
 {
     delete d->ft;
-    d->ft = 0;
+    d->ft = nullptr;
 
     busy->stop();
     closeDialogs(this);
@@ -1450,7 +1450,7 @@ class FileTransView : public QListWidget
 public:
     ColumnWidthManager *cm;
 
-    FileTransView(QWidget *parent=0, const char *name=0)
+    FileTransView(QWidget *parent=nullptr, const char *name=nullptr)
     :QListWidget(parent)
     {
         Q_UNUSED(name)
@@ -1566,7 +1566,7 @@ private:
 
 FileTransDelegate::FileTransDelegate(QObject* p)
     : QItemDelegate(p)
-    , ftv(0)
+    , ftv(nullptr)
 {
     ftv = static_cast<FileTransView*>(p);
 }
@@ -1672,7 +1672,7 @@ public:
             if(fi->id == id)
                 return fi;
         }
-        return 0;
+        return nullptr;
     }
 
     QList<FileTransItem*> getFinished()
@@ -1694,7 +1694,7 @@ public:
             if((*it)->h == h)
                 return *it;
         }
-        return 0;
+        return nullptr;
     }
 
     TransferMapping *findMapping(int id)
@@ -1704,7 +1704,7 @@ public:
             if((*it)->id == id)
                 return *it;
         }
-        return 0;
+        return nullptr;
     }
 
     void updateProgress(TransferMapping *i, bool updateAll=true)
@@ -1759,7 +1759,7 @@ public:
 };
 
 FileTransDlg::FileTransDlg(PsiCon *psi)
-:AdvancedWidget<QDialog>(0, psi_dialog_flags)
+:AdvancedWidget<QDialog>(nullptr, psi_dialog_flags)
 {
     d = new Private(this);
     d->psi = psi;

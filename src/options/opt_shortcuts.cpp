@@ -50,7 +50,7 @@ public:
 OptionsTabShortcuts::OptionsTabShortcuts(QObject *parent)
 : OptionsTab(parent, "shortcuts", "", tr("Shortcuts"), tr("Options for Psi Shortcuts"), "psi/shortcuts")
 {
-    w = 0;
+    w = nullptr;
 }
 
 /**
@@ -67,7 +67,7 @@ OptionsTabShortcuts::~OptionsTabShortcuts()
 QWidget *OptionsTabShortcuts::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptShortcutsUI();
     OptShortcutsUI *d = static_cast<OptShortcutsUI *>(w);

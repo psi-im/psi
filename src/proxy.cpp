@@ -142,8 +142,8 @@ public slots:
     {
         q->ui_.lbx_proxy->clear();
 
-        QListWidgetItem* firstItem = 0;
-        QListWidgetItem* currentItem = 0;
+        QListWidgetItem* firstItem = nullptr;
+        QListWidgetItem* currentItem = nullptr;
         foreach(ProxyItem i, list) {
             QListWidgetItem* item = new QListWidgetItem(i.name);
             addItem(item);
@@ -515,7 +515,7 @@ public:
 };
 
 ProxyManager::ProxyManager()
-        : QObject(0)
+        : QObject(nullptr)
 {
     d = new Private;
 }
@@ -585,7 +585,7 @@ void ProxyManager::openDialog(QString def)
     if(d->pd)
         bringToFront(d->pd);
     else {
-        d->pd = new ProxyDlg(itemList(), def, 0);
+        d->pd = new ProxyDlg(itemList(), def, nullptr);
         connect(d->pd, SIGNAL(applyList(const ProxyItemList &, int)), SLOT(pd_applyList(const ProxyItemList &, int)));
         d->pd->show();
     }

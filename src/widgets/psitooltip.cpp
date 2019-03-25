@@ -60,7 +60,7 @@ private slots:
         watchedWidgets_.remove(widget);
         if(watchedWidgets_.isEmpty()) {
             instance->deleteLater();
-            instance = 0;
+            instance = nullptr;
         }
     }
 
@@ -92,7 +92,7 @@ private:
     }
 };
 
-PsiToolTipHandler* PsiToolTipHandler::instance = 0;
+PsiToolTipHandler* PsiToolTipHandler::instance = nullptr;
 
 //----------------------------------------------------------------------------
 // ToolTipPosition
@@ -197,7 +197,7 @@ void PsiToolTip::doShowText(const QPoint &pos, const QString &text, const QWidge
         return;
     }
 
-    bool preventAnimation = (PsiTipLabel::instance() != 0);
+    bool preventAnimation = (PsiTipLabel::instance() != nullptr);
 
     installPsiToolTipFont();
     QFrame *label = createTipLabel(text, QApplication::desktop()->screen(calc->getScreenNumber()));
@@ -243,7 +243,7 @@ void PsiToolTip::doInstall(QWidget *w)
     PsiToolTipHandler::getInstance()->install(w);
 }
 
-PsiToolTip *PsiToolTip::instance_ = 0;
+PsiToolTip *PsiToolTip::instance_ = nullptr;
 
 PsiToolTip* PsiToolTip::instance()
 {

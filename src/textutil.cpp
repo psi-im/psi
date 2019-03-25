@@ -481,7 +481,7 @@ QString TextUtil::emoticonify(const QString &in)
         while ( i >= 0 ) {
             // find closest emoticon
             int ePos = -1;
-            PsiIcon *closest = 0;
+            PsiIcon *closest = nullptr;
 
             int foundPos = -1, foundLen = -1;
 

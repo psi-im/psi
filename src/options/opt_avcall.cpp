@@ -25,7 +25,7 @@ public:
 OptionsTabAvCall::OptionsTabAvCall(QObject *parent)
 : OptionsTab(parent, "avcall", "", tr("Voice Calling"), AvCallManager::isVideoSupported() ? tr("Audio and video device configuration") : tr("Audio device configuration"), "psi/avcall")
 {
-    w = 0;
+    w = nullptr;
     connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::updated, this, [this](){
         restoreOptions();
     });
@@ -38,7 +38,7 @@ OptionsTabAvCall::~OptionsTabAvCall()
 QWidget *OptionsTabAvCall::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptAvCallUI();
     //OptAvCallUI *d = static_cast<OptAvCallUI *>(w);

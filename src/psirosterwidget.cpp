@@ -108,12 +108,12 @@ protected:
 
 PsiRosterWidget::PsiRosterWidget(QWidget* parent)
     : QWidget(parent)
-    , stackedWidget_(0)
-    , contactListPage_(0)
-    , filterPage_(0)
-    , contactListPageView_(0)
-    , filterPageView_(0)
-    , contactListModel_(0)
+    , stackedWidget_(nullptr)
+    , contactListPage_(nullptr)
+    , filterPage_(nullptr)
+    , contactListPageView_(nullptr)
+    , filterPageView_(nullptr)
+    , contactListModel_(nullptr)
     , filterModel_(nullptr)
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
@@ -125,7 +125,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
     layout->addWidget(stackedWidget_);
 
     // contactListPage_
-    contactListPage_ = new QWidget(0);
+    contactListPage_ = new QWidget(nullptr);
     contactListPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     stackedWidget_->addWidget(contactListPage_);
 
@@ -137,7 +137,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
     contactListPageLayout->addWidget(contactListPageView_);
 
     // filterPage_
-    filterPage_ = new QWidget(0);
+    filterPage_ = new QWidget(nullptr);
     filterPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     filterPage_->installEventFilter(this);
     stackedWidget_->addWidget(filterPage_);
@@ -280,8 +280,8 @@ void PsiRosterWidget::setFilterModeEnabled(bool enabled)
     if (enabled == currentlyEnabled)
         return;
 
-    PsiContactListView *selectionSource = 0;
-    PsiContactListView *selectionDestination = 0;
+    PsiContactListView *selectionSource = nullptr;
+    PsiContactListView *selectionDestination = nullptr;
 
     if (enabled) {
         Q_ASSERT(!filterModel_);

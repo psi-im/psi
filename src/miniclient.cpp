@@ -38,10 +38,10 @@ MiniClient::MiniClient(QObject *parent)
 {
     _client = new Client;
     _client->bobManager()->setCache(BoBFileCache::instance());
-    conn = 0;
-    tls = 0;
-    tlsHandler = 0;
-    stream = 0;
+    conn = nullptr;
+    tls = nullptr;
+    tlsHandler = nullptr;
+    stream = nullptr;
     auth = false;
     force_ssl = false;
     error_disconnect = true;
@@ -56,14 +56,14 @@ MiniClient::~MiniClient()
 void MiniClient::reset()
 {
     delete stream;
-    stream = 0;
+    stream = nullptr;
 
     delete tls;
-    tls = 0;
-    tlsHandler = 0;
+    tls = nullptr;
+    tlsHandler = nullptr;
 
     delete conn;
-    conn = 0;
+    conn = nullptr;
 }
 
 void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool legacy_ssl, bool forcessl, const QString &_host, int _port, QString proxy, QString *_pass)
@@ -165,7 +165,7 @@ void MiniClient::setErrorOnDisconnect(bool b)
 
 void MiniClient::tls_handshaken()
 {
-    if (CertificateHelpers::checkCertificate(tls, tlsHandler, tlsOverrideDomain, tlsOverrideCert, 0,
+    if (CertificateHelpers::checkCertificate(tls, tlsHandler, tlsOverrideDomain, tlsOverrideCert, nullptr,
                                          tr("Server Authentication"),
                                          j.domain())) {
         tlsHandler->continueAfterHandshake();
@@ -235,7 +235,7 @@ void MiniClient::cs_warning(int err)
 {
     if (err == ClientStream::WarnNoTLS && force_ssl) {
         close();
-        QMessageBox::critical(0, tr("Server Error"), tr("The server does not support TLS encryption."));
+        QMessageBox::critical(nullptr, tr("Server Error"), tr("The server does not support TLS encryption."));
     }
     else {
         stream->continueAfterWarning();
@@ -255,7 +255,7 @@ void MiniClient::cs_error(int err)
     close();
 
     if (needAlert)
-        QMessageBox::critical(0, tr("Server Error"), tr("There was an error communicating with the XMPP server.\nDetails: %1").arg(str));
+        QMessageBox::critical(nullptr, tr("Server Error"), tr("There was an error communicating with the XMPP server.\nDetails: %1").arg(str));
     error();
 }
 

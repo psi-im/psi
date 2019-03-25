@@ -26,7 +26,7 @@
 
 InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget* parent)
     : QMenu(parent)
-    , controller_(0)
+    , controller_(nullptr)
 {
 }
 

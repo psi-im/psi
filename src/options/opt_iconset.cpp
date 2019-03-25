@@ -349,7 +349,7 @@ void IconsetLoadThread::run()
     }
 
     for(int i = 0; i < failedList.size(); i++) {
-        postEvent(new IconsetLoadEvent(this, 0));
+        postEvent(new IconsetLoadEvent(this, nullptr));
     }
 
 getout:
@@ -363,8 +363,8 @@ getout:
 
 OptionsTabIconsetSystem::OptionsTabIconsetSystem(QObject *parent)
     : OptionsTab(parent, "iconset_system", "", tr("System Icons"), tr("Select the system iconset"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -376,7 +376,7 @@ OptionsTabIconsetSystem::~OptionsTabIconsetSystem()
 QWidget *OptionsTabIconsetSystem::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetSystemUI;
     IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
@@ -463,7 +463,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -493,7 +493,7 @@ void OptionsTabIconsetSystem::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }
 
@@ -503,8 +503,8 @@ void OptionsTabIconsetSystem::cancelThread()
 
 OptionsTabIconsetEmoticons::OptionsTabIconsetEmoticons(QObject *parent)
     : OptionsTab(parent, "iconset_emoticons", "", tr("Emoticons"), tr("Select your emoticon iconsets"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -516,7 +516,7 @@ OptionsTabIconsetEmoticons::~OptionsTabIconsetEmoticons()
 QWidget *OptionsTabIconsetEmoticons::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetEmoUI;
     IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
@@ -641,7 +641,7 @@ bool OptionsTabIconsetEmoticons::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -671,7 +671,7 @@ void OptionsTabIconsetEmoticons::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }
 
@@ -682,8 +682,8 @@ void OptionsTabIconsetEmoticons::cancelThread()
 
 OptionsTabIconsetMoods::OptionsTabIconsetMoods(QObject *parent)
     : OptionsTab(parent, "iconset_moods", "", tr("Moods"), tr("Select your mood iconset"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -695,7 +695,7 @@ OptionsTabIconsetMoods::~OptionsTabIconsetMoods()
 QWidget *OptionsTabIconsetMoods::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetMoodUI;
     IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
@@ -790,7 +790,7 @@ bool OptionsTabIconsetMoods::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -820,7 +820,7 @@ void OptionsTabIconsetMoods::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }
 //----------------------------------------------------------------------------
@@ -829,8 +829,8 @@ void OptionsTabIconsetMoods::cancelThread()
 
 OptionsTabIconsetActivity::OptionsTabIconsetActivity(QObject *parent)
     : OptionsTab(parent, "iconset_activities", "", tr("Activity"), tr("Select your activity iconset"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -842,7 +842,7 @@ OptionsTabIconsetActivity::~OptionsTabIconsetActivity()
 QWidget *OptionsTabIconsetActivity::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetActivityUI;
     IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
@@ -937,7 +937,7 @@ bool OptionsTabIconsetActivity::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -967,7 +967,7 @@ void OptionsTabIconsetActivity::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }
 //----------------------------------------------------------------------------
@@ -976,8 +976,8 @@ void OptionsTabIconsetActivity::cancelThread()
 
 OptionsTabIconsetAffiliations::OptionsTabIconsetAffiliations(QObject *parent)
     : OptionsTab(parent, "iconset_affiliations", "", tr("Affiliations"), tr("Select your affiliations iconset"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -989,7 +989,7 @@ OptionsTabIconsetAffiliations::~OptionsTabIconsetAffiliations()
 QWidget *OptionsTabIconsetAffiliations::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetAffiliationUI;
     IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
@@ -1084,7 +1084,7 @@ bool OptionsTabIconsetAffiliations::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -1114,7 +1114,7 @@ void OptionsTabIconsetAffiliations::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }
 
@@ -1124,8 +1124,8 @@ void OptionsTabIconsetAffiliations::cancelThread()
 
 OptionsTabIconsetClients::OptionsTabIconsetClients(QObject *parent)
     : OptionsTab(parent, "iconset_clients", "", tr("Clients"), tr("Select your clients iconset"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -1137,7 +1137,7 @@ OptionsTabIconsetClients::~OptionsTabIconsetClients()
 QWidget *OptionsTabIconsetClients::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetClientUI;
     IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
@@ -1232,7 +1232,7 @@ bool OptionsTabIconsetClients::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -1262,7 +1262,7 @@ void OptionsTabIconsetClients::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }
 
@@ -1272,8 +1272,8 @@ void OptionsTabIconsetClients::cancelThread()
 
 OptionsTabIconsetRoster::OptionsTabIconsetRoster(QObject *parent)
     : OptionsTab(parent, "iconset_roster", "", tr("Roster Icons"), tr("Select iconsets for your roster"))
-    , w(0)
-    , thread(0)
+    , w(nullptr)
+    , thread(nullptr)
 {
 }
 
@@ -1293,7 +1293,7 @@ void OptionsTabIconsetRoster::addService(const QString& id, const QString& name)
 QWidget *OptionsTabIconsetRoster::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new IconsetRosterUI;
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
@@ -1323,7 +1323,7 @@ QWidget *OptionsTabIconsetRoster::widget()
     connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(isServices_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
     connect(d->tw_isServices, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(isServices_selectionChanged(QTreeWidgetItem *)));
     connect(d->pb_servicesDetails, SIGNAL(clicked()), SLOT(servicesDetails()));
-    isServices_selectionChanged(0);
+    isServices_selectionChanged(nullptr);
 
     connect(d->iss_customRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(isCustom_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
     connect(d->tw_customRoster, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
@@ -1333,7 +1333,7 @@ QWidget *OptionsTabIconsetRoster::widget()
     connect(d->le_customRoster, SIGNAL(textChanged(const QString &)), SLOT(isCustom_textChanged()));
     connect(d->pb_customRosterAdd, SIGNAL(clicked()), SLOT(isCustom_add()));
     connect(d->pb_customRosterDelete, SIGNAL(clicked()), SLOT(isCustom_delete()));
-    isCustom_selectionChanged(0);
+    isCustom_selectionChanged(nullptr);
 
     d->ck_useTransportIconsForContacts->setWhatsThis(
         tr("Toggles use of transport icons to the contacts, that use that transports."));
@@ -1482,7 +1482,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
         // roster - custom
         {
             // Then, fill the QListView
-            QTreeWidgetItem *last = 0;
+            QTreeWidgetItem *last = nullptr;
             QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
             foreach(QString base, customicons) {
                 QString regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
@@ -1513,7 +1513,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
         d->progress->hide();
 
         d->unsetCursor();
-        thread = 0;
+        thread = nullptr;
 
         return true;
     }
@@ -1578,8 +1578,8 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
 void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 {
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    d->iss_servicesRoster->setEnabled( it != 0 );
-    d->pb_servicesDetails->setEnabled( it != 0 );
+    d->iss_servicesRoster->setEnabled( it != nullptr );
+    d->pb_servicesDetails->setEnabled( it != nullptr );
     d->iss_servicesRoster->clearSelection();
     if ( !it )
         return;
@@ -1631,11 +1631,11 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
 void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 {
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    d->iss_customRoster->setEnabled( it != 0 );
-    d->pb_customRosterDetails->setEnabled( it != 0 );
+    d->iss_customRoster->setEnabled( it != nullptr );
+    d->pb_customRosterDetails->setEnabled( it != nullptr );
     //d->pb_customRosterAdd->setEnabled( it != 0 );
-    d->pb_customRosterDelete->setEnabled( it != 0 );
-    d->le_customRoster->setEnabled( it != 0 );
+    d->pb_customRosterDelete->setEnabled( it != nullptr );
+    d->le_customRoster->setEnabled( it != nullptr );
     d->iss_customRoster->clearSelection();
     if ( !it )
         return;
@@ -1710,7 +1710,7 @@ void OptionsTabIconsetRoster::isCustom_delete()
         return;
 
     delete item;
-    isCustom_selectionChanged(0);
+    isCustom_selectionChanged(nullptr);
     d->tw_customRoster->clearSelection();
     emit dataChanged();
 }
@@ -1732,6 +1732,6 @@ void OptionsTabIconsetRoster::cancelThread()
         thread->cancelled = true;
         threadCancelled.unlock();
 
-        thread = 0;
+        thread = nullptr;
     }
 }

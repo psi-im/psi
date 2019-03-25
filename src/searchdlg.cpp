@@ -173,8 +173,8 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
     d->pa = pa;
     d->jid = jid;
     d->pa->dialogRegister(this, d->jid);
-    d->jt = 0;
-    d->xdata = 0;
+    d->jt = nullptr;
+    d->xdata = nullptr;
     d->scrollArea = scrollArea;
 
 
@@ -304,7 +304,7 @@ void SearchDlg::jt_finished()
 {
     d->busy->stop();
     JT_XSearch *jt = d->jt;
-    d->jt = 0;
+    d->jt = nullptr;
 
     if(d->type == 1) {
         d->gr_form->setEnabled(true);
@@ -457,7 +457,7 @@ void SearchDlg::doStop()
         return;
 
     delete d->jt;
-    d->jt = 0;
+    d->jt = nullptr;
 
     d->busy->stop();
     d->gr_form->setEnabled(true);

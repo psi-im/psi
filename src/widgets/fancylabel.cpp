@@ -55,7 +55,7 @@ public:
     Private(IconLabel *l)
     {
         label = l;
-        icon = 0;
+        icon = nullptr;
         copyIcon = false;
     }
 
@@ -76,7 +76,7 @@ public:
 #ifndef WIDGET_PLUGIN
             delete icon;
 #endif
-            icon = 0;
+            icon = nullptr;
         }
 
         copyIcon = _copyIcon;
@@ -89,7 +89,7 @@ public:
                 icon = const_cast<PsiIcon *>(i);
         }
         else {
-            icon = 0;
+            icon = nullptr;
         }
 
 #else
@@ -103,7 +103,7 @@ protected:
     {
 #ifndef WIDGET_PLUGIN
         if ( icon ) {
-            disconnect(icon, 0, this, 0);
+            disconnect(icon, nullptr, this, nullptr);
             icon->stop();
         }
 #endif

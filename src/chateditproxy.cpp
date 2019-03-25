@@ -27,8 +27,8 @@
 ChatEditProxy::ChatEditProxy(QWidget* parent)
     : QWidget(parent)
     , lineEditEnabled_(false)
-    , textEdit_(0)
-    , layout_(0)
+    , textEdit_(nullptr)
+    , layout_(nullptr)
 {
     layout_ = new QVBoxLayout(this);
     layout_->setMargin(0);
@@ -77,7 +77,7 @@ void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) con
     QTextCursor cursor = oldTextEdit->textCursor();
 
     doc->setParent(newTextEdit);
-    oldTextEdit->setDocument(0);
+    oldTextEdit->setDocument(nullptr);
 
     newTextEdit->setDocument(doc);
     newTextEdit->setTextCursor(cursor);

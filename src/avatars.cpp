@@ -268,7 +268,7 @@ public:
     }
 
     OpResult appendUser(const QString &hash, IconType iconType, const QString &jid,
-                              JidIcons **iconsOut = 0, FileCacheItem **itemOut = 0)
+                              JidIcons **iconsOut = nullptr, FileCacheItem **itemOut = nullptr)
     {
         auto item = get(hash);
         if (!item) {
@@ -554,7 +554,7 @@ private:
     static AvatarCache *_instance;
 };
 
-AvatarCache* AvatarCache::_instance = 0;
+AvatarCache* AvatarCache::_instance = nullptr;
 
 
 //------------------------------------------------------------------------------

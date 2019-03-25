@@ -316,7 +316,7 @@ void ContactListModel::Private::clear()
     QHashIterator<PsiContact*, QPersistentModelIndex> it(monitoredContacts);
     while (it.hasNext()) {
         it.next();
-        disconnect(it.key(), 0, this, 0);
+        disconnect(it.key(), nullptr, this, nullptr);
     }
     monitoredContacts.clear();
 
@@ -369,7 +369,7 @@ void ContactListModel::Private::removeContact(PsiContact *contact)
             emit q->dataChanged(index, index);
         }
     }
-    disconnect(contact, 0, this, 0);
+    disconnect(contact, nullptr, this, nullptr);
     operationQueue.remove(contact);
 }
 
@@ -443,7 +443,7 @@ void ContactListModel::Private::updateAccount()
 
 void ContactListModel::Private::cleanUpAccount(PsiAccount *account)
 {
-    disconnect(account, 0, this, nullptr);
+    disconnect(account, nullptr, this, nullptr);
     ContactListItem *root = static_cast<ContactListItem*>(q->root());
     ContactListItem *item = root->findAccount(account);
     if (!item) {

@@ -28,7 +28,7 @@
 #include <QLineEdit>
 #include "iconset.h"
 
-GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
+GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(nullptr), pa_(list)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     if(pa_.isEmpty())

@@ -26,7 +26,7 @@
 #include <QLabel>
 
 ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel* model)
-    : QMenu(0)
+    : QMenu(nullptr)
     , item_(item)
     , model_(model)
     , _lblTitle(nullptr)

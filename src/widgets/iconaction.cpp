@@ -51,7 +51,7 @@ public:
     IconAction *action;
 
     Private(IconAction *act, QObject *parent) {
-        icon = 0;
+        icon = nullptr;
         action = act;
         Q_ASSERT(action);
 
@@ -68,7 +68,7 @@ public:
 #ifndef WIDGET_PLUGIN
         if (icon) {
             delete icon;
-            icon = 0;
+            icon = nullptr;
         }
 #endif
     }
@@ -151,10 +151,10 @@ void IconAction::setPsiIcon(const PsiIcon *i)
     Q_UNUSED(i);
 #else
     if ( d->icon ) {
-        disconnect(d->icon, 0, this, 0 );
+        disconnect(d->icon, nullptr, this, nullptr );
         d->icon->stop();
         delete d->icon;
-        d->icon = 0;
+        d->icon = nullptr;
     }
 
     QIcon is;
@@ -339,7 +339,7 @@ void IconAction::setVisible( bool b )
 
 IconAction *IconAction::copy() const
 {
-    IconAction *act = new IconAction(text(), psiIconName(), statusTip(), shortcut(), 0, objectName(), isCheckable());
+    IconAction *act = new IconAction(text(), psiIconName(), statusTip(), shortcut(), nullptr, objectName(), isCheckable());
 
     *act = *this;
 

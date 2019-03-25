@@ -105,8 +105,8 @@ static PPayloadInfo exportPayloadInfo(const PayloadInfo &p)
 //----------------------------------------------------------------------------
 // Global
 //----------------------------------------------------------------------------
-static Provider *g_provider = 0;
-static QPluginLoader *g_pluginLoader = 0;
+static Provider *g_provider = nullptr;
+static QPluginLoader *g_pluginLoader = nullptr;
 
 static void cleanupProvider();
 
@@ -115,7 +115,7 @@ Provider *provider()
     if(!g_provider)
     {
         // static plugin around?
-        Provider *provider = 0;
+        Provider *provider = nullptr;
         QObjectList list = QPluginLoader::staticInstances();
         foreach(QObject *obj, list)
         {
@@ -136,7 +136,7 @@ Provider *provider()
             if(!provider->init(QString()))
             {
                 delete provider;
-                return 0;
+                return nullptr;
             }
 
             g_provider = provider;
@@ -199,13 +199,13 @@ void cleanupProvider()
         return;
 
     delete g_provider;
-    g_provider = 0;
+    g_provider = nullptr;
 
     if(g_pluginLoader)
     {
         g_pluginLoader->unload();
         delete g_pluginLoader;
-        g_pluginLoader = 0;
+        g_pluginLoader = nullptr;
     }
 }
 
@@ -252,12 +252,12 @@ public:
 // Device
 //----------------------------------------------------------------------------
 Device::Device() :
-    d(0)
+    d(nullptr)
 {
 }
 
 Device::Device(const Device &other) :
-    d(other.d ? new Private(*other.d) : 0)
+    d(other.d ? new Private(*other.d) : nullptr)
 {
 }
 
@@ -280,7 +280,7 @@ Device & Device::operator=(const Device &other)
         else
         {
             delete d;
-            d = 0;
+            d = nullptr;
         }
     }
     else
@@ -616,7 +616,7 @@ public:
 };
 
 RtpPacket::RtpPacket() :
-    d(0)
+    d(nullptr)
 {
 }
 
@@ -930,7 +930,7 @@ void RtpSession::setAudioOutputDevice(const QString &deviceId)
 #ifdef QT_GUI_LIB
 void RtpSession::setVideoOutputWidget(VideoWidget *widget)
 {
-    d->c->setVideoOutputWidget(widget ? widget->d : 0);
+    d->c->setVideoOutputWidget(widget ? widget->d : nullptr);
 }
 #endif
 
@@ -962,7 +962,7 @@ void RtpSession::setFileLoopEnabled(bool enabled)
 #ifdef QT_GUI_LIB
 void RtpSession::setVideoPreviewWidget(VideoWidget *widget)
 {
-    d->c->setVideoPreviewWidget(widget ? widget->d : 0);
+    d->c->setVideoPreviewWidget(widget ? widget->d : nullptr);
 }
 #endif
 

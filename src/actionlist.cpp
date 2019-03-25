@@ -156,7 +156,7 @@ ActionList *MetaActionList::actionList( const QString &name ) const
             return a;
     }
 
-    return 0;
+    return nullptr;
 }
 
 QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const

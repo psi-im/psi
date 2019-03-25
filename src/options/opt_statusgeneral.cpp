@@ -32,7 +32,7 @@ OptionsTabStatusGeneral::~OptionsTabStatusGeneral()
 QWidget *OptionsTabStatusGeneral::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptStatusGeneralUI();
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
@@ -196,8 +196,8 @@ void OptionsTabStatusGeneral::setData(PsiCon *, QWidget *parentDialog)
 void OptionsTabStatusGeneral::currentItemChanged(QListWidgetItem * current, QListWidgetItem * /*previous*/ )
 {
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI*>(w);
-    d->pb_spEdit->setEnabled(current != 0);
-    d->pb_spDelete->setEnabled(current != 0);
+    d->pb_spEdit->setEnabled(current != nullptr);
+    d->pb_spDelete->setEnabled(current != nullptr);
     if (current)
         loadStatusPreset();
     else

@@ -38,7 +38,7 @@
  * Each frame of Anim is stored as Impix.
  */
 
-static QThread *animMainThread = 0;
+static QThread *animMainThread = nullptr;
 
 //! \if _hide_doc_
 class Anim::Private : public QObject, public QSharedData

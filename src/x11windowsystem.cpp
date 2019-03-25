@@ -5,7 +5,7 @@
 #include <X11/Xutil.h> // needed for WM_CLASS hinting
 
 const long MAX_PROP_SIZE = 100000;
-X11WindowSystem* X11WindowSystem::_instance = 0;
+X11WindowSystem* X11WindowSystem::_instance = nullptr;
 
 
 void X11WindowSystem::x11wmClass(WId wid, QString resName)

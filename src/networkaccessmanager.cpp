@@ -30,7 +30,7 @@ NetworkAccessManager::NetworkAccessManager(QObject *parent)
 }
 
 QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest & req,
-                                                   QIODevice * outgoingData = 0)
+                                                   QIODevice * outgoingData = nullptr)
 {
     if (req.url().host() != QLatin1String("psi")) {
         return QNetworkAccessManager::createRequest(op, req, outgoingData);

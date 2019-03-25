@@ -360,7 +360,7 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
         // Ignore the message if contact not in roster
         if(!pa_->find(message.from())) {
             qDebug("SXE invitation received from contact that is not in roster.");
-            return 0;
+            return nullptr;
         }
     }
 
@@ -371,7 +371,7 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
         // Only accept further negotiation messages from the source we are already negotiationing with or if we've requested connection to a groupchat session
         if(!negotiation->peer.compare(message.from()) && !(negotiation->groupChat && negotiation->peer.resource().isEmpty())) {
             abortNegotiation(negotiation->sessionId, message.from(), true);
-            return 0;
+            return nullptr;
         }
 
     } else
@@ -399,10 +399,10 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 
                 if(negotiation->role == SxeNegotiation::Participant) {
                     if(!processNegotiationAsParticipant(n.childNodes().at(j), negotiation, response))
-                        return 0;
+                        return nullptr;
                 } else if(negotiation->role == SxeNegotiation::Joiner) {
                     if(!processNegotiationAsJoiner(n.childNodes().at(j), negotiation, response, message))
-                        return 0;
+                        return nullptr;
                 } else {
                     Q_ASSERT(false);
                 }
@@ -457,7 +457,7 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 
         }
     }
-    return 0;
+    return nullptr;
 }
 
 SxeManager::SxeNegotiation* SxeManager::findNegotiation(const Jid &jid, const QString &session) {
@@ -468,7 +468,7 @@ SxeManager::SxeNegotiation* SxeManager::findNegotiation(const Jid &jid, const QS
             return negotiation;
     }
 
-    return 0;
+    return nullptr;
 }
 
 void SxeManager::removeNegotiation(SxeNegotiation* negotiation) {
@@ -485,7 +485,7 @@ SxeManager::SxeNegotiation* SxeManager::createNegotiation(SxeNegotiation::Role r
     negotiation->peer = target;
     negotiation->ownJid = ownJid;
     negotiation->groupChat = groupChat;
-    negotiation->session = 0;
+    negotiation->session = nullptr;
 
     negotiations_.insert(sessionId, negotiation);
 
@@ -688,12 +688,12 @@ QPointer<SxeSession> SxeManager::findSession(const QString &session) {
         if(w->session() == session)
             return w;
     }
-    return 0;
+    return nullptr;
 }
 
 QPointer<SxeSession> SxeManager::createSxeSession(const Jid &target, QString session, const Jid &ownJid, bool groupChat, const QList<QString> &features) {
     if(session.isEmpty() || !target.isValid())
-        return 0;
+        return nullptr;
     if(!ownJids_.contains(ownJid.full()))
         ownJids_.append(ownJid.full());
     // FIXME: detect serverside support

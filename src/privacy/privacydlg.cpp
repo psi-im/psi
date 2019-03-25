@@ -287,7 +287,7 @@ void PrivacyDlg::changeList_succeeded(QString name)
 
 void PrivacyDlg::changeList_failed()
 {
-    QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error changing the list."));
+    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr("There was an error changing the list."));
     setWidgetsEnabled(true);
 }
 
@@ -300,7 +300,7 @@ void PrivacyDlg::change_succeeded()
 void PrivacyDlg::change_failed()
 {
     revertSettings();
-    QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error processing your request."));
+    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr("There was an error processing your request."));
     setWidgetsEnabled(true);
 }
 

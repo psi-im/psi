@@ -853,6 +853,6 @@ UserListItem *UserList::find(const XMPP::Jid &j)
         if(i->jid().compare(j))
             return i;
     }
-    return 0;
+    return nullptr;
 }
 

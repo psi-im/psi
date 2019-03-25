@@ -55,7 +55,7 @@ void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
         icon_->stop();
 
         delete icon_;
-        icon_ = 0;
+        icon_ = nullptr;
     }
 
     realIcon_ = quintptr(icon);

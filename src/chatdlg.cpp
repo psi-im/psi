@@ -98,12 +98,12 @@ ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabMan
 ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
     : TabbableWidget(jid, pa, tabManager)
     , highlightersInstalled_(false)
-    , delayedMessages(0)
+    , delayedMessages(nullptr)
 {
     pending_ = 0;
     keepOpen_ = false;
     warnSend_ = false;
-    selfDestruct_ = 0;
+    selfDestruct_ = nullptr;
     transid_ = -1;
     key_ = "";
     lastWasEncrypted_ = false;
@@ -134,7 +134,7 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
     lastChatState_ = XMPP::StateNone;
     sendComposingEvents_ = false;
     isComposing_ = false;
-    composingTimer_ = 0;
+    composingTimer_ = nullptr;
     updateRealJid();
 }
 
@@ -673,7 +673,7 @@ void ChatDlg::setSelfDestruct(int minutes)
     if (minutes <= 0) {
         if (selfDestruct_) {
             delete selfDestruct_;
-            selfDestruct_ = 0;
+            selfDestruct_ = nullptr;
         }
         return;
     }
@@ -1015,7 +1015,7 @@ void ChatDlg::holdMessages(bool hold)
                 displayMessage(mv);
         }
         delete delayedMessages;
-        delayedMessages = 0;
+        delayedMessages = nullptr;
     }
 }
 
@@ -1200,7 +1200,7 @@ void ChatDlg::checkComposing()
     if (!isComposing_) {
         // User stopped composing
         composingTimer_->deleteLater();
-        composingTimer_ = 0;
+        composingTimer_ = nullptr;
         emit composing(false);
     }
     isComposing_ = false; // Reset composing
@@ -1210,7 +1210,7 @@ void ChatDlg::resetComposing()
 {
     if (composingTimer_) {
         delete composingTimer_;
-        composingTimer_ = 0;
+        composingTimer_ = nullptr;
         isComposing_ = false;
     }
 }

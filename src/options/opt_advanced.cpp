@@ -24,7 +24,7 @@ public:
 OptionsTabAdvanced::OptionsTabAdvanced(QObject *parent)
 : OptionsTab(parent, "misc", "", tr("Misc."), tr("Extra uncategorized options"), "psi/advanced")
 {
-    w = 0;
+    w = nullptr;
 }
 
 OptionsTabAdvanced::~OptionsTabAdvanced()
@@ -34,7 +34,7 @@ OptionsTabAdvanced::~OptionsTabAdvanced()
 QWidget *OptionsTabAdvanced::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptAdvancedUI();
     OptAdvancedUI *d = static_cast<OptAdvancedUI *>(w);

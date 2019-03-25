@@ -187,4 +187,4 @@ const QList<MoodCatalog::Entry>& MoodCatalog::entries() const
     return entries_;
 }
 
-MoodCatalog* MoodCatalog::instance_ = 0;
+MoodCatalog* MoodCatalog::instance_ = nullptr;

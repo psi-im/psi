@@ -45,7 +45,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     keepOpen_ = false;
     allowEdits_ = true;
 
-    selfDestruct_ = 0;
+    selfDestruct_ = nullptr;
     setAttribute(Qt::WA_DeleteOnClose, false); // we want deferred endSession call and delete from manager
 
     setWindowTitle(CAP(tr("Whiteboard (%1)").arg(pa->jid().bare())));
@@ -81,7 +81,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     pixmap.fill(QColor(Qt::black));
     act_color_ = new QAction(QIcon(pixmap), tr("Stroke color"), this);
     pixmap.fill(QColor(Qt::lightGray));
-    act_fill_ = new IconAction(tr("Fill color"), "psi/select", tr("Fill color"),0, this, 0, true);
+    act_fill_ = new IconAction(tr("Fill color"), "psi/select", tr("Fill color"),0, this, nullptr, true);
     act_fill_->setIcon(QIcon(pixmap));
     act_fill_->setChecked(false);
 
@@ -393,7 +393,7 @@ void WbDlg::setSelfDestruct(int minutes) {
     if(minutes <= 0) {
         if(selfDestruct_) {
             delete selfDestruct_;
-            selfDestruct_ = 0;
+            selfDestruct_ = nullptr;
         }
         return;
     }

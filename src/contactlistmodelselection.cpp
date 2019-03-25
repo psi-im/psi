@@ -32,7 +32,7 @@ static const QString psiRosterSelectionMimeType = "application/psi-roster-select
 
 ContactListModelSelection::ContactListModelSelection(QList<ContactListItem*> items)
     : QMimeData()
-    , mimeData_(0)
+    , mimeData_(nullptr)
 {
     QDomDocument doc;
     QDomElement root = doc.createElement("items");

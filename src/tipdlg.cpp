@@ -43,7 +43,7 @@ void TipDlg::show(PsiCon* psi)
  * \brief A 'Tip Of The Day' dialog
  */
 TipDlg::TipDlg(PsiCon* psi)
-    : QDialog(0)
+    : QDialog(nullptr)
     , psi_(psi)
 {
     setAttribute(Qt::WA_DeleteOnClose);

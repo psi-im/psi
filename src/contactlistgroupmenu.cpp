@@ -27,7 +27,7 @@
 
 
 ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListItem *item)
-    : QObject(0)
+    : QObject(nullptr)
     , q(menu)
     , group(item)
 {
@@ -69,10 +69,10 @@ ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListIt
     actionMucLeave_ = new IconAction(tr("Leave All"), this, "psi/action_muc_leave");
     connect(actionMucLeave_, SIGNAL(triggered()), SLOT(mucLeave()));
 
-    actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, 0, true);
+    actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, nullptr, true);
     connect(actionHide_, SIGNAL(triggered(bool)), SLOT(actHide(bool)));
 
-    authMenu_ = 0;
+    authMenu_ = nullptr;
 
     if (item->specialGroupType() != ContactListItem::SpecialGroupType::ConferenceSpecialGroupType) {
         q->addAction(renameAction_);

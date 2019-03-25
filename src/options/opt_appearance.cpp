@@ -119,7 +119,7 @@ OptionsTabAppearanceMisc::~OptionsTabAppearanceMisc()
 QWidget *OptionsTabAppearanceMisc::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptAppearanceMiscUI();
 
@@ -191,7 +191,7 @@ static QPixmap color2pixmap(QColor c) // taken from opt_general.cpp
 QWidget *OptionsTabAppearanceGeneral::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptAppearanceUI();
     OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);

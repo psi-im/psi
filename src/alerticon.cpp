@@ -53,7 +53,7 @@ private:
     Impix _blank16;
 };
 
-static MetaAlertIcon *metaAlertIcon = 0;
+static MetaAlertIcon *metaAlertIcon = nullptr;
 
 MetaAlertIcon::MetaAlertIcon()
     : QObject(qApp)
@@ -129,7 +129,7 @@ QString AlertIcon::Private::alertStyle = QString();
 
 AlertIcon::Private::Private(AlertIcon *_ai)
     : ai(_ai)
-    , real(0)
+    , real(nullptr)
     , isActivated(false)
 {
     if ( !metaAlertIcon )

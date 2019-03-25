@@ -235,7 +235,7 @@ AHCommandServer* AHCServerManager::findServer(const QString& node) const
         if ((*it)->node() == node)
             return (*it);
     }
-    return 0;
+    return nullptr;
 }
 
 

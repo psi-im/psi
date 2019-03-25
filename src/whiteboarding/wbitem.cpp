@@ -295,7 +295,7 @@ void WbItem::resetPos() {
 }
 
 WbItemMenu* WbItem::constructContextMenu() {
-     WbItemMenu* menu = new WbItemMenu(0);
+     WbItemMenu* menu = new WbItemMenu(nullptr);
 
      if(scene_) {
          // Add the default actions
@@ -331,7 +331,7 @@ WbItemMenu* WbItem::constructContextMenu() {
          // menu->addActionGroup(group);
 
          // menu->addSeparator();
-         group = new QActionGroup(0);
+         group = new QActionGroup(nullptr);
          IconAction* action = new IconAction(tr("Bring forward"), "psi/bringForwards", tr("Bring forward"), 0, group);
          connect(action, SIGNAL(triggered()), scene_, SLOT(bringForward()));
          action = new IconAction(tr("Bring to front"), "psi/bringToFront", tr("Bring to front"), 0, group);
@@ -343,7 +343,7 @@ WbItemMenu* WbItem::constructContextMenu() {
          menu->addActionGroup(group);
 
          menu->addSeparator();
-         group = new QActionGroup(0);
+         group = new QActionGroup(nullptr);
          action = new IconAction(tr("Group"), "psi/group", tr("Group"), 0, group);
          connect(action, SIGNAL(triggered()), scene_, SLOT(group()));
          action = new IconAction(tr("Ungroup"), "psi/ungroup", tr("Ungroup"), 0, group);
@@ -486,7 +486,7 @@ static qreal toDouble(const QChar *&str)
 #endif
         {
             bool ok = false;
-            val = qstrtod(temp, 0, &ok);
+            val = qstrtod(temp, nullptr, &ok);
         }
     }
     return val;

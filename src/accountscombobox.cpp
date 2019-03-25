@@ -24,8 +24,8 @@
 
 AccountsComboBox::AccountsComboBox(QWidget* parent)
     : QComboBox(parent)
-    , controller_(0)
-    , account_(0)
+    , controller_(nullptr)
+    , account_(nullptr)
     , onlineOnly_(false)
 {
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
@@ -86,7 +86,7 @@ void AccountsComboBox::setOnlineOnly(bool onlineOnly)
 
 void AccountsComboBox::changeAccount()
 {
-    account_ = 0;
+    account_ = nullptr;
     if (currentIndex() >= 0 && currentIndex() < accounts().count())
         account_ = accounts().at(currentIndex());
     emit activated(account_);

@@ -104,7 +104,7 @@ static QDBusMessage createMessage(const QString& method)
 PsiDBusNotifier::PsiDBusNotifier(QObject *parent)
     : QObject(parent)
     , id_(0)
-    , account_(0)
+    , account_(nullptr)
     , lifeTimer_(new QTimer(this))
 {
     QDBusConnection::sessionBus().connect("org.freedesktop.Notifications",
@@ -168,7 +168,7 @@ void PsiDBusNotifier::popup(PsiAccount* account, PopupManager::PopupType type, c
         if (((int)statusMsg.length()) > len)
             statusMsg = statusMsg.left(len) + "...";
     bool doAlert = false;
-    PsiIcon* ico = 0;
+    PsiIcon* ico = nullptr;
 
     if (uli && !uli->name().isEmpty()) {
         contact = uli->name();

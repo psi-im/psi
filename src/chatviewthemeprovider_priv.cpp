@@ -232,7 +232,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 ChatViewCon::~ChatViewCon()
 {
 #ifdef WEBENGINE
-    QWebEngineProfile::defaultProfile()->setRequestInterceptor(0);
+    QWebEngineProfile::defaultProfile()->setRequestInterceptor(nullptr);
     delete requestInterceptor;
     delete themeServer;
 #endif

@@ -29,7 +29,7 @@ OptionsTabStatusAuto::~OptionsTabStatusAuto()
 QWidget *OptionsTabStatusAuto::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptStatusAutoUI();
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);

@@ -179,7 +179,7 @@ bool Impix::loadFromData(const QByteArray &ba)
     bool ret = false;
 
     delete d->pixmap;
-    d->pixmap = 0;
+    d->pixmap = nullptr;
 
     QImage img;
     if ( img.loadFromData(ba) ) {
@@ -218,7 +218,7 @@ private:
     friend class PsiIcon;
 };
 
-static IconSharedObject *iconSharedObject = 0;
+static IconSharedObject *iconSharedObject = nullptr;
 
 //----------------------------------------------------------------------------
 // PsiIcon
@@ -246,8 +246,8 @@ public:
     {
         moveToMainThread(this);
 
-        anim = 0;
-        icon = 0;
+        anim = nullptr;
+        icon = nullptr;
         activatedCount = 0;
     }
 
@@ -271,8 +271,8 @@ public:
         sound = from.sound;
         impix = from.impix;
         rawData = from.rawData;
-        anim = from.anim ? new Anim ( *from.anim ) : 0;
-        icon = 0;
+        anim = from.anim ? new Anim ( *from.anim ) : nullptr;
+        icon = nullptr;
         activatedCount = from.activatedCount;
     }
 
@@ -281,7 +281,7 @@ public:
         if ( anim ) {
             delete anim;
         }
-        anim = 0;
+        anim = nullptr;
     }
 
     void connectInstance(PsiIcon *icon)
@@ -332,7 +332,7 @@ public:
  * Constructs empty PsiIcon.
  */
 PsiIcon::PsiIcon()
-: QObject(0)
+: QObject(nullptr)
 {
     moveToMainThread(this);
 
@@ -352,7 +352,7 @@ PsiIcon::~PsiIcon()
  * other will be changed as well. (that's because image data is shared)
  */
 PsiIcon::PsiIcon(const PsiIcon &from)
-: QObject(0)
+: QObject(nullptr)
 , d(from.d)
 {
     moveToMainThread(this);
@@ -392,7 +392,7 @@ void PsiIcon::detach()
  */
 bool PsiIcon::isAnimated() const
 {
-    return d->anim != 0;
+    return d->anim != nullptr;
 }
 
 /**
@@ -480,7 +480,7 @@ void PsiIcon::setImpix(const Impix &impix, bool doDetach)
     d->impix = impix;
     if ( d->icon ) {
         delete d->icon;
-        d->icon = 0;
+        d->icon = nullptr;
     }
 
     emit d->pixmapChanged();
@@ -515,7 +515,7 @@ void PsiIcon::setAnim(const Anim &anim, bool doDetach)
 
     if ( d->anim->numFrames() < 2 ) {
         delete d->anim;
-        d->anim = 0;
+        d->anim = nullptr;
     }
 
     if ( d->anim && d->activatedCount > 0 ) {
@@ -545,7 +545,7 @@ void PsiIcon::removeAnim(bool doDetach)
     stop();
 
     delete d->anim;
-    d->anim = 0;
+    d->anim = nullptr;
 
     emit d->pixmapChanged();
     //emit d->iconModified();
@@ -815,8 +815,8 @@ class IconsetFactoryPrivate : public QObject
 private:
     IconsetFactoryPrivate()
         : QObject(QCoreApplication::instance())
-        , iconsets_(0)
-        , emptyPixmap_(0)
+        , iconsets_(nullptr)
+        , emptyPixmap_(nullptr)
     {
     }
 
@@ -826,12 +826,12 @@ private:
             while (!iconsets_->empty())
                 delete iconsets_->takeFirst();
             delete iconsets_;
-            iconsets_ = 0;
+            iconsets_ = nullptr;
         }
 
         if (emptyPixmap_) {
             delete emptyPixmap_;
-            emptyPixmap_ = 0;
+            emptyPixmap_ = nullptr;
         }
     }
 
@@ -880,7 +880,7 @@ public:
     static void reset()
     {
         delete instance_;
-        instance_ = 0;
+        instance_ = nullptr;
     }
 };
 //! \endif
@@ -1560,7 +1560,7 @@ bool Iconset::load(const QString &dir)
 const PsiIcon *Iconset::icon(const QString &name) const
 {
     if ( !d || d->dict.isEmpty() ) {
-        return 0;
+        return nullptr;
     }
 
     return d->dict[name];

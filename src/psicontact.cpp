@@ -50,7 +50,7 @@ public:
     Private(PsiContact* contact)
         : Alertable()
         , q(contact)
-        , account_(0)
+        , account_(nullptr)
         , statusTimer_(nullptr)
         , animTimer_(nullptr)
         , oldStatus_(XMPP::Status::Offline)
@@ -141,10 +141,10 @@ PsiContact::PsiContact(const UserListItem& u, PsiAccount* account, bool isSelf)
 }
 
 PsiContact::PsiContact()
-    : QObject(0)
+    : QObject(nullptr)
 {
     d = new Private(this);
-    d->account_ = 0;
+    d->account_ = nullptr;
 }
 
 /**
@@ -262,7 +262,7 @@ QIcon PsiContact::picture() const
 ContactListItemMenu* PsiContact::contextMenu(ContactListModel* model)
 {
     if (!account())
-        return 0;
+        return nullptr;
     return new PsiContactMenu(this, model);
 }
 

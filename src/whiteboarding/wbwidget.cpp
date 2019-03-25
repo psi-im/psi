@@ -26,8 +26,8 @@
 #include <QApplication>
 
 WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent) {
-    newWbItem_ = 0;
-    adding_ = 0;
+    newWbItem_ = nullptr;
+    adding_ = nullptr;
     addVertex_ = false;
     strokeColor_ = Qt::black;
     fillColor_ = Qt::transparent;
@@ -111,7 +111,7 @@ void WbWidget::setMode(Mode mode) {
      if(mode_ < Mode::DrawPath) {
              if(newWbItem_) {
                      delete newWbItem_;
-                     newWbItem_ = 0;
+                     newWbItem_ = nullptr;
              }
      }
 
@@ -232,7 +232,7 @@ void WbWidget::mousePressEvent(QMouseEvent * event) {
     // delete any temporary item being drawn
     if(newWbItem_) {
         delete newWbItem_;
-        newWbItem_ = 0;
+        newWbItem_ = nullptr;
     }
 
     QPointF startPoint = mapToScene(mapFromGlobal(event->globalPos()));
@@ -260,7 +260,7 @@ void WbWidget::mousePressEvent(QMouseEvent * event) {
             session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
             session_->flush();
             delete newWbItem_;
-            newWbItem_ = 0;
+            newWbItem_ = nullptr;
         }
     }
 
@@ -276,7 +276,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
     if(QApplication::mouseButtons() != Qt::MouseButtons(Qt::LeftButton)) {
         if(newWbItem_) {
              delete newWbItem_;
-             newWbItem_ = 0;
+             newWbItem_ = nullptr;
         }
         return;
     }
@@ -293,7 +293,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
                 session_->removeNode(wbitem->node());
          }
          delete eraseRect;
-         eraseRect = 0;
+         eraseRect = nullptr;
 
          event->ignore();
          return;
@@ -312,7 +312,7 @@ void WbWidget::mouseReleaseEvent(QMouseEvent * event) {
         session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
         session_->flush();
         delete newWbItem_;
-        newWbItem_ = 0;
+        newWbItem_ = nullptr;
         return;
     }
 
@@ -324,7 +324,7 @@ WbItem* WbWidget::wbItem(const QDomNode &node) {
         if(wbitem->node() == node)
             return wbitem;
     }
-    return 0;
+    return nullptr;
 }
 
 void WbWidget::handleDocumentUpdated(bool remote) {

@@ -246,7 +246,7 @@ FileCacheItem *FileCache::get(const QString &id, bool reborn)
         }
         remove(id);
     }
-    return 0;
+    return nullptr;
 }
 
 QByteArray FileCache::getData(const QString &id, bool reborn)

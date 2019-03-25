@@ -27,7 +27,7 @@
 #include "psiiconset.h"
 
 MoodDlg::MoodDlg(QList<PsiAccount*> list)
-    : QDialog(0), pa_(list)
+    : QDialog(nullptr), pa_(list)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     if(pa_.isEmpty())

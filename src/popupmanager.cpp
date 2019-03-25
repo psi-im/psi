@@ -57,15 +57,15 @@ class PopupManager::Private
 
 public:
     Private()
-        : psi_(0)
+        : psi_(nullptr)
         , lastCustomType_(PopupManager::AlertCustom)
     {
     }
 
     PsiPopupInterface* popup(const QString& name)
     {
-        PsiPopupInterface* ppi = 0;
-        PsiPopupPluginInterface *plugin = 0;
+        PsiPopupInterface* ppi = nullptr;
+        PsiPopupPluginInterface *plugin = nullptr;
         if(popups_.keys().contains(name)) {
             plugin = popups_.value(name);
         }

@@ -47,15 +47,15 @@
 
 ContactListDragView::ContactListDragView(QWidget* parent)
     : ContactListView(parent)
-    , backedUpSelection_(0)
-    , removeAction_(0)
+    , backedUpSelection_(nullptr)
+    , removeAction_(nullptr)
     , dropIndicatorRect_(QRect())
     , dropIndicatorPosition_(QAbstractItemView::OnViewport)
     , keyboardModifiers_(Qt::NoModifier)
     , dirty_(false)
-    , pressedIndex_(0)
+    , pressedIndex_(nullptr)
     , pressedIndexWasSelected_(false)
-    , viewportMenu_(0)
+    , viewportMenu_(nullptr)
     , editing(false)
 {
     removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
@@ -154,7 +154,7 @@ void ContactListDragView::mouseDoubleClickEvent(QMouseEvent* e)
 {
     ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
     if (model && pressedIndex_) {
-        QModelIndexList indexes = model->indexesFor(0, pressedIndex_);
+        QModelIndexList indexes = model->indexesFor(nullptr, pressedIndex_);
         if (e->button() == Qt::LeftButton
             && indexes.count() == 1
             && model->toItem(indexes.first())->isGroup()) {
@@ -201,7 +201,7 @@ QModelIndexList ContactListDragView::indexesFor(PsiContact* contact, QMimeData* 
 void ContactListDragView::toolTipEntered(PsiContact* contact, QMimeData* contactSelection)
 {
     Q_UNUSED(contact); // we don't want tooltips on multiple selections
-    QModelIndexList indexes = indexesFor(0, contactSelection);
+    QModelIndexList indexes = indexesFor(nullptr, contactSelection);
     if (indexes.count() == 1) {
         updateCursor(proxyIndex(indexes.first()), UC_TooltipEntered, false);
     }
@@ -312,7 +312,7 @@ bool ContactListDragView::supportsDropOnIndex(QDropEvent *e, const QModelIndex &
     ContactListModelSelection selection(e->mimeData());
     ContactListDragModel *model = qobject_cast<ContactListDragModel*>(realModel());
     if (!selection.haveRosterSelection())
-        model = 0;
+        model = nullptr;
 
     if (model && !model->supportsMimeDataOnIndex(e->mimeData(), realIndex(index))) {
         return false;
@@ -612,7 +612,7 @@ QMimeData* ContactListDragView::selection() const
     if (model && model->contactList() && !selectedIndexes().isEmpty()) {
         return model->mimeData(realIndexes(selectedIndexes()));
     }
-    return 0;
+    return nullptr;
 }
 
 void ContactListDragView::restoreSelection(QMimeData* _mimeData)
@@ -749,7 +749,7 @@ void ContactListDragView::mousePressEvent(QMouseEvent* e)
 {
     pressPosition_ = e->pos();
     delete pressedIndex_;
-    pressedIndex_ = 0;
+    pressedIndex_ = nullptr;
     pressedIndexWasSelected_ = false;
 
     QModelIndex index = indexAt(e->pos());
@@ -834,7 +834,7 @@ void ContactListDragView::backupCurrentSelection()
 {
     if (backedUpSelection_) {
         delete backedUpSelection_;
-        backedUpSelection_ = 0;
+        backedUpSelection_ = nullptr;
     }
 
     backedUpSelection_ = selection();
@@ -885,7 +885,7 @@ void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
     bool filter = false;
     ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
     if (model && pressedIndex_) {
-        QModelIndexList indexes = model->indexesFor(0, pressedIndex_);
+        QModelIndexList indexes = model->indexesFor(nullptr, pressedIndex_);
         QModelIndex index = indexes.count() == 1 ? proxyIndex(indexes.first()) : QModelIndex();
         if (event->button() == Qt::LeftButton &&
             index.isValid() &&
@@ -908,7 +908,7 @@ void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
 
     pressPosition_ = QPoint();
     delete pressedIndex_;
-    pressedIndex_ = 0;
+    pressedIndex_ = nullptr;
 }
 
 void ContactListDragView::setViewportMenu(QMenu* menu)

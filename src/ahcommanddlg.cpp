@@ -143,7 +143,7 @@ private slots:
 // --------------------------------------------------------------------------
 
 AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
-    : QDialog(0), pa_(pa), receiver_(receiver)
+    : QDialog(nullptr), pa_(pa), receiver_(receiver)
 {
     ui_.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);

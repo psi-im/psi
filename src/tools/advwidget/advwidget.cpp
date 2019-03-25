@@ -65,7 +65,7 @@ AdvancedWidgetShared::~AdvancedWidgetShared()
 {
 }
 
-static AdvancedWidgetShared *advancedWidgetShared = 0;
+static AdvancedWidgetShared *advancedWidgetShared = nullptr;
 
 //----------------------------------------------------------------------------
 // GAdvancedWidget::Private

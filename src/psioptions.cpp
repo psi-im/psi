@@ -128,7 +128,7 @@ const PsiOptions* PsiOptions::defaults()
  */
 void PsiOptions::reset() {
     delete instance_;
-    instance_ = 0;
+    instance_ = nullptr;
 }
 
 
@@ -285,7 +285,7 @@ bool PsiOptions::save(QString file)
 
 PsiOptions::PsiOptions()
     : OptionsTree()
-    , autoSaveTimer_(0)
+    , autoSaveTimer_(nullptr)
 {
     autoSaveTimer_ = new QTimer(this);
     autoSaveTimer_->setSingleShot(true);

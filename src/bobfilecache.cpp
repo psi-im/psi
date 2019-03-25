@@ -26,7 +26,7 @@ using namespace XMPP;
 
 
 BoBFileCache::BoBFileCache()
-    : BoBCache(0)
+    : BoBCache(nullptr)
 {
     setParent(QApplication::instance());
     _fileCache = new FileCache(ApplicationInfo::bobDir(), this);
@@ -61,4 +61,4 @@ BoBData BoBFileCache::get(const QString &cid)
     return bd;
 }
 
-BoBFileCache* BoBFileCache::_instance = 0;
+BoBFileCache* BoBFileCache::_instance = nullptr;

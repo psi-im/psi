@@ -89,7 +89,7 @@ void AccountAddDlg::add()
     QString aname = createNewAccountName(le_name->text());
     le_name->setText( aname );
 
-    PsiAccount* newAccount = 0;
+    PsiAccount* newAccount = nullptr;
     if(ck_reg->isChecked()) {
         AccountRegDlg *w = new AccountRegDlg(psi, this);
         int n = w->exec();

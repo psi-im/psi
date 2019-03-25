@@ -59,7 +59,7 @@ public:
     IconSelectButton(QWidget *parent)
     : QAbstractButton(parent)
     {
-        ic = 0;
+        ic = nullptr;
         animated = false;
         connect (this, SIGNAL(clicked()), SLOT(iconSelected()));
     }
@@ -70,7 +70,7 @@ public:
 
         if ( ic ) {
             delete ic;
-            ic = 0;
+            ic = nullptr;
         }
     }
 
@@ -80,13 +80,13 @@ public:
 
         if ( ic ) {
             delete ic;
-            ic = 0;
+            ic = nullptr;
         }
 
         if ( i )
             ic = new PsiIcon(*((PsiIcon *)i));
         else
-            ic = 0;
+            ic = nullptr;
     }
 
     const PsiIcon *icon() const
@@ -130,7 +130,7 @@ private:
     void iconStop()
     {
         if ( ic ) {
-            disconnect(ic, 0, this, 0 );
+            disconnect(ic, nullptr, this, nullptr );
             if ( animated ) {
                 ic->stop();
                 animated = false;
@@ -229,7 +229,7 @@ IconSelect::IconSelect(IconSelectPopup *parentMenu)
     menu = parentMenu;
     connect(menu, SIGNAL(textSelected(QString)), SLOT(closeMenu()));
 
-    grid = 0;
+    grid = nullptr;
     noIcons();
 
     Q_UNUSED(shown)
@@ -253,7 +253,7 @@ void IconSelect::createLayout()
 {
     Q_ASSERT(!grid);
     grid = new QGridLayout(this);
-    grid->setMargin(style()->pixelMetric(QStyle::PM_MenuPanelWidth, 0, this));
+    grid->setMargin(style()->pixelMetric(QStyle::PM_MenuPanelWidth, nullptr, this));
     grid->setSpacing(1);
 }
 
@@ -273,7 +273,7 @@ void IconSelect::setIconset(const Iconset &iconset)
     // delete all children
     if (grid) {
         delete grid;
-        grid = 0;
+        grid = nullptr;
 
         QObjectList list = children();
         qDeleteAll(list);

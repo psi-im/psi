@@ -67,14 +67,14 @@ class ContactListAccountMenu::Private : public QObject
 
 public:
     Private(ContactListAccountMenu *menu, PsiAccount *_account)
-        : QObject(0)
+        : QObject(nullptr)
         , account(_account)
     {
         connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
         connect(account, SIGNAL(updatedActivity()), SLOT(updateActions()));
         connect(account, SIGNAL(updatedAccount()), SLOT(updateActions()));
 
-        statusMenu_ = new AccountStatusMenu(0, account->psi(), account);
+        statusMenu_ = new AccountStatusMenu(nullptr, account->psi(), account);
         statusMenu_->fill();
         statusMenu_->setTitle(tr("&Status"));
         statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->status())).icon());

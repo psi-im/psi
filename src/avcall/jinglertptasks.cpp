@@ -174,7 +174,7 @@ static JingleCondEntry jingleCondTable[] =
     { "timeout",                  JingleRtpReason::Timeout },
     { "unsupported-applications", JingleRtpReason::UnsupportedApplications },
     { "unsupported-transports",   JingleRtpReason::UnsupportedTransports },
-    { 0, 0 }
+    { nullptr, 0 }
 };
 
 static QString conditionToElementName(JingleRtpReason::Condition cond)

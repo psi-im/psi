@@ -175,7 +175,7 @@ URLObject::URLObject()
  */
 URLObject *URLObject::getInstance()
 {
-    static URLObject *urlObject = 0;
+    static URLObject *urlObject = nullptr;
     if (!urlObject)
         urlObject = new URLObject();
     return urlObject;
@@ -189,7 +189,7 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 {
     d->link = lnk;
     if ( d->link.isEmpty() )
-        return 0;
+        return nullptr;
 
     int colon = d->link.indexOf(':');
     if ( colon == -1 )

@@ -235,7 +235,7 @@ static const QFlags<Qt::WindowType>
 POPUP_FLAGS = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
 
 FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon)
-    : QFrame( 0, POPUP_FLAGS )
+    : QFrame( nullptr, POPUP_FLAGS )
 {
     QWidget::setAttribute(Qt::WA_DeleteOnClose);
     setWindowModality(Qt::NonModal);

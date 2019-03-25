@@ -17,8 +17,8 @@ public:
 
 OptionsTabStatusPep::OptionsTabStatusPep(QObject *parent)
 : OptionsTab(parent, "status_tunes", "", tr("PEP"), tr("Tunes no-video filter and controllers switcher"))
-, w_(0)
-, psi_(0)
+, w_(nullptr)
+, psi_(nullptr)
 , controllersChanged_(false)
 {
 }
@@ -30,7 +30,7 @@ OptionsTabStatusPep::~OptionsTabStatusPep()
 QWidget *OptionsTabStatusPep::widget()
 {
     if (w_) {
-        return 0;
+        return nullptr;
     }
 
     w_ = new OptStatusPepUI();

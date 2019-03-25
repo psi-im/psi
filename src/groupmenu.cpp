@@ -90,11 +90,11 @@ void GroupMenu::createNewGroup()
 {
     while (contact_) {
         bool ok = false;
-        QString newgroup = QInputDialog::getText(0, tr("Create New Group"),
+        QString newgroup = QInputDialog::getText(nullptr, tr("Create New Group"),
                                                  tr("Enter the new group name:"),
                                                  QLineEdit::Normal,
                                                  QString::null,
-                                                 &ok, 0);
+                                                 &ok, nullptr);
         if (!ok)
             break;
         if (newgroup.isEmpty())

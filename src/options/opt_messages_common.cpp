@@ -17,8 +17,8 @@ public:
 
 OptionsTabMsgCommon::OptionsTabMsgCommon(QObject *parent)
 : OptionsTab(parent, "common", "", tr("Common"), tr("Сommon options for messages section"), "psi/advanced"),
-  w_(0),
-  psi_(0)
+  w_(nullptr),
+  psi_(nullptr)
 {
 }
 
@@ -28,7 +28,7 @@ OptionsTabMsgCommon::~OptionsTabMsgCommon()
 QWidget *OptionsTabMsgCommon::widget()
 {
     if (w_) {
-        return 0;
+        return nullptr;
     }
 
     w_ = new OptMsgCommonUI();

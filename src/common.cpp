@@ -375,7 +375,7 @@ QLayout *rw_recurseFindLayout(QLayout *lo, QWidget *w)
             return lo;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 QLayout *rw_findLayoutOf(QWidget *w)
@@ -450,7 +450,7 @@ void reorderGridLayout(QGridLayout* layout, int maxCols)
 TabbableWidget* findActiveTab()
 {
     QWidget* chat = QApplication::activeWindow();
-    TabbableWidget* tw = 0;
+    TabbableWidget* tw = nullptr;
     if(chat) {
         TabDlg* td = qobject_cast<TabDlg*>(chat);
         if(td) {

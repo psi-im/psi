@@ -1246,7 +1246,7 @@ void DiscoDlg::Private::actionActivated(int id)
 void DiscoDlg::Private::objectDestroyed(QObject *obj)
 {
     if ( obj == busy )
-        busy = 0;
+        busy = nullptr;
 }
 
 //----------------------------------------------------------------------------
@@ -1254,7 +1254,7 @@ void DiscoDlg::Private::objectDestroyed(QObject *obj)
 //----------------------------------------------------------------------------
 
 DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);

@@ -34,10 +34,10 @@ TranslationManager::TranslationManager()
     QString currentLanguageName = QT_TR_NOOP("language_name");
 
     // The application translator
-    translator_ = new QTranslator(0);
+    translator_ = new QTranslator(nullptr);
 
     // The qt translator
-    qt_translator_ = new QTranslator(0);
+    qt_translator_ = new QTranslator(nullptr);
 
     // Self-destruct
     connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
@@ -47,11 +47,11 @@ TranslationManager::~TranslationManager()
 {
     QCoreApplication::instance()->removeTranslator(translator_);
     delete translator_;
-    translator_ = 0;
+    translator_ = nullptr;
 
     QCoreApplication::instance()->removeTranslator(qt_translator_);
     delete qt_translator_;
-    qt_translator_ = 0;
+    qt_translator_ = nullptr;
 }
 
 TranslationManager* TranslationManager::instance()
@@ -153,7 +153,7 @@ VarList TranslationManager::availableTranslations()
 
             // get the language_name
             QString name = QString("[") + str + "]";
-            QTranslator t(0);
+            QTranslator t(nullptr);
             if(!t.load(str, dirName))
                 continue;
 

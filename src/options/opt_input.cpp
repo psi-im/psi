@@ -26,8 +26,8 @@ public:
 
 OptionsTabInput::OptionsTabInput(QObject *parent)
 : OptionsTab(parent, "input", "", tr("Input"), tr("Input options"), "psi/action_templates_edit"),
-  w_(0),
-  psi_(0)
+  w_(nullptr),
+  psi_(nullptr)
 {
 }
 
@@ -37,7 +37,7 @@ OptionsTabInput::~OptionsTabInput()
 QWidget *OptionsTabInput::widget()
 {
     if (w_) {
-        return 0;
+        return nullptr;
     }
 
     w_ = new OptInputUI();

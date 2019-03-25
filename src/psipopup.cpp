@@ -52,7 +52,7 @@ static int MaxPopups = 5;
 /**
  * Holds a list of Psi Popups.
  */
-static QList<PsiPopup *> *psiPopupList = 0;
+static QList<PsiPopup *> *psiPopupList = nullptr;
 
 //----------------------------------------------------------------------------
 // PsiPopup::Private
@@ -108,7 +108,7 @@ PsiPopup::Private::~Private()
         delete popup;
     if ( titleIcon )
         delete titleIcon;
-    popup = 0;
+    popup = nullptr;
 }
 
 void PsiPopup::Private::init(const PsiIcon *_titleIcon, const QString& titleText, PsiAccount *acc)
@@ -124,7 +124,7 @@ void PsiPopup::Private::init(const PsiIcon *_titleIcon, const QString& titleText
     if ( psiPopupList->count() >= MaxPopups && MaxPopups > 0 )
         delete psiPopupList->first();
 
-    FancyPopup *lastPopup = 0;
+    FancyPopup *lastPopup = nullptr;
     if ( psiPopupList->count() && psiPopupList->last() )
         lastPopup = psiPopupList->last()->popup();
 
@@ -148,7 +148,7 @@ void PsiPopup::Private::init(const PsiIcon *_titleIcon, const QString& titleText
 
 void PsiPopup::Private::popupDestroyed()
 {
-    popup = 0;
+    popup = nullptr;
     psiPopup->deleteLater();
 }
 
@@ -225,7 +225,7 @@ PsiPopup::~PsiPopup()
 void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j, const Resource &r, const UserListItem *item, const PsiEvent::Ptr &event)
 {
     d->popupType = type;
-    PsiIcon *icon = 0;
+    PsiIcon *icon = nullptr;
     QString text = title(type, &d->doAlertIcon, &icon);
     d->init(icon, text, acc);
     setData(j, r, item, event);
@@ -440,7 +440,7 @@ void PsiPopup::deleteAll()
 
     psiPopupList->clear();
     delete psiPopupList;
-    psiPopupList = 0;
+    psiPopupList = nullptr;
 }
 
 #include "psipopup.moc"

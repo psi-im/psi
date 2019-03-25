@@ -306,7 +306,7 @@ void BusyWidget::animate()
         {
             if (d->t)
                 d->t->deleteLater();
-            d->t = 0;
+            d->t = nullptr;
         }
     }
 

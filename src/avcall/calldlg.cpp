@@ -62,8 +62,8 @@ public:
         q(_q),
         active(false),
         activated(false),
-        sess(0),
-        timer(0)
+        sess(nullptr),
+        timer(nullptr)
     {
         ui.setupUi(q);
         q->setWindowTitle(tr("Voice Call"));
@@ -105,7 +105,7 @@ public:
             if(active)
                 sess->reject();
 
-            sess->setIncomingVideo(0);
+            sess->setIncomingVideo(nullptr);
             sess->disconnect(this);
             sess->unlink();
             sess->deleteLater();

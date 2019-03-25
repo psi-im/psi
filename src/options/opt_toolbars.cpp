@@ -93,7 +93,7 @@ OptionsTabToolbars::OptionsTabToolbars(QObject *parent)
 QWidget *OptionsTabToolbars::widget()
 {
     if (w)
-        return 0;
+        return nullptr;
 
     w = new LookFeelToolbarsUI();
     LookFeelToolbarsUI *d = (LookFeelToolbarsUI*) w;
@@ -404,7 +404,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
     {
         // Fill the TreeWidget with toolbar-specific actions
         QTreeWidget *tw = d->tw_availActions;
-        QTreeWidgetItem *lastRoot = 0;
+        QTreeWidgetItem *lastRoot = nullptr;
 
         QList<ActionList*> lists = psi->actionList()->actionLists(p->currentType());
 
@@ -415,7 +415,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
             root->setData(0, Qt::UserRole, QString(""));
             root->setExpanded(true);
 
-            QTreeWidgetItem *last = 0;
+            QTreeWidgetItem *last = nullptr;
             QStringList actionNames = actionList->actions();
             QStringList::Iterator it2 = actionNames.begin();
             for (; it2 != actionNames.end(); ++it2) {

@@ -36,7 +36,7 @@ QWidget* AlertManager::findDialog(const QMetaObject& mo) const {
             return i->widget;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 void AlertManager::findDialogs(const QMetaObject& mo, QList<void*>* list) const

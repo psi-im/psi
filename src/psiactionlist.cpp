@@ -115,7 +115,7 @@ void PsiActionList::Private::createCommon()
     ActionNames actions[] = {
         { "separator", separatorAction },
         { "spacer", spacerAction },
-        { "", 0 }
+        { "", nullptr }
     };
 
     createActionList( tr( "Common Actions" ), Actions_Common, actions );
@@ -130,26 +130,26 @@ void PsiActionList::Private::createMainWin()
         viewGroups->setUsesDropDown(true);
         viewGroups->setExclusive(false);
 
-        IconAction *actEnableGroups = new IconAction(tr("Show Roster Groups"), "psi/enable-groups", tr("Show Roster Groups"), 0, viewGroups, 0, true);
+        IconAction *actEnableGroups = new IconAction(tr("Show Roster Groups"), "psi/enable-groups", tr("Show Roster Groups"), 0, viewGroups, nullptr, true);
         actEnableGroups->setWhatsThis(tr("Enable/disable groups in roster"));
 
-        IconAction *showOffline = new IconAction(tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, 0, true);
+        IconAction *showOffline = new IconAction(tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, nullptr, true);
         showOffline->setWhatsThis(tr("Toggles visibility of offline contacts in roster"));
 
         /*IconAction *showAway = new IconAction(tr("Show Away/XA/DnD Contacts"), "psi/show_away", tr("Show Away/XA/DnD Contacts"), 0,
                                               PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool() ? (QObject*)viewGroups : (QObject*)this, 0, true);
         showAway->setWhatsThis(tr("Toggles visibility of away/xa/dnd contacts in roster"));*/
 
-        IconAction *showHidden = new IconAction(tr("Show Hidden Contacts"), "psi/show_hidden", tr("Show Hidden Contacts"), 0, viewGroups, 0, true);
+        IconAction *showHidden = new IconAction(tr("Show Hidden Contacts"), "psi/show_hidden", tr("Show Hidden Contacts"), 0, viewGroups, nullptr, true);
         showHidden->setWhatsThis(tr("Toggles visibility of hidden contacts in roster"));
 
-        IconAction *showAgents = new IconAction(tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"), 0, viewGroups, 0, true);
+        IconAction *showAgents = new IconAction(tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"), 0, viewGroups, nullptr, true);
         showAgents->setWhatsThis(tr("Toggles visibility of agents/transports in roster"));
 
-        IconAction *showSelf = new IconAction(tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0, viewGroups, 0, true);
+        IconAction *showSelf = new IconAction(tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0, viewGroups, nullptr, true);
         showSelf->setWhatsThis(tr("Toggles visibility of self contact in roster"));
 
-        IconAction *showStatusMsg = new IconAction(tr("Show Status Messages"), "psi/statusmsg", tr("Show Status Messages"), 0, viewGroups, 0, true);
+        IconAction *showStatusMsg = new IconAction(tr("Show Status Messages"), "psi/statusmsg", tr("Show Status Messages"), 0, viewGroups, nullptr, true);
         showSelf->setWhatsThis(tr("Toggles visibility of status messages of contacts"));
 
         ActionNames actions[] = {
@@ -161,19 +161,19 @@ void PsiActionList::Private::createMainWin()
             { "show_agents",  showAgents  },
             { "show_self",    showSelf    },
             { "show_statusmsg", showStatusMsg },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList(tr("Show Contacts"), Actions_MainWin, actions);
     }
 
     {
-        PopupAction *optionsButton = new PopupAction (tr("&Psi"), 0, this, "optionsButton");
+        PopupAction *optionsButton = new PopupAction (tr("&Psi"), nullptr, this, "optionsButton");
         optionsButton->setWhatsThis (tr("The main Psi button, that provides access to many actions"));
         optionsButton->setSizePolicy ( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Preferred ) );
         optionsButton->setIcon ( IconsetFactory::iconPtr("psi/main"), false );
 
-        PopupAction *statusButton = new PopupAction (tr("&Status"), 0, this, "statusButton");
+        PopupAction *statusButton = new PopupAction (tr("&Status"), nullptr, this, "statusButton");
         statusButton->setWhatsThis (tr("Provides a convenient way to change and to get information about current status"));
         statusButton->setSizePolicy ( QSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding ) );
 
@@ -188,7 +188,7 @@ void PsiActionList::Private::createMainWin()
             { "button_status",  statusButton  },
             { "active_contacts",actActiveContacts},
             { "event_notifier", eventNotifier },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList( tr( "Buttons" ), Actions_MainWin, actions );
@@ -196,13 +196,13 @@ void PsiActionList::Private::createMainWin()
 
 
     {
-        IconAction *add_act = 0;
+        IconAction *add_act = nullptr;
         if (!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool())
             add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a Contact"), 0, psi, this);
 
         IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 2, psi, this);
 
-        IconAction *actDisco = 0;
+        IconAction *actDisco = nullptr;
         if(!PsiOptions::instance()->getOption("options.ui.contactlist.disable-service-discovery").toBool())
             actDisco = new MAction(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 3, psi, this);
 
@@ -228,7 +228,7 @@ void PsiActionList::Private::createMainWin()
         IconAction *actToolbars = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
         IconAction *actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change Profile"), 0, this);
 
-        IconAction *actPlaySounds = new IconAction (tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, 0, true);
+        IconAction *actPlaySounds = new IconAction (tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, nullptr, true);
         actPlaySounds->setWhatsThis (tr("Toggles whether sound should be played or not"));
 
         IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
@@ -255,7 +255,7 @@ void PsiActionList::Private::createMainWin()
             { "menu_change_profile",  actChangeProfile },
             { "menu_play_sounds",     actPlaySounds    },
             { "menu_quit",            actQuit          },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList( tr( "Menu Items" ), Actions_MainWin, actions );
@@ -263,7 +263,7 @@ void PsiActionList::Private::createMainWin()
 
 #ifdef USE_PEP
     {
-        IconAction *actPublishTune = new IconAction (tr("Publish Tune"), "psi/publishTune", tr("Publish &Tune"), 0, this, 0, true);
+        IconAction *actPublishTune = new IconAction (tr("Publish Tune"), "psi/publishTune", tr("Publish &Tune"), 0, this, nullptr, true);
         actPublishTune->setWhatsThis (tr("Toggles whether the currently playing tune should be published or not"));
 
         IconAction *actSetMood = new IconAction (tr("Set Mood"), "pep/mood", tr("Set Mood"), 0, this);
@@ -280,7 +280,7 @@ void PsiActionList::Private::createMainWin()
             { "set_mood",        actSetMood },
             { "set_activity",    actSetActivity },
             { "set_geoloc",        actSetGeoloc },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList( tr( "Publish" ), Actions_MainWin, actions );
@@ -346,7 +346,7 @@ void PsiActionList::Private::createMainWin()
             { "status_offline",   statusOffline   },
             { "choose_status",    chooseStatus    },
             { "reconnect_all",    reconnectAll    },
-            { "", 0 }
+            { "", nullptr }
         };
 
         statusActionList = createActionList( tr( "Status" ), Actions_MainWin, actions );
@@ -401,7 +401,7 @@ void PsiActionList::Private::createMainWin()
             { "help_about_psimedia",   actAboutPsiMedia   },
             { "help_diag_qcaplugin",   actDiagQCAPlugin   },
             { "help_diag_qcakeystore", actDiagQCAKeyStore },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList( tr( "Help" ), Actions_MainWin, actions );
@@ -434,7 +434,7 @@ void PsiActionList::Private::createChat()
         IconAction *actIcon = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
         IconAction *actVoice = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
         IconAction *actFile = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
-        IconAction *actPgp = new IconAction(tr("Toggle Encryption"), "psi/cryptoYes", tr("Toggle Encryption"), 0, this, 0, true);
+        IconAction *actPgp = new IconAction(tr("Toggle Encryption"), "psi/cryptoYes", tr("Toggle Encryption"), 0, this, nullptr, true);
         IconAction *actInfo = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
         IconAction *actHistory = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
         IconAction *actCompact = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
@@ -453,7 +453,7 @@ void PsiActionList::Private::createChat()
             { "chat_history", actHistory   },
             { "chat_compact", actCompact   },
             { "chat_active_contacts", actActiveContacts   },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList(tr("Chat basic buttons"), Actions_Chat, actions);
@@ -477,7 +477,7 @@ void PsiActionList::Private::createGroupchat()
             { "gchat_html_text", actHtmlText   },
             { "gchat_configure", actConfigure   },
             { "gchat_icon", actIcon   },
-            { "", 0 }
+            { "", nullptr }
         };
 
         createActionList(tr("Groupchat basic buttons"), Actions_Groupchat, actions);

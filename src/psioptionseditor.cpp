@@ -41,7 +41,7 @@ OptionEditor::supportedType OptionEditor::supportedTypes[] = {
     {"QString", QVariant::String},
     {"QColor", QVariant::Color},
 //    {"QStringList", QVariant::StringList},  doesn't work
-    {0, QVariant::Invalid}};
+    {nullptr, QVariant::Invalid}};
 
 
 OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)

@@ -57,10 +57,10 @@
 //----------------------------------------------------------------------------
 
 PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
-    : QObject(0)
+    : QObject(nullptr)
     , contact_(_contact)
     , menu_(menu)
-    , authMenu_(0)
+    , authMenu_(nullptr)
 {
     Jid jid = _contact->jid();
     menu->setLabelTitle(_contact->isPrivate() ? jid.full() : jid.bare());
@@ -180,10 +180,10 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
     connect(mucLeaveAction_, SIGNAL(triggered()), SLOT(mucLeave()));
     mucLeaveAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
 
-    blockAction_ = new IconAction(tr("Block"), "psi/stop", tr("Block"), 0, this, 0, true);
+    blockAction_ = new IconAction(tr("Block"), "psi/stop", tr("Block"), 0, this, nullptr, true);
     connect(blockAction_, SIGNAL(triggered(bool)), SLOT(block(bool)));
 
-    visibleAction_ = new IconAction(tr("Always Visible"), "psi/eye", tr("Always Visible"), 0, this, 0, true);
+    visibleAction_ = new IconAction(tr("Always Visible"), "psi/eye", tr("Always Visible"), 0, this, nullptr, true);
     connect(visibleAction_, SIGNAL(triggered(bool)), SLOT(setAlwaysVisible(bool)));
 
     _copyUserJid = new IconAction(tr("Copy User JID"), "", tr("Copy User JID"), 0 , this);
@@ -431,7 +431,7 @@ void PsiContactMenu::Private::inviteToGroupchat(PsiAccount* account, QString gro
     if (!contact_)
         return;
     account->actionInvite(contact_->jid(), groupchat);
-    QMessageBox::information(0, tr("Invitation"),
+    QMessageBox::information(nullptr, tr("Invitation"),
                              tr("Sent groupchat invitation to <b>%1</b>.").arg(contact_->name()));
 }
 
@@ -468,7 +468,7 @@ void PsiContactMenu::Private::addAuth()
     else
         contact_->account()->actionAdd(contact_->jid());
 
-    QMessageBox::information(0, tr("Add"),
+    QMessageBox::information(nullptr, tr("Add"),
                              tr("Added/Authorized <b>%1</b> to the contact list.").arg(contact_->name()));
 }
 
@@ -536,7 +536,7 @@ void PsiContactMenu::Private::authResend()
     if (!contact_)
         return;
     contact_->account()->actionAuth(contact_->jid());
-    QMessageBox::information(0, tr("Authorize"),
+    QMessageBox::information(nullptr, tr("Authorize"),
                              tr("Sent authorization to <b>%1</b>.").arg(contact_->name()));
 }
 
@@ -545,7 +545,7 @@ void PsiContactMenu::Private::authRerequest()
     if (!contact_)
         return;
     contact_->account()->actionAuthRequest(contact_->jid());
-    QMessageBox::information(0, tr("Authorize"),
+    QMessageBox::information(nullptr, tr("Authorize"),
                              tr("Rerequested authorization from <b>%1</b>.").arg(contact_->name()));
 }
 
@@ -554,7 +554,7 @@ void PsiContactMenu::Private::authRemove()
     if (!contact_)
         return;
 
-    int n = QMessageBox::information(0, tr("Remove"),
+    int n = QMessageBox::information(nullptr, tr("Remove"),
                                      tr("Are you sure you want to remove authorization from <b>%1</b>?").arg(contact_->name()),
                                      tr("&Yes"), tr("&No"));
 
@@ -574,7 +574,7 @@ void PsiContactMenu::Private::pictureAssign()
 {
     if (!contact_)
         return;
-    QString file = QFileDialog::getOpenFileName(0, tr("Choose an Image"), "", tr("All files (*.png *.jpg *.gif)"));
+    QString file = QFileDialog::getOpenFileName(nullptr, tr("Choose an Image"), "", tr("All files (*.png *.jpg *.gif)"));
     if (!file.isNull()) {
         contact_->account()->avatarFactory()->importManualAvatar(contact_->jid(),file);
     }

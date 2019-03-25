@@ -313,12 +313,12 @@ PsiAccount* ContactListDragModel::getDropAccount(PsiAccount* account, const QMod
     Q_UNUSED(account);
 
     if (!parent.isValid())
-        return 0;
+        return nullptr;
 
     ContactListItem *item = static_cast<ContactListItem*>(parent.internalPointer());
     Q_ASSERT(item);
     if (!item)
-        return 0;
+        return nullptr;
 
     if (item->isContact()) {
         return item->contact()->account();
@@ -327,7 +327,7 @@ PsiAccount* ContactListDragModel::getDropAccount(PsiAccount* account, const QMod
         return item->account();
     }
 
-    return 0;
+    return nullptr;
 }
 
 QString ContactListDragModel::getDropGroupName(const QModelIndex& parent) const
@@ -338,7 +338,7 @@ QString ContactListDragModel::getDropGroupName(const QModelIndex& parent) const
     ContactListItem *item = static_cast<ContactListItem*>(parent.internalPointer());
     Q_ASSERT(item);
     if (!item)
-        return 0;
+        return nullptr;
 
     if (item->isGroup()) {
         return item->name();

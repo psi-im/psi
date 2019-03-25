@@ -44,7 +44,7 @@ QModelIndex AbstractTreeModel::index(int row, int column, const QModelIndex &par
     else
         parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
 
-    AbstractTreeItem *childItem = 0;
+    AbstractTreeItem *childItem = nullptr;
     if (row >= 0 && row < parentItem->childCount())
         childItem = parentItem->children().at(row);
 

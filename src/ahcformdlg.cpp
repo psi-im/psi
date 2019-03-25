@@ -32,13 +32,13 @@
 #include "busywidget.h"
 
 AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final) :
-    QDialog(0),
+    QDialog(nullptr),
     _psi(psi),
-    _pb_prev(0),
-    _pb_next(0),
-    _pb_complete(0),
-    _pb_cancel(0),
-    _xdata(0),
+    _pb_prev(nullptr),
+    _pb_next(nullptr),
+    _pb_complete(nullptr),
+    _pb_cancel(nullptr),
+    _xdata(nullptr),
     _receiver(receiver),
     _client(client)
 {
@@ -141,7 +141,7 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMP
 
     adjustSize();
     show();
-    setParent(0);
+    setParent(nullptr);
 }
 
 void AHCFormDlg::doPrev()

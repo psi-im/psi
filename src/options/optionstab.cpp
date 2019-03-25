@@ -50,7 +50,7 @@ QString OptionsTab::tabName() const
 PsiIcon *OptionsTab::tabIcon() const
 {
     if ( v_tabIconName.isEmpty() )
-        return 0;
+        return nullptr;
 
     return (PsiIcon *)IconsetFactory::iconPtr( v_tabIconName );
 }
@@ -120,7 +120,7 @@ private slots:
 
 private:
     struct TabData {
-        TabData() { tab = 0; initialized = false; }
+        TabData() { tab = nullptr; initialized = false; }
         TabData(OptionsTab *t) { tab = t; initialized = false; }
         OptionsTab *tab;
         bool initialized;
@@ -141,7 +141,7 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 
     // the widget will have no parent; it will be reparented
     // when inserting it with "addTab"
-    QWidget *w = new QWidget(0);
+    QWidget *w = new QWidget(nullptr);
     w->setObjectName(tab->name());
 
     if ( !tab->desc().isEmpty() )
@@ -228,7 +228,7 @@ MetaOptionsTab::~MetaOptionsTab()
 
 void MetaOptionsTab::init()
 {
-    w = 0;
+    w = nullptr;
 }
 
 void MetaOptionsTab::addTab(OptionsTab *tab)
@@ -253,7 +253,7 @@ QWidget *MetaOptionsTab::widget()
     if ( w )
         return w;
 
-    OptionsTabWidget *t = new OptionsTabWidget(0);
+    OptionsTabWidget *t = new OptionsTabWidget(nullptr);
     w = t;
 
     connect(w, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));

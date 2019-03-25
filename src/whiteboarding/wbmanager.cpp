@@ -157,7 +157,7 @@ WbDlg* WbManager::findWbDlg(const Jid &jid) {
             return w;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 void WbManager::createWbDlg(SxeSession* session) {

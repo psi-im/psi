@@ -60,7 +60,7 @@ TabDlgDelegate::~TabDlgDelegate()
 
 Qt::WindowFlags TabDlgDelegate::initWindowFlags() const
 {
-    return (Qt::WindowFlags)0;
+    return (Qt::WindowFlags)nullptr;
 }
 
 void TabDlgDelegate::create(QWidget *)
@@ -128,21 +128,21 @@ bool TabDlgDelegate::tabEventFilter(QWidget *, QObject *, QEvent *)
  *        passed.
  */
 TabDlg::TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate)
-        : AdvancedWidget<QWidget>(0, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)0)
+        : AdvancedWidget<QWidget>(nullptr, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)nullptr)
         , delegate_(delegate)
-        , tabWidget_(0)
-        , detachButton_(0)
-        , closeButton_(0)
-        , closeCross_(0)
+        , tabWidget_(nullptr)
+        , detachButton_(nullptr)
+        , closeButton_(nullptr)
+        , closeCross_(nullptr)
         , tabMenu_(new QMenu(this))
-        , act_close_(0)
-        , act_next_(0)
-        , act_prev_(0)
+        , act_close_(nullptr)
+        , act_next_(nullptr)
+        , act_prev_(nullptr)
         , tabManager_(tabManager)
         , userManagement_(true)
         , tabBarSingles_(true)
         , simplifiedCaption_(false)
-        , activateTabMapper_(0)
+        , activateTabMapper_(nullptr)
 {
     if (delegate_) {
         delegate_->create(this);
@@ -230,7 +230,7 @@ void TabDlg::setShortcuts()
         qDeleteAll(tabMapperActions_);
         tabMapperActions_.clear();
         delete activateTabMapper_;
-        activateTabMapper_ = 0;
+        activateTabMapper_ = nullptr;
     }
 }
 
@@ -252,7 +252,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
     clearMenu(tabMenu_);
 
     if (tab != -1) {
-        QAction *d = 0;
+        QAction *d = nullptr;
         QAction *h = tabMenu_->addAction(tr("Hide Tab"));
         if(userManagement_) {
             d = tabMenu_->addAction(tr("Detach Tab"));
@@ -499,7 +499,7 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
     setUpdatesEnabled(false);
     chat->hide();
     removeTabWithNoChecks(chat);
-    chat->setParent(0);
+    chat->setParent(nullptr);
     QCoreApplication::postEvent(chat, new QEvent(QEvent::ActivationChange));
     if (tabWidget_->count() > 0) {
         updateCaption();
@@ -604,7 +604,7 @@ TabbableWidget* TabDlg::getTabPointer(PsiAccount* account, QString fullJid)
         }
     }
 
-    return 0;
+    return nullptr;
 }
 
 void TabDlg::updateTab()

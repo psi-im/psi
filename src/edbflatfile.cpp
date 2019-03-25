@@ -182,7 +182,7 @@ EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
         if(i->j.compare(j, false))
             return i;
     }
-    return 0;
+    return nullptr;
 }
 
 EDBFlatFile::File *EDBFlatFile::ensureFile(const Jid &j)
@@ -637,7 +637,7 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
             m.urlAdd(Url(url, logdecode(strData.at(UrlDesc))));
         m.setSpooled(true);
 
-        MessageEvent::Ptr me(new MessageEvent(m, 0));
+        MessageEvent::Ptr me(new MessageEvent(m, nullptr));
         me->setOriginLocal(originLocal);
 
         return me.staticCast<PsiEvent>();
@@ -661,7 +661,7 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
         else if(type == 8)
             subType = "unsubscribed";
 
-        AuthEvent::Ptr ae(new AuthEvent(j, subType, 0));
+        AuthEvent::Ptr ae(new AuthEvent(j, subType, nullptr));
         ae->setTimeStamp(QDateTime::fromString(strData.at(Time), Qt::ISODate));
         return ae.staticCast<PsiEvent>();
     }

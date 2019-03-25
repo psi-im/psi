@@ -51,7 +51,7 @@ XmlConsole::XmlConsole(PsiAccount *_pa)
     connect(pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateCaption()));
     updateCaption();
 
-    prompt = 0;
+    prompt = nullptr;
 
     ui_.te->setUndoRedoEnabled(false);
     ui_.te->setReadOnly(true);

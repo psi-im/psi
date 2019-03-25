@@ -35,7 +35,7 @@
 //----------------------------------------------------------------------------
 
 TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
-    : AdvancedWidget<QWidget>(0)
+    : AdvancedWidget<QWidget>(nullptr)
     , state_(ActivationState::Deactivated)
     , jid_(jid)
     , pa_(pa)

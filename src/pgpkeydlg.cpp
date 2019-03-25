@@ -77,7 +77,7 @@ public:
 
 PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent)
     : QDialog(parent)
-    , model_(0)
+    , model_(nullptr)
 {
     ui_.setupUi(this);
     setModal(true);
@@ -103,8 +103,8 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent)
 
     ui_.le_filter->installEventFilter(this);
 
-    KeyViewItem* firstItem = 0;
-    KeyViewItem* selectedItem = 0;
+    KeyViewItem* firstItem = nullptr;
+    KeyViewItem* selectedItem = nullptr;
     int row = 0;
 
     foreach(QCA::KeyStore *ks, PGPUtil::instance().keystores_) {

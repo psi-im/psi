@@ -75,7 +75,7 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
     // Proxy
     proxy_chooser_ = ProxyManager::instance()->createProxyChooser(ui_.gb_connection);
     replaceWidget(ui_.lb_proxychooser, proxy_chooser_);
-    proxy_chooser_->setCurrentItem(0);
+    proxy_chooser_->setCurrentItem(nullptr);
 
     // Fields pane
     QVBoxLayout *fields_layout = new QVBoxLayout(ui_.page_fields);

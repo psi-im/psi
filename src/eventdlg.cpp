@@ -331,10 +331,10 @@ void AttachView::contextMenuEvent(QContextMenuEvent* e)
     if(!i)
         return;
 
-    QAction* goToUrlAction = 0;
-    QAction* copyLocationAction = 0;
-    QAction* joinGroupChatAction = 0;
-    QAction* removeAction = 0;
+    QAction* goToUrlAction = nullptr;
+    QAction* copyLocationAction = nullptr;
+    QAction* joinGroupChatAction = nullptr;
+    QAction* removeAction = nullptr;
 
     QMenu pm(this);
     if(i->type == 0) {
@@ -557,16 +557,16 @@ public slots:
 };
 
 EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
-    : AdvancedWidget<QWidget>(0)
+    : AdvancedWidget<QWidget>(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private(this);
     d->composing = true;
     d->psi = psi;
-    d->pa = 0;
+    d->pa = nullptr;
     d->psi->dialogRegister(this);
 
-    d->anim = 0;
+    d->anim = nullptr;
     d->nextAmount = 0;
     d->urlOnShow = false;
 
@@ -617,7 +617,7 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 }
 
 EventDlg::EventDlg(const Jid &j, PsiAccount *pa, bool unique)
-    : AdvancedWidget<QWidget>(0)
+    : AdvancedWidget<QWidget>(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private(this);
@@ -632,7 +632,7 @@ EventDlg::EventDlg(const Jid &j, PsiAccount *pa, bool unique)
     else
         d->pa->dialogRegister(this);
 
-    d->anim = 0;
+    d->anim = nullptr;
     d->nextAmount = 0;
     d->urlOnShow = false;
 
@@ -681,13 +681,13 @@ void EventDlg::init()
     d->transid = -1;
 
     if(d->composing) {
-        d->lb_ident = 0;
+        d->lb_ident = nullptr;
         d->cb_ident = d->psi->accountsComboBox(this);
         connect(d->cb_ident, SIGNAL(activated(PsiAccount *)), SLOT(updateIdentity(PsiAccount *)));
         hb1->addWidget(d->cb_ident);
     }
     else {
-        d->cb_ident = 0;
+        d->cb_ident = nullptr;
         d->lb_ident = new AccountLabel(this);
         d->lb_ident->setAccount(d->pa);
         d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
@@ -767,12 +767,12 @@ void EventDlg::init()
         d->tb_pgp = new IconToolButton(this);
         d->tb_pgp->setCheckable(true);
         d->tb_pgp->setToolTip(tr("Toggle encryption"));
-        d->lb_pgp = 0;
+        d->lb_pgp = nullptr;
     }
     else {
         d->lb_pgp = new IconLabel(this);
         d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr("psi/cryptoNo"));
-        d->tb_pgp = 0;
+        d->tb_pgp = nullptr;
     }
 
     d->tb_url = new IconToolButton(this);
@@ -1372,7 +1372,7 @@ void EventDlg::optionsUpdate()
         QIcon i;
         i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
         i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
-        d->tb_pgp->setPsiIcon(0);
+        d->tb_pgp->setPsiIcon(nullptr);
         d->tb_pgp->setIcon(i);
     }
     if(d->lb_pgp)
@@ -1719,7 +1719,7 @@ void EventDlg::updateContact(const Jid &jid)
     if(d->jid.compare(jid, false)) {
         QString rname = d->jid.resource();
         QList<UserListItem*> ul = d->pa->findRelevant(d->jid);
-        UserListItem *u = 0;
+        UserListItem *u = nullptr;
         int status = -1;
         if(!ul.isEmpty()) {
             u = ul.first();
@@ -2042,8 +2042,8 @@ void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
     d->nextAmount = nextAmount;
 
     if(nextAmount == 0) {
-        d->setNextAnim(0);
-        d->pb_next->forceSetPsiIcon(0);
+        d->setNextAnim(nullptr);
+        d->pb_next->forceSetPsiIcon(nullptr);
         d->pb_next->setEnabled(false);
         d->pb_next->setText(tr("&Next"));
 

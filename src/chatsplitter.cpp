@@ -32,8 +32,8 @@
 ChatSplitter::ChatSplitter(QWidget* parent)
     : QWidget(parent)
     , splitterEnabled_(true)
-    , splitter_(0)
-    , layout_(0)
+    , splitter_(nullptr)
+    , layout_(nullptr)
 {
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
     optionsChanged();

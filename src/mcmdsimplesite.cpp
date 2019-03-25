@@ -33,8 +33,8 @@ MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i)
 }
 
 MCmdSimpleSite::MCmdSimpleSite()
-    : promptWidget(0)
-    , inputWidget(0)
+    : promptWidget(nullptr)
+    , inputWidget(nullptr)
     , open(false)
 {
 }

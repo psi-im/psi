@@ -7,7 +7,7 @@
 OptionsTabTree::OptionsTabTree(QObject *parent)
         : OptionsTab(parent, "tree", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced-plus")
 {
-    w = 0;
+    w = nullptr;
 }
 
 OptionsTabTree::~OptionsTabTree()
@@ -17,7 +17,7 @@ OptionsTabTree::~OptionsTabTree()
 QWidget *OptionsTabTree::widget()
 {
     if (w) {
-        return 0;
+        return nullptr;
     }
     w = new QWidget();
     //w->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);

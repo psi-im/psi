@@ -218,7 +218,7 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
     prefilterShowAway = false;
 
     char* squishStr = getenv("SQUISH_ENABLED");
-    squishEnabled = squishStr != 0;
+    squishEnabled = squishStr != nullptr;
 }
 
 MainWin::Private::~Private()
@@ -315,7 +315,7 @@ const QString rosterGeometryPath      = "options.ui.save.roster-width";
 const QString tabsGeometryPath        = "options.ui.save.log-width";
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
-:AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
+:AdvancedWidget<QMainWindow>(nullptr, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
 {
     setObjectName("MainWin");
     setAttribute(Qt::WA_AlwaysShowToolTips);
@@ -333,12 +333,12 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     d->lastStatus = -2;
 
     d->nextAmount = 0;
-    d->nextAnim = 0;
-    d->tray = 0;
-    d->trayMenu = 0;
+    d->nextAnim = nullptr;
+    d->tray = nullptr;
+    d->trayMenu = nullptr;
     d->statusTip = "";
     d->nickname = "";
-    d->defaultAccount = 0;
+    d->defaultAccount = nullptr;
 
     QWidget *rosterBar = new QWidget(this);
     bool allInOne = false;
@@ -350,7 +350,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
         setCentralWidget(d->splitter);
         allInOne = true;
 
-        d->mainTabs = d->psi->tabManager()->newTabs(0);
+        d->mainTabs = d->psi->tabManager()->newTabs(nullptr);
         d->psi->tabManager()->setPreferredTabsForKind('C', d->mainTabs);
         d->psi->tabManager()->setPreferredTabsForKind('M', d->mainTabs);
 
@@ -559,7 +559,7 @@ MainWin::~MainWin()
 {
     if(d->tray) {
         delete d->tray;
-        d->tray = 0;
+        d->tray = nullptr;
     }
 
     saveToolbarsState();
@@ -658,7 +658,7 @@ void MainWin::registerAction( IconAction* action )
         { "help_diag_qcaplugin",   activated, this, SLOT( actDiagQCAPluginActivated() ) },
         { "help_diag_qcakeystore", activated, this, SLOT( actDiagQCAKeyStoreActivated() ) },
 
-        { "", 0, 0, 0 }
+        { "", nullptr, nullptr, nullptr }
     };
 
     int i;
@@ -700,8 +700,8 @@ void MainWin::registerAction( IconAction* action )
         { "show_offline",   contactList, SIGNAL(showOfflineChanged(bool)), setChecked, contactList->showOffline()},
         { "show_self",      contactList, SIGNAL(showSelfChanged(bool)), setChecked, contactList->showSelf()},
         { "show_agents",    contactList, SIGNAL(showAgentsChanged(bool)), setChecked, contactList->showAgents()},
-        { "show_statusmsg", 0, 0, 0, false},
-        { "", 0, 0, 0, false }
+        { "show_statusmsg", nullptr, nullptr, nullptr, false},
+        { "", nullptr, nullptr, nullptr, false }
     };
 
     for ( i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++ ) {
@@ -734,7 +734,7 @@ void MainWin::reinitAutoHide()
         }
     } else {
         delete d->hideTimer;
-        d->hideTimer = 0;
+        d->hideTimer = nullptr;
     }
 }
 
@@ -784,13 +784,13 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
 void MainWin::setUseDock(bool use)
 {
-    if (use == (d->tray != 0)) {
+    if (use == (d->tray != nullptr)) {
         return;
     }
 
     if (d->tray) {
         delete d->tray;
-        d->tray = 0;
+        d->tray = nullptr;
     }
 
     Q_ASSERT(!d->tray);
@@ -885,7 +885,7 @@ void MainWin::buildToolbars()
         } else {
             if (d && d->viewToolBar) {
                 delete d->viewToolBar;
-                d->viewToolBar = 0;
+                d->viewToolBar = nullptr;
             }
             tb = new PsiToolBar(base, this, d->psi->actionList());
         }
@@ -1670,7 +1670,7 @@ void MainWin::trayHide()
 void MainWin::updateReadNext(PsiIcon* anim, int amount)
 {
     d->nextAnim = anim;
-    if(anim == 0) {
+    if(anim == nullptr) {
         d->nextAmount = 0;
     }
     else {

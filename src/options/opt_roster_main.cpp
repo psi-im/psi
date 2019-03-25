@@ -17,7 +17,7 @@ public:
 
 OptionsTabRosterMain::OptionsTabRosterMain(QObject *parent)
     : OptionsTab(parent, "roster_main", "", tr("Roster"), tr("Roster window options"), "psi/roster_icon")
-    , w(0)
+    , w(nullptr)
 {
 }
 
@@ -28,7 +28,7 @@ OptionsTabRosterMain::~OptionsTabRosterMain()
 QWidget *OptionsTabRosterMain::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptRosterMainUI();
     OptRosterMainUI *d = static_cast<OptRosterMainUI *>(w);

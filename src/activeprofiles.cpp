@@ -23,7 +23,7 @@
 #include "profiles.h"
 
 
-ActiveProfiles* ActiveProfiles::instance_ = 0;
+ActiveProfiles* ActiveProfiles::instance_ = nullptr;
 
 /**
  * \fn virtual ActiveProfiles::~ActiveProfiles();

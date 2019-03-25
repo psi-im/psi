@@ -181,7 +181,7 @@ QString PsiEvent::description() const
 
 PsiEvent *PsiEvent::copy() const
 {
-    return 0;
+    return nullptr;
 }
 
 #ifdef PSI_PLUGINS
@@ -687,7 +687,7 @@ private:
     EventIdGenerator();
 };
 
-EventIdGenerator* EventIdGenerator::instance_ = 0;
+EventIdGenerator* EventIdGenerator::instance_ = nullptr;
 
 EventIdGenerator* EventIdGenerator::instance()
 {
@@ -753,7 +753,7 @@ void AvCallEvent::setFrom(const XMPP::Jid &j)
 AvCall *AvCallEvent::takeAvCall()
 {
     AvCall *_sess = sess;
-    sess = 0;
+    sess = nullptr;
     return _sess;
 }
 
@@ -808,8 +808,8 @@ PsiEvent::Ptr EventItem::event() const
 //----------------------------------------------------------------------------
 
 EventQueue::EventQueue(PsiAccount *account)
-    : psi_(0)
-    , account_(0)
+    : psi_(nullptr)
+    , account_(nullptr)
     , enabled_(false)
 {
     account_ = account;
@@ -819,8 +819,8 @@ EventQueue::EventQueue(PsiAccount *account)
 EventQueue::EventQueue(const EventQueue &from)
     : QObject()
     , list_()
-    , psi_(0)
-    , account_(0)
+    , psi_(nullptr)
+    , account_(nullptr)
     , enabled_(false)
 {
     Q_ASSERT(false);
@@ -1160,14 +1160,14 @@ bool EventQueue::fromXml(const QDomElement *q)
         PsiEvent::Ptr event;
         QString eventType = e.attribute("type");
         if ( eventType == "MessageEvent" ) {
-            event = MessageEvent::Ptr(new MessageEvent(0));
+            event = MessageEvent::Ptr(new MessageEvent(nullptr));
             if ( !event->fromXml(psi_, account_, &e) ) {
                 //delete event;
                 event.clear();
             }
         }
         else if ( eventType == "AuthEvent" ) {
-            event = AuthEvent::Ptr(new AuthEvent("", "", 0));
+            event = AuthEvent::Ptr(new AuthEvent("", "", nullptr));
             if ( !event->fromXml(psi_, account_, &e) ) {
                 //delete event;
                 event.clear();

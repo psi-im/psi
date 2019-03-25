@@ -653,7 +653,7 @@ PrivacyList* PsiPrivacyManager::blockedList() const
     if(lists_.contains(blockedListName_))
         return lists_[blockedListName_];
 
-    return 0;
+    return nullptr;
 }
 
 QStringList PsiPrivacyManager::blockedContacts() const

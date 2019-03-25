@@ -99,7 +99,7 @@ void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
     d = new Private;
     d->pa = pa;
     d->pa->dialogRegister(this);
-    d->jt = 0;
+    d->jt = nullptr;
     d->tasks = new TaskList;
     connect(d->tasks, SIGNAL(started()),  busy, SLOT(start()));
     connect(d->tasks, SIGNAL(finished()), busy, SLOT(stop()));
@@ -195,7 +195,7 @@ void AddUserDlg::serviceActivated(int x)
 {
     if(d->jt) {
         delete d->jt;
-        d->jt = 0;
+        d->jt = nullptr;
         d->busy->stop();
     }
     gb_trans->setEnabled(false);
@@ -236,7 +236,7 @@ void AddUserDlg::getTransID()
 void AddUserDlg::jt_getFinished()
 {
     JT_Gateway *jt = d->jt;
-    d->jt = 0;
+    d->jt = nullptr;
 
     if(jt->success()) {
         gb_trans->setEnabled(true);
@@ -254,7 +254,7 @@ void AddUserDlg::jt_setFinished()
     pb_transGet->setEnabled(true);
 
     JT_Gateway *jt = d->jt;
-    d->jt = 0;
+    d->jt = nullptr;
 
     if(jt->success()) {
         QString jid = jt->translatedJid().full();
@@ -301,7 +301,7 @@ void AddUserDlg::getVCardActivated()
 {
     const VCard vcard = VCardFactory::instance()->vcard(jid());
 
-    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, 0, false);
+    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr, false);
     w->show();
 
     // automatically retrieve info if it doesn't exist

@@ -25,8 +25,8 @@ public:
 OptionsTabChat::OptionsTabChat(QObject *parent)
 : OptionsTab(parent, "chat", "", tr("Chat"), tr("Configure the chat dialog"), "psi/start-chat")
 {
-    w = 0;
-    bg_delChats = bg_defAct = 0;
+    w = nullptr;
+    bg_delChats = bg_defAct = nullptr;
 }
 
 OptionsTabChat::~OptionsTabChat()
@@ -40,7 +40,7 @@ OptionsTabChat::~OptionsTabChat()
 QWidget *OptionsTabChat::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptChatUI();
     OptChatUI *d = static_cast<OptChatUI *>(w);

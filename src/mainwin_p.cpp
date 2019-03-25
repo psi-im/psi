@@ -48,7 +48,7 @@ class PopupActionButton : public QPushButton
 {
     Q_OBJECT
 public:
-    PopupActionButton(QWidget *parent = 0, const char *name = 0);
+    PopupActionButton(QWidget *parent = nullptr, const char *name = nullptr);
     ~PopupActionButton();
 
     void setIcon(PsiIcon *, bool showText);
@@ -72,7 +72,7 @@ private:
 };
 
 PopupActionButton::PopupActionButton(QWidget *parent, const char *name)
-: QPushButton(parent), icon(0), showText(true)
+: QPushButton(parent), icon(nullptr), showText(true)
 {
     setObjectName(name);
 }
@@ -101,8 +101,8 @@ void PopupActionButton::setIcon(PsiIcon *i, bool st)
 {
     if ( icon ) {
         icon->stop();
-        disconnect (icon, 0, this, 0);
-        icon = 0;
+        disconnect (icon, nullptr, this, nullptr);
+        icon = nullptr;
     }
 
     icon = i;
@@ -231,7 +231,7 @@ public:
     Private (QObject *parent)
     : QObject (parent)
     {
-        icon = 0;
+        icon = nullptr;
         showText = true;
     }
 
@@ -263,10 +263,10 @@ void PopupAction::setAlert (const PsiIcon *icon)
 
 void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
 {
-    PsiIcon *oldIcon = 0;
+    PsiIcon *oldIcon = nullptr;
     if ( d->icon ) {
         oldIcon = d->icon;
-        d->icon = 0;
+        d->icon = nullptr;
     }
 
     d->showText = showText;
@@ -280,7 +280,7 @@ void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
         IconAction::setIcon(icon->icon());
     }
     else {
-        d->icon = 0;
+        d->icon = nullptr;
         IconAction::setIcon(QIcon());
     }
 
@@ -339,7 +339,7 @@ void PopupAction::setEnabled (bool e)
 
 IconAction *PopupAction::copy() const
 {
-    PopupAction *act = new PopupAction(text(), menu(), 0, objectName().toLatin1());
+    PopupAction *act = new PopupAction(text(), menu(), nullptr, objectName().toLatin1());
 
     *act = *this;
 
@@ -457,7 +457,7 @@ void MAction::numAccountsChanged()
 
 IconAction *MAction::copy() const
 {
-    MAction *act = new MAction(text(), id_, controller_, 0);
+    MAction *act = new MAction(text(), id_, controller_, nullptr);
 
     *act = *this;
 
@@ -473,7 +473,7 @@ MAction &MAction::operator=( const MAction &from )
 
 void MAction::doSetMenu(QMenu* menu)
 {
-    IconActionGroup::doSetMenu(findChildren<QAction*>().count() > 1 ? menu : 0);
+    IconActionGroup::doSetMenu(findChildren<QAction*>().count() > 1 ? menu : nullptr);
 }
 
 //----------------------------------------------------------------------------
@@ -507,7 +507,7 @@ bool SpacerAction::addTo(QWidget *w)
 
 IconAction *SpacerAction::copy() const
 {
-    return new SpacerAction( 0 );
+    return new SpacerAction( nullptr );
 }
 
 //----------------------------------------------------------------------------
@@ -535,7 +535,7 @@ bool SeparatorAction::addTo(QWidget *w)
 
 IconAction *SeparatorAction::copy() const
 {
-    return new SeparatorAction(0);
+    return new SeparatorAction(nullptr);
 }
 
 //----------------------------------------------------------------------------
@@ -658,7 +658,7 @@ void EventNotifierAction::updateVisibility()
 
 IconAction *EventNotifierAction::copy() const
 {
-    EventNotifierAction *act = new EventNotifierAction( 0 );
+    EventNotifierAction *act = new EventNotifierAction( nullptr );
 
     *act = *this;
 

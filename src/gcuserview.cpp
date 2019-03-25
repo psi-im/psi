@@ -424,7 +424,7 @@ QString GCUserModel::makeToolTip(const MUCContact &contact) const
 
 QMimeData* GCUserModel::mimeData(const QModelIndexList &indexes) const
 {
-    QMimeData* data = 0;
+    QMimeData* data = nullptr;
     if(!indexes.isEmpty()) {
         data = new QMimeData();
         data->setText(_selfJid.withResource(indexes.first().data().toString()).full());

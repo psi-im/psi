@@ -40,7 +40,7 @@ class PluginsOptionsDlg : public OptionsDlgBase
 {
     Q_OBJECT
 public:
-    PluginsOptionsDlg(const QString &pluginName, PsiCon *psi, QWidget *parent = 0) :
+    PluginsOptionsDlg(const QString &pluginName, PsiCon *psi, QWidget *parent = nullptr) :
         OptionsDlgBase(psi, parent)
     {
         setWindowTitle(QString("%1: %2").arg(pluginName).arg(windowTitle()));
@@ -82,7 +82,7 @@ void OptionsTabPlugins::setData(PsiCon *psi, QWidget *)
 QWidget *OptionsTabPlugins::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptPluginsUI();
     OptPluginsUI *d = static_cast<OptPluginsUI *>(w);

@@ -49,7 +49,7 @@
 // FIXME: Will no longer be needed once it is out of the groupchat contactview
 //----------------------------------------------------------------------------
 StatusShowDlg::StatusShowDlg(const UserListItem &u)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     // build the dialog
@@ -102,12 +102,12 @@ public:
 };
 
 StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private;
     d->psi = psi;
-    d->pa = 0;
+    d->pa = nullptr;
     d->psi->dialogRegister(this);
     d->s = s;
     d->withPriority = withPriority;
@@ -119,11 +119,11 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority)
 }
 
 StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s, bool withPriority)
-    : QDialog(0)
+    : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     d = new Private;
-    d->psi = 0;
+    d->psi = nullptr;
     d->pa = pa;
     d->pa->dialogRegister(this);
     d->s = s;

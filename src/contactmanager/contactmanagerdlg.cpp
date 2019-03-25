@@ -35,9 +35,9 @@
 
 
 ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
-    QDialog(0, Qt::Window),
+    QDialog(nullptr, Qt::Window),
     pa_(pa),
-    um(0)
+    um(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose, true);
     ui_.setupUi(this);

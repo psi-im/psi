@@ -972,7 +972,7 @@ QWidget *PsiCon::dialogFind(const char *className)
             return i->widget;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 QMenuBar* PsiCon::defaultMenuBar() const
@@ -1288,12 +1288,12 @@ void PsiCon::openUri(const QUrl &uri)
 
     // scheme
     if (uri.scheme() != "xmpp") {
-        QMessageBox::critical(0, tr("Unsupported URI type"), QString("URI (link) type \"%1\" is not supported.").arg(uri.scheme()));
+        QMessageBox::critical(nullptr, tr("Unsupported URI type"), QString("URI (link) type \"%1\" is not supported.").arg(uri.scheme()));
         return;
     }
 
     // authority
-    PsiAccount *pa = 0;
+    PsiAccount *pa = nullptr;
     //if (uri.authority().isEmpty()) {
         TabbableWidget* tw = findActiveTab();
         if (tw) {
@@ -1304,7 +1304,7 @@ void PsiCon::openUri(const QUrl &uri)
         }
 
         if (!pa) {
-            QMessageBox::critical(0, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
+            QMessageBox::critical(nullptr, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
             return;
         }
     //
@@ -1716,13 +1716,13 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
         e->account()->cpUpdate(*u);
         if(sess) {
             if(!sess->jid().isEmpty()) {
-                CallDlg *w = new CallDlg(e->account(), 0);
+                CallDlg *w = new CallDlg(e->account(), nullptr);
                 w->setAttribute(Qt::WA_DeleteOnClose);
                 w->setIncoming(sess);
                 bringToFront(w);
             }
             else {
-                QMessageBox::information(0, tr("Call ended"), tr("Other party canceled call."));
+                QMessageBox::information(nullptr, tr("Call ended"), tr("Other party canceled call."));
                 delete sess;
             }
         }
@@ -1880,7 +1880,7 @@ void PsiCon::s5b_init()
     int port = PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt();
     if (port) {
         if(!d->s5bServer->start(port)) {
-            QMessageBox::warning(0, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(port));
+            QMessageBox::warning(nullptr, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(port));
         }
     }
 }

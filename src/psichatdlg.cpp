@@ -55,7 +55,7 @@
 
 #define MCMDCHAT        "https://psi-im.org/ids/mcmd#chatmain"
 
-PsiIcon* PsiChatDlg::throbber_icon = 0;
+PsiIcon* PsiChatDlg::throbber_icon = nullptr;
 
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
     Q_OBJECT
@@ -74,25 +74,25 @@ public:
                 //qDebug() << "querying: " << dlg_->jid().full();
                 version->get(dlg_->jid());
                 version->go();
-                newstate = 0;
+                newstate = nullptr;
             } else if (cmd == "idle") {
                 LastActivityTask *idle = new LastActivityTask(dlg_->jid(), dlg_->account()->client()->rootTask());
                 connect(idle, SIGNAL(finished()), SLOT(lastactivity_finished()));
                 idle->go();
-                newstate = 0;
+                newstate = nullptr;
             } else if (cmd == "clear") {
                 dlg_->doClear();
-                newstate = 0;
+                newstate = nullptr;
             } else if (cmd == "vcard") {
                 dlg_->doInfo();
-                newstate = 0;
+                newstate = nullptr;
             } else if (cmd == "auth") {
                 if (command.count() == 2) {
                     if (command[1].toLower() == "request") {
                         dlg_->account()->actionAuthRequest(dlg_->jid());
                     }
                 }
-                newstate = 0;
+                newstate = nullptr;
             } else if (cmd == "compact") {
                 if (command.count() == 2) {
                     QString sub = command[1].toLower();
@@ -107,7 +107,7 @@ public:
                     dlg_->smallChat_ = !dlg_->smallChat_;
                 }
                 dlg_->setLooks();
-                newstate = 0;
+                newstate = nullptr;
             } else if (!cmd.isEmpty()) {
                 return false;
             }
@@ -274,7 +274,7 @@ void PsiChatDlg::initUi()
     ui_.log->realTextWidget()->installEventFilter(this);
     ui_.mini_prompt->hide();
 
-    if (throbber_icon == 0) {
+    if (throbber_icon == nullptr) {
         throbber_icon = (PsiIcon *)IconsetFactory::iconPtr("psi/throbber");
     }
 #ifdef PSI_PLUGINS
@@ -344,7 +344,7 @@ void PsiChatDlg::setLooks()
     QIcon i;
     i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
     i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
-    actions_->action("chat_pgp")->setPsiIcon(0);
+    actions_->action("chat_pgp")->setPsiIcon(nullptr);
     actions_->action("chat_pgp")->setIcon(i);
 }
 
@@ -449,7 +449,7 @@ void PsiChatDlg::initToolButtons()
 {
 // typeahead find
     QHBoxLayout *hb3a = new QHBoxLayout();
-    typeahead_ = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), 0);
+    typeahead_ = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), nullptr);
     hb3a->addWidget( typeahead_ );
     ui_.vboxLayout1->addLayout(hb3a);
 // -- typeahead

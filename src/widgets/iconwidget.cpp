@@ -130,7 +130,7 @@ class RealIconWidgetItem : public IconWidgetItem
 {
     Q_OBJECT
 public:
-    RealIconWidgetItem(QListWidget *parent = 0)
+    RealIconWidgetItem(QListWidget *parent = nullptr)
     : IconWidgetItem(parent) {}
 
     virtual void paint(QPainter *painter) const = 0;
@@ -395,11 +395,11 @@ const Iconset *IconsetSelect::iconset() const
     IconsetSelectItem *i = (IconsetSelectItem *)currentItem();
     if ( !i ) {
         QList<QListWidgetItem *> items = selectedItems();
-        i = !items.isEmpty() ? (IconsetSelectItem *)items.first() : 0;
+        i = !items.isEmpty() ? (IconsetSelectItem *)items.first() : nullptr;
     }
     if ( i )
         return i->iconset();
-    return 0;
+    return nullptr;
 }
 
 QListWidgetItem *IconsetSelect::lastItem() const
@@ -579,12 +579,12 @@ public:
     {
 #ifndef WIDGET_PLUGIN
         if ( icon ) {
-            disconnect(icon, 0, this, 0 );
+            disconnect(icon, nullptr, this, nullptr );
             if ( activate )
                 icon->stop();
 
             delete icon;
-            icon = 0;
+            icon = nullptr;
         }
 #endif
     }
@@ -751,12 +751,12 @@ public:
     {
 #ifndef WIDGET_PLUGIN
         if ( icon ) {
-            disconnect(icon, 0, this, 0 );
+            disconnect(icon, nullptr, this, nullptr );
             if ( activate )
                 icon->stop();
 
             delete icon;
-            icon = 0;
+            icon = nullptr;
         }
 #endif
     }

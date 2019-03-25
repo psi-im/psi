@@ -25,7 +25,7 @@ class HTMLTextMenu : public QMenu
 {
     Q_OBJECT
 public:
-    HTMLTextMenu(QWidget* parent = 0): QMenu(parent)
+    HTMLTextMenu(QWidget* parent = nullptr): QMenu(parent)
     {
         actBold = addAction(tr("Bold"));
         actBold->setCheckable(true);

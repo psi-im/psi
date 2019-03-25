@@ -204,7 +204,7 @@ ActiveProfiles::ActiveProfiles()
 ActiveProfiles::~ActiveProfiles()
 {
     delete d;
-    d = 0;
+    d = nullptr;
 }
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
@@ -223,7 +223,7 @@ bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
-    QLabel *lab=0;
+    QLabel *lab=nullptr;
     QDBusMessage msg = QDBusMessage::createMethodCall ( d->dbusName(profile), "/Main", PSIDBUSMAINIF, "raise" );
     if (withUI) {
         lab = new QLabel(tr("This psi profile is already running...<br>please wait..."));

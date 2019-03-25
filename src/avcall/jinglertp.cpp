@@ -146,7 +146,7 @@ public:
     QHostAddress extAddr;
     QHostAddress stunBindAddr, stunRelayUdpAddr, stunRelayTcpAddr;
 
-    Resolver(QObject *parent = 0) :
+    Resolver(QObject *parent = nullptr) :
         QObject(parent),
         dnsA(parent),
         dnsB(parent),
@@ -291,10 +291,10 @@ public:
     XMPP::UdpPortReserver *portReserver;
     QList<XMPP::Ice176*> left;
 
-    IceStopper(QObject *parent = 0) :
+    IceStopper(QObject *parent = nullptr) :
         QObject(parent),
         t(this),
-        portReserver(0)
+        portReserver(nullptr)
     {
         connect(&t, SIGNAL(timeout()), SLOT(t_timeout()));
         t.setSingleShot(true);
@@ -334,7 +334,7 @@ private slots:
     {
         XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
         ice->disconnect(this);
-        ice->setParent(0);
+        ice->setParent(nullptr);
         ice->deleteLater();
         left.removeAll(ice);
         if(left.isEmpty())
@@ -483,19 +483,19 @@ public:
     JingleRtpPrivate(JingleRtp *_q) :
         QObject(_q),
         q(_q),
-        manager(0),
+        manager(nullptr),
         localMaximumBitrate(-1),
         remoteMaximumBitrate(-1),
-        jt(0),
+        jt(nullptr),
         resolver(this),
-        iceA(0),
-        iceV(0),
+        iceA(nullptr),
+        iceV(nullptr),
         local_media_ready(false),
         prov_accepted(false),
         ice_connected(false),
         session_accepted(false),
         session_activated(false),
-        portReserver(0)
+        portReserver(nullptr)
     {
         connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
 
@@ -511,7 +511,7 @@ public:
         cleanup();
         manager->unlink(q);
 
-        handshakeTimer->setParent(0);
+        handshakeTimer->setParent(nullptr);
         handshakeTimer->disconnect(this);
         handshakeTimer->deleteLater();
 
@@ -612,8 +612,8 @@ public:
 
             init_iq_id = iq_id;
 
-            const JingleRtpContent *audioContent = 0;
-            const JingleRtpContent *videoContent = 0;
+            const JingleRtpContent *audioContent = nullptr;
+            const JingleRtpContent *videoContent = nullptr;
 
             // find content
             foreach(const JingleRtpContent &c, envelope.contentList)
@@ -659,8 +659,8 @@ public:
         {
             manager->push_task->respondSuccess(peer, iq_id);
 
-            const JingleRtpContent *audioContent = 0;
-            const JingleRtpContent *videoContent = 0;
+            const JingleRtpContent *audioContent = nullptr;
+            const JingleRtpContent *videoContent = nullptr;
 
             // find content
             foreach(const JingleRtpContent &c, envelope.contentList)
@@ -730,8 +730,8 @@ public:
         {
             manager->push_task->respondSuccess(peer, iq_id);
 
-            const JingleRtpContent *audioContent = 0;
-            const JingleRtpContent *videoContent = 0;
+            const JingleRtpContent *audioContent = nullptr;
+            const JingleRtpContent *videoContent = nullptr;
 
             // find content
             foreach(const JingleRtpContent &c, envelope.contentList)
@@ -790,56 +790,56 @@ private:
         handshakeTimer->stop();
 
         delete jt;
-        jt = 0;
+        jt = nullptr;
 
         if(portReserver)
         {
-            portReserver->setParent(0);
+            portReserver->setParent(nullptr);
 
             QList<XMPP::Ice176*> list;
 
             if(iceA)
             {
                 iceA->disconnect(this);
-                iceA->setParent(0);
+                iceA->setParent(nullptr);
                 list += iceA;
-                iceA = 0;
+                iceA = nullptr;
             }
 
             if(iceV)
             {
                 iceV->disconnect(this);
-                iceV->setParent(0);
+                iceV->setParent(nullptr);
                 list += iceV;
-                iceV = 0;
+                iceV = nullptr;
             }
 
             // pass ownership of portReserver, iceA, and iceV
             IceStopper *iceStopper = new IceStopper;
             iceStopper->start(portReserver, list);
 
-            portReserver = 0;
+            portReserver = nullptr;
         }
         else
         {
             if(iceA)
             {
                 iceA->disconnect(this);
-                iceA->setParent(0);
+                iceA->setParent(nullptr);
                 iceA->deleteLater();
-                iceA = 0;
+                iceA = nullptr;
             }
 
             if(iceV)
             {
                 iceV->disconnect(this);
-                iceV->setParent(0);
+                iceV->setParent(nullptr);
                 iceV->deleteLater();
-                iceV = 0;
+                iceV = nullptr;
             }
 
             delete portReserver;
-            portReserver = 0;
+            portReserver = nullptr;
         }
 
         // prevent delivery of events by manager
@@ -1255,24 +1255,24 @@ private:
             handshakeTimer->stop();
 
             if(portReserver)
-                portReserver->setParent(0);
+                portReserver->setParent(nullptr);
 
             if(iceA)
             {
                 iceA->disconnect(this);
-                iceA->setParent(0);
+                iceA->setParent(nullptr);
             }
             if(iceV)
             {
                 iceV->disconnect(this);
-                iceV->setParent(0);
+                iceV->setParent(nullptr);
             }
 
             rtpChannel->d->setIceObjects(portReserver, iceA, iceV);
 
-            portReserver = 0;
-            iceA = 0;
-            iceV = 0;
+            portReserver = nullptr;
+            iceA = nullptr;
+            iceV = nullptr;
 
             emit q->activated();
         }
@@ -1413,7 +1413,7 @@ private slots:
             return;
 
         JT_JingleRtp *task = jt;
-        jt = 0;
+        jt = nullptr;
 
         if(task->success())
             prov_accept();
@@ -1509,9 +1509,9 @@ JingleRtpChannel *JingleRtp::rtpChannel()
 JingleRtpChannelPrivate::JingleRtpChannelPrivate(JingleRtpChannel *_q) :
     QObject(_q),
     q(_q),
-    portReserver(0),
-    iceA(0),
-    iceV(0)
+    portReserver(nullptr),
+    iceA(nullptr),
+    iceV(nullptr)
 {
     rtpActivityTimer = new QTimer(this);
     connect(rtpActivityTimer, SIGNAL(timeout()), SLOT(rtpActivity_timeout()));
@@ -1523,12 +1523,12 @@ JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
     {
         QList<XMPP::Ice176*> list;
 
-        portReserver->setParent(0);
+        portReserver->setParent(nullptr);
 
         if(iceA)
         {
             iceA->disconnect(this);
-            iceA->setParent(0);
+            iceA->setParent(nullptr);
             //iceA->deleteLater();
             list += iceA;
         }
@@ -1536,7 +1536,7 @@ JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
         if(iceV)
         {
             iceV->disconnect(this);
-            iceV->setParent(0);
+            iceV->setParent(nullptr);
             //iceV->deleteLater();
             list += iceV;
         }
@@ -1546,7 +1546,7 @@ JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
         iceStopper->start(portReserver, list);
     }
 
-    rtpActivityTimer->setParent(0);
+    rtpActivityTimer->setParent(nullptr);
     rtpActivityTimer->disconnect(this);
     rtpActivityTimer->deleteLater();
 }
@@ -1814,7 +1814,7 @@ void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, c
 }
 
 JingleRtpManager::JingleRtpManager(XMPP::Client *client) :
-    QObject(0)
+    QObject(nullptr)
 {
     d = new JingleRtpManagerPrivate(client, this);
 }

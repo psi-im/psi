@@ -130,7 +130,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     d->pa = pa;
     d->busy = false;
     d->te_edited = false;
-    d->jt = 0;
+    d->jt = nullptr;
     d->pa->dialogRegister(this, j);
     d->cacheVCard = cacheVCard;
     d->dateTextFormat = "d MMM yyyy";
@@ -244,7 +244,7 @@ InfoWidget::~InfoWidget()
 {
     d->pa->dialogUnregister(this);
     delete d->userListItem;
-    d->userListItem = 0;
+    d->userListItem = nullptr;
     delete d;
 }
 
@@ -271,7 +271,7 @@ bool InfoWidget::aboutToClose() {
     // cancel active transaction (refresh only)
     if(d->busy && d->actionType == 0) {
         delete d->jt;
-        d->jt = 0;
+        d->jt = nullptr;
     }
 
     return true;
@@ -279,7 +279,7 @@ bool InfoWidget::aboutToClose() {
 
 void InfoWidget::jt_finished()
 {
-    d->jt = 0;
+    d->jt = nullptr;
     JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
 
     d->busy = false;

@@ -62,7 +62,7 @@ OptionsTabAppearanceTheme::OptionsTabAppearanceTheme(QObject *parent,
     : OptionsTab(parent, provider_->type(), "",
                  provider_->optionsName(),
                  provider_->optionsDescription())
-    , w(0)
+    , w(nullptr)
     , provider(provider_)
 {
 
@@ -75,7 +75,7 @@ OptionsTabAppearanceTheme::~OptionsTabAppearanceTheme()
 QWidget *OptionsTabAppearanceTheme::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptAppearanceThemeUI();
     OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);

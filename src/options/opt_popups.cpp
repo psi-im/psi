@@ -34,15 +34,15 @@ public:
 
 OptionsTabPopups::OptionsTabPopups(QObject *parent)
     : OptionsTab(parent, "popups", "", tr("Popups"), tr("The popups behaviour"), "psi/tip")
-    , w(0)
-    , popup_(0)
+    , w(nullptr)
+    , popup_(nullptr)
 {
 }
 
 QWidget *OptionsTabPopups::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptPopupsUI();
     return w;

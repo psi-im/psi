@@ -39,7 +39,7 @@ void OptionsTabGroupchat::setData(PsiCon *, QWidget *_dlg)
 QWidget *OptionsTabGroupchat::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new GeneralGroupchatUI();
     GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
@@ -92,8 +92,8 @@ void OptionsTabGroupchat::restoreOptions()
     GeneralGroupchatUI *d = static_cast<GeneralGroupchatUI *>(w);
 
     // no need to call dataChanged() when these widgets are modified
-    disconnect(d->le_newNickColor,     SIGNAL(textChanged(const QString &)), 0, 0);
-    disconnect(d->le_newHighlightWord, SIGNAL(textChanged(const QString &)), 0, 0);
+    disconnect(d->le_newNickColor,     SIGNAL(textChanged(const QString &)), nullptr, nullptr);
+    disconnect(d->le_newHighlightWord, SIGNAL(textChanged(const QString &)), nullptr, nullptr);
     connect(d->le_newNickColor,       SIGNAL(textChanged(const QString &)), SLOT(displayGCNickColor()));
 
     d->ck_gcHighlights->setChecked( true );

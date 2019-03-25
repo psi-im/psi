@@ -23,7 +23,7 @@
 #include "psioptions.h"
 
 ColorOpt::ColorOpt()
-    : QObject(0)
+    : QObject(nullptr)
 {
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
     connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
@@ -99,7 +99,7 @@ ColorOpt* ColorOpt::instance()
 
 void ColorOpt::reset()
 {
-    instance_.reset(0);
+    instance_.reset(nullptr);
 }
 
 QScopedPointer<ColorOpt> ColorOpt::instance_;

@@ -18,7 +18,7 @@ public:
 
 OptionsTabRosterMuc::OptionsTabRosterMuc(QObject *parent)
     : OptionsTab(parent, "roster_muc", "", tr("Groupchat"), tr("Groupchat roster options"), "psi/groupChat")
-    , w(0)
+    , w(nullptr)
 {
 }
 
@@ -45,7 +45,7 @@ void OptionsTabRosterMuc::changeEvent(QEvent *e)
 QWidget *OptionsTabRosterMuc::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptRosterMucUI();
     OptRosterMucUI *d = static_cast<OptRosterMucUI *>(w);

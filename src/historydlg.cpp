@@ -101,7 +101,7 @@ static QStringList wrapString(const QString &str, int wid)
 
 
 SearchProxy::SearchProxy(PsiCon *p, DisplayProxy *d)
-    : QObject(0)
+    : QObject(nullptr)
     , active(false)
 {
     psi = p;
@@ -296,7 +296,7 @@ void SearchProxy::handlePadding(const EDBResult &r)
 
 
 DisplayProxy::DisplayProxy(PsiCon *p, PsiTextView *v)
-    : QObject(0)
+    : QObject(nullptr)
 {
     psi = p;
     viewWid = v;
@@ -635,7 +635,7 @@ public:
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
-    : AdvancedWidget<QDialog>(0, Qt::Window)
+    : AdvancedWidget<QDialog>(nullptr, Qt::Window)
     , lastFocus(nullptr)
 {
     ui_.setupUi(this);
@@ -1284,7 +1284,7 @@ void HistoryDlg::updateSearchHint()
 
 UserListItem* HistoryDlg::currentUserListItem() const
 {
-    UserListItem* u = 0;
+    UserListItem* u = nullptr;
     if (d->pa && !d->jid.isEmpty())
         u = d->pa->findFirstRelevant(d->jid);
     return u;

@@ -52,7 +52,7 @@ OptionsTabApplication::~OptionsTabApplication()
 QWidget *OptionsTabApplication::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptApplicationUI();
     OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
@@ -136,7 +136,7 @@ void OptionsTabApplication::applyOptions()
     }
     if(curLang != itemData && !itemData.isEmpty()) {
         TranslationManager::instance()->loadTranslation(itemData);
-        QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
+        QMessageBox::information(nullptr, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
     }
     QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
     s.setValue("last_lang", itemData);

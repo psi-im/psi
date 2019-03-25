@@ -32,7 +32,7 @@
 // void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 // void VariantTree::elementToVariant(const QVariant& var, QDomElement& e)
 
-QDomDocument *VariantTree::unknownsDoc=0;
+QDomDocument *VariantTree::unknownsDoc=nullptr;
 
 /**
  * Default Constructor

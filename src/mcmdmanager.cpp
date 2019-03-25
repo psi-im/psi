@@ -40,7 +40,7 @@ MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags)
 MCmdSimpleState::~MCmdSimpleState() {
 }
 
-MCmdManager::MCmdManager(MCmdUiSiteIface* site_) : state_(0), uiSite_(site_) {
+MCmdManager::MCmdManager(MCmdUiSiteIface* site_) : state_(nullptr), uiSite_(site_) {
 };
 
 MCmdManager::~MCmdManager() {
@@ -129,7 +129,7 @@ QString MCmdManager::serializeCommand(const QStringList &list)
 
 
 bool MCmdManager::processCommand(QString command) {
-    MCmdStateIface *tmpstate=0;
+    MCmdStateIface *tmpstate=nullptr;
     QStringList preset;
     QStringList items;
     if (state_->getFlags() & MCMDSTATE_UNPARSED) {
@@ -143,7 +143,7 @@ bool MCmdManager::processCommand(QString command) {
     foreach(MCmdProviderIface *prov, providers_) {
         if (prov->mCmdTryStateTransit(state_, items, tmpstate, preset)) {
             state_ = tmpstate;
-            if (state_ != 0) {
+            if (state_ != nullptr) {
                 QString prompt = state_->getPrompt();
                 QString def;
                 if (state_->getFlags() & MCMDSTATE_UNPARSED) {
@@ -163,8 +163,8 @@ bool MCmdManager::processCommand(QString command) {
 
     tmpstate = state_;
     bool ret = state_->unhandled(items);
-    state_ = 0;
-    if (state_ == 0) {
+    state_ = nullptr;
+    if (state_ == nullptr) {
         tmpstate->dispose();
         uiSite_->mCmdClose();
     }
@@ -173,7 +173,7 @@ bool MCmdManager::processCommand(QString command) {
 
 
 bool MCmdManager::open(MCmdStateIface *state, QStringList preset) {
-    if (0 != state_) state_->dispose();
+    if (nullptr != state_) state_->dispose();
 
     state_ = state;
     QString prompt = state->getPrompt();
@@ -229,7 +229,7 @@ QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, 
 }
 
 bool MCmdManager::isActive() {
-    return state_ != 0;
+    return state_ != nullptr;
 }
 
 

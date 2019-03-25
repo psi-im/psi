@@ -55,7 +55,7 @@ class AccountRemoveDlg : public QDialog, public Ui::AccountRemove
 {
     Q_OBJECT
 public:
-    AccountRemoveDlg(const UserAccount &, QWidget *parent=0);
+    AccountRemoveDlg(const UserAccount &, QWidget *parent=nullptr);
     ~AccountRemoveDlg();
 
 protected:
@@ -321,7 +321,7 @@ void AccountManageTree::dragMoveEvent(QDragMoveEvent *event)
 
 
 AccountManageDlg::AccountManageDlg(PsiCon *_psi)
-:QDialog(0)
+:QDialog(nullptr)
 {
     setupUi(this);
     setModal(false);
@@ -377,7 +377,7 @@ void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetIte
 
 void AccountManageDlg::add()
 {
-    AccountAddDlg *w = new AccountAddDlg(psi, 0);
+    AccountAddDlg *w = new AccountAddDlg(psi, nullptr);
     w->show();
 }
 
@@ -402,7 +402,7 @@ void AccountManageDlg::remove()
         return;
 
     if(i->pa->eventQueue()->count()) {
-        QMessageBox::information(0, tr("Error"), qApp->translate("PsiAccount", "Unable to disable the account, as it has pending events."));
+        QMessageBox::information(nullptr, tr("Error"), qApp->translate("PsiAccount", "Unable to disable the account, as it has pending events."));
         return;
     }
 
@@ -442,7 +442,7 @@ void AccountManageDlg::accountRemoved(PsiAccount *pa)
         AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->topLevelItem(index));
         if(i->pa == pa) {
             delete i;
-            qlv_selectionChanged(lv_accs->currentItem(), 0);
+            qlv_selectionChanged(lv_accs->currentItem(), nullptr);
             break;
         }
     }

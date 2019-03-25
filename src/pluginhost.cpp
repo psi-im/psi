@@ -537,7 +537,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
         }
 
         // choose handler function depending on iq type
-        bool (IqNamespaceFilter::*handler)(int account, const QDomElement& xml) = 0;
+        bool (IqNamespaceFilter::*handler)(int account, const QDomElement& xml) = nullptr;
         const QString type = e.attribute("type");
         if (type == "get") {
             handler = &IqNamespaceFilter::iqGet;
@@ -944,7 +944,7 @@ void PluginHost::addIcon(const QString& name, const QByteArray& ba)
 
 QTextEdit* PluginHost::getEditBox()
 {
-    QTextEdit* ed = 0;
+    QTextEdit* ed = nullptr;
     TabbableWidget* tw = findActiveTab();
     if(tw) {
         QWidget* chatEditProxy = tw->findChild<QWidget*>("mle");

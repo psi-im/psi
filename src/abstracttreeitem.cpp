@@ -102,7 +102,7 @@ AbstractTreeItem *AbstractTreeItem::child(int row) const
     if (row < childCount())
         return _children.at(row);
     else
-        return 0;
+        return nullptr;
 }
 
 int AbstractTreeItem::childCount() const

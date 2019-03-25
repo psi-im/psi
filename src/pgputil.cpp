@@ -8,7 +8,7 @@
 #include "passphrasedlg.h"
 #include "showtextdlg.h"
 
-PGPUtil* PGPUtil::instance_ = 0;
+PGPUtil* PGPUtil::instance_ = nullptr;
 
 PGPUtil::PGPUtil() : qcaEventHandler_(nullptr), passphraseDlg_(nullptr), cache_no_pgp_(false)
 {
@@ -301,11 +301,11 @@ void PGPUtil::showDiagnosticText(const QString& event, const QString& diagnostic
         QMessageBox msgbox(QMessageBox::Critical,
                            tr("Error"),
                            event,
-                           QMessageBox::Ok, 0);
+                           QMessageBox::Ok, nullptr);
         QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
         msgbox.exec();
         if (msgbox.clickedButton() == diag) {
-            ShowTextDlg* w = new ShowTextDlg(diagnostic, true, false, 0);
+            ShowTextDlg* w = new ShowTextDlg(diagnostic, true, false, nullptr);
             w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
             w->resize(560, 240);
             w->exec();

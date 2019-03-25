@@ -44,7 +44,7 @@ static MediaConfiguration getDefaultConfiguration()
     return config;
 }
 
-static MediaConfiguration *g_config = 0;
+static MediaConfiguration *g_config = nullptr;
 
 static void ensureConfig()
 {
@@ -165,7 +165,7 @@ public:
     PsiMedia::RtpChannel *audio, *video;
     JingleRtpChannel *transport;
 
-    AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport, QObject *parent = 0) :
+    AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport, QObject *parent = nullptr) :
         QObject(parent),
         audio(_audio),
         video(_video),
@@ -191,10 +191,10 @@ public:
     ~AvTransmit()
     {
         if(audio)
-            audio->setParent(0);
+            audio->setParent(nullptr);
         if(video)
-            video->setParent(0);
-        transport->setParent(0);
+            video->setParent(nullptr);
+        transport->setParent(nullptr);
     }
 
 private slots:
@@ -284,7 +284,7 @@ public:
     {
         Q_ASSERT(avTransmit);
         avTransmit->moveToThread(previousThread);
-        avTransmit = 0;
+        avTransmit = nullptr;
     }
 };
 
@@ -295,9 +295,9 @@ class AvTransmitThread : public QCA::SyncThread
 public:
     AvTransmitHandler *handler;
 
-    AvTransmitThread(QObject *parent = 0) :
+    AvTransmitThread(QObject *parent = nullptr) :
         QCA::SyncThread(parent),
-        handler(0)
+        handler(nullptr)
     {
     }
 
@@ -365,13 +365,13 @@ public:
     AvCallPrivate(AvCall *_q) :
         QObject(_q),
         q(_q),
-        manager(0),
-        sess(0),
+        manager(nullptr),
+        sess(nullptr),
         transmitAudio(false),
         transmitVideo(false),
         transmitting(false),
-        avTransmit(0),
-        avTransmitThread(0)
+        avTransmit(nullptr),
+        avTransmitThread(nullptr)
     {
         allowVideo = AvCallManager::isVideoSupported();
 
@@ -395,7 +395,7 @@ public:
             // note that the object remains active, just
             //   dissociated from the manager
             manager->unlink(q);
-            manager = 0;
+            manager = nullptr;
         }
     }
 
@@ -489,15 +489,15 @@ private:
     {
         // if we had a thread, this will move the object back
         delete avTransmitThread;
-        avTransmitThread = 0;
+        avTransmitThread = nullptr;
 
         delete avTransmit;
-        avTransmit = 0;
+        avTransmit = nullptr;
 
         rtp.reset();
 
         delete sess;
-        sess = 0;
+        sess = nullptr;
     }
 
     void start_rtp()
@@ -710,8 +710,8 @@ private slots:
 
     void sess_activated()
     {
-        PsiMedia::RtpChannel *audio = 0;
-        PsiMedia::RtpChannel *video = 0;
+        PsiMedia::RtpChannel *audio = nullptr;
+        PsiMedia::RtpChannel *video = nullptr;
 
         if(transmitAudio)
             audio = rtp.audioRtpChannel();
@@ -747,7 +747,7 @@ AvCall::AvCall()
 }
 
 AvCall::AvCall(const AvCall &from) :
-    QObject(0)
+    QObject(nullptr)
 {
     Q_UNUSED(from);
     fprintf(stderr, "AvCall copy not supported\n");
@@ -840,7 +840,7 @@ void AvCallManagerPrivate::rtp_incomingReady()
     {
         call->d->sess->reject();
         delete call->d->sess;
-        call->d->sess = 0;
+        call->d->sess = nullptr;
         delete call;
         return;
     }
@@ -850,7 +850,7 @@ void AvCallManagerPrivate::rtp_incomingReady()
 }
 
 AvCallManager::AvCallManager(PsiAccount *pa) :
-    QObject(0)
+    QObject(nullptr)
 {
     d = new AvCallManagerPrivate(pa, this);
 }

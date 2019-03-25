@@ -24,7 +24,7 @@
 #include <QGraphicsScene>
 
 WbNewPath::WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor) : WbNewItem(s) {
-    controlPoint_ = 0;
+    controlPoint_ = nullptr;
 
     graphicsitem_.setZValue(std::numeric_limits<double>::max());
 
@@ -52,7 +52,7 @@ void WbNewPath::parseCursorMove(QPointF newPos) {
         graphicsitem_.setPath(painterpath);
 
         delete controlPoint_;
-        controlPoint_ = 0;
+        controlPoint_ = nullptr;
     }
     else {
         controlPoint_ = new QPointF(newPos);
@@ -66,7 +66,7 @@ QDomNode WbNewPath::serializeToSvg(QDomDocument *doc) {
         graphicsitem_.setPath(painterpath);
 
         delete controlPoint_;
-        controlPoint_ = 0;
+        controlPoint_ = nullptr;
     }
 
     // trim the generated SVG to remove unnecessary nested <g/>'s

@@ -131,7 +131,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
         jsUtil.reset(new ChatViewThemeJSUtil(this));
     }
     if (wv.isNull()) {
-        wv = new WebView(0);
+        wv = new WebView(nullptr);
     }
 
     QString themeType = id.section('/', 0, 0);

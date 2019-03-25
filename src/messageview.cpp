@@ -28,7 +28,7 @@ static const QString me_cmd = "/me ";
 
 MessageView::MessageView(Type t) :
     _type(t),
-    _flags(0),
+    _flags(nullptr),
     _status(0),
     _statusPriority(0),
     _dateTime(QDateTime::currentDateTime()),

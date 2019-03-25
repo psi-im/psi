@@ -36,7 +36,7 @@ static const int nickConflictCode = 409;
 static const QString additionalSymbol = "_";
 
 MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
-    : QDialog(0)
+    : QDialog(nullptr)
     , nickAlreadyCompleted_(false)
 {
     setAttribute(Qt::WA_DeleteOnClose);
@@ -47,7 +47,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
     setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
 #endif
     controller_ = psi;
-    account_ = 0;
+    account_ = nullptr;
     controller_->dialogRegister(this);
     ui_.ck_history->setChecked(true);
     ui_.ck_history->hide();
@@ -123,7 +123,7 @@ void MUCJoinDlg::updateIdentityVisibility()
 
 void MUCJoinDlg::updateFavorites()
 {
-    QListWidgetItem *recentLwi = 0, *lwi;
+    QListWidgetItem *recentLwi = nullptr, *lwi;
 
     ui_.lwFavorites->clear();
 

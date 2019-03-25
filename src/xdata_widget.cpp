@@ -135,7 +135,7 @@ private:
 class XDataField
 {
 public:
-    XDataField(XData::Field f, XDataWidget *w = 0)
+    XDataField(XData::Field f, XDataWidget *w = nullptr)
     {
         _field = f;
         _xdWidget = w;
@@ -284,7 +284,7 @@ public:
         int row = grid->rowCount();
         XData::Field::MediaElement me = f.mediaElement();
         if (!me.isEmpty()) {
-            XDataField *fromField = 0;
+            XDataField *fromField = nullptr;
             Jid j = xdw->owner();
             if (xdw->registrarType() == "urn:xmpp:captcha"
                 && (fromField = xdw->fieldByVar("from"))) {
@@ -628,7 +628,7 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
     fields_.clear();
 
     QLayoutItem *child;
-    while ((child = layout_->takeAt(0)) != 0) {
+    while ((child = layout_->takeAt(0)) != nullptr) {
         delete child->widget();
         delete child;
     }
@@ -763,7 +763,7 @@ XDataField* XDataWidget::fieldByVar(const QString &var) const
             return field;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 void XDataWidget::linkActivated(const QString& link)

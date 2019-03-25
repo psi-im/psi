@@ -167,7 +167,7 @@ PsiAccount *PsiContactList::defaultAccount() const
     if (!enabledAccounts_.isEmpty()) {
         return enabledAccounts_.first();
     }
-    return 0;
+    return nullptr;
 }
 
 /**
@@ -263,7 +263,7 @@ int PsiContactList::queueContactCount() const
  */
 PsiAccount* PsiContactList::queueLowestEventId()
 {
-    PsiAccount *low = 0;
+    PsiAccount *low = nullptr;
 
     // first try to get event from non-dnd account
     low = tryQueueLowestEventId(false);
@@ -458,7 +458,7 @@ void PsiContactList::setContactSortStyle(QString style)
 
 PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
 {
-    PsiAccount *low = 0;
+    PsiAccount *low = nullptr;
     int low_id = 0;
     int low_prior = EventPriorityDontCare;
 
@@ -496,7 +496,7 @@ PsiAccount* PsiContactList::getAccount(const QString& id) const
         if (account->id() == id)
             return account;
 
-    return 0;
+    return nullptr;
 }
 
 PsiAccount* PsiContactList::getAccountByJid(const XMPP::Jid& jid) const
@@ -505,7 +505,7 @@ PsiAccount* PsiContactList::getAccountByJid(const XMPP::Jid& jid) const
         if (account->jid().compare(jid, false))
             return account;
 
-    return 0;
+    return nullptr;
 }
 
 const QList<PsiContact*>& PsiContactList::contacts() const

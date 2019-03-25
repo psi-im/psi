@@ -11,7 +11,7 @@
 TabManager::TabManager(PsiCon* psiCon, QObject *parent)
     : QObject(parent)
     , psiCon_(psiCon)
-    , tabDlgDelegate_(0)
+    , tabDlgDelegate_(nullptr)
     , userManagement_(true)
     , tabSingles_(true)
     , simplifiedCaption_(false)
@@ -144,7 +144,7 @@ TabDlg* TabManager::getManagingTabs(const TabbableWidget* chat) const
             return tabDlg;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 const QList<TabDlg*>& TabManager::tabSets()

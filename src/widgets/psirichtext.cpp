@@ -86,7 +86,7 @@ class TextIconHandler : public QObject, public QTextObjectInterface
     Q_OBJECT
     Q_INTERFACES(QTextObjectInterface)
 public:
-    TextIconHandler(QObject *parent = 0);
+    TextIconHandler(QObject *parent = nullptr);
 
     virtual QSizeF intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format);
     virtual void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format);
@@ -150,7 +150,7 @@ void PsiRichText::install(QTextDocument *doc)
 {
     Q_ASSERT(doc);
 #ifndef WIDGET_PLUGIN
-    static TextIconHandler *handler = 0;
+    static TextIconHandler *handler = nullptr;
     if (!handler) {
         handler = new TextIconHandler(qApp);
     }

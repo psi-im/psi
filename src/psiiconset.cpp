@@ -352,7 +352,7 @@ PsiIconset::~PsiIconset()
 void PsiIconset::reset()
 {
     delete instance_;
-    instance_ = 0;
+    instance_ = nullptr;
     IconsetFactory::reset();
 }
 
@@ -858,7 +858,7 @@ PsiIcon PsiIconset::status(const XMPP::Status &s)
 
 PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
 {
-    PsiIcon *icon = 0;
+    PsiIcon *icon = nullptr;
 
     QVariantList serviceicons = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
     if (serviceicons.contains(name)) {
@@ -926,7 +926,7 @@ PsiIcon PsiIconset::status(const XMPP::Jid &jid, const XMPP::Status &s)
 PsiIcon *PsiIconset::statusPtr(UserListItem *u)
 {
     if ( !u )
-        return 0;
+        return nullptr;
 
     int s = 0;
     if ( !u->presenceError().isEmpty() )

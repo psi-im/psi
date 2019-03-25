@@ -214,4 +214,4 @@ const QList<ActivityCatalog::Entry>& ActivityCatalog::entries() const
     return entries_;
 }
 
-ActivityCatalog* ActivityCatalog::instance_ = 0;
+ActivityCatalog* ActivityCatalog::instance_ = nullptr;

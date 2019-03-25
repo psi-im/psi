@@ -44,7 +44,7 @@ OptionsTabSound::~OptionsTabSound()
 QWidget *OptionsTabSound::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptSoundUI();
     OptSoundUI *d = static_cast<OptSoundUI *>(w);

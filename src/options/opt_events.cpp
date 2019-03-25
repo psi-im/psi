@@ -24,14 +24,14 @@ public:
 
 OptionsTabEvents::OptionsTabEvents(QObject *parent)
     : OptionsTab(parent, "events", "", tr("Events"), tr("The events behaviour"), "psi/events")
-    , w(0)
+    , w(nullptr)
 {
 }
 
 QWidget *OptionsTabEvents::widget()
 {
     if ( w )
-        return 0;
+        return nullptr;
 
     w = new OptEventsUI();
     OptEventsUI *d = static_cast<OptEventsUI *>(w);

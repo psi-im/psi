@@ -96,7 +96,7 @@ PsiMain::PsiMain(const QHash<QString, QString>& commandline, QObject *par)
     : QObject(par)
     , cmdline(commandline)
 {
-    pcon = 0;
+    pcon = nullptr;
 
     // migrate old (pre 0.11) registry settings...
     QSettings sUser(QSettings::UserScope, "psi-im.org", "Psi");
@@ -205,7 +205,7 @@ void PsiMain::useLocalInstance()
     else {
         // Create & open the default profile
         if (!profileExists("default") && !profileNew("default")) {
-            QMessageBox::critical(0, tr("Error"),
+            QMessageBox::critical(nullptr, tr("Error"),
                 tr("There was an error creating the default profile."));
             QTimer::singleShot(0, this, SLOT(bail()));
         } else {
@@ -221,7 +221,7 @@ void PsiMain::chooseProfile()
 {
     if(pcon) {
         delete pcon;
-        pcon = 0;
+        pcon = nullptr;
     }
 
     QString str = "";
@@ -288,7 +288,7 @@ void PsiMain::sessionStart()
 {
     if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
         if (!ActiveProfiles::instance()->raise(activeProfile, true)) {
-            QMessageBox::critical(0, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
+            QMessageBox::critical(nullptr, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
         }
         quit();
         return;
@@ -300,7 +300,7 @@ void PsiMain::sessionStart()
     pcon = new PsiCon();
     if (!pcon->init()) {
         delete pcon;
-        pcon = 0;
+        pcon = nullptr;
         quit();
         return;
     }
@@ -332,7 +332,7 @@ void PsiMain::bail()
     if(pcon) {
         pcon->gracefulDeinit([this](){
             pcon->deleteLater();
-            pcon = 0;
+            pcon = nullptr;
             quit();
         });
     }
@@ -503,7 +503,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
         return restart_process(argc, argv, cmdline["uri"]);
 #else
         // otherwise, it should enough to modify argc/argv
-        argv[argc] = 0;
+        argv[argc] = nullptr;
 #endif
     }
 
