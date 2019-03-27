@@ -1,9 +1,6 @@
-unset(MOC_SOURCES)
 unset(HEADERS)
-unset(PLAIN_HEADERS)
 unset(FORMS)
 unset(SOURCES)
-unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 unset(EXTRA_LDFLAGS)
 
@@ -14,9 +11,7 @@ list(APPEND SOURCES
 
     # advwidget
     advwidget/advwidget.cpp
-)
 
-list(APPEND PLAIN_SOURCES
     # optionstree
     optionstree/optionstree.cpp
     optionstree/optionstreemodel.cpp
@@ -51,9 +46,7 @@ list(APPEND HEADERS
     # psifile
     tunecontroller/tunecontrollermanager.h
     tunecontroller/plugins/psifile/psifileplugin.h
-)
 
-list(APPEND PLAIN_HEADERS
     # iconset
     iconset/anim.h
 
@@ -68,21 +61,21 @@ list(APPEND PLAIN_HEADERS
 )
 
 if(USE_CRASH)
-    list(APPEND PLAIN_HEADERS
+    list(APPEND HEADERS
         crash/crash.h
     )
 
     if(LINUX)
-        list(APPEND PLAIN_SOURCES
+        list(APPEND SOURCES
             crash/crash_sigsegv.cpp
             crash/crash.cpp
         )
-        list(APPEND PLAIN_HEADERS
+        list(APPEND HEADERS
             crash/crash_sigsegv.h
         )
     endif()
     if(WIN32)
-        list(APPEND PLAIN_SOURCES
+        list(APPEND SOURCES
             crash/crash_dummy.cpp
         )
     endif()
@@ -116,9 +109,7 @@ elseif(WIN32)
     add_definitions(-DTC_WINAMP -DTC_AIMP)
     list(APPEND SOURCES
         tunecontroller/plugins/aimp/aimpplugin.cpp
-    )
 
-    list(APPEND PLAIN_SOURCES
         tunecontroller/aimptunecontroller.cpp
         tunecontroller/winamptunecontroller.cpp
         tunecontroller/plugins/winamp/winampplugin.cpp
@@ -134,9 +125,7 @@ elseif(LINUX)
     add_definitions(-DTC_MPRIS)
     list(APPEND SOURCES
         tunecontroller/plugins/mpris/mprisplugin.cpp
-    )
 
-    list(APPEND PLAIN_SOURCES
         tunecontroller/mpristunecontroller.cpp
         tunecontroller/plugins/mpris/mprisplugin.cpp
     )
@@ -146,8 +135,7 @@ elseif(LINUX)
     )
 endif()
 
-qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
-add_library(tools STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${PLAIN_SOURCES} ${PLAIN_HEADERS})
+add_library(tools STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(tools ${QT_LIBRARIES} ${iris_LIB} zip ${EXTRA_LDFLAGS})
 target_include_directories(tools PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}

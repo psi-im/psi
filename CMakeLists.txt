@@ -63,6 +63,8 @@ option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
 #Apple only
 if(APPLE)
     option( USE_SPARKLE "Use Sparkle for APPLE builds" ON )
+    option( USE_GROWL "Use growl for macOS builds" OFF )
+    option( USE_MAC_DOC "Use macOS dock" OFF )
 endif()
 
 if( USE_HUNSPELL AND USE_ENCHANT )
@@ -98,7 +100,7 @@ if(ENABLE_WEBKIT)
     message(STATUS "Webkit - enabled")
 endif()
 
-message(STATUS "SQL history - enabled since 1.4.444 version")
+message(STATUS "SQL history - built-in since 1.4.444 version")
 
 if(USE_WEBENGINE AND USE_WEBKIT)
     message(FATAL_ERROR "Both flags USE_WEBENGINE and USE_WEBKIT cannot be enabled at the same time. Please disable one of them")

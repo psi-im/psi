@@ -1,9 +1,6 @@
-unset(MOC_SOURCES)
 unset(HEADERS)
-unset(PLAIN_HEADERS)
 unset(FORMS)
 unset(SOURCES)
-unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 unset(EXTRA_LDFLAGS)
 
@@ -19,9 +16,7 @@ set(SOURCES
     psitooltip.cpp
     tabbar.cpp
     urlobject.cpp
-)
 
-set(PLAIN_SOURCES
     actionlineedit.cpp
     pixmapratiolabel.cpp
     psitabbar.cpp
@@ -55,9 +50,7 @@ set(HEADERS
     updatingcombobox.h
     urllabel.h
     urlobject.h
-)
 
-set(PLAIN_HEADERS
     psirichtext.h
     psitooltip.h
     stretchwidget.h
@@ -68,7 +61,7 @@ set(FORMS
 )
 
 if(IS_PSIPLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
-    list(APPEND PLAIN_SOURCES
+    list(APPEND SOURCES
         psiwindowheader.cpp
     )
     list(APPEND HEADERS
@@ -80,7 +73,6 @@ if(IS_PSIPLUS AND (EXISTS "${CMAKE_CURRENT_LIST_DIR}/psiwindowheader.cpp"))
 endif()
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
-qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
-add_library(widgets STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES} ${PLAIN_HEADERS})
+add_library(widgets STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 target_link_libraries(widgets ${QT_LIBRARIES} ${iris_LIB} libpsi_tools)
 target_include_directories(widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

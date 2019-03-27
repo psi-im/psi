@@ -1,9 +1,6 @@
-unset(MOC_SOURCES)
 unset(HEADERS)
-unset(PLAIN_HEADERS)
 unset(FORMS)
 unset(SOURCES)
-unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 include_directories(..)
@@ -44,9 +41,7 @@ list(APPEND SOURCES
     optionsdlgbase.cpp
     optionstab.cpp
     opt_plugins.cpp
-)
 
-list(APPEND PLAIN_SOURCES
     optionsdlg.cpp
     opt_advanced.cpp
     opt_appearance.cpp
@@ -109,7 +104,6 @@ list(APPEND FORMS
 )
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
-qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
-add_library(options STATIC ${SOURCES} ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
+add_library(options STATIC ${SOURCES} ${HEADERS} ${UI_FORMS})
 target_link_libraries(options ${QT_LIBRARIES} tools widgets tabs libpsi_dialogs)
 target_include_directories(options PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

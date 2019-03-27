@@ -4,7 +4,7 @@ set( CMAKE_MODULE_PATH
     "${CMAKE_MODULE_PATH}"
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${PROJECT_SOURCE_DIR}/cmake/modules" )
-set(CMAKE_AUTOMOC OFF)
+set(CMAKE_AUTOMOC ON)
 
 if(LINUX)
     set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
@@ -116,25 +116,6 @@ if(USE_HUNSPELL)
         include_directories( ${HUNSPELL_INCLUDE_DIR}/../ )
     endif()
 endif()
-
-macro(qt_wrap_cpp)
-    set(_SOURCES ${ARGN})
-    list(REMOVE_AT _SOURCES 0)
-    foreach(SOURCE ${_SOURCES})
-        if(SOURCE MATCHES "^(.*/|)([^/.]+)\\.h$")
-            set(DEST "moc_${CMAKE_MATCH_2}.cpp")
-            qt5_generate_moc(${SOURCE} ${DEST} TARGET ${PROJECT_NAME})
-            list(APPEND ${ARGV0} ${DEST})
-        elseif(SOURCE MATCHES "^(.*/|)([^/.]+)\\.cpp$")
-            set(DEST "${CMAKE_MATCH_2}.moc")
-            qt5_generate_moc(${SOURCE} ${DEST} TARGET ${PROJECT_NAME})
-            list(APPEND ${ARGV0} ${DEST})
-        else()
-            message(WARNING "Wrong source ${SOURCE}")
-        endif()
-    endforeach()
-    unset(_SOURCES)
-endmacro()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -263,9 +244,7 @@ set(RESOURCES
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
-add_custom_target(build_ui_files DEPENDS "${UI_FORMS}" SOURCES "${FORMS}")
-
-qt_wrap_cpp(MOC_SOURCES ${SOURCES} ${HEADERS})
+add_custom_target(build_ui_files DEPENDS "${UI_FORMS}")# SOURCES "${FORMS}")
 
 if(WIN32)
     if(IS_PSIPLUS)
@@ -325,10 +304,7 @@ add_executable(${PROJECT_NAME}
     MACOSX_BUNDLE
     ${SOURCES}
     ${HEADERS}
-    ${MOC_SOURCES}
     ${UI_FORMS}
-    ${PLAIN_SOURCES}
-    ${PLAIN_HEADERS}
     ${QRC_SOURCES}
     ${QM}
     ${RC_FILE}

@@ -22,6 +22,7 @@
  *
  */
 
+#include "moc_psidbusnotifier.cpp"
 
 #include <QDBusConnection>
 #include <QDBusMessage>

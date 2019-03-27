@@ -15,9 +15,9 @@ if(UNIX AND NOT (APPLE OR HAIKU))
         )
 endif()
 
-#if(APPLE)
-#    add_definitions(-DHAVE_GROWL)
-#endif()
+if(APPLE AND USE_GROWL)
+    add_definitions(-DHAVE_GROWL)
+endif()
 
 include_directories(.)
 
@@ -206,87 +206,6 @@ list(APPEND HEADERS
     voicecaller.h
     xdata_widget.h
     xmlconsole.h
-    )
-
-# Source files
-list(APPEND SOURCES
-    accountmanagedlg.cpp
-    actionlist.cpp
-    activecontactsmenu.cpp
-    ahcommanddlg.cpp
-    ahcservermanager.cpp
-    alerticon.cpp
-    avatars.cpp
-    contactlistaccountmenu.cpp
-    discodlg.cpp
-    eventdlg.cpp
-    filetransdlg.cpp
-    gcuserview.cpp
-    groupchatdlg.cpp
-    htmltextcontroller.cpp
-    httpauthmanager.cpp
-    mainwin_p.cpp
-    msgmle.cpp
-    proxy.cpp
-    psiaccount.cpp
-    psiactionlist.cpp
-    psichatdlg.cpp
-    psicon.cpp
-    psicontactlistview.cpp
-    psievent.cpp
-    psioptionseditor.cpp
-    psipopup.cpp
-    psirosterwidget.cpp
-    registrationdlg.cpp
-    searchdlg.cpp
-    xdata_widget.cpp
-    )
-
-if(UNIX AND NOT APPLE AND NOT HAIKU)
-    list(APPEND SOURCES
-        dbus.cpp
-        )
-
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_dbus.cpp
-        psidbusnotifier.cpp
-        )
-
-    list(APPEND HEADERS
-        psidbusnotifier.h
-        )
-
-    list(APPEND PLAIN_HEADERS
-        dbus.h
-        )
-    list(APPEND PLAIN_SOURCES
-        x11windowsystem.cpp
-        )
-    list(APPEND PLAIN_HEADERS
-        x11windowsystem.h
-        )
-elseif(APPLE)
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_stub.cpp
-        )
-#    list(APPEND SOURCES
-#        psigrowlnotifier.cpp
-#        )
-#
-#    list(APPEND HEADERS
-#        psigrowlnotifier.h
-#        )
-elseif(HAIKU)
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_stub.cpp
-        )
-elseif(WIN32)
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_win.cpp
-        )
-endif()
-
-list(APPEND PLAIN_HEADERS
     abstracttreeitem.h
     activity.h
     activitycatalog.h
@@ -331,9 +250,78 @@ list(APPEND PLAIN_HEADERS
     urlbookmark.h
     userlist.h
     varlist.h
+    edbsqlite.h
+    historyimp.h
     )
 
-list(APPEND PLAIN_SOURCES
+if(UNIX AND NOT APPLE AND NOT HAIKU)
+    list(APPEND SOURCES
+        dbus.cpp
+        activeprofiles_dbus.cpp
+        psidbusnotifier.cpp
+        x11windowsystem.cpp
+        )
+
+    list(APPEND HEADERS
+        psidbusnotifier.h
+        dbus.h
+        x11windowsystem.h
+        )
+elseif(APPLE)
+    list(APPEND SOURCES
+        activeprofiles_stub.cpp
+        )
+    if(USE_GROWL)
+        list(APPEND SOURCES
+            psigrowlnotifier.cpp
+            )
+
+        list(APPEND HEADERS
+            psigrowlnotifier.h
+            )
+    endif()
+elseif(HAIKU)
+    list(APPEND SOURCES
+        activeprofiles_stub.cpp
+        )
+elseif(WIN32)
+    list(APPEND SOURCES
+        activeprofiles_win.cpp
+        )
+endif()
+
+# Source files
+list(APPEND SOURCES
+    accountmanagedlg.cpp
+    actionlist.cpp
+    activecontactsmenu.cpp
+    ahcommanddlg.cpp
+    ahcservermanager.cpp
+    alerticon.cpp
+    avatars.cpp
+    contactlistaccountmenu.cpp
+    discodlg.cpp
+    eventdlg.cpp
+    filetransdlg.cpp
+    gcuserview.cpp
+    groupchatdlg.cpp
+    htmltextcontroller.cpp
+    httpauthmanager.cpp
+    mainwin_p.cpp
+    msgmle.cpp
+    proxy.cpp
+    psiaccount.cpp
+    psiactionlist.cpp
+    psichatdlg.cpp
+    psicon.cpp
+    psicontactlistview.cpp
+    psievent.cpp
+    psioptionseditor.cpp
+    psipopup.cpp
+    psirosterwidget.cpp
+    registrationdlg.cpp
+    searchdlg.cpp
+    xdata_widget.cpp
     aboutdlg.cpp
     abstracttreeitem.cpp
     abstracttreemodel.cpp
@@ -478,11 +466,13 @@ list(APPEND PLAIN_SOURCES
     vcardphotodlg.cpp
     voicecalldlg.cpp
     xmlconsole.cpp
+    edbsqlite.cpp
+    historyimp.cpp
     )
 
 if(ENABLE_WEBKIT)
     if(USE_WEBENGINE)
-        list(APPEND PLAIN_SOURCES
+        list(APPEND SOURCES
             themeserver.cpp
         )
         list(APPEND HEADERS
@@ -496,14 +486,10 @@ if(ENABLE_WEBKIT)
         chatviewtheme_p.h
         chatviewthemeprovider.h
         chatviewthemeprovider_priv.h
-        )
-    list(APPEND PLAIN_HEADERS
         jsutil.h
         )
     list(APPEND SOURCES
         chatview_webkit.cpp
-        )
-    list(APPEND PLAIN_SOURCES
         webview.cpp
         jsutil.cpp
         chatviewtheme.cpp
@@ -513,20 +499,9 @@ if(ENABLE_WEBKIT)
 else()
     list(APPEND HEADERS
         chatview_te.h
-        )
-    list(APPEND SOURCES
         chatview_te.cpp
         )
 endif()
-
-list(APPEND HEADERS
-    edbsqlite.h
-    historyimp.h
-    )
-list(APPEND PLAIN_SOURCES
-    edbsqlite.cpp
-    historyimp.cpp
-    )
 
 if(IS_PSIPLUS)
     list(APPEND FORMS
@@ -535,7 +510,7 @@ if(IS_PSIPLUS)
     list(APPEND HEADERS
         sendbuttonmenu.h
     )
-    list(APPEND PLAIN_SOURCES
+    list(APPEND SOURCES
         sendbuttonmenu.cpp
     )
 endif()

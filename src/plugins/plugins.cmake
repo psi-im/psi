@@ -47,6 +47,6 @@ list(APPEND PLUGINS_INCLUDES
     plugins/include/webkitaccessor.h
     plugins/include/webkitaccessinghost.h
 )
-list(APPEND PLAIN_HEADERS
+list(APPEND HEADERS
     ${PLUGINS_INCLUDES}
 )

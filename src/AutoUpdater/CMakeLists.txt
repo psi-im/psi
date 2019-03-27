@@ -1,9 +1,6 @@
-unset(MOC_SOURCES)
 unset(HEADERS)
-unset(PLAIN_HEADERS)
 unset(FORMS)
 unset(SOURCES)
-unset(PLAIN_SOURCES)
 unset(UI_FORMS)
 
 if(WIN32 AND IS_PSIPLUS)
@@ -16,11 +13,11 @@ include_directories(
     ../
 )
 
-list(APPEND PLAIN_HEADERS
+list(APPEND HEADERS
     AutoUpdater.h
 )
 
-list(APPEND PLAIN_SOURCES
+list(APPEND SOURCES
     AutoUpdater.cpp
 )
 
@@ -41,7 +38,7 @@ if(USE_QDCHECKER)
     list(APPEND HEADERS
         QDChecker.h
     )
-    list(APPEND PLAIN_SOURCES
+    list(APPEND SOURCES
         QDChecker.cpp
     )
     list(APPEND FORMS
@@ -58,8 +55,7 @@ if(USE_QDCHECKER)
 endif()
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
-qt_wrap_cpp(MOC_SOURCES ${HEADERS})
-add_library(AutoUpdater STATIC ${HEADERS} ${MOC_SOURCES} ${UI_FORMS} ${PLAIN_SOURCES})
+add_library(AutoUpdater STATIC ${HEADERS} ${SOURCES} ${UI_FORMS})
 if(USE_QDCHECKER)
     add_dependencies(AutoUpdater build_ui_files tools widgets)
 endif()
