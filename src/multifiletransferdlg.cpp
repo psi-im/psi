@@ -119,7 +119,6 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
         if (d->isOutgoing) {
             d->session = d->account->client()->jingleManager()->newSession(d->peer);
             QMimeDatabase mimeDb;
-            QList<Jingle::Application*> appList;
 
             for (int i = 0; i < d->model->rowCount() - 1; ++i) {
                 auto index = d->model->index(i, 0, QModelIndex());
@@ -164,11 +163,10 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
                 file.setThumbnail(thumb);
 
                 app->setFile(file);
-                app->selectNextTransport();
-                appList.append(app);
+                d->session->addContent(app);
             }
 
-            d->session->initiate(appList);
+            d->session->initiate();
         }
     });
 }

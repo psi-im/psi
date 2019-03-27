@@ -71,6 +71,10 @@ struct ClientIconCheck
  *
  * Note: It's quite regular for caps node to start with "https" but current client_icons.txt almost doesn't have
  * such records. It just means it heavily rely on detected client names instead of caps.
+ * Client name from its side maybe taken from caps node when there is not other way to detect.
+ * Example:
+ * caps node = https://www.psi-im.org/helloworld/caps
+ * resulting client name = psi-im.org/helloworld
  */
 typedef QMap<QString, QList<ClientIconCheck> > ClientIconMap;
 
