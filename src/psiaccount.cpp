@@ -3014,7 +3014,7 @@ void PsiAccount::client_incomingJingle(Jingle::Session *session)
     if (ns == Jingle::FileTransfer::NS) {
         if (session->allApplicationTypes().size() > 1) {
             // file transfer dialog understands only file transfers..
-            session->reject(); // TODO reason?
+            session->terminate(XMPP::Jingle::Reason::GeneralError, "FileTransfer is not compatible with anything else");
             return;
         }
         FileEvent::Ptr fe(new FileEvent(session->peer().full(), session, this));
