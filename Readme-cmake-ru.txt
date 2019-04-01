@@ -146,6 +146,17 @@
   собирать только плагины не собирая саму Psi/Psi+ (по-умолчанию -OFF).
   Включив этот флаг, флаг ENABLE_PLUGINS включается автоматически
 
+>  -DDEV_MODE=ON
+
+  В OS Windows включает цель сборки prepare-bin-libs.
+  Этот флаг удобен для запуска Psi/Psi+ сразу после сборки при разработке.
+  При включении этого флага скрипт ищет библиотеки зависимостей и по команде:
+  > $ make prepare-bin-libs
+  копирует их в каталог сборки.
+  В OS Linux включает режим разработчика и вместе с флагом ENABLE_PLUGINS
+  при использовании psi-plus-snapshots позовяет отлаживать плагины без
+  утсновки Psi
+
 ## Работа с плагинами:
 
 ### Следующие флаги работают только если включены флаги ENABLE_PLUGINS или ONLY_PLUGINS
@@ -157,12 +168,11 @@
   - возможные значения для ${plugins} (можно определить по содержимому каталога plugins/generic):
 
     historykeeperplugin	stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
-    cleanerplugin autoreplyplugin contentdownloaderplugin	qipxstatusesplugin skinsplugin icqdieplugin
-    clientswitcherplugin captchaformsplugin watcherplugin videostatusplugin screenshotplugin
-    jabberdiskplugin storagenotesplugin	extendedoptionsplugin imageplugin	extendedmenuplugin
-    birthdayreminderplugin gmailserviceplugin gnupgplugin pepchangenotifyplugin otrplugin
-    chessplugin conferenceloggerplugin gnome3supportplugin enummessagesplugin httpuploadplugin 
-    imagepreviewplugin
+    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin icqdieplugin
+    clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
+    storagenotesplugin	extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
+    gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin
+    enummessagesplugin httpuploadplugin imagepreviewplugin
 
   Пример:
 
@@ -214,14 +224,6 @@
 >  -DHUNSPELL_ROOT=DIRECTORY
 
   задать корневой каталог с библиотекой Hunspell
-
->  -DDEV_MODE=ON
-
-  Включает цель сборки prepare-bin-libs.
-  Этот флаг удобен для запуска Psi/Psi+ сразу после сборки при разработке.
-  При включении этого флага скрипт ищет библиотеки зависимостей и по команде:
-  > $ make prepare-bin-libs
-  копирует их в каталог сборки.
 
 ### Для сборки плагина OTR в OS WINDOWS возможно понадобятся дополнительные флаги: 
 

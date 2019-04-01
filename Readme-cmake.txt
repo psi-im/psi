@@ -69,9 +69,9 @@ or
 
 >  -DENABLE_WEBKIT = ON
 
-   enable support of QtWebKit or QtWebengine. If the flag is enabled and
-   both libraries qtwebkit and qtwebengine are installed the script 
-   automatically selects qtwebengine. (default is ON)
+   Global flag which enables support of QtWebKit or QtWebengine.
+   If the flag is enabled and both libraries qtwebkit and qtwebengine
+   are installed the script automatically selects qtwebengine. (default is ON)
 
 >  -DUSE_WEBKIT = OFF
 
@@ -146,6 +146,11 @@ or
   to build only psi plugins (default OFF). On enabling this flag 
   ENABLE_PLUGINS flag turns on automatically
 
+>  -DDEV_MODE=ON
+
+  In OS Windows enables prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
+  In Linux sets PSI_DATA directory to current binary direrctory (Usefull to debug plugins)
+
 ## Work with plugins:
 
 ### Next flags are working only if ENABLE_PLUGINS or ONLY_PLUGINS are enabled
@@ -157,12 +162,11 @@ or
   - possible values for ${plugins}:
 
     historykeeperplugin	stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
-    cleanerplugin autoreplyplugin contentdownloaderplugin	qipxstatusesplugin skinsplugin icqdieplugin
-    clientswitcherplugin captchaformsplugin watcherplugin videostatusplugin screenshotplugin
-    jabberdiskplugin storagenotesplugin	extendedoptionsplugin imageplugin	extendedmenuplugin
-    birthdayreminderplugin gmailserviceplugin gnupgplugin pepchangenotifyplugin otrplugin
-    chessplugin conferenceloggerplugin gnome3supportplugin enummessagesplugin httpuploadplugin 
-    imagepreviewplugin
+    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin icqdieplugin
+    clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
+    storagenotesplugin	extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
+    gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin
+    enummessagesplugin httpuploadplugin imagepreviewplugin
 
   Example:
 
@@ -204,10 +208,6 @@ or
 >  -DHUNSPELL_ROOT=DIRECTORY
 
   to set Hunspell library root directory
-
->  -DDEV_MODE=ON
-
-  to enable prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
 
 >  -DENABLE_PORTABLE=ON
 
