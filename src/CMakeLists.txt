@@ -527,6 +527,17 @@ if(APPLE)
     endif()
     # end of qca hack
 
+    # Special hack for QtWebEngineProcess executable from Homebrew
+    if(USE_WEBENGINE AND HOMEBREW)
+        set(QtWebEngineProcess_path "Versions/5/Helpers/QtWebEngineProcess.app")
+        set(QtWebEngineProcess_file "${QtWebEngineProcess_path}/Contents/MacOS/QtWebEngineProcess")
+        set(QtWebEngineCore_path "${CLIENT_NAME}.app/Contents/Frameworks/QtWebEngineCore.framework")
+        set(MACDEPLOYQT_EXTRA_OPTS "-executable=${QtWebEngineCore_path}/${QtWebEngineProcess_file}")
+    else()
+        set(MACDEPLOYQT_EXTRA_OPTS "")
+    endif()
+    # end of QtWebEngineProcess hack
+
     # Simple and smart hack for using of macdeployqt to fix Psi plugins
     if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))
         install(DIRECTORY "${CMAKE_BINARY_DIR}/psi/plugins"
@@ -537,7 +548,8 @@ if(APPLE)
     # Create a deployable application bundle that contains the all necessary libraries
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
                           ${PROJECT_SOURCE_DIR}/mac/Info.plist.in)
-    install(CODE "execute_process(COMMAND ${MACDEPLOYQT} ${CLIENT_NAME}.app -verbose=2
+    install(CODE "execute_process(COMMAND ${MACDEPLOYQT} ${CLIENT_NAME}.app -verbose=2 \
+                                                         ${MACDEPLOYQT_EXTRA_OPTS}
                                   WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX})")
 
     # Move Psi plugins fixed by macdeployqt to proper place
