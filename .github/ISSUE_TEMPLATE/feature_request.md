@@ -11,4 +11,4 @@ assignees: ''
 
 You can discuss your ideas first in xmpp:psi-dev@conference.jabber.ru?join
 
-Don't forget your idea cab be already implemented in [plugins](https://github.com/psi-im/plugins)
+Don't forget, your idea can already be implemented in Psi plugins (https://github.com/psi-im/plugins)
