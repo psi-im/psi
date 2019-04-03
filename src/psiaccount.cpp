@@ -1278,6 +1278,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     reconfigureFTManager();
     connect(d->client->fileTransferManager(), SIGNAL(incomingReady()),
             SLOT(client_incomingFileTransfer()));
+    connect(d->client->jingleManager(), &Jingle::Manager::incomingSession, this,
+            &PsiAccount::client_incomingJingle);
 #endif
 #ifdef GOOGLE_FT
     d->googleFTManager = new GoogleFTManager(client());

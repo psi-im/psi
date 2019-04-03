@@ -30,6 +30,7 @@
 MultiFileTransferModel::MultiFileTransferModel(QObject *parent) :
     QAbstractListModel(parent)
 {
+    updateTimer.setSingleShot(true);
     connect(&updateTimer, &QTimer::timeout, this, [this](){
         auto s = updatedTransfers;
         updatedTransfers.clear();
