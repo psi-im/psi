@@ -14,11 +14,14 @@ assignees: ''
 
 XML log (you can find it in account's context menu)
 ```
+paste your xml log here
 ```
+
 stdout (terminal log)
 ```
+paste your terminal log here
 ```
 
 In case of app crash please provide back trace (start debug version in gdb).
 
-You can always ask for help in [our conference](xmpp:psi-dev@conference.jabber.ru?join)
+You can always ask for help in xmpp:psi-dev@conference.jabber.ru?join
