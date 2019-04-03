@@ -176,6 +176,16 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
     d->session = session;
     d->peer = session->peer();
     updatePeerVisuals();
+    updateComonVisuals();
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Receive"));
+    for (const auto &c: session->contentList()) {
+        if (c->creator() == Jingle::Origin::Initiator && c->pad()->ns() == Jingle::FileTransfer::NS) {
+            auto ft = static_cast<Jingle::FileTransfer::Application*>(c);
+            auto file = ft->file();
+            auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(), file.size()); // FIXME size is optional. ranges?
+            item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(ft));
+        }
+    }
 }
 
 void MultiFileTransferDlg::updateMyVisuals()
