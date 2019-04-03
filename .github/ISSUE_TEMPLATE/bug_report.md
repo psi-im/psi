@@ -10,6 +10,7 @@ assignees: ''
 <You problem here>
 
 *OS:*
+
 *Psi Version:*
 
 XML log (you can find it in account's context menu)
