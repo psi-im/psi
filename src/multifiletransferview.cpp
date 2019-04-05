@@ -218,20 +218,32 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     painter->drawText(stbr, option.displayAlignment, s);
     painter->restore();
 
+    // Progress bar background
+    const int progressLeft = textLeft + progressHeight / 2;
+    const int progressMaxRight = right - progressHeight / 2 - 1;
+    const int progressBottom = progressTop + progressHeight - 1;
+    painter->save();
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
+    painter->drawEllipse(textLeft, progressTop, progressHeight, progressHeight);
+    painter->drawRect(QRect(QPoint(progressLeft, progressTop),
+                            QPoint(progressMaxRight, progressBottom)));
+    painter->drawEllipse(progressMaxRight - progressHeight / 2, progressTop, progressHeight, progressHeight);
     // -----------------------------
     // Transfer progress bar
     // -----------------------------
-    painter->save();
-    painter->setPen(Qt::NoPen);
-    QBrush b;
-    b.setTexture(progressTexture);
-    QPainterPath p;
-    p.setFillRule(Qt::WindingFill);
-    p.addEllipse(textLeft, progressTop, progressHeight, progressHeight);
-    p.addEllipse(right - progressHeight, progressTop, progressHeight, progressHeight);
-    p.addRect(QRect(QPoint(textLeft + progressHeight / 2, progressTop),
-                    QPoint(right - progressHeight / 2 - 1, progressTop + progressHeight - 1)));
-    painter->fillPath(p, b);
+    int progressRight = progressLeft + static_cast<int>((progressMaxRight - progressLeft) * (curSize / double(fullSize))+0.5);
+    if(progressRight > progressLeft) {
+        QBrush b;
+        b.setTexture(progressTexture);
+        QPainterPath p;
+        p.setFillRule(Qt::WindingFill);
+        p.addEllipse(textLeft, progressTop, progressHeight, progressHeight);
+        p.addRect(QRect(QPoint(progressLeft, progressTop),
+                        QPoint(progressRight, progressBottom)));
+        p.addEllipse(progressRight - progressHeight / 2, progressTop, progressHeight, progressHeight);
+        painter->fillPath(p, b);
+    }
     painter->restore();
 }
 
