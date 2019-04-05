@@ -116,58 +116,57 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
 
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
-        if (d->isOutgoing) {
-            d->session = d->account->client()->jingleManager()->newSession(d->peer);
-            QMimeDatabase mimeDb;
+        ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
+        d->session = d->account->client()->jingleManager()->newSession(d->peer);
+        QMimeDatabase mimeDb;
 
-            for (int i = 0; i < d->model->rowCount() - 1; ++i) {
-                auto index = d->model->index(i, 0, QModelIndex());
-                auto item = reinterpret_cast<MultiFileTransferItem*>(index.internalPointer());
-                QFileInfo fi(item->filePath());
-                if (!fi.isReadable()) {
-                    delete item;
-                    continue;
-                }
-
-                auto app = static_cast<Jingle::FileTransfer::Application*>(d->session->newContent(Jingle::FileTransfer::NS, d->session->role()));
-                if (!app) {
-                    qWarning("Nothing registered in Jingle for %s", qPrintable(Jingle::FileTransfer::NS));
-                    return;
-                }
-
-                // compute file hash
-                XMPP::Hash hash(XMPP::Hash::Blake2b512);
-                QFile f(item->filePath());
-                hash.computeFromDevice(&f); // FIXME it will freeze Psi for awhile on large files
-
-                // take thumbnail
-                QImage img(item->filePath());
-                XMPP::Thumbnail thumb;
-                if (!img.isNull()) {
-                    QByteArray ba;
-                    QBuffer buffer(&ba);
-                    buffer.open(QIODevice::WriteOnly);
-                    img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                    img.save(&buffer, "PNG");
-                    thumb = XMPP::Thumbnail(ba, "image/png", img.width(), img.height());
-                }
-
-                Jingle::FileTransfer::File file;
-                file.setDate(fi.lastModified());
-                file.setDescription(item->description());
-                file.setHash(hash);
-                file.setMediaType(mimeDb.mimeTypeForFile(fi).name());
-                file.setName(fi.fileName());
-                file.setRange(); // indicate range support
-                file.setSize(fi.size());
-                file.setThumbnail(thumb);
-
-                app->setFile(file);
-                d->session->addContent(app);
+        for (int i = 0; i < d->model->rowCount() - 1; ++i) {
+            auto index = d->model->index(i, 0, QModelIndex());
+            auto item = reinterpret_cast<MultiFileTransferItem*>(index.internalPointer());
+            QFileInfo fi(item->filePath());
+            if (!fi.isReadable()) {
+                delete item;
+                continue;
             }
 
-            d->session->initiate();
+            auto app = static_cast<Jingle::FileTransfer::Application*>(d->session->newContent(Jingle::FileTransfer::NS, d->session->role()));
+            if (!app) {
+                qWarning("Nothing registered in Jingle for %s", qPrintable(Jingle::FileTransfer::NS));
+                return;
+            }
+
+            // compute file hash
+            XMPP::Hash hash(XMPP::Hash::Blake2b512);
+            QFile f(item->filePath());
+            hash.computeFromDevice(&f); // FIXME it will freeze Psi for awhile on large files
+
+            // take thumbnail
+            QImage img(item->filePath());
+            XMPP::Thumbnail thumb;
+            if (!img.isNull()) {
+                QByteArray ba;
+                QBuffer buffer(&ba);
+                buffer.open(QIODevice::WriteOnly);
+                img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                img.save(&buffer, "PNG");
+                thumb = XMPP::Thumbnail(ba, "image/png", img.width(), img.height());
+            }
+
+            Jingle::FileTransfer::File file;
+            file.setDate(fi.lastModified());
+            file.setDescription(item->description());
+            file.setHash(hash);
+            file.setMediaType(mimeDb.mimeTypeForFile(fi).name());
+            file.setName(fi.fileName());
+            file.setRange(); // indicate range support
+            file.setSize(fi.size());
+            file.setThumbnail(thumb);
+
+            app->setFile(file);
+            d->session->addContent(app);
         }
+
+        d->session->initiate();
     });
 }
 
@@ -176,7 +175,6 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
     d->session = session;
     d->peer = session->peer();
     updatePeerVisuals();
-    updateComonVisuals();
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Receive"));
     for (const auto &c: session->contentList()) {
         if (c->creator() == Jingle::Origin::Initiator && c->pad()->ns() == Jingle::FileTransfer::NS) {
@@ -186,6 +184,12 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(ft));
         }
     }
+    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
+        ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
+        d->session->accept();
+    });
+
+    updateComonVisuals();
 }
 
 void MultiFileTransferDlg::updateMyVisuals()
