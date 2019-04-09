@@ -1,17 +1,30 @@
 New in 2.0 (UNRELEASED)
+- Program now requires Qt >= 5.5.x and compilers with support of C++14
 - Rewritten code related to spell checkers support (hunspell, aspell)
 - Improved saving of program settings on exit
 - Partially reorganized options dialog
 - Multiple fixes and optimizations in UI
-- Added system keychain support
-- Added multi-language topics in MUC
+- Added (optional) support of QtKeychain: allows to store passwords in more
+  secure way (using special mechanisms from your operating system)
+- Added support of multi-language topics in MUC
 - Added HTTP File Upload (XEP-0363) implementation
 - Added Result Set Management (XEP-0059) implementation
 - Fixed crashes on Wayland due to usage of X11 specific calls
-- Fixed build for macOS using cmake
-- Changed plugins API
+- Fixed build for macOS using cmake + different macOS specific improvements
+- Different MS Windows specific improvements
+- Added support of Haiku operating system
+- Changed plugins API (plugins from old Psi IM releases will not work):
+  + changes for implementation of OMEMO plugin
+  + changes for getting rid of dependency from QtWebKit in few plugins
+  + some minor changes
 - Rewritten API for PsiMedia (https://github.com/psi-im/psimedia),
   PsiMedia versions older than 1.0.6 are not supported anymore
+- Rewritten file transfers dialog
+- Added support of Jingle File Transfer (XEP-0234). Old (deprecated) XEPs
+  for file exchange are still supported in Psi IM, but may be deleted in
+  future releases
+- Disable usage of system proxies (it was added and enable inside Qt library by
+  Qt developers but does not work properly and conflicts with Psi IM settings)
 - Code refactoring
 
 New in 1.4
