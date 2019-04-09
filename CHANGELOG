@@ -23,7 +23,7 @@ New in 2.0 (UNRELEASED)
 - Added support of Jingle File Transfer (XEP-0234). Old (deprecated) XEPs
   for file exchange are still supported in Psi IM, but may be deleted in
   future releases
-- Disable usage of system proxies (it was added and enable inside Qt library by
+- Disable usage of system proxies (it was added and enabled inside Qt library by
   Qt developers but does not work properly and conflicts with Psi IM settings)
 - Code refactoring
 
