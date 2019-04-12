@@ -23,8 +23,6 @@
 #include <QDateTime>
 #include <QVariantMap>
 
-#include "xmpp_message.h"
-
 #if QT_VERSION < QT_VERSION_CHECK(5,7,0)
 # define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag
 #else
@@ -124,8 +122,6 @@ public:
     inline QMap<QString, QString> urls() const { return _urls; }
     inline void setReplaceId(const QString &id) { _replaceId = id; }
     inline const QString &replaceId() const { return _replaceId; }
-    inline void setCarbonDirection(XMPP::Message::CarbonDir c) {_carbon = c; }
-    inline XMPP::Message::CarbonDir carbonDirection() const { return _carbon; }
 
     QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
@@ -142,7 +138,6 @@ private:
     QDateTime _dateTime;
     QMap<QString, QString> _urls;
     QString _replaceId;
-    XMPP::Message::CarbonDir _carbon;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

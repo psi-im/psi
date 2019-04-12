@@ -1840,9 +1840,9 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
     if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &m = me->message();
+        const Message &dm = me->message().displayMessage();
 
-        d->enc = m.wasEncrypted();
+        d->enc = dm.wasEncrypted();
 
         // HTTP auth request buttons
         if ( e->type() == PsiEvent::HttpAuth ) {
@@ -1856,12 +1856,12 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
             d->pb_http_deny->show();
         }
 
-        bool xhtml = m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty();
-        QString txt = xhtml ? m.html().toString("div") : TextUtil::plain2rich(m.body());
+        bool xhtml = dm.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !dm.html().text().isEmpty();
+        QString txt = xhtml ? dm.html().toString("div") : TextUtil::plain2rich(dm.body());
 
         // show subject line if the incoming message has one
-        if(!m.subject().isEmpty() && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
-            txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
+        if(!dm.subject().isEmpty() && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
+            txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(dm.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
         if (!xhtml) {
             txt = TextUtil::linkify(txt);
@@ -1874,13 +1874,13 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
         setHtml("<qt>" + txt + "</qt>");
 
-        d->le_subj->setText(m.subject());
+        d->le_subj->setText(dm.subject());
         d->le_subj->setCursorPosition(0);
 
-        d->thread = m.thread();
+        d->thread = dm.thread();
 
         // Form buttons
-        if (!m.getForm().fields().empty()) {
+        if (!dm.getForm().fields().empty()) {
             d->pb_chat->hide();
             d->pb_reply->hide();
             d->pb_quote->hide();
@@ -1893,7 +1893,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
             d->pb_form_submit->setEnabled(true);
             d->pb_form_cancel->setEnabled(true);
             //set title if specified
-            const XData& form = m.getForm();
+            const XData& form = dm.getForm();
             if ( !form.title().isEmpty() )
                 setWindowTitle( form.title() );
 
@@ -1907,14 +1907,14 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
         }
 
         d->attachView->clear();
-        d->attachView->addUrlList(m.urlList());
+        d->attachView->addUrlList(dm.urlList());
 
-        if(!m.mucInvites().isEmpty()) {
-            MUCInvite i = m.mucInvites().first();
-            d->attachView->gcAdd(m.from().full(),i.from().bare(),i.reason(),m.mucPassword());
+        if(!dm.mucInvites().isEmpty()) {
+            MUCInvite i = dm.mucInvites().first();
+            d->attachView->gcAdd(dm.from().full(),i.from().bare(),i.reason(),dm.mucPassword());
         }
-        else if(!m.invite().isEmpty())
-            d->attachView->gcAdd(m.invite());
+        else if(!dm.invite().isEmpty())
+            d->attachView->gcAdd(dm.invite());
         showHideAttachView();
     }
     else if(e->type() == PsiEvent::Auth) {

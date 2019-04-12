@@ -858,37 +858,38 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 
 void ChatDlg::incomingMessage(const Message &m)
 {
+    const Message &dm = m.displayMessage();
     historyState = false;
-    if (m.body().isEmpty() && m.subject().isEmpty() && m.urlList().isEmpty()) {
+    if (dm.body().isEmpty() && dm.subject().isEmpty() && dm.urlList().isEmpty()) {
         // Event message
-        if (m.containsEvent(CancelEvent)) {
+        if (dm.containsEvent(CancelEvent)) {
             setContactChatState(XMPP::StatePaused);
         }
-        else if (m.containsEvent(ComposingEvent)) {
+        else if (dm.containsEvent(ComposingEvent)) {
             setContactChatState(XMPP::StateComposing);
         }
 
-        if (m.chatState() != XMPP::StateNone) {
-            setContactChatState(m.chatState());
+        if (dm.chatState() != XMPP::StateNone) {
+            setContactChatState(dm.chatState());
         }
-        if (m.messageReceipt() == ReceiptReceived) {
-            chatView()->markReceived(m.messageReceiptId());
+        if (dm.messageReceipt() == ReceiptReceived) {
+            chatView()->markReceived(dm.messageReceiptId());
         }
     }
     else {
         // Normal message
         // Check if user requests event messages
-        sendComposingEvents_ = m.containsEvent(ComposingEvent);
-        if (!m.eventId().isEmpty()) {
-            eventId_ = m.eventId();
+        sendComposingEvents_ = dm.containsEvent(ComposingEvent);
+        if (!dm.eventId().isEmpty()) {
+            eventId_ = dm.eventId();
         }
-        if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
+        if (dm.containsEvents() || dm.chatState() != XMPP::StateNone) {
             setContactChatState(XMPP::StateActive);
         }
         else {
             setContactChatState(XMPP::StateNone);
         }
-        appendMessage(m, m.carbonDirection() == Message::Sent);
+        appendMessage(m, m.forwarded().type() == Forwarding::ForwardedCarbonsSent);
     }
 }
 
@@ -913,6 +914,7 @@ QString ChatDlg::whoNick(bool local) const
 
 void ChatDlg::appendMessage(const Message &m, bool local)
 {
+    const Message &dm = m.displayMessage();
     if(trackBar_)
         doTrackBar();
 
@@ -920,10 +922,10 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     bool encChanged = false;
     bool encEnabled = false;
     if (!historyState) {
-        if (lastWasEncrypted_ != m.wasEncrypted()) {
+        if (lastWasEncrypted_ != dm.wasEncrypted()) {
             encChanged = true;
         }
-        lastWasEncrypted_ = m.wasEncrypted();
+        lastWasEncrypted_ = dm.wasEncrypted();
         encEnabled = lastWasEncrypted_;
     }
 
@@ -943,18 +945,19 @@ void ChatDlg::appendMessage(const Message &m, bool local)
         }
     }
 
-    if (!m.subject().isEmpty()) {
-        MessageView smv = MessageView::subjectMessage(m.subject());
+    if (!dm.subject().isEmpty()) {
+        MessageView smv = MessageView::subjectMessage(dm.subject());
         smv.setSpooled(historyState);
         dispatchMessage(smv);
     }
 
     MessageView mv(MessageView::Message);
 
-    QString body = m.body();
-    HTMLElement htmlElem;
-    if (m.containsHTML())
-        htmlElem = m.html();
+    QString body = dm.body();
+    HTMLElement htmlElem = dm.html();
+    //if (m.forwarded().type() == Forwarding::ForwardedMessage) {
+    //    TODO
+    //}
 
 #ifdef PSI_PLUGINS
     QDomElement html = htmlElem.body();
@@ -971,19 +974,18 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     } else {
         mv.setPlainText(body);
     }
-    mv.setMessageId(m.id());
+    mv.setMessageId(dm.id());
     mv.setLocal(local);
     mv.setNick(whoNick(local));
     mv.setUserId(local?account()->jid().full():jid().full()); // theoretically, this can be inferred from the chat dialog properties
-    mv.setDateTime(m.timeStamp());
+    mv.setDateTime(dm.timeStamp());
     mv.setSpooled(historyState);
-    mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
-    mv.setReplaceId(m.replaceId());
-    mv.setCarbonDirection(m.carbonDirection());
+    mv.setAwaitingReceipt(local && dm.messageReceipt() == ReceiptRequest);
+    mv.setReplaceId(dm.replaceId());
     dispatchMessage(mv);
 
-    if (!m.urlList().isEmpty()) {
-        UrlList urls = m.urlList();
+    if (!dm.urlList().isEmpty()) {
+        UrlList urls = dm.urlList();
         QMap<QString,QString> urlsMap;
         foreach (const Url &u, urls) {
             urlsMap.insert(u.url(), u.desc());
@@ -1033,7 +1035,7 @@ void ChatDlg::displayMessage(const MessageView &mv)
 
     // if we're not active, notify the user by changing the title
     MessageView::Type type = mv.type();
-    if (type != MessageView::System && type != MessageView::Status && !mv.isSpooled() && !isActiveTab() && mv.carbonDirection() != Message::Sent) {
+    if (type != MessageView::System && type != MessageView::Status && !mv.isSpooled() && !isActiveTab() && !mv.isLocal()) {
         ++pending_;
         invalidateTab();
         if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {

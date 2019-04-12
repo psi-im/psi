@@ -342,7 +342,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
          (d->popupType != PopupManager::AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
     {
         if ((event && event->type() == PsiEvent::Message) && (PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.showMessage").toBool())) {
-            const Message *jmessage = &event.staticCast<MessageEvent>()->message();
+            const Message *jmessage = &event.staticCast<MessageEvent>()->message().displayMessage();
             QString message;
 
             if ( !jmessage->subject().isEmpty() )

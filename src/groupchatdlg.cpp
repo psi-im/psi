@@ -1970,22 +1970,23 @@ void GCMainDlg::avatarUpdated(const Jid &jid_)
 void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 {
     Message m = _m;
-    QString from = m.from().resource();
+    const Message dm = m.displayMessage();
+    QString from = dm.from().resource();
     d->alert = false;
 
-    if (m.getMUCStatuses().contains(100)) {
+    if (dm.getMUCStatuses().contains(100)) {
         d->nonAnonymous = true;
     }
-    if (m.getMUCStatuses().contains(172)) {
+    if (dm.getMUCStatuses().contains(172)) {
         d->nonAnonymous = true;
     }
-    if (m.getMUCStatuses().contains(173)) {
+    if (dm.getMUCStatuses().contains(173)) {
         d->nonAnonymous = false;
     }
-    if (m.getMUCStatuses().contains(174)) {
+    if (dm.getMUCStatuses().contains(174)) {
         d->nonAnonymous = false;
     }
-    if (m.getMUCStatuses().contains(104)) {
+    if (dm.getMUCStatuses().contains(104)) {
         // new MUC vcard available
         if (!d->gcSelfPresenceSupported) {
             // we had to handle avatar hash from presence already
@@ -1996,9 +1997,9 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     PsiOptions *options = PsiOptions::instance();
 
     QString topic;
-    if (!m.subjectMap().isEmpty()) {
+    if (!dm.subjectMap().isEmpty()) {
         d->subjectMap.clear();
-        auto sm = m.subjectMap();
+        auto sm = dm.subjectMap();
         for (auto l = sm.constBegin(); l != sm.constEnd(); ++l) {
             d->subjectMap.insert(LanguageManager::fromString(l.key()), l.value());
         }
@@ -2019,14 +2020,14 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         if (from.isEmpty()) {
             // The topic was set by the server
             // ugly trick
-            int btStart = m.body().indexOf(topic);
-            sysMsg = btStart > 0?m.body().left(btStart).remove(": "):tr("The topic has been set to");
+            int btStart = dm.body().indexOf(topic);
+            sysMsg = btStart > 0?dm.body().left(btStart).remove(": "):tr("The topic has been set to");
         } else {
             sysMsg = QString(from) + (topic.isEmpty()?
                          tr(" has unset the topic"):tr(" has set the topic to"));
         }
         MessageView tv = MessageView::subjectMessage(topic, sysMsg);
-        tv.setDateTime(m.timeStamp());
+        tv.setDateTime(dm.timeStamp());
 
 
         ui_.le_topic->setText(topic.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
@@ -2037,20 +2038,20 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    if(m.body().isEmpty())
+    if(dm.body().isEmpty())
         return;
 
     // code to determine if the speaker was addressing this client in chat
-    if(m.body().contains(d->self))
+    if(dm.body().contains(d->self))
         d->alert = true;
 
-    if (m.body().left(d->self.length()) == d->self)
-        d->lastReferrer = m.from().resource();
+    if (dm.body().left(d->self.length()) == d->self)
+        d->lastReferrer = dm.from().resource();
 
     if(options->getOption("options.ui.muc.use-highlighting").toBool()) {
         QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
         foreach (QString word, highlightWords) {
-            if(m.body().contains((word), Qt::CaseInsensitive)) {
+            if(dm.body().contains((word), Qt::CaseInsensitive)) {
                 d->alert = true;
             }
         }
@@ -2058,26 +2059,26 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
     // play sound?
     if(from == d->self) {
-        if(!m.spooled())
+        if(!dm.spooled())
             account()->playSound(PsiAccount::eSend);
     }
     else {
-        if(d->alert || (options->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
+        if(d->alert || (options->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !dm.spooled() && !from.isEmpty()) )
             account()->playSound(PsiAccount::eGroupChat);
 
-        if(d->alert || (options->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) ) {
-            if (!m.spooled() && !isActiveTab() && !m.from().resource().isEmpty()) {
-                XMPP::Jid jid = m.from()/*.withDomain("")*/;
+        if(d->alert || (options->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !dm.spooled() && !from.isEmpty()) ) {
+            if (!dm.spooled() && !isActiveTab() && !dm.from().resource().isEmpty()) {
+                XMPP::Jid jid = dm.from()/*.withDomain("")*/;
                 UserListItem i;
                 i.setPrivate(true);
-                account()->psi()->popupManager()->doPopup(account(), PopupManager::AlertGcHighlight, jid, m.from().resource(), &i, e);
+                account()->psi()->popupManager()->doPopup(account(), PopupManager::AlertGcHighlight, jid, dm.from().resource(), &i, e);
             }
         }
     }
 
     if(from.isEmpty()) {
-        auto mv = MessageView::systemMessage(m.body());
-        mv.setDateTime(m.timeStamp());
+        auto mv = MessageView::systemMessage(dm.body());
+        mv.setDateTime(dm.timeStamp());
         dispatchMessage(mv);
     } else
         appendMessage(m, d->alert);
@@ -2136,23 +2137,24 @@ void GCMainDlg::dispatchMessage(const MessageView &mv)
 
 void GCMainDlg::appendMessage(const Message &m, bool alert)
 {
+    const Message &dm = m.displayMessage();
     MessageView mv(MessageView::Message);
-    if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool() &&
-                    !m.html().text().isEmpty()) {
-        mv.setHtml(m.html().toString("span"));
+    if (dm.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool() &&
+            !dm.html().text().isEmpty()) {
+        mv.setHtml(dm.html().toString("span"));
     } else {
-        mv.setPlainText(m.body());
+        mv.setPlainText(dm.body());
     }
     if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
         alert=false;
-    mv.setMessageId(m.id());
+    mv.setMessageId(dm.id());
     mv.setAlert(alert);
-    mv.setUserId(m.from().full()); // theoretically, this can be inferred from the chat dialog properties
-    mv.setNick(m.from().resource());
+    mv.setUserId(dm.from().full()); // theoretically, this can be inferred from the chat dialog properties
+    mv.setNick(dm.from().resource());
     mv.setLocal(mv.nick() == d->self);
-    mv.setSpooled(m.spooled());
-    mv.setDateTime(m.timeStamp());
-    mv.setReplaceId(m.replaceId());
+    mv.setSpooled(dm.spooled());
+    mv.setDateTime(dm.timeStamp());
+    mv.setReplaceId(dm.replaceId());
 
     dispatchMessage(mv);
 
@@ -2175,7 +2177,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
         d->keepOpen = true;
         QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
                 }*/
-    emit messageAppended(m.body(), ui_.log->textWidget());
+    emit messageAppended(dm.body(), ui_.log->textWidget());
 }
 
 void GCMainDlg::doAlert()

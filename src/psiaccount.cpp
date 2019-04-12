@@ -55,6 +55,7 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_caps.h"
 #include "xmpp_captcha.h"
+#include "xmpp_carbons.h"
 #include "xmpp_serverinfomanager.h"
 #include "httpfileupload.h"
 #include "s5b.h"
@@ -2386,9 +2387,7 @@ void PsiAccount::serverFeaturesChanged()
     }
 
     if (d->client->serverInfoManager()->canMessageCarbons()) {
-        JT_MessageCarbons *j = new JT_MessageCarbons(d->client->rootTask());
-        j->enable();
-        j->go(true);
+        d->client->carbonsManager()->setEnabled(true);
     }
 
     if (d->client->serverInfoManager()->features().hasVCard() && !d->vcardChecked) {
@@ -2735,35 +2734,44 @@ void PsiAccount::client_presenceError(const Jid &j, int, const QString &str)
 
 void PsiAccount::client_messageReceived(const Message &m)
 {
-    //check if it's a server message without a from, and set the from appropriately
     Message _m(m);
-    if (_m.from().isEmpty()) {
-        _m.setFrom(jid().domain());
+    Message &dm = _m.displayMessage();
+
+    //check if it's a server message without a from, and set the from appropriately
+    if (dm.from().isEmpty()) {
+        dm.setFrom(jid().domain());
+    }
+
+    // if there is no timestamp in the message, forwarded timestamp will be used
+    if (_m.forwarded().isCarbons() && !dm.spooled()) {
+        QDateTime ts = _m.forwarded().timeStamp();
+        if (ts.isValid())
+            dm.setTimeStamp(ts);
     }
 
     // if the sender is already in the queue, then queue this message also
-    foreach (Message mi, d->messageQueue) {
-        if (mi.from().compare(_m.from())) {
+    foreach (const Message &mi, d->messageQueue) {
+        if (mi.displayJid().compare(dm.displayJid())) {
             d->messageQueue.append(_m);
             return;
         }
     }
 
     // check to see if message was forwarded from another resource
-    if (jid().compare(_m.from(), false)) {
-        AddressList oFrom = _m.findAddresses(Address::OriginalFrom);
-        AddressList oTo = _m.findAddresses(Address::OriginalTo);
+    if (jid().compare(dm.from(), false)) {
+        AddressList oFrom = dm.findAddresses(Address::OriginalFrom);
+        AddressList oTo = dm.findAddresses(Address::OriginalTo);
         if ((oFrom.count() > 0) && (oTo.count() > 0)) {
             // might want to store current values in MessageEvent object
             // replace out the from and to addresses with the original addresses
-            _m.setFrom(oFrom[0].jid());
-            _m.setTo(oTo[0].jid());
+            dm.setFrom(oFrom.at(0).jid());
+            dm.setTo(oTo.at(0).jid());
         }
     }
 
 #ifdef HAVE_PGPUTIL
     // encrypted message?
-    if (PGPUtil::instance().pgpAvailable() && !_m.xencrypted().isEmpty()) {
+    if (PGPUtil::instance().pgpAvailable() && !dm.xencrypted().isEmpty()) {
         d->messageQueue.append(_m);
         processMessageQueue();
         return;
@@ -2796,33 +2804,38 @@ void PsiAccount::wbRequest(const Jid &j, int id)
  */
 void PsiAccount::processIncomingMessage(const Message &_m)
 {
+    bool selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
+    const Message &dm = _m.displayMessage();
     // skip empty messages, but not if the message contains a data form
-    if (_m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty() &&
-            !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isNull() &&
-            _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty() &&
-            _m.getForm().fields().empty() && _m.messageReceipt() == ReceiptNone &&
-            _m.getMUCStatuses().isEmpty())
+    if(dm.body().isEmpty() && dm.urlList().isEmpty() && dm.invite().isEmpty() &&
+            !dm.containsEvents() && dm.chatState() == StateNone && dm.subject().isNull() &&
+            dm.rosterExchangeItems().isEmpty() && dm.mucInvites().isEmpty() &&
+            dm.getForm().fields().empty() && dm.messageReceipt() == ReceiptNone &&
+            dm.getMUCStatuses().isEmpty())
         return;
 
     // skip headlines?
-    if (_m.type() == "headline"
+    if (dm.type() == "headline"
             && PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool())
         return;
 
-    if (_m.getForm().registrarType() == "urn:xmpp:captcha") {
-        CaptchaChallenge challenge(_m);
+    if (dm.getForm().registrarType() == "urn:xmpp:captcha") {
+        CaptchaChallenge challenge(dm);
         if (challenge.isValid()) {
+            if (selfMessage) {
+                return;
+            }
             QWidget *pw = nullptr;
             MUCJoinDlg *joinDlg = nullptr;
-            if (_m.from().resource().isEmpty()) {
-                pw = findDialog<GCMainDlg *>(_m.from());
+            if (dm.from().resource().isEmpty()) {
+                pw = findDialog<GCMainDlg *>(dm.from());
                 if (!pw) {
-                    joinDlg = findDialog<MUCJoinDlg *>(_m.from());
+                    joinDlg = findDialog<MUCJoinDlg *>(dm.from());
                     pw = joinDlg;
                 }
             }
             if (!pw) {
-                pw = findChatDialog(_m.from());
+                pw = findChatDialog(dm.from());
             }
             // it's possible there is no any related dialog. like registration form?
             CaptchaDlg *dlg = new CaptchaDlg(pw, challenge, this);
@@ -2836,7 +2849,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     }
 
 #ifdef GROUPCHAT
-    if (_m.type() == "groupchat") {
+    if (dm.type() == "groupchat") {
         MessageEvent::Ptr me(new MessageEvent(_m, this));
         me->setOriginLocal(false);
         handleEvent(me, IncomingStanza);
@@ -2844,22 +2857,27 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     }
 #endif
 
-    UserListItem *u = findFirstRelevant(_m.from());
-    if (u) {
-        if (_m.type() == "chat") u->setLastMessageType(1);
-        else u->setLastMessageType(0);
+    Jid dj = _m.displayJid();
+    QList<UserListItem*> ul;
+    if (!selfMessage) {
+        ul = findRelevant(dj);
+        if (!ul.isEmpty()) {
+            if (dm.type() == QLatin1String("chat"))
+                ul.first()->setLastMessageType(1);
+            else
+                ul.first()->setLastMessageType(0);
+        }
     }
 
     Message m = _m;
+    Message &dm2 = m.displayMessage();
 
     // smartchat: try to match up the incoming event to an existing chat
     // (prior to 0.9, m.from() always contained a resource)
-    Jid j;
     ChatDlg *c;
-    QList<UserListItem *> ul = findRelevant(m.from());
 
     // ignore events from non-roster JIDs?
-    if (ul.isEmpty()
+    if (!selfMessage && ul.isEmpty()
             && PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool()) {
         if (PsiOptions::instance()->getOption("options.messages.exclude-muc-from-ignore").toBool()) {
 #ifdef GROUPCHAT
@@ -2874,56 +2892,56 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     }
 
     if (ul.isEmpty())
-        j = m.from().bare();
+        dj = dj.bare();
     else
-        j = ul.first()->jid();
+        dj = ul.first()->jid();
 
     /*c = findChatDialog(j);
     if(!c)
         c = findChatDialog(m.from().full());*/
 
-    if (m.type() == "error") {
-        Stanza::Error err = m.error();
+    if (dm2.type() == "error") {
+        Stanza::Error err = dm2.error();
         QPair<QString, QString> desc = err.description();
         QString msg = desc.first + ".\n" + desc.second;
         if (!err.text.isEmpty())
             msg += "\n" + err.text;
 
-        m.setBody(msg + "\n------\n" + m.body());
+        dm2.setBody(msg + "\n------\n" + dm2.body());
     } else {
         // only toggle if not an invite or body is not empty
         if (_m.invite().isEmpty() && !_m.body().isEmpty() && _m.mucInvites().isEmpty()
                 && _m.rosterExchangeItems().isEmpty())
-            toggleSecurity(_m.from(), _m.wasEncrypted());
+            toggleSecurity(dj, _m.wasEncrypted());
 
         // Roster item exchange
-        if (!_m.rosterExchangeItems().isEmpty()) {
-            RosterExchangeEvent::Ptr ree(new RosterExchangeEvent(j, _m.rosterExchangeItems(), _m.body(), this));
+        if (!_m.forwarded().isCarbons() && !_m.rosterExchangeItems().isEmpty()) {
+            RosterExchangeEvent::Ptr ree(new RosterExchangeEvent(dj ,_m.rosterExchangeItems(), _m.body(), this));
             handleEvent(ree, IncomingStanza);
             return;
         }
 
         // change the type?
-        if (m.type() != "headline" && m.invite().isEmpty() && m.mucInvites().isEmpty()) {
+        if (dm2.type() != "headline" && dm2.invite().isEmpty() && dm2.mucInvites().isEmpty()) {
             const QString type =
                 PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString();
             if (type == "message")
-                m.setType("");
+                dm2.setType("");
             else if (type == "chat")
-                m.setType("chat");
+                dm2.setType("chat");
             else if (type == "current-open") {
                 c = nullptr;
-                foreach (ChatDlg *cl, findChatDialogs(m.from(), false)) {
+                foreach (ChatDlg *cl, findChatDialogs(dj, false)) {
                     if (cl->autoSelectContact() || cl->jid().resource().isEmpty()
-                            || m.from().resource() == cl->jid().resource()) {
+                            || dj.resource() == cl->jid().resource()) {
                         c = cl;
                         break;
                     }
                 }
                 if (c != nullptr && !c->isHidden())
-                    m.setType("chat");
+                    dm2.setType("chat");
                 else
-                    m.setType("");
+                    dm2.setType("");
             }
         }
 
@@ -2931,17 +2949,28 @@ void PsiAccount::processIncomingMessage(const Message &_m)
         //if(m.type() == "chat" && (!m.urlList().isEmpty() || !m.subject().isEmpty()))
         //    m.setType("");
 
-        if ( m.messageReceipt() == ReceiptRequest && !m.id().isEmpty() &&
-                PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()) {
-            UserListItem *u;
-            if (j.compare(d->self.jid(), false) || groupchats().contains(j.bare())
-                    || (!d->loginStatus.isInvisible() && (u = d->userList.find(j))
-                        && (u->subscription().type() == Subscription::To
-                            || u->subscription().type() == Subscription::Both))) {
-                Message tm(m.from());
-                tm.setMessageReceiptId(m.id());
-                tm.setMessageReceipt(ReceiptReceived);
-                dj_sendMessage(tm, false);
+        if (dm2.messageReceipt() == ReceiptRequest) {
+            QString id;
+            switch (m.forwarded().type()) {
+            case Forwarding::ForwardedNone:
+            case Forwarding::ForwardedMessage:
+            case Forwarding::ForwardedCarbonsReceived:
+                id = dm2.id();
+                break;
+            default:
+                break;
+            }
+            if (!id.isEmpty() && PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()) {
+                UserListItem *u;
+                if (dj.compare(d->self.jid(), false) || groupchats().contains(dj.bare())
+                        || (!d->loginStatus.isInvisible() && (u = d->userList.find(dj))
+                            && (u->subscription().type() == Subscription::To
+                                || u->subscription().type() == Subscription::Both))) {
+                    Message tm(dm2.from());
+                    tm.setMessageReceiptId(id);
+                    tm.setMessageReceipt(ReceiptReceived);
+                    dj_sendMessage(tm, false);
+                }
             }
         }
     }
@@ -5087,34 +5116,22 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         return;
     }
 
+    MessageEvent::Ptr me = nullptr;
+    if (e->type() == PsiEvent::Message)
+        me = e.staticCast<MessageEvent>();
+
     if (activationType != FromXml) {
         if (e->type() == PsiEvent::Message ||
                 e->type() == PsiEvent::Auth
            ) {
-            bool found = false;
-
-            // don't log private messages
-            if (!found &&
-                    !(e->type() == PsiEvent::Message &&
-                      e.staticCast<MessageEvent>()->message().body().isEmpty())) {
+            if (!me || !me->message().displayMessage().body().isEmpty()) {
                 bool isMuc = false;
 #ifdef GROUPCHAT
-                if (e->type() == PsiEvent::Message) {
-                    MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-                    if (me->message().type() == "groupchat")
-                        isMuc = true;
-                }
+                if (me && me->message().displayMessage().type() == QLatin1String("groupchat"))
+                    isMuc = true;
 #endif
                 if (!isMuc) {
-                    Jid    chatJid = e->from();
-                    if (e->type() == PsiEvent::Message) {
-                        MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-                        const Message &m = me->message();
-                        if (m.carbonDirection() == Message::Sent) {
-                            chatJid = m.to();
-                        }
-                    }
-
+                    Jid chatJid = e->from();
                     int type = findGCContact(chatJid) ? EDB::GroupChatContact : EDB::Contact;
                     logEvent(chatJid, e, type);
                 }
@@ -5122,21 +5139,24 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         }
     }
 
-    if (e->type() == PsiEvent::Message) {
-        MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+    if (me) {
         const Message &m = me->message();
+        const Message &dm = m.displayMessage();
+        bool selfMessage = m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
 
 #ifdef PSI_PLUGINS
         //TODO(mck): clean up
         //UserListItem *ulItem=nullptr;
         //if ( !ul.isEmpty() )
         //    ulItem=ul.first();
-        if (PluginManager::instance()->processMessage(this, e->from().full(), m.body(), m.subject())) {
-            return;
+        if (!selfMessage) {
+            if (PluginManager::instance()->processMessage(this, e->from().full(), dm.body(), dm.subject())) {
+                return;
+            }
+            //PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
         }
-        //PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
 #endif
-        if (m.messageReceipt() == ReceiptReceived) {
+        if (dm.messageReceipt() == ReceiptReceived) {
             if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
                 foreach (ChatDlg *c, findChatDialogs(e->from(), false)) {
                     if (c->autoSelectContact() || c->jid().resource().isEmpty()
@@ -5149,9 +5169,9 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         }
 
         // Pass message events to chat window
-        if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()
-                && m.type() != "groupchat") {
-            if (m.carbonDirection() == Message::Sent) {
+        if ((dm.containsEvents() || dm.chatState() != StateNone) && dm.body().isEmpty()
+                && dm.type() != "groupchat") {
+            if (selfMessage) {
                 return; // ignore own composing for carbon. TODO should we?
             }
             if (o->getOption("options.messages.send-composing-events").toBool()) {
@@ -5161,7 +5181,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
                     c->incomingMessage(m);
                 }
             }
-            if (m.chatState() == StateComposing) {
+            if (dm.chatState() == StateComposing) {
                 doPopup = true;
                 putToQueue = false;
                 popupType = PopupManager::AlertComposing;
@@ -5171,19 +5191,17 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         }
 
         // pass chat messages directly to a chat window if possible (and deal with sound)
-        else if (m.type() == "chat") {
-            Jid    chatJid = m.carbonDirection() == Message::Sent ? m.to() : m.from();
-
-            if (m.carbonDirection() == Message::Sent) {
+        else if(dm.type() == "chat") {
+            Jid chatJid = m.displayJid();
+            if (selfMessage)
                 e->setOriginLocal(true);
-                doPopup = false;
-            }
+
             // throw away carbons sent for MUC private messages
             // server sends them to all resources so we have to explicitly skip them or we'll have a lot of duplicates
-            if (m.carbonDirection() == Message::Received && m.hasMUCUser()) {
+            if (m.forwarded().type() == Forwarding::ForwardedCarbonsReceived && m.hasMUCUser()) {
                 return;
             }
-            ChatDlg *c = findChatDialogEx(chatJid, m.carbonDirection() == Message::Sent);
+            ChatDlg *c = findChatDialogEx(chatJid, selfMessage);
             if (c && c->jid().resource().isEmpty())
                 c->setJid(chatJid);
 
@@ -5192,7 +5210,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
             if ( c && ( d->tabManager->isChatTabbed(c) || !c->isHidden() ) ) {
                 c->incomingMessage(m);
                 soundType = eChat2;
-                if (m.carbonDirection() != Message::Sent &&
+                if (selfMessage &&
                         ((o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab())
                          || (c->isTabbed() && c->getManagingTabDlg()->isHidden()))) {
 
@@ -5206,32 +5224,32 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
                 soundType = firstChat ? eChat1 : eChat2;
             }
 
-            if (putToQueue && m.carbonDirection() != Message::Sent) {
+            if (putToQueue && !selfMessage) {
                 doPopup = true;
                 popupType = PopupManager::AlertChat;
             }
         } // /chat
-        else if (m.type() == "headline") {
+        else if (dm.type() == "headline") {
             soundType = eHeadline;
             doPopup = true;
             popupType = PopupManager::AlertHeadline;
         } // /headline
 #ifdef GROUPCHAT
-        else if (m.type() == "groupchat") {
+        else if (dm.type() == "groupchat") {
             putToQueue = false;
             bool allowMucEvents = o->getOption("options.ui.muc.allow-highlight-events").toBool();
             if (activationType != FromXml) {
                 GCMainDlg *c = findDialog<GCMainDlg *>(e->from());
                 if (c) {
                     c->message(m, e);
-                    if (!c->isActiveTab() && c->isLastMessageAlert() && !m.spooled() && allowMucEvents)
+                    if (!c->isActiveTab() && c->isLastMessageAlert() && !dm.spooled() && allowMucEvents)
                         putToQueue = true;
                 }
             } else if (allowMucEvents)
                 putToQueue = true;
         } // /groupchat
 #endif
-        else if (m.type().isEmpty()) {
+        else if (dm.type().isEmpty()) {
             soundType = eMessage;
             doPopup = true;
             popupType = PopupManager::AlertMessage;
@@ -5240,12 +5258,12 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
             soundType = eSystem;
         }
 
-        if (m.carbonDirection() == Message::Sent) {
+        if (selfMessage) {
             doPopup = false;
             soundType = eNone;
             putToQueue = false;
         }
-        if (m.type() == "error") {
+        if (dm.type() == "error") {
             // FIXME: handle message errors
             //msg.text = QString(tr("<big>[Error Message]</big><br>%1").arg(plain2rich(msg.text)));
         }
@@ -5433,7 +5451,7 @@ void PsiAccount::queueEvent(const PsiEvent::Ptr &e, ActivationType activationTyp
             nick = ae->nick();
         } else if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            if (me->message().type()  != "error")
+            if (me->message().displayMessage().type() != QLatin1String("error"))
                 nick = me->nick();
         }
 
@@ -5462,10 +5480,10 @@ void PsiAccount::queueEvent(const PsiEvent::Ptr &e, ActivationType activationTyp
         // Check to see if we need to popup
         if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            const Message &m = me->message();
-            if (m.type() == "chat")
+            const Message &dm = me->message().displayMessage();
+            if (dm.type() == "chat")
                 doPopup = PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool();
-            else if (m.type() == "headline")
+            else if (dm.type() == "headline")
                 doPopup = PsiOptions::instance()->getOption("options.ui.message.auto-popup-headlines").toBool();
             else
                 doPopup = PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool();
@@ -5540,6 +5558,8 @@ int PsiAccount::forwardPendingEvents(const Jid &jid)
     foreach (const PsiEvent::Ptr &e, chatList) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         Message m = me->message();
+        if (m.forwarded().isCarbons())
+            continue;
 
         AddressList oFrom = m.findAddresses(Address::OriginalFrom);
         AddressList oTo = m.findAddresses(Address::OriginalTo);
@@ -5609,11 +5629,11 @@ void PsiAccount::processReadNext(const UserListItem &u)
 #endif
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &m = me->message();
-        if (m.type() == "chat" && m.getForm().fields().empty())
+        const Message &dm = me->message().displayMessage();
+        if (dm.type() == QLatin1String("chat") && dm.getForm().fields().empty())
             isChat = true;
 #ifdef GROUPCHAT
-        else if (m.type() == "groupchat")
+        else if (dm.type() == QLatin1String("groupchat"))
             isMuc = true;
 #endif
     }
@@ -5673,11 +5693,9 @@ void PsiAccount::processChatsHelper(const Jid &j, bool removeEvents)
         foreach (const PsiEvent::Ptr &e, chatList) {
             if (e->type() == PsiEvent::Message) {
                 MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-                const Message &m = me->message();
-
                 // process the message
                 if (!me->sentToChatWindow()) {
-                    c->incomingMessage(m);
+                    c->incomingMessage(me->message());
                     me->setSentToChatWindow(true);
                 }
             }
@@ -6292,7 +6310,7 @@ void PsiAccount::processEncryptedMessage(const Message &m)
     connect(t, SIGNAL(finished()), SLOT(pgp_decryptFinished()));
     t->setFormat(QCA::SecureMessage::Ascii);
     t->startDecrypt();
-    t->update(PGPUtil::instance().addHeaderFooter(m.xencrypted(), 0).toUtf8());
+    t->update(PGPUtil::instance().addHeaderFooter(m.displayMessage().xencrypted(), 0).toUtf8());
     t->end();
 #endif
 }
@@ -6300,22 +6318,24 @@ void PsiAccount::processEncryptedMessage(const Message &m)
 
 void PsiAccount::pgp_decryptFinished()
 {
-    PGPTransaction *pt = (PGPTransaction *) sender();
+    PGPTransaction *pt = static_cast<PGPTransaction *>(sender());
     bool tryAgain = false;
     if (pt->success()) {
         Message m = pt->message();
-        m.setBody(QString::fromUtf8(pt->read()));
-        m.setXEncrypted("");
-        m.setWasEncrypted(true);
+        Message &dm = m.displayMessage();
+        dm.setBody(QString::fromUtf8(pt->read()));
+        dm.setXEncrypted(QString::null);
+        dm.setWasEncrypted(true);
         processIncomingMessage(m);
     } else {
-        if (loggedIn()) {
+        if (loggedIn() && pt->message().forwarded().type() != Forwarding::ForwardedCarbonsSent) {
             Message m;
-            m.setTo(pt->message().from());
+            Message &dm = m.displayMessage();
+            m.setTo(pt->message().displayJid());
             m.setType("error");
-            if (!pt->message().id().isEmpty())
-                m.setId(pt->message().id());
-            m.setBody(pt->message().body());
+            if (!dm.id().isEmpty())
+                m.setId(dm.id());
+            m.setBody(dm.body());
 
             m.setError(Stanza::Error(Stanza::Error::Modify,
                                      Stanza::Error::NotAcceptable,
@@ -6340,7 +6360,7 @@ void PsiAccount::processMessageQueue()
 
 #ifdef HAVE_PGPUTIL
         // encrypted?
-        if (PGPUtil::instance().pgpAvailable() && !mp.xencrypted().isEmpty()) {
+        if (PGPUtil::instance().pgpAvailable() && !mp.displayMessage().xencrypted().isEmpty()) {
             processEncryptedMessageNext();
             break;
         }

@@ -31,8 +31,7 @@ MessageView::MessageView(Type t) :
     _flags(nullptr),
     _status(0),
     _statusPriority(0),
-    _dateTime(QDateTime::currentDateTime()),
-    _carbon(XMPP::Message::NoCarbon)
+    _dateTime(QDateTime::currentDateTime())
 {
 }
 

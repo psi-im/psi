@@ -261,10 +261,10 @@ int MessageEvent::type() const
 Jid MessageEvent::from() const
 {
 #ifdef GROUPCHAT
-    if (v_m.type() == "groupchat")
-        return v_m.from().bare();
+    if (v_m.displayMessage().type() == "groupchat")
+        return v_m.displayJid().bare();
 #endif
-    return v_m.carbonDirection() == XMPP::Message::Sent ? v_m.to() : v_m.from();
+    return v_m.displayJid();
 }
 
 void MessageEvent::setFrom(const Jid &j)
@@ -274,12 +274,7 @@ void MessageEvent::setFrom(const Jid &j)
 
 const QString& MessageEvent::nick() const
 {
-    return v_m.nick();
-}
-
-void MessageEvent::setNick(const QString &nick)
-{
-    v_m.setNick(nick);
+    return v_m.displayMessage().nick();
 }
 
 bool MessageEvent::sentToChatWindow() const
@@ -340,9 +335,9 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
 
 int MessageEvent::priority() const
 {
-    if ( v_m.type() == "headline" )
+    if (v_m.displayMessage().type() == QLatin1String("headline"))
         return eventPriorityHeadline;
-    else if ( v_m.type() == "chat" )
+    else if (v_m.displayMessage().type() == QLatin1String("chat"))
         return eventPriorityChat;
 
     return eventPriorityMessage;
@@ -351,11 +346,12 @@ int MessageEvent::priority() const
 QString MessageEvent::description() const
 {
     QStringList result;
-    if (!v_m.subject().isEmpty())
-        result << v_m.subject();
-    if (!v_m.body().isEmpty())
-        result << v_m.body();
-    foreach(Url url, v_m.urlList()) {
+    const class Message &d_m = v_m.displayMessage();
+    if (!d_m.subject().isEmpty())
+        result << d_m.subject();
+    if (!d_m.body().isEmpty())
+        result << d_m.body();
+    foreach (const Url &url, d_m.urlList()) {
         QString text = url.url();
         if (!url.desc().isEmpty())
             text += QString("(%1)").arg(url.desc());
@@ -995,7 +991,7 @@ PsiEvent::Ptr EventQueue::peekFirstChat(const Jid &j, bool compareRes) const
         PsiEvent::Ptr e = i->event();
         if(e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            if(j.compare(me->from(), compareRes) && me->message().type() == "chat")
+            if (j.compare(me->from(), compareRes) && me->message().displayMessage().type() == QLatin1String("chat"))
                 return e;
         }
     }
@@ -1018,7 +1014,7 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
         bool extract = false;
         if(e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            if(j.compare(me->from(), compareRes) && me->message().type() == "chat") { // FIXME: refactor-refactor-refactor
+            if(j.compare(me->from(), compareRes) && me->message().displayMessage().type() == QLatin1String("chat")) { // FIXME: refactor-refactor-refactor
                 extract = true;
             }
         }
