@@ -46,6 +46,11 @@ Currently the development model looks like this:
 * Psi IM [plugins](https://github.com/psi-im/plugins) are developed separately. Plugin API in `master` branches of [psi](https://github.com/psi-im/psi) and [plugin](https://github.com/psi-im/plugins) repos should be in sync.
 * All [translations](https://github.com/psi-plus/psi-plus-l10n) are prepared for `master` branch of Psi+ and are (semi-automatically) [adapted](https://github.com/psi-im/psi-l10n) for Psi.
 
+All changes are tested on Continuous Integration services:
+
+* Travis CI: [psi](https://travis-ci.org/psi-im/psi), [plugins](https://travis-ci.org/psi-im/plugins), [psi-plus](https://travis-ci.org/psi-plus/psi-plus-snapshots).
+* Sibuserv CI: [psi](https://sibuserv-ci.org/projects/psi), [plugins](https://sibuserv-ci.org/projects/psi-plugins), [psi-plus](https://sibuserv-ci.org/projects/psi-plus-snapshots), [psimedia](https://sibuserv-ci.org/projects/psimedia), [qconf](https://sibuserv-ci.org/projects/qconf).
+
 ## Developers
 
 ### Lead developers
