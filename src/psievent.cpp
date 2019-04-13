@@ -272,7 +272,7 @@ void MessageEvent::setFrom(const Jid &j)
     v_m.setFrom(j);
 }
 
-const QString& MessageEvent::nick() const
+QString MessageEvent::nick() const
 {
     return v_m.nick();
 }

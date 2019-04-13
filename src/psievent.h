@@ -148,7 +148,7 @@ public:
     XMPP::Jid from() const;
     void setFrom(const XMPP::Jid &j);
 
-    const QString& nick() const;
+    QString nick() const;
     void setNick(const QString&);
 
     bool sentToChatWindow() const;
