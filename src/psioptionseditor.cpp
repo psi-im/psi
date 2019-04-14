@@ -121,7 +121,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     filterLe->setToolTip(tr("Options filter"));
     layout->addWidget(filterLe);
     connect(filterLe, &QLineEdit::textChanged, this, [this, filterLe](){
-        tpm_->setFilterRegularExpression(filterLe->text());
+        tpm_->setFilterWildcard(filterLe->text());
     });
 
     tv_ = new QTreeView(this);
