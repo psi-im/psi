@@ -111,7 +111,6 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     tm_ = new OptionsTreeModel(o_, this);
     tpm_ = new QSortFilterProxyModel(this);
     tpm_->setSourceModel(tm_);
-    tpm_->setRecursiveFilteringEnabled(true);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setSpacing(0);
