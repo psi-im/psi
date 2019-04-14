@@ -168,7 +168,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     connect(cb_, &QCheckBox::toggled, tm_, [this, filterLe](bool b){
         if (tm_->setFlat(b)) {
             if (!b) {
-                tpm_->setFilterRegularExpression(QString());
+                tpm_->setFilterWildcard(QString());
             }
             filterLe->setVisible(b);
         }
