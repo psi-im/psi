@@ -93,6 +93,8 @@ if(ENABLE_WEBKIT)
                 -DWEBENGINE=1
             )
             message(STATUS "QtWebEngine - enabled")
+        elseif(USE_WEBENGINE)
+            message(FATAL_ERROR "USE_WEBENGINE flag is enabled but Qt5WebEngine package not found!")
         else()
             set( USE_WEBENGINE OFF )
         endif()
