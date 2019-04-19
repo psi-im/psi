@@ -50,9 +50,9 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ "${ENABLE_WEBENGINE}" = "OFF" ] && \
-     CHAT_TYPE="basic" || \
-     CHAT_TYPE="webengine"
+[ "${ENABLE_WEBENGINE}" = "ON" ] && \
+     CHAT_TYPE="webengine" || \
+     CHAT_TYPE="basic"
 
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
