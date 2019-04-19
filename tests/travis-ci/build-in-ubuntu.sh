@@ -17,7 +17,7 @@ LDFLAGS="$(dpkg-buildflags --get LDFLAGS) -Wl,--as-needed"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ "${ENABLE_WEBKIT}" = "true" ] && \
+[ "${ENABLE_WEBKIT}" = "OFF" ] && \
     CHAT_TYPE="basic" || \
     CHAT_TYPE="webkit"
 

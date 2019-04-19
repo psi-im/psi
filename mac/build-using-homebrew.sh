@@ -50,7 +50,7 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ -z "${ENABLE_WEBENGINE}" ] && \
+[ "${ENABLE_WEBENGINE}" = "OFF" ] && \
      CHAT_TYPE="basic" || \
      CHAT_TYPE="webengine"
 
