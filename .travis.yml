@@ -8,16 +8,16 @@ os:
   - osx
 
 env:
-  - TARGET=linux64 ENABLE_WEBENGINE=OFF
-  - TARGET=linux64 ENABLE_WEBENGINE=ON
+  - TARGET=linux64 ENABLE_WEBKIT=OFF
+  - TARGET=linux64 ENABLE_WEBKIT=ON
   - TARGET=macos64 ENABLE_WEBENGINE=OFF
   - TARGET=macos64 ENABLE_WEBENGINE=ON
 
 matrix:
   exclude:
-    - env: TARGET=linux64 ENABLE_WEBENGINE=OFF
+    - env: TARGET=linux64 ENABLE_WEBKIT=OFF
       os: osx
-    - env: TARGET=linux64 ENABLE_WEBENGINE=ON
+    - env: TARGET=linux64 ENABLE_WEBKIT=ON
       os: osx
     - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
       os: linux
