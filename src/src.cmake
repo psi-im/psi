@@ -470,8 +470,8 @@ list(APPEND SOURCES
     historyimp.cpp
     )
 
-if(ENABLE_WEBKIT)
-    if(USE_WEBENGINE)
+if(IS_WEBKIT OR IS_WEBENGINE)
+    if(IS_WEBENGINE)
         list(APPEND SOURCES
             themeserver.cpp
         )
