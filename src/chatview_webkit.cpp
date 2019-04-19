@@ -193,10 +193,9 @@ public:
     { emit localUserImageChanged(hash.isEmpty()? hash : avatarUrl(hash)); }
 
 public slots:
-    QString mucNickColor(QString nick, bool isSelf,
-                         QStringList validList = QStringList()) const
+    QString mucNickColor(QString nick, bool isSelf) const
     {
-        return _view->getMucNickColor(nick, isSelf, validList);
+        return _view->getMucNickColor(nick, isSelf);
     }
 
     void signalInited()
