@@ -140,14 +140,16 @@ QVariant VariantTree::getValue(const QString& node) const
     QString key,subnode;
     if (getKeyRest(node, key, subnode)) {
         //not this tier
-        if (trees_.contains(key))
+        auto it = trees_.constFind(key);
+        if (it != trees_.constEnd())
         {
-            return trees_[key]->getValue(subnode);
+            return it.value()->getValue(subnode);
         }
     } else {
         //this tier
-        if (values_.contains(node))
-            return values_[node];
+        auto it = values_.constFind(node);
+        if (it != values_.constEnd())
+            return it.value();
     }
     return missingValue;
 }
@@ -183,8 +185,9 @@ bool VariantTree::isInternalNode(QString node) const
     QString key,subnode;
     if (getKeyRest(node, key, subnode)) {
         //not this tier
-        if (trees_.contains(key)) {
-            return trees_[key]->isInternalNode(subnode);
+        auto it = trees_.constFind(key);
+        if (it != trees_.constEnd()) {
+            return it.value()->isInternalNode(subnode);
         }
         qWarning("isInternalNode called on non existent node: %s", qPrintable(node));
         return false;
@@ -233,21 +236,21 @@ void VariantTree::setComment(QString node, QString comment)
  */
 QString VariantTree::getComment(QString node) const
 {
-    if (node.contains(QChar('.')))
+    int dotIdx = node.indexOf(QChar('.'));
+    if (dotIdx != -1)
     {
         //not this tier
-        QString key=node.left(node.indexOf(QChar('.')));
-        QString subnode=node.remove(0,node.indexOf(QChar('.'))+1);
-        if (trees_.contains(key))
+        QString key=node.left(dotIdx);
+        QString subnode=node.remove(0, dotIdx + 1);
+        auto it = trees_.constFind(key);
+        if (it != trees_.constEnd())
         {
-            return trees_[key]->getComment(subnode);
+            return it.value()->getComment(subnode);
         }
-    } else {
-        //this tier
-        if (comments_.contains(node))
-            return comments_[node];
+        return QString();
     }
-    return QString();
+    //this tier
+    return comments_.value(node);
 }
 
 /**
@@ -264,9 +267,10 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
     if (!node.isEmpty()) {
         // Go down further
         QString subnode;
-        if (node.contains('.')) {
-            key = node.left(node.indexOf(QChar('.')));
-            subnode = node.right(node.length() - node.indexOf(QChar('.')) - 1);
+        int dotIdx = node.indexOf(QChar('.'));
+        if (dotIdx != -1) {
+            key = node.left(dotIdx);
+            subnode = node.right(node.length() - dotIdx - 1);
         }
         if (trees_.contains(key)) {
             children = trees_[key]->nodeChildren(subnode,direct,internal_nodes);
@@ -274,16 +278,16 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
     }
     else {
         // Current tree
-        foreach (QString subnode, trees_.keys()) {
+        for (auto it = trees_.constBegin(); it != trees_.constEnd(); ++it) {
             if (internal_nodes)
-                children << subnode;
+                children << it.key();
 
             if (!direct)
-                children += nodeChildren(subnode,direct,internal_nodes);
+                children += nodeChildren(it.key(),direct,internal_nodes);
         }
 
-        foreach (QString child, values_.keys()) {
-            children << child;
+        for (auto it = values_.constBegin(); it != values_.constEnd(); ++it) {
+            children << it.key();
         }
     }
 
@@ -292,8 +296,8 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
     }
     else {
         QStringList long_children;
-        foreach (QString child, children) {
-            QString long_child = QString("%1.%2").arg(key).arg(child);
+        foreach (const QString &child, children) {
+            QString long_child = QString("%1.%2").arg(key, child);
             long_children << long_child;
         }
         return long_children;
@@ -307,24 +311,26 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
 void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 {
     // Subtrees
-    foreach (QString node, trees_.keys()) {
-        Q_ASSERT(!node.isEmpty());
-        QDomElement nodeEle = doc.createElement(node);
-        trees_[node]->toXml(doc, nodeEle);
-        if (comments_.contains(node))
-            nodeEle.setAttribute("comment",comments_[node]);
+    for (auto it = trees_.constBegin(); it != trees_.constEnd(); ++it) {
+        Q_ASSERT(!it.key().isEmpty());
+        QDomElement nodeEle = doc.createElement(it.key());
+        it.value()->toXml(doc, nodeEle);
+        auto cit = comments_.constFind(it.key());
+        if (cit != comments_.constEnd())
+            nodeEle.setAttribute("comment",cit.value());
         ele.appendChild(nodeEle);
     }
 
     // Values
-    foreach (QString child, values_.keys()) {
-        Q_ASSERT(!child.isEmpty());
-        QVariant var = values_[child];
-        QDomElement valEle = doc.createElement(child);
+    for (auto it = values_.constBegin(); it != values_.constEnd(); ++it) {
+        Q_ASSERT(!it.key().isEmpty());
+        QVariant var = it.value();
+        QDomElement valEle = doc.createElement(it.key());
         variantToElement(var,valEle);
         ele.appendChild(valEle);
-        if (comments_.contains(child))
-            valEle.setAttribute("comment",comments_[child]);
+        auto cit = comments_.constFind(it.key());
+        if (cit != comments_.constEnd())
+            valEle.setAttribute("comment",cit.value());
     }
 
     // unknown types passthrough

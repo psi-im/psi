@@ -48,7 +48,7 @@ public:
     QString indexToOptionName(QModelIndex idx) const;
 
 public slots:
-    void setFlat(bool);
+    bool setFlat(bool);
 
 protected:
     enum Section { Name = 0, Type = 1, Value = 2, Comment = 3, SectionBound=4};

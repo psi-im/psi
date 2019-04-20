@@ -40,8 +40,7 @@ public:
     void setLooks(QWidget *);
     inline const QDateTime& lastMsgTime() const { return _lastMsgTime; }
     bool updateLastMsgTime(QDateTime t);
-    QString getMucNickColor(const QString &, bool,
-                            QStringList validList = QStringList());
+    QString getMucNickColor(const QString &, bool, bool *isNewNick = nullptr);
     QList<QColor> getPalette();
 
 protected:

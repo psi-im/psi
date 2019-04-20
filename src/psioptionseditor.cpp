@@ -109,13 +109,23 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
     o_ = PsiOptions::instance();
     tm_ = new OptionsTreeModel(o_, this);
+    tpm_ = new QSortFilterProxyModel(this);
+    tpm_->setSourceModel(tm_);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setMargin(0);
 
+    auto filterLe = new QLineEdit(this);
+    filterLe->setProperty("isOption", false);
+    filterLe->setToolTip(tr("Options filter"));
+    layout->addWidget(filterLe);
+    connect(filterLe, &QLineEdit::textChanged, this, [this, filterLe](){
+        tpm_->setFilterWildcard(filterLe->text());
+    });
+
     tv_ = new QTreeView(this);
-    tv_->setModel(tm_);
+    tv_->setModel(tpm_);
     tv_->setAlternatingRowColors(true);
     layout->addWidget(tv_);
     tv_->setColumnHidden(1, true);
@@ -155,7 +165,15 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     cb_->setText(tr("Flat"));
     cb_->setToolTip(tr("Display all options as a flat list."));
     cb_->setProperty("isOption", false);
-    connect(cb_,SIGNAL(toggled(bool)),tm_,SLOT(setFlat(bool)));
+    connect(cb_, &QCheckBox::toggled, tm_, [this, filterLe](bool b){
+        if (tm_->setFlat(b)) {
+            if (!b) {
+                tpm_->setFilterWildcard(QString());
+            }
+            filterLe->setVisible(b);
+        }
+    });
+    filterLe->setVisible(cb_->isChecked());
     buttonLine->addWidget(cb_);
 
     buttonLine->addStretch(1);
@@ -197,7 +215,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     connect(tv_,SIGNAL(collapsed(const QModelIndex&)), SLOT(updateWidth()));
 
 
-    tv_->setCurrentIndex(tm_->index(0,0, QModelIndex()));
+    tv_->setCurrentIndex(tpm_->index(0,0, QModelIndex()));
 
     if (!parent) show();
 }
@@ -205,7 +223,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 void PsiOptionsEditor::tv_edit( const QModelIndex &idx)
 {
     //QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(idx);
+    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     QVariant value = PsiOptions::instance()->getOption(option);
     if (value.type() == QVariant::Bool) {
         PsiOptions::instance()->setOption(option, QVariant(!value.toBool()));
@@ -228,8 +246,9 @@ void PsiOptionsEditor::updateWidth()
     }
 }
 
-void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx)
+void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx_f)
 {
+    QModelIndex idx = tpm_->mapToSource(idx_f);
     QString type = tm_->data(idx.sibling(idx.row(), 1), Qt::DisplayRole).toString();
     QString comment = tm_->data(idx.sibling(idx.row(), 3), Qt::DisplayRole).toString();
     lb_path->setText("<b>"+TextUtil::escape(tm_->indexToOptionName(idx))+"</b>");
@@ -251,7 +270,7 @@ void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx)
 void PsiOptionsEditor::add()
 {
     QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(idx);
+    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     if (o_->isInternalNode(option)) {
         option += ".";
     } else {
@@ -263,7 +282,7 @@ void PsiOptionsEditor::add()
 void PsiOptionsEditor::edit()
 {
     QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(idx);
+    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     if (!o_->isInternalNode(option)) {
         new OptionEditor(false, option, PsiOptions::instance()->getOption(option));
     }
@@ -272,7 +291,7 @@ void PsiOptionsEditor::edit()
 void PsiOptionsEditor::deleteit()
 {
     QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(idx);
+    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     bool sub = false;
     QString confirm = tr("Really delete options %1?");
     if (o_->isInternalNode(option)) {
@@ -287,7 +306,7 @@ void PsiOptionsEditor::deleteit()
 
 void PsiOptionsEditor::resetit()
 {
-    QModelIndex idx = tv_->currentIndex();
+    QModelIndex idx = tpm_->mapToSource(tv_->currentIndex());
     QString option = tm_->indexToOptionName(idx);
     QString confirm = tr("Really reset options %1 to default value?");
     if (o_->isInternalNode(option)) {

@@ -44,7 +44,7 @@ bool ChatViewCommon::updateLastMsgTime(QDateTime t)
     return doInsert;
 }
 
-QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf, QStringList validList)
+QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
 {
     do {
         if(!PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool()) {
@@ -61,9 +61,7 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf, QStrin
             return _palette.at(hash % _palette.size()).name();
         }
 
-        QStringList nickColors = validList.isEmpty()
-            ? PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList()
-            : validList;
+        QStringList nickColors = PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
 
         if (nickColors.empty()) {
             break;

@@ -36,14 +36,12 @@ option( ONLY_PLUGINS "Build psi-plus plugins only" OFF )
 option( USE_HUNSPELL "Build psi-plus with hunspell spellcheck" ON )
 option( USE_ENCHANT "Build psi-plus with enchant spellcheck" OFF )
 option( ENABLE_PLUGINS "Enable plugins" OFF )
-option( ENABLE_WEBKIT "Enable webkit/webengine support" ON )
-option( USE_WEBKIT "Use Webkit support instead of WebEngine" OFF )
-option( USE_WEBENGINE "Use WebEngine support instead of Webkit" OFF )
+set( CHAT_TYPE "WEBENGINE" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC")
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
 option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
-option( BUILD_PSIMEDIA "Build psimedia plugin if sources found" ON )
+option( BUILD_PSIMEDIA "Build psimedia plugin if sources found" OFF )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
@@ -79,40 +77,31 @@ set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 
 set( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
-#Detect QtWebEngine if enabled
-if(ENABLE_WEBKIT)
+set(IS_WEBKIT OFF CACHE BOOL "Use webkit. Internal variable")
+set(IS_WEBENGINE OFF CACHE BOOL "Use webengine. Internal variable")
+string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
+
+if("${LCHAT_TYPE}" STREQUAL "webkit")
     add_definitions(
         -DWEBKIT
     )
-    find_package( Qt5Core REQUIRED )
-    find_package( Qt5 COMPONENTS WebEngine QUIET )
-    if(${Qt5Core_VERSION} VERSION_GREATER 5.6.0)
-        if( Qt5WebEngine_FOUND AND (NOT USE_WEBKIT) )
-            set( USE_WEBENGINE ON )
-            add_definitions(
-                -DWEBENGINE=1
-            )
-            message(STATUS "QtWebEngine - enabled")
-        else()
-            set( USE_WEBENGINE OFF )
-        endif()
-    endif()
-    message(STATUS "Webkit - enabled")
+    set(IS_WEBKIT ON)
+    message(STATUS "Chatlog type - QtWebKit")
+elseif("${LCHAT_TYPE}" STREQUAL "webengine")
+    set(IS_WEBENGINE ON)
+    find_package( Qt5Core 5.6.0 REQUIRED )
+    add_definitions(
+        -DWEBKIT
+        -DWEBENGINE=1
+    )
+    message(STATUS "Chatlog type - QtWebEngine")
+else()
+    set(IS_WEBKIT OFF)
+    set(IS_WEBENGINE OFF)
+    message(STATUS "Chatlog type - Basic")
 endif()
 
 message(STATUS "SQL history - built-in since 1.4.444 version")
-
-if(USE_WEBENGINE AND USE_WEBKIT)
-    message(FATAL_ERROR "Both flags USE_WEBENGINE and USE_WEBKIT cannot be enabled at the same time. Please disable one of them")
-endif()
-
-if(USE_WEBENGINE AND (NOT ENABLE_WEBKIT))
-    message(FATAL_ERROR "USE_WEBENGINE flag is enabled but ENABLE_WEBKIT flag is disabled. Please disable USE_WEBENGINE or enable ENABLE_WEBKIT")
-endif()
-
-if(USE_WEBKIT AND (NOT ENABLE_WEBKIT))
-    message(FATAL_ERROR "USE_WEBKIT flag is enabled but ENABLE_WEBKIT flag is disabled. Please disable USE_WEBKIT or enable ENABLE_WEBKIT")
-endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
     set(ISDEBUG ON)
@@ -266,6 +255,8 @@ if(NOT ONLY_PLUGINS)
         endif()
         option(BUILD_DEMO "build demo" OFF)
         add_subdirectory(psimedia)
+    elseif(BUILD_PSIMEDIA)
+        message(FATAL_ERROR "BUILD_PSIMEDIA flag is enabled but Psimedia sources not found at ${PROJECT_SOURCE_DIR}/psimedia")
     endif()
 else()
     add_subdirectory(src/plugins)

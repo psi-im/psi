@@ -57,6 +57,7 @@
 #include "xmpp_message.h"
 #include "xmpp_caps.h"
 #include "xmpp_htmlelement.h"
+#include "xmpp_forwarding.h"
 #include "fancylabel.h"
 #include "msgmle.h"
 #include "iconselect.h"

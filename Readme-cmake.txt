@@ -66,25 +66,11 @@ or
 >  -DSEPARATE_QJDNS=ON
 
   to build qjdns library as separate library (default OFF)
+  
+>  -DCHAT_TYPE = BASIC
 
->  -DENABLE_WEBKIT = ON
-
-   Global flag which enables support of QtWebKit or QtWebengine.
-   If the flag is enabled and both libraries qtwebkit and qtwebengine
-   are installed the script automatically selects qtwebengine. (default is ON)
-
->  -DUSE_WEBKIT = OFF
-
-   used to force build with QtWebKit instead of QtWebengine 
-   (ENABLE_WEBKIT flag should be set ON)
-   (default is OFF)
-
->  -DUSE_WEBENGINE = OFF
-
-   use QtWebengine instead of QtWebKit. This flag is set automatically
-   if the USE_WEBKIT flag is disabled and the Qt5Webengine>=5.6.0 library
-   is installed. (ENABLE_WEBKIT flag should be set ON)
-   (default is OFF)
+   to set type of chatlog engine. Possible values: WEBKIT, WEBENGINE, BASIC
+   default value - WEBENGINE
 
 >  -DPSI_VERSION=${version}
 

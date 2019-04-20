@@ -63,22 +63,10 @@
 
   использовать стороннюю библиотеку qjdns (по-умолчанию - OFF)
 
->  -DENABLE_WEBKIT=ON
+>  -DCHAT_TYPE=BASIC
 
-  включить поддержку QtWebKit или QtWebengine. Если флаг включен и в 
-  системе установлены обе библиотеки и qtwebkit, и qtwebengine скрипт 
-  атоматически выберет qtwebengine. (по-умолчанию - ON)
-
->  -DUSE_WEBKIT=OFF
-
-  использовать QtWebKit вместо QtWebengine при включенном флаге 
-  ENABLE_WEBKIT (по-умолчанию - OFF)
-
->  -DUSE_WEBENGINE=OFF
-
-  использовать QtWebengine вместо QtWebKit. Этот флаг устанавливается 
-  автоматически, если не включен флаг USE_WEBKIT и в системе установлена 
-  библиотека Qt5Webengine>=5.6.0. (по-умолчанию - OFF)
+  выбрать тип движка чатлогов. Возможные значения: WEBKIT, WEBENGINE, BASIC
+  значение по-умолчанию - WEBENGINE.
 
 >  -DPSI_VERSION=${version}
 

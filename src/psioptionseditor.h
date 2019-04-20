@@ -12,6 +12,7 @@
 #include "optionstreemodel.h"
 
 class PsiOptions;
+class QSortFilterProxyModel;
 
 class PsiOptionsEditor : public QWidget
 {
@@ -22,7 +23,7 @@ public:
 
 private slots:
     void tv_edit(const QModelIndex &idx);
-    void selectionChanged(const QModelIndex &idx);
+    void selectionChanged(const QModelIndex &idx_f);
     void updateWidth();
     void add();
     void edit();
@@ -35,6 +36,7 @@ private:
     QTreeView* tv_;
     int tv_colWidth;
     OptionsTreeModel* tm_;
+    QSortFilterProxyModel *tpm_;
     QCheckBox* cb_;
     QLabel*    lb_type;
     QLabel* lb_path;
