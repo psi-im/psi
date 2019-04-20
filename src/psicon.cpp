@@ -1736,7 +1736,7 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
     bool sentToChatWindow = false;
     if ( e->type() == PsiEvent::Message ) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &dm = me->message().displayMessage();
+        const Message dm = me->message().displayMessage();
 #ifdef GROUPCHAT
         if (dm.type() == "groupchat") {
             isMuc = true;

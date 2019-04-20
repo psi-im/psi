@@ -769,7 +769,7 @@ PsiIcon *PsiIconset::event2icon(const PsiEvent::Ptr &e)
     QString icon;
     if(e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &dm = me->message().displayMessage();
+        const Message dm = me->message().displayMessage();
         if (dm.type() == QLatin1String("headline"))
             icon = "psi/headline";
         else if (dm.type() == QLatin1String("chat") || dm.type() == QLatin1String("groupchat"))

@@ -676,7 +676,7 @@ QString EDBFlatFile::File::eventToLine(const PsiEvent::Ptr &e)
 
     if(e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &m = me->message().displayMessage();
+        Message m = me->message().displayMessage();
         const UrlList urls = m.urlList();
 
         if(!m.subject().isEmpty())

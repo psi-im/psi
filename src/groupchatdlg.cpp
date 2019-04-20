@@ -2137,7 +2137,7 @@ void GCMainDlg::dispatchMessage(const MessageView &mv)
 
 void GCMainDlg::appendMessage(const Message &m, bool alert)
 {
-    const Message &dm = m.displayMessage();
+    Message dm = m.displayMessage();
     MessageView mv(MessageView::Message);
     if (dm.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool() &&
             !dm.html().text().isEmpty()) {

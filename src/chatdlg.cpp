@@ -859,7 +859,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 
 void ChatDlg::incomingMessage(const Message &m)
 {
-    const Message &dm = m.displayMessage();
+    Message dm = m.displayMessage();
     historyState = false;
     if (dm.body().isEmpty() && dm.subject().isEmpty() && dm.urlList().isEmpty()) {
         // Event message
@@ -915,7 +915,7 @@ QString ChatDlg::whoNick(bool local) const
 
 void ChatDlg::appendMessage(const Message &m, bool local)
 {
-    const Message &dm = m.displayMessage();
+    Message dm = m.displayMessage();
     if(trackBar_)
         doTrackBar();
 

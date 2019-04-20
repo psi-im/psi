@@ -1840,7 +1840,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
     if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &dm = me->message().displayMessage();
+        Message dm = me->message().displayMessage();
 
         d->enc = dm.wasEncrypted();
 

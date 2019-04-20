@@ -56,6 +56,7 @@
 #include "xmpp_caps.h"
 #include "xmpp_captcha.h"
 #include "xmpp_carbons.h"
+#include "xmpp_forwarding.h"
 #include "xmpp_serverinfomanager.h"
 #include "httpfileupload.h"
 #include "s5b.h"
@@ -2735,7 +2736,7 @@ void PsiAccount::client_presenceError(const Jid &j, int, const QString &str)
 void PsiAccount::client_messageReceived(const Message &m)
 {
     Message _m(m);
-    Message &dm = _m.displayMessage();
+    Message dm = _m.displayMessage();
 
     //check if it's a server message without a from, and set the from appropriately
     if (dm.from().isEmpty()) {
@@ -2805,7 +2806,7 @@ void PsiAccount::wbRequest(const Jid &j, int id)
 void PsiAccount::processIncomingMessage(const Message &_m)
 {
     bool selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
-    const Message &dm = _m.displayMessage();
+    Message dm = _m.displayMessage();
     // skip empty messages, but not if the message contains a data form
     if(dm.body().isEmpty() && dm.urlList().isEmpty() && dm.invite().isEmpty() &&
             !dm.containsEvents() && dm.chatState() == StateNone && dm.subject().isNull() &&
@@ -2870,7 +2871,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
     }
 
     Message m = _m;
-    Message &dm2 = m.displayMessage();
+    Message dm2 = m.displayMessage();
 
     // smartchat: try to match up the incoming event to an existing chat
     // (prior to 0.9, m.from() always contained a resource)
@@ -5141,7 +5142,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
     if (me) {
         const Message &m = me->message();
-        const Message &dm = m.displayMessage();
+        const Message dm = m.displayMessage();
         bool selfMessage = m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
 
 #ifdef PSI_PLUGINS
@@ -5480,7 +5481,7 @@ void PsiAccount::queueEvent(const PsiEvent::Ptr &e, ActivationType activationTyp
         // Check to see if we need to popup
         if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-            const Message &dm = me->message().displayMessage();
+            const Message dm = me->message().displayMessage();
             if (dm.type() == "chat")
                 doPopup = PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool();
             else if (dm.type() == "headline")
@@ -5629,7 +5630,7 @@ void PsiAccount::processReadNext(const UserListItem &u)
 #endif
     if (e->type() == PsiEvent::Message) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message &dm = me->message().displayMessage();
+        const Message dm = me->message().displayMessage();
         if (dm.type() == QLatin1String("chat") && dm.getForm().fields().empty())
             isChat = true;
 #ifdef GROUPCHAT
@@ -6322,7 +6323,7 @@ void PsiAccount::pgp_decryptFinished()
     bool tryAgain = false;
     if (pt->success()) {
         Message m = pt->message();
-        Message &dm = m.displayMessage();
+        Message dm = m.displayMessage();
         dm.setBody(QString::fromUtf8(pt->read()));
         dm.setXEncrypted(QString::null);
         dm.setWasEncrypted(true);
@@ -6330,7 +6331,7 @@ void PsiAccount::pgp_decryptFinished()
     } else {
         if (loggedIn() && pt->message().forwarded().type() != Forwarding::ForwardedCarbonsSent) {
             Message m;
-            Message &dm = m.displayMessage();
+            Message dm = m.displayMessage();
             m.setTo(pt->message().displayJid());
             m.setType("error");
             if (!dm.id().isEmpty())

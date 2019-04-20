@@ -28,6 +28,7 @@
 #include "psicon.h"
 #include "psiaccount.h"
 #include "xmpp_xmlcommon.h"
+#include "xmpp_message.h"
 #include "dummystream.h"
 #include "filetransfer.h"
 #include "applicationinfo.h"
@@ -346,7 +347,7 @@ int MessageEvent::priority() const
 QString MessageEvent::description() const
 {
     QStringList result;
-    const class Message &d_m = v_m.displayMessage();
+    const XMPP::Message d_m = v_m.displayMessage();
     if (!d_m.subject().isEmpty())
         result << d_m.subject();
     if (!d_m.body().isEmpty())
