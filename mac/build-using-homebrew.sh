@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2019-02-27
+# Updated: 2019-04-23
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -33,6 +33,14 @@
 # Build dependencies of Psi plugins:
 # brew install --build-bottle tidy-html5 libgpg-error libgcrypt libotr
 # brew install --build-bottle libsignal-protocol-c
+#
+# Enabling of qca-gnupg plugin if necessary:
+# Apply changes from: https://github.com/tehnick/homebrew-core/commit/2f866aee
+# Then:
+# brew uninstall qca
+# brew install --build-bottle gmp libtasn1 nettle libffi p11-kit libevent unbound
+# brew install --build-bottle adns libassuan libksba libusb npth pinentry gnutls
+# brew install --build-bottle gnupg qca
 #
 # If you were uncareful and have installed Homebrew to /usr/local as suggested
 # by its developers now, then export HOMEBREW environment variable before
