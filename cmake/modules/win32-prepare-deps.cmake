@@ -143,34 +143,34 @@ if(WIN32)
         )
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         #
-        find_psi_lib(qtaudio_windows${D}.dll ${QT_PLUGINS_DIR}/audio/ ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/audio/)
+        find_psi_lib(qtaudio_windows${D}.dll ${QT_PLUGINS_DIR}/audio/ ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/audio/)
         set(PLATFORMS_PLUGS
             qminimal${D}.dll
             qoffscreen${D}.dll
             qwindows${D}.dll
         )
-        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/platforms/")
+        find_psi_lib("${PLATFORMS_PLUGS}" "${QT_PLUGINS_DIR}/platforms/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/platforms/")
         #
         set(STYLES_PLUGS
             qwindowsvistastyle${D}.dll
         )
-        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/styles/")
+        find_psi_lib("${STYLES_PLUGS}" "${QT_PLUGINS_DIR}/styles/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/styles/")
         #
         set(BEARER_PLUGS
             qgenericbearer${D}.dll
             qnativewifibearer${D}.dll
         )
-        find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bearer/")
+        find_psi_lib("${BEARER_PLUGS}" "${QT_PLUGINS_DIR}/bearer/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/bearer/")
         #
         set(GENERIC_PLUGS
             qtuiotouchplugin${D}.dll
         )
-        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/generic/")
+        find_psi_lib("${GENERIC_PLUGS}" "${QT_PLUGINS_DIR}/generic/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/generic/")
         #
         set(ICONENGINES_PLUGS
             qsvgicon${D}.dll
         )
-        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconengines/")
+        find_psi_lib("${ICONENGINES_PLUGS}" "${QT_PLUGINS_DIR}/iconengines/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/iconengines/")
         #
         set(IMAGEFORMATS_PLUGS
             qdds${D}.dll
@@ -186,29 +186,29 @@ if(WIN32)
             qwbmp${D}.dll
             qwebp${D}.dll
         )
-        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/imageformats/")
+        find_psi_lib("${IMAGEFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/imageformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/imageformats/")
         #
         set(MEDIASERVICE_PLUGS
             dsengine${D}.dll
             qtmedia_audioengine${D}.dll
             wmfengine${D}.dll
         )
-        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/mediaservice/")
+        find_psi_lib("${MEDIASERVICE_PLUGS}" "${QT_PLUGINS_DIR}/mediaservice/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/mediaservice/")
         #
         set(PLAYLISTFORMATS_PLUGS
             qtmultimedia_m3u${D}.dll
         )
-        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/playlistformats/")
+        find_psi_lib("${PLAYLISTFORMATS_PLUGS}" "${QT_PLUGINS_DIR}/playlistformats/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/playlistformats/")
         #
         set(PRINTSUPPORT_PLUGS
             windowsprintersupport${D}.dll
         )
-        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/printsupport/")
+        find_psi_lib("${PRINTSUPPORT_PLUGS}" "${QT_PLUGINS_DIR}/printsupport/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/printsupport/")
         #
         set(SQLDRIVERS_PLUGS
             qsqlite${D}.dll
         )
-        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sqldrivers/")
+        find_psi_lib("${SQLDRIVERS_PLUGS}" "${QT_PLUGINS_DIR}/sqldrivers/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/sqldrivers/")
         #
         if(KEYCHAIN_LIBS)
             set(KEYCHAIN_LIBS
@@ -520,5 +520,6 @@ if(WIN32)
             qca-gnupg${D}.dll
         )
     endif()
-    find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crypto/")
+    find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/crypto/")
+    copy("${PROJECT_SOURCE_DIR}/win32/qt.conf" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" "${LIBS_TARGET}")
 endif()
