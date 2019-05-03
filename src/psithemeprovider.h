@@ -41,6 +41,7 @@ public:
     virtual Theme theme(const QString &id) = 0; // make new theme
     virtual const QStringList themeIds() const = 0;
     virtual bool loadCurrent() = 0;
+    virtual void unloadCurrent() = 0;
     virtual Theme current() const = 0;
     virtual void setCurrentTheme(const QString &) = 0;
 

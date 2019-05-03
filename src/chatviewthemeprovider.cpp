@@ -134,6 +134,11 @@ bool ChatViewThemeProvider::loadCurrent()
     return startedLoading; // does not really matter. may fail later on loading
 }
 
+void ChatViewThemeProvider::unloadCurrent()
+{
+    curTheme = Theme();
+}
+
 Theme ChatViewThemeProvider::current() const
 {
     return curTheme;

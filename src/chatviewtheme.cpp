@@ -91,7 +91,10 @@ ChatViewThemePrivate::ChatViewThemePrivate(ChatViewThemeProvider *provider) :
     nam = provider->psi()->networkAccessManager();
 }
 
-
+ChatViewThemePrivate::~ChatViewThemePrivate()
+{
+    delete wv;
+}
 
 bool ChatViewThemePrivate::exists()
 {
@@ -337,7 +340,7 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
             return true;
         } else {
             bool loaded;
-            QByteArray data = Theme(this).loadData(httpRelPath + path, &loaded);
+            QByteArray data = loadData(httpRelPath + path, &loaded);
             if (loaded) {
                 if (!data.isNull() && path.endsWith(QLatin1String(".tiff"))) {
                     // seems like we are loading tiff image which is supported by safari only.
@@ -409,9 +412,9 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 //------------------------------------------------------------------------------
 // ChatViewThemeJSLoader
 //------------------------------------------------------------------------------
-ChatViewJSLoader::ChatViewJSLoader(Theme theme, QObject *parent) :
+ChatViewJSLoader::ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent) :
     QObject(parent),
-    theme(theme.priv<ChatViewThemePrivate>())
+    theme(theme)
 {}
 
 const QString ChatViewJSLoader::themeId() const
@@ -452,6 +455,7 @@ void ChatViewJSLoader::_callFinishLoadCalbacks()
     for (auto &cb : theme->loadCallbacks) {
         cb(theme->state == Theme::State::Loaded);
     }
+    theme->loadCallbacks.clear();
 }
 
 void ChatViewJSLoader::setMetaData(const QVariantMap &map)
@@ -617,7 +621,7 @@ void ChatViewJSLoader::setTransparent()
 //------------------------------------------------------------------------------
 // ChatViewThemeJSUtil
 //------------------------------------------------------------------------------
-ChatViewThemeJSUtil::ChatViewThemeJSUtil(Theme theme, QObject *parent) :
+ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent) :
     QObject(parent),
     theme(theme)
 {
@@ -644,17 +648,17 @@ void ChatViewThemeJSUtil::optionsChanged(const QString &option)
 
 void ChatViewThemeJSUtil::putToCache(const QString &key, const QVariant &data)
 {
-    theme.priv<ChatViewThemePrivate>()->cache.insert(key, data);
+    theme->cache.insert(key, data);
 }
 
 QVariantMap ChatViewThemeJSUtil::loadFromCacheMulti(const QVariantList &list)
 {
-    return theme.priv<ChatViewThemePrivate>()->loadFromCacheMulti(list);
+    return theme->loadFromCacheMulti(list);
 }
 
 QVariant ChatViewThemeJSUtil::cache(const QString &name) const
 {
-    return theme.priv<ChatViewThemePrivate>()->cache.value(name);
+    return theme->cache.value(name);
 }
 
 QString ChatViewThemeJSUtil::psiOption(const QString &option) const

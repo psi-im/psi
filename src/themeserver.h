@@ -28,8 +28,6 @@
 #include "qhttpserverrequest.hpp"
 #include "qhttpserverresponse.hpp"
 
-class Theme;
-
 class ThemeServer : public qhttp::server::QHttpServer
 {
     Q_OBJECT

@@ -40,6 +40,7 @@ public:
     Theme theme(const QString &id);
 
     bool loadCurrent();
+    void unloadCurrent();
     Theme current() const; // currently loaded theme
 
     void setCurrentTheme(const QString &);

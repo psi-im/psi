@@ -704,6 +704,12 @@ void PsiCon::deinit()
     // this deletes all dialogs except for mainwin
     deleteAllDialogs();
 
+#ifdef WEBKIT
+    // unload webkit themes early (before realease of webengine profile)
+    delete PsiThemeManager::instance()->unregisterProvider(QString::fromLatin1("groupchatview"));
+    delete PsiThemeManager::instance()->unregisterProvider(QString::fromLatin1("chatview"));
+#endif
+
     d->idle.stop();
 
     // shut down all accounts

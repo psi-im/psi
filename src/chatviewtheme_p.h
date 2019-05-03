@@ -54,7 +54,7 @@ signals:
     void sessionHtmlReady(const QString &sessionId, const QString &html);
 
 public:
-    ChatViewJSLoader(Theme theme, QObject *parent = 0);
+    ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent = 0);
     const QString themeId() const;
     bool isMuc() const;
     QString serverUrl() const;
@@ -104,7 +104,7 @@ public slots:
 class ChatViewThemeJSUtil : public QObject {
     Q_OBJECT
 
-    Theme theme;
+    ChatViewThemePrivate *theme;
     QString psiDefaultAvatarUrl;
     QStringList changedOptions;
     QTimer optChangeTimer;
@@ -115,7 +115,7 @@ signals:
     void optionsChanged(const QStringList &);
 
 public:
-    ChatViewThemeJSUtil(Theme theme, QObject *parent = 0);
+    ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent = 0);
     void putToCache(const QString &key, const QVariant &data);
 
 public slots:
@@ -164,6 +164,7 @@ public:
 #endif
 
     ChatViewThemePrivate(ChatViewThemeProvider *provider);
+    ~ChatViewThemePrivate();
 
     bool exists();
     bool load(std::function<void(bool)> loadCallback);

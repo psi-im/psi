@@ -62,6 +62,15 @@ void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
     }
 }
 
+PsiThemeProvider * PsiThemeManager::unregisterProvider(const QString &type)
+{
+    auto p = d->providers.take(type);
+    if (p) {
+        p->unloadCurrent();
+    }
+    return p;
+}
+
 PsiThemeProvider *PsiThemeManager::provider(const QString &type)
 {
     return d->providers.value(type);
