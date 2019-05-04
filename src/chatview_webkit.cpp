@@ -395,10 +395,8 @@ ChatView::ChatView(QWidget *parent) :
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
     d->webView = new ChatWebView(this);
     d->webView->setFocusPolicy(Qt::NoFocus);
-#ifdef WEBENGINE
     d->webView->setPage(new ChatViewPage(d->webView));
-#else
-    d->webView->setPage(new ChatViewPage(d->webView));
+#ifndef WEBENGINE
     d->webView->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 #endif
     QVBoxLayout *layout = new QVBoxLayout;
@@ -430,7 +428,7 @@ ChatView::ChatView(QWidget *parent) :
 
 ChatView::~ChatView()
 {
-#ifdef WEBENGINE
+#if defined(WEBENGINE) && QT_VERSION < QT_VERSION_CHECK(5,12,3)
     // next two lines is a workaround to some Qt(?) bug very similar to
     // QTBUG-48014 and bunch of others (deletes QWidget twice).
     // The bug was last time reproduced with Qt-5.9. algo is pretty simple:
