@@ -5073,7 +5073,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
     e->setJid(j);
 
-#ifdef PSI_PLUGINS
+#if defined(PSI_PLUGINS) && defined(DEPRECATED_EVENT_FILTER)
     QDomDocument doc;
     QDomElement eXml = e->toXml(&doc);
     if (PluginManager::instance()->processEvent(this, eXml)) {
