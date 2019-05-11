@@ -1109,6 +1109,11 @@ int PluginHost::findOnlineAccountForContact(const QString &jid) const
     return manager_->findOnlineAccountForContact(jid);
 }
 
+void PluginHost::subscribeLogout(QObject *context, std::function<void(int account)> callback)
+{
+    connect(manager_, &PluginManager::accountLoggedOut, context, callback);
+}
+
 bool PluginHost::setActivity(int account, const QString& Jid, QDomElement xml)
 {
     return manager_->setActivity(account, Jid, xml);

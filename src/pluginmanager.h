@@ -107,6 +107,7 @@ public:
 
 signals:
     void jsFiltersUpdated();
+    void accountLoggedOut(int account_id);
 
 private:
     PluginManager();

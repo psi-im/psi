@@ -471,6 +471,7 @@ void PluginManager::logout(PsiAccount* account)
     const int acc_id = accountIds_.id(account);
     foreach (PluginHost* host, pluginByFile_.values()) {
         host->logout(acc_id);
+        emit accountLoggedOut(acc_id);
     }
 }
 
