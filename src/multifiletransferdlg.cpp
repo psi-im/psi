@@ -31,11 +31,13 @@
 #include "psicon.h"
 #include "userlist.h"
 #include "iconset.h"
+#include "fileutil.h"
 
 #include <QFileIconProvider>
 #include <QFileInfo>
 #include <QMimeDatabase>
 #include <QBuffer>
+#include <QFileDialog>
 
 using namespace XMPP;
 
@@ -141,11 +143,6 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
                 f->seek(offset);
                 app->setDevice(f);
                 Q_UNUSED(size);
-                connect(app, &Jingle::Application::stateChanged, [app, f](Jingle::State s){
-                    if (s == Jingle::State::Finished) {
-                        f->close();
-                    }
-                });
             });
 
             // compute file hash
@@ -199,6 +196,53 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
     }
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
+        auto cl = d->session->contentList();
+        QList<Jingle::FileTransfer::Application*> appToAccept;
+        for (auto it = cl.constBegin(); it != cl.constEnd(); ++it) {
+            if (it.key().second == Jingle::Origin::Initiator) {
+                appToAccept.append(static_cast<Jingle::FileTransfer::Application*>(it.value()));
+            }
+        }
+        if (appToAccept.size() > 1) {
+            auto dirName = FileUtil::getSaveDirName(this, tr("Directory to save files"));
+            if (!dirName.isEmpty()) {
+                QDir d(dirName);
+                for (auto app: appToAccept) {
+                    auto fn = d.absoluteFilePath(FileUtil::cleanFileName(app->file().name()));
+                    QFileInfo fi(fn);
+                    if (fi.dir() != d) { // in case it has .. or something like this
+                        fn = d.absoluteFilePath(fi.fileName());
+                        fi = QFileInfo(fn);
+                    }
+                    if (fi.exists()) {
+                        // TODO suggest overwrite
+                    }
+                    connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
+                        auto f = new QFile(fn, app);
+                        f->open(QIODevice::WriteOnly);
+                        f->seek(offset);
+                        Q_UNUSED(size);
+                        app->setDevice(f);
+                    });
+                }
+            }
+        } else if (appToAccept.size()) {
+            auto app = appToAccept.first();
+            auto fn = FileUtil::getSaveFileName(this, tr("Save As"), FileUtil::cleanFileName(app->file().name()), tr("All files (*)"));
+            if (!fn.isEmpty()) {
+                QFileInfo fi(fn);
+                if (fi.exists()) {
+                    // TODO suggest overwrite
+                }
+                connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
+                    auto f = new QFile(fn, app);
+                    f->open(QIODevice::WriteOnly);
+                    f->seek(offset);
+                    Q_UNUSED(size);
+                    app->setDevice(f);
+                });
+            }
+        }
         d->session->accept();
     });
 

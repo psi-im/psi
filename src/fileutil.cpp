@@ -23,6 +23,7 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QStandardPaths>
 
 #include "psioptions.h"
 
@@ -102,6 +103,29 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
     return QString();
 }
 
+QString FileUtil::getSaveDirName(QWidget* parent, const QString& caption)
+{
+    if (lastUsedSavePath().isEmpty()) {
+        if (!lastUsedOpenPath().isEmpty()) {
+            setLastUsedSavePath(lastUsedOpenPath());
+        }
+        else {
+            setLastUsedSavePath(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation));
+        }
+    }
+
+    QString dirName = QFileDialog::getExistingDirectory(parent, caption, lastUsedSavePath());
+
+    if (!dirName.isEmpty()) {
+        if (QDir(dirName).exists()) {
+            setLastUsedSavePath(dirName);
+            return dirName;
+        }
+    }
+
+    return QString();
+}
+
 QString FileUtil::getImageFileName(QWidget* parent, QString caption)
 {
     // double extenstions because of QTBUG-51712
@@ -132,4 +156,24 @@ QString FileUtil::mimeToFileExt(const QString &mime)
         // add more when needed
     }
     return mimes.value(mime);
+}
+
+QString FileUtil::cleanFileName(const QString &s)
+{
+//#ifdef Q_OS_WIN
+    QString badchars = "\\/|?*:\"<>";
+    QString str;
+    str.reserve(s.size());
+    for(int n = 0; n < s.length(); ++n) {
+        auto c = s.at(n);
+        if (badchars.indexOf(c) != -1)
+            continue;
+        str += c;
+    }
+    if(str.isEmpty())
+        str = "unnamed";
+    return str;
+//#else
+//    return s;
+//#endif
 }

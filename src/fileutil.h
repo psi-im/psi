@@ -39,8 +39,10 @@ public:
     static QString getInbandImageFileName(QWidget* parent);
     static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
     static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& defaultFileName = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
+    static QString getSaveDirName(QWidget *parent, const QString &caption);
 
     static QString mimeToFileExt(const QString &mime);
+    static QString cleanFileName(const QString &s);
 };
 
 #endif

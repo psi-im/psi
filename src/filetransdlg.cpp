@@ -91,30 +91,6 @@ static bool active_file_check(const QString &s)
     return activeFiles->contains(s);
 }
 
-static QString clean_filename(const QString &s)
-{
-//#ifdef Q_OS_WIN
-    QString badchars = "\\/|?*:\"<>";
-    QString str;
-    for(int n = 0; n < s.length(); ++n) {
-        bool found = false;
-        for(int b = 0; b < badchars.length(); ++b) {
-            if(s.at(n) == badchars.at(b)) {
-                found = true;
-                break;
-            }
-        }
-        if(!found)
-            str += s;
-    }
-    if(str.isEmpty())
-        str = "unnamed";
-    return str;
-//#else
-//    return s;
-//#endif
-}
-
 //----------------------------------------------------------------------------
 // FileTransferHandler
 //----------------------------------------------------------------------------
@@ -145,7 +121,7 @@ FileTransferHandler::FileTransferHandler(PsiAccount *pa, FileTransfer *ft)
     if(ft) {
         d->sending = false;
         d->peer = ft->peer();
-        d->fileName = clean_filename(ft->fileName());
+        d->fileName = FileUtil::cleanFileName(ft->fileName());
         d->fileSize = ft->fileSize();
         d->desc = ft->description();
         d->shift = calcShift(d->fileSize);
