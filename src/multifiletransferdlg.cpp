@@ -135,6 +135,19 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
                 return;
             }
 
+            connect(app, &Jingle::FileTransfer::Application::deviceRequested, item, [app,item](quint64 offset, quint64 size){
+                auto f = new QFile(item->filePath(), app);
+                f->open(QIODevice::ReadOnly);
+                f->seek(offset);
+                app->setDevice(f);
+                Q_UNUSED(size);
+                connect(app, &Jingle::Application::stateChanged, [app, f](Jingle::State s){
+                    if (s == Jingle::State::Finished) {
+                        f->close();
+                    }
+                });
+            });
+
             // compute file hash
             XMPP::Hash hash(XMPP::Hash::Blake2b512);
             QFile f(item->filePath());

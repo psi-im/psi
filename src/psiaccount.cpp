@@ -4100,7 +4100,7 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
         if (u && u->isAvailable())
             j2 = j2.withResource((*u->userResourceList().priority()).name());
     }
-#if 0
+//#if 0
     Features f = client()->capsManager()->features(j2);
 
     if (f.hasJingleFT()) { // we have to check supported transprts as well. but s5b is mandatory
@@ -4109,7 +4109,7 @@ void PsiAccount::sendFiles(const Jid &j, const QStringList &fileList)
         w->show();
         return;
     }
-#endif
+//#endif
     // Create a dialog for each file in the list. Once the xfer dialog itself
     // supports multiple files, only the 'else' branch needs to stay.
     if (!fileList.isEmpty()) {
