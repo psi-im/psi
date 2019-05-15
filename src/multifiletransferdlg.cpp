@@ -101,6 +101,30 @@ MultiFileTransferDlg::~MultiFileTransferDlg()
     delete ui;
 }
 
+static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::FileTransfer::Application *app)
+{
+    QString comment;
+    MultiFileTransferModel::State state = MultiFileTransferModel::State::Pending;
+    if (app->state() > Jingle::State::Active) {
+        // TODO consider lastError and return Failed instead
+        state = MultiFileTransferModel::State::Done;
+    } else if (app->state() > Jingle::State::Pending) {
+        state = MultiFileTransferModel::State::Active;
+    }
+    switch (app->state()) {
+    case Jingle::State::Created:             comment = QObject::tr("Not started"); break;
+    case Jingle::State::PrepareLocalOffer:   comment = QObject::tr("Prepare local offer"); break;
+    case Jingle::State::Unacked:             comment = QObject::tr("IQ unacknowledged"); break;
+    case Jingle::State::Pending:             comment = QObject::tr("Waiting accept"); break;
+    case Jingle::State::Accepted:            comment = QObject::tr("Accepted"); break;
+    case Jingle::State::Connecting:          comment = QObject::tr("Connecting"); break;
+    case Jingle::State::Active:              comment = QObject::tr("Transferring"); break;
+    case Jingle::State::Finishing:           break;// put error in comment here if any
+    case Jingle::State::Finished:            break;
+    };
+    item->setState(state, comment);
+}
+
 void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
 {
     d->peer = jid;
@@ -144,6 +168,11 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
                 app->setDevice(f);
                 Q_UNUSED(size);
             });
+            connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [app,item](Jingle::State state){
+                Q_UNUSED(state);
+                setMFTItemStateFromJingleState(item, app);
+            });
+            connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);
 
             // compute file hash
             XMPP::Hash hash(XMPP::Hash::Blake2b512);
@@ -188,10 +217,15 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Receive"));
     for (const auto &c: session->contentList()) {
         if (c->creator() == Jingle::Origin::Initiator && c->pad()->ns() == Jingle::FileTransfer::NS) {
-            auto ft = static_cast<Jingle::FileTransfer::Application*>(c);
-            auto file = ft->file();
+            auto app = static_cast<Jingle::FileTransfer::Application*>(c);
+            auto file = app->file();
             auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(), file.size()); // FIXME size is optional. ranges?
-            item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(ft));
+            item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(app));
+            connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [app,item](Jingle::State state){
+                Q_UNUSED(state);
+                setMFTItemStateFromJingleState(item, app);
+            });
+            connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);
         }
     }
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
