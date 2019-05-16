@@ -35,6 +35,7 @@ namespace XMPP {
 }
 
 class PsiAccount;
+class MultiFileTransferItem;
 
 class MultiFileTransferDlg : public QDialog
 {
@@ -46,10 +47,19 @@ public:
 
     void initOutgoing(const XMPP::Jid &jid, const QStringList &fileList);
     void initIncoming(XMPP::Jingle::Session *session);
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dragMoveEvent(QDragMoveEvent *event);
+    void dragLeaveEvent(QDragLeaveEvent *event);
+    void dropEvent(QDropEvent *event);
+
 private:
     void updatePeerVisuals();
     void updateMyVisuals();
     void updateComonVisuals();
+    void addTransferContent(MultiFileTransferItem *item);
+    void appendOutgoing(const QStringList &fileList);
 
 private:
     Ui::MultiFileTransferDlg *ui;

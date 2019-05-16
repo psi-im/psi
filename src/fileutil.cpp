@@ -58,7 +58,7 @@ void FileUtil::setLastUsedSavePath(const QString& path)
 
 QString FileUtil::getOpenFileName(QWidget* parent, const QString& caption, const QString& filter, QString* selectedFilter)
 {
-    while (1) {
+    while (true) {
         if (lastUsedOpenPath().isEmpty()) {
             setLastUsedOpenPath(QDir::homePath());
         }
@@ -77,6 +77,27 @@ QString FileUtil::getOpenFileName(QWidget* parent, const QString& caption, const
     }
 
     return QString();
+}
+
+QStringList FileUtil::getOpenFileNames(QWidget* parent, const QString& caption, const QString& filter, QString* selectedFilter)
+{
+    while (true) {
+        if (lastUsedOpenPath().isEmpty()) {
+            setLastUsedOpenPath(QDir::homePath());
+        }
+        QStringList result;
+        QStringList fileNames = QFileDialog::getOpenFileNames(parent, caption, lastUsedOpenPath(), filter, selectedFilter);
+        foreach (const QString &fileName, fileNames) {
+            QFileInfo fi(fileName);
+            if (!fi.exists()) {
+                QMessageBox::information(parent, tr("Error"), tr("The file specified does not exist."));
+                continue;
+            }
+            result << fileName;
+            setLastUsedOpenPath(fi.path());
+        }
+        return result;
+    }
 }
 
 QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const QString& defaultFileName, const QString& filter, QString* selectedFilter)

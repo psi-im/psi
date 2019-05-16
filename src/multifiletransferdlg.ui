@@ -10,6 +10,9 @@
     <height>300</height>
    </rect>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string notr="true">File Transfer</string>
   </property>
@@ -206,7 +209,14 @@
     </layout>
    </item>
    <item>
-    <widget class="QListView" name="listView"/>
+    <widget class="QListView" name="listView">
+     <property name="acceptDrops">
+      <bool>true</bool>
+     </property>
+     <property name="dragDropMode">
+      <enum>QAbstractItemView::DropOnly</enum>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
