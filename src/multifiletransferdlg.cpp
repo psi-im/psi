@@ -38,6 +38,11 @@
 #include <QMimeDatabase>
 #include <QBuffer>
 #include <QFileDialog>
+#include <QDragEnterEvent>
+#include <QDragLeaveEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
 
 using namespace XMPP;
 
@@ -137,15 +142,7 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     d->peer = jid;
     d->isOutgoing = true;
     updatePeerVisuals();
-    for (auto const &fname: fileList) {
-        QFileInfo fi(fname);
-        if (fi.isFile() && fi.isReadable()) {
-            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
-            mftItem->setThumbnail(QFileIconProvider().icon(fi));
-            mftItem->setFileName(fname);
-        }
-    }
-    updateComonVisuals();
+    appendOutgoing(fileList);
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
 
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
@@ -296,7 +293,6 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
 
 void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
 {
-    updatePeerVisuals();
     for (auto const &fname: fileList) {
         QFileInfo fi(fname);
         if (fi.isFile() && fi.isReadable()) {

@@ -36,6 +36,10 @@ namespace XMPP {
 
 class PsiAccount;
 class MultiFileTransferItem;
+class QDragEnterEvent;
+class QDragMoveEvent;
+class QDragLeaveEvent;
+class QDropEvent;
 
 class MultiFileTransferDlg : public QDialog
 {
