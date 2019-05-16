@@ -45,7 +45,6 @@ public:
     QString errorString() const;
     QString toolTipText() const;
     QString filePath() const;
-    void setCurrentSize(quint64 newCurrentSize);
     void setThumbnail(const QIcon &img);
     void setMediaType(const QString &mediaType);
     void setDescription(const QString &description);
@@ -53,6 +52,8 @@ public:
     void setSuccess();
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
     void setFileName(const QString &filePath);
+public slots:
+    void setCurrentSize(quint64 newCurrentSize);
 signals:
     void descriptionChanged(); // user changes description
     void rejectRequested();    // user selects reject in UI

@@ -186,6 +186,7 @@ void MultiFileTransferItem::setSuccess()
 
 void MultiFileTransferItem::setState(MultiFileTransferModel::State state, const QString &stateComment)
 {
+    d->state = state;
     d->errorString = stateComment;
     if (state == MultiFileTransferModel::Active) {
         d->lastTimer.start();
