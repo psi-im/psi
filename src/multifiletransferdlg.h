@@ -52,6 +52,8 @@ public:
     void initOutgoing(const XMPP::Jid &jid, const QStringList &fileList);
     void initIncoming(XMPP::Jingle::Session *session);
 
+    void reject();
+
 protected:
     void dragEnterEvent(QDragEnterEvent *event);
     void dragMoveEvent(QDragMoveEvent *event);

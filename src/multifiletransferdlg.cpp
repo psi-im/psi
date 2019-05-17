@@ -51,7 +51,7 @@ class MultiFileTransferDlg::Private
 public:
     PsiAccount *account;
     Jid peer;
-    XMPP::Jingle::Session *session = nullptr;
+    QPointer<XMPP::Jingle::Session> session;
     MultiFileTransferModel *model = nullptr;
     bool isOutgoing = false;
 };
@@ -235,6 +235,13 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
     });
 
     updateComonVisuals();
+}
+
+void MultiFileTransferDlg::reject()
+{
+    if (d->session && d->session->state() < Jingle::State::Finishing) {
+        d->session->terminate(Jingle::Reason::Condition::Cancel);
+    }
 }
 
 void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
