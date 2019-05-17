@@ -97,7 +97,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     ui->listView->setItemDelegate(new MultiFileTransferDelegate(this));
     ui->listView->setModel(d->model);
     ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
-    connect(ui->listView, &QListView::activated, this, [this] (const QModelIndex &index) {
+    connect(ui->listView, &QListView::clicked, this, [this] (const QModelIndex &index) {
         auto state = index.data(MultiFileTransferModel::StateRole).toInt();
         if (state == MultiFileTransferModel::AddTemplate) {
             QStringList files_ = FileUtil::getOpenFileNames(this, tr("Open Files"));
