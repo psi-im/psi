@@ -193,7 +193,13 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
                 s += QString(" @ ") + tr("%1%2/s").arg(roundedNumber(speed, div)).arg(unit);
 
                 s += ", ";
-                QTime t = QTime().addSecs(timeRemaining);
+                int days = 0;
+                if (timeRemaining > 24*3600) {
+                    days = timeRemaining / (24*3600);
+                    timeRemaining -= (24*3600)*days;
+                    s += tr("%1d").arg(days);
+                }
+                QTime t = QTime(0, 0).addSecs(timeRemaining);
                 s += tr("%1h%2m%3s remaining").arg(t.hour()).arg(t.minute()).arg(t.second());
             }
             break;

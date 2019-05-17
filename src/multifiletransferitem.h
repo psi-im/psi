@@ -54,6 +54,8 @@ public:
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
     void setFileName(const QString &filePath);
     void setOffset(quint64 offset); // set initial offset
+
+    void updateStats();
 public slots:
     void setCurrentSize(quint64 newCurrentSize);
 signals:

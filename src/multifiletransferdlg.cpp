@@ -242,6 +242,7 @@ void MultiFileTransferDlg::reject()
     if (d->session && d->session->state() < Jingle::State::Finishing) {
         d->session->terminate(Jingle::Reason::Condition::Cancel);
     }
+    QDialog::reject();
 }
 
 void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)

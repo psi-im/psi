@@ -31,10 +31,12 @@ MultiFileTransferModel::MultiFileTransferModel(QObject *parent) :
     QAbstractListModel(parent)
 {
     updateTimer.setSingleShot(true);
+    updateTimer.setInterval(1000);
     connect(&updateTimer, &QTimer::timeout, this, [this](){
         auto s = updatedTransfers;
         updatedTransfers.clear();
         for (const auto &v: s) {
+            v->updateStats();
             int row = transfers.indexOf(v); // what about thousands of active transfers? probably we can build a map from trasfers
             if (row >= 0) {
                 auto ind = index(row, 0, QModelIndex());

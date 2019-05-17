@@ -33,8 +33,10 @@ struct MultiFileTransferItem::Private
     QString       fileName;
     quint64       fullSize = 0;
     quint64       currentSize = 0;   // currently transfered
+    quint64       lastSize = 0;
     quint64       offset = 0; // initial offset if only part of file is transferred
     quint32       timeRemaining = 0; // secs
+    quint32       speed; // bytes per second
     MultiFileTransferModel::Direction direction;
     MultiFileTransferModel::State    state = MultiFileTransferModel::State::Pending;
     QIcon         thumbnail;
@@ -93,6 +95,8 @@ QString MultiFileTransferItem::description() const
 
 quint32 MultiFileTransferItem::speed() const
 {
+    return d->speed;
+#if 0
     if (d->lastSpeeds.size()) {
         quint64 sum = 0;
         for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
@@ -101,6 +105,7 @@ quint32 MultiFileTransferItem::speed() const
         return quint32(sum / d->lastSpeeds.size());
     }
     return 0;
+#endif
 }
 
 MultiFileTransferModel::Direction MultiFileTransferItem::direction() const
@@ -135,6 +140,9 @@ QString MultiFileTransferItem::filePath() const
 
 void MultiFileTransferItem::setCurrentSize(quint64 newCurrentSize)
 {
+    d->currentSize = newCurrentSize;
+    emit updated();
+#if 0
     auto diff = newCurrentSize - d->currentSize;
     auto elapsed = d->lastTimer.elapsed();
     quint32 speed;
@@ -156,6 +164,7 @@ void MultiFileTransferItem::setCurrentSize(quint64 newCurrentSize)
     }
     d->lastTimer.start();
     emit updated();
+#endif
 }
 
 void MultiFileTransferItem::setThumbnail(const QIcon &img)
@@ -207,4 +216,19 @@ void MultiFileTransferItem::setFileName(const QString &fileName)
 void MultiFileTransferItem::setOffset(quint64 offset)
 {
     d->offset = offset;
+    d->lastSize = offset;
+    d->currentSize = offset;
+}
+
+void MultiFileTransferItem::updateStats()
+{
+    auto elapsed = d->lastTimer.elapsed();
+    if (!elapsed) {
+        return;
+    }
+    double speedf = double(d->currentSize - d->lastSize) * 1000.0 / double(elapsed); // bytes per second
+    d->speed = speedf;
+    d->timeRemaining = (d->fullSize - d->currentSize) / speedf;
+    d->lastSize = d->currentSize;
+    d->lastTimer.start();
 }
