@@ -35,6 +35,7 @@ public:
     const QString &displayName() const;
     quint64 fullSize() const;
     quint64 currentSize() const;
+    quint64 offset() const; // initial offset
     QIcon icon() const;
     QString mediaType() const;
     QString description() const;
@@ -52,6 +53,7 @@ public:
     void setSuccess();
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
     void setFileName(const QString &filePath);
+    void setOffset(quint64 offset); // set initial offset
 public slots:
     void setCurrentSize(quint64 newCurrentSize);
 signals:

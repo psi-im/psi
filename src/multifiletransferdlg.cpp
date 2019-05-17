@@ -255,6 +255,9 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     });
     connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [app,item](Jingle::State state){
         Q_UNUSED(state);
+        if (state == Jingle::State::Accepted) {
+            item->setOffset(app->acceptFile().range().offset);
+        }
         setMFTItemStateFromJingleState(item, app);
     });
     connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);

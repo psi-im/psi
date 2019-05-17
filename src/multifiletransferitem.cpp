@@ -33,6 +33,7 @@ struct MultiFileTransferItem::Private
     QString       fileName;
     quint64       fullSize = 0;
     quint64       currentSize = 0;   // currently transfered
+    quint64       offset = 0; // initial offset if only part of file is transferred
     quint32       timeRemaining = 0; // secs
     MultiFileTransferModel::Direction direction;
     MultiFileTransferModel::State    state = MultiFileTransferModel::State::Pending;
@@ -68,6 +69,11 @@ quint64 MultiFileTransferItem::fullSize() const
 quint64 MultiFileTransferItem::currentSize() const
 {
     return d->currentSize;
+}
+
+quint64 MultiFileTransferItem::offset() const
+{
+    return d->offset;
 }
 
 QIcon MultiFileTransferItem::icon() const
@@ -196,4 +202,9 @@ void MultiFileTransferItem::setState(MultiFileTransferModel::State state, const 
 void MultiFileTransferItem::setFileName(const QString &fileName)
 {
     d->fileName = fileName;
+}
+
+void MultiFileTransferItem::setOffset(quint64 offset)
+{
+    d->offset = offset;
 }
