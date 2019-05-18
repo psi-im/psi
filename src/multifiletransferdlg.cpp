@@ -271,7 +271,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);
 
     // compute file hash
-    XMPP::Hash hash(XMPP::Hash::Blake2b512);
+    XMPP::Hash hash(XMPP::Hash::Sha1); // use Blake2 when we have optimized implementation
     QFile f(item->filePath());
     hash.computeFromDevice(&f); // FIXME it will freeze Psi for awhile on large files
 

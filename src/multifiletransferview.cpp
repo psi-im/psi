@@ -170,6 +170,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     // Transfer current status line
     // -----------------------------
     QString s;
+    s.reserve(128);
     {
         qlonglong div;
         QString unit;
@@ -193,14 +194,33 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
                 s += QString(" @ ") + tr("%1%2/s").arg(roundedNumber(speed, div)).arg(unit);
 
                 s += ", ";
+
+                QString ts;
+                ts.reserve(16);
                 int days = 0;
+                int hours = 0;
+                int minutes = 0;
                 if (timeRemaining > 24*3600) {
                     days = timeRemaining / (24*3600);
                     timeRemaining -= (24*3600)*days;
-                    s += tr("%1d").arg(days);
+                    ts += tr("%1d").arg(days);
                 }
-                QTime t = QTime(0, 0).addSecs(timeRemaining);
-                s += tr("%1h%2m%3s remaining").arg(t.hour()).arg(t.minute()).arg(t.second());
+                if (timeRemaining > 3600) {
+                    hours = timeRemaining / 3600;
+                    timeRemaining -= 3600*hours;
+                    if (ts.size() || hours) {
+                        ts += tr("%1h").arg(hours);
+                    }
+                }
+                if (timeRemaining > 60) {
+                    minutes = timeRemaining / 60;
+                    timeRemaining -= 60*minutes;
+                    if (ts.size() || minutes) {
+                        ts += tr("%1m").arg(minutes);
+                    }
+                }
+                ts += tr("%1s").arg(timeRemaining);
+                s += tr("%1 remaining").arg(ts);
             }
             break;
         }
