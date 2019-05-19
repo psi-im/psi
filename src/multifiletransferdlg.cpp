@@ -54,6 +54,7 @@ public:
     QPointer<XMPP::Jingle::Session> session;
     MultiFileTransferModel *model = nullptr;
     bool isOutgoing = false;
+    bool finished = false;
 };
 
 MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
@@ -100,6 +101,9 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     connect(ui->listView, &QListView::clicked, this, [this] (const QModelIndex &index) {
         auto state = index.data(MultiFileTransferModel::StateRole).toInt();
         if (state == MultiFileTransferModel::AddTemplate) {
+            if (d->finished) {
+                return;
+            }
             QStringList files_ = FileUtil::getOpenFileNames(this, tr("Open Files"));
             appendOutgoing(files_);
         }
@@ -148,6 +152,9 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
         d->session = d->account->client()->jingleManager()->newSession(d->peer);
+        connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
+            d->finished = true;
+        });
 
         for (int i = 0; i < d->model->rowCount() - 1; ++i) {
             auto index = d->model->index(i, 0, QModelIndex());
@@ -166,6 +173,9 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
 void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 {
     d->session = session;
+    connect(session, &Jingle::Session::terminated, this, [this](){
+        d->finished = true;
+    });
     d->peer = session->peer();
     updatePeerVisuals();
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Receive"));
@@ -240,6 +250,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 void MultiFileTransferDlg::reject()
 {
     if (d->session && d->session->state() < Jingle::State::Finishing) {
+        d->finished = true;
         d->session->terminate(Jingle::Reason::Condition::Cancel);
     }
     QDialog::reject();
@@ -367,21 +378,30 @@ void MultiFileTransferDlg::updateComonVisuals()
 
 void MultiFileTransferDlg::dragEnterEvent(QDragEnterEvent *event)
 {
-    event->acceptProposedAction();
+    if (!d->finished) {
+        event->acceptProposedAction();
+    }
 }
 
 void MultiFileTransferDlg::dragMoveEvent(QDragMoveEvent *event)
 {
-    event->acceptProposedAction();
+    if (!d->finished) {
+        event->acceptProposedAction();
+    }
 }
 
 void MultiFileTransferDlg::dragLeaveEvent(QDragLeaveEvent *event)
 {
-    event->accept();
+    if (!d->finished) {
+        event->accept();
+    }
 }
 
 void MultiFileTransferDlg::dropEvent(QDropEvent *event)
 {
+    if (!d->finished) {
+        return;
+    }
     QStringList dragFiles;
     const QMimeData* mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
