@@ -97,6 +97,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     ui->listView->setItemDelegate(new MultiFileTransferDelegate(this));
     ui->listView->setModel(d->model);
     ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
+    ui->buttonBox->button(QDialogButtonBox::Close)->hide();
     connect(ui->listView, &QListView::clicked, this, [this] (const QModelIndex &index) {
         auto state = index.data(MultiFileTransferModel::StateRole).toInt();
         if (state == MultiFileTransferModel::AddTemplate) {
@@ -353,8 +354,7 @@ void MultiFileTransferDlg::setupSessionSignals()
     }
     connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
         ui->buttonBox->button(QDialogButtonBox::Cancel)->hide();
-        auto btn = ui->buttonBox->button(QDialogButtonBox::Close);
-        btn->show();
+        ui->buttonBox->button(QDialogButtonBox::Close)->show();
         d->model->setAddEnabled(false);
     });
 }
