@@ -53,6 +53,7 @@ public:
     void initIncoming(XMPP::Jingle::Session *session);
 
     void reject();
+    void accept();
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event);
@@ -66,6 +67,7 @@ private:
     void updateComonVisuals();
     void addTransferContent(MultiFileTransferItem *item);
     void appendOutgoing(const QStringList &fileList);
+    void setupSessionSignals();
 
 private:
     Ui::MultiFileTransferDlg *ui;

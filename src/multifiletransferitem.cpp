@@ -40,7 +40,7 @@ struct MultiFileTransferItem::Private
     MultiFileTransferModel::Direction direction;
     MultiFileTransferModel::State    state = MultiFileTransferModel::State::Pending;
     QIcon         thumbnail;
-    QContiguousCache<quint32>         lastSpeeds = QContiguousCache<quint32>(3);      // bytes per second
+    QContiguousCache<quint32>         lastSpeeds = QContiguousCache<quint32>(5);      // bytes per second
     QElapsedTimer lastTimer;         // last speed value update
 };
 
@@ -96,16 +96,6 @@ QString MultiFileTransferItem::description() const
 quint32 MultiFileTransferItem::speed() const
 {
     return d->speed;
-#if 0
-    if (d->lastSpeeds.size()) {
-        quint64 sum = 0;
-        for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
-            sum += d->lastSpeeds.at(i);
-        }
-        return quint32(sum / d->lastSpeeds.size());
-    }
-    return 0;
-#endif
 }
 
 MultiFileTransferModel::Direction MultiFileTransferItem::direction() const
@@ -130,7 +120,8 @@ QString MultiFileTransferItem::errorString() const
 
 QString MultiFileTransferItem::toolTipText() const
 {
-    return QString("<b>%1</b><br><br>%2<br><br>").arg(d->displayName, d->description);
+    return QString("<b>%1</b><br><br>%2<br><br>").arg(d->displayName, d->description) +
+            tr("Transferred: %1/%2 bytes").arg(QString::number(d->currentSize), QString::number(d->fullSize));
 }
 
 QString MultiFileTransferItem::filePath() const
@@ -142,29 +133,6 @@ void MultiFileTransferItem::setCurrentSize(quint64 newCurrentSize)
 {
     d->currentSize = newCurrentSize;
     emit updated();
-#if 0
-    auto diff = newCurrentSize - d->currentSize;
-    auto elapsed = d->lastTimer.elapsed();
-    quint32 speed;
-    if (diff && !elapsed) {
-        speed = quint32(d->fullSize);
-    } else if (diff) {
-        speed = quint32(double(diff) / double(elapsed) / 1000.0);
-    } else {
-        speed = 0;
-    }
-
-    d->currentSize = newCurrentSize;
-    d->lastSpeeds.append(speed);
-    auto averageSpeed = this->speed();
-    if (averageSpeed) {
-        d->timeRemaining = (d->fullSize - d->currentSize) / averageSpeed;
-    } else {
-        d->timeRemaining = 0; // just undefined
-    }
-    d->lastTimer.start();
-    emit updated();
-#endif
 }
 
 void MultiFileTransferItem::setThumbnail(const QIcon &img)
@@ -227,7 +195,14 @@ void MultiFileTransferItem::updateStats()
         return;
     }
     double speedf = double(d->currentSize - d->lastSize) * 1000.0 / double(elapsed); // bytes per second
-    d->speed = speedf;
+    d->lastSpeeds.append(speedf);
+
+    quint64 sum = 0;
+    for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
+        sum += d->lastSpeeds.at(i);
+    }
+    d->speed = quint32(sum / d->lastSpeeds.size());
+
     d->timeRemaining = (d->fullSize - d->currentSize) / speedf;
     d->lastSize = d->currentSize;
     d->lastTimer.start();

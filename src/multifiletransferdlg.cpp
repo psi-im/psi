@@ -152,9 +152,7 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
         d->session = d->account->client()->jingleManager()->newSession(d->peer);
-        connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
-            d->finished = true;
-        });
+        setupSessionSignals();
 
         for (int i = 0; i < d->model->rowCount() - 1; ++i) {
             auto index = d->model->index(i, 0, QModelIndex());
@@ -173,9 +171,7 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
 void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 {
     d->session = session;
-    connect(session, &Jingle::Session::terminated, this, [this](){
-        d->finished = true;
-    });
+    setupSessionSignals();
     d->peer = session->peer();
     updatePeerVisuals();
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Receive"));
@@ -256,6 +252,15 @@ void MultiFileTransferDlg::reject()
     QDialog::reject();
 }
 
+void MultiFileTransferDlg::accept()
+{
+    if (d->session && d->session->state() < Jingle::State::Finishing) {
+        d->finished = true;
+        d->session->terminate(Jingle::Reason::Condition::Success); // really?
+    }
+    QDialog::accept();
+}
+
 void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
 {
     QMimeDatabase mimeDb;
@@ -327,6 +332,19 @@ void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
         }
     }
     updateComonVisuals();
+}
+
+void MultiFileTransferDlg::setupSessionSignals()
+{
+    if (!d->session) {
+        return;
+    }
+    connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
+        d->finished = true;
+        ui->buttonBox->button(QDialogButtonBox::Cancel)->hide();
+        auto btn = ui->buttonBox->button(QDialogButtonBox::Close);
+        btn->show();
+    });
 }
 
 void MultiFileTransferDlg::updateMyVisuals()
