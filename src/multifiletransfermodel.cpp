@@ -61,7 +61,7 @@ Qt::ItemFlags MultiFileTransferModel::flags(const QModelIndex &index) const
 
 int MultiFileTransferModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid()? 0 : transfers.size() + 1; // only for root it's valid
+    return parent.isValid()? 0 : transfers.size() + (addEnabled? 1 : 0); // only for root it's valid
 }
 
 QVariant MultiFileTransferModel::data(const QModelIndex &index, int role) const
@@ -188,4 +188,27 @@ MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,
     transfers.append(t);
     endInsertRows();
     return t;
+}
+
+void MultiFileTransferModel::setAddEnabled(bool enabled)
+{
+    if (addEnabled == enabled) {
+        return;
+    }
+    if (enabled) {
+        beginInsertRows(QModelIndex(), transfers.size() + 1, transfers.size() + 1);
+    } else {
+        beginRemoveRows(QModelIndex(), transfers.size() + 1, transfers.size() + 1);
+    }
+    addEnabled = enabled;
+    if (enabled) { // wasn't enabled. now enabled. +1 row
+        endInsertRows();
+    } else {
+        endRemoveRows();
+    }
+}
+
+bool MultiFileTransferModel::isAddEnabled() const
+{
+    return addEnabled;
 }

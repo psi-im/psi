@@ -54,7 +54,6 @@ public:
     QPointer<XMPP::Jingle::Session> session;
     MultiFileTransferModel *model = nullptr;
     bool isOutgoing = false;
-    bool finished = false;
 };
 
 MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
@@ -101,7 +100,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     connect(ui->listView, &QListView::clicked, this, [this] (const QModelIndex &index) {
         auto state = index.data(MultiFileTransferModel::StateRole).toInt();
         if (state == MultiFileTransferModel::AddTemplate) {
-            if (d->finished) {
+            if (!d->model->isAddEnabled()) {
                 return;
             }
             QStringList files_ = FileUtil::getOpenFileNames(this, tr("Open Files"));
@@ -168,6 +167,32 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     });
 }
 
+void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application *app, MultiFileTransferItem *item)
+{
+    connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [this, app,item](Jingle::State state){
+        if (state == Jingle::State::Accepted) {
+            item->setOffset(app->acceptFile().range().offset);
+        }
+        setMFTItemStateFromJingleState(item, app);
+        if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())) {
+            // transfer has just finished and we were the receiving side.
+            // if it was the last finished transfer xep recommends us to send session.terminate
+            bool hasUnfinished = false;
+            for (auto &c: d->session->contentList()) {
+                if (c->state() != Jingle::State::Finished) {
+                    hasUnfinished = true;
+                    break;
+                }
+            }
+            if (!hasUnfinished) {
+                // ready to terminate
+                d->session->terminate(Jingle::Reason::Condition::Success);
+            }
+        }
+    });
+    connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);
+}
+
 void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 {
     d->session = session;
@@ -181,11 +206,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             auto file = app->file();
             auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(), file.size()); // FIXME size is optional. ranges?
             item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(app));
-            connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [app,item](Jingle::State state){
-                Q_UNUSED(state);
-                setMFTItemStateFromJingleState(item, app);
-            });
-            connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);
+            setupCommonSignals(app, item);
         }
     }
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::pressed, this, [this](){
@@ -246,7 +267,6 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 void MultiFileTransferDlg::reject()
 {
     if (d->session && d->session->state() < Jingle::State::Finishing) {
-        d->finished = true;
         d->session->terminate(Jingle::Reason::Condition::Cancel);
     }
     QDialog::reject();
@@ -255,7 +275,6 @@ void MultiFileTransferDlg::reject()
 void MultiFileTransferDlg::accept()
 {
     if (d->session && d->session->state() < Jingle::State::Finishing) {
-        d->finished = true;
         d->session->terminate(Jingle::Reason::Condition::Success); // really?
     }
     QDialog::accept();
@@ -277,14 +296,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
         app->setDevice(f);
         Q_UNUSED(size);
     });
-    connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [app,item](Jingle::State state){
-        Q_UNUSED(state);
-        if (state == Jingle::State::Accepted) {
-            item->setOffset(app->acceptFile().range().offset);
-        }
-        setMFTItemStateFromJingleState(item, app);
-    });
-    connect(app, &Jingle::FileTransfer::Application::progress, item, &MultiFileTransferItem::setCurrentSize);
+    setupCommonSignals(app, item);
 
     // compute file hash
     XMPP::Hash hash(XMPP::Hash::Sha1); // use Blake2 when we have optimized implementation
@@ -340,10 +352,10 @@ void MultiFileTransferDlg::setupSessionSignals()
         return;
     }
     connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
-        d->finished = true;
         ui->buttonBox->button(QDialogButtonBox::Cancel)->hide();
         auto btn = ui->buttonBox->button(QDialogButtonBox::Close);
         btn->show();
+        d->model->setAddEnabled(false);
     });
 }
 
@@ -396,28 +408,28 @@ void MultiFileTransferDlg::updateComonVisuals()
 
 void MultiFileTransferDlg::dragEnterEvent(QDragEnterEvent *event)
 {
-    if (!d->finished) {
+    if (!d->model->isAddEnabled()) {
         event->acceptProposedAction();
     }
 }
 
 void MultiFileTransferDlg::dragMoveEvent(QDragMoveEvent *event)
 {
-    if (!d->finished) {
+    if (!d->model->isAddEnabled()) {
         event->acceptProposedAction();
     }
 }
 
 void MultiFileTransferDlg::dragLeaveEvent(QDragLeaveEvent *event)
 {
-    if (!d->finished) {
+    if (!d->model->isAddEnabled()) {
         event->accept();
     }
 }
 
 void MultiFileTransferDlg::dropEvent(QDropEvent *event)
 {
-    if (!d->finished) {
+    if (!d->model->isAddEnabled()) {
         return;
     }
     QStringList dragFiles;

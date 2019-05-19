@@ -31,6 +31,9 @@ namespace XMPP {
     class Jid;
     namespace Jingle {
         class Session;
+        namespace FileTransfer {
+            class Application;
+        }
     }
 }
 
@@ -68,6 +71,7 @@ private:
     void addTransferContent(MultiFileTransferItem *item);
     void appendOutgoing(const QStringList &fileList);
     void setupSessionSignals();
+    void setupCommonSignals(XMPP::Jingle::FileTransfer::Application *app, MultiFileTransferItem *item);
 
 private:
     Ui::MultiFileTransferDlg *ui;

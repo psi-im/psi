@@ -71,10 +71,13 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     MultiFileTransferItem *addTransfer(Direction direction, const QString &displayName, quint64 fullSize);
+    void setAddEnabled(bool enabled = true);
+    bool isAddEnabled() const;
 private:
     QList<MultiFileTransferItem*> transfers;
     QSet<MultiFileTransferItem*> updatedTransfers;
     QTimer updateTimer;
+    bool addEnabled = true;
 };
 
 #endif // MULTIFILETRANSFERMODEL_H
