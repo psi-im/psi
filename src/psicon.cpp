@@ -1838,19 +1838,7 @@ void PsiCon::updateS5BServerAddresses()
     // grab all IP addresses
     foreach(PsiAccount* account, d->contactList->accounts()) {
         QHostAddress *a = account->localAddress();
-        if(!a)
-            continue;
-
-        // don't take dups
-        bool found = false;
-        for(QList<QHostAddress>::ConstIterator hit = list.begin(); hit != list.end(); ++hit) {
-            const QHostAddress &ha = *hit;
-            if(ha == (*a)) {
-                found = true;
-                break;
-            }
-        }
-        if(!found)
+        if(a && list.indexOf(*a) == -1)
             list += (*a);
     }
 
@@ -1861,17 +1849,8 @@ void PsiCon::updateS5BServerAddresses()
 
     // add external
     QString extAddr = PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString();
-    if(!extAddr.isEmpty()) {
-        bool found = false;
-        for(QStringList::ConstIterator sit = slist.begin(); sit != slist.end(); ++sit) {
-            const QString &s = *sit;
-            if(s == extAddr) {
-                found = true;
-                break;
-            }
-        }
-        if(!found)
-            slist += extAddr;
+    if(!extAddr.isEmpty() && slist.indexOf(extAddr) == -1) {
+        slist += extAddr;
     }
 
     // set up the server
