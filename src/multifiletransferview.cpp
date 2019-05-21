@@ -191,7 +191,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
                 s += QString(" ") + tr("[Stalled]");
             else {
                 niceUnit(speed, &div, &unit);
-                s += QString(" @ ") + tr("%1%2/s").arg(roundedNumber(speed, div)).arg(unit);
+                s += QString(" @ ") + tr("%1%2/s").arg(roundedNumber(speed, div), unit);
 
                 s += ", ";
 
@@ -244,33 +244,34 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     painter->drawText(stbr, option.displayAlignment, s);
     painter->restore();
 
-    // Progress bar background
-    const int progressLeft = textLeft + progressHeight / 2;
-    const int progressMaxRight = right - progressHeight / 2 - 1;
-    const int progressBottom = progressTop + progressHeight - 1;
-    painter->save();
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(QBrush(Qt::lightGray, Qt::SolidPattern));
-    painter->drawEllipse(textLeft, progressTop, progressHeight, progressHeight);
-    painter->drawRect(QRect(QPoint(progressLeft, progressTop),
-                            QPoint(progressMaxRight, progressBottom)));
-    painter->drawEllipse(progressMaxRight - progressHeight / 2, progressTop, progressHeight, progressHeight);
     // -----------------------------
     // Transfer progress bar
     // -----------------------------
-    int progressRight = progressLeft + static_cast<int>((progressMaxRight - progressLeft) * (curSize / double(fullSize))+0.5);
-    if(progressRight > progressLeft) {
-        QBrush b;
-        b.setTexture(progressTexture);
-        QPainterPath p;
-        p.setFillRule(Qt::WindingFill);
-        p.addEllipse(textLeft, progressTop, progressHeight, progressHeight);
-        p.addRect(QRect(QPoint(progressLeft, progressTop),
-                        QPoint(progressRight, progressBottom)));
-        p.addEllipse(progressRight - progressHeight / 2, progressTop, progressHeight, progressHeight);
-        painter->fillPath(p, b);
+    const int progressLeft = textLeft + progressHeight / 2;
+    const int progressMaxRight = right - progressHeight / 2 - 1;
+
+    QImage ppImg(progressMaxRight - progressLeft + progressHeight, progressHeight, QImage::Format_ARGB32_Premultiplied);
+    ppImg.fill(Qt::transparent);
+    QPainter pp(&ppImg);
+    QPen pen(Qt::NoPen);
+    pen.setWidth(0);
+    pp.setPen(pen);
+
+    QPainterPath ppath;
+    ppath.setFillRule(Qt::WindingFill);
+    ppath.addEllipse(0, 0, progressHeight, progressHeight);
+    ppath.addRect(QRect(QPoint(progressHeight / 2, 0), QPoint(ppImg.width() - progressHeight / 2, progressHeight)));
+    ppath.addEllipse(ppImg.width() - progressHeight, 0, progressHeight, progressHeight);
+
+    // Progress bar background
+    pp.fillPath(ppath, QBrush(Qt::lightGray, Qt::SolidPattern));
+    // transferred
+    int progressWidth = static_cast<int>(ppImg.width() * (curSize / double(fullSize))+0.5);
+    if (progressWidth) {
+        pp.setClipRect(0, 0, progressWidth, progressHeight);
+        pp.fillPath(ppath, QBrush(progressTexture));
     }
-    painter->restore();
+    painter->drawImage(textLeft, progressTop, ppImg);
 }
 
 bool MultiFileTransferDelegate::helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option, const QModelIndex &index)
