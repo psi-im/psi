@@ -37,7 +37,7 @@ public:
 
     QVariant getOption(const QString& name, const QVariant &defaultValue = QVariant::Invalid) const;
     inline QVariant getOption(const char *name, const QVariant &defaultValue = QVariant::Invalid) const
-    { return getOption(QString(QLatin1String(name)), defaultValue); }
+    { return getOption(QString(QString::fromLatin1(name)), defaultValue); }
 
     // Warning: when inserting Map/Hash be very careful with keys. They are going to become xml element names.
     // full set of supported types can be found in VariantTree::variantToElement()

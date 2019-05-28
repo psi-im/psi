@@ -37,6 +37,7 @@
 #include <QNetworkConfigurationManager>
 
 #include "iris/processquit.h"
+#include "iris/tcpportreserver.h"
 #include "s5b.h"
 #include "jingle-s5b.h"
 #include "xmpp_caps.h"
@@ -288,7 +289,8 @@ public:
     int eventId = 0;
     QStringList recentNodeList; // FIXME move this to options system?
     EDB *edb = nullptr;
-    S5BServer *s5bServer = nullptr;
+    TcpPortReserver *tcpPortReserver = nullptr;
+    S5BServersManager *s5bServer = nullptr;
     IconSelectPopup *iconSelect = nullptr;
     NetworkAccessManager *nam = nullptr;
 #ifdef FILETRANSFER
@@ -308,6 +310,8 @@ public:
     PopupManager * popupManager = nullptr;
     QNetworkConfigurationManager netConfMng;
     QNetworkSession *netSession = nullptr;
+    quint16 byteStreamsPort = 0;
+    QString externalByteStreamsAddress;
 
     struct IdleSettings
     {
@@ -566,9 +570,30 @@ bool PsiCon::init()
     //PopupDurationsManager
     d->popupManager = new PopupManager(this);
 
+    // incoming bytestreams address
+    int bsPort = PsiOptions::instance()->getOption(QString::fromLatin1("options.p2p.bytestreams.listen-port")).toInt();
+    if (bsPort > 0 && bsPort < 65536) {
+        d->byteStreamsPort = quint16(bsPort);
+    }
+    d->externalByteStreamsAddress = PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString();
+
+    // general purpose tcp port reserver
+    d->tcpPortReserver = new TcpPortReserver;
+    connect(d->tcpPortReserver, &TcpPortReserver::newDiscoverer, this, [this](TcpPortDiscoverer *tpd){
+        // add external
+        if(d->externalByteStreamsAddress.isEmpty() || d->byteStreamsPort) {
+            return;
+        }
+        if (!tpd->setExternalHost(d->externalByteStreamsAddress, d->byteStreamsPort, QHostAddress(QHostAddress::Any), d->byteStreamsPort)) {
+            QMessageBox::warning(nullptr, tr("Warning"),
+                                 tr("Unable to bind to port %1 for Data Transfer.\n"
+                                    "This may mean you are already running another instance of Psi. "
+                                    "You may experience problems sending and/or receiving files.").arg(d->byteStreamsPort));
+        }
+    });
     // S5B
-    d->s5bServer = new S5BServer;
-    s5b_init();
+    d->s5bServer = new S5BServersManager;
+    d->s5bServer->setTcpPortReserver(d->tcpPortReserver);
 
     // Connect to the system monitor
     SystemWatch* sw = SystemWatch::instance();
@@ -722,6 +747,7 @@ void PsiCon::deinit()
 
     // delete s5b server
     delete d->s5bServer;
+    delete d->tcpPortReserver;
 
 #ifdef FILETRANSFER
     delete d->ftwin;
@@ -1040,6 +1066,7 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
     connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
     connect(pa, SIGNAL(startBounce()), SLOT(startBounce()));
     connect(pa, SIGNAL(disconnected()), SLOT(proceedWithSleep()));
+    pa->client()->setTcpPortReserver(d->tcpPortReserver);
     if (d->s5bServer) {
         pa->client()->s5bManager()->setServer(d->s5bServer);
         pa->client()->jingleS5BManager()->setServer(d->s5bServer);
@@ -1209,9 +1236,6 @@ void PsiCon::pa_updatedActivity()
 {
     PsiAccount *pa = static_cast<PsiAccount *>(sender());
     emit accountUpdated(pa);
-
-    // update s5b server
-    updateS5BServerAddresses();
 
     updateMainwinStatus();
 }
@@ -1403,20 +1427,29 @@ void PsiCon::optionChanged(const QString& option)
         d->idleSettings_.secondsIdle = 0;
     }
 
-    if (option == "options.ui.notifications.alert-style") {
+    if (option == QString::fromLatin1("options.ui.notifications.alert-style")) {
         alertIconUpdateAlertStyle();
     }
 
-    if (option == "options.ui.tabs.use-tabs" ||
-        option == "options.ui.tabs.grouping" ||
-        option == "options.ui.tabs.show-tab-buttons") {
+    if (option == QString::fromLatin1("options.ui.tabs.use-tabs") ||
+        option == QString::fromLatin1("options.ui.tabs.grouping") ||
+        option == QString::fromLatin1("options.ui.tabs.show-tab-buttons")) {
         QMessageBox::information(nullptr, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
         //notifyRestart = false;
     }
 
     // update s5b
-    if (option == "options.p2p.bytestreams.listen-port") {
-        s5b_init();
+    QString checkOpt = QString::fromLatin1("options.p2p.bytestreams.listen-port");
+    if (option == checkOpt) {
+        int port = PsiOptions::instance()->getOption(checkOpt).toInt();
+        if (port > 0 && port < 65536) {
+            d->byteStreamsPort = quint16(port);
+        }
+    }
+
+    checkOpt = QString::fromLatin1("options.p2p.bytestreams.external-address");
+    if (option == checkOpt) {
+        d->externalByteStreamsAddress = PsiOptions::instance()->getOption(checkOpt).toString();
     }
 
     if (option == "options.ui.chat.css") {
@@ -1426,7 +1459,7 @@ void PsiCon::optionChanged(const QString& option)
         return;
     }
 
-    if (option == "options.ui.spell-check.langs") {
+    if (option == QString::fromLatin1("options.ui.spell-check.langs")) {
         if(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool()) {
             auto langs = LanguageManager::deserializeLanguageSet(PsiOptions::instance()->getOption(option).toString());
             if(langs.isEmpty()) {
@@ -1479,8 +1512,6 @@ void PsiCon::slotApplyOptions()
         }
     }
 #endif
-
-    updateS5BServerAddresses();
 
     if(AvCallManager::isSupported()) {
         AvCallManager::setAudioOutDevice(o->getOption("options.media.devices.audio-output").toString());
@@ -1826,48 +1857,6 @@ void PsiCon::removeEvent(const PsiEvent::Ptr &e)
     account->queueChanged();
     if(u)
         account->cpUpdate(*u);
-}
-
-void PsiCon::updateS5BServerAddresses()
-{
-    if(!d->s5bServer)
-        return;
-
-    QList<QHostAddress> list;
-
-    // grab all IP addresses
-    foreach(PsiAccount* account, d->contactList->accounts()) {
-        QHostAddress *a = account->localAddress();
-        if(a && list.indexOf(*a) == -1)
-            list += (*a);
-    }
-
-    // convert to stringlist
-    QStringList slist;
-    for(QList<QHostAddress>::ConstIterator hit = list.begin(); hit != list.end(); ++hit)
-        slist += (*hit).toString();
-
-    // add external
-    QString extAddr = PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString();
-    if(!extAddr.isEmpty() && slist.indexOf(extAddr) == -1) {
-        slist += extAddr;
-    }
-
-    // set up the server
-    d->s5bServer->setHostList(slist);
-}
-
-void PsiCon::s5b_init()
-{
-    if(d->s5bServer->isActive())
-        d->s5bServer->stop();
-
-    int port = PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt();
-    if (port) {
-        if(!d->s5bServer->start(port)) {
-            QMessageBox::warning(nullptr, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(port));
-        }
-    }
 }
 
 void PsiCon::doSleep()

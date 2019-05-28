@@ -194,8 +194,6 @@ private:
 
     void initNetSession();
     void deleteAllDialogs();
-    void s5b_init();
-    void updateS5BServerAddresses();
     void setShortcuts();
 
     friend class PsiAccount; // FIXME
