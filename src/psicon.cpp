@@ -290,7 +290,6 @@ public:
     QStringList recentNodeList; // FIXME move this to options system?
     EDB *edb = nullptr;
     TcpPortReserver *tcpPortReserver = nullptr;
-    S5BServersManager *s5bServer = nullptr;
     IconSelectPopup *iconSelect = nullptr;
     NetworkAccessManager *nam = nullptr;
 #ifdef FILETRANSFER
@@ -591,9 +590,8 @@ bool PsiCon::init()
                                     "You may experience problems sending and/or receiving files.").arg(d->byteStreamsPort));
         }
     });
-    // S5B
-    d->s5bServer = new S5BServersManager;
-    d->s5bServer->setTcpPortReserver(d->tcpPortReserver);
+
+    d->tcpPortReserver->registerScope(QString::fromLatin1("s5b"), new S5BServersProducer);
 
     // Connect to the system monitor
     SystemWatch* sw = SystemWatch::instance();
@@ -745,8 +743,6 @@ void PsiCon::deinit()
     }
     d->nam->releaseHandlers();
 
-    // delete s5b server
-    delete d->s5bServer;
     delete d->tcpPortReserver;
 
 #ifdef FILETRANSFER
@@ -1067,10 +1063,6 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
     connect(pa, SIGNAL(startBounce()), SLOT(startBounce()));
     connect(pa, SIGNAL(disconnected()), SLOT(proceedWithSleep()));
     pa->client()->setTcpPortReserver(d->tcpPortReserver);
-    if (d->s5bServer) {
-        pa->client()->s5bManager()->setServer(d->s5bServer);
-        pa->client()->jingleS5BManager()->setServer(d->s5bServer);
-    }
     return pa;
 }
 
