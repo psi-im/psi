@@ -42,6 +42,8 @@ public:
     }
     HoverableStyleOptionViewItem(const QStyleOptionViewItem &other);
     HoverableStyleOptionViewItem &operator = (const QStyleOptionViewItem &other);
+    inline HoverableStyleOptionViewItem &operator = (const HoverableStyleOptionViewItem &other)
+    { return *this = static_cast<QStyleOptionViewItem>(other); }
 
 protected:
     HoverableStyleOptionViewItem(int version);
