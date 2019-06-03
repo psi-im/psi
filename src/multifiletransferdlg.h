@@ -44,6 +44,15 @@ class QDragMoveEvent;
 class QDragLeaveEvent;
 class QDropEvent;
 
+class BinaryUriLoader : public QObject
+{
+    Q_OBJECT
+public:
+    BinaryUriLoader(PsiAccount *acc, const XMPP::Jid &peer, const QUrl &uri);
+signals:
+    void ready(const QByteArray &);
+};
+
 class MultiFileTransferDlg : public QDialog
 {
     Q_OBJECT

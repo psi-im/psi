@@ -32,6 +32,7 @@
 #include "userlist.h"
 #include "iconset.h"
 #include "fileutil.h"
+#include "networkaccessmanager.h"
 
 #include <QFileIconProvider>
 #include <QFileInfo>
@@ -44,6 +45,8 @@
 #include <QDropEvent>
 #include <QMimeData>
 #include <QPainter>
+#include <QNetworkReply>
+#include <xmpp_tasks.h>
 
 using namespace XMPP;
 
@@ -209,6 +212,18 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(), file.size()); // FIXME size is optional. ranges?
             item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(app));
             setupCommonSignals(app, item);
+
+            auto thumb = file.thumbnail();
+            if (!thumb.uri.isEmpty()) {
+                auto loader = new BinaryUriLoader(d->account, d->peer, thumb.uri);
+                connect(loader, &BinaryUriLoader::ready, item, [item](const QByteArray &ba){
+                    if (ba.isEmpty())
+                        return;
+                    QPixmap p;
+                    p.loadFromData(ba);
+                    item->setThumbnail(QIcon(p));
+                });
+            }
         }
     }
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::pressed, this, [this](){
@@ -457,5 +472,29 @@ void MultiFileTransferDlg::dropEvent(QDropEvent *event)
     if (!dragFiles.isEmpty()) {
         appendOutgoing(dragFiles);
         event->acceptProposedAction();
+    }
+}
+
+BinaryUriLoader::BinaryUriLoader(PsiAccount *acc, const Jid &peer, const QUrl &uri)
+{
+    auto uris = uri.toString();
+    if (uris.startsWith(QString::fromLatin1("cid:"))) {
+        JT_BitsOfBinary *task = new JT_BitsOfBinary(acc->client()->rootTask());
+        connect(task, &JT_BitsOfBinary::finished, this, [this,task](){
+            BoBData &bob = ((JT_BitsOfBinary*)sender())->data();
+            emit ready(bob.data());
+            deleteLater();
+        }, Qt::QueuedConnection);
+        task->get(peer, uri.toString().mid(4));
+        task->go(true);
+    } else {
+        auto nam = acc->psi()->networkAccessManager();
+        QNetworkReply *reply = nam->get(QNetworkRequest(uri));
+        connect(reply, &QNetworkReply::finished, this, [this,reply](){
+            QNetworkReply* reply = dynamic_cast<QNetworkReply*>(sender());
+            ready(reply->readAll());
+            reply->deleteLater();
+            deleteLater();
+        }, Qt::QueuedConnection);
     }
 }
