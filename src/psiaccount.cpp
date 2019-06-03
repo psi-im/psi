@@ -60,6 +60,7 @@
 #include "s5b.h"
 #ifdef FILETRANSFER
 #include "filetransfer.h"
+#include "jingle-s5b.h"
 #endif
 #include "psioptions.h"
 #include "textutil.h"
@@ -3508,6 +3509,7 @@ void PsiAccount::reconfigureFTManager()
 #ifdef FILETRANSFER
     d->client->fileTransferManager()->setDisabled(S5BManager::ns(),
                                                   d->acc.ibbOnly); // TODO more stream types?
+    d->client->jingleS5BManager()->setUserProxy(d->acc.dtProxy);
 #endif
 }
 
