@@ -46,6 +46,7 @@ public:
     QString errorString() const;
     QString toolTipText() const;
     QString filePath() const;
+    QIcon thumbnail() const;
     void setThumbnail(const QIcon &img);
     void setMediaType(const QString &mediaType);
     void setDescription(const QString &description);

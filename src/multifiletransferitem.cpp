@@ -129,6 +129,11 @@ QString MultiFileTransferItem::filePath() const
     return d->fileName;
 }
 
+QIcon MultiFileTransferItem::thumbnail() const
+{
+    return d->thumbnail;
+}
+
 void MultiFileTransferItem::setCurrentSize(quint64 newCurrentSize)
 {
     d->currentSize = newCurrentSize;

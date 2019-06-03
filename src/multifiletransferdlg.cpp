@@ -43,6 +43,7 @@
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QMimeData>
+#include <QPainter>
 
 using namespace XMPP;
 
@@ -305,15 +306,15 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     hash.computeFromDevice(&f); // FIXME it will freeze Psi for awhile on large files
 
     // take thumbnail
-    QImage img(item->filePath());
     XMPP::Thumbnail thumb;
-    if (!img.isNull()) {
+    auto icon = item->thumbnail();
+    if (!icon.isNull()) {
+        QPixmap p = icon.pixmap(icon.availableSizes()[0]);
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
-        img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        img.save(&buffer, "PNG");
-        thumb = XMPP::Thumbnail(ba, "image/png", img.width(), img.height());
+        p.save(&buffer, "PNG");
+        thumb = XMPP::Thumbnail(ba, "image/png", p.width(), p.height());
     }
 
     Jingle::FileTransfer::File file;
@@ -337,7 +338,21 @@ void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
         QFileInfo fi(fname);
         if (fi.isFile() && fi.isReadable()) {
             auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
-            mftItem->setThumbnail(QFileIconProvider().icon(fi));
+
+            QImage img(fi.filePath());
+            if (!img.isNull()) {
+                img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                QImage back(64,64,QImage::Format_ARGB32_Premultiplied);
+                back.fill(Qt::transparent);
+                QPainter painter(&back);
+                auto imgRect = img.rect();
+                imgRect.moveCenter(back.rect().center());
+                painter.drawImage(imgRect, img);
+                mftItem->setThumbnail(QIcon(QPixmap::fromImage(std::move(back))));
+            } else {
+                mftItem->setThumbnail(QFileIconProvider().icon(fi));
+            }
+
             mftItem->setFileName(fname);
             if(d->session) {
                 addTransferContent(mftItem);
