@@ -1294,6 +1294,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
         d->avCallManager = new AvCallManager(this);
         connect(d->avCallManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
         d->updateAvCallSettings(acc);
+        d->client->jingleManager()->addExternalManager("urn:xmpp:jingle:apps:rtp:1");
     }
 
     // load event queue from disk
