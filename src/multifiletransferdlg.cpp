@@ -174,6 +174,8 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
 
 void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application *app, MultiFileTransferItem *item)
 {
+    item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(app));
+    app->setProperty("mftitem", QVariant::fromValue<MultiFileTransferItem*>(item));
     connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [this, app,item](Jingle::State state){
         if (state == Jingle::State::Accepted) {
             item->setOffset(app->acceptFile().range().offset);
@@ -210,7 +212,6 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             auto app = static_cast<Jingle::FileTransfer::Application*>(c);
             auto file = app->file();
             auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(), file.size()); // FIXME size is optional. ranges?
-            item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(app));
             setupCommonSignals(app, item);
 
             auto thumb = file.thumbnail();
@@ -249,6 +250,9 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                     if (fi.exists()) {
                         // TODO suggest overwrite
                     }
+                    auto item = app->property("mftitem").value<MultiFileTransferItem*>();
+                    if (item)
+                        item->setFileName(fn);
                     connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
                         auto f = new QFile(fn, app);
                         f->open(QIODevice::WriteOnly);
@@ -266,6 +270,9 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                 if (fi.exists()) {
                     // TODO suggest overwrite
                 }
+                auto item = app->property("mftitem").value<MultiFileTransferItem*>();
+                if (item)
+                    item->setFileName(fn);
                 connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
                     auto f = new QFile(fn, app);
                     f->open(QIODevice::WriteOnly);
