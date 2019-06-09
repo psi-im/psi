@@ -22,7 +22,7 @@
 #include "xmpp/jid/jid.h"
 #include "jingle.h"
 #include "jingle-ft.h"
-#include "multifiletransferview.h"
+#include "multifiletransferdelegate.h"
 #include "multifiletransfermodel.h"
 #include "multifiletransferitem.h"
 #include "psiaccount.h"
@@ -184,6 +184,9 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
         if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())) {
             // transfer has just finished and we were the receiving side.
             // if it was the last finished transfer xep recommends us to send session.terminate
+            connect(item, &MultiFileTransferItem::openDirRequested, this, [item](){
+                FileUtil::openFolder(item->filePath());
+            });
             bool hasUnfinished = false;
             for (auto &c: d->session->contentList()) {
                 if (c->state() != Jingle::State::Finished) {

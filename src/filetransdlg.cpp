@@ -6,7 +6,6 @@
 #include <QPainter>
 #include <QDesktopServices>
 #include <QFileIconProvider>
-#include <QProcess>
 #include <QMenu>
 #include <QKeyEvent>
 #include <QBuffer>
@@ -1951,24 +1950,7 @@ void FileTransDlg::itemCancel(int id)
 void FileTransDlg::itemOpenDest(int id)
 {
     FileTransItem *i = d->findItem(id);
-
-#if defined(Q_OS_WIN)
-    QProcess::startDetached("explorer.exe", QStringList() << QLatin1String("/select,")
-                                                          << QDir::toNativeSeparators(i->path));
-#elif defined(Q_OS_MAC)
-    QProcess::execute("/usr/bin/osascript", QStringList()
-                        << "-e"
-                        << QString("tell application \"Finder\" to reveal POSIX file \"%1\"")
-                        .arg(i->path));
-    QProcess::execute("/usr/bin/osascript", QStringList()
-                        << "-e"
-                        << "tell application \"Finder\" to activate");
-#else
-    // we cannot select a file here, because no file browser really supports it...
-    const QFileInfo fileInfo(i->path);
-    QProcess::startDetached("xdg-open", QStringList(fileInfo.path()));
-#endif
-    //printf("item open dest: [%s]\n", path.latin1());
+    FileUtil::openFolder(i->path);
 }
 
 void FileTransDlg::itemClear(int id)

@@ -120,7 +120,7 @@ list(APPEND HEADERS
     filetransdlg.h
     multifiletransferitem.h
     multifiletransfermodel.h
-    multifiletransferview.h
+    multifiletransferdelegate.h
     multifiletransferdlg.h
     filesharedlg.h
     fileutil.h
@@ -410,7 +410,7 @@ list(APPEND SOURCES
     mucreasonseditor.cpp
     multifiletransferitem.cpp
     multifiletransfermodel.cpp
-    multifiletransferview.cpp
+    multifiletransferdelegate.cpp
     multifiletransferdlg.cpp
     networkaccessmanager.cpp
     passdialog.cpp

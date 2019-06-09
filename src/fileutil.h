@@ -44,6 +44,7 @@ public:
 
     static QString mimeToFileExt(const QString &mime);
     static QString cleanFileName(const QString &s);
+    static void openFolder(const QString &path);
 };
 
 #endif

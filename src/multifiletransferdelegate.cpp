@@ -1,5 +1,5 @@
 /*
- * multifiletransferview.h - file transfer delegate
+ * multifiletransferdelegate.cpp - file transfer delegate
  * Copyright (C) 2019 Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  *
  */
 
-#include "multifiletransferview.h"
+#include "multifiletransferdelegate.h"
 #include "multifiletransfermodel.h"
 #include "psitooltip.h"
 #include "iconset.h"
@@ -339,6 +339,11 @@ bool MultiFileTransferDelegate::editorEvent(QEvent *event, QAbstractItemModel *m
         if (status == MultiFileTransferModel::Pending || status == MultiFileTransferModel::Active) {
             connect(menu->addAction(tr("Reject")), &QAction::triggered, this, [model, index](){
                 model->setData(index, 1, MultiFileTransferModel::RejectFileRole);
+            });
+        }
+        if (status == MultiFileTransferModel::Done) {
+            connect(menu->addAction(tr("Open Destination Folder")), &QAction::triggered, this, [model, index](){
+                model->setData(index, 1, MultiFileTransferModel::OpenDirRole);
             });
         }
         menu->popup(me->globalPos());

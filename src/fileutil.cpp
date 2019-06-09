@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <QProcess>
 
 #include "psioptions.h"
 
@@ -197,4 +198,25 @@ QString FileUtil::cleanFileName(const QString &s)
 //#else
 //    return s;
 //#endif
+}
+
+void FileUtil::openFolder(const QString &path)
+{
+#if defined(Q_OS_WIN)
+    QProcess::startDetached("explorer.exe", QStringList() << QLatin1String("/select,")
+                                                          << QDir::toNativeSeparators(path));
+#elif defined(Q_OS_MAC)
+    QProcess::execute("/usr/bin/osascript", QStringList()
+                        << "-e"
+                        << QString("tell application \"Finder\" to reveal POSIX file \"%1\"")
+                        .arg(path));
+    QProcess::execute("/usr/bin/osascript", QStringList()
+                        << "-e"
+                        << "tell application \"Finder\" to activate");
+#else
+    // we cannot select a file here, because no file browser really supports it...
+    const QFileInfo fileInfo(path);
+    QProcess::startDetached("xdg-open", QStringList(fileInfo.path()));
+#endif
+    //printf("item open dest: [%s]\n", path.latin1());
 }
