@@ -705,6 +705,16 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/cm_export</x>
+		<object mime='image/png'>cm_export.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cm_import</x>
+		<object mime='image/png'>cm_import.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/xmpp</x>
 		<object mime='image/png'>xmpp.svg</object>
 	</icon>

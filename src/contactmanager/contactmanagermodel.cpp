@@ -81,23 +81,17 @@ QVariant ContactManagerModel::data(const QModelIndex &index, int role) const
     Role columnRole = roles[index.column()];
     UserListItem *u = _userList.at(index.row());
     if (u) {
-        switch (columnRole) {
-            case CheckRole: //checkbox
-                if (role == Qt::CheckStateRole) {
-                    return checks.contains(u->jid().full())?2:0;
-                } else if (role == Qt::TextAlignmentRole) {
-                    return (int)(Qt::AlignRight | Qt::AlignVCenter);
-                }
-                break;
-            case NodeRole:
-                if (role == Qt::TextAlignmentRole) {
-                    return (int)(Qt::AlignRight | Qt::AlignVCenter);
-                }
-                break;
-            default:
-                if (role == Qt::DisplayRole) {
-                    return userFieldString(u, columnRole);
-                }
+        switch (role) {
+        case Qt::DisplayRole:
+            return userFieldString(u, columnRole);
+        case Qt::TextAlignmentRole:
+            if (columnRole ==CheckRole || columnRole == NodeRole)
+                return (int)(Qt::AlignRight | Qt::AlignVCenter);
+            break;
+        case Qt::CheckStateRole:
+            if (columnRole == CheckRole) {
+                return checks.contains(u->jid().full())?2:0;
+            }
         }
     }
     return QVariant();

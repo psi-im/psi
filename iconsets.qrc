@@ -129,6 +129,8 @@
         <file>iconsets/system/default/cm_check.png</file>
         <file>iconsets/system/default/cm_invertcheck.png</file>
         <file>iconsets/system/default/cm_uncheck.png</file>
+        <file>iconsets/system/default/cm_export.png</file>
+        <file>iconsets/system/default/cm_import.png</file>
         <file>iconsets/system/default/keys_64.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
