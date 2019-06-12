@@ -29,7 +29,7 @@ class MultiFileTransferItem : public QObject
     Q_OBJECT
 public:
 
-    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize);
+    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize, QObject *parent);
     ~MultiFileTransferItem();
 
     const QString &displayName() const;

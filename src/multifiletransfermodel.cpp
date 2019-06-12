@@ -169,7 +169,7 @@ MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,
                                                            const QString &displayName, quint64 fullSize)
 {
     beginInsertRows(QModelIndex(), transfers.size(), transfers.size());
-    auto t = new MultiFileTransferItem(direction, displayName, fullSize);
+    auto t = new MultiFileTransferItem(direction, displayName, fullSize, this);
     connect(t, &MultiFileTransferItem::updated, this, [this, t](){
         updatedTransfers.insert(t);
         if (!updateTimer.isActive()) {
