@@ -221,9 +221,8 @@ public slots:
         return QString("{fontFamily:'%1',fontSize:'%2px',fontStyle:'%3',fontVariant:'%4',fontWeight:'%5'}")
                          .arg(f.family())
                          .arg(pixelSize)
-                         .arg(f.style()==QFont::StyleNormal?"normal":(f.style()==QFont::StyleItalic?"italic":"oblique"))
-                         .arg(f.capitalization() == QFont::SmallCaps?"small-caps":"normal")
-                         .arg(weight);
+                         .arg(f.style()==QFont::StyleNormal?"normal":(f.style()==QFont::StyleItalic?"italic":"oblique"),
+                              f.capitalization() == QFont::SmallCaps?"small-caps":"normal", weight);
     }
 
     QString getPaletteColor(const QString &name) const
