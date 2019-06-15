@@ -230,14 +230,13 @@ void PsiMain::chooseProfile()
     PsiIconset::instance()->loadSystem();
 
     while(1) {
-        ProfileOpenDlg *w = new ProfileOpenDlg(lastProfile, TranslationManager::instance()->availableTranslations(), TranslationManager::instance()->currentLanguage());
+        QScopedPointer<ProfileOpenDlg> w(new ProfileOpenDlg(lastProfile, TranslationManager::instance()->availableTranslations(), TranslationManager::instance()->currentLanguage()));
         w->ck_auto->setChecked(autoOpen);
         int r = w->exec();
         // lang change
         if(r == 10) {
             TranslationManager::instance()->loadTranslation(w->newLang);
             lastLang = TranslationManager::instance()->currentLanguage();
-            delete w;
             continue;
         }
         else {
@@ -262,7 +261,6 @@ void PsiMain::chooseProfile()
                     }
                 }
             }
-            delete w;
             if (again) {
                 str = "";
                 continue;

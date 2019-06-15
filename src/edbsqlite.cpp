@@ -109,6 +109,7 @@ EDBSqLite::~EDBSqLite()
             db.close();
     }
     QSqlDatabase::removeDatabase("history");
+    delete mirror_;
 }
 
 bool EDBSqLite::init()
