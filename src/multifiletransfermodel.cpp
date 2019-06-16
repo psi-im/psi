@@ -165,6 +165,13 @@ QHash<int, QByteArray> MultiFileTransferModel::roleNames() const
     };
 }
 
+void MultiFileTransferModel::clear()
+{
+    beginResetModel();
+    qDeleteAll(transfers);
+    endResetModel();
+}
+
 MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,
                                                            const QString &displayName, quint64 fullSize)
 {
@@ -188,6 +195,13 @@ MultiFileTransferItem* MultiFileTransferModel::addTransfer(Direction direction,
     transfers.append(t);
     endInsertRows();
     return t;
+}
+
+void MultiFileTransferModel::forEachTransfer(const std::function<void(MultiFileTransferItem *)> cb) const
+{
+    for (auto &t: transfers) {
+        cb(t);
+    }
 }
 
 void MultiFileTransferModel::setAddEnabled(bool enabled)

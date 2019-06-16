@@ -50,6 +50,7 @@
 #include "actionlist.h"
 #include "psiactionlist.h"
 #ifdef PSI_PLUGINS
+#include "filesharedlg.h"
 #include "pluginmanager.h"
 #endif
 
@@ -906,6 +907,21 @@ void PsiChatDlg::chatEditCreated()
     mCmdSite_.setInput(chatEdit());
     mCmdSite_.setPrompt(ui_.mini_prompt);
     tabCompletion.setTextEdit(chatEdit());
+
+    connect(chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
+        auto dlg = FileShareDlg::fromMimeData(data, account(), this);
+        if (!dlg)
+            return;
+
+        connect(dlg, &FileShareDlg::published, this, [this, dlg](){
+            FileSharingItem *item;
+            while ((item = dlg->takePendingPublisher())) {
+                doFileShare(item);
+            }
+        });
+
+        dlg->exec();
+    });
 }
 
 

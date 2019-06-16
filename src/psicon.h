@@ -57,6 +57,7 @@ class TabManager;
 class ContactUpdatesManager;
 class PopupManager;
 class NetworkAccessManager;
+class FileSharingManager;
 
 namespace OpenPGP {
     class Engine;
@@ -83,6 +84,7 @@ public:
     FileTransDlg *ftdlg();
     TabManager *tabManager() const;
     NetworkAccessManager *networkAccessManager() const;
+    FileSharingManager *fileSharingManager() const;
 
     AlertManager *alertManager() const;
 

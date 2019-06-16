@@ -30,7 +30,7 @@
 
 FileCacheItem::FileCacheItem(FileCache *parent, const QString &itemId,
                              const QVariantMap &metadata, const QDateTime &dt,
-                             unsigned int maxAge, unsigned int size,
+                             unsigned int maxAge, size_t size,
                              const QByteArray &data)
     : QObject(parent)
     , _id(itemId)
@@ -269,8 +269,8 @@ void FileCache::sync(bool finishSession)
 {
     QList<FileCacheItem *> loadedItems;
     QList<FileCacheItem *> onDiskItems;
-    quint32 sumMemorySize = 0;
-    quint32 sumFileSize = 0;
+    size_t sumMemorySize = 0;
+    size_t sumFileSize = 0;
     FileCacheItem *item;
 
     QHashIterator<QString, FileCacheItem*> it(_items);
@@ -356,7 +356,7 @@ void FileCache::toRegistry(FileCacheItem *item)
     _registry->setOption(prefix + ".metadata", item->metadata());
     _registry->setOption(prefix + ".ctime", item->created().toString(Qt::ISODate));
     _registry->setOption(prefix + ".max-age", (int)item->maxAge());
-    _registry->setOption(prefix + ".size", (int)item->size());
+    _registry->setOption(prefix + ".size", (qulonglong)item->size());
 
     item->_flags |= FileCacheItem::Registered;
     _pendingRegisterItems.remove(item->id());

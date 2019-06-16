@@ -122,6 +122,7 @@ list(APPEND HEADERS
     multifiletransfermodel.h
     multifiletransferdelegate.h
     multifiletransferdlg.h
+    filesharingmanager.h
     filesharedlg.h
     fileutil.h
     gcuserview.h
@@ -374,6 +375,7 @@ list(APPEND SOURCES
     edbflatfile.cpp
     eventdb.cpp
     filecache.cpp
+    filesharingmanager.cpp
     filesharedlg.cpp
     fileutil.cpp
     fileutil.cpp

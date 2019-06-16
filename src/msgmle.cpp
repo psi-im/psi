@@ -508,11 +508,9 @@ void ChatEdit::setEditText(const QString& text)
 
 void ChatEdit::insertFromMimeData(const QMimeData *source)
 {
-    if (source->hasImage()) {
-        auto img = qvariant_cast<QImage>(source->imageData());
-        if (!img.isNull()) {
-            emit imagePasted(img);
-        }
+    if (source->hasImage() || source->hasUrls()) {
+        emit fileSharingRequested(source);
+        return;
     }
     QTextEdit::insertFromMimeData(source);
 }

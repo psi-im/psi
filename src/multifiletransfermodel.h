@@ -23,6 +23,7 @@
 #include <QAbstractListModel>
 #include <QSet>
 #include <QTimer>
+#include <functional>
 
 class MultiFileTransferItem;
 
@@ -70,7 +71,9 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    void clear();
     MultiFileTransferItem *addTransfer(Direction direction, const QString &displayName, quint64 fullSize);
+    void forEachTransfer(const std::function<void(MultiFileTransferItem *)> cb) const;
     void setAddEnabled(bool enabled = true);
     bool isAddEnabled() const;
 private:

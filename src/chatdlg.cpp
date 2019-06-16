@@ -75,6 +75,7 @@
 #include "psirichtext.h"
 #include "chatview.h"
 #include "eventdb.h"
+#include "filesharingmanager.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -84,6 +85,7 @@
 #include "pluginmanager.h"
 #endif
 
+#include "filesharedlg.h"
 #include "psichatdlg.h"
 
 static const QString geometryOption = "options.ui.chat.size";
@@ -186,7 +188,7 @@ ChatDlg::~ChatDlg()
 void ChatDlg::initComposing()
 {
     highlightersInstalled_ = true;
-    chatEditCreated();
+    initHighlighters();
 }
 
 void ChatDlg::doTrackBar()
@@ -728,13 +730,20 @@ bool ChatDlg::isEncryptionEnabled() const
     return false;
 }
 
+void ChatDlg::doFileShare(FileSharingItem *item)
+{
+    fileShareItem_ = item;
+    ChatDlg::doSend(); // FIXME PsiChatDlg does som weird things, so direct call
+    fileShareItem_ = nullptr;
+}
+
 void ChatDlg::doSend()
 {
     if (!chatEdit()->isEnabled()) {
         return;
     }
 
-    if (chatEdit()->toPlainText().isEmpty()) {
+    if (chatEdit()->toPlainText().isEmpty() && !fileShareItem_) {
         return;
     }
 
@@ -774,6 +783,12 @@ void ChatDlg::doSend()
     HTMLElement html = chatEdit()->toHTMLElement();
     if(!html.body().isNull())
         m.setHTML(html);
+
+    if (fileShareItem_) {
+        if (!fileShareItem_->setupMessage(m)) {
+            return;
+        }
+    }
 
     QString id = account()->client()->genUniqueId();
     m.setId(id); // we need id early for message manipulations in chatview
@@ -1234,13 +1249,17 @@ void ChatDlg::nicksChanged()
     // this function is intended to be reimplemented in subclasses
 }
 
-void ChatDlg::chatEditCreated()
+void ChatDlg::initHighlighters()
 {
-    chatEdit()->setDialog(this);
-
     if (highlightersInstalled_) {
         connect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
     }
+}
+
+void ChatDlg::chatEditCreated()
+{
+    chatEdit()->setDialog(this);
+    initHighlighters();
 }
 
 TabbableWidget::State ChatDlg::state() const

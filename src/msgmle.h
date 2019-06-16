@@ -83,7 +83,7 @@ protected slots:
     void pasteAsQuote();
 
 signals:
-    void imagePasted(const QImage &);
+    void fileSharingRequested(const QMimeData *);
 
 protected:
     // override the tab/esc behavior

@@ -42,7 +42,7 @@ public:
     };
 
     FileCacheItem(FileCache *parent, const QString &itemId, const QVariantMap &metadata,
-                  const QDateTime &dt, unsigned int maxAge, unsigned int size,
+                  const QDateTime &dt, unsigned int maxAge, size_t size,
                   const QByteArray &data = QByteArray());
 
     void flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
@@ -59,7 +59,7 @@ public:
     inline QDateTime created() const { return _ctime; }
     inline void reborn() { _ctime = QDateTime::currentDateTime(); }
     inline unsigned int maxAge() const { return _maxAge; }
-    inline unsigned int size() const { return _size; }
+    inline size_t size() const { return _size; }
     QByteArray data();
     inline QString fileName() const { return _fileName; }
     inline QString hash() const { return _hash; } // it's a hash from 'id'. so you can have string for id. the hash will be used for filename
@@ -71,12 +71,12 @@ public:
 private:
     friend class FileCache;
 
-    QString _id;
-    QVariantMap _metadata;
-    QDateTime _ctime;
+    QString      _id;
+    QVariantMap  _metadata;
+    QDateTime    _ctime;
     unsigned int _maxAge;
-    unsigned int _size;
-    QByteArray _data;
+    size_t       _size;
+    QByteArray   _data;
 
     quint16 _flags;
     QString _fileName;

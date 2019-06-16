@@ -99,6 +99,7 @@
 #include "psioptions.h"
 #include "psirichtext.h"
 #ifdef PSI_PLUGINS
+#include "filesharingmanager.h"
 #include "pluginmanager.h"
 #endif
 #include "psicontactlist.h"
@@ -292,6 +293,7 @@ public:
     TcpPortReserver *tcpPortReserver = nullptr;
     IconSelectPopup *iconSelect = nullptr;
     NetworkAccessManager *nam = nullptr;
+    FileSharingManager *fileSharingManager = nullptr;
 #ifdef FILETRANSFER
     FileTransDlg *ftwin = nullptr;
 #endif
@@ -516,6 +518,7 @@ bool PsiCon::init()
     }
 
     d->nam = new NetworkAccessManager(this);
+    d->fileSharingManager = new FileSharingManager(this);
 #ifdef WEBKIT
     PsiThemeManager::instance()->registerProvider(
             new ChatViewThemeProvider(this), true);
@@ -880,6 +883,11 @@ TabManager *PsiCon::tabManager() const
 NetworkAccessManager *PsiCon::networkAccessManager() const
 {
     return d->nam;
+}
+
+FileSharingManager *PsiCon::fileSharingManager() const
+{
+    return d->fileSharingManager;
 }
 
 TuneControllerManager *PsiCon::tuneManager() const

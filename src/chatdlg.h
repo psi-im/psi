@@ -48,6 +48,7 @@ class QDropEvent;
 class QDragEnterEvent;
 class ChatView;
 class ChatEdit;
+class FileSharingItem;
 
 struct UserStatus {
     UserStatus()
@@ -134,6 +135,7 @@ protected slots:
     void doInfo();
     virtual void doHistory();
     virtual void doClear();
+    virtual void doFileShare(FileSharingItem *item);
     virtual void doSend();
     void doVoice();
     void doFile();
@@ -167,6 +169,7 @@ protected:
     virtual void setLooks();
     void setSelfDestruct(int);
     virtual void chatEditCreated();
+    void initHighlighters();
 
     virtual void initUi() = 0;
     virtual void capsChanged();
@@ -220,6 +223,8 @@ private:
     ChatState contactChatState_;
     ChatState lastChatState_;
     QList<MessageView> *delayedMessages;
+
+    FileSharingItem *fileShareItem_ = nullptr;
 };
 
 #endif

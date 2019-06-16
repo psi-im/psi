@@ -168,7 +168,7 @@ public:
     OpResult setIcon(IconType iconType, const QString &jid, const QByteArray &data, const QString &_hash = QString())
     {
         QString metaType = image2type(data);
-        if (metaType == QLatin1String("image/unknown")) { // a little bit stupid. It's better to use some enum
+        if (metaType.isEmpty()) { // a little bit stupid. It's better to use some enum
             return NoData;
         }
 
