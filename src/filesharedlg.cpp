@@ -112,7 +112,7 @@ FileSharingItem *FileShareDlg::takePendingPublisher()
         return nullptr;
 
     auto ret = readyPublishers.takeFirst();
-    if (readyPublishers.isEmpty()) {
+    if (readyPublishers.isEmpty() && !inProgressCount && !hasFailures) {
         deleteLater();
     }
     return ret;
@@ -139,10 +139,13 @@ void FileShareDlg::publish()
             } else {
                 item->setState(MultiFileTransferModel::Done);
                 item->setCurrentSize(item->fullSize());
+                hasFailures = true;
             }
+            inProgressCount--;
             readyPublishers.append(publisher);
             emit published();
         });
+        inProgressCount++;
         publisher->publish();
     });
     if (readyPublishers.count()) {

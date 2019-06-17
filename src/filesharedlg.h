@@ -60,6 +60,8 @@ private:
     QImage image;
     MultiFileTransferModel *filesModel;
     QList<FileSharingItem*> readyPublishers;
+    int inProgressCount = 0;
+    bool hasFailures = false;
 };
 
 #endif // FILESHAREDLG_H
