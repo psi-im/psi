@@ -124,18 +124,30 @@ void FileShareDlg::publish()
     filesModel->forEachTransfer([this](MultiFileTransferItem *item){
         auto publisher = item->property("publisher").value<FileSharingItem*>();
         if (publisher->isPublished()) {
+            item->setState(MultiFileTransferModel::Done);
+            item->setCurrentSize(item->fullSize());
             readyPublishers.append(publisher);
             return;
         }
+        item->setState(MultiFileTransferModel::Active);
         connect(publisher, &FileSharingItem::publishProgress, this, [this, item](size_t progress){
             item->setCurrentSize(progress);
         });
-        connect(publisher, &FileSharingItem::published, this, [this,publisher](){
+        connect(publisher, &FileSharingItem::publishFinished, this, [this,publisher,item](){
+            if (publisher->uris().count()) {
+                item->setState(MultiFileTransferModel::Failed);
+            } else {
+                item->setState(MultiFileTransferModel::Done);
+                item->setCurrentSize(item->fullSize());
+            }
             readyPublishers.append(publisher);
             emit published();
         });
         publisher->publish();
     });
+    if (readyPublishers.count()) {
+        emit published();
+    }
 }
 
 FileShareDlg::~FileShareDlg()

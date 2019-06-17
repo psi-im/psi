@@ -49,14 +49,15 @@ public:
     QString displayName() const;
     QString fileName() const;
 
-    inline bool isPublished() const { return cache != nullptr; }
+    inline bool isPublished() const { return httpFinished && jingleFinished; }
     void publish();
+    inline const QStringList &uris() const { return readyUris; }
 private:
     void initFromCache();
     void checkFinished();
 
 signals:
-    void published();
+    void publishFinished();
     void publishProgress(size_t transferredBytes);
 private:
     FileCacheItem *cache = nullptr;

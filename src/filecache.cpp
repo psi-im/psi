@@ -164,7 +164,7 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent)
             _registry->getOption(prefix + ".metadata", QVariantMap()).toMap(),
             QDateTime::fromString(_registry->getOption(prefix + ".ctime").toString(), Qt::ISODate),
             _registry->getOption(prefix + ".max-age").toInt(),
-            _registry->getOption(prefix + ".size").toInt()
+            _registry->getOption(prefix + ".size").toULongLong()
         );
         item->_flags |= (FileCacheItem::OnDisk | FileCacheItem::Registered);
         _items[id] = item;
@@ -316,7 +316,7 @@ void FileCache::sync(bool finishSession)
     }
 
     // register pending items and flush them if necessary
-    foreach (FileCacheItem *item, _pendingRegisterItems.values()) {
+    foreach (FileCacheItem *item, _pendingRegisterItems) {
         toRegistry(item); // FIXME do this only after we have a file on disk (or data size = 0)
         if (_syncPolicy == InstantFLush) {
             item->flushToDisk();
@@ -332,7 +332,7 @@ void FileCache::sync(bool finishSession)
                 continue;
             }
             QString id = item->id();
-            unsigned int sz = item->size();
+            size_t sz = item->size();
             removeItem(item, false);
             if (!_items.value(id)) { // really removed
                 sumFileSize -= sz;

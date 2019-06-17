@@ -477,16 +477,24 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
     else { // Standard values
         QVariant::Type varianttype;
         bool known = true;
+        static QString stringType(QString::fromLatin1("QString"));
+        static QString boolType(QString::fromLatin1("bool"));
+        static QString intType(QString::fromLatin1("int"));
+        static QString ulonglongType(QString::fromLatin1("qulonglong"));
+        static QString keyseqType(QString::fromLatin1("QKeySequence"));
+        static QString colorType(QString::fromLatin1("QColor"));
 
-        if (type==QLatin1String("QString")) {
+        if (type == stringType) {
             varianttype = QVariant::String;
-        } else if (type==QLatin1String("bool")) {
+        } else if (type==boolType) {
             varianttype = QVariant::Bool;
-        } else if (type==QLatin1String("int")) {
+        } else if (type==intType) {
             varianttype = QVariant::Int;
-        } else if (type == QLatin1String("QKeySequence")) {
+        } else if (type==ulonglongType) {
+            varianttype = QVariant::ULongLong;
+        } else if (type == keyseqType) {
             varianttype = QVariant::KeySequence;
-        } else if (type == QLatin1String("QColor")) {
+        } else if (type == colorType) {
             varianttype = QVariant::Color;
         } else {
             known = false;

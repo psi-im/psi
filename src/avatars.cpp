@@ -518,6 +518,7 @@ private:
                 QString jid = jIt.next();
                 IconType itype = extractIconType(jid);
                 QString realJid = extractIconJid(jid);
+
                 switch (itype) {
                 case NoneType:
                     jidsChanged = true;
@@ -640,7 +641,6 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
     }
 
     auto icons = AvatarCache::instance()->icons(bareJid);
-
     QImage img;
     if (icons.customAvatar) {
         img = QImage::fromData(icons.customAvatar->data());
@@ -662,7 +662,11 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
         }
         QByteArray data = vcard.photo();
         if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, bareJid, data) != AvatarCache::NoData) {
-            img = QImage::fromData(AvatarCache::instance()->icons(bareJid).avatar->data()); // from scaled avatar
+            auto item = AvatarCache::instance()->icons(bareJid).avatar;
+            if (!item)
+                qWarning("Avatars cache is damaged");
+            else
+                img = QImage::fromData(item->data()); // from scaled avatar
         }
     }
 

@@ -96,7 +96,7 @@ void FileSharingItem::checkFinished()
             mime["link"] = _fileName;
             cache = manager->saveToCache(sha1hash, QByteArray(), mime, 365 * 24 * 3600);
         }
-        emit published();
+        emit publishFinished();
     }
 }
 
