@@ -644,9 +644,15 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
     QImage img;
     if (icons.customAvatar) {
         img = QImage::fromData(icons.customAvatar->data());
+        if (img.isNull()) {
+            AvatarCache::instance()->removeIcon(AvatarCache::CustomType, bareJid);
+        }
     }
     if (img.isNull() && icons.avatar) {
         img = QImage::fromData(icons.avatar->data());
+        if (img.isNull()) {
+            AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, bareJid);
+        }
     }
 
     if (img.isNull()) {
