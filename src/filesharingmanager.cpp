@@ -25,6 +25,7 @@
 #include "xmpp_client.h"
 #include "httpfileupload.h"
 #include "filecache.h"
+#include "fileutil.h"
 
 #include <QBuffer>
 #include <QDir>
@@ -197,7 +198,8 @@ QImage FileSharingItem::preview(const QSize &maxSize) const
 QString FileSharingItem::displayName() const
 {
     if (isTempFile) {
-        return QString("psi-%1.png").arg(sha1hash);
+        auto ext = FileUtil::mimeToFileExt(mimeType);
+        return QString("psi-%1.%2").arg(sha1hash, ext);
     }
     return QFileInfo(_fileName).fileName();
 }
@@ -211,8 +213,12 @@ void FileSharingItem::publish()
 {
     if (!httpFinished) {
         auto hm = acc->client()->httpFileUploadManager();
-        auto hfu = hm->upload(_fileName, QString("psi-%1.png").arg(sha1hash), mimeType);
+        auto hfu = hm->upload(_fileName, displayName(), mimeType);
         hfu->setParent(this);
+        connect(hfu, &HttpFileUpload::progress, this, [this](qint64 bytesReceived, qint64 bytesTotal){
+            Q_UNUSED(bytesTotal)
+            emit publishProgress(bytesReceived);
+        });
         connect(hfu, &HttpFileUpload::finished, this, [hfu, this]() {
             httpFinished = true;
             if (hfu->success()) {

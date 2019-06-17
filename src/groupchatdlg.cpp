@@ -2465,7 +2465,7 @@ void GCMainDlg::chatEditCreated()
             }
         });
 
-        dlg->exec();
+        dlg->show();
     });
 }
 

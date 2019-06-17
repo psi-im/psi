@@ -127,7 +127,9 @@ void FileShareDlg::publish()
             readyPublishers.append(publisher);
             return;
         }
-
+        connect(publisher, &FileSharingItem::publishProgress, this, [this, item](size_t progress){
+            item->setCurrentSize(progress);
+        });
         connect(publisher, &FileSharingItem::published, this, [this,publisher](){
             readyPublishers.append(publisher);
             emit published();
