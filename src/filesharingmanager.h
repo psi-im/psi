@@ -84,6 +84,7 @@ public:
     FileCacheItem *getCacheItem(const QString &id, bool reborn = false);
     FileCacheItem *saveToCache(const QString &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
     QList<FileSharingItem *> fromMimeData(const QMimeData *data, PsiAccount *acc);
+    QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 signals:
 
 public slots:

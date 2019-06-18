@@ -49,6 +49,7 @@
 #include "avcall/avcall.h"
 #include "actionlist.h"
 #include "psiactionlist.h"
+#include "filesharingmanager.h"
 #ifdef PSI_PLUGINS
 #include "filesharedlg.h"
 #include "pluginmanager.h"
@@ -460,48 +461,55 @@ void PsiChatDlg::initToolButtons()
         IconAction *action = list->action(name)->copy();
         action->setParent(this);
         actions_->addAction(name, action);
-        if (name == "chat_clear") {
+        if (name == QString::fromLatin1("chat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
         }
-        else if (name == "chat_find") {
+        else if (name == QString::fromLatin1("chat_find")) {
             // typeahead find
             connect(action, SIGNAL(triggered()), typeahead_, SLOT(toggleVisibility()));
         // -- typeahead
         }
-        else if (name == "chat_html_text") {
+        else if (name == QString::fromLatin1("chat_html_text")) {
             connect(action, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
         }
-        else if (name == "chat_add_contact") {
+        else if (name == QString::fromLatin1("chat_add_contact")) {
             connect(action, SIGNAL(triggered()), SLOT(addContact()));
         }
-        else if (name == "chat_icon") {
+        else if (name == QString::fromLatin1("chat_icon")) {
             connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
             action->setMenu(account()->psi()->iconSelectPopup());
             ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
         }
-        else if (name == "chat_voice") {
+        else if (name == QString::fromLatin1("chat_voice")) {
             connect(action, SIGNAL(triggered()), SLOT(doVoice()));
             //act_voice_->setEnabled(false);
             ui_.tb_voice->setDefaultAction(actions_->action("chat_voice"));
         }
-        else if (name == "chat_file") {
+        else if (name == QString::fromLatin1("chat_file")) {
             connect(action, SIGNAL(triggered()), SLOT(doFile()));
         }
-        else if (name == "chat_pgp") {
+        else if (name == QString::fromLatin1("chat_pgp")) {
             ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
             connect(action, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
         }
-        else if (name == "chat_info") {
+        else if (name == QString::fromLatin1("chat_info")) {
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         }
-        else if (name == "chat_history") {
+        else if (name == QString::fromLatin1("chat_history")) {
             connect(action, SIGNAL(triggered()), SLOT(doHistory()));
         }
-        else if (name == "chat_compact") {
+        else if (name == QString::fromLatin1("chat_compact")) {
             connect(action, SIGNAL(triggered()), SLOT(toggleSmallChat()));
         }
-        else if (name == "chat_active_contacts") {
+        else if (name == QString::fromLatin1("chat_active_contacts")) {
             connect(action, SIGNAL(triggered()), SLOT(actActiveContacts()));
+        }
+        else if (name == QString::fromLatin1("chat_share_files")) {
+            connect(action, &QAction::triggered, account(), [this](){
+                account()->shareFiles(this, [this](FileSharingItem *item){
+                    doFileShare(item);
+                });
+            });
         }
     }
 

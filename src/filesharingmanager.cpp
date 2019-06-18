@@ -300,3 +300,14 @@ QList<FileSharingItem*> FileSharingManager::fromMimeData(const QMimeData *data, 
     return ret;
 }
 
+QList<FileSharingItem*> FileSharingManager::fromFilesList(const QStringList &fileList, PsiAccount *acc)
+{
+    QList<FileSharingItem*> ret;
+    if(fileList.isEmpty())
+        return ret;
+    foreach (const QString &file, fileList) {
+        auto item = new FileSharingItem(file, acc, this);
+        ret << item;
+    }
+    return ret;
+}

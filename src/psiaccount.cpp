@@ -151,6 +151,8 @@
 #include "alertmanager.h"
 #include "popupmanager.h"
 #include "networkaccessmanager.h"
+#include "filesharedlg.h"
+#include "filesharingmanager.h"
 
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
@@ -6732,6 +6734,23 @@ bool PsiAccount::encryptMessageElement(QDomElement &element)
 #else
     return false;
 #endif
+}
+
+void PsiAccount::shareFiles(QWidget *parent, std::function<void(FileSharingItem *)> callback)
+{
+    QStringList files = FileUtil::getOpenFileNames(parent, tr("Open Files For Sharing"));
+    if(files.isEmpty())
+        return;
+
+    auto itList = psi()->fileSharingManager()->fromFilesList(files, this);
+    auto dlg = new FileShareDlg(itList, parent);
+    connect(dlg, &FileShareDlg::published, this, [dlg, callback](){
+        FileSharingItem *item;
+        while ((item = dlg->takePendingPublisher())) {
+            callback(item);
+        }
+    });
+    dlg->show();
 }
 
 #include "psiaccount.moc"

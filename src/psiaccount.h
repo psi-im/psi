@@ -98,6 +98,8 @@ struct GCContact;
 
 class AvCallManager;
 
+class FileSharingItem;
+
 class PsiAccount : public QObject, EncryptionHandler
 {
     Q_OBJECT
@@ -237,7 +239,7 @@ public:
     UserList *userList() const;
     bool usingSSL() const;
 
-    bool checkConnected(QWidget *parent=0);
+    bool checkConnected(QWidget *parent=nullptr);
 
     enum SoundType {
         eNone = -1,
@@ -303,6 +305,7 @@ public:
     void savePassword();
 #endif
     void loadBob(const Jid &jid, const QString &cid, std::function<void(const QByteArray &,const QByteArray &)> callback);
+    void shareFiles(QWidget *parent, std::function<void(FileSharingItem *)> callback);
 
 signals:
     void accountDestroyed();

@@ -525,7 +525,7 @@ void OptionsMigration::lateMigration()
         chatToolbar.on = PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool();
         PsiOptions::instance()->removeOption("options.ui.chat.central-toolbar");
         chatToolbar.name = "Chat";
-        chatToolbar.keys << "chat_clear"  << "chat_find" << "chat_html_text" << "chat_add_contact";
+        chatToolbar.keys << "chat_clear"  << "chat_find" << "chat_html_text" << "chat_add_contact" << "chat_share_files";
         chatToolbar.keys += pluginsKeys;
         chatToolbar.keys << "spacer" << "chat_icon" << "chat_file"
                          << "chat_pgp" << "chat_info" << "chat_history" << "chat_voice"
@@ -539,7 +539,7 @@ void OptionsMigration::lateMigration()
         groupchatToolbar.on = chatToolbar.on;
 
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" << "gchat_configure";
+        groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" << "gchat_configure" << "gchat_share_files";
         groupchatToolbar.keys += pluginsKeys;
         groupchatToolbar.keys << "spacer" << "gchat_icon" ;
 
