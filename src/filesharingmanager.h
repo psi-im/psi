@@ -72,6 +72,7 @@ private:
     QString _fileName;
     QString sha1hash;
     QString mimeType;
+    QString _description;
 };
 
 class FileSharingManager : public QObject

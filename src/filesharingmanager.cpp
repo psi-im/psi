@@ -23,6 +23,8 @@
 #include "xmpp_vcard.h"
 #include "xmpp_message.h"
 #include "xmpp_client.h"
+#include "xmpp_reference.h"
+#include "xmpp_hash.h"
 #include "httpfileupload.h"
 #include "filecache.h"
 #include "fileutil.h"
@@ -38,6 +40,9 @@
 #include <QPixmap>
 #include <QTemporaryFile>
 #include <QUrl>
+
+#define FILE_TTL (365 * 24 * 3600)
+#define TEMP_TTL (7 * 24 * 3600)
 
 FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileSharingManager *manager) :
     QObject(manager),
@@ -91,10 +96,10 @@ void FileSharingItem::checkFinished()
             f.open(QIODevice::ReadOnly);
             auto d = f.readAll();
             f.close();
-            cache = manager->saveToCache(sha1hash, d, mime, 7 * 24 * 3600);
+            cache = manager->saveToCache(sha1hash, d, mime, TEMP_TTL);
         } else {
             mime["link"] = _fileName;
-            cache = manager->saveToCache(sha1hash, QByteArray(), mime, 365 * 24 * 3600);
+            cache = manager->saveToCache(sha1hash, QByteArray(), mime, FILE_TTL);
         }
         emit publishFinished();
     }
@@ -166,6 +171,41 @@ bool FileSharingItem::setupMessage(XMPP::Message &msg)
     }
     msg.setBody(readyUris.join(' '));
     msg.setHTML(HTMLElement());
+
+    QSize thumbSize(64,64);
+    auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
+    QByteArray pixData;
+    QBuffer buf(&pixData);
+    thumbPix.save(&buf, "PNG");
+    QString png(QString::fromLatin1("image/png"));
+    auto bob = acc->client()->bobManager()->append(pixData, png, isTempFile? TEMP_TTL: FILE_TTL);
+    Thumbnail thumb(QByteArray(), png, thumbSize.width(), thumbSize.height());
+    thumb.uri = QLatin1String("cid:") + bob.cid();
+
+    QFile file(_fileName);
+    file.open(QIODevice::ReadOnly);
+    Hash hash(Hash::Sha1);
+    hash.computeFromDevice(&file);
+    file.close();
+
+    Jingle::FileTransfer::File jfile;
+    QFileInfo fi(_fileName);
+    jfile.setDate(fi.lastModified());
+    jfile.setHash(hash);
+    jfile.setName(fi.fileName());
+    jfile.setSize(fi.size());
+    jfile.setMediaType(mimeType);
+    jfile.setThumbnail(thumb);
+    jfile.setDescription(_description);
+
+    Reference r(Reference::Data, readyUris.first());
+    MediaSharing ms;
+    ms.file = jfile;
+    ms.sources = readyUris;
+    r.setMediaSharing(ms);
+
+    msg.setReference(r);
+
     return true;
 }
 
