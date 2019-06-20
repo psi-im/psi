@@ -266,7 +266,6 @@ void FileSharingItem::publish()
                 readyUris.append(hfu->getHttpSlot().get.url);
             }
             checkFinished();
-            hfu->deleteLater();
         });
     }
     if (!jingleFinished) {
