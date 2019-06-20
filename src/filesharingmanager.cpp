@@ -97,6 +97,8 @@ void FileSharingItem::checkFinished()
             auto d = f.readAll();
             f.close();
             cache = manager->saveToCache(sha1hash, d, mime, TEMP_TTL);
+            _fileName = cache->fileName();
+            f.remove();
         } else {
             mime["link"] = _fileName;
             cache = manager->saveToCache(sha1hash, QByteArray(), mime, FILE_TTL);
@@ -161,7 +163,11 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
 
 FileSharingItem::~FileSharingItem()
 {
-
+    if (!cache && isTempFile && !_fileName.isEmpty()) {
+        QFile f(_fileName);
+        if (f.exists())
+            f.remove();
+    }
 }
 
 Reference FileSharingItem::toReference() const
