@@ -430,6 +430,11 @@
 		<object mime='image/png'>upload.png</object>
 	</icon>
 
+    <icon>
+		<x xmlns='name'>psi/share_file</x>
+		<object mime='image/png'>share_file.png</object>
+	</icon>
+
 	<icon>
 		<x xmlns='name'>psi/download</x>
 		<object mime='image/png'>download.png</object>
