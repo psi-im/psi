@@ -72,6 +72,7 @@ class UserAccount;
 class ContactProfile;
 class QWidget;
 class QString;
+class QMimeData;
 class EventQueue;
 class UserResource;
 class UserListItem;
@@ -306,8 +307,8 @@ public:
     void savePassword();
 #endif
     void loadBob(const Jid &jid, const QString &cid, std::function<void(const QByteArray &,const QByteArray &)> callback);
-    void shareFiles(QWidget *parent, std::function<void(const QList<Reference> &, const QString &)> callback);
-    void shareFiles(QWidget *parent, const QMimeData *mdata, std::function<void(const QList<Reference> &, const QString &)> callback);
+    void shareFiles(QWidget *parent, const std::function<void(const QList<Reference> &, const QString &)> &callback);
+    void shareFiles(QWidget *parent, const QMimeData *mdata, const std::function<void(const QList<Reference> &, const QString &)> &callback);
 
 signals:
     void accountDestroyed();

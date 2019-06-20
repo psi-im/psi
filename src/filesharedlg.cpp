@@ -116,7 +116,8 @@ QList<FileSharingItem *> FileShareDlg::takeItems()
 void FileShareDlg::publish()
 {
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
-    filesModel->forEachTransfer([this](MultiFileTransferItem *item){
+    QList<FileSharingItem*> toPublish;
+    filesModel->forEachTransfer([this,&toPublish](MultiFileTransferItem *item){
         auto publisher = item->property("publisher").value<FileSharingItem*>();
         if (publisher->isPublished()) {
             item->setState(MultiFileTransferModel::Done);
@@ -142,11 +143,13 @@ void FileShareDlg::publish()
                 emit published();
         });
         inProgressCount++;
-        publisher->publish();
+        toPublish.append(publisher);
     });
     if (!inProgressCount) {
         emit published();
     }
+    for (auto &p: toPublish)
+        p->publish();
 }
 
 FileShareDlg::~FileShareDlg()

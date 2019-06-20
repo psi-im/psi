@@ -435,7 +435,7 @@ UserStatus ChatDlg::userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool 
     else {
         // use specific
         UserResourceList::ConstIterator rit = u.userListItem->userResourceList().find(jid.resource());
-        if (rit != u.userListItem->userResourceList().end()) {
+        if (rit != u.userListItem->userResourceList().constEnd()) {
             u.statusType = (*rit).status().type();
             u.status = (*rit).status().status();
             u.priority = (*rit).status().priority();
@@ -996,6 +996,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
     mv.setReplaceId(m.replaceId());
     mv.setCarbonDirection(m.carbonDirection());
+
     dispatchMessage(mv);
 
     if (!m.urlList().isEmpty()) {

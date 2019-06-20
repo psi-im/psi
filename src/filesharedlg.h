@@ -45,6 +45,7 @@ public:
     ~FileShareDlg();
 
     QString description() const;
+    inline bool hasPublishErrors() const { return hasFailures; }
 
     static FileShareDlg* fromMimeData(const QMimeData *md, PsiAccount *acc, QWidget *parent);
 

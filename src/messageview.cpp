@@ -227,8 +227,8 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
         case Urls:
         {
             QVariantMap vmUrls;
-            foreach (const QString &u, _urls.keys()) {
-                vmUrls[u] = _urls.value(u);
+            for (auto it = _urls.constBegin(); it != _urls.constEnd(); ++it) {
+                vmUrls.insert(it.key(), it.value());
             }
             m["urls"] = vmUrls;
             break;
