@@ -229,7 +229,7 @@ QIcon FileSharingItem::thumbnail(const QSize &size) const
 QImage FileSharingItem::preview(const QSize &maxSize) const
 {
     QImage image;
-    if (isImage && image.load(_fileName)) {
+    if (image.load(_fileName)) {
         auto s = image.size().boundedTo(maxSize);
         return image.scaled(s, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
