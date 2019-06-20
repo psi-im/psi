@@ -506,8 +506,8 @@ void PsiChatDlg::initToolButtons()
         }
         else if (name == QString::fromLatin1("chat_share_files")) {
             connect(action, &QAction::triggered, account(), [this](){
-                account()->shareFiles(this, [this](FileSharingItem *item){
-                    doFileShare(item);
+                account()->shareFiles(this, [this](const QList<Reference> &references, const QString &desc){
+                    doFileShare(references, desc);
                 });
             });
         }
@@ -917,18 +917,9 @@ void PsiChatDlg::chatEditCreated()
     tabCompletion.setTextEdit(chatEdit());
 
     connect(chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
-        auto dlg = FileShareDlg::fromMimeData(data, account(), this);
-        if (!dlg)
-            return;
-
-        connect(dlg, &FileShareDlg::published, this, [this, dlg](){
-            FileSharingItem *item;
-            while ((item = dlg->takePendingPublisher())) {
-                doFileShare(item);
-            }
+        account()->shareFiles(this, data, [this](const QList<Reference> &refs, const QString &desc){
+            doFileShare(refs, desc);
         });
-
-        dlg->show();
     });
 }
 

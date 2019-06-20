@@ -730,11 +730,13 @@ bool ChatDlg::isEncryptionEnabled() const
     return false;
 }
 
-void ChatDlg::doFileShare(FileSharingItem *item)
+void ChatDlg::doFileShare(const QList<Reference> &references, const QString &desc)
 {
-    fileShareItem_ = item;
+    fileShareReferences_ = std::move(references);
+    fileShareDesc_ = desc;
     ChatDlg::doSend(); // FIXME PsiChatDlg does som weird things, so direct call
-    fileShareItem_ = nullptr;
+    fileShareReferences_.clear();
+    fileShareDesc_ = QString();
 }
 
 void ChatDlg::doSend()
@@ -743,7 +745,7 @@ void ChatDlg::doSend()
         return;
     }
 
-    if (chatEdit()->toPlainText().isEmpty() && !fileShareItem_) {
+    if (chatEdit()->toPlainText().isEmpty() && !fileShareReferences_.count()) {
         return;
     }
 
@@ -774,20 +776,19 @@ void ChatDlg::doSend()
 
     Message m(jid());
     m.setType("chat");
-    m.setBody(chatEdit()->toPlainText());
     m.setTimeStamp(QDateTime::currentDateTime());
     if (isEncryptionEnabled()) {
         m.setWasEncrypted(true);
     }
 
-    HTMLElement html = chatEdit()->toHTMLElement();
-    if(!html.body().isNull())
-        m.setHTML(html);
-
-    if (fileShareItem_) {
-        if (!fileShareItem_->setupMessage(m)) {
-            return;
-        }
+    if (fileShareReferences_.count()) {
+        m.setReferences(fileShareReferences_);
+        m.setBody(fileShareDesc_);
+    } else {
+        m.setBody(chatEdit()->toPlainText());
+        HTMLElement html = chatEdit()->toHTMLElement();
+        if(!html.body().isNull())
+            m.setHTML(html);
     }
 
     QString id = account()->client()->genUniqueId();

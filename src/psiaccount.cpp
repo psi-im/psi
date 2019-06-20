@@ -6736,7 +6736,7 @@ bool PsiAccount::encryptMessageElement(QDomElement &element)
 #endif
 }
 
-void PsiAccount::shareFiles(QWidget *parent, std::function<void(FileSharingItem *)> callback)
+void PsiAccount::shareFiles(QWidget *parent, std::function<void(const QList<Reference> &, const QString &)> callback)
 {
     QStringList files = FileUtil::getOpenFileNames(parent, tr("Open Files For Sharing"));
     if(files.isEmpty())
@@ -6745,10 +6745,41 @@ void PsiAccount::shareFiles(QWidget *parent, std::function<void(FileSharingItem 
     auto itList = psi()->fileSharingManager()->fromFilesList(files, this);
     auto dlg = new FileShareDlg(itList, parent);
     connect(dlg, &FileShareDlg::published, this, [dlg, callback](){
-        FileSharingItem *item;
-        while ((item = dlg->takePendingPublisher())) {
-            callback(item);
+        QList<Reference> references;
+        QString desc = dlg->description();
+        for (auto const &i: dlg->takeItems()) {
+            auto r = i->toReference();
+            if (r.isValid()) {
+                auto uri = r.uri();
+                r.setRange(desc.size() + 1, desc.size() + uri.size() + 1);
+                desc += QString(" %1").arg(uri);
+                references.append(r);
+            }
         }
+        callback(references, desc);
+    });
+    dlg->show();
+}
+
+// TODO unduplicate the code
+void PsiAccount::shareFiles(QWidget *parent, const QMimeData *mdata, std::function<void(const QList<Reference> &, const QString &)> callback)
+{
+    auto dlg = FileShareDlg::fromMimeData(mdata, this, parent);
+    if (!dlg)
+        return;
+    connect(dlg, &FileShareDlg::published, this, [dlg, callback](){
+        QList<Reference> references;
+        QString desc = dlg->description();
+        for (auto const &i: dlg->takeItems()) {
+            auto r = i->toReference();
+            if (r.isValid()) {
+                auto uri = r.uri();
+                r.setRange(desc.size() + 1, desc.size() + uri.size() + 1);
+                desc += QString(" %1").arg(uri);
+                references.append(r);
+            }
+        }
+        callback(references, desc);
     });
     dlg->show();
 }

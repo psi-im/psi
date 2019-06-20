@@ -106,15 +106,10 @@ FileShareDlg *FileShareDlg::fromMimeData(const QMimeData *data, PsiAccount *acc,
     return new FileShareDlg(items, parent);
 }
 
-FileSharingItem *FileShareDlg::takePendingPublisher()
+QList<FileSharingItem *> FileShareDlg::takeItems()
 {
-    if (readyPublishers.isEmpty())
-        return nullptr;
-
-    auto ret = readyPublishers.takeFirst();
-    if (readyPublishers.isEmpty() && !inProgressCount && !hasFailures) {
-        deleteLater();
-    }
+    auto ret = readyPublishers;
+    readyPublishers.clear();
     return ret;
 }
 
@@ -135,20 +130,21 @@ void FileShareDlg::publish()
         });
         connect(publisher, &FileSharingItem::publishFinished, this, [this,publisher,item](){
             if (publisher->uris().count()) {
-                item->setState(MultiFileTransferModel::Failed);
-            } else {
                 item->setState(MultiFileTransferModel::Done);
                 item->setCurrentSize(item->fullSize());
+            } else {
+                item->setState(MultiFileTransferModel::Failed);
                 hasFailures = true;
             }
             inProgressCount--;
             readyPublishers.append(publisher);
-            emit published();
+            if (!inProgressCount)
+                emit published();
         });
         inProgressCount++;
         publisher->publish();
     });
-    if (readyPublishers.count()) {
+    if (!inProgressCount) {
         emit published();
     }
 }

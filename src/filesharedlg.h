@@ -20,6 +20,8 @@
 #ifndef FILESHAREDLG_H
 #define FILESHAREDLG_H
 
+#include "xmpp_reference.h"
+
 #include <QDialog>
 
 namespace XMPP {
@@ -45,14 +47,14 @@ public:
     QString description() const;
 
     static FileShareDlg* fromMimeData(const QMimeData *md, PsiAccount *acc, QWidget *parent);
-    FileSharingItem *takePendingPublisher();
 
     void showImage(const QImage &img);
+    QList<FileSharingItem *> takeItems();
 public slots:
     void publish();
 
 signals:
-    void published();
+    void published(); // signalled when all items are published or failed
 
 private:
     Ui::FileShareDlg *ui;

@@ -164,13 +164,10 @@ FileSharingItem::~FileSharingItem()
 
 }
 
-bool FileSharingItem::setupMessage(XMPP::Message &msg)
+Reference FileSharingItem::toReference() const
 {
-    if (!readyUris.size()) {
-        return false;
-    }
-    msg.setBody(readyUris.join(' '));
-    msg.setHTML(HTMLElement());
+    if (readyUris.isEmpty())
+        return Reference(); // invalid reference
 
     QSize thumbSize(64,64);
     auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
@@ -204,9 +201,7 @@ bool FileSharingItem::setupMessage(XMPP::Message &msg)
     ms.sources = readyUris;
     r.setMediaSharing(ms);
 
-    msg.setReference(r);
-
-    return true;
+    return r;
 }
 
 QIcon FileSharingItem::thumbnail(const QSize &size) const

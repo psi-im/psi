@@ -135,7 +135,7 @@ protected slots:
     void doInfo();
     virtual void doHistory();
     virtual void doClear();
-    virtual void doFileShare(FileSharingItem *item);
+    virtual void doFileShare(const QList<Reference> &references, const QString &desc);
     virtual void doSend();
     void doVoice();
     void doFile();
@@ -224,7 +224,8 @@ private:
     ChatState lastChatState_;
     QList<MessageView> *delayedMessages;
 
-    FileSharingItem *fileShareItem_ = nullptr;
+    QList<Reference> fileShareReferences_;
+    QString fileShareDesc_;
 };
 
 #endif

@@ -32,6 +32,7 @@
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
 #include "xmpp_encryptionhandler.h"
+#include "xmpp_reference.h"
 #include "psiactions.h"
 #include "psievent.h"
 #include "mood.h"
@@ -305,7 +306,8 @@ public:
     void savePassword();
 #endif
     void loadBob(const Jid &jid, const QString &cid, std::function<void(const QByteArray &,const QByteArray &)> callback);
-    void shareFiles(QWidget *parent, std::function<void(FileSharingItem *)> callback);
+    void shareFiles(QWidget *parent, std::function<void(const QList<Reference> &, const QString &)> callback);
+    void shareFiles(QWidget *parent, const QMimeData *mdata, std::function<void(const QList<Reference> &, const QString &)> callback);
 
 signals:
     void accountDestroyed();

@@ -22,6 +22,8 @@
 
 #include <QObject>
 
+#include "xmpp_reference.h"
+
 class QMimeData;
 class QImage;
 class PsiAccount;
@@ -43,7 +45,6 @@ public:
     FileSharingItem(const QString &fileName, PsiAccount *acc, FileSharingManager *manager);
     ~FileSharingItem();
 
-    bool setupMessage(XMPP::Message &msg);
     QIcon thumbnail(const QSize &size) const;
     QImage preview(const QSize &maxSize) const;
     QString displayName() const;
@@ -52,6 +53,8 @@ public:
     inline bool isPublished() const { return httpFinished && jingleFinished; }
     void publish();
     inline const QStringList &uris() const { return readyUris; }
+    PsiAccount *account() const;
+    XMPP::Reference toReference() const;
 private:
     void initFromCache();
     void checkFinished();

@@ -507,12 +507,12 @@ public:
         trackBar = false;
         te_log()->doTrackBar();
     }
-    void doFileShare(FileSharingItem *item){
+    void doFileShare(const QList<Reference> &refs, const QString &desc){
         Message m(dlg->jid());
         m.setType("groupchat");
-        if (item->setupMessage(m)) {
-            dlg->aSend(m);
-        }
+        m.setReferences(refs);
+        m.setBody(desc);
+        dlg->aSend(m);
     }
 public:
     QString lastReferrer;  // contains nick of last person, who have said "yourNick: ..."
@@ -916,8 +916,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
         }
         else if (name == QString::fromLatin1("gchat_share_files")) {
             connect(action, &QAction::triggered, account(), [this](){
-                account()->shareFiles(this, [this](FileSharingItem *item){
-                    d->doFileShare(item);
+                account()->shareFiles(this, [this](const QList<Reference> &refs, const QString &desc){
+                    d->doFileShare(refs, desc);
                 });
             });
         }
@@ -2463,18 +2463,9 @@ void GCMainDlg::chatEditCreated()
 
     ui_.mle->chatEdit()->installEventFilter(d);
     connect(ui_.mle->chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
-        auto dlg = FileShareDlg::fromMimeData(data, account(), this);
-        if (!dlg)
-            return;
-
-        connect(dlg, &FileShareDlg::published, this, [this, dlg](){
-            FileSharingItem *item;
-            while ((item = dlg->takePendingPublisher())) {
-                d->doFileShare(item);
-            }
+        account()->shareFiles(this, data, [this](const QList<Reference> &refs, const QString &desc){
+            d->doFileShare(refs, desc);
         });
-
-        dlg->show();
     });
 }
 
