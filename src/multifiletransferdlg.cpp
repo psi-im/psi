@@ -346,7 +346,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     QFileInfo fi(item->filePath());
     file.setDate(fi.lastModified());
     file.setDescription(item->description());
-    file.setHash(hash);
+    file.addHash(hash);
     file.setMediaType(mimeDb.mimeTypeForFile(fi).name());
     file.setName(fi.fileName());
     file.setRange(); // indicate range support
@@ -395,6 +395,7 @@ void MultiFileTransferDlg::setupSessionSignals()
     connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
         ui->buttonBox->button(QDialogButtonBox::Cancel)->hide();
         ui->buttonBox->button(QDialogButtonBox::Close)->show();
+        ui->buttonBox->button(QDialogButtonBox::Apply)->hide();
         d->model->setAddEnabled(false);
     });
 }
