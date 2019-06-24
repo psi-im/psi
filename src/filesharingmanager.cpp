@@ -25,6 +25,7 @@
 #include "xmpp_client.h"
 #include "xmpp_reference.h"
 #include "xmpp_hash.h"
+#include "xmpp_jid.h"
 #include "httpfileupload.h"
 #include "filecache.h"
 #include "fileutil.h"
@@ -194,7 +195,7 @@ Reference FileSharingItem::toReference() const
     Jingle::FileTransfer::File jfile;
     QFileInfo fi(_fileName);
     jfile.setDate(fi.lastModified());
-    jfile.setHash(hash);
+    jfile.addHash(hash);
     jfile.setName(fi.fileName());
     jfile.setSize(fi.size());
     jfile.setMediaType(mimeType);
@@ -280,8 +281,25 @@ void FileSharingItem::publish()
 // ======================================================================
 // FileSharingManager
 // ======================================================================
+class FileSharingManager::Private
+{
+public:
+    struct Source {
+        XMPP::Jingle::FileTransfer::File file;
+        QList<XMPP::Jid> jids;
+    };
+
+    FileCache *cache;
+    QHash<QString,Source> sources;
+};
+
 FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent),
-    cache(new FileCache(getCacheDir(), this))
+    d(new Private)
+{
+    d->cache = new FileCache(getCacheDir(), this);
+}
+
+FileSharingManager::~FileSharingManager()
 {
 
 }
@@ -298,14 +316,28 @@ QString FileSharingManager::getCacheDir()
 
 FileCacheItem *FileSharingManager::getCacheItem(const QString &id, bool reborn)
 {
-    return cache->get(id, reborn);
+    return d->cache->get(id, reborn);
 }
 
 FileCacheItem * FileSharingManager::saveToCache(const QString &id, const QByteArray &data,
                                                 const QVariantMap &metadata, unsigned int maxAge)
 {
-    return cache->append(id, data, metadata, maxAge);
+    return d->cache->append(id, data, metadata, maxAge);
 }
+
+/*
+FileSharingItem *FileSharingManager::fromReference(const Reference &ref, PsiAccount *acc)
+{
+    auto h = ref.mediaSharing().file.hash(Hash::Sha1);
+    if (!h.isValid())
+        return nullptr;
+    auto c = cache->get(QString::fromLatin1(h.data().toHex()));
+    if (c)
+        return new FileSharingItem(c, acc, this);
+
+    return nullptr;
+}
+*/
 
 QList<FileSharingItem*> FileSharingManager::fromMimeData(const QMimeData *data, PsiAccount *acc)
 {
@@ -353,4 +385,24 @@ QList<FileSharingItem*> FileSharingManager::fromFilesList(const QStringList &fil
         }
     }
     return ret;
+}
+
+QString FileSharingManager::registerSource(const Jingle::FileTransfer::File &file, const Jid &source)
+{
+    Hash h = file.hash(Hash::Sha1);
+    if (!h.isValid()) {
+        h = file.hash();
+    }
+    QString shareId = QString::fromLatin1(h.data().toHex());
+    auto it = d->sources.find(shareId);
+    if (it == d->sources.end())
+        it = d->sources.insert(shareId, Private::Source{file, QList<Jid>()<<source});
+    else {
+        if (it.value().jids.indexOf(source) == -1)
+            it.value().jids.append(source);
+        if (!it.value().file.merge(file)) { // failed to merge files. replace it
+            it = d->sources.insert(shareId, Private::Source{file, QList<Jid>()<<source});
+        }
+    }
+    return shareId;
 }

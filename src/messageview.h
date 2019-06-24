@@ -31,6 +31,11 @@
 # define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
 #endif
 
+class MessageViewReference
+{
+
+};
+
 class MessageView
 {
 public:

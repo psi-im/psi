@@ -18,6 +18,7 @@ namespace TextUtil
     QString img2title(const QString &in);
 
     QString prepareMessageText(const QString& text, bool isEmote=false, bool isHtml=false);
+    QString sizeUnit(qlonglong n, qlonglong *div = nullptr);
 }
 
 #endif

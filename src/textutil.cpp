@@ -571,3 +571,33 @@ QString TextUtil::legacyFormat(const QString& in)
 
     return out;
 }
+
+QString TextUtil::sizeUnit(qlonglong n, qlonglong *div)
+{
+    qlonglong gb = 1024 * 1024 * 1024;
+    qlonglong mb = 1024 * 1024;
+    qlonglong kb = 1024;
+    QString unit;
+    qlonglong d;
+    if(n >= gb) {
+        d = gb;
+        unit = QString("GB");
+    }
+    else if(n >= mb) {
+        d = mb;
+        unit = QString("MB");
+    }
+    else if(n >= kb) {
+        d = kb;
+        unit = QString("KB");
+    }
+    else {
+        d = 1;
+        unit = QString("B");
+    }
+
+    if (div)
+        *div = d;
+
+    return unit;
+}

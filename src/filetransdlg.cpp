@@ -26,6 +26,7 @@
 #include "psioptions.h"
 #include "fileutil.h"
 #include "xmpp_tasks.h"
+#include "textutil.h"
 
 typedef quint64 LARGE_TYPE;
 
@@ -1103,29 +1104,6 @@ public:
         cm = nullptr;
     }
 
-    void niceUnit(qlonglong n, qlonglong *div, QString *unit)
-    {
-        qlonglong gb = 1024 * 1024 * 1024;
-        qlonglong mb = 1024 * 1024;
-        qlonglong kb = 1024;
-        if(n >= gb) {
-            *div = gb;
-            *unit = QString("GB");
-        }
-        else if(n >= mb) {
-            *div = mb;
-            *unit = QString("MB");
-        }
-        else if(n >= kb) {
-            *div = kb;
-            *unit = QString("KB");
-        }
-        else {
-            *div = 1;
-            *unit = QString("B");
-        }
-    }
-
     QString roundedNumber(qlonglong n, qlonglong div)
     {
         bool decimal = false;
@@ -1172,8 +1150,7 @@ public:
         QString s;
         {
             qlonglong div;
-            QString unit;
-            niceUnit(size, &div, &unit);
+            QString unit = TextUtil::sizeUnit(size, &div);
 
             s = roundedNumber(sent, div) + '/' + roundedNumber(size, div) + unit;
 
@@ -1188,7 +1165,7 @@ public:
             else if(bps == 0)
                 s += QString(" ") + FileTransDlg::tr("[Stalled]");
             else {
-                niceUnit(bps, &div, &unit);
+                unit = TextUtil::sizeUnit(bps, &div);
                 s += QString(" @ ") + FileTransDlg::tr("%1%2/s").arg(roundedNumber(bps, div)).arg(unit);
 
                 s += ", ";

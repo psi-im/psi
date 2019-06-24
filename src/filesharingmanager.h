@@ -49,6 +49,7 @@ public:
     QImage preview(const QSize &maxSize) const;
     QString displayName() const;
     QString fileName() const;
+    inline const QString &hash() const { return sha1hash; }
 
     inline bool isPublished() const { return httpFinished && jingleFinished; }
     void publish();
@@ -83,18 +84,26 @@ class FileSharingManager : public QObject
     Q_OBJECT
 public:
     explicit FileSharingManager(QObject *parent = nullptr);
+    ~FileSharingManager();
 
     static QString getCacheDir();
     FileCacheItem *getCacheItem(const QString &id, bool reborn = false);
+
+    // id - usually hex(sha1(image data))
     FileCacheItem *saveToCache(const QString &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
+    //FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
     QList<FileSharingItem *> fromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
+
+    // registers source for file and returns share id for future access to the source
+    QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source);
 signals:
 
 public slots:
 
 private:
-    FileCache *cache;
+    class Private;
+    QScopedPointer<Private> d;
 };
 
 #endif // FILESHARINGMANAGER_H

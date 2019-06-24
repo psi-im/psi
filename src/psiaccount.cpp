@@ -964,7 +964,7 @@ public:
                 delete i;
                 if (r.isValid()) {
                     auto uri = r.uri();
-                    r.setRange(desc.size() + 1, desc.size() + uri.size() + 1);
+                    r.setRange(desc.size(), desc.size() + uri.size() + 1);
                     desc += QString(" %1").arg(uri);
                     references.append(r);
                 }

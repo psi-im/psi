@@ -21,6 +21,7 @@
 #include "multifiletransfermodel.h"
 #include "psitooltip.h"
 #include "iconset.h"
+#include "textutil.h"
 
 #include <QHelpEvent>
 #include <QMenu>
@@ -33,29 +34,6 @@
 #include <QTextEdit>
 #include <QPlainTextEdit>
 #include <QLineEdit>
-
-void MultiFileTransferDelegate::niceUnit(qlonglong n, qlonglong *div, QString *unit)
-{
-    qlonglong gb = 1024 * 1024 * 1024;
-    qlonglong mb = 1024 * 1024;
-    qlonglong kb = 1024;
-    if(n >= gb) {
-        *div = gb;
-        *unit = QString("GB");
-    }
-    else if(n >= mb) {
-        *div = mb;
-        *unit = QString("MB");
-    }
-    else if(n >= kb) {
-        *div = kb;
-        *unit = QString("KB");
-    }
-    else {
-        *div = 1;
-        *unit = QString("B");
-    }
-}
 
 QString MultiFileTransferDelegate::roundedNumber(qlonglong n, qlonglong div)
 {
@@ -173,8 +151,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     s.reserve(128);
     {
         qlonglong div;
-        QString unit;
-        niceUnit(fullSize, &div, &unit);
+        QString unit = TextUtil::sizeUnit(fullSize, &div);
 
         s = roundedNumber(curSize, div) + '/' + roundedNumber(fullSize, div) + unit;
         QString space(" ");
@@ -190,7 +167,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
             if(speed == 0)
                 s += QString(" ") + tr("[Stalled]");
             else {
-                niceUnit(speed, &div, &unit);
+                unit = TextUtil::sizeUnit(speed, &div);
                 s += QString(" @ ") + tr("%1%2/s").arg(roundedNumber(speed, div), unit);
 
                 s += ", ";
