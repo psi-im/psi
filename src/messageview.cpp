@@ -26,6 +26,74 @@
 
 static const QString me_cmd = "/me ";
 
+// ======================================================================
+// MessageViewReference
+// ======================================================================
+class MessageViewReference::Private : public QSharedData
+{
+public:
+    QString         shareId;
+    QString         fileName;
+    size_t          fileSize;
+    QString         mediaType;
+    QStringList     sources;
+    QList<quint8>   spectrum;
+    QUrl            thumbnailUri;
+    QString         thumbnailMediaType;
+};
+
+MessageViewReference::MessageViewReference(const QString &shareId, const QString &fileName, size_t fileSize,
+                                           const QString &mediaType, const QStringList &sources) :
+    d(new Private)
+{
+    d->shareId = shareId;
+    d->fileName = fileName;
+    d->fileSize = fileSize;
+    d->mediaType = mediaType;
+    d->sources = sources;
+}
+
+MessageViewReference::MessageViewReference(const MessageViewReference &other) :
+    d(other.d)
+{
+
+}
+
+MessageViewReference &MessageViewReference::operator=(const MessageViewReference &other)
+{
+    d = other.d;
+    return *this;
+}
+
+MessageViewReference::~MessageViewReference()
+{
+
+}
+
+void MessageViewReference::setThumbnail(const QUrl &uri, const QString &mediaType)
+{
+    d->thumbnailUri = uri;
+    d->thumbnailMediaType = mediaType;
+}
+
+void MessageViewReference::setAudioSpectrum(const QList<quint8> &spectrum)
+{
+    d->spectrum = spectrum;
+}
+
+const QString &MessageViewReference::id() const
+{
+    return d->shareId;
+}
+
+QVariantMap MessageViewReference::toVariantMap() const
+{
+    return QVariantMap(); // FIXME
+}
+
+// ======================================================================
+// MessageView
+// ======================================================================
 MessageView::MessageView(Type t) :
     _type(t),
     _flags(nullptr),
@@ -200,6 +268,13 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
                 m["alert"] = isAlert();
             } else {
                 m["awaitingReceipt"] = isAwaitingReceipt();
+            }
+            if (_references.count()) {
+                QVariantMap rvm;
+                for (auto const &r: _references) {
+                    rvm.insert(r.id(), r.toVariantMap());
+                }
+                m["references"] = rvm;
             }
             break;
         case NickChange:

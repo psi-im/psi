@@ -2171,9 +2171,10 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 
     auto refs = m.references();
     if (refs.count()) {
-        QList<Reference> tailReferences;
+        QString tailReferences;
         QString desc = m.body();
         QString htmlDesc;
+        htmlDesc.reserve(desc.size() + refs.count() * 64);
 
         std::sort(refs.begin(), refs.end(), [](auto &a, auto &b){ return a.begin() < b.begin(); });
 
@@ -2182,7 +2183,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
             if (!r.mediaSharing().isValid()) {
                 continue;
             }
-#if 0
+
             auto file = r.mediaSharing().file;
             QString shareId = account()->psi()->fileSharingManager()->registerSource(file, m.from());
 
@@ -2192,11 +2193,11 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
                 std::function<quint8(quint32)> normalizer;
                 switch (as.coding) {
                 case Jingle::FileTransfer::File::Spectrum::U8:  normalizer = [](quint32 v){ return quint8(v);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S8:  normalizer = [](quint32 v){ return quint8(std::abs(v)<<1);}; break;
+                case Jingle::FileTransfer::File::Spectrum::S8:  normalizer = [](quint32 v){ return quint8(std::abs(qint8(v))<<1);}; break;
                 case Jingle::FileTransfer::File::Spectrum::U16: normalizer = [](quint32 v){ return quint8(v>>8);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S16: normalizer = [](quint32 v){ return quint8(std::abs(v)>>7);}; break;
+                case Jingle::FileTransfer::File::Spectrum::S16: normalizer = [](quint32 v){ return quint8(std::abs(qint16(v))>>7);}; break;
                 case Jingle::FileTransfer::File::Spectrum::U32: normalizer = [](quint32 v){ return quint8(v>>16);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S32: normalizer = [](quint32 v){ return quint8(std::abs(v)>>15);}; break;
+                case Jingle::FileTransfer::File::Spectrum::S32: normalizer = [](quint32 v){ return quint8(std::abs(qint32(v))>>15);}; break;
                 }
                 if (normalizer)
                     std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(spectrum), normalizer);
@@ -2206,32 +2207,22 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
             auto thumb = file.thumbnail();
             mvr.setThumbnail(thumb.uri, thumb.mimeType);
             mvr.setAudioSpectrum(spectrum);
+            mv.addReference(mvr);
 
+            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(shareId));
             if (r.begin() != -1 && r.begin() >= lastEnd && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
-                mvr.setRange(r.begin(), r.end());
+                htmlDesc += TextUtil::escape(desc.mid(lastEnd, r.begin() - lastEnd)); // something before link
+                htmlDesc += shareStr; // something instead of link
+                lastEnd = r.end() + 1;
+            } else {
+                tailReferences += shareStr;
             }
-
-            if (r.begin() == -1 || r.begin() < lastEnd) {
-                tailReferences.append(r);
-                continue;
-            }
-            QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed());
-            if (!url.isValid()) {
-                tailReferences.append(r);
-                continue;
-            }
-
-            // we are going to replace the url with reference
-            //htmlDesc += TextUtil::escape(desc.mid(lastEnd, r.begin() - lastEnd));
-
-            mv.addReference(MessageViewReference)
-            //quint64 div;
-            //QString su = TextUtil::sizeUnit(file.size(), &div);
-            //htmlDesc += QString("<share id=\"%1\" type=\"%2\" size=\"%3%4\" name=\"%5\"/>")
-            //        .arg(shareId, file.mediaType(), QString::number(file.size() / div), su, file.name()); // TODO put more meta here
-            //lastEnd = r.end() + 1;
-#endif
         }
+        if (lastEnd < desc.size()) {
+            htmlDesc += TextUtil::escape(desc.mid(lastEnd, desc.size() - lastEnd));
+        }
+        htmlDesc += tailReferences;
+        mv.setHtml(htmlDesc);
     }
 
     dispatchMessage(mv);

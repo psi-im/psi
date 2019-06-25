@@ -33,7 +33,21 @@
 
 class MessageViewReference
 {
+public:
+    MessageViewReference(const QString &shareId, const QString &fileName, size_t fileSize,
+                         const QString &mediaType, const QStringList &sources);
+    MessageViewReference(const MessageViewReference &other);
+    MessageViewReference &operator=(const MessageViewReference &other);
+    ~MessageViewReference();
 
+    void setThumbnail(const QUrl &uri, const QString &mediaType);
+    void setAudioSpectrum(const QList<quint8> &spectrum);
+
+    const QString &id() const;
+    QVariantMap toVariantMap() const;
+private:
+    class Private;
+    QSharedDataPointer<Private> d;
 };
 
 class MessageView
@@ -131,6 +145,7 @@ public:
     inline const QString &replaceId() const { return _replaceId; }
     inline void setCarbonDirection(XMPP::Message::CarbonDir c) {_carbon = c; }
     inline XMPP::Message::CarbonDir carbonDirection() const { return _carbon; }
+    inline void addReference(const MessageViewReference &mvr) { _references.append(mvr); }
 
     QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
@@ -148,6 +163,7 @@ private:
     QMap<QString, QString> _urls;
     QString _replaceId;
     XMPP::Message::CarbonDir _carbon;
+    QList<MessageViewReference> _references;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)
