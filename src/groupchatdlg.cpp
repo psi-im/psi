@@ -2193,11 +2193,11 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
                 std::function<quint8(quint32)> normalizer;
                 switch (as.coding) {
                 case Jingle::FileTransfer::File::Spectrum::U8:  normalizer = [](quint32 v){ return quint8(v);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S8:  normalizer = [](quint32 v){ return quint8(std::abs(qint8(v))<<1);}; break;
+                case Jingle::FileTransfer::File::Spectrum::S8:  normalizer = [](quint32 v){ return quint8(quint8(std::abs(qint8(v)))<<1);}; break;
                 case Jingle::FileTransfer::File::Spectrum::U16: normalizer = [](quint32 v){ return quint8(v>>8);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S16: normalizer = [](quint32 v){ return quint8(std::abs(qint16(v))>>7);}; break;
+                case Jingle::FileTransfer::File::Spectrum::S16: normalizer = [](quint32 v){ return quint8(quint16(std::abs(qint16(v)))>>7);}; break;
                 case Jingle::FileTransfer::File::Spectrum::U32: normalizer = [](quint32 v){ return quint8(v>>16);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S32: normalizer = [](quint32 v){ return quint8(std::abs(qint32(v))>>15);}; break;
+                case Jingle::FileTransfer::File::Spectrum::S32: normalizer = [](quint32 v){ return quint8(quint32(std::abs(qint32(v)))>>15);}; break;
                 }
                 if (normalizer)
                     std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(spectrum), normalizer);
