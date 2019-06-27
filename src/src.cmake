@@ -472,6 +472,10 @@ list(APPEND SOURCES
     historyimp.cpp
     )
 
+include(${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite/libqite.cmake)
+list(APPEND HEADERS ${qite_HEADERS})
+list(APPEND SOURCES ${qite_SOURCES})
+
 if(IS_WEBKIT OR IS_WEBENGINE)
     if(IS_WEBENGINE)
         list(APPEND SOURCES
