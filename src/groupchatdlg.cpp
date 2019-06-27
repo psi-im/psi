@@ -2180,11 +2180,12 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 
         int lastEnd = 0;
         for (auto const &r: m.references()) {
-            if (!r.mediaSharing().isValid()) {
+            MediaSharing ms = r.mediaSharing();
+            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio"))) { // only audio is supported for now
                 continue;
             }
 
-            auto file = r.mediaSharing().file;
+            auto file = ms.file;
             QString shareId = account()->psi()->fileSharingManager()->registerSource(file, m.from());
 
             auto as = file.audioSpectrum();
@@ -2203,7 +2204,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
                     std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(spectrum), normalizer);
             }
 
-            MessageViewReference mvr(shareId, file.name(), file.size(), file.mediaType(), r.mediaSharing().sources);
+            MessageViewReference mvr(shareId, file.name(), file.size(), file.mediaType(), ms.sources);
             auto thumb = file.thumbnail();
             mvr.setThumbnail(thumb.uri, thumb.mimeType);
             mvr.setAudioSpectrum(spectrum);
