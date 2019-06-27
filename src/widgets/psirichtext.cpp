@@ -317,7 +317,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
     int initialpos = cursor.position();
 
     // prepare images and remove insecure images
-    QRegExp re("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
+    static QRegExp re("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
     QString replace;
     for (int pos = 0; (pos = re.indexIn(text, pos)) != -1; ) {
         replace.clear();
@@ -325,7 +325,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
         QUrl imgSrcUrl = QUrl::fromEncoded(imgSrc.toLatin1());
         if (imgSrcUrl.isValid()) {
             if (imgSrcUrl.scheme() == "data") {
-                QRegExp dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
+                static QRegExp dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
                 if (dataRe.indexIn(imgSrcUrl.path()) != -1) {
                     const QByteArray ba = QByteArray::fromBase64(dataRe.cap(1).toLatin1());
                     if (!ba.isNull()) {

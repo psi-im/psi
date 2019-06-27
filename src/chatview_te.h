@@ -32,6 +32,7 @@
 class ChatEdit;
 class ChatViewBase;
 class MessageView;
+class ITEAudioController;
 namespace XMPP {
     class Jid;
 }
@@ -105,11 +106,12 @@ private:
     bool isMuc_;
     bool isMucPrivate_;
     bool isEncryptionEnabled_;
+    bool useMessageIcons_;
+    int  oldTrackBarPosition;
     XMPP::Jid jid_;
     QString name_;
-    int  oldTrackBarPosition;
     QPointer<QWidget> dialog_;
-    bool useMessageIcons_;
+    ITEAudioController *voiceMsgCtrl;
 
     QPixmap logIconSend;
     QPixmap logIconReceive;

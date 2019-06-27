@@ -86,6 +86,26 @@ const QString &MessageViewReference::id() const
     return d->shareId;
 }
 
+const QString &MessageViewReference::fileName() const
+{
+    return d->fileName;
+}
+
+size_t MessageViewReference::size() const
+{
+    return d->fileSize;
+}
+
+const QString &MessageViewReference::mediaType() const
+{
+    return d->mediaType;
+}
+
+const QStringList &MessageViewReference::sources() const
+{
+    return d->sources;
+}
+
 QVariantMap MessageViewReference::toVariantMap() const
 {
     return QVariantMap(); // FIXME

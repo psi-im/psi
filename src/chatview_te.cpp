@@ -28,6 +28,7 @@
 #include "common.h"
 #include "iconset.h"
 #include "xmpp/jid/jid.h"
+#include "qiteaudio.h"
 
 #include <QWidget>
 #include <QTextOption>
@@ -105,6 +106,9 @@ ChatView::ChatView(QWidget *parent)
         addLogIconsResources();
     }
 
+    auto itc = new InteractiveText(this);
+    voiceMsgCtrl = new ITEAudioController(itc);
+    voiceMsgCtrl->setAutoFetchMetadata(true);
 }
 
 ChatView::~ChatView()
@@ -416,6 +420,34 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
                    "\" style=\"color: "+nickcolor+"; text-decoration: none; \">"+TextUtil::escape(mv.nick())+"</a>";
 
     QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
+
+    // temporary hack with references
+    for (auto const &r: mv.references()) {
+        if (r.mediaType().startsWith(QString::fromLatin1("audio"))) {
+            QUrl httpSrc;
+            for (auto const &src: r.sources()) {
+                if (src.startsWith("http")) {
+                    httpSrc = src;
+                }
+            }
+            if (httpSrc.isEmpty())
+                continue;
+
+            bool ab = atBottom();
+            QTextCursor selCursor = textCursor();
+            PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
+
+            setTextCursor(insertCursor);
+            voiceMsgCtrl->insert(httpSrc);
+
+            PsiRichText::restoreSelection(this, selCursor, selection);
+            setTextCursor(selCursor);
+
+            if (ab) {
+                scrollToBottom();
+            }
+        }
+    }
     if(mv.isEmote()) {
         insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>", insertCursor);
     }

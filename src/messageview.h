@@ -44,6 +44,11 @@ public:
     void setAudioSpectrum(const QList<quint8> &spectrum);
 
     const QString &id() const;
+    const QString &fileName() const;
+    size_t size() const;
+    const QString &mediaType() const;
+    const QStringList &sources() const;
+
     QVariantMap toVariantMap() const;
 private:
     class Private;
@@ -146,6 +151,7 @@ public:
     inline void setCarbonDirection(XMPP::Message::CarbonDir c) {_carbon = c; }
     inline XMPP::Message::CarbonDir carbonDirection() const { return _carbon; }
     inline void addReference(const MessageViewReference &mvr) { _references.append(mvr); }
+    inline const QList<MessageViewReference> &references() const { return _references; }
 
     QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
