@@ -1783,7 +1783,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                 if ( options_->getOption("options.muc.show-role-affiliation").toBool() ) {
                     if (s.mucItem().role() != MUCItem::NoRole) {
                         if (s.mucItem().affiliation() != MUCItem::NoAffiliation) {
-                            message = tr("%3 has joined the room as %1 and %2").arg(MUCManager::roleToString(s.mucItem().role(),true)).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
+                            message = tr("%3 has joined the room as %1 and %2").arg(MUCManager::roleToString(s.mucItem().role(),true), MUCManager::affiliationToString(s.mucItem().affiliation(),true));
                         }
                         else {
                             message = tr("%2 has joined the room as %1").arg(MUCManager::roleToString(s.mucItem().role(),true));
@@ -1794,7 +1794,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                     }
                 }
                 if (!s.mucItem().jid().isEmpty()) {
-                    message = message.arg(QString("%1 (%2)").arg(nick).arg(s.mucItem().jid().full()));
+                    message = message.arg(QString("%1 (%2)").arg(nick, s.mucItem().jid().full()));
                 } else {
                     message = message.arg(nick);
                 }
@@ -1821,15 +1821,15 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                 QString reason;
                 if (contact->status.mucItem().role() != s.mucItem().role() && s.mucItem().role() != MUCItem::NoRole) {
                     if (contact->status.mucItem().affiliation() != s.mucItem().affiliation()) {
-                        message = tr("%1 is now %2 and %3").arg(nick).arg(MUCManager::roleToString(s.mucItem().role(),true)).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
+                        message = tr("%1 is now %2 and %3").arg(nick, MUCManager::roleToString(s.mucItem().role(),true), MUCManager::affiliationToString(s.mucItem().affiliation(),true));
                     }
                     else {
-                        message = tr("%1 is now %2").arg(nick).arg(MUCManager::roleToString(s.mucItem().role(),true));
+                        message = tr("%1 is now %2").arg(nick, MUCManager::roleToString(s.mucItem().role(),true));
                     }
                     reason = s.mucItem().reason();
                 }
                 else if (contact->status.mucItem().affiliation() != s.mucItem().affiliation()) {
-                    message += tr("%1 is now %2").arg(nick).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
+                    message += tr("%1 is now %2").arg(nick, MUCManager::affiliationToString(s.mucItem().affiliation(),true));
                     reason = s.mucItem().reason();
                 }
 
@@ -1885,7 +1885,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         QString nickJid;
         auto contact = d->usersModel->findEntry(nick);
         if (contact && !contact->status.mucItem().jid().isEmpty()) {
-            nickJid = QString("%1 (%2)").arg(nick).arg(contact->status.mucItem().jid().full());
+            nickJid = QString("%1 (%2)").arg(nick, contact->status.mucItem().jid().full());
         } else {
             nickJid = nick;
         }
@@ -1936,7 +1936,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 
         if ( !d->connecting && !suppressDefault && options_->getOption("options.muc.show-joins").toBool() ) {
             if (s.getMUCStatuses().contains(303)) {
-                message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
+                message = tr("%1 is now known as %2").arg(nick, s.mucItem().nick());
                 d->usersModel->updateEntry(s.mucItem().nick(), s);
                 dispatchMessage(MessageView::nickChangeMessage(nick, s.mucItem().nick()));
             } else {

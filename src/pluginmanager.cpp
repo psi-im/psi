@@ -216,7 +216,7 @@ void PluginManager::optionChanged(const QString& option)
 {
     bool pluginOpt = option.startsWith(loadOptionPrefix);
     const QString shortName = option.split(".").last();
-    foreach (PluginHost* plugin, pluginByFile_.values()) {
+    foreach (PluginHost* plugin, pluginByFile_) {
         plugin->optionChanged(option);
         if(pluginOpt && plugin->shortName() == shortName) {
             bool shouldUpdateFeatures;
