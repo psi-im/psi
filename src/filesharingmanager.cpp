@@ -157,6 +157,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
     if (cache) {
         initFromCache();
     } else {
+        file.seek(0);
         mimeType = QMimeDatabase().mimeTypeForFileNameAndData(fileName, &file).name();
         isImage = QImageReader::supportedMimeTypes().contains(mimeType.toLatin1());
     }

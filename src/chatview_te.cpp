@@ -106,7 +106,7 @@ ChatView::ChatView(QWidget *parent)
         addLogIconsResources();
     }
 
-    auto itc = new InteractiveText(this);
+    auto itc = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
     voiceMsgCtrl = new ITEAudioController(itc);
     voiceMsgCtrl->setAutoFetchMetadata(true);
 }
@@ -421,6 +421,18 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
 
     QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
 
+    if(mv.isEmote()) {
+        insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>", insertCursor);
+    }
+    else {
+        if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
+            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>", insertCursor);
+        }
+        else {
+            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>", insertCursor);
+        }
+    }
+
     // temporary hack with references
     for (auto const &r: mv.references()) {
         if (r.mediaType().startsWith(QString::fromLatin1("audio"))) {
@@ -434,29 +446,10 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
                 continue;
 
             bool ab = atBottom();
-            QTextCursor selCursor = textCursor();
-            PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
-
-            setTextCursor(insertCursor);
             voiceMsgCtrl->insert(httpSrc);
-
-            PsiRichText::restoreSelection(this, selCursor, selection);
-            setTextCursor(selCursor);
-
             if (ab) {
                 scrollToBottom();
             }
-        }
-    }
-    if(mv.isEmote()) {
-        insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>", insertCursor);
-    }
-    else {
-        if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>", insertCursor);
-        }
-        else {
-            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>", insertCursor);
         }
     }
 
