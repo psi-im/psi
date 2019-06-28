@@ -64,8 +64,7 @@ bool Mood::isNull() const
 
 QDomElement Mood::toXml(QDomDocument& doc)
 {
-    QDomElement mood = doc.createElement("mood");
-    mood.setAttribute("xmlns", PEP_MOOD_NS);
+    QDomElement mood = doc.createElementNS(PEP_MOOD_NS, "mood");
 
     if (type() != Unknown) {
         QDomElement el = doc.createElement(MoodCatalog::instance()->findEntryByType(type()).value());

@@ -131,8 +131,7 @@ public:
     void onGo() {
         iq_ = createIQ(doc(), "get", myjid_.full(), id());
 
-        QDomElement ping = doc()->createElement("ping");
-        ping.setAttribute("xmlns", "urn:xmpp:ping");
+        QDomElement ping = doc()->createElementNS("urn:xmpp:ping", "ping");
         iq_.appendChild(ping);
         timeout.setSingleShot ( true );
         timeout.setInterval( 1000 * 60 * 10 );

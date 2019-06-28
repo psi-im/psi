@@ -70,8 +70,7 @@ JT_AHCGetList::JT_AHCGetList(Task* t, const Jid& j) : Task(t), receiver_(j)
 void JT_AHCGetList::onGo()
 {
     QDomElement e = createIQ(doc(), "get", receiver_.full(), id());
-    QDomElement q = doc()->createElement("query");
-    q.setAttribute("xmlns", "http://jabber.org/protocol/disco#items");
+    QDomElement q = doc()->createElementNS("http://jabber.org/protocol/disco#items", "query");
     q.setAttribute("node", AHC_NS);
     e.appendChild(q);
     send(e);

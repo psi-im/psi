@@ -111,7 +111,7 @@ AHCommand::AHCommand(const QDomElement& q) :
         QString tag = e.tagName();
 
         // A form
-        if (tag == "x" && e.attribute("xmlns") =="jabber:x:data") {
+        if (tag == "x" && e.namespaceURI() =="jabber:x:data") {
             d->data.fromXml(e);
             d->hasData = true;
         }
@@ -183,8 +183,7 @@ const AHCommand::Note &AHCommand::note() const { return d->note; }
 
 QDomElement AHCommand::toXml(QDomDocument* doc, bool submit) const
 {
-    QDomElement command = doc->createElement("command");
-    command.setAttribute("xmlns", AHC_NS);
+    QDomElement command = doc->createElementNS(AHC_NS, "command");
     if (d->status != NoStatus)
         command.setAttribute("status",status2string(status()));
     if (hasData())
@@ -327,10 +326,10 @@ AHCError::AHCError(const QDomElement& e) : type_(None)
 
         QString tag = i.tagName();
 
-        if ((tag == "bad-request" || tag == "not-allowed" || tag == "forbidden" || tag == "forbidden" || tag == "item-not-found" || tag == "feature-not-implemented") && e.attribute("xmlns") == XMPPSTANZA_NS) {
+        if ((tag == "bad-request" || tag == "not-allowed" || tag == "forbidden" || tag == "forbidden" || tag == "item-not-found" || tag == "feature-not-implemented") && e.namespaceURI() == XMPPSTANZA_NS) {
             errorGeneral = tag;
         }
-        else if ((tag == "malformed-action" || tag == "bad-action" || tag == "bad-locale" || tag == "bad-payload" || tag == "bad-sessionid" || tag == "session-expired") && e.attribute("xmlns") == AHC_NS) {
+        else if ((tag == "malformed-action" || tag == "bad-action" || tag == "bad-locale" || tag == "bad-payload" || tag == "bad-sessionid" || tag == "session-expired") && e.namespaceURI() == AHC_NS) {
             errorSpecific = tag;
         }
     }
@@ -384,14 +383,12 @@ QDomElement AHCError::toXml(QDomDocument* doc) const
         }
 
         // General error condition
-        QDomElement generalElement = doc->createElement(desc);
-        generalElement.setAttribute("xmlns", XMPPSTANZA_NS);
+        QDomElement generalElement = doc->createElementNS(XMPPSTANZA_NS, desc);
         err.appendChild(generalElement);
 
         // Specific error condition
         if (!specificCondition.isEmpty()) {
-            QDomElement generalElement = doc->createElement(specificCondition);
-            generalElement.setAttribute("xmlns", AHC_NS);
+            QDomElement generalElement = doc->createElementNS(AHC_NS, specificCondition);
             err.appendChild(generalElement);
         }
     }

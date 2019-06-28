@@ -259,8 +259,7 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
 {
     to_ = to;
     iq_ = createIQ(doc(), "set", to.full(), id());
-    QDomElement query = doc()->createElement("jingle");
-    query.setAttribute("xmlns", "urn:xmpp:jingle:1");
+    QDomElement query = doc()->createElementNS("urn:xmpp:jingle:1", "jingle");
     query.setAttribute("action", envelope.action);
     if(!envelope.initiator.isEmpty())
         query.setAttribute("initiator", envelope.initiator);
@@ -289,8 +288,7 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
             if(!c.desc.media.isEmpty())
             {
                 // TODO: ssrc, bitrate, crypto
-                QDomElement description = doc()->createElement("description");
-                description.setAttribute("xmlns", "urn:xmpp:jingle:apps:rtp:1");
+                QDomElement description = doc()->createElementNS("urn:xmpp:jingle:apps:rtp:1", "description");
                 description.setAttribute("media", c.desc.media);
                 foreach(const JingleRtpPayloadType &pt, c.desc.payloadTypes)
                 {
@@ -303,8 +301,7 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
 
             if(!c.trans.user.isEmpty())
             {
-                QDomElement transport = doc()->createElement("transport");
-                transport.setAttribute("xmlns", "urn:xmpp:jingle:transports:ice-udp:1");
+                QDomElement transport = doc()->createElementNS("urn:xmpp:jingle:transports:ice-udp:1", "transport");
                 transport.setAttribute("ufrag", c.trans.user);
                 transport.setAttribute("pwd", c.trans.pass);
                 foreach(const XMPP::Ice176::Candidate &ic, c.trans.candidates)
@@ -383,7 +380,7 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
             continue;
 
         QDomElement e = n.toElement();
-        if(e.tagName() == "jingle" && e.attribute("xmlns") == "urn:xmpp:jingle:1")
+        if(e.tagName() == "jingle" && e.namespaceURI() == "urn:xmpp:jingle:1")
         {
             je = e;
             break;
@@ -441,7 +438,7 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
                     continue;
 
                 QDomElement e = n.toElement();
-                if(e.tagName() == "description" && e.attribute("xmlns") == "urn:xmpp:jingle:apps:rtp:1")
+                if(e.tagName() == "description" && e.namespaceURI() == "urn:xmpp:jingle:apps:rtp:1")
                 {
                     c.desc.media = e.attribute("media");
 
@@ -461,7 +458,7 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
                         c.desc.payloadTypes += pt;
                     }
                 }
-                else if(e.tagName() == "transport" && e.attribute("xmlns") == "urn:xmpp:jingle:transports:ice-udp:1")
+                else if(e.tagName() == "transport" && e.namespaceURI() == "urn:xmpp:jingle:transports:ice-udp:1")
                 {
                     c.trans.user = e.attribute("ufrag");
                     c.trans.pass = e.attribute("pwd");

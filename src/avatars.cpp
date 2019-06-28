@@ -796,8 +796,7 @@ void AvatarFactory::setSelfAvatar(const QString& fileName)
             // Publish data
             QDomDocument* doc = account()->client()->doc();
             QString hash = QString::fromLatin1(QCryptographicHash::hash(avatar_data, QCryptographicHash::Sha1).toHex());
-            QDomElement el = doc->createElement(PEP_AVATAR_DATA_TN);
-            el.setAttribute("xmlns",PEP_AVATAR_DATA_NS);
+            QDomElement el = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
             el.appendChild(doc->createTextNode(QString::fromLatin1(avatar_data.toBase64())));
             d->selfAvatarData_ = avatar_data;
             d->selfAvatarHash_ = hash;
@@ -1034,8 +1033,7 @@ void AvatarFactory::publish_success(const QString& n, const PubSubItem& item)
         // Publish metadata
         QDomDocument* doc = account()->client()->doc();
         QImage avatar_image = QImage::fromData(d->selfAvatarData_);
-        QDomElement meta_el = doc->createElement(PEP_AVATAR_METADATA_TN);
-        meta_el.setAttribute("xmlns",PEP_AVATAR_METADATA_NS);
+        QDomElement meta_el = doc->createElementNS(PEP_AVATAR_METADATA_NS, PEP_AVATAR_METADATA_TN);
         QDomElement info_el = doc->createElement("info");
         info_el.setAttribute("id",d->selfAvatarHash_);
         info_el.setAttribute("bytes",avatar_image.byteCount());

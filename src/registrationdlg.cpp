@@ -85,8 +85,7 @@ void JT_XRegister::setXForm(const Form &frm, const XData &_form)
     JT_Register::setForm( frm );
 
     _iq = createIQ(doc(), "set", frm.jid().full(), id());
-    QDomElement query = doc()->createElement("query");
-    query.setAttribute("xmlns", "jabber:iq:register");
+    QDomElement query = doc()->createElementNS("jabber:iq:register", "query");
     _iq.appendChild(query);
 
     XData form( _form );
@@ -110,7 +109,7 @@ QDomElement JT_XRegister::xdataElement() const
         if (i.isNull())
             continue;
 
-        if (i.attribute("xmlns") == "jabber:x:data")
+        if (i.namespaceURI() == "jabber:x:data")
             return i;
     }
 

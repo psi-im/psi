@@ -336,8 +336,7 @@ public:
         const QString ns = queryNS(e);
         if (ns == "jabber:iq:last") {
             QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
-            QDomElement query = doc()->createElement("query");
-            query.setAttribute("xmlns", ns);
+            QDomElement query = doc()->createElementNS(ns, "query");
             iq.appendChild(query);
             query.setAttribute("seconds", pa_->psi()->idle());
 
@@ -3323,8 +3322,7 @@ void PsiAccount::tunePlaying(const Tune &tune)
 void PsiAccount::publishTune(const Tune &tune)
 {
     QDomDocument *doc = d->client->rootTask()->doc();
-    QDomElement t = doc->createElement("tune");
-    t.setAttribute("xmlns", "http://jabber.org/protocol/tune");
+    QDomElement t = doc->createElementNS("http://jabber.org/protocol/tune", "tune");
     if (!tune.artist().isEmpty())
         t.appendChild(textTag(doc, "artist", tune.artist()));
     if (!tune.name().isEmpty())

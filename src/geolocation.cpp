@@ -34,8 +34,7 @@ GeoLocation::GeoLocation(const QDomElement& el)
 
 QDomElement GeoLocation::toXml(QDomDocument& doc)
 {
-    QDomElement geoloc = doc.createElement(PEP_GEOLOC_TN);
-    geoloc.setAttribute("xmlns", PEP_GEOLOC_NS);
+    QDomElement geoloc = doc.createElementNS(PEP_GEOLOC_NS, PEP_GEOLOC_TN);
 
     if (alt_.hasValue()) {
         QDomElement e = doc.createElement("alt");

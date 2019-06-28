@@ -96,8 +96,7 @@ private:
 public:
     GetPrivacyListsTask(Task* parent) : Task(parent) {
         iq_ = createIQ(doc(), "get", "", id());
-        QDomElement query = doc()->createElement("query");
-        query.setAttribute("xmlns",PRIVACY_NS);
+        QDomElement query = doc()->createElementNS(PRIVACY_NS, "query");
         iq_.appendChild(query);
     }
 
@@ -162,8 +161,7 @@ public:
 
     void onGo() {
         QDomElement iq_ = createIQ(doc(), "set", "", id());
-        QDomElement query = doc()->createElement("query");
-        query.setAttribute("xmlns",PRIVACY_NS);
+        QDomElement query = doc()->createElementNS(PRIVACY_NS, "query");
         iq_.appendChild(query);
 
         QDomElement e;
@@ -245,8 +243,7 @@ private:
 public:
     GetPrivacyListTask(Task* parent, const QString& name) : Task(parent), name_(name), list_(PrivacyList("")) {
         iq_ = createIQ(doc(), "get", "", id());
-        QDomElement query = doc()->createElement("query");
-        query.setAttribute("xmlns",PRIVACY_NS);
+        QDomElement query = doc()->createElementNS(PRIVACY_NS, "query");
         iq_.appendChild(query);
         QDomElement list = doc()->createElement("list");
         list.setAttribute("name",name);

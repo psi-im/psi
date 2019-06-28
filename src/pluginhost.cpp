@@ -530,8 +530,8 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
         QString ns;
         for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
             QDomElement i = n.toElement();
-            if (!i.isNull() && i.hasAttribute("xmlns")) {
-                ns = i.attribute("xmlns");
+            if (!i.isNull() && !i.namespaceURI().isNull()) {
+                ns = i.namespaceURI();
                 break;
             }
         }

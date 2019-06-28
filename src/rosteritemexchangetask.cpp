@@ -32,15 +32,14 @@ bool RosterItemExchangeTask::take(const QDomElement& e)
         QDomElement i = n.toElement();
         if(i.isNull())
             continue;
-        if(i.tagName() == "x" && i.attribute("xmlns") == "http://jabber.org/protocol/rosterx") {
+        if(i.tagName() == "x" && i.namespaceURI() == "http://jabber.org/protocol/rosterx") {
             Jid from(e.attribute("from"));
             if (client()->roster().find(from,false) == client()->roster().end() && ignoreNonRoster_) {
                 // Send a not-authorized error
                 QDomElement iq = createIQ(doc(), "error", e.attribute("from"), e.attribute("id"));
                 QDomElement error = doc()->createElement("error");
                 error.setAttribute("type","cancel");
-                QDomElement notauthorized = doc()->createElement("not-authorized");
-                notauthorized.setAttribute("xmlns","urn:ietf:params:xml:ns:xmpp-stanzas");
+                QDomElement notauthorized = doc()->createElementNS("urn:ietf:params:xml:ns:xmpp-stanzas", "not-authorized");
                 error.appendChild(notauthorized);
                 iq.appendChild(error);
                 send(iq);

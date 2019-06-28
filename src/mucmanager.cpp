@@ -53,8 +53,7 @@ public:
         action_ = action;
         iq_ = createIQ(doc(), "set", room_.full(), id());
 
-        QDomElement muc = doc()->createElement("query");
-        muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#admin");
+        QDomElement muc = doc()->createElementNS("http://jabber.org/protocol/muc#admin", "query");
         iq_.appendChild(muc);
 
         foreach(MUCItem item, items) {
@@ -66,8 +65,7 @@ public:
         affiliation_ = affiliation;
         iq_ = createIQ(doc(), "get", room_.full(), id());
 
-        QDomElement muc = doc()->createElement("query");
-        muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#admin");
+        QDomElement muc = doc()->createElementNS("http://jabber.org/protocol/muc#admin", "query");
         muc.appendChild(MUCItem(MUCItem::UnknownRole, affiliation).toXml(*doc()));
         iq_.appendChild(muc);
     }
@@ -128,8 +126,7 @@ public:
     void set(const XData& data) {
         iq_ = createIQ(doc(), "set", room_.full(), id());
 
-        QDomElement muc = doc()->createElement("query");
-        muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#owner");
+        QDomElement muc = doc()->createElementNS("http://jabber.org/protocol/muc#owner", "query");
         iq_.appendChild(muc);
 
         muc.appendChild(data.toXml(doc()));
@@ -138,8 +135,7 @@ public:
     void get() {
         iq_ = createIQ(doc(), "get", room_.full(), id());
 
-        QDomElement muc = doc()->createElement("query");
-        muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#owner");
+        QDomElement muc = doc()->createElementNS("http://jabber.org/protocol/muc#owner", "query");
         iq_.appendChild(muc);
     }
 
@@ -155,7 +151,7 @@ public:
             QDomElement q = queryTag(x);
             for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
                 QDomElement e = n.toElement();
-                if (!e.isNull() && e.tagName() == "x" && e.attribute("xmlns") == "jabber:x:data") {
+                if (!e.isNull() && e.tagName() == "x" && e.namespaceURI() == "jabber:x:data") {
                     data_.fromXml(e);
                 }
             }
@@ -186,8 +182,7 @@ public:
     {
         iq_ = createIQ(doc(), "set", room.full(), id());
 
-        QDomElement muc = doc()->createElement("query");
-        muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#owner");
+        QDomElement muc = doc()->createElementNS("http://jabber.org/protocol/muc#owner", "query");
         iq_.appendChild(muc);
 
         MUCDestroy d;

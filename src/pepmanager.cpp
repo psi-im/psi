@@ -38,8 +38,7 @@ public:
     PEPGetTask(Task* parent, const QString& jid, const QString& node, const QString& itemID) : Task(parent), jid_(jid), node_(node) {
         iq_ = createIQ(doc(), "get", jid_, id());
 
-        QDomElement pubsub = doc()->createElement("pubsub");
-        pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
         iq_.appendChild(pubsub);
 
         QDomElement items = doc()->createElement("items");
@@ -111,8 +110,7 @@ public:
     PEPUnsubscribeTask(Task* parent, const QString& jid, const QString& node) : Task(parent), jid_(jid) {
         iq_ = createIQ(doc(), "set", jid_, id());
 
-        QDomElement pubsub = doc()->createElement("pubsub");
-        pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
         iq_.appendChild(pubsub);
 
         QDomElement unsubscribe = doc()->createElement("unsubscribe");
@@ -151,8 +149,7 @@ public:
     PEPSubscribeTask(Task* parent, const QString& jid, const QString& node) : Task(parent), jid_(jid) {
         iq_ = createIQ(doc(), "set", jid_, id());
 
-        QDomElement pubsub = doc()->createElement("pubsub");
-        pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
         iq_.appendChild(pubsub);
 
         QDomElement subscribe = doc()->createElement("subscribe");
@@ -193,8 +190,7 @@ public:
         node_ = node;
         iq_ = createIQ(doc(), "set", "", id());
 
-        QDomElement pubsub = doc()->createElement("pubsub");
-        pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
         iq_.appendChild(pubsub);
 
         QDomElement subscribe = doc()->createElement("create");
@@ -239,8 +235,7 @@ public:
     PEPPublishTask(Task* parent, const QString& node, const PubSubItem& it, PEPManager::Access access) : Task(parent), node_(node), item_(it) {
         iq_ = createIQ(doc(), "set", "", id());
 
-        QDomElement pubsub = doc()->createElement("pubsub");
-        pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
         iq_.appendChild(pubsub);
 
         QDomElement publish = doc()->createElement("publish");
@@ -325,8 +320,7 @@ public:
     PEPRetractTask(Task* parent, const QString& node, const QString& itemId) : Task(parent), node_(node), itemId_(itemId) {
         iq_ = createIQ(doc(), "set", "", id());
 
-        QDomElement pubsub = doc()->createElement("pubsub");
-        pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+        QDomElement pubsub = doc()->createElementNS("http://jabber.org/protocol/pubsub", "pubsub");
         iq_.appendChild(pubsub);
 
         QDomElement retract = doc()->createElement("retract");
@@ -572,8 +566,7 @@ void PEPManager::retract(const QString& node, const QString& id)
 void PEPManager::disable(const QString& tagName, const QString& node, const QString& id)
 {
     // disable by publishing an empty element
-    QDomElement element = client_->rootTask()->doc()->createElement(tagName);
-    element.setAttribute("xmlns", node);
+    QDomElement element = client_->rootTask()->doc()->createElementNS(node, tagName);
 
     publish(node, PubSubItem(id,element));
 }

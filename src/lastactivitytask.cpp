@@ -27,8 +27,7 @@ using namespace XMPP;
 LastActivityTask::LastActivityTask(const Jid& jid, Task* parent) : Task(parent), jid_(jid)
 {
     iq_ = createIQ(doc(), "get", jid_.full(), id());
-    QDomElement query = doc()->createElement("query");
-    query.setAttribute("xmlns", "jabber:iq:last");
+    QDomElement query = doc()->createElementNS("jabber:iq:last", "query");
     iq_.appendChild(query);
 }
 

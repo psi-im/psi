@@ -40,12 +40,10 @@ public:
 
         iq_ = createIQ(doc(), "set", "", id());
 
-        QDomElement prvt = doc()->createElement("query");
-        prvt.setAttribute("xmlns", "jabber:iq:private");
+        QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
         iq_.appendChild(prvt);
 
-        QDomElement storage = doc()->createElement("storage");
-        storage.setAttribute("xmlns", "storage:bookmarks");
+        QDomElement storage = doc()->createElementNS("storage:bookmarks", "storage");
         prvt.appendChild(storage);
 
         foreach(URLBookmark u, urls)
@@ -57,12 +55,10 @@ public:
     void get() {
         iq_ = createIQ(doc(), "get", "", id());
 
-        QDomElement prvt = doc()->createElement("query");
-        prvt.setAttribute("xmlns", "jabber:iq:private");
+        QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
         iq_.appendChild(prvt);
 
-        QDomElement bookmarks = doc()->createElement("storage");
-        bookmarks.setAttribute("xmlns", "storage:bookmarks");
+        QDomElement bookmarks = doc()->createElementNS("storage:bookmarks", "storage");
         prvt.appendChild(bookmarks);
     }
 
@@ -78,7 +74,7 @@ public:
             QDomElement q = queryTag(x);
             for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
                 QDomElement e = n.toElement();
-                if (!e.isNull() && e.tagName() == "storage" && e.attribute("xmlns") == "storage:bookmarks") {
+                if (!e.isNull() && e.tagName() == "storage" && e.namespaceURI() == "storage:bookmarks") {
                     for (QDomNode m = e.firstChild(); !m.isNull(); m = m.nextSibling()) {
                         QDomElement f = m.toElement();
                         if (f.isNull())

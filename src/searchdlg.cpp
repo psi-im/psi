@@ -77,8 +77,7 @@ void JT_XSearch::setForm(const Form &frm, const XData &_form)
     JT_Search::set( frm );
 
     _iq = createIQ(doc(), "set", frm.jid().full(), id());
-    QDomElement query = doc()->createElement("query");
-    query.setAttribute("xmlns", "jabber:iq:search");
+    QDomElement query = doc()->createElementNS("jabber:iq:search", "query");
     _iq.appendChild(query);
 
     XData form( _form );
@@ -324,7 +323,7 @@ void SearchDlg::jt_finished()
                     if(i.isNull())
                         continue;
 
-                    if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
+                    if( i.namespaceURI() == "jabber:x:data" ) {
                         useXData = true;
 
                         XData form;
@@ -398,7 +397,7 @@ void SearchDlg::jt_finished()
                     if(i.isNull())
                         continue;
 
-                    if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
+                    if( i.namespaceURI() == "jabber:x:data" ) {
                         form.fromXml( i );
                         break;
                     }

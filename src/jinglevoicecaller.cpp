@@ -78,7 +78,7 @@ bool JingleIQResponder::take(const QDomElement &e)
         return false;
 
     QDomElement first = e.firstChild().toElement();
-    if (!first.isNull() && first.attribute("xmlns") == JINGLE_NS) {
+    if (!first.isNull() && first.namespaceURI() == JINGLE_NS) {
         QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
         send(iq);
         return true;
@@ -368,7 +368,7 @@ void JingleVoiceCaller::receiveStanza(const QString& stanza)
     bool ok = false;
     while (!n.isNull() && !ok) {
         QDomElement e = n.toElement();
-        if (!e.isNull() && e.attribute("xmlns") == JINGLE_NS) {
+        if (!e.isNull() && e.namespaceURI() == JINGLE_NS) {
             ok = true;
         }
         n = n.nextSibling();

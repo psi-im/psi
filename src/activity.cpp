@@ -83,8 +83,7 @@ bool Activity::isNull() const
 
 QDomElement Activity::toXml(QDomDocument& doc)
 {
-    QDomElement activity = doc.createElement(PEP_ACTIVITY_TN);
-    activity.setAttribute("xmlns", PEP_ACTIVITY_NS);
+    QDomElement activity = doc.createElementNS(PEP_ACTIVITY_NS, PEP_ACTIVITY_TN);
 
     if (type() != Unknown) {
         ActivityCatalog* ac = ActivityCatalog::instance();

@@ -323,7 +323,7 @@ bool OptionsTree::loadOptions(const QDomElement& base, const QString& configName
     //    return false;
     //if(configVersion!="" && base.attribute("version") != configVersion)
     //    return false;
-    //if(configNS!="" && base.attribute("xmlns")  != configNS)
+    //if(configNS!="" && base.namespaceURI()  != configNS)
     //    return false;
 
     // Convert

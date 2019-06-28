@@ -80,11 +80,11 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
             return false;
 
         // Disco replies to the AdHoc node
-        if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#items" && q.attribute("node") == AHC_NS) {
+        if (q.namespaceURI() == "http://jabber.org/protocol/disco#items" && q.attribute("node") == AHC_NS) {
             sendCommandList(e.attribute("from"),e.attribute("to"),e.attribute("id"));
             return true;
         }
-        else if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#info" && q.attribute("node") == AHC_NS) {
+        else if (q.namespaceURI() == "http://jabber.org/protocol/disco#info" && q.attribute("node") == AHC_NS) {
             QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
             DiscoItem item;
             iq.appendChild(item.toDiscoInfoResult(doc())).toElement();
@@ -92,17 +92,16 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
             return true;
         }
         // Disco replies to specific adhoc nodes
-        else if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#items" && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
+        else if (q.namespaceURI() == "http://jabber.org/protocol/disco#items" && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
             QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
-            QDomElement query = doc()->createElement("query");
-            query.setAttribute("xmlns", "http://jabber.org/protocol/disco#items");
+            QDomElement query = doc()->createElementNS("http://jabber.org/protocol/disco#items", "query");
             query.setAttribute("node", q.attribute("node"));
             iq.appendChild(query);
 
             send(iq);
             return true;
         }
-        else if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#info" && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
+        else if (q.namespaceURI() == "http://jabber.org/protocol/disco#info" && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
             QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
             DiscoItem item;
             item.setNode(q.attribute("node"));
@@ -123,7 +122,7 @@ bool JT_AHCServer::commandExecuteQuery(const QDomElement& e)
 {
     if (e.attribute("type") == "set") {
         QDomElement q = e.firstChildElement("command");
-        if (!q.isNull() && q.attribute("xmlns") == AHC_NS && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
+        if (!q.isNull() && q.namespaceURI() == AHC_NS && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
             AHCommand command(q);
             manager_->execute(command, Jid(e.attribute("from")), e.attribute("id"));
             return true;
@@ -138,8 +137,7 @@ void JT_AHCServer::sendCommandList(const QString& to, const QString& from, const
 {
     // Create query element
     QDomElement iq = createIQ(doc(), "result", to, id);
-    QDomElement query = doc()->createElement("query");
-    query.setAttribute("xmlns", "http://jabber.org/protocol/disco#items");
+    QDomElement query = doc()->createElementNS("http://jabber.org/protocol/disco#items", "query");
     query.setAttribute("node", AHC_NS);
     iq.appendChild(query);
 

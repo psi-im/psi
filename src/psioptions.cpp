@@ -46,8 +46,7 @@ public:
     void set(/* ... */) {
         iq_ = createIQ(doc(), "set", "", id());
 
-        QDomElement prvt = doc()->createElement("query");
-        prvt.setAttribute("xmlns", "jabber:iq:private");
+        QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
         iq_.appendChild(prvt);
 
         // ...
@@ -56,12 +55,10 @@ public:
     void get() {
         iq_ = createIQ(doc(), "get", "", id());
 
-        QDomElement prvt = doc()->createElement("query");
-        prvt.setAttribute("xmlns", "jabber:iq:private");
+        QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
         iq_.appendChild(prvt);
 
-        QDomElement options = doc()->createElement("options");
-        options.setAttribute("xmlns", ApplicationInfo::storageNS());
+        QDomElement options = doc()->createElementNS(ApplicationInfo::storageNS(), "options");
         prvt.appendChild(options);
     }
 
@@ -77,7 +74,7 @@ public:
             QDomElement q = queryTag(x);
             for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
                 QDomElement e = n.toElement();
-                if (!e.isNull() && e.tagName() == "options" && e.attribute("xmlns") == ApplicationInfo::storageNS()) {
+                if (!e.isNull() && e.tagName() == "options" && e.namespaceURI() == ApplicationInfo::storageNS()) {
                     options_ = e;
                 }
             }

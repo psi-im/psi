@@ -65,8 +65,7 @@ public:
 
     void onGo() {
         QDomElement iq = createIQ(doc(), "get", "", id());
-        QDomElement query = doc()->createElement("query");
-        query.setAttribute("xmlns", JINGLEINFO_NS);
+        QDomElement query = doc()->createElementNS(JINGLEINFO_NS, "query");
         iq.appendChild(query);
         send(iq);
     }
@@ -103,7 +102,7 @@ public:
         if(e.tagName() != "iq")
             return false;
         QDomElement first = e.firstChild().toElement();
-        if (!first.isNull() && first.attribute("xmlns") == JINGLE_NS) {
+        if (!first.isNull() && first.namespaceURI() == JINGLE_NS) {
             return true;
         }
         return false;
@@ -377,7 +376,7 @@ void GoogleFTManager::receiveStanza(const QString& sstanza)
     bool ok = false;
     while (!n.isNull() && !ok) {
         QDomElement e = n.toElement();
-        if (!e.isNull() && e.attribute("xmlns") == JINGLE_NS) {
+        if (!e.isNull() && e.namespaceURI() == JINGLE_NS) {
             ok = true;
         }
         n = n.nextSibling();
