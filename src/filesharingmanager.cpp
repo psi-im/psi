@@ -754,8 +754,24 @@ void FileSharingManager::saveDownloadedSource(const QString &sourceId, const QSt
     if (it == d->sources.end())
         return;
 
+    Private::Source &src = *it;
+    QVariantMap vm;
+    vm.insert(QString::fromLatin1("type"), src.file.mediaType());
+    vm.insert(QString::fromLatin1("uris"), src.uris);
+    vm.insert(QString::fromLatin1("link"), absPath);
+    auto thumb = src.file.thumbnail();
+    if (thumb.isValid())
+        vm.insert(QString::fromLatin1("thumbnail"), thumb.uri);
+    if (src.file.audioSpectrum().bars.count()) {
+        auto s = src.file.audioSpectrum();
+        QStringList sl;
+        sl.reserve(s.bars.count());
+        for (auto const &v: s.bars) sl.append(QString::number(v));
+        vm.insert(QString::fromLatin1("spectrum"), sl.join(','));
+        vm.insert(QString::fromLatin1("spectrum_coding"), s.coding);
+    }
 
-    // TODO do actual save
+    saveToCache(hash, QByteArray(), vm, FILE_TTL);
 }
 
 #include "filesharingmanager.moc"

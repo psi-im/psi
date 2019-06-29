@@ -159,7 +159,7 @@ protected slots:
 
 protected:
     // reimplemented
-    virtual void invalidateTab();
+    void invalidateTab() override;
 
     void updateRealJid();
     void resetComposing();
