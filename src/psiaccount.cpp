@@ -3198,15 +3198,15 @@ void PsiAccount::savePassword()
  * @param cid - cache item id / bob hash
  * @param callback - accepts data and content-type. null data means failure
  */
-void PsiAccount::loadBob(const Jid &jid, const QString &cid,
-                         std::function<void (const QByteArray &, const QByteArray &)> callback)
+void PsiAccount::loadBob(const Jid &jid, const QString &cid, QObject *context,
+                         std::function<void (bool success, const QByteArray &, const QByteArray &)> callback)
 {
     JT_BitsOfBinary *task = new JT_BitsOfBinary(d->client->rootTask());
-    QObject::connect(task, &JT_BitsOfBinary::finished, this, [task, callback]() {
+    QObject::connect(task, &JT_BitsOfBinary::finished, context, [task, callback]() {
         if (task->success()) {
-            callback(task->data().data(), task->data().type().toLatin1());
+            callback(true, task->data().data(), task->data().type().toLatin1());
         } else {
-            callback(QByteArray(), QByteArray());
+            callback(false, QByteArray(), QByteArray());
         }
     });
     task->get(jid, cid);

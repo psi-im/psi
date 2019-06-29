@@ -306,7 +306,7 @@ public:
 #ifdef HAVE_KEYCHAIN
     void savePassword();
 #endif
-    void loadBob(const Jid &jid, const QString &cid, std::function<void(const QByteArray &,const QByteArray &)> callback);
+    void loadBob(const Jid &jid, const QString &cid, QObject *context, std::function<void(bool, const QByteArray &, const QByteArray &)> callback);
     void shareFiles(QWidget *parent, const std::function<void(const QList<Reference> &, const QString &)> &callback);
     void shareFiles(QWidget *parent, const QMimeData *mdata, const std::function<void(const QList<Reference> &, const QString &)> &callback);
 

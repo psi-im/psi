@@ -139,11 +139,11 @@ public:
     // accepts url of http request from chatlog.
     // returns to callback data and content-type.
     // if data is null then it's 404
-    bool getContents(const QUrl &url, std::function<void(const QByteArray &,const QByteArray &)> callback)
+    bool getContents(const QUrl &url, std::function<void(bool success, const QByteArray &,const QByteArray &)> callback)
     {
         if (url.path().startsWith("/psibob/")) {
             QString cid = url.path().mid(sizeof("/psibob/") - 1);
-            _view->d->account_->loadBob(_view->d->jid_, cid, callback);
+            _view->d->account_->loadBob(_view->d->jid_, cid, this, callback);
             return true;
         }
         //qDebug("Unhandled url: %s", qPrintable(url.toString()));

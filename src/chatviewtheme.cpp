@@ -282,12 +282,12 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
         if (!weakSession) {
             return false;
         }
-        bool handled = session->getContents(req->url(), [res](const QByteArray &data, const QByteArray &ctype){
-            if (data.isNull()) {
-                res->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
-            } else {
+        bool handled = session->getContents(req->url(), [res](bool success, const QByteArray &data, const QByteArray &ctype){
+            if (success) {
                 res->setStatusCode(qhttp::ESTATUS_OK);
                 res->headers().insert("Content-Type", ctype);
+            } else {
+                res->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
             }
             res->end(data);
         });

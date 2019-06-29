@@ -35,6 +35,26 @@ namespace XMPP {
     class Message;
 }
 
+class FileShareDownloader: public QObject
+{
+    Q_OBJECT
+public:
+    FileShareDownloader(PsiAccount *acc, const QString &sourceId, const XMPP::Jingle::FileTransfer::File &file,
+                        const QList<XMPP::Jid> &jids, const QStringList &uris, FileSharingManager *manager);
+    ~FileShareDownloader();
+
+    bool isSuccess() const;
+    void start();
+    void abort();
+signals:
+    void started();
+    void finished();
+    void progress(size_t curSize, size_t fullSize);
+private:
+    class Private;
+    QScopedPointer<Private> d;
+};
+
 class FileSharingItem : public QObject
 {
     Q_OBJECT
@@ -96,7 +116,9 @@ public:
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
     // registers source for file and returns share id for future access to the source
-    QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source);
+    QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
+    QString downloadThumbnail(const QString &sourceId);
+    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId);
 signals:
 
 public slots:
