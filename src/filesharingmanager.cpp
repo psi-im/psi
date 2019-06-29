@@ -46,6 +46,7 @@
 #include <QPixmap>
 #include <QTemporaryFile>
 #include <QUrl>
+#include <QUrlQuery>
 
 #define FILE_TTL (365 * 24 * 3600)
 #define TEMP_TTL (7 * 24 * 3600)
