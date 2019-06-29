@@ -36,6 +36,7 @@ public:
     static QString historyDir();
     static QString vCardDir();
     static QString bobDir();
+    static QString documentsDir();
     static QStringList getCertificateStoreDirs();
     static QString getCertificateStoreSaveDir();
     static QStringList dataDirs();

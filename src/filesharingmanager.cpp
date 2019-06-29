@@ -32,6 +32,7 @@
 #include "psicon.h"
 #include "networkaccessmanager.h"
 #include "xmpp_bitsofbinary.h"
+#include "jidutil.h"
 
 #include <QBuffer>
 #include <QDir>
@@ -70,9 +71,9 @@ public:
     QStringList uris; // sorted from low priority to high.
     FileSharingManager *manager = nullptr;
     DownloaderType currentType = DownloaderType::None;
-    QScopedPointer<QTemporaryFile> tmpFile;
-    QByteArray tmpData;
+    QScopedPointer<QFile> tmpFile;
     QString lastError;
+    QString dstFileName;
     bool success = false;
 
     DownloaderType detectDownloaderType(const QString &uri) const
@@ -112,20 +113,29 @@ public:
         }
     }
 
+    void setupTempFile()
+    {
+        if (!tmpFile) {
+            QString tmpFN = QString::fromLatin1("dl-") + dstFileName;
+            tmpFN = QString("%1/%2").arg(ApplicationInfo::documentsDir(), tmpFN);
+            tmpFile.reset(new QFile(tmpFN));
+            if (!tmpFile->open(QIODevice::ReadWrite | QIODevice::Truncate)) { // TODO complete unfinished downloads
+                lastError = tmpFile->errorString();
+                tmpFile.reset();
+            }
+        }
+    }
+
     void downloadNetworkManager(const QString &uri)
     {
         QNetworkReply *reply = acc->psi()->networkAccessManager()->get(QNetworkRequest(QUrl(uri)));
         connect(reply, &QNetworkReply::readyRead, this, [this,reply](){
+            setupTempFile();
             if (!tmpFile) {
-                tmpFile.reset(new QTemporaryFile(QString::fromLatin1("psidlXXXXXX")));
-                if (!tmpFile->open()) {
-                    lastError = tmpFile->errorString();
-                    tmpFile.reset();
-                    reply->disconnect(this);
-                    reply->deleteLater();
-                    startNextDownloader();
-                    return;
-                }
+                reply->disconnect(this);
+                reply->deleteLater();
+                startNextDownloader();
+                return;
             }
             if (tmpFile->write(reply->read(reply->bytesAvailable())) == -1) {
                 lastError = tmpFile->errorString();
@@ -162,17 +172,40 @@ public:
                 return;
             }
             emit q->progress(data.size(), file.size() > size_t(data.size())? file.size() : data.size());
-            tmpData = data;
+            setupTempFile();
+            if (!tmpFile) {
+                startNextDownloader();
+                return;
+            }
+            tmpFile->write(data);
             downloadFinished();
         });
     }
 
-    void downloadJingle(const QString &uri)
+    void downloadJingle(const QString &sourceUri)
     {
-        Jingle::Session *session = acc->client()->jingleManager()->newSession(jids.first());
+        QUrl uriToOpen(sourceUri);
+        QString path = uriToOpen.path();
+        if (path.startsWith('/')) {    // this happens when authority part is present
+            path = path.mid(1);
+        }
+        Jid entity = JIDUtil::fromString(path);
+
+        // query
+        QUrlQuery uri;
+        uri.setQueryDelimiters('=', ';');
+        uri.setQuery(uriToOpen.query(QUrl::FullyEncoded));
+
+        QString querytype = uri.queryItems().value(0).first;
+
+        if (!(entity.isValid() && !entity.node().isEmpty() && querytype == QStringLiteral("jingle-ft"))) {
+            lastError = tr("Invalid Jingle-FT uri");
+        }
+
+        Jingle::Session *session = acc->client()->jingleManager()->newSession(entity);
         auto app = static_cast<Jingle::FileTransfer::Application*>(session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
         if (!app) {
-            lastError = tr("Jingle file transfer is disabled");
+            lastError = QString::fromLatin1("Jingle file transfer is disabled");
             startNextDownloader();
             return;
         }
@@ -181,15 +214,13 @@ public:
 
         connect(session, &Jingle::Session::newContentReceived, this, [session, this](){
             // we don't expect any new content on the session
-            lastError = QString::fromLatin1("Unexpected content add");
+            lastError = tr("Unexpected content add");
             session->terminate(Jingle::Reason::Condition::Decline, lastError);
         });
 
         connect(app, &Jingle::FileTransfer::Application::deviceRequested, this, [app, this](quint64 offset, quint64 size){
-            tmpFile.reset(new QTemporaryFile(QString::fromLatin1("psidlXXXXXX")));
-            if (!tmpFile->open()) {
-                lastError = tmpFile->errorString();
-                tmpFile.reset();
+            setupTempFile();
+            if (!tmpFile) {
                 app->setDevice(nullptr);
                 return;
             }
@@ -204,7 +235,7 @@ public:
                 downloadFinished();
                 return;
             }
-            lastError = QString::fromLatin1("Jingle download failed");
+            lastError = tr("Jingle download failed");
             startNextDownloader();
         });
 
@@ -217,26 +248,24 @@ public:
     void downloadFinished()
     {
         lastError.clear();
-        if (tmpFile) {
-            tmpFile->flush();
-            tmpFile->seek(0);
-            auto h = file.hash(Hash::Sha1);
-            QString sha1hash;
-            if (!h.isValid() || h.data().isEmpty()) {
-                // no sha1 hash
-                Hash h(Hash::Sha1);
-                if (h.computeFromDevice(tmpFile.data())) {
-                    sha1hash = QString::fromLatin1(h.data().toHex());
-                }
-            } else {
+        tmpFile->flush();
+        tmpFile->seek(0);
+        auto h = file.hash(Hash::Sha1);
+        QString sha1hash;
+        if (!h.isValid() || h.data().isEmpty()) {
+            // no sha1 hash
+            Hash h(Hash::Sha1);
+            if (h.computeFromDevice(tmpFile.data())) {
                 sha1hash = QString::fromLatin1(h.data().toHex());
             }
-
-            //manager->saveToCache()
-            // TODO finish this
-        } else { // data
-
+        } else {
+            sha1hash = QString::fromLatin1(h.data().toHex());
         }
+        tmpFile->rename(QString("%1/%2").arg(ApplicationInfo::documentsDir(),dstFileName));
+        manager->saveDownloadedSource(sourceId, sha1hash, QFileInfo(tmpFile->fileName()).absoluteFilePath());
+
+        success = true;
+        emit q->finished();
     }
 };
 
@@ -253,10 +282,6 @@ FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QString &sourceI
     d->manager  = manager;
 
     // sort uris by priority first
-    // 0 - ibb
-    // 1 - ftp
-    // 2 - jingle
-    // 3 - http
     QMultiMap<int,QString> sorted;
     for (auto const &u: uris) {
         auto type = d->detectDownloaderType(u);
@@ -283,7 +308,23 @@ void FileShareDownloader::start()
         emit finished();
         return;
     }
+    auto docLoc = ApplicationInfo::documentsDir();
+    QDir docDir(docLoc);
+    QString fn = FileUtil::cleanFileName(d->file.name()).split('/').last();
+    if (fn.isEmpty()) {
+        fn = d->sourceId;
+    }
+    int index = 1;
+    while (docDir.exists(fn)) {
+        QFileInfo fi(fn);
+        fn = fi.completeBaseName();
+        auto suf = fi.completeSuffix();
+        if (suf.size()) {
+            fn = QString("%1-%2.%3").arg(fn, QString::number(index), suf);
+        }
+    }
 
+    d->dstFileName = fn;
     d->startNextDownloader();
 }
 
@@ -704,6 +745,16 @@ FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QS
     }
 
     return src.downloader;
+}
+
+void FileSharingManager::saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath)
+{
+    auto it = d->sources.find(sourceId);
+    if (it == d->sources.end())
+        return;
+
+
+    // TODO do actual save
 }
 
 #include "filesharingmanager.moc"

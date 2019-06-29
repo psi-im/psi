@@ -333,6 +333,17 @@ QString ApplicationInfo::bobDir()
     return makeSubhomePath("bob", ApplicationInfo::CacheLocation);
 }
 
+QString ApplicationInfo::documentsDir()
+{
+    QString docDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/" + name());
+    QDir d(docDir);
+    if (!d.exists()) {
+        if (!d.mkpath("."))
+            return QString();
+    }
+    return docDir;
+}
+
 QString ApplicationInfo::profilesDir(ApplicationInfo::HomedirType type)
 {
     return makeSubhomePath("profiles", type);

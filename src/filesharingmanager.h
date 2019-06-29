@@ -119,6 +119,7 @@ public:
     QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
     FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId);
+    void saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath);
 signals:
 
 public slots:
