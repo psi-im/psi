@@ -437,6 +437,7 @@ Reference FileSharingItem::toReference() const
     QStringList uris(readyUris);
     uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(acc->jid().full()));
     uris = FileSharingManager::sortSourcesByPriority(uris);
+    std::reverse(uris.begin(), uris.end());
 
     QSize thumbSize(64,64);
     auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
@@ -552,7 +553,11 @@ public:
         Downloading,
         Cached
     };
-    struct Source {
+    class Source
+    {
+    public:
+        Source(const XMPP::Jingle::FileTransfer::File &file, const QList<XMPP::Jid> &jids, const QStringList &uris) :
+            file(file), jids(jids), uris(uris) {}
         XMPP::Jingle::FileTransfer::File file;
         QList<XMPP::Jid> jids;
         QStringList uris;
@@ -667,12 +672,12 @@ QString FileSharingManager::registerSource(const Jingle::FileTransfer::File &fil
     QString shareId = QString::fromLatin1(h.data().toHex());
     auto it = d->sources.find(shareId);
     if (it == d->sources.end())
-        it = d->sources.insert(shareId, Private::Source{file, QList<Jid>()<<source, uris});
+        it = d->sources.insert(shareId, Private::Source(file, QList<Jid>()<<source, uris));
     else {
         if (it.value().jids.indexOf(source) == -1)
             it.value().jids.append(source);
         if (!it.value().file.merge(file)) { // failed to merge files. replace it
-            it = d->sources.insert(shareId, Private::Source{file, QList<Jid>()<<source, uris});
+            it = d->sources.insert(shareId, Private::Source(file, QList<Jid>()<<source, uris));
         } else {
             for (auto const &uri : uris) {
                 if (it->uris.indexOf(uri) == -1)
