@@ -24,6 +24,10 @@ list(APPEND SOURCES
     tunecontroller/pollingtunecontroller.cpp
     tunecontroller/tunecontrollermanager.cpp
     tunecontroller/plugins/psifile/psifileplugin.cpp
+
+    #recorder
+    recorder/recorder.cpp
+    recorder/recorder.h
 )
 
 list(APPEND HEADERS
