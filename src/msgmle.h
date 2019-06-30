@@ -24,6 +24,7 @@
 #include <QTextEdit>
 
 #include "xmpp_htmlelement.h"
+#include "recorder/recorder.h"
 
 #define MAX_MESSAGE_HISTORY 50
 
@@ -36,6 +37,8 @@ class QImage;
 class SpellHighlighter;
 class HTMLTextController;
 class CapitalLettersController;
+class QToolButton;
+class QLabel;
 
 
 class ChatEdit : public QTextEdit
@@ -104,7 +107,7 @@ private:
     QPoint last_click_;
     int previous_position_ = 0;
     QStringList typedMsgsHistory;
-    long typedMsgsIndex = 0;
+    int typedMsgsIndex = 0;
     QAction* act_showMessagePrev = nullptr;
     QAction* act_showMessageNext = nullptr;
     QAction* act_showMessageFirst = nullptr;
@@ -136,9 +139,20 @@ protected:
     // reimplemented
     void resizeEvent(QResizeEvent*);
 
+signals:
+    void recordingFinished(const QByteArray &recFile);
+
 private slots:
     void recalculateSize();
     void updateScrollBar();
+
+private:
+    QLayout *layout_;
+    QToolButton *recButton_;
+    QLabel *overlay_;
+    std::unique_ptr<QTimer> timer_;
+    Recorder *recorder_;
+    int timeout_;
 };
 
 #endif

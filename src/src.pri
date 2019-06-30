@@ -40,6 +40,7 @@ include($$PWD/libpsi/tools/tools.pri)
 include($$PWD/tools/iconset/iconset.pri)
 include($$PWD/tools/optionstree/optionstree.pri)
 include($$PWD/tools/advwidget/advwidget.pri)
+include($$PWD/tools/recorder/recorder.pri)
 include($$PWD/libpsi/dialogs/grepshortcutkeydialog.pri)
 INCLUDEPATH += $$PWD/libpsi/tools
 

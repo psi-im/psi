@@ -33,12 +33,16 @@
 #include <QTimer>
 #include <QMimeData>
 #include <QClipboard>
+#include <QToolButton>
+#include <QLabel>
 
 #include "shortcutmanager.h"
 #include "spellchecker/spellhighlighter.h"
 #include "spellchecker/spellchecker.h"
 #include "psioptions.h"
 #include "htmltextcontroller.h"
+#include "psiiconset.h"
+#include "recorder/recorder.h"
 
 //----------------------------------------------------------------------------
 // CapitalLettersController
@@ -382,7 +386,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
  */
 void ChatEdit::applySuggestion()
 {
-    QAction* act_suggestion = (QAction*) sender();
+    QAction* act_suggestion = qobject_cast<QAction*>(sender());
     int current_position = textCursor().position();
 
     // Replace the word
@@ -531,7 +535,7 @@ void ChatEdit::appendMessageHistory(const QString& text)
         if (currentText == text)
             // Remove current typed text only if we want to add it to history
             currentText.clear();
-        long index = typedMsgsHistory.indexOf(text);
+        int index = typedMsgsHistory.indexOf(text);
         if (index >=0) {
             typedMsgsHistory.removeAt(index);
         }
@@ -613,12 +617,75 @@ void ChatEdit::insertAsQuote(const QString &text)
 //----------------------------------------------------------------------------
 LineEdit::LineEdit( QWidget *parent)
     : ChatEdit(parent)
+    , layout_(nullptr)
+    , recButton_(nullptr)
+    , overlay_(nullptr)
+    , timeout_(0)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere); // no need for horizontal scrollbar with this
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
+    const int bs = PsiIconset::instance()->system().iconSize();
     setMinimumHeight(0);
+
+    QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
+    frmt.setRightMargin(bs + 8);
+    document()->rootFrame()->setFrameFormat(frmt);
+
+    layout_ = new QHBoxLayout(this);
+    overlay_ = new QLabel(this);
+    overlay_->setText(tr("Recording..."));
+    overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
+    overlay_->setAlignment(Qt::AlignCenter);
+    overlay_->setVisible(false);
+    layout_->addWidget(overlay_);
+    recButton_ = new QToolButton();
+    recButton_->setStyleSheet("background-color: none; border: 0;");
+    recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+    recButton_->setGeometry(QRect(recButton_->pos(), QSize(bs,bs)));
+    layout_->addWidget(recButton_);
+    layout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
+    layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
+
+    connect(recButton_, &QToolButton::pressed, this, [this](){
+        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
+        overlay_->setVisible(true);
+        timeout_ = 30000;
+        timer_ = std::unique_ptr<QTimer>(new QTimer(this));
+        connect(timer_.get(), &QTimer::timeout, this, [this](){
+            if(timeout_>0) {
+                timeout_ -= 1000;
+                overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/1000));
+            }
+            else {
+                timer_->stop();
+                recorder_->stop();
+                emit recordingFinished(recorder_->data());
+            }
+        });
+        timer_->start(1000);
+        recorder_ = new Recorder(this);
+        connect(recorder_, &Recorder::recordingStopped, this, [this](){
+            if(!recorder_->dataObtained()) {
+                emit recordingFinished(recorder_->data());
+            }
+        });
+        recorder_->record();
+    });
+    connect(recButton_, &QToolButton::released, this, [this](){
+        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+        timer_->stop();
+        timer_.reset();
+        overlay_->setVisible(false);
+        if(recorder_) {
+            recorder_->stop();
+            if(!recorder_->dataObtained()) {
+                emit recordingFinished(recorder_->data());
+            }
+            recorder_->cleanUp();
+        }
+    });
 
     connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
 }
@@ -660,6 +727,8 @@ void LineEdit::updateScrollBar()
 {
     setVerticalScrollBarPolicy(sizeHint().height() > height() ? Qt::ScrollBarAlwaysOn : Qt::ScrollBarAlwaysOff);
     ensureCursorVisible();
+    const int bs = PsiIconset::instance()->system().iconSize();
+    recButton_->setGeometry(QRect(recButton_->pos(), QSize(bs,bs)));
 }
 
 #include "msgmle.moc"
