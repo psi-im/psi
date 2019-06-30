@@ -282,7 +282,7 @@ void PsiChatDlg::initUi()
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupChatTab(this, account(), jid().full());
 #endif
-    LineEdit *le = qobject_cast<LineEdit*>(ui_.mle);
+    LineEdit *le = qobject_cast<LineEdit*>(ui_.mle->chatEdit());
     connect(le, &LineEdit::recordingFinished, this, [this](const QByteArray &data) {
         QMimeData *md = new QMimeData();
         md->setData("audio/ogg", data);
