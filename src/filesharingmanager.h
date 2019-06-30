@@ -33,6 +33,9 @@ class FileCacheItem;
 
 namespace XMPP {
     class Message;
+    namespace Jingle {
+        class Session;
+    }
 }
 
 class FileShareDownloader: public QObject
@@ -91,6 +94,7 @@ private:
     bool isTempFile = false;
     bool httpFinished = false;
     bool jingleFinished = false;
+    bool finishNotified = false;
     size_t _fileSize;
     QStringList readyUris;
     QString _fileName;
@@ -103,6 +107,14 @@ class FileSharingManager : public QObject
 {
     Q_OBJECT
 public:
+    enum class SourceType { // from lowest priority to highest
+        None,
+        BOB,
+        FTP,
+        Jingle,
+        HTTP
+    };
+
     explicit FileSharingManager(QObject *parent = nullptr);
     ~FileSharingManager();
 
@@ -120,6 +132,12 @@ public:
     QString downloadThumbnail(const QString &sourceId);
     FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId);
     void saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath);
+
+    // returns false if unable to accept automatically
+    bool jingleAutoAcceptDownloadRequest(XMPP::Jingle::Session *session);
+
+    static SourceType sourceType(const QString &uri);
+    static QStringList sortSourcesByPriority(const QStringList &uris);
 signals:
 
 public slots:

@@ -56,14 +56,6 @@ class FileShareDownloader::Private : public QObject
 {
     Q_OBJECT
 public:
-    enum class DownloaderType { // from lowest priority to highest
-        None,
-        BOB,
-        FTP,
-        Jingle,
-        HTTP
-    };
-
     FileShareDownloader *q = nullptr;
     PsiAccount *acc = nullptr;
     QString sourceId;
@@ -71,42 +63,25 @@ public:
     QList<Jid> jids;
     QStringList uris; // sorted from low priority to high.
     FileSharingManager *manager = nullptr;
-    DownloaderType currentType = DownloaderType::None;
+    FileSharingManager::SourceType currentType = FileSharingManager::SourceType::None;
     QScopedPointer<QFile> tmpFile;
     QString lastError;
     QString dstFileName;
     bool success = false;
 
-    DownloaderType detectDownloaderType(const QString &uri) const
-    {
-        if (uri.startsWith(QLatin1String("http"))) {
-            return DownloaderType::HTTP;
-        }
-        else if (uri.startsWith(QLatin1String("xmpp"))) {
-            return DownloaderType::Jingle;
-        }
-        else if (uri.startsWith(QLatin1String("ftp"))) {
-            return DownloaderType::FTP;
-        }
-        else if (uri.startsWith(QLatin1String("cid"))) {
-            return DownloaderType::BOB;
-        }
-        return DownloaderType::None;
-    }
-
     void startNextDownloader()
     {
         QString uri = uris.takeLast();
-        auto type = detectDownloaderType(uri);
+        auto type = FileSharingManager::sourceType(uri);
         switch (type) {
-        case DownloaderType::HTTP:
-        case DownloaderType::FTP:
+        case FileSharingManager::SourceType::HTTP:
+        case FileSharingManager::SourceType::FTP:
             downloadNetworkManager(uri);
             break;
-        case DownloaderType::BOB:
+        case FileSharingManager::SourceType::BOB:
             downloadBOB(uri);
             break;
-        case DownloaderType::Jingle:
+        case FileSharingManager::SourceType::Jingle:
             downloadJingle(uri);
             break;
         default:
@@ -281,15 +256,7 @@ FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QString &sourceI
     d->file     = file;
     d->jids     = jids;
     d->manager  = manager;
-
-    // sort uris by priority first
-    QMultiMap<int,QString> sorted;
-    for (auto const &u: uris) {
-        auto type = d->detectDownloaderType(u);
-        if (type != Private::DownloaderType::None)
-            sorted.insert(int(type), u);
-    }
-    d->uris = sorted.values();
+    d->uris     = FileSharingManager::sortSourcesByPriority(uris);
 }
 
 FileShareDownloader::~FileShareDownloader()
@@ -345,59 +312,6 @@ FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileShar
     isTempFile(false)
 {
     initFromCache();
-}
-
-void FileSharingItem::initFromCache()
-{
-    auto md = cache->metadata();
-    mimeType = md.value(QString::fromLatin1("type")).toString();
-    isImage = QImageReader::supportedMimeTypes().contains(mimeType.toLatin1());
-    QString link = md.value(QString::fromLatin1("link")).toString();
-    if (link.isEmpty()) {
-        _fileName = cache->fileName();
-        _fileSize = cache->size();
-    }
-    else {
-        _fileName = link;
-        _fileSize = QFileInfo(_fileName).size();
-    }
-
-    sha1hash = cache->id();
-    readyUris = md.value(QString::fromLatin1("uris")).toStringList();
-
-    QString httpScheme(QString::fromLatin1("http"));
-    QString xmppScheme(QString::fromLatin1("xmpp")); // jingle ?
-    for (const auto &u: readyUris) {
-        QUrl url(u);
-        auto scheme = url.scheme();
-        if (scheme.startsWith(httpScheme)) {
-            httpFinished = true;
-        } else if (scheme == xmppScheme) {
-            jingleFinished = true;
-        }
-    }
-}
-
-void FileSharingItem::checkFinished()
-{
-    if (httpFinished && jingleFinished) {
-        QVariantMap mime;
-        mime["type"] = mimeType;
-        mime["uris"] = readyUris;
-        if (isTempFile) {
-            QFile f(_fileName);
-            f.open(QIODevice::ReadOnly);
-            auto d = f.readAll();
-            f.close();
-            cache = manager->saveToCache(sha1hash, d, mime, TEMP_TTL);
-            _fileName = cache->fileName();
-            f.remove();
-        } else {
-            mime["link"] = _fileName;
-            cache = manager->saveToCache(sha1hash, QByteArray(), mime, FILE_TTL);
-        }
-        emit publishFinished();
-    }
 }
 
 FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager) :
@@ -464,10 +378,65 @@ FileSharingItem::~FileSharingItem()
     }
 }
 
+void FileSharingItem::initFromCache()
+{
+    auto md = cache->metadata();
+    mimeType = md.value(QString::fromLatin1("type")).toString();
+    isImage = QImageReader::supportedMimeTypes().contains(mimeType.toLatin1());
+    QString link = md.value(QString::fromLatin1("link")).toString();
+    if (link.isEmpty()) {
+        _fileName = cache->fileName();
+        _fileSize = cache->size();
+    }
+    else {
+        _fileName = link;
+        _fileSize = QFileInfo(_fileName).size();
+    }
+
+    sha1hash = cache->id();
+    readyUris = md.value(QString::fromLatin1("uris")).toStringList();
+
+    QString httpScheme(QString::fromLatin1("http"));
+    QString xmppScheme(QString::fromLatin1("xmpp")); // jingle ?
+    for (const auto &u: readyUris) {
+        QUrl url(u);
+        auto scheme = url.scheme();
+        if (scheme.startsWith(httpScheme)) {
+            httpFinished = true;
+        } else if (scheme == xmppScheme) {
+            jingleFinished = true;
+        }
+    }
+}
+
+void FileSharingItem::checkFinished()
+{
+    if (!finishNotified && httpFinished && jingleFinished) {
+        QVariantMap mime;
+        mime["type"] = mimeType;
+        mime["uris"] = readyUris;
+        if (isTempFile) {
+            QFile f(_fileName);
+            f.open(QIODevice::ReadOnly);
+            auto d = f.readAll();
+            f.close();
+            cache = manager->saveToCache(sha1hash, d, mime, TEMP_TTL);
+            _fileName = cache->fileName();
+            f.remove();
+        } else {
+            mime["link"] = _fileName;
+            cache = manager->saveToCache(sha1hash, QByteArray(), mime, FILE_TTL);
+        }
+        finishNotified = true;
+        emit publishFinished();
+    }
+}
+
 Reference FileSharingItem::toReference() const
 {
-    if (readyUris.isEmpty())
-        return Reference(); // invalid reference
+    QStringList uris(readyUris);
+    uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(acc->jid().full()));
+    uris = FileSharingManager::sortSourcesByPriority(uris);
 
     QSize thumbSize(64,64);
     auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
@@ -495,10 +464,11 @@ Reference FileSharingItem::toReference() const
     jfile.setThumbnail(thumb);
     jfile.setDescription(_description);
 
-    Reference r(Reference::Data, readyUris.first());
+    Reference r(Reference::Data, uris.first());
     MediaSharing ms;
     ms.file = jfile;
-    ms.sources = readyUris;
+    ms.sources = uris;
+
     r.setMediaSharing(ms);
 
     return r;
@@ -772,6 +742,83 @@ void FileSharingManager::saveDownloadedSource(const QString &sourceId, const QSt
     }
 
     saveToCache(hash, QByteArray(), vm, FILE_TTL);
+}
+
+bool FileSharingManager::jingleAutoAcceptDownloadRequest(Jingle::Session *session)
+{
+    QList<QPair<Jingle::FileTransfer::Application*,FileCacheItem*>> toAccept;
+    // check if we can accept the session immediately w/o user interaction
+    for (auto const &a: session->contentList()) {
+        auto ft = static_cast<Jingle::FileTransfer::Application*>(a);
+        if (a->senders() == Jingle::Origin::Initiator)
+            return false;
+
+        Hash h = ft->file().hash(Hash::Sha1);
+        if (!h.isValid()) {
+            h = ft->file().hash();
+        }
+        if (!h.isValid() || h.data().isEmpty())
+            return false;
+
+        FileCacheItem *item = getCacheItem(h.data().toHex(), true);
+        if (!item)
+            return false;
+
+        toAccept.append(qMakePair(ft,item));
+    }
+
+    for (auto const &p: toAccept) {
+        auto ft = p.first;
+        auto item = p.second;
+
+        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this, [this,ft,item](quint64 offset, quint64 /*size*/){
+            auto vm = item->metadata();
+            QString fileName = vm.value(QString::fromLatin1("link")).toString();
+            if (fileName.isEmpty()) {
+                fileName = item->fileName();
+            }
+            auto f = new QFile(fileName, ft);
+            if (!f->open(QIODevice::ReadOnly)) {
+                ft->setDevice(nullptr);
+                return;
+            }
+            f->seek(offset);
+            ft->setDevice(f);
+        });
+    }
+    session->accept();
+
+    return true;
+}
+
+FileSharingManager::SourceType FileSharingManager::sourceType(const QString &uri)
+{
+    if (uri.startsWith(QLatin1String("http"))) {
+        return FileSharingManager::SourceType::HTTP;
+    }
+    else if (uri.startsWith(QLatin1String("xmpp"))) {
+        return FileSharingManager::SourceType::Jingle;
+    }
+    else if (uri.startsWith(QLatin1String("ftp"))) {
+        return FileSharingManager::SourceType::FTP;
+    }
+    else if (uri.startsWith(QLatin1String("cid"))) {
+        return FileSharingManager::SourceType::BOB;
+    }
+    return FileSharingManager::SourceType::None;
+}
+
+QStringList FileSharingManager::sortSourcesByPriority(const QStringList &uris)
+{
+    // sort uris by priority first
+    QMultiMap<int,QString> sorted;
+    for (auto const &u: uris) {
+        auto type = FileSharingManager::sourceType(u);
+        if (type != FileSharingManager::SourceType::None)
+            sorted.insert(int(type), u);
+    }
+
+    return sorted.values();
 }
 
 #include "filesharingmanager.moc"

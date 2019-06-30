@@ -3044,9 +3044,12 @@ void PsiAccount::client_incomingJingle(Jingle::Session *session)
             session->terminate(XMPP::Jingle::Reason::GeneralError, "FileTransfer is not compatible with anything else");
             return;
         }
-        FileEvent::Ptr fe(new FileEvent(session->peer().full(), session, this));
-        fe->setTimeStamp(QDateTime::currentDateTime());
-        handleEvent(fe, IncomingStanza);
+
+        if (!psi()->fileSharingManager()->jingleAutoAcceptDownloadRequest(session)) {
+            FileEvent::Ptr fe(new FileEvent(session->peer().full(), session, this));
+            fe->setTimeStamp(QDateTime::currentDateTime());
+            handleEvent(fe, IncomingStanza);
+        }
     }
 #endif
 }
