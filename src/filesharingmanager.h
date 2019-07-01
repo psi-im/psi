@@ -23,6 +23,9 @@
 #include <QObject>
 
 #include "xmpp_reference.h"
+#ifndef WEBKIT
+# include "qite.h"
+#endif
 
 class QMimeData;
 class QImage;
@@ -146,5 +149,18 @@ private:
     class Private;
     QScopedPointer<Private> d;
 };
+
+#ifndef WEBKIT
+class FileSharingDeviceOpener : public ITEMediaOpener
+{
+    PsiAccount *acc;
+public:
+    inline FileSharingDeviceOpener(PsiAccount *acc) :
+        acc(acc){}
+
+    QIODevice *open(const QUrl &url) override;
+    void close(QIODevice *dev) override;
+};
+#endif
 
 #endif // FILESHARINGMANAGER_H

@@ -849,6 +849,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     ui_.log->setSessionData(true, false, jid(), jid().full()); //FIXME change conference name
 #ifdef WEBKIT
     ui_.log->setAccount(account());
+#else
+    //ui_.log->setSharesDeviceOpener(new FileSharingDeviceOpener(account()));
 #endif
 
     connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(doContactContextMenu(QString)));

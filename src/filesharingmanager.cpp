@@ -827,3 +827,15 @@ QStringList FileSharingManager::sortSourcesByPriority(const QStringList &uris)
 }
 
 #include "filesharingmanager.moc"
+
+#ifndef WEBKIT
+QIODevice *FileSharingDeviceOpener::open(const QUrl &url)
+{
+    return nullptr; // TODO
+}
+
+void FileSharingDeviceOpener::close(QIODevice *dev)
+{
+
+}
+#endif
