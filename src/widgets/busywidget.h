@@ -35,7 +35,7 @@ class BusyWidget : public QWidget
     Q_OVERRIDE( QSize maximumSize DESIGNABLE false SCRIPTABLE false )
 
 public:
-    BusyWidget(QWidget *parent=0);
+    BusyWidget(QWidget *parent=nullptr);
     ~BusyWidget();
 
     bool isActive() const;

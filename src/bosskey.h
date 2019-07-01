@@ -27,7 +27,7 @@ class BossKey : public QObject
 {
     Q_OBJECT
 public:
-    BossKey(QObject *p = 0);
+    BossKey(QObject *p = nullptr);
     ~BossKey() {};
 
 public slots:

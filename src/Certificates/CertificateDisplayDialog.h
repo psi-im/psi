@@ -28,7 +28,7 @@ class CertificateDisplayDialog : public QDialog
         Q_OBJECT
 
     public:
-        CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=0);
+        CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=nullptr);
 
     protected:
         static void setLabelStatus(QLabel& l, bool ok);

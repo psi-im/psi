@@ -13,7 +13,7 @@ class FontLabel : public QLineEdit
 {
     Q_OBJECT
 public:
-    FontLabel(QWidget *parent = 0, const char *name = 0);
+    FontLabel(QWidget *parent = nullptr, const char *name = nullptr);
 
     void setFont(QString);
     QString fontName() const;

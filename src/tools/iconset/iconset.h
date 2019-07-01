@@ -66,13 +66,13 @@ private:
 
         Private()
         {
-            pixmap = 0;
+            pixmap = nullptr;
         }
 
         Private(const Private& from)
             : QSharedData(from)
         {
-            pixmap = from.pixmap ? new QPixmap(*from.pixmap) : 0;
+            pixmap = from.pixmap ? new QPixmap(*from.pixmap) : nullptr;
             image  = from.image;
         }
 
@@ -85,7 +85,7 @@ private:
         {
             if (pixmap)
                 delete pixmap;
-            pixmap = 0;
+            pixmap = nullptr;
             image  = QImage();
         }
     };

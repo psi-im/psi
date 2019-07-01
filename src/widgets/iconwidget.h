@@ -29,10 +29,10 @@ class IconWidgetItem : public QObject, public QListWidgetItem
 {
     Q_OBJECT
 public:
-    IconWidgetItem(QListWidget *parent = 0)
+    IconWidgetItem(QListWidget *parent = nullptr)
     : QListWidgetItem(parent) {}
 
-    virtual const Iconset *iconset() const { return 0; }
+    virtual const Iconset *iconset() const { return nullptr; }
 };
 
 #endif

@@ -32,7 +32,7 @@ public:
     ByteArrayReply(const QNetworkRequest &request,
                    const QByteArray &ba = QByteArray(),
                    const QString &mimeType = QString(),
-                   QObject * parent = 0);
+                   QObject * parent = nullptr);
 
     /** Construct IconReply that fails with ContentAccessDenied error */
     //ByteArrayReply();

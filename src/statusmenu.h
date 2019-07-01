@@ -56,7 +56,7 @@ private:
     virtual void addReconnect() = 0;
 
     void addStatus(XMPP::Status::Type type);
-    void addPresets(IconActionGroup* parent = 0);
+    void addPresets(IconActionGroup* parent = nullptr);
     XMPP::Status::Type actionStatus(const QAction* action) const;
 
 private slots:

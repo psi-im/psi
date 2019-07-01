@@ -30,7 +30,7 @@ class OptionsDlgBase : public QDialog, public Ui::OptionsUI
 {
     Q_OBJECT
 public:
-    OptionsDlgBase(PsiCon *, QWidget *parent = 0);
+    OptionsDlgBase(PsiCon *, QWidget *parent = nullptr);
     ~OptionsDlgBase();
 
     PsiCon *psi() const;

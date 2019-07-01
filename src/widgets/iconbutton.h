@@ -39,7 +39,7 @@ class IconButton : public QPushButton
     Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
 
 public:
-    IconButton(QWidget *parent = 0);
+    IconButton(QWidget *parent = nullptr);
     ~IconButton();
 
     void setIcon(const QPixmap &);

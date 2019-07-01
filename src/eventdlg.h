@@ -48,7 +48,7 @@ class ELineEdit : public QLineEdit
 {
     Q_OBJECT
 public:
-    ELineEdit(EventDlg *parent, const char *name=0);
+    ELineEdit(EventDlg *parent, const char *name=nullptr);
 
 signals:
     void changeResource(const QString &);
@@ -103,7 +103,7 @@ class AddUrlDlg : public QDialog, public Ui::AddUrl
 {
     Q_OBJECT
 public:
-    AddUrlDlg(QWidget *parent=0);
+    AddUrlDlg(QWidget *parent=nullptr);
     ~AddUrlDlg();
 };
 

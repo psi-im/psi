@@ -40,11 +40,11 @@ class PsiDBusNotifier : public QObject, public PsiPopupInterface
     Q_OBJECT
 
 public:
-    PsiDBusNotifier(QObject* parent = 0);
+    PsiDBusNotifier(QObject* parent = nullptr);
     ~PsiDBusNotifier();
     static bool isAvailable();
 
-    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr());
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = nullptr, const PsiEvent::Ptr& = PsiEvent::Ptr());
     virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
                const QPixmap* avatar, const PsiIcon* icon, const QString& text);
 

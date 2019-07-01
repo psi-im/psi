@@ -27,7 +27,7 @@ class MUCAffiliationsView : public QTreeView
     Q_OBJECT
 
 public:
-    MUCAffiliationsView(QWidget* parent = 0);
+    MUCAffiliationsView(QWidget* parent = nullptr);
 
 public slots:
     void removeCurrent();

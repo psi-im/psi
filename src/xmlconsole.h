@@ -62,7 +62,7 @@ class XmlPrompt : public QDialog
 {
     Q_OBJECT
 public:
-    XmlPrompt(QWidget *parent=0);
+    XmlPrompt(QWidget *parent=nullptr);
     ~XmlPrompt();
 
 signals:

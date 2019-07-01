@@ -98,7 +98,7 @@ public:
         FlushOverflow // flush to disk only when memory cache limit is exceeded
     };
 
-    FileCache(const QString &cacheDir, QObject *parent = 0);
+    FileCache(const QString &cacheDir, QObject *parent = nullptr);
     ~FileCache();
 
     void gc();

@@ -40,7 +40,7 @@ class NetworkAccessManager : public QNetworkAccessManager {
     Q_OBJECT
 public:
 
-    NetworkAccessManager(QObject *parent = 0);
+    NetworkAccessManager(QObject *parent = nullptr);
 
     inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler)
     { _pathHandlers.append(handler); }

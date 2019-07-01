@@ -43,14 +43,14 @@ protected:
 class PsiToolTip : public QObject
 {
 public:
-    static void showText(const QPoint &pos, const QString &text, const QWidget *w = 0) { instance()->doShowText(pos, text, w); }
+    static void showText(const QPoint &pos, const QString &text, const QWidget *w = nullptr) { instance()->doShowText(pos, text, w); }
     static void install(QWidget *w) { instance()->doInstall(w); }
 
     static PsiToolTip* instance();
 
 protected:
     PsiToolTip();
-    void doShowText(const QPoint &pos, const QString &text, const QWidget *w = 0);
+    void doShowText(const QPoint &pos, const QString &text, const QWidget *w = nullptr);
     void doInstall(QWidget *w);
     virtual ToolTipPosition* createTipPosition(const QPoint& cursorPos, const QWidget* parentWidget);
     virtual PsiTipLabel* createTipLabel(const QString& text, QWidget* parent);

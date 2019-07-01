@@ -58,7 +58,7 @@ public:
     static void setMainThread(QThread *);
 
     void connectUpdate(QObject *receiver, const char *member);
-    void disconnectUpdate(QObject *receiver, const char *member = 0);
+    void disconnectUpdate(QObject *receiver, const char *member = nullptr);
 
     Anim & operator= (const Anim &);
     Anim copy() const;

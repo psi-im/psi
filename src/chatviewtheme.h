@@ -43,11 +43,11 @@ class ChatViewThemeSession : public QObject {
     QString sessId; // unique id of session
 
 #ifdef WEBENGINE
-    ThemeServer *server = 0;
+    ThemeServer *server = nullptr;
 #endif
 
 public:
-    ChatViewThemeSession(QObject *parent = 0);
+    ChatViewThemeSession(QObject *parent = nullptr);
     virtual ~ChatViewThemeSession();
 
     inline const QString &sessionId() const { return sessId; }

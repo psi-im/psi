@@ -28,7 +28,7 @@ class ChangePasswordDlg : public QDialog
 {
     Q_OBJECT
 public:
-    ChangePasswordDlg(PsiAccount *, QWidget *parent=0);
+    ChangePasswordDlg(PsiAccount *, QWidget *parent=nullptr);
     ~ChangePasswordDlg();
 
 protected:

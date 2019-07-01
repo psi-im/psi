@@ -30,7 +30,7 @@ class IconSelectPopup : public QMenu
     Q_OBJECT
 
 public:
-    IconSelectPopup(QWidget *parent = 0);
+    IconSelectPopup(QWidget *parent = nullptr);
     ~IconSelectPopup();
 
     void setIconset(const Iconset &);

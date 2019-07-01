@@ -33,7 +33,7 @@ class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen
 {
     Q_OBJECT
 public:
-    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent=0);
+    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent=nullptr);
     ~ProfileOpenDlg();
 
     QString newLang;
@@ -53,7 +53,7 @@ class ProfileManageDlg : public QDialog, public Ui::ProfileManage
 {
     Q_OBJECT
 public:
-    ProfileManageDlg(const QString &, QWidget *parent=0);
+    ProfileManageDlg(const QString &, QWidget *parent=nullptr);
 
 private slots:
     void slotProfileNew();
@@ -66,7 +66,7 @@ class ProfileNewDlg : public QDialog, public Ui::ProfileNew
 {
     Q_OBJECT
 public:
-    ProfileNewDlg(QWidget *parent=0);
+    ProfileNewDlg(QWidget *parent=nullptr);
 
     QString name;
 

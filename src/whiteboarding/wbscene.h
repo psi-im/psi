@@ -40,7 +40,7 @@ public:
     /*! \brief Constructor
      *  Constructs a new scene with parent \a parent.
      */
-    WbScene(SxeSession* session, QObject * parent = 0);
+    WbScene(SxeSession* session, QObject * parent = nullptr);
 
     /*! \brief Appends the item to a list of items whose "transform" attribute is to be regenerated.*/
     void queueTransformationRegeneration(WbItem* item);

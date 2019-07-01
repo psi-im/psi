@@ -32,7 +32,7 @@ class InviteToGroupChatMenu : public QMenu
     Q_OBJECT
 
 public:
-    InviteToGroupChatMenu(QWidget *parent = 0);
+    InviteToGroupChatMenu(QWidget *parent = nullptr);
     void updateMenu(PsiContact *contact);
 
 signals:

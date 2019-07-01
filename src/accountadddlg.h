@@ -33,7 +33,7 @@ class AccountAddDlg : public QDialog, public Ui::AccountAdd
 {
     Q_OBJECT
 public:
-    AccountAddDlg(PsiCon *, QWidget *parent=0);
+    AccountAddDlg(PsiCon *, QWidget *parent=nullptr);
     ~AccountAddDlg();
 
 private slots:

@@ -30,7 +30,7 @@ class PsiMain : public QObject
 {
     Q_OBJECT
 public:
-    PsiMain(const QHash<QString, QString>& commandline, QObject *parent=0);
+    PsiMain(const QHash<QString, QString>& commandline, QObject *parent=nullptr);
     ~PsiMain();
 
     bool useActiveInstance();

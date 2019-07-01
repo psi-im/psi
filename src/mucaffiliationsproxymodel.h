@@ -7,7 +7,7 @@ class MUCAffiliationsProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
 public:
-    MUCAffiliationsProxyModel(QObject* parent = 0);
+    MUCAffiliationsProxyModel(QObject* parent = nullptr);
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;

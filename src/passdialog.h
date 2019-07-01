@@ -29,7 +29,7 @@ class PassDialog : public QDialog
 {
     Q_OBJECT
 public:
-    PassDialog(const QString& jid = "", QWidget *parent = 0);
+    PassDialog(const QString& jid = "", QWidget *parent = nullptr);
 
     QString password() const;
     bool savePassword() const;

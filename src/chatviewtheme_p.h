@@ -54,7 +54,7 @@ signals:
     void sessionHtmlReady(const QString &sessionId, const QString &html);
 
 public:
-    ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent = 0);
+    ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent = nullptr);
     const QString themeId() const;
     bool isMuc() const;
     QString serverUrl() const;
@@ -115,7 +115,7 @@ signals:
     void optionsChanged(const QStringList &);
 
 public:
-    ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent = 0);
+    ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent = nullptr);
     void putToCache(const QString &key, const QVariant &data);
 
 public slots:

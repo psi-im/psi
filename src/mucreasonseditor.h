@@ -31,7 +31,7 @@ class MUCReasonsEditor: public QDialog
 {
     Q_OBJECT
 public:
-    MUCReasonsEditor(QWidget* parent = 0);
+    MUCReasonsEditor(QWidget* parent = nullptr);
     ~MUCReasonsEditor();
     QString reason() const { return reason_; }
 

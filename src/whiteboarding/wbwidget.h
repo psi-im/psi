@@ -56,7 +56,7 @@ public:
     /*! \brief Constructor
      *  Constructs a new widget with \a session and parent \a parent.
      */
-    WbWidget(SxeSession* session, QWidget* parent = 0);
+    WbWidget(SxeSession* session, QWidget* parent = nullptr);
     /*! \brief Returns the session this widget is visualizing.*/
     SxeSession* session();
     /*! \brief Returns the mode this widget is in.*/

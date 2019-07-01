@@ -23,7 +23,7 @@ class FileTransferHandler : public QObject
 public:
     enum { ErrReject, ErrTransfer, ErrFile };
     enum { Sending, Receiving };
-    FileTransferHandler(PsiAccount *pa, FileTransfer *ft=0);
+    FileTransferHandler(PsiAccount *pa, FileTransfer *ft=nullptr);
     ~FileTransferHandler();
 
     PsiAccount *account() const;

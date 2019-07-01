@@ -13,7 +13,7 @@ class OptionsTab : public QObject
 {
     Q_OBJECT
 public:
-    OptionsTab(QObject *parent, const char *name = 0);
+    OptionsTab(QObject *parent, const char *name = nullptr);
     OptionsTab(QObject *parent, QByteArray id, QByteArray parentId, QString name, QString desc, QString tabIconName = QString::null, QString iconName = QString::null);
     ~OptionsTab();
 
@@ -52,7 +52,7 @@ class MetaOptionsTab : public OptionsTab
 {
     Q_OBJECT
 public:
-    MetaOptionsTab(QObject *parent, const char *name = 0);
+    MetaOptionsTab(QObject *parent, const char *name = nullptr);
     MetaOptionsTab(QObject *parent, QByteArray id, QByteArray parentId, QString name, QString desc, QString tabIconName = QString::null, QString iconName = QString::null);
     ~MetaOptionsTab();
 

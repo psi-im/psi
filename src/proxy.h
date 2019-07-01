@@ -56,7 +56,7 @@ class ProxyDlg : public QDialog
 {
     Q_OBJECT
 public:
-    ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=0);
+    ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=nullptr);
     ~ProxyDlg();
 
 signals:
@@ -111,12 +111,12 @@ class ProxyForObject : public QObject
     Q_OBJECT
 
 public:
-    ProxyForObject(OptionsTree *o, QObject *parent = 0);
+    ProxyForObject(OptionsTree *o, QObject *parent = nullptr);
     ~ProxyForObject();
 
     QString itemForObject(const QString& obj);
     void save();
-    QComboBox* getComboBox(ProxyChooser* pc, QWidget* p = 0);
+    QComboBox* getComboBox(ProxyChooser* pc, QWidget* p = nullptr);
 
 private slots:
     void currentItemChanged(int);
@@ -141,7 +141,7 @@ public:
     void init(OptionsTree *o);
     ~ProxyManager();
 
-    ProxyChooser *createProxyChooser(QWidget *parent=0);
+    ProxyChooser *createProxyChooser(QWidget *parent=nullptr);
     ProxyItemList itemList() const;
     ProxyItem getItem(const QString &id) const;
     QString lastEdited() const;

@@ -48,7 +48,7 @@ class TabDlgDelegate : public QObject
 {
     Q_OBJECT
 public:
-    TabDlgDelegate(QObject *parent = 0);
+    TabDlgDelegate(QObject *parent = nullptr);
     ~TabDlgDelegate();
 
     virtual Qt::WindowFlags initWindowFlags() const;
@@ -69,7 +69,7 @@ class TabDlg : public AdvancedWidget<QWidget>
 {
     Q_OBJECT
 public:
-    TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate = 0);
+    TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate = nullptr);
     ~TabDlg();
     bool managesTab(const TabbableWidget*) const;
     bool tabOnTop(const TabbableWidget*) const;

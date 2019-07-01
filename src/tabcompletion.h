@@ -29,7 +29,7 @@ class TabCompletion : public QObject
 {
 Q_OBJECT
 public:
-    TabCompletion(QObject *parent = 0);
+    TabCompletion(QObject *parent = nullptr);
     ~TabCompletion() = default;
 
     void setTextEdit(QTextEdit* mle);

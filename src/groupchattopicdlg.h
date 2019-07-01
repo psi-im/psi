@@ -16,7 +16,7 @@ class GCMainDlg;
 class GroupchatTopicDlg : public QDialog {
     Q_OBJECT
 public:
-    GroupchatTopicDlg(GCMainDlg *parent = 0);
+    GroupchatTopicDlg(GCMainDlg *parent = nullptr);
     ~GroupchatTopicDlg();
     QMap<LanguageManager::LangId,QString> subjectMap() const;
     void setSubjectMap(const QMap<LanguageManager::LangId,QString> &topics);
