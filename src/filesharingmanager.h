@@ -52,6 +52,8 @@ public:
     bool isSuccess() const;
     void start();
     void abort();
+
+    QString fileName() const;
 signals:
     void started();
     void finished();

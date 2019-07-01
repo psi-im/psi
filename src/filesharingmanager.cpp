@@ -298,7 +298,15 @@ void FileShareDownloader::start()
 
 void FileShareDownloader::abort()
 {
+    // TODO
+}
 
+QString FileShareDownloader::fileName() const
+{
+    if (d->success && d->tmpFile) {
+        return d->tmpFile->fileName();
+    }
+    return QString();
 }
 
 // ======================================================================
@@ -826,16 +834,83 @@ QStringList FileSharingManager::sortSourcesByPriority(const QStringList &uris)
     return sorted.values();
 }
 
-#include "filesharingmanager.moc"
-
 #ifndef WEBKIT
+class MediaDevice : public QIODevice
+{
+    Q_OBJECT
+    QFile *file = nullptr;
+    FileShareDownloader *downloader;
+public:
+    MediaDevice(FileShareDownloader *downloader) :
+        downloader(downloader)
+    {
+        downloader->setParent(this);
+        connect(downloader, &FileShareDownloader::finished, this, [this,downloader](){
+            if (downloader->isSuccess() && isOpen()) {
+                file = new QFile(downloader->fileName(), this);
+                file->open(QIODevice::ReadOnly);
+            }
+            downloader->deleteLater();
+            this->downloader = nullptr;
+        }, Qt::QueuedConnection);
+    }
+
+    void close()
+    {
+        if (file)
+            file->close();
+        if (downloader)
+            downloader->abort();
+        QIODevice::close();
+    }
+
+    bool isSequential() const { return true; }
+
+    qint64 bytesAvailable() const
+    {
+        if (file) {
+            return file->size() - file->pos();
+        }
+        return 0;
+    }
+
+protected:
+    qint64 readData(char *data, qint64 maxSize)
+    {
+        return file->read(data, maxSize);
+    }
+
+    qint64 writeData(const char *data, qint64 maxSize)
+    {
+        Q_UNUSED(data)
+        Q_UNUSED(maxSize)
+        return 0;  // it's a readonly device
+    }
+};
+
 QIODevice *FileSharingDeviceOpener::open(const QUrl &url)
 {
-    return nullptr; // TODO
+    if (url.scheme() != QLatin1String("share"))
+        return nullptr;
+
+    QString sourceId = url.path();
+    if (sourceId.startsWith('/'))
+        sourceId = sourceId.mid(1);
+
+    FileShareDownloader *downloader = acc->psi()->fileSharingManager()->downloadShare(acc, sourceId);
+    if (!downloader)
+        return nullptr;
+
+    auto md = new MediaDevice(downloader);
+    md->open(QIODevice::ReadOnly);
+    return md;
 }
 
 void FileSharingDeviceOpener::close(QIODevice *dev)
 {
-
+    dev->close();
+    dev->deleteLater();
 }
 #endif
+
+#include "filesharingmanager.moc"
