@@ -33,6 +33,7 @@
 #include "networkaccessmanager.h"
 #include "xmpp_bitsofbinary.h"
 #include "jidutil.h"
+#include "userlist.h"
 
 #include <QBuffer>
 #include <QDir>
@@ -71,6 +72,12 @@ public:
 
     void startNextDownloader()
     {
+        if (uris.isEmpty()) {
+            success = false;
+            if (lastError.isEmpty())
+                lastError = tr("Download sources are not given");
+            emit q->finished();
+        }
         QString uri = uris.takeLast();
         auto type = FileSharingManager::sourceType(uri);
         switch (type) {
@@ -100,6 +107,18 @@ public:
                 tmpFile.reset();
             }
         }
+    }
+
+    Jid selectOnlineJid(const QList<Jid> &jids) const
+    {
+        for (auto const &j: jids) {
+            for (UserListItem *u: acc->findRelevant(j)) {
+                UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
+                if (rit != u->userResourceList().end())
+                    return j;
+            }
+        }
+        return Jid();
     }
 
     void downloadNetworkManager(const QString &uri)
@@ -141,9 +160,15 @@ public:
 
     void downloadBOB(const QString &uri)
     {
+        Jid j = selectOnlineJid(jids);
+        if (!j.isValid()) {
+            lastError = tr("\"Bits Of Binary\" data source is offline");
+            startNextDownloader();
+            return;
+        }
         acc->loadBob(jids.first(), uri.mid(4), this, [this](bool success, const QByteArray &data, const QByteArray &/* media type */) {
             if (!success) {
-                lastError = tr("Bits of binary download failed"); // make translatable?
+                lastError = tr("Download using \"Bits Of Binary\" failed"); // make translatable?
                 startNextDownloader();
                 return;
             }
@@ -166,6 +191,15 @@ public:
             path = path.mid(1);
         }
         Jid entity = JIDUtil::fromString(path);
+        auto myJids = jids;
+        if (entity.isValid() && !entity.node().isEmpty())
+            myJids.prepend(entity);
+        Jid dataSource = selectOnlineJid(myJids);
+        if (!dataSource.isValid()) {
+            lastError = tr("Jingle data source is offline");
+            startNextDownloader();
+            return;
+        }
 
         // query
         QUrlQuery uri;
@@ -174,11 +208,13 @@ public:
 
         QString querytype = uri.queryItems().value(0).first;
 
-        if (!(entity.isValid() && !entity.node().isEmpty() && querytype == QStringLiteral("jingle-ft"))) {
-            lastError = tr("Invalid Jingle-FT uri");
+        if (querytype != QStringLiteral("jingle-ft")) {
+            lastError = tr("Invalid Jingle-FT URI");
+            startNextDownloader();
+            return;
         }
 
-        Jingle::Session *session = acc->client()->jingleManager()->newSession(entity);
+        Jingle::Session *session = acc->client()->jingleManager()->newSession(dataSource);
         auto app = static_cast<Jingle::FileTransfer::Application*>(session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
         if (!app) {
             lastError = QString::fromLatin1("Jingle file transfer is disabled");
@@ -190,7 +226,7 @@ public:
 
         connect(session, &Jingle::Session::newContentReceived, this, [session, this](){
             // we don't expect any new content on the session
-            lastError = tr("Unexpected content add");
+            lastError = tr("Unexpected incoming content");
             session->terminate(Jingle::Reason::Condition::Decline, lastError);
         });
 
@@ -443,7 +479,13 @@ void FileSharingItem::checkFinished()
 Reference FileSharingItem::toReference() const
 {
     QStringList uris(readyUris);
-    uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(acc->jid().full()));
+
+    UserListItem *u = acc->find(acc->jid());
+    if (u->userResourceList().isEmpty())
+        return Reference();
+    Jid selfJid = u->jid().withResource(u->userResourceList().first().name());
+
+    uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(selfJid.full()));
     uris = FileSharingManager::sortSourcesByPriority(uris);
     std::reverse(uris.begin(), uris.end());
 
@@ -702,6 +744,22 @@ QString FileSharingManager::downloadThumbnail(const QString &sourceId)
     return QString(); //fixme
 }
 
+// try take http or ftp source to be passed directly to media backend
+QUrl FileSharingManager::simpleSource(const QString &sourceId) const
+{
+    auto it = d->sources.find(sourceId);
+    if (it == d->sources.end())
+        return QUrl();
+    Private::Source &src = *it;
+    auto sorted = sortSourcesByPriority(src.uris);
+    QString srcUrl = sorted.last();
+    auto t = sourceType(srcUrl);
+    if (t == SourceType::HTTP || t == SourceType::FTP) {
+        return QUrl(srcUrl);
+    }
+    return QUrl();
+}
+
 
 FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QString &sourceId)
 {
@@ -723,7 +781,16 @@ FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QS
             if (it == d->sources.end())
                 return;
             it->state = it->downloader->isSuccess()? Private::Cached : Private::None;
+            it->downloader->disconnect(this);
             it->downloader->deleteLater();
+            it->downloader = nullptr;
+        });
+        connect(src.downloader, &FileShareDownloader::destroyed, this, [this,sourceId](){
+            auto it = d->sources.find(sourceId);
+            if (it == d->sources.end())
+                return;
+            if (it->state == Private::Downloading)
+                it->state = Private::None;
             it->downloader = nullptr;
         });
     }
@@ -888,7 +955,7 @@ protected:
     }
 };
 
-QIODevice *FileSharingDeviceOpener::open(const QUrl &url)
+QIODevice *FileSharingDeviceOpener::open(QUrl &url)
 {
     if (url.scheme() != QLatin1String("share"))
         return nullptr;
@@ -897,6 +964,12 @@ QIODevice *FileSharingDeviceOpener::open(const QUrl &url)
     if (sourceId.startsWith('/'))
         sourceId = sourceId.mid(1);
 
+    QUrl simplelUrl = acc->psi()->fileSharingManager()->simpleSource(sourceId);
+    if (simplelUrl.isValid()) {
+        url = simplelUrl;
+        return nullptr;
+    }
+    //return acc->psi()->networkAccessManager()->get(QNetworkRequest(QUrl("https://jabber.ru/upload/98354d3264f6584ef9520cc98641462d6906288f/mW6JnUCmCwOXPch1M3YeqSQUMzqjH9NjmeYuNIzz/file_example_OOG_1MG.ogg")));
     FileShareDownloader *downloader = acc->psi()->fileSharingManager()->downloadShare(acc, sourceId);
     if (!downloader)
         return nullptr;
