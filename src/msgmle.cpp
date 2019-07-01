@@ -44,6 +44,9 @@
 #include "psiiconset.h"
 #include "recorder/recorder.h"
 
+static const int TIMEOUT = 30000; //30 secs maximum time interval
+static const int SECOND = 1000;
+
 //----------------------------------------------------------------------------
 // CapitalLettersController
 //----------------------------------------------------------------------------
@@ -620,7 +623,7 @@ LineEdit::LineEdit( QWidget *parent)
     , layout_(nullptr)
     , recButton_(nullptr)
     , overlay_(nullptr)
-    , timeout_(0)
+    , timeout_(TIMEOUT)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere); // no need for horizontal scrollbar with this
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -629,19 +632,21 @@ LineEdit::LineEdit( QWidget *parent)
     const int bs = PsiIconset::instance()->system().iconSize();
     setMinimumHeight(0);
 
+    //Set text right margin for rec button
     QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
     frmt.setRightMargin(bs + 8);
     document()->rootFrame()->setFrameFormat(frmt);
 
+    //Add text label and rec button to the right side of LineEdit
     layout_ = new QHBoxLayout(this);
     overlay_ = new QLabel(this);
-    overlay_->setText(tr("Recording..."));
     overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
     overlay_->setAlignment(Qt::AlignCenter);
     overlay_->setVisible(false);
     layout_->addWidget(overlay_);
-    recButton_ = new QToolButton();
-    recButton_->setStyleSheet("background-color: none; border: 0;");
+    recButton_ = new QToolButton(this);
+    recButton_->setToolTip(tr("Record and share audio note while pressed"));
+    recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
     recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
     recButton_->setGeometry(QRect(recButton_->pos(), QSize(bs,bs)));
     layout_->addWidget(recButton_);
@@ -651,19 +656,19 @@ LineEdit::LineEdit( QWidget *parent)
     connect(recButton_, &QToolButton::pressed, this, [this](){ //Rec button pressed
         recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
         overlay_->setVisible(true);
-        timeout_ = 30000; //30 secs maximum time interval
-        timer_ = std::unique_ptr<QTimer>(new QTimer(this));//countdown timer to stop recording while the button is pressed
+        timeout_ = TIMEOUT;
+        timer_ = std::unique_ptr<QTimer>(new QTimer(this)); //countdown timer to stop recording while the button is pressed
         connect(timer_.get(), &QTimer::timeout, this, [this]() {
             if(timeout_>0) {
-                timeout_ -= 1000;
-                overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/1000));
+                timeout_ -= SECOND;
+                overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/SECOND));
             }
             else {
                 timer_->stop();
                 recorder_->stop();
             }
         });
-        timer_->start(1000);
+        timer_->start(SECOND);
         if(recorder_) {
             recorder_->disconnect();
             recorder_.reset();
@@ -671,7 +676,7 @@ LineEdit::LineEdit( QWidget *parent)
         recorder_ = std::unique_ptr<Recorder>(new Recorder(this));
         connect(recorder_.get(), &Recorder::recordingStopped, this, [this](const QByteArray &data, const QString &fileName){
             if(timeout_ < 29000) {
-                QMimeData *md = new QMimeData();
+                QMimeData *md = new QMimeData(); //howto delete?
                 md->setData("audio/ogg", data);
                 md->setUrls({QUrl::fromLocalFile(fileName)});
                 emit recordingFinished(md);
@@ -679,7 +684,7 @@ LineEdit::LineEdit( QWidget *parent)
         });
         recorder_->record();
     });
-    connect(recButton_, &QToolButton::released, this, [this](){
+    connect(recButton_, &QToolButton::released, this, [this](){ //Rec button relesed
         recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
         timer_->stop();
         timer_.reset();

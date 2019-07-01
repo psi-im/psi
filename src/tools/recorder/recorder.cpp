@@ -22,7 +22,6 @@
 #include "applicationinfo.h"
 
 #include <QAudioRecorder>
-#include <QStandardPaths>
 #include <QFile>
 #include <QDate>
 
@@ -41,7 +40,6 @@ Recorder::~Recorder()
 void Recorder::record()
 {
     cleanUp();
-    const QString tmpPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     recFileName_ = QString("%1/psi_tmp_record_%2.ogg")
                     .arg(ApplicationInfo::documentsDir())
                     .arg(QDateTime::currentDateTimeUtc().toString("dd_MM_yyyy_hh_mm_ss"));
@@ -69,7 +67,7 @@ void Recorder::stop()
 QByteArray Recorder::data() const
 {
     QByteArray result;
-    if(!recFileName_.isEmpty()) {
+    if(QFile::exists(recFileName_)) {
         QFile file(recFileName_);
         file.open(QIODevice::ReadOnly);
         result = file.readAll();

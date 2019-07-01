@@ -277,7 +277,7 @@ void PsiChatDlg::initUi()
     ui_.mini_prompt->hide();
 
     if (throbber_icon == nullptr) {
-        throbber_icon = (PsiIcon *)IconsetFactory::iconPtr("psi/throbber");
+        throbber_icon = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/throbber"));
     }
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupChatTab(this, account(), jid().full());
