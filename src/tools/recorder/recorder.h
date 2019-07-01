@@ -23,7 +23,7 @@
 #include <QObject>
 #include <memory>
 
-#include "3rdparty/qite/libqite/qiteaudiorecorder.h"
+class AudioRecorder;
 
 class Recorder: public QObject
 {
@@ -33,19 +33,17 @@ public:
     ~Recorder();
     void record();
     void stop();
-    void cleanUp();
-
-    QByteArray data();
-    bool dataObtained();
 
 signals:
-    void recordingStopped(const QString &file);
-    void recordingStarted();
+    void recordingStopped(const QByteArray &data, const QString &file);
+
+private:
+    void cleanUp();
+    QByteArray data() const;
 
 private:
     std::unique_ptr<AudioRecorder> audioRecorder_;
-    QString recFile_;
-    bool dataObtained_;
+    QString recFileName_;
 };
 
 #endif //RECORDER_H

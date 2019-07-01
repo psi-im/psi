@@ -1055,10 +1055,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     PluginManager::instance()->setupGCTab(this, account(), jid().full());
 #endif
     LineEdit *le = qobject_cast<LineEdit*>(d->mle());
-    connect(le, &LineEdit::recordingFinished, this, [this](const QByteArray &data) {
-        QMimeData *md = new QMimeData();
-        md->setData("audio/ogg", data);
-        account()->shareFiles(this, md, [this](const QList<Reference> &refs, const QString &desc) {
+    connect(le, &LineEdit::recordingFinished, this, [this](QMimeData *data) {
+        account()->shareFiles(this, data, [this](const QList<Reference> &refs, const QString &desc) {
             d->doFileShare(refs, desc);
         });
     });

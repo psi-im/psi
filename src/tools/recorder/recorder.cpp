@@ -19,39 +19,42 @@
 
 #include "recorder.h"
 #include "3rdparty/qite/libqite/qiteaudiorecorder.h"
+#include "applicationinfo.h"
 
 #include <QAudioRecorder>
 #include <QStandardPaths>
 #include <QFile>
+#include <QDate>
 
 Recorder::Recorder(QObject *parent)
     : QObject(parent)
     , audioRecorder_(nullptr)
-    , recFile_(QString())
-    , dataObtained_(false)
+    , recFileName_(QString())
 {
-
 }
 
 Recorder::~Recorder()
 {
+    cleanUp();
 }
 
 void Recorder::record()
 {
+    cleanUp();
     const QString tmpPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    recFile_ = tmpPath + "/psi_tmp_record.ogg";
+    recFileName_ = QString("%1/psi_tmp_record_%2.ogg")
+                    .arg(ApplicationInfo::documentsDir())
+                    .arg(QDateTime::currentDateTimeUtc().toString("dd_MM_yyyy_hh_mm_ss"));
     audioRecorder_ = std::unique_ptr<AudioRecorder>(new AudioRecorder(parent()));
     connect(audioRecorder_.get(), &AudioRecorder::stateChanged, this, [this](){
         if (audioRecorder_->recorder()->state() == QAudioRecorder::StoppedState) {
-            emit recordingStopped(recFile_);
+            emit recordingStopped(data(), recFileName_);
         }
     });
 
     if (audioRecorder_->recorder()->state() == QAudioRecorder::StoppedState) {
-        audioRecorder_->record(recFile_);
+        audioRecorder_->record(recFileName_);
     }
-    dataObtained_ = false;
 }
 
 void Recorder::stop()
@@ -60,32 +63,28 @@ void Recorder::stop()
         return;
     if (audioRecorder_->recorder()->state() == QAudioRecorder::RecordingState) {
         audioRecorder_->stop();
-        audioRecorder_->disconnect();
-        audioRecorder_.reset();
     }
 }
 
-QByteArray Recorder::data()
+QByteArray Recorder::data() const
 {
     QByteArray result;
-    if(!recFile_.isEmpty()) {
-        QFile file(recFile_);
+    if(!recFileName_.isEmpty()) {
+        QFile file(recFileName_);
         file.open(QIODevice::ReadOnly);
         result = file.readAll();
         file.close();
-        dataObtained_ = true;
     }
     return result;
 }
 
 void Recorder::cleanUp()
 {
-    if(QFile::exists(recFile_)) {
-        QFile::remove(recFile_);
+    if(QFile::exists(recFileName_)) {
+        QFile::remove(recFileName_);
     }
-}
-
-bool Recorder::dataObtained()
-{
-    return dataObtained_;
+    if(audioRecorder_) {
+        audioRecorder_->disconnect();
+        audioRecorder_.reset();
+    }
 }

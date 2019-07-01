@@ -648,12 +648,12 @@ LineEdit::LineEdit( QWidget *parent)
     layout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
     layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
-    connect(recButton_, &QToolButton::pressed, this, [this](){
+    connect(recButton_, &QToolButton::pressed, this, [this](){ //Rec button pressed
         recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
         overlay_->setVisible(true);
-        timeout_ = 30000;
-        timer_ = std::unique_ptr<QTimer>(new QTimer(this));
-        connect(timer_.get(), &QTimer::timeout, this, [this](){
+        timeout_ = 30000; //30 secs maximum time interval
+        timer_ = std::unique_ptr<QTimer>(new QTimer(this));//countdown timer to stop recording while the button is pressed
+        connect(timer_.get(), &QTimer::timeout, this, [this]() {
             if(timeout_>0) {
                 timeout_ -= 1000;
                 overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/1000));
@@ -661,14 +661,20 @@ LineEdit::LineEdit( QWidget *parent)
             else {
                 timer_->stop();
                 recorder_->stop();
-                emit recordingFinished(recorder_->data());
             }
         });
         timer_->start(1000);
-        recorder_ = new Recorder(this);
-        connect(recorder_, &Recorder::recordingStopped, this, [this](){
-            if(!recorder_->dataObtained()) {
-                emit recordingFinished(recorder_->data());
+        if(recorder_) {
+            recorder_->disconnect();
+            recorder_.reset();
+        }
+        recorder_ = std::unique_ptr<Recorder>(new Recorder(this));
+        connect(recorder_.get(), &Recorder::recordingStopped, this, [this](const QByteArray &data, const QString &fileName){
+            if(timeout_ < 29000) {
+                QMimeData *md = new QMimeData();
+                md->setData("audio/ogg", data);
+                md->setUrls({QUrl::fromLocalFile(fileName)});
+                emit recordingFinished(md);
             }
         });
         recorder_->record();
@@ -680,10 +686,6 @@ LineEdit::LineEdit( QWidget *parent)
         overlay_->setVisible(false);
         if(recorder_) {
             recorder_->stop();
-            if(!recorder_->dataObtained()) {
-                emit recordingFinished(recorder_->data());
-            }
-            recorder_->cleanUp();
         }
     });
 
