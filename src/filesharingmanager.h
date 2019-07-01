@@ -135,6 +135,7 @@ public:
     // registers source for file and returns share id for future access to the source
     QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
+    QUrl simpleSource(const QString &sourceId) const;
     FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId);
     void saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath);
 
@@ -160,7 +161,7 @@ public:
     inline FileSharingDeviceOpener(PsiAccount *acc) :
         acc(acc){}
 
-    QIODevice *open(const QUrl &url) override;
+    QIODevice *open(QUrl &url) override;
     void close(QIODevice *dev) override;
 };
 #endif

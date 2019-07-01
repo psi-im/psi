@@ -850,7 +850,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #ifdef WEBKIT
     ui_.log->setAccount(account());
 #else
-    //ui_.log->setSharesDeviceOpener(new FileSharingDeviceOpener(account()));
+    ui_.log->setMediaOpener(new FileSharingDeviceOpener(account()));
 #endif
 
     connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(doContactContextMenu(QString)));

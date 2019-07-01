@@ -33,6 +33,7 @@ class ChatEdit;
 class ChatViewBase;
 class MessageView;
 class ITEAudioController;
+class ITEMediaOpener;
 namespace XMPP {
     class Jid;
 }
@@ -56,6 +57,7 @@ public:
     void init();
     void setDialog(QWidget* dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
+    inline void setMediaOpener(ITEMediaOpener *opener) { mediaOpener = opener; }
 
     void insertText(const QString &text, QTextCursor &insertCursor);
     void appendText(const QString &text);
@@ -112,6 +114,7 @@ private:
     QString name_;
     QPointer<QWidget> dialog_;
     ITEAudioController *voiceMsgCtrl;
+    ITEMediaOpener *mediaOpener = nullptr;
 
     QPixmap logIconSend;
     QPixmap logIconReceive;

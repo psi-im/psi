@@ -436,17 +436,8 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     // temporary hack with references
     for (auto const &r: mv.references()) {
         if (r.mediaType().startsWith(QString::fromLatin1("audio"))) {
-            QUrl httpSrc;
-            for (auto const &src: r.sources()) {
-                if (src.startsWith("http")) {
-                    httpSrc = src;
-                }
-            }
-            if (httpSrc.isEmpty())
-                continue;
-
             bool ab = atBottom();
-            voiceMsgCtrl->insert(httpSrc);
+            voiceMsgCtrl->insert(QUrl(QLatin1String("share:") + r.id()), mediaOpener);
             if (ab) {
                 scrollToBottom();
             }
