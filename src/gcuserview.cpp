@@ -116,7 +116,11 @@ public:
         if (slimGroups_    && !(o.state & QStyle::State_Selected))
         {
             QFontMetrics fm(f);
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+            int x = fm.horizontalAdvance(groupName) + 8;
+#else
             int x = fm.width(groupName) + 8;
+#endif
             int width = rect.width();
             if(x < width - 8) {
                 int h = rect.y() + (rect.height() / 2) - 1;
@@ -640,7 +644,7 @@ GCUserView::GCUserView(QWidget* parent)
 {
     header()->hide();
     setRootIsDecorated(false);
-    sortByColumn(0);
+    sortByColumn(0, Qt::AscendingOrder);
     setIndentation(0);
     setContextMenuPolicy(Qt::DefaultContextMenu);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

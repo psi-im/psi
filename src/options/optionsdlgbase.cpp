@@ -141,7 +141,11 @@ public:
 
         int width = iconSize.width();
         width += 8;
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        width += option.fontMetrics.horizontalAdvance(index.data(Qt::DisplayRole).toString());
+#else
         width += option.fontMetrics.width(index.data(Qt::DisplayRole).toString());
+#endif
         width += 8;
 
         int height = iconSize.height();

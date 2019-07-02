@@ -121,10 +121,6 @@ void OptionsTabPlugins::listPlugins()
     QStringList plugins = pm->availablePlugins();
     plugins.sort();
     const QSize buttonSize = QSize(21,21);
-    QSignalMapper *info = new QSignalMapper(d);
-    QSignalMapper *settings = new QSignalMapper(d);
-    connect(info, SIGNAL(mapped(int)), this, SLOT(showPluginInfo(int)));
-    connect(settings, SIGNAL(mapped(int)), this, SLOT(settingsClicked(int)));
     foreach ( const QString& plugin, plugins ){
         QIcon icon = pm->icon(plugin);
         bool enabled = pm->isEnabled(plugin);
@@ -151,8 +147,7 @@ void OptionsTabPlugins::listPlugins()
         aboutbutton->setObjectName("ab_" + shortName);
         aboutbutton->setToolTip(tr("Show information about plugin"));
         d->tw_Plugins->setItemWidget(item, C_ABOUT, aboutbutton);
-        connect(aboutbutton, SIGNAL(clicked(bool)), info, SLOT(map()));
-        info->setMapping(aboutbutton, index);
+        connect(aboutbutton, &QToolButton::clicked, this, [index, this](bool){showPluginInfo(index);});
 
         QToolButton *settsbutton = new QToolButton(d->tw_Plugins);
         settsbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/options")));
@@ -161,8 +156,7 @@ void OptionsTabPlugins::listPlugins()
         settsbutton->setToolTip(tr("Open plugin settings dialog"));
         settsbutton->setEnabled(enabled);
         d->tw_Plugins->setItemWidget(item, C_SETTS, settsbutton);
-        connect(settsbutton, SIGNAL(clicked(bool)), settings, SLOT(map()));
-        settings->setMapping(settsbutton, index);
+        connect(settsbutton, &QToolButton::clicked, this, [index, this](bool){settingsClicked(index);});
     }
     if ( d->tw_Plugins->topLevelItemCount() > 0 ) {
         d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);

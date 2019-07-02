@@ -447,7 +447,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 
             QFileInfo fi( i->fileName() );
             if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.system").toString() )
-                d->iss_system->setItemSelected(d->iss_system->lastItem(), true);
+                d->iss_system->lastItem()->setSelected(true);
 
             delete i;
         }
@@ -549,7 +549,7 @@ void OptionsTabIconsetEmoticons::applyOptions()
     for (int row = 0; row < d->iss_emoticons->count(); row++) {
         IconWidgetItem *item = (IconWidgetItem *)d->iss_emoticons->item(row);
 
-        if ( d->iss_emoticons->isItemSelected(item) ) {
+        if ( item->isSelected() ) {
             const Iconset *is = item->iconset();
             if ( is ) {
                 QFileInfo fi( is->fileName() );
@@ -574,7 +574,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     {
         foreach(Iconset* is, PsiIconset::instance()->emoticons) {
             d->iss_emoticons->insert(*is);
-            d->iss_emoticons->setItemSelected(d->iss_emoticons->lastItem(), true);
+            d->iss_emoticons->lastItem()->setSelected(true);
         }
     }
 
@@ -771,7 +771,7 @@ bool OptionsTabIconsetMoods::event(QEvent *e)
 
             QFileInfo fi( i->fileName() );
             if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.moods").toString() )
-                d->iss_moods->setItemSelected(d->iss_moods->lastItem(), true);
+                d->iss_moods->lastItem()->setSelected(true);
 
             delete i;
         }
@@ -918,7 +918,7 @@ bool OptionsTabIconsetActivity::event(QEvent *e)
 
             QFileInfo fi( i->fileName() );
             if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.activities").toString() )
-                d->iss_activity->setItemSelected(d->iss_activity->lastItem(), true);
+                d->iss_activity->lastItem()->setSelected(true);
 
             delete i;
         }
@@ -1065,7 +1065,7 @@ bool OptionsTabIconsetAffiliations::event(QEvent *e)
 
             QFileInfo fi( i->fileName() );
             if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.affiliations").toString() )
-                d->iss_affiliation->setItemSelected(d->iss_affiliation->lastItem(), true);
+                d->iss_affiliation->lastItem()->setSelected(true);
 
             delete i;
         }
@@ -1213,7 +1213,7 @@ bool OptionsTabIconsetClients::event(QEvent *e)
 
             QFileInfo fi( i->fileName() );
             if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.clients").toString() )
-                d->iss_clients->setItemSelected(d->iss_clients->lastItem(), true);
+                d->iss_clients->lastItem()->setSelected(true);
 
             delete i;
         }
@@ -1443,7 +1443,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
             // roster - default
             d->iss_defRoster->insert(*i);
             if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.status"))
-                d->iss_defRoster->setItemSelected(d->iss_defRoster->lastItem(), true);
+                d->iss_defRoster->lastItem()->setSelected(true);
 
             // roster - service
             d->iss_servicesRoster->insert(*i);
@@ -1596,7 +1596,7 @@ void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
             QFileInfo fi ( is->fileName() );
             if ( fi.fileName() == name ) {
                 emit noDirty(true);
-                d->iss_servicesRoster->setItemSelected(item, true);
+                item->setSelected(true);
                 d->iss_servicesRoster->scrollToItem(item);
                 emit noDirty(false);
                 break;
@@ -1653,7 +1653,7 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
         if ( is ) {
             QFileInfo fi ( is->fileName() );
             if ( fi.fileName() == name ) {
-                d->iss_customRoster->setItemSelected(item, true);
+                item->setSelected(true);
                 d->iss_customRoster->scrollToItem(item);
                 break;
             }

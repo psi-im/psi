@@ -1322,7 +1322,11 @@ public:
         p->setFont(boldFont);
         p->drawText(tm, tt, flabel);
         p->drawText(tm, tb, plabel);
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        _w = qMax(fmbold.horizontalAdvance(flabel), fmbold.horizontalAdvance(plabel));
+#else
         _w = qMax(fmbold.width(flabel), fmbold.width(plabel));
+#endif
         int left = col1 - _w;
         p->setFont(font);
         p->drawText(tm + _w, tt, chopString(name, fm, left));
@@ -1330,7 +1334,11 @@ public:
 
         // rate
         QString slabel = FileTransDlg::tr("Status") + ": ";
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        _w = fmbold.horizontalAdvance(slabel);
+#else
         _w = fmbold.width(slabel);
+#endif
         p->setFont(boldFont);
         p->drawText(px, tb, slabel);
         left = pw - _w;
@@ -1378,18 +1386,34 @@ public:
             QFontMetrics fm(fbold);
             QString fl = FileTransDlg::tr("File") + ": ";
             QString pl = (sending ? FileTransDlg::tr("To") : FileTransDlg::tr("From")) + ": ";
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+            int w = qMax(fm.horizontalAdvance(fl), fm.horizontalAdvance(pl));
+#else
             int w = qMax(fm.width(fl), fm.width(pl));
+#endif
             fm = QFontMetrics(font());
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+            w += qMax(fm.horizontalAdvance(name), fm.horizontalAdvance(peer));
+#else
             w += qMax(fm.width(name), fm.width(peer));
+#endif
             return w;
         }
         if (col == 2) {
             QFont fbold = font();
             fbold.setBold(true);
             QFontMetrics fm(fbold);
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+            int w = fm.horizontalAdvance(FileTransDlg::tr("Status") + ": ");
+#else
             int w = fm.width(FileTransDlg::tr("Status") + ": ");
+#endif
             fm = QFontMetrics(font());
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+            w += fm.horizontalAdvance(rate);
+#else
             w += fm.width(rate);
+#endif
             return w;
         }
         return 0;
