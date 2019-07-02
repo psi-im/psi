@@ -412,7 +412,7 @@ void ContactListViewDelegate::Private::updateAlerts()
         QModelIndex index = it2.key();
 
         // update contacts
-        contactList->dataChanged(index.child(row1, 0), index.child(row2, 0));
+        contactList->dataChanged(contactList->model()->index(row1, 0, index), contactList->model()->index(row2, 0, index));
     }
 }
 
@@ -461,7 +461,8 @@ void ContactListViewDelegate::Private::updateAnim()
         QModelIndex index = it2.key();
 
         // update contacts
-        contactList->dataChanged(index.child(row1, 0), index.child(row2, 0));
+        contactList->dataChanged(contactList->model()->index(row1, 0, index), contactList->model()->index(row2, 0, index));
+
     }
 }
 
@@ -766,7 +767,11 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 
     int sumWidth = 0;
     if(isMuc)
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        sumWidth = fontMetrics_.horizontalAdvance(mucMessages);
+#else
         sumWidth = fontMetrics_.width(mucMessages);
+#endif
     else {
         foreach (int w, rightWidths) {
             sumWidth += w;
@@ -999,7 +1004,11 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 
     if(slimGroup_ && !(opt.state & QStyle::State_Selected)) {
         int h = r.y() + (r.height() / 2);
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        int x = r.left() + fontMetrics_.horizontalAdvance(text) + 8;
+#else
         int x = r.left() + fontMetrics_.width(text) + 8;
+#endif
         painter->setPen(QPen(_headerBackgroundColor, 2));
         painter->drawLine(x, h, r.right(), h);
     }
@@ -1030,7 +1039,11 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
     QRect statusIconRect = relativeRect(o, pixmapSize, QRect());
     statusIconRect.moveTop(opt.rect.top() + (opt.rect.height() - statusIconRect.height()) / 2);
     QString text = index.data(Qt::DisplayRole).toString();
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+    QRect r = relativeRect(o, QSize(o.fontMetrics.horizontalAdvance(text), o.rect.height()), statusIconRect, 3);
+#else
     QRect r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), statusIconRect, 3);
+#endif
     painter->drawPixmap(statusIconRect, statusPixmap);
 
     drawText(painter, o, r, text);

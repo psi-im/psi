@@ -361,7 +361,7 @@ bool HistoryContactListProxyModel::filterAcceptsRow(int source_row, const QModel
 
     if (!source_parent.isValid())
     {
-        QModelIndex child = index.child(0, 0);
+        QModelIndex child = sourceModel()->index(0, 0, index);
         while (child.isValid())
         {
             if (filterAcceptsRow(child.row(), child.parent()))

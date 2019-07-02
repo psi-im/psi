@@ -144,7 +144,6 @@ public:
     QWidget *searchWidget;
 
     QTimer *hideTimer;
-    QSignalMapper *statusMapper;
 
     PsiIcon *nextAnim;
     int nextAmount;
@@ -210,9 +209,6 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
     statusButton  = (PopupAction *)getAction("button_status");
     statusSmallerAlt = getAction("status_all");
 
-    statusMapper = new QSignalMapper(mainWin);
-    mainWin->connect(statusMapper, SIGNAL(mapped(int)), mainWin, SLOT(activatedStatusAction(int)));
-
     filterActive = false;
     prefilterShowOffline = false;
     prefilterShowAway = false;
@@ -243,12 +239,20 @@ void MainWin::Private::registerActions()
 
     int i;
     QString aName;
-    for ( i = 0; !(aName = QString(statuslist[i].name)).isEmpty(); i++ ) {
+    for ( i = 0; !(aName = QString::fromLatin1(statuslist[i].name)).isEmpty(); i++ ) {
+        int id = statuslist[i].id;
         IconAction* action = getAction( aName );
-        connect (action, SIGNAL(triggered()), statusMapper, SLOT(map()));
+        mainWin->connect(action, &IconAction::triggered, mainWin, [this,id](bool){
+            QList<IconAction*> l = statusGroup->findChildren<IconAction*>();
+            foreach(IconAction* action, l) {
+                auto it = statusActions.constFind(action);
+                action->setChecked (it != statusActions.constEnd() && *it == id );
+            }
 
-        statusMapper->setMapping(action, statuslist[i].id);
-        statusActions[action] = statuslist[i].id;
+            mainWin->statusChanged(static_cast<XMPP::Status::Type>(id));
+        });
+
+        statusActions[action] = id;
     }
 
     // register all actions
@@ -826,16 +830,6 @@ void MainWin::buildStatusMenu(GlobalStatusMenu *statusMenu)
 {
     statusMenu->clear();
     statusMenu->fill();
-}
-
-void MainWin::activatedStatusAction(int id)
-{
-    QList<IconAction*> l = d->statusGroup->findChildren<IconAction*>();
-    foreach(IconAction* action, l) {
-        action->setChecked ( d->statusActions.contains(action) && d->statusActions[action] == id );
-    }
-
-    statusChanged(static_cast<XMPP::Status::Type>(id));
 }
 
 QMenuBar* MainWin::mainMenuBar() const

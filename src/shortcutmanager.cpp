@@ -101,7 +101,7 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
         if (!k.isEmpty())
             list += k;
     }
-    qStableSort(list.begin(), list.end(), shortcutManagerKeySequenceLessThan);
+    std::stable_sort(list.begin(), list.end(), shortcutManagerKeySequenceLessThan);
     return list;
 }
 

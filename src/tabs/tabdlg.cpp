@@ -142,7 +142,6 @@ TabDlg::TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDele
         , userManagement_(true)
         , tabBarSingles_(true)
         , simplifiedCaption_(false)
-        , activateTabMapper_(nullptr)
 {
     if (delegate_) {
         delegate_->create(this);
@@ -213,24 +212,19 @@ void TabDlg::setShortcuts()
     act_next_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.next-tab"));
 
     bool useTabShortcuts = PsiOptions::instance()->getOption("options.ui.tabs.use-tab-shortcuts").toBool();
-    if (useTabShortcuts && !activateTabMapper_) {
-        activateTabMapper_ = new QSignalMapper(this);
-        connect(activateTabMapper_, SIGNAL(mapped(int)), tabWidget_, SLOT(setCurrentPage(int)));
+    if (useTabShortcuts && !tabMapperActions_.size()) {
         for (int i = 0; i < 10; ++i) {
             QAction* action = new QAction(this);
-            connect(action, SIGNAL(triggered()), activateTabMapper_, SLOT(map()));
+            connect(action, &QAction::triggered, this, [this,i](bool){tabWidget_->setCurrentPage((i > 0 ? i : 10) - 1);});
             action->setShortcuts(QList<QKeySequence>() << QKeySequence(QString("Ctrl+%1").arg(i))
                                                        << QKeySequence(QString("Alt+%1").arg(i)));
-            activateTabMapper_->setMapping(action, (i > 0 ? i : 10) - 1);
             tabMapperActions_ += action;
             addAction(action);
         }
     }
-    else if (!useTabShortcuts && activateTabMapper_) {
+    else if (!useTabShortcuts && tabMapperActions_.count()) {
         qDeleteAll(tabMapperActions_);
         tabMapperActions_.clear();
-        delete activateTabMapper_;
-        activateTabMapper_ = nullptr;
     }
 }
 

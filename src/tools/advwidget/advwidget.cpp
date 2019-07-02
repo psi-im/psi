@@ -33,6 +33,7 @@
 #include <QTimer>
 #include <QDesktopWidget>
 #include <QDebug>
+#include <QScreen>
 
 #include "psioptions.h"
 
@@ -352,10 +353,13 @@ void GAdvancedWidget::Private::restoreGeometry()
 void GAdvancedWidget::Private::restoreGeometry(QRect savedGeometry)
 {
     QRect geom = savedGeometry;
+#if QT_VERSION >= QT_VERSION_CHECK(5,10,0)
+    QRect r = QApplication::screenAt(geom.topLeft())->geometry();
+#else
     QDesktopWidget *pdesktop = QApplication::desktop();
     int nscreen = pdesktop->screenNumber(geom.topLeft());
     QRect r = pdesktop->screenGeometry(nscreen);
-
+#endif
     // if the coordinates are out of the desktop bounds, reset to the top left
     int pad = 10;
     if (geom.left() < r.left())

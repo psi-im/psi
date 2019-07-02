@@ -161,7 +161,6 @@ private:
     bool userManagement_;
     bool tabBarSingles_;
     bool simplifiedCaption_;
-    QSignalMapper *activateTabMapper_;
     QList<QAction*> tabMapperActions_;
 
     QSize chatSize_;

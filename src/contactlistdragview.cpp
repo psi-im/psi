@@ -298,7 +298,7 @@ void ContactListDragView::paintEvent(QPaintEvent* e)
         p.setPen(QPen(dragIndicatorColor, 2));
         p.setRenderHint(QPainter::Antialiasing, true);
         QPainterPath path;
-        path.addRoundRect(dropIndicatorRect_.adjusted(2, 1, 0, 0), 5);
+        path.addRoundedRect(dropIndicatorRect_.adjusted(2, 1, 0, 0), 5, 5, Qt::RelativeSize);
         p.drawPath(path);
     }
 }

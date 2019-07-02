@@ -848,7 +848,7 @@ void HistoryDlg::selectDefaultContact(const QModelIndex &prefer_parent, int pref
         {
             for (int i = 1; i <= 2; ++i)
             {
-                QModelIndex index = parent.child(prefer_row, 0);
+                QModelIndex index = ui_.contactList->model()->index(prefer_row, 0, parent);
                 if (index.isValid())
                 {
                     ui_.contactList->selectionModel()->clearSelection();

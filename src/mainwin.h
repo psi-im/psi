@@ -109,8 +109,6 @@ private slots:
 
     void setTrayToolTip();
 
-    void activatedStatusAction(int);
-
     void trayClicked(const QPoint &, int);
     void trayDoubleClicked();
     void trayShow();

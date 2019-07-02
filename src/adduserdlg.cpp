@@ -119,7 +119,6 @@ void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
     if (!groups.contains(str)) {
         cb_group->addItem(str);
     }
-    cb_group->setAutoCompletion(true);
 
     pb_add->setDefault(true);
     connect(pb_add, SIGNAL(clicked()), SLOT(ok()));

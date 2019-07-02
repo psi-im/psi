@@ -313,7 +313,11 @@ public:
 
     int width() const
     {
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        int ww = qMax(listWidget()->fontMetrics().horizontalAdvance( text() ) + 6 + 15, w + 10);
+#else
         int ww = qMax(listWidget()->fontMetrics().width( text() ) + 6 + 15, w + 10);
+#endif
         return qMax( ww, QApplication::globalStrut().width() );
     }
 
@@ -372,7 +376,7 @@ void IconsetSelect::moveItemUp()
     int prevRow = row(i) - 1;
     i = takeItem(row(i));
     insertItem(prevRow, i);
-    setItemSelected(i, true);
+    i->setSelected(true);
     setCurrentItem(i);
 }
 
@@ -470,7 +474,11 @@ public:
 
     int width() const
     {
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        int ww = listWidget()->fontMetrics().horizontalAdvance(text()) + w + 3*margin + 15;
+#else
         int ww = listWidget()->fontMetrics().width(text()) + w + 3*margin + 15;
+#endif
         return qMax( ww, QApplication::globalStrut().width() );
     }
 

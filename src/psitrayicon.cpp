@@ -194,7 +194,7 @@ void PsiTrayIcon::animate()
             + QString::number( icon_->frameNumber() );
 
     QPixmap p;
-    if ( !QPixmapCache::find(cachedName, p) ) {
+    if ( !QPixmapCache::find(cachedName, &p) ) {
         p = makeIcon();
         QPixmapCache::insert( cachedName, p );
     }

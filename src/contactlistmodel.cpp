@@ -190,7 +190,7 @@ void ContactListModel::Private::updateContacts(const QList<PsiContact*> &contact
         QModelIndex index = it.key();
 
         // update contact
-        emit q->dataChanged(index.child(row1, 0), index.child(row2, 0));
+        emit q->dataChanged(q->index(row1, 0, index), q->index(row2, 0, index));
 
         // Update group
         emit q->dataChanged(index, index);
