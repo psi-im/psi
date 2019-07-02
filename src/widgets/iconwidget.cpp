@@ -667,7 +667,7 @@ QString IconButton::psiIconName() const
 #ifndef WIDGET_PLUGIN
     if ( d->icon )
         return d->icon->name();
-    return QString::null;
+    return QString();
 #else
     return d->iconName;
 #endif
@@ -821,7 +821,7 @@ QString IconToolButton::psiIconName() const
 #ifndef WIDGET_PLUGIN
     if ( d->icon )
         return d->icon->name();
-    return QString::null;
+    return QString();
 #else
     return d->iconName;
 #endif

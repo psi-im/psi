@@ -52,7 +52,7 @@
     </layout>
    </item>
    <item>
-    <widget class="LineEdit" name="lineEdit"/>
+    <widget class="QLineEdit" name="lineEdit"/>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
@@ -71,11 +71,6 @@
    <class>PixmapRatioLabel</class>
    <extends>QLabel</extends>
    <header>pixmapratiolabel.h</header>
-  </customwidget>
-  <customwidget>
-   <class>LineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>msgmle.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

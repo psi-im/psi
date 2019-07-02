@@ -93,7 +93,7 @@ void GroupMenu::createNewGroup()
         QString newgroup = QInputDialog::getText(nullptr, tr("Create New Group"),
                                                  tr("Enter the new group name:"),
                                                  QLineEdit::Normal,
-                                                 QString::null,
+                                                 QString(),
                                                  &ok, nullptr);
         if (!ok)
             break;

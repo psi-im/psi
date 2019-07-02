@@ -150,7 +150,7 @@ QString IconLabel::psiIconName () const
 #ifndef WIDGET_PLUGIN
     if ( d->icon )
         return d->icon->name();
-    return QString::null;
+    return QString();
 #else
     return d->iconName;
 #endif

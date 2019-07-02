@@ -85,7 +85,7 @@ void WbScene::group() {
 
         // Arrange the items by Z coordinate
         QList<QGraphicsItem*> selected = selectedItems();
-        qSort(selected.begin(), selected.end(), zValueLessThan);
+        std::sort(selected.begin(), selected.end(), zValueLessThan);
 
         // Reparent each selected item
         foreach(QGraphicsItem* item, selected) {

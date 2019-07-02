@@ -246,7 +246,7 @@ void SxeRecord::processInOrderRecordEdit(const SxeRecordEdit* edit) {
 }
 
 void SxeRecord::reorderEdits() {
-    qSort(edits_.begin(), edits_.end(), referencedEditLessThan);
+    std::sort(edits_.begin(), edits_.end(), referencedEditLessThan);
 
     revertToZero();
 

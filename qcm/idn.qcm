@@ -75,7 +75,7 @@ public:
 
     	QStringList incs;
     	QString version, libs, other;
-    	if(conf->findPkgConfig("libidn", VersionAny, QString::null, &version, &incs, &libs, &other))
+    	if(conf->findPkgConfig("libidn", VersionAny, QString(), &version, &incs, &libs, &other))
     	{
     		for(int n = 0; n < incs.count(); ++n)
     			conf->addIncludePath(incs[n]);

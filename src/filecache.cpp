@@ -300,7 +300,7 @@ void FileCache::sync(bool finishSession)
 
     // flush overflowed in-memory data to disk
     if (sumMemorySize > _memoryCacheSize) {
-        qSort(loadedItems.begin(), loadedItems.end(), ctimeLessThan); // by create time from oldest to newest
+        std::sort(loadedItems.begin(), loadedItems.end(), ctimeLessThan); // by create time from oldest to newest
         while (sumMemorySize > _memoryCacheSize && loadedItems.size()) {
             item = loadedItems.takeFirst();
             if (!item->isOnDisk()) { // was kept in memory only. unload() will flush to disk
@@ -325,7 +325,7 @@ void FileCache::sync(bool finishSession)
 
     // remove overflowed disk data
     if (sumFileSize > _fileCacheSize) {
-        qSort(onDiskItems.begin(), onDiskItems.end(), ctimeLessThan);
+        std::sort(onDiskItems.begin(), onDiskItems.end(), ctimeLessThan);
         while (sumFileSize > _fileCacheSize && onDiskItems.size()) {
             item = onDiskItems.takeFirst();
             if (!item->isDeletable()) {

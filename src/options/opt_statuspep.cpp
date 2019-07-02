@@ -49,7 +49,7 @@ void OptionsTabStatusPep::applyOptions()
     QString tuneExstensionsFilter;
     if (!newTuneFilters.isEmpty()) {
         newTuneFilters.removeDuplicates();
-        qSort(newTuneFilters);
+        std::sort(newTuneFilters.begin(), newTuneFilters.end());
         tuneExstensionsFilter = newTuneFilters.join(" ").toLower();
         d->tuneExtensions->setText(tuneExstensionsFilter);
     }

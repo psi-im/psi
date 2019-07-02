@@ -28,7 +28,7 @@
 
 PrivacyList::PrivacyList(const QString& name, const QList<PrivacyListItem>& items) : name_(name), items_(items)
 {
-    qSort(items_);
+    std::sort(items_.begin(), items_.end());
 };
 
 PrivacyList::PrivacyList(const QDomElement& e)
@@ -149,7 +149,7 @@ void PrivacyList::fromXml(const QDomElement& el)
             items_.append(PrivacyListItem(e));
     }
 
-    qSort(items_);
+    std::sort(items_.begin(), items_.end());
 }
 
 QString PrivacyList::toString() const

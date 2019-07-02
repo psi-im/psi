@@ -283,7 +283,7 @@ UserResourceList::ConstIterator UserResourceList::priority() const
 
 void UserResourceList::sort()
 {
-    qSort(*this);
+    std::sort(begin(), end());
 }
 
 

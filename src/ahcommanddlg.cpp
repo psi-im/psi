@@ -95,7 +95,7 @@ bool JT_AHCGetList::take(const QDomElement& e)
                 ci.jid = i.attribute("jid");
                 commands_ += ci;
             }
-            qSort(commands_);
+            std::sort(commands_.begin(), commands_.end());
         }
         setSuccess();
         return true;

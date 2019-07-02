@@ -230,7 +230,7 @@ QVariantList OptionsTree::mapKeyList(const QString &basename, bool sortedByNumbe
     QStringList children = getChildOptionNames( basename, true, true);
     if (sortedByNumbers)
     {
-        qSort(children.begin(), children.end(), mapKeyListLessThanByNumber);
+        std::sort(children.begin(), children.end(), mapKeyListLessThanByNumber);
     }
     foreach (QString path, children) {
         ret << getOption(path+".key");

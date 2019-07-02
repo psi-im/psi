@@ -204,7 +204,7 @@ void ContactManagerModel::sort ( int column, Qt::SortOrder order = Qt::Ascending
     ContactManagerModel::sortOrder = order;
     if (columnRole != CheckRole) {
         emit layoutAboutToBeChanged();
-        qSort(_userList.begin(), _userList.end(), ContactManagerModel::sortLessThan);
+        std::sort(_userList.begin(), _userList.end(), ContactManagerModel::sortLessThan);
         emit layoutChanged();
     }
 }

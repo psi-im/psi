@@ -145,7 +145,7 @@ MoodCatalog::MoodCatalog() : QObject(QCoreApplication::instance())
     entries_ += Entry(Mood::Undefined, "undefined", QObject::tr("Else"));
     entries_ += Entry(Mood::Weak, "weak", QObject::tr("Weak"));
     entries_ += Entry(Mood::Worried, "worried", QObject::tr("Worried"));
-    qSort(entries_);
+    std::sort(entries_.begin(), entries_.end());
 }
 
 MoodCatalog* MoodCatalog::instance()

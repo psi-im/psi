@@ -95,7 +95,7 @@ void FileShareDlg::showImage(const QImage &img)
 
 QString FileShareDlg::description() const
 {
-    return ui->lineEdit->toPlainText();
+    return ui->lineEdit->text();
 }
 
 FileShareDlg *FileShareDlg::fromMimeData(const QMimeData *data, PsiAccount *acc, QWidget *parent)

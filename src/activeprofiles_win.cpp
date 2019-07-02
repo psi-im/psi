@@ -275,7 +275,7 @@ void ActiveProfiles::unsetThisProfile()
     d->startChanges();
     CloseHandle(d->mutex);
     d->mutex = 0;
-    d->profile = QString::null;
+    d->profile = QString();
     d->setWindowText("");
     d->endChanges();
 }
