@@ -37,8 +37,8 @@ class AccountModifyDlg : public QDialog, public Ui::AccountModify
 {
     Q_OBJECT
 public:
-    AccountModifyDlg(PsiCon *,QWidget *parent=0);
-    AccountModifyDlg(PsiAccount *, QWidget *parent=0);
+    AccountModifyDlg(PsiCon *,QWidget *parent=nullptr);
+    AccountModifyDlg(PsiAccount *, QWidget *parent=nullptr);
     ~AccountModifyDlg();
 
     void setPassword(const QString &);

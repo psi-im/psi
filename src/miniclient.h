@@ -42,7 +42,7 @@ class MiniClient : public QObject
 {
     Q_OBJECT
 public:
-    MiniClient(QObject *parent=0);
+    MiniClient(QObject *parent=nullptr);
     ~MiniClient();
 
     void reset();

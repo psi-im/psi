@@ -29,7 +29,7 @@ class FancyPopup : public QFrame
 {
     Q_OBJECT
 public:
-    FancyPopup(QString title, const PsiIcon *icon = 0, FancyPopup *prev = 0, bool copyIcon = true);
+    FancyPopup(QString title, const PsiIcon *icon = nullptr, FancyPopup *prev = nullptr, bool copyIcon = true);
     ~FancyPopup();
 
     void addLayout(QLayout *layout, int stretch = 0);

@@ -31,7 +31,7 @@ class TabManager : public QObject
 {
     Q_OBJECT
 public:
-    TabManager(PsiCon *psiCon, QObject *parent = 0);
+    TabManager(PsiCon *psiCon, QObject *parent = nullptr);
     ~TabManager();
 
     PsiCon* psiCon() const;
@@ -44,7 +44,7 @@ public:
     /**
      * Return a new tabset (for this widget).
      */
-    TabDlg*    newTabs(QWidget *widget=0);
+    TabDlg*    newTabs(QWidget *widget=nullptr);
 
     /**
      * Checks if a tabset manages this widget.

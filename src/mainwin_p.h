@@ -36,7 +36,7 @@ class SeparatorAction : public IconAction
 {
     Q_OBJECT
 public:
-    SeparatorAction(QObject *parent, const char *name = 0);
+    SeparatorAction(QObject *parent, const char *name = nullptr);
     ~SeparatorAction();
 
     virtual bool addTo(QWidget *w);
@@ -48,7 +48,7 @@ class SpacerAction : public IconAction
 {
     Q_OBJECT
 public:
-    SpacerAction(QObject *parent, const char *name = 0);
+    SpacerAction(QObject *parent, const char *name = nullptr);
     ~SpacerAction();
 
     virtual bool addTo (QWidget *w);
@@ -60,7 +60,7 @@ class EventNotifierAction : public IconAction
 {
     Q_OBJECT
 public:
-    EventNotifierAction(QObject *parent, const char *name = 0);
+    EventNotifierAction(QObject *parent, const char *name = nullptr);
     ~EventNotifierAction();
 
     void setMessage(const QString &);
@@ -113,7 +113,7 @@ class MLabel : public QLabel
 {
     Q_OBJECT
 public:
-    MLabel(QWidget *parent=0, const char *name=0);
+    MLabel(QWidget *parent=nullptr, const char *name=nullptr);
 
 protected:
     // reimplemented

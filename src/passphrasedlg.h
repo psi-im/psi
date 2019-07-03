@@ -26,7 +26,7 @@ class PassphraseDlg : public QDialog
 {
     Q_OBJECT
 public:
-    PassphraseDlg(QWidget* parent = 0);
+    PassphraseDlg(QWidget* parent = nullptr);
 
     void promptPassphrase(const QString& name);
 

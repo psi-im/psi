@@ -39,7 +39,7 @@ class PGPKeyDlg : public QDialog
 public:
     enum Type { Public, Secret };
 
-    PGPKeyDlg(Type, const QString& defaultKeyID, QWidget *parent = 0);
+    PGPKeyDlg(Type, const QString& defaultKeyID, QWidget *parent = nullptr);
     const QCA::KeyStoreEntry& keyStoreEntry() const;
 
 private slots:

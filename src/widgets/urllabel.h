@@ -36,7 +36,7 @@ class URLLabel : public QLabel
     //Q_OVERRIDE( TextFormat DESIGNABLE false SCRIPTABLE false )
 
 public:
-    URLLabel(QWidget *parent = 0);
+    URLLabel(QWidget *parent = nullptr);
     ~URLLabel();
 
     const QString &url() const;

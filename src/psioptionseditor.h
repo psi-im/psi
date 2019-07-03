@@ -18,7 +18,7 @@ class PsiOptionsEditor : public QWidget
 {
     Q_OBJECT
 public:
-    PsiOptionsEditor(QWidget *parent=0);
+    PsiOptionsEditor(QWidget *parent=nullptr);
     void bringToFront();
 
 private slots:

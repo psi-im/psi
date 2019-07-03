@@ -8,7 +8,7 @@ class PsiCapsRegistry : public XMPP::CapsRegistry
     Q_OBJECT
 
 public:
-    PsiCapsRegistry(QObject *parent = 0);
+    PsiCapsRegistry(QObject *parent = nullptr);
 
     void saveData(const QByteArray &data);
     QByteArray loadData();

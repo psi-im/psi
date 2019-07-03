@@ -37,7 +37,7 @@ class AccountManageTree : public QTreeWidget
     Q_OBJECT
 
 public:
-    AccountManageTree(QWidget *parent = 0);
+    AccountManageTree(QWidget *parent = nullptr);
 
 protected:
     void dropEvent(QDropEvent *event);

@@ -35,7 +35,7 @@ class IconToolButton : public QToolButton
     Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
 
 public:
-    IconToolButton(QWidget *parent = 0);
+    IconToolButton(QWidget *parent = nullptr);
     ~IconToolButton();
 
     void setIcon(const QIcon &);

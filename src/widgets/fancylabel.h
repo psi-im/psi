@@ -45,7 +45,7 @@ class FancyLabel : public QWidget
     Q_PROPERTY( int midLineWidth READ midLineWidth WRITE setMidLineWidth )
 
 public:
-    FancyLabel (QWidget *parent = 0);
+    FancyLabel (QWidget *parent = nullptr);
     ~FancyLabel ();
 
     const QString &text () const;

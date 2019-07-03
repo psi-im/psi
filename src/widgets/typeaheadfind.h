@@ -38,9 +38,9 @@ public:
         WebView
     };
 
-    TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = 0);
+    TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = nullptr);
 #ifdef WEBKIT
-    TypeAheadFindBar(WebView *webView, const QString &title, QWidget *parent = 0);
+    TypeAheadFindBar(WebView *webView, const QString &title, QWidget *parent = nullptr);
 #endif
     ~TypeAheadFindBar();
     void init();

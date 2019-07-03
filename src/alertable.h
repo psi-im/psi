@@ -30,7 +30,7 @@ class Alertable : public QObject
 {
     Q_OBJECT
 public:
-    Alertable(QObject* parent = 0);
+    Alertable(QObject* parent = nullptr);
     ~Alertable();
 
     bool alerting() const;

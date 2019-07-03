@@ -54,7 +54,7 @@ class HoverableTreeView : public QTreeView
     Q_OBJECT
 
 public:
-    HoverableTreeView(QWidget* parent = 0);
+    HoverableTreeView(QWidget* parent = nullptr);
 
     enum HoverableItemFeature {
         Hovered = 0x8000

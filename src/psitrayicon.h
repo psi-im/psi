@@ -14,7 +14,7 @@ class PsiTrayIcon : public QObject
 {
     Q_OBJECT
 public:
-    PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent=0);
+    PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent=nullptr);
     ~PsiTrayIcon();
 
     void setContextMenu(QMenu*);

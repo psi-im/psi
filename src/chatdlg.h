@@ -52,7 +52,7 @@ class FileSharingItem;
 
 struct UserStatus {
     UserStatus()
-            : userListItem(0)
+            : userListItem(nullptr)
             , statusType(XMPP::Status::Offline) {}
     UserListItem* userListItem;
     XMPP::Status::Type statusType;

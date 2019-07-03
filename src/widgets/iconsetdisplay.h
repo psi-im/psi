@@ -29,7 +29,7 @@ class IconsetDisplay : public QListWidget
 {
     Q_OBJECT
 public:
-    IconsetDisplay(QWidget *parent = 0);
+    IconsetDisplay(QWidget *parent = nullptr);
     ~IconsetDisplay();
 
     void setIconset(const Iconset &);

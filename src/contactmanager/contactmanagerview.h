@@ -26,7 +26,7 @@ class ContactManagerView : public QTableView
 {
     Q_OBJECT
 public:
-    ContactManagerView( QWidget * parent = 0 );
+    ContactManagerView( QWidget * parent = nullptr );
     void init();
 
 protected:

@@ -37,7 +37,7 @@ public:
 
     typedef std::function<bool(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res)> Handler;
 
-    ThemeServer(QObject *parent = 0);
+    ThemeServer(QObject *parent = nullptr);
     quint16 serverPort() const;
     QHostAddress serverAddress() const;
 

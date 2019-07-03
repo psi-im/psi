@@ -8,7 +8,7 @@ class OptionsDlg : public OptionsDlgBase
     Q_OBJECT
 
 public:
-    OptionsDlg(PsiCon *, QWidget *parent = 0);
+    OptionsDlg(PsiCon *, QWidget *parent = nullptr);
 
 };
 

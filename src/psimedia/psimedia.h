@@ -84,7 +84,7 @@ class VideoWidget : public QWidget
     Q_OBJECT
 
 public:
-    VideoWidget(QWidget *parent = 0);
+    VideoWidget(QWidget *parent = nullptr);
     ~VideoWidget();
 
     virtual QSize sizeHint() const;
@@ -181,7 +181,7 @@ public:
         All        = 0xff
     };
 
-    Features(QObject *parent = 0);
+    Features(QObject *parent = nullptr);
     ~Features();
 
     QList<Device> audioOutputDevices();
@@ -316,7 +316,7 @@ public:
         ErrorCodec
     };
 
-    RtpSession(QObject *parent = 0);
+    RtpSession(QObject *parent = nullptr);
     ~RtpSession();
 
     void reset();

@@ -225,7 +225,7 @@ bool StatusMenu::eventFilter(QObject *obj, QEvent *event)
     {
         QMouseEvent* e = static_cast<QMouseEvent*>(event); //We sure event is QMouseEvent
         QMenu* menu = dynamic_cast<QMenu*>(obj); //Event filter can be installed on anything, so do dynamic_cast
-        assert(menu != 0); //Dynamic cast on wrong type will return 0
+        assert(menu != nullptr); //Dynamic cast on wrong type will return 0
         QAction* action = menu->actionAt(e->pos());
         if (action && e->button() == Qt::RightButton)
         {

@@ -34,7 +34,7 @@ class CallDlg : public QDialog
     Q_OBJECT
 
 public:
-    CallDlg(PsiAccount *pa, QWidget *parent = 0);
+    CallDlg(PsiAccount *pa, QWidget *parent = nullptr);
     ~CallDlg();
 
     void setOutgoing(const XMPP::Jid &jid);

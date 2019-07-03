@@ -723,4 +723,12 @@
 		<x xmlns='name'>psi/xmpp</x>
 		<object mime='image/png'>xmpp.svg</object>
 	</icon>
+    <icon>
+		<x xmlns='name'>psi/mic</x>
+		<object mime='image/png'>mic.png</object>
+	</icon>
+    <icon>
+		<x xmlns='name'>psi/mic_rec</x>
+		<object mime='image/png'>mic_rec.png</object>
+	</icon>
 </icondef>

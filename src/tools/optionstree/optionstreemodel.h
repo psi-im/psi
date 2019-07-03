@@ -32,7 +32,7 @@ class OptionsTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    OptionsTreeModel(OptionsTree* tree, QObject* parent = 0);
+    OptionsTreeModel(OptionsTree* tree, QObject* parent = nullptr);
 
     // Reimplemented from QAbstractItemModel
     int rowCount(const QModelIndex& parent = QModelIndex()) const;

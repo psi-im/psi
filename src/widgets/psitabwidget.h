@@ -39,7 +39,7 @@ class PsiTabWidget : public QWidget //: public QTabWidget
 {
     Q_OBJECT
 public:
-    PsiTabWidget(QWidget *parent = 0);
+    PsiTabWidget(QWidget *parent = nullptr);
     ~PsiTabWidget();
 
     void setTabTextColor(QWidget *tab, const QColor &color);

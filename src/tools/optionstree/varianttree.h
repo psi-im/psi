@@ -50,7 +50,7 @@ class VariantTree : public QObject
 {
     Q_OBJECT
 public:
-    VariantTree(QObject *parent = 0);
+    VariantTree(QObject *parent = nullptr);
     ~VariantTree();
 
     void setValue(QString node, QVariant value);

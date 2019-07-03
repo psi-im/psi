@@ -32,7 +32,7 @@ class OptionsTree : public QObject
 {
     Q_OBJECT
 public:
-    OptionsTree(QObject *parent = 0);
+    OptionsTree(QObject *parent = nullptr);
     ~OptionsTree();
 
     QVariant getOption(const QString& name, const QVariant &defaultValue = QVariant::Invalid) const;

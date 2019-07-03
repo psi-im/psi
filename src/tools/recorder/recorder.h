@@ -1,8 +1,6 @@
 /*
- * invitetogroupchatmenu.h - invite to groupchat context menu option
- * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
- *
- * This file is part of the WhoerIM project.
+ * recorder.h - Sound recorder
+ * Copyright (C) 2019 Sergey Ilinykh, Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,28 +17,33 @@
  *
  */
 
-#pragma once
+#ifndef RECORDER_H
+#define RECORDER_H
 
-#include <QMenu>
+#include <QObject>
+#include <memory>
 
-class PsiContact;
-class PsiAccount;
-class PsiCon;
+class AudioRecorder;
 
-class InviteToGroupChatMenu : public QMenu
+class Recorder: public QObject
 {
     Q_OBJECT
-
 public:
-    InviteToGroupChatMenu(QWidget *parent = nullptr);
-    void updateMenu(PsiContact *contact);
+    Recorder(QObject *parent = nullptr);
+    ~Recorder();
+    void record();
+    void stop();
 
 signals:
-    void inviteToGroupchat(PsiAccount *account, const QString &groupChat);
-
-private slots:
-    void actionActivated();
+    void recordingStopped(const QByteArray &data, const QString &file);
 
 private:
-    PsiCon* controller_;
+    void cleanUp();
+    QByteArray data() const;
+
+private:
+    std::unique_ptr<AudioRecorder> audioRecorder_;
+    QString recFileName_;
 };
+
+#endif //RECORDER_H

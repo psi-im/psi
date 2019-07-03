@@ -37,7 +37,7 @@ public:
         ItemTypeRole = Qt::UserRole + 2
     };
 
-    HistoryContactListModel(QObject *parent = 0);
+    HistoryContactListModel(QObject *parent = nullptr);
     ~HistoryContactListModel();
     void clear();
     void updateContacts(PsiCon *psi, const QString &id);
@@ -97,7 +97,7 @@ class HistoryContactListProxyModel : public QSortFilterProxyModel
     Q_OBJECT
 
 public:
-    HistoryContactListProxyModel(QObject *parent = 0);
+    HistoryContactListProxyModel(QObject *parent = nullptr);
 
 public slots:
     void setFilterFixedString(const QString & pattern);

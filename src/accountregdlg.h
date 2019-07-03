@@ -47,7 +47,7 @@ class AccountRegDlg : public QDialog
 {
     Q_OBJECT
 public:
-    AccountRegDlg(PsiCon *psi, QWidget *parent = 0);
+    AccountRegDlg(PsiCon *psi, QWidget *parent = nullptr);
     ~AccountRegDlg();
 
     const XMPP::Jid& jid() const { return jid_; }
