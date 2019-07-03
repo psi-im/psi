@@ -17,27 +17,27 @@
  *
  */
 
-#include "recorder.h"
-#include "3rdparty/qite/libqite/qiteaudiorecorder.h"
+#include "voicerecorder.h"
+#include "qiteaudiorecorder.h"
 #include "applicationinfo.h"
 
 #include <QAudioRecorder>
 #include <QFile>
 #include <QDate>
 
-Recorder::Recorder(QObject *parent)
+VoiceRecorder::VoiceRecorder(QObject *parent)
     : QObject(parent)
     , audioRecorder_(nullptr)
     , recFileName_(QString())
 {
 }
 
-Recorder::~Recorder()
+VoiceRecorder::~VoiceRecorder()
 {
     cleanUp();
 }
 
-void Recorder::record()
+void VoiceRecorder::record()
 {
     cleanUp();
     recFileName_ = QString("%1/psi_tmp_record_%2.ogg")
@@ -46,7 +46,7 @@ void Recorder::record()
     audioRecorder_ = std::unique_ptr<AudioRecorder>(new AudioRecorder(parent()));
     connect(audioRecorder_.get(), &AudioRecorder::stateChanged, this, [this](){
         if (audioRecorder_->recorder()->state() == QAudioRecorder::StoppedState) {
-            emit recordingStopped(data(), recFileName_);
+            emit recordingStopped();
         }
     });
 
@@ -55,7 +55,7 @@ void Recorder::record()
     }
 }
 
-void Recorder::stop()
+void VoiceRecorder::stop()
 {
     if(!audioRecorder_)
         return;
@@ -64,7 +64,7 @@ void Recorder::stop()
     }
 }
 
-QByteArray Recorder::data() const
+QByteArray VoiceRecorder::data() const
 {
     QByteArray result;
     if(QFile::exists(recFileName_)) {
@@ -76,7 +76,7 @@ QByteArray Recorder::data() const
     return result;
 }
 
-void Recorder::cleanUp()
+void VoiceRecorder::cleanUp()
 {
     if(QFile::exists(recFileName_)) {
         QFile::remove(recFileName_);

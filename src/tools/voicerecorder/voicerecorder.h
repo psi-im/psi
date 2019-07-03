@@ -25,12 +25,12 @@
 
 class AudioRecorder;
 
-class Recorder: public QObject
+class VoiceRecorder: public QObject
 {
     Q_OBJECT
 public:
-    Recorder(QObject *parent = nullptr);
-    ~Recorder();
+    VoiceRecorder(QObject *parent = nullptr);
+    ~VoiceRecorder();
     void record();
     void stop();
 

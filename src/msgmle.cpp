@@ -35,6 +35,7 @@
 #include <QClipboard>
 #include <QToolButton>
 #include <QLabel>
+#include <QAudioRecorder>
 
 #include "shortcutmanager.h"
 #include "spellchecker/spellhighlighter.h"
@@ -42,7 +43,7 @@
 #include "psioptions.h"
 #include "htmltextcontroller.h"
 #include "psiiconset.h"
-#include "recorder/recorder.h"
+#include "qiteaudiorecorder.h"
 
 static const int TIMEOUT = 30000; //30 secs maximum time interval
 static const int SECOND = 1000;
@@ -657,7 +658,7 @@ LineEdit::LineEdit( QWidget *parent)
         recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
         overlay_->setVisible(true);
         timeout_ = TIMEOUT;
-        timer_ = std::unique_ptr<QTimer>(new QTimer(this)); //countdown timer to stop recording while the button is pressed
+        timer_.reset(new QTimer); //countdown timer to stop recording while the button is pressed
         connect(timer_.get(), &QTimer::timeout, this, [this]() {
             if(timeout_>0) {
                 timeout_ -= SECOND;
@@ -673,14 +674,17 @@ LineEdit::LineEdit( QWidget *parent)
             recorder_->disconnect();
             recorder_.reset();
         }
-        recorder_ = std::unique_ptr<Recorder>(new Recorder(this));
-        connect(recorder_.get(), &Recorder::recordingStopped, this, [this](const QByteArray &data, const QString &fileName){
-            if(timeout_ < 29000) {
-                QMimeData *md = new QMimeData(); //howto delete?
-                md->setData("audio/ogg", data);
-                md->setUrls({QUrl::fromLocalFile(fileName)});
-                emit recordingFinished(md);
-            }
+
+        recorder_.reset(new AudioRecorder);
+        recorder_->setMaxDuration(TIMEOUT);
+        connect(recorder_.get(), &AudioRecorder::recorded, this, [this](){
+            if (recorder_->duration() < 1000)
+                return;
+
+            QMimeData md;
+            md.setData("audio/ogg", recorder_->data());
+            md.setData("application/x-psi-histogram", recorder_->histogram());
+            emit fileSharingRequested(&md);
         });
         recorder_->record();
     });

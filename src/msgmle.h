@@ -38,7 +38,7 @@ class HTMLTextController;
 class CapitalLettersController;
 class QToolButton;
 class QLabel;
-class Recorder;
+class AudioRecorder;
 
 
 class ChatEdit : public QTextEdit
@@ -139,9 +139,6 @@ protected:
     // reimplemented
     void resizeEvent(QResizeEvent*);
 
-signals:
-    void recordingFinished(QMimeData *data);
-
 private slots:
     void recalculateSize();
     void updateScrollBar();
@@ -151,7 +148,7 @@ private:
     QToolButton *recButton_;
     QLabel *overlay_;
     std::unique_ptr<QTimer> timer_;
-    std::unique_ptr<Recorder> recorder_;
+    std::unique_ptr<AudioRecorder> recorder_;
     int timeout_;
 };
 

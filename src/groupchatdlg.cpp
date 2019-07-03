@@ -1054,12 +1054,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupGCTab(this, account(), jid().full());
 #endif
-    LineEdit *le = qobject_cast<LineEdit*>(d->mle());
-    connect(le, &LineEdit::recordingFinished, this, [this](QMimeData *data) {
-        account()->shareFiles(this, data, [this](const QList<Reference> &refs, const QString &desc) {
-            d->doFileShare(refs, desc);
-        });
-    });
 }
 
 GCMainDlg::~GCMainDlg()

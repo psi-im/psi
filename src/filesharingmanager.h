@@ -71,6 +71,8 @@ public:
     FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileSharingManager *manager);
     FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager);
     FileSharingItem(const QString &fileName, PsiAccount *acc, FileSharingManager *manager);
+    FileSharingItem(const QString &mime, const QByteArray &data, const QVariantMap &metaData,
+                    PsiAccount *acc, FileSharingManager *manager);
     ~FileSharingItem();
 
     QIcon thumbnail(const QSize &size) const;
@@ -106,6 +108,7 @@ private:
     QString sha1hash;
     QString mimeType;
     QString _description;
+    QVariantMap metaData;
 };
 
 class FileSharingManager : public QObject

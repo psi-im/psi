@@ -25,9 +25,9 @@ list(APPEND SOURCES
     tunecontroller/tunecontrollermanager.cpp
     tunecontroller/plugins/psifile/psifileplugin.cpp
 
-    #recorder
-    recorder/recorder.cpp
-    recorder/recorder.h
+    # voice recorder
+    voicerecorder/voicerecorder.cpp
+    voicerecorder/voicerecorder.h
 )
 
 list(APPEND HEADERS
@@ -149,4 +149,5 @@ target_include_directories(tools PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/advwidget
     ${CMAKE_CURRENT_SOURCE_DIR}/iconset
     ${CMAKE_CURRENT_SOURCE_DIR}/tunecontroller
+    ${CMAKE_CURRENT_SOURCE_DIR}/voicerecorder
 )

@@ -107,7 +107,11 @@ ToolTipPosition::ToolTipPosition(const QPoint& _pos, const QWidget* _w)
 
 QPoint ToolTipPosition::calculateTipPosition(const QWidget* label) const
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5,10,0)
     QRect screen = QApplication::screenAt(pos)->geometry();
+#else
+    QRect screen = QApplication::desktop()->screenGeometry(pos);
+#endif
 
     QPoint p = pos;
     p += QPoint(2,

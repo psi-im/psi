@@ -282,12 +282,6 @@ void PsiChatDlg::initUi()
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupChatTab(this, account(), jid().full());
 #endif
-    LineEdit *le = qobject_cast<LineEdit*>(ui_.mle->chatEdit());
-    connect(le, &LineEdit::recordingFinished, this, [this](QMimeData *data) {
-        account()->shareFiles(this, data, [this](const QList<Reference> &refs, const QString &desc){
-            doFileShare(refs, desc);
-        });
-    });
 }
 
 void PsiChatDlg::updateCountVisibility()

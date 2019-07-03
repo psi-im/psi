@@ -377,7 +377,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
     if (cache) {
         _fileName = cache->fileName();
     } else {
-        QTemporaryFile file(QString::fromLatin1("psishare"));
+        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare"));
         file.open();
         file.write(ba);
         file.setAutoRemove(false);
@@ -410,6 +410,33 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
         file.seek(0);
         mimeType = QMimeDatabase().mimeTypeForFileNameAndData(fileName, &file).name();
         isImage = QImageReader::supportedMimeTypes().contains(mimeType.toLatin1());
+    }
+}
+
+FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, const QVariantMap &metaData,
+                                 PsiAccount *acc, FileSharingManager *manager) :
+    QObject(manager),
+    acc(acc),
+    manager(manager),
+    isImage(false),
+    isTempFile(false),
+    metaData(metaData)
+{
+    sha1hash = QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha1).toHex());
+    mimeType = mime;
+    _fileSize = data.size();
+
+    cache = manager->getCacheItem(sha1hash, true);
+    if (cache) {
+        _fileName = cache->fileName();
+    } else {
+        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare"));
+        file.open();
+        file.write(data);
+        file.setAutoRemove(false);
+        _fileName = file.fileName();
+        isTempFile = true;
+        file.close();
     }
 }
 
@@ -456,20 +483,20 @@ void FileSharingItem::initFromCache()
 void FileSharingItem::checkFinished()
 {
     if (!finishNotified && httpFinished && jingleFinished) {
-        QVariantMap mime;
-        mime["type"] = mimeType;
-        mime["uris"] = readyUris;
+        QVariantMap meta = metaData;
+        meta["type"] = mimeType;
+        meta["uris"] = readyUris;
         if (isTempFile) {
             QFile f(_fileName);
             f.open(QIODevice::ReadOnly);
             auto d = f.readAll();
             f.close();
-            cache = manager->saveToCache(sha1hash, d, mime, TEMP_TTL);
+            cache = manager->saveToCache(sha1hash, d, meta, TEMP_TTL);
             _fileName = cache->fileName();
             f.remove();
         } else {
-            mime["link"] = _fileName;
-            cache = manager->saveToCache(sha1hash, QByteArray(), mime, FILE_TTL);
+            meta["link"] = _fileName;
+            cache = manager->saveToCache(sha1hash, QByteArray(), meta, FILE_TTL);
         }
         finishNotified = true;
         emit publishFinished();
@@ -669,7 +696,12 @@ QList<FileSharingItem*> FileSharingManager::fromMimeData(const QMimeData *data, 
 {
     QList<FileSharingItem*> ret;
     QStringList files;
-    if (!data->hasImage() && data->hasUrls()) {
+
+    QString voiceMsgMime(QLatin1String("audio/ogg"));
+    QString voiceHistogramMime(QLatin1String("application/x-psi-histogram"));
+
+    bool hasVoice = data->hasFormat(voiceMsgMime) && data->hasFormat(voiceHistogramMime);
+    if (!data->hasImage() && !hasVoice && data->hasUrls()) {
         for(auto const &url: data->urls()) {
             if (!url.isLocalFile()) {
                 continue;
@@ -680,13 +712,22 @@ QList<FileSharingItem*> FileSharingManager::fromMimeData(const QMimeData *data, 
             }
         }
     }
-    if (files.isEmpty() && !data->hasImage()) {
+    if (files.isEmpty() && !data->hasImage() && !hasVoice) {
         return ret;
     }
 
     if (files.isEmpty()) { // so we have an image
-        QImage img = data->imageData().value<QImage>();
-        auto item = new FileSharingItem(img, acc, this);
+        FileSharingItem *item;
+        if (hasVoice) {
+            QByteArray ba = data->data(voiceMsgMime);
+            QByteArray histogram = data->data(voiceHistogramMime);
+            QVariantMap vm;
+            vm.insert("histogram", histogram);
+            item = new FileSharingItem(voiceMsgMime, ba, vm, acc, this);
+        } else {
+            QImage img = data->imageData().value<QImage>();
+            item = new FileSharingItem(img, acc, this);
+        }
         ret.append(item);
     } else {
         for (auto const &f: files) {

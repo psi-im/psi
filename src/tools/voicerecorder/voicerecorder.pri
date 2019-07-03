@@ -2,7 +2,7 @@ INCLUDEPATH += $$PWD
 DEPENDPATH  += $$PWD
 
 SOURCES += \
-    $$PWD/recorder.cpp
+    $$PWD/voicerecorder.cpp
 
 HEADERS += \
-    $$PWD/recorder.h
+    $$PWD/voicerecorder.h
