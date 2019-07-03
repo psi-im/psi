@@ -602,7 +602,11 @@ void DiscoListView::resizeEvent(QResizeEvent* e)
     QTreeWidget::resizeEvent(e);
 
     QHeaderView* h = header();
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+    h->resizeSection(2, h->fontMetrics().horizontalAdvance(headerItem()->text(2)) * 2);
+#else
     h->resizeSection(2, h->fontMetrics().width(headerItem()->text(2)) * 2);
+#endif
     float remainingWidth = viewport()->width() - h->sectionSize(2);
     h->resizeSection(1, int(remainingWidth * 0.3));
     h->resizeSection(0, int(remainingWidth * 0.7));
@@ -850,32 +854,29 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
     connect (actForward, SIGNAL(triggered()), SLOT(actionForward()));
 
     // custom actions
-    QSignalMapper *sm = new QSignalMapper(this);
-    connect(sm, SIGNAL(mapped(int)), SLOT(actionActivated(int)));
     actRegister = new IconAction (tr("Register"), "psi/register", tr("&Register"), 0, dlg);
-    connect (actRegister, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actRegister, Features::FID_Register);
+    connect (actRegister, &IconAction::triggered, this, [this](){actionActivated(Features::FID_Register);});
+
     actUnregister = new IconAction (tr("Unregister"), "psi/cancel", tr("&Unregister"), 0, dlg);
-    connect (actUnregister, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actUnregister, Features::FID_Gateway);
+    connect (actUnregister, &IconAction::triggered, this, [this](){actionActivated(Features::FID_Gateway);});
+
     actSearch = new IconAction (tr("Search"), "psi/search", tr("&Search"), 0, dlg);
-    connect (actSearch, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actSearch, Features::FID_Search);
+    connect (actSearch, &IconAction::triggered, this, [this](){actionActivated(Features::FID_Search);});
+
     actJoin = new IconAction (tr("Join"), "psi/groupChat", tr("&Join"), 0, dlg);
-    connect (actJoin, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actJoin, Features::FID_Groupchat);
+    connect (actJoin, &IconAction::triggered, this, [this](){actionActivated(Features::FID_Groupchat);});
+
     actAHCommand = new IconAction (tr("Execute command"), "psi/command", tr("&Execute command"), 0, dlg);
-    connect (actAHCommand, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actAHCommand, Features::FID_AHCommand);
+    connect (actAHCommand, &IconAction::triggered, this, [this](){actionActivated(Features::FID_AHCommand);});
+
     actVCard = new IconAction (tr("vCard"), "psi/vCard", tr("&vCard"), 0, dlg);
-    connect (actVCard, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actVCard, Features::FID_VCard);
+    connect (actVCard, &IconAction::triggered, this, [this](){actionActivated(Features::FID_VCard);});
+
     actAdd = new IconAction (tr("Add to roster"), "psi/addContact", tr("&Add to roster"), 0, dlg);
-    connect (actAdd, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actAdd, Features::FID_Add);
+    connect (actAdd, &IconAction::triggered, this, [this](){actionActivated(Features::FID_Add);});
+
     actQueryVersion = new IconAction (tr("Query version"), "psi/info", tr("&Query version"), 0, dlg);
-    connect (actQueryVersion, SIGNAL(triggered()), sm, SLOT(map()));
-    sm->setMapping(actQueryVersion, Features::FID_QueryVersion);
+    connect (actQueryVersion, &IconAction::triggered, this, [this](){actionActivated(Features::FID_QueryVersion);});
 
     // create toolbar
     toolBar = new QToolBar(tr("Service Discovery toolbar"), dlg);

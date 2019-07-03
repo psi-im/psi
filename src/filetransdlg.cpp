@@ -1211,7 +1211,11 @@ public:
 
         QFontMetrics fm(p->font());
         int ty = ((height - fm.height()) / 2) + fm.ascent() + y;
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        int textwidth = fm.horizontalAdvance(s);
+#else
         int textwidth = fm.width(s);
+#endif
         int center = xoff + (xsize / 2);
 
         p->save();
@@ -1250,14 +1254,22 @@ public:
 
     QString chopString(const QString &s, const QFontMetrics &fm, int len) const
     {
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        if(fm.horizontalAdvance(s) <= len)
+#else
         if(fm.width(s) <= len)
+#endif
             return s;
 
         QString str;
         uint n = s.length();
         do {
             str = s.mid(0, --n) + "...";
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        } while(n > 0 && fm.horizontalAdvance(str) > len);
+#else
         } while(n > 0 && fm.width(str) > len);
+#endif
         return str;
     }
 

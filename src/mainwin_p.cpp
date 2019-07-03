@@ -173,7 +173,11 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
         QFontMetrics fm(font());
 
         // w1 = width of button text, w2 = width of text area
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        int w1 = fm.horizontalAdvance(label);
+#else
         int w1 = fm.width(label);
+#endif
         int w2 = r.width();
 
         // backup original text
@@ -187,7 +191,11 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
             QString newtext;
             int n;
             for(n = oldtext.length(); n > 0; --n) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+                if(fm.horizontalAdvance(oldtext, n) < w2) {
+#else
                 if(fm.width(oldtext, n) < w2) {
+#endif
                     found = true;
                     break;
                 }

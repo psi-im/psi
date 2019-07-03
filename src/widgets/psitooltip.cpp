@@ -25,6 +25,7 @@
 #include <QPointer>
 #include <QHash>
 #include <QToolTip>
+#include <QScreen>
 #include "private/qeffects_p.h"
 
 #include "psitiplabel.h"
@@ -104,26 +105,9 @@ ToolTipPosition::ToolTipPosition(const QPoint& _pos, const QWidget* _w)
 {
 }
 
-int ToolTipPosition::getScreenNumber() const
-{
-    if (QApplication::desktop()->isVirtualDesktop())
-        return QApplication::desktop()->screenNumber(pos);
-
-    return QApplication::desktop()->screenNumber(w);
-}
-
-QRect ToolTipPosition::screenRect() const
-{
-#ifdef Q_OS_MAC
-    return QApplication::desktop()->availableGeometry(getScreenNumber());
-#else
-    return QApplication::desktop()->screenGeometry(getScreenNumber());
-#endif
-}
-
 QPoint ToolTipPosition::calculateTipPosition(const QWidget* label) const
 {
-    QRect screen = screenRect();
+    QRect screen = QApplication::screenAt(pos)->geometry();
 
     QPoint p = pos;
     p += QPoint(2,
@@ -200,7 +184,7 @@ void PsiToolTip::doShowText(const QPoint &pos, const QString &text, const QWidge
     bool preventAnimation = (PsiTipLabel::instance() != nullptr);
 
     installPsiToolTipFont();
-    QFrame *label = createTipLabel(text, QApplication::desktop()->screen(calc->getScreenNumber()));
+    QFrame *label = createTipLabel(text, QApplication::desktop());
     label->move(calc->calculateTipPosition(label));
 
     if ( QApplication::isEffectEnabled(Qt::UI_AnimateTooltip) == false || preventAnimation)

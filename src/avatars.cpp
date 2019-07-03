@@ -1036,7 +1036,11 @@ void AvatarFactory::publish_success(const QString& n, const PubSubItem& item)
         QDomElement meta_el = doc->createElementNS(PEP_AVATAR_METADATA_NS, PEP_AVATAR_METADATA_TN);
         QDomElement info_el = doc->createElement("info");
         info_el.setAttribute("id",d->selfAvatarHash_);
+#if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
+        info_el.setAttribute("bytes",avatar_image.sizeInBytes());
+#else
         info_el.setAttribute("bytes",avatar_image.byteCount());
+#endif
         info_el.setAttribute("height",avatar_image.height());
         info_el.setAttribute("width",avatar_image.width());
         info_el.setAttribute("type",image2type(d->selfAvatarData_));

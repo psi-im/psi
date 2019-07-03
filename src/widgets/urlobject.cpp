@@ -38,12 +38,12 @@ public:
     QString link;
     IconAction *act_xmpp, *act_mailto, *act_join_groupchat, *act_send_message, *act_chat, *act_browser, *act_add_to_roster, *act_copy, *act_info;
     URLObject *urlObject;
-    QSignalMapper xmppActionMapper;
 
     void connectXmppAction(QAction* action, const QString& query)
     {
-        connect(action, SIGNAL(triggered()), &xmppActionMapper, SLOT(map()));
-        xmppActionMapper.setMapping(action, query);
+        connect(action, &QAction::triggered, this, [query, this](){
+            xmppAction(query);
+        });
     }
 
     Private(URLObject *parent)
@@ -87,8 +87,6 @@ public:
         tr = qApp->translate("URLLabel", "User Info");
         act_info = new IconAction(tr, "psi/vCard", tr, 0, this);
         connectXmppAction(act_info, "vcard");
-
-        connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
     }
 
     QString copyString(QString from)

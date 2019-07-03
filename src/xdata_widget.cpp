@@ -461,7 +461,7 @@ public:
             QStringList::Iterator sit = val.begin();
             for ( ; sit != val.end(); ++sit)
                 if ( (*it).label == *sit || (*it).value == *sit )
-                    list->setItemSelected(item, true);
+                    item->setSelected(true);
         }
 
         QLabel *req = new QLabel(reqText(), xdw);
@@ -481,7 +481,7 @@ public:
 
         for (int i = 0; i < list->count(); i++) {
             QListWidgetItem* item = list->item(i);
-            if ( list->isItemSelected(item) ) {
+            if ( item->isSelected() ) {
                 QString lbl = item->text();
                 XData::Field::OptionList opts = f.options();
                 XData::Field::OptionList::Iterator it = opts.begin();

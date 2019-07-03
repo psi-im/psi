@@ -315,7 +315,7 @@ void AccountManageTree::dropEvent(QDropEvent *event)
 void AccountManageTree::dragMoveEvent(QDragMoveEvent *event)
 {
     QTreeWidget::dragMoveEvent(event);
-    sortByColumn(-1);
+    sortByColumn(-1, Qt::AscendingOrder);
 }
 
 
@@ -349,7 +349,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
     lv_accs->setDragDropMode(QAbstractItemView::InternalMove);
     lv_accs->setDragDropOverwriteMode(false);
     lv_accs->setSortingEnabled(true);
-    lv_accs->sortByColumn(-1);
+    lv_accs->sortByColumn(-1, Qt::AscendingOrder);
 
     foreach(PsiAccount* pa, psi->contactList()->accounts())
         new AccountManageItem(lv_accs, pa);

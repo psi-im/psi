@@ -30,9 +30,6 @@ public:
     ToolTipPosition(const QPoint& cursorPos, const QWidget* parentWidget);
     virtual ~ToolTipPosition() {}
 
-    int getScreenNumber() const;
-    QRect screenRect() const;
-
     virtual QPoint calculateTipPosition(const QWidget* label) const;
 
 protected:
