@@ -1,5 +1,5 @@
 /*
- * recorder.cpp - Sound recorder
+ * voicerecorder.cpp - Voice recorder
  * Copyright (C) 2019 Sergey Ilinykh, Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ void VoiceRecorder::record()
     recFileName_ = QString("%1/psi_tmp_record_%2.ogg")
                     .arg(ApplicationInfo::documentsDir())
                     .arg(QDateTime::currentDateTimeUtc().toString("dd_MM_yyyy_hh_mm_ss"));
-    audioRecorder_ = std::unique_ptr<AudioRecorder>(new AudioRecorder(parent()));
+    audioRecorder_.reset(new AudioRecorder(parent()));
     connect(audioRecorder_.get(), &AudioRecorder::stateChanged, this, [this](){
         if (audioRecorder_->recorder()->state() == QAudioRecorder::StoppedState) {
             emit recordingStopped();

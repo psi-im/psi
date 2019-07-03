@@ -1,5 +1,5 @@
 /*
- * recorder.h - Sound recorder
+ * voicerecorder.h - Voice recorder
  * Copyright (C) 2019 Sergey Ilinykh, Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef RECORDER_H
-#define RECORDER_H
+#ifndef VOICERECORDER_H
+#define VOICERECORDER_H
 
 #include <QObject>
 #include <memory>
@@ -35,7 +35,7 @@ public:
     void stop();
 
 signals:
-    void recordingStopped(const QByteArray &data, const QString &file);
+    void recordingStopped();
 
 private:
     void cleanUp();
@@ -46,4 +46,4 @@ private:
     QString recFileName_;
 };
 
-#endif //RECORDER_H
+#endif //VOICERECORDER_H
