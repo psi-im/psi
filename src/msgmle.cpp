@@ -621,9 +621,9 @@ void ChatEdit::insertAsQuote(const QString &text)
 //----------------------------------------------------------------------------
 LineEdit::LineEdit( QWidget *parent)
     : ChatEdit(parent)
-    , layout_(nullptr)
-    , recButton_(nullptr)
-    , overlay_(nullptr)
+    , layout_(new QHBoxLayout(this))
+    , recButton_(new QToolButton(this))
+    , overlay_(new QLabel(tr("Recording (%1 sec left)").arg(TIMEOUT/SECOND), this))
     , timeout_(TIMEOUT)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere); // no need for horizontal scrollbar with this
@@ -639,13 +639,11 @@ LineEdit::LineEdit( QWidget *parent)
     document()->rootFrame()->setFrameFormat(frmt);
 
     //Add text label and rec button to the right side of LineEdit
-    layout_ = new QHBoxLayout(this);
-    overlay_ = new QLabel(this);
+    //Setting label color to grey with 70% opacity with red bold text
     overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
     overlay_->setAlignment(Qt::AlignCenter);
     overlay_->setVisible(false);
     layout_->addWidget(overlay_);
-    recButton_ = new QToolButton(this);
     recButton_->setToolTip(tr("Record and share audio note while pressed"));
     recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
     recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
