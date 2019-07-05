@@ -174,6 +174,10 @@ ChatEdit::ChatEdit(QWidget *parent)
     : QTextEdit(parent)
     , palOriginal(palette())
     , palCorrection(palOriginal)
+    , layout_(new QHBoxLayout(this))
+    , recButton_(new QToolButton(this))
+    , overlay_(new QLabel(tr("Recording (%1 sec left)").arg(TIMEOUT/SECOND), this))
+    , timeout_(TIMEOUT)
 {
     controller_ = new HTMLTextController(this);
     capitalizer_ = new CapitalLettersController(this);
@@ -194,6 +198,70 @@ ChatEdit::ChatEdit(QWidget *parent)
     initActions();
     setShortcuts();
     optionsChanged();
+
+    const int bs = PsiIconset::instance()->system().iconSize();
+    //Set text right margin for rec button
+    QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
+    frmt.setRightMargin(bs + 8);
+    document()->rootFrame()->setFrameFormat(frmt);
+
+    //Add text label and rec button to the right side of LineEdit
+    //Setting label color to grey with 70% opacity with red bold text
+    overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
+    overlay_->setAlignment(Qt::AlignCenter);
+    overlay_->setVisible(false);
+    layout_->addWidget(overlay_);
+    recButton_->setToolTip(tr("Record and share audio note while pressed"));
+    recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
+    recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+    layout_->addWidget(recButton_);
+    layout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
+    layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
+
+    connect(recButton_, &QToolButton::pressed, this, [this](){ //Rec button pressed
+        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
+        overlay_->setVisible(true);
+        timeout_ = TIMEOUT;
+        timer_.reset(new QTimer); //countdown timer to stop recording while the button is pressed
+        connect(timer_.get(), &QTimer::timeout, this, [this]() {
+            if(timeout_>0) {
+                timeout_ -= SECOND;
+                overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/SECOND));
+            }
+            else {
+                timer_->stop();
+                recorder_->stop();
+            }
+        });
+        timer_->start(SECOND);
+        if(recorder_) {
+            recorder_->disconnect();
+            recorder_.reset();
+        }
+
+        recorder_.reset(new AudioRecorder);
+        recorder_->setMaxDuration(TIMEOUT);
+        connect(recorder_.get(), &AudioRecorder::recorded, this, [this](){
+            if (recorder_->duration() < 1000)
+                return;
+
+            QMimeData md;
+            md.setData("audio/ogg", recorder_->data());
+            md.setData("application/x-psi-histogram", recorder_->histogram());
+            emit fileSharingRequested(&md);
+        });
+        recorder_->record();
+    });
+    connect(recButton_, &QToolButton::released, this, [this](){ //Rec button relesed
+        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+        timer_->stop();
+        timer_.reset();
+        overlay_->setVisible(false);
+        if(recorder_) {
+            recorder_->stop();
+        }
+    });
+
 }
 
 ChatEdit::~ChatEdit()
@@ -621,80 +689,12 @@ void ChatEdit::insertAsQuote(const QString &text)
 //----------------------------------------------------------------------------
 LineEdit::LineEdit( QWidget *parent)
     : ChatEdit(parent)
-    , layout_(new QHBoxLayout(this))
-    , recButton_(new QToolButton(this))
-    , overlay_(new QLabel(tr("Recording (%1 sec left)").arg(TIMEOUT/SECOND), this))
-    , timeout_(TIMEOUT)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere); // no need for horizontal scrollbar with this
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    const int bs = PsiIconset::instance()->system().iconSize();
     setMinimumHeight(0);
-
-    //Set text right margin for rec button
-    QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
-    frmt.setRightMargin(bs + 8);
-    document()->rootFrame()->setFrameFormat(frmt);
-
-    //Add text label and rec button to the right side of LineEdit
-    //Setting label color to grey with 70% opacity with red bold text
-    overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
-    overlay_->setAlignment(Qt::AlignCenter);
-    overlay_->setVisible(false);
-    layout_->addWidget(overlay_);
-    recButton_->setToolTip(tr("Record and share audio note while pressed"));
-    recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
-    recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
-    recButton_->setGeometry(QRect(recButton_->pos(), QSize(bs,bs)));
-    layout_->addWidget(recButton_);
-    layout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
-    layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
-
-    connect(recButton_, &QToolButton::pressed, this, [this](){ //Rec button pressed
-        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
-        overlay_->setVisible(true);
-        timeout_ = TIMEOUT;
-        timer_.reset(new QTimer); //countdown timer to stop recording while the button is pressed
-        connect(timer_.get(), &QTimer::timeout, this, [this]() {
-            if(timeout_>0) {
-                timeout_ -= SECOND;
-                overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/SECOND));
-            }
-            else {
-                timer_->stop();
-                recorder_->stop();
-            }
-        });
-        timer_->start(SECOND);
-        if(recorder_) {
-            recorder_->disconnect();
-            recorder_.reset();
-        }
-
-        recorder_.reset(new AudioRecorder);
-        recorder_->setMaxDuration(TIMEOUT);
-        connect(recorder_.get(), &AudioRecorder::recorded, this, [this](){
-            if (recorder_->duration() < 1000)
-                return;
-
-            QMimeData md;
-            md.setData("audio/ogg", recorder_->data());
-            md.setData("application/x-psi-histogram", recorder_->histogram());
-            emit fileSharingRequested(&md);
-        });
-        recorder_->record();
-    });
-    connect(recButton_, &QToolButton::released, this, [this](){ //Rec button relesed
-        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
-        timer_->stop();
-        timer_.reset();
-        overlay_->setVisible(false);
-        if(recorder_) {
-            recorder_->stop();
-        }
-    });
 
     connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
 }
@@ -736,8 +736,6 @@ void LineEdit::updateScrollBar()
 {
     setVerticalScrollBarPolicy(sizeHint().height() > height() ? Qt::ScrollBarAlwaysOn : Qt::ScrollBarAlwaysOff);
     ensureCursorVisible();
-    const int bs = PsiIconset::instance()->system().iconSize();
-    recButton_->setGeometry(QRect(recButton_->pos(), QSize(bs,bs)));
 }
 
 #include "msgmle.moc"

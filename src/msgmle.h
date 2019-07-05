@@ -121,6 +121,12 @@ private:
     QString lastId;
     QPalette palOriginal;
     QPalette palCorrection;
+    QLayout *layout_;
+    QToolButton *recButton_;
+    QLabel *overlay_;
+    std::unique_ptr<QTimer> timer_;
+    std::unique_ptr<AudioRecorder> recorder_;
+    int timeout_;
 };
 
 
@@ -142,14 +148,6 @@ protected:
 private slots:
     void recalculateSize();
     void updateScrollBar();
-
-private:
-    QLayout *layout_;
-    QToolButton *recButton_;
-    QLabel *overlay_;
-    std::unique_ptr<QTimer> timer_;
-    std::unique_ptr<AudioRecorder> recorder_;
-    int timeout_;
 };
 
 #endif
