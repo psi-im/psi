@@ -47,7 +47,6 @@ public:
     virtual int screenshotWidth() const { return 512; } // hack
 
 #ifdef WEBENGINE
-    ThemeServer *themeServer();
     QWebEngineUrlRequestInterceptor *requestInterceptor();
 #endif
 

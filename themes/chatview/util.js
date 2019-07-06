@@ -106,10 +106,10 @@ function initPsiTheme() {
             },
 
             // replaces <icon name="icon_name" text="icon_text" />
-            // with <img src="/psiicon/icon_name" title="icon_text" />
+            // with <img src="/psi/icon/icon_name" title="icon_text" />
             icon2img : function (obj) {
                 var img = document.createElement('img');
-                img.src = "/psiicon/" + obj.getAttribute("name");
+                img.src = "/psi/icon/" + obj.getAttribute("name");
                 img.title = obj.getAttribute("text");
                 obj.parentNode.replaceChild(img, obj);
             },
@@ -364,7 +364,7 @@ function initPsiTheme() {
                     while (se.nextSibling !== ee) {
                         se.parentNode.removeChild(se.nextSibling);
                     }
-                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + "<img src=\"/psiicon/psi/action_templates_edit\">"));
+                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + "<img src=\"/psi/icon/psi/action_templates_edit\">"));
                     //chat.console(chat.util.props(node));
                     chat.util.handleLinks(node);
                     chat.util.replaceIcons(node);

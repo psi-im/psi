@@ -1,18 +1,15 @@
-QT += xml network sql
+QT += xml network sql widgets multimedia concurrent
 
-greaterThan(QT_MAJOR_VERSION, 4) {
-  QT += widgets multimedia concurrent
-
-  unix:!mac {
+unix:!mac {
     LIBS += -lxcb
     QT += x11extras
-  }
+}
 
-  keychain {
+keychain {
     keychain_with_qtmodule:QT += Qt5Keychain # if w/o module let's suppose configure added all paths
     DEFINES += HAVE_KEYCHAIN
-  }
 }
+
 unix:!mac {
   DEFINES += HAVE_X11
   DEFINES += HAVE_FREEDESKTOP
@@ -552,6 +549,14 @@ SOURCES += \
     $$PWD/networkaccessmanager.cpp \
     $$PWD/bytearrayreply.cpp \
 
+unix|qtwebengine {
+    # we need web server to serve media shares and some specific web engine requests
+    include (../3rdparty/qhttp.pri)
+    HEADERS += $$PWD/webserver.h
+    SOURCES += $$PWD/webserver.cpp
+    DEFINES += HAVE_WEBSERVER
+}
+
 # Qt Designer forms
 FORMS += \
     $$PWD/profileopen.ui \
@@ -657,7 +662,6 @@ qtwebengine|qtwebkit {
     qtwebengine {
         QT += webenginewidgets webchannel
         DEFINES += WEBENGINE
-        include (../3rdparty/qhttp.pri)
 
         HEADERS +=  \
             $$PWD/themeserver.h
@@ -681,4 +685,4 @@ mac {
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
-OTHER_FILES += $$PWD/src.cmake
+OTHER_FILES += $$PWD/src.cmake $$PWD/CMakeLists.txt

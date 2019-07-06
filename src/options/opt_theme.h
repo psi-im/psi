@@ -35,6 +35,8 @@ class OptionsTabAppearanceThemes : public MetaOptionsTab
     Q_OBJECT
 public:
     OptionsTabAppearanceThemes(QObject *parent);
+
+    void setData(PsiCon *, QWidget *);
 };
 
 class OptionsTabAppearanceTheme : public OptionsTab
@@ -55,7 +57,6 @@ protected slots:
 
 private slots:
     void themeSelected(const QModelIndex &current, const QModelIndex &previous);
-    void startLoading();
 private:
     QString getThemeId(const QString &objName) const;
 

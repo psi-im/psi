@@ -34,6 +34,7 @@ class OptionsTabAppearance : public MetaOptionsTab
     Q_OBJECT
 public:
     OptionsTabAppearance(QObject *parent);
+    void setData(PsiCon *, QWidget *);
 };
 
 class OptionsTabIconset : public MetaOptionsTab

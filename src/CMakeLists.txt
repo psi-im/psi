@@ -80,7 +80,7 @@ set(QT_LIBRARIES Qt5::Widgets Qt5::Core Qt5::Network Qt5::Xml ${WEBKIT_LIBS} Qt5
 if(LINUX)
     list(APPEND QT_LIBRARIES Qt5::DBus Qt5::X11Extras ${LIBXCB_LIBRARIES})
 endif()
-if(IS_WEBENGINE)
+if(UNIX OR IS_WEBENGINE)
     list(APPEND EXTRA_LIBS qhttp)
 endif()
 if(APPLE)
@@ -190,7 +190,8 @@ if(APPLE)
     add_subdirectory(CocoaUtilities)
 endif()
 
-if(IS_WEBENGINE)
+if(UNIX OR IS_WEBENGINE)
+    add_definitions(-DHAVE_WEBSERVER)
     include_directories(
         ${PROJECT_SOURCE_DIR}/3rdparty
         ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
@@ -335,7 +336,7 @@ endif()
 set(STANDARD_NUM 14)
 
 add_dependencies(${PROJECT_NAME} iris)
-if(IS_WEBENGINE)
+if(UNIX OR IS_WEBENGINE)
     add_dependencies(${PROJECT_NAME} qhttp)
 endif()
 add_dependencies(${PROJECT_NAME} build_ui_files)

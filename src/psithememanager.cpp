@@ -30,13 +30,11 @@ public:
     QSet<QString> required;
 };
 
-
-
 //---------------------------------------------------------
 // PsiThemeManager
 //---------------------------------------------------------
-PsiThemeManager::PsiThemeManager()
-    : QObject(QCoreApplication::instance())
+PsiThemeManager::PsiThemeManager(QObject *parent)
+    : QObject(parent)
 {
     d = new Private;//(this);
 }
@@ -44,13 +42,6 @@ PsiThemeManager::PsiThemeManager()
 PsiThemeManager::~PsiThemeManager()
 {
     delete d;
-}
-
-PsiThemeManager* PsiThemeManager::instance()
-{
-    if (!instance_)
-        instance_ = new PsiThemeManager();
-    return instance_;
 }
 
 void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
@@ -90,5 +81,3 @@ bool PsiThemeManager::loadAll()
     }
     return true;
 }
-
-PsiThemeManager* PsiThemeManager::instance_ = nullptr;

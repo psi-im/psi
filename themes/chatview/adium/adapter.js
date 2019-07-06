@@ -299,10 +299,10 @@ chat.util.updateObject(adapter, function(chat){
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
                 var initScripts;
                 if (chat.async) {
-                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
-<script src=\"/psithemes/chatview/util.js\"></script>\n \
-<script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
-<script src=\"/psiglobal/qwebchannel.js\"></script>\n \
+                    initScripts = "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
+<script src=\"/psi/themes/chatview/util.js\"></script>\n \
+<script src=\"/psi/themes/chatview/adium/adapter.js\"></script>\n \
+<script src=\"/psi/static/qwebchannel.js\"></script>\n \
 <script type=\"text/javascript\">\n \
     new QWebChannel(qt.webChannelTransport, function (channel) {\n \
         window.srvSession = channel.objects.srvSession;\n \
@@ -315,7 +315,7 @@ chat.util.updateObject(adapter, function(chat){
     });\n \
 </script>";
                 } else {
-                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
+                    initScripts = "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
                         <script type=\"text/javascript\"> \
                             window.addEventListener(\"load\", \
                                                       function() { \
@@ -449,7 +449,7 @@ chat.util.updateObject(adapter, function(chat){
                                         template = data.local?templates.outgoingContent:templates.incomingContent;
                                     }
                                     prevGrouppingData = data;
-                                    data.senderStatusIcon="/psiicon/status/online"; //FIXME temporary hack
+                                    data.senderStatusIcon="/psi/icon/status/online"; //FIXME temporary hack
                                     break;
                                 case "join":
                                 case "part":

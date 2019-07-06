@@ -58,6 +58,8 @@ class ContactUpdatesManager;
 class PopupManager;
 class NetworkAccessManager;
 class FileSharingManager;
+class PsiThemeManager;
+class WebServer;
 
 namespace OpenPGP {
     class Engine;
@@ -85,6 +87,8 @@ public:
     TabManager *tabManager() const;
     NetworkAccessManager *networkAccessManager() const;
     FileSharingManager *fileSharingManager() const;
+    PsiThemeManager *themeManager() const;
+    WebServer *webServer() const;
 
     AlertManager *alertManager() const;
 

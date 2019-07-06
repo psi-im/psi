@@ -42,10 +42,6 @@ class ChatViewThemeSession : public QObject {
     Theme theme;
     QString sessId; // unique id of session
 
-#ifdef WEBENGINE
-    ThemeServer *server = nullptr;
-#endif
-
 public:
     ChatViewThemeSession(QObject *parent = nullptr);
     virtual ~ChatViewThemeSession();

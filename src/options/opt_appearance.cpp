@@ -23,6 +23,7 @@
 #include "psioptions.h"
 #include "coloropt.h"
 #include "psithememanager.h"
+#include "psicon.h"
 
 
 class OptAppearanceUI : public QWidget, public Ui::OptAppearance
@@ -79,12 +80,18 @@ QSize FontLabel::sizeHint() const
 //----------------------------------------------------------------------------
 OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Psi's appearance"), "psi/appearance")
 {
+
+}
+
+void OptionsTabAppearance::setData(PsiCon *psi, QWidget *w)
+{
     addTab( new OptionsTabAppearanceGeneral(this) );
     addTab( new OptionsTabIconset(this) );
-    if (PsiThemeManager::instance()->registeredProviders().count()) {
+    if (psi->themeManager()->registeredProviders().count()) {
         addTab( new OptionsTabAppearanceThemes(this) );
     }
     addTab( new OptionsTabAppearanceMisc(this) );
+    MetaOptionsTab::setData(psi, w);
 }
 
 

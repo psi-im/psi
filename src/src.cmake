@@ -255,6 +255,11 @@ list(APPEND HEADERS
     historyimp.h
     )
 
+if(UNIX OR IS_WEBENGINE)
+    list(APPEND SOURCES webserver.cpp)
+    list(APPEND HEADERS webserver.h)
+endif()
+
 if(UNIX AND NOT APPLE AND NOT HAIKU)
     list(APPEND SOURCES
         dbus.cpp

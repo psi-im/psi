@@ -33,7 +33,11 @@ public:
 
     bool exec()
     {
+#ifdef Q_OS_UNIX
+        qc_use_http_parser = true;
+#else
     	qc_use_http_parser = (qc_webkit_type == "qtwebengine");
+#endif
     	if (!qc_use_http_parser)
     		return true; // http parser is not needed. success.
 

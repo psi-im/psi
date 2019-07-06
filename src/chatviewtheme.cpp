@@ -46,9 +46,7 @@
 #include "jsutil.h"
 #include "webview.h"
 #include "chatviewthemeprovider.h"
-#ifdef WEBENGINE
-# include "themeserver.h"
-#endif
+#include "chatviewthemeprovider_priv.h"
 #include "avatars.h"
 #include "common.h"
 #include "psicon.h"
@@ -147,10 +145,10 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
     //QString themeServer = ChatViewThemeProvider::serverAddr();
     wv->page()->setHtml(QString(
         "<html><head>\n"
-        "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n"
-        "<script src=\"/psithemes/chatview/util.js\"></script>\n"
-        "<script src=\"/psithemes/chatview/%1/adapter.js\"></script>\n"
-        "<script src=\"/psiglobal/qwebchannel.js\"></script>\n"
+        "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n"
+        "<script src=\"/psi/themes/chatview/util.js\"></script>\n"
+        "<script src=\"/psi/themes/chatview/%1/adapter.js\"></script>\n"
+        "<script src=\"/psi/static/qwebchannel.js\"></script>\n"
         "<script type=\"text/javascript\">\n"
             "document.addEventListener(\"DOMContentLoaded\", function () {\n"
                 "new QWebChannel(qt.webChannelTransport, function (channel) {\n"
@@ -270,11 +268,6 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     channel->registerObject(QLatin1String("srvSession"), session);
     page->setWebChannel(channel);
 
-    ChatViewThemeProvider *cvProvider = static_cast<ChatViewThemeProvider*>(provider);
-
-    auto server = cvProvider->themeServer();
-    session->server = server;
-
     QPointer<ChatViewThemeSession> weakSession(session);
     auto handler = [weakSession,this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
     {
@@ -365,8 +358,8 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
         return false;
     };
 
-    session->sessId = server->registerSessionHandler(handler);
-    QUrl url = server->serverUrl();
+    session->sessId = ChatViewCon::instance()->registerSessionHandler(handler);
+    QUrl url = ChatViewCon::instance()->serverUrl();
     QUrlQuery q;
     q.addQueryItem(QLatin1String("psiId"), session->sessId);
     url.setQuery(q);
@@ -430,9 +423,7 @@ bool ChatViewJSLoader::isMuc() const
 QString ChatViewJSLoader::serverUrl() const
 {
 #ifdef WEBENGINE
-    ChatViewThemeProvider *cvProvider = static_cast<ChatViewThemeProvider*>(theme->provider);
-    auto server = cvProvider->themeServer();
-    QUrl url = server->serverUrl();
+    QUrl url = ChatViewCon::instance()->serverUrl();
     return url.url();
 #else
     static QString url("http://psi");
@@ -625,7 +616,7 @@ ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *p
     QObject(parent),
     theme(theme)
 {
-    psiDefaultAvatarUrl = "psiglobal/avatar/default.png"; // relative to session url
+    psiDefaultAvatarUrl = "psi/static/avatar/default.png"; // relative to session url
     // may be in the future we can make different defaults. per transport for example
 
     optChangeTimer.setSingleShot(true);
@@ -727,9 +718,7 @@ ChatViewThemeSession::ChatViewThemeSession(QObject *parent) :
 ChatViewThemeSession::~ChatViewThemeSession()
 {
 #ifdef WEBENGINE
-    if (server) {
-        server->unregisterSessionHandler(sessId);
-    }
+    ChatViewCon::instance()->unregisterSessionHandler(sessId);
 #else
     theme.priv<ChatViewThemePrivate>()->nam->unregisterSessionHandler(sessId);
 #endif

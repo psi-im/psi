@@ -25,6 +25,7 @@
 #include <QStringList>
 
 class Theme;
+class PsiThemeProvider;
 
 struct ThemeItemInfo
 {
@@ -54,15 +55,18 @@ public:
         IsCurrent
     };
 
-    PsiThemeModel(QObject *parent);
+    PsiThemeModel(PsiThemeProvider *provider, QObject *parent);
     ~PsiThemeModel();
-    void setType(const QString &type);
 
     int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
     QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
     int themeRow(const QString &id);
 
     bool setData(const QModelIndex &index, const QVariant &value, int role);
+
+public slots:
+    void load();
+
 private slots:
     void onThreadedResultReadyAt(int index);
     void loadComplete();
@@ -70,10 +74,10 @@ private slots:
 private:
     struct Loader;
     Loader *loader = nullptr;
+    PsiThemeProvider *provider = nullptr;
     QFutureWatcher<ThemeItemInfo> themeWatcher;
     QFuture<ThemeItemInfo> themesFuture;
     QList<ThemeItemInfo> themesInfo;
-    QString providerType;
 };
 
 #endif

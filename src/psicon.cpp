@@ -89,6 +89,9 @@
 #endif
 #include "spellchecker/aspellchecker.h"
 #include "networkaccessmanager.h"
+#ifdef HAVE_WEBSERVER
+# include "webserver.h"
+#endif
 #ifdef WEBKIT
 #include "avatars.h"
 #include "chatviewthemeprovider.h"
@@ -294,6 +297,10 @@ public:
     IconSelectPopup *iconSelect = nullptr;
     NetworkAccessManager *nam = nullptr;
     FileSharingManager *fileSharingManager = nullptr;
+    PsiThemeManager *themeManager = nullptr;
+#ifdef HAVE_WEBSERVER
+    WebServer *webServer = nullptr;
+#endif
 #ifdef FILETRANSFER
     FileTransDlg *ftwin = nullptr;
 #endif
@@ -519,14 +526,16 @@ bool PsiCon::init()
 
     d->nam = new NetworkAccessManager(this);
     d->fileSharingManager = new FileSharingManager(this);
+#ifdef HAVE_WEBSERVER
+    d->webServer = new WebServer(this);
+#endif
+    d->themeManager = new PsiThemeManager(this);
 #ifdef WEBKIT
-    PsiThemeManager::instance()->registerProvider(
-            new ChatViewThemeProvider(this), true);
-    PsiThemeManager::instance()->registerProvider(
-            new GroupChatViewThemeProvider(this), true);
+    d->themeManager->registerProvider(new ChatViewThemeProvider(this), true);
+    d->themeManager->registerProvider(new GroupChatViewThemeProvider(this), true);
 #endif
 
-    if( !PsiThemeManager::instance()->loadAll() ) {
+    if( !d->themeManager->loadAll() ) {
         QMessageBox::critical(nullptr, tr("Error"), tr("Unable to load theme!  Please make sure Psi is properly installed."));
         result = false;
     }
@@ -732,8 +741,14 @@ void PsiCon::deinit()
 
 #ifdef WEBKIT
     // unload webkit themes early (before realease of webengine profile)
-    delete PsiThemeManager::instance()->unregisterProvider(QString::fromLatin1("groupchatview"));
-    delete PsiThemeManager::instance()->unregisterProvider(QString::fromLatin1("chatview"));
+    delete d->themeManager->unregisterProvider(QString::fromLatin1("groupchatview"));
+    delete d->themeManager->unregisterProvider(QString::fromLatin1("chatview"));
+#endif
+    delete d->themeManager;
+    d->themeManager = nullptr;
+#ifdef HAVE_WEBSERVER
+    delete d->webServer;
+    d->webServer = nullptr;
 #endif
 
     d->idle.stop();
@@ -888,6 +903,20 @@ NetworkAccessManager *PsiCon::networkAccessManager() const
 FileSharingManager *PsiCon::fileSharingManager() const
 {
     return d->fileSharingManager;
+}
+
+PsiThemeManager *PsiCon::themeManager() const
+{
+    return d->themeManager;
+}
+
+WebServer *PsiCon::webServer() const
+{
+#ifdef HAVE_WEBSERVER
+    return d->webServer;
+#else
+    return nullptr;
+#endif
 }
 
 TuneControllerManager *PsiCon::tuneManager() const

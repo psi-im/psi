@@ -89,8 +89,9 @@ struct PsiThemeModel::Loader
 // PsiThemeModel
 //------------------------------------------------------------------------------
 
-PsiThemeModel::PsiThemeModel(QObject *parent)
-    : QAbstractListModel(parent)
+PsiThemeModel::PsiThemeModel(PsiThemeProvider *provider, QObject *parent)
+    : QAbstractListModel(parent),
+      provider(provider)
 {
     connect(&themeWatcher, SIGNAL(resultReadyAt(int)),
             SLOT(onThreadedResultReadyAt(int)));
@@ -117,28 +118,24 @@ void PsiThemeModel::loadComplete()
     qDebug("Themes loading finished");
 }
 
-void PsiThemeModel::setType(const QString &type)
+void PsiThemeModel::load()
 {
-    providerType = type;
-    PsiThemeProvider *provider = PsiThemeManager::instance()->provider(type);
-    if (provider) {
-        loader = new Loader(provider);
-        if (provider->threadedLoading()) {
-            themesFuture = QtConcurrent::mapped(provider->themeIds(), *loader);
-            themeWatcher.setFuture(themesFuture);
-        } else {
-            QStringList ids = provider->themeIds();
-            qDebug() << ids;
-            foreach (const QString &id, ids) {
-                loader->asyncLoad(id, [this](const ThemeItemInfo &ti) {
-                    if (ti.isValid) {
-                        beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
-                        themesInfo.append(ti);
-                        endInsertRows();
-                    }
-                });
+    loader = new Loader(provider);
+    if (provider->threadedLoading()) {
+        themesFuture = QtConcurrent::mapped(provider->themeIds(), *loader);
+        themeWatcher.setFuture(themesFuture);
+    } else {
+        QStringList ids = provider->themeIds();
+        qDebug() << ids;
+        foreach (const QString &id, ids) {
+            loader->asyncLoad(id, [this](const ThemeItemInfo &ti) {
+                if (ti.isValid) {
+                    beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
+                    themesInfo.append(ti);
+                    endInsertRows();
+                }
+            });
 
-            }
         }
     }
 }
@@ -199,7 +196,6 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 
 bool PsiThemeModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    PsiThemeProvider *provider = PsiThemeManager::instance()->provider(providerType);
     if (!index.isValid() || !provider) {
         return false;
     }

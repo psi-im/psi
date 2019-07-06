@@ -153,12 +153,6 @@ void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 }
 
 #ifdef WEBENGINE
-ThemeServer *ChatViewThemeProvider::themeServer()
-{
-    Q_ASSERT(ChatViewCon::isReady());
-    return ChatViewCon::instance()->themeServer;
-}
-
 QWebEngineUrlRequestInterceptor *ChatViewThemeProvider::requestInterceptor()
 {
     Q_ASSERT(ChatViewCon::isReady());

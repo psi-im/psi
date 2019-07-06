@@ -81,6 +81,11 @@ ThemeServer::ThemeServer(QObject *parent) :
         }
         if (!handler && path.size() > 1) { // if we have something after slash
             QString baPath = path.mid(1);
+
+            // baPath => session base path + remaining path
+            //   session base path - is usually "tXXX" where XXX is a sequence number
+            //
+            // check all session base pathes to find best suitable baPath handler
             auto it = sessionHandlers.begin();
             while (it != sessionHandlers.end()) {
                 if (!it.value()) { /* garbage collecting */

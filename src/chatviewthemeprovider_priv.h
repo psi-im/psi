@@ -21,7 +21,8 @@
 #define CHATVIEWTHEMEPROVIDER_PRIV_H
 
 #ifdef WEBENGINE
-#include <QWebEngineUrlRequestInterceptor>
+# include <QWebEngineUrlRequestInterceptor>
+# include "webserver.h"
 #else
 #include <QObject> // at least
 #endif
@@ -45,13 +46,19 @@ class ChatViewCon : public QObject
     Q_OBJECT
 
     PsiCon *pc;
-
+#ifdef WEBENGINE
+    QMap<QString,WebServer::Handler> sessionHandlers;
+    int handlerSeed = 0;
+#endif
     ChatViewCon(PsiCon *pc);
 public:
     ~ChatViewCon();
 #ifdef WEBENGINE
-    ThemeServer *themeServer;
     ChatViewUrlRequestInterceptor *requestInterceptor;
+
+    QString registerSessionHandler(const WebServer::Handler &handler);
+    void unregisterSessionHandler(const QString &path);
+    QUrl serverUrl() const;
 #endif
     static ChatViewCon* instance();
     static void init(PsiCon *pc);

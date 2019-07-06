@@ -24,6 +24,7 @@
 #include "psithememodel.h"
 #include "psithememanager.h"
 #include "psiiconset.h"
+#include "psicon.h"
 
 #include <QToolButton>
 #include <QDialog>
@@ -43,10 +44,14 @@ public:
 OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent)
     : MetaOptionsTab(parent, "themes", "", tr("Themes"), tr("Configure themes"))
 {
-    foreach (PsiThemeProvider *provider,
-             PsiThemeManager::instance()->registeredProviders()) {
+}
+
+void OptionsTabAppearanceThemes::setData(PsiCon *psi, QWidget *w)
+{
+    foreach (PsiThemeProvider *provider,psi->themeManager()->registeredProviders()) {
         addTab( new OptionsTabAppearanceTheme(this, provider) );
     }
+    MetaOptionsTab::setData(psi, w);
 }
 
 
@@ -80,7 +85,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
     w = new OptAppearanceThemeUI();
     OptAppearanceThemeUI *d = static_cast<OptAppearanceThemeUI *>(w);
 
-    unsortedModel = new PsiThemeModel(this);
+    unsortedModel = new PsiThemeModel(provider, this);
 
     themesModel = new QSortFilterProxyModel(this);
     themesModel->setSourceModel(unsortedModel);
@@ -97,14 +102,9 @@ QWidget *OptionsTabAppearanceTheme::widget()
         SIGNAL(rowsInserted(QModelIndex,int,int)),
         SLOT(modelRowsInserted(QModelIndex,int,int)));
 
-    QTimer::singleShot(0, this, SLOT(startLoading()));
+    QTimer::singleShot(0, unsortedModel, &PsiThemeModel::load);
 
     return w;
-}
-
-void OptionsTabAppearanceTheme::startLoading()
-{
-    unsortedModel->setType(provider->type());
 }
 
 void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)

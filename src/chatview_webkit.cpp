@@ -90,12 +90,7 @@ public:
     PsiAccount *account_ = nullptr;
     AvatarFactory::UserHashes remoteIcons;
     AvatarFactory::UserHashes localIcons;
-
-    inline ChatViewThemeProvider* themeProvider() const
-    {
-        return static_cast<ChatViewThemeProvider *>(PsiThemeManager::instance()->
-                            provider(isMuc_?"groupchatview":"chatview"));
-    }
+    ChatViewThemeProvider *themeProvider = nullptr;
 
     static QString closeIconTags(const QString &richText)
     {
@@ -440,7 +435,7 @@ ChatView::~ChatView()
 // something after we know isMuc and dialog is set. kind of final step
 void ChatView::init()
 {
-    Theme curTheme = d->themeProvider()->current();
+    Theme curTheme = d->themeProvider->current();
     //qDebug() << "Init chatview with theme" << curTheme.name();
     if (curTheme.state() != Theme::State::Loaded) {
         qDebug("ChatView theme is not loaded. this is fatal");
@@ -492,8 +487,6 @@ void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const Jid &jid, con
     d->isMucPrivate_ = isMucPrivate;
     d->jid_ = jid;
     d->name_ = name;
-
-    connect(d->themeProvider(), SIGNAL(themeChanged()), SLOT(init()));
 }
 
 void ChatView::setAccount(PsiAccount *acc)
@@ -501,6 +494,9 @@ void ChatView::setAccount(PsiAccount *acc)
     d->account_ = acc;
     d->remoteIcons = acc->avatarFactory()->userHashes((d->isMuc_ || d->isMucPrivate_)? d->jid_ : d->jid_.withResource(QString()));
     d->localIcons = acc->avatarFactory()->userHashes(acc->jid());
+
+    d->themeProvider  = static_cast<ChatViewThemeProvider*>(acc->psi()->themeManager()->provider(d->isMuc_?"groupchatview":"chatview"));
+    connect(d->themeProvider, SIGNAL(themeChanged()), SLOT(init()));
 }
 
 void ChatView::contextMenuEvent(QContextMenuEvent *e)

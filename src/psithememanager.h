@@ -29,19 +29,14 @@
 class PsiThemeManager : public QObject {
     Q_OBJECT
 public:
-    static PsiThemeManager* instance();
+    PsiThemeManager(QObject *parent);
+    ~PsiThemeManager();
 
     void registerProvider(PsiThemeProvider *provider, bool required = false);
     PsiThemeProvider *unregisterProvider(const QString &type);
     PsiThemeProvider *provider(const QString &type);
     QList<PsiThemeProvider *> registeredProviders() const;
     bool loadAll();
-
-private:
-    PsiThemeManager();
-    ~PsiThemeManager();
-
-    static PsiThemeManager* instance_;
 
     class Private;
     Private *d;
