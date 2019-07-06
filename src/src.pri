@@ -662,11 +662,6 @@ qtwebengine|qtwebkit {
     qtwebengine {
         QT += webenginewidgets webchannel
         DEFINES += WEBENGINE
-
-        HEADERS +=  \
-            $$PWD/themeserver.h
-        SOURCES +=  \
-            $$PWD/themeserver.cpp
     } else {
         QT += webkit
         greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets

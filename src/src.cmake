@@ -482,14 +482,6 @@ list(APPEND HEADERS ${qite_HEADERS})
 list(APPEND SOURCES ${qite_SOURCES})
 
 if(IS_WEBKIT OR IS_WEBENGINE)
-    if(IS_WEBENGINE)
-        list(APPEND SOURCES
-            themeserver.cpp
-        )
-        list(APPEND HEADERS
-            themeserver.h
-        )
-    endif()
     list(APPEND HEADERS
         chatview_webkit.h
         webview.h

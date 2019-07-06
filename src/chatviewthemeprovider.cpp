@@ -34,9 +34,6 @@
 #include "theme.h"
 #include "applicationinfo.h"
 #include "psithememanager.h"
-#ifdef WEBENGINE
-# include "themeserver.h"
-#endif
 #include "chatviewthemeprovider_priv.h"
 #include "chatviewtheme.h"
 
