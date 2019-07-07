@@ -243,7 +243,7 @@ set(RESOURCES
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
-add_custom_target(build_ui_files DEPENDS "${UI_FORMS}")# SOURCES "${FORMS}")
+add_custom_target(build_ui_files DEPENDS "${UI_FORMS}")
 
 if(WIN32)
     if(IS_PSIPLUS)
@@ -332,8 +332,6 @@ if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
                 ${VERBOSED_NAME}
     )
 endif()
-
-set(STANDARD_NUM 14)
 
 add_dependencies(${PROJECT_NAME} iris)
 if(UNIX OR IS_WEBENGINE)
