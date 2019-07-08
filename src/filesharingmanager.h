@@ -62,6 +62,7 @@ public:
     bool isSuccess() const;
     void start();
     void abort();
+    void setRange(qint64 start, qint64 size);
 
     QString fileName() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;
@@ -151,7 +152,6 @@ public:
     QString downloadThumbnail(const QString &sourceId);
     QUrl simpleSource(const QString &sourceId) const;
     FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, qint64 start = -1, qint64 size = -1);
-    void saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath);
 
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);

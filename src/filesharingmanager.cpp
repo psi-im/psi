@@ -71,6 +71,8 @@ public:
     QScopedPointer<QFile> tmpFile;
     QString lastError;
     QString dstFileName;
+    qint64 rangeStart = -1;
+    qint64 rangeSize = -1;
     bool success = false;
 
     void startNextDownloader()
@@ -126,7 +128,11 @@ public:
 
     void downloadNetworkManager(const QString &uri)
     {
-        QNetworkReply *reply = acc->psi()->networkAccessManager()->get(QNetworkRequest(QUrl(uri)));
+        QNetworkRequest req = QNetworkRequest(QUrl(uri));
+        if (rangeStart != -1)
+            req.setRawHeader("Range", QString("bytes=%1-%2").arg(QString::number(rangeStart),
+                                                                 QString::number(rangeStart + rangeSize - 1)).toLatin1());
+        QNetworkReply *reply = acc->psi()->networkAccessManager()->get(req);
         connect(reply, &QNetworkReply::readyRead, this, [this,reply](){
             setupTempFile();
             if (!tmpFile) {
@@ -181,7 +187,10 @@ public:
                 startNextDownloader();
                 return;
             }
-            tmpFile->write(data);
+            if (rangeStart != -1)
+                tmpFile->write(data.mid(int(rangeStart), int(rangeSize)));
+            else
+                tmpFile->write(data);
             downloadFinished();
         });
     }
@@ -224,6 +233,8 @@ public:
             startNextDownloader();
             return;
         }
+        if (rangeStart != -1)
+            file.setRange(XMPP::Jingle::FileTransfer::Range(quint64(rangeStart), quint64(rangeSize)));
         app->setFile(file);
         session->addContent(app);
 
@@ -265,20 +276,7 @@ public:
         lastError.clear();
         tmpFile->flush();
         tmpFile->seek(0);
-        auto h = file.hash(Hash::Sha1);
-        QString sha1hash;
-        if (!h.isValid() || h.data().isEmpty()) {
-            // no sha1 hash
-            Hash h(Hash::Sha1);
-            if (h.computeFromDevice(tmpFile.data())) {
-                sha1hash = QString::fromLatin1(h.data().toHex());
-            }
-        } else {
-            sha1hash = QString::fromLatin1(h.data().toHex());
-        }
         tmpFile->rename(QString("%1/%2").arg(ApplicationInfo::documentsDir(),dstFileName));
-        manager->saveDownloadedSource(sourceId, sha1hash, QFileInfo(tmpFile->fileName()).absoluteFilePath());
-
         success = true;
         emit q->finished();
     }
@@ -338,6 +336,12 @@ void FileShareDownloader::start()
 void FileShareDownloader::abort()
 {
     // TODO
+}
+
+void FileShareDownloader::setRange(qint64 start, qint64 size)
+{
+    d->rangeStart = start;
+    d->rangeSize = size;
 }
 
 QString FileShareDownloader::fileName() const
@@ -628,11 +632,6 @@ void FileSharingItem::publish()
 class FileSharingManager::Private
 {
 public:
-    enum State {
-        None,
-        Downloading,
-        Cached
-    };
     class Source
     {
     public:
@@ -641,8 +640,7 @@ public:
         XMPP::Jingle::FileTransfer::File file;
         QList<XMPP::Jid> jids;
         QStringList uris;
-        State state = None;
-        FileShareDownloader *downloader = nullptr;
+        FileShareDownloader *downloader = nullptr; // download request for full file
     };
 
     FileCache *cache;
@@ -676,7 +674,7 @@ FileCacheItem *FileSharingManager::getCacheItem(const QString &id, bool reborn, 
     if (!item)
         return nullptr;
 
-    QString link = item->metadata().value(QLatin1String("link"));
+    QString link = item->metadata().value(QLatin1String("link")).toString();
     QString fileName = link.size()? link : item->fileName();
     if (fileName.isEmpty() || !QFile(fileName).isReadable()) {
         d->cache->remove(id);
@@ -829,62 +827,70 @@ FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QS
     if (size == -1)
         size = qint64(src.file.size());
 
-    // TODO pass start/size to downloader. store reference to downloader only for full download
+    FileShareDownloader *downloader = src.downloader;
+    if (!(src.downloader && size == qint64(src.file.size()))) {
+        downloader = new FileShareDownloader(acc, sourceId, src.file, src.jids, src.uris, this);
 
-    if (!src.downloader) {
-        src.downloader = new FileShareDownloader(acc, sourceId, src.file, src.jids, src.uris, this);
-        connect(src.downloader, &FileShareDownloader::started, this, [this,sourceId](){
-            auto it = d->sources.find(sourceId);
-            if (it == d->sources.end())
-                return;
-            it->state = Private::Downloading;
-        });
-        connect(src.downloader, &FileShareDownloader::finished, this, [this,sourceId](){
-            auto it = d->sources.find(sourceId);
-            if (it == d->sources.end())
-                return;
-            it->state = it->downloader->isSuccess()? Private::Cached : Private::None;
-            it->downloader->disconnect(this);
-            it->downloader->deleteLater();
-            it->downloader = nullptr;
-        });
-        connect(src.downloader, &FileShareDownloader::destroyed, this, [this,sourceId](){
-            auto it = d->sources.find(sourceId);
-            if (it == d->sources.end())
-                return;
-            if (it->state == Private::Downloading)
-                it->state = Private::None;
-            it->downloader = nullptr;
-        });
+        if (size == qint64(src.file.size())) {// so src.downloader wasn't set but has to now
+            src.downloader = downloader;
+            connect(downloader, &FileShareDownloader::finished, this, [this,sourceId](){
+                auto it = d->sources.find(sourceId);
+                if (it == d->sources.end())
+                    return;
+                Private::Source &src = *it;
+                src.downloader->disconnect(this);
+                src.downloader->deleteLater();
+
+                if (src.downloader->isSuccess()) {
+                    QFile tmpFile(src.downloader->fileName());
+                    tmpFile.open(QIODevice::ReadOnly);
+                    auto h = src.downloader->jingleFile().hash(Hash::Sha1);
+                    QString sha1hash;
+                    if (!h.isValid() || h.data().isEmpty()) {
+                        // no sha1 hash
+                        Hash h(Hash::Sha1);
+                        if (h.computeFromDevice(&tmpFile)) {
+                            sha1hash = QString::fromLatin1(h.data().toHex());
+                        }
+                    } else {
+                        sha1hash = QString::fromLatin1(h.data().toHex());
+                    }
+                    tmpFile.close();
+
+                    QVariantMap vm;
+                    vm.insert(QString::fromLatin1("type"), src.file.mediaType());
+                    vm.insert(QString::fromLatin1("uris"), src.uris);
+                    vm.insert(QString::fromLatin1("link"), QFileInfo(src.downloader->fileName()).absoluteFilePath());
+                    auto thumb = src.file.thumbnail();
+                    if (thumb.isValid())
+                        vm.insert(QString::fromLatin1("thumbnail"), thumb.uri);
+                    if (src.file.audioSpectrum().bars.count()) {
+                        auto s = src.file.audioSpectrum();
+                        QStringList sl;
+                        sl.reserve(s.bars.count());
+                        for (auto const &v: s.bars) sl.append(QString::number(v));
+                        vm.insert(QString::fromLatin1("spectrum"), sl.join(','));
+                        vm.insert(QString::fromLatin1("spectrum_coding"), s.coding);
+                    }
+
+                    saveToCache(sha1hash, QByteArray(), vm, FILE_TTL);
+                    d->sources.erase(it); // now it's in cache so the source is not needed anymore
+                } else {
+                    src.downloader = nullptr;
+                }
+            });
+            connect(downloader, &FileShareDownloader::destroyed, this, [this,sourceId](){
+                auto it = d->sources.find(sourceId);
+                if (it == d->sources.end())
+                    return;
+                it->downloader = nullptr;
+            });
+
+        } else
+            downloader->setRange(start, size);
     }
 
-    return src.downloader;
-}
-
-void FileSharingManager::saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath)
-{
-    auto it = d->sources.find(sourceId);
-    if (it == d->sources.end())
-        return;
-
-    Private::Source &src = *it;
-    QVariantMap vm;
-    vm.insert(QString::fromLatin1("type"), src.file.mediaType());
-    vm.insert(QString::fromLatin1("uris"), src.uris);
-    vm.insert(QString::fromLatin1("link"), absPath);
-    auto thumb = src.file.thumbnail();
-    if (thumb.isValid())
-        vm.insert(QString::fromLatin1("thumbnail"), thumb.uri);
-    if (src.file.audioSpectrum().bars.count()) {
-        auto s = src.file.audioSpectrum();
-        QStringList sl;
-        sl.reserve(s.bars.count());
-        for (auto const &v: s.bars) sl.append(QString::number(v));
-        vm.insert(QString::fromLatin1("spectrum"), sl.join(','));
-        vm.insert(QString::fromLatin1("spectrum_coding"), s.coding);
-    }
-
-    saveToCache(hash, QByteArray(), vm, FILE_TTL);
+    return downloader;
 }
 
 bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session *session)
@@ -1037,7 +1043,7 @@ static bool parseHttpRange(qhttp::server::QHttpRequest* req, qhttp::server::QHtt
         auto trab = ba.trimmed();
         if (!trab.size()) {
             res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-            res->addHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(fsize);
+            res->addHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(fsize));
             return false;
         }
         bool ok;
@@ -1065,7 +1071,7 @@ static bool parseHttpRange(qhttp::server::QHttpRequest* req, qhttp::server::QHtt
         }
         if (start >= fsize || end >= fsize || start > end) {
             res->setStatusCode(qhttp::ESTATUS_REQUESTED_RANGE_NOT_SATISFIABLE);
-            res->addHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(fsize);
+            res->addHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(fsize));
             return false;
         }
         ranges.append(qMakePair(start, end));
@@ -1094,16 +1100,16 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             return false;
         }
         if (lastModified.isValid())
-            res->addHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date));
+            res->addHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
         if (contentType.count())
-            res->addHeader("Content-Type", str.toLatin1());
+            res->addHeader("Content-Type", contentType.toLatin1());
 
-        qint64 start = 0;
-        qint64 size  = fileSize;
+        start = 0;
+        size  = fileSize;
         if (ranges.count()) {
             start = ranges[0].first;
             size = ranges[0].second - ranges[0].first + 1;
-            auto range = QString(QLatin1String("bytes %1-%2/%3")).arg(start).arg(ranges[0].second).arg(file->size());
+            auto range = QString(QLatin1String("bytes %1-%2/%3")).arg(start).arg(ranges[0].second).arg(fileSize);
             res->addHeader("Content-Range", range.toLatin1());
             res->setStatusCode(qhttp::ESTATUS_PARTIAL_CONTENT);
         } else {
@@ -1122,7 +1128,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         lastModified = fi.lastModified();
         contentType = item->metadata().value("type").toString();
         file->open(QIODevice::ReadOnly);
-        if (!setupHeaders(fi.size()))
+        if (!setupHeaders())
             return false;
         file->seek(start);
 

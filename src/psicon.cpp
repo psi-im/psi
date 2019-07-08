@@ -539,7 +539,7 @@ bool PsiCon::init()
             if(!account->isActive() || account->id() != pathParts[0])
                 continue;
 
-            return d->fileSharingManager->downloadHttpRequest(account, pathParts[2], req, res);
+            return d->fileSharingManager->downloadHttpRequest(account, pathParts[2].toString(), req, res);
         }
 
         return true;
