@@ -38,6 +38,16 @@ namespace XMPP {
     class Message;
     namespace Jingle {
         class Session;
+        namespace FileTransfer {
+            class File;
+        }
+    }
+}
+
+namespace qhttp {
+    namespace server {
+        class QHttpRequest;
+        class QHttpResponse;
     }
 }
 
@@ -54,6 +64,7 @@ public:
     void abort();
 
     QString fileName() const;
+    const XMPP::Jingle::FileTransfer::File &jingleFile() const;
 signals:
     void started();
     void finished();
@@ -127,7 +138,7 @@ public:
     ~FileSharingManager();
 
     static QString getCacheDir();
-    FileCacheItem *getCacheItem(const QString &id, bool reborn = false);
+    FileCacheItem *getCacheItem(const QString &id, bool reborn = false, QString *fileName = nullptr);
 
     // id - usually hex(sha1(image data))
     FileCacheItem *saveToCache(const QString &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
@@ -139,14 +150,17 @@ public:
     QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
     QUrl simpleSource(const QString &sourceId) const;
-    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId);
+    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, qint64 start = -1, qint64 size = -1);
     void saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath);
 
     // returns false if unable to accept automatically
-    bool jingleAutoAcceptDownloadRequest(XMPP::Jingle::Session *session);
+    bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
 
     static SourceType sourceType(const QString &uri);
     static QStringList sortSourcesByPriority(const QStringList &uris);
+#ifdef HAVE_WEBSERVER
+    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceId, qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse* res);
+#endif
 signals:
 
 public slots:
