@@ -63,6 +63,8 @@ public:
     void start();
     void abort();
     void setRange(qint64 start, qint64 size);
+    bool isRanged() const;
+    std::tuple<qint64,qint64> range() const;
 
     QString fileName() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;

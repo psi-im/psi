@@ -56,6 +56,22 @@
 #define TEMP_TTL (7 * 24 * 3600)
 #define HTTP_CHUNK (256 * 1024 * 1024)
 
+static std::tuple<qint64,qint64> parseHttpRangeResponse(const QByteArray &value)
+{
+    auto arr = value.split(' ');
+    if (arr.size() != 2 || arr[0] != "bytes" || (arr = arr[1].split('-')).size() != 2)
+        return std::tuple<qint64,qint64>(-1, -1);
+    qint64 start, size;
+    bool ok;
+    start = arr[0].toLongLong(&ok);
+    if (ok) {
+        size = arr[1].toLongLong(&ok) - start + 1;
+    }
+    if (!ok || size < 0)
+        return std::tuple<qint64,qint64>(-1, -1);
+    return std::tuple<qint64,qint64>(start, size);
+}
+
 class FileShareDownloader::Private : public QObject
 {
     Q_OBJECT
@@ -161,6 +177,9 @@ public:
                 reply->deleteLater();
                 startNextDownloader();
                 return;
+            }
+            if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 206) {
+                std::tie(rangeStart, rangeSize) = parseHttpRangeResponse(reply->rawHeader("Content-Range"));
             }
             reply->deleteLater();
             downloadFinished();
@@ -344,12 +363,27 @@ void FileShareDownloader::setRange(qint64 start, qint64 size)
     d->rangeSize = size;
 }
 
+bool FileShareDownloader::isRanged() const
+{
+    return d->rangeStart != -1;
+}
+
+std::tuple<qint64, qint64> FileShareDownloader::range() const
+{
+    return std::tuple<qint64,qint64>(d->rangeStart, d->rangeSize);
+}
+
 QString FileShareDownloader::fileName() const
 {
     if (d->success && d->tmpFile) {
         return d->tmpFile->fileName();
     }
     return QString();
+}
+
+const Jingle::FileTransfer::File &FileShareDownloader::jingleFile() const
+{
+    return d->file;
 }
 
 // ======================================================================
@@ -1024,7 +1058,7 @@ protected:
 };
 
 #ifdef HAVE_WEBSERVER
-static bool parseHttpRange(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse *res,
+static bool parseHttpRangeRequest(qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse *res,
                            qint64 fsize, QList<QPair<qint64,qint64>> &ranges)
 {
     QByteArray rangesBa = req->headers().value("range");
@@ -1090,7 +1124,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
     auto setupHeaders = [&]() -> bool
     {
         QList<QPair<qint64,qint64>> ranges;
-        if (!parseHttpRange(req, res, fileSize, ranges)) {
+        if (!parseHttpRangeRequest(req, res, fileSize, ranges)) {
             res->end();
             return false;
         }
@@ -1156,7 +1190,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
     fileSize = downloader->jingleFile().size();
     contentType = downloader->jingleFile().mediaType();
     lastModified = downloader->jingleFile().date();
-    if (!setupHeaders()) {
+    if (!setupHeaders()) { // FIXME if downloader ignored range then for a steramed download (it's not for now) we should not pass range here
         return true;
     }
 
