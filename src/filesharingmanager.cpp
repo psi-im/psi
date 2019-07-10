@@ -264,6 +264,13 @@ public:
         });
 
         connect(app, &Jingle::FileTransfer::Application::deviceRequested, this, [app, this](quint64 offset, quint64 size){
+            if (rangeStart != -1 && rangeStart != offset) {
+                qWarning("Requested offset and accepted do not match. Updating requested..");
+                rangeStart = qint64(offset);
+            }
+            if (rangeSize == -1 && size != 0) { // looks like we wanted entire file but responder sends up exact size
+                rangeSize = qint64(size); // REVIEW: should we store it at all?
+            }
             setupTempFile();
             if (!tmpFile) {
                 app->setDevice(nullptr);
@@ -1190,7 +1197,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
     fileSize = downloader->jingleFile().size();
     contentType = downloader->jingleFile().mediaType();
     lastModified = downloader->jingleFile().date();
-    if (!setupHeaders()) { // FIXME if downloader ignored range then for a steramed download (it's not for now) we should not pass range here
+    if (!setupHeaders()) { // FIXME if downloader ignored range then for a streamed download (it's not for now) we should not pass range here
         return true;
     }
 
