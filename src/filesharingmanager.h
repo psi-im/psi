@@ -70,6 +70,7 @@ public:
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;
 signals:
     void started();
+    void metaDataChanged();
     void finished();
     void progress(size_t curSize, size_t fullSize);
 private:
@@ -153,7 +154,8 @@ public:
     QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
     QUrl simpleSource(const QString &sourceId) const;
-    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, qint64 start = -1, qint64 size = -1);
+    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, bool isRanged = false,
+                                       qint64 start = 0, qint64 size = 0);
 
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
