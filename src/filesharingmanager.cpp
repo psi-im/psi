@@ -36,6 +36,7 @@
 #include "userlist.h"
 #ifdef HAVE_WEBSERVER
 # include "webserver.h"
+# include "qhttpserverconnection.hpp"
 #endif
 
 #include <QBuffer>
@@ -54,7 +55,7 @@
 
 #define FILE_TTL (365 * 24 * 3600)
 #define TEMP_TTL (7 * 24 * 3600)
-#define HTTP_CHUNK (256 * 1024 * 1024)
+#define HTTP_CHUNK (512 * 1024 * 1024)
 
 static std::tuple<bool,qint64,qint64> parseHttpRangeResponse(const QByteArray &value)
 {
@@ -1056,7 +1057,8 @@ class MediaDevice : public QIODevice
     QFile *file = nullptr;
     FileShareDownloader *downloader;
 public:
-    MediaDevice(FileShareDownloader *downloader) :
+    MediaDevice(FileShareDownloader *downloader, QObject *parent) :
+        QObject(parent),
         downloader(downloader)
     {
         downloader->setParent(this);
@@ -1089,10 +1091,18 @@ public:
         return 0;
     }
 
+signals:
+    void disconnected();
+
 protected:
     qint64 readData(char *data, qint64 maxSize)
     {
-        return file->read(data, maxSize);
+        qint64 ret = file->read(data, maxSize);
+        if (file->size() == file->pos())
+            QTimer::singleShot(0, this, &MediaDevice::disconnected);
+        else
+            QTimer::singleShot(0, this, &MediaDevice::readyRead);
+        return ret;
     }
 
     qint64 writeData(const char *data, qint64 maxSize)
@@ -1292,14 +1302,21 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         }
 
         // TODO decide about parents
-        auto md = new MediaDevice(downloader);
+        auto md = new MediaDevice(downloader, res);
         md->open(QIODevice::ReadOnly);
 
-        connect(md, &MediaDevice::readyRead, res, [md, res](){
-            res->write(md->read(md->bytesAvailable()));
+        connect(md, &MediaDevice::readyRead, res, [md, res]() {
+            if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK)
+                res->write(md->read(md->bytesAvailable() > HTTP_CHUNK? HTTP_CHUNK : md->bytesAvailable()));
         });
 
-        connect(md, &MediaDevice::aboutToClose, res, [md, res](){
+        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, md, [md,res](){
+            auto bytesAvail = md->bytesAvailable();
+            if (!bytesAvail) return; // let's wait readyRead
+            res->write(md->read(bytesAvail > HTTP_CHUNK? HTTP_CHUNK : bytesAvail));
+        });
+
+        connect(md, &MediaDevice::disconnected, res, [md, res](){
 
         });
     });
