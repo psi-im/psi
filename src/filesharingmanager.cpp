@@ -73,63 +73,33 @@ static std::tuple<bool,qint64,qint64> parseHttpRangeResponse(const QByteArray &v
     return std::tuple<bool,qint64,qint64>(true, start, size);
 }
 
-class FileShareDownloader::Private : public QObject
+
+class AbstractFileShareDownloader : public QObject
 {
     Q_OBJECT
-public:
-    FileShareDownloader *q = nullptr;
-    PsiAccount *acc = nullptr;
-    QString sourceId;
-    Jingle::FileTransfer::File file;
-    QList<Jid> jids;
-    QStringList uris; // sorted from low priority to high.
-    FileSharingManager *manager = nullptr;
-    FileSharingManager::SourceType currentType = FileSharingManager::SourceType::None;
+protected:
+    QString _lastError;
+    qint64  rangeStart = 0;
+    qint64  rangeSize = 0;
     QScopedPointer<QFile> tmpFile;
-    QString lastError;
+    PsiAccount *acc;
+    QString sourceUri;
     QString dstFileName;
-    qint64 rangeStart = 0;
-    qint64 rangeSize = 0;
-    bool metaReady = false;
-    bool success = false;
 
-    void startNextDownloader()
+    void downloadError(const QString &err)
     {
-        if (uris.isEmpty()) {
-            success = false;
-            if (lastError.isEmpty())
-                lastError = tr("Download sources are not given");
-            emit q->finished();
-        }
-        QString uri = uris.takeLast();
-        auto type = FileSharingManager::sourceType(uri);
-        switch (type) {
-        case FileSharingManager::SourceType::HTTP:
-        case FileSharingManager::SourceType::FTP:
-            downloadNetworkManager(uri);
-            break;
-        case FileSharingManager::SourceType::BOB:
-            downloadBOB(uri);
-            break;
-        case FileSharingManager::SourceType::Jingle:
-            downloadJingle(uri);
-            break;
-        default:
-            break;
-        }
+        if (!err.isEmpty())
+            _lastError = err;
+        QTimer::singleShot(0, this, &AbstractFileShareDownloader::failed);
     }
 
-    void setupTempFile()
+    void downloadFinished()
     {
-        if (!tmpFile) {
-            QString tmpFN = QString::fromLatin1("dl-") + dstFileName;
-            tmpFN = QString("%1/%2").arg(ApplicationInfo::documentsDir(), tmpFN);
-            tmpFile.reset(new QFile(tmpFN));
-            if (!tmpFile->open(QIODevice::ReadWrite | QIODevice::Truncate)) { // TODO complete unfinished downloads
-                lastError = tmpFile->errorString();
-                tmpFile.reset();
-            }
-        }
+        _lastError.clear();
+        tmpFile->close();
+        tmpFile->rename(dstFileName);
+        tmpFile.reset();
+        QTimer::singleShot(0, this, &AbstractFileShareDownloader::success);
     }
 
     Jid selectOnlineJid(const QList<Jid> &jids) const
@@ -144,120 +114,79 @@ public:
         return Jid();
     }
 
-    void downloadNetworkManager(const QString &uri)
+    void setupTempFile()
     {
-        QNetworkRequest req = QNetworkRequest(QUrl(uri));
-        if (q->isRanged())
-            req.setRawHeader("Range", QString("bytes=%1-%2").arg(QString::number(rangeStart), rangeSize?
-                                                                 QString::number(rangeStart + rangeSize - 1) :
-                                                                     QString()).toLatin1());
-#if QT_VERSION >= QT_VERSION_CHECK(5,9,0)
-        req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-#elif QT_VERSION >= QT_VERSION_CHECK(5,6,0)
-        req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
-#endif
-        QNetworkReply *reply = acc->psi()->networkAccessManager()->get(req);
-        connect(reply, &QNetworkReply::metaDataChanged, this, [this,reply](){
-            int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            if (status == 206) {
-                QByteArray ba = reply->rawHeader("Content-Range");
-                bool parsed;
-                std::tie(parsed, rangeStart, rangeSize) = parseHttpRangeResponse(ba);
-                if (ba.size() && !parsed) {
-                    lastError = QLatin1String("Invalid HTTP response range");
-                    reply->disconnect(this);
-                    reply->deleteLater();
-                    startNextDownloader();
-                    return;
-                }
-            } else if (status != 200 && status != 203) {
-                rangeStart = 0;
-                rangeSize = 0; // make it not-ranged
-                lastError = tr("Unexpected HTTP status") + QString(": %1").arg(status);
-                reply->disconnect(this);
-                reply->deleteLater();
-                startNextDownloader();
-                return;
-            }
-            metaReady = true;
-            emit q->metaDataChanged();
-        });
-
-        connect(reply, &QNetworkReply::readyRead, this, [this,reply](){
-            setupTempFile();
-            if (!tmpFile) {
-                reply->disconnect(this);
-                reply->deleteLater();
-                startNextDownloader();
-                return;
-            }
-            QByteArray ba = reply->read(reply->bytesAvailable());
-            if (tmpFile->write(ba) != ba.size()) { // file engine tries to write everything until it's system error
-                lastError = tmpFile->errorString();
+        if (!tmpFile) {
+            QFileInfo fi(dstFileName);
+            QString tmpFN = QString::fromLatin1("dl-") + fi.fileName();
+            tmpFN = QString("%1/%2").arg(fi.path(), tmpFN);
+            tmpFile.reset(new QFile(tmpFN));
+            if (!tmpFile->open(QIODevice::ReadWrite | QIODevice::Truncate)) { // TODO complete unfinished downloads
+                _lastError = tmpFile->errorString();
                 tmpFile.reset();
-                reply->disconnect(this);
-                reply->deleteLater();
-                startNextDownloader();
-                return;
             }
-            if (reply->isFinished()) {
-                // seems like last piece of data was written. we are ready to finish
-                reply->disconnect(this);
-                reply->deleteLater();
-                downloadFinished();
-            }
-        });
-
-        connect(reply, &QNetworkReply::downloadProgress, this, [this,reply](qint64 bytesReceived, qint64 bytesTotal){
-            emit q->progress(bytesReceived, bytesTotal);
-        });
-
-        connect(reply, &QNetworkReply::finished, this, [this,reply](){
-            if (reply->error() != QNetworkReply::NoError) {
-                lastError = reply->errorString();
-                tmpFile.reset();
-                reply->deleteLater();
-                if (metaReady)
-                    emit q->finished();
-                else
-                    startNextDownloader();
-                return;
-            }
-        });
-    }
-
-    void downloadBOB(const QString &uri)
-    {
-        Jid j = selectOnlineJid(jids);
-        if (!j.isValid()) {
-            lastError = tr("\"Bits Of Binary\" data source is offline");
-            startNextDownloader();
-            return;
         }
-        acc->loadBob(jids.first(), uri.mid(4), this, [this](bool success, const QByteArray &data, const QByteArray &/* media type */) {
-            if (!success) {
-                lastError = tr("Download using \"Bits Of Binary\" failed"); // make translatable?
-                startNextDownloader();
-                return;
-            }
-            if (q->isRanged()) { // there is not such a thing like ranged bob
-                rangeStart = 0;
-                rangeSize = 0; // make it not-ranged
-            }
-            metaReady = true;
-            emit q->metaDataChanged();
-            emit q->progress(data.size(), file.size() > size_t(data.size())? file.size() : data.size());
-            setupTempFile();
-            if (!tmpFile) {
-                startNextDownloader();
-                return;
-            }
-            tmpFile->write(data);
-            downloadFinished();
-        });
+    }
+public:
+    AbstractFileShareDownloader(PsiAccount *acc, const QString &uri, const QString &dstFileName, QObject *parent) :
+        QObject(parent),
+        acc(acc),
+        sourceUri(uri),
+        dstFileName(dstFileName)
+    {
+
     }
 
-    void downloadJingle(const QString &sourceUri)
+    ~AbstractFileShareDownloader()
+    {
+        if (tmpFile) {
+            tmpFile->remove();
+            tmpFile->reset();
+        }
+    }
+
+    virtual void start() = 0;
+    virtual qint64 bytesAvailable() const = 0;
+    virtual QByteArray read(qint64 bytesCount) = 0;
+    virtual void abort() = 0;
+
+    inline QString &lastError() const { return _lastError; }
+    void setRange(qint64 offset, qint64 length)
+    {
+        rangeStart = offset;
+        rangeSize = length;
+    }
+    inline bool isRanged() const { return rangeSize || rangeStart; }
+
+signals:
+    void metaDataChanged();
+    void readyRead();
+    void progress(qint64 size, qint64 fullSize);
+    void failed();
+    void success();
+};
+
+class JingleFileShareDownloader : public AbstractFileShareDownloader
+{
+    Q_OBJECT
+
+    XMPP::Jingle::Connection::Ptr connection;
+    Jingle::FileTransfer::Application *app = nullptr;
+    XMPP::Jingle::FileTransfer::File file;
+    QList<Jid> jids;
+
+public:
+    JingleFileShareDownloader(PsiAccount *acc, const QString &uri, const QString &dstFile,
+                              const XMPP::Jingle::FileTransfer::File &file,
+                              const QList<Jid> &jids, QObject *parent) :
+        AbstractFileShareDownloader(acc, uri, dstFile, parent),
+        file(file),
+        jids(jids)
+    {
+
+    }
+
+    void start()
     {
         QUrl uriToOpen(sourceUri);
         QString path = uriToOpen.path();
@@ -270,8 +199,7 @@ public:
             myJids.prepend(entity);
         Jid dataSource = selectOnlineJid(myJids);
         if (!dataSource.isValid()) {
-            lastError = tr("Jingle data source is offline");
-            startNextDownloader();
+            downloadError(tr("Jingle data source is offline"));
             return;
         }
 
@@ -283,75 +211,344 @@ public:
         QString querytype = uri.queryItems().value(0).first;
 
         if (querytype != QStringLiteral("jingle-ft")) {
-            lastError = tr("Invalid Jingle-FT URI");
-            startNextDownloader();
+            downloadError(tr("Invalid Jingle-FT URI"));
             return;
         }
 
         Jingle::Session *session = acc->client()->jingleManager()->newSession(dataSource);
-        auto app = static_cast<Jingle::FileTransfer::Application*>(session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
+        app = static_cast<Jingle::FileTransfer::Application*>(session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
         if (!app) {
-            lastError = QString::fromLatin1("Jingle file transfer is disabled");
-            startNextDownloader();
+            downloadError(QString::fromLatin1("Jingle file transfer is disabled"));
             return;
         }
-        if (q->isRanged())
+        if (isRanged())
             file.setRange(XMPP::Jingle::FileTransfer::Range(quint64(rangeStart), quint64(rangeSize)));
         app->setFile(file);
+        app->setStreamingMode(true);
         session->addContent(app);
 
         connect(session, &Jingle::Session::newContentReceived, this, [session, this](){
             // we don't expect any new content on the session
-            lastError = tr("Unexpected incoming content");
-            session->terminate(Jingle::Reason::Condition::Decline, lastError);
+            _lastError = tr("Unexpected incoming content");
+            session->terminate(Jingle::Reason::Condition::Decline, _lastError);
         });
 
-        connect(app, &Jingle::FileTransfer::Application::deviceRequested, this, [app, this](quint64 offset, quint64 size){
-            rangeStart = offset;
-            rangeSize = size;
+        connect(app, &Jingle::FileTransfer::Application::connectionReady, this, [app, this](){
+            auto r = app->acceptFile().range();
+            rangeStart = r.offset;
+            rangeSize = r.length;
             setupTempFile();
             if (!tmpFile) {
-                app->setDevice(nullptr);
+                app->remove(XMPP::Jingle::Reason::FailedApplication, "Failed to setup temporary file");
+                // this should endup in Session::terminated handled below
                 return;
             }
-            app->setDevice(tmpFile.data());
-            metaReady = true;
-            emit q->metaDataChanged();
+            emit metaDataChanged();
+
+            connection = app->connection();
+            connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this, &JingleFileShareDownloader::readyRead);
         });
 
-        connect(session, &Jingle::Session::terminated, this, [this, app](){
+        connect(session, &Jingle::Session::terminated, this, [this](){
             auto r = app->terminationReason();
+            app = nullptr;
             if (r.isValid() && r.condition() == Jingle::Reason::Success) {
                 downloadFinished();
                 return;
             }
-            lastError = tr("Jingle download failed");
-            if (metaReady)
-                emit q->finished();
-            else
-                startNextDownloader();
+            downloadError(tr("Jingle download failed"));
+        });
+    }
+
+    qint64 bytesAvailable() const
+    {
+        if (connection)
+            return connection->bytesAvailable();
+    }
+
+    QByteArray read(qint64 bytesCount)
+    {
+        if (connection)
+            return connection->read(bytesCount);
+    }
+
+    void abort()
+    {
+        if (app) {
+            if (connection)
+                connection->disconnect(this);
+            app->pad()->session()->disconnect(this);
+            app->remove();
+            app = nullptr;
+        }
+    }
+};
+
+class NAMFileShareDownloader : public AbstractFileShareDownloader
+{
+    Q_OBJECT
+
+    QNetworkReply *reply = nullptr;
+
+    void namFailed(const QString &err = QString())
+    {
+        reply->disconnect(this);
+        reply->deleteLater();
+        downloadError(err);
+    }
+
+    void namSuccess()
+    {
+        reply->disconnect(this);
+        reply->deleteLater();
+        QTimer::singleShot(0, this, &NAMFileShareDownloader::success);
+    }
+
+public:
+    using AbstractFileShareDownloader::AbstractFileShareDownloader;
+    void start()
+    {
+        QNetworkRequest req = QNetworkRequest(QUrl(uri));
+        if (isRanged())
+            req.setRawHeader("Range", QString("bytes=%1-%2").arg(QString::number(rangeStart), rangeSize?
+                                                                 QString::number(rangeStart + rangeSize - 1) :
+                                                                     QString()).toLatin1());
+#if QT_VERSION >= QT_VERSION_CHECK(5,9,0)
+        req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+#elif QT_VERSION >= QT_VERSION_CHECK(5,6,0)
+        req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
+        QNetworkReply *reply = acc->psi()->networkAccessManager()->get(req);
+        connect(reply, &QNetworkReply::metaDataChanged, this, [this,reply](){
+            int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if (status == 206) { // partial content
+                QByteArray ba = reply->rawHeader("Content-Range");
+                bool parsed;
+                std::tie(parsed, rangeStart, rangeSize) = parseHttpRangeResponse(ba);
+                if (ba.size() && !parsed) {
+                    namFailed(QLatin1String("Invalid HTTP response range"));
+                    return;
+                }
+            } else if (status != 200 && status != 203) {
+                rangeStart = 0;
+                rangeSize = 0; // make it not-ranged
+                namFailed(tr("Unexpected HTTP status") + QString(": %1").arg(status));
+                return;
+            }
+
+            setupTempFile();
+            if (!tmpFile) {
+                namFailed();
+                return;
+            }
+
+            emit metaDataChanged();
         });
 
-        connect(app, &Jingle::FileTransfer::Application::progress, this, [this](quint64 offset){
-            emit q->progress(offset, file.size());
+        connect(reply, &QNetworkReply::readyRead, this, &NAMFileShareDownloader::readyRead);
+        connect(reply, &QNetworkReply::downloadProgress, this, [this,reply](qint64 bytesReceived, qint64 bytesTotal){
+            emit progress(bytesReceived, bytesTotal);
         });
+
+        connect(reply, &QNetworkReply::finished, this, [this,reply](){
+            if (reply->error() == QNetworkReply::NoError) {
+                if (reply->bytesAvailable())
+                    emit readyRead();
+                else {
+                    namSuccess();
+                }
+            } else {
+                namFailed(reply->errorString());
+            }
+        });
+    }
+
+    qint64 bytesAvailable() const
+    {
+        return reply? reply->bytesAvailable() : 0;
+    }
+
+    QByteArray read(qint64 bytesCount)
+    {
+        if (!reply) return QByteArray();
+
+        QByteArray ba;
+        ba = reply->read(bytesCount);
+        if (tmpFile->write(ba) != ba.size()) { // file engine tries to write everything until it's system error
+            namFailed(tmpFile->errorString());
+            return QByteArray();
+        }
+
+        if (reply->isFinished()) {
+            // seems like last piece of data was written. we are ready to finish
+            namSuccess();
+        }
+
+        return ba;
+    }
+
+    void abort()
+    {
+        if (reply) {
+            reply->disconnect(this);
+            reply->deleteLater();
+            reply = nullptr;
+        }
+    }
+};
+
+class BOBFileShareDownloader : public AbstractFileShareDownloader
+{
+    Q_OBJECT
+
+    PsiAccount *acc;
+    QList<Jid> jids;
+    QByteArray data;
+    bool destroyed = false;
+
+public:
+    BOBFileShareDownloader(PsiAccount *acc, const QString &uri, const QString &dstFile,
+                              const QList<Jid> &jids, QObject *parent) :
+        AbstractFileShareDownloader(acc, uri, dstFile, parent),
+        jids(jids)
+    {
 
     }
 
-    void downloadFinished()
+    void start()
     {
-        lastError.clear();
-        tmpFile->flush();
-        tmpFile->seek(0);
-        tmpFile->rename(QString("%1/%2").arg(ApplicationInfo::documentsDir(),dstFileName));
-        success = true;
-        emit q->finished();
+        Jid j = selectOnlineJid(jids);
+        if (!j.isValid()) {
+            downloadError(tr("\"Bits Of Binary\" data source is offline"));
+            return;
+        }
+        // skip cid: from uri and request it
+        acc->loadBob(jids.first(), sourceUri.mid(4), this, [this](bool success, const QByteArray &data, const QByteArray &/* media type */) {
+            if (destroyed) return; // should not happen but who knows.
+            if (!success) {
+                downloadError(tr("Download using \"Bits Of Binary\" failed"));
+                return;
+            }
+            this->data = data;
+            if (isRanged()) { // there is not such a thing like ranged bob
+                rangeStart = 0;
+                rangeSize = 0; // make it not-ranged
+            }
+            emit metaDataChanged();
+            emit progress(data.size(), file.size() > size_t(data.size())? file.size() : data.size());
+            setupTempFile();
+            if (!tmpFile) {
+                emit failed();
+                return;
+            }
+            tmpFile->write(data);
+            downloadFinished();
+        });
+    }
+
+    qint64 bytesAvailable() const
+    {
+        return data->size();
+    }
+
+    QByteArray read(qint64 bytesCount)
+    {
+        if (bytesCount >= data.count()) {
+            auto ret = data;
+            data.clear();
+            return ret;
+        }
+
+        auto ret = data;
+        data = data.mid(bytesCount);
+        ret.resize(bytesCount);
+        return ret;
+    }
+
+    void abort()
+    {
+        destroyed = true;
+    }
+};
+
+
+class FileShareDownloader::Private : public QObject
+{
+    Q_OBJECT
+public:
+    FileShareDownloader *q = nullptr;
+    PsiAccount *acc = nullptr;
+    QString sourceId;
+    Jingle::FileTransfer::File file;
+    QList<Jid> jids;
+    QStringList uris; // sorted from low priority to high.
+    FileSharingManager *manager = nullptr;
+    FileSharingManager::SourceType currentType = FileSharingManager::SourceType::None;
+
+    QString lastError;
+    QString dstFileName; // just file name without path
+    qint64 rangeStart = 0;
+    qint64 rangeSize = 0;
+    AbstractFileShareDownloader downloader = nullptr;
+    bool metaReady = false;
+    bool success = false;
+
+    void startNextDownloader()
+    {
+        if (downloader) {
+            lastError = downloader->lastError();
+            delete downloader;
+        }
+
+        if (uris.isEmpty()) {
+            success = false;
+            if (lastError.isEmpty())
+                lastError = tr("Download sources are not given");
+            emit q->finished();
+        }
+        QString uri = uris.takeLast();
+        auto type = FileSharingManager::sourceType(uri);
+        switch (type) {
+        case FileSharingManager::SourceType::HTTP:
+        case FileSharingManager::SourceType::FTP:
+            downloader = new NAMFileShareDownloader(acc, uri, dstFileName, q);
+            break;
+        case FileSharingManager::SourceType::BOB:
+            downloader = new BOBFileShareDownloader(acc, uri, dstFileName, jids, q);
+            break;
+        case FileSharingManager::SourceType::Jingle:
+            downloader = new JingleFileShareDownloader(acc, uri, dstFileName, file, jids, q);
+            break;
+        default:
+            success = false;
+            emit q->finished();
+            return;
+        }
+
+        connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this](){
+            metaReady = true;
+        });
+
+        connect(downloader, &AbstractFileShareDownloader::success, q, [this](){
+            success = true;
+            lastError.clear();
+            emit q->finished();
+        });
+
+        connect(downloader, &AbstractFileShareDownloader::failed, q, [this](){
+            success = false;
+            if (metaReady) {
+                lastError = downloader->lastError();
+                emit q->finished();
+            } else
+                startNextDownloader();
+        });
     }
 };
 
 FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QString &sourceId, const Jingle::FileTransfer::File &file,
                                          const QList<Jid> &jids, const QStringList &uris, FileSharingManager *manager) :
-    QObject(manager),
+    QIODevice(manager),
     d(new Private)
 {
     d->q        = this;
@@ -365,7 +562,7 @@ FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QString &sourceI
 
 FileShareDownloader::~FileShareDownloader()
 {
-
+    abort();
 }
 
 bool FileShareDownloader::isSuccess() const
@@ -382,7 +579,8 @@ void FileShareDownloader::start()
     }
     auto docLoc = ApplicationInfo::documentsDir();
     QDir docDir(docLoc);
-    QString fn = FileUtil::cleanFileName(d->file.name()).split('/').last();
+    QFileInfo fi(d->file.name());
+    QString fn = FileUtil::cleanFileName(fi.fileName());
     if (fn.isEmpty()) {
         fn = d->sourceId;
     }
@@ -396,13 +594,16 @@ void FileShareDownloader::start()
         }
     }
 
-    d->dstFileName = fn;
+    d->dstFileName = docDir.absoluteFilePath(fn);
     d->startNextDownloader();
 }
 
 void FileShareDownloader::abort()
 {
     // TODO
+    if (d->downloader && !d->success) {
+        d->downloader->abort();
+    }
 }
 
 void FileShareDownloader::setRange(qint64 start, qint64 size)
@@ -423,8 +624,8 @@ std::tuple<qint64, qint64> FileShareDownloader::range() const
 
 QString FileShareDownloader::fileName() const
 {
-    if (d->success && d->tmpFile) {
-        return d->tmpFile->fileName();
+    if (d->success) {
+        return d->dstFileName;
     }
     return QString();
 }
@@ -1058,7 +1259,7 @@ class MediaDevice : public QIODevice
     FileShareDownloader *downloader;
 public:
     MediaDevice(FileShareDownloader *downloader, QObject *parent) :
-        QObject(parent),
+        QIODevice(parent),
         downloader(downloader)
     {
         downloader->setParent(this);
@@ -1069,6 +1270,7 @@ public:
             }
             downloader->deleteLater();
             this->downloader = nullptr;
+            emit readyRead();
         }, Qt::QueuedConnection);
     }
 
@@ -1248,6 +1450,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             size = (requestedStart + requestedSize) > fi.size()? fi.size() - requestedStart : requestedSize;
             file->seek(requestedStart);
         }
+        // TODO If-Modified-Since
         if (!setupHeaders(fi.size(), item->metadata().value("type").toString(), fi.lastModified(), isRanged, requestedStart, size))
             return true; // handled but with error
 
@@ -1305,21 +1508,27 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         auto md = new MediaDevice(downloader, res);
         md->open(QIODevice::ReadOnly);
 
+        bool *disconnected = new bool(false);
         connect(md, &MediaDevice::readyRead, res, [md, res]() {
             if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK)
                 res->write(md->read(md->bytesAvailable() > HTTP_CHUNK? HTTP_CHUNK : md->bytesAvailable()));
         });
 
-        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, md, [md,res](){
+        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, md, [md,res, disconnected](){
             auto bytesAvail = md->bytesAvailable();
             if (!bytesAvail) return; // let's wait readyRead
-            res->write(md->read(bytesAvail > HTTP_CHUNK? HTTP_CHUNK : bytesAvail));
+            if (*disconnected && bytesAvail <= HTTP_CHUNK)
+                res->end(md->read(bytesAvail));
+            else
+                res->write(md->read(bytesAvail > HTTP_CHUNK? HTTP_CHUNK : bytesAvail));
         });
 
-        connect(md, &MediaDevice::disconnected, res, [md, res](){
-
+        connect(md, &MediaDevice::disconnected, res, [md, res, disconnected](){
+            *disconnected = true;
         });
     });
+
+    downloader->start();
 
     return true;
 }
@@ -1348,7 +1557,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     path.reserve(128);
     if (!path.endsWith('/'))
         path += '/';
-    path += QString("%1/shareddile/%2").arg(acc->id(), sourceId);
+    path += QString("psi/account/%1/sharedfile/%2").arg(acc->id(), sourceId);
     localServerUrl.setPath(path);
     url = localServerUrl;
     return nullptr;

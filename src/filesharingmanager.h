@@ -51,7 +51,7 @@ namespace qhttp {
     }
 }
 
-class FileShareDownloader: public QObject
+class FileShareDownloader: public QIODevice
 {
     Q_OBJECT
 public:
