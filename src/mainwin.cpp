@@ -58,7 +58,6 @@
 #include "aboutdlg.h"
 #include "psitoolbar.h"
 #include "psioptions.h"
-#include "tipdlg.h"
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
 #include "desktoputil.h"
@@ -201,12 +200,12 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
     rosterWidget_(nullptr)
 {
 
-    statusGroup   = (IconActionGroup *)getAction("status_group");
-    viewGroups    = (IconActionGroup *)getAction("view_groups");
-    eventNotifier = (EventNotifierAction *)getAction("event_notifier");
+    statusGroup   = static_cast<IconActionGroup *>(getAction("status_group"));
+    viewGroups    = static_cast<IconActionGroup *>(getAction("view_groups"));
+    eventNotifier = static_cast<EventNotifierAction *>(getAction("event_notifier"));
 
-    optionsButton = (PopupAction *)getAction("button_options");
-    statusButton  = (PopupAction *)getAction("button_status");
+    optionsButton = static_cast<PopupAction *>(getAction("button_options"));
+    statusButton  = static_cast<PopupAction *>(getAction("button_status"));
     statusSmallerAlt = getAction("status_all");
 
     filterActive = false;
@@ -421,7 +420,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     //add contact view
     d->vb_roster->addWidget(d->rosterWidget_);
 
-    d->statusMenu = new GlobalStatusMenu((QWidget*)this, d->psi);
+    d->statusMenu = new GlobalStatusMenu(qobject_cast<QWidget*>(this), d->psi);
     d->statusMenu->setTitle(tr("Status"));
     d->statusMenu->setObjectName("statusMenu");
     connect(d->statusMenu, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
@@ -429,7 +428,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     connect(d->statusMenu, SIGNAL(statusPresetDialogForced(const QString &)), d->psi, SLOT(showStatusDialog(const QString &)));
 
 #ifdef Q_OS_LINUX
-    d->statusMenuMB = new GlobalStatusMenu((QWidget*)this, d->psi);
+    d->statusMenuMB = new GlobalStatusMenu(qobject_cast<QWidget*>(this), d->psi);
     d->statusMenuMB->setTitle(tr("Status"));
     d->statusMenuMB->setObjectName("statusMenu");
     connect(d->statusMenuMB, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
@@ -516,7 +515,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     QMenu* helpMenu = new QMenu(tr("Help"), this);
     mainMenuBar()->addMenu(helpMenu);
     d->getAction("help_readme")->addTo (helpMenu);
-    d->getAction("help_tip")->addTo (helpMenu);
     helpMenu->addSeparator();
     d->getAction("help_online_wiki")->addTo (helpMenu);
     d->getAction("help_online_home")->addTo (helpMenu);
@@ -650,7 +648,6 @@ void MainWin::registerAction( IconAction* action )
         { "event_notifier", activated, this, SLOT( doRecvNextEvent() ) },
 
         { "help_readme",      activated, this, SLOT( actReadmeActivated() ) },
-        { "help_tip",         activated, this, SLOT( actTipActivated() ) },
         { "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
         { "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
         { "help_online_forum", activated, this, SLOT( actOnlineForumActivated() ) },
@@ -928,7 +925,6 @@ void MainWin::buildOptionsMenu()
 
     QStringList actions;
     actions << "help_readme"
-            << "help_tip"
             << "separator"
             << "help_online_wiki"
             << "help_online_home"
@@ -1045,11 +1041,6 @@ void MainWin::actAboutActivated ()
 {
     AboutDlg* about = new AboutDlg();
     about->show();
-}
-
-void MainWin::actTipActivated ()
-{
-    TipDlg::show(d->psi);
 }
 
 void MainWin::actAboutQtActivated ()
@@ -1508,7 +1499,7 @@ bool MainWin::eventFilter(QObject *o, QEvent *e)
 {
     if(e->type() == QEvent::KeyPress
        && o->isWidgetType()
-       && isAncestorOf( (QWidget*)o ) ) {
+       && isAncestorOf( qobject_cast<QWidget*>(o) ) ) {
         if(d->hideTimer && d->hideTimer->isActive())
             d->hideTimer->start();
     }

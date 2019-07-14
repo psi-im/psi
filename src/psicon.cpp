@@ -107,7 +107,6 @@
 #endif
 #include "psicontactlist.h"
 #include "dbus.h"
-#include "tipdlg.h"
 #include "shortcutmanager.h"
 #include "globalshortcut/globalshortcutmanager.h"
 #include "desktoputil.h"
@@ -515,7 +514,7 @@ bool PsiCon::init()
         d->iconSelect->setStyleSheet(css);
 
     // first thing, try to load the iconset
-    bool result = true;;
+    bool result = true;
     if( !PsiIconset::instance()->loadAll() ) {
         //LEGOPTS.iconset = "stellar";
         //if(!is.load(LEGOPTS.iconset)) {
@@ -681,10 +680,6 @@ bool PsiCon::init()
     if(d->contactList->defaultAccount())
         emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
 
-    // show tip of the day
-    if ( options->getOption("options.ui.tip.show").toBool() ) {
-        TipDlg::show(this);
-    }
 
 #ifdef USE_DBUS
     addPsiConAdapter(this);
@@ -955,7 +950,7 @@ void PsiCon::changeProfile()
 void PsiCon::doManageAccounts()
 {
     if (!PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
-        AccountManageDlg *w = (AccountManageDlg *)dialogFind("AccountManageDlg");
+        AccountManageDlg *w = qobject_cast<AccountManageDlg *>(dialogFind("AccountManageDlg"));
         if(w)
             bringToFront(w);
         else {
@@ -1021,7 +1016,7 @@ void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 {
     foreach(item_dialog* i, d->dialogList) {
         if(i->className == "EventDlg") {
-            EventDlg *e = (EventDlg *)i->widget;
+            EventDlg *e = qobject_cast<EventDlg *>(i->widget);
             if(e->psiAccount() == pa)
                 e->updateContact(j);
         }
@@ -1310,7 +1305,7 @@ void PsiCon::updateMainwinStatus()
 
 void PsiCon::doOptions()
 {
-    OptionsDlg *w = (OptionsDlg *)dialogFind("OptionsDlg");
+    OptionsDlg *w = qobject_cast<OptionsDlg *>(dialogFind("OptionsDlg"));
     if(w)
         bringToFront(w);
     else {
@@ -1412,7 +1407,7 @@ void PsiCon::openAtStyleUri(const QUrl &uri)
 void PsiCon::doToolbars()
 {
     // TODO try to remember source toolbar to open correct settings in the toolbars dialog
-    OptionsDlg *w = (OptionsDlg *)dialogFind("OptionsDlg");
+    OptionsDlg *w = qobject_cast<OptionsDlg *>(dialogFind("OptionsDlg"));
     if (w) {
         w->openTab("toolbars");
         bringToFront(w);
@@ -1427,7 +1422,7 @@ void PsiCon::doToolbars()
 
 void PsiCon::doStatusPresets()
 {
-    OptionsDlg *w = (OptionsDlg *)dialogFind("OptionsDlg");
+    OptionsDlg *w = qobject_cast<OptionsDlg *>(dialogFind("OptionsDlg"));
     if (w) {
         w->openTab("status");
         bringToFront(w);

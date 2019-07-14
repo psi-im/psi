@@ -135,7 +135,6 @@ private slots:
     void actPlaySoundsActivated (bool);
     void actPublishTuneActivated (bool);
     void actEnableGroupsActivated (bool);
-    void actTipActivated();
     void actDiagQCAPluginActivated();
     void actDiagQCAKeyStoreActivated();
     void actChooseStatusActivated();

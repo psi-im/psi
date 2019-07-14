@@ -61,7 +61,6 @@ list(APPEND FORMS
     proxy.ui
     rosteravatarframe.ui
     search.ui
-    tip.ui
     voicecall.ui
     xmlconsole.ui
     )
@@ -199,7 +198,6 @@ list(APPEND HEADERS
     statusmenu.h
     tabcompletion.h
     tasklist.h
-    tipdlg.h
     translationmanager.h
     vcardfactory.h
     vcardphotodlg.h
@@ -464,7 +462,6 @@ list(APPEND SOURCES
     textutil.cpp
     theme.cpp
     theme_p.cpp
-    tipdlg.cpp
     translationmanager.cpp
     urlbookmark.cpp
     userlist.cpp

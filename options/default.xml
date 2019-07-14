@@ -340,10 +340,6 @@ QLineEdit#le_status_text {
                 <enable type="bool">true</enable>
                 <use-double-click type="bool">false</use-double-click>
             </systemtray>
-            <tip comment="Tip of the day options">
-                <show comment="Show the tip of the day upon startup" type="bool">true</show>
-                <number comment="The next tip to show" type="int">0</number>
-            </tip>
             <flash-windows comment="Allow windows to flash upon activity" type="bool">true</flash-windows>
             <automatically-copy-selected-text type="bool">false</automatically-copy-selected-text>
             <emoticons>
