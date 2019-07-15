@@ -1372,7 +1372,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             bool isRanged,
             qint64 start,
             qint64 size
-    ) -> bool
+    )
     {
 
         if (lastModified.isValid())
@@ -1381,6 +1381,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             res->addHeader("Content-Type", contentType.toLatin1());
 
         res->addHeader("Accept-Ranges", "bytes");
+        res->addHeader("connection", "keep-alive");
         if (isRanged) {
             auto range = QString(QLatin1String("bytes %1-%2/%3")).arg(start).arg(start+size-1)
                     .arg(fileSize == -1? QString('*'): QString::number(fileSize));
@@ -1391,7 +1392,6 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
                 res->addHeader("Content-Length", QByteArray::number(fileSize));
             res->setStatusCode(qhttp::ESTATUS_OK);
         }
-        return true;
     };
 
     QString fileName;
@@ -1409,9 +1409,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             file->seek(requestedStart);
         }
         // TODO If-Modified-Since
-        if (!setupHeaders(fi.size(), item->metadata().value("type").toString(), fi.lastModified(), isRanged, requestedStart, size))
-            return true; // handled but with error
-
+        setupHeaders(fi.size(), item->metadata().value("type").toString(), fi.lastModified(), isRanged, requestedStart, size);
         connect(res, &qhttp::server::QHttpResponse::allBytesWritten, file, [res,file,requestedStart,size](){
             qint64 toWrite = requestedStart + size - file->pos();
             if (!toWrite) {
@@ -1457,10 +1455,8 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         qint64 size;
         std::tie(start, size) = downloader->range();
         auto const file = downloader->jingleFile();
-        if (!setupHeaders(file.hasSize()? file.size() : -1, file.mediaType(),
-                          file.date(), downloader->isRanged(), start, size)) {
-            return;
-        }
+        setupHeaders(file.hasSize()? file.size() : -1, file.mediaType(),
+                     file.date(), downloader->isRanged(), start, size);
 
         bool *disconnected = new bool(false);
         connect(downloader, &FileShareDownloader::readyRead, res, [downloader, res]() {
