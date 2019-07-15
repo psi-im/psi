@@ -273,10 +273,12 @@ public:
     void start()
     {
         QNetworkRequest req = QNetworkRequest(QUrl(sourceUri));
-        if (isRanged())
-            req.setRawHeader("Range", QString("bytes=%1-%2").arg(QString::number(rangeStart), rangeSize?
-                                                                 QString::number(rangeStart + rangeSize - 1) :
-                                                                     QString()).toLatin1());
+        if (isRanged()) {
+            QString range = QString("bytes=%1-%2").arg(QString::number(rangeStart), rangeSize?
+                                                           QString::number(rangeStart + rangeSize - 1) :
+                                                           QString());
+            req.setRawHeader("Range", range.toLatin1());
+        }
 #if QT_VERSION >= QT_VERSION_CHECK(5,9,0)
         req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
 #elif QT_VERSION >= QT_VERSION_CHECK(5,6,0)
@@ -304,7 +306,10 @@ public:
         });
 
         connect(reply, &QNetworkReply::readyRead, this, &NAMFileShareDownloader::readyRead);
+        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+              [=](QNetworkReply::NetworkError code){ qDebug("reply errored %d", code); });
         connect(reply, &QNetworkReply::finished, this, [this](){
+            qDebug("reply is finished. error code=%d. bytes available=%lld", reply->error(), reply->bytesAvailable());
             if (reply->error() == QNetworkReply::NoError)
                 emit disconnected();
             else
@@ -528,6 +533,7 @@ FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QString &sourceI
 FileShareDownloader::~FileShareDownloader()
 {
     abort();
+    qDebug("downloader deleted");
 }
 
 bool FileShareDownloader::isSuccess() const
@@ -1374,6 +1380,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         if (contentType.count())
             res->addHeader("Content-Type", contentType.toLatin1());
 
+        res->addHeader("Accept-Ranges", "bytes");
         if (isRanged) {
             auto range = QString(QLatin1String("bytes %1-%2/%3")).arg(start).arg(start+size-1)
                     .arg(fileSize == -1? QString('*'): QString::number(fileSize));
@@ -1461,7 +1468,9 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
                 res->write(downloader->read(downloader->bytesAvailable() > HTTP_CHUNK? HTTP_CHUNK : downloader->bytesAvailable()));
         });
 
-        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, downloader, [downloader,res, disconnected](){
+        connect(res->connection()->tcpSocket(), &QTcpSocket::bytesWritten, downloader, [downloader,res, disconnected](){
+            if (res->connection()->tcpSocket()->bytesToWrite() >= HTTP_CHUNK)
+                return; // we will return here when the buffer will be less occupied
             auto bytesAvail = downloader->bytesAvailable();
             if (!bytesAvail) return; // let's wait readyRead
             if (*disconnected && bytesAvail <= HTTP_CHUNK) {
@@ -1473,7 +1482,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
 
         connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected](){
             *disconnected = true;
-            if (!res->connection()->tcpSocket()->bytesToWrite()) {
+            if (!res->connection()->tcpSocket()->bytesToWrite() && !downloader->bytesAvailable()) {
                 res->disconnect(downloader);
                 res->end();
                 delete disconnected;
