@@ -38,10 +38,20 @@ namespace XMPP {
     class Message;
     namespace Jingle {
         class Session;
+        namespace FileTransfer {
+            class File;
+        }
     }
 }
 
-class FileShareDownloader: public QObject
+namespace qhttp {
+    namespace server {
+        class QHttpRequest;
+        class QHttpResponse;
+    }
+}
+
+class FileShareDownloader: public QIODevice
 {
     Q_OBJECT
 public:
@@ -50,13 +60,25 @@ public:
     ~FileShareDownloader();
 
     bool isSuccess() const;
-    void start();
+    bool open(QIODevice::OpenMode mode = QIODevice::ReadOnly);
     void abort();
+    void setRange(qint64 start, qint64 size);
+    bool isRanged() const;
+    std::tuple<qint64,qint64> range() const;
 
     QString fileName() const;
+    const XMPP::Jingle::FileTransfer::File &jingleFile() const;
+
+    bool isSequential() const override;
+    qint64 bytesAvailable() const override;
+protected:
+    qint64 readData(char *data, qint64 maxSize) override;
+    qint64 writeData(const char *data, qint64 maxSize) override;
+
 signals:
-    void started();
-    void finished();
+    void metaDataChanged();
+    void disconnected();
+    void finished(); // when last piece of data saved to file or on error
     void progress(size_t curSize, size_t fullSize);
 private:
     class Private;
@@ -127,7 +149,7 @@ public:
     ~FileSharingManager();
 
     static QString getCacheDir();
-    FileCacheItem *getCacheItem(const QString &id, bool reborn = false);
+    FileCacheItem *getCacheItem(const QString &id, bool reborn = false, QString *fileName = nullptr);
 
     // id - usually hex(sha1(image data))
     FileCacheItem *saveToCache(const QString &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
@@ -139,14 +161,17 @@ public:
     QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
     QUrl simpleSource(const QString &sourceId) const;
-    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId);
-    void saveDownloadedSource(const QString &sourceId, const QString &hash, const QString &absPath);
+    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, bool isRanged = false,
+                                       qint64 start = 0, qint64 size = 0);
 
     // returns false if unable to accept automatically
-    bool jingleAutoAcceptDownloadRequest(XMPP::Jingle::Session *session);
+    bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
 
     static SourceType sourceType(const QString &uri);
     static QStringList sortSourcesByPriority(const QStringList &uris);
+#ifdef HAVE_WEBSERVER
+    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceId, qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse* res);
+#endif
 signals:
 
 public slots:

@@ -527,6 +527,22 @@ bool PsiCon::init()
     d->fileSharingManager = new FileSharingManager(this);
 #ifdef HAVE_WEBSERVER
     d->webServer = new WebServer(this);
+    d->webServer->route("/psi/account", [this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool {
+        if (req->method() != qhttp::EHTTP_GET)
+            return false;
+        auto pathParts = req->url().path().midRef(sizeof("/psi/account")).split('/');
+        if (pathParts.size() < 3 || pathParts[1] != QLatin1String("sharedfile") || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
+            return false;
+
+        foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+            if(!account->isActive() || account->id() != pathParts[0])
+                continue;
+
+            return d->fileSharingManager->downloadHttpRequest(account, pathParts[2].toString(), req, res);
+        }
+
+        return true;
+    });
 #endif
     d->themeManager = new PsiThemeManager(this);
 #ifdef WEBKIT
