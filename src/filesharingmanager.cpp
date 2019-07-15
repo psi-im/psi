@@ -537,6 +537,8 @@ bool FileShareDownloader::open(QIODevice::OpenMode mode)
         d->success = false;
         return false;
     }
+    if (isOpen())
+        return true;
 
     auto docLoc = ApplicationInfo::documentsDir();
     QDir docDir(docLoc);
@@ -1249,69 +1251,6 @@ QStringList FileSharingManager::sortSourcesByPriority(const QStringList &uris)
     return sorted.values();
 }
 
-class MediaDevice : public QIODevice
-{
-    Q_OBJECT
-    QFile *file = nullptr;
-    FileShareDownloader *downloader;
-public:
-    MediaDevice(FileShareDownloader *downloader, QObject *parent) :
-        QIODevice(parent),
-        downloader(downloader)
-    {
-        downloader->setParent(this);
-        connect(downloader, &FileShareDownloader::finished, this, [this,downloader](){
-            if (downloader->isSuccess() && isOpen()) {
-                file = new QFile(downloader->fileName(), this);
-                file->open(QIODevice::ReadOnly);
-            }
-            downloader->deleteLater();
-            this->downloader = nullptr;
-            emit readyRead();
-        }, Qt::QueuedConnection);
-    }
-
-    void close()
-    {
-        if (file)
-            file->close();
-        if (downloader)
-            downloader->abort();
-        QIODevice::close();
-    }
-
-    bool isSequential() const { return true; }
-
-    qint64 bytesAvailable() const
-    {
-        if (file) {
-            return file->size() - file->pos();
-        }
-        return 0;
-    }
-
-signals:
-    void disconnected();
-
-protected:
-    qint64 readData(char *data, qint64 maxSize)
-    {
-        qint64 ret = file->read(data, maxSize);
-        if (file->size() == file->pos())
-            QTimer::singleShot(0, this, &MediaDevice::disconnected);
-        else
-            QTimer::singleShot(0, this, &MediaDevice::readyRead);
-        return ret;
-    }
-
-    qint64 writeData(const char *data, qint64 maxSize)
-    {
-        Q_UNUSED(data)
-        Q_UNUSED(maxSize)
-        return 0;  // it's a readonly device
-    }
-};
-
 #ifdef HAVE_WEBSERVER
 // returns <parsed,list of start/size>
 static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp::server::QHttpRequest* req,
@@ -1501,27 +1440,29 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             return;
         }
 
-        // TODO decide about parents
-        auto md = new MediaDevice(downloader, res);
-        md->open(QIODevice::ReadOnly);
-
         bool *disconnected = new bool(false);
-        connect(md, &MediaDevice::readyRead, res, [md, res]() {
+        connect(downloader, &FileShareDownloader::readyRead, res, [downloader, res]() {
             if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK)
-                res->write(md->read(md->bytesAvailable() > HTTP_CHUNK? HTTP_CHUNK : md->bytesAvailable()));
+                res->write(downloader->read(downloader->bytesAvailable() > HTTP_CHUNK? HTTP_CHUNK : downloader->bytesAvailable()));
         });
 
-        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, md, [md,res, disconnected](){
-            auto bytesAvail = md->bytesAvailable();
+        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, downloader, [downloader,res, disconnected](){
+            auto bytesAvail = downloader->bytesAvailable();
             if (!bytesAvail) return; // let's wait readyRead
-            if (*disconnected && bytesAvail <= HTTP_CHUNK)
-                res->end(md->read(bytesAvail));
-            else
-                res->write(md->read(bytesAvail > HTTP_CHUNK? HTTP_CHUNK : bytesAvail));
+            if (*disconnected && bytesAvail <= HTTP_CHUNK) {
+                res->end(downloader->read(bytesAvail));
+                delete disconnected;
+            } else
+                res->write(downloader->read(bytesAvail > HTTP_CHUNK? HTTP_CHUNK : bytesAvail));
         });
 
-        connect(md, &MediaDevice::disconnected, res, [md, res, disconnected](){
+        connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected](){
             *disconnected = true;
+            if (!res->connection()->tcpSocket()->bytesToWrite()) {
+                res->disconnect(downloader);
+                res->end();
+                delete disconnected;
+            }
         });
     });
 
@@ -1571,8 +1512,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     if (!downloader)
         return nullptr;
 
-    auto md = new MediaDevice(downloader);
-    md->open(QIODevice::ReadOnly);
+    downloader->open(QIODevice::ReadOnly);
     return md;
 #endif
 }
