@@ -693,7 +693,8 @@ LineEdit::LineEdit( QWidget *parent)
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setMinimumHeight(0);
+    const int pic_h = PsiIconset::instance()->system().iconSize()*2-1;
+    setMinimumHeight(pic_h);
 
     connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
 }
