@@ -215,7 +215,6 @@ ChatEdit::ChatEdit(QWidget *parent)
     recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
     recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
     layout_->addWidget(recButton_);
-    layout_->setSizeConstraint(QLayout::SetMinAndMaxSize);
     layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
     connect(recButton_, &QToolButton::pressed, this, [this](){ //Rec button pressed
