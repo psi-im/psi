@@ -66,7 +66,8 @@ static std::tuple<bool,qint64,qint64> parseHttpRangeResponse(const QByteArray &v
     bool ok;
     start = arr[0].toLongLong(&ok);
     if (ok) {
-        size = arr[1].toLongLong(&ok) - start + 1;
+        arr = arr[1].split('/');
+        size = arr[0].toLongLong(&ok) - start + 1;
     }
     if (!ok || size < 0)
         return std::tuple<bool,qint64,qint64>(false, 0, 0);
@@ -442,6 +443,7 @@ public:
         if (downloader) {
             lastError = downloader->lastError();
             delete downloader;
+            downloader = nullptr;
         }
 
         if (uris.isEmpty()) {
@@ -449,6 +451,7 @@ public:
             if (lastError.isEmpty())
                 lastError = tr("Download sources are not given");
             emit q->finished();
+            return;
         }
         QString uri = uris.takeLast();
         auto type = FileSharingManager::sourceType(uri);
@@ -492,6 +495,7 @@ public:
                 lastError = tmpFile->errorString();
                 tmpFile.reset();
                 downloader->abort();
+                success = false;
                 emit q->finished();
                 return;
             }
@@ -1286,7 +1290,7 @@ static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp:
         bool ok;
         qint64 start;
         qint64 end;
-        if (trab[0] = '-') {
+        if (trab[0] == '-') {
             res->setStatusCode(qhttp::ESTATUS_NOT_IMPLEMENTED);
             return std::make_tuple(false, ret);
         }
@@ -1298,15 +1302,20 @@ static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp:
         }
 
         start = l[0].toLongLong(&ok);
-        if (ok && l[1].size())
-            end = l[1].toLongLong(&ok);
-        if (!ok || start > end) {
-            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-            return std::make_tuple(false, ret);
-        }
+        if (l[1].size()) {
+            if (ok && l[1].size())
+                end = l[1].toLongLong(&ok);
+            if (!ok || start > end) {
+                res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
+                return std::make_tuple(false, ret);
+            }
 
-        if (!fullSizeKnown || start < fullSize) {
-            ret.append(qMakePair(start, end - start + 1));
+            if (!fullSizeKnown || start < fullSize) {
+                ret.append(qMakePair(start, end - start + 1));
+            }
+        } else {
+            if (!fullSizeKnown || start < fullSize)
+                ret.append(qMakePair(start, 0));
         }
     }
 
