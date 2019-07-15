@@ -101,6 +101,7 @@ else()
     message(STATUS "Chatlog type - Basic")
 endif()
 
+message(STATUS "System name - ${CMAKE_SYSTEM_NAME}")
 message(STATUS "SQL history - built-in since 1.4.444 version")
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo"))
@@ -133,6 +134,12 @@ if(UNIX AND NOT (APPLE OR HAIKU))
         -DAPP_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DAPP_BIN_NAME=${PROJECT_NAME}
     )
+endif()
+
+#Detect *BSD systems
+STRING (REGEX MATCH "BSD" PROJECT_OS_BSD ${CMAKE_SYSTEM_NAME})
+if(PROJECT_OS_BSD)
+    add_definitions(-DIOAPI_NO_64)
 endif()
 
 # Qt dependencies make building very slow
