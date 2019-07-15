@@ -1537,7 +1537,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         return nullptr;
 
     downloader->open(QIODevice::ReadOnly);
-    return md;
+    return downloader;
 #endif
 }
 
