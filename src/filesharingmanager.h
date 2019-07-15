@@ -60,7 +60,7 @@ public:
     ~FileShareDownloader();
 
     bool isSuccess() const;
-    void start();
+    bool open(QIODevice::OpenMode mode = QIODevice::ReadOnly);
     void abort();
     void setRange(qint64 start, qint64 size);
     bool isRanged() const;
@@ -68,10 +68,17 @@ public:
 
     QString fileName() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;
+
+    bool isSequential() const override;
+    qint64 bytesAvailable() const override;
+protected:
+    qint64 readData(char *data, qint64 maxSize) override;
+    qint64 writeData(const char *data, qint64 maxSize) override;
+
 signals:
-    void started();
     void metaDataChanged();
-    void finished();
+    void disconnected();
+    void finished(); // when last piece of data saved to file or on error
     void progress(size_t curSize, size_t fullSize);
 private:
     class Private;
