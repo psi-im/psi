@@ -672,7 +672,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
     QBuffer buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG", 0);
-    sha1hash = QString::fromLatin1(QCryptographicHash::hash(ba, QCryptographicHash::Sha1).toHex());
+    sha1hash = QString::fromLatin1(QCryptographicHash::hash(ba, QCryptographicHash::Sha1).toBase64());
     mimeType = QString::fromLatin1("image/png");
     _fileSize = ba.size();
 
@@ -680,7 +680,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
     if (cache) {
         _fileName = cache->fileName();
     } else {
-        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare"));
+        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare-XXXXXX.png"));
         file.open();
         file.write(ba);
         file.setAutoRemove(false);
@@ -704,7 +704,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
     _fileSize = file.size();
     file.open(QIODevice::ReadOnly);
     hash.addData(&file);
-    sha1hash = QString::fromLatin1(hash.result().toHex());
+    sha1hash = QString::fromLatin1(hash.result().toBase64());
     cache = manager->getCacheItem(sha1hash, true);
 
     if (cache) {
@@ -725,7 +725,7 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
     isTempFile(false),
     metaData(metaData)
 {
-    sha1hash = QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha1).toHex());
+    sha1hash = QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha1).toBase64());
     mimeType = mime;
     _fileSize = data.size();
 
@@ -733,7 +733,10 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
     if (cache) {
         _fileName = cache->fileName();
     } else {
-        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare"));
+        QMimeDatabase db;
+        QString fileExt = db.mimeTypeForData(data).suffixes().value(0);
+        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psi-XXXXXX") +
+                            (fileExt.isEmpty()? fileExt : QString('.')+fileExt));
         file.open();
         file.write(data);
         file.setAutoRemove(false);
@@ -785,10 +788,12 @@ void FileSharingItem::initFromCache()
 
 void FileSharingItem::checkFinished()
 {
+    // if we didn't emit yet finished signal and everything is finished
     if (!finishNotified && httpFinished && jingleFinished) {
         QVariantMap meta = metaData;
         meta["type"] = mimeType;
-        meta["uris"] = readyUris;
+        if (readyUris.count()) // if ever published something on external service like http
+            meta["uris"] = readyUris;
         if (isTempFile) {
             QFile f(_fileName);
             f.open(QIODevice::ReadOnly);
@@ -829,11 +834,8 @@ Reference FileSharingItem::toReference() const
     Thumbnail thumb(QByteArray(), png, thumbSize.width(), thumbSize.height());
     thumb.uri = QLatin1String("cid:") + bob.cid();
 
-    QFile file(_fileName);
-    file.open(QIODevice::ReadOnly);
     Hash hash(Hash::Sha1);
-    hash.computeFromDevice(&file);
-    file.close();
+    hash.setData(QByteArray::fromBase64(sha1hash.toLatin1()));
 
     Jingle::FileTransfer::File jfile;
     QFileInfo fi(_fileName);
@@ -883,9 +885,9 @@ QImage FileSharingItem::preview(const QSize &maxSize) const
 
 QString FileSharingItem::displayName() const
 {
-    if (isTempFile) {
+    if (_fileName.isEmpty()) {
         auto ext = FileUtil::mimeToFileExt(mimeType);
-        return QString("psi-%1.%2").arg(sha1hash, ext);
+        return QString("psi-%1.%2").arg(sha1hash, ext).replace("/", "");
     }
     return QFileInfo(_fileName).fileName();
 }
@@ -899,19 +901,24 @@ void FileSharingItem::publish()
 {
     if (!httpFinished) {
         auto hm = acc->client()->httpFileUploadManager();
-        auto hfu = hm->upload(_fileName, displayName(), mimeType);
-        hfu->setParent(this);
-        connect(hfu, &HttpFileUpload::progress, this, [this](qint64 bytesReceived, qint64 bytesTotal){
-            Q_UNUSED(bytesTotal)
-            emit publishProgress(bytesReceived);
-        });
-        connect(hfu, &HttpFileUpload::finished, this, [hfu, this]() {
+        if (hm->discoveryStatus() == HttpFileUploadManager::DiscoNotFound) {
             httpFinished = true;
-            if (hfu->success()) {
-                readyUris.append(hfu->getHttpSlot().get.url);
-            }
             checkFinished();
-        });
+        } else {
+            auto hfu = hm->upload(_fileName, displayName(), mimeType);
+            hfu->setParent(this);
+            connect(hfu, &HttpFileUpload::progress, this, [this](qint64 bytesReceived, qint64 bytesTotal){
+                Q_UNUSED(bytesTotal)
+                emit publishProgress(bytesReceived);
+            });
+            connect(hfu, &HttpFileUpload::finished, this, [hfu, this]() {
+                httpFinished = true;
+                if (hfu->success()) {
+                    readyUris.append(hfu->getHttpSlot().get.url);
+                }
+                checkFinished();
+            });
+        }
     }
     if (!jingleFinished) {
         // FIXME we have to add muc jids here if shared with muc
@@ -971,8 +978,8 @@ FileCacheItem *FileSharingManager::getCacheItem(const QString &id, bool reborn, 
         return nullptr;
 
     QString link = item->metadata().value(QLatin1String("link")).toString();
-    QString fileName = link.size()? link : item->fileName();
-    if (fileName.isEmpty() || !QFile(fileName).isReadable()) {
+    QString fileName = link.size()? link : d->cache->cacheDir() + "/" + item->fileName();
+    if (fileName.isEmpty() || !QFileInfo(fileName).isReadable()) {
         d->cache->remove(id);
         return nullptr;
     }
@@ -1501,6 +1508,9 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     QString sourceId = url.path();
     if (sourceId.startsWith('/'))
         sourceId = sourceId.mid(1);
+    sourceId = QByteArray::fromHex(sourceId.toLatin1()).toBase64();
+    if (sourceId.isEmpty())
+        return nullptr;
 
     QString fileName;
     FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, &fileName);

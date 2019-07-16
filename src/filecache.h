@@ -91,7 +91,7 @@ public:
     static const unsigned int Forever = -1; //never remove
 
     static const unsigned int DefaultMemoryCacheSize = 1*1024*1024; //1 Mb
-    static const unsigned int DefaultFileCacheSize = 50*1024*1024; //50 Mb
+    static const unsigned int DefaultFileCacheSize  = 50*1024*1024; //50 Mb
 
     enum SyncPolicy {
         InstantFLush, // always flush all data to disk (keeps copy in memory if fit)
