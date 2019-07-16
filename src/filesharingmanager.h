@@ -108,6 +108,7 @@ public:
     inline const QStringList &uris() const { return readyUris; }
     PsiAccount *account() const;
     XMPP::Reference toReference() const;
+    inline const QStringList log() const { return _log; }
 private:
     void initFromCache();
     void checkFinished();
@@ -115,6 +116,7 @@ private:
 signals:
     void publishFinished();
     void publishProgress(size_t transferredBytes);
+    void logChanged();
 private:
     FileCacheItem *cache = nullptr;
     PsiAccount *acc;
@@ -131,6 +133,7 @@ private:
     QString mimeType;
     QString _description;
     QVariantMap metaData;
+    QStringList _log;
 };
 
 class FileSharingManager : public QObject

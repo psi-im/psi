@@ -29,6 +29,7 @@
 #include "filesharingmanager.h"
 #include "filecache.h"
 #include "psicon.h"
+#include "textutil.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -141,6 +142,9 @@ void FileShareDlg::publish()
             readyPublishers.append(publisher);
             if (!inProgressCount)
                 emit published();
+        });
+        connect(publisher, &FileSharingItem::logChanged, this, [this,publisher,item](){
+            item->setInfo(TextUtil::plain2rich(publisher->log().join('\n')));
         });
         inProgressCount++;
         toPublish.append(publisher);

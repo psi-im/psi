@@ -914,8 +914,14 @@ void FileSharingItem::publish()
             connect(hfu, &HttpFileUpload::finished, this, [hfu, this]() {
                 httpFinished = true;
                 if (hfu->success()) {
+                    _log.append(tr("Published on HttpUpload service"));
                     readyUris.append(hfu->getHttpSlot().get.url);
+                } else {
+                    _log.append(QString("%1: %2")
+                               .arg(tr("Failed to publish on HttpUpload service"),
+                                    hfu->statusString()));
                 }
+                emit logChanged();
                 checkFinished();
             });
         }

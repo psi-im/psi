@@ -29,6 +29,7 @@ struct MultiFileTransferItem::Private
     QString       displayName;       // usually base filename
     QString       mediaType;
     QString       description;
+    QString       info;
     QString       errorString;       // last error
     QString       fileName;
     quint64       fullSize = 0;
@@ -121,8 +122,16 @@ QString MultiFileTransferItem::errorString() const
 
 QString MultiFileTransferItem::toolTipText() const
 {
-    return QString("<b>%1</b><br><br>%2<br><br>").arg(d->displayName, d->description) +
-            tr("Transferred: %1/%2 bytes").arg(QString::number(d->currentSize), QString::number(d->fullSize));
+    QString text = QString("<b>%1</b>").arg(d->displayName);
+    if (!d->description.isEmpty()) {
+        text += (QLatin1String("<br><br>") + d->description);
+    }
+    text += (QLatin1String("<br><br>") +
+             tr("Transferred: %1/%2 bytes").arg(QString::number(d->currentSize), QString::number(d->fullSize)));
+    if (!d->info.isEmpty()) {
+        text += (QLatin1String("<br><br>") + d->info);
+    }
+    return text;
 }
 
 QString MultiFileTransferItem::filePath() const
@@ -158,6 +167,11 @@ void MultiFileTransferItem::setDescription(const QString &description)
     d->description = description;
     emit descriptionChanged();
     emit updated();
+}
+
+void MultiFileTransferItem::setInfo(const QString &html)
+{
+    d->info = html;
 }
 
 void MultiFileTransferItem::setFailure(const QString &error)

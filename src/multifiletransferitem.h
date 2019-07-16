@@ -50,6 +50,7 @@ public:
     void setThumbnail(const QIcon &img);
     void setMediaType(const QString &mediaType);
     void setDescription(const QString &description);
+    void setInfo(const QString &html); // to be shown in tooltips
     void setFailure(const QString &error);
     void setSuccess();
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
