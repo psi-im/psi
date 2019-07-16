@@ -218,21 +218,6 @@ ChatEdit::ChatEdit(QWidget *parent)
     layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
     connect(recButton_, &QToolButton::pressed, this, [this](){ //Rec button pressed
-        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
-        overlay_->setVisible(true);
-        timeout_ = TIMEOUT;
-        timer_.reset(new QTimer); //countdown timer to stop recording while the button is pressed
-        connect(timer_.get(), &QTimer::timeout, this, [this]() {
-            if(timeout_>0) {
-                timeout_ -= SECOND;
-                overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/SECOND));
-            }
-            else {
-                timer_->stop();
-                recorder_->stop();
-            }
-        });
-        timer_->start(SECOND);
         if(recorder_) {
             recorder_->disconnect();
             recorder_.reset();
@@ -248,6 +233,23 @@ ChatEdit::ChatEdit(QWidget *parent)
             md.setData("audio/ogg", recorder_->data());
             md.setData("application/x-psi-histogram", recorder_->histogram());
             emit fileSharingRequested(&md);
+        });
+        connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this](){
+            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
+            overlay_->setVisible(true);
+            timeout_ = TIMEOUT;
+            timer_.reset(new QTimer); //countdown timer to stop recording while the button is pressed
+            connect(timer_.get(), &QTimer::timeout, this, [this]() {
+                if(timeout_>0) {
+                    timeout_ -= SECOND;
+                    overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/SECOND));
+                }
+                else {
+                    timer_->stop();
+                    recorder_->stop();
+                }
+            });
+            timer_->start(SECOND);
         });
         recorder_->record();
     });
