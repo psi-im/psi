@@ -965,8 +965,10 @@ public:
                 delete i;
                 if (r.isValid()) {
                     auto uri = r.uri();
-                    r.setRange(desc.size(), desc.size() + uri.size() + 1);
-                    desc += QString(" %1").arg(uri);
+                    if (!uri.endsWith(QLatin1String("?jingle")) && !uri.startsWith(QLatin1String("cid"))) {
+                        r.setRange(desc.size(), desc.size() + uri.size() + 1);
+                        desc += QString(" %1").arg(uri);
+                    }
                     references.append(r);
                 }
             }
