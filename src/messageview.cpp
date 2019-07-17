@@ -32,7 +32,7 @@ static const QString me_cmd = "/me ";
 class MessageViewReference::Private : public QSharedData
 {
 public:
-    QString         shareId;
+    QByteArray      shareId;
     QString         fileName;
     size_t          fileSize;
     QString         mediaType;
@@ -42,7 +42,7 @@ public:
     QString         thumbnailMediaType;
 };
 
-MessageViewReference::MessageViewReference(const QString &shareId, const QString &fileName, size_t fileSize,
+MessageViewReference::MessageViewReference(const QByteArray &shareId, const QString &fileName, size_t fileSize,
                                            const QString &mediaType, const QStringList &sources) :
     d(new Private)
 {
@@ -81,7 +81,7 @@ void MessageViewReference::setAudioSpectrum(const QList<quint8> &spectrum)
     d->spectrum = spectrum;
 }
 
-const QString &MessageViewReference::id() const
+const QByteArray &MessageViewReference::id() const
 {
     return d->shareId;
 }
@@ -292,7 +292,7 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
             if (_references.count()) {
                 QVariantMap rvm;
                 for (auto const &r: _references) {
-                    rvm.insert(r.id(), r.toVariantMap());
+                    rvm.insert(QString::fromLatin1(r.id().toHex()), r.toVariantMap());
                 }
                 m["references"] = rvm;
             }

@@ -1363,7 +1363,7 @@ void GCMainDlg::mle_returnPressed()
         return;
     }
 
-    if(str.toLower().startsWith("/nick ")) {
+    if(str.startsWith("/nick ", Qt::CaseInsensitive)) {
         QString nick = str.mid(6).trimmed();
     XMPP::Jid newJid = jid().withResource(nick);
         if (!nick.isEmpty() && newJid.isValid()) {
@@ -2187,31 +2187,14 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
             }
 
             auto file = ms.file;
-            QString shareId = account()->psi()->fileSharingManager()->registerSource(file, m.from(), ms.sources);
-
-            auto as = file.audioHistogram();
-            QList<quint8> spectrum;
-            if (as.bars.count()) {
-                std::function<quint8(quint32)> normalizer;
-                switch (as.coding) {
-                case Jingle::FileTransfer::File::Histogram::U8:  normalizer = [](quint32 v){ return quint8(v);}; break;
-                case Jingle::FileTransfer::File::Histogram::S8:  normalizer = [](quint32 v){ return quint8(quint8(std::abs(qint8(v)))<<1);}; break;
-                case Jingle::FileTransfer::File::Histogram::U16: normalizer = [](quint32 v){ return quint8(v>>8);}; break;
-                case Jingle::FileTransfer::File::Histogram::S16: normalizer = [](quint32 v){ return quint8(quint16(std::abs(qint16(v)))>>7);}; break;
-                case Jingle::FileTransfer::File::Histogram::U32: normalizer = [](quint32 v){ return quint8(v>>16);}; break;
-                case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return quint8(quint32(std::abs(qint32(v)))>>15);}; break;
-                }
-                if (normalizer)
-                    std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(spectrum), normalizer);
-            }
+            QByteArray shareId = account()->psi()->fileSharingManager()->registerSource(file, m.from(), ms.sources);
 
             MessageViewReference mvr(shareId, file.name(), file.size(), file.mediaType(), ms.sources);
             auto thumb = file.thumbnail();
             mvr.setThumbnail(thumb.uri, thumb.mimeType);
-            mvr.setAudioSpectrum(spectrum);
             mv.addReference(mvr);
 
-            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(shareId));
+            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(QString::fromLatin1(shareId.toHex())));
             if (r.begin() != -1 && r.begin() >= lastEnd && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
                 htmlDesc += TextUtil::escape(desc.mid(lastEnd, r.begin() - lastEnd)); // something before link
                 htmlDesc += shareStr; // something instead of link

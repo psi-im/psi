@@ -675,7 +675,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
     QBuffer buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG", 0);
-    sha1hash = QString::fromLatin1(QCryptographicHash::hash(ba, QCryptographicHash::Sha1).toBase64());
+    sha1hash = QCryptographicHash::hash(ba, QCryptographicHash::Sha1);
     mimeType = QString::fromLatin1("image/png");
     _fileSize = ba.size();
 
@@ -707,7 +707,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
     _fileSize = file.size();
     file.open(QIODevice::ReadOnly);
     hash.addData(&file);
-    sha1hash = QString::fromLatin1(hash.result().toBase64());
+    sha1hash = hash.result();
     cache = manager->getCacheItem(sha1hash, true);
 
     if (cache) {
@@ -728,7 +728,7 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
     isTempFile(false),
     metaData(metaData)
 {
-    sha1hash = QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha1).toBase64());
+    sha1hash = QCryptographicHash::hash(data, QCryptographicHash::Sha1);
     mimeType = mime;
     _fileSize = data.size();
 
@@ -773,7 +773,7 @@ void FileSharingItem::initFromCache()
         _fileSize = QFileInfo(_fileName).size();
     }
 
-    sha1hash = cache->id();
+    sha1hash = QByteArray::fromBase64(cache->id().toLatin1());
     readyUris = md.value(QString::fromLatin1("uris")).toStringList();
 
     QString httpScheme(QString::fromLatin1("http"));
@@ -828,7 +828,7 @@ Reference FileSharingItem::toReference() const
     std::reverse(uris.begin(), uris.end());
 
     Hash hash(Hash::Sha1);
-    hash.setData(QByteArray::fromBase64(sha1hash.toLatin1()));
+    hash.setData(sha1hash);
 
     Jingle::FileTransfer::File jfile;
     QFileInfo fi(_fileName);
@@ -852,7 +852,7 @@ Reference FileSharingItem::toReference() const
         jfile.setThumbnail(thumb);
     }
 
-    auto bhg = QByteArray::fromBase64(metaData.value(QLatin1String("histogram")).toByteArray());
+    auto bhg = metaData.value(QLatin1String("histogram")).toByteArray();
     if (bhg.size()) {
         XMPP::Jingle::FileTransfer::File::Histogram hg;
         hg.coding = XMPP::Jingle::FileTransfer::File::Histogram::Coding::U8;
@@ -900,7 +900,7 @@ QString FileSharingItem::displayName() const
 {
     if (_fileName.isEmpty()) {
         auto ext = FileUtil::mimeToFileExt(mimeType);
-        return QString("psi-%1.%2").arg(sha1hash, ext).replace("/", "");
+        return QString("psi-%1.%2").arg(QString::fromLatin1(sha1hash.toHex()), ext).replace("/", "");
     }
     return QFileInfo(_fileName).fileName();
 }
@@ -966,7 +966,7 @@ public:
     };
 
     FileCache *cache;
-    QHash<QString,Source> sources;
+    QHash<QByteArray,Source> sources;
 };
 
 FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent),
@@ -990,16 +990,17 @@ QString FileSharingManager::getCacheDir()
     return shares.path();
 }
 
-FileCacheItem *FileSharingManager::getCacheItem(const QString &id, bool reborn, QString *fileName_out)
+FileCacheItem *FileSharingManager::getCacheItem(const QByteArray &id, bool reborn, QString *fileName_out)
 {
-    auto item = d->cache->get(id, reborn);
+    QString idStr = QString::fromLatin1(id.toBase64());
+    auto item = d->cache->get(idStr, reborn);
     if (!item)
         return nullptr;
 
     QString link = item->metadata().value(QLatin1String("link")).toString();
     QString fileName = link.size()? link : d->cache->cacheDir() + "/" + item->fileName();
     if (fileName.isEmpty() || !QFileInfo(fileName).isReadable()) {
-        d->cache->remove(id);
+        d->cache->remove(idStr);
         return nullptr;
     }
     if (fileName_out)
@@ -1007,10 +1008,13 @@ FileCacheItem *FileSharingManager::getCacheItem(const QString &id, bool reborn, 
     return item;
 }
 
-FileCacheItem * FileSharingManager::saveToCache(const QString &id, const QByteArray &data,
+FileCacheItem * FileSharingManager::saveToCache(const QByteArray &id, const QByteArray &data,
                                                 const QVariantMap &metadata, unsigned int maxAge)
 {
-    return d->cache->append(id, data, metadata, maxAge);
+    auto item = d->cache->append(QString::fromLatin1(id.toBase64()), data, metadata, maxAge);
+    if (item && data.size())
+        d->cache->sync();
+    return item;
 }
 
 /*
@@ -1089,13 +1093,16 @@ QList<FileSharingItem*> FileSharingManager::fromFilesList(const QStringList &fil
     return ret;
 }
 
-QString FileSharingManager::registerSource(const Jingle::FileTransfer::File &file, const Jid &source, const QStringList &uris)
+QByteArray FileSharingManager::registerSource(const Jingle::FileTransfer::File &file, const Jid &source, const QStringList &uris)
 {
     Hash h = file.hash(Hash::Sha1);
     if (!h.isValid()) {
         h = file.hash();
     }
-    QString shareId = QString::fromLatin1(h.data().toHex());
+    QByteArray shareId = h.data();
+    if (shareId.isEmpty())
+        return QByteArray();
+
     auto it = d->sources.find(shareId);
     if (it == d->sources.end())
         it = d->sources.insert(shareId, Private::Source(file, QList<Jid>()<<source, uris));
@@ -1121,7 +1128,7 @@ QString FileSharingManager::downloadThumbnail(const QString &sourceId)
 }
 
 // try take http or ftp source to be passed directly to media backend
-QUrl FileSharingManager::simpleSource(const QString &sourceId) const
+QUrl FileSharingManager::simpleSource(const QByteArray &sourceId) const
 {
     auto it = d->sources.find(sourceId);
     if (it == d->sources.end())
@@ -1136,7 +1143,7 @@ QUrl FileSharingManager::simpleSource(const QString &sourceId) const
     return QUrl();
 }
 
-Jingle::FileTransfer::File FileSharingManager::registeredSourceFile(const QString &sourceId)
+Jingle::FileTransfer::File FileSharingManager::registeredSourceFile(const QByteArray &sourceId)
 {
     auto it = d->sources.find(sourceId);
     if (it == d->sources.end())
@@ -1145,7 +1152,7 @@ Jingle::FileTransfer::File FileSharingManager::registeredSourceFile(const QStrin
     return src.file;
 }
 
-FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QString &sourceId,
+FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QByteArray &sourceId,
                                                        bool isRanged, qint64 start, qint64 size)
 {
     auto it = d->sources.find(sourceId);
@@ -1182,15 +1189,15 @@ FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QS
         QFile tmpFile(src.downloader->fileName());
         tmpFile.open(QIODevice::ReadOnly);
         auto h = src.downloader->jingleFile().hash(Hash::Sha1);
-        QString sha1hash;
+        QByteArray sha1hash;
         if (!h.isValid() || h.data().isEmpty()) {
             // no sha1 hash
             Hash h(Hash::Sha1);
             if (h.computeFromDevice(&tmpFile)) {
-                sha1hash = QString::fromLatin1(h.data().toHex());
+                sha1hash = h.data();
             }
         } else {
-            sha1hash = QString::fromLatin1(h.data().toHex());
+            sha1hash = h.data();
         }
         tmpFile.close();
 
@@ -1240,7 +1247,7 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         if (!h.isValid() || h.data().isEmpty())
             return false;
 
-        FileCacheItem *item = getCacheItem(h.data().toHex(), true);
+        FileCacheItem *item = getCacheItem(h.data(), true);
         if (!item)
             return false;
 
@@ -1369,12 +1376,13 @@ static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp:
 }
 
 // returns true if request handled. false if we need to find another hander
-bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sourceId,
+bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex,
                                              qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse *res)
 {
     qint64 requestedStart = 0;
     qint64 requestedSize = 0;
     bool isRanged = false;
+    QByteArray sourceId = QByteArray::fromHex(sourceIdHex.toLatin1());
 
     auto handleRequestedRange = [&](qint64 fileSize = -1)
     {
@@ -1527,24 +1535,20 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
 #endif
 
 #ifndef WEBKIT
-QString FileSharingDeviceOpener::urlToSourceId(const QUrl &url)
+QByteArray FileSharingDeviceOpener::urlToSourceId(const QUrl &url)
 {
     if (url.scheme() != QLatin1String("share"))
-        return QString();
+        return QByteArray();
 
     QString sourceId = url.path();
     if (sourceId.startsWith('/'))
         sourceId = sourceId.mid(1);
-    sourceId = QByteArray::fromHex(sourceId.toLatin1()).toBase64();
-    if (sourceId.isEmpty())
-        return QString();
-
-    return sourceId;
+    return QByteArray::fromHex(sourceId.toLatin1());
 }
 
 QIODevice *FileSharingDeviceOpener::open(QUrl &url)
 {
-    QString sourceId = urlToSourceId(url);
+    QByteArray sourceId = urlToSourceId(url);
     if (sourceId.isEmpty())
         return nullptr;
 
@@ -1561,7 +1565,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     path.reserve(128);
     if (!path.endsWith('/'))
         path += '/';
-    path += QString("psi/account/%1/sharedfile/%2").arg(acc->id(), sourceId);
+    path += QString("psi/account/%1/sharedfile/%2").arg(acc->id(), QString::fromLatin1(sourceId.toHex()));
     localServerUrl.setPath(path);
     url = localServerUrl;
     return nullptr;
@@ -1591,13 +1595,13 @@ void FileSharingDeviceOpener::close(QIODevice *dev)
 
 QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 {
-    QString sourceId = urlToSourceId(url);
+    QByteArray sourceId = urlToSourceId(url);
     if (sourceId.isEmpty())
         return QVariant();
 
     FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, nullptr);
     if (item) {
-        QByteArray hg = QByteArray::fromBase64(item->metadata().value("histogram").toByteArray());
+        QByteArray hg = item->metadata().value("histogram").toByteArray();
         if (hg.isEmpty())
             return QVariant();
 
@@ -1608,14 +1612,31 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
             iteHg.append(float(b) / 255.0);
         }
 
-        return QVariant::fromValue<ITEAudioController::Histogram>(iteHg);
+        QVariantMap vm;
+        vm.insert(QString::fromLatin1("histogram"),
+                  QVariant::fromValue<ITEAudioController::Histogram>(iteHg));
+        return vm;
     }
 
     auto file = acc->psi()->fileSharingManager()->registeredSourceFile(sourceId);
-    if (file.isValid()) {
-        ITEAudioController::Histogram iteHg = file.audioHistogram<float>();
-        if (iteHg.size()) {
-            return QVariant::fromValue<ITEAudioController::Histogram>(iteHg);
+    if (file.isValid() && file.audioHistogram().bars.count()) {
+        auto as = file.audioHistogram();
+        std::function<float(quint32)> normalizer;
+        switch (as.coding) {
+        case Jingle::FileTransfer::File::Histogram::U8:  normalizer = [](quint32 v){ return quint8(v) / 255.0f;                      }; break;
+        case Jingle::FileTransfer::File::Histogram::S8:  normalizer = [](quint32 v){ return std::fabs(qint8(v) / 128.0f);            }; break;
+        case Jingle::FileTransfer::File::Histogram::U16: normalizer = [](quint32 v){ return quint16(v) / float(1 << 16);             }; break;
+        case Jingle::FileTransfer::File::Histogram::S16: normalizer = [](quint32 v){ return std::fabs(qint16(v) / float(1 << 15));   }; break;
+        case Jingle::FileTransfer::File::Histogram::U32: normalizer = [](quint32 v){ return quint32(v) / float(1UL << 32);           }; break;
+        case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return std::fabs(qint32(v) / float(1UL << 31)); }; break;
+        }
+        if (normalizer) {
+            ITEAudioController::Histogram ret;
+            std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(ret), normalizer);
+            QVariantMap vm;
+            vm.insert(QString::fromLatin1("histogram"),
+                      QVariant::fromValue<ITEAudioController::Histogram>(ret));
+            return vm;
         }
     }
 

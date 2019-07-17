@@ -101,7 +101,7 @@ public:
     QImage preview(const QSize &maxSize) const;
     QString displayName() const;
     QString fileName() const;
-    inline const QString &hash() const { return sha1hash; }
+    inline const QByteArray &hash() const { return sha1hash; }
 
     inline bool isPublished() const { return httpFinished && jingleFinished; }
     void publish();
@@ -126,12 +126,12 @@ private:
     bool httpFinished = false;
     bool jingleFinished = false;
     bool finishNotified = false;
-    size_t _fileSize;
+    size_t      _fileSize;
     QStringList readyUris;
-    QString _fileName;
-    QString sha1hash;
-    QString mimeType;
-    QString _description;
+    QString     _fileName;
+    QByteArray  sha1hash;
+    QString     mimeType;
+    QString     _description;
     QVariantMap metaData;
     QStringList _log;
 };
@@ -152,20 +152,20 @@ public:
     ~FileSharingManager();
 
     static QString getCacheDir();
-    FileCacheItem *getCacheItem(const QString &id, bool reborn = false, QString *fileName = nullptr);
+    FileCacheItem *getCacheItem(const QByteArray &id, bool reborn = false, QString *fileName = nullptr);
 
     // id - usually hex(sha1(image data))
-    FileCacheItem *saveToCache(const QString &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
+    FileCacheItem *saveToCache(const QByteArray &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
     //FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
     QList<FileSharingItem *> fromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
     // registers source for file and returns share id for future access to the source
-    QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
+    QByteArray registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
-    QUrl simpleSource(const QString &sourceId) const;
-    XMPP::Jingle::FileTransfer::File registeredSourceFile(const QString &sourceId);
-    FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, bool isRanged = false,
+    QUrl simpleSource(const QByteArray &sourceId) const;
+    XMPP::Jingle::FileTransfer::File registeredSourceFile(const QByteArray &sourceId);
+    FileShareDownloader *downloadShare(PsiAccount *acc, const QByteArray &sourceId, bool isRanged = false,
                                        qint64 start = 0, qint64 size = 0);
 
     // returns false if unable to accept automatically
@@ -174,7 +174,7 @@ public:
     static SourceType sourceType(const QString &uri);
     static QStringList sortSourcesByPriority(const QStringList &uris);
 #ifdef HAVE_WEBSERVER
-    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceId, qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse* res);
+    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse* res);
 #endif
 signals:
 
@@ -190,7 +190,7 @@ class FileSharingDeviceOpener : public ITEMediaOpener
 {
     PsiAccount *acc;
 
-    QString urlToSourceId(const QUrl &url);
+    QByteArray urlToSourceId(const QUrl &url);
 public:
     inline FileSharingDeviceOpener(PsiAccount *acc) :
         acc(acc){}

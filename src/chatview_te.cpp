@@ -437,7 +437,8 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     for (auto const &r: mv.references()) {
         if (r.mediaType().startsWith(QString::fromLatin1("audio"))) {
             bool ab = atBottom();
-            voiceMsgCtrl->insert(QUrl(QLatin1String("share:") + r.id()), mediaOpener);
+            voiceMsgCtrl->insert(QUrl(QLatin1String("share:") + QString::fromLatin1(r.id().toHex())),
+                                 mediaOpener);
             if (ab) {
                 scrollToBottom();
             }

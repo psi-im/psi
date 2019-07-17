@@ -34,7 +34,7 @@
 class MessageViewReference
 {
 public:
-    MessageViewReference(const QString &shareId, const QString &fileName, size_t fileSize,
+    MessageViewReference(const QByteArray &shareId, const QString &fileName, size_t fileSize,
                          const QString &mediaType, const QStringList &sources);
     MessageViewReference(const MessageViewReference &other);
     MessageViewReference &operator=(const MessageViewReference &other);
@@ -43,7 +43,7 @@ public:
     void setThumbnail(const QUrl &uri, const QString &mediaType);
     void setAudioSpectrum(const QList<quint8> &spectrum);
 
-    const QString &id() const;
+    const QByteArray &id() const;
     const QString &fileName() const;
     size_t size() const;
     const QString &mediaType() const;
