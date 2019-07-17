@@ -958,6 +958,8 @@ public:
         connect(dlg, &FileShareDlg::published, this, [dlg, callback](){
             QList<Reference> references;
             QString desc = dlg->description();
+
+            // append reference main links to description and setup their range
             for (auto const &i: dlg->takeItems()) {
                 auto r = i->toReference();
                 delete i;
