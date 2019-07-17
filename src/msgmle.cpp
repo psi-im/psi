@@ -255,8 +255,10 @@ ChatEdit::ChatEdit(QWidget *parent)
     });
     connect(recButton_, &QToolButton::released, this, [this](){ //Rec button relesed
         recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
-        timer_->stop();
-        timer_.reset();
+        if (timer_) {
+            timer_->stop();
+            timer_.reset();
+        }
         overlay_->setVisible(false);
         if(recorder_) {
             recorder_->stop();

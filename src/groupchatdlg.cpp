@@ -2189,17 +2189,17 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
             auto file = ms.file;
             QString shareId = account()->psi()->fileSharingManager()->registerSource(file, m.from(), ms.sources);
 
-            auto as = file.audioSpectrum();
+            auto as = file.audioHistogram();
             QList<quint8> spectrum;
             if (as.bars.count()) {
                 std::function<quint8(quint32)> normalizer;
                 switch (as.coding) {
-                case Jingle::FileTransfer::File::Spectrum::U8:  normalizer = [](quint32 v){ return quint8(v);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S8:  normalizer = [](quint32 v){ return quint8(quint8(std::abs(qint8(v)))<<1);}; break;
-                case Jingle::FileTransfer::File::Spectrum::U16: normalizer = [](quint32 v){ return quint8(v>>8);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S16: normalizer = [](quint32 v){ return quint8(quint16(std::abs(qint16(v)))>>7);}; break;
-                case Jingle::FileTransfer::File::Spectrum::U32: normalizer = [](quint32 v){ return quint8(v>>16);}; break;
-                case Jingle::FileTransfer::File::Spectrum::S32: normalizer = [](quint32 v){ return quint8(quint32(std::abs(qint32(v)))>>15);}; break;
+                case Jingle::FileTransfer::File::Histogram::U8:  normalizer = [](quint32 v){ return quint8(v);}; break;
+                case Jingle::FileTransfer::File::Histogram::S8:  normalizer = [](quint32 v){ return quint8(quint8(std::abs(qint8(v)))<<1);}; break;
+                case Jingle::FileTransfer::File::Histogram::U16: normalizer = [](quint32 v){ return quint8(v>>8);}; break;
+                case Jingle::FileTransfer::File::Histogram::S16: normalizer = [](quint32 v){ return quint8(quint16(std::abs(qint16(v)))>>7);}; break;
+                case Jingle::FileTransfer::File::Histogram::U32: normalizer = [](quint32 v){ return quint8(v>>16);}; break;
+                case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return quint8(quint32(std::abs(qint32(v)))>>15);}; break;
                 }
                 if (normalizer)
                     std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(spectrum), normalizer);

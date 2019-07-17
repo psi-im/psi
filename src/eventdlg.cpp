@@ -182,10 +182,6 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
         tryComplete();
 }
 
-#ifdef __GNUC__
-#warning "eventdlg.cpp: Disabled right click on JID"
-#endif
-
 //QMenu *ELineEdit::createPopupMenu()
 //{
 //    EventDlg *e = (EventDlg *)parent();

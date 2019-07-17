@@ -38,6 +38,9 @@
 # include "webserver.h"
 # include "qhttpserverconnection.hpp"
 #endif
+#ifndef WEBKIT
+# include "qiteaudio.h"
+#endif
 
 #include <QBuffer>
 #include <QDir>
@@ -824,16 +827,6 @@ Reference FileSharingItem::toReference() const
     uris = FileSharingManager::sortSourcesByPriority(uris);
     std::reverse(uris.begin(), uris.end());
 
-    QSize thumbSize(64,64);
-    auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
-    QByteArray pixData;
-    QBuffer buf(&pixData);
-    thumbPix.save(&buf, "PNG");
-    QString png(QString::fromLatin1("image/png"));
-    auto bob = acc->client()->bobManager()->append(pixData, png, isTempFile? TEMP_TTL: FILE_TTL);
-    Thumbnail thumb(QByteArray(), png, thumbSize.width(), thumbSize.height());
-    thumb.uri = QLatin1String("cid:") + bob.cid();
-
     Hash hash(Hash::Sha1);
     hash.setData(QByteArray::fromBase64(sha1hash.toLatin1()));
 
@@ -844,8 +837,28 @@ Reference FileSharingItem::toReference() const
     jfile.setName(fi.fileName());
     jfile.setSize(fi.size());
     jfile.setMediaType(mimeType);
-    jfile.setThumbnail(thumb);
     jfile.setDescription(_description);
+
+    QSize thumbSize(64,64);
+    auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
+    if (!thumbPix.isNull()) {
+        QByteArray pixData;
+        QBuffer buf(&pixData);
+        thumbPix.save(&buf, "PNG");
+        QString png(QString::fromLatin1("image/png"));
+        auto bob = acc->client()->bobManager()->append(pixData, png, isTempFile? TEMP_TTL: FILE_TTL);
+        Thumbnail thumb(QByteArray(), png, thumbSize.width(), thumbSize.height());
+        thumb.uri = QLatin1String("cid:") + bob.cid();
+        jfile.setThumbnail(thumb);
+    }
+
+    auto bhg = QByteArray::fromBase64(metaData.value(QLatin1String("histogram")).toByteArray());
+    if (bhg.size()) {
+        XMPP::Jingle::FileTransfer::File::Histogram hg;
+        hg.coding = XMPP::Jingle::FileTransfer::File::Histogram::Coding::U8;
+        std::transform(bhg.begin(), bhg.end(), std::back_inserter(hg.bars), [](auto v){ return quint32(v); });
+        jfile.setAudioHistogram(hg);
+    }
 
     Reference r(Reference::Data, uris.first());
     MediaSharing ms;
@@ -1123,6 +1136,14 @@ QUrl FileSharingManager::simpleSource(const QString &sourceId) const
     return QUrl();
 }
 
+Jingle::FileTransfer::File FileSharingManager::registeredSourceFile(const QString &sourceId)
+{
+    auto it = d->sources.find(sourceId);
+    if (it == d->sources.end())
+        return Jingle::FileTransfer::File();
+    Private::Source &src = *it;
+    return src.file;
+}
 
 FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QString &sourceId,
                                                        bool isRanged, qint64 start, qint64 size)
@@ -1180,8 +1201,8 @@ FileShareDownloader* FileSharingManager::downloadShare(PsiAccount *acc, const QS
         auto thumb = src.file.thumbnail();
         if (thumb.isValid())
             vm.insert(QString::fromLatin1("thumbnail"), thumb.uri);
-        if (src.file.audioSpectrum().bars.count()) {
-            auto s = src.file.audioSpectrum();
+        if (src.file.audioHistogram().bars.count()) {
+            auto s = src.file.audioHistogram();
             QStringList sl;
             sl.reserve(s.bars.count());
             for (auto const &v: s.bars) sl.append(QString::number(v));
@@ -1506,15 +1527,24 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
 #endif
 
 #ifndef WEBKIT
-QIODevice *FileSharingDeviceOpener::open(QUrl &url)
+QString FileSharingDeviceOpener::urlToSourceId(const QUrl &url)
 {
     if (url.scheme() != QLatin1String("share"))
-        return nullptr;
+        return QString();
 
     QString sourceId = url.path();
     if (sourceId.startsWith('/'))
         sourceId = sourceId.mid(1);
     sourceId = QByteArray::fromHex(sourceId.toLatin1()).toBase64();
+    if (sourceId.isEmpty())
+        return QString();
+
+    return sourceId;
+}
+
+QIODevice *FileSharingDeviceOpener::open(QUrl &url)
+{
+    QString sourceId = urlToSourceId(url);
     if (sourceId.isEmpty())
         return nullptr;
 
@@ -1557,6 +1587,39 @@ void FileSharingDeviceOpener::close(QIODevice *dev)
 {
     dev->close();
     dev->deleteLater();
+}
+
+QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
+{
+    QString sourceId = urlToSourceId(url);
+    if (sourceId.isEmpty())
+        return QVariant();
+
+    FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, nullptr);
+    if (item) {
+        QByteArray hg = QByteArray::fromBase64(item->metadata().value("histogram").toByteArray());
+        if (hg.isEmpty())
+            return QVariant();
+
+        // so it looks like a voice message
+        ITEAudioController::Histogram iteHg;
+        iteHg.reserve(hg.size());
+        for (quint8 b: hg) {
+            iteHg.append(float(b) / 255.0);
+        }
+
+        return QVariant::fromValue<ITEAudioController::Histogram>(iteHg);
+    }
+
+    auto file = acc->psi()->fileSharingManager()->registeredSourceFile(sourceId);
+    if (file.isValid()) {
+        ITEAudioController::Histogram iteHg = file.audioHistogram<float>();
+        if (iteHg.size()) {
+            return QVariant::fromValue<ITEAudioController::Histogram>(iteHg);
+        }
+    }
+
+    return QVariant();
 }
 #endif
 

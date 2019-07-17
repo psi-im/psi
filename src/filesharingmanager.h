@@ -164,6 +164,7 @@ public:
     QString registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
     QUrl simpleSource(const QString &sourceId) const;
+    XMPP::Jingle::FileTransfer::File registeredSourceFile(const QString &sourceId);
     FileShareDownloader *downloadShare(PsiAccount *acc, const QString &sourceId, bool isRanged = false,
                                        qint64 start = 0, qint64 size = 0);
 
@@ -188,12 +189,15 @@ private:
 class FileSharingDeviceOpener : public ITEMediaOpener
 {
     PsiAccount *acc;
+
+    QString urlToSourceId(const QUrl &url);
 public:
     inline FileSharingDeviceOpener(PsiAccount *acc) :
         acc(acc){}
 
     QIODevice *open(QUrl &url) override;
     void close(QIODevice *dev) override;
+    QVariant metadata(const QUrl &url) override;
 };
 #endif
 
