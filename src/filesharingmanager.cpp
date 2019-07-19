@@ -1494,7 +1494,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         return false; // REVIEW probably 404 would be better
 
     downloader->setParent(res);
-    connect(downloader, &FileShareDownloader::metaDataChanged, this, [downloader, setupHeaders, res](){
+    connect(downloader, &FileShareDownloader::metaDataChanged, this, [this, downloader, setupHeaders, res](){
         qint64 start;
         qint64 size;
         std::tie(start, size) = downloader->range();
