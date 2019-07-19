@@ -213,7 +213,7 @@ void ContactListView::rowsInserted(const QModelIndex &parent, int start, int end
 {
     HoverableTreeView::rowsInserted(parent, start, end);
     for (int i = start; i <= end; ++i) {
-        QModelIndex index = parent.model()->index(i, 0, parent);
+        QModelIndex index = model()->index(i, 0, parent);
         if (realIndex(index).data(ContactListModel::ExpandedRole).toBool())
             setExpanded(index, true);
     }
