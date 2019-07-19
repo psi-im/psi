@@ -60,7 +60,7 @@ TabDlgDelegate::~TabDlgDelegate()
 
 Qt::WindowFlags TabDlgDelegate::initWindowFlags() const
 {
-    return (Qt::WindowFlags)nullptr;
+    return Qt::Widget;
 }
 
 void TabDlgDelegate::create(QWidget *)
@@ -128,7 +128,7 @@ bool TabDlgDelegate::tabEventFilter(QWidget *, QObject *, QEvent *)
  *        passed.
  */
 TabDlg::TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate)
-        : AdvancedWidget<QWidget>(nullptr, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)nullptr)
+        : AdvancedWidget<QWidget>(nullptr, delegate ? delegate->initWindowFlags() : Qt::Widget)
         , delegate_(delegate)
         , tabWidget_(nullptr)
         , detachButton_(nullptr)
@@ -371,7 +371,7 @@ void TabDlg::setLooks()
 void TabDlg::tabSelected(QWidget* _selected)
 {
     // _selected could be null when TabDlg is closing and deleting all its tabs
-    TabbableWidget* selected = _selected ? qobject_cast<TabbableWidget*>(_selected) : 0;
+    TabbableWidget* selected = _selected ? qobject_cast<TabbableWidget*>(_selected) : nullptr;
     if (!selectedTab_.isNull()) {
         QCoreApplication::postEvent(selectedTab_, new QEvent(QEvent::ActivationChange));
     }
@@ -535,7 +535,7 @@ QString TabDlg::desiredCaption() const
     QString cap = "";
     uint pending = 0;
     foreach(TabbableWidget* tab, tabs_) {
-        pending += tab->unreadMessageCount();
+        pending += uint(tab->unreadMessageCount());
     }
     if (pending > 0) {
         cap += "* ";

@@ -53,9 +53,6 @@ signals:
     void playing(const Tune &tune);
     void stopped();
 
-protected slots:
-    void sendTune(const Tune &tune);
-
 protected:
     bool loadPlugin(QObject* plugin);
 

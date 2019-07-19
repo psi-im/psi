@@ -27,7 +27,7 @@
 
 static const int PLAYING = 2;
 static const int STOPPED = 0;
-static const WCHAR* AIMP_REMOTE_CLASS = (WCHAR *)L"AIMP2_RemoteInfo";
+static const WCHAR* AIMP_REMOTE_CLASS = const_cast<WCHAR *>(L"AIMP2_RemoteInfo");
 
 AimpTuneController::AimpTuneController()
 : PollingTuneController(),
@@ -44,7 +44,7 @@ HWND AimpTuneController::findAimp() const
 int AimpTuneController::getAimpStatus(const HWND &aimp) const
 {
     if (aimp) {
-        return (int)SendMessage(aimp, WM_AIMP_PROPERTY, AIMP_RA_PROPERTY_PLAYER_STATE | AIMP_RA_PROPVALUE_GET, 0);
+        return int(SendMessage(aimp, WM_AIMP_PROPERTY, AIMP_RA_PROPERTY_PLAYER_STATE | AIMP_RA_PROPVALUE_GET, 0));
     }
     return STOPPED;
 }
@@ -69,16 +69,16 @@ Tune AimpTuneController::currentTune() const
 Tune AimpTuneController::getTune() const
 {
     HANDLE aFile=OpenFileMapping(FILE_MAP_READ, TRUE, AIMP_REMOTE_CLASS);
-    PAIMPRemoteFileInfo aInfo = (PAIMPRemoteFileInfo)MapViewOfFile(aFile, FILE_MAP_READ, 0, 0, AIMPRemoteAccessMapFileSize);
-    if (aInfo != NULL) {
+    PAIMPRemoteFileInfo aInfo = static_cast<PAIMPRemoteFileInfo>(MapViewOfFile(aFile, FILE_MAP_READ, 0, 0, AIMPRemoteAccessMapFileSize));
+    if (aInfo != nullptr) {
         wchar_t *str = (wchar_t *)((char*)aInfo + sizeof(*aInfo));
-        QString album = QString::fromWCharArray(str, aInfo->AlbumLength);
+        QString album = QString::fromWCharArray(str, int(aInfo->AlbumLength));
         str += aInfo->AlbumLength;
-        QString artist = QString::fromWCharArray(str, aInfo->ArtistLength);
+        QString artist = QString::fromWCharArray(str, int(aInfo->ArtistLength));
         str += aInfo->ArtistLength + aInfo->DateLength;
-        QString url = QString::fromWCharArray(str, aInfo->FileNameLength);
+        QString url = QString::fromWCharArray(str, int(aInfo->FileNameLength));
         str += aInfo->FileNameLength + aInfo->GenreLength;
-        QString title = QString::fromWCharArray(str, aInfo->TitleLength);
+        QString title = QString::fromWCharArray(str, int(aInfo->TitleLength));
         unsigned long trackNumber = aInfo->TrackNumber;
         unsigned long time = aInfo->Duration;
         Tune tune = Tune();

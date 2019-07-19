@@ -18,6 +18,7 @@
  */
 
 #include <windows.h>
+#include <QString>
 
 #ifdef Q_CC_MSVC
 #pragma warning(push)
@@ -53,12 +54,8 @@ WinAmpTuneController::WinAmpTuneController()
     setInterval(NormInterval);
 }
 
-template <typename char_type> const size_t length (const char_type * begin)
-{
-    const char_type * end = begin;
-    for (; *end; ++end);
-    return end - begin;
-}
+QString tchar2str(const char *str) { return QString::fromLocal8Bit(str); }
+QString tchar2str(const wchar_t *str) { return QString::fromWCharArray(str); }
 
 // Returns a title of a track currently being played by WinAmp with given HWND (passed in waWnd)
 QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) const
@@ -69,7 +66,7 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
     // Get WinAmp window title. It always contains name of the track
     SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
     // Now, waTitle contains WinAmp window title
-    title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle));
+    title = tchar2str(waTitle);
     if (title[0] == '*' || (title.length () && title[title.length() - 1] == '*')) {
         // request to be called again soon.
         return QPair<bool, QString>(false, QString());
@@ -96,7 +93,7 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
         }
     }
     else {
-        title = QString ((const QChar *) waTitle, (int)length<TCHAR> ((const TCHAR *) waTitle)); // Title is not scrolling
+        title = tchar2str(waTitle);// Title is not scrolling
     }
 
     // Remove leading and trailing spaces
@@ -151,9 +148,9 @@ void WinAmpTuneController::check()
 
     Tune tune;
 #ifdef UNICODE
-    HWND h = FindWindow(L"Winamp v1.x", NULL);
+    HWND h = FindWindow(L"Winamp v1.x", nullptr);
 #else
-    HWND h = FindWindow("Winamp v1.x", NULL);
+    HWND h = FindWindow("Winamp v1.x", nullptr);
 #endif
     if (h && SendMessage(h, WM_WA_IPC, 0, IPC_ISPLAYING) == 1) {
         tune = getTune(h);
@@ -166,7 +163,7 @@ void WinAmpTuneController::check()
 Tune WinAmpTuneController::getTune(const HWND &hWnd)
 {
     Tune tune = Tune();
-    int position = (int)SendMessage(hWnd, WM_WA_IPC, 0, IPC_GETLISTPOS);
+    int position = int(SendMessage(hWnd, WM_WA_IPC, 0, IPC_GETLISTPOS));
     if (position != -1) {
         if (hWnd && SendMessage(hWnd,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
             QPair<bool, QString> trackpair(getTrackTitle(hWnd));
@@ -184,7 +181,7 @@ Tune WinAmpTuneController::getTune(const HWND &hWnd)
             tune.setName(trackpair.second);
             tune.setURL(trackpair.second);
             tune.setTrack(QString::number(position + 1));
-            tune.setTime(SendMessage(hWnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME));
+            tune.setTime(uint(SendMessage(hWnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME)));
         }
     }
     return tune;

@@ -19,9 +19,6 @@
 
 #include <QtGlobal> // required to make mingw32 happy
 #ifdef Q_OS_WIN
-#if __GNUC__ >= 3
-#    define WINVER 0x0500
-#endif
 #include <windows.h>
 #include <winuser.h>
 #endif
@@ -157,7 +154,7 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
         bool dockWidget = false;
 
         if ( w->windowType() == Qt::Desktop )
-            rect = ((QDesktopWidget *)w)->availableGeometry((QWidget *)parent());
+            rect = (static_cast<QDesktopWidget *>(w))->availableGeometry(static_cast<QWidget *>(parent()));
         else {
             if ( w == p ||
                  desktop->screenNumber(p) != desktop->screenNumber(w) )
@@ -238,7 +235,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
     FLASHWINFO fwi;
     
     fwi.cbSize = sizeof(fwi);
-    fwi.hwnd = (HWND)parentWidget_->winId();
+    fwi.hwnd = HWND(parentWidget_->winId());
     
     if (yes) {
         fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
@@ -288,7 +285,7 @@ void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 
 void GAdvancedWidget::Private::updateGeometry()
 {
-    QWidget *w = (QWidget *)parent();
+    QWidget *w = static_cast<QWidget *>(parent());
     w->move(newGeometry_.topLeft());
 }
 
@@ -414,7 +411,8 @@ bool GAdvancedWidget::winEvent(MSG* msg, long* result)
 
         d->posChanging(&wpos->x, &wpos->y, &wpos->cx, &wpos->cy);
 
-        result = 0;
+        result = nullptr;
+        Q_UNUSED(result);
         return true;
     }
 

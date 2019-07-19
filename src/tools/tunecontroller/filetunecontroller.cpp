@@ -58,18 +58,15 @@ FileTuneController::FileTuneController(const QString& songFile)
     // on the other hand if watch is recognized as functional polling will be disabled, so the user
     // should understand if he suddenly removed the directory with watched file tunes won't work at all.
     _tuneFileWatcher = new QCA::FileWatch(_songFile, this); // qca watch works on non-existing files ;)
-    connect(_tuneFileWatcher, SIGNAL(changed()), this, SLOT(onFileChanged()));
+    connect(_tuneFileWatcher, &QCA::FileWatch::changed, this, [this](){
+        _watchFunctional = true;
+        check();
+    });
 }
 
 Tune FileTuneController::currentTune() const
 {
     return _currentTune;
-}
-
-void FileTuneController::onFileChanged() // this will never happen if _songFile's directory doesn't exist
-{
-    _watchFunctional = true;
-    check();
 }
 
 void FileTuneController::check()

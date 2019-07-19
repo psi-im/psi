@@ -53,8 +53,12 @@ void TuneControllerManager::updateControllers(const QStringList &blacklist)
         isInBlacklist = blacklist.contains(name);
         if (!c && !isInBlacklist) {
             c = TuneControllerPtr(plugins_[name]->createController());
-            connect(c.data(),SIGNAL(stopped()),SIGNAL(stopped()));
-            connect(c.data(),SIGNAL(playing(const Tune&)),SLOT(sendTune(const Tune&)));
+            connect(c.data(), &TuneController::stopped, this, &TuneControllerManager::stopped);
+            connect(c.data(), &TuneController::playing, this, [this](const Tune &tune){
+                if (checkTune(tune)) {
+                    emit playing(tune);
+                }
+            });
             controllers_.insert(name, c);
         }
         else if (c && isInBlacklist) {
@@ -74,14 +78,6 @@ Tune TuneControllerManager::currentTune() const
     }
     return Tune();
 }
-
-void TuneControllerManager::sendTune(const Tune &tune)
-{
-    if (checkTune(tune)) {
-        emit playing(tune);
-    }
-}
-
 
 /**
  * \brief Returns a list of all the supported controllers.

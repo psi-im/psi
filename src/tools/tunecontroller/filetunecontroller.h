@@ -42,7 +42,6 @@ public:
     Tune currentTune() const;
 
 protected slots:
-    void onFileChanged();
     void check();
 
 private:
