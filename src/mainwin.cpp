@@ -1508,8 +1508,9 @@ bool MainWin::eventFilter(QObject *o, QEvent *e)
 
 #ifdef Q_OS_WIN
 #include <windows.h>
-bool MainWin::winEvent(MSG* msg, long* result)
+bool MainWin::nativeEvent(const QByteArray &eventType, MSG* msg, long* result)
 {
+    Q_UNUSED(eventType);
     if (d->asTool && msg->message == WM_SYSCOMMAND && msg->wParam == SC_MINIMIZE) {
         hide();    // minimized toolwindows look bad on Windows, so let's just hide it instead
             // plus we cannot do this in changeEvent(), because it's called too late

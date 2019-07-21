@@ -83,7 +83,7 @@ protected:
     void keyPressEvent(QKeyEvent *);
     QMenuBar* mainMenuBar() const;
 #ifdef Q_OS_WIN
-    bool winEvent(MSG *, long *);
+    bool nativeEvent(const QByteArray &eventType, MSG *, long *);
 #endif
 
 signals:

@@ -404,15 +404,15 @@ GAdvancedWidget::GAdvancedWidget(QWidget *parent)
 }
 
 #ifdef Q_OS_WIN
-bool GAdvancedWidget::winEvent(MSG* msg, long* result)
+bool GAdvancedWidget::nativeEvent(const QByteArray &eventType, MSG* msg, long* result)
 {
+    Q_UNUSED(eventType);
     if ( msg->message == WM_WINDOWPOSCHANGING ) {
         WINDOWPOS *wpos = (WINDOWPOS *)msg->lParam;
 
         d->posChanging(&wpos->x, &wpos->y, &wpos->cx, &wpos->cy);
 
-        result = nullptr;
-        Q_UNUSED(result);
+        *result = 0;
         return true;
     }
 
@@ -443,7 +443,7 @@ void GAdvancedWidget::doFlash(bool on)
 {
     d->doFlash( on );
 }
-
+/* looks like the next part of the code is no longer relevant
 #ifdef Q_OS_WIN
 // http://groups.google.ru/group/borland.public.cppbuilder.winapi/msg/6eb6f1832d68686d?hl=ru&
 bool ForceForegroundWindow(HWND hwnd)
@@ -509,7 +509,7 @@ bool ForceForegroundWindow(HWND hwnd)
     return Result;
 }
 #endif
-
+*/
 /**
  * http://trolltech.com/developer/task-tracker/index_html?id=202971&method=entry
  * There's a bug in Qt that prevents us to show a window on Windows
@@ -525,23 +525,23 @@ void GAdvancedWidget::showWithoutActivation()
     // in Qt 4.4.0, maybe it'll provide a simpler alternative to this
     // windows-specific code
 
-#ifdef Q_OS_WIN
+/*#ifdef Q_OS_WIN
     HWND foregroundWindow = GetForegroundWindow();
-#endif
+#endif*/
 
     bool showWithoutActivating = d->parentWidget_->testAttribute(Qt::WA_ShowWithoutActivating);
     d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, true);
     d->parentWidget_->show();
     d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, showWithoutActivating);
 
-#ifdef Q_OS_WIN
+/*#ifdef Q_OS_WIN
     if (foregroundWindow) {
         // the first step is to make sure we're the topmost window
         // otherwise step two doesn't seem to have any effect at all
         ForceForegroundWindow((HWND)d->parentWidget_->winId());
         ForceForegroundWindow(foregroundWindow);
     }
-#endif
+#endif*/
 }
 
 void GAdvancedWidget::changeEvent(QEvent *event)

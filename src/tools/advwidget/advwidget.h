@@ -46,7 +46,7 @@ public:
     void doFlash(bool on);
 
 #ifdef Q_OS_WIN
-    bool winEvent(MSG* msg, long* result);
+    bool nativeEvent(const QByteArray &eventType, MSG* msg, long* result);
 #endif
 
     void moveEvent(QMoveEvent *e);
@@ -130,11 +130,11 @@ public:
     }
 
 #ifdef Q_OS_WIN
-    bool winEvent(MSG* msg, long* result)
+    bool nativeEvent(const QByteArray &eventType, MSG* msg, long* result)
     {
         if (gAdvWidget)
-            return gAdvWidget->winEvent(msg, result);
-        return BaseClass::winEvent(msg, result);
+            return gAdvWidget->nativeEvent(eventType,msg, result);
+        return BaseClass::nativeEvent(eventType, msg, result);
     }
 #endif
 
