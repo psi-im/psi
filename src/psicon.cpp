@@ -1347,8 +1347,7 @@ void PsiCon::checkAccountsEmpty()
 
 void PsiCon::openUri(const QString &uri)
 {
-    QUrl url;
-    url.setUrl(uri, QUrl::StrictMode);
+    QUrl url = QUrl::fromUserInput(uri);
     openUri(url);
 }
 
