@@ -1,6 +1,6 @@
 [Desktop Entry]
 # This is the spec version, *not* the application version
-Version=1.0
+Version=1.1
 Type=Application
 Name=Psi
 GenericName=XMPP Client
@@ -9,9 +9,11 @@ Icon=psi
 Exec=psi %U
 MimeType=x-scheme-handler/xmpp;
 Terminal=false
+X-KDE-StartupNotify=true
 StartupWMClass=Psi
 Categories=Network;InstantMessaging;Qt;
 Keywords=XMPP;Jabber;Chat;InstantMessaging;
+Actions=SelectProfile
 
 # Translations
 GenericName[be]=Кліент XMPP
@@ -64,3 +66,8 @@ Comment[ur_PK]=جیبر نیٹ ورک پر مواصلت کریں
 Comment[vi]=Liên lạc qua mạng XMPP nhé
 Comment[zh_CN]=通过XMPP网络进行通信
 Comment[zh_TW]=通過XMPP網絡進行通信
+
+[Desktop Action SelectProfile]
+Exec=psi --choose-profile
+Name=Start with another profile
+Icon=psi
