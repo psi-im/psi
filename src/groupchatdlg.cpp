@@ -1535,7 +1535,7 @@ void GCMainDlg::doBookmark()
     dlg->move(ui_.le_topic->mapToGlobal(QPoint(
             ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
     if (dlg->exec() == QDialog::Accepted) {
-        ConferenceBookmark conf(txtName->text(), jid(), (ConferenceBookmark::JoinType)cbAutoJoin->currentIndex(), txtNick->text(), d->password);
+        ConferenceBookmark conf(txtName->text(), jid(), ConferenceBookmark::JoinType(cbAutoJoin->currentIndex()), txtNick->text(), d->password);
         confs[confInd] = conf;
         bm->setBookmarks(confs);
     }
@@ -1805,10 +1805,10 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                     message += tr(" and now is %1").arg(status2txt(s.type()));
                 }
 
-                mv = MessageView::mucJoinMessage(nick, (int)s.type(), message, s.status(), s.priority());
+                mv = MessageView::mucJoinMessage(nick, int(s.type()), message, s.status(), s.priority());
                 mv.setStatusChangeHidden(!showStatusChanges);
             } else {
-                mv = MessageView::mucJoinMessage(nick, (int)s.type(), QString(), s.status(), s.priority());
+                mv = MessageView::mucJoinMessage(nick, int(s.type()), QString(), s.status(), s.priority());
                 mv.setStatusChangeHidden();
                 mv.setJoinLeaveHidden();
             }
@@ -1847,7 +1847,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
                 if (s.status() != contact->status.status() || s.show() != contact->status.show() ||
                         (statusWithPriority && s.priority() != contact->status.priority())) {
                     ui_.log->dispatchMessage(MessageView::statusMessage(
-                                                 nick, (int)s.type(), s.status(), s.priority()));
+                                                 nick, int(s.type()), s.status(), s.priority()));
                 }
             }
         }
@@ -2336,7 +2336,7 @@ void GCMainDlg::setToolbuttons()
         if (action) {
             action->addTo(ui_.toolbar);
             if (actionName == "gchat_icon" || actionName == "gchat_templates") {
-                ((QToolButton *)ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
+                static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
             }
         }
     }

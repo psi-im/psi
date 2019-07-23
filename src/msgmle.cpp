@@ -697,8 +697,12 @@ LineEdit::LineEdit( QWidget *parent)
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    const int pic_h = PsiIconset::instance()->system().iconSize()*2-1;
-    setMinimumHeight(pic_h);
+    //Set text right margin for rec button
+    QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
+    frmt.setRightMargin(PsiIconset::instance()->system().iconSize() + 8);
+    document()->rootFrame()->setFrameFormat(frmt);
+
+    setMinimumHeight(0);
 
     connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
 }
@@ -709,8 +713,10 @@ LineEdit::~LineEdit()
 
 QSize LineEdit::minimumSizeHint() const
 {
+    const int sz = qMax(PsiIconset::instance()->system().iconSize()*2-1
+                        ,fontMetrics().height() + 1);
     QSize sh = QTextEdit::minimumSizeHint();
-    sh.setHeight(fontMetrics().height() + 1);
+    sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
     return sh;
 }
@@ -718,7 +724,9 @@ QSize LineEdit::minimumSizeHint() const
 QSize LineEdit::sizeHint() const
 {
     QSize sh = QTextEdit::sizeHint();
-    sh.setHeight(int(document()->documentLayout()->documentSize().height()));
+    const int sz = qMax(PsiIconset::instance()->system().iconSize()*2-1
+                        ,int(document()->documentLayout()->documentSize().height()));
+    sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
     ((QTextEdit*)this)->setMaximumHeight(sh.height());
     return sh;

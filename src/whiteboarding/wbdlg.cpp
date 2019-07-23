@@ -274,15 +274,7 @@ void WbDlg::closeEvent(QCloseEvent *e) {
         }
     }
 
-    // destroy the dialog if delChats is dcClose
-    if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant")
-        endSession();
-    else {
-        if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "hour")
-            setSelfDestruct(60);
-        else if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "day")
-            setSelfDestruct(60 * 24);
-    }
+    endSession();
 }
 
 void WbDlg::showEvent(QShowEvent *) {

@@ -74,12 +74,12 @@ void OptionsTabGroupchat::applyOptions()
 
     QStringList highlight;
     int i;
-    for (i = 0; i < (int)d->lw_highlightWords->count(); i++)
+    for (i = 0; i < int(d->lw_highlightWords->count()); i++)
         highlight << d->lw_highlightWords->item(i)->text();
     PsiOptions::instance()->setOption("options.ui.muc.highlight-words", highlight);
 
     QStringList colors;
-    for (i = 0; i < (int)d->lw_nickColors->count(); i++)
+    for (i = 0; i < int(d->lw_nickColors->count()); i++)
         colors << d->lw_nickColors->item(i)->text();
     PsiOptions::instance()->setOption("options.ui.look.colors.muc.nick-colors", colors);
 }

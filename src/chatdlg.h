@@ -167,7 +167,6 @@ protected:
     void holdMessages(bool hold);
     void displayMessage(const MessageView &mv);
     virtual void setLooks();
-    void setSelfDestruct(int);
     virtual void chatEditCreated();
     void initHighlighters();
 
@@ -205,8 +204,6 @@ private:
 
     bool trackBar_;
     void doTrackBar();
-
-    QTimer* selfDestruct_;
 
     QString key_;
     int transid_;

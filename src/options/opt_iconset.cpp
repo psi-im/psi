@@ -85,13 +85,8 @@ public:
 
         psi->dialogRegister(this);
 
-        QStringList bold_labels;
-        bold_labels << "lb_name2";
-        bold_labels << "lb_version2";
-        bold_labels << "lb_date2";
-        bold_labels << "lb_home2";
-        bold_labels << "lb_desc2";
-        bold_labels << "lb_authors";
+        QStringList bold_labels({"lb_name2", "lb_version2", "lb_date2",
+                                 "lb_home2", "lb_desc2", "lb_authors"});
 
         QList<QLabel *> labels = findChildren<QLabel *>();
         foreach (QLabel *l, labels) {
@@ -438,7 +433,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int((float(100 * ++iconsetsLoaded / numIconsets)) ));
 
         Iconset *i = le->iconset();
         if ( i ) {
@@ -547,7 +542,7 @@ void OptionsTabIconsetEmoticons::applyOptions()
 
     QStringList list;
     for (int row = 0; row < d->iss_emoticons->count(); row++) {
-        IconWidgetItem *item = (IconWidgetItem *)d->iss_emoticons->item(row);
+        IconWidgetItem *item = static_cast<IconWidgetItem *>(d->iss_emoticons->item(row));
 
         if ( item->isSelected() ) {
             const Iconset *is = item->iconset();
@@ -617,7 +612,7 @@ bool OptionsTabIconsetEmoticons::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
 
         Iconset *is = le->iconset();
         if ( is ) {
@@ -762,7 +757,7 @@ bool OptionsTabIconsetMoods::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
 
         Iconset *i = le->iconset();
         if ( i ) {
@@ -909,7 +904,7 @@ bool OptionsTabIconsetActivity::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
 
         Iconset *i = le->iconset();
         if ( i ) {
@@ -1056,7 +1051,7 @@ bool OptionsTabIconsetAffiliations::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
 
         Iconset *i = le->iconset();
         if ( i ) {
@@ -1204,7 +1199,7 @@ bool OptionsTabIconsetClients::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
 
         Iconset *i = le->iconset();
         if ( i ) {
@@ -1284,7 +1279,7 @@ OptionsTabIconsetRoster::~OptionsTabIconsetRoster()
 
 void OptionsTabIconsetRoster::addService(const QString& id, const QString& name)
 {
-    IconsetRosterUI*d = (IconsetRosterUI*)w;
+    IconsetRosterUI*d = static_cast<IconsetRosterUI*>(w);
     QTreeWidgetItem* item = new QTreeWidgetItem(d->tw_isServices, QStringList(QString(name)));
     item->setData(0, ServiceRole, QVariant(QString(id)));
     d->tw_isServices->addTopLevelItem(item);
@@ -1433,7 +1428,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 
         if ( !numIconsets )
             numIconsets = 1;
-        d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
 
         Iconset *i = le->iconset();
         if ( i ) {
@@ -1566,7 +1561,7 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
     if ( !it )
         return;
 
-    const Iconset *is = ((IconWidgetItem *)item)->iconset();
+    const Iconset *is = static_cast<IconWidgetItem *>(item)->iconset();
     if ( !is )
         return;
 
@@ -1590,7 +1585,7 @@ void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 
     emit noDirty(true);
     for (int row = 0; row < d->iss_servicesRoster->count(); row++) {
-        IconWidgetItem *item = (IconWidgetItem *)d->iss_servicesRoster->item(row);
+        IconWidgetItem *item = static_cast<IconWidgetItem *>(d->iss_servicesRoster->item(row));
         const Iconset *is = item->iconset();
         if ( is ) {
             QFileInfo fi ( is->fileName() );
@@ -1619,7 +1614,7 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
     if ( !it )
         return;
 
-    const Iconset *is = ((IconWidgetItem *)item)->iconset();
+    const Iconset *is = static_cast<IconWidgetItem *>(item)->iconset();
     if ( !is )
         return;
 
@@ -1648,7 +1643,7 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
     d->le_customRoster->setText(it->data(0, RegexpRole).toString());
 
     for (int row = 0; row < d->iss_customRoster->count(); row++) {
-        IconWidgetItem *item = (IconWidgetItem *)d->iss_customRoster->item(row);
+        IconWidgetItem *item = static_cast<IconWidgetItem *>(d->iss_customRoster->item(row));
         const Iconset *is = item->iconset();
         if ( is ) {
             QFileInfo fi ( is->fileName() );

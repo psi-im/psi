@@ -47,26 +47,26 @@ public:
     class OptionsTabToolbars *q;
 
     PsiActionList::ActionsType class2id() {
-        int ret = (int)PsiActionList::Actions_Common;
-        ret |= (int)PsiActionList::Actions_MainWin;
-        return (PsiActionList::ActionsType)ret;
+        int ret = int(PsiActionList::Actions_Common);
+        ret |= int(PsiActionList::Actions_MainWin);
+        return static_cast<PsiActionList::ActionsType>(ret);
     }
 
     PsiActionList::ActionsType class2idChat() {
-        int ret = (int)PsiActionList::Actions_Common;
-        ret |= (int)PsiActionList::Actions_Chat;
-        return (PsiActionList::ActionsType)ret;
+        int ret = int(PsiActionList::Actions_Common);
+        ret |= int(PsiActionList::Actions_Chat);
+        return static_cast<PsiActionList::ActionsType>(ret);
     }
 
     PsiActionList::ActionsType class2idGroupchat() {
-        int ret = (int)PsiActionList::Actions_Common;
-        ret |= (int)PsiActionList::Actions_Groupchat;
-        return (PsiActionList::ActionsType)ret;
+        int ret = int(PsiActionList::Actions_Common);
+        ret |= int(PsiActionList::Actions_Groupchat);
+        return static_cast<PsiActionList::ActionsType>(ret);
     }
 
     PsiActionList::ActionsType currentType() {
         PsiActionList::ActionsType type;
-        LookFeelToolbarsUI *d = (LookFeelToolbarsUI*) q->w;
+        LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI*>(q->w);
 
         if (d->cb_toolbars->currentIndex() == CHAT_TOOLBAR) {
             type = class2idChat();
@@ -96,7 +96,7 @@ QWidget *OptionsTabToolbars::widget()
         return nullptr;
 
     w = new LookFeelToolbarsUI();
-    LookFeelToolbarsUI *d = (LookFeelToolbarsUI*) w;
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI*>(w);
 
     connect(d->pb_addToolbar, SIGNAL(clicked()), SLOT(toolbarAdd()));
     connect(d->pb_deleteToolbar, SIGNAL(clicked()), SLOT(toolbarDelete()));
@@ -247,7 +247,7 @@ void OptionsTabToolbars::restoreOptions()
         tb.on = o->getOption(base + ".visible").toBool();
         tb.locked = o->getOption(base + ".locked").toBool();
         // tb.stretchable = o->getOption(base + ".stretchable").toBool();
-        tb.dock = (Qt3Dock)o->getOption(base + ".dock.position").toInt(); //FIXME
+        tb.dock = static_cast<Qt3Dock>(o->getOption(base + ".dock.position").toInt()); //FIXME
         // tb.index = o->getOption(base + ".dock.index").toInt();
         tb.nl = o->getOption(base + ".dock.nl").toBool();
         // tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
@@ -330,8 +330,8 @@ void OptionsTabToolbars::toolbarDelete()
 
 void OptionsTabToolbars::addToolbarAction(QListWidget *parent, QString name, int toolbarId)
 {
-    ActionList actions = psi->actionList()->suitableActions((PsiActionList::ActionsType)toolbarId);
-    const QAction *action = (QAction *)actions.action(name);
+    ActionList actions = psi->actionList()->suitableActions(static_cast<PsiActionList::ActionsType>(toolbarId));
+    const QAction *action = static_cast<QAction *>(actions.action(name));
     if (!action)
         return;
     addToolbarAction(parent, action, name);
@@ -425,7 +425,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
                 QTreeWidgetItem *item = new QTreeWidgetItem(root, last);
                 last = item;
 
-                QString n = actionName((QAction *)action);
+                QString n = actionName(static_cast<QAction *>(action));
                 if (!action->whatsThis().isEmpty()) {
                     n += " - " + action->whatsThis();
                 }
@@ -615,7 +615,7 @@ void OptionsTabToolbars::toolbarDataChanged()
 QString OptionsTabToolbars::actionName(const QAction *a)
 {
     QString n = a->text(), n2;
-    for (int i = 0; i < (int)n.length(); i++) {
+    for (int i = 0; i < int(n.length()); i++) {
         if (n[i] == '&' && n[i+1] != '&')
             continue;
         else if (n[i] == '&' && n[i+1] == '&')

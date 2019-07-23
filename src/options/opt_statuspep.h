@@ -21,9 +21,6 @@ public:
     void restoreOptions();
     void setData(PsiCon *psi, QWidget *);
 
-protected slots:
-    void controllerSelected(bool);
-
 private:
     QWidget *w_;
     PsiCon *psi_;

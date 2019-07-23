@@ -24,17 +24,15 @@ public:
 
 OptionsTabChat::OptionsTabChat(QObject *parent)
 : OptionsTab(parent, "chat", "", tr("Chat"), tr("Configure the chat dialog"), "psi/start-chat")
+, w(nullptr)
+, bg_defAct(nullptr)
 {
-    w = nullptr;
-    bg_delChats = bg_defAct = nullptr;
 }
 
 OptionsTabChat::~OptionsTabChat()
 {
     if ( bg_defAct )
         delete bg_defAct;
-    if ( bg_delChats )
-        delete bg_delChats;
 }
 
 QWidget *OptionsTabChat::widget()
@@ -49,14 +47,6 @@ QWidget *OptionsTabChat::widget()
     bg_defAct->setExclusive( true );
     bg_defAct->addButton( d->rb_defActMsg);
     bg_defAct->addButton( d->rb_defActChat);
-
-    bg_delChats = new QButtonGroup;
-    bg_delChats->setExclusive( true );
-    bg_delChats->addButton( d->rb_delChatsClose);
-    bg_delChats->addButton( d->rb_delChatsHour);
-    bg_delChats->addButton( d->rb_delChatsDay);
-    bg_delChats->addButton( d->rb_delChatsNever);
-
 
     d->rb_defActMsg->setWhatsThis(
         tr("Make the default action open a normal message window."));
@@ -80,14 +70,6 @@ QWidget *OptionsTabChat::widget()
         tr("Makes Psi open chat windows in compact mode."));
     QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
         " chat window is closed.</P>");
-    d->rb_delChatsClose->setWhatsThis(s +
-        tr("<P>This option does not keep the chat log in memory.</P>"));
-    d->rb_delChatsHour->setWhatsThis(s +
-        tr("<P>This option keeps the chat log for 1 hour before deleting it.</P>"));
-    d->rb_delChatsDay->setWhatsThis(s +
-        tr("<P>This option keeps the chat log for 1 day before deleting it.</P>"));
-    d->rb_delChatsNever->setWhatsThis(s +
-        tr("<P>This options keeps the chat log forever.</P>"));
 
     return w;
 }
@@ -105,23 +87,6 @@ void OptionsTabChat::applyOptions()
     PsiOptions::instance()->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
     PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
 
-    QString delafter;
-    switch (bg_delChats->buttons().indexOf( bg_delChats->checkedButton() )) {
-        case 0:
-            delafter = "instant";
-            break;
-        case 1:
-            delafter = "hour";
-            break;
-        case 2:
-            delafter = "day";
-            break;
-        case 3:
-            delafter = "never";
-            break;
-    }
-    PsiOptions::instance()->setOption("options.ui.chat.delete-contents-after", delafter);
-
     // Soft return.
     // Only update this if the value actually changed, or else custom presets
     // might go lost.
@@ -136,6 +101,7 @@ void OptionsTabChat::applyOptions()
         }
         PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
     }
+    PsiOptions::instance()->setOption("options.ui.chat.history.preload-history-size", d->sb_msgHistCount->value());
 }
 
 void OptionsTabChat::restoreOptions()
@@ -151,15 +117,6 @@ void OptionsTabChat::restoreOptions()
     d->ck_switchTabOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
     d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
 
-    QString delafter = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
-    if (delafter == "instant") {
-        d->rb_delChatsClose->setChecked(true);
-    } else if (delafter == "hour") {
-        d->rb_delChatsHour->setChecked(true);
-    } else if (delafter == "day") {
-        d->rb_delChatsDay->setChecked(true);
-    } else if (delafter == "never") {
-        d->rb_delChatsNever->setChecked(true);
-    }
     d->ck_chatSoftReturn->setChecked(ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
+    d->sb_msgHistCount->setValue(PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt());
 }

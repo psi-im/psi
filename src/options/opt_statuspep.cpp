@@ -82,23 +82,19 @@ void OptionsTabStatusPep::restoreOptions()
         int i = controllers.indexOf(name);
         d->gridLayout->addWidget(cb,i/3,i%3);
         cb->setChecked(!blackList_.contains(name));
-        connect(cb, SIGNAL(toggled(bool)), SLOT(controllerSelected(bool)));
-    }
-}
-
-void OptionsTabStatusPep::controllerSelected(bool checked)
-{
-    QCheckBox *box = qobject_cast<QCheckBox*>(sender());
-    QString name_ = box->objectName();
-    if (!name_.isEmpty()) {
-        if (!checked && !blackList_.contains(name_, Qt::CaseInsensitive)) {
-            blackList_ << name_;
-            controllersChanged_ = true;
-        }
-        else if (checked) {
-            blackList_.removeAll(name_);
-            controllersChanged_ = true;
-        }
+        connect(cb, &QCheckBox::toggled, this, [this, cb](bool checked){
+            QString name_ = cb->objectName();
+            if (!name_.isEmpty()) {
+                if (!checked && !blackList_.contains(name_, Qt::CaseInsensitive)) {
+                    blackList_ << name_;
+                    controllersChanged_ = true;
+                }
+                else if (checked) {
+                    blackList_.removeAll(name_);
+                    controllersChanged_ = true;
+                }
+            }
+        });
     }
 }
 

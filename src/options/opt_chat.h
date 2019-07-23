@@ -19,7 +19,7 @@ public:
 
 private:
     QWidget *w;
-    QButtonGroup *bg_defAct, *bg_delChats;
+    QButtonGroup *bg_defAct;
 };
 
 #endif

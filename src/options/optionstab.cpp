@@ -52,7 +52,7 @@ PsiIcon *OptionsTab::tabIcon() const
     if ( v_tabIconName.isEmpty() )
         return nullptr;
 
-    return (PsiIcon *)IconsetFactory::iconPtr( v_tabIconName );
+    return const_cast<PsiIcon *>(IconsetFactory::iconPtr( v_tabIconName ));
 }
 
 QString OptionsTab::name() const
@@ -71,10 +71,10 @@ PsiIcon *OptionsTab::psiIcon() const
         //if ( tabIcon() )
         //    return tabIcon();
 
-        return (PsiIcon *)IconsetFactory::iconPtr("psi/logo_32");
+        return const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/logo_32"));
     }
 
-    return (PsiIcon *)IconsetFactory::iconPtr( v_iconName );
+    return const_cast<PsiIcon *>(IconsetFactory::iconPtr( v_iconName ));
 }
 
 void OptionsTab::applyOptions()

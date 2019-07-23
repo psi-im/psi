@@ -306,7 +306,7 @@ void OptionsTabAppearanceGeneral::applyOptions()
     ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
     while (i != colorWidgetsMap.constEnd()) {
         PsiOptions::instance()->setOption("options.ui.look.colors." + i.value().second,
-                                          i.key()->isChecked()? getColor((QToolButton*)i.value().first) : QColor());
+                                          i.key()->isChecked()? getColor(static_cast<QToolButton*>(i.value().first)) : QColor());
         ++i;
     }
 }
@@ -335,7 +335,7 @@ void OptionsTabAppearanceGeneral::restoreOptions()
         QColor color = ColorOpt::instance()->color("options.ui.look.colors." + i.value().second);
         QColor realColor = PsiOptions::instance()->getOption("options.ui.look.colors." + i.value().second).value<QColor>();
         i.key()->setChecked(realColor.isValid());
-        restoreColor((QToolButton*)i.value().first, color);
+        restoreColor(static_cast<QToolButton*>(i.value().first), color);
         ++i;
     }
 }
@@ -380,10 +380,10 @@ void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton* button)
 
 void OptionsTabAppearanceGeneral::colorCheckBoxClicked(int state)
 {
-    QPair<QAbstractButton*,QString> data = colorWidgetsMap[(QCheckBox*)sender()];
+    QPair<QAbstractButton*,QString> data = colorWidgetsMap[static_cast<QCheckBox*>(sender())];
     if (state) {
         data.first->setDisabled(false);
-        restoreColor((QToolButton*)data.first, ColorOpt::instance()->color("options.ui.look.colors." + data.second));
+        restoreColor(static_cast<QToolButton*>(data.first), ColorOpt::instance()->color("options.ui.look.colors." + data.second));
     }
     else {
         //data.first->setDisabled(true); // TODO disable color changing

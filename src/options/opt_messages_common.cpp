@@ -8,6 +8,7 @@
 
 #include "ui_opt_messages_common.h"
 
+static const QStringList clickActList = {"none", "hide", "close", "detach"};
 
 class OptMsgCommonUI : public QWidget, public Ui::OptMsgCommon
 {
@@ -35,7 +36,11 @@ QWidget *OptionsTabMsgCommon::widget()
 
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
 
-    connect(d->ck_tabChats, SIGNAL(toggled(bool)), d->cb_tabGrouping, SLOT(setEnabled(bool)));
+    connect(d->ck_tabChats, &QCheckBox::toggled, d->cb_tabGrouping, &QComboBox::setEnabled);
+    connect(d->ck_tabChats, &QCheckBox::toggled, d->cb_tabMdlClick, &QComboBox::setEnabled);
+    connect(d->ck_tabChats, &QCheckBox::toggled, d->cb_tabDblClick, &QComboBox::setEnabled);
+    connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_showTabButtons, &QCheckBox::setEnabled);
+    connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_tabShortcuts, &QCheckBox::setEnabled);
 
     d->ck_tabChats->setWhatsThis(
         tr("Makes Psi open chats in a tabbed window."));
@@ -48,6 +53,9 @@ QWidget *OptionsTabMsgCommon::widget()
            " Can be useful when you're using SMS transport."));
     d->ck_contactsMessageFormatting->setWhatsThis(
         tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact"));
+
+    d->cb_tabMdlClick->addItems(clickActList);
+    d->cb_tabDblClick->addItems(clickActList);
 
     return w_;
 }
@@ -62,38 +70,46 @@ void OptionsTabMsgCommon::applyOptions()
     PsiOptions* o = PsiOptions::instance();
     o->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
     o->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
-    o->setOption("options.ui.tabs.show-tab-buttons", d->ck_showTabButtons->isChecked());
+    if(d->ck_showTabButtons->isEnabled())
+        o->setOption("options.ui.tabs.show-tab-buttons", d->ck_showTabButtons->isChecked());
 
     o->setOption("options.ui.tabs.use-tabs", d->ck_tabChats->isChecked());
-    QString tabGrouping;
-    int idx = d->cb_tabGrouping->currentIndex();
-    switch (idx) {
-        case 0:
-            tabGrouping = "C";
-            break;
-        case 1:
-            tabGrouping = "M";
-            break;
-        case 2:
-            tabGrouping = "C:M";
-            break;
-        case 3:
-            tabGrouping = "CM";
-            break;
-        case 4:
-            tabGrouping = "ACM";
-            break;
-    }
-    if (!tabGrouping.isEmpty()) {
-        o->setOption("options.ui.tabs.grouping", tabGrouping);
-    } else {
-        if (d->cb_tabGrouping->count() == 6) {
-            d->cb_tabGrouping->removeItem(5);
+    if(d->cb_tabGrouping->isEnabled()) {
+        QString tabGrouping;
+        int idx = d->cb_tabGrouping->currentIndex();
+        switch (idx) {
+            case 0:
+                tabGrouping = "C";
+                break;
+            case 1:
+                tabGrouping = "M";
+                break;
+            case 2:
+                tabGrouping = "C:M";
+                break;
+            case 3:
+                tabGrouping = "CM";
+                break;
+            case 4:
+                tabGrouping = "ACM";
+                break;
+        }
+        if (!tabGrouping.isEmpty()) {
+            o->setOption("options.ui.tabs.grouping", tabGrouping);
+        } else {
+            if (d->cb_tabGrouping->count() == 6) {
+                d->cb_tabGrouping->removeItem(5);
+            }
         }
     }
 
-    o->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
+    if(d->ck_tabShortcuts->isEnabled())
+        o->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
     o->setOption("options.ui.chat.show-previews", d->ck_showPreviews->isChecked());
+    if(d->cb_tabMdlClick->isEnabled())
+        o->setOption("options.ui.tabs.mouse-middle-button", d->cb_tabMdlClick->currentText());
+    if(d->cb_tabDblClick->isEnabled())
+        o->setOption("options.ui.tabs.mouse-doubleclick-action", d->cb_tabDblClick->currentText());
 }
 
 void OptionsTabMsgCommon::restoreOptions()
@@ -134,6 +150,13 @@ void OptionsTabMsgCommon::restoreOptions()
     }
     d->ck_tabShortcuts->setChecked( o->getOption("options.ui.tabs.use-tab-shortcuts").toBool() );
     d->ck_showPreviews->setChecked( o->getOption("options.ui.chat.show-previews").toBool() );
+
+    QString clickAct = o->getOption("options.ui.tabs.mouse-middle-button").toString();
+    if(clickActList.contains(clickAct))
+        d->cb_tabMdlClick->setCurrentIndex(clickActList.indexOf(clickAct));
+    clickAct = o->getOption("options.ui.tabs.mouse-doubleclick-action").toString();
+    if(clickActList.contains(clickAct))
+        d->cb_tabDblClick->setCurrentIndex(clickActList.indexOf(clickAct));
 }
 
 void OptionsTabMsgCommon::setData(PsiCon *psi, QWidget *)

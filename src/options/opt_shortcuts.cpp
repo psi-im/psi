@@ -180,7 +180,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
         }
         topLevelItem->setText(0, comment);
         topLevelItem->setData(0, OPTIONSTREEPATH, QVariant(shortcutGroup));
-        topLevelItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::TopLevelItem));
+        topLevelItem->setData(0, ITEMKIND, QVariant(int(OptionsTabShortcuts::TopLevelItem)));
         topLevelItem->setExpanded(true);
         d->treeShortcuts->addTopLevelItem(topLevelItem);
     }
@@ -218,7 +218,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
                 /* create the TreeWidgetItem and set the Data the Kind and it's Optionspath and append it */
                 shortcutItem = new QTreeWidgetItem(topLevelItem);
                 shortcutItem->setText(0, comment);
-                shortcutItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::ShortcutItem));
+                shortcutItem->setData(0, ITEMKIND, QVariant(int(OptionsTabShortcuts::ShortcutItem)));
                 shortcutItem->setData(0, OPTIONSTREEPATH, QVariant(shortcut));
                 topLevelItem->addChild(shortcutItem);
 
@@ -227,7 +227,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
                 foreach(QKeySequence key, keys) {
                     keyItem = new QTreeWidgetItem(shortcutItem);
                     keyItem->setText(0, QString(tr("Key %1")).arg(keyItemsCount++));
-                    keyItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::KeyItem));
+                    keyItem->setData(0, ITEMKIND, QVariant(int(OptionsTabShortcuts::KeyItem)));
                     keyItem->setText(1, key.toString(QKeySequence::NativeText));
                     shortcutItem->addChild(keyItem);
                 }
@@ -252,7 +252,7 @@ void OptionsTabShortcuts::onAdd() {
         return;
 
     shortcutItem = selectedItems[0];
-    itemKind = (Kind)shortcutItem->data(0, ITEMKIND).toInt();
+    itemKind = static_cast<Kind>(shortcutItem->data(0, ITEMKIND).toInt());
 
     switch(itemKind) {
         case OptionsTabShortcuts::KeyItem:
@@ -306,7 +306,7 @@ void OptionsTabShortcuts::onRemove() {
     keyItem = selectedItems[0];
 
     /* we need a Item with the Kind "KeyItem", else we could / should not remove it */
-    if((Kind)keyItem->data(0, ITEMKIND).toInt() == OptionsTabShortcuts::KeyItem) {
+    if(static_cast<Kind>(keyItem->data(0, ITEMKIND).toInt()) == OptionsTabShortcuts::KeyItem) {
         shortcutItem = keyItem->parent();
         /* remove the key item from the shortcut item's children */
         shortcutItem->takeChild(shortcutItem->indexOfChild(keyItem));
@@ -333,7 +333,7 @@ void OptionsTabShortcuts::onEdit() {
 
     QTreeWidgetItem    *keyItem = selectedItems[0];
 
-    if((Kind)keyItem->data(0, ITEMKIND).toInt() == OptionsTabShortcuts::KeyItem)
+    if(static_cast<Kind>(keyItem->data(0, ITEMKIND).toInt()) == OptionsTabShortcuts::KeyItem)
         grep();
 }
 
@@ -380,7 +380,7 @@ void OptionsTabShortcuts::onItemSelectionChanged() {
         return;
     }
 
-    itemKind = (Kind)selectedItems[0]->data(0, ITEMKIND).toInt();
+    itemKind = static_cast<Kind>(selectedItems[0]->data(0, ITEMKIND).toInt());
     switch(itemKind) {
         case OptionsTabShortcuts::TopLevelItem:
             /* for a topLevel Item, we can't do anything neither add a key, nor remove one */
@@ -413,7 +413,7 @@ void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
     if (!item)
         return;
 
-     Kind itemKind = (Kind)item->data(0, ITEMKIND).toInt();
+     Kind itemKind = static_cast<Kind>(item->data(0, ITEMKIND).toInt());
     if (itemKind == KeyItem)
         grep();
     else if (itemKind == ShortcutItem && item->childCount() == 0)
@@ -436,7 +436,7 @@ void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence& key) {
         return;
 
     keyItem = selectedItems[0];
-    itemKind = (OptionsTabShortcuts::Kind)keyItem->data(0, ITEMKIND).toInt();
+    itemKind = static_cast<OptionsTabShortcuts::Kind>(keyItem->data(0, ITEMKIND).toInt());
 
     /* if we got a key item, set the new key sequence and notify the options dialog that data has changed */
     if(itemKind == OptionsTabShortcuts::KeyItem) {

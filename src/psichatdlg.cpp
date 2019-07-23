@@ -428,7 +428,7 @@ void PsiChatDlg::updateToolbuttons()
         if (action) {
             action->addTo(ui_.toolbar);
             if (actionName == "chat_icon") {
-                ((QToolButton *)ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
+                static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
             }
         }
     }
@@ -768,6 +768,7 @@ void PsiChatDlg::optionsUpdate()
 {
     smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
 
+    updateToolbuttons();
     ChatDlg::optionsUpdate();
 // typeahead find bar
     typeahead_->optionsUpdate();
