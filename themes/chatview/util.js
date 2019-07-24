@@ -12,6 +12,101 @@ function initPsiTheme() {
     var previewsEnabled = true;
     var optionChangeHandlers = {}
 
+    function BackForthScollerPausedAnimation(start, stop, callback)
+    {
+        callback(start);
+        var that = this;
+        var startTime = performance.now();
+        this.id = setInterval(function animate() {
+            requestAnimationFrame(function(time){
+                if (!that.id) return;
+                var angle = (time - startTime) / 5000;
+                var dist = stop - start;
+                callback(start + (1 - Math.cos(angle)) / 2 * dist);
+            });
+        }, 70); // we can just requestAnimationFrame but this raises cpu load twice
+
+        this.stop = function() { if (this.id){clearInterval(this.id); this.id = null;}};
+    }
+
+    class AudioMessage
+    {
+        constructor(domEl) {
+            var that = this;
+            this.el = domEl;
+            this.playing = false;
+            var audio = this.audio;
+
+            domEl.querySelector(".psi-am-play-btn").addEventListener("click", event => {
+                if (that.playing) that.stop();
+                else that.play();
+                event.preventDefault();
+            });
+
+            audio.addEventListener("durationchange", event => that.progressBar.max = that.audio.duration);
+            audio.addEventListener("timeupdate", event => that.progressBar.value = that.audio.currentTime);
+            audio.addEventListener("ended", event => that._markStopped());
+            this.progressBar.addEventListener("click", event => that.seekFraction(event.offsetX / that.progressBar.clientWidth));
+            this._updateTitleScroller();
+        }
+
+        get audio() {
+            return this.el.querySelector("audio");
+        }
+
+        get progressBar() {
+            return this.el.querySelector("progress");
+        }
+
+        play() {
+            if (this.playing) return;
+            var sign = this.el.querySelector(".psi-am-play-sign");
+            sign.className = sign.className.replace(/\bpsi-am-sign-play\b/, "");
+            sign.className += " psi-am-sign-stop";
+            this.playing = true;
+            this.audio.play();
+            this._updateTitleScroller();
+        }
+
+        _updateTitleScroller() {
+            if (this.titleAnim) this.titleAnim.stop();
+
+            var info = this.el.querySelector(".psi-am-info > div")
+            if (!info) return;
+            if (this.playing) {
+                if (info.scrollWidth > info.clientWidth) {
+                    this.titleAnim = new BackForthScollerPausedAnimation(0, info.scrollWidth - info.clientWidth, function(x){
+                        info.scrollTo(x, 0);
+                    });
+                }
+            } else {
+                info.scrollTo(0, 0);
+                this.titleAnim = null;
+            }
+        }
+
+        _markStopped() {
+            var sign = this.el.querySelector(".psi-am-play-sign");
+            sign.className = sign.className.replace(/\bpsi-am-sign-stop\b/, "");
+            sign.className += " psi-am-sign-play";
+            this.playing = false;
+            this._updateTitleScroller();
+        }
+
+        stop() {
+            if (!this.playing) return;
+            this._markStopped();
+            this.audio.pause();
+        }
+
+        seekFraction(fraction) {
+            var a = this.audio, p = this.progressBar;
+            a.currentTime = fraction * a.duration;
+            p.value =       fraction * p.max;
+        }
+
+    }
+
     var chat =  {
         async : async,
         console : server.console,
@@ -250,18 +345,44 @@ function initPsiTheme() {
                 }
             },
 
-            appendHtml : function(dest, html) {
+            handleShares : function(el) {
+                var shares = el.querySelectorAll("share");
+                for (var li = 0; li < shares.length; li++) {
+                    var share = shares[li];
+                    var info = ""; // TODO
+                    var source = share.url;
+                    var type = ""; // TODO
+                    var player = chat.util.createHtmlNode(`<div class="psi-audio-msg">
+  <div class="psi-am-play-btn"><div class="psi-am-play-sign psi-am-sign-play"></div></div>
+  <div class="psi-am-info">
+  <div>
+  ${info}
+  </div>
+  </div>
+  <progress class="psi-am-progressbar"/>
+  <audio>
+    <source src="${source}" type="${type}">
+  </audio>
+</div>`);
+                    share.parentNode.insertBefore(player, share.nextSibling);
+                }
+            },
+
+            prepareContents : function(html) {
                 htmlSource.innerHTML = html;
                 chat.util.replaceBob(htmlSource);
                 chat.util.handleLinks(htmlSource);
                 chat.util.replaceIcons(htmlSource);
+                chat.util.handleShares(htmlSource);
+            },
+
+            appendHtml : function(dest, html) {
+                chat.util.prepareContents(html);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
             },
 
             siblingHtml : function(dest, html) {
-                htmlSource.innerHTML = html;
-                chat.util.handleLinks(htmlSource);
-                chat.util.replaceIcons(htmlSource);
+                chat.util.prepareContents(html);
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
             },
 
@@ -597,6 +718,8 @@ function initPsiTheme() {
             }
         },
 
+        AudioMessage : AudioMessage,
+
         receiveObject : function(data) {
             for(var i=0; i < chat.hooks.length; i++) {
                 try {
@@ -631,7 +754,7 @@ function initPsiTheme() {
                 for (var i = 0; i < data.hooks.length; i++) {
                     try {
                         // same chat object as everywhere
-                        var func = new Function("chat, data", data.hooks[i]); /*jshint -W053 */
+                        let func = new Function("chat, data", data.hooks[i]); /*jshint -W053 */
                         hooks.push(func);
                     } catch(e) {
                         server.console("Failed to evalute receive hook: " + e + "\n" + data.hooks[i]);
@@ -642,7 +765,7 @@ function initPsiTheme() {
                 try {
                     //server.console("An attempt to execute: " + data.js);
                     // same chat object as everywhere
-                    var func = new Function("chat", data.js); /*jshint -W053 */
+                    let func = new Function("chat", data.js); /*jshint -W053 */
                     func(chat);
                 } catch(e) {
                     server.console("Failed to evalute/execute js: " + e + "\n" + data.js);

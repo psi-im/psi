@@ -26,6 +26,7 @@ function psiThemeAdapter(chat) {
             srvLoader.getFileContents("index.html", function(html){
                 // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
                 // probably it's a good idea if adapter will send to Psi a list of required scripts
+                var hasStyles = html.indexOf("%styles%") !== -1;
                 html = html.replace("%scripts%", "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
 <script src=\"/psi/themes/chatview/util.js\"></script>\n \
 <script src=\"/psi/themes/chatview/psi/adapter.js\"></script>\n \
@@ -36,7 +37,8 @@ function psiThemeAdapter(chat) {
         window.srvUtil = channel.objects.srvUtil;\n \
         var shared = initPsiTheme().adapter.initSession();\n \
     });\n \
-</script>");
+</script>" + (hasStyles?"":"%styles%"));
+                html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
                 srvLoader.setHtml(html);
                 srvLoader.getFileContents("load.js", function(js){
                     eval(js);
