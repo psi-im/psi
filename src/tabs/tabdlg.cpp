@@ -861,12 +861,13 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled)
   */
 void TabDlg::tabCloseRequested(int i)
 {
-    if (tabWidget_->currentPageIndex() != i)
+    if (tabWidget_->currentPageIndex() != i) {
         if (!PsiOptions::instance()->getOption("options.ui.tabs.can-close-inactive-tab").toBool()) {
             selectTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
             return;
         }
-        closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
+    }
+    closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
 }
 
 /**
