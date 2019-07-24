@@ -1956,15 +1956,18 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
             pwJob->setKey(d->jid.bare());
             pwJob->setAutoDelete(true);
             QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [ = ](QKeychain::Job * job) {
-                if (job->error() == QKeychain::NoError) {
+                if (job->error() == QKeychain::NoError && d->stream) {
                     d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob *>(job)->textData());
                 } else {
-                    qWarning("KeyChain error=%d", job->error());
-                    bool accepted = passwordPrompt();
-                    if (!d->stream) {
+                    bool accepted = false;
+                    if (d->stream) {
+                        qWarning("KeyChain error=%d", job->error());
+                        accepted = passwordPrompt();
+                    }
+                    else {
                         // tcp socket reports failure RemoteHostClosedError.
                         // baically we have to reestablish connection if it's lost here.
-                        qWarning("fixme: stream was cleaned up while waiting for password input");
+                        qWarning("fixme: stream was unexpectedly cleaned up");
                         return;
                     }
                     if (accepted) {
@@ -3097,8 +3100,8 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 
     // Block all transports' contacts' status change popups from popping
     {
-        Roster::ConstIterator rit = d->acc.roster.begin();
-        for ( ; rit != d->acc.roster.end(); ++rit) {
+        Roster::ConstIterator rit = d->acc.roster.constBegin();
+        for ( ; rit != d->acc.roster.constEnd(); ++rit) {
             const RosterItem &i = *rit;
             if ( i.jid().node().isEmpty() /*&& i.jid().resource() == "registered"*/ ) // it is very likely then, that it's transport
                 new BlockTransportPopup(d->blockTransportPopupList,
@@ -3760,7 +3763,7 @@ void PsiAccount::simulateRosterOffline()
     {
         UserListItem *u = &d->self;
         UserResourceList rl = u->userResourceList();
-        for (UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
+        for (auto rit = rl.constBegin(); rit != rl.constEnd(); ++rit) {
             Jid j = u->jid();
             if (u->jid().resource().isEmpty()) {
                 j = j.withResource((*rit).name());
