@@ -101,6 +101,9 @@ protected:
     void insertFromMimeData(const QMimeData *source);
 
 private:
+    void setOverlayText(int value);
+
+private:
     QWidget    *dialog_ = nullptr;
     bool check_spelling_ = false;
     std::unique_ptr<SpellHighlighter> spellhighlighter_;

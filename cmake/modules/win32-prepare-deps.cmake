@@ -107,6 +107,7 @@ if(WIN32)
             icuuc5
         )
         set( ICU_LIBS "" )
+        #hack to find icu libs with name template icu\W{2}[1..9]-0.dll
         foreach( icu_prefix ${ICU_LIBS_PREFIXES} )
             foreach( icu_counter RANGE 9 )
                     list(APPEND ICU_LIBS
@@ -115,6 +116,7 @@ if(WIN32)
             endforeach()
         endforeach()
         find_psi_lib("${ICU_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        unset(ICU_LIBS)
         # Qt5 libraries
         set(QT_LIBAS
             Qt5Core${D}.dll
@@ -423,6 +425,14 @@ if(WIN32)
         # streamer plugins
         find_psi_lib("${GSTREAMER_PLUGINS}" "${GSTREAMER_PLUGINS_DIR}/" "${GST_PLUGINS_OUTPUT}")
     endif()
+    #hack to find hunspell libs with name template libhunspell-1.[1..9]-0.dll
+    foreach( hunsp_counter RANGE 9 )
+       list(APPEND HUNSPELL_LIBS
+            "libhunspell-1.${hunsp_counter}-0.dll"
+            )
+    endforeach()
+    find_psi_lib("${HUNSPELL_LIBS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+    unset(HUNSPELL_LIBS)
     # other libs and executables
     set( LIBRARIES_LIST
         libgcc_s_sjlj-1.dll
@@ -447,12 +457,6 @@ if(WIN32)
         libidn-11.dll
         libidn-12.dll
         libhunspell.dll
-        libhunspell-1.3-0.dll
-        libhunspell-1.4-0.dll
-        libhunspell-1.5-0.dll
-        libhunspell-1.6-0.dll
-        libhunspell-1.7-0.dll
-        libhunspell-1.8-0.dll
         libeay32.dll
         libqca-qt5${D}.dll
         ssleay32.dll

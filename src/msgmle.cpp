@@ -176,7 +176,7 @@ ChatEdit::ChatEdit(QWidget *parent)
     , palCorrection(palOriginal)
     , layout_(new QHBoxLayout(this))
     , recButton_(new QToolButton(this))
-    , overlay_(new QLabel(tr("Recording (%1 sec left)").arg(TIMEOUT/SECOND), this))
+    , overlay_(new QLabel(this))
     , timeout_(TIMEOUT)
 {
     controller_ = new HTMLTextController(this);
@@ -209,6 +209,8 @@ ChatEdit::ChatEdit(QWidget *parent)
     //Setting label color to grey with 70% opacity with red bold text
     overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
     overlay_->setAlignment(Qt::AlignCenter);
+    const int maxOverlayTime = TIMEOUT/SECOND;
+    setOverlayText(maxOverlayTime);
     overlay_->setVisible(false);
     layout_->addWidget(overlay_);
     recButton_->setToolTip(tr("Record and share audio note while pressed"));
@@ -242,7 +244,7 @@ ChatEdit::ChatEdit(QWidget *parent)
             connect(timer_.get(), &QTimer::timeout, this, [this]() {
                 if(timeout_>0) {
                     timeout_ -= SECOND;
-                    overlay_->setText(tr("Recording (%1 sec left)").arg(timeout_/SECOND));
+                    setOverlayText(timeout_/SECOND);
                 }
                 else {
                     timer_->stop();
@@ -259,6 +261,7 @@ ChatEdit::ChatEdit(QWidget *parent)
             timer_->stop();
             timer_.reset();
         }
+        setOverlayText(maxOverlayTime);
         overlay_->setVisible(false);
         if(recorder_) {
             recorder_->stop();
@@ -686,6 +689,10 @@ void ChatEdit::insertAsQuote(const QString &text)
     insertPlainText(quote);
 }
 
+void ChatEdit::setOverlayText(int value)
+{
+    overlay_->setText(tr("Recording (%1 sec left)").arg(value));
+}
 
 //----------------------------------------------------------------------------
 // LineEdit

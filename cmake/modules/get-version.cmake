@@ -75,6 +75,7 @@ if(NOT PSI_VERSION AND (EXISTS "${VER_FILE}"))
             endif()
         endif()
     endif()
+    unset(VER_LINES)
 endif()
 
 message(STATUS "${CLIENT_NAME} version set: ${PSI_VERSION}")
