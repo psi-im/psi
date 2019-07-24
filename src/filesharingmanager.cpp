@@ -1629,8 +1629,8 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
         case Jingle::FileTransfer::File::Histogram::S8:  normalizer = [](quint32 v){ return std::fabs(qint8(v) / 128.0f);            }; break;
         case Jingle::FileTransfer::File::Histogram::U16: normalizer = [](quint32 v){ return quint16(v) / float(1 << 16);             }; break;
         case Jingle::FileTransfer::File::Histogram::S16: normalizer = [](quint32 v){ return std::fabs(qint16(v) / float(1 << 15));   }; break;
-        case Jingle::FileTransfer::File::Histogram::U32: normalizer = [](quint32 v){ return quint32(v) / float(1UL << 32);           }; break;
-        case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return std::fabs(qint32(v) / float(1UL << 31)); }; break;
+        case Jingle::FileTransfer::File::Histogram::U32: normalizer = [](quint32 v){ return quint32(v) / float(quint64(1) << 32);           }; break;
+        case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return std::fabs(qint32(v) / float(quint64(1) << 31)); }; break;
         }
         if (normalizer) {
             ITEAudioController::Histogram ret;
