@@ -2350,6 +2350,7 @@ void GCMainDlg::optionsUpdate()
     delete m;*/
 
     setLooks();
+    d->mle()->addSoundRecButton();
     setToolbuttons();
     setShortcuts();
     d->typeahead->optionsUpdate();
