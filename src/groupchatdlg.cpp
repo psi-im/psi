@@ -1054,6 +1054,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupGCTab(this, account(), jid().full());
 #endif
+    d->mle()->addSoundRecButton();
 }
 
 GCMainDlg::~GCMainDlg()

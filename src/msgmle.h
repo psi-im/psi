@@ -66,6 +66,8 @@ public:
     const QString& lastMessageId() { return lastId; }
     void resetCorrection() { correction = false; updateBackground(); }
     CapitalLettersController * capitalizer();
+    void addSoundRecButton();
+    bool hasSoundRecButton() const {return bool(recButton_);}
 
 public slots:
     void appendMessageHistory(const QString& text);
@@ -124,9 +126,9 @@ private:
     QString lastId;
     QPalette palOriginal;
     QPalette palCorrection;
-    QLayout *layout_;
-    QToolButton *recButton_;
-    QLabel *overlay_;
+    std::unique_ptr<QLayout> layout_;
+    std::unique_ptr<QToolButton> recButton_;
+    std::unique_ptr<QLabel> overlay_;
     std::unique_ptr<QTimer> timer_;
     std::unique_ptr<AudioRecorder> recorder_;
     int timeout_;
