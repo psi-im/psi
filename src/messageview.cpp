@@ -108,7 +108,8 @@ const QStringList &MessageViewReference::sources() const
 
 QVariantMap MessageViewReference::toVariantMap() const
 {
-    return QVariantMap(); // FIXME
+    QVariantMap vm = {}; // FIXME
+    return vm;
 }
 
 // ======================================================================

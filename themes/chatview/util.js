@@ -350,7 +350,7 @@ function initPsiTheme() {
                 for (var li = 0; li < shares.length; li++) {
                     var share = shares[li];
                     var info = ""; // TODO
-                    var source = share.url;
+                    var source = share.getAttribute("id");
                     var type = ""; // TODO
                     var player = chat.util.createHtmlNode(`<div class="psi-audio-msg">
   <div class="psi-am-play-btn"><div class="psi-am-play-sign psi-am-sign-play"></div></div>
@@ -361,10 +361,11 @@ function initPsiTheme() {
   </div>
   <progress class="psi-am-progressbar"/>
   <audio>
-    <source src="${source}" type="${type}">
+    <source src="/psi/account/${session.account}/sharedfile/${source}" type="${type}">
   </audio>
 </div>`);
                     share.parentNode.insertBefore(player, share.nextSibling);
+                    //new AudioMessage(player);
                 }
             },
 
