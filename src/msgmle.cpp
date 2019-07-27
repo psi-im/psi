@@ -47,6 +47,7 @@
 
 static const int TIMEOUT = 30000; //30 secs maximum time interval
 static const int SECOND = 1000;
+static const int maxOverlayTime = TIMEOUT / SECOND;
 
 //----------------------------------------------------------------------------
 // CapitalLettersController
@@ -636,7 +637,6 @@ void ChatEdit::addSoundRecButton()
         //Setting label color to grey with 70% opacity with red bold text
         overlay_->setStyleSheet("background-color: rgba(169, 169, 169, 0.7); color: red; font-weight: bold;");
         overlay_->setAlignment(Qt::AlignCenter);
-        const int maxOverlayTime = TIMEOUT/SECOND;
         setOverlayText(maxOverlayTime);
         overlay_->setVisible(false);
         layout_->addWidget(overlay_.get());
