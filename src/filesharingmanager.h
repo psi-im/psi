@@ -30,6 +30,7 @@
 class FileCache;
 class FileCacheItem;
 class FileSharingManager;
+class MessageView;
 class PsiAccount;
 class QImage;
 class QMimeData;
@@ -161,6 +162,7 @@ public:
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
     // registers source for file and returns share id for future access to the source
+    void fillMessageView(MessageView &mv, const XMPP::Message &m);
     QByteArray registerSource(const XMPP::Jingle::FileTransfer::File &file, const XMPP::Jid &source, const QStringList &uris);
     QString downloadThumbnail(const QString &sourceId);
     QUrl simpleSource(const QByteArray &sourceId) const;

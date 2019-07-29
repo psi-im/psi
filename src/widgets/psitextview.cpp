@@ -19,16 +19,18 @@
 
 #include "psitextview.h"
 
-#include "psirichtext.h"
-#include "urlobject.h"
-
 #include <QAbstractTextDocumentLayout>
 #include <QMenu>
 #include <QMimeData>
 #include <QRegExp>
+#include <QRegularExpression>
 #include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
+
+#include "urlobject.h"
+#include "psirichtext.h"
+#include "qiteaudio.h"
 
 //----------------------------------------------------------------------------
 // PsiTextView::Private
@@ -40,19 +42,29 @@ class PsiTextView::Private : public QObject
     Q_OBJECT
 
 public:
-    Private(QObject *parent)
-    : QObject(parent)
-    {
-        anchorOnMousePress = QString();
-        hadSelectionOnMousePress = false;
-    }
+    using QObject::QObject;
 
     QString anchorOnMousePress;
-    bool hadSelectionOnMousePress;
+    bool hadSelectionOnMousePress = false;
+    ITEMediaOpener *mediaOpener = nullptr;
+    ITEAudioController *voiceMsgCtrl = nullptr;
 
-    QString fragmentToPlainText(const QTextFragment &fragment);
-    QString blockToPlainText(const QTextBlock &block);
-    QString documentFragmentToPlainText(const QTextDocument &doc, QTextFrame::Iterator frameIt);
+    // handler function accepts everything after tag name upto but exluding final ">"
+    PsiRichText::ParsersMap objectParsers;
+
+    QMap<QString,QString> parseHtmlAttrs(const QStringRef &html)
+    {
+        static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])(.*)\\2");
+        auto it = attrStart.globalMatch(html);
+        QMap<QString,QString> attrs;
+        while (it.hasNext()) {
+            auto match = it.next();
+            QString name = match.captured(1);
+            QString value = match.captured(3);
+            attrs.insert(name, value);
+        }
+        return attrs;
+    }
 };
 //!endif
 
@@ -69,7 +81,7 @@ public:
  * Default constructor.
  */
 PsiTextView::PsiTextView(QWidget *parent)
-: QTextEdit(parent)
+    : QTextEdit(parent)
 {
     d = new Private(this);
 
@@ -77,6 +89,32 @@ PsiTextView::PsiTextView(QWidget *parent)
     PsiRichText::install(document());
 
     viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
+
+    auto itc = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
+    d->voiceMsgCtrl = new ITEAudioController(itc);
+    d->voiceMsgCtrl->setAutoFetchMetadata(true);
+
+    d->objectParsers = PsiRichText::ParsersMap
+    {
+        {"share", [this](const QStringRef &html) {
+            if (!d->mediaOpener)
+                return QTextCharFormat();
+            auto attrs = d->parseHtmlAttrs(html);
+            QString id = attrs.value(QLatin1String("id"));
+            if (id.isEmpty())
+                return QTextCharFormat();
+            QUrl url(QLatin1String("share:") + id);
+            auto v = d->mediaOpener->metadata(url);
+            if (!v.isValid())
+                return QTextCharFormat();
+            QVariantMap md = v.toMap();
+            QString type = md.value(QLatin1String("type")).toString();
+            if (type.startsWith("audio/")) {
+                return d->voiceMsgCtrl->makeFormat(url, d->mediaOpener);
+            }
+            return QTextCharFormat();
+        }}
+    };
 }
 
  /**
@@ -162,7 +200,7 @@ void PsiTextView::appendText(const QString &text)
     QTextCursor cursor = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
 
-    PsiRichText::appendText(document(), cursor, text);
+    PsiRichText::appendText(document(), cursor, text, true, d->objectParsers);
 
     PsiRichText::restoreSelection(this, cursor, selection);
     setTextCursor(cursor);
@@ -177,7 +215,7 @@ void PsiTextView::insertText(const QString &text, QTextCursor &cursor)
     QTextCursor selCursor = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
 
-    PsiRichText::appendText(document(), cursor, text, false);
+    PsiRichText::appendText(document(), cursor, text, false, d->objectParsers);
 
     PsiRichText::restoreSelection(this, selCursor, selection);
     setTextCursor(selCursor);
@@ -227,6 +265,11 @@ QString PsiTextView::getHtml() const
 QString PsiTextView::getPlainText() const
 {
     return getTextHelper(false);
+}
+
+void PsiTextView::setMediaOpener(ITEMediaOpener *opener)
+{
+    d->mediaOpener = opener;
 }
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)

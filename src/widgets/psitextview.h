@@ -24,6 +24,7 @@
 
 class QMimeData;
 class QTextCursor;
+class ITEMediaOpener;
 
 class PsiTextView : public QTextEdit
 {
@@ -41,6 +42,7 @@ public:
 
     QString getHtml() const;
     QString getPlainText() const;
+    void setMediaOpener(ITEMediaOpener *opener);
 
 public slots:
     void scrollToBottom();

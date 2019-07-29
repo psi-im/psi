@@ -38,7 +38,7 @@ public:
     size_t          fileSize;
     QString         mediaType;
     QStringList     sources;
-    QList<quint8>   spectrum;
+    QList<float>    histogram;
     QUrl            thumbnailUri;
     QString         thumbnailMediaType;
 };
@@ -77,9 +77,9 @@ void MessageViewReference::setThumbnail(const QUrl &uri, const QString &mediaTyp
     d->thumbnailMediaType = mediaType;
 }
 
-void MessageViewReference::setAudioSpectrum(const QList<quint8> &spectrum)
+void MessageViewReference::setAudioHistogram(const QList<float> &spectrum)
 {
-    d->spectrum = spectrum;
+    d->histogram = spectrum;
 }
 
 const QByteArray &MessageViewReference::id() const
@@ -105,6 +105,11 @@ const QString &MessageViewReference::mediaType() const
 const QStringList &MessageViewReference::sources() const
 {
     return d->sources;
+}
+
+const QList<float> &MessageViewReference::histogram() const
+{
+    return d->histogram;
 }
 
 QVariantMap MessageViewReference::toVariantMap() const

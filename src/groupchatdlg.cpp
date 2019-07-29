@@ -2160,46 +2160,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     mv.setSpooled(m.spooled());
     mv.setDateTime(m.timeStamp());
     mv.setReplaceId(m.replaceId());
-
-    auto refs = m.references();
-    if (refs.count()) {
-        QString tailReferences;
-        QString desc = m.body();
-        QString htmlDesc;
-        htmlDesc.reserve(desc.size() + refs.count() * 64);
-
-        std::sort(refs.begin(), refs.end(), [](auto &a, auto &b){ return a.begin() < b.begin(); });
-
-        int lastEnd = 0;
-        for (auto const &r: m.references()) {
-            MediaSharing ms = r.mediaSharing();
-            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio"))) { // only audio is supported for now
-                continue;
-            }
-
-            auto file = ms.file;
-            QByteArray shareId = account()->psi()->fileSharingManager()->registerSource(file, m.from(), ms.sources);
-
-            MessageViewReference mvr(shareId, file.name(), file.size(), file.mediaType(), ms.sources);
-            auto thumb = file.thumbnail();
-            mvr.setThumbnail(thumb.uri, thumb.mimeType);
-            mv.addReference(mvr);
-
-            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(QString::fromLatin1(shareId.toHex())));
-            if (r.begin() != -1 && r.begin() >= lastEnd && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
-                htmlDesc += TextUtil::escape(desc.mid(lastEnd, r.begin() - lastEnd)); // something before link
-                htmlDesc += shareStr; // something instead of link
-                lastEnd = r.end() + 1;
-            } else {
-                tailReferences += shareStr;
-            }
-        }
-        if (lastEnd < desc.size()) {
-            htmlDesc += TextUtil::escape(desc.mid(lastEnd, desc.size() - lastEnd));
-        }
-        htmlDesc += tailReferences;
-        mv.setHtml(htmlDesc);
-    }
+    account()->psi()->fileSharingManager()->fillMessageView(mv, m);
 
     dispatchMessage(mv);
 

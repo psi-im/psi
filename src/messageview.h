@@ -41,13 +41,14 @@ public:
     ~MessageViewReference();
 
     void setThumbnail(const QUrl &uri, const QString &mediaType);
-    void setAudioSpectrum(const QList<quint8> &spectrum);
+    void setAudioHistogram(const QList<float> &spectrum);
 
     const QByteArray &id() const;
     const QString &fileName() const;
     size_t size() const;
     const QString &mediaType() const;
     const QStringList &sources() const;
+    const QList<float> &histogram() const;
 
     QVariantMap toVariantMap() const;
 private:

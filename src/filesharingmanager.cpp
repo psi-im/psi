@@ -42,6 +42,8 @@
 #    include "qhttpserverconnection.hpp"
 #    include "webserver.h"
 #endif
+#include "messageview.h"
+#include "textutil.h"
 
 #include <QBuffer>
 #include <QDir>
@@ -1092,6 +1094,49 @@ QList<FileSharingItem*> FileSharingManager::fromFilesList(const QStringList &fil
     return ret;
 }
 
+void FileSharingManager::fillMessageView(MessageView &mv, const Message &m)
+{
+    auto refs = m.references();
+    if (refs.count()) {
+        QString tailReferences;
+        QString desc = m.body();
+        QString htmlDesc;
+        htmlDesc.reserve(desc.size() + refs.count() * 64);
+
+        std::sort(refs.begin(), refs.end(), [](auto &a, auto &b){ return a.begin() < b.begin(); });
+
+        int lastEnd = 0;
+        for (auto const &r: m.references()) {
+            MediaSharing ms = r.mediaSharing();
+            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio"))) { // only audio is supported for now
+                continue;
+            }
+
+            auto file = ms.file;
+            QByteArray shareId = registerSource(file, m.from(), ms.sources);
+
+            MessageViewReference mvr(shareId, file.name(), file.size(), file.mediaType(), ms.sources);
+            auto thumb = file.thumbnail();
+            mvr.setThumbnail(thumb.uri, thumb.mimeType);
+            mv.addReference(mvr);
+
+            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(QString::fromLatin1(shareId.toHex())));
+            if (r.begin() != -1 && r.begin() >= lastEnd && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
+                htmlDesc += TextUtil::escape(desc.mid(lastEnd, r.begin() - lastEnd)); // something before link
+                htmlDesc += shareStr; // something instead of link
+                lastEnd = r.end() + 1;
+            } else {
+                tailReferences += shareStr;
+            }
+        }
+        if (lastEnd < desc.size()) {
+            htmlDesc += TextUtil::escape(desc.mid(lastEnd, desc.size() - lastEnd));
+        }
+        htmlDesc += tailReferences;
+        mv.setHtml(htmlDesc);
+    }
+}
+
 QByteArray FileSharingManager::registerSource(const Jingle::FileTransfer::File &file, const Jid &source, const QStringList &uris)
 {
     Hash h = file.hash(Hash::Sha1);
@@ -1594,15 +1639,17 @@ void FileSharingDeviceOpener::close(QIODevice *dev)
 
 QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 {
+    QVariantMap ret;
     QByteArray sourceId = urlToSourceId(url);
     if (sourceId.isEmpty())
-        return QVariant();
+        return ret;
 
     FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, nullptr);
     if (item) {
-        QByteArray hg = item->metadata().value("histogram").toByteArray();
+        ret.insert(QString::fromLatin1("type"), item->metadata().value(QString::fromLatin1("type")));
+        QByteArray hg = item->metadata().value(QString::fromLatin1("histogram")).toByteArray();
         if (hg.isEmpty())
-            return QVariant();
+            return ret;
 
         // so it looks like a voice message
         ITEAudioController::Histogram iteHg;
@@ -1611,13 +1658,13 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
             iteHg.append(float(b) / 255.0);
         }
 
-        QVariantMap vm;
-        vm.insert(QString::fromLatin1("histogram"),
+        ret.insert(QString::fromLatin1("histogram"),
                   QVariant::fromValue<ITEAudioController::Histogram>(iteHg));
-        return vm;
+        return ret;
     }
 
     auto file = acc->psi()->fileSharingManager()->registeredSourceFile(sourceId);
+    ret.insert("type", file.mediaType()); // TODO what if it's not there?
     if (file.isValid() && file.audioHistogram().bars.count()) {
         auto as = file.audioHistogram();
         std::function<float(quint32)> normalizer;
@@ -1630,16 +1677,15 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
         case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return std::fabs(qint32(v) / float(quint64(1) << 31)); }; break;
         }
         if (normalizer) {
-            ITEAudioController::Histogram ret;
-            std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(ret), normalizer);
-            QVariantMap vm;
-            vm.insert(QString::fromLatin1("histogram"),
-                      QVariant::fromValue<ITEAudioController::Histogram>(ret));
-            return vm;
+            ITEAudioController::Histogram hg;
+            std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(hg), normalizer);
+            ret.insert(QString::fromLatin1("histogram"),
+                      QVariant::fromValue<ITEAudioController::Histogram>(hg));
+            return ret;
         }
     }
 
-    return QVariant();
+    return ret;
 }
 #endif
 

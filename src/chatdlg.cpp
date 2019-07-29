@@ -147,6 +147,8 @@ void ChatDlg::init()
     chatView()->setSessionData(false, isPrivate, jid(), jid().full()); //FIXME fix nick updating
 #ifdef WEBKIT
     chatView()->setAccount(account());
+#else
+    chatView()->setMediaOpener(new FileSharingDeviceOpener(account()));
 #endif
     chatView()->init();
 
@@ -947,6 +949,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
     mv.setReplaceId(m.replaceId());
     mv.setCarbonDirection(m.carbonDirection());
+    account()->psi()->fileSharingManager()->fillMessageView(mv, m);
 
     dispatchMessage(mv);
 

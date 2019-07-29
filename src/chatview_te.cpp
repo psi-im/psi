@@ -107,10 +107,6 @@ ChatView::ChatView(QWidget *parent)
         }
         addLogIconsResources();
     }
-
-    auto itc = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
-    voiceMsgCtrl = new ITEAudioController(itc);
-    voiceMsgCtrl->setAutoFetchMetadata(true);
 }
 
 ChatView::~ChatView()
@@ -432,18 +428,6 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
         }
         else {
             insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>", insertCursor);
-        }
-    }
-
-    // temporary hack with references
-    for (auto const &r: mv.references()) {
-        if (r.mediaType().startsWith(QString::fromLatin1("audio"))) {
-            bool ab = atBottom();
-            voiceMsgCtrl->insert(QUrl(QLatin1String("share:") + QString::fromLatin1(r.id().toHex())),
-                                 mediaOpener);
-            if (ab) {
-                scrollToBottom();
-            }
         }
     }
 
