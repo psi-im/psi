@@ -1,7 +1,8 @@
 /****************************************************************************
 ** $Id:  qt/tictac.cpp   3.0.6   edited Nov 14 2001 $
 **
-** Copyright (C) 1992-2000 Trolltech AS.  All rights reserved.
+** Copyright (C) 2001-2019  Psi Team
+** Copyright (C) 1992-2000  Trolltech AS.  All rights reserved.
 **
 ** This file is part of an example program for Qt.  This example
 ** program may be used, distributed and modified without limitation.

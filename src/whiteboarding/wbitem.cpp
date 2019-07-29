@@ -367,7 +367,7 @@ QPointF WbItem::center() {
 // The following functions are from qt-mac-opensource-src-4.3.1/src/svg/qsvghandler.cpp
 /****************************************************************************
 **
-** Copyright (C) 1992-2007 Trolltech ASA. All rights reserved.
+** Copyright (C) 1992-2007  Trolltech ASA. All rights reserved.
 **
 ** This file is part of the QtSVG module of the Qt Toolkit.
 **
