@@ -25,6 +25,7 @@
 #include "iris/turnclient.h"
 #include "iris/udpportreserver.h"
 #include "xmpp_client.h"
+#include "jingle.h"
 
 // TODO: reject offers that don't contain at least one of audio or video
 // TODO: support candidate negotiations over the JingleRtpChannel thread
@@ -1025,6 +1026,7 @@ private:
         if(!incoming)
         {
             sid = manager->createSid(peer);
+            manager->client->jingleManager()->registerExternalSession(sid);
 
             JingleRtpEnvelope envelope;
             envelope.action = "session-initiate";
