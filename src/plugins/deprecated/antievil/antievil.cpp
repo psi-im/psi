@@ -1,10 +1,11 @@
 /*
- * (c) 2007-2008 Maciej Niedzielski
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2007-2008  Maciej Niedzielski
  */
 
+#include <QDebug>
 #include <QObject>
 #include <QTextStream>
-#include <QDebug>
 
 #include "psiplugin.h"
 #include "stanzafilter.h"
@@ -21,7 +22,6 @@ public:
         : stanzaSender(0)
     {
     }
-
 
     //-- PsiPlugin -------------------------------------------
 
@@ -61,7 +61,6 @@ public:
         return true;
     }
 
-
     //-- StanzaFilter ----------------------------------------
 
     virtual bool incomingStanza(int account, const QDomElement& stanza)
@@ -92,14 +91,12 @@ public:
         return blocked;
     }
 
-
     //-- StanzaSender ----------------------------------------
 
     virtual void setStanzaSendingHost(StanzaSendingHost *host)
     {
         stanzaSender = host;
     }
-
 
 private:
     StanzaSendingHost* stanzaSender;

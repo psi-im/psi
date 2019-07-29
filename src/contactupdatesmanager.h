@@ -1,5 +1,6 @@
 /*
  * contactupdatesmanager.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +24,11 @@
 #include <QObject>
 #include <QPointer>
 
-class PsiCon;
-class QTimer;
-
 #include "psiaccount.h"
 #include "xmpp_jid.h"
+
+class PsiCon;
+class QTimer;
 
 class ContactUpdatesManager : public QObject
 {

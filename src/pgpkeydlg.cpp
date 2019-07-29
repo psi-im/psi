@@ -1,5 +1,6 @@
 /*
  * pgpkeydlg.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -24,17 +25,17 @@
 
 #include "pgpkeydlg.h"
 
-#include <QString>
+#include <QHeaderView>
+#include <QKeyEvent>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QStandardItemModel>
 #include <QSortFilterProxyModel>
-#include <QKeyEvent>
-#include <QHeaderView>
+#include <QStandardItemModel>
+#include <QString>
 
-#include <pgputil.h>
 #include "common.h"
 #include "showtextdlg.h"
+#include <pgputil.h>
 
 class KeyViewItem : public QStandardItem
 {

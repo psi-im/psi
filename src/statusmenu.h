@@ -1,5 +1,6 @@
 /*
  * statusmenu.h - helper class that displays available statuses using QMenu
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +24,8 @@
 #include <QMenu>
 #include <QMouseEvent>
 
-#include "psicon.h"
 #include "iconaction.h"
+#include "psicon.h"
 #include "xmpp_status.h"
 
 class StatusMenu : public QMenu

@@ -1,60 +1,62 @@
 /*
- * (c) 2006 Kevin Smith
- * (c) 2008 Maciej Niedzielski
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2006  Kevin Smith
+ * Copyright (C) 2008  Maciej Niedzielski
  */
 
 #include "pluginhost.h"
 
-#include <QPluginLoader>
-#include <QWidget>
-#include <QSplitter>
 #include <QAction>
 #include <QByteArray>
 #include <QDomElement>
 #include <QKeySequence>
 #include <QObject>
+#include <QPluginLoader>
 #include <QRegExp>
+#include <QSplitter>
 #include <QString>
 #include <QStringList>
 #include <QTextEdit>
-//#include "xmpp_message.h"
-#include "psioptions.h"
-#include "psiaccount.h"
+#include <QWidget>
+
+#include "accountinfoaccessor.h"
+#include "activetabaccessor.h"
+#include "applicationinfo.h"
+#include "applicationinfoaccessor.h"
 #include "chatdlg.h"
+#include "chattabaccessor.h"
+#include "chatview.h"
+#include "contactinfoaccessor.h"
+#include "contactstateaccessor.h"
+#include "eventcreator.h"
+#include "eventfilter.h"
+#include "gctoolbariconaccessor.h"
 #include "globalshortcut/globalshortcutmanager.h"
 #include "grepshortcutkeydialog.h"
-#include "pluginmanager.h"
-#include "psiplugin.h"
-#include "applicationinfo.h"
-#include "stanzasender.h"
-#include "stanzafilter.h"
+#include "groupchatdlg.h"
+#include "iconfactoryaccessor.h"
 #include "iqfilter.h"
 #include "iqnamespacefilter.h"
-#include "eventfilter.h"
-#include "optionaccessor.h"
-#include "shortcutaccessor.h"
-#include "iconfactoryaccessor.h"
-#include "activetabaccessor.h"
-#include "groupchatdlg.h"
-#include "tabmanager.h"
-#include "popupaccessor.h"
-#include "applicationinfoaccessor.h"
-#include "accountinfoaccessor.h"
-#include "toolbariconaccessor.h"
-#include "gctoolbariconaccessor.h"
-#include "widgets/iconaction.h"
 #include "menuaccessor.h"
-#include "contactstateaccessor.h"
-#include "plugininfoprovider.h"
-#include "psiaccountcontroller.h"
-#include "eventcreator.h"
-#include "contactinfoaccessor.h"
-#include "soundaccessor.h"
-#include "textutil.h"
-#include "chattabaccessor.h"
+#include "optionaccessor.h"
 #include "pluginaccessor.h"
-#include "chatview.h"
+#include "plugininfoprovider.h"
+#include "pluginmanager.h"
+#include "popupaccessor.h"
+#include "psiaccount.h"
+#include "psiaccountcontroller.h"
+#include "psioptions.h"
+#include "psiplugin.h"
+#include "shortcutaccessor.h"
+#include "soundaccessor.h"
+#include "stanzafilter.h"
+#include "stanzasender.h"
+#include "tabmanager.h"
+#include "textutil.h"
+#include "toolbariconaccessor.h"
 #include "webkitaccessor.h"
+#include "widgets/iconaction.h"
+//#include "xmpp_message.h"
 
 /**
  * \brief Constructs a host/wrapper for a plugin.
@@ -189,7 +191,6 @@ QWidget* PluginHost::optionsWidget() const
     }
     return widget;
 }
-
 
 //-- loading and enabling -------------------------------------------
 
@@ -500,7 +501,6 @@ bool PluginHost::isEnabled() const
     return enabled_;
 }
 
-
 //-- for StanzaFilter and IqNamespaceFilter -------------------------
 
 /**
@@ -570,7 +570,6 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
 
     return handled;
 }
-
 
 bool PluginHost::outgoingXml(int account, QDomElement &e)
 {
@@ -802,7 +801,6 @@ void PluginHost::removeIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *f
     iqNsxFilters_.remove(ns, filter);
 }
 
-
 //-- OptionAccessor -------------------------------------------------
 
 /**
@@ -890,7 +888,6 @@ void PluginHost::restoreOptions()
     if(pp)
         pp->restoreOptions();
 }
-
 
 /**
  * Shortcut accessing host

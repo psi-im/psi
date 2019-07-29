@@ -1,5 +1,6 @@
 /*
  * optionstree.cpp - Soft-coded options structure implementation
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +20,8 @@
 
 #include "optionstree.h"
 
-#include <QDomElement>
 #include <QDomDocument>
+#include <QDomElement>
 #include <QStringList>
 
 #include "atomicxmlfile/atomicxmlfile.h"
@@ -87,7 +88,6 @@ void OptionsTree::setOption(const QString& name, const QVariant& value)
     emit optionChanged(name);
 }
 
-
 /**
  * @brief returns true if the node @a node is an internal node.
  */
@@ -123,7 +123,6 @@ bool OptionsTree::removeOption(const QString &name, bool internal_nodes)
     return ok;
 }
 
-
 /**
  * Names of every stored option
  * \return Names of options
@@ -152,7 +151,6 @@ bool OptionsTree::isValidName(const QString &name)
     return true;
 }
 
-
 QString OptionsTree::mapLookup(const QString &basename, const QVariant &key) const
 {
     QStringList children = getChildOptionNames( basename, true, true);
@@ -177,7 +175,6 @@ QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const
         return def;
     }
 }
-
 
 QString OptionsTree::mapPut(const QString &basename, const QVariant &key)
 {
@@ -238,8 +235,6 @@ QVariantList OptionsTree::mapKeyList(const QString &basename, bool sortedByNumbe
     return ret;
 }
 
-
-
 /**
  * Saves all options to the specified file
  * \param fileName Name of the file to which to save options
@@ -295,7 +290,6 @@ bool OptionsTree::loadOptions(const QString& fileName, const QString& configName
 
     return loadOptions(doc.documentElement(), configName, configVersion, configNS);
 }
-
 
 /**
  * Checks for existing saved Options.

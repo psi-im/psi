@@ -1,32 +1,32 @@
 #include "filetransdlg.h"
 
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QTimer>
-#include <QPainter>
-#include <QDesktopServices>
-#include <QFileIconProvider>
-#include <QMenu>
-#include <QKeyEvent>
 #include <QBuffer>
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QFileIconProvider>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPainter>
+#include <QTimer>
 
-#include "psicon.h"
-#include "psiaccount.h"
-#include "userlist.h"
-#include "s5b.h"
+#include "accountlabel.h"
+#include "accountscombobox.h"
 #include "busywidget.h"
 #include "filetransfer.h"
-#include "psiiconset.h"
-#include "psitextview.h"
-#include "jidutil.h"
-#include "psitooltip.h"
-#include "psicontactlist.h"
-#include "accountscombobox.h"
-#include "accountlabel.h"
-#include "psioptions.h"
 #include "fileutil.h"
-#include "xmpp_tasks.h"
+#include "jidutil.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitextview.h"
+#include "psitooltip.h"
+#include "s5b.h"
 #include "textutil.h"
+#include "userlist.h"
+#include "xmpp_tasks.h"
 
 typedef quint64 LARGE_TYPE;
 
@@ -521,7 +521,6 @@ public:
     QTimer t;
 };
 
-
 FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
     : QDialog(nullptr, psi_dialog_flags)
 {
@@ -531,7 +530,6 @@ FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
     QStringList l;
     FileRequestDlg(j, psi, pa, l);
 }
-
 
 FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, const QStringList& files, bool direct)
     : QDialog(nullptr, psi_dialog_flags)
@@ -1485,7 +1483,6 @@ signals:
     void itemOpenDest(int id);
     void itemClear(int id);
 
-
 protected:
     void mousePressEvent(QMouseEvent *event)
     {
@@ -1549,9 +1546,6 @@ private:
     }
 };
 
-
-
-
 FileTransDelegate::FileTransDelegate(QObject* p)
     : QItemDelegate(p)
     , ftv(nullptr)
@@ -1572,8 +1566,6 @@ QSize FileTransDelegate::sizeHint(const QStyleOptionViewItem &option, const QMod
     sz.setHeight(fti->height);
     return sz;
 }
-
-
 
 class TransferMapping
 {
@@ -1711,7 +1703,6 @@ public:
             FileTransItem *fi = findItem(i->id);
             fi->done = true;
         }
-
 
         if(done) {
             bool recv = (i->h->mode() == FileTransferHandler::Receiving);

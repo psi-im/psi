@@ -1,6 +1,7 @@
 /*
  * wbnewpath.cpp - a class used for representing a path on the whiteboard
  *              while it's being drawn.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +20,10 @@
  */
 
 #include "wbnewpath.h"
-#include "../sxe/sxesession.h"
 
 #include <QGraphicsScene>
+
+#include "../sxe/sxesession.h"
 
 WbNewPath::WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor) : WbNewItem(s) {
     controlPoint_ = nullptr;

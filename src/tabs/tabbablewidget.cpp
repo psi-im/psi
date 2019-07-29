@@ -1,6 +1,7 @@
 /*
  * tabbable.cpp
- * Copyright (C) 2007 Kevin Smith
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2007  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,17 +19,17 @@
  */
 
 #include "tabbablewidget.h"
-#include "tabmanager.h"
-#include "tabdlg.h"
-#include "jidutil.h"
-#include "groupchatdlg.h"
-#include "psioptions.h"
+
 #include <QTimer>
-
-
 #ifdef Q_OS_WIN
-#include <windows.h>
+#    include <windows.h>
 #endif
+
+#include "groupchatdlg.h"
+#include "jidutil.h"
+#include "psioptions.h"
+#include "tabdlg.h"
+#include "tabmanager.h"
 
 //----------------------------------------------------------------------------
 // TabbableWidget

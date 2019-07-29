@@ -1,5 +1,6 @@
 /*
  * jsutil.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +40,5 @@ public:
         return str;
     }
 };
-
 
 #endif

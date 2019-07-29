@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Barracuda Networks, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,22 +19,22 @@
 
 #include "avcall.h"
 
+#include <QCoreApplication>
+#include <QDir>
+#include <QLibrary>
+#include <QtCrypto>
 #include <stdio.h>
 #include <stdlib.h>
-#include <QCoreApplication>
-#include <QLibrary>
-#include <QDir>
-#include <QtCrypto>
-#include "xmpp_jid.h"
-#include "jinglertp.h"
+
 #include "../psimedia/psimedia.h"
 #include "applicationinfo.h"
+#include "jinglertp.h"
+#include "mediadevicewatcher.h"
 #include "psiaccount.h"
 #include "psioptions.h"
-#include "mediadevicewatcher.h"
+#include "xmpp_jid.h"
 
 #define USE_THREAD
-
 
 // get default settings
 static MediaConfiguration getDefaultConfiguration()
@@ -56,7 +57,7 @@ static void ensureConfig()
 }
 
 #ifdef GSTPROVIDER_STATIC
-Q_IMPORT_PLUGIN(gstprovider)
+    Q_IMPORT_PLUGIN(gstprovider)
 #endif
 
 #ifndef GSTPROVIDER_STATIC

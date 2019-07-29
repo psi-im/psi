@@ -1,5 +1,6 @@
 /*
  * advwidget.cpp - AdvancedWidget template class
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005-2007  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -17,28 +18,26 @@
  *
  */
 
-#include <QtGlobal> // required to make mingw32 happy
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <winuser.h>
-#endif
-
 #include "advwidget.h"
 
 #include <QApplication>
-#include <QWidget>
-#include <QTimer>
-#include <QDesktopWidget>
 #include <QDebug>
+#include <QDesktopWidget>
 #include <QScreen>
+#include <QTimer>
+#include <QWidget>
+#include <QtGlobal> // required to make mingw32 happy
+#ifdef HAVE_X11
+#    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
+#    include <QX11Info>
+#endif
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#    include <winuser.h>
+#endif
 
 #include "psioptions.h"
-
-#ifdef HAVE_X11
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <QX11Info>
-#endif
 
 // TODO: Make use of KDE taskbar flashing support
 

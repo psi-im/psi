@@ -1,6 +1,7 @@
 /*
  * accountregdlg.cpp - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002, 2006  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002, 2006  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,20 +18,21 @@
  *
  */
 
-#include <QtCrypto>
+#include "accountregdlg.h"
+
 #include <QMessageBox>
 #include <QScrollArea>
+#include <QtCrypto>
 
-#include "accountregdlg.h"
-#include "proxy.h"
-#include "serverlistquerier.h"
-#include "miniclient.h"
-#include "xmpp_tasks.h"
-#include "psioptions.h"
 #include "jidutil.h"
+#include "miniclient.h"
+#include "proxy.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "serverlistquerier.h"
 #include "textutil.h"
 #include "xdata_widget.h"
-#include "psicon.h"
+#include "xmpp_tasks.h"
 
 using namespace XMPP;
 
@@ -124,7 +126,6 @@ void AccountRegDlg::sslActivated(int i)
         ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
     }
 }
-
 
 bool AccountRegDlg::checkSSL()
 {
@@ -365,6 +366,3 @@ void AccountRegDlg::unblock()
             fields_->setEnabled(true);
     }
 }
-
-
-

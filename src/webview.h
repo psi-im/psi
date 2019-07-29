@@ -1,6 +1,7 @@
 /*
  * webview.h - QWebView handling links and copying text
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,20 +21,20 @@
 #ifndef _WEBVIEW_H
 #define    _WEBVIEW_H
 
-#ifdef WEBENGINE
-#include <QWebEngineView>
-#else
-#include <QWebView>
-#endif
-#include <QMessageBox>
-#include <QMenu>
-#include <QContextMenuEvent>
-#include <QClipboard>
 #include <QBuffer>
+#include <QClipboard>
+#include <QContextMenuEvent>
+#include <QMenu>
+#include <QMessageBox>
 #include <QUrlQuery>
+#ifdef WEBENGINE
+#    include <QWebEngineView>
+#else
+#    include <QWebView>
+#endif
 
-#include "networkaccessmanager.h"
 #include "iconset.h"
+#include "networkaccessmanager.h"
 
 /**
  * Extended QWebView.
@@ -95,6 +96,4 @@ protected slots:
     void loadFinishedEvent(bool);
 };
 
-
 #endif
-

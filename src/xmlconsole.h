@@ -1,6 +1,7 @@
 /*
  * xmlconsole.h - dialog for interacting manually with XMPP
- * Copyright (C) 2001, 2002  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,9 +21,9 @@
 #ifndef XMLCONSOLE_H
 #define XMLCONSOLE_H
 
-#include <QWidget>
 #include <QDialog>
 #include <QPointer>
+#include <QWidget>
 
 #include "ui_xmlconsole.h"
 

@@ -1,5 +1,6 @@
 /*
  * statusmenu.cpp - helper class that displays available statuses using QMenu
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +20,13 @@
 
 #include "statusmenu.h"
 
-#include "psioptions.h"
-#include "psiiconset.h"
-#include "psiaccount.h"
-#include "xmpp_status.h"
-#include "common.h"
-
 #include <cassert>
+
+#include "common.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "xmpp_status.h"
 
 /**
  * \class StatusMenu

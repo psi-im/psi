@@ -1,8 +1,8 @@
 #ifndef ITUNESTUNECONTROLLER_H
 #define ITUNESTUNECONTROLLER_H
 
-#include <QString>
 #include <CoreFoundation/CoreFoundation.h>
+#include <QString>
 
 #include "tunecontrollerinterface.h"
 

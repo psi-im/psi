@@ -1,6 +1,7 @@
 /*
  * psithememanager.h - manages all themes in psi
- * Copyright (C) 2010  Rion (Sergey Ilinyh)
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,8 +22,8 @@
 
 #include <QCoreApplication>
 
-#include "theme.h"
 #include "applicationinfo.h"
+#include "theme.h"
 
 class PsiThemeManager::Private {
 public:

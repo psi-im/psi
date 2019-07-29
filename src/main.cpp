@@ -1,5 +1,6 @@
 /*
  * main.cpp - initialization and profile/settings handling
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -19,60 +20,56 @@
 
 #include "main.h"
 
-#include "psiapplication.h"
-#include <QTimer>
-
-#include <QImage>
 #include <QBitmap>
-#include <QTextCodec>
-#include <QSettings>
-#include <QComboBox>
 #include <QCheckBox>
-#include <QMessageBox>
-#include <QtCrypto>
-#include <QTranslator>
+#include <QComboBox>
 #include <QDir>
 #include <QFileInfo>
-#include <QProcess>
-#include <QTime>
-#include <QLibraryInfo>
 #include <QHashIterator>
-
+#include <QImage>
+#include <QLibraryInfo>
+#include <QMessageBox>
+#include <QProcess>
+#include <QSettings>
+#include <QTextCodec>
+#include <QTime>
+#include <QTimer>
+#include <QTranslator>
+#include <QtCrypto>
 #include <stdlib.h>
+#ifdef Q_OS_WIN
+#    include <qt_windows.h> // for RegDeleteKey
+#endif
 #include <time.h>
-#include "profiledlg.h"
-#include "activeprofiles.h"
-#include "psicli.h"
-#include "psioptions.h"
 
-#include "eventdlg.h"
-#include "psicon.h"
-#include "psiiconset.h"
-#include "translationmanager.h"
+#ifdef Q_OS_MAC
+#    include "CocoaUtilities/CocoaInitializer.h"
+#endif
+#include "activeprofiles.h"
 #include "applicationinfo.h"
 #include "chatdlg.h"
 #ifdef USE_CRASH
 #    include"crash.h"
 #endif
-
-#ifdef Q_OS_MAC
-#include "CocoaUtilities/CocoaInitializer.h"
-#endif
+#include "eventdlg.h"
+#include "profiledlg.h"
+#include "psiapplication.h"
+#include "psicli.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "translationmanager.h"
 
 #ifdef Q_OS_WIN
-#    include <qt_windows.h> // for RegDeleteKey
-#endif
-
-#ifdef Q_OS_WIN
-#define URI_RESTART
+#    define URI_RESTART
 #endif
 
 #if defined(Q_OS_WIN) && !defined (_MSC_VER)
 // Fix of vulnerability in MS Windows in builds using mingw-w64
 // See: https://www.kb.cert.org/vuls/id/307144/
-#define PSI_EXPORT_FUNC __declspec(dllexport)
+#    define PSI_EXPORT_FUNC __declspec(dllexport)
 #else
-#define PSI_EXPORT_FUNC
+#    define PSI_EXPORT_FUNC
 #endif
 
 /** \mainpage Psi API Documentation
@@ -87,10 +84,7 @@
  *        And here we might put our contact details
  */
 
-
-
 using namespace XMPP;
-
 
 PsiMain::PsiMain(const QHash<QString, QString>& commandline, QObject *par)
     : QObject(par)
@@ -526,9 +520,9 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     // it must be initialized first in order for ApplicationInfo::resourcesDir() to work
     qSetMessagePattern("[%{time yyyyMMdd h:mm:ss}] %{if-info}I:%{endif}%{if-warning}W:%{endif}%{if-critical}C:%{endif}%{if-fatal}F:%{endif}"
                        "%{message} (%{file}:%{line}, %{function})");
-# ifdef Q_OS_WIN
+#ifdef Q_OS_WIN
     QCoreApplication::addLibraryPath(appPath);
-# endif
+#endif
     PsiApplication app(argc, argv);
     QApplication::setApplicationName(ApplicationInfo::name());
     QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
@@ -613,17 +607,17 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 }
 
 #ifdef QCA_STATIC
-#include <QtPlugin>
-#ifdef HAVE_OPENSSL
-Q_IMPORT_PLUGIN(qca_ossl)
-#endif
-#ifdef HAVE_CYRUSSASL
-Q_IMPORT_PLUGIN(qca_cyrus_sasl)
-#endif
-Q_IMPORT_PLUGIN(qca_gnupg)
+#    include <QtPlugin>
+# ifdef HAVE_OPENSSL
+    Q_IMPORT_PLUGIN(qca_ossl)
+# endif
+# ifdef HAVE_CYRUSSASL
+    Q_IMPORT_PLUGIN(qca_cyrus_sasl)
+# endif
+    Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
 
 //#if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)
-//Q_IMPORT_PLUGIN(qjpeg)
-//Q_IMPORT_PLUGIN(qgif)
+//    Q_IMPORT_PLUGIN(qjpeg)
+//    Q_IMPORT_PLUGIN(qgif)
 //#endif

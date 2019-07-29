@@ -1,5 +1,6 @@
 /*
  * privacylist.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +18,12 @@
  *
  */
 
+#include "privacylist.h"
+
 #include <QDomElement>
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <QList>
-
-#include "privacylist.h"
 
 #define ORDER_INCREMENT 10
 
@@ -55,7 +56,6 @@ void PrivacyList::appendItem(const PrivacyListItem& item)
     insertItem(items_.count(), item);
 }
 
-
 void PrivacyList::reNumber()
 {
     unsigned int order = 100;
@@ -64,7 +64,6 @@ void PrivacyList::reNumber()
         order += ORDER_INCREMENT;
     }
 }
-
 
 bool PrivacyList::moveItemUp(int index)
 {

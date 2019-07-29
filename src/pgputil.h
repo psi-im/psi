@@ -3,7 +3,6 @@
 
 // FIXME: instead of a singleton, make it a member of PsiCon.
 
-
 #include <QSet>
 #include <QList>
 #include <QMap>

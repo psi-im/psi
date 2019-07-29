@@ -1,5 +1,6 @@
 /*
  * profiles.cpp - deal with profiles
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -18,36 +19,36 @@
  */
 
 #include "profiles.h"
-#include "common.h"
-#include "applicationinfo.h"
-#include <QDir>
-#include <QFileInfo>
-#include <QDomElement>
 
 #include <QApplication>
-#include <QTextStream>
-#include <QtCrypto>
-#include <QList>
-#include <QUuid>
 #include <QDesktopWidget>
+#include <QDir>
+#include <QDomElement>
+#include <QFileInfo>
+#include <QList>
+#include <QTextStream>
+#include <QUuid>
+#include <QtCrypto>
 
-#include "eventdlg.h"
-#include "chatdlg.h"
-#include "xmpp_xmlcommon.h"
-#include "fancylabel.h"
 #include "advwidget.h"
-#include "psioptions.h"
-#include "varlist.h"
+#include "applicationinfo.h"
 #include "atomicxmlfile/atomicxmlfile.h"
-#include "psitoolbar.h"
+#include "chatdlg.h"
+#include "common.h"
+#include "eventdlg.h"
+#include "fancylabel.h"
 #include "optionstree.h"
-#include "shortcutmanager.h"
 #ifdef HAVE_PGPUTIL
-#include "pgputil.h"
+#    include "pgputil.h"
 #endif
 #ifdef PSI_PLUGINS
-#include "pluginmanager.h"
+#    include "pluginmanager.h"
 #endif
+#include "psioptions.h"
+#include "psitoolbar.h"
+#include "shortcutmanager.h"
+#include "varlist.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -297,7 +298,6 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
     dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
     ibbOnly = o->getOption(base + ".ibb-only").toBool();
-
 
     if (allSetOptions.contains(base + ".stun-hosts")) {
         stunHosts = o->getOption(base + ".stun-hosts").toStringList();
@@ -600,7 +600,6 @@ void OptionsMigration::lateMigration()
     }
 }
 
-
 QString pathToProfile(const QString &name, ApplicationInfo::HomedirType type)
 {
     return ApplicationInfo::profilesDir(type) + "/" + name;
@@ -708,7 +707,6 @@ bool profileRename(const QString &oldname, const QString &name)
     if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation))) {
         paths << ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation);
     }
-
 
     // First we need to check configDir for existing
     QDir configDir(paths[0]);

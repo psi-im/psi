@@ -1,5 +1,6 @@
 /*
  * chatdlg.h - dialog for handling chats
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2007  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,26 +21,24 @@
 #ifndef CHATDLG_H
 #define CHATDLG_H
 
+#include <QCloseEvent>
 #include <QContextMenuEvent>
 #include <QDragEnterEvent>
-#include <QShowEvent>
+#include <QDropEvent>
 #include <QKeyEvent>
 #include <QResizeEvent>
-#include <QDropEvent>
-#include <QCloseEvent>
+#include <QShowEvent>
 #include <QTextEdit>
 
 #include "advwidget.h"
-
-#include "tabbablewidget.h"
 #include "messageview.h"
+#include "tabbablewidget.h"
 
-
-namespace XMPP
-{
-class Jid;
-class Message;
+namespace XMPP {
+    class Jid;
+    class Message;
 }
+
 using namespace XMPP;
 
 class PsiAccount;

@@ -1,8 +1,8 @@
 #include "optionstreereader.h"
 
-#include <QSize>
-#include <QRect>
 #include <QBuffer>
+#include <QRect>
+#include <QSize>
 
 #include "optionstree.h"
 #include "varianttree.h"

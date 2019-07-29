@@ -1,5 +1,6 @@
 /*
  * mucmanager.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -22,18 +23,19 @@
 
 #include <QObject>
 
-#include "xmpp_muc.h"
 #include "xmpp_jid.h"
+#include "xmpp_muc.h"
 
 class QString;
+
 namespace XMPP {
     class XData;
     class Client;
 }
 
-class PsiAccount;
-
 using namespace XMPP;
+
+class PsiAccount;
 
 class MUCManager : public QObject
 {
@@ -111,7 +113,6 @@ signals:
 
     void action_success(MUCManager::Action);
     void action_error(MUCManager::Action, int, const QString&);
-
 
 protected slots:
     void getConfiguration_finished();

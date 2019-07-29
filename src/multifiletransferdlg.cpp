@@ -1,6 +1,7 @@
 /*
  * multifiletransferdlg.cpp - file transfer dialog
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,35 +19,36 @@
  */
 
 #include "multifiletransferdlg.h"
-#include "ui_multifiletransferdlg.h"
-#include "xmpp/jid/jid.h"
-#include "jingle.h"
-#include "jingle-ft.h"
-#include "multifiletransferdelegate.h"
-#include "multifiletransfermodel.h"
-#include "multifiletransferitem.h"
-#include "psiaccount.h"
-#include "avatars.h"
-#include "psicontact.h"
-#include "psicon.h"
-#include "userlist.h"
-#include "iconset.h"
-#include "fileutil.h"
-#include "networkaccessmanager.h"
 
-#include <QFileIconProvider>
-#include <QFileInfo>
-#include <QMimeDatabase>
 #include <QBuffer>
-#include <QFileDialog>
 #include <QDragEnterEvent>
 #include <QDragLeaveEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
+#include <QFileDialog>
+#include <QFileIconProvider>
+#include <QFileInfo>
 #include <QMimeData>
-#include <QPainter>
+#include <QMimeDatabase>
 #include <QNetworkReply>
+#include <QPainter>
 #include <xmpp_tasks.h>
+
+#include "avatars.h"
+#include "fileutil.h"
+#include "iconset.h"
+#include "jingle-ft.h"
+#include "jingle.h"
+#include "multifiletransferdelegate.h"
+#include "multifiletransferitem.h"
+#include "multifiletransfermodel.h"
+#include "networkaccessmanager.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontact.h"
+#include "ui_multifiletransferdlg.h"
+#include "userlist.h"
+#include "xmpp/jid/jid.h"
 
 using namespace XMPP;
 

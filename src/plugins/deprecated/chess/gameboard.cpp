@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: gameboard.cpp,v 1.1 2005/03/26 11:24:13 denis Exp $
@@ -13,25 +14,24 @@
  *    Fixed the mate checker (big thanks to knyaz@RusNet)
  */
 
-#include <QPainter>
+#include "gameboard.h"
+
+#include <Q3FileDialog>
+#include <Q3PointArray>
+#include <QCloseEvent>
+#include <QCursor>
+#include <QDebug>
+#include <QFocusEvent>
 #include <QFontMetrics>
 #include <QMessageBox>
-#include <QCursor>
-#include <Q3FileDialog>
-//Added by qt3to4:
-#include <Q3PointArray>
-#include <QPixmap>
-#include <QResizeEvent>
-#include <QFocusEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
-#include <QCloseEvent>
-#include <QDebug>
+#include <QPainter>
+#include <QPixmap>
+#include <QResizeEvent>
 #include <stdlib.h>
 
-#include "gameboard.h"
 #include "gamesocket.h"
-
 #include "xpm/black_bishop.xpm"
 #include "xpm/black_castle.xpm"
 #include "xpm/black_king.xpm"
@@ -93,7 +93,6 @@ bool Figure::hasMyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
 int Figure::hasEnemyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
     int x, int y, bool mirror)
 {
@@ -140,7 +139,6 @@ int Figure::hasEnemyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
 bool Figure::hasFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
     int x, int y, bool mirror)
 {
@@ -150,7 +148,6 @@ bool Figure::hasFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
 
     return (map[n] != GameBoard::NONE);
 }
-
 
 int Figure::map2map(GameBoard::GameType gt, int x, int y, bool mirror)
 {
@@ -170,7 +167,6 @@ int Figure::map2map(GameBoard::GameType gt, int x, int y, bool mirror)
     return (n);
 }
 
-
 QString Figure::map2str(int x, int y)
 {
     QString    s;
@@ -179,13 +175,11 @@ QString Figure::map2str(int x, int y)
     return (s);
 }
 
-
 void Figure::str2map(const QString &coo, int *x, int *y)
 {
     *x = coo.at(0).toLatin1() - 'a' + 1;
     *y = coo.at(1).toLatin1() - '0';
 }
-
 
 int
 Figure::validMove(GameBoard::GameType gt, GameBoard::FigureType *map,
@@ -232,7 +226,6 @@ Figure::validMove(GameBoard::GameType gt, GameBoard::FigureType *map,
 
     return (res);
 }
-
 
 /*
  *    0 - nothing
@@ -329,7 +322,6 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
 void
 Figure::moveList(Q3PointArray &vl, GameBoard::GameType gt,
     GameBoard::FigureType *map, int x, int y, bool mirror)
@@ -371,11 +363,9 @@ Figure::moveList(Q3PointArray &vl, GameBoard::GameType gt,
             moveListBlackPawn(vl, gt, map, x, y, mirror);
             break;
 
-
         default:;
     }
 }
-
 
 void
 Figure::moveListWhitePawn(Q3PointArray &vl, GameBoard::GameType gt,
@@ -396,7 +386,6 @@ Figure::moveListWhitePawn(Q3PointArray &vl, GameBoard::GameType gt,
         vl.putPoints(vl.size(), 1, x - 1, y + 1);
 }
 
-
 void
 Figure::moveListBlackPawn(Q3PointArray &vl, GameBoard::GameType gt,
     GameBoard::FigureType *map, int x, int y, bool mirror)
@@ -415,7 +404,6 @@ Figure::moveListBlackPawn(Q3PointArray &vl, GameBoard::GameType gt,
         hasEnemyFigure(gt, map, x - 1, y - 1, mirror))
         vl.putPoints(vl.size(), 1, x - 1, y - 1);
 }
-
 
 void
 Figure::moveListCastle(Q3PointArray &vl, GameBoard::GameType gt,
@@ -457,7 +445,6 @@ Figure::moveListCastle(Q3PointArray &vl, GameBoard::GameType gt,
     }
 }
 
-
 void
 Figure::moveListBishop(Q3PointArray &vl, GameBoard::GameType gt,
     GameBoard::FigureType *map, int x, int y, bool mirror)
@@ -498,7 +485,6 @@ Figure::moveListBishop(Q3PointArray &vl, GameBoard::GameType gt,
     }
 }
 
-
 void
 Figure::moveListKing(Q3PointArray &vl, GameBoard::GameType gt,
     GameBoard::FigureType *map, int x, int y, bool mirror)
@@ -533,7 +519,6 @@ Figure::moveListKing(Q3PointArray &vl, GameBoard::GameType gt,
         vl.putPoints(vl.size(), 1, x2, y1);
 }
 
-
 void
 Figure::moveListQueen(Q3PointArray &vl, GameBoard::GameType gt,
     GameBoard::FigureType *map, int x, int y, bool mirror)
@@ -542,7 +527,6 @@ Figure::moveListQueen(Q3PointArray &vl, GameBoard::GameType gt,
     moveListBishop(vl, gt, map, x, y, mirror);
     moveListCastle(vl, gt, map, x, y, mirror);
 }
-
 
 void
 Figure::moveListKnight(Q3PointArray &vl, GameBoard::GameType gt,
@@ -577,7 +561,6 @@ Figure::moveListKnight(Q3PointArray &vl, GameBoard::GameType gt,
         vl.putPoints(vl.size(), 1, x1, y4);
 }
 
-
 bool
 Figure::hasKingsMeeting(GameBoard::GameType gt, GameBoard::FigureType *map,
     int x, int y, bool mirror)
@@ -609,7 +592,6 @@ Figure::hasKingsMeeting(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
 bool
 Figure::hasPoint(const Q3PointArray &vl, int x, int y)
 {
@@ -627,7 +609,6 @@ Figure::hasPoint(const Q3PointArray &vl, int x, int y)
 
     return (res);
 }
-
 
 bool
 Figure::validPoint(GameBoard::GameType gt, GameBoard::FigureType *map,
@@ -700,7 +681,6 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
         this, SLOT(sockClosed()));
     QObject::connect(sock, SIGNAL(error(int)),
         this, SLOT(sockError(int)));*/
-
 
     QObject::connect(drw, SIGNAL(moved(const QString&)),
         this, SLOT(sendMove(const QString&)));
@@ -777,7 +757,6 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
     QObject::connect(sock, SIGNAL(error(int)),
         this, SLOT(sockError(int)));*/
 
-
     QObject::connect(drw, SIGNAL(moved(const QString&)),
         this, SLOT(sendMove(const QString&)));
     QObject::connect(drw, SIGNAL(newFigure(const QString&,
@@ -791,7 +770,6 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
     resize(XSize, YSize);
     setMinimumSize(size());
     setMaximumSize(size());
-
 
     //hackyhackhack
     tmr = new QTimer(this);
@@ -822,7 +800,6 @@ GameBoard::~GameBoard()
     delete protocol;
 }
 
-
 void
 GameBoard::resizeEvent(QResizeEvent *e)
 {
@@ -848,7 +825,6 @@ GameBoard::resizeEvent(QResizeEvent *e)
     hb->resize(hw->size());
 }
 
-
 void
 GameBoard::focusInEvent(QFocusEvent *e)
 {
@@ -856,7 +832,6 @@ GameBoard::focusInEvent(QFocusEvent *e)
     QWidget::focusInEvent(e);
     emit showStatus(my_stat);
 }
-
 
 void
 GameBoard::initMap()
@@ -932,7 +907,6 @@ GameBoard::initMap()
     }
 }
 
-
 void
 GameBoard::showHostFound()
 {
@@ -941,7 +915,6 @@ GameBoard::showHostFound()
     emit showStatus(my_stat);
     qDebug("showHostFound");
 }
-
 
 void
 GameBoard::sockConnected()
@@ -965,14 +938,12 @@ void GameBoard::sockRead(const QString& data)
 
 }
 
-
 void
 GameBoard::sockClosed()
 {
 
     close();
 }
-
 
 void
 GameBoard::sockError(int err)
@@ -983,7 +954,6 @@ GameBoard::sockError(int err)
         tr("You have a socket error number") + ' ' +
         QString::number(err));
 }
-
 
 void
 GameBoard::parseString(const QString &str)
@@ -1053,7 +1023,6 @@ GameBoard::parseString(const QString &str)
     }
 }
 
-
 void GameBoard::sendMove(const QString &str)
 {
 
@@ -1066,7 +1035,6 @@ void GameBoard::sendMove(const QString &str)
     my_stat = tr("Waiting a move...");
     emit showStatus(my_stat);
 }
-
 
 void GameBoard::closeEvent(QCloseEvent *e)
 {
@@ -1082,7 +1050,6 @@ void GameBoard::closeEvent(QCloseEvent *e)
         QWidget::closeEvent(e);
 }
 
-
 void
 GameBoard::sendText()
 {
@@ -1096,7 +1063,6 @@ GameBoard::sendText()
     edt->clear();
 }
 
-
 void
 GameBoard::updateChat(const QString &s)
 {
@@ -1108,7 +1074,6 @@ GameBoard::updateChat(const QString &s)
     if ((int)lst->count() * fh >= lst->visibleHeight())
         lst->removeItem(0);
 }
-
 
 void
 GameBoard::updateHistory(const QString &st, bool t)
@@ -1134,7 +1099,6 @@ GameBoard::updateHistory(const QString &st, bool t)
             hb->insertItem(s);
     }
 }
-
 
 void
 GameBoard::updateHistory(int id, bool t)
@@ -1180,7 +1144,6 @@ GameBoard::updateHistory(int id, bool t)
     }
 }
 
-
 void
 GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
 {
@@ -1215,7 +1178,6 @@ GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
     }
 }
 
-
 void
 GameBoard::sockTest()
 {
@@ -1236,7 +1198,6 @@ GameBoard::sockTest()
 
 }
 
-
 void
 GameBoard::saveImage()
 {
@@ -1251,7 +1212,6 @@ GameBoard::saveImage()
         QPixmap::grabWidget(this).save(fn, "PNG");
     }
 }
-
 
 void
 GameBoard::gameover(int type)
@@ -1322,7 +1282,6 @@ Drawer::~Drawer()
 {
 }
 
-
 void
 Drawer::paintEvent(QPaintEvent *e)
 {
@@ -1341,7 +1300,6 @@ Drawer::paintEvent(QPaintEvent *e)
     drawMap(p, x_brd, y_brd);
     delete p;
 }
-
 
 void
 Drawer::drawBoard(QPainter *p, int x, int y)
@@ -1392,7 +1350,6 @@ Drawer::drawBoard(QPainter *p, int x, int y)
         p->drawRect(x, y, cell_size, cell_size);
     }
 }
-
 
 void
 Drawer::drawMap(QPainter *p, int x, int y)
@@ -1449,7 +1406,6 @@ Drawer::drawMap(QPainter *p, int x, int y)
     }
 }
 
-
 void
 Drawer::mousePressEvent(QMouseEvent *e)
 {
@@ -1471,14 +1427,12 @@ Drawer::mousePressEvent(QMouseEvent *e)
     }
 }
 
-
 bool
 Drawer::canTake(int x, int y)
 {
 
     return (Figure::hasMyFigure(*gt, map, x, y, false));
 }
-
 
 void
 Drawer::win2map(int &x, int &y)
@@ -1494,7 +1448,6 @@ Drawer::win2map(int &x, int &y)
         y++;
     }
 }
-
 
 void
 Drawer::map2win(int mx, int my, int &x, int &y)
@@ -1512,7 +1465,6 @@ Drawer::map2win(int mx, int my, int &x, int &y)
     }
 }
 
-
 void
 Drawer::takeFigure(int x, int y)
 {
@@ -1526,14 +1478,12 @@ Drawer::takeFigure(int x, int y)
     repaint(false);
 }
 
-
 bool
 Drawer::hasTakenFigure()
 {
 
     return ((tfx != -1) && (tfy != -1));
 }
-
 
 void
 Drawer::newFigure(const QString &coo, int id)
@@ -1587,7 +1537,6 @@ Drawer::newFigure(const QString &coo, int id)
     }
 }
 
-
 void
 Drawer::makeMove(const QString &txt)
 {
@@ -1616,7 +1565,6 @@ Drawer::makeMove(const QString &txt)
         makeMove(et, fx, fy, tx, ty, true, false);
     }
 }
-
 
 void
 Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
@@ -1692,7 +1640,6 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
     }
 }
 
-
 bool
 Drawer::xchg(GameBoard::FigureType o, GameBoard::FigureType n,
     int fx, int fy, int tx, int ty)
@@ -1711,7 +1658,6 @@ Drawer::xchg(GameBoard::FigureType o, GameBoard::FigureType n,
 
     return (ret);
 }
-
 
 bool
 Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
@@ -1759,7 +1705,6 @@ Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
     return (ret);
 }
 
-
 bool
 Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
 {
@@ -1805,7 +1750,6 @@ Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
     return (ret);
 }
 
-
 bool
 Drawer::makeXchg()
 {
@@ -1813,7 +1757,6 @@ Drawer::makeXchg()
     return (QMessageBox::question(this, tr("To castle"),
         tr("Do you want to castle?"), tr("Yes"), tr("No")) == 0);
 }
-
 
 //-----------------------------------------------------------------------------
 
@@ -1843,7 +1786,6 @@ FigureDialog::~FigureDialog()
 {
 }
 
-
 void
 FigureDialog::paintEvent(QPaintEvent *e)
 {
@@ -1867,7 +1809,6 @@ FigureDialog::paintEvent(QPaintEvent *e)
 
     delete p;
 }
-
 
 void
 FigureDialog::mousePressEvent(QMouseEvent *e)
@@ -1917,7 +1858,6 @@ FigureDialog::mousePressEvent(QMouseEvent *e)
     }
 }
 
-
 //-----------------------------------------------------------------------------
 
 void
@@ -1935,7 +1875,6 @@ GameProtocol::send(Q3Socket *sock, const QString &dat)
     emit sendData(dat);
 }
 
-
 void
 GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
 {
@@ -1951,7 +1890,6 @@ GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
     send(sock, d);
 }
 
-
 void
 GameProtocol::acceptGame(Q3Socket *sock)
 {
@@ -1961,7 +1899,6 @@ GameProtocol::acceptGame(Q3Socket *sock)
     d += "ACCEPT";
     send(sock, d);
 }
-
 
 void
 GameProtocol::sendMove(Q3Socket *sock, const QString &coo)
@@ -1973,14 +1910,12 @@ GameProtocol::sendMove(Q3Socket *sock, const QString &coo)
     send(sock, d);
 }
 
-
 void
 GameProtocol::sendQuit(Q3Socket *sock)
 {
 
     send(sock, "QUIT");
 }
-
 
 void
 GameProtocol::sendText(Q3Socket *sock, const QString &txt)
@@ -1991,7 +1926,6 @@ GameProtocol::sendText(Q3Socket *sock, const QString &txt)
     d += txt;
     send(sock, d);
 }
-
 
 void
 GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
@@ -2004,7 +1938,6 @@ GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
     d += QString::number(id);
     send(sock, d);
 }
-
 
 void
 GameProtocol::sendGameover(Q3Socket *sock, const QString &got)

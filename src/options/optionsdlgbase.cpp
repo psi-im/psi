@@ -1,5 +1,6 @@
 /*
  * optionsdlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2009  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -18,23 +19,24 @@
  */
 
 #include "optionsdlgbase.h"
-#include "optionstab.h"
+
+#include <QItemDelegate>
+#include <QLabel>
+#include <QLayout>
+#include <QPainter>
+#include <QPen>
+#include <QPixmap>
+#include <QScrollBar>
+#include <QStackedWidget>
+#include <QVBoxLayout>
+
 #include "common.h"
-#include "psicon.h"
 #include "fancylabel.h"
 #include "iconset.h"
 #include "iconwidget.h"
+#include "optionstab.h"
+#include "psicon.h"
 #include "psiiconset.h"
-
-#include <QLayout>
-#include <QLabel>
-#include <QStackedWidget>
-#include <QPen>
-#include <QPainter>
-#include <QPixmap>
-#include <QVBoxLayout>
-#include <QItemDelegate>
-#include <QScrollBar>
 
 //----------------------------------------------------------------------------
 // OptionsTabsDelegate
@@ -250,7 +252,6 @@ void OptionsDlgBase::Private::setTabs(QList<OptionsTab*> t)
         dlg->lv_tabs->setVisible(false);
     }
 }
-
 
 void OptionsDlgBase::Private::createChangedMap()
 {

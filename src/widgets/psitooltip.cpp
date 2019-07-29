@@ -1,5 +1,6 @@
 /*
  * psitooltip.cpp - PsiIcon-aware QToolTip clone
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -21,13 +22,13 @@
 
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QHash>
 #include <QKeyEvent>
 #include <QPointer>
-#include <QHash>
-#include <QToolTip>
 #include <QScreen>
-#include "private/qeffects_p.h"
+#include <QToolTip>
 
+#include "private/qeffects_p.h"
 #include "psitiplabel.h"
 
 //----------------------------------------------------------------------------

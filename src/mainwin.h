@@ -1,5 +1,6 @@
 /*
  * mainwin.h - the main window.  holds contactlist and buttons.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +21,9 @@
 #ifndef MAINWIN_H
 #define MAINWIN_H
 
+#include <QList>
 #include <QMainWindow>
 #include <QMap>
-#include <QList>
 #include <QString>
 #include <QStringList>
 

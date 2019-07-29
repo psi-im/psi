@@ -9,22 +9,21 @@
 *****************************************************************************/
 
 #include "tictac.h"
+
+#include <Q3Frame>
+#include <Q3GridLayout>
+#include <Q3HBoxLayout>
+#include <Q3VBoxLayout>
 #include <QApplication>
-#include <QPainter>
-#include <qdrawutil.h>
-#include <QComboBox>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QDateTime>                          // seed for rand()
+#include <QDebug>
 #include <QLabel>
 #include <QLayout>
-//Added by qt3to4:
-#include <Q3HBoxLayout>
-#include <Q3GridLayout>
-#include <Q3Frame>
-#include <Q3VBoxLayout>
-#include <QDebug>
+#include <QPainter>
+#include <qdrawutil.h>
 #include <stdlib.h>                             // rand() function
-#include <QDateTime>                          // seed for rand()
-
 
 //***************************************************************************
 //* TicTacButton member functions
@@ -54,7 +53,6 @@ TicTacButton::TicTacButton( QWidget *parent ) : QPushButton( parent )
         p->drawLine( r.bottomLeft()+QPoint(4,-4),r.topRight()   -QPoint(4,-4));
     }
 }*/
-
 
 //***************************************************************************
 //* TicTacGameBoard member functions
@@ -97,7 +95,6 @@ TicTacGameBoard::~TicTacGameBoard()
     delete btArray;
 }
 
-
 // --------------------------------------------------------------------------
 // TicTacGameBoard::computerStarts( bool v )
 //
@@ -108,7 +105,6 @@ void TicTacGameBoard::computerStarts( bool v )
 {
     comp_starts = v;
 }
-
 
 // --------------------------------------------------------------------------
 // TicTacGameBoard::newGame()
@@ -127,7 +123,6 @@ void TicTacGameBoard::newGame()
     //else
     updateButtons();
 }
-
 
 // --------------------------------------------------------------------------
 // TicTacGameBoard::buttonClicked()             - SLOT
@@ -198,7 +193,6 @@ void TicTacGameBoard::updateButtons()
     emit stateChanged();
 }
 
-
 // --------------------------------------------------------------------------
 // TicTacGameBoard::checkBoard()
 //
@@ -263,7 +257,6 @@ int TicTacGameBoard::checkBoard( TicTacArray *a )
     return t;
 }
 
-
 // --------------------------------------------------------------------------
 // TicTacGameBoard::computerMove()
 //
@@ -310,7 +303,6 @@ void TicTacGameBoard::computerMove()
     updateButtons();                            // update buttons
     delete[] altv;
 }
-
 
 //***************************************************************************
 //* TicTacToe member functions
@@ -394,7 +386,6 @@ void TicTacToe::newGameClicked()
     newState();
 }
 
-
 // --------------------------------------------------------------------------
 // TicTacToe::gameOver()                        - SLOT
 //
@@ -407,7 +398,6 @@ void TicTacToe::gameOver()
     newState();                                 // update text box
     emit gameOverSignal(board->state());
 }
-
 
 // --------------------------------------------------------------------------
 // Updates the message to reflect a new state.

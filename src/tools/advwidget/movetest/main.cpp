@@ -1,7 +1,8 @@
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QMoveEvent>
 #include <QMouseEvent>
+#include <QMoveEvent>
+
 #include "../advwidget.h"
 
 class MyWidget : public AdvancedWidget<QWidget>

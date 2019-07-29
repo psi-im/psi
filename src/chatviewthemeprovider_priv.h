@@ -1,5 +1,6 @@
 /*
  * chatviewthemeprovider_priv.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -21,10 +22,10 @@
 #define CHATVIEWTHEMEPROVIDER_PRIV_H
 
 #ifdef WEBENGINE
-# include <QWebEngineUrlRequestInterceptor>
-# include "webserver.h"
+#    include <QWebEngineUrlRequestInterceptor>
+#    include "webserver.h"
 #else
-#include <QObject> // at least
+#    include <QObject> // at least
 #endif
 
 class PsiCon;

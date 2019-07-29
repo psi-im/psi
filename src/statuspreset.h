@@ -1,5 +1,6 @@
 /*
  * statuspreset.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +24,8 @@
 #include <QString>
 
 #include "maybe.h"
-#include "xmpp_status.h"
 #include "optionstree.h"
+#include "xmpp_status.h"
 
 class QDomDocument;
 class QDomElement;

@@ -1,5 +1,6 @@
 /*
  * chatviewtheme_p.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -20,16 +21,16 @@
 #ifndef CHATVIEWTHEME_P_H
 #define CHATVIEWTHEME_P_H
 
-#include <QTimer>
-#include <QScopedPointer>
 #include <QPointer>
+#include <QScopedPointer>
+#include <QTimer>
 #ifdef WEBENGINE
-# include <QWebEngineScript>
+#    include <QWebEngineScript>
 #else
 #endif
 
-#include "theme_p.h"
 #include "chatviewtheme.h"
+#include "theme_p.h"
 
 class QWebFrame;
 
@@ -98,7 +99,6 @@ public slots:
     QString getFileContentsFromAdapterDir(const QString &name) const;
     void setTransparent();
 };
-
 
 // JS Bridge object emedded by theme. Has any logic unrelted to contact itself
 class ChatViewThemeJSUtil : public QObject {

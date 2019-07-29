@@ -1,5 +1,6 @@
 /*
  * ahcservermanager.cpp - Server implementation of XEP-50 (Ad-Hoc Commands)
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,20 +18,20 @@
  *
  */
 
+#include "ahcservermanager.h"
+
 #include <QComboBox>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLayout>
 
-#include "ahcservermanager.h"
+#include "ahcommand.h"
 #include "ahcommandserver.h"
 #include "psiaccount.h"
-
-#include "xmpp_xmlcommon.h"
+#include "xdata_widget.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
-#include "xdata_widget.h"
-#include "ahcommand.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 
@@ -57,7 +58,6 @@ protected:
 private:
     AHCServerManager* manager_;
 };
-
 
 JT_AHCServer::JT_AHCServer(Task* t, AHCServerManager* manager) : Task(t), manager_(manager)
 {
@@ -193,7 +193,6 @@ AHCServerManager::ServerList AHCServerManager::commands(const Jid& j) const
     return list;
 }
 
-
 void AHCServerManager::execute(const AHCommand& command, const Jid& requester, QString id)
 {
     AHCommandServer* c = findServer(command.node());
@@ -220,7 +219,6 @@ void AHCServerManager::execute(const AHCommand& command, const Jid& requester, Q
     }
 }
 
-
 bool AHCServerManager::hasServer(const QString& node, const Jid& requester) const
 {
     AHCommandServer* c = findServer(node);
@@ -235,6 +233,5 @@ AHCommandServer* AHCServerManager::findServer(const QString& node) const
     }
     return nullptr;
 }
-
 
 #include "ahcservermanager.moc"

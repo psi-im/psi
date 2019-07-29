@@ -1,5 +1,6 @@
 /*
  * historycontactlistmodel.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2017  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +18,13 @@
  *
  */
 
-
 #include "historycontactlistmodel.h"
+
 #include "eventdb.h"
+#include "jidutil.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "psiiconset.h"
-#include "jidutil.h"
-
 
 HistoryContactListModel::HistoryContactListModel(QObject *parent)
     : QAbstractItemModel(parent)

@@ -1,5 +1,6 @@
 /*
  * iconselect.cpp - class that allows user to select an PsiIcon from an Iconset
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2005  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -19,19 +20,18 @@
 
 #include "iconselect.h"
 
+#include <QAbstractButton>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QStyle>
 #include <QStyleOption>
-#include <QLayout>
-#include <QAbstractButton>
-#include <QLabel>
 #include <QTextCodec>
-#include <QEvent>
-#include <QMouseEvent>
 #include <QWidgetAction>
-
 #include <math.h>
 
 #include "iconset.h"

@@ -1,5 +1,6 @@
 /*
  * passphrasedlg.cpp - class to handle entering of OpenPGP passphrase
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +18,10 @@
  *
  */
 
+#include "passphrasedlg.h"
+
 #include <QLineEdit>
 #include <QPushButton>
-
-#include "passphrasedlg.h"
 
 PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
 {

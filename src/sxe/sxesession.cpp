@@ -1,5 +1,6 @@
 /*
  * sxesession.cpp - Sxe Session
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +19,11 @@
  */
 
 #include "sxesession.h"
-#include "sxemanager.h"
 
 #include "QTimer"
 #include "QUuid"
+
+#include "sxemanager.h"
 
 // The maxlength of a chdata that gets put in one edit
 enum {MAXCHDATA = 1024};
@@ -69,7 +71,6 @@ void SxeSession::initializeDocument(const QDomDocument &doc) {
     recordByNodeId_.clear();
     queuedIncomingEdits_.clear();
     queuedOutgoingEdits_.clear();
-
 
     // import prolog
     doc_.setContent(parseProlog(doc));
@@ -660,7 +661,6 @@ void SxeSession::handleNodeToBeRemoved(const QDomNode &node, bool remote) {
     emit nodeToBeRemoved(node, remote);
     removeRecord(node);
 }
-
 
 void SxeSession::removeRecord(const QDomNode &node) {
     QMutableHashIterator<QString, SxeRecord*> i(recordByNodeId_);

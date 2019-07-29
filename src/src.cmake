@@ -381,7 +381,6 @@ list(APPEND SOURCES
     filesharingmanager.cpp
     filesharedlg.cpp
     fileutil.cpp
-    fileutil.cpp
     geolocation.cpp
     geolocationdlg.cpp
     globaleventqueue.cpp
@@ -391,7 +390,6 @@ list(APPEND SOURCES
     historycontactlistmodel.cpp
     historydlg.cpp
     hoverabletreeview.cpp
-    infodlg.cpp
     infodlg.cpp
     invitetogroupchatmenu.cpp
     jidutil.cpp

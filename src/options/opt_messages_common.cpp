@@ -1,11 +1,9 @@
 #include "opt_messages_common.h"
 
-#include <QWidget>
 #include <QDebug>
+#include <QWidget>
 
 #include "psioptions.h"
-
-
 #include "ui_opt_messages_common.h"
 
 static const QStringList clickActList = {"none", "hide", "close", "detach"};

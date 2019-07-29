@@ -1,6 +1,7 @@
 /*
  * wbnewitem.h - a class used for representing items on the whiteboard
  *              while they're being drawn.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +22,8 @@
 #ifndef WBNEWITEM_H
 #define WBNEWITEM_H
 
-#include <QGraphicsItem>
 #include <QDomNode>
+#include <QGraphicsItem>
 
 class WbNewItem {
 public:

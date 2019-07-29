@@ -1,9 +1,9 @@
 #include "accountstatusmenu.h"
 
+#include "common.h"
+#include "iconaction.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "iconaction.h"
-#include "common.h"
 #include "statusdlg.h"
 
 void AccountStatusMenu::addChoose()

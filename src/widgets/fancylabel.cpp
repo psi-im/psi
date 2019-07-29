@@ -1,5 +1,6 @@
 /*
  * fancylabel.cpp - the FancyLabel widget
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -19,21 +20,20 @@
 
 #include "fancylabel.h"
 
-#include <QPixmap>
 #include <QColor>
-#include <QLayout>
-#include <QLabel>
 #include <QFrame>
+#include <QLabel>
+#include <QLayout>
 #include <QPainter>
+#include <QPixmap>
 #include <QResizeEvent>
 
+#include "iconlabel.h"
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #else
 class PsiIcon;
 #endif
-
-#include "iconlabel.h"
 
 //----------------------------------------------------------------------------
 // IconLabel

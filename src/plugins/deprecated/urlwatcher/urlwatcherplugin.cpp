@@ -1,5 +1,6 @@
 /*
  * urlwatcherplugin.cpp - Psi plugin to log URLs to a widget
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -22,14 +23,13 @@
  *
  */
 
+#include <QString>
 #include <QtCore>
 #include <QtGui>
-#include <QString>
 
-#include "psiplugin.h"
 #include "eventfilter.h"
+#include "psiplugin.h"
 #include "urlevent.h"
-
 
 class URLWatcherPlugin : public QObject, public PsiPlugin, public EventFilter
 {
@@ -75,8 +75,6 @@ URLWatcherPlugin::URLWatcherPlugin()
     viewerText_ = new QTextEdit(frame);
     viewerText_->setObjectName(QString::fromUtf8("text"));
     viewerText_->setReadOnly(true);
-
-
 
     label = new QLabel(viewer_);
     label->setObjectName(QString::fromUtf8("label"));
@@ -158,7 +156,6 @@ QString resolveEntities(const QString &in)
     return out;
 }
 
-
 static bool linkify_pmatch(const QString &str1, int at, const QString &str2)
 {
     if(str2.length() > (str1.length()-at))
@@ -234,7 +231,6 @@ bool URLWatcherPlugin::processEvent(int account, const QDomElement& e)
     Q_UNUSED(e);
     return false;
 }
-
 
 bool URLWatcherPlugin::processMessage(int account, const QString& fromJid, const QString& body, const QString& subject)
 {

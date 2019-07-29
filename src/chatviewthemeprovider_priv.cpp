@@ -1,5 +1,6 @@
 /*
  * chatviewthemeprovider_priv.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -17,23 +18,27 @@
  *
  */
 
-#include <QPointer>
-#include <QBuffer>
-#include <QUrlQuery>
-
-#include "psicon.h"
 #include "chatviewthemeprovider_priv.h"
-#include "psithemeprovider.h"
-#include "psiiconset.h"
+
+#include <QBuffer>
+#include <QPointer>
+#include <QUrlQuery>
 #ifdef WEBENGINE
-# include <QWebEngineProfile>
-# include "webserver.h"
+#    include <QWebEngineProfile>
 #else
-# include "networkaccessmanager.h"
-# include <QNetworkRequest>
+#    include <QNetworkRequest>
 #endif
-#include "xmpp_vcard.h"
+
 #include "avatars.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psithemeprovider.h"
+#include "xmpp_vcard.h"
+#ifdef WEBENGINE
+#    include "webserver.h"
+#else
+#    include "networkaccessmanager.h"
+#endif
 
 static QPointer<ChatViewCon> cvCon;
 

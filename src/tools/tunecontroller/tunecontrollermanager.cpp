@@ -1,5 +1,6 @@
 /*
  * turencontrollermanager.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -21,18 +22,18 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
+#include "tunecontrollermanager.h"
+
 #include <QPluginLoader>
+#include <QtCore>
 
 #include "tunecontroller.h"
-#include "tunecontrollermanager.h"
 #include "tunecontrollerplugin.h"
 
 /**
  * \class TuneControllerManager
  * \brief A manager for all tune controller plugins.
  */
-
 
 TuneControllerManager::TuneControllerManager()
 {
@@ -87,7 +88,6 @@ QList<QString> TuneControllerManager::controllerNames() const
     return plugins_.keys();
 }
 
-
 /**
  * \brief Creates a new controller.
  */
@@ -95,7 +95,6 @@ TuneController* TuneControllerManager::createController(const QString& name) con
 {
     return plugins_[name]->createController();
 }
-
 
 /**
  * \brief Loads a TuneControllerPlugin from a file.
@@ -105,7 +104,6 @@ bool TuneControllerManager::loadPlugin(const QString& file)
     //return QPluginLoader(file).load();
     return loadPlugin(QPluginLoader(file).instance());
 }
-
 
 bool TuneControllerManager::loadPlugin(QObject* plugin)
 {
@@ -152,21 +150,21 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
 // ----------------------------------------------------------------------------
 
 #ifdef TC_ITUNES
-Q_IMPORT_PLUGIN(ITunesPlugin)
+    Q_IMPORT_PLUGIN(ITunesPlugin)
 #endif
 
 #ifdef TC_WINAMP
-Q_IMPORT_PLUGIN(WinAmpPlugin)
+    Q_IMPORT_PLUGIN(WinAmpPlugin)
 #endif
 
 #ifdef TC_AIMP
-Q_IMPORT_PLUGIN(AIMPPlugin)
+    Q_IMPORT_PLUGIN(AIMPPlugin)
 #endif
 
 #ifdef TC_PSIFILE
-Q_IMPORT_PLUGIN(PsiFilePlugin)
+    Q_IMPORT_PLUGIN(PsiFilePlugin)
 #endif
 
 #if defined(TC_MPRIS) && defined(USE_DBUS)
-Q_IMPORT_PLUGIN(MPRISPlugin)
+    Q_IMPORT_PLUGIN(MPRISPlugin)
 #endif

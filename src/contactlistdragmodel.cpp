@@ -1,5 +1,6 @@
 /*
  * contactlistdragmodel.cpp - ContactListModel with support for Drag'n'Drop operations
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,17 +20,17 @@
 
 #include "contactlistdragmodel.h"
 
-#include <QtAlgorithms>
 #include <QTimer>
+#include <QtAlgorithms>
 
-#include "psioptions.h"
-#include "psiaccount.h"
-#include "psicontactlist.h"
-#include "psicontact.h"
 #include "common.h"
-#include "contactlistmodelselection.h"
 #include "contactlistitem.h"
+#include "contactlistmodelselection.h"
 #include "debug.h"
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "psicontactlist.h"
+#include "psioptions.h"
 
 //----------------------------------------------------------------------------
 // ContactListModelOperationList
@@ -297,7 +298,6 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
             psiContact->setGroups(groups);
         }
     }
-
 
     return true;
 }

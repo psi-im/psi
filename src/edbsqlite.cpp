@@ -1,6 +1,7 @@
 /*
  * edbsqlite.cpp
- * Copyright (C) 2011   Aleksey Andreev
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,18 +18,18 @@
  *
  */
 
-#include <QSqlError>
-#include <QSqlDriver>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSqlDriver>
+#include <QSqlError>
 
-#include "edbsqlite.h"
-//#include "common.h"
 #include "applicationinfo.h"
-#include "psicontactlist.h"
-#include "jidutil.h"
+//#include "common.h"
+#include "edbsqlite.h"
 #include "historyimp.h"
+#include "jidutil.h"
+#include "psicontactlist.h"
 
 #define FAKEDELAY 0
 

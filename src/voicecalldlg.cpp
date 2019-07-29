@@ -1,5 +1,6 @@
 /*
  * voicecalldlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +18,11 @@
  *
  */
 
+#include "voicecalldlg.h"
+
 #include <QLabel>
 #include <QPushButton>
 
-#include "voicecalldlg.h"
 #include "voicecaller.h"
 
 VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller)
@@ -106,7 +108,6 @@ void VoiceCallDlg::terminated(const Jid& j)
         finalize();
     }
 }
-
 
 void VoiceCallDlg::incoming()
 {

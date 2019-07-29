@@ -1,6 +1,7 @@
 /*
  * eventdlg.h - dialog for sending / receiving messages and events
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,12 +24,12 @@
 #include <QLineEdit>
 #include <QListWidget>
 
-#include "xmpp_url.h"
-#include "xmpp_rosterx.h"
-#include "ui_addurl.h"
 #include "advwidget.h"
-#include "userlist.h"
 #include "psievent.h"
+#include "ui_addurl.h"
+#include "userlist.h"
+#include "xmpp_rosterx.h"
+#include "xmpp_url.h"
 
 class QDateTime;
 class QStringList;
@@ -36,13 +37,15 @@ class PsiCon;
 class PsiAccount;
 class PsiIcon;
 class EventDlg;
+
 namespace XMPP {
     class Jid;
     class XData;
 }
-class PsiHttpAuthRequest;
 
 using namespace XMPP;
+
+class PsiHttpAuthRequest;
 
 class ELineEdit : public QLineEdit
 {

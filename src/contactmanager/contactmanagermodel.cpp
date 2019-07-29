@@ -1,6 +1,7 @@
 /*
  * contactmanagermodel.cpp
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,11 +19,12 @@
  */
 
 #include "contactmanagermodel.h"
+
+#include "QDebug"
+
 #include "psiaccount.h"
 #include "userlist.h"
 #include "xmpp_tasks.h"
-#include "QDebug"
-
 
 ContactManagerModel::ContactManagerModel(QObject * parent, PsiAccount *pa) :
         QAbstractTableModel(parent),
@@ -138,7 +140,6 @@ QVariant ContactManagerModel::headerData(int section, Qt::Orientation orientatio
     }
     return QVariant();
 }
-
 
 QStringList ContactManagerModel::manageableFields()
 {

@@ -1,5 +1,6 @@
 /*
  * discodlg.cpp - main dialog for the Service Discovery protocol
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,39 +20,36 @@
 
 #include "discodlg.h"
 
-#include <QTreeWidget>
-#include <QHeaderView>
-#include <QMenu>
-
-#include <QComboBox>
-#include <QCheckBox>
-#include <QMessageBox>
 #include <QAction>
-#include <QSignalMapper>
-#include <QPushButton>
-#include <QToolButton>
-#include <QToolBar>
-#include <QScrollBar>
-
 #include <QActionGroup>
-#include <QEvent>
-#include <QList>
+#include <QCheckBox>
+#include <QComboBox>
 #include <QContextMenuEvent>
+#include <QEvent>
+#include <QHeaderView>
+#include <QList>
+#include <QMenu>
+#include <QMessageBox>
 #include <QPainter>
+#include <QPushButton>
+#include <QScrollBar>
+#include <QSignalMapper>
+#include <QToolBar>
+#include <QToolButton>
+#include <QTreeWidget>
 
-#include "xmpp_tasks.h"
-
-#include "tasklist.h"
-#include "psiaccount.h"
-#include "psicon.h"
-#include "busywidget.h"
-#include "iconaction.h"
-#include "psiiconset.h"
-#include "psitooltip.h"
-#include "stretchwidget.h"
-#include "psioptions.h"
 #include "accountlabel.h"
 #include "bookmarkmanager.h"
+#include "busywidget.h"
+#include "iconaction.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+#include "stretchwidget.h"
+#include "tasklist.h"
+#include "xmpp_tasks.h"
 
 //----------------------------------------------------------------------------
 

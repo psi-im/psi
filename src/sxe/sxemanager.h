@@ -1,5 +1,6 @@
 /*
  * sxemanager.h - Whiteboard manager
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -148,7 +149,6 @@ private:
     SxeNegotiation* findNegotiation(const Jid &jid, const QString &session);
     /*! \brief Remove the negotiation object of \a session with \a jid.*/
     void removeNegotiation(SxeNegotiation* negotiation);
-
 
     /*! \brief A pointer to the Client to listen to.*/
     XMPP::Client* client_;

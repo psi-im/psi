@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -16,14 +17,14 @@
  *
  */
 
-#include <QtCrypto>
+#include "Certificates/CertificateDisplayDialog.h"
+
 #include <QDateTime>
 #include <QLabel>
 #include <QPushButton>
+#include <QtCrypto>
 
 #include "Certificates/CertificateHelpers.h"
-#include "Certificates/CertificateDisplayDialog.h"
-
 
 CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent) : QDialog(parent)
 {

@@ -1,5 +1,6 @@
 /*
  * activeprofiles_dbus.cpp - Class for interacting with other psi instances
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2007  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
@@ -17,27 +18,19 @@
  *
  */
 
-#include "activeprofiles.h"
-
-#include <QCoreApplication>
-#include <QString>
-#include <QStringList>
 #include <QByteArray>
+#include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusInterface>
-
-
 #include <QLabel>
+#include <QString>
+#include <QStringList>
 #include <QTimer>
 
-
+#include "activeprofiles.h"
 #include "applicationinfo.h"
 #include "dbus.h"
-
-
-
-
 
 /** \brief encodes a string to "[A-Z][a-z][0-9]_-" ascii subset
  * [A-Z][a-z][0-9] -> [A-Z][a-z][0-9]
@@ -64,7 +57,6 @@ static QString encodeAlNumD(QString in)
     }
     return out;
 }
-
 
 /** \brief DBus busname registration helper
  * \param dbusIface interface of bus
@@ -96,7 +88,6 @@ static bool registerBusname(QDBusConnectionInterface *dbusIface, QString name, b
     return ok;
 }
 
-
 class ActiveProfiles::Private {
 public:
     QString profile;
@@ -105,7 +96,6 @@ public:
 
     QString dbusName(QString prof);
 };
-
 
 QString ActiveProfiles::Private::dbusName(QString prof)
 {
@@ -119,8 +109,6 @@ QString ActiveProfiles::Private::dbusName(QString prof)
     return name;
 }
 
-
-
 bool ActiveProfiles::Private::registerBusnames(QString prof)
 {
     // FIXME move where?
@@ -128,7 +116,6 @@ bool ActiveProfiles::Private::registerBusnames(QString prof)
         qWarning("can't connect to dbus");
         return true;
     }
-
 
     QDBusConnectionInterface *dbusIface = QDBusConnection::sessionBus().interface ();
 
@@ -143,7 +130,6 @@ bool ActiveProfiles::Private::registerBusnames(QString prof)
     return registerBusname(dbusIface, name, false);
 
 }
-
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {
@@ -160,7 +146,6 @@ bool ActiveProfiles::isAnyActive() const
 {
     return isActive("");
 }
-
 
 bool ActiveProfiles::setThisProfile(const QString &profile)
 {

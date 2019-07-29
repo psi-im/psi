@@ -7,7 +7,6 @@
 const long MAX_PROP_SIZE = 100000;
 X11WindowSystem* X11WindowSystem::_instance = nullptr;
 
-
 void X11WindowSystem::x11wmClass(WId wid, QString resName)
 {
     if (!QX11Info::isPlatformX11())
@@ -49,7 +48,6 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
         return false;
     }
 
-
     // Try to get the property
     result = XGetWindowProperty(display, win, nameAtom, 0, 1, False,
         typeAtom, &actual_type_return, &actual_format_return,
@@ -72,7 +70,6 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     return true;
 }
 
-
 // Get the desktop number that a window is on
 bool X11WindowSystem::desktopOfWindow(Window *window, long *desktop)
 {
@@ -82,7 +79,6 @@ bool X11WindowSystem::desktopOfWindow(Window *window, long *desktop)
     //    qDebug("Desktop: " + QString::number(*desktop));
     return result;
 }
-
 
 // Get the current desktop the WM is displaying
 bool X11WindowSystem::currentDesktop(long *desktop)

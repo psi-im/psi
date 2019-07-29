@@ -1,5 +1,6 @@
 /*
  * hoverabletreeview.cpp - QTreeView that allows to show hovered items apart
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -21,13 +22,14 @@
 
 #include <QMouseEvent>
 #include <QScrollBar>
+#ifdef Q_OS_WIN
+#    include <QLibrary>
+#    include <windows.h>
+#endif
 
 #ifdef Q_OS_WIN
-#include <QLibrary>
-#include <windows.h>
-
 // taken from qapplication_win.cpp
-#if (_WIN32_WINNT < 0x0400)
+# if (_WIN32_WINNT < 0x0400)
 // This struct is defined in winuser.h if the _WIN32_WINNT >= 0x0400 -- in the
 // other cases we have to define it on our own.
 typedef struct tagTRACKMOUSEEVENT {
@@ -36,7 +38,7 @@ typedef struct tagTRACKMOUSEEVENT {
     HWND  hwndTrack;
     DWORD dwHoverTime;
 } TRACKMOUSEEVENT, *LPTRACKMOUSEEVENT;
-#endif
+# endif
 #endif
 
 //----------------------------------------------------------------------------

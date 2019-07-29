@@ -1,6 +1,7 @@
 /*
  * psithememodel.cpp - just a model for theme views
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,13 +20,12 @@
 
 #include "psithememodel.h"
 
-#include <QtConcurrentMap>
 #include <QPixmap>
+#include <QtConcurrentMap>
 
 #include "psithememanager.h"
 #include "psiiconset.h"
 #include "textutil.h"
-
 
 class PsiThemeModel;
 struct PsiThemeModel::Loader
@@ -211,7 +211,6 @@ bool PsiThemeModel::setData(const QModelIndex &index, const QVariant &value, int
 
     return false;
 }
-
 
 int PsiThemeModel::themeRow(const QString &id)
 {

@@ -1,6 +1,7 @@
 #include "psicapsregsitry.h"
-#include "iodeviceopener.h"
+
 #include "applicationinfo.h"
+#include "iodeviceopener.h"
 
 PsiCapsRegistry::PsiCapsRegistry(QObject *parent) :
     CapsRegistry(parent)

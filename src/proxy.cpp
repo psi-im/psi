@@ -1,5 +1,6 @@
 /*
  * proxy.cpp - classes for handling proxy profiles
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -19,17 +20,17 @@
 
 #include "proxy.h"
 
-#include <QLabel>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QLayout>
-#include <QComboBox>
-#include <QPushButton>
-#include <QDomElement>
-#include <QPointer>
 #include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDomElement>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
 #include <QList>
+#include <QPointer>
+#include <QPushButton>
 
 #include "common.h"
 #include "iconwidget.h"
@@ -422,7 +423,6 @@ void ProxyChooser::doOpen()
     connect(d->m, SIGNAL(settingsChanged()), SLOT(pm_settingsChangedApply()));
     d->m->openDialog(x);
 }
-
 
 //----------------------------------------------------------------------------
 // ProxyForObject

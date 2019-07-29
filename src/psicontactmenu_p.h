@@ -1,5 +1,6 @@
 /*
  * psicontactmenu.cpp - a PsiContact context menu
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +18,10 @@
  *
  */
 
-#include "psicontactmenu.h"
-
-#include "psiaccount.h"
-#include "resourcemenu.h"
 #include "groupmenu.h"
+#include "psiaccount.h"
+#include "psicontactmenu.h"
+#include "resourcemenu.h"
 
 class InviteToGroupChatMenu;
 

@@ -1,5 +1,6 @@
 /*
  * opt_theme.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010-2017  Sergey Ilinykh, Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,9 @@
 #ifndef OPT_THEME_H
 #define OPT_THEME_H
 
-#include "optionstab.h"
 #include <QPointer>
+
+#include "optionstab.h"
 
 class QModelIndex;
 class QSortFilterProxyModel;

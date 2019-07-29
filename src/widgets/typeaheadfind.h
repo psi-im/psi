@@ -1,5 +1,6 @@
 /*
  * typeaheadfind.h - Typeahead find toolbar
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
@@ -21,9 +22,8 @@
 #define TYPEAHEADFIND_H
 
 #include <QToolBar>
-
 #ifdef WEBKIT
-#include <webview.h>
+    #include <webview.h>
 #endif
 
 class QTextEdit;

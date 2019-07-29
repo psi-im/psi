@@ -1,5 +1,6 @@
 /*
  * accountmanagedlg.cpp - dialogs for manipulating PsiAccounts
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,35 +18,35 @@
  *
  */
 
-#include <QtCrypto>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QLabel>
-#include <QPointer>
-#include <QTimer>
-#include <QHeaderView>
-#include <QDropEvent>
-#include <QButtonGroup>
+#include "accountmanagedlg.h"
 
-#include "psicon.h"
-#include "psiaccount.h"
+#include <QButtonGroup>
+#include <QDropEvent>
+#include <QHeaderView>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QTimer>
+#include <QtCrypto>
+
+#include "accountadddlg.h"
 #include "common.h"
-#include "xmpp_tasks.h"
+#include "iconaction.h"
+#include "miniclient.h"
 #include "pgputil.h"
 #include "proxy.h"
-#include "miniclient.h"
-#include "accountadddlg.h"
-#include "accountmanagedlg.h"
-#include "ui_accountremove.h"
+#include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
-#include "iconaction.h"
-#include "shortcutmanager.h"
 #include "psiiconset.h"
+#include "shortcutmanager.h"
+#include "ui_accountremove.h"
+#include "xmpp_tasks.h"
 
 using namespace XMPP;
-
 
 //----------------------------------------------------------------------------
 // AccountRemoveDlg
@@ -290,8 +291,6 @@ private slots:
     }
 };
 
-
-
 AccountManageTree::AccountManageTree(QWidget *parent)
     : QTreeWidget(parent)
 {
@@ -317,8 +316,6 @@ void AccountManageTree::dragMoveEvent(QDragMoveEvent *event)
     QTreeWidget::dragMoveEvent(event);
     sortByColumn(-1, Qt::AscendingOrder);
 }
-
-
 
 AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 :QDialog(nullptr)

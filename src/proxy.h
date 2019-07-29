@@ -1,5 +1,6 @@
 /*
  * proxy.h - classes for handling proxy profiles
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef PROXYDLG_H
 #define PROXYDLG_H
 
-#include <QList>
 #include <QGroupBox>
+#include <QList>
 #include <QPointer>
 
 #include "ui_proxy.h"
@@ -44,7 +45,6 @@ public:
     int port;
     bool useAuth;
     QString url;
-
 
     void toOptions(OptionsTree* o, QString base) const;
     void fromOptions(OptionsTree* o, QString base);

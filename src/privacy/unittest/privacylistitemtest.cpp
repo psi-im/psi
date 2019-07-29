@@ -1,5 +1,6 @@
 /**
- * Copyright (C) 2007, Remko Troncon
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2007  Remko Troncon
  */
 
 #include <QList>
@@ -8,8 +9,8 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 
-#include "unittestutil.h"
 #include "privacylistitem.h"
+#include "unittestutil.h"
 
 class PrivacyListItemTest : public CppUnit::TestFixture
 {

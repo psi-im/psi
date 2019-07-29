@@ -1,5 +1,6 @@
 /*
  * urllabel.cpp - clickable URL-label
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -19,8 +20,8 @@
 
 #include "urllabel.h"
 
-#include <QMenu>
 #include <QContextMenuEvent>
+#include <QMenu>
 
 #include "urlobject.h"
 

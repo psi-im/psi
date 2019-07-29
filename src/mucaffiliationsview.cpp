@@ -1,5 +1,6 @@
 /*
  * mucaffiliationsview.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,16 +18,16 @@
  *
  */
 
+#include "mucaffiliationsview.h"
+
 #include <QHeaderView>
 
 #include "xmpp_jid.h"
-#include "mucaffiliationsview.h"
 
 MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
 {
     setRootIsDecorated(false);
     header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    setItemsExpandable(false);
     setItemsExpandable(false);
     setDragEnabled(true);
     setAcceptDrops(true);

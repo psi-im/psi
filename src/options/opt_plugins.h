@@ -1,11 +1,12 @@
 #ifndef OPT_PLUGINS_H
 #define OPT_PLUGINS_H
 
-#include "optionstab.h"
-#include "advwidget.h"
-#include "ui_plugininfodialog.h"
 #include <QPointer>
 #include <QTreeWidgetItem>
+
+#include "advwidget.h"
+#include "optionstab.h"
+#include "ui_plugininfodialog.h"
 
 class QWidget;
 class Options;

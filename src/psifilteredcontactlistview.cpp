@@ -1,5 +1,6 @@
 /*
  * psifilteredcontactlistview.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +20,11 @@
 
 #include "psifilteredcontactlistview.h"
 
-#include "contactlistviewdelegate.h"
-#include "psioptions.h"
-
 #include <QKeyEvent>
 #include <QPainter>
+
+#include "contactlistviewdelegate.h"
+#include "psioptions.h"
 
 PsiFilteredContactListView::PsiFilteredContactListView(QWidget* parent)
     : PsiContactListView(parent)

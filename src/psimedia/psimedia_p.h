@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2009  Barracuda Networks, Inc.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,18 +17,16 @@
  *
  */
 
-#include "psimedia.h"
-
 #include <QCoreApplication>
+#ifdef QT_GUI_LIB
+#    include <QPainter>
+#endif
 #include <QPluginLoader>
 
-#ifdef QT_GUI_LIB
-#include <QPainter>
-#endif
-
+#include "psimedia.h"
 #include "psimediaprovider.h"
-namespace PsiMedia {
 
+namespace PsiMedia {
 #ifdef QT_GUI_LIB
 //----------------------------------------------------------------------------
 // VideoWidget

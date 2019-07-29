@@ -14,5 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(AccountInfoAccessor, "org.psi-im.AccountInfoAccessor/0.1");
 
-
 #endif // ACCOUNTINFOACCESSOR_H

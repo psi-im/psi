@@ -1,5 +1,6 @@
 /*
  * pepmanager.h - Classes for PEP
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -30,11 +31,11 @@ namespace XMPP {
     class PubSubRetraction;
     class ServerInfoManager;
 }
-class PubSubSubscription;
-class QString;
 
 using namespace XMPP;
 
+class PubSubSubscription;
+class QString;
 
 class PEPManager : public QObject
 {

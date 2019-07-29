@@ -1,5 +1,6 @@
 /*
  * debug.cpp - debug staff
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2017  Ivan Romanov <drizt@land.ru>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +20,8 @@
 
 #include "debug.h"
 
-#include <config.h>
-
 #include <QDir>
+#include <config.h>
 
 SlowTimer::SlowTimer(const QString &path, int line, int maxTime, const QString &message)
     : _path(QDir::fromNativeSeparators(path))

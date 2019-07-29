@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Barracuda Networks, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,11 +20,12 @@
 #ifndef JINGLERTPTASKS_H
 #define JINGLERTPTASKS_H
 
-#include <QHostAddress>
 #include <QDomElement>
+#include <QHostAddress>
+
+#include "iris/ice176.h"
 #include "xmpp_jid.h"
 #include "xmpp_task.h"
-#include "iris/ice176.h"
 
 class JingleRtpPayloadType
 {

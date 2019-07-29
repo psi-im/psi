@@ -1,5 +1,6 @@
 /*
  * mucaffiliationsmodel.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +18,13 @@
  *
  */
 
-#include <QMimeData>
-#include <QFont>
-#include <QVariant>
-
 #include "mucaffiliationsmodel.h"
 
-using namespace XMPP;
+#include <QFont>
+#include <QMimeData>
+#include <QVariant>
 
+using namespace XMPP;
 
 MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,2)
 {
@@ -208,7 +208,6 @@ MUCAffiliationsModel::AffiliationListIndex MUCAffiliationsModel::affiliationToIn
     else
         return Unknown;
 }
-
 
 void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
 {

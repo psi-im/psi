@@ -1,5 +1,6 @@
 /*
  * urlobject.cpp - helper class for handling links
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +19,7 @@
  */
 
 #include "urlobject.h"
-#ifndef WIDGET_PLUGIN
-#include "psioptions.h"
-#endif
+
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>
@@ -29,6 +28,9 @@
 #include <QUrlQuery>
 
 #include "iconaction.h"
+#ifndef WIDGET_PLUGIN
+#include "psioptions.h"
+#endif
 
 //! \if _hide_doc_
 class URLObject::Private : QObject

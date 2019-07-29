@@ -1,5 +1,6 @@
 /*
  * ahcexecutetask.h - Ad-Hoc Command Execute Task
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +21,9 @@
 #ifndef AHCEXECUTETASK_H
 #define AHCEXECUTETASK_H
 
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
 #include "ahcommand.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
 
 class QDomElement;
 

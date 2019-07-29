@@ -1,5 +1,6 @@
 /*
  * turencontrollerplugin.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef TUNECONTROLLERPLUGIN_H
 #define TUNECONTROLLERPLUGIN_H
 
-#include <QString>
 #include <QPluginLoader>
+#include <QString>
 
 class TuneController;
 
@@ -45,6 +46,5 @@ public:
 };
 
 Q_DECLARE_INTERFACE(TuneControllerPlugin, "be.el-tramo.TuneController/0.0-20060129");
-
 
 #endif

@@ -1,5 +1,6 @@
 /*
  * optionstree.h - Soft-coded options structure header
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +60,6 @@ public:
     QVariant mapGet(const QString &basename, const QVariant &key, const QString &node) const;
     QVariant mapGet(const QString &basename, const QVariant &key, const QString &node, const QVariant &def) const;
     QVariantList mapKeyList(const QString &basename, bool sortedByNumbers = false) const;
-
 
     bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion, bool streamWriter = false) const;
     bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "", bool streamReader = false);

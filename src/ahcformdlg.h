@@ -1,5 +1,6 @@
 /*
  * ahcformdlg.h - Ad-Hoc Command Form Dialog
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,23 +21,23 @@
 #ifndef AHCFORMDLG_H
 #define AHCFORMDLG_H
 
-#include <QObject>
 #include <QDialog>
+#include <QObject>
 #include <QString>
 
-#include "xmpp_xdata.h"
+#include "ui_ahcformdlg.h"
 #include "xmpp_jid.h"
+#include "xmpp_xdata.h"
 
 class QPushButton;
 class BusyWidget;
 class AHCommand;
 class XDataWidget;
 class PsiCon;
+
 namespace XMPP {
     class Client;
 }
-
-#include "ui_ahcformdlg.h"
 
 class AHCFormDlg : public QDialog
 {

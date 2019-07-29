@@ -1,5 +1,6 @@
 /*
  * psiplugin.h - Psi plugin interface
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2008  Kevin Smith, Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +29,6 @@
 class QWidget;
 
 #include <QtCore>
-
 
 /**
  * \brief An abstract class for implementing a plugin

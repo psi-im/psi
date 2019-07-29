@@ -1,5 +1,6 @@
 /*
  * desktoputil.cpp - url-opening routines
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Maciej Niedzielski, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,17 +21,18 @@
 #include "desktoputil.h"
 
 #include <QDesktopServices>
-#include <QUrl>
-#include <QSettings>
 #include <QFileInfo>
 #include <QProcess>
-#include <QSysInfo>
 #include <QSet>
+#include <QSettings>
+#include <QSysInfo>
+#include <QUrl>
+#ifdef Q_OS_WIN
+#    include <shellapi.h>
+#    include <windows.h>
+#endif
 
 #ifdef Q_OS_WIN
-#include <windows.h>
-#include <shellapi.h>
-
 QString defaultBrowser()
 {
     QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);

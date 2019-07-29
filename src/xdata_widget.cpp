@@ -1,5 +1,6 @@
 /*
  * xdata_widget.cpp - a class for displaying jabber:x:data forms
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2004  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,30 +20,28 @@
 
 #include "xdata_widget.h"
 
-#include <QLayout>
-#include <QLabel>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QUrl>
-#include <QListWidget>
-#include <QLineEdit>
-#include <QObject>
-#include <QTextEdit>
 #include <QGridLayout>
-#include <QNetworkRequest>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QObject>
 #include <QSpacerItem>
+#include <QTextEdit>
+#include <QUrl>
 
 #include "desktoputil.h"
-#include "xmpp_xdata.h"
+#include "networkaccessmanager.h"
+#include "psicon.h"
 #include "xmpp_client.h"
 #include "xmpp_tasks.h"
-#include "psicon.h"
-#include "networkaccessmanager.h"
+#include "xmpp_xdata.h"
 
 using namespace XMPP;
-
-
 
 class XDataMediaWidget : public QLabel
 {
@@ -694,7 +693,6 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
     }
     setFields(fields);
 }
-
 
 XData::FieldList XDataWidget::fields() const
 {

@@ -1,5 +1,6 @@
 /*
  * psitabbar.cpp - Tabbar child for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -18,13 +19,14 @@
  */
 
 #include "psitabbar.h"
-#include "psitabwidget.h"
-#include <QMouseEvent>
+
 #include <QApplication>
 #include <QMimeData>
+#include <QMouseEvent>
 #include <QPainter>
 
 #include "psioptions.h"
+#include "psitabwidget.h"
 
 /**
  * Constructor

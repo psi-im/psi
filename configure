@@ -1905,9 +1905,9 @@ public:
     	return false;
 #else
     	QString str =
+    		"#include<X11/extensions/scrnsaver.h>\\n"
     		"#include<X11/Xlib.h>\\n"
     		"#include<X11/Xutil.h>\\n"
-    		"#include<X11/extensions/scrnsaver.h>\\n"
     		"\\n"
     		"int main()\\n"
     		"{\\n"
@@ -2603,12 +2603,13 @@ cat >"$1/modules_new.cpp" <<EOT
 EOT
 cat >"$1/conf4.h" <<EOT
 /*
-Copyright (C) 2004-2008  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2004-2008  Justin Karneges
 
-This file is free software; unlimited permission is given to copy and/or
-distribute it, with or without modifications, as long as this notice is
-preserved.
-*/
+ * This file is free software; unlimited permission is given to copy and/or
+ * distribute it, with or without modifications, as long as this notice is
+ * preserved.
+ */
 
 #ifndef QC_CONF4_H
 #define QC_CONF4_H
@@ -2722,18 +2723,19 @@ private:
 EOT
 cat >"$1/conf4.cpp" <<EOT
 /*
-Copyright (C) 2004-2008  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2004-2008  Justin Karneges
 
-This file is free software; unlimited permission is given to copy and/or
-distribute it, with or without modifications, as long as this notice is
-preserved.
-*/
+ * This file is free software; unlimited permission is given to copy and/or
+ * distribute it, with or without modifications, as long as this notice is
+ * preserved.
+ */
 
 #include "conf4.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #ifndef PATH_MAX
 # ifdef Q_OS_WIN
 #  define PATH_MAX 260

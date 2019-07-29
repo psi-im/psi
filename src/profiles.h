@@ -1,5 +1,6 @@
 /*
  * profiles.h - deal with profiles
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -20,19 +21,19 @@
 #ifndef PROFILES_H
 #define PROFILES_H
 
+#include <QByteArray>
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <QList>
 #include <QtCrypto>
-#include <QByteArray>
 
-#include "varlist.h"
-#include "proxy.h"
-#include "common.h"
-#include "xmpp_clientstream.h"
-#include "xmpp_roster.h"
-#include "xmpp_jid.h"
 #include "applicationinfo.h"
+#include "common.h"
+#include "proxy.h"
+#include "varlist.h"
+#include "xmpp_clientstream.h"
+#include "xmpp_jid.h"
+#include "xmpp_roster.h"
 
 class OptionsTree;
 
@@ -106,7 +107,6 @@ public:
 };
 
 typedef QList<UserAccount> UserAccountList;
-
 
 class OptionsMigration
 {

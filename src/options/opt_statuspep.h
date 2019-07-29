@@ -1,8 +1,8 @@
 #ifndef OPT_STAUSPEP_H
 #define OPT_STAUSPEP_H
 
-#include "optionstab.h"
 #include "common.h"
+#include "optionstab.h"
 #include "psicon.h"
 
 class QWidget;
@@ -28,6 +28,5 @@ private:
     QString tuneFilters_;
     bool controllersChanged_;
 };
-
 
 #endif // OPT_STAUSPEP_H

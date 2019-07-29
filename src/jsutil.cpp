@@ -1,5 +1,6 @@
 /*
  * jsutil.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -18,9 +19,10 @@
  */
 
 #include "jsutil.h"
-#include <QStringList>
+
 #include <QDateTime>
 #include <QJsonDocument>
+#include <QStringList>
 
 QString JSUtil::variant2js(const QVariant &value)
 {

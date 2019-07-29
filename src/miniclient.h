@@ -1,6 +1,7 @@
 /*
  * miniclient.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -80,6 +81,5 @@ private:
     QString pass;
     bool auth, force_ssl, error_disconnect;
 };
-
 
 #endif

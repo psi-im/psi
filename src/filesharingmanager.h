@@ -1,6 +1,7 @@
 /*
  * filesharingmanager.h - file sharing manager
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,10 +23,10 @@
 
 #include <QObject>
 
-#include "xmpp_reference.h"
 #ifndef WEBKIT
-# include "qite.h"
+#    include "qite.h"
 #endif
+#include "xmpp_reference.h"
 
 class QMimeData;
 class QImage;

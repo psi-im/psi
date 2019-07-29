@@ -1,18 +1,17 @@
+#include "psioptionseditor.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QColorDialog>
 #include <QDialog>
-#include <QVariant>
+#include <QHBoxLayout>
 #include <QMessageBox>
 #include <QTextDocument>
-#include <QColorDialog>
+#include <QVBoxLayout>
+#include <QVariant>
 
-#include "psioptionseditor.h"
-#include "psioptions.h"
 #include "common.h"
 #include "iconset.h"
+#include "psioptions.h"
 #include "textutil.h"
-
 #include "ui_optioneditor.h"
 
 class OptionEditor : public QDialog, protected Ui_OptionEditor {
@@ -42,7 +41,6 @@ OptionEditor::supportedType OptionEditor::supportedTypes[] = {
     {"QColor", QVariant::Color},
 //    {"QStringList", QVariant::StringList},  doesn't work
     {nullptr, QVariant::Invalid}};
-
 
 OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 {
@@ -148,8 +146,6 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
     infoLine->addWidget(lb_type);
 
-
-
     lb_comment = new QLabel(this);
     lb_comment->setTextInteractionFlags(Qt::TextSelectableByMouse);
     lb_comment->setText("   ");
@@ -194,7 +190,6 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     buttonLine->addWidget(pb_new);
     connect(pb_new, SIGNAL(clicked()), SLOT(add()));
 
-
     if (parent) {
         pb_detach = new QToolButton(this);
         pb_detach->setIcon(IconsetFactory::iconPixmap("psi/advanced"));
@@ -207,13 +202,10 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
         setWindowTitle(CAP(tr("Advanced")));
     }
 
-
-
     connect(tv_->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)), SLOT(selectionChanged(const QModelIndex &)));
     connect(tv_,SIGNAL(activated(const QModelIndex&)),SLOT(tv_edit(const QModelIndex&)));
     connect(tv_,SIGNAL(expanded(const QModelIndex&)), SLOT(updateWidth()));
     connect(tv_,SIGNAL(collapsed(const QModelIndex&)), SLOT(updateWidth()));
-
 
     tv_->setCurrentIndex(tpm_->index(0,0, QModelIndex()));
 
@@ -323,11 +315,9 @@ void PsiOptionsEditor::detach()
     new PsiOptionsEditor();
 }
 
-
 void PsiOptionsEditor::bringToFront()
 {
     ::bringToFront(this, true);
 }
-
 
 #include "psioptionseditor.moc"

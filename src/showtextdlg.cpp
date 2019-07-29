@@ -1,5 +1,6 @@
 /*
  * showtextdlg.cpp - dialog for displaying a text file
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Justin Karneges
  *
  * This library is free software; you can redistribute it and/or
@@ -17,15 +18,15 @@
  *
  */
 
+#include "showtextdlg.h"
+
+#include <QFile>
+#include <QHBoxLayout>
 #include <QLayout>
 #include <QPushButton>
-#include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-
-#include "showtextdlg.h"
 
 // FIXME: combine to common init function
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)

@@ -1,6 +1,7 @@
 /*
  * eventdb.cpp - asynchronous I/O event database
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,15 +20,15 @@
 
 #include "eventdb.h"
 
-#include <QVector>
-#include <QFileInfo>
-#include <QDir>
-#include <QTimer>
-#include <QTextStream>
 #include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QTimer>
+#include <QVector>
 
-#include "psievent.h"
 #include "jidutil.h"
+#include "psievent.h"
 
 using namespace XMPP;
 
@@ -53,7 +54,6 @@ const QString & EDBItem::id() const
 {
     return v_id;
 }
-
 
 //----------------------------------------------------------------------------
 // EDBHandle
@@ -165,7 +165,6 @@ int EDBHandle::beginRow() const
 {
     return d->beginRow_;
 }
-
 
 //----------------------------------------------------------------------------
 // EDB

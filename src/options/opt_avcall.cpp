@@ -1,15 +1,15 @@
 #include "opt_avcall.h"
-#include "common.h"
-#include "iconwidget.h"
-#include "psioptions.h"
-#include "../psimedia/psimedia.h"
-#include "../avcall/avcall.h"
-#include "../avcall/mediadevicewatcher.h"
 
 #include <QComboBox>
 #include <QLineEdit>
 #include <QList>
 
+#include "../avcall/avcall.h"
+#include "../avcall/mediadevicewatcher.h"
+#include "../psimedia/psimedia.h"
+#include "common.h"
+#include "iconwidget.h"
+#include "psioptions.h"
 #include "ui_opt_avcall.h"
 
 class OptAvCallUI : public QWidget, public Ui::OptAvCall

@@ -2,6 +2,7 @@
 #define FILETRANSDLG_H
 
 #include <QItemDelegate>
+
 #include "advwidget.h"
 #include "ui_filetrans.h"
 #include "s5b.h"
@@ -10,11 +11,13 @@ class PsiCon;
 class PsiAccount;
 class QPixmap;
 class FileTransView;
+
 namespace XMPP {
     class FileTransfer;
     class Jid;
     class BoBData;
 }
+
 using namespace XMPP;
 
 class FileTransferHandler : public QObject
@@ -38,7 +41,6 @@ public:
     QString saveName() const;
     QString filePath() const;
     QPixmap fileIcon() const;
-
 
     void send(const Jid &to, const QString &fname, const QString &desc);
     void accept(const QString &saveName, const QString &fileName, qlonglong offset=0);

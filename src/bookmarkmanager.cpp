@@ -1,5 +1,6 @@
 /*
  * bookmarkmanager.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2008  Remko Troncon, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +20,11 @@
 
 #include "bookmarkmanager.h"
 
-#include "xmpp_task.h"
-#include "xmpp_client.h"
-#include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "xmpp_client.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
 
 // -----------------------------------------------------------------------------
 

@@ -1,5 +1,6 @@
 /*
  * mainwin_p.h - classes used privately by the main window.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +20,16 @@
 
 #ifndef MAINWIN_P_H
 
+#include <QAction>
+#include <QLabel>
+#include <QLayout>
+#include <QMenu>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QToolButton>
-#include <QMenu>
-#include <QLayout>
-#include <QLabel>
-#include <QAction>
-#include <QMouseEvent>
 
-#include "psicon.h"
 #include "iconaction.h"
+#include "psicon.h"
 
 class QMenu;
 

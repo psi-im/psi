@@ -1,10 +1,11 @@
+#include "textutil.h"
+
 #include <QTextDocument> // for escape()
 
-#include "textutil.h"
-#include "psiiconset.h"
-#include "rtparse.h"
-#include "psioptions.h"
 #include "coloropt.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "rtparse.h"
 
 QString TextUtil::escape(const QString &plain)
 {
@@ -39,7 +40,6 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
         quoted.replace(QRegExp("^>+\n"), "\n\n");  // unquote empty lines
         quoted.replace(QRegExp("\n>+\n"), "\n\n");
     }
-
 
     for (int i=0;i<(int) quoted.length();i++)
     {
@@ -223,7 +223,6 @@ QString TextUtil::resolveEntities(const QString &in)
 
     return out;
 }
-
 
 static bool linkify_pmatch(const QString &str1, int at, const QString &str2)
 {
@@ -556,7 +555,6 @@ QString TextUtil::img2title(const QString &in)
 
 QString TextUtil::legacyFormat(const QString& in)
 {
-
 
     //enable *bold* stuff
     // //old code

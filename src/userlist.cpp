@@ -1,6 +1,7 @@
 /*
  * userlist.cpp - high-level roster
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +18,23 @@
  *
  */
 
-#include <QApplication>
-#include <QPixmap>
-#include <QList>
-#include <QtCrypto>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QBuffer>
-#include <QUrl>
-
 #include "userlist.h"
+
+#include <QApplication>
+#include <QBuffer>
+#include <QList>
+#include <QPixmap>
+#include <QTextDocument> // for TextUtil::escape()
+#include <QUrl>
+#include <QtCrypto>
+
 #include "avatars.h"
-#include "textutil.h"
 #include "common.h"
-#include "mucmanager.h"
-#include "psioptions.h"
 #include "jidutil.h"
+#include "mucmanager.h"
 #include "psiiconset.h"
-#include "common.h"
+#include "psioptions.h"
+#include "textutil.h"
 
 using namespace XMPP;
 
@@ -198,7 +199,6 @@ const PhysicalLocation& UserResource::physicalLocation() const
     return v_physicalLocation;
 }*/
 
-
 bool operator<(const UserResource &r1, const UserResource &r2)
 {
     return r1.priority() > r2.priority();
@@ -223,7 +223,6 @@ bool operator>=(const UserResource &r1, const UserResource &r2)
 {
     return r1.priority() <= r2.priority();
 }
-
 
 //----------------------------------------------------------------------------
 // UserResourceList
@@ -285,7 +284,6 @@ void UserResourceList::sort()
 {
     std::sort(begin(), end());
 }
-
 
 //----------------------------------------------------------------------------
 // UserListItem
@@ -690,7 +688,6 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                 str += QString("<div class='layer1'>%1 ").arg(client) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
             }
 
-
             // Entity Time
             if (r.timezoneOffset().hasValue()) {
                 QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value()*60);
@@ -834,7 +831,6 @@ void UserListItem::setPublicKeyID(const QString &k)
 {
     v_keyID = k;
 }
-
 
 //----------------------------------------------------------------------------
 // UserList

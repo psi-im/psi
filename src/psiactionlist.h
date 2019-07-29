@@ -1,5 +1,6 @@
 /*
  * psiactionlist.h - the customizeable action list for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2004  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

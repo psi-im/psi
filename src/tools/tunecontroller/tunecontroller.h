@@ -1,5 +1,6 @@
 /*
  * tunecontroller.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef TUNECONTROLLER_H
 #define TUNECONTROLLER_H
 
-#include <QString>
 #include <QObject>
+#include <QString>
 
 #include "tune.h"
 

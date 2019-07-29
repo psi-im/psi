@@ -1,14 +1,12 @@
-#include <QObject>
-#include <QtTest/QtTest>
-
+#include <QDebug>
 #include <QMap>
 #include <QMapIterator>
-#include <QDebug>
+#include <QObject>
 #include <QTime>
-
-#include "qttestutil/qttestutil.h"
+#include <QtTest/QtTest>
 
 #include "optionstree.h"
+#include "qttestutil/qttestutil.h"
 
 class Benchmark
 {

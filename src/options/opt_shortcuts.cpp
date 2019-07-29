@@ -1,6 +1,7 @@
 /*
  * opt_shortcuts.cpp - an OptionsTab for setting the Keyboard Shortcuts of Psi
- * Copyright (C) 2006 Cestonaro Thilo
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2006  Cestonaro Thilo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,10 +23,9 @@
 #include <QMessageBox>
 
 #include "common.h"
+#include "grepshortcutkeydialog.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
-#include "grepshortcutkeydialog.h"
-
 #include "ui_opt_shortcuts.h"
 
 #define ITEMKIND Qt::UserRole

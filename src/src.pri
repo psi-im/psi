@@ -519,7 +519,6 @@ SOURCES += \
     $$PWD/abstracttreemodel.cpp \
     $$PWD/psicontactlistview.cpp
 
-
 CONFIG += pgputil
 pgputil {
     DEFINES += HAVE_PGPUTIL

@@ -1,5 +1,6 @@
 /*
  * invitetogroupchatmenu.cpp - invite to groupchat context menu option
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This file is part of the WhoerIM project.
@@ -20,9 +21,10 @@
  */
 
 #include "invitetogroupchatmenu.h"
-#include "psicontact.h"
+
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontact.h"
 
 InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget* parent)
     : QMenu(parent)

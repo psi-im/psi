@@ -1,7 +1,8 @@
 /*
  * filetunecontroller.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
- * 2011 Vitaly Tonkacheyev, rion
+ * Copyright (C) 2011  Vitaly Tonkacheyev, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,8 +26,8 @@ namespace QCA {
     class FileWatch;
 }
 
-#include "tune.h"
 #include "pollingtunecontroller.h"
+#include "tune.h"
 
 class FileTuneController : public PollingTuneController
 {

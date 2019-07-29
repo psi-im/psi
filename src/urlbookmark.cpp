@@ -1,5 +1,6 @@
 /*
  * urlbookmark.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +18,10 @@
  *
  */
 
+#include "urlbookmark.h"
+
 #include <QDomDocument>
 #include <QDomElement>
-
-#include "urlbookmark.h"
 
 URLBookmark::URLBookmark(const QString& name, const QString& url) : name_(name), url_(url)
 {

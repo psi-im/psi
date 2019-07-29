@@ -1,6 +1,7 @@
 /*
  * eventdlg.cpp - dialog for sending / receiving messages and events
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,64 +20,62 @@
 
 #include "eventdlg.h"
 
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
-#include <QPushButton>
-#include <QMessageBox>
-#include <QStringList>
-#include <QTimer>
-#include <QCursor>
-#include <QIcon>
-#include <QDateTime>
 #include <QApplication>
+#include <QCheckBox>
 #include <QClipboard>
+#include <QCloseEvent>
+#include <QComboBox>
+#include <QCursor>
+#include <QDateTime>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QIcon>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QList>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QPushButton>
 #include <QResizeEvent>
 #include <QShowEvent>
-#include <QFrame>
-#include <QKeyEvent>
-#include <QList>
-#include <QVBoxLayout>
-#include <QDropEvent>
-#include <QDragEnterEvent>
-#include <QList>
-#include <QHBoxLayout>
-#include <QCloseEvent>
+#include <QStringList>
 #include <QTextDocumentFragment>
-#include <QMimeData>
-#include <QCheckBox>
+#include <QTimer>
+#include <QVBoxLayout>
 
-#include "psievent.h"
-#include "psicon.h"
-#include "psiaccount.h"
-#include "textutil.h"
-#include "psiiconset.h"
-#include "jidutil.h"
-#include "psioptions.h"
-#include "psitextview.h"
+#include "accountlabel.h"
 #include "accountscombobox.h"
+#include "alerticon.h"
 #include "common.h"
+#include "desktoputil.h"
+#include "fancylabel.h"
+#include "httpauthmanager.h"
+#include "iconlabel.h"
+#include "iconselect.h"
+#include "icontoolbutton.h"
+#include "iconwidget.h"
+#include "jidutil.h"
+#ifdef HAVE_PGPUTIL
+#    include "pgputil.h"
+#endif
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psievent.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psirichtext.h"
+#include "psitextview.h"
+#include "psitooltip.h"
+#include "shortcutmanager.h"
+#include "textutil.h"
+#include "userlist.h"
+#include "xdata_widget.h"
 #include "xmpp_htmlelement.h"
 #include "xmpp_serverinfomanager.h"
-#include "userlist.h"
-#include "iconwidget.h"
-#include "fancylabel.h"
-#include "iconselect.h"
-#include "iconlabel.h"
-#include "iconwidget.h"
-#include "icontoolbutton.h"
-#include "psitooltip.h"
-#include "alerticon.h"
-#include "shortcutmanager.h"
-#include "httpauthmanager.h"
-#include "psicontactlist.h"
-#include "accountlabel.h"
-#include "xdata_widget.h"
-#include "desktoputil.h"
-#ifdef HAVE_PGPUTIL
-#include "pgputil.h"
-#endif
-#include "psirichtext.h"
 
 static const QString geometryOption = "options.ui.message.size";
 
@@ -240,7 +239,6 @@ void ELineEdit::resourceMenuActivated(QAction *x)
     url.clear();
     changeResource(x->data().toString());
 }
-
 
 //----------------------------------------------------------------------------
 // AttachView
@@ -413,7 +411,6 @@ void AttachView::addUrlList(const UrlList &list)
     }
 }
 
-
 //----------------------------------------------------------------------------
 // AddUrlDlg
 //----------------------------------------------------------------------------
@@ -433,7 +430,6 @@ AddUrlDlg::AddUrlDlg(QWidget *parent)
 AddUrlDlg::~AddUrlDlg()
 {
 }
-
 
 //----------------------------------------------------------------------------
 // EventDlg - a window to read and write events

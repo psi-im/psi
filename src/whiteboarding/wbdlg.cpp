@@ -1,10 +1,12 @@
 /*
  * wbdlg.cpp - dialog for whiteboarding
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * Originally developed from:
  * chatdlg.cpp - dialog for handling chats
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,15 +25,15 @@
 
 #include "wbdlg.h"
 
-#include <QMessageBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QColorDialog>
+#include <QHBoxLayout>
+#include <QMessageBox>
 #include <QToolButton>
+#include <QVBoxLayout>
 
 #include "accountlabel.h"
-#include "stretchwidget.h"
 #include "iconset.h"
+#include "stretchwidget.h"
 
 static const QString geometryOption = "options.ui.chat.wb-size";
 

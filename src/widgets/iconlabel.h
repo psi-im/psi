@@ -1,5 +1,6 @@
 /*
  * iconlabel.h - the FancyLabel widget
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef ICONLABEL_H
 #define ICONLABEL_H
 
-#include <QWidget>
 #include <QLabel>
+#include <QWidget>
 
 class PsiIcon;
 

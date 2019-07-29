@@ -50,5 +50,4 @@ private:
     quintptr realIcon_;
 };
 
-
 #endif

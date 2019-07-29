@@ -1,5 +1,6 @@
 /*
  * turencontrollermanager.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,11 +21,11 @@
 #ifndef TUNECONTROLLERMANAGER_H
 #define TUNECONTROLLERMANAGER_H
 
-#include <QObject>
-#include <QMap>
 #include <QList>
-#include <QStringList>
+#include <QMap>
+#include <QObject>
 #include <QSharedPointer>
+#include <QStringList>
 
 #include "tune.h"
 
@@ -33,7 +34,6 @@ class TuneController;
 
 typedef QSharedPointer<TuneController> TuneControllerPtr;
 typedef QSharedPointer<TuneControllerPlugin> TuneControllerPluginPtr;
-
 
 class TuneControllerManager : public QObject
 {

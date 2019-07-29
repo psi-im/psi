@@ -1,14 +1,14 @@
 #include "opt_statusauto.h"
-#include "psioptions.h"
-#include "priorityvalidator.h"
 
-#include <limits.h>
-#include <QWhatsThis>
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QTextEdit>
+#include <QWhatsThis>
+#include <limits.h>
 
+#include "priorityvalidator.h"
+#include "psioptions.h"
 #include "ui_opt_statusauto.h"
 
 class OptStatusAutoUI : public QWidget, public Ui::OptStatusAuto

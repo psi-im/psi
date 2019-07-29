@@ -1,6 +1,7 @@
 /*
  * wbnewimage.cpp - a class used for representing an image on the whiteboard
  *              while it's being added.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -19,10 +20,11 @@
  */
 
 #include "wbnewimage.h"
-#include "../sxe/sxesession.h"
 
-#include <QGraphicsScene>
 #include <QFile>
+#include <QGraphicsScene>
+
+#include "../sxe/sxesession.h"
 
 WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename) : WbNewItem(s),
                        graphicsitem_(QPixmap(filename)) {
@@ -32,7 +34,6 @@ WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filen
 
     scene->addItem(&graphicsitem_);
 }
-
 
 QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
     // TODO: Should we perhaps scale large images?

@@ -1,5 +1,6 @@
 /*
  * psirichtext.h - helper functions to handle Icons in QTextDocuments
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -17,8 +18,8 @@
  *
  */
 
-#include <QTextDocument>
 #include <QTextCursor>
+#include <QTextDocument>
 
 class QTextEdit;
 

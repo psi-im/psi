@@ -1,5 +1,6 @@
 /*
  * psiapplication.cpp - subclass of QApplication to do some workarounds
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -18,17 +19,18 @@
  */
 
 #include "psiapplication.h"
-#include "resourcemenu.h"
 
+#ifdef Q_OS_MAC
+#    include <Carbon/Carbon.h>
+#endif
 #include <QSessionManager>
 
 #ifdef Q_OS_MAC
-#include <Carbon/Carbon.h>
-#include "CocoaUtilities/CocoaTrayClick.h"
+#    include "CocoaUtilities/CocoaTrayClick.h"
 #endif
-
+#include "resourcemenu.h"
 #ifdef Q_OS_WIN
-#include "systemwatch/systemwatch_win.h"
+#    include "systemwatch/systemwatch_win.h"
 #endif
 
 //----------------------------------------------------------------------------

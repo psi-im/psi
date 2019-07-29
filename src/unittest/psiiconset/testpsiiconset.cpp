@@ -1,7 +1,6 @@
-#include <QtTest/QtTest>
-
-#include <QStringList>
 #include <Q3PtrList>
+#include <QStringList>
+#include <QtTest/QtTest>
 
 #include "iconset.h"
 #include "psiiconset.h"

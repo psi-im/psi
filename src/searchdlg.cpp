@@ -1,6 +1,7 @@
 /*
  * searchdlg.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,20 +18,21 @@
  *
  */
 
+#include "searchdlg.h"
+
 #include <QDomElement>
-#include <QPointer>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPointer>
 
+#include "common.h"
 #include "jidutil.h"
 #include "psiaccount.h"
-#include "common.h"
+#include "textutil.h"
 #include "xdata_widget.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
-#include "textutil.h"
-#include "searchdlg.h"
 
 using namespace XMPP;
 
@@ -175,7 +177,6 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
     d->jt = nullptr;
     d->xdata = nullptr;
     d->scrollArea = scrollArea;
-
 
     setWindowTitle(windowTitle().arg(d->jid.full()));
 

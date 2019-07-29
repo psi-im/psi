@@ -1,6 +1,7 @@
 /*
  * historyimp.cpp
- * Copyright (C) 2011   Aleksey Andreev
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,18 +18,19 @@
  *
  */
 
-#include <QDir>
-#include <QTimer>
-#include <QMessageBox>
-#include <QLayout>
-
 #include "historyimp.h"
-#include "edbsqlite.h"
-#include "edbflatfile.h"
+
+#include <QDir>
+#include <QLayout>
+#include <QMessageBox>
+#include <QTimer>
+
 #include "applicationinfo.h"
-#include "psicontactlist.h"
+#include "edbflatfile.h"
+#include "edbsqlite.h"
 #include "psiaccount.h"
 #include "psicontact.h"
+#include "psicontactlist.h"
 
 HistoryImport::HistoryImport(PsiCon *psi) : QObject(),
     psi_(psi),

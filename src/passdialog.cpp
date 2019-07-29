@@ -1,6 +1,8 @@
 /*
  * passdialog.cpp
- * Copyright (C) 2009-2010 Virnik, 2011 Evgeny Khryukin
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2009-2010  Virnik
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,16 +19,15 @@
  *
  */
 
+#include "passdialog.h"
+
 #include <QCheckBox>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
-
-#include "passdialog.h"
-
 
 PassDialog::PassDialog(const QString& jid, QWidget *parent)
     : QDialog(parent)

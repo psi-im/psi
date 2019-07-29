@@ -1,8 +1,8 @@
 #ifndef OPT_STATUSAUTO_H
 #define OPT_STATUSAUTO_H
 
-#include "optionstab.h"
 #include "common.h"
+#include "optionstab.h"
 
 class QWidget;
 

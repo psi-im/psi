@@ -1,6 +1,7 @@
 /*
  * miniclient.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,18 +18,19 @@
  *
  */
 
-#include <QtCrypto>
+#include "miniclient.h"
+
 #include <QMessageBox>
 #include <QUrl>
 #include <QUrlQuery>
+#include <QtCrypto>
 
-#include "applicationinfo.h"
-#include "miniclient.h"
-#include "proxy.h"
-#include "Certificates/CertificateHelpers.h"
 #include "Certificates/CertificateErrorDialog.h"
-#include "psiaccount.h"
+#include "Certificates/CertificateHelpers.h"
+#include "applicationinfo.h"
 #include "bobfilecache.h"
+#include "proxy.h"
+#include "psiaccount.h"
 #include "xmpp_tasks.h"
 
 using namespace XMPP;

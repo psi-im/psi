@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QPointer>
 
-#include "xmpp_client.h"
 #include "protocol/discoinfoquerier.h"
+#include "xmpp_client.h"
 
 namespace XMPP {
     class Jid;

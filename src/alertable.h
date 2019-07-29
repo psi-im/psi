@@ -1,5 +1,6 @@
 /*
  * alertable.h - simplify alert icon plumbing
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

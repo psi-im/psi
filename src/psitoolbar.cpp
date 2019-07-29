@@ -1,5 +1,6 @@
 /*
  * psitoolbar.cpp - the Psi toolbar class
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2008  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,20 +20,20 @@
 
 #include "psitoolbar.h"
 
-#include <QMenu>
-#include <QLabel>
 #include <QAction>
 #include <QContextMenuEvent>
+#include <QLabel>
 #include <QList>
 #include <QMainWindow>
+#include <QMenu>
 #include <QToolButton>
 
-#include "iconset.h"
-#include "psiiconset.h"
-#include "iconaction.h"
-#include "psioptions.h"
-#include "options/opt_toolbars.h"
 #include "common.h"
+#include "iconaction.h"
+#include "iconset.h"
+#include "options/opt_toolbars.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
 Qt::ToolBarArea dockPositionToToolBarArea(Qt3Dock dock)
 {

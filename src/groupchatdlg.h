@@ -1,6 +1,7 @@
 /*
  * groupchatdlg.h - dialogs for handling groupchat
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,19 +21,15 @@
 #ifndef GROUPCHATDLG_H
 #define GROUPCHATDLG_H
 
-#include <QWidget>
 #include <QDialog>
-
+#include <QWidget>
 
 #include "advwidget.h"
+#include "languagemanager.h"
+#include "mucmanager.h"
+#include "psievent.h"
 #include "tabbablewidget.h"
 #include "ui_groupchatdlg.h"
-#include "mucmanager.h"
-#include "advwidget.h"
-#include "psievent.h"
-#include "languagemanager.h"
-
-using namespace XMPP;
 
 class PsiCon;
 class PsiAccount;
@@ -41,9 +38,12 @@ class QRect;
 class GCMainDlg;
 class MessageView;
 class QColorGroup;
+
 namespace XMPP {
     class Message;
 }
+
+using namespace XMPP;
 
 class GCMainDlg : public TabbableWidget
 {

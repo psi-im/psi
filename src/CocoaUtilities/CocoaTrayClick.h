@@ -1,5 +1,6 @@
 /*
  * CocoaTrayClick
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2012  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +22,7 @@
 #define COCOATRAYCLICK_H
 
 #include <QObject>
+
 class CocoaTrayClick : public QObject
 {
     Q_OBJECT

@@ -1,5 +1,6 @@
 /*
  * jidutil.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon, Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +18,10 @@
  *
  */
 
-#include "xmpp_jid.h"
 #include "jidutil.h"
+
 #include "psioptions.h"
+#include "xmpp_jid.h"
 
 using namespace XMPP;
 

@@ -1,6 +1,7 @@
 /*
  * actionlineedit.h - QLineEdit widget with buttons on right side
- * Copyright (C) 2009 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2009  Sergey Ilinykh
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,15 +18,14 @@
  *
  */
 
+#include "actionlineedit.h"
 
-#include <QIcon>
-#include <QPainter>
-#include <QHBoxLayout>
 #include <QAction>
 #include <QActionEvent>
+#include <QHBoxLayout>
 #include <QIcon>
 #include <QMenu>
-#include "actionlineedit.h"
+#include <QPainter>
 
 ActionLineEditButton::ActionLineEditButton( QWidget *parent )
         : QAbstractButton(parent), action_(nullptr), popup_(nullptr)

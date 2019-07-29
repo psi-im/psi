@@ -1,5 +1,6 @@
 /*
  * xdata_widget.h - a class for displaying jabber:x:data forms
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2004  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,14 +21,14 @@
 #ifndef XDATAWIDGET_H
 #define XDATAWIDGET_H
 
-#include <QWidget>
 #include <QList>
 #include <QString>
 #include <QVBoxLayout>
+#include <QWidget>
 
+#include "xmpp_jid.h"
 #include "xmpp_stanza.h"
 #include "xmpp_xdata.h"
-#include "xmpp_jid.h"
 
 class PsiCon;
 class XDataField;

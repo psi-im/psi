@@ -1,5 +1,6 @@
 /*
  * mucmanager.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -26,14 +27,15 @@
 // In the most extreme case, the MUC manager also broadcasts status changes,
 // taking all the protocol responsibilities from the groupchat.
 
+#include "mucmanager.h"
+
 #include <QObject>
 
-#include "mucmanager.h"
+#include "psiaccount.h"
+#include "xmpp_client.h"
+#include "xmpp_task.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
-#include "xmpp_task.h"
-#include "xmpp_client.h"
-#include "psiaccount.h"
 
 using namespace XMPP;
 
@@ -212,7 +214,6 @@ private:
     Jid room_;
     QDomElement iq_;
 };
-
 
 // -----------------------------------------------------------------------------
 

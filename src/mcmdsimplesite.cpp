@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,12 +19,13 @@
 
 // simple UI integration for mini command system.
 
+#include "mcmdsimplesite.h"
+
 #include <QLabel>
-#include <QTextEdit>
 #include <QPalette>
 #include <QString>
+#include <QTextEdit>
 #include <QToolTip>
-#include "mcmdsimplesite.h"
 
 MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i)
     : promptWidget(p)

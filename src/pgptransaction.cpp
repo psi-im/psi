@@ -1,5 +1,6 @@
 /*
  * pgptransaction.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2005  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -22,9 +23,9 @@
  *
  */
 
-#include <QtCrypto>
-
 #include "pgptransaction.h"
+
+#include <QtCrypto>
 
 using namespace XMPP;
 

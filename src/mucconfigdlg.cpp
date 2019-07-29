@@ -1,5 +1,6 @@
 /*
  * mucconfigdlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,21 +18,22 @@
  *
  */
 
-#include <QVariant>
-#include <QMessageBox>
+#include "mucconfigdlg.h"
+
 #include <QInputDialog>
 #include <QMap>
+#include <QMessageBox>
 #include <QScrollArea>
+#include <QVariant>
 
-#include "mucmanager.h"
+#include "infodlg.h"
 #include "mucaffiliationsmodel.h"
 #include "mucaffiliationsproxymodel.h"
-#include "mucconfigdlg.h"
-#include "xdata_widget.h"
-#include "infodlg.h"
-#include "vcardfactory.h"
-#include "xmpp_vcard.h"
+#include "mucmanager.h"
 #include "psiaccount.h"
+#include "vcardfactory.h"
+#include "xdata_widget.h"
+#include "xmpp_vcard.h"
 
 using namespace XMPP;
 
@@ -334,7 +336,6 @@ void MUCConfigDlg::setItems_error(int, const QString&)
         refreshAffiliations();
     }
 }
-
 
 void MUCConfigDlg::removePendingRequest(MUCItem::Affiliation a)
 {

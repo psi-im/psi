@@ -1,5 +1,6 @@
 /*
  * mainwin.cpp - the main window.  holds contactlist and buttons.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,67 +20,61 @@
 
 #include "mainwin.h"
 
-#include <QMessageBox>
-#include <QIcon>
 #include <QApplication>
-#include <QTimer>
+#include <QCloseEvent>
+#include <QEvent>
+#include <QIcon>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMenuBar>
+#include <QMessageBox>
 #include <QObject>
 #include <QPainter>
-#include <QSignalMapper>
-#include <QMenuBar>
 #include <QPixmap>
-#include <QCloseEvent>
-#include <QKeyEvent>
-#include <QEvent>
-#include <QVBoxLayout>
-#include <QSplitter>
-#include <QMenu>
-#include <QtAlgorithms>
 #include <QShortcut>
-
+#include <QSignalMapper>
+#include <QSplitter>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QtAlgorithms>
 #ifdef Q_OS_WIN
-#include <windows.h>
+#    include <windows.h>
 #endif
 
-#include "tabmanager.h"
-#include "tabdlg.h"
-#include "common.h"
-#include "showtextdlg.h"
-#include "psicon.h"
-#include "textutil.h"
-#include "psiiconset.h"
-#include "xmpp_serverinfomanager.h"
+#include "aboutdlg.h"
+#include "activecontactsmenu.h"
+#include "activitydlg.h"
 #include "applicationinfo.h"
+#include "avatars.h"
+#include "avcall/avcall.h"
+#include "common.h"
+#include "desktoputil.h"
+#include "geolocationdlg.h"
+#include "globalstatusmenu.h"
+#include "mainwin_p.h"
+#include "mooddlg.h"
+#include "mucjoindlg.h"
 #include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
 #include "psievent.h"
+#include "psiiconset.h"
+#include "psimedia/psimedia.h"
+#include "psioptions.h"
+#include "psirosterwidget.h"
+#include "psitoolbar.h"
 #include "psitooltip.h"
 #include "psitrayicon.h"
-#include "psitoolbar.h"
-#include "aboutdlg.h"
-#include "psitoolbar.h"
-#include "psioptions.h"
-#include "mucjoindlg.h"
-#include "psicontactlist.h"
-#include "desktoputil.h"
-#include "statusdlg.h"
-#include "globalstatusmenu.h"
-#include "psirosterwidget.h"
-#include "mooddlg.h"
-#include "activitydlg.h"
-#include "geolocationdlg.h"
-#include "activecontactsmenu.h"
-
-#include "mainwin_p.h"
-
-#include "psimedia/psimedia.h"
-#include "avcall/avcall.h"
-
 #include "rosteravatarframe.h"
-#include "avatars.h"
-
+#include "showtextdlg.h"
+#include "statusdlg.h"
+#include "tabdlg.h"
+#include "tabmanager.h"
+#include "textutil.h"
 #ifdef HAVE_X11
-#include <x11windowsystem.h>
+#    include <x11windowsystem.h>
 #endif
+#include "xmpp_serverinfomanager.h"
 
 using namespace XMPP;
 
@@ -389,7 +384,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #endif
     QMenu* viewMenu = new QMenu(tr("View"), this);
 
-
     d->vb_roster->setMargin(layoutMargin);
     d->vb_roster->setSpacing(layoutMargin);
 
@@ -406,7 +400,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
             }
         }
     }
-
 
     // create rosteravatarframe
     d->rosterAvatar = new RosterAvatarFrame(this);
@@ -448,14 +441,12 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
 #endif
 
-
     buildStatusMenu(d->statusMenu);
 #ifdef Q_OS_LINUX
     buildStatusMenu(d->statusMenuMB);
 #endif
     buildOptionsMenu();
     connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
-
 
     X11WM_CLASS("main");
 
@@ -1507,7 +1498,6 @@ bool MainWin::eventFilter(QObject *o, QEvent *e)
 }
 
 #ifdef Q_OS_WIN
-#include <windows.h>
 bool MainWin::nativeEvent(const QByteArray &eventType, MSG* msg, long* result)
 {
     Q_UNUSED(eventType);
@@ -1853,7 +1843,6 @@ void MainWin::setWindowIcon(const QPixmap& p)
 
 #if 0
 #if defined(Q_OS_WIN)
-#include <windows.h>
 void MainWin::showNoFocus()
 {
     clearWState( WState_ForceHide );
@@ -1871,13 +1860,13 @@ void MainWin::showNoFocus()
         // minimum size.
         QSize s = sizeHint();
         QSizePolicy::ExpandData exp;
-#ifndef QT_NO_LAYOUT
+# ifndef QT_NO_LAYOUT
         if ( layout() ) {
             if ( layout()->hasHeightForWidth() )
                 s.setHeight( layout()->totalHeightForWidth( s.width() ) );
             exp =  layout()->expanding();
         } else
-#endif
+# endif
         {
             if ( sizePolicy().hasHeightForWidth() )
                 s.setHeight( heightForWidth( s.width() ) );
@@ -1924,9 +1913,9 @@ void MainWin::showNoFocus()
         }
     }
 
-#if defined(QT_ACCESSIBILITY_SUPPORT)
+# if defined(QT_ACCESSIBILITY_SUPPORT)
     QAccessible::updateAccessibility( this, 0, QAccessible::ObjectShow );
-#endif
+# endif
 
     SetWindowPos(winId(),HWND_TOP,0,0,0,0, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW);
     UpdateWindow(winId());

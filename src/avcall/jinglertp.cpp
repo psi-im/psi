@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Barracuda Networks, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,14 +19,15 @@
 
 #include "jinglertp.h"
 
+#include <QtCrypto>
 #include <stdio.h>
 #include <stdlib.h>
-#include <QtCrypto>
+
 #include "iris/netnames.h"
 #include "iris/turnclient.h"
 #include "iris/udpportreserver.h"
-#include "xmpp_client.h"
 #include "jingle.h"
+#include "xmpp_client.h"
 
 // TODO: reject offers that don't contain at least one of audio or video
 // TODO: support candidate negotiations over the JingleRtpChannel thread

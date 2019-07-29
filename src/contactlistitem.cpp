@@ -1,5 +1,6 @@
 /*
  * contactlistitem.cpp - base class for contact list items
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +20,16 @@
 
 #include "contactlistitem.h"
 
-#include "psicontact.h"
-#include "psiaccount.h"
-#include "contactlistmodel.h"
-#include "userlist.h"
+#include <QCoreApplication>
+#include <QTextDocument>
+
 #include "avatars.h"
 #include "contactlistaccountmenu.h"
 #include "contactlistgroupmenu.h"
-
-#include <QCoreApplication>
-#include <QTextDocument>
+#include "contactlistmodel.h"
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "userlist.h"
 
 ContactListItem::ContactListItem(ContactListModel *model, Type type, SpecialGroupType specialGropType)
     : AbstractTreeItem()

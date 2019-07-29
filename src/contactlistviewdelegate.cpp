@@ -1,5 +1,6 @@
 /*
  * contactlistviewdelegate.cpp - base class for painting contact list items
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -17,28 +18,27 @@
  *
  */
 
-#include "contactlistviewdelegate_p.h"
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QMutableSetIterator>
+#include <QPainter>
+#include <QSetIterator>
+#include <QSortFilterProxyModel>
 
+#include "activity.h"
 #include "avatars.h"
 #include "coloropt.h"
 #include "common.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "contactlistview.h"
-#include "psiiconset.h"
-#include "psioptions.h"
+#include "contactlistviewdelegate_p.h"
 #include "debug.h"
 #include "mood.h"
-#include "activity.h"
-
-#include <QKeyEvent>
-#include <QLineEdit>
-#include <QPainter>
-#include <QSortFilterProxyModel>
-#include <QMutableSetIterator>
-#include <QSetIterator>
-#include <QApplication>
-#include <QDesktopWidget>
+#include "psiiconset.h"
+#include "psioptions.h"
 
 static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
@@ -171,7 +171,6 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     animTimer->setInterval(ANIM_INTERVAL);
     animTimer->setSingleShot(false);
     connect(animTimer, SIGNAL(timeout()), SLOT(updateAnim()));
-
 
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
     connect(ColorOpt::instance(), SIGNAL(changed(const QString&)), SLOT(colorOptionChanged(const QString&)));
@@ -574,7 +573,6 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
      * 12) on the other side of nickname rectangle draw transparent gradient if it intersects nick space to hide nickname softly
      * 13) Draw icons in its rectangle aligned vertically starting from opposite side on nickname start
      */
-
 
     drawBackground(painter, opt, index);
 
@@ -1246,7 +1244,6 @@ void ContactListViewDelegate::Private::setAnimEnabled(const QModelIndex &index, 
 /***************************/
 /* ContactListViewDelegate */
 /***************************/
-
 
 ContactListViewDelegate::ContactListViewDelegate(ContactListView *parent)
     : QItemDelegate(parent)

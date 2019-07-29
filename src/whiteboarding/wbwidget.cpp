@@ -1,6 +1,7 @@
 /*
  * wbwidget.cpp - a widget for processing and showing whiteboard
  *                messages.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +20,12 @@
  */
 
 #include "wbwidget.h"
-#include "wbnewpath.h"
-#include "wbnewimage.h"
 
-#include <QMouseEvent>
 #include <QApplication>
+#include <QMouseEvent>
+
+#include "wbnewimage.h"
+#include "wbnewpath.h"
 
 WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent) {
     newWbItem_ = nullptr;

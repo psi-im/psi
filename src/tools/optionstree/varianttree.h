@@ -1,5 +1,6 @@
 /*
  * varianttree.h - Tree structure for QVariants and Comments
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -20,14 +21,13 @@
 #ifndef _VARIANTTREE_H_
 #define _VARIANTTREE_H_
 
+#include <QHash>
 #include <QObject>
 #include <QVariant>
-#include <QHash>
 
 class QDomDocument;
 class QDomElement;
 class QDomDocumentFragment;
-
 
 /**
  * \class VariantTree

@@ -1,5 +1,6 @@
 /*
  * privacydlg.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +24,8 @@
 #include <QDialog>
 #include <QPointer>
 
-#include "ui_privacy.h"
 #include "privacylistmodel.h"
+#include "ui_privacy.h"
 
 class QWidget;
 class QString;

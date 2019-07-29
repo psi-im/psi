@@ -1,5 +1,6 @@
 /*
  * privacylistmodel.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +18,11 @@
  *
  */
 
+#include "privacylistmodel.h"
+
 #include <QAbstractListModel>
 
 #include "privacylist.h"
-#include "privacylistmodel.h"
 #include "privacyruledlg.h"
 
 PrivacyListModel::PrivacyListModel(const PrivacyList& list, QObject* parent) : QAbstractListModel(parent), list_(list)

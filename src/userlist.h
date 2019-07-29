@@ -1,6 +1,7 @@
 /*
  * userlist.h - high-level roster
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,18 +21,20 @@
 #ifndef USERLIST_H
 #define USERLIST_H
 
-#include <QString>
 #include <QDateTime>
 #include <QList>
 #include <QPixmap>
-#include "xmpp_resource.h"
-#include "xmpp_liverosteritem.h"
-#include "mood.h"
+#include <QString>
+
 #include "activity.h"
 #include "geolocation.h"
 #include "maybe.h"
+#include "mood.h"
+#include "xmpp_liverosteritem.h"
+#include "xmpp_resource.h"
 
 class AvatarFactory;
+
 namespace XMPP {
     class Jid;
 }

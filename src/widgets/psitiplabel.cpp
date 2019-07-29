@@ -1,18 +1,18 @@
 #include "psitiplabel.h"
 
-#include <QApplication>
 #include <QAbstractTextDocumentLayout>
-#include <QTextFrame>
+#include <QApplication>
 #include <QStyle>
 #include <QStyleOption>
 #include <QStylePainter>
+#include <QTextEdit>
+#include <QTextFrame>
 #include <QTimer>
 #include <QToolTip>
-#include <QTextEdit>
 
-#include "psirichtext.h"
-#include "psioptions.h"
 #include "common.h"
+#include "psioptions.h"
+#include "psirichtext.h"
 
 PsiTipLabel *PsiTipLabel::instance_ = nullptr;
 

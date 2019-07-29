@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: main.cpp,v 0.1 2005/01/08 12:19:58 denis Exp $

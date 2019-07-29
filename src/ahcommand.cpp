@@ -1,5 +1,6 @@
 /*
  * ahcommand.cpp - Ad-Hoc Command
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +18,12 @@
  *
  */
 
+#include "ahcommand.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QSharedData>
 
-#include "ahcommand.h"
 #include "xmpp_xdata.h"
 
 #define AHC_NS "http://jabber.org/protocol/commands"
@@ -197,7 +199,6 @@ QDomElement AHCommand::toXml(QDomDocument* doc, bool submit) const
     return command;
 }
 
-
 AHCommand AHCommand::formReply(const AHCommand& c, const XData& data)
 {
     AHCommand r(c.node(), data, c.sessionId());
@@ -305,7 +306,6 @@ AHCommand::Status AHCommand::string2status(const QString& s)
     else
         return NoStatus;
 }
-
 
 // --------------------------------------------------------------------------
 // AHCError: The class representing an Ad-Hoc command error

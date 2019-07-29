@@ -1,6 +1,7 @@
 /*
  * chatview_webkit.cpp - Webkit based chatview
- * Copyright (C) 2010  Rion
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,54 +20,50 @@
 
 #include "chatview_webkit.h"
 
-#include "msgmle.h"
-#include "psioptions.h"
-#include "textutil.h"
-
-#include <QWidget>
-#include <QJsonObject>
-#include <QMetaObject>
-#include <QMetaProperty>
-#include <QJsonDocument>
-#ifdef WEBENGINE
-# if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-#  include <QWebEngineContextMenuData>
-# endif
-# include <QWebEngineSettings>
-#else
-# include <QWebPage>
-# include <QWebFrame>
-# include <QNetworkRequest>
-#endif
+#include <QAction>
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLayout>
-#include <QPalette>
-#include <QDesktopWidget>
-#include <QApplication>
+#include <QMetaObject>
 #include <QMetaProperty>
 #include <QNetworkReply>
-#include <QAction>
-
-
-#include "webview.h"
-//#include "psiapplication.h"
-#include "psiaccount.h"
-#include "applicationinfo.h"
-#include "networkaccessmanager.h"
-#include "jsutil.h"
-#include "messageview.h"
-#include "psithememanager.h"
-#include "chatviewtheme.h"
-#include "chatviewthemeprovider.h"
-#include "avatars.h"
-#include "desktoputil.h"
-#include "psicon.h"
-#include "xmpp_tasks.h"
-#ifdef PSI_PLUGINS
-# include "pluginmanager.h"
+#include <QPalette>
+#include <QWidget>
+#ifdef WEBENGINE
+#    if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#      include <QWebEngineContextMenuData>
+#    endif
+#    include <QWebEngineSettings>
+#else
+#    include <QNetworkRequest>
+#    include <QWebFrame>
+#    include <QWebPage>
 #endif
 
+#include "applicationinfo.h"
+#include "avatars.h"
+#include "chatviewtheme.h"
+#include "chatviewthemeprovider.h"
+#include "desktoputil.h"
+#include "jsutil.h"
+#include "messageview.h"
+#include "msgmle.h"
+#include "networkaccessmanager.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
+#endif
+#include "psiaccount.h"
+//#include "psiapplication.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psithememanager.h"
+#include "textutil.h"
+#include "webview.h"
+#include "xmpp_tasks.h"
 
 class ChatViewThemeSessionBridge;
 class ChatViewJSObject;
@@ -101,7 +98,6 @@ public:
     }
 };
 
-
 //----------------------------------------------------------------------------
 // ChatViewJSObject
 // object which will be embed to javascript part of view
@@ -121,7 +117,6 @@ class ChatViewJSObject : public ChatViewThemeSession
     Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
     Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged)    // local image. from vcard
     Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY localUserAvatarChanged) // local avatar. resized vcard or PEP.
-
 
 public:
     ChatViewJSObject(ChatView *view) :
@@ -700,9 +695,9 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
         }
     });
     return false;
-#ifdef __GNUC__
+# ifdef __GNUC__
 #warning "TODO: make search asynchronous in all cases"
-#endif
+# endif
 #else
     bool found = d->webView->page()->findText(str, startFromBeginning ?
                  QWebPage::FindWrapsAroundDocument : (QWebPage::FindFlag)0);

@@ -1,5 +1,6 @@
 /*
  * mooddlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +18,15 @@
  *
  */
 
-#include "xmpp_pubsubitem.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
 #include "mooddlg.h"
+
 #include "moodcatalog.h"
-#include "psiaccount.h"
 #include "pepmanager.h"
+#include "psiaccount.h"
 #include "psiiconset.h"
+#include "xmpp_client.h"
+#include "xmpp_pubsubitem.h"
+#include "xmpp_task.h"
 
 MoodDlg::MoodDlg(QList<PsiAccount*> list)
     : QDialog(nullptr), pa_(list)
@@ -52,7 +54,6 @@ MoodDlg::MoodDlg(QList<PsiAccount*> list)
     }
     ui_.le_text->setText(pa->mood().text());
 }
-
 
 void MoodDlg::setMood()
 {

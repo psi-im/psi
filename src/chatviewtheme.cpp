@@ -1,6 +1,7 @@
 /*
  * chatviewtheme.cpp - theme for webkit based chatview
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,41 +18,41 @@
  *
  */
 
-#ifdef WEBENGINE
-#include <QWebEnginePage>
-#include <QWebChannel>
-#include <QWebEngineScript>
-#include <QWebEngineScriptCollection>
-#include <QWebEngineProfile>
-#include <functional>
-#else
-#include <QWebPage>
-#include <QWebFrame>
-#include <QNetworkRequest>
-#endif
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <QMetaProperty>
-#include <QFileInfo>
+#include "chatviewtheme.h"
+
 #include <QApplication>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMetaProperty>
 #include <QScopedPointer>
 #include <QTimer>
 #include <time.h>
 #include <tuple>
+#ifdef WEBENGINE
+#    include <QWebChannel>
+#    include <QWebEnginePage>
+#    include <QWebEngineProfile>
+#    include <QWebEngineScript>
+#    include <QWebEngineScriptCollection>
+#    include <functional>
+#else
+#    include <QNetworkRequest>
+#    include <QWebFrame>
+#    include <QWebPage>
+#endif
 
-#include "chatviewtheme.h"
+#include "avatars.h"
 #include "chatviewtheme_p.h"
-#include "psioptions.h"
-#include "coloropt.h"
-#include "jsutil.h"
-#include "webview.h"
 #include "chatviewthemeprovider.h"
 #include "chatviewthemeprovider_priv.h"
-#include "avatars.h"
+#include "coloropt.h"
 #include "common.h"
-#include "psicon.h"
-#include "theme_p.h"
 #include "jsutil.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "theme_p.h"
+#include "webview.h"
 
 #ifndef WEBENGINE
 class SessionRequestHandler : public NAMDataHandler
@@ -166,7 +167,6 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
             << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
             << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
             << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
-
 
     wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", jsLoader.data(), QWebFrame::QtOwnership);
     wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", jsUtil.data(), QWebFrame::QtOwnership);
@@ -293,7 +293,6 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
             res->setStatusCode(qhttp::ESTATUS_OK);
             res->headers().insert("Content-Type", "text/html;charset=utf-8");
 
-
             if (prepareSessionHtml) { // html should be prepared for ech individual session
                 // Even crazier stuff starts here.
                 // Basically we send to theme's webview instance a signal to
@@ -400,7 +399,6 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     return true;
 #endif
 }
-
 
 //------------------------------------------------------------------------------
 // ChatViewThemeJSLoader
@@ -602,12 +600,6 @@ void ChatViewJSLoader::setTransparent()
 {
     theme->transparentBackground = true;
 }
-
-
-
-
-
-
 
 //------------------------------------------------------------------------------
 // ChatViewThemeJSUtil

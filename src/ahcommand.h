@@ -1,5 +1,6 @@
 /*
  * ahcommand.h - Ad-Hoc Command
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef AHCOMMAND_H
 #define AHCOMMAND_H
 
-#include <QString>
 #include <QSharedDataPointer>
+#include <QString>
 
 #include "xmpp_xdata.h"
 

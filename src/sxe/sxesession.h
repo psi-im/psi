@@ -1,5 +1,6 @@
 /*
  * sxesession.h - Sxe Session
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -23,10 +24,10 @@
 #define SXENS "http://jabber.org/protocol/sxe"
 /*  ^^^^ make sure corresponds to NS used for parsing in iris/src/xmpp/xmpp-im/types.cpp ^^^^ */
 
-#include <QObject>
-#include <QList>
-#include <QPointer>
 #include <QDomNode>
+#include <QList>
+#include <QObject>
+#include <QPointer>
 
 #include "im.h"
 #include "psiaccount.h"

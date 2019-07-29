@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2008 Remko Troncon
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2008  Remko Troncon
  * See COPYING file for the detailed license.
  */
 
 #include <QApplication>
 #include <QDir>
-#include <QWidget>
+#include <QFile>
 #include <QPushButton>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QVBoxLayout>
-#include <QFile>
+#include <QWidget>
 
 #include "AutoUpdater/AutoUpdater.h"
 #include "AutoUpdater/SparkleAutoUpdater.h"
@@ -154,7 +155,6 @@ class UpdaterWidget : public QWidget
             appcast += "</rss>";
             return appcast.toUtf8();
         }
-
 
     public slots:
         void doCheckWithNew() {

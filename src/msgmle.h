@@ -1,5 +1,6 @@
 /*
  * msgmle.h - subclass of PsiTextView to handle various hotkeys
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef MSGMLE_H
 #define MSGMLE_H
 
-#include <memory>
 #include <QTextEdit>
+#include <memory>
 
 #include "xmpp_htmlelement.h"
 
@@ -39,7 +40,6 @@ class CapitalLettersController;
 class QToolButton;
 class QLabel;
 class AudioRecorder;
-
 
 class ChatEdit : public QTextEdit
 {
@@ -133,7 +133,6 @@ private:
     std::unique_ptr<AudioRecorder> recorder_;
     int timeout_;
 };
-
 
 class LineEdit : public ChatEdit
 {

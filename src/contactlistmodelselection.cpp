@@ -1,5 +1,6 @@
 /*
  * contactlistmodelselection.cpp - stores persistent contact list selections
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +23,11 @@
 #include <QDomElement>
 #include <QStringList>
 
-#include "xmpp_xmlcommon.h"
+#include "contactlistitem.h"
 #include "psiaccount.h"
 #include "psicontact.h"
-#include "contactlistitem.h"
 #include "textutil.h"
+#include "xmpp_xmlcommon.h"
 
 static const QString psiRosterSelectionMimeType = "application/psi-roster-selection";
 

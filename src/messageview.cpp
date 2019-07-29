@@ -1,5 +1,6 @@
 /*
  * messageview.cpp - message data for chatview
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -18,11 +19,12 @@
  */
 
 #include "messageview.h"
-#include "textutil.h"
-#include "psioptions.h"
-#include "common.h"
 
 #include <QTextDocument>
+
+#include "common.h"
+#include "psioptions.h"
+#include "textutil.h"
 
 static const QString me_cmd = "/me ";
 

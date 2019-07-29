@@ -1,5 +1,6 @@
 /*
  * wbitem.h - the item classes for the SVG WB
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +21,13 @@
 #ifndef WBITEM_H
 #define WBITEM_H
 
-#include <QGraphicsSvgItem>
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSvgItem>
 #include <QMenu>
-#include "iconaction.h"
+
 #include "../sxe/sxesession.h"
+#include "iconaction.h"
 
 class WbScene;
 class WbWidget;

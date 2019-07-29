@@ -1,7 +1,8 @@
 /*
  * crash.c - handle psi's crashes
  *
- * Copyright (C) 2004 by Juan F. Codagnone <juam@users.sourceforge.net>
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2004  Juan F. Codagnone <juam@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +18,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#include <signal.h>
 #include "crash.h"
+
+#include <signal.h>
+
 #include "crash_sigsegv.h"
 
 namespace Crash {

@@ -1,10 +1,10 @@
 #ifndef GROUPCHATTOPICDLG_H
 #define GROUPCHATTOPICDLG_H
 
-#include "languagemanager.h"
-
-#include <QPointer>
 #include <QDialog>
+#include <QPointer>
+
+#include "languagemanager.h"
 
 namespace Ui {
     class GroupchatTopicDlg;

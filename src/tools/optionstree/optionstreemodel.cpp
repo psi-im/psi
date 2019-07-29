@@ -1,5 +1,6 @@
 /*
  * optionstreemodel.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -21,17 +22,15 @@
 
 #include <QStringList>
 
-#include "optionstree.h"
-
-
 // Enable this if you have Trolltech Labs' ModelTest and are not going
 // to distribute the source or binary. You need to include modeltest.pri
 // somewhere too.
 //#define HAVE_MODELTEST
 
 #ifdef HAVE_MODELTEST
-#include <modeltest.h>
+#    include <modeltest.h>
 #endif
+#include "optionstree.h"
 
 OptionsTreeModel::OptionsTreeModel(OptionsTree* tree, QObject* parent)
         : QAbstractItemModel(parent),
@@ -61,7 +60,6 @@ bool OptionsTreeModel::setFlat(bool b)
     return false;
 }
 
-
 /**
  * Get the parent option of @a option
  * @param option the option name to be splitted
@@ -76,8 +74,6 @@ QString OptionsTreeModel::getParentName(const QString &option) const
     }
     return parentname;
 }
-
-
 
 /**
  * Get index of given @a option
@@ -106,7 +102,6 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
         return createIndex(row, sec, nameToIndex(option));
     }
 }
-
 
 Qt::ItemFlags OptionsTreeModel::flags(const QModelIndex& index) const
 {
@@ -241,9 +236,6 @@ bool OptionsTreeModel::setData ( const QModelIndex & index, const QVariant & val
     return true;
 }
 
-
-
-
 void OptionsTreeModel::optionAboutToBeInserted(const QString& option)
 {
     QString parentname(getParentName(option));
@@ -289,7 +281,6 @@ void OptionsTreeModel::optionRemoved(const QString& option)
     Q_UNUSED(option)
     if (realRemove.pop()) endRemoveRows ();
 }
-
 
 void OptionsTreeModel::optionChanged(const QString& option)
 {

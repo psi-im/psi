@@ -1,5 +1,6 @@
-#include "crash.h"
 #include <kcrash.h>
+
+#include "crash.h"
 
 namespace Crash {
 

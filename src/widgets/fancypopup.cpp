@@ -1,5 +1,6 @@
 /*
  * fancypopup.cpp - the FancyPopup passive popup widget
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2005  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -18,21 +19,20 @@
  */
 
 #include "fancypopup.h"
-#include "ui_fancypopup.h"
 
 #include <QApplication>
-#include <QTimer>
-#include <QList>
-#include <QStyle>
 #include <QDesktopWidget>
-#include <QMouseEvent>
 #include <QList>
+#include <QMouseEvent>
+#include <QStyle>
+#include <QTimer>
 
-#include "iconset.h"
 #include "fancylabel.h"
 //#include "iconlabel.h"
-#include "psitooltip.h"
+#include "iconset.h"
 #include "psioptions.h"
+#include "psitooltip.h"
+#include "ui_fancypopup.h"
 
 #define BUTTON_WIDTH    16
 #define BUTTON_HEIGHT    14

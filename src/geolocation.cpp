@@ -1,5 +1,6 @@
 /*
  * geolocation.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,11 +18,11 @@
  *
  */
 
+#include "geolocation.h"
+
+#include <QApplication>
 #include <QDomDocument>
 #include <QDomElement>
-#include <QApplication>
-
-#include "geolocation.h"
 
 GeoLocation::GeoLocation()
 {

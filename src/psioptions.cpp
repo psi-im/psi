@@ -1,5 +1,6 @@
 /*
  * psioptions.cpp - Psi options class
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -23,16 +24,17 @@
 #include <QTimer>
 
 #include "applicationinfo.h"
-#include "xmpp_xmlcommon.h"
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
-#include "xmpp_client.h"
-#include "statuspreset.h"
-#include "psitoolbar.h"
 #include "common.h"
 #ifdef PSI_PLUGINS
-#include "pluginmanager.h"
+#    include "pluginmanager.h"
 #endif
+#include "psitoolbar.h"
+#include "statuspreset.h"
+#include "xmpp_client.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
+
 using namespace XMPP;
 
 // ----------------------------------------------------------------------------
@@ -127,7 +129,6 @@ void PsiOptions::reset() {
     delete instance_;
     instance_ = nullptr;
 }
-
 
 /**
  * initizialises the default options for a new profile
@@ -237,7 +238,6 @@ bool PsiOptions::newProfile()
 
     return ok;
 }
-
 
 /**
  * Checks for existing saved Options.
@@ -389,7 +389,6 @@ void PsiOptions::resetOption(const QString &name)
         }
     }
 }
-
 
 PsiOptions* PsiOptions::instance_ = nullptr;
 PsiOptions* PsiOptions::defaults_ = nullptr;

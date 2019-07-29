@@ -1,8 +1,8 @@
 #include "opt_roster_main.h"
+
 #include "common.h"
 #include "iconwidget.h"
 #include "psioptions.h"
-
 #include "ui_opt_roster_main.h"
 
 class OptRosterMainUI : public QWidget, public Ui::OptRosterMain

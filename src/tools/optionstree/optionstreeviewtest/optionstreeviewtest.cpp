@@ -1,8 +1,8 @@
 #include <QApplication>
-#include <QTreeView>
-#include <QHeaderView>
-#include <QVBoxLayout>
 #include <QCheckBox>
+#include <QHeaderView>
+#include <QTreeView>
+#include <QVBoxLayout>
 
 #include "optionstree.h"
 #include "optionstreemodel.h"

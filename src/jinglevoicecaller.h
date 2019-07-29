@@ -1,5 +1,6 @@
 /*
  * jinglevoicecaller.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -36,14 +37,15 @@ namespace cricket {
     class Call;
     class SocketAddress;
 }
+
 namespace XMPP {
     class Jid;
 }
-class JingleClientSlots;
-class JingleCallSlots;
 
 using namespace XMPP;
 
+class JingleClientSlots;
+class JingleCallSlots;
 
 class JingleVoiceCaller : public VoiceCaller
 {

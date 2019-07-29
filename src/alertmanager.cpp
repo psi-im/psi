@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,12 +20,11 @@
 // Manager of a queue for alert popup dialogs (like can't connect to Server,
 // connection errors, etc) the user has to attend to
 
-#include <algorithm>
-#include <QDebug>
-#include <QMessageBox>
-
 #include "alertmanager.h"
 
+#include <QDebug>
+#include <QMessageBox>
+#include <algorithm>
 
 static bool itemCompare(AlertManager::Item* a, AlertManager::Item* b) {
     return a->priority > b->priority;
@@ -87,7 +87,6 @@ void AlertManager::forceDialogUnregister(QObject* obj)
     dialogUnregister(static_cast<QWidget*>(obj));
 }
 
-
 void AlertManager::deleteDialogList()
 {
     while (!list_.isEmpty()) {
@@ -97,8 +96,6 @@ void AlertManager::deleteDialogList()
         delete i;
     }
 }
-
-
 
 bool AlertManager::raiseDialog(QWidget* w, int prio) {
     dialogRegister(w, prio);
@@ -119,15 +116,9 @@ void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QStri
     raiseDialog(msgBox, prio);
 }
 
-
-
-
-
-
 AlertManager::AlertManager(PsiCon *psi) {
     psi_ = psi;
 }
-
 
 AlertManager::~AlertManager() {
     deleteDialogList();

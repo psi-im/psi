@@ -1,6 +1,7 @@
 /*
  * filesharingmanager.cpp - file sharing manager
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,30 +18,7 @@
  *
  */
 
-#include "applicationinfo.h"
 #include "filesharingmanager.h"
-#include "psiaccount.h"
-#include "xmpp_vcard.h"
-#include "xmpp_message.h"
-#include "xmpp_client.h"
-#include "xmpp_reference.h"
-#include "xmpp_hash.h"
-#include "xmpp_jid.h"
-#include "httpfileupload.h"
-#include "filecache.h"
-#include "fileutil.h"
-#include "psicon.h"
-#include "networkaccessmanager.h"
-#include "xmpp_bitsofbinary.h"
-#include "jidutil.h"
-#include "userlist.h"
-#ifdef HAVE_WEBSERVER
-# include "webserver.h"
-# include "qhttpserverconnection.hpp"
-#endif
-#ifndef WEBKIT
-# include "qiteaudio.h"
-#endif
 
 #include <QBuffer>
 #include <QDir>
@@ -55,8 +33,32 @@
 #include <QTemporaryFile>
 #include <QUrl>
 #include <QUrlQuery>
-#include <cstdlib>
 #include <cmath>
+#include <cstdlib>
+
+#include "applicationinfo.h"
+#include "filecache.h"
+#include "fileutil.h"
+#include "httpfileupload.h"
+#include "jidutil.h"
+#include "networkaccessmanager.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#ifndef WEBKIT
+#    include "qiteaudio.h"
+#endif
+#include "userlist.h"
+#include "xmpp_bitsofbinary.h"
+#include "xmpp_client.h"
+#include "xmpp_hash.h"
+#include "xmpp_jid.h"
+#include "xmpp_message.h"
+#include "xmpp_reference.h"
+#include "xmpp_vcard.h"
+#ifdef HAVE_WEBSERVER
+#    include "qhttpserverconnection.hpp"
+#    include "webserver.h"
+#endif
 
 #define FILE_TTL (365 * 24 * 3600)
 #define TEMP_TTL (7 * 24 * 3600)
@@ -79,7 +81,6 @@ static std::tuple<bool,qint64,qint64> parseHttpRangeResponse(const QByteArray &v
     return std::tuple<bool,qint64,qint64>(true, start, size);
 }
 
-
 class AbstractFileShareDownloader : public QObject
 {
     Q_OBJECT
@@ -89,7 +90,6 @@ protected:
     qint64  rangeSize = 0;
     PsiAccount *acc;
     QString sourceUri;
-
 
     void downloadError(const QString &err)
     {
@@ -425,7 +425,6 @@ public:
         return connected;
     }
 };
-
 
 class FileShareDownloader::Private : public QObject
 {
@@ -948,7 +947,6 @@ void FileSharingItem::publish()
         checkFinished();
     }
 }
-
 
 // ======================================================================
 // FileSharingManager

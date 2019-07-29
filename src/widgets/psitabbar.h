@@ -1,5 +1,6 @@
 /*
  * psitabbar.h - Tabbar child for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,9 @@
 #ifndef _PSITABBAR_H_
 #define _PSITABBAR_H_
 
-#include "tabbar.h"
 #include <QPoint>
+
+#include "tabbar.h"
 
 class PsiTabWidget;
 

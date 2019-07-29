@@ -1,5 +1,6 @@
 /*
  * bookmarkmanager.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2008  Remko Troncon, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef BOOKMARKMANAGER_H
 #define BOOKMARKMANAGER_H
 
-#include <QObject>
 #include <QList>
+#include <QObject>
 
 #include "conferencebookmark.h"
 #include "urlbookmark.h"

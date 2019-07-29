@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,9 +22,9 @@
 #ifndef MINICMDSIMPLESITE_H
 #define MINICMDSIMPLESITE_H
 
-#include "minicmd.h"
-
 #include <QPalette>
+
+#include "minicmd.h"
 
 class QLabel;
 class QTextEdit;

@@ -1,7 +1,8 @@
 /*
  *
  * opt_shortcuts.h - an OptionsTab for setting the Keyboard Shortcuts of Psi
- * Copyright (C) 2006 Cestonaro Thilo
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2006  Cestonaro Thilo
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,8 +22,9 @@
 #ifndef OPT_SHORTCUTS_H
 #define OPT_SHORTCUTS_H
 
-#include "optionstab.h"
 #include <QKeySequence>
+
+#include "optionstab.h"
 
 class QTreeWidgetItem;
 class QWidget;

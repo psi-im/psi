@@ -1,5 +1,6 @@
 /*
  * wbitem.cpp - the item classes for the SVG WB
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -18,13 +19,15 @@
  */
 
 #include "wbitem.h"
+
+#include <QDebug>
+#include <QRegExp>
+#include <QSvgRenderer>
+#include <math.h>
+
 #include "wbscene.h"
 #include "wbwidget.h"
-#include <QRegExp>
-#include <QDebug>
-#include <QSvgRenderer>
 
-#include <math.h>
 static QMatrix parseTransformationMatrix(const QString &value);
 
 /*
@@ -53,7 +56,6 @@ void WbItemMenu::destructSelf() {
     deleteLater();
 }
 
-
 /*
  *   WbItem
  */
@@ -71,7 +73,6 @@ WbItem::WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, Wb
         qDebug("Trying to create a WbItem from a null QDomNode.");
         return;
     }
-
 
     // Make the item selectable and movable
     setFlag(QGraphicsItem::ItemIsSelectable);
@@ -363,9 +364,6 @@ QPointF WbItem::center() {
     return transform().map(c);
 }
 
-
-
-
 // The following functions are from qt-mac-opensource-src-4.3.1/src/svg/qsvghandler.cpp
 /****************************************************************************
 **
@@ -599,7 +597,6 @@ static QMatrix parseTransformationMatrix(const QString &value)
         else {
             goto error;
         }
-
 
         while (str->isSpace()) {
             ++str;

@@ -1,5 +1,6 @@
 /*
  * sxemanager.cpp - Whiteboard manager
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +18,13 @@
  *
  */
 
+#include "sxemanager.h"
+
 #include <QUrl>
 
-#include "sxemanager.h"
-#include "psipopup.h"
-#include "psioptions.h"
 #include "common.h"
+#include "psioptions.h"
+#include "psipopup.h"
 #include "xmpp_caps.h"
 
 #define ONETOONEPREFIXSELF "0"
@@ -426,7 +428,6 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 
         }
     }
-
 
     // Cleanup:
     // Delete negotation objects that are no longer needed

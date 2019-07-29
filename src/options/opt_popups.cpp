@@ -1,5 +1,6 @@
 /*
  * opt_popups.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +18,15 @@
  *
  */
 
+#include "opt_popups.h"
+
 //#include <QHBoxLayout>
 #include <QRadioButton>
 
-#include "opt_popups.h"
-#include "ui_opt_popups.h"
-#include "psioptions.h"
-#include "psicon.h"
 #include "popupmanager.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "ui_opt_popups.h"
 
 class OptPopupsUI : public QWidget, public Ui::OptPopups
 {

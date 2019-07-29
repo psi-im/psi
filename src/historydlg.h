@@ -1,5 +1,6 @@
 /*
  * historydlg.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,10 +21,10 @@
 #ifndef HISTORYDLG_H
 #define HISTORYDLG_H
 
-#include "eventdb.h"
-#include "ui_history.h"
 #include "advwidget.h"
+#include "eventdb.h"
 #include "historycontactlistmodel.h"
+#include "ui_history.h"
 
 class PsiAccount;
 class PsiContact;

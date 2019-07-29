@@ -1,9 +1,9 @@
 #include "optionstreewriter.h"
 
-#include <QSize>
-#include <QRect>
-#include <QKeySequence>
 #include <QBuffer>
+#include <QKeySequence>
+#include <QRect>
+#include <QSize>
 
 #include "optionstree.h"
 #include "varianttree.h"

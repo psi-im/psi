@@ -1,6 +1,7 @@
 /*
  * filesharedlg.cpp - file sharing dialog
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,27 +19,28 @@
  */
 
 #include "filesharedlg.h"
-#include "ui_filesharedlg.h"
-#include "psiaccount.h"
-#include "xmpp_message.h"
-#include "multifiletransfermodel.h"
-#include "multifiletransferitem.h"
-#include "xmpp_client.h"
-#include "httpfileupload.h"
-#include "multifiletransferdelegate.h"
-#include "filesharingmanager.h"
-#include "filecache.h"
-#include "psicon.h"
-#include "textutil.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QFileIconProvider>
 #include <QFileInfo>
 #include <QMimeData>
-#include <QUrl>
-#include <QPushButton>
-#include <QFileIconProvider>
 #include <QPainter>
+#include <QPushButton>
+#include <QUrl>
+
+#include "filecache.h"
+#include "filesharingmanager.h"
+#include "httpfileupload.h"
+#include "multifiletransferdelegate.h"
+#include "multifiletransferitem.h"
+#include "multifiletransfermodel.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "textutil.h"
+#include "ui_filesharedlg.h"
+#include "xmpp_client.h"
+#include "xmpp_message.h"
 
 FileShareDlg::FileShareDlg(const QList<FileSharingItem*> &items, QWidget *parent) :
     QDialog(parent),

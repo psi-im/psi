@@ -1,46 +1,42 @@
 /*
- * (c) 2006 Kevin Smith
- * (c) 2008 Maciej Niedzielski
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2006  Kevin Smith
+ * Copyright (C) 2008  Maciej Niedzielski
  */
 
 #include "pluginmanager.h"
 
-#include <QtCore>
-#include <QtCrypto>
-#include <QPluginLoader>
 #include <QLabel>
 #include <QMetaObject>
-
-#include "xmpp_client.h"
-#include "xmpp_task.h"
-#include "xmpp_message.h"
+#include <QPluginLoader>
+#include <QtCore>
+#include <QtCrypto>
 
 #include "applicationinfo.h"
-#include "psioptions.h"
-
-#include "pluginhost.h"
-#include "psicon.h"
-#include "psicontact.h"
-#include "psiplugin.h"
-#include "psiaccount.h"
-#include "stanzafilter.h"
-#include "stanzasender.h"
+#include "avatars.h"
+#include "chatdlg.h"
+#include "eventfilter.h"
+#include "groupchatdlg.h"
 #include "iqfilter.h"
 #include "iqnamespacefilter.h"
-#include "eventfilter.h"
-#include "optionaccessor.h"
-#include "avatars.h"
-#include "psiiconset.h"
-#include "popupmanager.h"
-
-#include "chatdlg.h"
-#include "groupchatdlg.h"
 #include "messageview.h"
-
+#include "optionaccessor.h"
+#include "pluginhost.h"
+#include "popupmanager.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontact.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psiplugin.h"
+#include "stanzafilter.h"
+#include "stanzasender.h"
+#include "xmpp_client.h"
+#include "xmpp_message.h"
+#include "xmpp_task.h"
 
 //TODO(mck)
 // - use native separators when displaying file path
-
 
 /**
  * Helper class used to process incoming XML in plugins.
@@ -66,7 +62,6 @@ public:
     PluginManager* manager;
     int account;
 };
-
 
 /**
  * Function to obtain all the directories in which plugins can be stored
@@ -936,7 +931,6 @@ bool PluginManager::appendMsgView(int account, const QString &jid, const Message
     }
     return false;
 }
-
 
 bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
 {

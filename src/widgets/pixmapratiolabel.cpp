@@ -1,9 +1,9 @@
+#include "pixmapratiolabel.h"
+
+#include <QHBoxLayout>
 #include <QPaintEvent>
 #include <QPainter>
-#include <QHBoxLayout>
 #include <QTimer>
-
-#include "pixmapratiolabel.h"
 
 PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent)
 {

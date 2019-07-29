@@ -1,5 +1,6 @@
 /*
  * geolocationdlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,14 +20,15 @@
 
 #include "geolocationdlg.h"
 
-#include "xmpp_pubsubitem.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
-#include "psiaccount.h"
-#include "pepmanager.h"
-#include "geolocation.h"
 #include <QLineEdit>
+
+#include "geolocation.h"
 #include "iconset.h"
+#include "pepmanager.h"
+#include "psiaccount.h"
+#include "xmpp_client.h"
+#include "xmpp_pubsubitem.h"
+#include "xmpp_task.h"
 
 GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(nullptr), pa_(list)
 {

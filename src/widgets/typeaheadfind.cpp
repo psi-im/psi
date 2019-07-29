@@ -1,5 +1,6 @@
 /*
  * typeaheadfind.cpp - Typeahead find toolbar
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
@@ -20,15 +21,15 @@
 #include "typeaheadfind.h"
 
 #include <QAction>
-#include <QLineEdit>
 #include <QCheckBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QTextEdit>
 
 #include "iconaction.h"
-#include "stretchwidget.h"
-#include "shortcutmanager.h"
 #include "psioptions.h"
+#include "shortcutmanager.h"
+#include "stretchwidget.h"
 
 /**
  * \class TypeAheadFindBar
@@ -83,7 +84,7 @@ public:
     {
         if (widgetType == TypeAheadFindBar::Type::WebView) {
 #ifdef WEBKIT
-#ifdef WEBENGINE
+# ifdef WEBENGINE
             QWebEnginePage::FindFlags wkOptions;
             wkOptions |= options & QTextDocument::FindBackward? QWebEnginePage::FindBackward : (QWebEnginePage::FindFlags)nullptr;
             wkOptions |= options & QTextDocument::FindCaseSensitively? QWebEnginePage::FindCaseSensitively : (QWebEnginePage::FindFlags)nullptr;
@@ -91,12 +92,12 @@ public:
                 updateFoundStyle(found);
             });
             return true; // means nothing
-#else
+# else
             QWebPage::FindFlags wkOptions;
             wkOptions |= options & QTextDocument::FindBackward? QWebPage::FindBackward : (QWebPage::FindFlags)0;
             wkOptions |= options & QTextDocument::FindCaseSensitively? QWebPage::FindCaseSensitively : (QWebPage::FindFlags)0;
             return wv->findText(str, wkOptions);
-#endif
+# endif
 #else
             Q_UNUSED(str);
 #endif

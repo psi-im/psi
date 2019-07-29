@@ -1,5 +1,6 @@
 /*
  * common.h - contains all the common variables and functions for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -20,13 +21,13 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <QString>
-#include <QMap>
-#include <QSize>
-#include <QStringList>
-#include <QList>
 #include <QColor>
 #include <QGridLayout>
+#include <QList>
+#include <QMap>
+#include <QSize>
+#include <QString>
+#include <QStringList>
 
 #if __cplusplus < 201703L
 # define PSI_FALLSTHROUGH
@@ -77,7 +78,6 @@ public:
     bool operator==(const ToolbarPrefs& other);
 };
 
-
 struct lateMigrationOptions
 {
 
@@ -97,7 +97,6 @@ extern int common_smallFontSize;
 // used to be part of the global options struct.
 // FIXME find it a new home!
 enum { EventPriorityDontCare = -1 };
-
 
 // -----------------------------------------------------------------------------
 // Status
@@ -150,10 +149,10 @@ void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 TabbableWidget* findActiveTab();
 #ifdef HAVE_X11
-# include "x11windowsystem.h"
-# define X11WM_CLASS(x)    X11WindowSystem::instance()->x11wmClass(winId(), (x));
+#    include "x11windowsystem.h"
+#    define X11WM_CLASS(x)    X11WindowSystem::instance()->x11wmClass(winId(), (x));
 #else
-# define X11WM_CLASS(x)    /* dummy */
+#    define X11WM_CLASS(x)    /* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
 
@@ -164,7 +163,6 @@ void reorderGridLayout(QGridLayout* layout, int maxCols);
 QString logencode(QString);
 QString logdecode(const QString &);
 
-
 // -----------------------------------------------------------------------------
 // Misc.
 // -----------------------------------------------------------------------------
@@ -174,8 +172,8 @@ QString CAP(const QString &str);
 QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
 #ifdef HAVE_KEYCHAIN
-void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent);
-bool isKeychainEnabled();
+    void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent);
+    bool isKeychainEnabled();
 #endif
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
@@ -196,6 +194,5 @@ class Activity;
 QString activityIconName(const Activity &);
 
 QString macToQtDatetimeFormat(const QString &sys_fmt);
-
 
 #endif

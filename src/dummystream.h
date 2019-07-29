@@ -1,5 +1,6 @@
 /*
  * dummystream.h - dummy Stream class for saving stanzas to strings
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2010  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef DUMMYSTREAM_H
 #define DUMMYSTREAM_H
 
-#include "xmpp_stream.h"
 #include "xmpp_stanza.h"
+#include "xmpp_stream.h"
 
 class DummyStream : public XMPP::Stream
 {
@@ -43,6 +44,5 @@ public:
 private:
     static QDomDocument v_doc;
 };
-
 
 #endif

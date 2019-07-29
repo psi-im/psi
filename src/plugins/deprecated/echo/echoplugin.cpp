@@ -1,5 +1,6 @@
 /*
  * echoplugin.cpp - Psi plugin to echo messages
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -24,12 +25,12 @@
 
 #include <QtCore>
 
-#include "psiplugin.h"
 #include "eventfilter.h"
+#include "optionaccessinghost.h"
+#include "optionaccessor.h"
+#include "psiplugin.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
-#include "optionaccessor.h"
-#include "optionaccessinghost.h"
 
 class EchoPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender, public OptionAccessor
 {
@@ -57,8 +58,6 @@ public:
     // OptionAccessor
     virtual void setOptionAccessingHost(OptionAccessingHost* host);
     virtual void optionChanged(const QString& option);
-
-
 
 private:
     bool enabled;
@@ -159,6 +158,5 @@ void EchoPlugin::optionChanged(const QString& option)
 {
     Q_UNUSED(option);
 }
-
 
 #include "echoplugin.moc"

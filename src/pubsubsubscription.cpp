@@ -1,5 +1,6 @@
 /*
  * pubsubsubscription.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +18,11 @@
  *
  */
 
+#include "pubsubsubscription.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QString>
-
-#include "pubsubsubscription.h"
-
 
 PubSubSubscription::PubSubSubscription()
 {

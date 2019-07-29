@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2009  Barracuda Networks, Inc.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,12 +21,11 @@
 #define PSIMEDIA_H
 
 #include <QMetaType>
+#include <QSharedDataPointer>
 #include <QSize>
 #include <QStringList>
-#include <QSharedDataPointer>
-
 #ifdef QT_GUI_LIB
-#include <QWidget>
+#    include <QWidget>
 #endif
 
 class QMetaMethod;

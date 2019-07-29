@@ -1,6 +1,7 @@
 /*
  * psievent.h - events
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,23 +20,23 @@
 
 #include "psievent.h"
 
-#include <QDomElement>
-#include <QTextStream>
-#include <QList>
 #include <QCoreApplication>
+#include <QDomElement>
+#include <QList>
 #include <QSet>
+#include <QTextStream>
 
-#include "psicon.h"
-#include "psiaccount.h"
-#include "xmpp_xmlcommon.h"
+#include "applicationinfo.h"
+#include "atomicxmlfile/atomicxmlfile.h"
+#include "avcall/avcall.h"
 #include "dummystream.h"
 #include "filetransfer.h"
-#include "applicationinfo.h"
-#include "psicontactlist.h"
-#include "atomicxmlfile/atomicxmlfile.h"
-#include "psioptions.h"
-#include "avcall/avcall.h"
 #include "jingle.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psioptions.h"
+#include "xmpp_xmlcommon.h"
 
 // FIXME renames those
 const int eventPriorityHeadline = 0;
@@ -45,7 +46,6 @@ const int eventPriorityAuth     = 2;
 //const int eventPriorityFile     = 3;
 const int eventPriorityFile     = 2;
 const int eventPriorityRosterExchange = 0; // LEGOPTFIXME: was uninitialised
-
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -1051,7 +1051,6 @@ void EventQueue::extractByJid(QList<PsiEvent::Ptr> *list, const XMPP::Jid &jid)
         }
     }
 }
-
 
 // this function extracts all messages from the queue, and returns a list of them
 void EventQueue::extractMessages(QList<PsiEvent::Ptr> *el)

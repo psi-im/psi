@@ -1,5 +1,6 @@
 /*
  * psiiconset.cpp - the Psi iconset class
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -18,18 +19,18 @@
  */
 
 #include "psiiconset.h"
-#include "psievent.h"
-#include "common.h"
-#include "userlist.h"
-#include "anim.h"
-#include "applicationinfo.h"
 
-#include "psioptions.h"
-
-#include <QFileInfo>
 #include <QCoreApplication>
+#include <QFileInfo>
 #include <QSet>
 #include <QTextStream>
+
+#include "anim.h"
+#include "applicationinfo.h"
+#include "common.h"
+#include "psievent.h"
+#include "psioptions.h"
+#include "userlist.h"
 
 using namespace XMPP;
 
@@ -78,7 +79,6 @@ struct ClientIconCheck
  */
 typedef QMap<QString, QList<ClientIconCheck> > ClientIconMap;
 
-
 //----------------------------------------------------------------------------
 // PsiIconset
 //----------------------------------------------------------------------------
@@ -103,7 +103,6 @@ public:
         QList<IconsetItem> list;
         QList<IconsetItem> customList;
     } status_icons;
-
 
     Private(PsiIconset *_psi) {
         psi = _psi;

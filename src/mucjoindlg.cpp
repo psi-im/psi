@@ -1,5 +1,6 @@
 /*
  * mucjoindlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,20 +18,21 @@
  *
  */
 
+#include "mucjoindlg.h"
+
+#include <QMessageBox>
 #include <QString>
 #include <QStringList>
-#include <QMessageBox>
 
-#include "jidutil.h"
-#include "psicon.h"
 #include "accountscombobox.h"
-#include "psiaccount.h"
-#include "mucjoindlg.h"
-#include "psicontactlist.h"
-#include "groupchatdlg.h"
-#include "psiiconset.h"
 #include "bookmarkmanager.h"
+#include "groupchatdlg.h"
 #include "iconset.h"
+#include "jidutil.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psiiconset.h"
 
 static const int nickConflictCode = 409;
 static const QString additionalSymbol = "_";
@@ -151,7 +153,6 @@ void MUCJoinDlg::updateFavorites()
         ui_.lwFavorites->addItem(item);
     }
 
-
     foreach(QString j, controller_->recentGCList()) {
         Jid jid(j);
         if (!jid.isValid()) {
@@ -223,7 +224,6 @@ void MUCJoinDlg::favoritesItemDoubleClicked(QListWidgetItem *lwi)
     doJoin();
 }
 
-
 void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
 {
     if (!account_ || !account_->checkConnected(this))
@@ -260,7 +260,6 @@ void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
         joined();
         return;
     }
-
 
     if (!account_->groupChatJoin(host, room, nick, pass, !ui_.ck_history->isChecked())) {
         QMessageBox::information(this, tr("Error"), tr("You are in or joining this room already!"));

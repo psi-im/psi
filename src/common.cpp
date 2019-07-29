@@ -1,5 +1,6 @@
 /*
  * common.cpp - contains all the common variables and functions for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -17,6 +18,8 @@
  *
  */
 
+#include "common.h"
+
 #include <QUrl>
 #include <QProcess>
 #include <QBoxLayout>
@@ -31,40 +34,37 @@
 #include <QDir>
 #include <QLibrary>
 #include <QDesktopWidget>
+#ifdef __GLIBC__
+#    include <langinfo.h>
+#endif
 #ifdef HAVE_KEYCHAIN
-# include <qt5keychain/keychain.h>
+#    include <qt5keychain/keychain.h>
 #endif
-
 #include <stdio.h>
-#ifdef HAVE_X11
-#include "x11windowsystem.h"
+#ifdef Q_OS_MAC
+#    include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
+#    include <CoreServices/CoreServices.h>
+#    include <sys/stat.h>
+#    include <sys/types.h>
 #endif
-
 #ifdef Q_OS_WIN
-#include <windows.h>
+#    include <windows.h>
 #endif
 
 #ifdef Q_OS_MAC
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
-#include <CoreServices/CoreServices.h>
-#include "CocoaUtilities/cocoacommon.h"
+#    include "CocoaUtilities/cocoacommon.h"
 #endif
-
-#ifdef __GLIBC__
-#include <langinfo.h>
-#endif
-
-#include "common.h"
+#include "activity.h"
+#include "applicationinfo.h"
 #include "profiles.h"
-#include "rtparse.h"
 #include "psievent.h"
 #include "psiiconset.h"
-#include "applicationinfo.h"
 #include "psioptions.h"
-#include "activity.h"
+#include "rtparse.h"
 #include "tabdlg.h"
+#ifdef HAVE_X11
+#    include "x11windowsystem.h"
+#endif
 
 Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
@@ -76,7 +76,6 @@ QString CAP(const QString &str)
 {
     return QString("%1: %2").arg(ApplicationInfo::name()).arg(str);
 }
-
 
 // clips plain text
 QString clipStatus(const QString &str, int width, int height)
@@ -202,7 +201,6 @@ QString status2txt(int status)
     }
 }
 
-
 QString logencode(QString str)
 {
     str.replace(QRegExp("\\\\"), "\\\\");   // backslash to double-backslash
@@ -239,7 +237,6 @@ QString logdecode(const QString &str)
     return ret;
 }
 
-
 bool fileCopy(const QString &src, const QString &dest)
 {
     QFile in(src);
@@ -269,7 +266,6 @@ bool fileCopy(const QString &src, const QString &dest)
 
     return true;
 }
-
 
 /** Detect default player helper on unix like systems
  */
@@ -591,7 +587,6 @@ bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
            nl == other.nl;
            // extraOffset == other.extraOffset;
 }
-
 
 int versionStringToInt(const char* version)
 {

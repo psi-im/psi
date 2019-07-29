@@ -14,8 +14,10 @@
  *
  */
 
-#include <QApplication>
 #include "mediadevicewatcher.h"
+
+#include <QApplication>
+
 #include "../psimedia/psimedia.h"
 #include "psioptions.h"
 
@@ -33,7 +35,6 @@ MediaDeviceWatcher* MediaDeviceWatcher::instance()
     return _instance;
 }
 
-
 void MediaDeviceWatcher::updateDefaults()
 {
     QString id;
@@ -44,7 +45,6 @@ void MediaDeviceWatcher::updateDefaults()
     bool hasAudioIn = !id.isNull();
     QString userPrefVideoIn = PsiOptions::instance()->getOption("options.media.devices.video-input").toString();
     bool hasVideoIn = !id.isNull();
-
 
     //configuration.liveInput = s.value("liveInput", true).toBool();
 	//configuration.loopFile = s.value("liveFile", true).toBool();

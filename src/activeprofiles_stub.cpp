@@ -1,5 +1,6 @@
 /*
  * activeprofiles_stub.cpp - Class for interacting with other psi instances
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Maciej Niedzielski
  * Copyright (C) 2006-2007  Martin Hostettler
  *
@@ -18,10 +19,10 @@
  *
  */
 
-#include "activeprofiles.h"
-
 #include <QCoreApplication>
 #include <QString>
+
+#include "activeprofiles.h"
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {

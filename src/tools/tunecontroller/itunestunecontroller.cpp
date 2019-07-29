@@ -1,5 +1,6 @@
 /*
  * itunescontroller.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +18,13 @@
  *
  */
 
-#include <QtGlobal>
-#include <QString>
-#include <QTime>
-#include <QDebug>
+#include "itunestunecontroller.h"
 
 #include <CoreFoundation/CoreFoundation.h>
-
-#include "itunestunecontroller.h"
+#include <QDebug>
+#include <QString>
+#include <QTime>
+#include <QtGlobal>
 
 /**
  * \class ITunesController
@@ -48,7 +48,6 @@ static QString CFStringToQString(CFStringRef s)
     }
     return result;
 }
-
 
 ITunesController::ITunesController()
 {

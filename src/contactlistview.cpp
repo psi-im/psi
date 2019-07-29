@@ -1,5 +1,6 @@
 /*
  * contactlistview.cpp - base contact list widget class
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -17,24 +18,25 @@
  *
  */
 
-#include <QTreeView>
-#include <QHeaderView>
+#include "contactlistview.h"
+
 #include <QContextMenuEvent>
-#include <QSortFilterProxyModel>
-#include <QLineEdit>
-#include <QPainter>
-#include <QLinearGradient>
-#include <QScrollBar>
 #include <QCoreApplication>
+#include <QHeaderView>
+#include <QLineEdit>
+#include <QLinearGradient>
+#include <QPainter>
+#include <QScrollBar>
+#include <QSortFilterProxyModel>
+#include <QTreeView>
 
 #include "contactlistitem.h"
 #include "contactlistitemmenu.h"
 #include "contactlistmodel.h"
-#include "contactlistview.h"
-#include "psioptions.h"
-#include "psitooltip.h"
 #include "contactlistproxymodel.h"
 #include "debug.h"
+#include "psioptions.h"
+#include "psitooltip.h"
 
 ContactListView::ContactListView(QWidget* parent)
     : HoverableTreeView(parent)

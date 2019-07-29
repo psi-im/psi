@@ -14,5 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(ContactInfoAccessor, "org.psi-im.ContactInfoAccessor/0.1");
 
-
 #endif // CONTACTINFOACCESSOR_H

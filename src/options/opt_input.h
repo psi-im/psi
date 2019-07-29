@@ -1,9 +1,9 @@
 #ifndef OPT_TABINPUT_H
 #define OPT_TABINPUT_H
 
+#include "languagemanager.h"
 #include "optionstab.h"
 #include "psicon.h"
-#include "languagemanager.h"
 
 class QWidget;
 class QTreeWidgetItem;

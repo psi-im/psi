@@ -1,5 +1,6 @@
 /*
  * iconwidget.cpp - misc. Iconset- and PsiIcon-aware widgets
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -18,23 +19,23 @@
  */
 
 #include "iconwidget.h"
+
+#include <QApplication>
+#include <QBrush>
+#include <QPainter>
+
+#ifndef WIDGET_PLUGIN
+#    include <QBitmap>
+#    include <QMap>
+#    include <QStyle>
+#    include "iconset.h"
+#    include "pixmaputil.h"
+#else
+#    include <QImage>
+#include "iconbutton.h"
 #include "iconsetdisplay.h"
 #include "iconsetselect.h"
 #include "icontoolbutton.h"
-#include "iconbutton.h"
-
-#include <QApplication>
-#include <QPainter>
-#include <QBrush>
-
-#ifndef WIDGET_PLUGIN
-#    include "iconset.h"
-#    include <QStyle>
-#    include <QBitmap>
-#    include <QMap>
-#       include "pixmaputil.h"
-#else
-#    include <QImage>
 
 static const char *cancel_xpm[] = {
 "22 22 60 1",
@@ -320,7 +321,6 @@ public:
 #endif
         return qMax( ww, QApplication::globalStrut().width() );
     }
-
 
     void paint(QPainter *painter) const
     {

@@ -1,5 +1,6 @@
 /*
  * rosteravatarframe.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +19,10 @@
  */
 
 #include "rosteravatarframe.h"
-#include "psioptions.h"
-#include "iconset.h"
-#include "qpainter.h"
 
+#include "iconset.h"
+#include "psioptions.h"
+#include "qpainter.h"
 
 RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
     : QFrame(parent)

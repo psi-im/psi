@@ -14,5 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(WebkitAccessor, "org.psi-im.WebkitAccessor/0.1");
 
-
 #endif // WEBKITACCESSOR_H

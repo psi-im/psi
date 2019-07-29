@@ -1,8 +1,8 @@
 #ifndef SNARL_INTERFACE
 #define SNARL_INTERFACE
 
-#include <windows.h>
 #include <string>
+#include <windows.h>
 
 class SnarlInterface {
     public:

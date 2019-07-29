@@ -1,5 +1,6 @@
 /*
  * popupmanager.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2011-2012  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -18,15 +19,15 @@
  */
 
 #include "popupmanager.h"
-#include "psioptions.h"
-#include "psiaccount.h"
-#include "psicon.h"
-#include "psipopupinterface.h"
-#include "xmpp_jid.h"
 
 #include <QPluginLoader>
 #include <QtPlugin>
 
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psipopupinterface.h"
+#include "xmpp_jid.h"
 
 static const int defaultTimeout = 5;
 static const QString defaultType = "Classic";
@@ -236,7 +237,6 @@ void PopupManager::doPopup(PsiAccount *account, const Jid &j, const PsiIcon *tit
     }
 }
 
-
 QStringList PopupManager::availableTypes() const
 {
     return d->popups_.keys();
@@ -251,13 +251,12 @@ QString PopupManager::currentType() const
     return defaultType;
 }
 
-
 Q_IMPORT_PLUGIN(PsiPopupPlugin)
 
-# if defined(Q_OS_MAC) && defined(HAVE_GROWL)
-Q_IMPORT_PLUGIN(PsiGrowlNotifierPlugin)
-# endif
+#if defined(Q_OS_MAC) && defined(HAVE_GROWL)
+    Q_IMPORT_PLUGIN(PsiGrowlNotifierPlugin)
+#endif
 
-# ifdef USE_DBUS
-Q_IMPORT_PLUGIN(PsiDBusNotifierPlugin)
-# endif
+#ifdef USE_DBUS
+    Q_IMPORT_PLUGIN(PsiDBusNotifierPlugin)
+#endif

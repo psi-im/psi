@@ -1,5 +1,6 @@
 /*
  * sxerecord.h - A class for storing the record of an individual node
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +22,9 @@
 #define SXDEMETADATA_H
 
 #include <QObject>
-#include "sxerecordedit.h"
+
 #include "sxenewedit.h"
+#include "sxerecordedit.h"
 #include "sxeremoveedit.h"
 
 /*! \brief A class for storing the record of an individual node.*/

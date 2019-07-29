@@ -1,5 +1,6 @@
 /*
  * sxenewedit.h - An single SXE edit that creates a new node
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +56,6 @@ class SxeNewEdit : public SxeEdit {
         QString processingInstructionTarget() const;
         /*! \brief Returns the target of the processing instruction, if any.*/
         QString processingInstructionData() const;
-
 
     private:
         QString type_;

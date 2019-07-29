@@ -1,28 +1,26 @@
 #include "optionsdlg.h"
-#include "psicon.h"
+
 #include "../avcall/avcall.h"
 #include "iconset.h"
-
-// tabs
-#include "opt_toolbars.h"
-#include "opt_application.h"
-#include "opt_roster.h"
-#include "opt_appearance.h"
-#include "opt_messages.h"
-#include "opt_events.h"
-#include "opt_popups.h"
-#include "opt_status.h"
-#include "opt_iconset.h"
-//#include "opt_groupchat.h"
-#include "opt_sound.h"
-#include "opt_avcall.h"
 #include "opt_advanced.h"
-#include "opt_shortcuts.h"
-#include "opt_tree.h"
-
+#include "opt_appearance.h"
+#include "opt_application.h"
+#include "opt_avcall.h"
+#include "opt_events.h"
+//#include "opt_groupchat.h"
+#include "opt_iconset.h"
+#include "opt_messages.h"
 #ifdef PSI_PLUGINS
-#include "opt_plugins.h"
+#    include "opt_plugins.h"
 #endif
+#include "opt_popups.h"
+#include "opt_roster.h"
+#include "opt_shortcuts.h"
+#include "opt_sound.h"
+#include "opt_status.h"
+#include "opt_toolbars.h"
+#include "opt_tree.h"
+#include "psicon.h"
 
 OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
     OptionsDlgBase(psi, parent)

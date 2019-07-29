@@ -1,5 +1,6 @@
 /*
  * contactlistaccountmenu.cpp - context menu for contact list accounts
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009-2010  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -21,18 +22,18 @@
 
 #include <QPointer>
 
-#include "pluginmanager.h"
-#include "psiiconset.h"
-#include "psiaccount.h"
 #include "accountstatusmenu.h"
-#include "xmpp_serverinfomanager.h"
 #include "bookmarkmanager.h"
-#include "psioptions.h"
-#include "iconaction.h"
-#include "privacy/privacydlg.h"
 #include "common.h"
 #include "contactmanager/contactmanagerdlg.h"
+#include "iconaction.h"
 #include "mucjoindlg.h"
+#include "pluginmanager.h"
+#include "privacy/privacydlg.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "xmpp_serverinfomanager.h"
 
 class ContactListAccountMenu::Private : public QObject
 {

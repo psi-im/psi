@@ -1,9 +1,11 @@
 /*
  * wbmanager.cpp - Whiteboard manager
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * Influenced by:
  * pepmanager.cpp - Classes for PEP
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -21,17 +23,17 @@
  *
  */
 
-#include <QDebug>
-#include <QMessageBox>
-#include <QEventLoop>
-
 #include "wbmanager.h"
+
+#include <QDebug>
+#include <QEventLoop>
+#include <QMessageBox>
+
 #include "psipopup.h"
 
 #define EMPTYWB "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\"> <svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.2\" viewBox=\"0 0 600 400\" baseProfile=\"tiny\" />"
 
 using namespace XMPP;
-
 
 class WbRequest
 {
@@ -98,7 +100,6 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
         return;
     }
 
-
     // See if we have a session for the JID
     WbDlg* w = findWbDlg(target);
     if(!w) {
@@ -134,7 +135,6 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
             doc.setContent(QString(EMPTYWB), true);
 
         }
-
 
         // negotiate the session
         sxemanager_->startNewSession(target, ownJid, groupChat, doc, features);

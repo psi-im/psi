@@ -1,10 +1,9 @@
 #include "opt_roster_muc.h"
+
 #include "common.h"
 #include "iconwidget.h"
 #include "psioptions.h"
-
 #include "ui_opt_roster_muc.h"
-
 
 class OptRosterMucUI : public QWidget, public Ui::OptRosterMuc
 {

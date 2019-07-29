@@ -1,5 +1,6 @@
 /*
  * accountscombobox.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +18,10 @@
  *
  */
 
-#include "psicon.h"
 #include "accountscombobox.h"
+
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
 
 AccountsComboBox::AccountsComboBox(QWidget* parent)

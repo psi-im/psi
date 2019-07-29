@@ -1,5 +1,6 @@
 /*
  * pollingtunecontroller.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +18,11 @@
  *
  */
 
+#include "pollingtunecontroller.h"
+
 #include <QTimer>
 
 #include "tune.h"
-#include "pollingtunecontroller.h"
 
 /**
  * \class PollingTuneController
@@ -29,7 +31,6 @@
  * An implementing class only has to implement currentTune(), and the correct
  * signals will be emitted.
  */
-
 
 /**
  * \brief Constructs the controller.

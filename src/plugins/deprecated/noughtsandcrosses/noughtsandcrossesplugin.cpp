@@ -1,5 +1,6 @@
 /*
  * noughtsandcrossesplugin.cpp - Psi plugin to play noughts and crosses
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -22,14 +23,13 @@
  *
  */
 
-#include <QtCore>
 #include <QDebug>
+#include <QtCore>
 
-#include "psiplugin.h"
 #include "eventfilter.h"
+#include "psiplugin.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
-
 #include "tictac.h"
 
 class NoughtsAndCrossesPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender
@@ -60,8 +60,6 @@ private slots:
 
 private:
     void startGame(QString jid, int size, bool meFirst, int account);
-
-
 
     TicTacToe* game;
     QString playingWith;
@@ -118,7 +116,6 @@ void NoughtsAndCrossesPlugin::setStanzaSendingHost(StanzaSendingHost *host)
 {
     stanzaSender_ = host;
 }
-
 
 bool NoughtsAndCrossesPlugin::processEvent(int account, const QDomElement& e)
 {
@@ -244,6 +241,5 @@ void NoughtsAndCrossesPlugin::theirTurn(int space)
         return;
     game->theirMove(space);
 }
-
 
 #include "noughtsandcrossesplugin.moc"

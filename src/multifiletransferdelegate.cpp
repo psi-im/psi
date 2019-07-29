@@ -1,6 +1,7 @@
 /*
  * multifiletransferdelegate.cpp - file transfer delegate
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,22 +19,23 @@
  */
 
 #include "multifiletransferdelegate.h"
-#include "multifiletransfermodel.h"
-#include "psitooltip.h"
-#include "iconset.h"
-#include "textutil.h"
 
+#include <QAbstractItemView>
 #include <QHelpEvent>
+#include <QLabel>
+#include <QLineEdit>
 #include <QMenu>
 #include <QPainter>
-#include <QStyledItemDelegate>
-#include <QTime>
-#include <QAbstractItemView>
-#include <QVBoxLayout>
-#include <QLabel>
-#include <QTextEdit>
 #include <QPlainTextEdit>
-#include <QLineEdit>
+#include <QStyledItemDelegate>
+#include <QTextEdit>
+#include <QTime>
+#include <QVBoxLayout>
+
+#include "iconset.h"
+#include "multifiletransfermodel.h"
+#include "psitooltip.h"
+#include "textutil.h"
 
 QString MultiFileTransferDelegate::roundedNumber(qlonglong n, qlonglong div)
 {

@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2015  Ivan Romanov <drizt@land.ru>
  *
  * This program is free software; you can redistribute it and/or
@@ -16,10 +17,11 @@
  *
  */
 
-#include "abstracttreeitem.h"
 #include "abstracttreemodel.h"
 
 #include <QDebug>
+
+#include "abstracttreeitem.h"
 
 AbstractTreeModel::AbstractTreeModel(AbstractTreeItem *root, QObject *parent)
     : QAbstractItemModel(parent)

@@ -1,5 +1,6 @@
 /*
  * psipopup.h - the Psi passive popup class
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +25,8 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include "psipopupinterface.h"
 #include "psievent.h"
+#include "psipopupinterface.h"
 
 class FancyPopup;
 

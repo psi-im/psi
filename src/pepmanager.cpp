@@ -1,5 +1,6 @@
 /*
  * pepmanager.cpp - Classes for PEP
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +21,10 @@
 #include "pepmanager.h"
 
 #include <QtDebug>
-#include "xmpp_xmlcommon.h"
-#include "xmpp_tasks.h"
+
 #include "xmpp_serverinfomanager.h"
+#include "xmpp_tasks.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 
@@ -99,7 +101,6 @@ private:
     QString node_;
     QList<PubSubItem> items_;
 };
-
 
 // -----------------------------------------------------------------------------
 
@@ -272,7 +273,6 @@ public:
             }
             conf_x.appendChild(access_model);
 
-
             conf.appendChild(conf_x);
             pubsub.appendChild(conf);
         }
@@ -310,7 +310,6 @@ private:
     QString node_;
     PubSubItem item_;
 };
-
 
 // -----------------------------------------------------------------------------
 
@@ -359,7 +358,6 @@ private:
     QString node_;
     QString itemId_;
 };
-
 
 // -----------------------------------------------------------------------------
 
@@ -479,7 +477,6 @@ void PEPManager::createNode(const QString& node)
     t->go(true);
 }
 
-
 void PEPManager::subscribe(const QString& jid, const QString& ns)
 {
     PEPSubscribeTask* t = new PEPSubscribeTask(client_->rootTask(),jid,ns);
@@ -551,7 +548,6 @@ void PEPManager::publish(const QString& node, const PubSubItem& it, Access acces
     tp->go(true);
 }
 
-
 void PEPManager::retract(const QString& node, const QString& id)
 {
     if (!serverInfo_->hasPEP())
@@ -562,7 +558,6 @@ void PEPManager::retract(const QString& node, const QString& id)
     tp->go(true);
 }
 
-
 void PEPManager::disable(const QString& tagName, const QString& node, const QString& id)
 {
     // disable by publishing an empty element
@@ -570,7 +565,6 @@ void PEPManager::disable(const QString& tagName, const QString& node, const QStr
 
     publish(node, PubSubItem(id,element));
 }
-
 
 void PEPManager::publishFinished()
 {

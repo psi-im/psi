@@ -1,5 +1,6 @@
 /*
  * winamptunecontroller.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,23 +18,19 @@
  *
  */
 
-#include <windows.h>
+#include "winamptunecontroller.h"
+
 #include <QString>
+#include <windows.h>
 
 #ifdef Q_CC_MSVC
-#pragma warning(push)
-#pragma warning(disable: 4100)
+#    pragma warning(pop)
+#    pragma warning(push)
+#    pragma warning(disable: 4100)
 #endif
 
 // this file generates eight C4100 warnings, when compiled with MSVC2003
 #include "plugins/winamp/third-party/wa_ipc.h"
-
-#ifdef Q_CC_MSVC
-#pragma warning(pop)
-#endif
-
-#include "winamptunecontroller.h"
-
 
 /**
  * \class WinAmpTuneController
@@ -138,7 +135,6 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
 
     return QPair<bool, QString>(true,title);
 }
-
 
 /**
  * Polls for new song info.

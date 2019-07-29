@@ -1,6 +1,7 @@
 /*
  * accountregdlg.h
- * Copyright (C) 2001, 2002, 2006  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002, 2006  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,8 +25,8 @@
 #include <QString>
 
 #include "profiles.h"
-#include "xmpp_jid.h"
 #include "ui_accountreg.h"
+#include "xmpp_jid.h"
 
 class ProxyManager;
 class ProxyChooser;

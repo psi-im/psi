@@ -1,5 +1,6 @@
 /*
  * psicontactmenu.cpp - a PsiContact context menu
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +20,11 @@
 
 #include "groupmenu.h"
 
-#include "userlist.h"
-#include "psicontact.h"
-#include "psiaccount.h"
-
 #include <QInputDialog>
+
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "userlist.h"
 
 GroupMenu::GroupMenu(QWidget* parent)
     : QMenu(parent)

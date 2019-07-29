@@ -1,5 +1,6 @@
 /*
  * winamptunecontroller.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +23,8 @@
 
 #include "pollingtunecontroller.h"
 
-#include <windows.h>
 #include <QPair>
+#include <windows.h>
 
 class WinAmpTuneController : public PollingTuneController
 {

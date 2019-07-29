@@ -1,11 +1,12 @@
 #ifndef PSICLI_H
 #define PSICLI_H
 
-#include "simplecli/simplecli.h"
-#include "applicationinfo.h"
 #include <QApplication>
-#include <QMessageBox>
 #include <QFileInfo>
+#include <QMessageBox>
+
+#include "applicationinfo.h"
+#include "simplecli/simplecli.h"
 
 class PsiCli : public SimpleCli
 {

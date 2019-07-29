@@ -1,5 +1,6 @@
 /*
  * psiaccount.h - handles a Psi account
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2005  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -29,18 +30,17 @@
 #include <QUrl>
 #include <functional>
 
-#include "xmpp_rosterx.h"
-#include "xmpp_status.h"
-#include "xmpp_encryptionhandler.h"
-#include "xmpp_reference.h"
-#include "psiactions.h"
-#include "psievent.h"
-#include "mood.h"
 #include "activity.h"
 #include "geolocation.h"
+#include "mood.h"
+#include "psiactions.h"
+#include "psievent.h"
+#include "xmpp_encryptionhandler.h"
+#include "xmpp_reference.h"
+#include "xmpp_rosterx.h"
+#include "xmpp_status.h"
 
-namespace XMPP
-{
+namespace XMPP {
     class Jid;
     class XData;
     class AdvancedConnector;
@@ -87,12 +87,12 @@ class AvatarFactory;
 class PEPManager;
 class TabManager;
 #ifdef GOOGLE_FT
-class GoogleFileTransfer;
+    class GoogleFileTransfer;
 #endif
 class PsiIcon;
 class QIcon;
 #ifdef WHITEBOARDING
-class WbManager;
+    class WbManager;
 #endif
 
 // sick sick remove this someday please!

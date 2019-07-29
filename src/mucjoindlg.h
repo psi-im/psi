@@ -1,5 +1,6 @@
 /*
  * mucjoindlg.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -22,13 +23,12 @@
 
 #include <QDialog>
 
+#include "psiaccount.h"
 #include "ui_mucjoin.h"
+#include "xmpp_jid.h"
 
 class PsiCon;
 class QString;
-
-#include "xmpp_jid.h"
-#include "psiaccount.h"
 
 class MUCJoinDlg : public QDialog
 {

@@ -1,6 +1,7 @@
 /*
  * infodlg.h - handle vcard
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,8 +24,7 @@
 #include "ui_info.h"
 #include "ui_infodlg.h"
 
-namespace XMPP
-{
+namespace XMPP {
     class Jid;
     class VCard;
     class Resource;

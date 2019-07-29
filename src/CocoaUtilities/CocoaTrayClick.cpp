@@ -1,5 +1,6 @@
 /*
  * CocoaTrayClick
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2012, 2017  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +20,10 @@
 
 #include "CocoaUtilities/CocoaTrayClick.h"
 
-#include <objc/runtime.h>
-#include <objc/message.h>
 #include <QApplication>
-
 #include <QDebug>
+#include <objc/message.h>
+#include <objc/runtime.h>
 
 //#define DEBUG_OUTPUT
 
@@ -32,7 +32,6 @@ bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
     CocoaTrayClick::instance()->emitTrayClicked();
     return true;
 }
-
 
 CocoaTrayClick * CocoaTrayClick::instance()
 {

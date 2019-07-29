@@ -2,11 +2,11 @@
 
 #include <QtAlgorithms>
 
-#include "tabdlg.h"
-#include "tabbablewidget.h"
-#include "groupchatdlg.h"
 #include "chatdlg.h"
+#include "groupchatdlg.h"
 #include "psioptions.h"
+#include "tabbablewidget.h"
+#include "tabdlg.h"
 
 TabManager::TabManager(PsiCon* psiCon, QObject *parent)
     : QObject(parent)

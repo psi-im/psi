@@ -1,5 +1,6 @@
 /*
  * fancypopuplist.h - the list class to hold all the FancyPopups
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -20,8 +21,9 @@
 #ifndef POPUPLIST_H
 #define POPUPLIST_H
 
-#include <QObject>
 #include <QList>
+#include <QObject>
+
 #include "fancypopup.h"
 
 class FancyPopupList : public QObject, public QList<FancyPopup *>

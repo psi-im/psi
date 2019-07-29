@@ -1,6 +1,7 @@
 /*
  * mprisplugin.cpp
- * Copyright (C) 2010 Vitaly Tonkacheyev
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,9 +22,9 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
 #include <QObject>
 #include <QString>
+#include <QtCore>
 
 #include "mpristunecontroller.h"
 #include "tunecontrollerplugin.h"

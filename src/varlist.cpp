@@ -1,6 +1,7 @@
 /*
  * varlist.cpp - class for handling a list of string vars
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,14 +18,14 @@
  *
  */
 
+#include "varlist.h"
+
+#include <QDomDocument>
+#include <QDomElement>
 #include <QList>
 #include <QStringList>
-#include <QDomElement>
-#include <QDomDocument>
 
-#include "varlist.h"
 #include "optionstree.h"
-
 
 VarList::VarList() :QList<VarListItem>()
 {
@@ -56,7 +57,6 @@ void VarList::toOptions(OptionsTree *o, QString base)
         o->setOption(ibase + ".data", item.data());
     }
 }
-
 
 QDomElement VarList::toXml(QDomDocument &doc, const QString &tagName)
 {

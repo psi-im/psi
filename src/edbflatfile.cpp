@@ -1,6 +1,7 @@
 /*
  * edbflatfile.cpp - asynchronous I/O event database
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,21 +18,22 @@
  *
  */
 
-#include <QVector>
-#include <QFileInfo>
-#include <QDir>
-#include <QTimer>
-#include <QTextStream>
-#include <QDateTime>
-
 #include "edbflatfile.h"
-#include "psicon.h"
+
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QTimer>
+#include <QVector>
+
+#include "applicationinfo.h"
+#include "common.h"
+#include "jidutil.h"
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
 #include "xmpp_jid.h"
-#include "jidutil.h"
-#include "common.h"
-#include "applicationinfo.h"
 
 #define FAKEDELAY 0
 
@@ -311,7 +313,6 @@ void EDBFlatFile::file_timeout()
     d->flist.removeAll(i);
     i->deleteLater();
 }
-
 
 //----------------------------------------------------------------------------
 // EDBFlatFile::File

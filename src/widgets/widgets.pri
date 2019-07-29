@@ -21,7 +21,6 @@ SOURCES += \
     $$PWD/typeaheadfind.cpp \
     $$PWD/pixmapratiolabel.cpp
 
-
 HEADERS += \
     $$PWD/stretchwidget.h \
     $$PWD/busywidget.h \

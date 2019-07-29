@@ -1,5 +1,6 @@
 /*
  * psiactionlist.cpp - the customizeable action list for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2004  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -23,12 +24,11 @@
 #include <QPointer>
 
 #include "iconset.h"
-#include "psioptions.h"
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
-#endif
-
 #include "mainwin_p.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
+#endif
+#include "psioptions.h"
 
 //----------------------------------------------------------------------------
 // PsiActionList::Private
@@ -193,7 +193,6 @@ void PsiActionList::Private::createMainWin()
 
         createActionList( tr( "Buttons" ), Actions_MainWin, actions );
     }
-
 
     {
         IconAction *add_act = nullptr;

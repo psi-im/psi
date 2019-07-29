@@ -1,5 +1,6 @@
 /*
  * mucaffiliationsmodel.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +21,9 @@
 #ifndef MUCAFFILIATIONSMODEL_H
 #define MUCAFFILIATIONSMODEL_H
 
-#include <QStandardItemModel>
 #include <QList>
 #include <QMap>
+#include <QStandardItemModel>
 
 #include "xmpp_muc.h"
 
@@ -60,6 +61,5 @@ private:
     QList<XMPP::MUCItem> items_;
     QMap<AffiliationListIndex,bool> enabled_;
 };
-
 
 #endif

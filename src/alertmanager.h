@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +24,7 @@
 #define ALERTMANAGER_H
 
 #include <QMessageBox>
+
 #include "psicon.h"
 
 class AlertManager : public QObject {
@@ -37,7 +39,6 @@ public:
 
     void dialogRegister(QWidget* w, int prio);
     void dialogUnregister(QWidget* w);
-
 
     QWidget* findDialog(const QMetaObject& mo) const;
     template<typename T>
@@ -59,7 +60,6 @@ public:
 protected:
     void deleteDialogList();
 
-
 private slots:
     void forceDialogUnregister(QObject* obj);
 
@@ -71,7 +71,5 @@ public:
     PsiCon *psi_;
     QList<Item*> list_;
 };
-
-
 
 #endif

@@ -1,5 +1,6 @@
 /*
  * ahcommanddlg.cpp - Ad-Hoc Command Dialog
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,17 +21,17 @@
 #include "ahcommanddlg.h"
 
 #include <QComboBox>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLayout>
-#include <QLabel>
 
 #include "ahcexecutetask.h"
+#include "ahcformdlg.h"
 #include "busywidget.h"
 #include "psiaccount.h"
-#include "xmpp_xmlcommon.h"
 #include "xmpp_client.h"
-#include "ahcformdlg.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 
@@ -61,7 +62,6 @@ private:
     Jid receiver_;
     QList<AHCommandItem> commands_;
 };
-
 
 JT_AHCGetList::JT_AHCGetList(Task* t, const Jid& j) : Task(t), receiver_(j)
 {
@@ -135,7 +135,6 @@ private slots:
             new AHCFormDlg(psi, c, task->receiver(), task->client(), true);
     }
 };
-
 
 // --------------------------------------------------------------------------
 // JT_AHCommandDlg: Initial command dialog

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: gamesocket.cpp,v 0.1 2005/01/08 12:31:24 denis Exp $
@@ -12,9 +13,9 @@
  * Hacked by:
  */
 
-#include <Q3Socket>
-
 #include "gamesocket.h"
+
+#include <Q3Socket>
 
 GameSocket::GameSocket(QWidget *parent, const char *name)
     :Q3ServerSocket(GAME_PORT, GAME_BACKLOG, (QObject *)parent, name)
@@ -24,7 +25,6 @@ GameSocket::GameSocket(QWidget *parent, const char *name)
 GameSocket::~GameSocket()
 {
 }
-
 
 void
 GameSocket::newConnection(int sock)

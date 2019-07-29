@@ -1,15 +1,15 @@
 #include "opt_events.h"
+
+#include "psioptions.h"
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QWhatsThis>
+
 #include "common.h"
 #include "iconwidget.h"
-
-#include <QWhatsThis>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLineEdit>
-#include "psioptions.h"
-
 #include "ui_opt_events.h"
 
 class OptEventsUI : public QWidget, public Ui::OptEvents
@@ -69,7 +69,6 @@ QWidget *OptionsTabEvents::widget()
         tr("Makes Psi automatically accept all authorization requests from <b>anyone</b>."));
     d->ck_notifyAuth->setWhatsThis(
         tr("Makes Psi notify you when your authorization request was approved."));
-
 
     d->cb_bounce->setItemData(0, "never");
     d->cb_bounce->setItemData(1, "once");

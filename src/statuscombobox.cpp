@@ -1,5 +1,6 @@
 /*
  * statuscombobox.cpp - helper class that displays available statuses using QComboBox
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +20,9 @@
 
 #include "statuscombobox.h"
 
-#include "psioptions.h"
-#include "psiiconset.h"
 #include "common.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
 /**
  * \brief Constructs new StatusComboBox

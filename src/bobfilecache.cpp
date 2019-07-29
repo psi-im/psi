@@ -1,6 +1,7 @@
 /*
  * bob.cpp - Bits of Binary server and manager
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -18,12 +19,13 @@
  */
 
 #include "bobfilecache.h"
-#include "applicationinfo.h"
-#include "filecache.h"
+
 #include <QApplication>
 
-using namespace XMPP;
+#include "applicationinfo.h"
+#include "filecache.h"
 
+using namespace XMPP;
 
 BoBFileCache::BoBFileCache()
     : BoBCache(nullptr)

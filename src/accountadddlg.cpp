@@ -1,6 +1,7 @@
 /*
  * accountadddlg.cpp - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,11 +19,12 @@
  */
 
 #include "accountadddlg.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "psiaccount.h"
+
 #include "accountregdlg.h"
+#include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
+#include "psioptions.h"
 
 AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
@@ -127,6 +129,3 @@ void AccountAddDlg::setAddButton(const QString &s)
 {
     pb_add->setEnabled(!s.isEmpty());
 }
-
-
-

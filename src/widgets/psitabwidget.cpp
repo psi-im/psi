@@ -1,5 +1,6 @@
 /*
  * psitabwidget.cpp - Customised QTabWidget for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -18,17 +19,19 @@
  */
 
 #include "psitabwidget.h"
-#include "psitabbar.h"
-#include "common.h"
-#include "psioptions.h"
-#include <QWidget>
-#include <QVBoxLayout>
+
+#include <QApplication>
 #include <QHBoxLayout>
-#include <QToolButton>
+#include <QMenu>
 #include <QStackedLayout>
 #include <QStyle>
-#include <QApplication>
-#include <QMenu>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <QWidget>
+
+#include "common.h"
+#include "psioptions.h"
+#include "psitabbar.h"
 
 /**
  * Constructor

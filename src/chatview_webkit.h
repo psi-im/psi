@@ -1,5 +1,6 @@
 /*
  * chatview_webkit.h - Webkit based chatview
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +21,13 @@
 #ifndef CHATVIEW_H
 #define CHATVIEW_H
 
-#include <QWidget>
 #include <QDateTime>
 #include <QFrame>
 #include <QPointer>
-#include "webview.h"
+#include <QWidget>
+
 #include "chatviewcommon.h"
+#include "webview.h"
 
 class ChatEdit;
 class ChatView;
@@ -33,6 +35,7 @@ class MessageView;
 class PsiAccount;
 class ChatViewTheme;
 class ChatViewPrivate;
+
 namespace XMPP {
     class Jid;
 }

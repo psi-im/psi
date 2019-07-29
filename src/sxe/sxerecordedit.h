@@ -1,5 +1,6 @@
 /*
  * sxeedit.h - A class for SXE edits that change a node
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,9 @@
 #ifndef SXDEMETADATAEDIT_H
 #define SXDEMETADATAEDIT_H
 
-#include "sxeedit.h"
 #include <QHash>
+
+#include "sxeedit.h"
 
 /*! \brief A class used for storing SXE edits that change nodes in the undo stacks and in the queue of outgoing edits.*/
 class SxeRecordEdit : public SxeEdit {

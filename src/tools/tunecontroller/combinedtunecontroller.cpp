@@ -1,5 +1,6 @@
 /*
  * combinedtunecontroller.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,15 +18,15 @@
  *
  */
 
-#include "tune.h"
 #include "combinedtunecontroller.h"
+
+#include "tune.h"
 #include "tunecontrollermanager.h"
 
 /**
  * \class CombinedTuneController
  * \brief Combines all supported controllers into one controller.
  */
-
 
 CombinedTuneController::CombinedTuneController()
 {

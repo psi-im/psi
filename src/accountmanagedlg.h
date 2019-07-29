@@ -1,5 +1,6 @@
 /*
  * accountmanagedlg.h - dialogs for manipulating PsiAccounts
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +23,9 @@
 
 #include <QTreeWidget>
 
-namespace XMPP
-{
+#include "ui_accountmanage.h"
+
+namespace XMPP {
     class Jid;
     class Client;
 }
@@ -46,8 +48,6 @@ protected:
 signals:
     void orderChanged(QList<PsiAccount *> accountsList);
 };
-
-#include "ui_accountmanage.h"
 
 class AccountManageDlg : public QDialog, public Ui::AccountManage
 {

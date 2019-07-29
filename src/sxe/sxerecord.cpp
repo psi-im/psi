@@ -1,5 +1,6 @@
 /*
  * sxerecord.cpp - A class for storing the record of an individual node
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +20,7 @@
 
 #include "sxerecord.h"
 
-
 static bool referencedEditLessThan(const SxeEdit* e1, const SxeEdit* e2) { return *e1 < *e2; }
-
 
 //----------------------------------------------------------------------------
 // SxeRecord

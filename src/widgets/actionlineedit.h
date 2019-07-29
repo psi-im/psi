@@ -1,6 +1,7 @@
 /*
  * actionlineedit.h - QLineEdit widget with buttons on right side
- * Copyright (C) 2009 Sergey Ilinykh
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2009  Sergey Ilinykh
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,14 +18,13 @@
  *
  */
 
-
 #ifndef ACTIONLINEEDIT_H
 #define ACTIONLINEEDIT_H
 
-#include <QLineEdit>
 #include <QAbstractButton>
-#include <QList>
 #include <QAction>
+#include <QLineEdit>
+#include <QList>
 
 class ActionLineEditButton : public QAbstractButton
 {

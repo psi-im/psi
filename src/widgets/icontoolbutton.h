@@ -1,5 +1,6 @@
 /*
  * iconwidget.h - misc. Iconset- and PsiIcon-aware widgets
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef ICONTOOLBUTTON_H
 #define ICONTOOLBUTTON_H
 
-#include <QToolButton>
 #include <QPixmap>
+#include <QToolButton>
 
 class PsiIcon;
 class Iconset;

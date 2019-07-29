@@ -1,6 +1,7 @@
 /* sigsegv.c -- sigsegv handlers
  *
- * Copyright (c) 2003 Juan F. Codagnone <juam@users.sourceforge.net>
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2003  Juan F. Codagnone <juam@users.sourceforge.net>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,22 +22,13 @@
  * SOFTWARE.
  */
 
-#ifdef HAVE_CONFIG_H_
-  #include <config.h>
-#endif
+#include "crash_sigsegv.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
-#include <errno.h>
-
-#include <unistd.h>
-
-#ifdef HAVE_PTHREADS_H
-#    include <pthread.h>
+#ifdef HAVE_CONFIG_H_
+#    include <config.h>
 #endif
-
+#include <errno.h>
 /*
  * http://www.gnu.org/manual/glibc-2.2.3/html_chapter/libc_33.html
  */
@@ -44,9 +36,14 @@
 #    define HAVE_BACKTRACE
 #    include <execinfo.h>
 #endif
+#ifdef HAVE_PTHREADS_H
+#    include <pthread.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
-
-#include "crash_sigsegv.h"
+#include <unistd.h>
 
 namespace Crash {
 

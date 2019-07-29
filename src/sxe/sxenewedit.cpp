@@ -1,5 +1,6 @@
 /*
  * sxenewedit.cpp - An single SXE edit that creates a new node
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -18,6 +19,7 @@
  */
 
 #include "sxenewedit.h"
+
 #include "sxesession.h"
 
 //----------------------------------------------------------------------------
@@ -87,7 +89,6 @@ SxeNewEdit::SxeNewEdit(const QDomElement &sxeElement, bool remote) : SxeEdit(sxe
 SxeEdit::EditType SxeNewEdit::type() const {
     return SxeEdit::New;
 };
-
 
 QDomElement SxeNewEdit::xml(QDomDocument &doc) const {
     QDomElement edit = doc.createElementNS(SXENS, "new");

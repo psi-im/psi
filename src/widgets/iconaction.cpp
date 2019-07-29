@@ -1,5 +1,6 @@
 /*
  * iconaction.cpp - the QAction subclass that uses Icons and supports animation
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2005  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -18,10 +19,14 @@
  */
 
 #include "iconaction.h"
+
+#include <QChildEvent>
+#include <QLayout>
+#include <QMenu>
+#include <QTimer>
+
 #include "icontoolbutton.h"
-
 #include "iconwidget.h"
-
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #include "psioptions.h"
@@ -29,11 +34,6 @@
 class PsiIcon;
 class Iconset;
 #endif
-
-#include <QLayout>
-#include <QMenu>
-#include <QTimer>
-#include <QChildEvent>
 
 //----------------------------------------------------------------------------
 // IconAction

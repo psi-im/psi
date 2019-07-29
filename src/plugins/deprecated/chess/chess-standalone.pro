@@ -27,5 +27,4 @@ HEADERS += gameboard.h \
            xpm/quit.xpm \
            xpm/new_game.xpm
 SOURCES += gameboard.cpp gamesocket.cpp main.cpp mainwindow.cpp
-#The following line was inserted by qt3to4
 QT += network

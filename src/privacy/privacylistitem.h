@@ -1,5 +1,6 @@
 /*
  * privacylistitem.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +23,8 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class PrivacyListItem
 {

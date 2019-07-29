@@ -1,6 +1,7 @@
 /*
  * cocoacommon.h - common utilities for cocoa framework
- * Copyright (C) 2010 Tobias Markmann
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Tobias Markmann
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

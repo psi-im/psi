@@ -1,5 +1,6 @@
 /*
  * bookmarkmanagedlg.h - manage groupchat room bookmarks
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -23,14 +24,13 @@
 #include <QDialog>
 
 #include "ui_bookmarkmanage.h"
+#include "xmpp_jid.h"
 
 class PsiAccount;
 class QPushButton;
 class QStandardItemModel;
 class QStandardItem;
 class ConferenceBookmark;
-
-#include "xmpp_jid.h"
 
 class BookmarkManageDlg : public QDialog
 {

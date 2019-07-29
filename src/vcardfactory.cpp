@@ -1,5 +1,6 @@
 /*
  * vcardfactory.cpp - class for caching vCards
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,21 +18,22 @@
  *
  */
 
-#include <QObject>
+#include "vcardfactory.h"
+
 #include <QApplication>
-#include <QMap>
+#include <QDir>
 #include <QDomDocument>
 #include <QFile>
+#include <QMap>
+#include <QObject>
 #include <QTextStream>
-#include <QDir>
 
-#include "profiles.h"
 #include "applicationinfo.h"
-#include "vcardfactory.h"
 #include "jidutil.h"
+#include "profiles.h"
 #include "psiaccount.h"
-#include "xmpp_vcard.h"
 #include "xmpp_tasks.h"
+#include "xmpp_vcard.h"
 
 /**
  * \brief Factory for retrieving and changing VCards.
@@ -59,7 +61,6 @@ VCardFactory* VCardFactory::instance()
     return instance_;
 }
 
-
 /**
  * Adds a vcard to the cache (and removes other items if necessary)
  */
@@ -77,7 +78,6 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
     vcardDict_.insert(jid, vcard);
     vcardList_.push_front(jid);
 }
-
 
 void VCardFactory::taskFinished()
 {
@@ -144,7 +144,6 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& vcard, bool notifyPhoto)
     }
 }
 
-
 /**
  * \brief Call this, when you need a runtime cached vCard.
  */
@@ -183,7 +182,6 @@ VCard VCardFactory::vcard(const Jid &j)
 
     return VCard();
 }
-
 
 /**
  * \brief Call this when you need to update vCard in cache.

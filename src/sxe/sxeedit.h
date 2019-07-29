@@ -1,5 +1,6 @@
 /*
  * sxeedit.h - The base class for SXE edits
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 #ifndef SXDEEDIT_H
 #define SXDEEDIT_H
 
-#include <QString>
 #include <QDomNode>
+#include <QString>
 
 /*! \brief A class used for storing SXE edits in the undo stacks and in the queue of outgoing edits.*/
 class SxeEdit {

@@ -1,5 +1,6 @@
 /*
  * lastactivitytask.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,10 +18,11 @@
  *
  */
 
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
-#include "xmpp_xmlcommon.h"
 #include "lastactivitytask.h"
+
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 

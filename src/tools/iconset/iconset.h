@@ -1,5 +1,6 @@
 /*
  * iconset.h - various graphics handling classes
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2006  Justin Karneges, Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -20,16 +21,15 @@
 #ifndef ICONSET_H
 #define ICONSET_H
 
-#include <QObject>
 #include <QHash>
+#include <QImage>
 #include <QList>
+#include <QObject>
+#include <QPixmap>
 #include <QRegExp>
+#include <QSharedData>
 #include <QString>
 #include <QStringList>
-#include <QSharedData>
-
-#include <QPixmap>
-#include <QImage>
 
 class QIcon;
 class QFileInfo;

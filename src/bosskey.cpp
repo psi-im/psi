@@ -1,5 +1,6 @@
 /*
  * bosskey.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +21,8 @@
 
 #include <QApplication>
 
-#include "psioptions.h"
 #include "mainwin.h"
+#include "psioptions.h"
 #include "psitrayicon.h"
 
 BossKey::BossKey(QObject* p)

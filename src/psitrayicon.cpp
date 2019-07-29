@@ -1,13 +1,14 @@
+#include "psitrayicon.h"
+
+#include <QApplication> // old
+#include <QHelpEvent>
 #include <QPixmap>
 #include <QPixmapCache>
-#include <QApplication> // old
 #include <QSystemTrayIcon>
-#include <QHelpEvent>
 
-#include "psitrayicon.h"
-#include "iconset.h"
 #include "alerticon.h"
 #include "common.h"
+#include "iconset.h"
 
 // TODO: remove the QPoint parameter from the signals when we finally move
 // to the new system.
@@ -99,7 +100,6 @@ void PsiTrayIcon::hide()
     trayicon_->hide();
 }
 
-
 // a function to blend 2 pixels taking their alpha channels
 // into consideration
 // p1 is in the 1st layer, p2 is in the 2nd layer (over p1)
@@ -115,7 +115,6 @@ QRgb PsiTrayIcon::pixelBlend(QRgb p1, QRgb p2)
     int b = int( qBlue(p1)*prop1 + qBlue(p2)*prop2 );
     return qRgba(r, g, b, (a1>a2) ? a1:a2);
 }
-
 
 QPixmap PsiTrayIcon::makeIcon()
 {

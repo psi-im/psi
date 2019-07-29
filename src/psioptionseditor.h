@@ -1,13 +1,12 @@
 #ifndef _PSIOPTIONSEDITOR_H_
 #define _PSIOPTIONSEDITOR_H_
 
-
-#include <QtCore>
-#include <QTreeView>
 #include <QCheckBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QToolButton>
+#include <QTreeView>
+#include <QtCore>
 
 #include "optionstreemodel.h"
 
@@ -47,7 +46,5 @@ private:
     QPushButton *pb_new;
     QToolButton *pb_detach;
 };
-
-
 
 #endif /* _PSIOPTIONSEDITOR_H_ */

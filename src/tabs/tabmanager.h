@@ -1,5 +1,6 @@
 /*
  * tabmanager.h - Controller for tab dialogs.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -19,8 +20,9 @@
 #ifndef _TABMANAGER_H_
 #define _TABMANAGER_H_
 
-#include <QObject>
 #include <QList>
+#include <QObject>
+
 #include "psicon.h"
 
 class TabbableWidget;
@@ -71,7 +73,6 @@ public:
      * removes and deletes all tabsets
      */
     void deleteAll();
-
 
     /**
      * Returns the Kind of the given widget.

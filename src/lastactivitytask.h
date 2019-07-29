@@ -1,5 +1,6 @@
 /*
  * lastactivitytask.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,12 +21,12 @@
 #ifndef LASTACTIVITYTASK_H
 #define LASTACTIVITYTASK_H
 
+#include <QDateTime>
 #include <QDomElement>
 #include <QString>
-#include <QDateTime>
 
-#include "xmpp_task.h"
 #include "xmpp_jid.h"
+#include "xmpp_task.h"
 
 class LastActivityTask : public XMPP::Task
 {

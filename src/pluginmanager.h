@@ -1,17 +1,18 @@
 /*
- * (c) 2006 Kevin Smith
- * (c) 2008 Maciej Niedzielski
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2006  Kevin Smith
+ * Copyright (C) 2008  Maciej Niedzielski
  */
 
 #ifndef PLUGINMANAGER_H
 #define PLUGINMANAGER_H
 
-#include <QtCore>
+#include <QDomElement>
+#include <QHash>
 #include <QList>
 #include <QMap>
-#include <QHash>
-#include <QDomElement>
 #include <QMenu>
+#include <QtCore>
 
 #include "psiplugin.h"
 
@@ -131,7 +132,6 @@ private:
     QMap<QString, PluginHost*> pluginByFile_;
     //sorted by priority
     QList<PluginHost*> pluginsByPriority_;
-
 
     QList<QCA::DirWatch*> dirWatchers_;
 

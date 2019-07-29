@@ -1,5 +1,6 @@
 /*
  * conferencebookmark.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +18,14 @@
  *
  */
 
+#include "conferencebookmark.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QObject>
-#include <QVector>
 #include <QStringList>
+#include <QVector>
 
-#include "conferencebookmark.h"
 #include "xmpp_xmlcommon.h"
 
 ConferenceBookmark::ConferenceBookmark(const QString& name, const XMPP::Jid& jid, JoinType auto_join, const QString& nick, const QString& password) : name_(name), jid_(jid), auto_join_(auto_join), nick_(nick), password_(password)

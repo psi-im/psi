@@ -1,9 +1,9 @@
 #ifndef OPTIONSTREEREADER_H
 #define OPTIONSTREEREADER_H
 
-#include "atomicxmlfile/atomicxmlfile.h"
-
 #include <QVariant>
+
+#include "atomicxmlfile/atomicxmlfile.h"
 
 class OptionsTree;
 class VariantTree;
@@ -34,6 +34,5 @@ private:
     OptionsTree* options_;
     QString unknown_;
 };
-
 
 #endif

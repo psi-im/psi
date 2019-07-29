@@ -1,5 +1,6 @@
 /*
  * aboutdlg.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +18,13 @@
  *
  */
 
-#include <QTextStream>
+#include "aboutdlg.h"
+
 #include <QFile>
+#include <QTextStream>
 #include <QtCrypto>
 
 #include "applicationinfo.h"
-#include "aboutdlg.h"
 #include "iconset.h"
 
 AboutDlg::AboutDlg(QWidget* parent)
@@ -183,7 +185,6 @@ QString AboutDlg::loadText( const QString & fileName )
 
     return text;
 }
-
 
 QString AboutDlg::details( QString name, QString email, QString jabber, QString www, QString desc )
 {

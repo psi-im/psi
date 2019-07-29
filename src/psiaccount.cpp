@@ -1,5 +1,6 @@
 /*
  * psiaccount.cpp - handles a Psi account
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2005  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -22,157 +23,150 @@
  *
  */
 
-
-#include <QFileDialog>
-#include <QInputDialog>
-#include <QTimer>
-#include <QMessageBox>
-#include <QPointer>
-#include <QApplication>
-#include <QPushButton>
-#include <QLayout>
-#include <QUrl>
-#include <QObject>
-#include <QMap>
-#include <qca.h>
-#include <QFileInfo>
-#include <QIcon>
-#include <QPixmap>
-#include <QFrame>
-#include <QList>
-#include <QQueue>
-#include <QHostInfo>
-#include <QtCrypto>
-#ifdef HAVE_KEYCHAIN
-# include <qt5keychain/keychain.h>
-#endif
-
 #include "psiaccount.h"
-#include "psiiconset.h"
-#include "psicon.h"
-#include "profiles.h"
-#include "xmpp_tasks.h"
-#include "xmpp_xmlcommon.h"
-#include "xmpp_caps.h"
-#include "xmpp_captcha.h"
-#include "xmpp_serverinfomanager.h"
-#include "httpfileupload.h"
-#include "s5b.h"
-#ifdef FILETRANSFER
-#include "filetransfer.h"
-#include "jingle-s5b.h"
-#endif
-#include "psioptions.h"
-#include "textutil.h"
-#include "httpauthmanager.h"
-#ifdef HAVE_PGPUTIL
-#include "multifiletransferdlg.h"
-#include "pgpkeydlg.h"
-#include "pgputil.h"
-#endif
-#include "applicationinfo.h"
-#include "pgptransaction.h"
-#include "accountmanagedlg.h"
-#include "changepwdlg.h"
-#include "xmlconsole.h"
-#include "userlist.h"
-#include "psievent.h"
-#include "jidutil.h"
-#include "eventdlg.h"
-#include "psiprivacymanager.h"
-#include "rosteritemexchangetask.h"
-#include "chatdlg.h"
-#include "mood.h"
-#include "activity.h"
-#include "tune.h"
-#ifdef GROUPCHAT
-#include "groupchatdlg.h"
-#include "mucjoindlg.h"
-#endif
-#include "statusdlg.h"
-#include "infodlg.h"
-#include "adduserdlg.h"
-#include "historydlg.h"
-#include "registrationdlg.h"
-#include "searchdlg.h"
-#include "discodlg.h"
-#include "eventdb.h"
-#include "accountmodifydlg.h"
-#include "passphrasedlg.h"
-#include "voicecaller.h"
-#include "voicecalldlg.h"
-#ifdef HAVE_JINGLE
-#include "jinglevoicecaller.h"
-#endif
-#ifdef GOOGLE_FT
-#include "googleftmanager.h"
-#endif
-#include "pepmanager.h"
-#ifdef WHITEBOARDING
-#include "sxe/sxemanager.h"
-#include "whiteboarding/wbmanager.h"
-#endif
-#include "bookmarkmanager.h"
-#include "vcardfactory.h"
-//#include "qssl.h"
-#include "mooddlg.h"
-#include "activitydlg.h"
-#include "qwextend.h"
-#include "geolocationdlg.h"
-//#include "physicallocation.h"
-#include "translationmanager.h"
-#include "irisprotocol/iris_discoinfoquerier.h"
-#include "iconwidget.h"
-#ifdef FILETRANSFER
-#include "filetransdlg.h"
-#include "jingle-ft.h"
-#endif
-#include "systeminfo.h"
-#include "avatars.h"
-#include "ahcommanddlg.h"
-#include "ahcservermanager.h"
-#include "rc.h"
-#include "tabdlg.h"
-#include "proxy.h"
-#include "passdialog.h"
-#include "captchadlg.h"
-#include "bobfilecache.h"
-#include "psicontactlist.h"
-#include "psicontact.h"
-#include "psiselfcontact.h"
-#include "alertable.h"
-#include "tabmanager.h"
-#include "contactupdatesmanager.h"
-#include "fileutil.h"
-#include "Certificates/CertificateHelpers.h"
-#include "Certificates/CertificateErrorDialog.h"
-#include "Certificates/CertificateDisplayDialog.h"
-#include "bookmarkmanagedlg.h"
-#include "alertmanager.h"
-#include "popupmanager.h"
-#include "networkaccessmanager.h"
-#include "filesharedlg.h"
-#include "filesharingmanager.h"
 
-#include "psimedia/psimedia.h"
-#include "avcall/avcall.h"
-#include "avcall/calldlg.h"
-
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
+#include <QApplication>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFrame>
+#include <QHostInfo>
+#include <QIcon>
+#include <QInputDialog>
+#include <QLayout>
+#include <QList>
+#include <QMap>
+#include <QMessageBox>
+#include <QObject>
+#include <QPixmap>
+#include <QPointer>
+#include <QPushButton>
+#include <QQueue>
+#include <QTimer>
+#include <QUrl>
+#include <QtCrypto>
+#include <qca.h>
+#ifdef HAVE_KEYCHAIN
+#    include <qt5keychain/keychain.h>
 #endif
 
 #include "../iris/src/xmpp/xmpp-core/protocol.h"
-
-
-
+#include "Certificates/CertificateDisplayDialog.h"
+#include "Certificates/CertificateErrorDialog.h"
+#include "Certificates/CertificateHelpers.h"
+#include "accountmanagedlg.h"
+#include "accountmodifydlg.h"
+#include "activity.h"
+#include "activitydlg.h"
+#include "adduserdlg.h"
+#include "ahcommanddlg.h"
+#include "ahcservermanager.h"
+#include "alertable.h"
+#include "alertmanager.h"
+#include "applicationinfo.h"
+#include "avatars.h"
+#include "avcall/avcall.h"
+#include "avcall/calldlg.h"
+#include "bobfilecache.h"
+#include "bookmarkmanagedlg.h"
+#include "bookmarkmanager.h"
 #include "bsocket.h"
+#include "captchadlg.h"
+#include "changepwdlg.h"
+#include "chatdlg.h"
+#include "contactupdatesmanager.h"
+#include "discodlg.h"
+#include "eventdb.h"
+#include "eventdlg.h"
+#include "filesharedlg.h"
+#include "filesharingmanager.h"
+#include "fileutil.h"
+#include "geolocationdlg.h"
+#ifdef GOOGLE_FT
+#    include "googleftmanager.h"
+#endif
+#include "historydlg.h"
+#include "httpauthmanager.h"
+#include "httpfileupload.h"
+#include "iconwidget.h"
+#include "infodlg.h"
+#include "irisprotocol/iris_discoinfoquerier.h"
+#include "jidutil.h"
+#ifdef HAVE_JINGLE
+#    include "jinglevoicecaller.h"
+#endif
+#include "mood.h"
+#include "mooddlg.h"
+#include "networkaccessmanager.h"
+#include "passdialog.h"
+#include "passphrasedlg.h"
+#include "pepmanager.h"
+#include "pgptransaction.h"
+//#include "physicallocation.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
+#endif
+#include "popupmanager.h"
+#include "profiles.h"
+#include "proxy.h"
+#include "psicon.h"
+#include "psicontact.h"
+#include "psicontactlist.h"
+#include "psievent.h"
+#include "psiiconset.h"
+#include "psimedia/psimedia.h"
+#include "psioptions.h"
+#include "psiprivacymanager.h"
+#include "psiselfcontact.h"
+#include "qwextend.h"
+//#include "qssl.h"
+#include "rc.h"
+#include "registrationdlg.h"
+#include "rosteritemexchangetask.h"
+#include "s5b.h"
+#include "searchdlg.h"
+#include "statusdlg.h"
+#include "systeminfo.h"
+#include "tabdlg.h"
+#include "tabmanager.h"
+#include "textutil.h"
+#include "translationmanager.h"
+#include "tune.h"
+#include "userlist.h"
+#include "vcardfactory.h"
+#include "voicecalldlg.h"
+#include "voicecaller.h"
+#include "xmlconsole.h"
+#include "xmpp_caps.h"
+#include "xmpp_captcha.h"
+#include "xmpp_serverinfomanager.h"
+#include "xmpp_tasks.h"
+#include "xmpp_xmlcommon.h"
+#ifdef FILETRANSFER
+#    include "filetransdlg.h"
+#    include "filetransfer.h"
+#    include "jingle-ft.h"
+#    include "jingle-s5b.h"
+#endif
+#ifdef GROUPCHAT
+#    include "groupchatdlg.h"
+#    include "mucjoindlg.h"
+#endif
+#ifdef HAVE_PGPUTIL
+#    include "multifiletransferdlg.h"
+#    include "pgpkeydlg.h"
+#    include "pgputil.h"
+#endif
+#ifdef WHITEBOARDING
+#    include "sxe/sxemanager.h"
+#    include "whiteboarding/wbmanager.h"
+#endif
+
 /*#ifdef Q_OS_WIN
-#include <windows.h>
+#    include <windows.h>
 typedef int socklen_t;
 #else
-#include <sys/socket.h>
-#include <netinet/in.h>
+#    include <netinet/in.h>
+#    include <sys/socket.h>
 #endif*/
 
 using namespace XMPP;
@@ -310,7 +304,6 @@ bool BlockTransportPopupList::find(const Jid &j, bool online)
     return false;
 }
 
-
 //----------------------------------------------------------------------------
 // IdleServer
 //----------------------------------------------------------------------------
@@ -350,7 +343,6 @@ private:
     PsiAccount *pa_;
 };
 
-
 //----------------------------------------------------------------------------
 // PsiAccount
 //----------------------------------------------------------------------------
@@ -384,7 +376,6 @@ static QList<ReconnectData> reconnectData()
 
     return data;
 }
-
 
 class PsiAccount::Private : public Alertable
 {
@@ -1890,7 +1881,6 @@ void PsiAccount::showCert()
     dlg.exec();
 }
 
-
 void PsiAccount::cs_connected()
 {
     // get IP address
@@ -2038,7 +2028,6 @@ void PsiAccount::sessionStart_finished()
         cs_error(-1);
     }
 }
-
 
 void PsiAccount::sessionStarted()
 {
@@ -4884,7 +4873,6 @@ void PsiAccount::dj_addAuth(const Jid &j)
     dj_addAuth(j, QString());
 }
 
-
 void PsiAccount::dj_addAuth(const Jid &j, const QString &nick)
 {
     QString name;
@@ -6197,7 +6185,6 @@ void PsiAccount::pgp_signFinished()
 #endif
 }
 
-
 void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 {
 #ifdef HAVE_PGPUTIL
@@ -6209,7 +6196,6 @@ void PsiAccount::verifyStatus(const Jid &j, const Status &s)
     t->end();
 #endif
 }
-
 
 void PsiAccount::pgp_verifyFinished()
 {
@@ -6318,7 +6304,6 @@ void PsiAccount::pgp_encryptFinished()
 #endif
 }
 
-
 void PsiAccount::processEncryptedMessage(const Message &m)
 {
 #ifdef HAVE_PGPUTIL
@@ -6331,7 +6316,6 @@ void PsiAccount::processEncryptedMessage(const Message &m)
     t->end();
 #endif
 }
-
 
 void PsiAccount::pgp_decryptFinished()
 {
@@ -6436,7 +6420,6 @@ void PsiAccount::optionsUpdate()
         setStatusActual(d->loginStatus);
     }
 }
-
 
 void PsiAccount::setRCEnabled(bool b)
 {

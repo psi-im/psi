@@ -1,5 +1,6 @@
 /*
  * contactlistitem.h - base class for contact list items
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +20,12 @@
 
 #pragma once
 
-#include "abstracttreeitem.h"
-
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QVariant>
-#include <QPointer>
+
+#include "abstracttreeitem.h"
 
 class PsiContact;
 class PsiAccount;

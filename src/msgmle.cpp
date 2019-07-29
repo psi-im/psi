@@ -1,5 +1,6 @@
 /*
  * msgmle.cpp - subclass of PsiTextView to handle various hotkeys
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -22,28 +23,28 @@
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
 #include <QApplication>
+#include <QAudioRecorder>
+#include <QClipboard>
 #include <QDesktopWidget>
 #include <QEvent>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QLayout>
 #include <QMenu>
+#include <QMimeData>
 #include <QResizeEvent>
 #include <QTextCharFormat>
 #include <QTextDocument>
 #include <QTimer>
-#include <QMimeData>
-#include <QClipboard>
 #include <QToolButton>
-#include <QLabel>
-#include <QAudioRecorder>
 
-#include "shortcutmanager.h"
-#include "spellchecker/spellhighlighter.h"
-#include "spellchecker/spellchecker.h"
-#include "psioptions.h"
 #include "htmltextcontroller.h"
 #include "psiiconset.h"
+#include "psioptions.h"
 #include "qiteaudiorecorder.h"
+#include "shortcutmanager.h"
+#include "spellchecker/spellchecker.h"
+#include "spellchecker/spellhighlighter.h"
 
 static const int TIMEOUT = 30000; //30 secs maximum time interval
 static const int SECOND = 1000;
@@ -166,7 +167,6 @@ private:
     QTextEdit* te_;
     bool enabled_;
 };
-
 
 //----------------------------------------------------------------------------
 // ChatEdit

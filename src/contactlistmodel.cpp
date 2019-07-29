@@ -1,5 +1,6 @@
 /*
  * contactlistmodel.cpp - model of contact list
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -17,22 +18,21 @@
  *
  */
 
-#include "contactlistmodel_p.h"
+#include <QColor>
+#include <QIcon>
+#include <QMessageBox>
+#include <QModelIndex>
+#include <QTextDocument>
+#include <QVariant>
 
+#include "avatars.h"
+#include "contactlistitem.h"
+#include "contactlistmodel_p.h"
 #include "debug.h"
 #include "psiaccount.h"
 #include "psicontactlist.h"
-#include "contactlistitem.h"
-#include "userlist.h"
-#include "avatars.h"
 #include "psioptions.h"
-
-#include <QMessageBox>
-#include <QModelIndex>
-#include <QVariant>
-#include <QColor>
-#include <QIcon>
-#include <QTextDocument>
+#include "userlist.h"
 
 #define MAX_COMMIT_DELAY 30 /* seconds */
 #define COMMIT_INTERVAL 100 /* msecs */
@@ -64,7 +64,6 @@ ContactListModel::Private::Private(ContactListModel *parent)
     collapsed = PsiOptions::instance()->getOption(COLLAPSED_OPTIONS, QStringList()).toStringList();
     hidden = PsiOptions::instance()->getOption(HIDDEN_OPTIONS, QStringList()).toStringList();
 }
-
 
 ContactListModel::Private::~Private()
 {
@@ -181,7 +180,6 @@ void ContactListModel::Private::updateContacts(const QList<PsiContact*> &contact
         }
     }
 
-
     QHashIterator<QModelIndex, QPair<int, int>> it(ranges);
     while (it.hasNext()) {
         it.next();
@@ -212,7 +210,6 @@ void ContactListModel::Private::addOperation(PsiContact *contact, ContactListMod
 
     if (commitTimerStartTime.isNull())
         commitTimerStartTime = QDateTime::currentDateTime();
-
 
     if (commitTimerStartTime.secsTo(QDateTime::currentDateTime()) > MAX_COMMIT_DELAY)
         commit();
@@ -265,7 +262,6 @@ void ContactListModel::Private::commit()
 
     QList<PsiContact*> contactsForAdding;
     QList<PsiContact*> contactsForUpdate;
-
 
     while (it.hasNext()) {
         it.next();
@@ -501,7 +497,6 @@ void ContactListModel::destroyingContactList()
 
     PsiOptions::instance()->setOption(COLLAPSED_OPTIONS, d->collapsed);
     PsiOptions::instance()->setOption(HIDDEN_OPTIONS, d->hidden);
-
 
     d->clear();
 

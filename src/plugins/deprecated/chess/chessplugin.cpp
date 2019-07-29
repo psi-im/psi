@@ -1,5 +1,6 @@
 /*
  * chessplugin.cpp - Psi plugin to play chess
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -22,11 +23,11 @@
  *
  */
 
-#include <QtCore>
 #include <QDebug>
+#include <QtCore>
 
-#include "psiplugin.h"
 #include "gameboard.h"
+#include "psiplugin.h"
 
 extern QColor    cw, cb;
 
@@ -47,12 +48,9 @@ private slots:
     void sendData(const QString& data);
     void receiveData(const QString& data);
 
-
 private:
     void startGame(const QString& jid, bool meWhite, const PsiAccount* account);
     void stopGame();
-
-
 
     GameBoard* game_;
     QString playingWith_;
@@ -85,7 +83,6 @@ bool ChessPlugin::processEvent( const PsiAccount* account, QDomNode &event )
 {
     return true;
 }
-
 
 void ChessPlugin::message( const PsiAccount* account, const QString& message, const QString& fromJid, const QString& fromDisplay)
 {
@@ -213,6 +210,5 @@ void ChessPlugin::receiveData(const QString& data)
     //game->theirMove(space);
     game_->receiveData(data);
 }
-
 
 #include "chessplugin.moc"

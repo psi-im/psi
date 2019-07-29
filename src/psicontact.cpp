@@ -1,5 +1,6 @@
 /*
  * psicontact.cpp - PsiContact
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -22,24 +23,22 @@
 #include <QFileDialog>
 #include <QTimer>
 
+#include "alertable.h"
 #include "avatars.h"
 #include "common.h"
+#include "desktoputil.h"
 #include "iconset.h"
 #include "jidutil.h"
 #include "profiles.h"
 #include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
 #include "psicontactmenu.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "userlist.h"
-#include "userlist.h"
-#include "alertable.h"
-#include "avatars.h"
 #include "psiprivacymanager.h"
-#include "desktoputil.h"
+#include "userlist.h"
 #include "vcardfactory.h"
-#include "psicon.h"
-#include "psicontactlist.h"
 
 #define STATUS_TIMER_INTERVAL 5000
 #define ANIM_TIMER_INTERVAL 5000

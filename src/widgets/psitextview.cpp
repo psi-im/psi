@@ -1,5 +1,6 @@
 /*
  * psitextview.cpp - PsiIcon-aware QTextView subclass widget
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -19,16 +20,16 @@
 
 #include "psitextview.h"
 
-#include <QMenu>
-#include <QScrollBar>
 #include <QAbstractTextDocumentLayout>
+#include <QMenu>
+#include <QMimeData>
+#include <QRegExp>
+#include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
-#include <QRegExp>
-#include <QMimeData>
 
-#include "urlobject.h"
 #include "psirichtext.h"
+#include "urlobject.h"
 
 //----------------------------------------------------------------------------
 // PsiTextView::Private

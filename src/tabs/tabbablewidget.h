@@ -1,6 +1,7 @@
 /*
  * tabbable.h
- * Copyright (C) 2007 Kevin Smith
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2007  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +23,7 @@
 
 #include <QIcon>
 #include <QTimer>
+
 #include "advwidget.h"
 #include "im.h" // ChatState
 
@@ -29,6 +31,7 @@ namespace XMPP {
     class Jid;
     class Message;
 }
+
 using namespace XMPP;
 
 class PsiAccount;

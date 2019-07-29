@@ -1,6 +1,7 @@
 /*
  * registrationdlg.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,6 +26,7 @@
 class QDomElement;
 class JT_XRegister;
 class PsiAccount;
+
 namespace XMPP {
     class Jid;
     class Form;

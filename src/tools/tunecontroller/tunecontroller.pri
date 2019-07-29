@@ -10,8 +10,6 @@ HEADERS += \
     $$PWD/tunecontrollermanager.h \
     $$PWD/tunecontrollerinterface.h
 
-
-
 SOURCES += \
     $$PWD/pollingtunecontroller.cpp \
     $$PWD/filetunecontroller.cpp \

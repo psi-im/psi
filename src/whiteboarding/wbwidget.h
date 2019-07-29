@@ -1,6 +1,7 @@
 /*
  * wbwidget.h - a widget for processing and showing whiteboard
  *              messages.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -21,18 +22,17 @@
 #ifndef WBWIDGET_H
 #define WBWIDGET_H
 
+#include <QFileDialog>
+#include <QGraphicsView>
+#include <QSvgRenderer>
+#include <QTime>
+#include <QTimer>
+#include <QWidget>
+
 #include "../sxe/sxesession.h"
-#include "wbscene.h"
 #include "wbitem.h"
 #include "wbnewitem.h"
-
-#include <QSvgRenderer>
-#include <QWidget>
-#include <QGraphicsView>
-#include <QTimer>
-#include <QTime>
-#include <QFileDialog>
-
+#include "wbscene.h"
 
 /*! \brief The whiteboard widget.
  *  Visualizes the whiteboard scene and provides different modes for editing and adding new elements.
@@ -151,7 +151,6 @@ private slots:
     void checkForViewBoxChange(const QDomNode &node);
     // /*! \brief Deletes the WbItem's in the deletion queue. */
     // void flushDeletionQueue();
-
 
     /*! \brief Rerenders the contents of the document.*/
     void rerender();

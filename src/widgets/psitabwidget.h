@@ -1,5 +1,6 @@
 /*
  * psitabwidget.h - Customised QTabWidget for Psi
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +21,10 @@
 #ifndef PSITABWIDGET_H
 #define PSITABWIDGET_H
 
-#include <QTabWidget>
-#include <QTabBar>
 #include <QDragEnterEvent>
+#include <QTabBar>
+#include <QTabWidget>
+
 #include "psitabbar.h"
 
 class QVBoxLayout;
@@ -99,7 +101,6 @@ private:
     QTabWidget::TabPosition tabsPosition_;
     QMenu *menu_;
 };
-
 
 #define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
 

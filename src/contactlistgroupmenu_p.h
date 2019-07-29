@@ -1,5 +1,6 @@
 /*
  * contactlistgroupmenu_p.h - context menu for contact list groups
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  * Copyright (C) 2017  Ivan Romanov <drizt@land.ru>
  *
@@ -20,14 +21,12 @@
 
 #pragma once
 
-#include "contactlistgroupmenu.h"
+#include <QObject>
 
-#include "contactlistitem.h"
-#include "xmpp_tasks.h"
+#include "contactlistgroupmenu.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "groupchatdlg.h"
-#include "iconaction.h"
 #include "iconaction.h"
 #include "iconset.h"
 #include "psiaccount.h"
@@ -36,8 +35,7 @@
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "statusdlg.h"
-
-#include <QObject>
+#include "xmpp_tasks.h"
 
 class ContactListGroupMenu::Private : public QObject
 {

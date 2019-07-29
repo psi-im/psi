@@ -1,37 +1,35 @@
-#include <QString>
-#include <QLatin1String>
+#include "applicationinfo.h"
+
+#include <QDesktopServices>
 #include <QDir>
 #include <QFile>
-#include <QSettings>
+#include <QLatin1String>
 #include <QLocale>
-#include <QDesktopServices>
 #include <QMessageBox>
+#include <QSettings>
 #include <QStandardPaths>
-
-#ifdef Q_OS_UNIX
-#include <sys/stat.h> // chmod
-#endif
-
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <shellapi.h>
-#include <shlobj.h>
-#endif
-
+#include <QString>
 #ifdef Q_OS_MAC
-#include <sys/stat.h> // chmod
-#include <CoreServices/CoreServices.h>
+#    include <CoreServices/CoreServices.h>
+#    include <sys/stat.h> // chmod
+#endif
+#ifdef Q_OS_UNIX
+#    include <sys/stat.h> // chmod
+#endif
+#ifdef Q_OS_WIN
+#    include <shellapi.h>
+#    include <shlobj.h>
+#    include <windows.h>
 #endif
 
-#include "psiapplication.h"
-#include "applicationinfo.h"
-#include "systeminfo.h"
-#include "profiles.h"
 #include "activeprofiles.h"
-#include "translationmanager.h"
 #ifdef HAVE_CONFIG
-#include "config.h"
+#    include "config.h"
 #endif
+#include "profiles.h"
+#include "psiapplication.h"
+#include "systeminfo.h"
+#include "translationmanager.h"
 
 #define xstr(a) str(a)
 #define str(a) #a
@@ -53,9 +51,9 @@
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
 #define PROG_FILECACHE_NS "http://psi-im.org/filecache"
 #ifdef Q_OS_MAC
-#define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
+#    define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
 #else
-#define PROG_APPCAST_URL ""
+#    define PROG_APPCAST_URL ""
 #endif
 
 QString ApplicationInfo::name()

@@ -1,9 +1,9 @@
 #ifndef CAPTCHADLG_H
 #define CAPTCHADLG_H
 
-#include "xmpp_captcha.h"
-
 #include <QDialog>
+
+#include "xmpp_captcha.h"
 
 namespace Ui {
 class CaptchaDlg;

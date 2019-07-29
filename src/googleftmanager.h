@@ -1,5 +1,6 @@
 /*
  * googleftmanager.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -20,11 +21,11 @@
 #ifndef GOOGLEFTMANAGER_H
 #define GOOGLEFTMANAGER_H
 
-#include "talk/base/scoped_ptr.h"
-#include "filetransfer.h"
-
-#include <QObject>
 #include <QMap>
+#include <QObject>
+
+#include "filetransfer.h"
+#include "talk/base/scoped_ptr.h"
 
 namespace cricket {
     class HttpPortAllocator;
@@ -107,7 +108,6 @@ private:
      talk_base::scoped_ptr<cricket::SessionManager> session_manager_;
      talk_base::scoped_ptr<cricket::FileShareSessionClient> file_share_session_client_;
 };
-
 
 #include <QProgressDialog>
 

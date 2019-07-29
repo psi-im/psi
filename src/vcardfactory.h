@@ -1,5 +1,6 @@
 /*
  * vcardfactory.h - class for caching vCards
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +32,7 @@ namespace XMPP {
     class Task;
     class JT_VCard;
 }
+
 using namespace XMPP;
 
 class PsiAccount;

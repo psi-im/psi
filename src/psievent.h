@@ -1,6 +1,7 @@
 /*
  * psievent.h - events
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,17 +21,17 @@
 #ifndef PSIEVENT_H
 #define PSIEVENT_H
 
-#include <QList>
 #include <QDateTime>
-#include <QObject>
 #include <QDomDocument>
 #include <QDomElement>
+#include <QList>
+#include <QObject>
 #include <QPointer>
 
-#include "xmpp_jid.h"
-#include "xmpp_rosterx.h"
-#include "xmpp_message.h"
 #include "psihttpauthrequest.h"
+#include "xmpp_jid.h"
+#include "xmpp_message.h"
+#include "xmpp_rosterx.h"
 
 namespace XMPP {
     class FileTransfer;
@@ -106,7 +107,6 @@ private:
     PsiAccount *v_account;
 };
 
-
 #ifdef PSI_PLUGINS
 class PluginEvent : public PsiEvent
 {
@@ -131,7 +131,6 @@ private:
     int _account;
 };
 #endif
-
 
 // normal, chat, error, headline, etc
 class MessageEvent : public PsiEvent
@@ -431,7 +430,5 @@ private:
     PsiAccount* account_;
     bool enabled_;
 };
-
-
 
 #endif

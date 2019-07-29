@@ -1,6 +1,7 @@
 /*
  * adduserdlg.cpp - dialog for adding contacts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,24 +20,25 @@
 
 #include "adduserdlg.h"
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QLabel>
 #include <QLayout>
-#include <QPushButton>
-#include <QMessageBox>
-#include <QComboBox>
-#include <QStringList>
 #include <QLineEdit>
-#include <QCheckBox>
-#include "xmpp_tasks.h"
-#include "psiaccount.h"
-#include "psiiconset.h"
+#include <QMessageBox>
+#include <QPushButton>
+#include <QStringList>
+
 #include "busywidget.h"
 #include "common.h"
 #include "iconwidget.h"
-#include "tasklist.h"
-#include "xmpp_vcard.h"
-#include "vcardfactory.h"
 #include "infodlg.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "tasklist.h"
+#include "vcardfactory.h"
+#include "xmpp_tasks.h"
+#include "xmpp_vcard.h"
 
 class AddUserDlg::Private
 {

@@ -1,5 +1,6 @@
 /*
  * activeprofiles_win.cpp - Class for interacting with other app instances
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
@@ -17,14 +18,14 @@
  *
  */
 
+#include <QCoreApplication>
+#include <QTimer>
+#include <QWidget>
+#include <windows.h>
+
 #include "activeprofiles.h"
 #include "applicationinfo.h"
 #include "psicon.h"
-
-#include <QCoreApplication>
-#include <QWidget>
-#include <QTimer>
-#include <windows.h>
 
 #define QT_WA(unicode, ansi) unicode
 /*
@@ -316,7 +317,6 @@ bool ActiveProfiles::isAnyActive() const
 {
     return !d->pickProfile().isEmpty();
 }
-
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {

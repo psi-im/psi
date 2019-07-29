@@ -1,6 +1,7 @@
 /*
  * xmlconsole.cpp - dialog for interacting manually with XMPP
- * Copyright (C) 2001, 2002  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +18,24 @@
  *
  */
 
-#include <QLayout>
-#include <QPushButton>
-#include <QCheckBox>
-#include <QVBoxLayout>
-#include <QTextEdit>
-#include <QHBoxLayout>
-#include <QMessageBox>
-#include <QTextFrame>
-#include <QScrollBar>
-
-#include "xmpp_client.h"
 #include "xmlconsole.h"
+
+#include <QCheckBox>
+#include <QHBoxLayout>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QScrollBar>
+#include <QTextEdit>
+#include <QTextFrame>
+#include <QVBoxLayout>
+
+#include "iconset.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "textutil.h"
-#include "iconset.h"
+#include "xmpp_client.h"
 
 //----------------------------------------------------------------------------
 // XmlConsole
@@ -182,7 +184,6 @@ void XmlConsole::xml_textReady(const QString &str)
 {
     pa->client()->send(str);
 }
-
 
 //----------------------------------------------------------------------------
 // XmlPrompt

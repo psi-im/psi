@@ -13,7 +13,6 @@ CONFIG += pep
 #CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
 
-
 win32:CONFIG(debug, debug|release):DEFINES += ALLOW_QT_PLUGINS_DIR
 
 # Import several very useful Makefile targets
@@ -148,7 +147,6 @@ translate_options.commands = $$PWD/../admin/update_options_ts.py $$PWD/../option
 # In case lupdate doesn't work
 QMAKE_EXTRA_TARGETS += translate
 translate.commands = lupdate . options widgets tools/grepshortcutkeydlg ../cutestuff/network ../iris/xmpp-im -ts $$TRANSLATIONS
-
 
 exists($$OPTIONS_TRANSLATIONS_FILE) {
     SOURCES += $$OPTIONS_TRANSLATIONS_FILE

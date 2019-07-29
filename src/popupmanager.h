@@ -1,5 +1,6 @@
 /*
  * popupmanager.h
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2011-2012  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +22,7 @@
 #define POPUPMANAGER_H
 
 #include <QStringList>
+
 #include "psievent.h"
 
 class PsiAccount;
@@ -33,6 +35,7 @@ namespace XMPP {
     class Jid;
     class Resource;
 }
+
 using namespace XMPP;
 
 class PopupManager

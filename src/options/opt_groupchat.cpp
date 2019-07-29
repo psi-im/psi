@@ -1,19 +1,19 @@
 #include "opt_groupchat.h"
+
+#include <QButtonGroup>
+#include <QCheckBox>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QPainter>
+#include <QPixmap>
+#include <QRadioButton>
+#include <QSignalMapper>
+#include <QWhatsThis>
+
 #include "common.h"
 #include "iconwidget.h"
 #include "psioptions.h"
-
-#include <QButtonGroup>
-#include <QWhatsThis>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QComboBox>
-#include <QLineEdit>
-#include <QSignalMapper>
-#include <QPixmap>
-#include <QPainter>
-#include <QColorDialog>
-
 #include "ui_opt_general_groupchat.h"
 
 class GeneralGroupchatUI : public QWidget, public Ui::GeneralGroupchat
@@ -105,7 +105,6 @@ void OptionsTabGroupchat::restoreOptions()
     d->lw_highlightWords->clear();
     d->lw_highlightWords->addItems( PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList() );
     d->lw_nickColors->clear();
-
 
     foreach(QString col, PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList()) {
         addNickColor(col);

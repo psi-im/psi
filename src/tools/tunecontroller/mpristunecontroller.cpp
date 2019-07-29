@@ -1,6 +1,7 @@
 /*
  * mpristunecontroller.cpp
- * Copyright (C) 2010 Vitaly Tonkacheyev
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2010  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,11 +18,11 @@
  *
  */
 
+#include "mpristunecontroller.h"
+
+#include <QDBusConnectionInterface>
 #include <QDBusMetaType>
 #include <QDBusReply>
-#include <QDBusConnectionInterface>
-
-#include "mpristunecontroller.h"
 
 /**
  * \class MPRISTuneController

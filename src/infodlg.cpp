@@ -1,6 +1,7 @@
 /*
  * infodlg.cpp - handle vcard
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,42 +18,41 @@
  *
  */
 
-#include <QFileDialog>
-
 #include "infodlg.h"
 
-#include <QPointer>
-#include <QLayout>
+#include <QAction>
+#include <QCalendarWidget>
+#include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QFormLayout>
 #include <QLabel>
-#include <QTabWidget>
+#include <QLayout>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPixmap>
-#include <QCalendarWidget>
-#include <QFormLayout>
-#include <QDialogButtonBox>
+#include <QPointer>
+#include <QTabWidget>
 #include <QVBoxLayout>
-#include <QAction>
 
-#include "vcardphotodlg.h"
-#include "msgmle.h"
-#include "userlist.h"
-#include "xmpp_vcard.h"
-#include "xmpp_tasks.h"
-#include "xmpp_serverinfomanager.h"
-#include "psiaccount.h"
 #include "busywidget.h"
-#include "iconset.h"
 #include "common.h"
-#include "lastactivitytask.h"
-#include "vcardfactory.h"
-#include "iconwidget.h"
-#include "psirichtext.h"
-#include "psioptions.h"
-#include "fileutil.h"
-#include "discodlg.h"
 #include "desktoputil.h"
+#include "discodlg.h"
+#include "fileutil.h"
+#include "iconset.h"
+#include "iconwidget.h"
+#include "lastactivitytask.h"
+#include "msgmle.h"
+#include "psiaccount.h"
+#include "psioptions.h"
+#include "psirichtext.h"
 #include "textutil.h"
+#include "userlist.h"
+#include "vcardfactory.h"
+#include "vcardphotodlg.h"
+#include "xmpp_serverinfomanager.h"
+#include "xmpp_tasks.h"
+#include "xmpp_vcard.h"
 
 using namespace XMPP;
 
@@ -865,7 +865,6 @@ void InfoWidget::requestLastActivityFinished()
     }
 }
 
-
 void InfoWidget::contactAvailable(const Jid &j, const Resource &r)
 {
     if (d->jid.compare(j,false)) {
@@ -915,7 +914,6 @@ void InfoWidget::goHomepage()
         DesktopUtil::openUrl(homepage);
     }
 }
-
 
 // --------------------------------------------
 // InfoDlg

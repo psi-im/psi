@@ -1,5 +1,6 @@
 /*
  * ahcformdlg.cpp - Ad-Hoc Command Form Dialog
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -19,17 +20,17 @@
 
 #include "ahcformdlg.h"
 
+#include <QLabel>
 #include <QLayout>
 #include <QPushButton>
-#include <QLabel>
 #include <QScrollArea>
 
-#include "ahcommand.h"
 #include "ahcexecutetask.h"
+#include "ahcommand.h"
+#include "busywidget.h"
+#include "psiaccount.h"
 #include "xdata_widget.h"
 #include "xmpp_client.h"
-#include "psiaccount.h"
-#include "busywidget.h"
 
 AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final) :
     QDialog(nullptr),

@@ -1,5 +1,6 @@
 /*
  * sxeremoveedit.cpp - An single SXE edit that changes a node
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -18,6 +19,7 @@
  */
 
 #include "sxerecordedit.h"
+
 #include "sxesession.h"
 
 //----------------------------------------------------------------------------

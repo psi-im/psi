@@ -1,10 +1,12 @@
 /*
  * wbdlg.h - dialog for whiteboarding
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * Originally developed from:
  * wbdlg.h - dialog for handling chats
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,24 +26,24 @@
 #ifndef WBDLG_H
 #define WBDLG_H
 
-#include <QToolBar>
+#include <QCloseEvent>
+#include <QContextMenuEvent>
+#include <QInputDialog>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
-#include <QContextMenuEvent>
-#include <QShowEvent>
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <QCloseEvent>
-#include <QInputDialog>
 // #include <QMessageBoxEx>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QToolBar>
 
 #include "advwidget.h"
-#include "im.h"
 #include "common.h"
-#include "wbwidget.h"
 #include "iconlabel.h"
+#include "im.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "wbwidget.h"
 
 class AccountLabel;
 

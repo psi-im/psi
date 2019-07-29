@@ -1,5 +1,6 @@
 /*
  * serverlistquerier.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,16 +18,16 @@
  *
  */
 
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QUrl>
+#include "serverlistquerier.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDomNodeList>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QStringList>
-
-#include "serverlistquerier.h"
+#include <QUrl>
 
 // #define XML_SERVER_LIST
 #define SERVERLIST_MAX_REDIRECT  5

@@ -1,5 +1,6 @@
 /*
  * urlevent.h - simple URL container
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
@@ -18,10 +19,6 @@
  */
 #ifndef _URLEVENT_H_
 #define _URLEVENT_H_
-
-
-
-
 
 #include "QtCore"
 

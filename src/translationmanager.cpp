@@ -1,5 +1,6 @@
 /*
  * translationmanager.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon, Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -17,13 +18,14 @@
  *
  */
 
-#include <QTranslator>
-#include <QCoreApplication>
-#include <QFile>
-#include <QDir>
-#include <QLibraryInfo>
-
 #include "translationmanager.h"
+
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QLibraryInfo>
+#include <QTranslator>
+
 #include "applicationinfo.h"
 #include "varlist.h"
 

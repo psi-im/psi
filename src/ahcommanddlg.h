@@ -1,5 +1,6 @@
 /*
  * ahcommanddlg.h - Ad-Hoc Command Dialog
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +24,7 @@
 #include <QDialog>
 #include <QList>
 
+#include "ui_ahcommanddlg.h"
 #include "xmpp_jid.h"
 
 namespace XMPP {
@@ -37,8 +39,6 @@ class QPushButton;
 class BusyWidget;
 
 typedef struct { QString jid, node, name; } AHCommandItem;
-
-#include "ui_ahcommanddlg.h"
 
 class AHCommandDlg : public QDialog
 {

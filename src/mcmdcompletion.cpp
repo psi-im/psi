@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2001-2019  Psi Team
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +20,7 @@
 // tab completion helper for mini command system
 
 #include "mcmdcompletion.h"
+
 #include "minicmd.h"
 
 void MCmdTabCompletion::setup(QString str, int pos, int &start, int &end) {

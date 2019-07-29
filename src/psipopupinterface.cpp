@@ -1,5 +1,6 @@
 /*
  * psipopuinterface.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2012  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -18,9 +19,10 @@
  */
 
 #include "psipopupinterface.h"
-#include "psioptions.h"
-#include "psiiconset.h"
+
 #include "common.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
 QString PsiPopupInterface::clipText(QString text)
 {

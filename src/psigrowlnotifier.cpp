@@ -1,5 +1,6 @@
 /*
  * psigrowlnotifier.cpp: Psi's interface to Growl
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -22,21 +23,22 @@
  *
  */
 
+#include "psigrowlnotifier.h"
+
+#include <QCoreApplication>
 #include <QPixmap>
 #include <QStringList>
-#include <QCoreApplication>
 #include <QtPlugin>
 
-#include "common.h"
-#include "psiaccount.h"
 #include "avatars.h"
+#include "common.h"
 #include "growlnotifier/growlnotifier.h"
-#include "psigrowlnotifier.h"
+#include "iconset.h"
+#include "psiaccount.h"
 #include "psievent.h"
-#include "userlist.h"
 #include "psioptions.h"
 #include "textutil.h"
-#include "iconset.h"
+#include "userlist.h"
 
 /**
  * A class representing the notification context, which will be passed to
@@ -56,7 +58,6 @@ private:
 public:
     int deleteCount_;
 };
-
 
 /**
  * (Private) constructor of the PsiGrowlNotifier.
@@ -87,7 +88,6 @@ PsiGrowlNotifier::PsiGrowlNotifier() : QObject(QCoreApplication::instance())
     gn_ = new GrowlNotifier(nots, nots, QCoreApplication::applicationName());
 }
 
-
 /**
  * Requests the global PsiGrowlNotifier instance.
  * If PsiGrowlNotifier wasn't initialized yet, it is initialized.
@@ -102,7 +102,6 @@ PsiGrowlNotifier* PsiGrowlNotifier::instance()
 
     return instance_;
 }
-
 
 /**
  * Requests a popup to be sent to Growl.

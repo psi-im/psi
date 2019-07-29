@@ -1,7 +1,8 @@
 /*
  * filetunecontroller.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
- * 2011 Vitaly Tonkacheyev, rion
+ * Copyright (C) 2011  Vitaly Tonkacheyev, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,13 +19,14 @@
  *
  */
 
-#include <QFile>
+#include "filetunecontroller.h"
+
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
 
 #include "qca.h"
-#include "filetunecontroller.h"
 
 /**
  * \class FileTuneController
@@ -37,7 +39,6 @@
  * following order: track name, track artist, track album, track number, track
  * time.
  */
-
 
 /**
  * \brief Constructs the controller.

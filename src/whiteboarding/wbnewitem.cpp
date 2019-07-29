@@ -1,6 +1,7 @@
 /*
  * wbnewitem.cpp - a class used for representing items on the whiteboard
  *              while they're being drawn.
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +20,13 @@
  */
 
 #include "wbnewitem.h"
-#include "../sxe/sxesession.h"
 
-#include <QSvgGenerator>
+#include <QBuffer>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
-#include <QBuffer>
+#include <QSvgGenerator>
+
+#include "../sxe/sxesession.h"
 
 WbNewItem::WbNewItem(QGraphicsScene* s) {
     scene = s;

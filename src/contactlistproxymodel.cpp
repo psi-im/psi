@@ -1,5 +1,6 @@
 /*
  * contactlistproxymodel.cpp - contact list model sorting and filtering
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,13 +20,13 @@
 
 #include "contactlistproxymodel.h"
 
-#include "contactlistmodel.h"
 #include "contactlistitem.h"
+#include "contactlistmodel.h"
+#include "debug.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "psicontactlist.h"
 #include "userlist.h"
-#include "debug.h"
 
 ContactListProxyModel::ContactListProxyModel(QObject* parent)
     : QSortFilterProxyModel(parent)
@@ -105,7 +106,6 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
         if (psiContact->isHidden()) {
             show = showHidden();
         }
-
 
         if (!showOffline()) {
             return show && psiContact->isOnline();

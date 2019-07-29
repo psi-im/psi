@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2009  Barracuda Networks, Inc.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,18 +20,18 @@
 #ifndef PSIMEDIAPROVIDER_H
 #define PSIMEDIAPROVIDER_H
 
-#include <QString>
-#include <QList>
 #include <QByteArray>
-#include <QSize>
+#include <QList>
 #include <QObject>
+#include <QSize>
+#include <QString>
 
 class QImage;
 class QIODevice;
 
 #ifdef QT_GUI_LIB
-class QWidget;
-class QPainter;
+    class QWidget;
+    class QPainter;
 #endif
 
 // since we cannot put signals/slots in Qt "interfaces", we use the following

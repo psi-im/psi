@@ -1,5 +1,6 @@
 /*
  * messageview.h - message data for chatview
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or

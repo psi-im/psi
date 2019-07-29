@@ -1,5 +1,6 @@
 /*
  * psicontact.h - PsiContact
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +20,11 @@
 
 #pragma once
 
+#include <QObject>
+
+#include "contactlistitemmenu.h"
 #include "psicontactlist.h"
 #include "xmpp_vcard.h"
-#include "contactlistitemmenu.h"
-
-#include <QObject>
 
 class PsiIcon;
 class PsiAccount;

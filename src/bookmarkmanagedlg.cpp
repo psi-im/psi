@@ -1,5 +1,6 @@
 /*
  * bookmarkmanagedlg.cpp - manage groupchat room bookmarks
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +20,16 @@
 
 #include "bookmarkmanagedlg.h"
 
-#include <QStandardItemModel>
-#include <QPushButton>
 #include <QAction>
 #include <QFile>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QStandardItemModel>
 
 #include "bookmarkmanager.h"
-#include "psiaccount.h"
 #include "fileutil.h"
 #include "iconset.h"
+#include "psiaccount.h"
 
 BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
     : QDialog()

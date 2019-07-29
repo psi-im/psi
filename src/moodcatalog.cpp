@@ -1,5 +1,6 @@
 /*
  * moodcatalog.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,12 +18,13 @@
  *
  */
 
-#include <QString>
-#include <QObject>
+#include "moodcatalog.h"
+
 #include <QCoreApplication>
+#include <QObject>
+#include <QString>
 
 #include "mood.h"
-#include "moodcatalog.h"
 
 MoodCatalog::Entry::Entry()
 {

@@ -1,5 +1,6 @@
 /*
  * fileutil.h - common file dialogs
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +20,12 @@
 
 #include "fileutil.h"
 
-#include <QFileInfo>
 #include <QDir>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QMessageBox>
-#include <QStandardPaths>
 #include <QProcess>
+#include <QStandardPaths>
 
 #include "psioptions.h"
 

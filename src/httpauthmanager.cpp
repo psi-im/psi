@@ -1,5 +1,6 @@
 /*
  * httpauthmanager.cpp - Classes managing incoming HTTP-Auth requests
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
@@ -18,12 +19,13 @@
  */
 
 #include "httpauthmanager.h"
+
 #include "psihttpauthrequest.h"
-#include "xmpp_xmlcommon.h"
-#include "xmpp_task.h"
 #include "xmpp_client.h"
 #include "xmpp_message.h"
 #include "xmpp_stream.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
 
 class HttpAuthListener : public XMPP::Task
 {

@@ -1,5 +1,6 @@
 /*
  * googleftmanager.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -17,32 +18,32 @@
  *
  */
 
-// libjingle includes
-#define POSIX
+#include "googleftmanager.h"
+
+#include <QDir>
+#include <QDomElement>
+#include <QString>
+
+#include "talk/base/helpers.h"
+#include "talk/base/network.h"
+#include "talk/base/physicalsocketserver.h"
 #include "talk/base/sigslot.h"
-#include "talk/xmpp/constants.h"
-#include "talk/xmpp/jid.h"
+#include "talk/base/socketaddress.h"
+#include "talk/base/thread.h"
+#include "talk/p2p/base/session.h"
+#include "talk/p2p/base/sessionclient.h"
+#include "talk/p2p/base/sessionmanager.h"
+#include "talk/p2p/client/basicportallocator.h"
+#include "talk/p2p/client/httpportallocator.h"
+#include "talk/p2p/client/sessionsendtask.h"
+#include "talk/session/fileshare/fileshare.h"
 #include "talk/xmllite/xmlelement.h"
 #include "talk/xmllite/xmlprinter.h"
-#include "talk/base/network.h"
-#include "talk/p2p/base/session.h"
-#include "talk/p2p/base/sessionmanager.h"
-#include "talk/base/helpers.h"
-#include "talk/p2p/client/basicportallocator.h"
-#include "talk/p2p/base/sessionclient.h"
-#include "talk/p2p/client/sessionsendtask.h"
-#include "talk/p2p/client/httpportallocator.h"
-#include "talk/base/physicalsocketserver.h"
-#include "talk/base/thread.h"
-#include "talk/base/socketaddress.h"
-#include "talk/session/fileshare/fileshare.h"
-
-#include <QString>
-#include <QDomElement>
-#include <QDir>
-
+#include "talk/xmpp/constants.h"
+#include "talk/xmpp/jid.h"
 #include "xmpp_xmlcommon.h"
-#include "googleftmanager.h"
+
+#define POSIX
 
 // Should change in the future
 #define JINGLE_NS "http://www.google.com/session"
@@ -85,7 +86,6 @@ public:
     }
 };
 
-
 // ----------------------------------------------------------------------------
 
 /**
@@ -126,7 +126,6 @@ public:
 private:
     GoogleFTManager* manager_;
 };
-
 
 GoogleSessionListener::GoogleSessionListener(GoogleFTManager* manager) : manager_(manager)
 {
@@ -338,7 +337,6 @@ void GoogleFTManager::initialize()
     initialized_ = true;
 }
 
-
 void GoogleFTManager::deinitialize()
 {
     if (!initialized_)
@@ -350,7 +348,6 @@ void GoogleFTManager::deinitialize()
     delete listener_;
     initialized_ = false;
 }
-
 
 GoogleFTManager::~GoogleFTManager()
 {

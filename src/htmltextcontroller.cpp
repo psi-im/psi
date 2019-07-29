@@ -1,5 +1,6 @@
 /*
  * htmltextcontroller.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
@@ -17,9 +18,10 @@
  *
  */
 #include "htmltextcontroller.h"
-#include <QMenu>
-#include <QFontDialog>
+
 #include <QColorDialog>
+#include <QFontDialog>
+#include <QMenu>
 
 class HTMLTextMenu : public QMenu
 {

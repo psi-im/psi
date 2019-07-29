@@ -1,5 +1,6 @@
 /*
  * psicontactlist.cpp - general abstraction of the psi-specific contact list
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -21,12 +22,12 @@
 
 #include <QTimer>
 
-#include "psiaccount.h"
-#include "psievent.h"
 #include "accountadddlg.h"
-#include "xmpp_serverinfomanager.h"
+#include "psiaccount.h"
 #include "psicon.h"
+#include "psievent.h"
 #include "psioptions.h"
+#include "xmpp_serverinfomanager.h"
 
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.

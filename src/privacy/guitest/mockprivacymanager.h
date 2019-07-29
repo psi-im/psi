@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +23,8 @@
 #include <QObject>
 #include <QStringList>
 
-#include "privacymanager.h"
 #include "privacylistitem.h"
+#include "privacymanager.h"
 
 class MockPrivacyManager : public PrivacyManager
 {

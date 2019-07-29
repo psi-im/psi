@@ -1,5 +1,6 @@
 /*
  * psirosterwidget.cpp
+ * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  Yandex LLC (Michail Pishchagin)
  *
  * This program is free software; you can redistribute it and/or
@@ -19,29 +20,28 @@
 
 #include "psirosterwidget.h"
 
-#include "widgets/actionlineedit.h"
-#include "widgets/iconaction.h"
-
-#include <QVBoxLayout>
-#include <QStackedWidget>
-#include <QMessageBox>
-#include <QLineEdit>
-#include <QSortFilterProxyModel>
 #include <QKeyEvent>
+#include <QLineEdit>
+#include <QMessageBox>
 #include <QMimeData>
+#include <QSortFilterProxyModel>
+#include <QStackedWidget>
+#include <QVBoxLayout>
 
 #include "contactlistdragmodel.h"
+#include "contactlistitem.h"
+#include "contactlistproxymodel.h"
+#include "debug.h"
+#ifdef MODELTEST
+#    include "modeltest.h"
+#endif
+#include "psiaccount.h"
+#include "psicontact.h"
 #include "psicontactlistview.h"
 #include "psifilteredcontactlistview.h"
-#include "contactlistproxymodel.h"
-#include "psicontact.h"
-#include "contactlistitem.h"
-#ifdef MODELTEST
-#include "modeltest.h"
-#endif
 #include "psioptions.h"
-#include "psiaccount.h"
-#include "debug.h"
+#include "widgets/actionlineedit.h"
+#include "widgets/iconaction.h"
 
 static const QString contactSortStyleOptionPath = "options.ui.contactlist.contact-sort-style";
 static const QString showOfflineOptionPath = "options.ui.contactlist.show.offline-contacts";
