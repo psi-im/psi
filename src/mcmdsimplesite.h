@@ -27,8 +27,8 @@
 #include "minicmd.h"
 
 class QLabel;
-class QTextEdit;
 class QString;
+class QTextEdit;
 
 class MCmdSimpleSite : public MCmdUiSiteIface {
 public:

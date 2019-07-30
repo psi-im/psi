@@ -3,17 +3,18 @@
 
 // FIXME: instead of a singleton, make it a member of PsiCon.
 
-#include <QSet>
 #include <QList>
 #include <QMap>
+#include <QSet>
 #include <QtCrypto>
 
-class QString;
-class PassphraseDlg;
 namespace QCA {
     class KeyStore;
     class PGPKey;
 }
+
+class PassphraseDlg;
+class QString;
 
 class PGPUtil : public QObject
 {

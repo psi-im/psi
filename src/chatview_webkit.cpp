@@ -65,8 +65,9 @@
 #include "webview.h"
 #include "xmpp_tasks.h"
 
-class ChatViewThemeSessionBridge;
 class ChatViewJSObject;
+class ChatViewThemeSessionBridge;
+
 class ChatViewPrivate
 {
 public:

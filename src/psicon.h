@@ -30,44 +30,42 @@
 #include "tabbablewidget.h"
 #include "tunecontrollermanager.h"
 
-class PsiCon;
-class PsiAccount;
-class ContactView;
-class AutoUpdater;
-class EventDlg;
-class UserListItem;
-class EDB;
-class EDBItem;
-class ProxyManager;
-class QMenuBar;
-class FileTransDlg;
-class IconSelectPopup;
-class QThread;
-class PsiActionList;
-class PsiToolBar;
-class TabDlg;
-class TabManager;
-class AccountsComboBox;
-class ChatDlg;
-class AlertManager;
-class TuneController;
-class PsiContactList;
-class TabManager;
-class ContactUpdatesManager;
-class PopupManager;
-class NetworkAccessManager;
-class FileSharingManager;
-class PsiThemeManager;
-class WebServer;
-
 namespace OpenPGP {
     class Engine;
 }
 namespace XMPP {
     class Jid;
 }
-
 using namespace XMPP;
+
+class AccountsComboBox;
+class AlertManager;
+class AutoUpdater;
+class ChatDlg;
+class ContactUpdatesManager;
+class ContactView;
+class EDB;
+class EDBItem;
+class EventDlg;
+class FileSharingManager;
+class FileTransDlg;
+class IconSelectPopup;
+class NetworkAccessManager;
+class PopupManager;
+class ProxyManager;
+class PsiAccount;
+class PsiActionList;
+class PsiCon;
+class PsiContactList;
+class PsiThemeManager;
+class PsiToolBar;
+class QMenuBar;
+class QThread;
+class TabDlg;
+class TabManager;
+class TuneController;
+class UserListItem;
+class WebServer;
 
 class PsiCon : public QObject
 {

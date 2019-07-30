@@ -24,8 +24,8 @@
 #include <QPixmap>
 #include <QToolButton>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
 class IconToolButton : public QToolButton
 {

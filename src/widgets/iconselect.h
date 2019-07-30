@@ -23,8 +23,8 @@
 
 #include <QMenu>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
 class IconSelectPopup : public QMenu
 {

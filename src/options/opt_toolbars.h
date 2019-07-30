@@ -3,13 +3,14 @@
 
 #include "optionstab.h"
 
+class IconButton;
 class PsiCon;
 class PsiToolBar;
 class QAction;
-class IconButton;
 class QListWidget;
-class QTreeWidgetItem;
 class QListWidgetItem;
+class QTreeWidgetItem;
+
 class OptionsTabToolbars : public OptionsTab
 {
     Q_OBJECT

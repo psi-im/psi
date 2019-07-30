@@ -25,8 +25,8 @@
 
 #include "xmpp_jid.h"
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class ConferenceBookmark
 {

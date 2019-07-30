@@ -29,7 +29,6 @@ namespace XMPP {
     class VCard;
     class Resource;
 }
-
 using namespace XMPP;
 
 class PsiAccount;

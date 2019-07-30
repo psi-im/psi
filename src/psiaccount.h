@@ -41,66 +41,63 @@
 #include "xmpp_status.h"
 
 namespace XMPP {
-    class Jid;
-    class XData;
     class AdvancedConnector;
-    class Stream;
-    class QCATLSHandler;
+    class Client;
+    class Jid;
+    class Message;
     class PubSubItem;
     class PubSubRetraction;
-    class RosterItem;
-    class Client;
-    //class StreamError;
+    class QCATLSHandler;
     class Resource;
-    class Message;
+    class RosterItem;
     class ServerInfoManager;
+    class Stream;
+    //class StreamError;
+    class XData;
 };
-
 using namespace XMPP;
 
-class PsiCon;
-class PsiContact;
-class PsiContactList;
-class PsiAccount;
-class PsiHttpAuthRequest;
-class Tune;
-class BookmarkManager;
-class URLBookmark;
-class ConferenceBookmark;
-class VoiceCaller;
-class UserAccount;
-class ContactProfile;
-class QWidget;
-class QString;
-class QMimeData;
-class EventQueue;
-class UserResource;
-class UserListItem;
-class UserList;
-class EventDlg;
-class ChatDlg;
-class PrivacyManager;
-class EDB;
-class QSSLCert;
-class QHostAddress;
 class AvatarFactory;
-class PEPManager;
-class TabManager;
+class AvCallManager;
+class BookmarkManager;
+class ChatDlg;
+class ConferenceBookmark;
+class ContactProfile;
+class EDB;
+class EventDlg;
+class EventQueue;
+class FileSharingItem;
 #ifdef GOOGLE_FT
     class GoogleFileTransfer;
 #endif
+class PEPManager;
+class PrivacyManager;
+class PsiAccount;
+class PsiCon;
+class PsiContact;
+class PsiContactList;
+class PsiHttpAuthRequest;
 class PsiIcon;
+class QHostAddress;
 class QIcon;
+class QMimeData;
+class QSSLCert;
+class QString;
+class QWidget;
+class TabManager;
+class Tune;
+class URLBookmark;
+class UserAccount;
+class UserList;
+class UserListItem;
+class UserResource;
+class VoiceCaller;
 #ifdef WHITEBOARDING
     class WbManager;
 #endif
 
 // sick sick remove this someday please!
 struct GCContact;
-
-class AvCallManager;
-
-class FileSharingItem;
 
 class PsiAccount : public QObject, EncryptionHandler
 {

@@ -40,11 +40,10 @@ namespace XMPP {
     }
 }
 
-class PsiCon;
-class PsiAccount;
-class QDomElement;
-
 class AvCall;
+class PsiAccount;
+class PsiCon;
+class QDomElement;
 
 class PsiEvent : public QObject
 {

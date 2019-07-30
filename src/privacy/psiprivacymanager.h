@@ -28,15 +28,15 @@
 #include "privacymanager.h"
 #include "xmpp_jid.h"
 
-class QString;
-class PsiAccount;
-class PrivacyList;
-class PrivacyListItem;
-class PrivacyListListener;
-
 namespace XMPP {
     class Task;
 }
+
+class PrivacyList;
+class PrivacyListItem;
+class PrivacyListListener;
+class PsiAccount;
+class QString;
 
 class PsiPrivacyManager : public PrivacyManager
 {

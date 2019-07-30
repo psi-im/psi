@@ -23,15 +23,15 @@
 
 #include <QDialog>
 
-class QDomElement;
-class JT_XRegister;
-class PsiAccount;
-
 namespace XMPP {
-    class Jid;
     class Form;
+    class Jid;
     class XData;
 }
+
+class JT_XRegister;
+class PsiAccount;
+class QDomElement;
 
 class RegistrationDlg : public QDialog
 {

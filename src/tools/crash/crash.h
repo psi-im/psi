@@ -4,9 +4,7 @@
 #include <QString>
 
 namespace Crash {
-
     void registerSigsegvHandler(QString progname);
-
-};
+}; // namespace Crash
 
 #endif

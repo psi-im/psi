@@ -28,18 +28,18 @@
 
 #define MAX_MESSAGE_HISTORY 50
 
+class AudioRecorder;
+class CapitalLettersController;
 class ChatEdit;
+class HTMLTextController;
 class QEvent;
+class QImage;
 class QKeyEvent;
+class QLabel;
 class QResizeEvent;
 class QTimer;
-class QImage;
-class SpellHighlighter;
-class HTMLTextController;
-class CapitalLettersController;
 class QToolButton;
-class QLabel;
-class AudioRecorder;
+class SpellHighlighter;
 
 class ChatEdit : public QTextEdit
 {

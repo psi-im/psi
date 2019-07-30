@@ -29,20 +29,19 @@
 #include "advwidget.h"
 #include "tabbablewidget.h"
 
-class PsiCon;
-class ChatTabs;
 class ChatDlg;
-class QPushButton;
-class QMenu;
-class QString;
-class QContextMenuEvent;
+class ChatTabs;
+class PsiCon;
+class PsiTabWidget;
 class QAction;
 class QActionGroup;
+class QContextMenuEvent;
+class QMenu;
+class QPushButton;
 class QSignalMapper;
-class PsiTabWidget;
-class TabManager;
-
+class QString;
 class TabDlg;
+class TabManager;
 
 class TabDlgDelegate : public QObject
 {

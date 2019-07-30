@@ -25,18 +25,17 @@
 
 #include "psievent.h"
 
-class PsiAccount;
-class PsiCon;
-class UserListItem;
-class PsiIcon;
-class QPixmap;
-
 namespace XMPP {
     class Jid;
     class Resource;
 }
-
 using namespace XMPP;
+
+class PsiAccount;
+class PsiCon;
+class PsiIcon;
+class QPixmap;
+class UserListItem;
 
 class PopupManager
 {

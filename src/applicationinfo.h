@@ -1,9 +1,9 @@
 #ifndef APPLICATIONINFO_H
 #define APPLICATIONINFO_H
 
+class QLatin1String;
 class QString;
 class QStringList;
-class QLatin1String;
 
 class ApplicationInfo
 {

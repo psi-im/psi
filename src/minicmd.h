@@ -25,9 +25,9 @@
 #include <QHash>
 #include <QVariant>
 
+class MCmdProviderIface;
 class QString;
 class QStringList;
-class MCmdProviderIface;
 
 /** unparsed state: this is a state where the whole user input is passed
   * unparsed as the first part to the handler functions

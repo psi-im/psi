@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QListWidgetItem;
+class QWidget;
 
 class OptionsTabGroupchat : public OptionsTab
 {

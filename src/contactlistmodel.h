@@ -26,10 +26,10 @@
 
 #include "abstracttreemodel.h"
 
+class ContactListItem;
 class PsiAccount;
 class PsiContact;
 class PsiContactList;
-class ContactListItem;
 
 class ContactListModel : public AbstractTreeModel
 {

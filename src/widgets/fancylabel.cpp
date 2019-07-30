@@ -30,9 +30,9 @@
 
 #include "iconlabel.h"
 #ifndef WIDGET_PLUGIN
-#include "iconset.h"
+#    include "iconset.h"
 #else
-class PsiIcon;
+    class PsiIcon;
 #endif
 
 //----------------------------------------------------------------------------

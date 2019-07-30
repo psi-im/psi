@@ -26,12 +26,12 @@
 #include "ui_accountmanage.h"
 
 namespace XMPP {
-    class Jid;
     class Client;
+    class Jid;
 }
 
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 class QTreeWidgetItem;
 
 class AccountManageTree : public QTreeWidget

@@ -6,11 +6,10 @@
 #include "atomicxmlfile/atomicxmlfile.h"
 
 class OptionsTree;
-class VariantTree;
-
-class QStringList;
-class QSize;
 class QRect;
+class QSize;
+class QStringList;
+class VariantTree;
 
 class OptionsTreeReader : public AtomicXmlFileReader
 {

@@ -26,8 +26,8 @@
 
 #include "xmpp_jid.h"
 
-class UserResource;
 class PsiContact;
+class UserResource;
 
 class ResourceMenu : public QMenu
 {

@@ -31,12 +31,11 @@ namespace XMPP {
     class Jid;
     class Message;
 }
-
 using namespace XMPP;
 
 class PsiAccount;
-class TabManager;
 class TabDlg;
+class TabManager;
 
 class TabbableWidget : public AdvancedWidget<QWidget>
 {

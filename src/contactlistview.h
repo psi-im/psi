@@ -25,11 +25,11 @@
 
 #include "hoverabletreeview.h"
 
-class QWidget;
 class ContactListItem;
 class ContactListItemMenu;
-class QLineEdit;
 class ContactListModel;
+class QLineEdit;
+class QWidget;
 
 class ContactListView : public HoverableTreeView
 {

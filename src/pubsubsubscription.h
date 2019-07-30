@@ -23,8 +23,8 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class PubSubSubscription
 {

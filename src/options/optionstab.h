@@ -5,9 +5,9 @@
 #include <QObject>
 #include <QString>
 
+class PsiCon;
 class PsiIcon;
 class QWidget;
-class PsiCon;
 
 class OptionsTab : public QObject
 {

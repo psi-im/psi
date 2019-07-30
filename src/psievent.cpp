@@ -38,6 +38,9 @@
 #include "psioptions.h"
 #include "xmpp_xmlcommon.h"
 
+using namespace XMLHelper;
+using namespace XMPP;
+
 // FIXME renames those
 const int eventPriorityHeadline = 0;
 const int eventPriorityChat     = 1;
@@ -46,9 +49,6 @@ const int eventPriorityAuth     = 2;
 //const int eventPriorityFile     = 3;
 const int eventPriorityFile     = 2;
 const int eventPriorityRosterExchange = 0; // LEGOPTFIXME: was uninitialised
-
-using namespace XMPP;
-using namespace XMLHelper;
 
 //----------------------------------------------------------------------------
 // PsiEvent

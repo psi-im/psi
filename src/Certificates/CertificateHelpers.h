@@ -10,14 +10,15 @@
 
 #include <QtCrypto>
 
-class QString;
-
 namespace QCA {
     class CertificateCollection;
 }
+
 namespace XMPP {
     class QCATLSHandler;
 }
+
+class QString;
 
 class CertificateHelpers
 {

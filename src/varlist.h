@@ -21,13 +21,13 @@
 #ifndef VARLIST_H
 #define VARLIST_H
 
-#include <QString>
 #include <QList>
+#include <QString>
 
+class OptionsTree;
 class QDomDocument;
 class QDomElement;
 class QStringList;
-class OptionsTree;
 
 class VarListItem
 {

@@ -25,10 +25,10 @@
 
 #include "sxemanager.h"
 
+using namespace XMPP;
+
 // The maxlength of a chdata that gets put in one edit
 enum {MAXCHDATA = 1024};
-
-using namespace XMPP;
 
 //----------------------------------------------------------------------------
 // SxeSession

@@ -29,8 +29,8 @@
 
 #include "tune.h"
 
-class TuneControllerPlugin;
 class TuneController;
+class TuneControllerPlugin;
 
 typedef QSharedPointer<TuneController> TuneControllerPtr;
 typedef QSharedPointer<TuneControllerPlugin> TuneControllerPluginPtr;

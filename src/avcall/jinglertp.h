@@ -24,9 +24,9 @@
 #include "xmpp.h"
 
 class JingleRtpChannel;
-class JingleRtpPrivate;
 class JingleRtpChannelPrivate;
 class JingleRtpManagerPrivate;
+class JingleRtpPrivate;
 
 class JingleRtp : public QObject
 {

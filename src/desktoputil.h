@@ -21,17 +21,16 @@
 #ifndef DESKTOPUTIL_H
 #define DESKTOPUTIL_H
 
-class QString;
 class QObject;
+class QString;
 class QUrl;
 
-namespace DesktopUtil
-{
+namespace DesktopUtil {
     bool openUrl(const QString& url);
     bool openUrl(const QUrl& url);
 
     void setUrlHandler(const QString& scheme, QObject* receiver, const char* method);
     void unsetUrlHandler(const QString& scheme);
-}
+}; // namespace DesktopUtil
 
 #endif

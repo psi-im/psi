@@ -29,15 +29,15 @@
 #include "xmpp_jid.h"
 #include "xmpp_xdata.h"
 
-class QPushButton;
-class BusyWidget;
-class AHCommand;
-class XDataWidget;
-class PsiCon;
-
 namespace XMPP {
     class Client;
 }
+
+class AHCommand;
+class BusyWidget;
+class PsiCon;
+class QPushButton;
+class XDataWidget;
 
 class AHCFormDlg : public QDialog
 {

@@ -1,9 +1,8 @@
 #ifndef OPTIONACCESSOR_H
 #define OPTIONACCESSOR_H
 
-class QString;
-
 class OptionAccessingHost;
+class QString;
 
 class OptionAccessor
 {

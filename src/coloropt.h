@@ -18,9 +18,9 @@
  *
  */
 
-#include <QObject>
-#include <QHash>
 #include <QColor>
+#include <QHash>
+#include <QObject>
 #include <QPalette>
 
 class ColorData

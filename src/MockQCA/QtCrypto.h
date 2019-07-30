@@ -79,6 +79,6 @@ namespace QCA {
 
     extern CertificateCollection gSystemStore;
     CertificateCollection systemStore();
-}
+} // namespace QCA
 
 #endif

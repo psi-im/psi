@@ -26,16 +26,15 @@
 
 #include "xmpp_jid.h"
 
-class PsiCon;
-class PsiAccount;
-class UserListItem;
-class QKeyEvent;
-
 namespace XMPP {
     class Status;
 }
-
 using namespace XMPP;
+
+class PsiAccount;
+class PsiCon;
+class QKeyEvent;
+class UserListItem;
 
 enum setStatusEnum {setStatusForAccount = 0, setStatusForJid, setStatusForJidList};
 

@@ -1,10 +1,9 @@
 #ifndef IQFILTERINGHOST_H
 #define IQFILTERINGHOST_H
 
-class QString;
-class QRegExp;
-
 class IqNamespaceFilter;
+class QRegExp;
+class QString;
 
 class IqFilteringHost
 {

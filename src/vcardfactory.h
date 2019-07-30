@@ -21,18 +21,17 @@
 #ifndef VCARDFACTORY_H
 #define VCARDFACTORY_H
 
-#include <QObject>
-#include <QMap>
 #include <QHash>
+#include <QMap>
+#include <QObject>
 #include <QStringList>
 
 namespace XMPP {
-    class VCard;
+    class JT_VCard;
     class Jid;
     class Task;
-    class JT_VCard;
+    class VCard;
 }
-
 using namespace XMPP;
 
 class PsiAccount;

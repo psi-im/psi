@@ -6,7 +6,7 @@
 #include "xmpp_captcha.h"
 
 namespace Ui {
-class CaptchaDlg;
+    class CaptchaDlg;
 }
 
 class PsiAccount;

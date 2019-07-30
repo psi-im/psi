@@ -21,18 +21,17 @@
 #ifndef PSIROSTERWIDGET_H
 #define PSIROSTERWIDGET_H
 
-#include <QWidget>
 #include <QPointer>
+#include <QWidget>
 
 class ContactListDragModel;
 class PsiContactList;
-class QStackedWidget;
 class PsiContactListView;
-class QStackedWidget;
-class QMimeData;
-class QLineEdit;
-class QSortFilterProxyModel;
 class PsiFilteredContactListView;
+class QLineEdit;
+class QMimeData;
+class QSortFilterProxyModel;
+class QStackedWidget;
 
 class PsiRosterWidget : public QWidget
 {

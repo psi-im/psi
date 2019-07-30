@@ -30,8 +30,8 @@
 
 #include "ui_pgpkey.h"
 
-class QStandardItemModel;
 class QSortFilterProxyModel;
+class QStandardItemModel;
 
 class PGPKeyDlg : public QDialog
 {

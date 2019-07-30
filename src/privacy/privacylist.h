@@ -26,8 +26,8 @@
 
 #include "privacylistitem.h"
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class PrivacyList
 {

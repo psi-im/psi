@@ -21,13 +21,13 @@
 #ifndef AHCOMMANDSERVER_H
 #define AHCOMMANDSERVER_H
 
-class AHCServerManager;
-class QString;
-class AHCommand;
-
 namespace XMPP {
     class Jid;
 }
+
+class AHCServerManager;
+class AHCommand;
+class QString;
 
 class AHCommandServer
 {

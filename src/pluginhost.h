@@ -37,11 +37,10 @@
 #include "userlist.h"
 #include "webkitaccessinghost.h"
 
-class QWidget;
-class QPluginLoader;
-
-class PluginManager;
 class IqNamespaceFilter;
+class PluginManager;
+class QPluginLoader;
+class QWidget;
 
 class PluginHost: public QObject,
         public StanzaSendingHost,

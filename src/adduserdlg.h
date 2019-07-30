@@ -23,13 +23,13 @@
 
 #include "ui_adduser.h"
 
-class QString;
-class QStringList;
-class PsiAccount;
-
 namespace XMPP {
     class Jid;
 }
+
+class PsiAccount;
+class QString;
+class QStringList;
 
 class AddUserDlg : public QDialog, public Ui::AddUser
 {

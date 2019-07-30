@@ -31,7 +31,6 @@ namespace XMPP {
     class PubSubRetraction;
     class ServerInfoManager;
 }
-
 using namespace XMPP;
 
 class PubSubSubscription;

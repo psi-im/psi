@@ -26,8 +26,8 @@
     #include <webview.h>
 #endif
 
-class QTextEdit;
 class QString;
+class QTextEdit;
 
 class TypeAheadFindBar : public QToolBar
 {

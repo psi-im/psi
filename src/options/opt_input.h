@@ -5,8 +5,8 @@
 #include "optionstab.h"
 #include "psicon.h"
 
-class QWidget;
 class QTreeWidgetItem;
+class QWidget;
 
 class OptionsTabInput : public OptionsTab
 {

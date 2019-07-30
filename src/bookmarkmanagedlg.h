@@ -26,11 +26,11 @@
 #include "ui_bookmarkmanage.h"
 #include "xmpp_jid.h"
 
+class ConferenceBookmark;
 class PsiAccount;
 class QPushButton;
-class QStandardItemModel;
 class QStandardItem;
-class ConferenceBookmark;
+class QStandardItemModel;
 
 class BookmarkManageDlg : public QDialog
 {

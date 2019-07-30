@@ -16,23 +16,22 @@
 
 #include "psiplugin.h"
 
-class QPluginLoader;
-
-class PsiAccount;
-class PsiPlugin;
-class PluginHost;
-class PsiCon;
-class MessageView;
-
 #define PLUGINS_NO_DEBUG
+
+namespace QCA {
+    class DirWatch;
+}
 
 namespace XMPP {
     class Client;
 }
 
-namespace QCA {
-    class DirWatch;
-}
+class MessageView;
+class PluginHost;
+class PsiAccount;
+class PsiCon;
+class PsiPlugin;
+class QPluginLoader;
 
 class AccountIds
 {

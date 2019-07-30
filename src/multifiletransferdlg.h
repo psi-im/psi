@@ -25,7 +25,7 @@
 #include <QScopedPointer>
 
 namespace Ui {
-class MultiFileTransferDlg;
+    class MultiFileTransferDlg;
 }
 
 namespace XMPP {
@@ -38,11 +38,11 @@ namespace XMPP {
     }
 }
 
-class PsiAccount;
 class MultiFileTransferItem;
+class PsiAccount;
 class QDragEnterEvent;
-class QDragMoveEvent;
 class QDragLeaveEvent;
+class QDragMoveEvent;
 class QDropEvent;
 
 class BinaryUriLoader : public QObject

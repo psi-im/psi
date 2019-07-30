@@ -30,7 +30,6 @@ namespace XMPP {
     class Jid;
     class Message;
 }
-
 using namespace XMPP;
 
 /*! \brief The manager for SXE sessions and negotiations.

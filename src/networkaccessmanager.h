@@ -22,9 +22,9 @@
 #ifndef _NETWORKACCESSMANAGER_H
 #define _NETWORKACCESSMANAGER_H
 
+#include <QHash>
 #include <QNetworkAccessManager>
 #include <QSharedPointer>
-#include <QHash>
 
 class QByteArray;
 class QNetworkRequest;

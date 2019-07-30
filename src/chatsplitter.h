@@ -21,8 +21,8 @@
 #ifndef CHATSPLITTER_H
 #define CHATSPLITTER_H
 
-#include <QWidget>
 #include <QList>
+#include <QWidget>
 
 class QSplitter;
 

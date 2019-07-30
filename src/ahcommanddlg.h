@@ -31,12 +31,12 @@ namespace XMPP {
     class Client;
 }
 
-class PsiCon;
-class PsiAccount;
-class QObject;
-class QComboBox;
-class QPushButton;
 class BusyWidget;
+class PsiAccount;
+class PsiCon;
+class QComboBox;
+class QObject;
+class QPushButton;
 
 typedef struct { QString jid, node, name; } AHCommandItem;
 

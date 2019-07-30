@@ -27,10 +27,10 @@
 #include "privacylistmodel.h"
 #include "ui_privacy.h"
 
-class QWidget;
+class PrivacyManager;
 class QString;
 class QStringList;
-class PrivacyManager;
+class QWidget;
 
 class PrivacyDlg : public QDialog
 {

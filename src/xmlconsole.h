@@ -27,9 +27,9 @@
 
 #include "ui_xmlconsole.h"
 
-class QTextEdit;
-class QCheckBox;
 class PsiAccount;
+class QCheckBox;
+class QTextEdit;
 class XmlPrompt;
 
 class XmlConsole : public QWidget

@@ -38,11 +38,11 @@
 #include <QVariant>
 
 #ifndef WIDGET_PLUGIN
-#include "iconset.h"
-#include "textutil.h"
+#    include "iconset.h"
+#    include "textutil.h"
 #else
-class PsiIcon;
-class Iconset;
+    class Iconset;
+    class PsiIcon;
 #endif
 
 static const int IconFormatType = QTextFormat::UserObject;
@@ -548,5 +548,5 @@ void PsiRichText::restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Psi
 }
 
 #ifndef WIDGET_PLUGIN
-#include "psirichtext.moc"
+#    include "psirichtext.moc"
 #endif

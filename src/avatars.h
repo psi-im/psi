@@ -34,22 +34,21 @@
 #define PEP_AVATAR_METADATA_TN "metadata"
 #define PEP_AVATAR_METADATA_NS "urn:xmpp:avatar:metadata"
 
-class PsiAccount;
-class Avatar;
-class VCardAvatar;
-class VCardMucAvatar;
-class VCardStaticAvatar;
-class FileAvatar;
-class PEPAvatar;
-
 namespace XMPP {
     class Jid;
     class Resource;
     class PubSubItem;
     class Status;
 }
-
 using namespace XMPP;
+
+class Avatar;
+class FileAvatar;
+class PEPAvatar;
+class PsiAccount;
+class VCardAvatar;
+class VCardMucAvatar;
+class VCardStaticAvatar;
 
 //------------------------------------------------------------------------------
 

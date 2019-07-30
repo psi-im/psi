@@ -31,11 +31,10 @@
 class QMetaMethod;
 
 namespace PsiMedia {
-
+class RtpChannelPrivate;
 class RtpSession;
 class RtpSessionPrivate;
 class VideoWidgetPrivate;
-class RtpChannelPrivate;
 
 enum PluginResult
 {
@@ -500,8 +499,7 @@ private:
     friend class RtpSessionPrivate;
     RtpSessionPrivate *d;
 };
-
-}
+}; // namespace PsiMedia
 
 Q_DECLARE_METATYPE(PsiMedia::AudioParams)
 Q_DECLARE_METATYPE(PsiMedia::VideoParams)

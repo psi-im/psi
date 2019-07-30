@@ -23,8 +23,8 @@
 
 #include <QComboBox>
 
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 
 class AccountsComboBox : public QComboBox
 {

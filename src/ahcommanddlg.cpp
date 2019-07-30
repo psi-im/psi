@@ -33,9 +33,9 @@
 #include "xmpp_client.h"
 #include "xmpp_xmlcommon.h"
 
-using namespace XMPP;
-
 #define AHC_NS "http://jabber.org/protocol/commands"
+
+using namespace XMPP;
 
 // --------------------------------------------------------------------------
 

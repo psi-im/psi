@@ -23,13 +23,12 @@
 
 #include <QObject>
 
-class PsiAccount;
-
 namespace XMPP {
     class Jid;
 }
-
 using namespace XMPP;
+
+class PsiAccount;
 
 /**
  * \brief An abstract class for a voice call implementation.

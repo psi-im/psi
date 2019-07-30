@@ -23,10 +23,10 @@
 
 #include "psithemeprovider.h"
 
-class QWebEngineUrlRequestInterceptor;
 class ChatViewTheme;
-class ThemeServer;
 class PsiCon;
+class QWebEngineUrlRequestInterceptor;
+class ThemeServer;
 
 class ChatViewThemeProvider : public PsiThemeProvider
 {

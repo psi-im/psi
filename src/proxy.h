@@ -29,11 +29,11 @@
 //#include "ui_proxyedit.h"
 
 class OptionsTree;
-class QDomElement;
-class QDomDocument;
-
 class ProxyItem;
 class ProxyManager;
+class QDomDocument;
+class QDomElement;
+
 typedef QList<ProxyItem> ProxyItemList;
 
 class ProxySettings

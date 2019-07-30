@@ -25,8 +25,8 @@
 #include <QFutureWatcher>
 #include <QStringList>
 
-class Theme;
 class PsiThemeProvider;
+class Theme;
 
 struct ThemeItemInfo
 {

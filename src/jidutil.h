@@ -21,11 +21,11 @@
 #ifndef JIDUTIL
 #define JIDUTIL
 
-class QString;
-
 namespace XMPP {
     class Jid;
 }
+
+class QString;
 
 class JIDUtil
 {

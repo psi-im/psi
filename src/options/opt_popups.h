@@ -23,8 +23,8 @@
 
 #include "optionstab.h"
 
-class PsiCon;
 class PopupManager;
+class PsiCon;
 
 class OptionsTabPopups : public OptionsTab
 {

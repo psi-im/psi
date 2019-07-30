@@ -26,8 +26,8 @@
 #include "psicontactlist.h"
 #include "xmpp_vcard.h"
 
-class PsiIcon;
 class PsiAccount;
+class PsiIcon;
 class UserListItem;
 class UserResourceList;
 

@@ -38,16 +38,15 @@ namespace XMPP {
     class Jid;
     class Message;
 }
-
 using namespace XMPP;
 
-class PsiAccount;
-class UserListItem;
-class QDropEvent;
-class QDragEnterEvent;
-class ChatView;
 class ChatEdit;
+class ChatView;
 class FileSharingItem;
+class PsiAccount;
+class QDragEnterEvent;
+class QDropEvent;
+class UserListItem;
 
 struct UserStatus {
     UserStatus()

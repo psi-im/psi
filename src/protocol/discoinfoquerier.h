@@ -4,12 +4,11 @@
 #include <QObject>
 
 namespace XMPP {
-    class Jid;
     class DiscoItem;
+    class Jid;
 };
 
 namespace Protocol {
-
 /**
  * A DiscoInfoQuerier is an object used to query Service Discovery information.
  */
@@ -43,6 +42,6 @@ signals:
      */
     void getDiscoInfo_error(const XMPP::Jid& jid, const QString& node, int error_code, const QString& error_string);
 };
-};
+}; // namespace Protocol
 
 #endif

@@ -25,27 +25,25 @@
 
 #include "voicecaller.h"
 
-class PsiAccount;
-
 namespace cricket {
+    class BasicPortAllocator;
+    class Call;
+    class NetworkManager;
+    class PhoneSessionClient;
+    class SessionManager;
+    class SocketAddress;
     class SocketServer;
     class Thread;
-    class NetworkManager;
-    class BasicPortAllocator;
-    class SessionManager;
-    class PhoneSessionClient;
-    class Call;
-    class SocketAddress;
 }
 
 namespace XMPP {
     class Jid;
 }
-
 using namespace XMPP;
 
-class JingleClientSlots;
 class JingleCallSlots;
+class JingleClientSlots;
+class PsiAccount;
 
 class JingleVoiceCaller : public VoiceCaller
 {

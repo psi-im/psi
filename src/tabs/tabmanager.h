@@ -25,9 +25,9 @@
 
 #include "psicon.h"
 
-class TabbableWidget;
 class TabDlg;
 class TabDlgDelegate;
+class TabbableWidget;
 
 class TabManager : public QObject
 {

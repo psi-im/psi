@@ -23,8 +23,8 @@
 
 #include <QLabel>
 
-class QWidget;
 class QObject;
+class QWidget;
 
 class URLLabel : public QLabel
 {

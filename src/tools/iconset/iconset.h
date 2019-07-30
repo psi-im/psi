@@ -31,9 +31,9 @@
 #include <QString>
 #include <QStringList>
 
-class QIcon;
-class QFileInfo;
 class Anim;
+class QFileInfo;
+class QIcon;
 
 class Impix
 {

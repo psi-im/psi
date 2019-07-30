@@ -26,8 +26,8 @@
 #include "ui_accountadd.h"
 
 class PsiCon;
-class QWidget;
 class QString;
+class QWidget;
 
 class AccountAddDlg : public QDialog, public Ui::AccountAdd
 {

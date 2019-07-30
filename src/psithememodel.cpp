@@ -28,6 +28,7 @@
 #include "textutil.h"
 
 class PsiThemeModel;
+
 struct PsiThemeModel::Loader
 {
     Loader(PsiThemeProvider *provider_)

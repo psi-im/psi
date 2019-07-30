@@ -7,8 +7,8 @@
 #include "languagemanager.h"
 
 namespace Ui {
-    class GroupchatTopicDlg;
     class GroupChatTopicAddLangDlg;
+    class GroupchatTopicDlg;
 }
 
 class GCMainDlg;

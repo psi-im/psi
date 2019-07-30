@@ -21,17 +21,16 @@
 #ifndef CONTACTLISTDRAGMODEL_H
 #define CONTACTLISTDRAGMODEL_H
 
+#include <QHash>
+
 #include "contactlistmodel.h"
-
-class ContactListItem;
-class ContactListGroupItem;
-class PsiContactGroup;
-class PsiAccount;
-class PsiContact;
-
 #include "xmpp_jid.h"
 
-#include <QHash>
+class ContactListGroupItem;
+class ContactListItem;
+class PsiAccount;
+class PsiContact;
+class PsiContactGroup;
 
 class ContactListModelOperationList
 {

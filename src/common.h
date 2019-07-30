@@ -29,16 +29,16 @@
 #include <QString>
 #include <QStringList>
 
+#include "statuspreset.h"
+
 #if __cplusplus < 201703L
-# define PSI_FALLSTHROUGH
+#    define PSI_FALLSTHROUGH
 #else
-# define PSI_FALLSTHROUGH [[fallthrough]]
+#    define PSI_FALLSTHROUGH [[fallthrough]]
 #endif
 
 class QMenu;
 class TabbableWidget;
-
-#include "statuspreset.h"
 
 // -----------------------------------------------------------------------------
 // Options

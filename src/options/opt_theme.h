@@ -25,12 +25,12 @@
 
 #include "optionstab.h"
 
-class QModelIndex;
-class QSortFilterProxyModel;
-class QWidget;
 class PsiThemeModel;
 class PsiThemeProvider;
 class QDialog;
+class QModelIndex;
+class QSortFilterProxyModel;
+class QWidget;
 
 class OptionsTabAppearanceThemes : public MetaOptionsTab
 {

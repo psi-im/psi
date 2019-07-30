@@ -26,8 +26,8 @@
 #include <QVariant>
 
 class QDomDocument;
-class QDomElement;
 class QDomDocumentFragment;
+class QDomElement;
 
 /**
  * \class VariantTree

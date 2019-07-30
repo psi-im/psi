@@ -46,7 +46,6 @@
 #include <unistd.h>
 
 namespace Crash {
-
 static int (* print)(const char *format, ...) = NULL;
 static int needs_cr = 1;
 
@@ -247,5 +246,4 @@ void sigsegv_handler_bt_full_fnc(int signal)
 {
     sigsegv_handler_generic(signal, 1);
 }
-
 }; // namespace Crash

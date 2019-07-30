@@ -26,16 +26,14 @@
 #include "xmpp_jid.h"
 #include "xmpp_muc.h"
 
-class QString;
-
 namespace XMPP {
-    class XData;
     class Client;
+    class XData;
 }
-
 using namespace XMPP;
 
 class PsiAccount;
+class QString;
 
 class MUCManager : public QObject
 {

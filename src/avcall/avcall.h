@@ -24,20 +24,18 @@
 
 #include "xmpp.h"
 
-class QHostAddress;
+namespace PsiMedia {
+    class VideoWidget;
+}
 
 namespace XMPP {
     class Jid;
 }
 
-namespace PsiMedia {
-    class VideoWidget;
-}
-
-class PsiAccount;
-
-class AvCallPrivate;
 class AvCallManagerPrivate;
+class AvCallPrivate;
+class PsiAccount;
+class QHostAddress;
 
 class AvCall : public QObject
 {

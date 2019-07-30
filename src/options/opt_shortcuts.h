@@ -26,10 +26,9 @@
 
 #include "optionstab.h"
 
+class PsiOptions;
 class QTreeWidgetItem;
 class QWidget;
-
-class PsiOptions;
 
 class OptionsTabShortcuts : public OptionsTab
 {

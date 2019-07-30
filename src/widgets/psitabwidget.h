@@ -27,11 +27,11 @@
 
 #include "psitabbar.h"
 
-class QVBoxLayout;
 class QHBoxLayout;
-class QToolButton;
-class QStackedLayout;
 class QMenu;
+class QStackedLayout;
+class QToolButton;
+class QVBoxLayout;
 
 /**
  * \class PsiTabWidget

@@ -31,21 +31,19 @@
 #include "xmpp_rosterx.h"
 #include "xmpp_url.h"
 
-class QDateTime;
-class QStringList;
-class PsiCon;
-class PsiAccount;
-class PsiIcon;
-class EventDlg;
-
 namespace XMPP {
     class Jid;
     class XData;
 }
-
 using namespace XMPP;
 
+class EventDlg;
+class PsiAccount;
+class PsiCon;
 class PsiHttpAuthRequest;
+class PsiIcon;
+class QDateTime;
+class QStringList;
 
 class ELineEdit : public QLineEdit
 {

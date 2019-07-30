@@ -26,9 +26,9 @@
 #ifndef PSIPLUGIN_H
 #define PSIPLUGIN_H
 
-class QWidget;
-
 #include <QtCore>
+
+class QWidget;
 
 /**
  * \brief An abstract class for implementing a plugin

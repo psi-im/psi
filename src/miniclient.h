@@ -26,18 +26,20 @@
 
 #include "xmpp_jid.h"
 
-namespace XMPP {
-    class Client;
-    class ClientStream;
-    class AdvancedConnector;
-    class QCATLSHandler;
-}
 namespace QCA {
     class TLS;
 }
+
+namespace XMPP {
+    class AdvancedConnector;
+    class Client;
+    class ClientStream;
+    class QCATLSHandler;
+}
+
 class ProxyManager;
-class QString;
 class QByteArray;
+class QString;
 
 class MiniClient : public QObject
 {

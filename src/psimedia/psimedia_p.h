@@ -288,5 +288,4 @@ private slots:
         emit q->error();
     }
 };
-
-} // namespace
+}; // namespace PsiMedia

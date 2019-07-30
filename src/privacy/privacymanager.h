@@ -24,8 +24,8 @@
 #include <QObject>
 #include <QStringList>
 
-class QString;
 class PrivacyList;
+class QString;
 
 class PrivacyManager : public QObject
 {

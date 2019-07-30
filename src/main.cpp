@@ -72,6 +72,8 @@
 #    define PSI_EXPORT_FUNC
 #endif
 
+using namespace XMPP;
+
 /** \mainpage Psi API Documentation
  *
  *    \section intro_sec Indroduction
@@ -83,8 +85,6 @@
  *    \section Contact Details
  *        And here we might put our contact details
  */
-
-using namespace XMPP;
 
 PsiMain::PsiMain(const QHash<QString, QString>& commandline, QObject *par)
     : QObject(par)

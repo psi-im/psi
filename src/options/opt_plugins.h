@@ -8,8 +8,8 @@
 #include "optionstab.h"
 #include "ui_plugininfodialog.h"
 
-class QWidget;
 class Options;
+class QWidget;
 
 class OptionsTabPlugins : public OptionsTab
 {

@@ -12,7 +12,6 @@ namespace XMPP {
 }
 
 namespace IrisProtocol {
-
 class DiscoInfoQuerier : public Protocol::DiscoInfoQuerier
 {
     Q_OBJECT
@@ -27,8 +26,6 @@ private slots:
 private:
     QPointer<XMPP::Client> client_;
 };
-
-} // namespace
+}; // namespace IrisProtocol
 
 #endif
-

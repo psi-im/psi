@@ -5,10 +5,10 @@
 
 #include "optionstab.h"
 
-class QWidget;
-class QLineEdit;
-class QButtonGroup;
 class QAbstractButton;
+class QButtonGroup;
+class QLineEdit;
+class QWidget;
 
 class OptionsTabSound : public OptionsTab
 {

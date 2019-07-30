@@ -21,10 +21,10 @@
 #ifndef JSUTIL
 #define JSUTIL
 
+#include <QVariantMap>
+
 class QString;
 class QVariant;
-
-#include <QVariantMap>
 
 class JSUtil
 {

@@ -5,10 +5,10 @@
 
 #include "optionstab.h"
 
-class QWidget;
-class QListWidgetItem;
 class IconsetLoadThread;
+class QListWidgetItem;
 class QTreeWidgetItem;
+class QWidget;
 
 class OptionsTabIconsetSystem : public OptionsTab
 {

@@ -29,10 +29,10 @@
 #include "profiles.h"
 #include "ui_accountmodify.h"
 
-class PsiAccount;
-class QWidget;
-class PsiCon;
 class ProxyChooser;
+class PsiAccount;
+class PsiCon;
+class QWidget;
 
 class AccountModifyDlg : public QDialog, public Ui::AccountModify
 {

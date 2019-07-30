@@ -21,15 +21,15 @@
 #ifndef FILECACHE_H
 #define FILECACHE_H
 
-#include <QObject>
 #include <QDateTime>
 #include <QFile>
 #include <QHash>
+#include <QObject>
 #include <QVariantMap>
 
-class QTimer;
-class OptionsTree;
 class FileCache;
+class OptionsTree;
+class QTimer;
 
 class FileCacheItem : public QObject
 {

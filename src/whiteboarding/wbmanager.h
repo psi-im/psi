@@ -38,7 +38,6 @@ namespace XMPP {
     class Jid;
     class Message;
 }
-
 using namespace XMPP;
 
 class WbRequest;

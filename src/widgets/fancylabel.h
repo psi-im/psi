@@ -24,9 +24,9 @@
 #include <QLabel>
 #include <QWidget>
 
-class QPixmap;
-class QColor;
 class PsiIcon;
+class QColor;
+class QPixmap;
 
 class FancyLabel : public QWidget
 {

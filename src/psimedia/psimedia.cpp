@@ -22,7 +22,6 @@
 #include "psimedia_p.h"
 
 namespace PsiMedia {
-
 static AudioParams importAudioParams(const PAudioParams &pp)
 {
     AudioParams out;
@@ -1141,5 +1140,4 @@ RtpChannel *RtpSession::videoRtpChannel()
 {
     return &d->videoRtpChannel;
 }
-
-}
+}; // namespace PsiMedia

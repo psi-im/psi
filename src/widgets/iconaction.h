@@ -24,12 +24,12 @@
 #include <QAction>
 #include <QList>
 
-class QToolButton;
-class QPixmap;
-class QIcon;
-class PsiIcon;
 class IconToolButton;
+class PsiIcon;
 class QChildEvent;
+class QIcon;
+class QPixmap;
+class QToolButton;
 
 class IconAction : public QAction
 {

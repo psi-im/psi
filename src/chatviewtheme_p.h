@@ -32,12 +32,11 @@
 #include "chatviewtheme.h"
 #include "theme_p.h"
 
-class QWebFrame;
-
-class WebView;
-class NetworkAccessManager;
-class ChatViewThemeProvider;
 class ChatViewThemePrivate;
+class ChatViewThemeProvider;
+class NetworkAccessManager;
+class QWebFrame;
+class WebView;
 
 class ChatViewJSLoader : public QObject
 {

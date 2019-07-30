@@ -26,8 +26,8 @@
 #include "xmpp_status.h"
 
 class ContactListView;
-class PsiContact;
 class PsiAccount;
+class PsiContact;
 
 class ContactListViewDelegate : public QItemDelegate
 {

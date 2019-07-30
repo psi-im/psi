@@ -21,14 +21,14 @@
 #ifndef ACTIVITY_H
 #define ACTIVITY_H
 
-#include <QString>
 #include <QMetaType>
+#include <QString>
 
 #define PEP_ACTIVITY_TN "activity"
 #define PEP_ACTIVITY_NS "http://jabber.org/protocol/activity"
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class Activity
 {

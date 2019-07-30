@@ -720,8 +720,8 @@ typedef struct
 #ifndef NO_IVIDEO_DECLARE
 #ifdef __cplusplus
 
-class VideoOutput;
 class SubsItem;
+class VideoOutput;
 
 typedef    struct {
     unsigned char*    baseAddr;

@@ -4,7 +4,6 @@
 using namespace XMPP;
 
 namespace IrisProtocol {
-
 DiscoInfoQuerier::DiscoInfoQuerier(XMPP::Client* client) : client_(client)
 {
 }
@@ -28,6 +27,4 @@ void DiscoInfoQuerier::discoFinished()
         emit getDiscoInfo_error(disco->jid(), disco->node(), disco->statusCode(), disco->statusString());
     }
 }
-
-} // namespace
-
+}; // namespace IrisProtocol

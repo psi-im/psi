@@ -23,8 +23,8 @@
 
 #include "contactlistdragview.h"
 
-class QAbstractItemModel;
 class ContactListViewDelegate;
+class QAbstractItemModel;
 
 class PsiContactListView : public ContactListDragView
 {

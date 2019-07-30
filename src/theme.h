@@ -32,10 +32,10 @@
 #include <QStringList>
 #include <functional>
 
+class PsiThemeProvider;
 class QFileInfo;
 class QWidget;
 class ThemePrivate;
-class PsiThemeProvider;
 
 //-----------------------------------------------
 // Theme

@@ -30,27 +30,25 @@
 #include "advwidget.h"
 #include "xmpp_status.h"
 
-class QMenuBar;
-class QAction;
-class QPixmap;
-class QPoint;
-class QMenu;
-class QMimeData;
-
-class PsiCon;
-class PsiToolBar;
-class PsiAccount;
-class IconAction;
-class PsiIcon;
-class ContactView;
-class PsiTrayIcon;
-class GlobalStatusMenu;
-
 namespace XMPP {
     class Status;
 }
-
 using namespace XMPP;
+
+class ContactView;
+class GlobalStatusMenu;
+class IconAction;
+class PsiAccount;
+class PsiCon;
+class PsiIcon;
+class PsiToolBar;
+class PsiTrayIcon;
+class QAction;
+class QMenu;
+class QMenuBar;
+class QMimeData;
+class QPixmap;
+class QPoint;
 
 class MainWin : public AdvancedWidget<QMainWindow>
 {

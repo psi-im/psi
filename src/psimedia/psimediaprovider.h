@@ -30,8 +30,8 @@ class QImage;
 class QIODevice;
 
 #ifdef QT_GUI_LIB
-    class QWidget;
     class QPainter;
+    class QWidget;
 #endif
 
 // since we cannot put signals/slots in Qt "interfaces", we use the following
@@ -42,8 +42,8 @@ class QIODevice;
 
 namespace PsiMedia {
 
-class Provider;
 class FeaturesContext;
+class Provider;
 class RtpSessionContext;
 
 class Plugin
@@ -298,8 +298,7 @@ public:
     HINT_METHOD(finished()) // for file playback only
     HINT_METHOD(error())
 };
-
-}
+}; // namespace PsiMedia
 
 Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.4")

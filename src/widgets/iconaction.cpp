@@ -28,11 +28,11 @@
 #include "icontoolbutton.h"
 #include "iconwidget.h"
 #ifndef WIDGET_PLUGIN
-#include "iconset.h"
-#include "psioptions.h"
+#    include "iconset.h"
+#    include "psioptions.h"
 #else
-class PsiIcon;
-class Iconset;
+    class Iconset;
+    class PsiIcon;
 #endif
 
 //----------------------------------------------------------------------------

@@ -151,6 +151,7 @@ PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, 
 //----------------------------------------------------------------------------
 
 class DiscoListItem;
+
 class DiscoConnector : public QObject
 {
     Q_OBJECT

@@ -21,13 +21,13 @@
 #ifndef MOOD_H
 #define MOOD_H
 
-#include <QString>
 #include <QMetaType>
+#include <QString>
 
 #define PEP_MOOD_NS "http://jabber.org/protocol/mood"
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class Mood
 {

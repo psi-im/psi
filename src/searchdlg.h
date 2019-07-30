@@ -25,15 +25,14 @@
 
 #include "ui_search.h"
 
-class PsiAccount;
-class QString;
-class QStringList;
-
 namespace XMPP {
     class Jid;
 }
-
 using namespace XMPP;
+
+class PsiAccount;
+class QString;
+class QStringList;
 
 class SearchDlg : public QDialog, public Ui::Search
 {

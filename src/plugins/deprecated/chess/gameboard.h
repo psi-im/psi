@@ -37,9 +37,9 @@
 #define    SOCK_WAIT    900
 #define    GAMEOVER_TXT    "****"
 
-class GameBoard;
 class Drawer;
 class Figure;
+class GameBoard;
 class GameProtocol;
 
 class GameBoard:public QWidget

@@ -21,11 +21,11 @@
 #ifndef CONTACTLISTITEMMENU_H
 #define CONTACTLISTITEMMENU_H
 
-#include <QMenu>
 #include <QList>
+#include <QMenu>
 
-class ContactListModel;
 class ContactListItem;
+class ContactListModel;
 class QAction;
 class QLabel;
 

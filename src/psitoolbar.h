@@ -25,10 +25,9 @@
 
 #include "psiactionlist.h"
 
-class QContextMenuEvent;
-
-class ToolbarPrefs;
 class PsiOptions;
+class QContextMenuEvent;
+class ToolbarPrefs;
 
 class PsiToolBar : public QToolBar
 {

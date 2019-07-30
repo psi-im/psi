@@ -26,7 +26,6 @@
 #define CRASH_SIGSEGV_H
 
 namespace Crash {
-
 /**
  * sets the print function (it is used to print the backtrace)
  * if it isn't set, or it is set to nullptr, printf will be used.
@@ -44,7 +43,6 @@ void sigsegv_handler_fnc(int signal);
  * try to print a verbose backtrace of the program, and dump the core
  */
 void sigsegv_handler_bt_full_fnc(int signal);
-
 }; // namespace Crash
 
 #endif

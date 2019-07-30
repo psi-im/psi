@@ -23,8 +23,8 @@
 
 #include <QListWidget>
 
-class IconsetDisplayItem;
 class Iconset;
+class IconsetDisplayItem;
 
 class IconsetDisplay : public QListWidget
 {

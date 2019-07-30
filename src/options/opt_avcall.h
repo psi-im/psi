@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QButtonGroup;
+class QWidget;
 
 class OptionsTabAvCall : public OptionsTab
 {

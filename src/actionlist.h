@@ -21,12 +21,12 @@
 #ifndef ACTIONLIST_H
 #define ACTIONLIST_H
 
-#include <QObject>
 #include <QList>
+#include <QObject>
 
+class IconAction;
 class QString;
 class QStringList;
-class IconAction;
 
 class ActionList : public QObject
 {

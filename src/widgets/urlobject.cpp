@@ -29,7 +29,7 @@
 
 #include "iconaction.h"
 #ifndef WIDGET_PLUGIN
-#include "psioptions.h"
+#    include "psioptions.h"
 #endif
 
 //! \if _hide_doc_

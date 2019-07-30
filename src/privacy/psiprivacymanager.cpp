@@ -34,6 +34,8 @@
 
 #define PRIVACY_NS "jabber:iq:privacy"
 
+using namespace XMPP;
+
 static const QString BLOCKED_LIST_NAME = "blocked";
 
 static XMPP::Jid processJid(const XMPP::Jid& jid)
@@ -46,8 +48,6 @@ static bool privacyListItemForJid(const PrivacyListItem& item, const Jid& jid)
     return item.type() == PrivacyListItem::JidType &&
            processJid(item.value()) == processJid(jid);
 }
-
-using namespace XMPP;
 
 // -----------------------------------------------------------------------------
 //

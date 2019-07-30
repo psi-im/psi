@@ -22,12 +22,12 @@
 #ifndef FILEPLAYERCONTROLLER_H
 #define FILEPLAYERCONTROLLER_H
 
+#include "pollingtunecontroller.h"
+#include "tune.h"
+
 namespace QCA {
     class FileWatch;
 }
-
-#include "pollingtunecontroller.h"
-#include "tune.h"
 
 class FileTuneController : public PollingTuneController
 {

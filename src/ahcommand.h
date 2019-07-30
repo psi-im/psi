@@ -26,8 +26,9 @@
 
 #include "xmpp_xdata.h"
 
-class QDomElement;
+class AHCommandPrivate;
 class QDomDocument;
+class QDomElement;
 
 class AHCError
 {
@@ -52,7 +53,6 @@ private:
     ErrorType type_;
 };
 
-class AHCommandPrivate;
 class AHCommand
 {
 public:

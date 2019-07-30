@@ -32,10 +32,10 @@
 
 #include "psipopupinterface.h"
 
+using namespace XMPP;
+
 class GrowlNotifier;
 class NotificationContext;
-
-using namespace XMPP;
 
 /**
  * An interface for Psi to Growl.

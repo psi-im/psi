@@ -31,19 +31,18 @@
 #include "tabbablewidget.h"
 #include "ui_groupchatdlg.h"
 
-class PsiCon;
-class PsiAccount;
-class PsiOptions;
-class QRect;
-class GCMainDlg;
-class MessageView;
-class QColorGroup;
-
 namespace XMPP {
     class Message;
 }
-
 using namespace XMPP;
+
+class GCMainDlg;
+class MessageView;
+class PsiAccount;
+class PsiCon;
+class PsiOptions;
+class QColorGroup;
+class QRect;
 
 class GCMainDlg : public TabbableWidget
 {

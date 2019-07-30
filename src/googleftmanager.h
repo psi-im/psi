@@ -28,23 +28,26 @@
 #include "talk/base/scoped_ptr.h"
 
 namespace cricket {
+    class FileShareSession;
+    class FileShareSessionClient;
     class HttpPortAllocator;
     class SessionManager;
-    class FileShareSessionClient;
-    class FileShareSession;
 }
+
 namespace talk_base {
     class NetworkManager;
     class PhysicalSocketServer;
     class Thread;
 }
+
 namespace XMPP {
-    class Jid;
     class Client;
+    class Jid;
 }
-class GoogleSessionListener;
-class GoogleFileTransferListener;
+
 class GoogleFTManager;
+class GoogleFileTransferListener;
+class GoogleSessionListener;
 
 class GoogleFileTransfer : public QObject/*: public XMPP::AbstractFileTransfer*/
 {

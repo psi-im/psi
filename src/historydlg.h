@@ -26,15 +26,14 @@
 #include "historycontactlistmodel.h"
 #include "ui_history.h"
 
-class PsiAccount;
-class PsiContact;
-class UserListItem;
-
 namespace XMPP {
     class Jid;
 }
 
 class DisplayProxy;
+class PsiAccount;
+class PsiContact;
+class UserListItem;
 
 class SearchProxy : public QObject
 {
