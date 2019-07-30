@@ -28,16 +28,26 @@
      <property name="title">
       <string>Tunes</string>
      </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
      <property name="flat">
+      <bool>false</bool>
+     </property>
+     <property name="checkable">
       <bool>false</bool>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <property name="spacing">
        <number>6</number>
       </property>
+      <item>
+       <widget class="QCheckBox" name="cb_publishTunes">
+        <property name="toolTip">
+         <string>Publish information about the music being played</string>
+        </property>
+        <property name="text">
+         <string>Publish Tunes</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
@@ -76,7 +86,16 @@
          <property name="sizeConstraint">
           <enum>QLayout::SetDefaultConstraint</enum>
          </property>
-         <property name="margin">
+         <property name="leftMargin">
+          <number>6</number>
+         </property>
+         <property name="topMargin">
+          <number>6</number>
+         </property>
+         <property name="rightMargin">
+          <number>6</number>
+         </property>
+         <property name="bottomMargin">
           <number>6</number>
          </property>
          <item>
