@@ -1,6 +1,5 @@
 /*
  * chatsplitter.cpp - QSplitter replacement that masquerades it
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

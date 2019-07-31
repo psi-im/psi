@@ -1,6 +1,5 @@
 /*
  * activeprofiles_win.cpp - Class for interacting with other app instances
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or

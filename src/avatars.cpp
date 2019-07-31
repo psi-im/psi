@@ -1,6 +1,5 @@
 /*
  * avatars.cpp
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2017  Remko Troncon, Evgeny Khryukin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or

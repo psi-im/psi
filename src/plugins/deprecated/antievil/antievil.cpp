@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007-2008  Maciej Niedzielski
  */
 

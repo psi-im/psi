@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008  Remko Troncon
  * Licensed under the GNU GPL.
  * See COPYING for license details.

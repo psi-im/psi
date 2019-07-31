@@ -1,6 +1,5 @@
 /*
  * ahcservermanager.cpp - Server implementation of XEP-50 (Ad-Hoc Commands)
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or

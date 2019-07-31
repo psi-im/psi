@@ -1,6 +1,5 @@
 /*
  * multifiletransferview.h - file transfer delegate
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or

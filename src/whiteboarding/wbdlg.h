@@ -1,11 +1,9 @@
 /*
  * wbdlg.h - dialog for whiteboarding
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Joonas Govenius
  *
  * Originally developed from:
  * wbdlg.h - dialog for handling chats
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or

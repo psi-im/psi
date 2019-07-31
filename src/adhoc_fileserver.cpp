@@ -1,6 +1,5 @@
 /*
  * adhoc_fileserver.cpp - Implementation of a personal ad-hoc fileserver
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2005  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or

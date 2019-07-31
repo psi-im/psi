@@ -1,6 +1,5 @@
 /*
  * resourcemenu.h - helper class for displaying contact's resources
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2010  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

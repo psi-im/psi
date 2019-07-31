@@ -1,6 +1,5 @@
 /*
  * showtextdlg.h - dialog for displaying a text file
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Justin Karneges
  *
  * This library is free software; you can redistribute it and/or

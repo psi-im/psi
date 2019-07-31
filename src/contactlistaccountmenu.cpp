@@ -1,6 +1,5 @@
 /*
  * contactlistaccountmenu.cpp - context menu for contact list accounts
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009-2010  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

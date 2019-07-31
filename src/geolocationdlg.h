@@ -1,6 +1,5 @@
 /*
  * geolocationdlg.h
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or

@@ -1,6 +1,5 @@
 /*
  * bob.h - Bits of Binary server and manager
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or

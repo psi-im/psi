@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007-2008  Psi Development Team
  * Licensed under the GNU General Public License.
  * See the COPYING file for more information.

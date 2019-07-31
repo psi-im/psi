@@ -1,6 +1,5 @@
 /*
  * psitabbar.cpp - Tabbar child for Psi
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or

@@ -1,6 +1,5 @@
 /*
  * msgmle.h - subclass of PsiTextView to handle various hotkeys
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

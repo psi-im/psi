@@ -1,6 +1,5 @@
 /*
  * aboutdlg.h
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

@@ -1,6 +1,5 @@
 /*
  * historycontactlistmodel.cpp
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2017  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or

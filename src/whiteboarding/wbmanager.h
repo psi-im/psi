@@ -1,11 +1,9 @@
 /*
  * wbmanager.h - Whiteboard manager
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * Influenced by:
  * pepmanager.h - Classes for PEP
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or

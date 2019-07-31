@@ -1,6 +1,5 @@
 /*
  * sxerecord.cpp - A class for storing the record of an individual node
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2007  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or

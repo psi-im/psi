@@ -1,7 +1,6 @@
 /*
  * crash.c - handle psi's crashes
  *
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2004  Juan F. Codagnone <juam@users.sourceforge.net>
  *
  * This program is free software; you can redistribute it and/or modify

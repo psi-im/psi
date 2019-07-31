@@ -1,6 +1,5 @@
 /*
  * chatdlg.h - dialog for handling chats
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2007  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

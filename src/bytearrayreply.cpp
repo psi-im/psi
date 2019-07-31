@@ -1,6 +1,5 @@
 /*
  * bytearrayreply.cpp - Base class for QNetworReply'es returning QByteArray
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or

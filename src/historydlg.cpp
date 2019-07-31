@@ -1,6 +1,5 @@
 /*
  * historydlg.cpp
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Piotr Okonski, Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or

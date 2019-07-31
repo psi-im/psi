@@ -1,6 +1,5 @@
 /*
  * contactlistgroupmenu_p.h - context menu for contact list groups
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
  * Copyright (C) 2017  Ivan Romanov <drizt@land.ru>
  *

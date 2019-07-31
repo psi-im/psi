@@ -1,6 +1,5 @@
 /*
  * busywidget.cpp - cool animating widget
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2002  Justin Karneges
  *                           Hideaki Omuro
  *

@@ -1,6 +1,5 @@
 /*
  * webview.h - QWebView handling links and copying text
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or

@@ -1,6 +1,5 @@
 /*
  * tasklist.h - A small, but useful Task List
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

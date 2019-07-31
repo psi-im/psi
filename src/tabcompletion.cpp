@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2008  Justin Karneges, Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or

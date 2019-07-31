@@ -1215,8 +1215,6 @@ public:
     	QStringList incs;
     	QString version, libs, other;
     	QString s;
-    	
-    	
 
     	if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
 
@@ -2603,7 +2601,6 @@ cat >"$1/modules_new.cpp" <<EOT
 EOT
 cat >"$1/conf4.h" <<EOT
 /*
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2004-2008  Justin Karneges
 
  * This file is free software; unlimited permission is given to copy and/or
@@ -2723,7 +2720,6 @@ private:
 EOT
 cat >"$1/conf4.cpp" <<EOT
 /*
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2004-2008  Justin Karneges
 
  * This file is free software; unlimited permission is given to copy and/or
@@ -3006,7 +3002,6 @@ QString qc_escapeArg(const QString &str)
     }
     return out;
 }
-
 
 QString qc_trim_char(const QString &s, const QChar &ch)
 {
@@ -3844,7 +3839,6 @@ DESTDIR  = \$\$PWD
 
 HEADERS += conf4.h
 SOURCES += conf4.cpp
-
 
 DEFINES += HAVE_MODULES
 

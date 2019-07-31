@@ -1,7 +1,6 @@
 /*
  * sigsegv.h -- sigsegv handlers
  *
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003  Juan F. Codagnone <juam@users.sourceforge.net>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

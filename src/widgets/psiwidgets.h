@@ -1,6 +1,5 @@
 /*
  * psiwidgets.h - plugin for loading Psi's custom widgets into Qt Designer
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2003-2005  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or

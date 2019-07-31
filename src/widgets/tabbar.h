@@ -1,6 +1,5 @@
 /*
  * tabbar.h
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2013-2014  Ivan Romanov <drizt@land.ru>
  *
  * This library is free software; you can redistribute it and/or

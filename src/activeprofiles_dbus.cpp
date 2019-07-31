@@ -1,6 +1,5 @@
 /*
  * activeprofiles_dbus.cpp - Class for interacting with other psi instances
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2006-2007  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or

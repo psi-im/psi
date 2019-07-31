@@ -1,6 +1,5 @@
 /*
  * statusmenu.h - helper class that displays available statuses using QMenu
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2008-2010  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or

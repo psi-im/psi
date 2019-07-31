@@ -1,6 +1,5 @@
 /*
  * gcuserview.cpp - groupchat roster
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2002  Justin Karneges
  * Copyright (C) 2011  Evgeny Khryukin
  *

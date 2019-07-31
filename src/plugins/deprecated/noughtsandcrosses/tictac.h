@@ -2,7 +2,6 @@
 /****************************************************************************
 ** $Id: $
 **
-** Copyright (C) 2001-2019  Psi Team
 ** Copyright (C) 1992-2000  Trolltech AS.  All rights reserved.
 **
 ** This file is part of an example program for Qt.  This example

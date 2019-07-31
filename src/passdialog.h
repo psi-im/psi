@@ -1,6 +1,5 @@
 /*
  * passdialog.cpp
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2009-2010  Virnik
  * Copyright (C) 2011  Evgeny Khryukin
  *

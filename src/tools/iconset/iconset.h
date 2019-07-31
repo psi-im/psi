@@ -1,6 +1,5 @@
 /*
  * iconset.h - various graphics handling classes
- * Copyright (C) 2001-2019  Psi Team
  * Copyright (C) 2001-2006  Justin Karneges, Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
