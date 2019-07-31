@@ -627,11 +627,9 @@ void ChatEdit::addSoundRecButton()
         recButton_.reset(new QToolButton(this));
         overlay_.reset(new QLabel(this));
 
-        const int bs = PsiIconset::instance()->system().iconSize();
         //Set text right margin for rec button
-        QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
-        frmt.setRightMargin(bs + 8);
-        document()->rootFrame()->setFrameFormat(frmt);
+        connect(document(), &QTextDocument::contentsChanged, this, &ChatEdit::setRigthMargin);
+
 
         //Add text label and rec button to the right side of LineEdit
         //Setting label color to grey with 70% opacity with red bold text
@@ -700,6 +698,16 @@ void ChatEdit::addSoundRecButton()
 void ChatEdit::setOverlayText(int value)
 {
     overlay_->setText(tr("Recording (%1 sec left)").arg(value));
+}
+
+void ChatEdit::setRigthMargin()
+{
+    const int margin = PsiIconset::instance()->system().iconSize() + 8;
+    QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
+    if(frmt.rightMargin() < margin) {
+        frmt.setRightMargin(margin);
+        document()->rootFrame()->setFrameFormat(frmt);
+    }
 }
 
 //----------------------------------------------------------------------------
