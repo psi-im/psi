@@ -169,4 +169,4 @@ private:
     QTimer *selfDestruct_;
 };
 
-#endif
+#endif // WBDLG_H

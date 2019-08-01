@@ -28,7 +28,6 @@
 #include <QTimer>
 #include <QUrl>
 #include <QWidget>
-//#define CORRECTION_DEBUG
 #ifdef CORRECTION_DEBUG
 #    include <QDebug>
 #endif
@@ -44,9 +43,12 @@
 #include "textutil.h"
 #include "xmpp/jid/jid.h"
 
+//#define CORRECTION_DEBUG
+
 static const char *informationalColorOpt = "options.ui.look.colors.messages.informational";
 static const QRegExp underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
 static const QRegExp removeTagsRE("<[^>]*>");
+
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------

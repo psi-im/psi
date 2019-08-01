@@ -50,4 +50,4 @@ private:
     quintptr realIcon_;
 };
 
-#endif
+#endif // PSITRAYICON_H

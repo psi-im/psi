@@ -145,4 +145,4 @@ private:
     void reorderGroups(QDropEvent *e, const QModelIndex &index);
 };
 
-#endif
+#endif // CONTACTLISTDRAGVIEW_H

@@ -44,4 +44,4 @@ signals:
 };
 }; // namespace Protocol
 
-#endif
+#endif // DISCOINFOQUERIER_H

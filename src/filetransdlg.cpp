@@ -32,6 +32,7 @@ typedef quint64 LARGE_TYPE;
 
 #define CSMAX (sizeof(LARGE_TYPE)*8)
 #define CSMIN 16
+
 static int calcShift(qlonglong big)
 {
     LARGE_TYPE val = 1;

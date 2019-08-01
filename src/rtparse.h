@@ -40,4 +40,4 @@ private:
     bool v_atEnd;
 };
 
-#endif
+#endif // RTPARSE_H

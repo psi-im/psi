@@ -28,4 +28,4 @@ private slots:
     void restore();
 };
 
-#endif
+#endif // VCARDPHOTODLG_H

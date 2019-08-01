@@ -85,4 +85,4 @@ private:
     QMap<QString,cricket::Call*> calls_;
 };
 
-#endif
+#endif // JINGLEVOICECALLER_H

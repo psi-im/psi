@@ -12,8 +12,8 @@
  * Hacked by:
  */
 
-#ifndef    __GAME_BOARD_H__
-#define    __GAME_BOARD_H__
+#ifndef GAMEBOARD_H
+#define GAMEBOARD_H
 
 #include <QCloseEvent>
 #include <QDialog>
@@ -255,4 +255,4 @@ signals:
     void sendData(const QString& data);
 };
 
-#endif    /* __GAME_BOARD_H__ */
+#endif // GAMEBOARD_H

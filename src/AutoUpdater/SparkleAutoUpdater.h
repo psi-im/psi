@@ -23,4 +23,4 @@ class SparkleAutoUpdater : public AutoUpdater
         Private* d;
 };
 
-#endif
+#endif // SPARKLEAUTOUPDATER_H

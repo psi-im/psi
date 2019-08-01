@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef JIDUTIL
-#define JIDUTIL
+#ifndef JIDUTIL_H
+#define JIDUTIL_H
 
 namespace XMPP {
     class Jid;
@@ -44,4 +44,4 @@ public:
     static QString decode822(const QString&);
 };
 
-#endif
+#endif // JIDUTIL_H

@@ -60,4 +60,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONBUTTON_H

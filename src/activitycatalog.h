@@ -65,4 +65,4 @@ private:
 
 };
 
-#endif
+#endif // ACTIVITYCATALOG_H

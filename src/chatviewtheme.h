@@ -58,4 +58,4 @@ private slots:
 #endif
 };
 
-#endif
+#endif // CHATVIEWTHEME_H

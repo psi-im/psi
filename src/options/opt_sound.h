@@ -35,4 +35,4 @@ private:
     QButtonGroup *bg_se = nullptr, *bg_sePlay = nullptr;
 };
 
-#endif
+#endif // OPT_SOUND_H

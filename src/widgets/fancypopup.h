@@ -54,4 +54,4 @@ private:
     friend class Private;
 };
 
-#endif
+#endif // FANCYPOPUP_H

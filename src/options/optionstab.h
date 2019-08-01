@@ -74,4 +74,4 @@ private:
     QList<OptionsTab*> tabs;
 };
 
-#endif
+#endif // OPTIONSTAB_H

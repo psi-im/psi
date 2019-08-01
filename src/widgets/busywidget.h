@@ -62,4 +62,4 @@ private:
     friend class Private;
 };
 
-#endif
+#endif // BUSYWIDGET_H

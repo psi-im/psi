@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef BOB_H
-#define BOB_H
+#ifndef BOBFILECACHE_H
+#define BOBFILECACHE_H
 
 #include "iris/xmpp_bitsofbinary.h"
 
@@ -42,4 +42,4 @@ private:
     static BoBFileCache *_instance;
 };
 
-#endif
+#endif // BOBFILECACHE_H

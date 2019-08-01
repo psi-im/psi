@@ -24,4 +24,4 @@ private:
     static ShortcutManager* instance_;
 };
 
-#endif
+#endif // SHORTCUTMANAGER_H

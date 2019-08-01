@@ -57,4 +57,4 @@ protected:
     static PsiToolTip* instance_;
 };
 
-#endif
+#endif // PSITOOLTIP_H

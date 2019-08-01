@@ -21,4 +21,4 @@ private:
     QWidget *w;
 };
 
-#endif
+#endif // OPT_AVCALL_H

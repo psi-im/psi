@@ -39,4 +39,4 @@ private:
         QString host_;
 };
 
-#endif
+#endif // CERTIFICATEERRORDIALOG_H

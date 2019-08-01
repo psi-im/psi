@@ -55,4 +55,4 @@ private:
     void saveSettings();
 };
 
-#endif
+#endif // MAIN_H

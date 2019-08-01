@@ -79,4 +79,4 @@ private:
     QList<ThemeItemInfo> themesInfo;
 };
 
-#endif
+#endif // PSITHEMEMODEL_H

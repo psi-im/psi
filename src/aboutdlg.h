@@ -39,4 +39,4 @@ private:
     Ui::AboutDlg ui_;
 };
 
-#endif
+#endif // ABOUTDLG_H

@@ -121,4 +121,4 @@ private:
 
 };
 
-#endif
+#endif // WBITEM_H

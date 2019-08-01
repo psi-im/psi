@@ -227,4 +227,4 @@ private:
     void addService(const QString& id, const QString& name);
 };
 
-#endif
+#endif // OPT_ICONSET_H

@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef _WEBVIEW_H
-#define    _WEBVIEW_H
+#ifndef WEBVIEW_H
+#define WEBVIEW_H
 
 #include <QBuffer>
 #include <QClipboard>
@@ -95,4 +95,4 @@ protected slots:
     void loadFinishedEvent(bool);
 };
 
-#endif
+#endif // WEBVIEW_H

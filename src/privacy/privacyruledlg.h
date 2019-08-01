@@ -43,4 +43,4 @@ private:
     Ui::PrivacyRule ui_;
 };
 
-#endif
+#endif // PRIVACYRULEDLG_H

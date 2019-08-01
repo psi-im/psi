@@ -159,5 +159,4 @@ private:
     QList<PsiAccount*> accounts() const;
 };
 
-#endif
-
+#endif // MAINWIN_P_H

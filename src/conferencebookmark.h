@@ -67,4 +67,4 @@ private:
     QString password_;
 };
 
-#endif
+#endif // CONFERENCEBOOKMARK_H

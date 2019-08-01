@@ -114,4 +114,4 @@ private:
     QSharedDataPointer<AHCommandPrivate> d;
 };
 
-#endif
+#endif // AHCOMMAND_H

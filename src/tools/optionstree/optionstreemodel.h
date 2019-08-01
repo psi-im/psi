@@ -73,4 +73,4 @@ private:
     QStack<bool> realRemove;
 };
 
-#endif
+#endif // OPTIONSTREEMODEL_H

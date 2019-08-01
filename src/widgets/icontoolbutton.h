@@ -55,4 +55,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONTOOLBUTTON_H

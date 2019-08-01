@@ -57,4 +57,4 @@ private:
     QPushButton* pb_apply;
 };
 
-#endif
+#endif // OPTIONSDLGBASE_H

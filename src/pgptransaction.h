@@ -59,4 +59,4 @@ private:
     static int idCounter_;
 };
 
-#endif
+#endif // PGPTRANSACTION_H

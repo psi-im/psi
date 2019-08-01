@@ -65,4 +65,4 @@ class SxeNewEdit : public SxeEdit {
         QString data_;
 };
 
-#endif
+#endif // SXDENEWEDIT_H

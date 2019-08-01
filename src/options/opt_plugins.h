@@ -44,4 +44,4 @@ private slots:
     void settingsClicked(int item);
 };
 
-#endif
+#endif // OPT_PLUGINS_H

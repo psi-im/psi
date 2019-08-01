@@ -131,4 +131,4 @@ bool profileDelete(const QStringList &);
 
 extern QString activeProfile;
 
-#endif
+#endif // PROFILES_H

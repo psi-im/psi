@@ -32,4 +32,4 @@ namespace DesktopUtil {
     void unsetUrlHandler(const QString& scheme);
 }; // namespace DesktopUtil
 
-#endif
+#endif // DESKTOPUTIL_H

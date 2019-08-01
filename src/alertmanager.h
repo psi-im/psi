@@ -71,4 +71,4 @@ public:
     QList<Item*> list_;
 };
 
-#endif
+#endif // ALERTMANAGER_H

@@ -95,4 +95,4 @@ private:
     bool checkSSL();
 };
 
-#endif
+#endif // ACCOUNTMODIFYDLG_H

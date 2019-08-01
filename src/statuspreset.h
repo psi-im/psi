@@ -60,4 +60,4 @@ private:
     Maybe<int> priority_;
 };
 
-#endif
+#endif // STATUSPRESET_H

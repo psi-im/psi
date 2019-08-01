@@ -69,4 +69,4 @@ public:
     virtual PsiPopupInterface* popup(QObject* p) { return new PsiPopup(p); }
 };
 
-#endif
+#endif // PSIPOPUP_H

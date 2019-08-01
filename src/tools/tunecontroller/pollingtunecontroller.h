@@ -46,4 +46,4 @@ private:
     Tune _prevTune;
 };
 
-#endif
+#endif // POLLINGTUNECONTROLLER_H

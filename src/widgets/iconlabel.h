@@ -46,4 +46,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONLABEL_H

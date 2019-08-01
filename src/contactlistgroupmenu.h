@@ -40,4 +40,4 @@ private:
     Private* d;
 };
 
-#endif
+#endif // CONTACTLISTGROUPMENU_H

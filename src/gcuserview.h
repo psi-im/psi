@@ -117,4 +117,4 @@ private slots:
     void qlv_doubleClicked(const QModelIndex& index);
 };
 
-#endif
+#endif // GCUSERVIEW_H

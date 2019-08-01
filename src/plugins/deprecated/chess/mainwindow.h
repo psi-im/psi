@@ -12,8 +12,8 @@
  * Hacked by:
  */
 
-#ifndef    __MAIN_WINDOW_H__
-#define    __MAIN_WINDOW_H__
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include <Q3ButtonGroup>
 #include <Q3GroupBox>
@@ -88,4 +88,4 @@ private slots:
     void    checkParams(const QString&);
 };
 
-#endif    /* __MAIN_WINDOW_H__ */
+#endif // MAINWINDOW_H

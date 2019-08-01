@@ -44,4 +44,4 @@ void sigsegv_handler_fnc(int signal);
 void sigsegv_handler_bt_full_fnc(int signal);
 }; // namespace Crash
 
-#endif
+#endif // CRASH_SIGSEGV_H

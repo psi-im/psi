@@ -42,4 +42,4 @@ private:
     AlertIcon* alert_;
 };
 
-#endif
+#endif // ALERTABLE_H

@@ -20,4 +20,4 @@ namespace TextUtil {
     QString sizeUnit(qlonglong n, qlonglong *div = nullptr);
 }; // namespace TextUtil
 
-#endif
+#endif // TEXTUTIL_H

@@ -105,4 +105,4 @@ protected:
     QString destinationOperationsForContactGroup(const QString &groupName, PsiContact *contact) const;
 };
 
-#endif
+#endif // CONTACTLISTDRAGMODEL_H

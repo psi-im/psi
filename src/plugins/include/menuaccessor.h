@@ -22,4 +22,4 @@ public:
 
 Q_DECLARE_INTERFACE(MenuAccessor, "org.psi-im.MenuAccessor/0.1");
 
-#endif
+#endif // MENUACCESSOR_H

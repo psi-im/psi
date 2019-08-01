@@ -1,5 +1,5 @@
-#ifndef OPT_MSGCOMMON_H
-#define OPT_MSGCOMMON_H
+#ifndef OPT_MESSAGES_COMMON_H
+#define OPT_MESSAGES_COMMON_H
 
 #include "optionstab.h"
 #include "psicon.h"
@@ -23,4 +23,4 @@ private:
     PsiCon *psi_;
 };
 
-#endif // OPT_MSGCOMMON_H
+#endif // OPT_MESSAGES_COMMON_H

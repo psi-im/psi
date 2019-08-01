@@ -79,4 +79,4 @@ private:
     bool newList_;
 };
 
-#endif
+#endif // PRIVACYDLG_H

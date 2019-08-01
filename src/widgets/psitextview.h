@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef PSITEXTVIEW
-#define PSITEXTVIEW
+#ifndef PSITEXTVIEW_H
+#define PSITEXTVIEW_H
 
 #include <QTextEdit>
 
@@ -74,4 +74,4 @@ private:
     bool isSelectedBlock();
 };
 
-#endif
+#endif // PSITEXTVIEW_H

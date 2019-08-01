@@ -66,4 +66,4 @@ private:
     QWidget *w;
 };
 
-#endif
+#endif // OPT_SHORTCUTS_H

@@ -141,4 +141,4 @@ private:
     GoogleFileTransfer* ft_;
 };
 
-#endif
+#endif // GOOGLEFTMANAGER_H

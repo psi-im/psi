@@ -78,5 +78,4 @@ private:
     QPointF selectionCenter_;
 };
 
-#endif
-
+#endif // WBSCENE_H

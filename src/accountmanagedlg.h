@@ -69,4 +69,4 @@ private:
     QAction* removeAction_;
 };
 
-#endif
+#endif // ACCOUNTMANAGEDLG_H

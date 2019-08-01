@@ -54,4 +54,4 @@ private:
     QString base_;
 };
 
-#endif
+#endif // PSITOOLBAR_H

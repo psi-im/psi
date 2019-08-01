@@ -48,4 +48,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONSELECT_H

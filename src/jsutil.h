@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef JSUTIL
-#define JSUTIL
+#ifndef JSUTIL_H
+#define JSUTIL_H
 
 #include <QVariantMap>
 
@@ -40,4 +40,4 @@ public:
     }
 };
 
-#endif
+#endif // JSUTIL_H

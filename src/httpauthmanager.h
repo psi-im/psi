@@ -48,4 +48,4 @@ private:
     HttpAuthListener *listener_;
 };
 
-#endif
+#endif // HTTPAUTHMANAGER_H

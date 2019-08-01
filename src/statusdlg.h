@@ -74,4 +74,4 @@ private:
     void init();
 };
 
-#endif
+#endif // STATUSDLG_H

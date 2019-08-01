@@ -117,4 +117,4 @@ private:
     AvCallManagerPrivate *d;
 };
 
-#endif
+#endif // AVCALL_H

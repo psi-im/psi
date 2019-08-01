@@ -77,4 +77,4 @@ private:
     void updateFavorites();
 };
 
-#endif
+#endif // MUCJOINDLG_H

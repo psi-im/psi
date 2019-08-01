@@ -14,4 +14,5 @@ public:
 };
 
 Q_DECLARE_INTERFACE(EventCreatingHost, "org.psi-im.EventCreatingHost/0.1");
-#endif
+
+#endif // EVENTCREATINGHOST_H

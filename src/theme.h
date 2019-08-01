@@ -22,8 +22,8 @@
  so its one-way relation.
 */
 
-#ifndef PSITHEME_H
-#define PSITHEME_H
+#ifndef THEME_H
+#define THEME_H
 
 #include <QObject>
 #include <QSharedData>
@@ -119,4 +119,4 @@ private:
     QExplicitlySharedDataPointer<ThemePrivate> d;
 };
 
-#endif
+#endif // THEME_H

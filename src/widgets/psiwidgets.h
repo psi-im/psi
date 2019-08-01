@@ -51,4 +51,4 @@ private:
     bool initialized;
 };
 
-#endif
+#endif // PSIWIDGETSPLUGIN_H

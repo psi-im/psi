@@ -64,4 +64,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // TYPEAHEADFIND_H

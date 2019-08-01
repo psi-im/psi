@@ -168,4 +168,4 @@ private:
     void updateTabBar();
 };
 
-#endif
+#endif // TABDLG_H

@@ -503,4 +503,4 @@ private:
 Q_DECLARE_METATYPE(PsiMedia::AudioParams)
 Q_DECLARE_METATYPE(PsiMedia::VideoParams)
 
-#endif
+#endif // PSIMEDIA_H

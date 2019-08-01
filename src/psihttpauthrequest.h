@@ -16,4 +16,4 @@ private:
     XMPP::Stanza s;
 };
 
-#endif
+#endif // PSIHTTPAUTHREQUEST_H

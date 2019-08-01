@@ -52,4 +52,4 @@ private:
     QBuffer buffer;
 };
 
-#endif
+#endif // BYTEARRAYREPLY_H

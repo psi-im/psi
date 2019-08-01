@@ -52,4 +52,4 @@ private:
     bool _watchFunctional; // is able to work at all (for example it is known NFS doesn't support fs notifications)
 };
 
-#endif
+#endif // FILEPLAYERCONTROLLER_H

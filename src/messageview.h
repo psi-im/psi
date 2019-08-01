@@ -174,4 +174,4 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)
 
-#endif
+#endif // MESSAGEVIEW_H

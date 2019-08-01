@@ -13,4 +13,4 @@ public:
 
 Q_DECLARE_INTERFACE(SoundAccessingHost, "org.psi-im.SoundAccessingHost/0.1");
 
-#endif
+#endif // SOUNDACCESSINGHOST_H

@@ -47,4 +47,4 @@ protected:
     QPalette palette, cmdPalette;
 };
 
-#endif
+#endif // MINICMDSIMPLESITE_H

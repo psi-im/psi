@@ -44,4 +44,4 @@ private:
     int antiscrollCounter_;
 };
 
-#endif
+#endif // WINAMPTUNECONTROLLER_H

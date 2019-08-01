@@ -18,7 +18,7 @@
 
 // Generic tab completion support code.
 
- #ifndef TABCOMPLETION_H
+#ifndef TABCOMPLETION_H
 #define TABCOMPLETION_H
 
 #include <QObject>
@@ -71,4 +71,4 @@ private:
     QTextEdit *textEdit_;
 };
 
-#endif
+#endif // TABCOMPLETION_H

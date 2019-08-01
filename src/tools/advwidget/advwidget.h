@@ -165,4 +165,4 @@ protected:
     }
 };
 
-#endif
+#endif // ADVWIDGET_H

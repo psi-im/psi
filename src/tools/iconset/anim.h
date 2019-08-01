@@ -69,4 +69,4 @@ private:
     QSharedDataPointer<Private> d;
 };
 
-#endif
+#endif // ANIM_H

@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef VOICECALLDLG
-#define VOICECALLDLG
+#ifndef VOICECALLDLG_H
+#define VOICECALLDLG_H
 
 #include <QDialog>
 
@@ -69,4 +69,4 @@ private:
     Ui::VoiceCall ui_;
 };
 
-#endif
+#endif // VOICECALLDLG_H

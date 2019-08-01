@@ -161,4 +161,4 @@ private:
     JingleRtpManagerPrivate *d;
 };
 
-#endif
+#endif // JINGLERTP_H

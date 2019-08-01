@@ -1,5 +1,5 @@
-#ifndef MOCKQCA_QTCRYPTO
-#define MOCKQCA_QTCRYPTO
+#ifndef QTCRYPTO_H
+#define QTCRYPTO_H
 
 #include <QByteArray>
 #include <QList>
@@ -81,4 +81,4 @@ namespace QCA {
     CertificateCollection systemStore();
 } // namespace QCA
 
-#endif
+#endif // QTCRYPTO_H

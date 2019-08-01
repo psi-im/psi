@@ -65,4 +65,4 @@ private:
     QString tuneTitleFilterPattern_;
 };
 
-#endif
+#endif // TUNECONTROLLERMANAGER_H

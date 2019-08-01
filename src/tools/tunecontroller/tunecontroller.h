@@ -48,4 +48,4 @@ signals:
     void stopped();
 };
 
-#endif
+#endif // TUNECONTROLLER_H

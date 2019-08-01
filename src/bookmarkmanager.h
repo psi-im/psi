@@ -71,4 +71,4 @@ private:
     QList<ConferenceBookmark> conferences_;
 };
 
-#endif
+#endif // BOOKMARKMANAGER_H

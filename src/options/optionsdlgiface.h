@@ -12,4 +12,4 @@ public slots:
 
 };
 
-#endif
+#endif // OPTIONSDLGIFACE_H

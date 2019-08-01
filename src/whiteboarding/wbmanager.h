@@ -94,4 +94,4 @@ private slots:
     void  checkInvitation(const Jid &peer, const QList<QString> &features, bool* result);
 };
 
-#endif
+#endif // WBMANAGER_H

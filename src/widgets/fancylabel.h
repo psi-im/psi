@@ -103,4 +103,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // FANCYLABEL_H

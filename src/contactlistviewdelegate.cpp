@@ -39,6 +39,12 @@
 #include "psiiconset.h"
 #include "psioptions.h"
 
+#define ALERT_INTERVAL 100 /* msecs */
+#define ANIM_INTERVAL 300 /* msecs */
+
+#define PSI_HIDPI computeScaleFactor(contactList)
+//#define PSI_HIDPI (2) // for testing purposes
+
 static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
 static const QString outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
@@ -70,12 +76,6 @@ static const QString animation2ColorPath(QStringLiteral("options.ui.look.colors.
 static const QString statusMessageColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-messages"));
 static const QString headerBackgroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
 static const QString headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
-
-#define ALERT_INTERVAL 100 /* msecs */
-#define ANIM_INTERVAL 300 /* msecs */
-
-#define PSI_HIDPI computeScaleFactor(contactList)
-//#define PSI_HIDPI (2) // for testing purposes
 
 int computeScaleFactor(ContactListView *contactList) {
     static int factor = 0;

@@ -50,5 +50,4 @@ private:
     Private *d;
 };
 
-#endif
-
+#endif // DISCODLG_H

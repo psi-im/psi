@@ -18,4 +18,4 @@ public:
 
 Q_DECLARE_INTERFACE(PopupAccessingHost, "org.psi-im.PopupAccessingHost/0.1");
 
-#endif
+#endif // POPUPACCESSINGHOST_H

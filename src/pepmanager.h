@@ -94,4 +94,4 @@ private:
     //QStringList nodes_, ensured_nodes_;
 };
 
-#endif
+#endif // PEPMANAGER_H

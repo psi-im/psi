@@ -69,4 +69,4 @@ private:
     QPointer<QDialog> screenshotDialog;
 };
 
-#endif
+#endif // OPT_THEME_H

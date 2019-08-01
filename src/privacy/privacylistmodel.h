@@ -56,4 +56,4 @@ private:
     PrivacyList list_;
 };
 
-#endif
+#endif // PRIVACYLISTMODEL_H

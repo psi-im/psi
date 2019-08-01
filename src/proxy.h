@@ -167,4 +167,4 @@ private:
     static ProxyManager* instance_;
 };
 
-#endif
+#endif // PROXYDLG_H

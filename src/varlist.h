@@ -65,4 +65,4 @@ public:
     void fromXml(const QDomElement &);
 };
 
-#endif
+#endif // VARLIST_H

@@ -44,4 +44,4 @@ private:
     QString createNewAccountName(QString def);
 };
 
-#endif
+#endif // ACCOUNTADDDLG_H

@@ -34,4 +34,4 @@ private:
     QWidget *w = nullptr, *dlg = nullptr;
 };
 
-#endif
+#endif // OPT_GROUPCHAT_H

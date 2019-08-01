@@ -109,4 +109,4 @@ private:
     QByteArray tlsOverrideCert_;
 };
 
-#endif
+#endif // ACCOUNTREGDLG_H

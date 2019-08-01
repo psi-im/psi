@@ -1,5 +1,5 @@
-#ifndef SNARL_INTERFACE
-#define SNARL_INTERFACE
+#ifndef SNARLINTERFACE_H
+#define SNARLINTERFACE_H
 
 #include <string>
 #include <windows.h>
@@ -59,4 +59,4 @@ class SnarlInterface {
 
 };
 
-#endif // SNARL_INTERFACE
+#endif // SNARLINTERFACE_H

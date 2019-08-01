@@ -70,4 +70,4 @@ private:
     void removeNotInListContacts(PsiAccount* account, const XMPP::Jid& jid);
 };
 
-#endif
+#endif // CONTACTUPDATESMANAGER_H

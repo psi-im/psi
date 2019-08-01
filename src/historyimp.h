@@ -87,4 +87,4 @@ signals:
 
 };
 
-#endif
+#endif // HISTORYIMP_H

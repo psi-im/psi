@@ -70,5 +70,4 @@ private slots:
     }
 };
 
-#endif
-
+#endif // POPUPLIST_H

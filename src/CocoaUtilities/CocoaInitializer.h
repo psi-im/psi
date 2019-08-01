@@ -17,4 +17,4 @@ class CocoaInitializer
         Private* d;
 };
 
-#endif
+#endif // COCOAINITIALIZER_H

@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef _PSIOPTIONS_H_
-#define _PSIOPTIONS_H_
+#ifndef PSIOPTIONS_H
+#define PSIOPTIONS_H
 
 #include "optionstree.h"
 
@@ -63,4 +63,4 @@ private:
     static PsiOptions* defaults_;
 };
 
-#endif /* _PSIOPTIONS_H_ */
+#endif // PSIOPTIONS_H

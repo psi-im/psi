@@ -75,4 +75,4 @@ private slots:
     }
 };
 
-#endif
+#endif // TASKLIST_H

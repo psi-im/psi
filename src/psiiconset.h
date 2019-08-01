@@ -112,4 +112,4 @@ private:
 
 QString status2name(int s);
 
-#endif
+#endif // PSIICONSET_H

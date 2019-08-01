@@ -37,4 +37,4 @@ private:
     QString filename_;
 };
 
-#endif
+#endif // WBNEWIMAGE_H

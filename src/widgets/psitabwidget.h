@@ -26,6 +26,8 @@
 
 #include "psitabbar.h"
 
+#define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
+
 class QHBoxLayout;
 class QMenu;
 class QStackedLayout;
@@ -101,6 +103,4 @@ private:
     QMenu *menu_;
 };
 
-#define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
-
-#endif
+#endif // PSITABWIDGET_H

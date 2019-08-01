@@ -91,4 +91,4 @@ private:
     QString country_, region_, locality_, area_, street_, building_, floor_, room_, postalcode_, text_;
 };
 
-#endif
+#endif // GEOLOCATION_H

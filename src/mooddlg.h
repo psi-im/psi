@@ -41,4 +41,4 @@ private:
     QList<PsiAccount*> pa_;
 };
 
-#endif
+#endif // MOODDLG_H

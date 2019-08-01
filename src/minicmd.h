@@ -24,14 +24,14 @@
 #include <QHash>
 #include <QVariant>
 
-class MCmdProviderIface;
-class QString;
-class QStringList;
-
 /** unparsed state: this is a state where the whole user input is passed
   * unparsed as the first part to the handler functions
   */
 #define MCMDSTATE_UNPARSED    1
+
+class MCmdProviderIface;
+class QString;
+class QStringList;
 
 /** This interface models the methods common to all mini command states.
   */
@@ -161,4 +161,4 @@ public:
     virtual ~MCmdProviderIface() {};
 };
 
-#endif
+#endif // MINICMD_H

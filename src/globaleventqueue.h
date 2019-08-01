@@ -52,4 +52,4 @@ private:
     friend class EventQueue;
 };
 
-#endif
+#endif // GLOBALEVENTQUEUE_H

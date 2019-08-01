@@ -75,4 +75,4 @@ private:
     void saveVCard(const Jid &, const VCard &, bool notifyPhoto);
 };
 
-#endif
+#endif // VCARDFACTORY_H

@@ -51,4 +51,4 @@ private:
     PsiAccount* pa;
 };
 
-#endif
+#endif // CHANGEPWDLG_H

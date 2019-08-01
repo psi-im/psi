@@ -54,4 +54,4 @@ private:
     bool activeChatsMode_;
 };
 
-#endif
+#endif // RESOURCEMENU_H

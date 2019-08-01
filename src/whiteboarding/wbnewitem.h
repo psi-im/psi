@@ -38,4 +38,4 @@ protected:
     QGraphicsScene* scene;
 };
 
-#endif
+#endif // WBNEWITEM_H

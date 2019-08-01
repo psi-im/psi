@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef PRIVACYLISTBLOCKEDMODEL
-#define PRIVACYLISTBLOCKEDMODEL
+#ifndef PRIVACYLISTBLOCKEDMODEL_H
+#define PRIVACYLISTBLOCKEDMODEL_H
 
 #include <QSortFilterProxyModel>
 
@@ -32,4 +32,4 @@ public:
     bool filterAcceptsRow(int source_row, const QModelIndex & source_parent ) const;
 };
 
-#endif
+#endif // PRIVACYLISTBLOCKEDMODEL_H

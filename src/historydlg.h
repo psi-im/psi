@@ -210,4 +210,4 @@ private:
     SearchProxy *searchProxy;
 };
 
-#endif
+#endif // HISTORYDLG_H

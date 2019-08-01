@@ -60,4 +60,4 @@ private:
     QSortFilterProxyModel* proxy_;
 };
 
-#endif
+#endif // PGPKEYDLG_H

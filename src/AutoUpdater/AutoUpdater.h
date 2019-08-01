@@ -14,4 +14,4 @@ class AutoUpdater
         virtual void checkForUpdates() = 0;
 };
 
-#endif
+#endif // AUTOUPDATER_H

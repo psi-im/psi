@@ -39,4 +39,4 @@ class SxeRemoveEdit : public SxeEdit {
         QDomElement xml(QDomDocument &doc) const;
 };
 
-#endif
+#endif // SXDEREMOVEEDIT_H

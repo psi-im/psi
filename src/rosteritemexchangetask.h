@@ -44,4 +44,4 @@ private:
     bool ignoreNonRoster_;
 };
 
-#endif
+#endif // ROSTERITEMEXCHANGETASK_H

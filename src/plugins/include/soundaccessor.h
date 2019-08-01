@@ -13,4 +13,4 @@ public:
 
 Q_DECLARE_INTERFACE(SoundAccessor, "org.psi-im.SoundAccessor/0.1");
 
-#endif
+#endif // SOUNDACCESSOR_H

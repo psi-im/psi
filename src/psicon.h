@@ -32,6 +32,7 @@
 namespace OpenPGP {
     class Engine;
 }
+
 namespace XMPP {
     class Jid;
 }
@@ -206,4 +207,4 @@ private:
     void doQuit(int);
 };
 
-#endif
+#endif // PSICON_H

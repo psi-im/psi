@@ -78,4 +78,4 @@ private:
     QButtonGroup* buttonGroup_;
 };
 
-#endif
+#endif // PROFILEDLG_H

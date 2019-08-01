@@ -1,5 +1,5 @@
-#ifndef OPT_TOOLBARDLG_H
-#define OPT_TOOLBARDLG_H
+#ifndef OPT_TOOLBARS_H
+#define OPT_TOOLBARS_H
 
 #include "optionstab.h"
 
@@ -59,4 +59,4 @@ private:
     Private *p;
 };
 
-#endif
+#endif // OPT_TOOLBARS_H

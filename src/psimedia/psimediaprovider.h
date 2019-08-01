@@ -25,6 +25,12 @@
 #include <QSize>
 #include <QString>
 
+// since we cannot put signals/slots in Qt "interfaces", we use the following
+//   defines to hint about signals/slots that derived classes should provide
+#define HINT_SIGNALS protected
+#define HINT_PUBLIC_SLOTS public
+#define HINT_METHOD(x)
+
 class QImage;
 class QIODevice;
 
@@ -33,14 +39,7 @@ class QIODevice;
     class QWidget;
 #endif
 
-// since we cannot put signals/slots in Qt "interfaces", we use the following
-//   defines to hint about signals/slots that derived classes should provide
-#define HINT_SIGNALS protected
-#define HINT_PUBLIC_SLOTS public
-#define HINT_METHOD(x)
-
 namespace PsiMedia {
-
 class FeaturesContext;
 class Provider;
 class RtpSessionContext;
@@ -305,4 +304,4 @@ Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesCont
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.4")
 
-#endif
+#endif // PSIMEDIAPROVIDER_H

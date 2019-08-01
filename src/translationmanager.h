@@ -53,4 +53,4 @@ private:
     static TranslationManager* instance_;
 };
 
-#endif
+#endif // TRANSLATIONMANAGER_H

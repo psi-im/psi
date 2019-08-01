@@ -46,4 +46,4 @@ private:
     QString last_status_;
 };
 
-#endif
+#endif // LASTACTIVITYTASK_H

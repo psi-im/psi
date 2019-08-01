@@ -130,4 +130,4 @@ private:
     QAction *actQuote_;
 };
 
-#endif
+#endif // CHATVIEW_TE_H

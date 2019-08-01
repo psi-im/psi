@@ -45,4 +45,4 @@ public:
     virtual TuneController* createController();
 };
 
-#endif
+#endif // PSIFILEPLUGIN_H

@@ -79,4 +79,4 @@ private:
     friend class PGPKeyDlg;
 };
 
-#endif
+#endif // PGPUTIL_H

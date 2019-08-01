@@ -88,4 +88,4 @@ private:
     ColorWidgetsMap colorWidgetsMap;
 };
 
-#endif
+#endif // OPT_APPEARANCEGENERAL_H

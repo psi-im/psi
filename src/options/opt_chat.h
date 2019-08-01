@@ -22,4 +22,4 @@ private:
     QButtonGroup *bg_defAct;
 };
 
-#endif
+#endif // OPT_CHAT_H

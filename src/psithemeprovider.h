@@ -55,4 +55,4 @@ public:
     static QString themePath(const QString &name);
 };
 
-#endif
+#endif // PSITHEMEPROVIDER_H

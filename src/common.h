@@ -29,6 +29,7 @@
 #include <QStringList>
 
 #include "statuspreset.h"
+#include "xmpp_status.h"
 
 #if __cplusplus < 201703L
 #    define PSI_FALLSTHROUGH
@@ -100,8 +101,6 @@ enum { EventPriorityDontCare = -1 };
 // -----------------------------------------------------------------------------
 // Status
 // -----------------------------------------------------------------------------
-
-#include "xmpp_status.h"
 
 #define STATUS_OFFLINE   XMPP::Status::Offline
 #define STATUS_ONLINE    XMPP::Status::Online
@@ -194,4 +193,4 @@ QString activityIconName(const Activity &);
 
 QString macToQtDatetimeFormat(const QString &sys_fmt);
 
-#endif
+#endif // COMMON_H

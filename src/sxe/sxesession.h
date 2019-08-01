@@ -248,4 +248,4 @@ class SxeSession : public QObject {
         QDomDocument doc_;
 };
 
-#endif
+#endif // SXDESESSION_H

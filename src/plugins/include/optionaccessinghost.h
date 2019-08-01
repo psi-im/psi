@@ -19,4 +19,4 @@ public:
 
 Q_DECLARE_INTERFACE(OptionAccessingHost, "org.psi-im.OptionAccessingHost/0.1");
 
-#endif
+#endif // OPTIONACCESSINGHOST_H

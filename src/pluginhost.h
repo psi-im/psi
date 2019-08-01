@@ -289,4 +289,4 @@ private:
     PluginHost& operator=(const PluginHost&);
 };
 
-#endif
+#endif // PLUGINHOST_H

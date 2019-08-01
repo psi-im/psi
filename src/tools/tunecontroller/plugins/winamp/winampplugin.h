@@ -42,5 +42,4 @@ public:
     virtual TuneController* createController();
 };
 
-#endif
-
+#endif // WINAMPPLUGIN_H

@@ -56,4 +56,4 @@ private:
     QList<PsiAccount*> accounts() const;
 };
 
-#endif
+#endif // ACCOUNTSCOMBOBOX_H

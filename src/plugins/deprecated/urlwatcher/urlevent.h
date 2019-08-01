@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#ifndef _URLEVENT_H_
-#define _URLEVENT_H_
+#ifndef URLEVENT_H
+#define URLEVENT_H
 
 #include "QtCore"
 
@@ -38,4 +38,4 @@ public:
     bool viewed_;
 };
 
-#endif /* _URLEVENT_H_ */
+#endif // URLEVENT_H

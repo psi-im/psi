@@ -199,4 +199,4 @@ signals:
     void incomingRequest(const XMPP::Jid &from, const QString &iq_id, const JingleRtpEnvelope &envelope);
 };
 
-#endif
+#endif // JINGLERTPTASKS_H

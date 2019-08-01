@@ -35,7 +35,6 @@
 
 #define MAX_COMMIT_DELAY 30 /* seconds */
 #define COMMIT_INTERVAL 100 /* msecs */
-
 #define COLLAPSED_OPTIONS "options.contactlist.group-state.collapsed"
 #define HIDDEN_OPTIONS "options.contactlist.group-state.hidden"
 

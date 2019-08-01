@@ -59,4 +59,4 @@ private:
     void processLegacyForm(const XMPP::Form& form);
 };
 
-#endif
+#endif // REGISTRATIONDLG_H

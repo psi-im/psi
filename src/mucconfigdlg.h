@@ -86,4 +86,4 @@ private:
     QList<MUCItem::Affiliation> pending_requests_;
 };
 
-#endif
+#endif // MUCCONFIG_H

@@ -67,4 +67,4 @@ private:
 
 Q_DECLARE_METATYPE(Mood)
 
-#endif
+#endif // MOOD_H

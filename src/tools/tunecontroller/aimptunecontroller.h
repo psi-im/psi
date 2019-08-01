@@ -47,4 +47,4 @@ private:
     bool _tuneSent;
 };
 
-#endif
+#endif // AIMPTUNECONTROLLER_H

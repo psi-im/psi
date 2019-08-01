@@ -31,4 +31,4 @@ public:
     ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent);
 };
 
-#endif
+#endif // CS_SHOWTEXTDLG_H

@@ -1,5 +1,5 @@
-#ifndef _PSIOPTIONSEDITOR_H_
-#define _PSIOPTIONSEDITOR_H_
+#ifndef PSIOPTIONSEDITOR_H
+#define PSIOPTIONSEDITOR_H
 
 #include <QCheckBox>
 #include <QLabel>
@@ -47,4 +47,4 @@ private:
     QToolButton *pb_detach;
 };
 
-#endif /* _PSIOPTIONSEDITOR_H_ */
+#endif // PSIOPTIONSEDITOR_H

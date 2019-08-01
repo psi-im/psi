@@ -155,4 +155,4 @@ private slots:
     void rerender();
 };
 
-#endif
+#endif // WBWIDGET_H

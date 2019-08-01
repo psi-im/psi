@@ -37,4 +37,4 @@ private:
     QList<TuneController*> controllers_;
 };
 
-#endif
+#endif // COMBINEDTUNECONTROLLER_H

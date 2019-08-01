@@ -64,4 +64,4 @@ private:
     QLayout* layout_;
 };
 
-#endif
+#endif // CHATEDITPROXY_H

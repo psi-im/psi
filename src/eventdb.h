@@ -127,4 +127,4 @@ private:
     int op_erase(const QString &accId, const XMPP::Jid &);
 };
 
-#endif
+#endif // EVENTDB_H

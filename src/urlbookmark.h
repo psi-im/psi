@@ -45,4 +45,4 @@ private:
     QString url_;
 };
 
-#endif
+#endif // URLBOOKMARK_H

@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef CHATVIEW_H
-#define CHATVIEW_H
+#ifndef CHATVIEW_WEBKIT_H
+#define CHATVIEW_WEBKIT_H
 
 #include <QDateTime>
 #include <QFrame>
@@ -103,4 +103,4 @@ private:
     QScopedPointer<ChatViewPrivate> d;
 };
 
-#endif
+#endif // CHATVIEW_WEBKIT_H

@@ -86,4 +86,4 @@ protected:
     MCmdUiSiteIface *uiSite_;
 };
 
-#endif
+#endif // MCMDMANAGER_H

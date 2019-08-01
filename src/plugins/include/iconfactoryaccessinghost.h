@@ -14,4 +14,5 @@ public:
 };
 
 Q_DECLARE_INTERFACE(IconFactoryAccessingHost, "org.psi-im.IconFactoryAccessingHost/0.1");
+
 #endif // ICONFACTORYACCESSINGHOST_H

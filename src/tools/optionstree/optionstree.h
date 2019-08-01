@@ -78,4 +78,4 @@ private:
     friend class OptionsTreeWriter;
 };
 
-#endif
+#endif // OPTIONSTREE_H

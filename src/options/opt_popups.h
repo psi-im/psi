@@ -45,4 +45,4 @@ private:
     PopupManager* popup_;
 };
 
-#endif
+#endif // OPT_POPUPS_H

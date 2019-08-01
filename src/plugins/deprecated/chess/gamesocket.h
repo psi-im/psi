@@ -12,14 +12,14 @@
  * Hacked by:
  */
 
-#ifndef    __GAME_SOCKET_H__
-#define    __GAME_SOCKET_H__
+#ifndef GAMESOCKET_H
+#define GAMESOCKET_H
 
 #include <Q3ServerSocket>
 #include <stdlib.h>
 
-#define    GAME_PORT    1345
-#define    GAME_BACKLOG    5
+#define GAME_PORT 1345
+#define GAME_BACKLOG 5
 
 class GameSocket:public Q3ServerSocket
 {
@@ -37,4 +37,4 @@ signals:
     void    acceptConnection(int);
 };
 
-#endif    /* __GAME_SOCKET_H__ */
+#endif // GAMESOCKET_H

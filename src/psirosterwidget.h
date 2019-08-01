@@ -72,4 +72,4 @@ private:
     QSortFilterProxyModel* filterModel_;
 };
 
-#endif
+#endif // PSIROSTERWIDGET_H

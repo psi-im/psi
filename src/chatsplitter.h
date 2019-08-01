@@ -58,4 +58,4 @@ private:
     QLayout* layout_;
 };
 
-#endif
+#endif // CHATSPLITTER_H

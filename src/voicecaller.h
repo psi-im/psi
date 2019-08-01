@@ -111,4 +111,4 @@ private:
     PsiAccount* account_;
 };
 
-#endif
+#endif // VOICECALLER_H

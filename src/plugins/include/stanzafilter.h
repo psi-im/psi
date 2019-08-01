@@ -16,4 +16,4 @@ public:
 
 Q_DECLARE_INTERFACE(StanzaFilter, "org.psi-im.StanzaFilter/0.1");
 
-#endif
+#endif // STANZAFILTER_H

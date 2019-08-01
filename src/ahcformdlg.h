@@ -71,4 +71,4 @@ private:
     QString sessionId_;
 };
 
-#endif
+#endif // AHCFORMDLG_H

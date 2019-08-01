@@ -65,4 +65,4 @@ private:
     void errorGateway(const QString &str, const QString &err);
 };
 
-#endif
+#endif // ADDUSERDLG_H

@@ -57,4 +57,4 @@ private:
     QList<PrivacyListItem> items_;
 };
 
-#endif
+#endif // PRIVACYLIST_H

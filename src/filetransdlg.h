@@ -156,4 +156,4 @@ private:
     FileTransView* ftv;
 };
 
-#endif
+#endif // FILETRANSDLG_H

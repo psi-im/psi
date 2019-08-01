@@ -15,4 +15,4 @@ public:
 
 Q_DECLARE_INTERFACE(ShortcutAccessor, "org.psi-im.ShortcutAccessor/0.1");
 
-#endif
+#endif // SHORTCUTACCESSOR_H

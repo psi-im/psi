@@ -569,4 +569,4 @@ private:
     bool encryptMessageElement(QDomElement &element) override;
 };
 
-#endif
+#endif // PSIACCOUNT_H

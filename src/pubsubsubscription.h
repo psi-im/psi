@@ -49,4 +49,4 @@ private:
     State state_;
 };
 
-#endif
+#endif // PUBSUBSUBSCRIPTION_H

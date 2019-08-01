@@ -186,4 +186,4 @@ private slots:
     void negotiationTimeout();
 };
 
-#endif
+#endif // SXDEMANAGER_H

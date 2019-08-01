@@ -72,4 +72,4 @@ class SxeEdit {
         bool null_;
 };
 
-#endif
+#endif // SXDEEDIT_H

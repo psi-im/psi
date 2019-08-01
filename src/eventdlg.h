@@ -202,4 +202,4 @@ private:
     QString jidToString(const Jid &, const QString &r="") const;
 };
 
-#endif
+#endif // EVENTDLG_H

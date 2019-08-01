@@ -204,4 +204,4 @@ private slots:
     void accountDestroyed();
 };
 
-#endif
+#endif // PLUGINMANAGER_H

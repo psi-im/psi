@@ -52,4 +52,4 @@ private:
     QLabel *_lblTitle;
 };
 
-#endif
+#endif // CONTACTLISTITEMMENU_H

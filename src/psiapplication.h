@@ -45,4 +45,4 @@ private:
     void init(bool GUIenabled);
 };
 
-#endif
+#endif // PSIAPPLICATION_H

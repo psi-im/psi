@@ -17,8 +17,9 @@
  *
  */
 
-#ifndef COCOAUTILITIES_COMMON_H
-#define COCOAUTILITIES_COMMON_H
+#ifndef COCOACOMMON_H
+#define COCOACOMMON_H
 
 int macosCommonFirstWeekday();
-#endif
+
+#endif // COCOACOMMON_H

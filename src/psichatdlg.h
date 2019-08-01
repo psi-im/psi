@@ -102,4 +102,4 @@ private:
     static PsiIcon *throbber_icon;
 };
 
-#endif
+#endif // PSICHATDLG_H

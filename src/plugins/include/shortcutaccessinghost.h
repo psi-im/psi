@@ -17,4 +17,4 @@ public:
 
 Q_DECLARE_INTERFACE(ShortcutAccessingHost, "org.psi-im.ShortcutAccessingHost/0.1");
 
-#endif
+#endif // SHORTCUTACCESSINGHOST_H

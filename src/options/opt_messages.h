@@ -1,5 +1,5 @@
-#ifndef OPT_TABMESSAGES_H
-#define OPT_TABMESSAGES_H
+#ifndef OPT_MESSAGES_H
+#define OPT_MESSAGES_H
 
 #include "optionstab.h"
 
@@ -10,4 +10,4 @@ public:
     OptionsTabMessages(QObject *parent);
 };
 
-#endif // OPT_TABTABMESSAGES_H
+#endif // OPT_MESSAGES_H

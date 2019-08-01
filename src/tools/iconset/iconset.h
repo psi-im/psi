@@ -247,4 +247,4 @@ public:
 #endif
 };
 
-#endif
+#endif // ICONSET_H

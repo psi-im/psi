@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#ifndef _TABMANAGER_H_
-#define _TABMANAGER_H_
+#ifndef TABMANAGER_H
+#define TABMANAGER_H
 
 #include <QList>
 #include <QObject>
@@ -129,4 +129,4 @@ private:
     bool simplifiedCaption_;
 };
 
-#endif /* _TABMANAGER_H_ */
+#endif // TABMANAGER_H

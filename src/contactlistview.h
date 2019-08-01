@@ -101,4 +101,4 @@ private:
     bool contextMenuActive_;
 };
 
-#endif
+#endif // CONTACTLISTVIEW_H

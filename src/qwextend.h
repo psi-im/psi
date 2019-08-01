@@ -9,4 +9,4 @@
     void reparent_good(QWidget *that, Qt::WindowFlags f, bool showIt);
 #endif
 
-#endif
+#endif // QWEXTEND_H

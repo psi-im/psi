@@ -57,4 +57,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // URLLABEL_H

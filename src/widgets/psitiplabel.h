@@ -49,4 +49,4 @@ private:
     static PsiTipLabel* instance_;
 };
 
-#endif
+#endif // PSITIPLABEL_H

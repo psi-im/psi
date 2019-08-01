@@ -60,4 +60,4 @@ class SxeRecordEdit : public SxeEdit {
         QHash<Key, QString> changes_;
 };
 
-#endif
+#endif // SXDEMETADATAEDIT_H

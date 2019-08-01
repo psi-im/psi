@@ -30,4 +30,4 @@ class CertificateHelpers
         static QString validityToString(QCA::Validity);
 };
 
-#endif
+#endif // CERTUTIL_H

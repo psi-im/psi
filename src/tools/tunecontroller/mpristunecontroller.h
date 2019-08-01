@@ -83,4 +83,4 @@ private:
     bool tuneSent_;
 };
 
-#endif
+#endif // MPRISTUNECONTROLLER_H

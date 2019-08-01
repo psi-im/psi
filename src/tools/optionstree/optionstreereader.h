@@ -34,4 +34,4 @@ private:
     QString unknown_;
 };
 
-#endif
+#endif // OPTIONSTREEREADER_H

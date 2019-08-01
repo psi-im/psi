@@ -44,4 +44,4 @@ private:
     static QDomDocument v_doc;
 };
 
-#endif
+#endif // DUMMYSTREAM_H

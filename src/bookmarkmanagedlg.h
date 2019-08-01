@@ -80,4 +80,4 @@ private:
     ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
 };
 
-#endif
+#endif // BOOKMARKMANAGEDLG_H

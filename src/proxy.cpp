@@ -36,6 +36,8 @@
 #include "psioptions.h"
 #include "xmpp_xmlcommon.h"
 
+#define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
+
 //----------------------------------------------------------------------------
 // ProxySettings
 //----------------------------------------------------------------------------
@@ -44,8 +46,6 @@ ProxySettings::ProxySettings()
     port = 0;
     useAuth = false;
 }
-
-#define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
 
 void ProxySettings::toOptions(OptionsTree* o, QString base) const
 {

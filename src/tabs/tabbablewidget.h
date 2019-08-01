@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef TABBABLE_H
-#define TABBABLE_H
+#ifndef TABBABLEWIDGET_H
+#define TABBABLEWIDGET_H
 
 #include <QIcon>
 #include <QTimer>
@@ -99,4 +99,4 @@ private:
     QIcon icon_;
 };
 
-#endif
+#endif // TABBABLEWIDGET_H

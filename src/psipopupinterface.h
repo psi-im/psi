@@ -53,4 +53,4 @@ private:
     int duration_;
 };
 
-#endif
+#endif // PSIPOPUPINTERFACE_H

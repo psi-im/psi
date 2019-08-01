@@ -196,4 +196,4 @@ private:
     QList<PsiToolBar*> toolbars_;
 };
 
-#endif
+#endif // MAINWIN_H

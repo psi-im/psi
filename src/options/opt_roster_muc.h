@@ -24,4 +24,4 @@ private:
     QWidget *w;
 };
 
-#endif
+#endif // OPT_ROSTER_MUC_H

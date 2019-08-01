@@ -83,4 +83,4 @@ private:
     bool auth, force_ssl, error_disconnect;
 };
 
-#endif
+#endif // MINICLIENT_H

@@ -52,4 +52,4 @@ public:
     static bool isPortable();
 };
 
-#endif
+#endif // APPLICATIONINFO_H

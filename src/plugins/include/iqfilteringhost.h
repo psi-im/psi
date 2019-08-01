@@ -21,4 +21,4 @@ public:
 
 Q_DECLARE_INTERFACE(IqFilteringHost, "org.psi-im.IqFilteringHost/0.1");
 
-#endif
+#endif // IQFILTERINGHOST_H

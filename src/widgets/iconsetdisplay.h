@@ -37,4 +37,4 @@ private:
     friend class IconsetDisplayItem;
 };
 
-#endif
+#endif // ICONSETDISPLAY_H

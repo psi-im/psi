@@ -62,4 +62,4 @@ private:
     QPushButton* pb_execute;
 };
 
-#endif
+#endif // AHCOMMANDDLG_H

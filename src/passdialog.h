@@ -41,4 +41,4 @@ private:
     QLineEdit *le_password;
 };
 
-#endif
+#endif // PASSDIALOG_H

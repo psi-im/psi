@@ -62,4 +62,4 @@ private:
     void clear();
 };
 
-#endif
+#endif // SEARCHDLG_H

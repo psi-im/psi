@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef _VARIANTTREE_H_
-#define _VARIANTTREE_H_
+#ifndef VARIANTTREE_H
+#define VARIANTTREE_H
 
 #include <QHash>
 #include <QObject>
@@ -91,4 +91,4 @@ private:
     friend class OptionsTreeWriter;
 };
 
-#endif /* _VARIANTTREE_H_ */
+#endif // VARIANTTREE_H

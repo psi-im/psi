@@ -39,4 +39,4 @@ class CertificateDisplayDialog : public QDialog
         Ui::CertificateDisplay ui_;
 };
 
-#endif
+#endif // CERTIFICATEDISPLAYDIALOG_H

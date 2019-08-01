@@ -42,4 +42,4 @@ private:
     QList<PsiAccount*> pa_;
 };
 
-#endif
+#endif // ACTIVITYDLG_H

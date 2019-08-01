@@ -1,5 +1,5 @@
-#ifndef IRISPROTOCOL_DISCOINFOQUERIER_H
-#define IRISPROTOCOL_DISCOINFOQUERIER_H
+#ifndef IRIS_DISCOINFOQUERIER_H
+#define IRIS_DISCOINFOQUERIER_H
 
 #include <QObject>
 #include <QPointer>
@@ -28,4 +28,4 @@ private:
 };
 }; // namespace IrisProtocol
 
-#endif
+#endif // IRIS_DISCOINFOQUERIER_H

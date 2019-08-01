@@ -27,6 +27,7 @@
 #include "psicon.h"
 
 #define QT_WA(unicode, ansi) unicode
+
 /*
     Implementor notes:
 

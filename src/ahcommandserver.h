@@ -47,4 +47,4 @@ private:
     AHCServerManager* manager_;
 };
 
-#endif
+#endif // AHCOMMANDSERVER_H

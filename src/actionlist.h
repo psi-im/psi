@@ -73,4 +73,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ACTIONLIST_H

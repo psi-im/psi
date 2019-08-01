@@ -42,4 +42,4 @@ public:
     Private *d;
 };
 
-#endif
+#endif // PSITHEMEMANAGER_H

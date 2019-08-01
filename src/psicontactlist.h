@@ -178,4 +178,4 @@ private:
     void removeEnabledAccount(PsiAccount* account);
 };
 
-#endif
+#endif // PSICONTACTLIST_H

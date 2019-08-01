@@ -80,4 +80,4 @@ private:
     Private* d;
 };
 
-#endif
+#endif // POPUPMANAGER_H

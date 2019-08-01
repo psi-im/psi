@@ -59,4 +59,4 @@ private:
 
 void alertIconUpdateAlertStyle();
 
-#endif
+#endif // ALERTICON_H

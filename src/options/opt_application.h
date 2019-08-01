@@ -31,4 +31,4 @@ private slots:
     void doEnableQuitOnClose(int);
 };
 
-#endif
+#endif // OPT_APPLICATION_H

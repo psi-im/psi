@@ -28,11 +28,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // common defines
 //
-#define FPS          20 // frequency of update
-
-#define SPINRATE     24 // 1024ths of a revolution per frame
+#define FPS           20 // frequency of update
+#define SPINRATE      24 // 1024ths of a revolution per frame
 #define SPINOFFSET    4 // frames each panel is offset by
-
 #define COLORSTOPPED  0xFFFFFF // color when stopped
 #define COLORSPINNING 0xFFFFFF // color when spinning
 #define COLORSHADOW   0x000000 // color of shadow
@@ -40,7 +38,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // derived defines
 //
-#define MSECSPERFRAME    (1000 / FPS)
+#define MSECSPERFRAME (1000 / FPS)
 
 /////////////////////////////////////////////////////////////////////////////
 // declared later

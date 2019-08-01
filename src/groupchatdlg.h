@@ -161,4 +161,4 @@ private:
     void setMucSelfAvatar();
 };
 
-#endif
+#endif // GROUPCHATDLG_H

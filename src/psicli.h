@@ -88,4 +88,4 @@ public:
     virtual ~PsiCli() {}
 };
 
-#endif
+#endif // PSICLI_H

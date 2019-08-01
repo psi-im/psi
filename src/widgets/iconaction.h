@@ -117,4 +117,4 @@ private:
     friend class Private;
 };
 
-#endif
+#endif // ICONACTION_H

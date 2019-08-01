@@ -7,4 +7,4 @@ namespace Crash {
     void registerSigsegvHandler(QString progname);
 }; // namespace Crash
 
-#endif
+#endif // CRASH_H

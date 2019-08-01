@@ -115,4 +115,4 @@ private:
     InfoWidget *iw;
 };
 
-#endif
+#endif // INFODLG_H

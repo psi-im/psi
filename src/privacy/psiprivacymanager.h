@@ -131,4 +131,4 @@ private:
     bool isAuthorized(const XMPP::Jid& jid) const;
 };
 
-#endif
+#endif // PSIPRIVACYMANAGER_H

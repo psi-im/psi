@@ -74,4 +74,4 @@ private:
     PsiCon* psiCon_;
 };
 
-#endif
+#endif // RC_H

@@ -189,5 +189,4 @@ public:
     UserListItem *find(const XMPP::Jid &);
 };
 
-#endif
-
+#endif // USERLIST_H

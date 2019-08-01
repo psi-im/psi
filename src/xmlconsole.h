@@ -75,4 +75,4 @@ private:
     QTextEdit *te;
 };
 
-#endif
+#endif // XMLCONSOLE_H

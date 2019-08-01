@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef SERVERLISTQUERIER
-#define SERVERLISTQUERIER
+#ifndef SERVERLISTQUERIER_H
+#define SERVERLISTQUERIER_H
 
 #include <QObject>
 #include <QUrl>
@@ -46,4 +46,4 @@ private:
     int redirectCount_;
 };
 
-#endif
+#endif // SERVERLISTQUERIER_H

@@ -19,4 +19,4 @@ private:
     Tune currentTune_;
 };
 
-#endif
+#endif // ITUNESTUNECONTROLLER_H

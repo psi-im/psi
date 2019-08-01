@@ -52,4 +52,4 @@ private:
     QMap<QString,int> _nicks;
 };
 
-#endif
+#endif // CHATVIEWBASE_H

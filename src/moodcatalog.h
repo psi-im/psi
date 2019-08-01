@@ -62,4 +62,4 @@ private:
 
 };
 
-#endif
+#endif // MOODCATALOG_H

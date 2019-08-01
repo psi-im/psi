@@ -74,4 +74,4 @@ private:
     XMPP::Stanza::Error consistencyError_;
 };
 
-#endif
+#endif // XDATAWIDGET_H

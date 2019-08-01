@@ -72,4 +72,4 @@ private:
     QString value_;
 };
 
-#endif
+#endif // PRIVACYLISTITEM_H

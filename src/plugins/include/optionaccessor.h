@@ -16,4 +16,4 @@ public:
 
 Q_DECLARE_INTERFACE(OptionAccessor, "org.psi-im.OptionAccessor/0.1");
 
-#endif
+#endif // OPTIONACCESSOR_H

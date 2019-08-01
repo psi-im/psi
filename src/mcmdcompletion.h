@@ -44,4 +44,4 @@ protected:
     MCmdManagerIface *mgr_;
 };
 
-#endif
+#endif // MCMDCOMPLETION_H

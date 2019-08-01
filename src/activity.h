@@ -98,4 +98,4 @@ private:
 
 Q_DECLARE_METATYPE(Activity)
 
-#endif
+#endif // ACTIVITY_H

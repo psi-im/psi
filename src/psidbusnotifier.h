@@ -78,4 +78,4 @@ public:
     virtual bool isAvailable() { return PsiDBusNotifier::isAvailable(); }
 };
 
-#endif
+#endif // PSIDBUSNOTIFIER_H

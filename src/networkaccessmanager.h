@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef _NETWORKACCESSMANAGER_H
-#define _NETWORKACCESSMANAGER_H
+#ifndef NETWORKACCESSMANAGER_H
+#define NETWORKACCESSMANAGER_H
 
 #include <QHash>
 #include <QNetworkAccessManager>
@@ -69,4 +69,4 @@ private:
     QHash<QString,QSharedPointer<NAMDataHandler> > _sessionHandlers;
 };
 
-#endif
+#endif // NETWORKACCESSMANAGER_H

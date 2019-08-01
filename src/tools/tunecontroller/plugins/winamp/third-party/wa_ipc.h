@@ -16,8 +16,8 @@
 **
 */
 
-#ifndef _WA_IPC_H_
-#define _WA_IPC_H_
+#ifndef WA_IPC_H
+#define WA_IPC_H
 
 /*
 ** This is the modern replacement for the classic 'frontend.h'. Most of these
@@ -960,9 +960,8 @@ typedef struct {
 // IDs 42000 to 45000 are reserved for gen_ff
 // IDs from 45000 to 57000 are reserved for library
 
-#endif//_WA_IPC_H_
+#endif // WA_IPC_H
 
 /*
 ** EOF.. Enjoy.
 */
-

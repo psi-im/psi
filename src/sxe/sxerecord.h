@@ -132,4 +132,4 @@ class SxeRecord : public QObject {
         QString data_, lastData_;
 };
 
-#endif
+#endif // SXDEMETADATA_H

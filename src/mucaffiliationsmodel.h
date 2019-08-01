@@ -61,4 +61,4 @@ private:
     QMap<AffiliationListIndex,bool> enabled_;
 };
 
-#endif
+#endif // MUCAFFILIATIONSMODEL_H

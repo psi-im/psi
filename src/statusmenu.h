@@ -65,4 +65,4 @@ private slots:
     void statusActivated();
 };
 
-#endif
+#endif // STATUSMENU_H

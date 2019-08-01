@@ -48,4 +48,4 @@ protected slots:
     void accept();
 };
 
-#endif
+#endif // MUCREASONSEDITOR_H

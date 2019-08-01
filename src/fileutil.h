@@ -47,4 +47,4 @@ public:
     static void openFolder(const QString &path);
 };
 
-#endif
+#endif // FILEUTIL_H

@@ -153,4 +153,4 @@ private slots:
     void updateScrollBar();
 };
 
-#endif
+#endif // MSGMLE_H

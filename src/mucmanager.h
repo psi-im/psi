@@ -124,4 +124,4 @@ private:
     Jid room_;
 };
 
-#endif
+#endif // MUCMANAGER_H

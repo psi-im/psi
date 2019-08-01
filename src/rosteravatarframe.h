@@ -62,4 +62,4 @@ class RosterAvatarFrame : public QFrame
         void setFont();
 };
 
-#endif
+#endif // ROSTERAVATARFRAME_H

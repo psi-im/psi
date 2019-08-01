@@ -62,4 +62,4 @@ private:
     Private* d;
 };
 
-#endif
+#endif // PSICONTACTLISTVIEW_H

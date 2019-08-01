@@ -222,4 +222,4 @@ private:
     QString fileShareDesc_;
 };
 
-#endif
+#endif // CHATDLG_H

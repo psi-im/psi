@@ -13,4 +13,4 @@ public:
 
 Q_DECLARE_INTERFACE(IqFilter, "org.psi-im.IqFilter/0.1");
 
-#endif
+#endif // IQFILTER_H

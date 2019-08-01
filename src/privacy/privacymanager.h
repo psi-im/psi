@@ -55,4 +55,4 @@ signals:
     void listsError();
 };
 
-#endif
+#endif // PRIVACYMANAGER_H

@@ -43,4 +43,4 @@ private slots:
     void onCurrentIndexChanged(int);
 };
 
-#endif
+#endif // STATUSCOMBOBOX_H
