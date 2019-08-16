@@ -17,9 +17,7 @@
  *
  */
 
-#ifndef COCOACOMMON_H
-#define COCOACOMMON_H
+#pragma once
 
 int macosCommonFirstWeekday();
 
-#endif // COCOACOMMON_H

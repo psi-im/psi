@@ -22,14 +22,14 @@
 #include "optionstree.h"
 
 #include <QStringList>
-#ifdef HAVE_MODELTEST
-#    include <modeltest.h>
-#endif
 
 // Enable this if you have Trolltech Labs' ModelTest and are not going
 // to distribute the source or binary. You need to include modeltest.pri
 // somewhere too.
 //#define HAVE_MODELTEST
+#ifdef HAVE_MODELTEST
+#    include <modeltest.h>
+#endif
 
 OptionsTreeModel::OptionsTreeModel(OptionsTree* tree, QObject* parent)
         : QAbstractItemModel(parent),

@@ -19,22 +19,23 @@
 
 #include "iconwidget.h"
 
+#include "iconbutton.h"
+#include "iconsetdisplay.h"
+#include "iconsetselect.h"
+#include "icontoolbutton.h"
+
 #include <QApplication>
 #include <QBrush>
 #include <QPainter>
 
 #ifndef WIDGET_PLUGIN
+#    include "iconset.h"
+#    include "pixmaputil.h"
 #    include <QBitmap>
 #    include <QMap>
 #    include <QStyle>
-#    include "iconset.h"
-#    include "pixmaputil.h"
 #else
 #    include <QImage>
-#include "iconbutton.h"
-#include "iconsetdisplay.h"
-#include "iconsetselect.h"
-#include "icontoolbutton.h"
 
 static const char *cancel_xpm[] = {
 "22 22 60 1",

@@ -1,5 +1,4 @@
-#ifndef QTCRYPTO_H
-#define QTCRYPTO_H
+#pragma once
 
 #include <QByteArray>
 #include <QList>
@@ -80,5 +79,3 @@ namespace QCA {
     extern CertificateCollection gSystemStore;
     CertificateCollection systemStore();
 } // namespace QCA
-
-#endif // QTCRYPTO_H

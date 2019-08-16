@@ -17,6 +17,8 @@
  *
  */
 
+#define POSIX
+
 #include "googleftmanager.h"
 
 #include "talk/base/helpers.h"
@@ -41,8 +43,6 @@
 #include <QDir>
 #include <QDomElement>
 #include <QString>
-
-#define POSIX
 
 // Should change in the future
 #define JINGLE_NS "http://www.google.com/session"
