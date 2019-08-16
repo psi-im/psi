@@ -43,9 +43,9 @@
 #include "psioptions.h"
 #include "wbwidget.h"
 
-using namespace XMPP;
-
 class AccountLabel;
+
+using namespace XMPP;
 
 /*! \brief The dialog for a whiteboard session.
  *

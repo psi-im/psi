@@ -7,17 +7,17 @@
 #include "ui_filetrans.h"
 #include "s5b.h"
 
+class FileTransView;
+class PsiAccount;
+class PsiCon;
+class QPixmap;
+
 namespace XMPP {
     class BoBData;
     class FileTransfer;
     class Jid;
 }
 using namespace XMPP;
-
-class FileTransView;
-class PsiAccount;
-class PsiCon;
-class QPixmap;
 
 class FileTransferHandler : public QObject
 {

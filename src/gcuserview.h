@@ -26,13 +26,13 @@
 
 #include "xmpp_status.h"
 
+class GCUserView;
+class PsiAccount;
+
 namespace XMPP {
     class Jid;
 }
 using namespace XMPP;
-
-class GCUserView;
-class PsiAccount;
 
 class GCUserModel : public QAbstractItemModel
 {

@@ -31,14 +31,14 @@
 
 #define WBNS "http://www.w3.org/2000/svg"
 
+class WbRequest;
+
 namespace XMPP {
     class Client;
     class Jid;
     class Message;
 }
 using namespace XMPP;
-
-class WbRequest;
 
 /*! \brief The manager for whiteboard dialogs.
  *  The manager listen to SxeManager to pick up any new sessions negotiated by

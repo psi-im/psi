@@ -22,12 +22,12 @@
 
 #include <QObject>
 
+class HttpAuthListener;
+class PsiHttpAuthRequest;
+
 namespace XMPP {
     class Task;
 }
-
-class HttpAuthListener;
-class PsiHttpAuthRequest;
 
 class HttpAuthManager : public QObject
 {

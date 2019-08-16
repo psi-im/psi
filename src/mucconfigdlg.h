@@ -25,17 +25,17 @@
 #include "ui_mucconfig.h"
 #include "xmpp_muc.h"
 
-namespace XMPP {
-    class XData;
-}
-using namespace XMPP;
-
 class InfoWidget;
 class MUCAffiliationsModel;
 class MUCAffiliationsProxyModel;
 class MUCManager;
 class QScrollArea;
 class XDataWidget;
+
+namespace XMPP {
+    class XData;
+}
+using namespace XMPP;
 
 class MUCConfigDlg : public QDialog
 {

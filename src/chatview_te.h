@@ -29,15 +29,15 @@
 #include "psitextview.h"
 #include "xmpp/jid/jid.h"
 
-namespace XMPP {
-    class Jid;
-}
-
 class ChatEdit;
 class ChatViewBase;
 class ITEAudioController;
 class ITEMediaOpener;
 class MessageView;
+
+namespace XMPP {
+    class Jid;
+}
 
 class ChatView : public PsiTextView, public ChatViewCommon
 {

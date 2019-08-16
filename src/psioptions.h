@@ -25,12 +25,12 @@
 // Some hard coded options
 #define MINIMUM_OPACITY 10
 
+class QString;
+class QTimer;
+
 namespace XMPP {
     class Client;
 }
-
-class QString;
-class QTimer;
 
 class PsiOptions : public OptionsTree//, QObject
 {

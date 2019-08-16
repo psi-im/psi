@@ -30,11 +30,6 @@
 #include "tabbablewidget.h"
 #include "ui_groupchatdlg.h"
 
-namespace XMPP {
-    class Message;
-}
-using namespace XMPP;
-
 class GCMainDlg;
 class MessageView;
 class PsiAccount;
@@ -42,6 +37,11 @@ class PsiCon;
 class PsiOptions;
 class QColorGroup;
 class QRect;
+
+namespace XMPP {
+    class Message;
+}
+using namespace XMPP;
 
 class GCMainDlg : public TabbableWidget
 {

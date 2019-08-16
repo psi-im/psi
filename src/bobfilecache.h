@@ -22,9 +22,9 @@
 
 #include "iris/xmpp_bitsofbinary.h"
 
-using namespace XMPP;
-
 class FileCache;
+
+using namespace XMPP;
 
 class BoBFileCache : public BoBCache
 {

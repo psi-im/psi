@@ -21,12 +21,12 @@
 
 #include <QDialog>
 
+class AvCall;
+class PsiAccount;
+
 namespace XMPP {
     class Jid;
 }
-
-class AvCall;
-class PsiAccount;
 
 class CallDlg : public QDialog
 {

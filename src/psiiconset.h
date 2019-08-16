@@ -25,12 +25,12 @@
 #include "iconset.h"
 #include "psievent.h"
 
+class UserListItem;
+
 namespace XMPP {
     class Jid;
     class Status;
 }
-
-class UserListItem;
 
 class PsiIconset : public QObject
 {

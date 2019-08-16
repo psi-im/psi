@@ -27,15 +27,15 @@
 #include "privacymanager.h"
 #include "xmpp_jid.h"
 
-namespace XMPP {
-    class Task;
-}
-
 class PrivacyList;
 class PrivacyListItem;
 class PrivacyListListener;
 class PsiAccount;
 class QString;
+
+namespace XMPP {
+    class Task;
+}
 
 class PsiPrivacyManager : public PrivacyManager
 {

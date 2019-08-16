@@ -27,6 +27,13 @@
 #endif
 #include "xmpp_reference.h"
 
+class FileCache;
+class FileCacheItem;
+class FileSharingManager;
+class PsiAccount;
+class QImage;
+class QMimeData;
+
 namespace qhttp {
     namespace server {
         class QHttpRequest;
@@ -43,13 +50,6 @@ namespace XMPP {
         }
     }
 }
-
-class FileCache;
-class FileCacheItem;
-class FileSharingManager;
-class PsiAccount;
-class QImage;
-class QMimeData;
 
 class FileShareDownloader: public QIODevice
 {

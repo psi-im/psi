@@ -32,17 +32,17 @@
 #include "xmpp_message.h"
 #include "xmpp_rosterx.h"
 
+class AvCall;
+class PsiAccount;
+class PsiCon;
+class QDomElement;
+
 namespace XMPP {
     class FileTransfer;
     namespace Jingle {
         class Session;
     }
 }
-
-class AvCall;
-class PsiAccount;
-class PsiCon;
-class QDomElement;
 
 class PsiEvent : public QObject
 {

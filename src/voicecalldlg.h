@@ -25,9 +25,9 @@
 #include "ui_voicecall.h"
 #include "xmpp_jid.h"
 
-using namespace XMPP;
-
 class VoiceCaller;
+
+using namespace XMPP;
 
 class VoiceCallDlg : public QDialog
 {

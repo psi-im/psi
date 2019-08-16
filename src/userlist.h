@@ -32,11 +32,11 @@
 #include "xmpp_liverosteritem.h"
 #include "xmpp_resource.h"
 
+class AvatarFactory;
+
 namespace XMPP {
     class Jid;
 }
-
-class AvatarFactory;
 
 class UserResource : public XMPP::Resource
 {

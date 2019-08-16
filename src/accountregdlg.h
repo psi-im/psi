@@ -27,11 +27,6 @@
 #include "ui_accountreg.h"
 #include "xmpp_jid.h"
 
-namespace XMPP {
-    class Form;
-    class XData;
-}
-
 class MiniClient;
 class ProxyChooser;
 class ProxyManager;
@@ -42,6 +37,11 @@ class QStringList;
 class QWidget;
 class ServerListQuerier;
 class XDataWidget;
+
+namespace XMPP {
+    class Form;
+    class XData;
+}
 
 class AccountRegDlg : public QDialog
 {

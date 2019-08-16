@@ -24,6 +24,10 @@
 
 #include "voicecaller.h"
 
+class JingleCallSlots;
+class JingleClientSlots;
+class PsiAccount;
+
 namespace cricket {
     class BasicPortAllocator;
     class Call;
@@ -39,10 +43,6 @@ namespace XMPP {
     class Jid;
 }
 using namespace XMPP;
-
-class JingleCallSlots;
-class JingleClientSlots;
-class PsiAccount;
 
 class JingleVoiceCaller : public VoiceCaller
 {

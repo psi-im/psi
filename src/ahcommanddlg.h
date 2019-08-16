@@ -26,16 +26,16 @@
 #include "ui_ahcommanddlg.h"
 #include "xmpp_jid.h"
 
-namespace XMPP {
-    class Client;
-}
-
 class BusyWidget;
 class PsiAccount;
 class PsiCon;
 class QComboBox;
 class QObject;
 class QPushButton;
+
+namespace XMPP {
+    class Client;
+}
 
 typedef struct { QString jid, node, name; } AHCommandItem;
 

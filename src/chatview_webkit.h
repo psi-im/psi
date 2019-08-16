@@ -28,16 +28,16 @@
 #include "chatviewcommon.h"
 #include "webview.h"
 
-namespace XMPP {
-    class Jid;
-}
-
 class ChatEdit;
 class ChatView;
 class ChatViewPrivate;
 class ChatViewTheme;
 class MessageView;
 class PsiAccount;
+
+namespace XMPP {
+    class Jid;
+}
 
 class ChatView : public QFrame, public ChatViewCommon
 {

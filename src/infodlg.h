@@ -23,14 +23,14 @@
 #include "ui_info.h"
 #include "ui_infodlg.h"
 
+class PsiAccount;
+
 namespace XMPP {
     class Jid;
     class VCard;
     class Resource;
 }
 using namespace XMPP;
-
-class PsiAccount;
 
 class InfoWidget : public QWidget
 {

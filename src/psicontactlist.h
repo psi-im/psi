@@ -25,14 +25,14 @@
 
 #include "profiles.h"
 
+class PsiAccount;
+class PsiCon;
+class PsiContact;
+
 namespace XMPP {
     class Jid;
 }
 using namespace XMPP;
-
-class PsiAccount;
-class PsiCon;
-class PsiContact;
 
 class PsiContactList : public QObject
 {

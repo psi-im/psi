@@ -33,12 +33,6 @@
 #include "messageview.h"
 #include "tabbablewidget.h"
 
-namespace XMPP {
-    class Jid;
-    class Message;
-}
-using namespace XMPP;
-
 class ChatEdit;
 class ChatView;
 class FileSharingItem;
@@ -46,6 +40,12 @@ class PsiAccount;
 class QDragEnterEvent;
 class QDropEvent;
 class UserListItem;
+
+namespace XMPP {
+    class Jid;
+    class Message;
+}
+using namespace XMPP;
 
 struct UserStatus {
     UserStatus()

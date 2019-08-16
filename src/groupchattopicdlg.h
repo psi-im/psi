@@ -6,12 +6,12 @@
 
 #include "languagemanager.h"
 
+class GCMainDlg;
+
 namespace Ui {
     class GroupChatTopicAddLangDlg;
     class GroupchatTopicDlg;
 }
-
-class GCMainDlg;
 
 class GroupchatTopicDlg : public QDialog {
     Q_OBJECT

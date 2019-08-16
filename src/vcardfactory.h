@@ -25,6 +25,8 @@
 #include <QObject>
 #include <QStringList>
 
+class PsiAccount;
+
 namespace XMPP {
     class JT_VCard;
     class Jid;
@@ -32,8 +34,6 @@ namespace XMPP {
     class VCard;
 }
 using namespace XMPP;
-
-class PsiAccount;
 
 class VCardFactory : public QObject
 {

@@ -22,6 +22,9 @@
 
 #include <QObject>
 
+class PubSubSubscription;
+class QString;
+
 namespace XMPP {
     class Client;
     class Jid;
@@ -31,9 +34,6 @@ namespace XMPP {
     class ServerInfoManager;
 }
 using namespace XMPP;
-
-class PubSubSubscription;
-class QString;
 
 class PEPManager : public QObject
 {

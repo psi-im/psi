@@ -39,23 +39,6 @@
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
 
-namespace XMPP {
-    class AdvancedConnector;
-    class Client;
-    class Jid;
-    class Message;
-    class PubSubItem;
-    class PubSubRetraction;
-    class QCATLSHandler;
-    class Resource;
-    class RosterItem;
-    class ServerInfoManager;
-    class Stream;
-    //class StreamError;
-    class XData;
-};
-using namespace XMPP;
-
 class AvatarFactory;
 class AvCallManager;
 class BookmarkManager;
@@ -94,6 +77,23 @@ class VoiceCaller;
 #ifdef WHITEBOARDING
     class WbManager;
 #endif
+
+namespace XMPP {
+    class AdvancedConnector;
+    class Client;
+    class Jid;
+    class Message;
+    class PubSubItem;
+    class PubSubRetraction;
+    class QCATLSHandler;
+    class Resource;
+    class RosterItem;
+    class ServerInfoManager;
+    class Stream;
+    //class StreamError;
+    class XData;
+};
+using namespace XMPP;
 
 // sick sick remove this someday please!
 struct GCContact;

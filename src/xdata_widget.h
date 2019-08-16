@@ -29,12 +29,12 @@
 #include "xmpp_stanza.h"
 #include "xmpp_xdata.h"
 
+class PsiCon;
+class XDataField;
+
 namespace XMPP {
     class Client;
 }
-
-class PsiCon;
-class XDataField;
 
 class XDataWidget : public QWidget
 {

@@ -17,6 +17,13 @@
 
 #define PLUGINS_NO_DEBUG
 
+class MessageView;
+class PluginHost;
+class PsiAccount;
+class PsiCon;
+class PsiPlugin;
+class QPluginLoader;
+
 namespace QCA {
     class DirWatch;
 }
@@ -24,13 +31,6 @@ namespace QCA {
 namespace XMPP {
     class Client;
 }
-
-class MessageView;
-class PluginHost;
-class PsiAccount;
-class PsiCon;
-class PsiPlugin;
-class QPluginLoader;
 
 class AccountIds
 {

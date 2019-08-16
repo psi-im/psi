@@ -26,15 +26,15 @@
 #include "advwidget.h"
 #include "im.h" // ChatState
 
+class PsiAccount;
+class TabDlg;
+class TabManager;
+
 namespace XMPP {
     class Jid;
     class Message;
 }
 using namespace XMPP;
-
-class PsiAccount;
-class TabDlg;
-class TabManager;
 
 class TabbableWidget : public AdvancedWidget<QWidget>
 {

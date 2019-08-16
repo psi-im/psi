@@ -29,11 +29,6 @@
 #include "advwidget.h"
 #include "xmpp_status.h"
 
-namespace XMPP {
-    class Status;
-}
-using namespace XMPP;
-
 class ContactView;
 class GlobalStatusMenu;
 class IconAction;
@@ -48,6 +43,11 @@ class QMenuBar;
 class QMimeData;
 class QPixmap;
 class QPoint;
+
+namespace XMPP {
+    class Status;
+}
+using namespace XMPP;
 
 class MainWin : public AdvancedWidget<QMainWindow>
 {

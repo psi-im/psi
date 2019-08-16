@@ -29,15 +29,6 @@
 #include "tabbablewidget.h"
 #include "tunecontrollermanager.h"
 
-namespace OpenPGP {
-    class Engine;
-}
-
-namespace XMPP {
-    class Jid;
-}
-using namespace XMPP;
-
 class AccountsComboBox;
 class AlertManager;
 class AutoUpdater;
@@ -66,6 +57,15 @@ class TabManager;
 class TuneController;
 class UserListItem;
 class WebServer;
+
+namespace OpenPGP {
+    class Engine;
+}
+
+namespace XMPP {
+    class Jid;
+}
+using namespace XMPP;
 
 class PsiCon : public QObject
 {

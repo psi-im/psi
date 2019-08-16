@@ -8,13 +8,13 @@
 #include <QSet>
 #include <QtCrypto>
 
+class PassphraseDlg;
+class QString;
+
 namespace QCA {
     class KeyStore;
     class PGPKey;
 }
-
-class PassphraseDlg;
-class QString;
 
 class PGPUtil : public QObject
 {

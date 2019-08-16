@@ -25,10 +25,10 @@
 #include "ui_disco.h"
 #include "xmpp_jid.h"
 
-using namespace XMPP;
-
 class PsiAccount;
 class QString;
+
+using namespace XMPP;
 
 class DiscoDlg : public QDialog, public Ui::Disco
 {

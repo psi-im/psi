@@ -24,6 +24,11 @@
 
 #include "xmpp_reference.h"
 
+class FileSharingItem;
+class MultiFileTransferModel;
+class PsiAccount;
+class QMimeData;
+
 namespace Ui {
     class FileShareDlg;
 }
@@ -31,11 +36,6 @@ namespace Ui {
 namespace XMPP {
     class Message;
 }
-
-class FileSharingItem;
-class MultiFileTransferModel;
-class PsiAccount;
-class QMimeData;
 
 class FileShareDlg : public QDialog
 {

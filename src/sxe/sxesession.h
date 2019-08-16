@@ -32,14 +32,14 @@
 #define SXENS "http://jabber.org/protocol/sxe"
 /*  ^^^^ make sure corresponds to NS used for parsing in iris/src/xmpp/xmpp-im/types.cpp ^^^^ */
 
+class SxeManager;
+
 namespace XMPP {
     class Client;
     class Jid;
     class Message;
 }
 using namespace XMPP;
-
-class SxeManager;
 
 /*! \brief Class for storing the record and the XML document for an established SXE session.*/
 class SxeSession : public QObject {

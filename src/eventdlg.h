@@ -30,12 +30,6 @@
 #include "xmpp_rosterx.h"
 #include "xmpp_url.h"
 
-namespace XMPP {
-    class Jid;
-    class XData;
-}
-using namespace XMPP;
-
 class EventDlg;
 class PsiAccount;
 class PsiCon;
@@ -43,6 +37,12 @@ class PsiHttpAuthRequest;
 class PsiIcon;
 class QDateTime;
 class QStringList;
+
+namespace XMPP {
+    class Jid;
+    class XData;
+}
+using namespace XMPP;
 
 class ELineEdit : public QLineEdit
 {

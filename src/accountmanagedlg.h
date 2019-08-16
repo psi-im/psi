@@ -24,14 +24,14 @@
 
 #include "ui_accountmanage.h"
 
+class PsiAccount;
+class PsiCon;
+class QTreeWidgetItem;
+
 namespace XMPP {
     class Client;
     class Jid;
 }
-
-class PsiAccount;
-class PsiCon;
-class QTreeWidgetItem;
 
 class AccountManageTree : public QTreeWidget
 {

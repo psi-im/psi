@@ -23,6 +23,13 @@
 #include <QDialog>
 #include <QScopedPointer>
 
+class MultiFileTransferItem;
+class PsiAccount;
+class QDragEnterEvent;
+class QDragLeaveEvent;
+class QDragMoveEvent;
+class QDropEvent;
+
 namespace Ui {
     class MultiFileTransferDlg;
 }
@@ -36,13 +43,6 @@ namespace XMPP {
         }
     }
 }
-
-class MultiFileTransferItem;
-class PsiAccount;
-class QDragEnterEvent;
-class QDragLeaveEvent;
-class QDragMoveEvent;
-class QDropEvent;
 
 class BinaryUriLoader : public QObject
 {

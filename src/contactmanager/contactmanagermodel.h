@@ -24,14 +24,14 @@
 #include <QSet>
 #include <QStringList>
 
+class PsiAccount;
+class UserListItem;
+
 namespace XMPP {
     class Jid;
     class RosterItem;
 }
 using namespace XMPP;
-
-class PsiAccount;
-class UserListItem;
 
 class ContactManagerModel : public QAbstractTableModel
 {

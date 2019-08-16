@@ -26,6 +26,10 @@
 #include "filetransfer.h"
 #include "talk/base/scoped_ptr.h"
 
+class GoogleFTManager;
+class GoogleFileTransferListener;
+class GoogleSessionListener;
+
 namespace cricket {
     class FileShareSession;
     class FileShareSessionClient;
@@ -43,10 +47,6 @@ namespace XMPP {
     class Client;
     class Jid;
 }
-
-class GoogleFTManager;
-class GoogleFileTransferListener;
-class GoogleSessionListener;
 
 class GoogleFileTransfer : public QObject/*: public XMPP::AbstractFileTransfer*/
 {

@@ -5,12 +5,12 @@
 
 #include "xmpp_captcha.h"
 
+class PsiAccount;
+class XDataWidget;
+
 namespace Ui {
     class CaptchaDlg;
 }
-
-class PsiAccount;
-class XDataWidget;
 
 class CaptchaDlg : public QDialog
 {

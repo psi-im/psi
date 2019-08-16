@@ -25,6 +25,10 @@
 
 #include "xmpp_jid.h"
 
+class ProxyManager;
+class QByteArray;
+class QString;
+
 namespace QCA {
     class TLS;
 }
@@ -35,10 +39,6 @@ namespace XMPP {
     class ClientStream;
     class QCATLSHandler;
 }
-
-class ProxyManager;
-class QByteArray;
-class QString;
 
 class MiniClient : public QObject
 {
