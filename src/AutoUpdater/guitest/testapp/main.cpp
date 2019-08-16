@@ -3,6 +3,10 @@
  * See COPYING file for the detailed license.
  */
 
+#include "AutoUpdater/AutoUpdater.h"
+#include "AutoUpdater/SparkleAutoUpdater.h"
+#include "CocoaUtilities/CocoaInitializer.h"
+
 #include <QApplication>
 #include <QDir>
 #include <QFile>
@@ -11,10 +15,6 @@
 #include <QTcpSocket>
 #include <QVBoxLayout>
 #include <QWidget>
-
-#include "AutoUpdater/AutoUpdater.h"
-#include "AutoUpdater/SparkleAutoUpdater.h"
-#include "CocoaUtilities/CocoaInitializer.h"
 
 class SimpleHTTPServer : public QObject
 {

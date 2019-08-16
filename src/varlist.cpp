@@ -19,12 +19,12 @@
 
 #include "varlist.h"
 
+#include "optionstree.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QList>
 #include <QStringList>
-
-#include "optionstree.h"
 
 VarList::VarList() :QList<VarListItem>()
 {

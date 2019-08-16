@@ -1,7 +1,7 @@
-#include <QtTest/QtTest>
-
 #include "anim.h"
 #include "iconset.h"
+
+#include <QtTest/QtTest>
 
 class TestIconset: public QObject
 {

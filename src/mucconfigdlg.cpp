@@ -19,12 +19,6 @@
 
 #include "mucconfigdlg.h"
 
-#include <QInputDialog>
-#include <QMap>
-#include <QMessageBox>
-#include <QScrollArea>
-#include <QVariant>
-
 #include "infodlg.h"
 #include "mucaffiliationsmodel.h"
 #include "mucaffiliationsproxymodel.h"
@@ -33,6 +27,12 @@
 #include "vcardfactory.h"
 #include "xdata_widget.h"
 #include "xmpp_vcard.h"
+
+#include <QInputDialog>
+#include <QMap>
+#include <QMessageBox>
+#include <QScrollArea>
+#include <QVariant>
 
 using namespace XMPP;
 

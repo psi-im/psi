@@ -20,9 +20,9 @@
 #ifndef PSITABBAR_H
 #define PSITABBAR_H
 
-#include <QPoint>
-
 #include "tabbar.h"
+
+#include <QPoint>
 
 class PsiTabWidget;
 

@@ -1,5 +1,11 @@
 #include "opt_statusgeneral.h"
 
+#include "common.h"
+#include "priorityvalidator.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "ui_opt_statusgeneral.h"
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QInputDialog>
@@ -7,12 +13,6 @@
 #include <QMessageBox>
 #include <QTextEdit>
 #include <QWhatsThis>
-
-#include "common.h"
-#include "priorityvalidator.h"
-#include "psiiconset.h"
-#include "psioptions.h"
-#include "ui_opt_statusgeneral.h"
 
 class OptStatusGeneralUI : public QWidget, public Ui::OptStatusGeneral
 {

@@ -16,9 +16,9 @@
  *
  */
 
-#include <QMetaMethod>
-
 #include "psimedia_p.h"
+
+#include <QMetaMethod>
 
 namespace PsiMedia {
 static AudioParams importAudioParams(const PAudioParams &pp)

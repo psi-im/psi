@@ -19,16 +19,16 @@
 
 #include "tabbablewidget.h"
 
-#include <QTimer>
-#ifdef Q_OS_WIN
-#    include <windows.h>
-#endif
-
 #include "groupchatdlg.h"
 #include "jidutil.h"
 #include "psioptions.h"
 #include "tabdlg.h"
 #include "tabmanager.h"
+
+#include <QTimer>
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#endif
 
 //----------------------------------------------------------------------------
 // TabbableWidget

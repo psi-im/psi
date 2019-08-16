@@ -20,11 +20,11 @@
 #ifndef TABBABLEWIDGET_H
 #define TABBABLEWIDGET_H
 
-#include <QIcon>
-#include <QTimer>
-
 #include "advwidget.h"
 #include "im.h" // ChatState
+
+#include <QIcon>
+#include <QTimer>
 
 class PsiAccount;
 class TabDlg;

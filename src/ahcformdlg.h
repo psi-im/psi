@@ -20,13 +20,13 @@
 #ifndef AHCFORMDLG_H
 #define AHCFORMDLG_H
 
-#include <QDialog>
-#include <QObject>
-#include <QString>
-
 #include "ui_ahcformdlg.h"
 #include "xmpp_jid.h"
 #include "xmpp_xdata.h"
+
+#include <QDialog>
+#include <QObject>
+#include <QString>
 
 class AHCommand;
 class BusyWidget;

@@ -21,9 +21,9 @@
 #ifndef MINICMDSIMPLESITE_H
 #define MINICMDSIMPLESITE_H
 
-#include <QPalette>
-
 #include "minicmd.h"
+
+#include <QPalette>
 
 class QLabel;
 class QString;

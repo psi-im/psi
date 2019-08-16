@@ -19,11 +19,6 @@
 
 #include "ahcservermanager.h"
 
-#include <QComboBox>
-#include <QLayout>
-#include <QMessageBox>
-#include <QPushButton>
-
 #include "ahcommand.h"
 #include "ahcommandserver.h"
 #include "psiaccount.h"
@@ -31,6 +26,11 @@
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QComboBox>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
 
 #define AHC_NS "http://jabber.org/protocol/commands"
 

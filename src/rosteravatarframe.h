@@ -20,9 +20,9 @@
 #ifndef ROSTERAVATARFRAME_H
 #define ROSTERAVATARFRAME_H
 
-#include <QKeyEvent>
-
 #include "ui_rosteravatarframe.h"
+
+#include <QKeyEvent>
 
 class RosterAvatarFrame : public QFrame
 {

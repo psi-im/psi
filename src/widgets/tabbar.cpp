@@ -19,6 +19,8 @@
 
 #include "tabbar.h"
 
+#include "iconset.h"
+
 #include <QAbstractButton>
 #include <QApplication>
 //#include <QDebug>
@@ -30,8 +32,6 @@
 #include <QStyleOptionTab>
 #include <QStylePainter>
 #include <memory>
-
-#include "iconset.h"
 
 #define PINNED_CHARS 6
 

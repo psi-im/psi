@@ -19,9 +19,9 @@
 #ifndef CERTIFICATEDISPLAYDIALOG_H
 #define CERTIFICATEDISPLAYDIALOG_H
 
-#include <QtCrypto>
-
 #include "ui_CertificateDisplay.h"
+
+#include <QtCrypto>
 
 class CertificateDisplayDialog : public QDialog
 {

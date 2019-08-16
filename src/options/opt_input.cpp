@@ -1,14 +1,14 @@
 #include "opt_input.h"
 
+#include "psioptions.h"
+#include "spellchecker/spellchecker.h"
+#include "ui_opt_input.h"
+
 #include <QCheckBox>
 #include <QLocale>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QWidget>
-
-#include "psioptions.h"
-#include "spellchecker/spellchecker.h"
-#include "ui_opt_input.h"
 
 static const QString ENABLED_OPTION = QStringLiteral("options.ui.spell-check.enabled");
 static const QString DICTS_OPTION = QStringLiteral("options.ui.spell-check.langs");

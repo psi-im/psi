@@ -20,12 +20,12 @@
 #ifndef PROXYDLG_H
 #define PROXYDLG_H
 
+#include "ui_proxy.h"
+//#include "ui_proxyedit.h"
+
 #include <QGroupBox>
 #include <QList>
 #include <QPointer>
-
-#include "ui_proxy.h"
-//#include "ui_proxyedit.h"
 
 class OptionsTree;
 class ProxyItem;

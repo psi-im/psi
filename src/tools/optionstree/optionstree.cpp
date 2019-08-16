@@ -19,13 +19,13 @@
 
 #include "optionstree.h"
 
-#include <QDomDocument>
-#include <QDomElement>
-#include <QStringList>
-
 #include "atomicxmlfile/atomicxmlfile.h"
 #include "optionstreereader.h"
 #include "optionstreewriter.h"
+
+#include <QDomDocument>
+#include <QDomElement>
+#include <QStringList>
 
 /**
  * Default constructor

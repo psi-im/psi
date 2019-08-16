@@ -19,6 +19,11 @@
 
 #include "multifiletransferdelegate.h"
 
+#include "iconset.h"
+#include "multifiletransfermodel.h"
+#include "psitooltip.h"
+#include "textutil.h"
+
 #include <QAbstractItemView>
 #include <QHelpEvent>
 #include <QLabel>
@@ -30,11 +35,6 @@
 #include <QTextEdit>
 #include <QTime>
 #include <QVBoxLayout>
-
-#include "iconset.h"
-#include "multifiletransfermodel.h"
-#include "psitooltip.h"
-#include "textutil.h"
 
 QString MultiFileTransferDelegate::roundedNumber(qlonglong n, qlonglong div)
 {

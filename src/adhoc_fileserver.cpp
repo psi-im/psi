@@ -19,11 +19,11 @@
 
 #include "adhoc_fileserver.h"
 
-#include <QDir>
-#include <QFileInfo>
-
 #include "psiaccount.h"
 #include "xmpp_xdata.h"
+
+#include <QDir>
+#include <QFileInfo>
 
 using namespace XMPP;
 

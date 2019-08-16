@@ -19,11 +19,11 @@
 
 #include "multifiletransfermodel.h"
 
+#include "multifiletransferitem.h"
+
 #include <QDateTime>
 #include <QElapsedTimer>
 #include <QIcon>
-
-#include "multifiletransferitem.h"
 
 // ----------------------------------------------------------------
 // MultiFileTransferModel

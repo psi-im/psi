@@ -19,6 +19,13 @@
 
 #include "psitoolbar.h"
 
+#include "common.h"
+#include "iconaction.h"
+#include "iconset.h"
+#include "options/opt_toolbars.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QLabel>
@@ -26,13 +33,6 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QToolButton>
-
-#include "common.h"
-#include "iconaction.h"
-#include "iconset.h"
-#include "options/opt_toolbars.h"
-#include "psiiconset.h"
-#include "psioptions.h"
 
 Qt::ToolBarArea dockPositionToToolBarArea(Qt3Dock dock)
 {

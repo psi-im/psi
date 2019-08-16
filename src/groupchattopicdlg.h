@@ -1,10 +1,10 @@
 #ifndef GROUPCHATTOPICDLG_H
 #define GROUPCHATTOPICDLG_H
 
+#include "languagemanager.h"
+
 #include <QDialog>
 #include <QPointer>
-
-#include "languagemanager.h"
 
 class GCMainDlg;
 

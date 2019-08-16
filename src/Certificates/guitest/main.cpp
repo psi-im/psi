@@ -1,6 +1,6 @@
-#include <QApplication>
-
 #include "Certificates/CertificateErrorDialog.h"
+
+#include <QApplication>
 
 int main(int argc, char* argv[])
 {

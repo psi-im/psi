@@ -19,32 +19,6 @@
 
 #include "eventdlg.h"
 
-#include <QApplication>
-#include <QCheckBox>
-#include <QClipboard>
-#include <QCloseEvent>
-#include <QComboBox>
-#include <QCursor>
-#include <QDateTime>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-#include <QFrame>
-#include <QHBoxLayout>
-#include <QIcon>
-#include <QKeyEvent>
-#include <QLabel>
-#include <QLayout>
-#include <QList>
-#include <QMessageBox>
-#include <QMimeData>
-#include <QPushButton>
-#include <QResizeEvent>
-#include <QShowEvent>
-#include <QStringList>
-#include <QTextDocumentFragment>
-#include <QTimer>
-#include <QVBoxLayout>
-
 #include "accountlabel.h"
 #include "accountscombobox.h"
 #include "alerticon.h"
@@ -75,6 +49,32 @@
 #include "xdata_widget.h"
 #include "xmpp_htmlelement.h"
 #include "xmpp_serverinfomanager.h"
+
+#include <QApplication>
+#include <QCheckBox>
+#include <QClipboard>
+#include <QCloseEvent>
+#include <QComboBox>
+#include <QCursor>
+#include <QDateTime>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QIcon>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QList>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QPushButton>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QStringList>
+#include <QTextDocumentFragment>
+#include <QTimer>
+#include <QVBoxLayout>
 
 static const QString geometryOption = "options.ui.message.size";
 

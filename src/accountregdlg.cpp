@@ -19,10 +19,6 @@
 
 #include "accountregdlg.h"
 
-#include <QMessageBox>
-#include <QScrollArea>
-#include <QtCrypto>
-
 #include "jidutil.h"
 #include "miniclient.h"
 #include "proxy.h"
@@ -32,6 +28,10 @@
 #include "textutil.h"
 #include "xdata_widget.h"
 #include "xmpp_tasks.h"
+
+#include <QMessageBox>
+#include <QScrollArea>
+#include <QtCrypto>
 
 using namespace XMPP;
 

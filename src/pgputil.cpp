@@ -1,12 +1,12 @@
 #include "pgputil.h"
 
+#include "passphrasedlg.h"
+#include "showtextdlg.h"
+
 #include <QDialog>
 #include <QMessageBox>
 #include <QStringList>
 #include <QtCore>
-
-#include "passphrasedlg.h"
-#include "showtextdlg.h"
 
 PGPUtil* PGPUtil::instance_ = nullptr;
 

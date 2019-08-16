@@ -1,13 +1,13 @@
 #include "vcardphotodlg.h"
 
+#include "fileutil.h"
+#include "psiiconset.h"
+
 #include <QAction>
 #include <QDialog>
 #include <QFileDialog>
 #include <QMouseEvent>
 #include <QVBoxLayout>
-
-#include "fileutil.h"
-#include "psiiconset.h"
 
 ShowPhotoDlg::ShowPhotoDlg(QWidget *parent, QPixmap &pixmap)
     : QDialog(parent), initSize(true)

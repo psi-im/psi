@@ -19,13 +19,6 @@
 
 #include "historydlg.h"
 
-#include <QKeyEvent>
-#include <QMenu>
-#include <QMessageBox>
-#include <QProgressDialog>
-#include <QScrollBar>
-#include <QTextBlock>
-
 #include "coloropt.h"
 #include "common.h"
 #include "fileutil.h"
@@ -38,6 +31,13 @@
 #include "shortcutmanager.h"
 #include "textutil.h"
 #include "userlist.h"
+
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QProgressDialog>
+#include <QScrollBar>
+#include <QTextBlock>
 
 #define SEARCH_PADDING_SIZE 20
 #define DISPLAY_PAGE_SIZE   200

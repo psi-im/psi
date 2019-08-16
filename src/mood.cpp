@@ -19,10 +19,10 @@
 
 #include "mood.h"
 
+#include "moodcatalog.h"
+
 #include <QDomDocument>
 #include <QDomElement>
-
-#include "moodcatalog.h"
 
 Mood::Mood()
 {

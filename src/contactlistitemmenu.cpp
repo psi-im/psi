@@ -19,11 +19,11 @@
 
 #include "contactlistitemmenu.h"
 
-#include <QLabel>
-#include <QWidgetAction>
-
 #include "psioptions.h"
 #include "shortcutmanager.h"
+
+#include <QLabel>
+#include <QWidgetAction>
 
 ContactListItemMenu::ContactListItemMenu(ContactListItem* item, ContactListModel* model)
     : QMenu(nullptr)

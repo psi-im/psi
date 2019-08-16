@@ -1,5 +1,13 @@
 #include "opt_sound.h"
 
+#include "applicationinfo.h"
+#include "common.h"
+#include "fileutil.h"
+#include "iconset.h"
+#include "iconwidget.h"
+#include "psioptions.h"
+#include "ui_opt_sound.h"
+
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
@@ -8,14 +16,6 @@
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QWhatsThis>
-
-#include "applicationinfo.h"
-#include "common.h"
-#include "fileutil.h"
-#include "iconset.h"
-#include "iconwidget.h"
-#include "psioptions.h"
-#include "ui_opt_sound.h"
 
 class OptSoundUI : public QWidget, public Ui::OptSound
 {

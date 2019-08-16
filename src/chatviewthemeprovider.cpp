@@ -19,13 +19,6 @@
 
 #include "chatviewthemeprovider.h"
 
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
-#ifdef WEBENGINE
-#    include <QWebEngineUrlRequestInterceptor>
-#endif
-
 #include "applicationinfo.h"
 #include "chatviewtheme.h"
 #include "chatviewtheme_p.h"
@@ -34,6 +27,13 @@
 #include "psioptions.h"
 #include "psithememanager.h"
 #include "theme.h"
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#ifdef WEBENGINE
+#    include <QWebEngineUrlRequestInterceptor>
+#endif
 
 class ChatViewThemeProvider;
 

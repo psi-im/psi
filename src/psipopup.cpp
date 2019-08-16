@@ -19,16 +19,6 @@
 
 #include "psipopup.h"
 
-#include <QApplication>
-#include <QBoxLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QLayout>
-#include <QList>
-#include <QTextDocument>
-#include <QVBoxLayout>
-#include <QtPlugin>
-
 #include "alerticon.h"
 #include "avatars.h"
 #include "coloropt.h"
@@ -42,6 +32,16 @@
 #include "psioptions.h"
 #include "textutil.h"
 #include "userlist.h"
+
+#include <QApplication>
+#include <QBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QList>
+#include <QTextDocument>
+#include <QVBoxLayout>
+#include <QtPlugin>
 
 /**
  * Limits number of popups that could be displayed

@@ -24,12 +24,12 @@
 #define QT_STATICPLUGIN
 #endif
 
+#include "filetunecontroller.h"
+#include "tunecontrollerplugin.h"
+
 #include <QObject>
 #include <QString>
 #include <QtCore>
-
-#include "filetunecontroller.h"
-#include "tunecontrollerplugin.h"
 
 /**
  * \brief A TuneController plugin for the Psi file controller.

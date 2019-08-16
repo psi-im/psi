@@ -19,14 +19,14 @@
 
 #include "popupmanager.h"
 
-#include <QPluginLoader>
-#include <QtPlugin>
-
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psioptions.h"
 #include "psipopupinterface.h"
 #include "xmpp_jid.h"
+
+#include <QPluginLoader>
+#include <QtPlugin>
 
 static const int defaultTimeout = 5;
 static const QString defaultType = "Classic";

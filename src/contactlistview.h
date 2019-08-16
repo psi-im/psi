@@ -20,9 +20,9 @@
 #ifndef CONTACTLISTVIEW_H
 #define CONTACTLISTVIEW_H
 
-#include <QPointer>
-
 #include "hoverabletreeview.h"
+
+#include <QPointer>
 
 class ContactListItem;
 class ContactListItemMenu;

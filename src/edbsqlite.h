@@ -20,6 +20,11 @@
 #ifndef EDBSQLITE_H
 #define EDBSQLITE_H
 
+#include "edbflatfile.h"
+#include "eventdb.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
 #include <QDateTime>
 #include <QHash>
 #include <QObject>
@@ -28,11 +33,6 @@
 #include <QSqlRecord>
 #include <QTimer>
 #include <QVariant>
-
-#include "edbflatfile.h"
-#include "eventdb.h"
-#include "psievent.h"
-#include "xmpp_jid.h"
 
 enum QueryType {
     QueryContactsList,

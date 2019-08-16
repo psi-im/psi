@@ -20,9 +20,9 @@
 #ifndef FILESHAREDLG_H
 #define FILESHAREDLG_H
 
-#include <QDialog>
-
 #include "xmpp_reference.h"
+
+#include <QDialog>
 
 class FileSharingItem;
 class MultiFileTransferModel;

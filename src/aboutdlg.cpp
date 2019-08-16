@@ -18,13 +18,12 @@
  */
 
 #include "aboutdlg.h"
+#include "applicationinfo.h"
+#include "iconset.h"
 
 #include <QFile>
 #include <QTextStream>
 #include <QtCrypto>
-
-#include "applicationinfo.h"
-#include "iconset.h"
 
 AboutDlg::AboutDlg(QWidget* parent)
     : QDialog(parent)

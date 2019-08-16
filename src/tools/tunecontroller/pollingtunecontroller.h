@@ -20,10 +20,10 @@
 #ifndef POLLINGTUNECONTROLLER_H
 #define POLLINGTUNECONTROLLER_H
 
-#include <QTimer>
-
 #include "tune.h"
 #include "tunecontroller.h"
+
+#include <QTimer>
 
 class PollingTuneController : public TuneController
 {

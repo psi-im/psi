@@ -25,10 +25,6 @@
 #ifndef PSIACCOUNT_H
 #define PSIACCOUNT_H
 
-#include <QList>
-#include <QUrl>
-#include <functional>
-
 #include "activity.h"
 #include "geolocation.h"
 #include "mood.h"
@@ -38,6 +34,10 @@
 #include "xmpp_reference.h"
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
+
+#include <QList>
+#include <QUrl>
+#include <functional>
 
 class AvatarFactory;
 class AvCallManager;

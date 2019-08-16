@@ -1,9 +1,9 @@
 #ifndef OPTIONSTREEWRITER_H
 #define OPTIONSTREEWRITER_H
 
-#include <QVariant>
-
 #include "atomicxmlfile/atomicxmlfile.h"
+
+#include <QVariant>
 
 class OptionsTree;
 class VariantTree;

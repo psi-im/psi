@@ -19,11 +19,6 @@
 
 #include "miniclient.h"
 
-#include <QMessageBox>
-#include <QUrl>
-#include <QUrlQuery>
-#include <QtCrypto>
-
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateHelpers.h"
 #include "applicationinfo.h"
@@ -31,6 +26,11 @@
 #include "proxy.h"
 #include "psiaccount.h"
 #include "xmpp_tasks.h"
+
+#include <QMessageBox>
+#include <QUrl>
+#include <QUrlQuery>
+#include <QtCrypto>
 
 using namespace XMPP;
 

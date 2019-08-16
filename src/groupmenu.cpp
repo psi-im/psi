@@ -19,11 +19,11 @@
 
 #include "groupmenu.h"
 
-#include <QInputDialog>
-
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "userlist.h"
+
+#include <QInputDialog>
 
 GroupMenu::GroupMenu(QWidget* parent)
     : QMenu(parent)

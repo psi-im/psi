@@ -20,10 +20,10 @@
 #ifndef MESSAGEVIEW_H
 #define MESSAGEVIEW_H
 
+#include "xmpp_message.h"
+
 #include <QDateTime>
 #include <QVariantMap>
-
-#include "xmpp_message.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5,7,0)
 #     define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag

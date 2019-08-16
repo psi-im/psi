@@ -19,12 +19,12 @@
 
 #include "optionstreemodel.h"
 
-#include <QStringList>
+#include "optionstree.h"
 
+#include <QStringList>
 #ifdef HAVE_MODELTEST
 #    include <modeltest.h>
 #endif
-#include "optionstree.h"
 
 // Enable this if you have Trolltech Labs' ModelTest and are not going
 // to distribute the source or binary. You need to include modeltest.pri

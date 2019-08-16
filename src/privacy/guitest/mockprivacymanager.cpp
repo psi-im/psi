@@ -18,10 +18,10 @@
 
 #include "mockprivacymanager.h"
 
-#include <QDebug>
-
 #include "privacylist.h"
 #include "privacylistitem.h"
+
+#include <QDebug>
 
 MockPrivacyManager::MockPrivacyManager()
 {

@@ -1,15 +1,15 @@
 /**
  * Copyright (C) 2007  Remko Troncon
  */
+ 
+#include "privacylistitem.h"
+#include "unittestutil.h"
 
 #include <QList>
 #include <QStringList>
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
-
-#include "privacylistitem.h"
-#include "unittestutil.h"
 
 class PrivacyListItemTest : public CppUnit::TestFixture
 {

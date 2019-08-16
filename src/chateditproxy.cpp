@@ -19,10 +19,10 @@
 
 #include "chateditproxy.h"
 
-#include <QVBoxLayout>
-
 #include "msgmle.h"
 #include "psioptions.h"
+
+#include <QVBoxLayout>
 
 ChatEditProxy::ChatEditProxy(QWidget* parent)
     : QWidget(parent)

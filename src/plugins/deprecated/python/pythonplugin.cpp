@@ -22,11 +22,11 @@
  *
  */
 
+#include "psiplugin.h"
+
 #include <Python.h>
 #include <QDebug>
 #include <QtCore>
-
-#include "psiplugin.h"
 
 extern int Py_VerboseFlag;
 

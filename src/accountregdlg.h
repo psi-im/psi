@@ -20,12 +20,12 @@
 #ifndef ACCOUNTREGDLG_H
 #define ACCOUNTREGDLG_H
 
-#include <QDialog>
-#include <QString>
-
 #include "profiles.h"
 #include "ui_accountreg.h"
 #include "xmpp_jid.h"
+
+#include <QDialog>
+#include <QString>
 
 class MiniClient;
 class ProxyChooser;

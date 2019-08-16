@@ -1,9 +1,9 @@
 #ifndef CAPTCHADLG_H
 #define CAPTCHADLG_H
 
-#include <QDialog>
-
 #include "xmpp_captcha.h"
+
+#include <QDialog>
 
 class PsiAccount;
 class XDataWidget;

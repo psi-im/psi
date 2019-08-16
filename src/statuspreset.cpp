@@ -19,10 +19,10 @@
 
 #include "statuspreset.h"
 
-#include <QString>
-
 #include "maybe.h"
 #include "psioptions.h"
+
+#include <QString>
 
 //-----------------------------------------------------------------------------
 // StatusPreset

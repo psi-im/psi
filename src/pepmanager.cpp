@@ -19,11 +19,11 @@
 
 #include "pepmanager.h"
 
-#include <QtDebug>
-
 #include "xmpp_serverinfomanager.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QtDebug>
 
 using namespace XMPP;
 

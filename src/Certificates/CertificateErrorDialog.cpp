@@ -5,13 +5,13 @@
 
 #include "Certificates/CertificateErrorDialog.h"
 
+#include "Certificates/CertificateDisplayDialog.h"
+#include "Certificates/CertificateHelpers.h"
+
 #include <QFile>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QtDebug>
-
-#include "Certificates/CertificateDisplayDialog.h"
-#include "Certificates/CertificateHelpers.h"
 
 CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert) : certificate_(cert), result_(result), validity_(validity), tlsOverrideDomain_(tlsOverrideDomain), tlsOverrideCert_(tlsOverrideCert), domainOverride_(domainOverride), host_(host)
 {

@@ -19,6 +19,13 @@
 
 #include "profiledlg.h"
 
+#include "applicationinfo.h"
+#include "common.h"
+#include "iconset.h"
+#include "iconwidget.h"
+#include "profiles.h"
+#include "psioptions.h"
+
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
@@ -30,13 +37,6 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPushButton>
-
-#include "applicationinfo.h"
-#include "common.h"
-#include "iconset.h"
-#include "iconwidget.h"
-#include "profiles.h"
-#include "psioptions.h"
 
 class StretchLogoLabel : public QLabel
 {

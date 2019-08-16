@@ -1,11 +1,11 @@
 #ifndef IRIS_DISCOINFOQUERIER_H
 #define IRIS_DISCOINFOQUERIER_H
 
-#include <QObject>
-#include <QPointer>
-
 #include "protocol/discoinfoquerier.h"
 #include "xmpp_client.h"
+
+#include <QObject>
+#include <QPointer>
 
 namespace XMPP {
     class Jid;

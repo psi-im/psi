@@ -1,9 +1,5 @@
 #include "opt_avcall.h"
 
-#include <QComboBox>
-#include <QLineEdit>
-#include <QList>
-
 #include "../avcall/avcall.h"
 #include "../avcall/mediadevicewatcher.h"
 #include "../psimedia/psimedia.h"
@@ -11,6 +7,10 @@
 #include "iconwidget.h"
 #include "psioptions.h"
 #include "ui_opt_avcall.h"
+
+#include <QComboBox>
+#include <QLineEdit>
+#include <QList>
 
 class OptAvCallUI : public QWidget, public Ui::OptAvCall
 {

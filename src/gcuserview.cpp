@@ -20,12 +20,6 @@
 
 #include "gcuserview.h"
 
-#include <QItemDelegate>
-#include <QMenu>
-#include <QMimeData>
-#include <QMouseEvent>
-#include <QPainter>
-
 #include "avatars.h"
 #include "coloropt.h"
 #include "common.h"
@@ -37,6 +31,12 @@
 #include "userlist.h"
 #include "xmpp_caps.h"
 #include "xmpp_muc.h"
+
+#include <QItemDelegate>
+#include <QMenu>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QPainter>
 
 //static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 //{

@@ -19,16 +19,6 @@
 
 #include "profiles.h"
 
-#include <QApplication>
-#include <QDesktopWidget>
-#include <QDir>
-#include <QDomElement>
-#include <QFileInfo>
-#include <QList>
-#include <QTextStream>
-#include <QUuid>
-#include <QtCrypto>
-
 #include "advwidget.h"
 #include "applicationinfo.h"
 #include "atomicxmlfile/atomicxmlfile.h"
@@ -48,6 +38,16 @@
 #include "shortcutmanager.h"
 #include "varlist.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QDir>
+#include <QDomElement>
+#include <QFileInfo>
+#include <QList>
+#include <QTextStream>
+#include <QUuid>
+#include <QtCrypto>
 
 #define PROXY_NONE       0
 #define PROXY_HTTPS      1

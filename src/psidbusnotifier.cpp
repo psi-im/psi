@@ -24,16 +24,6 @@
 
 #include "psidbusnotifier.h"
 
-#include <QDBusArgument>
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusMessage>
-#include <QDBusMetaType>
-#include <QDBusReply>
-#include <QImage>
-#include <QTimer>
-#include <QtPlugin>
-
 #include "avatars.h"
 #include "common.h"
 #include "iconset.h"
@@ -44,6 +34,16 @@
 #include "psioptions.h"
 #include "textutil.h"
 #include "userlist.h"
+
+#include <QDBusArgument>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusMessage>
+#include <QDBusMetaType>
+#include <QDBusReply>
+#include <QImage>
+#include <QTimer>
+#include <QtPlugin>
 
 static const int minLifeTime = 5000;
 static const QString markupCaps = "body-markup";

@@ -19,17 +19,17 @@
 
 #include "opt_theme.h"
 
-#include <QDialog>
-#include <QSortFilterProxyModel>
-#include <QTimer>
-#include <QToolButton>
-
 #include "psicon.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "psithememanager.h"
 #include "psithememodel.h"
 #include "ui_opt_theme.h"
+
+#include <QDialog>
+#include <QSortFilterProxyModel>
+#include <QTimer>
+#include <QToolButton>
 
 #define SCREEN_PREFIX "scb_"
 

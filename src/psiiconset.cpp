@@ -19,17 +19,17 @@
 
 #include "psiiconset.h"
 
-#include <QCoreApplication>
-#include <QFileInfo>
-#include <QSet>
-#include <QTextStream>
-
 #include "anim.h"
 #include "applicationinfo.h"
 #include "common.h"
 #include "psievent.h"
 #include "psioptions.h"
 #include "userlist.h"
+
+#include <QCoreApplication>
+#include <QFileInfo>
+#include <QSet>
+#include <QTextStream>
 
 using namespace XMPP;
 

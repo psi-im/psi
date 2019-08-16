@@ -20,10 +20,10 @@
 #ifndef MUCMANAGER_H
 #define MUCMANAGER_H
 
-#include <QObject>
-
 #include "xmpp_jid.h"
 #include "xmpp_muc.h"
+
+#include <QObject>
 
 class PsiAccount;
 class QString;

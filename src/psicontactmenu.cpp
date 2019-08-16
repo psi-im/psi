@@ -17,14 +17,6 @@
  *
  */
 
-#include <QApplication>
-#include <QClipboard>
-#include <QFileDialog>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QPointer>
-#include <QWidgetAction>
-
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
@@ -45,6 +37,14 @@
 #include "shortcutmanager.h"
 #include "userlist.h"
 #include "xmpp_tasks.h"
+
+#include <QApplication>
+#include <QClipboard>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QPointer>
+#include <QWidgetAction>
 
 //----------------------------------------------------------------------------
 // GroupMenu

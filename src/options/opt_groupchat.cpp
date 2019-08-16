@@ -1,5 +1,10 @@
 #include "opt_groupchat.h"
 
+#include "common.h"
+#include "iconwidget.h"
+#include "psioptions.h"
+#include "ui_opt_general_groupchat.h"
+
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QColorDialog>
@@ -10,11 +15,6 @@
 #include <QRadioButton>
 #include <QSignalMapper>
 #include <QWhatsThis>
-
-#include "common.h"
-#include "iconwidget.h"
-#include "psioptions.h"
-#include "ui_opt_general_groupchat.h"
 
 class GeneralGroupchatUI : public QWidget, public Ui::GeneralGroupchat
 {

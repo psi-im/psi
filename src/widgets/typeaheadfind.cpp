@@ -19,16 +19,16 @@
 
 #include "typeaheadfind.h"
 
+#include "iconaction.h"
+#include "psioptions.h"
+#include "shortcutmanager.h"
+#include "stretchwidget.h"
+
 #include <QAction>
 #include <QCheckBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QTextEdit>
-
-#include "iconaction.h"
-#include "psioptions.h"
-#include "shortcutmanager.h"
-#include "stretchwidget.h"
 
 /**
  * \class TypeAheadFindBar

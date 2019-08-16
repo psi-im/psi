@@ -20,9 +20,9 @@
 #ifndef JINGLEVOICECALLER_H
 #define JINGLEVOICECALLER_H
 
-#include <QMap>
-
 #include "voicecaller.h"
+
+#include <QMap>
 
 class JingleCallSlots;
 class JingleClientSlots;

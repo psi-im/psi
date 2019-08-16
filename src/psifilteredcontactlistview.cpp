@@ -19,11 +19,11 @@
 
 #include "psifilteredcontactlistview.h"
 
-#include <QKeyEvent>
-#include <QPainter>
-
 #include "contactlistviewdelegate.h"
 #include "psioptions.h"
+
+#include <QKeyEvent>
+#include <QPainter>
 
 PsiFilteredContactListView::PsiFilteredContactListView(QWidget* parent)
     : PsiContactListView(parent)

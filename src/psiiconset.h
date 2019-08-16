@@ -20,10 +20,10 @@
 #ifndef PSIICONSET_H
 #define PSIICONSET_H
 
-#include <QMap>
-
 #include "iconset.h"
 #include "psievent.h"
+
+#include <QMap>
 
 class UserListItem;
 

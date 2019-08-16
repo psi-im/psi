@@ -19,10 +19,10 @@
 #ifndef TABMANAGER_H
 #define TABMANAGER_H
 
+#include "psicon.h"
+
 #include <QList>
 #include <QObject>
-
-#include "psicon.h"
 
 class TabDlg;
 class TabDlgDelegate;

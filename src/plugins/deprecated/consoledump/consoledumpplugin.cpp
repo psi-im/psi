@@ -22,10 +22,10 @@
  *
  */
 
-#include <QtCore>
-
 #include "eventfilter.h"
 #include "psiplugin.h"
+
+#include <QtCore>
 
 class ConsoleDumpPlugin : public QObject, public PsiPlugin, public EventFilter
 {

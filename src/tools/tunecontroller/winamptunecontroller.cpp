@@ -19,6 +19,9 @@
 
 #include "winamptunecontroller.h"
 
+// this file generates eight C4100 warnings, when compiled with MSVC2003
+#include "plugins/winamp/third-party/wa_ipc.h"
+
 #include <QString>
 #include <windows.h>
 
@@ -27,9 +30,6 @@
 #    pragma warning(push)
 #    pragma warning(disable: 4100)
 #endif
-
-// this file generates eight C4100 warnings, when compiled with MSVC2003
-#include "plugins/winamp/third-party/wa_ipc.h"
 
 /**
  * \class WinAmpTuneController

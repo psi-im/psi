@@ -20,10 +20,10 @@
 #ifndef MUCCONFIG_H
 #define MUCCONFIG_H
 
-#include <QDialog>
-
 #include "ui_mucconfig.h"
 #include "xmpp_muc.h"
+
+#include <QDialog>
 
 class InfoWidget;
 class MUCAffiliationsModel;

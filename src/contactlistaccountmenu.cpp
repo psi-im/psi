@@ -19,8 +19,6 @@
 
 #include "contactlistaccountmenu.h"
 
-#include <QPointer>
-
 #include "accountstatusmenu.h"
 #include "bookmarkmanager.h"
 #include "common.h"
@@ -33,6 +31,8 @@
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "xmpp_serverinfomanager.h"
+
+#include <QPointer>
 
 class ContactListAccountMenu::Private : public QObject
 {

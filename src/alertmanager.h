@@ -22,9 +22,9 @@
 #ifndef ALERTMANAGER_H
 #define ALERTMANAGER_H
 
-#include <QMessageBox>
-
 #include "psicon.h"
+
+#include <QMessageBox>
 
 class AlertManager : public QObject {
     Q_OBJECT

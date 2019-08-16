@@ -24,10 +24,10 @@
 #ifndef WBMANAGER_H
 #define WBMANAGER_H
 
-#include <QInputDialog>
-
 #include "../sxe/sxemanager.h"
 #include "wbdlg.h"
+
+#include <QInputDialog>
 
 #define WBNS "http://www.w3.org/2000/svg"
 

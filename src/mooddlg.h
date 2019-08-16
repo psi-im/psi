@@ -20,9 +20,9 @@
 #ifndef MOODDLG_H
 #define MOODDLG_H
 
-#include <QDialog>
-
 #include "ui_mood.h"
+
+#include <QDialog>
 
 class PsiAccount;
 

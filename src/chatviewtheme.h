@@ -20,11 +20,11 @@
 #ifndef CHATVIEWTHEME_H
 #define CHATVIEWTHEME_H
 
-#include <QPointer>
-#include <functional>
-
 #include "theme.h"
 #include "webview.h"
+
+#include <QPointer>
+#include <functional>
 
 class SessionRequestHandler;
 class ThemeServer;

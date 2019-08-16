@@ -20,14 +20,14 @@
 #ifndef SXDESESSION_H
 #define SXDESESSION_H
 
+#include "im.h"
+#include "psiaccount.h"
+#include "sxerecord.h"
+
 #include <QDomNode>
 #include <QList>
 #include <QObject>
 #include <QPointer>
-
-#include "im.h"
-#include "psiaccount.h"
-#include "sxerecord.h"
 
 #define SXENS "http://jabber.org/protocol/sxe"
 /*  ^^^^ make sure corresponds to NS used for parsing in iris/src/xmpp/xmpp-im/types.cpp ^^^^ */

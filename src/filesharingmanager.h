@@ -20,12 +20,12 @@
 #ifndef FILESHARINGMANAGER_H
 #define FILESHARINGMANAGER_H
 
-#include <QObject>
-
 #ifndef WEBKIT
 #    include "qite.h"
 #endif
 #include "xmpp_reference.h"
+
+#include <QObject>
 
 class FileCache;
 class FileCacheItem;

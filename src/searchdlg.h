@@ -20,9 +20,9 @@
 #ifndef SEARCHDLG_H
 #define SEARCHDLG_H
 
-#include <QDialog>
-
 #include "ui_search.h"
+
+#include <QDialog>
 
 class PsiAccount;
 class QString;

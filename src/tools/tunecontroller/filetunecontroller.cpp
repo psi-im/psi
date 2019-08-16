@@ -20,12 +20,12 @@
 
 #include "filetunecontroller.h"
 
+#include "qca.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
-
-#include "qca.h"
 
 /**
  * \class FileTuneController

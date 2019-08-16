@@ -19,6 +19,13 @@
 
 #include "xmlconsole.h"
 
+#include "iconset.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "textutil.h"
+#include "xmpp_client.h"
+
 #include <QCheckBox>
 #include <QHBoxLayout>
 #include <QLayout>
@@ -28,13 +35,6 @@
 #include <QTextEdit>
 #include <QTextFrame>
 #include <QVBoxLayout>
-
-#include "iconset.h"
-#include "psiaccount.h"
-#include "psicon.h"
-#include "psicontactlist.h"
-#include "textutil.h"
-#include "xmpp_client.h"
 
 //----------------------------------------------------------------------------
 // XmlConsole

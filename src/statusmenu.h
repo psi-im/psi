@@ -20,12 +20,12 @@
 #ifndef STATUSMENU_H
 #define STATUSMENU_H
 
-#include <QMenu>
-#include <QMouseEvent>
-
 #include "iconaction.h"
 #include "psicon.h"
 #include "xmpp_status.h"
+
+#include <QMenu>
+#include <QMouseEvent>
 
 class StatusMenu : public QMenu
 {

@@ -6,14 +6,14 @@
 #ifndef PLUGINMANAGER_H
 #define PLUGINMANAGER_H
 
+#include "psiplugin.h"
+
 #include <QDomElement>
 #include <QHash>
 #include <QList>
 #include <QMap>
 #include <QMenu>
 #include <QtCore>
-
-#include "psiplugin.h"
 
 #define PLUGINS_NO_DEBUG
 

@@ -20,9 +20,9 @@
 
 #include "networkaccessmanager.h"
 
-#include <QCoreApplication>
-
 #include "bytearrayreply.h"
+
+#include <QCoreApplication>
 
 NetworkAccessManager::NetworkAccessManager(QObject *parent)
     : QNetworkAccessManager(parent)

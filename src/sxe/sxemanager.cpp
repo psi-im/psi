@@ -19,12 +19,12 @@
 
 #include "sxemanager.h"
 
-#include <QUrl>
-
 #include "common.h"
 #include "psioptions.h"
 #include "psipopup.h"
 #include "xmpp_caps.h"
+
+#include <QUrl>
 
 #define ONETOONEPREFIXSELF "0"
 #define ONETOONEPREFIXOTHER "1"

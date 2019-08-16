@@ -20,14 +20,14 @@
 #ifndef MAINWIN_H
 #define MAINWIN_H
 
+#include "advwidget.h"
+#include "xmpp_status.h"
+
 #include <QList>
 #include <QMainWindow>
 #include <QMap>
 #include <QString>
 #include <QStringList>
-
-#include "advwidget.h"
-#include "xmpp_status.h"
 
 class ContactView;
 class GlobalStatusMenu;

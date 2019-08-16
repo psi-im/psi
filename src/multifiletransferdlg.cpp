@@ -19,20 +19,6 @@
 
 #include "multifiletransferdlg.h"
 
-#include <QBuffer>
-#include <QDragEnterEvent>
-#include <QDragLeaveEvent>
-#include <QDragMoveEvent>
-#include <QDropEvent>
-#include <QFileDialog>
-#include <QFileIconProvider>
-#include <QFileInfo>
-#include <QMimeData>
-#include <QMimeDatabase>
-#include <QNetworkReply>
-#include <QPainter>
-#include <xmpp_tasks.h>
-
 #include "avatars.h"
 #include "fileutil.h"
 #include "iconset.h"
@@ -48,6 +34,20 @@
 #include "ui_multifiletransferdlg.h"
 #include "userlist.h"
 #include "xmpp/jid/jid.h"
+
+#include <QBuffer>
+#include <QDragEnterEvent>
+#include <QDragLeaveEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QFileDialog>
+#include <QFileIconProvider>
+#include <QFileInfo>
+#include <QMimeData>
+#include <QMimeDatabase>
+#include <QNetworkReply>
+#include <QPainter>
+#include <xmpp_tasks.h>
 
 using namespace XMPP;
 

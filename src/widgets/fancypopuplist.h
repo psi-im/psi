@@ -20,10 +20,10 @@
 #ifndef POPUPLIST_H
 #define POPUPLIST_H
 
+#include "fancypopup.h"
+
 #include <QList>
 #include <QObject>
-
-#include "fancypopup.h"
 
 class FancyPopupList : public QObject, public QList<FancyPopup *>
 {

@@ -19,10 +19,10 @@
 
 #include "voicecalldlg.h"
 
+#include "voicecaller.h"
+
 #include <QLabel>
 #include <QPushButton>
-
-#include "voicecaller.h"
 
 VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller)
     : QDialog(nullptr), jid_(jid), voiceCaller_(voiceCaller)

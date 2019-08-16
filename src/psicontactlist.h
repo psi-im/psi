@@ -20,10 +20,10 @@
 #ifndef PSICONTACTLIST_H
 #define PSICONTACTLIST_H
 
+#include "profiles.h"
+
 #include <QList>
 #include <functional>
-
-#include "profiles.h"
 
 class PsiAccount;
 class PsiCon;

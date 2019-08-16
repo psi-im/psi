@@ -23,16 +23,16 @@
 
 #include "theme.h"
 
-#include <QDir>
-#include <QDirIterator>
-#include <QFileInfo>
-#include <QStringList>
-
 #include "psithemeprovider.h"
 #include "theme_p.h"
 #ifdef Theme_ZIP
 #    include "zip/zip.h"
 #endif
+
+#include <QDir>
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QStringList>
 
 //--------------------------------------
 // Theme

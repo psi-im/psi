@@ -20,10 +20,10 @@
 #ifndef BOOKMARKMANAGEDLG_H
 #define BOOKMARKMANAGEDLG_H
 
-#include <QDialog>
-
 #include "ui_bookmarkmanage.h"
 #include "xmpp_jid.h"
+
+#include <QDialog>
 
 class ConferenceBookmark;
 class PsiAccount;

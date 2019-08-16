@@ -20,11 +20,11 @@
 #ifndef MUCAFFILIATIONSMODEL_H
 #define MUCAFFILIATIONSMODEL_H
 
+#include "xmpp_muc.h"
+
 #include <QList>
 #include <QMap>
 #include <QStandardItemModel>
-
-#include "xmpp_muc.h"
 
 class QMimeData;
 

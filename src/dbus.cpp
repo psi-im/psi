@@ -1,15 +1,15 @@
 #include "dbus.h"
 
+#include "activeprofiles.h"
+#include "common.h"
+#include "psiaccount.h"
+#include "psicontactlist.h"
+
 #include <QDBusAbstractAdaptor>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QString>
 #include <QVector>
-
-#include "activeprofiles.h"
-#include "common.h"
-#include "psiaccount.h"
-#include "psicontactlist.h"
 
 #define PSIDBUSIFACE "org.psi_im.Psi"
 

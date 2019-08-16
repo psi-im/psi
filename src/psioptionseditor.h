@@ -1,14 +1,14 @@
 #ifndef PSIOPTIONSEDITOR_H
 #define PSIOPTIONSEDITOR_H
 
+#include "optionstreemodel.h"
+
 #include <QCheckBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QToolButton>
 #include <QTreeView>
 #include <QtCore>
-
-#include "optionstreemodel.h"
 
 class PsiOptions;
 class QSortFilterProxyModel;

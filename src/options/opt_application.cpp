@@ -1,14 +1,5 @@
 #include "opt_application.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QDir>
-#include <QLineEdit>
-#include <QList>
-#include <QMessageBox>
-#include <QSettings>
-#include <QStandardPaths>
-
 #include "applicationinfo.h"
 #include "common.h"
 #include "iconwidget.h"
@@ -17,6 +8,15 @@
 #include "translationmanager.h"
 #include "ui_opt_application.h"
 #include "varlist.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDir>
+#include <QLineEdit>
+#include <QList>
+#include <QMessageBox>
+#include <QSettings>
+#include <QStandardPaths>
 
 #ifdef Q_OS_WIN
     static const QString regString = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";

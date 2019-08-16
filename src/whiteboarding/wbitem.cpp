@@ -19,13 +19,13 @@
 
 #include "wbitem.h"
 
+#include "wbscene.h"
+#include "wbwidget.h"
+
 #include <QDebug>
 #include <QRegExp>
 #include <QSvgRenderer>
 #include <math.h>
-
-#include "wbscene.h"
-#include "wbwidget.h"
 
 static QMatrix parseTransformationMatrix(const QString &value);
 

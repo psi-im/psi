@@ -20,6 +20,9 @@
 #ifndef WEBVIEW_H
 #define WEBVIEW_H
 
+#include "iconset.h"
+#include "networkaccessmanager.h"
+
 #include <QBuffer>
 #include <QClipboard>
 #include <QContextMenuEvent>
@@ -31,9 +34,6 @@
 #else
 #    include <QWebView>
 #endif
-
-#include "iconset.h"
-#include "networkaccessmanager.h"
 
 /**
  * Extended QWebView.

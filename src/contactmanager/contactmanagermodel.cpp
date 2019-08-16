@@ -20,7 +20,6 @@
 #include "contactmanagermodel.h"
 
 #include "QDebug"
-
 #include "psiaccount.h"
 #include "userlist.h"
 #include "xmpp_tasks.h"

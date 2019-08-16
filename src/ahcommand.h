@@ -20,10 +20,10 @@
 #ifndef AHCOMMAND_H
 #define AHCOMMAND_H
 
+#include "xmpp_xdata.h"
+
 #include <QSharedDataPointer>
 #include <QString>
-
-#include "xmpp_xdata.h"
 
 class AHCommandPrivate;
 class QDomDocument;

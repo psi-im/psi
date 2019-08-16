@@ -1,8 +1,3 @@
-#include <QApplication>
-#include <QTimer>
-#include <QtCrypto>
-#include <QtTest/QtTest>
-
 #include "iconset.h"
 #include "im.h" // for Jid
 #include "mainwin.h"
@@ -11,6 +6,11 @@
 #include "psicon.h" // for PsiCon
 #include "psipopup.h"
 #include "userlist.h" // for UserListItem
+
+#include <QApplication>
+#include <QTimer>
+#include <QtCrypto>
+#include <QtTest/QtTest>
 
 class TestPsiPopup: public QObject
 {

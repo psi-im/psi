@@ -20,11 +20,11 @@
 #ifndef PRIVACYDLG_H
 #define PRIVACYDLG_H
 
-#include <QDialog>
-#include <QPointer>
-
 #include "privacylistmodel.h"
 #include "ui_privacy.h"
+
+#include <QDialog>
+#include <QPointer>
 
 class PrivacyManager;
 class QString;

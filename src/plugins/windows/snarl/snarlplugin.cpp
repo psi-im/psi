@@ -22,11 +22,11 @@
  *
  */
 
-#include <QMessageBox>
-#include <QtCore>
-
 #include "SnarlInterface.h"
 #include "psiplugin.h"
+
+#include <QMessageBox>
+#include <QtCore>
 
 class SnarlPlugin : public QObject, public PsiPlugin
 {

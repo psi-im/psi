@@ -14,6 +14,11 @@
 
 #include "mainwindow.h"
 
+#include "gameboard.h"
+#include "xpm/chess.xpm"
+#include "xpm/new_game.xpm"
+#include "xpm/quit.xpm"
+
 #include <Q3PopupMenu>
 #include <QApplication>
 #include <QLabel>
@@ -23,11 +28,6 @@
 #include <QResizeEvent>
 #include <QStatusBar>
 #include <QValidator>
-
-#include "gameboard.h"
-#include "xpm/chess.xpm"
-#include "xpm/new_game.xpm"
-#include "xpm/quit.xpm"
 
 extern QColor    cw, cb;
 

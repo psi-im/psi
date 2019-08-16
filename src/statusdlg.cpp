@@ -19,17 +19,6 @@
 
 #include "statusdlg.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QHBoxLayout>
-#include <QInputDialog>
-#include <QKeyEvent>
-#include <QLabel>
-#include <QLayout>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QVBoxLayout>
-
 #include "common.h"
 #include "jidutil.h"
 #include "msgmle.h"
@@ -43,6 +32,17 @@
 #include "statuscombobox.h"
 #include "statuspreset.h"
 #include "userlist.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 //----------------------------------------------------------------------------
 // StatusShowDlg

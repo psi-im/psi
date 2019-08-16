@@ -21,12 +21,12 @@
 #define QT_STATICPLUGIN
 #endif
 
+#include "itunestunecontroller.h"
+#include "tunecontrollerplugin.h"
+
 #include <QObject>
 #include <QString>
 #include <QtCore>
-
-#include "itunestunecontroller.h"
-#include "tunecontrollerplugin.h"
 
 class ITunesPlugin : public QObject, public TuneControllerPlugin
 {

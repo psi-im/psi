@@ -20,9 +20,9 @@
 #ifndef MULTIFILETRANSFERITEM_H
 #define MULTIFILETRANSFERITEM_H
 
-#include <QScopedPointer>
-
 #include "multifiletransfermodel.h"
+
+#include <QScopedPointer>
 
 class MultiFileTransferItem : public QObject
 {

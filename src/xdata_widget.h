@@ -20,14 +20,14 @@
 #ifndef XDATAWIDGET_H
 #define XDATAWIDGET_H
 
+#include "xmpp_jid.h"
+#include "xmpp_stanza.h"
+#include "xmpp_xdata.h"
+
 #include <QList>
 #include <QString>
 #include <QVBoxLayout>
 #include <QWidget>
-
-#include "xmpp_jid.h"
-#include "xmpp_stanza.h"
-#include "xmpp_xdata.h"
 
 class PsiCon;
 class XDataField;

@@ -20,10 +20,10 @@
 #ifndef PRIVACYLIST_H
 #define PRIVACYLIST_H
 
+#include "privacylistitem.h"
+
 #include <QList>
 #include <QString>
-
-#include "privacylistitem.h"
 
 class QDomDocument;
 class QDomElement;

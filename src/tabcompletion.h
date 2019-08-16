@@ -21,9 +21,9 @@
 #ifndef TABCOMPLETION_H
 #define TABCOMPLETION_H
 
-#include <QObject>
-
 #include "msgmle.h"
+
+#include <QObject>
 
 class TabCompletion : public QObject
 {

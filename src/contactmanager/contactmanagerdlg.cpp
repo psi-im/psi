@@ -19,19 +19,19 @@
 
 #include "contactmanagerdlg.h"
 
-#include <QCheckBox>
-#include <QFile>
-#include <QFileDialog>
-#include <QItemSelectionModel>
-#include <QMessageBox>
-#include <QScrollArea>
-
 //#include "contactview.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "xmpp_tasks.h"
+
+#include <QCheckBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QItemSelectionModel>
+#include <QMessageBox>
+#include <QScrollArea>
 
 ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
     QDialog(nullptr, Qt::Window),

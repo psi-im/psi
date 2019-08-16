@@ -23,15 +23,15 @@
 
 #include "wbdlg.h"
 
+#include "accountlabel.h"
+#include "iconset.h"
+#include "stretchwidget.h"
+
 #include <QColorDialog>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QToolButton>
 #include <QVBoxLayout>
-
-#include "accountlabel.h"
-#include "iconset.h"
-#include "stretchwidget.h"
 
 static const QString geometryOption = "options.ui.chat.wb-size";
 

@@ -2,11 +2,11 @@
  * Copyright (C) 2007  Remko Troncon
  */
 
-#include <QObject>
-#include <QtTest/QtTest>
-
 #include "common.h"
 #include "qttestutil/qttestutil.h"
+
+#include <QObject>
+#include <QtTest/QtTest>
 
 int versionStringToInt(const char* version);
 

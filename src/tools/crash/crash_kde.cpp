@@ -1,6 +1,6 @@
-#include <kcrash.h>
-
 #include "crash.h"
+
+#include <kcrash.h>
 
 namespace Crash {
 void registerSigsegvHandler(QString progname)

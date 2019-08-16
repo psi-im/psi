@@ -24,6 +24,14 @@
 #ifndef WBDLG_H
 #define WBDLG_H
 
+#include "advwidget.h"
+#include "common.h"
+#include "iconlabel.h"
+#include "im.h"
+#include "psiaccount.h"
+#include "psioptions.h"
+#include "wbwidget.h"
+
 #include <QCloseEvent>
 #include <QContextMenuEvent>
 #include <QInputDialog>
@@ -34,14 +42,6 @@
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QToolBar>
-
-#include "advwidget.h"
-#include "common.h"
-#include "iconlabel.h"
-#include "im.h"
-#include "psiaccount.h"
-#include "psioptions.h"
-#include "wbwidget.h"
 
 class AccountLabel;
 

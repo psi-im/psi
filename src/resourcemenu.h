@@ -20,10 +20,10 @@
 #ifndef RESOURCEMENU_H
 #define RESOURCEMENU_H
 
+#include "xmpp_jid.h"
+
 #include <QMenu>
 #include <QPointer>
-
-#include "xmpp_jid.h"
 
 class PsiContact;
 class UserResource;

@@ -20,10 +20,10 @@
 
 #include "wbnewimage.h"
 
+#include "../sxe/sxesession.h"
+
 #include <QFile>
 #include <QGraphicsScene>
-
-#include "../sxe/sxesession.h"
 
 WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename) : WbNewItem(s),
                        graphicsitem_(QPixmap(filename)) {

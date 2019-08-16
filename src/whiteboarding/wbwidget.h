@@ -21,17 +21,17 @@
 #ifndef WBWIDGET_H
 #define WBWIDGET_H
 
+#include "../sxe/sxesession.h"
+#include "wbitem.h"
+#include "wbnewitem.h"
+#include "wbscene.h"
+
 #include <QFileDialog>
 #include <QGraphicsView>
 #include <QSvgRenderer>
 #include <QTime>
 #include <QTimer>
 #include <QWidget>
-
-#include "../sxe/sxesession.h"
-#include "wbitem.h"
-#include "wbnewitem.h"
-#include "wbscene.h"
 
 /*! \brief The whiteboard widget.
  *  Visualizes the whiteboard scene and provides different modes for editing and adding new elements.

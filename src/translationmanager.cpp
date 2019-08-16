@@ -19,14 +19,14 @@
 
 #include "translationmanager.h"
 
+#include "applicationinfo.h"
+#include "varlist.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QLibraryInfo>
 #include <QTranslator>
-
-#include "applicationinfo.h"
-#include "varlist.h"
 
 TranslationManager::TranslationManager()
 {

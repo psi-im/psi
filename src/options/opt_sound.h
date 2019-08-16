@@ -1,9 +1,9 @@
 #ifndef OPT_SOUND_H
 #define OPT_SOUND_H
 
-#include <QMap>
-
 #include "optionstab.h"
+
+#include <QMap>
 
 class QAbstractButton;
 class QButtonGroup;

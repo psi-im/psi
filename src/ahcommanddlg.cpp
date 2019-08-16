@@ -19,18 +19,18 @@
 
 #include "ahcommanddlg.h"
 
-#include <QComboBox>
-#include <QLabel>
-#include <QLayout>
-#include <QMessageBox>
-#include <QPushButton>
-
 #include "ahcexecutetask.h"
 #include "ahcformdlg.h"
 #include "busywidget.h"
 #include "psiaccount.h"
 #include "xmpp_client.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QComboBox>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
 
 #define AHC_NS "http://jabber.org/protocol/commands"
 

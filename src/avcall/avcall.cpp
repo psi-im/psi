@@ -18,13 +18,6 @@
 
 #include "avcall.h"
 
-#include <QCoreApplication>
-#include <QDir>
-#include <QLibrary>
-#include <QtCrypto>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "../psimedia/psimedia.h"
 #include "applicationinfo.h"
 #include "jinglertp.h"
@@ -32,6 +25,13 @@
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "xmpp_jid.h"
+
+#include <QCoreApplication>
+#include <QDir>
+#include <QLibrary>
+#include <QtCrypto>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define USE_THREAD
 

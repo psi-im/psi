@@ -20,15 +20,15 @@
 #ifndef EVENTDLG_H
 #define EVENTDLG_H
 
-#include <QLineEdit>
-#include <QListWidget>
-
 #include "advwidget.h"
 #include "psievent.h"
 #include "ui_addurl.h"
 #include "userlist.h"
 #include "xmpp_rosterx.h"
 #include "xmpp_url.h"
+
+#include <QLineEdit>
+#include <QListWidget>
 
 class EventDlg;
 class PsiAccount;

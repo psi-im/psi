@@ -20,9 +20,9 @@
 #ifndef PSITHEMEMANAGER_H
 #define PSITHEMEMANAGER_H
 
-#include <QObject>
-
 #include "psithemeprovider.h"
+
+#include <QObject>
 
 //class ChatViewTheme;
 

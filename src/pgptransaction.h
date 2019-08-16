@@ -25,11 +25,11 @@
 #ifndef PGPTRANSACTION_H
 #define PGPTRANSACTION_H
 
-#include <QDomElement>
-#include <QtCrypto>
-
 #include "xmpp_jid.h"
 #include "xmpp_message.h"
+
+#include <QDomElement>
+#include <QtCrypto>
 
 class PGPTransaction : public QCA::SecureMessage
 {

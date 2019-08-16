@@ -20,9 +20,9 @@
 #ifndef THEME_P_H
 #define THEME_P_H
 
-#include <QSharedData>
-
 #include "theme.h"
+
+#include <QSharedData>
 
 class QWidget;
 

@@ -1,12 +1,12 @@
 #ifndef WEBSERVER_H
 #define WEBSERVER_H
 
-#include <QObject>
-#include <functional>
-
 #include "qhttpserver.hpp"
 #include "qhttpserverrequest.hpp"
 #include "qhttpserverresponse.hpp"
+
+#include <QObject>
+#include <functional>
 
 class WebServer : public qhttp::server::QHttpServer
 {

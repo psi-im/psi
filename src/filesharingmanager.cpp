@@ -19,22 +19,6 @@
 
 #include "filesharingmanager.h"
 
-#include <QBuffer>
-#include <QDir>
-#include <QFileIconProvider>
-#include <QFileInfo>
-#include <QImageReader>
-#include <QMimeData>
-#include <QMimeDatabase>
-#include <QNetworkReply>
-#include <QPainter>
-#include <QPixmap>
-#include <QTemporaryFile>
-#include <QUrl>
-#include <QUrlQuery>
-#include <cmath>
-#include <cstdlib>
-
 #include "applicationinfo.h"
 #include "filecache.h"
 #include "fileutil.h"
@@ -58,6 +42,22 @@
 #    include "qhttpserverconnection.hpp"
 #    include "webserver.h"
 #endif
+
+#include <QBuffer>
+#include <QDir>
+#include <QFileIconProvider>
+#include <QFileInfo>
+#include <QImageReader>
+#include <QMimeData>
+#include <QMimeDatabase>
+#include <QNetworkReply>
+#include <QPainter>
+#include <QPixmap>
+#include <QTemporaryFile>
+#include <QUrl>
+#include <QUrlQuery>
+#include <cmath>
+#include <cstdlib>
 
 #define FILE_TTL (365 * 24 * 3600)
 #define TEMP_TTL (7 * 24 * 3600)

@@ -6,6 +6,9 @@
 
 #include "Certificates/CertificateHelpers.h"
 
+#include "Certificates/CertificateErrorDialog.h"
+#include "xmpp.h"
+
 #include <QDebug>
 #include <QDir>
 #include <QDomDocument>
@@ -14,9 +17,6 @@
 #include <QStringList>
 #include <QtCrypto>
 #include <QtDebug>
-
-#include "Certificates/CertificateErrorDialog.h"
-#include "xmpp.h"
 
 using namespace QCA;
 

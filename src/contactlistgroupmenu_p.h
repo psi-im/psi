@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include <QObject>
-
 #include "contactlistgroupmenu.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
@@ -35,6 +33,8 @@
 #include "shortcutmanager.h"
 #include "statusdlg.h"
 #include "xmpp_tasks.h"
+
+#include <QObject>
 
 class ContactListGroupMenu::Private : public QObject
 {

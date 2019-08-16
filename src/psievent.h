@@ -20,17 +20,17 @@
 #ifndef PSIEVENT_H
 #define PSIEVENT_H
 
+#include "psihttpauthrequest.h"
+#include "xmpp_jid.h"
+#include "xmpp_message.h"
+#include "xmpp_rosterx.h"
+
 #include <QDateTime>
 #include <QDomDocument>
 #include <QDomElement>
 #include <QList>
 #include <QObject>
 #include <QPointer>
-
-#include "psihttpauthrequest.h"
-#include "xmpp_jid.h"
-#include "xmpp_message.h"
-#include "xmpp_rosterx.h"
 
 class AvCall;
 class PsiAccount;

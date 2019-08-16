@@ -19,11 +19,11 @@
 
 #include "messageview.h"
 
-#include <QTextDocument>
-
 #include "common.h"
 #include "psioptions.h"
 #include "textutil.h"
+
+#include <QTextDocument>
 
 static const QString me_cmd = "/me ";
 

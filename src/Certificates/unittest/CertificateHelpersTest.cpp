@@ -5,12 +5,11 @@
  */
 
 #include "Certificates/CertificateHelpers.h"
+#include "QtCrypto"
+#include "qttestutil/qttestutil.h"
 
 #include <QObject>
 #include <QtTest/QtTest>
-
-#include "qttestutil/qttestutil.h"
-#include "QtCrypto"
 
 using namespace QCA;
 

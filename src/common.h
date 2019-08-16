@@ -20,6 +20,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "statuspreset.h"
+#include "xmpp_status.h"
+
 #include <QColor>
 #include <QGridLayout>
 #include <QList>
@@ -27,9 +30,6 @@
 #include <QSize>
 #include <QString>
 #include <QStringList>
-
-#include "statuspreset.h"
-#include "xmpp_status.h"
 
 #if __cplusplus < 201703L
 #    define PSI_FALLSTHROUGH

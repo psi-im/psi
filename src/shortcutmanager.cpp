@@ -1,10 +1,10 @@
 #include "shortcutmanager.h"
 
-#include <QAction>
-#include <QCoreApplication>
-
 #include "globalshortcut/globalshortcutmanager.h"
 #include "psioptions.h"
+
+#include <QAction>
+#include <QCoreApplication>
 
 /**
  * \brief The Construtor of the Shortcutmanager

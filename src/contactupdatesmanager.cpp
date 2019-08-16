@@ -19,13 +19,13 @@
 
 #include "contactupdatesmanager.h"
 
-#include <QTimer>
-
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
 #include "psievent.h"
 #include "userlist.h"
+
+#include <QTimer>
 
 ContactUpdatesManager::ContactUpdatesManager(PsiCon* parent)
     : QObject(parent)

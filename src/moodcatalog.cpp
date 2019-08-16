@@ -19,11 +19,11 @@
 
 #include "moodcatalog.h"
 
+#include "mood.h"
+
 #include <QCoreApplication>
 #include <QObject>
 #include <QString>
-
-#include "mood.h"
 
 MoodCatalog::Entry::Entry()
 {

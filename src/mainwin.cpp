@@ -19,27 +19,6 @@
 
 #include "mainwin.h"
 
-#include <QApplication>
-#include <QCloseEvent>
-#include <QEvent>
-#include <QIcon>
-#include <QKeyEvent>
-#include <QMenu>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QObject>
-#include <QPainter>
-#include <QPixmap>
-#include <QShortcut>
-#include <QSignalMapper>
-#include <QSplitter>
-#include <QTimer>
-#include <QVBoxLayout>
-#include <QtAlgorithms>
-#ifdef Q_OS_WIN
-#    include <windows.h>
-#endif
-
 #include "aboutdlg.h"
 #include "activecontactsmenu.h"
 #include "activitydlg.h"
@@ -70,10 +49,31 @@
 #include "tabdlg.h"
 #include "tabmanager.h"
 #include "textutil.h"
+#include "xmpp_serverinfomanager.h"
+
+#include <QApplication>
+#include <QCloseEvent>
+#include <QEvent>
+#include <QIcon>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QObject>
+#include <QPainter>
+#include <QPixmap>
+#include <QShortcut>
+#include <QSignalMapper>
+#include <QSplitter>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QtAlgorithms>
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#endif
 #ifdef HAVE_X11
 #    include <x11windowsystem.h>
 #endif
-#include "xmpp_serverinfomanager.h"
 
 using namespace XMPP;
 

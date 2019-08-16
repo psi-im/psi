@@ -15,6 +15,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "gameboard.h"
+#include "gamesocket.h"
+
 #include <Q3ButtonGroup>
 #include <Q3GroupBox>
 #include <Q3MainWindow>
@@ -27,9 +30,6 @@
 #include <QResizeEvent>
 #include <QWorkspace>
 #include <stdlib.h>
-
-#include "gameboard.h"
-#include "gamesocket.h"
 
 class MainWindow:public Q3MainWindow
 {

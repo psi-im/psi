@@ -19,14 +19,6 @@
 
 #include "psicontactlistview.h"
 
-#include <QApplication>
-#include <QDesktopWidget>
-#include <QFileInfo>
-#include <QHelpEvent>
-#include <QLayout>
-#include <QMimeData>
-#include <QTimer>
-
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "contactlistproxymodel.h"
@@ -36,6 +28,14 @@
 #include "psicontact.h"
 #include "psioptions.h"
 #include "psitooltip.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QFileInfo>
+#include <QHelpEvent>
+#include <QLayout>
+#include <QMimeData>
+#include <QTimer>
 
 static const int recalculateTimerTimeout = 500;
 static const QLatin1String groupIndentOption("options.ui.contactlist.group-indent");

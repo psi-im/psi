@@ -25,9 +25,9 @@
 #ifndef PGPKEYDLG_H
 #define PGPKEYDLG_H
 
-#include <QtCrypto>
-
 #include "ui_pgpkey.h"
+
+#include <QtCrypto>
 
 class QSortFilterProxyModel;
 class QStandardItemModel;

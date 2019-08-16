@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QDateTime>
-#include <QModelIndex>
-#include <QTimer>
-
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "psicontact.h"
+
+#include <QDateTime>
+#include <QModelIndex>
+#include <QTimer>
 
 class ContactListModel::Private : public QObject
 {

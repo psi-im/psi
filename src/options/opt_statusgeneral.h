@@ -1,12 +1,12 @@
 #ifndef OPT_STATUSGENERAL_H
 #define OPT_STATUSGENERAL_H
 
+#include "optionstab.h"
+#include "statuspreset.h"
+
 #include <QListWidgetItem>
 #include <QMap>
 #include <QMenu>
-
-#include "optionstab.h"
-#include "statuspreset.h"
 
 class QWidget;
 

@@ -17,10 +17,10 @@
  *
  */
 
+#include "optionstree.h"
+
 #include <QKeySequence>
 #include <QtCore>
-
-#include "optionstree.h"
 
 int main (int argc, char const* argv[])
 {

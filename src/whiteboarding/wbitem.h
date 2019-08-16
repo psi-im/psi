@@ -20,13 +20,13 @@
 #ifndef WBITEM_H
 #define WBITEM_H
 
+#include "../sxe/sxesession.h"
+#include "iconaction.h"
+
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsSvgItem>
 #include <QMenu>
-
-#include "../sxe/sxesession.h"
-#include "iconaction.h"
 
 class WbScene;
 class WbWidget;

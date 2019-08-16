@@ -5,12 +5,6 @@
 
 #include "pluginmanager.h"
 
-#include <QLabel>
-#include <QMetaObject>
-#include <QPluginLoader>
-#include <QtCore>
-#include <QtCrypto>
-
 #include "applicationinfo.h"
 #include "avatars.h"
 #include "chatdlg.h"
@@ -33,6 +27,12 @@
 #include "xmpp_client.h"
 #include "xmpp_message.h"
 #include "xmpp_task.h"
+
+#include <QLabel>
+#include <QMetaObject>
+#include <QPluginLoader>
+#include <QtCore>
+#include <QtCrypto>
 
 //TODO(mck)
 // - use native separators when displaying file path

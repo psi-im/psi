@@ -19,15 +19,15 @@
 
 #include "psiactionlist.h"
 
-#include <QObject>
-#include <QPointer>
-
 #include "iconset.h"
 #include "mainwin_p.h"
 #ifdef PSI_PLUGINS
 #    include "pluginmanager.h"
 #endif
 #include "psioptions.h"
+
+#include <QObject>
+#include <QPointer>
 
 //----------------------------------------------------------------------------
 // PsiActionList::Private

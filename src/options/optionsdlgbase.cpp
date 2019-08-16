@@ -19,6 +19,14 @@
 
 #include "optionsdlgbase.h"
 
+#include "common.h"
+#include "fancylabel.h"
+#include "iconset.h"
+#include "iconwidget.h"
+#include "optionstab.h"
+#include "psicon.h"
+#include "psiiconset.h"
+
 #include <QItemDelegate>
 #include <QLabel>
 #include <QLayout>
@@ -28,14 +36,6 @@
 #include <QScrollBar>
 #include <QStackedWidget>
 #include <QVBoxLayout>
-
-#include "common.h"
-#include "fancylabel.h"
-#include "iconset.h"
-#include "iconwidget.h"
-#include "optionstab.h"
-#include "psicon.h"
-#include "psiiconset.h"
 
 //----------------------------------------------------------------------------
 // OptionsTabsDelegate

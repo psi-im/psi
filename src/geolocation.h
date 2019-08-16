@@ -20,9 +20,9 @@
 #ifndef GEOLOCATION_H
 #define GEOLOCATION_H
 
-#include <QString>
-
 #include "maybe.h"
+
+#include <QString>
 
 #define PEP_GEOLOC_TN "geoloc"
 #define PEP_GEOLOC_NS "http://jabber.org/protocol/geoloc"

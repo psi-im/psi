@@ -17,9 +17,9 @@
  *
  */
 
-#include <QMessageBox>
-
 #include "contactlistgroupmenu_p.h"
+
+#include <QMessageBox>
 
 /*********************************/
 /* ContactListGroupMenu::Private */

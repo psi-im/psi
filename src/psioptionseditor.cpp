@@ -1,5 +1,11 @@
 #include "psioptionseditor.h"
 
+#include "common.h"
+#include "iconset.h"
+#include "psioptions.h"
+#include "textutil.h"
+#include "ui_optioneditor.h"
+
 #include <QColorDialog>
 #include <QDialog>
 #include <QHBoxLayout>
@@ -7,12 +13,6 @@
 #include <QTextDocument>
 #include <QVBoxLayout>
 #include <QVariant>
-
-#include "common.h"
-#include "iconset.h"
-#include "psioptions.h"
-#include "textutil.h"
-#include "ui_optioneditor.h"
 
 class OptionEditor : public QDialog, protected Ui_OptionEditor {
     Q_OBJECT

@@ -15,6 +15,20 @@
 
 #include "gameboard.h"
 
+#include "gamesocket.h"
+#include "xpm/black_bishop.xpm"
+#include "xpm/black_castle.xpm"
+#include "xpm/black_king.xpm"
+#include "xpm/black_knight.xpm"
+#include "xpm/black_pawn.xpm"
+#include "xpm/black_queen.xpm"
+#include "xpm/white_bishop.xpm"
+#include "xpm/white_castle.xpm"
+#include "xpm/white_king.xpm"
+#include "xpm/white_knight.xpm"
+#include "xpm/white_pawn.xpm"
+#include "xpm/white_queen.xpm"
+
 #include <Q3FileDialog>
 #include <Q3PointArray>
 #include <QCloseEvent>
@@ -29,20 +43,6 @@
 #include <QPixmap>
 #include <QResizeEvent>
 #include <stdlib.h>
-
-#include "gamesocket.h"
-#include "xpm/black_bishop.xpm"
-#include "xpm/black_castle.xpm"
-#include "xpm/black_king.xpm"
-#include "xpm/black_knight.xpm"
-#include "xpm/black_pawn.xpm"
-#include "xpm/black_queen.xpm"
-#include "xpm/white_bishop.xpm"
-#include "xpm/white_castle.xpm"
-#include "xpm/white_king.xpm"
-#include "xpm/white_knight.xpm"
-#include "xpm/white_pawn.xpm"
-#include "xpm/white_queen.xpm"
 
 const int     cell_size = 40,
             XSize = 640,

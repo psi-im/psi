@@ -20,11 +20,11 @@
 #ifndef PSITABWIDGET_H
 #define PSITABWIDGET_H
 
+#include "psitabbar.h"
+
 #include <QDragEnterEvent>
 #include <QTabBar>
 #include <QTabWidget>
-
-#include "psitabbar.h"
 
 #define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
 

@@ -20,10 +20,10 @@
 #ifndef COMBINEDTUNECONTROLLER_H
 #define COMBINEDTUNECONTROLLER_H
 
-#include <QList>
-
 #include "tune.h"
 #include "tunecontroller.h"
+
+#include <QList>
 
 class CombinedTuneController : public TuneController
 {

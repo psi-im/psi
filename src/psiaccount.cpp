@@ -24,30 +24,6 @@
 
 #include "psiaccount.h"
 
-#include <QApplication>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QFrame>
-#include <QHostInfo>
-#include <QIcon>
-#include <QInputDialog>
-#include <QLayout>
-#include <QList>
-#include <QMap>
-#include <QMessageBox>
-#include <QObject>
-#include <QPixmap>
-#include <QPointer>
-#include <QPushButton>
-#include <QQueue>
-#include <QTimer>
-#include <QUrl>
-#include <QtCrypto>
-#include <qca.h>
-#ifdef HAVE_KEYCHAIN
-#    include <qt5keychain/keychain.h>
-#endif
-
 #include "../iris/src/xmpp/xmpp-core/protocol.h"
 #include "Certificates/CertificateDisplayDialog.h"
 #include "Certificates/CertificateErrorDialog.h"
@@ -158,6 +134,30 @@
 #ifdef WHITEBOARDING
 #    include "sxe/sxemanager.h"
 #    include "whiteboarding/wbmanager.h"
+#endif
+
+#include <QApplication>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFrame>
+#include <QHostInfo>
+#include <QIcon>
+#include <QInputDialog>
+#include <QLayout>
+#include <QList>
+#include <QMap>
+#include <QMessageBox>
+#include <QObject>
+#include <QPixmap>
+#include <QPointer>
+#include <QPushButton>
+#include <QQueue>
+#include <QTimer>
+#include <QUrl>
+#include <QtCrypto>
+#include <qca.h>
+#ifdef HAVE_KEYCHAIN
+#    include <qt5keychain/keychain.h>
 #endif
 
 /*#ifdef Q_OS_WIN

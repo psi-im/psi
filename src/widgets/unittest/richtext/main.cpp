@@ -1,8 +1,8 @@
+#include "../../psirichtext.cpp"
+
 #include <QTextCursor>
 #include <QTextDocument>
 #include <QtTest/QtTest>
-
-#include "../../psirichtext.cpp"
 
 class TestRichText : public QObject
 {

@@ -19,23 +19,6 @@
 
 #include "psicon.h"
 
-#include <QApplication>
-#include <QColor>
-#include <QDesktopWidget>
-#include <QDir>
-#include <QFile>
-#include <QIcon>
-#include <QImage>
-#include <QImageReader>
-#include <QList>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QNetworkConfigurationManager>
-#include <QPixmap>
-#include <QPixmapCache>
-#include <QPointer>
-#include <QSessionManager>
-
 #include "AutoUpdater/AutoUpdater.h"
 #include "accountadddlg.h"
 #include "accountmanagedlg.h"
@@ -131,6 +114,23 @@
 #ifdef Q_OS_MAC
 #    include "mac_dock/mac_dock.h"
 #endif
+
+#include <QApplication>
+#include <QColor>
+#include <QDesktopWidget>
+#include <QDir>
+#include <QFile>
+#include <QIcon>
+#include <QImage>
+#include <QImageReader>
+#include <QList>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QNetworkConfigurationManager>
+#include <QPixmap>
+#include <QPixmapCache>
+#include <QPointer>
+#include <QSessionManager>
 
 static const char *tunePublishOptionPath = "options.extended-presence.tune.publish";
 static const char *tuneUrlFilterOptionPath = "options.extended-presence.tune.url-filter";

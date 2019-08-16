@@ -1,10 +1,10 @@
+#include "iconaction.h"
+#include "icontoolbutton.h"
+
 #include <QSignalSpy>
 #include <QToolBar>
 #include <QToolButton>
 #include <QtTest/QtTest>
-
-#include "iconaction.h"
-#include "icontoolbutton.h"
 
 class TestIconAction : public QObject
 {

@@ -17,15 +17,6 @@
  *
  */
 
-#include <QApplication>
-#include <QDesktopWidget>
-#include <QKeyEvent>
-#include <QLineEdit>
-#include <QMutableSetIterator>
-#include <QPainter>
-#include <QSetIterator>
-#include <QSortFilterProxyModel>
-
 #include "activity.h"
 #include "avatars.h"
 #include "coloropt.h"
@@ -38,6 +29,15 @@
 #include "mood.h"
 #include "psiiconset.h"
 #include "psioptions.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QMutableSetIterator>
+#include <QPainter>
+#include <QSetIterator>
+#include <QSortFilterProxyModel>
 
 #define ALERT_INTERVAL 100 /* msecs */
 #define ANIM_INTERVAL 300 /* msecs */

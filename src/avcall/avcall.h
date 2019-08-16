@@ -19,9 +19,9 @@
 #ifndef AVCALL_H
 #define AVCALL_H
 
-#include <QObject>
-
 #include "xmpp.h"
+
+#include <QObject>
 
 class AvCallManagerPrivate;
 class AvCallPrivate;

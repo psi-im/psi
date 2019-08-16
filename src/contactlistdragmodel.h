@@ -20,10 +20,10 @@
 #ifndef CONTACTLISTDRAGMODEL_H
 #define CONTACTLISTDRAGMODEL_H
 
-#include <QHash>
-
 #include "contactlistmodel.h"
 #include "xmpp_jid.h"
+
+#include <QHash>
 
 class ContactListGroupItem;
 class ContactListItem;

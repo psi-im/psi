@@ -20,14 +20,14 @@
 #ifndef PSICON_H
 #define PSICON_H
 
-#include <QList>
-#include <functional>
-
 #include "profiles.h"
 #include "psiactions.h"
 #include "psievent.h"
 #include "tabbablewidget.h"
 #include "tunecontrollermanager.h"
+
+#include <QList>
+#include <functional>
 
 class AccountsComboBox;
 class AlertManager;

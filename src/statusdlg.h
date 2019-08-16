@@ -20,10 +20,10 @@
 #ifndef STATUSDLG_H
 #define STATUSDLG_H
 
+#include "xmpp_jid.h"
+
 #include <QDialog>
 #include <QList>
-
-#include "xmpp_jid.h"
 
 class PsiAccount;
 class PsiCon;

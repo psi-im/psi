@@ -19,6 +19,19 @@
 
 #include "discodlg.h"
 
+#include "accountlabel.h"
+#include "bookmarkmanager.h"
+#include "busywidget.h"
+#include "iconaction.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+#include "stretchwidget.h"
+#include "tasklist.h"
+#include "xmpp_tasks.h"
+
 #include <QAction>
 #include <QActionGroup>
 #include <QCheckBox>
@@ -36,19 +49,6 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QTreeWidget>
-
-#include "accountlabel.h"
-#include "bookmarkmanager.h"
-#include "busywidget.h"
-#include "iconaction.h"
-#include "psiaccount.h"
-#include "psicon.h"
-#include "psiiconset.h"
-#include "psioptions.h"
-#include "psitooltip.h"
-#include "stretchwidget.h"
-#include "tasklist.h"
-#include "xmpp_tasks.h"
 
 //----------------------------------------------------------------------------
 

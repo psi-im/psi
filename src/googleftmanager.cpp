@@ -19,10 +19,6 @@
 
 #include "googleftmanager.h"
 
-#include <QDir>
-#include <QDomElement>
-#include <QString>
-
 #include "talk/base/helpers.h"
 #include "talk/base/network.h"
 #include "talk/base/physicalsocketserver.h"
@@ -41,6 +37,10 @@
 #include "talk/xmpp/constants.h"
 #include "talk/xmpp/jid.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QDir>
+#include <QDomElement>
+#include <QString>
 
 #define POSIX
 

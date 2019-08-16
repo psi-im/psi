@@ -19,10 +19,6 @@
 
 #include "mucjoindlg.h"
 
-#include <QMessageBox>
-#include <QString>
-#include <QStringList>
-
 #include "accountscombobox.h"
 #include "bookmarkmanager.h"
 #include "groupchatdlg.h"
@@ -32,6 +28,10 @@
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "psiiconset.h"
+
+#include <QMessageBox>
+#include <QString>
+#include <QStringList>
 
 static const int nickConflictCode = 409;
 static const QString additionalSymbol = "_";

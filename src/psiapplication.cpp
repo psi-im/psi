@@ -20,17 +20,17 @@
 #include "psiapplication.h"
 
 #ifdef Q_OS_MAC
-#    include <Carbon/Carbon.h>
-#endif
-#include <QSessionManager>
-
-#ifdef Q_OS_MAC
 #    include "CocoaUtilities/CocoaTrayClick.h"
 #endif
 #include "resourcemenu.h"
 #ifdef Q_OS_WIN
 #    include "systemwatch/systemwatch_win.h"
 #endif
+
+#ifdef Q_OS_MAC
+#    include <Carbon/Carbon.h>
+#endif
+#include <QSessionManager>
 
 //----------------------------------------------------------------------------
 // PsiApplication

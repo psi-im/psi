@@ -19,9 +19,9 @@
 
 #include "coloropt.h"
 
-#include <QApplication>
-
 #include "psioptions.h"
+
+#include <QApplication>
 
 ColorOpt::ColorOpt()
     : QObject(nullptr)

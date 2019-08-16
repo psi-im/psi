@@ -19,15 +19,15 @@
 
 #include "eventdb.h"
 
+#include "jidutil.h"
+#include "psievent.h"
+
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
 #include <QTextStream>
 #include <QTimer>
 #include <QVector>
-
-#include "jidutil.h"
-#include "psievent.h"
 
 using namespace XMPP;
 

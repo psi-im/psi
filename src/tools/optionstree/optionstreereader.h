@@ -1,9 +1,9 @@
 #ifndef OPTIONSTREEREADER_H
 #define OPTIONSTREEREADER_H
 
-#include <QVariant>
-
 #include "atomicxmlfile/atomicxmlfile.h"
+
+#include <QVariant>
 
 class OptionsTree;
 class QRect;

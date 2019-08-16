@@ -19,6 +19,10 @@
 
 #include "psitabwidget.h"
 
+#include "common.h"
+#include "psioptions.h"
+#include "psitabbar.h"
+
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QMenu>
@@ -27,10 +31,6 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidget>
-
-#include "common.h"
-#include "psioptions.h"
-#include "psitabbar.h"
 
 /**
  * Constructor

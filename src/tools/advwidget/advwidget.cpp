@@ -19,6 +19,8 @@
 
 #include "advwidget.h"
 
+#include "psioptions.h"
+
 #include <QApplication>
 #include <QDebug>
 #include <QDesktopWidget>
@@ -35,8 +37,6 @@
 #    include <windows.h>
 #    include <winuser.h>
 #endif
-
-#include "psioptions.h"
 
 // TODO: Make use of KDE taskbar flashing support
 

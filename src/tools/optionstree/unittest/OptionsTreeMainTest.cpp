@@ -1,12 +1,12 @@
+#include "optionstree.h"
+#include "qttestutil/qttestutil.h"
+
 #include <QDebug>
 #include <QMap>
 #include <QMapIterator>
 #include <QObject>
 #include <QTime>
 #include <QtTest/QtTest>
-
-#include "optionstree.h"
-#include "qttestutil/qttestutil.h"
 
 class Benchmark
 {

@@ -1,13 +1,13 @@
 #include "groupchattopicdlg.h"
 
-#include <QPlainTextEdit>
-
 #include "groupchatdlg.h"
 #include "iconset.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "ui_groupchattopicaddlang.h"
 #include "ui_groupchattopicdlg.h"
+
+#include <QPlainTextEdit>
 
 GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
     QDialog(parent),

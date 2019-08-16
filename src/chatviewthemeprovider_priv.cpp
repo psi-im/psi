@@ -19,15 +19,6 @@
 
 #include "chatviewthemeprovider_priv.h"
 
-#include <QBuffer>
-#include <QPointer>
-#include <QUrlQuery>
-#ifdef WEBENGINE
-#    include <QWebEngineProfile>
-#else
-#    include <QNetworkRequest>
-#endif
-
 #include "avatars.h"
 #include "psicon.h"
 #include "psiiconset.h"
@@ -37,6 +28,15 @@
 #    include "webserver.h"
 #else
 #    include "networkaccessmanager.h"
+#endif
+
+#include <QBuffer>
+#include <QPointer>
+#include <QUrlQuery>
+#ifdef WEBENGINE
+#    include <QWebEngineProfile>
+#else
+#    include <QNetworkRequest>
 #endif
 
 static QPointer<ChatViewCon> cvCon;

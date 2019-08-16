@@ -19,13 +19,6 @@
 
 #include "edbflatfile.h"
 
-#include <QDateTime>
-#include <QDir>
-#include <QFileInfo>
-#include <QTextStream>
-#include <QTimer>
-#include <QVector>
-
 #include "applicationinfo.h"
 #include "common.h"
 #include "jidutil.h"
@@ -33,6 +26,13 @@
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "xmpp_jid.h"
+
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QTimer>
+#include <QVector>
 
 #define FAKEDELAY 0
 

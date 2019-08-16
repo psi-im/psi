@@ -20,9 +20,9 @@
 #ifndef ACCOUNTMANAGEDLG_H
 #define ACCOUNTMANAGEDLG_H
 
-#include <QTreeWidget>
-
 #include "ui_accountmanage.h"
+
+#include <QTreeWidget>
 
 class PsiAccount;
 class PsiCon;

@@ -24,11 +24,6 @@
 
 #include "psigrowlnotifier.h"
 
-#include <QCoreApplication>
-#include <QPixmap>
-#include <QStringList>
-#include <QtPlugin>
-
 #include "avatars.h"
 #include "common.h"
 #include "growlnotifier/growlnotifier.h"
@@ -38,6 +33,11 @@
 #include "psioptions.h"
 #include "textutil.h"
 #include "userlist.h"
+
+#include <QCoreApplication>
+#include <QPixmap>
+#include <QStringList>
+#include <QtPlugin>
 
 /**
  * A class representing the notification context, which will be passed to

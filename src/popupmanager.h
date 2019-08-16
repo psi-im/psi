@@ -20,9 +20,9 @@
 #ifndef POPUPMANAGER_H
 #define POPUPMANAGER_H
 
-#include <QStringList>
-
 #include "psievent.h"
+
+#include <QStringList>
 
 class PsiAccount;
 class PsiCon;

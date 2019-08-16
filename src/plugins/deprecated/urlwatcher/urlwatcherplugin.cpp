@@ -22,13 +22,13 @@
  *
  */
 
-#include <QString>
-#include <QtCore>
-#include <QtGui>
-
 #include "eventfilter.h"
 #include "psiplugin.h"
 #include "urlevent.h"
+
+#include <QString>
+#include <QtCore>
+#include <QtGui>
 
 class URLWatcherPlugin : public QObject, public PsiPlugin, public EventFilter
 {

@@ -20,9 +20,9 @@
 #ifndef PRIVACYRULEDLG_H
 #define PRIVACYRULEDLG_H
 
-#include <QDialog>
-
 #include "ui_privacyrule.h"
+
+#include <QDialog>
 
 class PrivacyListItem;
 

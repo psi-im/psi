@@ -1,5 +1,8 @@
 #pragma once
 
+#include "contactlistview.h"
+#include "contactlistviewdelegate.h"
+
 #include <QColor>
 #include <QFont>
 #include <QFontMetrics>
@@ -10,9 +13,6 @@
 #include <QPixmap>
 #include <QSet>
 #include <QTimer>
-
-#include "contactlistview.h"
-#include "contactlistviewdelegate.h"
 
 class ContactListViewDelegate::Private : public QObject
 {

@@ -19,6 +19,13 @@
 
 #include "xdata_widget.h"
 
+#include "desktoputil.h"
+#include "networkaccessmanager.h"
+#include "psicon.h"
+#include "xmpp_client.h"
+#include "xmpp_tasks.h"
+#include "xmpp_xdata.h"
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGridLayout>
@@ -32,13 +39,6 @@
 #include <QSpacerItem>
 #include <QTextEdit>
 #include <QUrl>
-
-#include "desktoputil.h"
-#include "networkaccessmanager.h"
-#include "psicon.h"
-#include "xmpp_client.h"
-#include "xmpp_tasks.h"
-#include "xmpp_xdata.h"
 
 using namespace XMPP;
 

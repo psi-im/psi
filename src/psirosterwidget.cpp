@@ -19,14 +19,6 @@
 
 #include "psirosterwidget.h"
 
-#include <QKeyEvent>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QMimeData>
-#include <QSortFilterProxyModel>
-#include <QStackedWidget>
-#include <QVBoxLayout>
-
 #include "contactlistdragmodel.h"
 #include "contactlistitem.h"
 #include "contactlistproxymodel.h"
@@ -41,6 +33,14 @@
 #include "psioptions.h"
 #include "widgets/actionlineedit.h"
 #include "widgets/iconaction.h"
+
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QSortFilterProxyModel>
+#include <QStackedWidget>
+#include <QVBoxLayout>
 
 static const QString contactSortStyleOptionPath = "options.ui.contactlist.contact-sort-style";
 static const QString showOfflineOptionPath = "options.ui.contactlist.show.offline-contacts";

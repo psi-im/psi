@@ -18,10 +18,10 @@
  *
  */
 
+#include "activeprofiles.h"
+
 #include <QCoreApplication>
 #include <QString>
-
-#include "activeprofiles.h"
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {

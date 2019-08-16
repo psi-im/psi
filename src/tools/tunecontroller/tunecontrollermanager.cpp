@@ -23,11 +23,11 @@
 
 #include "tunecontrollermanager.h"
 
-#include <QPluginLoader>
-#include <QtCore>
-
 #include "tunecontroller.h"
 #include "tunecontrollerplugin.h"
+
+#include <QPluginLoader>
+#include <QtCore>
 
 /**
  * \class TuneControllerManager

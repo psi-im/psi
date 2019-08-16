@@ -21,10 +21,10 @@
 #ifndef GCUSERVIEW_H
 #define GCUSERVIEW_H
 
+#include "xmpp_status.h"
+
 #include <QAbstractItemModel>
 #include <QTreeView>
-
-#include "xmpp_status.h"
 
 class GCUserView;
 class PsiAccount;

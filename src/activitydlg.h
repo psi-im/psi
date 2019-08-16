@@ -20,9 +20,9 @@
 #ifndef ACTIVITYDLG_H
 #define ACTIVITYDLG_H
 
-#include <QDialog>
-
 #include "ui_activity.h"
+
+#include <QDialog>
 
 class PsiAccount;
 

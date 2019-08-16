@@ -20,17 +20,17 @@
 #ifndef USERLIST_H
 #define USERLIST_H
 
-#include <QDateTime>
-#include <QList>
-#include <QPixmap>
-#include <QString>
-
 #include "activity.h"
 #include "geolocation.h"
 #include "maybe.h"
 #include "mood.h"
 #include "xmpp_liverosteritem.h"
 #include "xmpp_resource.h"
+
+#include <QDateTime>
+#include <QList>
+#include <QPixmap>
+#include <QString>
 
 class AvatarFactory;
 

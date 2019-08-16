@@ -19,10 +19,10 @@
 
 #include "activity.h"
 
+#include "activitycatalog.h"
+
 #include <QDomDocument>
 #include <QDomElement>
-
-#include "activitycatalog.h"
 
 Activity::Activity()
 {

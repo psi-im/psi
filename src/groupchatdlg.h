@@ -20,15 +20,15 @@
 #ifndef GROUPCHATDLG_H
 #define GROUPCHATDLG_H
 
-#include <QDialog>
-#include <QWidget>
-
 #include "advwidget.h"
 #include "languagemanager.h"
 #include "mucmanager.h"
 #include "psievent.h"
 #include "tabbablewidget.h"
 #include "ui_groupchatdlg.h"
+
+#include <QDialog>
+#include <QWidget>
 
 class GCMainDlg;
 class MessageView;

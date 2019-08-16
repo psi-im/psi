@@ -20,13 +20,13 @@
 #ifndef TABDLG_H
 #define TABDLG_H
 
+#include "advwidget.h"
+#include "tabbablewidget.h"
+
 #include <QMap>
 #include <QPointer>
 #include <QSize>
 #include <QWidget>
-
-#include "advwidget.h"
-#include "tabbablewidget.h"
 
 class ChatDlg;
 class ChatTabs;

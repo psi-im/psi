@@ -20,10 +20,10 @@
 #ifndef TUNECONTROLLER_H
 #define TUNECONTROLLER_H
 
+#include "tune.h"
+
 #include <QObject>
 #include <QString>
-
-#include "tune.h"
 
 /**
  * \brief Base class for representing a media player.

@@ -1,11 +1,11 @@
 #ifndef FILETRANSDLG_H
 #define FILETRANSDLG_H
 
-#include <QItemDelegate>
-
 #include "advwidget.h"
 #include "ui_filetrans.h"
 #include "s5b.h"
+
+#include <QItemDelegate>
 
 class FileTransView;
 class PsiAccount;

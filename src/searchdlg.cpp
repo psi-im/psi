@@ -19,11 +19,6 @@
 
 #include "searchdlg.h"
 
-#include <QDomElement>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPointer>
-
 #include "common.h"
 #include "jidutil.h"
 #include "psiaccount.h"
@@ -32,6 +27,11 @@
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QDomElement>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
 
 using namespace XMPP;
 

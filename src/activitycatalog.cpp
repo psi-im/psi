@@ -19,11 +19,11 @@
 
 #include "activitycatalog.h"
 
+#include "activity.h"
+
 #include <QCoreApplication>
 #include <QObject>
 #include <QString>
-
-#include "activity.h"
 
 ActivityCatalog::Entry::Entry()
 {

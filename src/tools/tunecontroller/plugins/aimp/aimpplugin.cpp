@@ -21,12 +21,12 @@
 #define QT_STATICPLUGIN
 #endif
 
+#include "aimptunecontroller.h"
+#include "tunecontrollerplugin.h"
+
 #include <QObject>
 #include <QString>
 #include <QtCore>
-
-#include "aimptunecontroller.h"
-#include "tunecontrollerplugin.h"
 
 class AIMPPlugin : public QObject, public TuneControllerPlugin
 {

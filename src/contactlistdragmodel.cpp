@@ -19,9 +19,6 @@
 
 #include "contactlistdragmodel.h"
 
-#include <QTimer>
-#include <QtAlgorithms>
-
 #include "common.h"
 #include "contactlistitem.h"
 #include "contactlistmodelselection.h"
@@ -30,6 +27,9 @@
 #include "psicontact.h"
 #include "psicontactlist.h"
 #include "psioptions.h"
+
+#include <QTimer>
+#include <QtAlgorithms>
 
 //----------------------------------------------------------------------------
 // ContactListModelOperationList

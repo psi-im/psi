@@ -19,13 +19,13 @@
 
 #include "statusmenu.h"
 
-#include <cassert>
-
 #include "common.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "xmpp_status.h"
+
+#include <cassert>
 
 /**
  * \class StatusMenu

@@ -20,11 +20,11 @@
 #ifndef GOOGLEFTMANAGER_H
 #define GOOGLEFTMANAGER_H
 
-#include <QMap>
-#include <QObject>
-
 #include "filetransfer.h"
 #include "talk/base/scoped_ptr.h"
+
+#include <QMap>
+#include <QObject>
 
 class GoogleFTManager;
 class GoogleFileTransferListener;

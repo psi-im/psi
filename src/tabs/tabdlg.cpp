@@ -19,6 +19,15 @@
 
 #include "tabdlg.h"
 
+#include "chatdlg.h"
+#include "iconset.h"
+#include "iconwidget.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psitabwidget.h"
+#include "shortcutmanager.h"
+#include "tabmanager.h"
+
 #include <QCloseEvent>
 #include <QCursor>
 #include <QDragMoveEvent>
@@ -33,15 +42,6 @@
 #ifdef Q_OS_WIN
 #    include <windows.h>
 #endif
-
-#include "chatdlg.h"
-#include "iconset.h"
-#include "iconwidget.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "psitabwidget.h"
-#include "shortcutmanager.h"
-#include "tabmanager.h"
 
 //----------------------------------------------------------------------------
 // TabDlgDelegate

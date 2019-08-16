@@ -1,11 +1,11 @@
 #include "optionstreereader.h"
 
+#include "optionstree.h"
+#include "varianttree.h"
+
 #include <QBuffer>
 #include <QRect>
 #include <QSize>
-
-#include "optionstree.h"
-#include "varianttree.h"
 
 OptionsTreeReader::OptionsTreeReader(OptionsTree* options)
     : options_(options)

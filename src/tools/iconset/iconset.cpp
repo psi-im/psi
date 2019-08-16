@@ -28,6 +28,11 @@
 
 #include "iconset.h"
 
+#include "anim.h"
+#ifdef ICONSET_ZIP
+#    include "zip/zip.h"
+#endif
+
 #include <QBuffer>
 #include <QCoreApplication>
 #include <QDomDocument>
@@ -46,11 +51,6 @@
 #ifdef ICONSET_SOUND
 #    include <QDataStream>
 #    include <qca_basic.h>
-#endif
-
-#include "anim.h"
-#ifdef ICONSET_ZIP
-#    include "zip/zip.h"
 #endif
 
 static void moveToMainThread(QObject *obj)

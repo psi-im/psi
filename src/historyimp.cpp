@@ -19,17 +19,17 @@
 
 #include "historyimp.h"
 
-#include <QDir>
-#include <QLayout>
-#include <QMessageBox>
-#include <QTimer>
-
 #include "applicationinfo.h"
 #include "edbflatfile.h"
 #include "edbsqlite.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "psicontactlist.h"
+
+#include <QDir>
+#include <QLayout>
+#include <QMessageBox>
+#include <QTimer>
 
 HistoryImport::HistoryImport(PsiCon *psi) : QObject(),
     psi_(psi),

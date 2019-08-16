@@ -22,11 +22,11 @@
  *
  */
 
-#include <QDebug>
-#include <QtCore>
-
 #include "gameboard.h"
 #include "psiplugin.h"
+
+#include <QDebug>
+#include <QtCore>
 
 extern QColor    cw, cb;
 

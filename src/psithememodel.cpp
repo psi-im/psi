@@ -19,12 +19,12 @@
 
 #include "psithememodel.h"
 
-#include <QPixmap>
-#include <QtConcurrentMap>
-
 #include "psithememanager.h"
 #include "psiiconset.h"
 #include "textutil.h"
+
+#include <QPixmap>
+#include <QtConcurrentMap>
 
 class PsiThemeModel;
 

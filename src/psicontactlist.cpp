@@ -19,14 +19,14 @@
 
 #include "psicontactlist.h"
 
-#include <QTimer>
-
 #include "accountadddlg.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psievent.h"
 #include "psioptions.h"
 #include "xmpp_serverinfomanager.h"
+
+#include <QTimer>
 
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.

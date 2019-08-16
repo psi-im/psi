@@ -12,11 +12,11 @@
  * Hacked by:
  */
 
+#include "mainwindow.h"
+
 #include <QApplication>
 #include <QMessageBox>
 #include <QTextCodec>
-
-#include "mainwindow.h"
 
 const int
     XSize = 800,

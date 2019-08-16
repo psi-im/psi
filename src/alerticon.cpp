@@ -19,11 +19,11 @@
 
 #include "alerticon.h"
 
+#include "psioptions.h"
+
 #include <QApplication>
 #include <QPixmap>
 #include <QTimer>
-
-#include "psioptions.h"
 
 //----------------------------------------------------------------------------
 // MetaAlertIcon

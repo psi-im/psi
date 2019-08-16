@@ -26,17 +26,6 @@
 
 #include "avatars.h"
 
-#include <QBuffer>
-#include <QDateTime>
-#include <QDir>
-#include <QDomElement>
-#include <QFile>
-#include <QFileInfo>
-#include <QImageReader>
-#include <QPainter>
-#include <QPixmap>
-#include <QtCrypto>
-
 #include "applicationinfo.h"
 #include "filecache.h"
 #include "iconset.h"
@@ -51,6 +40,17 @@
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QBuffer>
+#include <QDateTime>
+#include <QDir>
+#include <QDomElement>
+#include <QFile>
+#include <QFileInfo>
+#include <QImageReader>
+#include <QPainter>
+#include <QPixmap>
+#include <QtCrypto>
 
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
 // it would be better to scale images according to monitor properties

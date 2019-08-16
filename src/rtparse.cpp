@@ -19,9 +19,9 @@
 
 #include "rtparse.h"
 
-#include <QTextDocument> // for Qt::escape()
-
 #include "textutil.h"
+
+#include <QTextDocument> // for Qt::escape()
 
 RTParse::RTParse(const QString &_in)
 {

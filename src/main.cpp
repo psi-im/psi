@@ -19,6 +19,24 @@
 
 #include "main.h"
 
+#ifdef Q_OS_MAC
+#    include "CocoaUtilities/CocoaInitializer.h"
+#endif
+#include "activeprofiles.h"
+#include "applicationinfo.h"
+#include "chatdlg.h"
+#ifdef USE_CRASH
+#    include"crash.h"
+#endif
+#include "eventdlg.h"
+#include "profiledlg.h"
+#include "psiapplication.h"
+#include "psicli.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "translationmanager.h"
+
 #include <QBitmap>
 #include <QCheckBox>
 #include <QComboBox>
@@ -40,24 +58,6 @@
 #    include <qt_windows.h> // for RegDeleteKey
 #endif
 #include <time.h>
-
-#ifdef Q_OS_MAC
-#    include "CocoaUtilities/CocoaInitializer.h"
-#endif
-#include "activeprofiles.h"
-#include "applicationinfo.h"
-#include "chatdlg.h"
-#ifdef USE_CRASH
-#    include"crash.h"
-#endif
-#include "eventdlg.h"
-#include "profiledlg.h"
-#include "psiapplication.h"
-#include "psicli.h"
-#include "psicon.h"
-#include "psiiconset.h"
-#include "psioptions.h"
-#include "translationmanager.h"
 
 #ifdef Q_OS_WIN
 #    define URI_RESTART

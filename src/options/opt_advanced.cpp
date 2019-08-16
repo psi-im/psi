@@ -1,15 +1,15 @@
 #include "opt_advanced.h"
 
+#include "common.h"
+#include "iconwidget.h"
+#include "psioptions.h"
+#include "ui_opt_advanced.h"
+
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QRadioButton>
 #include <QWhatsThis>
-
-#include "common.h"
-#include "iconwidget.h"
-#include "psioptions.h"
-#include "ui_opt_advanced.h"
 
 class OptAdvancedUI : public QWidget, public Ui::OptAdvanced
 {

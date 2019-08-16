@@ -1,5 +1,14 @@
 #include "opt_toolbars.h"
 
+#include "common.h"
+#include "iconaction.h"
+#include "iconwidget.h"
+#include "psiactionlist.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psitoolbar.h"
+#include "ui_opt_lookfeel_toolbars.h"
+
 #include <QAction>
 #include <QCheckBox>
 #include <QComboBox>
@@ -13,15 +22,6 @@
 #include <QRegExp>
 #include <QSpinBox>
 #include <QVBoxLayout>
-
-#include "common.h"
-#include "iconaction.h"
-#include "iconwidget.h"
-#include "psiactionlist.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "psitoolbar.h"
-#include "ui_opt_lookfeel_toolbars.h"
 
 #define CHAT_TOOLBAR       0
 #define GROUPCHAT_TOOLBAR  1

@@ -1,5 +1,20 @@
 #include "opt_iconset.h"
 
+#include "applicationinfo.h"
+#include "common.h"
+#include "iconwidget.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "ui_opt_iconset_activity.h"
+#include "ui_opt_iconset_affiliation.h"
+#include "ui_opt_iconset_client.h"
+#include "ui_opt_iconset_emo.h"
+#include "ui_opt_iconset_mood.h"
+#include "ui_opt_iconset_roster.h"
+#include "ui_opt_iconset_system.h"
+#include "ui_ui_isdetails.h"
+
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
@@ -15,21 +30,6 @@
 #include <QTabWidget>
 #include <QThread>
 #include <QTreeWidget>
-
-#include "applicationinfo.h"
-#include "common.h"
-#include "iconwidget.h"
-#include "psicon.h"
-#include "psiiconset.h"
-#include "psioptions.h"
-#include "ui_opt_iconset_activity.h"
-#include "ui_opt_iconset_affiliation.h"
-#include "ui_opt_iconset_client.h"
-#include "ui_opt_iconset_emo.h"
-#include "ui_opt_iconset_mood.h"
-#include "ui_opt_iconset_roster.h"
-#include "ui_opt_iconset_system.h"
-#include "ui_ui_isdetails.h"
 
 class IconsetEmoUI : public QWidget, public Ui::IconsetEmo
 {

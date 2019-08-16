@@ -20,11 +20,11 @@
 
 #include "wbwidget.h"
 
-#include <QApplication>
-#include <QMouseEvent>
-
 #include "wbnewimage.h"
 #include "wbnewpath.h"
+
+#include <QApplication>
+#include <QMouseEvent>
 
 WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent) {
     newWbItem_ = nullptr;

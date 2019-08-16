@@ -19,6 +19,14 @@
 
 #include "mainwin_p.h"
 
+#include "alerticon.h"
+#include "icontoolbutton.h"
+#include "iconwidget.h"
+#include "psiaccount.h"
+#include "psicontactlist.h"
+#include "psitoolbar.h"
+#include "stretchwidget.h"
+
 #include <QApplication>
 #include <QFrame>
 #include <QLabel>
@@ -31,14 +39,6 @@
 #include <QStyle>
 #include <QTimer>
 #include <QtAlgorithms>
-
-#include "alerticon.h"
-#include "icontoolbutton.h"
-#include "iconwidget.h"
-#include "psiaccount.h"
-#include "psicontactlist.h"
-#include "psitoolbar.h"
-#include "stretchwidget.h"
 
 //----------------------------------------------------------------------------
 // PopupActionButton

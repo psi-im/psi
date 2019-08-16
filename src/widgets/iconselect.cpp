@@ -19,6 +19,9 @@
 
 #include "iconselect.h"
 
+#include "iconset.h"
+#include "psitooltip.h"
+
 #include <QAbstractButton>
 #include <QApplication>
 #include <QDesktopWidget>
@@ -32,9 +35,6 @@
 #include <QTextCodec>
 #include <QWidgetAction>
 #include <math.h>
-
-#include "iconset.h"
-#include "psitooltip.h"
 
 //----------------------------------------------------------------------------
 // IconSelectButton

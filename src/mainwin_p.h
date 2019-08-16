@@ -19,6 +19,9 @@
 
 #ifndef MAINWIN_P_H
 
+#include "iconaction.h"
+#include "psicon.h"
+
 #include <QAction>
 #include <QLabel>
 #include <QLayout>
@@ -26,9 +29,6 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QToolButton>
-
-#include "iconaction.h"
-#include "psicon.h"
 
 class QMenu;
 

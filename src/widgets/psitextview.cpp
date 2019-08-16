@@ -19,6 +19,9 @@
 
 #include "psitextview.h"
 
+#include "psirichtext.h"
+#include "urlobject.h"
+
 #include <QAbstractTextDocumentLayout>
 #include <QMenu>
 #include <QMimeData>
@@ -26,9 +29,6 @@
 #include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
-
-#include "psirichtext.h"
-#include "urlobject.h"
 
 //----------------------------------------------------------------------------
 // PsiTextView::Private

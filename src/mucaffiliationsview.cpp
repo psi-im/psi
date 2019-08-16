@@ -19,9 +19,9 @@
 
 #include "mucaffiliationsview.h"
 
-#include <QHeaderView>
-
 #include "xmpp_jid.h"
+
+#include <QHeaderView>
 
 MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
 {

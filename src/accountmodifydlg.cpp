@@ -19,9 +19,6 @@
 
 #include "accountmodifydlg.h"
 
-#include <QInputDialog>
-#include <QMessageBox>
-
 #include "actionlineedit.h"
 #include "iconaction.h"
 #include "iconset.h"
@@ -38,6 +35,9 @@
 #ifdef HAVE_KEYCHAIN
 #    include <qt5keychain/keychain.h>
 #endif
+
+#include <QInputDialog>
+#include <QMessageBox>
 
 AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)

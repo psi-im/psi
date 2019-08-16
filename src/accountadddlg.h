@@ -20,9 +20,9 @@
 #ifndef ACCOUNTADDDLG_H
 #define ACCOUNTADDDLG_H
 
-#include <QDialog>
-
 #include "ui_accountadd.h"
+
+#include <QDialog>
 
 class PsiCon;
 class QString;

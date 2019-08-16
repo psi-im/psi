@@ -20,13 +20,13 @@
 #ifndef ACCOUNTMODIFYDLG_H
 #define ACCOUNTMODIFYDLG_H
 
-#include <QDialog>
-#include <QtCrypto>
-
 #include "privacylistblockedmodel.h"
 #include "privacylistmodel.h"
 #include "profiles.h"
 #include "ui_accountmodify.h"
+
+#include <QDialog>
+#include <QtCrypto>
 
 class ProxyChooser;
 class PsiAccount;

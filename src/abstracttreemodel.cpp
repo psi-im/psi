@@ -18,9 +18,9 @@
 
 #include "abstracttreemodel.h"
 
-#include <QDebug>
-
 #include "abstracttreeitem.h"
+
+#include <QDebug>
 
 AbstractTreeModel::AbstractTreeModel(AbstractTreeItem *root, QObject *parent)
     : QAbstractItemModel(parent)

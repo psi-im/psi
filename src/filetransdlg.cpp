@@ -1,15 +1,5 @@
 #include "filetransdlg.h"
 
-#include <QBuffer>
-#include <QDesktopServices>
-#include <QFileDialog>
-#include <QFileIconProvider>
-#include <QKeyEvent>
-#include <QMenu>
-#include <QMessageBox>
-#include <QPainter>
-#include <QTimer>
-
 #include "accountlabel.h"
 #include "accountscombobox.h"
 #include "busywidget.h"
@@ -27,6 +17,16 @@
 #include "textutil.h"
 #include "userlist.h"
 #include "xmpp_tasks.h"
+
+#include <QBuffer>
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QFileIconProvider>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPainter>
+#include <QTimer>
 
 typedef quint64 LARGE_TYPE;
 

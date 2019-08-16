@@ -16,10 +16,10 @@
 
 #include "mediadevicewatcher.h"
 
-#include <QApplication>
-
 #include "../psimedia/psimedia.h"
 #include "psioptions.h"
+
+#include <QApplication>
 
 MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent)
 {

@@ -17,6 +17,10 @@
  *
  */
 
+#include "activeprofiles.h"
+#include "applicationinfo.h"
+#include "dbus.h"
+
 #include <QByteArray>
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -26,10 +30,6 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
-
-#include "activeprofiles.h"
-#include "applicationinfo.h"
-#include "dbus.h"
 
 /** \brief encodes a string to "[A-Z][a-z][0-9]_-" ascii subset
  * [A-Z][a-z][0-9] -> [A-Z][a-z][0-9]

@@ -19,9 +19,6 @@
 
 #include "psicontact.h"
 
-#include <QFileDialog>
-#include <QTimer>
-
 #include "alertable.h"
 #include "avatars.h"
 #include "common.h"
@@ -38,6 +35,9 @@
 #include "psiprivacymanager.h"
 #include "userlist.h"
 #include "vcardfactory.h"
+
+#include <QFileDialog>
+#include <QTimer>
 
 #define STATUS_TIMER_INTERVAL 5000
 #define ANIM_TIMER_INTERVAL 5000

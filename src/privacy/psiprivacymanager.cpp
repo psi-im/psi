@@ -16,20 +16,21 @@
  *
  */
 
-#include <QDebug>
-#include <QObject>
+#include "psiprivacymanager.h"
 
 #include "contactupdatesmanager.h"
 #include "privacylist.h"
 #include "privacymanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
-#include "psiprivacymanager.h"
 #include "userlist.h"
 #include "xmpp_jid.h"
 #include "xmpp_task.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QDebug>
+#include <QObject>
 
 #define PRIVACY_NS "jabber:iq:privacy"
 

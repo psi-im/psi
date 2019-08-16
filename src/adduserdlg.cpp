@@ -19,15 +19,6 @@
 
 #include "adduserdlg.h"
 
-#include <QCheckBox>
-#include <QComboBox>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QStringList>
-
 #include "busywidget.h"
 #include "common.h"
 #include "iconwidget.h"
@@ -38,6 +29,15 @@
 #include "vcardfactory.h"
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QStringList>
 
 class AddUserDlg::Private
 {

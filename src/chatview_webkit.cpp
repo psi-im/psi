@@ -19,6 +19,27 @@
 
 #include "chatview_webkit.h"
 
+#include "applicationinfo.h"
+#include "avatars.h"
+#include "chatviewtheme.h"
+#include "chatviewthemeprovider.h"
+#include "desktoputil.h"
+#include "jsutil.h"
+#include "messageview.h"
+#include "msgmle.h"
+#include "networkaccessmanager.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
+#endif
+#include "psiaccount.h"
+//#include "psiapplication.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psithememanager.h"
+#include "textutil.h"
+#include "webview.h"
+#include "xmpp_tasks.h"
+
 #include <QAction>
 #include <QApplication>
 #include <QDesktopWidget>
@@ -42,27 +63,6 @@
 #    include <QWebFrame>
 #    include <QWebPage>
 #endif
-
-#include "applicationinfo.h"
-#include "avatars.h"
-#include "chatviewtheme.h"
-#include "chatviewthemeprovider.h"
-#include "desktoputil.h"
-#include "jsutil.h"
-#include "messageview.h"
-#include "msgmle.h"
-#include "networkaccessmanager.h"
-#ifdef PSI_PLUGINS
-#    include "pluginmanager.h"
-#endif
-#include "psiaccount.h"
-//#include "psiapplication.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "psithememanager.h"
-#include "textutil.h"
-#include "webview.h"
-#include "xmpp_tasks.h"
 
 class ChatViewJSObject;
 class ChatViewThemeSessionBridge;

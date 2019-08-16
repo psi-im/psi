@@ -20,11 +20,11 @@
 #ifndef CONTACTUPDATESMANAGER_H
 #define CONTACTUPDATESMANAGER_H
 
-#include <QObject>
-#include <QPointer>
-
 #include "psiaccount.h"
 #include "xmpp_jid.h"
+
+#include <QObject>
+#include <QPointer>
 
 class PsiCon;
 class QTimer;

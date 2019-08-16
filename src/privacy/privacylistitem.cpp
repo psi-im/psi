@@ -19,11 +19,11 @@
 
 #include "privacylistitem.h"
 
-#include <QDomElement>
-#include <QObject>
-
 #include "xmpp_jid.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QDomElement>
+#include <QObject>
 
 PrivacyListItem::PrivacyListItem()
     : type_(Type::FallthroughType)

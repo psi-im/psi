@@ -20,14 +20,14 @@
 #ifndef EDBFLATFILE_H
 #define EDBFLATFILE_H
 
+#include "eventdb.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
 #include <QDateTime>
 #include <QFile>
 #include <QObject>
 #include <QTimer>
-
-#include "eventdb.h"
-#include "psievent.h"
-#include "xmpp_jid.h"
 
 class EDBFlatFile : public EDB
 {

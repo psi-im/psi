@@ -20,9 +20,9 @@
 #ifndef CONFERENCEBOOKMARK_H
 #define CONFERENCEBOOKMARK_H
 
-#include <QString>
-
 #include "xmpp_jid.h"
+
+#include <QString>
 
 class QDomDocument;
 class QDomElement;

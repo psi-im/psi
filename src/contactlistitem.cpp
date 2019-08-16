@@ -19,9 +19,6 @@
 
 #include "contactlistitem.h"
 
-#include <QCoreApplication>
-#include <QTextDocument>
-
 #include "avatars.h"
 #include "contactlistaccountmenu.h"
 #include "contactlistgroupmenu.h"
@@ -29,6 +26,9 @@
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "userlist.h"
+
+#include <QCoreApplication>
+#include <QTextDocument>
 
 ContactListItem::ContactListItem(ContactListModel *model, Type type, SpecialGroupType specialGropType)
     : AbstractTreeItem()

@@ -19,9 +19,9 @@
 
 #include "alertable.h"
 
-#include <QIcon>
-
 #include "alerticon.h"
+
+#include <QIcon>
 
 /**
  * Class to simplify alert icon plumbing. You'll have to re-implement

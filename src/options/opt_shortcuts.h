@@ -21,9 +21,9 @@
 #ifndef OPT_SHORTCUTS_H
 #define OPT_SHORTCUTS_H
 
-#include <QKeySequence>
-
 #include "optionstab.h"
+
+#include <QKeySequence>
 
 class PsiOptions;
 class QTreeWidgetItem;

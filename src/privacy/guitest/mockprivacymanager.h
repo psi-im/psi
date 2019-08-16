@@ -19,11 +19,11 @@
 #ifndef MOCKPRIVACYMANAGER_H
 #define MOCKPRIVACYMANAGER_H
 
-#include <QObject>
-#include <QStringList>
-
 #include "privacylistitem.h"
 #include "privacymanager.h"
+
+#include <QObject>
+#include <QStringList>
 
 class MockPrivacyManager : public PrivacyManager
 {

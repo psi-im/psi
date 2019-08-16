@@ -1,9 +1,9 @@
+#include "iconset.h"
+#include "psiiconset.h"
+
 #include <Q3PtrList>
 #include <QStringList>
 #include <QtTest/QtTest>
-
-#include "iconset.h"
-#include "psiiconset.h"
 
 class TestPsiIconset: public QObject
 {

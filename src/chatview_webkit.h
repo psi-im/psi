@@ -20,13 +20,13 @@
 #ifndef CHATVIEW_WEBKIT_H
 #define CHATVIEW_WEBKIT_H
 
+#include "chatviewcommon.h"
+#include "webview.h"
+
 #include <QDateTime>
 #include <QFrame>
 #include <QPointer>
 #include <QWidget>
-
-#include "chatviewcommon.h"
-#include "webview.h"
 
 class ChatEdit;
 class ChatView;

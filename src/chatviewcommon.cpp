@@ -19,13 +19,13 @@
 
 #include "chatviewcommon.h"
 
+#include "psioptions.h"
+
 #include <QApplication>
 #include <QColor>
 #include <QRegExp>
 #include <QWidget>
 #include <math.h>
-
-#include "psioptions.h"
 
 void ChatViewCommon::setLooks(QWidget *w)
 {

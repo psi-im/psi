@@ -19,12 +19,12 @@
 #ifndef JINGLERTPTASKS_H
 #define JINGLERTPTASKS_H
 
-#include <QDomElement>
-#include <QHostAddress>
-
 #include "iris/ice176.h"
 #include "xmpp_jid.h"
 #include "xmpp_task.h"
+
+#include <QDomElement>
+#include <QHostAddress>
 
 class JingleRtpPayloadType
 {

@@ -20,9 +20,9 @@
 #ifndef GLOBALEVENTQUEUE_H
 #define GLOBALEVENTQUEUE_H
 
-#include <QObject>
-
 #include "psievent.h"
+
+#include <QObject>
 
 class GlobalEventQueue : public QObject
 {

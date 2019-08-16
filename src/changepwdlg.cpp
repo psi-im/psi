@@ -19,13 +19,6 @@
 
 #include "changepwdlg.h"
 
-#include <QFormLayout>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-
 #include "accountmodifydlg.h"
 #include "busywidget.h"
 #include "iconwidget.h"
@@ -33,6 +26,13 @@
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "xmpp_tasks.h"
+
+#include <QFormLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
 
 using namespace XMPP;
 

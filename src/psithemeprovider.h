@@ -20,10 +20,10 @@
 #ifndef PSITHEMEPROVIDER_H
 #define PSITHEMEPROVIDER_H
 
+#include "theme.h"
+
 #include <QFuture>
 #include <functional>
-
-#include "theme.h"
 
 class PsiCon;
 

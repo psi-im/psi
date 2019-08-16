@@ -20,9 +20,9 @@
 #ifndef STATUSCOMBOBOX_H
 #define STATUSCOMBOBOX_H
 
-#include <QComboBox>
-
 #include "xmpp_status.h"
+
+#include <QComboBox>
 
 class StatusComboBox : public QComboBox
 {

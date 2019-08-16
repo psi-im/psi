@@ -19,11 +19,11 @@
 
 #pragma once
 
+#include "abstracttreemodel.h"
+
 #include <QHash>
 #include <QModelIndex>
 #include <QVariant>
-
-#include "abstracttreemodel.h"
 
 class ContactListItem;
 class PsiAccount;

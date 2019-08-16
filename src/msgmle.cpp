@@ -19,6 +19,14 @@
 
 #include "msgmle.h"
 
+#include "htmltextcontroller.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "qiteaudiorecorder.h"
+#include "shortcutmanager.h"
+#include "spellchecker/spellchecker.h"
+#include "spellchecker/spellhighlighter.h"
+
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
 #include <QApplication>
@@ -36,14 +44,6 @@
 #include <QTextDocument>
 #include <QTimer>
 #include <QToolButton>
-
-#include "htmltextcontroller.h"
-#include "psiiconset.h"
-#include "psioptions.h"
-#include "qiteaudiorecorder.h"
-#include "shortcutmanager.h"
-#include "spellchecker/spellchecker.h"
-#include "spellchecker/spellhighlighter.h"
 
 static const int TIMEOUT = 30000; //30 secs maximum time interval
 static const int SECOND = 1000;

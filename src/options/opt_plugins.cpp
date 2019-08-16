@@ -1,10 +1,5 @@
 #include "opt_plugins.h"
 
-#include <QHeaderView>
-#include <QSignalMapper>
-#include <QToolButton>
-#include <QWhatsThis>
-
 #include "common.h"
 #include "iconwidget.h"
 #include "optionsdlgbase.h"
@@ -13,6 +8,11 @@
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "ui_opt_plugins.h"
+
+#include <QHeaderView>
+#include <QSignalMapper>
+#include <QToolButton>
+#include <QWhatsThis>
 
 class OptPluginsUI : public QWidget, public Ui::OptPlugins
 {

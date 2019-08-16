@@ -22,14 +22,14 @@
  *
  */
 
-#include <QDebug>
-#include <QtCore>
-
 #include "eventfilter.h"
 #include "psiplugin.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
 #include "tictac.h"
+
+#include <QDebug>
+#include <QtCore>
 
 class NoughtsAndCrossesPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender
 {

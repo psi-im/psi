@@ -19,6 +19,18 @@
 
 #include "chatviewtheme.h"
 
+#include "avatars.h"
+#include "chatviewtheme_p.h"
+#include "chatviewthemeprovider.h"
+#include "chatviewthemeprovider_priv.h"
+#include "coloropt.h"
+#include "common.h"
+#include "jsutil.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "theme_p.h"
+#include "webview.h"
+
 #include <QApplication>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -40,18 +52,6 @@
 #    include <QWebFrame>
 #    include <QWebPage>
 #endif
-
-#include "avatars.h"
-#include "chatviewtheme_p.h"
-#include "chatviewthemeprovider.h"
-#include "chatviewthemeprovider_priv.h"
-#include "coloropt.h"
-#include "common.h"
-#include "jsutil.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "theme_p.h"
-#include "webview.h"
 
 #ifndef WEBENGINE
 class SessionRequestHandler : public NAMDataHandler

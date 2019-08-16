@@ -19,12 +19,6 @@
 
 #include "psievent.h"
 
-#include <QCoreApplication>
-#include <QDomElement>
-#include <QList>
-#include <QSet>
-#include <QTextStream>
-
 #include "applicationinfo.h"
 #include "atomicxmlfile/atomicxmlfile.h"
 #include "avcall/avcall.h"
@@ -36,6 +30,12 @@
 #include "psicontactlist.h"
 #include "psioptions.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QCoreApplication>
+#include <QDomElement>
+#include <QList>
+#include <QSet>
+#include <QTextStream>
 
 using namespace XMLHelper;
 using namespace XMPP;

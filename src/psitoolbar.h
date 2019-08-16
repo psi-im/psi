@@ -20,9 +20,9 @@
 #ifndef PSITOOLBAR_H
 #define PSITOOLBAR_H
 
-#include <QToolBar>
-
 #include "psiactionlist.h"
+
+#include <QToolBar>
 
 class PsiOptions;
 class QContextMenuEvent;

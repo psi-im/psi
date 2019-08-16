@@ -20,12 +20,6 @@
 #ifndef PROFILES_H
 #define PROFILES_H
 
-#include <QByteArray>
-#include <QList>
-#include <QString>
-#include <QStringList>
-#include <QtCrypto>
-
 #include "applicationinfo.h"
 #include "common.h"
 #include "proxy.h"
@@ -33,6 +27,12 @@
 #include "xmpp_clientstream.h"
 #include "xmpp_jid.h"
 #include "xmpp_roster.h"
+
+#include <QByteArray>
+#include <QList>
+#include <QString>
+#include <QStringList>
+#include <QtCrypto>
 
 class OptionsTree;
 

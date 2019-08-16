@@ -19,6 +19,13 @@
 
 #include "vcardfactory.h"
 
+#include "applicationinfo.h"
+#include "jidutil.h"
+#include "profiles.h"
+#include "psiaccount.h"
+#include "xmpp_tasks.h"
+#include "xmpp_vcard.h"
+
 #include <QApplication>
 #include <QDir>
 #include <QDomDocument>
@@ -26,13 +33,6 @@
 #include <QMap>
 #include <QObject>
 #include <QTextStream>
-
-#include "applicationinfo.h"
-#include "jidutil.h"
-#include "profiles.h"
-#include "psiaccount.h"
-#include "xmpp_tasks.h"
-#include "xmpp_vcard.h"
 
 /**
  * \brief Factory for retrieving and changing VCards.

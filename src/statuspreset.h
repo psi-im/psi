@@ -20,11 +20,11 @@
 #ifndef STATUSPRESET_H
 #define STATUSPRESET_H
 
-#include <QString>
-
 #include "maybe.h"
 #include "optionstree.h"
 #include "xmpp_status.h"
+
+#include <QString>
 
 class QDomDocument;
 class QDomElement;

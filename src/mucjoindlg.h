@@ -20,11 +20,11 @@
 #ifndef MUCJOINDLG_H
 #define MUCJOINDLG_H
 
-#include <QDialog>
-
 #include "psiaccount.h"
 #include "ui_mucjoin.h"
 #include "xmpp_jid.h"
+
+#include <QDialog>
 
 class PsiCon;
 class QString;

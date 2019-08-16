@@ -19,13 +19,13 @@
 
 #include "psitabbar.h"
 
+#include "psioptions.h"
+#include "psitabwidget.h"
+
 #include <QApplication>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
-
-#include "psioptions.h"
-#include "psitabwidget.h"
 
 /**
  * Constructor

@@ -20,12 +20,12 @@
 #ifndef PSIPRIVACYMANAGER_H
 #define PSIPRIVACYMANAGER_H
 
+#include "privacymanager.h"
+#include "xmpp_jid.h"
+
 #include <QHash>
 #include <QObject>
 #include <QStringList>
-
-#include "privacymanager.h"
-#include "xmpp_jid.h"
 
 class PrivacyList;
 class PrivacyListItem;

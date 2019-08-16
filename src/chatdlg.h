@@ -20,6 +20,10 @@
 #ifndef CHATDLG_H
 #define CHATDLG_H
 
+#include "advwidget.h"
+#include "messageview.h"
+#include "tabbablewidget.h"
+
 #include <QCloseEvent>
 #include <QContextMenuEvent>
 #include <QDragEnterEvent>
@@ -28,10 +32,6 @@
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QTextEdit>
-
-#include "advwidget.h"
-#include "messageview.h"
-#include "tabbablewidget.h"
 
 class ChatEdit;
 class ChatView;

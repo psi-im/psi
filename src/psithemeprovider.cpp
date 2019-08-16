@@ -19,11 +19,11 @@
 
 #include "psithemeprovider.h"
 
-#include <QFileInfo>
-#include <QStringList>
-
 #include "applicationinfo.h"
 #include "psicon.h"
+
+#include <QFileInfo>
+#include <QStringList>
 
 PsiThemeProvider::PsiThemeProvider(PsiCon *parent) :
     QObject(parent),

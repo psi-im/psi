@@ -19,6 +19,17 @@
 
 #include "chatview_te.h"
 
+#include "coloropt.h"
+#include "common.h"
+#include "iconset.h"
+#include "messageview.h"
+#include "msgmle.h"
+#include "psioptions.h"
+#include "psirichtext.h"
+#include "qiteaudio.h"
+#include "textutil.h"
+#include "xmpp/jid/jid.h"
+
 #include <QKeyEvent>
 #include <QMenu>
 #include <QScrollBar>
@@ -31,17 +42,6 @@
 #ifdef CORRECTION_DEBUG
 #    include <QDebug>
 #endif
-
-#include "coloropt.h"
-#include "common.h"
-#include "iconset.h"
-#include "messageview.h"
-#include "msgmle.h"
-#include "psioptions.h"
-#include "psirichtext.h"
-#include "qiteaudio.h"
-#include "textutil.h"
-#include "xmpp/jid/jid.h"
 
 //#define CORRECTION_DEBUG
 

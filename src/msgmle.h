@@ -20,10 +20,10 @@
 #ifndef MSGMLE_H
 #define MSGMLE_H
 
+#include "xmpp_htmlelement.h"
+
 #include <QTextEdit>
 #include <memory>
-
-#include "xmpp_htmlelement.h"
 
 #define MAX_MESSAGE_HISTORY 50
 

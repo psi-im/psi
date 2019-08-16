@@ -19,11 +19,11 @@
 
 #include "contactmanagerview.h"
 
+#include "psiiconset.h"
+
 #include <QContextMenuEvent>
 #include <QHeaderView>
 #include <QMenu>
-
-#include "psiiconset.h"
 
 ContactManagerView::ContactManagerView( QWidget * parent )
         : QTableView(parent)

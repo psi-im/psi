@@ -17,13 +17,6 @@
  *
  */
 
-#include <QColor>
-#include <QIcon>
-#include <QMessageBox>
-#include <QModelIndex>
-#include <QTextDocument>
-#include <QVariant>
-
 #include "avatars.h"
 #include "contactlistitem.h"
 #include "contactlistmodel_p.h"
@@ -32,6 +25,13 @@
 #include "psicontactlist.h"
 #include "psioptions.h"
 #include "userlist.h"
+
+#include <QColor>
+#include <QIcon>
+#include <QMessageBox>
+#include <QModelIndex>
+#include <QTextDocument>
+#include <QVariant>
 
 #define MAX_COMMIT_DELAY 30 /* seconds */
 #define COMMIT_INTERVAL 100 /* msecs */

@@ -20,9 +20,9 @@
 #ifndef OPT_THEME_H
 #define OPT_THEME_H
 
-#include <QPointer>
-
 #include "optionstab.h"
+
+#include <QPointer>
 
 class PsiThemeModel;
 class PsiThemeProvider;

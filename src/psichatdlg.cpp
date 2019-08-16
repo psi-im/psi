@@ -1,25 +1,5 @@
 #include "psichatdlg.h"
 
-#include <QClipboard>
-#include <QCloseEvent>
-#include <QColor>
-#include <QContextMenuEvent>
-#include <QCursor>
-#include <QDebug>
-#include <QDragEnterEvent>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QMenu>
-#include <QMessageBox>
-#include <QPixmap>
-#include <QResizeEvent>
-#include <QSplitter>
-#include <QToolBar>
-#include <QToolButton>
-#include <QVBoxLayout>
-
 #include "accountlabel.h"
 #include "actionlist.h"
 #include "activecontactsmenu.h"
@@ -54,6 +34,26 @@
 #    include "filesharedlg.h"
 #    include "pluginmanager.h"
 #endif
+
+#include <QClipboard>
+#include <QCloseEvent>
+#include <QColor>
+#include <QContextMenuEvent>
+#include <QCursor>
+#include <QDebug>
+#include <QDragEnterEvent>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPixmap>
+#include <QResizeEvent>
+#include <QSplitter>
+#include <QToolBar>
+#include <QToolButton>
+#include <QVBoxLayout>
 
 #define MCMDCHAT        "https://psi-im.org/ids/mcmd#chatmain"
 

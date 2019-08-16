@@ -24,6 +24,10 @@
 
 #include "pgpkeydlg.h"
 
+#include "common.h"
+#include "showtextdlg.h"
+#include <pgputil.h>
+
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QMessageBox>
@@ -31,10 +35,6 @@
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QString>
-
-#include "common.h"
-#include "showtextdlg.h"
-#include <pgputil.h>
 
 class KeyViewItem : public QStandardItem
 {

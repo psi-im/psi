@@ -16,14 +16,14 @@
  *
  */
 
+#include "psimedia.h"
+#include "psimediaprovider.h"
+
 #include <QCoreApplication>
 #ifdef QT_GUI_LIB
 #    include <QPainter>
 #endif
 #include <QPluginLoader>
-
-#include "psimedia.h"
-#include "psimediaprovider.h"
 
 namespace PsiMedia {
 #ifdef QT_GUI_LIB

@@ -19,14 +19,14 @@
 
 #include "filecache.h"
 
+#include "applicationinfo.h"
+#include "fileutil.h"
+#include "optionstree.h"
+
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QDir>
 #include <QTimer>
-
-#include "applicationinfo.h"
-#include "fileutil.h"
-#include "optionstree.h"
 
 #define FC_META_PERSISTENT QStringLiteral("fc_persistent")
 

@@ -20,9 +20,9 @@
 #ifndef OPTIONSDLGBASE_H
 #define OPTIONSDLGBASE_H
 
-#include <QDialog>
-
 #include "ui_ui_options.h"
+
+#include <QDialog>
 
 class OptionsTab;
 class PsiCon;

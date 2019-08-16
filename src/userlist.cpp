@@ -19,14 +19,6 @@
 
 #include "userlist.h"
 
-#include <QApplication>
-#include <QBuffer>
-#include <QList>
-#include <QPixmap>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QUrl>
-#include <QtCrypto>
-
 #include "avatars.h"
 #include "common.h"
 #include "jidutil.h"
@@ -34,6 +26,14 @@
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "textutil.h"
+
+#include <QApplication>
+#include <QBuffer>
+#include <QList>
+#include <QPixmap>
+#include <QTextDocument> // for TextUtil::escape()
+#include <QUrl>
+#include <QtCrypto>
 
 using namespace XMPP;
 

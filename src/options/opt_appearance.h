@@ -1,11 +1,11 @@
 #ifndef OPT_APPEARANCEGENERAL_H
 #define OPT_APPEARANCEGENERAL_H
 
+#include "optionstab.h"
+
 #include <QAbstractButton>
 #include <QHash>
 #include <QLineEdit>
-
-#include "optionstab.h"
 
 class QButtonGroup;
 class QCheckBox;

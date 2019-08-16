@@ -20,10 +20,10 @@
 #ifndef CONTACTMANAGERDLG_H
 #define CONTACTMANAGERDLG_H
 
-#include <QDialog>
-
 #include "contactmanagermodel.h"
 #include "ui_contactmanagerdlg.h"
+
+#include <QDialog>
 
 class PsiAccount;
 

@@ -19,13 +19,13 @@
 
 #include "opt_shortcuts.h"
 
-#include <QMessageBox>
-
 #include "common.h"
 #include "grepshortcutkeydialog.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "ui_opt_shortcuts.h"
+
+#include <QMessageBox>
 
 #define ITEMKIND Qt::UserRole
 #define OPTIONSTREEPATH Qt::UserRole + 1

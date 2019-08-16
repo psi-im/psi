@@ -19,10 +19,10 @@
 
 #include "bobfilecache.h"
 
-#include <QApplication>
-
 #include "applicationinfo.h"
 #include "filecache.h"
+
+#include <QApplication>
 
 using namespace XMPP;
 

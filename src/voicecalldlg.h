@@ -20,10 +20,10 @@
 #ifndef VOICECALLDLG_H
 #define VOICECALLDLG_H
 
-#include <QDialog>
-
 #include "ui_voicecall.h"
 #include "xmpp_jid.h"
+
+#include <QDialog>
 
 class VoiceCaller;
 

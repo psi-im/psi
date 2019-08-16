@@ -1,5 +1,14 @@
 #include "applicationinfo.h"
 
+#include "activeprofiles.h"
+#ifdef HAVE_CONFIG
+#    include "config.h"
+#endif
+#include "profiles.h"
+#include "psiapplication.h"
+#include "systeminfo.h"
+#include "translationmanager.h"
+
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
@@ -21,15 +30,6 @@
 #    include <shlobj.h>
 #    include <windows.h>
 #endif
-
-#include "activeprofiles.h"
-#ifdef HAVE_CONFIG
-#    include "config.h"
-#endif
-#include "profiles.h"
-#include "psiapplication.h"
-#include "systeminfo.h"
-#include "translationmanager.h"
 
 #define xstr(a) str(a)
 #define str(a) #a

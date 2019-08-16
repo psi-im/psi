@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <QItemDelegate>
-
 #include "hoverabletreeview.h"
 #include "xmpp_status.h"
+
+#include <QItemDelegate>
 
 class ContactListView;
 class PsiAccount;

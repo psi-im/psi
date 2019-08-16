@@ -19,6 +19,10 @@
 
 #include "webview.h"
 
+#include "textutil.h"
+#include "urlobject.h"
+#include "xmpp_vcard.h"
+
 #include <QApplication>
 #include <QDebug>
 #include <QDrag>
@@ -35,10 +39,6 @@
 #    include <QWebFrame>
 #    include <QWebSecurityOrigin>
 #endif
-
-#include "textutil.h"
-#include "urlobject.h"
-#include "xmpp_vcard.h"
 
 WebView::WebView(QWidget* parent) :
 #ifdef WEBENGINE

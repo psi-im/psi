@@ -1,16 +1,16 @@
 #include "opt_events.h"
 
+#include "common.h"
+#include "iconwidget.h"
 #include "psioptions.h"
+#include "ui_opt_events.h"
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QWhatsThis>
-
-#include "common.h"
-#include "iconwidget.h"
-#include "ui_opt_events.h"
 
 class OptEventsUI : public QWidget, public Ui::OptEvents
 {

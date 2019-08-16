@@ -20,10 +20,10 @@
 #ifndef MINICLIENT_H
 #define MINICLIENT_H
 
+#include "xmpp_jid.h"
+
 #include <QObject>
 #include <QString>
-
-#include "xmpp_jid.h"
 
 class ProxyManager;
 class QByteArray;

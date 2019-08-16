@@ -19,6 +19,8 @@
 
 #include "anim.h"
 
+#include "iconset.h"
+
 //#include <QApplication>
 #include <QBuffer>
 #include <QImage>
@@ -26,8 +28,6 @@
 #include <QObject>
 #include <QThread>
 #include <QTimer>
-
-#include "iconset.h"
 
 /**
  * \class Anim

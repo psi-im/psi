@@ -21,7 +21,6 @@
 #define SXDEMANAGER_H
 
 #include "QTimer"
-
 #include "sxesession.h"
 
 namespace XMPP {

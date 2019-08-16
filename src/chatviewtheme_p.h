@@ -20,6 +20,9 @@
 #ifndef CHATVIEWTHEME_P_H
 #define CHATVIEWTHEME_P_H
 
+#include "chatviewtheme.h"
+#include "theme_p.h"
+
 #include <QPointer>
 #include <QScopedPointer>
 #include <QTimer>
@@ -27,9 +30,6 @@
 #    include <QWebEngineScript>
 #else
 #endif
-
-#include "chatviewtheme.h"
-#include "theme_p.h"
 
 class ChatViewThemePrivate;
 class ChatViewThemeProvider;

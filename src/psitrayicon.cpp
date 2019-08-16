@@ -1,14 +1,14 @@
 #include "psitrayicon.h"
 
+#include "alerticon.h"
+#include "common.h"
+#include "iconset.h"
+
 #include <QApplication> // old
 #include <QHelpEvent>
 #include <QPixmap>
 #include <QPixmapCache>
 #include <QSystemTrayIcon>
-
-#include "alerticon.h"
-#include "common.h"
-#include "iconset.h"
 
 // TODO: remove the QPoint parameter from the signals when we finally move
 // to the new system.

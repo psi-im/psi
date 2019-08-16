@@ -19,10 +19,10 @@
 
 #include "psithememanager.h"
 
-#include <QCoreApplication>
-
 #include "applicationinfo.h"
 #include "theme.h"
+
+#include <QCoreApplication>
 
 class PsiThemeManager::Private {
 public:

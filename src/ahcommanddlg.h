@@ -20,11 +20,11 @@
 #ifndef AHCOMMANDDLG_H
 #define AHCOMMANDDLG_H
 
-#include <QDialog>
-#include <QList>
-
 #include "ui_ahcommanddlg.h"
 #include "xmpp_jid.h"
+
+#include <QDialog>
+#include <QList>
 
 class BusyWidget;
 class PsiAccount;

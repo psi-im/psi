@@ -1,9 +1,9 @@
 #ifndef OPT_ICONSET_H
 #define OPT_ICONSET_H
 
-#include <QEvent>
-
 #include "optionstab.h"
+
+#include <QEvent>
 
 class IconsetLoadThread;
 class QListWidgetItem;

@@ -19,10 +19,6 @@
 
 #include "jinglevoicecaller.h"
 
-#include <QDebug>
-#include <QDomElement>
-#include <QString>
-
 #include "im.h"
 #include "psiaccount.h"
 #include "talk/base/network.h"
@@ -44,6 +40,10 @@
 #include "talk/xmpp/jid.h"
 #include "xmpp.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QDebug>
+#include <QDomElement>
+#include <QString>
 
 // Should change in the future
 #define JINGLE_NS "http://www.google.com/session"

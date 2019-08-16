@@ -20,9 +20,9 @@
 
 #include "wbnewpath.h"
 
-#include <QGraphicsScene>
-
 #include "../sxe/sxesession.h"
+
+#include <QGraphicsScene>
 
 WbNewPath::WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor) : WbNewItem(s) {
     controlPoint_ = nullptr;

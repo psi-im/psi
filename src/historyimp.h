@@ -20,17 +20,17 @@
 #ifndef HISTORYIMP_H
 #define HISTORYIMP_H
 
+#include "eventdb.h"
+#include "jidutil.h"
+#include "psicon.h"
+#include "xmpp/jid/jid.h"
+
 #include <QDialog>
 #include <QLabel>
 #include <QObject>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QStackedWidget>
-
-#include "eventdb.h"
-#include "jidutil.h"
-#include "psicon.h"
-#include "xmpp/jid/jid.h"
 
 struct ImportItem
 {

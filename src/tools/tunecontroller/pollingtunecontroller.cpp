@@ -19,9 +19,9 @@
 
 #include "pollingtunecontroller.h"
 
-#include <QTimer>
-
 #include "tune.h"
+
+#include <QTimer>
 
 /**
  * \class PollingTuneController

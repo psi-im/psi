@@ -19,10 +19,10 @@
 
 #include "actionlist.h"
 
+#include "iconaction.h"
+
 #include <QHash>
 #include <QList>
-
-#include "iconaction.h"
 
 //----------------------------------------------------------------------------
 // ActionList

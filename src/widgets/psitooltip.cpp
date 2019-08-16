@@ -19,6 +19,9 @@
 
 #include "psitooltip.h"
 
+#include "private/qeffects_p.h"
+#include "psitiplabel.h"
+
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QHash>
@@ -26,9 +29,6 @@
 #include <QPointer>
 #include <QScreen>
 #include <QToolTip>
-
-#include "private/qeffects_p.h"
-#include "psitiplabel.h"
 
 //----------------------------------------------------------------------------
 // PsiToolTipHandler

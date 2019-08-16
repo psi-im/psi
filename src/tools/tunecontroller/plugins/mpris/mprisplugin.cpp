@@ -21,12 +21,12 @@
 #define QT_STATICPLUGIN
 #endif
 
+#include "mpristunecontroller.h"
+#include "tunecontrollerplugin.h"
+
 #include <QObject>
 #include <QString>
 #include <QtCore>
-
-#include "mpristunecontroller.h"
-#include "tunecontrollerplugin.h"
 
 class MPRISPlugin : public QObject, public TuneControllerPlugin
 {

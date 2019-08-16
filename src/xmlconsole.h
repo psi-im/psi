@@ -20,11 +20,11 @@
 #ifndef XMLCONSOLE_H
 #define XMLCONSOLE_H
 
+#include "ui_xmlconsole.h"
+
 #include <QDialog>
 #include <QPointer>
 #include <QWidget>
-
-#include "ui_xmlconsole.h"
 
 class PsiAccount;
 class QCheckBox;

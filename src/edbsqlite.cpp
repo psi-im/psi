@@ -17,18 +17,18 @@
  *
  */
 
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QSqlDriver>
-#include <QSqlError>
-
 #include "applicationinfo.h"
 //#include "common.h"
 #include "edbsqlite.h"
 #include "historyimp.h"
 #include "jidutil.h"
 #include "psicontactlist.h"
+
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSqlDriver>
+#include <QSqlError>
 
 #define FAKEDELAY 0
 

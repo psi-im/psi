@@ -22,14 +22,14 @@
  *
  */
 
-#include <QtCore>
-
 #include "eventfilter.h"
 #include "optionaccessinghost.h"
 #include "optionaccessor.h"
 #include "psiplugin.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
+
+#include <QtCore>
 
 class EchoPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender, public OptionAccessor
 {

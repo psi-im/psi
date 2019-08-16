@@ -19,6 +19,11 @@
 
 #include "proxy.h"
 
+#include "common.h"
+#include "iconwidget.h"
+#include "psioptions.h"
+#include "xmpp_xmlcommon.h"
+
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
@@ -30,11 +35,6 @@
 #include <QList>
 #include <QPointer>
 #include <QPushButton>
-
-#include "common.h"
-#include "iconwidget.h"
-#include "psioptions.h"
-#include "xmpp_xmlcommon.h"
 
 #define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
 

@@ -20,15 +20,15 @@
 #ifndef MPRISTUNECONTROLLER_H
 #define MPRISTUNECONTROLLER_H
 
+#include "tune.h"
+#include "tunecontrollerinterface.h"
+
 #include <QDBusArgument>
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusMessage>
 #include <QStringList>
 #include <QVariantMap>
-
-#include "tune.h"
-#include "tunecontrollerinterface.h"
 
 struct PlayerStatus
 {

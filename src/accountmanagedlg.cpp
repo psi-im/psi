@@ -19,18 +19,6 @@
 
 #include "accountmanagedlg.h"
 
-#include <QButtonGroup>
-#include <QDropEvent>
-#include <QHeaderView>
-#include <QInputDialog>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPointer>
-#include <QPushButton>
-#include <QTimer>
-#include <QtCrypto>
-
 #include "accountadddlg.h"
 #include "common.h"
 #include "iconaction.h"
@@ -44,6 +32,18 @@
 #include "shortcutmanager.h"
 #include "ui_accountremove.h"
 #include "xmpp_tasks.h"
+
+#include <QButtonGroup>
+#include <QDropEvent>
+#include <QHeaderView>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QTimer>
+#include <QtCrypto>
 
 using namespace XMPP;
 

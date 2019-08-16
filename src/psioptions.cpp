@@ -19,9 +19,6 @@
 
 #include "psioptions.h"
 
-#include <QCoreApplication>
-#include <QTimer>
-
 #include "applicationinfo.h"
 #include "common.h"
 #ifdef PSI_PLUGINS
@@ -33,6 +30,9 @@
 #include "xmpp_jid.h"
 #include "xmpp_task.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QCoreApplication>
+#include <QTimer>
 
 using namespace XMPP;
 

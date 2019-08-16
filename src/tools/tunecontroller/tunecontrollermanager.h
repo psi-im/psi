@@ -20,13 +20,13 @@
 #ifndef TUNECONTROLLERMANAGER_H
 #define TUNECONTROLLERMANAGER_H
 
+#include "tune.h"
+
 #include <QList>
 #include <QMap>
 #include <QObject>
 #include <QSharedPointer>
 #include <QStringList>
-
-#include "tune.h"
 
 class TuneController;
 class TuneControllerPlugin;

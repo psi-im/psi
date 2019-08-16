@@ -19,37 +19,6 @@
 
 #include "chatdlg.h"
 
-#include <QCloseEvent>
-#include <QColor>
-#include <QContextMenuEvent>
-#include <QCursor>
-#include <QDateTime>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-#include <QHBoxLayout>
-#include <QKeyEvent>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QList>
-#include <QMenu>
-#include <QMessageBox>
-#include <QMimeData>
-#include <QPixmap>
-#include <QResizeEvent>
-#include <QScrollBar>
-#include <QShowEvent>
-#include <QSplitter>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QTimer>
-#include <QToolBar>
-#include <QToolButton>
-#include <QVBoxLayout>
-#include <Qt>
-#ifdef Q_OS_WIN
-#    include <windows.h>
-#endif
-
 #include "accountlabel.h"
 #include "avatars.h"
 #include "chatview.h"
@@ -83,6 +52,37 @@
 #include "xmpp_caps.h"
 #include "xmpp_htmlelement.h"
 #include "xmpp_message.h"
+
+#include <QCloseEvent>
+#include <QColor>
+#include <QContextMenuEvent>
+#include <QCursor>
+#include <QDateTime>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QHBoxLayout>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QList>
+#include <QMenu>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QPixmap>
+#include <QResizeEvent>
+#include <QScrollBar>
+#include <QShowEvent>
+#include <QSplitter>
+#include <QTextDocument> // for TextUtil::escape()
+#include <QTimer>
+#include <QToolBar>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <Qt>
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#endif
 
 static const QString geometryOption = "options.ui.chat.size";
 

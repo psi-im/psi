@@ -20,10 +20,10 @@
 #ifndef ACTIVITYCATALOG_H
 #define ACTIVITYCATALOG_H
 
+#include "activity.h"
+
 #include <QList>
 #include <QObject>
-
-#include "activity.h"
 
 class QString;
 

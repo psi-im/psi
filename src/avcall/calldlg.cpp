@@ -18,10 +18,6 @@
 
 #include "calldlg.h"
 
-#include <QMessageBox>
-#include <QTime>
-#include <QTimer>
-
 #include "../avcall/mediadevicewatcher.h"
 #include "../psimedia/psimedia.h"
 #include "avcall.h"
@@ -31,6 +27,10 @@
 #include "psioptions.h"
 #include "ui_call.h"
 #include "xmpp_client.h"
+
+#include <QMessageBox>
+#include <QTime>
+#include <QTimer>
 
 // we have this so if the user plugs in a device, but never goes to the
 //   options screen to select it, and then starts a call, it'll get used

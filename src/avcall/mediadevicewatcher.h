@@ -17,9 +17,9 @@
 #ifndef MEDIADEVICEWATCHER_H
 #define MEDIADEVICEWATCHER_H
 
-#include <QObject>
-
 #include "../psimedia/psimedia.h"
+
+#include <QObject>
 
 class MediaConfiguration
 {

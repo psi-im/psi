@@ -17,14 +17,14 @@
  *
  */
 
+#include "activeprofiles.h"
+#include "applicationinfo.h"
+#include "psicon.h"
+
 #include <QCoreApplication>
 #include <QTimer>
 #include <QWidget>
 #include <windows.h>
-
-#include "activeprofiles.h"
-#include "applicationinfo.h"
-#include "psicon.h"
 
 #define QT_WA(unicode, ansi) unicode
 

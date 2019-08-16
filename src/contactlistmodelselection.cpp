@@ -19,14 +19,14 @@
 
 #include "contactlistmodelselection.h"
 
-#include <QDomElement>
-#include <QStringList>
-
 #include "contactlistitem.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "textutil.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QDomElement>
+#include <QStringList>
 
 static const QString psiRosterSelectionMimeType = "application/psi-roster-selection";
 

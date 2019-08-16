@@ -6,9 +6,9 @@
 #ifndef SPARKLEAUTOUPDATER_H
 #define SPARKLEAUTOUPDATER_H
 
-#include <QString>
-
 #include "AutoUpdater/AutoUpdater.h"
+
+#include <QString>
 
 class SparkleAutoUpdater : public AutoUpdater
 {

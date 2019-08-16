@@ -1,5 +1,9 @@
 #include "psitiplabel.h"
 
+#include "common.h"
+#include "psioptions.h"
+#include "psirichtext.h"
+
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
 #include <QStyle>
@@ -9,10 +13,6 @@
 #include <QTextFrame>
 #include <QTimer>
 #include <QToolTip>
-
-#include "common.h"
-#include "psioptions.h"
-#include "psirichtext.h"
 
 PsiTipLabel *PsiTipLabel::instance_ = nullptr;
 

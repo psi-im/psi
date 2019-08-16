@@ -28,13 +28,13 @@
 
 #include "mucmanager.h"
 
-#include <QObject>
-
 #include "psiaccount.h"
 #include "xmpp_client.h"
 #include "xmpp_task.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QObject>
 
 using namespace XMPP;
 

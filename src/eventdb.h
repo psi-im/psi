@@ -20,15 +20,15 @@
 #ifndef EVENTDB_H
 #define EVENTDB_H
 
+#include "psicon.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
 #include <QDateTime>
 #include <QFile>
 #include <QObject>
 #include <QSharedPointer>
 #include <QTimer>
-
-#include "psicon.h"
-#include "psievent.h"
-#include "xmpp_jid.h"
 
 class EDBItem
 {

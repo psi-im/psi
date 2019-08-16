@@ -19,16 +19,6 @@
 
 #include "registrationdlg.h"
 
-#include <QApplication>
-#include <QDomElement>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPointer>
-#include <QPushButton>
-#include <QVBoxLayout>
-
 #include "busywidget.h"
 #include "common.h"
 #include "jidutil.h"
@@ -38,6 +28,16 @@
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QApplication>
+#include <QDomElement>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 using namespace XMPP;
 

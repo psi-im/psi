@@ -19,8 +19,6 @@
 
 #include "geolocationdlg.h"
 
-#include <QLineEdit>
-
 #include "geolocation.h"
 #include "iconset.h"
 #include "pepmanager.h"
@@ -28,6 +26,8 @@
 #include "xmpp_client.h"
 #include "xmpp_pubsubitem.h"
 #include "xmpp_task.h"
+
+#include <QLineEdit>
 
 GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(nullptr), pa_(list)
 {

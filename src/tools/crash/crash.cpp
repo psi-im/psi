@@ -19,9 +19,9 @@
  */
 #include "crash.h"
 
-#include <signal.h>
-
 #include "crash_sigsegv.h"
+
+#include <signal.h>
 
 namespace Crash {
 void registerSigsegvHandler(QString)

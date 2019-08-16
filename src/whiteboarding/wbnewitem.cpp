@@ -20,12 +20,12 @@
 
 #include "wbnewitem.h"
 
+#include "../sxe/sxesession.h"
+
 #include <QBuffer>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 #include <QSvgGenerator>
-
-#include "../sxe/sxesession.h"
 
 WbNewItem::WbNewItem(QGraphicsScene* s) {
     scene = s;

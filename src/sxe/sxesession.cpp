@@ -21,7 +21,6 @@
 
 #include "QTimer"
 #include "QUuid"
-
 #include "sxemanager.h"
 
 using namespace XMPP;

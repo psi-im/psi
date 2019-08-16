@@ -19,15 +19,6 @@
 
 #include "filesharedlg.h"
 
-#include <QApplication>
-#include <QDesktopWidget>
-#include <QFileIconProvider>
-#include <QFileInfo>
-#include <QMimeData>
-#include <QPainter>
-#include <QPushButton>
-#include <QUrl>
-
 #include "filecache.h"
 #include "filesharingmanager.h"
 #include "httpfileupload.h"
@@ -40,6 +31,15 @@
 #include "ui_filesharedlg.h"
 #include "xmpp_client.h"
 #include "xmpp_message.h"
+
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QFileIconProvider>
+#include <QFileInfo>
+#include <QMimeData>
+#include <QPainter>
+#include <QPushButton>
+#include <QUrl>
 
 FileShareDlg::FileShareDlg(const QList<FileSharingItem*> &items, QWidget *parent) :
     QDialog(parent),

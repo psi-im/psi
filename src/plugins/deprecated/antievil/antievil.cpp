@@ -2,14 +2,14 @@
  * Copyright (C) 2007-2008  Maciej Niedzielski
  */
 
-#include <QDebug>
-#include <QObject>
-#include <QTextStream>
-
 #include "psiplugin.h"
 #include "stanzafilter.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
+
+#include <QDebug>
+#include <QObject>
+#include <QTextStream>
 
 class AntiEvilPlugin: public QObject, public PsiPlugin, public StanzaFilter, public StanzaSender
 {

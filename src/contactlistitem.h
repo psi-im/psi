@@ -19,12 +19,12 @@
 
 #pragma once
 
+#include "abstracttreeitem.h"
+
 #include <QObject>
 #include <QPointer>
 #include <QString>
 #include <QVariant>
-
-#include "abstracttreeitem.h"
 
 class ContactListItem;
 class ContactListItemMenu;

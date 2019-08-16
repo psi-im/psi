@@ -19,20 +19,6 @@
 
 #include "infodlg.h"
 
-#include <QAction>
-#include <QCalendarWidget>
-#include <QDialogButtonBox>
-#include <QFileDialog>
-#include <QFormLayout>
-#include <QLabel>
-#include <QLayout>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPixmap>
-#include <QPointer>
-#include <QTabWidget>
-#include <QVBoxLayout>
-
 #include "busywidget.h"
 #include "common.h"
 #include "desktoputil.h"
@@ -52,6 +38,20 @@
 #include "xmpp_serverinfomanager.h"
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
+
+#include <QAction>
+#include <QCalendarWidget>
+#include <QDialogButtonBox>
+#include <QFileDialog>
+#include <QFormLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPixmap>
+#include <QPointer>
+#include <QTabWidget>
+#include <QVBoxLayout>
 
 using namespace XMPP;
 
