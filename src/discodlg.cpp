@@ -608,8 +608,8 @@ void DiscoListView::resizeEvent(QResizeEvent* e)
     h->resizeSection(2, h->fontMetrics().width(headerItem()->text(2)) * 2);
 #endif
     float remainingWidth = viewport()->width() - h->sectionSize(2);
-    h->resizeSection(1, int(double(remainingWidth) * 0.3));
-    h->resizeSection(0, int(double(remainingWidth) * 0.7));
+    h->resizeSection(1, int(remainingWidth * 0.3f));
+    h->resizeSection(0, int(remainingWidth * 0.7f));
 
     //h->adjustHeaderSize();
 }

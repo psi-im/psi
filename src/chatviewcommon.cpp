@@ -58,7 +58,7 @@ QString ChatViewCommon::getMucNickColor(const QString &nick, bool isSelf)
             /* Hash-driven colors */
             quint32 hash = qHash(nickwoun); // almost unique hash
             QList<QColor> &_palette = generatePalette();
-            return _palette.at(int(hash) % _palette.size()).name();
+            return _palette.at(int(hash % uint(_palette.size()))).name();
         }
 
         QStringList nickColors = PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
