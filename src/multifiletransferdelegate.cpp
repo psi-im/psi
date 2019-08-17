@@ -153,7 +153,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
         qlonglong div;
         QString unit = TextUtil::sizeUnit(qlonglong(fullSize), &div);
 
-        s = roundedNumber(qint64(curSize), div) + '/' + roundedNumber(qlonglong(fullSize), div) + unit;
+        s = roundedNumber(qint64(curSize), div) + '/' + roundedNumber(qint64(fullSize), div) + unit;
         QString space(" ");
 
         switch (state) {

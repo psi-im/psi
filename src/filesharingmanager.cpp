@@ -1328,7 +1328,7 @@ static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp:
     }
 
     QList<QByteArray> arr = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"),
-                                                    int(ulong(rangesBa.size()) - sizeof("bytes"))).split(',');
+                                                    rangesBa.size() - int(sizeof("bytes"))).split(',');
 
     for (const auto &ba: arr) {
         auto trab = ba.trimmed();
@@ -1486,7 +1486,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         if (requestedStart == 0 && requestedSize == qint64(src.file.size()))
             isRanged = false;
         else if (requestedStart + requestedSize > qint64(src.file.size()))
-            requestedSize = qint64(src.file.size() - quintptr(requestedStart)); // don't request more than declared in share
+            requestedSize = qint64(src.file.size()) - requestedStart; // don't request more than declared in share
     }
 
     FileShareDownloader *downloader = downloadShare(acc, sourceId, isRanged, requestedStart, requestedSize);
@@ -1494,7 +1494,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         return false; // REVIEW probably 404 would be better
 
     downloader->setParent(res);
-    connect(downloader, &FileShareDownloader::metaDataChanged, this, [downloader, setupHeaders, res](){
+    connect(downloader, &FileShareDownloader::metaDataChanged, this, [this, downloader, setupHeaders, res](){
         qint64 start;
         qint64 size;
         std::tie(start, size) = downloader->range();

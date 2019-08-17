@@ -84,7 +84,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
     if(!proxy.isEmpty()) {
         const ProxyItem &pi = ProxyManager::instance()->getItem(proxy);
         if(pi.type == "http") // HTTP Connect
-            p.setHttpConnect(pi.settings.host, quint8(pi.settings.port));
+            p.setHttpConnect(pi.settings.host, quint16(pi.settings.port));
         else if(pi.type == "socks") // SOCKS
             p.setSocks(pi.settings.host, quint16(pi.settings.port));
         else if(pi.type == "poll") { // HTTP Poll
