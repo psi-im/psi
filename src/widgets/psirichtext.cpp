@@ -227,7 +227,7 @@ static QString preserveOriginalObjectReplacementCharacters(QString text, TextIco
     // create a hole. ejabberd protects us from it though.
     objReplChars += text.count("<img ");
     for (int i = objReplChars; i; i--) {
-        queue->enqueue(0);
+        queue->enqueue(nullptr);
     }
 
     return text;

@@ -21,7 +21,7 @@ void X11WindowSystem::x11wmClass(WId wid, QString resName)
     XFree(classhint.res_name);
 
     const QByteArray latinResName = resName.toLatin1();
-    classhint.res_name = (char *)latinResName.data(); // res_name
+    classhint.res_name = const_cast<char *>(latinResName.data()); // res_name
     XSetClassHint(QX11Info::display(), wid, &classhint);           // set the class hints
 
     XFree(classhint.res_class);
@@ -54,7 +54,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
     result = XGetWindowProperty(display, win, nameAtom, 0, 1, False,
         typeAtom, &actual_type_return, &actual_format_return,
         &nitems_return, &bytes_after_return,
-        (unsigned char **)&result_array);
+        reinterpret_cast<unsigned char **>(&result_array));
 
     if( result != Success ) {
         //qDebug("not Success");
@@ -77,7 +77,7 @@ static bool getCardinal32Prop(Display *display, Window win, char *propName, long
 bool X11WindowSystem::desktopOfWindow(Window *window, long *desktop)
 {
     Display *display = QX11Info::display();
-    bool result = getCardinal32Prop(display, *window, (char *)"_NET_WM_DESKTOP", desktop);
+    bool result = getCardinal32Prop(display, *window, const_cast<char *>("_NET_WM_DESKTOP"), desktop);
     //if( result )
     //    qDebug("Desktop: " + QString::number(*desktop));
     return result;
@@ -92,7 +92,7 @@ bool X11WindowSystem::currentDesktop(long *desktop)
     bool result;
 
     rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
-    result = getCardinal32Prop(display, rootWin, (char *)"_NET_CURRENT_DESKTOP", desktop);
+    result = getCardinal32Prop(display, rootWin, const_cast<char *>("_NET_CURRENT_DESKTOP"), desktop);
     //if( result )
     //    qDebug("Current Desktop: " + QString::number(*desktop));
     return result;
@@ -133,7 +133,7 @@ X11WindowSystem::X11WindowSystem()
     while (i--)
         atoms[i] = 0;
 
-    XInternAtoms(QX11Info::display(), (char**)names, atomsCount, true, atoms);
+    XInternAtoms(QX11Info::display(), const_cast<char**>(names), atomsCount, true, atoms);
 
     i = atomsCount;
     while (i--)
@@ -177,14 +177,14 @@ QRect X11WindowSystem::windowRect(Window win)
     int format_ret;
     unsigned char *data_ret;
     unsigned long nitems_ret, unused;
-    const Atom XA_CARDINAL = (Atom) 6;
+    const Atom XA_CARDINAL = Atom(6);
     if (net_frame_extents != None && XGetWindowProperty(QX11Info::display(), win, net_frame_extents,
                                                         0l, 4l, False, XA_CARDINAL, &type_ret, &format_ret,
                                                         &nitems_ret, &unused, &data_ret) == Success)
     {
         if (type_ret == XA_CARDINAL && format_ret == 32 && nitems_ret == 4) {
             //Struts array: 0 - left, 1 - right, 2 - top, 3 - bottom
-            long *d = (long *) data_ret;
+            long *d = reinterpret_cast<long *>(data_ret);
             x -= d[0];
             y -= d[2];
             w += d[0] + d[1];
@@ -194,7 +194,7 @@ QRect X11WindowSystem::windowRect(Window win)
             XFree(data_ret);
     }
 
-    return QRect(x, y, w, h);
+    return QRect(x, y, int(w), int(h));
 }
 
 // Determine if window is obscured by other windows
@@ -215,7 +215,7 @@ bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
     long desktop;
     desktopOfWindow(&win, &desktop);
 
-    const Atom XA_WINDOW= (Atom) 33;
+    const Atom XA_WINDOW= Atom(33);
     Atom type_ret;
     int format_ret;
     unsigned char *data_ret;
@@ -228,7 +228,7 @@ bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
                        0, MAX_PROP_SIZE, False, XA_WINDOW, &type_ret,
                        &format_ret, &nitems_ret, &unused, &data_ret) == Success) {
             if (type_ret == XA_WINDOW && format_ret == 32) {
-                Window *wins = (Window *) data_ret;
+                Window *wins = reinterpret_cast<Window *>(data_ret);
 
                 //Enumerate windows in reverse order (from most foreground window)
                 while (nitems_ret--)
@@ -266,7 +266,7 @@ bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
 //If window has any type other than allowed_types return false, else return true
 bool X11WindowSystem::windowHasOnlyTypes(Window win, const QSet<Atom> &allowedTypes)
 {
-    const Atom XA_ATOM = (Atom) 4;
+    const Atom XA_ATOM = Atom(4);
     Atom type_ret;
     int format_ret;
     unsigned char *data_ret;
@@ -276,7 +276,7 @@ bool X11WindowSystem::windowHasOnlyTypes(Window win, const QSet<Atom> &allowedTy
                                                          0l, 2048l, False, XA_ATOM, &type_ret,
                                                          &format_ret, &nitems_ret, &unused, &data_ret) == Success) {
         if (type_ret == XA_ATOM && format_ret == 32 && nitems_ret > 0) {
-            Atom *types = (Atom *) data_ret;
+            Atom *types = reinterpret_cast<Atom *>(data_ret);
             for (unsigned long i = 0; i < nitems_ret; i++)
             {
                 if (!allowedTypes.contains(types[i]))
@@ -296,7 +296,7 @@ bool X11WindowSystem::windowHasOnlyTypes(Window win, const QSet<Atom> &allowedTy
 //If window has any of filteredStates return
 bool X11WindowSystem::windowHasAnyOfStates(Window win, const QSet<Atom> &filteredStates)
 {
-    const Atom XA_ATOM = (Atom) 4;
+    const Atom XA_ATOM = Atom(4);
     Atom type_ret;
     int format_ret;
     unsigned char *data_ret;
@@ -305,7 +305,7 @@ bool X11WindowSystem::windowHasAnyOfStates(Window win, const QSet<Atom> &filtere
                                                    False, XA_ATOM, &type_ret, &format_ret,
                                                    &nitems_ret, &unused, &data_ret) == Success) {
         if (type_ret == XA_ATOM && format_ret == 32 && nitems_ret > 0) {
-            Atom *states = (Atom *) data_ret;
+            Atom *states = reinterpret_cast<Atom *>(data_ret);
             for (unsigned long i = 0; i < nitems_ret; i++) {
 
                 if (filteredStates.contains(states[i]))

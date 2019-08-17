@@ -748,7 +748,7 @@ QSize LineEdit::sizeHint() const
                                        : int(document()->documentLayout()->documentSize().height());
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
-    ((QTextEdit*)this)->setMaximumHeight(sh.height());
+    static_cast<QTextEdit*>(const_cast<LineEdit*>(this))->setMaximumHeight(sh.height());
     return sh;
 }
 

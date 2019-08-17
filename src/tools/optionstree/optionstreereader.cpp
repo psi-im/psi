@@ -101,7 +101,7 @@ QVariant OptionsTreeReader::readVariant(const QString& type)
 
         if (known) {
             result = readElementText();
-            result.convert(varianttype);
+            result.convert(int(varianttype));
         }
         else {
             QString result;

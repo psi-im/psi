@@ -59,9 +59,9 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
             addLangDlg->show();
             QObject::connect(addLangDlg,  &QDialog::accepted, this, [=]() {
                 LanguageManager::LangId id;
-                id.language = m_addLangUi->cmbLang->currentData().toInt();
-                id.script = m_addLangUi->cmbScript->currentData().toInt();
-                id.country = m_addLangUi->cmbCountry->currentData().toInt();
+                id.language = quint16(m_addLangUi->cmbLang->currentData().toInt());
+                id.script = quint8(m_addLangUi->cmbScript->currentData().toInt());
+                id.country = quint16(m_addLangUi->cmbCountry->currentData().toInt());
                 bool found = false;
                 for (int i = 0; i < m_ui->twLang->count(); i++) {
                     QPlainTextEdit *edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));

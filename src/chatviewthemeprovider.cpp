@@ -45,7 +45,7 @@ class ChatViewThemeProvider;
 ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) :
     PsiThemeProvider(psi)
 {
-    ChatViewCon::init((PsiCon*)parent());
+    ChatViewCon::init(static_cast<PsiCon*>(parent()));
 }
 
 const QStringList ChatViewThemeProvider::themeIds() const

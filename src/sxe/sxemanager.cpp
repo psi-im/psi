@@ -281,7 +281,7 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
             return false;
 //        }
         // othewise abort negotiation
-        abortNegotiation(negotiation);
+        abortNegotiation(negotiation); //NEEDS REVIEW. CODE WILL NEVER BE EXECUTED
         return false;
 
     } else if(negotiationElement.nodeName() == "history-offer"

@@ -201,7 +201,7 @@ public:
         QList<QPixmap> rightPixs;
 
         if(showAffiliations_) {
-            QPixmap pix = index.data(GCUserModel::AffilationIconRole).value<QPixmap>();;
+            QPixmap pix = index.data(GCUserModel::AffilationIconRole).value<QPixmap>();
             if(!pix.isNull())
                 rightPixs.push_back(pix);
         }
@@ -318,7 +318,7 @@ QVariant GCUserModel::data(const QModelIndex &index, int role) const
     if (index.parent().isValid()) {
         // contact
 
-        Role groupRole = (Role)index.parent().row();
+        Role groupRole = Role(index.parent().row());
         const auto &cs = contacts[groupRole];
         if (index.row() >= cs.size()) {
             return QVariant();
@@ -328,7 +328,6 @@ QVariant GCUserModel::data(const QModelIndex &index, int role) const
         switch (role) {
         case Qt::DisplayRole:
             return contact.name;
-            break;
         case Qt::ToolTipRole:
             return makeToolTip(contact);
         case StatusRole:
@@ -700,7 +699,7 @@ void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
 
 void GCUserView::setLooks()
 {
-    ((GCUserViewDelegate*)itemDelegate())->updateSettings();
+    static_cast<GCUserViewDelegate*>(itemDelegate())->updateSettings();
     viewport()->update();
 }
 

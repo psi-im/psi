@@ -46,6 +46,7 @@
 // declared later
 //
 extern char psigraphic[];
+static const double varPi(M_PI);
 
 // panel class
 class CPanel
@@ -155,11 +156,11 @@ public:
 
             l = panel[i].GetModHeight();
 
-            double radangle = (double) 3.1415926f * (double) panel[i].GetAngle() / (double) 512;
-            int step = (int)((double)1024 / cos(radangle));
+            double radangle = varPi * double(panel[i].GetAngle()) / double(512);
+            int step = int(double(1024) / cos(radangle));
             step = step < 0 ? -step : step;
 
-            int n = (int)((double)1024 * cos(radangle) * 17 / 2);
+            int n = int(double(1024) * cos(radangle) * 17 / 2);
             n = n < 0 ? -n : n;
 
             row = 8192 - step * n / 1024;
@@ -356,8 +357,8 @@ int CPanel::GetModHeight()
     int l = GetAngle();
     if(l > 512)
         l = 1024 - l;
-    double radangle = (double) 3.1415926f * (double) l / (double) 512;
-    int tmp = (int)(cos(radangle)* (double) height);
+    double radangle = varPi * double(l) / double(512);
+    int tmp = int(cos(radangle)* double(height));
     return tmp < 0 ? -tmp : tmp;
 }
 
@@ -370,8 +371,8 @@ int CPanel::GetShade()
         l %= 1024;
     if(l == 0)
         l += 1024;
-    double radangle = (double) 3.1415926f * (double) l / (double) 512;
-    return 128 + (int)(cos(radangle)* (double) 128);
+    double radangle = varPi * double(l) / double(512);
+    return 128 + int(cos(radangle)* double(128));
 }
 
 void CPanel::Spin(int n)

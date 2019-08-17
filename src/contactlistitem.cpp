@@ -492,7 +492,6 @@ QVariant ContactListItem::value(int role) const
 
             case ContactListModel::ActivityRole:
                 return QVariant::fromValue(_contact->userListItem().activity());
-                break;
 
             default:
                 break;

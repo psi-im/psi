@@ -213,8 +213,8 @@ public:
 
         connect(app, &Jingle::FileTransfer::Application::connectionReady, this, [this](){
             auto r = app->acceptFile().range();
-            rangeStart = r.offset;
-            rangeSize  = r.length;
+            rangeStart = qint64(r.offset);
+            rangeSize  = qint64(r.length);
             connection = app->connection();
             connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this, &JingleFileShareDownloader::readyRead);
             emit metaDataChanged();
@@ -403,13 +403,13 @@ public:
     {
         if (maxSize >= receivedData.count()) {
             qint64 ret = receivedData.count();
-            memcpy(data, receivedData.data(), ret);
+            memcpy(data, receivedData.data(), size_t(ret));
             receivedData.clear();
             return ret;
         }
 
-        memcpy(data, receivedData.data(), maxSize);
-        receivedData = receivedData.mid(maxSize);
+        memcpy(data, receivedData.data(), size_t(maxSize));
+        receivedData = receivedData.mid(int(maxSize));
         return maxSize;
     }
 
@@ -679,7 +679,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
     image.save(&buffer, "PNG", 0);
     sha1hash = QCryptographicHash::hash(ba, QCryptographicHash::Sha1);
     mimeType = QString::fromLatin1("image/png");
-    _fileSize = ba.size();
+    _fileSize = size_t(ba.size());
 
     cache = manager->getCacheItem(sha1hash, true);
     if (cache) {
@@ -706,7 +706,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
 {
     QCryptographicHash hash(QCryptographicHash::Sha1);
     QFile file(fileName);
-    _fileSize = file.size();
+    _fileSize = size_t(file.size());
     file.open(QIODevice::ReadOnly);
     hash.addData(&file);
     sha1hash = hash.result();
@@ -732,7 +732,7 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
 {
     sha1hash = QCryptographicHash::hash(data, QCryptographicHash::Sha1);
     mimeType = mime;
-    _fileSize = data.size();
+    _fileSize = size_t(data.size());
 
     cache = manager->getCacheItem(sha1hash, true);
     if (cache) {
@@ -772,7 +772,7 @@ void FileSharingItem::initFromCache()
     }
     else {
         _fileName = link;
-        _fileSize = QFileInfo(_fileName).size();
+        _fileSize = size_t(QFileInfo(_fileName).size());
     }
 
     sha1hash = QByteArray::fromBase64(cache->id().toLatin1());
@@ -837,7 +837,7 @@ Reference FileSharingItem::toReference() const
     jfile.setDate(fi.lastModified());
     jfile.addHash(hash);
     jfile.setName(fi.fileName());
-    jfile.setSize(fi.size());
+    jfile.setSize(quint64(fi.size()));
     jfile.setMediaType(mimeType);
     jfile.setDescription(_description);
 
@@ -849,7 +849,7 @@ Reference FileSharingItem::toReference() const
         thumbPix.save(&buf, "PNG");
         QString png(QString::fromLatin1("image/png"));
         auto bob = acc->client()->bobManager()->append(pixData, png, isTempFile? TEMP_TTL: FILE_TTL);
-        Thumbnail thumb(QByteArray(), png, thumbSize.width(), thumbSize.height());
+        Thumbnail thumb(QByteArray(), png, quint32(thumbSize.width()), quint32(thumbSize.height()));
         thumb.uri = QLatin1String("cid:") + bob.cid();
         jfile.setThumbnail(thumb);
     }
@@ -924,7 +924,7 @@ void FileSharingItem::publish()
             hfu->setParent(this);
             connect(hfu, &HttpFileUpload::progress, this, [this](qint64 bytesReceived, qint64 bytesTotal){
                 Q_UNUSED(bytesTotal)
-                emit publishProgress(bytesReceived);
+                emit publishProgress(size_t(bytesReceived));
             });
             connect(hfu, &HttpFileUpload::finished, this, [hfu, this]() {
                 httpFinished = true;
@@ -1260,7 +1260,7 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         auto ft = p.first;
         auto item = p.second;
 
-        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this, [this,ft,item](quint64 offset, quint64 /*size*/){
+        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this, [ft,item](quint64 offset, quint64 /*size*/){
             auto vm = item->metadata();
             QString fileName = vm.value(QString::fromLatin1("link")).toString();
             if (fileName.isEmpty()) {
@@ -1271,7 +1271,7 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
                 ft->setDevice(nullptr);
                 return;
             }
-            f->seek(offset);
+            f->seek(qint64(offset));
             ft->setDevice(f);
         });
     }
@@ -1328,7 +1328,7 @@ static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp:
     }
 
     QList<QByteArray> arr = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"),
-                                                    rangesBa.size() - sizeof("bytes")).split(',');
+                                                    int(ulong(rangesBa.size()) - sizeof("bytes"))).split(',');
 
     for (const auto &ba: arr) {
         auto trab = ba.trimmed();
@@ -1409,7 +1409,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         return true;
     };
 
-    auto setupHeaders = [req,res](
+    auto setupHeaders = [res](
             qint64 fileSize,
             QString contentType,
             QDateTime lastModified,
@@ -1478,7 +1478,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         return false; // really? maybe better 404 ?
     Private::Source &src = *it;
 
-    if (!handleRequestedRange(src.file.hasSize()? src.file.size() : -1)) {
+    if (!handleRequestedRange(src.file.hasSize()? qint64(src.file.size()) : -1)) {
         return true; // handled with error
     }
 
@@ -1486,7 +1486,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         if (requestedStart == 0 && requestedSize == qint64(src.file.size()))
             isRanged = false;
         else if (requestedStart + requestedSize > qint64(src.file.size()))
-            requestedSize = src.file.size() - requestedStart; // don't request more than declared in share
+            requestedSize = qint64(src.file.size() - quintptr(requestedStart)); // don't request more than declared in share
     }
 
     FileShareDownloader *downloader = downloadShare(acc, sourceId, isRanged, requestedStart, requestedSize);
@@ -1494,12 +1494,12 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         return false; // REVIEW probably 404 would be better
 
     downloader->setParent(res);
-    connect(downloader, &FileShareDownloader::metaDataChanged, this, [this, downloader, setupHeaders, res](){
+    connect(downloader, &FileShareDownloader::metaDataChanged, this, [downloader, setupHeaders, res](){
         qint64 start;
         qint64 size;
         std::tie(start, size) = downloader->range();
         auto const file = downloader->jingleFile();
-        setupHeaders(file.hasSize()? file.size() : -1, file.mediaType(),
+        setupHeaders(file.hasSize()? qint64(file.size()) : -1, file.mediaType(),
                      file.date(), downloader->isRanged(), start, size);
 
         bool *disconnected = new bool(false);

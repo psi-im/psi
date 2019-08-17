@@ -618,7 +618,7 @@ void PEPManager::messageReceived(const Message& m)
 
 void PEPManager::getFinished()
 {
-    PEPGetTask* task = (PEPGetTask*) sender();
+    PEPGetTask* task = static_cast<PEPGetTask*>(sender());
     if (task->success()) {
         // Act as if the item was published. This is a convenience
         // implementation, probably should be changed later.

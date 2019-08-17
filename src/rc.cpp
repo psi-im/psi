@@ -223,23 +223,23 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
             else if (fl[i].var() == "auto-offline") {
                 QString v =  fl[i].value().first();
                 if (v == "1")
-                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) true);
+                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", true);
                 else if (v == "0")
-                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) false);
+                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", false);
             }
             else if (fl[i].var() == "auto-auth") {
                 QString v =  fl[i].value().first();
                 if (v == "1")
-                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) true);
+                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", true);
                 else if (v == "0")
-                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) false);
+                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", false);
             }
             else if (fl[i].var() == "auto-open") {
                 QString v =  fl[i].value().first();
                 if (v == "1")
-                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) true);
+                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", true);
                 else if (v == "0")
-                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) false);
+                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", false);
             }
         }
         return AHCommand::completedReply(c);

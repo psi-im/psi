@@ -59,7 +59,7 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
 
     // add the initial items
     const QDomNodeList children = session_->document().documentElement().childNodes();
-    for(int i = 0; i < (int)children.length(); i++) {
+    for(int i = 0; i < int(children.length()); i++) {
         const QDomNode node = children.at(i);
         if(node.isElement()) {
             queueNodeInspection(node.toElement());
@@ -88,8 +88,8 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
     else {
         QSize size;
         QRectF rect = scene_->sceneRect();
-        size.setWidth(rect.x() + rect.width());
-        size.setHeight(rect.y() + rect.height());
+        size.setWidth(int(rect.x() + rect.width()));
+        size.setHeight(int(rect.y() + rect.height()));
         if(size.width() > 0 && size.height() > 0)
             setSize(size);
         else
@@ -165,7 +165,7 @@ static QRectF parseSvgViewBox(QString string) {
     }
 
     // qDebug() << QString("QRectF(%1 %2 %3 %4)").arg(numbers[0]).arg(numbers[1]).arg(numbers[2]).arg(numbers[3]).toLatin1();
-    return QRect(numbers[0], numbers[1], numbers[2], numbers[3]);
+    return QRect(int(numbers[0]), int(numbers[1]), int(numbers[2]), int(numbers[3]));
 }
 
 void WbWidget::checkForViewBoxChange(const QDomNode &node) {

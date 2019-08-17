@@ -205,7 +205,7 @@ void AddUserDlg::serviceActivated(int x)
         return;
     --x;
 
-    if(x >= 0 && x < (int)d->services.count()) {
+    if(x >= 0 && x < int(d->services.count())) {
         d->jt = new JT_Gateway(d->pa->client()->rootTask());
         connect(d->jt, SIGNAL(finished()), SLOT(jt_getFinished()));
         d->jt->get(Jid(d->services[x]));

@@ -306,7 +306,7 @@ void AccountManageTree::dropEvent(QDropEvent *event)
     if (tree) {
         QList<PsiAccount*> accountsList;
         foreach (QTreeWidgetItem *ami, tree->findItems("*", Qt::MatchWildcard)) {
-            accountsList.append(((AccountManageItem *)ami)->pa.data());
+            accountsList.append(static_cast<AccountManageItem *>(ami)->pa.data());
         }
         emit orderChanged(accountsList);
     }
@@ -397,7 +397,7 @@ void AccountManageDlg::modify(QTreeWidgetItem *lvi)
 
 void AccountManageDlg::remove()
 {
-    AccountManageItem *i = (AccountManageItem *)lv_accs->currentItem();
+    AccountManageItem *i = static_cast<AccountManageItem *>(lv_accs->currentItem());
     if(!i)
         return;
 

@@ -109,7 +109,7 @@ public:
     {
         init();
 
-        QBuffer buffer((QByteArray *)ba);
+        QBuffer buffer(const_cast<QByteArray *>(ba));
         buffer.open(QBuffer::ReadOnly);
         QImageReader reader(&buffer);
 

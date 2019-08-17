@@ -465,7 +465,7 @@ void SxeSession::flush() {
         return;
 
     // create the sxe element
-    QDomDocument *doc = ((SxeManager*)parent())->client()->doc();
+    QDomDocument *doc = static_cast<SxeManager*>(parent())->client()->doc();
     QDomElement sxe = doc->createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session_);
 
@@ -701,7 +701,7 @@ QList<QString> SxeSession::usedSxeIds() {
 void SxeSession::queueOutgoingEdit(SxeEdit* edit) {
     if(!importing_) {
         QDomElement el = edit->xml(doc_);
-        queuedOutgoingEdits_.append(((SxeManager*)parent())->client()->doc()->importNode(el, true));
+        queuedOutgoingEdits_.append(static_cast<SxeManager*>(parent())->client()->doc()->importNode(el, true));
     }
 }
 
