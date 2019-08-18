@@ -46,7 +46,6 @@
 // declared later
 //
 extern char psigraphic[];
-static const double varPi(M_PI);
 
 // panel class
 class CPanel
@@ -156,7 +155,7 @@ public:
 
             l = panel[i].GetModHeight();
 
-            double radangle = varPi * double(panel[i].GetAngle()) / double(512);
+            double radangle = M_PI * double(panel[i].GetAngle()) / double(512);
             int step = int(double(1024) / cos(radangle));
             step = step < 0 ? -step : step;
 
@@ -357,7 +356,7 @@ int CPanel::GetModHeight()
     int l = GetAngle();
     if(l > 512)
         l = 1024 - l;
-    double radangle = varPi * double(l) / double(512);
+    double radangle = M_PI * double(l) / double(512);
     int tmp = int(cos(radangle)* double(height));
     return tmp < 0 ? -tmp : tmp;
 }
@@ -371,7 +370,7 @@ int CPanel::GetShade()
         l %= 1024;
     if(l == 0)
         l += 1024;
-    double radangle = varPi * double(l) / double(512);
+    double radangle = M_PI * double(l) / double(512);
     return 128 + int(cos(radangle)* double(128));
 }
 
