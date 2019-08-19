@@ -19,9 +19,10 @@
 
 #include "sxesession.h"
 
+#include "sxemanager.h"
+
 #include "QTimer"
 #include "QUuid"
-#include "sxemanager.h"
 
 using namespace XMPP;
 

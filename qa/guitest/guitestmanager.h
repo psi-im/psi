@@ -1,9 +1,9 @@
 #ifndef GUITESTMANAGER_H
 #define GUITESTMANAGER_H
 
-#include <QStringList>
-
 #include "guitest.h"
+
+#include <QStringList>
 
 class GUITestManager
 {

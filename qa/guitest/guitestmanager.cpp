@@ -1,6 +1,6 @@
-#include <QDebug>
-
 #include "guitestmanager.h"
+
+#include <QDebug>
 
 GUITestManager::GUITestManager()
 {
