@@ -1086,7 +1086,7 @@ QStringList EventDlg::stringToList(const QString &s, bool enc) const
     while(1) {
         // scan along for a comma
         bool found = false;
-        for(int n = x1; n < (int)s.length(); ++n) {
+        for(int n = x1; n < int(s.length()); ++n) {
             if(s.at(n) == ',') {
                 found = true;
                 x2 = n;
@@ -1226,7 +1226,7 @@ void EventDlg::to_tryComplete()
 
         bool ok = true;
         int n;
-        for(n = 0; n < (int)s.length(); ++n) {
+        for(n = 0; n < int(s.length()); ++n) {
             if(s.at(n).toLower() != name.at(n).toLower()) {
                 ok = false;
                 break;
@@ -1403,7 +1403,7 @@ void EventDlg::showEvent(QShowEvent *e)
 void EventDlg::keyPressEvent(QKeyEvent *e)
 {
     // FIXMEKEY
-    QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier);
+    QKeySequence key = int(e->key()) + int( e->modifiers() & ~Qt::KeypadModifier);
     if(ShortcutManager::instance()->shortcuts("common.close").contains(key))
         close();
     else if(ShortcutManager::instance()->shortcuts("message.send").contains(key))

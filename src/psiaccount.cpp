@@ -195,9 +195,9 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid 
     if (!acc.proxyID.isEmpty()) {
         const ProxyItem &pi = ProxyManager::instance()->getItem(acc.proxyID);
         if (pi.type == "http") // HTTP Connect
-            p.setHttpConnect(pi.settings.host, pi.settings.port);
+            p.setHttpConnect(pi.settings.host, quint16(pi.settings.port));
         else if (pi.type == "socks") // SOCKS
-            p.setSocks(pi.settings.host, pi.settings.port);
+            p.setSocks(pi.settings.host, quint16(pi.settings.port));
         else if (pi.type == "poll") { // HTTP Poll
             QUrl u = pi.settings.url;
             QUrlQuery q(u.query(QUrl::FullyEncoded));
@@ -208,7 +208,7 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid 
                     q.addQueryItem("server", jid.domain());
                 u.setQuery(q);
             }
-            p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
+            p.setHttpPoll(pi.settings.host, quint16(pi.settings.port), u.toString());
             p.setPollInterval(2);
         }
 
@@ -1776,7 +1776,7 @@ void PsiAccount::login()
     d->conn->setProxy(p);
 
     if (useHost) {
-        d->conn->setOptHostPort(host, port);
+        d->conn->setOptHostPort(host, quint16(port));
         d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
     }
 
@@ -1899,7 +1899,7 @@ void PsiAccount::cs_connected()
         return;
 
     if (bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
-        d->localAddress = ((BSocket *)bs)->address();
+        d->localAddress = static_cast<BSocket *>(bs)->address();
 
         if (d->avCallManager)
             d->avCallManager->setSelfAddress(d->localAddress);
@@ -2031,7 +2031,7 @@ void PsiAccount::cs_authenticated()
 
 void PsiAccount::sessionStart_finished()
 {
-    JT_Session *j = (JT_Session *)sender();
+    JT_Session *j = static_cast<JT_Session *>(sender());
     if ( j->success() ) {
         sessionStarted();
     } else {
@@ -4071,7 +4071,7 @@ void PsiAccount::changeStatus(int x, bool forceDialog)
             status.setIsInvisible(true);
             break;
         default:
-            status = Status((XMPP::Status::Type)x, "", 0);
+            status = Status(XMPP::Status::Type(x), "", 0);
             break;
         }
         if (o->getOption("options.status.last-overwrite.by-status").toBool()) {
@@ -5890,7 +5890,7 @@ void PsiAccount::shareImage(const Jid &target, const QImage &image, const QStrin
     buffer->seek(0);
 
     auto hfu = d->client->httpFileUploadManager()->upload(
-                   buffer, buffer->size(), QString("psi-share-%1.png").arg(QString::number(
+                   buffer, size_t(buffer->size()), QString("psi-share-%1.png").arg(QString::number(
                                                                                QDateTime::currentMSecsSinceEpoch())),
                    QLatin1String("image/png"));
     buffer->setParent(hfu);
@@ -6170,7 +6170,7 @@ void PsiAccount::trySignPresence()
 void PsiAccount::pgp_signFinished()
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *t = (PGPTransaction *) sender();
+    PGPTransaction *t = static_cast<PGPTransaction *>(sender());
     if (t->success()) {
         Status s = d->loginStatus;
         s.setXSigned(PGPUtil::instance().stripHeaderFooter(QString(t->signature())));
@@ -6214,7 +6214,7 @@ void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 void PsiAccount::pgp_verifyFinished()
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *t = (PGPTransaction *) sender();
+    PGPTransaction *t = static_cast<PGPTransaction *>(sender());
     Jid j = t->jid();
     foreach (UserListItem *u, findRelevant(j)) {
         UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
@@ -6335,7 +6335,7 @@ void PsiAccount::processEncryptedMessage(const Message &m)
 
 void PsiAccount::pgp_decryptFinished()
 {
-    PGPTransaction *pt = (PGPTransaction *) sender();
+    PGPTransaction *pt = static_cast<PGPTransaction *>(sender());
     bool tryAgain = false;
     if (pt->success()) {
         Message m = pt->message();

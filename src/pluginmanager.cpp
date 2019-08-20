@@ -712,7 +712,7 @@ bool PluginManager::setTune(int account, const QString& jid, const QString& tune
 void PluginManager::initPopup(const QString& text, const QString& title, const QString& icon, int type)
 {
     const PsiIcon* ico = IconsetFactory::iconPtr(icon);
-    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, (PopupManager::PopupType)type);
+    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, PopupManager::PopupType(type));
 }
 
 void PluginManager::initPopupForJid(int account, const QString &jid, const QString &text, const QString &title, const QString &icon, int type)
@@ -724,10 +724,10 @@ void PluginManager::initPopupForJid(int account, const QString &jid, const QStri
         UserListItem *i = pa->findFirstRelevant(j);
         PsiIcon *statusIco = PsiIconset::instance()->statusPtr(i);
         const QPixmap pix = pa->avatarFactory()->getAvatar(j);
-        psi_->popupManager()->doPopup(pa, j, ico, title, &pix, statusIco, text, true, (PopupManager::PopupType)type);
+        psi_->popupManager()->doPopup(pa, j, ico, title, &pix, statusIco, text, true, PopupManager::PopupType(type));
         return;
     }
-    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, (PopupManager::PopupType)type);
+    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, PopupManager::PopupType(type));
 }
 
 int PluginManager::registerOption(const QString& name, int initValue, const QString& path)

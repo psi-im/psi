@@ -123,11 +123,11 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
 {
     std::unique_ptr<int[]> layouts(new int[50 * 10000]);
     for (int i = 0; i < rows; ++i) {
-        layouts[i] = i;
+        layouts[size_t(i)] = i;
     }
 
     int *pPrevLayout = &layouts[0];
-    int *pLayout = &layouts[rows];
+    int *pLayout = &layouts[size_t(rows)];
     int nTabs = tabs.size();
 
 
@@ -407,7 +407,7 @@ void TabBar::Private::layoutTabs()
             QStyleOptionTab &tab = hackedTabs[j];
             int tabWidth = tab.rect.width();
             if (rows > 1 && (j < firstNormalTab || j >= pinnedTabs)) {
-                tabWidth *= row.sf;
+                tabWidth *= int(row.sf);
                 tab.rect.setWidth(tabWidth);
             }
             tab.rect.moveTop(bottom);

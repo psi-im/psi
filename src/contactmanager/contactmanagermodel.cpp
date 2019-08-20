@@ -86,7 +86,7 @@ QVariant ContactManagerModel::data(const QModelIndex &index, int role) const
             return userFieldString(u, columnRole);
         case Qt::TextAlignmentRole:
             if (columnRole ==CheckRole || columnRole == NodeRole)
-                return (int)(Qt::AlignRight | Qt::AlignVCenter);
+                return int(Qt::AlignRight | Qt::AlignVCenter);
             break;
         case Qt::CheckStateRole:
             if (columnRole == CheckRole) {

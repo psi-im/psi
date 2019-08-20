@@ -215,15 +215,15 @@ void MultiFileTransferItem::updateStats()
         return;
     }
     double speedf = double(d->currentSize - d->lastSize) * 1000.0 / double(elapsed); // bytes per second
-    d->lastSpeeds.append(speedf);
+    d->lastSpeeds.append(uint(speedf));
 
     quint64 sum = 0;
     for (int i = d->lastSpeeds.firstIndex(); i < d->lastSpeeds.lastIndex(); i++) {
         sum += d->lastSpeeds.at(i);
     }
-    d->speed = quint32(sum / d->lastSpeeds.size());
+    d->speed = quint32(sum / qulonglong(d->lastSpeeds.size()));
 
-    d->timeRemaining = (d->fullSize - d->currentSize) / speedf;
+    d->timeRemaining = quint32((d->fullSize - d->currentSize) / speedf);
     d->lastSize = d->currentSize;
     d->lastTimer.start();
 }

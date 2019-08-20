@@ -48,14 +48,14 @@ static QString getNext(QString *str)
 {
     int n = 0;
     // skip leading spaces (but *do* return them later!)
-    while(n < (int)str->length() && str->at(n).isSpace()) {
+    while(n < int(str->length()) && str->at(n).isSpace()) {
         ++n;
     }
-    if(n == (int)str->length()) {
+    if(n == int(str->length())) {
         return QString();
     }
     // find end or next space
-    while(n < (int)str->length() && !str->at(n).isSpace()) {
+    while(n < int(str->length()) && !str->at(n).isSpace()) {
         ++n;
     }
     QString result = str->mid(0, n);
@@ -78,14 +78,14 @@ static QStringList wrapString(const QString &str, int wid)
         }
         //printf("word:[%s]\n", word.latin1());
         if(!cur.isEmpty()) {
-            if((int)cur.length() + (int)word.length() > wid) {
+            if(int(cur.length()) + int(word.length()) > wid) {
                 lines += cur;
                 cur = "";
             }
         }
         if(cur.isEmpty()) {
             // trim the whitespace in front
-            for(int n = 0; n < (int)word.length(); ++n) {
+            for(int n = 0; n < int(word.length()); ++n) {
                 if(!word.at(n).isSpace()) {
                     if(n > 0) {
                         word = word.mid(n);
@@ -1043,7 +1043,7 @@ void HistoryDlg::exportHistory()
     {
         quint64 edbCnt = d->psi->edb()->eventsCount(paId, d->jid);
         if (edbCnt > 1000) {
-            max = edbCnt / 1000;
+            max = int(edbCnt / 1000);
             if ((edbCnt % 1000) != 0)
                 ++max;
             showProgress(max);

@@ -118,7 +118,7 @@ ConferenceBookmark BookmarkManageDlg::bookmarkFor(const QModelIndex& index) cons
 {
     return ConferenceBookmark(index.data(Qt::DisplayRole).toString(),
                               index.data(JidRole).toString(),
-                              (ConferenceBookmark::JoinType)index.data(AutoJoinRole).toInt(),
+                              ConferenceBookmark::JoinType(index.data(AutoJoinRole).toInt()),
                               index.data(NickRole).toString(),
                               index.data(PasswordRole).toString());
 }

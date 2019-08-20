@@ -84,7 +84,7 @@ public:
         }
 
         if ( i )
-            ic = new PsiIcon(*((PsiIcon *)i));
+            ic = new PsiIcon(*(const_cast<PsiIcon *>(i)));
         else
             ic = nullptr;
     }
@@ -295,16 +295,16 @@ void IconSelect::setIconset(const Iconset &iconset)
         w += icon->pixmap().width();
         h += icon->pixmap().height();
     }
-    w /= count;
-    h /= count;
+    w /= float(count);
+    h /= float(count);
 
     const int margin = 2;
-    int tileSize = (int)qMax(w, h) + 2*margin;
+    int tileSize = int(qMax(w, h)) + 2*margin;
 
     QRect r = QApplication::desktop()->availableGeometry( menu );
     int maxSize = qMin(r.width(), r.height())*3/4;
 
-    int size = (int)ceil( sqrt( count ) );
+    int size = int(ceil( sqrt( count ) ));
 
     if ( size*tileSize > maxSize ) { // too many icons. find reasonable size.
         int c = 0;

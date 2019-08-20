@@ -137,8 +137,8 @@ FancyPopup::Private::~Private()
 
 void FancyPopup::Private::popupDestroyed(QObject *obj)
 {
-    if ( prevPopups.contains((FancyPopup *)obj) ) {
-        prevPopups.removeAll((FancyPopup *)obj);
+    if ( prevPopups.contains(static_cast<FancyPopup *>(obj)) ) {
+        prevPopups.removeAll(static_cast<FancyPopup *>(obj));
         popup->move( position() );
     }
 }
@@ -223,7 +223,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
 {
     if (e->type() == QEvent::MouseButtonRelease)
-        popup->mouseReleaseEvent((QMouseEvent *)e);
+        popup->mouseReleaseEvent(static_cast<QMouseEvent *>(e));
     return QObject::eventFilter(o, e);
 }
 
@@ -295,7 +295,7 @@ void FancyPopup::mouseReleaseEvent(QMouseEvent *e)
     if (!isVisible())
         return;
 
-    emit clicked((int)e->button());
+    emit clicked(int(e->button()));
     hide();
 }
 

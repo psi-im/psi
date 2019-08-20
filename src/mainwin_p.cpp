@@ -333,8 +333,7 @@ bool PopupAction::addTo(QWidget *w)
 
 void PopupAction::objectDestroyed ()
 {
-    const QObject *obj = sender();
-    d->buttons.removeAll( (PopupActionButton *) obj );
+    d->buttons.removeAll( static_cast<PopupActionButton *>(sender()) );
 }
 
 void PopupAction::setEnabled (bool e)
@@ -356,7 +355,7 @@ IconAction *PopupAction::copy() const
 
 PopupAction &PopupAction::operator=( const PopupAction &from )
 {
-    *( (IconAction *)this ) = from;
+    *( static_cast<IconAction *>(this) ) = from;
 
     d->size = from.d->size;
     setIcon( from.d->icon );
@@ -380,7 +379,7 @@ MLabel::MLabel(QWidget *parent, const char *name)
 
 void MLabel::mouseReleaseEvent(QMouseEvent *e)
 {
-    emit clicked(e->button());
+    emit clicked(int(e->button()));
     e->ignore();
 }
 
@@ -474,7 +473,7 @@ IconAction *MAction::copy() const
 
 MAction &MAction::operator=( const MAction &from )
 {
-    *( (IconAction *)this ) = from;
+    *( static_cast<IconAction *>(this) ) = from;
 
     return *this;
 }
@@ -675,7 +674,7 @@ IconAction *EventNotifierAction::copy() const
 
 EventNotifierAction &EventNotifierAction::operator=( const EventNotifierAction &from )
 {
-    *( (IconAction *)this ) = from;
+    *( static_cast<IconAction *>(this) ) = from;
 
     d->hide = from.d->hide;
 

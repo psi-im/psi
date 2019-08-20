@@ -118,29 +118,29 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 
     IconAction* action;
     action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Select));
+    action->setData(QVariant(int(WbWidget::Mode::Select)));
     action->setCheckable(true);
     action = new IconAction(tr( "Translate"), "psi/translate", tr("Translate"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Translate));
+    action->setData(QVariant(int(WbWidget::Mode::Translate)));
     action->setCheckable(true);
     action = new IconAction(tr( "Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Rotate));
+    action->setData(QVariant(int(WbWidget::Mode::Rotate)));
     action->setCheckable(true);
     action = new IconAction(tr( "Scale"), "psi/scale", tr("Scale"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Scale));
+    action->setData(QVariant(int(WbWidget::Mode::Scale)));
     action->setCheckable(true);
     action = new IconAction(tr( "Erase"), "psi/erase", tr("Erase"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Erase));
+    action->setData(QVariant(int(WbWidget::Mode::Erase)));
     action->setCheckable(true);
     QAction *separator = new QAction(group_modes_);
     separator->setSeparator(true);
     action = new IconAction(tr( "Scroll view"), "psi/scroll", tr("Scroll"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Scroll));
+    action->setData(QVariant(int(WbWidget::Mode::Scroll)));
     action->setCheckable(true);
     separator = new QAction(group_modes_);
     separator->setSeparator(true);
     action = new IconAction(tr( "Draw paths"), "psi/drawPaths", tr("Draw paths"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::DrawPath));
+    action->setData(QVariant(int(WbWidget::Mode::DrawPath)));
     action->setCheckable(true);
     action->trigger();
     // action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
@@ -159,7 +159,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     //     action->setData(QVariant(WbWidget::DrawText));
     //     action->setCheckable(true);
     action = new IconAction(tr( "Add images"), "psi/addImage", tr("Add images"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::DrawImage));
+    action->setData(QVariant(int(WbWidget::Mode::DrawImage)));
     action->setCheckable(true);
 
     menu_widths_ = new QMenu(this);

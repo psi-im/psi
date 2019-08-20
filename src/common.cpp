@@ -410,7 +410,7 @@ void closeDialogs(QWidget *w)
     QObjectList list = w->children();
     for (QObjectList::Iterator it = list.begin() ; it != list.end(); ++it) {
         if((*it)->inherits("QDialog")) {
-            dialogs.append((QDialog *)(*it));
+            dialogs.append(static_cast<QDialog *>(*it));
         }
     }
     foreach (QDialog *w, dialogs) {

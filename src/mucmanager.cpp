@@ -476,7 +476,7 @@ bool MUCManager::canRevokeAdmin(const XMPP::MUCItem& i1, const XMPP::MUCItem& i2
 
 void MUCManager::getConfiguration_finished()
 {
-    MUCConfigurationTask* t = (MUCConfigurationTask*) sender();
+    MUCConfigurationTask* t = static_cast<MUCConfigurationTask*>(sender());
     if (t->success()) {
         emit getConfiguration_success(t->data());
     }
@@ -532,7 +532,7 @@ bool MUCManager::canSetAffiliation(const XMPP::MUCItem& i1, const XMPP::MUCItem&
 
 void MUCManager::setConfiguration_finished()
 {
-    MUCConfigurationTask* t = (MUCConfigurationTask*) sender();
+    MUCConfigurationTask* t = static_cast<MUCConfigurationTask*>(sender());
     if (t->success()) {
         emit setConfiguration_success();
     }
@@ -543,7 +543,7 @@ void MUCManager::setConfiguration_finished()
 
 void MUCManager::action_finished()
 {
-    MUCItemsTask* t = (MUCItemsTask*) sender();
+    MUCItemsTask* t = static_cast<MUCItemsTask*>(sender());
     if (t->success()) {
         emit action_success(t->action());
     }
@@ -587,7 +587,7 @@ void MUCManager::action_finished()
 
 void MUCManager::getItemsByAffiliation_finished()
 {
-    MUCItemsTask* t = (MUCItemsTask*) sender();
+    MUCItemsTask* t = static_cast<MUCItemsTask*>(sender());
     if (t->success()) {
         emit getItemsByAffiliation_success(t->affiliation(), t->items());
     }
@@ -598,7 +598,7 @@ void MUCManager::getItemsByAffiliation_finished()
 
 void MUCManager::setItems_finished()
 {
-    MUCItemsTask* t = (MUCItemsTask*) sender();
+    MUCItemsTask* t = static_cast<MUCItemsTask*>(sender());
     if (t->success()) {
         emit setItems_success();
     }
@@ -609,7 +609,7 @@ void MUCManager::setItems_finished()
 
 void MUCManager::destroy_finished()
 {
-    MUCDestroyTask* t = (MUCDestroyTask*) sender();
+    MUCDestroyTask* t = static_cast<MUCDestroyTask*>(sender());
     if (t->success()) {
         emit destroy_success();
     }

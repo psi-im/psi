@@ -570,7 +570,7 @@ void AccountModifyDlg::save()
 
     acc.opt_host = ck_host->isChecked();
     acc.host = le_host->text();
-    acc.port = le_port->text().toInt();
+    acc.port = quint16(le_port->text().toInt());
 
     acc.req_mutual_auth = ck_req_mutual->isChecked();
     acc.security_level = cb_security_level->itemData(cb_security_level->currentIndex()).toInt();
@@ -582,8 +582,8 @@ void AccountModifyDlg::save()
     acc.customAuth = ck_custom_auth->isChecked();
     acc.authid = le_authid->text();
     acc.realm = le_realm->text();
-    acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
-    acc.allow_plain =  (ClientStream::AllowPlainType) cb_plain->itemData(cb_plain->currentIndex()).toInt();
+    acc.ssl = UserAccount::SSLFlag(cb_ssl->itemData(cb_ssl->currentIndex()).toInt());
+    acc.allow_plain = ClientStream::AllowPlainType(cb_plain->itemData(cb_plain->currentIndex()).toInt());
     acc.opt_compress = ck_compress->isChecked();
     acc.opt_auto = ck_auto->isChecked();
     acc.opt_connectAfterSleep = ck_connectAfterSleep->isChecked();

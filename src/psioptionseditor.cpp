@@ -95,7 +95,7 @@ void OptionEditor::finished()
     QVariant strval(le_value->text());
     QVariant::Type type = supportedTypes[cb_typ->currentIndex()].typ;
     QVariant newval = strval;
-    newval.convert(type);
+    newval.convert(int(type));
     PsiOptions::instance()->setOption(option, newval);
 
     accept();

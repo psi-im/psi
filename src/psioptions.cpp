@@ -347,7 +347,7 @@ void PsiOptions::saveToAutoFile()
  */
 void PsiOptions::getOptionsStorage_finished()
 {
-    OptionsStorageTask* t = (OptionsStorageTask*) sender();
+    OptionsStorageTask* t = static_cast<OptionsStorageTask*>(sender());
     if (t->success()) {
         QDomElement e = t->options();
         e.setAttribute("xmlns",ApplicationInfo::optionsNS());

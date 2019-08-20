@@ -893,15 +893,15 @@ void IconsetFactoryPrivate::registerIconset(const Iconset *i)
         iconsets_ = new QList<Iconset*>;
     }
 
-    if (!iconsets_->contains((Iconset*)i)) {
-        iconsets_->append((Iconset*)i);
+    if (!iconsets_->contains(const_cast<Iconset*>(i))) {
+        iconsets_->append(const_cast<Iconset*>(i));
     }
 }
 
 void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
 {
-    if (iconsets_ && iconsets_->contains((Iconset*)i)) {
-        iconsets_->removeAll((Iconset*)i);
+    if (iconsets_ && iconsets_->contains(const_cast<Iconset*>(i))) {
+        iconsets_->removeAll(const_cast<Iconset*>(i));
     }
 }
 

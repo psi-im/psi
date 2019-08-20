@@ -19,7 +19,7 @@ void DiscoInfoQuerier::getDiscoInfo(const XMPP::Jid& jid, const QString& node)
 
 void DiscoInfoQuerier::discoFinished()
 {
-    JT_DiscoInfo *disco = (JT_DiscoInfo*)sender();
+    JT_DiscoInfo *disco = static_cast<JT_DiscoInfo*>(sender());
     Q_ASSERT(disco);
     if (disco->success()) {
         emit getDiscoInfo_success(disco->jid(), disco->node(), disco->item());

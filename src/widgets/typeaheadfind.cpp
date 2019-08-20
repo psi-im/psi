@@ -85,8 +85,8 @@ public:
 #ifdef WEBKIT
 #ifdef WEBENGINE
             QWebEnginePage::FindFlags wkOptions;
-            wkOptions |= options & QTextDocument::FindBackward? QWebEnginePage::FindBackward : (QWebEnginePage::FindFlags)nullptr;
-            wkOptions |= options & QTextDocument::FindCaseSensitively? QWebEnginePage::FindCaseSensitively : (QWebEnginePage::FindFlags)nullptr;
+            wkOptions |= options & QTextDocument::FindBackward? QWebEnginePage::FindBackward : QWebEnginePage::FindFlags(nullptr);
+            wkOptions |= options & QTextDocument::FindCaseSensitively? QWebEnginePage::FindCaseSensitively : QWebEnginePage::FindFlags(nullptr);
             wv->findText(str, wkOptions, [this](bool found) {
                 updateFoundStyle(found);
             });

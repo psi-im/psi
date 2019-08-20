@@ -382,7 +382,7 @@ void IconsetSelect::moveItemUp()
 
 void IconsetSelect::moveItemDown()
 {
-    if ( !currentItem() || currentRow() > (int)count() - 2 )
+    if ( !currentItem() || currentRow() > int(count()) - 2 )
         return;
 
     QListWidgetItem *i = currentItem();
@@ -396,10 +396,10 @@ void IconsetSelect::moveItemDown()
 
 const Iconset *IconsetSelect::iconset() const
 {
-    IconsetSelectItem *i = (IconsetSelectItem *)currentItem();
+    IconsetSelectItem *i = static_cast<IconsetSelectItem *>(currentItem());
     if ( !i ) {
         QList<QListWidgetItem *> items = selectedItems();
-        i = !items.isEmpty() ? (IconsetSelectItem *)items.first() : nullptr;
+        i = !items.isEmpty() ? static_cast<IconsetSelectItem *>(items.first()) : nullptr;
     }
     if ( i )
         return i->iconset();
@@ -645,7 +645,7 @@ void IconButton::setIcon(const QPixmap &p)
 void IconButton::forceSetPsiIcon(const PsiIcon *i, bool activate)
 {
     d->activate = activate;
-    d->setIcon((PsiIcon *)i);
+    d->setIcon(const_cast<PsiIcon *>(i));
     d->forced = true;
 }
 
@@ -812,7 +812,7 @@ void IconToolButton::setIcon(const QIcon &p)
 void IconToolButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
     d->activate = activate;
-    d->setIcon ((PsiIcon *)i);
+    d->setIcon (const_cast<PsiIcon *>(i));
 }
 
 void IconToolButton::setPsiIcon(const QString &name)

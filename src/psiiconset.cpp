@@ -148,7 +148,7 @@ public:
             PsiIcon *icon = it.next();
 
             if ( icon && !icon->name().isEmpty() ) {
-                PsiIcon *toIcon = (PsiIcon *)to->icon(icon->name());
+                PsiIcon *toIcon = const_cast<PsiIcon *>(to->icon(icon->name()));
                 if ( toIcon ) {
                     if ( icon->anim() ) {
                         // setAnim and setImpix both
@@ -183,7 +183,7 @@ public:
     PsiIcon *jid2icon(const Jid &jid, const QString &iconName)
     {
         // first level -- global default icon
-        PsiIcon *icon = (PsiIcon *)IconsetFactory::iconPtr(iconName);
+        PsiIcon *icon = const_cast<PsiIcon *>(IconsetFactory::iconPtr(iconName));
 
         // second level -- transport icon
         if (jid.node().isEmpty() || status_icons.useServicesIcons) {
@@ -191,7 +191,7 @@ public:
                 if (item.regexp.isEmpty() ? jid.node().isEmpty() : (item.regexp.indexIn(jid.domain()) != -1)) {
                     const Iconset *is = psi->roster.value(item.iconset);
                     if (is) {
-                        PsiIcon *i = (PsiIcon *)is->icon(iconName);
+                        PsiIcon *i = const_cast<PsiIcon *>(is->icon(iconName));
                         if (i) {
                             icon = i;
                             break;
@@ -206,7 +206,7 @@ public:
             if (item.regexp.indexIn(jid.bare()) != -1) {
                 const Iconset *is = psi->roster.value(item.iconset);
                 if (is) {
-                    PsiIcon *i = (PsiIcon *)is->icon(iconName);
+                    PsiIcon *i = const_cast<PsiIcon *>(is->icon(iconName));
                     if (i) {
                         icon = i;
                         break;
@@ -839,7 +839,7 @@ QString status2name(int s)
 
 PsiIcon *PsiIconset::statusPtr(int s)
 {
-    return (PsiIcon *)IconsetFactory::iconPtr(status2name(s));
+    return const_cast<PsiIcon *>(IconsetFactory::iconPtr(status2name(s)));
 }
 
 PsiIcon PsiIconset::status(int s)
@@ -870,7 +870,7 @@ PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
                             PsiOptions::instance()->getOption(
                             PsiOptions::instance()->mapLookup("options.iconsets.service-status", name)+".iconset").toString());
         if ( is ) {
-            icon = (PsiIcon *)is->icon(status2name(s));
+            icon = const_cast<PsiIcon *>(is->icon(status2name(s)));
         }
     }
 

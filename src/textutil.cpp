@@ -41,7 +41,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
     }
 
 
-    for (int i=0;i<(int) quoted.length();i++)
+    for (int i=0;i<int(quoted.length());i++)
     {
         col++;
         if (atstart && quoted[i] == '>') ql++; else atstart=0;
@@ -63,7 +63,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
                 while ((ls<i) && !quoted[ls].isSpace()) ls++;
                 i = ls;
             }
-            if ((i<(int)quoted.length()) && (quoted[ls] != '\n'))
+            if ((i<int(quoted.length())) && (quoted[ls] != '\n'))
             {
                 quoted.insert(ls, '\n');
                 ++ls;
@@ -83,7 +83,7 @@ QString TextUtil::plain2rich(const QString &plain)
     QString rich;
     int col = 0;
 
-    for(int i = 0; i < (int)plain.length(); ++i) {
+    for(int i = 0; i < int(plain.length()); ++i) {
 #ifdef Q_OS_WIN
         if(plain[i] == '\r' && i+1 < (int)plain.length() && plain[i+1] == '\n')
             ++i;    // Qt/Win sees \r\n as two new line chars
@@ -119,7 +119,7 @@ QString TextUtil::rich2plain(const QString &in, bool collapseSpaces)
 {
     QString out;
 
-    for(int i = 0; i < (int)in.length(); ++i) {
+    for(int i = 0; i < int(in.length()); ++i) {
         // tag?
         if(in[i] == '<') {
             // find end of tag
@@ -193,7 +193,7 @@ QString TextUtil::resolveEntities(const QString &in)
 {
     QString out;
 
-    for(int i = 0; i < (int)in.length(); ++i) {
+    for(int i = 0; i < int(in.length()); ++i) {
         if(in[i] == '&') {
             // find a semicolon
             ++i;
@@ -214,7 +214,7 @@ QString TextUtil::resolveEntities(const QString &in)
             else if(type == "apos")
                 out += '\'';
             else if(type == "nbsp")
-                out += (char)0xa0;
+                out += char(0xa0);
         }
         else {
             out += in[i];
@@ -230,7 +230,7 @@ static bool linkify_pmatch(const QString &str1, int at, const QString &str2)
     if(str2.length() > (str1.length()-at))
         return false;
 
-    for(int n = 0; n < (int)str2.length(); ++n) {
+    for(int n = 0; n < int(str2.length()); ++n) {
         if(str1.at(n+at).toLower() != str2.at(n).toLower())
             return false;
     }
@@ -240,7 +240,7 @@ static bool linkify_pmatch(const QString &str1, int at, const QString &str2)
 
 static bool linkify_isOneOf(const QChar &c, const QString &charlist)
 {
-    for(int i = 0; i < (int)charlist.length(); ++i) {
+    for(int i = 0; i < int(charlist.length()); ++i) {
         if(c == charlist.at(i))
             return true;
     }
@@ -305,7 +305,7 @@ QString TextUtil::linkify(const QString &in)
     bool isUrl, isAtStyle;
     QString linked, link, href;
 
-    for(int n = 0; n < (int)out.length(); ++n) {
+    for(int n = 0; n < int(out.length()); ++n) {
         isUrl = false;
         isAtStyle = false;
         x1 = n;
@@ -380,7 +380,7 @@ QString TextUtil::linkify(const QString &in)
             openingBracket[')'] = '(';
             openingBracket[']'] = '[';
             openingBracket['}'] = '{';
-            for(x2 = n; x2 < (int)out.length(); ++x2) {
+            for(x2 = n; x2 < int(out.length()); ++x2) {
                 if(out.at(x2).isSpace() || linkify_isOneOf(out.at(x2), "\"\'`<>")
                     || linkify_pmatch(out, x2, "&quot;")  || linkify_pmatch(out, x2, "&apos;")
                     || linkify_pmatch(out, x2, "&gt;") || linkify_pmatch(out, x2, "&lt;") ) {
@@ -444,7 +444,7 @@ QString TextUtil::linkify(const QString &in)
 
             // go forward till we find the end
             x2 = n + 1;
-            for(; x2 < (int)out.length(); ++x2) {
+            for(; x2 < int(out.length()); ++x2) {
                 if(!linkify_isOneOf(out.at(x2), "_.-+") && !out.at(x2).isLetterOrNumber())
                     break;
             }
@@ -507,7 +507,7 @@ QString TextUtil::emoticonify(const QString &in)
 
                         if(ePos == -1 || n < ePos || (rx.matchedLength() > foundLen && n < ePos + foundLen)) {
                             bool leftSpace  = n == 0 || (n > 0 && str[n-1].isSpace());
-                            bool rightSpace = (n+rx.matchedLength() == (int)str.length()) || (n+rx.matchedLength() < (int)str.length() && str[n+rx.matchedLength()].isSpace());
+                            bool rightSpace = (n+rx.matchedLength() == int(str.length())) || (n+rx.matchedLength() < int(str.length()) && str[n+rx.matchedLength()].isSpace());
                             // there must be whitespace at least on one side of the emoticon
                             if (leftSpace || rightSpace) {
                                 ePos = n;

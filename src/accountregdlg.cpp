@@ -183,7 +183,7 @@ void AccountRegDlg::next()
 
         // Update settings
         server_ = JIDUtil::accountFromString(ui_.le_server->currentText().trimmed());
-        ssl_ =  (UserAccount::SSLFlag) ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt();
+        ssl_ =  UserAccount::SSLFlag(ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt());
         opt_host_ = ui_.ck_host->isChecked();
         host_ = ui_.le_host->text();
         port_ = ui_.le_port->text().toInt();

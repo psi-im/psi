@@ -33,11 +33,11 @@ MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,2)
     QVariant font_variant = qVariantFromValue(font);
     for (int i = 0; i < Unknown; i++) {
         QModelIndex ind = index(i, 0, QModelIndex());
-        setData(ind,QVariant(affiliationlistindexToString((AffiliationListIndex) i)));
+        setData(ind,QVariant(affiliationlistindexToString(AffiliationListIndex(i))));
         setData(ind,font_variant,Qt::FontRole);
         insertColumns(0,1,ind);
         insertColumns(1,1,ind);
-        enabled_[(AffiliationListIndex) i] = false;
+        enabled_[AffiliationListIndex(i)] = false;
     }
     setHorizontalHeaderLabels(QStringList() << tr("JID") << tr("Reason"));
 }
@@ -47,7 +47,7 @@ Qt::ItemFlags MUCAffiliationsModel::flags(const QModelIndex &index) const
     Qt::ItemFlags a;
     if (!index.parent().isValid()) {
         // List headers
-        if (enabled_[(AffiliationListIndex) index.row()]) {
+        if (enabled_[AffiliationListIndex(index.row())]) {
             a |= Qt::ItemIsDropEnabled | Qt::ItemIsSelectable | Qt::ItemIsEnabled;
         }
     }
@@ -156,7 +156,7 @@ void MUCAffiliationsModel::resetAffiliationLists()
 void MUCAffiliationsModel::resetAffiliationList(MUCItem::Affiliation a)
 {
     emit layoutAboutToBeChanged();
-    enabled_[(AffiliationListIndex) affiliationToIndex(a)] = false;
+    enabled_[AffiliationListIndex(affiliationToIndex(a))] = false;
     QModelIndex index = affiliationListIndex(a);
     if (hasChildren(index)) {
         removeRows(0,rowCount(index),index);
@@ -168,7 +168,7 @@ void MUCAffiliationsModel::setAffiliationListEnabled(MUCItem::Affiliation a, boo
 {
     emit layoutAboutToBeChanged();
     QModelIndex index = affiliationListIndex(a);
-    enabled_[(AffiliationListIndex) index.row()] = b;
+    enabled_[AffiliationListIndex(index.row())] = b;
     emit layoutChanged();
 }
 
@@ -221,7 +221,7 @@ void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
             }
             int row = rowCount(list);
             if (row == 0) {
-                enabled_[(AffiliationListIndex) list.row()] = true;
+                enabled_[AffiliationListIndex(list.row())] = true;
             }
             insertRows(row,1,list);
             setData(index(row,0,list),QVariant(item.jid().full()));

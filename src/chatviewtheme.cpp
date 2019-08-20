@@ -681,7 +681,7 @@ QString ChatViewThemeJSUtil::strftime(const QDateTime &dt, const QString &format
 {
     char str[256];
     time_t t = dt.toTime_t();
-    int s = ::strftime(str, 256, format.toLocal8Bit(), localtime(&t));
+    int s = int(::strftime(str, 256, format.toLocal8Bit(), localtime(&t)));
     if (s) {
         return QString::fromLocal8Bit(str, s);
     }
@@ -701,7 +701,7 @@ QString ChatViewThemeJSUtil::status2text(int status) const
 QString ChatViewThemeJSUtil::hex2rgba(const QString &hex, float opacity)
 {
     QColor color("#" + hex);
-    color.setAlphaF(opacity);
+    color.setAlphaF(qreal(opacity));
     return QString("rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green())
             .arg(color.blue()).arg(color.alpha());
 }

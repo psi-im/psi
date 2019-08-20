@@ -182,7 +182,7 @@ void TabCompletion::tryComplete() {
     if (typingStatus_ == TypingStatus::MultipleSuggestions) {
         if (!suggestedCompletion_.isEmpty()) {
             suggestedIndex_++;
-            if (suggestedIndex_ >= (int)suggestedCompletion_.count()) {
+            if (suggestedIndex_ >= int(suggestedCompletion_.count())) {
                 suggestedIndex_ = 0;
             }
             newText = suggestedCompletion_[suggestedIndex_];

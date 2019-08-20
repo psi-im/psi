@@ -41,9 +41,9 @@ TabDlg* TabManager::getTabs(QWidget *widget)
 QChar TabManager::tabKind(QWidget *widget) {
     QChar retval = 0;
 
-    if (qobject_cast<ChatDlg*> (widget)) {
+    if (static_cast<ChatDlg*> (widget)) {
         retval = 'C';
-    } else if (qobject_cast<GCMainDlg*> (widget)) {
+    } else if (static_cast<GCMainDlg*> (widget)) {
         retval = 'M';
     } else {
         qDebug("Checking if widget should be tabbed: Unknown type");
