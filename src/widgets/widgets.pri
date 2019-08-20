@@ -1,10 +1,6 @@
 INCLUDEPATH += $$PWD
 DEPENDPATH  += $$PWD
 
-win32-msvc* {
-    DEFINES += _USE_MATH_DEFINES
-}
-
 SOURCES += \
     $$PWD/busywidget.cpp \
     $$PWD/fancylabel.cpp \
