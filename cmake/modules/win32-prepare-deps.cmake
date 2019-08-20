@@ -504,6 +504,7 @@ if(WIN32)
             libwebpdecoder-3.dll
             libwebpdemux-2.dll
             libxml2-2.dll
+            libzstd.dll
         )
     endif()
     if(SEPARATE_QJDNS)
