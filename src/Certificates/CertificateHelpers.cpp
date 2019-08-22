@@ -70,7 +70,7 @@ CertificateCollection CertificateHelpers::allCertificates(const QStringList& sto
                 continue;
             QDomNodeList cl = base.elementsByTagName("certificate");
 
-            for(int n = 0; n < (int)cl.count(); ++n) {
+            for(int n = 0; n < int(cl.count()); ++n) {
                 QDomElement data = cl.item(n).toElement().elementsByTagName("data").item(0).toElement();
                 if(!data.isNull()) {
                     ConvertResult result;

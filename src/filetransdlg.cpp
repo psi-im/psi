@@ -38,7 +38,7 @@ static int calcShift(qlonglong big)
     LARGE_TYPE val = 1;
     val <<= CSMAX - 1;
     for(int n = CSMAX - CSMIN; n > 0; --n) {
-        if(big & val)
+        if(quintptr(big) & val)
             return n;
         val >>= 1;
     }
@@ -52,19 +52,19 @@ static int calcComplement(qlonglong big, int shift)
     if(rem == 0)
         return 0;
     else
-        return (block - (int)rem);
+        return (block - int(rem));
 }
 
 static int calcTotalSteps(qlonglong big, int shift)
 {
     if(big < 1)
         return 0;
-    return ((big - 1) >> shift) + 1;
+    return int((big - 1) >> shift) + 1;
 }
 
 static int calcProgressStep(qlonglong big, int complement, int shift)
 {
-    return ((big + complement) >> shift);
+    return int((big + complement) >> shift);
 }
 
 static QStringList *activeFiles = nullptr;
@@ -182,7 +182,7 @@ void FileTransferHandler::send(const XMPP::Jid &to, const QString &fname, const 
         buffer.open(QIODevice::WriteOnly);
         img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         img.save(&buffer, "PNG");
-        thumb = XMPP::Thumbnail(ba, "image/png", img.width(), img.height());
+        thumb = XMPP::Thumbnail(ba, "image/png", quint32(img.width()), quint32(img.height()));
     }
 
     d->ft->sendFile(d->peer, d->fileName, d->fileSize, desc, thumb);
@@ -397,7 +397,7 @@ void FileTransferHandler::ft_readyRead(const QByteArray &a)
 {
     if(!d->sending) {
         //printf("%d bytes read\n", a.size());
-        int r = d->f.write(a.data(), a.size());
+        int r = int(d->f.write(a.data(), a.size()));
         if(r < 0) {
             d->f.close();
             delete d->ft;
@@ -468,7 +468,7 @@ void FileTransferHandler::trySend()
     QByteArray a(blockSize, 0);
     int r = 0;
     if(blockSize > 0)
-        r = d->f.read(a.data(), a.size());
+        r = int(d->f.read(a.data(), a.size()));
     if(r < 0) {
         d->f.close();
         delete d->ft;
@@ -476,7 +476,7 @@ void FileTransferHandler::trySend()
         error(ErrFile, 0, d->f.errorString());
         return;
     }
-    if(r < (int)a.size())
+    if(r < int(a.size()))
         a.resize(r);
     d->ft->writeFileData(a);
 }
@@ -677,7 +677,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
     tb_browse->hide();
 
     if (ft->thumbnail().isValid()) {
-        lb_thumbnail->resize(ft->thumbnail().width, ft->thumbnail().height);
+        lb_thumbnail->resize(int(ft->thumbnail().width), int(ft->thumbnail().height));
         JT_BitsOfBinary *task = new JT_BitsOfBinary(pa->client()->rootTask());
         connect(task, SIGNAL(finished()), SLOT(thumbnailReceived()));
         task->get(ft->peer(), QString(ft->thumbnail().data));
@@ -1111,9 +1111,9 @@ public:
             decimal = true;
         }
         qlonglong x_long = n / div;
-        int x = (int)x_long;
+        int x = int(x_long);
         if(decimal) {
-            double f = (double)x;
+            double f = double(x);
             f /= 10;
             return QString::number(f, 'f', 1);
         }
@@ -1133,7 +1133,7 @@ public:
             int maxtime = (23 * 60 * 60) + (59 * 60) + (59); // 23h59m59s
             if(rest_long > maxtime)
                 rest_long = maxtime;
-            timeRemaining = (int)rest_long;
+            timeRemaining = int(rest_long);
         }
 
         int lastDist = dist;
@@ -1261,9 +1261,9 @@ public:
             return s;
 
         QString str;
-        uint n = s.length();
+        uint n = uint(s.length());
         do {
-            str = s.mid(0, --n) + "...";
+            str = s.mid(0, int(--n)) + "...";
 #if QT_VERSION >= QT_VERSION_CHECK(5,11,0)
         } while(n > 0 && fm.horizontalAdvance(str) > len);
 #else
@@ -1472,7 +1472,7 @@ public:
     bool event(QEvent* e)
     {
         if (e->type() == QEvent::ToolTip) {
-            QPoint pos = ((QHelpEvent*) e)->pos();
+            QPoint pos = static_cast<QHelpEvent*>(e)->pos();
             e->setAccepted(maybeTip(pos));
             return true;
         }
@@ -1697,7 +1697,7 @@ public:
         if(!done && i->at >= 2) {
             int seconds = i->at - 1;
             qlonglong average = i->last[i->at-1] - i->last[0];
-            bps = ((int)average) / seconds;
+            bps = int(average) / seconds;
         }
 
         if(done) {

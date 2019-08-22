@@ -64,11 +64,11 @@ QString JIDUtil::decode(const QString &jid)
     QString jid2;
     int n;
 
-    for(n = 0; n < (int)jid.length(); ++n) {
+    for(n = 0; n < int(jid.length()); ++n) {
         if(jid.at(n) == '%' && (jid.length() - n - 1) >= 2) {
             QString str = jid.mid(n+1,2);
             bool ok;
-            char c = str.toInt(&ok, 16);
+            char c = char(str.toInt(&ok, 16));
             if(!ok)
                 continue;
 
@@ -137,10 +137,10 @@ Jid JIDUtil::fromString(const QString& s)
 QString JIDUtil::encode822(const QString &s)
 {
     QString out;
-    for(int n = 0; n < (int)s.length(); ++n) {
+    for(int n = 0; n < int(s.length()); ++n) {
         if(s[n] == '\\' || s[n] == '<' || s[n] == '>') {
             QString hex;
-            hex.sprintf("\\x%02X", (unsigned char )s[n].toLatin1());
+            hex.sprintf("\\x%02X", uchar(s[n].toLatin1()));
             out.append(hex);
         }
         else
@@ -152,8 +152,8 @@ QString JIDUtil::encode822(const QString &s)
 QString JIDUtil::decode822(const QString &s)
 {
     QString out;
-    for(int n = 0; n < (int)s.length(); ++n) {
-        if(s[n] == '\\' && n + 3 < (int)s.length()) {
+    for(int n = 0; n < int(s.length()); ++n) {
+        if(s[n] == '\\' && n + 3 < int(s.length())) {
             int x = n + 1;
             n += 3;
             if(s[x] != 'x')

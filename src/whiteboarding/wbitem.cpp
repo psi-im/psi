@@ -468,7 +468,7 @@ static qreal toDouble(const QChar *&str)
                 div *= 10;
                 ++t;
             }
-            val = ((qreal)ival)/((qreal)div);
+            val = (qreal(ival))/(qreal(div));
         }
         else {
             val = ival;

@@ -430,7 +430,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
             if (!value.isValid())
                 value = QString("");
 
-            value.convert(varianttype);
+            value.convert(int(varianttype));
             return value;
         }
     }

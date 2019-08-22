@@ -86,7 +86,7 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 
     langs = _langs;
 
-    QPixmap logo = (QPixmap)IconsetFactory::icon("psi/logo").pixmap();
+    QPixmap logo = QPixmap(IconsetFactory::icon("psi/logo").pixmap());
     lb_logo->setPixmap(logo);
     lb_logo->setFixedSize(logo.width(), logo.height());
     lb_logo->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));

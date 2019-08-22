@@ -44,9 +44,9 @@ QString MultiFileTransferDelegate::roundedNumber(qlonglong n, qlonglong div)
         decimal = true;
     }
     qlonglong x_long = n / div;
-    int x = (int)x_long;
+    int x = int(x_long);
     if(decimal) {
-        double f = (double)x;
+        double f = double(x);
         f /= 10;
         return QString::number(f, 'f', 1);
     }
@@ -137,13 +137,13 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     f.setBold(true);
     painter->setFont(f);
     painter->drawText(QRect(QPoint(textLeft, textTop),QPoint(right, textTop + fontPixelSize)),
-                      option.displayAlignment, index.data(Qt::DisplayRole).toString());
+                      int(option.displayAlignment), index.data(Qt::DisplayRole).toString());
     painter->restore();
 
     // generate and draw status line
     quint64 fullSize = index.data(MultiFileTransferModel::FullSizeRole).toULongLong();
     quint64 curSize = index.data(MultiFileTransferModel::CurrentSizeRole).toULongLong();
-    int timeRemaining = index.data(MultiFileTransferModel::TimeRemainingRole).toULongLong();
+    int timeRemaining = index.data(MultiFileTransferModel::TimeRemainingRole).toInt();
 
     // -----------------------------
     // Transfer current status line
@@ -152,9 +152,9 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     s.reserve(128);
     {
         qlonglong div;
-        QString unit = TextUtil::sizeUnit(fullSize, &div);
+        QString unit = TextUtil::sizeUnit(qlonglong(fullSize), &div);
 
-        s = roundedNumber(curSize, div) + '/' + roundedNumber(fullSize, div) + unit;
+        s = roundedNumber(qint64(curSize), div) + '/' + roundedNumber(qint64(fullSize), div) + unit;
         QString space(" ");
 
         switch (state) {
@@ -219,7 +219,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     auto stbr = fm.boundingRect(s);
     stbr.moveCenter(str.center());
 
-    painter->drawText(stbr, option.displayAlignment, s);
+    painter->drawText(stbr, int(option.displayAlignment), s);
     painter->restore();
 
     // -----------------------------

@@ -21,6 +21,9 @@ public:
     void restoreOptions();
     void setData(PsiCon *psi, QWidget *);
 
+protected slots:
+    void changeVisibleState(bool state);
+
 private:
     QWidget *w_;
     PsiCon *psi_;

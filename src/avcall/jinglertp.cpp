@@ -217,7 +217,7 @@ signals:
 private slots:
     void dns_resultsReady(const QList<XMPP::NameRecord> &results)
     {
-        XMPP::NameResolver *dns = (XMPP::NameResolver *)sender();
+        XMPP::NameResolver *dns = static_cast<XMPP::NameResolver *>(sender());
 
         // FIXME: support more than one address?
         QHostAddress addr = results.first().address();
@@ -252,7 +252,7 @@ private slots:
     {
         Q_UNUSED(e);
 
-        XMPP::NameResolver *dns = (XMPP::NameResolver *)sender();
+        XMPP::NameResolver *dns = static_cast<XMPP::NameResolver *>(sender());
 
         if(dns == &dnsA)
         {
@@ -334,7 +334,7 @@ public:
 private slots:
     void ice_stopped()
     {
-        XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
         ice->disconnect(this);
         ice->setParent(nullptr);
         ice->deleteLater();
@@ -1309,7 +1309,7 @@ private slots:
 
     void ice_started()
     {
-        XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
         printf("ice_started\n");
 
@@ -1349,7 +1349,7 @@ private slots:
 
     void ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &list)
     {
-        XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
         if(ice == iceA)
             iceA_status.localCandidates += list;
@@ -1364,7 +1364,7 @@ private slots:
 
     void ice_componentReady(int index)
     {
-        XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
         if(ice == iceA)
         {
@@ -1626,7 +1626,7 @@ void JingleRtpChannelPrivate::start()
 
 void JingleRtpChannelPrivate::ice_readyRead(int componentIndex)
 {
-    XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+    XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
     if(ice == iceA && componentIndex == 0)
         restartRtpActivityTimer();

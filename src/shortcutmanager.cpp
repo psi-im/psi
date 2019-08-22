@@ -128,7 +128,7 @@ void ShortcutManager::connect(const QString& path, QObject* parent, const char* 
             act->setShortcutContext(appWide ?
                                     Qt::ApplicationShortcut : Qt::WindowShortcut);
             if (parent->isWidgetType())
-                ((QWidget*) parent)->addAction(act);
+                static_cast<QWidget*>(parent)->addAction(act);
             parent->connect(act, SIGNAL(triggered()), slot);
         }
     }

@@ -195,7 +195,7 @@ public slots:
 
     QString getFont() const
     {
-        QFont f = ((ChatView*)parent())->font();
+        QFont f = static_cast<ChatView*>(parent())->font();
         QString weight = "normal";
         switch (f.weight()) {
             case QFont::Light: weight = "lighter"; break;
@@ -567,7 +567,7 @@ void ChatView::sessionInited()
 
 bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit) {
     if (object == chatEdit && event->type() == QEvent::ShortcutOverride &&
-        ((QKeyEvent*)event)->matches(QKeySequence::Copy)) {
+        static_cast<QKeyEvent*>(event)->matches(QKeySequence::Copy)) {
 
         if (!chatEdit->textCursor().hasSelection() &&
              !(d->webView->page()->selectedText().isEmpty()))

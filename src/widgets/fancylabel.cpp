@@ -208,17 +208,17 @@ protected:
         int r2, g2, b2;
         to->getRgb (&r2, &g2, &b2);
 
-        float stepR = (float)(r2 - r1) / w;
-        float stepG = (float)(g2 - g1) / w;
-        float stepB = (float)(b2 - b1) / w;
+        float stepR = float(r2 - r1) / w;
+        float stepG = float(g2 - g1) / w;
+        float stepB = float(b2 - b1) / w;
 
         QPixmap pix (rect.width(), rect.height());
         QPainter p;
         p.begin (&pix);
         for (int i = 0; i < w; i++) {
-            int r = (int)((float)r1 + stepR*i);
-            int g = (int)((float)g1 + stepG*i);
-            int b = (int)((float)b1 + stepB*i);
+            int r = int(float(r1) + stepR*i);
+            int g = int(float(g1) + stepG*i);
+            int b = int(float(b1) + stepB*i);
 
             p.setPen ( QColor( r, g, b ) );
             p.drawLine ( i, 0, i, rect.height() );
@@ -281,7 +281,7 @@ public:
         frameLayout->addLayout( layout );
 
         text = new IconLabel( frame );
-        text->setSizePolicy( (QSizePolicy::Policy)7, (QSizePolicy::Policy)5 );
+        text->setSizePolicy( QSizePolicy::Policy(7), QSizePolicy::Policy(5) );
         layout->addWidget( text );
 
         help = new IconLabel( frame );
@@ -292,7 +292,7 @@ public:
         help->setFont(font);
 
         pix = new IconLabel( frame );
-        pix->setSizePolicy( (QSizePolicy::Policy)1, (QSizePolicy::Policy)5 );
+        pix->setSizePolicy( QSizePolicy::Policy(1), QSizePolicy::Policy(5) );
         frameLayout->addWidget( pix );
 
         mainbox->addWidget( frame );
@@ -406,23 +406,23 @@ QString FancyLabel::psiIconName () const
 
 FancyLabel::Shape FancyLabel::frameShape () const
 {
-    return (FancyLabel::Shape)(int)d->frame->frameShape();
+    return FancyLabel::Shape(int(d->frame->frameShape()));
 }
 
 void FancyLabel::setFrameShape (FancyLabel::Shape v)
 {
-    d->frame->setFrameShape( (QFrame::Shape)(int)v );
+    d->frame->setFrameShape( QFrame::Shape(int(v)) );
     d->frame->repaintBackground();
 }
 
 FancyLabel::Shadow FancyLabel::frameShadow () const
 {
-    return (FancyLabel::Shadow)(int)d->frame->frameShadow();
+    return FancyLabel::Shadow(int(d->frame->frameShadow()));
 }
 
 void FancyLabel::setFrameShadow (FancyLabel::Shadow v)
 {
-    d->frame->setFrameShadow( (QFrame::Shadow)(int)v );
+    d->frame->setFrameShadow( QFrame::Shadow(int(v)) );
     d->frame->repaintBackground();
 }
 

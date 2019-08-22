@@ -167,7 +167,7 @@ QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const
             continue;
 
         foreach(ActionList* a, d->lists) {
-            if ( a->id() & ( 1u << i ) )
+            if ( uint(a->id()) & ( 1u << i ) )
                 list.append(a);
         }
     }
@@ -177,7 +177,7 @@ QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const
 
 ActionList MetaActionList::suitableActions( int id ) const
 {
-    QList<ActionList*> lists = actionLists( id );
+    QList<ActionList*> lists = actionLists( uint(id) );
     ActionList actions("", 0, false);
 
     foreach(ActionList* list, lists) {

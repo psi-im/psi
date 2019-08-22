@@ -260,7 +260,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                     connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
                         auto f = new QFile(fn, app);
                         f->open(QIODevice::WriteOnly);
-                        f->seek(offset);
+                        f->seek(qint64(offset));
                         Q_UNUSED(size);
                         app->setDevice(f);
                     });
@@ -280,7 +280,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                 connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
                     auto f = new QFile(fn, app);
                     f->open(QIODevice::WriteOnly);
-                    f->seek(offset);
+                    f->seek(qint64(offset));
                     Q_UNUSED(size);
                     app->setDevice(f);
                 });
@@ -320,7 +320,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     connect(app, &Jingle::FileTransfer::Application::deviceRequested, item, [app,item](quint64 offset, quint64 size){
         auto f = new QFile(item->filePath(), app);
         f->open(QIODevice::ReadOnly);
-        f->seek(offset);
+        f->seek(qint64(offset));
         app->setDevice(f);
         Q_UNUSED(size);
     });
@@ -340,7 +340,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
         p.save(&buffer, "PNG");
-        thumb = XMPP::Thumbnail(ba, "image/png", p.width(), p.height());
+        thumb = XMPP::Thumbnail(ba, "image/png", quint32(p.width()), quint32(p.height()));
     }
 
     Jingle::FileTransfer::File file;
@@ -351,7 +351,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
     file.setMediaType(mimeDb.mimeTypeForFile(fi).name());
     file.setName(fi.fileName());
     file.setRange(); // indicate range support
-    file.setSize(fi.size());
+    file.setSize(quint64(fi.size()));
     file.setThumbnail(thumb);
 
     app->setFile(file);
@@ -363,7 +363,7 @@ void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
     for (auto const &fname: fileList) {
         QFileInfo fi(fname);
         if (fi.isFile() && fi.isReadable()) {
-            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
+            auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), quint64(fi.size()));
 
             QImage img(fi.filePath());
             if (!img.isNull()) {
@@ -492,8 +492,8 @@ BinaryUriLoader::BinaryUriLoader(PsiAccount *acc, const Jid &peer, const QUrl &u
     auto uris = uri.toString();
     if (uris.startsWith(QString::fromLatin1("cid:"))) {
         JT_BitsOfBinary *task = new JT_BitsOfBinary(acc->client()->rootTask());
-        connect(task, &JT_BitsOfBinary::finished, this, [this,task](){
-            BoBData &bob = ((JT_BitsOfBinary*)sender())->data();
+        connect(task, &JT_BitsOfBinary::finished, this, [this](){
+            BoBData &bob = (static_cast<JT_BitsOfBinary*>(sender()))->data();
             emit ready(bob.data());
             deleteLater();
         }, Qt::QueuedConnection);
@@ -502,7 +502,7 @@ BinaryUriLoader::BinaryUriLoader(PsiAccount *acc, const Jid &peer, const QUrl &u
     } else {
         auto nam = acc->psi()->networkAccessManager();
         QNetworkReply *reply = nam->get(QNetworkRequest(uri));
-        connect(reply, &QNetworkReply::finished, this, [this,reply](){
+        connect(reply, &QNetworkReply::finished, this, [this](){
             QNetworkReply* reply = dynamic_cast<QNetworkReply*>(sender());
             ready(reply->readAll());
             reply->deleteLater();

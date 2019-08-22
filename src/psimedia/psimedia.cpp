@@ -239,7 +239,7 @@ public:
     {
         Device dev;
         dev.d = new Device::Private;
-        dev.d->type = (Device::Type)pd.type;
+        dev.d->type = Device::Type(pd.type);
         dev.d->id = pd.id;
         dev.d->name = pd.name;
         dev.d->isDefault = pd.isDefault;
@@ -1127,7 +1127,7 @@ void RtpSession::setInputVolume(int level)
 
 RtpSession::Error RtpSession::errorCode() const
 {
-    return (RtpSession::Error)d->c->errorCode();
+    return RtpSession::Error(d->c->errorCode());
 }
 
 RtpChannel *RtpSession::audioRtpChannel()

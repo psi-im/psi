@@ -164,7 +164,7 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent)
         FileCacheItem *item = new FileCacheItem(this, id,
             _registry->getOption(prefix + ".metadata", QVariantMap()).toMap(),
             QDateTime::fromString(_registry->getOption(prefix + ".ctime").toString(), Qt::ISODate),
-            _registry->getOption(prefix + ".max-age").toInt(),
+            _registry->getOption(prefix + ".max-age").toUInt(),
             _registry->getOption(prefix + ".size").toULongLong()
         );
         item->_flags |= (FileCacheItem::OnDisk | FileCacheItem::Registered);
@@ -203,7 +203,7 @@ FileCacheItem *FileCache::append(const QString &id, const QByteArray &data,
 {
     FileCacheItem *item = new FileCacheItem(this, id, metadata,
                                             QDateTime::currentDateTime(),
-                                            maxAge, data.size(), data);
+                                            maxAge, size_t(data.size()), data);
     _items[id] = item;
     _pendingRegisterItems[id] = item;
     _syncTimer->start();
@@ -239,7 +239,7 @@ FileCacheItem *FileCache::get(const QString &id, bool reborn)
     FileCacheItem *item = _items.value(id);
     if (item) {
         if (!item->isExpired()) {
-            if (reborn && item->maxAge() > 0u && item->created().secsTo(QDateTime::currentDateTime()) < (int)item->maxAge() / 2) {
+            if (reborn && item->maxAge() > 0u && item->created().secsTo(QDateTime::currentDateTime()) < int(item->maxAge()) / 2) {
                 item->reborn();
                 toRegistry(item);
             }
@@ -356,8 +356,8 @@ void FileCache::toRegistry(FileCacheItem *item)
     _registry->setOption(prefix + ".id", item->id());
     _registry->setOption(prefix + ".metadata", item->metadata());
     _registry->setOption(prefix + ".ctime", item->created().toString(Qt::ISODate));
-    _registry->setOption(prefix + ".max-age", (int)item->maxAge());
-    _registry->setOption(prefix + ".size", (qulonglong)item->size());
+    _registry->setOption(prefix + ".max-age", int(item->maxAge()));
+    _registry->setOption(prefix + ".size", qulonglong(item->size()));
 
     item->_flags |= FileCacheItem::Registered;
     _pendingRegisterItems.remove(item->id());

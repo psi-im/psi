@@ -110,7 +110,7 @@ private:
 private slots:
     void bobReceived()
     {
-        BoBData &bob = ((JT_BitsOfBinary*)sender())->data();
+        BoBData &bob = static_cast<JT_BitsOfBinary*>(sender())->data();
         onDataReceived(bob.data());
     }
 
@@ -644,7 +644,7 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
         foreach (const XData::Field &field, d.fields()) {
             if (!field.var().isEmpty()) {
                 if (field.var() == "answers") {
-                    requestedAnswers = field.value().value(0).toInt();
+                    requestedAnswers = field.value().value(0).toShort();
                 }
                 if (field.var() == "from") {
                     from = field.value().value(0);

@@ -33,9 +33,9 @@ SlowTimer::SlowTimer(const QString &path, int line, int maxTime, const QString &
 
 SlowTimer::~SlowTimer ()
 {
-    int t = _timer.elapsed();
+    int t = int(_timer.elapsed());
     if (t >= _maxTime) {
-        const int stripSz = (int)(sizeof(__FILE__) - sizeof("src/debug.cpp"));
+        const int stripSz = int(sizeof(__FILE__) - sizeof("src/debug.cpp"));
         QString relPath = _path.size() > stripSz ? _path.mid(stripSz) : _path;
         if (_message.isEmpty())
             WARNING() << "[slow]" << QString("%1:%2 %3 milliseconds").arg(relPath).arg(_line).arg(t);

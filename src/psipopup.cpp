@@ -155,7 +155,7 @@ void PsiPopup::Private::popupDestroyed()
 
 void PsiPopup::Private::popupClicked(int button)
 {
-    if ( button == (int)Qt::LeftButton ) {
+    if ( button == int(Qt::LeftButton) ) {
         if ( event )
             psi->processEvent(event, UserAction);
         else if ( account ) {
@@ -165,7 +165,7 @@ void PsiPopup::Private::popupClicked(int button)
             account->actionDefault( j );
         }
     }
-    else if ( event && event->account() && button == (int)Qt::RightButton ) {
+    else if ( event && event->account() && button == int(Qt::RightButton) ) {
         event->account()->psi()->removeEvent(event);
     }
 
@@ -278,7 +278,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 
     QString jid = j.full();
     int jidLen = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-jid-length").toInt();
-    if (jidLen > 0 && ((int)jid.length()) > jidLen)
+    if (jidLen > 0 && int(jid.length()) > jidLen)
         jid = jid.left(jidLen) + "...";
 
     QString status;
@@ -286,7 +286,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
     if (len != 0)
         status = r.status().status();
     if (len > 0)
-        if ( ((int)status.length()) > len )
+        if ( int(status.length()) > len )
             status = status.left (len) + "...";
 
     QString name;

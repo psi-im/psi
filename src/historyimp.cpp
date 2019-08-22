@@ -72,8 +72,8 @@ bool HistoryImport::isNeeded()
 void HistoryImport::clear()
 {
     if (dstEdb) {
-        ((EDBSqLite *)dstEdb)->setInsertingMode(EDBSqLite::Normal);
-        ((EDBSqLite *)dstEdb)->setMirror(new EDBFlatFile(psi_));
+        static_cast<EDBSqLite *>(dstEdb)->setInsertingMode(EDBSqLite::Normal);
+        static_cast<EDBSqLite *>(dstEdb)->setMirror(new EDBFlatFile(psi_));
     }
     if (hErase) {
         delete hErase;
@@ -102,8 +102,8 @@ int HistoryImport::exec()
     active = true;
 
     dstEdb = psi_->edb();
-    ((EDBSqLite *)dstEdb)->setMirror(nullptr);
-    ((EDBSqLite *)dstEdb)->setInsertingMode(EDBSqLite::Import);
+    static_cast<EDBSqLite *>(dstEdb)->setMirror(nullptr);
+    static_cast<EDBSqLite *>(dstEdb)->setInsertingMode(EDBSqLite::Import);
 
     dstEdb->setStorageParam("import_start", "yes");
 
@@ -159,7 +159,7 @@ void HistoryImport::stop(int reason)
 
 int HistoryImport::importDuration()
 {
-    return startTime.secsTo(stopTime);
+    return int(startTime.secsTo(stopTime));
 }
 
 void HistoryImport::readFromFiles()
@@ -279,7 +279,7 @@ void HistoryImport::start()
     lbStatus->setText(tr("Counting records"));
     qApp->processEvents();
     recordsCount = srcEdb->eventsCount(QString(), XMPP::Jid());
-    int max = recordsCount / 100;
+    int max = int(recordsCount / 100);
     if ((recordsCount % 100) != 0)
         ++max;
     progressBar->setMaximum(max);

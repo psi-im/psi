@@ -90,7 +90,7 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
         QStringList options = tree_->getChildOptionNames("",false,false);
         options.sort();
         int row = options.indexOf(option);
-        return createIndex(row, sec, nameToIndex(options.at(row)));
+        return createIndex(row, sec, quintptr(nameToIndex(options.at(row))));
     } else {
         QString parentname(getParentName(option));
 
@@ -98,7 +98,7 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
         children.sort();
         int row = children.indexOf(option);
 
-        return createIndex(row, sec, nameToIndex(option));
+        return createIndex(row, sec, quintptr(nameToIndex(option)));
     }
 }
 
@@ -116,7 +116,7 @@ Qt::ItemFlags OptionsTreeModel::flags(const QModelIndex& index) const
 
 int OptionsTreeModel::rowCount(const QModelIndex& parent) const
 {
-    if ((Section)parent.column() == Name || !parent.isValid()) {
+    if (Section(parent.column()) == Name || !parent.isValid()) {
         if (flat_) {
             return (parent.isValid() ? 0 : tree_->getChildOptionNames("",false,false).count());
         } else {
@@ -140,7 +140,7 @@ QVariant OptionsTreeModel::data(const QModelIndex& index, int role) const
         return QVariant();
 
     QString option = indexToOptionName(index);
-    Section section = (Section) index.column();
+    Section section = Section(index.column());
     if ((role == Qt::DisplayRole) || (role == Qt::EditRole)) {
         if (section == Name) {
             if (flat_) {
@@ -171,7 +171,7 @@ QVariant OptionsTreeModel::headerData(int s, Qt::Orientation, int role) const
     if (role != Qt::DisplayRole)
         return QVariant();
 
-    Section section = (Section) s;
+    Section section = Section(s);
     switch (section) {
         case Name: return tr("Name");
         case Type: return QString(tr("Type"));
@@ -203,7 +203,7 @@ QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex & par
     }
     options.sort();
     id = nameToIndex(options.at(row));
-    return createIndex(row,column,id);
+    return createIndex(row,column,quintptr(id));
 }
 
 QModelIndex OptionsTreeModel::parent(const QModelIndex& modelindex) const
@@ -221,16 +221,16 @@ QModelIndex OptionsTreeModel::parent(const QModelIndex& modelindex) const
 bool OptionsTreeModel::setData ( const QModelIndex & index, const QVariant & value, int role)
 {
     QString option = indexToOptionName(index);
-    if ((role != Qt::EditRole) || ((Section) index.column() != Value) || internalNode(option)) {
+    if ((role != Qt::EditRole) || (Section(index.column()) != Value) || internalNode(option)) {
         return false;
     }
     QVariant current = tree_->getOption(option);
     QVariant newval = value;
-    if (!newval.canConvert(current.type())) {
+    if (!newval.canConvert(int(current.type()))) {
         qWarning("Sorry don't know how to do that!");
         return false;
     }
-    newval.convert(current.type());
+    newval.convert(int(current.type()));
     tree_->setOption(option, newval);
     return true;
 }
@@ -309,5 +309,5 @@ int OptionsTreeModel::nameToIndex(QString name) const
 
 QString OptionsTreeModel::indexToOptionName(QModelIndex idx) const
 {
-    return indexMap[idx.internalId()];
+    return indexMap[int(idx.internalId())];
 }

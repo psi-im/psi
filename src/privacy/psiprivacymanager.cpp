@@ -418,7 +418,7 @@ void PsiPrivacyManager::changeDefaultList(const QString& name)
 
 void PsiPrivacyManager::changeDefaultList_finished()
 {
-    SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
+    SetPrivacyListsTask *t = static_cast<SetPrivacyListsTask*>(sender());
     if (!t) {
         qWarning("privacy.cpp:changeDefault_finished(): Unexpected sender.");
         return;
@@ -443,7 +443,7 @@ void PsiPrivacyManager::changeActiveList(const QString& name)
 
 void PsiPrivacyManager::changeActiveList_finished()
 {
-    SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
+    SetPrivacyListsTask *t = static_cast<SetPrivacyListsTask*>(sender());
     if (!t) {
         qWarning("privacy.cpp:changeActive_finished(): Unexpected sender.");
         return;
@@ -468,7 +468,7 @@ void PsiPrivacyManager::changeList(const PrivacyList& list)
 
 void PsiPrivacyManager::changeList_finished()
 {
-    SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
+    SetPrivacyListsTask *t = static_cast<SetPrivacyListsTask*>(sender());
     if (!t) {
         qWarning("privacy.cpp:changeList_finished(): Unexpected sender.");
         return;
@@ -484,7 +484,7 @@ void PsiPrivacyManager::changeList_finished()
 
 void PsiPrivacyManager::receiveLists()
 {
-    GetPrivacyListsTask *t = (GetPrivacyListsTask*)sender();
+    GetPrivacyListsTask *t = static_cast<GetPrivacyListsTask*>(sender());
     if (!t) {
         qWarning("privacy.cpp:receiveLists(): Unexpected sender.");
         return;
@@ -501,7 +501,7 @@ void PsiPrivacyManager::receiveLists()
 
 void PsiPrivacyManager::receiveList()
 {
-    GetPrivacyListTask *t = (GetPrivacyListTask*)sender();
+    GetPrivacyListTask *t = static_cast<GetPrivacyListTask*>(sender());
     if (!t) {
         qWarning("privacy.cpp:receiveList(): Unexpected sender.");
         return;

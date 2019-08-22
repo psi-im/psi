@@ -235,7 +235,7 @@ static JingleRtpReason elementToReason(const QDomElement &e)
         return JingleRtpReason();
 
     JingleRtpReason out;
-    out.condition = (JingleRtpReason::Condition)x;
+    out.condition = JingleRtpReason::Condition(x);
     QDomElement text = e.firstChildElement("text");
     if(!text.isNull())
         out.text = tagContent(text);
@@ -409,7 +409,7 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
         }
 
         envelope.reason = elementToReason(re);
-        if((int)envelope.reason.condition == -1)
+        if(int(envelope.reason.condition) == -1)
         {
             respondError(from, iq_id, 400, QString());
             return true;

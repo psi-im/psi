@@ -186,7 +186,7 @@ PsiAccount* PsiContactList::createAccount(const QString& name, const Jid& j, con
 
     acc.opt_host = opt_host;
     acc.host = host;
-    acc.port = port;
+    acc.port = quint16(port);
     acc.ssl = ssl;
     acc.proxyID = proxyID;
     acc.legacy_ssl_probe = legacy_ssl_probe;
@@ -483,7 +483,7 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
 
 void PsiContactList::accountEnabledChanged()
 {
-    PsiAccount* account = (PsiAccount*)sender();
+    PsiAccount* account = static_cast<PsiAccount*>(sender());
     if (account->enabled())
         addEnabledAccount(account);
     else

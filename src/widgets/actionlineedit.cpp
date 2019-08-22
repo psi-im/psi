@@ -97,7 +97,7 @@ void ActionLineEditButton::paintEvent ( QPaintEvent * event )
     Q_UNUSED(event)
 
     QPainter painter(this);
-    ActionLineEdit *p = (ActionLineEdit *)parent();
+    ActionLineEdit *p = static_cast<ActionLineEdit *>(parent());
     Qt::ToolButtonStyle tbs = p->toolButtonStyle();
     int lpos = 0;
     //int h = height();
@@ -121,10 +121,10 @@ void ActionLineEditButton::paintEvent ( QPaintEvent * event )
 
 QSize ActionLineEditButton::sizeHint () const
 {
-    ActionLineEdit *p = (ActionLineEdit *)parent();
+    ActionLineEdit *p = static_cast<ActionLineEdit *>(parent());
     Qt::ToolButtonStyle tbs = p->toolButtonStyle();
     int w = 0, h = p->height();
-    int ih = ((QLineEdit *)parent())->minimumSizeHint().height()-2; //2px padding from max. the same as in paintEvent
+    int ih = static_cast<QLineEdit *>(parent())->minimumSizeHint().height()-2; //2px padding from max. the same as in paintEvent
     QSize is(0, 0), ts(0, 0);
     if (!icon().isNull() && tbs != Qt::ToolButtonTextOnly) {
         is = icon().actualSize(
@@ -153,10 +153,10 @@ ActionLineEdit::ActionLineEdit(QWidget *parent)
 
 ActionLineEditButton * ActionLineEdit::widgetForAction ( QAction * action )
 {
-    QHBoxLayout *lo = (QHBoxLayout *)layout();
+    QHBoxLayout *lo = static_cast<QHBoxLayout *>(layout());
     ActionLineEditButton *btn;
     for (int i=1, count=lo->count(); i<count; i++) {
-        btn = (ActionLineEditButton *)lo->itemAt(i)->widget();
+        btn = static_cast<ActionLineEditButton *>(lo->itemAt(i)->widget());
         if (btn->defaultAction() == action) {
             return btn;
         }
@@ -166,13 +166,13 @@ ActionLineEditButton * ActionLineEdit::widgetForAction ( QAction * action )
 
 void ActionLineEdit::actionEvent ( QActionEvent * event )
 {
-    QHBoxLayout *lo = (QHBoxLayout *)layout();
+    QHBoxLayout *lo = static_cast<QHBoxLayout *>(layout());
     QAction *act = event->action();
     ActionLineEditButton *btn;
     if (event->type() == QEvent::ActionAdded) {
         btn = new ActionLineEditButton(this);
         QAction *before = event->before();
-        int beforeInd;
+        int beforeInd = 0;
         if (before && (beforeInd = actions().indexOf(before)) >= 0) { //TODO test it
             lo->insertWidget(beforeInd + 1, btn); //1 - first item is spacer. skip it
         }
@@ -183,7 +183,7 @@ void ActionLineEdit::actionEvent ( QActionEvent * event )
     }
     else if (event->type() == QEvent::ActionRemoved) {
         for (int i=1, count=lo->count(); i<count; i++) {
-            btn = (ActionLineEditButton *)lo->itemAt(i)->widget();
+            btn = static_cast<ActionLineEditButton *>(lo->itemAt(i)->widget());
             if (btn->defaultAction() == act) {
                 lo->removeWidget(btn);
                 delete btn;
@@ -193,7 +193,7 @@ void ActionLineEdit::actionEvent ( QActionEvent * event )
     }
     int sumWidth = 0;
     for (int i=1, count=lo->count(); i<count; i++) {
-        btn = (ActionLineEditButton *)lo->itemAt(i)->widget();
+        btn = static_cast<ActionLineEditButton *>(lo->itemAt(i)->widget());
         if (btn->defaultAction()->isVisible()) {
             sumWidth += btn->width();
         }

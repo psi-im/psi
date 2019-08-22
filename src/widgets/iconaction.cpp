@@ -55,7 +55,7 @@ public:
         Q_ASSERT(action);
 
         if (parent && parent->isWidgetType())
-            ((QWidget *)parent)->addAction(action);
+            static_cast<QWidget *>(parent)->addAction(action);
 
 #ifdef Q_OS_MAC
         action->setIconVisibleInMenu(false);
@@ -202,8 +202,7 @@ bool IconAction::addTo(QWidget *w)
     w->addAction(this);
     return true;
 
-    QStringList supportedContainers;
-    supportedContainers << "QWidget";
+    /*QStringList supportedContainers = {"QWidget"};
     if (w->inherits("QToolBar") ||
         supportedContainers.contains(w->metaObject()->className()))
     {
@@ -240,13 +239,13 @@ bool IconAction::addTo(QWidget *w)
     else
         w->addAction(this);
 
-    return true;
+    return true;*/
 }
 
 void IconAction::objectDestroyed()
 {
-    const QObject *obj = sender();
-    d->buttons.removeAll((IconToolButton *)obj);
+    QObject *obj = sender();
+    d->buttons.removeAll(static_cast<IconToolButton *>(obj));
 }
 
 void IconAction::setChecked(bool b)
@@ -290,7 +289,7 @@ void IconAction::iconUpdated()
 QString IconAction::toolTipFromMenuText() const
 {
     QString tt, str = text();
-    for (int i = 0; i < (int)str.length(); i++)
+    for (int i = 0; i < int(str.length()); i++)
         if ( str[i] == '&' && str[i+1] != '&' )
             continue;
         else
@@ -369,7 +368,7 @@ void IconAction::setParent(QObject *newParent)
 
     QAction::setParent(newParent);
     if (newParent && newParent->isWidgetType()) {
-        ((QWidget *)newParent)->addAction(this);
+        static_cast<QWidget *>(newParent)->addAction(this);
     }
 }
 
@@ -410,7 +409,7 @@ void IconActionGroup::Private::updatePopup()
     QList<QAction *> list = group->findChildren<QAction *>();
     foreach(QAction *action, list) {
         if (!group->psiIcon() && action->inherits("IconAction"))
-            group->setIcon(((IconAction *)action)->icon());
+            group->setIcon(static_cast<IconAction *>(action)->icon());
 
         popup->addAction(action);
     }

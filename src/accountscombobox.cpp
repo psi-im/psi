@@ -101,7 +101,7 @@ void AccountsComboBox::updateAccounts()
         addItem(account->nameWithJid());
 
     if (accounts().indexOf(account_) == -1) {
-        account_ = accounts().isEmpty() ? 0 : accounts().first();
+        account_ = accounts().isEmpty() ? nullptr : accounts().first();
         emit activated(account_);
     }
     setCurrentIndex(accounts().indexOf(account_));

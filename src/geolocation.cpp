@@ -38,27 +38,27 @@ QDomElement GeoLocation::toXml(QDomDocument& doc)
 
     if (alt_.hasValue()) {
         QDomElement e = doc.createElement("alt");
-        e.appendChild(doc.createTextNode(QString::number(alt_.value())));
+        e.appendChild(doc.createTextNode(QString::number(double(alt_.value()))));
         geoloc.appendChild(e);
     }
     if (bearing_.hasValue()) {
         QDomElement e = doc.createElement("bearing");
-        e.appendChild(doc.createTextNode(QString::number(bearing_.value())));
+        e.appendChild(doc.createTextNode(QString::number(double(bearing_.value()))));
         geoloc.appendChild(e);
     }
     if (error_.hasValue()) {
         QDomElement e = doc.createElement("error");
-        e.appendChild(doc.createTextNode(QString::number(error_.value())));
+        e.appendChild(doc.createTextNode(QString::number(double(error_.value()))));
         geoloc.appendChild(e);
     }
     if (lat_.hasValue()) {
         QDomElement e = doc.createElement("lat");
-        e.appendChild(doc.createTextNode(QString::number(lat_.value())));
+        e.appendChild(doc.createTextNode(QString::number(double(lat_.value()))));
         geoloc.appendChild(e);
     }
     if (lon_.hasValue()) {
         QDomElement e = doc.createElement("lon");
-        e.appendChild(doc.createTextNode(QString::number(lon_.value())));
+        e.appendChild(doc.createTextNode(QString::number(double(lon_.value()))));
         geoloc.appendChild(e);
     }
     if (!datum_.isEmpty()) {
@@ -377,27 +377,27 @@ QString GeoLocation::toString() const
         loc += QObject::tr("Latitude/Longitude/Altitude: ");
 
         if(lat_.hasValue())
-            loc += QString::number(lat_.value()) + "/";
+            loc += QString::number(double(lat_.value())) + "/";
         else
             loc += "0/";
 
         if(lon_.hasValue())
-            loc += QString::number(lon_.value()) + "/";
+            loc += QString::number(double(lon_.value())) + "/";
         else
             loc += "0/";
 
         if(alt_.hasValue())
-            loc += QString::number(alt_.value());
+            loc += QString::number(double(alt_.value()));
         else
             loc += "0";
 
     }
 
     if(bearing_.hasValue())
-        loc += QObject::tr("\nBearing: ") + QString::number(bearing_.value());
+        loc += QObject::tr("\nBearing: ") + QString::number(double(bearing_.value()));
 
     if(error_.hasValue())
-        loc += QObject::tr("\nError: ") + QString::number(error_.value());
+        loc += QObject::tr("\nError: ") + QString::number(double(error_.value()));
 
     if (!datum().isEmpty())
         loc += QObject::tr("\nDatum: ") + datum();

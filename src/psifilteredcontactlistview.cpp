@@ -74,7 +74,7 @@ bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent* e)
             if (itemHeight)
                 delta = viewport()->height() / itemHeight;
         }
-        moveSelection(delta, e->key() == Qt::Key_PageUp ? Backward : Forward);
+        moveSelection(uint(delta), e->key() == Qt::Key_PageUp ? Backward : Forward);
         return true;
     }
     default:
@@ -87,12 +87,12 @@ bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent* e)
 void PsiFilteredContactListView::moveSelection(uint delta, PsiFilteredContactListView::Direction direction)
 {
     QModelIndex currentIndex = this->currentIndex();
-    int row = currentIndex.row();
+    uint row = uint(currentIndex.row());
     if (currentIndex.isValid())
         row = direction == Forward ? (row + delta) : (row - delta);
     else
         row = 0;
-    selectIndex(row);
+    selectIndex(int(row));
 }
 
 void PsiFilteredContactListView::selectIndex(int row)

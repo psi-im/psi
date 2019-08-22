@@ -61,10 +61,10 @@ FileShareDlg::FileShareDlg(const QList<FileSharingItem*> &items, QWidget *parent
 
     for (auto const &pi: items) {
         QFileInfo fi(pi->fileName());
-        auto tr = filesModel->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), fi.size());
+        auto tr = filesModel->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), quint64(fi.size()));
         tr->setThumbnail(pi->thumbnail(QSize(64,64)));
         if (pi->isPublished()) {
-            tr->setCurrentSize(fi.size());
+            tr->setCurrentSize(quint64(fi.size()));
             tr->setState(MultiFileTransferModel::Done);
         }
         tr->setProperty("publisher", QVariant::fromValue<FileSharingItem*>(pi));
@@ -128,7 +128,7 @@ void FileShareDlg::publish()
             return;
         }
         item->setState(MultiFileTransferModel::Active);
-        connect(publisher, &FileSharingItem::publishProgress, this, [this, item](size_t progress){
+        connect(publisher, &FileSharingItem::publishProgress, this, [item](size_t progress){
             item->setCurrentSize(progress);
         });
         connect(publisher, &FileSharingItem::publishFinished, this, [this,publisher,item](){
@@ -144,7 +144,7 @@ void FileShareDlg::publish()
             if (!inProgressCount)
                 emit published();
         });
-        connect(publisher, &FileSharingItem::logChanged, this, [this,publisher,item](){
+        connect(publisher, &FileSharingItem::logChanged, this, [publisher,item](){
             item->setInfo(TextUtil::plain2rich(publisher->log().join('\n')));
         });
         inProgressCount++;

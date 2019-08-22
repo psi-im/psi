@@ -33,6 +33,17 @@
 #    include <sys/utsname.h>
 #endif
 
+#if defined(Q_OS_WIN) || defined(Q_OS_MAC)//QSysInfo for Mac and Windows systems is obsolete for Qt>=5.9
+# if QT_VERSION >= QT_VERSION_CHECK(5,9,0)
+# include <QOperatingSystemVersion>
+#  if defined(Q_OS_WIN)
+#  include <versionhelpers.h>
+#  endif
+# endif
+#endif
+
+#include "systeminfo.h"
+
 #if QT_VERSION < QT_VERSION_CHECK(5,5,0)
     #error "Minimal supported version of Qt in this file is 5.5.0"
 #endif
@@ -210,8 +221,9 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     }
 
 #elif defined(Q_OS_MAC)
-    QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
     os_str_.clear();
+# if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
+    QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
     switch (v) {
         case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
             os_name_str_ = "Mac OS X";
@@ -242,32 +254,49 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
             os_name_str_ = QSysInfo::productType();
             os_str_ = QSysInfo::prettyProductName();
     }
+# else
+    auto current = QOperatingSystemVersion::current();
+    if(current.type() == QOperatingSystemVersion::MacOS && current.minorVersion() > 12) {
+        os_name_str_ = "macOS";
+    }
+    else {
+        os_name_str_ = "Mac OS X";
+    }
+
+    if(current >= QOperatingSystemVersion::MacOSMojave) {
+        os_version_str_ = "10.14 (Mojave)";
+    }
+    else if(current >= QOperatingSystemVersion::MacOSHighSierra) {
+        os_version_str_ = "10.13 (High Sierra)";
+    }
+    else if(current >= QOperatingSystemVersion::MacOSSierra) {
+        os_version_str_ = "10.12 (Sierra)";
+    }
+    else if(current >= QOperatingSystemVersion::OSXElCapitan) {
+        os_version_str_ = "10.11 (El Capitan)";
+    }
+    else if(current >= QOperatingSystemVersion::OSXYosemite) {
+        os_version_str_ = "10.10 (Yosemite)";
+    }
+    else if(current >= QOperatingSystemVersion::OSXMavericks) {
+        os_version_str_ = "10.9 (Mavericks)";
+    }
+    else {
+        os_version_str_ = QString("%1.%2").arg(current.majorVersion()).arg(current.minorVersion());
+        os_name_str_ = current.name();
+    }
+# endif
     if (os_str_.isEmpty()) {
         os_str_ = os_name_str_ + " " + os_version_str_;
     }
 #endif
 
 #if defined(Q_OS_WIN)
-
     os_name_str_ = "Windows";
     os_str_ = os_name_str_;
+# if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
     QSysInfo::WinVersion v = QSysInfo::WindowsVersion;
     switch (v) {
-        case QSysInfo::WV_95:
-            os_version_str_ = "95";
-            break;
-        case QSysInfo::WV_98:
-            os_version_str_ = "98";
-            break;
-        case QSysInfo::WV_Me:
-            os_version_str_ = "Me";
-            break;
-        case QSysInfo::WV_DOS_based:
-            os_version_str_ = "9x/Me";
-            break;
-        case QSysInfo::WV_NT:
-            os_version_str_ = "NT 4.x";
-            break;
         case QSysInfo::WV_2000:
             os_version_str_ = "2000";
             break;
@@ -298,6 +327,71 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
         default: // make compiler happy with unsupported Windows versions
             break;
     }
+# else
+    auto current = QOperatingSystemVersion::current();
+    if(IsWindowsServer()) {
+        os_name_str_ = "Windows Server";
+        os_str_ = os_name_str_;
+        switch (current.majorVersion()) {
+        case 5:
+            os_version_str_ = "2003";
+            break;
+        case 6:
+            switch (current.minorVersion()) {
+            case 0:
+                os_version_str_ = "2008";
+                break;
+            case 1:
+                os_version_str_ = "2008 R2";
+                break;
+            case 2:
+                os_version_str_ = "2012";
+                break;
+            case 3:
+                os_version_str_ = "2012 R2";
+                break;
+            }
+            break;
+        case 10:
+            os_version_str_ = "2016";
+            break;
+        }
+    }
+    else{
+        if(current >= QOperatingSystemVersion::Windows10) {
+            os_version_str_ = "10";
+        }
+        else if(current >= QOperatingSystemVersion::Windows8_1) {
+            os_version_str_ = "8.1";
+        }
+        else if(current >= QOperatingSystemVersion::Windows8) {
+            os_version_str_ = "8";
+        }
+        else if(current >= QOperatingSystemVersion::Windows7) {
+            os_version_str_ = "7";
+        }
+        else { //Outdated systems
+            switch(current.majorVersion()){
+            case 6:
+                os_version_str_ = "Vista";
+                break;
+            case 5:
+                switch(current.minorVersion()){
+                case 0:
+                    os_version_str_ = "2000";
+                    break;
+                case 1:
+                    os_version_str_ = "XP";
+                    break;
+                case 2:
+                    os_version_str_ = "XP 64-Bit Edition";
+                    break;
+                }
+                break;
+            }
+        }
+    }
+# endif
 
     if (!os_version_str_.isEmpty()) {
         os_str_ += (" " + os_version_str_);

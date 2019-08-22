@@ -48,13 +48,13 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(nullptr), pa_(
         return;
 
     if (geoloc.alt().hasValue())
-        ui_.le_altitude->setText(QString::number(geoloc.alt().value()));
+        ui_.le_altitude->setText(QString::number(double(geoloc.alt().value())));
 
     if (!geoloc.area().isEmpty())
         ui_.le_area->setText(geoloc.area());
 
     if (geoloc.bearing().hasValue())
-        ui_.le_bearing->setText(QString::number(geoloc.bearing().value()));
+        ui_.le_bearing->setText(QString::number(double(geoloc.bearing().value())));
 
     if (!geoloc.building().isEmpty())
         ui_.le_building->setText(geoloc.building());
@@ -69,19 +69,19 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(nullptr), pa_(
         ui_.le_description->setText(geoloc.description());
 
     if (geoloc.error().hasValue())
-        ui_.le_error->setText(QString::number(geoloc.error().value()));
+        ui_.le_error->setText(QString::number(double(geoloc.error().value())));
 
     if (!geoloc.floor().isEmpty())
         ui_.le_floor->setText(geoloc.floor());
 
     if (geoloc.lat().hasValue())
-        ui_.le_latitude->setText(QString::number(geoloc.lat().value()));
+        ui_.le_latitude->setText(QString::number(double(geoloc.lat().value())));
 
     if (!geoloc.locality().isEmpty())
         ui_.le_locality->setText(geoloc.locality());
 
     if (geoloc.lon().hasValue())
-        ui_.le_longitude->setText(QString::number(geoloc.lon().value()));
+        ui_.le_longitude->setText(QString::number(double(geoloc.lon().value())));
 
     if (!geoloc.postalcode().isEmpty())
         ui_.le_postalcode->setText(geoloc.postalcode());

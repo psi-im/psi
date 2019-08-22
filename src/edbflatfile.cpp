@@ -170,10 +170,10 @@ quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
 {
     quint64 res = 0;
     if (!jid.isEmpty())
-        res = ensureFile(jid)->total();
+        res = quint64(ensureFile(jid)->total());
     else
         foreach (const ContactItem &ci, contacts(accId, Contact))
-            res += ensureFile(ci.jid)->total();
+            res += quint64(ensureFile(ci.jid)->total());
     return res;
 }
 
@@ -392,7 +392,7 @@ void EDBFlatFile::File::ensureIndex()
         //printf(" file: %s\n", fname.latin1());
         // build index
         while(1) {
-            quint64 at = f.pos();
+            quint64 at = quint64(f.pos());
 
             // locate a newline
             bool found = false;
@@ -423,7 +423,7 @@ void EDBFlatFile::File::ensureIndex()
 
 int EDBFlatFile::File::total() const
 {
-    ((EDBFlatFile::File *)this)->ensureIndex();
+    const_cast<EDBFlatFile::File *>(this)->ensureIndex();
     return d->index.size();
 }
 
@@ -546,7 +546,7 @@ bool EDBFlatFile::File::append(const PsiEvent::Ptr &e)
         return false;
 
     f.seek(f.size());
-    quint64 at = f.pos();
+    quint64 at = quint64(f.pos());
 
     QTextStream t;
     t.setDevice(&f);
@@ -749,10 +749,10 @@ QString EDBFlatFile::File::getLine(int id)
         return QString();
 
     ensureIndex();
-    if(id < 0 || id >= (int)d->index.size())
+    if(id < 0 || id >= int(d->index.size()))
         return QString();
 
-    f.seek(d->index[id]);
+    f.seek(qint64(d->index[id]));
 
     QTextStream t;
     t.setDevice(&f);

@@ -64,7 +64,7 @@ PrivacyListItem PrivacyRuleDlg::rule() const
     PrivacyListItem item;
 
     // Type & value
-    PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
+    PrivacyListItem::Type t = PrivacyListItem::Type(ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt());
     if(t == PrivacyListItem::SubscriptionType) {
         item.setType(t);
         item.setValue(ui_.cb_value->itemData(ui_.cb_value->currentIndex()).toString());
@@ -75,7 +75,7 @@ PrivacyListItem PrivacyRuleDlg::rule() const
     }
 
     // Action
-    item.setAction((PrivacyListItem::Action)ui_.cb_action->itemData(ui_.cb_action->currentIndex()).toInt());
+    item.setAction(PrivacyListItem::Action(ui_.cb_action->itemData(ui_.cb_action->currentIndex()).toInt()));
 
     // Selection
     item.setMessage(ui_.ck_messages->isChecked());
@@ -90,7 +90,7 @@ void PrivacyRuleDlg::type_selected(const QString& type)
 {
     ui_.cb_value->clear();
     ui_.cb_value->setItemText(ui_.cb_value->currentIndex(), "");
-    PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
+    PrivacyListItem::Type t = PrivacyListItem::Type(ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt());
     if (t == PrivacyListItem::SubscriptionType) {
         ui_.cb_value->addItem(tr("None"), "none");
         ui_.cb_value->addItem(tr("Both"), "both");

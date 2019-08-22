@@ -85,9 +85,9 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
     if(!proxy.isEmpty()) {
         const ProxyItem &pi = ProxyManager::instance()->getItem(proxy);
         if(pi.type == "http") // HTTP Connect
-            p.setHttpConnect(pi.settings.host, pi.settings.port);
+            p.setHttpConnect(pi.settings.host, quint16(pi.settings.port));
         else if(pi.type == "socks") // SOCKS
-            p.setSocks(pi.settings.host, pi.settings.port);
+            p.setSocks(pi.settings.host, quint16(pi.settings.port));
         else if(pi.type == "poll") { // HTTP Poll
             QUrl u = pi.settings.url;
             QUrlQuery q(u.query(QUrl::FullyEncoded));
@@ -100,7 +100,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
                 u.setQuery(q);
             }
 
-            p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
+            p.setHttpPoll(pi.settings.host, quint16(pi.settings.port), u.toString());
             p.setPollInterval(2);
         }
 
@@ -120,7 +120,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 
     conn->setProxy(p);
     if (useHost) {
-        conn->setOptHostPort(host, port);
+        conn->setOptHostPort(host, quint16(port));
         conn->setOptSSL(legacy_ssl);
     }
     else {
@@ -211,7 +211,7 @@ void MiniClient::cs_authenticated()
 
 void MiniClient::sessionStart_finished()
 {
-    JT_Session *j = (JT_Session*)sender();
+    JT_Session *j = static_cast<JT_Session*>(sender());
     if ( j->success() ) {
         handshaken();
     }

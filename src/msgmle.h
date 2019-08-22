@@ -85,6 +85,7 @@ protected slots:
     void showHistoryMessageLast();
     void changeActPasteAsQuoteState();
     void pasteAsQuote();
+    void setRigthMargin();
 
 signals:
     void fileSharingRequested(const QMimeData *);

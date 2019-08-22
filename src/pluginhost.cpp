@@ -945,7 +945,7 @@ QTextEdit* PluginHost::getEditBox()
     if(tw) {
         QWidget* chatEditProxy = tw->findChild<QWidget*>("mle");
         if(chatEditProxy) {
-            ed = (QTextEdit *)chatEditProxy->children().at(1);
+            ed = static_cast<QTextEdit *>(chatEditProxy->children().at(1));
         }
     }
 
@@ -1016,7 +1016,7 @@ QString PluginHost::appOsName()
 
 QString PluginHost::appHomeDir(ApplicationInfoAccessingHost::HomedirType type)
 {
-    return ApplicationInfo::homeDir((ApplicationInfo::HomedirType)type);
+    return ApplicationInfo::homeDir(ApplicationInfo::HomedirType(type));
 }
 
 QString PluginHost::appResourcesDir()
@@ -1031,7 +1031,7 @@ QString PluginHost::appLibDir()
 
 QString PluginHost::appProfilesDir(ApplicationInfoAccessingHost::HomedirType type)
 {
-    return ApplicationInfo::profilesDir((ApplicationInfo::HomedirType)type);
+    return ApplicationInfo::profilesDir(ApplicationInfo::HomedirType(type));
 }
 
 QString PluginHost::appHistoryDir()
@@ -1041,7 +1041,7 @@ QString PluginHost::appHistoryDir()
 
 QString PluginHost::appCurrentProfileDir(ApplicationInfoAccessingHost::HomedirType type)
 {
-    return ApplicationInfo::currentProfileDir((ApplicationInfo::HomedirType)type);
+    return ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType(type));
 }
 
 QString PluginHost::appVCardDir()

@@ -721,7 +721,7 @@ void EDBSqLite::startAutocommitTimer()
         commitTimer = new QTimer(this);
         connect(commitTimer, SIGNAL(timeout()), this, SLOT(commit()));
         commitTimer->setSingleShot(true);
-        commitTimer->setInterval(commitByTimeoutSecs * 1000);
+        commitTimer->setInterval(int(commitByTimeoutSecs) * 1000);
     }
     commitTimer->start();
 }
