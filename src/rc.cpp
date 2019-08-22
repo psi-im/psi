@@ -17,8 +17,6 @@
  *
  */
 
-#include "rc.h"
-
 #include "ahcommand.h"
 #include "ahcservermanager.h"
 #include "groupchatdlg.h"
@@ -28,6 +26,7 @@
 #include "psicon.h"
 #include "psioptions.h"
 #include "xmpp_xdata.h"
+#include "rc.h"
 
 using namespace XMPP;
 

@@ -42,8 +42,6 @@
 # endif
 #endif
 
-#include "systeminfo.h"
-
 #if QT_VERSION < QT_VERSION_CHECK(5,5,0)
     #error "Minimal supported version of Qt in this file is 5.5.0"
 #endif

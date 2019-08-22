@@ -20,10 +20,10 @@
 #ifndef PSIEVENT_H
 #define PSIEVENT_H
 
-#include "psihttpauthrequest.h"
 #include "xmpp_jid.h"
 #include "xmpp_message.h"
 #include "xmpp_rosterx.h"
+#include "psihttpauthrequest.h"
 
 #include <QDateTime>
 #include <QDomDocument>

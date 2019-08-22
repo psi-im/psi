@@ -20,14 +20,14 @@
 #ifndef CHATVIEW_TE_H
 #define CHATVIEW_TE_H
 
-#include "chatviewcommon.h"
-#include "psitextview.h"
-#include "xmpp/jid/jid.h"
-
 #include <QContextMenuEvent>
 #include <QDateTime>
 #include <QPointer>
 #include <QWidget>
+
+#include "chatviewcommon.h"
+#include "psitextview.h"
+#include "xmpp/jid/jid.h"
 
 class ChatEdit;
 class ChatViewBase;

@@ -20,8 +20,6 @@
 #ifndef ACCOUNTMANAGEDLG_H
 #define ACCOUNTMANAGEDLG_H
 
-#include "ui_accountmanage.h"
-
 #include <QTreeWidget>
 
 class PsiAccount;
@@ -47,6 +45,8 @@ protected:
 signals:
     void orderChanged(QList<PsiAccount *> accountsList);
 };
+
+#include "ui_accountmanage.h"
 
 class AccountManageDlg : public QDialog, public Ui::AccountManage
 {

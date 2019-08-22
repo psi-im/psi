@@ -1,11 +1,11 @@
+#include <QTextDocument> // for escape()
+
 #include "textutil.h"
 
 #include "coloropt.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "rtparse.h"
-
-#include <QTextDocument> // for escape()
 
 QString TextUtil::escape(const QString &plain)
 {

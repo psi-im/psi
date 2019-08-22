@@ -19,12 +19,12 @@
 
 #include "httpauthmanager.h"
 
-#include "psihttpauthrequest.h"
 #include "xmpp_client.h"
 #include "xmpp_message.h"
 #include "xmpp_stream.h"
 #include "xmpp_task.h"
 #include "xmpp_xmlcommon.h"
+#include "psihttpauthrequest.h"
 
 class HttpAuthListener : public XMPP::Task
 {

@@ -20,11 +20,13 @@
 #include "contactmanagerdlg.h"
 
 //#include "contactview.h"
-#include "psiaccount.h"
+#include "xmpp_tasks.h"
+
 #include "psiiconset.h"
 #include "userlist.h"
+#include "psiaccount.h"
 #include "vcardfactory.h"
-#include "xmpp_tasks.h"
+
 
 #include <QCheckBox>
 #include <QFile>

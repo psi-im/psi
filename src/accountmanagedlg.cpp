@@ -19,6 +19,7 @@
 
 #include "accountmanagedlg.h"
 
+#include "xmpp_tasks.h"
 #include "accountadddlg.h"
 #include "common.h"
 #include "iconaction.h"
@@ -31,7 +32,6 @@
 #include "psiiconset.h"
 #include "shortcutmanager.h"
 #include "ui_accountremove.h"
-#include "xmpp_tasks.h"
 
 #include <QButtonGroup>
 #include <QDropEvent>

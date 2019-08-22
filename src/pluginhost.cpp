@@ -5,6 +5,19 @@
 
 #include "pluginhost.h"
 
+#include <QAction>
+#include <QByteArray>
+#include <QDomElement>
+#include <QKeySequence>
+#include <QObject>
+#include <QPluginLoader>
+#include <QRegExp>
+#include <QSplitter>
+#include <QString>
+#include <QStringList>
+#include <QTextEdit>
+#include <QWidget>
+
 #include "accountinfoaccessor.h"
 #include "activetabaccessor.h"
 #include "applicationinfo.h"
@@ -43,19 +56,6 @@
 #include "webkitaccessor.h"
 #include "widgets/iconaction.h"
 //#include "xmpp_message.h"
-
-#include <QAction>
-#include <QByteArray>
-#include <QDomElement>
-#include <QKeySequence>
-#include <QObject>
-#include <QPluginLoader>
-#include <QRegExp>
-#include <QSplitter>
-#include <QString>
-#include <QStringList>
-#include <QTextEdit>
-#include <QWidget>
 
 /**
  * \brief Constructs a host/wrapper for a plugin.
