@@ -18,19 +18,20 @@
  */
 
 #include "tabbar.h"
+
 #include "iconset.h"
 
 #include <QAbstractButton>
+#include <QApplication>
+//#include <QDebug>
+#include <QDrag>
+#include <QLine>
+#include <QMimeData>
+#include <QMouseEvent>
 #include <QPixmap>
 #include <QStyleOptionTab>
 #include <QStylePainter>
-#include <QMouseEvent>
-#include <QApplication>
-#include <QLine>
-#include <QDrag>
-#include <QMimeData>
 #include <memory>
-//#include <QDebug>
 
 #define PINNED_CHARS 6
 
@@ -129,7 +130,6 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
     int *pPrevLayout = &layouts[0];
     int *pLayout = &layouts[size_t(rows)];
     int nTabs = tabs.size();
-
 
     // Fill layouts
     while (true) {
@@ -994,7 +994,6 @@ void TabBar::paintEvent(QPaintEvent *event)
             drawSelected = true;
         }
 
-
         if (tab.position == QStyleOptionTab::End || tab.position == QStyleOptionTab::OnlyOneTab) {
             if (drawSelected) {
                 // Draw current tab in the last order
@@ -1099,7 +1098,6 @@ void TabBar::mouseReleaseEvent(QMouseEvent *event)
 
     if (curTab < 0)
         return;
-
 
     setCurrentIndex(curTab);
     d->layoutTabs();

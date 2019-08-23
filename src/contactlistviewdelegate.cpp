@@ -17,28 +17,33 @@
  *
  */
 
-#include "contactlistviewdelegate_p.h"
-
+#include "activity.h"
 #include "avatars.h"
 #include "coloropt.h"
 #include "common.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "contactlistview.h"
-#include "psiiconset.h"
-#include "psioptions.h"
+#include "contactlistviewdelegate_p.h"
 #include "debug.h"
 #include "mood.h"
-#include "activity.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
-#include <QKeyEvent>
-#include <QLineEdit>
-#include <QPainter>
-#include <QSortFilterProxyModel>
-#include <QMutableSetIterator>
-#include <QSetIterator>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QMutableSetIterator>
+#include <QPainter>
+#include <QSetIterator>
+#include <QSortFilterProxyModel>
+
+#define ALERT_INTERVAL 100 /* msecs */
+#define ANIM_INTERVAL 300 /* msecs */
+
+#define PSI_HIDPI computeScaleFactor(contactList)
+//#define PSI_HIDPI (2) // for testing purposes
 
 static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
@@ -71,12 +76,6 @@ static const QString animation2ColorPath(QStringLiteral("options.ui.look.colors.
 static const QString statusMessageColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-messages"));
 static const QString headerBackgroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
 static const QString headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
-
-#define ALERT_INTERVAL 100 /* msecs */
-#define ANIM_INTERVAL 300 /* msecs */
-
-#define PSI_HIDPI computeScaleFactor(contactList)
-//#define PSI_HIDPI (2) // for testing purposes
 
 int computeScaleFactor(ContactListView *contactList) {
     static int factor = 0;
@@ -171,7 +170,6 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     animTimer->setInterval(ANIM_INTERVAL);
     animTimer->setSingleShot(false);
     connect(animTimer, SIGNAL(timeout()), SLOT(updateAnim()));
-
 
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
     connect(ColorOpt::instance(), SIGNAL(changed(const QString&)), SLOT(colorOptionChanged(const QString&)));
@@ -574,7 +572,6 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
      * 12) on the other side of nickname rectangle draw transparent gradient if it intersects nick space to hide nickname softly
      * 13) Draw icons in its rectangle aligned vertically starting from opposite side on nickname start
      */
-
 
     drawBackground(painter, opt, index);
 
@@ -1246,7 +1243,6 @@ void ContactListViewDelegate::Private::setAnimEnabled(const QModelIndex &index, 
 /***************************/
 /* ContactListViewDelegate */
 /***************************/
-
 
 ContactListViewDelegate::ContactListViewDelegate(ContactListView *parent)
     : QItemDelegate(parent)

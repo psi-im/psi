@@ -1,6 +1,6 @@
 /*
  * edbsqlite.h
- * Copyright (C) 2011   Aleksey Andreev
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,19 +20,19 @@
 #ifndef EDBSQLITE_H
 #define EDBSQLITE_H
 
-#include <QObject>
+#include "edbflatfile.h"
+#include "eventdb.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
 #include <QDateTime>
-#include <QTimer>
+#include <QHash>
+#include <QObject>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
-#include <QHash>
+#include <QTimer>
 #include <QVariant>
-
-#include "eventdb.h"
-#include "xmpp_jid.h"
-#include "psievent.h"
-#include "edbflatfile.h"
 
 enum QueryType {
     QueryContactsList,

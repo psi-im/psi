@@ -21,6 +21,7 @@
 #define SXDEMETADATAEDIT_H
 
 #include "sxeedit.h"
+
 #include <QHash>
 
 /*! \brief A class used for storing SXE edits that change nodes in the undo stacks and in the queue of outgoing edits.*/
@@ -59,4 +60,4 @@ class SxeRecordEdit : public SxeEdit {
         QHash<Key, QString> changes_;
 };
 
-#endif
+#endif // SXDEMETADATAEDIT_H

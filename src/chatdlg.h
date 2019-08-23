@@ -20,35 +20,32 @@
 #ifndef CHATDLG_H
 #define CHATDLG_H
 
+#include "advwidget.h"
+#include "messageview.h"
+#include "tabbablewidget.h"
+
+#include <QCloseEvent>
 #include <QContextMenuEvent>
 #include <QDragEnterEvent>
-#include <QShowEvent>
+#include <QDropEvent>
 #include <QKeyEvent>
 #include <QResizeEvent>
-#include <QDropEvent>
-#include <QCloseEvent>
+#include <QShowEvent>
 #include <QTextEdit>
 
-#include "advwidget.h"
+class ChatEdit;
+class ChatView;
+class FileSharingItem;
+class PsiAccount;
+class QDragEnterEvent;
+class QDropEvent;
+class UserListItem;
 
-#include "tabbablewidget.h"
-#include "messageview.h"
-
-
-namespace XMPP
-{
-class Jid;
-class Message;
+namespace XMPP {
+    class Jid;
+    class Message;
 }
 using namespace XMPP;
-
-class PsiAccount;
-class UserListItem;
-class QDropEvent;
-class QDragEnterEvent;
-class ChatView;
-class ChatEdit;
-class FileSharingItem;
 
 struct UserStatus {
     UserStatus()
@@ -225,4 +222,4 @@ private:
     QString fileShareDesc_;
 };
 
-#endif
+#endif // CHATDLG_H

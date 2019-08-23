@@ -1,10 +1,10 @@
 #ifndef ITUNESTUNECONTROLLER_H
 #define ITUNESTUNECONTROLLER_H
 
-#include <QString>
-#include <CoreFoundation/CoreFoundation.h>
-
 #include "tunecontrollerinterface.h"
+
+#include <CoreFoundation/CoreFoundation.h>
+#include <QString>
 
 class ITunesController : public TuneController
 {
@@ -19,4 +19,4 @@ private:
     Tune currentTune_;
 };
 
-#endif
+#endif // ITUNESTUNECONTROLLER_H

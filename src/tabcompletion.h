@@ -18,12 +18,12 @@
 
 // Generic tab completion support code.
 
- #ifndef TABCOMPLETION_H
+#ifndef TABCOMPLETION_H
 #define TABCOMPLETION_H
 
-#include <QObject>
-
 #include "msgmle.h"
+
+#include <QObject>
 
 class TabCompletion : public QObject
 {
@@ -51,7 +51,6 @@ protected:
 
 private:
 
-
     QString longestCommonPrefix(QStringList list);
     QString suggestCompletion(bool *replaced);
 
@@ -72,4 +71,4 @@ private:
     QTextEdit *textEdit_;
 };
 
-#endif
+#endif // TABCOMPLETION_H

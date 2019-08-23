@@ -19,22 +19,24 @@
 
 #include "proxy.h"
 
-#include <QLabel>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QLayout>
-#include <QComboBox>
-#include <QPushButton>
-#include <QDomElement>
-#include <QPointer>
-#include <QApplication>
-#include <QHBoxLayout>
-#include <QList>
-
 #include "common.h"
 #include "iconwidget.h"
 #include "psioptions.h"
 #include "xmpp_xmlcommon.h"
+
+#include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDomElement>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QList>
+#include <QPointer>
+#include <QPushButton>
+
+#define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
 
 //----------------------------------------------------------------------------
 // ProxySettings
@@ -44,8 +46,6 @@ ProxySettings::ProxySettings()
     port = 0;
     useAuth = false;
 }
-
-#define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
 
 void ProxySettings::toOptions(OptionsTree* o, QString base) const
 {
@@ -422,7 +422,6 @@ void ProxyChooser::doOpen()
     connect(d->m, SIGNAL(settingsChanged()), SLOT(pm_settingsChangedApply()));
     d->m->openDialog(x);
 }
-
 
 //----------------------------------------------------------------------------
 // ProxyForObject

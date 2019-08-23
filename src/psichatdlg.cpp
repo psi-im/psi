@@ -1,59 +1,59 @@
 #include "psichatdlg.h"
 
-#include <QLabel>
+#include "accountlabel.h"
+#include "actionlist.h"
+#include "activecontactsmenu.h"
+#include "avatars.h"
+#include "avcall/avcall.h"
+#include "coloropt.h"
+#include "fancylabel.h"
+#include "filesharingmanager.h"
+#include "iconaction.h"
+#include "iconlabel.h"
+#include "iconselect.h"
+#include "iconwidget.h"
+#include "jidutil.h"
+#include "lastactivitytask.h"
+#include "messageview.h"
+#include "msgmle.h"
+#include "psiaccount.h"
+#include "psiactionlist.h"
+#include "psicon.h"
+#include "psicontact.h"
+#include "psicontactlist.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+#include "shortcutmanager.h"
+#include "stretchwidget.h"
+#include "textutil.h"
+#include "userlist.h"
+#include "xmpp_caps.h"
+#include "xmpp_tasks.h"
+#ifdef PSI_PLUGINS
+#    include "filesharedlg.h"
+#    include "pluginmanager.h"
+#endif
+
+#include <QClipboard>
+#include <QCloseEvent>
+#include <QColor>
+#include <QContextMenuEvent>
 #include <QCursor>
-#include <QLineEdit>
-#include <QToolButton>
+#include <QDebug>
+#include <QDragEnterEvent>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QLayout>
+#include <QLineEdit>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPixmap>
+#include <QResizeEvent>
 #include <QSplitter>
 #include <QToolBar>
-#include <QPixmap>
-#include <QColor>
-#include <QCloseEvent>
-#include <QHBoxLayout>
+#include <QToolButton>
 #include <QVBoxLayout>
-#include <QContextMenuEvent>
-#include <QResizeEvent>
-#include <QMenu>
-#include <QDragEnterEvent>
-#include <QMessageBox>
-#include <QDebug>
-#include <QClipboard>
-
-#include "psicon.h"
-#include "psiaccount.h"
-#include "iconaction.h"
-#include "stretchwidget.h"
-#include "psiiconset.h"
-#include "iconwidget.h"
-#include "fancylabel.h"
-#include "textutil.h"
-#include "msgmle.h"
-#include "messageview.h"
-#include "iconselect.h"
-#include "avatars.h"
-#include "activecontactsmenu.h"
-#include "psitooltip.h"
-#include "psioptions.h"
-#include "coloropt.h"
-#include "shortcutmanager.h"
-#include "accountlabel.h"
-#include "iconlabel.h"
-#include "psicontactlist.h"
-#include "userlist.h"
-#include "psicontact.h"
-#include "jidutil.h"
-#include "xmpp_tasks.h"
-#include "xmpp_caps.h"
-#include "lastactivitytask.h"
-#include "avcall/avcall.h"
-#include "actionlist.h"
-#include "psiactionlist.h"
-#include "filesharingmanager.h"
-#ifdef PSI_PLUGINS
-#include "filesharedlg.h"
-#include "pluginmanager.h"
-#endif
 
 #define MCMDCHAT        "https://psi-im.org/ids/mcmd#chatmain"
 
@@ -139,7 +139,6 @@ public:
     virtual void mCmdSiteDestroyed() {};
     virtual ~ChatDlgMCmdProvider() {};
 
-
 public slots:
     void version_finished() {
         JT_ClientVersion *version = qobject_cast<JT_ClientVersion*>(sender());
@@ -172,8 +171,6 @@ public slots:
 private:
     PsiChatDlg *dlg_;
 };
-
-
 
 PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
     : ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_)
@@ -926,7 +923,6 @@ void PsiChatDlg::chatEditCreated()
     });
 }
 
-
 void PsiChatDlg::doSend() {
     tabCompletion.reset();
     if (mCmdSite_.isActive()) {
@@ -973,7 +969,6 @@ bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
 
     return ChatDlg::eventFilter( obj, ev );
 }
-
 
 QString PsiChatDlg::makeContactName(const QString &name, const Jid &jid) const
 {

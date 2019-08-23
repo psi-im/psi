@@ -35,7 +35,6 @@ public:
         Participant
     };
 
-
     ChatViewCommon() : _nickNumber(0) { }
     void setLooks(QWidget *);
     inline const QDateTime& lastMsgTime() const { return _lastMsgTime; }
@@ -53,4 +52,4 @@ private:
     QMap<QString,int> _nicks;
 };
 
-#endif
+#endif // CHATVIEWBASE_H

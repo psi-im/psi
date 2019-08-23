@@ -1,19 +1,21 @@
 #ifndef FILETRANSDLG_H
 #define FILETRANSDLG_H
 
-#include <QItemDelegate>
 #include "advwidget.h"
 #include "ui_filetrans.h"
 #include "s5b.h"
 
-class PsiCon;
-class PsiAccount;
-class QPixmap;
+#include <QItemDelegate>
+
 class FileTransView;
+class PsiAccount;
+class PsiCon;
+class QPixmap;
+
 namespace XMPP {
+    class BoBData;
     class FileTransfer;
     class Jid;
-    class BoBData;
 }
 using namespace XMPP;
 
@@ -38,7 +40,6 @@ public:
     QString saveName() const;
     QString filePath() const;
     QPixmap fileIcon() const;
-
 
     void send(const Jid &to, const QString &fname, const QString &desc);
     void accept(const QString &saveName, const QString &fileName, qlonglong offset=0);
@@ -155,4 +156,4 @@ private:
     FileTransView* ftv;
 };
 
-#endif
+#endif // FILETRANSDLG_H

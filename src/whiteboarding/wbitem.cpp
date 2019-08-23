@@ -18,13 +18,15 @@
  */
 
 #include "wbitem.h"
+
 #include "wbscene.h"
 #include "wbwidget.h"
-#include <QRegExp>
-#include <QDebug>
-#include <QSvgRenderer>
 
+#include <QDebug>
+#include <QRegExp>
+#include <QSvgRenderer>
 #include <math.h>
+
 static QMatrix parseTransformationMatrix(const QString &value);
 
 /*
@@ -53,7 +55,6 @@ void WbItemMenu::destructSelf() {
     deleteLater();
 }
 
-
 /*
  *   WbItem
  */
@@ -71,7 +72,6 @@ WbItem::WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, Wb
         qDebug("Trying to create a WbItem from a null QDomNode.");
         return;
     }
-
 
     // Make the item selectable and movable
     setFlag(QGraphicsItem::ItemIsSelectable);
@@ -363,13 +363,10 @@ QPointF WbItem::center() {
     return transform().map(c);
 }
 
-
-
-
 // The following functions are from qt-mac-opensource-src-4.3.1/src/svg/qsvghandler.cpp
 /****************************************************************************
 **
-** Copyright (C) 1992-2007 Trolltech ASA. All rights reserved.
+** Copyright (C) 1992-2007  Trolltech ASA. All rights reserved.
 **
 ** This file is part of the QtSVG module of the Qt Toolkit.
 **
@@ -599,7 +596,6 @@ static QMatrix parseTransformationMatrix(const QString &value)
         else {
             goto error;
         }
-
 
         while (str->isSpace()) {
             ++str;

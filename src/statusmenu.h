@@ -20,12 +20,12 @@
 #ifndef STATUSMENU_H
 #define STATUSMENU_H
 
+#include "iconaction.h"
+#include "psicon.h"
+#include "xmpp_status.h"
+
 #include <QMenu>
 #include <QMouseEvent>
-
-#include "psicon.h"
-#include "iconaction.h"
-#include "xmpp_status.h"
 
 class StatusMenu : public QMenu
 {
@@ -65,4 +65,4 @@ private slots:
     void statusActivated();
 };
 
-#endif
+#endif // STATUSMENU_H

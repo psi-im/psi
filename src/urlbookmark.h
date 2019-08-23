@@ -22,8 +22,8 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class URLBookmark
 {
@@ -45,4 +45,4 @@ private:
     QString url_;
 };
 
-#endif
+#endif // URLBOOKMARK_H

@@ -18,18 +18,19 @@
  */
 
 #include "psiapplication.h"
-#include "resourcemenu.h"
-
-#include <QSessionManager>
 
 #ifdef Q_OS_MAC
-#include <Carbon/Carbon.h>
-#include "CocoaUtilities/CocoaTrayClick.h"
+#    include "CocoaUtilities/CocoaTrayClick.h"
+#endif
+#include "resourcemenu.h"
+#ifdef Q_OS_WIN
+#    include "systemwatch/systemwatch_win.h"
 #endif
 
-#ifdef Q_OS_WIN
-#include "systemwatch/systemwatch_win.h"
+#ifdef Q_OS_MAC
+#    include <Carbon/Carbon.h>
 #endif
+#include <QSessionManager>
 
 //----------------------------------------------------------------------------
 // PsiApplication

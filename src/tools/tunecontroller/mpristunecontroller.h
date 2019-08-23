@@ -1,6 +1,6 @@
 /*
  * mpristunecontroller.h
- * Copyright (C) 2010 Vitaly Tonkacheyev
+ * Copyright (C) 2010  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,15 +20,15 @@
 #ifndef MPRISTUNECONTROLLER_H
 #define MPRISTUNECONTROLLER_H
 
-#include <QDBusConnection>
-#include <QDBusArgument>
-#include <QDBusMessage>
-#include <QDBusInterface>
-#include <QVariantMap>
-#include <QStringList>
-
-#include "tunecontrollerinterface.h"
 #include "tune.h"
+#include "tunecontrollerinterface.h"
+
+#include <QDBusArgument>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusMessage>
+#include <QStringList>
+#include <QVariantMap>
 
 struct PlayerStatus
 {
@@ -83,4 +83,4 @@ private:
     bool tuneSent_;
 };
 
-#endif
+#endif // MPRISTUNECONTROLLER_H

@@ -17,15 +17,16 @@
  *
  */
 
+#include "privacydlg.h"
+
+#include "iconset.h"
+#include "privacylist.h"
+#include "privacylistmodel.h"
+#include "privacymanager.h"
+
 #include <QListView>
 #include <QInputDialog>
 #include <QMessageBox>
-
-#include "privacydlg.h"
-#include "privacylist.h"
-#include "privacymanager.h"
-#include "privacylistmodel.h"
-#include "iconset.h"
 
 // fixme: subscribe on the destroyed() signal of the manager
 
@@ -317,7 +318,6 @@ void PrivacyDlg::revertSettings()
     ui_.cb_active->setCurrentIndex(previousActive_);
     ui_.cb_lists->setCurrentIndex(previousList_);
 }
-
 
 void PrivacyDlg::newList()
 {

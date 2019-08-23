@@ -1,16 +1,16 @@
 #include "opt_chat.h"
+
 #include "common.h"
 #include "iconwidget.h"
+#include "psioptions.h"
+#include "shortcutmanager.h"
+#include "ui_opt_chat.h"
 
-#include <QWhatsThis>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QButtonGroup>
 #include <QRadioButton>
-
-#include "ui_opt_chat.h"
-#include "shortcutmanager.h"
-#include "psioptions.h"
+#include <QWhatsThis>
 
 class OptChatUI : public QWidget, public Ui::OptChat
 {

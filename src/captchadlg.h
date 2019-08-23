@@ -5,12 +5,12 @@
 
 #include <QDialog>
 
-namespace Ui {
-class CaptchaDlg;
-}
-
 class PsiAccount;
 class XDataWidget;
+
+namespace Ui {
+    class CaptchaDlg;
+}
 
 class CaptchaDlg : public QDialog
 {

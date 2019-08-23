@@ -13,4 +13,4 @@ protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
 };
 
-#endif
+#endif // MUCAFFILIATIONSPROXYMODEL_H

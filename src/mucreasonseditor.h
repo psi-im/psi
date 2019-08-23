@@ -1,7 +1,6 @@
 /*
  * mucreasonseditor.cpp
- * Copyright (C)
- * 2011 Evgeny Khryukin
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,4 +48,4 @@ protected slots:
     void accept();
 };
 
-#endif
+#endif // MUCREASONSEDITOR_H

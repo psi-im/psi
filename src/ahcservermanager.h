@@ -22,11 +22,12 @@
 
 #include <QList>
 
-class AHCommandServer;
 class AHCommand;
+class AHCommandServer;
 class JT_AHCServer;
 class PsiAccount;
 class QString;
+
 namespace XMPP {
     class Jid;
 }
@@ -53,4 +54,4 @@ private:
     ServerList servers_;
 };
 
-#endif
+#endif // AHCSERVERMANAGER_H

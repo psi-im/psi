@@ -20,26 +20,25 @@
 #ifndef MSGMLE_H
 #define MSGMLE_H
 
-#include <memory>
-#include <QTextEdit>
-
 #include "xmpp_htmlelement.h"
+
+#include <QTextEdit>
+#include <memory>
 
 #define MAX_MESSAGE_HISTORY 50
 
+class AudioRecorder;
+class CapitalLettersController;
 class ChatEdit;
+class HTMLTextController;
 class QEvent;
+class QImage;
 class QKeyEvent;
+class QLabel;
 class QResizeEvent;
 class QTimer;
-class QImage;
-class SpellHighlighter;
-class HTMLTextController;
-class CapitalLettersController;
 class QToolButton;
-class QLabel;
-class AudioRecorder;
-
+class SpellHighlighter;
 
 class ChatEdit : public QTextEdit
 {
@@ -135,7 +134,6 @@ private:
     int timeout_;
 };
 
-
 class LineEdit : public ChatEdit
 {
     Q_OBJECT
@@ -156,4 +154,4 @@ private slots:
     void updateScrollBar();
 };
 
-#endif
+#endif // MSGMLE_H

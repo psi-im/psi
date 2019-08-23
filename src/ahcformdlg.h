@@ -20,23 +20,23 @@
 #ifndef AHCFORMDLG_H
 #define AHCFORMDLG_H
 
-#include <QObject>
+#include "ui_ahcformdlg.h"
+#include "xmpp_jid.h"
+#include "xmpp_xdata.h"
+
 #include <QDialog>
+#include <QObject>
 #include <QString>
 
-#include "xmpp_xdata.h"
-#include "xmpp_jid.h"
-
-class QPushButton;
-class BusyWidget;
 class AHCommand;
-class XDataWidget;
+class BusyWidget;
 class PsiCon;
+class QPushButton;
+class XDataWidget;
+
 namespace XMPP {
     class Client;
 }
-
-#include "ui_ahcformdlg.h"
 
 class AHCFormDlg : public QDialog
 {
@@ -71,4 +71,4 @@ private:
     QString sessionId_;
 };
 
-#endif
+#endif // AHCFORMDLG_H

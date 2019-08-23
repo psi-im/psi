@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,9 +18,9 @@
 
 // manager mini command system
 
-#include <QDebug>
-
 #include "mcmdmanager.h"
+
+#include <QDebug>
 
 MCmdSimpleState::MCmdSimpleState(QString name, QString prompt)
     : name_(name)
@@ -36,7 +36,6 @@ MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags)
 {
 }
 
-
 MCmdSimpleState::~MCmdSimpleState() {
 }
 
@@ -48,7 +47,6 @@ MCmdManager::~MCmdManager() {
         prov->mCmdSiteDestroyed();
     }
 }
-
 
 QStringList MCmdManager::parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end, char &quotedAtPos)
 {
@@ -68,7 +66,6 @@ QStringList MCmdManager::parseCommand(const QString command, int pos, int &part,
             start = partStart;
             if (quote) quotedAtPos =  (quote == 1) ? '"' : '\'';
         }
-
 
         QChar ch = command[i];
         if (escape) {
@@ -127,7 +124,6 @@ QString MCmdManager::serializeCommand(const QStringList &list)
     return retval;
 }
 
-
 bool MCmdManager::processCommand(QString command) {
     MCmdStateIface *tmpstate=nullptr;
     QStringList preset;
@@ -171,7 +167,6 @@ bool MCmdManager::processCommand(QString command) {
     return ret;
 }
 
-
 bool MCmdManager::open(MCmdStateIface *state, QStringList preset) {
     if (nullptr != state_) state_->dispose();
 
@@ -186,7 +181,6 @@ bool MCmdManager::open(MCmdStateIface *state, QStringList preset) {
     uiSite_->mCmdReady(prompt, def);
     return true;
 }
-
 
 QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, int &end) {
     int part;
@@ -231,8 +225,6 @@ QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, 
 bool MCmdManager::isActive() {
     return state_ != nullptr;
 }
-
-
 
 void MCmdManager::registerProvider(MCmdProviderIface *prov)
 {

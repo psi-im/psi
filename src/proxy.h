@@ -20,19 +20,19 @@
 #ifndef PROXYDLG_H
 #define PROXYDLG_H
 
-#include <QList>
-#include <QGroupBox>
-#include <QPointer>
-
 #include "ui_proxy.h"
 //#include "ui_proxyedit.h"
 
-class OptionsTree;
-class QDomElement;
-class QDomDocument;
+#include <QGroupBox>
+#include <QList>
+#include <QPointer>
 
+class OptionsTree;
 class ProxyItem;
 class ProxyManager;
+class QDomDocument;
+class QDomElement;
+
 typedef QList<ProxyItem> ProxyItemList;
 
 class ProxySettings
@@ -44,7 +44,6 @@ public:
     int port;
     bool useAuth;
     QString url;
-
 
     void toOptions(OptionsTree* o, QString base) const;
     void fromOptions(OptionsTree* o, QString base);
@@ -168,4 +167,4 @@ private:
     static ProxyManager* instance_;
 };
 
-#endif
+#endif // PROXYDLG_H

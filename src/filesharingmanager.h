@@ -1,6 +1,6 @@
 /*
  * filesharingmanager.h - file sharing manager
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,19 +20,26 @@
 #ifndef FILESHARINGMANAGER_H
 #define FILESHARINGMANAGER_H
 
+#ifndef WEBKIT
+#    include "qite.h"
+#endif
+#include "xmpp_reference.h"
+
 #include <QObject>
 
-#include "xmpp_reference.h"
-#ifndef WEBKIT
-# include "qite.h"
-#endif
-
-class QMimeData;
-class QImage;
-class PsiAccount;
-class FileSharingManager;
 class FileCache;
 class FileCacheItem;
+class FileSharingManager;
+class PsiAccount;
+class QImage;
+class QMimeData;
+
+namespace qhttp {
+    namespace server {
+        class QHttpRequest;
+        class QHttpResponse;
+    }
+}
 
 namespace XMPP {
     class Message;
@@ -41,13 +48,6 @@ namespace XMPP {
         namespace FileTransfer {
             class File;
         }
-    }
-}
-
-namespace qhttp {
-    namespace server {
-        class QHttpRequest;
-        class QHttpResponse;
     }
 }
 

@@ -22,29 +22,28 @@
  *
  */
 
-#include "moc_psidbusnotifier.cpp"
+#include "psidbusnotifier.h"
 
-#include <QDBusConnection>
-#include <QDBusMessage>
-#include <QDBusInterface>
+#include "avatars.h"
+#include "common.h"
+#include "iconset.h"
+#include "moc_psidbusnotifier.cpp"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psievent.h"
+#include "psioptions.h"
+#include "textutil.h"
+#include "userlist.h"
+
 #include <QDBusArgument>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusMessage>
 #include <QDBusMetaType>
 #include <QDBusReply>
 #include <QImage>
 #include <QTimer>
 #include <QtPlugin>
-
-#include "psidbusnotifier.h"
-#include "psiaccount.h"
-#include "psievent.h"
-#include "common.h"
-#include "avatars.h"
-#include "userlist.h"
-#include "psioptions.h"
-#include "psicon.h"
-#include "textutil.h"
-#include "iconset.h"
-
 
 static const int minLifeTime = 5000;
 static const QString markupCaps = "body-markup";
@@ -104,7 +103,6 @@ static QDBusMessage createMessage(const QString& method)
                         "org.freedesktop.Notifications",
                         method);
 }
-
 
 PsiDBusNotifier::PsiDBusNotifier(QObject *parent)
     : QObject(parent)

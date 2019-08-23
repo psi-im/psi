@@ -19,20 +19,21 @@
 
 #include "psioptions.h"
 
+#include "applicationinfo.h"
+#include "common.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
+#endif
+#include "psitoolbar.h"
+#include "statuspreset.h"
+#include "xmpp_client.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
+
 #include <QCoreApplication>
 #include <QTimer>
 
-#include "applicationinfo.h"
-#include "xmpp_xmlcommon.h"
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
-#include "xmpp_client.h"
-#include "statuspreset.h"
-#include "psitoolbar.h"
-#include "common.h"
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
-#endif
 using namespace XMPP;
 
 // ----------------------------------------------------------------------------
@@ -127,7 +128,6 @@ void PsiOptions::reset() {
     delete instance_;
     instance_ = nullptr;
 }
-
 
 /**
  * initizialises the default options for a new profile
@@ -237,7 +237,6 @@ bool PsiOptions::newProfile()
 
     return ok;
 }
-
 
 /**
  * Checks for existing saved Options.
@@ -389,7 +388,6 @@ void PsiOptions::resetOption(const QString &name)
         }
     }
 }
-
 
 PsiOptions* PsiOptions::instance_ = nullptr;
 PsiOptions* PsiOptions::defaults_ = nullptr;

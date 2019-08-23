@@ -1,6 +1,7 @@
 /*
  * passdialog.cpp
- * Copyright (C) 2009-2010 Virnik, 2011 Evgeny Khryukin
+ * Copyright (C) 2009-2010  Virnik
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,4 +41,4 @@ private:
     QLineEdit *le_password;
 };
 
-#endif
+#endif // PASSDIALOG_H

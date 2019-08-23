@@ -17,15 +17,16 @@
  *
  */
 
-#include <QTranslator>
-#include <QCoreApplication>
-#include <QFile>
-#include <QDir>
-#include <QLibraryInfo>
-
 #include "translationmanager.h"
+
 #include "applicationinfo.h"
 #include "varlist.h"
+
+#include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QLibraryInfo>
+#include <QTranslator>
 
 TranslationManager::TranslationManager()
 {

@@ -20,20 +20,19 @@
 #ifndef ICONSET_H
 #define ICONSET_H
 
-#include <QObject>
 #include <QHash>
+#include <QImage>
 #include <QList>
+#include <QObject>
+#include <QPixmap>
 #include <QRegExp>
+#include <QSharedData>
 #include <QString>
 #include <QStringList>
-#include <QSharedData>
 
-#include <QPixmap>
-#include <QImage>
-
-class QIcon;
-class QFileInfo;
 class Anim;
+class QFileInfo;
+class QIcon;
 
 class Impix
 {
@@ -248,4 +247,4 @@ public:
 #endif
 };
 
-#endif
+#endif // ICONSET_H

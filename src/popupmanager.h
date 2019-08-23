@@ -20,14 +20,15 @@
 #ifndef POPUPMANAGER_H
 #define POPUPMANAGER_H
 
-#include <QStringList>
 #include "psievent.h"
+
+#include <QStringList>
 
 class PsiAccount;
 class PsiCon;
-class UserListItem;
 class PsiIcon;
 class QPixmap;
+class UserListItem;
 
 namespace XMPP {
     class Jid;
@@ -79,4 +80,4 @@ private:
     Private* d;
 };
 
-#endif
+#endif // POPUPMANAGER_H

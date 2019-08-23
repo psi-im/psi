@@ -1,15 +1,14 @@
-#ifndef _PSIOPTIONSEDITOR_H_
-#define _PSIOPTIONSEDITOR_H_
+#ifndef PSIOPTIONSEDITOR_H
+#define PSIOPTIONSEDITOR_H
 
+#include "optionstreemodel.h"
 
-#include <QtCore>
-#include <QTreeView>
 #include <QCheckBox>
 #include <QLabel>
 #include <QPushButton>
 #include <QToolButton>
-
-#include "optionstreemodel.h"
+#include <QTreeView>
+#include <QtCore>
 
 class PsiOptions;
 class QSortFilterProxyModel;
@@ -48,6 +47,4 @@ private:
     QToolButton *pb_detach;
 };
 
-
-
-#endif /* _PSIOPTIONSEDITOR_H_ */
+#endif // PSIOPTIONSEDITOR_H

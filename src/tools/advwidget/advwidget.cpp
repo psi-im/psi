@@ -17,27 +17,25 @@
  *
  */
 
-#include <QtGlobal> // required to make mingw32 happy
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <winuser.h>
-#endif
-
 #include "advwidget.h"
-
-#include <QApplication>
-#include <QWidget>
-#include <QTimer>
-#include <QDesktopWidget>
-#include <QDebug>
-#include <QScreen>
 
 #include "psioptions.h"
 
+#include <QApplication>
+#include <QDebug>
+#include <QDesktopWidget>
+#include <QScreen>
+#include <QTimer>
+#include <QWidget>
+#include <QtGlobal> // required to make mingw32 happy
 #ifdef HAVE_X11
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <QX11Info>
+#    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
+#    include <QX11Info>
+#endif
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#    include <winuser.h>
 #endif
 
 // TODO: Make use of KDE taskbar flashing support

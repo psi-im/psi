@@ -17,24 +17,25 @@
  *
  */
 
-#include <QTreeView>
-#include <QHeaderView>
-#include <QContextMenuEvent>
-#include <QSortFilterProxyModel>
-#include <QLineEdit>
-#include <QPainter>
-#include <QLinearGradient>
-#include <QScrollBar>
-#include <QCoreApplication>
+#include "contactlistview.h"
 
 #include "contactlistitem.h"
 #include "contactlistitemmenu.h"
 #include "contactlistmodel.h"
-#include "contactlistview.h"
-#include "psioptions.h"
-#include "psitooltip.h"
 #include "contactlistproxymodel.h"
 #include "debug.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+
+#include <QContextMenuEvent>
+#include <QCoreApplication>
+#include <QHeaderView>
+#include <QLineEdit>
+#include <QLinearGradient>
+#include <QPainter>
+#include <QScrollBar>
+#include <QSortFilterProxyModel>
+#include <QTreeView>
 
 ContactListView::ContactListView(QWidget* parent)
     : HoverableTreeView(parent)

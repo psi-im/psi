@@ -20,10 +20,10 @@
 #ifndef HISTORYCONTACTLISTMODEL_H
 #define HISTORYCONTACTLISTMODEL_H
 
+#include "psicon.h"
+
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
-
-#include "psicon.h"
 
 class HistoryContactListModel : public QAbstractItemModel
 {

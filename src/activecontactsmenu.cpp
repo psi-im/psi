@@ -18,11 +18,11 @@
  */
 
 #include "activecontactsmenu.h"
+
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontact.h"
 #include "psiiconset.h"
-#include "psicon.h"
-
 
 class ActiveContactAction : public QAction
 {
@@ -48,8 +48,6 @@ private:
     QString jid_;
 };
 
-
-
 ActiveContactsMenu::ActiveContactsMenu(PsiCon *psi, QWidget *parent)
     : QMenu(parent)
     , psi_(psi)
@@ -64,6 +62,5 @@ ActiveContactsMenu::ActiveContactsMenu(PsiCon *psi, QWidget *parent)
         }
     }
 }
-
 
 #include "activecontactsmenu.moc"

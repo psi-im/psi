@@ -19,14 +19,14 @@
 
 #include "fileutil.h"
 
-#include <QFileInfo>
+#include "psioptions.h"
+
 #include <QDir>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QMessageBox>
-#include <QStandardPaths>
 #include <QProcess>
-
-#include "psioptions.h"
+#include <QStandardPaths>
 
 static QString lastUsedOpenPathOptionPath = "options.ui.last-used-open-path";
 static QString lastUsedSavePathOptionPath = "options.ui.last-used-save-path";

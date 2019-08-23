@@ -23,10 +23,10 @@
 #include <QObject>
 
 class PsiAccount;
+
 namespace XMPP {
     class Jid;
 }
-
 using namespace XMPP;
 
 /**
@@ -111,4 +111,4 @@ private:
     PsiAccount* account_;
 };
 
-#endif
+#endif // VOICECALLER_H

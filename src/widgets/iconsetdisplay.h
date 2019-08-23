@@ -22,8 +22,8 @@
 
 #include <QListWidget>
 
-class IconsetDisplayItem;
 class Iconset;
+class IconsetDisplayItem;
 
 class IconsetDisplay : public QListWidget
 {
@@ -37,4 +37,4 @@ private:
     friend class IconsetDisplayItem;
 };
 
-#endif
+#endif // ICONSETDISPLAY_H

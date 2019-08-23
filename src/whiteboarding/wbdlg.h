@@ -4,7 +4,7 @@
  *
  * Originally developed from:
  * wbdlg.h - dialog for handling chats
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,24 +24,24 @@
 #ifndef WBDLG_H
 #define WBDLG_H
 
-#include <QToolBar>
-#include <QLabel>
-#include <QLineEdit>
-#include <QContextMenuEvent>
-#include <QShowEvent>
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <QCloseEvent>
-#include <QInputDialog>
-// #include <QMessageBoxEx>
-
 #include "advwidget.h"
-#include "im.h"
 #include "common.h"
-#include "wbwidget.h"
 #include "iconlabel.h"
+#include "im.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "wbwidget.h"
+
+#include <QCloseEvent>
+#include <QContextMenuEvent>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLineEdit>
+// #include <QMessageBoxEx>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QToolBar>
 
 class AccountLabel;
 
@@ -169,4 +169,4 @@ private:
     QTimer *selfDestruct_;
 };
 
-#endif
+#endif // WBDLG_H

@@ -18,17 +18,19 @@
  */
 
 #include "psitabwidget.h"
-#include "psitabbar.h"
+
 #include "common.h"
 #include "psioptions.h"
-#include <QWidget>
-#include <QVBoxLayout>
+#include "psitabbar.h"
+
+#include <QApplication>
 #include <QHBoxLayout>
-#include <QToolButton>
+#include <QMenu>
 #include <QStackedLayout>
 #include <QStyle>
-#include <QApplication>
-#include <QMenu>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <QWidget>
 
 /**
  * Constructor

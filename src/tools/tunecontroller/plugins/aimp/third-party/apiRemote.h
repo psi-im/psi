@@ -11,8 +11,8 @@
 /*                                              */
 /************************************************/
 
-#ifndef apiRemoteH
-#define apiRemoteH
+#ifndef APIREMOTE_H
+#define APIREMOTE_H
 
 #include <windows.h>
 
@@ -210,4 +210,4 @@ const int AIMP_RA_NOTIFY_TRACK_START = AIMP_RA_NOTIFY_BASE + 2;
 // LParam: Property ID
 const int AIMP_RA_NOTIFY_PROPERTY = AIMP_RA_NOTIFY_BASE + 3; 
 
-#endif // !apiRemoteH
+#endif // APIREMOTE_H

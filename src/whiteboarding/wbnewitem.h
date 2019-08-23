@@ -21,8 +21,8 @@
 #ifndef WBNEWITEM_H
 #define WBNEWITEM_H
 
-#include <QGraphicsItem>
 #include <QDomNode>
+#include <QGraphicsItem>
 
 class WbNewItem {
 public:
@@ -38,4 +38,4 @@ protected:
     QGraphicsScene* scene;
 };
 
-#endif
+#endif // WBNEWITEM_H

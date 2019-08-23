@@ -17,9 +17,10 @@
  *
  */
 #include "htmltextcontroller.h"
-#include <QMenu>
-#include <QFontDialog>
+
 #include <QColorDialog>
+#include <QFontDialog>
+#include <QMenu>
 
 class HTMLTextMenu : public QMenu
 {

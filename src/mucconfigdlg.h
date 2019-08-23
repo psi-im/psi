@@ -20,21 +20,21 @@
 #ifndef MUCCONFIG_H
 #define MUCCONFIG_H
 
-#include <QDialog>
-
 #include "ui_mucconfig.h"
 #include "xmpp_muc.h"
 
-class QScrollArea;
-class XDataWidget;
-class MUCManager;
+#include <QDialog>
+
+class InfoWidget;
 class MUCAffiliationsModel;
 class MUCAffiliationsProxyModel;
-class InfoWidget;
+class MUCManager;
+class QScrollArea;
+class XDataWidget;
+
 namespace XMPP {
     class XData;
 }
-
 using namespace XMPP;
 
 class MUCConfigDlg : public QDialog
@@ -86,4 +86,4 @@ private:
     QList<MUCItem::Affiliation> pending_requests_;
 };
 
-#endif
+#endif // MUCCONFIG_H

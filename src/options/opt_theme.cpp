@@ -19,17 +19,17 @@
 
 #include "opt_theme.h"
 
-#include "ui_opt_theme.h"
-#include "psioptions.h"
-#include "psithememodel.h"
-#include "psithememanager.h"
-#include "psiiconset.h"
 #include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psithememanager.h"
+#include "psithememodel.h"
+#include "ui_opt_theme.h"
 
-#include <QToolButton>
 #include <QDialog>
 #include <QSortFilterProxyModel>
 #include <QTimer>
+#include <QToolButton>
 
 #define SCREEN_PREFIX "scb_"
 
@@ -38,8 +38,6 @@ class OptAppearanceThemeUI : public QWidget, public Ui::OptAppearanceTheme
 public:
     OptAppearanceThemeUI() : QWidget() { setupUi(this); }
 };
-
-
 
 OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent)
     : MetaOptionsTab(parent, "themes", "", tr("Themes"), tr("Configure themes"))
@@ -53,10 +51,6 @@ void OptionsTabAppearanceThemes::setData(PsiCon *psi, QWidget *w)
     }
     MetaOptionsTab::setData(psi, w);
 }
-
-
-
-
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearanceTheme

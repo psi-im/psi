@@ -17,8 +17,8 @@
  *
  */
 
-#include <QTextDocument>
 #include <QTextCursor>
+#include <QTextDocument>
 
 class QTextEdit;
 

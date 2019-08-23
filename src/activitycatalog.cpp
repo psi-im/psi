@@ -1,6 +1,6 @@
 /*
  * activitycatalog.cpp
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,12 +17,13 @@
  *
  */
 
-#include <QString>
-#include <QObject>
-#include <QCoreApplication>
+#include "activitycatalog.h"
 
 #include "activity.h"
-#include "activitycatalog.h"
+
+#include <QCoreApplication>
+#include <QObject>
+#include <QString>
 
 ActivityCatalog::Entry::Entry()
 {

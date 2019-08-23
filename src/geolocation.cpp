@@ -17,11 +17,11 @@
  *
  */
 
+#include "geolocation.h"
+
+#include <QApplication>
 #include <QDomDocument>
 #include <QDomElement>
-#include <QApplication>
-
-#include "geolocation.h"
 
 GeoLocation::GeoLocation()
 {

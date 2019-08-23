@@ -17,10 +17,11 @@
  *
  */
 
-#ifndef _PSITABBAR_H_
-#define _PSITABBAR_H_
+#ifndef PSITABBAR_H
+#define PSITABBAR_H
 
 #include "tabbar.h"
+
 #include <QPoint>
 
 class PsiTabWidget;
@@ -56,4 +57,4 @@ private:
     int findTabUnder(const QPoint &pos);
 };
 
-#endif /* _PSITABBAR_H_ */
+#endif // PSITABBAR_H

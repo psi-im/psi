@@ -1,6 +1,6 @@
 /*
  * accountmodifydlg.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,26 +17,27 @@
  *
  */
 
+#include "accountmodifydlg.h"
+
+#include "actionlineedit.h"
+#include "iconaction.h"
+#include "iconset.h"
+#include "jidutil.h"
+#include "pgpkeydlg.h"
+#include "pgputil.h"
+#include "privacydlg.h"
+#include "privacymanager.h"
+#include "proxy.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psioptions.h"
+#ifdef HAVE_KEYCHAIN
+#    include <qt5keychain/keychain.h>
+#endif
+
 #include <QInputDialog>
 #include <QMessageBox>
-
-#include "accountmodifydlg.h"
-#include "pgputil.h"
-#include "psiaccount.h"
-#include "iconset.h"
-#include "psioptions.h"
-#include "jidutil.h"
-#include "psicon.h"
-#include "proxy.h"
-#include "privacymanager.h"
-#include "privacydlg.h"
-#include "pgpkeydlg.h"
-#include "psicontactlist.h"
-#include "iconaction.h"
-#include "actionlineedit.h"
-#ifdef HAVE_KEYCHAIN
-# include <qt5keychain/keychain.h>
-#endif
 
 AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)

@@ -19,9 +19,8 @@
 
 #include "debug.h"
 
-#include <config.h>
-
 #include <QDir>
+#include <config.h>
 
 SlowTimer::SlowTimer(const QString &path, int line, int maxTime, const QString &message)
     : _path(QDir::fromNativeSeparators(path))

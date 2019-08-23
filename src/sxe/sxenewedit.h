@@ -56,7 +56,6 @@ class SxeNewEdit : public SxeEdit {
         /*! \brief Returns the target of the processing instruction, if any.*/
         QString processingInstructionData() const;
 
-
     private:
         QString type_;
         QString parent_;
@@ -66,4 +65,4 @@ class SxeNewEdit : public SxeEdit {
         QString data_;
 };
 
-#endif
+#endif // SXDENEWEDIT_H

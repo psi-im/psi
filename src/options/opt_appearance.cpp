@@ -1,30 +1,29 @@
 #include "opt_appearance.h"
-#include "opt_iconset.h"
-#include "opt_theme.h"
+
+#include "coloropt.h"
 #include "common.h"
 #include "iconwidget.h"
-
-#include <QWhatsThis>
-#include <QCheckBox>
-#include <QSlider>
-#include <QLabel>
-#include <QComboBox>
-#include <QButtonGroup>
-#include <QRadioButton>
-#include <QPainter>
-#include <QPixmap>
-#include <QColorDialog>
-#include <QFontDialog>
-#include <QLineEdit>
-#include <QSignalMapper>
-
+#include "opt_iconset.h"
+#include "opt_theme.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psithememanager.h"
 #include "ui_opt_appearance.h"
 #include "ui_opt_appearance_misc.h"
-#include "psioptions.h"
-#include "coloropt.h"
-#include "psithememanager.h"
-#include "psicon.h"
 
+#include <QButtonGroup>
+#include <QCheckBox>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QFontDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPainter>
+#include <QPixmap>
+#include <QRadioButton>
+#include <QSignalMapper>
+#include <QSlider>
+#include <QWhatsThis>
 
 class OptAppearanceUI : public QWidget, public Ui::OptAppearance
 {
@@ -74,7 +73,6 @@ QSize FontLabel::sizeHint() const
     return QSize(QLineEdit::sizeHint().width(), m_defaultHeight);
 }
 
-
 //----------------------------------------------------------------------------
 // OptionsTabAppearance
 //----------------------------------------------------------------------------
@@ -94,7 +92,6 @@ void OptionsTabAppearance::setData(PsiCon *psi, QWidget *w)
     MetaOptionsTab::setData(psi, w);
 }
 
-
 //----------------------------------------------------------------------------
 // OptionsTabIconset
 //----------------------------------------------------------------------------
@@ -108,7 +105,6 @@ OptionsTabIconset::OptionsTabIconset(QObject *parent) : MetaOptionsTab(parent, "
     addTab( new OptionsTabIconsetSystem(this) );
     addTab( new OptionsTabIconsetAffiliations(this) );
 }
-
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearanceMisc
@@ -230,8 +226,6 @@ QWidget *OptionsTabAppearanceGeneral::widget()
     d->pb_fChat->setWhatsThis(
         tr("Selects a font for chat windows using the font selection dialog."));
 
-
-
     QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
     struct ColorWidgetData {
         QCheckBox *cbox;
@@ -283,7 +277,6 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 
     return w;
 }
-
 
 static QColor getColor(QAbstractButton *button)
 {

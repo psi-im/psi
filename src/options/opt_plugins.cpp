@@ -1,25 +1,24 @@
 #include "opt_plugins.h"
-#include "ui_opt_plugins.h"
-
-#include <QWhatsThis>
-#include <QToolButton>
-#include <QHeaderView>
-#include <QSignalMapper>
 
 #include "common.h"
 #include "iconwidget.h"
-#include "pluginmanager.h"
-#include "psioptions.h"
-#include "psiiconset.h"
 #include "optionsdlgbase.h"
+#include "pluginmanager.h"
 #include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "ui_opt_plugins.h"
+
+#include <QHeaderView>
+#include <QSignalMapper>
+#include <QToolButton>
+#include <QWhatsThis>
 
 class OptPluginsUI : public QWidget, public Ui::OptPlugins
 {
 public:
     OptPluginsUI() : QWidget() { setupUi(this); }
 };
-
 
 class OptionsTabPlugin : public OptionsTab
 {
@@ -34,7 +33,6 @@ public:
     void applyOptions() { PluginManager::instance()->applyOptions( pluginName ); }
     void restoreOptions() { PluginManager::instance()->restoreOptions( pluginName ); }
 };
-
 
 class PluginsOptionsDlg : public OptionsDlgBase
 {
@@ -105,7 +103,6 @@ bool OptionsTabPlugins::stretchable() const
 {
     return true;
 }
-
 
 void OptionsTabPlugins::listPlugins()
 {

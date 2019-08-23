@@ -18,21 +18,22 @@
  */
 
 #include "iconwidget.h"
+
+#include "iconbutton.h"
 #include "iconsetdisplay.h"
 #include "iconsetselect.h"
 #include "icontoolbutton.h"
-#include "iconbutton.h"
 
 #include <QApplication>
-#include <QPainter>
 #include <QBrush>
+#include <QPainter>
 
 #ifndef WIDGET_PLUGIN
 #    include "iconset.h"
-#    include <QStyle>
+#    include "pixmaputil.h"
 #    include <QBitmap>
 #    include <QMap>
-#       include "pixmaputil.h"
+#    include <QStyle>
 #else
 #    include <QImage>
 
@@ -320,7 +321,6 @@ public:
 #endif
         return qMax( ww, QApplication::globalStrut().width() );
     }
-
 
     void paint(QPainter *painter) const
     {

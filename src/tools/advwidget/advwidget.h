@@ -52,7 +52,6 @@ public:
     void moveEvent(QMoveEvent *e);
     void changeEvent(QEvent *event);
 
-
 public:
     class Private;
 private:
@@ -166,4 +165,4 @@ protected:
     }
 };
 
-#endif
+#endif // ADVWIDGET_H

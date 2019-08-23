@@ -16,14 +16,14 @@
  *
  */
 
-#include <QtCrypto>
+#include "Certificates/CertificateDisplayDialog.h"
+
+#include "Certificates/CertificateHelpers.h"
+
 #include <QDateTime>
 #include <QLabel>
 #include <QPushButton>
-
-#include "Certificates/CertificateHelpers.h"
-#include "Certificates/CertificateDisplayDialog.h"
-
+#include <QtCrypto>
 
 CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent) : QDialog(parent)
 {

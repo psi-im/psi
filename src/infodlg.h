@@ -1,6 +1,6 @@
 /*
  * infodlg.h - handle vcard
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,16 +23,14 @@
 #include "ui_info.h"
 #include "ui_infodlg.h"
 
-namespace XMPP
-{
+class PsiAccount;
+
+namespace XMPP {
     class Jid;
     class VCard;
     class Resource;
 }
-
 using namespace XMPP;
-
-class PsiAccount;
 
 class InfoWidget : public QWidget
 {
@@ -117,4 +115,4 @@ private:
     InfoWidget *iw;
 };
 
-#endif
+#endif // INFODLG_H

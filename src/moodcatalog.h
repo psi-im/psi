@@ -20,10 +20,10 @@
 #ifndef MOODCATALOG_H
 #define MOODCATALOG_H
 
+#include "mood.h"
+
 #include <QList>
 #include <QObject>
-
-#include "mood.h"
 
 class QString;
 
@@ -62,4 +62,4 @@ private:
 
 };
 
-#endif
+#endif // MOODCATALOG_H

@@ -1,6 +1,6 @@
 /*
  * filesharedlg.h - file sharing dialog
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,17 +24,18 @@
 
 #include <QDialog>
 
+class FileSharingItem;
+class MultiFileTransferModel;
+class PsiAccount;
+class QMimeData;
+
+namespace Ui {
+    class FileShareDlg;
+}
+
 namespace XMPP {
     class Message;
 }
-
-namespace Ui {
-class FileShareDlg;
-}
-class QMimeData;
-class PsiAccount;
-class MultiFileTransferModel;
-class FileSharingItem;
 
 class FileShareDlg : public QDialog
 {

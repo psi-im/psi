@@ -44,4 +44,4 @@ private:
     Private* d;
 };
 
-#endif
+#endif // PSICONTACTMENU_H

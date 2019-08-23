@@ -46,4 +46,4 @@ private:
     bool showJid_;
 };
 
-#endif
+#endif // ACCOUNTLABEL_H

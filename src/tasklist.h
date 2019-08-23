@@ -20,9 +20,9 @@
 #ifndef TASKLIST_H
 #define TASKLIST_H
 
-#include <QObject>
-
 #include "xmpp_task.h"
+
+#include <QObject>
 
 using namespace XMPP;
 
@@ -75,4 +75,4 @@ private slots:
     }
 };
 
-#endif
+#endif // TASKLIST_H

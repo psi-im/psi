@@ -1,6 +1,6 @@
 /*
  * bob.h - Bits of Binary server and manager
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -17,14 +17,14 @@
  *
  */
 
-#ifndef BOB_H
-#define BOB_H
+#ifndef BOBFILECACHE_H
+#define BOBFILECACHE_H
 
 #include "iris/xmpp_bitsofbinary.h"
 
-using namespace XMPP;
-
 class FileCache;
+
+using namespace XMPP;
 
 class BoBFileCache : public BoBCache
 {
@@ -42,4 +42,4 @@ private:
     static BoBFileCache *_instance;
 };
 
-#endif
+#endif // BOBFILECACHE_H

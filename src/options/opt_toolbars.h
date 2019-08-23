@@ -1,15 +1,16 @@
-#ifndef OPT_TOOLBARDLG_H
-#define OPT_TOOLBARDLG_H
+#ifndef OPT_TOOLBARS_H
+#define OPT_TOOLBARS_H
 
 #include "optionstab.h"
 
+class IconButton;
 class PsiCon;
 class PsiToolBar;
 class QAction;
-class IconButton;
 class QListWidget;
-class QTreeWidgetItem;
 class QListWidgetItem;
+class QTreeWidgetItem;
+
 class OptionsTabToolbars : public OptionsTab
 {
     Q_OBJECT
@@ -58,4 +59,4 @@ private:
     Private *p;
 };
 
-#endif
+#endif // OPT_TOOLBARS_H

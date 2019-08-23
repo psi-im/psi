@@ -84,4 +84,4 @@ public:
     virtual bool isAvailable() const { return PsiGrowlNotifier::isAvailable(); }
 };
 
-#endif
+#endif // PSIGROWLNOTIFIER_H

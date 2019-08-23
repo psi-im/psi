@@ -53,4 +53,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // URLOBJECT_H

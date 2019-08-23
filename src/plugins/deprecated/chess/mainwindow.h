@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: mainwindow.h,v 0.1 2005/01/08 12:20:13 denis Exp $
@@ -12,25 +12,24 @@
  * Hacked by:
  */
 
-#ifndef    __MAIN_WINDOW_H__
-#define    __MAIN_WINDOW_H__
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
+#include "gameboard.h"
+#include "gamesocket.h"
+
+#include <Q3ButtonGroup>
+#include <Q3GroupBox>
 #include <Q3MainWindow>
 #include <Q3PopupMenu>
-#include <QWorkspace>
+#include <QComboBox>
 #include <QDialog>
 #include <QLabel>
-#include <QComboBox>
-#include <Q3ButtonGroup>
-#include <QRadioButton>
-#include <Q3GroupBox>
 #include <QPushButton>
-//Added by qt3to4:
+#include <QRadioButton>
 #include <QResizeEvent>
+#include <QWorkspace>
 #include <stdlib.h>
-
-#include "gamesocket.h"
-#include "gameboard.h"
 
 class MainWindow:public Q3MainWindow
 {
@@ -89,4 +88,4 @@ private slots:
     void    checkParams(const QString&);
 };
 
-#endif    /* __MAIN_WINDOW_H__ */
+#endif // MAINWINDOW_H

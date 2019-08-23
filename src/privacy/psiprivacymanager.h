@@ -20,23 +20,22 @@
 #ifndef PSIPRIVACYMANAGER_H
 #define PSIPRIVACYMANAGER_H
 
-#include <QObject>
-#include <QStringList>
-#include <QHash>
-
 #include "privacymanager.h"
-
 #include "xmpp_jid.h"
 
-class QString;
-class PsiAccount;
+#include <QHash>
+#include <QObject>
+#include <QStringList>
+
 class PrivacyList;
 class PrivacyListItem;
 class PrivacyListListener;
+class PsiAccount;
+class QString;
+
 namespace XMPP {
     class Task;
 }
-
 
 class PsiPrivacyManager : public PrivacyManager
 {
@@ -132,4 +131,4 @@ private:
     bool isAuthorized(const XMPP::Jid& jid) const;
 };
 
-#endif
+#endif // PSIPRIVACYMANAGER_H

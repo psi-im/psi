@@ -21,13 +21,9 @@
 #pragma once
 
 #include "contactlistgroupmenu.h"
-
-#include "contactlistitem.h"
-#include "xmpp_tasks.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "groupchatdlg.h"
-#include "iconaction.h"
 #include "iconaction.h"
 #include "iconset.h"
 #include "psiaccount.h"
@@ -36,6 +32,7 @@
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "statusdlg.h"
+#include "xmpp_tasks.h"
 
 #include <QObject>
 

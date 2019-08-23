@@ -21,13 +21,12 @@
 #define TYPEAHEADFIND_H
 
 #include <QToolBar>
-
 #ifdef WEBKIT
-#include <webview.h>
+    #include <webview.h>
 #endif
 
-class QTextEdit;
 class QString;
+class QTextEdit;
 
 class TypeAheadFindBar : public QToolBar
 {
@@ -65,4 +64,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // TYPEAHEADFIND_H

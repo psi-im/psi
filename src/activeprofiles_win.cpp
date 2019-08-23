@@ -22,11 +22,12 @@
 #include "psicon.h"
 
 #include <QCoreApplication>
-#include <QWidget>
 #include <QTimer>
+#include <QWidget>
 #include <windows.h>
 
 #define QT_WA(unicode, ansi) unicode
+
 /*
     Implementor notes:
 
@@ -316,7 +317,6 @@ bool ActiveProfiles::isAnyActive() const
 {
     return !d->pickProfile().isEmpty();
 }
-
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {

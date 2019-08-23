@@ -17,10 +17,10 @@
  *
  */
 
+#include "theme_p.h"
+
 #include <QDir>
 #include <QDirIterator>
-
-#include "theme_p.h"
 
 ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
     provider(provider),
@@ -60,7 +60,6 @@ QByteArray ThemePrivate::loadData(const QString &fileName, bool *loaded) const
 {
     return Theme::loadData(fileName, filepath, caseInsensitiveFS, loaded);
 }
-
 
 //=================================================
 // Reource Loader
@@ -182,5 +181,3 @@ Theme::ResourceLoader *ThemePrivate::resourceLoader() const
 #endif
     return nullptr;
 }
-
-

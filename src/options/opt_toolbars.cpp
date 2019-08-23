@@ -1,28 +1,27 @@
 #include "opt_toolbars.h"
 
-#include "psicon.h"
 #include "common.h"
-#include "iconwidget.h"
-#include "psitoolbar.h"
 #include "iconaction.h"
+#include "iconwidget.h"
 #include "psiactionlist.h"
+#include "psicon.h"
 #include "psioptions.h"
-
+#include "psitoolbar.h"
 #include "ui_opt_lookfeel_toolbars.h"
 
-#include <QLayout>
-#include <QPushButton>
-#include <QComboBox>
 #include <QAction>
-#include <QLineEdit>
 #include <QCheckBox>
-#include <QSpinBox>
-#include <QHeaderView>
+#include <QComboBox>
 #include <QEvent>
 #include <QHBoxLayout>
+#include <QHeaderView>
+#include <QLayout>
+#include <QLineEdit>
 #include <QList>
-#include <QVBoxLayout>
+#include <QPushButton>
 #include <QRegExp>
+#include <QSpinBox>
+#include <QVBoxLayout>
 
 #define CHAT_TOOLBAR       0
 #define GROUPCHAT_TOOLBAR  1
@@ -221,7 +220,6 @@ void OptionsTabToolbars::restoreOptions()
 
     QStringList toolbarBases;
     toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-
 
     // toolbarBases is chaotic. Need to sort before do anything.
     QStringList sortedToolbarBases;

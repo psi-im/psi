@@ -1,6 +1,6 @@
 /*
  * multifiletransferdlg.h - file transfer dialog
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,8 +23,15 @@
 #include <QDialog>
 #include <QScopedPointer>
 
+class MultiFileTransferItem;
+class PsiAccount;
+class QDragEnterEvent;
+class QDragLeaveEvent;
+class QDragMoveEvent;
+class QDropEvent;
+
 namespace Ui {
-class MultiFileTransferDlg;
+    class MultiFileTransferDlg;
 }
 
 namespace XMPP {
@@ -36,13 +43,6 @@ namespace XMPP {
         }
     }
 }
-
-class PsiAccount;
-class MultiFileTransferItem;
-class QDragEnterEvent;
-class QDragMoveEvent;
-class QDragLeaveEvent;
-class QDropEvent;
 
 class BinaryUriLoader : public QObject
 {

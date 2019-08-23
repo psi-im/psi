@@ -21,16 +21,15 @@
 #define CONTACTLISTDRAGMODEL_H
 
 #include "contactlistmodel.h"
-
-class ContactListItem;
-class ContactListGroupItem;
-class PsiContactGroup;
-class PsiAccount;
-class PsiContact;
-
 #include "xmpp_jid.h"
 
 #include <QHash>
+
+class ContactListGroupItem;
+class ContactListItem;
+class PsiAccount;
+class PsiContact;
+class PsiContactGroup;
 
 class ContactListModelOperationList
 {
@@ -106,4 +105,4 @@ protected:
     QString destinationOperationsForContactGroup(const QString &groupName, PsiContact *contact) const;
 };
 
-#endif
+#endif // CONTACTLISTDRAGMODEL_H

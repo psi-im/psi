@@ -1,6 +1,6 @@
 /*
  * historyimp.h
- * Copyright (C) 2011   Aleksey Andreev
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,17 +20,17 @@
 #ifndef HISTORYIMP_H
 #define HISTORYIMP_H
 
-#include <QObject>
-#include <QDialog>
-#include <QLabel>
-#include <QProgressBar>
-#include <QStackedWidget>
-#include <QPushButton>
-
-#include "xmpp/jid/jid.h"
+#include "eventdb.h"
 #include "jidutil.h"
 #include "psicon.h"
-#include "eventdb.h"
+#include "xmpp/jid/jid.h"
+
+#include <QDialog>
+#include <QLabel>
+#include <QObject>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QStackedWidget>
 
 struct ImportItem
 {
@@ -87,4 +87,4 @@ signals:
 
 };
 
-#endif
+#endif // HISTORYIMP_H

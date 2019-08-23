@@ -22,8 +22,8 @@
 
 #include "pollingtunecontroller.h"
 
-#include <windows.h>
 #include <QPair>
+#include <windows.h>
 
 class WinAmpTuneController : public PollingTuneController
 {
@@ -44,4 +44,4 @@ private:
     int antiscrollCounter_;
 };
 
-#endif
+#endif // WINAMPTUNECONTROLLER_H

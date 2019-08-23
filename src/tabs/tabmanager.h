@@ -16,16 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#ifndef _TABMANAGER_H_
-#define _TABMANAGER_H_
+#ifndef TABMANAGER_H
+#define TABMANAGER_H
 
-#include <QObject>
-#include <QList>
 #include "psicon.h"
 
-class TabbableWidget;
+#include <QList>
+#include <QObject>
+
 class TabDlg;
 class TabDlgDelegate;
+class TabbableWidget;
 
 class TabManager : public QObject
 {
@@ -71,7 +72,6 @@ public:
      * removes and deletes all tabsets
      */
     void deleteAll();
-
 
     /**
      * Returns the Kind of the given widget.
@@ -129,4 +129,4 @@ private:
     bool simplifiedCaption_;
 };
 
-#endif /* _TABMANAGER_H_ */
+#endif // TABMANAGER_H

@@ -16,22 +16,25 @@
  *
  */
 
-#include <QObject>
-#include <QDebug>
-
-#include "xmpp_xmlcommon.h"
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
-#include "xmpp_tasks.h"
-#include "userlist.h"
 #include "psiprivacymanager.h"
-#include "privacymanager.h"
-#include "privacylist.h"
-#include "psicon.h"
+
 #include "contactupdatesmanager.h"
+#include "privacylist.h"
+#include "privacymanager.h"
 #include "psiaccount.h"
+#include "psicon.h"
+#include "userlist.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+#include "xmpp_tasks.h"
+#include "xmpp_xmlcommon.h"
+
+#include <QDebug>
+#include <QObject>
 
 #define PRIVACY_NS "jabber:iq:privacy"
+
+using namespace XMPP;
 
 static const QString BLOCKED_LIST_NAME = "blocked";
 
@@ -45,8 +48,6 @@ static bool privacyListItemForJid(const PrivacyListItem& item, const Jid& jid)
     return item.type() == PrivacyListItem::JidType &&
            processJid(item.value()) == processJid(jid);
 }
-
-using namespace XMPP;
 
 // -----------------------------------------------------------------------------
 //
@@ -144,7 +145,6 @@ public:
         return active_;
     }
 };
-
 
 class SetPrivacyListsTask : public Task
 {
@@ -516,7 +516,6 @@ void PsiPrivacyManager::receiveList()
     }
 }
 
-
 bool PsiPrivacyManager::isAvailable() const
 {
     return isAvailable_;
@@ -739,6 +738,5 @@ bool PsiPrivacyManager::isAuthorized(const XMPP::Jid& jid) const
     return u && (u->subscription().type() == Subscription::Both ||
              u->subscription().type() == Subscription::From);
 }
-
 
 #include "psiprivacymanager.moc"

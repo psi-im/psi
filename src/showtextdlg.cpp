@@ -17,15 +17,15 @@
  *
  */
 
+#include "showtextdlg.h"
+
+#include <QFile>
+#include <QHBoxLayout>
 #include <QLayout>
 #include <QPushButton>
-#include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-
-#include "showtextdlg.h"
 
 // FIXME: combine to common init function
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)

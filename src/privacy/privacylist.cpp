@@ -17,12 +17,12 @@
  *
  */
 
+#include "privacylist.h"
+
 #include <QDomElement>
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <QList>
-
-#include "privacylist.h"
 
 #define ORDER_INCREMENT 10
 
@@ -55,7 +55,6 @@ void PrivacyList::appendItem(const PrivacyListItem& item)
     insertItem(items_.count(), item);
 }
 
-
 void PrivacyList::reNumber()
 {
     unsigned int order = 100;
@@ -64,7 +63,6 @@ void PrivacyList::reNumber()
         order += ORDER_INCREMENT;
     }
 }
-
 
 bool PrivacyList::moveItemUp(int index)
 {

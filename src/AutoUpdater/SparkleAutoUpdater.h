@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2008 Remko Troncon
+ * Copyright (C) 2008  Remko Troncon
  * See COPYING file for the detailed license.
  */
 
 #ifndef SPARKLEAUTOUPDATER_H
 #define SPARKLEAUTOUPDATER_H
 
-#include <QString>
-
 #include "AutoUpdater/AutoUpdater.h"
+
+#include <QString>
 
 class SparkleAutoUpdater : public AutoUpdater
 {
@@ -23,4 +23,4 @@ class SparkleAutoUpdater : public AutoUpdater
         Private* d;
 };
 
-#endif
+#endif // SPARKLEAUTOUPDATER_H

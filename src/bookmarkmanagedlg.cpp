@@ -19,16 +19,16 @@
 
 #include "bookmarkmanagedlg.h"
 
-#include <QStandardItemModel>
-#include <QPushButton>
+#include "bookmarkmanager.h"
+#include "fileutil.h"
+#include "iconset.h"
+#include "psiaccount.h"
+
 #include <QAction>
 #include <QFile>
 #include <QMessageBox>
-
-#include "bookmarkmanager.h"
-#include "psiaccount.h"
-#include "fileutil.h"
-#include "iconset.h"
+#include <QPushButton>
+#include <QStandardItemModel>
 
 BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
     : QDialog()

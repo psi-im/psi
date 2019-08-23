@@ -22,14 +22,14 @@
  *
  */
 
-#include <QtCore>
-
-#include "psiplugin.h"
 #include "eventfilter.h"
+#include "optionaccessinghost.h"
+#include "optionaccessor.h"
+#include "psiplugin.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
-#include "optionaccessor.h"
-#include "optionaccessinghost.h"
+
+#include <QtCore>
 
 class EchoPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender, public OptionAccessor
 {
@@ -57,8 +57,6 @@ public:
     // OptionAccessor
     virtual void setOptionAccessingHost(OptionAccessingHost* host);
     virtual void optionChanged(const QString& option);
-
-
 
 private:
     bool enabled;
@@ -159,6 +157,5 @@ void EchoPlugin::optionChanged(const QString& option)
 {
     Q_UNUSED(option);
 }
-
 
 #include "echoplugin.moc"

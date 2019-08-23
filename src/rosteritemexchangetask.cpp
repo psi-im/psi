@@ -17,10 +17,11 @@
  *
  */
 
-#include "xmpp_xmlcommon.h"
+#include "rosteritemexchangetask.h"
+
 #include "xmpp_client.h"
 #include "xmpp_liveroster.h"
-#include "rosteritemexchangetask.h"
+#include "xmpp_xmlcommon.h"
 
 RosterItemExchangeTask::RosterItemExchangeTask(Task* parent) : Task(parent), ignoreNonRoster_(false)
 {
@@ -69,7 +70,6 @@ bool RosterItemExchangeTask::take(const QDomElement& e)
     }
     return false;
 }
-
 
 void RosterItemExchangeTask::setIgnoreNonRoster(bool b)
 {

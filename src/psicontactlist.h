@@ -20,17 +20,19 @@
 #ifndef PSICONTACTLIST_H
 #define PSICONTACTLIST_H
 
+#include "profiles.h"
+
 #include <QList>
 #include <functional>
 
-#include "profiles.h"
-
-using namespace XMPP;
-
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 class PsiContact;
-namespace XMPP { class Jid; }
+
+namespace XMPP {
+    class Jid;
+}
+using namespace XMPP;
 
 class PsiContactList : public QObject
 {
@@ -176,4 +178,4 @@ private:
     void removeEnabledAccount(PsiAccount* account);
 };
 
-#endif
+#endif // PSICONTACTLIST_H

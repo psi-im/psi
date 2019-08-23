@@ -1,6 +1,6 @@
 /*
  * activitydlg.h
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,9 +20,9 @@
 #ifndef ACTIVITYDLG_H
 #define ACTIVITYDLG_H
 
-#include <QDialog>
-
 #include "ui_activity.h"
+
+#include <QDialog>
 
 class PsiAccount;
 
@@ -42,4 +42,4 @@ private:
     QList<PsiAccount*> pa_;
 };
 
-#endif
+#endif // ACTIVITYDLG_H

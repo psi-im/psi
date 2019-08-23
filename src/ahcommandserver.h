@@ -21,8 +21,9 @@
 #define AHCOMMANDSERVER_H
 
 class AHCServerManager;
-class QString;
 class AHCommand;
+class QString;
+
 namespace XMPP {
     class Jid;
 }
@@ -46,4 +47,4 @@ private:
     AHCServerManager* manager_;
 };
 
-#endif
+#endif // AHCOMMANDSERVER_H

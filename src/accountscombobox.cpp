@@ -17,9 +17,10 @@
  *
  */
 
-#include "psicon.h"
 #include "accountscombobox.h"
+
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
 
 AccountsComboBox::AccountsComboBox(QWidget* parent)

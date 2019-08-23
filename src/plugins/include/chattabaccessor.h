@@ -1,9 +1,9 @@
 #ifndef CHATTABACCESSOR_H
 #define CHATTABACCESSOR_H
 
-class QWidget;
-class QString;
 class QDomElement;
+class QString;
+class QWidget;
 
 class ChatTabAccessor
 {

@@ -7,8 +7,8 @@
 
 class PsiIcon;
 class QMenu;
-class QPoint;
 class QPixmap;
+class QPoint;
 
 class PsiTrayIcon : public QObject
 {
@@ -50,5 +50,4 @@ private:
     quintptr realIcon_;
 };
 
-
-#endif
+#endif // PSITRAYICON_H

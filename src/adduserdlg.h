@@ -1,6 +1,6 @@
 /*
  * adduserdlg.h - dialog for adding contacts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,9 +22,10 @@
 
 #include "ui_adduser.h"
 
+class PsiAccount;
 class QString;
 class QStringList;
-class PsiAccount;
+
 namespace XMPP {
     class Jid;
 }
@@ -64,4 +65,4 @@ private:
     void errorGateway(const QString &str, const QString &err);
 };
 
-#endif
+#endif // ADDUSERDLG_H

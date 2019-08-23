@@ -1,6 +1,6 @@
 /*
  * registrationdlg.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,12 +22,13 @@
 
 #include <QDialog>
 
-class QDomElement;
 class JT_XRegister;
 class PsiAccount;
+class QDomElement;
+
 namespace XMPP {
-    class Jid;
     class Form;
+    class Jid;
     class XData;
 }
 
@@ -58,4 +59,4 @@ private:
     void processLegacyForm(const XMPP::Form& form);
 };
 
-#endif
+#endif // REGISTRATIONDLG_H

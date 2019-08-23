@@ -19,6 +19,7 @@
  */
 
 #include "wbnewpath.h"
+
 #include "../sxe/sxesession.h"
 
 #include <QGraphicsScene>

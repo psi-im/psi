@@ -20,22 +20,20 @@
 #define PSIMEDIA_H
 
 #include <QMetaType>
+#include <QSharedDataPointer>
 #include <QSize>
 #include <QStringList>
-#include <QSharedDataPointer>
-
 #ifdef QT_GUI_LIB
-#include <QWidget>
+#    include <QWidget>
 #endif
 
 class QMetaMethod;
 
 namespace PsiMedia {
-
+class RtpChannelPrivate;
 class RtpSession;
 class RtpSessionPrivate;
 class VideoWidgetPrivate;
-class RtpChannelPrivate;
 
 enum PluginResult
 {
@@ -500,10 +498,9 @@ private:
     friend class RtpSessionPrivate;
     RtpSessionPrivate *d;
 };
-
-}
+}; // namespace PsiMedia
 
 Q_DECLARE_METATYPE(PsiMedia::AudioParams)
 Q_DECLARE_METATYPE(PsiMedia::VideoParams)
 
-#endif
+#endif // PSIMEDIA_H

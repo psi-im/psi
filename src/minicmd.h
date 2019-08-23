@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,22 +18,20 @@
 
 // Interfaces for mini command system
 
-
-
 #ifndef MINICMD_H
 #define MINICMD_H
 
 #include <QHash>
 #include <QVariant>
 
-class QString;
-class QStringList;
-class MCmdProviderIface;
-
 /** unparsed state: this is a state where the whole user input is passed
   * unparsed as the first part to the handler functions
   */
 #define MCMDSTATE_UNPARSED    1
+
+class MCmdProviderIface;
+class QString;
+class QStringList;
 
 /** This interface models the methods common to all mini command states.
   */
@@ -163,4 +161,4 @@ public:
     virtual ~MCmdProviderIface() {};
 };
 
-#endif
+#endif // MINICMD_H

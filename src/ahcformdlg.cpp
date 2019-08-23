@@ -19,17 +19,17 @@
 
 #include "ahcformdlg.h"
 
-#include <QLayout>
-#include <QPushButton>
-#include <QLabel>
-#include <QScrollArea>
-
-#include "ahcommand.h"
 #include "ahcexecutetask.h"
+#include "ahcommand.h"
+#include "busywidget.h"
+#include "psiaccount.h"
 #include "xdata_widget.h"
 #include "xmpp_client.h"
-#include "psiaccount.h"
-#include "busywidget.h"
+
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QScrollArea>
 
 AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final) :
     QDialog(nullptr),

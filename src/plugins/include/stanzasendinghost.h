@@ -20,4 +20,4 @@ public:
 
 Q_DECLARE_INTERFACE(StanzaSendingHost, "org.psi-im.StanzaSendingHost/0.1");
 
-#endif
+#endif // STANZASENDINGHOST_H

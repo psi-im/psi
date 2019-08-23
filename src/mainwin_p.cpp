@@ -19,26 +19,26 @@
 
 #include "mainwin_p.h"
 
+#include "alerticon.h"
+#include "icontoolbutton.h"
+#include "iconwidget.h"
+#include "psiaccount.h"
+#include "psicontactlist.h"
+#include "psitoolbar.h"
+#include "stretchwidget.h"
+
 #include <QApplication>
-#include <QStyle>
-#include <QTimer>
-#include <QSignalMapper>
-#include <QObject>
-#include <QPixmapCache>
-#include <QPixmap>
 #include <QFrame>
 #include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QObject>
+#include <QPixmap>
+#include <QPixmapCache>
+#include <QSignalMapper>
+#include <QStyle>
+#include <QTimer>
 #include <QtAlgorithms>
-
-#include "psiaccount.h"
-#include "stretchwidget.h"
-#include "iconwidget.h"
-#include "icontoolbutton.h"
-#include "alerticon.h"
-#include "psicontactlist.h"
-#include "psitoolbar.h"
 
 //----------------------------------------------------------------------------
 // PopupActionButton
@@ -391,7 +391,6 @@ void MLabel::mouseDoubleClickEvent(QMouseEvent *e)
     e->ignore();
 }
 
-
 //----------------------------------------------------------------------------
 // MAction
 //----------------------------------------------------------------------------
@@ -491,7 +490,6 @@ SpacerAction::SpacerAction(QObject *parent, const char *name)
 : IconAction(parent)
 {
     setObjectName(name);
-    setText(tr("<Spacer>"));
     setText(tr("<Spacer>"));
     setWhatsThis(tr("Spacer provides spacing to separate actions"));
 }

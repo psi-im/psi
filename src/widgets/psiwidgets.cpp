@@ -21,14 +21,14 @@
 
 #include "busywidget.h"
 #include "fancylabel.h"
-#include "iconwidget.h"
-#include "iconlabel.h"
 #include "iconbutton.h"
-#include "iconsetselect.h"
+#include "iconlabel.h"
 #include "iconsetdisplay.h"
+#include "iconsetselect.h"
 #include "icontoolbutton.h"
-#include "urllabel.h"
+#include "iconwidget.h"
 #include "psitextview.h"
+#include "urllabel.h"
 
 static const char *psiwidget_data[] = {
 "16 16 5 1",
@@ -167,7 +167,6 @@ public:
         return "busywidget.h";
     }
 };
-
 
 //----------------------------------------------------------------------------
 // IconLabelPlugin
@@ -471,7 +470,6 @@ public:
         return "psitextview.h";
     }
 };
-
 
 //----------------------------------------------------------------------------
 // URLLabelPlugin

@@ -22,11 +22,11 @@
 
 #include "iconset.h"
 
-class QPixmap;
 class Impix;
-class QString;
 class QIcon;
 class QImage;
+class QPixmap;
+class QString;
 
 class AlertIcon : public PsiIcon
 {
@@ -59,4 +59,4 @@ private:
 
 void alertIconUpdateAlertStyle();
 
-#endif
+#endif // ALERTICON_H

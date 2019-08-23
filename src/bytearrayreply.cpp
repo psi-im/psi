@@ -1,6 +1,6 @@
 /*
  * bytearrayreply.cpp - Base class for QNetworReply'es returning QByteArray
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,7 +63,6 @@ qint64 ByteArrayReply::bytesAvailable() const
     return data.length() - buffer.pos() + QNetworkReply::bytesAvailable();
 }
 
-
 qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
 {
     auto len = buffer.read(buf, maxlen);
@@ -71,7 +70,6 @@ qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
         QTimer::singleShot(0, this, SIGNAL(finished()));
     return len;
 }
-
 
 bool ByteArrayReply::open(OpenMode mode) {
     Q_ASSERT(0); // we don't come here

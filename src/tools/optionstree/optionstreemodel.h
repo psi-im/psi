@@ -21,9 +21,9 @@
 #define OPTIONSTREEMODEL_H
 
 #include <QAbstractItemModel>
-#include <QVariant>
 #include <QHash>
 #include <QStack>
+#include <QVariant>
 
 class OptionsTree;
 
@@ -57,14 +57,12 @@ protected:
     int nameToIndex(QString name) const;
     bool internalNode(QString name) const;
 
-
 protected slots:
     void optionChanged(const QString& option);
     void optionAboutToBeInserted(const QString& option);
     void optionInserted(const QString& option);
     void optionAboutToBeRemoved(const QString& option);
     void optionRemoved(const QString& option);
-
 
 private:
     OptionsTree* tree_;
@@ -75,4 +73,4 @@ private:
     QStack<bool> realRemove;
 };
 
-#endif
+#endif // OPTIONSTREEMODEL_H

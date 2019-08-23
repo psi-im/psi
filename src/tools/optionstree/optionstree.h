@@ -60,7 +60,6 @@ public:
     QVariant mapGet(const QString &basename, const QVariant &key, const QString &node, const QVariant &def) const;
     QVariantList mapKeyList(const QString &basename, bool sortedByNumbers = false) const;
 
-
     bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion, bool streamWriter = false) const;
     bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "", bool streamReader = false);
     bool loadOptions(const QDomElement& name, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
@@ -79,4 +78,4 @@ private:
     friend class OptionsTreeWriter;
 };
 
-#endif
+#endif // OPTIONSTREE_H

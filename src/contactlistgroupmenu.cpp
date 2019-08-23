@@ -25,7 +25,6 @@
 /* ContactListGroupMenu::Private */
 /*********************************/
 
-
 ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListItem *item)
     : QObject(nullptr)
     , q(menu)

@@ -19,21 +19,20 @@
 
 #include "fancylabel.h"
 
-#include <QPixmap>
 #include <QColor>
-#include <QLayout>
-#include <QLabel>
 #include <QFrame>
+#include <QLabel>
+#include <QLayout>
 #include <QPainter>
+#include <QPixmap>
 #include <QResizeEvent>
 
-#ifndef WIDGET_PLUGIN
-#include "iconset.h"
-#else
-class PsiIcon;
-#endif
-
 #include "iconlabel.h"
+#ifndef WIDGET_PLUGIN
+#    include "iconset.h"
+#else
+    class PsiIcon;
+#endif
 
 //----------------------------------------------------------------------------
 // IconLabel

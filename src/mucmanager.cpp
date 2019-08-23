@@ -26,14 +26,15 @@
 // In the most extreme case, the MUC manager also broadcasts status changes,
 // taking all the protocol responsibilities from the groupchat.
 
-#include <QObject>
-
 #include "mucmanager.h"
+
+#include "psiaccount.h"
+#include "xmpp_client.h"
+#include "xmpp_task.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
-#include "xmpp_task.h"
-#include "xmpp_client.h"
-#include "psiaccount.h"
+
+#include <QObject>
 
 using namespace XMPP;
 
@@ -212,7 +213,6 @@ private:
     Jid room_;
     QDomElement iq_;
 };
-
 
 // -----------------------------------------------------------------------------
 

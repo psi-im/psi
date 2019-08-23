@@ -1,10 +1,10 @@
 #include "opt_statuspep.h"
+
 #include "psioptions.h"
-
-#include <QListWidget>
-#include <QCheckBox>
-
 #include "ui_opt_statuspep.h"
+
+#include <QCheckBox>
+#include <QListWidget>
 
 static const char *tuneUrlFilterOptionPath = "options.extended-presence.tune.url-filter";
 static const char *tuneControllerFilterOptionPath = "options.extended-presence.tune.controller-filter";

@@ -22,8 +22,8 @@
 
 #include <QMenu>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
 class IconSelectPopup : public QMenu
 {
@@ -48,4 +48,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONSELECT_H

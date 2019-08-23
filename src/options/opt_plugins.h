@@ -1,14 +1,15 @@
 #ifndef OPT_PLUGINS_H
 #define OPT_PLUGINS_H
 
-#include "optionstab.h"
 #include "advwidget.h"
+#include "optionstab.h"
 #include "ui_plugininfodialog.h"
+
 #include <QPointer>
 #include <QTreeWidgetItem>
 
-class QWidget;
 class Options;
+class QWidget;
 
 class OptionsTabPlugins : public OptionsTab
 {
@@ -43,4 +44,4 @@ private slots:
     void settingsClicked(int item);
 };
 
-#endif
+#endif // OPT_PLUGINS_H

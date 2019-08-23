@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QButtonGroup;
+class QWidget;
 
 class OptionsTabChat : public OptionsTab
 {
@@ -22,4 +22,4 @@ private:
     QButtonGroup *bg_defAct;
 };
 
-#endif
+#endif // OPT_CHAT_H

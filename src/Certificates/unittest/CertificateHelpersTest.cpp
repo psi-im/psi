@@ -4,13 +4,12 @@
  * See COPYING for license details.
  */
 
-#include <QObject>
-#include <QtTest/QtTest>
-
+#include "Certificates/CertificateHelpers.h"
+#include "QtCrypto"
 #include "qttestutil/qttestutil.h"
 
-#include "QtCrypto"
-#include "Certificates/CertificateHelpers.h"
+#include <QObject>
+#include <QtTest/QtTest>
 
 using namespace QCA;
 

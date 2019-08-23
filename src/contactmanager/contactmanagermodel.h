@@ -1,6 +1,6 @@
 /*
  * contactmanagermodel.h
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,15 +21,15 @@
 #define CONTACTMANAGERMODEL_H
 
 #include <QAbstractTableModel>
-#include <QStringList>
 #include <QSet>
+#include <QStringList>
 
-class UserListItem;
 class PsiAccount;
-namespace XMPP
-{
-    class RosterItem;
+class UserListItem;
+
+namespace XMPP {
     class Jid;
+    class RosterItem;
 }
 using namespace XMPP;
 
@@ -62,7 +62,6 @@ public:
     static Role sortRole;
     static Qt::SortOrder sortOrder;
 
-
     QStringList manageableFields();
     void reloadUsers();
     void clear();
@@ -72,7 +71,6 @@ public:
 
     void startBatch() { layoutAboutToBeChanged(); }
     void stopBatch() { layoutChanged(); }
-
 
 private:
     PsiAccount *pa_;

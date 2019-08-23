@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2008 Justin Karneges, Martin Hostettler
+ * Copyright (C) 2001-2008  Justin Karneges, Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,8 +18,9 @@
 
  // Generic tab completion support code.
 
-#include <QDebug>
 #include "tabcompletion.h"
+
+#include <QDebug>
 
 TabCompletion::TabCompletion(QObject *parent)
     : QObject(parent)
@@ -29,7 +30,6 @@ TabCompletion::TabCompletion(QObject *parent)
     , textEdit_(nullptr)
 {
 }
-
 
 void TabCompletion::setTextEdit(QTextEdit* textEdit) {
     textEdit_ = textEdit;
@@ -47,7 +47,6 @@ QTextEdit* TabCompletion::getTextEdit() {
     return textEdit_;
 }
 
-
 void TabCompletion::highlight(bool set) {
     Q_UNUSED(set);
 /*
@@ -61,9 +60,6 @@ void TabCompletion::highlight(bool set) {
     }*/
 }
 
-
-
-
 void TabCompletion::moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor::MoveMode mode) {
     cur.movePosition(QTextCursor::Start, mode);
     for (int i = 0; i < offset; i++) { // some sane limit on iterations
@@ -71,8 +67,6 @@ void TabCompletion::moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor
         if (!cur.movePosition(QTextCursor::NextCharacter, mode)) break; // failed?
     }
 }
-
-
 
 /** Find longest common (case insensitive) prefix of \a list.
     */
@@ -123,9 +117,6 @@ void TabCompletion::setup(QString text, int pos, int &start, int &end) {
     toComplete_ = text.mid(start, end-start);
 }
 
-
-
-
 QString TabCompletion::suggestCompletion(bool *replaced) {
 
     suggestedCompletion_ = possibleCompletions();
@@ -146,11 +137,8 @@ QString TabCompletion::suggestCompletion(bool *replaced) {
         *replaced = true;
     }
 
-
     return newText;
 }
-
-
 
 void TabCompletion::reset() {
     typingStatus_ = TypingStatus::Normal;
@@ -174,7 +162,6 @@ void TabCompletion::tryComplete() {
         default:
             break;
     }
-
 
     QString newText;
     bool replaced = false;
@@ -230,7 +217,6 @@ void TabCompletion::tryComplete() {
         QTextCursor newPos(replacementCursor_);
 
         moveCursorToOffset(replacementCursor_, start, QTextCursor::KeepAnchor);
-
 
         newPos.clearSelection();
 

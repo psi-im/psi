@@ -20,8 +20,8 @@
 #ifndef CHATSPLITTER_H
 #define CHATSPLITTER_H
 
-#include <QWidget>
 #include <QList>
+#include <QWidget>
 
 class QSplitter;
 
@@ -58,4 +58,4 @@ private:
     QLayout* layout_;
 };
 
-#endif
+#endif // CHATSPLITTER_H

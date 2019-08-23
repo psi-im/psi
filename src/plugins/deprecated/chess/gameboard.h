@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: gameboard.h,v 0.1 2005/01/08 13:00:57 denis Exp $
@@ -12,21 +12,20 @@
  * Hacked by:
  */
 
-#ifndef    __GAME_BOARD_H__
-#define    __GAME_BOARD_H__
+#ifndef GAMEBOARD_H
+#define GAMEBOARD_H
 
-#include <QWidget>
+#include <QCloseEvent>
+#include <QDialog>
+#include <QFocusEvent>
+#include <QLineEdit>
+#include <QMouseEvent>
+#include <QPaintEvent>
 #include <QPainter>
 #include <QPixmap>
-#include <QDialog>
-#include <QLineEdit>
-#include <QTimer>
-//Added by qt3to4:
-#include <QCloseEvent>
-#include <QPaintEvent>
 #include <QResizeEvent>
-#include <QFocusEvent>
-#include <QMouseEvent>
+#include <QTimer>
+#include <QWidget>
 #include <stdlib.h>
 
 #define    MAX(a, b)    (((a) > (b))?(a):(b))
@@ -37,9 +36,9 @@
 #define    SOCK_WAIT    900
 #define    GAMEOVER_TXT    "****"
 
-class GameBoard;
 class Drawer;
 class Figure;
+class GameBoard;
 class GameProtocol;
 
 class GameBoard:public QWidget
@@ -256,4 +255,4 @@ signals:
     void sendData(const QString& data);
 };
 
-#endif    /* __GAME_BOARD_H__ */
+#endif // GAMEBOARD_H

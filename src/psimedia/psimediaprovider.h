@@ -19,19 +19,11 @@
 #ifndef PSIMEDIAPROVIDER_H
 #define PSIMEDIAPROVIDER_H
 
-#include <QString>
-#include <QList>
 #include <QByteArray>
-#include <QSize>
+#include <QList>
 #include <QObject>
-
-class QImage;
-class QIODevice;
-
-#ifdef QT_GUI_LIB
-class QWidget;
-class QPainter;
-#endif
+#include <QSize>
+#include <QString>
 
 // since we cannot put signals/slots in Qt "interfaces", we use the following
 //   defines to hint about signals/slots that derived classes should provide
@@ -39,10 +31,17 @@ class QPainter;
 #define HINT_PUBLIC_SLOTS public
 #define HINT_METHOD(x)
 
-namespace PsiMedia {
+class QImage;
+class QIODevice;
 
-class Provider;
+#ifdef QT_GUI_LIB
+    class QPainter;
+    class QWidget;
+#endif
+
+namespace PsiMedia {
 class FeaturesContext;
+class Provider;
 class RtpSessionContext;
 
 class Plugin
@@ -297,8 +296,7 @@ public:
     HINT_METHOD(finished()) // for file playback only
     HINT_METHOD(error())
 };
-
-}
+}; // namespace PsiMedia
 
 Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.4")
@@ -306,4 +304,4 @@ Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesCont
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.4")
 
-#endif
+#endif // PSIMEDIAPROVIDER_H

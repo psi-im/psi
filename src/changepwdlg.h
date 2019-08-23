@@ -1,6 +1,6 @@
 /*
  * changepwdlg.h - dialog for changing password
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,4 +51,4 @@ private:
     PsiAccount* pa;
 };
 
-#endif
+#endif // CHANGEPWDLG_H

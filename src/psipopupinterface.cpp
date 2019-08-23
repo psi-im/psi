@@ -18,9 +18,10 @@
  */
 
 #include "psipopupinterface.h"
-#include "psioptions.h"
-#include "psiiconset.h"
+
 #include "common.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
 QString PsiPopupInterface::clipText(QString text)
 {

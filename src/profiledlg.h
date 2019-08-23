@@ -20,12 +20,12 @@
 #ifndef PROFILEDLG_H
 #define PROFILEDLG_H
 
-#include <QDialog>
-
-#include "ui_profileopen.h"
 #include "ui_profilemanage.h"
 #include "ui_profilenew.h"
+#include "ui_profileopen.h"
 #include "varlist.h"
+
+#include <QDialog>
 
 class QButtonGroup;
 
@@ -78,4 +78,4 @@ private:
     QButtonGroup* buttonGroup_;
 };
 
-#endif
+#endif // PROFILEDLG_H

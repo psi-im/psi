@@ -21,4 +21,4 @@ private:
     QList<QRadioButton*> list_alerts;
 };
 
-#endif
+#endif // OPT_EVENTS_H

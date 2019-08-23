@@ -48,4 +48,4 @@ protected:
     virtual void itemActivated(const QModelIndex& index);
 };
 
-#endif
+#endif // PSIFILTEREDCONTACTLISTVIEW_H

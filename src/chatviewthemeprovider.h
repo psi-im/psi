@@ -1,6 +1,6 @@
 /*
  * chatviewthemeprovider.h - adapter for set of chatview themes
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,16 +17,15 @@
  *
  */
 
-
 #ifndef CHATVIEWTHEMEPROVIDER_H
 #define CHATVIEWTHEMEPROVIDER_H
 
 #include "psithemeprovider.h"
 
-class QWebEngineUrlRequestInterceptor;
 class ChatViewTheme;
-class ThemeServer;
 class PsiCon;
+class QWebEngineUrlRequestInterceptor;
+class ThemeServer;
 
 class ChatViewThemeProvider : public PsiThemeProvider
 {

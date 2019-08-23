@@ -1,6 +1,6 @@
 /*
  * psithemeprovider.cpp - kinda adapter for set of themes
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,12 +19,11 @@
 
 #include "psithemeprovider.h"
 
-#include <QFileInfo>
-#include <QStringList>
-
 #include "applicationinfo.h"
 #include "psicon.h"
 
+#include <QFileInfo>
+#include <QStringList>
 
 PsiThemeProvider::PsiThemeProvider(PsiCon *parent) :
     QObject(parent),
@@ -51,7 +50,6 @@ QString PsiThemeProvider::themePath(const QString &name) {
     qWarning("PsiThemeManager::Private::themePath(\"%s\"): not found", qPrintable(name));
     return QString();
 }
-
 
 // says where theme is able to load in separate thread
 bool PsiThemeProvider::threadedLoading() const

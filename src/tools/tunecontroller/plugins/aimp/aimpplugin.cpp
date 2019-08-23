@@ -1,6 +1,6 @@
 /*
  * aimpplugin.cpp
- * Copyright (C) 2012 Vitaly Tonkacheyev
+ * Copyright (C) 2012  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,12 +21,12 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
-#include <QObject>
-#include <QString>
-
 #include "aimptunecontroller.h"
 #include "tunecontrollerplugin.h"
+
+#include <QObject>
+#include <QString>
+#include <QtCore>
 
 class AIMPPlugin : public QObject, public TuneControllerPlugin
 {

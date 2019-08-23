@@ -1,6 +1,6 @@
 /*
  * varlist.h - class for handling a list of string vars
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,13 +20,13 @@
 #ifndef VARLIST_H
 #define VARLIST_H
 
-#include <QString>
 #include <QList>
+#include <QString>
 
+class OptionsTree;
 class QDomDocument;
 class QDomElement;
 class QStringList;
-class OptionsTree;
 
 class VarListItem
 {
@@ -65,4 +65,4 @@ public:
     void fromXml(const QDomElement &);
 };
 
-#endif
+#endif // VARLIST_H

@@ -1,5 +1,5 @@
-#ifndef PSI_PLUGINACCESSINGHOST_H
-#define PSI_PLUGINACCESSINGHOST_H
+#ifndef PLUGINACCESSINGHOST_H
+#define PLUGINACCESSINGHOST_H
 
 class PsiPlugin;
 
@@ -13,4 +13,4 @@ public:
 
 Q_DECLARE_INTERFACE(PluginAccessingHost, "org.psi-im.PluginAccessingHost/0.1");
 
-#endif //PSI_PLUGINACCESSINGHOST_H
+#endif // PLUGINACCESSINGHOST_H

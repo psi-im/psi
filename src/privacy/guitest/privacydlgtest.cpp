@@ -1,9 +1,9 @@
-#include <QDebug>
-
 #include "guitest.h"
 #include "guitestmanager.h"
 #include "mockprivacymanager.h"
 #include "privacydlg.h"
+
+#include <QDebug>
 
 class PrivacyDlgTest : public GUITest
 {

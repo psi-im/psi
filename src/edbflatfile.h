@@ -1,6 +1,6 @@
 /*
  * edbflatfile.h - asynchronous I/O event database
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,14 +20,14 @@
 #ifndef EDBFLATFILE_H
 #define EDBFLATFILE_H
 
+#include "eventdb.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
+#include <QDateTime>
+#include <QFile>
 #include <QObject>
 #include <QTimer>
-#include <QFile>
-#include <QDateTime>
-
-#include "eventdb.h"
-#include "xmpp_jid.h"
-#include "psievent.h"
 
 class EDBFlatFile : public EDB
 {

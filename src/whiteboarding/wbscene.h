@@ -18,8 +18,10 @@
  */
 #ifndef WBSCENE_H
 #define WBSCENE_H
-#include <QPointer>
+
 #include "wbitem.h"
+
+#include <QPointer>
 
 /*! \brief The scene class for whiteboard items.
  *  Inherits QGraphicsScene.
@@ -76,5 +78,4 @@ private:
     QPointF selectionCenter_;
 };
 
-#endif
-
+#endif // WBSCENE_H

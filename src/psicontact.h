@@ -19,14 +19,14 @@
 
 #pragma once
 
+#include "contactlistitemmenu.h"
 #include "psicontactlist.h"
 #include "xmpp_vcard.h"
-#include "contactlistitemmenu.h"
 
 #include <QObject>
 
-class PsiIcon;
 class PsiAccount;
+class PsiIcon;
 class UserListItem;
 class UserResourceList;
 

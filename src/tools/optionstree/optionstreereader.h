@@ -6,11 +6,10 @@
 #include <QVariant>
 
 class OptionsTree;
-class VariantTree;
-
-class QStringList;
-class QSize;
 class QRect;
+class QSize;
+class QStringList;
+class VariantTree;
 
 class OptionsTreeReader : public AtomicXmlFileReader
 {
@@ -35,5 +34,4 @@ private:
     QString unknown_;
 };
 
-
-#endif
+#endif // OPTIONSTREEREADER_H

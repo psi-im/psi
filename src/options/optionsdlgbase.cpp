@@ -18,23 +18,24 @@
  */
 
 #include "optionsdlgbase.h"
-#include "optionstab.h"
+
 #include "common.h"
-#include "psicon.h"
 #include "fancylabel.h"
 #include "iconset.h"
 #include "iconwidget.h"
+#include "optionstab.h"
+#include "psicon.h"
 #include "psiiconset.h"
 
-#include <QLayout>
-#include <QLabel>
-#include <QStackedWidget>
-#include <QPen>
-#include <QPainter>
-#include <QPixmap>
-#include <QVBoxLayout>
 #include <QItemDelegate>
+#include <QLabel>
+#include <QLayout>
+#include <QPainter>
+#include <QPen>
+#include <QPixmap>
 #include <QScrollBar>
+#include <QStackedWidget>
+#include <QVBoxLayout>
 
 //----------------------------------------------------------------------------
 // OptionsTabsDelegate
@@ -250,7 +251,6 @@ void OptionsDlgBase::Private::setTabs(QList<OptionsTab*> t)
         dlg->lv_tabs->setVisible(false);
     }
 }
-
 
 void OptionsDlgBase::Private::createChangedMap()
 {

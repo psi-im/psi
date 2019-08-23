@@ -18,6 +18,7 @@
  */
 
 #include "ahcommandserver.h"
+
 #include "ahcservermanager.h"
 
 // --------------------------------------------------------------------------
@@ -33,5 +34,3 @@ AHCommandServer::~AHCommandServer()
 {
     manager_->removeServer(this);
 }
-
-

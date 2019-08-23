@@ -19,11 +19,11 @@
 
 #include "bookmarkmanager.h"
 
-#include "xmpp_task.h"
-#include "xmpp_client.h"
-#include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "xmpp_client.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
 
 // -----------------------------------------------------------------------------
 

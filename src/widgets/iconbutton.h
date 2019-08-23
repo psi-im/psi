@@ -20,12 +20,11 @@
 #ifndef ICONBUTTON_H
 #define ICONBUTTON_H
 
-#include <QPushButton>
-#include <QWidget>
-#include <QString>
-#include <QPixmap>
 #include <QIcon>
-
+#include <QPixmap>
+#include <QPushButton>
+#include <QString>
+#include <QWidget>
 
 class PsiIcon;
 
@@ -61,4 +60,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONBUTTON_H

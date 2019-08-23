@@ -19,25 +19,22 @@
 #ifndef AVCALL_H
 #define AVCALL_H
 
-#include <QObject>
 #include "xmpp.h"
 
+#include <QObject>
+
+class AvCallManagerPrivate;
+class AvCallPrivate;
+class PsiAccount;
 class QHostAddress;
 
-namespace XMPP
-{
-    class Jid;
-}
-
-namespace PsiMedia
-{
+namespace PsiMedia {
     class VideoWidget;
 }
 
-class PsiAccount;
-
-class AvCallPrivate;
-class AvCallManagerPrivate;
+namespace XMPP {
+    class Jid;
+}
 
 class AvCall : public QObject
 {
@@ -120,4 +117,4 @@ private:
     AvCallManagerPrivate *d;
 };
 
-#endif
+#endif // AVCALL_H

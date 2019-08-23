@@ -1,11 +1,12 @@
 #ifndef PSICLI_H
 #define PSICLI_H
 
-#include "simplecli/simplecli.h"
 #include "applicationinfo.h"
+#include "simplecli/simplecli.h"
+
 #include <QApplication>
-#include <QMessageBox>
 #include <QFileInfo>
+#include <QMessageBox>
 
 class PsiCli : public SimpleCli
 {
@@ -87,4 +88,4 @@ public:
     virtual ~PsiCli() {}
 };
 
-#endif
+#endif // PSICLI_H

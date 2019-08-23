@@ -1,6 +1,6 @@
 /*
  * psithemeprovider.h - kinda adapter for set of themes
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,9 +20,10 @@
 #ifndef PSITHEMEPROVIDER_H
 #define PSITHEMEPROVIDER_H
 
+#include "theme.h"
+
 #include <QFuture>
 #include <functional>
-#include "theme.h"
 
 class PsiCon;
 
@@ -54,4 +55,4 @@ public:
     static QString themePath(const QString &name);
 };
 
-#endif
+#endif // PSITHEMEPROVIDER_H

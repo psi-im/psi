@@ -23,10 +23,10 @@
 #include <QByteArray>
 #include <QSharedDataPointer>
 
+class Impix;
+class QImage;
 class QObject;
 class QPixmap;
-class QImage;
-class Impix;
 class QThread;
 
 class Anim
@@ -69,4 +69,4 @@ private:
     QSharedDataPointer<Private> d;
 };
 
-#endif
+#endif // ANIM_H

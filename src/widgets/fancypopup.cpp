@@ -18,21 +18,20 @@
  */
 
 #include "fancypopup.h"
+
+#include "fancylabel.h"
+//#include "iconlabel.h"
+#include "iconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
 #include "ui_fancypopup.h"
 
 #include <QApplication>
-#include <QTimer>
-#include <QList>
-#include <QStyle>
 #include <QDesktopWidget>
-#include <QMouseEvent>
 #include <QList>
-
-#include "iconset.h"
-#include "fancylabel.h"
-//#include "iconlabel.h"
-#include "psitooltip.h"
-#include "psioptions.h"
+#include <QMouseEvent>
+#include <QStyle>
+#include <QTimer>
 
 #define BUTTON_WIDTH    16
 #define BUTTON_HEIGHT    14

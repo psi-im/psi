@@ -22,8 +22,8 @@
 
 #include <QObject>
 
-class VarList;
 class QTranslator;
+class VarList;
 
 class TranslationManager : public QObject
 {
@@ -53,4 +53,4 @@ private:
     static TranslationManager* instance_;
 };
 
-#endif
+#endif // TRANSLATIONMANAGER_H

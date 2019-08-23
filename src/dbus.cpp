@@ -1,20 +1,17 @@
-
-#include <QString>
-#include <QVector>
-#include <QDBusConnection>
-#include <QDBusConnectionInterface>
-#include <QDBusAbstractAdaptor>
-
-#include "common.h"
 #include "dbus.h"
 
-#include "psicontactlist.h"
-#include "psiaccount.h"
 #include "activeprofiles.h"
+#include "common.h"
+#include "psiaccount.h"
+#include "psicontactlist.h"
+
+#include <QDBusAbstractAdaptor>
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
+#include <QString>
+#include <QVector>
 
 #define PSIDBUSIFACE "org.psi_im.Psi"
-
-
 
 class PsiConAdapter : public QDBusAbstractAdaptor
 {
@@ -37,8 +34,6 @@ public Q_SLOTS:
 private:
     PsiCon *psicon;
 };
-
-
 
 PsiConAdapter::PsiConAdapter(PsiCon *psicon_) : QDBusAbstractAdaptor(psicon_)
 {
@@ -74,12 +69,10 @@ void PsiConAdapter::wake()
     psicon->doWakeup();
 }
 
-
 void addPsiConAdapter(PsiCon *psicon)
 {
     new PsiConAdapter(psicon);
     QDBusConnection::sessionBus().registerObject("/Main", psicon);
 }
-
 
 #include "dbus.moc"

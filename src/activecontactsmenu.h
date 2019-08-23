@@ -34,4 +34,4 @@ private:
     PsiCon* psi_;
 };
 
-#endif
+#endif // ACTIVECONTACTSMENU_H

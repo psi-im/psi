@@ -20,8 +20,8 @@
 #include <QPointer>
 #include <QVariantHash>
 
-class PsiOptions;
 class MainWin;
+class PsiOptions;
 
 class BossKey : public QObject
 {

@@ -20,23 +20,22 @@
 #ifndef CHATVIEWTHEME_P_H
 #define CHATVIEWTHEME_P_H
 
-#include <QTimer>
-#include <QScopedPointer>
+#include "chatviewtheme.h"
+#include "theme_p.h"
+
 #include <QPointer>
+#include <QScopedPointer>
+#include <QTimer>
 #ifdef WEBENGINE
-# include <QWebEngineScript>
+#    include <QWebEngineScript>
 #else
 #endif
 
-#include "theme_p.h"
-#include "chatviewtheme.h"
-
-class QWebFrame;
-
-class WebView;
-class NetworkAccessManager;
-class ChatViewThemeProvider;
 class ChatViewThemePrivate;
+class ChatViewThemeProvider;
+class NetworkAccessManager;
+class QWebFrame;
+class WebView;
 
 class ChatViewJSLoader : public QObject
 {
@@ -98,7 +97,6 @@ public slots:
     QString getFileContentsFromAdapterDir(const QString &name) const;
     void setTransparent();
 };
-
 
 // JS Bridge object emedded by theme. Has any logic unrelted to contact itself
 class ChatViewThemeJSUtil : public QObject {

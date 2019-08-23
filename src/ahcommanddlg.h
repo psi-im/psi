@@ -20,25 +20,24 @@
 #ifndef AHCOMMANDDLG_H
 #define AHCOMMANDDLG_H
 
+#include "ui_ahcommanddlg.h"
+#include "xmpp_jid.h"
+
 #include <QDialog>
 #include <QList>
 
-#include "xmpp_jid.h"
+class BusyWidget;
+class PsiAccount;
+class PsiCon;
+class QComboBox;
+class QObject;
+class QPushButton;
 
 namespace XMPP {
     class Client;
 }
 
-class PsiCon;
-class PsiAccount;
-class QObject;
-class QComboBox;
-class QPushButton;
-class BusyWidget;
-
 typedef struct { QString jid, node, name; } AHCommandItem;
-
-#include "ui_ahcommanddlg.h"
 
 class AHCommandDlg : public QDialog
 {
@@ -63,4 +62,4 @@ private:
     QPushButton* pb_execute;
 };
 
-#endif
+#endif // AHCOMMANDDLG_H

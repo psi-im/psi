@@ -35,7 +35,6 @@ public:
 
 Q_DECLARE_INTERFACE(PsiPopupPluginInterface, "psi-im.org.PsiPopupInterface/0.1")
 
-
 class PsiPopupInterface
 {
 public:
@@ -54,4 +53,4 @@ private:
     int duration_;
 };
 
-#endif
+#endif // PSIPOPUPINTERFACE_H

@@ -17,13 +17,14 @@
  *
  */
 
-#include <QUrl>
-
 #include "sxemanager.h"
-#include "psipopup.h"
-#include "psioptions.h"
+
 #include "common.h"
+#include "psioptions.h"
+#include "psipopup.h"
 #include "xmpp_caps.h"
+
+#include <QUrl>
 
 #define ONETOONEPREFIXSELF "0"
 #define ONETOONEPREFIXOTHER "1"
@@ -426,7 +427,6 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 
         }
     }
-
 
     // Cleanup:
     // Delete negotation objects that are no longer needed

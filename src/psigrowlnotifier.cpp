@@ -22,21 +22,22 @@
  *
  */
 
-#include <QPixmap>
-#include <QStringList>
-#include <QCoreApplication>
-#include <QtPlugin>
-
-#include "common.h"
-#include "psiaccount.h"
-#include "avatars.h"
-#include "growlnotifier/growlnotifier.h"
 #include "psigrowlnotifier.h"
+
+#include "avatars.h"
+#include "common.h"
+#include "growlnotifier/growlnotifier.h"
+#include "iconset.h"
+#include "psiaccount.h"
 #include "psievent.h"
-#include "userlist.h"
 #include "psioptions.h"
 #include "textutil.h"
-#include "iconset.h"
+#include "userlist.h"
+
+#include <QCoreApplication>
+#include <QPixmap>
+#include <QStringList>
+#include <QtPlugin>
 
 /**
  * A class representing the notification context, which will be passed to
@@ -56,7 +57,6 @@ private:
 public:
     int deleteCount_;
 };
-
 
 /**
  * (Private) constructor of the PsiGrowlNotifier.
@@ -87,7 +87,6 @@ PsiGrowlNotifier::PsiGrowlNotifier() : QObject(QCoreApplication::instance())
     gn_ = new GrowlNotifier(nots, nots, QCoreApplication::applicationName());
 }
 
-
 /**
  * Requests the global PsiGrowlNotifier instance.
  * If PsiGrowlNotifier wasn't initialized yet, it is initialized.
@@ -102,7 +101,6 @@ PsiGrowlNotifier* PsiGrowlNotifier::instance()
 
     return instance_;
 }
-
 
 /**
  * Requests a popup to be sent to Growl.

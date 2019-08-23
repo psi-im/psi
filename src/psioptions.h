@@ -17,19 +17,20 @@
  *
  */
 
-#ifndef _PSIOPTIONS_H_
-#define _PSIOPTIONS_H_
+#ifndef PSIOPTIONS_H
+#define PSIOPTIONS_H
 
 #include "optionstree.h"
 
 // Some hard coded options
 #define MINIMUM_OPACITY 10
 
+class QString;
+class QTimer;
+
 namespace XMPP {
     class Client;
 }
-class QString;
-class QTimer;
 
 class PsiOptions : public OptionsTree//, QObject
 {
@@ -62,4 +63,4 @@ private:
     static PsiOptions* defaults_;
 };
 
-#endif /* _PSIOPTIONS_H_ */
+#endif // PSIOPTIONS_H

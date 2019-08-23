@@ -20,8 +20,8 @@
 #ifndef SXDEEDIT_H
 #define SXDEEDIT_H
 
-#include <QString>
 #include <QDomNode>
+#include <QString>
 
 /*! \brief A class used for storing SXE edits in the undo stacks and in the queue of outgoing edits.*/
 class SxeEdit {
@@ -72,4 +72,4 @@ class SxeEdit {
         bool null_;
 };
 
-#endif
+#endif // SXDEEDIT_H

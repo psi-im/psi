@@ -18,22 +18,21 @@
  */
 
 #include "iconaction.h"
-#include "icontoolbutton.h"
 
-#include "iconwidget.h"
-
-#ifndef WIDGET_PLUGIN
-#include "iconset.h"
-#include "psioptions.h"
-#else
-class PsiIcon;
-class Iconset;
-#endif
-
+#include <QChildEvent>
 #include <QLayout>
 #include <QMenu>
 #include <QTimer>
-#include <QChildEvent>
+
+#include "icontoolbutton.h"
+#include "iconwidget.h"
+#ifndef WIDGET_PLUGIN
+#    include "iconset.h"
+#    include "psioptions.h"
+#else
+    class Iconset;
+    class PsiIcon;
+#endif
 
 //----------------------------------------------------------------------------
 // IconAction

@@ -18,15 +18,16 @@
  */
 
 #include "anim.h"
+
 #include "iconset.h"
 
-#include <QObject>
-#include <QImageReader>
-#include <QTimer>
 //#include <QApplication>
 #include <QBuffer>
 #include <QImage>
+#include <QImageReader>
+#include <QObject>
 #include <QThread>
+#include <QTimer>
 
 /**
  * \class Anim

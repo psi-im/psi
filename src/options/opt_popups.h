@@ -22,8 +22,8 @@
 
 #include "optionstab.h"
 
-class PsiCon;
 class PopupManager;
+class PsiCon;
 
 class OptionsTabPopups : public OptionsTab
 {
@@ -45,4 +45,4 @@ private:
     PopupManager* popup_;
 };
 
-#endif
+#endif // OPT_POPUPS_H

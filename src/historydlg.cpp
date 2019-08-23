@@ -1,7 +1,6 @@
 /*
  * historydlg.cpp
- * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin,
- * Piotr Okonski, Evgeny Khryukin
+ * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Piotr Okonski, Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,26 +17,27 @@
  *
  */
 
-#include <QMessageBox>
-#include <QScrollBar>
-#include <QMenu>
-#include <QProgressDialog>
-#include <QKeyEvent>
-#include <QTextBlock>
-
 #include "historydlg.h"
-#include "psicon.h"
+
+#include "coloropt.h"
+#include "common.h"
+#include "fileutil.h"
+#include "jidutil.h"
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontact.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "coloropt.h"
-#include "textutil.h"
-#include "jidutil.h"
-#include "fileutil.h"
-#include "userlist.h"
-#include "common.h"
 #include "shortcutmanager.h"
+#include "textutil.h"
+#include "userlist.h"
+
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QProgressDialog>
+#include <QScrollBar>
+#include <QTextBlock>
 
 #define SEARCH_PADDING_SIZE 20
 #define DISPLAY_PAGE_SIZE   200
@@ -98,7 +98,6 @@ static QStringList wrapString(const QString &str, int wid)
     }
     return lines;
 }
-
 
 SearchProxy::SearchProxy(PsiCon *p, DisplayProxy *d)
     : QObject(nullptr)
@@ -293,7 +292,6 @@ void SearchProxy::handlePadding(const EDBResult &r)
     }
     dp->displayWithSearchCursor(acc_, jid_, s_date, direction, s_string, s_pos);
 }
-
 
 DisplayProxy::DisplayProxy(PsiCon *p, PsiTextView *v)
     : QObject(nullptr)
@@ -621,7 +619,6 @@ QString DisplayProxy::getNick(PsiAccount *pa, const Jid &jid) const
     }
     return from;
 }
-
 
 class HistoryDlg::Private
 {

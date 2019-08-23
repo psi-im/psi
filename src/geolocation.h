@@ -20,15 +20,15 @@
 #ifndef GEOLOCATION_H
 #define GEOLOCATION_H
 
-#include <QString>
-
 #include "maybe.h"
+
+#include <QString>
 
 #define PEP_GEOLOC_TN "geoloc"
 #define PEP_GEOLOC_NS "http://jabber.org/protocol/geoloc"
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class GeoLocation
 {
@@ -91,4 +91,4 @@ private:
     QString country_, region_, locality_, area_, street_, building_, floor_, room_, postalcode_, text_;
 };
 
-#endif
+#endif // GEOLOCATION_H

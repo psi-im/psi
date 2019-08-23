@@ -19,30 +19,28 @@
 
 #include "tabdlg.h"
 
-#include "iconwidget.h"
-#include "iconset.h"
-#include "psicon.h"
-
-#include <QMenuBar>
-#include <QCursor>
-#include <QVBoxLayout>
-#include <QDragMoveEvent>
-#include <QResizeEvent>
-#include <QKeyEvent>
-#include <QDropEvent>
-#include <QCloseEvent>
-#include <QSignalMapper>
-#include <QTimer>
-#include <QMimeData>
-
-#include "psitabwidget.h"
-#include "psioptions.h"
-#include "shortcutmanager.h"
 #include "chatdlg.h"
+#include "iconset.h"
+#include "iconwidget.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psitabwidget.h"
+#include "shortcutmanager.h"
 #include "tabmanager.h"
 
+#include <QCloseEvent>
+#include <QCursor>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QKeyEvent>
+#include <QMenuBar>
+#include <QMimeData>
+#include <QResizeEvent>
+#include <QSignalMapper>
+#include <QTimer>
+#include <QVBoxLayout>
 #ifdef Q_OS_WIN
-#include <windows.h>
+#    include <windows.h>
 #endif
 
 //----------------------------------------------------------------------------
@@ -322,7 +320,6 @@ void TabDlg::setAsDefaultForChat() {
 void TabDlg::setAsDefaultForMuc() {
     tabManager_->setPreferredTabsForKind('M', this);
 }
-
 
 void TabDlg::menu_sendTabTo(QAction *act)
 {

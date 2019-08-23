@@ -19,14 +19,14 @@
 
 #include "varianttree.h"
 
-#include <QRect>
-#include <QSize>
-#include <QDomElement>
+#include <QColor>
 #include <QDomDocument>
 #include <QDomDocumentFragment>
+#include <QDomElement>
 #include <QKeySequence>
+#include <QRect>
+#include <QSize>
 #include <QStringList>
-#include <QColor>
 
 // FIXME: Helpers from xmpp_xmlcommon.h would be very appropriate for
 // void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
@@ -54,7 +54,6 @@ VariantTree::~VariantTree()
     }
 }
 
-
 /**
  * Split a @a node into local key and rest
  * @param node
@@ -72,7 +71,6 @@ bool VariantTree::getKeyRest(const QString& node, QString &key, QString &rest)
     }
     return false;
 }
-
 
 bool VariantTree::isValidNodeName(const QString &name)
 {
@@ -154,7 +152,6 @@ QVariant VariantTree::getValue(const QString& node) const
     return missingValue;
 }
 
-
 bool VariantTree::remove(const QString &node, bool internal_nodes)
 {
     QString key,subnode;
@@ -195,8 +192,6 @@ bool VariantTree::isInternalNode(QString node) const
         return trees_.contains(node);
     }
 }
-
-
 
 /**
  * \brief Sets the comment of the specified node.
@@ -303,7 +298,6 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
         return long_children;
     }
 }
-
 
 /**
  *

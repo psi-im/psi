@@ -2,12 +2,13 @@
 #define OPT_ICONSET_H
 
 #include "optionstab.h"
+
 #include <QEvent>
 
-class QWidget;
-class QListWidgetItem;
 class IconsetLoadThread;
+class QListWidgetItem;
 class QTreeWidgetItem;
+class QWidget;
 
 class OptionsTabIconsetSystem : public OptionsTab
 {
@@ -226,4 +227,4 @@ private:
     void addService(const QString& id, const QString& name);
 };
 
-#endif
+#endif // OPT_ICONSET_H

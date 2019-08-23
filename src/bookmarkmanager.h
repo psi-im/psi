@@ -20,11 +20,11 @@
 #ifndef BOOKMARKMANAGER_H
 #define BOOKMARKMANAGER_H
 
-#include <QObject>
-#include <QList>
-
 #include "conferencebookmark.h"
 #include "urlbookmark.h"
+
+#include <QList>
+#include <QObject>
 
 class PsiAccount;
 
@@ -71,4 +71,4 @@ private:
     QList<ConferenceBookmark> conferences_;
 };
 
-#endif
+#endif // BOOKMARKMANAGER_H

@@ -1,6 +1,6 @@
 /*
  * filecache.h - File storage with age and size control
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -20,15 +20,15 @@
 #ifndef FILECACHE_H
 #define FILECACHE_H
 
-#include <QObject>
 #include <QDateTime>
 #include <QFile>
 #include <QHash>
+#include <QObject>
 #include <QVariantMap>
 
-class QTimer;
-class OptionsTree;
 class FileCache;
+class OptionsTree;
+class QTimer;
 
 class FileCacheItem : public QObject
 {

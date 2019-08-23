@@ -1,36 +1,35 @@
 /*
- * (c) 2006 Kevin Smith
- * (c) 2008 Maciej Niedzielski
+ * Copyright (C) 2006  Kevin Smith
+ * Copyright (C) 2008  Maciej Niedzielski
  */
 
 #ifndef PLUGINMANAGER_H
 #define PLUGINMANAGER_H
 
-#include <QtCore>
-#include <QList>
-#include <QMap>
-#include <QHash>
-#include <QDomElement>
-#include <QMenu>
-
 #include "psiplugin.h"
 
-class QPluginLoader;
-
-class PsiAccount;
-class PsiPlugin;
-class PluginHost;
-class PsiCon;
-class MessageView;
+#include <QDomElement>
+#include <QHash>
+#include <QList>
+#include <QMap>
+#include <QMenu>
+#include <QtCore>
 
 #define PLUGINS_NO_DEBUG
 
-namespace XMPP {
-    class Client;
-}
+class MessageView;
+class PluginHost;
+class PsiAccount;
+class PsiCon;
+class PsiPlugin;
+class QPluginLoader;
 
 namespace QCA {
     class DirWatch;
+}
+
+namespace XMPP {
+    class Client;
 }
 
 class AccountIds
@@ -132,7 +131,6 @@ private:
     //sorted by priority
     QList<PluginHost*> pluginsByPriority_;
 
-
     QList<QCA::DirWatch*> dirWatchers_;
 
     // Options widget provides by plugin on opt_plugins
@@ -206,4 +204,4 @@ private slots:
     void accountDestroyed();
 };
 
-#endif
+#endif // PLUGINMANAGER_H

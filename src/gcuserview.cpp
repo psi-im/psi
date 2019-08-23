@@ -1,7 +1,7 @@
 /*
  * gcuserview.cpp - groupchat roster
- * Copyright (C) 2001, 2002  Justin Karneges
- * 2011 Evgeny Khryukin
+ * Copyright (C) 2001-2002  Justin Karneges
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,29 +20,28 @@
 
 #include "gcuserview.h"
 
-#include <QPainter>
-#include <QMouseEvent>
-#include <QItemDelegate>
-#include <QMimeData>
-#include <QMenu>
-
-#include "psitooltip.h"
-#include "psiaccount.h"
-#include "userlist.h"
-#include "psiiconset.h"
-#include "groupchatdlg.h"
-#include "common.h"
-#include "psioptions.h"
-#include "coloropt.h"
-#include "xmpp_muc.h"
-#include "xmpp_caps.h"
 #include "avatars.h"
+#include "coloropt.h"
+#include "common.h"
+#include "groupchatdlg.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+#include "userlist.h"
+#include "xmpp_caps.h"
+#include "xmpp_muc.h"
+
+#include <QItemDelegate>
+#include <QMenu>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QPainter>
 
 //static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 //{
 //    return s1.toLower() < s2.toLower();
 //}
-
 
 //----------------------------------------------------------------------------
 // GCUserViewDelegate
@@ -279,11 +278,9 @@ private:
     int avatarSize_, fontHeight_, avatarRadius_;
 };
 
-
 //----------------------------------------------------------------------------
 // GCUserModel
 //----------------------------------------------------------------------------
-
 
 GCUserModel::GCUserModel(PsiAccount *account, const Jid selfJid, QObject *parent) :
     QAbstractItemModel(parent),

@@ -17,14 +17,13 @@
  *
  */
 
-#include <QtGlobal>
-#include <QString>
-#include <QTime>
-#include <QDebug>
+#include "itunestunecontroller.h"
 
 #include <CoreFoundation/CoreFoundation.h>
-
-#include "itunestunecontroller.h"
+#include <QDebug>
+#include <QString>
+#include <QTime>
+#include <QtGlobal>
 
 /**
  * \class ITunesController
@@ -48,7 +47,6 @@ static QString CFStringToQString(CFStringRef s)
     }
     return result;
 }
-
 
 ITunesController::ITunesController()
 {

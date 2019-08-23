@@ -20,20 +20,19 @@
 #ifndef TUNECONTROLLERMANAGER_H
 #define TUNECONTROLLERMANAGER_H
 
-#include <QObject>
-#include <QMap>
-#include <QList>
-#include <QStringList>
-#include <QSharedPointer>
-
 #include "tune.h"
 
-class TuneControllerPlugin;
+#include <QList>
+#include <QMap>
+#include <QObject>
+#include <QSharedPointer>
+#include <QStringList>
+
 class TuneController;
+class TuneControllerPlugin;
 
 typedef QSharedPointer<TuneController> TuneControllerPtr;
 typedef QSharedPointer<TuneControllerPlugin> TuneControllerPluginPtr;
-
 
 class TuneControllerManager : public QObject
 {
@@ -66,4 +65,4 @@ private:
     QString tuneTitleFilterPattern_;
 };
 
-#endif
+#endif // TUNECONTROLLERMANAGER_H

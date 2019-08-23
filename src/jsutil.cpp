@@ -18,9 +18,10 @@
  */
 
 #include "jsutil.h"
-#include <QStringList>
+
 #include <QDateTime>
 #include <QJsonDocument>
+#include <QStringList>
 
 QString JSUtil::variant2js(const QVariant &value)
 {

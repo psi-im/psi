@@ -18,16 +18,16 @@
  */
 
 #include "psiiconset.h"
-#include "psievent.h"
-#include "common.h"
-#include "userlist.h"
+
 #include "anim.h"
 #include "applicationinfo.h"
-
+#include "common.h"
+#include "psievent.h"
 #include "psioptions.h"
+#include "userlist.h"
 
-#include <QFileInfo>
 #include <QCoreApplication>
+#include <QFileInfo>
 #include <QSet>
 #include <QTextStream>
 
@@ -78,7 +78,6 @@ struct ClientIconCheck
  */
 typedef QMap<QString, QList<ClientIconCheck> > ClientIconMap;
 
-
 //----------------------------------------------------------------------------
 // PsiIconset
 //----------------------------------------------------------------------------
@@ -103,7 +102,6 @@ public:
         QList<IconsetItem> list;
         QList<IconsetItem> customList;
     } status_icons;
-
 
     Private(PsiIconset *_psi) {
         psi = _psi;

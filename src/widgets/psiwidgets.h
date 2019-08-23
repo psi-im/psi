@@ -20,10 +20,10 @@
 #ifndef PSIWIDGETSPLUGIN_H
 #define PSIWIDGETSPLUGIN_H
 
-#include <QtUiPlugin/QDesignerExportWidget>
-#include <QtUiPlugin/QDesignerCustomWidgetInterface>
-#include <QtCore/qplugin.h>
 #include <QIcon>
+#include <QtCore/qplugin.h>
+#include <QtUiPlugin/QDesignerCustomWidgetInterface>
+#include <QtUiPlugin/QDesignerExportWidget>
 
 class QDESIGNER_WIDGET_EXPORT PsiWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
 {
@@ -51,4 +51,4 @@ private:
     bool initialized;
 };
 
-#endif
+#endif // PSIWIDGETSPLUGIN_H

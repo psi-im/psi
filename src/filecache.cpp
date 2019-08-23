@@ -1,6 +1,6 @@
 /*
  * filecache.cpp - File storage with age and size control
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -17,14 +17,16 @@
  *
  */
 
-#include <QTimer>
-#include <QCryptographicHash>
-#include <QDir>
-#include <QDebug>
 #include "filecache.h"
-#include "optionstree.h"
-#include "fileutil.h"
+
 #include "applicationinfo.h"
+#include "fileutil.h"
+#include "optionstree.h"
+
+#include <QCryptographicHash>
+#include <QDebug>
+#include <QDir>
+#include <QTimer>
 
 #define FC_META_PERSISTENT QStringLiteral("fc_persistent")
 
@@ -135,7 +137,6 @@ bool FileCacheItem::isDeletable() const
 {
     return !(_flags & SessionUndeletable) && !_metadata.contains(FC_META_PERSISTENT);
 }
-
 
 //------------------------------------------------------------------------------
 // FileCache

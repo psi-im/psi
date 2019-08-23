@@ -20,24 +20,25 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <QString>
-#include <QMap>
-#include <QSize>
-#include <QStringList>
-#include <QList>
+#include "statuspreset.h"
+#include "xmpp_status.h"
+
 #include <QColor>
 #include <QGridLayout>
+#include <QList>
+#include <QMap>
+#include <QSize>
+#include <QString>
+#include <QStringList>
 
 #if __cplusplus < 201703L
-# define PSI_FALLSTHROUGH
+#    define PSI_FALLSTHROUGH
 #else
-# define PSI_FALLSTHROUGH [[fallthrough]]
+#    define PSI_FALLSTHROUGH [[fallthrough]]
 #endif
 
 class QMenu;
 class TabbableWidget;
-
-#include "statuspreset.h"
 
 // -----------------------------------------------------------------------------
 // Options
@@ -77,7 +78,6 @@ public:
     bool operator==(const ToolbarPrefs& other);
 };
 
-
 struct lateMigrationOptions
 {
 
@@ -98,12 +98,9 @@ extern int common_smallFontSize;
 // FIXME find it a new home!
 enum { EventPriorityDontCare = -1 };
 
-
 // -----------------------------------------------------------------------------
 // Status
 // -----------------------------------------------------------------------------
-
-#include "xmpp_status.h"
 
 #define STATUS_OFFLINE   XMPP::Status::Offline
 #define STATUS_ONLINE    XMPP::Status::Online
@@ -150,10 +147,10 @@ void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 TabbableWidget* findActiveTab();
 #ifdef HAVE_X11
-# include "x11windowsystem.h"
-# define X11WM_CLASS(x)    X11WindowSystem::instance()->x11wmClass(winId(), (x));
+#    include "x11windowsystem.h"
+#    define X11WM_CLASS(x)    X11WindowSystem::instance()->x11wmClass(winId(), (x));
 #else
-# define X11WM_CLASS(x)    /* dummy */
+#    define X11WM_CLASS(x)    /* dummy */
 #endif
 void reorderGridLayout(QGridLayout* layout, int maxCols);
 
@@ -164,7 +161,6 @@ void reorderGridLayout(QGridLayout* layout, int maxCols);
 QString logencode(QString);
 QString logdecode(const QString &);
 
-
 // -----------------------------------------------------------------------------
 // Misc.
 // -----------------------------------------------------------------------------
@@ -174,8 +170,8 @@ QString CAP(const QString &str);
 QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
 #ifdef HAVE_KEYCHAIN
-void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent);
-bool isKeychainEnabled();
+    void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent);
+    bool isKeychainEnabled();
 #endif
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
@@ -197,5 +193,4 @@ QString activityIconName(const Activity &);
 
 QString macToQtDatetimeFormat(const QString &sys_fmt);
 
-
-#endif
+#endif // COMMON_H

@@ -20,12 +20,12 @@
 #ifndef CONFERENCEBOOKMARK_H
 #define CONFERENCEBOOKMARK_H
 
-#include <QString>
-
 #include "xmpp_jid.h"
 
-class QDomElement;
+#include <QString>
+
 class QDomDocument;
+class QDomElement;
 
 class ConferenceBookmark
 {
@@ -67,4 +67,4 @@ private:
     QString password_;
 };
 
-#endif
+#endif // CONFERENCEBOOKMARK_H

@@ -20,14 +20,14 @@
 #ifndef CONTACTUPDATESMANAGER_H
 #define CONTACTUPDATESMANAGER_H
 
+#include "psiaccount.h"
+#include "xmpp_jid.h"
+
 #include <QObject>
 #include <QPointer>
 
 class PsiCon;
 class QTimer;
-
-#include "psiaccount.h"
-#include "xmpp_jid.h"
 
 class ContactUpdatesManager : public QObject
 {
@@ -70,4 +70,4 @@ private:
     void removeNotInListContacts(PsiAccount* account, const XMPP::Jid& jid);
 };
 
-#endif
+#endif // CONTACTUPDATESMANAGER_H

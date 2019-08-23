@@ -10,9 +10,11 @@
 #include <QtCrypto>
 
 class QString;
+
 namespace QCA {
     class CertificateCollection;
 }
+
 namespace XMPP {
     class QCATLSHandler;
 }
@@ -28,4 +30,4 @@ class CertificateHelpers
         static QString validityToString(QCA::Validity);
 };
 
-#endif
+#endif // CERTUTIL_H

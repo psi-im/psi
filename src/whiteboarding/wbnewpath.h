@@ -38,4 +38,4 @@ class WbNewPath : public WbNewItem {
         QPointF* controlPoint_;
 };
 
-#endif
+#endif // WBNEWPATH_H

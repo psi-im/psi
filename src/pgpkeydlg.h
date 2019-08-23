@@ -25,12 +25,12 @@
 #ifndef PGPKEYDLG_H
 #define PGPKEYDLG_H
 
-#include <QtCrypto>
-
 #include "ui_pgpkey.h"
 
-class QStandardItemModel;
+#include <QtCrypto>
+
 class QSortFilterProxyModel;
+class QStandardItemModel;
 
 class PGPKeyDlg : public QDialog
 {
@@ -60,4 +60,4 @@ private:
     QSortFilterProxyModel* proxy_;
 };
 
-#endif
+#endif // PGPKEYDLG_H

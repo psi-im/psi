@@ -19,11 +19,11 @@
 
 #include "resourcemenu.h"
 
+#include "psiaccount.h"
+#include "psicontact.h"
 #include "psiiconset.h"
 #include "userlist.h"
 #include "xmpp_status.h"
-#include "psicontact.h"
-#include "psiaccount.h"
 
 /**
  * \class ResourceMenu

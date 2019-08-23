@@ -1,8 +1,8 @@
 #ifndef PSITIPLABEL_H
 #define PSITIPLABEL_H
 
-#include <QFrame>
 #include <QBasicTimer>
+#include <QFrame>
 
 class QTextDocument;
 
@@ -49,4 +49,4 @@ private:
     static PsiTipLabel* instance_;
 };
 
-#endif
+#endif // PSITIPLABEL_H

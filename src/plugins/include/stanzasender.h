@@ -13,4 +13,4 @@ public:
 
 Q_DECLARE_INTERFACE(StanzaSender, "org.psi-im.StanzaSender/0.1");
 
-#endif
+#endif // STANZASENDER_H

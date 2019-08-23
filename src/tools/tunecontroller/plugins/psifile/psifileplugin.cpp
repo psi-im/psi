@@ -17,9 +17,9 @@
  *
  */
 
-#include "applicationinfo.h"
 #include "psifileplugin.h"
 
+#include "applicationinfo.h"
 
 QString PsiFilePlugin::name()
 {

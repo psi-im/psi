@@ -33,4 +33,4 @@ private:
     QString configVersion_;
 };
 
-#endif
+#endif // OPTIONSTREEWRITER_H

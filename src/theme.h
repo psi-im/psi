@@ -1,6 +1,6 @@
 /*
  * theme.h - base class for any theme
- * Copyright (C) 2010-2017 Justin Karneges, Michail Pishchagin, Sergey Ilinykh
+ * Copyright (C) 2010-2017  Justin Karneges, Michail Pishchagin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,8 +22,8 @@
  so its one-way relation.
 */
 
-#ifndef PSITHEME_H
-#define PSITHEME_H
+#ifndef THEME_H
+#define THEME_H
 
 #include <QObject>
 #include <QSharedData>
@@ -31,10 +31,10 @@
 #include <QStringList>
 #include <functional>
 
+class PsiThemeProvider;
 class QFileInfo;
 class QWidget;
 class ThemePrivate;
-class PsiThemeProvider;
 
 //-----------------------------------------------
 // Theme
@@ -119,5 +119,4 @@ private:
     QExplicitlySharedDataPointer<ThemePrivate> d;
 };
 
-
-#endif
+#endif // THEME_H

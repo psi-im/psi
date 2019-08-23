@@ -19,74 +19,70 @@
 
 #include "chatdlg.h"
 
-#include <QLabel>
-#include <QCursor>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QLayout>
-#include <QSplitter>
-#include <QToolBar>
-#include <QTimer>
-#include <QDateTime>
-#include <QPixmap>
-#include <QColor>
-#include <Qt>
-#include <QCloseEvent>
-#include <QList>
-#include <QKeyEvent>
-#include <QHBoxLayout>
-#include <QDropEvent>
-#include <QList>
-#include <QMessageBox>
-#include <QShowEvent>
-#include <QVBoxLayout>
-#include <QContextMenuEvent>
-#include <QResizeEvent>
-#include <QMenu>
-#include <QDragEnterEvent>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QScrollBar>
-#include <QMimeData>
-
-#include "psiaccount.h"
-#include "userlist.h"
-#include "stretchwidget.h"
-#include "psiiconset.h"
-#include "iconwidget.h"
-#include "textutil.h"
-#include "xmpp_message.h"
-#include "xmpp_caps.h"
-#include "xmpp_htmlelement.h"
-#include "fancylabel.h"
-#include "msgmle.h"
-#include "iconselect.h"
-#include "pgputil.h"
-#include "psicon.h"
-#include "iconlabel.h"
-#include "iconaction.h"
-#include "avatars.h"
-#include "jidutil.h"
-#include "tabdlg.h"
-#include "psioptions.h"
-#include "psitooltip.h"
-#include "shortcutmanager.h"
-#include "psicontactlist.h"
 #include "accountlabel.h"
-#include "psirichtext.h"
+#include "avatars.h"
 #include "chatview.h"
 #include "eventdb.h"
-#include "filesharingmanager.h"
-
-#ifdef Q_OS_WIN
-#include <windows.h>
-#endif
-
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
-#endif
-
+#include "fancylabel.h"
 #include "filesharedlg.h"
+#include "filesharingmanager.h"
+#include "iconaction.h"
+#include "iconlabel.h"
+#include "iconselect.h"
+#include "iconwidget.h"
+#include "jidutil.h"
+#include "msgmle.h"
+#include "pgputil.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
+#endif
+#include "psiaccount.h"
 #include "psichatdlg.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psirichtext.h"
+#include "psitooltip.h"
+#include "shortcutmanager.h"
+#include "stretchwidget.h"
+#include "tabdlg.h"
+#include "textutil.h"
+#include "userlist.h"
+#include "xmpp_caps.h"
+#include "xmpp_htmlelement.h"
+#include "xmpp_message.h"
+
+#include <QCloseEvent>
+#include <QColor>
+#include <QContextMenuEvent>
+#include <QCursor>
+#include <QDateTime>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QHBoxLayout>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QList>
+#include <QMenu>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QPixmap>
+#include <QResizeEvent>
+#include <QScrollBar>
+#include <QShowEvent>
+#include <QSplitter>
+#include <QTextDocument> // for TextUtil::escape()
+#include <QTimer>
+#include <QToolBar>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <Qt>
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#endif
 
 static const QString geometryOption = "options.ui.chat.size";
 

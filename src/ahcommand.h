@@ -20,13 +20,14 @@
 #ifndef AHCOMMAND_H
 #define AHCOMMAND_H
 
-#include <QString>
-#include <QSharedDataPointer>
-
 #include "xmpp_xdata.h"
 
-class QDomElement;
+#include <QSharedDataPointer>
+#include <QString>
+
+class AHCommandPrivate;
 class QDomDocument;
+class QDomElement;
 
 class AHCError
 {
@@ -51,7 +52,6 @@ private:
     ErrorType type_;
 };
 
-class AHCommandPrivate;
 class AHCommand
 {
 public:
@@ -114,4 +114,4 @@ private:
     QSharedDataPointer<AHCommandPrivate> d;
 };
 
-#endif
+#endif // AHCOMMAND_H

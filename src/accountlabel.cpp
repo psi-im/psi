@@ -18,6 +18,7 @@
  */
 
 #include "accountlabel.h"
+
 #include "psiaccount.h"
 
 AccountLabel::AccountLabel(QWidget* parent)

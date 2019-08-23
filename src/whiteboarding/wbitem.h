@@ -20,12 +20,13 @@
 #ifndef WBITEM_H
 #define WBITEM_H
 
-#include <QGraphicsSvgItem>
+#include "../sxe/sxesession.h"
+#include "iconaction.h"
+
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSvgItem>
 #include <QMenu>
-#include "iconaction.h"
-#include "../sxe/sxesession.h"
 
 class WbScene;
 class WbWidget;
@@ -120,4 +121,4 @@ private:
 
 };
 
-#endif
+#endif // WBITEM_H

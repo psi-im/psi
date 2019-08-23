@@ -17,23 +17,27 @@
  *
  */
 
-#include <QPointer>
-#include <QBuffer>
-#include <QUrlQuery>
-
-#include "psicon.h"
 #include "chatviewthemeprovider_priv.h"
-#include "psithemeprovider.h"
-#include "psiiconset.h"
-#ifdef WEBENGINE
-# include <QWebEngineProfile>
-# include "webserver.h"
-#else
-# include "networkaccessmanager.h"
-# include <QNetworkRequest>
-#endif
-#include "xmpp_vcard.h"
+
 #include "avatars.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psithemeprovider.h"
+#include "xmpp_vcard.h"
+#ifdef WEBENGINE
+#    include "webserver.h"
+#else
+#    include "networkaccessmanager.h"
+#endif
+
+#include <QBuffer>
+#include <QPointer>
+#include <QUrlQuery>
+#ifdef WEBENGINE
+#    include <QWebEngineProfile>
+#else
+#    include <QNetworkRequest>
+#endif
 
 static QPointer<ChatViewCon> cvCon;
 

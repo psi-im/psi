@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QButtonGroup;
+class QWidget;
 
 class OptionsTabApplication : public OptionsTab
 {
@@ -31,4 +31,4 @@ private slots:
     void doEnableQuitOnClose(int);
 };
 
-#endif
+#endif // OPT_APPLICATION_H

@@ -19,4 +19,4 @@ signals:
     void popup();
 };
 
-#endif
+#endif // UPDATINGCOMBOBOX_H

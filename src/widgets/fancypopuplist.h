@@ -20,9 +20,10 @@
 #ifndef POPUPLIST_H
 #define POPUPLIST_H
 
-#include <QObject>
-#include <QList>
 #include "fancypopup.h"
+
+#include <QList>
+#include <QObject>
 
 class FancyPopupList : public QObject, public QList<FancyPopup *>
 {
@@ -69,5 +70,4 @@ private slots:
     }
 };
 
-#endif
-
+#endif // POPUPLIST_H

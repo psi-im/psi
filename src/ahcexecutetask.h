@@ -20,9 +20,9 @@
 #ifndef AHCEXECUTETASK_H
 #define AHCEXECUTETASK_H
 
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
 #include "ahcommand.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
 
 class QDomElement;
 
@@ -45,4 +45,4 @@ private:
     AHCommand resultCommand_;
 };
 
-#endif
+#endif // AHCEXECUTETASK_H

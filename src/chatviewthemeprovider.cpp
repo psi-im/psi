@@ -1,6 +1,6 @@
 /*
  * chatviewthemeprovider.cpp - adapter for set of chatview themes
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,25 +17,23 @@
  *
  */
 
-
 #include "chatviewthemeprovider.h"
 
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#ifdef WEBENGINE
-#include <QWebEngineUrlRequestInterceptor>
-#endif
-
-#include "psicon.h"
+#include "applicationinfo.h"
 #include "chatviewtheme.h"
 #include "chatviewtheme_p.h"
-#include "psioptions.h"
-#include "theme.h"
-#include "applicationinfo.h"
-#include "psithememanager.h"
 #include "chatviewthemeprovider_priv.h"
-#include "chatviewtheme.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psithememanager.h"
+#include "theme.h"
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#ifdef WEBENGINE
+#    include <QWebEngineUrlRequestInterceptor>
+#endif
 
 class ChatViewThemeProvider;
 

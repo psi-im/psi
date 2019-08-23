@@ -1,6 +1,6 @@
 /*
  * psicon.cpp - core of Psi
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,120 +19,118 @@
 
 #include "psicon.h"
 
-#include <QApplication>
-#include <QDesktopWidget>
-#include <QMenuBar>
-#include <QPointer>
-#include <QIcon>
-#include <QColor>
-#include <QImage>
-#include <QPixmapCache>
-#include <QFile>
-#include <QPixmap>
-#include <QList>
-#include <QImageReader>
-#include <QMessageBox>
-#include <QDir>
-#include <QSessionManager>
-#include <QNetworkConfigurationManager>
-
-#include "iris/processquit.h"
-#include "iris/tcpportreserver.h"
-#include "s5b.h"
-#include "jingle-s5b.h"
-#include "xmpp_caps.h"
-#include "psiaccount.h"
-#include "activeprofiles.h"
+#include "AutoUpdater/AutoUpdater.h"
 #include "accountadddlg.h"
-#include "psiiconset.h"
-#include "psithememanager.h"
-#include "psievent.h"
-#include "passphrasedlg.h"
-#include "common.h"
-#include "mainwin.h"
-#include "idle/idle.h"
 #include "accountmanagedlg.h"
-#include "statusdlg.h"
-#include "options/optionsdlg.h"
-#include "options/opt_toolbars.h"
-#include "accountregdlg.h"
-#include "tunecontrollermanager.h"
-#include "mucjoindlg.h"
-#include "userlist.h"
-#include "eventdlg.h"
-#ifdef HAVE_PGPUTIL
-#include "pgputil.h"
-#endif
-#include "edbsqlite.h"
-#include "proxy.h"
-#ifdef PSIMNG
-#include "psimng.h"
-#endif
-#include "alerticon.h"
-#include "iconselect.h"
-#include "psitoolbar.h"
-#ifdef FILETRANSFER
-#include "filetransfer.h"
-#include "filetransdlg.h"
-#include "multifiletransferdlg.h"
-#endif
 #include "accountmodifydlg.h"
-#include "psiactionlist.h"
-#include "applicationinfo.h"
-#include "jidutil.h"
-#include "systemwatch/systemwatch.h"
+#include "accountregdlg.h"
 #include "accountscombobox.h"
-#include "tabdlg.h"
-#include "chatdlg.h"
-#ifdef GROUPCHAT
-#include "groupchatdlg.h"
-#endif
-#include "spellchecker/aspellchecker.h"
-#include "networkaccessmanager.h"
-#ifdef HAVE_WEBSERVER
-# include "webserver.h"
-#endif
-#ifdef WEBKIT
-#include "avatars.h"
-#include "chatviewthemeprovider.h"
-#include "webview.h"
-#endif
-#include "urlobject.h"
+#include "activeprofiles.h"
+#include "alerticon.h"
+#include "alertmanager.h"
 #include "anim.h"
-#include "psioptions.h"
-#include "psirichtext.h"
-#ifdef PSI_PLUGINS
-#include "filesharingmanager.h"
-#include "pluginmanager.h"
-#endif
-#include "psicontactlist.h"
-#include "dbus.h"
-#include "shortcutmanager.h"
-#include "globalshortcut/globalshortcutmanager.h"
-#include "desktoputil.h"
-#include "tabmanager.h"
-#include "xmpp_xmlcommon.h"
-#include "psicapsregsitry.h"
-#include "psicontact.h"
-#include "contactupdatesmanager.h"
+#include "applicationinfo.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 #include "avcall/mediadevicewatcher.h"
-#include "alertmanager.h"
 #include "bosskey.h"
+#include "chatdlg.h"
+#include "common.h"
+#include "contactupdatesmanager.h"
+#include "dbus.h"
+#include "desktoputil.h"
+#include "edbsqlite.h"
+#include "eventdlg.h"
+#include "globalshortcut/globalshortcutmanager.h"
+#ifdef GROUPCHAT
+#    include "groupchatdlg.h"
+#endif
+#include "iconselect.h"
+#include "idle/idle.h"
+#include "iris/processquit.h"
+#include "iris/tcpportreserver.h"
+#include "jidutil.h"
+#include "jingle-s5b.h"
+#include "mainwin.h"
+#include "mucjoindlg.h"
+#include "networkaccessmanager.h"
+#include "options/opt_toolbars.h"
+#include "options/optionsdlg.h"
+#include "passphrasedlg.h"
+#ifdef HAVE_PGPUTIL
+#    include "pgputil.h"
+#endif
 #include "popupmanager.h"
+#include "proxy.h"
+#include "psiaccount.h"
+#include "psiactionlist.h"
+#include "psicapsregsitry.h"
+#include "psicontact.h"
+#include "psicontactlist.h"
+#include "psievent.h"
+#include "psiiconset.h"
+#ifdef PSIMNG
+#    include "psimng.h"
+#endif
+#include "psioptions.h"
+#include "psirichtext.h"
+#include "psithememanager.h"
+#include "psitoolbar.h"
+#include "s5b.h"
+#include "shortcutmanager.h"
+#include "spellchecker/aspellchecker.h"
+#include "statusdlg.h"
+#include "systemwatch/systemwatch.h"
+#include "tabdlg.h"
+#include "tabmanager.h"
+#include "tunecontrollermanager.h"
+#include "urlobject.h"
+#include "userlist.h"
+#ifdef HAVE_WEBSERVER
+#    include "webserver.h"
+#endif
+#include "xmpp_caps.h"
+#include "xmpp_xmlcommon.h"
 #ifdef WHITEBOARDING
-#include "whiteboarding/wbmanager.h"
+#    include "whiteboarding/wbmanager.h"
 #endif
-
-#include "AutoUpdater/AutoUpdater.h"
+#ifdef FILETRANSFER
+#    include "filetransfer.h"
+#    include "filetransdlg.h"
+#    include "multifiletransferdlg.h"
+#endif
+#ifdef PSI_PLUGINS
+#    include "filesharingmanager.h"
+#    include "pluginmanager.h"
+#endif
+#ifdef WEBKIT
+#    include "avatars.h"
+#    include "chatviewthemeprovider.h"
+#    include "webview.h"
+#endif
 #ifdef HAVE_SPARKLE
-#include "AutoUpdater/SparkleAutoUpdater.h"
+#    include "AutoUpdater/SparkleAutoUpdater.h"
+#endif
+#ifdef Q_OS_MAC
+#    include "mac_dock/mac_dock.h"
 #endif
 
-#ifdef Q_OS_MAC
-#include "mac_dock/mac_dock.h"
-#endif
+#include <QApplication>
+#include <QColor>
+#include <QDesktopWidget>
+#include <QDir>
+#include <QFile>
+#include <QIcon>
+#include <QImage>
+#include <QImageReader>
+#include <QList>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QNetworkConfigurationManager>
+#include <QPixmap>
+#include <QPixmapCache>
+#include <QPointer>
+#include <QSessionManager>
 
 static const char *tunePublishOptionPath = "options.extended-presence.tune.publish";
 static const char *tuneUrlFilterOptionPath = "options.extended-presence.tune.url-filter";
@@ -208,7 +206,6 @@ private:
         return true;
     }
 };
-
 
 //----------------------------------------------------------------------------
 // PsiCon::Private
@@ -413,7 +410,6 @@ bool PsiCon::init()
     d->updatedAccountTimer_->setInterval(1000);
     connect(d->updatedAccountTimer_, SIGNAL(timeout()), SLOT(saveAccounts()));
 
-
     QString oldConfig = pathToProfileConfig(activeProfile);
     if(QFile::exists(oldConfig)) {
         QMessageBox::warning(d->mainwin, tr("Migration is impossible"),
@@ -499,7 +495,6 @@ bool PsiCon::init()
     connect(proxy, SIGNAL(settingsChanged()), SLOT(proxy_settingsChanged()));
 
     connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
-
 
     contactUpdatesManager_ = new ContactUpdatesManager(this);
 
@@ -696,7 +691,6 @@ bool PsiCon::init()
     if(d->contactList->defaultAccount())
         emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
 
-
 #ifdef USE_DBUS
     addPsiConAdapter(this);
 #endif
@@ -704,7 +698,6 @@ bool PsiCon::init()
     connect(ActiveProfiles::instance(), SIGNAL(setStatusRequested(const QString &, const QString &)), SLOT(setStatusFromCommandline(const QString &, const QString &)));
     connect(ActiveProfiles::instance(), SIGNAL(openUriRequested(const QString &)), SLOT(openUri(const QString &)));
     connect(ActiveProfiles::instance(), SIGNAL(raiseRequested()), SLOT(raiseMainwin()));
-
 
     DesktopUtil::setUrlHandler("xmpp", this, "openUri");
     DesktopUtil::setUrlHandler("x-psi-atstyle", this, "openAtStyleUri");
@@ -717,7 +710,6 @@ bool PsiCon::init()
         AvCallManager::setBasePort(options->getOption("options.p2p.bytestreams.listen-port").toInt());
         AvCallManager::setExternalAddress(options->getOption("options.p2p.bytestreams.external-address").toString());
     }
-
 
 #ifdef USE_PEP
     optionChanged(tuneControllerFilterOptionPath);
@@ -938,7 +930,6 @@ TuneControllerManager *PsiCon::tuneManager() const
 AlertManager *PsiCon::alertManager() const {
     return &(d->alertManager);
 }
-
 
 void PsiCon::closeProgram()
 {
@@ -1408,7 +1399,6 @@ void PsiCon::openUri(const QUrl &uri)
     //}
 
     pa->openUri(uri);
-
 
 }
 

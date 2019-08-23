@@ -1,12 +1,12 @@
 #include "pgputil.h"
 
-#include <QtCore>
-#include <QStringList>
-#include <QDialog>
-#include <QMessageBox>
-
 #include "passphrasedlg.h"
 #include "showtextdlg.h"
+
+#include <QDialog>
+#include <QMessageBox>
+#include <QStringList>
+#include <QtCore>
 
 PGPUtil* PGPUtil::instance_ = nullptr;
 
@@ -30,7 +30,6 @@ PGPUtil::~PGPUtil()
     }
     keystores_.clear();
 }
-
 
 PGPUtil& PGPUtil::instance()
 {
@@ -181,7 +180,6 @@ QString PGPUtil::stripHeaderFooter(const QString &str)
     return s;
 }
 
-
 QString PGPUtil::addHeaderFooter(const QString &str, int type)
 {
     QString stype;
@@ -198,7 +196,6 @@ QString PGPUtil::addHeaderFooter(const QString &str, int type)
     s += QString("-----END PGP %1-----\n").arg(stype);
     return s;
 }
-
 
 QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
 {

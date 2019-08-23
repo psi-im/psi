@@ -17,13 +17,12 @@
  *
  */
 
-#include <QList>
-
 #include "actionlist.h"
 
-#include <QHash>
-
 #include "iconaction.h"
+
+#include <QHash>
+#include <QList>
 
 //----------------------------------------------------------------------------
 // ActionList

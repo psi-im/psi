@@ -17,12 +17,13 @@
  *
  */
 
-#include <QString>
-#include <QObject>
-#include <QCoreApplication>
+#include "moodcatalog.h"
 
 #include "mood.h"
-#include "moodcatalog.h"
+
+#include <QCoreApplication>
+#include <QObject>
+#include <QString>
 
 MoodCatalog::Entry::Entry()
 {

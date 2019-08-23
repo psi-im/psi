@@ -25,4 +25,4 @@ private:
     QString os_str_, os_name_str_, os_version_str_;
 };
 
-#endif
+#endif // SYSTEMINFO_H

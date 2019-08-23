@@ -1,6 +1,6 @@
 /*
  * chatview_te.h - subclass of PsiTextView to handle various hotkeys
- * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Rion
+ * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,20 +20,21 @@
 #ifndef CHATVIEW_TE_H
 #define CHATVIEW_TE_H
 
-#include <QWidget>
+#include <QContextMenuEvent>
 #include <QDateTime>
 #include <QPointer>
-#include <QContextMenuEvent>
+#include <QWidget>
 
-#include "psitextview.h"
 #include "chatviewcommon.h"
+#include "psitextview.h"
 #include "xmpp/jid/jid.h"
 
 class ChatEdit;
 class ChatViewBase;
-class MessageView;
 class ITEAudioController;
 class ITEMediaOpener;
+class MessageView;
+
 namespace XMPP {
     class Jid;
 }
@@ -129,4 +130,4 @@ private:
     QAction *actQuote_;
 };
 
-#endif
+#endif // CHATVIEW_TE_H

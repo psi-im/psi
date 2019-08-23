@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,7 +25,6 @@
 
 class MCmdManagerIface;
 
-
 /** This class offers TabCompletion based completion support
   * for cases where only mini commands need to be completed
   */
@@ -45,5 +44,4 @@ protected:
     MCmdManagerIface *mgr_;
 };
 
-
-#endif
+#endif // MCMDCOMPLETION_H

@@ -34,4 +34,4 @@ public:
     virtual AHCommand execute(const AHCommand& c, const Jid&);
 };
 
-#endif
+#endif // AHFILESERVER_H

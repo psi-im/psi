@@ -2,7 +2,7 @@
 /****************************************************************************
 ** $Id: $
 **
-** Copyright (C) 1992-2000 Trolltech AS.  All rights reserved.
+** Copyright (C) 1992-2000  Trolltech AS.  All rights reserved.
 **
 ** This file is part of an example program for Qt.  This example
 ** program may be used, distributed and modified without limitation.
@@ -12,16 +12,13 @@
 #ifndef TICTAC_H
 #define TICTAC_H
 
-
-#include <QPushButton>
-#include <Q3PtrVector>
-//Added by qt3to4:
 #include <Q3MemArray>
+#include <Q3PtrVector>
 #include <QLabel>
+#include <QPushButton>
 
 class QComboBox;
 class QLabel;
-
 
 // --------------------------------------------------------------------------
 // TicTacButton implements a single tic-tac-toe button
@@ -58,7 +55,6 @@ private:
 
 typedef Q3PtrVector<TicTacButton>        TicTacButtons;
 typedef Q3MemArray<int>          TicTacArray;
-
 
 // --------------------------------------------------------------------------
 // TicTacGameBoard implements the tic-tac-toe game board.
@@ -97,7 +93,6 @@ private:
     TicTacButtons *buttons;
 };
 
-
 // --------------------------------------------------------------------------
 // TicTacToe implements the complete game.
 // TicTacToe is a composite widget that contains a TicTacGameBoard and
@@ -128,6 +123,5 @@ private:
     QLabel      *message;
     TicTacGameBoard *board;
 };
-
 
 #endif // TICTAC_H

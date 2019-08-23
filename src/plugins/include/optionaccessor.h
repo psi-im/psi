@@ -1,9 +1,8 @@
 #ifndef OPTIONACCESSOR_H
 #define OPTIONACCESSOR_H
 
-class QString;
-
 class OptionAccessingHost;
+class QString;
 
 class OptionAccessor
 {
@@ -17,4 +16,4 @@ public:
 
 Q_DECLARE_INTERFACE(OptionAccessor, "org.psi-im.OptionAccessor/0.1");
 
-#endif
+#endif // OPTIONACCESSOR_H

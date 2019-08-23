@@ -20,9 +20,9 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <QString>
-#include <QObject>
 #include <QHash>
+#include <QObject>
+#include <QString>
 
 class PsiCon;
 
@@ -55,4 +55,4 @@ private:
     void saveSettings();
 };
 
-#endif
+#endif // MAIN_H

@@ -18,28 +18,29 @@
  */
 
 #include "psipopup.h"
-#include "fancypopup.h"
-#include "fancylabel.h"
-#include "userlist.h"
+
 #include "alerticon.h"
-#include "psievent.h"
-#include "psicon.h"
-#include "textutil.h"
-#include "psiaccount.h"
-#include "psiiconset.h"
-#include "iconlabel.h"
-#include "psioptions.h"
-#include "coloropt.h"
 #include "avatars.h"
+#include "coloropt.h"
+#include "fancylabel.h"
+#include "fancypopup.h"
+#include "iconlabel.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psievent.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "textutil.h"
+#include "userlist.h"
 
 #include <QApplication>
-#include <QLayout>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLayout>
 #include <QList>
 #include <QTextDocument>
+#include <QVBoxLayout>
 #include <QtPlugin>
 
 /**
@@ -174,7 +175,6 @@ void PsiPopup::Private::popupClicked(int button)
 QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap *avatar, const PsiIcon *icon, const QString& text)
 {
     QHBoxLayout *dataBox = new QHBoxLayout();
-
 
     if (avatar && !avatar->isNull()) {
         int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();

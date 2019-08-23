@@ -1,6 +1,6 @@
 /*
  * activitydlg.cpp
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,14 +17,15 @@
  *
  */
 
-#include "xmpp_pubsubitem.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
 #include "activitydlg.h"
+
 #include "activitycatalog.h"
-#include "psiaccount.h"
 #include "pepmanager.h"
+#include "psiaccount.h"
 #include "psiiconset.h"
+#include "xmpp_client.h"
+#include "xmpp_pubsubitem.h"
+#include "xmpp_task.h"
 
 ActivityDlg::ActivityDlg(QList<PsiAccount*> list) : QDialog(nullptr), pa_(list)
 {

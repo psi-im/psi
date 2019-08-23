@@ -20,11 +20,12 @@
 #ifndef HISTORYDLG_H
 #define HISTORYDLG_H
 
-#include "eventdb.h"
-#include "ui_history.h"
 #include "advwidget.h"
+#include "eventdb.h"
 #include "historycontactlistmodel.h"
+#include "ui_history.h"
 
+class DisplayProxy;
 class PsiAccount;
 class PsiContact;
 class UserListItem;
@@ -32,8 +33,6 @@ class UserListItem;
 namespace XMPP {
     class Jid;
 }
-
-class DisplayProxy;
 
 class SearchProxy : public QObject
 {
@@ -211,4 +210,4 @@ private:
     SearchProxy *searchProxy;
 };
 
-#endif
+#endif // HISTORYDLG_H

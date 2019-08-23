@@ -19,4 +19,4 @@ public:
 
 Q_DECLARE_INTERFACE(EventFilter, "org.psi-im.EventFilter/0.1");
 
-#endif
+#endif // EVENTFILTER_H

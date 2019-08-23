@@ -20,9 +20,9 @@
 #ifndef PRIVACYLISTMODEL_H
 #define PRIVACYLISTMODEL_H
 
-#include <QAbstractListModel>
-
 #include "privacylist.h"
+
+#include <QAbstractListModel>
 
 class QObject;
 
@@ -56,4 +56,4 @@ private:
     PrivacyList list_;
 };
 
-#endif
+#endif // PRIVACYLISTMODEL_H

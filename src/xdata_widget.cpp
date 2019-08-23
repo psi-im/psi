@@ -19,30 +19,28 @@
 
 #include "xdata_widget.h"
 
-#include <QLayout>
-#include <QLabel>
-#include <QCheckBox>
-#include <QComboBox>
-#include <QUrl>
-#include <QListWidget>
-#include <QLineEdit>
-#include <QObject>
-#include <QTextEdit>
-#include <QGridLayout>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QSpacerItem>
-
 #include "desktoputil.h"
-#include "xmpp_xdata.h"
+#include "networkaccessmanager.h"
+#include "psicon.h"
 #include "xmpp_client.h"
 #include "xmpp_tasks.h"
-#include "psicon.h"
-#include "networkaccessmanager.h"
+#include "xmpp_xdata.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QGridLayout>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QObject>
+#include <QSpacerItem>
+#include <QTextEdit>
+#include <QUrl>
 
 using namespace XMPP;
-
-
 
 class XDataMediaWidget : public QLabel
 {
@@ -694,7 +692,6 @@ void XDataWidget::setForm(const XMPP::XData& d, bool withInstructions)
     }
     setFields(fields);
 }
-
 
 XData::FieldList XDataWidget::fields() const
 {

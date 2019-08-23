@@ -18,6 +18,7 @@
  */
 
 #include "sxenewedit.h"
+
 #include "sxesession.h"
 
 //----------------------------------------------------------------------------
@@ -87,7 +88,6 @@ SxeNewEdit::SxeNewEdit(const QDomElement &sxeElement, bool remote) : SxeEdit(sxe
 SxeEdit::EditType SxeNewEdit::type() const {
     return SxeEdit::New;
 };
-
 
 QDomElement SxeNewEdit::xml(QDomDocument &doc) const {
     QDomElement edit = doc.createElementNS(SXENS, "new");

@@ -1,6 +1,6 @@
 /*
  * psithememodel.h - just a model for theme views
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,8 +24,8 @@
 #include <QFutureWatcher>
 #include <QStringList>
 
-class Theme;
 class PsiThemeProvider;
+class Theme;
 
 struct ThemeItemInfo
 {
@@ -41,7 +41,6 @@ struct ThemeItemInfo
     bool isValid = false;
     bool isCurrent = false;
 };
-
 
 class PsiThemeModel : public QAbstractListModel
 {
@@ -80,4 +79,4 @@ private:
     QList<ThemeItemInfo> themesInfo;
 };
 
-#endif
+#endif // PSITHEMEMODEL_H

@@ -37,4 +37,4 @@ private:
     Ui::Passphrase ui_;
 };
 
-#endif
+#endif // PASSPHRASEDLG_H

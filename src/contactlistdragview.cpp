@@ -24,13 +24,13 @@
 #include "contactlistitemmenu.h"
 #include "contactlistmodelselection.h"
 #include "contactlistviewdelegate.h"
+#include "debug.h"
 #include "iconaction.h"
+#include "psicontact.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
-#include "debug.h"
 #include "textutil.h"
-#include "psicontact.h"
 
 #include <QAbstractButton>
 #include <QAction>
@@ -39,11 +39,11 @@
 #include <QDropEvent>
 #include <QLineEdit>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
-#include <QMessageBox>
 
 ContactListDragView::ContactListDragView(QWidget* parent)
     : ContactListView(parent)

@@ -19,9 +19,9 @@
 
 #include "groupmenu.h"
 
-#include "userlist.h"
-#include "psicontact.h"
 #include "psiaccount.h"
+#include "psicontact.h"
+#include "userlist.h"
 
 #include <QInputDialog>
 

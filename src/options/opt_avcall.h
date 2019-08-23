@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QButtonGroup;
+class QWidget;
 
 class OptionsTabAvCall : public OptionsTab
 {
@@ -21,4 +21,4 @@ private:
     QWidget *w;
 };
 
-#endif
+#endif // OPT_AVCALL_H

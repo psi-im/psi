@@ -22,8 +22,8 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class PrivacyListItem
 {
@@ -72,4 +72,4 @@ private:
     QString value_;
 };
 
-#endif
+#endif // PRIVACYLISTITEM_H

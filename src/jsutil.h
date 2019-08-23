@@ -17,13 +17,13 @@
  *
  */
 
-#ifndef JSUTIL
-#define JSUTIL
+#ifndef JSUTIL_H
+#define JSUTIL_H
+
+#include <QVariantMap>
 
 class QString;
 class QVariant;
-
-#include <QVariantMap>
 
 class JSUtil
 {
@@ -40,5 +40,4 @@ public:
     }
 };
 
-
-#endif
+#endif // JSUTIL_H

@@ -2,17 +2,17 @@
 
 #ifdef HAVE_X11
 
-#define protected public
-#define private public
-#include <QWidget>
-#undef protected
-#undef private
-
 #include <QCursor>
 #include <QObject>
 #include <QPixmap>
+#include <QWidget>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+#define protected public
+#define private public
+#undef protected
+#undef private
 
 // taken from qt/x11 (doing this sucks sucks sucks sucks sucks)
 void reparent_good(QWidget *that, Qt::WindowFlags f, bool showIt)

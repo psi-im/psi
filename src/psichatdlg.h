@@ -1,17 +1,16 @@
 #ifndef PSICHATDLG_H
 #define PSICHATDLG_H
 
-#include "minicmd.h"
-#include "mcmdsimplesite.h"
-#include "mcmdmanager.h"
+#include "actionlist.h"
+#include "applicationinfo.h"
 #include "chatdlg.h"
 #include "mcmdcompletion.h"
-#include "applicationinfo.h"
-
-#include "ui_chatdlg.h"
+#include "mcmdmanager.h"
+#include "mcmdsimplesite.h"
+#include "minicmd.h"
 #include "typeaheadfind.h"
+#include "ui_chatdlg.h"
 #include "widgets/actionlineedit.h"
-#include "actionlist.h"
 
 class IconAction;
 class PsiContact;
@@ -103,4 +102,4 @@ private:
     static PsiIcon *throbber_icon;
 };
 
-#endif
+#endif // PSICHATDLG_H

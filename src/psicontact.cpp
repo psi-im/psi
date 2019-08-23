@@ -19,27 +19,25 @@
 
 #include "psicontact.h"
 
-#include <QFileDialog>
-#include <QTimer>
-
+#include "alertable.h"
 #include "avatars.h"
 #include "common.h"
+#include "desktoputil.h"
 #include "iconset.h"
 #include "jidutil.h"
 #include "profiles.h"
 #include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
 #include "psicontactmenu.h"
 #include "psiiconset.h"
 #include "psioptions.h"
-#include "userlist.h"
-#include "userlist.h"
-#include "alertable.h"
-#include "avatars.h"
 #include "psiprivacymanager.h"
-#include "desktoputil.h"
+#include "userlist.h"
 #include "vcardfactory.h"
-#include "psicon.h"
-#include "psicontactlist.h"
+
+#include <QFileDialog>
+#include <QTimer>
 
 #define STATUS_TIMER_INTERVAL 5000
 #define ANIM_TIMER_INTERVAL 5000

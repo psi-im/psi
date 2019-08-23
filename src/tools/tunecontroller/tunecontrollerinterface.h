@@ -24,4 +24,4 @@
 #include "tunecontroller.h"
 #include "tunecontrollerplugin.h"
 
-#endif
+#endif // TUNECONTROLLERINTERFACE_H

@@ -17,11 +17,12 @@
  *
  */
 
-#include <QString>
+#include "statuspreset.h"
 
 #include "maybe.h"
-#include "statuspreset.h"
 #include "psioptions.h"
+
+#include <QString>
 
 //-----------------------------------------------------------------------------
 // StatusPreset

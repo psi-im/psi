@@ -27,4 +27,4 @@ enum ActivationType {
     FromXml            // action is triggered by restoring saved events from XML
 };
 
-#endif
+#endif // PSIACTIONS_H

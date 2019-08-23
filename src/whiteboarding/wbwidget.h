@@ -22,17 +22,16 @@
 #define WBWIDGET_H
 
 #include "../sxe/sxesession.h"
-#include "wbscene.h"
 #include "wbitem.h"
 #include "wbnewitem.h"
+#include "wbscene.h"
 
-#include <QSvgRenderer>
-#include <QWidget>
-#include <QGraphicsView>
-#include <QTimer>
-#include <QTime>
 #include <QFileDialog>
-
+#include <QGraphicsView>
+#include <QSvgRenderer>
+#include <QTime>
+#include <QTimer>
+#include <QWidget>
 
 /*! \brief The whiteboard widget.
  *  Visualizes the whiteboard scene and provides different modes for editing and adding new elements.
@@ -152,9 +151,8 @@ private slots:
     // /*! \brief Deletes the WbItem's in the deletion queue. */
     // void flushDeletionQueue();
 
-
     /*! \brief Rerenders the contents of the document.*/
     void rerender();
 };
 
-#endif
+#endif // WBWIDGET_H

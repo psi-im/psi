@@ -21,14 +21,14 @@
 
 #include "abstracttreemodel.h"
 
+#include <QHash>
 #include <QModelIndex>
 #include <QVariant>
-#include <QHash>
 
+class ContactListItem;
 class PsiAccount;
 class PsiContact;
 class PsiContactList;
-class ContactListItem;
 
 class ContactListModel : public AbstractTreeModel
 {

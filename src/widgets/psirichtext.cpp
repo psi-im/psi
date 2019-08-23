@@ -19,29 +19,29 @@
 
 #include "psirichtext.h"
 
-#include <QApplication>
-#include <QTextDocumentFragment>
-#include <QTextCharFormat>
 #include <QAbstractTextDocumentLayout> // for QTextObjectInterface
-#include <QPainter>
-#include <QRegExp>
-#include <QVariant>
+#include <QApplication>
+#include <QCryptographicHash>
+#include <QFileInfo>
 #include <QFont>
 #include <QList>
+#include <QPainter>
 #include <QQueue>
-#include <QTextFrame>
-#include <QTextEdit>
+#include <QRegExp>
+#include <QTextCharFormat>
 #include <QTextCursor>
-#include <QCryptographicHash>
+#include <QTextDocumentFragment>
+#include <QTextEdit>
+#include <QTextFrame>
 #include <QUrl>
-#include <QFileInfo>
+#include <QVariant>
 
 #ifndef WIDGET_PLUGIN
-#include "iconset.h"
-#include "textutil.h"
+#    include "iconset.h"
+#    include "textutil.h"
 #else
-class PsiIcon;
-class Iconset;
+    class Iconset;
+    class PsiIcon;
 #endif
 
 static const int IconFormatType = QTextFormat::UserObject;
@@ -547,5 +547,5 @@ void PsiRichText::restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Psi
 }
 
 #ifndef WIDGET_PLUGIN
-#include "psirichtext.moc"
+#    include "psirichtext.moc"
 #endif

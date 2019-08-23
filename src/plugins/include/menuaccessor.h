@@ -4,8 +4,8 @@
 #include <QList>
 #include <QVariantHash>
 
-class QObject;
 class QAction;
+class QObject;
 class QString;
 
 class MenuAccessor
@@ -22,4 +22,4 @@ public:
 
 Q_DECLARE_INTERFACE(MenuAccessor, "org.psi-im.MenuAccessor/0.1");
 
-#endif
+#endif // MENUACCESSOR_H

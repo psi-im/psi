@@ -20,9 +20,10 @@
  */
 
 #include "invitetogroupchatmenu.h"
-#include "psicontact.h"
+
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontact.h"
 
 InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget* parent)
     : QMenu(parent)

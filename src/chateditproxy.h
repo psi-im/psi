@@ -22,9 +22,9 @@
 
 #include <QWidget>
 
-class QTextEdit;
-class QLayout;
 class ChatEdit;
+class QLayout;
+class QTextEdit;
 
 class ChatEditProxy : public QWidget
 {
@@ -64,4 +64,4 @@ private:
     QLayout* layout_;
 };
 
-#endif
+#endif // CHATEDITPROXY_H

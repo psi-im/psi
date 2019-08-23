@@ -14,5 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(ContactStateAccessor, "org.psi-im.ContactStateAccessor/0.2");
 
-
 #endif // CONTACTSTATEACCESSOR_H

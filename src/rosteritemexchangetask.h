@@ -20,10 +20,10 @@
 #ifndef ROSTERITEMEXCHANGETASK_H
 #define ROSTERITEMEXCHANGETASK_H
 
-#include <QDomElement>
-
-#include "xmpp_task.h"
 #include "xmpp_rosterx.h"
+#include "xmpp_task.h"
+
+#include <QDomElement>
 
 using namespace XMPP;
 
@@ -44,4 +44,4 @@ private:
     bool ignoreNonRoster_;
 };
 
-#endif
+#endif // ROSTERITEMEXCHANGETASK_H

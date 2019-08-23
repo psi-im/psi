@@ -20,15 +20,15 @@
 #ifndef MESSAGEVIEW_H
 #define MESSAGEVIEW_H
 
+#include "xmpp_message.h"
+
 #include <QDateTime>
 #include <QVariantMap>
 
-#include "xmpp_message.h"
-
 #if QT_VERSION < QT_VERSION_CHECK(5,7,0)
-# define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag
+#     define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag
 #else
-# define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
+#     define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
 #endif
 
 class MessageViewReference
@@ -174,4 +174,4 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)
 
-#endif
+#endif // MESSAGEVIEW_H

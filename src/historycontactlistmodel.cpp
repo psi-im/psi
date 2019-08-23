@@ -17,14 +17,13 @@
  *
  */
 
-
 #include "historycontactlistmodel.h"
+
 #include "eventdb.h"
+#include "jidutil.h"
 #include "psiaccount.h"
 #include "psicontact.h"
 #include "psiiconset.h"
-#include "jidutil.h"
-
 
 HistoryContactListModel::HistoryContactListModel(QObject *parent)
     : QAbstractItemModel(parent)

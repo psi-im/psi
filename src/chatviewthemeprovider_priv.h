@@ -21,10 +21,10 @@
 #define CHATVIEWTHEMEPROVIDER_PRIV_H
 
 #ifdef WEBENGINE
-# include <QWebEngineUrlRequestInterceptor>
-# include "webserver.h"
+#    include <QWebEngineUrlRequestInterceptor>
+#    include "webserver.h"
 #else
-#include <QObject> // at least
+#    include <QObject> // at least
 #endif
 
 class PsiCon;

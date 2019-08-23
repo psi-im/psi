@@ -1,6 +1,6 @@
 /*
  * accountmodifydlg.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,18 +20,18 @@
 #ifndef ACCOUNTMODIFYDLG_H
 #define ACCOUNTMODIFYDLG_H
 
+#include "privacylistblockedmodel.h"
+#include "privacylistmodel.h"
+#include "profiles.h"
+#include "ui_accountmodify.h"
+
 #include <QDialog>
 #include <QtCrypto>
 
-#include "privacylistmodel.h"
-#include "privacylistblockedmodel.h"
-#include "ui_accountmodify.h"
-#include "profiles.h"
-
-class PsiAccount;
-class QWidget;
-class PsiCon;
 class ProxyChooser;
+class PsiAccount;
+class PsiCon;
+class QWidget;
 
 class AccountModifyDlg : public QDialog, public Ui::AccountModify
 {
@@ -95,4 +95,4 @@ private:
     bool checkSSL();
 };
 
-#endif
+#endif // ACCOUNTMODIFYDLG_H

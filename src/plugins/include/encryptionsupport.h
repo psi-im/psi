@@ -16,4 +16,4 @@ public:
 
 Q_DECLARE_INTERFACE(EncryptionSupport, "org.psi-im.EncryptionSupport/0.1");
 
-#endif
+#endif // ENCRYPTIONSUPPORT_H

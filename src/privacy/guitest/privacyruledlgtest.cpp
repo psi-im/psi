@@ -1,6 +1,7 @@
 #include "guitest.h"
 #include "guitestmanager.h"
 #include "privacyruledlg.h"
+
 #include <QDebug>
 
 class PrivacyRuleDlgTest : public GUITest

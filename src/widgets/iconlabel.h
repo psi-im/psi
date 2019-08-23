@@ -20,8 +20,8 @@
 #ifndef ICONLABEL_H
 #define ICONLABEL_H
 
-#include <QWidget>
 #include <QLabel>
+#include <QWidget>
 
 class PsiIcon;
 
@@ -46,4 +46,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONLABEL_H

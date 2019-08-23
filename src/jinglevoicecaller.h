@@ -20,30 +20,29 @@
 #ifndef JINGLEVOICECALLER_H
 #define JINGLEVOICECALLER_H
 
-#include <QMap>
-
 #include "voicecaller.h"
 
+#include <QMap>
+
+class JingleCallSlots;
+class JingleClientSlots;
 class PsiAccount;
 
 namespace cricket {
+    class BasicPortAllocator;
+    class Call;
+    class NetworkManager;
+    class PhoneSessionClient;
+    class SessionManager;
+    class SocketAddress;
     class SocketServer;
     class Thread;
-    class NetworkManager;
-    class BasicPortAllocator;
-    class SessionManager;
-    class PhoneSessionClient;
-    class Call;
-    class SocketAddress;
 }
+
 namespace XMPP {
     class Jid;
 }
-class JingleClientSlots;
-class JingleCallSlots;
-
 using namespace XMPP;
-
 
 class JingleVoiceCaller : public VoiceCaller
 {
@@ -86,4 +85,4 @@ private:
     QMap<QString,cricket::Call*> calls_;
 };
 
-#endif
+#endif // JINGLEVOICECALLER_H

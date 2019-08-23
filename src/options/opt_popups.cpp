@@ -17,14 +17,15 @@
  *
  */
 
+#include "opt_popups.h"
+
+#include "popupmanager.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "ui_opt_popups.h"
+
 //#include <QHBoxLayout>
 #include <QRadioButton>
-
-#include "opt_popups.h"
-#include "ui_opt_popups.h"
-#include "psioptions.h"
-#include "psicon.h"
-#include "popupmanager.h"
 
 class OptPopupsUI : public QWidget, public Ui::OptPopups
 {

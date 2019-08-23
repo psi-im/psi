@@ -19,9 +19,9 @@
 #ifndef GEOLOCATIONDLG_H
 #define GEOLOCATIONDLG_H
 
-#include <QDialog>
-
 #include "ui_geolocation.h"
+
+#include <QDialog>
 
 class PsiAccount;
 

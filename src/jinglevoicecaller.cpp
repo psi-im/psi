@@ -17,33 +17,33 @@
  *
  */
 
-#include <QString>
-#include <QDomElement>
-#include <QDebug>
+#include "jinglevoicecaller.h"
 
-#include "talk/xmpp/constants.h"
-#include "talk/base/sigslot.h"
-#include "talk/xmpp/jid.h"
-#include "talk/xmllite/xmlelement.h"
-#include "talk/xmllite/xmlprinter.h"
+#include "im.h"
+#include "psiaccount.h"
 #include "talk/base/network.h"
+#include "talk/base/physicalsocketserver.h"
+#include "talk/base/sigslot.h"
+#include "talk/base/socketaddress.h"
+#include "talk/base/thread.h"
+#include "talk/p2p/base/helpers.h"
 #include "talk/p2p/base/session.h"
 #include "talk/p2p/base/sessionmanager.h"
-#include "talk/p2p/base/helpers.h"
 #include "talk/p2p/client/basicportallocator.h"
 #include "talk/p2p/client/sessionclient.h"
-#include "talk/base/physicalsocketserver.h"
-#include "talk/base/thread.h"
-#include "talk/base/socketaddress.h"
 #include "talk/session/phone/call.h"
 #include "talk/session/phone/phonesessionclient.h"
 #include "talk/session/sessionsendtask.h"
-
-#include "im.h"
+#include "talk/xmllite/xmlelement.h"
+#include "talk/xmllite/xmlprinter.h"
+#include "talk/xmpp/constants.h"
+#include "talk/xmpp/jid.h"
 #include "xmpp.h"
 #include "xmpp_xmlcommon.h"
-#include "jinglevoicecaller.h"
-#include "psiaccount.h"
+
+#include <QDebug>
+#include <QDomElement>
+#include <QString>
 
 // Should change in the future
 #define JINGLE_NS "http://www.google.com/session"
@@ -106,7 +106,6 @@ public:
 private:
     JingleVoiceCaller* voiceCaller_;
 };
-
 
 JingleClientSlots::JingleClientSlots(JingleVoiceCaller *voiceCaller) : voiceCaller_(voiceCaller)
 {
@@ -252,7 +251,6 @@ void JingleVoiceCaller::initialize()
     initialized_ = true;
 }
 
-
 void JingleVoiceCaller::deinitialize()
 {
     if (!initialized_)
@@ -272,7 +270,6 @@ void JingleVoiceCaller::deinitialize()
 
     initialized_ = false;
 }
-
 
 JingleVoiceCaller::~JingleVoiceCaller()
 {

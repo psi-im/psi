@@ -18,10 +18,10 @@
  */
 
 #include "rosteravatarframe.h"
-#include "psioptions.h"
-#include "iconset.h"
-#include "qpainter.h"
 
+#include "iconset.h"
+#include "psioptions.h"
+#include "qpainter.h"
 
 RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
     : QFrame(parent)

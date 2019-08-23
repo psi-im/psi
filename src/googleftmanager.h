@@ -20,30 +20,33 @@
 #ifndef GOOGLEFTMANAGER_H
 #define GOOGLEFTMANAGER_H
 
-#include "talk/base/scoped_ptr.h"
 #include "filetransfer.h"
+#include "talk/base/scoped_ptr.h"
 
-#include <QObject>
 #include <QMap>
+#include <QObject>
+
+class GoogleFTManager;
+class GoogleFileTransferListener;
+class GoogleSessionListener;
 
 namespace cricket {
+    class FileShareSession;
+    class FileShareSessionClient;
     class HttpPortAllocator;
     class SessionManager;
-    class FileShareSessionClient;
-    class FileShareSession;
 }
+
 namespace talk_base {
     class NetworkManager;
     class PhysicalSocketServer;
     class Thread;
 }
+
 namespace XMPP {
-    class Jid;
     class Client;
+    class Jid;
 }
-class GoogleSessionListener;
-class GoogleFileTransferListener;
-class GoogleFTManager;
 
 class GoogleFileTransfer : public QObject/*: public XMPP::AbstractFileTransfer*/
 {
@@ -108,7 +111,6 @@ private:
      talk_base::scoped_ptr<cricket::FileShareSessionClient> file_share_session_client_;
 };
 
-
 #include <QProgressDialog>
 
 class GoogleFileTransferProgressDialog : public QProgressDialog
@@ -139,4 +141,4 @@ private:
     GoogleFileTransfer* ft_;
 };
 
-#endif
+#endif // GOOGLEFTMANAGER_H

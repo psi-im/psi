@@ -17,10 +17,11 @@
  *
  */
 
-#include <QTimer>
+#include "pollingtunecontroller.h"
 
 #include "tune.h"
-#include "pollingtunecontroller.h"
+
+#include <QTimer>
 
 /**
  * \class PollingTuneController
@@ -29,7 +30,6 @@
  * An implementing class only has to implement currentTune(), and the correct
  * signals will be emitted.
  */
-
 
 /**
  * \brief Constructs the controller.

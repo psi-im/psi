@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2008 Remko Troncon
+ * Copyright (C) 2008  Remko Troncon
  * See COPYING file for the detailed license.
  */
-
-#include <QApplication>
-#include <QDir>
-#include <QWidget>
-#include <QPushButton>
-#include <QTcpServer>
-#include <QTcpSocket>
-#include <QVBoxLayout>
-#include <QFile>
 
 #include "AutoUpdater/AutoUpdater.h"
 #include "AutoUpdater/SparkleAutoUpdater.h"
 #include "CocoaUtilities/CocoaInitializer.h"
+
+#include <QApplication>
+#include <QDir>
+#include <QFile>
+#include <QPushButton>
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QVBoxLayout>
+#include <QWidget>
 
 class SimpleHTTPServer : public QObject
 {
@@ -154,7 +154,6 @@ class UpdaterWidget : public QWidget
             appcast += "</rss>";
             return appcast.toUtf8();
         }
-
 
     public slots:
         void doCheckWithNew() {

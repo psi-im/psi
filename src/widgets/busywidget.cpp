@@ -1,6 +1,6 @@
 /*
  * busywidget.cpp - cool animating widget
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *                           Hideaki Omuro
  *
  * This program is free software; you can redistribute it and/or
@@ -20,23 +20,21 @@
 
 #include "busywidget.h"
 
-#include <QTimer>
-#include <QPainter>
-#include <QPixmap>
-
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES
 #endif
 #include <math.h>
 
+#include <QPainter>
+#include <QPixmap>
+#include <QTimer>
+
 /////////////////////////////////////////////////////////////////////////////
 // common defines
 //
-#define FPS          20 // frequency of update
-
-#define SPINRATE     24 // 1024ths of a revolution per frame
+#define FPS           20 // frequency of update
+#define SPINRATE      24 // 1024ths of a revolution per frame
 #define SPINOFFSET    4 // frames each panel is offset by
-
 #define COLORSTOPPED  0xFFFFFF // color when stopped
 #define COLORSPINNING 0xFFFFFF // color when spinning
 #define COLORSHADOW   0x000000 // color of shadow
@@ -44,7 +42,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // derived defines
 //
-#define MSECSPERFRAME    (1000 / FPS)
+#define MSECSPERFRAME (1000 / FPS)
 
 /////////////////////////////////////////////////////////////////////////////
 // declared later

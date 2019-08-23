@@ -16,4 +16,4 @@ public:
 
 Q_DECLARE_INTERFACE(IqNamespaceFilter, "org.psi-im.IqNamespaceFilter/0.1");
 
-#endif
+#endif // IQNAMESPACEFILTER_H

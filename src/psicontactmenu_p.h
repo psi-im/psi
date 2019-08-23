@@ -17,11 +17,10 @@
  *
  */
 
-#include "psicontactmenu.h"
-
-#include "psiaccount.h"
-#include "resourcemenu.h"
 #include "groupmenu.h"
+#include "psiaccount.h"
+#include "psicontactmenu.h"
+#include "resourcemenu.h"
 
 class InviteToGroupChatMenu;
 

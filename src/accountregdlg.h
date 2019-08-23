@@ -1,6 +1,6 @@
 /*
  * accountregdlg.h
- * Copyright (C) 2001, 2002, 2006  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2002, 2006  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,23 +20,23 @@
 #ifndef ACCOUNTREGDLG_H
 #define ACCOUNTREGDLG_H
 
+#include "profiles.h"
+#include "ui_accountreg.h"
+#include "xmpp_jid.h"
+
 #include <QDialog>
 #include <QString>
 
-#include "profiles.h"
-#include "xmpp_jid.h"
-#include "ui_accountreg.h"
-
-class ProxyManager;
+class MiniClient;
 class ProxyChooser;
-class QWidget;
+class ProxyManager;
+class PsiCon;
+class QByteArray;
 class QScrollArea;
 class QStringList;
-class MiniClient;
-class XDataWidget;
+class QWidget;
 class ServerListQuerier;
-class QByteArray;
-class PsiCon;
+class XDataWidget;
 
 namespace XMPP {
     class Form;
@@ -109,4 +109,4 @@ private:
     QByteArray tlsOverrideCert_;
 };
 
-#endif
+#endif // ACCOUNTREGDLG_H

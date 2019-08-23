@@ -1,7 +1,7 @@
 /*
  * gcuserview.h - groupchat roster
- * Copyright (C) 2001, 2002  Justin Karneges
- * 2011 Evgeny Khryukin
+ * Copyright (C) 2001-2002  Justin Karneges
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,18 +21,18 @@
 #ifndef GCUSERVIEW_H
 #define GCUSERVIEW_H
 
+#include "xmpp_status.h"
+
 #include <QAbstractItemModel>
 #include <QTreeView>
 
-#include "xmpp_status.h"
-
-using namespace XMPP;
-
 class GCUserView;
 class PsiAccount;
+
 namespace XMPP {
-class Jid;
+    class Jid;
 }
+using namespace XMPP;
 
 class GCUserModel : public QAbstractItemModel
 {
@@ -57,8 +57,6 @@ public:
     };
 
     GCUserModel(PsiAccount *account, const Jid selfJid, QObject *parent);
-
-
 
     // added
     void removeEntry(const QString &nick);
@@ -119,4 +117,4 @@ private slots:
     void qlv_doubleClicked(const QModelIndex& index);
 };
 
-#endif
+#endif // GCUSERVIEW_H

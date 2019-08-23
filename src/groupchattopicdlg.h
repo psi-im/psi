@@ -3,15 +3,15 @@
 
 #include "languagemanager.h"
 
-#include <QPointer>
 #include <QDialog>
-
-namespace Ui {
-    class GroupchatTopicDlg;
-    class GroupChatTopicAddLangDlg;
-}
+#include <QPointer>
 
 class GCMainDlg;
+
+namespace Ui {
+    class GroupChatTopicAddLangDlg;
+    class GroupchatTopicDlg;
+}
 
 class GroupchatTopicDlg : public QDialog {
     Q_OBJECT

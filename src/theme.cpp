@@ -1,6 +1,6 @@
 /*
  * theme.cpp - base class for any theme
- * Copyright (C) 2010 Justin Karneges, Michail Pishchagin, Rion (Sergey Ilinyh)
+ * Copyright (C) 2010  Justin Karneges, Michail Pishchagin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,26 +17,22 @@
  *
  */
 
-#include "theme.h"
-
-#include <QFileInfo>
-#include <QDir>
-#include <QDirIterator>
-#include <QStringList>
-
 #ifndef NO_Theme_ZIP
 #define Theme_ZIP
 #endif
 
+#include "theme.h"
+
+#include "psithemeprovider.h"
+#include "theme_p.h"
 #ifdef Theme_ZIP
 #    include "zip/zip.h"
 #endif
 
-#include "psithemeprovider.h"
-#include "theme_p.h"
-
-
-
+#include <QDir>
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QStringList>
 
 //--------------------------------------
 // Theme

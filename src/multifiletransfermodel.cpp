@@ -1,6 +1,6 @@
 /*
  * multifiletransfermodel.cpp - model for file transfers
- * Copyright (C) 2019 Sergey Ilinykh
+ * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,10 +18,11 @@
  */
 
 #include "multifiletransfermodel.h"
+
 #include "multifiletransferitem.h"
 
-#include <QElapsedTimer>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QIcon>
 
 // ----------------------------------------------------------------

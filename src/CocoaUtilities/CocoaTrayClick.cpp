@@ -19,11 +19,10 @@
 
 #include "CocoaUtilities/CocoaTrayClick.h"
 
-#include <objc/runtime.h>
-#include <objc/message.h>
 #include <QApplication>
-
 #include <QDebug>
+#include <objc/message.h>
+#include <objc/runtime.h>
 
 //#define DEBUG_OUTPUT
 
@@ -32,7 +31,6 @@ bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
     CocoaTrayClick::instance()->emitTrayClicked();
     return true;
 }
-
 
 CocoaTrayClick * CocoaTrayClick::instance()
 {

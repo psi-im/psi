@@ -18,9 +18,10 @@
  */
 
 #include "ahcexecutetask.h"
+
 #include "ahcformdlg.h"
-#include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 

@@ -1,6 +1,6 @@
 /*
  * webview.cpp - QWebView handling links and copying text
- * Copyright (C) 2010-2016 senu, Rion
+ * Copyright (C) 2010-2016  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,27 +17,28 @@
  *
  */
 
-#include <QFile>
-#include <QMimeData>
+#include "webview.h"
+
+#include "textutil.h"
+#include "urlobject.h"
+#include "xmpp_vcard.h"
+
 #include <QApplication>
-#include <QStyle>
 #include <QDebug>
 #include <QDrag>
+#include <QFile>
+#include <QMimeData>
+#include <QStyle>
 #ifdef WEBENGINE
-#include <QWebEngineSettings>
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-#include <QWebEngineContextMenuData>
-#endif
+#    include <QWebEngineSettings>
+#    if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#      include <QWebEngineContextMenuData>
+#    endif
 #else
-#include <QWebFrame>
-#include <QWebSecurityOrigin>
-#include <QNetworkRequest>
+#    include <QNetworkRequest>
+#    include <QWebFrame>
+#    include <QWebSecurityOrigin>
 #endif
-
-#include "webview.h"
-#include "urlobject.h"
-#include "textutil.h"
-#include "xmpp_vcard.h"
 
 WebView::WebView(QWidget* parent) :
 #ifdef WEBENGINE
@@ -102,14 +103,14 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
     if (isLoading_) return;
 #ifdef WEBENGINE
-#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+# if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
     QWebEngineContextMenuData r = page()->contextMenuData();
-#else
+# else
     struct CMData {
         QUrl linkUrl() { return QUrl(); } // just a stub. TODO invent something
     };
     CMData r;
-#endif
+# endif
 #else
     QWebHitTestResult r = page()->mainFrame()->hitTestContent(event->pos());
 #endif
@@ -213,7 +214,6 @@ void WebView::mouseMoveEvent(QMouseEvent *event)
     drag->setMimeData(mimeData);
     drag->exec(Qt::CopyAction);
 }
-
 
 void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 {

@@ -35,4 +35,4 @@ public:
     virtual const Iconset *iconset() const { return nullptr; }
 };
 
-#endif
+#endif // ICONWIDGET_H

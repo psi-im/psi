@@ -10,4 +10,4 @@ public:
     OptionsTabStatus(QObject *parent);
 };
 
-#endif
+#endif // OPT_STATUS_H

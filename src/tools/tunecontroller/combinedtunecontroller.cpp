@@ -17,15 +17,15 @@
  *
  */
 
-#include "tune.h"
 #include "combinedtunecontroller.h"
+
+#include "tune.h"
 #include "tunecontrollermanager.h"
 
 /**
  * \class CombinedTuneController
  * \brief Combines all supported controllers into one controller.
  */
-
 
 CombinedTuneController::CombinedTuneController()
 {

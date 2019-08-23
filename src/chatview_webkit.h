@@ -17,22 +17,24 @@
  *
  */
 
-#ifndef CHATVIEW_H
-#define CHATVIEW_H
+#ifndef CHATVIEW_WEBKIT_H
+#define CHATVIEW_WEBKIT_H
 
-#include <QWidget>
 #include <QDateTime>
 #include <QFrame>
 #include <QPointer>
-#include "webview.h"
+#include <QWidget>
+
 #include "chatviewcommon.h"
+#include "webview.h"
 
 class ChatEdit;
 class ChatView;
+class ChatViewPrivate;
+class ChatViewTheme;
 class MessageView;
 class PsiAccount;
-class ChatViewTheme;
-class ChatViewPrivate;
+
 namespace XMPP {
     class Jid;
 }
@@ -101,4 +103,4 @@ private:
     QScopedPointer<ChatViewPrivate> d;
 };
 
-#endif
+#endif // CHATVIEW_WEBKIT_H

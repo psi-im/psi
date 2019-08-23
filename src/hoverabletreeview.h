@@ -23,7 +23,6 @@
 #include <QTreeView>
 #include <QStyleOption>
 
-
 typedef QStyleOptionViewItem HoverableStyleOptionViewItemBaseClass;
 
 class HoverableStyleOptionViewItem : public HoverableStyleOptionViewItemBaseClass
@@ -74,4 +73,4 @@ private:
     QPoint mousePosition_;
 };
 
-#endif
+#endif // HOVERABLETREEVIEW_H

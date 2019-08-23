@@ -21,14 +21,15 @@
 #define OPT_THEME_H
 
 #include "optionstab.h"
+
 #include <QPointer>
 
-class QModelIndex;
-class QSortFilterProxyModel;
-class QWidget;
 class PsiThemeModel;
 class PsiThemeProvider;
 class QDialog;
+class QModelIndex;
+class QSortFilterProxyModel;
+class QWidget;
 
 class OptionsTabAppearanceThemes : public MetaOptionsTab
 {
@@ -68,4 +69,4 @@ private:
     QPointer<QDialog> screenshotDialog;
 };
 
-#endif
+#endif // OPT_THEME_H

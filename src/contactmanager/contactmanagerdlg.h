@@ -1,6 +1,6 @@
 /*
  * contactmanagerdlg.h
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,10 +19,12 @@
 
 #ifndef CONTACTMANAGERDLG_H
 #define CONTACTMANAGERDLG_H
+
+#include "contactmanagermodel.h"
 #include "ui_contactmanagerdlg.h"
 
 #include <QDialog>
-#include "contactmanagermodel.h"
+
 class PsiAccount;
 
 namespace Ui {

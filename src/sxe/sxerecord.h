@@ -20,10 +20,11 @@
 #ifndef SXDEMETADATA_H
 #define SXDEMETADATA_H
 
-#include <QObject>
-#include "sxerecordedit.h"
 #include "sxenewedit.h"
+#include "sxerecordedit.h"
 #include "sxeremoveedit.h"
+
+#include <QObject>
 
 /*! \brief A class for storing the record of an individual node.*/
 class SxeRecord : public QObject {
@@ -131,4 +132,4 @@ class SxeRecord : public QObject {
         QString data_, lastData_;
 };
 
-#endif
+#endif // SXDEMETADATA_H

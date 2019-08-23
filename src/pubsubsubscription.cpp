@@ -17,12 +17,11 @@
  *
  */
 
+#include "pubsubsubscription.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QString>
-
-#include "pubsubsubscription.h"
-
 
 PubSubSubscription::PubSubSubscription()
 {

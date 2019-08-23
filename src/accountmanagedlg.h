@@ -22,15 +22,14 @@
 
 #include <QTreeWidget>
 
-namespace XMPP
-{
-    class Jid;
-    class Client;
-}
-
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 class QTreeWidgetItem;
+
+namespace XMPP {
+    class Client;
+    class Jid;
+}
 
 class AccountManageTree : public QTreeWidget
 {
@@ -70,4 +69,4 @@ private:
     QAction* removeAction_;
 };
 
-#endif
+#endif // ACCOUNTMANAGEDLG_H

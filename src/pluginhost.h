@@ -1,46 +1,45 @@
 /*
- * (c) 2006 Kevin Smith
- * (c) 2008 Maciej Niedzielski
+ * Copyright (C) 2006  Kevin Smith
+ * Copyright (C) 2008  Maciej Niedzielski
  */
 
 #ifndef PLUGINHOST_H
 #define PLUGINHOST_H
 
 #include <QDomElement>
-#include <QVariant>
-#include <QRegExp>
 #include <QMultiMap>
 #include <QPointer>
+#include <QRegExp>
 #include <QTextEdit>
+#include <QVariant>
 
+#include "accountinfoaccessinghost.h"
+#include "activetabaccessinghost.h"
 #include "applicationinfo.h"
-#include "userlist.h"
+#include "applicationinfoaccessinghost.h"
+#include "contactinfoaccessinghost.h"
+#include "contactstateaccessinghost.h"
+#include "encryptionsupport.h"
+#include "eventcreatinghost.h"
+#include "iconfactoryaccessinghost.h"
 #include "iconset.h"
-#include "stanzasendinghost.h"
 #include "iqfilteringhost.h"
 #include "optionaccessinghost.h"
-#include "shortcutaccessinghost.h"
-#include "iconfactoryaccessinghost.h"
-#include "activetabaccessinghost.h"
-#include "applicationinfoaccessinghost.h"
-#include "accountinfoaccessinghost.h"
-#include "tabdlg.h"
-#include "tabbablewidget.h"
-#include "popupaccessinghost.h"
-#include "contactstateaccessinghost.h"
-#include "psiaccountcontrollinghost.h"
-#include "eventcreatinghost.h"
-#include "contactinfoaccessinghost.h"
-#include "soundaccessinghost.h"
-#include "encryptionsupport.h"
 #include "pluginaccessinghost.h"
+#include "popupaccessinghost.h"
+#include "psiaccountcontrollinghost.h"
+#include "shortcutaccessinghost.h"
+#include "soundaccessinghost.h"
+#include "stanzasendinghost.h"
+#include "tabbablewidget.h"
+#include "tabdlg.h"
+#include "userlist.h"
 #include "webkitaccessinghost.h"
 
-class QWidget;
-class QPluginLoader;
-
-class PluginManager;
 class IqNamespaceFilter;
+class PluginManager;
+class QPluginLoader;
+class QWidget;
 
 class PluginHost: public QObject,
         public StanzaSendingHost,
@@ -290,5 +289,4 @@ private:
     PluginHost& operator=(const PluginHost&);
 };
 
-
-#endif
+#endif // PLUGINHOST_H

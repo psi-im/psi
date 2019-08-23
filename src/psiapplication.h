@@ -22,7 +22,7 @@
 
 #include <QApplication>
 #ifdef Q_OS_MAC
-#include <Carbon/Carbon.h>
+#    include <Carbon/Carbon.h>
 #endif
 
 class QEvent;
@@ -45,4 +45,4 @@ private:
     void init(bool GUIenabled);
 };
 
-#endif
+#endif // PSIAPPLICATION_H

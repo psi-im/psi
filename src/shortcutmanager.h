@@ -1,12 +1,12 @@
 #ifndef SHORTCUTMANAGER_H
 #define SHORTCUTMANAGER_H
 
-#include <QObject>
 #include <QList>
+#include <QObject>
 
+class PsiOptions;
 class QKeySequence;
 class QString;
-class PsiOptions;
 
 class ShortcutManager : public QObject
 {
@@ -24,4 +24,4 @@ private:
     static ShortcutManager* instance_;
 };
 
-#endif
+#endif // SHORTCUTMANAGER_H

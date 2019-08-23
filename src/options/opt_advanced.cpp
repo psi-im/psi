@@ -1,15 +1,15 @@
 #include "opt_advanced.h"
+
 #include "common.h"
 #include "iconwidget.h"
+#include "psioptions.h"
+#include "ui_opt_advanced.h"
 
-#include <QWhatsThis>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QButtonGroup>
 #include <QRadioButton>
-
-#include "ui_opt_advanced.h"
-#include "psioptions.h"
+#include <QWhatsThis>
 
 class OptAdvancedUI : public QWidget, public Ui::OptAdvanced
 {
@@ -42,7 +42,6 @@ QWidget *OptionsTabAdvanced::widget()
 #ifdef HAVE_X11    // auto-copy is a built-in feature on linux, we don't want user to use our own one
     d->ck_autocopy->hide();
 #endif
-
 
     d->ck_messageevents->setWhatsThis(
         tr("Enables the sending and requesting of message events such as "

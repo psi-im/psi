@@ -1,12 +1,12 @@
 #include "optionstreewriter.h"
 
-#include <QSize>
-#include <QRect>
-#include <QKeySequence>
-#include <QBuffer>
-
 #include "optionstree.h"
 #include "varianttree.h"
+
+#include <QBuffer>
+#include <QKeySequence>
+#include <QRect>
+#include <QSize>
 
 OptionsTreeWriter::OptionsTreeWriter(const OptionsTree* options)
     : options_(options)

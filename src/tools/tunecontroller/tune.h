@@ -81,4 +81,4 @@ private:
     unsigned int time_;
 };
 
-#endif
+#endif // TUNE_H

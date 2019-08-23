@@ -61,4 +61,4 @@ private:
     friend class PsiMain;
 };
 
-#endif
+#endif // ACTIVEPSIPROFILES_H

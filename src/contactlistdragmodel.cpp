@@ -19,17 +19,17 @@
 
 #include "contactlistdragmodel.h"
 
-#include <QtAlgorithms>
-#include <QTimer>
-
-#include "psioptions.h"
-#include "psiaccount.h"
-#include "psicontactlist.h"
-#include "psicontact.h"
 #include "common.h"
-#include "contactlistmodelselection.h"
 #include "contactlistitem.h"
+#include "contactlistmodelselection.h"
 #include "debug.h"
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "psicontactlist.h"
+#include "psioptions.h"
+
+#include <QTimer>
+#include <QtAlgorithms>
 
 //----------------------------------------------------------------------------
 // ContactListModelOperationList
@@ -297,7 +297,6 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
             psiContact->setGroups(groups);
         }
     }
-
 
     return true;
 }

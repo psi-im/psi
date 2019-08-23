@@ -25,10 +25,9 @@
 #ifndef PSIPLUGIN_H
 #define PSIPLUGIN_H
 
-class QWidget;
-
 #include <QtCore>
 
+class QWidget;
 
 /**
  * \brief An abstract class for implementing a plugin
@@ -117,4 +116,4 @@ public:
 
 Q_DECLARE_INTERFACE(PsiPlugin, "org.psi-im.PsiPlugin/0.4");
 
-#endif
+#endif // PSIPLUGIN_H

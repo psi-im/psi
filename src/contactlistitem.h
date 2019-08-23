@@ -22,15 +22,15 @@
 #include "abstracttreeitem.h"
 
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QVariant>
-#include <QPointer>
 
-class PsiContact;
-class PsiAccount;
-class ContactListModel;
 class ContactListItem;
 class ContactListItemMenu;
+class ContactListModel;
+class PsiAccount;
+class PsiContact;
 
 typedef QList<ContactListItem*> ContactListItemList;
 

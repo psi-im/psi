@@ -17,12 +17,13 @@
  *
  */
 
+#include "ahcommand.h"
+
+#include "xmpp_xdata.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QSharedData>
-
-#include "ahcommand.h"
-#include "xmpp_xdata.h"
 
 #define AHC_NS "http://jabber.org/protocol/commands"
 #define XMPPSTANZA_NS "urn:ietf:params:xml:ns:xmpp-stanzas"
@@ -197,7 +198,6 @@ QDomElement AHCommand::toXml(QDomDocument* doc, bool submit) const
     return command;
 }
 
-
 AHCommand AHCommand::formReply(const AHCommand& c, const XData& data)
 {
     AHCommand r(c.node(), data, c.sessionId());
@@ -305,7 +305,6 @@ AHCommand::Status AHCommand::string2status(const QString& s)
     else
         return NoStatus;
 }
-
 
 // --------------------------------------------------------------------------
 // AHCError: The class representing an Ad-Hoc command error

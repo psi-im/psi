@@ -1,6 +1,6 @@
 /*
  * groupchatdlg.cpp - dialogs for handling groupchat
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,98 +22,95 @@
 
 #include "groupchatdlg.h"
 
-#include <QLabel>
-#include <QLayout>
-#include <QPushButton>
-#include <QToolBar>
-#include <QMessageBox>
-#include <QSplitter>
-#include <QTimer>
-#include <QToolButton>
-#include <QInputDialog>
-#include <QPointer>
-#include <QAction>
-#include <QMimeData>
-#include <QCursor>
-#include <QCloseEvent>
-#include <QEvent>
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <QHBoxLayout>
-#include <QFrame>
-#include <QList>
-#include <QVBoxLayout>
-#include <QContextMenuEvent>
-#include <QTextCursor>
-#include <QTextDocument> // for TextUtil::escape()
-#include <QToolTip>
-#include <QScrollBar>
-#include <QCheckBox>
-#include <QDialogButtonBox>
-#include <QFormLayout>
-#include <QClipboard>
-#include <functional>
-
-#include "psiactionlist.h"
-#include "psicon.h"
-#include "psiaccount.h"
-#include "userlist.h"
-#include "mucconfigdlg.h"
-#include "textutil.h"
-#include "statusdlg.h"
-#include "xmpp_message.h"
-#include "psiiconset.h"
-#include "stretchwidget.h"
-#include "mucmanager.h"
-#include "busywidget.h"
-#include "msgmle.h"
-#include "messageview.h"
-#include "iconwidget.h"
-#include "iconselect.h"
-#include "xmpp_tasks.h"
-#include "xmpp_caps.h"
-#include "iconaction.h"
-#include "pixmapratiolabel.h"
-#include "psitooltip.h"
-#include "avatars.h"
-#include "psioptions.h"
-#include "coloropt.h"
-#include "urlobject.h"
-#include "shortcutmanager.h"
-#include "psicontactlist.h"
 #include "accountlabel.h"
-#include "gcuserview.h"
+#include "avatars.h"
+#include "avcall/avcall.h"
 #include "bookmarkmanager.h"
-#include "mucreasonseditor.h"
-#include "mcmdmanager.h"
-#include "lastactivitytask.h"
-#ifdef PSI_PLUGINS
-#include "pluginmanager.h"
-#endif
-#include "psirichtext.h"
-#include "mcmdsimplesite.h"
-#include "tabcompletion.h"
-#include "vcardfactory.h"
-#include "languagemanager.h"
+#include "busywidget.h"
+#include "coloropt.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
-
-#ifdef Q_OS_WIN
-#include <windows.h>
+#include "gcuserview.h"
+#include "groupchattopicdlg.h"
+#include "iconaction.h"
+#include "iconselect.h"
+#include "iconwidget.h"
+#include "languagemanager.h"
+#include "lastactivitytask.h"
+#include "mcmdmanager.h"
+#include "mcmdsimplesite.h"
+#include "messageview.h"
+#include "msgmle.h"
+#include "mucconfigdlg.h"
+#include "mucmanager.h"
+#include "mucreasonseditor.h"
+#include "pixmapratiolabel.h"
+#ifdef PSI_PLUGINS
+#    include "pluginmanager.h"
 #endif
-
 #include "popupmanager.h"
+#include "psiaccount.h"
+#include "psiactionlist.h"
+#include "psicon.h"
+#include "psicontactlist.h"
 #include "psievent.h"
-#include "avcall/avcall.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psirichtext.h"
+#include "psitooltip.h"
+#include "shortcutmanager.h"
+#include "statusdlg.h"
+#include "stretchwidget.h"
+#include "tabcompletion.h"
+#include "textutil.h"
+#include "typeaheadfind.h"
+#include "urlobject.h"
+#include "userlist.h"
+#include "vcardfactory.h"
+#include "xmpp_caps.h"
+#include "xmpp_message.h"
+#include "xmpp_tasks.h"
+
+#include <QAction>
+#include <QCheckBox>
+#include <QClipboard>
+#include <QCloseEvent>
+#include <QContextMenuEvent>
+#include <QCursor>
+#include <QDialogButtonBox>
+#include <QEvent>
+#include <QFormLayout>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QList>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QPointer>
+#include <QPushButton>
+#include <QResizeEvent>
+#include <QScrollBar>
+#include <QSplitter>
+#include <QTextCursor>
+#include <QTextDocument> // for TextUtil::escape()
+#include <QTimer>
+#include <QToolBar>
+#include <QToolButton>
+#include <QToolTip>
+#include <QVBoxLayout>
+#include <functional>
+#ifdef Q_OS_WIN
+#    include <windows.h>
+#endif
 
 #define MCMDMUC        "https://psi-im.org/ids/mcmd#mucmain"
 #define MCMDMUCNICK    "https://psi-im.org/ids/mcmd#mucnick"
 
 static const QString geometryOption = "options.ui.muc.size";
 
-
-#include "groupchattopicdlg.h"
-#include "typeaheadfind.h"
 //----------------------------------------------------------------------------
 // StatusPingTask
 //----------------------------------------------------------------------------
@@ -126,7 +123,6 @@ public:
     StatusPingTask(const Jid& myjid, Task* parent) : Task(parent), myjid_(myjid)
     {
     }
-
 
     void onGo() {
         iq_ = createIQ(doc(), "get", myjid_.full(), id());
@@ -191,7 +187,6 @@ private:
     QTimer timeout;
 };
 
-
 //----------------------------------------------------------------------------
 // GCMainDlg
 //----------------------------------------------------------------------------
@@ -215,7 +210,6 @@ public:
     ~Private() {
         delete actions;
     }
-
 
     GCMainDlg *dlg;
     int state;
@@ -1334,7 +1328,6 @@ void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, 
     }
 }
 
-
 void GCMainDlg::mle_returnPressed()
 {
     d->tabCompletion.reset();
@@ -1651,7 +1644,6 @@ void GCMainDlg::dropEvent(QDropEvent *e)
     }
 }
 
-
 void GCMainDlg::pa_updatedActivity()
 {
     if(!account()->loggedIn()) {
@@ -1686,7 +1678,6 @@ void GCMainDlg::error(int, const QString &str)
 
     d->state = Private::Idle;
 }
-
 
 void GCMainDlg::mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
             const QString &youSimple, const QString &youBy, const QString &someoneSimple,
@@ -2044,7 +2035,6 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         }
         MessageView tv = MessageView::subjectMessage(topic, sysMsg);
         tv.setDateTime(m.timeStamp());
-
 
         ui_.le_topic->setText(topic.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
         ui_.le_topic->setCursorPosition(0);
@@ -2501,7 +2491,6 @@ void GCMainDlg::chatEditCreated()
     d->mCmdSite.setPrompt(ui_.mini_prompt);
     d->tabCompletion.setTextEdit(d->mle());
 
-
     ui_.log->setDialog(this);
     ui_.mle->chatEdit()->setDialog(this);
 
@@ -2527,8 +2516,6 @@ void GCMainDlg::setStatusTabIcon(int status)
 {
     setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon());
 }
-
-
 
 void GCMainDlg::resizeEvent(QResizeEvent *e)
 {

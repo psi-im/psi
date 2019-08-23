@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QButtonGroup;
+class QWidget;
 
 class OptionsTabRosterMuc : public OptionsTab
 {
@@ -24,4 +24,4 @@ private:
     QWidget *w;
 };
 
-#endif
+#endif // OPT_ROSTER_MUC_H

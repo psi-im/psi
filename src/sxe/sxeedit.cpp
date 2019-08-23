@@ -18,6 +18,7 @@
  */
 
 #include "sxeedit.h"
+
 #include "sxerecordedit.h"
 
 //----------------------------------------------------------------------------
@@ -54,7 +55,6 @@ void SxeEdit::nullify()
 {
     null_ = true;
 }
-
 
 bool SxeEdit::overridenBy(const SxeEdit &e) const
 {

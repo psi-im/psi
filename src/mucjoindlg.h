@@ -20,15 +20,14 @@
 #ifndef MUCJOINDLG_H
 #define MUCJOINDLG_H
 
-#include <QDialog>
-
+#include "psiaccount.h"
 #include "ui_mucjoin.h"
+#include "xmpp_jid.h"
+
+#include <QDialog>
 
 class PsiCon;
 class QString;
-
-#include "xmpp_jid.h"
-#include "psiaccount.h"
 
 class MUCJoinDlg : public QDialog
 {
@@ -78,4 +77,4 @@ private:
     void updateFavorites();
 };
 
-#endif
+#endif // MUCJOINDLG_H

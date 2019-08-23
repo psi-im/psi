@@ -17,13 +17,13 @@
  *
  */
 
+#include "privacylistitem.h"
+
+#include "xmpp_jid.h"
+#include "xmpp_xmlcommon.h"
+
 #include <QDomElement>
 #include <QObject>
-
-#include "privacylistitem.h"
-#include "xmpp_xmlcommon.h"
-#include "xmpp_jid.h"
-
 
 PrivacyListItem::PrivacyListItem()
     : type_(Type::FallthroughType)

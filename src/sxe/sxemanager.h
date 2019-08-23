@@ -21,7 +21,6 @@
 #define SXDEMANAGER_H
 
 #include "QTimer"
-
 #include "sxesession.h"
 
 namespace XMPP {
@@ -29,7 +28,6 @@ namespace XMPP {
     class Jid;
     class Message;
 }
-
 using namespace XMPP;
 
 /*! \brief The manager for SXE sessions and negotiations.
@@ -149,7 +147,6 @@ private:
     /*! \brief Remove the negotiation object of \a session with \a jid.*/
     void removeNegotiation(SxeNegotiation* negotiation);
 
-
     /*! \brief A pointer to the Client to listen to.*/
     XMPP::Client* client_;
     /*! \brief A pointer to the PsiAccount to listen to.*/
@@ -188,4 +185,4 @@ private slots:
     void negotiationTimeout();
 };
 
-#endif
+#endif // SXDEMANAGER_H

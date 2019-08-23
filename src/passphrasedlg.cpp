@@ -17,10 +17,10 @@
  *
  */
 
+#include "passphrasedlg.h"
+
 #include <QLineEdit>
 #include <QPushButton>
-
-#include "passphrasedlg.h"
 
 PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
 {

@@ -20,20 +20,20 @@
 #ifndef VCARDFACTORY_H
 #define VCARDFACTORY_H
 
-#include <QObject>
-#include <QMap>
 #include <QHash>
+#include <QMap>
+#include <QObject>
 #include <QStringList>
 
+class PsiAccount;
+
 namespace XMPP {
-    class VCard;
+    class JT_VCard;
     class Jid;
     class Task;
-    class JT_VCard;
+    class VCard;
 }
 using namespace XMPP;
-
-class PsiAccount;
 
 class VCardFactory : public QObject
 {
@@ -75,4 +75,4 @@ private:
     void saveVCard(const Jid &, const VCard &, bool notifyPhoto);
 };
 
-#endif
+#endif // VCARDFACTORY_H

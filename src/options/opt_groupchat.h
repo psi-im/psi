@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-class QWidget;
 class QListWidgetItem;
+class QWidget;
 
 class OptionsTabGroupchat : public OptionsTab
 {
@@ -34,4 +34,4 @@ private:
     QWidget *w = nullptr, *dlg = nullptr;
 };
 
-#endif
+#endif // OPT_GROUPCHAT_H

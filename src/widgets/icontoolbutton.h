@@ -20,11 +20,11 @@
 #ifndef ICONTOOLBUTTON_H
 #define ICONTOOLBUTTON_H
 
-#include <QToolButton>
 #include <QPixmap>
+#include <QToolButton>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
 class IconToolButton : public QToolButton
 {
@@ -55,4 +55,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONTOOLBUTTON_H

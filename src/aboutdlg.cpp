@@ -17,13 +17,13 @@
  *
  */
 
-#include <QTextStream>
-#include <QFile>
-#include <QtCrypto>
-
-#include "applicationinfo.h"
 #include "aboutdlg.h"
+#include "applicationinfo.h"
 #include "iconset.h"
+
+#include <QFile>
+#include <QTextStream>
+#include <QtCrypto>
 
 AboutDlg::AboutDlg(QWidget* parent)
     : QDialog(parent)
@@ -183,7 +183,6 @@ QString AboutDlg::loadText( const QString & fileName )
 
     return text;
 }
-
 
 QString AboutDlg::details( QString name, QString email, QString jabber, QString www, QString desc )
 {

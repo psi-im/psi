@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,8 +26,8 @@
 #include <QPalette>
 
 class QLabel;
-class QTextEdit;
 class QString;
+class QTextEdit;
 
 class MCmdSimpleSite : public MCmdUiSiteIface {
 public:
@@ -47,4 +47,4 @@ protected:
     QPalette palette, cmdPalette;
 };
 
-#endif
+#endif // MINICMDSIMPLESITE_H

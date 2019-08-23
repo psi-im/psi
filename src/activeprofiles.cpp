@@ -19,9 +19,10 @@
  */
 
 #include "activeprofiles.h"
-#include <QMessageBox>
+
 #include "profiles.h"
 
+#include <QMessageBox>
 
 ActiveProfiles* ActiveProfiles::instance_ = nullptr;
 

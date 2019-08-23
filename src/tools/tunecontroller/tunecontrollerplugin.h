@@ -20,8 +20,8 @@
 #ifndef TUNECONTROLLERPLUGIN_H
 #define TUNECONTROLLERPLUGIN_H
 
-#include <QString>
 #include <QPluginLoader>
+#include <QString>
 
 class TuneController;
 
@@ -46,5 +46,4 @@ public:
 
 Q_DECLARE_INTERFACE(TuneControllerPlugin, "be.el-tramo.TuneController/0.0-20060129");
 
-
-#endif
+#endif // TUNECONTROLLERPLUGIN_H

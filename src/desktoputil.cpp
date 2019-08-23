@@ -20,17 +20,18 @@
 #include "desktoputil.h"
 
 #include <QDesktopServices>
-#include <QUrl>
-#include <QSettings>
 #include <QFileInfo>
 #include <QProcess>
-#include <QSysInfo>
 #include <QSet>
-
+#include <QSettings>
+#include <QSysInfo>
+#include <QUrl>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <shellapi.h>
+#endif
 
+#ifdef Q_OS_WIN
 QString defaultBrowser()
 {
     QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);

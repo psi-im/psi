@@ -17,10 +17,11 @@
  *
  */
 
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
-#include "xmpp_xmlcommon.h"
 #include "lastactivitytask.h"
+
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 

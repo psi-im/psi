@@ -51,4 +51,4 @@ private slots:
     void filterParametersChanged();
 };
 
-#endif
+#endif // CONTACTLISTPROXYMODEL_H

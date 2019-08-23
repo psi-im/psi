@@ -18,11 +18,11 @@
  */
 #include "bosskey.h"
 
-#include <QApplication>
-
-#include "psioptions.h"
 #include "mainwin.h"
+#include "psioptions.h"
 #include "psitrayicon.h"
+
+#include <QApplication>
 
 BossKey::BossKey(QObject* p)
     : QObject(p)

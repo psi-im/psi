@@ -1,6 +1,6 @@
 /*
  * tabbable.h
- * Copyright (C) 2007 Kevin Smith
+ * Copyright (C) 2007  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +17,24 @@
  *
  */
 
-#ifndef TABBABLE_H
-#define TABBABLE_H
+#ifndef TABBABLEWIDGET_H
+#define TABBABLEWIDGET_H
+
+#include "advwidget.h"
+#include "im.h" // ChatState
 
 #include <QIcon>
 #include <QTimer>
-#include "advwidget.h"
-#include "im.h" // ChatState
+
+class PsiAccount;
+class TabDlg;
+class TabManager;
 
 namespace XMPP {
     class Jid;
     class Message;
 }
 using namespace XMPP;
-
-class PsiAccount;
-class TabManager;
-class TabDlg;
 
 class TabbableWidget : public AdvancedWidget<QWidget>
 {
@@ -98,4 +99,4 @@ private:
     QIcon icon_;
 };
 
-#endif
+#endif // TABBABLEWIDGET_H

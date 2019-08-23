@@ -1,6 +1,6 @@
 /*
  * accountadddlg.h - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,14 +20,13 @@
 #ifndef ACCOUNTADDDLG_H
 #define ACCOUNTADDDLG_H
 
-#include <QDialog>
-
 #include "ui_accountadd.h"
 
-class PsiCon;
-class QWidget;
-class QString;
+#include <QDialog>
 
+class PsiCon;
+class QString;
+class QWidget;
 
 class AccountAddDlg : public QDialog, public Ui::AccountAdd
 {
@@ -45,4 +44,4 @@ private:
     QString createNewAccountName(QString def);
 };
 
-#endif
+#endif // ACCOUNTADDDLG_H

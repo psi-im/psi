@@ -19,23 +19,22 @@
 
 #include "iconselect.h"
 
+#include "iconset.h"
+#include "psitooltip.h"
+
+#include <QAbstractButton>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QStyle>
 #include <QStyleOption>
-#include <QLayout>
-#include <QAbstractButton>
-#include <QLabel>
 #include <QTextCodec>
-#include <QEvent>
-#include <QMouseEvent>
 #include <QWidgetAction>
-
 #include <math.h>
-
-#include "iconset.h"
-#include "psitooltip.h"
 
 //----------------------------------------------------------------------------
 // IconSelectButton

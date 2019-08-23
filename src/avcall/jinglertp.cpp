@@ -18,14 +18,15 @@
 
 #include "jinglertp.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <QtCrypto>
 #include "iris/netnames.h"
 #include "iris/turnclient.h"
 #include "iris/udpportreserver.h"
-#include "xmpp_client.h"
 #include "jingle.h"
+#include "xmpp_client.h"
+
+#include <QtCrypto>
+#include <stdio.h>
+#include <stdlib.h>
 
 // TODO: reject offers that don't contain at least one of audio or video
 // TODO: support candidate negotiations over the JingleRtpChannel thread

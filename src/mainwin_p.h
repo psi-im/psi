@@ -19,16 +19,16 @@
 
 #ifndef MAINWIN_P_H
 
+#include "iconaction.h"
+#include "psicon.h"
+
+#include <QAction>
+#include <QLabel>
+#include <QLayout>
+#include <QMenu>
+#include <QMouseEvent>
 #include <QPushButton>
 #include <QToolButton>
-#include <QMenu>
-#include <QLayout>
-#include <QLabel>
-#include <QAction>
-#include <QMouseEvent>
-
-#include "psicon.h"
-#include "iconaction.h"
 
 class QMenu;
 
@@ -159,5 +159,4 @@ private:
     QList<PsiAccount*> accounts() const;
 };
 
-#endif
-
+#endif // MAINWIN_P_H

@@ -10,7 +10,6 @@ SOURCES += \
 FORMS += \
     $$PWD/ui_options.ui
 
-
 # additional tabs
 HEADERS += \
     $$PWD/opt_application.h \

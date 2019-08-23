@@ -3,8 +3,7 @@
 
 class QString;
 
-namespace TextUtil
-{
+namespace TextUtil {
     QString escape(const QString &plain);
     QString unescape(const QString& escaped);
 
@@ -19,6 +18,6 @@ namespace TextUtil
 
     QString prepareMessageText(const QString& text, bool isEmote=false, bool isHtml=false);
     QString sizeUnit(qlonglong n, qlonglong *div = nullptr);
-}
+}; // namespace TextUtil
 
-#endif
+#endif // TEXTUTIL_H

@@ -18,6 +18,7 @@
  */
 
 #include "privacyruledlg.h"
+
 #include "privacylistitem.h"
 
 PrivacyRuleDlg::PrivacyRuleDlg()

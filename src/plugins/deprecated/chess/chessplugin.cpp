@@ -22,11 +22,11 @@
  *
  */
 
-#include <QtCore>
-#include <QDebug>
-
-#include "psiplugin.h"
 #include "gameboard.h"
+#include "psiplugin.h"
+
+#include <QDebug>
+#include <QtCore>
 
 extern QColor    cw, cb;
 
@@ -47,12 +47,9 @@ private slots:
     void sendData(const QString& data);
     void receiveData(const QString& data);
 
-
 private:
     void startGame(const QString& jid, bool meWhite, const PsiAccount* account);
     void stopGame();
-
-
 
     GameBoard* game_;
     QString playingWith_;
@@ -85,7 +82,6 @@ bool ChessPlugin::processEvent( const PsiAccount* account, QDomNode &event )
 {
     return true;
 }
-
 
 void ChessPlugin::message( const PsiAccount* account, const QString& message, const QString& fromJid, const QString& fromDisplay)
 {
@@ -213,6 +209,5 @@ void ChessPlugin::receiveData(const QString& data)
     //game->theirMove(space);
     game_->receiveData(data);
 }
-
 
 #include "chessplugin.moc"

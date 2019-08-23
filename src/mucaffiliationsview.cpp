@@ -17,16 +17,16 @@
  *
  */
 
-#include <QHeaderView>
+#include "mucaffiliationsview.h"
 
 #include "xmpp_jid.h"
-#include "mucaffiliationsview.h"
+
+#include <QHeaderView>
 
 MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
 {
     setRootIsDecorated(false);
     header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    setItemsExpandable(false);
     setItemsExpandable(false);
     setDragEnabled(true);
     setAcceptDrops(true);

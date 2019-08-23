@@ -19,20 +19,20 @@
 
 #include "contactlistaccountmenu.h"
 
-#include <QPointer>
-
-#include "pluginmanager.h"
-#include "psiiconset.h"
-#include "psiaccount.h"
 #include "accountstatusmenu.h"
-#include "xmpp_serverinfomanager.h"
 #include "bookmarkmanager.h"
-#include "psioptions.h"
-#include "iconaction.h"
-#include "privacy/privacydlg.h"
 #include "common.h"
 #include "contactmanager/contactmanagerdlg.h"
+#include "iconaction.h"
 #include "mucjoindlg.h"
+#include "pluginmanager.h"
+#include "privacy/privacydlg.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "xmpp_serverinfomanager.h"
+
+#include <QPointer>
 
 class ContactListAccountMenu::Private : public QObject
 {

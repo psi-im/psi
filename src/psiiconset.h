@@ -20,15 +20,16 @@
 #ifndef PSIICONSET_H
 #define PSIICONSET_H
 
-#include <QMap>
-
 #include "iconset.h"
 #include "psievent.h"
 
+#include <QMap>
+
 class UserListItem;
+
 namespace XMPP {
-    class Status;
     class Jid;
+    class Status;
 }
 
 class PsiIconset : public QObject
@@ -111,4 +112,4 @@ private:
 
 QString status2name(int s);
 
-#endif
+#endif // PSIICONSET_H

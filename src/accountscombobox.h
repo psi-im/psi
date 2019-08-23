@@ -22,8 +22,8 @@
 
 #include <QComboBox>
 
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 
 class AccountsComboBox : public QComboBox
 {
@@ -56,4 +56,4 @@ private:
     QList<PsiAccount*> accounts() const;
 };
 
-#endif
+#endif // ACCOUNTSCOMBOBOX_H

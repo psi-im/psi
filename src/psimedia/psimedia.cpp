@@ -21,7 +21,6 @@
 #include <QMetaMethod>
 
 namespace PsiMedia {
-
 static AudioParams importAudioParams(const PAudioParams &pp)
 {
     AudioParams out;
@@ -1140,5 +1139,4 @@ RtpChannel *RtpSession::videoRtpChannel()
 {
     return &d->videoRtpChannel;
 }
-
-}
+}; // namespace PsiMedia

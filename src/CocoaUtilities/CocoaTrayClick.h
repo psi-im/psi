@@ -21,6 +21,7 @@
 #define COCOATRAYCLICK_H
 
 #include <QObject>
+
 class CocoaTrayClick : public QObject
 {
     Q_OBJECT

@@ -20,14 +20,14 @@
 #ifndef XDATAWIDGET_H
 #define XDATAWIDGET_H
 
-#include <QWidget>
+#include "xmpp_jid.h"
+#include "xmpp_stanza.h"
+#include "xmpp_xdata.h"
+
 #include <QList>
 #include <QString>
 #include <QVBoxLayout>
-
-#include "xmpp_stanza.h"
-#include "xmpp_xdata.h"
-#include "xmpp_jid.h"
+#include <QWidget>
 
 class PsiCon;
 class XDataField;
@@ -74,4 +74,4 @@ private:
     XMPP::Stanza::Error consistencyError_;
 };
 
-#endif
+#endif // XDATAWIDGET_H

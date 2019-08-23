@@ -19,11 +19,11 @@
 
 #include "chatsplitter.h"
 
+#include "psioptions.h"
+
+#include <QChildEvent>
 #include <QSplitter>
 #include <QVBoxLayout>
-#include <QChildEvent>
-
-#include "psioptions.h"
 
 /**
  * Handy widget that masquerades itself as QSplitter, and could work

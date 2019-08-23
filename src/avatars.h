@@ -29,17 +29,16 @@
 
 #define PEP_AVATAR_DATA_TN     "data"
 #define PEP_AVATAR_DATA_NS     "urn:xmpp:avatar:data"
-
 #define PEP_AVATAR_METADATA_TN "metadata"
 #define PEP_AVATAR_METADATA_NS "urn:xmpp:avatar:metadata"
 
-class PsiAccount;
 class Avatar;
+class FileAvatar;
+class PEPAvatar;
+class PsiAccount;
 class VCardAvatar;
 class VCardMucAvatar;
 class VCardStaticAvatar;
-class FileAvatar;
-class PEPAvatar;
 
 namespace XMPP {
     class Jid;
@@ -47,7 +46,6 @@ namespace XMPP {
     class PubSubItem;
     class Status;
 }
-
 using namespace XMPP;
 
 //------------------------------------------------------------------------------
@@ -107,6 +105,4 @@ private:
     Private *d;
 };
 
-
-
-#endif
+#endif // AVATARS_H

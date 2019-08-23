@@ -20,9 +20,9 @@
 #ifndef ABOUTDLG_H
 #define ABOUTDLG_H
 
-#include <QDialog>
-
 #include "ui_about.h"
+
+#include <QDialog>
 
 class AboutDlg : public QDialog
 {
@@ -39,4 +39,4 @@ private:
     Ui::AboutDlg ui_;
 };
 
-#endif
+#endif // ABOUTDLG_H

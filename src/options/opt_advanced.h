@@ -20,4 +20,4 @@ private:
     QWidget *w;
 };
 
-#endif
+#endif // OPT_ADVANCED_H

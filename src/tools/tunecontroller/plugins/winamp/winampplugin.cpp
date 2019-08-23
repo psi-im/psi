@@ -18,8 +18,8 @@
  */
 
 #include "winampplugin.h"
-#include "moc_winampplugin.cpp"
 
+#include "moc_winampplugin.cpp"
 
 QString WinAmpPlugin::name()
 {

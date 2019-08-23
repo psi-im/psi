@@ -25,82 +25,78 @@
 #ifndef PSIACCOUNT_H
 #define PSIACCOUNT_H
 
+#include "activity.h"
+#include "geolocation.h"
+#include "mood.h"
+#include "psiactions.h"
+#include "psievent.h"
+#include "xmpp_encryptionhandler.h"
+#include "xmpp_reference.h"
+#include "xmpp_rosterx.h"
+#include "xmpp_status.h"
+
 #include <QList>
 #include <QUrl>
 #include <functional>
 
-#include "xmpp_rosterx.h"
-#include "xmpp_status.h"
-#include "xmpp_encryptionhandler.h"
-#include "xmpp_reference.h"
-#include "psiactions.h"
-#include "psievent.h"
-#include "mood.h"
-#include "activity.h"
-#include "geolocation.h"
-
-namespace XMPP
-{
-    class Jid;
-    class XData;
-    class AdvancedConnector;
-    class Stream;
-    class QCATLSHandler;
-    class PubSubItem;
-    class PubSubRetraction;
-    class RosterItem;
-    class Client;
-    //class StreamError;
-    class Resource;
-    class Message;
-    class ServerInfoManager;
-};
-
-using namespace XMPP;
-
+class AvatarFactory;
+class AvCallManager;
+class BookmarkManager;
+class ChatDlg;
+class ConferenceBookmark;
+class ContactProfile;
+class EDB;
+class EventDlg;
+class EventQueue;
+class FileSharingItem;
+#ifdef GOOGLE_FT
+    class GoogleFileTransfer;
+#endif
+class PEPManager;
+class PrivacyManager;
+class PsiAccount;
 class PsiCon;
 class PsiContact;
 class PsiContactList;
-class PsiAccount;
 class PsiHttpAuthRequest;
-class Tune;
-class BookmarkManager;
-class URLBookmark;
-class ConferenceBookmark;
-class VoiceCaller;
-class UserAccount;
-class ContactProfile;
-class QWidget;
-class QString;
-class QMimeData;
-class EventQueue;
-class UserResource;
-class UserListItem;
-class UserList;
-class EventDlg;
-class ChatDlg;
-class PrivacyManager;
-class EDB;
-class QSSLCert;
-class QHostAddress;
-class AvatarFactory;
-class PEPManager;
-class TabManager;
-#ifdef GOOGLE_FT
-class GoogleFileTransfer;
-#endif
 class PsiIcon;
+class QHostAddress;
 class QIcon;
+class QMimeData;
+class QSSLCert;
+class QString;
+class QWidget;
+class TabManager;
+class Tune;
+class URLBookmark;
+class UserAccount;
+class UserList;
+class UserListItem;
+class UserResource;
+class VoiceCaller;
 #ifdef WHITEBOARDING
-class WbManager;
+    class WbManager;
 #endif
+
+namespace XMPP {
+    class AdvancedConnector;
+    class Client;
+    class Jid;
+    class Message;
+    class PubSubItem;
+    class PubSubRetraction;
+    class QCATLSHandler;
+    class Resource;
+    class RosterItem;
+    class ServerInfoManager;
+    class Stream;
+    //class StreamError;
+    class XData;
+};
+using namespace XMPP;
 
 // sick sick remove this someday please!
 struct GCContact;
-
-class AvCallManager;
-
-class FileSharingItem;
 
 class PsiAccount : public QObject, EncryptionHandler
 {
@@ -573,4 +569,4 @@ private:
     bool encryptMessageElement(QDomElement &element) override;
 };
 
-#endif
+#endif // PSIACCOUNT_H

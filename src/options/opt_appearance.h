@@ -3,11 +3,14 @@
 
 #include "optionstab.h"
 
+#include <QAbstractButton>
 #include <QHash>
 #include <QLineEdit>
-#include <QAbstractButton>
 
+class QButtonGroup;
 class QCheckBox;
+class QLineEdit;
+class QWidget;
 
 class FontLabel : public QLineEdit
 {
@@ -24,10 +27,6 @@ private:
     QString m_font;
     int m_defaultHeight;
 };
-
-class QWidget;
-class QButtonGroup;
-class QLineEdit;
 
 class OptionsTabAppearance : public MetaOptionsTab
 {
@@ -89,4 +88,4 @@ private:
     ColorWidgetsMap colorWidgetsMap;
 };
 
-#endif
+#endif // OPT_APPEARANCEGENERAL_H

@@ -1,6 +1,6 @@
 /*
  * chatview_te.cpp - subclass of PsiTextView to handle various hotkeys
- * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Rion
+ * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,34 +19,36 @@
 
 #include "chatview_te.h"
 
-#include "msgmle.h"
-#include "messageview.h"
-#include "psioptions.h"
 #include "coloropt.h"
-#include "textutil.h"
-#include "psirichtext.h"
 #include "common.h"
 #include "iconset.h"
-#include "xmpp/jid/jid.h"
+#include "messageview.h"
+#include "msgmle.h"
+#include "psioptions.h"
+#include "psirichtext.h"
 #include "qiteaudio.h"
+#include "textutil.h"
+#include "xmpp/jid/jid.h"
 
-#include <QWidget>
-#include <QTextOption>
-#include <QScrollBar>
-#include <QTimer>
 #include <QKeyEvent>
-#include <QUrl>
 #include <QMenu>
+#include <QScrollBar>
 #include <QTextBlock>
 #include <QTextDocumentFragment>
-//#define CORRECTION_DEBUG
+#include <QTextOption>
+#include <QTimer>
+#include <QUrl>
+#include <QWidget>
 #ifdef CORRECTION_DEBUG
-#include <QDebug>
+#    include <QDebug>
 #endif
+
+//#define CORRECTION_DEBUG
 
 static const char *informationalColorOpt = "options.ui.look.colors.messages.informational";
 static const QRegExp underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
 static const QRegExp removeTagsRE("<[^>]*>");
+
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------

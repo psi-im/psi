@@ -1,10 +1,10 @@
 #include "SnarlInterface.h"
+
 #include <QtCore>
 #include <stdlib.h>
 #include <string>
 
 using namespace std;
-
 
 SnarlInterface::SnarlInterface() {
     SNARL_GLOBAL_MESSAGE = "SnarlGlobalMessage";

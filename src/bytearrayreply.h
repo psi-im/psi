@@ -1,6 +1,6 @@
 /*
  * bytearrayreply.h - Base class for QNetworReply'es returning QByteArray
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,9 +20,8 @@
 #ifndef BYTEARRAYREPLY_H
 #define BYTEARRAYREPLY_H
 
-#include <QNetworkReply>
 #include <QBuffer>
-
+#include <QNetworkReply>
 
 class ByteArrayReply : public QNetworkReply {
 
@@ -53,4 +52,4 @@ private:
     QBuffer buffer;
 };
 
-#endif
+#endif // BYTEARRAYREPLY_H

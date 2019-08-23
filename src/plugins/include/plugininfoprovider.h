@@ -14,5 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(PluginInfoProvider, "org.psi-im.PluginInfoProvider/0.1");
 
-
 #endif // PLUGININFOPROVIDER_H

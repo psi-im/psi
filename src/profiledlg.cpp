@@ -18,26 +18,26 @@
  */
 
 #include "profiledlg.h"
+
 #include "applicationinfo.h"
+#include "common.h"
 #include "iconset.h"
+#include "iconwidget.h"
+#include "profiles.h"
 #include "psioptions.h"
 
-#include <QLabel>
-#include <QComboBox>
-#include <QMessageBox>
+#include <QButtonGroup>
 #include <QCheckBox>
-#include <QPushButton>
-#include <QInputDialog>
+#include <QComboBox>
 #include <QFile>
 #include <QFileInfo>
-#include <QPixmap>
-#include <QButtonGroup>
-
-#include "profiles.h"
-#include "common.h"
-#include "iconwidget.h"
-
+#include <QInputDialog>
+#include <QLabel>
+#include <QMessageBox>
 #include <QPainter>
+#include <QPixmap>
+#include <QPushButton>
+
 class StretchLogoLabel : public QLabel
 {
 public:
@@ -364,7 +364,6 @@ void ProfileNewDlg::slotCreate()
     if (!o.newProfile()) {
         qWarning("ERROR: Failed to new profile default options");
     }
-
 
     o.setOption("options.messages.default-outgoing-message-type" ,rb_message->isChecked() ? "message": "chat");
     o.setOption("options.ui.emoticons.use-emoticons" ,ck_useEmoticons->isChecked());

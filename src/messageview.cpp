@@ -18,9 +18,10 @@
  */
 
 #include "messageview.h"
-#include "textutil.h"
-#include "psioptions.h"
+
 #include "common.h"
+#include "psioptions.h"
+#include "textutil.h"
 
 #include <QTextDocument>
 

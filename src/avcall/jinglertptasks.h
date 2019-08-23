@@ -19,11 +19,12 @@
 #ifndef JINGLERTPTASKS_H
 #define JINGLERTPTASKS_H
 
-#include <QHostAddress>
-#include <QDomElement>
+#include "iris/ice176.h"
 #include "xmpp_jid.h"
 #include "xmpp_task.h"
-#include "iris/ice176.h"
+
+#include <QDomElement>
+#include <QHostAddress>
 
 class JingleRtpPayloadType
 {
@@ -198,4 +199,4 @@ signals:
     void incomingRequest(const XMPP::Jid &from, const QString &iq_id, const JingleRtpEnvelope &envelope);
 };
 
-#endif
+#endif // JINGLERTPTASKS_H

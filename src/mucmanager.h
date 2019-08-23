@@ -20,19 +20,18 @@
 #ifndef MUCMANAGER_H
 #define MUCMANAGER_H
 
+#include "xmpp_jid.h"
+#include "xmpp_muc.h"
+
 #include <QObject>
 
-#include "xmpp_muc.h"
-#include "xmpp_jid.h"
-
-class QString;
-namespace XMPP {
-    class XData;
-    class Client;
-}
-
 class PsiAccount;
+class QString;
 
+namespace XMPP {
+    class Client;
+    class XData;
+}
 using namespace XMPP;
 
 class MUCManager : public QObject
@@ -112,7 +111,6 @@ signals:
     void action_success(MUCManager::Action);
     void action_error(MUCManager::Action, int, const QString&);
 
-
 protected slots:
     void getConfiguration_finished();
     void setConfiguration_finished();
@@ -126,4 +124,4 @@ private:
     Jid room_;
 };
 
-#endif
+#endif // MUCMANAGER_H

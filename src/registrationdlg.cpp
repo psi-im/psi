@@ -1,6 +1,6 @@
 /*
  * registrationdlg.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,29 +17,29 @@
  *
  */
 
-#include <QDomElement>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QPointer>
-#include <QHBoxLayout>
-#include <QApplication>
-#include <QLabel>
-
-#include "jidutil.h"
-#include "psiaccount.h"
 #include "registrationdlg.h"
+
 #include "busywidget.h"
 #include "common.h"
+#include "jidutil.h"
+#include "psiaccount.h"
+#include "textutil.h"
 #include "xdata_widget.h"
 #include "xmpp_tasks.h"
-#include "textutil.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
 
-using namespace XMPP;
+#include <QApplication>
+#include <QDomElement>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QVBoxLayout>
 
+using namespace XMPP;
 
 //----------------------------------------------------------------------------
 // JT_XRegister

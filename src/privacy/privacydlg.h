@@ -20,16 +20,16 @@
 #ifndef PRIVACYDLG_H
 #define PRIVACYDLG_H
 
+#include "privacylistmodel.h"
+#include "ui_privacy.h"
+
 #include <QDialog>
 #include <QPointer>
 
-#include "ui_privacy.h"
-#include "privacylistmodel.h"
-
-class QWidget;
+class PrivacyManager;
 class QString;
 class QStringList;
-class PrivacyManager;
+class QWidget;
 
 class PrivacyDlg : public QDialog
 {
@@ -79,4 +79,4 @@ private:
     bool newList_;
 };
 
-#endif
+#endif // PRIVACYDLG_H

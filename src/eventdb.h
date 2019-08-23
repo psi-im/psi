@@ -1,6 +1,6 @@
 /*
  * eventdb.h - asynchronous I/O event database
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,15 +20,15 @@
 #ifndef EVENTDB_H
 #define EVENTDB_H
 
-#include <QObject>
-#include <QTimer>
-#include <QFile>
-#include <QSharedPointer>
-#include <QDateTime>
-
-#include "xmpp_jid.h"
-#include "psievent.h"
 #include "psicon.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
+#include <QDateTime>
+#include <QFile>
+#include <QObject>
+#include <QSharedPointer>
+#include <QTimer>
 
 class EDBItem
 {
@@ -127,4 +127,4 @@ private:
     int op_erase(const QString &accId, const XMPP::Jid &);
 };
 
-#endif
+#endif // EVENTDB_H

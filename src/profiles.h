@@ -20,19 +20,19 @@
 #ifndef PROFILES_H
 #define PROFILES_H
 
+#include "applicationinfo.h"
+#include "common.h"
+#include "proxy.h"
+#include "varlist.h"
+#include "xmpp_clientstream.h"
+#include "xmpp_jid.h"
+#include "xmpp_roster.h"
+
+#include <QByteArray>
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <QList>
 #include <QtCrypto>
-#include <QByteArray>
-
-#include "varlist.h"
-#include "proxy.h"
-#include "common.h"
-#include "xmpp_clientstream.h"
-#include "xmpp_roster.h"
-#include "xmpp_jid.h"
-#include "applicationinfo.h"
 
 class OptionsTree;
 
@@ -107,7 +107,6 @@ public:
 
 typedef QList<UserAccount> UserAccountList;
 
-
 class OptionsMigration
 {
 public:
@@ -132,4 +131,4 @@ bool profileDelete(const QStringList &);
 
 extern QString activeProfile;
 
-#endif
+#endif // PROFILES_H

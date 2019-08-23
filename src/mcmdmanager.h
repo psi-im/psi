@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,7 +28,6 @@
 #include <QHash>
 #include <minicmd.h>
 
-
 // implementation in groupchatdlg.cpp
 void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2);
 
@@ -51,7 +50,6 @@ public:
 
     virtual ~MCmdSimpleState();
 
-
     QHash<QString, QVariant> info_;
 
 signals:
@@ -61,7 +59,6 @@ protected:
     QString name_, prompt_;
     int flags_;
 };
-
 
 class MCmdManager : public MCmdManagerIface
 {
@@ -76,7 +73,6 @@ public:
 
     virtual bool isActive();
 
-
     // Provider registratation
     virtual void registerProvider(MCmdProviderIface *prov);
 
@@ -90,4 +86,4 @@ protected:
     MCmdUiSiteIface *uiSite_;
 };
 
-#endif
+#endif // MCMDMANAGER_H

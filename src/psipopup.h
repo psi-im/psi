@@ -24,8 +24,8 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include "psipopupinterface.h"
 #include "psievent.h"
+#include "psipopupinterface.h"
 
 class FancyPopup;
 
@@ -69,4 +69,4 @@ public:
     virtual PsiPopupInterface* popup(QObject* p) { return new PsiPopup(p); }
 };
 
-#endif
+#endif // PSIPOPUP_H

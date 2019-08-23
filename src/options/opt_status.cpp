@@ -1,6 +1,7 @@
 #include "opt_status.h"
-#include "opt_statusgeneral.h"
+
 #include "opt_statusauto.h"
+#include "opt_statusgeneral.h"
 #include "opt_statuspep.h"
 
 OptionsTabStatus::OptionsTabStatus(QObject *parent)

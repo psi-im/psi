@@ -19,13 +19,13 @@
 
 #include "contactlistitem.h"
 
-#include "psicontact.h"
-#include "psiaccount.h"
-#include "contactlistmodel.h"
-#include "userlist.h"
 #include "avatars.h"
 #include "contactlistaccountmenu.h"
 #include "contactlistgroupmenu.h"
+#include "contactlistmodel.h"
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "userlist.h"
 
 #include <QCoreApplication>
 #include <QTextDocument>

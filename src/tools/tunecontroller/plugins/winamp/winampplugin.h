@@ -24,12 +24,12 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
+#include "tunecontrollerplugin.h"
+#include "winamptunecontroller.h"
+
 #include <QObject>
 #include <QString>
-
-#include "winamptunecontroller.h"
-#include "tunecontrollerplugin.h"
+#include <QtCore>
 
 class WinAmpPlugin : public QObject, public TuneControllerPlugin
 {
@@ -42,5 +42,4 @@ public:
     virtual TuneController* createController();
 };
 
-#endif
-
+#endif // WINAMPPLUGIN_H

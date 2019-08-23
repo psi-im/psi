@@ -1,18 +1,17 @@
-#ifndef IRISPROTOCOL_DISCOINFOQUERIER_H
-#define IRISPROTOCOL_DISCOINFOQUERIER_H
+#ifndef IRIS_DISCOINFOQUERIER_H
+#define IRIS_DISCOINFOQUERIER_H
+
+#include "protocol/discoinfoquerier.h"
+#include "xmpp_client.h"
 
 #include <QObject>
 #include <QPointer>
-
-#include "xmpp_client.h"
-#include "protocol/discoinfoquerier.h"
 
 namespace XMPP {
     class Jid;
 }
 
 namespace IrisProtocol {
-
 class DiscoInfoQuerier : public Protocol::DiscoInfoQuerier
 {
     Q_OBJECT
@@ -27,8 +26,6 @@ private slots:
 private:
     QPointer<XMPP::Client> client_;
 };
+}; // namespace IrisProtocol
 
-} // namespace
-
-#endif
-
+#endif // IRIS_DISCOINFOQUERIER_H

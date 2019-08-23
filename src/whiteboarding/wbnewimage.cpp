@@ -19,10 +19,11 @@
  */
 
 #include "wbnewimage.h"
+
 #include "../sxe/sxesession.h"
 
-#include <QGraphicsScene>
 #include <QFile>
+#include <QGraphicsScene>
 
 WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename) : WbNewItem(s),
                        graphicsitem_(QPixmap(filename)) {
@@ -32,7 +33,6 @@ WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filen
 
     scene->addItem(&graphicsitem_);
 }
-
 
 QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
     // TODO: Should we perhaps scale large images?

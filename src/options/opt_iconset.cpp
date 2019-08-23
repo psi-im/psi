@@ -1,35 +1,35 @@
 #include "opt_iconset.h"
+
+#include "applicationinfo.h"
 #include "common.h"
 #include "iconwidget.h"
-#include "applicationinfo.h"
-#include "psiiconset.h"
 #include "psicon.h"
+#include "psiiconset.h"
 #include "psioptions.h"
-
-#include <QDir>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QComboBox>
-#include <QLineEdit>
-#include <QFileInfo>
-#include <QApplication>
-#include <QThread>
-#include <QMutex>
-#include <QEvent>
-#include <QCursor>
-#include <QPalette>
-#include <QTabWidget>
-#include <QFont>
-#include <QTreeWidget>
-
+#include "ui_opt_iconset_activity.h"
+#include "ui_opt_iconset_affiliation.h"
+#include "ui_opt_iconset_client.h"
 #include "ui_opt_iconset_emo.h"
 #include "ui_opt_iconset_mood.h"
-#include "ui_opt_iconset_activity.h"
-#include "ui_opt_iconset_client.h"
-#include "ui_opt_iconset_system.h"
 #include "ui_opt_iconset_roster.h"
-#include "ui_opt_iconset_affiliation.h"
+#include "ui_opt_iconset_system.h"
 #include "ui_ui_isdetails.h"
+
+#include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QCursor>
+#include <QDir>
+#include <QEvent>
+#include <QFileInfo>
+#include <QFont>
+#include <QLineEdit>
+#include <QMutex>
+#include <QPalette>
+#include <QRadioButton>
+#include <QTabWidget>
+#include <QThread>
+#include <QTreeWidget>
 
 class IconsetEmoUI : public QWidget, public Ui::IconsetEmo
 {
@@ -226,7 +226,6 @@ public:
     {
     }
 };
-
 
 //----------------------------------------------------------------------------
 // IconsetLoadThreadDestroyEvent
@@ -573,7 +572,6 @@ void OptionsTabIconsetEmoticons::restoreOptions()
         }
     }
 
-
     {
         QStringList loaded;
         {
@@ -669,7 +667,6 @@ void OptionsTabIconsetEmoticons::cancelThread()
         thread = nullptr;
     }
 }
-
 
 //----------------------------------------------------------------------------
 // OptionsTabIconsetMoods

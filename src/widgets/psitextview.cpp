@@ -19,16 +19,16 @@
 
 #include "psitextview.h"
 
-#include <QMenu>
-#include <QScrollBar>
+#include "psirichtext.h"
+#include "urlobject.h"
+
 #include <QAbstractTextDocumentLayout>
+#include <QMenu>
+#include <QMimeData>
+#include <QRegExp>
+#include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
-#include <QRegExp>
-#include <QMimeData>
-
-#include "urlobject.h"
-#include "psirichtext.h"
 
 //----------------------------------------------------------------------------
 // PsiTextView::Private

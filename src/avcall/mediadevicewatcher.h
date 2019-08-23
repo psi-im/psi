@@ -17,8 +17,9 @@
 #ifndef MEDIADEVICEWATCHER_H
 #define MEDIADEVICEWATCHER_H
 
-#include <QObject>
 #include "../psimedia/psimedia.h"
+
+#include <QObject>
 
 class MediaConfiguration
 {
@@ -64,7 +65,6 @@ private:
     MediaConfiguration _configuration;
     PsiMedia::Features _features;
     static MediaDeviceWatcher *_instance;
-
 
 };
 

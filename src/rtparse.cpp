@@ -1,6 +1,6 @@
 /*
  * rtparse.cpp - class for manipulating richtext
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
  */
 
 #include "rtparse.h"
+
 #include "textutil.h"
 
 #include <QTextDocument> // for Qt::escape()

@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2008 Remko Troncon
+ * Copyright (C) 2008  Remko Troncon
  * See COPYING file for the detailed license.
  */
 
-#include <QtDebug>
+#include "Certificates/CertificateErrorDialog.h"
+
+#include "Certificates/CertificateDisplayDialog.h"
+#include "Certificates/CertificateHelpers.h"
+
 #include <QFile>
 #include <QMessageBox>
 #include <QPushButton>
-
-#include "Certificates/CertificateHelpers.h"
-#include "Certificates/CertificateErrorDialog.h"
-#include "Certificates/CertificateDisplayDialog.h"
+#include <QtDebug>
 
 CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert) : certificate_(cert), result_(result), validity_(validity), tlsOverrideDomain_(tlsOverrideDomain), tlsOverrideCert_(tlsOverrideCert), domainOverride_(domainOverride), host_(host)
 {

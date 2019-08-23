@@ -19,11 +19,11 @@
 
 #include "statusmenu.h"
 
-#include "psioptions.h"
-#include "psiiconset.h"
-#include "psiaccount.h"
-#include "xmpp_status.h"
 #include "common.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "xmpp_status.h"
 
 #include <cassert>
 

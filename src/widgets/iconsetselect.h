@@ -48,4 +48,4 @@ private:
     friend class IconsetSelectItem;
 };
 
-#endif
+#endif // ICONSETSELECT_H

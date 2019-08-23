@@ -24,32 +24,33 @@
  *   being changed.
  */
 
-#include <QDomElement>
-#include <QtCrypto>
-#include <QPixmap>
-#include <QDateTime>
-#include <QDir>
-#include <QFileInfo>
-#include <QFile>
-#include <QBuffer>
-#include <QPainter>
-#include <QImageReader>
-
-#include "xmpp_xmlcommon.h"
-#include "xmpp_vcard.h"
-#include "xmpp_client.h"
-#include "xmpp_resource.h"
-#include "xmpp_pubsubitem.h"
-#include "xmpp_tasks.h"
 #include "avatars.h"
+
 #include "applicationinfo.h"
-#include "psiaccount.h"
-#include "profiles.h"
-#include "vcardfactory.h"
-#include "pepmanager.h"
-#include "pixmaputil.h"
 #include "filecache.h"
 #include "iconset.h"
+#include "pepmanager.h"
+#include "pixmaputil.h"
+#include "profiles.h"
+#include "psiaccount.h"
+#include "vcardfactory.h"
+#include "xmpp_client.h"
+#include "xmpp_pubsubitem.h"
+#include "xmpp_resource.h"
+#include "xmpp_tasks.h"
+#include "xmpp_vcard.h"
+#include "xmpp_xmlcommon.h"
+
+#include <QBuffer>
+#include <QDateTime>
+#include <QDir>
+#include <QDomElement>
+#include <QFile>
+#include <QFileInfo>
+#include <QImageReader>
+#include <QPainter>
+#include <QPixmap>
+#include <QtCrypto>
 
 // we have retine nowdays and various other huge resolutions.96px is not that big already.
 // it would be better to scale images according to monitor properties
@@ -57,7 +58,6 @@
 //#define MAX_AVATAR_DISPLAY_SIZE 64
 
 using namespace QCA;
-
 
 //------------------------------------------------------------------------------
 
@@ -557,7 +557,6 @@ private:
 
 AvatarCache* AvatarCache::_instance = nullptr;
 
-
 //------------------------------------------------------------------------------
 // Avatar factory
 //------------------------------------------------------------------------------
@@ -836,7 +835,6 @@ void AvatarFactory::resourceAvailable(const Jid& jid, const Resource& r)
     statusUpdate(jid.withResource(QString()), r.status());
 }
 
-
 void AvatarFactory::newMucItem(const Jid &fullJid, const Status &s)
 {
     statusUpdate(fullJid, s);
@@ -923,7 +921,6 @@ QPixmap AvatarFactory::roundedAvatar(const QPixmap &pix, int rad, int avSize)
 
     return avatar_icon;
 }
-
 
 void AvatarFactory::onVcardTaskFinsihed()
 {

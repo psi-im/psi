@@ -19,39 +19,36 @@
 
 #include "discodlg.h"
 
-#include <QTreeWidget>
-#include <QHeaderView>
-#include <QMenu>
-
-#include <QComboBox>
-#include <QCheckBox>
-#include <QMessageBox>
-#include <QAction>
-#include <QSignalMapper>
-#include <QPushButton>
-#include <QToolButton>
-#include <QToolBar>
-#include <QScrollBar>
-
-#include <QActionGroup>
-#include <QEvent>
-#include <QList>
-#include <QContextMenuEvent>
-#include <QPainter>
-
-#include "xmpp_tasks.h"
-
-#include "tasklist.h"
-#include "psiaccount.h"
-#include "psicon.h"
-#include "busywidget.h"
-#include "iconaction.h"
-#include "psiiconset.h"
-#include "psitooltip.h"
-#include "stretchwidget.h"
-#include "psioptions.h"
 #include "accountlabel.h"
 #include "bookmarkmanager.h"
+#include "busywidget.h"
+#include "iconaction.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitooltip.h"
+#include "stretchwidget.h"
+#include "tasklist.h"
+#include "xmpp_tasks.h"
+
+#include <QAction>
+#include <QActionGroup>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QContextMenuEvent>
+#include <QEvent>
+#include <QHeaderView>
+#include <QList>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPainter>
+#include <QPushButton>
+#include <QScrollBar>
+#include <QSignalMapper>
+#include <QToolBar>
+#include <QToolButton>
+#include <QTreeWidget>
 
 //----------------------------------------------------------------------------
 
@@ -153,6 +150,7 @@ PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, 
 //----------------------------------------------------------------------------
 
 class DiscoListItem;
+
 class DiscoConnector : public QObject
 {
     Q_OBJECT

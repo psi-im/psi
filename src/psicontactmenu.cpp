@@ -17,40 +17,38 @@
  *
  */
 
+#include "avatars.h"
+#include "avcall/avcall.h"
+#include "bookmarkmanager.h"
+#include "contactlistmodel.h"
+#include "groupchatdlg.h"
+#include "iconaction.h"
+#include "iconset.h"
+#include "invitetogroupchatmenu.h"
+#ifdef HAVE_PGPUTIL
+#    include "pgputil.h"
+#endif
+#include "pluginmanager.h"
+#include "psicon.h"
+#include "psicontact.h"
 #include "psicontactmenu_p.h"
+#include "psioptions.h"
+#include "psiprivacymanager.h"
+#include "shortcutmanager.h"
+#include "userlist.h"
+#include "xmpp_tasks.h"
 
+#include <QApplication>
+#include <QClipboard>
+#include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QPointer>
-#include <QFileDialog>
 #include <QWidgetAction>
-#include <QApplication>
-#include <QClipboard>
-
-#include "iconaction.h"
-#include "iconset.h"
-#include "psicontact.h"
-#include "psioptions.h"
-#include "contactlistmodel.h"
-#include "shortcutmanager.h"
-#include "psicon.h"
-#include "avatars.h"
-#include "userlist.h"
-#include "xmpp_tasks.h"
-#include "avcall/avcall.h"
-#include "pluginmanager.h"
-#ifdef HAVE_PGPUTIL
-#include "pgputil.h"
-#endif
-#include "invitetogroupchatmenu.h"
-#include "psiprivacymanager.h"
-#include "groupchatdlg.h"
-#include "bookmarkmanager.h"
 
 //----------------------------------------------------------------------------
 // GroupMenu
 //----------------------------------------------------------------------------
-
 
 //----------------------------------------------------------------------------
 // PsiContactMenu::Private

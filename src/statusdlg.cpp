@@ -1,6 +1,6 @@
 /*
  * statusdlg.cpp - dialogs for setting and reading status messages
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,30 +19,30 @@
 
 #include "statusdlg.h"
 
-#include <QPushButton>
-#include <QMessageBox>
-#include <QLayout>
-#include <QLabel>
-#include <QComboBox>
-#include <QInputDialog>
-#include <QCheckBox>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QKeyEvent>
-
-#include "jidutil.h"
-#include "psicon.h"
-#include "psioptions.h"
-#include "psiiconset.h"
-#include "psiaccount.h"
-#include "userlist.h"
 #include "common.h"
-#include "psitextview.h"
+#include "jidutil.h"
 #include "msgmle.h"
-#include "statuspreset.h"
-#include "statuscombobox.h"
-#include "shortcutmanager.h"
 #include "priorityvalidator.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "psitextview.h"
+#include "shortcutmanager.h"
+#include "statuscombobox.h"
+#include "statuspreset.h"
+#include "userlist.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 //----------------------------------------------------------------------------
 // StatusShowDlg
@@ -76,7 +76,6 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
 
     pb->setFocus();
 }
-
 
 //----------------------------------------------------------------------------
 // StatusSetDlg

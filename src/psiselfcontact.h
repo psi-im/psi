@@ -39,4 +39,4 @@ protected:
     virtual bool shouldBeVisible() const;
 };
 
-#endif
+#endif // PSISELFCONTACT_H

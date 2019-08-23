@@ -1,8 +1,7 @@
-#ifndef MOCKQCA_QTCRYPTO
-#define MOCKQCA_QTCRYPTO
+#pragma once
 
-#include <QList>
 #include <QByteArray>
+#include <QList>
 #include <QString>
 
 namespace QCA {
@@ -79,7 +78,4 @@ namespace QCA {
 
     extern CertificateCollection gSystemStore;
     CertificateCollection systemStore();
-}
-
-
-#endif
+} // namespace QCA

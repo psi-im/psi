@@ -1,11 +1,11 @@
-#include <QApplication>
-#include <QTreeView>
-#include <QHeaderView>
-#include <QVBoxLayout>
-#include <QCheckBox>
-
 #include "optionstree.h"
 #include "optionstreemodel.h"
+
+#include <QApplication>
+#include <QCheckBox>
+#include <QHeaderView>
+#include <QTreeView>
+#include <QVBoxLayout>
 
 class MyHeaderViewWidget : public QWidget
 {

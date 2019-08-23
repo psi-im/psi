@@ -19,13 +19,13 @@
 #ifndef JINGLERTP_H
 #define JINGLERTP_H
 
-#include "xmpp.h"
 #include "jinglertptasks.h"
+#include "xmpp.h"
 
 class JingleRtpChannel;
-class JingleRtpPrivate;
 class JingleRtpChannelPrivate;
 class JingleRtpManagerPrivate;
+class JingleRtpPrivate;
 
 class JingleRtp : public QObject
 {
@@ -161,4 +161,4 @@ private:
     JingleRtpManagerPrivate *d;
 };
 
-#endif
+#endif // JINGLERTP_H

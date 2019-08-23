@@ -24,15 +24,12 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
+#include "filetunecontroller.h"
+#include "tunecontrollerplugin.h"
+
 #include <QObject>
 #include <QString>
-
-#include "tunecontrollerplugin.h"
-#include "filetunecontroller.h"
-
-
-
+#include <QtCore>
 
 /**
  * \brief A TuneController plugin for the Psi file controller.
@@ -48,4 +45,4 @@ public:
     virtual TuneController* createController();
 };
 
-#endif
+#endif // PSIFILEPLUGIN_H

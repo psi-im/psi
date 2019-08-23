@@ -1,6 +1,6 @@
 /*
  * tabdlg.h - dialog for handling tabbed chats
- * Copyright (C) 2005 Kevin Smith
+ * Copyright (C) 2005  Kevin Smith
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,29 +20,27 @@
 #ifndef TABDLG_H
 #define TABDLG_H
 
-#include <QWidget>
-#include <QSize>
-#include <QMap>
-#include <QPointer>
-
 #include "advwidget.h"
-
 #include "tabbablewidget.h"
 
-class PsiCon;
-class ChatTabs;
+#include <QMap>
+#include <QPointer>
+#include <QSize>
+#include <QWidget>
+
 class ChatDlg;
-class QPushButton;
-class QMenu;
-class QString;
-class QContextMenuEvent;
+class ChatTabs;
+class PsiCon;
+class PsiTabWidget;
 class QAction;
 class QActionGroup;
+class QContextMenuEvent;
+class QMenu;
+class QPushButton;
 class QSignalMapper;
-class PsiTabWidget;
-class TabManager;
-
+class QString;
 class TabDlg;
+class TabManager;
 
 class TabDlgDelegate : public QObject
 {
@@ -170,4 +168,4 @@ private:
     void updateTabBar();
 };
 
-#endif
+#endif // TABDLG_H

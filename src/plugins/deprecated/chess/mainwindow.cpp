@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: mainwindow.cpp,v 0.1 2005/01/08 12:20:13 denis Exp $
@@ -12,23 +12,22 @@
  * Hacked by:
  */
 
-#include <QApplication>
-#include <QMenuBar>
-#include <QStatusBar>
-#include <QPixmap>
-#include <QValidator>
-#include <QMessageBox>
-//Added by qt3to4:
-#include <QResizeEvent>
-#include <QLabel>
-#include <Q3PopupMenu>
-
 #include "mainwindow.h"
-#include "gameboard.h"
 
+#include "gameboard.h"
 #include "xpm/chess.xpm"
-#include "xpm/quit.xpm"
 #include "xpm/new_game.xpm"
+#include "xpm/quit.xpm"
+
+#include <Q3PopupMenu>
+#include <QApplication>
+#include <QLabel>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QPixmap>
+#include <QResizeEvent>
+#include <QStatusBar>
+#include <QValidator>
 
 extern QColor    cw, cb;
 
@@ -77,14 +76,12 @@ MainWindow::~MainWindow()
     delete wrk;
 }
 
-
 void
 MainWindow::showStatus(const QString &txt)
 {
 
     statusBar()->message(txt);
 }
-
 
 void
 MainWindow::newGame()
@@ -107,7 +104,6 @@ MainWindow::newGame()
     delete dlg;
 }
 
-
 void
 MainWindow::newGame(int sock)
 {
@@ -120,7 +116,6 @@ MainWindow::newGame(int sock)
     brd->show();
     game->setItemEnabled(id, true);
 }
-
 
 void
 MainWindow::about()
@@ -135,7 +130,6 @@ MainWindow::about()
     ));
 }
 
-
 void
 MainWindow::activated(QWidget *w)
 {
@@ -147,7 +141,6 @@ MainWindow::activated(QWidget *w)
     else
         showStatus(ready_txt);
 }
-
 
 void
 MainWindow::saveImage()
@@ -203,7 +196,6 @@ SelectGame::~SelectGame()
     delete l1;
 }
 
-
 void
 SelectGame::resizeEvent(QResizeEvent *e)
 {
@@ -231,7 +223,6 @@ SelectGame::resizeEvent(QResizeEvent *e)
         Ok->width(), Ok->height());
 }
 
-
 void
 SelectGame::checkParams()
 {
@@ -242,14 +233,12 @@ SelectGame::checkParams()
     Ok->setEnabled(res);
 }
 
-
 void
 SelectGame::checkParams(const QString&)
 {
 
     checkParams();
 }
-
 
 QString
 SelectGame::host()
@@ -258,7 +247,6 @@ SelectGame::host()
 
     return h.left(h.findRev(':'));
 }
-
 
 QStringList SelectGame::hosts()
 {
@@ -273,12 +261,10 @@ QStringList SelectGame::hosts()
     return (lst);
 }
 
-
 void SelectGame::setHosts(const QStringList &h)
 {
     hst->insertStringList(h);
 }
-
 
 GameBoard::GameType SelectGame::gameType()
 {

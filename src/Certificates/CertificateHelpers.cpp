@@ -4,18 +4,19 @@
  * See COPYING for details.
  */
 
-#include <QtDebug>
-#include <QtCrypto>
-#include <QStringList>
-#include <QDomDocument>
+#include "Certificates/CertificateHelpers.h"
+
+#include "Certificates/CertificateErrorDialog.h"
+#include "xmpp.h"
+
 #include <QDebug>
 #include <QDir>
+#include <QDomDocument>
 #include <QFile>
 #include <QMessageBox>
-
-#include "Certificates/CertificateHelpers.h"
-#include "xmpp.h"
-#include "Certificates/CertificateErrorDialog.h"
+#include <QStringList>
+#include <QtCrypto>
+#include <QtDebug>
 
 using namespace QCA;
 

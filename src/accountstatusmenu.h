@@ -1,9 +1,9 @@
 #ifndef ACCOUNTSTATUSMENU_H
 #define ACCOUNTSTATUSMENU_H
 
-#include "statusmenu.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "statusmenu.h"
 
 class AccountStatusMenu : public StatusMenu {
     Q_OBJECT

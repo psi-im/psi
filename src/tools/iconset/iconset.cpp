@@ -17,46 +17,41 @@
  *
  */
 
-#include "iconset.h"
-
-#include <QObject>
-#include <QFile>
-#include <QFileInfo>
-#include <QTimer>
-
-#include <QIcon>
-#include <QRegExp>
-#include <QDomDocument>
-#include <QThread>
-#include <QCoreApplication>
-#include <QLocale>
-#include <QBuffer>
-
-#include <QTextCodec>
-
-#include "anim.h"
-
 // sound support
 #ifndef NO_ICONSET_SOUND
 #define ICONSET_SOUND
-#endif
-
-#ifdef ICONSET_SOUND
-#    include <QDataStream>
-#    include <qca_basic.h>
 #endif
 
 #ifndef NO_ICONSET_ZIP
 #define ICONSET_ZIP
 #endif
 
+#include "iconset.h"
+
+#include "anim.h"
 #ifdef ICONSET_ZIP
 #    include "zip/zip.h"
 #endif
 
+#include <QBuffer>
+#include <QCoreApplication>
+#include <QDomDocument>
+#include <QFile>
+#include <QFileInfo>
+#include <QIcon>
+#include <QLocale>
+#include <QObject>
+#include <QRegExp>
+#include <QTextCodec>
+#include <QThread>
+#include <QTimer>
 #include <QApplication>
 #include <QSharedData>
 #include <QSharedDataPointer>
+#ifdef ICONSET_SOUND
+#    include <QDataStream>
+#    include <qca_basic.h>
+#endif
 
 static void moveToMainThread(QObject *obj)
 {
@@ -875,7 +870,6 @@ public:
     }
 
     const PsiIcon *icon(const QString &name) const;
-
 
     static void reset()
     {

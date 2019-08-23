@@ -19,9 +19,7 @@
 
 #include "sxerecord.h"
 
-
 static bool referencedEditLessThan(const SxeEdit* e1, const SxeEdit* e2) { return *e1 < *e2; }
-
 
 //----------------------------------------------------------------------------
 // SxeRecord

@@ -18,17 +18,18 @@
  */
 
 #include "urlobject.h"
+
+#include "iconaction.h"
 #ifndef WIDGET_PLUGIN
-#include "psioptions.h"
+#    include "psioptions.h"
 #endif
+
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>
 #include <QSignalMapper>
 #include <QUrl>
 #include <QUrlQuery>
-
-#include "iconaction.h"
 
 //! \if _hide_doc_
 class URLObject::Private : QObject

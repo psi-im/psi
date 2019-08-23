@@ -17,17 +17,17 @@
  *
  */
 
-#ifndef VOICECALLDLG
-#define VOICECALLDLG
-
-#include <QDialog>
+#ifndef VOICECALLDLG_H
+#define VOICECALLDLG_H
 
 #include "ui_voicecall.h"
 #include "xmpp_jid.h"
 
-using namespace XMPP;
+#include <QDialog>
 
 class VoiceCaller;
+
+using namespace XMPP;
 
 class VoiceCallDlg : public QDialog
 {
@@ -69,4 +69,4 @@ private:
     Ui::VoiceCall ui_;
 };
 
-#endif
+#endif // VOICECALLDLG_H

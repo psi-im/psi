@@ -20,11 +20,11 @@
 #ifndef MUCAFFILIATIONSMODEL_H
 #define MUCAFFILIATIONSMODEL_H
 
-#include <QStandardItemModel>
+#include "xmpp_muc.h"
+
 #include <QList>
 #include <QMap>
-
-#include "xmpp_muc.h"
+#include <QStandardItemModel>
 
 class QMimeData;
 
@@ -61,5 +61,4 @@ private:
     QMap<AffiliationListIndex,bool> enabled_;
 };
 
-
-#endif
+#endif // MUCAFFILIATIONSMODEL_H

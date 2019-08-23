@@ -22,9 +22,9 @@
  *
  */
 
-#include <QtCrypto>
-
 #include "pgptransaction.h"
+
+#include <QtCrypto>
 
 using namespace XMPP;
 

@@ -1,13 +1,13 @@
 #ifndef OPTIONSTAB_H
 #define OPTIONSTAB_H
 
-#include <QString>
-#include <QObject>
 #include <QByteArray>
+#include <QObject>
+#include <QString>
 
+class PsiCon;
 class PsiIcon;
 class QWidget;
-class PsiCon;
 
 class OptionsTab : public QObject
 {
@@ -74,4 +74,4 @@ private:
     QList<OptionsTab*> tabs;
 };
 
-#endif
+#endif // OPTIONSTAB_H

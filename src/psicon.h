@@ -1,6 +1,6 @@
 /*
  * psicon.h - core of Psi
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,53 +20,52 @@
 #ifndef PSICON_H
 #define PSICON_H
 
-#include <QList>
-#include <functional>
-
 #include "profiles.h"
 #include "psiactions.h"
 #include "psievent.h"
 #include "tabbablewidget.h"
 #include "tunecontrollermanager.h"
 
-using namespace XMPP;
+#include <QList>
+#include <functional>
 
-class PsiCon;
-class PsiAccount;
-class ContactView;
+class AccountsComboBox;
+class AlertManager;
 class AutoUpdater;
-class EventDlg;
-class UserListItem;
+class ChatDlg;
+class ContactUpdatesManager;
+class ContactView;
 class EDB;
 class EDBItem;
-class ProxyManager;
-class QMenuBar;
+class EventDlg;
+class FileSharingManager;
 class FileTransDlg;
 class IconSelectPopup;
-class QThread;
+class NetworkAccessManager;
+class PopupManager;
+class ProxyManager;
+class PsiAccount;
 class PsiActionList;
+class PsiCon;
+class PsiContactList;
+class PsiThemeManager;
 class PsiToolBar;
+class QMenuBar;
+class QThread;
 class TabDlg;
 class TabManager;
-class AccountsComboBox;
-class ChatDlg;
-class AlertManager;
 class TuneController;
-class PsiContactList;
-class TabManager;
-class ContactUpdatesManager;
-class PopupManager;
-class NetworkAccessManager;
-class FileSharingManager;
-class PsiThemeManager;
+class UserListItem;
 class WebServer;
 
 namespace OpenPGP {
     class Engine;
 }
+
 namespace XMPP {
     class Jid;
 }
+using namespace XMPP;
 
 class PsiCon : public QObject
 {
@@ -208,4 +207,4 @@ private:
     void doQuit(int);
 };
 
-#endif
+#endif // PSICON_H

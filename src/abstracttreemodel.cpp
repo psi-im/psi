@@ -16,8 +16,9 @@
  *
  */
 
-#include "abstracttreeitem.h"
 #include "abstracttreemodel.h"
+
+#include "abstracttreeitem.h"
 
 #include <QDebug>
 

@@ -17,21 +17,22 @@
  *
  */
 
-#include <QVariant>
-#include <QMessageBox>
-#include <QInputDialog>
-#include <QMap>
-#include <QScrollArea>
+#include "mucconfigdlg.h"
 
-#include "mucmanager.h"
+#include "infodlg.h"
 #include "mucaffiliationsmodel.h"
 #include "mucaffiliationsproxymodel.h"
-#include "mucconfigdlg.h"
-#include "xdata_widget.h"
-#include "infodlg.h"
-#include "vcardfactory.h"
-#include "xmpp_vcard.h"
+#include "mucmanager.h"
 #include "psiaccount.h"
+#include "vcardfactory.h"
+#include "xdata_widget.h"
+#include "xmpp_vcard.h"
+
+#include <QInputDialog>
+#include <QMap>
+#include <QMessageBox>
+#include <QScrollArea>
+#include <QVariant>
 
 using namespace XMPP;
 
@@ -334,7 +335,6 @@ void MUCConfigDlg::setItems_error(int, const QString&)
         refreshAffiliations();
     }
 }
-
 
 void MUCConfigDlg::removePendingRequest(MUCItem::Affiliation a)
 {

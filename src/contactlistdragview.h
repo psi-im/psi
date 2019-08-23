@@ -22,11 +22,11 @@
 
 #include "contactlistview.h"
 
-class QTimer;
-class QMimeData;
 class ContactListDragModel;
 class ContactListModelSelection;
 class PsiContact;
+class QMimeData;
+class QTimer;
 
 class ContactListDragView : public ContactListView
 {
@@ -145,4 +145,4 @@ private:
     void reorderGroups(QDropEvent *e, const QModelIndex &index);
 };
 
-#endif
+#endif // CONTACTLISTDRAGVIEW_H

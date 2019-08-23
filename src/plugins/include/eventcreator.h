@@ -14,4 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(EventCreator, "org.psi-im.EventCreator/0.1");
 
-#endif
+#endif // EVENTCREATOR_H

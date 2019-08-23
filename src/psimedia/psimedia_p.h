@@ -17,17 +17,15 @@
  */
 
 #include "psimedia.h"
+#include "psimediaprovider.h"
 
 #include <QCoreApplication>
+#ifdef QT_GUI_LIB
+#    include <QPainter>
+#endif
 #include <QPluginLoader>
 
-#ifdef QT_GUI_LIB
-#include <QPainter>
-#endif
-
-#include "psimediaprovider.h"
 namespace PsiMedia {
-
 #ifdef QT_GUI_LIB
 //----------------------------------------------------------------------------
 // VideoWidget
@@ -289,5 +287,4 @@ private slots:
         emit q->error();
     }
 };
-
-} // namespace
+}; // namespace PsiMedia

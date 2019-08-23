@@ -20,17 +20,16 @@
 #ifndef BOOKMARKMANAGEDLG_H
 #define BOOKMARKMANAGEDLG_H
 
+#include "ui_bookmarkmanage.h"
+#include "xmpp_jid.h"
+
 #include <QDialog>
 
-#include "ui_bookmarkmanage.h"
-
+class ConferenceBookmark;
 class PsiAccount;
 class QPushButton;
-class QStandardItemModel;
 class QStandardItem;
-class ConferenceBookmark;
-
-#include "xmpp_jid.h"
+class QStandardItemModel;
 
 class BookmarkManageDlg : public QDialog
 {
@@ -81,4 +80,4 @@ private:
     ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
 };
 
-#endif
+#endif // BOOKMARKMANAGEDLG_H

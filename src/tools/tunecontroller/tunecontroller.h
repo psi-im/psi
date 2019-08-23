@@ -20,10 +20,10 @@
 #ifndef TUNECONTROLLER_H
 #define TUNECONTROLLER_H
 
-#include <QString>
-#include <QObject>
-
 #include "tune.h"
+
+#include <QObject>
+#include <QString>
 
 /**
  * \brief Base class for representing a media player.
@@ -48,4 +48,4 @@ signals:
     void stopped();
 };
 
-#endif
+#endif // TUNECONTROLLER_H

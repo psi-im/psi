@@ -1,6 +1,6 @@
 /*
  * coloropt.cpp - Psi color options class
- * Copyright (C) 2011 Rion
+ * Copyright (C) 2011  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,10 +17,11 @@
  *
  */
 
-#include <QApplication>
-
 #include "coloropt.h"
+
 #include "psioptions.h"
+
+#include <QApplication>
 
 ColorOpt::ColorOpt()
     : QObject(nullptr)

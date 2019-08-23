@@ -1,22 +1,19 @@
 #include "opt_input.h"
 
-#include <QWidget>
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
-#include <QCheckBox>
-#include <QLocale>
-
 #include "psioptions.h"
 #include "spellchecker/spellchecker.h"
-
-
 #include "ui_opt_input.h"
+
+#include <QCheckBox>
+#include <QLocale>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
+#include <QWidget>
 
 static const QString ENABLED_OPTION = QStringLiteral("options.ui.spell-check.enabled");
 static const QString DICTS_OPTION = QStringLiteral("options.ui.spell-check.langs");
 static const QString AUTORESIZE_OPTION = QStringLiteral("options.ui.chat.use-expanding-line-edit");
 static const uint FullName = 0;
-
 
 class OptInputUI : public QWidget, public Ui::OptInput
 {

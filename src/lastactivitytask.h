@@ -20,12 +20,12 @@
 #ifndef LASTACTIVITYTASK_H
 #define LASTACTIVITYTASK_H
 
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+
+#include <QDateTime>
 #include <QDomElement>
 #include <QString>
-#include <QDateTime>
-
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
 
 class LastActivityTask : public XMPP::Task
 {
@@ -46,4 +46,4 @@ private:
     QString last_status_;
 };
 
-#endif
+#endif // LASTACTIVITYTASK_H

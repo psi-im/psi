@@ -6,8 +6,8 @@
 #ifndef CERTIFICATEERRORDIALOG_H
 #define CERTIFICATEERRORDIALOG_H
 
-#include <QtCrypto>
 #include <QString>
+#include <QtCrypto>
 
 class QMessageBox;
 class QPushButton;
@@ -39,4 +39,4 @@ private:
         QString host_;
 };
 
-#endif
+#endif // CERTIFICATEERRORDIALOG_H

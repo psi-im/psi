@@ -18,15 +18,16 @@
  */
 
 #include "sxesession.h"
+
 #include "sxemanager.h"
 
 #include "QTimer"
 #include "QUuid"
 
+using namespace XMPP;
+
 // The maxlength of a chdata that gets put in one edit
 enum {MAXCHDATA = 1024};
-
-using namespace XMPP;
 
 //----------------------------------------------------------------------------
 // SxeSession
@@ -69,7 +70,6 @@ void SxeSession::initializeDocument(const QDomDocument &doc) {
     recordByNodeId_.clear();
     queuedIncomingEdits_.clear();
     queuedOutgoingEdits_.clear();
-
 
     // import prolog
     doc_.setContent(parseProlog(doc));
@@ -660,7 +660,6 @@ void SxeSession::handleNodeToBeRemoved(const QDomNode &node, bool remote) {
     emit nodeToBeRemoved(node, remote);
     removeRecord(node);
 }
-
 
 void SxeSession::removeRecord(const QDomNode &node) {
     QMutableHashIterator<QString, SxeRecord*> i(recordByNodeId_);

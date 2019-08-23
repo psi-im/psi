@@ -1,12 +1,12 @@
 /**
- * Copyright (C) 2007, Remko Troncon
+ * Copyright (C) 2007  Remko Troncon
  */
+
+#include "common.h"
+#include "qttestutil/qttestutil.h"
 
 #include <QObject>
 #include <QtTest/QtTest>
-
-#include "qttestutil/qttestutil.h"
-#include "common.h"
 
 int versionStringToInt(const char* version);
 

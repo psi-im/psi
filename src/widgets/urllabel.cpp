@@ -19,10 +19,10 @@
 
 #include "urllabel.h"
 
-#include <QMenu>
-#include <QContextMenuEvent>
-
 #include "urlobject.h"
+
+#include <QContextMenuEvent>
+#include <QMenu>
 
 //! \if _hide_doc_
 class URLLabel::Private

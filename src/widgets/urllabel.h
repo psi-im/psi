@@ -22,8 +22,8 @@
 
 #include <QLabel>
 
-class QWidget;
 class QObject;
+class QWidget;
 
 class URLLabel : public QLabel
 {
@@ -57,4 +57,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // URLLABEL_H

@@ -1,8 +1,9 @@
+#include "opt_tree.h"
+
+#include "psioptionseditor.h"
+
 #include <QDebug>
 #include <QVBoxLayout>
-
-#include "opt_tree.h"
-#include "psioptionseditor.h"
 
 OptionsTabTree::OptionsTabTree(QObject *parent)
         : OptionsTab(parent, "tree", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced-plus")

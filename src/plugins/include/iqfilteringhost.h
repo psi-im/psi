@@ -1,10 +1,9 @@
 #ifndef IQFILTERINGHOST_H
 #define IQFILTERINGHOST_H
 
-class QString;
-class QRegExp;
-
 class IqNamespaceFilter;
+class QRegExp;
+class QString;
 
 class IqFilteringHost
 {
@@ -22,4 +21,4 @@ public:
 
 Q_DECLARE_INTERFACE(IqFilteringHost, "org.psi-im.IqFilteringHost/0.1");
 
-#endif
+#endif // IQFILTERINGHOST_H

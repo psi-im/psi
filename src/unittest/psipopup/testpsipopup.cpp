@@ -1,16 +1,16 @@
-#include <QtTest/QtTest>
+#include "iconset.h"
+#include "im.h" // for Jid
+#include "mainwin.h"
+#include "profiles.h" // for UserAccount
+#include "psiaccount.h" // for PsiAccount
+#include "psicon.h" // for PsiCon
+#include "psipopup.h"
+#include "userlist.h" // for UserListItem
+
 #include <QApplication>
 #include <QTimer>
 #include <QtCrypto>
-
-#include "psipopup.h"
-#include "iconset.h"
-#include "psicon.h" // for PsiCon
-#include "psiaccount.h" // for PsiAccount
-#include "profiles.h" // for UserAccount
-#include "im.h" // for Jid
-#include "userlist.h" // for UserListItem
-#include "mainwin.h"
+#include <QtTest/QtTest>
 
 class TestPsiPopup: public QObject
 {

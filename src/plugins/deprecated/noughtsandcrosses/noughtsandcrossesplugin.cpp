@@ -22,15 +22,14 @@
  *
  */
 
-#include <QtCore>
-#include <QDebug>
-
-#include "psiplugin.h"
 #include "eventfilter.h"
+#include "psiplugin.h"
 #include "stanzasender.h"
 #include "stanzasendinghost.h"
-
 #include "tictac.h"
+
+#include <QDebug>
+#include <QtCore>
 
 class NoughtsAndCrossesPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender
 {
@@ -60,8 +59,6 @@ private slots:
 
 private:
     void startGame(QString jid, int size, bool meFirst, int account);
-
-
 
     TicTacToe* game;
     QString playingWith;
@@ -118,7 +115,6 @@ void NoughtsAndCrossesPlugin::setStanzaSendingHost(StanzaSendingHost *host)
 {
     stanzaSender_ = host;
 }
-
 
 bool NoughtsAndCrossesPlugin::processEvent(int account, const QDomElement& e)
 {
@@ -244,6 +240,5 @@ void NoughtsAndCrossesPlugin::theirTurn(int space)
         return;
     game->theirMove(space);
 }
-
 
 #include "noughtsandcrossesplugin.moc"

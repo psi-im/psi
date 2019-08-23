@@ -3,14 +3,14 @@
 
 // FIXME: instead of a singleton, make it a member of PsiCon.
 
-
-#include <QSet>
 #include <QList>
 #include <QMap>
+#include <QSet>
 #include <QtCrypto>
 
-class QString;
 class PassphraseDlg;
+class QString;
+
 namespace QCA {
     class KeyStore;
     class PGPKey;
@@ -79,4 +79,4 @@ private:
     friend class PGPKeyDlg;
 };
 
-#endif
+#endif // PGPUTIL_H

@@ -36,4 +36,4 @@ private:
     Private* d;
 };
 
-#endif
+#endif // CONTACTLISTACCOUNTMENU_H

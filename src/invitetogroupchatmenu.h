@@ -23,9 +23,9 @@
 
 #include <QMenu>
 
-class PsiContact;
 class PsiAccount;
 class PsiCon;
+class PsiContact;
 
 class InviteToGroupChatMenu : public QMenu
 {

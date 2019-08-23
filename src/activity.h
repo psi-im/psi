@@ -1,6 +1,6 @@
 /*
  * activiy.h
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,14 +20,14 @@
 #ifndef ACTIVITY_H
 #define ACTIVITY_H
 
-#include <QString>
 #include <QMetaType>
+#include <QString>
 
 #define PEP_ACTIVITY_TN "activity"
 #define PEP_ACTIVITY_NS "http://jabber.org/protocol/activity"
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class Activity
 {
@@ -98,4 +98,4 @@ private:
 
 Q_DECLARE_METATYPE(Activity)
 
-#endif
+#endif // ACTIVITY_H

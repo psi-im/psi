@@ -1,6 +1,6 @@
 /*
  * chatviewcommon.cpp - shared part of any chatview
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,15 +17,15 @@
  *
  */
 
+#include "psioptions.h"
+
 #include <QApplication>
-#include <QWidget>
 #include <QColor>
 #include <QRegExp>
-
+#include <QWidget>
 #include <math.h>
 
 #include "chatviewcommon.h"
-#include "psioptions.h"
 
 void ChatViewCommon::setLooks(QWidget *w)
 {

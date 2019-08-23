@@ -1,6 +1,6 @@
 /*
  * miniclient.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,23 +20,25 @@
 #ifndef MINICLIENT_H
 #define MINICLIENT_H
 
+#include "xmpp_jid.h"
+
 #include <QObject>
 #include <QString>
 
-#include "xmpp_jid.h"
+class ProxyManager;
+class QByteArray;
+class QString;
 
-namespace XMPP {
-    class Client;
-    class ClientStream;
-    class AdvancedConnector;
-    class QCATLSHandler;
-}
 namespace QCA {
     class TLS;
 }
-class ProxyManager;
-class QString;
-class QByteArray;
+
+namespace XMPP {
+    class AdvancedConnector;
+    class Client;
+    class ClientStream;
+    class QCATLSHandler;
+}
 
 class MiniClient : public QObject
 {
@@ -81,5 +83,4 @@ private:
     bool auth, force_ssl, error_disconnect;
 };
 
-
-#endif
+#endif // MINICLIENT_H

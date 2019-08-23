@@ -1,29 +1,29 @@
 #include "opt_application.h"
+
+#include "applicationinfo.h"
 #include "common.h"
 #include "iconwidget.h"
-#include "psioptions.h"
 #include "proxy.h"
+#include "psioptions.h"
 #include "translationmanager.h"
+#include "ui_opt_application.h"
 #include "varlist.h"
-#include "applicationinfo.h"
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDir>
 #include <QLineEdit>
-#include <QSettings>
 #include <QList>
 #include <QMessageBox>
-#include <QDir>
+#include <QSettings>
 #include <QStandardPaths>
-
-#include "ui_opt_application.h"
 
 #ifdef Q_OS_WIN
     static const QString regString = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 #endif
 #ifdef HAVE_FREEDESKTOP
-#define xstr(a) str(a)
-#define str(a) #a
+#    define xstr(a) str(a)
+#    define str(a) #a
     static const QString psiAutoStart("/autostart/" xstr(APP_BIN_NAME) ".desktop");
 #endif
 
@@ -83,7 +83,6 @@ QWidget *OptionsTabApplication::widget()
     ProxyChooser *pc = ProxyManager::instance()->createProxyChooser(w);
     d->gb_proxy->layout()->addWidget(ProxyManager::instance()->proxyForObject()->getComboBox(pc, w));
     d->gb_proxy->layout()->addWidget(pc);
-
 
     connect(d->le_dtPort, SIGNAL(textChanged(QString)), this, SLOT(updatePortLabel()));
     connect(d->ck_docklet, SIGNAL(stateChanged(int)), this, SLOT(doEnableQuitOnClose(int)));

@@ -21,6 +21,7 @@
 #define OPTIONSDLGBASE_H
 
 #include "ui_ui_options.h"
+
 #include <QDialog>
 
 class OptionsTab;
@@ -56,4 +57,4 @@ private:
     QPushButton* pb_apply;
 };
 
-#endif
+#endif // OPTIONSDLGBASE_H

@@ -4,34 +4,33 @@
  * See the COPYING file for more information.
  */
 
-#include <QString>
-#include <QStringList>
+#include "systeminfo.h"
+
+#include <QByteArray>
+#include <QCoreApplication>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
-#include <QCoreApplication>
-#include <QSysInfo>
 #include <QProcess>
+#include <QString>
+#include <QStringList>
+#include <QSysInfo>
 #include <QTextStream>
-#include <QByteArray>
-
 #if defined(HAVE_X11) || defined(Q_OS_MAC)
-#include <time.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/utsname.h>
+#    include <stdlib.h>
+#    include <string.h>
+#    include <sys/utsname.h>
+#    include <time.h>
 #endif
-
 #if defined(Q_OS_WIN)
-#include <windows.h>
+#    include <windows.h>
 #endif
-
 #if defined(Q_OS_HAIKU)
-#include <sys/utsname.h>
-#include <Path.h>
-#include <FindDirectory.h>
-#include <AppFileInfo.h>
-#include <File.h>
+#    include <AppFileInfo.h>
+#    include <File.h>
+#    include <FindDirectory.h>
+#    include <Path.h>
+#    include <sys/utsname.h>
 #endif
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)//QSysInfo for Mac and Windows systems is obsolete for Qt>=5.9
@@ -43,10 +42,8 @@
 # endif
 #endif
 
-#include "systeminfo.h"
-
 #if QT_VERSION < QT_VERSION_CHECK(5,5,0)
-#error "Minimal supported version of Qt in this file is 5.5.0"
+    #error "Minimal supported version of Qt in this file is 5.5.0"
 #endif
 
 #if defined(HAVE_X11)
@@ -87,7 +84,6 @@ static QString lsbRelease(const QStringList& args)
     process.close();
     return ret;
 }
-
 
 static QString unixHeuristicDetect() {
 
@@ -186,8 +182,6 @@ static QString unixHeuristicDetect() {
     return ret;
 }
 #endif
-
-
 
 SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 {

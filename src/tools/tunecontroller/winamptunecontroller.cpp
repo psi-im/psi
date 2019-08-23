@@ -17,8 +17,7 @@
  *
  */
 
-#include <windows.h>
-#include <QString>
+#include "winamptunecontroller.h"
 
 #ifdef Q_CC_MSVC
 #pragma warning(push)
@@ -32,8 +31,8 @@
 #pragma warning(pop)
 #endif
 
-#include "winamptunecontroller.h"
-
+#include <QString>
+#include <windows.h>
 
 /**
  * \class WinAmpTuneController
@@ -138,7 +137,6 @@ QPair<bool, QString> WinAmpTuneController::getTrackTitle(const HWND &waWnd) cons
 
     return QPair<bool, QString>(true,title);
 }
-
 
 /**
  * Polls for new song info.

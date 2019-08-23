@@ -21,13 +21,12 @@
 
 #include <QDialog>
 
-namespace XMPP
-{
+class AvCall;
+class PsiAccount;
+
+namespace XMPP {
     class Jid;
 }
-
-class PsiAccount;
-class AvCall;
 
 class CallDlg : public QDialog
 {
@@ -45,4 +44,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // CALLDLG_H

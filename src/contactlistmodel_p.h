@@ -4,9 +4,9 @@
 #include "contactlistmodel.h"
 #include "psicontact.h"
 
-#include <QTimer>
 #include <QDateTime>
 #include <QModelIndex>
+#include <QTimer>
 
 class ContactListModel::Private : public QObject
 {

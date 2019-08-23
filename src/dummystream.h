@@ -20,8 +20,8 @@
 #ifndef DUMMYSTREAM_H
 #define DUMMYSTREAM_H
 
-#include "xmpp_stream.h"
 #include "xmpp_stanza.h"
+#include "xmpp_stream.h"
 
 class DummyStream : public XMPP::Stream
 {
@@ -44,5 +44,4 @@ private:
     static QDomDocument v_doc;
 };
 
-
-#endif
+#endif // DUMMYSTREAM_H

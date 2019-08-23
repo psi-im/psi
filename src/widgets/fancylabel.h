@@ -20,12 +20,12 @@
 #ifndef FANCYLABEL_H
 #define FANCYLABEL_H
 
-#include <QWidget>
 #include <QLabel>
+#include <QWidget>
 
-class QPixmap;
-class QColor;
 class PsiIcon;
+class QColor;
+class QPixmap;
 
 class FancyLabel : public QWidget
 {
@@ -103,4 +103,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // FANCYLABEL_H

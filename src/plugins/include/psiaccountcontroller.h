@@ -14,5 +14,4 @@ public:
 
 Q_DECLARE_INTERFACE(PsiAccountController, "org.psi-im.PsiAccountController/0.1");
 
-
 #endif // PSIACCOUNTCONTROLLER_H

@@ -10,4 +10,4 @@ public:
     }
 };
 
-#endif
+#endif // STRETCHWIDGET_H

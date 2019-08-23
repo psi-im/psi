@@ -23,8 +23,8 @@
 #include <QObject>
 #include <QStringList>
 
-class QString;
 class PrivacyList;
+class QString;
 
 class PrivacyManager : public QObject
 {
@@ -55,4 +55,4 @@ signals:
     void listsError();
 };
 
-#endif
+#endif // PRIVACYMANAGER_H

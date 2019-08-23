@@ -17,16 +17,16 @@
  *
  */
 
+#include "ahcommand.h"
+#include "ahcservermanager.h"
+#include "groupchatdlg.h"
 #include "iconaction.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psioptions.h"
-#include "rc.h"
 #include "xmpp_xdata.h"
-#include "ahcservermanager.h"
-#include "ahcommand.h"
-#include "groupchatdlg.h"
+#include "rc.h"
 
 using namespace XMPP;
 
@@ -143,7 +143,6 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
         return AHCommand::completedReply(c);
     }
 }
-
 
 AHCommand RCForwardServer::execute(const AHCommand& c, const Jid& j)
 {

@@ -1,6 +1,6 @@
 /*
  * contactmanagerdlg.cpp
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,22 +17,23 @@
  *
  */
 
-#include <QMessageBox>
-#include <QItemSelectionModel>
-#include <QFileDialog>
-#include <QFile>
-#include <QScrollArea>
-#include <QCheckBox>
-
 #include "contactmanagerdlg.h"
 
-#include "psiaccount.h"
-#include "userlist.h"
-#include "xmpp_tasks.h"
-#include "psiiconset.h"
-#include "vcardfactory.h"
 //#include "contactview.h"
+#include "xmpp_tasks.h"
 
+#include "psiiconset.h"
+#include "userlist.h"
+#include "psiaccount.h"
+#include "vcardfactory.h"
+
+
+#include <QCheckBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QItemSelectionModel>
+#include <QMessageBox>
+#include <QScrollArea>
 
 ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
     QDialog(nullptr, Qt::Window),
@@ -70,8 +71,6 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
 
     connect(pa_->client(), SIGNAL(rosterRequestFinished(bool,int,QString)), this, SLOT(client_rosterUpdated(bool,int,QString)));
 }
-
-
 
 ContactManagerDlg::~ContactManagerDlg()
 {

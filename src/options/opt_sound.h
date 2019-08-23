@@ -1,14 +1,14 @@
 #ifndef OPT_SOUND_H
 #define OPT_SOUND_H
 
-#include <QMap>
-
 #include "optionstab.h"
 
-class QWidget;
-class QLineEdit;
-class QButtonGroup;
+#include <QMap>
+
 class QAbstractButton;
+class QButtonGroup;
+class QLineEdit;
+class QWidget;
 
 class OptionsTabSound : public OptionsTab
 {
@@ -35,4 +35,4 @@ private:
     QButtonGroup *bg_se = nullptr, *bg_sePlay = nullptr;
 };
 
-#endif
+#endif // OPT_SOUND_H

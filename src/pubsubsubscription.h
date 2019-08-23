@@ -22,8 +22,8 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
 class PubSubSubscription
 {
@@ -49,4 +49,4 @@ private:
     State state_;
 };
 
-#endif
+#endif // PUBSUBSUBSCRIPTION_H

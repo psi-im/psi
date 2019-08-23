@@ -1,6 +1,6 @@
 /*
  * contactmanagerview.cpp
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,12 +17,13 @@
  *
  */
 
-#include <QMenu>
+#include "contactmanagerview.h"
+
+#include "psiiconset.h"
+
 #include <QContextMenuEvent>
 #include <QHeaderView>
-
-#include "contactmanagerview.h"
-#include "psiiconset.h"
+#include <QMenu>
 
 ContactManagerView::ContactManagerView( QWidget * parent )
         : QTableView(parent)

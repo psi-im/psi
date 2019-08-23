@@ -20,14 +20,13 @@
 #ifndef PSITOOLBAR_H
 #define PSITOOLBAR_H
 
+#include "psiactionlist.h"
+
 #include <QToolBar>
 
-class QContextMenuEvent;
-
-class ToolbarPrefs;
 class PsiOptions;
-
-#include "psiactionlist.h"
+class QContextMenuEvent;
+class ToolbarPrefs;
 
 class PsiToolBar : public QToolBar
 {
@@ -55,4 +54,4 @@ private:
     QString base_;
 };
 
-#endif
+#endif // PSITOOLBAR_H

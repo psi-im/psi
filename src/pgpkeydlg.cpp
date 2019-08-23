@@ -24,17 +24,17 @@
 
 #include "pgpkeydlg.h"
 
-#include <QString>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QStandardItemModel>
-#include <QSortFilterProxyModel>
-#include <QKeyEvent>
-#include <QHeaderView>
-
-#include <pgputil.h>
 #include "common.h"
 #include "showtextdlg.h"
+#include <pgputil.h>
+
+#include <QHeaderView>
+#include <QKeyEvent>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSortFilterProxyModel>
+#include <QStandardItemModel>
+#include <QString>
 
 class KeyViewItem : public QStandardItem
 {

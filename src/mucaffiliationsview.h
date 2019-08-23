@@ -40,4 +40,4 @@ protected:
     virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous);
 };
 
-#endif
+#endif // MUCAFFILIATIONSVIEW_H

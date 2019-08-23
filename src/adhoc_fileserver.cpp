@@ -17,12 +17,13 @@
  *
  */
 
-#include <QDir>
-#include <QFileInfo>
+#include "adhoc_fileserver.h"
 
 #include "psiaccount.h"
-#include "adhoc_fileserver.h"
 #include "xmpp_xdata.h"
+
+#include <QDir>
+#include <QFileInfo>
 
 using namespace XMPP;
 
