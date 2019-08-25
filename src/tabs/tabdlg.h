@@ -86,6 +86,8 @@ public:
     void setTabIcon(QWidget *,const QIcon &);
     TabbableWidget* getCurrentTab() const;
 
+    bool isTabPinned(QWidget *page);
+
 protected:
     void setShortcuts();
 
@@ -121,6 +123,7 @@ public slots:
     void sendTabTo(TabbableWidget*, TabDlg *);
     void tabCloseRequested(int i);
     void hideTab(TabbableWidget*);
+    void pinTab(TabbableWidget *tab);
     void hideCurrentTab();
     void hideAllTab();
 
