@@ -62,6 +62,7 @@
 #include "statusdlg.h"
 #include "stretchwidget.h"
 #include "tabcompletion.h"
+#include "tabdlg.h"
 #include "textutil.h"
 #include "typeaheadfind.h"
 #include "urlobject.h"
@@ -253,6 +254,7 @@ public:
     int rosterSize;
 public:
     bool trackBar;
+    bool tabmode;
 
 public:
     ChatEdit* mle() const { return dlg->ui_.mle->chatEdit(); }
@@ -838,6 +840,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
     setAcceptDrops(true);
 
     ui_.setupUi(this);
+    d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
     ui_.lb_ident->setAccount(account());
     ui_.lb_ident->setShowJid(false);
     ui_.log->setSessionData(true, false, jid(), jid().full()); //FIXME change conference name
@@ -916,6 +919,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
                     d->doFileShare(refs, desc);
                 });
             });
+        }
+        else if (name == "gchat_pin_tab") {
+            connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         }
     }
 
@@ -2442,6 +2448,10 @@ void GCMainDlg::buildMenu()
     d->pm_settings->addAction(d->actions->action("gchat_icon"));
     d->pm_settings->addAction(d->act_nick);
     d->pm_settings->addAction(d->act_bookmark);
+    if (PsiOptions::instance()->getOption("options.ui.tabs.multi-rows").toBool() && d->tabmode) {
+        d->pm_settings->addSeparator();
+        d->pm_settings->addAction(d->actions->action("gchat_pin_tab"));
+    }
 #ifdef PSI_PLUGINS
     if(!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         d->pm_settings->addSeparator();

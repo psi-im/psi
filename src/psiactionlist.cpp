@@ -438,6 +438,7 @@ void PsiActionList::Private::createChat()
         IconAction *actCompact = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
         IconAction *actActiveContacts = new IconAction (tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
         IconAction *actShareFiles = new IconAction (tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
+        IconAction *actPinTab = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0 , this);
 
         ActionNames actions[] = {
             { "chat_clear",  actClear  },
@@ -453,6 +454,7 @@ void PsiActionList::Private::createChat()
             { "chat_compact", actCompact   },
             { "chat_active_contacts", actActiveContacts   },
             { "chat_share_files", actShareFiles  },
+            { "chat_pin_tab", actPinTab },
             { "", nullptr }
         };
 
@@ -471,6 +473,7 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actConfigure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("Configure Room"), 0, this);
         IconAction *actIcon = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
         IconAction *actShareFiles = new IconAction (tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
+        IconAction *actPinTab = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0 , this);
 
         ActionNames actions[] = {
             { "gchat_clear",  actClear  },
@@ -479,6 +482,7 @@ void PsiActionList::Private::createGroupchat()
             { "gchat_configure", actConfigure   },
             { "gchat_icon", actIcon   },
             { "gchat_share_files", actShareFiles   },
+            { "gchat_pin_tab",   actPinTab    },
             { "", nullptr }
         };
 

@@ -26,6 +26,7 @@
 #include "psitooltip.h"
 #include "shortcutmanager.h"
 #include "stretchwidget.h"
+#include "tabdlg.h"
 #include "textutil.h"
 #include "userlist.h"
 #include "xmpp_caps.h"
@@ -509,6 +510,9 @@ void PsiChatDlg::initToolButtons()
                 });
             });
         }
+        else if (name == "chat_pin_tab") {
+            connect(action, SIGNAL(triggered()), SLOT(pinTab()));
+        }
     }
 
     list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
@@ -871,6 +875,11 @@ void PsiChatDlg::buildMenu()
 
     pm_settings_->addAction(actions_->action("chat_info"));
     pm_settings_->addAction(actions_->action("chat_history"));
+    auto dlg = getManagingTabDlg();
+    if (dlg && PsiOptions::instance()->getOption("options.ui.tabs.multi-rows").toBool()) {
+        pm_settings_->addAction(actions_->action("chat_pin_tab"));
+
+    } // else it's not tabbed dialog
 #ifdef PSI_PLUGINS
     if(!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
         pm_settings_->addSeparator();
