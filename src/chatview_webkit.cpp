@@ -24,6 +24,7 @@
 #include "chatviewtheme.h"
 #include "chatviewthemeprovider.h"
 #include "desktoputil.h"
+#include "filesharingmanager.h"
 #include "jsutil.h"
 #include "messageview.h"
 #include "msgmle.h"
@@ -95,6 +96,41 @@ public:
         QString s(richText);
         s.replace(mIcon, "\\1</icon>");
         return s;
+    }
+
+    QString prepareShares(const QString &msg)
+    {
+        static QRegularExpression re("<share id=\"([^\"]+)\"/>");
+        int post = 0;
+        QString ret;
+        auto it = re.globalMatch(msg);
+        while (it.hasNext()) {
+            auto match = it.next();
+            auto idStr = match.captured(1);
+            auto id = QByteArray::fromHex(idStr.toLatin1());
+            auto md = account_->psi()->fileSharingManager()->metadata(id);
+            ret.append(msg.midRef(post, match.capturedStart(0) - post));
+            if (md.isValid()) {
+                QString attrs;
+                attrs += QString(" id=\"%1\"").arg(idStr);
+                auto vm = md.toMap();
+                auto metaType = vm["type"].toString();
+                attrs += QString(" type=\"%1\"").arg(metaType);
+                if (metaType.startsWith(QLatin1String("audio/"))) {
+                    auto hg = vm.value(QLatin1String("histogram")).value<QList<float>>();
+                    if (hg.count()) {
+                        QStringList l;
+                        std::transform(hg.constBegin(), hg.constEnd(), std::back_inserter(l),
+                                       [](float f){ return QString::number(int(f * 100)); });
+                        attrs += QString(" histogram=\"%1\"").arg(l.join(','));
+                    }
+                }
+                ret.append(QString("<share%1/>").arg(attrs));
+            }
+            post = match.capturedEnd(0);
+        }
+        ret.append(msg.midRef(post));
+        return ret;
     }
 };
 
@@ -604,6 +640,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
     }
     it = vm.find(QLatin1String("message"));
     if (it != vm.end()) {
+        *it = d->prepareShares(it.value().toString());
         *it = ChatViewPrivate::closeIconTags(it.value().toString());
     }
 

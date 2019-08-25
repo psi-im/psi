@@ -137,6 +137,17 @@ private:
     QStringList _log;
 };
 
+/**
+ * @brief The FileSharingManager class
+ * magic class for sharing files.
+ *
+ * Probably this thing requires some refactoring to follow SOLID principles.
+ * We have next components:
+ *  - publishing user content
+ *  - handle share:// scheme
+ *  - download shares
+ *  - cache data
+ */
 class FileSharingManager : public QObject
 {
     Q_OBJECT
@@ -173,11 +184,14 @@ public:
     // returns false if unable to accept automatically
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
 
+    // accept public internet uri and returns it's type
     static SourceType sourceType(const QString &uri);
     static QStringList sortSourcesByPriority(const QStringList &uris);
 #ifdef HAVE_WEBSERVER
     bool downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse* res);
 #endif
+    // accepts share id and returns its metadata
+    QVariant metadata(const QByteArray &shareId);
 signals:
 
 public slots:
@@ -192,11 +206,11 @@ class FileSharingDeviceOpener : public ITEMediaOpener
 {
     PsiAccount *acc;
 
-    QByteArray urlToSourceId(const QUrl &url);
 public:
     inline FileSharingDeviceOpener(PsiAccount *acc) :
         acc(acc){}
 
+    static QByteArray urlToSourceId(const QUrl &url);
     QIODevice *open(QUrl &url) override;
     void close(QIODevice *dev) override;
     QVariant metadata(const QUrl &url) override;

@@ -351,8 +351,12 @@ function initPsiTheme() {
                     var share = shares[li];
                     var info = ""; // TODO
                     var source = share.getAttribute("id");
-                    var type = ""; // TODO
-                    var player = chat.util.createHtmlNode(`<div class="psi-audio-msg">
+                    var type = share.getAttribute("type");
+                    if (type.startsWith("audio")) {
+                        var hg = share.getAttribute("histogram");
+                        if (hg && hg.length)
+                            hg.split(",").forEach(v => { info += `<b style="height:${v}%"></b>` });
+                        var playerFragment = chat.util.createHtmlNode(`<div class="psi-audio-msg">
   <div class="psi-am-play-btn"><div class="psi-am-play-sign psi-am-sign-play"></div></div>
   <div class="psi-am-info">
   <div>
@@ -364,8 +368,13 @@ function initPsiTheme() {
     <source src="/psi/account/${session.account}/sharedfile/${source}" type="${type}">
   </audio>
 </div>`);
-                    share.parentNode.insertBefore(player, share.nextSibling);
-                    //new AudioMessage(player);
+                        var player = playerFragment.firstChild;
+                        if (share.nextSibling)
+                            share.parentNode.insertBefore(playerFragment, share.nextSibling);
+                        else
+                            share.parentNode.appendChild(playerFragment);
+                        new AudioMessage(player);
+                    }
                 }
             },
 

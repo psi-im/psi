@@ -1352,6 +1352,40 @@ QStringList FileSharingManager::sortSourcesByPriority(const QStringList &uris)
     return sorted.values();
 }
 
+
+QVariant FileSharingManager::metadata(const QByteArray &sourceId)
+{
+    QVariantMap ret;
+    if (sourceId.isEmpty())
+        return QVariant();
+
+    FileCacheItem *item = getCacheItem(sourceId, true, nullptr);
+    if (item) {
+        ret.insert(QString::fromLatin1("type"), item->metadata().value(QString::fromLatin1("type")));
+        QByteArray hg = item->metadata().value(QString::fromLatin1("histogram")).toByteArray();
+        if (hg.isEmpty())
+            return ret;
+
+        // so it looks like a voice message
+        QList<float> iteHg;
+        iteHg.reserve(hg.size());
+        for (quint8 b: hg) {
+            iteHg.append(float(b) / 255.0);
+        }
+
+        ret.insert(QString::fromLatin1("histogram"), QVariant::fromValue<QList<float>>(iteHg));
+        return ret;
+    }
+
+    auto file = registeredSourceFile(sourceId);
+    ret.insert("type", file.mediaType()); // TODO what if it's not there?
+    if (file.isValid() && file.audioHistogram().bars.count()) {
+        ret.insert(QString::fromLatin1("histogram"), QVariant::fromValue<QList<float>>(file.audioFloatHistogram()));
+    }
+
+    return ret;
+}
+
 #ifdef HAVE_WEBSERVER
 // returns <parsed,list of start/size>
 static std::tuple<bool,QList<QPair<qint64,qint64>>> parseHttpRangeRequest(qhttp::server::QHttpRequest* req,
@@ -1491,7 +1525,10 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         file->open(QIODevice::ReadOnly);
         qint64 size = fi.size();
         if (isRanged) {
-            size = (requestedStart + requestedSize) > fi.size()? fi.size() - requestedStart : requestedSize;
+            if (requestedSize)
+                size = (requestedStart + requestedSize) > fi.size()? fi.size() - requestedStart : requestedSize;
+            else
+                size = fi.size() - requestedStart;
             file->seek(requestedStart);
         }
         // TODO If-Modified-Since
@@ -1543,6 +1580,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         auto const file = downloader->jingleFile();
         setupHeaders(file.hasSize()? qint64(file.size()) : -1, file.mediaType(),
                      file.date(), downloader->isRanged(), start, size);
+        res->setProperty("headers", true);
 
         bool *disconnected = new bool(false);
         connect(downloader, &FileShareDownloader::readyRead, res, [downloader, res]() {
@@ -1570,6 +1608,13 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
                 delete disconnected;
             }
         });
+    });
+
+    connect(downloader, &FileShareDownloader::finished, this, [this, downloader, setupHeaders, res](){
+        if (!res->property("headers").toBool()) {
+            res->setStatusCode(qhttp::ESTATUS_BAD_GATEWAY); // something finnished with errors quite early
+            res->end();
+        }
     });
 
     downloader->open();
@@ -1639,53 +1684,8 @@ void FileSharingDeviceOpener::close(QIODevice *dev)
 
 QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 {
-    QVariantMap ret;
     QByteArray sourceId = urlToSourceId(url);
-    if (sourceId.isEmpty())
-        return ret;
-
-    FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, nullptr);
-    if (item) {
-        ret.insert(QString::fromLatin1("type"), item->metadata().value(QString::fromLatin1("type")));
-        QByteArray hg = item->metadata().value(QString::fromLatin1("histogram")).toByteArray();
-        if (hg.isEmpty())
-            return ret;
-
-        // so it looks like a voice message
-        ITEAudioController::Histogram iteHg;
-        iteHg.reserve(hg.size());
-        for (quint8 b: hg) {
-            iteHg.append(float(b) / 255.0);
-        }
-
-        ret.insert(QString::fromLatin1("histogram"),
-                  QVariant::fromValue<ITEAudioController::Histogram>(iteHg));
-        return ret;
-    }
-
-    auto file = acc->psi()->fileSharingManager()->registeredSourceFile(sourceId);
-    ret.insert("type", file.mediaType()); // TODO what if it's not there?
-    if (file.isValid() && file.audioHistogram().bars.count()) {
-        auto as = file.audioHistogram();
-        std::function<float(quint32)> normalizer;
-        switch (as.coding) {
-        case Jingle::FileTransfer::File::Histogram::U8:  normalizer = [](quint32 v){ return quint8(v) / 255.0f;                      }; break;
-        case Jingle::FileTransfer::File::Histogram::S8:  normalizer = [](quint32 v){ return std::fabs(qint8(v) / 128.0f);            }; break;
-        case Jingle::FileTransfer::File::Histogram::U16: normalizer = [](quint32 v){ return quint16(v) / float(1 << 16);             }; break;
-        case Jingle::FileTransfer::File::Histogram::S16: normalizer = [](quint32 v){ return std::fabs(qint16(v) / float(1 << 15));   }; break;
-        case Jingle::FileTransfer::File::Histogram::U32: normalizer = [](quint32 v){ return quint32(v) / float(quint64(1) << 32);           }; break;
-        case Jingle::FileTransfer::File::Histogram::S32: normalizer = [](quint32 v){ return std::fabs(qint32(v) / float(quint64(1) << 31)); }; break;
-        }
-        if (normalizer) {
-            ITEAudioController::Histogram hg;
-            std::transform(as.bars.begin(), as.bars.end(), std::back_inserter(hg), normalizer);
-            ret.insert(QString::fromLatin1("histogram"),
-                      QVariant::fromValue<ITEAudioController::Histogram>(hg));
-            return ret;
-        }
-    }
-
-    return ret;
+    return acc->psi()->fileSharingManager()->metadata(sourceId);
 }
 #endif
 
