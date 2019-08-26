@@ -305,7 +305,8 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
         }
     }
 
-    return result + preserveOriginalObjectReplacementCharacters(work, queue);
+    result += preserveOriginalObjectReplacementCharacters(work, queue);
+    return result;
 }
 
 /**
