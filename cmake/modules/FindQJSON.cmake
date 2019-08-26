@@ -28,7 +28,7 @@
 if (QJSON_INCLUDE_DIR AND QJSON_LIBRARY)
     # in cache already
     set(QJSON_FIND_QUIETLY TRUE)
-endif ()
+endif()
 
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
@@ -37,7 +37,7 @@ if ( UNIX AND NOT( APPLE OR CYGWIN ) )
         ${PC_QJSON_CFLAGS}
         ${PC_QJSON_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
 set ( LIBINCS 
     parser.h
@@ -53,7 +53,7 @@ find_path(
     ""
     if ( NOT ${WIN32} )
     qjson
-    endif ( NOT ${WIN32} )
+    endif()
 )
 
 find_library(
@@ -75,7 +75,7 @@ find_package_handle_standard_args(
 if ( QJSON_FOUND )
     set ( QJSON_LIBRARIES ${QJSON_LIBRARY} )
     set ( QJSON_INCLUDE_DIRS ${QJSON_INCLUDE_DIR} )
-endif ( QJSON_FOUND )
+endif()
 
 mark_as_advanced( QJSON_INCLUDE_DIR QJSON_LIBRARY )
 

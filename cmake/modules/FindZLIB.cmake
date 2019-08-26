@@ -31,15 +31,15 @@ endif()
 if( ZLIB_INCLUDE_DIR AND ZLIB_LIBRARY )
     # in cache already
     set(ZLIB_FIND_QUIETLY TRUE)
-endif( ZLIB_INCLUDE_DIR AND ZLIB_LIBRARY )
+endif()
 
 if( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_ZLIB QUIET zlib )
     if( PC_ZLIB_FOUND )
         set( ZLIB_DEFINITIONS ${PC_ZLIB_CFLAGS} ${PC_ZLIB_CFLAGS_OTHER} )
-    endif( PC_ZLIB_FOUND )
-endif( UNIX AND NOT( APPLE OR CYGWIN ) )
+    endif()
+endif()
 
 set( ZLIB_ROOT "" CACHE STRING "Path to libidn library" )
 
@@ -75,6 +75,6 @@ find_package_handle_standard_args(
 if( ZLIB_FOUND )
     set( ZLIB_LIBRARIES ${ZLIB_LIBRARY} )
     set( ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR} )
-endif( ZLIB_FOUND )
+endif()
 
 mark_as_advanced( ZLIB_INCLUDE_DIR ZLIB_LIBRARY )
