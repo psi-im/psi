@@ -20,6 +20,8 @@
 #include <QTextCursor>
 #include <QTextDocument>
 
+#include <functional>
+
 class QTextEdit;
 class ITEMediaOpener;
 
