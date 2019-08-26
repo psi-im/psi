@@ -37,7 +37,7 @@ if ( UNIX AND NOT( APPLE OR CYGWIN ) )
         ${PC_MINIZIP_CFLAGS}
         ${PC_MINIZIP_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
 set ( LIBINCS 
     unzip.h
@@ -53,7 +53,7 @@ find_path(
     ""
     if ( NOT ${WIN32} )
     minizip
-    endif ( NOT ${WIN32} )
+    endif()
 )
 
 find_library(
@@ -75,7 +75,7 @@ find_package_handle_standard_args(
 if ( MINIZIP_FOUND )
     set ( MINIZIP_LIBRARIES ${MINIZIP_LIBRARY} )
     set ( MINIZIP_INCLUDE_DIRS ${MINIZIP_INCLUDE_DIR} )
-endif ( MINIZIP_FOUND )
+endif()
 
 mark_as_advanced( MINIZIP_INCLUDE_DIR MINIZIP_LIBRARY )
 

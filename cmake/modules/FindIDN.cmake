@@ -31,15 +31,15 @@ endif()
 if( IDN_INCLUDE_DIR AND IDN_LIBRARY )
     # in cache already
     set(IDN_FIND_QUIETLY TRUE)
-endif( IDN_INCLUDE_DIR AND IDN_LIBRARY )
+endif()
 
 if( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_IDN QUIET libidn )
     if( PC_IDN_FOUND )
         set( IDN_DEFINITIONS ${PC_IDN_CFLAGS} ${PC_IDN_CFLAGS_OTHER} )
-    endif( PC_IDN_FOUND )
-endif( UNIX AND NOT( APPLE OR CYGWIN ) )
+    endif()
+endif()
 
 set( IDN_ROOT "" CACHE STRING "Path to libidn library" )
 
@@ -75,6 +75,6 @@ find_package_handle_standard_args(
 if( IDN_FOUND )
     set( IDN_LIBRARIES ${IDN_LIBRARY} )
     set( IDN_INCLUDE_DIRS ${IDN_INCLUDE_DIR} )
-endif( IDN_FOUND )
+endif()
 
 mark_as_advanced( IDN_INCLUDE_DIR IDN_LIBRARY )

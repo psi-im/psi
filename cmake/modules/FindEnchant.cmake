@@ -28,7 +28,7 @@
 if (Enchant_INCLUDE_DIR AND Enchant_LIBRARY)
     # in cache already
     set(Enchant_FIND_QUIETLY TRUE)
-endif ()
+endif()
 
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
@@ -37,7 +37,7 @@ if ( UNIX AND NOT( APPLE OR CYGWIN ) )
         ${PC_Enchant_CFLAGS}
         ${PC_Enchant_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
 set ( LIBINCS 
     enchant.h
@@ -53,7 +53,7 @@ find_path(
     ""
     if ( NOT ${WIN32} )
     enchant
-    endif ( NOT ${WIN32} )
+    endif ()
 )
 
 find_library(
@@ -78,7 +78,7 @@ if ( Enchant_FOUND )
     if(PC_Enchant_FOUND)
         set ( Enchant_VERSION ${PC_Enchant_VERSION} )
     endif()
-endif ( Enchant_FOUND )
+endif()
 
 if( Enchant_VERSION )
     mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY Enchant_VERSION )
