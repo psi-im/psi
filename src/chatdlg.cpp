@@ -355,18 +355,9 @@ void ChatDlg::activated()
 
 void ChatDlg::dropEvent(QDropEvent* event)
 {
-    QStringList files;
-    if (account()->loggedIn() && event->mimeData()->hasUrls()) {
-        foreach(QUrl url, event->mimeData()->urls()) {
-            if (!url.toLocalFile().isEmpty()) {
-                files << url.toLocalFile();
-            }
-        }
-    }
-
-    if (!files.isEmpty()) {
-        account()->sendFiles(jid(), files);
-    }
+    account()->shareFiles(this, event->mimeData(), [this](const QList<Reference> &refs, const QString &desc){
+        doFileShare(refs, desc);
+    });
 }
 
 void ChatDlg::dragEnterEvent(QDragEnterEvent* event)

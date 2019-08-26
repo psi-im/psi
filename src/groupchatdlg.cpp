@@ -1641,6 +1641,10 @@ void GCMainDlg::dropEvent(QDropEvent *e)
             m.setMUCPassword(d->password);
         m.setTimeStamp(QDateTime::currentDateTime());
         account()->dj_sendMessage(m);
+    } else {
+        account()->shareFiles(this, e->mimeData(), [this](const QList<Reference> &refs, const QString &desc){
+            d->doFileShare(refs, desc);
+        });
     }
 }
 
