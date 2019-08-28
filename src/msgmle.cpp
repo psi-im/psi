@@ -26,6 +26,7 @@
 #include "shortcutmanager.h"
 #include "spellchecker/spellchecker.h"
 #include "spellchecker/spellhighlighter.h"
+#include "textutil.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
@@ -524,7 +525,25 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
         emit fileSharingRequested(source);
         return;
     }
+//dirty hacks to make text drag-n-drop work in OS Linux with Qt>=5.11
+#if defined(Q_OS_LINUX) && (QT_VERSION >= QT_VERSION_CHECK(5,11,0))
+    if (source->hasText()) {
+        textCursor().insertText(source->data("text/plain"));
+        return;
+    }
+    if (source->hasHtml()) {
+        textCursor().insertText(TextUtil::rich2plain(source->html()));
+        return;
+    }
+#endif
     QTextEdit::insertFromMimeData(source);
+}
+
+bool ChatEdit::canInsertFromMimeData(const QMimeData *source) const
+{
+    return (source->hasText() || source->hasHtml()
+            || source->hasUrls() || source->hasImage()
+            || QTextEdit::canInsertFromMimeData(source));
 }
 
 void ChatEdit::updateBackground() {

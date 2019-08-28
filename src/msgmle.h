@@ -101,6 +101,7 @@ protected:
     void setShortcuts();
     void setEditText(const QString& text);
     void insertFromMimeData(const QMimeData *source);
+    bool canInsertFromMimeData(const QMimeData *source) const;
 
 private:
     void setOverlayText(int value);
