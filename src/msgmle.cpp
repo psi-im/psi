@@ -521,14 +521,30 @@ void ChatEdit::setEditText(const QString& text)
 
 void ChatEdit::insertFromMimeData(const QMimeData *source)
 {
+    auto obtainSourceText = [source](){
+        if (!source->text().isEmpty())
+            return source->text();
+        else
+            return QString(source->data("text/plain"));
+    };
     if (source->hasImage() || source->hasUrls()) {
+        //Check that source doesn't contains a local files and paste data as a text
+        bool isLocalFile = false;
+        foreach (const QUrl &url, source->urls()) {
+            if (url.isLocalFile())
+                isLocalFile = true;
+        }
+        if(source->hasText() && !isLocalFile) {
+            textCursor().insertText(obtainSourceText());
+            return;
+        }
         emit fileSharingRequested(source);
         return;
     }
 //dirty hacks to make text drag-n-drop work in OS Linux with Qt>=5.11
 #if defined(Q_OS_LINUX) && (QT_VERSION >= QT_VERSION_CHECK(5,11,0))
     if (source->hasText()) {
-        textCursor().insertText(source->data("text/plain"));
+        textCursor().insertText(obtainSourceText());
         return;
     }
     if (source->hasHtml()) {
