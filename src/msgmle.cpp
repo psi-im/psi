@@ -524,8 +524,7 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
     auto obtainSourceText = [source](){
         if (!source->text().isEmpty())
             return source->text();
-        else
-            return QString::fromLocal8Bit(source->data("text/plain"));
+        return QString::fromLocal8Bit(source->data("text/plain"));
     };
     if (source->hasImage() || source->hasUrls()) {
         //Check that source doesn't contains a local files and paste data as a text
