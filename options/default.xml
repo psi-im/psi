@@ -499,6 +499,9 @@ QLineEdit#le_status_text {
                 <tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
                 <use-tab-shortcuts type="bool">true</use-tab-shortcuts>
                 <show-tab-buttons type="bool">true</show-tab-buttons>
+                <multi-rows comment="Use multi rows mode for chat tab bar" type="bool">false</multi-rows>
+                <current-index-at-bottom comment="Move current row to bottom in multi-row mode" type="bool">true</current-index-at-bottom>
+                <disable-wheel-scroll type="bool">false</disable-wheel-scroll>
             </tabs>
         </ui>
         <shortcuts comment="Shortcuts">

@@ -39,7 +39,11 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
         : QWidget(parent) {
     tabsPosition_ = QTabWidget::East; // impossible => uninitialised state
     tabBar_ = new PsiTabBar(this);
-    tabBar_->setUsesScrollButtons(true);
+    bool multiRow = PsiOptions::instance()->getOption("options.ui.tabs.multi-rows", true).toBool();
+    bool currentIndexAlwaysAtBottom  = PsiOptions::instance()->getOption("options.ui.tabs.current-index-at-bottom", true).toBool();
+    tabBar_->setMultiRow(multiRow);
+    tabBar_->setUsesScrollButtons(!multiRow);
+    tabBar_->setCurrentIndexAlwaysAtBottom(currentIndexAlwaysAtBottom);
     layout_ = new QVBoxLayout(this);
     layout_->setMargin(0);
     layout_->setSpacing(0);
@@ -56,19 +60,21 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
     downButton_ = new QToolButton(this);
     downButton_->setMinimumSize(3,3);
     downButton_->setFixedWidth(buttonwidth);
-    downButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+    downButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     menu_ = new QMenu(this);
     downButton_->setMenu(menu_);
     downButton_->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
     connect(menu_, SIGNAL(aboutToShow()), SLOT(menu_aboutToShow()));
     connect(menu_, SIGNAL(triggered(QAction*)), SLOT(menu_triggered(QAction*)));
     barLayout_->addWidget(downButton_);
+    barLayout_->setAlignment(downButton_, Qt::AlignBottom);
 
     closeButton_ = new QToolButton(this);
     closeButton_->setMinimumSize(3,3);
     closeButton_->setFixedWidth(buttonwidth);
-    closeButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+    closeButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     barLayout_->addWidget(closeButton_);
+    barLayout_->setAlignment(closeButton_, Qt::AlignBottom);
     closeButton_->setText("x");
     downButton_->setArrowType(Qt::DownArrow);
     downButton_->setPopupMode(QToolButton::InstantPopup);
@@ -77,20 +83,22 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
     setTabPosition(QTabWidget::North);
     setLooks();
 
-    if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-close-buttons").toBool()){
-        tabBar_->setTabsClosable(false);
-    }
     if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-buttons").toBool()){
         closeButton_->hide();
         downButton_->hide();
     }
-    connect(tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
-    connect(tabBar_, SIGNAL(mouseMiddleClickTab(int)), SLOT(mouseMiddleClickTab(int)));
-    connect(tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
-    connect(tabBar_, SIGNAL( contextMenu(QContextMenuEvent*,int)), SLOT( tab_contextMenu(QContextMenuEvent*,int)));
+    if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-close-buttons").toBool()){
+        tabBar_->setTabsClosable(false);
+    }
+
+    connect( tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
+    connect( tabBar_, SIGNAL(mouseMiddleClickTab(int)), SLOT(mouseMiddleClickTab(int)));
+    // TabBar::tabRemove must be handled before tab_currentChanged
+    connect( tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
+    connect( tabBar_, SIGNAL( contextMenu(QContextMenuEvent*,int)), SLOT( tab_contextMenu(QContextMenuEvent*,int)));
+    connect( closeButton_, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
     connect(tabBar_, SIGNAL(tabMoved(int,int)),SLOT(widgetMoved(int,int)));
     connect(tabBar_, SIGNAL(tabCloseRequested(int)),SIGNAL(tabCloseRequested(int)));
-    connect(closeButton_, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
 }
 
 void PsiTabWidget::setCloseIcon(const QIcon& icon) {
@@ -181,6 +189,7 @@ void PsiTabWidget::addTab(QWidget *widget, QString name, const QIcon &icon)
         tabBar_->addTab(name);
     setLooks();
     showPage(currentPage());
+    tabBar_->layoutTabs();
 }
 
 void PsiTabWidget::setLooks()
@@ -188,6 +197,14 @@ void PsiTabWidget::setLooks()
     const QString css = PsiOptions::instance()->getOption("options.ui.chat.css").toString();
     if (!css.isEmpty()) {
         setStyleSheet(css);
+    }
+}
+
+void PsiTabWidget::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (tabBar_->multiRow()) {
+        tabBar_->layoutTabs();
     }
 }
 
@@ -216,6 +233,27 @@ void PsiTabWidget::showPageDirectly(QWidget* widget) {
             return;
         }
     }
+}
+
+void PsiTabWidget::setPagePinned(QWidget *page, bool pinned)
+{
+    foreach (QWidget *w, widgets_) {
+        if (w == page) {
+            tabBar_->setTabPinned(widgets_.indexOf(w), pinned);
+            showPageDirectly(page);
+            break;
+        }
+    }
+}
+
+bool PsiTabWidget::isPagePinned(QWidget *page)
+{
+    foreach (QWidget *w, widgets_) {
+        if(w == page) {
+            return tabBar_->isTabPinned(widgets_.indexOf(w));
+        }
+    }
+    return false;
 }
 
 /**
@@ -362,7 +400,12 @@ void PsiTabWidget::setTabButtonsShown(bool shown) {
  * Enable/disable dragging of tabs
  */
 void PsiTabWidget::setDragsEnabled(bool enabled) {
-    ((PsiTabBar *)tabBar_)->setDragsEnabled(enabled);
+    static_cast<PsiTabBar *>(tabBar_)->setDragsEnabled(enabled);
+}
+
+void PsiTabWidget::setTabBarUpdateEnabled(bool b)
+{
+    tabBar_->setUpdateEnabled(b);
 }
 
 void PsiTabWidget::widgetMoved(int from, int to)

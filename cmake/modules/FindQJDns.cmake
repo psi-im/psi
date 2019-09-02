@@ -31,7 +31,7 @@ endif()
 if (QJDns_INCLUDE_DIR AND QJDns_LIBRARY)
     # in cache already
     set(QJDns_FIND_QUIETLY TRUE)
-endif ()
+endif()
 
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
@@ -40,7 +40,7 @@ if ( UNIX AND NOT( APPLE OR CYGWIN ) )
         ${PC_QJDns_CFLAGS}
         ${PC_QJDns_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
 set ( LIBINCS 
     qjdns.h
@@ -60,7 +60,7 @@ find_path(
     ""
     if( NOT WIN32 )
         jdns
-    endif( NOT WIN32 )
+    endif()
 )
 set(QJDns_NAMES
     qjdns${D}
@@ -85,6 +85,6 @@ find_package_handle_standard_args(
 if ( QJDns_FOUND )
     set ( QJDns_LIBRARIES ${QJDns_LIBRARY} )
     set ( QJDns_INCLUDE_DIRS ${QJDns_INCLUDE_DIR} )
-endif ( QJDns_FOUND )
+endif()
 
 mark_as_advanced( QJDns_INCLUDE_DIR QJDns_LIBRARY )

@@ -265,6 +265,11 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
             tabMenu_->addMenu(sendTo);
         }
 
+        QAction *p = nullptr;
+        if (PsiOptions::instance()->getOption("options.ui.tabs.multi-rows", true).toBool()) {
+            p = tabMenu_->addAction(tabWidget_->isPagePinned(getTab(tab)) ? tr("Unpin Tab") : tr("Pin Tab"));
+        }
+
         QAction *act = tabMenu_->exec(pos);
         if (!act)
             return;
@@ -276,6 +281,9 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
         }
         else if(act == h) {
             hideTab(getTab(tab));
+        }
+        else if (p && act == p) {
+            pinTab(getTab(tab));
         }
         else {
             TabDlg* target = sentTos[act];
@@ -418,6 +426,11 @@ void TabDlg::hideCurrentTab()
 void TabDlg::hideTab(TabbableWidget* tab)
 {
     closeTab(tab, false);
+}
+
+void TabDlg::pinTab(TabbableWidget* tab)
+{
+    tabWidget_->setPagePinned(tab, !tabWidget_->isPagePinned(tab));
 }
 
 void TabDlg::hideAllTab()
@@ -873,6 +886,11 @@ void TabDlg::tabCloseRequested(int i)
 void TabDlg::setTabIcon(QWidget *widget,const QIcon &icon)
 {
     tabWidget_->setTabIcon(widget, icon);
+}
+
+bool TabDlg::isTabPinned(QWidget *page)
+{
+    return tabWidget_->isPagePinned(page);
 }
 
 TabbableWidget* TabDlg::getCurrentTab() const
