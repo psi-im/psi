@@ -32,30 +32,28 @@ if(PsiPluginsApi_INCLUDE_DIR)
 endif()
 
 if(PLUGINS_ROOT_DIR)
-    get_filename_component(
-        ABS_PLUGINS_ROOT_DIR
-        "${PLUGINS_ROOT_DIR}"
-        ABSOLUTE
-    )
+    get_filename_component(ABS_PLUGINS_ROOT_DIR "${PLUGINS_ROOT_DIR}" ABSOLUTE)
 endif()
-get_filename_component(
-    ABS_CURRENT_DIR
-    "${CMAKE_CURRENT_LIST_DIR}/../.."
-    ABSOLUTE
-)
+get_filename_component(ABS_CURRENT_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+get_filename_component(ABS_PARENT_DIR "${ABS_CURRENT_DIR}/.." ABSOLUTE)
+
+if(CMAKE_CROSSCOMPILING OR CMAKE_CROSS_COMPILING OR (EXISTS "${ABS_PLUGINS_ROOT_DIR}/include"))
+    set(SEARCH_FLAG NO_CMAKE_SYSTEM_PATH CMAKE_FIND_ROOT_PATH_BOTH)
+endif()
 
 find_path(
     PsiPluginsApi_DIR
     NAMES
     "variables.cmake"
     PATHS
-    ${ABS_CURRENT_DIR}
     ${ABS_PLUGINS_ROOT_DIR}/cmake/modules
+    ${ABS_CURRENT_DIR}
+    ${ABS_PARENT_DIR}/psi
     PATH_SUFFIXES
     src/plugins/cmake/modules
     share/psi/plugins
     share/psi-plus/plugins
-    CMAKE_FIND_ROOT_PATH_BOTH
+    ${SEARCH_FLAG}
 )
 
 find_path(
@@ -63,13 +61,14 @@ find_path(
     NAMES
     "applicationinfoaccessor.h"
     PATHS
-    ${ABS_CURRENT_DIR}
     ${ABS_PLUGINS_ROOT_DIR}/include
+    ${ABS_CURRENT_DIR}
+    ${ABS_PARENT_DIR}/psi
     PATH_SUFFIXES
     src/plugins/include
-    share/psi/plugins/include
-    share/psi-plus/plugins/include
-    CMAKE_FIND_ROOT_PATH_BOTH
+    include/psi/plugins
+    include/psi-plus/plugins
+    ${SEARCH_FLAG}
 )
 
 include(FindPackageHandleStandardArgs)
