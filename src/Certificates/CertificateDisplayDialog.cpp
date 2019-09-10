@@ -25,7 +25,8 @@
 #include <QPushButton>
 #include <QtCrypto>
 
-CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent) : QDialog(parent)
+CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent)
+: QDialog(parent)
 {
     ui_.setupUi(this);
     setModal(true);
