@@ -12,6 +12,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QStyle>
 #include <QVBoxLayout>
 
 static const QSize imgSize(64,64);
@@ -43,7 +44,8 @@ CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QStri
                              + QString("\n\n%1").arg(CertificateHelpers::resultToString(result, validity));
     QLabel *dlgCaption = new QLabel(infoText, this);
     QLabel *image = new QLabel(this);
-    image->setPixmap(QIcon::fromTheme("dialog-warning").pixmap(imgSize));
+    QIcon icon(QIcon::fromTheme("dialog-warning", qApp->style()->standardIcon(QStyle::SP_MessageBoxWarning)));
+    image->setPixmap(icon.pixmap(imgSize));
     QHBoxLayout *lay = new QHBoxLayout(); //Horizontal layout to add image and caption
     lay->addWidget(image);
     lay->addWidget(dlgCaption);
