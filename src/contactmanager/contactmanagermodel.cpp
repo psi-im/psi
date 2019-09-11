@@ -198,6 +198,8 @@ Qt::SortOrder ContactManagerModel::sortOrder = Qt::AscendingOrder;
 
 void ContactManagerModel::sort ( int column, Qt::SortOrder order = Qt::AscendingOrder )
 {
+    if(column < 0)
+        return;
     Role columnRole = roles[column];
     ContactManagerModel::sortRole = columnRole;
     ContactManagerModel::sortOrder = order;
