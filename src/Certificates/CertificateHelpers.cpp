@@ -197,12 +197,7 @@ bool CertificateHelpers::checkCertificate(QCA::TLS* tls, XMPP::QCATLSHandler *tl
             QObject::connect(canceler, SIGNAL(disconnected()), &errorDialog, SLOT(reject()), Qt::AutoConnection);
             QObject::connect(canceler, SIGNAL(reconnecting()), &errorDialog, SLOT(reject()), Qt::AutoConnection);
         }
-        if (errorDialog.exec() == QDialog::Accepted) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return (errorDialog.exec() == QDialog::Accepted);
     }
     else {
         return true;
