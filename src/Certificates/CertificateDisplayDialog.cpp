@@ -25,7 +25,8 @@
 #include <QPushButton>
 #include <QtCrypto>
 
-CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent) : QDialog(parent)
+CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent)
+: QDialog(parent)
 {
     ui_.setupUi(this);
     setModal(true);
@@ -38,14 +39,11 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
         return;
     }
 
-    if (result == QCA::TLS::Valid) {
-        ui_.lb_valid->setText(tr("The certificate is valid."));
-        setLabelStatus(*ui_.lb_valid, true);
-    }
-    else {
-        ui_.lb_valid->setText(tr("The certificate is NOT valid!") + "\n" + QString(tr("Reason: %1.")).arg(CertificateHelpers::resultToString(result, validity)));
-        setLabelStatus(*ui_.lb_valid, false);
-    }
+    bool resultIsValid = result == QCA::TLS::Valid;
+    ui_.lb_valid->setText(resultIsValid ? tr("The certificate is valid.")
+                                        : tr("The certificate is NOT valid!\n")
+                                          + QString(tr("Reason: %1.")).arg(CertificateHelpers::resultToString(result, validity)));
+    setLabelStatus(*ui_.lb_valid, resultIsValid);
 
     QDateTime now = QDateTime::currentDateTime();
     QDateTime notBefore = cert.notValidBefore();
@@ -57,9 +55,8 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
 
     ui_.lb_sn->setText(cert.serialNumber().toString());
 
-    QString str;
     QString direction = qApp->layoutDirection() == Qt::RightToLeft ? "rtl" : "ltr";
-    str += "<table dir=\"" + direction + "\">";
+    QString str = "<table dir=\"" + direction + "\">";
     str += makePropTable(tr("Subject Details:"), cert.subjectInfo());
     str += makePropTable(tr("Issuer Details:"), cert.issuerInfo());
     str += "</table>";
@@ -72,8 +69,8 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
 
 QString CertificateDisplayDialog::makePropTable(const QString &heading, const QCA::CertificateInfo &list)
 {
-    QString str;
-    str += "<tr><td><i>" + heading + "</i><br>";
+
+    QString str = "<tr><td><i>" + heading + "</i><br>";
     str += "<table>";
     str += makePropEntry(QCA::Organization, tr("Organization:"), list);
     str += makePropEntry(QCA::OrganizationalUnit, tr("Organizational unit:"), list);
@@ -105,5 +102,5 @@ QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, co
     if(val.isEmpty())
         return "";
     else
-        return QString("<tr><td><nobr><b>") + name + "</b></nobr></td><td dir=\"ltr\">" + val + "</td></tr>";
+        return QString("<tr><td><nobr><b>%1</b></nobr></td><td dir=\"ltr\">%2</td></tr>").arg(name).arg(val);
 }
