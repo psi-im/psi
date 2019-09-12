@@ -1230,16 +1230,9 @@ void MainWin::buildTrayMenu()
 #ifndef Q_OS_MAC
     if(!d->trayMenu) {
         d->trayMenu = new QMenu(this);
-        QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, [this](){doRecvNextEvent();});
+        QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
         QAction *separator = d->trayMenu->addSeparator();
-        QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, [this](){
-            if(isHidden()) {
-                trayShow();
-            }
-            else {
-                trayHide();
-            }
-        });
+        QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, SLOT(trayHideShow()));
         d->optionsButton->addTo(d->trayMenu);
         d->trayMenu->addMenu(d->statusMenu);
         d->trayMenu->addSeparator();
@@ -1585,15 +1578,10 @@ void MainWin::toggleVisible(bool fromTray)
         Q_UNUSED(fromTray);
         hidden = isHidden() || !isActiveWindow();
 #endif
-        if(hidden) {
-            trayShow();
-        }
-        else {
-            trayHide();
-        }
+        trayHideShow();
     }
     else
-        isHidden() ? trayShow() : trayHide();
+        trayHideShow();
 }
 
 void MainWin::setTrayToolTip(const Status& status, bool, bool)
@@ -1647,6 +1635,16 @@ void MainWin::trayShow()
 void MainWin::trayHide()
 {
     hide();
+}
+
+void MainWin::trayHideShow()
+{
+    if(isHidden()) {
+        trayShow();
+    }
+    else {
+        trayHide();
+    }
 }
 
 void MainWin::updateReadNext(PsiIcon* anim, int amount)
