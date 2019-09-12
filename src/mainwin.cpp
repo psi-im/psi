@@ -112,8 +112,8 @@ public:
 #endif
     int sbState;
     QString nickname;
-    std::unique_ptr<PsiTrayIcon> tray;
-    std::unique_ptr<QMenu> trayMenu;
+    PsiTrayIcon *tray;
+    QMenu *trayMenu;
     QVBoxLayout *vb_roster;
     QSplitter *splitter;
     TabDlg *mainTabs;
@@ -435,8 +435,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #ifdef Q_OS_MAC
     d->trayMenu.reset(d->statusMenu);
     d->trayMenu->setAsDockMenu();
-#else
-    buildTrayMenu();
 #endif
 
     buildStatusMenu(d->statusMenu);
@@ -548,8 +546,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
 MainWin::~MainWin()
 {
-    if(d->tray)
-        d->tray.reset();
+    if(d->tray) {
+        delete d->tray;
+        d->tray = nullptr;
+    }
 
     saveToolbarsState();
 
@@ -777,20 +777,25 @@ void MainWin::setUseDock(bool use)
     }
 
     if (d->tray) {
-        d->tray.reset();
-        d->trayMenu.reset();
+        delete d->tray;
+        d->tray = nullptr;
+        if(d->trayMenu) {
+            delete d->trayMenu;
+            d->trayMenu = nullptr;
+        }
         if(isHidden())
             trayShow();
     }
 
     Q_ASSERT(!d->tray);
     if (use) {
-        d->tray.reset(new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu.get()));
-        connect(d->tray.get(), SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
-        connect(d->tray.get(), SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
+        buildTrayMenu();
+        d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu, this);
+        connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
+        connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
         d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
         setTrayToolTip();
-        connect(d->tray.get(), SIGNAL(doToolTip(QObject *, QPoint)), this, SLOT(doTrayToolTip(QObject *, QPoint)));
+        connect(d->tray, SIGNAL(doToolTip(QObject *, QPoint)), this, SLOT(doTrayToolTip(QObject *, QPoint)));
 
         updateReadNext(d->nextAnim, d->nextAmount);
 
@@ -1223,32 +1228,28 @@ void MainWin::activatedAccOption(PsiAccount* pa, int x)
 void MainWin::buildTrayMenu()
 {
 #ifndef Q_OS_MAC
-    d->trayMenu.reset(new QMenu(this));
-    QAction *nextEvent = new QAction(tr("Receive next event"), this);
-    QAction *hideRestore = new QAction(this);
-    QAction *separator = new QAction(this);
-    separator->setSeparator(true);
-    d->trayMenu->addAction(nextEvent);
-    d->trayMenu->addAction(separator);
-    d->trayMenu->addAction(hideRestore);
-    d->optionsButton->addTo(d->trayMenu.get());
-    d->trayMenu->addMenu(d->statusMenu);
-    d->trayMenu->addSeparator();
-    d->getAction("menu_quit")->addTo(d->trayMenu.get());
-    connect(nextEvent, &QAction::triggered, this, [this](){doRecvNextEvent();});
-    connect(hideRestore, &QAction::triggered, this, [this](){
-        if(isHidden()) {
-            trayShow();
-        }
-        else {
-            trayHide();
-        }
-    });
-    connect(d->trayMenu.get(), &QMenu::aboutToShow, this, [this, hideRestore, nextEvent, separator](){
-        nextEvent->setVisible(d->nextAmount > 0);
-        separator->setVisible(d->nextAmount > 0);
-        hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
-    });
+    if(!d->trayMenu) {
+        d->trayMenu = new QMenu(this);
+        QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, [this](){doRecvNextEvent();});
+        QAction *separator = d->trayMenu->addSeparator();
+        QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, [this](){
+            if(isHidden()) {
+                trayShow();
+            }
+            else {
+                trayHide();
+            }
+        });
+        d->optionsButton->addTo(d->trayMenu);
+        d->trayMenu->addMenu(d->statusMenu);
+        d->trayMenu->addSeparator();
+        d->getAction("menu_quit")->addTo(d->trayMenu);
+        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, separator, hideRestore](){
+            nextEvent->setVisible(d->nextAmount > 0);
+            separator->setVisible(d->nextAmount > 0);
+            hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
+        });
+    }
 #endif
 }
 
@@ -1706,9 +1707,8 @@ void MainWin::updateTray()
         d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
     }
 
-    if(!d->trayMenu)
-        buildTrayMenu();
-    d->tray->setContextMenu(d->trayMenu.get());
+    buildTrayMenu();
+    d->tray->setContextMenu(d->trayMenu);
 }
 
 void MainWin::doRecvNextEvent()
@@ -1725,7 +1725,7 @@ void MainWin::statusClicked(int x)
 
 PsiTrayIcon *MainWin::psiTrayIcon()
 {
-    return d->tray.get();
+    return d->tray;
 }
 
 void MainWin::numAccountsChanged()
