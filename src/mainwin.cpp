@@ -1578,7 +1578,7 @@ void MainWin::toggleVisible(bool fromTray)
         Q_UNUSED(fromTray);
         hidden = isHidden() || !isActiveWindow();
 #endif
-        trayHideShow();
+        hidden ? trayShow() : trayHide();
     }
     else
         trayHideShow();
