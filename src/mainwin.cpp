@@ -433,7 +433,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     d->optionsMenu = new QMenu(tr("General"), this);
     d->optionsMenu->setObjectName("optionsMenu");
 #ifdef Q_OS_MAC
-    d->trayMenu.reset(d->statusMenu);
+    d->trayMenu = d->statusMenu;
     d->trayMenu->setAsDockMenu();
 #endif
 
