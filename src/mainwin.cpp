@@ -432,10 +432,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
     d->optionsMenu = new QMenu(tr("General"), this);
     d->optionsMenu->setObjectName("optionsMenu");
-#ifdef Q_OS_MAC
-    d->trayMenu = d->statusMenu;
-    d->trayMenu->setAsDockMenu();
-#endif
 
     buildStatusMenu(d->statusMenu);
 #ifdef Q_OS_LINUX
@@ -1227,11 +1223,20 @@ void MainWin::activatedAccOption(PsiAccount* pa, int x)
 
 void MainWin::buildTrayMenu()
 {
-#ifndef Q_OS_MAC
     if(!d->trayMenu) {
         d->trayMenu = new QMenu(this);
         QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
         QAction *separator = d->trayMenu->addSeparator();
+#ifdef Q_OS_MAC
+        d->trayMenu->addActions(d->statusMenu->actions());
+        d->trayMenu->addSeparator();
+        d->optionsButton->addTo(d->trayMenu);
+        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, separator]() {
+            nextEvent->setVisible(d->nextAmount > 0);
+            separator->setVisible(d->nextAmount > 0);
+        });
+        d->trayMenu->setAsDockMenu();
+#else
         QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, SLOT(trayHideShow()));
         d->optionsButton->addTo(d->trayMenu);
         d->trayMenu->addMenu(d->statusMenu);
@@ -1242,8 +1247,8 @@ void MainWin::buildTrayMenu()
             separator->setVisible(d->nextAmount > 0);
             hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
         });
-    }
 #endif
+    }
 }
 
 void MainWin::setTrayToolTip()
