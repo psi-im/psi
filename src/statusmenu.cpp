@@ -60,6 +60,7 @@ void StatusMenu::fill()
             addSeparator();
             addStatus(XMPP::Status::Invisible);
         }
+        addStatus(XMPP::Status::Offline);
     }
 
     QString statusInMenus = o->getOption("options.status.presets-in-status-menus").toString();
@@ -82,7 +83,6 @@ void StatusMenu::fill()
     bool showChoose = o->getOption("options.status.show-choose").toBool();
     bool showReconnect = o->getOption("options.status.show-reconnect").toBool();
     if (showChoose || showReconnect) {
-        addSeparator();
         if (showChoose) {
             addChoose();
         }
@@ -90,9 +90,6 @@ void StatusMenu::fill()
             addReconnect();
         }
     }
-
-    addSeparator();
-    addStatus(XMPP::Status::Offline);
 }
 
 void StatusMenu::clear()

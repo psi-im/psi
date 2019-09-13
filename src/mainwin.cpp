@@ -310,8 +310,8 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 const QString toolbarsStateOptionPath = "options.ui.save.toolbars-state";
 const QString rosterGeometryPath      = "options.ui.save.roster-width";
 const QString tabsGeometryPath        = "options.ui.save.log-width";
-const QString hideCaption(QObject::tr("&Hide"));
-const QString unHideCaption(QObject::tr("Un&hide"));
+const QString hideCaption = QObject::tr("&Hide");
+const QString unHideCaption = QObject::tr("Un&hide");
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(nullptr, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
@@ -1226,27 +1226,26 @@ void MainWin::buildTrayMenu()
     if(!d->trayMenu) {
         d->trayMenu = new QMenu(this);
         QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
-        QAction *separator = d->trayMenu->addSeparator();
-#ifdef Q_OS_MAC
-        d->trayMenu->addActions(d->statusMenu->actions());
+#ifndef Q_OS_MAC
         d->trayMenu->addSeparator();
-        d->optionsButton->addTo(d->trayMenu);
-        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, separator]() {
-            nextEvent->setVisible(d->nextAmount > 0);
-            separator->setVisible(d->nextAmount > 0);
-        });
-        d->trayMenu->setAsDockMenu();
-#else
         QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, SLOT(trayHideShow()));
-        d->optionsButton->addTo(d->trayMenu);
-        d->trayMenu->addMenu(d->statusMenu);
-        d->trayMenu->addSeparator();
-        d->getAction("menu_quit")->addTo(d->trayMenu);
-        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, separator, hideRestore](){
-            nextEvent->setVisible(d->nextAmount > 0);
-            separator->setVisible(d->nextAmount > 0);
+        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, hideRestore](){
+            nextEvent->setEnabled(d->nextAmount > 0);
             hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
         });
+#endif
+        d->trayMenu->addSeparator();
+        d->trayMenu->addActions(d->statusMenu->actions());
+        d->trayMenu->addSeparator();
+        d->getAction("menu_options")->addTo(d->trayMenu);
+#ifndef Q_OS_MAC
+        d->trayMenu->addSeparator();
+        d->getAction("menu_quit")->addTo(d->trayMenu);
+#else
+        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent](){
+            nextEvent->setEnabled(d->nextAmount > 0);
+        });
+        d->trayMenu->setAsDockMenu();
 #endif
     }
 }
