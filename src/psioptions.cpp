@@ -206,9 +206,7 @@ bool PsiOptions::newProfile()
 
         ToolbarPrefs buttons;
         buttons.name = tr("Buttons");
-#ifndef Q_OS_MAC
         buttons.on = true;
-#endif
         buttons.keys << "button_options" << "button_status";
         buttons.dock = Qt3Dock_Bottom;
 

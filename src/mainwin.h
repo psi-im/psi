@@ -111,6 +111,7 @@ private slots:
     void trayDoubleClicked();
     void trayShow();
     void trayHide();
+    void trayHideShow();
 
     void doRecvNextEvent();
     void statusClicked(int);

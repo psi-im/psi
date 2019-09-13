@@ -114,6 +114,9 @@ public:
     QString nickname;
     PsiTrayIcon *tray;
     QMenu *trayMenu;
+#ifdef Q_OS_MAC
+    QMenu *dockMenu;
+#endif
     QVBoxLayout *vb_roster;
     QSplitter *splitter;
     TabDlg *mainTabs;
@@ -174,6 +177,9 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
     sbState(0),
     tray(nullptr),
     trayMenu(nullptr),
+#ifdef Q_OS_MAC
+    dockMenu(nullptr),
+#endif
     vb_roster(nullptr),
     splitter(nullptr),
     mainTabs(nullptr),
@@ -310,6 +316,8 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 const QString toolbarsStateOptionPath = "options.ui.save.toolbars-state";
 const QString rosterGeometryPath      = "options.ui.save.roster-width";
 const QString tabsGeometryPath        = "options.ui.save.log-width";
+const QString hideCaption = QObject::tr("Hide");
+const QString unHideCaption = QObject::tr("Show");
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(nullptr, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
@@ -430,15 +438,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
     d->optionsMenu = new QMenu(tr("General"), this);
     d->optionsMenu->setObjectName("optionsMenu");
-#ifdef Q_OS_MAC
-    d->trayMenu = d->statusMenu;
-    extern void qt_mac_set_dock_menu(QMenu *);
-    qt_mac_set_dock_menu(d->statusMenu);
-#else
-    d->trayMenu = new QMenu(this);
-    buildTrayMenu();
-    connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
-#endif
 
     buildStatusMenu(d->statusMenu);
 #ifdef Q_OS_LINUX
@@ -782,11 +781,24 @@ void MainWin::setUseDock(bool use)
     if (d->tray) {
         delete d->tray;
         d->tray = nullptr;
+        if(d->trayMenu) {
+            delete d->trayMenu;
+            d->trayMenu = nullptr;
+        }
+#ifdef Q_OS_MAC
+        if(d->dockMenu) {
+            delete d->dockMenu;
+            d->dockMenu = nullptr;
+        }
+#endif
+        if(isHidden())
+            trayShow();
     }
 
     Q_ASSERT(!d->tray);
     if (use) {
-        d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu);
+        buildTrayMenu();
+        d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu, this);
         connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
         connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
         d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
@@ -1223,26 +1235,31 @@ void MainWin::activatedAccOption(PsiAccount* pa, int x)
 
 void MainWin::buildTrayMenu()
 {
-#ifndef Q_OS_MAC
-    d->trayMenu->clear();
-
-    if(d->nextAmount > 0) {
-        d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
+    if(!d->trayMenu) {
+        d->trayMenu = new QMenu(this);
+        QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
+        QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, SLOT(trayHideShow()));
+        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, hideRestore](){
+            nextEvent->setEnabled(d->nextAmount > 0);
+            hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
+        });
         d->trayMenu->addSeparator();
+        d->trayMenu->addActions(d->statusMenu->actions());
+        d->trayMenu->addSeparator();
+        d->getAction("menu_options")->addTo(d->trayMenu);
+#ifndef Q_OS_MAC
+        d->trayMenu->addSeparator();
+        d->getAction("menu_quit")->addTo(d->trayMenu);
     }
-
-    if(isHidden()) {
-        d->trayMenu->addAction(tr("Un&hide"), this, SLOT(trayShow()));
+#else
     }
-    else {
-        d->trayMenu->addAction(tr("&Hide"), this, SLOT(trayHide()));
+    if(!d->dockMenu) {
+        d->dockMenu = new QMenu(this);
+        d->dockMenu->addActions(d->statusMenu->actions());
+        d->trayMenu->addSeparator();
+        d->getAction("menu_options")->addTo(d->trayMenu);
+        d->dockMenu->setAsDockMenu();
     }
-    d->optionsButton->addTo(d->trayMenu);
-    d->trayMenu->addMenu(d->statusMenu);
-
-    d->trayMenu->addSeparator();
-    // TODO!
-    d->getAction("menu_quit")->addTo(d->trayMenu);
 #endif
 }
 
@@ -1578,15 +1595,10 @@ void MainWin::toggleVisible(bool fromTray)
         Q_UNUSED(fromTray);
         hidden = isHidden() || !isActiveWindow();
 #endif
-        if(hidden) {
-            trayShow();
-        }
-        else {
-            trayHide();
-        }
+        hidden ? trayShow() : trayHide();
     }
     else
-        isHidden() ? trayShow() : trayHide();
+        trayHideShow();
 }
 
 void MainWin::setTrayToolTip(const Status& status, bool, bool)
@@ -1640,6 +1652,16 @@ void MainWin::trayShow()
 void MainWin::trayHide()
 {
     hide();
+}
+
+void MainWin::trayHideShow()
+{
+    if(isHidden()) {
+        trayShow();
+    }
+    else {
+        trayHide();
+    }
 }
 
 void MainWin::updateReadNext(PsiIcon* anim, int amount)
