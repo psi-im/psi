@@ -114,6 +114,9 @@ public:
     QString nickname;
     PsiTrayIcon *tray;
     QMenu *trayMenu;
+#ifdef Q_OS_MAC
+    QMenu *dockMenu;
+#endif
     QVBoxLayout *vb_roster;
     QSplitter *splitter;
     TabDlg *mainTabs;
@@ -174,6 +177,9 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
     sbState(0),
     tray(nullptr),
     trayMenu(nullptr),
+#ifdef Q_OS_MAC
+    dockMenu(nullptr),
+#endif
     vb_roster(nullptr),
     splitter(nullptr),
     mainTabs(nullptr),
@@ -310,8 +316,8 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 const QString toolbarsStateOptionPath = "options.ui.save.toolbars-state";
 const QString rosterGeometryPath      = "options.ui.save.roster-width";
 const QString tabsGeometryPath        = "options.ui.save.log-width";
-const QString hideCaption = QObject::tr("&Hide");
-const QString unHideCaption = QObject::tr("Un&hide");
+const QString hideCaption = QObject::tr("Hide");
+const QString unHideCaption = QObject::tr("Show");
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(nullptr, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
@@ -779,6 +785,12 @@ void MainWin::setUseDock(bool use)
             delete d->trayMenu;
             d->trayMenu = nullptr;
         }
+#ifdef Q_OS_MAC
+        if(d->dockMenu) {
+            delete d->dockMenu;
+            d->dockMenu = nullptr;
+        }
+#endif
         if(isHidden())
             trayShow();
     }
@@ -1226,14 +1238,11 @@ void MainWin::buildTrayMenu()
     if(!d->trayMenu) {
         d->trayMenu = new QMenu(this);
         QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
-#ifndef Q_OS_MAC
-        d->trayMenu->addSeparator();
         QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, SLOT(trayHideShow()));
         connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, hideRestore](){
             nextEvent->setEnabled(d->nextAmount > 0);
             hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
         });
-#endif
         d->trayMenu->addSeparator();
         d->trayMenu->addActions(d->statusMenu->actions());
         d->trayMenu->addSeparator();
@@ -1241,13 +1250,17 @@ void MainWin::buildTrayMenu()
 #ifndef Q_OS_MAC
         d->trayMenu->addSeparator();
         d->getAction("menu_quit")->addTo(d->trayMenu);
-#else
-        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent](){
-            nextEvent->setEnabled(d->nextAmount > 0);
-        });
-        d->trayMenu->setAsDockMenu();
-#endif
     }
+#else
+    }
+    if(!d->dockMenu) {
+        d->dockMenu = new QMenu(this);
+        d->dockMenu->addActions(d->statusMenu->actions());
+        d->trayMenu->addSeparator();
+        d->getAction("menu_options")->addTo(d->trayMenu);
+        d->dockMenu->setAsDockMenu();
+    }
+#endif
 }
 
 void MainWin::setTrayToolTip()
