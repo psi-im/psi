@@ -29,82 +29,76 @@ function initPsiTheme() {
         this.stop = function() { if (this.id){clearInterval(this.id); this.id = null;}};
     }
 
-    class AudioMessage
+    function AudioMessage(el)
     {
-        constructor(domEl) {
-            var that = this;
-            this.el = domEl;
-            this.playing = false;
-            var audio = this.audio;
+        var playing = false;
+        var audio = el.querySelector("audio");
+        var progressBar = el.querySelector("progress");
+        var titleAnim = null;
 
-            domEl.querySelector(".psi-am-play-btn").addEventListener("click", event => {
-                if (that.playing) that.stop();
-                else that.play();
-                event.preventDefault();
-            });
+        function updateTitleScroller() {
+            if (titleAnim) titleAnim.stop();
 
-            audio.addEventListener("durationchange", event => that.progressBar.max = that.audio.duration);
-            audio.addEventListener("timeupdate", event => that.progressBar.value = that.audio.currentTime);
-            audio.addEventListener("ended", event => that._markStopped());
-            this.progressBar.addEventListener("click", event => that.seekFraction(event.offsetX / that.progressBar.clientWidth));
-            this._updateTitleScroller();
-        }
-
-        get audio() {
-            return this.el.querySelector("audio");
-        }
-
-        get progressBar() {
-            return this.el.querySelector("progress");
-        }
-
-        play() {
-            if (this.playing) return;
-            var sign = this.el.querySelector(".psi-am-play-sign");
-            sign.className = sign.className.replace(/\bpsi-am-sign-play\b/, "");
-            sign.className += " psi-am-sign-stop";
-            this.playing = true;
-            this.audio.play();
-            this._updateTitleScroller();
-        }
-
-        _updateTitleScroller() {
-            if (this.titleAnim) this.titleAnim.stop();
-
-            var info = this.el.querySelector(".psi-am-info > div")
+            var info = el.querySelector(".psi-am-info > div")
             if (!info) return;
-            if (this.playing) {
+
+            if (playing) {
                 if (info.scrollWidth > info.clientWidth) {
-                    this.titleAnim = new BackForthScollerPausedAnimation(0, info.scrollWidth - info.clientWidth, function(x){
-                        info.scrollTo(x, 0);
+                    titleAnim = new PsiBackForthScollerPausedAnimation(0, info.scrollWidth - info.clientWidth, function(x){
+                        info.scrollLeft = x;
                     });
                 }
             } else {
-                info.scrollTo(0, 0);
-                this.titleAnim = null;
+                info.scrollLeft = 0;
+                titleAnim = null;
             }
         }
 
-        _markStopped() {
-            var sign = this.el.querySelector(".psi-am-play-sign");
+        function markStopped() {
+            var sign = el.querySelector(".psi-am-play-sign");
             sign.className = sign.className.replace(/\bpsi-am-sign-stop\b/, "");
             sign.className += " psi-am-sign-play";
-            this.playing = false;
-            this._updateTitleScroller();
+            playing = false;
+            updateTitleScroller();
         }
 
-        stop() {
-            if (!this.playing) return;
-            this._markStopped();
-            this.audio.pause();
+        var that = {
+            play: function() {
+                if (playing) return;
+                var sign = el.querySelector(".psi-am-play-sign");
+                sign.className = sign.className.replace(/\bpsi-am-sign-play\b/, "");
+                sign.className += " psi-am-sign-stop";
+                playing = true;
+                audio.play();
+                updateTitleScroller();
+            },
+
+            stop: function() {
+                if (!playing) return;
+                markStopped();
+                audio.pause();
+            },
+
+            seekFraction: function(fraction) {
+                audio.currentTime = fraction * audio.duration;
+                progressBar.value = fraction * progressBar.max;
+            }
+
         }
 
-        seekFraction(fraction) {
-            var a = this.audio, p = this.progressBar;
-            a.currentTime = fraction * a.duration;
-            p.value =       fraction * p.max;
-        }
+        el.querySelector(".psi-am-play-btn").addEventListener("click", function(event) {
+            if (playing) that.stop();
+            else that.play();
+            event.preventDefault();
+        });
+        audio.addEventListener("durationchange", function(event) { progressBar.max = audio.duration });
+        audio.addEventListener("timeupdate", function(event) { progressBar.value = audio.currentTime });
+        audio.addEventListener("ended", markStopped);
+        progressBar.addEventListener("click", function(event) { that.seekFraction(event.offsetX / progressBar.clientWidth) });
 
+        updateTitleScroller();
+
+        return that;
     }
 
     var chat =  {
