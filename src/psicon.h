@@ -162,7 +162,6 @@ public slots:
     void doWakeup();
     void closeProgram();
     void changeProfile();
-    void doManageAccounts();
     void doGroupChat();
     void doNewBlankMessage();
     void doOptions();

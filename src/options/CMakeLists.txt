@@ -34,6 +34,7 @@ list(APPEND HEADERS
     opt_input.h
     opt_statusgeneral.h
     opt_theme.h
+    opt_accounts.h
 )
 
 list(APPEND SOURCES
@@ -67,6 +68,7 @@ list(APPEND SOURCES
     opt_theme.cpp
     opt_toolbars.cpp
     opt_tree.cpp
+    opt_accounts.cpp
 )
 
 list(APPEND FORMS

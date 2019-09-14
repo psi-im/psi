@@ -33,7 +33,7 @@
 #include <QStylePainter>
 #include <memory>
 
-#define PINNED_CHARS 6
+#define PINNED_CHARS 12
 
 // Do not count invisible &
 #define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)

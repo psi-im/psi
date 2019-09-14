@@ -317,15 +317,10 @@ void AccountManageTree::dragMoveEvent(QDragMoveEvent *event)
 }
 
 AccountManageDlg::AccountManageDlg(PsiCon *_psi)
-:QDialog(nullptr)
+:QWidget(nullptr)
 {
     setupUi(this);
-    setModal(false);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     psi = _psi;
-    psi->dialogRegister(this);
-
-    setWindowTitle(CAP(windowTitle()));
 
     removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
     connect(removeAction_, SIGNAL(triggered()), SLOT(remove()));
@@ -353,12 +348,10 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
     if (lv_accs->topLevelItemCount())
         lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
 
-    //adjustSize();
 }
 
 AccountManageDlg::~AccountManageDlg()
 {
-    psi->dialogUnregister(this);
 }
 
 void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetItem *)
