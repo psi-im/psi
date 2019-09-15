@@ -4,6 +4,8 @@
 
 #include "accountmanagedlg.h"
 
+static const QString accSingleOption = "options.ui.account.single";
+
 OptionsTabAccounts::OptionsTabAccounts(QObject *parent)
 : MetaOptionsTab(parent, "accounts", "", tr("Accounts"), tr("Manage accounts"), "psi/account")
 , w_(nullptr)
@@ -22,6 +24,9 @@ QWidget *OptionsTabAccounts::widget()
     }
 
     w_ = new AccountManageDlg(psi_);
+    PsiOptions* o = PsiOptions::instance();
+
+    static_cast<AccountManageDlg *>(w_)->enableElements(!o->getOption(accSingleOption).toBool());
 
     return w_;
 }

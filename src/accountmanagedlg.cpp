@@ -321,6 +321,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 {
     setupUi(this);
     psi = _psi;
+    noAccountLabel->setVisible(false);
 
     removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
     connect(removeAction_, SIGNAL(triggered()), SLOT(remove()));
@@ -435,6 +436,28 @@ void AccountManageDlg::accountRemoved(PsiAccount *pa)
             break;
         }
     }
+}
+
+void AccountManageDlg::enableElements(bool enabled)
+{
+    const int items = lv_accs->topLevelItemCount();
+    lv_accs->setEnabled(enabled);
+    pb_remove->setEnabled(enabled);
+    if(!enabled) {
+        if(items > 0) {
+            pb_modify->setEnabled(true);
+            pb_add->setEnabled(false);
+        }
+        else {
+            pb_modify->setEnabled(false);
+            pb_add->setEnabled(true);
+        }
+    }
+    else {
+        pb_modify->setEnabled(true);
+        pb_add->setEnabled(true);
+    }
+    noAccountLabel->setVisible(items <= 0);
 }
 
 #include "accountmanagedlg.moc"

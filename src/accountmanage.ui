@@ -19,7 +19,17 @@
   </property>
   <layout class="QVBoxLayout" name="_2">
    <item>
-    <layout class="QHBoxLayout">
+    <widget class="QLabel" name="noAccountLabel">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;No accounts created. To create account please click the Add button.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="listLayout">
      <item>
       <widget class="AccountManageTree" name="lv_accs">
        <property name="indentation">

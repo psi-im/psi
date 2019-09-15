@@ -54,6 +54,7 @@ class AccountManageDlg : public QWidget, public Ui::AccountManage
 public:
     AccountManageDlg(PsiCon *);
     ~AccountManageDlg();
+    void enableElements(bool enabled);
 
 private slots:
     void qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *);
