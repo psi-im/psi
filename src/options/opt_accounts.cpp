@@ -27,6 +27,13 @@ QWidget *OptionsTabAccounts::widget()
     PsiOptions* o = PsiOptions::instance();
 
     static_cast<AccountManageDlg *>(w_)->enableElements(!o->getOption(accSingleOption).toBool());
+    connect(o, &PsiOptions::optionChanged, this, [this](const QString &option){
+        if(!w_)
+            return;
+
+        if(option == accSingleOption)
+            static_cast<AccountManageDlg *>(w_)->enableElements(!PsiOptions::instance()->getOption(accSingleOption).toBool());
+    });
 
     return w_;
 }
