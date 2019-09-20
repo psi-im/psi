@@ -3,7 +3,7 @@ This directory contains the SSL certificates shipped with psi/psi+. The files sh
 Please use PSIDATADIR/certs for local additions.
 
 Default value of PSIDATADIR for psi client:
-  Linux, MacOS X and other Unices
+  GNU/Linux, macOS, FreeBSD and other *nix systems
     ~/.local/share/psi
   Windows NT, 2000, XP and Server 2003
     %APPDATA%\Psi
@@ -11,7 +11,7 @@ Default value of PSIDATADIR for psi client:
     %APPDATA%\Roaming\Psi
 
 Default value of PSIDATADIR for psi-plus client:
-  Linux, MacOS X and other Unices
+  GNU/Linux, macOS, FreeBSD and other *nix systems
      ~/.local/share/psi+
   Windows NT, 2000, XP and Server 2003
     %APPDATA%\Psi+
