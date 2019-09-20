@@ -54,7 +54,7 @@ QWidget *OptionsTabGroupchat::widget()
     connect(d->pb_removeNickColor, &QPushButton::clicked, this, &OptionsTabGroupchat::removeGCNickColor);
 
     connect(d->alertGroupBox, &QGroupBox::toggled, this, [this](){updateWidgetsState();});
-    connect(d->cb_coloringType, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](const int index){
+    connect(d->cb_coloringType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [this](const int index){
         if(index>= 0)
             updateWidgetsState();
     });
