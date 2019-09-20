@@ -81,11 +81,14 @@ void OptionsTabChat::applyOptions()
 
     OptChatUI *d = static_cast<OptChatUI *>(w);
 
-    PsiOptions::instance()->setOption("options.messages.default-outgoing-message-type", bg_defAct->buttons().indexOf(bg_defAct->checkedButton()) == 0 ? "message" : "chat");
-    PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
-    PsiOptions::instance()->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
-    PsiOptions::instance()->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
-    PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
+    PsiOptions *o = PsiOptions::instance();
+    o->setOption("options.messages.default-outgoing-message-type", bg_defAct->buttons().indexOf(bg_defAct->checkedButton()) == 0 ? "message" : "chat");
+    o->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
+    o->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
+    o->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
+    o->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
+    o->setOption("options.ui.chat.show-status-changes", d->ck_showStatusChanges->isChecked());
+    o->setOption("options.ui.chat.status-with-priority", d->ck_showStatusPriority->isChecked());
 
     // Soft return.
     // Only update this if the value actually changed, or else custom presets
@@ -99,9 +102,9 @@ void OptionsTabChat::applyOptions()
         else  {
             vl << qVariantFromValue(QKeySequence(Qt::Key_Enter+Qt::CTRL)) << qVariantFromValue(QKeySequence(Qt::CTRL+Qt::Key_Return));
         }
-        PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
+        o->setOption("options.shortcuts.chat.send",vl);
     }
-    PsiOptions::instance()->setOption("options.ui.chat.history.preload-history-size", d->sb_msgHistCount->value());
+    o->setOption("options.ui.chat.history.preload-history-size", d->sb_msgHistCount->value());
 }
 
 void OptionsTabChat::restoreOptions()
@@ -111,12 +114,15 @@ void OptionsTabChat::restoreOptions()
 
     OptChatUI *d = static_cast<OptChatUI *>(w);
 
-    bg_defAct->buttons()[PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]->setChecked(true);
-    d->ck_alertOpenChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() );
-    d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
-    d->ck_switchTabOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
-    d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
+    PsiOptions *o = PsiOptions::instance();
+    bg_defAct->buttons()[o->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]->setChecked(true);
+    d->ck_alertOpenChats->setChecked( o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() );
+    d->ck_raiseChatWindow->setChecked( o->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
+    d->ck_switchTabOnMessage->setChecked( o->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
+    d->ck_smallChats->setChecked( o->getOption("options.ui.chat.use-small-chats").toBool() );
+    d->ck_showStatusChanges->setChecked( o->getOption("options.ui.chat.show-status-changes").toBool());
+    d->ck_showStatusPriority->setChecked( o->getOption("options.ui.chat.status-with-priority").toBool());
 
     d->ck_chatSoftReturn->setChecked(ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
-    d->sb_msgHistCount->setValue(PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt());
+    d->sb_msgHistCount->setValue(o->getOption("options.ui.chat.history.preload-history-size").toInt());
 }
