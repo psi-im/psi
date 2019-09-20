@@ -36,7 +36,10 @@ QWidget *OptionsTabStatusPep::widget()
 
     w_ = new OptStatusPepUI();
     OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
-    connect(d->cb_publishTunes, &QCheckBox::toggled, this, &OptionsTabStatusPep::changeVisibleState);
+    connect(d->groupBox, &QGroupBox::toggled, this, [this](bool toggled){
+        changeVisibleState(toggled);
+        emit dataChanged();
+    });
 
     return w_;
 }
@@ -49,7 +52,7 @@ void OptionsTabStatusPep::applyOptions()
 
     OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
     PsiOptions* o = PsiOptions::instance();
-    bool publishTune = d->cb_publishTunes->isChecked();
+    bool publishTune = d->groupBox->isChecked();
     o->setOption(tunePublishOptionPath, publishTune);
     if(publishTune) {
         QStringList newTuneFilters = d->tuneExtensions->text().split(QRegExp("\\W+"));
@@ -105,7 +108,7 @@ void OptionsTabStatusPep::restoreOptions()
         });
     }
     bool publishTune = o->getOption(tunePublishOptionPath).toBool();
-    d->cb_publishTunes->setChecked(publishTune);
+    d->groupBox->setChecked(publishTune);
     changeVisibleState(publishTune);
 }
 

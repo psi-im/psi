@@ -12,6 +12,11 @@ class OptionsTabGroupchat : public OptionsTab
 public:
     OptionsTabGroupchat(QObject *parent);
 
+    enum coloringType{
+        NONE = 0,
+        HASH = 1,
+        MANUAL = 2
+    };
     QWidget *widget();
     void applyOptions();
     void restoreOptions();

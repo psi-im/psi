@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>455</width>
-    <height>403</height>
+    <height>433</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,41 +34,16 @@
      <property name="spacing">
       <number>6</number>
      </property>
-     <item row="0" column="0">
-      <widget class="QCheckBox" name="ck_gcHighlights">
-       <property name="text">
-        <string>Enable word highlighting</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QCheckBox" name="ck_gcHashNickColoring">
-       <property name="text">
-        <string>Enable hash nick coloring</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="ck_gcNickColoring">
-       <property name="text">
-        <string>Enable nick coloring</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="spacing">
-      <number>6</number>
-     </property>
-     <item>
+     <item row="1" column="0">
       <widget class="QGroupBox" name="alertGroupBox">
        <property name="toolTip">
         <string>Highlight lines and alert the user if this text is included in chat</string>
        </property>
        <property name="title">
         <string>Word highlighting</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
        <layout class="QVBoxLayout">
         <property name="spacing">
@@ -186,7 +161,29 @@
        </layout>
       </widget>
      </item>
-     <item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="cb_coloringType">
+       <property name="toolTip">
+        <string>Select nick coloring type for conference log</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>None</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Automatic</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Manual palette</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="1">
       <widget class="QGroupBox" name="ncGroupBox">
        <property name="title">
         <string>Nick coloring</string>
@@ -339,13 +336,54 @@
        </layout>
       </widget>
      </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Nick Coloring Type</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridLayout_3">
+     <property name="topMargin">
+      <number>20</number>
+     </property>
+     <item row="1" column="0">
+      <widget class="QCheckBox" name="ck_showJoins">
+       <property name="text">
+        <string>Show joins</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="ck_showStatusChanges">
+       <property name="text">
+        <string>Show status changes</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QCheckBox" name="ck_showStatusPriority">
+       <property name="text">
+        <string>Show status priority</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="ck_showInitialJoins">
+       <property name="text">
+        <string>Show initial joins</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
-  <tabstop>ck_gcHighlights</tabstop>
   <tabstop>le_newHighlightWord</tabstop>
   <tabstop>pb_removeHighlightWord</tabstop>
   <tabstop>pb_addHighlightWord</tabstop>
@@ -355,22 +393,5 @@
   <tabstop>pb_addNickColor</tabstop>
  </tabstops>
  <resources/>
- <connections>
-  <connection>
-   <sender>ck_gcNickColoring</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>ck_gcHashNickColoring</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>326</x>
-     <y>18</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>326</x>
-     <y>42</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
