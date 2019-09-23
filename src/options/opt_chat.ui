@@ -74,7 +74,7 @@
    <item>
     <widget class="QCheckBox" name="ck_showStatusPriority">
      <property name="text">
-      <string>Show status priority</string>
+      <string>Show status with priority</string>
      </property>
     </widget>
    </item>
