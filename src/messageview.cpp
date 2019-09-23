@@ -114,8 +114,7 @@ const QList<float> &MessageViewReference::histogram() const
 
 QVariantMap MessageViewReference::toVariantMap() const
 {
-    QVariantMap vm = {}; // FIXME
-    return vm;
+    return {};
 }
 
 // ======================================================================

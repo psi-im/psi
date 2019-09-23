@@ -57,7 +57,7 @@ ChatView::ChatView(QWidget *parent)
     , isMuc_(false)
     , isEncryptionEnabled_(false)
     , oldTrackBarPosition(0)
-    , dialog_(0)
+    , dialog_(nullptr)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
@@ -81,7 +81,7 @@ ChatView::ChatView(QWidget *parent)
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
     if (useMessageIcons_) {
-        int logIconsSize = fontInfo().pixelSize()*0.93;
+        int logIconsSize = int(fontInfo().pixelSize()*0.93);
         if (PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool()) {
             logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
             logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
@@ -247,7 +247,7 @@ void ChatView::autoCopy()
 bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit)
 {
     if (object == chatEdit && event->type() == QEvent::ShortcutOverride &&
-        ((QKeyEvent*)event)->matches(QKeySequence::Copy)) {
+        static_cast<QKeyEvent *>(event)->matches(QKeySequence::Copy)) {
 
         if (!chatEdit->textCursor().hasSelection() &&
             this->textCursor().hasSelection()) {
@@ -263,7 +263,7 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 {
     // TODO: provide an option for user to customize
     // time stamp format
-    return QString().sprintf("%02d:%02d:%02d", time.time().hour(), time.time().minute(), time.time().second());;
+    return QString().sprintf("%02d:%02d:%02d", time.time().hour(), time.time().minute(), time.time().second());
 }
 
 QString ChatView::colorString(bool local, bool spooled) const
@@ -505,10 +505,18 @@ void ChatView::renderSysMessage(const MessageView &mv)
 
     if (mv.type() == MessageView::MUCJoin && mv.isStatusChangeHidden()) {
         ut.clear();
-    } else {
-        if (PsiOptions::instance()->getOption("options.ui.muc.status-with-priority").toBool() && mv.statusPriority() != 0) {
-            ut += QString(" [%1]").arg(mv.statusPriority());
-        }
+    }
+
+    bool isPriority = false;
+    if(isMuc_) {
+        isPriority = mv.type() == MessageView::Status
+                     && PsiOptions::instance()->getOption("options.ui.muc.status-with-priority").toBool()
+                     && mv.statusPriority();
+    }
+    else {
+        isPriority = mv.type() == MessageView::Status
+                     && PsiOptions::instance()->getOption("options.ui.chat.status-with-priority").toBool()
+                     && mv.statusPriority();
     }
 
     QString color = ColorOpt::instance()->color(informationalColorOpt).name();
@@ -518,8 +526,7 @@ void ChatView::renderSysMessage(const MessageView &mv)
                mv.formattedText() +
                (ut.isEmpty()?"":QString(": <span style=\"color:%1;\">%2</span>")
                                       .arg(userTextColor, ut)) +
-               (mv.type() == MessageView::Status && mv.statusPriority() ?
-                    QString(" [%1]").arg(mv.statusPriority()) :  "") +
+               (isPriority ? QString(" [%1]").arg(mv.statusPriority()) :  "") +
                "</font>");
 }
 
