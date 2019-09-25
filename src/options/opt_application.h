@@ -19,9 +19,6 @@ public:
     void applyOptions();
     void restoreOptions();
 
-private slots:
-    void updatePortLabel();
-
 private:
     QWidget *w = nullptr;
     bool haveAutoUpdater_ = false;

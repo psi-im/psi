@@ -84,8 +84,31 @@ QWidget *OptionsTabApplication::widget()
     d->gb_proxy->layout()->addWidget(ProxyManager::instance()->proxyForObject()->getComboBox(pc, w));
     d->gb_proxy->layout()->addWidget(pc);
 
-    connect(d->le_dtPort, SIGNAL(textChanged(QString)), this, SLOT(updatePortLabel()));
-    connect(d->ck_docklet, SIGNAL(stateChanged(int)), this, SLOT(doEnableQuitOnClose(int)));
+    connect(d->le_dtPort, &QLineEdit::textChanged, this, [this](){
+        if ( !w )
+            return;
+
+        OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
+
+        if ( d->le_dtPort->text().isEmpty() ) {
+            d->label->clear();
+            return;
+        }
+
+        int port = d->le_dtPort->text().toInt();
+        if ( port < 0 || port > 65532 ) {
+            d->label->clear();
+            return;
+        }
+
+        if ( port == 0 ) {
+            d->label->setText(tr("(TCP: Disabled, UDP: Auto)"));
+        }
+        else {
+            d->label->setText(tr("(TCP: %1, UDP: %1-%2)").arg( port ).arg( port + 3 ));
+        }
+    });
+    connect(d->ck_docklet, &QCheckBox::stateChanged, this, &OptionsTabApplication::doEnableQuitOnClose);
 
     return w;
 }
@@ -155,12 +178,17 @@ void OptionsTabApplication::applyOptions()
     if (!home.exists("autostart")) {
         home.mkpath("autostart");
     }
+    //Create APP_BIN_NAME.desktop file if not exists
     QFile f(home.absolutePath() + psiAutoStart);
+    const QString fContents = "[Desktop Entry]\nVersion=1.1\nType=Application\n"
+                              + QString("Name=%1\n").arg(ApplicationInfo::name())
+                              + QString("Icon=%1\n").arg(xstr(APP_BIN_NAME))
+                              + QString("Exec=%1\n").arg(xstr(APP_BIN_NAME))
+                              + QString("Hidden=%1\n").arg(d->ck_auto_load->isChecked() ? "false" : "true");
     if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-        const QString contents = ApplicationInfo::desktopFile().trimmed();
-        f.write(contents.toUtf8());
-        f.write(QString("\nHidden=%1").arg(d->ck_auto_load->isChecked() ? "false\n" : "true\n").toUtf8());
+        f.write(fContents.toUtf8());
     }
+
 #endif
 }
 
@@ -212,7 +240,7 @@ void OptionsTabApplication::restoreOptions()
 #ifdef HAVE_FREEDESKTOP
     QFile desktop(configPath_ + psiAutoStart);
     if (desktop.open(QIODevice::ReadOnly)
-        && QString(desktop.readAll()).contains(QRegExp("\\bhidden\\s*=\\s*false", Qt::CaseInsensitive)))
+        && QString(desktop.readAll()).contains(QRegularExpression("\\bhidden\\s*=\\s*false", QRegularExpression::CaseInsensitiveOption)))
     {
         d->ck_auto_load->setChecked(true);
     }
@@ -226,35 +254,12 @@ void OptionsTabApplication::restoreOptions()
 
 void OptionsTabApplication::doEnableQuitOnClose(int state)
 {
+    if ( !w )
+        return;
+
     OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
     d->ck_quitOnClose->setEnabled(state>0);
     d->ck_dockToolMW->setEnabled(state>0);
     d->ck_dockDCstyle->setEnabled(state>0);
     d->ck_dockHideMW->setEnabled(state>0);
-}
-
-void OptionsTabApplication::updatePortLabel()
-{
-    if ( !w )
-        return;
-
-    OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
-
-    if ( d->le_dtPort->text().isEmpty() ) {
-        d->label->clear();
-        return;
-    }
-
-    int port = d->le_dtPort->text().toInt();
-    if ( port < 0 || port > 65532 ) {
-        d->label->clear();
-        return;
-    }
-
-    if ( port == 0 ) {
-        d->label->setText(tr("(TCP: Disabled, UDP: Auto)"));
-    }
-    else {
-        d->label->setText(tr("(TCP: %1, UDP: %1-%2)").arg( port ).arg( port + 3 ));
-    }
 }
