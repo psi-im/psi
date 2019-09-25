@@ -566,7 +566,6 @@ bool PsiCon::init()
 
     connect(d->mainwin, SIGNAL(closeProgram()), SLOT(closeProgram()));
     connect(d->mainwin, SIGNAL(changeProfile()), SLOT(changeProfile()));
-    connect(d->mainwin, SIGNAL(doManageAccounts()), SLOT(doManageAccounts()));
     connect(d->mainwin, SIGNAL(doGroupChat()), SLOT(doGroupChat()));
     connect(d->mainwin, SIGNAL(blankMessage()), SLOT(doNewBlankMessage()));
     connect(d->mainwin, SIGNAL(statusChanged(XMPP::Status::Type)), SLOT(statusMenuChanged(XMPP::Status::Type)));
@@ -952,28 +951,6 @@ void PsiCon::changeProfile()
     }
 
     doQuit(QuitProfile);
-}
-
-void PsiCon::doManageAccounts()
-{
-    if (!PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
-        AccountManageDlg *w = qobject_cast<AccountManageDlg *>(dialogFind("AccountManageDlg"));
-        if(w)
-            bringToFront(w);
-        else {
-            w = new AccountManageDlg(this);
-            w->show();
-        }
-    }
-    else {
-        PsiAccount *account = d->contactList->defaultAccount();
-        if(account) {
-            account->modify();
-        }
-        else {
-            promptUserToCreateAccount();
-        }
-    }
 }
 
 void PsiCon::doGroupChat()

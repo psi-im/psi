@@ -619,7 +619,6 @@ void MainWin::registerAction( IconAction* action )
 #ifdef GROUPCHAT
         { "menu_join_groupchat", activated, this, SIGNAL( doGroupChat() ) },
 #endif
-        { "menu_account_setup",  activated, this, SIGNAL( doManageAccounts() ) },
         { "menu_options",        activated, this, SIGNAL( doOptions() ) },
         { "menu_file_transfer",  activated, this, SIGNAL( doFileTransDlg() ) },
         { "menu_toolbars",       activated, this, SIGNAL( doToolbars() ) },
@@ -959,8 +958,7 @@ void MainWin::buildMainMenu()
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "separator"
-            << "menu_account_setup";
+            << "separator";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -991,7 +989,6 @@ void MainWin::buildGeneralMenu(QMenu* menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_account_setup"
             << "menu_options"
             << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
@@ -1244,9 +1241,12 @@ void MainWin::buildTrayMenu()
             hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
         });
         d->trayMenu->addSeparator();
-        d->trayMenu->addActions(d->statusMenu->actions());
-        d->trayMenu->addSeparator();
-        d->getAction("menu_options")->addTo(d->trayMenu);
+        const QStringList _actions = {"status_online", "status_chat", "status_away",
+                                      "status_xa", "status_dnd", "status_offline",
+                                      "separator", "menu_options"};
+        foreach(const QString &action, _actions) {
+            d->getAction(action)->addTo(d->trayMenu);
+        }
 #ifndef Q_OS_MAC
         d->trayMenu->addSeparator();
         d->getAction("menu_quit")->addTo(d->trayMenu);

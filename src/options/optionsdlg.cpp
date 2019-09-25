@@ -20,6 +20,7 @@
 #include "opt_status.h"
 #include "opt_toolbars.h"
 #include "opt_tree.h"
+#include "opt_accounts.h"
 #include "psicon.h"
 
 OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
@@ -47,6 +48,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
     OptionsTabApplication* applicationTab = new OptionsTabApplication(this);
     applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
     tabs.append( applicationTab );
+    tabs.append( new OptionsTabAccounts(this));
     tabs.append( new OptionsTabRoster(this) );
     tabs.append( new OptionsTabMessages(this) );
     tabs.append( new OptionsTabEvents(this) );

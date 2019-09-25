@@ -1538,6 +1538,9 @@ void GCMainDlg::doBookmark()
         ConferenceBookmark conf(txtName->text(), jid(), ConferenceBookmark::JoinType(cbAutoJoin->currentIndex()), txtNick->text(), d->password);
         confs[confInd] = conf;
         bm->setBookmarks(confs);
+
+        if(getDisplayName() != txtName->text())
+            account()->actionRename(jid(), txtName->text());
     }
     delete dlg;
 }

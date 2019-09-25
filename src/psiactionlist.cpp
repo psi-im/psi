@@ -218,7 +218,6 @@ void PsiActionList::Private::createMainWin()
 
         IconAction *actNewMessage = new IconAction (tr("New Blank Message"), "psi/sendMessage", tr("New &Blank Message"), 0, this);
         IconAction *actJoinGroupchat = new IconAction (tr("Join Groupchat"), "psi/groupChat", tr("Join &Groupchat"), 0, this);
-        IconAction *actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
 
         IconAction *actOptions = new IconAction (tr("Options"), "psi/options", tr("&Options"), 0, this);
         actOptions->setMenuRole(QAction::PreferencesRole);
@@ -245,7 +244,6 @@ void PsiActionList::Private::createMainWin()
             { "menu_add_contact",     add_act          },
             { "menu_new_message",     actNewMessage    },
             { "menu_join_groupchat",  actJoinGroupchat },
-            { "menu_account_setup",   actAccountSetup  },
             { "menu_options",         actOptions       },
             { "menu_file_transfer",   actFileTrans     },
             { "menu_toolbars",        actToolbars      },

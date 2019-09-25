@@ -48,12 +48,13 @@ signals:
 
 #include "ui_accountmanage.h"
 
-class AccountManageDlg : public QDialog, public Ui::AccountManage
+class AccountManageDlg : public QWidget, public Ui::AccountManage
 {
     Q_OBJECT
 public:
     AccountManageDlg(PsiCon *);
     ~AccountManageDlg();
+    void enableElements(bool enabled);
 
 private slots:
     void qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *);
