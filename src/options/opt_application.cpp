@@ -177,17 +177,15 @@ void OptionsTabApplication::applyOptions()
         }
 #elif defined(HAVE_FREEDESKTOP)
         QDir home(configPath_);
-        if (!home.exists("autostart")) {
-            home.mkpath("autostart");
-        }
+        home.mkpath("autostart");
         //Create APP_BIN_NAME.desktop file if not exists
         QFile f(home.absolutePath() + psiAutoStart);
         const QString fContents = "[Desktop Entry]\nVersion=1.1\nType=Application\n"
                                   + QString("Name=%1\n").arg(ApplicationInfo::name())
                                   + QString("Icon=%1\n").arg(xstr(APP_BIN_NAME))
-                                  + QString("Exec=%1\n").arg(xstr(APP_BIN_NAME))
+                                  + QString("Exec=%1\n").arg(qApp->applicationFilePath())
                                   + QString("Hidden=%1\n").arg(d->ck_auto_load->isChecked() ? "false" : "true");
-        if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
             f.write(fContents.toUtf8());
         }
 #endif
