@@ -316,8 +316,6 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 const QString toolbarsStateOptionPath = "options.ui.save.toolbars-state";
 const QString rosterGeometryPath      = "options.ui.save.roster-width";
 const QString tabsGeometryPath        = "options.ui.save.log-width";
-const QString hideCaption = QObject::tr("Hide");
-const QString unHideCaption = QObject::tr("Show");
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(nullptr, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
@@ -1235,10 +1233,10 @@ void MainWin::buildTrayMenu()
     if(!d->trayMenu) {
         d->trayMenu = new QMenu(this);
         QAction *nextEvent = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
-        QAction *hideRestore = d->trayMenu->addAction(hideCaption, this, SLOT(trayHideShow()));
+        QAction *hideRestore = d->trayMenu->addAction(tr("Hide"), this, SLOT(trayHideShow()));
         connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, hideRestore](){
             nextEvent->setEnabled(d->nextAmount > 0);
-            hideRestore->setText(isHidden() ? unHideCaption : hideCaption);
+            hideRestore->setText(isHidden() ? tr("Show") : tr("Hide"));
         });
         d->trayMenu->addSeparator();
         const QStringList _actions = {"status_online", "status_chat", "status_away",

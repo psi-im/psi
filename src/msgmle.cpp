@@ -674,6 +674,8 @@ void ChatEdit::addSoundRecButton()
         recButton_->setToolTip(tr("Record and share audio note while pressed"));
         recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
         recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+        const int iconSize = PsiIconset::instance()->system().iconSize() + 2;
+        recButton_->setMinimumSize(QSize(iconSize, iconSize));
         layout_->addWidget(recButton_.get());
         layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
@@ -764,7 +766,7 @@ LineEdit::~LineEdit()
 
 QSize LineEdit::minimumSizeHint() const
 {
-    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize()*2-1
+    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1
                                               ,fontMetrics().height() + 1)
                                        : fontMetrics().height() + 1;
     QSize sh = QTextEdit::minimumSizeHint();
@@ -776,7 +778,7 @@ QSize LineEdit::minimumSizeHint() const
 QSize LineEdit::sizeHint() const
 {
     QSize sh = QTextEdit::sizeHint();
-    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize()*2-1
+    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1
                                               ,int(document()->documentLayout()->documentSize().height()))
                                        : int(document()->documentLayout()->documentSize().height());
     sh.setHeight(sz);
