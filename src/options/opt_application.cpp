@@ -20,8 +20,7 @@
 
 #ifdef Q_OS_WIN
     static const QString regString = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-#endif
-#ifdef HAVE_FREEDESKTOP
+#elif defined(HAVE_FREEDESKTOP)
 #    define xstr(a) str(a)
 #    define str(a) #a
     static const QString psiAutoStart("/autostart/" xstr(APP_BIN_NAME) ".desktop");
@@ -109,6 +108,9 @@ QWidget *OptionsTabApplication::widget()
         }
     });
     connect(d->ck_docklet, &QCheckBox::stateChanged, this, &OptionsTabApplication::doEnableQuitOnClose);
+    connect(d->ck_auto_load, &QCheckBox::toggled, this, [this](){
+        autostartOptChanged_ = true;
+    });
 
     return w;
 }
@@ -164,32 +166,30 @@ void OptionsTabApplication::applyOptions()
     s.setValue("last_lang", itemData);
 
     //Auto-load
+    if(autostartOptChanged_) {
 #ifdef Q_OS_WIN
-    QSettings set(regString, QSettings::NativeFormat);
-    if(d->ck_auto_load->isChecked()) {
-        set.setValue(ApplicationInfo::name(), QDir::toNativeSeparators(qApp->applicationFilePath()));
-    }
-    else {
-        set.remove(ApplicationInfo::name());
-    }
-#endif
-#ifdef HAVE_FREEDESKTOP
-    QDir home(configPath_);
-    if (!home.exists("autostart")) {
+        QSettings set(regString, QSettings::NativeFormat);
+        if(d->ck_auto_load->isChecked()) {
+            set.setValue(ApplicationInfo::name(), QDir::toNativeSeparators(qApp->applicationFilePath()));
+        }
+        else {
+            set.remove(ApplicationInfo::name());
+        }
+#elif defined(HAVE_FREEDESKTOP)
+        QDir home(configPath_);
         home.mkpath("autostart");
-    }
-    //Create APP_BIN_NAME.desktop file if not exists
-    QFile f(home.absolutePath() + psiAutoStart);
-    const QString fContents = "[Desktop Entry]\nVersion=1.1\nType=Application\n"
-                              + QString("Name=%1\n").arg(ApplicationInfo::name())
-                              + QString("Icon=%1\n").arg(xstr(APP_BIN_NAME))
-                              + QString("Exec=%1\n").arg(xstr(APP_BIN_NAME))
-                              + QString("Hidden=%1\n").arg(d->ck_auto_load->isChecked() ? "false" : "true");
-    if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-        f.write(fContents.toUtf8());
-    }
-
+        //Create APP_BIN_NAME.desktop file if not exists
+        QFile f(home.absolutePath() + psiAutoStart);
+        const QString fContents = "[Desktop Entry]\nVersion=1.1\nType=Application\n"
+                                  + QString("Name=%1\n").arg(ApplicationInfo::name())
+                                  + QString("Icon=%1\n").arg(xstr(APP_BIN_NAME))
+                                  + QString("Exec=%1\n").arg(qApp->applicationFilePath())
+                                  + QString("Hidden=%1\n").arg(d->ck_auto_load->isChecked() ? "false" : "true");
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            f.write(fContents.toUtf8());
+        }
 #endif
+    }
 }
 
 void OptionsTabApplication::restoreOptions()
@@ -232,18 +232,19 @@ void OptionsTabApplication::restoreOptions()
         d->cb_lang->setCurrentIndex( d->cb_lang->findText(vList.get(curLang)) );
 
     //Auto-load
+    autostartOptChanged_ = false;
 #ifdef Q_OS_WIN
     QSettings set(regString, QSettings::NativeFormat);
     const QString path = set.value(ApplicationInfo::name()).toString();
+    d->ck_auto_load->blockSignals(true);
     d->ck_auto_load->setChecked( (path == QDir::toNativeSeparators(qApp->applicationFilePath())) );
-#endif
-#ifdef HAVE_FREEDESKTOP
+    d->ck_auto_load->blockSignals(false);
+#elif defined(HAVE_FREEDESKTOP)
     QFile desktop(configPath_ + psiAutoStart);
-    if (desktop.open(QIODevice::ReadOnly)
-        && QString(desktop.readAll()).contains(QRegularExpression("\\bhidden\\s*=\\s*false", QRegularExpression::CaseInsensitiveOption)))
-    {
-        d->ck_auto_load->setChecked(true);
-    }
+    d->ck_auto_load->blockSignals(true);
+    d->ck_auto_load->setChecked(desktop.open(QIODevice::ReadOnly)
+                                && QString(desktop.readAll()).contains(QRegularExpression("\\bhidden\\s*=\\s*false", QRegularExpression::CaseInsensitiveOption)));
+    d->ck_auto_load->blockSignals(false);
 #endif
 #ifdef HAVE_KEYCHAIN
     d->ck_useKeychain->setVisible(!ApplicationInfo::isPortable());

@@ -23,6 +23,7 @@ private:
     QWidget *w = nullptr;
     bool haveAutoUpdater_ = false;
     QString configPath_;
+    bool autostartOptChanged_ = false;
 
 private slots:
     void doEnableQuitOnClose(int);
