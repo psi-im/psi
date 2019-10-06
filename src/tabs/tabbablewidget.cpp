@@ -19,7 +19,6 @@
 
 #include "tabbablewidget.h"
 
-#include "groupchatdlg.h"
 #include "jidutil.h"
 #include "psioptions.h"
 #include "tabdlg.h"
@@ -254,4 +253,9 @@ void TabbableWidget::hideTab()
 void TabbableWidget::pinTab()
 {
     getManagingTabDlg()->pinTab(this);
+}
+
+bool TabbableWidget::isGroupChat()
+{
+    return objectName().contains("GroupChatDlg", Qt::CaseInsensitive);
 }

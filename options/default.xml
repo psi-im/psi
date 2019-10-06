@@ -327,6 +327,7 @@ QLineEdit#le_status_text {
                 </size>
                 <use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring><use-hash-nick-coloring type="bool">true</use-hash-nick-coloring><colored-history type="bool">true</colored-history>
                 <allow-highlight-events type="bool">false</allow-highlight-events>
+                <hide-when-closing type="bool">false</hide-when-closing>
             </muc>
             <spell-check comment="Options related to the spell checker">
                 <enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
