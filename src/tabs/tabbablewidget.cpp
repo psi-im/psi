@@ -257,5 +257,5 @@ void TabbableWidget::pinTab()
 
 bool TabbableWidget::isGroupChat()
 {
-    return tabManager_->tabKind(this) == "M";
+    return objectName() == "GroupChatDlg";
 }
