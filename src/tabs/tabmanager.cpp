@@ -40,10 +40,11 @@ TabDlg* TabManager::getTabs(QWidget *widget)
 
 QChar TabManager::tabKind(QWidget *widget) {
     QChar retval = 0;
+    const QString name = widget->objectName();
 
-    if (static_cast<ChatDlg*> (widget)) {
+    if (name == "ChatDlg") {
         retval = 'C';
-    } else if (static_cast<GCMainDlg*> (widget)) {
+    } else if (name == "GroupChatDlg") {
         retval = 'M';
     } else {
         qDebug("Checking if widget should be tabbed: Unknown type");
