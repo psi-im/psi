@@ -1,5 +1,5 @@
 {
-    "app-id": "con.psi-plus.Psi-plus",
+    "app-id": "con.psi_plus.Psi_plus",
     "runtime": "org.kde.Platform",
     "runtime-version": "5.12",
     "sdk": "org.kde.Sdk",
@@ -49,6 +49,16 @@
             ]
         },
         {
+           "name": "libidn",
+           "sources": [
+               {
+                   "type": "archive",
+                   "url": "https://ftp.gnu.org/gnu/libidn/libidn-1.35.tar.gz",
+                   "sha256": "f11af1005b46b7b15d057d7f107315a1ad46935c7fcdf243c16e46ec14f0fe1e"
+               }
+           ]
+        },
+        {
             "name": "libgpg-error",
             "sources": [
                 {
@@ -95,10 +105,8 @@
         },
         {
             "name": "libsignal-protocol-c",
-            "buildsystem": "cmake"
-            "build-commands": [
-                "cd build/cmake && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app ../.. -DBUILD_TESTING=0  -DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-                "cd build/cmake && make && make install"],
+            "buildsystem": "cmake",
+            "config-opts": ["-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=0", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=/app"],
              "sources": [
                 {
                     "type": "git",
@@ -106,7 +114,6 @@
                 }
              ]
         },
-
         {
             "name": "psi-plus",
             "buildsystem": "cmake",

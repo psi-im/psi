@@ -49,6 +49,16 @@
             ]
         },
         {
+           "name": "libidn",
+           "sources": [
+               {
+                   "type": "archive",
+                   "url": "https://ftp.gnu.org/gnu/libidn/libidn-1.35.tar.gz",
+                   "sha256": "f11af1005b46b7b15d057d7f107315a1ad46935c7fcdf243c16e46ec14f0fe1e"
+               }
+           ]
+        },
+        {
             "name": "libgpg-error",
             "sources": [
                 {
@@ -93,12 +103,10 @@
                 }
             ]
         },
-        {
+{
             "name": "libsignal-protocol-c",
-            "buildsystem": "cmake"
-            "build-commands": [
-                "cd build/cmake && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app ../.. -DBUILD_TESTING=0  -DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-                "cd build/cmake && make && make install"],
+            "buildsystem": "cmake",
+            "config-opts": ["-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=0", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=/app"],
              "sources": [
                 {
                     "type": "git",
@@ -121,7 +129,7 @@
                     "dest": "iris",
                     "type": "git",
                     "url": "https://github.com/psi-im/iris.git",
-                    "commit": "13078a405242f03412ae91e9c65e79cd44282cb2"
+                    "commit": "5d2a4bf2b096105a7fa73aab04ebbb0f26f51532"
                 },
                 {
                     "dest": "src/libpsi",
