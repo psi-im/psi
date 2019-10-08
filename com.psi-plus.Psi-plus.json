@@ -1,5 +1,5 @@
 {
-    "app-id": "org.psi_im.Psi",
+    "app-id": "con.psi-plus.Psi-plus",
     "runtime": "org.kde.Platform",
     "runtime-version": "5.12",
     "sdk": "org.kde.Sdk",
@@ -108,7 +108,7 @@
         },
 
         {
-            "name": "psi",
+            "name": "psi-plus",
             "buildsystem": "cmake",
             "builddir": true,
             "config-opts": ["-DENABLE_PLUGINS=ON", "-DBUILD_DEV_PLUGINS=ON"],
