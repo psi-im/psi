@@ -119,6 +119,12 @@
             "buildsystem": "cmake",
             "builddir": true,
             "config-opts": ["-DENABLE_PLUGINS=ON", "-DPLUGINS_PATH=lib/psi/plugins"],
+            "post-install": [
+                "for icon_size in 16 32 48 64 128; do
+                     install -dm755 /app/share/icons/hicolor/${icon_size}x${icon_size}/apps
+                     install -m644 /app/share/psi/iconsets/system/default/logo_${icon_size}.png /app/share/icons/hicolor/${icon_size}x${icon_size}/apps/psi.png
+                 done"
+            ],
             "sources": [
                 {
                     "type": "archive",
