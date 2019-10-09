@@ -40,14 +40,15 @@ TabDlg* TabManager::getTabs(QWidget *widget)
 
 QChar TabManager::tabKind(QWidget *widget) {
     QChar retval = 0;
-    const QString name = widget->objectName();
-
-    if (name == "ChatDlg") {
-        retval = 'C';
-    } else if (name == "GroupChatDlg") {
-        retval = 'M';
-    } else {
-        qDebug("Checking if widget should be tabbed: Unknown type");
+    if (widget) {
+        const QString name = widget->objectName();
+        if (name == "ChatDlg") {
+            retval = 'C';
+        } else if (name == "GroupChatDlg") {
+            retval = 'M';
+        } else {
+            qDebug("Checking if widget should be tabbed: Unknown type");
+        }
     }
     return retval;
 }

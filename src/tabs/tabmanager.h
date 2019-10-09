@@ -120,7 +120,7 @@ public slots:
 private:
     QMap<QChar, TabDlg*> preferedTabsetForKind_;
     QMap<TabDlg*, QString> tabsetToKinds_;
-     QList<TabDlg*> tabs_;
+    QList<TabDlg*> tabs_;
     QList<TabbableWidget*> tabControlledChats_;
     PsiCon *psiCon_;
     TabDlgDelegate *tabDlgDelegate_;
