@@ -147,16 +147,26 @@ or
 
   - possible values for ${plugins}:
 
-    historykeeperplugin	stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
+    historykeeperplugin stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
     cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin icqdieplugin
     clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
-    storagenotesplugin	extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
+    storagenotesplugin extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
     gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin
     enummessagesplugin httpuploadplugin imagepreviewplugin
 
   Example:
 
-  > -DBUILD_PLUGINS="chessplugin;otrplugin;gnome3supportplugin"
+  > -DBUILD_PLUGINS="chessplugin;otrplugin"
+
+    The BUILD_PLUGINS variable can also be used as a blacklist.
+    In this case, all plugins will be compiled, except those indicated.
+    To do this, just specify the variable as
+
+    > -DBUILD_PLUGINS = "-chessplugin;-otrplugin"
+
+    and plugins chessplugin and otrplugin will not be assembled
+
+    ATTENTION! Mixing white and black lists is not allowed.
 
 >  -DPLUGINS_ROOT_DIR=${path}
 

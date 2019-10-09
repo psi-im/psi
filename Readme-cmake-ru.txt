@@ -164,7 +164,18 @@
 
   Пример:
 
-  > -DBUILD_PLUGINS="chessplugin;otrplugin;gnome3supportplugin"
+  > -DBUILD_PLUGINS="chessplugin;otrplugin"
+
+    Переменная BUILD_PLUGINS может также быть использована как черный список.
+    В этом случае будут собраны все плагины, кроме указаных.
+    Для этого достаточно указать переменную как
+
+    > -DBUILD_PLUGINS="-chessplugin;-otrplugin"
+
+    и плагины chessplugin и otrplugin собраны не будут
+
+    ВНИМАНИЕ! Смешивание белого и черного списков не допускается.
+
 
 >  -DPLUGINS_ROOT_DIR=${path}
 

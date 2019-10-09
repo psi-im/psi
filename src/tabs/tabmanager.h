@@ -45,7 +45,7 @@ public:
     /**
      * Return a new tabset (for this widget).
      */
-    TabDlg*    newTabs(QWidget *widget=nullptr);
+    TabDlg* newTabs(QWidget *widget=nullptr);
 
     /**
      * Checks if a tabset manages this widget.

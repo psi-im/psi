@@ -1,12 +1,12 @@
 {
-    "app-id": "org.psi_im.Psi",
+    "app-id": "con.psi_plus.Psi_plus",
     "runtime": "org.kde.Platform",
     "runtime-version": "5.12",
     "sdk": "org.kde.Sdk",
-    "command": "psi",
-    "rename-desktop-file": "psi.desktop",
-    "rename-appdata-file": "psi.appdata.xml",
-    "rename-icon": "psi",
+    "command": "psi-plus",
+    "rename-desktop-file": "psi-plus.desktop",
+    "rename-appdata-file": "psi-plus.appdata.xml",
+    "rename-icon": "psi-plus",
     "finish-args": [
         "--socket=x11",
         "--socket=wayland",
@@ -103,7 +103,7 @@
                 }
             ]
         },
-{
+        {
             "name": "libsignal-protocol-c",
             "buildsystem": "cmake",
             "config-opts": ["-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=0", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=/app"],
@@ -115,62 +115,25 @@
              ]
         },
         {
-            "name": "psi",
+            "name": "psi-plus",
             "buildsystem": "cmake",
             "builddir": true,
-            "config-opts": ["-DENABLE_PLUGINS=ON", "-DPLUGINS_PATH=lib/psi/plugins"],
-            "post-install": [
-                "for icon_size in 16 32 48 64 128; do
-                     install -dm755 /app/share/icons/hicolor/${icon_size}x${icon_size}/apps
-                     install -m644 /app/share/psi/iconsets/system/default/logo_${icon_size}.png /app/share/icons/hicolor/${icon_size}x${icon_size}/apps/psi.png
-                 done"
-            ],
+            "config-opts": ["-DENABLE_PLUGINS=ON", "-DBUILD_DEV_PLUGINS=ON"],
             "sources": [
                 {
-                    "type": "archive",
-                    "url": "https://github.com/psi-im/psi/archive/1.4.zip",
-                    "sha256": "9421ceee162015ff7a692c9f85588085df3dbbfd663af931ddef2b3926bc8d63"
-                },
-                {
-                    "dest": "iris",
                     "type": "git",
-                    "url": "https://github.com/psi-im/iris.git",
-                    "commit": "5d2a4bf2b096105a7fa73aab04ebbb0f26f51532"
+                    "url": "https://github.com/psi-plus/psi-plus-snapshots.git"
                 },
                 {
-                    "dest": "src/libpsi",
+                    "dest": "psi-plus-l10n",
                     "type": "git",
-                    "url": "https://github.com/psi-im/libpsi.git",
-                    "commit": "22d5ff63bd38362bd8771dbcecb98c71bf172c30"
-                },
-                {
-                    "dest": "psi-l10n",
-                    "type": "git",
-                    "url": "https://github.com/psi-im/psi-l10n.git"
-                },
-                {
-                    "dest": "3rdparty/http-parser",
-                    "type": "git",
-                    "url": "https://github.com/nodejs/http-parser.git",
-                    "commit": "9f489a474d5761ca5715f1e13a3d39023a656424"
-                },
-                {
-                    "dest": "3rdparty/qhttp",
-                    "type": "git",
-                    "url": "https://github.com/azadkuh/qhttp.git",
-                    "commit": "2cc654a126b80cd081d2985d5e08437e9eafd877"
-                },
-                {
-                    "dest": "psi-plugins",
-                    "type": "archive", 
-                    "url": "https://github.com/psi-im/plugins/archive/1.4.zip", 
-                    "sha256": "be6608b21167d3d47935987d720725347991c3f7f32fbf0eca943e8316e6532f"
+                    "url": "https://github.com/psi-plus/psi-plus-l10n.git"
                 },
                 {
                     "type": "shell",
                     "commands": [
-                        "cp -R psi-l10n/translations .",
-                        "cp -R psi-plugins/* src/plugins"]
+                        "mkdir -p ./translations",
+                        "cp -R psi-plus-l10n/translations ./translations"]
                 }
             ]
         }
