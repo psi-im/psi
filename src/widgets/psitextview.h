@@ -24,16 +24,15 @@
 
 class QMimeData;
 class QTextCursor;
-class ITEMediaOpener;
+class FileSharingDeviceOpener;
 
-class PsiTextView : public QTextEdit
-{
+class PsiTextView : public QTextEdit {
     Q_OBJECT
 public:
     PsiTextView(QWidget *parent = nullptr);
 
     // Reimplemented
-    QMenu* createStandardContextMenu(const QPoint &position);
+    QMenu *createStandardContextMenu(const QPoint &position);
 
     bool atBottom();
 
@@ -42,7 +41,7 @@ public:
 
     QString getHtml() const;
     QString getPlainText() const;
-    void setMediaOpener(ITEMediaOpener *opener);
+    void    setMediaOpener(FileSharingDeviceOpener *opener);
 
 public slots:
     void scrollToBottom();
@@ -52,28 +51,29 @@ protected:
     // make these functions unusable, because they modify
     // document structure and we can't override them to
     // handle Icons correctly
-    void append(const QString &) { }
-    void toHtml() const { }
-    void toPlainText() const { }
-    void insertHtml(const QString &) { }
-    void insertPlainText(const QString &) { }
-    void setHtml(const QString &) { }
-    void setPlainText(const QString &) { }
+    void append(const QString &) {}
+    void toHtml() const {}
+    void toPlainText() const {}
+    void insertHtml(const QString &) {}
+    void insertPlainText(const QString &) {}
+    void setHtml(const QString &) {}
+    void setPlainText(const QString &) {}
 
     // reimplemented
-    void contextMenuEvent(QContextMenuEvent *e);
-    void mouseMoveEvent(QMouseEvent *e);
-    void mousePressEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
+    void       contextMenuEvent(QContextMenuEvent *e);
+    void       mouseMoveEvent(QMouseEvent *e);
+    void       mousePressEvent(QMouseEvent *e);
+    void       mouseReleaseEvent(QMouseEvent *e);
     QMimeData *createMimeDataFromSelection() const;
-    void resizeEvent(QResizeEvent *);
+    void       resizeEvent(QResizeEvent *);
 
     QString getTextHelper(bool html) const;
 
     class Private;
+
 private:
     Private *d;
-    bool isSelectedBlock();
+    bool     isSelectedBlock();
 };
 
 #endif // PSITEXTVIEW_H

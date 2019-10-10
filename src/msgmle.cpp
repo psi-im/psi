@@ -46,24 +46,21 @@
 #include <QTimer>
 #include <QToolButton>
 
-static const int TIMEOUT = 30000; //30 secs maximum time interval
-static const int SECOND = 1000;
+static const int TIMEOUT        = 30000; //30 secs maximum time interval
+static const int SECOND         = 1000;
 static const int maxOverlayTime = TIMEOUT / SECOND;
 
 //----------------------------------------------------------------------------
 // CapitalLettersController
 //----------------------------------------------------------------------------
 
-class CapitalLettersController : public QObject
-{
+class CapitalLettersController : public QObject {
     Q_OBJECT
 public:
-    CapitalLettersController(QTextEdit* parent)
-        : QObject()
-        , te_(parent)
-        , enabled_(true)
+    CapitalLettersController(QTextEdit *parent) :
+        QObject(), te_(parent), enabled_(true)
     {
-        connect(te_->document(), SIGNAL(contentsChange(int,int,int)), SLOT(textChanged(int,int,int)));
+        connect(te_->document(), SIGNAL(contentsChange(int, int, int)), SLOT(textChanged(int, int, int)));
     }
 
     virtual ~CapitalLettersController() {}
@@ -87,7 +84,7 @@ private:
     void changeChar(int pos, QChar c)
     {
         QTextCursor cur = te_->textCursor();
-        cur.setPosition(pos+1);
+        cur.setPosition(pos + 1);
         const QTextCharFormat cf = cur.charFormat();
         cur.deletePreviousChar();
         cur.setCharFormat(cf);
@@ -97,36 +94,33 @@ private:
 public slots:
     void textChanged(int pos, int /*charsRemoved*/, int charsAdded)
     {
-        if(enabled_) {
-            if(charsAdded == 0) {
+        if (enabled_) {
+            if (charsAdded == 0) {
                 return;
             }
-            if(!te_->textCursor().atEnd()) { //Editing the letter in the middle of the text
+            if (!te_->textCursor().atEnd()) { //Editing the letter in the middle of the text
                 return;
             }
             bool capitalizeNext_ = false;
 
-            if(pos == 0 && charsAdded < 3) { //the first letter after the previous message was sent
+            if (pos == 0 && charsAdded < 3) { //the first letter after the previous message was sent
                 capitalizeNext_ = true;
-            }
-            else if (charsAdded > 1) { //Insert a piece of text
+            } else if (charsAdded > 1) { //Insert a piece of text
                 return;
-            }
-            else {
+            } else {
                 QString txt = te_->toPlainText();
                 QRegExp capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
-                int index = txt.lastIndexOf(capitalizeAfter);
-                if(index != -1 && index == pos-capitalizeAfter.matchedLength()) {
+                int     index = txt.lastIndexOf(capitalizeAfter);
+                if (index != -1 && index == pos - capitalizeAfter.matchedLength()) {
                     capitalizeNext_ = true;
                 }
             }
 
-            if(capitalizeNext_) {
+            if (capitalizeNext_) {
                 QChar ch = te_->document()->characterAt(pos);
-                if(!ch.isLetter() || !ch.isLower()) {
+                if (!ch.isLetter() || !ch.isLower()) {
                     return;
-                }
-                else {
+                } else {
                     capitalizeChar(pos, ch);
                 }
             }
@@ -135,26 +129,25 @@ public slots:
 
     void changeCase()
     {
-        bool tmpEnabled = enabled_;
-        enabled_ = false;
+        bool tmpEnabled    = enabled_;
+        enabled_           = false;
         QTextCursor oldCur = te_->textCursor();
-        int pos = oldCur.position();
-        int begin = 0;
-        int end = te_->document()->characterCount();
-        if(oldCur.hasSelection()) {
+        int         pos    = oldCur.position();
+        int         begin  = 0;
+        int         end    = te_->document()->characterCount();
+        if (oldCur.hasSelection()) {
             begin = oldCur.selectionStart();
-            end = oldCur.selectionEnd();
+            end   = oldCur.selectionEnd();
         }
-        for(; begin < end; begin++) {
+        for (; begin < end; begin++) {
             QChar ch = te_->document()->characterAt(begin);
-            if(!ch.isLetter()) {
+            if (!ch.isLetter()) {
                 continue;
             }
 
-            if(ch.isLower()) {
+            if (ch.isLower()) {
                 capitalizeChar(begin, ch);
-            }
-            else {
+            } else {
                 decapitalizeChar(begin, ch);
             }
         }
@@ -164,23 +157,17 @@ public slots:
     }
 
 private:
-    QTextEdit* te_;
-    bool enabled_;
+    QTextEdit *te_;
+    bool       enabled_;
 };
 
 //----------------------------------------------------------------------------
 // ChatEdit
 //----------------------------------------------------------------------------
-ChatEdit::ChatEdit(QWidget *parent)
-    : QTextEdit(parent)
-    , palOriginal(palette())
-    , palCorrection(palOriginal)
-    , layout_(nullptr)
-    , recButton_(nullptr)
-    , overlay_(nullptr)
-    , timeout_(TIMEOUT)
+ChatEdit::ChatEdit(QWidget *parent) :
+    QTextEdit(parent), palOriginal(palette()), palCorrection(palOriginal), layout_(nullptr), recButton_(nullptr), overlay_(nullptr), timeout_(TIMEOUT)
 {
-    controller_ = new HTMLTextController(this);
+    controller_  = new HTMLTextController(this);
     capitalizer_ = new CapitalLettersController(this);
 
     setWordWrapMode(QTextOption::WordWrap);
@@ -193,7 +180,7 @@ ChatEdit::ChatEdit(QWidget *parent)
 
     previous_position_ = 0;
     setCheckSpelling(checkSpellingGloballyEnabled());
-    connect(PsiOptions::instance(),SIGNAL(optionChanged(const QString&)),SLOT(optionsChanged()));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
     typedMsgsIndex = 0;
     palCorrection.setColor(QPalette::Base, QColor(160, 160, 0));
     initActions();
@@ -208,7 +195,7 @@ ChatEdit::~ChatEdit()
     delete capitalizer_;
 }
 
-CapitalLettersController * ChatEdit::capitalizer()
+CapitalLettersController *ChatEdit::capitalizer()
 {
     return capitalizer_;
 }
@@ -219,7 +206,7 @@ void ChatEdit::initActions()
     addAction(act_showMessagePrev);
     connect(act_showMessagePrev, SIGNAL(triggered()), SLOT(showHistoryMessagePrev()));
 
-    act_showMessageNext= new QAction(this);
+    act_showMessageNext = new QAction(this);
     addAction(act_showMessageNext);
     connect(act_showMessageNext, SIGNAL(triggered()), SLOT(showHistoryMessageNext()));
 
@@ -227,7 +214,7 @@ void ChatEdit::initActions()
     addAction(act_showMessageFirst);
     connect(act_showMessageFirst, SIGNAL(triggered()), SLOT(showHistoryMessageFirst()));
 
-    act_showMessageLast= new QAction(this);
+    act_showMessageLast = new QAction(this);
     addAction(act_showMessageLast);
     connect(act_showMessageLast, SIGNAL(triggered()), SLOT(showHistoryMessageLast()));
 
@@ -236,7 +223,7 @@ void ChatEdit::initActions()
     connect(act_changeCase, SIGNAL(triggered()), capitalizer_, SLOT(changeCase()));
 
     QClipboard *clipboard = QApplication::clipboard();
-    actPasteAsQuote_ = new QAction(tr("Paste as Quotation"), this);
+    actPasteAsQuote_      = new QAction(tr("Paste as Quotation"), this);
     actPasteAsQuote_->setEnabled(clipboard->mimeData()->hasText());
     addAction(actPasteAsQuote_);
     connect(actPasteAsQuote_, SIGNAL(triggered()), SLOT(pasteAsQuote()));
@@ -252,7 +239,7 @@ void ChatEdit::setShortcuts()
     act_changeCase->setShortcuts(ShortcutManager::instance()->shortcuts("chat.change-case"));
 }
 
-void ChatEdit::setDialog(QWidget* dialog)
+void ChatEdit::setDialog(QWidget *dialog)
 {
     dialog_ = dialog;
 }
@@ -268,7 +255,7 @@ void ChatEdit::setFont(const QFont &f)
     controller_->setFont(f);
 }
 
-QMenu* ChatEdit::createStandardContextMenu(const QPoint &position)
+QMenu *ChatEdit::createStandardContextMenu(const QPoint &position)
 {
     QMenu *menu = QTextEdit::createStandardContextMenu(position);
     menu->addAction(actPasteAsQuote_);
@@ -286,8 +273,7 @@ void ChatEdit::setCheckSpelling(bool b)
     if (check_spelling_) {
         if (!spellhighlighter_)
             spellhighlighter_.reset(new SpellHighlighter(document()));
-    }
-    else {
+    } else {
         spellhighlighter_.reset();
     }
 }
@@ -299,7 +285,8 @@ bool ChatEdit::focusNextPrevChild(bool next)
 
 // Qt text controls are quite greedy to grab key events.
 // disable that.
-bool ChatEdit::event(QEvent * event) {
+bool ChatEdit::event(QEvent *event)
+{
     if (event->type() == QEvent::ShortcutOverride) {
         return false;
     }
@@ -308,7 +295,7 @@ bool ChatEdit::event(QEvent * event) {
 
 void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
-/*    if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
+    /*    if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
         e->ignore();
     else if(e->key() == Qt::Key_Return &&
            ((e->modifiers() & Qt::ControlModifier)
@@ -323,7 +310,8 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
         e->ignore();
     else  if(e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier))
         e->ignore();
-    else*/ if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier))
+    else*/
+    if (e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier))
         setText("");
 /*    else if((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && !((e->modifiers() & Qt::ShiftModifier) || (e->modifiers() & Qt::AltModifier)) && LEGOPTS.chatSoftReturn)
         e->ignore();
@@ -336,8 +324,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
         e->ignore();
     }
 #endif
-    else
-    {
+    else {
         QTextEdit::keyPressEvent(e);
     }
 }
@@ -361,15 +348,15 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
             if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {
                 QMenu spell_menu;
                 if (!suggestions.isEmpty()) {
-                    foreach(QString suggestion, suggestions) {
-                        QAction* act_suggestion = spell_menu.addAction(suggestion);
-                        connect(act_suggestion,SIGNAL(triggered()),SLOT(applySuggestion()));
+                    foreach (QString suggestion, suggestions) {
+                        QAction *act_suggestion = spell_menu.addAction(suggestion);
+                        connect(act_suggestion, SIGNAL(triggered()), SLOT(applySuggestion()));
                     }
                     spell_menu.addSeparator();
                 }
                 if (SpellChecker::instance()->writable()) {
-                    QAction* act_add = spell_menu.addAction(tr("Add to dictionary"));
-                    connect(act_add,SIGNAL(triggered()),SLOT(addToDictionary()));
+                    QAction *act_add = spell_menu.addAction(tr("Add to dictionary"));
+                    connect(act_add, SIGNAL(triggered()), SLOT(addToDictionary()));
                 }
                 spell_menu.exec(QCursor::pos());
                 e->accept();
@@ -395,11 +382,11 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
  */
 void ChatEdit::applySuggestion()
 {
-    QAction* act_suggestion = qobject_cast<QAction*>(sender());
-    int current_position = textCursor().position();
+    QAction *act_suggestion   = qobject_cast<QAction *>(sender());
+    int      current_position = textCursor().position();
 
     // Replace the word
-    QTextCursor    tc = cursorForPosition(last_click_);
+    QTextCursor tc = cursorForPosition(last_click_);
     tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
     tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
     int old_length = tc.position() - tc.anchor();
@@ -421,8 +408,8 @@ void ChatEdit::applySuggestion()
  */
 void ChatEdit::addToDictionary()
 {
-    QTextCursor    tc = cursorForPosition(last_click_);
-    int current_position = textCursor().position();
+    QTextCursor tc               = cursorForPosition(last_click_);
+    int         current_position = textCursor().position();
 
     // Get the selected word
     tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
@@ -449,7 +436,7 @@ void ChatEdit::showHistoryMessageNext()
             ++typedMsgsIndex;
             showMessageHistory();
         } else {
-            if(typedMsgsIndex != typedMsgsHistory.size()) {
+            if (typedMsgsIndex != typedMsgsHistory.size()) {
                 typedMsgsIndex = typedMsgsHistory.size();
                 // Restore last typed text
                 setEditText(currentText);
@@ -477,9 +464,9 @@ void ChatEdit::showHistoryMessagePrev()
         // Save current typed text
         if (typedMsgsIndex == typedMsgsHistory.size()) {
             currentText = toPlainText();
-            correction = true;
+            correction  = true;
         }
-        if (typedMsgsIndex == typedMsgsHistory.size() -1 && correction) {
+        if (typedMsgsIndex == typedMsgsHistory.size() - 1 && correction) {
             correction = false;
             ++typedMsgsIndex;
         }
@@ -513,7 +500,7 @@ void ChatEdit::showHistoryMessageLast()
     }
 }
 
-void ChatEdit::setEditText(const QString& text)
+void ChatEdit::setEditText(const QString &text)
 {
     setPlainText(text);
     moveCursor(QTextCursor::End);
@@ -521,7 +508,7 @@ void ChatEdit::setEditText(const QString& text)
 
 void ChatEdit::insertFromMimeData(const QMimeData *source)
 {
-    auto obtainSourceText = [source](){
+    auto obtainSourceText = [source]() {
         if (!source->text().isEmpty())
             return source->text();
         return QString::fromLocal8Bit(source->data("text/plain"));
@@ -533,7 +520,7 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
             if (url.isLocalFile())
                 isLocalFile = true;
         }
-        if(source->hasText() && !isLocalFile) {
+        if (source->hasText() && !isLocalFile) {
             textCursor().insertText(obtainSourceText());
             return;
         }
@@ -541,7 +528,7 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
         return;
     }
 //dirty hacks to make text drag-n-drop work in OS Linux with Qt>=5.11
-#if defined(Q_OS_LINUX) && (QT_VERSION >= QT_VERSION_CHECK(5,11,0))
+#if defined(Q_OS_LINUX) && (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
     if (source->hasText()) {
         textCursor().insertText(obtainSourceText());
         return;
@@ -561,7 +548,8 @@ bool ChatEdit::canInsertFromMimeData(const QMimeData *source) const
             || QTextEdit::canInsertFromMimeData(source));
 }
 
-void ChatEdit::updateBackground() {
+void ChatEdit::updateBackground()
+{
     setPalette(correction ? palCorrection : palOriginal);
 }
 
@@ -571,14 +559,14 @@ void ChatEdit::showMessageHistory()
     updateBackground();
 }
 
-void ChatEdit::appendMessageHistory(const QString& text)
+void ChatEdit::appendMessageHistory(const QString &text)
 {
     if (!text.simplified().isEmpty()) {
         if (currentText == text)
             // Remove current typed text only if we want to add it to history
             currentText.clear();
         int index = typedMsgsHistory.indexOf(text);
-        if (index >=0) {
+        if (index >= 0) {
             typedMsgsHistory.removeAt(index);
         }
         if (typedMsgsHistory.size() >= MAX_MESSAGE_HISTORY) {
@@ -595,32 +583,33 @@ void ChatEdit::clearMessageHistory()
     typedMsgsIndex = 0;
 }
 
-XMPP::HTMLElement ChatEdit::toHTMLElement() {
+XMPP::HTMLElement ChatEdit::toHTMLElement()
+{
     XMPP::HTMLElement elem;
-    QString html = toHtml();
-    int index = html.indexOf("<body");
-    int lastIndex = html.lastIndexOf("</body>");
-    if(index == -1 || lastIndex == -1)
+    QString           html      = toHtml();
+    int               index     = html.indexOf("<body");
+    int               lastIndex = html.lastIndexOf("</body>");
+    if (index == -1 || lastIndex == -1)
         return elem;
     lastIndex += 7;
-    html = html.mid(index, lastIndex-index);
+    html = html.mid(index, lastIndex - index);
     QDomDocument doc;
-    if(!doc.setContent(html))
+    if (!doc.setContent(html))
         return elem;
-    QDomElement htmlElem = doc.firstChildElement("body");
-    QDomElement p = htmlElem.firstChildElement("p");
-    QDomElement body = doc.createElementNS("http://www.w3.org/1999/xhtml", "body");
-    bool foundSpan = false;
-    int paraCnt = 0;
-    while(!p.isNull()) {
+    QDomElement htmlElem  = doc.firstChildElement("body");
+    QDomElement p         = htmlElem.firstChildElement("p");
+    QDomElement body      = doc.createElementNS("http://www.w3.org/1999/xhtml", "body");
+    bool        foundSpan = false;
+    int         paraCnt   = 0;
+    while (!p.isNull()) {
         p.setAttribute("style", "margin:0;padding:0;"); //p.removeAttribute("style");
         body.appendChild(p.cloneNode(true).toElement());
-        if(!p.firstChildElement("span").isNull())
+        if (!p.firstChildElement("span").isNull())
             foundSpan = true;
         p = p.nextSiblingElement("p");
         ++paraCnt;
     }
-    if(foundSpan) {
+    if (foundSpan) {
         if (paraCnt == 1)
             body.firstChildElement("p").setTagName("span");
         elem.setBody(body);
@@ -628,25 +617,27 @@ XMPP::HTMLElement ChatEdit::toHTMLElement() {
     return elem;
 }
 
-void ChatEdit::doHTMLTextMenu() {
+void ChatEdit::doHTMLTextMenu()
+{
     controller_->doMenu();
 }
 
-void ChatEdit::setCssString(const QString &css) {
+void ChatEdit::setCssString(const QString &css)
+{
     controller_->setCssString(css);
 }
 
 void ChatEdit::insertAsQuote(const QString &text)
 {
-    int pos =  textCursor().position();
+    int     pos      = textCursor().position();
     QString prevLine = toPlainText().left(pos - 1);
-    prevLine = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
+    prevLine         = prevLine.mid(prevLine.lastIndexOf("\n") + 1);
 
     QString quote = QString::fromUtf8("» ") + text;
     quote.replace("\n", QString::fromUtf8("\n» "));
 
     // Check for previous quote and merge if true
-    if(!prevLine.startsWith(QString::fromUtf8("»"))) {
+    if (!prevLine.startsWith(QString::fromUtf8("»"))) {
         quote.prepend("\n");
     }
     quote.append("\n");
@@ -655,14 +646,13 @@ void ChatEdit::insertAsQuote(const QString &text)
 
 void ChatEdit::addSoundRecButton()
 {
-    if(!recButton_) {
+    if (!recButton_) {
         layout_.reset(new QHBoxLayout(this));
         recButton_.reset(new QToolButton(this));
         overlay_.reset(new QLabel(this));
 
         //Set text right margin for rec button
         connect(document(), &QTextDocument::contentsChanged, this, &ChatEdit::setRigthMargin);
-
 
         //Add text label and rec button to the right side of LineEdit
         //Setting label color to grey with 70% opacity with red bold text
@@ -679,34 +669,33 @@ void ChatEdit::addSoundRecButton()
         layout_->addWidget(recButton_.get());
         layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
-        connect(recButton_.get(), &QToolButton::pressed, this, [this](){ //Rec button pressed
-            if(recorder_) {
+        connect(recButton_.get(), &QToolButton::pressed, this, [this]() { //Rec button pressed
+            if (recorder_) {
                 recorder_->disconnect();
                 recorder_.reset();
             }
 
             recorder_.reset(new AudioRecorder);
             recorder_->setMaxDuration(TIMEOUT);
-            connect(recorder_.get(), &AudioRecorder::recorded, this, [this](){
+            connect(recorder_.get(), &AudioRecorder::recorded, this, [this]() {
                 if (recorder_->duration() < 1000)
                     return;
 
                 QMimeData md;
                 md.setData("audio/ogg", recorder_->data());
-                md.setData("application/x-psi-histogram", recorder_->histogram());
+                md.setData("application/x-psi-amplitudes", recorder_->histogram());
                 emit fileSharingRequested(&md);
             });
-            connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this](){
+            connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this]() {
                 recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
                 overlay_->setVisible(true);
                 timeout_ = TIMEOUT;
                 timer_.reset(new QTimer); //countdown timer to stop recording while the button is pressed
                 connect(timer_.get(), &QTimer::timeout, this, [this]() {
-                    if(timeout_>0) {
+                    if (timeout_ > 0) {
                         timeout_ -= SECOND;
-                        setOverlayText(timeout_/SECOND);
-                    }
-                    else {
+                        setOverlayText(timeout_ / SECOND);
+                    } else {
                         timer_->stop();
                         recorder_->stop();
                     }
@@ -715,7 +704,7 @@ void ChatEdit::addSoundRecButton()
             });
             recorder_->record();
         });
-        connect(recButton_.get(), &QToolButton::released, this, [this](){ //Rec button relesed
+        connect(recButton_.get(), &QToolButton::released, this, [this]() { //Rec button relesed
             recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
             if (timer_) {
                 timer_->stop();
@@ -723,7 +712,7 @@ void ChatEdit::addSoundRecButton()
             }
             setOverlayText(maxOverlayTime);
             overlay_->setVisible(false);
-            if(recorder_) {
+            if (recorder_) {
                 recorder_->stop();
             }
         });
@@ -737,9 +726,9 @@ void ChatEdit::setOverlayText(int value)
 
 void ChatEdit::setRigthMargin()
 {
-    const int margin = PsiIconset::instance()->system().iconSize() + 8;
-    QTextFrameFormat frmt = document()->rootFrame()->frameFormat();
-    if(frmt.rightMargin() < margin) {
+    const int        margin = PsiIconset::instance()->system().iconSize() + 8;
+    QTextFrameFormat frmt   = document()->rootFrame()->frameFormat();
+    if (frmt.rightMargin() < margin) {
         frmt.setRightMargin(margin);
         document()->rootFrame()->setFrameFormat(frmt);
     }
@@ -748,8 +737,8 @@ void ChatEdit::setRigthMargin()
 //----------------------------------------------------------------------------
 // LineEdit
 //----------------------------------------------------------------------------
-LineEdit::LineEdit( QWidget *parent)
-    : ChatEdit(parent)
+LineEdit::LineEdit(QWidget *parent) :
+    ChatEdit(parent)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere); // no need for horizontal scrollbar with this
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -766,8 +755,7 @@ LineEdit::~LineEdit()
 
 QSize LineEdit::minimumSizeHint() const
 {
-    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1
-                                              ,fontMetrics().height() + 1)
+    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1, fontMetrics().height() + 1)
                                        : fontMetrics().height() + 1;
     QSize sh = QTextEdit::minimumSizeHint();
     sh.setHeight(sz);
@@ -777,17 +765,16 @@ QSize LineEdit::minimumSizeHint() const
 
 QSize LineEdit::sizeHint() const
 {
-    QSize sh = QTextEdit::sizeHint();
-    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1
-                                              ,int(document()->documentLayout()->documentSize().height()))
+    QSize     sh = QTextEdit::sizeHint();
+    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1, int(document()->documentLayout()->documentSize().height()))
                                        : int(document()->documentLayout()->documentSize().height());
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
-    static_cast<QTextEdit*>(const_cast<LineEdit*>(this))->setMaximumHeight(sh.height());
+    static_cast<QTextEdit *>(const_cast<LineEdit *>(this))->setMaximumHeight(sh.height());
     return sh;
 }
 
-void LineEdit::resizeEvent(QResizeEvent* e)
+void LineEdit::resizeEvent(QResizeEvent *e)
 {
     ChatEdit::resizeEvent(e);
     QTimer::singleShot(0, this, SLOT(updateScrollBar()));

@@ -37,8 +37,8 @@
 /**
  * \brief Factory for retrieving and changing VCards.
  */
-VCardFactory::VCardFactory()
-    : QObject(qApp), dictSize_(5)
+VCardFactory::VCardFactory() :
+    QObject(qApp), dictSize_(5)
 {
 }
 
@@ -52,7 +52,7 @@ VCardFactory::~VCardFactory()
 /**
  * \brief Returns the VCardFactory instance.
  */
-VCardFactory* VCardFactory::instance()
+VCardFactory *VCardFactory::instance()
 {
     if (!instance_) {
         instance_ = new VCardFactory();
@@ -68,8 +68,7 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
     if (vcardList_.contains(jid)) {
         vcardList_.removeAll(jid);
         vcardDict_.remove(jid);
-    }
-    else if (vcardList_.size() > dictSize_) {
+    } else if (vcardList_.size() > dictSize_) {
         QString j = vcardList_.takeLast();
         vcardDict_.remove(j);
     }
@@ -80,9 +79,9 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 
 void VCardFactory::taskFinished()
 {
-    JT_VCard *task = static_cast<JT_VCard *>(sender());
-    bool notifyPhoto = task->property("phntf").toBool();
-    if ( task->success() ) {
+    JT_VCard *task        = static_cast<JT_VCard *>(sender());
+    bool      notifyPhoto = task->property("phntf").toBool();
+    if (task->success()) {
         Jid j = task->jid();
 
         saveVCard(j, task->vcard(), notifyPhoto);
@@ -91,12 +90,12 @@ void VCardFactory::taskFinished()
 
 void VCardFactory::mucTaskFinished()
 {
-    JT_VCard *task = static_cast<JT_VCard *>(sender());
-    bool notifyPhoto = task->property("phntf").toBool();
-    if ( task->success() ) {
-        Jid j = task->jid();
+    JT_VCard *task        = static_cast<JT_VCard *>(sender());
+    bool      notifyPhoto = task->property("phntf").toBool();
+    if (task->success()) {
+        Jid   j          = task->jid();
         auto &nick2vcard = mucVcardDict_[j.bare()];
-        auto nickIt = nick2vcard.find(j.resource());
+        auto  nickIt     = nick2vcard.find(j.resource());
         if (nickIt == nick2vcard.end()) {
             nick2vcard.insert(j.resource(), task->vcard());
             auto &resQueue = lastMucVcards_[j.bare()];
@@ -115,7 +114,7 @@ void VCardFactory::mucTaskFinished()
     }
 }
 
-void VCardFactory::saveVCard(const Jid& j, const VCard& vcard, bool notifyPhoto)
+void VCardFactory::saveVCard(const Jid &j, const VCard &vcard, bool notifyPhoto)
 {
     checkLimit(j.bare(), vcard);
 
@@ -124,18 +123,18 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& vcard, bool notifyPhoto)
     // ensure that there's a vcard directory to save into
     QDir p(pathToProfile(activeProfile, ApplicationInfo::CacheLocation));
     QDir v(pathToProfile(activeProfile, ApplicationInfo::CacheLocation) + "/vcard");
-    if(!v.exists())
+    if (!v.exists())
         p.mkdir("vcard");
 
-    QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml" );
-    file.open ( QIODevice::WriteOnly );
-    QTextStream out ( &file );
+    QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
+    file.open(QIODevice::WriteOnly);
+    QTextStream out(&file);
     out.setCodec("UTF-8");
     QDomDocument doc;
-    doc.appendChild( vcard.toXml ( &doc ) );
+    doc.appendChild(vcard.toXml(&doc));
     out << doc.toString(4);
 
-    Jid jid = j;
+    Jid  jid = j;
     emit vcardChanged(jid);
 
     if (notifyPhoto && !vcard.photo().isEmpty()) {
@@ -148,8 +147,8 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& vcard, bool notifyPhoto)
  */
 const VCard VCardFactory::mucVcard(const Jid &j) const
 {
-    QHash<QString,VCard> d = mucVcardDict_.value(j.bare());
-    QHash<QString,VCard>::ConstIterator it = d.constFind(j.resource());
+    QHash<QString, VCard>                d  = mucVcardDict_.value(j.bare());
+    QHash<QString, VCard>::ConstIterator it = d.constFind(j.resource());
     if (it != d.constEnd()) {
         return *it;
     }
@@ -167,11 +166,11 @@ VCard VCardFactory::vcard(const Jid &j)
     }
 
     // then try to load from cache on disk
-    QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml" );
-    file.open (QIODevice::ReadOnly);
+    QFile file(ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml");
+    file.open(QIODevice::ReadOnly);
     QDomDocument doc;
 
-    if ( doc.setContent(&file, false) ) {
+    if (doc.setContent(&file, false)) {
         VCard vcard = VCard::fromXml(doc.documentElement());
         if (!vcard.isNull()) {
             checkLimit(j.bare(), vcard);
@@ -193,9 +192,9 @@ void VCardFactory::setVCard(const Jid &j, const VCard &v, bool notifyPhoto)
 /**
  * \brief Updates vCard on specified \a account.
  */
-void VCardFactory::setVCard(const PsiAccount* account, const VCard &v, QObject* obj, const char* slot)
+void VCardFactory::setVCard(const PsiAccount *account, const VCard &v, QObject *obj, const char *slot)
 {
-    JT_VCard* jtVCard_ = new JT_VCard(account->client()->rootTask());
+    JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
     if (obj)
         connect(jtVCard_, SIGNAL(finished()), obj, slot);
     connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
@@ -206,9 +205,9 @@ void VCardFactory::setVCard(const PsiAccount* account, const VCard &v, QObject* 
 /**
  * \brief Updates vCard on specified \a account.
  */
-void VCardFactory::setTargetVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot)
+void VCardFactory::setTargetVCard(const PsiAccount *account, const VCard &v, const Jid &mucJid, QObject *obj, const char *slot)
 {
-    JT_VCard* jtVCard_ = new JT_VCard(account->client()->rootTask());
+    JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
     if (obj)
         connect(jtVCard_, SIGNAL(finished()), obj, slot);
     connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
@@ -218,7 +217,7 @@ void VCardFactory::setTargetVCard(const PsiAccount* account, const VCard &v, con
 
 void VCardFactory::updateVCardFinished()
 {
-    JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
+    JT_VCard *jtVCard = static_cast<JT_VCard *>(sender());
     if (jtVCard && jtVCard->success()) {
         setVCard(jtVCard->jid(), jtVCard->vcard());
     }
@@ -230,23 +229,23 @@ void VCardFactory::updateVCardFinished()
 /**
  * \brief Call this when you need to retrieve fresh vCard from server (and store it in cache afterwards)
  */
-JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, const char *slot,
+JT_VCard *VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, std::function<void()> &&cb,
                                  bool cacheVCard, bool isMuc, bool notifyPhoto)
 {
-    JT_VCard *task = new JT_VCard( rootTask );
+    JT_VCard *task = new JT_VCard(rootTask);
     if (notifyPhoto) {
         task->setProperty("phntf", true);
     }
-    if ( cacheVCard ) {
+    if (cacheVCard) {
         if (isMuc)
             task->connect(task, SIGNAL(finished()), this, SLOT(mucTaskFinished()));
         else
             task->connect(task, SIGNAL(finished()), this, SLOT(taskFinished()));
     }
-    task->connect(task, SIGNAL(finished()), obj, slot);
+    task->connect(task, &JT_VCard::finished, obj, cb);
     task->get(Jid(jid.full()));
     task->go(true);
     return task;
 }
 
-VCardFactory* VCardFactory::instance_ = nullptr;
+VCardFactory *VCardFactory::instance_ = nullptr;

@@ -20,44 +20,23 @@
 #ifndef MESSAGEVIEW_H
 #define MESSAGEVIEW_H
 
+#include "filesharingitem.h"
 #include "xmpp_message.h"
 
 #include <QDateTime>
 #include <QVariantMap>
 
-#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
-#     define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+#define SET_QFLAG(flags, flag, state) \
+    if (state)                        \
+        flags |= flag;                \
+    else                              \
+        flags &= ~flag
 #else
-#     define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
+#define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
 #endif
 
-class MessageViewReference
-{
-public:
-    MessageViewReference(const QByteArray &shareId, const QString &fileName, size_t fileSize,
-                         const QString &mediaType, const QStringList &sources);
-    MessageViewReference(const MessageViewReference &other);
-    MessageViewReference &operator=(const MessageViewReference &other);
-    ~MessageViewReference();
-
-    void setThumbnail(const QUrl &uri, const QString &mediaType);
-    void setAudioHistogram(const QList<float> &spectrum);
-
-    const QByteArray &id() const;
-    const QString &fileName() const;
-    size_t size() const;
-    const QString &mediaType() const;
-    const QStringList &sources() const;
-    const QList<float> &histogram() const;
-
-    QVariantMap toVariantMap() const;
-private:
-    class Private;
-    QSharedDataPointer<Private> d;
-};
-
-class MessageView
-{
+class MessageView {
 public:
     enum Type {
         Message,
@@ -73,10 +52,10 @@ public:
     };
 
     enum Flag {
-        Emote   = 0x1,
-        Alert   = 0x2,
-        Local   = 0x4,
-        Spooled = 0x8,
+        Emote            = 0x1,
+        Alert            = 0x2,
+        Local            = 0x4,
+        Spooled          = 0x8,
         AwaitingReceipt  = 0x10,
         HideStatusChange = 0x20,
         HideJoinLeave    = 0x40,
@@ -99,22 +78,22 @@ public:
 
     // accepts plain/text nick, plain/text status and rich/text statusText
     static MessageView mucJoinMessage(const QString &nick, int status, const QString &message,
-                                     const QString &statusText = QString(), int priority = 0);
+                                      const QString &statusText = QString(), int priority = 0);
     static MessageView mucPartMessage(const QString &nick, const QString &message = QString(),
-                                     const QString &statusText = QString());
+                                      const QString &statusText = QString());
     static MessageView nickChangeMessage(const QString &nick, const QString &newNick);
 
-    inline Type type() const { return _type; }
+    inline Type           type() const { return _type; }
     inline const QString &text() const { return _text; }
-    inline void setText(const QString &text) { _text = text; }
+    inline void           setText(const QString &text) { _text = text; }
     inline const QString &userText() const { return _userText; }
-    inline void setUserText(const QString &text) { _userText = text; }
+    inline void           setUserText(const QString &text) { _userText = text; }
 
-    void setPlainText(const QString &);
-    void setHtml(const QString &);
+    void    setPlainText(const QString &);
+    void    setHtml(const QString &);
     QString formattedText() const;
     QString formattedUserText() const;
-    bool hasStatus() const;
+    bool    hasStatus() const;
 
     inline const Flags &flags() const { return _flags; }
 
@@ -134,43 +113,43 @@ public:
     inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
 
     inline void setStatus(int s) { _status = s; }
-    inline int status() const { return _status; }
+    inline int  status() const { return _status; }
     inline void setStatusPriority(int s) { _statusPriority = s; }
-    inline int statusPriority() const { return _statusPriority; }
+    inline int  statusPriority() const { return _statusPriority; }
 
-    inline void setNick(const QString &nick) { _nick = nick; }
-    inline const QString &nick() const { return _nick; }
-    inline void setMessageId(const QString &id) { _messageId = id; }
-    inline const QString &messageId() const { return _messageId; }
-    inline void setUserId(const QString &id) { _userId = id; }
-    inline const QString &userId() const { return _userId; }
-    inline void setDateTime(const QDateTime &dt) { _dateTime = dt; }
-    inline const QDateTime &dateTime() const { return _dateTime; }
-    inline QMap<QString, QString> urls() const { return _urls; }
-    inline void setReplaceId(const QString &id) { _replaceId = id; }
-    inline const QString &replaceId() const { return _replaceId; }
-    inline void setCarbonDirection(XMPP::Message::CarbonDir c) {_carbon = c; }
-    inline XMPP::Message::CarbonDir carbonDirection() const { return _carbon; }
-    inline void addReference(const MessageViewReference &mvr) { _references.append(mvr); }
-    inline const QList<MessageViewReference> &references() const { return _references; }
+    inline void                            setNick(const QString &nick) { _nick = nick; }
+    inline const QString &                 nick() const { return _nick; }
+    inline void                            setMessageId(const QString &id) { _messageId = id; }
+    inline const QString &                 messageId() const { return _messageId; }
+    inline void                            setUserId(const QString &id) { _userId = id; }
+    inline const QString &                 userId() const { return _userId; }
+    inline void                            setDateTime(const QDateTime &dt) { _dateTime = dt; }
+    inline const QDateTime &               dateTime() const { return _dateTime; }
+    inline QMap<QString, QString>          urls() const { return _urls; }
+    inline void                            setReplaceId(const QString &id) { _replaceId = id; }
+    inline const QString &                 replaceId() const { return _replaceId; }
+    inline void                            setCarbonDirection(XMPP::Message::CarbonDir c) { _carbon = c; }
+    inline XMPP::Message::CarbonDir        carbonDirection() const { return _carbon; }
+    inline void                            addReference(FileSharingItem *fsi) { _references.append(fsi); }
+    inline const QList<FileSharingItem *> &references() const { return _references; }
 
     QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
 private:
-    Type _type;
-    Flags _flags;
-    int _status;
-    int _statusPriority;
-    QString _messageId;
-    QString _userId; // TODO: convert to XMPP::Jid, only used in message corrections as of now
-    QString _nick; // rich / as is
-    QString _text; // always rich (plain text converted to rich)
-    QString _userText; // rich
-    QDateTime _dateTime;
-    QMap<QString, QString> _urls;
-    QString _replaceId;
+    Type                     _type;
+    Flags                    _flags;
+    int                      _status;
+    int                      _statusPriority;
+    QString                  _messageId;
+    QString                  _userId;   // TODO: convert to XMPP::Jid, only used in message corrections as of now
+    QString                  _nick;     // rich / as is
+    QString                  _text;     // always rich (plain text converted to rich)
+    QString                  _userText; // rich
+    QDateTime                _dateTime;
+    QMap<QString, QString>   _urls;
+    QString                  _replaceId;
     XMPP::Message::CarbonDir _carbon;
-    QList<MessageViewReference> _references;
+    QList<FileSharingItem *> _references;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)

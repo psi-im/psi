@@ -122,6 +122,8 @@ list(APPEND HEADERS
     multifiletransferdelegate.h
     multifiletransferdlg.h
     filesharingmanager.h
+    filesharingitem.h
+    filesharingdownloader.h
     filesharedlg.h
     fileutil.h
     gcuserview.h
@@ -379,6 +381,8 @@ list(APPEND SOURCES
     eventdb.cpp
     filecache.cpp
     filesharingmanager.cpp
+    filesharingitem.cpp
+    filesharingdownloader.cpp
     filesharedlg.cpp
     fileutil.cpp
     geolocation.cpp

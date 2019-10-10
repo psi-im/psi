@@ -26,19 +26,18 @@ class FileCache;
 
 using namespace XMPP;
 
-class BoBFileCache : public BoBCache
-{
+class BoBFileCache : public BoBCache {
     Q_OBJECT
 public:
     static BoBFileCache *instance();
 
-    virtual void put(const BoBData &);
-    virtual BoBData get(const QString &);
+    virtual void    put(const BoBData &) override;
+    virtual BoBData get(const Hash &) override;
 
 private:
     BoBFileCache();
 
-    FileCache *_fileCache;
+    FileCache *          _fileCache;
     static BoBFileCache *_instance;
 };
 

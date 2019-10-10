@@ -20,15 +20,15 @@
 #ifndef AVATARS_H
 #define AVATARS_H
 
-#include <QPixmap>
-#include <QMap>
 #include <QByteArray>
-#include <QString>
+#include <QMap>
+#include <QPixmap>
 #include <QQueue>
+#include <QString>
 #include <QTimer>
 
-#define PEP_AVATAR_DATA_TN     "data"
-#define PEP_AVATAR_DATA_NS     "urn:xmpp:avatar:data"
+#define PEP_AVATAR_DATA_TN "data"
+#define PEP_AVATAR_DATA_NS "urn:xmpp:avatar:data"
 #define PEP_AVATAR_METADATA_TN "metadata"
 #define PEP_AVATAR_METADATA_NS "urn:xmpp:avatar:metadata"
 
@@ -41,65 +41,64 @@ class VCardMucAvatar;
 class VCardStaticAvatar;
 
 namespace XMPP {
-    class Jid;
-    class Resource;
-    class PubSubItem;
-    class Status;
+class Jid;
+class Resource;
+class PubSubItem;
+class Status;
 }
 using namespace XMPP;
 
 //------------------------------------------------------------------------------
 
-class AvatarFactory : public QObject
-{
+class AvatarFactory : public QObject {
     Q_OBJECT
 
     static const int VcardReqInterval = 500; // query vcard avatars once per half second
 
 public:
     struct UserHashes {
-        QString avatar; // current active avatar
-        QString vcard;  // avatar hash just in case
+        QByteArray avatar; // current active avatar
+        QByteArray vcard;  // avatar hash just in case
     };
 
     struct AvatarData {
         QByteArray data;
-        QString metaType;
+        QString    metaType;
     };
 
-    AvatarFactory(PsiAccount* pa);
+    AvatarFactory(PsiAccount *pa);
     ~AvatarFactory();
 
-    QPixmap getAvatar(const Jid& jid);
+    QPixmap getAvatar(const Jid &jid);
     //QPixmap getAvatarByHash(const QString& hash);
-    static AvatarData avatarDataByHash(const QString& hash);
-    UserHashes userHashes(const Jid& jid) const;
-    PsiAccount* account() const;
-    void setSelfAvatar(const QString& fileName);
+    static AvatarData avatarDataByHash(const QByteArray &hash);
+    UserHashes        userHashes(const Jid &jid) const;
+    PsiAccount *      account() const;
+    void              setSelfAvatar(const QString &fileName);
 
-    void importManualAvatar(const Jid& j, const QString& fileName);
-    void removeManualAvatar(const Jid& j);
-    bool hasManualAvatar(const Jid& j);
+    void importManualAvatar(const Jid &j, const QString &fileName);
+    void removeManualAvatar(const Jid &j);
+    bool hasManualAvatar(const Jid &j);
 
-    void newMucItem(const Jid& fullJid, const Status& s);
-    QPixmap getMucAvatar(const Jid& jid);
+    void    newMucItem(const Jid &fullJid, const Status &s);
+    QPixmap getMucAvatar(const Jid &jid);
 
     static QString getCacheDir();
-    static int maxAvatarSize();
-    static QPixmap roundedAvatar(const QPixmap& pix, int rad, int avatarSize);
+    static int     maxAvatarSize();
+    static QPixmap roundedAvatar(const QPixmap &pix, int rad, int avatarSize);
 
     void statusUpdate(const Jid &jid, const XMPP::Status &status);
 signals:
-    void avatarChanged(const Jid&);
+    void avatarChanged(const Jid &);
 
 protected slots:
-    void itemPublished(const Jid&, const QString&, const PubSubItem&);
-    void publish_success(const QString&, const PubSubItem&);
-    void resourceAvailable(const Jid&, const Resource&);
+    void itemPublished(const Jid &, const QString &, const PubSubItem &);
+    void publish_success(const QString &, const PubSubItem &);
+    void resourceAvailable(const Jid &, const Resource &);
 
 private slots:
-    void onVcardTaskFinsihed();
-    void vcardUpdated(const Jid&, bool isMuc);
+    void vcardUpdated(const Jid &, bool isMuc);
+
 private:
     class Private;
     Private *d;

@@ -1,0 +1,7 @@
+BasedOnStyle: WebKit
+BreakConstructorInitializers: AfterColon
+PointerAlignment: Right
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true

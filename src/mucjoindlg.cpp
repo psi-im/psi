@@ -33,12 +33,11 @@
 #include <QString>
 #include <QStringList>
 
-static const int nickConflictCode = 409;
+static const int nickConflictCode     = 409;
 static const QString additionalSymbol = "_";
 
-MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
-    : QDialog(nullptr)
-    , nickAlreadyCompleted_(false)
+MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) :
+    QDialog(nullptr), nickAlreadyCompleted_(false)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
@@ -48,7 +47,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
     setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
 #endif
     controller_ = psi;
-    account_ = nullptr;
+    account_    = nullptr;
     controller_->dialogRegister(this);
     ui_.ck_history->setChecked(true);
     ui_.ck_history->hide();
@@ -70,7 +69,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
     setWindowTitle(CAP(windowTitle()));
 
     connect(ui_.lwFavorites, SIGNAL(currentRowChanged(int)), SLOT(favoritesCurrentRowChanged(int)));
-    connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(favoritesItemDoubleClicked(QListWidgetItem*)));
+    connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(favoritesItemDoubleClicked(QListWidgetItem *)));
     ui_.lwFavorites->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContentsOnFirstShow);
 
     favoritesCurrentRowChanged(ui_.lwFavorites->currentRow());
@@ -131,7 +130,7 @@ void MUCJoinDlg::updateFavorites()
     QHash<QString, QListWidgetItem *> bmMap; // jid to item
     QMultiMap<QString, QListWidgetItem *> nmMap; // name to item
     if (account_ && account_->bookmarkManager()->isAvailable()) {
-        foreach(ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
+        foreach (ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
             if (!c.jid().isValid()) {
                 continue;
             }
@@ -140,33 +139,32 @@ void MUCJoinDlg::updateFavorites()
             if (name.isEmpty()) {
                 name = jidBare;
             }
-            QString s = tr("%1 on %2").arg(c.nick()).arg(name);
-            lwi = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon(), s);
+            QString s = tr("%1 (%2)").arg(name, c.nick());
+            lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon(), s);
             lwi->setData(Qt::UserRole, c.jid().withResource(c.nick()).full());
             lwi->setData(Qt::UserRole + 1, c.password());
             bmMap.insert(jidBare, lwi);
             nmMap.insertMulti(name.toLower(), lwi);
         }
     }
-    for (auto &item: nmMap) { // sorted by key (name)
+    for (auto &item : nmMap) { // sorted by key (name)
         ui_.lwFavorites->addItem(item);
     }
 
-    foreach(QString j, controller_->recentGCList()) {
+    foreach (QString j, controller_->recentGCList()) {
         Jid jid(j);
         if (!jid.isValid()) {
             continue;
         }
         QString bareJid = jid.bare();
-        lwi = bmMap.value(bareJid);
+        lwi             = bmMap.value(bareJid);
         if (!lwi) {
             QString s = tr("%1 on %2").arg(jid.resource()).arg(JIDUtil::toString(jid, false));
-            lwi = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/history")).icon(), s);
+            lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/history")).icon(), s);
             lwi->setData(Qt::UserRole, j);
             ui_.lwFavorites->addItem(lwi);
         }
-        if (!recentLwi)
-        {
+        if (!recentLwi) {
             recentLwi = lwi;
         }
     }
@@ -246,13 +244,13 @@ void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
         return;
     }
 
-    GCMainDlg *gc = account_->findDialog<GCMainDlg*>(j.bare());
+    GCMainDlg *gc = account_->findDialog<GCMainDlg *>(j.bare());
     if (gc) {
-        if(gc->isHidden() && !gc->isTabbed())
+        if (gc->isHidden() && !gc->isTabbed())
             gc->ensureTabbedCorrectly();
         gc->bringToFront();
         if (gc->isInactive()) {
-            if(gc->jid() != j.bare())
+            if (gc->jid() != j.bare())
                 gc->setJid(j.bare());
             gc->reactivate();
         }
@@ -300,36 +298,36 @@ void MUCJoinDlg::error(int error, const QString &str)
     account_->dialogUnregister(this);
     controller_->dialogRegister(this);
 
-    if(!nickAlreadyCompleted_ && reason_ == PsiAccount::MucAutoJoin && error == nickConflictCode) {
+    if (!nickAlreadyCompleted_ && reason_ == PsiAccount::MucAutoJoin && error == nickConflictCode) {
         nickAlreadyCompleted_ = true;
         ui_.le_nick->setText(ui_.le_nick->text() + additionalSymbol);
         doJoin(reason_);
         return;
     }
 
-    if(!isVisible())
+    if (!isVisible())
         show();
 
     nickAlreadyCompleted_ = false;
 
-    QMessageBox* msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
+    QMessageBox *msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
     msg->setAttribute(Qt::WA_DeleteOnClose, true);
     msg->setModal(false);
     msg->show();
 }
 
-void MUCJoinDlg::setJid(const Jid& mucJid)
+void MUCJoinDlg::setJid(const Jid &mucJid)
 {
     ui_.le_host->setText(mucJid.domain());
     ui_.le_room->setText(mucJid.node());
 }
 
-void MUCJoinDlg::setNick(const QString& nick)
+void MUCJoinDlg::setNick(const QString &nick)
 {
     ui_.le_nick->setText(nick);
 }
 
-void MUCJoinDlg::setPassword(const QString& password)
+void MUCJoinDlg::setPassword(const QString &password)
 {
     ui_.le_pass->setText(password);
 }

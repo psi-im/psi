@@ -27,11 +27,10 @@ class QString;
 class QStringList;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class AddUserDlg : public QDialog, public Ui::AddUser
-{
+class AddUserDlg : public QDialog, public Ui::AddUser {
     Q_OBJECT
 public:
     AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *);
@@ -52,7 +51,6 @@ private slots:
 
     void getVCardActivated();
     void resolveNickActivated();
-    void resolveNickFinished();
 
     void jid_Changed();
 
@@ -62,7 +60,7 @@ private:
     Private *d;
 
     XMPP::Jid jid() const;
-    void errorGateway(const QString &str, const QString &err);
+    void      errorGateway(const QString &str, const QString &err);
 };
 
 #endif // ADDUSERDLG_H

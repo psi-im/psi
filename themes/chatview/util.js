@@ -347,7 +347,7 @@ function initPsiTheme() {
                     var source = share.getAttribute("id");
                     var type = share.getAttribute("type");
                     if (type.startsWith("audio")) {
-                        var hg = share.getAttribute("histogram");
+                        var hg = share.getAttribute("amplitudes");
                         if (hg && hg.length)
                             hg.split(",").forEach(v => { info += `<b style="height:${v}%"></b>` });
                         var playerFragment = chat.util.createHtmlNode(`<div class="psi-audio-msg">

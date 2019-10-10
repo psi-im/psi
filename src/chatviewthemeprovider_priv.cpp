@@ -25,18 +25,18 @@
 #include "psithemeprovider.h"
 #include "xmpp_vcard.h"
 #ifdef WEBENGINE
-#    include "webserver.h"
+#include "webserver.h"
 #else
-#    include "networkaccessmanager.h"
+#include "networkaccessmanager.h"
 #endif
 
 #include <QBuffer>
 #include <QPointer>
 #include <QUrlQuery>
 #ifdef WEBENGINE
-#    include <QWebEngineProfile>
+#include <QWebEngineProfile>
 #else
-#    include <QNetworkRequest>
+#include <QNetworkRequest>
 #endif
 
 static QPointer<ChatViewCon> cvCon;
@@ -44,19 +44,20 @@ static QPointer<ChatViewCon> cvCon;
 #ifdef WEBENGINE
 
 ChatViewUrlRequestInterceptor::ChatViewUrlRequestInterceptor(QObject *parent) :
-    QWebEngineUrlRequestInterceptor(parent) {}
+    QWebEngineUrlRequestInterceptor(parent)
+{
+}
 
 void ChatViewUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
 {
     QString q = info.firstPartyUrl().query();
     if (q.startsWith(QLatin1String("psiId="))) {
         // handle urls like this http://127.0.0.1:12345/?psiId=ab4ba
-        info.setHttpHeader(QByteArray("PsiId"), q.mid(sizeof("psiId=")-1).toUtf8());
+        info.setHttpHeader(QByteArray("PsiId"), q.mid(sizeof("psiId=") - 1).toUtf8());
     }
 }
 #else
-class AvatarHandler : public NAMDataHandler
-{
+class AvatarHandler : public NAMDataHandler {
 public:
     bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
     {
@@ -73,7 +74,7 @@ public:
                     return true;
                 }
             } else {
-                AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(hash);
+                AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(QByteArray::fromHex(hash.toLatin1()));
                 if (!ad.data.isEmpty()) {
                     data = ad.data;
                     mime = ad.metaType.toLatin1();
@@ -85,25 +86,23 @@ public:
     }
 };
 
-class IconHandler : public NAMDataHandler
-{
+class IconHandler : public NAMDataHandler {
 public:
     bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
     {
-        QUrl url = req.url();
+        QUrl    url  = req.url();
         QString path = url.path();
         if (!path.startsWith(QLatin1String("/psi/icon/"))) {
             return false;
         }
         QString iconId = path.mid(sizeof("/psi/icon/") - 1);
-        int w = QUrlQuery(url.query()).queryItemValue("w").toInt();
-        int h = QUrlQuery(url.query()).queryItemValue("h").toInt();
-        PsiIcon icon = IconsetFactory::icon(iconId);
+        int     w      = QUrlQuery(url.query()).queryItemValue("w").toInt();
+        int     h      = QUrlQuery(url.query()).queryItemValue("h").toInt();
+        PsiIcon icon   = IconsetFactory::icon(iconId);
         if (w && h && !icon.isAnimated()) {
             QBuffer buffer(&data);
             buffer.open(QIODevice::WriteOnly);
-            if (icon.pixmap().scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-                    .toImage().save(&buffer, "PNG") && data.size()) {
+            if (icon.pixmap().scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage().save(&buffer, "PNG") && data.size()) {
                 mime = "image/png";
                 return true;
             }
@@ -119,8 +118,7 @@ public:
     }
 };
 
-class ThemesDirHandler : public NAMDataHandler
-{
+class ThemesDirHandler : public NAMDataHandler {
 public:
     bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
     {
@@ -148,12 +146,12 @@ public:
 
 #endif
 
-ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
+ChatViewCon::ChatViewCon(PsiCon *pc) :
+    QObject(pc), pc(pc)
 {
 #ifdef WEBENGINE
     // handler reading data from themes directory
-    WebServer::Handler themesDirHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
+    WebServer::Handler themesDirHandler = [&](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
         QString fn = req->url().path().mid(sizeof("/psi/themes"));
         fn.replace("..", ""); // a little security
         fn = PsiThemeProvider::themePath(fn);
@@ -176,10 +174,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         return false;
     };
 
-    WebServer::Handler iconsHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
-        QString name = req->url().path().mid(sizeof("/psi/icon"));
-        QByteArray ba = IconsetFactory::raw(name);
+    WebServer::Handler iconsHandler = [&](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
+        QString    name = req->url().path().mid(sizeof("/psi/icon"));
+        QByteArray ba   = IconsetFactory::raw(name);
 
         if (!ba.isEmpty()) {
             res->setStatusCode(qhttp::ESTATUS_OK);
@@ -189,9 +186,8 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         return false;
     };
 
-    WebServer::Handler avatarsHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
-        QString hash = req->url().path().mid(sizeof("/psi/avatar")); // no / because of null pointer
+    WebServer::Handler avatarsHandler = [&](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
+        QString    hash = req->url().path().mid(sizeof("/psi/avatar")); // no / because of null pointer
         QByteArray ba;
         if (hash == QLatin1String("default.png")) {
             QPixmap p;
@@ -217,9 +213,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         return false;
     };
 
-    WebServer::Handler qwebchannelHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
-        if (req->method() != qhttp::EHTTP_GET) return false;
+    WebServer::Handler qwebchannelHandler = [&](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
+        if (req->method() != qhttp::EHTTP_GET)
+            return false;
         QFile qwcjs(":/qtwebchannel/qwebchannel.js");
         if (qwcjs.open(QIODevice::ReadOnly)) {
             res->setStatusCode(qhttp::ESTATUS_OK);
@@ -231,16 +227,15 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         return true;
     };
 
-    WebServer::Handler faviconHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
-        if (req->method() != qhttp::EHTTP_GET) return false;
+    WebServer::Handler faviconHandler = [&](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
+        if (req->method() != qhttp::EHTTP_GET)
+            return false;
         res->setStatusCode(qhttp::ESTATUS_OK);
         res->end(IconsetFactory::icon(QLatin1String("psi/logo_16")).raw());
         return true;
     };
 
-    WebServer::Handler defaultHandler = [this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
+    WebServer::Handler defaultHandler = [this](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
         // PsiId identifies certiain element of interface we load contents for.
         // For example it could be currently opened chat window for some jid.
         // This id should be the same for all requests of the element.
@@ -250,9 +245,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         // HTTP referer header is even less reliable so it's not used here.
 
         // qhttp::server keeps headers lower-cased
-        static QByteArray psiHdr = QByteArray::fromRawData("psiid", sizeof("psiid")-1);
+        static QByteArray psiHdr = QByteArray::fromRawData("psiid", sizeof("psiid") - 1);
 
-        auto it = req->headers().constFind(psiHdr);
+        auto               it = req->headers().constFind(psiHdr);
         WebServer::Handler handler;
         if (it != req->headers().constEnd()) {
             handler = sessionHandlers.value(it.value());
@@ -273,11 +268,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
                 if (!it.value()) { /* garbage collecting */
                     it = sessionHandlers.erase(it);
                 } else {
-                    if (baPath.startsWith(it.key()) && (baPath.size() == it.key().size() ||
-                                                        !baPath[it.key().size()].isLetter()))
-                    {
+                    if (baPath.startsWith(it.key()) && (baPath.size() == it.key().size() || !baPath[it.key().size()].isLetter())) {
                         req->setProperty("basePath", QString('/') + it.key());
-                        const_cast<QUrl&>(req->url()).setPath(baPath.mid(it.key().size()));
+                        const_cast<QUrl &>(req->url()).setPath(baPath.mid(it.key().size()));
                         handler = it.value();
                     }
                     ++it;
@@ -294,7 +287,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
     auto ws = pc->webServer();
     ws->setDefaultHandler(defaultHandler);
     ws->route("/psi/themes/", themesDirHandler);
-    ws->route("/psi/icon/",   iconsHandler);
+    ws->route("/psi/icon/", iconsHandler);
     ws->route("/psi/avatar/", avatarsHandler);
     ws->route("/psi/static/qwebchannel.js", qwebchannelHandler);
     ws->route("/favicon.ico", faviconHandler);
@@ -321,7 +314,8 @@ ChatViewCon *ChatViewCon::instance()
     return cvCon.data();
 }
 
-void ChatViewCon::init(PsiCon *pc) {
+void ChatViewCon::init(PsiCon *pc)
+{
     if (!cvCon) {
         cvCon = new ChatViewCon(pc);
     }

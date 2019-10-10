@@ -55,33 +55,32 @@
 
 using namespace XMPP;
 
-class InfoWidget::Private
-{
+class InfoWidget::Private {
 public:
     Private() = default;
 
-    int type = 0;
-    Jid jid;
-    VCard vcard;
-    PsiAccount *pa = nullptr;
-    bool busy = false;
-    bool te_edited = false;
-    int actionType = 0;
-    JT_VCard *jt = nullptr;
-    bool cacheVCard = false;
-    QByteArray photo;
-    QDate bday;
-    QString dateTextFormat;
-    QList<QString> infoRequested;
-    QPointer<QDialog> showPhotoDlg;
-    QPointer<QFrame> namesDlg;
-    QPointer<QPushButton> noBdayButton;
-    QPointer<QFrame> bdayPopup;
+    int                       type = 0;
+    Jid                       jid;
+    VCard                     vcard;
+    PsiAccount *              pa         = nullptr;
+    bool                      busy       = false;
+    bool                      te_edited  = false;
+    int                       actionType = 0;
+    JT_VCard *                jt         = nullptr;
+    bool                      cacheVCard = false;
+    QByteArray                photo;
+    QDate                     bday;
+    QString                   dateTextFormat;
+    QList<QString>            infoRequested;
+    QPointer<QDialog>         showPhotoDlg;
+    QPointer<QFrame>          namesDlg;
+    QPointer<QPushButton>     noBdayButton;
+    QPointer<QFrame>          bdayPopup;
     QPointer<QCalendarWidget> calendar;
-    QLineEdit *le_givenname = nullptr;
-    QLineEdit *le_middlename = nullptr;
-    QLineEdit *le_familyname = nullptr;
-    QAction *homepageAction = nullptr;
+    QLineEdit *               le_givenname   = nullptr;
+    QLineEdit *               le_middlename  = nullptr;
+    QLineEdit *               le_familyname  = nullptr;
+    QAction *                 homepageAction = nullptr;
 
     // Fake UserListItem for groupchat contacts.
     // One day this dialog should be rewritten not to talk directly to psiaccount,
@@ -90,10 +89,10 @@ public:
     UserListItem *userListItem;
 
     // use instead of pa->findRelevant(j)
-    QList<UserListItem*> findRelevant(const Jid &j) const
+    QList<UserListItem *> findRelevant(const Jid &j) const
     {
         if (userListItem) {
-            return QList<UserListItem*>() << userListItem;
+            return QList<UserListItem *>() << userListItem;
         } else {
             return pa->findRelevant(j);
         }
@@ -118,20 +117,20 @@ public:
     }
 };
 
-InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard)
-    : QWidget(parent)
+InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard) :
+    QWidget(parent)
 {
     ui_.setupUi(this);
-    d = new Private;
-    d->type = type;
-    d->jid = j;
-    d->vcard = vcard? vcard : VCard::makeEmpty();
-    d->pa = pa;
-    d->busy = false;
+    d            = new Private;
+    d->type      = type;
+    d->jid       = j;
+    d->vcard     = vcard ? vcard : VCard::makeEmpty();
+    d->pa        = pa;
+    d->busy      = false;
     d->te_edited = false;
-    d->jt = nullptr;
+    d->jt        = nullptr;
     d->pa->dialogRegister(this, j);
-    d->cacheVCard = cacheVCard;
+    d->cacheVCard     = cacheVCard;
     d->dateTextFormat = "d MMM yyyy";
 
     setWindowTitle(d->jid.full());
@@ -141,8 +140,8 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     // names editing dialog
     d->namesDlg = new QFrame(this);
     d->namesDlg->setFrameShape(QFrame::StyledPanel);
-    QFormLayout *fl = new QFormLayout;
-    d->le_givenname = new QLineEdit(d->namesDlg);
+    QFormLayout *fl  = new QFormLayout;
+    d->le_givenname  = new QLineEdit(d->namesDlg);
     d->le_middlename = new QLineEdit(d->namesDlg);
     d->le_familyname = new QLineEdit(d->namesDlg);
     fl->addRow(tr("First Name:"), d->le_givenname);
@@ -152,7 +151,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     // end names editing dialog
 
     QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self ? "psi/options" : "psi/info").icon(),
-                                     d->type == Self ? tr("Edit names") : tr("View names") , this);
+                                     d->type == Self ? tr("Edit names") : tr("View names"), this);
     ui_.le_fullname->addAction(editnames);
     ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
     d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), tr("Open web browser"), this);
@@ -167,17 +166,17 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     connect(ui_.tb_photo, SIGNAL(clicked()), SLOT(showPhoto()));
     //connect(editnames, SIGNAL(triggered()), d->namesDlg, SLOT(show()));
 
-    if(d->type == Self || d->type == MucAdm) {
+    if (d->type == Self || d->type == MucAdm) {
         d->bdayPopup = new QFrame(this);
         d->bdayPopup->setFrameShape(QFrame::StyledPanel);
-        QVBoxLayout* vbox = new QVBoxLayout(d->bdayPopup);
+        QVBoxLayout *vbox = new QVBoxLayout(d->bdayPopup);
 
         d->calendar = new QCalendarWidget(d->bdayPopup);
         d->calendar->setFirstDayOfWeek(QLocale().firstDayOfWeek());
         d->calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
         vbox->addWidget(d->calendar);
 
-        QFrame* line = new QFrame(d->bdayPopup);
+        QFrame *line = new QFrame(d->bdayPopup);
         line->setFrameShape(QFrame::HLine);
         line->setFrameShadow(QFrame::Sunken);
         vbox->addWidget(line);
@@ -196,8 +195,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
         connect(d->calendar, SIGNAL(clicked(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
         connect(d->calendar, SIGNAL(activated(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
         connect(d->noBdayButton, SIGNAL(clicked()), SLOT(doClearBirthDate()));
-    }
-    else {
+    } else {
         // Hide buttons
         ui_.pb_open->hide();
         ui_.pb_clear->hide();
@@ -222,13 +220,13 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     // Add a status tab
     connect(d->pa->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(contactAvailable(const Jid &, const Resource &)));
     connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
-    connect(d->pa,SIGNAL(updateContact(const Jid&)),SLOT(contactUpdated(const Jid&)));
+    connect(d->pa, SIGNAL(updateContact(const Jid &)), SLOT(contactUpdated(const Jid &)));
     ui_.te_status->setReadOnly(true);
     ui_.te_status->setAcceptRichText(true);
     PsiRichText::install(ui_.te_status->document());
     updateStatus();
-    foreach(UserListItem* u, d->findRelevant(j)) {
-        foreach(UserResource r, u->userResourceList()) {
+    foreach (UserListItem *u, d->findRelevant(j)) {
+        foreach (UserResource r, u->userResourceList()) {
             requestResourceInfo(d->jid.withResource(r.name()));
         }
         if (u->userResourceList().isEmpty() && u->lastAvailable().isNull()) {
@@ -250,25 +248,25 @@ InfoWidget::~InfoWidget()
 /**
  * Redefined so the window does not close when changes are not saved.
  */
-bool InfoWidget::aboutToClose() {
+bool InfoWidget::aboutToClose()
+{
 
     // don't close if submitting
-    if(d->busy && d->actionType == 1) {
+    if (d->busy && d->actionType == 1) {
         return false;
     }
 
-    if((d->type == Self || d->type == MucAdm) && edited()) {
+    if ((d->type == Self || d->type == MucAdm) && edited()) {
         int n = QMessageBox::information(this, tr("Warning"),
-                                         d->type == MucAdm ? tr("You have not published conference information changes.\nAre you sure you want to discard them?") :
-                                                             tr("You have not published your account information changes.\nAre you sure you want to discard them?"),
+                                         d->type == MucAdm ? tr("You have not published conference information changes.\nAre you sure you want to discard them?") : tr("You have not published your account information changes.\nAre you sure you want to discard them?"),
                                          tr("Close and discard"), tr("Don't close"));
-        if(n != 0) {
+        if (n != 0) {
             return false;
         }
     }
 
     // cancel active transaction (refresh only)
-    if(d->busy && d->actionType == 0) {
+    if (d->busy && d->actionType == 0) {
         delete d->jt;
         d->jt = nullptr;
     }
@@ -278,47 +276,42 @@ bool InfoWidget::aboutToClose() {
 
 void InfoWidget::jt_finished()
 {
-    d->jt = nullptr;
-    JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
+    d->jt             = nullptr;
+    JT_VCard *jtVCard = static_cast<JT_VCard *>(sender());
 
     d->busy = false;
     emit released();
     fieldsEnable(true);
 
-    if(jtVCard->success()) {
-        if(d->actionType == 0) {
+    if (jtVCard->success()) {
+        if (d->actionType == 0) {
             d->vcard = jtVCard->vcard();
             setData(d->vcard);
-        }
-        else if(d->actionType == 1) {
+        } else if (d->actionType == 1) {
             d->vcard = jtVCard->vcard();
-            if ( d->cacheVCard )
+            if (d->cacheVCard)
                 VCardFactory::instance()->setVCard(d->jid, d->vcard);
             setData(d->vcard);
         }
 
-        if(d->jid.compare(d->pa->jid(), false)) {
+        if (d->jid.compare(d->pa->jid(), false)) {
             if (!d->vcard.nickName().isEmpty())
                 d->pa->setNick(d->vcard.nickName());
             else
                 d->pa->setNick(d->pa->jid().node());
         }
 
-        if(d->actionType == 1)
-            QMessageBox::information(this, tr("Success"), d->type == MucAdm?
-                                         tr("Your conference information has been published.") :
-                                         tr("Your account information has been published."));
-    }
-    else {
-        if(d->actionType == 0) {
-            if(d->type == Self)
+        if (d->actionType == 1)
+            QMessageBox::information(this, tr("Success"), d->type == MucAdm ? tr("Your conference information has been published.") : tr("Your account information has been published."));
+    } else {
+        if (d->actionType == 0) {
+            if (d->type == Self)
                 QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
             else if (d->type == MucAdm)
                 QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this conference.\nReason: %1").arg(jtVCard->statusString()));
             else
                 QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this contact.\nReason: %1").arg(jtVCard->statusString()));
-        }
-        else {
+        } else {
             QMessageBox::critical(this, tr("Error"), tr("Unable to publish your account information.\nReason: %1").arg(jtVCard->statusString()));
         }
     }
@@ -326,84 +319,80 @@ void InfoWidget::jt_finished()
 
 void InfoWidget::setData(const VCard &i)
 {
-    d->le_givenname->setText( i.givenName() );
-    d->le_middlename->setText( i.middleName() );
-    d->le_familyname->setText( i.familyName() );
-    ui_.le_nickname->setText( i.nickName() );
+    d->le_givenname->setText(i.givenName());
+    d->le_middlename->setText(i.middleName());
+    d->le_familyname->setText(i.familyName());
+    ui_.le_nickname->setText(i.nickName());
     d->bday = QDate::fromString(i.bdayStr(), Qt::ISODate);
     if (d->bday.isValid()) {
-        ui_.le_bday->setText( d->bday.toString(d->dateTextFormat) );
-    }
-    else {
-        ui_.le_bday->setText( i.bdayStr() );
+        ui_.le_bday->setText(d->bday.toString(d->dateTextFormat));
+    } else {
+        ui_.le_bday->setText(i.bdayStr());
     }
     const QString fullName = i.fullName();
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        ui_.le_fullname->setText( QString("%1 %2 %3")
-            .arg(i.givenName())
-            .arg(i.middleName())
-            .arg(i.familyName()) );
+        ui_.le_fullname->setText(QString("%1 %2 %3")
+                                     .arg(i.givenName())
+                                     .arg(i.middleName())
+                                     .arg(i.familyName()));
     } else {
-        ui_.le_fullname->setText( fullName );
+        ui_.le_fullname->setText(fullName);
     }
 
     ui_.le_fullname->setToolTip(
-        QString("<b>")+tr("First Name:")+"</b> "+TextUtil::escape(d->vcard.givenName())+"<br>"+
-            "<b>"+tr("Middle Name:")+"</b> "+TextUtil::escape(d->vcard.middleName())+"<br>"+
-            "<b>"+tr("Last Name:")+"</b> "+TextUtil::escape(d->vcard.familyName()) );
+        QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName()) + "<br>" + "<b>" + tr("Middle Name:") + "</b> " + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> " + TextUtil::escape(d->vcard.familyName()));
 
     QString email;
-    if ( !i.emailList().isEmpty() )
+    if (!i.emailList().isEmpty())
         email = i.emailList()[0].userid;
-    ui_.le_email->setText( email );
+    ui_.le_email->setText(email);
 
-    ui_.le_homepage->setText( i.url() );
+    ui_.le_homepage->setText(i.url());
     d->homepageAction->setVisible(!i.url().isEmpty());
 
     QString phone;
-    if ( !i.phoneList().isEmpty() )
+    if (!i.phoneList().isEmpty())
         phone = i.phoneList()[0].number;
-    ui_.le_phone->setText( phone );
+    ui_.le_phone->setText(phone);
 
     VCard::Address addr;
-    if ( !i.addressList().isEmpty() )
+    if (!i.addressList().isEmpty())
         addr = i.addressList()[0];
-    ui_.le_street->setText( addr.street );
-    ui_.le_ext->setText( addr.extaddr );
-    ui_.le_city->setText( addr.locality );
-    ui_.le_state->setText( addr.region );
-    ui_.le_pcode->setText( addr.pcode );
-    ui_.le_country->setText( addr.country );
+    ui_.le_street->setText(addr.street);
+    ui_.le_ext->setText(addr.extaddr);
+    ui_.le_city->setText(addr.locality);
+    ui_.le_state->setText(addr.region);
+    ui_.le_pcode->setText(addr.pcode);
+    ui_.le_country->setText(addr.country);
 
-    ui_.le_orgName->setText( i.org().name );
+    ui_.le_orgName->setText(i.org().name);
 
     QString unit;
-    if ( !i.org().unit.isEmpty() )
+    if (!i.org().unit.isEmpty())
         unit = i.org().unit[0];
-    ui_.le_orgUnit->setText( unit );
+    ui_.le_orgUnit->setText(unit);
 
-    ui_.le_title->setText( i.title() );
-    ui_.le_role->setText( i.role() );
-    ui_.te_desc->setPlainText( i.desc() );
+    ui_.le_title->setText(i.title());
+    ui_.le_role->setText(i.role());
+    ui_.te_desc->setPlainText(i.desc());
 
-    if ( !i.photo().isEmpty() ) {
+    if (!i.photo().isEmpty()) {
         //printf("There is a picture...\n");
         d->photo = i.photo();
         if (!updatePhoto()) {
             clearPhoto();
         }
-    }
-    else {
+    } else {
         clearPhoto();
     }
 
     setEdited(false);
 }
 
-void InfoWidget::showEvent( QShowEvent * event )
+void InfoWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
-    if ( !d->vcard.photo().isEmpty() ) {
+    if (!d->vcard.photo().isEmpty()) {
         //printf("There is a picture...\n");
         d->photo = d->vcard.photo();
         updatePhoto();
@@ -416,7 +405,7 @@ bool InfoWidget::updatePhoto()
     if (img.isNull()) {
         return false;
     }
-    int max_width  = ui_.tb_photo->width() - 10; // FIXME: Ugly magic number
+    int max_width  = ui_.tb_photo->width() - 10;  // FIXME: Ugly magic number
     int max_height = ui_.tb_photo->height() - 10; // FIXME: Ugly magic number
 
     ui_.tb_photo->setIcon(QPixmap::fromImage(img));
@@ -483,26 +472,46 @@ bool InfoWidget::edited()
 {
     bool x = false;
 
-    if(ui_.le_fullname->isModified()) x = true;
-    if(d->le_givenname->isModified()) x = true;
-    if(d->le_middlename->isModified()) x = true;
-    if(d->le_familyname->isModified()) x = true;
-    if(ui_.le_nickname->isModified()) x = true;
-    if(ui_.le_bday->isModified()) x = true;
-    if(ui_.le_email->isModified()) x = true;
-    if(ui_.le_homepage->isModified()) x = true;
-    if(ui_.le_phone->isModified()) x = true;
-    if(ui_.le_street->isModified()) x = true;
-    if(ui_.le_ext->isModified()) x = true;
-    if(ui_.le_city->isModified()) x = true;
-    if(ui_.le_state->isModified()) x = true;
-    if(ui_.le_pcode->isModified()) x = true;
-    if(ui_.le_country->isModified()) x = true;
-    if(ui_.le_orgName->isModified()) x = true;
-    if(ui_.le_orgUnit->isModified()) x = true;
-    if(ui_.le_title->isModified()) x = true;
-    if(ui_.le_role->isModified()) x = true;
-    if(d->te_edited) x = true;
+    if (ui_.le_fullname->isModified())
+        x = true;
+    if (d->le_givenname->isModified())
+        x = true;
+    if (d->le_middlename->isModified())
+        x = true;
+    if (d->le_familyname->isModified())
+        x = true;
+    if (ui_.le_nickname->isModified())
+        x = true;
+    if (ui_.le_bday->isModified())
+        x = true;
+    if (ui_.le_email->isModified())
+        x = true;
+    if (ui_.le_homepage->isModified())
+        x = true;
+    if (ui_.le_phone->isModified())
+        x = true;
+    if (ui_.le_street->isModified())
+        x = true;
+    if (ui_.le_ext->isModified())
+        x = true;
+    if (ui_.le_city->isModified())
+        x = true;
+    if (ui_.le_state->isModified())
+        x = true;
+    if (ui_.le_pcode->isModified())
+        x = true;
+    if (ui_.le_country->isModified())
+        x = true;
+    if (ui_.le_orgName->isModified())
+        x = true;
+    if (ui_.le_orgUnit->isModified())
+        x = true;
+    if (ui_.le_title->isModified())
+        x = true;
+    if (ui_.le_role->isModified())
+        x = true;
+    if (d->te_edited)
+        x = true;
 
     return x;
 }
@@ -533,9 +542,9 @@ void InfoWidget::setReadOnly(bool x)
 
 void InfoWidget::doRefresh()
 {
-    if(!d->pa->checkConnected(this))
+    if (!d->pa->checkConnected(this))
         return;
-    if(d->busy)
+    if (d->busy)
         return;
 
     fieldsEnable(false);
@@ -543,18 +552,19 @@ void InfoWidget::doRefresh()
     d->actionType = 0;
     emit busy();
 
-    d->jt = VCardFactory::instance()->getVCard(d->jid, d->pa->client()->rootTask(), this, SLOT(jt_finished()), d->cacheVCard, d->type == MucContact);
+    d->jt = VCardFactory::instance()->getVCard(
+        d->jid, d->pa->client()->rootTask(), this, [this]() { jt_finished(); }, d->cacheVCard, d->type == MucContact);
 }
 
 void InfoWidget::publish()
 {
-    if(!d->pa->checkConnected(this)) {
+    if (!d->pa->checkConnected(this)) {
         return;
     }
-    if(!(d->type == Self || d->type == MucAdm)) {
+    if (!(d->type == Self || d->type == MucAdm)) {
         return;
     }
-    if(d->busy) {
+    if (d->busy) {
         return;
     }
 
@@ -590,7 +600,7 @@ void InfoWidget::doShowCal()
     }
 }
 
-void InfoWidget::doUpdateFromCalendar(const QDate& date)
+void InfoWidget::doUpdateFromCalendar(const QDate &date)
 {
     if (d->bday != date) {
         d->bday = date;
@@ -614,48 +624,42 @@ VCard InfoWidget::makeVCard()
 {
     VCard v = VCard::makeEmpty();
 
-    v.setFullName( ui_.le_fullname->text() );
-    v.setGivenName( d->le_givenname->text() );
-    v.setMiddleName( d->le_middlename->text() );
-    v.setFamilyName( d->le_familyname->text() );
-    v.setNickName( ui_.le_nickname->text() );
-    v.setBdayStr( d->bday.isValid()? d->bday.toString(Qt::ISODate) : ui_.le_bday->text() );
+    v.setFullName(ui_.le_fullname->text());
+    v.setGivenName(d->le_givenname->text());
+    v.setMiddleName(d->le_middlename->text());
+    v.setFamilyName(d->le_familyname->text());
+    v.setNickName(ui_.le_nickname->text());
+    v.setBdayStr(d->bday.isValid() ? d->bday.toString(Qt::ISODate) : ui_.le_bday->text());
 
-    if ( !ui_.le_email->text().isEmpty() ) {
+    if (!ui_.le_email->text().isEmpty()) {
         VCard::Email email;
         email.internet = true;
-        email.userid = ui_.le_email->text();
+        email.userid   = ui_.le_email->text();
 
         VCard::EmailList list;
         list << email;
-        v.setEmailList( list );
+        v.setEmailList(list);
     }
 
-    v.setUrl( ui_.le_homepage->text() );
+    v.setUrl(ui_.le_homepage->text());
 
-    if ( !ui_.le_phone->text().isEmpty() ) {
+    if (!ui_.le_phone->text().isEmpty()) {
         VCard::Phone p;
-        p.home = true;
-        p.voice = true;
+        p.home   = true;
+        p.voice  = true;
         p.number = ui_.le_phone->text();
 
         VCard::PhoneList list;
         list << p;
-        v.setPhoneList( list );
+        v.setPhoneList(list);
     }
 
-    if ( !d->photo.isEmpty() ) {
+    if (!d->photo.isEmpty()) {
         //printf("Adding a pixmap to the vCard...\n");
-        v.setPhoto( d->photo );
+        v.setPhoto(d->photo);
     }
 
-    if ( !ui_.le_street->text().isEmpty() ||
-         !ui_.le_ext->text().isEmpty()    ||
-         !ui_.le_city->text().isEmpty()   ||
-         !ui_.le_state->text().isEmpty()  ||
-         !ui_.le_pcode->text().isEmpty()  ||
-         !ui_.le_country->text().isEmpty() )
-    {
+    if (!ui_.le_street->text().isEmpty() || !ui_.le_ext->text().isEmpty() || !ui_.le_city->text().isEmpty() || !ui_.le_state->text().isEmpty() || !ui_.le_pcode->text().isEmpty() || !ui_.le_country->text().isEmpty()) {
         VCard::Address addr;
         addr.home     = true;
         addr.street   = ui_.le_street->text();
@@ -667,22 +671,22 @@ VCard InfoWidget::makeVCard()
 
         VCard::AddressList list;
         list << addr;
-        v.setAddressList( list );
+        v.setAddressList(list);
     }
 
     VCard::Org org;
 
     org.name = ui_.le_orgName->text();
 
-    if ( !ui_.le_orgUnit->text().isEmpty() ) {
+    if (!ui_.le_orgUnit->text().isEmpty()) {
         org.unit << ui_.le_orgUnit->text();
     }
 
-    v.setOrg( org );
+    v.setOrg(org);
 
-    v.setTitle( ui_.le_title->text() );
-    v.setRole( ui_.le_role->text() );
-    v.setDesc( ui_.te_desc->toPlainText() );
+    v.setTitle(ui_.le_title->text());
+    v.setRole(ui_.le_role->text());
+    v.setDesc(ui_.te_desc->toPlainText());
 
     return v;
 }
@@ -708,15 +712,15 @@ void InfoWidget::selectPhoto()
  * Loads the image from the requested URL, and inserts the resized image into the preview box.
  * \param path image file to load
 */
-void InfoWidget::setPreviewPhoto(const QString& path)
+void InfoWidget::setPreviewPhoto(const QString &path)
 {
     QFile photo_file(path);
     if (!photo_file.open(QIODevice::ReadOnly))
         return;
 
-    QByteArray photo_data = photo_file.readAll();
-    QImage photo_image = QImage::fromData(photo_data);
-    if(!photo_image.isNull()) {
+    QByteArray photo_data  = photo_file.readAll();
+    QImage     photo_image = QImage::fromData(photo_data);
+    if (!photo_image.isNull()) {
         d->photo = photo_data;
         updatePhoto();
         d->te_edited = true;
@@ -742,33 +746,32 @@ void InfoWidget::clearPhoto()
 void InfoWidget::updateStatus()
 {
     UserListItem *u = d->find(d->jid);
-    if(u) {
+    if (u) {
         PsiRichText::setText(ui_.te_status->document(), u->makeDesc());
     } else if (d->jid.node().isEmpty() && d->jid.domain() == d->pa->jid().domain()) { // requesting info for our server.
         // let's add some more stuff..
-        static const QMap<QString,QString> transMap{
-            {"abuse-addresses", tr("Abuse")},
-            {"admin-addresses", tr("Administrators")},
-            {"feedback-addresses", tr("Feedback")},
-            {"sales-addresses", tr("Sales")},
-            {"security-addresses", tr("Security")},
-            {"support-addresses", tr("Support")}
+        static const QMap<QString, QString> transMap {
+            { "abuse-addresses", tr("Abuse") },
+            { "admin-addresses", tr("Administrators") },
+            { "feedback-addresses", tr("Feedback") },
+            { "sales-addresses", tr("Sales") },
+            { "security-addresses", tr("Security") },
+            { "support-addresses", tr("Support") }
         };
-        QString info;
-        QMapIterator<QString,QStringList> it(d->pa->serverInfoManager()->extraServerInfo());
+        QString                            info;
+        QMapIterator<QString, QStringList> it(d->pa->serverInfoManager()->extraServerInfo());
         while (it.hasNext()) {
-            auto l = it.next();
+            auto l  = it.next();
             auto at = transMap.value(l.key());
             if (!at.isEmpty()) {
                 info += QLatin1String("<b>") + at + QLatin1String(":</b><br>");
-                for (const auto &a: l.value()) {
-                    info += QLatin1String("  ") + a  + QLatin1String("<br>");
+                for (const auto &a : l.value()) {
+                    info += QLatin1String("  ") + a + QLatin1String("<br>");
                 }
             }
         }
         PsiRichText::setText(ui_.te_status->document(), info);
-    }
-    else {
+    } else {
         ui_.te_status->clear();
     }
 }
@@ -780,11 +783,10 @@ void InfoWidget::setStatusVisibility(bool visible)
 {
     // Add/remove tab if necessary
     int index = ui_.tabwidget->indexOf(ui_.tab_status);
-    if(index==-1) {
-        if(visible)
-            ui_.tabwidget->addTab(ui_.tab_status,tr("Status"));
-    }
-    else if(!visible) {
+    if (index == -1) {
+        if (visible)
+            ui_.tabwidget->addTab(ui_.tab_status, tr("Status"));
+    } else if (!visible) {
         ui_.tabwidget->removeTab(index);
     }
 }
@@ -794,7 +796,7 @@ void InfoWidget::setStatusVisibility(bool visible)
  *
  * Gets information about client version and time.
  */
-void InfoWidget::requestResourceInfo(const Jid& j)
+void InfoWidget::requestResourceInfo(const Jid &j)
 {
     d->infoRequested += j.full();
 
@@ -812,15 +814,15 @@ void InfoWidget::requestResourceInfo(const Jid& j)
 void InfoWidget::clientVersionFinished()
 {
     JT_ClientVersion *j = static_cast<JT_ClientVersion *>(sender());
-    if(j->success()) {
-        foreach(UserListItem* u, d->findRelevant(j->jid())) {
-            UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
-            bool found = (rit == u->userResourceList().end()) ? false: true;
-            if(!found) {
+    if (j->success()) {
+        foreach (UserListItem *u, d->findRelevant(j->jid())) {
+            UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
+            bool                       found = (rit == u->userResourceList().end()) ? false : true;
+            if (!found) {
                 continue;
             }
 
-            (*rit).setClient(j->name(),j->version(),j->os());
+            (*rit).setClient(j->name(), j->version(), j->os());
             d->updateEntry(*u);
             updateStatus();
         }
@@ -830,11 +832,11 @@ void InfoWidget::clientVersionFinished()
 void InfoWidget::entityTimeFinished()
 {
     JT_EntityTime *j = static_cast<JT_EntityTime *>(sender());
-    if(j->success()) {
-        foreach(UserListItem* u, d->findRelevant(j->jid())) {
-            UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
-            bool found = (rit == u->userResourceList().end()) ? false: true;
-            if(!found)
+    if (j->success()) {
+        foreach (UserListItem *u, d->findRelevant(j->jid())) {
+            UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
+            bool                       found = (rit == u->userResourceList().end()) ? false : true;
+            if (!found)
                 continue;
 
             (*rit).setTimezone(j->timezoneOffset());
@@ -846,7 +848,7 @@ void InfoWidget::entityTimeFinished()
 
 void InfoWidget::requestLastActivity()
 {
-    LastActivityTask *jla = new LastActivityTask(d->jid.bare(),d->pa->client()->rootTask());
+    LastActivityTask *jla = new LastActivityTask(d->jid.bare(), d->pa->client()->rootTask());
     connect(jla, SIGNAL(finished()), SLOT(requestLastActivityFinished()));
     jla->go(true);
 }
@@ -854,9 +856,9 @@ void InfoWidget::requestLastActivity()
 void InfoWidget::requestLastActivityFinished()
 {
     LastActivityTask *j = static_cast<LastActivityTask *>(sender());
-    if(j->success()) {
-        foreach(UserListItem* u, d->findRelevant(d->jid)) {
-            u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE,j->status()));
+    if (j->success()) {
+        foreach (UserListItem *u, d->findRelevant(d->jid)) {
+            u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE, j->status()));
             u->setLastAvailable(j->time());
             d->updateEntry(*u);
             updateStatus();
@@ -866,7 +868,7 @@ void InfoWidget::requestLastActivityFinished()
 
 void InfoWidget::contactAvailable(const Jid &j, const Resource &r)
 {
-    if (d->jid.compare(j,false)) {
+    if (d->jid.compare(j, false)) {
         if (!d->infoRequested.contains(j.withResource(r.name()).full())) {
             requestResourceInfo(j.withResource(r.name()));
         }
@@ -875,32 +877,31 @@ void InfoWidget::contactAvailable(const Jid &j, const Resource &r)
 
 void InfoWidget::contactUnavailable(const Jid &j, const Resource &r)
 {
-    if (d->jid.compare(j,false)) {
+    if (d->jid.compare(j, false)) {
         d->infoRequested.removeAll(j.withResource(r.name()).full());
     }
 }
 
-void InfoWidget::contactUpdated(const XMPP::Jid & j)
+void InfoWidget::contactUpdated(const XMPP::Jid &j)
 {
-    if (d->jid.compare(j,false)) {
+    if (d->jid.compare(j, false)) {
         updateStatus();
     }
 }
 
 void InfoWidget::showPhoto()
 {
-     if (!d->photo.isEmpty()) {
+    if (!d->photo.isEmpty()) {
         QPixmap pixmap;
         if (!d->showPhotoDlg) {
             if (pixmap.loadFromData(d->photo)) {
-                d->showPhotoDlg=new ShowPhotoDlg(this, pixmap);
+                d->showPhotoDlg = new ShowPhotoDlg(this, pixmap);
                 d->showPhotoDlg->show();
             }
-        }
-        else {
+        } else {
             ::bringToFront(d->showPhotoDlg);
         }
-     }
+    }
 }
 
 void InfoWidget::goHomepage()
@@ -934,7 +935,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidge
 
     connect(ui_.pb_refresh, SIGNAL(clicked()), iw, SLOT(doRefresh()));
     connect(ui_.pb_refresh, SIGNAL(clicked()), iw, SLOT(updateStatus()));
-    connect(ui_.pb_submit, SIGNAL(clicked()),  iw, SLOT(publish()));
+    connect(ui_.pb_submit, SIGNAL(clicked()), iw, SLOT(publish()));
     connect(ui_.pb_close, SIGNAL(clicked()), this, SLOT(close()));
     connect(ui_.pb_disco, SIGNAL(clicked()), this, SLOT(doDisco()));
     connect(iw, SIGNAL(busy()), SLOT(doBusy()));
@@ -952,7 +953,7 @@ void InfoDlg::closeEvent(QCloseEvent *e)
 
 void InfoDlg::doDisco()
 {
-    DiscoDlg* w=new DiscoDlg(iw->account(), iw->jid(), "");
+    DiscoDlg *w = new DiscoDlg(iw->account(), iw->jid(), "");
     connect(w, SIGNAL(featureActivated(QString, Jid, QString)), iw->account(), SLOT(featureActivated(QString, Jid, QString)));
     w->show();
 }
