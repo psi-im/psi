@@ -24,6 +24,7 @@
 #include <QMap>
 #include <QObject>
 #include <QStringList>
+#include <functional>
 
 class PsiAccount;
 

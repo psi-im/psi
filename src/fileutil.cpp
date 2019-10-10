@@ -224,7 +224,11 @@ void FileUtil::openFolder(const QString &path)
 
 void FileUtil::setModificationTime(const QString &filename, const QDateTime &mtime)
 {
-    auto secs = mtime.toSecsSinceEpoch();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
+    qint64 secs = mtime.toSecsSinceEpoch();
+#else
+    qint64  secs = mtime.toTime_t();
+#endif
 #ifdef Q_OS_WIN
     _utimbuf t;
     t.actime  = secs;
