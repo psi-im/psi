@@ -30,6 +30,7 @@
 #include "xmpp_jid.h"
 
 #include <QByteArray>
+#include <QDir>
 #include <QFileInfo>
 #include <QNetworkReply>
 #include <QTimer>

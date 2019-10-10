@@ -25,6 +25,7 @@
 #include "psiaccount.h"
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
+#include <functional>
 
 #include <QApplication>
 #include <QDir>

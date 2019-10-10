@@ -201,7 +201,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) :
                 return true;
             }
         } else {
-            AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(hash);
+            AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(QByteArray::fromHex(hash.toLatin1()));
             if (!ad.data.isEmpty()) {
                 res->setStatusCode(qhttp::ESTATUS_OK);
                 res->headers().insert("Content-Type", ad.metaType.toLatin1());

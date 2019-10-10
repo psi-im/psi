@@ -212,7 +212,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         int lastEnd = 0;
         for (auto const &r : m.references()) {
             MediaSharing ms = r.mediaSharing();
-            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio")) || !ms.file.hash().isValid()) { // only audio is supported for now
+            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio")) || !ms.file.hash().isValid() || !ms.file.hasSize()) { // only audio is supported for now
                 continue;
             }
             auto item = new FileSharingItem(ms, m.from(), acc, this);

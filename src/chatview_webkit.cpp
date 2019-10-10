@@ -105,8 +105,8 @@ public:
         auto                      it = re.globalMatch(msg);
         while (it.hasNext()) {
             auto match = it.next();
-            auto idStr = match.capturedRef(1);
-            auto id    = XMPP::Hash::from(idStr);
+            auto idStr = match.captured(1);
+            auto id    = XMPP::Hash::from(QStringRef(&idStr));
             auto item  = account_->psi()->fileSharingManager()->item(id);
 
             ret.append(msg.midRef(post, match.capturedStart(0) - post));
