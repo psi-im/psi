@@ -229,7 +229,7 @@ void FileUtil::setModificationTime(const QString &filename, const QDateTime &mti
     _utimbuf t;
     t.actime  = secs;
     t.modtime = secs;
-    _wutime(filename.utf16(), &t);
+    _wutime(filename.toStdWString().c_str(), &t);
 #else
     utimbuf t;
     t.actime  = secs;
