@@ -221,15 +221,15 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
             QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums().cbegin().value().toString()));
             if (r.begin() != -1 && r.begin() >= lastEnd && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
-                htmlDesc += TextUtil::escape(desc.mid(lastEnd, r.begin() - lastEnd)); // something before link
-                htmlDesc += shareStr;                                                 // something instead of link
+                htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd))); // something before link
+                htmlDesc += shareStr;                                                                        // something instead of link
                 lastEnd = r.end() + 1;
             } else {
                 tailReferences += shareStr;
             }
         }
         if (lastEnd < desc.size()) {
-            htmlDesc += TextUtil::escape(desc.mid(lastEnd, desc.size() - lastEnd));
+            htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, desc.size() - lastEnd)));
         }
         htmlDesc += tailReferences;
         mv.setHtml(htmlDesc);
