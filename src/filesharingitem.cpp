@@ -47,32 +47,30 @@ using namespace XMPP;
 FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc,
                                  FileSharingManager *manager) :
     QObject(manager),
-    _cache(cache),
     _acc(acc),
-    _manager(manager),
-    _isTempFile(false)
+    _manager(manager)
 {
-    initFromCache();
+    initFromCache(cache);
 }
 
 FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAccount *acc, FileSharingManager *manager) :
     _acc(acc),
-    _manager(manager)
+    _manager(manager),
+    _fileType(FileType::RemoteFile)
 {
-    _sizeKnown = ms.file.hasSize();
-    _fileSize  = ms.file.size();
-    _fileName  = ms.file.name();
-    _mimeType  = ms.file.mediaType();
-    _readyUris = ms.sources;
-    _jids << from;
     for (auto const &h : ms.file.hashes()) {
-        if (!_cache) {
-            auto c = manager->getCacheItem(h);
-            if (c)
-                _cache = c;
-        }
         _sums.insert(h.type(), h);
     }
+    initFromCache();
+
+    if (ms.file.hasSize()) {
+        _flags |= SizeKnown;
+        _fileSize = ms.file.size();
+    }
+    _fileName = ms.file.name();
+    _mimeType = ms.file.mediaType();
+    _uris     = ms.sources;
+    _jids << from;
 
     // TODO remaining
 }
@@ -82,30 +80,23 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc,
     QObject(manager),
     _acc(acc),
     _manager(manager),
-    _isImage(true),
-    _isTempFile(false),
-    _sizeKnown(true)
+    _fileType(FileType::TempFile),
+    _flags(SizeKnown)
 {
     QByteArray ba;
     QBuffer    buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG", 0);
-    auto sha1hash = Hash::from(Hash::Sha1, ba);
-    _mimeType     = QString::fromLatin1("image/png");
-    _fileSize     = size_t(ba.size());
+    _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, ba));
 
-    _cache = manager->getCacheItem(sha1hash, true);
-    if (_cache) {
-        _fileName = _cache->fileName();
-        // TODO fill _sums
-    } else {
-        _sums.insert(Hash::Sha1, sha1hash);
+    if (!initFromCache()) {
+        _mimeType = QString::fromLatin1("image/png");
+        _fileSize = size_t(ba.size());
         QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare-XXXXXX.png"));
         file.open();
         file.write(ba);
         file.setAutoRemove(false);
-        _fileName   = file.fileName();
-        _isTempFile = true;
+        _fileName = file.fileName();
         file.close();
     }
 }
@@ -115,23 +106,17 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc,
     QObject(manager),
     _acc(acc),
     _manager(manager),
-    _isImage(false),
-    _isTempFile(false),
-    _sizeKnown(true),
+    _fileType(FileType::LocalLink),
+    _flags(SizeKnown),
     _fileName(fileName)
 {
     QFile file(fileName);
-    _fileSize     = size_t(file.size());
-    auto sha1hash = Hash::from(Hash::Sha1, &file);
-    _cache        = manager->getCacheItem(sha1hash, true);
+    _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, &file));
 
-    if (_cache) {
-        initFromCache();
-    } else {
-        _sums.insert(Hash::Sha1, sha1hash);
+    if (!initFromCache()) {
         file.seek(0);
+        _fileSize = size_t(file.size());
         _mimeType = QMimeDatabase().mimeTypeForFileNameAndData(fileName, &file).name();
-        _isImage  = QImageReader::supportedMimeTypes().contains(_mimeType.toLatin1());
     }
 }
 
@@ -141,75 +126,83 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data,
     QObject(manager),
     _acc(acc),
     _manager(manager),
-    _isImage(false),
-    _isTempFile(false),
-    _sizeKnown(true),
+    _fileType(FileType::TempFile),
+    _flags(SizeKnown),
     _modifyTime(QDateTime::currentDateTimeUtc()),
     _metaData(metaData)
 {
-    auto sha1hash = Hash::from(Hash::Sha1, data);
-    _mimeType     = mime;
-    _fileSize     = size_t(data.size());
+    _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, data));
 
-    _cache = manager->getCacheItem(sha1hash, true);
-    if (_cache) {
-        _fileName = _cache->fileName();
-    } else {
-        _sums.insert(Hash::Sha1, sha1hash);
+    if (!initFromCache()) {
+        _mimeType = mime;
+        _fileSize = size_t(data.size());
+
         QMimeDatabase  db;
         QString        fileExt = db.mimeTypeForData(data).suffixes().value(0);
         QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psi-XXXXXX") + (fileExt.isEmpty() ? fileExt : QString('.') + fileExt));
         file.open();
         file.write(data);
         file.setAutoRemove(false);
-        _fileName   = file.fileName();
-        _isTempFile = true;
+        _fileName = file.fileName();
         file.close();
     }
 }
 
 FileSharingItem::~FileSharingItem()
 {
-    if (!_cache && _isTempFile && !_fileName.isEmpty()) {
+    if (_fileType == FileType::TempFile && !_fileName.isEmpty()) {
         QFile f(_fileName);
         if (f.exists())
             f.remove();
     }
 }
 
-void FileSharingItem::initFromCache()
+bool FileSharingItem::initFromCache(FileCacheItem *cache)
 {
-    auto md      = _cache->metadata();
+    if (!cache && _sums.size())
+        cache = this->cache(true);
+
+    if (!cache)
+        return false;
+
+    _flags       = SizeKnown | PublishNotified;
+    auto md      = cache->metadata();
     _mimeType    = md.value(QString::fromLatin1("type")).toString();
-    _isImage     = QImageReader::supportedMimeTypes().contains(_mimeType.toLatin1());
     QString link = md.value(QString::fromLatin1("link")).toString();
     if (link.isEmpty()) {
-        _fileName = _cache->fileName();
-        _fileSize = _cache->size();
+        _fileType = FileType::LocalFile;
+        _fileName = _manager->cacheDir() + "/" + cache->fileName();
+        _fileSize = cache->size();
     } else {
+        _fileType = FileType::LocalLink;
         _fileName = link;
-        _fileSize = size_t(QFileInfo(_fileName).size());
+        _fileSize = size_t(QFileInfo(_fileName).size()); // note the readability of the filename was aleady checked by this moment
     }
-    _sizeKnown = true;
-    _sums.insert(_cache->id().type(), _cache->id());
-    _readyUris = md.value(QString::fromLatin1("uris")).toStringList();
+
+    for (auto const h : cache->aliases()) {
+        _sums.insert(h.type(), h);
+    }
+    _sums.insert(cache->id().type(), cache->id());
+    _uris = md.value(QString::fromLatin1("uris")).toStringList();
 
     QString httpScheme(QString::fromLatin1("http"));
     QString xmppScheme(QString::fromLatin1("xmpp")); // jingle ?
-    for (const auto &u : _readyUris) {
+    for (const auto &u : _uris) {
         QUrl url(u);
         auto scheme = url.scheme();
         if (scheme.startsWith(httpScheme)) {
-            _httpFinished = true;
+            _flags |= HttpFinished;
         } else if (scheme == xmppScheme) {
-            _jingleFinished = true;
+            _flags |= JingleFinished;
         }
     }
+
+    return true;
 }
 
 Reference FileSharingItem::toReference() const
 {
-    QStringList uris(_readyUris);
+    QStringList uris(_uris);
 
     UserListItem *u = _acc->find(_acc->jid());
     if (u->userResourceList().isEmpty())
@@ -238,7 +231,7 @@ Reference FileSharingItem::toReference() const
         thumbPix.save(&buf, "PNG");
         QString png(QString::fromLatin1("image/png"));
         auto    bob = _acc->client()->bobManager()->append(
-            pixData, png, _isTempFile ? TEMP_TTL : FILE_TTL);
+            pixData, png, _fileType == FileType::TempFile ? TEMP_TTL : FILE_TTL); // TODO the ttl logic doesn't look valid
         Thumbnail thumb(QByteArray(), png, quint32(thumbSize.width()),
                         quint32(thumbSize.height()));
         thumb.uri = QLatin1String("cid:") + bob.cid();
@@ -262,8 +255,11 @@ Reference FileSharingItem::toReference() const
 
 QIcon FileSharingItem::thumbnail(const QSize &size) const
 {
+    if (_fileType == FileType::RemoteFile)
+        return QIcon();
+
     QImage image;
-    if (_isImage && image.load(_fileName)) {
+    if (_mimeType.startsWith(QLatin1String("image")) && image.load(_fileName)) {
         auto   img = image.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         QImage back(64, 64, QImage::Format_ARGB32_Premultiplied);
         back.fill(Qt::transparent);
@@ -297,33 +293,51 @@ QString FileSharingItem::displayName() const
     return QFileInfo(_fileName).fileName();
 }
 
-QString FileSharingItem::fileName() const { return _fileName; }
+QString FileSharingItem::fileName() const
+{
+    return _fileName;
+}
+
+FileCacheItem *FileSharingItem::cache(bool reborn) const
+{
+    for (const auto &h : _sums) {
+        auto c = _manager->cacheItem(h, reborn);
+        if (c)
+            return c;
+    }
+    return nullptr;
+}
 
 void FileSharingItem::publish()
 {
+    Q_ASSERT(_fileType != FileType::RemoteFile);
+
     auto checkFinished = [this]() {
         // if we didn't emit yet finished signal and everything is finished
-        if (!_finishNotified && _httpFinished && _jingleFinished) {
+        auto ff = HttpFinished | JingleFinished;
+        if (!(_flags & PublishNotified) && (_flags & ff) == ff) { // TODO also check if any of them succeed
             QVariantMap meta = _metaData;
             meta["type"]     = _mimeType;
-            if (_readyUris.count()) // if ever published something on external service
+            if (_uris.count()) // if ever published something on external service
                 // like http
-                meta["uris"] = _readyUris;
-            if (_isTempFile) {
-                _cache = _manager->moveToCache(_sums.cbegin().value(), _fileName, meta, TEMP_TTL);
+                meta["uris"] = _uris;
+            if (_fileType == FileType::TempFile) {
+                auto cache = _manager->moveToCache(_sums.cbegin().value(), _fileName, meta, TEMP_TTL);
+                _fileType  = FileType::LocalFile;
+                _fileName  = _manager->cacheDir() + "/" + cache->fileName();
             } else {
                 meta["link"] = _fileName;
-                _cache       = _manager->saveToCache(_sums.cbegin().value(), QByteArray(), meta, FILE_TTL);
+                _manager->saveToCache(_sums.cbegin().value(), QByteArray(), meta, FILE_TTL);
             }
-            _finishNotified = true;
+            _flags |= PublishNotified;
             emit publishFinished();
         }
     };
 
-    if (!_httpFinished) {
+    if (!(_flags & HttpFinished)) {
         auto hm = _acc->client()->httpFileUploadManager();
         if (hm->discoveryStatus() == HttpFileUploadManager::DiscoNotFound) {
-            _httpFinished = true;
+            _flags |= HttpFinished;
             checkFinished();
         } else {
             auto hfu = hm->upload(_fileName, displayName(), _mimeType);
@@ -334,10 +348,10 @@ void FileSharingItem::publish()
                         emit publishProgress(size_t(bytesReceived));
                     });
             connect(hfu, &HttpFileUpload::finished, this, [hfu, this, checkFinished]() {
-                _httpFinished = true;
+                _flags |= HttpFinished;
                 if (hfu->success()) {
                     _log.append(tr("Published on HttpUpload service"));
-                    _readyUris.append(hfu->getHttpSlot().get.url);
+                    _uris.append(hfu->getHttpSlot().get.url);
                 } else {
                     _log.append(QString("%1: %2").arg(
                         tr("Failed to publish on HttpUpload service"),
@@ -348,17 +362,17 @@ void FileSharingItem::publish()
             });
         }
     }
-    if (!_jingleFinished) {
+    if (!(_flags & JingleFinished)) {
         // FIXME we have to add muc jids here if shared with muc
         // readyUris.append(QString::fromLatin1("xmpp:%1?jingle").arg(acc->jid().full()));
-        _jingleFinished = true;
+        _flags |= JingleFinished;
         checkFinished();
     }
 }
 
 FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint64 size)
 {
-    if (isRanged && _sizeKnown && start == 0 && size == _fileSize)
+    if (isRanged && (_flags & SizeKnown) && start == 0 && size == _fileSize)
         isRanged = false;
 
     if (!isRanged && _downloader) { // let's wait till first one is finished
@@ -370,11 +384,11 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
     file.setDate(_modifyTime);
     file.setMediaType(_mimeType);
     file.setName(_fileName);
-    if (_sizeKnown)
+    if (_flags & SizeKnown)
         file.setSize(_fileSize);
 
     FileShareDownloader *downloader = new FileShareDownloader(
-        _acc, _sums.values(), file, _jids, _readyUris, this);
+        _acc, _sums.values(), file, _jids, _uris, this);
     if (isRanged) {
         downloader->setRange(start, size);
         return downloader;
@@ -400,7 +414,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
 
                 QVariantMap vm;
                 vm.insert(QString::fromLatin1("type"), _mimeType);
-                vm.insert(QString::fromLatin1("uris"), _readyUris);
+                vm.insert(QString::fromLatin1("uris"), _uris);
                 if (thumbUri.size()) { // then thumbMetaType is not empty too
                     vm.insert(QString::fromLatin1("thumb-mt"), thumbMetaType);
                     vm.insert(QString::fromLatin1("thumb-uri"), thumbUri);
@@ -453,7 +467,7 @@ QStringList FileSharingItem::sortSourcesByPriority(const QStringList &uris)
 // try take http or ftp source to be passed directly to media backend
 QUrl FileSharingItem::simpleSource() const
 {
-    auto    sorted = sortSourcesByPriority(_readyUris);
+    auto    sorted = sortSourcesByPriority(_uris);
     QString srcUrl = sorted.last();
     auto    t      = sourceType(srcUrl);
     if (t == SourceType::HTTP || t == SourceType::FTP) {

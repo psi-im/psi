@@ -99,7 +99,7 @@ QString FileSharingManager::cacheDir()
     return shares.path();
 }
 
-FileCacheItem *FileSharingManager::getCacheItem(const XMPP::Hash &id, bool reborn, QString *fileName_out)
+FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, QString *fileName_out)
 {
     auto item = d->cache->get(id, reborn);
     if (!item)
@@ -252,7 +252,7 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         if (!h.isValid() || h.data().isEmpty())
             return false;
 
-        FileCacheItem *item = getCacheItem(h, true);
+        FileCacheItem *item = cacheItem(h, true);
         if (!item)
             return false;
 

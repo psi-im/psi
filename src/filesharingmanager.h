@@ -37,18 +37,18 @@ class QMimeData;
 
 namespace qhttp {
 namespace server {
-class QHttpRequest;
-class QHttpResponse;
+    class QHttpRequest;
+    class QHttpResponse;
 }
 }
 
 namespace XMPP {
 class Message;
 namespace Jingle {
-class Session;
-namespace FileTransfer {
-class File;
-}
+    class Session;
+    namespace FileTransfer {
+        class File;
+    }
 }
 }
 
@@ -70,7 +70,7 @@ public:
     ~FileSharingManager();
 
     static QString cacheDir();
-    FileCacheItem *getCacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
+    FileCacheItem *cacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
     // id - usually hex(sha1(image data))
     FileCacheItem *saveToCache(const XMPP::Hash &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
     FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &data, const QVariantMap &metadata, unsigned int maxAge);

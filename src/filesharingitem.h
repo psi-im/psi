@@ -48,8 +48,21 @@ public:
         HTTP
     };
 
-    //using Ptr  = QSharedPointer<FileSharingItem>;
-    //using List = QList<Ptr>;
+    enum class FileType : char {
+        RemoteFile, // not yet downloaded
+        LocalLink,  // an unmanager by cache local file
+        TempFile,   // a temporary file supposed to be eventually moved to the cache
+        LocalFile   // cached local file
+    };
+
+    enum Flag {
+        HttpFinished    = 0x1,
+        JingleFinished  = 0x2,
+        PublishNotified = 0x4,
+        SizeKnown       = 0x8,
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
     using HashSums = QMap<XMPP::Hash::Type, XMPP::Hash>;
 
     FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileSharingManager *manager);
@@ -67,13 +80,15 @@ public:
     inline const QString & mimeType() const { return _mimeType; }
     inline const HashSums &sums() const { return _sums; }
     inline QVariantMap     metaData() const { return _metaData; }
-    inline FileCacheItem * cache() const { return _cache; }
-    qint64                 fileSize() const { return _fileSize; }
-    inline bool            isSizeKnown() const { return _sizeKnown; }
 
-    inline bool               isCached() const { return _cache != nullptr; }
-    inline bool               isPublished() const { return _httpFinished && _jingleFinished; }
-    inline const QStringList &uris() const { return _readyUris; }
+    // reborn flag updates ttl for the item
+    FileCacheItem *cache(bool reborn = false) const;
+    qint64         fileSize() const { return _fileSize; }
+    inline bool    isSizeKnown() const { return _flags & SizeKnown; }
+
+    inline bool               isCached() const { return cache() != nullptr; }
+    inline bool               isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
+    inline const QStringList &uris() const { return _uris; }
     PsiAccount *              account() const;
     inline const QStringList  log() const { return _log; }
 
@@ -88,7 +103,7 @@ public:
     QUrl simpleSource() const;
 
 private:
-    void initFromCache();
+    bool initFromCache(FileCacheItem *cache = nullptr);
 
 signals:
     void publishFinished();
@@ -97,20 +112,15 @@ signals:
     void logChanged();
 
 private:
-    FileCacheItem *      _cache          = nullptr;
-    PsiAccount *         _acc            = nullptr;
-    FileSharingManager * _manager        = nullptr;
-    FileShareDownloader *_downloader     = nullptr;
-    bool                 _isImage        = false;
-    bool                 _isTempFile     = false;
-    bool                 _httpFinished   = false;
-    bool                 _jingleFinished = false;
-    bool                 _finishNotified = false;
-    bool                 _sizeKnown      = false;
-    qint64               _fileSize       = 0;
+    PsiAccount *         _acc        = nullptr;
+    FileSharingManager * _manager    = nullptr;
+    FileShareDownloader *_downloader = nullptr;
+    FileType             _fileType;
+    Flags                _flags;
+    qint64               _fileSize = 0;
     QDateTime            _modifyTime; // utc
-    QStringList          _readyUris;
-    QString              _fileName; // file name without path
+    QStringList          _uris;
+    QString              _fileName; // file name with path
     HashSums             _sums;
     QString              _mimeType;
     QString              _description;
@@ -118,5 +128,7 @@ private:
     QStringList          _log;
     QList<XMPP::Jid>     _jids;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(FileSharingItem::Flags)
 
 //Q_DECLARE_METATYPE(FileSharingItem::Ptr)
