@@ -514,7 +514,8 @@ bool PsiCon::init()
         "/psi/account", [this](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
             if (req->method() != qhttp::EHTTP_GET)
                 return false;
-            auto pathParts = req->url().path().midRef(sizeof("/psi/account")).split('/');
+            QString path      = req->url().path();
+            auto    pathParts = path.midRef(sizeof("/psi/account")).split('/');
             if (pathParts.size() < 3 || pathParts[1] != QLatin1String("sharedfile")
                 || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
                 return false;

@@ -459,7 +459,6 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
     if (!downloader)
         return false; // REVIEW probably 404 would be better
 
-    downloader->setParent(res);
     connect(downloader, &FileShareDownloader::metaDataChanged, this, [this, downloader, setupHeaders, res]() {
         qint64 start;
         qint64 size;
@@ -477,7 +476,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
                      start, size);
         res->setProperty("headers", true);
 
-        auto disconnected = std::shared_ptr<bool>(new bool);
+        auto disconnected = std::make_shared<bool>(false);
         connect(downloader, &FileShareDownloader::readyRead, res, [downloader, res]() {
             if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK) {
                 qDebug("FSM readyRead available=%lld transfer them", downloader->bytesAvailable());

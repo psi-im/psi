@@ -204,7 +204,7 @@ public:
     Device::Type type;
     QString      id;
     QString      name;
-    bool         isDefault;
+    bool         isDefault = false;
 };
 
 class Global {

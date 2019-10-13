@@ -68,7 +68,7 @@ public:
     Type    type;
     QString name;
     QString id;
-    bool    isDefault;
+    bool    isDefault = false;
 };
 
 class PAudioParams {

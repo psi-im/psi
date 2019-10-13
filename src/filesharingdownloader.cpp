@@ -187,7 +187,9 @@ public:
             emit metaDataChanged();
         });
 
-        connect(session, &Jingle::Session::terminated, this, [this]() {
+        connect(app, &Jingle::Application::stateChanged, this, [this](Jingle::State state) {
+            if (state != Jingle::State::Finished)
+                return;
             auto r = app->terminationReason();
             app    = nullptr;
             if (r.isValid() && r.condition() == Jingle::Reason::Success) {

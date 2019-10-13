@@ -370,16 +370,19 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
 
     _downloader = downloader;
     connect(downloader, &FileShareDownloader::finished, this, [this]() {
+        QString dlFileName = _downloader->fileName();
+        bool    success    = _downloader->isSuccess();
         _downloader->disconnect(this);
         _downloader->deleteLater();
+        _downloader = nullptr;
 
-        if (!_downloader->isSuccess()) {
+        if (!success) {
             emit downloadFinished();
             return;
         }
 
         if (_modifyTime.isValid())
-            FileUtil::setModificationTime(_downloader->fileName(), _modifyTime);
+            FileUtil::setModificationTime(dlFileName, _modifyTime);
 
         auto thumbMetaType = _metaData.value(QString::fromLatin1("thumb-mt")).toString();
         auto thumbUri      = _metaData.value(QString::fromLatin1("thumb-uri")).toString();
@@ -396,7 +399,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
             vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
         }
 
-        _manager->moveToCache(_sums, _downloader->fileName(), vm, FILE_TTL);
+        _manager->moveToCache(_sums, dlFileName, vm, FILE_TTL);
 
         emit downloadFinished();
     });
