@@ -46,25 +46,30 @@ public:
         // Unloadable  = 0x8 // another good idea
     };
 
-    FileCacheItem(FileCache *parent, const XMPP::Hash &itemId, const QVariantMap &metadata, const QDateTime &dt,
+    FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata, const QDateTime &dt,
                   unsigned int maxAge, qint64 size, const QByteArray &data = QByteArray());
+    inline FileCacheItem(FileCache *parent, const XMPP::Hash &id, const QVariantMap &metadata, const QDateTime &dt,
+                         unsigned int maxAge, qint64 size, const QByteArray &data = QByteArray()) :
+        FileCacheItem(parent, QList<XMPP::Hash>() << id, metadata, dt, maxAge, size, data)
+    {
+    }
 
     void
-                             flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
-    bool                     remove() const; // remove file from disk but not from registry. don't call this directly.
-    void                     unload();       // drop file to disk, deallocate memory
-    inline bool              inMemory() const;
-    inline bool              isOnDisk() const { return _flags & OnDisk; }         // data is on disk and not in rgistry
-    inline bool              isRegistered() const { return _flags & Registered; } // data is on disk and not in rgistry
-    bool                     isExpired(bool finishSession = false) const;
-    inline FileCache *       parentCache() const { return (FileCache *)parent(); }
-    inline const XMPP::Hash &id() const { return _id; }
-    inline void              addAlias(const XMPP::Hash &id)
+                      flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
+    bool              remove() const; // remove file from disk but not from registry. don't call this directly.
+    void              unload();       // drop file to disk, deallocate memory
+    inline bool       inMemory() const;
+    inline bool       isOnDisk() const { return _flags & OnDisk; }         // data is on disk and not in rgistry
+    inline bool       isRegistered() const { return _flags & Registered; } // data is on disk and not in rgistry
+    bool              isExpired(bool finishSession = false) const;
+    inline FileCache *parentCache() const { return (FileCache *)parent(); }
+    inline XMPP::Hash id() const { return _sums.value(0); }
+    inline void       addHashSum(const XMPP::Hash &id)
     {
-        _aliases += id;
+        _sums += id;
         _flags &= ~Registered;
     }
-    inline const QList<XMPP::Hash> &aliases() const { return _aliases; }
+    inline const QList<XMPP::Hash> &sums() const { return _sums; }
     inline QVariantMap              metadata() const { return _metadata; }
     inline void                     setMetadata(const QVariantMap &md)
     {
@@ -91,8 +96,7 @@ public:
 private:
     friend class FileCache;
 
-    XMPP::Hash        _id;
-    QList<XMPP::Hash> _aliases;
+    QList<XMPP::Hash> _sums;
     QVariantMap       _metadata;
     QDateTime         _ctime;
     unsigned int      _maxAge;
@@ -138,17 +142,29 @@ public:
 
     /**
      * @brief Add data to cache
-     * @param id unique id (e.g. sha1 of data)
+     * @param sums - hash sums of the data (at least 1)
      * @param type e.g. content-type
      * @param data / if no data(size=0) memory size restiction won't affect this item, also no files will be created
      * @param maxAge Session/Forever or just seconds to live
      * @return a new cache item. Not yet synchronized to disk
      */
-    FileCacheItem *append(const XMPP::Hash &id, const QByteArray &data, const QVariantMap &metadata = QVariantMap(),
-                          unsigned int maxAge = Forever);
-    FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &file, const QVariantMap &metadata = QVariantMap(),
-                               unsigned int maxAge = Forever);
-    void           remove(const XMPP::Hash &id, bool needSync = true);
+    FileCacheItem *       append(const QList<XMPP::Hash> &sums, const QByteArray &data,
+                                 const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
+    inline FileCacheItem *append(const XMPP::Hash &id, const QByteArray &data,
+                                 const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever)
+    {
+        return append(QList<XMPP::Hash>() << id, data, metadata, maxAge);
+    }
+
+    // similar to append but instead of `data` moves file to the cache directory
+    FileCacheItem *       moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file,
+                                      const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
+    inline FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &file,
+                                      const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever)
+    {
+        return moveToCache(QList<XMPP::Hash>() << id, file, metadata, maxAge);
+    }
+    void remove(const XMPP::Hash &id, bool needSync = true);
 
     /**
      * @brief get cache item metadata from cache (does not involve actual data loading)

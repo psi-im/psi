@@ -35,12 +35,10 @@ class QFileInfo;
 class QImage;
 class QMimeData;
 
-namespace qhttp {
-namespace server {
+namespace qhttp { namespace server {
     class QHttpRequest;
     class QHttpResponse;
-}
-}
+}}
 
 namespace XMPP {
 class Message;
@@ -70,13 +68,16 @@ public:
     ~FileSharingManager();
 
     static QString cacheDir();
+    FileCacheItem *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
     FileCacheItem *cacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
     // id - usually hex(sha1(image data))
-    FileCacheItem *saveToCache(const XMPP::Hash &id, const QByteArray &data, const QVariantMap &metadata, unsigned int maxAge);
-    FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &data, const QVariantMap &metadata, unsigned int maxAge);
+    FileCacheItem *saveToCache(const QList<XMPP::Hash> &sums, const QByteArray &data, const QVariantMap &metadata,
+                               unsigned int maxAge);
+    FileCacheItem *moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &data, const QVariantMap &metadata,
+                               unsigned int maxAge);
 
     FileSharingItem *item(const XMPP::Hash &id);
-    //FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
+    // FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
     QList<FileSharingItem *> fromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
 
@@ -87,7 +88,8 @@ public:
     bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
 
 #ifdef HAVE_WEBSERVER
-    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res);
+    bool downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *req,
+                             qhttp::server::QHttpResponse *res);
 #endif
 signals:
 
@@ -102,8 +104,7 @@ class FileSharingDeviceOpener : public ITEMediaOpener {
     PsiAccount *acc;
 
 public:
-    inline FileSharingDeviceOpener(PsiAccount *acc) :
-        acc(acc) {}
+    inline FileSharingDeviceOpener(PsiAccount *acc) : acc(acc) {}
     virtual ~FileSharingDeviceOpener() {}
 
     static XMPP::Hash urlToSourceId(const QUrl &url);

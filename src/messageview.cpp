@@ -31,11 +31,7 @@ static const QString me_cmd = "/me ";
 // MessageView
 // ======================================================================
 MessageView::MessageView(Type t) :
-    _type(t),
-    _flags(nullptr),
-    _status(0),
-    _statusPriority(0),
-    _dateTime(QDateTime::currentDateTime()),
+    _type(t), _flags(nullptr), _status(0), _statusPriority(0), _dateTime(QDateTime::currentDateTime()),
     _carbon(XMPP::Message::NoCarbon)
 {
 }
@@ -97,8 +93,7 @@ MessageView MessageView::nickChangeMessage(const QString &nick, const QString &n
     return mv;
 }
 
-MessageView MessageView::statusMessage(const QString &nick, int status,
-                                       const QString &statusText, int priority)
+MessageView MessageView::statusMessage(const QString &nick, int status, const QString &statusText, int priority)
 {
     QString message = QObject::tr("%1 is now %2").arg(nick, status2txt(status));
 
@@ -168,10 +163,7 @@ QString MessageView::formattedUserText() const
     return "";
 }
 
-bool MessageView::hasStatus() const
-{
-    return _type == Status || _type == MUCJoin;
-}
+bool MessageView::hasStatus() const { return _type == Status || _type == MUCJoin; }
 
 QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
 {
@@ -210,7 +202,7 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
             for (auto const &r : _references) {
                 auto md = r->metaData();
                 md.insert("type", r->mimeType());
-                rvm.insert(r->sums().cbegin().value().toString(), md);
+                rvm.insert(r->sums()[0].toString(), md);
             }
             m["references"] = rvm;
         }

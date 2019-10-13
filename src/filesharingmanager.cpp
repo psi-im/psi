@@ -96,6 +96,16 @@ QString FileSharingManager::cacheDir()
     return shares.path();
 }
 
+FileCacheItem *FileSharingManager::cacheItem(const QList<Hash> &hashes, bool reborn, QString *fileName)
+{
+    for (auto const &h : hashes) {
+        auto c = cacheItem(h, reborn, fileName);
+        if (c)
+            return c;
+    }
+    return nullptr;
+}
+
 FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, QString *fileName_out)
 {
     auto item = d->cache->get(id, reborn);
@@ -113,16 +123,16 @@ FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, 
     return item;
 }
 
-FileCacheItem *FileSharingManager::saveToCache(const XMPP::Hash &id, const QByteArray &data,
+FileCacheItem *FileSharingManager::saveToCache(const QList<XMPP::Hash> &sums, const QByteArray &data,
                                                const QVariantMap &metadata, unsigned int maxAge)
 {
-    return d->cache->append(id, data, metadata, maxAge);
+    return d->cache->append(sums, data, metadata, maxAge);
 }
 
-FileCacheItem *FileSharingManager::moveToCache(const XMPP::Hash &id, const QFileInfo &file, const QVariantMap &metadata,
-                                               unsigned int maxAge)
+FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file,
+                                               const QVariantMap &metadata, unsigned int maxAge)
 {
-    return d->cache->moveToCache(id, file, metadata, maxAge);
+    return d->cache->moveToCache(sums, file, metadata, maxAge);
 }
 
 FileSharingItem *FileSharingManager::item(const Hash &id) { return d->items.value(id); }
@@ -214,7 +224,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             d->rememberItem(item);
             mv.addReference(item);
 
-            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums().cbegin().value().toString()));
+            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums()[0].toString()));
             if (r.begin() != -1 && r.begin() >= lastEnd
                 && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
                 htmlDesc += TextUtil::linkify(
@@ -242,14 +252,7 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         if (a->senders() == Jingle::Origin::Initiator)
             return false;
 
-        Hash h = ft->file().hash(Hash::Sha1);
-        if (!h.isValid()) {
-            h = ft->file().hash();
-        }
-        if (!h.isValid() || h.data().isEmpty())
-            return false;
-
-        FileCacheItem *item = cacheItem(h, true);
+        FileCacheItem *item = cacheItem(ft->file().computedHashes(), true);
         if (!item)
             return false;
 

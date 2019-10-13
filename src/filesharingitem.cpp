@@ -55,9 +55,7 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     _acc(acc),
     _manager(manager), _fileType(FileType::RemoteFile)
 {
-    for (auto const &h : ms.file.hashes()) {
-        _sums.insert(h.type(), h);
-    }
+    _sums = ms.file.computedHashes();
     initFromCache();
 
     if (ms.file.hasSize()) {
@@ -163,10 +161,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
             QFileInfo(_fileName).size()); // note the readability of the filename was aleady checked by this moment
     }
 
-    for (auto const h : cache->aliases()) {
-        _sums.insert(h.type(), h);
-    }
-    _sums.insert(cache->id().type(), cache->id());
+    _sums = cache->sums();
     _uris = md.value(QString::fromLatin1("uris")).toStringList();
 
     QString httpScheme(QString::fromLatin1("http"));
@@ -270,9 +265,7 @@ QString FileSharingItem::displayName() const
 {
     if (_fileName.isEmpty()) {
         auto ext = FileUtil::mimeToFileExt(_mimeType);
-        return QString("psi-%1.%2")
-            .arg(QString::fromLatin1(_sums.cbegin().value().data().toHex()), ext)
-            .replace("/", "");
+        return QString("psi-%1.%2").arg(QString::fromLatin1(_sums[0].toHex()), ext).replace("/", "");
     }
     return QFileInfo(_fileName).fileName();
 }
@@ -303,12 +296,12 @@ void FileSharingItem::publish()
                 // like http
                 meta["uris"] = _uris;
             if (_fileType == FileType::TempFile) {
-                auto cache = _manager->moveToCache(_sums.cbegin().value(), _fileName, meta, TEMP_TTL);
+                auto cache = _manager->moveToCache(_sums, _fileName, meta, TEMP_TTL);
                 _fileType  = FileType::LocalFile;
                 _fileName  = _manager->cacheDir() + "/" + cache->fileName();
             } else {
                 meta["link"] = _fileName;
-                _manager->saveToCache(_sums.cbegin().value(), QByteArray(), meta, FILE_TTL);
+                _manager->saveToCache(_sums, QByteArray(), meta, FILE_TTL);
             }
             _flags |= PublishNotified;
             emit publishFinished();
@@ -369,7 +362,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
         file.addHash(h);
     }
 
-    FileShareDownloader *downloader = new FileShareDownloader(_acc, _sums.values(), file, _jids, _uris, this);
+    FileShareDownloader *downloader = new FileShareDownloader(_acc, _sums, file, _jids, _uris, this);
     if (isRanged) {
         downloader->setRange(start, size);
         return downloader;
@@ -403,8 +396,7 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
             vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
         }
 
-        auto hIt = _sums.cbegin();
-        _manager->moveToCache(hIt.value(), _downloader->fileName(), vm, FILE_TTL);
+        _manager->moveToCache(_sums, _downloader->fileName(), vm, FILE_TTL);
 
         emit downloadFinished();
     });
