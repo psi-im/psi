@@ -264,11 +264,11 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         auto item = p.second;
 
         connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this,
-                [ft, item](quint64 offset, quint64 /*size*/) {
+                [ft, item, this](quint64 offset, quint64 /*size*/) {
                     auto    vm       = item->metadata();
                     QString fileName = vm.value(QString::fromLatin1("link")).toString();
                     if (fileName.isEmpty()) {
-                        fileName = item->fileName();
+                        fileName = d->cache->cacheDir() + "/" + item->fileName();
                     }
                     auto f = new QFile(fileName, ft);
                     if (!f->open(QIODevice::ReadOnly)) {
