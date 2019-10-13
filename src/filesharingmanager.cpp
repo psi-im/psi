@@ -487,40 +487,31 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
             }
         });
 
-        connect(res->connection()->tcpSocket(), &QTcpSocket::bytesWritten, downloader,
-                [downloader, res, disconnected]() {
-                    if (res->connection()->tcpSocket()->bytesToWrite() >= HTTP_CHUNK) {
-                        qDebug("FSM bytesWritten output buffer full. waiting..");
-                        return; // we will return here when the buffer will be less occupied
-                    }
-                    auto bytesAvail = downloader->bytesAvailable();
-                    if (!bytesAvail) {
-                        if (*disconnected) {
-                            qDebug("FSM bytesWritten all data transfered. closing");
-                        } else
-                            qDebug("FSM bytesWritten downloader doesn't have more data yet. waiting..");
-                        return; // let's wait readyRead
-                    }
-                    if (*disconnected && bytesAvail <= HTTP_CHUNK) {
-                        qDebug("FSM bytesWritten tranfering last chunk of %lld bytes", bytesAvail);
-                        res->write(downloader->read(bytesAvail));
-                    } else {
-                        qDebug("FSM bytesWritten tranfering chunk of %lld bytes",
-                               bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail);
-                        res->write(downloader->read(bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail));
-                    }
-                });
-
-        /*connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected]() {
-            *disconnected = true;
-            if (!res->connection()->tcpSocket()->bytesToWrite() && !downloader->bytesAvailable()) {
-                qDebug("FSM disconnected. all bytes written. closing");
-                // res->disconnect(downloader);
-            } else {
-                qDebug("FSM disconnected. still has %lld bytes to write. waiting for bytesWritten",
-                       res->connection()->tcpSocket()->bytesToWrite());
+        auto responseSock = res->connection()->tcpSocket();
+        connect(responseSock, &QTcpSocket::bytesWritten, downloader, [downloader, res, disconnected, responseSock]() {
+            if (responseSock->bytesToWrite() >= HTTP_CHUNK) {
+                qDebug("FSM bytesWritten output buffer full. waiting..");
+                return; // we will return here when the buffer will be less occupied
             }
-        });*/
+            auto bytesAvail = downloader->bytesAvailable();
+            if (!bytesAvail) {
+                if (*disconnected) {
+                    qDebug("FSM bytesWritten all data transfered. closing");
+                } else
+                    qDebug("FSM bytesWritten downloader doesn't have more data yet. waiting..");
+                return; // let's wait readyRead
+            }
+            res->write(downloader->read(bytesAvail > HTTP_CHUNK && !*disconnected ? HTTP_CHUNK : bytesAvail));
+        });
+
+        // for keep alive connections we should detach from the socket as soon as response is destroyed (or earlier?)
+        connect(res, &qhttp::server::QHttpResponse::done, downloader,
+                [downloader, responseSock](bool) { responseSock->disconnect(downloader); });
+
+        connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected]() {
+            *disconnected = true;
+            qDebug("FSM disconnected.");
+        });
 
         connect(downloader, &FileShareDownloader::finished, res, [res]() { res->end(); });
     });
