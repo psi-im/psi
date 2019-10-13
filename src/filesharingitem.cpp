@@ -44,19 +44,16 @@ using namespace XMPP;
 // ======================================================================
 // FileSharingItem
 // ======================================================================
-FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc,
-                                 FileSharingManager *manager) :
-    QObject(manager),
-    _acc(acc),
-    _manager(manager)
+FileSharingItem::FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileSharingManager *manager) :
+    QObject(manager), _acc(acc), _manager(manager)
 {
     initFromCache(cache);
 }
 
-FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAccount *acc, FileSharingManager *manager) :
+FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAccount *acc,
+                                 FileSharingManager *manager) :
     _acc(acc),
-    _manager(manager),
-    _fileType(FileType::RemoteFile)
+    _manager(manager), _fileType(FileType::RemoteFile)
 {
     for (auto const &h : ms.file.hashes()) {
         _sums.insert(h.type(), h);
@@ -75,13 +72,8 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     // TODO remaining
 }
 
-FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc,
-                                 FileSharingManager *manager) :
-    QObject(manager),
-    _acc(acc),
-    _manager(manager),
-    _fileType(FileType::TempFile),
-    _flags(SizeKnown)
+FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileSharingManager *manager) :
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown)
 {
     QByteArray ba;
     QBuffer    buffer(&ba);
@@ -101,13 +93,8 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc,
     }
 }
 
-FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc,
-                                 FileSharingManager *manager) :
-    QObject(manager),
-    _acc(acc),
-    _manager(manager),
-    _fileType(FileType::LocalLink),
-    _flags(SizeKnown),
+FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileSharingManager *manager) :
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::LocalLink), _flags(SizeKnown),
     _fileName(fileName)
 {
     QFile file(fileName);
@@ -120,16 +107,11 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc,
     }
 }
 
-FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data,
-                                 const QVariantMap &metaData, PsiAccount *acc,
-                                 FileSharingManager *manager) :
+FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, const QVariantMap &metaData,
+                                 PsiAccount *acc, FileSharingManager *manager) :
     QObject(manager),
-    _acc(acc),
-    _manager(manager),
-    _fileType(FileType::TempFile),
-    _flags(SizeKnown),
-    _modifyTime(QDateTime::currentDateTimeUtc()),
-    _metaData(metaData)
+    _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown),
+    _modifyTime(QDateTime::currentDateTimeUtc()), _metaData(metaData)
 {
     _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, data));
 
@@ -139,7 +121,8 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data,
 
         QMimeDatabase  db;
         QString        fileExt = db.mimeTypeForData(data).suffixes().value(0);
-        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psi-XXXXXX") + (fileExt.isEmpty() ? fileExt : QString('.') + fileExt));
+        QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psi-XXXXXX")
+                            + (fileExt.isEmpty() ? fileExt : QString('.') + fileExt));
         file.open();
         file.write(data);
         file.setAutoRemove(false);
@@ -176,7 +159,8 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     } else {
         _fileType = FileType::LocalLink;
         _fileName = link;
-        _fileSize = size_t(QFileInfo(_fileName).size()); // note the readability of the filename was aleady checked by this moment
+        _fileSize = size_t(
+            QFileInfo(_fileName).size()); // note the readability of the filename was aleady checked by this moment
     }
 
     for (auto const h : cache->aliases()) {
@@ -231,9 +215,9 @@ Reference FileSharingItem::toReference() const
         thumbPix.save(&buf, "PNG");
         QString png(QString::fromLatin1("image/png"));
         auto    bob = _acc->client()->bobManager()->append(
-            pixData, png, _fileType == FileType::TempFile ? TEMP_TTL : FILE_TTL); // TODO the ttl logic doesn't look valid
-        Thumbnail thumb(QByteArray(), png, quint32(thumbSize.width()),
-                        quint32(thumbSize.height()));
+            pixData, png,
+            _fileType == FileType::TempFile ? TEMP_TTL : FILE_TTL); // TODO the ttl logic doesn't look valid
+        Thumbnail thumb(QByteArray(), png, quint32(thumbSize.width()), quint32(thumbSize.height()));
         thumb.uri = QLatin1String("cid:") + bob.cid();
         jfile.setThumbnail(thumb);
     }
@@ -293,10 +277,7 @@ QString FileSharingItem::displayName() const
     return QFileInfo(_fileName).fileName();
 }
 
-QString FileSharingItem::fileName() const
-{
-    return _fileName;
-}
+QString FileSharingItem::fileName() const { return _fileName; }
 
 FileCacheItem *FileSharingItem::cache(bool reborn) const
 {
@@ -342,20 +323,18 @@ void FileSharingItem::publish()
         } else {
             auto hfu = hm->upload(_fileName, displayName(), _mimeType);
             hfu->setParent(this);
-            connect(hfu, &HttpFileUpload::progress, this,
-                    [this](qint64 bytesReceived, qint64 bytesTotal) {
-                        Q_UNUSED(bytesTotal)
-                        emit publishProgress(size_t(bytesReceived));
-                    });
+            connect(hfu, &HttpFileUpload::progress, this, [this](qint64 bytesReceived, qint64 bytesTotal) {
+                Q_UNUSED(bytesTotal)
+                emit publishProgress(size_t(bytesReceived));
+            });
             connect(hfu, &HttpFileUpload::finished, this, [hfu, this, checkFinished]() {
                 _flags |= HttpFinished;
                 if (hfu->success()) {
                     _log.append(tr("Published on HttpUpload service"));
                     _uris.append(hfu->getHttpSlot().get.url);
                 } else {
-                    _log.append(QString("%1: %2").arg(
-                        tr("Failed to publish on HttpUpload service"),
-                        hfu->statusString()));
+                    _log.append(
+                        QString("%1: %2").arg(tr("Failed to publish on HttpUpload service"), hfu->statusString()));
                 }
                 emit logChanged();
                 checkFinished();
@@ -386,53 +365,51 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
     file.setName(_fileName);
     if (_flags & SizeKnown)
         file.setSize(_fileSize);
+    for (auto const &h : _sums) {
+        file.addHash(h);
+    }
 
-    FileShareDownloader *downloader = new FileShareDownloader(
-        _acc, _sums.values(), file, _jids, _uris, this);
+    FileShareDownloader *downloader = new FileShareDownloader(_acc, _sums.values(), file, _jids, _uris, this);
     if (isRanged) {
         downloader->setRange(start, size);
         return downloader;
     }
 
     _downloader = downloader;
-    connect(downloader, &FileShareDownloader::finished, this,
-            [this]() {
-                _downloader->disconnect(this);
-                _downloader->deleteLater();
+    connect(downloader, &FileShareDownloader::finished, this, [this]() {
+        _downloader->disconnect(this);
+        _downloader->deleteLater();
 
-                if (!_downloader->isSuccess()) {
-                    emit downloadFinished();
-                    return;
-                }
+        if (!_downloader->isSuccess()) {
+            emit downloadFinished();
+            return;
+        }
 
-                if (_modifyTime.isValid())
-                    FileUtil::setModificationTime(_downloader->fileName(), _modifyTime);
+        if (_modifyTime.isValid())
+            FileUtil::setModificationTime(_downloader->fileName(), _modifyTime);
 
-                auto thumbMetaType = _metaData.value(QString::fromLatin1("thumb-mt")).toString();
-                auto thumbUri      = _metaData.value(QString::fromLatin1("thumb-uri")).toString();
-                auto amplitudes    = _metaData.value(QString::fromLatin1("amplitudes")).toByteArray();
+        auto thumbMetaType = _metaData.value(QString::fromLatin1("thumb-mt")).toString();
+        auto thumbUri      = _metaData.value(QString::fromLatin1("thumb-uri")).toString();
+        auto amplitudes    = _metaData.value(QString::fromLatin1("amplitudes")).toByteArray();
 
-                QVariantMap vm;
-                vm.insert(QString::fromLatin1("type"), _mimeType);
-                vm.insert(QString::fromLatin1("uris"), _uris);
-                if (thumbUri.size()) { // then thumbMetaType is not empty too
-                    vm.insert(QString::fromLatin1("thumb-mt"), thumbMetaType);
-                    vm.insert(QString::fromLatin1("thumb-uri"), thumbUri);
-                }
-                if (amplitudes.size()) {
-                    vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
-                }
+        QVariantMap vm;
+        vm.insert(QString::fromLatin1("type"), _mimeType);
+        vm.insert(QString::fromLatin1("uris"), _uris);
+        if (thumbUri.size()) { // then thumbMetaType is not empty too
+            vm.insert(QString::fromLatin1("thumb-mt"), thumbMetaType);
+            vm.insert(QString::fromLatin1("thumb-uri"), thumbUri);
+        }
+        if (amplitudes.size()) {
+            vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
+        }
 
-                auto hIt = _sums.cbegin();
-                _manager->moveToCache(hIt.value(), _downloader->fileName(), vm, FILE_TTL);
+        auto hIt = _sums.cbegin();
+        _manager->moveToCache(hIt.value(), _downloader->fileName(), vm, FILE_TTL);
 
-                emit downloadFinished();
-            });
+        emit downloadFinished();
+    });
 
-    connect(downloader, &FileShareDownloader::destroyed, this,
-            [this]() {
-                _downloader = nullptr;
-            });
+    connect(downloader, &FileShareDownloader::destroyed, this, [this]() { _downloader = nullptr; });
 
     return downloader;
 }

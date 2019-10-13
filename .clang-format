@@ -5,3 +5,5 @@ AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
+ColumnLimit: 120
+CompactNamespaces: true

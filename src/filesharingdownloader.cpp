@@ -73,6 +73,8 @@ protected:
     Jid selectOnlineJid(const QList<Jid> &jids) const
     {
         for (auto const &j : jids) {
+            if (j == acc->client()->jid())
+                continue;
             for (UserListItem *u : acc->findRelevant(j)) {
                 UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
                 if (rit != u->userResourceList().end())
@@ -84,9 +86,7 @@ protected:
 
 public:
     AbstractFileShareDownloader(PsiAccount *acc, const QString &uri, QObject *parent) :
-        QObject(parent),
-        acc(acc),
-        sourceUri(uri)
+        QObject(parent), acc(acc), sourceUri(uri)
     {
     }
 
@@ -103,10 +103,7 @@ public:
         rangeSize  = length;
     }
     inline bool                isRanged() const { return rangeSize || rangeStart; }
-    std::tuple<qint64, qint64> range() const
-    {
-        return std::tuple<qint64, qint64>(rangeStart, rangeSize);
-    }
+    std::tuple<qint64, qint64> range() const { return std::tuple<qint64, qint64>(rangeStart, rangeSize); }
 
 signals:
     void metaDataChanged();
@@ -125,12 +122,10 @@ class JingleFileShareDownloader : public AbstractFileShareDownloader {
     QList<Jid>                         jids;
 
 public:
-    JingleFileShareDownloader(PsiAccount *acc, const QString &uri,
-                              const XMPP::Jingle::FileTransfer::File &file,
+    JingleFileShareDownloader(PsiAccount *acc, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
                               const QList<Jid> &jids, QObject *parent) :
         AbstractFileShareDownloader(acc, uri, parent),
-        file(file),
-        jids(jids)
+        file(file), jids(jids)
     {
     }
 
@@ -163,8 +158,9 @@ public:
             return;
         }
 
-        Jingle::Session *session = acc->client()->jingleManager()->newSession(dataSource);
-        app                      = static_cast<Jingle::FileTransfer::Application *>(session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
+        auto *session = acc->client()->jingleManager()->newSession(dataSource);
+        app           = static_cast<Jingle::FileTransfer::Application *>(
+            session->newContent(Jingle::FileTransfer::NS, Jingle::Origin::Responder));
         if (!app) {
             downloadError(QString::fromLatin1("Jingle file transfer is disabled"));
             return;
@@ -186,7 +182,8 @@ public:
             rangeStart = qint64(r.offset);
             rangeSize  = qint64(r.length);
             connection = app->connection();
-            connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this, &JingleFileShareDownloader::readyRead);
+            connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this,
+                    &JingleFileShareDownloader::readyRead);
             emit metaDataChanged();
         });
 
@@ -199,17 +196,13 @@ public:
             }
             downloadError(tr("Jingle download failed"));
         });
+
+        session->initiate();
     }
 
-    qint64 bytesAvailable() const
-    {
-        return connection ? connection->bytesAvailable() : 0;
-    }
+    qint64 bytesAvailable() const { return connection ? connection->bytesAvailable() : 0; }
 
-    qint64 read(char *data, qint64 maxSize)
-    {
-        return connection ? connection->read(data, maxSize) : 0;
-    }
+    qint64 read(char *data, qint64 maxSize) { return connection ? connection->read(data, maxSize) : 0; }
 
     void abort(bool isFailure, const QString &reason)
     {
@@ -224,10 +217,7 @@ public:
         }
     }
 
-    bool isConnected() const
-    {
-        return connection && app && app->state() == XMPP::Jingle::State::Active;
-    }
+    bool isConnected() const { return connection && app && app->state() == XMPP::Jingle::State::Active; }
 };
 
 class NAMFileShareDownloader : public AbstractFileShareDownloader {
@@ -248,7 +238,9 @@ public:
     {
         QNetworkRequest req = QNetworkRequest(QUrl(sourceUri));
         if (isRanged()) {
-            QString range = QString("bytes=%1-%2").arg(QString::number(rangeStart), rangeSize ? QString::number(rangeStart + rangeSize - 1) : QString());
+            QString range = QString("bytes=%1-%2")
+                                .arg(QString::number(rangeStart),
+                                     rangeSize ? QString::number(rangeStart + rangeSize - 1) : QString());
             req.setRawHeader("Range", range.toLatin1());
         }
 #if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
@@ -289,15 +281,9 @@ public:
         });
     }
 
-    qint64 bytesAvailable() const
-    {
-        return reply ? reply->bytesAvailable() : 0;
-    }
+    qint64 bytesAvailable() const { return reply ? reply->bytesAvailable() : 0; }
 
-    qint64 read(char *data, qint64 maxSize)
-    {
-        return reply ? reply->read(data, maxSize) : 0;
-    }
+    qint64 read(char *data, qint64 maxSize) { return reply ? reply->read(data, maxSize) : 0; }
 
     void abort(bool isFailure, const QString &reason)
     {
@@ -310,10 +296,7 @@ public:
         }
     }
 
-    bool isConnected() const
-    {
-        return reply && reply->isRunning();
-    }
+    bool isConnected() const { return reply && reply->isRunning(); }
 };
 
 class BOBFileShareDownloader : public AbstractFileShareDownloader {
@@ -326,10 +309,8 @@ class BOBFileShareDownloader : public AbstractFileShareDownloader {
     bool        connected = false;
 
 public:
-    BOBFileShareDownloader(PsiAccount *acc, const QString &uri,
-                           const QList<Jid> &jids, QObject *parent) :
-        AbstractFileShareDownloader(acc, uri, parent),
-        jids(jids)
+    BOBFileShareDownloader(PsiAccount *acc, const QString &uri, const QList<Jid> &jids, QObject *parent) :
+        AbstractFileShareDownloader(acc, uri, parent), jids(jids)
     {
     }
 
@@ -341,29 +322,27 @@ public:
             return;
         }
         // skip cid: from uri and request it
-        acc->loadBob(jids.first(), sourceUri.mid(4), this, [this](bool success, const QByteArray &data, const QByteArray & /* media type */) {
-            if (destroyed)
-                return; // should not happen but who knows.
-            connected = true;
-            if (!success) {
-                downloadError(tr("Download using \"Bits Of Binary\" failed"));
-                return;
-            }
-            receivedData = data;
-            if (isRanged()) { // there is not such a thing like ranged bob
-                rangeStart = 0;
-                rangeSize  = 0; // make it not-ranged
-            }
-            emit metaDataChanged();
-            connected = false;
-            emit disconnected();
-        });
+        acc->loadBob(jids.first(), sourceUri.mid(4), this,
+                     [this](bool success, const QByteArray &data, const QByteArray & /* media type */) {
+                         if (destroyed)
+                             return; // should not happen but who knows.
+                         connected = true;
+                         if (!success) {
+                             downloadError(tr("Download using \"Bits Of Binary\" failed"));
+                             return;
+                         }
+                         receivedData = data;
+                         if (isRanged()) { // there is not such a thing like ranged bob
+                             rangeStart = 0;
+                             rangeSize  = 0; // make it not-ranged
+                         }
+                         emit metaDataChanged();
+                         connected = false;
+                         emit disconnected();
+                     });
     }
 
-    qint64 bytesAvailable() const
-    {
-        return receivedData.size();
-    }
+    qint64 bytesAvailable() const { return receivedData.size(); }
 
     qint64 read(char *data, qint64 maxSize)
     {
@@ -386,10 +365,7 @@ public:
         destroyed = true;
     }
 
-    bool isConnected() const
-    {
-        return connected;
-    }
+    bool isConnected() const { return connected; }
 };
 
 class FileShareDownloader::Private : public QObject {
@@ -477,14 +453,19 @@ public:
         });
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
-        connect(downloader, &AbstractFileShareDownloader::disconnected, q, &FileShareDownloader::disconnected);
+        connect(downloader, &AbstractFileShareDownloader::disconnected, q, [this]() {
+            emit q->disconnected();
+            if (!downloader->bytesAvailable())
+                emit q->finished(); // TODO avoid double emit
+        });
 
         downloader->start();
     }
 };
 
-FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QList<XMPP::Hash> &sums, const Jingle::FileTransfer::File &file,
-                                         const QList<Jid> &jids, const QStringList &uris, QObject *parent) :
+FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QList<XMPP::Hash> &sums,
+                                         const Jingle::FileTransfer::File &file, const QList<Jid> &jids,
+                                         const QStringList &uris, QObject *parent) :
     QIODevice(parent),
     d(new Private)
 {
@@ -502,10 +483,7 @@ FileShareDownloader::~FileShareDownloader()
     qDebug("downloader deleted");
 }
 
-bool FileShareDownloader::isSuccess() const
-{
-    return d->success;
-}
+bool FileShareDownloader::isSuccess() const { return d->success; }
 
 bool FileShareDownloader::open(QIODevice::OpenMode mode)
 {
@@ -556,10 +534,7 @@ void FileShareDownloader::setRange(qint64 start, qint64 size)
     d->rangeSize  = size;
 }
 
-bool FileShareDownloader::isRanged() const
-{
-    return d->rangeStart > 0 || d->rangeSize > 0;
-}
+bool FileShareDownloader::isRanged() const { return d->rangeStart > 0 || d->rangeSize > 0; }
 
 std::tuple<qint64, qint64> FileShareDownloader::range() const
 {
@@ -574,10 +549,7 @@ QString FileShareDownloader::fileName() const
     return QString();
 }
 
-const Jingle::FileTransfer::File &FileShareDownloader::jingleFile() const
-{
-    return d->file;
-}
+const Jingle::FileTransfer::File &FileShareDownloader::jingleFile() const { return d->file; }
 
 qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
 {
@@ -585,7 +557,8 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
         return 0; // wtf?
 
     qint64 bytesRead = d->downloader->read(data, maxSize);
-    if (d->tmpFile->write(data, bytesRead) != bytesRead) { // file engine tries to write everything until it's a system error
+    if (d->tmpFile->write(data, bytesRead)
+        != bytesRead) { // file engine tries to write everything until it's a system error
         d->downloader->abort();
         d->lastError = d->tmpFile->errorString();
         return 0;
@@ -605,14 +578,8 @@ qint64 FileShareDownloader::writeData(const char *, qint64)
     return 0; // not supported
 }
 
-bool FileShareDownloader::isSequential() const
-{
-    return true;
-}
+bool FileShareDownloader::isSequential() const { return true; }
 
-qint64 FileShareDownloader::bytesAvailable() const
-{
-    return d->downloader ? d->downloader->bytesAvailable() : 0;
-}
+qint64 FileShareDownloader::bytesAvailable() const { return d->downloader ? d->downloader->bytesAvailable() : 0; }
 
 #include "filesharingdownloader.moc"

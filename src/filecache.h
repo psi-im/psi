@@ -43,14 +43,14 @@ public:
         OnDisk             = 0x1,
         Registered         = 0x2,
         SessionUndeletable = 0x4 // The item is undeletable by expiration or cache size limits during this session
-        //Unloadable  = 0x8 // another good idea
+        // Unloadable  = 0x8 // another good idea
     };
 
-    FileCacheItem(FileCache *parent, const XMPP::Hash &itemId, const QVariantMap &metadata,
-                  const QDateTime &dt, unsigned int maxAge, qint64 size,
-                  const QByteArray &data = QByteArray());
+    FileCacheItem(FileCache *parent, const XMPP::Hash &itemId, const QVariantMap &metadata, const QDateTime &dt,
+                  unsigned int maxAge, qint64 size, const QByteArray &data = QByteArray());
 
-    void                     flushToDisk();  // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
+    void
+                             flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
     bool                     remove() const; // remove file from disk but not from registry. don't call this directly.
     void                     unload();       // drop file to disk, deallocate memory
     inline bool              inMemory() const;
@@ -106,11 +106,11 @@ private:
 class FileCache : public QObject {
     Q_OBJECT
 public:
-    static const unsigned int Session = 0;  //remove data when application exits
-    static const unsigned int Forever = -1; //never remove
+    static constexpr unsigned int Session = 0;  // remove data when application exits
+    static constexpr unsigned int Forever = -1; // never remove
 
-    static const unsigned int DefaultMemoryCacheSize = 1 * 1024 * 1024;  //1 Mb
-    static const unsigned int DefaultFileCacheSize   = 50 * 1024 * 1024; //50 Mb
+    static constexpr unsigned int DefaultMemoryCacheSize = 1 * 1024 * 1024;  // 1 Mb
+    static constexpr unsigned int DefaultFileCacheSize   = 50 * 1024 * 1024; // 50 Mb
 
     enum SyncPolicy {
         InstantFLush, // always flush all data to disk (keeps copy in memory if fit)
@@ -124,19 +124,13 @@ public:
 
     inline QString cacheDir() const { return _cacheDir; }
 
-    inline void setMemoryCacheSize(unsigned int size)
-    {
-        _memoryCacheSize = size;
-    }
+    inline void         setMemoryCacheSize(unsigned int size) { _memoryCacheSize = size; }
     inline unsigned int memoryCacheSize() const { return _memoryCacheSize; }
 
     inline void         setFileCacheSize(unsigned int size) { _fileCacheSize = size; }
     inline unsigned int fileCacheSize() const { return _fileCacheSize; }
 
-    inline void setDefaultMaxAge(unsigned int maxAge)
-    {
-        _defaultMaxAge = maxAge;
-    }
+    inline void         setDefaultMaxAge(unsigned int maxAge) { _defaultMaxAge = maxAge; }
     inline unsigned int defaultMaxAge() const { return _defaultMaxAge; }
 
     inline void       setSyncPolicy(SyncPolicy sp) { _syncPolicy = sp; }
@@ -150,10 +144,10 @@ public:
      * @param maxAge Session/Forever or just seconds to live
      * @return a new cache item. Not yet synchronized to disk
      */
-    FileCacheItem *append(const XMPP::Hash &id, const QByteArray &data,
-                          const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
-    FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &file,
-                               const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
+    FileCacheItem *append(const XMPP::Hash &id, const QByteArray &data, const QVariantMap &metadata = QVariantMap(),
+                          unsigned int maxAge = Forever);
+    FileCacheItem *moveToCache(const XMPP::Hash &id, const QFileInfo &file, const QVariantMap &metadata = QVariantMap(),
+                               unsigned int maxAge = Forever);
     void           remove(const XMPP::Hash &id, bool needSync = true);
 
     /**
@@ -197,4 +191,4 @@ private:
     bool _registryChanged;
 };
 
-#endif //FILECACHE_H
+#endif // FILECACHE_H

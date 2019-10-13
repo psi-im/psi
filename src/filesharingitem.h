@@ -73,27 +73,26 @@ public:
                     PsiAccount *acc, FileSharingManager *manager);
     ~FileSharingItem();
 
-    QIcon                  thumbnail(const QSize &size) const;
-    QImage                 preview(const QSize &maxSize) const;
-    QString                displayName() const;
-    QString                fileName() const;
-    inline const QString & mimeType() const { return _mimeType; }
-    inline const HashSums &sums() const { return _sums; }
-    inline QVariantMap     metaData() const { return _metaData; }
+    QIcon                     thumbnail(const QSize &size) const;
+    QImage                    preview(const QSize &maxSize) const;
+    QString                   displayName() const;
+    QString                   fileName() const;
+    inline const QString &    mimeType() const { return _mimeType; }
+    inline const HashSums &   sums() const { return _sums; }
+    inline QVariantMap        metaData() const { return _metaData; }
+    inline qint64             fileSize() const { return _fileSize; }
+    inline bool               isSizeKnown() const { return _flags & SizeKnown; }
+    inline const QStringList &uris() const { return _uris; }
 
     // reborn flag updates ttl for the item
-    FileCacheItem *cache(bool reborn = false) const;
-    qint64         fileSize() const { return _fileSize; }
-    inline bool    isSizeKnown() const { return _flags & SizeKnown; }
-
-    inline bool               isCached() const { return cache() != nullptr; }
-    inline bool               isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
-    inline const QStringList &uris() const { return _uris; }
-    PsiAccount *              account() const;
-    inline const QStringList  log() const { return _log; }
+    FileCacheItem *          cache(bool reborn = false) const;
+    inline bool              isCached() const { return cache() != nullptr; }
+    PsiAccount *             account() const;
+    inline const QStringList log() const { return _log; }
 
     XMPP::Reference      toReference() const;
     void                 publish();
+    inline bool          isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
     FileShareDownloader *download(bool isRanged = false, qint64 start = 0, qint64 size = 0);
 
     // accept public internet uri and returns it's type

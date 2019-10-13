@@ -683,7 +683,7 @@ void ChatEdit::addSoundRecButton()
 
                 QMimeData md;
                 md.setData("audio/ogg", recorder_->data());
-                md.setData("application/x-psi-amplitudes", recorder_->histogram());
+                md.setData("application/x-psi-amplitudes", recorder_->amplitudes());
                 emit fileSharingRequested(&md);
             });
             connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this]() {

@@ -57,6 +57,7 @@
 #include <QTemporaryFile>
 #include <QUrl>
 #include <QUrlQuery>
+#include <cinttypes>
 #include <cmath>
 #include <cstdlib>
 
@@ -78,16 +79,12 @@ public:
     }
 };
 
-FileSharingManager::FileSharingManager(QObject *parent) :
-    QObject(parent),
-    d(new Private)
+FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new Private)
 {
     d->cache = new FileCache(cacheDir(), this);
 }
 
-FileSharingManager::~FileSharingManager()
-{
-}
+FileSharingManager::~FileSharingManager() {}
 
 QString FileSharingManager::cacheDir()
 {
@@ -122,16 +119,13 @@ FileCacheItem *FileSharingManager::saveToCache(const XMPP::Hash &id, const QByte
     return d->cache->append(id, data, metadata, maxAge);
 }
 
-FileCacheItem *FileSharingManager::moveToCache(const XMPP::Hash &id, const QFileInfo &file,
-                                               const QVariantMap &metadata, unsigned int maxAge)
+FileCacheItem *FileSharingManager::moveToCache(const XMPP::Hash &id, const QFileInfo &file, const QVariantMap &metadata,
+                                               unsigned int maxAge)
 {
     return d->cache->moveToCache(id, file, metadata, maxAge);
 }
 
-FileSharingItem *FileSharingManager::item(const Hash &id)
-{
-    return d->items.value(id);
-}
+FileSharingItem *FileSharingManager::item(const Hash &id) { return d->items.value(id); }
 
 QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data, PsiAccount *acc)
 {
@@ -212,7 +206,8 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         int lastEnd = 0;
         for (auto const &r : m.references()) {
             MediaSharing ms = r.mediaSharing();
-            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio")) || !ms.file.hash().isValid() || !ms.file.hasSize()) { // only audio is supported for now
+            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio")) || !ms.file.hasComputedHashes()
+                || !ms.file.hasSize()) { // only audio is supported for now
                 continue;
             }
             auto item = new FileSharingItem(ms, m.from(), acc, this);
@@ -220,9 +215,11 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             mv.addReference(item);
 
             QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums().cbegin().value().toString()));
-            if (r.begin() != -1 && r.begin() >= lastEnd && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
-                htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd))); // something before link
-                htmlDesc += shareStr;                                                                        // something instead of link
+            if (r.begin() != -1 && r.begin() >= lastEnd
+                && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
+                htmlDesc += TextUtil::linkify(
+                    TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd))); // something before link
+                htmlDesc += shareStr;                                              // something instead of link
                 lastEnd = r.end() + 1;
             } else {
                 tailReferences += shareStr;
@@ -263,20 +260,21 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
         auto ft   = p.first;
         auto item = p.second;
 
-        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this, [ft, item](quint64 offset, quint64 /*size*/) {
-            auto    vm       = item->metadata();
-            QString fileName = vm.value(QString::fromLatin1("link")).toString();
-            if (fileName.isEmpty()) {
-                fileName = item->fileName();
-            }
-            auto f = new QFile(fileName, ft);
-            if (!f->open(QIODevice::ReadOnly)) {
-                ft->setDevice(nullptr);
-                return;
-            }
-            f->seek(qint64(offset));
-            ft->setDevice(f);
-        });
+        connect(ft, &Jingle::FileTransfer::Application::deviceRequested, this,
+                [ft, item](quint64 offset, quint64 /*size*/) {
+                    auto    vm       = item->metadata();
+                    QString fileName = vm.value(QString::fromLatin1("link")).toString();
+                    if (fileName.isEmpty()) {
+                        fileName = item->fileName();
+                    }
+                    auto f = new QFile(fileName, ft);
+                    if (!f->open(QIODevice::ReadOnly)) {
+                        ft->setDevice(nullptr);
+                        return;
+                    }
+                    f->seek(qint64(offset));
+                    ft->setDevice(f);
+                });
     }
     session->accept();
 
@@ -287,8 +285,8 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
 // returns <parsed,list of start/size>
 static std::tuple<bool, QList<QPair<qint64, qint64>>> parseHttpRangeRequest(qhttp::server::QHttpRequest * req,
                                                                             qhttp::server::QHttpResponse *res,
-                                                                            bool                          fullSizeKnown = false,
-                                                                            qint64                        fullSize      = 0)
+                                                                            bool   fullSizeKnown = false,
+                                                                            qint64 fullSize      = 0)
 {
     QList<QPair<qint64, qint64>> ret;
     QByteArray                   rangesBa = req->headers().value("range");
@@ -300,9 +298,8 @@ static std::tuple<bool, QList<QPair<qint64, qint64>>> parseHttpRangeRequest(qhtt
         return std::make_tuple(false, ret);
     }
 
-    QList<QByteArray> arr = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"),
-                                                    rangesBa.size() - int(sizeof("bytes")))
-                                .split(',');
+    QList<QByteArray> arr
+        = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"), rangesBa.size() - int(sizeof("bytes"))).split(',');
 
     for (const auto &ba : arr) {
         auto trab = ba.trimmed();
@@ -360,6 +357,9 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
     bool       isRanged       = false;
     XMPP::Hash sourceId       = XMPP::Hash::from(QStringRef(&sourceIdHex));
 
+    qDebug("%s %s range: %s", qPrintable(req->methodString()), qPrintable(req->url().toString()),
+           qPrintable(req->headers().value("range")));
+
     auto handleRequestedRange = [&](qint64 fileSize = -1) {
         QList<QPair<qint64, qint64>> ranges;
         bool                         parsed;
@@ -382,13 +382,8 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         return true;
     };
 
-    auto setupHeaders = [res](
-                            qint64    fileSize,
-                            QString   contentType,
-                            QDateTime lastModified,
-                            bool      isRanged,
-                            qint64    start,
-                            qint64    size) {
+    auto setupHeaders = [res](qint64 fileSize, QString contentType, QDateTime lastModified, bool isRanged,
+                              qint64 rangeStart, qint64 rangeSize) {
         if (lastModified.isValid())
             res->addHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
         if (contentType.count())
@@ -397,7 +392,10 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         res->addHeader("Accept-Ranges", "bytes");
         res->addHeader("connection", "keep-alive");
         if (isRanged) {
-            auto range = QString(QLatin1String("bytes %1-%2/%3")).arg(start).arg(start + size - 1).arg(fileSize == -1 ? QString('*') : QString::number(fileSize));
+            auto range = QString(QLatin1String("bytes %1-%2/%3"))
+                             .arg(rangeStart)
+                             .arg(rangeStart + rangeSize - 1)
+                             .arg(fileSize == -1 ? QString('*') : QString::number(fileSize));
             res->addHeader("Content-Range", range.toLatin1());
             res->setStatusCode(qhttp::ESTATUS_PARTIAL_CONTENT);
         } else {
@@ -408,7 +406,7 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
     };
 
     auto item = acc->psi()->fileSharingManager()->item(sourceId);
-    //FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, &fileName);
+    // FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, &fileName);
     if (item->isCached()) {
         QFile *   file = new QFile(acc->psi()->fileSharingManager()->cacheDir() + "/" + item->fileName(), res);
         QFileInfo fi(*file);
@@ -464,37 +462,65 @@ bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sou
         qint64 size;
         std::tie(start, size) = downloader->range();
         auto const file       = downloader->jingleFile();
-        setupHeaders(file.hasSize() ? qint64(file.size()) : -1, file.mediaType(),
-                     file.date(), downloader->isRanged(), start, size);
+
+        if (downloader->isRanged())
+            qDebug("FSM metaDataChanged: rangeStart=%lld rangeSize=%lld", start, size);
+        else if (downloader->jingleFile().hasSize())
+            qDebug("FSM metaDataChanged: size=%lld", downloader->jingleFile().size());
+        else
+            qDebug("FSM metaDataChanged: unknown size or range");
+
+        setupHeaders(file.hasSize() ? qint64(file.size()) : -1, file.mediaType(), file.date(), downloader->isRanged(),
+                     start, size);
         res->setProperty("headers", true);
 
-        bool *disconnected = new bool(false);
+        auto disconnected = std::shared_ptr<bool>(new bool);
         connect(downloader, &FileShareDownloader::readyRead, res, [downloader, res]() {
-            if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK)
-                res->write(downloader->read(downloader->bytesAvailable() > HTTP_CHUNK ? HTTP_CHUNK : downloader->bytesAvailable()));
-        });
-
-        connect(res->connection()->tcpSocket(), &QTcpSocket::bytesWritten, downloader, [downloader, res, disconnected]() {
-            if (res->connection()->tcpSocket()->bytesToWrite() >= HTTP_CHUNK)
-                return; // we will return here when the buffer will be less occupied
-            auto bytesAvail = downloader->bytesAvailable();
-            if (!bytesAvail)
-                return; // let's wait readyRead
-            if (*disconnected && bytesAvail <= HTTP_CHUNK) {
-                res->end(downloader->read(bytesAvail));
-                delete disconnected;
-            } else
-                res->write(downloader->read(bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail));
-        });
-
-        connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected]() {
-            *disconnected = true;
-            if (!res->connection()->tcpSocket()->bytesToWrite() && !downloader->bytesAvailable()) {
-                res->disconnect(downloader);
-                res->end();
-                delete disconnected;
+            if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK) {
+                qDebug("FSM readyRead available=%lld transfer them", downloader->bytesAvailable());
+                res->write(downloader->read(downloader->bytesAvailable() > HTTP_CHUNK ? HTTP_CHUNK
+                                                                                      : downloader->bytesAvailable()));
+            } else {
+                qDebug("FSM readyRead available=%lld wait till previous chunk is wrtten", downloader->bytesAvailable());
             }
         });
+
+        connect(res->connection()->tcpSocket(), &QTcpSocket::bytesWritten, downloader,
+                [downloader, res, disconnected]() {
+                    if (res->connection()->tcpSocket()->bytesToWrite() >= HTTP_CHUNK) {
+                        qDebug("FSM bytesWritten output buffer full. waiting..");
+                        return; // we will return here when the buffer will be less occupied
+                    }
+                    auto bytesAvail = downloader->bytesAvailable();
+                    if (!bytesAvail) {
+                        if (*disconnected) {
+                            qDebug("FSM bytesWritten all data transfered. closing");
+                        } else
+                            qDebug("FSM bytesWritten downloader doesn't have more data yet. waiting..");
+                        return; // let's wait readyRead
+                    }
+                    if (*disconnected && bytesAvail <= HTTP_CHUNK) {
+                        qDebug("FSM bytesWritten tranfering last chunk of %lld bytes", bytesAvail);
+                        res->write(downloader->read(bytesAvail));
+                    } else {
+                        qDebug("FSM bytesWritten tranfering chunk of %lld bytes",
+                               bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail);
+                        res->write(downloader->read(bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail));
+                    }
+                });
+
+        /*connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected]() {
+            *disconnected = true;
+            if (!res->connection()->tcpSocket()->bytesToWrite() && !downloader->bytesAvailable()) {
+                qDebug("FSM disconnected. all bytes written. closing");
+                // res->disconnect(downloader);
+            } else {
+                qDebug("FSM disconnected. still has %lld bytes to write. waiting for bytesWritten",
+                       res->connection()->tcpSocket()->bytesToWrite());
+            }
+        });*/
+
+        connect(downloader, &FileShareDownloader::finished, res, [res]() { res->end(); });
     });
 
     connect(downloader, &FileShareDownloader::finished, this, [this, downloader, setupHeaders, res]() {
@@ -556,7 +582,8 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         return nullptr;
     }
 #endif
-    //return acc->psi()->networkAccessManager()->get(QNetworkRequest(QUrl("https://jabber.ru/upload/98354d3264f6584ef9520cc98641462d6906288f/mW6JnUCmCwOXPch1M3YeqSQUMzqjH9NjmeYuNIzz/file_example_OOG_1MG.ogg")));
+    // return
+    // acc->psi()->networkAccessManager()->get(QNetworkRequest(QUrl("https://jabber.ru/upload/98354d3264f6584ef9520cc98641462d6906288f/mW6JnUCmCwOXPch1M3YeqSQUMzqjH9NjmeYuNIzz/file_example_OOG_1MG.ogg")));
     FileShareDownloader *downloader = item->download();
     if (!downloader)
         return nullptr;
