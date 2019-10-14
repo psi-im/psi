@@ -33,7 +33,7 @@ struct MultiFileTransferItem::Private
     QString       errorString;       // last error
     QString       fileName;
     quint64       fullSize = 0;
-    quint64       currentSize = 0;   // currently transfered
+    quint64       currentSize = 0;   // currently transferred
     quint64       lastSize = 0;
     quint64       offset = 0; // initial offset if only part of file is transferred
     quint32       timeRemaining = 0; // secs

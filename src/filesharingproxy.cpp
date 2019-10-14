@@ -240,7 +240,7 @@ void FileSharingProxy::onMetadataChanged()
         auto bytesAvail = downloader->bytesAvailable();
         if (!bytesAvail) {
             if (upstreamDisconnected) {
-                qDebug("FSM bytesWritten all data transfered. closing");
+                qDebug("FSM bytesWritten all data transferred. closing");
                 response->end();
             } else
                 qDebug("FSM bytesWritten downloader doesn't have more data yet. waiting..");
