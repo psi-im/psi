@@ -378,6 +378,7 @@ SOURCES += \
     $$PWD/filesharingdownloader.cpp \
     $$PWD/filesharingitem.cpp
 
+
 CONFIG += filetransfer
 filetransfer {
     DEFINES += FILETRANSFER
@@ -553,8 +554,8 @@ SOURCES += \
 unix|qtwebengine {
     # we need web server to serve media shares and some specific web engine requests
     include (../3rdparty/qhttp.pri)
-    HEADERS += $$PWD/webserver.h
-    SOURCES += $$PWD/webserver.cpp
+    HEADERS += $$PWD/filesharingproxy.h $$PWD/webserver.h
+    SOURCES += $$PWD/filesharingproxy.cpp $$PWD/webserver.cpp
     DEFINES += HAVE_WEBSERVER
 }
 

@@ -23,15 +23,12 @@
 #include "filecache.h"
 #include "filesharingdownloader.h"
 #include "fileutil.h"
-#include "httpfileupload.h"
-#include "networkaccessmanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #ifndef WEBKIT
 #include "qiteaudio.h"
 #endif
 
-#include "xmpp_bitsofbinary.h"
 #include "xmpp_client.h"
 #include "xmpp_hash.h"
 #include "xmpp_jid.h"
@@ -39,29 +36,12 @@
 #include "xmpp_reference.h"
 #include "xmpp_vcard.h"
 #ifdef HAVE_WEBSERVER
+#include "filesharingproxy.h"
 #include "qhttpserverconnection.hpp"
 #include "webserver.h"
 #endif
 #include "messageview.h"
 #include "textutil.h"
-
-#include <QBuffer>
-#include <QDir>
-#include <QFileIconProvider>
-#include <QFileInfo>
-#include <QImageReader>
-#include <QMimeData>
-#include <QMimeDatabase>
-#include <QPainter>
-#include <QPixmap>
-#include <QTemporaryFile>
-#include <QUrl>
-#include <QUrlQuery>
-#include <cinttypes>
-#include <cmath>
-#include <cstdlib>
-
-#define HTTP_CHUNK (512 * 1024 * 1024)
 
 // ======================================================================
 // FileSharingManager
@@ -285,246 +265,11 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
 }
 
 #ifdef HAVE_WEBSERVER
-// returns <parsed,list of start/size>
-static std::tuple<bool, QList<QPair<qint64, qint64>>> parseHttpRangeRequest(qhttp::server::QHttpRequest * req,
-                                                                            qhttp::server::QHttpResponse *res,
-                                                                            bool   fullSizeKnown = false,
-                                                                            qint64 fullSize      = 0)
-{
-    QList<QPair<qint64, qint64>> ret;
-    QByteArray                   rangesBa = req->headers().value("range");
-    if (!rangesBa.size())
-        return std::make_tuple(true, ret);
-
-    if ((fullSizeKnown && !fullSize) || !rangesBa.startsWith("bytes=")) {
-        res->setStatusCode(qhttp::ESTATUS_REQUESTED_RANGE_NOT_SATISFIABLE);
-        return std::make_tuple(false, ret);
-    }
-
-    QList<QByteArray> arr
-        = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"), rangesBa.size() - int(sizeof("bytes"))).split(',');
-
-    for (const auto &ba : arr) {
-        auto trab = ba.trimmed();
-        if (!trab.size()) {
-            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-            return std::make_tuple(false, ret);
-        }
-        bool   ok;
-        qint64 start;
-        qint64 end;
-        if (trab[0] == '-') {
-            res->setStatusCode(qhttp::ESTATUS_NOT_IMPLEMENTED);
-            return std::make_tuple(false, ret);
-        }
-
-        auto l = trab.split('-');
-        if (l.size() != 2) {
-            res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-            return std::make_tuple(false, ret);
-        }
-
-        start = l[0].toLongLong(&ok);
-        if (l[1].size()) {
-            if (ok && l[1].size())
-                end = l[1].toLongLong(&ok);
-            if (!ok || start > end) {
-                res->setStatusCode(qhttp::ESTATUS_BAD_REQUEST);
-                return std::make_tuple(false, ret);
-            }
-
-            if (!fullSizeKnown || start < fullSize) {
-                ret.append(qMakePair(start, end - start + 1));
-            }
-        } else {
-            if (!fullSizeKnown || start < fullSize)
-                ret.append(qMakePair(start, 0));
-        }
-    }
-
-    if (fullSizeKnown && !ret.size()) {
-        res->setStatusCode(qhttp::ESTATUS_REQUESTED_RANGE_NOT_SATISFIABLE);
-        res->addHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(fullSize));
-        return std::make_tuple(false, ret);
-    }
-
-    return std::make_tuple(true, ret);
-}
-
 // returns true if request handled. false if we need to find another hander
 bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex,
                                              qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res)
 {
-    qint64     requestedStart = 0;
-    qint64     requestedSize  = 0;
-    bool       isRanged       = false;
-    XMPP::Hash sourceId       = XMPP::Hash::from(QStringRef(&sourceIdHex));
-
-    qDebug("%s %s range: %s", qPrintable(req->methodString()), qPrintable(req->url().toString()),
-           qPrintable(req->headers().value("range")));
-
-    auto handleRequestedRange = [&](qint64 fileSize = -1) {
-        QList<QPair<qint64, qint64>> ranges;
-        bool                         parsed;
-        std::tie(parsed, ranges) = parseHttpRangeRequest(req, res, fileSize != -1, fileSize);
-        if (!parsed) {
-            res->end();
-            return false;
-        }
-        if (ranges.count() > 1) { // maybe we can support this in the future..
-            res->setStatusCode(qhttp::ESTATUS_NOT_IMPLEMENTED);
-            res->end();
-            return false;
-        }
-
-        if (ranges.count()) {
-            requestedStart = ranges[0].first;
-            requestedSize  = ranges[0].second;
-            isRanged       = true;
-        }
-        return true;
-    };
-
-    auto setupHeaders = [res](qint64 fileSize, QString contentType, QDateTime lastModified, bool isRanged,
-                              qint64 rangeStart, qint64 rangeSize) {
-        if (lastModified.isValid())
-            res->addHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
-        if (contentType.count())
-            res->addHeader("Content-Type", contentType.toLatin1());
-
-        res->addHeader("Accept-Ranges", "bytes");
-        res->addHeader("connection", "keep-alive");
-        if (isRanged) {
-            auto range = QString(QLatin1String("bytes %1-%2/%3"))
-                             .arg(rangeStart)
-                             .arg(rangeStart + rangeSize - 1)
-                             .arg(fileSize == -1 ? QString('*') : QString::number(fileSize));
-            res->addHeader("Content-Range", range.toLatin1());
-            res->setStatusCode(qhttp::ESTATUS_PARTIAL_CONTENT);
-        } else {
-            if (fileSize != -1)
-                res->addHeader("Content-Length", QByteArray::number(fileSize));
-            res->setStatusCode(qhttp::ESTATUS_OK);
-        }
-    };
-
-    auto item = acc->psi()->fileSharingManager()->item(sourceId);
-    // FileCacheItem *item = acc->psi()->fileSharingManager()->getCacheItem(sourceId, true, &fileName);
-    if (item->isCached()) {
-        QFile *   file = new QFile(acc->psi()->fileSharingManager()->cacheDir() + "/" + item->fileName(), res);
-        QFileInfo fi(*file);
-        if (!handleRequestedRange(fi.size())) {
-            return true; // handled but with error
-        }
-        file->open(QIODevice::ReadOnly);
-        qint64 size = fi.size();
-        if (isRanged) {
-            if (requestedSize)
-                size = (requestedStart + requestedSize) > fi.size() ? fi.size() - requestedStart : requestedSize;
-            else
-                size = fi.size() - requestedStart;
-            file->seek(requestedStart);
-        }
-        // TODO If-Modified-Since
-        setupHeaders(fi.size(), item->mimeType(), fi.lastModified(), isRanged, requestedStart, size);
-        connect(res, &qhttp::server::QHttpResponse::allBytesWritten, file, [res, file, requestedStart, size]() {
-            qint64 toWrite = requestedStart + size - file->pos();
-            if (!toWrite) {
-                return;
-            }
-            if (toWrite > HTTP_CHUNK)
-                res->write(file->read(HTTP_CHUNK));
-            else
-                res->end(file->read(toWrite));
-        });
-
-        if (size < HTTP_CHUNK) {
-            res->end(file->read(size));
-        }
-        return true; // handled with success
-    }
-
-    if (!handleRequestedRange(item->isSizeKnown() ? item->fileSize() : -1)) {
-        return true; // handled with error
-    }
-
-    if (isRanged && item->isSizeKnown()) {
-        if (requestedStart == 0 && requestedSize == item->fileSize())
-            isRanged = false;
-        else if (requestedStart + requestedSize > item->fileSize())
-            requestedSize = item->fileSize() - requestedStart; // don't request more than declared in share
-    }
-
-    FileShareDownloader *downloader = item->download(isRanged, requestedStart, requestedSize);
-    if (!downloader)
-        return false; // REVIEW probably 404 would be better
-
-    connect(downloader, &FileShareDownloader::metaDataChanged, this, [this, downloader, setupHeaders, res]() {
-        qint64 start;
-        qint64 size;
-        std::tie(start, size) = downloader->range();
-        auto const file       = downloader->jingleFile();
-
-        if (downloader->isRanged())
-            qDebug("FSM metaDataChanged: rangeStart=%lld rangeSize=%lld", start, size);
-        else if (downloader->jingleFile().hasSize())
-            qDebug("FSM metaDataChanged: size=%lld", downloader->jingleFile().size());
-        else
-            qDebug("FSM metaDataChanged: unknown size or range");
-
-        setupHeaders(file.hasSize() ? qint64(file.size()) : -1, file.mediaType(), file.date(), downloader->isRanged(),
-                     start, size);
-        res->setProperty("headers", true);
-
-        auto disconnected = std::make_shared<bool>(false);
-        connect(downloader, &FileShareDownloader::readyRead, res, [downloader, res]() {
-            if (res->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK) {
-                qDebug("FSM readyRead available=%lld transfer them", downloader->bytesAvailable());
-                res->write(downloader->read(downloader->bytesAvailable() > HTTP_CHUNK ? HTTP_CHUNK
-                                                                                      : downloader->bytesAvailable()));
-            } else {
-                qDebug("FSM readyRead available=%lld wait till previous chunk is wrtten", downloader->bytesAvailable());
-            }
-        });
-
-        auto responseSock = res->connection()->tcpSocket();
-        connect(responseSock, &QTcpSocket::bytesWritten, downloader, [downloader, res, disconnected, responseSock]() {
-            if (responseSock->bytesToWrite() >= HTTP_CHUNK) {
-                qDebug("FSM bytesWritten output buffer full. waiting..");
-                return; // we will return here when the buffer will be less occupied
-            }
-            auto bytesAvail = downloader->bytesAvailable();
-            if (!bytesAvail) {
-                if (*disconnected) {
-                    qDebug("FSM bytesWritten all data transfered. closing");
-                } else
-                    qDebug("FSM bytesWritten downloader doesn't have more data yet. waiting..");
-                return; // let's wait readyRead
-            }
-            res->write(downloader->read(bytesAvail > HTTP_CHUNK && !*disconnected ? HTTP_CHUNK : bytesAvail));
-        });
-
-        // for keep alive connections we should detach from the socket as soon as response is destroyed (or earlier?)
-        connect(res, &qhttp::server::QHttpResponse::done, downloader,
-                [downloader, responseSock](bool) { responseSock->disconnect(downloader); });
-
-        connect(downloader, &FileShareDownloader::disconnected, res, [downloader, res, disconnected]() {
-            *disconnected = true;
-            qDebug("FSM disconnected.");
-        });
-
-        connect(downloader, &FileShareDownloader::finished, res, [res]() { res->end(); });
-    });
-
-    connect(downloader, &FileShareDownloader::finished, this, [this, downloader, setupHeaders, res]() {
-        if (!res->property("headers").toBool()) {
-            res->setStatusCode(qhttp::ESTATUS_BAD_GATEWAY); // something finnished with errors quite early
-            res->end();
-        }
-    });
-
-    downloader->open();
-
+    new FileSharingProxy(acc, sourceIdHex, req, res);
     return true;
 }
 #endif

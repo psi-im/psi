@@ -256,8 +256,12 @@ list(APPEND HEADERS
     )
 
 if(UNIX OR IS_WEBENGINE)
-    list(APPEND SOURCES webserver.cpp)
-    list(APPEND HEADERS webserver.h)
+    list(APPEND SOURCES
+        filesharingproxy.cpp
+        webserver.cpp)
+    list(APPEND HEADERS
+        filesharingproxy.h
+        webserver.h)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT HAIKU)

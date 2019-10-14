@@ -347,11 +347,6 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
     if (isRanged && (_flags & SizeKnown) && start == 0 && size == _fileSize)
         isRanged = false;
 
-    if (!isRanged && _downloader) { // let's wait till first one is finished
-        // qWarning("%s download is in progress already", qPrintable(src.file.name()));
-        return _downloader;
-    }
-
     XMPP::Jingle::FileTransfer::File file;
     file.setDate(_modifyTime);
     file.setMediaType(_mimeType);
@@ -366,6 +361,11 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
     if (isRanged) {
         downloader->setRange(start, size);
         return downloader;
+    }
+
+    if (_downloader) {
+        qWarning("double download for the same file: %s", qPrintable(_fileName));
+        return downloader; // seems like we are downloading this file twice, but what we can do?
     }
 
     _downloader = downloader;
