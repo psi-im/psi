@@ -43,6 +43,9 @@
 #include "messageview.h"
 #include "textutil.h"
 
+#include <QDir>
+#include <QMimeData>
+
 // ======================================================================
 // FileSharingManager
 // ======================================================================
