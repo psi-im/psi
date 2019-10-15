@@ -21,6 +21,7 @@
 #define FILESHARINGPROXY_H
 
 #include <QObject>
+#include <QPointer>
 
 class FileCacheItem;
 class FileSharingItem;
@@ -37,12 +38,14 @@ class FileSharingProxy : public QObject {
 public:
     explicit FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
                               qhttp::server::QHttpResponse *response);
+    ~FileSharingProxy();
 
 signals:
 
 public slots:
 private slots:
     void onMetadataChanged();
+    void transfer();
 
 private:
     int  parseHttpRangeRequest();
@@ -55,11 +58,12 @@ private:
     PsiAccount *                  acc;
     qhttp::server::QHttpRequest * request;
     qhttp::server::QHttpResponse *response;
-    FileShareDownloader *         downloader           = nullptr;
-    qint64                        requestedStart       = 0;
-    qint64                        requestedSize        = 0;
-    bool                          isRanged             = false;
-    bool                          upstreamDisconnected = false;
+    QPointer<FileShareDownloader> downloader;
+    qint64                        requestedStart = 0;
+    qint64                        requestedSize  = 0;  // if == 0 then all the remaining
+    qint64                        bytesLeft      = -1; // -1 - unknown
+    bool                          isRanged       = false;
+    bool                          headersSent    = false;
 };
 
 #endif // FILESHARINGPROXY_H

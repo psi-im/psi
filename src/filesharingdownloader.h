@@ -43,6 +43,7 @@ public:
     ~FileShareDownloader();
 
     bool                       isSuccess() const;
+    bool                       isConnected() const;
     bool                       open(QIODevice::OpenMode mode = QIODevice::ReadOnly) override;
     void                       abort();
     void                       setRange(qint64 start, qint64 size);

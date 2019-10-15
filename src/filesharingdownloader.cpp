@@ -59,7 +59,7 @@ class AbstractFileShareDownloader : public QObject {
 protected:
     QString     _lastError;
     qint64      rangeStart = 0;
-    qint64      rangeSize  = 0;
+    qint64      rangeSize  = 0; // 0 - all the remaining
     PsiAccount *acc;
     QString     sourceUri;
 
@@ -384,7 +384,7 @@ public:
     QString                      dstFileName;
     QString                      lastError;
     qint64                       rangeStart = 0;
-    qint64                       rangeSize  = 0;
+    qint64                       rangeSize  = 0; // 0 - all the remaining
     AbstractFileShareDownloader *downloader = nullptr;
     bool                         metaReady  = false;
     bool                         success    = false;
@@ -486,6 +486,8 @@ FileShareDownloader::~FileShareDownloader()
 }
 
 bool FileShareDownloader::isSuccess() const { return d->success; }
+
+bool FileShareDownloader::isConnected() const { return d->downloader ? d->downloader->isConnected() : false; }
 
 bool FileShareDownloader::open(QIODevice::OpenMode mode)
 {

@@ -26,6 +26,7 @@
 #include "qhttpserverconnection.hpp"
 #include "qhttpserverrequest.hpp"
 #include "qhttpserverresponse.hpp"
+#include "webserver.h"
 
 #include <QTcpSocket>
 #include <tuple>
@@ -38,7 +39,8 @@ FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, 
     item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(QStringRef(&sourceIdHex)))), acc(acc), request(req),
     response(res)
 {
-    qDebug("proxy %s %s %s range: %s", qPrintable(sourceIdHex), qPrintable(req->methodString()),
+    auto baseUrl = acc->psi()->webServer()->serverUrl().toString();
+    qDebug("FSP %s %s%s range: %s", qPrintable(req->methodString()), qPrintable(baseUrl),
            qPrintable(req->url().toString()), qPrintable(req->headers().value("range")));
 
     if (!item) {
@@ -73,7 +75,7 @@ FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, 
 
     connect(downloader, &FileShareDownloader::metaDataChanged, this, &FileSharingProxy::onMetadataChanged);
     connect(downloader, &FileShareDownloader::finished, this, [this]() {
-        if (!response->property("headers").toBool()) {
+        if (!headersSent) {
             response->setStatusCode(qhttp::ESTATUS_BAD_GATEWAY); // something finnished with errors quite early
             response->end();
         }
@@ -81,6 +83,8 @@ FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, 
 
     downloader->open();
 }
+
+FileSharingProxy::~FileSharingProxy() { qDebug("FSP deleted"); }
 
 // returns <parsed,list of start/size>
 int FileSharingProxy::parseHttpRangeRequest()
@@ -99,27 +103,26 @@ int FileSharingProxy::parseHttpRangeRequest()
 
     auto ba = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"), rangesBa.size() - int(sizeof("bytes")));
 
-    auto trab = ba.trimmed();
-    if (!trab.size()) {
-        return qhttp::ESTATUS_BAD_REQUEST;
-    }
-    bool   ok;
-    qint64 start;
-    qint64 end;
-    if (trab[0] == '-') {
-        return qhttp::ESTATUS_NOT_IMPLEMENTED;
-    }
-
-    auto l = trab.split('-');
+    auto l = ba.trimmed().split('-');
     if (l.size() != 2) {
         return qhttp::ESTATUS_BAD_REQUEST;
     }
 
+    bool   ok;
+    qint64 start;
+    qint64 end;
+
+    if (!l[0].size()) { // bytes from the end are requested. Jingle-ft doesn't support this
+        return qhttp::ESTATUS_NOT_IMPLEMENTED;
+    }
+
     start = l[0].toLongLong(&ok);
-    if (l[1].size()) {
-        if (ok && l[1].size())
-            end = l[1].toLongLong(&ok);
-        if (!ok || start > end) {
+    if (!ok) {
+        return qhttp::ESTATUS_BAD_REQUEST;
+    }
+    if (l[1].size()) {              // if we have end
+        end = l[1].toLongLong(&ok); // then parse it
+        if (!ok || start > end) {   // if something not parsed or range is invalid
             return qhttp::ESTATUS_BAD_REQUEST;
         }
 
@@ -128,7 +131,7 @@ int FileSharingProxy::parseHttpRangeRequest()
             requestedStart = start;
             requestedSize  = end - start + 1;
         }
-    } else {
+    } else { // no end. all the remaining
         if (!item->isSizeKnown() || start < item->fileSize()) {
             isRanged       = true;
             requestedStart = start;
@@ -184,7 +187,7 @@ void FileSharingProxy::proxyCache(FileCacheItem *cache)
     if (isRanged) {
         if (requestedSize)
             size = (requestedStart + requestedSize) > fi.size() ? fi.size() - requestedStart : requestedSize;
-        else
+        else // remaining part
             size = fi.size() - requestedStart;
         file->seek(requestedStart);
     }
@@ -214,54 +217,81 @@ void FileSharingProxy::onMetadataChanged()
     auto const file       = downloader->jingleFile();
 
     if (downloader->isRanged())
-        qDebug("FSM metaDataChanged: rangeStart=%lld rangeSize=%lld", start, size);
+        qDebug("FSP metaDataChanged: rangeStart=%lld rangeSize=%lld", start, size);
     else if (downloader->jingleFile().hasSize())
-        qDebug("FSM metaDataChanged: size=%lld", downloader->jingleFile().size());
+        qDebug("FSP metaDataChanged: size=%lld", downloader->jingleFile().size());
     else
-        qDebug("FSM metaDataChanged: unknown size or range");
+        qDebug("FSP metaDataChanged: unknown size or range");
+
+    // check range satisfaction
+    if (isRanged && downloader->isRanged() && !file.hasSize() && !size) { // size unknown for ranged response.
+        qWarning("Unknown size for ranged response");
+        downloader->disconnect(this);
+        downloader->deleteLater();
+        response->setStatusCode(qhttp::ESTATUS_BAD_GATEWAY);
+        response->end();
+        return;
+    }
+
+    if (isRanged && !downloader->isRanged()) {
+        qWarning("FSP: remote doesn't support ranged. transfer everything");
+        isRanged = false;
+        start    = 0;
+        size     = file.size();
+    }
+
+    if (isRanged && !size) {
+        size = file.size() - start;
+    }
+    bytesLeft = isRanged ? size : (file.hasSize() ? file.size() : -1);
 
     setupHeaders(file.hasSize() ? qint64(file.size()) : -1, file.mediaType(), file.date(), downloader->isRanged(),
                  start, size);
-    response->setProperty("headers", true);
+    headersSent = true;
 
-    // TODO below connections mess has to be fixed or at least documeted
+    connect(downloader, &FileShareDownloader::readyRead, this, &FileSharingProxy::transfer);
+    connect(downloader, &FileShareDownloader::disconnected, this, &FileSharingProxy::transfer);
+    connect(response, &qhttp::server::QHttpResponse::allBytesWritten, this, &FileSharingProxy::transfer);
+}
 
-    connect(downloader, &FileShareDownloader::readyRead, this, [this]() {
-        if (response->connection()->tcpSocket()->bytesToWrite() < HTTP_CHUNK) {
-            qDebug("FSM readyRead available=%lld transfer them", downloader->bytesAvailable());
-            response->write(downloader->read(downloader->bytesAvailable() > HTTP_CHUNK ? HTTP_CHUNK
-                                                                                       : downloader->bytesAvailable()));
+void FileSharingProxy::transfer()
+{
+    qint64 bytesAvail  = downloader ? downloader->bytesAvailable() : 0;
+    bool   isConnected = downloader ? downloader->isConnected() : false;
+    if (response->connection()->tcpSocket()->bytesToWrite() >= HTTP_CHUNK) {
+        qDebug("FSP available=%lld wait till previous chunk is wrtten", bytesAvail);
+        return;
+    }
+
+    if (isConnected) {
+        if (bytesAvail) {
+            qint64 toTransfer = bytesAvail > HTTP_CHUNK ? HTTP_CHUNK : bytesAvail;
+            auto   data       = downloader->read(toTransfer);
+            if (bytesLeft != -1) {
+                if (data.size() < bytesLeft)
+                    response->write(data);
+                else {
+                    // if (data.size() > bytesLeft)
+                    //    data.resize(bytesLeft);
+                    response->end(data);
+                }
+                bytesLeft -= data.size();
+            } else {
+                response->write(data);
+            }
+            qDebug("FSP transferred %d bytes of %lld bytes", data.size(), toTransfer);
         } else {
-            qDebug("FSM readyRead available=%lld wait till previous chunk is wrtten", downloader->bytesAvailable());
+            qDebug("FSP we have to wait for readyRead or disconnected");
         }
-    });
+        return;
+    }
 
-    connect(response, &qhttp::server::QHttpResponse::allBytesWritten, downloader, [this]() {
-        auto bytesAvail = downloader->bytesAvailable();
-        if (!bytesAvail) {
-            if (upstreamDisconnected) {
-                qDebug("FSM bytesWritten all data transferred. closing");
-                response->end();
-            } else
-                qDebug("FSM bytesWritten downloader doesn't have more data yet. waiting..");
-            return; // let's wait readyRead
-        }
-        auto toTransfer = bytesAvail > HTTP_CHUNK && !upstreamDisconnected ? HTTP_CHUNK : bytesAvail;
-        qDebug("FSM bytesWritten transferring %lld bytes", toTransfer);
-        response->write(downloader->read(toTransfer));
-    });
-
-    // for keep alive connections we should detach from the socket as soon as response is destroyed (or earlier?)
-    connect(response, &qhttp::server::QHttpResponse::done, downloader,
-            [this](bool) { response->connection()->tcpSocket()->disconnect(downloader); });
-
-    connect(downloader, &FileShareDownloader::disconnected, this, [this]() {
-        upstreamDisconnected = true;
-        qDebug("FSM disconnected.");
-    });
-
-    connect(downloader, &FileShareDownloader::finished, this, [this]() {
+    // so we are not connected
+    if (bytesAvail) {
+        response->end(downloader->read(bytesAvail));
+        qDebug("FSP transferred final %lld bytes", bytesAvail);
+    } else {
         response->end();
-        downloader->deleteLater();
-    });
+        qDebug("FSP ended with no additional data");
+    }
 }
