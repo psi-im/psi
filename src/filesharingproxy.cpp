@@ -155,19 +155,25 @@ void FileSharingProxy::setupHeaders(qint64 fileSize, QString contentType, QDateT
     if (contentType.count())
         response->addHeader("Content-Type", contentType.toLatin1());
 
+    bool keepAlive = true;
     response->addHeader("Accept-Ranges", "bytes");
-    response->addHeader("connection", "keep-alive");
     if (isRanged) {
+        response->setStatusCode(qhttp::ESTATUS_PARTIAL_CONTENT);
         auto range = QString(QLatin1String("bytes %1-%2/%3"))
                          .arg(rangeStart)
                          .arg(rangeStart + rangeSize - 1)
                          .arg(fileSize == -1 ? QString('*') : QString::number(fileSize));
         response->addHeader("Content-Range", range.toLatin1());
-        response->setStatusCode(qhttp::ESTATUS_PARTIAL_CONTENT);
+        response->addHeader("Content-Length", QByteArray::number(rangeSize));
     } else {
-        if (fileSize != -1)
-            response->addHeader("Content-Length", QByteArray::number(fileSize));
         response->setStatusCode(qhttp::ESTATUS_OK);
+        if (fileSize == -1)
+            keepAlive = false;
+        else
+            response->addHeader("Content-Length", QByteArray::number(fileSize));
+    }
+    if (keepAlive) {
+        response->addHeader("Connection", "keep-alive");
     }
 }
 
