@@ -273,7 +273,7 @@ void OptionsDlgBase::Private::createChangedMap()
     changedMap.insert("QSpinBox", SIGNAL(valueChanged(int)));
     changedMap.insert("QTimeEdit", SIGNAL(valueChanged(const QTime &)));
     changedMap.insert("QTextEdit", SIGNAL(textChanged()));
-    changedMap.insert("QTextBrowser", SIGNAL(sourceChanged(const QString &)));
+    changedMap.insert("QTextBrowser", SIGNAL(sourceChanged(const QUrl &)));
     changedMap.insert("QMultiLineEdit", SIGNAL(textChanged()));
     //changedMap.insert("QListBox", SIGNAL(selectionChanged()));
     //changedMap.insert("QTabWidget", SIGNAL(currentChanged(QWidget *)));

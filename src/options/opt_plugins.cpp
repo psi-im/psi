@@ -50,7 +50,7 @@ public:
         setTabs(QList<OptionsTab*>() << new OptionsTabPlugin(pluginName, this));
 
         psi->dialogRegister(this);
-        resize(440, 300);
+        setMinimumSize(440, 300);
 
         openTab( "general" );
     }
@@ -86,7 +86,7 @@ QWidget *OptionsTabPlugins::widget()
     OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
 
     listPlugins();
-    connect(d->tw_Plugins, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemChanged(QTreeWidgetItem*,int)));
+    connect(d->tw_Plugins, &QTreeWidget::itemChanged, this, &OptionsTabPlugins::itemChanged);
 
     return w;
 }
@@ -229,6 +229,7 @@ void OptionsTabPlugins::settingsClicked(int item)
             sw->setObjectName(shortName);
         }
         sw->open();
+        sw->adjustSize();
     }
 }
 
