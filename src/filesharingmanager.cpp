@@ -344,9 +344,17 @@ QVariant FileSharingDeviceOpener::metadata(const QUrl &url)
 {
     auto sourceId = urlToSourceId(url);
     auto item     = acc->psi()->fileSharingManager()->item(sourceId);
-    if (item)
-        return item->metaData();
-    return QVariant();
+    if (!item)
+        return QVariant();
+    auto       vm   = item->metaData();
+    QByteArray ampl = vm.value(QLatin1String("amplitudes")).toByteArray();
+    if (ampl.size()) {
+        QList<float> fampl;
+        std::transform(ampl.cbegin(), ampl.cend(), std::back_inserter(fampl),
+                       [](const char b) { return float(quint8(b)) / 255.1f; });
+        vm.insert(QLatin1String("amplitudes"), QVariant::fromValue<QList<float>>(fampl));
+    }
+    return vm;
 }
 
 FileSharingItem *FileSharingDeviceOpener::sharedItem(const QString &id)

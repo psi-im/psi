@@ -67,6 +67,11 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     _uris     = ms.sources;
     _jids << from;
 
+    QByteArray ampl = ms.file.amplitudes();
+    if (ampl.size()) {
+        _metaData.insert(QLatin1String("amplitudes"), ampl);
+    }
+
     // TODO remaining
 }
 
