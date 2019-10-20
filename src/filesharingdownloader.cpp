@@ -188,6 +188,8 @@ public:
             connect(connection.data(), &XMPP::Jingle::Connection::readyRead, this,
                     &JingleFileShareDownloader::readyRead);
             emit metaDataChanged();
+            if (connection->bytesAvailable())
+                emit readyRead();
         });
 
         connect(app, &Jingle::Application::stateChanged, this, [this](Jingle::State state) {
@@ -348,6 +350,7 @@ public:
                              rangeSize  = 0; // make it not-ranged
                          }
                          emit metaDataChanged();
+                         emit readyRead();
                          connected = false;
                          emit disconnected();
                      });
