@@ -374,17 +374,10 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
     }
 
     _downloader = downloader;
-    connect(downloader, &FileShareDownloader::finished, this, [this]() {
-        QString dlFileName = _downloader->fileName();
-        bool    success    = _downloader->isSuccess();
+    connect(downloader, &FileShareDownloader::cacheReady, this, [this]() {
+        QString dlFileName = _downloader->takeFile();
         _downloader->disconnect(this);
-        _downloader->deleteLater();
         _downloader = nullptr;
-
-        if (!success) {
-            emit downloadFinished();
-            return;
-        }
 
         if (_modifyTime.isValid())
             FileUtil::setModificationTime(dlFileName, _modifyTime);
@@ -404,8 +397,19 @@ FileShareDownloader *FileSharingItem::download(bool isRanged, qint64 start, qint
             vm.insert(QString::fromLatin1("amplitudes"), amplitudes);
         }
 
-        _manager->moveToCache(_sums, dlFileName, vm, FILE_TTL);
+        auto cache = _manager->moveToCache(_sums, dlFileName, vm, FILE_TTL);
+        if (cache) {
+            // TODO set some item flags?
+            _fileType = FileType::LocalFile;
+            _fileName = _manager->cacheDir() + "/" + cache->fileName();
+        }
 
+        emit downloadFinished();
+    });
+
+    connect(downloader, &FileShareDownloader::failed, this, [this]() {
+        _downloader->disconnect(this);
+        _downloader = nullptr;
         emit downloadFinished();
     });
 

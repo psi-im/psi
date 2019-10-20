@@ -19,6 +19,7 @@
 
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
+#include "filesharingmanager.h"
 #include "fileutil.h"
 #include "jidutil.h"
 #include "networkaccessmanager.h"
@@ -49,7 +50,7 @@ static std::tuple<bool, qint64, qint64> parseHttpRangeResponse(const QByteArray 
         arr  = arr[1].split('/');
         size = arr[0].toLongLong(&ok) - start + 1;
     }
-    if (!ok || size < 0)
+    if (!ok || size <= 0)
         return std::tuple<bool, qint64, qint64>(false, 0, 0);
     return std::tuple<bool, qint64, qint64>(true, start, size);
 }
@@ -95,6 +96,8 @@ public:
     virtual qint64 read(char *data, qint64 maxSize)                                 = 0;
     virtual void   abort(bool isFailure = false, const QString &reason = QString()) = 0;
     virtual bool   isConnected() const                                              = 0;
+    virtual bool   hasFileSize() const                                              = 0;
+    virtual qint64 fileSize() const                                                 = 0;
 
     inline const QString &lastError() const { return _lastError; }
     void                  setRange(qint64 offset, qint64 length)
@@ -220,6 +223,9 @@ public:
     }
 
     bool isConnected() const { return connection && app && app->state() == XMPP::Jingle::State::Active; }
+
+    bool   hasFileSize() const { return app && app->acceptFile().hasSize(); }
+    qint64 fileSize() const { return app ? app->acceptFile().size() : 0; }
 };
 
 class NAMFileShareDownloader : public AbstractFileShareDownloader {
@@ -299,6 +305,9 @@ public:
     }
 
     bool isConnected() const { return reply && reply->isRunning(); }
+
+    bool   hasFileSize() const { return reply && reply->header(QNetworkRequest::ContentLengthHeader).isValid(); }
+    qint64 fileSize() const { return reply ? reply->header(QNetworkRequest::ContentLengthHeader).toLongLong() : 0; }
 };
 
 class BOBFileShareDownloader : public AbstractFileShareDownloader {
@@ -368,6 +377,9 @@ public:
     }
 
     bool isConnected() const { return connected; }
+
+    bool   hasFileSize() const { return !receivedData.isNull(); }
+    qint64 fileSize() const { return receivedData.isNull() ? 0 : receivedData.size(); }
 };
 
 class FileShareDownloader::Private : public QObject {
@@ -385,9 +397,48 @@ public:
     QString                      lastError;
     qint64                       rangeStart = 0;
     qint64                       rangeSize  = 0; // 0 - all the remaining
+    qint64                       bytesLeft  = -1;
     AbstractFileShareDownloader *downloader = nullptr;
     bool                         metaReady  = false;
+    bool                         finished   = false;
     bool                         success    = false;
+    bool                         selfDelete = false;
+
+    void finishWithError(const QString &errStr)
+    {
+        Q_ASSERT(!finished);
+        finished  = true;
+        success   = false;
+        lastError = errStr;
+        if (tmpFile) {
+            tmpFile->close();
+            tmpFile->remove();
+
+            tmpFile.reset();
+        }
+        dstFileName.clear();
+        if (selfDelete) {
+            q->deleteLater();
+        }
+        emit q->failed();
+    }
+
+    void checkCacheReady()
+    {
+        Q_ASSERT(!finished);
+        if (!bytesLeft || (!downloader->isConnected() && !downloader->bytesAvailable())) {
+            if (tmpFile) {
+                tmpFile->close();
+                tmpFile.reset();
+                emit q->cacheReady();
+            }
+            finished = true;
+
+            if (selfDelete) {
+                q->deleteLater();
+            }
+        }
+    }
 
     void startNextDownloader()
     {
@@ -398,10 +449,7 @@ public:
         }
 
         if (uris.isEmpty()) {
-            success = false;
-            if (lastError.isEmpty())
-                lastError = tr("Download sources are not given");
-            emit q->finished();
+            finishWithError(lastError.isEmpty() ? tr("Download sources are not given") : lastError);
             return;
         }
         QString uri  = uris.takeLast();
@@ -418,9 +466,7 @@ public:
             downloader = new JingleFileShareDownloader(acc, uri, file, jids, q);
             break;
         default:
-            lastError = "Unhandled downloader";
-            success   = false;
-            emit q->finished();
+            finishWithError("Unhandled downloader");
             return;
         }
 
@@ -429,8 +475,7 @@ public:
         connect(downloader, &AbstractFileShareDownloader::failed, q, [this]() {
             success = false;
             if (metaReady) {
-                lastError = downloader->lastError();
-                emit q->finished();
+                finishWithError(downloader->lastError());
                 return;
             }
             startNextDownloader();
@@ -438,27 +483,32 @@ public:
 
         connect(downloader, &AbstractFileShareDownloader::metaDataChanged, q, [this]() {
             metaReady = true;
-            QFileInfo fi(dstFileName);
-            QString   tmpFN = QString::fromLatin1("dl-") + fi.fileName();
-            tmpFN           = QString("%1/%2").arg(fi.path(), tmpFN);
-            tmpFile.reset(new QFile(tmpFN));
-            if (!tmpFile->open(QIODevice::ReadWrite | QIODevice::Truncate)) { // TODO complete unfinished downloads
-                lastError = tmpFile->errorString();
-                tmpFile.reset();
-                downloader->abort();
-                success = false;
-                emit q->finished();
-                return;
-            }
+
             std::tie(rangeStart, rangeSize) = downloader->range();
+            if (rangeSize) {
+                bytesLeft = rangeSize;
+            } else if (!rangeStart && downloader->hasFileSize()) { // definitely not ranged and full size is known
+                bytesLeft = downloader->fileSize();
+
+                // then we are going to cache it as well. TODO: review caching when size is unknown
+                auto partDir = QDir(acc->psi()->fileSharingManager()->cacheDir() + "/partial");
+                partDir.mkpath(".");
+                dstFileName = partDir.absoluteFilePath(QString::fromLatin1(sums.value(0).data().toHex()));
+
+                tmpFile.reset(new QFile(dstFileName));
+                if (!tmpFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) { // TODO complete unfinished downloads
+                    downloader->abort();
+                    finishWithError(tmpFile->errorString());
+                    return;
+                }
+            }
             emit q->metaDataChanged();
         });
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
         connect(downloader, &AbstractFileShareDownloader::disconnected, q, [this]() {
+            checkCacheReady(); // TODO avoid double emit
             emit q->disconnected();
-            if (!downloader->bytesAvailable())
-                emit q->finished(); // TODO avoid double emit
         });
 
         downloader->start();
@@ -498,27 +548,6 @@ bool FileShareDownloader::open(QIODevice::OpenMode mode)
     if (isOpen())
         return true;
 
-    auto      docLoc = ApplicationInfo::documentsDir();
-    QDir      docDir(docLoc);
-    QFileInfo fi(d->file.name());
-    QString   fn = FileUtil::cleanFileName(fi.fileName());
-    if (fn.isEmpty()) {
-        fn = QString::fromLatin1(d->sums.value(0).data().toHex());
-    }
-    fi               = QFileInfo(fn);
-    QString baseName = fi.completeBaseName();
-    QString suffix   = fi.suffix();
-
-    int index = 1;
-    while (docDir.exists(fn)) {
-        if (suffix.size()) {
-            fn = QString("%1-%2.%3").arg(baseName, QString::number(index), suffix);
-        } else {
-            fn = QString("%1-%2").arg(baseName, QString::number(index));
-        }
-    }
-
-    d->dstFileName = docDir.absoluteFilePath(fn);
     QIODevice::open(mode);
     d->startNextDownloader();
 
@@ -545,34 +574,36 @@ std::tuple<qint64, qint64> FileShareDownloader::range() const
     return std::tuple<qint64, qint64>(d->rangeStart, d->rangeSize);
 }
 
-QString FileShareDownloader::fileName() const
+QString FileShareDownloader::takeFile() const
 {
-    if (d->success) {
-        return d->dstFileName;
+    if (d->tmpFile) {
+        d->tmpFile.reset(); // flush/close/clear ptr
     }
-    return QString();
+    auto f = d->dstFileName;
+    d->dstFileName.clear();
+    return f;
 }
 
 const Jingle::FileTransfer::File &FileShareDownloader::jingleFile() const { return d->file; }
 
 qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
 {
-    if (!d->tmpFile || !d->downloader)
-        return 0; // wtf?
+    if (!d->downloader) // wtf?
+        return 0;
 
     qint64 bytesRead = d->downloader->read(data, maxSize);
-    if (d->tmpFile->write(data, bytesRead)
-        != bytesRead) { // file engine tries to write everything until it's a system error
+    if (d->tmpFile && d->tmpFile->write(data, bytesRead) != bytesRead) {
+        // file engine tries to write everything unless it's a system error
         d->downloader->abort();
         d->lastError = d->tmpFile->errorString();
         return 0;
     }
 
-    if (!d->downloader->isConnected() && !d->downloader->bytesAvailable()) {
-        // seems like last piece of data was written. we are ready to finish
-        d->success = true;
-        emit finished();
+    if (d->bytesLeft != -1) {
+        d->bytesLeft -= bytesRead;
     }
+
+    d->checkCacheReady();
 
     return bytesRead;
 }
@@ -585,5 +616,7 @@ qint64 FileShareDownloader::writeData(const char *, qint64)
 bool FileShareDownloader::isSequential() const { return true; }
 
 qint64 FileShareDownloader::bytesAvailable() const { return d->downloader ? d->downloader->bytesAvailable() : 0; }
+
+void FileShareDownloader::setSelfDelete(bool enable) { d->selfDelete = enable; }
 
 #include "filesharingdownloader.moc"

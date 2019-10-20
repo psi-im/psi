@@ -28,6 +28,7 @@
 #include <QTextDocumentFragment>
 #include <QTextFragment>
 
+#include "filesharingdownloader.h"
 #include "filesharingmanager.h"
 #include "psirichtext.h"
 #include "qiteaudio.h"
@@ -66,7 +67,7 @@ public:
         return attrs;
     }
 };
-//!endif
+//! endif
 
 //----------------------------------------------------------------------------
 // PsiTextView
@@ -80,8 +81,7 @@ public:
 /**
  * Default constructor.
  */
-PsiTextView::PsiTextView(QWidget *parent) :
-    QTextEdit(parent)
+PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
 {
     d = new Private(this);
 
@@ -95,41 +95,42 @@ PsiTextView::PsiTextView(QWidget *parent) :
     d->voiceMsgCtrl->setAutoFetchMetadata(true);
 
     d->objectParsers = PsiRichText::ParsersMap {
-        { "share", [this](const QStringRef &html) -> QTextCharFormat {
-             if (!d->mediaOpener)
-                 return QTextCharFormat();
-             auto    attrs = d->parseHtmlAttrs(html);
-             QString id    = attrs.value(QLatin1String("id"));
-             if (id.isEmpty())
-                 return QTextCharFormat();
+        { "share",
+          [this](const QStringRef &html) -> QTextCharFormat {
+              if (!d->mediaOpener)
+                  return QTextCharFormat();
+              auto    attrs = d->parseHtmlAttrs(html);
+              QString id    = attrs.value(QLatin1String("id"));
+              if (id.isEmpty())
+                  return QTextCharFormat();
 
-             auto item = d->mediaOpener->sharedItem(id);
-             if (!item)
-                 return QTextCharFormat();
+              auto item = d->mediaOpener->sharedItem(id);
+              if (!item)
+                  return QTextCharFormat();
 
-             if (item->mimeType().startsWith(QLatin1String("audio/"))) {
-                 return d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener);
-             }
+              if (item->mimeType().startsWith(QLatin1String("audio/"))) {
+                  return d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener);
+              }
 
-             if (item->mimeType().startsWith("image/")) {
-                 QUrl url(QLatin1String("share:") + id);
-                 if (item->isCached()) {
-                     QImage img = item->preview(QSize(640, 480));
-                     document()->addResource(QTextDocument::ImageResource, url, img);
-                 } else {
-                     connect(item, &FileSharingItem::downloadFinished, this, [this, url, item]() {
-                         item->disconnect(this);
-                         // TODO handle errors
-                         document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
-                     });
-                     item->download(false, 0, 0);
-                 }
-                 QTextImageFormat fmt;
-                 fmt.setName(url.toString());
-                 return fmt;
-             }
-             return QTextCharFormat();
-         } }
+              if (item->mimeType().startsWith("image/")) {
+                  QUrl url(QLatin1String("share:") + id);
+                  if (item->isCached()) {
+                      QImage img = item->preview(QSize(640, 480));
+                      document()->addResource(QTextDocument::ImageResource, url, img);
+                  } else {
+                      connect(item, &FileSharingItem::downloadFinished, this, [this, url, item]() {
+                          item->disconnect(this);
+                          // TODO handle errors
+                          document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
+                      });
+                      item->download(false, 0, 0)->setSelfDelete(true);
+                  }
+                  QTextImageFormat fmt;
+                  fmt.setName(url.toString());
+                  return fmt;
+              }
+              return QTextCharFormat();
+          } }
     };
 }
 
@@ -193,18 +194,12 @@ bool PsiTextView::atBottom()
 /**
  * Scrolls the vertical scroll bar to its maximum position i.e. to the bottom.
  */
-void PsiTextView::scrollToBottom()
-{
-    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-}
+void PsiTextView::scrollToBottom() { verticalScrollBar()->setValue(verticalScrollBar()->maximum()); }
 
 /**
  * Scrolls the vertical scroll bar to its minimum position i.e. to the top.
  */
-void PsiTextView::scrollToTop()
-{
-    verticalScrollBar()->setValue(verticalScrollBar()->minimum());
-}
+void PsiTextView::scrollToTop() { verticalScrollBar()->setValue(verticalScrollBar()->minimum()); }
 
 /**
  * This function is provided for convenience. Please see
@@ -272,20 +267,11 @@ QString PsiTextView::getTextHelper(bool html) const
  * Returns HTML markup for selected text. If no text is selected, returns
  * HTML markup for all text.
  */
-QString PsiTextView::getHtml() const
-{
-    return getTextHelper(true);
-}
+QString PsiTextView::getHtml() const { return getTextHelper(true); }
 
-QString PsiTextView::getPlainText() const
-{
-    return getTextHelper(false);
-}
+QString PsiTextView::getPlainText() const { return getTextHelper(false); }
 
-void PsiTextView::setMediaOpener(FileSharingDeviceOpener *opener)
-{
-    d->mediaOpener = opener;
-}
+void PsiTextView::setMediaOpener(FileSharingDeviceOpener *opener) { d->mediaOpener = opener; }
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {
@@ -336,8 +322,7 @@ void PsiTextView::mouseReleaseEvent(QMouseEvent *e)
     if (anchor.isEmpty())
         return;
 
-    if (!textCursor().hasSelection()
-        || (anchor == d->anchorOnMousePress && d->hadSelectionOnMousePress))
+    if (!textCursor().hasSelection() || (anchor == d->anchorOnMousePress && d->hadSelectionOnMousePress))
         URLObject::getInstance()->popupAction(anchor);
 }
 

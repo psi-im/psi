@@ -90,9 +90,19 @@ public:
     PsiAccount *             account() const;
     inline const QStringList log() const { return _log; }
 
-    XMPP::Reference      toReference() const;
-    void                 publish();
-    inline bool          isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
+    XMPP::Reference toReference() const;
+    void            publish();
+    inline bool     isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
+
+    /**
+     * @brief FileSharingItem::download starts downloading SIMS
+     * @param isRanged - where it's a ranged request
+     * @param start    - range start
+     * @param size     - range end
+     * @return downloader object
+     *
+     * It's responsibility of the caller to delete downloader when it's done, or one can call setSelfDelete(true)
+     */
     FileShareDownloader *download(bool isRanged = false, qint64 start = 0, qint64 size = 0);
 
     // accept public internet uri and returns it's type

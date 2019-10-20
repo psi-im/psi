@@ -50,11 +50,13 @@ public:
     bool                       isRanged() const;
     std::tuple<qint64, qint64> range() const;
 
-    QString                                 fileName() const;
+    QString                                 takeFile() const;
     const XMPP::Jingle::FileTransfer::File &jingleFile() const;
 
     bool   isSequential() const override;
     qint64 bytesAvailable() const override;
+
+    void setSelfDelete(bool enable);
 
 protected:
     qint64 readData(char *data, qint64 maxSize) override;
@@ -63,7 +65,8 @@ protected:
 signals:
     void metaDataChanged();
     void disconnected();
-    void finished(); // when last piece of data saved to file or on error
+    void failed(); // when last piece of data saved to file or on error
+    void cacheReady();
     void progress(size_t curSize, size_t fullSize);
 
 private:

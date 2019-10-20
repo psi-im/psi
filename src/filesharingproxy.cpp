@@ -72,9 +72,10 @@ FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, 
 
     downloader = item->download(isRanged, requestedStart, requestedSize);
     Q_ASSERT(downloader);
+    downloader->setParent(this);
 
     connect(downloader, &FileShareDownloader::metaDataChanged, this, &FileSharingProxy::onMetadataChanged);
-    connect(downloader, &FileShareDownloader::finished, this, [this]() {
+    connect(downloader, &FileShareDownloader::failed, this, [this]() {
         if (!headersSent) {
             response->setStatusCode(qhttp::ESTATUS_BAD_GATEWAY); // something finnished with errors quite early
             response->end();
