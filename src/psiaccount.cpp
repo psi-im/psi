@@ -2956,6 +2956,15 @@ void PsiAccount::client_incomingJingle(Jingle::Session *session)
         }
 
         if (!psi()->fileSharingManager()->jingleAutoAcceptIncomingDownloadRequest(session)) {
+            // make sure there are only file offers
+            for (auto const &a : session->contentList()) {
+                if (a->senders() != Jingle::Origin::Initiator) {
+                    session->terminate(XMPP::Jingle::Reason::FailedApplication,
+                                       "file request failed, so expected only file offer");
+                    return;
+                }
+            }
+
             FileEvent::Ptr fe(new FileEvent(session->peer().full(), session, this));
             fe->setTimeStamp(QDateTime::currentDateTime());
             handleEvent(fe, IncomingStanza);
