@@ -374,9 +374,12 @@ public:
         connect(updateOnlineContactsCountTimer_, SIGNAL(timeout()), SLOT(updateOnlineContactsCountTimeout()));
 
         logoutTimer = new QTimer(this);
-        logoutTimer->setInterval(500);
+        logoutTimer->setInterval(1000);
         logoutTimer->setSingleShot(true);
-        connect(logoutTimer, SIGNAL(timeout()), SLOT(finishLogout()));
+        connect(logoutTimer, &QTimer::timeout, account, [this]() {
+            client->close(true);
+            finishLogout();
+        });
     }
 
     PsiContactList *         contactList             = nullptr;
@@ -689,6 +692,7 @@ public slots:
 
     void finishLogout()
     {
+        logoutTimer->stop();
         account->cleanupStream();
         account->isDisconnecting = false;
         emit account->disconnected();
@@ -1709,6 +1713,7 @@ void PsiAccount::logout(bool fast, const Status &s)
 
     d->stopReconnect();
 
+    bool waitForLogout = false;
     if (loggedIn()) {
         if (fast) {
             d->client->clearSendQueue(); // clears pending send items
@@ -1721,6 +1726,9 @@ void PsiAccount::logout(bool fast, const Status &s)
         // send logout status
         d->client->groupChatLeaveAll(PsiOptions::instance()->getOption("options.muc.leave-status-message").toString());
         d->client->setPresence(s);
+        waitForLogout = true;
+    } else if (v_isActive) {         // if initial resense wasn't sent
+        d->client->clearSendQueue(); // clears pending send items
     }
 
     isDisconnecting = true;
@@ -1732,11 +1740,10 @@ void PsiAccount::logout(bool fast, const Status &s)
     d->loginStatus = Status(Status::Offline);
     stateChanged();
 
-    d->client->close(fast);
-    if (fast) {
-        d->finishLogout();
-    } else { // let iris queue write all the stuff
+    if (waitForLogout) {
         d->logoutTimer->start();
+    } else {
+        d->client->close(fast);
     }
 }
 
@@ -1934,7 +1941,13 @@ void PsiAccount::sessionStarted()
     d->client->rosterRequest();
 }
 
-void PsiAccount::cs_connectionClosed() { cs_error(-1); }
+void PsiAccount::cs_connectionClosed()
+{
+    if (isDisconnecting)
+        d->finishLogout();
+    else
+        cs_error(-1);
+}
 
 void PsiAccount::cs_delayedCloseFinished()
 {
