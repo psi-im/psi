@@ -23,9 +23,9 @@
 #include "jidutil.h"
 #include "profiles.h"
 #include "psiaccount.h"
+#include "xmpp_client.h"
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
-#include <functional>
 
 #include <QApplication>
 #include <QDir>
@@ -35,20 +35,17 @@
 #include <QObject>
 #include <QTextStream>
 
+#include <functional>
+
 /**
  * \brief Factory for retrieving and changing VCards.
  */
-VCardFactory::VCardFactory() :
-    QObject(qApp), dictSize_(5)
-{
-}
+VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5) {}
 
 /**
  * \brief Destroys all cached VCards.
  */
-VCardFactory::~VCardFactory()
-{
-}
+VCardFactory::~VCardFactory() {}
 
 /**
  * \brief Returns the VCardFactory instance.
@@ -185,10 +182,7 @@ VCard VCardFactory::vcard(const Jid &j)
 /**
  * \brief Call this when you need to update vCard in cache.
  */
-void VCardFactory::setVCard(const Jid &j, const VCard &v, bool notifyPhoto)
-{
-    saveVCard(j, v, notifyPhoto);
-}
+void VCardFactory::setVCard(const Jid &j, const VCard &v, bool notifyPhoto) { saveVCard(j, v, notifyPhoto); }
 
 /**
  * \brief Updates vCard on specified \a account.
@@ -206,7 +200,8 @@ void VCardFactory::setVCard(const PsiAccount *account, const VCard &v, QObject *
 /**
  * \brief Updates vCard on specified \a account.
  */
-void VCardFactory::setTargetVCard(const PsiAccount *account, const VCard &v, const Jid &mucJid, QObject *obj, const char *slot)
+void VCardFactory::setTargetVCard(const PsiAccount *account, const VCard &v, const Jid &mucJid, QObject *obj,
+                                  const char *slot)
 {
     JT_VCard *jtVCard_ = new JT_VCard(account->client()->rootTask());
     if (obj)

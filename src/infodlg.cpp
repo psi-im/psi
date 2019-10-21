@@ -35,6 +35,7 @@
 #include "userlist.h"
 #include "vcardfactory.h"
 #include "vcardphotodlg.h"
+#include "xmpp_client.h"
 #include "xmpp_serverinfomanager.h"
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
@@ -164,7 +165,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     connect(ui_.pb_open, SIGNAL(clicked()), this, SLOT(selectPhoto()));
     connect(ui_.pb_clear, SIGNAL(clicked()), this, SLOT(clearPhoto()));
     connect(ui_.tb_photo, SIGNAL(clicked()), SLOT(showPhoto()));
-    //connect(editnames, SIGNAL(triggered()), d->namesDlg, SLOT(show()));
+    // connect(editnames, SIGNAL(triggered()), d->namesDlg, SLOT(show()));
 
     if (d->type == Self || d->type == MucAdm) {
         d->bdayPopup = new QFrame(this);
@@ -218,8 +219,10 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     }
 
     // Add a status tab
-    connect(d->pa->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(contactAvailable(const Jid &, const Resource &)));
-    connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
+    connect(d->pa->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)),
+            SLOT(contactAvailable(const Jid &, const Resource &)));
+    connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)),
+            SLOT(contactUnavailable(const Jid &, const Resource &)));
     connect(d->pa, SIGNAL(updateContact(const Jid &)), SLOT(contactUpdated(const Jid &)));
     ui_.te_status->setReadOnly(true);
     ui_.te_status->setAcceptRichText(true);
@@ -257,9 +260,13 @@ bool InfoWidget::aboutToClose()
     }
 
     if ((d->type == Self || d->type == MucAdm) && edited()) {
-        int n = QMessageBox::information(this, tr("Warning"),
-                                         d->type == MucAdm ? tr("You have not published conference information changes.\nAre you sure you want to discard them?") : tr("You have not published your account information changes.\nAre you sure you want to discard them?"),
-                                         tr("Close and discard"), tr("Don't close"));
+        int n = QMessageBox::information(
+            this, tr("Warning"),
+            d->type == MucAdm
+                ? tr("You have not published conference information changes.\nAre you sure you want to discard them?")
+                : tr(
+                    "You have not published your account information changes.\nAre you sure you want to discard them?"),
+            tr("Close and discard"), tr("Don't close"));
         if (n != 0) {
             return false;
         }
@@ -302,17 +309,27 @@ void InfoWidget::jt_finished()
         }
 
         if (d->actionType == 1)
-            QMessageBox::information(this, tr("Success"), d->type == MucAdm ? tr("Your conference information has been published.") : tr("Your account information has been published."));
+            QMessageBox::information(this, tr("Success"),
+                                     d->type == MucAdm ? tr("Your conference information has been published.")
+                                                       : tr("Your account information has been published."));
     } else {
         if (d->actionType == 0) {
             if (d->type == Self)
-                QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
+                QMessageBox::critical(
+                    this, tr("Error"),
+                    tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
             else if (d->type == MucAdm)
-                QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this conference.\nReason: %1").arg(jtVCard->statusString()));
+                QMessageBox::critical(this, tr("Error"),
+                                      tr("Unable to retrieve information about this conference.\nReason: %1")
+                                          .arg(jtVCard->statusString()));
             else
-                QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this contact.\nReason: %1").arg(jtVCard->statusString()));
+                QMessageBox::critical(
+                    this, tr("Error"),
+                    tr("Unable to retrieve information about this contact.\nReason: %1").arg(jtVCard->statusString()));
         } else {
-            QMessageBox::critical(this, tr("Error"), tr("Unable to publish your account information.\nReason: %1").arg(jtVCard->statusString()));
+            QMessageBox::critical(
+                this, tr("Error"),
+                tr("Unable to publish your account information.\nReason: %1").arg(jtVCard->statusString()));
         }
     }
 }
@@ -331,16 +348,15 @@ void InfoWidget::setData(const VCard &i)
     }
     const QString fullName = i.fullName();
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        ui_.le_fullname->setText(QString("%1 %2 %3")
-                                     .arg(i.givenName())
-                                     .arg(i.middleName())
-                                     .arg(i.familyName()));
+        ui_.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName()).arg(i.middleName()).arg(i.familyName()));
     } else {
         ui_.le_fullname->setText(fullName);
     }
 
-    ui_.le_fullname->setToolTip(
-        QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName()) + "<br>" + "<b>" + tr("Middle Name:") + "</b> " + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> " + TextUtil::escape(d->vcard.familyName()));
+    ui_.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
+                                + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
+                                + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
+                                + TextUtil::escape(d->vcard.familyName()));
 
     QString email;
     if (!i.emailList().isEmpty())
@@ -377,7 +393,7 @@ void InfoWidget::setData(const VCard &i)
     ui_.te_desc->setPlainText(i.desc());
 
     if (!i.photo().isEmpty()) {
-        //printf("There is a picture...\n");
+        // printf("There is a picture...\n");
         d->photo = i.photo();
         if (!updatePhoto()) {
             clearPhoto();
@@ -393,7 +409,7 @@ void InfoWidget::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     if (!d->vcard.photo().isEmpty()) {
-        //printf("There is a picture...\n");
+        // printf("There is a picture...\n");
         d->photo = d->vcard.photo();
         updatePhoto();
     }
@@ -523,7 +539,7 @@ void InfoWidget::setReadOnly(bool x)
     d->le_middlename->setReadOnly(x);
     d->le_familyname->setReadOnly(x);
     ui_.le_nickname->setReadOnly(x);
-    //ui_.le_bday->setReadOnly(x); //always read only. use calendar
+    // ui_.le_bday->setReadOnly(x); //always read only. use calendar
     ui_.le_email->setReadOnly(x);
     ui_.le_homepage->setReadOnly(x);
     ui_.le_phone->setReadOnly(x);
@@ -582,15 +598,9 @@ void InfoWidget::publish()
     }
 }
 
-PsiAccount *InfoWidget::account() const
-{
-    return d->pa;
-}
+PsiAccount *InfoWidget::account() const { return d->pa; }
 
-const Jid &InfoWidget::jid() const
-{
-    return d->jid;
-}
+const Jid &InfoWidget::jid() const { return d->jid; }
 
 void InfoWidget::doShowCal()
 {
@@ -655,11 +665,12 @@ VCard InfoWidget::makeVCard()
     }
 
     if (!d->photo.isEmpty()) {
-        //printf("Adding a pixmap to the vCard...\n");
+        // printf("Adding a pixmap to the vCard...\n");
         v.setPhoto(d->photo);
     }
 
-    if (!ui_.le_street->text().isEmpty() || !ui_.le_ext->text().isEmpty() || !ui_.le_city->text().isEmpty() || !ui_.le_state->text().isEmpty() || !ui_.le_pcode->text().isEmpty() || !ui_.le_country->text().isEmpty()) {
+    if (!ui_.le_street->text().isEmpty() || !ui_.le_ext->text().isEmpty() || !ui_.le_city->text().isEmpty()
+        || !ui_.le_state->text().isEmpty() || !ui_.le_pcode->text().isEmpty() || !ui_.le_country->text().isEmpty()) {
         VCard::Address addr;
         addr.home     = true;
         addr.street   = ui_.le_street->text();
@@ -691,15 +702,12 @@ VCard InfoWidget::makeVCard()
     return v;
 }
 
-void InfoWidget::textChanged()
-{
-    d->te_edited = true;
-}
+void InfoWidget::textChanged() { d->te_edited = true; }
 
 /**
  * Opens a file browser dialog, and if selected, calls the setPreviewPhoto with the consecuent path.
  * \see setPreviewPhoto(const QString& path)
-*/
+ */
 void InfoWidget::selectPhoto()
 {
     QString str = FileUtil::getInbandImageFileName(this);
@@ -711,7 +719,7 @@ void InfoWidget::selectPhoto()
 /**
  * Loads the image from the requested URL, and inserts the resized image into the preview box.
  * \param path image file to load
-*/
+ */
 void InfoWidget::setPreviewPhoto(const QString &path)
 {
     QFile photo_file(path);
@@ -729,7 +737,7 @@ void InfoWidget::setPreviewPhoto(const QString &path)
 
 /**
  * Clears the preview image box and marks the te_edited signal in the private.
-*/
+ */
 void InfoWidget::clearPhoto()
 {
     ui_.tb_photo->setIcon(QIcon());
@@ -751,12 +759,9 @@ void InfoWidget::updateStatus()
     } else if (d->jid.node().isEmpty() && d->jid.domain() == d->pa->jid().domain()) { // requesting info for our server.
         // let's add some more stuff..
         static const QMap<QString, QString> transMap {
-            { "abuse-addresses", tr("Abuse") },
-            { "admin-addresses", tr("Administrators") },
-            { "feedback-addresses", tr("Feedback") },
-            { "sales-addresses", tr("Sales") },
-            { "security-addresses", tr("Security") },
-            { "support-addresses", tr("Support") }
+            { "abuse-addresses", tr("Abuse") },       { "admin-addresses", tr("Administrators") },
+            { "feedback-addresses", tr("Feedback") }, { "sales-addresses", tr("Sales") },
+            { "security-addresses", tr("Security") }, { "support-addresses", tr("Support") }
         };
         QString                            info;
         QMapIterator<QString, QStringList> it(d->pa->serverInfoManager()->extraServerInfo());
@@ -921,7 +926,8 @@ void InfoWidget::goHomepage()
 InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidget *parent, bool cacheVCard)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint
+                   | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     setModal(false);
     ui_.setupUi(this);
     iw = new InfoWidget(type, j, vc, pa, parent, cacheVCard);
@@ -954,7 +960,8 @@ void InfoDlg::closeEvent(QCloseEvent *e)
 void InfoDlg::doDisco()
 {
     DiscoDlg *w = new DiscoDlg(iw->account(), iw->jid(), "");
-    connect(w, SIGNAL(featureActivated(QString, Jid, QString)), iw->account(), SLOT(featureActivated(QString, Jid, QString)));
+    connect(w, SIGNAL(featureActivated(QString, Jid, QString)), iw->account(),
+            SLOT(featureActivated(QString, Jid, QString)));
     w->show();
 }
 

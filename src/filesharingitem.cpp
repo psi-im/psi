@@ -26,6 +26,7 @@
 #include "userlist.h"
 #include "xmpp_client.h"
 #include "xmpp_reference.h"
+#include "xmpp_thumbs.h"
 
 #include <QBuffer>
 #include <QCryptographicHash>
@@ -101,7 +102,14 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
     _fileName(fileName)
 {
     QFile file(fileName);
-    _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, &file));
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    auto h = Hash::from(Hash::Sha1, &file);
+    if (!h.isValid())
+        return;
+
+    _sums.insert(Hash::Sha1, h);
 
     if (!initFromCache()) {
         file.seek(0);

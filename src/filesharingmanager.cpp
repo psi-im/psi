@@ -161,6 +161,8 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
     } else {
         for (auto const &f : files) {
             auto item = new FileSharingItem(f, acc, this);
+            if (!item->sums().count())
+                continue; // failed to calculate checksum. permissions problem?
             d->rememberItem(item);
             ret.append(item);
         }

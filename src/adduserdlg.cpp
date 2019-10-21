@@ -27,6 +27,7 @@
 #include "psiiconset.h"
 #include "tasklist.h"
 #include "vcardfactory.h"
+#include "xmpp_client.h"
 #include "xmpp_tasks.h"
 #include "xmpp_vcard.h"
 
@@ -51,7 +52,8 @@ public:
     QStringList services;
 };
 
-AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *pa) :
+AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups,
+                       PsiAccount *pa) :
     QDialog(nullptr)
 {
     init(groups, pa);
@@ -68,7 +70,8 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
     pb_transGet->setEnabled(false);
 }
 
-AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *pa)
+AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups,
+                       PsiAccount *pa)
 {
     init(groups, pa);
 
@@ -105,7 +108,8 @@ void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
 
     setWindowTitle(CAP(windowTitle()));
     setWindowIcon(IconsetFactory::icon("psi/addContact").icon());
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
+                   | Qt::CustomizeWindowHint);
 
     d->busy = busy;
 
@@ -142,10 +146,7 @@ AddUserDlg::~AddUserDlg()
     delete d;
 }
 
-Jid AddUserDlg::jid() const
-{
-    return Jid(le_jid->text().trimmed());
-}
+Jid AddUserDlg::jid() const { return Jid(le_jid->text().trimmed()); }
 
 void AddUserDlg::cancel()
 {
@@ -162,11 +163,14 @@ void AddUserDlg::ok()
     }
 
     if (le_jid->text().isEmpty()) {
-        QMessageBox::information(this, tr("Add User: Error"), tr("Please fill in the XMPP address of the person you wish to add."));
+        QMessageBox::information(this, tr("Add User: Error"),
+                                 tr("Please fill in the XMPP address of the person you wish to add."));
         return;
     }
     if (!jid().isValid()) {
-        QMessageBox::information(this, tr("Add User: Error"), tr("The XMPP address you entered is not valid!\nMake sure you enter a fully qualified XMPP address."));
+        QMessageBox::information(
+            this, tr("Add User: Error"),
+            tr("The XMPP address you entered is not valid!\nMake sure you enter a fully qualified XMPP address."));
         return;
     }
 
@@ -213,10 +217,7 @@ void AddUserDlg::serviceActivated(int x)
     }
 }
 
-void AddUserDlg::le_transPromptChanged(const QString &str)
-{
-    pb_transGet->setEnabled(!str.isEmpty());
-}
+void AddUserDlg::le_transPromptChanged(const QString &str) { pb_transGet->setEnabled(!str.isEmpty()); }
 
 void AddUserDlg::getTransID()
 {
@@ -276,22 +277,23 @@ void AddUserDlg::jt_setFinished()
 
 void AddUserDlg::errorGateway(const QString &str, const QString &err)
 {
-    QMessageBox::information(this, CAP(tr("Error")), tr("<qt>\n"
-                                                        "There was an error getting the Service ID translation information from \"%1\".<br>"
-                                                        "Reason: %2<br>"
-                                                        "<br>"
-                                                        "The service may not support this feature.  In this case you "
-                                                        "will need to enter the XMPP address manually for the contact you wish "
-                                                        "to add.  Examples:<br>"
-                                                        "<br>"
-                                                        "&nbsp;&nbsp;xmppUser@somehost.com<br>"
-                                                        "&nbsp;&nbsp;aolUser@[XMPP address of AIM Transport]<br>"
-                                                        "&nbsp;&nbsp;1234567@[XMPP address of ICQ Transport]<br>"
-                                                        "&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
-                                                        "&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
-                                                        "</qt>")
-                                                         .arg(str)
-                                                         .arg(QString(err).replace('\n', "<br>")));
+    QMessageBox::information(this, CAP(tr("Error")),
+                             tr("<qt>\n"
+                                "There was an error getting the Service ID translation information from \"%1\".<br>"
+                                "Reason: %2<br>"
+                                "<br>"
+                                "The service may not support this feature.  In this case you "
+                                "will need to enter the XMPP address manually for the contact you wish "
+                                "to add.  Examples:<br>"
+                                "<br>"
+                                "&nbsp;&nbsp;xmppUser@somehost.com<br>"
+                                "&nbsp;&nbsp;aolUser@[XMPP address of AIM Transport]<br>"
+                                "&nbsp;&nbsp;1234567@[XMPP address of ICQ Transport]<br>"
+                                "&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
+                                "&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
+                                "</qt>")
+                                 .arg(str)
+                                 .arg(QString(err).replace('\n', "<br>")));
 }
 
 void AddUserDlg::getVCardActivated()
@@ -309,7 +311,8 @@ void AddUserDlg::getVCardActivated()
 void AddUserDlg::resolveNickActivated()
 {
     JT_VCard *jt = VCardFactory::instance()->getVCard(
-        jid(), d->pa->client()->rootTask(), this, [this]() {
+        jid(), d->pa->client()->rootTask(), this,
+        [this]() {
             JT_VCard *jt = static_cast<JT_VCard *>(sender());
 
             if (jt->success()) {

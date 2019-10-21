@@ -20,6 +20,7 @@
 #include "contactmanagerdlg.h"
 
 //#include "contactview.h"
+#include "xmpp_client.h"
 #include "xmpp_tasks.h"
 
 #include "psiaccount.h"
@@ -34,10 +35,7 @@
 #include <QMessageBox>
 #include <QScrollArea>
 
-ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
-    QDialog(nullptr, Qt::Window),
-    pa_(pa),
-    um(nullptr)
+ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) : QDialog(nullptr, Qt::Window), pa_(pa), um(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose, true);
     ui_.setupUi(this);
@@ -68,13 +66,11 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
     connect(ui_.btnExecute, SIGNAL(clicked()), this, SLOT(executeCurrent()));
     connect(ui_.btnSelect, SIGNAL(clicked()), this, SLOT(doSelect()));
 
-    connect(pa_->client(), SIGNAL(rosterRequestFinished(bool, int, QString)), this, SLOT(client_rosterUpdated(bool, int, QString)));
+    connect(pa_->client(), SIGNAL(rosterRequestFinished(bool, int, QString)), this,
+            SLOT(client_rosterUpdated(bool, int, QString)));
 }
 
-ContactManagerDlg::~ContactManagerDlg()
-{
-    pa_->dialogUnregister(this);
-}
+ContactManagerDlg::~ContactManagerDlg() { pa_->dialogUnregister(this); }
 
 void ContactManagerDlg::changeEvent(QEvent *e)
 {
@@ -102,7 +98,7 @@ void ContactManagerDlg::executeCurrent()
         return;
     }
     switch (action) {
-    case 1: //message
+    case 1: // message
     {
         QList<XMPP::Jid> list;
         foreach (UserListItem *u, users) {
@@ -110,7 +106,7 @@ void ContactManagerDlg::executeCurrent()
         }
         pa_->actionSendMessage(list);
     } break;
-    case 2: //remove
+    case 2: // remove
     {
         if (QMessageBox::question(this, tr("Removal confirmation"),
                                   tr("Are you sure want to delete selected contacts?"),
@@ -132,20 +128,20 @@ void ContactManagerDlg::executeCurrent()
         um->clear();
         pa_->client()->rosterRequest();
     } break;
-    case 3: //Auth request
+    case 3: // Auth request
         foreach (UserListItem *u, users) {
             pa_->dj_authReq(u->jid());
         }
         break;
-    case 4: //Auth grant
+    case 4: // Auth grant
         foreach (UserListItem *u, users) {
             pa_->dj_auth(u->jid());
         }
         break;
-    case 5: //change domain
+    case 5: // change domain
         changeDomain(users);
         break;
-    case 6: //resolve nicks
+    case 6: // resolve nicks
         foreach (UserListItem *u, users) {
             pa_->resolveContactName(u->jid());
         }
@@ -153,10 +149,10 @@ void ContactManagerDlg::executeCurrent()
     case 7:
         changeGroup(users);
         break;
-    case 8: //export
+    case 8: // export
         exportRoster(users);
         break;
-    case 9: //import
+    case 9: // import
         importRoster();
         break;
     default:
@@ -296,9 +292,9 @@ void ContactManagerDlg::importRoster()
             labelContent.append(QString("%1 (%2)").arg(jid).arg(nicks[jid]));
         }
 
-        QMessageBox confirmDlg(
-            QMessageBox::Question, tr("Confirm contacts importing"),
-            tr("Do you really want to import these contacts?"), QMessageBox::Cancel | QMessageBox::Yes);
+        QMessageBox confirmDlg(QMessageBox::Question, tr("Confirm contacts importing"),
+                               tr("Do you really want to import these contacts?"),
+                               QMessageBox::Cancel | QMessageBox::Yes);
         confirmDlg.setDetailedText(labelContent.join("\n"));
         if (confirmDlg.exec() == QMessageBox::Yes) {
             um->startBatch();
