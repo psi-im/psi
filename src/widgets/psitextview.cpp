@@ -120,10 +120,15 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
                   } else {
                       connect(item, &FileSharingItem::downloadFinished, this, [this, url, item]() {
                           item->disconnect(this);
-                          // TODO handle errors
                           document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
+                          // document()->adjustSize();
                       });
-                      item->download(false, 0, 0)->setSelfDelete(true);
+                      auto downloader = item->download(false, 0, 0);
+                      downloader->setSelfDelete(true);
+                      // read just for cache
+                      connect(downloader, &FileShareDownloader::readyRead, this,
+                              [downloader]() { downloader->read(downloader->bytesAvailable()); });
+                      downloader->open();
                   }
                   QTextImageFormat fmt;
                   fmt.setName(url.toString());

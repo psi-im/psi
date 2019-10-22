@@ -428,8 +428,8 @@ public:
 
     void checkCacheReady()
     {
-        Q_ASSERT(!finished);
         if (!bytesLeft || (!downloader->isConnected() && !downloader->bytesAvailable())) {
+            Q_ASSERT(!finished);
             if (tmpFile) {
                 tmpFile->close();
                 tmpFile.reset();
@@ -510,7 +510,8 @@ public:
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
         connect(downloader, &AbstractFileShareDownloader::disconnected, q, [this]() {
-            checkCacheReady(); // TODO avoid double emit
+            if (!finished)
+                checkCacheReady(); // TODO avoid double emit
             emit q->disconnected();
         });
 

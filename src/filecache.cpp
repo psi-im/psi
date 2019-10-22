@@ -218,8 +218,15 @@ FileCacheItem *FileCache::append(const QList<XMPP::Hash> &sums, const QByteArray
 FileCacheItem *FileCache::moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file, const QVariantMap &metadata,
                                       unsigned int maxAge)
 {
+    Q_ASSERT(sums.size());
     auto item = new FileCacheItem(this, sums, metadata, file.lastModified(), maxAge, file.size());
-    if (!QFile(file.filePath()).rename(QString("%1/%2").arg(_cacheDir, item->fileName()))) {
+
+    QString cachedFilePath = QString("%1/%2").arg(_cacheDir, item->fileName());
+    QFile   cachedFile(cachedFilePath);
+    if (cachedFile.exists())
+        cachedFile.remove();
+
+    if (!QFile(file.filePath()).rename(cachedFilePath)) {
         delete item;
         return nullptr;
     }
