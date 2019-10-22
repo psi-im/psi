@@ -57,15 +57,19 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     _manager(manager), _fileType(FileType::RemoteFile)
 {
     _sums = ms.file.computedHashes();
-    initFromCache();
+    if (initFromCache()) {
+        _uris = (ms.sources.toSet() + uris().toSet()).toList();
+    } else {
+        _fileName = ms.file.name();
+        _mimeType = ms.file.mediaType();
+        _uris     = ms.sources;
+    }
 
     if (ms.file.hasSize()) {
         _flags |= SizeKnown;
         _fileSize = ms.file.size();
     }
-    _fileName = ms.file.name();
-    _mimeType = ms.file.mediaType();
-    _uris     = ms.sources;
+
     _jids << from;
 
     QByteArray ampl = ms.file.amplitudes();
@@ -159,7 +163,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     if (!cache)
         return false;
 
-    _flags       = SizeKnown | PublishNotified;
+    _flags       = SizeKnown;
     auto md      = cache->metadata();
     _mimeType    = md.value(QString::fromLatin1("type")).toString();
     QString link = md.value(QString::fromLatin1("link")).toString();
@@ -174,8 +178,10 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
             QFileInfo(_fileName).size()); // note the readability of the filename was aleady checked by this moment
     }
 
-    _sums = cache->sums();
-    _uris = md.value(QString::fromLatin1("uris")).toStringList();
+    _sums       = cache->sums();
+    auto urisvl = md.value(QString::fromLatin1("uris"));
+    if (urisvl.type() == QVariant::StringList)
+        _uris = urisvl.toStringList();
 
     QString httpScheme(QString::fromLatin1("http"));
     QString xmppScheme(QString::fromLatin1("xmpp")); // jingle ?
@@ -188,6 +194,9 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
             _flags |= JingleFinished;
         }
     }
+
+    if ((_flags & (HttpFinished | JingleFinished)) == (HttpFinished | JingleFinished))
+        _flags |= PublishNotified;
 
     return true;
 }
@@ -299,10 +308,15 @@ void FileSharingItem::publish()
 {
     Q_ASSERT(_fileType != FileType::RemoteFile);
 
+    if (_flags & PublishNotified) {
+        emit publishFinished();
+        return;
+    }
+
     auto checkFinished = [this]() {
         // if we didn't emit yet finished signal and everything is finished
         auto ff = HttpFinished | JingleFinished;
-        if (!(_flags & PublishNotified) && (_flags & ff) == ff) { // TODO also check if any of them succeed
+        if (!(_flags & PublishNotified) && ((_flags & ff) == ff)) { // TODO also check if any of them succeed
             QVariantMap meta = _metaData;
             meta["type"]     = _mimeType;
             if (_uris.count()) // if ever published something on external service
@@ -456,6 +470,9 @@ QStringList FileSharingItem::sortSourcesByPriority(const QStringList &uris)
 // try take http or ftp source to be passed directly to media backend
 QUrl FileSharingItem::simpleSource() const
 {
+    if (!_uris.size())
+        return QUrl();
+
     auto    sorted = sortSourcesByPriority(_uris);
     QString srcUrl = sorted.last();
     auto    t      = sourceType(srcUrl);

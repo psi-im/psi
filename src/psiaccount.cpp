@@ -923,15 +923,21 @@ public:
             // append reference main links to description and setup their range
             for (auto const &i : dlg->takeItems()) {
                 auto r = i->toReference();
-                delete i;
                 if (r.isValid()) {
-                    auto uri = r.uri();
-                    if (!uri.endsWith(QLatin1String("?jingle")) && !uri.startsWith(QLatin1String("cid"))) {
-                        r.setRange(desc.size(), desc.size() + uri.size() + 1);
-                        desc += QString(" %1").arg(uri);
+                    auto    uri = i->simpleSource();
+                    QString text;
+                    if (uri.isValid()) {
+                        text = uri.toString(QUrl::FullyEncoded);
+                    } else {
+                        text = QLatin1String("SIMS(") + i->mimeType() + ", " + QString::number(i->fileSize()) + "B, "
+                            + tr("requires compliant client") + ")";
                     }
+                    r.setRange(desc.size(), desc.size() + text.size() + 1);
+                    desc += QString(" %1").arg(text);
+
                     references.append(r);
                 }
+                delete i;
             }
             callback(references, desc);
             if (!dlg->hasPublishErrors())

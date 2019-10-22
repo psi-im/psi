@@ -125,7 +125,7 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
     QList<FileSharingItem *> ret;
     QStringList              files;
 
-    QString voiceMsgMime(QLatin1String("audio/ogg"));
+    QString voiceMsgMime(QLatin1String("audio/mp4")); // TODO take from recorder
     QString voiceAmplitudesMime(QLatin1String("application/x-psi-amplitudes"));
 
     bool hasVoice = data->hasFormat(voiceMsgMime) && data->hasFormat(voiceAmplitudesMime);
@@ -201,8 +201,10 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         int lastEnd = 0;
         for (auto const &r : m.references()) {
             MediaSharing ms = r.mediaSharing();
-            if (!ms.isValid() || !ms.file.mediaType().startsWith(QLatin1String("audio")) || !ms.file.hasComputedHashes()
-                || !ms.file.hasSize()) { // only audio is supported for now
+            // only audio and image supported for now
+            if (!ms.isValid() || !ms.file.hasComputedHashes() || !ms.file.hasSize()
+                || !(ms.file.mediaType().startsWith(QLatin1String("audio"))
+                     || ms.file.mediaType().startsWith(QLatin1String("image")))) {
                 continue;
             }
             auto item = new FileSharingItem(ms, m.from(), acc, this);
