@@ -1,11 +1,14 @@
 language: cpp
 
-dist: xenial
 sudo: required
+dist: xenial
+osx_image: xcode10.3
 
 os:
   - linux
   - osx
+
+if: tag IS blank
 
 env:
   - TARGET=linux64 ENABLE_WEBKIT=OFF
