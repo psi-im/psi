@@ -255,11 +255,8 @@ public:
         int                        row = grid->rowCount();
         XData::Field::MediaElement me  = f.mediaElement();
         if (!me.isEmpty()) {
-            XDataField *fromField = nullptr;
-            Jid         j         = xdw->owner();
-            if (xdw->registrarType() == "urn:xmpp:captcha" && (fromField = xdw->fieldByVar("from"))) {
-                j = Jid(fromField->field().value().value(0));
-            }
+            Jid j = xdw->owner();
+
             QList<XDataMediaWidget *> mediaWidgets = XDataMediaWidget::fromMediaElement(me, j, _xdWidget);
             foreach (XDataMediaWidget *w, mediaWidgets) {
                 grid->addWidget(w, row, 0, 1, 3, Qt::AlignCenter);
