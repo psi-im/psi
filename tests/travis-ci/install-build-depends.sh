@@ -34,17 +34,17 @@ fi
 
 if [ "${TARGET}" = "macos64" ]
 then
+    export HOMEBREW_NO_AUTO_UPDATE=1
     brew install libidn \
-                 qt \
-                 qtkeychain \
-                 qca \
-                 minizip \
-                 hunspell \
-                 tidy-html5 \
                  libgpg-error \
                  libgcrypt \
                  libotr \
                  libsignal-protocol-c \
-                 || true
+                 hunspell \
+                 minizip \
+                 qca \
+                 qt \
+                 qtkeychain \
+                 tidy-html5
 fi
 
