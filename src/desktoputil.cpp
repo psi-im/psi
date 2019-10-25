@@ -27,8 +27,7 @@
 #include <QSysInfo>
 #include <QUrl>
 #ifdef Q_OS_WIN
-#include <shellapi.h>
-#include <windows.h>
+#include <qt_windows.h>
 #endif
 
 #ifdef Q_OS_WIN
