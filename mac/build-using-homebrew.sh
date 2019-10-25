@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2019-04-23
+# Updated: 2019-10-25
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -21,35 +21,32 @@
 # https://sourceforge.net/projects/psi/files/Experimental-Builds/macOS/tehnick/
 #
 # Build dependencies of Psi and useful tools:
-# brew install --build-bottle pkg-config htop cmake coreutils gettext
-# brew install --build-bottle openssl pcre pcre2 libunistring libidn libidn2
-# brew install --build-bottle qt qtkeychain qca
+# brew install --build-bottle ccache pkg-config coreutils gettext
 # brew install --build-bottle autoconf automake libtool readline
+# brew install https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/cmake.rb
+# brew install --build-bottle openssl@1.1 pcre pcre2 libunistring libidn libidn2
+# brew install --build-bottle qt qtkeychain
 # brew install --build-bottle minizip hunspell
 #
-# Additional tools:
-# brew install --build-bottle curl wget git
+# Build qca with enabled qca-gnupg plugin:
+# brew install --build-bottle gmp libtasn1 nettle libffi p11-kit libevent unbound
+# brew install --build-bottle adns libassuan libksba libusb npth pinentry gnutls
+# brew install https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/qca.rb
+# end
 #
 # Build dependencies of Psi plugins:
 # brew install --build-bottle tidy-html5 libgpg-error libgcrypt libotr
 # brew install --build-bottle libsignal-protocol-c
 #
-# Enabling of qca-gnupg plugin if necessary:
-# Apply changes from: https://github.com/tehnick/homebrew-core/commit/2f866aee
-# Then:
-# brew uninstall qca
-# brew install --build-bottle gmp libtasn1 nettle libffi p11-kit libevent unbound
-# brew install --build-bottle adns libassuan libksba libusb npth pinentry gnutls
-# brew install --build-bottle gnupg qca
-#
-# If you were uncareful and have installed Homebrew to /usr/local as suggested
-# by its developers now, then export HOMEBREW environment variable before
-# launching this script or uncomment next string:
-# export HOMEBREW="/usr/local"
+# Additional tools:
+# brew install --build-bottle gnupg wget git
 
 set -e
 
+[ -z "${HOMEBREW}" ] && HOMEBREW="/usr/local"
+
 PATH="${HOMEBREW}/bin:${PATH}"
+PATH="${HOMEBREW}/opt/ccache/libexec:${PATH}"
 CUR_DIR="$(dirname $(realpath -s ${0}))"
 MAIN_DIR="$(realpath -s ${CUR_DIR}/..)"
 TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
@@ -69,15 +66,16 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
                -DUSE_QJDNS=OFF \
-               -DUSE_CCACHE=OFF \
                -DBUILD_DEV_PLUGINS=OFF \
                -DVERBOSE_PROGRAM_NAME=ON"
 
 mkdir -p "${MAIN_DIR}/builddir"
 cd "${MAIN_DIR}/builddir"
 
+which nproc > /dev/null && JOBS=$(nproc) || JOBS=4
+
 cmake .. -DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_FILE}" ${BUILD_OPTIONS} ${@}
-cmake --build . --target all -- -j4
+cmake --build . --target all -- -j ${JOBS}
 
 [ "${BUILD_ONLY}" = "true" ] && exit 0
 

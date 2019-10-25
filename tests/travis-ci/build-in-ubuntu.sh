@@ -29,18 +29,17 @@ BUILD_OPTIONS="-DCMAKE_INSTALL_PREFIX=/usr \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
                -DUSE_QJDNS=OFF \
-               -DUSE_CCACHE=OFF \
                -DBUILD_DEV_PLUGINS=OFF \
                -DVERBOSE_PROGRAM_NAME=ON \
-               .."
+               "
 
 mkdir -p builddir
 cd builddir
 
-cmake ${BUILD_OPTIONS} \
+cmake .. ${BUILD_OPTIONS} \
       -DCMAKE_CXX_FLAGS="${CXXFLAGS}" \
       -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS}" \
       -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}"
-make VERBOSE=1 -k -j $(nproc)
+make -k -j $(nproc) VERBOSE=1
 sudo make install -j 1
 

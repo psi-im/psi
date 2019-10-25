@@ -30,17 +30,9 @@ fi
 
 if [ "${TARGET}" = "macos64" ]
 then
-    export HOMEBREW="/usr/local"
     ./mac/build-using-homebrew.sh
 
     ls -alp ../Psi*.dmg
     du -shc ../Psi*.dmg
 fi
-
-
-
-
-
-
-
 

@@ -1,7 +1,7 @@
 if(DEFINED ENV{HOMEBREW})
     set(HOMEBREW "$ENV{HOMEBREW}")
 else()
-    set(HOMEBREW "$ENV{HOME}/Homebrew")
+    set(HOMEBREW "/usr/local")
 endif()
 
 if(DEFINED ENV{OSX_DEPLOYMENT_TARGET})

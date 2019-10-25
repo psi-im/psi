@@ -1,31 +1,36 @@
 language: cpp
 
 sudo: required
-dist: xenial
-osx_image: xcode10.3
-
-os:
-  - linux
-  - osx
+cache: ccache
 
 if: tag IS blank
 
-env:
-  - TARGET=linux64 ENABLE_WEBKIT=OFF
-  - TARGET=linux64 ENABLE_WEBKIT=ON
-  - TARGET=macos64 ENABLE_WEBENGINE=OFF
-  - TARGET=macos64 ENABLE_WEBENGINE=ON
-
-matrix:
-  exclude:
-    - env: TARGET=linux64 ENABLE_WEBKIT=OFF
-      os: osx
-    - env: TARGET=linux64 ENABLE_WEBKIT=ON
-      os: osx
+jobs:
+  include:
+    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=xenial
+      os: linux
+      dist: xenial
+    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=bionic
+      os: linux
+      dist: bionic
+    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=xenial
+      os: linux
+      dist: xenial
+    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=bionic
+      os: linux
+      dist: bionic
     - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
-      os: linux
+      os: osx
+      osx_image: xcode10
+    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
+      os: osx
+      osx_image: xcode10.3
     - env: TARGET=macos64 ENABLE_WEBENGINE=ON
-      os: linux
+      os: osx
+      osx_image: xcode10
+    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
+      os: osx
+      osx_image: xcode10.3
 
 install:
   - ./tests/travis-ci/install-build-depends.sh
