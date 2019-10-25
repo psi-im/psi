@@ -211,8 +211,9 @@ bool PsiOptions::newProfile()
         buttons.dock = Qt3Dock_Bottom;
 
         ToolbarPrefs showContacts;
+        showContacts.on = true;
         showContacts.name = tr("Show contacts");
-        showContacts.keys << "show_offline" << "show_hidden" << "show_agents" << "show_self" << "show_statusmsg";
+        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_disco" << "menu_play_sounds" <<"menu_xml_console";
 
         ToolbarPrefs eventNotifier;
         eventNotifier.name = tr("Event notifier");
