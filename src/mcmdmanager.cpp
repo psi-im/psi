@@ -30,7 +30,7 @@ MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags) : name
 
 MCmdSimpleState::~MCmdSimpleState() {}
 
-MCmdManager::MCmdManager(MCmdUiSiteIface *site_) : state_(nullptr), uiSite_(site_){};
+MCmdManager::MCmdManager(MCmdUiSiteIface *site_) : state_(nullptr), uiSite_(site_) {};
 
 MCmdManager::~MCmdManager()
 {

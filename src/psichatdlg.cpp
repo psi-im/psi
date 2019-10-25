@@ -63,7 +63,7 @@ PsiIcon *PsiChatDlg::throbber_icon = nullptr;
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
     Q_OBJECT
 public:
-    ChatDlgMCmdProvider(PsiChatDlg *dlg) : dlg_(dlg){};
+    ChatDlgMCmdProvider(PsiChatDlg *dlg) : dlg_(dlg) {};
 
     virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate,
                                      QStringList &preset)
@@ -146,8 +146,8 @@ public:
         return res;
     };
 
-    virtual void mCmdSiteDestroyed(){};
-    virtual ~ChatDlgMCmdProvider(){};
+    virtual void mCmdSiteDestroyed() {};
+    virtual ~ChatDlgMCmdProvider() {};
 
 public slots:
     void version_finished()

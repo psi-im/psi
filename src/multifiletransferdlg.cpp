@@ -506,25 +506,27 @@ BinaryUriLoader::BinaryUriLoader(PsiAccount *acc, const Jid &peer, const QUrl &u
     auto uris = uri.toString();
     if (uris.startsWith(QString::fromLatin1("cid:"))) {
         JT_BitsOfBinary *task = new JT_BitsOfBinary(acc->client()->rootTask());
-        connect(task, &JT_BitsOfBinary::finished, this,
-                [this]() {
-                    BoBData &bob = (static_cast<JT_BitsOfBinary *>(sender()))->data();
-                    emit     ready(bob.data());
-                    deleteLater();
-                },
-                Qt::QueuedConnection);
+        connect(
+            task, &JT_BitsOfBinary::finished, this,
+            [this]() {
+                BoBData &bob = (static_cast<JT_BitsOfBinary *>(sender()))->data();
+                emit     ready(bob.data());
+                deleteLater();
+            },
+            Qt::QueuedConnection);
         task->get(peer, uri.toString().mid(4));
         task->go(true);
     } else {
         auto           nam   = acc->psi()->networkAccessManager();
         QNetworkReply *reply = nam->get(QNetworkRequest(uri));
-        connect(reply, &QNetworkReply::finished, this,
-                [this]() {
-                    QNetworkReply *reply = dynamic_cast<QNetworkReply *>(sender());
-                    ready(reply->readAll());
-                    reply->deleteLater();
-                    deleteLater();
-                },
-                Qt::QueuedConnection);
+        connect(
+            reply, &QNetworkReply::finished, this,
+            [this]() {
+                QNetworkReply *reply = dynamic_cast<QNetworkReply *>(sender());
+                ready(reply->readAll());
+                reply->deleteLater();
+                deleteLater();
+            },
+            Qt::QueuedConnection);
     }
 }

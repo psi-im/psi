@@ -568,8 +568,8 @@ void InfoWidget::doRefresh()
     d->actionType = 0;
     emit busy();
 
-    d->jt = VCardFactory::instance()->getVCard(d->jid, d->pa->client()->rootTask(), this, [this]() { jt_finished(); },
-                                               d->cacheVCard, d->type == MucContact);
+    d->jt = VCardFactory::instance()->getVCard(
+        d->jid, d->pa->client()->rootTask(), this, [this]() { jt_finished(); }, d->cacheVCard, d->type == MucContact);
 }
 
 void InfoWidget::publish()
@@ -758,7 +758,7 @@ void InfoWidget::updateStatus()
         PsiRichText::setText(ui_.te_status->document(), u->makeDesc());
     } else if (d->jid.node().isEmpty() && d->jid.domain() == d->pa->jid().domain()) { // requesting info for our server.
         // let's add some more stuff..
-        static const QMap<QString, QString> transMap{
+        static const QMap<QString, QString> transMap {
             { "abuse-addresses", tr("Abuse") },       { "admin-addresses", tr("Administrators") },
             { "feedback-addresses", tr("Feedback") }, { "sales-addresses", tr("Sales") },
             { "security-addresses", tr("Security") }, { "support-addresses", tr("Support") }

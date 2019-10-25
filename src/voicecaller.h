@@ -41,7 +41,7 @@ public:
      *
      * \param account the account to which this voice caller belongs
      */
-    VoiceCaller(PsiAccount *account) : account_(account){};
+    VoiceCaller(PsiAccount *account) : account_(account) {};
 
     /**
      * \brief Retrieves the account to which this voice caller belongs.

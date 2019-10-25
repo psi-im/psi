@@ -61,9 +61,9 @@ public:
         actReset->setData(QVariant(HTMLTextController::StateNone));
     };
 
-    void setMenuState(QList<HTMLTextController::TextEditState> list){
+    void setMenuState(QList<HTMLTextController::TextEditState> list) {
         foreach (HTMLTextController::TextEditState state,
-                 list){ switch (state){ case HTMLTextController::StateBold : actBold->setChecked(true);
+                 list) { switch (state) { case HTMLTextController::StateBold : actBold->setChecked(true);
     break;
 case HTMLTextController::StateItalic:
     actItalic->setChecked(true);

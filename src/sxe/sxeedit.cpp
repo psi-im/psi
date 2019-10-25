@@ -25,9 +25,9 @@
 // SxeEdit
 //----------------------------------------------------------------------------
 
-SxeEdit::SxeEdit(const QString rid, bool remote) : rid_(rid), remote_(remote), null_(false){};
+SxeEdit::SxeEdit(const QString rid, bool remote) : rid_(rid), remote_(remote), null_(false) {};
 
-SxeEdit::~SxeEdit(){};
+SxeEdit::~SxeEdit() {};
 
 bool SxeEdit::remote() const { return remote_; };
 

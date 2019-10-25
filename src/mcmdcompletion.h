@@ -33,7 +33,7 @@ public:
     /** Constructs an MCmdTabCompletion for getting completions from mini command
      * manager \a mgr.
      */
-    MCmdTabCompletion(MCmdManagerIface *mgr) : mgr_(mgr){};
+    MCmdTabCompletion(MCmdManagerIface *mgr) : mgr_(mgr) {};
 
 protected:
     virtual void        setup(QString str, int pos, int &start, int &end);

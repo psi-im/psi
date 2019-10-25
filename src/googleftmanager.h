@@ -56,7 +56,7 @@ class GoogleFileTransfer : public QObject /*: public XMPP::AbstractFileTransfer*
 
 public:
     GoogleFileTransfer(cricket::FileShareSession *, GoogleFTManager *manager);
-    virtual ~GoogleFileTransfer(){};
+    virtual ~GoogleFileTransfer() {};
 
     virtual XMPP::Jid peer() const;
     virtual QString   fileName() const;

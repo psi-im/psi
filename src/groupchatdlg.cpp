@@ -587,7 +587,7 @@ public:
     class TabCompletionMUC : public TabCompletion {
     public:
         GCMainDlg::Private *p_;
-        TabCompletionMUC(GCMainDlg::Private *p) : p_(p), nickSeparator(":"){};
+        TabCompletionMUC(GCMainDlg::Private *p) : p_(p), nickSeparator(":") {};
 
         virtual void setup(QString str, int pos, int &start, int &end)
         {
@@ -1753,8 +1753,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
     if (isSelf) {
         if (!d->gcSelfPresenceSupported && !d->gcSelfAvatarRequested) {
             d->gcSelfAvatarRequested = true;
-            VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), this,
-                                               [this]() { GCMainDlg::updateGCVCard(); }, true);
+            VCardFactory::instance()->getVCard(
+                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true);
         }
 
         if (s.isAvailable())
@@ -2018,8 +2018,8 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         // new MUC vcard available
         if (!d->gcSelfPresenceSupported) {
             // we had to handle avatar hash from presence already
-            VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), this,
-                                               [this]() { GCMainDlg::updateGCVCard(); }, true);
+            VCardFactory::instance()->getVCard(
+                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true);
         }
     }
 

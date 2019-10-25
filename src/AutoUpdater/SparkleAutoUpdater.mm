@@ -8,31 +8,26 @@
 #include <Cocoa/Cocoa.h>
 #include <Sparkle/Sparkle.h>
 
-class SparkleAutoUpdater::Private
-{
-	public:
-		SUUpdater* updater;
+class SparkleAutoUpdater::Private {
+public:
+    SUUpdater *updater;
 };
 
-SparkleAutoUpdater::SparkleAutoUpdater(const QString& aUrl)
+SparkleAutoUpdater::SparkleAutoUpdater(const QString &aUrl)
 {
-	d = new Private;
+    d = new Private;
 
-	d->updater = [SUUpdater sharedUpdater];
-	[d->updater retain];
+    d->updater = [SUUpdater sharedUpdater];
+    [d->updater retain];
 
-	NSURL* url = [NSURL URLWithString:
-			[NSString stringWithUTF8String: aUrl.toUtf8().data()]];
-	[d->updater setFeedURL: url];
+    NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:aUrl.toUtf8().data()]];
+    [d->updater setFeedURL:url];
 }
 
 SparkleAutoUpdater::~SparkleAutoUpdater()
 {
-	[d->updater release];
-	delete d;
+    [d->updater release];
+    delete d;
 }
 
-void SparkleAutoUpdater::checkForUpdates()
-{
-	[d->updater checkForUpdatesInBackground];
-}
+void SparkleAutoUpdater::checkForUpdates() { [d->updater checkForUpdatesInBackground]; }

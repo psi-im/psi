@@ -192,9 +192,9 @@ void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features,
     delete wr;
     *result = (QMessageBox::Yes
                == QMessageBox::question(
-                      nullptr, tr("Whiteboarding Invitation?"),
-                      tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
-                      QMessageBox::Yes | QMessageBox::No, QMessageBox::No));
+                   nullptr, tr("Whiteboarding Invitation?"),
+                   tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
+                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No));
 }
 
 void WbManager::requestActivated(int id)

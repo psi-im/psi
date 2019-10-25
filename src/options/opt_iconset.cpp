@@ -510,7 +510,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     // fill in the iconset view
     d->iss_emoticons->clear();
 
-    { foreach (Iconset *is, PsiIconset::instance()->emoticons){ d->iss_emoticons->insert(*is);
+    { foreach (Iconset *is, PsiIconset::instance()->emoticons) { d->iss_emoticons->insert(*is);
     d->iss_emoticons->lastItem()->setSelected(true);
 }
 }

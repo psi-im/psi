@@ -21,9 +21,10 @@
 
 #include <Cocoa/Cocoa.h>
 
-int macosCommonFirstWeekday() {
-	int firstDay;
-	NSCalendar *cal = [NSCalendar currentCalendar];
-	firstDay = ([cal firstWeekday] + 5) % 7 + 1;
-	return firstDay;
+int macosCommonFirstWeekday()
+{
+    int         firstDay;
+    NSCalendar *cal = [NSCalendar currentCalendar];
+    firstDay        = ([cal firstWeekday] + 5) % 7 + 1;
+    return firstDay;
 }

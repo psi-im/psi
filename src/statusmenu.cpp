@@ -208,7 +208,7 @@ void StatusMenu::statusActivated()
 bool StatusMenu::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::MouseButtonRelease) {
-        QMouseEvent *e = static_cast<QMouseEvent *>(event); // We sure event is QMouseEvent
+        QMouseEvent *e    = static_cast<QMouseEvent *>(event); // We sure event is QMouseEvent
         QMenu *      menu = dynamic_cast<QMenu *>(obj); // Event filter can be installed on anything, so do dynamic_cast
         assert(menu != nullptr);                        // Dynamic cast on wrong type will return 0
         QAction *action = menu->actionAt(e->pos());

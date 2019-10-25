@@ -197,7 +197,7 @@ public:
         QVariantMap md;
         md.insert(QLatin1String("type"), metaType);
         md.insert(QLatin1String("jids"), QStringList() << typedJid(iconType, jid));
-        FileCacheItem *item = append(XMPP::Hash{ XMPP::Hash::Sha1, hash }, newData, md, 7 * 24 * 3600); // a week
+        FileCacheItem *item = append(XMPP::Hash { XMPP::Hash::Sha1, hash }, newData, md, 7 * 24 * 3600); // a week
 
         if (iconType == CustomType) {
             item->setUndeletable();
@@ -684,7 +684,7 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QByteArray &hash
 {
     FileCacheItem *item = AvatarCache::instance()->get({ XMPP::Hash::Sha1, hash }, true);
     if (item) {
-        return AvatarData{ item->data(), item->metadata()["type"].toString() };
+        return AvatarData { item->data(), item->metadata()["type"].toString() };
     }
     return AvatarData();
 }
@@ -842,7 +842,7 @@ void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status)
                 d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(jid);
             } else if (result == AvatarCache::NoData) {
-                d->vcardReqQueue_.enqueue(std::tuple<Jid, QByteArray, bool>{ jid, hash, isMuc });
+                d->vcardReqQueue_.enqueue(std::tuple<Jid, QByteArray, bool> { jid, hash, isMuc });
                 if (!d->vcardReqTimer_.isActive()) {
                     d->vcardReqTimer_.start();
                 }

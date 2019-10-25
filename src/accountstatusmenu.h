@@ -12,7 +12,7 @@ private:
 
 public:
     AccountStatusMenu(QWidget *parent, PsiCon *_psi, PsiAccount *_account) :
-        StatusMenu(parent, _psi), account(_account){};
+        StatusMenu(parent, _psi), account(_account) {};
 
     void fill();
 

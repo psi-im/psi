@@ -94,7 +94,7 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
     d->voiceMsgCtrl = new ITEAudioController(itc);
     d->voiceMsgCtrl->setAutoFetchMetadata(true);
 
-    d->objectParsers = PsiRichText::ParsersMap{
+    d->objectParsers = PsiRichText::ParsersMap {
         { "share",
           [this](const QStringRef &html) -> QTextCharFormat {
               if (!d->mediaOpener)

@@ -9,15 +9,14 @@
 #include <Cocoa/Cocoa.h>
 #include <QtDebug>
 
-class CocoaInitializer::Private 
-{
-	public:
-		NSAutoreleasePool* autoReleasePool_;
+class CocoaInitializer::Private {
+public:
+    NSAutoreleasePool *autoReleasePool_;
 };
 
 CocoaInitializer::CocoaInitializer()
 {
-	Q_UNUSED(d)
+    Q_UNUSED(d)
 #if 0
 	d = new CocoaInitializer::Private();
 	NSApplicationLoad();

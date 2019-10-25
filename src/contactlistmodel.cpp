@@ -81,7 +81,7 @@ void ContactListModel::Private::realAddContact(PsiContact *contact)
         ContactListItem::SpecialGroupType specialGroupType = specialGroupFor(contact);
         QStringList groups = specialGroupType == ContactListItem::SpecialGroupType::NoneSpecialGroupType
             ? contact->groups()
-            : QStringList{ QString() };
+            : QStringList { QString() };
 
         for (const QString &groupName : groups) {
 

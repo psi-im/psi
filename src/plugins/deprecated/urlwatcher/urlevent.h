@@ -30,7 +30,7 @@ public:
         url_    = url;
         viewed_ = false;
     }
-    ~URLEvent(){};
+    ~URLEvent() {};
 
     QString sender_;
     QString url_;

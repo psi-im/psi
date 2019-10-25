@@ -147,7 +147,7 @@ QModelIndex MultiFileTransferModel::index(int row, int column, const QModelIndex
 
 QHash<int, QByteArray> MultiFileTransferModel::roleNames() const
 {
-    return QHash<int, QByteArray>{
+    return QHash<int, QByteArray> {
         { Qt::DisplayRole, "display" },         { Qt::DecorationRole, "decoration" }, { Qt::ToolTipRole, "toolTip" },
         { FullSizeRole, "fullSize" },           { CurrentSizeRole, "currentSize" },   { SpeedRole, "speed" },
         { DescriptionRole, "description" },     { DirectionRole, "direction" },       { StateRole, "stateRole" },

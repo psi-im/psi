@@ -750,7 +750,7 @@ void TabBar::setDragsEnabled(bool enabled) { d->dragsEnabled = enabled; }
 
 void TabBar::setTabPinned(int index, bool pinned)
 {
-    int newPos = d->pinnedTabs + (pinned ? 0 : -1);
+    int newPos  = d->pinnedTabs + (pinned ? 0 : -1);
     int tempPos = (index + 1) < d->hackedTabs.count() ? index + 1 : index - 1; // get nearby tab index
     if (index != newPos) {
         if (index == TabBar::currentIndex()) { // Check is this tab active

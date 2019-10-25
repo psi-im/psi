@@ -418,8 +418,8 @@ double qstrtod(const char *s00, char const **se, bool *ok);
 static qreal toDouble(const QChar *&str)
 {
     const int maxLen = 255; // technically doubles can go til 308+ but whatever
-    char temp[maxLen + 1];
-    int  pos = 0;
+    char      temp[maxLen + 1];
+    int       pos = 0;
 
     if (*str == QLatin1Char('-')) {
         temp[pos++] = '-';
