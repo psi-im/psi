@@ -34,7 +34,7 @@
 #include <QtCore>
 #include <QtCrypto>
 
-//TODO(mck)
+// TODO(mck)
 // - use native separators when displaying file path
 
 /**
@@ -48,35 +48,30 @@
  * indefinitely long and feels more like a hook/handler.
  * Therefore it should probably be refactored to one.
  */
-class PluginManager::StreamWatcher: public XMPP::Task
-{
+class PluginManager::StreamWatcher : public XMPP::Task {
 public:
-    StreamWatcher(Task* t, PluginManager* m, int a) : Task(t), manager(m), account(a) {}
-    bool take(const QDomElement& e) {
-        return manager->incomingXml(account, e);
-    }
-    void onDisconnect() {
+    StreamWatcher(Task *t, PluginManager *m, int a) : Task(t), manager(m), account(a) {}
+    bool take(const QDomElement &e) { return manager->incomingXml(account, e); }
+    void onDisconnect()
+    {
         // never finish on client disconnect
     }
-    PluginManager* manager;
-    int account;
+    PluginManager *manager;
+    int            account;
 };
 
 /**
  * Function to obtain all the directories in which plugins can be stored
  * \return List of plugin directories
  */
-static QStringList pluginDirs()
-{
-    return ApplicationInfo::pluginDirs();
-}
+static QStringList pluginDirs() { return ApplicationInfo::pluginDirs(); }
 
 /**
  * Method for accessing the singleton instance of the class.
  * Instanciates if no instance yet exists.
  * \return Pointer to the plugin manager.
  */
-PluginManager* PluginManager::instance()
+PluginManager *PluginManager::instance()
 {
     if (!instance_) {
         instance_ = new PluginManager();
@@ -102,7 +97,7 @@ PluginManager::PluginManager() : QObject(nullptr), psi_(nullptr)
     _messageViewJSFiltersTimer->setInterval(10); // to be able to restart in case of batch events
     connect(_messageViewJSFiltersTimer, &QTimer::timeout, this, &PluginManager::jsFiltersUpdated);
 
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), this, SLOT(optionChanged(const QString&)));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), this, SLOT(optionChanged(const QString &)));
 }
 
 void PluginManager::initNewSession(PsiCon *psi)
@@ -117,11 +112,11 @@ void PluginManager::initNewSession(PsiCon *psi)
  * Updates list of known plugins by reading all plugin directories
  * and returns the list of new plugins
  */
-QList<PluginHost*> PluginManager::updatePluginsList()
+QList<PluginHost *> PluginManager::updatePluginsList()
 {
-    QList<PluginHost*> newPlugins;
+    QList<PluginHost *> newPlugins;
 
-    foreach (const QString& d, pluginDirs()) {
+    foreach (const QString &d, pluginDirs()) {
         QDir dir(d);
         foreach (QFileInfo fileInfo, dir.entryInfoList(QDir::Files)) {
             QString file = fileInfo.canonicalFilePath();
@@ -130,10 +125,10 @@ QList<PluginHost*> PluginManager::updatePluginsList()
                 qDebug("Found plugin: %s", qPrintable(file));
 #endif
                 if (!pluginByFile_.contains(file)) {
-                    PluginHost* host = new PluginHost(this, file);
+                    PluginHost *host = new PluginHost(this, file);
                     if (host->isValid() && !hosts_.contains(host->name())) {
                         hosts_[host->name()] = host;
-                        pluginByFile_[file] = host;
+                        pluginByFile_[file]  = host;
                         newPlugins.append(host);
                         if (host->priority() == PsiPlugin::PriorityHighest || !pluginsByPriority_.size()) {
                             pluginsByPriority_.push_front(host);
@@ -164,14 +159,14 @@ QList<PluginHost*> PluginManager::updatePluginsList()
  */
 void PluginManager::dirsChanged()
 {
-    foreach(PluginHost* plugin, updatePluginsList()) {
+    foreach (PluginHost *plugin, updatePluginsList()) {
         loadPluginIfEnabled(plugin);
     }
 }
 
 void PluginManager::accountDestroyed()
 {
-    PsiAccount* pa = static_cast<PsiAccount*>(sender());
+    PsiAccount *pa = static_cast<PsiAccount *>(sender());
     accountIds_.removeAccount(pa);
 }
 
@@ -184,7 +179,7 @@ void PluginManager::loadEnabledPlugins()
 #ifndef PLUGINS_NO_DEBUG
     qDebug("Loading enabled plugins");
 #endif
-    foreach (PluginHost* plugin, pluginsByPriority_) {
+    foreach (PluginHost *plugin, pluginsByPriority_) {
         loadPluginIfEnabled(plugin);
     }
 }
@@ -192,7 +187,7 @@ void PluginManager::loadEnabledPlugins()
 void PluginManager::loadPluginIfEnabled(PluginHost *plugin)
 {
     const QString option = QString("%1.%2").arg(loadOptionPrefix).arg(plugin->shortName());
-    QVariant load = PsiOptions::instance()->getOption(option, false);
+    QVariant      load   = PsiOptions::instance()->getOption(option, false);
     if (load.toBool()) {
 #ifndef PLUGINS_NO_DEBUG
         qDebug("Plugin %s is enabled in config: loading", qPrintable(plugin->shortName()));
@@ -206,21 +201,20 @@ void PluginManager::loadPluginIfEnabled(PluginHost *plugin)
  * option
  * \param option Option changed
  */
-void PluginManager::optionChanged(const QString& option)
+void PluginManager::optionChanged(const QString &option)
 {
-    bool pluginOpt = option.startsWith(loadOptionPrefix);
+    bool          pluginOpt = option.startsWith(loadOptionPrefix);
     const QString shortName = option.split(".").last();
-    foreach (PluginHost* plugin, pluginByFile_) {
+    foreach (PluginHost *plugin, pluginByFile_) {
         plugin->optionChanged(option);
-        if(pluginOpt && plugin->shortName() == shortName) {
+        if (pluginOpt && plugin->shortName() == shortName) {
             bool shouldUpdateFeatures;
-            if(PsiOptions::instance()->getOption(option).toBool()) {
+            if (PsiOptions::instance()->getOption(option).toBool()) {
                 plugin->enable();
                 shouldUpdateFeatures = !plugin->pluginFeatures().isEmpty();
-            }
-            else {
+            } else {
                 shouldUpdateFeatures = !plugin->pluginFeatures().isEmpty();
-                if(optionsWidget_)
+                if (optionsWidget_)
                     delete optionsWidget_;
                 plugin->unload();
             }
@@ -250,13 +244,13 @@ void PluginManager::loadAllPlugins()
 #ifndef PLUGINS_NO_DEBUG
     qDebug("Loading all plugins");
 #endif
-      //Any static (compiled in) plugins we happen to have
+    // Any static (compiled in) plugins we happen to have
     /*foreach( QObject* plugin, QPluginLoader::staticInstances() ) {
         loadPlugin( plugin );
     }*/
 
-    //Now look for external plugins
-    foreach (PluginHost* plugin, hosts_.values()) {
+    // Now look for external plugins
+    foreach (PluginHost *plugin, hosts_.values()) {
         plugin->load();
         plugin->enable();
     }
@@ -273,7 +267,7 @@ bool PluginManager::unloadAllPlugins()
     qDebug("Unloading all plugins");
 #endif
     bool ok = true;
-    foreach (PluginHost* plugin, hosts_.values()) {
+    foreach (PluginHost *plugin, hosts_.values()) {
         if (!plugin->unload()) {
             ok = false;
         }
@@ -281,7 +275,7 @@ bool PluginManager::unloadAllPlugins()
     return ok;
 }
 
-bool PluginManager::isEnabled(const QString& plugin) const
+bool PluginManager::isEnabled(const QString &plugin) const
 {
     bool enabled = false;
     if (hosts_.contains(plugin)) {
@@ -296,7 +290,7 @@ bool PluginManager::isEnabled(const QString& plugin) const
  * \param plugin Name of the plugin.
  * \return Path to the plugin file.
  */
-QString PluginManager::pathToPlugin(const QString& plugin) const
+QString PluginManager::pathToPlugin(const QString &plugin) const
 {
     QString path;
     if (hosts_.contains(plugin)) {
@@ -311,7 +305,7 @@ QString PluginManager::pathToPlugin(const QString& plugin) const
  * \param plugin Name of the plugin.
  * \return Path to the plugin file.
  */
-QString PluginManager::shortName(const QString& plugin) const
+QString PluginManager::shortName(const QString &plugin) const
 {
     QString name;
     if (hosts_.contains(plugin)) {
@@ -320,10 +314,10 @@ QString PluginManager::shortName(const QString& plugin) const
     return name;
 }
 
-QString PluginManager::nameByShortName(const QString& shortName) const
+QString PluginManager::nameByShortName(const QString &shortName) const
 {
     QString name;
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (host->shortName() == shortName) {
             name = host->name();
             break;
@@ -332,7 +326,7 @@ QString PluginManager::nameByShortName(const QString& shortName) const
     return name;
 }
 
-QString PluginManager::version(const QString& plugin) const
+QString PluginManager::version(const QString &plugin) const
 {
     QString name;
     if (hosts_.contains(plugin)) {
@@ -344,10 +338,7 @@ QString PluginManager::version(const QString& plugin) const
 /**
  * Returns a list of available plugin names found in all plugin directories.
  */
-QStringList PluginManager::availablePlugins() const
-{
-    return hosts_.keys();
-}
+QStringList PluginManager::availablePlugins() const { return hosts_.keys(); }
 
 /**
  * Provides a pointer to a QWidget providing the options dialog for the
@@ -355,9 +346,9 @@ QStringList PluginManager::availablePlugins() const
  * \param plugin Name of the plugin.
  * \return Pointer to the options widget for the named plugin.
  */
-QWidget* PluginManager::optionsWidget(const QString& plugin)
+QWidget *PluginManager::optionsWidget(const QString &plugin)
 {
-    if(optionsWidget_) {
+    if (optionsWidget_) {
         delete optionsWidget_;
     }
 
@@ -365,7 +356,7 @@ QWidget* PluginManager::optionsWidget(const QString& plugin)
         optionsWidget_ = hosts_[plugin]->optionsWidget();
     }
 
-    if(!optionsWidget_) {
+    if (!optionsWidget_) {
 #ifndef PLUGINS_NO_DEBUG
         qWarning("Attempting to get options for %s which doesn't exist", qPrintable(plugin));
 #endif
@@ -381,7 +372,7 @@ QWidget* PluginManager::optionsWidget(const QString& plugin)
  */
 void PluginManager::setShortcuts()
 {
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    foreach (PluginHost *host, pluginByFile_.values()) {
         host->setShortcuts();
     }
 }
@@ -396,10 +387,11 @@ void PluginManager::setShortcuts()
  * \param event Incoming event
  * \return Continue processing the event; true if the event should be silently discarded.
  */
-bool PluginManager::processMessage(PsiAccount* account, const QString& jidFrom, const QString& body, const QString& subject)
+bool PluginManager::processMessage(PsiAccount *account, const QString &jidFrom, const QString &body,
+                                   const QString &subject)
 {
     bool handled = false;
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (host->processMessage(accountIds_.id(account), jidFrom, body, subject)) {
             handled = true;
             break;
@@ -418,11 +410,11 @@ bool PluginManager::processMessage(PsiAccount* account, const QString& jidFrom, 
  * \param event Incoming event
  * \return Continue processing the event; true if the event should be silently discarded.
  */
-bool PluginManager::processEvent(PsiAccount* account, QDomElement& event)
+bool PluginManager::processEvent(PsiAccount *account, QDomElement &event)
 {
-    bool handled = false;
-    const int acc_id = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    bool      handled = false;
+    const int acc_id  = accountIds_.id(account);
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (host->processEvent(acc_id, event)) {
             handled = true;
             break;
@@ -434,11 +426,12 @@ bool PluginManager::processEvent(PsiAccount* account, QDomElement& event)
 /**
  * process an outgoing message
  */
-bool PluginManager::processOutgoingMessage(PsiAccount* account, const QString& jidTo, QString& body, const QString& type, QString& subject)
+bool PluginManager::processOutgoingMessage(PsiAccount *account, const QString &jidTo, QString &body,
+                                           const QString &type, QString &subject)
 {
-    bool handled = false;
-    const int acc_id = accountIds_.id(account);
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    bool      handled = false;
+    const int acc_id  = accountIds_.id(account);
+    foreach (PluginHost *host, pluginByFile_.values()) {
         if (host->processOutgoingMessage(acc_id, jidTo, body, type, subject)) {
             handled = true;
             break;
@@ -447,10 +440,10 @@ bool PluginManager::processOutgoingMessage(PsiAccount* account, const QString& j
     return handled;
 }
 
-void PluginManager::processOutgoingStanza(PsiAccount* account, QDomElement &stanza)
+void PluginManager::processOutgoingStanza(PsiAccount *account, QDomElement &stanza)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    foreach (PluginHost *host, pluginByFile_.values()) {
         if (host->outgoingXml(acc_id, stanza)) {
             break;
         }
@@ -460,10 +453,10 @@ void PluginManager::processOutgoingStanza(PsiAccount* account, QDomElement &stan
 /**
  * Notify to plugins that an account will go offline now.
  */
-void PluginManager::logout(PsiAccount* account)
+void PluginManager::logout(PsiAccount *account)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    foreach (PluginHost *host, pluginByFile_.values()) {
         host->logout(acc_id);
         emit accountLoggedOut(acc_id);
     }
@@ -484,7 +477,7 @@ void PluginManager::logout(PsiAccount* account)
 bool PluginManager::incomingXml(int account, const QDomElement &xml)
 {
     bool handled = false;
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (host->incomingXml(account, xml)) {
             handled = true;
             break;
@@ -499,9 +492,9 @@ bool PluginManager::incomingXml(int account, const QDomElement &xml)
  * \param account Identifier of the PsiAccount responsible
  * \param xml XML stanza to be sent
  */
-void PluginManager::sendXml(int account, const QString& xml)
+void PluginManager::sendXml(int account, const QString &xml)
 {
-    //TODO(mck)
+    // TODO(mck)
     // - think if it is better to ask plugin(host) for string or xml node
     // - validate things
     // - add id if missing
@@ -531,59 +524,56 @@ QString PluginManager::uniqueId(int account) const
 
 QString PluginManager::getStatus(int account) const
 {
-    Status S;
+    Status      S;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa)
+    if (pa)
         S = pa->status();
     return S.typeString();
 }
 
 QString PluginManager::getStatusMessage(int account) const
 {
-    Status S;
+    Status      S;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa)
-            S = pa->status();
+    if (pa)
+        S = pa->status();
     return S.status();
 }
 
-static inline const QString getProxyId(PsiAccount* pa)
-{
-    return pa->accountOptions().proxyID;
-}
+static inline const QString getProxyId(PsiAccount *pa) { return pa->accountOptions().proxyID; }
 
 QString PluginManager::proxyHost(int account) const
 {
-    QString host;
+    QString     host;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa)
+    if (pa)
         host = ProxyManager::instance()->getItem(getProxyId(pa)).settings.host;
     return host;
 }
 
 int PluginManager::proxyPort(int account) const
 {
-    int port = -1;
-    PsiAccount *pa = accountIds_.account(account);
-    if(pa)
+    int         port = -1;
+    PsiAccount *pa   = accountIds_.account(account);
+    if (pa)
         port = ProxyManager::instance()->getItem(getProxyId(pa)).settings.port;
     return port;
 }
 
 QString PluginManager::proxyUser(int account) const
 {
-    QString user;
+    QString     user;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa)
+    if (pa)
         user = ProxyManager::instance()->getItem(getProxyId(pa)).settings.user;
     return user;
 }
 
 QString PluginManager::proxyPassword(int account) const
 {
-    QString pass;
+    QString     pass;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa)
+    if (pa)
         pass = ProxyManager::instance()->getItem(getProxyId(pa)).settings.pass;
     return pass;
 }
@@ -595,9 +585,9 @@ QStringList PluginManager::getRoster(int account) const
     if (accountIds_.isValidRange(account)) {
         list.clear();
         PsiAccount *pa = accountIds_.account(account);
-        if(pa) {
-            QList<PsiContact*> roster = pa->contactList();
-            for(int i = 0; i < roster.size(); i++) {
+        if (pa) {
+            QList<PsiContact *> roster = pa->contactList();
+            for (int i = 0; i < roster.size(); i++) {
                 list.push_back(roster.at(i)->jid().bare());
             }
         }
@@ -611,7 +601,7 @@ QString PluginManager::getJid(int account) const
     if (accountIds_.isValidRange(account)) {
         Jid.clear();
         PsiAccount *pa = accountIds_.account(account);
-        if(pa)
+        if (pa)
             Jid = pa->jid().bare();
     }
     return Jid;
@@ -623,7 +613,7 @@ QString PluginManager::getId(int account) const
     if (accountIds_.isValidRange(account)) {
         id.clear();
         PsiAccount *pa = accountIds_.account(account);
-        if(pa)
+        if (pa)
             id = pa->id();
     }
     return id;
@@ -631,9 +621,9 @@ QString PluginManager::getId(int account) const
 
 QString PluginManager::getName(int account) const
 {
-    QString nm;
+    QString     nm;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa)
+    if (pa)
         nm = pa->name();
     return nm;
 }
@@ -649,138 +639,132 @@ int PluginManager::findOnlineAccountForContact(const QString &jid) const
     return -1;
 }
 
-bool PluginManager::setActivity(int account, const QString& jid, QDomElement xml)
+bool PluginManager::setActivity(int account, const QString &jid, QDomElement xml)
 {
     PsiAccount *pa = accountIds_.account(account);
-    if(!pa)
+    if (!pa)
         return false;
 
-    XMPP::Jid userJid(jid);
-    UserListItem *item =  pa->userList()->find(userJid);
+    XMPP::Jid     userJid(jid);
+    UserListItem *item = pa->userList()->find(userJid);
 
-    if(!item)
+    if (!item)
         return false;
 
     Activity act = Activity();
-    if(!xml.isNull())
+    if (!xml.isNull())
         act = Activity(xml);
     item->setActivity(act);
     return true;
 }
 
-bool PluginManager::setMood(int account, const QString& jid, QDomElement xml)
+bool PluginManager::setMood(int account, const QString &jid, QDomElement xml)
 {
     PsiAccount *pa = accountIds_.account(account);
-    if(!pa)
+    if (!pa)
         return false;
 
-    XMPP::Jid userJid(jid);
-    UserListItem *item =  pa->userList()->find(userJid);
+    XMPP::Jid     userJid(jid);
+    UserListItem *item = pa->userList()->find(userJid);
 
-    if(!item)
+    if (!item)
         return false;
 
     Mood mood = Mood();
-    if(!xml.isNull())
+    if (!xml.isNull())
         mood = Mood(xml);
     item->setMood(mood);
     return true;
 }
 
-bool PluginManager::setTune(int account, const QString& jid, const QString& tune)
+bool PluginManager::setTune(int account, const QString &jid, const QString &tune)
 {
     PsiAccount *pa = accountIds_.account(account);
-    if(!pa)
+    if (!pa)
         return false;
 
-    XMPP::Jid userJid(jid);
-    UserListItem *item =  pa->userList()->find(userJid);
+    XMPP::Jid     userJid(jid);
+    UserListItem *item = pa->userList()->find(userJid);
 
-    if(!item)
+    if (!item)
         return false;
 
     item->setTune(tune);
     return true;
 }
 
-void PluginManager::initPopup(const QString& text, const QString& title, const QString& icon, int type)
+void PluginManager::initPopup(const QString &text, const QString &title, const QString &icon, int type)
 {
-    const PsiIcon* ico = IconsetFactory::iconPtr(icon);
-    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, PopupManager::PopupType(type));
+    const PsiIcon *ico = IconsetFactory::iconPtr(icon);
+    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true,
+                                  PopupManager::PopupType(type));
 }
 
-void PluginManager::initPopupForJid(int account, const QString &jid, const QString &text, const QString &title, const QString &icon, int type)
+void PluginManager::initPopupForJid(int account, const QString &jid, const QString &text, const QString &title,
+                                    const QString &icon, int type)
 {
-    XMPP::Jid j(jid);
-    const PsiIcon* ico = IconsetFactory::iconPtr(icon);
-    PsiAccount * pa = accountIds_.account(account);
-    if(pa) {
-        UserListItem *i = pa->findFirstRelevant(j);
-        PsiIcon *statusIco = PsiIconset::instance()->statusPtr(i);
-        const QPixmap pix = pa->avatarFactory()->getAvatar(j);
+    XMPP::Jid      j(jid);
+    const PsiIcon *ico = IconsetFactory::iconPtr(icon);
+    PsiAccount *   pa  = accountIds_.account(account);
+    if (pa) {
+        UserListItem *i         = pa->findFirstRelevant(j);
+        PsiIcon *     statusIco = PsiIconset::instance()->statusPtr(i);
+        const QPixmap pix       = pa->avatarFactory()->getAvatar(j);
         psi_->popupManager()->doPopup(pa, j, ico, title, &pix, statusIco, text, true, PopupManager::PopupType(type));
         return;
     }
-    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true, PopupManager::PopupType(type));
+    psi_->popupManager()->doPopup(nullptr, Jid(), ico, title, nullptr, nullptr, text, true,
+                                  PopupManager::PopupType(type));
 }
 
-int PluginManager::registerOption(const QString& name, int initValue, const QString& path)
+int PluginManager::registerOption(const QString &name, int initValue, const QString &path)
 {
     return psi_->popupManager()->registerOption(name, initValue, path);
 }
 
-void PluginManager::unregisterOption(const QString &name)
-{
-    psi_->popupManager()->unregisterOption(name);
-}
+void PluginManager::unregisterOption(const QString &name) { psi_->popupManager()->unregisterOption(name); }
 
-int PluginManager::popupDuration(const QString& name) const
-{
-    return psi_->popupManager()->value(name);
-}
+int PluginManager::popupDuration(const QString &name) const { return psi_->popupManager()->value(name); }
 
-void PluginManager::setPopupDuration(const QString& name, int value)
-{
-    psi_->popupManager()->setValue(name, value);
-}
+void PluginManager::setPopupDuration(const QString &name, int value) { psi_->popupManager()->setValue(name, value); }
 
-void PluginManager::addAccountMenu(QMenu *menu, PsiAccount* account)
+void PluginManager::addAccountMenu(QMenu *menu, PsiAccount *account)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         host->addAccountMenu(menu, i);
     }
 }
 
-void PluginManager::addContactMenu(QMenu* menu, PsiAccount *account, QString jid)
+void PluginManager::addContactMenu(QMenu *menu, PsiAccount *account, QString jid)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         host->addContactMenu(menu, i, jid);
     }
 }
 
-void PluginManager::setupChatTab(QWidget *tab, PsiAccount *account, const QString& contact)
+void PluginManager::setupChatTab(QWidget *tab, PsiAccount *account, const QString &contact)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         host->setupChatTab(tab, i, contact);
     }
 }
 
-void PluginManager::setupGCTab(QWidget *tab, PsiAccount *account, const QString& contact)
+void PluginManager::setupGCTab(QWidget *tab, PsiAccount *account, const QString &contact)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         host->setupGCTab(tab, i, contact);
     }
 }
 
-bool PluginManager::appendingChatMessage(PsiAccount *account, const QString &contact,
-                     QString &body, QDomElement &html, bool local)
+bool PluginManager::appendingChatMessage(PsiAccount *account, const QString &contact, QString &body, QDomElement &html,
+                                         bool local)
 {
     bool handled = false;
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (host->appendingChatMessage(accountIds_.id(account), contact, body, html, local)) {
             handled = true;
             break;
@@ -789,7 +773,7 @@ bool PluginManager::appendingChatMessage(PsiAccount *account, const QString &con
     return handled;
 }
 
-bool PluginManager::hasInfoProvider(const QString& plugin) const
+bool PluginManager::hasInfoProvider(const QString &plugin) const
 {
     if (hosts_.contains(plugin))
         return hosts_[plugin]->hasInfoProvider();
@@ -797,7 +781,7 @@ bool PluginManager::hasInfoProvider(const QString& plugin) const
     return false;
 }
 
-QString PluginManager::pluginInfo(const QString& plugin) const
+QString PluginManager::pluginInfo(const QString &plugin) const
 {
     QString info;
     if (hosts_.contains(plugin))
@@ -805,7 +789,7 @@ QString PluginManager::pluginInfo(const QString& plugin) const
     return info;
 }
 
-QIcon PluginManager::icon(const QString& plugin) const
+QIcon PluginManager::icon(const QString &plugin) const
 {
     QIcon icon;
     if (hosts_.contains(plugin)) {
@@ -818,7 +802,7 @@ QIcon PluginManager::icon(const QString& plugin) const
 QStringList PluginManager::pluginFeatures() const
 {
     QStringList features;
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    foreach (PluginHost *host, pluginByFile_.values()) {
         features << host->pluginFeatures();
     }
     return features;
@@ -827,7 +811,7 @@ QStringList PluginManager::pluginFeatures() const
 /**
  * Tells the plugin manager about an XMPP::Client and the owning PsiAccount
  */
-void PluginManager::addAccount(PsiAccount* account, XMPP::Client* client)
+void PluginManager::addAccount(PsiAccount *account, XMPP::Client *client)
 {
     clients_.append(client);
     const int id = accountIds_.appendAccount(account);
@@ -840,71 +824,67 @@ void PluginManager::addAccount(PsiAccount* account, XMPP::Client* client)
  * Performs basic validity checking on a stanza
  * TODO : populate verifyStanza method and use it
  */
-bool PluginManager::verifyStanza(const QString& stanza)
+bool PluginManager::verifyStanza(const QString &stanza)
 {
     Q_UNUSED(stanza);
     return true;
 }
 
-void PluginManager::applyOptions(const QString& plugin)
+void PluginManager::applyOptions(const QString &plugin)
 {
     if (hosts_.contains(plugin)) {
         hosts_[plugin]->applyOptions();
     }
 }
 
-void PluginManager::restoreOptions(const QString& plugin)
+void PluginManager::restoreOptions(const QString &plugin)
 {
     if (hosts_.contains(plugin)) {
         hosts_[plugin]->restoreOptions();
     }
 }
 
-void PluginManager::addToolBarButton(QObject* parent, QWidget* toolbar, PsiAccount* account, const QString& contact, const QString& plugin)
+void PluginManager::addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
+                                     const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (plugin.isEmpty() || (host->name() == plugin)) {
-            host->addToolBarButton(parent,toolbar, acc_id, contact);
+            host->addToolBarButton(parent, toolbar, acc_id, contact);
         }
     }
 }
 
-bool PluginManager::hasToolBarButton(const QString& plugin) const
-{
-    return hosts_[plugin]->hasToolBarButton();
-}
+bool PluginManager::hasToolBarButton(const QString &plugin) const { return hosts_[plugin]->hasToolBarButton(); }
 
-void PluginManager::addGCToolBarButton(QObject* parent, QWidget* toolbar, PsiAccount* account, const QString& contact, const QString& plugin)
+void PluginManager::addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
+                                       const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost* host, pluginsByPriority_) {
+    foreach (PluginHost *host, pluginsByPriority_) {
         if (plugin.isEmpty() || (host->name() == plugin)) {
-            host->addGCToolBarButton(parent,toolbar, acc_id, contact);
+            host->addGCToolBarButton(parent, toolbar, acc_id, contact);
         }
     }
 }
 
-bool PluginManager::hasGCToolBarButton(const QString& plugin) const
-{
-    return hosts_[plugin]->hasGCToolBarButton();
-}
+bool PluginManager::hasGCToolBarButton(const QString &plugin) const { return hosts_[plugin]->hasGCToolBarButton(); }
 
-void PluginManager::setStatus(int account, const QString& status, const QString& statusMessage)
+void PluginManager::setStatus(int account, const QString &status, const QString &statusMessage)
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         XMPP::Status s(status, statusMessage);
         acc->setStatus(s, false, true);
     }
 }
 
-bool PluginManager::appendSysMsg(int account, const QString& jid, const QString& message)
+bool PluginManager::appendSysMsg(int account, const QString &jid, const QString &message)
 {
     return appendMsgView(account, jid, MessageView::fromPlainText(message, MessageView::System));
 }
 
-bool PluginManager::appendSysHtmlMsg(int account, const QString& jid, const QString& message)
+bool PluginManager::appendSysHtmlMsg(int account, const QString &jid, const QString &message)
 {
     return appendMsgView(account, jid, MessageView::fromHtml(message, MessageView::System));
 }
@@ -912,18 +892,18 @@ bool PluginManager::appendSysHtmlMsg(int account, const QString& jid, const QStr
 bool PluginManager::appendMsgView(int account, const QString &jid, const MessageView &message)
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
-        XMPP::Jid j (jid);
-        ChatDlg *chatDlg = acc->findChatDialogEx(j);
-        if(!chatDlg) {
+    if (acc) {
+        XMPP::Jid j(jid);
+        ChatDlg * chatDlg = acc->findChatDialogEx(j);
+        if (!chatDlg) {
             chatDlg = acc->findChatDialog(j, false);
         }
-        if(chatDlg) {
+        if (chatDlg) {
             chatDlg->dispatchMessage(message);
             return true;
         }
-        auto gcDlg = acc->findDialog<GCMainDlg*>(jid);
-        if(gcDlg) {
+        auto gcDlg = acc->findDialog<GCMainDlg *>(jid);
+        if (gcDlg) {
             gcDlg->dispatchMessage(message);
             return true;
         }
@@ -931,16 +911,17 @@ bool PluginManager::appendMsgView(int account, const QString &jid, const Message
     return false;
 }
 
-bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
+bool PluginManager::appendMsg(int account, const QString &jid, const QString &message, const QString &id,
+                              bool wasEncrypted)
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
-        XMPP::Jid j (jid);
-        ChatDlg *chatDlg = acc->findChatDialogEx(j);
-        if(!chatDlg) {
+    if (acc) {
+        XMPP::Jid j(jid);
+        ChatDlg * chatDlg = acc->findChatDialogEx(j);
+        if (!chatDlg) {
             chatDlg = acc->findChatDialog(j, false);
         }
-        if(chatDlg) {
+        if (chatDlg) {
             XMPP::Message msg;
             msg.setFrom(acc->jid());
             msg.setTo(j);
@@ -956,10 +937,11 @@ bool PluginManager::appendMsg(int account, const QString& jid, const QString& me
     return false;
 }
 
-void PluginManager::createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot)
+void PluginManager::createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
+                                   const char *slot)
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         acc->createNewPluginEvent(account, jid, descr, receiver, slot);
     }
 }
@@ -967,7 +949,7 @@ void PluginManager::createNewEvent(int account, const QString &jid, const QStrin
 void PluginManager::createNewMessageEvent(int account, QDomElement const &element)
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         acc->createNewMessageEvent(element);
     }
 }
@@ -975,14 +957,14 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
 QString PluginManager::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
 {
     QString uuid = QUuid::createUuid().toString();
-    _messageViewJSFilters.insert(priority, {uuid, js});
+    _messageViewJSFilters.insert(priority, { uuid, js });
     _messageViewJSFiltersTimer->start();
     return uuid;
 }
 
 void PluginManager::uninstallChatLogJSDataFilter(const QString &id)
 {
-    QMutableMapIterator<PsiPlugin::Priority,std::pair<QString,QString>> it(_messageViewJSFilters);
+    QMutableMapIterator<PsiPlugin::Priority, std::pair<QString, QString>> it(_messageViewJSFilters);
 
     while (it.hasNext()) {
         if (it.next().value().first == id) {
@@ -1002,108 +984,108 @@ QStringList PluginManager::messageViewJSFilters() const
     ret.reserve(_messageViewJSFilters.size());
     for (int i = PsiPlugin::PriorityHighest; i >= PsiPlugin::PriorityLowest; i--) {
         auto values = _messageViewJSFilters.values(PsiPlugin::Priority(i));
-        for (const auto &p: values) {
+        for (const auto &p : values) {
             ret.append(p.second);
         }
     }
     return ret;
 }
 
-bool PluginManager::isSelf(int account, const QString& jid) const
+bool PluginManager::isSelf(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->isSelf();
     }
     return false;
 }
 
-bool PluginManager::isAgent(int account, const QString& jid) const
+bool PluginManager::isAgent(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->isAgent();
     }
     return false;
 }
 
-bool PluginManager::inList(int account, const QString& jid) const
+bool PluginManager::inList(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->inList();
     }
     return false;
 }
 
-bool PluginManager::isPrivate(int account, const QString& jid) const
+bool PluginManager::isPrivate(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->isPrivate();
     }
     return false;
 }
 
-bool PluginManager::isConference(int account, const QString& jid) const
+bool PluginManager::isConference(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->isConference();
     }
     return false;
 }
 
-QString PluginManager::name(int account, const QString& jid) const
+QString PluginManager::name(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->name();
     }
     return QString();
 }
 
-QString PluginManager::status(int account, const QString& jid) const
+QString PluginManager::status(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->status().typeString();
     }
     return QString();
 }
 
-QString PluginManager::statusMessage(int account, const QString& jid) const
+QString PluginManager::statusMessage(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
-    if(acc) {
+    if (acc) {
         PsiContact *pc = acc->findContact(XMPP::Jid(jid));
-        if(pc)
+        if (pc)
             return pc->status().status();
     }
     return QString();
 }
 
-QStringList PluginManager::resources(int account, const QString& jid) const
+QStringList PluginManager::resources(int account, const QString &jid) const
 {
     QStringList l;
     PsiAccount *pa = accountIds_.account(account);
-    if(pa) {
+    if (pa) {
         UserListItem *u = pa->findFirstRelevant(XMPP::Jid(jid));
-        if(u) {
+        if (u) {
             QMutableListIterator<UserResource> i(u->userResourceList());
             while (i.hasNext()) {
                 l.push_back(i.next().name());
@@ -1113,12 +1095,12 @@ QStringList PluginManager::resources(int account, const QString& jid) const
     return l;
 }
 
-QString PluginManager::realJid(int account, const QString& jid) const
+QString PluginManager::realJid(int account, const QString &jid) const
 {
     PsiAccount *acc = accountIds_.account(account);
     if (acc) {
-      Jid realJid = acc->realJid(XMPP::Jid(jid));
-      return realJid.isNull() ? jid : realJid.full();
+        Jid realJid = acc->realJid(XMPP::Jid(jid));
+        return realJid.isNull() ? jid : realJid.full();
     }
     return jid;
 }
@@ -1127,8 +1109,8 @@ QStringList PluginManager::mucNicks(int account, const QString &mucJid) const
 {
     PsiAccount *acc = accountIds_.account(account);
     if (acc) {
-        auto gcDlg = acc->findDialog<GCMainDlg*>(mucJid);
-        if(gcDlg) {
+        auto gcDlg = acc->findDialog<GCMainDlg *>(mucJid);
+        if (gcDlg) {
             return gcDlg->mucRosterContent();
         }
     }
@@ -1137,7 +1119,7 @@ QStringList PluginManager::mucNicks(int account, const QString &mucJid) const
 
 bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &message) const
 {
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    foreach (PluginHost *host, pluginByFile_.values()) {
         if (host->decryptMessageElement(accountIds_.id(account), message)) {
             return true;
         }
@@ -1147,7 +1129,7 @@ bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &mess
 
 bool PluginManager::encryptMessageElement(PsiAccount *account, QDomElement &message) const
 {
-    foreach (PluginHost* host, pluginByFile_.values()) {
+    foreach (PluginHost *host, pluginByFile_.values()) {
         if (host->encryptMessageElement(accountIds_.id(account), message)) {
             return true;
         }
@@ -1159,8 +1141,8 @@ int AccountIds::appendAccount(PsiAccount *acc)
 {
     int id = -1;
     if (acc) {
-        id = id_keys.size();
-        id_keys[id] = acc;
+        id            = id_keys.size();
+        id_keys[id]   = acc;
         acc_keys[acc] = id;
     }
     return id;
@@ -1181,16 +1163,10 @@ void AccountIds::clear()
     id_keys.clear();
 }
 
-PsiAccount *AccountIds::account(int id) const
-{
-    return id_keys.value(id, nullptr);
-}
+PsiAccount *AccountIds::account(int id) const { return id_keys.value(id, nullptr); }
 
-int AccountIds::id(PsiAccount *acc) const
-{
-    return acc_keys.value(acc, -1);
-}
+int AccountIds::id(PsiAccount *acc) const { return acc_keys.value(acc, -1); }
 
-PluginManager* PluginManager::instance_ = nullptr;
-const QString PluginManager::loadOptionPrefix = "plugins.auto-load";
-const QString PluginManager::pluginOptionPrefix = "plugins.options";
+PluginManager *PluginManager::instance_          = nullptr;
+const QString  PluginManager::loadOptionPrefix   = "plugins.auto-load";
+const QString  PluginManager::pluginOptionPrefix = "plugins.options";

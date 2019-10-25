@@ -25,19 +25,16 @@
 // SxeRemoveEdit
 //----------------------------------------------------------------------------
 
-SxeRemoveEdit::SxeRemoveEdit(const QString rid, bool remote) : SxeEdit(rid, remote) {
+SxeRemoveEdit::SxeRemoveEdit(const QString rid, bool remote) : SxeEdit(rid, remote) {}
 
+SxeRemoveEdit::SxeRemoveEdit(const QDomElement &sxeElement, bool remote) : SxeEdit(sxeElement.attribute("rid"), remote)
+{
 }
 
-SxeRemoveEdit::SxeRemoveEdit(const QDomElement &sxeElement, bool remote) : SxeEdit(sxeElement.attribute("rid"), remote) {
+SxeEdit::EditType SxeRemoveEdit::type() const { return SxeEdit::Remove; }
 
-}
-
-SxeEdit::EditType SxeRemoveEdit::type() const {
-    return SxeEdit::Remove;
-}
-
-QDomElement SxeRemoveEdit::xml(QDomDocument &doc) const {
+QDomElement SxeRemoveEdit::xml(QDomDocument &doc) const
+{
     QDomElement edit = doc.createElementNS(SXENS, "remove");
 
     edit.setAttribute("rid", rid_);

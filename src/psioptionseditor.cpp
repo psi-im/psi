@@ -24,23 +24,24 @@ signals:
 
 protected slots:
     void finished();
+
 protected:
     struct supportedType {
-        const char *name;
+        const char *   name;
         QVariant::Type typ;
     };
     static supportedType supportedTypes[];
 };
 
-OptionEditor::supportedType OptionEditor::supportedTypes[] = {
-    {"bool", QVariant::Bool},
-    {"int", QVariant::Int},
-    {"QKeySequence", QVariant::KeySequence},
-    {"QSize", QVariant::Size},
-    {"QString", QVariant::String},
-    {"QColor", QVariant::Color},
-//    {"QStringList", QVariant::StringList},  doesn't work
-    {nullptr, QVariant::Invalid}};
+OptionEditor::supportedType OptionEditor::supportedTypes[]
+    = { { "bool", QVariant::Bool },
+        { "int", QVariant::Int },
+        { "QKeySequence", QVariant::KeySequence },
+        { "QSize", QVariant::Size },
+        { "QString", QVariant::String },
+        { "QColor", QVariant::Color },
+        //    {"QStringList", QVariant::StringList},  doesn't work
+        { nullptr, QVariant::Invalid } };
 
 OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 {
@@ -53,7 +54,7 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
         setWindowTitle(CAP(tr("Edit Option %1").arg(name_)));
     }
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(finished()));
-    for (int i=0; supportedTypes[i].name; i++) {
+    for (int i = 0; supportedTypes[i].name; i++) {
         cb_typ->addItem(supportedTypes[i].name);
     }
     le_option->setText(name_);
@@ -62,8 +63,8 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
         lb_comment->setText(PsiOptions::instance()->getComment(name_));
     }
     if (value_.isValid()) {
-        bool ok=false;
-        for (int i=0; supportedTypes[i].name; i++) {
+        bool ok = false;
+        for (int i = 0; supportedTypes[i].name; i++) {
             if (value_.type() == supportedTypes[i].typ) {
                 cb_typ->setCurrentIndex(i);
                 le_value->setText(value_.toString());
@@ -72,8 +73,8 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
             }
         }
         if (!ok) {
-            QMessageBox::critical(this, tr("Psi: Option Editor"),
-                   tr("Can't edit this type of setting, sorry."), QMessageBox::Close);
+            QMessageBox::critical(this, tr("Psi: Option Editor"), tr("Can't edit this type of setting, sorry."),
+                                  QMessageBox::Close);
             deleteLater();
         }
     }
@@ -86,31 +87,31 @@ void OptionEditor::finished()
     QString option = le_option->text();
     if (option.isEmpty() || option.endsWith(".") || option.contains("..") || !PsiOptions::isValidName(option)) {
         QMessageBox::critical(this, tr("Psi: Option Editor"),
-            tr("Please enter option name.\n\n"
-            "Option names may not be empty, end in '.' or contain '..'."), QMessageBox::Close);
+                              tr("Please enter option name.\n\n"
+                                 "Option names may not be empty, end in '.' or contain '..'."),
+                              QMessageBox::Close);
         return;
     }
-    QVariant strval(le_value->text());
-    QVariant::Type type = supportedTypes[cb_typ->currentIndex()].typ;
-    QVariant newval = strval;
+    QVariant       strval(le_value->text());
+    QVariant::Type type   = supportedTypes[cb_typ->currentIndex()].typ;
+    QVariant       newval = strval;
     newval.convert(int(type));
     PsiOptions::instance()->setOption(option, newval);
 
     accept();
 }
 
-PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
-        : QWidget(parent)
+PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose, true);
-    setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    o_ = PsiOptions::instance();
-    tm_ = new OptionsTreeModel(o_, this);
+    o_   = PsiOptions::instance();
+    tm_  = new OptionsTreeModel(o_, this);
     tpm_ = new QSortFilterProxyModel(this);
     tpm_->setSourceModel(tm_);
 
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setSpacing(0);
     layout->setMargin(0);
 
@@ -118,9 +119,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     filterLe->setProperty("isOption", false);
     filterLe->setToolTip(tr("Options filter"));
     layout->addWidget(filterLe);
-    connect(filterLe, &QLineEdit::textChanged, this, [this, filterLe](){
-        tpm_->setFilterWildcard(filterLe->text());
-    });
+    connect(filterLe, &QLineEdit::textChanged, this, [this, filterLe]() { tpm_->setFilterWildcard(filterLe->text()); });
 
     tv_ = new QTreeView(this);
     tv_->setModel(tpm_);
@@ -154,14 +153,14 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
     layout->addWidget(lb_comment);
 
-    QHBoxLayout* buttonLine = new QHBoxLayout;
+    QHBoxLayout *buttonLine = new QHBoxLayout;
     layout->addLayout(buttonLine);
 
     cb_ = new QCheckBox(this);
     cb_->setText(tr("Flat"));
     cb_->setToolTip(tr("Display all options as a flat list."));
     cb_->setProperty("isOption", false);
-    connect(cb_, &QCheckBox::toggled, tm_, [this, filterLe](bool b){
+    connect(cb_, &QCheckBox::toggled, tm_, [this, filterLe](bool b) {
         if (tm_->setFlat(b)) {
             if (!b) {
                 tpm_->setFilterWildcard(QString());
@@ -193,7 +192,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
     if (parent) {
         pb_detach = new QToolButton(this);
         pb_detach->setIcon(IconsetFactory::iconPixmap("psi/advanced"));
-        pb_detach->setIconSize(QSize(16,16));
+        pb_detach->setIconSize(QSize(16, 16));
         pb_detach->setToolTip(tr("Open a detached option editor window."));
         buttonLine->addWidget(pb_detach);
         connect(pb_detach, SIGNAL(clicked()), SLOT(detach()));
@@ -202,21 +201,23 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
         setWindowTitle(CAP(tr("Advanced")));
     }
 
-    connect(tv_->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)), SLOT(selectionChanged(const QModelIndex &)));
-    connect(tv_,SIGNAL(activated(const QModelIndex&)),SLOT(tv_edit(const QModelIndex&)));
-    connect(tv_,SIGNAL(expanded(const QModelIndex&)), SLOT(updateWidth()));
-    connect(tv_,SIGNAL(collapsed(const QModelIndex&)), SLOT(updateWidth()));
+    connect(tv_->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
+            SLOT(selectionChanged(const QModelIndex &)));
+    connect(tv_, SIGNAL(activated(const QModelIndex &)), SLOT(tv_edit(const QModelIndex &)));
+    connect(tv_, SIGNAL(expanded(const QModelIndex &)), SLOT(updateWidth()));
+    connect(tv_, SIGNAL(collapsed(const QModelIndex &)), SLOT(updateWidth()));
 
-    tv_->setCurrentIndex(tpm_->index(0,0, QModelIndex()));
+    tv_->setCurrentIndex(tpm_->index(0, 0, QModelIndex()));
 
-    if (!parent) show();
+    if (!parent)
+        show();
 }
 
-void PsiOptionsEditor::tv_edit( const QModelIndex &idx)
+void PsiOptionsEditor::tv_edit(const QModelIndex &idx)
 {
-    //QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
-    QVariant value = PsiOptions::instance()->getOption(option);
+    // QModelIndex idx = tv_->currentIndex();
+    QString  option = tm_->indexToOptionName(tpm_->mapToSource(idx));
+    QVariant value  = PsiOptions::instance()->getOption(option);
     if (value.type() == QVariant::Bool) {
         PsiOptions::instance()->setOption(option, QVariant(!value.toBool()));
     } else if (value.type() == QVariant::Color) {
@@ -238,12 +239,12 @@ void PsiOptionsEditor::updateWidth()
     }
 }
 
-void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx_f)
+void PsiOptionsEditor::selectionChanged(const QModelIndex &idx_f)
 {
-    QModelIndex idx = tpm_->mapToSource(idx_f);
-    QString type = tm_->data(idx.sibling(idx.row(), 1), Qt::DisplayRole).toString();
-    QString comment = tm_->data(idx.sibling(idx.row(), 3), Qt::DisplayRole).toString();
-    lb_path->setText("<b>"+TextUtil::escape(tm_->indexToOptionName(idx))+"</b>");
+    QModelIndex idx     = tpm_->mapToSource(idx_f);
+    QString     type    = tm_->data(idx.sibling(idx.row(), 1), Qt::DisplayRole).toString();
+    QString     comment = tm_->data(idx.sibling(idx.row(), 3), Qt::DisplayRole).toString();
+    lb_path->setText("<b>" + TextUtil::escape(tm_->indexToOptionName(idx)) + "</b>");
     lb_comment->setText(comment);
     updateWidth();
     QString option = tm_->indexToOptionName(idx);
@@ -256,25 +257,24 @@ void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx_f)
         pb_edit->setEnabled(true);
     }
     lb_type->setText("&nbsp;&nbsp;&nbsp;" + typ);
-
 }
 
 void PsiOptionsEditor::add()
 {
-    QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
+    QModelIndex idx    = tv_->currentIndex();
+    QString     option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     if (o_->isInternalNode(option)) {
         option += ".";
     } else {
-        option = option.left(option.lastIndexOf(".")+1);
+        option = option.left(option.lastIndexOf(".") + 1);
     }
     new OptionEditor(true, option, QVariant());
 }
 
 void PsiOptionsEditor::edit()
 {
-    QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
+    QModelIndex idx    = tv_->currentIndex();
+    QString     option = tm_->indexToOptionName(tpm_->mapToSource(idx));
     if (!o_->isInternalNode(option)) {
         new OptionEditor(false, option, PsiOptions::instance()->getOption(option));
     }
@@ -282,42 +282,38 @@ void PsiOptionsEditor::edit()
 
 void PsiOptionsEditor::deleteit()
 {
-    QModelIndex idx = tv_->currentIndex();
-    QString option = tm_->indexToOptionName(tpm_->mapToSource(idx));
-    bool sub = false;
-    QString confirm = tr("Really delete options %1?");
+    QModelIndex idx     = tv_->currentIndex();
+    QString     option  = tm_->indexToOptionName(tpm_->mapToSource(idx));
+    bool        sub     = false;
+    QString     confirm = tr("Really delete options %1?");
     if (o_->isInternalNode(option)) {
-        sub = true;
+        sub     = true;
         confirm = tr("Really delete all options starting with %1.?");
     }
-    if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi+: Option Editor"),
-                   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
-        PsiOptions::instance()->removeOption( option, sub);
+    if (QMessageBox::Yes
+        == QMessageBox::warning(this, tr("Psi+: Option Editor"), confirm.arg(option),
+                                QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
+        PsiOptions::instance()->removeOption(option, sub);
     }
 }
 
 void PsiOptionsEditor::resetit()
 {
-    QModelIndex idx = tpm_->mapToSource(tv_->currentIndex());
-    QString option = tm_->indexToOptionName(idx);
-    QString confirm = tr("Really reset options %1 to default value?");
+    QModelIndex idx     = tpm_->mapToSource(tv_->currentIndex());
+    QString     option  = tm_->indexToOptionName(idx);
+    QString     confirm = tr("Really reset options %1 to default value?");
     if (o_->isInternalNode(option)) {
         confirm = tr("Really reset all options starting with %1. to default value?");
     }
-    if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi+: Option Editor"),
-                   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
+    if (QMessageBox::Yes
+        == QMessageBox::warning(this, tr("Psi+: Option Editor"), confirm.arg(option),
+                                QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
         PsiOptions::instance()->resetOption(option);
     }
 }
 
-void PsiOptionsEditor::detach()
-{
-    new PsiOptionsEditor();
-}
+void PsiOptionsEditor::detach() { new PsiOptionsEditor(); }
 
-void PsiOptionsEditor::bringToFront()
-{
-    ::bringToFront(this, true);
-}
+void PsiOptionsEditor::bringToFront() { ::bringToFront(this, true); }
 
 #include "psioptionseditor.moc"

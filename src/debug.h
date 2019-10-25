@@ -40,18 +40,17 @@
 #define WARNING() qWarning().noquote()
 #define FATAL() QDebug(QtMsgType::QtFatalMsg).noquote()
 
-class SlowTimer
-{
+class SlowTimer {
 public:
     SlowTimer(const QString &path, int line, int maxTime = 0, const QString &message = QString());
     ~SlowTimer();
 
 private:
     QElapsedTimer _timer;
-    QString _path;
-    int _line;
-    QString _message;
-    int _maxTime;
+    QString       _path;
+    int           _line;
+    QString       _message;
+    int           _maxTime;
 };
 
 #define SLOW_TIMER(...) SlowTimer slowTimer(__FILE__, __LINE__, __VA_ARGS__)

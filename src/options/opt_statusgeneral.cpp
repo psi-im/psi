@@ -14,30 +14,28 @@
 #include <QTextEdit>
 #include <QWhatsThis>
 
-class OptStatusGeneralUI : public QWidget, public Ui::OptStatusGeneral
-{
+class OptStatusGeneralUI : public QWidget, public Ui::OptStatusGeneral {
 public:
     OptStatusGeneralUI() : QWidget() { setupUi(this); }
 };
 
-OptionsTabStatusGeneral::OptionsTabStatusGeneral(QObject *parent)
-    : OptionsTab(parent, "status_general", "", tr("General"), tr("General status preferences"))
+OptionsTabStatusGeneral::OptionsTabStatusGeneral(QObject *parent) :
+    OptionsTab(parent, "status_general", "", tr("General"), tr("General status preferences"))
 {
 }
 
-OptionsTabStatusGeneral::~OptionsTabStatusGeneral()
-{
-}
+OptionsTabStatusGeneral::~OptionsTabStatusGeneral() {}
 
 QWidget *OptionsTabStatusGeneral::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new OptStatusGeneralUI();
+    w                     = new OptStatusGeneralUI();
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
-    connect(d->lw_presets, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(currentItemChanged(QListWidgetItem *, QListWidgetItem *)));
+    connect(d->lw_presets, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+            SLOT(currentItemChanged(QListWidgetItem *, QListWidgetItem *)));
     connect(d->lw_presets, SIGNAL(doubleClicked(const QModelIndex &)), SLOT(presetDoubleClicked(const QModelIndex &)));
     connect(d->pb_spNew, SIGNAL(clicked()), SLOT(newStatusPreset()));
     connect(d->pb_spEdit, SIGNAL(clicked()), SLOT(editStatusPreset()));
@@ -46,7 +44,7 @@ QWidget *OptionsTabStatusGeneral::widget()
     connect(d->bb_selPreset, SIGNAL(accepted()), SLOT(statusPresetAccepted()));
     connect(d->bb_selPreset, SIGNAL(rejected()), SLOT(statusPresetRejected()));
 
-    PriorityValidator* prValidator = new PriorityValidator(d->le_sp_priority);
+    PriorityValidator *prValidator = new PriorityValidator(d->le_sp_priority);
     d->le_sp_priority->setValidator(prValidator);
 
     spContextMenu = new QMenu(w);
@@ -54,8 +52,8 @@ QWidget *OptionsTabStatusGeneral::widget()
     spContextMenu->addAction(tr("Delete"), this, SLOT(deleteStatusPreset()));
     connect(d->lw_presets, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showMenuForPreset(const QPoint &)));
 
-    PsiOptions* o = PsiOptions::instance();
-    int askCount = 6;
+    PsiOptions *o        = PsiOptions::instance();
+    int         askCount = 6;
     if (!o->getOption("options.ui.menu.status.chat").toBool()) {
         d->ck_askChat->hide();
         askCount--;
@@ -66,61 +64,53 @@ QWidget *OptionsTabStatusGeneral::widget()
     }
 
     if (askCount != 6) {
-        reorderGridLayout(d->gridLayout, askCount == 4 ? 2 : 3); //4 items in 2 columns look better
+        reorderGridLayout(d->gridLayout, askCount == 4 ? 2 : 3); // 4 items in 2 columns look better
     }
 
-    d->pb_spNew->setWhatsThis(
-        tr("Press this button to create a new status message preset."));
-    d->pb_spDelete->setWhatsThis(
-        tr("Press this button to delete a status message preset."));
+    d->pb_spNew->setWhatsThis(tr("Press this button to create a new status message preset."));
+    d->pb_spDelete->setWhatsThis(tr("Press this button to delete a status message preset."));
     /*TODO d->cb_preset->setWhatsThis(
         tr("Use this list to select a status message preset"
         " to view or edit in the box to the right. You can"
         " also sort them manually with drag and drop."));*/
-    d->te_sp->setWhatsThis(
-        tr("You may edit the message here for the currently selected"
-        " status message preset in the list to the above."));
-    d->cb_sp_status->setWhatsThis(
-        tr("Use this to choose the status that will be assigned to this preset"));
-    d->le_sp_priority->setWhatsThis(
-        tr("Fill in the priority that will be assigned to this preset."
-           " If no priority is given, the default account priority will be used."));
+    d->te_sp->setWhatsThis(tr("You may edit the message here for the currently selected"
+                              " status message preset in the list to the above."));
+    d->cb_sp_status->setWhatsThis(tr("Use this to choose the status that will be assigned to this preset"));
+    d->le_sp_priority->setWhatsThis(tr("Fill in the priority that will be assigned to this preset."
+                                       " If no priority is given, the default account priority will be used."));
 
-    d->ck_askOnline->setWhatsThis(
-        tr("Jabber allows you to put extended status messages on"
-        " all status types.  Normally, Psi does not prompt you for"
-        " an extended message when you set your status to \"online\"."
-        "  Check this option if you want to have this prompt."));
-    //TODO write whatsthis messages for other widgets
+    d->ck_askOnline->setWhatsThis(tr("Jabber allows you to put extended status messages on"
+                                     " all status types.  Normally, Psi does not prompt you for"
+                                     " an extended message when you set your status to \"online\"."
+                                     "  Check this option if you want to have this prompt."));
+    // TODO write whatsthis messages for other widgets
     return w;
 }
 
 void OptionsTabStatusGeneral::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    OptionsTree* o = PsiOptions::instance();
+    OptionsTree *       o = PsiOptions::instance();
 
-    if (d->gbSelectedPreset->isEnabled())
-    {
+    if (d->gbSelectedPreset->isEnabled()) {
         statusPresetRejected();
         switchPresetMode(false);
     }
-    //Unselect items
+    // Unselect items
     d->lw_presets->setCurrentRow(-1);
 
-    //Delete all presets
-    foreach(QString key, o->getChildOptionNames("options.status.presets", true, true)) {
+    // Delete all presets
+    foreach (QString key, o->getChildOptionNames("options.status.presets", true, true)) {
         o->removeOption(key, true);
     }
 
-    //Recreate presets considering order from list widget
-    for (int i = 0; i < d->lw_presets->count(); i++)
-    {
-        QListWidgetItem* item = d->lw_presets->item(i);
-        StatusPreset sp = presets[item->text()];
+    // Recreate presets considering order from list widget
+    for (int i = 0; i < d->lw_presets->count(); i++) {
+        QListWidgetItem *item = d->lw_presets->item(i);
+        StatusPreset     sp   = presets[item->text()];
         sp.filterStatus();
         sp.toOptions(o);
     }
@@ -132,7 +122,8 @@ void OptionsTabStatusGeneral::applyOptions()
     o->setOption("options.status.ask-for-message-on-dnd", d->ck_askDnd->isChecked());
     o->setOption("options.status.ask-for-message-on-offline", d->ck_askOffline->isChecked());
 
-    o->setOption("options.status.presets-in-status-menus", d->cb_presetsMenus->itemData(d->cb_presetsMenus->currentIndex()).toString());
+    o->setOption("options.status.presets-in-status-menus",
+                 d->cb_presetsMenus->itemData(d->cb_presetsMenus->currentIndex()).toString());
 
     o->setOption("options.status.show-only-online-offline", d->ck_onlyOnOff->isChecked());
     o->setOption("options.status.show-choose", d->ck_showChoose->isChecked());
@@ -142,26 +133,27 @@ void OptionsTabStatusGeneral::applyOptions()
 
 void OptionsTabStatusGeneral::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    OptionsTree* o = PsiOptions::instance();
+    OptionsTree *       o = PsiOptions::instance();
 
-    //TODO: Restore function is calling 3 times! Do something with it! Or maybe it's normal?
+    // TODO: Restore function is calling 3 times! Do something with it! Or maybe it's normal?
     d->lw_presets->clear();
     presets.clear();
 
-    foreach(QVariant name, o->mapKeyList("options.status.presets", true)) {
+    foreach (QVariant name, o->mapKeyList("options.status.presets", true)) {
         StatusPreset sp;
         sp.fromOptions(o, name.toString());
         sp.filterStatus();
 
         presets[name.toString()] = sp;
 #ifdef Q_OS_MAC
-        QListWidgetItem* item = new QListWidgetItem(sp.name(), d->lw_presets);
+        QListWidgetItem *item = new QListWidgetItem(sp.name(), d->lw_presets);
 #else
-        QListWidgetItem* item = new QListWidgetItem(PsiIconset::instance()->status(sp.status()).icon(), sp.name(), d->lw_presets);
+        QListWidgetItem *item
+            = new QListWidgetItem(PsiIconset::instance()->status(sp.status()).icon(), sp.name(), d->lw_presets);
 #endif
         d->lw_presets->addItem(item);
     }
@@ -169,12 +161,12 @@ void OptionsTabStatusGeneral::restoreOptions()
     cleanupSelectedPresetGroup();
     switchPresetMode(false);
 
-    d->ck_askOnline->setChecked( o->getOption("options.status.ask-for-message-on-online").toBool() );
-    d->ck_askChat->setChecked( o->getOption("options.status.ask-for-message-on-chat").toBool() );
-    d->ck_askAway->setChecked( o->getOption("options.status.ask-for-message-on-away").toBool() );
-    d->ck_askXa->setChecked( o->getOption("options.status.ask-for-message-on-xa").toBool() );
-    d->ck_askDnd->setChecked( o->getOption("options.status.ask-for-message-on-dnd").toBool() );
-    d->ck_askOffline->setChecked( o->getOption("options.status.ask-for-message-on-offline").toBool() );
+    d->ck_askOnline->setChecked(o->getOption("options.status.ask-for-message-on-online").toBool());
+    d->ck_askChat->setChecked(o->getOption("options.status.ask-for-message-on-chat").toBool());
+    d->ck_askAway->setChecked(o->getOption("options.status.ask-for-message-on-away").toBool());
+    d->ck_askXa->setChecked(o->getOption("options.status.ask-for-message-on-xa").toBool());
+    d->ck_askDnd->setChecked(o->getOption("options.status.ask-for-message-on-dnd").toBool());
+    d->ck_askOffline->setChecked(o->getOption("options.status.ask-for-message-on-offline").toBool());
 
     d->cb_presetsMenus->setItemData(0, "submenu");
     d->cb_presetsMenus->setItemData(1, "yes");
@@ -182,20 +174,17 @@ void OptionsTabStatusGeneral::restoreOptions()
     int mode = d->cb_presetsMenus->findData(o->getOption("options.status.presets-in-status-menus").toString());
     d->cb_presetsMenus->setCurrentIndex(mode == -1 ? 0 : mode);
 
-    d->ck_onlyOnOff->setChecked( o->getOption("options.status.show-only-online-offline").toBool() );
-    d->ck_showChoose->setChecked( o->getOption("options.status.show-choose").toBool() );
-    d->ck_showReconnect->setChecked( o->getOption("options.status.show-reconnect").toBool() );
-    d->ck_showEditPresets->setChecked( o->getOption("options.status.show-edit-presets").toBool() );
+    d->ck_onlyOnOff->setChecked(o->getOption("options.status.show-only-online-offline").toBool());
+    d->ck_showChoose->setChecked(o->getOption("options.status.show-choose").toBool());
+    d->ck_showReconnect->setChecked(o->getOption("options.status.show-reconnect").toBool());
+    d->ck_showEditPresets->setChecked(o->getOption("options.status.show-edit-presets").toBool());
 }
 
-void OptionsTabStatusGeneral::setData(PsiCon *, QWidget *parentDialog)
-{
-    parentWidget = parentDialog;
-}
+void OptionsTabStatusGeneral::setData(PsiCon *, QWidget *parentDialog) { parentWidget = parentDialog; }
 
-void OptionsTabStatusGeneral::currentItemChanged(QListWidgetItem * current, QListWidgetItem * /*previous*/ )
+void OptionsTabStatusGeneral::currentItemChanged(QListWidgetItem *current, QListWidgetItem * /*previous*/)
 {
-    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI*>(w);
+    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     d->pb_spEdit->setEnabled(current != nullptr);
     d->pb_spDelete->setEnabled(current != nullptr);
     if (current)
@@ -208,7 +197,7 @@ void OptionsTabStatusGeneral::loadStatusPreset()
 {
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
-    QListWidgetItem* item = d->lw_presets->currentItem();
+    QListWidgetItem *item = d->lw_presets->currentItem();
     if (!item)
         return;
 
@@ -228,7 +217,7 @@ void OptionsTabStatusGeneral::saveStatusPreset()
 {
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
-    QListWidgetItem* item = d->lw_presets->currentItem();
+    QListWidgetItem *item = d->lw_presets->currentItem();
     if (!item)
         return;
 
@@ -240,8 +229,7 @@ void OptionsTabStatusGeneral::saveStatusPreset()
     sp.setPriority(d->le_sp_priority->text());
     sp.setStatus(d->cb_sp_status->status());
     sp.filterStatus();
-    if (oldName != sp.name())
-    {
+    if (oldName != sp.name()) {
         presets.remove(oldName);
         item->setText(sp.name());
     }
@@ -257,7 +245,7 @@ void OptionsTabStatusGeneral::newStatusPreset()
 
     presets[""] = StatusPreset();
     d->lw_presets->addItem("");
-    d->lw_presets->setCurrentRow(d->lw_presets->count()-1);
+    d->lw_presets->setCurrentRow(d->lw_presets->count() - 1);
 
     loadStatusPreset();
 
@@ -266,29 +254,28 @@ void OptionsTabStatusGeneral::newStatusPreset()
 
 void OptionsTabStatusGeneral::deleteStatusPreset()
 {
-    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    int current = d->lw_presets->currentRow();
+    OptStatusGeneralUI *d       = static_cast<OptStatusGeneralUI *>(w);
+    int                 current = d->lw_presets->currentRow();
     if (current == -1)
         return;
 
-    QListWidgetItem* item = d->lw_presets->takeItem(current);
+    QListWidgetItem *item = d->lw_presets->takeItem(current);
     presets.remove(item->text());
 
     // select a new entry if possible
-    if(d->lw_presets->count() > 0) {
-        d->lw_presets->setCurrentRow(d->lw_presets->count()-1);
-    }
-    else
+    if (d->lw_presets->count() > 0) {
+        d->lw_presets->setCurrentRow(d->lw_presets->count() - 1);
+    } else
         cleanupSelectedPresetGroup();
 
-    //Emit dataChanged only if we delete existing item and not cancelling creating of new one
+    // Emit dataChanged only if we delete existing item and not cancelling creating of new one
     if (!item->text().isEmpty())
         emit dataChanged();
 
     delete item;
 }
 
-void OptionsTabStatusGeneral::statusMenusIndexChanged ( int index )
+void OptionsTabStatusGeneral::statusMenusIndexChanged(int index)
 {
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
     if (index == -1 || d->cb_presetsMenus->itemData(d->cb_presetsMenus->currentIndex()).toString() == "no")
@@ -299,22 +286,21 @@ void OptionsTabStatusGeneral::statusMenusIndexChanged ( int index )
 
 void OptionsTabStatusGeneral::showMenuForPreset(const QPoint &point)
 {
-    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    QListWidgetItem* item = d->lw_presets->itemAt(point);
-    if (item)
-    {
-        //paranoia: we must be sure item is selected
+    OptStatusGeneralUI *d    = static_cast<OptStatusGeneralUI *>(w);
+    QListWidgetItem *   item = d->lw_presets->itemAt(point);
+    if (item) {
+        // paranoia: we must be sure item is selected
         d->lw_presets->setCurrentItem(item);
 
-        //Show menu
+        // Show menu
         spContextMenu->exec(d->lw_presets->mapToGlobal(point));
     }
 }
 
 void OptionsTabStatusGeneral::editStatusPreset()
 {
-    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    int current = d->lw_presets->currentRow();
+    OptStatusGeneralUI *d       = static_cast<OptStatusGeneralUI *>(w);
+    int                 current = d->lw_presets->currentRow();
     if (current == -1)
         return;
 
@@ -334,22 +320,17 @@ void OptionsTabStatusGeneral::cleanupSelectedPresetGroup()
 
 void OptionsTabStatusGeneral::statusPresetAccepted()
 {
-    OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
-    QListWidgetItem* item = d->lw_presets->currentItem();
+    OptStatusGeneralUI *d    = static_cast<OptStatusGeneralUI *>(w);
+    QListWidgetItem *   item = d->lw_presets->currentItem();
     if (!item)
         return;
 
     QString newName = d->le_spName->text();
-    if(newName.trimmed().isEmpty())
-    {
+    if (newName.trimmed().isEmpty()) {
         QMessageBox::critical(parentWidget, tr("Error"), tr("Can't create a blank preset!"));
-    }
-    else if(newName != item->text() && presets.contains(newName))
-    {
+    } else if (newName != item->text() && presets.contains(newName)) {
         QMessageBox::critical(parentWidget, tr("Error"), tr("You already have a preset with that name!"));
-    }
-    else
-    {
+    } else {
         saveStatusPreset();
         switchPresetMode(false);
         loadStatusPreset();
@@ -359,22 +340,19 @@ void OptionsTabStatusGeneral::statusPresetAccepted()
 
 void OptionsTabStatusGeneral::statusPresetRejected()
 {
-    //TODO almost all functions have this line, GET RID OF IT
+    // TODO almost all functions have this line, GET RID OF IT
     OptStatusGeneralUI *d = static_cast<OptStatusGeneralUI *>(w);
 
     switchPresetMode(false);
-    QListWidgetItem* item = d->lw_presets->currentItem();
+    QListWidgetItem *item = d->lw_presets->currentItem();
     if (!item)
         return;
 
-    if (item->text().isEmpty())
-    {
-        //Cancel creating new item
+    if (item->text().isEmpty()) {
+        // Cancel creating new item
         deleteStatusPreset();
-    }
-    else
-    {
-        //Cancel editing, just refresh Selected Preset group for viewing
+    } else {
+        // Cancel editing, just refresh Selected Preset group for viewing
         loadStatusPreset();
     }
 }
@@ -391,7 +369,4 @@ void OptionsTabStatusGeneral::switchPresetMode(bool toEdit)
     emit enableDlgCommonWidgets(!toEdit);
 }
 
-void OptionsTabStatusGeneral::presetDoubleClicked(const QModelIndex & /*index*/ )
-{
-    editStatusPreset();
-}
+void OptionsTabStatusGeneral::presetDoubleClicked(const QModelIndex & /*index*/) { editStatusPreset(); }

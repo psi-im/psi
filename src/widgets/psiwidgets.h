@@ -25,26 +25,25 @@
 #include <QtUiPlugin/QDesignerCustomWidgetInterface>
 #include <QtUiPlugin/QDesignerExportWidget>
 
-class QDESIGNER_WIDGET_EXPORT PsiWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
-{
+class QDESIGNER_WIDGET_EXPORT PsiWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface {
     Q_OBJECT
-    Q_INTERFACES( QDesignerCustomWidgetInterface )
+    Q_INTERFACES(QDesignerCustomWidgetInterface)
 public:
     PsiWidgetPlugin(QObject *parent = 0);
 
     virtual QWidget *createWidget(QWidget *parent);
-    virtual QString name() const;
-    virtual QString group() const;
-    virtual QString toolTip() const;
-    virtual QString whatsThis() const;
-    virtual QString includeFile() const;
+    virtual QString  name() const;
+    virtual QString  group() const;
+    virtual QString  toolTip() const;
+    virtual QString  whatsThis() const;
+    virtual QString  includeFile() const;
 
     virtual QString codeTemplate() const;
     virtual QString domXml() const;
-    virtual QIcon icon() const;
-    virtual bool isContainer() const;
+    virtual QIcon   icon() const;
+    virtual bool    isContainer() const;
 
-    void initialize( QDesignerFormEditorInterface * );
+    void initialize(QDesignerFormEditorInterface *);
     bool isInitialized() const;
 
 private:

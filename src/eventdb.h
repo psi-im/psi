@@ -30,26 +30,24 @@
 #include <QSharedPointer>
 #include <QTimer>
 
-class EDBItem
-{
+class EDBItem {
 public:
     EDBItem(const PsiEvent::Ptr &, const QString &id);
     ~EDBItem();
 
-    PsiEvent::Ptr event() const;
-    const QString & id() const;
+    PsiEvent::Ptr  event() const;
+    const QString &id() const;
 
 private:
-    QString v_id;
+    QString       v_id;
     PsiEvent::Ptr e;
 };
 
 typedef QSharedPointer<EDBItem> EDBItemPtr;
-typedef QList<EDBItemPtr> EDBResult;
+typedef QList<EDBItemPtr>       EDBResult;
 
 class EDB;
-class EDBHandle : public QObject
-{
+class EDBHandle : public QObject {
     Q_OBJECT
 public:
     enum { Read, Write, Erase };
@@ -62,11 +60,11 @@ public:
     void append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
     void erase(const QString &accId, const XMPP::Jid &);
 
-    bool busy() const;
+    bool            busy() const;
     const EDBResult result() const;
-    bool writeSuccess() const;
-    int lastRequestType() const;
-    int beginRow() const;
+    bool            writeSuccess() const;
+    int             lastRequestType() const;
+    int             beginRow() const;
 
 signals:
     void finished();
@@ -78,40 +76,43 @@ private:
     friend class EDB;
     void edb_resultReady(EDBResult);
     void edb_writeFinished(bool);
-    int listeningFor() const;
+    int  listeningFor() const;
 };
 
-class EDB : public QObject
-{
+class EDB : public QObject {
     Q_OBJECT
 public:
     enum { Forward, Backward };
     enum { Contact = 1, GroupChatContact = 2 };
     enum { SeparateAccounts = 1, PrivateContacts = 2, AllContacts = 4, AllAccounts = 8 };
-    struct ContactItem
-    {
+    struct ContactItem {
         QString   accId;
         XMPP::Jid jid;
-        ContactItem(const QString &aId, XMPP::Jid j) { accId = aId; jid = j; }
+        ContactItem(const QString &aId, XMPP::Jid j)
+        {
+            accId = aId;
+            jid   = j;
+        }
     };
 
     EDB(PsiCon *psi);
-    virtual ~EDB()=0;
-    virtual int features() const = 0;
-    virtual QList<ContactItem> contacts(const QString &accId, int type) = 0;
-    virtual quint64 eventsCount(const QString &accId, const XMPP::Jid &jid) = 0;
-    virtual QString getStorageParam(const QString &key) = 0;
-    virtual void setStorageParam(const QString &key, const QString &val) = 0;
+    virtual ~EDB()                                                                     = 0;
+    virtual int                features() const                                        = 0;
+    virtual QList<ContactItem> contacts(const QString &accId, int type)                = 0;
+    virtual quint64            eventsCount(const QString &accId, const XMPP::Jid &jid) = 0;
+    virtual QString            getStorageParam(const QString &key)                     = 0;
+    virtual void               setStorageParam(const QString &key, const QString &val) = 0;
 
 protected:
-    int genUniqueId() const;
-    virtual int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len)=0;
-    virtual int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int)=0;
-    virtual int find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction)=0;
-    virtual int erase(const QString &accId, const XMPP::Jid &)=0;
-    void resultReady(int, EDBResult, int);
-    void writeFinished(int, bool);
-    PsiCon *psi();
+    int         genUniqueId() const;
+    virtual int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len)
+        = 0;
+    virtual int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int)                         = 0;
+    virtual int find(const QString &accId, const QString &, const XMPP::Jid &, const QDateTime date, int direction) = 0;
+    virtual int erase(const QString &accId, const XMPP::Jid &)                                                      = 0;
+    void        resultReady(int, EDBResult, int);
+    void        writeFinished(int, bool);
+    PsiCon *    psi();
 
 private:
     class Private;

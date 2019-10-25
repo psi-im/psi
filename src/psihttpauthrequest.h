@@ -4,13 +4,15 @@
 #include "xmpp_httpauthrequest.h"
 #include "xmpp_stanza.h"
 
-class PsiHttpAuthRequest : public XMPP::HttpAuthRequest
-{
+class PsiHttpAuthRequest : public XMPP::HttpAuthRequest {
 public:
     PsiHttpAuthRequest() {}
-    PsiHttpAuthRequest(const XMPP::HttpAuthRequest &request, const XMPP::Stanza &stanza) : HttpAuthRequest(request), s(stanza) {}
+    PsiHttpAuthRequest(const XMPP::HttpAuthRequest &request, const XMPP::Stanza &stanza) :
+        HttpAuthRequest(request), s(stanza)
+    {
+    }
 
-    const XMPP::Stanza & stanza() const { return s; }
+    const XMPP::Stanza &stanza() const { return s; }
 
 private:
     XMPP::Stanza s;

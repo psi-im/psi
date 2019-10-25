@@ -30,29 +30,26 @@ using namespace XMPP;
 // TaskList -- read some comments inline
 //----------------------------------------------------------------------------
 
-class TaskList : public QObject, public QList<Task*>
-{
+class TaskList : public QObject, public QList<Task *> {
     Q_OBJECT
 
 public:
-    TaskList()
-    {
-    }
+    TaskList() {}
 
     ~TaskList()
     {
-        for(QList<Task*>::Iterator i = begin(); i != end(); i++) {
+        for (QList<Task *>::Iterator i = begin(); i != end(); i++) {
             (*i)->safeDelete();
         }
     }
 
     void append(Task *d)
     {
-        if ( isEmpty() )
+        if (isEmpty())
             emit started();
 
         connect(d, SIGNAL(destroyed(QObject *)), SLOT(taskDestroyed(QObject *)));
-        QList<Task*>::append(d);
+        QList<Task *>::append(d);
     }
 
 signals:
@@ -68,9 +65,9 @@ signals:
 private slots:
     void taskDestroyed(QObject *p)
     {
-        removeAll(static_cast<Task*>(p));
+        removeAll(static_cast<Task *>(p));
 
-        if ( isEmpty() )
+        if (isEmpty())
             emit finished();
     }
 };

@@ -6,16 +6,15 @@
 class QButtonGroup;
 class QWidget;
 
-class OptionsTabAvCall : public OptionsTab
-{
+class OptionsTabAvCall : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabAvCall(QObject *parent);
     ~OptionsTabAvCall();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
 private:
     QWidget *w;

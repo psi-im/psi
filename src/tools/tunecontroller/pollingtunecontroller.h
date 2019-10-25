@@ -25,13 +25,13 @@
 
 #include <QTimer>
 
-class PollingTuneController : public TuneController
-{
+class PollingTuneController : public TuneController {
     Q_OBJECT
 
 private:
     static const int DefaultInterval = 10000;
-    QTimer _timer;
+    QTimer           _timer;
+
 public:
     PollingTuneController();
     inline bool isPolling() const { return _timer.isActive(); }

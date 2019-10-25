@@ -21,12 +21,9 @@
 
 #include "applicationinfo.h"
 
-QString PsiFilePlugin::name()
-{
-    return "Psi File";
-}
+QString PsiFilePlugin::name() { return "Psi File"; }
 
-TuneController* PsiFilePlugin::createController()
+TuneController *PsiFilePlugin::createController()
 {
     return new FileTuneController(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tune");
 }

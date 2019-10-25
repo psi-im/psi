@@ -6,27 +6,22 @@
 #include <QCheckBox>
 #include <QListWidget>
 
-static const char *tuneUrlFilterOptionPath = "options.extended-presence.tune.url-filter";
+static const char *tuneUrlFilterOptionPath        = "options.extended-presence.tune.url-filter";
 static const char *tuneControllerFilterOptionPath = "options.extended-presence.tune.controller-filter";
-static const char *tunePublishOptionPath = "options.extended-presence.tune.publish";
+static const char *tunePublishOptionPath          = "options.extended-presence.tune.publish";
 
-class OptStatusPepUI : public QWidget, public Ui::OptStatusPep
-{
+class OptStatusPepUI : public QWidget, public Ui::OptStatusPep {
 public:
     OptStatusPepUI() : QWidget() { setupUi(this); }
 };
 
-OptionsTabStatusPep::OptionsTabStatusPep(QObject *parent)
-: OptionsTab(parent, "status_tunes", "", tr("PEP"), tr("Tunes no-video filter and controllers switcher"))
-, w_(nullptr)
-, psi_(nullptr)
-, controllersChanged_(false)
+OptionsTabStatusPep::OptionsTabStatusPep(QObject *parent) :
+    OptionsTab(parent, "status_tunes", "", tr("PEP"), tr("Tunes no-video filter and controllers switcher")),
+    w_(nullptr), psi_(nullptr), controllersChanged_(false)
 {
 }
 
-OptionsTabStatusPep::~OptionsTabStatusPep()
-{
-}
+OptionsTabStatusPep::~OptionsTabStatusPep() {}
 
 QWidget *OptionsTabStatusPep::widget()
 {
@@ -34,9 +29,9 @@ QWidget *OptionsTabStatusPep::widget()
         return nullptr;
     }
 
-    w_ = new OptStatusPepUI();
+    w_                = new OptStatusPepUI();
     OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
-    connect(d->groupBox, &QGroupBox::toggled, this, [this](bool toggled){
+    connect(d->groupBox, &QGroupBox::toggled, this, [this](bool toggled) {
         changeVisibleState(toggled);
         emit dataChanged();
     });
@@ -50,13 +45,13 @@ void OptionsTabStatusPep::applyOptions()
         return;
     }
 
-    OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
-    PsiOptions* o = PsiOptions::instance();
-    bool publishTune = d->groupBox->isChecked();
+    OptStatusPepUI *d           = static_cast<OptStatusPepUI *>(w_);
+    PsiOptions *    o           = PsiOptions::instance();
+    bool            publishTune = d->groupBox->isChecked();
     o->setOption(tunePublishOptionPath, publishTune);
-    if(publishTune) {
+    if (publishTune) {
         QStringList newTuneFilters = d->tuneExtensions->text().split(QRegExp("\\W+"));
-        QString tuneExstensionsFilter;
+        QString     tuneExstensionsFilter;
         if (!newTuneFilters.isEmpty()) {
             newTuneFilters.removeDuplicates();
             std::sort(newTuneFilters.begin(), newTuneFilters.end());
@@ -80,27 +75,27 @@ void OptionsTabStatusPep::restoreOptions()
     }
 
     OptStatusPepUI *d = static_cast<OptStatusPepUI *>(w_);
-    PsiOptions* o = PsiOptions::instance();
-    tuneFilters_ = o->getOption(tuneUrlFilterOptionPath).toString();
+    PsiOptions *    o = PsiOptions::instance();
+    tuneFilters_      = o->getOption(tuneUrlFilterOptionPath).toString();
     d->tuneExtensions->setText(tuneFilters_);
     QStringList controllers = psi_->tuneManager()->controllerNames();
-    blackList_ = o->getOption(tuneControllerFilterOptionPath).toString().split(QRegExp("[,]\\s*"), QString::SkipEmptyParts);
-    foreach(const QString &name, controllers) {
-        QCheckBox* cb = new QCheckBox(name);
-        QString caption = name + " controller";
+    blackList_
+        = o->getOption(tuneControllerFilterOptionPath).toString().split(QRegExp("[,]\\s*"), QString::SkipEmptyParts);
+    foreach (const QString &name, controllers) {
+        QCheckBox *cb      = new QCheckBox(name);
+        QString    caption = name + " controller";
         cb->setText(caption);
         cb->setObjectName(name);
         int i = controllers.indexOf(name);
-        d->gridLayout->addWidget(cb,i/3,i%3);
+        d->gridLayout->addWidget(cb, i / 3, i % 3);
         cb->setChecked(!blackList_.contains(name));
-        connect(cb, &QCheckBox::toggled, this, [this, cb](bool checked){
+        connect(cb, &QCheckBox::toggled, this, [this, cb](bool checked) {
             QString name_ = cb->objectName();
             if (!name_.isEmpty()) {
                 if (!checked && !blackList_.contains(name_, Qt::CaseInsensitive)) {
                     blackList_ << name_;
                     controllersChanged_ = true;
-                }
-                else if (checked) {
+                } else if (checked) {
                     blackList_.removeAll(name_);
                     controllersChanged_ = true;
                 }
@@ -124,7 +119,4 @@ void OptionsTabStatusPep::changeVisibleState(bool state)
     d->label->setVisible(state);
 }
 
-void OptionsTabStatusPep::setData(PsiCon *psi, QWidget *)
-{
-    psi_ = psi;
-}
+void OptionsTabStatusPep::setData(PsiCon *psi, QWidget *) { psi_ = psi; }

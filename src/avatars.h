@@ -70,7 +70,7 @@ public:
     ~AvatarFactory();
 
     QPixmap getAvatar(const Jid &jid);
-    //QPixmap getAvatarByHash(const QString& hash);
+    // QPixmap getAvatarByHash(const QString& hash);
     static AvatarData avatarDataByHash(const QByteArray &hash);
     UserHashes        userHashes(const Jid &jid) const;
     PsiAccount *      account() const;

@@ -24,14 +24,13 @@
 #include <QObject>
 #include <QStringList>
 
-class ActiveProfiles: public QObject
-{
+class ActiveProfiles : public QObject {
     Q_OBJECT
 public:
-    static ActiveProfiles* instance();
+    static ActiveProfiles *instance();
 
-    bool setThisProfile(const QString &profile);
-    void unsetThisProfile();
+    bool    setThisProfile(const QString &profile);
+    void    unsetThisProfile();
     QString thisProfile() const;
 
     bool isActive(const QString &profile) const;

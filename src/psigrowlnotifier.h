@@ -44,44 +44,43 @@ using namespace XMPP;
  *
  * \see GrowlNotifier
  */
-class PsiGrowlNotifier : public QObject, public PsiPopupInterface
-{
+class PsiGrowlNotifier : public QObject, public PsiPopupInterface {
     Q_OBJECT
 
 public:
-    static PsiGrowlNotifier* instance();
-    static bool isAvailable();
+    static PsiGrowlNotifier *instance();
+    static bool              isAvailable();
 
-    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr());
-    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
-           const QPixmap* avatar, const PsiIcon* icon, const QString& text);
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const Resource &r,
+                       const UserListItem * = 0, const PsiEvent::Ptr & = PsiEvent::Ptr());
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon,
+                       const QString &titleText, const QPixmap *avatar, const PsiIcon *icon, const QString &text);
 
 public slots:
-    void notificationClicked(void*);
-    void notificationTimedOut(void*);
+    void notificationClicked(void *);
+    void notificationTimedOut(void *);
 
 private slots:
     void cleanup();
 
 private:
     PsiGrowlNotifier();
-    void tryDeleteContext(NotificationContext* context);
+    void tryDeleteContext(NotificationContext *context);
 
-    static PsiGrowlNotifier* instance_;
-    GrowlNotifier* gn_;
-    QList<NotificationContext*> contexts_;
+    static PsiGrowlNotifier *    instance_;
+    GrowlNotifier *              gn_;
+    QList<NotificationContext *> contexts_;
 };
 
-class PsiGrowlNotifierPlugin : public QObject, public PsiPopupPluginInterface
-{
+class PsiGrowlNotifierPlugin : public QObject, public PsiPopupPluginInterface {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.PsiPopupPluginInterface")
     Q_INTERFACES(PsiPopupPluginInterface)
 
 public:
-    virtual QString name() const { return "Growl"; }
-    virtual PsiPopupInterface* popup(QObject* ) { return PsiGrowlNotifier::instance(); }
-    virtual bool isAvailable() const { return PsiGrowlNotifier::isAvailable(); }
+    virtual QString            name() const { return "Growl"; }
+    virtual PsiPopupInterface *popup(QObject *) { return PsiGrowlNotifier::instance(); }
+    virtual bool               isAvailable() const { return PsiGrowlNotifier::isAvailable(); }
 };
 
 #endif // PSIGROWLNOTIFIER_H

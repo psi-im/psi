@@ -29,12 +29,11 @@ class QString;
 class QStringList;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 using namespace XMPP;
 
-class SearchDlg : public QDialog, public Ui::Search
-{
+class SearchDlg : public QDialog, public Ui::Search {
     Q_OBJECT
 public:
     SearchDlg(const XMPP::Jid &, PsiAccount *);
@@ -48,7 +47,7 @@ private slots:
     void doSearchGet();
     void doSearchSet();
     void selectionChanged();
-    void itemActivated(QTreeWidgetItem* item, int column);
+    void itemActivated(QTreeWidgetItem *item, int column);
     void jt_finished();
     void doStop();
     void doAdd();
@@ -58,7 +57,8 @@ private:
     class Private;
     Private *d;
 
-    void addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last, const QString &email);
+    void addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last,
+                  const QString &email);
     void clear();
 };
 

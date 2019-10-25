@@ -3,13 +3,11 @@
 
 class EventCreatingHost;
 
-class EventCreator
-{
+class EventCreator {
 public:
     virtual ~EventCreator() {}
 
-    virtual void setEventCreatingHost(EventCreatingHost* host) = 0;
-
+    virtual void setEventCreatingHost(EventCreatingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(EventCreator, "org.psi-im.EventCreator/0.1");

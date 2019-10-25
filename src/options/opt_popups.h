@@ -25,15 +25,14 @@
 class PopupManager;
 class PsiCon;
 
-class OptionsTabPopups : public OptionsTab
-{
+class OptionsTabPopups : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabPopups(QObject *parent);
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
     virtual bool stretchable() const { return true; }
 
@@ -41,8 +40,8 @@ public slots:
     virtual void setData(PsiCon *psi, QWidget *);
 
 private:
-    QWidget *w;
-    PopupManager* popup_;
+    QWidget *     w;
+    PopupManager *popup_;
 };
 
 #endif // OPT_POPUPS_H

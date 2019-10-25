@@ -28,8 +28,7 @@ class ContactListView;
 class PsiAccount;
 class PsiContact;
 
-class ContactListViewDelegate : public QItemDelegate
-{
+class ContactListViewDelegate : public QItemDelegate {
     Q_OBJECT
 
 public:
@@ -37,18 +36,19 @@ public:
     virtual ~ContactListViewDelegate();
 
     void recomputeGeometry();
-    int avatarSize() const;
+    int  avatarSize() const;
 
     void contactAlert(const QModelIndex &index);
     void animateContacts(const QModelIndexList &indexes, bool started);
     void clearAlerts();
 
     // reimplemented
-    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                              const QModelIndex &index) const override;
     void setEditorData(QWidget *editor, const QModelIndex &index) const override;
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    void  paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
 signals:
@@ -60,5 +60,5 @@ protected:
 
 private:
     class Private;
-    Private* d;
+    Private *d;
 };

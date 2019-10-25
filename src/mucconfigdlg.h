@@ -33,16 +33,15 @@ class QScrollArea;
 class XDataWidget;
 
 namespace XMPP {
-    class XData;
+class XData;
 }
 using namespace XMPP;
 
-class MUCConfigDlg : public QDialog
-{
+class MUCConfigDlg : public QDialog {
     Q_OBJECT
 
 public:
-    MUCConfigDlg(MUCManager*, QWidget*);
+    MUCConfigDlg(MUCManager *, QWidget *);
     ~MUCConfigDlg();
 
     void setRoleAffiliation(MUCItem::Role, MUCItem::Affiliation);
@@ -60,29 +59,29 @@ protected slots:
     void apply();
     void destroy();
     void currentTabChanged(int);
-    void applyFilter(const QString&);
+    void applyFilter(const QString &);
 
-    void getConfiguration_success( const XData&);
-    void getConfiguration_error(int, const QString&);
+    void getConfiguration_success(const XData &);
+    void getConfiguration_error(int, const QString &);
     void setConfiguration_success();
-    void setConfiguration_error(int, const QString&);
+    void setConfiguration_error(int, const QString &);
     void setItems_success();
-    void setItems_error(int, const QString&);
-    void getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem>&);
-    void getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString&);
+    void setItems_error(int, const QString &);
+    void getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem> &);
+    void getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString &);
     void destroy_success();
-    void destroy_error(int, const QString&);
+    void destroy_error(int, const QString &);
 
 private:
-    Ui::MUCConfig ui_;
-    MUCItem::Role role_;
-    MUCItem::Affiliation affiliation_;
-    MUCManager* manager_;
-    QScrollArea* data_container_;
-    XDataWidget* data_;
-    InfoWidget* vcard_;
-    MUCAffiliationsModel* affiliations_model_;
-    MUCAffiliationsProxyModel* affiliations_proxy_model_;
+    Ui::MUCConfig               ui_;
+    MUCItem::Role               role_;
+    MUCItem::Affiliation        affiliation_;
+    MUCManager *                manager_;
+    QScrollArea *               data_container_;
+    XDataWidget *               data_;
+    InfoWidget *                vcard_;
+    MUCAffiliationsModel *      affiliations_model_;
+    MUCAffiliationsProxyModel * affiliations_proxy_model_;
     QList<MUCItem::Affiliation> pending_requests_;
 };
 

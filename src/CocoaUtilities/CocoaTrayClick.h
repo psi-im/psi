@@ -22,11 +22,10 @@
 
 #include <QObject>
 
-class CocoaTrayClick : public QObject
-{
+class CocoaTrayClick : public QObject {
     Q_OBJECT
 public:
-    static CocoaTrayClick* instance();
+    static CocoaTrayClick *instance();
     ~CocoaTrayClick();
 
     void emitTrayClicked();
@@ -36,7 +35,7 @@ signals:
 
 private:
     CocoaTrayClick();
-    static CocoaTrayClick* instance_;
+    static CocoaTrayClick *instance_;
 };
 
 #endif // COCOATRAYCLICK_H

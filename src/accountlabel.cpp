@@ -21,28 +21,18 @@
 
 #include "psiaccount.h"
 
-AccountLabel::AccountLabel(QWidget* parent)
-    : QLabel(parent)
-    , showJid_(true)
+AccountLabel::AccountLabel(QWidget *parent) : QLabel(parent), showJid_(true)
 {
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
 }
 
-AccountLabel::~AccountLabel()
-{
-}
+AccountLabel::~AccountLabel() {}
 
-PsiAccount* AccountLabel::account() const
-{
-    return account_;
-}
+PsiAccount *AccountLabel::account() const { return account_; }
 
-bool AccountLabel::showJid() const
-{
-    return showJid_;
-}
+bool AccountLabel::showJid() const { return showJid_; }
 
-void AccountLabel::setAccount(PsiAccount* account)
+void AccountLabel::setAccount(PsiAccount *account)
 {
     account_ = account;
     if (account) {

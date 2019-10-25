@@ -21,33 +21,27 @@
 
 #include <QCoreApplication>
 
-GlobalEventQueue* GlobalEventQueue::instance()
+GlobalEventQueue *GlobalEventQueue::instance()
 {
     if (!instance_)
         instance_ = new GlobalEventQueue();
     return instance_;
 }
 
-int GlobalEventQueue::count() const
-{
-    return items_.count();
-}
+int GlobalEventQueue::count() const { return items_.count(); }
 
-const QList<int>& GlobalEventQueue::ids() const
-{
-    return ids_;
-}
+const QList<int> &GlobalEventQueue::ids() const { return ids_; }
 
 PsiEvent::Ptr GlobalEventQueue::peek(int id) const
 {
     Q_ASSERT(ids_.contains(id));
-    foreach(EventItem* item, items_)
+    foreach (EventItem *item, items_)
         if (item->id() == id)
             return item->event();
     return PsiEvent::Ptr();
 }
 
-void GlobalEventQueue::enqueue(EventItem* item)
+void GlobalEventQueue::enqueue(EventItem *item)
 {
     Q_ASSERT(item);
     Q_ASSERT(!ids_.contains(item->id()));
@@ -61,7 +55,7 @@ void GlobalEventQueue::enqueue(EventItem* item)
     emit queueChanged();
 }
 
-void GlobalEventQueue::dequeue(EventItem* item)
+void GlobalEventQueue::dequeue(EventItem *item)
 {
     Q_ASSERT(item);
     Q_ASSERT(ids_.contains(item->id()));
@@ -75,8 +69,6 @@ void GlobalEventQueue::dequeue(EventItem* item)
     emit queueChanged();
 }
 
-GlobalEventQueue::GlobalEventQueue()
-    : QObject(QCoreApplication::instance())
-{}
+GlobalEventQueue::GlobalEventQueue() : QObject(QCoreApplication::instance()) {}
 
-GlobalEventQueue* GlobalEventQueue::instance_ = nullptr;
+GlobalEventQueue *GlobalEventQueue::instance_ = nullptr;

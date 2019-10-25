@@ -3,12 +3,11 @@
 
 class QString;
 
-class SoundAccessingHost
-{
+class SoundAccessingHost {
 public:
     virtual ~SoundAccessingHost() {}
 
-    virtual void playSound(const QString& fileName) = 0;
+    virtual void playSound(const QString &fileName) = 0;
 };
 
 Q_DECLARE_INTERFACE(SoundAccessingHost, "org.psi-im.SoundAccessingHost/0.1");

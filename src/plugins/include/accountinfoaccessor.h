@@ -3,13 +3,11 @@
 
 class AccountInfoAccessingHost;
 
-class AccountInfoAccessor
-{
+class AccountInfoAccessor {
 public:
     virtual ~AccountInfoAccessor() {}
 
-    virtual void setAccountInfoAccessingHost(AccountInfoAccessingHost* host) = 0;
-
+    virtual void setAccountInfoAccessingHost(AccountInfoAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(AccountInfoAccessor, "org.psi-im.AccountInfoAccessor/0.1");

@@ -21,21 +21,20 @@
 
 #include "QtCore"
 
-class URLEvent : public QObject
-{
+class URLEvent : public QObject {
     Q_OBJECT
 public:
-    URLEvent(QString sender, QString url, QObject *parent = 0): QObject(parent)
+    URLEvent(QString sender, QString url, QObject *parent = 0) : QObject(parent)
     {
-        sender_=sender;
-        url_=url;
-        viewed_=false;
+        sender_ = sender;
+        url_    = url;
+        viewed_ = false;
     }
     ~URLEvent(){};
 
     QString sender_;
     QString url_;
-    bool viewed_;
+    bool    viewed_;
 };
 
 #endif // URLEVENT_H

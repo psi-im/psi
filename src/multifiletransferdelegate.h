@@ -22,21 +22,20 @@
 
 #include <QStyledItemDelegate>
 
-class MultiFileTransferDelegate : public QStyledItemDelegate
-{
+class MultiFileTransferDelegate : public QStyledItemDelegate {
     Q_OBJECT
 
     // cache for sizeHint
-    mutable int fontPixelSize = 0;
-    mutable int itemHeight;
-    mutable int spacing;
-    mutable int textLeft;
-    mutable int textTop;
-    mutable int speedTop;
-    mutable int progressTop;
-    mutable int progressHeight;
-    mutable int addButtonHeight;
-    mutable QRect iconRect;
+    mutable int     fontPixelSize = 0;
+    mutable int     itemHeight;
+    mutable int     spacing;
+    mutable int     textLeft;
+    mutable int     textTop;
+    mutable int     speedTop;
+    mutable int     progressTop;
+    mutable int     progressHeight;
+    mutable int     addButtonHeight;
+    mutable QRect   iconRect;
     mutable QPixmap progressTexture;
 
     static void niceUnit(qlonglong n, qlonglong *div, QString *unit);
@@ -50,16 +49,16 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
-    bool helpEvent(QHelpEvent *event, QAbstractItemView *view,
-                   const QStyleOptionViewItem &option, const QModelIndex &index) override;
+    bool     helpEvent(QHelpEvent *event, QAbstractItemView *view, const QStyleOptionViewItem &option,
+                       const QModelIndex &index) override;
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-    void setEditorData(QWidget *editor, const QModelIndex &index) const;
-    void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
-    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-protected:
-    bool editorEvent(QEvent *event, QAbstractItemModel *model,
-                     const QStyleOptionViewItem &option, const QModelIndex &index) override;
+    void     setEditorData(QWidget *editor, const QModelIndex &index) const;
+    void     setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
+    void     updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 
+protected:
+    bool editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option,
+                     const QModelIndex &index) override;
 };
 
 #endif // MULTIFILETRANSFERDELEGATE_H

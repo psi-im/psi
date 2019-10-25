@@ -41,26 +41,24 @@
 #include <time.h>
 #include <tuple>
 #ifdef WEBENGINE
-#    include <QWebChannel>
-#    include <QWebEnginePage>
-#    include <QWebEngineProfile>
-#    include <QWebEngineScript>
-#    include <QWebEngineScriptCollection>
-#    include <functional>
+#include <QWebChannel>
+#include <QWebEnginePage>
+#include <QWebEngineProfile>
+#include <QWebEngineScript>
+#include <QWebEngineScriptCollection>
+#include <functional>
 #else
-#    include <QNetworkRequest>
-#    include <QWebFrame>
-#    include <QWebPage>
+#include <QNetworkRequest>
+#include <QWebFrame>
+#include <QWebPage>
 #endif
 
 #ifndef WEBENGINE
-class SessionRequestHandler : public NAMDataHandler
-{
+class SessionRequestHandler : public NAMDataHandler {
     ChatViewThemeSession *session;
 
 public:
-    SessionRequestHandler(ChatViewThemeSession *session) :
-        session(session) {}
+    SessionRequestHandler(ChatViewThemeSession *session) : session(session) {}
 
     bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
     {
@@ -83,16 +81,12 @@ QVariant ChatViewThemePrivate::evaluateFromFile(const QString fileName, QWebFram
 }
 #endif
 
-ChatViewThemePrivate::ChatViewThemePrivate(ChatViewThemeProvider *provider) :
-    ThemePrivate(provider)
+ChatViewThemePrivate::ChatViewThemePrivate(ChatViewThemeProvider *provider) : ThemePrivate(provider)
 {
     nam = provider->psi()->networkAccessManager();
 }
 
-ChatViewThemePrivate::~ChatViewThemePrivate()
-{
-    delete wv;
-}
+ChatViewThemePrivate::~ChatViewThemePrivate() { delete wv; }
 
 bool ChatViewThemePrivate::exists()
 {
@@ -125,7 +119,8 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
         return true;
     }
 
-    qDebug("Starting loading \"%s\" theme at \"%s\" for %s", qPrintable(id), qPrintable(filepath), isMuc()? "muc": "chat");
+    qDebug("Starting loading \"%s\" theme at \"%s\" for %s", qPrintable(id), qPrintable(filepath),
+           isMuc() ? "muc" : "chat");
     state = Theme::State::Loading;
     if (jsUtil.isNull()) {
         jsLoader.reset(new ChatViewJSLoader(this));
@@ -137,35 +132,35 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 
     QString themeType = id.section('/', 0, 0);
 #ifdef WEBENGINE
-    QWebChannel * channel = new QWebChannel(wv->page());
+    QWebChannel *channel = new QWebChannel(wv->page());
     wv->page()->setWebChannel(channel);
     channel->registerObject(QLatin1String("srvLoader"), jsLoader.data());
     channel->registerObject(QLatin1String("srvUtil"), jsUtil.data());
 
-    //QString themeServer = ChatViewThemeProvider::serverAddr();
-    wv->page()->setHtml(QString(
-        "<html><head>\n"
-        "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n"
-        "<script src=\"/psi/themes/chatview/util.js\"></script>\n"
-        "<script src=\"/psi/themes/chatview/%1/adapter.js\"></script>\n"
-        "<script src=\"/psi/static/qwebchannel.js\"></script>\n"
-        "<script type=\"text/javascript\">\n"
-            "document.addEventListener(\"DOMContentLoaded\", function () {\n"
-                "new QWebChannel(qt.webChannelTransport, function (channel) {\n"
-                    "window.srvLoader = channel.objects.srvLoader;\n"
-                    "window.srvUtil = channel.objects.srvUtil;\n"
-                    "initPsiTheme().adapter.loadTheme();\n"
-                "});\n"
-            "});\n"
-        "</script></head></html>").arg(themeType), jsLoader->serverUrl()
-    );
+    // QString themeServer = ChatViewThemeProvider::serverAddr();
+    wv->page()->setHtml(QString("<html><head>\n"
+                                "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n"
+                                "<script src=\"/psi/themes/chatview/util.js\"></script>\n"
+                                "<script src=\"/psi/themes/chatview/%1/adapter.js\"></script>\n"
+                                "<script src=\"/psi/static/qwebchannel.js\"></script>\n"
+                                "<script type=\"text/javascript\">\n"
+                                "document.addEventListener(\"DOMContentLoaded\", function () {\n"
+                                "new QWebChannel(qt.webChannelTransport, function (channel) {\n"
+                                "window.srvLoader = channel.objects.srvLoader;\n"
+                                "window.srvUtil = channel.objects.srvUtil;\n"
+                                "initPsiTheme().adapter.loadTheme();\n"
+                                "});\n"
+                                "});\n"
+                                "</script></head></html>")
+                            .arg(themeType),
+                        jsLoader->serverUrl());
     return true;
 #else
     wv->page()->setNetworkAccessManager(nam);
     QStringList scriptPaths = QStringList()
-            << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
-            << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
-            << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
+        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
+        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
+        << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
 
     wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", jsLoader.data(), QWebFrame::QtOwnership);
     wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", jsUtil.data(), QWebFrame::QtOwnership);
@@ -174,15 +169,18 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
         evaluateFromFile(sp, wv->page()->mainFrame());
     }
 
-    QString resStr = wv->page()->mainFrame()->evaluateJavaScript(
-                "try { initPsiTheme().adapter.loadTheme(); \"ok\"; } "
-                "catch(e) { \"Error:\" + e + \"\\n\" + window.psiim.util.props(e); }").toString();
+    QString resStr = wv->page()
+                         ->mainFrame()
+                         ->evaluateJavaScript("try { initPsiTheme().adapter.loadTheme(); \"ok\"; } "
+                                              "catch(e) { \"Error:\" + e + \"\\n\" + window.psiim.util.props(e); }")
+                         .toString();
 
     if (resStr == "ok") {
         return true;
     }
     qWarning("javascript part of the theme loader "
-             "didn't return expected result: %s", qPrintable(resStr));
+             "didn't return expected result: %s",
+             qPrintable(resStr));
     return false;
 #endif
 }
@@ -207,27 +205,21 @@ QWidget *ChatViewThemePrivate::previewWidget()
     return l;
 }
 
-bool ChatViewThemePrivate::isMuc() const
-{
-    return dynamic_cast<GroupChatViewThemeProvider*>(provider);
-}
+bool ChatViewThemePrivate::isMuc() const { return dynamic_cast<GroupChatViewThemeProvider *>(provider); }
 
 QVariantMap ChatViewThemePrivate::loadFromCacheMulti(const QVariantList &list)
 {
     QVariantMap ret;
     for (auto &item : list) {
         QString key = item.toString();
-        ret[key] = cache.value(key);
-        //if (key.endsWith("html"))
+        ret[key]    = cache.value(key);
+        // if (key.endsWith("html"))
         //    qDebug() << "Loaded from cache" << key << ret[key].toString().left(50) << "priv=" << (void*)this;
     }
     return ret;
 }
 
-bool ChatViewThemePrivate::isTransparentBackground() const
-{
-    return transparentBackground;
-}
+bool ChatViewThemePrivate::isTransparentBackground() const { return transparentBackground; }
 
 #ifndef WEBENGINE
 void ChatViewThemePrivate::embedSessionJsObject(ChatViewThemeSession *session)
@@ -237,9 +229,10 @@ void ChatViewThemePrivate::embedSessionJsObject(ChatViewThemeSession *session)
     wf->addToJavaScriptWindowObject("srvSession", session);
 
     QStringList scriptPaths = QStringList()
-            << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
-            << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
-            << PsiThemeProvider::themePath(QLatin1String("chatview/") + id.section('/', 0, 0) + QLatin1String("/adapter.js"));
+        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.js"))
+        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
+        << PsiThemeProvider::themePath(QLatin1String("chatview/") + id.section('/', 0, 0)
+                                       + QLatin1String("/adapter.js"));
 
     foreach (const QString &script, scriptPaths) {
         evaluateFromFile(script, wf);
@@ -256,7 +249,7 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     }
 
     QWebChannel *channel = page->webChannel();
-    QObject *oldUtil = nullptr;
+    QObject *    oldUtil = nullptr;
     if (channel) {
         oldUtil = channel->registeredObjects()[QLatin1String("srvUtil")];
         oldUtil->deleteLater();
@@ -268,22 +261,22 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     page->setWebChannel(channel);
 
     QPointer<ChatViewThemeSession> weakSession(session);
-    auto handler = [weakSession,this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
-    {
+    auto handler = [weakSession, this](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
         auto session = weakSession.data();
         if (!weakSession) {
             return false;
         }
-        bool handled = session->getContents(req->url(), [res](bool success, const QByteArray &data, const QByteArray &ctype){
-            if (success) {
-                res->setStatusCode(qhttp::ESTATUS_OK);
-                res->headers().insert("Content-Type", ctype);
-            } else {
-                res->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
-            }
-            res->end(data);
-        });
-        if(handled) {
+        bool handled
+            = session->getContents(req->url(), [res](bool success, const QByteArray &data, const QByteArray &ctype) {
+                  if (success) {
+                      res->setStatusCode(qhttp::ESTATUS_OK);
+                      res->headers().insert("Content-Type", ctype);
+                  } else {
+                      res->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
+                  }
+                  res->end(data);
+              });
+        if (handled) {
             return true;
         }
         // not handled by chat. try handle by theme
@@ -300,45 +293,40 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
                 // indicating sessionId and html contents.
                 // And only then we close the request with hot html.
 
-                jsLoader->connect(jsLoader.data(),
-                                  &ChatViewJSLoader::sessionHtmlReady,
-                                  session,
-                [weakSession, res, this](const QString &sessionId, const QString &html)
-                {
-                    auto session = weakSession.data();
-                    if (!weakSession) {
-                        return;
-                    }
-                    if (session->sessId == sessionId) {
-                        res->end(html.toUtf8()); // return html to client
-                        // and disconnect from loader
-                        jsLoader->disconnect(
-                                    jsLoader.data(),
-                                    &ChatViewJSLoader::sessionHtmlReady,
-                                    session, nullptr);
-                        jsLoader->unregisterSession(session->sessId);
-                    }
-                });
+                jsLoader->connect(jsLoader.data(), &ChatViewJSLoader::sessionHtmlReady, session,
+                                  [weakSession, res, this](const QString &sessionId, const QString &html) {
+                                      auto session = weakSession.data();
+                                      if (!weakSession) {
+                                          return;
+                                      }
+                                      if (session->sessId == sessionId) {
+                                          res->end(html.toUtf8()); // return html to client
+                                          // and disconnect from loader
+                                          jsLoader->disconnect(jsLoader.data(), &ChatViewJSLoader::sessionHtmlReady,
+                                                               session, nullptr);
+                                          jsLoader->unregisterSession(session->sessId);
+                                      }
+                                  });
                 jsLoader->registerSession(session);
                 QString basePath = req->property("basePath").toString();
                 wv->page()->runJavaScript(
-                            QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
-                            .arg(session->sessId, session->propsAsJsonString(), basePath));
+                    QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
+                        .arg(session->sessId, session->propsAsJsonString(), basePath));
 
             } else {
                 res->end(html.toUtf8());
             }
             return true;
         } else {
-            bool loaded;
+            bool       loaded;
             QByteArray data = loadData(httpRelPath + path, &loaded);
             if (loaded) {
                 if (!data.isNull() && path.endsWith(QLatin1String(".tiff"))) {
                     // seems like we are loading tiff image which is supported by safari only.
                     // let's convert it
-                    QImage image(QImage::fromData(data));
+                    QImage     image(QImage::fromData(data));
                     QByteArray ba;
-                    QBuffer buffer(&ba);
+                    QBuffer    buffer(&ba);
                     buffer.open(QIODevice::WriteOnly);
                     image.save(&buffer, "PNG");
                     if (!ba.isNull()) {
@@ -357,14 +345,14 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     };
 
     session->sessId = ChatViewCon::instance()->registerSessionHandler(handler);
-    QUrl url = ChatViewCon::instance()->serverUrl();
+    QUrl      url   = ChatViewCon::instance()->serverUrl();
     QUrlQuery q;
     q.addQueryItem(QLatin1String("psiId"), session->sessId);
     url.setQuery(q);
 
     page->load(url);
 
-    //QString id = provider->themeServer()->registerHandler(sessionObject);
+    // QString id = provider->themeServer()->registerHandler(sessionObject);
     return true;
 #else
     QWebPage *page = session->webView()->page();
@@ -379,15 +367,17 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
     page->setNetworkAccessManager(nam);
 
     SessionRequestHandler *handler = new SessionRequestHandler(session);
-    session->sessId = nam->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
+    session->sessId                = nam->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
 
     QString html;
     if (prepareSessionHtml) {
         QString basePath = "";
         jsLoader->registerSession(session);
-        html = wv->page()->mainFrame()->evaluateJavaScript(
-                QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
-                .arg(session->sessId, session->propsAsJsonString(), basePath)).toString();
+        html = wv->page()
+                   ->mainFrame()
+                   ->evaluateJavaScript(QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
+                                            .arg(session->sessId, session->propsAsJsonString(), basePath))
+                   .toString();
         jsLoader->unregisterSession(session->sessId);
     } else {
         html = this->html;
@@ -402,20 +392,11 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 //------------------------------------------------------------------------------
 // ChatViewThemeJSLoader
 //------------------------------------------------------------------------------
-ChatViewJSLoader::ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent) :
-    QObject(parent),
-    theme(theme)
-{}
+ChatViewJSLoader::ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent) : QObject(parent), theme(theme) {}
 
-const QString ChatViewJSLoader::themeId() const
-{
-    return theme->id;
-}
+const QString ChatViewJSLoader::themeId() const { return theme->id; }
 
-bool ChatViewJSLoader::isMuc() const
-{
-    return theme->isMuc();
-}
+bool ChatViewJSLoader::isMuc() const { return theme->isMuc(); }
 
 QString ChatViewJSLoader::serverUrl() const
 {
@@ -433,10 +414,7 @@ void ChatViewJSLoader::registerSession(ChatViewThemeSession *session)
     _sessions.insert(session->sessionId(), session);
 }
 
-void ChatViewJSLoader::unregisterSession(const QString &sessId)
-{
-    _sessions.remove(sessId);
-}
+void ChatViewJSLoader::unregisterSession(const QString &sessId) { _sessions.remove(sessId); }
 
 void ChatViewJSLoader::_callFinishLoadCalbacks()
 {
@@ -476,7 +454,7 @@ void ChatViewJSLoader::setMetaData(const QVariantMap &map)
 
 void ChatViewJSLoader::finishThemeLoading()
 {
-    qDebug("%s theme is successfully loaded for %s", qPrintable(theme->id), theme->isMuc()? "muc": "chat");
+    qDebug("%s theme is successfully loaded for %s", qPrintable(theme->id), theme->isMuc() ? "muc" : "chat");
     Theme(theme).setState(Theme::State::Loaded);
 #ifdef WEBENGINE
     _callFinishLoadCalbacks();
@@ -496,30 +474,21 @@ void ChatViewJSLoader::errorThemeLoading(const QString &error)
 #endif
 }
 
-void ChatViewJSLoader::setHtml(const QString &h)
-{
-    theme->html = h;
-}
+void ChatViewJSLoader::setHtml(const QString &h) { theme->html = h; }
 
-void ChatViewJSLoader::setHttpResourcePath(const QString &relPath)
-{
-    theme->httpRelPath = relPath;
-}
+void ChatViewJSLoader::setHttpResourcePath(const QString &relPath) { theme->httpRelPath = relPath; }
 
-void ChatViewJSLoader::toCache(const QString &name, const QVariant &data)
-{
-    theme->cache.insert(name, data);
-}
+void ChatViewJSLoader::toCache(const QString &name, const QVariant &data) { theme->cache.insert(name, data); }
 
 void ChatViewJSLoader::saveFilesToCache(const QVariantMap &map)
 {
     auto it = map.constBegin();
     while (it != map.constEnd()) {
-        bool loaded;
+        bool       loaded;
         QByteArray ba = Theme(theme).loadData(it.value().toString(), &loaded);
         if (loaded) {
             theme->cache.insert(it.key(), QString::fromUtf8(ba));
-            //qDebug() << "Caching" << it.value() << "from" << Theme(theme).filePath()
+            // qDebug() << "Caching" << it.value() << "from" << Theme(theme).filePath()
             //         << theme->cache[it.key()] << "priv=" << (void*)theme;
         }
         ++it;
@@ -528,7 +497,7 @@ void ChatViewJSLoader::saveFilesToCache(const QVariantMap &map)
 
 QVariantMap ChatViewJSLoader::sessionProperties(const QString &sessionId, const QVariantList &props)
 {
-    auto sess = _sessions.value(sessionId);
+    auto        sess = _sessions.value(sessionId);
     QVariantMap ret;
     if (sess) {
         for (auto &p : props) {
@@ -539,15 +508,9 @@ QVariantMap ChatViewJSLoader::sessionProperties(const QString &sessionId, const 
     return ret;
 }
 
-void ChatViewJSLoader::setCaseInsensitiveFS(bool state)
-{
-    Theme(theme).setCaseInsensitiveFS(state);
-}
+void ChatViewJSLoader::setCaseInsensitiveFS(bool state) { Theme(theme).setCaseInsensitiveFS(state); }
 
-void ChatViewJSLoader::setPrepareSessionHtml(bool enabled)
-{
-    theme->prepareSessionHtml = enabled;
-}
+void ChatViewJSLoader::setPrepareSessionHtml(bool enabled) { theme->prepareSessionHtml = enabled; }
 
 void ChatViewJSLoader::setSessionHtml(const QString &sessionId, const QString &html)
 {
@@ -556,7 +519,7 @@ void ChatViewJSLoader::setSessionHtml(const QString &sessionId, const QString &h
 
 QVariantMap ChatViewJSLoader::checkFilesExist(const QStringList &files, const QString baseDir)
 {
-    QVariantMap ret;
+    QVariantMap                           ret;
     QScopedPointer<Theme::ResourceLoader> loader(Theme(theme).resourceLoader());
 
     QString d(baseDir);
@@ -570,14 +533,11 @@ QVariantMap ChatViewJSLoader::checkFilesExist(const QStringList &files, const QS
     return ret;
 }
 
-QString ChatViewJSLoader::getFileContents(const QString &name) const
-{
-    return QString(Theme(theme).loadData(name));
-}
+QString ChatViewJSLoader::getFileContents(const QString &name) const { return QString(Theme(theme).loadData(name)); }
 
 QString ChatViewJSLoader::getFileContentsFromAdapterDir(const QString &name) const
 {
-    QString relPath = QLatin1String("chatview/") + theme->id.split('/').first() + QLatin1Char('/') + name;
+    QString relPath  = QLatin1String("chatview/") + theme->id.split('/').first() + QLatin1Char('/') + name;
     QString filePath = theme->provider->themePath(relPath);
     if (filePath.isEmpty()) {
         qDebug("%s is not found", qPrintable(relPath));
@@ -589,23 +549,17 @@ QString ChatViewJSLoader::getFileContentsFromAdapterDir(const QString &name) con
         file.close();
         return QString::fromUtf8(result.constData(), result.size());
     } else {
-        qDebug("Failed to open file %s: %s", qPrintable(file.fileName()),
-               qPrintable(file.errorString()));
+        qDebug("Failed to open file %s: %s", qPrintable(file.fileName()), qPrintable(file.errorString()));
     }
     return QString();
 }
 
-void ChatViewJSLoader::setTransparent()
-{
-    theme->transparentBackground = true;
-}
+void ChatViewJSLoader::setTransparent() { theme->transparentBackground = true; }
 
 //------------------------------------------------------------------------------
 // ChatViewThemeJSUtil
 //------------------------------------------------------------------------------
-ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent) :
-    QObject(parent),
-    theme(theme)
+ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent) : QObject(parent), theme(theme)
 {
     psiDefaultAvatarUrl = "psi/static/avatar/default.png"; // relative to session url
     // may be in the future we can make different defaults. per transport for example
@@ -613,7 +567,7 @@ ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *p
     optChangeTimer.setSingleShot(true);
     optChangeTimer.setInterval(0);
     connect(&optChangeTimer, SIGNAL(timeout()), SLOT(sendOptionsChanges()));
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged(const QString&)));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged(const QString &)));
 }
 
 void ChatViewThemeJSUtil::sendOptionsChanges()
@@ -628,20 +582,14 @@ void ChatViewThemeJSUtil::optionsChanged(const QString &option)
     optChangeTimer.start();
 }
 
-void ChatViewThemeJSUtil::putToCache(const QString &key, const QVariant &data)
-{
-    theme->cache.insert(key, data);
-}
+void ChatViewThemeJSUtil::putToCache(const QString &key, const QVariant &data) { theme->cache.insert(key, data); }
 
 QVariantMap ChatViewThemeJSUtil::loadFromCacheMulti(const QVariantList &list)
 {
     return theme->loadFromCacheMulti(list);
 }
 
-QVariant ChatViewThemeJSUtil::cache(const QString &name) const
-{
-    return theme->cache.value(name);
-}
+QVariant ChatViewThemeJSUtil::cache(const QString &name) const { return theme->cache.value(name); }
 
 QString ChatViewThemeJSUtil::psiOption(const QString &option) const
 {
@@ -651,7 +599,7 @@ QString ChatViewThemeJSUtil::psiOption(const QString &option) const
 QString ChatViewThemeJSUtil::psiOptions(const QStringList &options) const
 {
     QVariantList ret;
-    for (auto &option: options) {
+    for (auto &option : options) {
         ret.append(PsiOptions::instance()->getOption(option));
     }
     QString retStr = JSUtil::variant2js(ret);
@@ -670,41 +618,30 @@ QString ChatViewThemeJSUtil::formatDate(const QDateTime &dt, const QString &form
 
 QString ChatViewThemeJSUtil::strftime(const QDateTime &dt, const QString &format) const
 {
-    char str[256];
+    char   str[256];
     time_t t = dt.toTime_t();
-    int s = int(::strftime(str, 256, format.toLocal8Bit(), localtime(&t)));
+    int    s = int(::strftime(str, 256, format.toLocal8Bit(), localtime(&t)));
     if (s) {
         return QString::fromLocal8Bit(str, s);
     }
     return QString();
 }
 
-void ChatViewThemeJSUtil::console(const QString &text) const
-{
-    qDebug("%s", qPrintable(text));
-}
+void ChatViewThemeJSUtil::console(const QString &text) const { qDebug("%s", qPrintable(text)); }
 
-QString ChatViewThemeJSUtil::status2text(int status) const
-{
-    return ::status2txt(status);
-}
+QString ChatViewThemeJSUtil::status2text(int status) const { return ::status2txt(status); }
 
 QString ChatViewThemeJSUtil::hex2rgba(const QString &hex, float opacity)
 {
     QColor color("#" + hex);
     color.setAlphaF(qreal(opacity));
-    return QString("rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green())
-            .arg(color.blue()).arg(color.alpha());
+    return QString("rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(color.alpha());
 }
 
 //------------------------------------------------------------------------------
 // ChatViewTheme
 //------------------------------------------------------------------------------
-ChatViewThemeSession::ChatViewThemeSession(QObject *parent) :
-    QObject(parent)
-{
-
-}
+ChatViewThemeSession::ChatViewThemeSession(QObject *parent) : QObject(parent) {}
 
 ChatViewThemeSession::~ChatViewThemeSession()
 {
@@ -718,7 +655,7 @@ ChatViewThemeSession::~ChatViewThemeSession()
 QString ChatViewThemeSession::propsAsJsonString()
 {
     QJsonObject jsObj;
-    int pc = metaObject()->propertyCount();
+    int         pc = metaObject()->propertyCount();
     for (int i = 0; i < pc; i++) {
         QMetaProperty p = metaObject()->property(i);
         if (p.isReadable()) {
@@ -736,8 +673,8 @@ void ChatViewThemeSession::init(const Theme &theme)
 {
     this->theme = theme;
 #ifndef WEBENGINE
-    connect(webView()->page()->mainFrame(),
-            SIGNAL(javaScriptWindowObjectCleared()), SLOT(embedJsObject()), Qt::UniqueConnection);
+    connect(webView()->page()->mainFrame(), SIGNAL(javaScriptWindowObjectCleared()), SLOT(embedJsObject()),
+            Qt::UniqueConnection);
 #endif
     auto priv = theme.priv<ChatViewThemePrivate>();
     priv->applyToSession(this);

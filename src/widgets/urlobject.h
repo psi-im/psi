@@ -31,8 +31,7 @@ class QMenu;
 // Examples of future use:
 // URLObject::getInstance()::registerAction(QRegExp("^http:\/\/"), act_open_browser);
 
-class URLObject : public QObject
-{
+class URLObject : public QObject {
     Q_OBJECT
 
 protected:
@@ -40,7 +39,7 @@ protected:
 
 public:
     static URLObject *getInstance();
-    QMenu *createPopupMenu(const QString &lnk);
+    QMenu *           createPopupMenu(const QString &lnk);
 
     void popupAction(QString lnk);
 
@@ -49,6 +48,7 @@ signals:
 
 public:
     class Private;
+
 private:
     Private *d;
 };

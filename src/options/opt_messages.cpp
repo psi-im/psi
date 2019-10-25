@@ -5,8 +5,8 @@
 #include "opt_input.h"
 #include "opt_messages_common.h"
 
-OptionsTabMessages::OptionsTabMessages(QObject *parent)
-: MetaOptionsTab(parent, "chat", "", tr("Messages"), tr("Messages options"), "psi/start-chat")
+OptionsTabMessages::OptionsTabMessages(QObject *parent) :
+    MetaOptionsTab(parent, "chat", "", tr("Messages"), tr("Messages options"), "psi/start-chat")
 {
     addTab(new OptionsTabMsgCommon(this));
     addTab(new OptionsTabChat(this));

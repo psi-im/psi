@@ -51,20 +51,17 @@
 
 using namespace XMPP;
 
-class MultiFileTransferDlg::Private
-{
+class MultiFileTransferDlg::Private {
 public:
-    PsiAccount *account;
-    Jid peer;
+    PsiAccount *                    account;
+    Jid                             peer;
     QPointer<XMPP::Jingle::Session> session;
-    MultiFileTransferModel *model = nullptr;
-    bool isOutgoing = false;
+    MultiFileTransferModel *        model      = nullptr;
+    bool                            isOutgoing = false;
 };
 
 MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::MultiFileTransferDlg),
-    d(new Private)
+    QDialog(parent), ui(new Ui::MultiFileTransferDlg), d(new Private)
 {
     d->account = acc;
     ui->setupUi(this);
@@ -72,28 +69,28 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
 
     // we need square avatar space. to update minimum width to fit height
     QFontMetrics fm(font());
-    int minHeight = 3 *(fm.height() + fm.leading()) + ui->ltNames->spacing() * 2;
+    int          minHeight = 3 * (fm.height() + fm.leading()) + ui->ltNames->spacing() * 2;
     ui->lblMyAvatar->setMinimumWidth(minHeight);
     ui->lblPeerAvatar->setMinimumWidth(minHeight);
 
     ui->lblMyAvatar->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->lblMyAvatar, &QLabel::customContextMenuRequested, this, [this](const QPoint &p){
-        QList<QPair<Jid, PsiAccount*>> accs;
-        for (auto const &a: d->account->psi()->contactList()->enabledAccounts()) {
+    connect(ui->lblMyAvatar, &QLabel::customContextMenuRequested, this, [this](const QPoint &p) {
+        QList<QPair<Jid, PsiAccount *>> accs;
+        for (auto const &a : d->account->psi()->contactList()->enabledAccounts()) {
             if (a->isAvailable()) {
-                accs.append({a->selfContact()->jid(), a});
+                accs.append({ a->selfContact()->jid(), a });
             }
         }
         if (accs.size() < 2) {
             return;
         }
         QMenu m(this);
-        for (auto const &j: accs) {
+        for (auto const &j : accs) {
             m.addAction(j.first.full())->setData(QVariant::fromValue(j.second));
         }
         auto act = m.exec(mapToGlobal(p));
         if (act) {
-            d->account = act->data().value<PsiAccount*>();
+            d->account = act->data().value<PsiAccount *>();
             updateMyVisuals();
         }
     });
@@ -103,7 +100,7 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     ui->listView->setModel(d->model);
     ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
     ui->buttonBox->button(QDialogButtonBox::Close)->hide();
-    connect(ui->listView, &QListView::clicked, this, [this] (const QModelIndex &index) {
+    connect(ui->listView, &QListView::clicked, this, [this](const QModelIndex &index) {
         auto state = index.data(MultiFileTransferModel::StateRole).toInt();
         if (state == MultiFileTransferModel::AddTemplate) {
             if (!d->model->isAddEnabled()) {
@@ -117,14 +114,11 @@ MultiFileTransferDlg::MultiFileTransferDlg(PsiAccount *acc, QWidget *parent) :
     updateMyVisuals();
 }
 
-MultiFileTransferDlg::~MultiFileTransferDlg()
-{
-    delete ui;
-}
+MultiFileTransferDlg::~MultiFileTransferDlg() { delete ui; }
 
 static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::FileTransfer::Application *app)
 {
-    QString comment;
+    QString                       comment;
     MultiFileTransferModel::State state = MultiFileTransferModel::State::Pending;
     if (app->state() > Jingle::State::Active) {
         // TODO consider lastError and return Failed instead
@@ -133,35 +127,51 @@ static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::
         state = MultiFileTransferModel::State::Active;
     }
     switch (app->state()) {
-    case Jingle::State::Created:             comment = QObject::tr("Not started"); break;
-    case Jingle::State::PrepareLocalOffer:   comment = QObject::tr("Prepare local offer"); break;
-    case Jingle::State::Unacked:             comment = QObject::tr("IQ unacknowledged"); break;
-    case Jingle::State::Pending:             comment = QObject::tr("Waiting accept"); break;
-    case Jingle::State::Accepted:            comment = QObject::tr("Accepted"); break;
-    case Jingle::State::Connecting:          comment = QObject::tr("Connecting"); break;
-    case Jingle::State::Active:              comment = QObject::tr("Transferring"); break;
-    case Jingle::State::Finishing:           break;// put error in comment here if any
-    case Jingle::State::Finished:            break;
+    case Jingle::State::Created:
+        comment = QObject::tr("Not started");
+        break;
+    case Jingle::State::PrepareLocalOffer:
+        comment = QObject::tr("Prepare local offer");
+        break;
+    case Jingle::State::Unacked:
+        comment = QObject::tr("IQ unacknowledged");
+        break;
+    case Jingle::State::Pending:
+        comment = QObject::tr("Waiting accept");
+        break;
+    case Jingle::State::Accepted:
+        comment = QObject::tr("Accepted");
+        break;
+    case Jingle::State::Connecting:
+        comment = QObject::tr("Connecting");
+        break;
+    case Jingle::State::Active:
+        comment = QObject::tr("Transferring");
+        break;
+    case Jingle::State::Finishing:
+        break; // put error in comment here if any
+    case Jingle::State::Finished:
+        break;
     };
     item->setState(state, comment);
 }
 
 void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList &fileList)
 {
-    d->peer = jid;
+    d->peer       = jid;
     d->isOutgoing = true;
     updatePeerVisuals();
     appendOutgoing(fileList);
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Send"));
 
-    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this](){
+    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this]() {
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
         d->session = d->account->client()->jingleManager()->newSession(d->peer);
         setupSessionSignals();
 
         for (int i = 0; i < d->model->rowCount() - 1; ++i) {
-            auto index = d->model->index(i, 0, QModelIndex());
-            auto item = reinterpret_cast<MultiFileTransferItem*>(index.internalPointer());
+            auto      index = d->model->index(i, 0, QModelIndex());
+            auto      item  = reinterpret_cast<MultiFileTransferItem *>(index.internalPointer());
             QFileInfo fi(item->filePath());
             if (!fi.isReadable()) {
                 delete item;
@@ -175,9 +185,9 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
 
 void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application *app, MultiFileTransferItem *item)
 {
-    item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application*>(app));
-    app->setProperty("mftitem", QVariant::fromValue<MultiFileTransferItem*>(item));
-    connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [this, app,item](Jingle::State state){
+    item->setProperty("jingle", QVariant::fromValue<Jingle::FileTransfer::Application *>(app));
+    app->setProperty("mftitem", QVariant::fromValue<MultiFileTransferItem *>(item));
+    connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [this, app, item](Jingle::State state) {
         if (state == Jingle::State::Accepted) {
             item->setOffset(app->acceptFile().range().offset);
         }
@@ -185,11 +195,10 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
         if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())) {
             // transfer has just finished and we were the receiving side.
             // if it was the last finished transfer xep recommends us to send session.terminate
-            connect(item, &MultiFileTransferItem::openDirRequested, this, [item](){
-                FileUtil::openFolder(item->filePath());
-            });
+            connect(item, &MultiFileTransferItem::openDirRequested, this,
+                    [item]() { FileUtil::openFolder(item->filePath()); });
             bool hasUnfinished = false;
-            for (auto &c: d->session->contentList()) {
+            for (auto &c : d->session->contentList()) {
                 if (c->state() != Jingle::State::Finished) {
                     hasUnfinished = true;
                     break;
@@ -211,17 +220,18 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
     d->peer = session->peer();
     updatePeerVisuals();
     ui->buttonBox->button(QDialogButtonBox::Apply)->setText(tr("Receive"));
-    for (const auto &c: session->contentList()) {
+    for (const auto &c : session->contentList()) {
         if (c->creator() == Jingle::Origin::Initiator && c->pad()->ns() == Jingle::FileTransfer::NS) {
-            auto app = static_cast<Jingle::FileTransfer::Application*>(c);
+            auto app  = static_cast<Jingle::FileTransfer::Application *>(c);
             auto file = app->file();
-            auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(), file.size()); // FIXME size is optional. ranges?
+            auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(),
+                                              file.size()); // FIXME size is optional. ranges?
             setupCommonSignals(app, item);
 
             auto thumb = file.thumbnail();
             if (!thumb.uri.isEmpty()) {
                 auto loader = new BinaryUriLoader(d->account, d->peer, thumb.uri);
-                connect(loader, &BinaryUriLoader::ready, item, [item](const QByteArray &ba){
+                connect(loader, &BinaryUriLoader::ready, item, [item](const QByteArray &ba) {
                     if (ba.isEmpty())
                         return;
                     QPixmap p;
@@ -231,21 +241,21 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             }
         }
     }
-    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::pressed, this, [this](){
+    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::pressed, this, [this]() {
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
-        auto cl = d->session->contentList();
-        QList<Jingle::FileTransfer::Application*> appToAccept;
+        auto                                       cl = d->session->contentList();
+        QList<Jingle::FileTransfer::Application *> appToAccept;
         for (auto it = cl.constBegin(); it != cl.constEnd(); ++it) {
             if (it.key().second == Jingle::Origin::Initiator) {
-                appToAccept.append(static_cast<Jingle::FileTransfer::Application*>(it.value()));
+                appToAccept.append(static_cast<Jingle::FileTransfer::Application *>(it.value()));
             }
         }
         if (appToAccept.size() > 1) {
             auto dirName = FileUtil::getSaveDirName(this, tr("Directory to save files"));
             if (!dirName.isEmpty()) {
                 QDir d(dirName);
-                for (auto app: appToAccept) {
-                    auto fn = d.absoluteFilePath(FileUtil::cleanFileName(app->file().name()));
+                for (auto app : appToAccept) {
+                    auto      fn = d.absoluteFilePath(FileUtil::cleanFileName(app->file().name()));
                     QFileInfo fi(fn);
                     if (fi.dir() != d) { // in case it has .. or something like this
                         fn = d.absoluteFilePath(fi.fileName());
@@ -254,36 +264,39 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                     if (fi.exists()) {
                         // TODO suggest overwrite
                     }
-                    auto item = app->property("mftitem").value<MultiFileTransferItem*>();
+                    auto item = app->property("mftitem").value<MultiFileTransferItem *>();
                     if (item)
                         item->setFileName(fn);
-                    connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
-                        auto f = new QFile(fn, app);
-                        f->open(QIODevice::WriteOnly);
-                        f->seek(qint64(offset));
-                        Q_UNUSED(size);
-                        app->setDevice(f);
-                    });
+                    connect(app, &Jingle::FileTransfer::Application::deviceRequested,
+                            [fn, app](quint64 offset, quint64 size) {
+                                auto f = new QFile(fn, app);
+                                f->open(QIODevice::WriteOnly);
+                                f->seek(qint64(offset));
+                                Q_UNUSED(size);
+                                app->setDevice(f);
+                            });
                 }
             }
         } else if (appToAccept.size()) {
             auto app = appToAccept.first();
-            auto fn = FileUtil::getSaveFileName(this, tr("Save As"), FileUtil::cleanFileName(app->file().name()), tr("All files (*)"));
+            auto fn  = FileUtil::getSaveFileName(this, tr("Save As"), FileUtil::cleanFileName(app->file().name()),
+                                                tr("All files (*)"));
             if (!fn.isEmpty()) {
                 QFileInfo fi(fn);
                 if (fi.exists()) {
                     // TODO suggest overwrite
                 }
-                auto item = app->property("mftitem").value<MultiFileTransferItem*>();
+                auto item = app->property("mftitem").value<MultiFileTransferItem *>();
                 if (item)
                     item->setFileName(fn);
-                connect(app, &Jingle::FileTransfer::Application::deviceRequested, [fn, app](quint64 offset, quint64 size){
-                    auto f = new QFile(fn, app);
-                    f->open(QIODevice::WriteOnly);
-                    f->seek(qint64(offset));
-                    Q_UNUSED(size);
-                    app->setDevice(f);
-                });
+                connect(app, &Jingle::FileTransfer::Application::deviceRequested,
+                        [fn, app](quint64 offset, quint64 size) {
+                            auto f = new QFile(fn, app);
+                            f->open(QIODevice::WriteOnly);
+                            f->seek(qint64(offset));
+                            Q_UNUSED(size);
+                            app->setDevice(f);
+                        });
             }
         }
         d->session->accept();
@@ -311,13 +324,14 @@ void MultiFileTransferDlg::accept()
 void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
 {
     QMimeDatabase mimeDb;
-    auto app = static_cast<Jingle::FileTransfer::Application*>(d->session->newContent(Jingle::FileTransfer::NS, d->session->role()));
+    auto          app = static_cast<Jingle::FileTransfer::Application *>(
+        d->session->newContent(Jingle::FileTransfer::NS, d->session->role()));
     if (!app) {
         qWarning("Nothing registered in Jingle for %s", qPrintable(Jingle::FileTransfer::NS));
         return;
     }
 
-    connect(app, &Jingle::FileTransfer::Application::deviceRequested, item, [app,item](quint64 offset, quint64 size){
+    connect(app, &Jingle::FileTransfer::Application::deviceRequested, item, [app, item](quint64 offset, quint64 size) {
         auto f = new QFile(item->filePath(), app);
         f->open(QIODevice::ReadOnly);
         f->seek(qint64(offset));
@@ -328,23 +342,23 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
 
     // compute file hash
     XMPP::Hash hash(XMPP::Hash::Sha1); // use Blake2 when we have optimized implementation
-    QFile f(item->filePath());
+    QFile      f(item->filePath());
     hash.compute(&f); // FIXME it will freeze Psi for awhile on large files
 
     // take thumbnail
     XMPP::Thumbnail thumb;
-    auto icon = item->thumbnail();
+    auto            icon = item->thumbnail();
     if (!icon.isNull()) {
-        QPixmap p = icon.pixmap(icon.availableSizes()[0]);
+        QPixmap    p = icon.pixmap(icon.availableSizes()[0]);
         QByteArray ba;
-        QBuffer buffer(&ba);
+        QBuffer    buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
         p.save(&buffer, "PNG");
         thumb = XMPP::Thumbnail(ba, "image/png", quint32(p.width()), quint32(p.height()));
     }
 
     Jingle::FileTransfer::File file;
-    QFileInfo fi(item->filePath());
+    QFileInfo                  fi(item->filePath());
     file.setDate(fi.lastModified());
     file.setDescription(item->description());
     file.addHash(hash);
@@ -360,7 +374,7 @@ void MultiFileTransferDlg::addTransferContent(MultiFileTransferItem *item)
 
 void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
 {
-    for (auto const &fname: fileList) {
+    for (auto const &fname : fileList) {
         QFileInfo fi(fname);
         if (fi.isFile() && fi.isReadable()) {
             auto mftItem = d->model->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), quint64(fi.size()));
@@ -368,10 +382,10 @@ void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
             QImage img(fi.filePath());
             if (!img.isNull()) {
                 img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                QImage back(64,64,QImage::Format_ARGB32_Premultiplied);
+                QImage back(64, 64, QImage::Format_ARGB32_Premultiplied);
                 back.fill(Qt::transparent);
                 QPainter painter(&back);
-                auto imgRect = img.rect();
+                auto     imgRect = img.rect();
                 imgRect.moveCenter(back.rect().center());
                 painter.drawImage(imgRect, img);
                 mftItem->setThumbnail(QIcon(QPixmap::fromImage(std::move(back))));
@@ -380,7 +394,7 @@ void MultiFileTransferDlg::appendOutgoing(const QStringList &fileList)
             }
 
             mftItem->setFileName(fname);
-            if(d->session) {
+            if (d->session) {
                 addTransferContent(mftItem);
             }
         }
@@ -393,7 +407,7 @@ void MultiFileTransferDlg::setupSessionSignals()
     if (!d->session) {
         return;
     }
-    connect(d->session.data(), &Jingle::Session::terminated, this, [this](){
+    connect(d->session.data(), &Jingle::Session::terminated, this, [this]() {
         ui->buttonBox->button(QDialogButtonBox::Cancel)->hide();
         ui->buttonBox->button(QDialogButtonBox::Close)->show();
         ui->buttonBox->button(QDialogButtonBox::Apply)->hide();
@@ -424,7 +438,7 @@ void MultiFileTransferDlg::updatePeerVisuals()
             ui->lblPeerName->setText(d->peer.resource());
 
         } else {
-            avatar = d->account->avatarFactory()->getAvatar(d->peer);
+            avatar    = d->account->avatarFactory()->getAvatar(d->peer);
             auto item = d->account->userList()->find(d->peer.withResource(QString()));
             if (item) {
                 ui->lblPeerName->setText(item->name());
@@ -474,10 +488,10 @@ void MultiFileTransferDlg::dropEvent(QDropEvent *event)
     if (!d->model->isAddEnabled()) {
         return;
     }
-    QStringList dragFiles;
-    const QMimeData* mimeData = event->mimeData();
+    QStringList      dragFiles;
+    const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
-        foreach(const QUrl & url_, mimeData->urls()) {
+        foreach (const QUrl &url_, mimeData->urls()) {
             dragFiles << url_.toLocalFile();
         }
     }
@@ -492,21 +506,25 @@ BinaryUriLoader::BinaryUriLoader(PsiAccount *acc, const Jid &peer, const QUrl &u
     auto uris = uri.toString();
     if (uris.startsWith(QString::fromLatin1("cid:"))) {
         JT_BitsOfBinary *task = new JT_BitsOfBinary(acc->client()->rootTask());
-        connect(task, &JT_BitsOfBinary::finished, this, [this](){
-            BoBData &bob = (static_cast<JT_BitsOfBinary*>(sender()))->data();
-            emit ready(bob.data());
-            deleteLater();
-        }, Qt::QueuedConnection);
+        connect(task, &JT_BitsOfBinary::finished, this,
+                [this]() {
+                    BoBData &bob = (static_cast<JT_BitsOfBinary *>(sender()))->data();
+                    emit     ready(bob.data());
+                    deleteLater();
+                },
+                Qt::QueuedConnection);
         task->get(peer, uri.toString().mid(4));
         task->go(true);
     } else {
-        auto nam = acc->psi()->networkAccessManager();
+        auto           nam   = acc->psi()->networkAccessManager();
         QNetworkReply *reply = nam->get(QNetworkRequest(uri));
-        connect(reply, &QNetworkReply::finished, this, [this](){
-            QNetworkReply* reply = dynamic_cast<QNetworkReply*>(sender());
-            ready(reply->readAll());
-            reply->deleteLater();
-            deleteLater();
-        }, Qt::QueuedConnection);
+        connect(reply, &QNetworkReply::finished, this,
+                [this]() {
+                    QNetworkReply *reply = dynamic_cast<QNetworkReply *>(sender());
+                    ready(reply->readAll());
+                    reply->deleteLater();
+                    deleteLater();
+                },
+                Qt::QueuedConnection);
     }
 }

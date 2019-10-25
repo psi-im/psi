@@ -27,25 +27,20 @@
 class PsiThemeManager::Private {
 public:
     QMap<QString, PsiThemeProvider *> providers;
-    QSet<QString> required;
+    QSet<QString>                     required;
 };
 
 //---------------------------------------------------------
 // PsiThemeManager
 //---------------------------------------------------------
-PsiThemeManager::PsiThemeManager(QObject *parent)
-    : QObject(parent)
+PsiThemeManager::PsiThemeManager(QObject *parent) : QObject(parent)
 {
-    d = new Private;//(this);
+    d = new Private; //(this);
 }
 
-PsiThemeManager::~PsiThemeManager()
-{
-    delete d;
-}
+PsiThemeManager::~PsiThemeManager() { delete d; }
 
-void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
-                                       bool required)
+void PsiThemeManager::registerProvider(PsiThemeProvider *provider, bool required)
 {
     d->providers[provider->type()] = provider;
     if (required) {
@@ -53,7 +48,7 @@ void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
     }
 }
 
-PsiThemeProvider * PsiThemeManager::unregisterProvider(const QString &type)
+PsiThemeProvider *PsiThemeManager::unregisterProvider(const QString &type)
 {
     auto p = d->providers.take(type);
     if (p) {
@@ -62,15 +57,9 @@ PsiThemeProvider * PsiThemeManager::unregisterProvider(const QString &type)
     return p;
 }
 
-PsiThemeProvider *PsiThemeManager::provider(const QString &type)
-{
-    return d->providers.value(type);
-}
+PsiThemeProvider *PsiThemeManager::provider(const QString &type) { return d->providers.value(type); }
 
-QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const
-{
-    return d->providers.values();
-}
+QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const { return d->providers.values(); }
 
 bool PsiThemeManager::loadAll()
 {

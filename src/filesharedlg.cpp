@@ -41,9 +41,8 @@
 #include <QPushButton>
 #include <QUrl>
 
-FileShareDlg::FileShareDlg(const QList<FileSharingItem*> &items, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::FileShareDlg)
+FileShareDlg::FileShareDlg(const QList<FileSharingItem *> &items, QWidget *parent) :
+    QDialog(parent), ui(new Ui::FileShareDlg)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
@@ -59,19 +58,20 @@ FileShareDlg::FileShareDlg(const QList<FileSharingItem*> &items, QWidget *parent
     shareBtn->setText(tr("Share"));
     connect(shareBtn, &QPushButton::clicked, this, &FileShareDlg::publish);
 
-    for (auto const &pi: items) {
+    for (auto const &pi : items) {
         QFileInfo fi(pi->fileName());
-        auto tr = filesModel->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), quint64(fi.size()));
-        tr->setThumbnail(pi->thumbnail(QSize(64,64)));
+        auto      tr = filesModel->addTransfer(MultiFileTransferModel::Outgoing, fi.fileName(), quint64(fi.size()));
+        tr->setThumbnail(pi->thumbnail(QSize(64, 64)));
         if (pi->isPublished()) {
             tr->setCurrentSize(quint64(fi.size()));
             tr->setState(MultiFileTransferModel::Done);
         }
-        tr->setProperty("publisher", QVariant::fromValue<FileSharingItem*>(pi));
+        tr->setProperty("publisher", QVariant::fromValue<FileSharingItem *>(pi));
     }
 
     QImage preview;
-    if (items.count() > 1 || (preview = items[0]->preview(QApplication::desktop()->screenGeometry(this).size() / 2)).isNull()) {
+    if (items.count() > 1
+        || (preview = items[0]->preview(QApplication::desktop()->screenGeometry(this).size() / 2)).isNull()) {
         ui->lv_files->show();
         ui->pixmapRatioLabel->hide();
     } else {
@@ -95,10 +95,7 @@ void FileShareDlg::showImage(const QImage &img)
     ui->pixmapRatioLabel->show();
 }
 
-QString FileShareDlg::description() const
-{
-    return ui->lineEdit->text();
-}
+QString FileShareDlg::description() const { return ui->lineEdit->text(); }
 
 FileShareDlg *FileShareDlg::fromMimeData(const QMimeData *data, PsiAccount *acc, QWidget *parent)
 {
@@ -118,9 +115,9 @@ QList<FileSharingItem *> FileShareDlg::takeItems()
 void FileShareDlg::publish()
 {
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
-    QList<FileSharingItem*> toPublish;
-    filesModel->forEachTransfer([this,&toPublish](MultiFileTransferItem *item){
-        auto publisher = item->property("publisher").value<FileSharingItem*>();
+    QList<FileSharingItem *> toPublish;
+    filesModel->forEachTransfer([this, &toPublish](MultiFileTransferItem *item) {
+        auto publisher = item->property("publisher").value<FileSharingItem *>();
         if (publisher->isPublished()) {
             item->setState(MultiFileTransferModel::Done);
             item->setCurrentSize(item->fullSize());
@@ -128,10 +125,9 @@ void FileShareDlg::publish()
             return;
         }
         item->setState(MultiFileTransferModel::Active);
-        connect(publisher, &FileSharingItem::publishProgress, this, [item](size_t progress){
-            item->setCurrentSize(progress);
-        });
-        connect(publisher, &FileSharingItem::publishFinished, this, [this,publisher,item](){
+        connect(publisher, &FileSharingItem::publishProgress, this,
+                [item](size_t progress) { item->setCurrentSize(progress); });
+        connect(publisher, &FileSharingItem::publishFinished, this, [this, publisher, item]() {
             if (publisher->uris().count()) {
                 item->setState(MultiFileTransferModel::Done);
                 item->setCurrentSize(item->fullSize());
@@ -144,20 +140,16 @@ void FileShareDlg::publish()
             if (!inProgressCount)
                 emit published();
         });
-        connect(publisher, &FileSharingItem::logChanged, this, [publisher,item](){
-            item->setInfo(TextUtil::plain2rich(publisher->log().join('\n')));
-        });
+        connect(publisher, &FileSharingItem::logChanged, this,
+                [publisher, item]() { item->setInfo(TextUtil::plain2rich(publisher->log().join('\n'))); });
         inProgressCount++;
         toPublish.append(publisher);
     });
     if (!inProgressCount) {
         emit published();
     }
-    for (auto &p: toPublish)
+    for (auto &p : toPublish)
         p->publish();
 }
 
-FileShareDlg::~FileShareDlg()
-{
-    delete ui;
-}
+FileShareDlg::~FileShareDlg() { delete ui; }

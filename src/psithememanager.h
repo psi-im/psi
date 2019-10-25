@@ -24,7 +24,7 @@
 
 #include <QObject>
 
-//class ChatViewTheme;
+// class ChatViewTheme;
 
 class PsiThemeManager : public QObject {
     Q_OBJECT
@@ -32,11 +32,11 @@ public:
     PsiThemeManager(QObject *parent);
     ~PsiThemeManager();
 
-    void registerProvider(PsiThemeProvider *provider, bool required = false);
-    PsiThemeProvider *unregisterProvider(const QString &type);
-    PsiThemeProvider *provider(const QString &type);
+    void                      registerProvider(PsiThemeProvider *provider, bool required = false);
+    PsiThemeProvider *        unregisterProvider(const QString &type);
+    PsiThemeProvider *        provider(const QString &type);
     QList<PsiThemeProvider *> registeredProviders() const;
-    bool loadAll();
+    bool                      loadAll();
 
     class Private;
     Private *d;

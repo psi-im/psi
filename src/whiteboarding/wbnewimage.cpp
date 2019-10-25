@@ -25,8 +25,9 @@
 #include <QFile>
 #include <QGraphicsScene>
 
-WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename) : WbNewItem(s),
-                       graphicsitem_(QPixmap(filename)) {
+WbNewImage::WbNewImage(QGraphicsScene *s, QPointF startPos, const QString &filename) :
+    WbNewItem(s), graphicsitem_(QPixmap(filename))
+{
     filename_ = filename;
     graphicsitem_.setZValue(std::numeric_limits<double>::max());
     graphicsitem_.setPos(startPos);
@@ -34,10 +35,11 @@ WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filen
     scene->addItem(&graphicsitem_);
 }
 
-QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
+QDomNode WbNewImage::serializeToSvg(QDomDocument *doc)
+{
     // TODO: Should we perhaps scale large images?
 
-    if(graphicsitem_.pixmap().isNull()) {
+    if (graphicsitem_.pixmap().isNull()) {
         return QDomNode();
     }
 
@@ -48,9 +50,10 @@ QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
         image.setAttribute("x", graphicsitem_.x());
         image.setAttribute("y", graphicsitem_.y());
         image.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-        image.setAttribute("xlink:href", QString("data:image/%1;base64,%2")
-                                            .arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower())
-                                            .arg(file.readAll().toBase64().constData()));
+        image.setAttribute("xlink:href",
+                           QString("data:image/%1;base64,%2")
+                               .arg(filename_.mid(filename_.lastIndexOf(".") + 1).toLower())
+                               .arg(file.readAll().toBase64().constData()));
 
         // QDomElement g = QDomDocument().createElement("g");
         // g.setAttribute("id", "e" + SxeSession::generateUUID());
@@ -62,10 +65,6 @@ QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
     return QDomNode();
 }
 
-void WbNewImage::parseCursorMove(QPointF newPos) {
-    Q_UNUSED(newPos);
-}
+void WbNewImage::parseCursorMove(QPointF newPos) { Q_UNUSED(newPos); }
 
-QGraphicsItem* WbNewImage::graphicsItem() {
-    return &graphicsitem_;
-}
+QGraphicsItem *WbNewImage::graphicsItem() { return &graphicsitem_; }

@@ -20,4 +20,3 @@
 #pragma once
 
 int macosCommonFirstWeekday();
-

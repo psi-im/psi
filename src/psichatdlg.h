@@ -15,11 +15,10 @@
 class IconAction;
 class PsiContact;
 
-class PsiChatDlg : public ChatDlg
-{
+class PsiChatDlg : public ChatDlg {
     Q_OBJECT
 public:
-    PsiChatDlg(const Jid& jid, PsiAccount* account, TabManager* tabManager);
+    PsiChatDlg(const Jid &jid, PsiAccount *account, TabManager *tabManager);
     ~PsiChatDlg();
 
 protected:
@@ -32,29 +31,29 @@ private:
     void setContactToolTip(QString text);
 
 private slots:
-    void toggleSmallChat();
-    void doClearButton();
-    void doMiniCmd();
-    void doMinimize();
-    void addContact();
-    void buildMenu();
-    void updateCounter();
-    void updateIdentityVisibility();
-    void updateCountVisibility();
-    void updateContactAdding(PsiContact* c = nullptr);
-    void updateContactAdding(const Jid &j);
-    void contactChanged();
+    void    toggleSmallChat();
+    void    doClearButton();
+    void    doMiniCmd();
+    void    doMinimize();
+    void    addContact();
+    void    buildMenu();
+    void    updateCounter();
+    void    updateIdentityVisibility();
+    void    updateCountVisibility();
+    void    updateContactAdding(PsiContact *c = nullptr);
+    void    updateContactAdding(const Jid &j);
+    void    contactChanged();
     QString makeContactName(const QString &name, const Jid &jid) const;
-    void updateToolbuttons();
-    void doSwitchJidMode();
-    void copyUserJid();
-    void actActiveContacts();
-    void actPgpToggled(bool);
-    void sendButtonMenu();
-    void editTemplates();
-    void doPasteAndSend();
-    void sendTemp(const QString &);
-    void psButtonEnabled();
+    void    updateToolbuttons();
+    void    doSwitchJidMode();
+    void    copyUserJid();
+    void    actActiveContacts();
+    void    actPgpToggled(bool);
+    void    sendButtonMenu();
+    void    editTemplates();
+    void    doPasteAndSend();
+    void    sendTemp(const QString &);
+    void    psButtonEnabled();
 
     // reimplemented
     void chatEditCreated();
@@ -64,41 +63,41 @@ private:
     void initToolButtons();
 
     // reimplemented
-    void initUi();
-    void capsChanged();
-    bool isEncryptionEnabled() const;
-    void updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence);
-    void contactUpdated(UserListItem* u, int status, const QString& statusString);
-    void updateAvatar();
-    void optionsUpdate();
-    void updatePGP();
-    void checkPGPAutostart();
-    void setPGPEnabled(bool enabled);
-    void activated();
-    void setLooks();
-    void setShortcuts();
-    void appendSysMsg(const QString &);
-    ChatView* chatView() const;
-    ChatEdit* chatEdit() const;
-    void updateAutojidIcon();
-    void setJidComboItem(int pos, const QString &text, const Jid &jid, const QString &icon_str);
+    void      initUi();
+    void      capsChanged();
+    bool      isEncryptionEnabled() const;
+    void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
+    void      contactUpdated(UserListItem *u, int status, const QString &statusString);
+    void      updateAvatar();
+    void      optionsUpdate();
+    void      updatePGP();
+    void      checkPGPAutostart();
+    void      setPGPEnabled(bool enabled);
+    void      activated();
+    void      setLooks();
+    void      setShortcuts();
+    void      appendSysMsg(const QString &);
+    ChatView *chatView() const;
+    ChatEdit *chatEdit() const;
+    void      updateAutojidIcon();
+    void      setJidComboItem(int pos, const QString &text, const Jid &jid, const QString &icon_str);
 
 private:
     Ui::ChatDlg ui_;
 
-    QMenu* pm_settings_;
+    QMenu *pm_settings_;
 
-    ActionList* actions_;
-    QAction *act_mini_cmd_;
-    QAction *act_minimize_;
+    ActionList *      actions_;
+    QAction *         act_mini_cmd_;
+    QAction *         act_minimize_;
     TypeAheadFindBar *typeahead_;
 
     ActionLineEdit *le_autojid;
-    IconAction *act_autojid;
-    IconAction *act_active_contacts;
-    IconAction* act_pastesend_;
+    IconAction *    act_autojid;
+    IconAction *    act_active_contacts;
+    IconAction *    act_pastesend_;
 
-    MCmdManager mCmdManager_;
+    MCmdManager    mCmdManager_;
     MCmdSimpleSite mCmdSite_;
 
     MCmdTabCompletion tabCompletion;

@@ -24,35 +24,34 @@
 
 #include <QScopedPointer>
 
-class MultiFileTransferItem : public QObject
-{
+class MultiFileTransferItem : public QObject {
     Q_OBJECT
 public:
-
-    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize, QObject *parent);
+    MultiFileTransferItem(MultiFileTransferModel::Direction direction, const QString &displayName, quint64 fullSize,
+                          QObject *parent);
     ~MultiFileTransferItem();
 
-    const QString &displayName() const;
-    quint64 fullSize() const;
-    quint64 currentSize() const;
-    quint64 offset() const; // initial offset
-    QIcon icon() const;
-    QString mediaType() const;
-    QString description() const;
-    quint32 speed() const;
+    const QString &                   displayName() const;
+    quint64                           fullSize() const;
+    quint64                           currentSize() const;
+    quint64                           offset() const; // initial offset
+    QIcon                             icon() const;
+    QString                           mediaType() const;
+    QString                           description() const;
+    quint32                           speed() const;
     MultiFileTransferModel::Direction direction() const;
-    MultiFileTransferModel::State state() const;
-    quint32 timeRemaining() const;
-    QString errorString() const;
-    QString toolTipText() const;
-    QString filePath() const;
-    QIcon thumbnail() const;
-    void setThumbnail(const QIcon &img);
-    void setMediaType(const QString &mediaType);
-    void setDescription(const QString &description);
-    void setInfo(const QString &html); // to be shown in tooltips
-    void setFailure(const QString &error);
-    void setSuccess();
+    MultiFileTransferModel::State     state() const;
+    quint32                           timeRemaining() const;
+    QString                           errorString() const;
+    QString                           toolTipText() const;
+    QString                           filePath() const;
+    QIcon                             thumbnail() const;
+    void                              setThumbnail(const QIcon &img);
+    void                              setMediaType(const QString &mediaType);
+    void                              setDescription(const QString &description);
+    void                              setInfo(const QString &html); // to be shown in tooltips
+    void                              setFailure(const QString &error);
+    void                              setSuccess();
     void setState(MultiFileTransferModel::State state, const QString &stateComment = QString());
     void setFileName(const QString &filePath);
     void setOffset(quint64 offset); // set initial offset
@@ -61,14 +60,14 @@ public:
 public slots:
     void setCurrentSize(quint64 newCurrentSize);
 signals:
-    void descriptionChanged(); // user changes description
-    void rejectRequested();    // user selects reject in UI
-    void deleteFileRequested();// user selects delete file from context menu
-    void openDirRequested();   // user wants to open directory with file
-    void openFileRequested();  // user wants to open file
+    void descriptionChanged();  // user changes description
+    void rejectRequested();     // user selects reject in UI
+    void deleteFileRequested(); // user selects delete file from context menu
+    void openDirRequested();    // user wants to open directory with file
+    void openFileRequested();   // user wants to open file
 
-    void aboutToBeDeleted();   // just this object. mostly to notify the model
-    void updated();            // to notify model mostly
+    void aboutToBeDeleted(); // just this object. mostly to notify the model
+    void updated();          // to notify model mostly
 private:
     friend class MultiFileTransferModel;
     struct Private;

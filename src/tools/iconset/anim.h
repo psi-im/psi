@@ -29,8 +29,7 @@ class QObject;
 class QPixmap;
 class QThread;
 
-class Anim
-{
+class Anim {
 public:
     Anim();
     Anim(const QByteArray &data);
@@ -38,12 +37,12 @@ public:
     ~Anim();
 
     const QPixmap &framePixmap() const;
-    const QImage &frameImage() const;
-    const Impix &frameImpix() const;
-    bool isNull() const;
+    const QImage & frameImage() const;
+    const Impix &  frameImpix() const;
+    bool           isNull() const;
 
-    int frameNumber() const;
-    int numFrames() const;
+    int          frameNumber() const;
+    int          numFrames() const;
     const Impix &frame(int n) const;
 
     bool paused() const;
@@ -55,16 +54,17 @@ public:
     void stripFirstFrame();
 
     static QThread *mainThread();
-    static void setMainThread(QThread *);
+    static void     setMainThread(QThread *);
 
     void connectUpdate(QObject *receiver, const char *member);
     void disconnectUpdate(QObject *receiver, const char *member = nullptr);
 
-    Anim & operator= (const Anim &);
-    Anim copy() const;
-    void detach();
+    Anim &operator=(const Anim &);
+    Anim  copy() const;
+    void  detach();
 
     class Private;
+
 private:
     QSharedDataPointer<Private> d;
 };

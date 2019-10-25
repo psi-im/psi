@@ -28,7 +28,7 @@
 class PsiAccount;
 
 namespace Ui {
-    class ContactManagerDlg;
+class ContactManagerDlg;
 }
 
 class ContactManagerDlg : public QDialog {
@@ -42,20 +42,20 @@ protected:
     virtual void changeEvent(QEvent *e);
 
 private:
-    void changeDomain(QList<UserListItem *>& users);
-    void changeGroup(QList<UserListItem *>& users);
-    void exportRoster(QList<UserListItem *>& users);
+    void changeDomain(QList<UserListItem *> &users);
+    void changeGroup(QList<UserListItem *> &users);
+    void exportRoster(QList<UserListItem *> &users);
     void importRoster();
 
     Ui::ContactManagerDlg ui_;
-    PsiAccount *pa_;
-    ContactManagerModel *um;
+    PsiAccount *          pa_;
+    ContactManagerModel * um;
 
 private slots:
     void doSelect();
     void executeCurrent();
     void showParamField(int index);
-    void client_rosterUpdated(bool,int,QString);
+    void client_rosterUpdated(bool, int, QString);
 };
 
 #endif // CONTACTMANAGERDLG_H

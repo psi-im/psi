@@ -25,20 +25,21 @@
 
 using namespace XMPP;
 
-AHCExecuteTask::AHCExecuteTask(const Jid& j, const AHCommand& command, Task* t) : Task(t), receiver_(j), command_(command)
+AHCExecuteTask::AHCExecuteTask(const Jid &j, const AHCommand &command, Task *t) :
+    Task(t), receiver_(j), command_(command)
 {
 }
 
 void AHCExecuteTask::onGo()
 {
     QDomElement e = createIQ(doc(), "set", receiver_.full(), id());
-    e.appendChild(command_.toXml(doc(),true));
+    e.appendChild(command_.toXml(doc(), true));
     send(e);
 }
 
-bool AHCExecuteTask::take(const QDomElement& e)
+bool AHCExecuteTask::take(const QDomElement &e)
 {
-    if(!iqVerify(e, receiver_, id())) {
+    if (!iqVerify(e, receiver_, id())) {
         return false;
     }
 
@@ -47,7 +48,7 @@ bool AHCExecuteTask::take(const QDomElement& e)
         QDomElement i = e.firstChildElement("command");
         if (!i.isNull()) {
             resultCommand_ = AHCommand(i);
-            hasPayload_ = i.childNodes().count() > 0;
+            hasPayload_    = i.childNodes().count() > 0;
             setSuccess();
             return true;
         }
@@ -56,7 +57,8 @@ bool AHCExecuteTask::take(const QDomElement& e)
     /*else if (e.attribute("type") == "set") {
         AHCError err(e);
         if (err.type() != None) {
-            QMessageBox::critical(0, tr("Error"), AHCommand::error2description(err.type()), QMessageBox::Ok, QMessageBox::NoButton);
+            QMessageBox::critical(0, tr("Error"), AHCommand::error2description(err.type()), QMessageBox::Ok,
+    QMessageBox::NoButton);
         }
         return true;
     }*/

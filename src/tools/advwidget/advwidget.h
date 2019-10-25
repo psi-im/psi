@@ -22,8 +22,7 @@
 
 #include <QWidget>
 
-class GAdvancedWidget : public QObject
-{
+class GAdvancedWidget : public QObject {
     Q_OBJECT
 public:
     GAdvancedWidget(QWidget *parent);
@@ -31,14 +30,14 @@ public:
     static bool stickEnabled();
     static void setStickEnabled(bool val);
 
-    static int stickAt();
+    static int  stickAt();
     static void setStickAt(int val);
 
     static bool stickToWindows();
     static void setStickToWindows(bool val);
 
     QString geometryOptionPath() const;
-    void setGeometryOptionPath(const QString& optionPath);
+    void    setGeometryOptionPath(const QString &optionPath);
 
     void showWithoutActivation();
 
@@ -46,7 +45,7 @@ public:
     void doFlash(bool on);
 
 #ifdef Q_OS_WIN
-    bool nativeEvent(const QByteArray &eventType, MSG* msg, long* result);
+    bool nativeEvent(const QByteArray &eventType, MSG *msg, long *result);
 #endif
 
     void moveEvent(QMoveEvent *e);
@@ -54,31 +53,26 @@ public:
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-template <class BaseClass>
-class AdvancedWidget : public BaseClass
-{
+template <class BaseClass> class AdvancedWidget : public BaseClass {
 private:
     GAdvancedWidget *gAdvWidget;
 
 public:
-    AdvancedWidget(QWidget *parent = nullptr, Qt::WindowFlags f = nullptr)
-        : BaseClass(parent)
-        , gAdvWidget(nullptr)
+    AdvancedWidget(QWidget *parent = nullptr, Qt::WindowFlags f = nullptr) : BaseClass(parent), gAdvWidget(nullptr)
     {
         if (f != 0)
             BaseClass::setWindowFlags(f);
-        gAdvWidget = new GAdvancedWidget( this );
+        gAdvWidget = new GAdvancedWidget(this);
     }
 
-    virtual ~AdvancedWidget()
-    {
-    }
+    virtual ~AdvancedWidget() {}
 
-    void setWindowIcon(const QIcon& icon)
+    void setWindowIcon(const QIcon &icon)
     {
 #ifdef Q_OS_MAC
         Q_UNUSED(icon);
@@ -88,13 +82,13 @@ public:
     }
 
     static bool stickEnabled() { return GAdvancedWidget::stickEnabled(); }
-    static void setStickEnabled( bool val ) { GAdvancedWidget::setStickEnabled( val ); }
+    static void setStickEnabled(bool val) { GAdvancedWidget::setStickEnabled(val); }
 
-    static int stickAt() { return GAdvancedWidget::stickAt(); }
-    static void setStickAt( int val ) { GAdvancedWidget::setStickAt( val ); }
+    static int  stickAt() { return GAdvancedWidget::stickAt(); }
+    static void setStickAt(int val) { GAdvancedWidget::setStickAt(val); }
 
     static bool stickToWindows() { return GAdvancedWidget::stickToWindows(); }
-    static void setStickToWindows( bool val ) { GAdvancedWidget::setStickToWindows( val ); }
+    static void setStickToWindows(bool val) { GAdvancedWidget::setStickToWindows(val); }
 
     QString geometryOptionPath() const
     {
@@ -103,7 +97,7 @@ public:
         return QString();
     }
 
-    void setGeometryOptionPath(const QString& optionPath)
+    void setGeometryOptionPath(const QString &optionPath)
     {
         if (gAdvWidget)
             gAdvWidget->setGeometryOptionPath(optionPath);
@@ -122,38 +116,35 @@ public:
             gAdvWidget->showWithoutActivation();
     }
 
-    virtual void doFlash( bool on )
+    virtual void doFlash(bool on)
     {
         if (gAdvWidget)
-            gAdvWidget->doFlash( on );
+            gAdvWidget->doFlash(on);
     }
 
 #ifdef Q_OS_WIN
-    bool nativeEvent(const QByteArray &eventType, MSG* msg, long* result)
+    bool nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
     {
         if (gAdvWidget)
-            return gAdvWidget->nativeEvent(eventType,msg, result);
+            return gAdvWidget->nativeEvent(eventType, msg, result);
         return BaseClass::nativeEvent(eventType, msg, result);
     }
 #endif
 
-    void moveEvent( QMoveEvent *e )
+    void moveEvent(QMoveEvent *e)
     {
         if (gAdvWidget)
             gAdvWidget->moveEvent(e);
     }
 
-    void setWindowTitle( const QString &c )
+    void setWindowTitle(const QString &c)
     {
-        BaseClass::setWindowTitle( c );
+        BaseClass::setWindowTitle(c);
         windowTitleChanged();
     }
 
 protected:
-    virtual void windowTitleChanged()
-    {
-        doFlash(flashing());
-    }
+    virtual void windowTitleChanged() { doFlash(flashing()); }
 
 protected:
     void changeEvent(QEvent *event)

@@ -29,18 +29,16 @@
 class PsiCon;
 class QString;
 
-class MUCJoinDlg : public QDialog
-{
+class MUCJoinDlg : public QDialog {
     Q_OBJECT
 
 public:
-
     MUCJoinDlg(PsiCon *, PsiAccount *);
     ~MUCJoinDlg();
 
-    void setJid(const XMPP::Jid& jid);
-    void setNick(const QString& nick);
-    void setPassword(const QString& password);
+    void setJid(const XMPP::Jid &jid);
+    void setNick(const QString &nick);
+    void setPassword(const QString &password);
 
     void joined();
     void error(int, const QString &);
@@ -63,13 +61,13 @@ private slots:
     void favoritesItemDoubleClicked(QListWidgetItem *lwi);
 
 private:
-    Ui::MUCJoin ui_;
-    PsiCon* controller_;
-    PsiAccount* account_;
-    QPushButton* joinButton_;
-    XMPP::Jid jid_;
+    Ui::MUCJoin               ui_;
+    PsiCon *                  controller_;
+    PsiAccount *              account_;
+    QPushButton *             joinButton_;
+    XMPP::Jid                 jid_;
     PsiAccount::MucJoinReason reason_;
-    bool nickAlreadyCompleted_;
+    bool                      nickAlreadyCompleted_;
 
     void disableWidgets();
     void enableWidgets();

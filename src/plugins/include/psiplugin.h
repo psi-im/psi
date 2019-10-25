@@ -32,8 +32,7 @@ class QWidget;
 /**
  * \brief An abstract class for implementing a plugin
  */
-class PsiPlugin
-{
+class PsiPlugin {
 public:
     // Priorities allows plugins to make processing more ordered. For example
     // some plugins may require process stanzas as early as possible, others
@@ -45,8 +44,7 @@ public:
     // need it. Think about for example stopspam plugin which is known to be
     // highest prioroty blocker/processor. Are you writing stopspam? If not
     // choose High if you want something more then Normal.
-    enum Priority
-    {
+    enum Priority {
         PriorityLowest  = 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
         PriorityLow     = 1,
         PriorityNormal  = 2, // default
@@ -70,7 +68,7 @@ public:
      * This is the short name of the plugin, used for options structures.
      * It must consist of only alphanumerics (no spaces or punctuation).
      * \return Short plugin name
-    */
+     */
     virtual QString shortName() const = 0;
 
     /**
@@ -91,7 +89,7 @@ public:
      *
      * TODO: make sure this is really deleted, etc
      */
-    virtual QWidget* options() = 0;
+    virtual QWidget *options() = 0;
 
     /**
      * \brief Enable plugin
@@ -106,7 +104,7 @@ public:
      */
     virtual bool disable() = 0;
 
-    virtual void applyOptions() = 0;
+    virtual void applyOptions()   = 0;
     virtual void restoreOptions() = 0;
 
     virtual QPixmap icon() const = 0;

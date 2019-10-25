@@ -21,32 +21,31 @@
 #ifndef MCMDMANAGER_H
 #define MCMDMANAGER_H
 
+#include <QHash>
 #include <QList>
+#include <QMap>
 #include <QStringList>
 #include <QVariant>
-#include <QMap>
-#include <QHash>
 #include <minicmd.h>
 
 // implementation in groupchatdlg.cpp
-void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2);
+void MiniCommand_Depreciation_Message(const QString &old, const QString &newCmd, QString &line1, QString &line2);
 
-class MCmdSimpleState : public QObject, public MCmdStateIface
-{
+class MCmdSimpleState : public QObject, public MCmdStateIface {
     Q_OBJECT
 public:
     MCmdSimpleState(QString name, QString prompt);
     MCmdSimpleState(QString name, QString prompt, int flags);
 
-    virtual QString getName() { return name_;};
+    virtual QString getName() { return name_; };
 
-    virtual QString getPrompt() { return prompt_;};
+    virtual QString getPrompt() { return prompt_; };
 
-    virtual int getFlags() { return flags_;};
+    virtual int getFlags() { return flags_; };
 
     virtual const QHash<QString, QVariant> &getInfo() { return info_; };
 
-    virtual void dispose() { delete(this); };
+    virtual void dispose() { delete (this); };
 
     virtual ~MCmdSimpleState();
 
@@ -57,19 +56,18 @@ signals:
 
 protected:
     QString name_, prompt_;
-    int flags_;
+    int     flags_;
 };
 
-class MCmdManager : public MCmdManagerIface
-{
+class MCmdManager : public MCmdManagerIface {
 public:
     // UiSite -> Manager
-    MCmdManager(MCmdUiSiteIface* site_);
+    MCmdManager(MCmdUiSiteIface *site_);
     ~MCmdManager();
 
-    virtual bool processCommand(QString command);
+    virtual bool        processCommand(QString command);
     virtual QStringList completeCommand(QString &command, int pos, int &start, int &end);
-    virtual bool open(MCmdStateIface *state, QStringList preset);
+    virtual bool        open(MCmdStateIface *state, QStringList preset);
 
     virtual bool isActive();
 
@@ -77,11 +75,12 @@ public:
     virtual void registerProvider(MCmdProviderIface *prov);
 
 protected:
-    QStringList parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end, char &quotedAtPos);
-    QString serializeCommand(const QStringList &list);
+    QStringList parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end,
+                             char &quotedAtPos);
+    QString     serializeCommand(const QStringList &list);
 
-    QList<MCmdProviderIface*> providers_;
-    MCmdStateIface *state_;
+    QList<MCmdProviderIface *> providers_;
+    MCmdStateIface *           state_;
 
     MCmdUiSiteIface *uiSite_;
 };

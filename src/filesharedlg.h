@@ -30,27 +30,26 @@ class PsiAccount;
 class QMimeData;
 
 namespace Ui {
-    class FileShareDlg;
+class FileShareDlg;
 }
 
 namespace XMPP {
-    class Message;
+class Message;
 }
 
-class FileShareDlg : public QDialog
-{
+class FileShareDlg : public QDialog {
     Q_OBJECT
 
 public:
-    explicit FileShareDlg(const QList<FileSharingItem*> &items, QWidget *parent = nullptr);
+    explicit FileShareDlg(const QList<FileSharingItem *> &items, QWidget *parent = nullptr);
     ~FileShareDlg();
 
-    QString description() const;
+    QString     description() const;
     inline bool hasPublishErrors() const { return hasFailures; }
 
-    static FileShareDlg* fromMimeData(const QMimeData *md, PsiAccount *acc, QWidget *parent);
+    static FileShareDlg *fromMimeData(const QMimeData *md, PsiAccount *acc, QWidget *parent);
 
-    void showImage(const QImage &img);
+    void                     showImage(const QImage &img);
     QList<FileSharingItem *> takeItems();
 public slots:
     void publish();
@@ -59,13 +58,13 @@ signals:
     void published(); // signalled when all items are published or failed
 
 private:
-    Ui::FileShareDlg *ui;
-    PsiAccount *account;
-    QImage image;
-    MultiFileTransferModel *filesModel;
-    QList<FileSharingItem*> readyPublishers;
-    int inProgressCount = 0;
-    bool hasFailures = false;
+    Ui::FileShareDlg *       ui;
+    PsiAccount *             account;
+    QImage                   image;
+    MultiFileTransferModel * filesModel;
+    QList<FileSharingItem *> readyPublishers;
+    int                      inProgressCount = 0;
+    bool                     hasFailures     = false;
 };
 
 #endif // FILESHAREDLG_H

@@ -1,22 +1,18 @@
+#include "privacyruledlg.h"
 #include "guitest.h"
 #include "guitestmanager.h"
-#include "privacyruledlg.h"
 
 #include <QDebug>
 
-class PrivacyRuleDlgTest : public GUITest
-{
+class PrivacyRuleDlgTest : public GUITest {
 public:
     PrivacyRuleDlgTest();
 
     QString name() { return "PrivacyRuleDlgTest"; }
-    bool run();
+    bool    run();
 };
 
-PrivacyRuleDlgTest::PrivacyRuleDlgTest()
-{
-    GUITestManager::instance()->registerTest(this);
-}
+PrivacyRuleDlgTest::PrivacyRuleDlgTest() { GUITestManager::instance()->registerTest(this); }
 
 bool PrivacyRuleDlgTest::run()
 {
@@ -25,4 +21,4 @@ bool PrivacyRuleDlgTest::run()
     return false;
 }
 
-static PrivacyRuleDlgTest* privacyRuleDlgTestInstance = new PrivacyRuleDlgTest();
+static PrivacyRuleDlgTest *privacyRuleDlgTestInstance = new PrivacyRuleDlgTest();

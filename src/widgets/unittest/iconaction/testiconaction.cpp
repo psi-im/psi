@@ -6,23 +6,24 @@
 #include <QToolButton>
 #include <QtTest/QtTest>
 
-class TestIconAction : public QObject
-{
+class TestIconAction : public QObject {
     Q_OBJECT
 
 private:
     IconAction *action, *checkableAction;
 
-    IconToolButton *findToolButton(QToolBar *toolBar) {
-        IconToolButton *toolButton = toolBar->findChild<IconToolButton*>();
-        if ( !toolButton )
+    IconToolButton *findToolButton(QToolBar *toolBar)
+    {
+        IconToolButton *toolButton = toolBar->findChild<IconToolButton *>();
+        if (!toolButton)
             throw "toolButton == 0!";
 
         return toolButton;
     }
 
 private slots:
-    void initTestCase() {
+    void initTestCase()
+    {
         action = new IconAction("statusTip", "foobar/icon", "text", 0, this, "action");
 
         QCOMPARE(action->statusTip(), QString("statusTip"));
@@ -36,12 +37,14 @@ private slots:
         QCOMPARE(checkableAction->isCheckable(), true);
     }
 
-    void cleanupTestCase() {
+    void cleanupTestCase()
+    {
         delete action;
         delete checkableAction;
     }
 
-    void testToolButtonClick() {
+    void testToolButtonClick()
+    {
         QToolBar toolBar;
         action->addTo(&toolBar);
         QSignalSpy spy(action, SIGNAL(triggered()));
@@ -53,7 +56,8 @@ private slots:
         QCOMPARE(spy.count(), 1);
     }
 
-    void testToolButtonChecked() {
+    void testToolButtonChecked()
+    {
         QToolBar toolBar;
         checkableAction->addTo(&toolBar);
         QSignalSpy spy(checkableAction, SIGNAL(toggled(bool)));
@@ -73,4 +77,3 @@ private slots:
 
 QTEST_MAIN(TestIconAction)
 #include "testiconaction.moc"
-

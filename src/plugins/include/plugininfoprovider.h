@@ -3,13 +3,11 @@
 
 class QString;
 
-class PluginInfoProvider
-{
+class PluginInfoProvider {
 public:
     virtual ~PluginInfoProvider() {}
 
     virtual QString pluginInfo() = 0;
-
 };
 
 Q_DECLARE_INTERFACE(PluginInfoProvider, "org.psi-im.PluginInfoProvider/0.1");

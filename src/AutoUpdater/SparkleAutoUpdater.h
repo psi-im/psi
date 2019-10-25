@@ -10,17 +10,16 @@
 
 #include <QString>
 
-class SparkleAutoUpdater : public AutoUpdater
-{
-    public:
-        SparkleAutoUpdater(const QString& url);
-        ~SparkleAutoUpdater();
+class SparkleAutoUpdater : public AutoUpdater {
+public:
+    SparkleAutoUpdater(const QString &url);
+    ~SparkleAutoUpdater();
 
-        void checkForUpdates();
+    void checkForUpdates();
 
-    private:
-        class Private;
-        Private* d;
+private:
+    class Private;
+    Private *d;
 };
 
 #endif // SPARKLEAUTOUPDATER_H

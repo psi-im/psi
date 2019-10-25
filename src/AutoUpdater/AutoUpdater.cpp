@@ -5,6 +5,4 @@
 
 #include "AutoUpdater.h"
 
-AutoUpdater::~AutoUpdater()
-{
-}
+AutoUpdater::~AutoUpdater() {}

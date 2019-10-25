@@ -30,32 +30,35 @@ class QIcon;
 class QPixmap;
 class QToolButton;
 
-class IconAction : public QAction
-{
+class IconAction : public QAction {
     Q_OBJECT
 public:
     IconAction(QObject *parent, const QString &name = QString());
-    IconAction(const QString &statusTip, const QString &icon, const QString &text, QKeySequence accel, QObject *parent, const QString &name = QString(), bool checkable = false);
-    IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name = QString(), bool checkable = false);
-    IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent, const QString &name = QString(), bool checkable = false);
-    IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name = QString(), bool checkable = false);
+    IconAction(const QString &statusTip, const QString &icon, const QString &text, QKeySequence accel, QObject *parent,
+               const QString &name = QString(), bool checkable = false);
+    IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel,
+               QObject *parent, const QString &name = QString(), bool checkable = false);
+    IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent,
+               const QString &name = QString(), bool checkable = false);
+    IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent,
+               const QString &name = QString(), bool checkable = false);
     IconAction(const QString &text, QObject *parent, const QString &icon);
     ~IconAction();
 
     virtual bool addTo(QWidget *);
 
     const PsiIcon *psiIcon() const;
-    void setPsiIcon(const PsiIcon *);
-    void setPsiIcon(const QString &);
-    QString psiIconName() const;
+    void           setPsiIcon(const PsiIcon *);
+    void           setPsiIcon(const QString &);
+    QString        psiIconName() const;
 
-    void setMenu( QMenu * );
+    void setMenu(QMenu *);
 
-    void setIcon( const QIcon & );
-    void setVisible( bool );
+    void setIcon(const QIcon &);
+    void setVisible(bool);
 
     virtual IconAction *copy() const;
-    virtual IconAction &operator=( const IconAction & );
+    virtual IconAction &operator=(const IconAction &);
 
     void setParent(QObject *newParent);
 
@@ -65,9 +68,9 @@ public slots:
     void setText(const QString &);
 
 protected:
-    virtual void doSetMenu(QMenu* menu);
-    virtual void addingToolButton(IconToolButton *) { }
-    //virtual void addingMenuItem(QPopupMenu *, int id) { Q_UNUSED(id); }
+    virtual void doSetMenu(QMenu *menu);
+    virtual void addingToolButton(IconToolButton *) {}
+    // virtual void addingMenuItem(QPopupMenu *, int id) { Q_UNUSED(id); }
     QList<IconToolButton *> buttonList();
 
     QString toolTipFromMenuText() const;
@@ -79,27 +82,27 @@ private slots:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;
 };
 
-class IconActionGroup : public IconAction
-{
+class IconActionGroup : public IconAction {
     Q_OBJECT
 public:
     IconActionGroup(QObject *parent, const char *name = nullptr, bool exclusive = false);
     ~IconActionGroup();
 
-    void setExclusive( bool );
+    void setExclusive(bool);
     bool isExclusive() const;
 
-    void add( QAction * );
+    void add(QAction *);
     void addSeparator();
 
-    bool addTo( QWidget * );
+    bool addTo(QWidget *);
 
-    void setUsesDropDown( bool );
+    void setUsesDropDown(bool);
     bool usesDropDown() const;
 
     void childEvent(QChildEvent *);
@@ -108,10 +111,11 @@ public:
 
     IconAction *copy() const;
 
-    QMenu* popup();
+    QMenu *popup();
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;

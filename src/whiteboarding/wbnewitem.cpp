@@ -27,15 +27,13 @@
 #include <QStyleOptionGraphicsItem>
 #include <QSvgGenerator>
 
-WbNewItem::WbNewItem(QGraphicsScene* s) {
-    scene = s;
-}
+WbNewItem::WbNewItem(QGraphicsScene *s) { scene = s; }
 
-WbNewItem::~WbNewItem() {
-}
+WbNewItem::~WbNewItem() {}
 
-QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
-    if(!graphicsItem()) {
+QDomNode WbNewItem::serializeToSvg(QDomDocument *doc)
+{
+    if (!graphicsItem()) {
         return QDomDocumentFragment();
     }
 
@@ -45,7 +43,7 @@ QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
     QSvgGenerator generator;
     generator.setOutputDevice(&buffer);
 
-    QPainter painter;
+    QPainter                 painter;
     QStyleOptionGraphicsItem options;
     painter.begin(&generator);
     graphicsItem()->paint(&painter, &options);
@@ -59,12 +57,9 @@ QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
     doc->setContent(buffer.buffer());
     QDomDocumentFragment fragment = doc->createDocumentFragment();
 
-    for(QDomNode n = doc->documentElement().lastChild(); !n.isNull(); n = n.previousSibling()) {
+    for (QDomNode n = doc->documentElement().lastChild(); !n.isNull(); n = n.previousSibling()) {
         // skip <title/>, <desc/>, and <defs/>
-        if(n.isElement() &&
-            !(n.nodeName() == "title"
-                || n.nodeName() == "desc"
-                || n.nodeName() == "defs")) {
+        if (n.isElement() && !(n.nodeName() == "title" || n.nodeName() == "desc" || n.nodeName() == "defs")) {
             n.toElement().setAttribute("id", "e" + SxeSession::generateUUID());
             fragment.insertBefore(n, QDomNode());
         }

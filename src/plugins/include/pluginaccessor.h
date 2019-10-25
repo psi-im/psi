@@ -3,8 +3,7 @@
 
 class PluginAccessingHost;
 
-class PluginAccessor
-{
+class PluginAccessor {
 public:
     virtual ~PluginAccessor() {}
 

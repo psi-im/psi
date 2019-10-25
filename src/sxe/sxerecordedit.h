@@ -26,38 +26,47 @@
 
 /*! \brief A class used for storing SXE edits that change nodes in the undo stacks and in the queue of outgoing edits.*/
 class SxeRecordEdit : public SxeEdit {
-    public:
-        /*! \brief The possible keys for record.*/
-        enum Key {Parent, PrimaryWeight, Name, Chdata, ReplaceFrom, ReplaceN, ProcessingInstructionTarget, ProcessingInstructionData};
+public:
+    /*! \brief The possible keys for record.*/
+    enum Key {
+        Parent,
+        PrimaryWeight,
+        Name,
+        Chdata,
+        ReplaceFrom,
+        ReplaceN,
+        ProcessingInstructionTarget,
+        ProcessingInstructionData
+    };
 
-        /*! \brief Constructor
-         *  Constructs a SxeRecordEdit for \a node.
-         */
-        SxeRecordEdit(const QString rid, int version, QHash<Key, QString> changes, bool remote = false);
-        /*! \brief Constructor
-         *  Parses a SxeRecordEdit from \a sxeElement.
-         */
-        SxeRecordEdit(const QDomElement &sxeElement, bool remote = true);
+    /*! \brief Constructor
+     *  Constructs a SxeRecordEdit for \a node.
+     */
+    SxeRecordEdit(const QString rid, int version, QHash<Key, QString> changes, bool remote = false);
+    /*! \brief Constructor
+     *  Parses a SxeRecordEdit from \a sxeElement.
+     */
+    SxeRecordEdit(const QDomElement &sxeElement, bool remote = true);
 
-        /*! \brief The type of edit.*/
-        SxeEdit::EditType type() const;
-        /*! \brief The XML (the SXE) representing the edit.*/
-        QDomElement xml(QDomDocument &doc) const;
-        /*! \brief The version of the edit.*/
-        int version() const;
-        /*! \brief The keys for the record entries that the edit modifies. */
-        QList<Key> keys() const;
-        /*! \brief The value that the edit will set for the given record entry. */
-        QString value(Key key) const;
+    /*! \brief The type of edit.*/
+    SxeEdit::EditType type() const;
+    /*! \brief The XML (the SXE) representing the edit.*/
+    QDomElement xml(QDomDocument &doc) const;
+    /*! \brief The version of the edit.*/
+    int version() const;
+    /*! \brief The keys for the record entries that the edit modifies. */
+    QList<Key> keys() const;
+    /*! \brief The value that the edit will set for the given record entry. */
+    QString value(Key key) const;
 
-        /*! \brief Turns the edit into a no-op.*/
-        void nullify();
+    /*! \brief Turns the edit into a no-op.*/
+    void nullify();
 
-    private:
-        static QString keyToString(Key key);
+private:
+    static QString keyToString(Key key);
 
-        int version_;
-        QHash<Key, QString> changes_;
+    int                 version_;
+    QHash<Key, QString> changes_;
 };
 
 #endif // SXDEMETADATAEDIT_H

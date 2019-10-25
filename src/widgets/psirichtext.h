@@ -25,26 +25,28 @@
 class QTextEdit;
 class ITEMediaOpener;
 
-class PsiRichText
-{
+class PsiRichText {
 public:
-    typedef QMap<QString,std::function<QTextCharFormat(const QStringRef &)>> ParsersMap;
+    typedef QMap<QString, std::function<QTextCharFormat(const QStringRef &)>> ParsersMap;
 
-    static void install(QTextDocument *doc);
-    static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft, Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
-    static void setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());
-    static void insertIcon(QTextCursor &cursor, const QString &iconName, const QString &iconText);
-    static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append = true, const ParsersMap &parsers = ParsersMap());
+    static void    install(QTextDocument *doc);
+    static void    ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,
+                                      Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
+    static void    setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());
+    static void    insertIcon(QTextCursor &cursor, const QString &iconName, const QString &iconText);
+    static void    appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append = true,
+                              const ParsersMap &parsers = ParsersMap());
     static QString convertToPlainText(const QTextDocument *doc);
-    static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
-    static void setAllowedImageDirs(const QStringList &);
+    static void    addEmoticon(QTextEdit *textEdit, const QString &emoticon);
+    static void    setAllowedImageDirs(const QStringList &);
 
-    static void insertMarker(QTextCursor &cursor, const QString &uniqueId);
-    static QTextCursor findMarker(const QTextCursor &cursor, const QString &uniqueId); // will modify cursor to stay right after marker.
+    static void        insertMarker(QTextCursor &cursor, const QString &uniqueId);
+    static QTextCursor findMarker(const QTextCursor &cursor,
+                                  const QString &    uniqueId); // will modify cursor to stay right after marker.
 
     struct Selection {
         int start, end;
     };
     static Selection saveSelection(QTextEdit *textEdit, QTextCursor &cursor);
-    static void restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Selection selection);
+    static void      restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Selection selection);
 };

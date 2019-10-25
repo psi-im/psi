@@ -27,63 +27,55 @@
 
 ActivityCatalog::Entry::Entry()
 {
-    type_ = Activity::Unknown;
+    type_         = Activity::Unknown;
     specificType_ = Activity::UnknownSpecific;
 }
 
-ActivityCatalog::Entry::Entry(Activity::Type type, const QString& value, const QString& text)
+ActivityCatalog::Entry::Entry(Activity::Type type, const QString &value, const QString &text)
 {
-    type_  = type;
+    type_         = type;
     specificType_ = Activity::UnknownSpecific;
-    value_ = value;
-    text_  = text;
+    value_        = value;
+    text_         = text;
 }
 
-ActivityCatalog::Entry::Entry(Activity::Type type, Activity::SpecificType specificType, const QString& value, const QString& text)
+ActivityCatalog::Entry::Entry(Activity::Type type, Activity::SpecificType specificType, const QString &value,
+                              const QString &text)
 {
-    type_ = type;
+    type_         = type;
     specificType_ = specificType;
-    value_ = value;
-    text_  = text;
+    value_        = value;
+    text_         = text;
 }
 
-Activity::Type ActivityCatalog::Entry::type() const
-{
-    return type_;
-}
+Activity::Type ActivityCatalog::Entry::type() const { return type_; }
 
-Activity::SpecificType ActivityCatalog::Entry::specificType() const
-{
-    return specificType_;
-}
+Activity::SpecificType ActivityCatalog::Entry::specificType() const { return specificType_; }
 
-const QString& ActivityCatalog::Entry::value() const
-{
-    return value_;
-}
+const QString &ActivityCatalog::Entry::value() const { return value_; }
 
-const QString& ActivityCatalog::Entry::text() const
-{
-    return text_;
-}
+const QString &ActivityCatalog::Entry::text() const { return text_; }
 
-bool ActivityCatalog::Entry::isNull() const
-{
-    return type_ == Activity::Unknown && text_.isNull() && value_.isNull();
-}
+bool ActivityCatalog::Entry::isNull() const { return type_ == Activity::Unknown && text_.isNull() && value_.isNull(); }
 
 ActivityCatalog::ActivityCatalog() : QObject(QCoreApplication::instance())
 {
     entries_ += Entry(Activity::DoingChores, "doing_chores", QObject::tr("Doing Chores"));
-    entries_ += Entry(Activity::DoingChores, Activity::BuyingGroceries, "buying_groceries", QObject::tr("Buying Groceries"));
+    entries_
+        += Entry(Activity::DoingChores, Activity::BuyingGroceries, "buying_groceries", QObject::tr("Buying Groceries"));
     entries_ += Entry(Activity::DoingChores, Activity::Cleaning, "cleaning", QObject::tr("Cleaning"));
     entries_ += Entry(Activity::DoingChores, Activity::Cooking, "cooking", QObject::tr("Cooking"));
-    entries_ += Entry(Activity::DoingChores, Activity::DoingMaintenance, "doing_maintenance", QObject::tr("Doing Maintenance"));
-    entries_ += Entry(Activity::DoingChores, Activity::DoingTheDishes, "doing_the_dishes", QObject::tr("Doing The Dishes"));
-    entries_ += Entry(Activity::DoingChores, Activity::DoingTheLaundry, "doing_the_laundry", QObject::tr("Doing The Laundry"));
+    entries_ += Entry(Activity::DoingChores, Activity::DoingMaintenance, "doing_maintenance",
+                      QObject::tr("Doing Maintenance"));
+    entries_
+        += Entry(Activity::DoingChores, Activity::DoingTheDishes, "doing_the_dishes", QObject::tr("Doing The Dishes"));
+    entries_ += Entry(Activity::DoingChores, Activity::DoingTheLaundry, "doing_the_laundry",
+                      QObject::tr("Doing The Laundry"));
     entries_ += Entry(Activity::DoingChores, Activity::Gardening, "gardening", QObject::tr("Gardening"));
-    entries_ += Entry(Activity::DoingChores, Activity::RunningAnErrand, "running_an_errand", QObject::tr("Running An Errand"));
-    entries_ += Entry(Activity::DoingChores, Activity::WalkingTheDog, "walking_the_dog", QObject::tr("Walking The Dog"));
+    entries_ += Entry(Activity::DoingChores, Activity::RunningAnErrand, "running_an_errand",
+                      QObject::tr("Running An Errand"));
+    entries_
+        += Entry(Activity::DoingChores, Activity::WalkingTheDog, "walking_the_dog", QObject::tr("Walking The Dog"));
 
     entries_ += Entry(Activity::Drinking, "drinking", QObject::tr("Drinking"));
     entries_ += Entry(Activity::Drinking, Activity::HavingABeer, "having_a_beer", QObject::tr("Having A Beer"));
@@ -110,7 +102,8 @@ ActivityCatalog::ActivityCatalog() : QObject(QCoreApplication::instance())
     entries_ += Entry(Activity::Grooming, "grooming", QObject::tr("Grooming"));
     entries_ += Entry(Activity::Grooming, Activity::AtTheSpa, "at_the_spa", QObject::tr("At The Spa"));
     entries_ += Entry(Activity::Grooming, Activity::BrushingTeeth, "brushing_teeth", QObject::tr("Brushing Teeth"));
-    entries_ += Entry(Activity::Grooming, Activity::GettingAHaircut, "getting_a_haircut", QObject::tr("Getting A Haircut"));
+    entries_
+        += Entry(Activity::Grooming, Activity::GettingAHaircut, "getting_a_haircut", QObject::tr("Getting A Haircut"));
     entries_ += Entry(Activity::Grooming, Activity::Shaving, "shaving", QObject::tr("Shaving"));
     entries_ += Entry(Activity::Grooming, Activity::TakingABath, "taking_a_bath", QObject::tr("Taking A Bath"));
     entries_ += Entry(Activity::Grooming, Activity::TakingAShower, "taking_a_shower", QObject::tr("Taking A Shower"));
@@ -123,7 +116,8 @@ ActivityCatalog::ActivityCatalog() : QObject(QCoreApplication::instance())
     entries_ += Entry(Activity::Inactive, Activity::Hiding, "hiding", QObject::tr("Hiding"));
     entries_ += Entry(Activity::Inactive, Activity::OnVacation, "on_vacation", QObject::tr("On Vacation"));
     entries_ += Entry(Activity::Inactive, Activity::Praying, "praying", QObject::tr("Praying"));
-    entries_ += Entry(Activity::Inactive, Activity::ScheduledHoliday, "scheduled_holiday", QObject::tr("Scheduled Holiday"));
+    entries_
+        += Entry(Activity::Inactive, Activity::ScheduledHoliday, "scheduled_holiday", QObject::tr("Scheduled Holiday"));
     entries_ += Entry(Activity::Inactive, Activity::Sleeping, "sleeping", QObject::tr("Sleeping"));
     entries_ += Entry(Activity::Inactive, Activity::Thinking, "thinking", QObject::tr("Thinking"));
 
@@ -139,7 +133,8 @@ ActivityCatalog::ActivityCatalog() : QObject(QCoreApplication::instance())
     entries_ += Entry(Activity::Relaxing, Activity::Socializing, "socializing", QObject::tr("Socializing"));
     entries_ += Entry(Activity::Relaxing, Activity::Sunbathing, "sunbathing", QObject::tr("Sunbathing"));
     entries_ += Entry(Activity::Relaxing, Activity::WatchingTv, "watching_tv", QObject::tr("Watching TV"));
-    entries_ += Entry(Activity::Relaxing, Activity::WatchingAMovie, "watching_a_movie", QObject::tr("Watching A Movie"));
+    entries_
+        += Entry(Activity::Relaxing, Activity::WatchingAMovie, "watching_a_movie", QObject::tr("Watching A Movie"));
 
     entries_ += Entry(Activity::Talking, "talking", QObject::tr("Talking"));
     entries_ += Entry(Activity::Talking, Activity::InRealLife, "in_real_life", QObject::tr("In Real Life"));
@@ -167,16 +162,16 @@ ActivityCatalog::ActivityCatalog() : QObject(QCoreApplication::instance())
     entries_ += Entry(Activity::Unknown, Activity::Other, "other", QObject::tr("Other"));
 }
 
-ActivityCatalog* ActivityCatalog::instance()
+ActivityCatalog *ActivityCatalog::instance()
 {
     if (!instance_)
-        instance_ = new  ActivityCatalog();
+        instance_ = new ActivityCatalog();
     return instance_;
 }
 
 ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::Type type) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.type() == type)
             return e;
     }
@@ -185,34 +180,31 @@ ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::Type type) con
 
 ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::SpecificType specificType) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.specificType() == specificType)
             return e;
     }
     return Entry();
 }
 
-ActivityCatalog::Entry ActivityCatalog::findEntryByValue(const QString& value) const
+ActivityCatalog::Entry ActivityCatalog::findEntryByValue(const QString &value) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.value() == value)
             return e;
     }
     return Entry();
 }
 
-ActivityCatalog::Entry ActivityCatalog::findEntryByText(const QString& text) const
+ActivityCatalog::Entry ActivityCatalog::findEntryByText(const QString &text) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.text() == text)
             return e;
     }
     return Entry();
 }
 
-const QList<ActivityCatalog::Entry>& ActivityCatalog::entries() const
-{
-    return entries_;
-}
+const QList<ActivityCatalog::Entry> &ActivityCatalog::entries() const { return entries_; }
 
-ActivityCatalog* ActivityCatalog::instance_ = nullptr;
+ActivityCatalog *ActivityCatalog::instance_ = nullptr;

@@ -3,15 +3,11 @@
 #include "applicationinfo.h"
 #include "iodeviceopener.h"
 
-PsiCapsRegistry::PsiCapsRegistry(QObject *parent) :
-    CapsRegistry(parent)
-{
-
-}
+PsiCapsRegistry::PsiCapsRegistry(QObject *parent) : CapsRegistry(parent) {}
 
 void PsiCapsRegistry::saveData(const QByteArray &data)
 {
-    QFile file(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/caps.xml");
+    QFile          file(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/caps.xml");
     IODeviceOpener opener(&file, QIODevice::WriteOnly);
     if (!opener.isOpen()) {
         qWarning("Caps: Unable to open IO device");

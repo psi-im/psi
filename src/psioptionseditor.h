@@ -13,11 +13,10 @@
 class PsiOptions;
 class QSortFilterProxyModel;
 
-class PsiOptionsEditor : public QWidget
-{
+class PsiOptionsEditor : public QWidget {
     Q_OBJECT
 public:
-    PsiOptionsEditor(QWidget *parent=nullptr);
+    PsiOptionsEditor(QWidget *parent = nullptr);
     void bringToFront();
 
 private slots:
@@ -31,20 +30,20 @@ private slots:
     void detach();
 
 private:
-    PsiOptions *o_;
-    QTreeView* tv_;
-    int tv_colWidth;
-    OptionsTreeModel* tm_;
+    PsiOptions *           o_;
+    QTreeView *            tv_;
+    int                    tv_colWidth;
+    OptionsTreeModel *     tm_;
     QSortFilterProxyModel *tpm_;
-    QCheckBox* cb_;
-    QLabel*    lb_type;
-    QLabel* lb_path;
-    QLabel* lb_comment;
-    QPushButton *pb_delete;
-    QPushButton *pb_reset;
-    QPushButton *pb_edit;
-    QPushButton *pb_new;
-    QToolButton *pb_detach;
+    QCheckBox *            cb_;
+    QLabel *               lb_type;
+    QLabel *               lb_path;
+    QLabel *               lb_comment;
+    QPushButton *          pb_delete;
+    QPushButton *          pb_reset;
+    QPushButton *          pb_edit;
+    QPushButton *          pb_new;
+    QToolButton *          pb_detach;
 };
 
 #endif // PSIOPTIONSEDITOR_H

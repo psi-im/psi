@@ -21,18 +21,17 @@
 #define CHATVIEWTHEMEPROVIDER_PRIV_H
 
 #ifdef WEBENGINE
-#    include <QWebEngineUrlRequestInterceptor>
-#    include "webserver.h"
+#include "webserver.h"
+#include <QWebEngineUrlRequestInterceptor>
 #else
-#    include <QObject> // at least
+#include <QObject> // at least
 #endif
 
 class PsiCon;
 class ThemeServer;
 
 #ifdef WEBENGINE
-class ChatViewUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor
-{
+class ChatViewUrlRequestInterceptor : public QWebEngineUrlRequestInterceptor {
     Q_OBJECT
     Q_DISABLE_COPY(ChatViewUrlRequestInterceptor)
 public:
@@ -41,28 +40,28 @@ public:
 };
 #endif
 
-class ChatViewCon : public QObject
-{
+class ChatViewCon : public QObject {
     Q_OBJECT
 
     PsiCon *pc;
 #ifdef WEBENGINE
-    QMap<QString,WebServer::Handler> sessionHandlers;
-    int handlerSeed = 0;
+    QMap<QString, WebServer::Handler> sessionHandlers;
+    int                               handlerSeed = 0;
 #endif
     ChatViewCon(PsiCon *pc);
+
 public:
     ~ChatViewCon();
 #ifdef WEBENGINE
     ChatViewUrlRequestInterceptor *requestInterceptor;
 
     QString registerSessionHandler(const WebServer::Handler &handler);
-    void unregisterSessionHandler(const QString &path);
-    QUrl serverUrl() const;
+    void    unregisterSessionHandler(const QString &path);
+    QUrl    serverUrl() const;
 #endif
-    static ChatViewCon* instance();
-    static void init(PsiCon *pc);
-    static bool isReady();
+    static ChatViewCon *instance();
+    static void         init(PsiCon *pc);
+    static bool         isReady();
 };
 
 #endif // CHATVIEWTHEMEPROVIDER_PRIV_H

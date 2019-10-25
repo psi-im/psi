@@ -22,7 +22,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 
-PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
+PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog(parent)
 {
     ui_.setupUi(this);
     setModal(false);
@@ -30,18 +30,12 @@ PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
 }
 
-void PassphraseDlg::promptPassphrase(const QString& name)
+void PassphraseDlg::promptPassphrase(const QString &name)
 {
     setWindowTitle(tr("%1: OpenPGP Passphrase").arg(name));
     resize(minimumSizeHint());
 }
 
-QString PassphraseDlg::getPassphrase() const
-{
-    return ui_.le_pass->text();
-}
+QString PassphraseDlg::getPassphrase() const { return ui_.le_pass->text(); }
 
-bool PassphraseDlg::rememberPassPhrase() const
-{
-    return ui_.cb_savePass->isChecked();
-}
+bool PassphraseDlg::rememberPassPhrase() const { return ui_.cb_savePass->isChecked(); }

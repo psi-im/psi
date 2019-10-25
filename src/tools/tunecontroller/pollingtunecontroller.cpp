@@ -50,8 +50,7 @@ void PollingTuneController::check()
         _prevTune = tune;
         if (tune.isNull()) {
             emit stopped();
-        }
-        else {
+        } else {
             emit playing(tune);
         }
     }

@@ -3,8 +3,7 @@
 
 class StanzaSendingHost;
 
-class StanzaSender
-{
+class StanzaSender {
 public:
     virtual ~StanzaSender() {}
 

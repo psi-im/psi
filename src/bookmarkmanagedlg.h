@@ -31,11 +31,10 @@ class QPushButton;
 class QStandardItem;
 class QStandardItemModel;
 
-class BookmarkManageDlg : public QDialog
-{
+class BookmarkManageDlg : public QDialog {
     Q_OBJECT
 public:
-    BookmarkManageDlg(PsiAccount* account);
+    BookmarkManageDlg(PsiAccount *account);
     ~BookmarkManageDlg();
 
 public slots:
@@ -55,8 +54,8 @@ private:
     void loadBookmarks();
     void saveBookmarks();
 
-    void appendItem(QStandardItem* item);
-    XMPP::Jid jid() const;
+    void        appendItem(QStandardItem *item);
+    XMPP::Jid   jid() const;
     QModelIndex currentIndex() const;
 
 private slots:
@@ -64,20 +63,20 @@ private slots:
     void removeBookmark();
     void updateCurrentItem();
     void joinCurrentRoom();
-    void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
-    void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+    void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
+    void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void importBookmarks();
     void exportBookmarks();
 
 private:
-    Ui::BookmarkManage ui_;
-    PsiAccount* account_;
-    QStandardItemModel* model_;
-    QPushButton* addButton_;
-    QPushButton* removeButton_;
-    QPushButton* joinButton_;
+    Ui::BookmarkManage  ui_;
+    PsiAccount *        account_;
+    QStandardItemModel *model_;
+    QPushButton *       addButton_;
+    QPushButton *       removeButton_;
+    QPushButton *       joinButton_;
 
-    ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
+    ConferenceBookmark bookmarkFor(const QModelIndex &index) const;
 };
 
 #endif // BOOKMARKMANAGEDLG_H

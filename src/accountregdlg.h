@@ -39,34 +39,33 @@ class ServerListQuerier;
 class XDataWidget;
 
 namespace XMPP {
-    class Form;
-    class XData;
+class Form;
+class XData;
 }
 
-class AccountRegDlg : public QDialog
-{
+class AccountRegDlg : public QDialog {
     Q_OBJECT
 public:
     AccountRegDlg(PsiCon *psi, QWidget *parent = nullptr);
     ~AccountRegDlg();
 
-    const XMPP::Jid& jid() const { return jid_; }
-    const QString& pass() const { return pass_; }
-    bool useHost() const { return opt_host_; }
-    const QString& host() const { return host_; }
-    int port() const { return port_; }
-    bool legacySSLProbe() { return legacy_ssl_probe_; }
+    const XMPP::Jid &    jid() const { return jid_; }
+    const QString &      pass() const { return pass_; }
+    bool                 useHost() const { return opt_host_; }
+    const QString &      host() const { return host_; }
+    int                  port() const { return port_; }
+    bool                 legacySSLProbe() { return legacy_ssl_probe_; }
     UserAccount::SSLFlag ssl() const { return ssl_; }
-    QString proxy() const { return proxy_; }
-    QString tlsOverrideDomain() { return tlsOverrideDomain_; }
-    QByteArray tlsOverrideCert() { return tlsOverrideCert_; }
+    QString              proxy() const { return proxy_; }
+    QString              tlsOverrideDomain() { return tlsOverrideDomain_; }
+    QByteArray           tlsOverrideCert() { return tlsOverrideCert_; }
 
 public slots:
     void done(int);
 
 protected:
-    static XMPP::XData convertToXData(const XMPP::Form&);
-    static XMPP::Form convertFromXData(const XMPP::XData&);
+    static XMPP::XData convertToXData(const XMPP::Form &);
+    static XMPP::Form  convertFromXData(const XMPP::XData &);
 
     bool checkSSL();
     void block();
@@ -78,8 +77,8 @@ protected slots:
     void next();
 
     void selectServer();
-    void serverListReceived(const QStringList&);
-    void serverListError(const QString&);
+    void serverListReceived(const QStringList &);
+    void serverListError(const QString &);
 
     void client_handshaken();
     void client_error();
@@ -88,25 +87,25 @@ protected slots:
     void setFields_finished();
 
 private:
-    Ui::AccountReg ui_;
-    PsiCon *psi;
-    QScrollArea* fields_container_;
-    XDataWidget* fields_;
-    ProxyChooser *proxy_chooser_;
+    Ui::AccountReg     ui_;
+    PsiCon *           psi;
+    QScrollArea *      fields_container_;
+    XDataWidget *      fields_;
+    ProxyChooser *     proxy_chooser_;
     ServerListQuerier *serverlist_querier_;
-    MiniClient *client_;
-    bool isOld_;
+    MiniClient *       client_;
+    bool               isOld_;
 
     // Account settings
-    XMPP::Jid jid_, server_;
+    XMPP::Jid            jid_, server_;
     UserAccount::SSLFlag ssl_;
-    bool opt_host_, legacy_ssl_probe_;
-    QString host_;
-    int port_;
-    QString pass_;
-    QString proxy_;
-    QString tlsOverrideDomain_;
-    QByteArray tlsOverrideCert_;
+    bool                 opt_host_, legacy_ssl_probe_;
+    QString              host_;
+    int                  port_;
+    QString              pass_;
+    QString              proxy_;
+    QString              tlsOverrideDomain_;
+    QByteArray           tlsOverrideCert_;
 };
 
 #endif // ACCOUNTREGDLG_H

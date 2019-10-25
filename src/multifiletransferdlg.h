@@ -31,21 +31,20 @@ class QDragMoveEvent;
 class QDropEvent;
 
 namespace Ui {
-    class MultiFileTransferDlg;
+class MultiFileTransferDlg;
 }
 
 namespace XMPP {
-    class Jid;
-    namespace Jingle {
-        class Session;
-        namespace FileTransfer {
-            class Application;
-        }
+class Jid;
+namespace Jingle {
+    class Session;
+    namespace FileTransfer {
+        class Application;
     }
 }
+}
 
-class BinaryUriLoader : public QObject
-{
+class BinaryUriLoader : public QObject {
     Q_OBJECT
 public:
     BinaryUriLoader(PsiAccount *acc, const XMPP::Jid &peer, const QUrl &uri);
@@ -53,8 +52,7 @@ signals:
     void ready(const QByteArray &);
 };
 
-class MultiFileTransferDlg : public QDialog
-{
+class MultiFileTransferDlg : public QDialog {
     Q_OBJECT
 
 public:

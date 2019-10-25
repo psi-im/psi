@@ -28,8 +28,7 @@
  * \param parent, widget's parent
  * \param type, selected status type just after creation
  */
-StatusComboBox::StatusComboBox(QWidget* parent, XMPP::Status::Type type)
-    : QComboBox(parent)
+StatusComboBox::StatusComboBox(QWidget *parent, XMPP::Status::Type type) : QComboBox(parent)
 {
     addStatus(XMPP::Status::Online);
     if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
@@ -59,7 +58,8 @@ void StatusComboBox::setStatus(XMPP::Status::Type type)
         type = XMPP::Status::Online;
     else if (type == XMPP::Status::XA && !PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
         type = XMPP::Status::Away;
-    else if (type == XMPP::Status::Invisible && !PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool())
+    else if (type == XMPP::Status::Invisible
+             && !PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool())
         type = XMPP::Status::Offline;
 
     for (int i = 0; i < count(); ++i) {
@@ -80,7 +80,8 @@ XMPP::Status::Type StatusComboBox::status() const
 
 // private
 
-void StatusComboBox::addStatus(XMPP::Status::Type status){
+void StatusComboBox::addStatus(XMPP::Status::Type status)
+{
 #ifdef Q_OS_MAC
     addItem(status2txt(status), status);
 #else

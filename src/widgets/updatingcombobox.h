@@ -3,14 +3,14 @@
 
 #include <QComboBox>
 
-class UpdatingComboBox : public QComboBox
-{
+class UpdatingComboBox : public QComboBox {
     Q_OBJECT
 
 public:
-    UpdatingComboBox(QWidget* parent) : QComboBox(parent) {}
+    UpdatingComboBox(QWidget *parent) : QComboBox(parent) {}
 
-    virtual void showPopup() {
+    virtual void showPopup()
+    {
         emit popup();
         QComboBox::showPopup();
     }

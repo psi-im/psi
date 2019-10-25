@@ -40,7 +40,7 @@ static MediaConfiguration getDefaultConfiguration()
 {
     MediaConfiguration config;
     config.liveInput = true;
-    config.loopFile = true;
+    config.loopFile  = true;
     return config;
 }
 
@@ -48,29 +48,26 @@ static MediaConfiguration *g_config = nullptr;
 
 static void ensureConfig()
 {
-    if(!g_config)
-    {
-        g_config = new MediaConfiguration;
+    if (!g_config) {
+        g_config  = new MediaConfiguration;
         *g_config = getDefaultConfiguration();
     }
 }
 
 #ifdef GSTPROVIDER_STATIC
-    Q_IMPORT_PLUGIN(gstprovider)
+Q_IMPORT_PLUGIN(gstprovider)
 #endif
 
 #ifndef GSTPROVIDER_STATIC
 static QString findPlugin(const QString &relpath, const QString &basename)
 {
     QDir dir(QCoreApplication::applicationDirPath());
-    if(!dir.cd(relpath))
+    if (!dir.cd(relpath))
         return QString();
-    foreach(const QString &fileName, dir.entryList())
-    {
-        if(fileName.contains(basename))
-        {
+    foreach (const QString &fileName, dir.entryList()) {
+        if (fileName.contains(basename)) {
             QString filePath = dir.filePath(fileName);
-            if(QLibrary::isLibrary(filePath))
+            if (QLibrary::isLibrary(filePath))
                 return filePath;
         }
     }
@@ -82,37 +79,35 @@ static bool g_loaded = false;
 
 static void ensureLoaded()
 {
-    if(!g_loaded)
-    {
+    if (!g_loaded) {
 #ifndef GSTPROVIDER_STATIC
         QString pluginFile;
         QString resourcePath;
 
         pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
-        if(pluginFile.isEmpty())
-        {
+        if (pluginFile.isEmpty()) {
 #if defined(Q_OS_WIN)
-            pluginFile = findPlugin(".", "gstprovider" DEBUG_POSTFIX);
+            pluginFile   = findPlugin(".", "gstprovider" DEBUG_POSTFIX);
             resourcePath = QCoreApplication::applicationDirPath() + "/gstreamer-0.10";
 #elif defined(Q_OS_MAC)
-            pluginFile = findPlugin("../Plugins", "gstprovider" DEBUG_POSTFIX);
+            pluginFile   = findPlugin("../Plugins", "gstprovider" DEBUG_POSTFIX);
             resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-0.10";
 #else
-            foreach(const QString& path, ApplicationInfo::pluginDirs()) {
+            foreach (const QString &path, ApplicationInfo::pluginDirs()) {
                 pluginFile = findPlugin(path, "gstprovider" DEBUG_POSTFIX);
-                if(!pluginFile.isEmpty())
+                if (!pluginFile.isEmpty())
                     break;
             }
 #endif
         }
 
         PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, resourcePath);
-        if(r == PsiMedia::PluginSuccess)
+        if (r == PsiMedia::PluginSuccess)
             g_loaded = true;
 #else
         g_loaded = true;
 #endif
-        if(g_loaded)
+        if (g_loaded)
             ensureConfig();
     }
 }
@@ -120,16 +115,15 @@ static void ensureLoaded()
 static JingleRtpPayloadType payloadInfoToPayloadType(const PsiMedia::PayloadInfo &pi)
 {
     JingleRtpPayloadType out;
-    out.id = pi.id();
-    out.name = pi.name();
+    out.id        = pi.id();
+    out.name      = pi.name();
     out.clockrate = pi.clockrate();
-    out.channels = pi.channels();
-    out.ptime = pi.ptime();
-    out.maxptime = pi.maxptime();
-    foreach(const PsiMedia::PayloadInfo::Parameter &pip, pi.parameters())
-    {
+    out.channels  = pi.channels();
+    out.ptime     = pi.ptime();
+    out.maxptime  = pi.maxptime();
+    foreach (const PsiMedia::PayloadInfo::Parameter &pip, pi.parameters()) {
         JingleRtpPayloadType::Parameter ptp;
-        ptp.name = pip.name;
+        ptp.name  = pip.name;
         ptp.value = pip.value;
         out.parameters += ptp;
     }
@@ -146,10 +140,9 @@ static PsiMedia::PayloadInfo payloadTypeToPayloadInfo(const JingleRtpPayloadType
     out.setPtime(pt.ptime);
     out.setMaxptime(pt.maxptime);
     QList<PsiMedia::PayloadInfo::Parameter> list;
-    foreach(const JingleRtpPayloadType::Parameter &ptp, pt.parameters)
-    {
+    foreach (const JingleRtpPayloadType::Parameter &ptp, pt.parameters) {
         PsiMedia::PayloadInfo::Parameter pip;
-        pip.name = ptp.name;
+        pip.name  = ptp.name;
         pip.value = ptp.value;
         list += pip;
     }
@@ -157,28 +150,24 @@ static PsiMedia::PayloadInfo payloadTypeToPayloadInfo(const JingleRtpPayloadType
     return out;
 }
 
-class AvTransmit : public QObject
-{
+class AvTransmit : public QObject {
     Q_OBJECT
 
 public:
     PsiMedia::RtpChannel *audio, *video;
-    JingleRtpChannel *transport;
+    JingleRtpChannel *    transport;
 
-    AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport, QObject *parent = nullptr) :
+    AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport,
+               QObject *parent = nullptr) :
         QObject(parent),
-        audio(_audio),
-        video(_video),
-        transport(_transport)
+        audio(_audio), video(_video), transport(_transport)
     {
-        if(audio)
-        {
+        if (audio) {
             audio->setParent(this);
             connect(audio, SIGNAL(readyRead()), SLOT(audio_readyRead()));
         }
 
-        if(video)
-        {
+        if (video) {
             video->setParent(this);
             connect(video, SIGNAL(readyRead()), SLOT(video_readyRead()));
         }
@@ -190,9 +179,9 @@ public:
 
     ~AvTransmit()
     {
-        if(audio)
+        if (audio)
             audio->setParent(nullptr);
-        if(video)
+        if (video)
             video->setParent(nullptr);
         transport->setParent(nullptr);
     }
@@ -200,14 +189,13 @@ public:
 private slots:
     void audio_readyRead()
     {
-        while(audio->packetsAvailable() > 0)
-        {
+        while (audio->packetsAvailable() > 0) {
             PsiMedia::RtpPacket packet = audio->read();
 
             JingleRtp::RtpPacket jpacket;
-            jpacket.type = JingleRtp::Audio;
+            jpacket.type       = JingleRtp::Audio;
             jpacket.portOffset = packet.portOffset();
-            jpacket.value = packet.rawValue();
+            jpacket.value      = packet.rawValue();
 
             transport->write(jpacket);
         }
@@ -215,14 +203,13 @@ private slots:
 
     void video_readyRead()
     {
-        while(video->packetsAvailable() > 0)
-        {
+        while (video->packetsAvailable() > 0) {
             PsiMedia::RtpPacket packet = video->read();
 
             JingleRtp::RtpPacket jpacket;
-            jpacket.type = JingleRtp::Video;
+            jpacket.type       = JingleRtp::Video;
             jpacket.portOffset = packet.portOffset();
-            jpacket.value = packet.rawValue();
+            jpacket.value      = packet.rawValue();
 
             transport->write(jpacket);
         }
@@ -230,13 +217,13 @@ private slots:
 
     void transport_readyRead()
     {
-        while(transport->packetsAvailable())
-        {
+        while (transport->packetsAvailable()) {
             JingleRtp::RtpPacket jpacket = transport->read();
 
-            if(jpacket.type == JingleRtp::Audio && audio) // FIXME why audio could null but we still receive packets? (the check was added to fix a crash)
+            if (jpacket.type == JingleRtp::Audio && audio) // FIXME why audio could null but we still receive packets?
+                                                           // (the check was added to fix a crash)
                 audio->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
-            else if(jpacket.type == JingleRtp::Video && video) //  FIXME see above
+            else if (jpacket.type == JingleRtp::Video && video) //  FIXME see above
                 video->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
         }
     }
@@ -249,24 +236,18 @@ private slots:
     }
 };
 
-class AvTransmitHandler : public QObject
-{
+class AvTransmitHandler : public QObject {
     Q_OBJECT
 
 public:
     AvTransmit *avTransmit;
-    QThread *previousThread;
+    QThread *   previousThread;
 
-    AvTransmitHandler(QObject *parent = nullptr) :
-        QObject(parent),
-        avTransmit(nullptr),
-        previousThread(nullptr)
-    {
-    }
+    AvTransmitHandler(QObject *parent = nullptr) : QObject(parent), avTransmit(nullptr), previousThread(nullptr) {}
 
     ~AvTransmitHandler()
     {
-        if(avTransmit)
+        if (avTransmit)
             releaseAvTransmit();
     }
 
@@ -275,7 +256,7 @@ public:
     //   another thread if you know what you're doing.
     void setAvTransmit(AvTransmit *_avTransmit)
     {
-        avTransmit = _avTransmit;
+        avTransmit     = _avTransmit;
         previousThread = avTransmit->thread();
         avTransmit->moveToThread(thread());
     }
@@ -288,49 +269,34 @@ public:
     }
 };
 
-class AvTransmitThread : public QCA::SyncThread
-{
+class AvTransmitThread : public QCA::SyncThread {
     Q_OBJECT
 
 public:
     AvTransmitHandler *handler;
 
-    AvTransmitThread(QObject *parent = nullptr) :
-        QCA::SyncThread(parent),
-        handler(nullptr)
-    {
-    }
+    AvTransmitThread(QObject *parent = nullptr) : QCA::SyncThread(parent), handler(nullptr) {}
 
-    ~AvTransmitThread()
-    {
-        stop();
-    }
+    ~AvTransmitThread() { stop(); }
 
 protected:
-    virtual void atStart()
-    {
-        handler = new AvTransmitHandler;
-    }
+    virtual void atStart() { handler = new AvTransmitHandler; }
 
-    virtual void atEnd()
-    {
-        delete handler;
-    }
+    virtual void atEnd() { delete handler; }
 };
 
 //----------------------------------------------------------------------------
 // AvCall
 //----------------------------------------------------------------------------
-class AvCallManagerPrivate : public QObject
-{
+class AvCallManagerPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCallManager *q;
-    PsiAccount *pa;
+    AvCallManager *   q;
+    PsiAccount *      pa;
     JingleRtpManager *rtpManager;
-    QList<AvCall*> sessions;
-    QList<AvCall*> pending;
+    QList<AvCall *>   sessions;
+    QList<AvCall *>   pending;
 
     AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q);
     ~AvCallManagerPrivate();
@@ -341,37 +307,29 @@ private slots:
     void rtp_incomingReady();
 };
 
-class AvCallPrivate : public QObject
-{
+class AvCallPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCall *q;
+    AvCall *              q;
     AvCallManagerPrivate *manager;
-    bool incoming;
-    JingleRtp *sess;
-    PsiMedia::RtpSession rtp;
-    XMPP::Jid peer;
-    AvCall::Mode mode;
-    int bitrate;
-    bool allowVideo;
-    QString errorString;
-    bool transmitAudio;
-    bool transmitVideo;
-    bool transmitting;
-    AvTransmit *avTransmit;
-    AvTransmitThread *avTransmitThread;
+    bool                  incoming;
+    JingleRtp *           sess;
+    PsiMedia::RtpSession  rtp;
+    XMPP::Jid             peer;
+    AvCall::Mode          mode;
+    int                   bitrate;
+    bool                  allowVideo;
+    QString               errorString;
+    bool                  transmitAudio;
+    bool                  transmitVideo;
+    bool                  transmitting;
+    AvTransmit *          avTransmit;
+    AvTransmitThread *    avTransmitThread;
 
     AvCallPrivate(AvCall *_q) :
-        QObject(_q),
-        q(_q),
-        manager(nullptr),
-        sess(nullptr),
-        transmitAudio(false),
-        transmitVideo(false),
-        transmitting(false),
-        avTransmit(nullptr),
-        avTransmitThread(nullptr)
+        QObject(_q), q(_q), manager(nullptr), sess(nullptr), transmitAudio(false), transmitVideo(false),
+        transmitting(false), avTransmit(nullptr), avTransmitThread(nullptr)
     {
         allowVideo = AvCallManager::isVideoSupported();
 
@@ -390,8 +348,7 @@ public:
 
     void unlink()
     {
-        if(manager)
-        {
+        if (manager) {
             // note that the object remains active, just
             //   dissociated from the manager
             manager->unlink(q);
@@ -401,7 +358,7 @@ public:
 
     void startOutgoing()
     {
-        if(!manager)
+        if (!manager)
             return;
 
         manager->rtpManager->setBasePort(g_config->basePort);
@@ -417,19 +374,18 @@ public:
         // JingleRtp guarantees there will be at least one of audio or video
         bool offeredAudio = false;
         bool offeredVideo = false;
-        if(!sess->remoteAudioPayloadTypes().isEmpty())
+        if (!sess->remoteAudioPayloadTypes().isEmpty())
             offeredAudio = true;
-        if(allowVideo && !sess->remoteVideoPayloadTypes().isEmpty())
+        if (allowVideo && !sess->remoteVideoPayloadTypes().isEmpty())
             offeredVideo = true;
 
-        if(offeredAudio && offeredVideo)
+        if (offeredAudio && offeredVideo)
             mode = AvCall::Both;
-        else if(offeredAudio)
+        else if (offeredAudio)
             mode = AvCall::Audio;
-        else if(offeredVideo)
+        else if (offeredVideo)
             mode = AvCall::Video;
-        else
-        {
+        else {
             // this could happen if only video is offered but
             //   we don't allow it
             return false;
@@ -440,7 +396,7 @@ public:
 
     void accept()
     {
-        if(!manager)
+        if (!manager)
             return;
 
         manager->rtpManager->setBasePort(g_config->basePort);
@@ -451,9 +407,9 @@ public:
         //   won't actually get sent to the peer until we call
         //   localMediaUpdated()
         int types;
-        if(mode == AvCall::Both)
+        if (mode == AvCall::Both)
             types = JingleRtp::Audio | JingleRtp::Video;
-        else if(mode == AvCall::Audio)
+        else if (mode == AvCall::Audio)
             types = JingleRtp::Audio;
         else // Video
             types = JingleRtp::Video;
@@ -464,7 +420,7 @@ public:
 
     void reject()
     {
-        if(sess)
+        if (sess)
             sess->reject();
         cleanup();
     }
@@ -473,14 +429,16 @@ private:
     static QString rtpSessionErrorToString(PsiMedia::RtpSession::Error e)
     {
         QString str;
-        switch(e)
-        {
-            case PsiMedia::RtpSession::ErrorSystem:
-                str = tr("System error"); break;
-            case PsiMedia::RtpSession::ErrorCodec:
-                str = tr("Codec error"); break;
-            default: // generic
-                str = tr("Generic error"); break;
+        switch (e) {
+        case PsiMedia::RtpSession::ErrorSystem:
+            str = tr("System error");
+            break;
+        case PsiMedia::RtpSession::ErrorCodec:
+            str = tr("Codec error");
+            break;
+        default: // generic
+            str = tr("Generic error");
+            break;
         }
         return str;
     }
@@ -507,33 +465,27 @@ private:
         transmitAudio = false;
         transmitVideo = false;
 
-        if(config.liveInput)
-        {
-            if(config.audioInDeviceId.isEmpty() && config.videoInDeviceId.isEmpty())
-            {
-                errorString = tr("Cannot call without selecting a device.  Do you have a microphone?  Check the Psi options.");
+        if (config.liveInput) {
+            if (config.audioInDeviceId.isEmpty() && config.videoInDeviceId.isEmpty()) {
+                errorString
+                    = tr("Cannot call without selecting a device.  Do you have a microphone?  Check the Psi options.");
                 cleanup();
                 emit q->error();
                 return;
             }
 
-            if((mode == AvCall::Audio || mode == AvCall::Both) && !config.audioInDeviceId.isEmpty())
-            {
+            if ((mode == AvCall::Audio || mode == AvCall::Both) && !config.audioInDeviceId.isEmpty()) {
                 rtp.setAudioInputDevice(config.audioInDeviceId);
                 transmitAudio = true;
-            }
-            else
+            } else
                 rtp.setAudioInputDevice(QString());
 
-            if((mode == AvCall::Video || mode == AvCall::Both) && !config.videoInDeviceId.isEmpty() && allowVideo)
-            {
+            if ((mode == AvCall::Video || mode == AvCall::Both) && !config.videoInDeviceId.isEmpty() && allowVideo) {
                 rtp.setVideoInputDevice(config.videoInDeviceId);
                 transmitVideo = true;
-            }
-            else
+            } else
                 rtp.setVideoInputDevice(QString());
-        }
-        else // non-live (file) input
+        } else // non-live (file) input
         {
             rtp.setFileInput(config.file);
             rtp.setFileLoopEnabled(config.loopFile);
@@ -546,26 +498,26 @@ private:
             transmitVideo = true;
         }
 
-        if(!config.audioOutDeviceId.isEmpty())
+        if (!config.audioOutDeviceId.isEmpty())
             rtp.setAudioOutputDevice(config.audioOutDeviceId);
 
         // media types are flagged by params, even if empty
         QList<PsiMedia::AudioParams> audioParamsList;
-        if(transmitAudio)
+        if (transmitAudio)
             audioParamsList += PsiMedia::AudioParams();
         rtp.setLocalAudioPreferences(audioParamsList);
 
         QList<PsiMedia::VideoParams> videoParamsList;
-        if(transmitVideo)
+        if (transmitVideo)
             videoParamsList += PsiMedia::VideoParams();
         rtp.setLocalVideoPreferences(videoParamsList);
 
         // for incoming sessions, we have the remote media info at
         //   the start, so use it
-        if(incoming)
+        if (incoming)
             setup_remote_media();
 
-        if(bitrate != -1)
+        if (bitrate != -1)
             rtp.setMaximumSendingBitrate(bitrate);
 
         transmitting = false;
@@ -582,20 +534,18 @@ private:
 
     void setup_remote_media()
     {
-        if(transmitAudio)
-        {
-            QList<JingleRtpPayloadType> payloadTypes = sess->remoteAudioPayloadTypes();
+        if (transmitAudio) {
+            QList<JingleRtpPayloadType>  payloadTypes = sess->remoteAudioPayloadTypes();
             QList<PsiMedia::PayloadInfo> list;
-            foreach(const JingleRtpPayloadType &pt, payloadTypes)
+            foreach (const JingleRtpPayloadType &pt, payloadTypes)
                 list += payloadTypeToPayloadInfo(pt);
             rtp.setRemoteAudioPreferences(list);
         }
 
-        if(transmitVideo)
-        {
-            QList<JingleRtpPayloadType> payloadTypes = sess->remoteVideoPayloadTypes();
+        if (transmitVideo) {
+            QList<JingleRtpPayloadType>  payloadTypes = sess->remoteVideoPayloadTypes();
             QList<PsiMedia::PayloadInfo> list;
-            foreach(const JingleRtpPayloadType &pt, payloadTypes)
+            foreach (const JingleRtpPayloadType &pt, payloadTypes)
                 list += payloadTypeToPayloadInfo(pt);
             rtp.setRemoteVideoPreferences(list);
         }
@@ -607,56 +557,48 @@ private:
 private slots:
     void rtp_started()
     {
-        if(!manager)
+        if (!manager)
             return;
 
         printf("rtp_started\n");
 
-        if(!incoming)
-        {
+        if (!incoming) {
             sess = manager->rtpManager->createOutgoing();
             setup_sess();
         }
 
-        if(transmitAudio && !rtp.localAudioPayloadInfo().isEmpty())
-        {
+        if (transmitAudio && !rtp.localAudioPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            foreach(PsiMedia::PayloadInfo pi, rtp.localAudioPayloadInfo())
-            {
+            foreach (PsiMedia::PayloadInfo pi, rtp.localAudioPayloadInfo()) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
             }
             sess->setLocalAudioPayloadTypes(pis);
-        }
-        else
+        } else
             transmitAudio = false;
 
-        if(transmitVideo && !rtp.localVideoPayloadInfo().isEmpty())
-        {
+        if (transmitVideo && !rtp.localVideoPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            foreach(PsiMedia::PayloadInfo pi, rtp.localVideoPayloadInfo())
-            {
+            foreach (PsiMedia::PayloadInfo pi, rtp.localVideoPayloadInfo()) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
             }
             sess->setLocalVideoPayloadTypes(pis);
-        }
-        else
+        } else
             transmitVideo = false;
 
-        if(transmitAudio && transmitVideo)
+        if (transmitAudio && transmitVideo)
             mode = AvCall::Both;
-        else if(transmitAudio && !transmitVideo)
+        else if (transmitAudio && !transmitVideo)
             mode = AvCall::Audio;
-        else if(transmitVideo && !transmitAudio)
+        else if (transmitVideo && !transmitAudio)
             mode = AvCall::Video;
-        else
-        {
+        else {
             // can't happen?
             Q_ASSERT(0);
         }
 
-        if(!incoming)
+        if (!incoming)
             sess->connectToJid(peer);
         else
             sess->localMediaUpdate();
@@ -689,18 +631,13 @@ private slots:
     void sess_error()
     {
         JingleRtp::Error e = sess->errorCode();
-        if(e == JingleRtp::ErrorTimeout)
-        {
+        if (e == JingleRtp::ErrorTimeout) {
             errorString = tr("Call negotiation timed out.");
             cleanup();
-        }
-        else if(e == JingleRtp::ErrorICE)
-        {
+        } else if (e == JingleRtp::ErrorICE) {
             errorString = tr("Unable to establish peer-to-peer connection.");
             reject();
-        }
-        else
-        {
+        } else {
             errorString = tr("Call negotiation failed.");
             cleanup();
         }
@@ -713,9 +650,9 @@ private slots:
         PsiMedia::RtpChannel *audio = nullptr;
         PsiMedia::RtpChannel *video = nullptr;
 
-        if(transmitAudio)
+        if (transmitAudio)
             audio = rtp.audioRtpChannel();
-        if(transmitVideo)
+        if (transmitVideo)
             video = rtp.videoRtpChannel();
 
         avTransmit = new AvTransmit(audio, video, sess->rtpChannel());
@@ -725,9 +662,9 @@ private slots:
         avTransmitThread->handler->setAvTransmit(avTransmit);
 #endif
 
-        if(transmitAudio)
+        if (transmitAudio)
             rtp.transmitAudio();
-        if(transmitVideo)
+        if (transmitVideo)
             rtp.transmitVideo();
 
         transmitting = true;
@@ -741,103 +678,71 @@ private slots:
     }
 };
 
-AvCall::AvCall()
-{
-    d = new AvCallPrivate(this);
-}
+AvCall::AvCall() { d = new AvCallPrivate(this); }
 
-AvCall::AvCall(const AvCall &from) :
-    QObject(nullptr)
+AvCall::AvCall(const AvCall &from) : QObject(nullptr)
 {
     Q_UNUSED(from);
     fprintf(stderr, "AvCall copy not supported\n");
     abort();
 }
 
-AvCall::~AvCall()
-{
-    delete d;
-}
+AvCall::~AvCall() { delete d; }
 
 XMPP::Jid AvCall::jid() const
 {
-    if(d->sess)
+    if (d->sess)
         return d->sess->jid();
     else
         return XMPP::Jid();
 }
 
-AvCall::Mode AvCall::mode() const
-{
-    return d->mode;
-}
+AvCall::Mode AvCall::mode() const { return d->mode; }
 
 void AvCall::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps)
 {
-    d->peer = jid;
-    d->mode = mode;
+    d->peer    = jid;
+    d->mode    = mode;
     d->bitrate = kbps;
     d->startOutgoing();
 }
 
 void AvCall::accept(Mode mode, int kbps)
 {
-    d->mode = mode;
+    d->mode    = mode;
     d->bitrate = kbps;
     d->accept();
 }
 
-void AvCall::reject()
-{
-    d->reject();
-}
+void AvCall::reject() { d->reject(); }
 
-void AvCall::setIncomingVideo(PsiMedia::VideoWidget *widget)
-{
-    d->rtp.setVideoOutputWidget(widget);
-}
+void AvCall::setIncomingVideo(PsiMedia::VideoWidget *widget) { d->rtp.setVideoOutputWidget(widget); }
 
-QString AvCall::errorString() const
-{
-    return d->errorString;
-}
+QString AvCall::errorString() const { return d->errorString; }
 
-void AvCall::unlink()
-{
-    d->unlink();
-}
+void AvCall::unlink() { d->unlink(); }
 
 //----------------------------------------------------------------------------
 // AvCallManager
 //----------------------------------------------------------------------------
-AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q) :
-    QObject(_q),
-    q(_q),
-    pa(_pa)
+AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q) : QObject(_q), q(_q), pa(_pa)
 {
     rtpManager = new JingleRtpManager(pa->client());
     connect(rtpManager, SIGNAL(incomingReady()), SLOT(rtp_incomingReady()));
 }
 
-AvCallManagerPrivate::~AvCallManagerPrivate()
-{
-    delete rtpManager;
-}
+AvCallManagerPrivate::~AvCallManagerPrivate() { delete rtpManager; }
 
-void AvCallManagerPrivate::unlink(AvCall *call)
-{
-    sessions.removeAll(call);
-}
+void AvCallManagerPrivate::unlink(AvCall *call) { sessions.removeAll(call); }
 
 void AvCallManagerPrivate::rtp_incomingReady()
 {
-    AvCall *call = new AvCall;
-    call->d->manager = this;
+    AvCall *call      = new AvCall;
+    call->d->manager  = this;
     call->d->incoming = true;
-    call->d->sess = rtpManager->takeIncoming();
+    call->d->sess     = rtpManager->takeIncoming();
     sessions += call;
-    if(!call->d->initIncoming())
-    {
+    if (!call->d->initIncoming()) {
         call->d->sess->reject();
         delete call->d->sess;
         call->d->sess = nullptr;
@@ -849,29 +754,19 @@ void AvCallManagerPrivate::rtp_incomingReady()
     emit q->incomingReady();
 }
 
-AvCallManager::AvCallManager(PsiAccount *pa) :
-    QObject(nullptr)
-{
-    d = new AvCallManagerPrivate(pa, this);
-}
+AvCallManager::AvCallManager(PsiAccount *pa) : QObject(nullptr) { d = new AvCallManagerPrivate(pa, this); }
 
-AvCallManager::~AvCallManager()
-{
-    delete d;
-}
+AvCallManager::~AvCallManager() { delete d; }
 
 AvCall *AvCallManager::createOutgoing()
 {
-    AvCall *call = new AvCall;
-    call->d->manager = d;
+    AvCall *call      = new AvCall;
+    call->d->manager  = d;
     call->d->incoming = false;
     return call;
 }
 
-AvCall *AvCallManager::takeIncoming()
-{
-    return d->pending.takeFirst();
-}
+AvCall *AvCallManager::takeIncoming() { return d->pending.takeFirst(); }
 
 void AvCallManager::config()
 {
@@ -881,8 +776,7 @@ void AvCallManager::config()
 bool AvCallManager::isSupported()
 {
     ensureLoaded();
-    if(!QCA::isSupported("hmac(sha1)"))
-    {
+    if (!QCA::isSupported("hmac(sha1)")) {
         printf("hmac support missing for voice calls, install qca-ossl\n");
         return false;
     }
@@ -891,63 +785,46 @@ bool AvCallManager::isSupported()
 
 bool AvCallManager::isVideoSupported()
 {
-    if(!isSupported())
+    if (!isSupported())
         return false;
 
-    if(PsiOptions::instance()->getOption("options.media.video-support").toBool())
+    if (PsiOptions::instance()->getOption("options.media.video-support").toBool())
         return true;
 
-    if(!QString::fromLatin1(qgetenv("PSI_ENABLE_VIDEO")).isEmpty())
+    if (!QString::fromLatin1(qgetenv("PSI_ENABLE_VIDEO")).isEmpty())
         return true;
     else
         return false;
 }
 
-void AvCallManager::setSelfAddress(const QHostAddress &addr)
-{
-    d->rtpManager->setSelfAddress(addr);
-}
+void AvCallManager::setSelfAddress(const QHostAddress &addr) { d->rtpManager->setSelfAddress(addr); }
 
-void AvCallManager::setStunBindService(const QString &host, int port)
-{
-    d->rtpManager->setStunBindService(host, port);
-}
+void AvCallManager::setStunBindService(const QString &host, int port) { d->rtpManager->setStunBindService(host, port); }
 
 void AvCallManager::setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass)
 {
     d->rtpManager->setStunRelayUdpService(host, port, user, pass);
 }
 
-void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass)
+void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
+                                           const QString &user, const QString &pass)
 {
     d->rtpManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
 void AvCallManager::setBasePort(int port)
 {
-    if(port == 0)
+    if (port == 0)
         port = -1;
     g_config->basePort = port;
 }
 
-void AvCallManager::setExternalAddress(const QString &host)
-{
-    g_config->extHost = host;
-}
+void AvCallManager::setExternalAddress(const QString &host) { g_config->extHost = host; }
 
-void AvCallManager::setAudioOutDevice(const QString &id)
-{
-    g_config->audioOutDeviceId = id;
-}
+void AvCallManager::setAudioOutDevice(const QString &id) { g_config->audioOutDeviceId = id; }
 
-void AvCallManager::setAudioInDevice(const QString &id)
-{
-    g_config->audioInDeviceId = id;
-}
+void AvCallManager::setAudioInDevice(const QString &id) { g_config->audioInDeviceId = id; }
 
-void AvCallManager::setVideoInDevice(const QString &id)
-{
-    g_config->videoInDeviceId = id;
-}
+void AvCallManager::setVideoInDevice(const QString &id) { g_config->videoInDeviceId = id; }
 
 #include "avcall.moc"

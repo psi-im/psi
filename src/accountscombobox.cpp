@@ -23,37 +23,26 @@
 #include "psicon.h"
 #include "psicontactlist.h"
 
-AccountsComboBox::AccountsComboBox(QWidget* parent)
-    : QComboBox(parent)
-    , controller_(nullptr)
-    , account_(nullptr)
-    , onlineOnly_(false)
+AccountsComboBox::AccountsComboBox(QWidget *parent) :
+    QComboBox(parent), controller_(nullptr), account_(nullptr), onlineOnly_(false)
 {
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
     connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
 }
 
-AccountsComboBox::~AccountsComboBox()
-{
-}
+AccountsComboBox::~AccountsComboBox() {}
 
-PsiAccount* AccountsComboBox::account() const
-{
-    return account_;
-}
+PsiAccount *AccountsComboBox::account() const { return account_; }
 
-void AccountsComboBox::setAccount(PsiAccount* account)
+void AccountsComboBox::setAccount(PsiAccount *account)
 {
     account_ = account;
     updateAccounts();
 }
 
-PsiCon* AccountsComboBox::controller() const
-{
-    return controller_;
-}
+PsiCon *AccountsComboBox::controller() const { return controller_; }
 
-void AccountsComboBox::setController(PsiCon* controller)
+void AccountsComboBox::setController(PsiCon *controller)
 {
     if (controller_) {
         disconnect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
@@ -74,10 +63,7 @@ void AccountsComboBox::setController(PsiCon* controller)
     updateAccounts();
 }
 
-bool AccountsComboBox::onlineOnly() const
-{
-    return onlineOnly_;
-}
+bool AccountsComboBox::onlineOnly() const { return onlineOnly_; }
 
 void AccountsComboBox::setOnlineOnly(bool onlineOnly)
 {
@@ -97,7 +83,7 @@ void AccountsComboBox::updateAccounts()
 {
     clear();
 
-    foreach(PsiAccount* account, accounts())
+    foreach (PsiAccount *account, accounts())
         addItem(account->nameWithJid());
 
     if (accounts().indexOf(account_) == -1) {
@@ -107,11 +93,11 @@ void AccountsComboBox::updateAccounts()
     setCurrentIndex(accounts().indexOf(account_));
 }
 
-QList<PsiAccount*> AccountsComboBox::accounts() const
+QList<PsiAccount *> AccountsComboBox::accounts() const
 {
-    QList<PsiAccount*> result;
+    QList<PsiAccount *> result;
     if (controller_) {
-        foreach(PsiAccount* account, controller_->contactList()->enabledAccounts())
+        foreach (PsiAccount *account, controller_->contactList()->enabledAccounts())
             if (!onlineOnly_ || account->isAvailable())
                 result << account;
     }

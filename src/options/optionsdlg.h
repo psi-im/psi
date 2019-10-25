@@ -3,13 +3,11 @@
 
 #include "options/optionsdlgbase.h"
 
-class OptionsDlg : public OptionsDlgBase
-{
+class OptionsDlg : public OptionsDlgBase {
     Q_OBJECT
 
 public:
     OptionsDlg(PsiCon *, QWidget *parent = nullptr);
-
 };
 
 #endif // OPTIONSDLG_H

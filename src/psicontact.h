@@ -30,25 +30,24 @@ class PsiIcon;
 class UserListItem;
 class UserResourceList;
 
-class PsiContact : public QObject
-{
+class PsiContact : public QObject {
     Q_OBJECT
 
 private:
-    PsiContact(const PsiContact&);
-    PsiContact& operator=(const PsiContact&);
+    PsiContact(const PsiContact &);
+    PsiContact &operator=(const PsiContact &);
 
 protected:
     PsiContact();
 
 public:
-    PsiContact(const UserListItem& u, PsiAccount* account, bool isSelf = false);
+    PsiContact(const UserListItem &u, PsiAccount *account, bool isSelf = false);
     ~PsiContact();
 
-    PsiAccount* account() const;
-    const UserListItem& userListItem() const;
-    const UserResourceList& userResourceList() const;
-    void update(const UserListItem& u);
+    PsiAccount *            account() const;
+    const UserListItem &    userListItem() const;
+    const UserResourceList &userResourceList() const;
+    void                    update(const UserListItem &u);
 
     bool isBlocked() const;
     bool isSelf() const;
@@ -81,31 +80,31 @@ public:
     bool isFake() const;
 
     // reimplemented
-    const QString& name() const;
-    QString comparisonName() const;
-    void setName(const QString& name);
-    ContactListItemMenu* contextMenu(ContactListModel* model);
-    bool isEditable() const;
-    bool isDragEnabled() const;
-//    bool compare(const ContactListItem* other) const;
+    const QString &      name() const;
+    QString              comparisonName() const;
+    void                 setName(const QString &name);
+    ContactListItemMenu *contextMenu(ContactListModel *model);
+    bool                 isEditable() const;
+    bool                 isDragEnabled() const;
+    //    bool compare(const ContactListItem* other) const;
     bool isRemovable() const;
 
-    XMPP::Jid jid() const;
+    XMPP::Jid    jid() const;
     XMPP::Status status() const;
-    QString statusText() const;
-    QString toolTip() const;
-    QIcon picture() const;
-    QIcon alertPicture() const;
+    QString      statusText() const;
+    QString      toolTip() const;
+    QIcon        picture() const;
+    QIcon        alertPicture() const;
 
     void rereadVCard();
 
-    bool groupOperationPermitted(const QString& oldGroupName, const QString& newGroupName) const;
+    bool        groupOperationPermitted(const QString &oldGroupName, const QString &newGroupName) const;
     QStringList groups() const;
-    void setGroups(QStringList);
-    bool alerting() const;
-    void setAlert(const PsiIcon* icon);
-    void startAnim();
-    bool find(const Jid& jid) const;
+    void        setGroups(QStringList);
+    bool        alerting() const;
+    void        setAlert(const PsiIcon *icon);
+    void        startAnim();
+    bool        find(const Jid &jid) const;
     // PsiContactList* contactList() const;
 
     static QString generalGroupName();
@@ -142,10 +141,10 @@ public slots:
     void stopAnim();
 
 private slots:
-    void avatarChanged(const Jid&);
-    void vcardChanged(const Jid&);
+    void avatarChanged(const Jid &);
+    void vcardChanged(const Jid &);
 
-    void blockContactConfirmation(const QString& id, bool confirmed);
+    void blockContactConfirmation(const QString &id, bool confirmed);
     void blockContactConfirmationHelper(bool block);
 
     void updateStatus();
@@ -160,11 +159,11 @@ signals:
      * This signal is emitted when PsiContact has entered its final
      * destruction stage.
      */
-    void destroyed(PsiContact*);
+    void destroyed(PsiContact *);
 
 private:
     class Private;
     Private *d;
 
-    void addRemoveAuthBlockAvailable(bool* add, bool* remove, bool* auth, bool* block) const;
+    void addRemoveAuthBlockAvailable(bool *add, bool *remove, bool *auth, bool *block) const;
 };

@@ -26,21 +26,21 @@
 class MCmdManagerIface;
 
 /** This class offers TabCompletion based completion support
-  * for cases where only mini commands need to be completed
-  */
+ * for cases where only mini commands need to be completed
+ */
 class MCmdTabCompletion : public TabCompletion {
 public:
     /** Constructs an MCmdTabCompletion for getting completions from mini command
-      * manager \a mgr.
-      */
-    MCmdTabCompletion(MCmdManagerIface *mgr) : mgr_(mgr) {};
+     * manager \a mgr.
+     */
+    MCmdTabCompletion(MCmdManagerIface *mgr) : mgr_(mgr){};
 
 protected:
-    virtual void setup(QString str, int pos, int &start, int &end);
+    virtual void        setup(QString str, int pos, int &start, int &end);
     virtual QStringList possibleCompletions();
     virtual QStringList allChoices(QString &guess);
 
-    QStringList mCmdList_;
+    QStringList       mCmdList_;
     MCmdManagerIface *mgr_;
 };
 

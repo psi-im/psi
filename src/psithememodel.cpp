@@ -19,8 +19,8 @@
 
 #include "psithememodel.h"
 
-#include "psithememanager.h"
 #include "psiiconset.h"
+#include "psithememanager.h"
 #include "textutil.h"
 
 #include <QPixmap>
@@ -28,17 +28,15 @@
 
 class PsiThemeModel;
 
-struct PsiThemeModel::Loader
-{
-    Loader(PsiThemeProvider *provider_)
-    : provider(provider_) { }
+struct PsiThemeModel::Loader {
+    Loader(PsiThemeProvider *provider_) : provider(provider_) {}
 
     typedef ThemeItemInfo result_type;
 
     ThemeItemInfo operator()(const QString &id)
     {
         ThemeItemInfo ti;
-        ti.id = id;
+        ti.id       = id;
         Theme theme = provider->theme(id);
         if (theme.load()) {
             fillThemeInfo(ti, theme);
@@ -46,40 +44,40 @@ struct PsiThemeModel::Loader
             ti.title = ":-(";
         }
 
-        qDebug("%s theme loading status: %s", qPrintable(theme.id()), ti.isValid? "success" : "failure");
+        qDebug("%s theme loading status: %s", qPrintable(theme.id()), ti.isValid ? "success" : "failure");
         return ti;
     }
 
-    void asyncLoad(const QString &id, std::function<void(const ThemeItemInfo&)> loadCallback)
+    void asyncLoad(const QString &id, std::function<void(const ThemeItemInfo &)> loadCallback)
     {
         Theme theme = provider->theme(id);
         if (!theme.isValid() || !theme.load([this, theme, loadCallback](bool success) {
-            qDebug("%s theme loading status: %s", qPrintable(theme.id()), success? "success" : "failure");
-            // TODO invent something smarter
+                qDebug("%s theme loading status: %s", qPrintable(theme.id()), success ? "success" : "failure");
+                // TODO invent something smarter
 
-            ThemeItemInfo ti;
-            if (success) { // if loaded
-                fillThemeInfo(ti, theme);
-            }
-            loadCallback(ti);
-        })) {
+                ThemeItemInfo ti;
+                if (success) { // if loaded
+                    fillThemeInfo(ti, theme);
+                }
+                loadCallback(ti);
+            })) {
             loadCallback(ThemeItemInfo());
         }
     }
 
     void fillThemeInfo(ThemeItemInfo &ti, const Theme &theme) const
     {
-        ti.id = theme.id();
-        ti.title = theme.title();
-        ti.version = theme.version();
+        ti.id          = theme.id();
+        ti.title       = theme.title();
+        ti.version     = theme.version();
         ti.description = theme.description();
-        ti.authors = theme.authors();
-        ti.creation = theme.creation();
-        ti.homeUrl = theme.homeUrl();
+        ti.authors     = theme.authors();
+        ti.creation    = theme.creation();
+        ti.homeUrl     = theme.homeUrl();
 
         ti.hasPreview = theme.hasPreview();
-        ti.isValid = true;
-        ti.isCurrent = provider->current().id() == ti.id;
+        ti.isValid    = true;
+        ti.isCurrent  = provider->current().id() == ti.id;
     }
 
     PsiThemeProvider *provider;
@@ -89,19 +87,14 @@ struct PsiThemeModel::Loader
 // PsiThemeModel
 //------------------------------------------------------------------------------
 
-PsiThemeModel::PsiThemeModel(PsiThemeProvider *provider, QObject *parent)
-    : QAbstractListModel(parent),
-      provider(provider)
+PsiThemeModel::PsiThemeModel(PsiThemeProvider *provider, QObject *parent) :
+    QAbstractListModel(parent), provider(provider)
 {
-    connect(&themeWatcher, SIGNAL(resultReadyAt(int)),
-            SLOT(onThreadedResultReadyAt(int)));
+    connect(&themeWatcher, SIGNAL(resultReadyAt(int)), SLOT(onThreadedResultReadyAt(int)));
     connect(&themeWatcher, SIGNAL(finished()), SLOT(loadComplete()));
 }
 
-PsiThemeModel::~PsiThemeModel()
-{
-    delete loader;
-}
+PsiThemeModel::~PsiThemeModel() { delete loader; }
 
 void PsiThemeModel::onThreadedResultReadyAt(int index)
 {
@@ -113,10 +106,7 @@ void PsiThemeModel::onThreadedResultReadyAt(int index)
     }
 }
 
-void PsiThemeModel::loadComplete()
-{
-    qDebug("Themes loading finished");
-}
+void PsiThemeModel::loadComplete() { qDebug("Themes loading finished"); }
 
 void PsiThemeModel::load()
 {
@@ -135,61 +125,58 @@ void PsiThemeModel::load()
                     endInsertRows();
                 }
             });
-
         }
     }
 }
 
-int PsiThemeModel::rowCount ( const QModelIndex & parent ) const
+int PsiThemeModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
     return themesInfo.count();
 }
 
-QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
+QVariant PsiThemeModel::data(const QModelIndex &index, int role) const
 {
     switch (role) {
-        case Qt::DecorationRole:
-            return IconsetFactory::icon(QString("clients/")+themesInfo[index.row()].id.section('/',0, 0)).pixmap();
-        case Qt::ToolTipRole:
-        {
-            QStringList toolTip;
-            const ThemeItemInfo &ti = themesInfo[index.row()];
+    case Qt::DecorationRole:
+        return IconsetFactory::icon(QString("clients/") + themesInfo[index.row()].id.section('/', 0, 0)).pixmap();
+    case Qt::ToolTipRole: {
+        QStringList          toolTip;
+        const ThemeItemInfo &ti = themesInfo[index.row()];
 
-            if (!ti.description.isEmpty()) {
-                toolTip += ti.description + "<br>";
-            }
-            if (!ti.version.isEmpty()) {
-                toolTip += "<b>" + tr("Version") + ":</b> " + ti.version;
-            }
-            if (!ti.authors.isEmpty()) {
-                toolTip += "<b>" +  tr("Authors") + ":</b>";
-                for (auto &a : ti.authors) {
-                    toolTip += QString("&nbsp;&nbsp;") + TextUtil::escape(a);
-                }
-            }
-            if (!ti.creation.isEmpty()) {
-                toolTip += "<b>" + tr("Released on") + ":</b> " + ti.creation;
-            }
-            if (!ti.homeUrl.isEmpty()) {
-                toolTip += "<b>" + tr("Home") + QString(":</b> <a href=\"%1\">%2</a>").arg(ti.homeUrl, ti.homeUrl);
-            }
-            if (!toolTip.isEmpty()) {
-                return "<html><body>"+toolTip.join("<br>")+"</body></html>";
-            }
-            break;
+        if (!ti.description.isEmpty()) {
+            toolTip += ti.description + "<br>";
         }
-        case IdRole:
-            return themesInfo[index.row()].id;
-        case Qt::DisplayRole:
-        case TitleRole:
-            return themesInfo[index.row()].title;
-        case HasPreviewRole:
-        {
-            return themesInfo[index.row()].hasPreview;
+        if (!ti.version.isEmpty()) {
+            toolTip += "<b>" + tr("Version") + ":</b> " + ti.version;
         }
-        case IsCurrent:
-            return themesInfo[index.row()].isCurrent;
+        if (!ti.authors.isEmpty()) {
+            toolTip += "<b>" + tr("Authors") + ":</b>";
+            for (auto &a : ti.authors) {
+                toolTip += QString("&nbsp;&nbsp;") + TextUtil::escape(a);
+            }
+        }
+        if (!ti.creation.isEmpty()) {
+            toolTip += "<b>" + tr("Released on") + ":</b> " + ti.creation;
+        }
+        if (!ti.homeUrl.isEmpty()) {
+            toolTip += "<b>" + tr("Home") + QString(":</b> <a href=\"%1\">%2</a>").arg(ti.homeUrl, ti.homeUrl);
+        }
+        if (!toolTip.isEmpty()) {
+            return "<html><body>" + toolTip.join("<br>") + "</body></html>";
+        }
+        break;
+    }
+    case IdRole:
+        return themesInfo[index.row()].id;
+    case Qt::DisplayRole:
+    case TitleRole:
+        return themesInfo[index.row()].title;
+    case HasPreviewRole: {
+        return themesInfo[index.row()].hasPreview;
+    }
+    case IsCurrent:
+        return themesInfo[index.row()].isCurrent;
     }
     return QVariant();
 }

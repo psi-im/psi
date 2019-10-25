@@ -31,8 +31,7 @@ class QCheckBox;
 class QTextEdit;
 class XmlPrompt;
 
-class XmlConsole : public QWidget
-{
+class XmlConsole : public QWidget {
     Q_OBJECT
 public:
     XmlConsole(PsiAccount *);
@@ -49,20 +48,19 @@ private slots:
     void xml_textReady(const QString &);
 
 protected:
-    bool filtered(const QString&) const;
+    bool filtered(const QString &) const;
     void addRecord(bool incoming, const QString &str);
 
 private:
-    Ui::XMLConsole ui_;
-    PsiAccount *pa;
+    Ui::XMLConsole      ui_;
+    PsiAccount *        pa;
     QPointer<XmlPrompt> prompt;
 };
 
-class XmlPrompt : public QDialog
-{
+class XmlPrompt : public QDialog {
     Q_OBJECT
 public:
-    XmlPrompt(QWidget *parent=nullptr);
+    XmlPrompt(QWidget *parent = nullptr);
     ~XmlPrompt();
 
 signals:

@@ -40,40 +40,43 @@ class QTimer;
 class QToolButton;
 class SpellHighlighter;
 
-class ChatEdit : public QTextEdit
-{
+class ChatEdit : public QTextEdit {
     void updateBackground();
 
     Q_OBJECT
 
 public:
-    ChatEdit(QWidget* parent);
+    ChatEdit(QWidget *parent);
     ~ChatEdit();
 
-    void setDialog(QWidget* dialog);
+    void setDialog(QWidget *dialog);
 
     // reimplemented
-    QSize sizeHint() const;
-    void setFont(const QFont &);
-    QMenu* createStandardContextMenu(const QPoint &position);
+    QSize  sizeHint() const;
+    void   setFont(const QFont &);
+    QMenu *createStandardContextMenu(const QPoint &position);
 
-    static bool checkSpellingGloballyEnabled();
-    void setCheckSpelling(bool);
+    static bool       checkSpellingGloballyEnabled();
+    void              setCheckSpelling(bool);
     XMPP::HTMLElement toHTMLElement();
-    bool isCorrection() { return correction; }
-    void setLastMessageId(const QString& id) { lastId = id; }
-    const QString& lastMessageId() { return lastId; }
-    void resetCorrection() { correction = false; updateBackground(); }
-    CapitalLettersController * capitalizer();
-    void addSoundRecButton();
-    bool hasSoundRecButton() const {return bool(recButton_);}
+    bool              isCorrection() { return correction; }
+    void              setLastMessageId(const QString &id) { lastId = id; }
+    const QString &   lastMessageId() { return lastId; }
+    void              resetCorrection()
+    {
+        correction = false;
+        updateBackground();
+    }
+    CapitalLettersController *capitalizer();
+    void                      addSoundRecButton();
+    bool                      hasSoundRecButton() const { return bool(recButton_); }
 
 public slots:
-    void appendMessageHistory(const QString& text);
+    void appendMessageHistory(const QString &text);
     void clearMessageHistory();
     void doHTMLTextMenu();
-    void setCssString(const QString& css);
-    void insertAsQuote(const QString& text);
+    void setCssString(const QString &css);
+    void insertAsQuote(const QString &text);
 
 protected slots:
     void applySuggestion();
@@ -94,12 +97,12 @@ protected:
     // override the tab/esc behavior
     bool focusNextPrevChild(bool next);
     void keyPressEvent(QKeyEvent *);
-    bool event(QEvent * event);
+    bool event(QEvent *event);
     void contextMenuEvent(QContextMenuEvent *e);
     void showMessageHistory();
     void initActions();
     void setShortcuts();
-    void setEditText(const QString& text);
+    void setEditText(const QString &text);
     void insertFromMimeData(const QMimeData *source);
     bool canInsertFromMimeData(const QMimeData *source) const;
 
@@ -107,39 +110,38 @@ private:
     void setOverlayText(int value);
 
 private:
-    QWidget    *dialog_ = nullptr;
-    bool check_spelling_ = false;
+    QWidget *                         dialog_         = nullptr;
+    bool                              check_spelling_ = false;
     std::unique_ptr<SpellHighlighter> spellhighlighter_;
-    QPoint last_click_;
-    int previous_position_ = 0;
-    QStringList typedMsgsHistory;
-    int typedMsgsIndex = 0;
-    QAction* act_showMessagePrev = nullptr;
-    QAction* act_showMessageNext = nullptr;
-    QAction* act_showMessageFirst = nullptr;
-    QAction* act_showMessageLast = nullptr;
-    QAction* act_changeCase = nullptr;
-    QAction *actPasteAsQuote_ = nullptr;
-    QString currentText;
-    HTMLTextController *controller_ = nullptr;
-    CapitalLettersController *capitalizer_ = nullptr;
-    bool correction = false;
-    QString lastId;
-    QPalette palOriginal;
-    QPalette palCorrection;
-    std::unique_ptr<QLayout> layout_;
-    std::unique_ptr<QToolButton> recButton_;
-    std::unique_ptr<QLabel> overlay_;
-    std::unique_ptr<QTimer> timer_;
-    std::unique_ptr<AudioRecorder> recorder_;
-    int timeout_;
+    QPoint                            last_click_;
+    int                               previous_position_ = 0;
+    QStringList                       typedMsgsHistory;
+    int                               typedMsgsIndex       = 0;
+    QAction *                         act_showMessagePrev  = nullptr;
+    QAction *                         act_showMessageNext  = nullptr;
+    QAction *                         act_showMessageFirst = nullptr;
+    QAction *                         act_showMessageLast  = nullptr;
+    QAction *                         act_changeCase       = nullptr;
+    QAction *                         actPasteAsQuote_     = nullptr;
+    QString                           currentText;
+    HTMLTextController *              controller_  = nullptr;
+    CapitalLettersController *        capitalizer_ = nullptr;
+    bool                              correction   = false;
+    QString                           lastId;
+    QPalette                          palOriginal;
+    QPalette                          palCorrection;
+    std::unique_ptr<QLayout>          layout_;
+    std::unique_ptr<QToolButton>      recButton_;
+    std::unique_ptr<QLabel>           overlay_;
+    std::unique_ptr<QTimer>           timer_;
+    std::unique_ptr<AudioRecorder>    recorder_;
+    int                               timeout_;
 };
 
-class LineEdit : public ChatEdit
-{
+class LineEdit : public ChatEdit {
     Q_OBJECT
 public:
-    LineEdit(QWidget* parent);
+    LineEdit(QWidget *parent);
     ~LineEdit();
 
     // reimplemented
@@ -148,7 +150,7 @@ public:
 
 protected:
     // reimplemented
-    void resizeEvent(QResizeEvent*);
+    void resizeEvent(QResizeEvent *);
 
 private slots:
     void recalculateSize();

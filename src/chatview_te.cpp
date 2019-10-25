@@ -40,24 +40,20 @@
 #include <QUrl>
 #include <QWidget>
 #ifdef CORRECTION_DEBUG
-#    include <QDebug>
+#include <QDebug>
 #endif
 
 //#define CORRECTION_DEBUG
 
-static const char *informationalColorOpt = "options.ui.look.colors.messages.informational";
+static const char *  informationalColorOpt = "options.ui.look.colors.messages.informational";
 static const QRegExp underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
 static const QRegExp removeTagsRE("<[^>]*>");
 
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent)
-    : PsiTextView(parent)
-    , isMuc_(false)
-    , isEncryptionEnabled_(false)
-    , oldTrackBarPosition(0)
-    , dialog_(nullptr)
+ChatView::ChatView(QWidget *parent) :
+    PsiTextView(parent), isMuc_(false), isEncryptionEnabled_(false), oldTrackBarPosition(0), dialog_(nullptr)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
@@ -66,7 +62,7 @@ ChatView::ChatView(QWidget *parent)
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setLooks(this);
 
-#ifndef HAVE_X11    // linux has this feature built-in
+#ifndef HAVE_X11 // linux has this feature built-in
     connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
     connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
 #endif
@@ -74,73 +70,66 @@ ChatView::ChatView(QWidget *parent)
     actQuote_->setEnabled(false);
     actQuote_->setShortcut(QKeySequence(tr("Ctrl+S")));
     addAction(actQuote_);
-    connect(actQuote_, &QAction::triggered, this, [this](bool){ emit quote(getPlainText()); });
-    connect(this, &ChatView::selectionChanged, this, [this](){
-        actQuote_->setEnabled(textCursor().hasSelection());
-    });
+    connect(actQuote_, &QAction::triggered, this, [this](bool) { emit quote(getPlainText()); });
+    connect(this, &ChatView::selectionChanged, this, [this]() { actQuote_->setEnabled(textCursor().hasSelection()); });
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
     if (useMessageIcons_) {
-        int logIconsSize = int(fontInfo().pixelSize()*0.93);
+        int logIconsSize = int(fontInfo().pixelSize() * 0.93);
         if (PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool()) {
-            logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconDelivered = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconReceivePgp = IconsetFactory::iconPixmap("psi/notification_chat_receive_pgp").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconSendPgp = IconsetFactory::iconPixmap("psi/notification_chat_send_pgp").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconHistory = IconsetFactory::iconPixmap("psi/history").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive")
+                                 .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send")
+                              .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconDelivered = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok")
+                                   .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconReceivePgp = IconsetFactory::iconPixmap("psi/notification_chat_receive_pgp")
+                                    .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconSendPgp = IconsetFactory::iconPixmap("psi/notification_chat_send_pgp")
+                                 .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp")
+                                      .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time")
+                              .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info")
+                              .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit")
+                                   .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+            logIconHistory
+                = IconsetFactory::iconPixmap("psi/history").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
         } else {
-            logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive");
-            logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send");
-            logIconDelivered = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok");
-            logIconReceivePgp = IconsetFactory::iconPixmap("psi/notification_chat_receive_pgp");
-            logIconSendPgp = IconsetFactory::iconPixmap("psi/notification_chat_send_pgp");
+            logIconReceive      = IconsetFactory::iconPixmap("psi/notification_chat_receive");
+            logIconSend         = IconsetFactory::iconPixmap("psi/notification_chat_send");
+            logIconDelivered    = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok");
+            logIconReceivePgp   = IconsetFactory::iconPixmap("psi/notification_chat_receive_pgp");
+            logIconSendPgp      = IconsetFactory::iconPixmap("psi/notification_chat_send_pgp");
             logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp");
-            logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time");
-            logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info");
-            logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit");
-            logIconHistory = IconsetFactory::iconPixmap("psi/history");
+            logIconTime         = IconsetFactory::iconPixmap("psi/notification_chat_time");
+            logIconInfo         = IconsetFactory::iconPixmap("psi/notification_chat_info");
+            logIconCorrected    = IconsetFactory::iconPixmap("psi/action_templates_edit");
+            logIconHistory      = IconsetFactory::iconPixmap("psi/history");
         }
         addLogIconsResources();
     }
 }
 
-ChatView::~ChatView()
-{
-
-}
+ChatView::~ChatView() {}
 
 // something after we know isMuc and dialog is set
-void ChatView::init()
-{
+void ChatView::init() {}
 
-}
+QSize ChatView::sizeHint() const { return minimumSizeHint(); }
 
-QSize ChatView::sizeHint() const
-{
-    return minimumSizeHint();
-}
+void ChatView::setDialog(QWidget *dialog) { dialog_ = dialog; }
 
-void ChatView::setDialog(QWidget* dialog)
-{
-    dialog_ = dialog;
-}
-
-void ChatView::setEncryptionEnabled(bool enabled)
-{
-    isEncryptionEnabled_ = enabled;
-}
+void ChatView::setEncryptionEnabled(bool enabled) { isEncryptionEnabled_ = enabled; }
 
 void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name)
 {
-    isMuc_ = isMuc;
+    isMuc_        = isMuc;
     isMucPrivate_ = isMucPrivate;
-    jid_ = jid;
-    name_ = name;
+    jid_          = jid;
+    name_         = name;
 }
 
 void ChatView::clear()
@@ -153,11 +142,10 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
 {
     const QUrl anc = QUrl::fromEncoded(anchorAt(e->pos()).toLatin1());
 
-    if ( anc.scheme() == "addnick" ) {
+    if (anc.scheme() == "addnick") {
         showNM(anc.path().mid(1));
         e->accept();
-    }
-    else {
+    } else {
         QMenu *menu = createStandardContextMenu(e->pos());
         menu->exec(e->globalPos());
         delete menu;
@@ -165,7 +153,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     }
 }
 
-QMenu* ChatView::createStandardContextMenu(const QPoint &position)
+QMenu *ChatView::createStandardContextMenu(const QPoint &position)
 {
     QMenu *menu = PsiTextView::createStandardContextMenu(position);
     menu->addAction(actQuote_);
@@ -189,39 +177,36 @@ void ChatView::addLogIconsResources()
 void ChatView::markReceived(QString id)
 {
     if (useMessageIcons_) {
-        document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id), isEncryptionEnabled_? logIconDeliveredPgp : logIconDelivered);
+        document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id),
+                                isEncryptionEnabled_ ? logIconDeliveredPgp : logIconDelivered);
         setLineWrapColumnOrWidth(lineWrapColumnOrWidth());
     }
 }
 
-bool ChatView::focusNextPrevChild(bool next)
-{
-    return QWidget::focusNextPrevChild(next);
-}
+bool ChatView::focusNextPrevChild(bool next) { return QWidget::focusNextPrevChild(next); }
 
 void ChatView::keyPressEvent(QKeyEvent *e)
 {
-/*    if(e->key() == Qt::Key_Escape)
-        e->ignore();
-#ifdef Q_OS_MAC
-    else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
-        e->ignore();
-    else
-#endif
-    else if(e->key() == Qt::Key_Return && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier)) )
-        e->ignore();
-    else if(e->key() == Qt::Key_H && (e->modifiers() & Qt::ControlModifier))
-        e->ignore();
-    else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
-        e->ignore(); */
-    /*else*/ if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline
+    /*    if(e->key() == Qt::Key_Escape)
+            e->ignore();
+    #ifdef Q_OS_MAC
+        else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
+            e->ignore();
+        else
+    #endif
+        else if(e->key() == Qt::Key_Return && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() &
+    Qt::AltModifier)) ) e->ignore(); else if(e->key() == Qt::Key_H && (e->modifiers() & Qt::ControlModifier))
+            e->ignore();
+        else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
+            e->ignore(); */
+    /*else*/ if (e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline
         append("\n");
-/*    else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
-        setText(""); */
-    else if ((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier))) {
+    /*    else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
+            setText(""); */
+    else if ((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter)
+             && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier))) {
         e->ignore();
-    }
-    else {
+    } else {
         PsiTextView::keyPressEvent(e);
     }
 }
@@ -246,11 +231,10 @@ void ChatView::autoCopy()
  */
 bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit)
 {
-    if (object == chatEdit && event->type() == QEvent::ShortcutOverride &&
-        static_cast<QKeyEvent *>(event)->matches(QKeySequence::Copy)) {
+    if (object == chatEdit && event->type() == QEvent::ShortcutOverride
+        && static_cast<QKeyEvent *>(event)->matches(QKeySequence::Copy)) {
 
-        if (!chatEdit->textCursor().hasSelection() &&
-            this->textCursor().hasSelection()) {
+        if (!chatEdit->textCursor().hasSelection() && this->textCursor().hasSelection()) {
             this->copy();
             return true;
         }
@@ -307,87 +291,90 @@ void ChatView::appendText(const QString &text)
 
 void ChatView::dispatchMessage(const MessageView &mv)
 {
-    const QString& replaceId = mv.replaceId();
+    const QString &replaceId = mv.replaceId();
     if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
-            && ChatViewCommon::updateLastMsgTime(mv.dateTime()) && replaceId.isEmpty())
-    {
+        && ChatViewCommon::updateLastMsgTime(mv.dateTime()) && replaceId.isEmpty()) {
         QString color = ColorOpt::instance()->color(informationalColorOpt).name();
-        appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_time\" />":"") +
-                   QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
+        appendText(
+            QString(useMessageIcons_ ? "<img src=\"icon:log_icon_time\" />" : "")
+            + QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
     }
 
     switch (mv.type()) {
-        case MessageView::Message:
-        {
-            int scrollPos = verticalScrollBar()->value();
-            bool doScrollBottom = atBottom();
-            bool isReplace = !replaceId.isEmpty();
-            QTextCursor cursor = textCursor(), replaceCursor;
-            auto sel = PsiRichText::saveSelection(this, cursor);
-            cursor.clearSelection();
-            setTextCursor(cursor);
-            if (isReplace) {
-                cursor.setPosition(0);
-                replaceCursor = PsiRichText::findMarker(cursor, replaceId + "_" + mv.userId());
-                isReplace = !replaceCursor.isNull(); // marker not found
-            }
-            if (isReplace) {
-                cursor = replaceCursor;
-                auto fin = PsiRichText::findMarker(cursor, QString()); // empty marker means end. it's iserted after each regular message
-                // the anchor is already on valid position, we only to move the end of selection quite a bit
-                if (fin.isNull()) {
-                    cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-                } else {
-                    cursor.setPosition(fin.anchor(), QTextCursor::KeepAnchor); // returne cursor is a selection of marker. so we need anchor
-                }
-                //qDebug("text to remove: %s", qPrintable(cursor.selectedText()));
-            } else {
-                cursor.movePosition(QTextCursor::End); // no luck with replace, then insert into the end of doc
-            }
-            PsiRichText::insertMarker(cursor, mv.messageId() + "_" + mv.userId());
-            setTextCursor(cursor); // make sure the message is rendered here and nowhere else
-            if (isMuc_) {
-                renderMucMessage(mv, cursor);
-            } else {
-                renderMessage(mv, cursor);
-            }
-            cursor = textCursor(); // take it again. since render function do not modify it
-            if (isReplace) {
-                QTextImageFormat imageFormat;
-                imageFormat.setName("icon:log_icon_corrected");
-                imageFormat.setToolTip(tr("The message was corrected"));
-                cursor.insertImage(imageFormat);
-                //PsiRichText::insertIcon(cursor, QLatin1String("psi/action_templates_edit"), tr("The message was corrected"));
-            } else {
-                //qDebug("end marker at %d", cursor.position());
-                PsiRichText::insertMarker(cursor, QString()); // end marker
-            }
-            cursor.movePosition(QTextCursor::End); // ensure everything else is inserted into the end
-            PsiRichText::restoreSelection(this, cursor, sel);
-            setTextCursor(cursor);
-            if (doScrollBottom) {
-                scrollToBottom();
-            } else {
-                verticalScrollBar()->setValue(scrollPos);
-            }
-            break;
+    case MessageView::Message: {
+        int         scrollPos      = verticalScrollBar()->value();
+        bool        doScrollBottom = atBottom();
+        bool        isReplace      = !replaceId.isEmpty();
+        QTextCursor cursor         = textCursor(), replaceCursor;
+        auto        sel            = PsiRichText::saveSelection(this, cursor);
+        cursor.clearSelection();
+        setTextCursor(cursor);
+        if (isReplace) {
+            cursor.setPosition(0);
+            replaceCursor = PsiRichText::findMarker(cursor, replaceId + "_" + mv.userId());
+            isReplace     = !replaceCursor.isNull(); // marker not found
         }
-        case MessageView::Subject:
-            if (isMuc_) {
-                renderMucSubject(mv);
+        if (isReplace) {
+            cursor   = replaceCursor;
+            auto fin = PsiRichText::findMarker(
+                cursor, QString()); // empty marker means end. it's iserted after each regular message
+            // the anchor is already on valid position, we only to move the end of selection quite a bit
+            if (fin.isNull()) {
+                cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
             } else {
-                renderSubject(mv);
+                cursor.setPosition(
+                    fin.anchor(),
+                    QTextCursor::KeepAnchor); // returne cursor is a selection of marker. so we need anchor
             }
-            break;
-        case MessageView::Urls:
-            renderUrls(mv);
-            break;
-        case MessageView::MUCJoin:
-        case MessageView::MUCPart:
-        case MessageView::FileTransferRequest:
-        case MessageView::FileTransferFinished:
-        default: // System/Status
-            renderSysMessage(mv);
+            // qDebug("text to remove: %s", qPrintable(cursor.selectedText()));
+        } else {
+            cursor.movePosition(QTextCursor::End); // no luck with replace, then insert into the end of doc
+        }
+        PsiRichText::insertMarker(cursor, mv.messageId() + "_" + mv.userId());
+        setTextCursor(cursor); // make sure the message is rendered here and nowhere else
+        if (isMuc_) {
+            renderMucMessage(mv, cursor);
+        } else {
+            renderMessage(mv, cursor);
+        }
+        cursor = textCursor(); // take it again. since render function do not modify it
+        if (isReplace) {
+            QTextImageFormat imageFormat;
+            imageFormat.setName("icon:log_icon_corrected");
+            imageFormat.setToolTip(tr("The message was corrected"));
+            cursor.insertImage(imageFormat);
+            // PsiRichText::insertIcon(cursor, QLatin1String("psi/action_templates_edit"), tr("The message was
+            // corrected"));
+        } else {
+            // qDebug("end marker at %d", cursor.position());
+            PsiRichText::insertMarker(cursor, QString()); // end marker
+        }
+        cursor.movePosition(QTextCursor::End); // ensure everything else is inserted into the end
+        PsiRichText::restoreSelection(this, cursor, sel);
+        setTextCursor(cursor);
+        if (doScrollBottom) {
+            scrollToBottom();
+        } else {
+            verticalScrollBar()->setValue(scrollPos);
+        }
+        break;
+    }
+    case MessageView::Subject:
+        if (isMuc_) {
+            renderMucSubject(mv);
+        } else {
+            renderSubject(mv);
+        }
+        break;
+    case MessageView::Urls:
+        renderUrls(mv);
+        break;
+    case MessageView::MUCJoin:
+    case MessageView::MUCPart:
+    case MessageView::FileTransferRequest:
+    case MessageView::FileTransferFinished:
+    default: // System/Status
+        renderSysMessage(mv);
     }
 }
 
@@ -399,39 +386,47 @@ QString ChatView::replaceMarker(const MessageView &mv) const
 void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor)
 {
     const QString timestr = formatTimeStamp(mv.dateTime());
-    QString alerttagso, alerttagsc, nickcolor;
-    QString textcolor = palette().color(QPalette::Active, QPalette::Text).name();
-    QString icon = useMessageIcons_?
-                    (QString("<img src=\"%1\" />").arg(mv.isLocal()?"icon:log_icon_delivered":"icon:log_icon_receive")):"";
-    if(mv.isAlert()) {
-        textcolor = PsiOptions::instance()->getOption("options.ui.look.colors.messages.highlighting").value<QColor>().name();
+    QString       alerttagso, alerttagsc, nickcolor;
+    QString       textcolor = palette().color(QPalette::Active, QPalette::Text).name();
+    QString       icon      = useMessageIcons_
+        ? (QString("<img src=\"%1\" />").arg(mv.isLocal() ? "icon:log_icon_delivered" : "icon:log_icon_receive"))
+        : "";
+    if (mv.isAlert()) {
+        textcolor
+            = PsiOptions::instance()->getOption("options.ui.look.colors.messages.highlighting").value<QColor>().name();
         alerttagso = "<b>";
         alerttagsc = "</b>";
     }
 
-    if(mv.isSpooled() && !PsiOptions::instance()->getOption("options.ui.muc.colored-history").toBool()) {
+    if (mv.isSpooled() && !PsiOptions::instance()->getOption("options.ui.muc.colored-history").toBool()) {
         nickcolor = ColorOpt::instance()->color(informationalColorOpt).name();
     } else {
         nickcolor = getMucNickColor(mv.nick(), mv.isLocal());
     }
-    QString nick = QString("<a href=\"addnick://psi/") + QUrl::toPercentEncoding(mv.nick()) +
-                   "\" style=\"color: "+nickcolor+"; text-decoration: none; \">"+TextUtil::escape(mv.nick())+"</a>";
+    QString nick = QString("<a href=\"addnick://psi/") + QUrl::toPercentEncoding(mv.nick())
+        + "\" style=\"color: " + nickcolor + "; text-decoration: none; \">" + TextUtil::escape(mv.nick()) + "</a>";
 
     QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
 
-    if(mv.isEmote()) {
-        insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>", insertCursor);
-    }
-    else {
-        if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>", insertCursor);
-        }
-        else {
-            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>", insertCursor);
+    if (mv.isEmote()) {
+        insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr)
+                       + QString(" *%1 ").arg(nick) + inner + "</font>",
+                   insertCursor);
+    } else {
+        if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
+            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr)
+                           + QString("%1 says:").arg(nick) + "</font><br>"
+                           + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>",
+                       insertCursor);
+        } else {
+            insertText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick
+                           + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner
+                           + "</font>",
+                       insertCursor);
         }
     }
 
-    if(mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool() ) {
+    if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool()) {
         scrollToBottom();
     }
 }
@@ -439,10 +434,10 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
 void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
 {
     QString timestr = formatTimeStamp(mv.dateTime());
-    QString color = colorString(mv.isLocal(), false);
+    QString color   = colorString(mv.isLocal(), false);
     if (useMessageIcons_ && mv.isAwaitingReceipt()) {
         document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + mv.messageId()),
-                    isEncryptionEnabled_ ? logIconSendPgp : logIconSend);
+                                isEncryptionEnabled_ ? logIconSendPgp : logIconSend);
     }
     QString icon;
     if (useMessageIcons_) {
@@ -456,8 +451,7 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
                 sRes = "icon:log_icon_receive_pgp";
             else
                 sRes = "icon:log_icon_send";
-        }
-        else {
+        } else {
             if (isEncryptionEnabled_)
                 sRes = "icon:log_icon_receive_pgp";
             else
@@ -469,23 +463,26 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
 
     QString inner = mv.formattedText() + replaceMarker(mv);
     if (mv.isEmote()) {
-        str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>";
-    }
-    else {
+        str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr)
+            + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>";
+    } else {
         if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-            str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>";
-        }
-        else {
-            str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ");
+            str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr)
+                + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>";
+        } else {
+            str = icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr)
+                + TextUtil::escape(mv.nick()) + QString("&gt;</span> ");
         }
         if (mv.isSpooled())
-            str.append(QString("<span style=\"color: %1\">%2</span>").arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name()).arg(inner));
+            str.append(QString("<span style=\"color: %1\">%2</span>")
+                           .arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name())
+                           .arg(inner));
         else
             str.append(inner);
     }
     insertText(str, insertCursor);
 
-    if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool() ) {
+    if (mv.isLocal() && PsiOptions::instance()->getOption("options.ui.chat.auto-scroll-to-bottom").toBool()) {
         deferredScroll();
     }
 }
@@ -493,7 +490,7 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
 void ChatView::renderSysMessage(const MessageView &mv)
 {
     QString timestr = formatTimeStamp(mv.dateTime());
-    QString ut = mv.formattedUserText();
+    QString ut      = mv.formattedUserText();
 
     if ((mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart) && mv.isJoinLeaveHidden()) {
         return; // not necessary here. maybe for other chatviews
@@ -508,43 +505,40 @@ void ChatView::renderSysMessage(const MessageView &mv)
     }
 
     bool isPriority = false;
-    if(isMuc_) {
+    if (isMuc_) {
         isPriority = mv.type() == MessageView::Status
-                     && PsiOptions::instance()->getOption("options.ui.muc.status-with-priority").toBool()
-                     && mv.statusPriority();
-    }
-    else {
+            && PsiOptions::instance()->getOption("options.ui.muc.status-with-priority").toBool() && mv.statusPriority();
+    } else {
         isPriority = mv.type() == MessageView::Status
-                     && PsiOptions::instance()->getOption("options.ui.chat.status-with-priority").toBool()
-                     && mv.statusPriority();
+            && PsiOptions::instance()->getOption("options.ui.chat.status-with-priority").toBool()
+            && mv.statusPriority();
     }
 
-    QString color = ColorOpt::instance()->color(informationalColorOpt).name();
+    QString color         = ColorOpt::instance()->color(informationalColorOpt).name();
     QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
-    appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
-               QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) +
-               mv.formattedText() +
-               (ut.isEmpty()?"":QString(": <span style=\"color:%1;\">%2</span>")
-                                      .arg(userTextColor, ut)) +
-               (isPriority ? QString(" [%1]").arg(mv.statusPriority()) :  "") +
-               "</font>");
+    appendText(QString(useMessageIcons_ ? "<img src=\"icon:log_icon_info\" />" : "")
+               + QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText()
+               + (ut.isEmpty() ? "" : QString(": <span style=\"color:%1;\">%2</span>").arg(userTextColor, ut))
+               + (isPriority ? QString(" [%1]").arg(mv.statusPriority()) : "") + "</font>");
 }
 
 void ChatView::renderSubject(const MessageView &mv)
 {
-    appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") + "<b>" + tr("Subject:") + "</b> " + QString("%1").arg(mv.formattedUserText()));
+    appendText(QString(useMessageIcons_ ? "<img src=\"icon:log_icon_info\" />" : "") + "<b>" + tr("Subject:") + "</b> "
+               + QString("%1").arg(mv.formattedUserText()));
 }
 
 void ChatView::renderMucSubject(const MessageView &mv)
 {
-    QString timestr = formatTimeStamp(mv.dateTime());
-    QString ut = mv.formattedUserText();
-    QString color = ColorOpt::instance()->color(informationalColorOpt).name();
+    QString timestr       = formatTimeStamp(mv.dateTime());
+    QString ut            = mv.formattedUserText();
+    QString color         = ColorOpt::instance()->color(informationalColorOpt).name();
     QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
-    appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
-               QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
-                        (ut.isEmpty()?"":":<br>") + "</font>" +
-                        (ut.isEmpty()?"":QString(" <span style=\"color:%1;font-weight:bold\">%2</span>").arg(userTextColor, ut)));
+    appendText(
+        QString(useMessageIcons_ ? "<img src=\"icon:log_icon_info\" />" : "")
+        + QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText()
+        + (ut.isEmpty() ? "" : ":<br>") + "</font>"
+        + (ut.isEmpty() ? "" : QString(" <span style=\"color:%1;font-weight:bold\">%2</span>").arg(userTextColor, ut)));
 }
 
 void ChatView::renderUrls(const MessageView &mv)
@@ -558,14 +552,9 @@ void ChatView::renderUrls(const MessageView &mv)
     }
 }
 
-void ChatView::slotScroll() {
-    scrollToBottom();
-}
+void ChatView::slotScroll() { scrollToBottom(); }
 
-void ChatView::deferredScroll()
-{
-    QTimer::singleShot(250, this, SLOT(slotScroll()));
-}
+void ChatView::deferredScroll() { QTimer::singleShot(250, this, SLOT(slotScroll())); }
 
 void ChatView::scrollUp()
 {
@@ -592,7 +581,7 @@ void ChatView::doTrackBar()
     cursor.beginEditBlock();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
 
-    //removeTrackBar(cursor);
+    // removeTrackBar(cursor);
     if (oldTrackBarPosition) {
         cursor.setPosition(oldTrackBarPosition, QTextCursor::KeepAnchor);
         QTextBlockFormat blockFormat = cursor.blockFormat();
@@ -601,9 +590,9 @@ void ChatView::doTrackBar()
         cursor.setBlockFormat(blockFormat);
     }
 
-    //addTrackBar(cursor);
+    // addTrackBar(cursor);
     cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-    oldTrackBarPosition = cursor.position();
+    oldTrackBarPosition          = cursor.position();
     QTextBlockFormat blockFormat = cursor.blockFormat();
     blockFormat.setProperty(QTextFormat::BlockTrailingHorizontalRulerWidth, QVariant(true));
     cursor.clearSelection();
@@ -626,7 +615,7 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
     }
 
     bool found = find(str);
-    if(!found) {
+    if (!found) {
         if (!startFromBeginning)
             return internalFind(str, true);
 
@@ -636,10 +625,7 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
     return true;
 }
 
-ChatView * ChatView::textWidget()
-{
-    return this;
-}
+ChatView *ChatView::textWidget() { return this; }
 
 QWidget *ChatView::realTextWidget()
 {

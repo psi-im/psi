@@ -28,26 +28,19 @@
 #include <QString>
 #include <QtCore>
 
-class MPRISPlugin : public QObject, public TuneControllerPlugin
-{
+class MPRISPlugin : public QObject, public TuneControllerPlugin {
 
     Q_OBJECT
 
     Q_INTERFACES(TuneControllerPlugin)
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
-QString MPRISPlugin::name()
-{
-    return "MPRIS";
-}
+QString MPRISPlugin::name() { return "MPRIS"; }
 
-TuneController* MPRISPlugin::createController()
-{
-    return new MPRISTuneController();
-}
+TuneController *MPRISPlugin::createController() { return new MPRISTuneController(); }
 
 #include "mprisplugin.moc"

@@ -34,7 +34,8 @@ class AddUserDlg : public QDialog, public Ui::AddUser {
     Q_OBJECT
 public:
     AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *);
-    AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *);
+    AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups,
+               PsiAccount *);
     ~AddUserDlg();
 
 signals:

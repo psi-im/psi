@@ -27,44 +27,39 @@
 using namespace XMPP;
 
 // The maxlength of a chdata that gets put in one edit
-enum {MAXCHDATA = 1024};
+enum { MAXCHDATA = 1024 };
 
 //----------------------------------------------------------------------------
 // SxeSession
 //----------------------------------------------------------------------------
 
 SxeSession::SxeSession(SxeManager *manager, const Jid &target, const QString &session, const Jid &ownJid,
-                        bool groupChat, bool serverSupport, const QList<QString> &features)
-    : QObject(manager)
-    , session_(session)
-    , target_(target)
-    , ownJid_(ownJid)
-    , groupChat_(groupChat)
-    , serverSupport_(serverSupport)
-    , queueing_(false)
-    , importing_(false)
-    , features_(features)
-    , uuidMaxPostfix_(0)
+                       bool groupChat, bool serverSupport, const QList<QString> &features) :
+    QObject(manager),
+    session_(session), target_(target), ownJid_(ownJid), groupChat_(groupChat), serverSupport_(serverSupport),
+    queueing_(false), importing_(false), features_(features), uuidMaxPostfix_(0)
 
 {
     setUUIDPrefix();
 }
 
-SxeSession::~SxeSession() {
+SxeSession::~SxeSession()
+{
     qDebug("destruct SxeSession");
     qDeleteAll(recordByNodeId_);
     recordByNodeId_.clear();
     emit sessionEnded(this);
 }
 
-void SxeSession::initializeDocument(const QDomDocument &doc) {
+void SxeSession::initializeDocument(const QDomDocument &doc)
+{
     bool origImporting = importing_;
 
     importing_ = true;
 
     // reset the document
     doc_ = QDomDocument();
-    foreach(SxeRecord* meta, recordByNodeId_.values())
+    foreach (SxeRecord *meta, recordByNodeId_.values())
         meta->deleteLater();
     // recordByNode_.clear();
     recordByNodeId_.clear();
@@ -77,43 +72,50 @@ void SxeSession::initializeDocument(const QDomDocument &doc) {
     // import other nodes
     // create all nodes recursively from root
     QDomNodeList children = doc.childNodes();
-    for(int i = 0; i < children.size(); i++) {
+    for (int i = 0; i < children.size(); i++) {
         // skip the XML declaration <?xml ...?> because it isn't a processing instruction
-        if(!(children.at(i).isProcessingInstruction() && children.at(i).toProcessingInstruction().target().toLower() == "xml"))
+        if (!(children.at(i).isProcessingInstruction()
+              && children.at(i).toProcessingInstruction().target().toLower() == "xml"))
             generateNewNode(children.at(i), QString(), i);
     }
 
     importing_ = origImporting;
 }
 
-void SxeSession::processIncomingSxeElement(const QDomElement &sxe, const QString &id) {
-    if(id.isEmpty() && !importing_) {
+void SxeSession::processIncomingSxeElement(const QDomElement &sxe, const QString &id)
+{
+    if (id.isEmpty() && !importing_) {
         qDebug("Trying to process an SXE element without an associated id!");
         return;
     }
 
-    if(processSxe(sxe, id))
+    if (processSxe(sxe, id))
         emit documentUpdated(true);
 }
 
-bool SxeSession::processSxe(const QDomElement &sxe, const QString &id) {
+bool SxeSession::processSxe(const QDomElement &sxe, const QString &id)
+{
     // Don't accept duplicates
-    if(!id.isEmpty() && usedSxeIds_.contains(id)) {
-        qDebug() << QString("Tried to process a duplicate %1 (received: %2).").arg(sxe.attribute("id")).arg(usedSxeIds_.size()).toLatin1();
+    if (!id.isEmpty() && usedSxeIds_.contains(id)) {
+        qDebug() << QString("Tried to process a duplicate %1 (received: %2).")
+                        .arg(sxe.attribute("id"))
+                        .arg(usedSxeIds_.size())
+                        .toLatin1();
         return false;
     }
 
-    if(!id.isEmpty())
+    if (!id.isEmpty())
         usedSxeIds_ += id;
 
     // store incoming edits when queueing
-    if(queueing_) {
+    if (queueing_) {
         // Make sure the element is not already in the queue.
-        foreach(IncomingEdit i, queuedIncomingEdits_)
-            if(i.xml == sxe)  return false;
+        foreach (IncomingEdit i, queuedIncomingEdits_)
+            if (i.xml == sxe)
+                return false;
 
         IncomingEdit incoming;
-        incoming.id = id;
+        incoming.id  = id;
         incoming.xml = sxe.cloneNode(true).toElement();
 
         queuedIncomingEdits_.append(incoming);
@@ -121,108 +123,99 @@ bool SxeSession::processSxe(const QDomElement &sxe, const QString &id) {
     }
 
     // create an SxeEdit for each child of the <sxe/>
-    QList<SxeEdit*> edits;
-    for(QDomNode n = sxe.firstChild(); !n.isNull(); n = n.nextSibling()) {
-        if(n.nodeName() == "new")
+    QList<SxeEdit *> edits;
+    for (QDomNode n = sxe.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        if (n.nodeName() == "new")
             edits.append(new SxeNewEdit(n.toElement()));
-        else if(n.nodeName() == "set")
+        else if (n.nodeName() == "set")
             edits.append(new SxeRecordEdit(n.toElement()));
-        else if(n.nodeName() == "remove")
+        else if (n.nodeName() == "remove")
             edits.append(new SxeRemoveEdit(n.toElement()));
     }
 
-    if (edits.size() == 0)  return false;
+    if (edits.size() == 0)
+        return false;
 
     // process all the edits
-    foreach(SxeEdit* e, edits) {
-        SxeRecord* meta;
-        if(e->type() == SxeEdit::New)
+    foreach (SxeEdit *e, edits) {
+        SxeRecord *meta;
+        if (e->type() == SxeEdit::New)
             meta = createRecord(e->rid());
         else
             meta = record(e->rid());
 
-        if(meta)
+        if (meta)
             meta->apply(doc_, e);
     }
 
     return true;
 }
 
-const QDomDocument& SxeSession::document() const {
-    return doc_;
-}
+const QDomDocument &SxeSession::document() const { return doc_; }
 
-bool SxeSession::groupChat() const {
-    return groupChat_;
-}
+bool SxeSession::groupChat() const { return groupChat_; }
 
-bool SxeSession::serverSupport() const {
-    return serverSupport_;
-}
+bool SxeSession::serverSupport() const { return serverSupport_; }
 
-const Jid SxeSession::target() const {
-    return target_;
-}
+const Jid SxeSession::target() const { return target_; }
 
-const QString SxeSession::session() const {
-    return session_;
-}
+const QString SxeSession::session() const { return session_; }
 
-const Jid SxeSession::ownJid() const {
-    return ownJid_;
-}
+const Jid SxeSession::ownJid() const { return ownJid_; }
 
-const QList<QString> SxeSession::features() const {
-    return features_;
-}
+const QList<QString> SxeSession::features() const { return features_; }
 
-QList<const SxeEdit*> SxeSession::startQueueing() {
+QList<const SxeEdit *> SxeSession::startQueueing()
+{
     // do nothing if already queueing
-    if(queueing_)
-        return QList<const SxeEdit*>();
+    if (queueing_)
+        return QList<const SxeEdit *>();
 
     queueing_ = true;
 
     // Return all the effective Edits to the session so far (snapshot)
     // make sure that they are added in the right order (parents first)
-    QString rootid;
-    QList<const SxeEdit*> nonDocElementEdits;
+    QString                      rootid;
+    QList<const SxeEdit *>       nonDocElementEdits;
     QMultiHash<QString, QString> ridByParent;
 
     // first collect all nodes into a hash by their parent
-    foreach(SxeRecord* m, recordByNodeId_.values()) {
-        if(!m->parent().isEmpty()) {
+    foreach (SxeRecord *m, recordByNodeId_.values()) {
+        if (!m->parent().isEmpty()) {
             ridByParent.insert(m->parent(), m->rid());
-        } else if(!m->node().isElement()) {
+        } else if (!m->node().isElement()) {
             nonDocElementEdits += m->edits();
         } else
             rootid = m->rid();
     }
 
     // starting from the root, add all edits to a list recursively
-    QList<const SxeEdit*> edits;
+    QList<const SxeEdit *> edits;
 
-    if(!rootid.isNull())
+    if (!rootid.isNull())
         arrangeEdits(ridByParent, edits, rootid);
 
     return nonDocElementEdits + edits;
 }
 
-void SxeSession::arrangeEdits(QHash<QString, QString> &ridByParent, QList<const SxeEdit*> &output, const QString &iterator) {
+void SxeSession::arrangeEdits(QHash<QString, QString> &ridByParent, QList<const SxeEdit *> &output,
+                              const QString &iterator)
+{
     // add the edits to this node
-    if(recordByNodeId_.contains(iterator))
+    if (recordByNodeId_.contains(iterator))
         output += recordByNodeId_.value(iterator)->edits();
 
     // process all the children
     QString child;
-    while(!(child = ridByParent.take(iterator)).isNull()) {
+    while (!(child = ridByParent.take(iterator)).isNull()) {
         arrangeEdits(ridByParent, output, child);
     }
 }
 
-void SxeSession::stopQueueing() {
+void SxeSession::stopQueueing()
+{
     // do nothing if not queueing
-    if(!queueing_)
+    if (!queueing_)
         return;
 
     queueing_ = false;
@@ -230,8 +223,8 @@ void SxeSession::stopQueueing() {
     // Process queued elements
     flush();
 
-    if(!queuedIncomingEdits_.isEmpty()) {
-        while(!queuedIncomingEdits_.isEmpty()) {
+    if (!queuedIncomingEdits_.isEmpty()) {
+        while (!queuedIncomingEdits_.isEmpty()) {
             IncomingEdit queued = queuedIncomingEdits_.takeFirst();
             processSxe(queued.xml, queued.id);
         }
@@ -240,7 +233,8 @@ void SxeSession::stopQueueing() {
     }
 }
 
-void SxeSession::startImporting(const QDomDocument &doc) {
+void SxeSession::startImporting(const QDomDocument &doc)
+{
     importing_ = true;
 
     // reset the document
@@ -250,30 +244,30 @@ void SxeSession::startImporting(const QDomDocument &doc) {
     startQueueing();
 }
 
-void SxeSession::stopImporting() {
+void SxeSession::stopImporting()
+{
     stopQueueing();
 
     importing_ = false;
 }
 
-void SxeSession::endSession() {
-    deleteLater();
-}
+void SxeSession::endSession() { deleteLater(); }
 
-const QDomNode SxeSession::insertNodeBefore(const QDomNode &node, const QDomNode &parent, const QDomNode &referenceNode) {
-    if(referenceNode.isNull() || referenceNode.previousSibling().isNull()) {
+const QDomNode SxeSession::insertNodeBefore(const QDomNode &node, const QDomNode &parent, const QDomNode &referenceNode)
+{
+    if (referenceNode.isNull() || referenceNode.previousSibling().isNull()) {
         // insert as the first node
-        SxeRecord* firstMeta = record(parent.firstChild());
-        double primaryWeight;
-        if(firstMeta)
+        SxeRecord *firstMeta = record(parent.firstChild());
+        double     primaryWeight;
+        if (firstMeta)
             primaryWeight = firstMeta->primaryWeight() - 1;
         else
             primaryWeight = 0;
 
         // find out the rid of the parent node
-        QString parentId;
-        SxeRecord* parentMeta = record(parent);
-        if(parentMeta)
+        QString    parentId;
+        SxeRecord *parentMeta = record(parent);
+        if (parentMeta)
             parentId = parentMeta->rid();
         else {
             qDebug("Trying to insert a node to parent without an id");
@@ -285,16 +279,17 @@ const QDomNode SxeSession::insertNodeBefore(const QDomNode &node, const QDomNode
         return insertNodeAfter(node, parent, referenceNode.previousSibling());
 }
 
-const QDomNode SxeSession::insertNodeAfter(const QDomNode &node, const QDomNode &parent, const QDomNode &referenceNode) {
-    if(node.isNull())
+const QDomNode SxeSession::insertNodeAfter(const QDomNode &node, const QDomNode &parent, const QDomNode &referenceNode)
+{
+    if (node.isNull())
         return QDomNode();
 
     // process each child of a document fragment separately
-    if(node.isDocumentFragment()) {
+    if (node.isDocumentFragment()) {
         // insert the first node relative to the specified referenceNode
-        QDomNode reference = referenceNode;
-        QDomNodeList children = node.childNodes();
-        for(int i = 0; i < children.size(); i++) {
+        QDomNode     reference = referenceNode;
+        QDomNodeList children  = node.childNodes();
+        for (int i = 0; i < children.size(); i++) {
             QDomNode newNode = children.at(i);
             insertNodeAfter(newNode, parent, reference);
             // and the rest relative to the previous sibling
@@ -305,9 +300,9 @@ const QDomNode SxeSession::insertNodeAfter(const QDomNode &node, const QDomNode 
     }
 
     // find out the rid of the parent node
-    QString parentId;
-    SxeRecord* parentMeta = record(parent);
-    if(parentMeta)
+    QString    parentId;
+    SxeRecord *parentMeta = record(parent);
+    if (parentMeta)
         parentId = parentMeta->rid();
     else {
         qDebug("Trying to insert a node to parent without an id");
@@ -315,18 +310,18 @@ const QDomNode SxeSession::insertNodeAfter(const QDomNode &node, const QDomNode 
     }
 
     // find out the appropriate weight for the node
-    double primaryWeight;
-    SxeRecord* referenceMeta = record(referenceNode);
-    SxeRecord* nextReferenceMeta = record(referenceNode.nextSibling());
-    if(parent.childNodes().count() == 0)
+    double     primaryWeight;
+    SxeRecord *referenceMeta     = record(referenceNode);
+    SxeRecord *nextReferenceMeta = record(referenceNode.nextSibling());
+    if (parent.childNodes().count() == 0)
         primaryWeight = 0;
-    else if(referenceMeta && nextReferenceMeta && referenceNode.parentNode() == parent) {
+    else if (referenceMeta && nextReferenceMeta && referenceNode.parentNode() == parent) {
         // get the average of the weights of the reference and it's next sibling
         primaryWeight = (referenceMeta->primaryWeight() + nextReferenceMeta->primaryWeight()) / 2;
     } else {
         // insert as the last node
         referenceMeta = record(parent.lastChild());
-        if(referenceMeta)
+        if (referenceMeta)
             primaryWeight = referenceMeta->primaryWeight() + 1;
         else
             primaryWeight = 0;
@@ -335,23 +330,24 @@ const QDomNode SxeSession::insertNodeAfter(const QDomNode &node, const QDomNode 
     return insertNode(node, parentId, primaryWeight);
 }
 
-const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &parentId, double primaryWeight) {
+const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &parentId, double primaryWeight)
+{
     QDomNode newNode;
 
-    SxeRecord* meta = record(node);
-    if(meta) {
+    SxeRecord *meta = record(node);
+    if (meta) {
         // move an existing node
 
         // figure out what's to be changed
         QHash<SxeRecordEdit::Key, QString> changes;
-        if(meta->parent() != parentId)
+        if (meta->parent() != parentId)
             changes.insert(SxeRecordEdit::Parent, parentId);
-        if(meta->primaryWeight() != primaryWeight)
+        if (meta->primaryWeight() != primaryWeight)
             changes.insert(SxeRecordEdit::PrimaryWeight, QString::number(primaryWeight));
 
-        if(changes.size() > 0) {
+        if (changes.size() > 0) {
             // create the edit
-            SxeRecordEdit* edit = new SxeRecordEdit(meta->rid(), meta->version() + 1, changes);
+            SxeRecordEdit *edit = new SxeRecordEdit(meta->rid(), meta->version() + 1, changes);
 
             // apply it
             meta->apply(doc_, edit);
@@ -365,7 +361,7 @@ const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &paren
 
     } else {
 
-        QList<SxeEdit*> edits;
+        QList<SxeEdit *> edits;
         // create a new node
         QDomNode result = generateNewNode(node, parentId, primaryWeight);
 
@@ -374,8 +370,9 @@ const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &paren
     }
 }
 
-void SxeSession::removeNode(const QDomNode &node) {
-    if(node.isNull())
+void SxeSession::removeNode(const QDomNode &node)
+{
+    if (node.isNull())
         return;
 
     // create SxeRemoveEdits for all child nodes
@@ -385,24 +382,25 @@ void SxeSession::removeNode(const QDomNode &node) {
     emit documentUpdated(false);
 }
 
-void SxeSession::setAttribute(const QDomNode &node, const QString &attribute, const QString &value, int from, int n) {
-    if(!node.isElement() || attribute.isEmpty())
+void SxeSession::setAttribute(const QDomNode &node, const QString &attribute, const QString &value, int from, int n)
+{
+    if (!node.isElement() || attribute.isEmpty())
         return;
 
-    if(value.isNull()) {
-        if(from < 0) {
+    if (value.isNull()) {
+        if (from < 0) {
             // Interpret passing QString() as value as wishing to remove the attribute
-            if(node.toElement().hasAttribute(attribute))
+            if (node.toElement().hasAttribute(attribute))
                 removeNode(node.toElement().attributeNode(attribute));
         }
 
         return;
     }
 
-    if(node.toElement().hasAttribute(attribute)) {
+    if (node.toElement().hasAttribute(attribute)) {
         setNodeValue(node.attributes().namedItem(attribute), value, from, n);
     } else {
-        if(from >= 0) {
+        if (from >= 0) {
             qDebug("from > 0 although attribute doesn't exist yet.");
             return;
         }
@@ -413,43 +411,47 @@ void SxeSession::setAttribute(const QDomNode &node, const QString &attribute, co
     }
 }
 
-void SxeSession::setNodeValue(const QDomNode &node, const QString &value, int from, int n) {
-    SxeRecord* meta = record(node);
+void SxeSession::setNodeValue(const QDomNode &node, const QString &value, int from, int n)
+{
+    SxeRecord *meta = record(node);
 
-    if(!meta) {
+    if (!meta) {
         qDebug() << "Trying to set value of " << node.nodeName() << " (a non-existent node) to \"" << value << "\"";
         return;
     }
 
-    if(!(node.isAttr() || node.isText())) {
+    if (!(node.isAttr() || node.isText())) {
         qDebug() << "Trying to set value of a non-attr/text node " << node.nodeName();
         return;
     }
 
     // Check whether anythings changing:
     QString newValue;
-    if(from >= 0 && n >= 0) {
-        if((from + n) > node.nodeValue().length()) {
-            qDebug() << QString("from (%1) + n (%2) > (length of existing node value) (%3).").arg(from).arg(n).arg(node.nodeValue().length());
+    if (from >= 0 && n >= 0) {
+        if ((from + n) > node.nodeValue().length()) {
+            qDebug() << QString("from (%1) + n (%2) > (length of existing node value) (%3).")
+                            .arg(from)
+                            .arg(n)
+                            .arg(node.nodeValue().length());
             return;
         }
         newValue = node.nodeValue().replace(from, n, value);
     } else
         newValue = value;
 
-    if(newValue == node.nodeValue())
+    if (newValue == node.nodeValue())
         return;
 
     // Create the appropriate RecordEdit
     QHash<SxeRecordEdit::Key, QString> changes;
     changes.insert(SxeRecordEdit::Chdata, value);
-    if(from >= 0 && n >= 0) {
+    if (from >= 0 && n >= 0) {
         changes.insert(SxeRecordEdit::ReplaceFrom, QString("%1").arg(from));
         changes.insert(SxeRecordEdit::ReplaceN, QString("%1").arg(n));
     }
 
     // create the edit
-    SxeRecordEdit* edit = new SxeRecordEdit(meta->rid(), meta->version() + 1, changes);
+    SxeRecordEdit *edit = new SxeRecordEdit(meta->rid(), meta->version() + 1, changes);
 
     // apply it
     meta->apply(doc_, edit);
@@ -460,17 +462,18 @@ void SxeSession::setNodeValue(const QDomNode &node, const QString &value, int fr
     emit documentUpdated(false);
 }
 
-void SxeSession::flush() {
-    if(queuedOutgoingEdits_.isEmpty())
+void SxeSession::flush()
+{
+    if (queuedOutgoingEdits_.isEmpty())
         return;
 
     // create the sxe element
-    QDomDocument *doc = static_cast<SxeManager*>(parent())->client()->doc();
-    QDomElement sxe = doc->createElementNS(SXENS, "sxe");
+    QDomDocument *doc = static_cast<SxeManager *>(parent())->client()->doc();
+    QDomElement   sxe = doc->createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session_);
 
     // append all queued edits
-    while(!queuedOutgoingEdits_.isEmpty()) {
+    while (!queuedOutgoingEdits_.isEmpty()) {
         sxe.appendChild(queuedOutgoingEdits_.takeFirst());
     }
 
@@ -478,45 +481,46 @@ void SxeSession::flush() {
     emit newSxeElement(sxe, target(), groupChat_);
 }
 
-QDomNode SxeSession::generateNewNode(const QDomNode node, const QString &parent, double primaryWeight) {
-    if(!record(node)) {
+QDomNode SxeSession::generateNewNode(const QDomNode node, const QString &parent, double primaryWeight)
+{
+    if (!record(node)) {
         // generate the appropriate edit(s) for the node
         QString rid = generateUUIDForSession();
         // create the SxeRecord
-        SxeRecord* meta = createRecord(rid);
-        if(!meta)
+        SxeRecord *meta = createRecord(rid);
+        if (!meta)
             return QDomNode();
 
-        if((node.isAttr() || node.isText()) && node.nodeValue().length() > MAXCHDATA) {
+        if ((node.isAttr() || node.isText()) && node.nodeValue().length() > MAXCHDATA) {
             // Generate a "stub" of the new node
             QDomNode clone = node.cloneNode();
-            QString full = clone.nodeValue();
+            QString  full  = clone.nodeValue();
             clone.setNodeValue("");
             QDomNode newNode = generateNewNode(clone, parent, primaryWeight);
             flush();
 
             // append the value
-            for(int i = 0; i < full.length(); i += MAXCHDATA) {
+            for (int i = 0; i < full.length(); i += MAXCHDATA) {
                 setNodeValue(newNode, full.mid(i, MAXCHDATA), i, 0);
                 flush();
             }
         } else {
-            SxeEdit* edit = new SxeNewEdit(rid, node, parent, primaryWeight, false);
+            SxeEdit *edit = new SxeNewEdit(rid, node, parent, primaryWeight, false);
 
             meta->apply(doc_, edit);
             queueOutgoingEdit(edit);
         }
 
         // process all the attributes and child nodes recursively
-        if(node.isElement()) {
+        if (node.isElement()) {
             // attributes
             QDomNamedNodeMap attributes = node.attributes();
-            for(int i = 0; i < attributes.count(); i++)
+            for (int i = 0; i < attributes.count(); i++)
                 generateNewNode(attributes.item(i), rid, i);
 
             // child nodes
             int i = 0;
-            for(QDomNode n = node.firstChild(); !n.isNull(); n = n.nextSibling())
+            for (QDomNode n = node.firstChild(); !n.isNull(); n = n.nextSibling())
                 generateNewNode(n, rid, i++);
         }
 
@@ -526,41 +530,43 @@ QDomNode SxeSession::generateNewNode(const QDomNode node, const QString &parent,
     return QDomNode();
 }
 
-void SxeSession::generateRemoves(const QDomNode &node) {
-    SxeRecord* meta = record(node);
-    if(meta) {
+void SxeSession::generateRemoves(const QDomNode &node)
+{
+    SxeRecord *meta = record(node);
+    if (meta) {
         // process all the attributes and child nodes recursively
-        if(node.isElement()) {
+        if (node.isElement()) {
             // attributes
             QDomNamedNodeMap attributes = node.attributes();
-            for(int i = 0; i < attributes.count(); i++)
+            for (int i = 0; i < attributes.count(); i++)
                 generateRemoves(attributes.item(i));
 
             // child nodes
             QDomNodeList children = node.childNodes();
-            for(int i = 0; i < children.count(); i++)
+            for (int i = 0; i < children.count(); i++)
                 generateRemoves(children.at(i));
         }
 
         // generate the appropriate edit for the node
-        SxeRemoveEdit* edit = new SxeRemoveEdit(meta->rid());
+        SxeRemoveEdit *edit = new SxeRemoveEdit(meta->rid());
         queueOutgoingEdit(edit);
         meta->apply(doc_, edit);
     }
 }
 
-void SxeSession::reposition(const QDomNode &node, bool remote) {
+void SxeSession::reposition(const QDomNode &node, bool remote)
+{
     Q_UNUSED(remote);
-    SxeRecord* meta = record(node);
+    SxeRecord *meta = record(node);
 
-    if(!meta) {
+    if (!meta) {
         qDebug("Trying to reposition a node without record.");
         return;
     }
 
     // inserting nodes to the document node is a special case
-    if(meta->parent().isEmpty()) {
-        if(node.isElement() && !(doc_.documentElement().isNull() || doc_.documentElement() == node)) {
+    if (meta->parent().isEmpty()) {
+        if (node.isElement() && !(doc_.documentElement().isNull() || doc_.documentElement() == node)) {
             qDebug("Trying to add a root node when one already exists.");
             removeNode(node);
             flush();
@@ -573,10 +579,9 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
     }
 
     // find the parent node
-    SxeRecord* parentMeta = record(meta->parent());
-    QDomNode parentNode;
-    if(!parentMeta
-        || (parentNode = parentMeta->node()).isNull()) {
+    SxeRecord *parentMeta = record(meta->parent());
+    QDomNode   parentNode;
+    if (!parentMeta || (parentNode = parentMeta->node()).isNull()) {
         qDebug("non-existent parent. Deleting node.");
         removeNode(node);
         flush();
@@ -584,23 +589,21 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
     }
 
     // simply insert if an attribute
-    if(node.isAttr()) {
+    if (node.isAttr()) {
         QDomElement parentElement = parentNode.toElement();
-        if(parentElement.isNull()) {
+        if (parentElement.isNull()) {
             qDebug("Trying to insert an attribute to a non-element.");
             return;
         }
 
         // unless an attribute with the same name already exists
-        if(parentElement.hasAttribute(node.nodeName())
-            && node != parentElement.attributeNode(node.nodeName())) {
+        if (parentElement.hasAttribute(node.nodeName()) && node != parentElement.attributeNode(node.nodeName())) {
 
             // qDebug() << QString("Removing an attribute node '%1' because one already exists").arg(node.nodeName());
 
             // delete the node with smaller secondary weight
-            if(removeSmaller(meta, record(parentElement.attributeNode(node.nodeName()))))
+            if (removeSmaller(meta, record(parentElement.attributeNode(node.nodeName()))))
                 return;
-
         }
 
         parentElement.setAttributeNode(node.toAttr());
@@ -613,16 +616,17 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
 
     // default to appending
     QDomNode before;
-    bool insertLast = true;
-    if(children.length() > 0) {
+    bool     insertLast = true;
+    if (children.length() > 0) {
         // find the child with the smallest weight greater than the weight of the node itself
         // if any, insert the node before that node
-        for(int i=0; i < children.length(); i++) {
-            if(children.item(i) != node) {
-                SxeRecord* siblingMeta = record(children.item(i));
-                if(siblingMeta && *meta < *siblingMeta) {
-                    // qDebug() << QString("%1 (pw: %2) is less than %3 (pw: %4)").arg(meta->name()).arg(meta->primaryWeight()).arg(siblingMeta->name()).arg(siblingMeta->primaryWeight()).toLatin1();
-                    before = children.item(i);
+        for (int i = 0; i < children.length(); i++) {
+            if (children.item(i) != node) {
+                SxeRecord *siblingMeta = record(children.item(i));
+                if (siblingMeta && *meta < *siblingMeta) {
+                    // qDebug() << QString("%1 (pw: %2) is less than %3 (pw:
+                    // %4)").arg(meta->name()).arg(meta->primaryWeight()).arg(siblingMeta->name()).arg(siblingMeta->primaryWeight()).toLatin1();
+                    before     = children.item(i);
                     insertLast = false;
                     break;
                 }
@@ -630,55 +634,62 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
         }
     }
 
-    if(insertLast) {
-        // qDebug() << QString("Repositioning '%1' (pw: %2) as last.").arg(node.nodeName()).arg(meta->primaryWeight()).toLatin1();
+    if (insertLast) {
+        // qDebug() << QString("Repositioning '%1' (pw: %2) as
+        // last.").arg(node.nodeName()).arg(meta->primaryWeight()).toLatin1();
         parentNode.appendChild(node);
     } else {
-        // qDebug() << QString("Repositioning '%1' (pw: %2) before '%3' (pw: %4).").arg(node.nodeName()).arg(meta->primaryWeight()).arg(before.nodeName()).arg(record(before)->primaryWeight()).toLatin1();
+        // qDebug() << QString("Repositioning '%1' (pw: %2) before '%3' (pw:
+        // %4).").arg(node.nodeName()).arg(meta->primaryWeight()).arg(before.nodeName()).arg(record(before)->primaryWeight()).toLatin1();
         parentNode.insertBefore(node, before);
     }
 }
 
 // void SxeSession::addToLookup(const QDomNode &node, bool, const QString &rid) {
-    // recordByNode_[node]
-    //     = recordByNodeId_[rid];
+// recordByNode_[node]
+//     = recordByNodeId_[rid];
 // }
 
-void SxeSession::handleNodeToBeAdded(const QDomNode &node, bool remote) {
+void SxeSession::handleNodeToBeAdded(const QDomNode &node, bool remote)
+{
     emit nodeToBeAdded(node, remote);
     reposition(node, remote);
     emit nodeAdded(node, remote);
 }
 
-void SxeSession::handleNodeToBeMoved(const QDomNode &node, bool remote) {
+void SxeSession::handleNodeToBeMoved(const QDomNode &node, bool remote)
+{
     emit nodeToBeMoved(node, remote);
     reposition(node, remote);
     emit nodeMoved(node, remote);
 }
 
-void SxeSession::handleNodeToBeRemoved(const QDomNode &node, bool remote) {
+void SxeSession::handleNodeToBeRemoved(const QDomNode &node, bool remote)
+{
     emit nodeToBeRemoved(node, remote);
     removeRecord(node);
 }
 
-void SxeSession::removeRecord(const QDomNode &node) {
-    QMutableHashIterator<QString, SxeRecord*> i(recordByNodeId_);
+void SxeSession::removeRecord(const QDomNode &node)
+{
+    QMutableHashIterator<QString, SxeRecord *> i(recordByNodeId_);
 
-    while(i.hasNext()) {
-        if(node == i.next().value()->node()) {
+    while (i.hasNext()) {
+        if (node == i.next().value()->node()) {
             i.remove();
             return;
         }
     }
 }
 
-bool SxeSession::removeSmaller(SxeRecord* meta1, SxeRecord* meta2) {
-    if(!meta1)
+bool SxeSession::removeSmaller(SxeRecord *meta1, SxeRecord *meta2)
+{
+    if (!meta1)
         return true;
-    if(!meta2)
+    if (!meta2)
         return false;
 
-    if(meta1->hasSmallerSecondaryWeight(*meta2)) {
+    if (meta1->hasSmallerSecondaryWeight(*meta2)) {
         removeNode(meta1->node());
         flush();
         return true;
@@ -689,32 +700,31 @@ bool SxeSession::removeSmaller(SxeRecord* meta1, SxeRecord* meta2) {
     }
 }
 
-void SxeSession::addUsedSxeId(QString id) {
-    usedSxeIds_ += id;
-}
+void SxeSession::addUsedSxeId(QString id) { usedSxeIds_ += id; }
 
-QList<QString> SxeSession::usedSxeIds() {
-    return usedSxeIds_;
-}
+QList<QString> SxeSession::usedSxeIds() { return usedSxeIds_; }
 
-void SxeSession::queueOutgoingEdit(SxeEdit* edit) {
-    if(!importing_) {
+void SxeSession::queueOutgoingEdit(SxeEdit *edit)
+{
+    if (!importing_) {
         QDomElement el = edit->xml(doc_);
-        queuedOutgoingEdits_.append(static_cast<SxeManager*>(parent())->client()->doc()->importNode(el, true));
+        queuedOutgoingEdits_.append(static_cast<SxeManager *>(parent())->client()->doc()->importNode(el, true));
     }
 }
 
-SxeRecord* SxeSession::createRecord(const QString &id) {
-    if(recordByNodeId_.contains(id)) {
+SxeRecord *SxeSession::createRecord(const QString &id)
+{
+    if (recordByNodeId_.contains(id)) {
         qDebug() << QString("record by id '%1' already exists.").arg(id).toLatin1();
         return nullptr;
     }
 
-    SxeRecord* m = new SxeRecord(id);
+    SxeRecord *m        = new SxeRecord(id);
     recordByNodeId_[id] = m;
 
     // once the node is actually created, add it to the lookup table
-    // connect(m, SIGNAL(nodeAdded(QDomNode, bool, QString)), SLOT(addToLookup(const QDomNode &, bool, const QString &)));
+    // connect(m, SIGNAL(nodeAdded(QDomNode, bool, QString)), SLOT(addToLookup(const QDomNode &, bool, const QString
+    // &)));
 
     // remove the node in case of a conflicting edit
     connect(m, SIGNAL(nodeRemovalRequired(QDomNode)), SLOT(removeNode(QDomNode)));
@@ -730,52 +740,55 @@ SxeRecord* SxeSession::createRecord(const QString &id) {
     return m;
 }
 
-SxeRecord* SxeSession::record(const QString &id) {
-    return recordByNodeId_.value(id);
-}
+SxeRecord *SxeSession::record(const QString &id) { return recordByNodeId_.value(id); }
 
-SxeRecord* SxeSession::record(const QDomNode &node) const {
-    if(node.isNull())
+SxeRecord *SxeSession::record(const QDomNode &node) const
+{
+    if (node.isNull())
         return nullptr;
 
     // go through all the SxeRecord's
-    foreach(SxeRecord* meta, recordByNodeId_.values()) {
+    foreach (SxeRecord *meta, recordByNodeId_.values()) {
         // qDebug() << QString("id: %1").arg(meta->rid()).toLatin1();
-        if(node == meta->node())
+        if (node == meta->node())
             return meta;
     }
 
     return nullptr;
 }
 
-void SxeSession::setUUIDPrefix(const QString uuidPrefix) {
-    if(!uuidPrefix.isNull())
+void SxeSession::setUUIDPrefix(const QString uuidPrefix)
+{
+    if (!uuidPrefix.isNull())
         uuidPrefix_ = uuidPrefix;
     else
         uuidPrefix_ = generateUUID();
 }
 
-QString SxeSession::generateUUIDForSession() {
+QString SxeSession::generateUUIDForSession()
+{
     return QString("%1.%2").arg(uuidPrefix_).arg(++uuidMaxPostfix_, 0, 36); // 36 is the max allowed base
 }
 
-QString SxeSession::generateUUID() {
+QString SxeSession::generateUUID()
+{
     QString fullstring = QUuid::createUuid().toString();
     // return the string between "{" and "}"
     int start = fullstring.indexOf("{") + 1;
     return fullstring.mid(start, fullstring.lastIndexOf("}") - start);
 }
 
-QString SxeSession::parseProlog(const QDomDocument &doc) {
-    QString prolog;
+QString SxeSession::parseProlog(const QDomDocument &doc)
+{
+    QString     prolog;
     QTextStream stream(&prolog);
 
     // check for the XML declaration
-    if(doc.childNodes().at(0).isProcessingInstruction()
-          && doc.childNodes().at(0).toProcessingInstruction().target().toLower() == "xml")
+    if (doc.childNodes().at(0).isProcessingInstruction()
+        && doc.childNodes().at(0).toProcessingInstruction().target().toLower() == "xml")
         doc.childNodes().at(0).save(stream, 1);
 
-    if(!doc.doctype().isNull())
+    if (!doc.doctype().isNull())
         doc.doctype().save(stream, 1);
 
     return prolog;

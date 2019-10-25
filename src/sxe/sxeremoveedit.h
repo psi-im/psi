@@ -24,19 +24,19 @@
 
 /*! \brief A class used for storing SXE edits that remove nodes in the undo stacks and in the queue of outgoing edits.*/
 class SxeRemoveEdit : public SxeEdit {
-    public:
-        /*! \brief Constructor
-         *  Constructs a SxeRemoveEdit for \a node.
-         */
-        SxeRemoveEdit(const QString rid, bool remote = false);
-        /*! \brief Constructor
-         *  Parses a SxeRemoveEdit from \a sxeElement.
-         */
-        SxeRemoveEdit(const QDomElement &sxeElement, bool remote = true);
-        /*! \brief The type of edit.*/
-        SxeEdit::EditType type() const;
-        /*! \brief The XML (the SXE) representing the edit.*/
-        QDomElement xml(QDomDocument &doc) const;
+public:
+    /*! \brief Constructor
+     *  Constructs a SxeRemoveEdit for \a node.
+     */
+    SxeRemoveEdit(const QString rid, bool remote = false);
+    /*! \brief Constructor
+     *  Parses a SxeRemoveEdit from \a sxeElement.
+     */
+    SxeRemoveEdit(const QDomElement &sxeElement, bool remote = true);
+    /*! \brief The type of edit.*/
+    SxeEdit::EditType type() const;
+    /*! \brief The XML (the SXE) representing the edit.*/
+    QDomElement xml(QDomDocument &doc) const;
 };
 
 #endif // SXDEREMOVEEDIT_H

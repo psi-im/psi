@@ -25,8 +25,7 @@
 class PsiIcon;
 class QTimer;
 
-class FancyPopup : public QFrame
-{
+class FancyPopup : public QFrame {
     Q_OBJECT
 public:
     FancyPopup(QString title, const PsiIcon *icon = nullptr, FancyPopup *prev = nullptr, bool copyIcon = true);
@@ -49,6 +48,7 @@ protected:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;

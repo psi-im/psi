@@ -7,29 +7,27 @@
 
 class QWidget;
 
-class OptionsTabStatusPep : public OptionsTab
-{
+class OptionsTabStatusPep : public OptionsTab {
     Q_OBJECT
 
 public:
-
     OptionsTabStatusPep(QObject *parent);
     ~OptionsTabStatusPep();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
-    void setData(PsiCon *psi, QWidget *);
+    void     applyOptions();
+    void     restoreOptions();
+    void     setData(PsiCon *psi, QWidget *);
 
 protected slots:
     void changeVisibleState(bool state);
 
 private:
-    QWidget *w_;
-    PsiCon *psi_;
+    QWidget *   w_;
+    PsiCon *    psi_;
     QStringList blackList_;
-    QString tuneFilters_;
-    bool controllersChanged_;
+    QString     tuneFilters_;
+    bool        controllersChanged_;
 };
 
 #endif // OPT_STAUSPEP_H

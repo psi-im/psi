@@ -27,27 +27,17 @@
  * Class to simplify alert icon plumbing. You'll have to re-implement
  * alertFrameUpdated() in your subclass.
  */
-Alertable::Alertable(QObject* parent)
-    : QObject(parent)
-{
-    alert_ = nullptr;
-}
+Alertable::Alertable(QObject *parent) : QObject(parent) { alert_ = nullptr; }
 
 /**
  * Destroys alert icon along with itself;
  */
-Alertable::~Alertable()
-{
-    setAlert(nullptr);
-}
+Alertable::~Alertable() { setAlert(nullptr); }
 
 /**
  * Returns true if alert is set, and false otherwise.
  */
-bool Alertable::alerting() const
-{
-    return alert_ != nullptr;
-}
+bool Alertable::alerting() const { return alert_ != nullptr; }
 
 /**
  * Returns current animation frame of alert, or null QIcon, if
@@ -65,7 +55,7 @@ QIcon Alertable::currentAlertFrame() const
  * Creates new AlertIcon based on provided \param icon. If 0 is passed,
  * alert is cleared.
  */
-void Alertable::setAlert(const PsiIcon* icon)
+void Alertable::setAlert(const PsiIcon *icon)
 {
     if (alert_) {
         alert_->stop();

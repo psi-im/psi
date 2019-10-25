@@ -23,7 +23,7 @@
 
 #include <QHeaderView>
 
-MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
+MUCAffiliationsView::MUCAffiliationsView(QWidget *parent) : QTreeView(parent)
 {
     setRootIsDecorated(false);
     header()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -38,22 +38,21 @@ void MUCAffiliationsView::removeCurrent()
 {
     QModelIndex index = currentIndex();
     if (index.isValid() && index.parent().isValid()) {
-        model()->removeRows(index.row(),1,index.parent());
+        model()->removeRows(index.row(), 1, index.parent());
     }
 }
 
-void MUCAffiliationsView::currentChanged(const QModelIndex& current, const QModelIndex& previous)
+void MUCAffiliationsView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
 {
     Q_UNUSED(previous);
     // Commenting these optimizations, since they cause too much trouble
-    //bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
-    //bool remove_before = previous.isValid() && previous.parent().isValid();
-    bool add_after = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
+    // bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
+    // bool remove_before = previous.isValid() && previous.parent().isValid();
+    bool add_after    = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
     bool remove_after = current.isValid() && current.parent().isValid();
 
-    //if (add_before != add_after)
-        emit addEnabled(add_after);
-    //if (remove_before != remove_after)
-        emit removeEnabled(remove_after);
+    // if (add_before != add_after)
+    emit addEnabled(add_after);
+    // if (remove_before != remove_after)
+    emit removeEnabled(remove_after);
 }
-

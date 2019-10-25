@@ -25,11 +25,10 @@ class AvCall;
 class PsiAccount;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class CallDlg : public QDialog
-{
+class CallDlg : public QDialog {
     Q_OBJECT
 
 public:

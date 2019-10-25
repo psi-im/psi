@@ -11,27 +11,26 @@ class QSize;
 class QStringList;
 class VariantTree;
 
-class OptionsTreeReader : public AtomicXmlFileReader
-{
+class OptionsTreeReader : public AtomicXmlFileReader {
 public:
-    OptionsTreeReader(OptionsTree*);
+    OptionsTreeReader(OptionsTree *);
 
     // reimplemented
-    virtual bool read(QIODevice* device);
+    virtual bool read(QIODevice *device);
 
 protected:
-    void readTree(VariantTree* tree);
-    QVariant readVariant(const QString& type);
-    void readUnknownElement(QXmlStreamWriter* writer);
+    void     readTree(VariantTree *tree);
+    QVariant readVariant(const QString &type);
+    void     readUnknownElement(QXmlStreamWriter *writer);
 
-    QStringList readStringList();
+    QStringList  readStringList();
     QVariantList readVariantList();
-    QSize readSize();
-    QRect readRect();
+    QSize        readSize();
+    QRect        readRect();
 
 private:
-    OptionsTree* options_;
-    QString unknown_;
+    OptionsTree *options_;
+    QString      unknown_;
 };
 
 #endif // OPTIONSTREEREADER_H

@@ -10,9 +10,7 @@
 #include <QPlainTextEdit>
 
 GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
-    QDialog(parent),
-    m_ui(new Ui::GroupchatTopicDlg),
-    m_addLangUi(new Ui::GroupChatTopicAddLangDlg)
+    QDialog(parent), m_ui(new Ui::GroupchatTopicDlg), m_addLangUi(new Ui::GroupChatTopicAddLangDlg)
 {
     m_ui->setupUi(this);
     QKeySequence sendKey = ShortcutManager::instance()->shortcut("chat.send");
@@ -37,17 +35,14 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
             addLangDlg->setAttribute(Qt::WA_DeleteOnClose);
 
             m_addLangUi->cmbLang->addItem(tr("Any Language"), 0);
-            QMap<QString,QLocale::Language> langs;
-            for (auto const &loc : QLocale::matchingLocales(
-                     QLocale::AnyLanguage,
-                     QLocale::AnyScript,
-                     QLocale::AnyCountry))
-            {
+            QMap<QString, QLocale::Language> langs;
+            for (auto const &loc :
+                 QLocale::matchingLocales(QLocale::AnyLanguage, QLocale::AnyScript, QLocale::AnyCountry)) {
                 if (loc != QLocale::c()) {
                     langs.insert(QLocale::languageToString(loc.language()), loc.language());
                 }
             }
-            for (auto lang: langs) {
+            for (auto lang : langs) {
                 LanguageManager::LangId id;
                 id.language = lang;
                 m_addLangUi->cmbLang->addItem(LanguageManager::languageName(id), lang);
@@ -58,14 +53,14 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
             addLangDlg->adjustSize();
             addLangDlg->move(cw->mapToGlobal(QPoint(cw->width() - addLangDlg->width(), cw->height())));
             addLangDlg->show();
-            QObject::connect(addLangDlg,  &QDialog::accepted, this, [=]() {
+            QObject::connect(addLangDlg, &QDialog::accepted, this, [=]() {
                 LanguageManager::LangId id;
                 id.language = quint16(m_addLangUi->cmbLang->currentData().toInt());
-                id.script = quint8(m_addLangUi->cmbScript->currentData().toInt());
-                id.country = quint16(m_addLangUi->cmbCountry->currentData().toInt());
-                bool found = false;
+                id.script   = quint8(m_addLangUi->cmbScript->currentData().toInt());
+                id.country  = quint16(m_addLangUi->cmbCountry->currentData().toInt());
+                bool found  = false;
                 for (int i = 0; i < m_ui->twLang->count(); i++) {
-                    QPlainTextEdit *edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
+                    QPlainTextEdit *        edit  = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
                     LanguageManager::LangId tabId = edit->property("langId").value<LanguageManager::LangId>();
                     if (id == tabId) {
                         m_ui->twLang->setCurrentIndex(i);
@@ -78,10 +73,12 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
                 }
             });
 
-            QObject::connect(m_addLangUi->cmbLang, static_cast<void(QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this, [=](int index) {
-                Q_UNUSED(index)
-                populateCountryAndScript();
-            });
+            QObject::connect(m_addLangUi->cmbLang,
+                             static_cast<void (QComboBox::*)(int index)>(&QComboBox::currentIndexChanged), this,
+                             [=](int index) {
+                                 Q_UNUSED(index)
+                                 populateCountryAndScript();
+                             });
         } else {
             addLangDlg->setFocus();
         }
@@ -98,9 +95,9 @@ QMap<LanguageManager::LangId, QString> GroupchatTopicDlg::subjectMap() const
 {
     QMap<LanguageManager::LangId, QString> ret;
     for (int i = 0; i < m_ui->twLang->count(); i++) {
-        QPlainTextEdit *edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
-        LanguageManager::LangId id = edit->property("langId").value<LanguageManager::LangId>();
-        QString text = edit->toPlainText();
+        QPlainTextEdit *        edit = static_cast<QPlainTextEdit *>(m_ui->twLang->widget(i));
+        LanguageManager::LangId id   = edit->property("langId").value<LanguageManager::LangId>();
+        QString                 text = edit->toPlainText();
         ret.insert(id, text);
     }
     return ret;
@@ -129,9 +126,9 @@ void GroupchatTopicDlg::addLanguage(const LanguageManager::LangId &id, const QSt
 
 void GroupchatTopicDlg::populateCountryAndScript()
 {
-    QLocale::Language lang = static_cast<QLocale::Language>(m_addLangUi->cmbLang->currentData().toInt());
-    QMap<QString,QLocale::Script> scripts;
-    QMap<QString,QLocale::Country> countries;
+    QLocale::Language               lang = static_cast<QLocale::Language>(m_addLangUi->cmbLang->currentData().toInt());
+    QMap<QString, QLocale::Script>  scripts;
+    QMap<QString, QLocale::Country> countries;
     m_addLangUi->cmbCountry->clear();
     m_addLangUi->cmbScript->clear();
     m_addLangUi->cmbCountry->addItem(tr("Any Country"), 0);
@@ -155,8 +152,8 @@ void GroupchatTopicDlg::populateCountryAndScript()
         if (countries.count() > 1) {
             for (auto it = countries.constBegin(); it != countries.constEnd(); ++it) {
                 LanguageManager::LangId id;
-                id.language = lang;
-                id.country = it.value();
+                id.language     = lang;
+                id.country      = it.value();
                 QString country = LanguageManager::countryName(id);
                 m_addLangUi->cmbCountry->addItem(country, it.value());
             }
@@ -168,10 +165,10 @@ void GroupchatTopicDlg::changeEvent(QEvent *e)
 {
     QDialog::changeEvent(e);
     switch (e->type()) {
-        case QEvent::LanguageChange:
-            m_ui->retranslateUi(this);
-            break;
-        default:
-            break;
+    case QEvent::LanguageChange:
+        m_ui->retranslateUi(this);
+        break;
+    default:
+        break;
     }
 }

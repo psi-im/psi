@@ -20,15 +20,15 @@
 #include "psiapplication.h"
 
 #ifdef Q_OS_MAC
-#    include "CocoaUtilities/CocoaTrayClick.h"
+#include "CocoaUtilities/CocoaTrayClick.h"
 #endif
 #include "resourcemenu.h"
 #ifdef Q_OS_WIN
-#    include "systemwatch/systemwatch_win.h"
+#include "systemwatch/systemwatch_win.h"
 #endif
 
 #ifdef Q_OS_MAC
-#    include <Carbon/Carbon.h>
+#include <Carbon/Carbon.h>
 #endif
 #include <QSessionManager>
 
@@ -36,8 +36,7 @@
 // PsiApplication
 //----------------------------------------------------------------------------
 
-PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled)
-:    QApplication(argc, argv, GUIenabled)
+PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled) : QApplication(argc, argv, GUIenabled)
 {
     init(GUIenabled);
 #ifdef Q_OS_MAC
@@ -45,10 +44,7 @@ PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled)
 #endif
 }
 
-PsiApplication::~PsiApplication()
-{
-
-}
+PsiApplication::~PsiApplication() {}
 
 void PsiApplication::init(bool GUIenabled)
 {
@@ -59,11 +55,11 @@ void PsiApplication::init(bool GUIenabled)
 }
 
 #ifdef Q_OS_MAC
-bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
+bool PsiApplication::macEventFilter(EventHandlerCallRef, EventRef inEvent)
 {
     UInt32 eclass = GetEventClass(inEvent);
-    int etype = GetEventKind(inEvent);
-    if(eclass == 'eppc' && etype == kEventAppleEvent) {
+    int    etype  = GetEventKind(inEvent);
+    if (eclass == 'eppc' && etype == kEventAppleEvent) {
         dockActivated();
     }
     return false;

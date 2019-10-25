@@ -36,9 +36,13 @@ public:
 
     static QString     getImageFileName(QWidget *parent, QString caption = QString());
     static QString     getInbandImageFileName(QWidget *parent);
-    static QString     getOpenFileName(QWidget *parent = nullptr, const QString &caption = QString(), const QString &filter = QString(), QString *selectedFilter = nullptr);
-    static QStringList getOpenFileNames(QWidget *parent = nullptr, const QString &caption = QString(), const QString &filter = QString(), QString *selectedFilter = nullptr);
-    static QString     getSaveFileName(QWidget *parent = nullptr, const QString &caption = QString(), const QString &defaultFileName = QString(), const QString &filter = QString(), QString *selectedFilter = nullptr);
+    static QString     getOpenFileName(QWidget *parent = nullptr, const QString &caption = QString(),
+                                       const QString &filter = QString(), QString *selectedFilter = nullptr);
+    static QStringList getOpenFileNames(QWidget *parent = nullptr, const QString &caption = QString(),
+                                        const QString &filter = QString(), QString *selectedFilter = nullptr);
+    static QString     getSaveFileName(QWidget *parent = nullptr, const QString &caption = QString(),
+                                       const QString &defaultFileName = QString(), const QString &filter = QString(),
+                                       QString *selectedFilter = nullptr);
     static QString     getSaveDirName(QWidget *parent, const QString &caption);
 
     static QString mimeToFileExt(const QString &mime);

@@ -32,8 +32,8 @@
 #include "xmpp_caps.h"
 #include "xmpp_tasks.h"
 #ifdef PSI_PLUGINS
-#    include "filesharedlg.h"
-#    include "pluginmanager.h"
+#include "filesharedlg.h"
+#include "pluginmanager.h"
 #endif
 
 #include <QClipboard>
@@ -56,25 +56,28 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
-#define MCMDCHAT        "https://psi-im.org/ids/mcmd#chatmain"
+#define MCMDCHAT "https://psi-im.org/ids/mcmd#chatmain"
 
-PsiIcon* PsiChatDlg::throbber_icon = nullptr;
+PsiIcon *PsiChatDlg::throbber_icon = nullptr;
 
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
     Q_OBJECT
 public:
-    ChatDlgMCmdProvider(PsiChatDlg *dlg) : dlg_(dlg) {};
+    ChatDlgMCmdProvider(PsiChatDlg *dlg) : dlg_(dlg){};
 
-    virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate, QStringList &preset) {
+    virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate,
+                                     QStringList &preset)
+    {
         Q_UNUSED(preset);
         if (oldstate->getName() == MCMDCHAT) {
             QString cmd;
-            if (command.count() > 0) cmd = command[0].toLower();
+            if (command.count() > 0)
+                cmd = command[0].toLower();
             if (cmd == "version") {
                 JT_ClientVersion *version = new JT_ClientVersion(dlg_->account()->client()->rootTask());
                 connect(version, SIGNAL(finished()), SLOT(version_finished()));
 
-                //qDebug() << "querying: " << dlg_->jid().full();
+                // qDebug() << "querying: " << dlg_->jid().full();
                 version->get(dlg_->jid());
                 version->go();
                 newstate = nullptr;
@@ -120,16 +123,22 @@ public:
         }
     };
 
-    virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item) {
+    virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item)
+    {
         Q_UNUSED(partcommand);
         QStringList all;
         if (state->getName() == MCMDCHAT) {
             if (item == 0) {
-                all << "version" << "idle" << "clear" << "vcard" << "auth" << "compact";
+                all << "version"
+                    << "idle"
+                    << "clear"
+                    << "vcard"
+                    << "auth"
+                    << "compact";
             }
         }
         QStringList res;
-        foreach(QString cmd, all) {
+        foreach (QString cmd, all) {
             if (cmd.startsWith(query)) {
                 res << cmd;
             }
@@ -137,18 +146,19 @@ public:
         return res;
     };
 
-    virtual void mCmdSiteDestroyed() {};
-    virtual ~ChatDlgMCmdProvider() {};
+    virtual void mCmdSiteDestroyed(){};
+    virtual ~ChatDlgMCmdProvider(){};
 
 public slots:
-    void version_finished() {
-        JT_ClientVersion *version = qobject_cast<JT_ClientVersion*>(sender());
+    void version_finished()
+    {
+        JT_ClientVersion *version = qobject_cast<JT_ClientVersion *>(sender());
         if (!version) {
             dlg_->appendSysMsg("No version information available.");
             return;
         }
-        dlg_->appendSysMsg(TextUtil::escape(QString("Version response: N: %2 V: %3 OS: %4")
-            .arg(version->name(), version->version(), version->os())));
+        dlg_->appendSysMsg(TextUtil::escape(
+            QString("Version response: N: %2 V: %3 OS: %4").arg(version->name(), version->version(), version->os())));
     };
 
     void lastactivity_finished()
@@ -161,11 +171,10 @@ public slots:
         }
 
         if (idle->status().isEmpty()) {
-            dlg_->appendSysMsg(QString("Last activity at %1")
-                .arg(idle->time().toString()));
+            dlg_->appendSysMsg(QString("Last activity at %1").arg(idle->time().toString()));
         } else {
-            dlg_->appendSysMsg(QString("Last activity at %1 (%2)")
-                .arg(idle->time().toString(), TextUtil::escape(idle->status())));
+            dlg_->appendSysMsg(
+                QString("Last activity at %1 (%2)").arg(idle->time().toString(), TextUtil::escape(idle->status())));
         }
     }
 
@@ -173,16 +182,16 @@ private:
     PsiChatDlg *dlg_;
 };
 
-PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
-    : ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_)
-    , autoPGP_(true)
+PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
+    ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_),
+    tabCompletion(&mCmdManager_), autoPGP_(true)
 {
     connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
-    connect(account(), SIGNAL(addedContact(PsiContact*)), SLOT(updateContactAdding(PsiContact*)));
-    connect(account(), SIGNAL(removedContact(PsiContact*)), SLOT(updateContactAdding(PsiContact*)));
+    connect(account(), SIGNAL(addedContact(PsiContact *)), SLOT(updateContactAdding(PsiContact *)));
+    connect(account(), SIGNAL(removedContact(PsiContact *)), SLOT(updateContactAdding(PsiContact *)));
     connect(account(), SIGNAL(updateContact(const Jid &)), SLOT(updateContactAdding(const Jid &)));
     mCmdManager_.registerProvider(new ChatDlgMCmdProvider(this));
-    SendButtonTemplatesMenu* menu = getTemplateMenu();
+    SendButtonTemplatesMenu *menu = getTemplateMenu();
     if (menu) {
         connect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
         connect(menu, SIGNAL(doEditTemplates()), this, SLOT(editTemplates()));
@@ -192,7 +201,7 @@ PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 
 PsiChatDlg::~PsiChatDlg()
 {
-    SendButtonTemplatesMenu* menu = getTemplateMenu();
+    SendButtonTemplatesMenu *menu = getTemplateMenu();
     if (menu) {
         disconnect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
         disconnect(menu, SIGNAL(doEditTemplates()), this, SLOT(editTemplates()));
@@ -209,7 +218,11 @@ void PsiChatDlg::initUi()
     ui_.le_jid->setLineEdit(le_autojid);
     ui_.le_jid->lineEdit()->setReadOnly(true);
     if (autoSelectContact_) {
-        QStringList excl = PsiOptions::instance()->getOption("options.ui.chat.default-jid-mode-ignorelist").toString().toLower().split(",", QString::SkipEmptyParts);
+        QStringList excl = PsiOptions::instance()
+                               ->getOption("options.ui.chat.default-jid-mode-ignorelist")
+                               .toString()
+                               .toLower()
+                               .split(",", QString::SkipEmptyParts);
         if (excl.indexOf(jid().bare()) == -1) {
             ui_.le_jid->insertItem(0, "auto", jid().full());
             ui_.le_jid->setCurrentIndex(0);
@@ -239,11 +252,11 @@ void PsiChatDlg::initUi()
 
     ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
-    connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));
+    connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit *)), SLOT(chatEditCreated()));
     chatEditCreated();
 
 #ifdef Q_OS_MAC
-    //connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
+    // connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
 
     initToolButtons();
@@ -252,12 +265,12 @@ void PsiChatDlg::initUi()
 
     PsiToolTip::install(ui_.avatar);
 
-    UserListItem* u = account()->findFirstRelevant(jid());
+    UserListItem *u = account()->findFirstRelevant(jid());
     if (u && u->isSecure(jid().resource()) && account()->hasPGP()) {
         setPGPEnabled(true);
     }
 
-    connect(account()->avatarFactory(), SIGNAL(avatarChanged(const Jid&)), this, SLOT(updateAvatar(const Jid&)));
+    connect(account()->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), this, SLOT(updateAvatar(const Jid &)));
 
     pm_settings_ = new QMenu(this);
     connect(pm_settings_, SIGNAL(aboutToShow()), SLOT(buildMenu()));
@@ -265,7 +278,7 @@ void PsiChatDlg::initUi()
     ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
     ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
-    connect(account()->client()->capsManager(), SIGNAL(capsChanged(const Jid&)), SLOT(capsChanged(const Jid&)));
+    connect(account()->client()->capsManager(), SIGNAL(capsChanged(const Jid &)), SLOT(capsChanged(const Jid &)));
 
     QList<int> list;
     list << 324;
@@ -273,7 +286,7 @@ void PsiChatDlg::initUi()
     ui_.splitter->setSizes(list);
 
     smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
-     ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
+    ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
     connect(ui_.pb_send, SIGNAL(clicked()), this, SLOT(doSend()));
     connect(ui_.pb_send, SIGNAL(customContextMenuRequested(const QPoint)), SLOT(sendButtonMenu()));
 
@@ -282,7 +295,8 @@ void PsiChatDlg::initUi()
     connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
     addAction(act_mini_cmd_);
 
-    connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(), SLOT(insertAsQuote(const QString &)));
+    connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(),
+            SLOT(insertAsQuote(const QString &)));
 
     act_pastesend_ = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
     connect(act_pastesend_, SIGNAL(triggered()), SLOT(doPasteAndSend()));
@@ -303,8 +317,7 @@ void PsiChatDlg::updateCountVisibility()
 {
     if (PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() && !smallChat_) {
         ui_.lb_count->show();
-    }
-    else {
+    } else {
         ui_.lb_count->hide();
     }
 }
@@ -322,8 +335,8 @@ void PsiChatDlg::setLooks()
     ui_.mle->optionsChanged();
 
     int s = PsiIconset::instance()->system().iconSize();
-    ui_.lb_status->setFixedSize(s,s);
-    ui_.lb_client->setFixedSize(s,s);
+    ui_.lb_status->setFixedSize(s, s);
+    ui_.lb_client->setFixedSize(s, s);
 
     ui_.tb_pgp->hide();
     if (smallChat_) {
@@ -334,8 +347,7 @@ void PsiChatDlg::setLooks()
         ui_.toolbar->hide();
         ui_.tb_voice->hide();
         ui_.lb_client->hide();
-    }
-    else {
+    } else {
         ui_.lb_client->show();
         ui_.lb_status->show();
         ui_.le_jid->show();
@@ -344,10 +356,10 @@ void PsiChatDlg::setLooks()
             ui_.tb_actions->hide();
             ui_.tb_emoticons->hide();
             ui_.tb_voice->hide();
-        }
-        else {
+        } else {
             ui_.toolbar->hide();
-            ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
+            ui_.tb_emoticons->setVisible(
+                PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
             ui_.tb_actions->show();
             ui_.tb_voice->setVisible(AvCallManager::isSupported());
         }
@@ -359,7 +371,7 @@ void PsiChatDlg::setLooks()
 
     // toolbuttons
     QIcon i;
-    i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
+    i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(), QIcon::Normal, QIcon::Off);
     i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
     actions_->action("chat_pgp")->setPsiIcon(nullptr);
     actions_->action("chat_pgp")->setIcon(i);
@@ -370,9 +382,9 @@ void PsiChatDlg::setShortcuts()
     ChatDlg::setShortcuts();
 
     actions_->action("chat_clear")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
-// typeahead find bar
+    // typeahead find bar
     actions_->action("chat_find")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
-// -- typeahead
+    // -- typeahead
     actions_->action("chat_info")->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
     actions_->action("chat_history")->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
 
@@ -390,23 +402,21 @@ void PsiChatDlg::updateIdentityVisibility()
     if (!smallChat_) {
         bool visible = account()->psi()->contactList()->enabledAccounts().count() > 1;
         ui_.lb_ident->setVisible(visible);
-    }
-    else {
+    } else {
         ui_.lb_ident->setVisible(false);
     }
 
     if (PsiOptions::instance()->getOption("options.ui.disable-send-button").toBool()) {
         ui_.pb_send->hide();
-    }
-    else {
+    } else {
         ui_.pb_send->show();
     }
 }
 
-void PsiChatDlg::updateContactAdding(PsiContact* c)
+void PsiChatDlg::updateContactAdding(PsiContact *c)
 {
     if (!c || realJid().compare(c->jid(), false)) {
-        Jid rj = realJid();
+        Jid           rj = realJid();
         UserListItem *uli;
         if (rj.isNull() || ((uli = account()->findFirstRelevant(rj)) && (uli->inList() || uli->isSelf()))) {
             actions_->action("chat_add_contact")->setVisible(false);
@@ -419,7 +429,7 @@ void PsiChatDlg::updateContactAdding(PsiContact* c)
 void PsiChatDlg::updateToolbuttons()
 {
     ui_.toolbar->clear();
-    PsiOptions *options = PsiOptions::instance();
+    PsiOptions *options      = PsiOptions::instance();
     QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m0.actions").toStringList();
     foreach (const QString &actionName, actionsNames) {
         if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
@@ -448,17 +458,14 @@ void PsiChatDlg::updateToolbuttons()
         if (action) {
             action->addTo(ui_.toolbar);
             if (actionName == QLatin1String("chat_icon") || actionName == QLatin1String("chat_templates")) {
-                static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
+                static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
+                    ->setPopupMode(QToolButton::InstantPopup);
             }
         }
     }
-
 }
 
-void PsiChatDlg::copyUserJid()
-{
-    QApplication::clipboard()->setText(jid().bare());
-}
+void PsiChatDlg::copyUserJid() { QApplication::clipboard()->setText(jid().bare()); }
 
 void PsiChatDlg::updateContactAdding(const Jid &j)
 {
@@ -469,72 +476,59 @@ void PsiChatDlg::updateContactAdding(const Jid &j)
 
 void PsiChatDlg::initToolButtons()
 {
-// typeahead find
+    // typeahead find
     QHBoxLayout *hb3a = new QHBoxLayout();
-    typeahead_ = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), nullptr);
-    hb3a->addWidget( typeahead_ );
+    typeahead_        = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), nullptr);
+    hb3a->addWidget(typeahead_);
     ui_.vboxLayout1->addLayout(hb3a);
-// -- typeahead
+    // -- typeahead
 
-    ActionList* list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).at(0);
+    ActionList *list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).at(0);
     foreach (const QString &name, list->actions()) {
         IconAction *action = list->action(name)->copy();
         action->setParent(this);
         actions_->addAction(name, action);
         if (name == QString::fromLatin1("chat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
-        }
-        else if (name == QString::fromLatin1("chat_find")) {
+        } else if (name == QString::fromLatin1("chat_find")) {
             // typeahead find
             connect(action, SIGNAL(triggered()), typeahead_, SLOT(toggleVisibility()));
-        // -- typeahead
-        }
-        else if (name == QString::fromLatin1("chat_html_text")) {
+            // -- typeahead
+        } else if (name == QString::fromLatin1("chat_html_text")) {
             connect(action, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
-        }
-        else if (name == QString::fromLatin1("chat_add_contact")) {
+        } else if (name == QString::fromLatin1("chat_add_contact")) {
             connect(action, SIGNAL(triggered()), SLOT(addContact()));
-        }
-        else if (name == QString::fromLatin1("chat_icon")) {
-            connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
+        } else if (name == QString::fromLatin1("chat_icon")) {
+            connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this,
+                    SLOT(addEmoticon(QString)));
             action->setMenu(account()->psi()->iconSelectPopup());
             ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
-        }
-        else if (name == QString::fromLatin1("chat_voice")) {
+        } else if (name == QString::fromLatin1("chat_voice")) {
             connect(action, SIGNAL(triggered()), SLOT(doVoice()));
-            //act_voice_->setEnabled(false);
+            // act_voice_->setEnabled(false);
             ui_.tb_voice->setDefaultAction(actions_->action("chat_voice"));
-        }
-        else if (name == QString::fromLatin1("chat_file")) {
+        } else if (name == QString::fromLatin1("chat_file")) {
             connect(action, SIGNAL(triggered()), SLOT(doFile()));
-        }
-        else if (name == QString::fromLatin1("chat_pgp")) {
+        } else if (name == QString::fromLatin1("chat_pgp")) {
             ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
             connect(action, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
-        }
-        else if (name == QString::fromLatin1("chat_info")) {
+        } else if (name == QString::fromLatin1("chat_info")) {
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
-        }
-        else if (name == QString::fromLatin1("chat_history")) {
+        } else if (name == QString::fromLatin1("chat_history")) {
             connect(action, SIGNAL(triggered()), SLOT(doHistory()));
-        }
-        else if (name == QString::fromLatin1("chat_compact")) {
+        } else if (name == QString::fromLatin1("chat_compact")) {
             connect(action, SIGNAL(triggered()), SLOT(toggleSmallChat()));
-        }
-        else if (name == QString::fromLatin1("chat_active_contacts")) {
+        } else if (name == QString::fromLatin1("chat_active_contacts")) {
             connect(action, SIGNAL(triggered()), SLOT(actActiveContacts()));
-        }
-        else if (name == QString::fromLatin1("chat_share_files")) {
-            connect(action, &QAction::triggered, account(), [this](){
-                account()->shareFiles(this, [this](const QList<Reference> &references, const QString &desc){
+        } else if (name == QString::fromLatin1("chat_share_files")) {
+            connect(action, &QAction::triggered, account(), [this]() {
+                account()->shareFiles(this, [this](const QList<Reference> &references, const QString &desc) {
                     doFileShare(references, desc);
                 });
             });
-        }
-        else if (name == "chat_pin_tab") {
+        } else if (name == "chat_pin_tab") {
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
-        }
-        else if (name == "chat_templates") {
+        } else if (name == "chat_templates") {
             action->setMenu(getTemplateMenu());
         }
     }
@@ -556,21 +550,19 @@ void PsiChatDlg::initToolBar()
     updateToolbuttons();
 }
 
-void PsiChatDlg::contextMenuEvent(QContextMenuEvent *)
-{
-    pm_settings_->exec(QCursor::pos());
-}
+void PsiChatDlg::contextMenuEvent(QContextMenuEvent *) { pm_settings_->exec(QCursor::pos()); }
 
 void PsiChatDlg::capsChanged()
 {
     ChatDlg::capsChanged();
 
-    QString resource = jid().resource();
-    UserListItem *ul = account()->findFirstRelevant(jid());
+    QString       resource = jid().resource();
+    UserListItem *ul       = account()->findFirstRelevant(jid());
     if (resource.isEmpty() && ul && !ul->userResourceList().isEmpty()) {
         resource = (*(ul->userResourceList().priority())).name();
     }
-    //act_voice_->setEnabled(!account()->capsManager()->isEnabled() || (ul && ul->isAvailable() && account()->capsManager()->features(jid().withResource(resource)).canVoice()));
+    // act_voice_->setEnabled(!account()->capsManager()->isEnabled() || (ul && ul->isAvailable() &&
+    // account()->capsManager()->features(jid().withResource(resource)).canVoice()));
 }
 
 void PsiChatDlg::activated()
@@ -586,7 +578,7 @@ void PsiChatDlg::setContactToolTip(QString text)
     ui_.avatar->setToolTip(text);
 }
 
-void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence)
+void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence)
 {
     static bool internal_change = false;
     if (!internal_change) {
@@ -594,86 +586,87 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
         const UserListItem *u = ul.first();
         if (!u)
             return;
-        UserResourceList resList = u->userResourceList();
-        const QString name = u->name();
-        QComboBox *jidCombo = ui_.le_jid;
+        UserResourceList resList  = u->userResourceList();
+        const QString    name     = u->name();
+        QComboBox *      jidCombo = ui_.le_jid;
         if (!u->isPrivate()) {
             // If no conference private chat
             const int combo_idx = jidCombo->currentIndex();
-            Jid old_jid = (combo_idx != -1) ? Jid(jidCombo->itemData(combo_idx).toString()) : Jid();
-            //if (fromPresence || jid() != old_jid) {
-                bool auto_mode = autoSelectContact_;
-                Jid new_auto_jid = jid();
-                if (auto_mode) {
-                    if (fromPresence && !resList.isEmpty()) {
-                        UserResourceList::ConstIterator it = resList.priority();
-                        new_auto_jid = jid().withResource((*it).name());
+            Jid       old_jid   = (combo_idx != -1) ? Jid(jidCombo->itemData(combo_idx).toString()) : Jid();
+            // if (fromPresence || jid() != old_jid) {
+            bool auto_mode    = autoSelectContact_;
+            Jid  new_auto_jid = jid();
+            if (auto_mode) {
+                if (fromPresence && !resList.isEmpty()) {
+                    UserResourceList::ConstIterator it = resList.priority();
+                    new_auto_jid                       = jid().withResource((*it).name());
+                }
+            }
+            // Filling address combobox
+            QString   iconStr;
+            const int resCnt = resList.size();
+            if (resCnt == 1) {
+                UserResourceList::ConstIterator it = resList.begin();
+                if (it != resList.end() && (*it).name().isEmpty()) {
+                    // Empty resource,  but online. Transport?
+                    QString client(u->findClient(*it));
+                    if (!client.isEmpty()) {
+                        iconStr = "clients/" + client;
                     }
                 }
-                // Filling address combobox
-                QString iconStr;
-                const int resCnt = resList.size();
-                if (resCnt == 1) {
-                    UserResourceList::ConstIterator it = resList.begin();
-                    if (it != resList.end() && (*it).name().isEmpty()) {
-                        // Empty resource,  but online. Transport?
-                        QString client(u->findClient(*it));
-                        if (!client.isEmpty()) {
-                            iconStr = "clients/" + client;
-                        }
+            }
+            setJidComboItem(0, makeContactName(name, u->jid().bare()), u->jid().bare(), iconStr);
+            int new_index  = -1;
+            int curr_index = 1;
+            for (UserResourceList::ConstIterator it = resList.begin(); it != resList.end(); it++) {
+                UserResource r = *it;
+                if (!r.name().isEmpty()) {
+                    Jid     tmp_jid(u->jid().withResource(r.name()));
+                    QString client(u->findClient(r));
+                    QString iconStr2;
+                    if (!client.isEmpty()) {
+                        iconStr2 = "clients/" + client;
+                    }
+                    setJidComboItem(curr_index, makeContactName(name, tmp_jid), tmp_jid, iconStr2);
+                    if (new_index == -1 && tmp_jid == new_auto_jid) {
+                        new_index = curr_index;
+                    }
+                    curr_index++;
+                }
+            }
+            if (new_index == -1) {
+                new_index = 0;
+                if (autoSelectContact_) {
+                    new_auto_jid = jid().bare();
+                } else {
+                    if (!jid().resource().isEmpty()) {
+                        new_index = jidCombo->count();
+                        setJidComboItem(curr_index, makeContactName(name, jid()), jid(), iconStr);
+                        new_index = curr_index++;
                     }
                 }
-                setJidComboItem(0, makeContactName(name, u->jid().bare()), u->jid().bare(), iconStr);
-                int new_index = -1;
-                int curr_index = 1;
-                for (UserResourceList::ConstIterator it = resList.begin(); it != resList.end(); it++) {
-                    UserResource r = *it;
-                    if (!r.name().isEmpty()) {
-                        Jid tmp_jid(u->jid().withResource(r.name()));
-                        QString client(u->findClient(r));
-                        QString iconStr2;
-                        if (!client.isEmpty()) {
-                            iconStr2 = "clients/" + client;
-                        }
-                        setJidComboItem(curr_index, makeContactName(name, tmp_jid), tmp_jid, iconStr2);
-                        if (new_index == -1 && tmp_jid == new_auto_jid) {
-                            new_index = curr_index;
-                        }
-                        curr_index++;
-                    }
-                }
-                if (new_index == -1) {
-                    new_index = 0;
-                    if (autoSelectContact_) {
-                        new_auto_jid = jid().bare();
-                    } else {
-                        if (!jid().resource().isEmpty()) {
-                            new_index = jidCombo->count();
-                            setJidComboItem(curr_index, makeContactName(name, jid()), jid(), iconStr);
-                            new_index = curr_index++;
-                        }
-                    }
-                }
-                // Сlean combobox's tail
-                while (curr_index < jidCombo->count())
-                    jidCombo->removeItem(curr_index);
+            }
+            // Сlean combobox's tail
+            while (curr_index < jidCombo->count())
+                jidCombo->removeItem(curr_index);
 
-                ui_.le_jid->setCurrentIndex(new_index);
-                if (new_auto_jid != jid()) {
-                    internal_change = true;
-                    setJid(new_auto_jid);
-                    if (old_jid != new_auto_jid) {
-                        if (autoSelectContact_ && (status != XMPP::Status::Offline || !new_auto_jid.resource().isEmpty())) {
-                            appendSysMsg(tr("Contact has been switched: %1").arg(TextUtil::escape(JIDUtil::toString(new_auto_jid, true))));
-                        }
+            ui_.le_jid->setCurrentIndex(new_index);
+            if (new_auto_jid != jid()) {
+                internal_change = true;
+                setJid(new_auto_jid);
+                if (old_jid != new_auto_jid) {
+                    if (autoSelectContact_ && (status != XMPP::Status::Offline || !new_auto_jid.resource().isEmpty())) {
+                        appendSysMsg(tr("Contact has been switched: %1")
+                                         .arg(TextUtil::escape(JIDUtil::toString(new_auto_jid, true))));
                     }
                 }
+            }
             //}
         } else {
             // Conference private chat
-            QString iconStr;
-            Jid tmp_jid = jid();
-            UserResourceList::ConstIterator it = resList.begin();
+            QString                         iconStr;
+            Jid                             tmp_jid = jid();
+            UserResourceList::ConstIterator it      = resList.begin();
             if (it != resList.end()) {
                 QString client(u->findClient(*it));
                 if (!client.isEmpty()) {
@@ -699,49 +692,47 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 
 void PsiChatDlg::actActiveContacts()
 {
-    ActiveContactsMenu* acm = new ActiveContactsMenu(account()->psi(), this);
-    if(!acm->actions().isEmpty())
+    ActiveContactsMenu *acm = new ActiveContactsMenu(account()->psi(), this);
+    if (!acm->actions().isEmpty())
         acm->exec(QCursor::pos());
     delete acm;
 }
 
-void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& statusString)
+void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &statusString)
 {
     Q_UNUSED(statusString);
 
     if (status == -1 || !u) {
         ui_.lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
         setTabIcon(IconsetFactory::iconPtr("status/noauth")->icon());
-    }
-    else {
+    } else {
         ui_.lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid(), status));
         setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon());
     }
 
     if (u) {
         setContactToolTip(u->makeTip(true, false));
-    }
-    else {
+    } else {
         setContactToolTip(QString());
     }
 
     if (u) {
         UserResourceList srl = u->userResourceList();
-        if(!srl.isEmpty()) {
+        if (!srl.isEmpty()) {
             UserResource r;
-            if(!jid().resource().isEmpty()) {
-                QString res = jid().resource();
-                UserResourceList::ConstIterator it = srl.find(res);
-                if(it != srl.end())
+            if (!jid().resource().isEmpty()) {
+                QString                         res = jid().resource();
+                UserResourceList::ConstIterator it  = srl.find(res);
+                if (it != srl.end())
                     r = *it;
             }
-            if(r.clientName().isEmpty()) {
+            if (r.clientName().isEmpty()) {
                 srl.sort();
                 r = srl.first();
             }
             QString client(u->findClient(r));
             if (!client.isEmpty()) {
-                const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client );
+                const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
                 ui_.lb_client->setPixmap(pix);
             }
             ui_.lb_client->setToolTip(r.versionString());
@@ -759,21 +750,20 @@ void PsiChatDlg::updateAvatar()
         return;
     }
 
-    UserListItem *ul = account()->findFirstRelevant(jid());
-    bool private_ = false;
+    UserListItem *ul       = account()->findFirstRelevant(jid());
+    bool          private_ = false;
     if (ul && !ul->userResourceList().isEmpty()) {
         UserResourceList::Iterator it = ul->userResourceList().find(jid().resource());
         if (it == ul->userResourceList().end())
             it = ul->userResourceList().priority();
 
-        res = (*it).name();
-        client = (*it).clientName();
+        res      = (*it).name();
+        client   = (*it).clientName();
         private_ = ul->isPrivate();
     }
-    //QPixmap p = account()->avatarFactory()->getAvatar(jid().withResource(res),client);
-    QPixmap p = private_ ?
-            account()->avatarFactory()->getMucAvatar(jid().withResource(res)) :
-            account()->avatarFactory()->getAvatar(jid().withResource(res));
+    // QPixmap p = account()->avatarFactory()->getAvatar(jid().withResource(res),client);
+    QPixmap p = private_ ? account()->avatarFactory()->getMucAvatar(jid().withResource(res))
+                         : account()->avatarFactory()->getAvatar(jid().withResource(res));
     if (p.isNull()) {
         if (!PsiOptions::instance()->getOption("options.ui.contactlist.avatars.use-default-avatar").toBool()) {
             ui_.avatar->hide();
@@ -783,7 +773,7 @@ void PsiChatDlg::updateAvatar()
     }
     int optSize = PsiOptions::instance()->getOption("options.ui.chat.avatars.size").toInt();
     ui_.avatar->setFixedSize(optSize, optSize);
-    int avatarSize = p.width(); //qMax(p.width(), p.height());
+    int avatarSize = p.width(); // qMax(p.width(), p.height());
     if (avatarSize > optSize)
         avatarSize = optSize;
     ui_.avatar->setPixmap(p.scaled(QSize(avatarSize, avatarSize), Qt::KeepAspectRatio, Qt::SmoothTransformation));
@@ -797,7 +787,7 @@ void PsiChatDlg::optionsUpdate()
     updateToolbuttons();
     ChatDlg::optionsUpdate();
     ui_.mle->chatEdit()->addSoundRecButton();
-// typeahead find bar
+    // typeahead find bar
     typeahead_->optionsUpdate();
 }
 
@@ -805,30 +795,29 @@ void PsiChatDlg::updatePGP()
 {
     if (account()->hasPGP()) {
         actions_->action("chat_pgp")->setEnabled(true);
-    }
-    else {
+    } else {
         setPGPEnabled(false);
         actions_->action("chat_pgp")->setEnabled(false);
     }
 
     checkPGPAutostart();
 
-    ui_.tb_pgp->setVisible(account()->hasPGP() &&
-                           !smallChat_ &&
-                           !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
+    ui_.tb_pgp->setVisible(
+        account()->hasPGP() && !smallChat_
+        && !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
     ui_.log->setEncryptionEnabled(isEncryptionEnabled());
 }
 
 void PsiChatDlg::checkPGPAutostart()
 {
-    if(account()->hasPGP() && autoPGP_ && PsiOptions::instance()->getOption("options.pgp.auto-start").toBool()) {
+    if (account()->hasPGP() && autoPGP_ && PsiOptions::instance()->getOption("options.pgp.auto-start").toBool()) {
         UserListItem *item = account()->findFirstRelevant(jid());
-        if(item && !item->publicKeyID().isEmpty()) {
-            if(!jid().resource().isEmpty()) {
+        if (item && !item->publicKeyID().isEmpty()) {
+            if (!jid().resource().isEmpty()) {
                 UserResourceList::Iterator rit = item->userResourceList().find(jid().resource());
-                if(rit !=item->userResourceList().end()) {
+                if (rit != item->userResourceList().end()) {
                     UserResource r = *rit;
-                    if(r.pgpVerifyStatus() != 0) {
+                    if (r.pgpVerifyStatus() != 0) {
                         setPGPEnabled(false);
                         return;
                     }
@@ -848,14 +837,10 @@ void PsiChatDlg::actPgpToggled(bool b)
 void PsiChatDlg::doClearButton()
 {
     if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
-        switch (
-            QMessageBox::warning(
-                this,
-                tr("Warning"),
-                tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-                QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No
-            )
-        ) {
+        switch (QMessageBox::warning(
+            this, tr("Warning"),
+            tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
+            QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No)) {
         case QMessageBox::No:
             break;
         case QMessageBox::YesAll:
@@ -907,22 +892,16 @@ void PsiChatDlg::buildMenu()
 
     } // else it's not tabbed dialog
 #ifdef PSI_PLUGINS
-    if(!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
+    if (!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
         pm_settings_->addSeparator();
         PluginManager::instance()->addToolBarButton(this, pm_settings_, account(), jid().full());
     }
 #endif
 }
 
-void PsiChatDlg::updateCounter()
-{
-    ui_.lb_count->setNum(chatEdit()->toPlainText().length());
-}
+void PsiChatDlg::updateCounter() { ui_.lb_count->setNum(chatEdit()->toPlainText().length()); }
 
-bool PsiChatDlg::isEncryptionEnabled() const
-{
-    return actions_->action("chat_pgp")->isChecked();
-}
+bool PsiChatDlg::isEncryptionEnabled() const { return actions_->action("chat_pgp")->isChecked(); }
 
 void PsiChatDlg::appendSysMsg(const QString &str)
 {
@@ -930,15 +909,9 @@ void PsiChatDlg::appendSysMsg(const QString &str)
     dispatchMessage(mv);
 }
 
-ChatView* PsiChatDlg::chatView() const
-{
-    return ui_.log;
-}
+ChatView *PsiChatDlg::chatView() const { return ui_.log; }
 
-ChatEdit* PsiChatDlg::chatEdit() const
-{
-    return ui_.mle->chatEdit();
-}
+ChatEdit *PsiChatDlg::chatEdit() const { return ui_.mle->chatEdit(); }
 
 void PsiChatDlg::chatEditCreated()
 {
@@ -952,15 +925,14 @@ void PsiChatDlg::chatEditCreated()
     tabCompletion.setTextEdit(chatEdit());
 
     connect(chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
-        account()->shareFiles(this, data, [this](const QList<Reference> &refs, const QString &desc){
-            doFileShare(refs, desc);
-        });
+        account()->shareFiles(this, data,
+                              [this](const QList<Reference> &refs, const QString &desc) { doFileShare(refs, desc); });
     });
 }
 
 void PsiChatDlg::sendButtonMenu()
 {
-    SendButtonTemplatesMenu* menu = getTemplateMenu();
+    SendButtonTemplatesMenu *menu = getTemplateMenu();
     if (menu) {
         menu->setParams(true);
         menu->exec(QCursor::pos());
@@ -971,14 +943,14 @@ void PsiChatDlg::sendButtonMenu()
 
 void PsiChatDlg::editTemplates()
 {
-    if(ChatDlg::isActiveTab()) {
+    if (ChatDlg::isActiveTab()) {
         showTemplateEditor();
     }
 }
 
 void PsiChatDlg::doPasteAndSend()
 {
-    if(ChatDlg::isActiveTab()) {
+    if (ChatDlg::isActiveTab()) {
         chatEdit()->paste();
         doSend();
         act_pastesend_->setEnabled(false);
@@ -986,14 +958,11 @@ void PsiChatDlg::doPasteAndSend()
     }
 }
 
-void PsiChatDlg::psButtonEnabled()
-{
-    act_pastesend_->setEnabled(true);
-}
+void PsiChatDlg::psButtonEnabled() { act_pastesend_->setEnabled(true); }
 
 void PsiChatDlg::sendTemp(const QString &templText)
 {
-    if(ChatDlg::isActiveTab()) {
+    if (ChatDlg::isActiveTab()) {
         if (!templText.isEmpty()) {
             chatEdit()->textCursor().insertText(templText);
             if (!PsiOptions::instance()->getOption("options.ui.chat.only-paste-template").toBool())
@@ -1002,7 +971,8 @@ void PsiChatDlg::sendTemp(const QString &templText)
     }
 }
 
-void PsiChatDlg::doSend() {
+void PsiChatDlg::doSend()
+{
     tabCompletion.reset();
     if (mCmdSite_.isActive()) {
         QString str = chatEdit()->toPlainText();
@@ -1014,25 +984,23 @@ void PsiChatDlg::doSend() {
     }
 }
 
-void PsiChatDlg::doMiniCmd()
-{
-    mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, tr("Command>")), QStringList() );
-}
+void PsiChatDlg::doMiniCmd() { mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, tr("Command>")), QStringList()); }
 
 void PsiChatDlg::addContact()
 {
-    Jid j(realJid());
-    UserListItem *uli = account()->findFirstRelevant(jid());
-    QString name = uli && !uli->name().isEmpty()? uli->name() : j.node();
-    account()->openAddUserDlg(j.withResource(""), name.isEmpty()?j.node():name, "");
+    Jid           j(realJid());
+    UserListItem *uli  = account()->findFirstRelevant(jid());
+    QString       name = uli && !uli->name().isEmpty() ? uli->name() : j.node();
+    account()->openAddUserDlg(j.withResource(""), name.isEmpty() ? j.node() : name, "");
 }
 
-bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
-    if ( obj == chatEdit() ) {
-        if ( ev->type() == QEvent::KeyPress ) {
+bool PsiChatDlg::eventFilter(QObject *obj, QEvent *ev)
+{
+    if (obj == chatEdit()) {
+        if (ev->type() == QEvent::KeyPress) {
             QKeyEvent *e = static_cast<QKeyEvent *>(ev);
 
-            if ( e->key() == Qt::Key_Tab ) {
+            if (e->key() == Qt::Key_Tab) {
                 tabCompletion.tryComplete();
                 return true;
             }
@@ -1041,18 +1009,15 @@ bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
         }
     }
 
-    else if ( obj == ui_.log->realTextWidget() ) {
-        if ( ev->type() == QEvent::MouseButtonPress )
+    else if (obj == ui_.log->realTextWidget()) {
+        if (ev->type() == QEvent::MouseButtonPress)
             chatEdit()->setFocus();
     }
 
-    return ChatDlg::eventFilter( obj, ev );
+    return ChatDlg::eventFilter(obj, ev);
 }
 
-void PsiChatDlg::doMinimize()
-{
-    window()->showMinimized();
-}
+void PsiChatDlg::doMinimize() { window()->showMinimized(); }
 
 QString PsiChatDlg::makeContactName(const QString &name, const Jid &jid) const
 {
@@ -1078,14 +1043,14 @@ void PsiChatDlg::contactChanged() /* current jid was chanegd in Jid combobox.TOD
 
 void PsiChatDlg::updateAutojidIcon()
 {
-    QIcon icon(IconsetFactory::iconPixmap("psi/autojid"));
+    QIcon   icon(IconsetFactory::iconPixmap("psi/autojid"));
     QPixmap pix;
     QString text;
     if (autoSelectContact_) {
-        pix = icon.pixmap(QSize(16, 16), QIcon::Normal, QIcon::Off);
+        pix  = icon.pixmap(QSize(16, 16), QIcon::Normal, QIcon::Off);
         text = tr("turn off autojid");
     } else {
-        pix = icon.pixmap(QSize(16, 16), QIcon::Disabled, QIcon::Off);
+        pix  = icon.pixmap(QSize(16, 16), QIcon::Disabled, QIcon::Off);
         text = tr("turn on autojid");
     }
     act_autojid->setIcon(QIcon(pix));
@@ -1098,11 +1063,11 @@ void PsiChatDlg::setJidComboItem(int pos, const QString &text, const Jid &jid, c
 {
     // Warning! If pos >= items count, the element will be added in a list tail
     //-
-    QIcon icon;
+    QIcon      icon;
     QComboBox *jid_combo = ui_.le_jid;
     if (!icon_str.isEmpty()) {
         const PsiIcon picon = IconsetFactory::icon(icon_str);
-        icon = picon.icon();
+        icon                = picon.icon();
     }
     if (jid_combo->count() > pos) {
         jid_combo->setItemText(pos, text);
@@ -1115,11 +1080,11 @@ void PsiChatDlg::setJidComboItem(int pos, const QString &text, const Jid &jid, c
 
 void PsiChatDlg::doSwitchJidMode()
 {
-    autoSelectContact_ = ! autoSelectContact_;
+    autoSelectContact_ = !autoSelectContact_;
     updateAutojidIcon();
     if (autoSelectContact_) {
-        const QList<UserListItem*> ul = account()->findRelevant(jid().bare());
-        UserStatus userStatus = userStatusFor(jid(), ul, false);
+        const QList<UserListItem *> ul         = account()->findRelevant(jid().bare());
+        UserStatus                  userStatus = userStatusFor(jid(), ul, false);
         updateJidWidget(ul, userStatus.statusType, true);
         userStatus = userStatusFor(jid(), ul, false);
         contactUpdated(userStatus.userListItem, userStatus.statusType, userStatus.status);

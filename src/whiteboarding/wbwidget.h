@@ -43,21 +43,35 @@
  *  \sa WbScene
  *  \sa WbDlg
  */
-class WbWidget : public QGraphicsView
-{
+class WbWidget : public QGraphicsView {
     Q_OBJECT
 public:
     /*! \brief Mode
      *  Indicates the mode the widget is in.
      */
-    enum class Mode : char { Select, Translate, Rotate, Scale, Scroll, Erase, DrawPath, DrawLine, DrawRectangle, DrawEllipse, DrawCircle, DrawPolyline, DrawText, DrawImage };
+    enum class Mode : char {
+        Select,
+        Translate,
+        Rotate,
+        Scale,
+        Scroll,
+        Erase,
+        DrawPath,
+        DrawLine,
+        DrawRectangle,
+        DrawEllipse,
+        DrawCircle,
+        DrawPolyline,
+        DrawText,
+        DrawImage
+    };
 
     /*! \brief Constructor
      *  Constructs a new widget with \a session and parent \a parent.
      */
-    WbWidget(SxeSession* session, QWidget* parent = nullptr);
+    WbWidget(SxeSession *session, QWidget *parent = nullptr);
     /*! \brief Returns the session this widget is visualizing.*/
-    SxeSession* session();
+    SxeSession *session();
     /*! \brief Returns the mode this widget is in.*/
     Mode mode();
     /*! \brief Sets the mode which determines how to react to user interaction.*/
@@ -80,22 +94,22 @@ public slots:
 
 protected:
     /*! \brief Makes sure that area outside the whiteboard is not shown by zooming if necessary.*/
-    virtual void resizeEvent(QResizeEvent * event);
+    virtual void resizeEvent(QResizeEvent *event);
     /*! \brief Passes events to items as specified by the mode.*/
-    virtual void mousePressEvent(QMouseEvent * event);
+    virtual void mousePressEvent(QMouseEvent *event);
     /*! \brief Passes events to items as specified by the mode.*/
-    virtual void mouseMoveEvent(QMouseEvent * event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
     /*! \brief Passes events to items as specified by the mode.*/
-    virtual void mouseReleaseEvent(QMouseEvent * event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
 
 private:
     /*! \brief Returns the item representing the node (if any).*/
-    WbItem* wbItem(const QDomNode &node);
+    WbItem *wbItem(const QDomNode &node);
 
     /*! \brief The SxeSession synchronizing the document.*/
-    SxeSession* session_;
+    SxeSession *session_;
     /*! \brief The WbScene used for visualizing the document.*/
-    WbScene* scene_;
+    WbScene *scene_;
     /*! \brief The user interaction mode the widget is in.*/
     Mode mode_;
     /*! \brief The stroke color used for new items.*/
@@ -106,19 +120,19 @@ private:
     int strokeWidth_;
 
     /*! \brief A list of existing WbItems */
-    QList<WbItem*> items_;
+    QList<WbItem *> items_;
     // /*! \brief A list of WbItems to be deleted. */
     //     QList<WbItem*> deletionQueue_;
     /*! \brief A list of QDomNode's that were added since last documentUpdated() signal received. */
     QList<QDomNode> recentlyRelocatedNodes_;
     /*! \brief A list of WbItem's whose nodes don't have 'id' attributes. */
-    QList<WbItem*> idlessItems_;
+    QList<WbItem *> idlessItems_;
     /*! \brief Pointer to a new item that is being drawn.*/
-    WbNewItem* newWbItem_;
+    WbNewItem *newWbItem_;
     /*! \brief Boolean used to force adding a vertex to a path being drawn.*/
     bool addVertex_;
     /*! \brief Timer used for forcing the addition of a new vertex.*/
-    QTimer* adding_;
+    QTimer *adding_;
     /*! \brief The primary renderer used for rendering the document.*/
     QSvgRenderer renderer_;
 

@@ -33,42 +33,42 @@ static QMatrix parseTransformationMatrix(const QString &value);
  *    WbItemMenu
  */
 
-WbItemMenu::WbItemMenu(QWidget* parent) : QMenu(parent) {
-    connect(this, SIGNAL(aboutToHide()), SLOT(destructSelf()));
-}
+WbItemMenu::WbItemMenu(QWidget *parent) : QMenu(parent) { connect(this, SIGNAL(aboutToHide()), SLOT(destructSelf())); }
 
-WbItemMenu::~WbItemMenu() {
-    foreach(QActionGroup* g, groups_) {
-        foreach(QAction* a, g->actions()) {
+WbItemMenu::~WbItemMenu()
+{
+    foreach (QActionGroup *g, groups_) {
+        foreach (QAction *a, g->actions()) {
             a->deleteLater();
         }
         g->deleteLater();
     }
 }
 
-void WbItemMenu::addActionGroup(QActionGroup* g) {
+void WbItemMenu::addActionGroup(QActionGroup *g)
+{
     groups_.append(g);
     addActions(g->actions());
 }
 
-void WbItemMenu::destructSelf() {
-    deleteLater();
-}
+void WbItemMenu::destructSelf() { deleteLater(); }
 
 /*
  *   WbItem
  */
 
-WbItem::WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, WbScene* scene, WbWidget* widget) : QGraphicsSvgItem() {
+WbItem::WbItem(SxeSession *session, QSvgRenderer *renderer, QDomElement node, WbScene *scene, WbWidget *widget) :
+    QGraphicsSvgItem()
+{
     // Store a pointer to the underlying session, scene and node
     session_ = session;
-    scene_ = scene;
-    widget_ = widget;
-    node_ = node;
+    scene_   = scene;
+    widget_  = widget;
+    node_    = node;
 
     // qDebug() << QString("constructing %1.").arg(id()).toLatin1();
 
-    if(node.isNull()) {
+    if (node.isNull()) {
         qDebug("Trying to create a WbItem from a null QDomNode.");
         return;
     }
@@ -90,43 +90,44 @@ WbItem::WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, Wb
     addToScene();
 }
 
-WbItem::~WbItem() {
+WbItem::~WbItem()
+{
     // qDebug() << QString("destructing %1.").arg(id()).toLatin1();
 }
 
-QString WbItem::id() {
-    return node_.toElement().attribute("id");
+QString WbItem::id() { return node_.toElement().attribute("id"); }
+
+QDomNode WbItem::node() { return node_; }
+
+void WbItem::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
+{
+    constructContextMenu()->exec(event->screenPos());
 }
 
-QDomNode WbItem::node() {
-    return node_;
-}
-
-void WbItem::contextMenuEvent (QGraphicsSceneContextMenuEvent * event) {
-     constructContextMenu()->exec(event->screenPos());
-}
-
-void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
+void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
     event->accept();
 
-    if(isSelected()) {
-        if(widget_->mode() == WbWidget::Mode::Translate) {
+    if (isSelected()) {
+        if (widget_->mode() == WbWidget::Mode::Translate) {
 
             // Translate each selected item
-            foreach(QGraphicsItem* graphicsitem, scene()->selectedItems()) {
+            foreach (QGraphicsItem *graphicsitem, scene()->selectedItems()) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
-                    QPointF d = graphicsitem->mapFromScene(event->scenePos()) - graphicsitem->mapFromScene(event->lastScenePos());
+                    QPointF d = graphicsitem->mapFromScene(event->scenePos())
+                        - graphicsitem->mapFromScene(event->lastScenePos());
                     graphicsitem->setTransform(QTransform::fromTranslate(d.x(), d.y()), true);
-                    // qDebug() QString("Translated %1 by %2 %3").arg((unsigned int) graphicsitem).arg(d.x()).arg(d.y()).toLatin1();
+                    // qDebug() QString("Translated %1 by %2 %3").arg((unsigned int)
+                    // graphicsitem).arg(d.x()).arg(d.y()).toLatin1();
 
                     // Regenerate the SVG transformation matrix later
-                    WbItem* wbitem = dynamic_cast<WbItem*>(graphicsitem);
-                    if(wbitem)
+                    WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
+                    if (wbitem)
                         scene_->queueTransformationRegeneration(wbitem);
                 }
             }
 
-        } else if(widget_->mode() == WbWidget::Mode::Rotate) {
+        } else if (widget_->mode() == WbWidget::Mode::Rotate) {
 
             // Rotate each selected item
             // get center coordinates of selected items in scene coordinates
@@ -134,20 +135,21 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
             // Determine the direction relative to the center
             // Divide the sum by two to reduce the "speed" of rotation
             QPointF difference = event->scenePos() - event->lastScenePos();
-//          qDebug() << QString("d: %1 %2 = %3 %4 + %5 %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y());
+            //          qDebug() << QString("d: %1 %2 = %3 %4 + %5
+            //          %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y());
             QPointF p = event->scenePos();
             QMatrix delta;
-            if(p.x() >= scenePivot.x() && p.y() >= scenePivot.y()) {
-                 delta.rotate((-difference.x() + difference.y()) / 2);
-            } else if(p.x() < scenePivot.x() && p.y() >= scenePivot.y()) {
-                 delta.rotate((-difference.x() - difference.y()) / 2);
-            } else if(p.x() < scenePivot.x() && p.y() < scenePivot.y()) {
-                 delta.rotate((difference.x() - difference.y()) / 2);
-            } else if(p.x() >= scenePivot.x() && p.y() < scenePivot.y()) {
-                 delta.rotate((difference.x() + difference.y()) / 2);
+            if (p.x() >= scenePivot.x() && p.y() >= scenePivot.y()) {
+                delta.rotate((-difference.x() + difference.y()) / 2);
+            } else if (p.x() < scenePivot.x() && p.y() >= scenePivot.y()) {
+                delta.rotate((-difference.x() - difference.y()) / 2);
+            } else if (p.x() < scenePivot.x() && p.y() < scenePivot.y()) {
+                delta.rotate((difference.x() - difference.y()) / 2);
+            } else if (p.x() >= scenePivot.x() && p.y() < scenePivot.y()) {
+                delta.rotate((difference.x() + difference.y()) / 2);
             }
 
-            foreach(QGraphicsItem* graphicsitem, scene()->selectedItems()) {
+            foreach (QGraphicsItem *graphicsitem, scene()->selectedItems()) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
                     QMatrix translation;
                     // get center coordinates of selected items in item coordinates
@@ -158,16 +160,16 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
                     graphicsitem->setTransform(QTransform(translation * delta * translation.inverted()), true);
 
                     // Regenerate the SVG transformation matrix later
-                    WbItem* wbitem = dynamic_cast<WbItem*>(graphicsitem);
-                    if(wbitem)
+                    WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
+                    if (wbitem)
                         scene_->queueTransformationRegeneration(wbitem);
                 }
             }
 
-        } else if(widget_->mode() == WbWidget::Mode::Scale) {
+        } else if (widget_->mode() == WbWidget::Mode::Scale) {
 
             // Scale each selected item
-            foreach(QGraphicsItem* graphicsitem, scene()->selectedItems()) {
+            foreach (QGraphicsItem *graphicsitem, scene()->selectedItems()) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
 
                     // get center coordinates in item coordinates
@@ -180,49 +182,57 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
                     // Moving mouse right enlarges, left shrinks, x axis.
                     QPointF difference = event->scenePos() - event->lastScenePos();
                     // Note: the y axis points downwards in scene coordinates
-                    delta.scale(1 + difference.x()/50, 1 - difference.y()/50);
+                    delta.scale(1 + difference.x() / 50, 1 - difference.y() / 50);
                     // set the matrix
                     setTransform(QTransform(translation * delta * translation.inverted()), true);
 
                     // Regenerate the SVG transformation matrix later
-                    scene_->queueTransformationRegeneration(dynamic_cast<WbItem*>(graphicsitem));
-
+                    scene_->queueTransformationRegeneration(dynamic_cast<WbItem *>(graphicsitem));
                 }
             }
-
         }
     }
 }
 
-void WbItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
+void WbItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+{
     QGraphicsSvgItem::mouseReleaseEvent(event);
 
     scene_->regenerateTransformations();
 }
 
-QMatrix WbItem::parseSvgTransform(QString string) {
+QMatrix WbItem::parseSvgTransform(QString string)
+{
     string = string.trimmed();
-    if(string.isEmpty())
+    if (string.isEmpty())
         return QMatrix();
 
     return parseTransformationMatrix(string);
 }
 
-QString WbItem::toSvgTransform(const QMatrix &m) {
-    return QString("matrix(%1 %2 %3 %4 %5 %6)").arg(m.m11()).arg(m.m12()).arg(m.m21()).arg(m.m22()).arg(m.dx()).arg(m.dy());
+QString WbItem::toSvgTransform(const QMatrix &m)
+{
+    return QString("matrix(%1 %2 %3 %4 %5 %6)")
+        .arg(m.m11())
+        .arg(m.m12())
+        .arg(m.m21())
+        .arg(m.m22())
+        .arg(m.dx())
+        .arg(m.dy());
 }
 
-void WbItem::regenerateTransform() {
+void WbItem::regenerateTransform()
+{
     // Replace the QGraphicsItem transformation with an SVG transformation.
     // Possible as long as no perspective transformations have been applied.
 
     // delta is the new transformation to be applied
     QMatrix delta = transform().toAffine();
-    if(delta.isIdentity())
+    if (delta.isIdentity())
         return;
 
     // get the existing SVG transformation
-    QString oldValue = node_.attribute("transform");
+    QString oldValue     = node_.attribute("transform");
     QMatrix oldTransform = parseSvgTransform(oldValue);
 
     // construct a translation that translates the item to (0,0) in scene coordinates
@@ -233,29 +243,26 @@ void WbItem::regenerateTransform() {
     // generate the string representation
     QString newValue = toSvgTransform(oldTransform * translation * delta * translation.inverted());
 
-    if(newValue != oldValue) {
+    if (newValue != oldValue) {
         resetTransform();
         session_->setAttribute(node_, "transform", newValue);
     }
 }
 
-void WbItem::addToScene() {
+void WbItem::addToScene()
+{
     // qDebug() << QString("adding %1 to scene.").arg(id()).toLatin1();
 
     // Do nothing if already added and id matches
-    if(scene_ == scene()
-        && node_.hasAttribute("id")
-        && node_.attribute("id") == elementId())
-    {
+    if (scene_ == scene() && node_.hasAttribute("id") && node_.attribute("id") == elementId()) {
         return;
     }
 
     // Read or generate an xml:id for the node
     QString id;
-    if(node_.hasAttribute("id")) {
+    if (node_.hasAttribute("id")) {
         id = node_.attribute("id");
-    }
-    else {
+    } else {
         id = "e" + SxeSession::generateUUID();
         // qDebug() << QString("Setting new id to %1").arg(id).toLatin1();
         session_->setAttribute(node_, "id", id);
@@ -271,7 +278,8 @@ void WbItem::addToScene() {
     scene_->addItem(this);
 }
 
-void WbItem::removeFromScene() {
+void WbItem::removeFromScene()
+{
     // qDebug() << QString("removing %1 from scene.").arg(id()).toLatin1();
 
     scene_->removeItem(this);
@@ -279,86 +287,89 @@ void WbItem::removeFromScene() {
     setElementId(QString());
 }
 
-void WbItem::resetPos() {
+void WbItem::resetPos()
+{
     // set the x & y approriately;
     setPos(renderer()->boundsOnElement(id()).topLeft());
 
     // set the drawing order
     // TODO: optimize
-    int i = 0;
+    int          i        = 0;
     QDomNodeList children = node_.parentNode().childNodes();
-    while(children.at(i) != node_) {
+    while (children.at(i) != node_) {
         i++;
     }
 
     setZValue(i);
 }
 
-WbItemMenu* WbItem::constructContextMenu() {
-     WbItemMenu* menu = new WbItemMenu(nullptr);
+WbItemMenu *WbItem::constructContextMenu()
+{
+    WbItemMenu *menu = new WbItemMenu(nullptr);
 
-     if(scene_) {
-         // Add the default actions
-         QActionGroup* group;
-         // QAction* qaction;
-         QPixmap pixmap;
+    if (scene_) {
+        // Add the default actions
+        QActionGroup *group;
+        // QAction* qaction;
+        QPixmap pixmap;
 
-         // group = new QActionGroup(0);
-         // pixmap(2, 2);
-         // pixmap.fill(QColor(Qt::black));
-         // qaction = new QAction(QIcon(pixmap), tr("Thin stroke"), group);
-         // qaction->setData(QVariant(1));
-         // pixmap = QPixmap(6, 6);
-         // pixmap.fill(QColor(Qt::black));
-         // qaction = new QAction(QIcon(pixmap), tr("Medium stroke"), group);
-         // qaction->setData(QVariant(3));
-         // pixmap = QPixmap(12, 12);
-         // pixmap.fill(QColor(Qt::black));
-         // qaction = new QAction(QIcon(pixmap), tr("Thick stroke"), group);
-         // qaction->setData(QVariant(6));
-         // connect(group, SIGNAL(triggered(QAction*)), wbscene, SLOT(setStrokeWidth(QAction*)));
-         // menu->addActionGroup(group);
+        // group = new QActionGroup(0);
+        // pixmap(2, 2);
+        // pixmap.fill(QColor(Qt::black));
+        // qaction = new QAction(QIcon(pixmap), tr("Thin stroke"), group);
+        // qaction->setData(QVariant(1));
+        // pixmap = QPixmap(6, 6);
+        // pixmap.fill(QColor(Qt::black));
+        // qaction = new QAction(QIcon(pixmap), tr("Medium stroke"), group);
+        // qaction->setData(QVariant(3));
+        // pixmap = QPixmap(12, 12);
+        // pixmap.fill(QColor(Qt::black));
+        // qaction = new QAction(QIcon(pixmap), tr("Thick stroke"), group);
+        // qaction->setData(QVariant(6));
+        // connect(group, SIGNAL(triggered(QAction*)), wbscene, SLOT(setStrokeWidth(QAction*)));
+        // menu->addActionGroup(group);
 
-         // menu->addSeparator();
-         // group = new QActionGroup(0);
-         // pixmap = QPixmap(16, 16);
-         // pixmap.fill(QColor(Qt::darkCyan));
-         // qaction = new QAction(QIcon(pixmap), tr("Change stroke color"), group);
-         // connect(qaction, SIGNAL(triggered()), wbscene, SLOT(setStrokeColor()));
-         // pixmap.fill(QColor(Qt::darkYellow));
-         // qaction = new QAction(QIcon(pixmap), tr("Change fill color"), group);
-         // connect(qaction, SIGNAL(triggered()), wbscene, SLOT(setFillColor()));
-         // menu->addActionGroup(group);
+        // menu->addSeparator();
+        // group = new QActionGroup(0);
+        // pixmap = QPixmap(16, 16);
+        // pixmap.fill(QColor(Qt::darkCyan));
+        // qaction = new QAction(QIcon(pixmap), tr("Change stroke color"), group);
+        // connect(qaction, SIGNAL(triggered()), wbscene, SLOT(setStrokeColor()));
+        // pixmap.fill(QColor(Qt::darkYellow));
+        // qaction = new QAction(QIcon(pixmap), tr("Change fill color"), group);
+        // connect(qaction, SIGNAL(triggered()), wbscene, SLOT(setFillColor()));
+        // menu->addActionGroup(group);
 
-         // menu->addSeparator();
-         group = new QActionGroup(nullptr);
-         IconAction* action = new IconAction(tr("Bring forward"), "psi/bringForwards", tr("Bring forward"), 0, group);
-         connect(action, SIGNAL(triggered()), scene_, SLOT(bringForward()));
-         action = new IconAction(tr("Bring to front"), "psi/bringToFront", tr("Bring to front"), 0, group);
-         connect(action, SIGNAL(triggered()), scene_, SLOT(bringToFront()));
-         action = new IconAction(tr("Send backwards"), "psi/sendBackwards", tr("Send backwards"), 0, group);
-         connect(action, SIGNAL(triggered()), scene_, SLOT(sendBackwards()));
-         action = new IconAction(tr("Send to back"), "psi/sendToBack", tr("Send to back"), 0, group);
-         connect(action, SIGNAL(triggered()), scene_, SLOT(sendToBack()));
-         menu->addActionGroup(group);
+        // menu->addSeparator();
+        group              = new QActionGroup(nullptr);
+        IconAction *action = new IconAction(tr("Bring forward"), "psi/bringForwards", tr("Bring forward"), 0, group);
+        connect(action, SIGNAL(triggered()), scene_, SLOT(bringForward()));
+        action = new IconAction(tr("Bring to front"), "psi/bringToFront", tr("Bring to front"), 0, group);
+        connect(action, SIGNAL(triggered()), scene_, SLOT(bringToFront()));
+        action = new IconAction(tr("Send backwards"), "psi/sendBackwards", tr("Send backwards"), 0, group);
+        connect(action, SIGNAL(triggered()), scene_, SLOT(sendBackwards()));
+        action = new IconAction(tr("Send to back"), "psi/sendToBack", tr("Send to back"), 0, group);
+        connect(action, SIGNAL(triggered()), scene_, SLOT(sendToBack()));
+        menu->addActionGroup(group);
 
-         menu->addSeparator();
-         group = new QActionGroup(nullptr);
-         action = new IconAction(tr("Group"), "psi/group", tr("Group"), 0, group);
-         connect(action, SIGNAL(triggered()), scene_, SLOT(group()));
-         action = new IconAction(tr("Ungroup"), "psi/ungroup", tr("Ungroup"), 0, group);
-         connect(action, SIGNAL(triggered()), scene_, SLOT(ungroup()));
-         menu->addActionGroup(group);
-     }
+        menu->addSeparator();
+        group  = new QActionGroup(nullptr);
+        action = new IconAction(tr("Group"), "psi/group", tr("Group"), 0, group);
+        connect(action, SIGNAL(triggered()), scene_, SLOT(group()));
+        action = new IconAction(tr("Ungroup"), "psi/ungroup", tr("Ungroup"), 0, group);
+        connect(action, SIGNAL(triggered()), scene_, SLOT(ungroup()));
+        menu->addActionGroup(group);
+    }
 
-     return menu;
+    return menu;
 }
 
-QPointF WbItem::center() {
+QPointF WbItem::center()
+{
     // Determine the center of the item in item coordinates before transformation
-    QRectF r = boundingRect();
-    QPointF c(r.x() + r.width()/2, r.y() + r.height()/2);
-//  qDebug() << QString("center: %1 + %2    %3 + %4").arg(r.x()).arg(r.width()/2).arg(r.y()).arg(r.height()/2);
+    QRectF  r = boundingRect();
+    QPointF c(r.x() + r.width() / 2, r.y() + r.height() / 2);
+    //  qDebug() << QString("center: %1 + %2    %3 + %4").arg(r.x()).arg(r.width()/2).arg(r.y()).arg(r.height()/2);
     // return the center with transformation applied
     return transform().map(c);
 }
@@ -406,15 +417,14 @@ double qstrtod(const char *s00, char const **se, bool *ok);
 
 static qreal toDouble(const QChar *&str)
 {
-    const int maxLen = 255;//technically doubles can go til 308+ but whatever
-    char temp[maxLen+1];
-    int pos = 0;
+    const int maxLen = 255; // technically doubles can go til 308+ but whatever
+    char temp[maxLen + 1];
+    int  pos = 0;
 
     if (*str == QLatin1Char('-')) {
         temp[pos++] = '-';
         ++str;
-    }
-    else if (*str == QLatin1Char('+')) {
+    } else if (*str == QLatin1Char('+')) {
         ++str;
     }
     while (*str >= QLatin1Char('0') && *str <= QLatin1Char('9') && pos < maxLen) {
@@ -431,7 +441,7 @@ static qreal toDouble(const QChar *&str)
     }
     bool exponent = false;
     if (*str == QLatin1Char('e') && pos < maxLen) {
-        exponent = true;
+        exponent    = true;
         temp[pos++] = 'e';
         ++str;
         if ((*str == QLatin1Char('-') || *str == QLatin1Char('+')) && pos < maxLen) {
@@ -447,47 +457,45 @@ static qreal toDouble(const QChar *&str)
 
     qreal val;
     if (!exponent && pos < 10) {
-        int ival = 0;
-        const char *t = temp;
-        bool neg = false;
-        if(*t == '-') {
+        int         ival = 0;
+        const char *t    = temp;
+        bool        neg  = false;
+        if (*t == '-') {
             neg = true;
             ++t;
         }
-        while(*t && *t != '.') {
+        while (*t && *t != '.') {
             ival *= 10;
             ival += (*t) - '0';
             ++t;
         }
-        if(*t == '.') {
+        if (*t == '.') {
             ++t;
             int div = 1;
-            while(*t) {
+            while (*t) {
                 ival *= 10;
                 ival += (*t) - '0';
                 div *= 10;
                 ++t;
             }
-            val = (qreal(ival))/(qreal(div));
-        }
-        else {
+            val = (qreal(ival)) / (qreal(div));
+        } else {
             val = ival;
         }
         if (neg)
             val = -val;
     } else {
 #ifdef Q_WS_QWS
-        if(sizeof(qreal) == sizeof(float))
+        if (sizeof(qreal) == sizeof(float))
             val = strtof(temp, 0);
         else
 #endif
         {
             bool ok = false;
-            val = qstrtod(temp, nullptr, &ok);
+            val     = qstrtod(temp, nullptr, &ok);
         }
     }
     return val;
-
 }
 
 static QVector<qreal> parseNumbersList(const QChar *&str)
@@ -500,9 +508,8 @@ static QVector<qreal> parseNumbersList(const QChar *&str)
     while (*str == QLatin1Char(' ')) {
         ++str;
     }
-    while ((*str >= QLatin1Char('0') && *str <= QLatin1Char('9')) ||
-           *str == QLatin1Char('-') || *str == QLatin1Char('+') ||
-           *str == QLatin1Char('.')) {
+    while ((*str >= QLatin1Char('0') && *str <= QLatin1Char('9')) || *str == QLatin1Char('-')
+           || *str == QLatin1Char('+') || *str == QLatin1Char('.')) {
 
         points.append(::toDouble(str));
 
@@ -513,7 +520,7 @@ static QVector<qreal> parseNumbersList(const QChar *&str)
             ++str;
         }
 
-        //eat the rest of space
+        // eat the rest of space
         while (*str == QLatin1Char(' ')) {
             ++str;
         }
@@ -524,7 +531,7 @@ static QVector<qreal> parseNumbersList(const QChar *&str)
 
 static QMatrix parseTransformationMatrix(const QString &value)
 {
-    QMatrix matrix;
+    QMatrix      matrix;
     const QChar *str = value.constData();
 
     while (*str != QLatin1Char(0)) {
@@ -532,16 +539,9 @@ static QMatrix parseTransformationMatrix(const QString &value)
             ++str;
             continue;
         }
-        enum class State : char {
-            Matrix,
-            Translate,
-            Rotate,
-            Scale,
-            SkewX,
-            SkewY
-        };
+        enum class State : char { Matrix, Translate, Rotate, Scale, SkewX, SkewY };
         State state = State::Matrix;
-        if (*str == QLatin1Char('m')) {  //matrix
+        if (*str == QLatin1Char('m')) { // matrix
             const char *ident = "atrix";
             for (int i = 0; i < 5; ++i) {
                 if (*(++str) != QLatin1Char(ident[i])) {
@@ -550,24 +550,21 @@ static QMatrix parseTransformationMatrix(const QString &value)
             }
             ++str;
             state = State::Matrix;
-        }
-        else if (*str == QLatin1Char('t')) { //translate
+        } else if (*str == QLatin1Char('t')) { // translate
             const char *ident = "ranslate";
             for (int i = 0; i < 8; ++i)
                 if (*(++str) != QLatin1Char(ident[i]))
                     goto error;
             ++str;
             state = State::Translate;
-        }
-        else if (*str == QLatin1Char('r')) { //rotate
+        } else if (*str == QLatin1Char('r')) { // rotate
             const char *ident = "otate";
             for (int i = 0; i < 5; ++i)
                 if (*(++str) != QLatin1Char(ident[i]))
                     goto error;
             ++str;
             state = State::Rotate;
-        }
-        else if (*str == QLatin1Char('s')) { //scale, skewX, skewY
+        } else if (*str == QLatin1Char('s')) { // scale, skewX, skewY
             ++str;
             if (*str == QLatin1Char('c')) {
                 const char *ident = "ale";
@@ -592,8 +589,7 @@ static QMatrix parseTransformationMatrix(const QString &value)
             } else {
                 goto error;
             }
-        }
-        else {
+        } else {
             goto error;
         }
 
@@ -610,24 +606,20 @@ static QMatrix parseTransformationMatrix(const QString &value)
         }
         ++str;
 
-        if(state == State::Matrix) {
-            if(points.count() != 6) {
+        if (state == State::Matrix) {
+            if (points.count() != 6) {
                 goto error;
             }
-            matrix = matrix * QMatrix(points[0], points[1],
-                                      points[2], points[3],
-                                      points[4], points[5]);
-        }
-        else if (state == State::Translate) {
+            matrix = matrix * QMatrix(points[0], points[1], points[2], points[3], points[4], points[5]);
+        } else if (state == State::Translate) {
             if (points.count() == 1)
                 matrix.translate(points[0], 0);
             else if (points.count() == 2)
                 matrix.translate(points[0], points[1]);
             else
                 goto error;
-        }
-        else if (state == State::Rotate) {
-            if(points.count() == 1) {
+        } else if (state == State::Rotate) {
+            if (points.count() == 1) {
                 matrix.rotate(points[0]);
             } else if (points.count() == 3) {
                 matrix.translate(points[1], points[2]);
@@ -636,29 +628,26 @@ static QMatrix parseTransformationMatrix(const QString &value)
             } else {
                 goto error;
             }
-        }
-        else if (state == State::Scale) {
+        } else if (state == State::Scale) {
             if (points.count() < 1 || points.count() > 2)
                 goto error;
             qreal sx = points[0];
             qreal sy = sx;
-            if(points.count() == 2)
+            if (points.count() == 2)
                 sy = points[1];
             matrix.scale(sx, sy);
-        }
-        else if (state == State::SkewX) {
+        } else if (state == State::SkewX) {
             if (points.count() != 1)
                 goto error;
             const qreal deg2rad = qreal(0.017453292519943295769);
-            matrix.shear(tan(points[0]*deg2rad), 0);
-        }
-        else if (state == State::SkewY) {
+            matrix.shear(tan(points[0] * deg2rad), 0);
+        } else if (state == State::SkewY) {
             if (points.count() != 1)
                 goto error;
             const qreal deg2rad = qreal(0.017453292519943295769);
-            matrix.shear(0, tan(points[0]*deg2rad));
+            matrix.shear(0, tan(points[0] * deg2rad));
         }
     }
-  error:
+error:
     return matrix;
 }

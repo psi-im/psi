@@ -10,16 +10,15 @@
 
 class QWidget;
 
-class OptionsTabStatusGeneral : public OptionsTab
-{
+class OptionsTabStatusGeneral : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabStatusGeneral(QObject *parent);
     ~OptionsTabStatusGeneral();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
     void setData(PsiCon *, QWidget *parentDialog);
     bool stretchable() const { return true; }
@@ -28,10 +27,10 @@ signals:
     void enableDlgCommonWidgets(bool);
 
 private slots:
-    void currentItemChanged(QListWidgetItem * current, QListWidgetItem * previous );
+    void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
     void newStatusPreset();
     void deleteStatusPreset();
-    void statusMenusIndexChanged( int index );
+    void statusMenusIndexChanged(int index);
     void showMenuForPreset(const QPoint &);
     void editStatusPreset();
     void statusPresetAccepted();
@@ -44,9 +43,9 @@ private:
     void switchPresetMode(bool toEdit);
     void cleanupSelectedPresetGroup();
 
-    QWidget *w = nullptr, *parentWidget = nullptr;
+    QWidget *                   w = nullptr, *parentWidget = nullptr;
     QMap<QString, StatusPreset> presets;
-    QMenu *spContextMenu = nullptr;
+    QMenu *                     spContextMenu = nullptr;
 };
 
 #endif // OPT_STATUSGENERAL_H

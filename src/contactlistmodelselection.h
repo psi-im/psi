@@ -24,58 +24,49 @@
 class ContactListItem;
 class QDomElement;
 
-class ContactListModelSelection : public QMimeData
-{
+class ContactListModelSelection : public QMimeData {
     Q_OBJECT
 public:
-    ContactListModelSelection(QList<ContactListItem*> items);
+    ContactListModelSelection(QList<ContactListItem *> items);
     ContactListModelSelection(const QMimeData *mimeData);
 
-    static const QString& mimeType();
+    static const QString &mimeType();
 
     struct Contact {
-        Contact(QString _jid, QString _account, QString _group)
-            : jid(_jid)
-            , account(_account)
-            , group(_group)
-        {}
+        Contact(QString _jid, QString _account, QString _group) : jid(_jid), account(_account), group(_group) {}
         QString jid;
         QString account;
         QString group;
     };
 
     struct Group {
-        Group(QString _fullName)
-            : fullName(_fullName)
-        {}
+        Group(QString _fullName) : fullName(_fullName) {}
         QString fullName;
     };
 
     struct Account {
-        Account(QString _id)
-            : id(_id)
-        {}
+        Account(QString _id) : id(_id) {}
         QString id;
     };
 
     bool haveRosterSelection() const;
 
     QList<Contact> contacts() const;
-    QList<Group> groups() const;
+    QList<Group>   groups() const;
     QList<Account> accounts() const;
 
     bool isMultiSelection() const;
 
-    static void debugSelection(const QMimeData* data, const QString& name);
+    static void debugSelection(const QMimeData *data, const QString &name);
 
 private:
-    const QMimeData* mimeData_;
+    const QMimeData *mimeData_;
 
-    const QMimeData* mimeData() const;
+    const QMimeData *mimeData() const;
 
-    QDomElement rootElementFor(const QMimeData* mimeData) const;
-    bool haveRosterSelectionIn(const QMimeData* mimeData) const;
-    QList<Contact> contactsFor(const QMimeData* mimeData) const;
-    QList<Group> groupsFor(const QMimeData* mimeData) const;
-    QList<Account> accountsFor(const QMimeData* mimeData) const;
+    QDomElement    rootElementFor(const QMimeData *mimeData) const;
+    bool           haveRosterSelectionIn(const QMimeData *mimeData) const;
+    QList<Contact> contactsFor(const QMimeData *mimeData) const;
+    QList<Group>   groupsFor(const QMimeData *mimeData) const;
+    QList<Account> accountsFor(const QMimeData *mimeData) const;
 };

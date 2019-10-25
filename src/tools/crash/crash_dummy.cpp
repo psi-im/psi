@@ -1,7 +1,5 @@
 #include "crash.h"
 
 namespace Crash {
-void registerSigsegvHandler(QString)
-{
-}
+void registerSigsegvHandler(QString) {}
 }; // namespace Crash

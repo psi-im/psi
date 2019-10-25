@@ -69,20 +69,11 @@
  * \param manager PluginManager instance that manages all plugins
  * \param pluginFile path to plugin file
  */
-PluginHost::PluginHost(PluginManager* manager, const QString& pluginFile)
-    : manager_(manager)
-    , plugin_(nullptr)
-    , file_(pluginFile)
-    , priority_(PsiPlugin::PriorityNormal)
-    , loader_(nullptr)
-    , iconset_(nullptr)
-    , valid_(false)
-    , connected_(false)
-    , enabled_(false)
-    , hasInfo_(false)
-    , infoString_(QString())
+PluginHost::PluginHost(PluginManager *manager, const QString &pluginFile) :
+    manager_(manager), plugin_(nullptr), file_(pluginFile), priority_(PsiPlugin::PriorityNormal), loader_(nullptr),
+    iconset_(nullptr), valid_(false), connected_(false), enabled_(false), hasInfo_(false), infoString_(QString())
 {
-    load();    // reads plugin name, etc
+    load(); // reads plugin name, etc
     unload();
 }
 
@@ -106,73 +97,52 @@ PluginHost::~PluginHost()
  *
  * Check is done once, in PluginHost constructor.
  */
-bool PluginHost::isValid() const
-{
-    return valid_;
-}
+bool PluginHost::isValid() const { return valid_; }
 
 /**
  * \brief Returns full path to plugin file.
  */
-const QString& PluginHost::path() const
-{
-    return file_;
-}
+const QString &PluginHost::path() const { return file_; }
 
 /**
  * \brief Returns plugin full name.
  *
  * Data is available also when plugin is not loaded.
  */
-const QString& PluginHost::name() const
-{
-    return name_;
-}
+const QString &PluginHost::name() const { return name_; }
 
 /**
  * \brief Returns plugin short name.
  *
  * Data is available also when plugin is not loaded.
  */
-const QString& PluginHost::shortName() const
-{
-    return shortName_;
-}
+const QString &PluginHost::shortName() const { return shortName_; }
 
 /**
  * \brief Returns plugin version string.
  *
  * Data is available also when plugin is not loaded.
  */
-const QString& PluginHost::version() const
-{
-    return version_;
-}
+const QString &PluginHost::version() const { return version_; }
 
 /**
  * \brief Returns plugin priority.
  *
  * Data is available also when plugin is not loaded.
  */
-int PluginHost::priority() const
-{
-    return priority_;
-}
+int PluginHost::priority() const { return priority_; }
 
 /**
  * \brief Returns plugin icon.
  *
  * Data is available also when plugin is not loaded.
  */
-const QIcon& PluginHost::icon() const
-{
-    return icon_;
-}
+const QIcon &PluginHost::icon() const { return icon_; }
 
 QStringList PluginHost::pluginFeatures() const
 {
     if (plugin_) {
-        return qobject_cast<PsiPlugin*>(plugin_)->pluginFeatures();
+        return qobject_cast<PsiPlugin *>(plugin_)->pluginFeatures();
     }
     return QStringList();
 }
@@ -182,11 +152,11 @@ QStringList PluginHost::pluginFeatures() const
  *
  * Always returns null if plugin is not currently loaded.
  */
-QWidget* PluginHost::optionsWidget() const
+QWidget *PluginHost::optionsWidget() const
 {
-    QWidget* widget = nullptr;
+    QWidget *widget = nullptr;
     if (plugin_) {
-        widget = qobject_cast<PsiPlugin*>(plugin_)->options();
+        widget = qobject_cast<PsiPlugin *>(plugin_)->options();
     }
     return widget;
 }
@@ -213,53 +183,51 @@ bool PluginHost::load()
 #ifndef PLUGINS_NO_DEBUG
         qDebug() << QString("Plugin %1 was already loaded.").arg(file_);
 #endif
-    }
-    else {
+    } else {
         if (!loader_) {
             loader_ = new QPluginLoader(file_);
-            //loader_->setLoadHints(QLibrary::ResolveAllSymbolsHint);
+            // loader_->setLoadHints(QLibrary::ResolveAllSymbolsHint);
         }
 
-        QObject* plugin = loader_->instance();
+        QObject *plugin = loader_->instance();
         if (!loader_->isLoaded()) {
 #ifndef PLUGINS_NO_DEBUG
             qDebug() << "Error loading plugin:" << loader_->errorString();
 #endif
             delete loader_;
             loader_ = nullptr;
-        }
-        else if (plugin) {
+        } else if (plugin) {
 #ifndef PLUGINS_NO_DEBUG
             qDebug("Trying to load plugin");
 #endif
-            //Check it's the right sort of plugin
-            PsiPlugin* psiPlugin = qobject_cast<PsiPlugin*>(plugin);
+            // Check it's the right sort of plugin
+            PsiPlugin *psiPlugin = qobject_cast<PsiPlugin *>(plugin);
             if (psiPlugin) {
                 plugin_ = plugin;
-                valid_ = true;
-                //loaded_ = true;
-                //enabled_ = false;
-                name_ = psiPlugin->name();
-                shortName_ = psiPlugin->shortName();
-                version_ = psiPlugin->version();
-                priority_ = psiPlugin->priority();
-                icon_ = QIcon(psiPlugin->icon());
-                hasToolBarButton_ = qobject_cast<ToolbarIconAccessor*>(plugin_) ? true : false;
-                hasGCToolBarButton_ = qobject_cast<GCToolbarIconAccessor*>(plugin_) ? true : false;
-                PluginInfoProvider *pip = qobject_cast<PluginInfoProvider*>(plugin_);
+                valid_  = true;
+                // loaded_ = true;
+                // enabled_ = false;
+                name_                   = psiPlugin->name();
+                shortName_              = psiPlugin->shortName();
+                version_                = psiPlugin->version();
+                priority_               = psiPlugin->priority();
+                icon_                   = QIcon(psiPlugin->icon());
+                hasToolBarButton_       = qobject_cast<ToolbarIconAccessor *>(plugin_) ? true : false;
+                hasGCToolBarButton_     = qobject_cast<GCToolbarIconAccessor *>(plugin_) ? true : false;
+                PluginInfoProvider *pip = qobject_cast<PluginInfoProvider *>(plugin_);
                 if (pip) {
-                    hasInfo_ = true;
+                    hasInfo_    = true;
                     infoString_ = pip->pluginInfo();
                 }
-            } else  {
+            } else {
                 qWarning("Attempted to load %s, but it is not a valid plugin.", qPrintable(file_));
                 if (loader_->isLoaded()) {
-                      qWarning("File is a plugin but not for Psi");
+                    qWarning("File is a plugin but not for Psi");
                     loader_->unload();
                 }
                 delete loader_;
                 loader_ = nullptr;
-                valid_ = false;
+                valid_  = false;
             }
         }
     }
@@ -286,16 +254,15 @@ bool PluginHost::unload()
         if (!loader_) {
             qWarning("Plugin %s's loader wasn't found when trying to unload", qPrintable(name_));
             return false;
-        }
-        else if (loader_->unload()) {
-            //if we're done with the plugin completely and it's unloaded
+        } else if (loader_->unload()) {
+            // if we're done with the plugin completely and it's unloaded
             // we can delete the loader;
             delete plugin_;
             delete loader_;
             plugin_ = nullptr;
             loader_ = nullptr;
             delete iconset_;
-            iconset_ = nullptr;
+            iconset_   = nullptr;
             connected_ = false;
         }
     }
@@ -305,10 +272,7 @@ bool PluginHost::unload()
 /**
  * \brief Returns true if plugin is currently loaded.
  */
-bool PluginHost::isLoaded() const
-{
-    return plugin_ != nullptr;
-}
+bool PluginHost::isLoaded() const { return plugin_ != nullptr; }
 
 /**
  * \brief Enabled the plugin
@@ -331,7 +295,7 @@ bool PluginHost::enable()
             qDebug() << "connecting plugin " << name_;
 #endif
 
-            StanzaSender* s = qobject_cast<StanzaSender*>(plugin_);
+            StanzaSender *s = qobject_cast<StanzaSender *>(plugin_);
             if (s) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting stanza sender");
@@ -339,7 +303,7 @@ bool PluginHost::enable()
                 s->setStanzaSendingHost(this);
             }
 
-            IqFilter* f = qobject_cast<IqFilter*>(plugin_);
+            IqFilter *f = qobject_cast<IqFilter *>(plugin_);
             if (f) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting iq filter");
@@ -347,7 +311,7 @@ bool PluginHost::enable()
                 f->setIqFilteringHost(this);
             }
 
-            OptionAccessor* o = qobject_cast<OptionAccessor*>(plugin_);
+            OptionAccessor *o = qobject_cast<OptionAccessor *>(plugin_);
             if (o) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting option accessor");
@@ -355,14 +319,14 @@ bool PluginHost::enable()
                 o->setOptionAccessingHost(this);
             }
 
-            ShortcutAccessor* sa = qobject_cast<ShortcutAccessor*>(plugin_);
+            ShortcutAccessor *sa = qobject_cast<ShortcutAccessor *>(plugin_);
             if (sa) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting shortcut accessor");
 #endif
                 sa->setShortcutAccessingHost(this);
             }
-            PopupAccessor* pa = qobject_cast<PopupAccessor*>(plugin_);
+            PopupAccessor *pa = qobject_cast<PopupAccessor *>(plugin_);
             if (pa) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting popup accessor");
@@ -370,99 +334,99 @@ bool PluginHost::enable()
                 pa->setPopupAccessingHost(this);
             }
 
-            IconFactoryAccessor* ia = qobject_cast<IconFactoryAccessor*>(plugin_);
+            IconFactoryAccessor *ia = qobject_cast<IconFactoryAccessor *>(plugin_);
             if (ia) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting iconfactory accessor");
 #endif
                 ia->setIconFactoryAccessingHost(this);
             }
-            ActiveTabAccessor* ta = qobject_cast<ActiveTabAccessor*>(plugin_);
+            ActiveTabAccessor *ta = qobject_cast<ActiveTabAccessor *>(plugin_);
             if (ta) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting activetab accessor");
 #endif
                 ta->setActiveTabAccessingHost(this);
             }
-            ApplicationInfoAccessor* aia = qobject_cast<ApplicationInfoAccessor*>(plugin_);
+            ApplicationInfoAccessor *aia = qobject_cast<ApplicationInfoAccessor *>(plugin_);
             if (aia) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting applicationinfo accessor");
 #endif
                 aia->setApplicationInfoAccessingHost(this);
             }
-            AccountInfoAccessor* ai = qobject_cast<AccountInfoAccessor*>(plugin_);
+            AccountInfoAccessor *ai = qobject_cast<AccountInfoAccessor *>(plugin_);
             if (ai) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting accountinfo accessor");
 #endif
                 ai->setAccountInfoAccessingHost(this);
             }
-            ToolbarIconAccessor *tia = qobject_cast<ToolbarIconAccessor*>(plugin_);
+            ToolbarIconAccessor *tia = qobject_cast<ToolbarIconAccessor *>(plugin_);
             if (tia) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("load toolbaricon param");
 #endif
                 buttons_ = tia->getButtonParam();
             }
-            GCToolbarIconAccessor *gtia = qobject_cast<GCToolbarIconAccessor*>(plugin_);
+            GCToolbarIconAccessor *gtia = qobject_cast<GCToolbarIconAccessor *>(plugin_);
             if (gtia) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("load gctoolbaricon param");
 #endif
                 gcbuttons_ = gtia->getGCButtonParam();
             }
-            MenuAccessor *ma = qobject_cast<MenuAccessor*>(plugin_);
+            MenuAccessor *ma = qobject_cast<MenuAccessor *>(plugin_);
             if (ma) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("load menu actions param");
 #endif
-                accMenu_ = ma->getAccountMenuParam();
+                accMenu_     = ma->getAccountMenuParam();
                 contactMenu_ = ma->getContactMenuParam();
             }
-            ContactStateAccessor *csa = qobject_cast<ContactStateAccessor*>(plugin_);
+            ContactStateAccessor *csa = qobject_cast<ContactStateAccessor *>(plugin_);
             if (csa) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting contactstate accessor");
 #endif
                 csa->setContactStateAccessingHost(this);
             }
-            PsiAccountController *pac = qobject_cast<PsiAccountController*>(plugin_);
+            PsiAccountController *pac = qobject_cast<PsiAccountController *>(plugin_);
             if (pac) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connectint psiaccount controller");
 #endif
                 pac->setPsiAccountControllingHost(this);
             }
-            EventCreator *ecr = qobject_cast<EventCreator*>(plugin_);
+            EventCreator *ecr = qobject_cast<EventCreator *>(plugin_);
             if (ecr) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connectint event creator");
 #endif
                 ecr->setEventCreatingHost(this);
             }
-            ContactInfoAccessor *cia = qobject_cast<ContactInfoAccessor*>(plugin_);
+            ContactInfoAccessor *cia = qobject_cast<ContactInfoAccessor *>(plugin_);
             if (cia) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting contactinfo accessor");
 #endif
                 cia->setContactInfoAccessingHost(this);
             }
-            SoundAccessor *soa = qobject_cast<SoundAccessor*>(plugin_);
-            if(soa) {
+            SoundAccessor *soa = qobject_cast<SoundAccessor *>(plugin_);
+            if (soa) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting sound accessor");
 #endif
                 soa->setSoundAccessingHost(this);
             }
-            PluginAccessor *pla = qobject_cast<PluginAccessor*>(plugin_);
-            if(pla) {
+            PluginAccessor *pla = qobject_cast<PluginAccessor *>(plugin_);
+            if (pla) {
 #ifndef PLUGINS_NO_DEBUG
                 qDebug("connecting plugin accessor");
 #endif
-              pla->setPluginAccessingHost(this);
+                pla->setPluginAccessingHost(this);
             }
-            auto wka = qobject_cast<WebkitAccessor*>(plugin_);
+            auto wka = qobject_cast<WebkitAccessor *>(plugin_);
             if (wka) {
                 wka->setWebkitAccessingHost(this);
             }
@@ -470,7 +434,7 @@ bool PluginHost::enable()
             connected_ = true;
         }
 
-        enabled_ = qobject_cast<PsiPlugin*>(plugin_)->enable();
+        enabled_ = qobject_cast<PsiPlugin *>(plugin_)->enable();
     }
 
     return enabled_;
@@ -487,7 +451,7 @@ bool PluginHost::enable()
 bool PluginHost::disable()
 {
     if (enabled_) {
-        enabled_ = !qobject_cast<PsiPlugin*>(plugin_)->disable();
+        enabled_ = !qobject_cast<PsiPlugin *>(plugin_)->disable();
     }
     return !enabled_;
 }
@@ -495,10 +459,7 @@ bool PluginHost::disable()
 /**
  * \brief Returns true if plugin is currently enabled.
  */
-bool PluginHost::isEnabled() const
-{
-    return enabled_;
-}
+bool PluginHost::isEnabled() const { return enabled_; }
 
 //-- for StanzaFilter and IqNamespaceFilter -------------------------
 
@@ -519,7 +480,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
     bool handled = false;
 
     // try stanza filter first
-    StanzaFilter* sf = qobject_cast<StanzaFilter*>(plugin_);
+    StanzaFilter *sf = qobject_cast<StanzaFilter *>(plugin_);
     if (sf && sf->incomingStanza(account, e)) {
         handled = true;
     }
@@ -536,8 +497,8 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
         }
 
         // choose handler function depending on iq type
-        bool (IqNamespaceFilter::*handler)(int account, const QDomElement& xml) = nullptr;
-        const QString type = e.attribute("type");
+        bool (IqNamespaceFilter::*handler)(int account, const QDomElement &xml) = nullptr;
+        const QString type                                                      = e.attribute("type");
         if (type == "get") {
             handler = &IqNamespaceFilter::iqGet;
         } else if (type == "set") {
@@ -550,7 +511,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
 
         if (handler) {
             // normal filters
-            foreach (IqNamespaceFilter* f, iqNsFilters_.values(ns)) {
+            foreach (IqNamespaceFilter *f, iqNsFilters_.values(ns)) {
                 if ((f->*handler)(account, e)) {
                     handled = true;
                     break;
@@ -558,7 +519,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
             }
 
             // regex filters
-            QMapIterator<QRegExp, IqNamespaceFilter*> i(iqNsxFilters_);
+            QMapIterator<QRegExp, IqNamespaceFilter *> i(iqNsxFilters_);
             while (!handled && i.hasNext()) {
                 if (i.key().indexIn(ns) >= 0 && (i.value()->*handler)(account, e)) {
                     handled = true;
@@ -572,8 +533,8 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
 
 bool PluginHost::outgoingXml(int account, QDomElement &e)
 {
-    bool handled = false;
-    StanzaFilter *ef = qobject_cast<StanzaFilter*>(plugin_);
+    bool          handled = false;
+    StanzaFilter *ef      = qobject_cast<StanzaFilter *>(plugin_);
     if (ef && ef->outgoingStanza(account, e)) {
         handled = true;
     }
@@ -594,10 +555,10 @@ bool PluginHost::outgoingXml(int account, QDomElement &e)
  * \param e Event XML
  * \return Continue processing the event; true if the stanza should be silently discarded.
  */
-bool PluginHost::processEvent(int account, QDomElement& e)
+bool PluginHost::processEvent(int account, QDomElement &e)
 {
-    bool handled = false;
-    EventFilter *ef = qobject_cast<EventFilter*>(plugin_);
+    bool         handled = false;
+    EventFilter *ef      = qobject_cast<EventFilter *>(plugin_);
     if (ef && ef->processEvent(account, e)) {
         handled = true;
     }
@@ -619,20 +580,21 @@ bool PluginHost::processEvent(int account, QDomElement& e)
  * \param subject Message subject
  * \return Continue processing the event; true if the stanza should be silently discarded.
  */
-bool PluginHost::processMessage(int account, const QString& jidFrom, const QString& body, const QString& subject)
+bool PluginHost::processMessage(int account, const QString &jidFrom, const QString &body, const QString &subject)
 {
-    bool handled = false;
-    EventFilter *ef = qobject_cast<EventFilter*>(plugin_);
+    bool         handled = false;
+    EventFilter *ef      = qobject_cast<EventFilter *>(plugin_);
     if (ef && ef->processMessage(account, jidFrom, body, subject)) {
         handled = true;
     }
     return handled;
 }
 
-bool PluginHost::processOutgoingMessage(int account, const QString& jidTo, QString& body, const QString& type, QString& subject)
+bool PluginHost::processOutgoingMessage(int account, const QString &jidTo, QString &body, const QString &type,
+                                        QString &subject)
 {
-    bool handled = false;
-    EventFilter *ef = qobject_cast<EventFilter*>(plugin_);
+    bool         handled = false;
+    EventFilter *ef      = qobject_cast<EventFilter *>(plugin_);
     if (ef && ef->processOutgoingMessage(account, jidTo, body, type, subject)) {
         handled = true;
     }
@@ -641,7 +603,7 @@ bool PluginHost::processOutgoingMessage(int account, const QString& jidTo, QStri
 
 void PluginHost::logout(int account)
 {
-    EventFilter *ef = qobject_cast<EventFilter*>(plugin_);
+    EventFilter *ef = qobject_cast<EventFilter *>(plugin_);
     if (ef) {
         ef->logout(account);
     }
@@ -655,7 +617,7 @@ void PluginHost::logout(int account)
  * \param account Identifier of the PsiAccount responsible
  * \param stanza The stanza to be sent
  */
-void PluginHost::sendStanza(int account, const QDomElement& stanza)
+void PluginHost::sendStanza(int account, const QDomElement &stanza)
 {
     QTextStream stream;
     stream.setString(new QString());
@@ -669,10 +631,7 @@ void PluginHost::sendStanza(int account, const QDomElement& stanza)
  * \param account Identifier of the PsiAccount responsible
  * \param stanza The stanza to be sent.
  */
-void PluginHost::sendStanza(int account, const QString& stanza)
-{
-    manager_->sendXml(account, stanza);
-}
+void PluginHost::sendStanza(int account, const QString &stanza) { manager_->sendXml(account, stanza); }
 
 /**
  * \brief Sends a message from the specified account.
@@ -684,21 +643,25 @@ void PluginHost::sendStanza(int account, const QString& stanza)
  * \param type Message type (XMPP message type)
  * \param stanza The stanza to be sent.
  */
-void PluginHost::sendMessage(int account, const QString& to, const QString& body, const QString& subject, const QString& type)
+void PluginHost::sendMessage(int account, const QString &to, const QString &body, const QString &subject,
+                             const QString &type)
 {
-    //XMPP::Message m;
-    //m.setTo(to);
-    //m.setBody(body);
-    //m.setSubject(subject);
-    //if (type =="chat" || type == "error" || type == "groupchat" || type == "headline" || type == "normal") {
+    // XMPP::Message m;
+    // m.setTo(to);
+    // m.setBody(body);
+    // m.setSubject(subject);
+    // if (type =="chat" || type == "error" || type == "groupchat" || type == "headline" || type == "normal") {
     //    m.setType(type);
     //}
-    //manager_->sendXml(account, m.toStanza(...).toString());
+    // manager_->sendXml(account, m.toStanza(...).toString());
 
-    //TODO(mck): yeah, that's sick..
-    manager_->sendXml(account, QString("<message to='%1' type='%4'><subject>%3</subject><body>%2</body></message>")
-              .arg(escape(to)).arg(escape(body)).arg(escape(subject)).arg(escape(type)));
-
+    // TODO(mck): yeah, that's sick..
+    manager_->sendXml(account,
+                      QString("<message to='%1' type='%4'><subject>%3</subject><body>%2</body></message>")
+                          .arg(escape(to))
+                          .arg(escape(body))
+                          .arg(escape(subject))
+                          .arg(escape(type)));
 }
 
 /**
@@ -707,15 +670,9 @@ void PluginHost::sendMessage(int account, const QString& to, const QString& body
  * \param account Identifier of the PsiAccount responsible
  * \return Unique stanza id, or empty string if account id is invalid.
  */
-QString PluginHost::uniqueId(int account)
-{
-    return manager_->uniqueId(account);
-}
+QString PluginHost::uniqueId(int account) { return manager_->uniqueId(account); }
 
-QString PluginHost::escape(const QString &str)
-{
-    return TextUtil::escape(str);
-}
+QString PluginHost::escape(const QString &str) { return TextUtil::escape(str); }
 
 //-- IqFilter -------------------------------------------------------
 
@@ -812,15 +769,15 @@ void PluginHost::removeIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *f
  * \param  option Option to set
  * \param value New option value
  */
-void PluginHost::setPluginOption( const QString& option, const QVariant& value)
+void PluginHost::setPluginOption(const QString &option, const QVariant &value)
 {
     // TODO(mck)
 
-    //PsiPlugin* plugin=nullptr;
+    // PsiPlugin* plugin=nullptr;
     //
-    //if (!plugin)
+    // if (!plugin)
     //    return;
-    QString optionKey=QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix).arg(shortName()).arg(option);
+    QString optionKey = QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix).arg(shortName()).arg(option);
     PsiOptions::instance()->setOption(optionKey, value);
 }
 
@@ -837,7 +794,7 @@ void PluginHost::setPluginOption( const QString& option, const QVariant& value)
 QVariant PluginHost::getPluginOption(const QString &option, const QVariant &defValue)
 {
     QString pluginName = name();
-    QString optionKey=QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix).arg(shortName()).arg(option);
+    QString optionKey  = QString("%1.%2.%3").arg(PluginManager::pluginOptionPrefix).arg(shortName()).arg(option);
     return PsiOptions::instance()->getOption(optionKey, defValue);
 }
 
@@ -849,7 +806,7 @@ QVariant PluginHost::getPluginOption(const QString &option, const QVariant &defV
  * \param  option Option to set
  * \param value New option value
  */
-void PluginHost::setGlobalOption(const QString& option, const QVariant& value)
+void PluginHost::setGlobalOption(const QString &option, const QVariant &value)
 {
     PsiOptions::instance()->setOption(option, value);
 }
@@ -862,29 +819,26 @@ void PluginHost::setGlobalOption(const QString& option, const QVariant& value)
  * \param  option Option to set
  * \param value Return value
  */
-QVariant PluginHost::getGlobalOption(const QString& option)
-{
-    return PsiOptions::instance()->getOption(option);
-}
+QVariant PluginHost::getGlobalOption(const QString &option) { return PsiOptions::instance()->getOption(option); }
 
-void PluginHost::optionChanged(const QString& option)
+void PluginHost::optionChanged(const QString &option)
 {
-    OptionAccessor *oa = qobject_cast<OptionAccessor*>(plugin_);
-    if(oa)
+    OptionAccessor *oa = qobject_cast<OptionAccessor *>(plugin_);
+    if (oa)
         oa->optionChanged(option);
 }
 
 void PluginHost::applyOptions()
 {
-    PsiPlugin* pp = qobject_cast<PsiPlugin*>(plugin_);
-    if(pp)
+    PsiPlugin *pp = qobject_cast<PsiPlugin *>(plugin_);
+    if (pp)
         pp->applyOptions();
 }
 
 void PluginHost::restoreOptions()
 {
-    PsiPlugin* pp = qobject_cast<PsiPlugin*>(plugin_);
-    if(pp)
+    PsiPlugin *pp = qobject_cast<PsiPlugin *>(plugin_);
+    if (pp)
         pp->restoreOptions();
 }
 
@@ -893,25 +847,25 @@ void PluginHost::restoreOptions()
  */
 void PluginHost::setShortcuts()
 {
-    ShortcutAccessor *sa = qobject_cast<ShortcutAccessor*>(plugin_);
+    ShortcutAccessor *sa = qobject_cast<ShortcutAccessor *>(plugin_);
     if (sa) {
         sa->setShortcuts();
     }
 }
 
-void PluginHost::connectShortcut(const QKeySequence& shortcut, QObject *receiver, const char* slot)
+void PluginHost::connectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot)
 {
     GlobalShortcutManager::instance()->connect(shortcut, receiver, slot);
 }
 
-void PluginHost::disconnectShortcut(const QKeySequence& shortcut, QObject *receiver, const char* slot)
+void PluginHost::disconnectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot)
 {
     GlobalShortcutManager::instance()->disconnect(shortcut, receiver, slot);
 }
 
-void PluginHost::requestNewShortcut(QObject *receiver, const char* slot)
+void PluginHost::requestNewShortcut(QObject *receiver, const char *slot)
 {
-    GrepShortcutKeyDialog* grep = new GrepShortcutKeyDialog();
+    GrepShortcutKeyDialog *grep = new GrepShortcutKeyDialog();
     connect(grep, SIGNAL(newShortcutKey(QKeySequence)), receiver, slot);
     grep->show();
 }
@@ -919,12 +873,9 @@ void PluginHost::requestNewShortcut(QObject *receiver, const char* slot)
 /**
  * IconFactory accessing host
  */
-QIcon PluginHost::getIcon(const QString& name)
-{
-    return IconsetFactory::icon(name).icon();
-}
+QIcon PluginHost::getIcon(const QString &name) { return IconsetFactory::icon(name).icon(); }
 
-void PluginHost::addIcon(const QString& name, const QByteArray& ba)
+void PluginHost::addIcon(const QString &name, const QByteArray &ba)
 {
     QPixmap pm;
     pm.loadFromData(ba);
@@ -934,17 +885,17 @@ void PluginHost::addIcon(const QString& name, const QByteArray& ba)
     if (!iconset_) {
         iconset_ = new Iconset();
     }
-    iconset_->setIcon(name,icon);
+    iconset_->setIcon(name, icon);
     iconset_->addToFactory();
 }
 
-QTextEdit* PluginHost::getEditBox()
+QTextEdit *PluginHost::getEditBox()
 {
-    QTextEdit* ed = nullptr;
-    TabbableWidget* tw = findActiveTab();
-    if(tw) {
-        QWidget* chatEditProxy = tw->findChild<QWidget*>("mle");
-        if(chatEditProxy) {
+    QTextEdit *     ed = nullptr;
+    TabbableWidget *tw = findActiveTab();
+    if (tw) {
+        QWidget *chatEditProxy = tw->findChild<QWidget *>("mle");
+        if (chatEditProxy) {
             ed = static_cast<QTextEdit *>(chatEditProxy->children().at(1));
         }
     }
@@ -954,9 +905,9 @@ QTextEdit* PluginHost::getEditBox()
 
 QString PluginHost::getJid()
 {
-    QString jid;
-    TabbableWidget* tw = findActiveTab();
-    if(tw) {
+    QString         jid;
+    TabbableWidget *tw = findActiveTab();
+    if (tw) {
         jid = tw->jid().full();
     }
 
@@ -965,9 +916,9 @@ QString PluginHost::getJid()
 
 QString PluginHost::getYourJid()
 {
-    QString jid;
-    TabbableWidget* tw = findActiveTab();
-    if(tw) {
+    QString         jid;
+    TabbableWidget *tw = findActiveTab();
+    if (tw) {
         jid = tw->account()->jid().full();
     }
 
@@ -979,126 +930,72 @@ QString PluginHost::getYourJid()
  */
 Proxy PluginHost::getProxyFor(const QString &obj)
 {
-    Proxy prx;
+    Proxy     prx;
     ProxyItem it = ProxyManager::instance()->getItemForObject(obj);
-    prx.type = it.type;
-    prx.host = it.settings.host;
-    prx.port = it.settings.port;
-    prx.user = it.settings.user;
-    prx.pass = it.settings.pass;
+    prx.type     = it.type;
+    prx.host     = it.settings.host;
+    prx.port     = it.settings.port;
+    prx.user     = it.settings.user;
+    prx.pass     = it.settings.pass;
     return prx;
 }
 
-QString PluginHost::appName()
-{
-    return ApplicationInfo::name();
-}
+QString PluginHost::appName() { return ApplicationInfo::name(); }
 
-QString PluginHost::appVersion()
-{
-    return ApplicationInfo::version();
-}
+QString PluginHost::appVersion() { return ApplicationInfo::version(); }
 
-QString PluginHost::appCapsNode()
-{
-    return ApplicationInfo::capsNode();
-}
+QString PluginHost::appCapsNode() { return ApplicationInfo::capsNode(); }
 
 QString PluginHost::appCapsVersion()
-{ // this stuff is incompatible with new caps 1.5
+{                     // this stuff is incompatible with new caps 1.5
     return QString(); // return ApplicationInfo::capsVersion();
 }
 
-QString PluginHost::appOsName()
-{
-    return ApplicationInfo::osName();
-}
+QString PluginHost::appOsName() { return ApplicationInfo::osName(); }
 
 QString PluginHost::appHomeDir(ApplicationInfoAccessingHost::HomedirType type)
 {
     return ApplicationInfo::homeDir(ApplicationInfo::HomedirType(type));
 }
 
-QString PluginHost::appResourcesDir()
-{
-    return ApplicationInfo::resourcesDir();
-}
+QString PluginHost::appResourcesDir() { return ApplicationInfo::resourcesDir(); }
 
-QString PluginHost::appLibDir()
-{
-    return ApplicationInfo::libDir();
-}
+QString PluginHost::appLibDir() { return ApplicationInfo::libDir(); }
 
 QString PluginHost::appProfilesDir(ApplicationInfoAccessingHost::HomedirType type)
 {
     return ApplicationInfo::profilesDir(ApplicationInfo::HomedirType(type));
 }
 
-QString PluginHost::appHistoryDir()
-{
-    return ApplicationInfo::historyDir();
-}
+QString PluginHost::appHistoryDir() { return ApplicationInfo::historyDir(); }
 
 QString PluginHost::appCurrentProfileDir(ApplicationInfoAccessingHost::HomedirType type)
 {
     return ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType(type));
 }
 
-QString PluginHost::appVCardDir()
-{
-    return ApplicationInfo::vCardDir();
-}
+QString PluginHost::appVCardDir() { return ApplicationInfo::vCardDir(); }
 
-//AccountInfoAcsessingHost
-QString PluginHost::getStatus(int account)
-{
-    return manager_->getStatus(account);
-}
+// AccountInfoAcsessingHost
+QString PluginHost::getStatus(int account) { return manager_->getStatus(account); }
 
-QString PluginHost::getStatusMessage(int account)
-{
-    return manager_->getStatusMessage(account);
-}
+QString PluginHost::getStatusMessage(int account) { return manager_->getStatusMessage(account); }
 
-QString PluginHost::proxyHost(int account)
-{
-    return manager_->proxyHost(account);
-}
+QString PluginHost::proxyHost(int account) { return manager_->proxyHost(account); }
 
-int PluginHost::proxyPort(int account)
-{
-    return manager_->proxyPort(account);
-}
+int PluginHost::proxyPort(int account) { return manager_->proxyPort(account); }
 
-QString PluginHost::proxyUser(int account)
-{
-    return manager_->proxyUser(account);
-}
+QString PluginHost::proxyUser(int account) { return manager_->proxyUser(account); }
 
-QString PluginHost::proxyPassword(int account)
-{
-    return manager_->proxyPassword(account);
-}
+QString PluginHost::proxyPassword(int account) { return manager_->proxyPassword(account); }
 
-QStringList PluginHost::getRoster(int account)
-{
-    return manager_->getRoster(account);
-}
+QStringList PluginHost::getRoster(int account) { return manager_->getRoster(account); }
 
-QString PluginHost::getJid(int account)
-{
-    return manager_->getJid(account);
-}
+QString PluginHost::getJid(int account) { return manager_->getJid(account); }
 
-QString PluginHost::getId(int account)
-{
-    return manager_->getId(account);
-}
+QString PluginHost::getId(int account) { return manager_->getId(account); }
 
-QString PluginHost::getName(int account)
-{
-    return manager_->getName(account);
-}
+QString PluginHost::getName(int account) { return manager_->getName(account); }
 
 int PluginHost::findOnlineAccountForContact(const QString &jid) const
 {
@@ -1110,251 +1007,205 @@ void PluginHost::subscribeLogout(QObject *context, std::function<void(int accoun
     connect(manager_, &PluginManager::accountLoggedOut, context, callback);
 }
 
-bool PluginHost::setActivity(int account, const QString& Jid, QDomElement xml)
+bool PluginHost::setActivity(int account, const QString &Jid, QDomElement xml)
 {
     return manager_->setActivity(account, Jid, xml);
 }
 
-bool PluginHost::setMood(int account, const QString& Jid, QDomElement xml)
+bool PluginHost::setMood(int account, const QString &Jid, QDomElement xml)
 {
     return manager_->setMood(account, Jid, xml);
 }
-bool PluginHost::setTune(int account, const QString& Jid, QString tune)
+bool PluginHost::setTune(int account, const QString &Jid, QString tune)
 {
     return manager_->setTune(account, Jid, tune);
 }
 
-void PluginHost::addToolBarButton(QObject* parent, QWidget* toolbar, int account, const QString& contact)
+void PluginHost::addToolBarButton(QObject *parent, QWidget *toolbar, int account, const QString &contact)
 {
-    ToolbarIconAccessor *ta = qobject_cast<ToolbarIconAccessor*>(plugin_);
+    ToolbarIconAccessor *ta = qobject_cast<ToolbarIconAccessor *>(plugin_);
     if (ta) {
-        if(!buttons_.isEmpty()) {
+        if (!buttons_.isEmpty()) {
             for (int i = 0; i < buttons_.size(); ++i) {
-                QVariantHash param = buttons_.at(i);
-                QString th = param.value("tooltip").value<QString>();
-                IconAction *button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
-                connect(button, SIGNAL(triggered()),param.value("reciver").value<QObject *>(), param.value("slot").value<QString>().toLatin1());
+                QVariantHash param  = buttons_.at(i);
+                QString      th     = param.value("tooltip").value<QString>();
+                IconAction * button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
+                connect(button, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
+                        param.value("slot").value<QString>().toLatin1());
                 toolbar->addAction(button);
             }
         }
         QAction *act = ta->getAction(parent, account, contact);
-        if(act) {
+        if (act) {
             act->setObjectName(shortName_);
             toolbar->addAction(act);
         }
     }
 }
 
-bool PluginHost::hasToolBarButton()
-{
-    return hasToolBarButton_;
-}
+bool PluginHost::hasToolBarButton() { return hasToolBarButton_; }
 
-void PluginHost::addGCToolBarButton(QObject* parent, QWidget* toolbar, int account, const QString& contact)
+void PluginHost::addGCToolBarButton(QObject *parent, QWidget *toolbar, int account, const QString &contact)
 {
-    GCToolbarIconAccessor *ta = qobject_cast<GCToolbarIconAccessor*>(plugin_);
+    GCToolbarIconAccessor *ta = qobject_cast<GCToolbarIconAccessor *>(plugin_);
     if (ta) {
-        if(!gcbuttons_.isEmpty()) {
+        if (!gcbuttons_.isEmpty()) {
             for (int i = 0; i < gcbuttons_.size(); ++i) {
-                QVariantHash param = gcbuttons_.at(i);
-                QString th = param.value("tooltip").value<QString>();
-                IconAction *button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
-                connect(button, SIGNAL(triggered()),param.value("reciver").value<QObject *>(), param.value("slot").value<QString>().toLatin1());
+                QVariantHash param  = gcbuttons_.at(i);
+                QString      th     = param.value("tooltip").value<QString>();
+                IconAction * button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
+                connect(button, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
+                        param.value("slot").value<QString>().toLatin1());
                 toolbar->addAction(button);
             }
         }
         QAction *act = ta->getGCAction(parent, account, contact);
-        if(act)
+        if (act)
             toolbar->addAction(act);
     }
 }
 
-bool PluginHost::hasGCToolBarButton()
-{
-    return hasGCToolBarButton_;
-}
+bool PluginHost::hasGCToolBarButton() { return hasGCToolBarButton_; }
 
-void PluginHost::initPopup(const QString& text, const QString& title, const QString& icon, int type)
+void PluginHost::initPopup(const QString &text, const QString &title, const QString &icon, int type)
 {
     manager_->initPopup(text, title, icon, type);
 }
 
-void PluginHost::initPopupForJid(int account, const QString &jid, const QString &text, const QString &title, const QString &icon, int type)
+void PluginHost::initPopupForJid(int account, const QString &jid, const QString &text, const QString &title,
+                                 const QString &icon, int type)
 {
     manager_->initPopupForJid(account, jid, text, title, icon, type);
 }
 
-int PluginHost::registerOption(const QString& name, int initValue, const QString& path)
+int PluginHost::registerOption(const QString &name, int initValue, const QString &path)
 {
     return manager_->registerOption(name, initValue, path);
 }
 
-void PluginHost::unregisterOption(const QString &name)
-{
-    manager_->unregisterOption(name);
-}
+void PluginHost::unregisterOption(const QString &name) { manager_->unregisterOption(name); }
 
-int PluginHost::popupDuration(const QString& name)
-{
-    return manager_->popupDuration(name);
-}
+int PluginHost::popupDuration(const QString &name) { return manager_->popupDuration(name); }
 
-void PluginHost::setPopupDuration(const QString& name, int value)
-{
-    manager_->setPopupDuration(name, value);
-}
+void PluginHost::setPopupDuration(const QString &name, int value) { manager_->setPopupDuration(name, value); }
 
 void PluginHost::addAccountMenu(QMenu *menu, int account)
 {
-    MenuAccessor *ma = qobject_cast<MenuAccessor*>(plugin_);
-    if(ma) {
-        if( !accMenu_.isEmpty()) {
+    MenuAccessor *ma = qobject_cast<MenuAccessor *>(plugin_);
+    if (ma) {
+        if (!accMenu_.isEmpty()) {
             for (int i = 0; i < accMenu_.size(); ++i) {
                 QVariantHash param = accMenu_.at(i);
-                IconAction *act = new IconAction(param.value("name").value<QString>(), menu, param.value("icon").value<QString>());
+                IconAction * act
+                    = new IconAction(param.value("name").value<QString>(), menu, param.value("icon").value<QString>());
                 act->setProperty("account", QVariant(account));
-                connect(act, SIGNAL(triggered()), param.value("reciver").value<QObject *>(), param.value("slot").value<QString>().toLatin1());
+                connect(act, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
+                        param.value("slot").value<QString>().toLatin1());
                 menu->addAction(act);
             }
         }
         QAction *act = ma->getAccountAction(menu, account);
-        if(act)
+        if (act)
             menu->addAction(act);
     }
 }
 
-void PluginHost::addContactMenu(QMenu *menu, int account, const QString& jid)
+void PluginHost::addContactMenu(QMenu *menu, int account, const QString &jid)
 {
-    MenuAccessor *ma = qobject_cast<MenuAccessor*>(plugin_);
-    if(ma) {
-        if(!contactMenu_.isEmpty()) {
+    MenuAccessor *ma = qobject_cast<MenuAccessor *>(plugin_);
+    if (ma) {
+        if (!contactMenu_.isEmpty()) {
             for (int i = 0; i < contactMenu_.size(); ++i) {
                 QVariantHash param = contactMenu_.at(i);
-                IconAction *act = new IconAction(param.value("name").value<QString>(), menu, param.value("icon").value<QString>());
+                IconAction * act
+                    = new IconAction(param.value("name").value<QString>(), menu, param.value("icon").value<QString>());
                 act->setProperty("account", QVariant(account));
                 act->setProperty("jid", QVariant(jid));
-                connect(act, SIGNAL(triggered()), param.value("reciver").value<QObject *>(), param.value("slot").value<QString>().toLatin1());
+                connect(act, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
+                        param.value("slot").value<QString>().toLatin1());
                 menu->addAction(act);
             }
         }
         QAction *act = ma->getContactAction(menu, account, jid);
-        if(act)
+        if (act)
             menu->addAction(act);
     }
 }
 
-void PluginHost::setupChatTab(QWidget* tab, int account, const QString& contact)
+void PluginHost::setupChatTab(QWidget *tab, int account, const QString &contact)
 {
-    ChatTabAccessor *cta = qobject_cast<ChatTabAccessor*>(plugin_);
-    if(cta) {
+    ChatTabAccessor *cta = qobject_cast<ChatTabAccessor *>(plugin_);
+    if (cta) {
         cta->setupChatTab(tab, account, contact);
     }
 }
 
-void PluginHost::setupGCTab(QWidget* tab, int account, const QString& contact)
+void PluginHost::setupGCTab(QWidget *tab, int account, const QString &contact)
 {
-    ChatTabAccessor *cta = qobject_cast<ChatTabAccessor*>(plugin_);
-    if(cta) {
+    ChatTabAccessor *cta = qobject_cast<ChatTabAccessor *>(plugin_);
+    if (cta) {
         cta->setupGCTab(tab, account, contact);
     }
 }
 
-bool PluginHost::appendingChatMessage(int account, const QString &contact,
-                      QString &body, QDomElement &html, bool local)
+bool PluginHost::appendingChatMessage(int account, const QString &contact, QString &body, QDomElement &html, bool local)
 {
-    ChatTabAccessor *cta = qobject_cast<ChatTabAccessor*>(plugin_);
-    if(cta) {
+    ChatTabAccessor *cta = qobject_cast<ChatTabAccessor *>(plugin_);
+    if (cta) {
         return cta->appendingChatMessage(account, contact, body, html, local);
     }
     return false;
 }
 
-bool PluginHost::isSelf(int account, const QString& jid)
-{
-    return manager_->isSelf(account, jid);
-}
+bool PluginHost::isSelf(int account, const QString &jid) { return manager_->isSelf(account, jid); }
 
-bool PluginHost::isAgent(int account, const QString& jid)
-{
-    return manager_->isAgent(account, jid);
-}
+bool PluginHost::isAgent(int account, const QString &jid) { return manager_->isAgent(account, jid); }
 
-bool PluginHost::inList(int account, const QString& jid)
-{
-    return manager_->inList(account, jid);
-}
+bool PluginHost::inList(int account, const QString &jid) { return manager_->inList(account, jid); }
 
-bool PluginHost::isPrivate(int account, const QString& jid)
-{
-    return manager_->isPrivate(account, jid);
-}
+bool PluginHost::isPrivate(int account, const QString &jid) { return manager_->isPrivate(account, jid); }
 
-bool PluginHost::isConference(int account, const QString& jid)
-{
-    return manager_->isConference(account, jid);
-}
+bool PluginHost::isConference(int account, const QString &jid) { return manager_->isConference(account, jid); }
 
-QString PluginHost::name(int account, const QString& jid)
-{
-    return manager_->name(account, jid);
-}
+QString PluginHost::name(int account, const QString &jid) { return manager_->name(account, jid); }
 
-QString PluginHost::status(int account, const QString& jid)
-{
-    return manager_->status(account, jid);
-}
+QString PluginHost::status(int account, const QString &jid) { return manager_->status(account, jid); }
 
-QString PluginHost::statusMessage(int account, const QString& jid)
-{
-    return manager_->statusMessage(account, jid);
-}
+QString PluginHost::statusMessage(int account, const QString &jid) { return manager_->statusMessage(account, jid); }
 
-QStringList PluginHost::resources(int account, const QString& jid)
-{
-    return manager_->resources(account, jid);
-}
+QStringList PluginHost::resources(int account, const QString &jid) { return manager_->resources(account, jid); }
 
-QString PluginHost::realJid(int account, const QString& jid)
-{
-    return manager_->realJid(account, jid);
-}
+QString PluginHost::realJid(int account, const QString &jid) { return manager_->realJid(account, jid); }
 
-QStringList PluginHost::mucNicks(int account, const QString &mucJid)
-{
-    return manager_->mucNicks(account, mucJid);
-}
+QStringList PluginHost::mucNicks(int account, const QString &mucJid) { return manager_->mucNicks(account, mucJid); }
 
-bool PluginHost::hasInfoProvider()
-{
-    return hasInfo_;
-}
+bool PluginHost::hasInfoProvider() { return hasInfo_; }
 
-QString PluginHost::pluginInfo()
-{
-    return infoString_;
-}
+QString PluginHost::pluginInfo() { return infoString_; }
 
-void PluginHost::setStatus(int account, const QString& status, const QString& statusMessage)
+void PluginHost::setStatus(int account, const QString &status, const QString &statusMessage)
 {
     manager_->setStatus(account, status, statusMessage);
 }
 
-bool PluginHost::appendSysMsg(int account, const QString& jid, const QString& message)
+bool PluginHost::appendSysMsg(int account, const QString &jid, const QString &message)
 {
     return manager_->appendSysMsg(account, jid, message);
 }
 
-bool PluginHost::appendSysHtmlMsg(int account, const QString& jid, const QString& message)
+bool PluginHost::appendSysHtmlMsg(int account, const QString &jid, const QString &message)
 {
     return manager_->appendSysHtmlMsg(account, jid, message);
 }
 
-bool PluginHost::appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted)
+bool PluginHost::appendMsg(int account, const QString &jid, const QString &message, const QString &id,
+                           bool wasEncrypted)
 {
     return manager_->appendMsg(account, jid, message, id, wasEncrypted);
 }
 
-void PluginHost::createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot)
+void PluginHost::createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
+                                const char *slot)
 {
     manager_->createNewEvent(account, jid, descr, receiver, slot);
 }
@@ -1364,10 +1215,7 @@ void PluginHost::createNewMessageEvent(int account, QDomElement const &element)
     manager_->createNewMessageEvent(account, element);
 }
 
-void PluginHost::playSound(const QString &fileName)
-{
-    soundPlay(fileName);
-}
+void PluginHost::playSound(const QString &fileName) { soundPlay(fileName); }
 
 /**
  * EncryptionSupport
@@ -1375,13 +1223,13 @@ void PluginHost::playSound(const QString &fileName)
 
 bool PluginHost::decryptMessageElement(int account, QDomElement &message)
 {
-    EncryptionSupport *es = qobject_cast<EncryptionSupport*>(plugin_);
+    EncryptionSupport *es = qobject_cast<EncryptionSupport *>(plugin_);
     return es && es->decryptMessageElement(account, message);
 }
 
 bool PluginHost::encryptMessageElement(int account, QDomElement &message)
 {
-    EncryptionSupport *es = qobject_cast<EncryptionSupport*>(plugin_);
+    EncryptionSupport *es = qobject_cast<EncryptionSupport *>(plugin_);
     return es && es->encryptMessageElement(account, message);
 }
 
@@ -1389,24 +1237,24 @@ bool PluginHost::encryptMessageElement(int account, QDomElement &message)
  * PluginAccessingHost
  */
 
-QObject* PluginHost::getPlugin(const QString &name)
+QObject *PluginHost::getPlugin(const QString &name)
 {
-  foreach (PluginHost *plugin, manager_->pluginsByPriority_) {
-      if (plugin->name() == name || plugin->shortName() == name) {
-          return plugin->plugin_;
-      }
-  }
-  return nullptr;
+    foreach (PluginHost *plugin, manager_->pluginsByPriority_) {
+        if (plugin->name() == name || plugin->shortName() == name) {
+            return plugin->plugin_;
+        }
+    }
+    return nullptr;
 }
 
 WebkitAccessingHost::RenderType PluginHost::chatLogRenderType() const
 {
 #ifdef WEBKIT
-# ifdef WEBENGINE
+#ifdef WEBENGINE
     return WebkitAccessingHost::RT_WebEngine;
-# else
+#else
     return WebkitAccessingHost::RT_WebKit;
-# endif
+#endif
 #else
     return WebkitAccessingHost::RT_TextEdit;
 #endif
@@ -1417,10 +1265,7 @@ QString PluginHost::installChatLogJSDataFilter(const QString &js, PsiPlugin::Pri
     return manager_->installChatLogJSDataFilter(js, priority);
 }
 
-void PluginHost::uninstallChatLogJSDataFilter(const QString &id)
-{
-    manager_->uninstallChatLogJSDataFilter(id);
-}
+void PluginHost::uninstallChatLogJSDataFilter(const QString &id) { manager_->uninstallChatLogJSDataFilter(id); }
 
 void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
 {
@@ -1440,7 +1285,4 @@ void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
 
 //-- helpers --------------------------------------------------------
 
-static bool operator<(const QRegExp &a, const QRegExp &b)
-{
-    return a.pattern() < b.pattern();
-}
+static bool operator<(const QRegExp &a, const QRegExp &b) { return a.pattern() < b.pattern(); }

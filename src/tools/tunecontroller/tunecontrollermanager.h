@@ -31,38 +31,37 @@
 class TuneController;
 class TuneControllerPlugin;
 
-typedef QSharedPointer<TuneController> TuneControllerPtr;
+typedef QSharedPointer<TuneController>       TuneControllerPtr;
 typedef QSharedPointer<TuneControllerPlugin> TuneControllerPluginPtr;
 
-class TuneControllerManager : public QObject
-{
+class TuneControllerManager : public QObject {
     Q_OBJECT
 public:
     TuneControllerManager();
     ~TuneControllerManager();
 
-    QList<QString> controllerNames() const;
-    TuneController* createController(const QString&) const;
-    bool loadPlugin(const QString&);
-    Tune currentTune() const;
-    void setTuneFilters(const QStringList &filters, const QString &pattern);
-    void updateControllers(const QStringList &blacklist);
+    QList<QString>  controllerNames() const;
+    TuneController *createController(const QString &) const;
+    bool            loadPlugin(const QString &);
+    Tune            currentTune() const;
+    void            setTuneFilters(const QStringList &filters, const QString &pattern);
+    void            updateControllers(const QStringList &blacklist);
 
 signals:
     void playing(const Tune &tune);
     void stopped();
 
 protected:
-    bool loadPlugin(QObject* plugin);
+    bool loadPlugin(QObject *plugin);
 
 private:
     bool checkTune(const Tune &tune) const;
 
 private:
-    QMap<QString,TuneControllerPluginPtr> plugins_;
-    QMap<QString,TuneControllerPtr> controllers_;
-    QStringList tuneUrlFilters_;
-    QString tuneTitleFilterPattern_;
+    QMap<QString, TuneControllerPluginPtr> plugins_;
+    QMap<QString, TuneControllerPtr>       controllers_;
+    QStringList                            tuneUrlFilters_;
+    QString                                tuneTitleFilterPattern_;
 };
 
 #endif // TUNECONTROLLERMANAGER_H

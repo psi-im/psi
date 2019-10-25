@@ -29,11 +29,10 @@
 
 class QButtonGroup;
 
-class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen
-{
+class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen {
     Q_OBJECT
 public:
-    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent=nullptr);
+    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent = nullptr);
     ~ProfileOpenDlg();
 
     QString newLang;
@@ -46,14 +45,13 @@ private:
     void reload(const QString &);
 
     VarList langs;
-    int langSel;
+    int     langSel;
 };
 
-class ProfileManageDlg : public QDialog, public Ui::ProfileManage
-{
+class ProfileManageDlg : public QDialog, public Ui::ProfileManage {
     Q_OBJECT
 public:
-    ProfileManageDlg(const QString &, QWidget *parent=nullptr);
+    ProfileManageDlg(const QString &, QWidget *parent = nullptr);
 
 private slots:
     void slotProfileNew();
@@ -62,11 +60,10 @@ private slots:
     void updateSelection();
 };
 
-class ProfileNewDlg : public QDialog, public Ui::ProfileNew
-{
+class ProfileNewDlg : public QDialog, public Ui::ProfileNew {
     Q_OBJECT
 public:
-    ProfileNewDlg(QWidget *parent=nullptr);
+    ProfileNewDlg(QWidget *parent = nullptr);
 
     QString name;
 
@@ -75,7 +72,7 @@ private slots:
     void nameModified();
 
 private:
-    QButtonGroup* buttonGroup_;
+    QButtonGroup *buttonGroup_;
 };
 
 #endif // PROFILEDLG_H

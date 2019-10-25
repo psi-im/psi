@@ -37,7 +37,7 @@ class ChatViewThemeSession : public QObject {
     friend class SessionRequestHandler;
 #endif
 
-    Theme theme;
+    Theme   theme;
     QString sessId; // unique id of session
 
 public:
@@ -45,9 +45,11 @@ public:
     virtual ~ChatViewThemeSession();
 
     inline const QString &sessionId() const { return sessId; }
-    virtual WebView* webView() = 0;
+    virtual WebView *     webView() = 0;
     // returns: data, content-type
-    virtual bool getContents(const QUrl &url, std::function<void(bool success, const QByteArray &,const QByteArray &)> callback) = 0;
+    virtual bool getContents(const QUrl &                                                              url,
+                             std::function<void(bool success, const QByteArray &, const QByteArray &)> callback)
+        = 0;
     QString propsAsJsonString();
 
     void init(const Theme &theme);

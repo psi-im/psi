@@ -11,16 +11,12 @@
 #include <QObject>
 #include <QTextStream>
 
-class AntiEvilPlugin: public QObject, public PsiPlugin, public StanzaFilter, public StanzaSender
-{
+class AntiEvilPlugin : public QObject, public PsiPlugin, public StanzaFilter, public StanzaSender {
     Q_OBJECT
     Q_INTERFACES(PsiPlugin StanzaFilter StanzaSender);
 
 public:
-    AntiEvilPlugin()
-        : stanzaSender(0)
-    {
-    }
+    AntiEvilPlugin() : stanzaSender(0) {}
 
     //-- PsiPlugin -------------------------------------------
 
@@ -36,15 +32,9 @@ public:
         return "antievil";
     }
 
-    virtual QString version() const
-    {
-        return "0.1";
-    }
+    virtual QString version() const { return "0.1"; }
 
-    virtual QWidget* options() const
-    {
-        return 0;
-    }
+    virtual QWidget *options() const { return 0; }
 
     virtual bool enable()
     {
@@ -62,7 +52,7 @@ public:
 
     //-- StanzaFilter ----------------------------------------
 
-    virtual bool incomingStanza(int account, const QDomElement& stanza)
+    virtual bool incomingStanza(int account, const QDomElement &stanza)
     {
         bool blocked = false;
 
@@ -75,13 +65,14 @@ public:
                     if (stanza.tagName() == "iq") {
                         qDebug("sending 'forbidden' error");
                         QString sender = stanza.attribute("from");
-                        QString reply = QString("<iq type='error' %1><error type='modify'><bad-request xmlns='urn:ietf:params:xml:xmpp-stanzas'/></error></iq>")
-                            .arg(sender.isEmpty() ? "" : QString("to='%1'").arg(sender));
+                        QString reply  = QString("<iq type='error' %1><error type='modify'><bad-request "
+                                                "xmlns='urn:ietf:params:xml:xmpp-stanzas'/></error></iq>")
+                                            .arg(sender.isEmpty() ? "" : QString("to='%1'").arg(sender));
 
                         stanzaSender->sendStanza(account, reply);
                     }
 
-                    blocked = true;    // stop processing this stanza
+                    blocked = true; // stop processing this stanza
                     break;
                 }
             }
@@ -92,14 +83,11 @@ public:
 
     //-- StanzaSender ----------------------------------------
 
-    virtual void setStanzaSendingHost(StanzaSendingHost *host)
-    {
-        stanzaSender = host;
-    }
+    virtual void setStanzaSendingHost(StanzaSendingHost *host) { stanzaSender = host; }
 
 private:
-    StanzaSendingHost* stanzaSender;
-    bool enabled;
+    StanzaSendingHost *stanzaSender;
+    bool               enabled;
 };
 
 Q_EXPORT_PLUGIN2(antievil, AntiEvilPlugin)

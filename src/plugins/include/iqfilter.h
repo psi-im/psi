@@ -3,8 +3,7 @@
 
 class IqFilteringHost;
 
-class IqFilter
-{
+class IqFilter {
 public:
     virtual ~IqFilter() {}
 

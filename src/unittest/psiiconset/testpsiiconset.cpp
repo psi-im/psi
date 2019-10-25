@@ -5,8 +5,7 @@
 #include <QStringList>
 #include <QtTest/QtTest>
 
-class TestPsiIconset: public QObject
-{
+class TestPsiIconset : public QObject {
     Q_OBJECT
 private:
     PsiIconset *is;
@@ -16,20 +15,14 @@ private slots:
     {
         is = new PsiIconset();
 
-        g.pathBase = "../../tools/iconset/unittest";
-        g.pathHome = getHomeDir();
+        g.pathBase     = "../../tools/iconset/unittest";
+        g.pathHome     = getHomeDir();
         g.pathProfiles = g.pathHome + "/profiles";
     }
 
-    void cleanupTestCase()
-    {
-        delete is;
-    }
+    void cleanupTestCase() { delete is; }
 
-    void testLoadSystem()
-    {
-        QVERIFY(is->loadSystem());
-    }
+    void testLoadSystem() { QVERIFY(is->loadSystem()); }
 
     // this mustn't produce any valgrind errors, so
     // it's pretty safe to generate suppressions
@@ -56,16 +49,16 @@ private slots:
 
     void testChangeOptions()
     {
-        Options oldOptions = option;
-        option.systemIconset = "crystal_system.jisp";
-        option.emoticons = (QStringList() << "puz.jisp");
+        Options oldOptions          = option;
+        option.systemIconset        = "crystal_system.jisp";
+        option.emoticons            = (QStringList() << "puz.jisp");
         option.defaultRosterIconset = "default.jisp";
 
         QVERIFY(is->optionsChanged(&oldOptions));
 
-        QCOMPARE(is->system().name(),        QString("Crystal (System)"));
+        QCOMPARE(is->system().name(), QString("Crystal (System)"));
         QCOMPARE(is->system().description(), QString("Crystal System Iconset"));
-        QCOMPARE(is->system().version(),     QString("0.3"));
+        QCOMPARE(is->system().version(), QString("0.3"));
         QCOMPARE(is->emoticons.first()->name(), QString("puzazBox"));
 
         option = oldOptions;

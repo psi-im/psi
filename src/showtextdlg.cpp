@@ -28,16 +28,15 @@
 #include <QVBoxLayout>
 
 // FIXME: combine to common init function
-ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
-    : QDialog(parent)
+ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     QString text;
 
     QFile f(fname);
-    if(f.open(QIODevice::ReadOnly)) {
+    if (f.open(QIODevice::ReadOnly)) {
         QTextStream t(&f);
-        while(!t.atEnd())
+        while (!t.atEnd())
             text += t.readLine() + '\n';
         f.close();
     }
@@ -65,8 +64,7 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
     resize(560, 384);
 }
 
-ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent)
-    : QDialog(parent)
+ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent) : QDialog(parent)
 {
     Q_UNUSED(nonfile);
 

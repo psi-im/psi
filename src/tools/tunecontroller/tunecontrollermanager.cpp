@@ -36,32 +36,29 @@
 
 TuneControllerManager::TuneControllerManager()
 {
-    foreach(QObject* plugin,QPluginLoader::staticInstances()) {
+    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
         loadPlugin(plugin);
     }
 }
 
-TuneControllerManager::~TuneControllerManager()
-{
-}
+TuneControllerManager::~TuneControllerManager() {}
 
 void TuneControllerManager::updateControllers(const QStringList &blacklist)
 {
     bool isInBlacklist;
-    foreach(const QString &name, plugins_.keys()) {
+    foreach (const QString &name, plugins_.keys()) {
         TuneControllerPtr c = controllers_.value(name);
-        isInBlacklist = blacklist.contains(name);
+        isInBlacklist       = blacklist.contains(name);
         if (!c && !isInBlacklist) {
             c = TuneControllerPtr(plugins_[name]->createController());
             connect(c.data(), &TuneController::stopped, this, &TuneControllerManager::stopped);
-            connect(c.data(), &TuneController::playing, this, [this](const Tune &tune){
+            connect(c.data(), &TuneController::playing, this, [this](const Tune &tune) {
                 if (checkTune(tune)) {
                     emit playing(tune);
                 }
             });
             controllers_.insert(name, c);
-        }
-        else if (c && isInBlacklist) {
+        } else if (c && isInBlacklist) {
             emit stopped();
             controllers_.remove(name);
         }
@@ -70,7 +67,7 @@ void TuneControllerManager::updateControllers(const QStringList &blacklist)
 
 Tune TuneControllerManager::currentTune() const
 {
-    foreach(const TuneControllerPtr &c, controllers_.values()) {
+    foreach (const TuneControllerPtr &c, controllers_.values()) {
         Tune t = c->currentTune();
         if (!t.isNull() && checkTune(t)) {
             return t;
@@ -82,15 +79,12 @@ Tune TuneControllerManager::currentTune() const
 /**
  * \brief Returns a list of all the supported controllers.
  */
-QList<QString> TuneControllerManager::controllerNames() const
-{
-    return plugins_.keys();
-}
+QList<QString> TuneControllerManager::controllerNames() const { return plugins_.keys(); }
 
 /**
  * \brief Creates a new controller.
  */
-TuneController* TuneControllerManager::createController(const QString& name) const
+TuneController *TuneControllerManager::createController(const QString &name) const
 {
     return plugins_[name]->createController();
 }
@@ -98,21 +92,21 @@ TuneController* TuneControllerManager::createController(const QString& name) con
 /**
  * \brief Loads a TuneControllerPlugin from a file.
  */
-bool TuneControllerManager::loadPlugin(const QString& file)
+bool TuneControllerManager::loadPlugin(const QString &file)
 {
-    //return QPluginLoader(file).load();
+    // return QPluginLoader(file).load();
     return loadPlugin(QPluginLoader(file).instance());
 }
 
-bool TuneControllerManager::loadPlugin(QObject* plugin)
+bool TuneControllerManager::loadPlugin(QObject *plugin)
 {
     if (!plugin)
         return false;
 
-    TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin*>(plugin));
+    TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin *>(plugin));
     if (tcplugin) {
-        if(!plugins_.contains(tcplugin->name())) {
-            //qDebug() << "Registering plugin " << tcplugin->name();
+        if (!plugins_.contains(tcplugin->name())) {
+            // qDebug() << "Registering plugin " << tcplugin->name();
             plugins_[tcplugin->name()] = tcplugin;
         }
         return true;
@@ -122,7 +116,7 @@ bool TuneControllerManager::loadPlugin(QObject* plugin)
 
 void TuneControllerManager::setTuneFilters(const QStringList &filters, const QString &pattern)
 {
-    tuneUrlFilters_ = filters;
+    tuneUrlFilters_         = filters;
     tuneTitleFilterPattern_ = pattern;
 }
 
@@ -137,7 +131,7 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
     if (!tune.url().isEmpty()) {
         int index = tune.url().lastIndexOf(".");
         if (index != -1) {
-            QString extension = tune.url().right(tune.url().length() - (index+1)).toLower();
+            QString extension = tune.url().right(tune.url().length() - (index + 1)).toLower();
             if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
                 return false;
             }
@@ -149,21 +143,21 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
 // ----------------------------------------------------------------------------
 
 #ifdef TC_ITUNES
-    Q_IMPORT_PLUGIN(ITunesPlugin)
+Q_IMPORT_PLUGIN(ITunesPlugin)
 #endif
 
 #ifdef TC_WINAMP
-    Q_IMPORT_PLUGIN(WinAmpPlugin)
+Q_IMPORT_PLUGIN(WinAmpPlugin)
 #endif
 
 #ifdef TC_AIMP
-    Q_IMPORT_PLUGIN(AIMPPlugin)
+Q_IMPORT_PLUGIN(AIMPPlugin)
 #endif
 
 #ifdef TC_PSIFILE
-    Q_IMPORT_PLUGIN(PsiFilePlugin)
+Q_IMPORT_PLUGIN(PsiFilePlugin)
 #endif
 
 #if defined(TC_MPRIS) && defined(USE_DBUS)
-    Q_IMPORT_PLUGIN(MPRISPlugin)
+Q_IMPORT_PLUGIN(MPRISPlugin)
 #endif

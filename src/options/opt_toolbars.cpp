@@ -23,67 +23,65 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
-#define CHAT_TOOLBAR       0
-#define GROUPCHAT_TOOLBAR  1
-#define ROSTER_TOOLBAR     2
+#define CHAT_TOOLBAR 0
+#define GROUPCHAT_TOOLBAR 1
+#define ROSTER_TOOLBAR 2
 
-class LookFeelToolbarsUI : public QWidget, public Ui::LookFeelToolbars
-{
+class LookFeelToolbarsUI : public QWidget, public Ui::LookFeelToolbars {
 public:
-    LookFeelToolbarsUI() : QWidget() {
-        setupUi(this);
-    }
+    LookFeelToolbarsUI() : QWidget() { setupUi(this); }
 };
 
 //----------------------------------------------------------------------------
 // OptionsTabToolbars
 //----------------------------------------------------------------------------
 
-class OptionsTabToolbars::Private
-{
+class OptionsTabToolbars::Private {
 public:
-    QList<ToolbarPrefs> toolbars;
+    QList<ToolbarPrefs>       toolbars;
     class OptionsTabToolbars *q;
 
-    PsiActionList::ActionsType class2id() {
+    PsiActionList::ActionsType class2id()
+    {
         int ret = int(PsiActionList::Actions_Common);
         ret |= int(PsiActionList::Actions_MainWin);
         return static_cast<PsiActionList::ActionsType>(ret);
     }
 
-    PsiActionList::ActionsType class2idChat() {
+    PsiActionList::ActionsType class2idChat()
+    {
         int ret = int(PsiActionList::Actions_Common);
         ret |= int(PsiActionList::Actions_Chat);
         return static_cast<PsiActionList::ActionsType>(ret);
     }
 
-    PsiActionList::ActionsType class2idGroupchat() {
+    PsiActionList::ActionsType class2idGroupchat()
+    {
         int ret = int(PsiActionList::Actions_Common);
         ret |= int(PsiActionList::Actions_Groupchat);
         return static_cast<PsiActionList::ActionsType>(ret);
     }
 
-    PsiActionList::ActionsType currentType() {
+    PsiActionList::ActionsType currentType()
+    {
         PsiActionList::ActionsType type;
-        LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI*>(q->w);
+        LookFeelToolbarsUI *       d = static_cast<LookFeelToolbarsUI *>(q->w);
 
         if (d->cb_toolbars->currentIndex() == CHAT_TOOLBAR) {
             type = class2idChat();
-        }
-        else if (d->cb_toolbars->currentIndex() == GROUPCHAT_TOOLBAR) {
+        } else if (d->cb_toolbars->currentIndex() == GROUPCHAT_TOOLBAR) {
             type = class2idGroupchat();
-        }
-        else {
+        } else {
             type = class2id();
         }
         return type;
     }
 };
 
-OptionsTabToolbars::OptionsTabToolbars(QObject *parent)
-    : OptionsTab(parent, "toolbars", "", tr("Toolbars"), tr("Configure Psi toolbars"), "psi/toolbars")
+OptionsTabToolbars::OptionsTabToolbars(QObject *parent) :
+    OptionsTab(parent, "toolbars", "", tr("Toolbars"), tr("Configure Psi toolbars"), "psi/toolbars")
 {
-    p = new Private();
+    p    = new Private();
     p->q = this;
 
     noDirty = false;
@@ -94,8 +92,8 @@ QWidget *OptionsTabToolbars::widget()
     if (w)
         return nullptr;
 
-    w = new LookFeelToolbarsUI();
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI*>(w);
+    w                     = new LookFeelToolbarsUI();
+    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
 
     connect(d->pb_addToolbar, SIGNAL(clicked()), SLOT(toolbarAdd()));
     connect(d->pb_deleteToolbar, SIGNAL(clicked()), SLOT(toolbarDelete()));
@@ -110,8 +108,10 @@ QWidget *OptionsTabToolbars::widget()
     connect(d->ck_toolbarOn, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
     connect(d->ck_toolbarLocked, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
     // connect(d->ck_toolbarStretch, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
-    connect(d->lw_selectedActions, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(selAct_selectionChanged(QListWidgetItem *)));
-    connect(d->tw_availActions, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(avaAct_selectionChanged(QTreeWidgetItem *)));
+    connect(d->lw_selectedActions, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+            SLOT(selAct_selectionChanged(QListWidgetItem *)));
+    connect(d->tw_availActions, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
+            SLOT(avaAct_selectionChanged(QTreeWidgetItem *)));
 
     connect(d->pb_deleteToolbar, SIGNAL(clicked()), SIGNAL(dataChanged()));
     connect(d->tb_up, SIGNAL(clicked()), SIGNAL(dataChanged()));
@@ -160,10 +160,7 @@ QWidget *OptionsTabToolbars::widget()
     resize( minimumSize() );*/
 }
 
-OptionsTabToolbars::~OptionsTabToolbars()
-{
-    delete p;
-}
+OptionsTabToolbars::~OptionsTabToolbars() { delete p; }
 
 /**
  * setData is called by the OptionsDlg private, after calling
@@ -172,11 +169,11 @@ OptionsTabToolbars::~OptionsTabToolbars()
  * /par psi_: PsiCon* object to apply the changes when needed
  * /par parent_: QWidget which is parent from the current object
  */
-void OptionsTabToolbars::setData(PsiCon * psi_, QWidget *parent_)
+void OptionsTabToolbars::setData(PsiCon *psi_, QWidget *parent_)
 {
     // the Psi con object is needed to apply the changes
     // the parent object is needed to show some popups
-    psi  = psi_;
+    psi    = psi_;
     parent = parent_;
 }
 
@@ -230,10 +227,10 @@ void OptionsTabToolbars::restoreOptions()
         }
     }
 
-    QString chatToolbarName = tr("Chat");
+    QString chatToolbarName      = tr("Chat");
     QString groupchatToolbarName = tr("Groupchat");
 
-    foreach(QString base, sortedToolbarBases) {
+    foreach (QString base, sortedToolbarBases) {
         ToolbarPrefs tb;
 
         tb.id = o->getOption(base + ".key").toString();
@@ -241,11 +238,11 @@ void OptionsTabToolbars::restoreOptions()
             tb.id = ToolbarPrefs().id;
             qWarning("broken toolbar setting: %s", qPrintable(base));
         }
-        tb.name = o->getOption(base + ".name").toString();
-        tb.on = o->getOption(base + ".visible").toBool();
+        tb.name   = o->getOption(base + ".name").toString();
+        tb.on     = o->getOption(base + ".visible").toBool();
         tb.locked = o->getOption(base + ".locked").toBool();
         // tb.stretchable = o->getOption(base + ".stretchable").toBool();
-        tb.dock = static_cast<Qt3Dock>(o->getOption(base + ".dock.position").toInt()); //FIXME
+        tb.dock = static_cast<Qt3Dock>(o->getOption(base + ".dock.position").toInt()); // FIXME
         // tb.index = o->getOption(base + ".dock.index").toInt();
         tb.nl = o->getOption(base + ".dock.nl").toBool();
         // tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
@@ -254,11 +251,9 @@ void OptionsTabToolbars::restoreOptions()
         p->toolbars << tb;
         if (tb.name == "Chat") {
             d->cb_toolbars->addItem(chatToolbarName);
-        }
-        else if (tb.name == "Groupchat") {
+        } else if (tb.name == "Groupchat") {
             d->cb_toolbars->addItem(groupchatToolbarName);
-        }
-        else {
+        } else {
             d->cb_toolbars->addItem(tb.name);
         }
     }
@@ -274,21 +269,20 @@ void OptionsTabToolbars::toolbarAdd()
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
 
     ToolbarPrefs tb;
-    int j = 0;
-    bool ok;
+    int          j = 0;
+    bool         ok;
     do {
-        ok = true;
+        ok      = true;
         tb.name = QObject::tr("<unnamed%1>").arg(j++);
-        foreach(ToolbarPrefs other, p->toolbars) {
+        foreach (ToolbarPrefs other, p->toolbars) {
             if (other.name == tb.name) {
                 ok = false;
                 break;
             }
         }
-    }
-    while (!ok);
+    } while (!ok);
 
-    tb.on = false;
+    tb.on     = false;
     tb.locked = false;
     // tb.stretchable = false;
     tb.keys.clear();
@@ -298,7 +292,7 @@ void OptionsTabToolbars::toolbarAdd()
     tb.nl = true;
     // tb.extraOffset = 0;
 
-    //tb.dirty = true;
+    // tb.dirty = true;
 
     p->toolbars << tb;
 
@@ -313,7 +307,7 @@ void OptionsTabToolbars::toolbarAdd()
 void OptionsTabToolbars::toolbarDelete()
 {
     LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    int n = d->cb_toolbars->currentIndex();
+    int                 n = d->cb_toolbars->currentIndex();
 
     noDirty = true;
     toolbarSelectionChanged(-1);
@@ -328,8 +322,8 @@ void OptionsTabToolbars::toolbarDelete()
 
 void OptionsTabToolbars::addToolbarAction(QListWidget *parent, QString name, int toolbarId)
 {
-    ActionList actions = psi->actionList()->suitableActions(static_cast<PsiActionList::ActionsType>(toolbarId));
-    const QAction *action = static_cast<QAction *>(actions.action(name));
+    ActionList     actions = psi->actionList()->suitableActions(static_cast<PsiActionList::ActionsType>(toolbarId));
+    const QAction *action  = static_cast<QAction *>(actions.action(name));
     if (!action)
         return;
     addToolbarAction(parent, action, name);
@@ -354,15 +348,15 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
         return;
 
     int n = item;
-//    PsiToolBar *toolBar = 0;
-//    if ( item != -1 )
-//        toolBar = psi->findToolBar( p->toolbars[n].group, p->toolbars[n].index );
+    //    PsiToolBar *toolBar = 0;
+    //    if ( item != -1 )
+    //        toolBar = psi->findToolBar( p->toolbars[n].group, p->toolbars[n].index );
 
     bool customizeable = true;
     bool moveable      = true;
 
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    bool enable = (item == -1) ? false : true;
+    LookFeelToolbarsUI *d      = static_cast<LookFeelToolbarsUI *>(w);
+    bool                enable = (item == -1) ? false : true;
     d->le_toolbarName->setEnabled(enable);
     // d->pb_toolbarPosition->setEnabled(enable && moveable);
     d->ck_toolbarOn->setEnabled(enable);
@@ -401,27 +395,27 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
     {
         // Fill the TreeWidget with toolbar-specific actions
-        QTreeWidget *tw = d->tw_availActions;
+        QTreeWidget *    tw       = d->tw_availActions;
         QTreeWidgetItem *lastRoot = nullptr;
 
-        QList<ActionList*> lists = psi->actionList()->actionLists(p->currentType());
+        QList<ActionList *> lists = psi->actionList()->actionLists(p->currentType());
 
-        foreach(ActionList* actionList, lists) {
+        foreach (ActionList *actionList, lists) {
             QTreeWidgetItem *root = new QTreeWidgetItem(tw, lastRoot);
-            lastRoot = root;
+            lastRoot              = root;
             root->setText(0, actionList->name());
             root->setData(0, Qt::UserRole, QString(""));
             root->setExpanded(true);
 
-            QTreeWidgetItem *last = nullptr;
-            QStringList actionNames = actionList->actions();
-            QStringList::Iterator it2 = actionNames.begin();
+            QTreeWidgetItem *     last        = nullptr;
+            QStringList           actionNames = actionList->actions();
+            QStringList::Iterator it2         = actionNames.begin();
             for (; it2 != actionNames.end(); ++it2) {
                 IconAction *action = actionList->action(*it2);
                 if (!action->isVisible())
                     continue;
                 QTreeWidgetItem *item = new QTreeWidgetItem(root, last);
-                last = item;
+                last                  = item;
 
                 QString n = actionName(static_cast<QAction *>(action));
                 if (!action->whatsThis().isEmpty()) {
@@ -465,10 +459,11 @@ void OptionsTabToolbars::rebuildToolbarKeys()
 
 void OptionsTabToolbars::updateArrows()
 {
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    bool up = false, down = false, left = false, right = false;
+    LookFeelToolbarsUI *d  = static_cast<LookFeelToolbarsUI *>(w);
+    bool                up = false, down = false, left = false, right = false;
 
-    if (d->tw_availActions->currentItem() && !d->tw_availActions->currentItem()->data(0, Qt::UserRole).toString().isEmpty())
+    if (d->tw_availActions->currentItem()
+        && !d->tw_availActions->currentItem()->data(0, Qt::UserRole).toString().isEmpty())
         right = true;
     QListWidgetItem *item = d->lw_selectedActions->currentItem();
     if (item) {
@@ -508,7 +503,7 @@ void OptionsTabToolbars::toolbarNameChanged()
 
     QString name = d->le_toolbarName->text();
 
-    int n = d->cb_toolbars->currentIndex();
+    int n               = d->cb_toolbars->currentIndex();
     p->toolbars[n].name = name;
 
     d->cb_toolbars->setItemText(n, name);
@@ -518,8 +513,8 @@ void OptionsTabToolbars::toolbarNameChanged()
 
 void OptionsTabToolbars::toolbarActionUp()
 {
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    QListWidgetItem *item = d->lw_selectedActions->currentItem();
+    LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
+    QListWidgetItem *   item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
 
@@ -540,8 +535,8 @@ void OptionsTabToolbars::toolbarActionUp()
 
 void OptionsTabToolbars::toolbarActionDown()
 {
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    QListWidgetItem *item = d->lw_selectedActions->currentItem();
+    LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
+    QListWidgetItem *   item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
 
@@ -562,8 +557,8 @@ void OptionsTabToolbars::toolbarActionDown()
 
 void OptionsTabToolbars::toolbarAddAction()
 {
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    QTreeWidgetItem *item = d->tw_availActions->currentItem();
+    LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
+    QTreeWidgetItem *   item = d->tw_availActions->currentItem();
     if (!item || item->data(0, Qt::UserRole).toString().isEmpty())
         return;
 
@@ -574,8 +569,8 @@ void OptionsTabToolbars::toolbarAddAction()
 
 void OptionsTabToolbars::toolbarRemoveAction()
 {
-    LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(w);
-    QListWidgetItem *item = d->lw_selectedActions->currentItem();
+    LookFeelToolbarsUI *d    = static_cast<LookFeelToolbarsUI *>(w);
+    QListWidgetItem *   item = d->lw_selectedActions->currentItem();
     if (!item)
         return;
 
@@ -597,9 +592,9 @@ void OptionsTabToolbars::toolbarDataChanged()
 
     ToolbarPrefs tb = p->toolbars[n];
 
-    //tb.dirty = true;
+    // tb.dirty = true;
     if (n > 1) {
-        tb.name = d->le_toolbarName->text();
+        tb.name   = d->le_toolbarName->text();
         tb.locked = d->ck_toolbarLocked->isChecked();
     }
     tb.on = d->ck_toolbarOn->isChecked();
@@ -614,9 +609,9 @@ QString OptionsTabToolbars::actionName(const QAction *a)
 {
     QString n = a->text(), n2;
     for (int i = 0; i < int(n.length()); i++) {
-        if (n[i] == '&' && n[i+1] != '&')
+        if (n[i] == '&' && n[i + 1] != '&')
             continue;
-        else if (n[i] == '&' && n[i+1] == '&')
+        else if (n[i] == '&' && n[i + 1] == '&')
             n2 += '&';
         else
             n2 += n[i];
@@ -653,12 +648,6 @@ void OptionsTabToolbars::toolbarPositionApply()
 #endif
 }
 
-void OptionsTabToolbars::selAct_selectionChanged(QListWidgetItem *)
-{
-    updateArrows();
-}
+void OptionsTabToolbars::selAct_selectionChanged(QListWidgetItem *) { updateArrows(); }
 
-void OptionsTabToolbars::avaAct_selectionChanged(QTreeWidgetItem *)
-{
-    updateArrows();
-}
+void OptionsTabToolbars::avaAct_selectionChanged(QTreeWidgetItem *) { updateArrows(); }

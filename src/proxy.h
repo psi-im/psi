@@ -35,27 +35,25 @@ class QDomElement;
 
 typedef QList<ProxyItem> ProxyItemList;
 
-class ProxySettings
-{
+class ProxySettings {
 public:
     ProxySettings();
 
     QString host, user, pass;
-    int port;
-    bool useAuth;
+    int     port;
+    bool    useAuth;
     QString url;
 
-    void toOptions(OptionsTree* o, QString base) const;
-    void fromOptions(OptionsTree* o, QString base);
+    void        toOptions(OptionsTree *o, QString base) const;
+    void        fromOptions(OptionsTree *o, QString base);
     QDomElement toXml(QDomDocument *) const;
-    bool fromXml(const QDomElement &);
+    bool        fromXml(const QDomElement &);
 };
 
-class ProxyDlg : public QDialog
-{
+class ProxyDlg : public QDialog {
     Q_OBJECT
 public:
-    ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=nullptr);
+    ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent = nullptr);
     ~ProxyDlg();
 
 signals:
@@ -64,20 +62,20 @@ signals:
 public:
     class Private;
     friend class Private;
+
 private:
-    Private *d;
+    Private * d;
     Ui::Proxy ui_;
 };
 
-class ProxyChooser : public QWidget
-{
+class ProxyChooser : public QWidget {
     Q_OBJECT
 public:
-    ProxyChooser(ProxyManager*, QWidget* parent);
+    ProxyChooser(ProxyManager *, QWidget *parent);
     ~ProxyChooser();
 
     QString currentItem() const;
-    void setCurrentItem(const QString &item);
+    void    setCurrentItem(const QString &item);
 
 private slots:
     void pm_settingsChanged();
@@ -94,60 +92,57 @@ private:
     void buildComboBox();
 };
 
-class ProxyItem
-{
+class ProxyItem {
 public:
     ProxyItem() {}
 
-    QString id;
-    QString name;
-    QString type;
+    QString       id;
+    QString       name;
+    QString       type;
     ProxySettings settings;
 };
 
-class ProxyForObject : public QObject
-{
+class ProxyForObject : public QObject {
     Q_OBJECT
 
 public:
     ProxyForObject(OptionsTree *o, QObject *parent = nullptr);
     ~ProxyForObject();
 
-    QString itemForObject(const QString& obj);
-    void save();
-    QComboBox* getComboBox(ProxyChooser* pc, QWidget* p = nullptr);
+    QString    itemForObject(const QString &obj);
+    void       save();
+    QComboBox *getComboBox(ProxyChooser *pc, QWidget *p = nullptr);
 
 private slots:
     void currentItemChanged(int);
     void updateCurrentItem();
 
 private:
-    void loadItem(const QString& obj);
+    void loadItem(const QString &obj);
 
-    OptionsTree* ot_;
-    ProxyChooser* pc_;
-    QPointer<QComboBox> cb_;
+    OptionsTree *          ot_;
+    ProxyChooser *         pc_;
+    QPointer<QComboBox>    cb_;
     QMap<QString, QString> items_;
     QMap<QString, QString> tmp_;
 };
 
-class ProxyManager : public QObject
-{
+class ProxyManager : public QObject {
     Q_OBJECT
 public:
-    static ProxyManager* instance();
+    static ProxyManager *instance();
 
     void init(OptionsTree *o);
     ~ProxyManager();
 
-    ProxyChooser *createProxyChooser(QWidget *parent=nullptr);
+    ProxyChooser *createProxyChooser(QWidget *parent = nullptr);
     ProxyItemList itemList() const;
-    ProxyItem getItem(const QString &id) const;
-    QString lastEdited() const;
-    void migrateItemList(const ProxyItemList &);
-//    int findOldIndex(int) const;
-    ProxyForObject* proxyForObject();
-    ProxyItem getItemForObject(const QString& obj);
+    ProxyItem     getItem(const QString &id) const;
+    QString       lastEdited() const;
+    void          migrateItemList(const ProxyItemList &);
+    //    int findOldIndex(int) const;
+    ProxyForObject *proxyForObject();
+    ProxyItem       getItemForObject(const QString &obj);
 
 signals:
     void settingsChanged();
@@ -164,7 +159,7 @@ private:
     class Private;
     Private *d;
 
-    static ProxyManager* instance_;
+    static ProxyManager *instance_;
 };
 
 #endif // PROXYDLG_H

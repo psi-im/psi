@@ -22,26 +22,21 @@
 #include <QObject>
 #include <QPalette>
 
-class ColorData
-{
+class ColorData {
 public:
     ColorData() : role(QPalette::NoRole), valid(false) {}
-    ColorData(const QColor &color, QPalette::ColorRole role)
-        : color(color)
-        , role(role)
-        , valid(true) { }
+    ColorData(const QColor &color, QPalette::ColorRole role) : color(color), role(role), valid(true) {}
 
-    QColor color;
+    QColor              color;
     QPalette::ColorRole role;
-    bool valid;
+    bool                valid;
 };
 
-class ColorOpt : public QObject
-{
+class ColorOpt : public QObject {
     Q_OBJECT
 public:
-    static ColorOpt* instance();
-    QColor color(const QString &opt, const QColor &defaultColor = QColor()) const;
+    static ColorOpt *   instance();
+    QColor              color(const QString &opt, const QColor &defaultColor = QColor()) const;
     QPalette::ColorRole colorRole(const QString &opt) const;
 
 signals:
@@ -58,5 +53,5 @@ private slots:
 
 private:
     static QScopedPointer<ColorOpt> instance_;
-    QHash<QString, ColorData> colors;
+    QHash<QString, ColorData>       colors;
 };

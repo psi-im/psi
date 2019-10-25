@@ -31,15 +31,14 @@
 #include <QString>
 #include <QtCore>
 
-class WinAmpPlugin : public QObject, public TuneControllerPlugin
-{
+class WinAmpPlugin : public QObject, public TuneControllerPlugin {
     Q_OBJECT
     Q_INTERFACES(TuneControllerPlugin)
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
 #endif // WINAMPPLUGIN_H

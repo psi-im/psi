@@ -28,13 +28,12 @@ class QDomDocument;
 class QDomElement;
 class QStringList;
 
-class VarListItem
-{
+class VarListItem {
 public:
-    VarListItem() { }
+    VarListItem() {}
 
-    const QString & key() const { return v_key; }
-    const QString & data() const { return v_data; }
+    const QString &key() const { return v_key; }
+    const QString &data() const { return v_data; }
 
     void setKey(const QString &s) { v_key = s; }
     void setData(const QString &s) { v_data = s; }
@@ -44,14 +43,13 @@ private:
     QString v_data;
 };
 
-class VarList : public QList<VarListItem>
-{
+class VarList : public QList<VarListItem> {
 public:
     VarList();
 
-    void set(const QString &, const QString &);
-    void unset(const QString &);
-    const QString & get(const QString &);
+    void           set(const QString &, const QString &);
+    void           unset(const QString &);
+    const QString &get(const QString &);
 
     VarList::Iterator findByKey(const QString &);
     VarList::Iterator findByNum(int);
@@ -62,7 +60,7 @@ public:
     void toOptions(OptionsTree *o, QString base);
 
     QDomElement toXml(QDomDocument &doc, const QString &tagName);
-    void fromXml(const QDomElement &);
+    void        fromXml(const QDomElement &);
 };
 
 #endif // VARLIST_H

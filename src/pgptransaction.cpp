@@ -28,49 +28,25 @@
 
 using namespace XMPP;
 
-PGPTransaction::PGPTransaction(QCA::SecureMessageSystem* system) : QCA::SecureMessage(system), system_(system)
+PGPTransaction::PGPTransaction(QCA::SecureMessageSystem *system) : QCA::SecureMessage(system), system_(system)
 {
     id_ = idCounter_++;
 }
 
-PGPTransaction::~PGPTransaction()
-{
-    delete system_;
-}
+PGPTransaction::~PGPTransaction() { delete system_; }
 
-int PGPTransaction::id() const
-{
-    return id_;
-}
+int PGPTransaction::id() const { return id_; }
 
-void PGPTransaction::setMessage(const XMPP::Message &m)
-{
-    message_ = m;
-}
+void PGPTransaction::setMessage(const XMPP::Message &m) { message_ = m; }
 
-const XMPP::Message & PGPTransaction::message() const
-{
-    return message_;
-}
+const XMPP::Message &PGPTransaction::message() const { return message_; }
 
-const QDomElement & PGPTransaction::xml() const
-{
-    return xml_;
-}
+const QDomElement &PGPTransaction::xml() const { return xml_; }
 
-void PGPTransaction::setXml(const QDomElement &xml)
-{
-    xml_ = xml;
-}
+void PGPTransaction::setXml(const QDomElement &xml) { xml_ = xml; }
 
-Jid PGPTransaction::jid() const
-{
-    return jid_;
-}
+Jid PGPTransaction::jid() const { return jid_; }
 
-void PGPTransaction::setJid(const Jid &j)
-{
-    jid_ = j;
-}
+void PGPTransaction::setJid(const Jid &j) { jid_ = j; }
 
 int PGPTransaction::idCounter_ = 0;

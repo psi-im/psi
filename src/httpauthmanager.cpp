@@ -19,15 +19,14 @@
 
 #include "httpauthmanager.h"
 
+#include "psihttpauthrequest.h"
 #include "xmpp_client.h"
 #include "xmpp_message.h"
 #include "xmpp_stream.h"
 #include "xmpp_task.h"
 #include "xmpp_xmlcommon.h"
-#include "psihttpauthrequest.h"
 
-class HttpAuthListener : public XMPP::Task
-{
+class HttpAuthListener : public XMPP::Task {
     Q_OBJECT
 
 public:
@@ -36,27 +35,25 @@ public:
     void reply(bool confirm, const PsiHttpAuthRequest &);
 
 signals:
-    void request(const PsiHttpAuthRequest&);
+    void request(const PsiHttpAuthRequest &);
 };
 
-HttpAuthListener::HttpAuthListener(XMPP::Task *parent) : XMPP::Task(parent)
-{
-}
+HttpAuthListener::HttpAuthListener(XMPP::Task *parent) : XMPP::Task(parent) {}
 
 bool HttpAuthListener::take(const QDomElement &e)
 {
     QDomElement c = e.elementsByTagName("confirm").item(0).toElement();
-        // yes, of course, we need to check namespace, too
-        // but it is impossible before calling addCorrectNS(),
-        // which may be time/resources consuming
-        // while this protocol is not so commonly used,
-        // so it probably makes sense to do a "first guess" check like this
+    // yes, of course, we need to check namespace, too
+    // but it is impossible before calling addCorrectNS(),
+    // which may be time/resources consuming
+    // while this protocol is not so commonly used,
+    // so it probably makes sense to do a "first guess" check like this
 
     if (c.isNull())
         return false;
 
     XMPP::Stanza s = client()->stream().createStanza(addCorrectNS(e));
-    if(s.isNull())
+    if (s.isNull())
         return false;
 
     if (s.kind() == XMPP::Stanza::IQ && s.type() != "get")
@@ -86,11 +83,10 @@ void HttpAuthListener::reply(bool confirm, const PsiHttpAuthRequest &req)
         QDomElement t = s.element().elementsByTagNameNS(s.baseNS(), "thread").item(0).toElement();
         if (!t.isNull()) {
             m.setThread(t.text(), true);
-        }    //FIX-ME: it doesn't make sense to create Message object just to read the thread, does it?
+        } // FIX-ME: it doesn't make sense to create Message object just to read the thread, does it?
 
         client()->sendMessage(m);
-     }
-    else {
+    } else {
         QDomElement e;
         e = createIQ(client()->doc(), confirm ? "result" : "error", s.from().full(), s.id());
         e.appendChild(req.toXml(*client()->doc()));
@@ -122,7 +118,8 @@ void HttpAuthListener::reply(bool confirm, const PsiHttpAuthRequest &req)
 HttpAuthManager::HttpAuthManager(XMPP::Task *root)
 {
     listener_ = new HttpAuthListener(root);
-    connect(listener_,SIGNAL(request(const PsiHttpAuthRequest&)),SIGNAL(confirmationRequest(const PsiHttpAuthRequest&)));
+    connect(listener_, SIGNAL(request(const PsiHttpAuthRequest &)),
+            SIGNAL(confirmationRequest(const PsiHttpAuthRequest &)));
 }
 
 /*!
@@ -136,17 +133,11 @@ HttpAuthManager::~HttpAuthManager()
 /*!
     Confirm the \a request.
 */
-void HttpAuthManager::confirm(const PsiHttpAuthRequest &request)
-{
-    listener_->reply(true, request);
-}
+void HttpAuthManager::confirm(const PsiHttpAuthRequest &request) { listener_->reply(true, request); }
 
 /*!
     Deny the \a request.
 */
-void HttpAuthManager::deny(const PsiHttpAuthRequest &request)
-{
-    listener_->reply(false, request);
-}
+void HttpAuthManager::deny(const PsiHttpAuthRequest &request) { listener_->reply(false, request); }
 
 #include "httpauthmanager.moc"

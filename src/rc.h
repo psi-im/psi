@@ -24,54 +24,47 @@
 
 class PsiCon;
 
-class RCCommandServer : public AHCommandServer
-{
+class RCCommandServer : public AHCommandServer {
 public:
-    RCCommandServer(AHCServerManager* m) : AHCommandServer(m) { }
-    virtual QString node() const
-        { return QString("http://jabber.org/protocol/rc#") + rcNode(); }
+    RCCommandServer(AHCServerManager *m) : AHCommandServer(m) {}
+    virtual QString node() const { return QString("http://jabber.org/protocol/rc#") + rcNode(); }
     virtual QString rcNode() const = 0;
-    virtual bool isAllowed(const Jid&) const;
-
+    virtual bool    isAllowed(const Jid &) const;
 };
 
-class RCSetStatusServer : public RCCommandServer
-{
+class RCSetStatusServer : public RCCommandServer {
 public:
-    RCSetStatusServer(AHCServerManager* m) : RCCommandServer(m) { }
-    virtual QString name() const { return "Set Status"; }
-    virtual QString rcNode() const { return "set-status"; }
-    virtual AHCommand execute(const AHCommand&, const Jid&);
+    RCSetStatusServer(AHCServerManager *m) : RCCommandServer(m) {}
+    virtual QString   name() const { return "Set Status"; }
+    virtual QString   rcNode() const { return "set-status"; }
+    virtual AHCommand execute(const AHCommand &, const Jid &);
 };
 
-class RCForwardServer : public RCCommandServer
-{
+class RCForwardServer : public RCCommandServer {
 public:
-    RCForwardServer(AHCServerManager* m) : RCCommandServer(m) { }
-    virtual QString name() const { return "Forward Messages"; }
-    virtual QString rcNode() const { return "forward"; }
-    virtual AHCommand execute(const AHCommand& c, const Jid&);
+    RCForwardServer(AHCServerManager *m) : RCCommandServer(m) {}
+    virtual QString   name() const { return "Forward Messages"; }
+    virtual QString   rcNode() const { return "forward"; }
+    virtual AHCommand execute(const AHCommand &c, const Jid &);
 };
 
-class RCLeaveMucServer : public RCCommandServer
-{
+class RCLeaveMucServer : public RCCommandServer {
 public:
-    RCLeaveMucServer(AHCServerManager* m) : RCCommandServer(m) { }
-    virtual QString name() const { return "Leave All Conferences"; }
-    virtual QString rcNode() const { return "leave-muc"; }
-    virtual AHCommand execute(const AHCommand& c, const Jid&);
+    RCLeaveMucServer(AHCServerManager *m) : RCCommandServer(m) {}
+    virtual QString   name() const { return "Leave All Conferences"; }
+    virtual QString   rcNode() const { return "leave-muc"; }
+    virtual AHCommand execute(const AHCommand &c, const Jid &);
 };
 
-class RCSetOptionsServer : public RCCommandServer
-{
+class RCSetOptionsServer : public RCCommandServer {
 public:
-    RCSetOptionsServer(AHCServerManager* m, PsiCon* c) : RCCommandServer(m), psiCon_(c) { }
-    virtual QString name() const { return "Set Options"; }
-    virtual QString rcNode() const { return "set-options"; }
-    virtual AHCommand execute(const AHCommand& c, const Jid&);
+    RCSetOptionsServer(AHCServerManager *m, PsiCon *c) : RCCommandServer(m), psiCon_(c) {}
+    virtual QString   name() const { return "Set Options"; }
+    virtual QString   rcNode() const { return "set-options"; }
+    virtual AHCommand execute(const AHCommand &c, const Jid &);
 
 private:
-    PsiCon* psiCon_;
+    PsiCon *psiCon_;
 };
 
 #endif // RC_H

@@ -16,23 +16,16 @@
 
 PsiTipLabel *PsiTipLabel::instance_ = nullptr;
 
-PsiTipLabel* PsiTipLabel::instance()
-{
-    return instance_;
-}
+PsiTipLabel *PsiTipLabel::instance() { return instance_; }
 
-PsiTipLabel::PsiTipLabel(QWidget* parent)
-    : QFrame(parent, Qt::ToolTip)
-    , doc(nullptr)
-    , isRichText(true)
-    , margin(5)
-    , enableColoring_(true)
+PsiTipLabel::PsiTipLabel(QWidget *parent) :
+    QFrame(parent, Qt::ToolTip), doc(nullptr), isRichText(true), margin(5), enableColoring_(true)
 {
     delete instance_;
     instance_ = this;
 }
 
-void PsiTipLabel::init(const QString& text)
+void PsiTipLabel::init(const QString &text)
 {
     setText(text);
     initUi();
@@ -45,10 +38,10 @@ void PsiTipLabel::init(const QString& text)
     setPalette(QToolTip::palette());
 
     enableColoring_ = PsiOptions::instance()->getOption("options.ui.look.colors.tooltip.enable").toBool();
-    if(enableColoring_){
+    if (enableColoring_) {
         QColor textColor(PsiOptions::instance()->getOption("options.ui.look.colors.tooltip.text").toString());
         QColor baseColor(PsiOptions::instance()->getOption("options.ui.look.colors.tooltip.background").toString());
-        if(textColor.isValid() && baseColor.isValid() && textColor != baseColor) { //looks fine
+        if (textColor.isValid() && baseColor.isValid() && textColor != baseColor) { // looks fine
             QPalette palette(QToolTip::palette());
             palette.setColor(QPalette::ToolTipText, textColor);
             palette.setColor(QPalette::ToolTipBase, baseColor);
@@ -65,17 +58,16 @@ void PsiTipLabel::init(const QString& text)
     }
 }
 
-void PsiTipLabel::setText(const QString& text)
+void PsiTipLabel::setText(const QString &text)
 {
-    theText_ = text;
+    theText_   = text;
     isRichText = false;
     if (doc) {
         if (Qt::mightBeRichText(theText_)) {
             isRichText = true;
             PsiRichText::install(doc);
             PsiRichText::setText(doc, theText_);
-        }
-        else {
+        } else {
             doc->setPlainText(theText_);
         }
     }
@@ -86,7 +78,7 @@ void PsiTipLabel::initUi()
     margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, nullptr, this);
     setFrameStyle(QFrame::NoFrame);
 
-    doc = new QTextDocument(this);
+    doc             = new QTextDocument(this);
     QTextOption opt = doc->defaultTextOption();
     opt.setWrapMode(QTextOption::WordWrap);
     doc->setDefaultTextOption(opt);
@@ -97,15 +89,9 @@ void PsiTipLabel::initUi()
     setText(theText_);
 }
 
-void PsiTipLabel::startHideTimer()
-{
-    hideTimer.start(10000, this);
-}
+void PsiTipLabel::startHideTimer() { hideTimer.start(10000, this); }
 
-QString PsiTipLabel::theText() const
-{
-    return theText_;
-}
+QString PsiTipLabel::theText() const { return theText_; }
 /*
 QSize PsiTipLabel::sizeForWidth(int w) const
 {
@@ -150,7 +136,7 @@ QSize PsiTipLabel::sizeHint() const
     QSize docSize = QSize(static_cast<int>(doc->idealWidth()), doc->size().toSize().height());
 
     QFontMetrics fm(font());
-    QSize extra(2*margin + 2, 2*margin + 1);    // "+" for tip's frame
+    QSize        extra(2 * margin + 2, 2 * margin + 1); // "+" for tip's frame
     // Make it look good with the default ToolTip font on Mac, which has a small descent.
     if (fm.descent() == 2 && fm.ascent() >= 11)
         ++extra.rheight();
@@ -176,10 +162,10 @@ QSize PsiTipLabel::minimumSizeHint() const
 
 void PsiTipLabel::paintEvent(QPaintEvent *)
 {
-    QStylePainter p(this);
+    QStylePainter     p(this);
     QStyleOptionFrame opt;
     opt.init(this);
-    if(enableColoring_) {
+    if (enableColoring_) {
         p.drawPrimitive(QStyle::PE_Frame, opt);
     } else {
         p.drawPrimitive(QStyle::PE_PanelTipLabel, opt);
@@ -192,7 +178,7 @@ void PsiTipLabel::paintEvent(QPaintEvent *)
     QRect cr = contentsRect();
     cr.adjust(margin, margin, -margin, -margin);
 
-    PsiRichText::ensureTextLayouted(doc, width() - 2*margin);
+    PsiRichText::ensureTextLayouted(doc, width() - 2 * margin);
     QAbstractTextDocumentLayout *layout = doc->documentLayout();
     // QRect lr = rect();
     QRect lr = cr;
@@ -211,10 +197,7 @@ void PsiTipLabel::paintEvent(QPaintEvent *)
     painter.restore();
 }
 
-PsiTipLabel::~PsiTipLabel()
-{
-    instance_ = nullptr;
-}
+PsiTipLabel::~PsiTipLabel() { instance_ = nullptr; }
 
 void PsiTipLabel::hideTip()
 {
@@ -223,10 +206,7 @@ void PsiTipLabel::hideTip()
     deleteTimer.start(250, this);
 }
 
-void PsiTipLabel::enterEvent(QEvent*)
-{
-    hideTip();
-}
+void PsiTipLabel::enterEvent(QEvent *) { hideTip(); }
 
 void PsiTipLabel::timerEvent(QTimerEvent *e)
 {
@@ -241,14 +221,12 @@ bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
     switch (e->type()) {
     case QEvent::KeyPress:
     case QEvent::KeyRelease: {
-        int key = static_cast<QKeyEvent *>(e)->key();
+        int                   key  = static_cast<QKeyEvent *>(e)->key();
         Qt::KeyboardModifiers mody = static_cast<QKeyEvent *>(e)->modifiers();
 
         if ((mody & Qt::KeyboardModifierMask)
-            || (key == Qt::Key_Shift || key == Qt::Key_Control
-            || key == Qt::Key_Alt || key == Qt::Key_Meta))
+            || (key == Qt::Key_Shift || key == Qt::Key_Control || key == Qt::Key_Alt || key == Qt::Key_Meta))
             break;
-
     }
         PSI_FALLSTHROUGH; // falls through
     case QEvent::Leave:
@@ -261,8 +239,7 @@ bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
     case QEvent::FocusOut:
     case QEvent::Wheel:
         hideTip();
-    default:
-        ;
+    default:;
     }
     return false;
 }

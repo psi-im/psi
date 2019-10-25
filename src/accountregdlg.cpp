@@ -35,9 +35,7 @@
 
 using namespace XMPP;
 
-AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
-    QDialog(parent),
-    psi(psi)
+AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) : QDialog(parent), psi(psi)
 {
     ui_.setupUi(this);
     setModal(false);
@@ -46,14 +44,15 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
     // step
 
     // Initialize settings
-    ssl_ = UserAccount::SSL_Auto;
+    ssl_  = UserAccount::SSL_Auto;
     port_ = 5222;
 
     // Server select button
-    connect(ui_.le_server,SIGNAL(popup()),SLOT(selectServer()));
+    connect(ui_.le_server, SIGNAL(popup()), SLOT(selectServer()));
     serverlist_querier_ = new ServerListQuerier(this);
-    connect(serverlist_querier_,SIGNAL(listReceived(const QStringList&)),SLOT(serverListReceived(const QStringList&)));
-    connect(serverlist_querier_,SIGNAL(error(const QString&)),SLOT(serverListError(const QString&)));
+    connect(serverlist_querier_, SIGNAL(listReceived(const QStringList &)),
+            SLOT(serverListReceived(const QStringList &)));
+    connect(serverlist_querier_, SIGNAL(error(const QString &)), SLOT(serverListError(const QString &)));
 
     // Manual Host/Port
     ui_.le_host->setEnabled(false);
@@ -63,8 +62,8 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
     connect(ui_.ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
 
     // SSL
-    ui_.cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
-    ui_.cb_ssl->addItem(tr("When available"),UserAccount::SSL_Auto);
+    ui_.cb_ssl->addItem(tr("Always"), UserAccount::SSL_Yes);
+    ui_.cb_ssl->addItem(tr("When available"), UserAccount::SSL_Auto);
     ui_.cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
     ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(ssl_));
     connect(ui_.cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
@@ -99,16 +98,14 @@ AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
     }
 }
 
-AccountRegDlg::~AccountRegDlg()
-{
-    delete client_;
-}
+AccountRegDlg::~AccountRegDlg() { delete client_; }
 
 void AccountRegDlg::done(int r)
 {
-    if(ui_.busy->isActive()) {
-        int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the registration?"), tr("&Yes"), tr("&No"));
-        if(n != 0)
+    if (ui_.busy->isActive()) {
+        int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the registration?"),
+                                         tr("&Yes"), tr("&No"));
+        if (n != 0)
             return;
     }
     client_->close();
@@ -117,18 +114,19 @@ void AccountRegDlg::done(int r)
 
 void AccountRegDlg::sslActivated(int i)
 {
-    if ((ui_.cb_ssl->itemData(i) == UserAccount::SSL_Yes || ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy) && !checkSSL()) {
+    if ((ui_.cb_ssl->itemData(i) == UserAccount::SSL_Yes || ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy)
+        && !checkSSL()) {
         ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
-    }
-    else if (ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ui_.ck_host->isChecked()) {
-        QMessageBox::critical(this, tr("Error"), tr("Legacy SSL is only available in combination with manual host/port."));
+    } else if (ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ui_.ck_host->isChecked()) {
+        QMessageBox::critical(this, tr("Error"),
+                              tr("Legacy SSL is only available in combination with manual host/port."));
         ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
     }
 }
 
 bool AccountRegDlg::checkSSL()
 {
-    if(!QCA::isSupported("tls")) {
+    if (!QCA::isSupported("tls")) {
         QMessageBox::information(this, tr("SSL error"), tr("Cannot enable SSL/TLS. QCA2 Plugin not found."));
         return false;
     }
@@ -155,7 +153,7 @@ void AccountRegDlg::selectServer()
     }
 }
 
-void AccountRegDlg::serverListReceived(const QStringList& list)
+void AccountRegDlg::serverListReceived(const QStringList &list)
 {
     ui_.busy->stop();
     unblock();
@@ -164,7 +162,7 @@ void AccountRegDlg::serverListReceived(const QStringList& list)
     ui_.le_server->showPopup();
 }
 
-void AccountRegDlg::serverListError(const QString& e)
+void AccountRegDlg::serverListError(const QString &e)
 {
     ui_.busy->stop();
     unblock();
@@ -173,7 +171,7 @@ void AccountRegDlg::serverListError(const QString& e)
         error += ".\n" + tr("Reason: ") + e;
     }
     qWarning("%s", qPrintable(error));
-    //QMessageBox::critical(this, tr("Error"), error);
+    // QMessageBox::critical(this, tr("Error"), error);
     ui_.le_server->setFocus();
 }
 
@@ -182,12 +180,12 @@ void AccountRegDlg::next()
     if (ui_.sw_register->currentWidget() == ui_.page_server) {
 
         // Update settings
-        server_ = JIDUtil::accountFromString(ui_.le_server->currentText().trimmed());
-        ssl_ =  UserAccount::SSLFlag(ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt());
+        server_   = JIDUtil::accountFromString(ui_.le_server->currentText().trimmed());
+        ssl_      = UserAccount::SSLFlag(ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt());
         opt_host_ = ui_.ck_host->isChecked();
-        host_ = ui_.le_host->text();
-        port_ = ui_.le_port->text().toInt();
-        proxy_ = proxy_chooser_->currentItem();
+        host_     = ui_.le_host->text();
+        port_     = ui_.le_port->text().toInt();
+        proxy_    = proxy_chooser_->currentItem();
 
         // Sanity check
         if (server_.isNull() || !server_.node().isEmpty() || !server_.resource().isEmpty()) {
@@ -198,19 +196,18 @@ void AccountRegDlg::next()
         // Connect to the server
         ui_.busy->start();
         block();
-        client_->connectToServer(server_, false, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes, opt_host_ ? host_ : QString(), port_, proxy_);
-    }
-    else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+        client_->connectToServer(server_, false, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes,
+                                 opt_host_ ? host_ : QString(), port_, proxy_);
+    } else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
         // Initialize the form
         XMPP::XData fields;
         fields.setFields(fields_->fields());
 
         // Determine the username and password
-        foreach(XMPP::XData::Field field, fields.fields()) {
+        foreach (XMPP::XData::Field field, fields.fields()) {
             if (field.var() == "username" && !field.value().isEmpty()) {
                 jid_ = Jid(field.value().at(0), server_.bare(), "");
-            }
-            else if (field.var() == "password" && !field.value().isEmpty()) {
+            } else if (field.var() == "password" && !field.value().isEmpty()) {
                 pass_ = field.value().at(0);
             }
         }
@@ -224,9 +221,8 @@ void AccountRegDlg::next()
             Form form = convertFromXData(fields);
             form.setJid(server_);
             reg->setForm(form);
-        }
-        else {
-            reg->setForm(server_,fields);
+        } else {
+            reg->setForm(server_, fields);
         }
         reg->go(true);
     }
@@ -259,15 +255,14 @@ void AccountRegDlg::getFields_finished()
     ui_.busy->stop();
     if (reg->success()) {
         unblock();
-        fields_ =  new XDataWidget(psi, ui_.page_fields, client_->client(), reg->form().jid());
+        fields_ = new XDataWidget(psi, ui_.page_fields, client_->client(), reg->form().jid());
         XData xdata;
         if (reg->hasXData()) {
             isOld_ = false;
-            xdata = reg->xdata();
-        }
-        else {
+            xdata  = reg->xdata();
+        } else {
             isOld_ = true;
-            xdata = convertToXData(reg->form());
+            xdata  = convertToXData(reg->form());
         }
         if (xdata.instructions().isEmpty())
             xdata.setInstructions(tr("Please provide the following information:"));
@@ -276,8 +271,7 @@ void AccountRegDlg::getFields_finished()
         fields_container_->setWidget(fields_);
         fields_container_->updateGeometry();
         ui_.sw_register->setCurrentWidget(ui_.page_fields);
-    }
-    else {
+    } else {
         QMessageBox::critical(this, tr("Error"), tr("This server does not support registration"));
         unblock();
     }
@@ -288,31 +282,33 @@ void AccountRegDlg::setFields_finished()
     JT_Register *reg = static_cast<JT_Register *>(sender());
     ui_.busy->stop();
     if (reg->success()) {
-        QMessageBox::information(this, tr("Success"), QString(tr("You have successfully registered your account with XMPP address '%1'")).arg(jid_.bare()));
-        tlsOverrideCert_ = client_->tlsOverrideCert;
+        QMessageBox::information(
+            this, tr("Success"),
+            QString(tr("You have successfully registered your account with XMPP address '%1'")).arg(jid_.bare()));
+        tlsOverrideCert_   = client_->tlsOverrideCert;
         tlsOverrideDomain_ = client_->tlsOverrideDomain;
         client_->close();
         accept();
-    }
-    else {
+    } else {
         unblock();
-        QMessageBox::critical(this, tr("Error"), QString(tr("There was an error registering the account.\nReason: %1")).arg(reg->statusString()));
+        QMessageBox::critical(
+            this, tr("Error"),
+            QString(tr("There was an error registering the account.\nReason: %1")).arg(reg->statusString()));
     }
 }
 
-XMPP::XData AccountRegDlg::convertToXData(const XMPP::Form& form)
+XMPP::XData AccountRegDlg::convertToXData(const XMPP::Form &form)
 {
     // Convert the fields
     XData::FieldList fields;
-    foreach(FormField f, form) {
+    foreach (FormField f, form) {
         XData::Field field;
         field.setLabel(f.fieldName());
         field.setVar(f.realName());
         field.setRequired(true);
         if (f.isSecret()) {
             field.setType(XData::Field::Field_TextPrivate);
-        }
-        else {
+        } else {
             field.setType(XData::Field::Field_TextSingle);
         }
         fields.push_back(field);
@@ -325,10 +321,10 @@ XMPP::XData AccountRegDlg::convertToXData(const XMPP::Form& form)
     return xdata;
 }
 
-XMPP::Form AccountRegDlg::convertFromXData(const XMPP::XData& xdata)
+XMPP::Form AccountRegDlg::convertFromXData(const XMPP::XData &xdata)
 {
     Form form;
-    foreach(XMPP::XData::Field field, xdata.fields()) {
+    foreach (XMPP::XData::Field field, xdata.fields()) {
         if (!field.value().isEmpty()) {
             FormField f;
             f.setType(field.var());
@@ -345,8 +341,7 @@ void AccountRegDlg::block()
         ui_.gb_server->setEnabled(false);
         ui_.gb_connection->setEnabled(false);
         ui_.pb_next->setEnabled(false);
-    }
-    else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+    } else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
         if (fields_)
             fields_->setEnabled(false);
     }
@@ -358,8 +353,7 @@ void AccountRegDlg::unblock()
         ui_.gb_server->setEnabled(true);
         ui_.gb_connection->setEnabled(true);
         ui_.pb_next->setEnabled(true);
-    }
-    else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+    } else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
         ui_.pb_next->setEnabled(true);
         if (fields_)
             fields_->setEnabled(true);

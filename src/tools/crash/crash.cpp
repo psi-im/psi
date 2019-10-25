@@ -24,8 +24,5 @@
 #include <signal.h>
 
 namespace Crash {
-void registerSigsegvHandler(QString)
-{
-    signal(SIGSEGV, sigsegv_handler_bt_full_fnc);
-}
+void registerSigsegvHandler(QString) { signal(SIGSEGV, sigsegv_handler_bt_full_fnc); }
 }; // namespace Crash

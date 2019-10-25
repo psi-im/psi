@@ -27,75 +27,77 @@ class PsiIcon;
 class QColor;
 class QPixmap;
 
-class FancyLabel : public QWidget
-{
+class FancyLabel : public QWidget {
     Q_OBJECT
-    Q_PROPERTY( QPixmap pixmap READ pixmap WRITE setPixmap )
-    Q_PROPERTY( QString text READ text WRITE setText )
-    Q_PROPERTY( QString help READ help WRITE setHelp )
-    Q_PROPERTY( QColor colorFrom READ colorFrom WRITE setColorFrom )
-    Q_PROPERTY( QColor colorTo READ colorTo WRITE setColorTo )
-    Q_PROPERTY( QColor colorFont READ colorFont WRITE setColorFont )
-    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
+    Q_PROPERTY(QPixmap pixmap READ pixmap WRITE setPixmap)
+    Q_PROPERTY(QString text READ text WRITE setText)
+    Q_PROPERTY(QString help READ help WRITE setHelp)
+    Q_PROPERTY(QColor colorFrom READ colorFrom WRITE setColorFrom)
+    Q_PROPERTY(QColor colorTo READ colorTo WRITE setColorTo)
+    Q_PROPERTY(QColor colorFont READ colorFont WRITE setColorFont)
+    Q_PROPERTY(QString psiIconName READ psiIconName WRITE setPsiIcon)
 
-    Q_ENUMS( Shape Shadow )
-    Q_PROPERTY( Shape frameShape READ frameShape WRITE setFrameShape )
-    Q_PROPERTY( Shadow frameShadow READ frameShadow WRITE setFrameShadow )
-    Q_PROPERTY( int lineWidth READ lineWidth WRITE setLineWidth )
-    Q_PROPERTY( int midLineWidth READ midLineWidth WRITE setMidLineWidth )
+    Q_ENUMS(Shape Shadow)
+    Q_PROPERTY(Shape frameShape READ frameShape WRITE setFrameShape)
+    Q_PROPERTY(Shadow frameShadow READ frameShadow WRITE setFrameShadow)
+    Q_PROPERTY(int lineWidth READ lineWidth WRITE setLineWidth)
+    Q_PROPERTY(int midLineWidth READ midLineWidth WRITE setMidLineWidth)
 
 public:
-    FancyLabel (QWidget *parent = nullptr);
-    ~FancyLabel ();
+    FancyLabel(QWidget *parent = nullptr);
+    ~FancyLabel();
 
-    const QString &text () const;
-    const QString &help () const;
-    const QPixmap *pixmap () const;
-    const QColor &colorFrom () const;
-    const QColor &colorTo () const;
-    const QColor &colorFont () const;
-    const PsiIcon *psiIcon () const;
-    QString psiIconName () const;
-    void setText (const QString &);
-    void setHelp (const QString &);
-    void setPixmap (const QPixmap &);
-    void setColorFrom (const QColor &);
-    void setColorTo (const QColor &);
-    void setColorFont (const QColor &);
-    void setPsiIcon (const PsiIcon *);
-    void setPsiIcon (const QString &);
+    const QString &text() const;
+    const QString &help() const;
+    const QPixmap *pixmap() const;
+    const QColor & colorFrom() const;
+    const QColor & colorTo() const;
+    const QColor & colorFont() const;
+    const PsiIcon *psiIcon() const;
+    QString        psiIconName() const;
+    void           setText(const QString &);
+    void           setHelp(const QString &);
+    void           setPixmap(const QPixmap &);
+    void           setColorFrom(const QColor &);
+    void           setColorTo(const QColor &);
+    void           setColorFont(const QColor &);
+    void           setPsiIcon(const PsiIcon *);
+    void           setPsiIcon(const QString &);
 
-    enum Shape { NoFrame  = 0,                  // no frame
-                Box      = 0x0001,             // rectangular box
-                Panel    = 0x0002,             // rectangular panel
-                WinPanel = 0x0003,             // rectangular panel (Windows)
-                StyledPanel = 0x0006,          // rectangular panel depending on the GUI style
-                PopupPanel = 0x0007,           // rectangular panel depending on the GUI style
-                MenuBarPanel = 0x0008,
-                ToolBarPanel = 0x0009,
-                LineEditPanel = 0x000a,
-                TabWidgetPanel = 0x000b,
-                GroupBoxPanel = 0x000c,
-                MShape   = 0x000f              // mask for the shape
+    enum Shape {
+        NoFrame        = 0,      // no frame
+        Box            = 0x0001, // rectangular box
+        Panel          = 0x0002, // rectangular panel
+        WinPanel       = 0x0003, // rectangular panel (Windows)
+        StyledPanel    = 0x0006, // rectangular panel depending on the GUI style
+        PopupPanel     = 0x0007, // rectangular panel depending on the GUI style
+        MenuBarPanel   = 0x0008,
+        ToolBarPanel   = 0x0009,
+        LineEditPanel  = 0x000a,
+        TabWidgetPanel = 0x000b,
+        GroupBoxPanel  = 0x000c,
+        MShape         = 0x000f // mask for the shape
     };
-    enum Shadow { Plain    = 0x0010,            // plain line
-                  Raised   = 0x0020,            // raised shadow effect
-                  Sunken   = 0x0030,            // sunken shadow effect
-                  MShadow  = 0x00f0 };          // mask for the shadow
+    enum Shadow {
+        Plain   = 0x0010, // plain line
+        Raised  = 0x0020, // raised shadow effect
+        Sunken  = 0x0030, // sunken shadow effect
+        MShadow = 0x00f0
+    }; // mask for the shadow
 
-    Shape frameShape () const;
-    void setFrameShape (Shape);
+    Shape frameShape() const;
+    void  setFrameShape(Shape);
 
-    Shadow frameShadow () const;
-    void setFrameShadow (Shadow);
+    Shadow frameShadow() const;
+    void   setFrameShadow(Shadow);
 
-    int lineWidth () const;
-    void setLineWidth (int);
+    int  lineWidth() const;
+    void setLineWidth(int);
 
-    int midLineWidth () const;
-    void setMidLineWidth (int);
+    int  midLineWidth() const;
+    void setMidLineWidth(int);
 
-    void setScaledContents(int width, int height);
+    void        setScaledContents(int width, int height);
     static void setSmallFontSize(int);
 
 private:

@@ -3,13 +3,11 @@
 
 class WebkitAccessingHost;
 
-class WebkitAccessor
-{
+class WebkitAccessor {
 public:
     virtual ~WebkitAccessor() {}
 
-    virtual void setWebkitAccessingHost(WebkitAccessingHost* host) = 0;
-
+    virtual void setWebkitAccessingHost(WebkitAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(WebkitAccessor, "org.psi-im.WebkitAccessor/0.1");

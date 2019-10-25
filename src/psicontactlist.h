@@ -30,57 +30,59 @@ class PsiCon;
 class PsiContact;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 using namespace XMPP;
 
-class PsiContactList : public QObject
-{
+class PsiContactList : public QObject {
     Q_OBJECT
 public:
-    PsiContactList(PsiCon* psi);
+    PsiContactList(PsiCon *psi);
     ~PsiContactList();
     void gracefulDeinit();
 
-    PsiCon* psi() const;
+    PsiCon *psi() const;
 
-    bool showAgents() const;
-    bool showHidden() const;
-    bool showSelf() const;
-    bool showOffline() const;
+    bool    showAgents() const;
+    bool    showHidden() const;
+    bool    showSelf() const;
+    bool    showOffline() const;
     QString contactSortStyle() const;
 
     bool accountsLoaded() const;
 
-    PsiAccount* getAccount(const QString& id) const;
-    PsiAccount* getAccountByJid(const XMPP::Jid& jid) const;
+    PsiAccount *getAccount(const QString &id) const;
+    PsiAccount *getAccountByJid(const XMPP::Jid &jid) const;
 
-    const QList<PsiAccount*>& accounts() const;
-    const QList<PsiAccount*>& enabledAccounts() const;
-    bool haveActiveAccounts() const;
-    bool haveAvailableAccounts() const;
-    bool haveEnabledAccounts() const;
-    bool haveConnectingAccounts() const;
+    const QList<PsiAccount *> &accounts() const;
+    const QList<PsiAccount *> &enabledAccounts() const;
+    bool                       haveActiveAccounts() const;
+    bool                       haveAvailableAccounts() const;
+    bool                       haveEnabledAccounts() const;
+    bool                       haveConnectingAccounts() const;
 
     PsiAccount *defaultAccount() const;
 
     UserAccountList getUserAccountList() const;
-    void setAccountsOrder(QList<PsiAccount*> accounts);
+    void            setAccountsOrder(QList<PsiAccount *> accounts);
 
-    PsiAccount* createAccount(const QString& name, const Jid& j = "", const QString& pass = "", bool opt_host = false, const QString& host = "", int port = 5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl = UserAccount::SSL_Auto, QString proxyID = "", const QString &tlsOverrideDomain="", const QByteArray &tlsOverrideCert=QByteArray());
-    void createAccount(const UserAccount&);
-    void removeAccount(PsiAccount*);
-    void setAccountEnabled(PsiAccount*, bool enabled = true);
+    PsiAccount *createAccount(const QString &name, const Jid &j = "", const QString &pass = "", bool opt_host = false,
+                              const QString &host = "", int port = 5222, bool legacy_ssl_probe = true,
+                              UserAccount::SSLFlag ssl = UserAccount::SSL_Auto, QString proxyID = "",
+                              const QString &tlsOverrideDomain = "", const QByteArray &tlsOverrideCert = QByteArray());
+    void        createAccount(const UserAccount &);
+    void        removeAccount(PsiAccount *);
+    void        setAccountEnabled(PsiAccount *, bool enabled = true);
 
-    int queueCount() const;
-    int queueContactCount() const;
+    int         queueCount() const;
+    int         queueContactCount() const;
     PsiAccount *queueLowestEventId();
 
     void loadAccounts(const UserAccountList &);
-    void link(PsiAccount*);
-    void unlink(PsiAccount*);
+    void link(PsiAccount *);
+    void unlink(PsiAccount *);
 
-    const QList<PsiContact*>& contacts() const;
+    const QList<PsiContact *> &contacts() const;
 
 public slots:
     void setShowAgents(bool);
@@ -98,8 +100,8 @@ signals:
     void gracefulDeinitFinished();
 
 signals:
-    void addedContact(PsiContact*);
-    void removedContact(PsiContact*);
+    void addedContact(PsiContact *);
+    void removedContact(PsiContact *);
 
     void beginBulkContactUpdate();
     void endBulkContactUpdate();
@@ -109,12 +111,12 @@ signals:
      * This signal is emitted when account is loaded from disk or created
      * anew.
      */
-    void accountAdded(PsiAccount*);
+    void accountAdded(PsiAccount *);
     /**
      * This signal is emitted when account is completely removed from the
      * program, i.e. deleted.
      */
-    void accountRemoved(PsiAccount*);
+    void accountRemoved(PsiAccount *);
     /**
      * This signal is emitted when number of accounts managed by
      * PsiContactList changes.
@@ -155,27 +157,28 @@ signals:
 
 private slots:
     void accountEnabledChanged();
-    void accountAddedContact(PsiContact*);
-    void accountRemovedContact(PsiContact*);
+    void accountAddedContact(PsiContact *);
+    void accountRemovedContact(PsiContact *);
     void gracefulDeinitOnDisconnected();
+
 private:
     PsiAccount *loadAccount(const UserAccount &);
     PsiAccount *tryQueueLowestEventId(bool includeDND);
 
-    PsiCon *psi_;
+    PsiCon *            psi_;
     QList<PsiAccount *> accounts_, enabledAccounts_;
     QList<PsiContact *> contacts_;
 
-    bool showAgents_;
-    bool showHidden_;
-    bool showSelf_;
-    bool showOffline_;
-    bool accountsLoaded_;
+    bool    showAgents_;
+    bool    showHidden_;
+    bool    showSelf_;
+    bool    showOffline_;
+    bool    accountsLoaded_;
     QString contactSortStyle_;
-    int deinitAccCounter_;
+    int     deinitAccCounter_;
 
-    void addEnabledAccount(PsiAccount* account);
-    void removeEnabledAccount(PsiAccount* account);
+    void addEnabledAccount(PsiAccount *account);
+    void removeEnabledAccount(PsiAccount *account);
 };
 
 #endif // PSICONTACTLIST_H

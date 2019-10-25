@@ -23,33 +23,32 @@
 
 class AbstractTreeItem;
 
-typedef QList<AbstractTreeItem*> AbstractTreeItemList;
+typedef QList<AbstractTreeItem *> AbstractTreeItemList;
 
-class AbstractTreeItem
-{
+class AbstractTreeItem {
 public:
     explicit AbstractTreeItem(AbstractTreeItem *parent = nullptr);
     virtual ~AbstractTreeItem();
 
     void setRow(int row);
-    int row() const;
+    int  row() const;
 
-    void setParent(AbstractTreeItem *newParent);
+    void              setParent(AbstractTreeItem *newParent);
     AbstractTreeItem *parent() const;
 
     void insertChild(int row, AbstractTreeItem *child);
     void appendChild(AbstractTreeItem *child);
     void removeChild(AbstractTreeItem *child);
 
-    AbstractTreeItem *child(int row) const;
-    int childCount() const;
+    AbstractTreeItem *   child(int row) const;
+    int                  childCount() const;
     AbstractTreeItemList children() const;
 
     virtual AbstractTreeItem *clone() const { return nullptr; /* no default implementation */ }
-    void dump(int indent = 0) const;
-    virtual QString toString() const { return QString(); /* no default implementation */ }
+    void                      dump(int indent = 0) const;
+    virtual QString           toString() const { return QString(); /* no default implementation */ }
 
 private:
-    AbstractTreeItem *_parent;
+    AbstractTreeItem *   _parent;
     AbstractTreeItemList _children;
 };

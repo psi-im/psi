@@ -3,13 +3,11 @@
 
 class ActiveTabAccessingHost;
 
-class ActiveTabAccessor
-{
+class ActiveTabAccessor {
 public:
     virtual ~ActiveTabAccessor() {}
 
-    virtual void setActiveTabAccessingHost(ActiveTabAccessingHost* host) = 0;
-
+    virtual void setActiveTabAccessingHost(ActiveTabAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(ActiveTabAccessor, "org.psi-im.ActiveTabAccessor/0.1");

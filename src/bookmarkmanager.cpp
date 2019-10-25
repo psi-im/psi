@@ -27,15 +27,14 @@
 
 // -----------------------------------------------------------------------------
 
-class BookmarkTask : public Task
-{
+class BookmarkTask : public Task {
 public:
-    BookmarkTask(Task* parent) : Task(parent) {
-    }
+    BookmarkTask(Task *parent) : Task(parent) {}
 
-    void set(const QList<URLBookmark>& urls, const QList<ConferenceBookmark>& conferences) {
+    void set(const QList<URLBookmark> &urls, const QList<ConferenceBookmark> &conferences)
+    {
         // Store it here to take back if necessary
-        urls_ = urls;
+        urls_        = urls;
         conferences_ = conferences;
 
         iq_ = createIQ(doc(), "set", "", id());
@@ -46,13 +45,14 @@ public:
         QDomElement storage = doc()->createElementNS("storage:bookmarks", "storage");
         prvt.appendChild(storage);
 
-        foreach(URLBookmark u, urls)
+        foreach (URLBookmark u, urls)
             storage.appendChild(u.toXml(*doc()));
-        foreach(ConferenceBookmark c, conferences)
+        foreach (ConferenceBookmark c, conferences)
             storage.appendChild(c.toXml(*doc()));
     }
 
-    void get() {
+    void get()
+    {
         iq_ = createIQ(doc(), "get", "", id());
 
         QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
@@ -62,15 +62,14 @@ public:
         prvt.appendChild(bookmarks);
     }
 
-    void onGo() {
-        send(iq_);
-    }
+    void onGo() { send(iq_); }
 
-    bool take(const QDomElement& x) {
-        if(!iqVerify(x, "", id()))
+    bool take(const QDomElement &x)
+    {
+        if (!iqVerify(x, "", id()))
             return false;
 
-        if(x.attribute("type") == "result") {
+        if (x.attribute("type") == "result") {
             QDomElement q = queryTag(x);
             for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
                 QDomElement e = n.toElement();
@@ -84,8 +83,7 @@ public:
                             URLBookmark u(f);
                             if (!u.isNull())
                                 urls_ += u;
-                        }
-                        else if (f.tagName() == "conference") {
+                        } else if (f.tagName() == "conference") {
                             ConferenceBookmark c(f);
                             if (!c.isNull()) {
                                 conferences_ += c;
@@ -95,41 +93,30 @@ public:
                 }
             }
             setSuccess();
-        }
-        else {
+        } else {
             setError(x);
         }
         return true;
     }
 
-    const QList<URLBookmark>& urls() const {
-        return urls_;
-    }
+    const QList<URLBookmark> &urls() const { return urls_; }
 
-    const QList<ConferenceBookmark>& conferences() const {
-        return conferences_;
-    }
+    const QList<ConferenceBookmark> &conferences() const { return conferences_; }
 
 private:
-    QDomElement iq_;
-    QList<URLBookmark> urls_;
+    QDomElement               iq_;
+    QList<URLBookmark>        urls_;
     QList<ConferenceBookmark> conferences_;
 };
 
 // -----------------------------------------------------------------------------
 
-BookmarkManager::BookmarkManager(PsiAccount* account)
-    : account_(account)
-    , accountAvailable_(false)
-    , isAvailable_(false)
+BookmarkManager::BookmarkManager(PsiAccount *account) : account_(account), accountAvailable_(false), isAvailable_(false)
 {
     connect(account_, SIGNAL(updatedActivity()), SLOT(accountStateChanged()));
 }
 
-bool BookmarkManager::isAvailable() const
-{
-    return isAvailable_;
-}
+bool BookmarkManager::isAvailable() const { return isAvailable_; }
 
 void BookmarkManager::setIsAvailable(bool available)
 {
@@ -139,10 +126,7 @@ void BookmarkManager::setIsAvailable(bool available)
     }
 }
 
-bool BookmarkManager::isBookmarked(const XMPP::Jid &j)
-{
-    return indexOfConference(j) >= 0;
-}
+bool BookmarkManager::isBookmarked(const XMPP::Jid &j) { return indexOfConference(j) >= 0; }
 
 void BookmarkManager::removeConference(const XMPP::Jid &j)
 {
@@ -157,21 +141,15 @@ void BookmarkManager::removeConference(const XMPP::Jid &j)
     }
 }
 
-QList<URLBookmark> BookmarkManager::urls() const
-{
-    return urls_;
-}
+QList<URLBookmark> BookmarkManager::urls() const { return urls_; }
 
-QList<ConferenceBookmark> BookmarkManager::conferences() const
-{
-    return conferences_;
-}
+QList<ConferenceBookmark> BookmarkManager::conferences() const { return conferences_; }
 
 int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
 {
     if (isAvailable_) {
         int i = 0;
-        foreach(ConferenceBookmark c, conferences_) {
+        foreach (ConferenceBookmark c, conferences_) {
             if (c.jid().compare(j, false)) {
                 return i;
             }
@@ -205,41 +183,35 @@ void BookmarkManager::accountStateChanged()
 
 void BookmarkManager::getBookmarks()
 {
-    BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(getBookmarks_finished()));
+    BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(getBookmarks_finished()));
     t->get();
     t->go(true);
 }
 
-void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls, const QList<ConferenceBookmark>& conferences)
+void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls, const QList<ConferenceBookmark> &conferences)
 {
-    BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
-    t->set(urls,conferences);
+    BookmarkTask *t = new BookmarkTask(account_->client()->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(setBookmarks_finished()));
+    t->set(urls, conferences);
     t->go(true);
 }
 
-void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls)
-{
-    setBookmarks(urls, conferences());
-}
+void BookmarkManager::setBookmarks(const QList<URLBookmark> &urls) { setBookmarks(urls, conferences()); }
 
-void BookmarkManager::setBookmarks(const QList<ConferenceBookmark>& conferences)
-{
-    setBookmarks(urls(), conferences);
-}
+void BookmarkManager::setBookmarks(const QList<ConferenceBookmark> &conferences) { setBookmarks(urls(), conferences); }
 
 void BookmarkManager::getBookmarks_finished()
 {
-    BookmarkTask* t = static_cast<BookmarkTask*>(sender());
+    BookmarkTask *t = static_cast<BookmarkTask *>(sender());
     if (t->success()) {
-        bool urlsWereChanged = urls_ != t->urls();
+        bool urlsWereChanged        = urls_ != t->urls();
         bool conferencesWereChanged = conferences_ != t->conferences();
-        urls_ = t->urls();
-        QStringList localMucs = account_->localMucBookmarks();
-        QStringList mucIgnore = account_->ignoreMucBookmarks();
+        urls_                       = t->urls();
+        QStringList   localMucs     = account_->localMucBookmarks();
+        QStringList   mucIgnore     = account_->ignoreMucBookmarks();
         QSet<QString> strippedMucs;
-        for (const QString &m: localMucs) {
+        for (const QString &m : localMucs) {
             Jid j(m);
             if (j.isValid()) {
                 strippedMucs.insert(j.bare());
@@ -247,7 +219,7 @@ void BookmarkManager::getBookmarks_finished()
         }
 
         conferences_ = t->conferences();
-        for (auto &muc: conferences_) {
+        for (auto &muc : conferences_) {
             if (strippedMucs.contains(muc.jid().bare())) {
                 muc.setAutoJoin(ConferenceBookmark::OnlyThisComputer);
             }
@@ -262,25 +234,24 @@ void BookmarkManager::getBookmarks_finished()
             emit conferencesChanged(conferences_);
 
         setIsAvailable(true);
-    }
-    else {
+    } else {
         setIsAvailable(false);
     }
 }
 
 void BookmarkManager::setBookmarks_finished()
 {
-    BookmarkTask* t = static_cast<BookmarkTask*>(sender());
+    BookmarkTask *t = static_cast<BookmarkTask *>(sender());
     if (t->success()) {
         bool conferencesWereChanged = conferences_ != t->conferences();
-        bool urlsWereChanged = urls_ != t->urls();
-        conferences_ = t->conferences();
-        urls_ = t->urls();
+        bool urlsWereChanged        = urls_ != t->urls();
+        conferences_                = t->conferences();
+        urls_                       = t->urls();
 
         QStringList localMucs;
         QStringList ignoreMucs;
 
-        for (const ConferenceBookmark &cb: conferences_) {
+        for (const ConferenceBookmark &cb : conferences_) {
             if (cb.autoJoin() == ConferenceBookmark::OnlyThisComputer) {
                 localMucs.append(cb.jid().withResource(cb.nick()).full());
             }

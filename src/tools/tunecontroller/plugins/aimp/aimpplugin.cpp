@@ -28,8 +28,7 @@
 #include <QString>
 #include <QtCore>
 
-class AIMPPlugin : public QObject, public TuneControllerPlugin
-{
+class AIMPPlugin : public QObject, public TuneControllerPlugin {
 
     Q_OBJECT
 
@@ -37,18 +36,12 @@ class AIMPPlugin : public QObject, public TuneControllerPlugin
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
-QString AIMPPlugin::name()
-{
-    return "AIMP3";
-}
+QString AIMPPlugin::name() { return "AIMP3"; }
 
-TuneController* AIMPPlugin::createController()
-{
-    return new AimpTuneController();
-}
+TuneController *AIMPPlugin::createController() { return new AimpTuneController(); }
 
 #include "aimpplugin.moc"

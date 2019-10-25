@@ -11,15 +11,10 @@
 class Options;
 class QWidget;
 
-class OptionsTabPlugins : public OptionsTab
-{
+class OptionsTabPlugins : public OptionsTab {
     Q_OBJECT
-    enum ColumnName {
-        C_NAME = 0,
-        C_VERSION = 1,
-        C_ABOUT = 2,
-        C_SETTS = 3
-    };
+    enum ColumnName { C_NAME = 0, C_VERSION = 1, C_ABOUT = 2, C_SETTS = 3 };
+
 public:
     OptionsTabPlugins(QObject *parent);
     ~OptionsTabPlugins();
@@ -27,15 +22,15 @@ public:
     void setData(PsiCon *, QWidget *);
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
-    bool stretchable() const;
+    void     applyOptions();
+    void     restoreOptions();
+    bool     stretchable() const;
 
 private:
-    QWidget *w = nullptr;
-    QPointer<QDialog> infoDialog;
+    QWidget *            w = nullptr;
+    QPointer<QDialog>    infoDialog;
     Ui::PluginInfoDialog ui_;
-    PsiCon *psi = nullptr;
+    PsiCon *             psi = nullptr;
 
 private slots:
     void listPlugins();

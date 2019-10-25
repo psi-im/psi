@@ -27,12 +27,11 @@ class PsiCon;
 class QTreeWidgetItem;
 
 namespace XMPP {
-    class Client;
-    class Jid;
+class Client;
+class Jid;
 }
 
-class AccountManageTree : public QTreeWidget
-{
+class AccountManageTree : public QTreeWidget {
     Q_OBJECT
 
 public:
@@ -48,8 +47,7 @@ signals:
 
 #include "ui_accountmanage.h"
 
-class AccountManageDlg : public QWidget, public Ui::AccountManage
-{
+class AccountManageDlg : public QWidget, public Ui::AccountManage {
     Q_OBJECT
 public:
     AccountManageDlg(PsiCon *);
@@ -66,8 +64,8 @@ private slots:
     void accountRemoved(PsiAccount *);
 
 private:
-    PsiCon *psi;
-    QAction* removeAction_;
+    PsiCon * psi;
+    QAction *removeAction_;
 };
 
 #endif // ACCOUNTMANAGEDLG_H

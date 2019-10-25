@@ -24,13 +24,12 @@
 
 class PsiContactList;
 
-class ContactListProxyModel : public QSortFilterProxyModel
-{
+class ContactListProxyModel : public QSortFilterProxyModel {
     Q_OBJECT
 public:
-    ContactListProxyModel(QObject* parent);
+    ContactListProxyModel(QObject *parent);
 
-    void setSourceModel(QAbstractItemModel* model);
+    void setSourceModel(QAbstractItemModel *model);
 
 public slots:
     void updateSorting();
@@ -39,8 +38,8 @@ signals:
     void recalculateSize();
 
 protected:
-    bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
-    bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
     bool showOffline() const;
     bool showSelf() const;

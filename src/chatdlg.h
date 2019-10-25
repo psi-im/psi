@@ -42,54 +42,51 @@ class QDropEvent;
 class UserListItem;
 
 namespace XMPP {
-    class Jid;
-    class Message;
+class Jid;
+class Message;
 }
 using namespace XMPP;
 
 struct UserStatus {
-    UserStatus()
-            : userListItem(nullptr)
-            , statusType(XMPP::Status::Offline) {}
-    UserListItem* userListItem;
+    UserStatus() : userListItem(nullptr), statusType(XMPP::Status::Offline) {}
+    UserListItem *     userListItem;
     XMPP::Status::Type statusType;
-    QString status;
-    int priority = 0;
-    QString publicKeyID;
+    QString            status;
+    int                priority = 0;
+    QString            publicKeyID;
 };
 
-class ChatDlg : public TabbableWidget
-{
+class ChatDlg : public TabbableWidget {
     Q_OBJECT
 protected:
-    ChatDlg(const Jid& jid, PsiAccount* account, TabManager* tabManager);
+    ChatDlg(const Jid &jid, PsiAccount *account, TabManager *tabManager);
     virtual void init();
 
 public:
-    static ChatDlg* create(const Jid& jid, PsiAccount* account, TabManager* tabManager);
+    static ChatDlg *create(const Jid &jid, PsiAccount *account, TabManager *tabManager);
     ~ChatDlg();
 
     // reimplemented
-    void setJid(const Jid &) override;
-    const QString & getDisplayName() const override;
+    void           setJid(const Jid &) override;
+    const QString &getDisplayName() const override;
 
     // reimplemented
-    bool readyToHide() override;
+    bool                  readyToHide() override;
     TabbableWidget::State state() const override;
-    int unreadMessageCount() const override;
-    QString desiredCaption() const override;
-    void ensureTabbedCorrectly() override;
+    int                   unreadMessageCount() const override;
+    QString               desiredCaption() const override;
+    void                  ensureTabbedCorrectly() override;
 
 public:
-    PsiAccount* account() const;
-    void setInputText(const QString &text);
-    Jid realJid() const;
-    bool autoSelectContact() const {return autoSelectContact_;}
-    static UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource);
-    void preloadHistory();
-    void dispatchMessage(const MessageView &mv);
-    virtual void appendSysMsg(const QString& txt) = 0;
-    void appendMessage(const Message &, bool local = false);
+    PsiAccount *      account() const;
+    void              setInputText(const QString &text);
+    Jid               realJid() const;
+    bool              autoSelectContact() const { return autoSelectContact_; }
+    static UserStatus userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool forceEmptyResource);
+    void              preloadHistory();
+    void              dispatchMessage(const MessageView &mv);
+    virtual void      appendSysMsg(const QString &txt) = 0;
+    void              appendMessage(const Message &, bool local = false);
 
 signals:
     void aInfo(const Jid &);
@@ -98,7 +95,7 @@ signals:
     void messagesRead(const Jid &);
     void aSend(Message &);
     void aFile(const Jid &);
-    void messageAppended(const QString &, QWidget*);
+    void messageAppended(const QString &, QWidget *);
 
     /**
      * Signals if user (re)started/stopped composing
@@ -112,8 +109,8 @@ protected:
     void closeEvent(QCloseEvent *) override;
     void hideEvent(QHideEvent *) override;
     void showEvent(QShowEvent *) override;
-    void dropEvent(QDropEvent* event) override;
-    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
     bool autoSelectContact_;
 
@@ -123,33 +120,33 @@ public slots:
     virtual void activated() override;
 
     virtual void optionsUpdate();
-    void updateContact(const Jid &, bool);
-    void incomingMessage(const Message &);
+    void         updateContact(const Jid &, bool);
+    void         incomingMessage(const Message &);
     virtual void updateAvatar() = 0;
-    void updateAvatar(const Jid&);
+    void         updateAvatar(const Jid &);
 
 protected slots:
-    void doInfo();
+    void         doInfo();
     virtual void doHistory();
     virtual void doClear();
     virtual void doFileShare(const QList<Reference> &references, const QString &desc);
     virtual void doSend();
-    void doVoice();
-    void doFile();
+    void         doVoice();
+    void         doFile();
 
 private slots:
     virtual void updatePGP();
     virtual void setPGPEnabled(bool enabled);
-    void encryptedMessageSent(int, bool, int, const QString &);
-    void setChatState(XMPP::ChatState s);
-    void updateIsComposing(bool);
-    void setContactChatState(ChatState s);
-    void logSelectionChanged();
-    void capsChanged(const Jid&);
-    void addEmoticon(QString text);
-    void initComposing();
-    void setComposing();
-    void getHistory();
+    void         encryptedMessageSent(int, bool, int, const QString &);
+    void         setChatState(XMPP::ChatState s);
+    void         updateIsComposing(bool);
+    void         setContactChatState(ChatState s);
+    void         logSelectionChanged();
+    void         capsChanged(const Jid &);
+    void         addEmoticon(QString text);
+    void         initComposing();
+    void         setComposing();
+    void         getHistory();
 
 protected slots:
     void checkComposing();
@@ -158,19 +155,19 @@ protected:
     // reimplemented
     void invalidateTab() override;
 
-    void updateRealJid();
-    void resetComposing();
-    void doneSend();
-    void holdMessages(bool hold);
-    void displayMessage(const MessageView &mv);
+    void         updateRealJid();
+    void         resetComposing();
+    void         doneSend();
+    void         holdMessages(bool hold);
+    void         displayMessage(const MessageView &mv);
     virtual void setLooks();
     virtual void chatEditCreated();
-    void initHighlighters();
+    void         initHighlighters();
 
     virtual void initUi() = 0;
     virtual void capsChanged();
-    virtual void updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence);
-    virtual void contactUpdated(UserListItem* u, int status, const QString& statusString);
+    virtual void updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
+    virtual void contactUpdated(UserListItem *u, int status, const QString &statusString);
 
     virtual bool isEncryptionEnabled() const;
 
@@ -179,23 +176,23 @@ protected:
 
     QString whoNick(bool local) const;
 
-    virtual ChatView* chatView() const = 0;
-    virtual ChatEdit* chatEdit() const = 0;
+    virtual ChatView *chatView() const = 0;
+    virtual ChatEdit *chatEdit() const = 0;
 
 private:
-    bool highlightersInstalled_;
+    bool    highlightersInstalled_;
     QString dispNick_;
-    int status_, priority_;
+    int     status_, priority_;
     QString statusString_;
 
-    void initActions();
-    QAction* act_send_;
-    QAction* act_scrollup_;
-    QAction* act_scrolldown_;
-    QAction* act_close_;
-    QAction* act_hide_;
+    void     initActions();
+    QAction *act_send_;
+    QAction *act_scrollup_;
+    QAction *act_scrolldown_;
+    QAction *act_close_;
+    QAction *act_hide_;
 
-    int pending_;
+    int  pending_;
     bool keepOpen_;
     bool warnSend_;
 
@@ -203,23 +200,23 @@ private:
     void doTrackBar();
 
     QString key_;
-    int transid_;
+    int     transid_;
     Message m_;
-    bool lastWasEncrypted_;
-    Jid realJid_;
+    bool    lastWasEncrypted_;
+    Jid     realJid_;
 
     // Message Events & Chat States
-    QTimer* composingTimer_;
-    bool isComposing_;
-    bool sendComposingEvents_;
-    bool historyState;
-    QString eventId_;
-    ChatState contactChatState_;
-    ChatState lastChatState_;
+    QTimer *            composingTimer_;
+    bool                isComposing_;
+    bool                sendComposingEvents_;
+    bool                historyState;
+    QString             eventId_;
+    ChatState           contactChatState_;
+    ChatState           lastChatState_;
     QList<MessageView> *delayedMessages;
 
     QList<Reference> fileShareReferences_;
-    QString fileShareDesc_;
+    QString          fileShareDesc_;
 };
 
 #endif // CHATDLG_H

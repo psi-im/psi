@@ -6,16 +6,15 @@
 
 class QWidget;
 
-class OptionsTabStatusAuto : public OptionsTab
-{
+class OptionsTabStatusAuto : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabStatusAuto(QObject *parent);
     ~OptionsTabStatusAuto();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
     void setData(PsiCon *, QWidget *parentDialog);
 

@@ -7,21 +7,19 @@
 
 class QWidget;
 
-class OptionsTabAccounts : public MetaOptionsTab
-{
+class OptionsTabAccounts : public MetaOptionsTab {
     Q_OBJECT
 
 public:
-
     OptionsTabAccounts(QObject *parent);
     ~OptionsTabAccounts();
 
     QWidget *widget();
-    void setData(PsiCon *psi, QWidget *);
+    void     setData(PsiCon *psi, QWidget *);
 
 private:
     QWidget *w_;
-    PsiCon *psi_;
+    PsiCon * psi_;
 };
 
 #endif // OPT_ACCOUNTS_H

@@ -24,18 +24,18 @@
 #include "wbnewitem.h"
 
 class WbNewPath : public WbNewItem {
-    public:
-        WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
-        ~WbNewPath();
-        void parseCursorMove(QPointF newPos);
-        QDomNode serializeToSvg(QDomDocument *doc);
+public:
+    WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
+    ~WbNewPath();
+    void     parseCursorMove(QPointF newPos);
+    QDomNode serializeToSvg(QDomDocument *doc);
 
-    protected:
-        QGraphicsItem* graphicsItem();
+protected:
+    QGraphicsItem *graphicsItem();
 
-    private:
-        QGraphicsPathItem graphicsitem_;
-        QPointF* controlPoint_;
+private:
+    QGraphicsPathItem graphicsitem_;
+    QPointF *         controlPoint_;
 };
 
 #endif // WBNEWPATH_H

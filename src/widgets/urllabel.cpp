@@ -25,8 +25,7 @@
 #include <QMenu>
 
 //! \if _hide_doc_
-class URLLabel::Private
-{
+class URLLabel::Private {
 public:
     QString url;
     QString title;
@@ -41,25 +40,18 @@ public:
 /**
  * Default constructor.
  */
-URLLabel::URLLabel(QWidget *parent)
-: QLabel(parent)
+URLLabel::URLLabel(QWidget *parent) : QLabel(parent)
 {
     d = new Private;
-    setCursor( Qt::PointingHandCursor );
+    setCursor(Qt::PointingHandCursor);
 }
 
-URLLabel::~URLLabel()
-{
-    delete d;
-}
+URLLabel::~URLLabel() { delete d; }
 
 /**
  * Returns URL of this label.
  */
-const QString &URLLabel::url() const
-{
-    return d->url;
-}
+const QString &URLLabel::url() const { return d->url; }
 
 /**
  * Sets the URL of this label to url
@@ -74,10 +66,7 @@ void URLLabel::setUrl(const QString &url)
 /**
  * Returns title of this label.
  */
-const QString &URLLabel::title() const
-{
-    return d->title;
-}
+const QString &URLLabel::title() const { return d->title; }
 
 /**
  * Sets the title of this lable to t
@@ -91,9 +80,9 @@ void URLLabel::setTitle(const QString &t)
 
 void URLLabel::updateText()
 {
-    setText( QString("<a href=\"%1\">%2</a>").arg(d->url).arg(d->title) );
+    setText(QString("<a href=\"%1\">%2</a>").arg(d->url).arg(d->title));
 
-    if ( d->url != d->title )
+    if (d->url != d->title)
         setToolTip(d->url);
     else
         setToolTip(QString());
@@ -103,8 +92,8 @@ void URLLabel::contextMenuEvent(QContextMenuEvent *e)
 {
     QMenu *m = URLObject::getInstance()->createPopupMenu(d->url);
 
-    if ( m ) {
-        m->exec( e->globalPos() );
+    if (m) {
+        m->exec(e->globalPos());
         delete m;
     }
 

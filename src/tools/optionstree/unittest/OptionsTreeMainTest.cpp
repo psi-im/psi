@@ -8,13 +8,12 @@
 #include <QTime>
 #include <QtTest/QtTest>
 
-class Benchmark
-{
+class Benchmark {
 public:
-    void end(const QString& msg)
+    void end(const QString &msg)
     {
         float avg = 0.0;
-        foreach(int i, results_) {
+        foreach (int i, results_) {
             avg += float(i);
         }
         avg /= float(results_.count());
@@ -23,62 +22,57 @@ public:
         results_.clear();
     }
 
-    void startIteration()
-    {
-        time_ = QTime::currentTime();
-    }
+    void startIteration() { time_ = QTime::currentTime(); }
 
-    void endIteration()
-    {
-        results_ << time_.msecsTo(QTime::currentTime());
-    }
+    void endIteration() { results_ << time_.msecsTo(QTime::currentTime()); }
 
 private:
-    QTime time_;
+    QTime      time_;
     QList<int> results_;
 };
 
-class OptionsTreeMainTest : public QObject
-{
+class OptionsTreeMainTest : public QObject {
     Q_OBJECT
 
 private slots:
-    void initTestCase() {
+    void initTestCase()
+    {
         QVariantList l;
         l << QVariant(QString("item1")) << qVariantFromValue(QKeySequence("CTRL+L"));
         QStringList sl;
-        sl << "String 1" << "String 2";
+        sl << "String 1"
+           << "String 2";
         l << sl;
         l << QRect(10, 20, 30, -666);
         l << l;
 
-        goodValues_["ba"] = QByteArray(QString("0xDEADBEEF").toLatin1());
-        goodValues_["paris"] = QVariant(QString("sirap"));
-        goodValues_["Benvolio"] = QVariant(QString("Benvolio"));
-        goodValues_["Benvolio"] = QVariant(QString("Not benvolio!!"));
-        goodValues_["capulet.Juliet"] = QVariant(QString("girly"));
+        goodValues_["ba"]                    = QByteArray(QString("0xDEADBEEF").toLatin1());
+        goodValues_["paris"]                 = QVariant(QString("sirap"));
+        goodValues_["Benvolio"]              = QVariant(QString("Benvolio"));
+        goodValues_["Benvolio"]              = QVariant(QString("Not benvolio!!"));
+        goodValues_["capulet.Juliet"]        = QVariant(QString("girly"));
         goodValues_["verona.montague.romeo"] = QVariant(QString("poisoned"));
-        goodValues_["capulet.Nursey"] = QVariant(QString("matchmaker"));
-        goodValues_["verona.city"] = QVariant(true);
-        goodValues_["verona.lovers"] = QVariant(2);
-        goodValues_["verona.size"] = QVariant(QSize(210,295));
-        goodValues_["verona.stuff"] = l;
-        goodValues_["verona.stringstuff"] = sl;
+        goodValues_["capulet.Nursey"]        = QVariant(QString("matchmaker"));
+        goodValues_["verona.city"]           = QVariant(true);
+        goodValues_["verona.lovers"]         = QVariant(2);
+        goodValues_["verona.size"]           = QVariant(QSize(210, 295));
+        goodValues_["verona.stuff"]          = l;
+        goodValues_["verona.stringstuff"]    = sl;
         // qWarning() << goodValues_;
 
         badValues_["capulet.Juliet.dead"] = QVariant(true);
         // qWarning() << badValues_;
 
-        comments_["verona"] = "Fair city";
-        comments_["paris"] = "Bloke or city?";
+        comments_["verona"]                = "Fair city";
+        comments_["paris"]                 = "Bloke or city?";
         comments_["verona.montague.romeo"] = "Watch what this one drinks";
         // qWarning() << comments_;
     }
 
-    void cleanupTestCase() {
-    }
+    void cleanupTestCase() {}
 
-    void createTreeTest() {
+    void createTreeTest()
+    {
         OptionsTree tree;
         initTree(&tree);
         verifyTree(&tree);
@@ -88,17 +82,18 @@ private slots:
         // }
     }
 
-    void saveLoadTreeTest() {
+    void saveLoadTreeTest()
+    {
         OptionsTree tree;
         initTree(&tree);
         verifyTree(&tree);
 
-        tree.saveOptions(dir() + "/options.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
+        tree.saveOptions(dir() + "/options.xml", "OptionsTest", "https://psi-im.org/optionstest", "0.1");
 
         OptionsTree tree2;
-        tree2.loadOptions(dir() + "/options.xml","OptionsTest","https://psi-im.org/optionstest","0.1", true);
+        tree2.loadOptions(dir() + "/options.xml", "OptionsTest", "https://psi-im.org/optionstest", "0.1", true);
         // tree2.saveOptions(dir() + "/options2.xml","OptionsTest","https://psi-im.org/optionstest","0.1");
-        tree2.saveOptions(dir() + "/options3.xml","OptionsTest","https://psi-im.org/optionstest","0.1", true);
+        tree2.saveOptions(dir() + "/options3.xml", "OptionsTest", "https://psi-im.org/optionstest", "0.1", true);
         verifyTree(&tree2);
     }
 
@@ -121,12 +116,11 @@ private slots:
     }
 #endif
 
-// #if 0
-    QString dir() {
-        return "/Users/mblsha/src/psi/src/tools/optionstree/unittest";
-    }
+    // #if 0
+    QString dir() { return "/Users/mblsha/src/psi/src/tools/optionstree/unittest"; }
 
-    void benchLoadOptions() {
+    void benchLoadOptions()
+    {
         // sleep(1);
         // OptionsTree tree;
         // QBENCHMARK {
@@ -134,20 +128,24 @@ private slots:
         // }
 
         // for (int i = 0; i < 100; ++i) {
-        QBENCHMARK {
-        OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1");
+        QBENCHMARK
+        {
+            OptionsTree tree;
+            tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1");
         }
     }
 
-    void benchLoadOptionsStream() {
-        QBENCHMARK {
-        OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1", true);
+    void benchLoadOptionsStream()
+    {
+        QBENCHMARK
+        {
+            OptionsTree tree;
+            tree.loadOptions(dir() + "/mbl_options.xml", "options", "https://psi-im.org/options", "0.1", true);
         }
     }
 
-    void benchLoadAccounts() {
+    void benchLoadAccounts()
+    {
         // sleep(1);
         // OptionsTree tree;
         // QBENCHMARK {
@@ -155,47 +153,52 @@ private slots:
         // }
 
         // for (int i = 0; i < 100; ++i) {
-        QBENCHMARK {
-        OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
+        QBENCHMARK
+        {
+            OptionsTree tree;
+            tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
         }
     }
 
-    void benchLoadAccountsStream() {
-        QBENCHMARK {
-        OptionsTree tree;
-        tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1", true);
+    void benchLoadAccountsStream()
+    {
+        QBENCHMARK
+        {
+            OptionsTree tree;
+            tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1", true);
         }
     }
 
-    void benchSaveAccounts() {
+    void benchSaveAccounts()
+    {
         OptionsTree tree;
         tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
-        QBENCHMARK {
-        tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "https://psi-im.org/options", "0.1");
-        }
+        QBENCHMARK { tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "https://psi-im.org/options", "0.1"); }
     }
 
-    void benchSaveAccountsStream() {
+    void benchSaveAccountsStream()
+    {
         OptionsTree tree;
         tree.loadOptions(dir() + "/mbl_accounts.xml", "accounts", "https://psi-im.org/options", "0.1");
-        QBENCHMARK {
-        tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "https://psi-im.org/options", "0.1", true);
+        QBENCHMARK
+        {
+            tree.saveOptions(dir() + "/mbl_accounts2.xml", "accounts", "https://psi-im.org/options", "0.1", true);
         }
     }
     // #endif
 
-// #endif
+    // #endif
 
 private:
     QMap<QString, QVariant> goodValues_;
     QMap<QString, QVariant> badValues_;
-    QMap<QString, QString> comments_;
+    QMap<QString, QString>  comments_;
 
-    QMap<QString, QVariant> generateStressTestValues(int count, int depth) {
+    QMap<QString, QVariant> generateStressTestValues(int count, int depth)
+    {
         QMap<QString, QVariant> result;
         for (int i = 1; i <= count; ++i) {
-            QMap<QString, QVariant> r = generateStressTestValues(QString("i%1").arg(i), depth);
+            QMap<QString, QVariant>         r = generateStressTestValues(QString("i%1").arg(i), depth);
             QMapIterator<QString, QVariant> it(r);
             while (it.hasNext()) {
                 it.next();
@@ -205,7 +208,8 @@ private:
         return result;
     }
 
-    QMap<QString, QVariant> generateStressTestValues(const QString& name, int depth) {
+    QMap<QString, QVariant> generateStressTestValues(const QString &name, int depth)
+    {
         Q_ASSERT(depth >= 1);
         QMap<QString, QVariant> result;
         for (int i = 1; i <= depth; ++i) {
@@ -223,13 +227,15 @@ private:
         return result;
     }
 
-    void initTree(OptionsTree* tree) {
+    void initTree(OptionsTree *tree)
+    {
         initTreeValues(tree, goodValues_);
         initTreeValues(tree, badValues_);
         initTreeComments(tree, comments_);
     }
 
-    void initTreeValues(OptionsTree* tree, const QMap<QString, QVariant>& values) {
+    void initTreeValues(OptionsTree *tree, const QMap<QString, QVariant> &values)
+    {
         Q_ASSERT(tree);
         Q_ASSERT(!values.isEmpty());
         QMapIterator<QString, QVariant> it(values);
@@ -239,7 +245,8 @@ private:
         }
     }
 
-    void initTreeComments(OptionsTree* tree, const QMap<QString, QString>& comments) {
+    void initTreeComments(OptionsTree *tree, const QMap<QString, QString> &comments)
+    {
         Q_ASSERT(tree);
         Q_ASSERT(!comments.isEmpty());
         QMapIterator<QString, QString> it(comments);
@@ -249,13 +256,15 @@ private:
         }
     }
 
-    void verifyTree(const OptionsTree* tree) {
+    void verifyTree(const OptionsTree *tree)
+    {
         verifyTreeValues(tree, goodValues_);
         verifyTreeBadValues(tree, badValues_);
         verifyTreeComments(tree, comments_);
     }
 
-    void verifyTreeValues(const OptionsTree* tree, const QMap<QString, QVariant>& values) {
+    void verifyTreeValues(const OptionsTree *tree, const QMap<QString, QVariant> &values)
+    {
         Q_ASSERT(tree);
         Q_ASSERT(!values.isEmpty());
         QMapIterator<QString, QVariant> it(values);
@@ -266,7 +275,8 @@ private:
         }
     }
 
-    void verifyTreeBadValues(const OptionsTree* tree, const QMap<QString, QVariant>& values) {
+    void verifyTreeBadValues(const OptionsTree *tree, const QMap<QString, QVariant> &values)
+    {
         Q_ASSERT(tree);
         Q_ASSERT(!values.isEmpty());
         QMapIterator<QString, QVariant> it(values);
@@ -276,7 +286,8 @@ private:
         }
     }
 
-    void verifyTreeComments(const OptionsTree* tree, const QMap<QString, QString>& comments) {
+    void verifyTreeComments(const OptionsTree *tree, const QMap<QString, QString> &comments)
+    {
         Q_ASSERT(tree);
         Q_ASSERT(!comments.isEmpty());
         QMapIterator<QString, QString> it(comments);

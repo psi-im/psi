@@ -32,7 +32,7 @@
 #include <QFile>
 #include <QFileInfo>
 #ifdef WEBENGINE
-#    include <QWebEngineUrlRequestInterceptor>
+#include <QWebEngineUrlRequestInterceptor>
 #endif
 
 class ChatViewThemeProvider;
@@ -40,10 +40,9 @@ class ChatViewThemeProvider;
 //--------------------------------------
 // ChatViewThemeProvider
 //--------------------------------------
-ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) :
-    PsiThemeProvider(psi)
+ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) : PsiThemeProvider(psi)
 {
-    ChatViewCon::init(static_cast<PsiCon*>(parent()));
+    ChatViewCon::init(static_cast<PsiCon *>(parent()));
 }
 
 const QStringList ChatViewThemeProvider::themeIds() const
@@ -56,16 +55,14 @@ const QStringList ChatViewThemeProvider::themeIds() const
 
     QSet<QString> ret;
     foreach (QString dir, dirs) {
-        foreach (QFileInfo tDirInfo, QDir(dir+"/themes/chatview/")
-            .entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
+        foreach (QFileInfo tDirInfo,
+                 QDir(dir + "/themes/chatview/").entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
             QString typeName = tDirInfo.fileName();
             foreach (QFileInfo themeInfo,
-                    QDir(tDirInfo.absoluteFilePath())
-                        .entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot) +
-                    QDir(tDirInfo.absoluteFilePath())
-                        .entryInfoList(QStringList("*.theme"), QDir::Files)) {
-                ret<<(QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
-                //qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
+                     QDir(tDirInfo.absoluteFilePath()).entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)
+                         + QDir(tDirInfo.absoluteFilePath()).entryInfoList(QStringList("*.theme"), QDir::Files)) {
+                ret << (QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
+                // qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
             }
         }
     }
@@ -95,7 +92,7 @@ Theme ChatViewThemeProvider::theme(const QString &id)
  */
 bool ChatViewThemeProvider::loadCurrent()
 {
-    QString loadedId = curTheme.id();
+    QString loadedId  = curTheme.id();
     QString themeName = PsiOptions::instance()->getOption(optionString()).toString();
     if (!loadedId.isEmpty() && loadedId == themeName) {
         return true; // already loaded. nothing todo
@@ -112,7 +109,7 @@ bool ChatViewThemeProvider::loadCurrent()
         return false;
     }
 
-    bool startedLoading = t.load([this, t, loadedId](bool success){
+    bool startedLoading = t.load([this, t, loadedId](bool success) {
         if (!success && t.id() != QLatin1String("psi/classic")) {
             qDebug("Failed to load theme \"%s\"", qPrintable(t.id()));
             qDebug("fallback to classic chatview theme");
@@ -129,15 +126,9 @@ bool ChatViewThemeProvider::loadCurrent()
     return startedLoading; // does not really matter. may fail later on loading
 }
 
-void ChatViewThemeProvider::unloadCurrent()
-{
-    curTheme = Theme();
-}
+void ChatViewThemeProvider::unloadCurrent() { curTheme = Theme(); }
 
-Theme ChatViewThemeProvider::current() const
-{
-    return curTheme;
-}
+Theme ChatViewThemeProvider::current() const { return curTheme; }
 
 void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 {

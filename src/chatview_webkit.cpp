@@ -148,56 +148,41 @@ class ChatViewJSObject : public ChatViewThemeSession {
     Q_PROPERTY(QString chatName READ chatName CONSTANT)
     Q_PROPERTY(QString jid READ jid CONSTANT)
     Q_PROPERTY(QString account READ account CONSTANT)
-    Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY remoteUserImageChanged)    // associated with chat(e.g. MUC's own avatar)
-    Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
-    Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged)       // local image. from vcard
-    Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY localUserAvatarChanged)    // local avatar. resized vcard or PEP.
+    Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY
+                                                            remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
+    Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY
+                                                              remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
+    Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged) // local image. from vcard
+    Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY
+                                                            localUserAvatarChanged) // local avatar. resized vcard or PEP.
 
 public:
-    ChatViewJSObject(ChatView *view) :
-        ChatViewThemeSession(view),
-        _view(view)
-    {
-    }
+    ChatViewJSObject(ChatView *view) : ChatViewThemeSession(view), _view(view) {}
 
     // accepts url of http request from chatlog.
     // returns to callback data and content-type.
     // if data is null then it's 404
-    bool getContents(const QUrl &url, std::function<void(bool success, const QByteArray &, const QByteArray &)> callback)
+    bool getContents(const QUrl &                                                              url,
+                     std::function<void(bool success, const QByteArray &, const QByteArray &)> callback)
     {
         if (url.path().startsWith("/psibob/")) {
             QString cid = url.path().mid(sizeof("/psibob/") - 1);
             _view->d->account_->loadBob(_view->d->jid_, cid, this, callback);
             return true;
         }
-        //qDebug("Unhandled url: %s", qPrintable(url.toString()));
+        // qDebug("Unhandled url: %s", qPrintable(url.toString()));
         return false;
     }
 
-    WebView *webView()
-    {
-        return _view->textWidget();
-    }
+    WebView *webView() { return _view->textWidget(); }
 
-    bool isMuc() const
-    {
-        return _view->d->isMuc_;
-    }
+    bool isMuc() const { return _view->d->isMuc_; }
 
-    QString chatName() const
-    {
-        return _view->d->name_;
-    }
+    QString chatName() const { return _view->d->name_; }
 
-    QString jid() const
-    {
-        return _view->d->jid_.full();
-    }
+    QString jid() const { return _view->d->jid_.full(); }
 
-    QString account() const
-    {
-        return _view->d->account_->id();
-    }
+    QString account() const { return _view->d->account_->id(); }
 
     inline static QString avatarUrl(const QByteArray &hash)
     {
@@ -227,15 +212,9 @@ public:
     }
 
 public slots:
-    QString mucNickColor(QString nick, bool isSelf) const
-    {
-        return _view->getMucNickColor(nick, isSelf);
-    }
+    QString mucNickColor(QString nick, bool isSelf) const { return _view->getMucNickColor(nick, isSelf); }
 
-    void signalInited()
-    {
-        emit inited();
-    }
+    void signalInited() { emit inited(); }
 
     QString getFont() const
     {
@@ -292,10 +271,7 @@ public slots:
         return _view->palette().color(cr).name();
     }
 
-    void nickInsertClick(const QString &nick)
-    {
-        emit _view->nickInsertClick(nick);
-    }
+    void nickInsertClick(const QString &nick) { emit _view->nickInsertClick(nick); }
 
     void getUrlHeaders(const QString &tId, const QString url)
     {
@@ -356,7 +332,9 @@ protected:
     using QWebEnginePage::QWebEnginePage;
     bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
     {
-        if (isMainFrame && (type == NavigationTypeLinkClicked || type == NavigationTypeFormSubmitted || type == NavigationTypeBackForward)) {
+        if (isMainFrame
+            && (type == NavigationTypeLinkClicked || type == NavigationTypeFormSubmitted
+                || type == NavigationTypeBackForward)) {
             DesktopUtil::openUrl(url);
             return false;
         }
@@ -372,10 +350,7 @@ class ChatViewPage : public QWebPage {
 public:
     using QWebPage::QWebPage;
 
-    void setCVPrivate(ChatViewPrivate *d)
-    {
-        cvd = d;
-    }
+    void setCVPrivate(ChatViewPrivate *d) { cvd = d; }
 
 protected:
     QString userAgentForUrl(const QUrl &url) const
@@ -389,7 +364,9 @@ protected:
     bool acceptNavigationRequest(QWebFrame *frame, const QNetworkRequest &request, NavigationType type)
     {
         bool isMainFrame = frame == cvd->webView->page()->mainFrame();
-        if (isMainFrame && (type == NavigationTypeLinkClicked || type == NavigationTypeFormSubmitted || type == NavigationTypeBackOrForward)) {
+        if (isMainFrame
+            && (type == NavigationTypeLinkClicked || type == NavigationTypeFormSubmitted
+                || type == NavigationTypeBackOrForward)) {
             DesktopUtil::openUrl(request.url());
             return false;
         }
@@ -406,8 +383,7 @@ class ChatWebView : public WebView {
     Q_OBJECT
 
 public:
-    ChatWebView(QWidget *parent) :
-        WebView(parent)
+    ChatWebView(QWidget *parent) : WebView(parent)
     {
         auto act = new QAction(tr("Quote"), this);
         act->setShortcut(QKeySequence(tr("Ctrl+S")));
@@ -422,9 +398,7 @@ signals:
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent) :
-    QFrame(parent),
-    d(new ChatViewPrivate)
+ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
 {
     d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
     d->webView  = new ChatWebView(this);
@@ -440,9 +414,10 @@ ChatView::ChatView(QWidget *parent) :
     setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
     setLooks(d->webView);
 
-#ifndef HAVE_X11                                                                                      // linux has this feature built-in
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(psiOptionChanged(QString))); //needed only for save autocopy state atm
-    psiOptionChanged("options.ui.automatically-copy-selected-text");                                  // init autocopy connection
+#ifndef HAVE_X11 // linux has this feature built-in
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)),
+            SLOT(psiOptionChanged(QString)));                        // needed only for save autocopy state atm
+    psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy connection
 #endif
     connect(d->jsObject, SIGNAL(inited()), SLOT(sessionInited()));
 
@@ -476,7 +451,7 @@ ChatView::~ChatView()
 void ChatView::init()
 {
     Theme curTheme = d->themeProvider->current();
-    //qDebug() << "Init chatview with theme" << curTheme.name();
+    // qDebug() << "Init chatview with theme" << curTheme.name();
     if (curTheme.state() != Theme::State::Loaded) {
         qDebug("ChatView theme is not loaded. this is fatal");
         return;
@@ -497,10 +472,7 @@ void ChatView::init()
     }*/
 }
 
-void ChatView::setEncryptionEnabled(bool enabled)
-{
-    d->isEncryptionEnabled_ = enabled;
-}
+void ChatView::setEncryptionEnabled(bool enabled) { d->isEncryptionEnabled_ = enabled; }
 
 void ChatView::markReceived(QString id)
 {
@@ -511,15 +483,9 @@ void ChatView::markReceived(QString id)
     sendJsObject(m);
 }
 
-QSize ChatView::sizeHint() const
-{
-    return minimumSizeHint();
-}
+QSize ChatView::sizeHint() const { return minimumSizeHint(); }
 
-void ChatView::setDialog(QWidget *dialog)
-{
-    d->dialog_ = dialog;
-}
+void ChatView::setDialog(QWidget *dialog) { d->dialog_ = dialog; }
 
 void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const Jid &jid, const QString name)
 {
@@ -531,11 +497,13 @@ void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const Jid &jid, con
 
 void ChatView::setAccount(PsiAccount *acc)
 {
-    d->account_    = acc;
-    d->remoteIcons = acc->avatarFactory()->userHashes((d->isMuc_ || d->isMucPrivate_) ? d->jid_ : d->jid_.withResource(QString()));
-    d->localIcons  = acc->avatarFactory()->userHashes(acc->jid());
+    d->account_ = acc;
+    d->remoteIcons
+        = acc->avatarFactory()->userHashes((d->isMuc_ || d->isMucPrivate_) ? d->jid_ : d->jid_.withResource(QString()));
+    d->localIcons = acc->avatarFactory()->userHashes(acc->jid());
 
-    d->themeProvider = static_cast<ChatViewThemeProvider *>(acc->psi()->themeManager()->provider(d->isMuc_ ? "groupchatview" : "chatview"));
+    d->themeProvider = static_cast<ChatViewThemeProvider *>(
+        acc->psi()->themeManager()->provider(d->isMuc_ ? "groupchatview" : "chatview"));
     connect(d->themeProvider, SIGNAL(themeChanged()), SLOT(init()));
 }
 
@@ -559,15 +527,11 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
 #endif
 }
 
-bool ChatView::focusNextPrevChild(bool next)
-{
-    return QWidget::focusNextPrevChild(next);
-}
+bool ChatView::focusNextPrevChild(bool next) { return QWidget::focusNextPrevChild(next); }
 
 void ChatView::changeEvent(QEvent *event)
 {
-    if (event->type() == QEvent::ApplicationPaletteChange
-        || event->type() == QEvent::PaletteChange
+    if (event->type() == QEvent::ApplicationPaletteChange || event->type() == QEvent::PaletteChange
         || event->type() == QEvent::FontChange) {
         QVariantMap m;
         m["type"] = "settings";
@@ -611,7 +575,8 @@ void ChatView::sessionInited()
 
 bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit)
 {
-    if (object == chatEdit && event->type() == QEvent::ShortcutOverride && static_cast<QKeyEvent *>(event)->matches(QKeySequence::Copy)) {
+    if (object == chatEdit && event->type() == QEvent::ShortcutOverride
+        && static_cast<QKeyEvent *>(event)->matches(QKeySequence::Copy)) {
 
         if (!chatEdit->textCursor().hasSelection() && !(d->webView->page()->selectedText().isEmpty())) {
             d->webView->copySelected();
@@ -669,15 +634,9 @@ void ChatView::sendJsCode(const QString &js)
     sendJsObject(m);
 }
 
-void ChatView::scrollUp()
-{
-    emit d->jsObject->scrollRequested(-50);
-}
+void ChatView::scrollUp() { emit d->jsObject->scrollRequested(-50); }
 
-void ChatView::scrollDown()
-{
-    emit d->jsObject->scrollRequested(50);
-}
+void ChatView::scrollDown() { emit d->jsObject->scrollRequested(50); }
 
 void ChatView::updateAvatar(const Jid &jid, ChatViewCommon::UserType utype)
 {
@@ -742,7 +701,8 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
 #warning "TODO: make search asynchronous in all cases"
 #endif
 #else
-    bool found = d->webView->page()->findText(str, startFromBeginning ? QWebPage::FindWrapsAroundDocument : (QWebPage::FindFlag)0);
+    bool found = d->webView->page()->findText(
+        str, startFromBeginning ? QWebPage::FindWrapsAroundDocument : (QWebPage::FindFlag)0);
 
     if (!found && !startFromBeginning) {
         return internalFind(str, true);
@@ -752,19 +712,10 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
 #endif
 }
 
-WebView *ChatView::textWidget()
-{
-    return d->webView;
-}
+WebView *ChatView::textWidget() { return d->webView; }
 
-QWidget *ChatView::realTextWidget()
-{
-    return d->webView;
-}
+QWidget *ChatView::realTextWidget() { return d->webView; }
 
-QObject *ChatView::jsBridge()
-{
-    return d->jsObject;
-}
+QObject *ChatView::jsBridge() { return d->jsObject; }
 
 #include "chatview_webkit.moc"

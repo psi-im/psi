@@ -25,14 +25,10 @@
 #include <QFileInfo>
 #include <QStringList>
 
-PsiThemeProvider::PsiThemeProvider(PsiCon *parent) :
-    QObject(parent),
-    _psi(parent)
+PsiThemeProvider::PsiThemeProvider(PsiCon *parent) : QObject(parent), _psi(parent) {}
+
+QString PsiThemeProvider::themePath(const QString &name)
 {
-
-}
-
-QString PsiThemeProvider::themePath(const QString &name) {
     QStringList dirs;
     dirs << ":";
     dirs << ".";
@@ -43,7 +39,7 @@ QString PsiThemeProvider::themePath(const QString &name) {
         QString fileName = dir + "/themes/" + name;
 
         QFileInfo fi(fileName);
-        if ( fi.exists() )
+        if (fi.exists())
             return fileName;
     }
 
@@ -52,12 +48,6 @@ QString PsiThemeProvider::themePath(const QString &name) {
 }
 
 // says where theme is able to load in separate thread
-bool PsiThemeProvider::threadedLoading() const
-{
-    return false;
-}
+bool PsiThemeProvider::threadedLoading() const { return false; }
 
-int PsiThemeProvider::screenshotWidth() const
-{
-    return 0;
-}
+int PsiThemeProvider::screenshotWidth() const { return 0; }

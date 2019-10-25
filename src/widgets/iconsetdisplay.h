@@ -25,14 +25,14 @@
 class Iconset;
 class IconsetDisplayItem;
 
-class IconsetDisplay : public QListWidget
-{
+class IconsetDisplay : public QListWidget {
     Q_OBJECT
 public:
     IconsetDisplay(QWidget *parent = nullptr);
     ~IconsetDisplay();
 
     void setIconset(const Iconset &);
+
 private:
     friend class IconsetDisplayItem;
 };

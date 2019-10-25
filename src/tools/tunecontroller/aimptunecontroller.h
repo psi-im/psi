@@ -24,8 +24,7 @@
 #include "tune.h"
 #include "windows.h"
 
-class AimpTuneController : public PollingTuneController
-{
+class AimpTuneController : public PollingTuneController {
     Q_OBJECT
 
 public:
@@ -38,7 +37,7 @@ protected slots:
 private:
     Tune getTune() const;
     HWND findAimp() const;
-    int getAimpStatus(const HWND &aimp) const;
+    int  getAimpStatus(const HWND &aimp) const;
     void sendTune(const Tune &tune);
     void clearTune();
 

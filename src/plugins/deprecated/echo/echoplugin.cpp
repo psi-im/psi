@@ -31,8 +31,7 @@
 
 #include <QtCore>
 
-class EchoPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender, public OptionAccessor
-{
+class EchoPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender, public OptionAccessor {
     Q_OBJECT
     Q_INTERFACES(PsiPlugin EventFilter StanzaSender OptionAccessor)
 
@@ -40,58 +39,43 @@ public:
     EchoPlugin();
 
     // PsiPlugin
-    virtual QString name() const;
-    virtual QString shortName() const;
-    virtual QString version() const;
-    virtual QWidget* options() const;
-    virtual bool enable();
-    virtual bool disable();
+    virtual QString  name() const;
+    virtual QString  shortName() const;
+    virtual QString  version() const;
+    virtual QWidget *options() const;
+    virtual bool     enable();
+    virtual bool     disable();
 
     // EventFilter
-    virtual bool processEvent(int account, const QDomElement& e);
-    virtual bool processMessage(int account, const QString& fromJid, const QString& body, const QString& subject);
+    virtual bool processEvent(int account, const QDomElement &e);
+    virtual bool processMessage(int account, const QString &fromJid, const QString &body, const QString &subject);
 
     // StanzaSender
     virtual void setStanzaSendingHost(StanzaSendingHost *host);
 
     // OptionAccessor
-    virtual void setOptionAccessingHost(OptionAccessingHost* host);
-    virtual void optionChanged(const QString& option);
+    virtual void setOptionAccessingHost(OptionAccessingHost *host);
+    virtual void optionChanged(const QString &option);
 
 private:
-    bool enabled;
-    OptionAccessingHost* psiOptions;
-    StanzaSendingHost* sender;
+    bool                 enabled;
+    OptionAccessingHost *psiOptions;
+    StanzaSendingHost *  sender;
 };
 
 Q_EXPORT_PLUGIN(EchoPlugin);
 
-EchoPlugin::EchoPlugin()
-    : enabled(false), psiOptions(0), sender(0)
-{
-}
+EchoPlugin::EchoPlugin() : enabled(false), psiOptions(0), sender(0) {}
 
 //-- PsiPlugin ------------------------------------------------------
 
-QString EchoPlugin::name() const
-{
-    return "Echo Plugin";
-}
+QString EchoPlugin::name() const { return "Echo Plugin"; }
 
-QString EchoPlugin::shortName() const
-{
-    return "echo";
-}
+QString EchoPlugin::shortName() const { return "echo"; }
 
-QString EchoPlugin::version() const
-{
-    return "0.1";
-}
+QString EchoPlugin::version() const { return "0.1"; }
 
-QWidget* EchoPlugin::options() const
-{
-    return 0;
-}
+QWidget *EchoPlugin::options() const { return 0; }
 
 bool EchoPlugin::enable()
 {
@@ -110,26 +94,26 @@ bool EchoPlugin::disable()
 
 //-- EventFilter ----------------------------------------------------
 
-bool EchoPlugin::processEvent(int account, const QDomElement& e)
+bool EchoPlugin::processEvent(int account, const QDomElement &e)
 {
     Q_UNUSED(account);
     Q_UNUSED(e);
-    return false;    // don't stop processing
+    return false; // don't stop processing
 }
 
-bool EchoPlugin::processMessage(int account, const QString& fromJid, const QString& body, const QString& subject)
+bool EchoPlugin::processMessage(int account, const QString &fromJid, const QString &body, const QString &subject)
 {
     if (enabled) {
         qWarning(qPrintable(QString("Received message '%1', echoing back to %2").arg(body).arg(fromJid)));
         QVariant option = psiOptions->getGlobalOption(body);
-        QString reply;
-        QString type;
+        QString  reply;
+        QString  type;
         if (option.isValid()) {
             reply = QString("Option %1 = %2").arg(body).arg(option.toString());
-            type = "chat";
+            type  = "chat";
         } else {
             reply = QString("What you say? %1 ?").arg(body);
-            type = "normal";
+            type  = "normal";
         }
         QString replySubject = QString("Re: %1").arg(subject);
 
@@ -141,21 +125,12 @@ bool EchoPlugin::processMessage(int account, const QString& fromJid, const QStri
 
 //-- StanzaSender ---------------------------------------------------
 
-void EchoPlugin::setStanzaSendingHost(StanzaSendingHost *host)
-{
-    sender = host;
-}
+void EchoPlugin::setStanzaSendingHost(StanzaSendingHost *host) { sender = host; }
 
 //-- OptionAccessor -------------------------------------------------
 
-void EchoPlugin::setOptionAccessingHost(OptionAccessingHost* host)
-{
-    psiOptions = host;
-}
+void EchoPlugin::setOptionAccessingHost(OptionAccessingHost *host) { psiOptions = host; }
 
-void EchoPlugin::optionChanged(const QString& option)
-{
-    Q_UNUSED(option);
-}
+void EchoPlugin::optionChanged(const QString &option) { Q_UNUSED(option); }
 
 #include "echoplugin.moc"

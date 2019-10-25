@@ -27,13 +27,12 @@ class PsiAccount;
 class QDomElement;
 
 namespace XMPP {
-    class Form;
-    class Jid;
-    class XData;
+class Form;
+class Jid;
+class XData;
 }
 
-class RegistrationDlg : public QDialog
-{
+class RegistrationDlg : public QDialog {
     Q_OBJECT
 
 public:
@@ -52,11 +51,11 @@ private:
     class Private;
     Private *d;
 
-    void setData(JT_XRegister* jt);
-    void updateData(JT_XRegister* jt);
-    void setInstructions(const QString& jid, const QString& instructions);
-    void processXData(const XMPP::XData& form);
-    void processLegacyForm(const XMPP::Form& form);
+    void setData(JT_XRegister *jt);
+    void updateData(JT_XRegister *jt);
+    void setInstructions(const QString &jid, const QString &instructions);
+    void processXData(const XMPP::XData &form);
+    void processLegacyForm(const XMPP::Form &form);
 };
 
 #endif // REGISTRATIONDLG_H

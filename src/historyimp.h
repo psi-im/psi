@@ -32,44 +32,47 @@
 #include <QPushButton>
 #include <QStackedWidget>
 
-struct ImportItem
-{
-    QStringList   accIds;
-    XMPP::Jid     jid;
-    int           startNum;
-    ImportItem(const QStringList &ids, const XMPP::Jid &j) { accIds = ids; jid = j; startNum = 0; }
+struct ImportItem {
+    QStringList accIds;
+    XMPP::Jid   jid;
+    int         startNum;
+    ImportItem(const QStringList &ids, const XMPP::Jid &j)
+    {
+        accIds   = ids;
+        jid      = j;
+        startNum = 0;
+    }
 };
 
-class HistoryImport : public QObject
-{
+class HistoryImport : public QObject {
     Q_OBJECT
 
 public:
-    enum {ResultNone, ResultNormal, ResultCancel, ResultError};
+    enum { ResultNone, ResultNormal, ResultCancel, ResultError };
     HistoryImport(PsiCon *psi);
     ~HistoryImport();
     bool isNeeded();
-    int exec();
-    int importDuration();
+    int  exec();
+    int  importDuration();
 
 private:
-    PsiCon *psi_;
+    PsiCon *          psi_;
     QList<ImportItem> importList;
-    EDB *srcEdb;
-    EDB *dstEdb;
-    EDBHandle *hErase;
-    EDBHandle *hRead;
-    EDBHandle *hWrite;
-    QDateTime startTime;
-    QDateTime stopTime;
-    bool active;
-    int result_;
-    quint64 recordsCount;
-    QDialog *dlg;
-    QLabel *lbStatus;
-    QProgressBar *progressBar;
-    QStackedWidget *stackedWidget;
-    QPushButton *btnOk;
+    EDB *             srcEdb;
+    EDB *             dstEdb;
+    EDBHandle *       hErase;
+    EDBHandle *       hRead;
+    EDBHandle *       hWrite;
+    QDateTime         startTime;
+    QDateTime         stopTime;
+    bool              active;
+    int               result_;
+    quint64           recordsCount;
+    QDialog *         dlg;
+    QLabel *          lbStatus;
+    QProgressBar *    progressBar;
+    QStackedWidget *  stackedWidget;
+    QPushButton *     btnOk;
 
 private:
     void clear();
@@ -84,7 +87,6 @@ private slots:
 
 signals:
     void finished(int);
-
 };
 
 #endif // HISTORYIMP_H

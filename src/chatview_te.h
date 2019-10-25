@@ -36,27 +36,26 @@ class ITEMediaOpener;
 class MessageView;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class ChatView : public PsiTextView, public ChatViewCommon
-{
+class ChatView : public PsiTextView, public ChatViewCommon {
     Q_OBJECT
 public:
-    ChatView(QWidget* parent);
+    ChatView(QWidget *parent);
     ~ChatView();
 
     void addLogIconsResources();
     void markReceived(QString id);
 
     // reimplemented
-    QSize sizeHint() const;
-    void clear();
-    void contextMenuEvent(QContextMenuEvent *e);
-    QMenu* createStandardContextMenu(const QPoint &position);
+    QSize  sizeHint() const;
+    void   clear();
+    void   contextMenuEvent(QContextMenuEvent *e);
+    QMenu *createStandardContextMenu(const QPoint &position);
 
     void init();
-    void setDialog(QWidget* dialog);
+    void setDialog(QWidget *dialog);
     void setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name);
 
     void insertText(const QString &text, QTextCursor &insertCursor);
@@ -64,11 +63,11 @@ public:
     void dispatchMessage(const MessageView &);
     bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
-    void deferredScroll();
-    void doTrackBar();
-    bool internalFind(QString str, bool startFromBeginning = false);
+    void      deferredScroll();
+    void      doTrackBar();
+    bool      internalFind(QString str, bool startFromBeginning = false);
     ChatView *textWidget();
-    QWidget *realTextWidget();
+    QWidget * realTextWidget();
 
     void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
 public slots:
@@ -86,12 +85,12 @@ protected:
     QString colorString(bool local, bool spooled) const;
 
     QString replaceMarker(const MessageView &mv) const;
-    void renderMucMessage(const MessageView &, QTextCursor &insertCursor);
-    void renderMessage(const MessageView &, QTextCursor &insertCursor);
-    void renderSysMessage(const MessageView &);
-    void renderSubject(const MessageView &);
-    void renderMucSubject(const MessageView &);
-    void renderUrls(const MessageView &);
+    void    renderMucMessage(const MessageView &, QTextCursor &insertCursor);
+    void    renderMessage(const MessageView &, QTextCursor &insertCursor);
+    void    renderSysMessage(const MessageView &);
+    void    renderSubject(const MessageView &);
+    void    renderMucSubject(const MessageView &);
+    void    renderUrls(const MessageView &);
 
 protected slots:
     void autoCopy();
@@ -100,30 +99,30 @@ private slots:
     void slotScroll();
 
 signals:
-    void showNM(const QString&);
+    void showNM(const QString &);
     void quote(const QString &text);
     void nickInsertClick(const QString &nick);
 
 private:
-    bool isMuc_;
-    bool isMucPrivate_;
-    bool isEncryptionEnabled_;
-    bool useMessageIcons_;
-    int  oldTrackBarPosition;
-    XMPP::Jid jid_;
-    QString name_;
+    bool              isMuc_;
+    bool              isMucPrivate_;
+    bool              isEncryptionEnabled_;
+    bool              useMessageIcons_;
+    int               oldTrackBarPosition;
+    XMPP::Jid         jid_;
+    QString           name_;
     QPointer<QWidget> dialog_;
 
-    QPixmap logIconSend;
-    QPixmap logIconReceive;
-    QPixmap logIconDelivered;
-    QPixmap logIconSendPgp;
-    QPixmap logIconReceivePgp;
-    QPixmap logIconDeliveredPgp;
-    QPixmap logIconTime;
-    QPixmap logIconInfo;
-    QPixmap logIconCorrected;
-    QPixmap logIconHistory;
+    QPixmap  logIconSend;
+    QPixmap  logIconReceive;
+    QPixmap  logIconDelivered;
+    QPixmap  logIconSendPgp;
+    QPixmap  logIconReceivePgp;
+    QPixmap  logIconDeliveredPgp;
+    QPixmap  logIconTime;
+    QPixmap  logIconInfo;
+    QPixmap  logIconCorrected;
+    QPixmap  logIconHistory;
     QAction *actQuote_;
 };
 

@@ -31,7 +31,7 @@ namespace Crash {
  *
  * \param  _need_cr    needs to append an \n at the end?
  */
-void *sigsegv_set_print( int (* fnc)(const char *format, ...), int _needs_cr);
+void *sigsegv_set_print(int (*fnc)(const char *format, ...), int _needs_cr);
 
 /**
  * try to print a backtrace of the programa, and dump the core

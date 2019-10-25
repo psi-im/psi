@@ -65,7 +65,8 @@ void FileUtil::setLastUsedSavePath(const QString &path)
     }
 }
 
-QString FileUtil::getOpenFileName(QWidget *parent, const QString &caption, const QString &filter, QString *selectedFilter)
+QString FileUtil::getOpenFileName(QWidget *parent, const QString &caption, const QString &filter,
+                                  QString *selectedFilter)
 {
     while (true) {
         if (lastUsedOpenPath().isEmpty()) {
@@ -88,14 +89,16 @@ QString FileUtil::getOpenFileName(QWidget *parent, const QString &caption, const
     return QString();
 }
 
-QStringList FileUtil::getOpenFileNames(QWidget *parent, const QString &caption, const QString &filter, QString *selectedFilter)
+QStringList FileUtil::getOpenFileNames(QWidget *parent, const QString &caption, const QString &filter,
+                                       QString *selectedFilter)
 {
     while (true) {
         if (lastUsedOpenPath().isEmpty()) {
             setLastUsedOpenPath(QDir::homePath());
         }
         QStringList result;
-        QStringList fileNames = QFileDialog::getOpenFileNames(parent, caption, lastUsedOpenPath(), filter, selectedFilter);
+        QStringList fileNames
+            = QFileDialog::getOpenFileNames(parent, caption, lastUsedOpenPath(), filter, selectedFilter);
         foreach (const QString &fileName, fileNames) {
             QFileInfo fi(fileName);
             if (!fi.exists()) {
@@ -109,7 +112,8 @@ QStringList FileUtil::getOpenFileNames(QWidget *parent, const QString &caption, 
     }
 }
 
-QString FileUtil::getSaveFileName(QWidget *parent, const QString &caption, const QString &defaultFileName, const QString &filter, QString *selectedFilter)
+QString FileUtil::getSaveFileName(QWidget *parent, const QString &caption, const QString &defaultFileName,
+                                  const QString &filter, QString *selectedFilter)
 {
     if (lastUsedSavePath().isEmpty()) {
         if (!lastUsedOpenPath().isEmpty()) {
@@ -209,17 +213,21 @@ QString FileUtil::cleanFileName(const QString &s)
 void FileUtil::openFolder(const QString &path)
 {
 #if defined(Q_OS_WIN)
-    QProcess::startDetached("explorer.exe", QStringList() << QLatin1String("/select,") << QDir::toNativeSeparators(path));
+    QProcess::startDetached("explorer.exe",
+                            QStringList() << QLatin1String("/select,") << QDir::toNativeSeparators(path));
 #elif defined(Q_OS_MAC)
-    QProcess::execute("/usr/bin/osascript", QStringList() << "-e" << QString("tell application \"Finder\" to reveal POSIX file \"%1\"").arg(path));
-    QProcess::execute("/usr/bin/osascript", QStringList() << "-e"
-                                                          << "tell application \"Finder\" to activate");
+    QProcess::execute("/usr/bin/osascript",
+                      QStringList() << "-e"
+                                    << QString("tell application \"Finder\" to reveal POSIX file \"%1\"").arg(path));
+    QProcess::execute("/usr/bin/osascript",
+                      QStringList() << "-e"
+                                    << "tell application \"Finder\" to activate");
 #else
     // we cannot select a file here, because no file browser really supports it...
     const QFileInfo fileInfo(path);
     QProcess::startDetached("xdg-open", QStringList(fileInfo.path()));
 #endif
-    //printf("item open dest: [%s]\n", path.latin1());
+    // printf("item open dest: [%s]\n", path.latin1());
 }
 
 void FileUtil::setModificationTime(const QString &filename, const QDateTime &mtime)

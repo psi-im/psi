@@ -48,17 +48,14 @@ Qt::ToolBarArea dockPositionToToolBarArea(Qt3Dock dock)
 
     case Qt3Dock_Unmanaged:
     case Qt3Dock_TornOff:
-    case Qt3Dock_Minimized:
-        ;
+    case Qt3Dock_Minimized:;
     }
 
     return Qt::NoToolBarArea;
 }
 
-PsiToolBar::PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList* actionList)
-    : QToolBar(mainWindow)
-    , actionList_(actionList)
-    , base_(base)
+PsiToolBar::PsiToolBar(const QString &base, QWidget *mainWindow, MetaActionList *actionList) :
+    QToolBar(mainWindow), actionList_(actionList), base_(base)
 {
     Q_ASSERT(mainWindow);
     Q_ASSERT(actionList_);
@@ -70,11 +67,9 @@ PsiToolBar::PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList*
     connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));
 }
 
-PsiToolBar::~PsiToolBar()
-{
-}
+PsiToolBar::~PsiToolBar() {}
 
-void PsiToolBar::contextMenuEvent(QContextMenuEvent* e)
+void PsiToolBar::contextMenuEvent(QContextMenuEvent *e)
 {
     e->accept();
 
@@ -83,14 +78,11 @@ void PsiToolBar::contextMenuEvent(QContextMenuEvent* e)
     menu.exec(e->globalPos());
 }
 
-QString PsiToolBar::base() const
-{
-    return base_;
-}
+QString PsiToolBar::base() const { return base_; }
 
 void PsiToolBar::initialize()
 {
-    PsiOptions* o = PsiOptions::instance();
+    PsiOptions *o = PsiOptions::instance();
     if (o->getOption(base_ + ".key").toString().isEmpty()) {
         o->setOption(base_ + ".key", ToolbarPrefs().id);
     }
@@ -100,34 +92,35 @@ void PsiToolBar::initialize()
 
     ActionList actions = actionList_->suitableActions(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
     QList<QString> skipList;
-    skipList << "button_options" << "button_status" << "event_notifier" << "spacer";
+    skipList << "button_options"
+             << "button_status"
+             << "event_notifier"
+             << "spacer";
 
-    foreach(QString actionName, o->getOption(base_ + ".actions").toStringList()) {
-        IconAction* action = actions.action(actionName);
+    foreach (QString actionName, o->getOption(base_ + ".actions").toStringList()) {
+        IconAction *action = actions.action(actionName);
 
         if (action) {
             if (action->isSeparator()) {
                 addSeparator();
-            }
-            else if (!skipList.contains(actionName)) {
+            } else if (!skipList.contains(actionName)) {
                 QToolButton *button = new QToolButton;
                 button->setDefaultAction(action);
                 button->setPopupMode(QToolButton::InstantPopup);
                 addWidget(button);
-            }
-            else {
+            } else {
                 action->addTo(this);
             }
-        }
-        else {
+        } else {
             qWarning("PsiToolBar::initialize(): action %s not found!", qPrintable(actionName));
         }
     }
 
     if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
-        QMainWindow* mainWindow = dynamic_cast<QMainWindow*>(parentWidget());
+        QMainWindow *mainWindow = dynamic_cast<QMainWindow *>(parentWidget());
         if (mainWindow) {
-            mainWindow->addToolBar(dockPositionToToolBarArea(Qt3Dock(o->getOption(base_ + ".dock.position").toInt())), this);
+            mainWindow->addToolBar(dockPositionToToolBarArea(Qt3Dock(o->getOption(base_ + ".dock.position").toInt())),
+                                   this);
             if (o->getOption(base_ + ".dock.nl").toBool())
                 mainWindow->insertToolBarBreak(this);
         }
@@ -140,13 +133,12 @@ void PsiToolBar::updateVisibility()
 {
     if (PsiOptions::instance()->getOption(base_ + ".visible").toBool()) {
         show();
-    }
-    else {
+    } else {
         hide();
     }
 }
 
-void PsiToolBar::structToOptions(PsiOptions* options, const ToolbarPrefs& tb)
+void PsiToolBar::structToOptions(PsiOptions *options, const ToolbarPrefs &tb)
 {
     Q_ASSERT(!tb.id.isEmpty());
     QString base = options->mapPut("options.ui.contactlist.toolbars", tb.id);

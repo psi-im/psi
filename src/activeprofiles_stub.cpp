@@ -29,10 +29,7 @@ bool ActiveProfiles::isActive(const QString &profile) const
     return false;
 }
 
-bool ActiveProfiles::isAnyActive() const
-{
-    return false;
-}
+bool ActiveProfiles::isAnyActive() const { return false; }
 
 bool ActiveProfiles::setThisProfile(const QString &profile)
 {
@@ -40,24 +37,13 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
     return true;
 }
 
-void ActiveProfiles::unsetThisProfile()
-{
-}
+void ActiveProfiles::unsetThisProfile() {}
 
-QString ActiveProfiles::thisProfile() const
-{
-    return QString();
-}
+QString ActiveProfiles::thisProfile() const { return QString(); }
 
-ActiveProfiles::ActiveProfiles()
-    : QObject(QCoreApplication::instance())
-    , d(nullptr)
-{
-}
+ActiveProfiles::ActiveProfiles() : QObject(QCoreApplication::instance()), d(nullptr) {}
 
-ActiveProfiles::~ActiveProfiles()
-{
-}
+ActiveProfiles::~ActiveProfiles() {}
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {

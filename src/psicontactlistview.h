@@ -25,15 +25,14 @@
 class ContactListViewDelegate;
 class QAbstractItemModel;
 
-class PsiContactListView : public ContactListDragView
-{
+class PsiContactListView : public ContactListDragView {
     Q_OBJECT
 
 public:
-    PsiContactListView(QWidget* parent);
+    PsiContactListView(QWidget *parent);
 
     // reimplemented
-    void setModel(QAbstractItemModel* model);
+    void setModel(QAbstractItemModel *model);
 
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
@@ -47,7 +46,7 @@ protected slots:
 
 protected:
     // reimplemented
-    void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
+    void showToolTip(const QModelIndex &index, const QPoint &globalPos) const;
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
     void dragMoveEvent(QDragMoveEvent *e);
@@ -59,7 +58,7 @@ private:
 
 private:
     class Private;
-    Private* d;
+    Private *d;
 };
 
 #endif // PSICONTACTLISTVIEW_H

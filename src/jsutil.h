@@ -25,8 +25,7 @@
 class QString;
 class QVariant;
 
-class JSUtil
-{
+class JSUtil {
 public:
     static QString variant2js(const QVariant &);
     /** Escapes " and \n  (for JS evaluation) */

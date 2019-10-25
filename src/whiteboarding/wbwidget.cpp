@@ -26,16 +26,17 @@
 #include <QApplication>
 #include <QMouseEvent>
 
-WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent) {
-    newWbItem_ = nullptr;
-    adding_ = nullptr;
-    addVertex_ = false;
+WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
+{
+    newWbItem_   = nullptr;
+    adding_      = nullptr;
+    addVertex_   = false;
     strokeColor_ = Qt::black;
-    fillColor_ = Qt::transparent;
+    fillColor_   = Qt::transparent;
     strokeWidth_ = 1;
-    session_ = session;
+    session_     = session;
 
-//    setCacheMode(CacheBackground);
+    //    setCacheMode(CacheBackground);
     setRenderHint(QPainter::Antialiasing);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -60,9 +61,9 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
 
     // add the initial items
     const QDomNodeList children = session_->document().documentElement().childNodes();
-    for(int i = 0; i < int(children.length()); i++) {
+    for (int i = 0; i < int(children.length()); i++) {
         const QDomNode node = children.at(i);
-        if(node.isElement()) {
+        if (node.isElement()) {
             queueNodeInspection(node.toElement());
         }
     }
@@ -84,80 +85,80 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
     setMode(Mode::Select);
 
     // set the initial size
-    if(session_->document().documentElement().hasAttribute("viewBox"))
+    if (session_->document().documentElement().hasAttribute("viewBox"))
         checkForViewBoxChange(session_->document().documentElement().attributeNode("viewBox"));
     else {
-        QSize size;
+        QSize  size;
         QRectF rect = scene_->sceneRect();
         size.setWidth(int(rect.x() + rect.width()));
         size.setHeight(int(rect.y() + rect.height()));
-        if(size.width() > 0 && size.height() > 0)
+        if (size.width() > 0 && size.height() > 0)
             setSize(size);
         else
             setSize(QSize(400, 600));
     }
 }
 
-SxeSession* WbWidget::session() {
-    return session_;
+SxeSession *WbWidget::session() { return session_; }
+
+WbWidget::Mode WbWidget::mode() { return mode_; }
+
+void WbWidget::setMode(Mode mode)
+{
+    mode_ = mode;
+
+    if (mode_ < Mode::DrawPath) {
+        if (newWbItem_) {
+            delete newWbItem_;
+            newWbItem_ = nullptr;
+        }
+    }
+
+    if (mode_ >= Mode::Erase) {
+        setDragMode(QGraphicsView::NoDrag);
+        setInteractive(false);
+        setCursor(Qt::CrossCursor);
+    } else {
+        setInteractive(true);
+    }
+
+    if (mode_ == Mode::Select) {
+        setDragMode(QGraphicsView::RubberBandDrag);
+        setCursor(Qt::ArrowCursor);
+    } else if (mode_ == Mode::Translate) {
+        setDragMode(QGraphicsView::RubberBandDrag);
+        setCursor(Qt::SizeAllCursor);
+    } else if (mode_ == Mode::Rotate) {
+        setDragMode(QGraphicsView::RubberBandDrag);
+        unsetCursor();
+        // TODO: load cursor from image
+    } else if (mode_ == Mode::Scale) {
+        setDragMode(QGraphicsView::RubberBandDrag);
+        setCursor(Qt::SizeBDiagCursor);
+    } else if (mode_ == Mode::Scroll) {
+        setDragMode(QGraphicsView::ScrollHandDrag);
+    }
 }
 
-WbWidget::Mode WbWidget::mode() {
-    return mode_;
-}
-
-void WbWidget::setMode(Mode mode) {
-     mode_ = mode;
-
-     if(mode_ < Mode::DrawPath) {
-             if(newWbItem_) {
-                     delete newWbItem_;
-                     newWbItem_ = nullptr;
-             }
-     }
-
-     if(mode_ >= Mode::Erase) {
-             setDragMode(QGraphicsView::NoDrag);
-             setInteractive(false);
-             setCursor(Qt::CrossCursor);
-     } else {
-             setInteractive(true);
-     }
-
-     if(mode_ == Mode::Select) {
-             setDragMode(QGraphicsView::RubberBandDrag);
-             setCursor(Qt::ArrowCursor);
-     } else if(mode_ == Mode::Translate) {
-             setDragMode(QGraphicsView::RubberBandDrag);
-             setCursor(Qt::SizeAllCursor);
-     } else if(mode_ == Mode::Rotate) {
-            setDragMode(QGraphicsView::RubberBandDrag);
-             unsetCursor();
-             // TODO: load cursor from image
-     } else if(mode_ == Mode::Scale) {
-            setDragMode(QGraphicsView::RubberBandDrag);
-             setCursor(Qt::SizeBDiagCursor);
-     } else if(mode_ == Mode::Scroll) {
-             setDragMode(QGraphicsView::ScrollHandDrag);
-     }
-}
-
-void WbWidget::setSize(const QSize &size) {
-    session_->setAttribute(session_->document().documentElement(), "viewBox", QString("0 0 %1 %2").arg(size.width()).arg(size.height()));
+void WbWidget::setSize(const QSize &size)
+{
+    session_->setAttribute(session_->document().documentElement(), "viewBox",
+                           QString("0 0 %1 %2").arg(size.width()).arg(size.height()));
     session_->flush();
 }
 
 /*! \brief Generates a QRectF based on \a string provided in the SVG viewBox format. */
-static QRectF parseSvgViewBox(QString string) {
+static QRectF parseSvgViewBox(QString string)
+{
     QString strings[4];
-    qreal numbers[4];
-    for(int i = 0, j = 0; i < 4; i++) {
+    qreal   numbers[4];
+    for (int i = 0, j = 0; i < 4; i++) {
         // skip spaces before number
-        while(string[j].isSpace() && j < string.length())
+        while (string[j].isSpace() && j < string.length())
             j++;
 
-        while(!string[j].isSpace() && j < string.length()) {
-            if(string[j].isNumber())
+        while (!string[j].isSpace() && j < string.length()) {
+            if (string[j].isNumber())
                 strings[i] += string[j];
             j++;
         }
@@ -165,57 +166,57 @@ static QRectF parseSvgViewBox(QString string) {
         numbers[i] = strings[i].toDouble();
     }
 
-    // qDebug() << QString("QRectF(%1 %2 %3 %4)").arg(numbers[0]).arg(numbers[1]).arg(numbers[2]).arg(numbers[3]).toLatin1();
+    // qDebug() << QString("QRectF(%1 %2 %3
+    // %4)").arg(numbers[0]).arg(numbers[1]).arg(numbers[2]).arg(numbers[3]).toLatin1();
     return QRect(int(numbers[0]), int(numbers[1]), int(numbers[2]), int(numbers[3]));
 }
 
-void WbWidget::checkForViewBoxChange(const QDomNode &node) {
-    if(node.isAttr() && node.nodeName().toLower() == "viewbox" && node.parentNode() == session_->document().documentElement()) {
+void WbWidget::checkForViewBoxChange(const QDomNode &node)
+{
+    if (node.isAttr() && node.nodeName().toLower() == "viewbox"
+        && node.parentNode() == session_->document().documentElement()) {
         QRectF box = parseSvgViewBox(node.nodeValue());
-        if(box.width() > 0 && box.height() > 0) {
+        if (box.width() > 0 && box.height() > 0) {
             scene_->setSceneRect(box);
         }
     }
 }
 
-void WbWidget::setStrokeColor(const QColor &color) {
-    strokeColor_ = color;
-}
+void WbWidget::setStrokeColor(const QColor &color) { strokeColor_ = color; }
 
-void WbWidget::setFillColor(const QColor &color) {
-    fillColor_ = color;
-}
+void WbWidget::setFillColor(const QColor &color) { fillColor_ = color; }
 
-void WbWidget::setStrokeWidth(int width) {
-    strokeWidth_ = width;
-}
+void WbWidget::setStrokeWidth(int width) { strokeWidth_ = width; }
 
-void WbWidget::clear() {
-    foreach(QGraphicsItem* graphicsitem, scene_->items()) {
-        WbItem* wbitem = dynamic_cast<WbItem*>(graphicsitem);
-        if(wbitem)
+void WbWidget::clear()
+{
+    foreach (QGraphicsItem *graphicsitem, scene_->items()) {
+        WbItem *wbitem = dynamic_cast<WbItem *>(graphicsitem);
+        if (wbitem)
             session_->removeNode(wbitem->node());
     }
     session_->flush();
 }
 
-QSize WbWidget::sizeHint() const {
-    if(scene_)
+QSize WbWidget::sizeHint() const
+{
+    if (scene_)
         return scene_->sceneRect().size().toSize();
     else
         return QSize();
 }
 
-void WbWidget::resizeEvent(QResizeEvent * event) {
+void WbWidget::resizeEvent(QResizeEvent *event)
+{
     // Never show areas outside the sceneRect
     // Doesn't consider rotated views.
     QMatrix t;
-    qreal sx = event->size().width() / scene_->sceneRect().width();
-    qreal sy = event->size().height() / scene_->sceneRect().height();
+    qreal   sx = event->size().width() / scene_->sceneRect().width();
+    qreal   sy = event->size().height() / scene_->sceneRect().height();
 
     // Never shrink the view. Only enlarge if necessary.
-    if(sx > 1 || sy > 1) {
-        if(sx > sy)
+    if (sx > 1 || sy > 1) {
+        if (sx > sy)
             t.scale(sx, sx);
         else
             t.scale(sy, sy);
@@ -225,37 +226,38 @@ void WbWidget::resizeEvent(QResizeEvent * event) {
     QGraphicsView::resizeEvent(event);
 }
 
-void WbWidget::mousePressEvent(QMouseEvent * event) {
+void WbWidget::mousePressEvent(QMouseEvent *event)
+{
     // ignore non-leftclicks when not in Select mode
-    if(event->button() != Qt::LeftButton && mode_ != Mode::Select)
+    if (event->button() != Qt::LeftButton && mode_ != Mode::Select)
         return;
 
     // delete any temporary item being drawn
-    if(newWbItem_) {
+    if (newWbItem_) {
         delete newWbItem_;
         newWbItem_ = nullptr;
     }
 
     QPointF startPoint = mapToScene(mapFromGlobal(event->globalPos()));
-    if(mode_ == Mode::DrawPath) {
+    if (mode_ == Mode::DrawPath) {
         // // Create the element with starting position
         // QPointF sp = mapToScene(mapFromGlobal(event->globalPos()));
         // qDebug() << QString("1: (%1, %2)").arg(sp.x()).arg(sp.y());
         newWbItem_ = new WbNewPath(scene_, startPoint, strokeWidth_, strokeColor_, fillColor_);
         return;
-    } else if(mode_ == Mode::DrawText) {
+    } else if (mode_ == Mode::DrawText) {
 
-    } else if(mode_ == Mode::DrawRectangle) {
+    } else if (mode_ == Mode::DrawRectangle) {
 
-    } else if(mode_ == Mode::DrawEllipse) {
+    } else if (mode_ == Mode::DrawEllipse) {
 
-    } else if(mode_ == Mode::DrawCircle) {
+    } else if (mode_ == Mode::DrawCircle) {
 
-    } else if(mode_ == Mode::DrawLine) {
+    } else if (mode_ == Mode::DrawLine) {
 
-    } else if(mode_ == Mode::DrawImage) {
+    } else if (mode_ == Mode::DrawImage) {
         QString filename = QFileDialog::getOpenFileName(this, "Choose an image", QString(), "Images (*.png *.jpg)");
-        if(!filename.isEmpty()) {
+        if (!filename.isEmpty()) {
             newWbItem_ = new WbNewImage(scene_, startPoint, filename);
             QDomDocument tempDoc;
             session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
@@ -268,44 +270,47 @@ void WbWidget::mousePressEvent(QMouseEvent * event) {
     QGraphicsView::mousePressEvent(event);
 }
 
-void WbWidget::mouseMoveEvent(QMouseEvent * event) {
-    if(mode_ < Mode::Erase) {
+void WbWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    if (mode_ < Mode::Erase) {
         QGraphicsView::mouseMoveEvent(event);
         return;
     }
 
-    if(QApplication::mouseButtons() != Qt::MouseButtons(Qt::LeftButton)) {
-        if(newWbItem_) {
-             delete newWbItem_;
-             newWbItem_ = nullptr;
+    if (QApplication::mouseButtons() != Qt::MouseButtons(Qt::LeftButton)) {
+        if (newWbItem_) {
+            delete newWbItem_;
+            newWbItem_ = nullptr;
         }
         return;
     }
 
-    if(mode_ == Mode::Erase) {
-         if(event->buttons() != Qt::MouseButtons(Qt::LeftButton))
-             return;
-         // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
-         QPointF p = mapToScene(mapFromGlobal(event->globalPos()));
-         QGraphicsRectItem* eraseRect = scene_->addRect(QRectF(p.x() - strokeWidth_, p.y() - strokeWidth_, 2 * strokeWidth_, 2 * strokeWidth_));
-         foreach(QGraphicsItem * item, eraseRect->collidingItems()) {
-            WbItem* wbitem = dynamic_cast<WbItem*>(item);
-            if(wbitem)
+    if (mode_ == Mode::Erase) {
+        if (event->buttons() != Qt::MouseButtons(Qt::LeftButton))
+            return;
+        // Erase all items that appear in a 2*strokeWidth_ square with center at the event position
+        QPointF            p = mapToScene(mapFromGlobal(event->globalPos()));
+        QGraphicsRectItem *eraseRect
+            = scene_->addRect(QRectF(p.x() - strokeWidth_, p.y() - strokeWidth_, 2 * strokeWidth_, 2 * strokeWidth_));
+        foreach (QGraphicsItem *item, eraseRect->collidingItems()) {
+            WbItem *wbitem = dynamic_cast<WbItem *>(item);
+            if (wbitem)
                 session_->removeNode(wbitem->node());
-         }
-         delete eraseRect;
-         eraseRect = nullptr;
+        }
+        delete eraseRect;
+        eraseRect = nullptr;
 
-         event->ignore();
-         return;
-    } else if(mode_ >= Mode::DrawPath && newWbItem_) {
+        event->ignore();
+        return;
+    } else if (mode_ >= Mode::DrawPath && newWbItem_) {
         newWbItem_->parseCursorMove(mapToScene(mapFromGlobal(event->globalPos())));
     }
 }
 
-void WbWidget::mouseReleaseEvent(QMouseEvent * event) {
+void WbWidget::mouseReleaseEvent(QMouseEvent *event)
+{
 
-    if(event->button() != Qt::LeftButton && mode_ >= Mode::Erase)
+    if (event->button() != Qt::LeftButton && mode_ >= Mode::Erase)
         return;
 
     if (newWbItem_ && mode_ >= Mode::DrawPath && mode_ != Mode::DrawImage) {
@@ -320,54 +325,57 @@ void WbWidget::mouseReleaseEvent(QMouseEvent * event) {
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-WbItem* WbWidget::wbItem(const QDomNode &node) {
-    foreach(WbItem* wbitem, items_) {
-        if(wbitem->node() == node)
+WbItem *WbWidget::wbItem(const QDomNode &node)
+{
+    foreach (WbItem *wbitem, items_) {
+        if (wbitem->node() == node)
             return wbitem;
     }
     return nullptr;
 }
 
-void WbWidget::handleDocumentUpdated(bool remote) {
+void WbWidget::handleDocumentUpdated(bool remote)
+{
     Q_UNUSED(remote);
     inspectNodes();
     rerender();
 }
 
-void WbWidget::inspectNodes() {
-    while(!recentlyRelocatedNodes_.isEmpty()) {
+void WbWidget::inspectNodes()
+{
+    while (!recentlyRelocatedNodes_.isEmpty()) {
         QDomNode node = recentlyRelocatedNodes_.takeFirst();
 
-        if(!node.isElement())
+        if (!node.isElement())
             continue;
 
         // check if we already have a WbItem for the node
-        WbItem* item = wbItem(node);
+        WbItem *item = wbItem(node);
 
         // We don't need to do anything iff node is child of <svg/> and item exists or vice versa
-        if((item != nullptr) == (node.parentNode() == session_->document().documentElement()))
+        if ((item != nullptr) == (node.parentNode() == session_->document().documentElement()))
             continue;
 
         // Otherwise, either item exists and needs to be removed
         //              or it doesn't exist and needs to be added
-        if(item)
+        if (item)
             removeWbItem(item);
         else
             items_.append(new WbItem(session_, &renderer_, node.toElement(), scene_, this));
     }
 }
 
-void WbWidget::queueNodeInspection(const QDomNode &node) {
-    if(node.isElement())
+void WbWidget::queueNodeInspection(const QDomNode &node)
+{
+    if (node.isElement())
         recentlyRelocatedNodes_.append(node);
 }
 
-void WbWidget::removeWbItem(const QDomNode &node) {
-    removeWbItem(wbItem(node));
-}
+void WbWidget::removeWbItem(const QDomNode &node) { removeWbItem(wbItem(node)); }
 
-void WbWidget::removeWbItem(WbItem *wbitem) {
-    if(wbitem) {
+void WbWidget::removeWbItem(WbItem *wbitem)
+{
+    if (wbitem) {
         qDebug("delete WbItem");
         // Remove from the lookup table to avoid infinite loop of deletes
         items_.removeAll(wbitem);
@@ -379,19 +387,21 @@ void WbWidget::removeWbItem(WbItem *wbitem) {
     }
 }
 
-void WbWidget::addIds() {
-    while(!idlessItems_.isEmpty())
+void WbWidget::addIds()
+{
+    while (!idlessItems_.isEmpty())
         idlessItems_.takeFirst()->addToScene();
 
     session_->flush();
 }
 
-void WbWidget::addToIdLess(const QDomElement &element) {
-    if(element.parentNode() != session_->document().documentElement())
+void WbWidget::addToIdLess(const QDomElement &element)
+{
+    if (element.parentNode() != session_->document().documentElement())
         return;
 
-    WbItem* item = wbItem(element);
-    if(item && !idlessItems_.contains(item)) {
+    WbItem *item = wbItem(element);
+    if (item && !idlessItems_.contains(item)) {
         // Remove from the scene until a new 'id' attribute is added
         item->removeFromScene();
 
@@ -402,20 +412,22 @@ void WbWidget::addToIdLess(const QDomElement &element) {
     }
 }
 
-void WbWidget::checkForRemovalOfId(QDomNode node) {
-    if(node.isAttr()) {
-        if(node.nodeName() == "id") {
-            while(!(node.isElement() || node.isNull()))
+void WbWidget::checkForRemovalOfId(QDomNode node)
+{
+    if (node.isAttr()) {
+        if (node.nodeName() == "id") {
+            while (!(node.isElement() || node.isNull()))
                 node = node.parentNode();
 
-            if(!node.isNull())
+            if (!node.isNull())
                 addToIdLess(node.toElement());
         }
     }
 }
 
-void WbWidget::rerender() {
-    QString xmldump;
+void WbWidget::rerender()
+{
+    QString     xmldump;
     QTextStream stream(&xmldump);
     session_->document().save(stream, 1);
 
@@ -425,8 +437,9 @@ void WbWidget::rerender() {
     renderer_.load(xmldump.toLatin1());
 
     // Update all positions if changed
-    foreach(WbItem* wbitem, items_) {
-        // resetting elementId is necessary for rendering some updates to the element (e.g. adding child elements to <g/>)
+    foreach (WbItem *wbitem, items_) {
+        // resetting elementId is necessary for rendering some updates to the element (e.g. adding child elements to
+        // <g/>)
         wbitem->setElementId(wbitem->id());
 
         // qDebug() << QString("Rerendering %1").arg((unsigned int) wbitem).toLatin1();

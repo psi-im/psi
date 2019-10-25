@@ -6,8 +6,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <QString>
 
-class ITunesController : public TuneController
-{
+class ITunesController : public TuneController {
 public:
     ITunesController();
     ~ITunesController();
@@ -15,8 +14,8 @@ public:
     virtual Tune currentTune() const;
 
 private:
-    static void iTunesCallback(CFNotificationCenterRef,void*,CFStringRef,const void*, CFDictionaryRef info);
-    Tune currentTune_;
+    static void iTunesCallback(CFNotificationCenterRef, void *, CFStringRef, const void *, CFDictionaryRef info);
+    Tune        currentTune_;
 };
 
 #endif // ITUNESTUNECONTROLLER_H

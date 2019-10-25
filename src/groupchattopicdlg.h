@@ -9,8 +9,8 @@
 class GCMainDlg;
 
 namespace Ui {
-    class GroupChatTopicAddLangDlg;
-    class GroupchatTopicDlg;
+class GroupChatTopicAddLangDlg;
+class GroupchatTopicDlg;
 }
 
 class GroupchatTopicDlg : public QDialog {
@@ -18,15 +18,16 @@ class GroupchatTopicDlg : public QDialog {
 public:
     GroupchatTopicDlg(GCMainDlg *parent = nullptr);
     ~GroupchatTopicDlg();
-    QMap<LanguageManager::LangId,QString> subjectMap() const;
-    void setSubjectMap(const QMap<LanguageManager::LangId,QString> &topics);
+    QMap<LanguageManager::LangId, QString> subjectMap() const;
+    void                                   setSubjectMap(const QMap<LanguageManager::LangId, QString> &topics);
 
 protected:
     void changeEvent(QEvent *e);
+
 private:
-    Ui::GroupchatTopicDlg *m_ui;
+    Ui::GroupchatTopicDlg *       m_ui;
     Ui::GroupChatTopicAddLangDlg *m_addLangUi;
-    QPointer<QDialog> addLangDlg;
+    QPointer<QDialog>             addLangDlg;
 
     void addLanguage(const LanguageManager::LangId &id, const QString &text = QString());
     void populateCountryAndScript();

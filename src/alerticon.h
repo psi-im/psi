@@ -28,20 +28,19 @@ class QImage;
 class QPixmap;
 class QString;
 
-class AlertIcon : public PsiIcon
-{
+class AlertIcon : public PsiIcon {
     Q_OBJECT
 public:
     AlertIcon(const PsiIcon *icon);
     ~AlertIcon();
 
     // reimplemented
-    virtual bool isAnimated() const;
+    virtual bool           isAnimated() const;
     virtual const QPixmap &pixmap() const;
-    virtual const QImage &image() const;
-    virtual const QIcon & icon() const;
-    virtual const Impix &impix() const;
-    virtual int frameNumber() const;
+    virtual const QImage & image() const;
+    virtual const QIcon &  icon() const;
+    virtual const Impix &  impix() const;
+    virtual int            frameNumber() const;
     virtual const QString &name() const;
 
     virtual PsiIcon *copy() const;
@@ -52,6 +51,7 @@ public slots:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;

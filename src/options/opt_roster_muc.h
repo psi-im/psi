@@ -6,16 +6,15 @@
 class QButtonGroup;
 class QWidget;
 
-class OptionsTabRosterMuc : public OptionsTab
-{
+class OptionsTabRosterMuc : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabRosterMuc(QObject *parent);
     ~OptionsTabRosterMuc();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
 protected:
     virtual void changeEvent(QEvent *e);

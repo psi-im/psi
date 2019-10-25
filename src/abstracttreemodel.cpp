@@ -22,16 +22,11 @@
 
 #include <QDebug>
 
-AbstractTreeModel::AbstractTreeModel(AbstractTreeItem *root, QObject *parent)
-    : QAbstractItemModel(parent)
-    , _root(root)
+AbstractTreeModel::AbstractTreeModel(AbstractTreeItem *root, QObject *parent) : QAbstractItemModel(parent), _root(root)
 {
 }
 
-AbstractTreeModel::~AbstractTreeModel()
-{
-    delete _root;
-}
+AbstractTreeModel::~AbstractTreeModel() { delete _root; }
 
 QModelIndex AbstractTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
@@ -43,7 +38,7 @@ QModelIndex AbstractTreeModel::index(int row, int column, const QModelIndex &par
     if (!parent.isValid())
         parentItem = _root;
     else
-        parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
+        parentItem = static_cast<AbstractTreeItem *>(parent.internalPointer());
 
     AbstractTreeItem *childItem = nullptr;
     if (row >= 0 && row < parentItem->childCount())
@@ -53,15 +48,14 @@ QModelIndex AbstractTreeModel::index(int row, int column, const QModelIndex &par
         return createIndex(row, column, childItem);
     else
         return QModelIndex();
-
 }
 
-QModelIndex    AbstractTreeModel::parent(const QModelIndex &index) const
+QModelIndex AbstractTreeModel::parent(const QModelIndex &index) const
 {
     if (!index.isValid())
         return QModelIndex();
 
-    AbstractTreeItem *childItem = static_cast<AbstractTreeItem*>(index.internalPointer());
+    AbstractTreeItem *childItem  = static_cast<AbstractTreeItem *>(index.internalPointer());
     AbstractTreeItem *parentItem = childItem->parent();
 
     if (parentItem == _root)
@@ -74,7 +68,7 @@ QModelIndex    AbstractTreeModel::parent(const QModelIndex &index) const
     return createIndex(row, 0, parentItem);
 }
 
-int    AbstractTreeModel::rowCount(const QModelIndex &parent) const
+int AbstractTreeModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.column() > 0)
         return 0;
@@ -83,12 +77,9 @@ int    AbstractTreeModel::rowCount(const QModelIndex &parent) const
     if (!parent.isValid())
         parentItem = _root;
     else
-        parentItem = static_cast<AbstractTreeItem*>(parent.internalPointer());
+        parentItem = static_cast<AbstractTreeItem *>(parent.internalPointer());
 
     return parentItem->children().size();
 }
 
-AbstractTreeItem *AbstractTreeModel::root() const
-{
-    return _root;
-}
+AbstractTreeItem *AbstractTreeModel::root() const { return _root; }

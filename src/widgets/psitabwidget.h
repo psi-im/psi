@@ -44,25 +44,25 @@ public:
     PsiTabWidget(QWidget *parent = nullptr);
     ~PsiTabWidget();
 
-    void setTabTextColor(QWidget *tab, const QColor &color);
-    int count();
+    void     setTabTextColor(QWidget *tab, const QColor &color);
+    int      count();
     QWidget *currentPage();
-    int currentPageIndex();
+    int      currentPageIndex();
     QWidget *widget(int index);
-    void addTab(QWidget *, QString, const QIcon &icon = QIcon());
-    void showPage(QWidget *);
-    void showPageDirectly(QWidget *);
+    void     addTab(QWidget *, QString, const QIcon &icon = QIcon());
+    void     showPage(QWidget *);
+    void     showPageDirectly(QWidget *);
 
     void setPagePinned(QWidget *page, bool pinned);
     bool isPagePinned(QWidget *page);
 
-    void removePage(QWidget *);
-    QWidget* page(int index);
-    int getIndex(QWidget *);
-    void setTabText(QWidget *, const QString &);
-    void setTabIcon(QWidget *, const QIcon &);
-    void setTabPosition(QTabWidget::TabPosition pos);
-    void setCloseIcon(const QIcon &);
+    void     removePage(QWidget *);
+    QWidget *page(int index);
+    int      getIndex(QWidget *);
+    void     setTabText(QWidget *, const QString &);
+    void     setTabIcon(QWidget *, const QIcon &);
+    void     setTabPosition(QTabWidget::TabPosition pos);
+    void     setCloseIcon(const QIcon &);
 
     void setTabBarShown(bool shown);     // default shown
     void setTabButtonsShown(bool shown); // default shown
@@ -99,15 +99,15 @@ private slots:
     void widgetMoved(int from, int to);
 
 private:
-    QVector<QWidget*> widgets_;
-    PsiTabBar *tabBar_;
-    QVBoxLayout *layout_;
-    QHBoxLayout *barLayout_;
-    QStackedLayout *stacked_;
-    QToolButton *closeButton_;
-    QToolButton *downButton_;
+    QVector<QWidget *>      widgets_;
+    PsiTabBar *             tabBar_;
+    QVBoxLayout *           layout_;
+    QHBoxLayout *           barLayout_;
+    QStackedLayout *        stacked_;
+    QToolButton *           closeButton_;
+    QToolButton *           downButton_;
     QTabWidget::TabPosition tabsPosition_;
-    QMenu *menu_;
+    QMenu *                 menu_;
 };
 
 #endif // PSITABWIDGET_H

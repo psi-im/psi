@@ -24,41 +24,34 @@
 #include "psicontact.h"
 #include "psiiconset.h"
 
-class ActiveContactAction : public QAction
-{
+class ActiveContactAction : public QAction {
     Q_OBJECT
 public:
-    ActiveContactAction(const QString& jid, const QString& nick, const QIcon& icon, PsiAccount* pa, QMenu* parent)
-        : QAction(icon, nick, parent)
-        , pa_(pa)
-        , jid_(jid)
+    ActiveContactAction(const QString &jid, const QString &nick, const QIcon &icon, PsiAccount *pa, QMenu *parent) :
+        QAction(icon, nick, parent), pa_(pa), jid_(jid)
     {
         parent->addAction(this);
         connect(this, SIGNAL(triggered()), SLOT(actionActivated()));
     }
 
 private slots:
-    void actionActivated()
-    {
-        pa_->actionDefault(Jid(jid_));
-    }
+    void actionActivated() { pa_->actionDefault(Jid(jid_)); }
 
 private:
-    PsiAccount* pa_;
-    QString jid_;
+    PsiAccount *pa_;
+    QString     jid_;
 };
 
-ActiveContactsMenu::ActiveContactsMenu(PsiCon *psi, QWidget *parent)
-    : QMenu(parent)
-    , psi_(psi)
+ActiveContactsMenu::ActiveContactsMenu(PsiCon *psi, QWidget *parent) : QMenu(parent), psi_(psi)
 {
-    foreach(PsiAccount *pa, psi_->contactList()->accounts()) {
-        if(!pa->enabled())
+    foreach (PsiAccount *pa, psi_->contactList()->accounts()) {
+        if (!pa->enabled())
             continue;
 
-        QList<PsiContact*> list = pa->activeContacts();
-        foreach(PsiContact* pc, list) {
-            new ActiveContactAction(pc->jid().full(), pc->name(), PsiIconset::instance()->statusPtr(pc->jid(), pc->status())->icon(), pa, this);
+        QList<PsiContact *> list = pa->activeContacts();
+        foreach (PsiContact *pc, list) {
+            new ActiveContactAction(pc->jid().full(), pc->name(),
+                                    PsiIconset::instance()->statusPtr(pc->jid(), pc->status())->icon(), pa, this);
         }
     }
 }

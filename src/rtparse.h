@@ -22,22 +22,21 @@
 
 #include <QString>
 
-class RTParse
-{
+class RTParse {
 public:
     RTParse(const QString &);
 
     const QString &output() const;
 
     QString next();
-    bool atEnd() const;
-    void putPlain(const QString &);
-    void putRich(const QString &);
+    bool    atEnd() const;
+    void    putPlain(const QString &);
+    void    putRich(const QString &);
 
 private:
     QString in, out;
-    int v_at;
-    bool v_atEnd;
+    int     v_at;
+    bool    v_atEnd;
 };
 
 #endif // RTPARSE_H

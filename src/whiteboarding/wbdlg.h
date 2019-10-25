@@ -58,24 +58,23 @@ using namespace XMPP;
  *  \sa WbManager
  *  \sa WbWidget
  */
-class WbDlg : public AdvancedWidget<QWidget>
-{
+class WbDlg : public AdvancedWidget<QWidget> {
     Q_OBJECT
 
 public:
     /*! \brief Constructor.
-    *  Creates a new dialog for the specified jid and session.
-    */
-    WbDlg(SxeSession* session, PsiAccount* pa);
+     *  Creates a new dialog for the specified jid and session.
+     */
+    WbDlg(SxeSession *session, PsiAccount *pa);
     /*! \brief Destructor.
-    *  Emits sessionEnded()
-    */
+     *  Emits sessionEnded()
+     */
     ~WbDlg();
 
     /*! \brief Returns the session identifier.*/
-    SxeSession* session() const;
+    SxeSession *session() const;
     /*! \brief Returns whether further edits to the session are allowed.*/
-        bool allowEdits() const;
+    bool allowEdits() const;
     /*! \brief Sets whether further edits to the session are allowed.*/
     void setAllowEdits(bool);
 
@@ -91,7 +90,7 @@ public slots:
 
 signals:
     /*! \brief Signals that the session ended and the dialog is to be deleted.*/
-    void sessionEnded(WbDlg* dialog);
+    void sessionEnded(WbDlg *dialog);
 
 protected:
     // reimplemented
@@ -153,8 +152,8 @@ private:
     /*! \brief The menu for widths.*/
     QMenu *menu_widths_;
     /*! \brief The menu for modes.*/
-    QMenu *menu_modes_;
-    QAction *act_color_, *act_fill_;
+    QMenu *     menu_modes_;
+    QAction *   act_color_, *act_fill_;
     IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
     /*! \brief True if the target is a groupchat.*/
     bool groupChat_;

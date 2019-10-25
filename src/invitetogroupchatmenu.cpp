@@ -25,13 +25,9 @@
 #include "psicon.h"
 #include "psicontact.h"
 
-InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget* parent)
-    : QMenu(parent)
-    , controller_(nullptr)
-{
-}
+InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget *parent) : QMenu(parent), controller_(nullptr) {}
 
-void InviteToGroupChatMenu::updateMenu(PsiContact* contact)
+void InviteToGroupChatMenu::updateMenu(PsiContact *contact)
 {
     if (isVisible())
         return;
@@ -40,9 +36,9 @@ void InviteToGroupChatMenu::updateMenu(PsiContact* contact)
     Q_ASSERT(controller_);
     clear();
 
-    foreach(PsiAccount* acc, controller_->contactList()->accounts()) {
-        foreach(QString groupChat, acc->groupchats()) {
-            QAction* action = new QAction(groupChat, this);
+    foreach (PsiAccount *acc, controller_->contactList()->accounts()) {
+        foreach (QString groupChat, acc->groupchats()) {
+            QAction *action = new QAction(groupChat, this);
             addAction(action);
 
             action->setProperty("groupChat", QVariant(groupChat));
@@ -54,7 +50,7 @@ void InviteToGroupChatMenu::updateMenu(PsiContact* contact)
 
 void InviteToGroupChatMenu::actionActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
-    emit inviteToGroupchat(controller_->contactList()->getAccount(action->property("account").toString()),
+    QAction *action = static_cast<QAction *>(sender());
+    emit     inviteToGroupchat(controller_->contactList()->getAccount(action->property("account").toString()),
                            action->property("groupChat").toString());
 }

@@ -1,7 +1,7 @@
 /**
  * Copyright (C) 2007  Remko Troncon
  */
- 
+
 #include "privacylistitem.h"
 #include "unittestutil.h"
 
@@ -11,8 +11,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 
-class PrivacyListItemTest : public CppUnit::TestFixture
-{
+class PrivacyListItemTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(PrivacyListItemTest);
     CPPUNIT_TEST(testFromXml_JidType);
     CPPUNIT_TEST(testFromXml_GroupType);
@@ -63,29 +62,25 @@ public:
     void testBlockItem();
 
     PrivacyListItem createItem();
-    PrivacyListItem createItemFromXml(const QString&);
-    PrivacyListItem createItemFromXmlWithTypeValue(const QString& type, const QString& value);
+    PrivacyListItem createItemFromXml(const QString &);
+    PrivacyListItem createItemFromXmlWithTypeValue(const QString &type, const QString &value);
     PrivacyListItem createItemFromXmlWithoutType();
-    PrivacyListItem createItemFromXmlWithAction(const QString&);
-    PrivacyListItem createItemFromXmlWithOrder(const QString&);
-    PrivacyListItem createItemFromXmlWithChildren(const QStringList& children);
+    PrivacyListItem createItemFromXmlWithAction(const QString &);
+    PrivacyListItem createItemFromXmlWithOrder(const QString &);
+    PrivacyListItem createItemFromXmlWithChildren(const QStringList &children);
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(PrivacyListItemTest);
 
 // -----------------------------------------------------------------------------
 
-PrivacyListItemTest::PrivacyListItemTest()
-{
-}
+PrivacyListItemTest::PrivacyListItemTest() {}
 
-PrivacyListItemTest::~PrivacyListItemTest()
-{
-}
+PrivacyListItemTest::~PrivacyListItemTest() {}
 
-PrivacyListItem PrivacyListItemTest::createItemFromXml(const QString& xml)
+PrivacyListItem PrivacyListItemTest::createItemFromXml(const QString &xml)
 {
-    QDomElement e = UnitTestUtil::createElement(xml);
+    QDomElement     e = UnitTestUtil::createElement(xml);
     PrivacyListItem item;
     item.fromXml(e);
     return item;
@@ -93,20 +88,21 @@ PrivacyListItem PrivacyListItemTest::createItemFromXml(const QString& xml)
 
 PrivacyListItem PrivacyListItemTest::createItem()
 {
-    return createItemFromXml("<item type='jid' value='me@example.com' order='1' action='allow'><presence-in/><presence-out/></item>");
+    return createItemFromXml(
+        "<item type='jid' value='me@example.com' order='1' action='allow'><presence-in/><presence-out/></item>");
 }
 
-PrivacyListItem PrivacyListItemTest::createItemFromXmlWithTypeValue(const QString& type, const QString& value)
+PrivacyListItem PrivacyListItemTest::createItemFromXmlWithTypeValue(const QString &type, const QString &value)
 {
     return createItemFromXml(QString("<item type='%1' value='%2' order='1' action='allow' />").arg(type).arg(value));
 }
 
-PrivacyListItem PrivacyListItemTest::createItemFromXmlWithAction(const QString& action)
+PrivacyListItem PrivacyListItemTest::createItemFromXmlWithAction(const QString &action)
 {
     return createItemFromXml(QString("<item order='1' action='%1' />").arg(action));
 }
 
-PrivacyListItem PrivacyListItemTest::createItemFromXmlWithOrder(const QString& order)
+PrivacyListItem PrivacyListItemTest::createItemFromXmlWithOrder(const QString &order)
 {
     return createItemFromXml(QString("<item order='%1' action='allow' />").arg(order));
 }
@@ -116,10 +112,10 @@ PrivacyListItem PrivacyListItemTest::createItemFromXmlWithoutType()
     return createItemFromXml("<item order='1' action='allow' />");
 }
 
-PrivacyListItem PrivacyListItemTest::createItemFromXmlWithChildren(const QStringList& children)
+PrivacyListItem PrivacyListItemTest::createItemFromXmlWithChildren(const QStringList &children)
 {
     QString xml("<item order='1' action='allow'>");
-    foreach(QString child, children) {
+    foreach (QString child, children) {
         xml += "<" + child + "/>";
     }
     xml += "</item>";
@@ -223,7 +219,10 @@ void PrivacyListItemTest::testFromXml_IQChild()
 void PrivacyListItemTest::testFromXml_AllChildren()
 {
     QStringList children;
-    children << "message" << "presence-in" << "presence-out" << "iq";
+    children << "message"
+             << "presence-in"
+             << "presence-out"
+             << "iq";
 
     PrivacyListItem item = createItemFromXmlWithChildren(children);
 
@@ -248,7 +247,7 @@ void PrivacyListItemTest::testFromXml_NoChildren()
 void PrivacyListItemTest::testToXml()
 {
     PrivacyListItem item1 = createItem();
-    QDomDocument doc;
+    QDomDocument    doc;
 
     QDomElement e = item1.toXml(doc);
 
@@ -266,7 +265,8 @@ void PrivacyListItemTest::testIsBlock()
 
 void PrivacyListItemTest::testIsBlock_NoBlock()
 {
-    PrivacyListItem item = createItemFromXml("<item type='jid' value='me@example.com' order='1' action='deny'><presence-in /></item>");
+    PrivacyListItem item
+        = createItemFromXml("<item type='jid' value='me@example.com' order='1' action='deny'><presence-in /></item>");
 
     CPPUNIT_ASSERT(!item.isBlock());
 }

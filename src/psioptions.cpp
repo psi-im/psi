@@ -22,7 +22,7 @@
 #include "applicationinfo.h"
 #include "common.h"
 #ifdef PSI_PLUGINS
-#    include "pluginmanager.h"
+#include "pluginmanager.h"
 #endif
 #include "psitoolbar.h"
 #include "statuspreset.h"
@@ -38,13 +38,13 @@ using namespace XMPP;
 
 // ----------------------------------------------------------------------------
 
-class OptionsStorageTask : public Task
-{
+class OptionsStorageTask : public Task {
 public:
-    OptionsStorageTask(Task* parent) : Task(parent) { }
+    OptionsStorageTask(Task *parent) : Task(parent) {}
 
     // TODO
-    void set(/* ... */) {
+    void set(/* ... */)
+    {
         iq_ = createIQ(doc(), "set", "", id());
 
         QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
@@ -53,7 +53,8 @@ public:
         // ...
     }
 
-    void get() {
+    void get()
+    {
         iq_ = createIQ(doc(), "get", "", id());
 
         QDomElement prvt = doc()->createElementNS("jabber:iq:private", "query");
@@ -63,15 +64,14 @@ public:
         prvt.appendChild(options);
     }
 
-    void onGo() {
-        send(iq_);
-    }
+    void onGo() { send(iq_); }
 
-    bool take(const QDomElement& x) {
-        if(!iqVerify(x, "", id()))
+    bool take(const QDomElement &x)
+    {
+        if (!iqVerify(x, "", id()))
             return false;
 
-        if(x.attribute("type") == "result") {
+        if (x.attribute("type") == "result") {
             QDomElement q = queryTag(x);
             for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
                 QDomElement e = n.toElement();
@@ -80,16 +80,13 @@ public:
                 }
             }
             setSuccess();
-        }
-        else {
+        } else {
             setError(x);
         }
         return true;
     }
 
-    const QDomElement& options() const {
-        return options_;
-    }
+    const QDomElement &options() const { return options_; }
 
 private:
     QDomElement iq_;
@@ -102,9 +99,9 @@ private:
  * Returns the singleton instance of this class
  * \return Instance of PsiOptions
  */
-PsiOptions* PsiOptions::instance()
+PsiOptions *PsiOptions::instance()
 {
-    if ( !instance_ )
+    if (!instance_)
         instance_ = new PsiOptions();
     return instance_;
 }
@@ -113,9 +110,9 @@ PsiOptions* PsiOptions::instance()
  * Returns the instance of this class containing default values of all options
  * \return Instance of PsiOptions
  */
-const PsiOptions* PsiOptions::defaults()
+const PsiOptions *PsiOptions::defaults()
 {
-    if ( !defaults_ )
+    if (!defaults_)
         defaults_ = new PsiOptions();
     return defaults_;
 }
@@ -124,7 +121,8 @@ const PsiOptions* PsiOptions::defaults()
  * Reset the singleton instance of this class
  * this delete the old instance so be sure no references are there anymore
  */
-void PsiOptions::reset() {
+void PsiOptions::reset()
+{
     delete instance_;
     instance_ = nullptr;
 }
@@ -138,83 +136,76 @@ bool PsiOptions::newProfile()
     if (!load(":/options/newprofile.xml")) {
         ok = false;
     }
-    StatusPreset(tr("Away from desk"),
-                 tr("I am away from my desk.  Leave a message."),
-                 XMPP::Status::Away
-                ).toOptions(this);
-    StatusPreset(tr("Showering"),
-                 tr("I'm in the shower.  You'll have to wait for me to get out."),
-                 XMPP::Status::Away
-                ).toOptions(this);
-    StatusPreset(tr("Eating"),
-                 tr("Out eating.  Mmmm.. food."),
-                 XMPP::Status::Away
-                ).toOptions(this);
-    StatusPreset(tr("Sleep"),
-                 tr("Sleep is good.  Zzzzz"),
-                 XMPP::Status::DND
-                ).toOptions(this);
-    StatusPreset(tr("Work"),
-                 tr("Can't chat.  Gotta work."),
-                 XMPP::Status::DND
-                ).toOptions(this);
-    StatusPreset(tr("Air"),
-                 tr("Stepping out to get some fresh air."),
-                 XMPP::Status::Away
-                ).toOptions(this);
-    StatusPreset(tr("Movie"),
-                 tr("Out to a movie.  Is that OK with you?"),
-                 XMPP::Status::Away
-                ).toOptions(this);
-    StatusPreset(tr("Secret"),
-                 tr("I'm not available right now and that's all you need to know."),
-                 XMPP::Status::XA
-                ).toOptions(this);
-    StatusPreset(tr("Out for the night"),
-                 tr("Out for the night."),
-                 XMPP::Status::Away
-                ).toOptions(this);
-    StatusPreset(tr("Greece"),
-                 tr("I have gone to a far away place.  I will be back someday!"),
-                 XMPP::Status::XA
-                ).toOptions(this);
+    StatusPreset(tr("Away from desk"), tr("I am away from my desk.  Leave a message."), XMPP::Status::Away)
+        .toOptions(this);
+    StatusPreset(tr("Showering"), tr("I'm in the shower.  You'll have to wait for me to get out."), XMPP::Status::Away)
+        .toOptions(this);
+    StatusPreset(tr("Eating"), tr("Out eating.  Mmmm.. food."), XMPP::Status::Away).toOptions(this);
+    StatusPreset(tr("Sleep"), tr("Sleep is good.  Zzzzz"), XMPP::Status::DND).toOptions(this);
+    StatusPreset(tr("Work"), tr("Can't chat.  Gotta work."), XMPP::Status::DND).toOptions(this);
+    StatusPreset(tr("Air"), tr("Stepping out to get some fresh air."), XMPP::Status::Away).toOptions(this);
+    StatusPreset(tr("Movie"), tr("Out to a movie.  Is that OK with you?"), XMPP::Status::Away).toOptions(this);
+    StatusPreset(tr("Secret"), tr("I'm not available right now and that's all you need to know."), XMPP::Status::XA)
+        .toOptions(this);
+    StatusPreset(tr("Out for the night"), tr("Out for the night."), XMPP::Status::Away).toOptions(this);
+    StatusPreset(tr("Greece"), tr("I have gone to a far away place.  I will be back someday!"), XMPP::Status::XA)
+        .toOptions(this);
 
     {
         QStringList pluginsKeys;
 #ifdef PSI_PLUGINS
-        PluginManager *pm = PluginManager::instance();
-        QStringList plugins = pm->availablePlugins();
+        PluginManager *pm      = PluginManager::instance();
+        QStringList    plugins = pm->availablePlugins();
         foreach (const QString &plugin, plugins) {
             pluginsKeys << pm->shortName(plugin) + "-plugin";
         }
 #endif
         ToolbarPrefs chatToolbar;
-        chatToolbar.on = true;
+        chatToolbar.on   = true;
         chatToolbar.name = "Chat";
-        chatToolbar.keys << "chat_clear"  << "chat_find" << "chat_html_text" << "chat_add_contact";
+        chatToolbar.keys << "chat_clear"
+                         << "chat_find"
+                         << "chat_html_text"
+                         << "chat_add_contact";
         chatToolbar.keys += pluginsKeys;
-        chatToolbar.keys << "spacer" << "chat_icon" << "chat_file"
-                         << "chat_pgp" << "chat_info" << "chat_history" << "chat_voice"
-                         << "chat_active_contacts" << "gchat_templates";
+        chatToolbar.keys << "spacer"
+                         << "chat_icon"
+                         << "chat_file"
+                         << "chat_pgp"
+                         << "chat_info"
+                         << "chat_history"
+                         << "chat_voice"
+                         << "chat_active_contacts"
+                         << "gchat_templates";
 
         ToolbarPrefs groupchatToolbar;
-        groupchatToolbar.on = true;
+        groupchatToolbar.on   = true;
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" <<
-                                 "gchat_configure" << "gchat_templates";
+        groupchatToolbar.keys << "gchat_clear"
+                              << "gchat_find"
+                              << "gchat_html_text"
+                              << "gchat_configure"
+                              << "gchat_templates";
         groupchatToolbar.keys += pluginsKeys;
-        groupchatToolbar.keys << "spacer" << "gchat_icon" ;
+        groupchatToolbar.keys << "spacer"
+                              << "gchat_icon";
 
         ToolbarPrefs buttons;
         buttons.name = tr("Buttons");
-        buttons.on = true;
-        buttons.keys << "button_options" << "button_status";
+        buttons.on   = true;
+        buttons.keys << "button_options"
+                     << "button_status";
         buttons.dock = Qt3Dock_Bottom;
 
         ToolbarPrefs showContacts;
-        showContacts.on = true;
+        showContacts.on   = true;
         showContacts.name = tr("Show contacts");
-        showContacts.keys << "menu_options" << "menu_add_contact" << "view_groups" << "menu_disco" << "menu_play_sounds" <<"menu_xml_console";
+        showContacts.keys << "menu_options"
+                          << "menu_add_contact"
+                          << "view_groups"
+                          << "menu_disco"
+                          << "menu_play_sounds"
+                          << "menu_xml_console";
 
         ToolbarPrefs eventNotifier;
         eventNotifier.name = tr("Event notifier");
@@ -222,12 +213,8 @@ bool PsiOptions::newProfile()
         eventNotifier.dock = Qt3Dock_Bottom;
 
         QList<ToolbarPrefs> toolbars;
-        toolbars << chatToolbar
-                 << groupchatToolbar
-                 << buttons
-                 << showContacts
-                 << eventNotifier;
-        foreach(ToolbarPrefs tb, toolbars) {
+        toolbars << chatToolbar << groupchatToolbar << buttons << showContacts << eventNotifier;
+        foreach (ToolbarPrefs tb, toolbars) {
             tb.locked = true;
             PsiToolBar::structToOptions(this, tb);
         }
@@ -242,29 +229,24 @@ bool PsiOptions::newProfile()
  * Checks for existing saved Options.
  * Does not guarantee that load succeeds if the config file was corrupted.
  */
-bool PsiOptions::exists(QString fileName) {
-    return OptionsTree::exists(fileName);
-}
+bool PsiOptions::exists(QString fileName) { return OptionsTree::exists(fileName); }
 
 /**
  * Loads the options present in the xml config file named.
  * \param file Name of the xml config file to load
  * \return Success
  */
-bool PsiOptions::load(QString file)
-{
-    return loadOptions(file, "options", ApplicationInfo::optionsNS());
-}
+bool PsiOptions::load(QString file) { return loadOptions(file, "options", ApplicationInfo::optionsNS()); }
 
 /**
  * Loads the options stored in the private storage of
  * the given client connection.
  * \param client the client whose private storage should be checked
  */
-void PsiOptions::load(XMPP::Client* client)
+void PsiOptions::load(XMPP::Client *client)
 {
-    OptionsStorageTask* t = new OptionsStorageTask(client->rootTask());
-    connect(t,SIGNAL(finished()),SLOT(getOptionsStorage_finished()));
+    OptionsStorageTask *t = new OptionsStorageTask(client->rootTask());
+    connect(t, SIGNAL(finished()), SLOT(getOptionsStorage_finished()));
     t->get();
     t->go(true);
 }
@@ -279,9 +261,7 @@ bool PsiOptions::save(QString file)
     return saveOptions(file, "options", ApplicationInfo::optionsNS(), ApplicationInfo::version());
 }
 
-PsiOptions::PsiOptions()
-    : OptionsTree()
-    , autoSaveTimer_(nullptr)
+PsiOptions::PsiOptions() : OptionsTree(), autoSaveTimer_(nullptr)
 {
     autoSaveTimer_ = new QTimer(this);
     autoSaveTimer_->setSingleShot(true);
@@ -322,11 +302,10 @@ PsiOptions::~PsiOptions()
 void PsiOptions::autoSave(bool autoSave, QString autoFile)
 {
     if (autoSave) {
-        connect(this, SIGNAL(optionChanged(const QString&)), autoSaveTimer_, SLOT(start()));
+        connect(this, SIGNAL(optionChanged(const QString &)), autoSaveTimer_, SLOT(start()));
         autoFile_ = autoFile;
-    }
-    else {
-        disconnect(this, SIGNAL(optionChanged(const QString&)), autoSaveTimer_, SLOT(start()));
+    } else {
+        disconnect(this, SIGNAL(optionChanged(const QString &)), autoSaveTimer_, SLOT(start()));
         autoFile = "";
     }
 }
@@ -346,10 +325,10 @@ void PsiOptions::saveToAutoFile()
  */
 void PsiOptions::getOptionsStorage_finished()
 {
-    OptionsStorageTask* t = static_cast<OptionsStorageTask*>(sender());
+    OptionsStorageTask *t = static_cast<OptionsStorageTask *>(sender());
     if (t->success()) {
         QDomElement e = t->options();
-        e.setAttribute("xmlns",ApplicationInfo::optionsNS());
+        e.setAttribute("xmlns", ApplicationInfo::optionsNS());
         loadOptions(e, "options", ApplicationInfo::optionsNS());
     }
 }
@@ -373,9 +352,8 @@ void PsiOptions::resetOption(const QString &name)
             return;
         }
         setOption(name, dev);
-    }
-    else { // internal node
-        foreach(QString node, nodes) {
+    } else { // internal node
+        foreach (QString node, nodes) {
             const QVariant &dev = defaults_->getOption(node);
             if (!dev.isValid()) {
                 continue;
@@ -389,5 +367,5 @@ void PsiOptions::resetOption(const QString &name)
     }
 }
 
-PsiOptions* PsiOptions::instance_ = nullptr;
-PsiOptions* PsiOptions::defaults_ = nullptr;
+PsiOptions *PsiOptions::instance_ = nullptr;
+PsiOptions *PsiOptions::defaults_ = nullptr;

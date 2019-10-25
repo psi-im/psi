@@ -25,43 +25,29 @@
 #include <QObject>
 #include <QString>
 
-MoodCatalog::Entry::Entry()
-{
-    type_ = Mood::Unknown;
-}
+MoodCatalog::Entry::Entry() { type_ = Mood::Unknown; }
 
-MoodCatalog::Entry::Entry(Mood::Type type, const QString& value, const QString& text) : type_(type), value_(value), text_(text)
+MoodCatalog::Entry::Entry(Mood::Type type, const QString &value, const QString &text) :
+    type_(type), value_(value), text_(text)
 {
 }
 
-Mood::Type MoodCatalog::Entry::type() const
-{
-    return type_;
-}
+Mood::Type MoodCatalog::Entry::type() const { return type_; }
 
-const QString& MoodCatalog::Entry::value() const
-{
-    return value_;
-}
+const QString &MoodCatalog::Entry::value() const { return value_; }
 
-const QString& MoodCatalog::Entry::text() const
-{
-    return text_;
-}
+const QString &MoodCatalog::Entry::text() const { return text_; }
 
-bool MoodCatalog::Entry::isNull() const
-{
-    return type_ == Mood::Unknown && text_.isNull() && value_.isNull();
-}
+bool MoodCatalog::Entry::isNull() const { return type_ == Mood::Unknown && text_.isNull() && value_.isNull(); }
 
 bool MoodCatalog::Entry::operator<(const MoodCatalog::Entry &m) const
 {
-    if ( type_ == Mood::Undefined )
+    if (type_ == Mood::Undefined)
         return false;
-    if ( m.type_ == Mood::Undefined )
+    if (m.type_ == Mood::Undefined)
         return true;
-    int result = QString::localeAwareCompare ( text_, m.text_ );
-    return result<0;
+    int result = QString::localeAwareCompare(text_, m.text_);
+    return result < 0;
 }
 
 MoodCatalog::MoodCatalog() : QObject(QCoreApplication::instance())
@@ -149,43 +135,40 @@ MoodCatalog::MoodCatalog() : QObject(QCoreApplication::instance())
     std::sort(entries_.begin(), entries_.end());
 }
 
-MoodCatalog* MoodCatalog::instance()
+MoodCatalog *MoodCatalog::instance()
 {
     if (!instance_)
-        instance_ = new  MoodCatalog();
+        instance_ = new MoodCatalog();
     return instance_;
 }
 
 MoodCatalog::Entry MoodCatalog::findEntryByType(Mood::Type type) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.type() == type)
             return e;
     }
     return Entry();
 }
 
-MoodCatalog::Entry MoodCatalog::findEntryByValue(const QString& value) const
+MoodCatalog::Entry MoodCatalog::findEntryByValue(const QString &value) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.value() == value)
             return e;
     }
     return Entry();
 }
 
-MoodCatalog::Entry MoodCatalog::findEntryByText(const QString& text) const
+MoodCatalog::Entry MoodCatalog::findEntryByText(const QString &text) const
 {
-    foreach(Entry e, entries_) {
+    foreach (Entry e, entries_) {
         if (e.text() == text)
             return e;
     }
     return Entry();
 }
 
-const QList<MoodCatalog::Entry>& MoodCatalog::entries() const
-{
-    return entries_;
-}
+const QList<MoodCatalog::Entry> &MoodCatalog::entries() const { return entries_; }
 
-MoodCatalog* MoodCatalog::instance_ = nullptr;
+MoodCatalog *MoodCatalog::instance_ = nullptr;

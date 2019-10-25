@@ -2,7 +2,7 @@
 
 #include "activeprofiles.h"
 #ifdef HAVE_CONFIG
-#    include "config.h"
+#include "config.h"
 #endif
 #include "profiles.h"
 #include "psiapplication.h"
@@ -19,16 +19,16 @@
 #include <QStandardPaths>
 #include <QString>
 #ifdef Q_OS_MAC
-#    include <CoreServices/CoreServices.h>
-#    include <sys/stat.h> // chmod
+#include <CoreServices/CoreServices.h>
+#include <sys/stat.h> // chmod
 #endif
 #ifdef Q_OS_UNIX
-#    include <sys/stat.h> // chmod
+#include <sys/stat.h> // chmod
 #endif
 #ifdef Q_OS_WIN
-#    include <shellapi.h>
-#    include <shlobj.h>
-#    include <windows.h>
+#include <shellapi.h>
+#include <shlobj.h>
+#include <windows.h>
 #endif
 
 #define xstr(a) str(a)
@@ -46,65 +46,35 @@
 //#define PROG_VERSION "0.15-dev" " (" __DATE__ ")" //CVS Builds are dated
 //#define PROG_VERSION "0.15";
 #define PROG_CAPS_NODE "https://psi-im.org"
-#define PROG_IPC_NAME "org.psi-im.Psi"    // must not contain '\\' character on Windows
+#define PROG_IPC_NAME "org.psi-im.Psi" // must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
 #define PROG_FILECACHE_NS "http://psi-im.org/filecache"
 #ifdef Q_OS_MAC
-#    define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
+#define PROG_APPCAST_URL "https://psi-im.org/appcast/psi-mac.xml"
 #else
-#    define PROG_APPCAST_URL ""
+#define PROG_APPCAST_URL ""
 #endif
 
-QString ApplicationInfo::name()
-{
-    return PROG_NAME;
-}
+QString ApplicationInfo::name() { return PROG_NAME; }
 
-QLatin1String ApplicationInfo::sname()
-{
-    return QLatin1String(PROG_SNAME);
-}
+QLatin1String ApplicationInfo::sname() { return QLatin1String(PROG_SNAME); }
 
-QString ApplicationInfo::version()
-{
-    return PROG_VERSION;
-}
+QString ApplicationInfo::version() { return PROG_VERSION; }
 
-QString ApplicationInfo::capsNode()
-{
-    return PROG_CAPS_NODE;
-}
+QString ApplicationInfo::capsNode() { return PROG_CAPS_NODE; }
 
-QString ApplicationInfo::osName()
-{
-    return SystemInfo::instance()->os();
-}
+QString ApplicationInfo::osName() { return SystemInfo::instance()->os(); }
 
-QString ApplicationInfo::IPCName()
-{
-    return PROG_IPC_NAME;
-}
+QString ApplicationInfo::IPCName() { return PROG_IPC_NAME; }
 
-QString ApplicationInfo::getAppCastURL()
-{
-    return PROG_APPCAST_URL;
-}
+QString ApplicationInfo::getAppCastURL() { return PROG_APPCAST_URL; }
 
-QString ApplicationInfo::optionsNS()
-{
-    return PROG_OPTIONS_NS;
-}
+QString ApplicationInfo::optionsNS() { return PROG_OPTIONS_NS; }
 
-QString ApplicationInfo::storageNS()
-{
-    return PROG_STORAGE_NS;
-}
+QString ApplicationInfo::storageNS() { return PROG_STORAGE_NS; }
 
-QString ApplicationInfo::fileCacheNS()
-{
-    return PROG_FILECACHE_NS;
-}
+QString ApplicationInfo::fileCacheNS() { return PROG_FILECACHE_NS; }
 
 QStringList ApplicationInfo::getCertificateStoreDirs()
 {
@@ -116,9 +86,9 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 
 QStringList ApplicationInfo::dataDirs()
 {
-    const static QStringList dirs = QStringList() << ":" << "." << homeDir(DataLocation)
-                                                  << resourcesDir();
-    return  dirs;
+    const static QStringList dirs = QStringList() << ":"
+                                                  << "." << homeDir(DataLocation) << resourcesDir();
+    return dirs;
 }
 
 QStringList ApplicationInfo::pluginDirs()
@@ -133,7 +103,7 @@ QStringList ApplicationInfo::pluginDirs()
 QString ApplicationInfo::getCertificateStoreSaveDir()
 {
     QDir certsave(homeDir(DataLocation) + "/certs");
-    if(!certsave.exists()) {
+    if (!certsave.exists()) {
         QDir home(homeDir(DataLocation));
         home.mkdir("certs");
     }
@@ -149,35 +119,29 @@ QString ApplicationInfo::resourcesDir()
     // FIXME: Clean this up (remko)
     // System routine locates resource files. We "know" that Psi.icns is
     // in the Resources directory.
-    QString resourcePath;
-    CFBundleRef mainBundle = CFBundleGetMainBundle();
-    CFStringRef resourceCFStringRef = CFStringCreateWithCString(nullptr,
-                                    "application.icns", kCFStringEncodingASCII);
-    CFURLRef resourceURLRef = CFBundleCopyResourceURL(mainBundle,
-                                            resourceCFStringRef, nullptr, nullptr);
+    QString     resourcePath;
+    CFBundleRef mainBundle          = CFBundleGetMainBundle();
+    CFStringRef resourceCFStringRef = CFStringCreateWithCString(nullptr, "application.icns", kCFStringEncodingASCII);
+    CFURLRef    resourceURLRef      = CFBundleCopyResourceURL(mainBundle, resourceCFStringRef, nullptr, nullptr);
     if (resourceURLRef) {
-        CFStringRef resourcePathStringRef = CFURLCopyFileSystemPath(
-                    resourceURLRef, kCFURLPOSIXPathStyle);
-        const char* resourcePathCString = CFStringGetCStringPtr(
-                    resourcePathStringRef, kCFStringEncodingASCII);
+        CFStringRef resourcePathStringRef = CFURLCopyFileSystemPath(resourceURLRef, kCFURLPOSIXPathStyle);
+        const char *resourcePathCString   = CFStringGetCStringPtr(resourcePathStringRef, kCFStringEncodingASCII);
         if (resourcePathCString) {
             resourcePath = resourcePathCString;
-        }
-        else { // CFStringGetCStringPtr failed; use fallback conversion
-            CFIndex bufferLength = CFStringGetLength(resourcePathStringRef) + 1;
-            char* resourcePathCString = new char[ bufferLength ];
-            Boolean conversionSuccess = CFStringGetCString(
-                        resourcePathStringRef, resourcePathCString,
-                        bufferLength, kCFStringEncodingASCII);
+        } else { // CFStringGetCStringPtr failed; use fallback conversion
+            CFIndex bufferLength        = CFStringGetLength(resourcePathStringRef) + 1;
+            char *  resourcePathCString = new char[bufferLength];
+            Boolean conversionSuccess
+                = CFStringGetCString(resourcePathStringRef, resourcePathCString, bufferLength, kCFStringEncodingASCII);
             if (conversionSuccess) {
                 resourcePath = resourcePathCString;
             }
-            delete [] resourcePathCString;  // I own this
+            delete[] resourcePathCString; // I own this
         }
-        CFRelease( resourcePathStringRef ); // I own this
+        CFRelease(resourcePathStringRef); // I own this
     }
     // Remove the tail component of the path
-    if (! resourcePath.isNull()) {
+    if (!resourcePath.isNull()) {
         QFileInfo fileInfo(resourcePath);
         resourcePath = fileInfo.absolutePath();
     }
@@ -197,9 +161,9 @@ QString ApplicationInfo::libDir()
 }
 
 /** \brief return psi's private read write data directory
-  * unix+mac: $HOME/.psi
-  * environment variable "PSIDATADIR" overrides
-  */
+ * unix+mac: $HOME/.psi
+ * environment variable "PSIDATADIR" overrides
+ */
 QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 {
     static QString configDir_;
@@ -212,7 +176,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 
         if (configDir_.isEmpty()) {
 #if defined(Q_OS_WIN)
-            QString base = ApplicationInfo::isPortable()? QCoreApplication::applicationDirPath() : "";
+            QString base = ApplicationInfo::isPortable() ? QCoreApplication::applicationDirPath() : "";
             if (base.isEmpty()) {
                 wchar_t path[MAX_PATH];
                 if (SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, path) == S_OK) {
@@ -259,8 +223,8 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             QDir dataDir(configDir);
 #endif
             configDir_ = configDir.path();
-            cacheDir_ = cacheDir.path();
-            dataDir_ = dataDir.path();
+            cacheDir_  = cacheDir.path();
+            dataDir_   = dataDir.path();
 
             if (!dataDir.exists()) {
                 dataDir.mkpath(".");
@@ -268,15 +232,14 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
             if (!cacheDir.exists()) {
                 cacheDir.mkpath(".");
             }
-        }
-        else {
+        } else {
             cacheDir_ = configDir_;
-            dataDir_ = configDir_;
+            dataDir_  = configDir_;
         }
     }
 
     QString ret;
-    switch(type) {
+    switch (type) {
     case ApplicationInfo::ConfigLocation:
         ret = configDir_;
         break;
@@ -316,25 +279,16 @@ QString ApplicationInfo::makeSubprofilePath(const QString &path, ApplicationInfo
     return QString();
 }
 
-QString ApplicationInfo::historyDir()
-{
-    return makeSubprofilePath("history", ApplicationInfo::DataLocation);
-}
+QString ApplicationInfo::historyDir() { return makeSubprofilePath("history", ApplicationInfo::DataLocation); }
 
-QString ApplicationInfo::vCardDir()
-{
-    return makeSubprofilePath("vcard", ApplicationInfo::CacheLocation);
-}
+QString ApplicationInfo::vCardDir() { return makeSubprofilePath("vcard", ApplicationInfo::CacheLocation); }
 
-QString ApplicationInfo::bobDir()
-{
-    return makeSubhomePath("bob", ApplicationInfo::CacheLocation);
-}
+QString ApplicationInfo::bobDir() { return makeSubhomePath("bob", ApplicationInfo::CacheLocation); }
 
 QString ApplicationInfo::documentsDir()
 {
     QString docDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/" + name());
-    QDir d(docDir);
+    QDir    d(docDir);
     if (!d.exists()) {
         if (!d.mkpath("."))
             return QString();
@@ -342,10 +296,7 @@ QString ApplicationInfo::documentsDir()
     return docDir;
 }
 
-QString ApplicationInfo::profilesDir(ApplicationInfo::HomedirType type)
-{
-    return makeSubhomePath("profiles", type);
-}
+QString ApplicationInfo::profilesDir(ApplicationInfo::HomedirType type) { return makeSubhomePath("profiles", type); }
 
 QString ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType type)
 {
@@ -354,10 +305,10 @@ QString ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType type)
 
 QString ApplicationInfo::desktopFile()
 {
-    QString dFile;
+    QString       dFile;
     const QString _desktopFile(xstr(APP_PREFIX) "/share/applications/" xstr(APP_BIN_NAME) ".desktop");
-    QFile f(_desktopFile);
-    if(f.open(QIODevice::ReadOnly)) {
+    QFile         f(_desktopFile);
+    if (f.open(QIODevice::ReadOnly)) {
         dFile = QString::fromUtf8(f.readAll());
     }
     return dFile;
@@ -365,7 +316,7 @@ QString ApplicationInfo::desktopFile()
 
 bool ApplicationInfo::isPortable()
 {
-    static bool portable = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
-                           .toLower().indexOf("portable") != -1;
+    static bool portable
+        = QFileInfo(QCoreApplication::applicationFilePath()).fileName().toLower().indexOf("portable") != -1;
     return portable;
 }

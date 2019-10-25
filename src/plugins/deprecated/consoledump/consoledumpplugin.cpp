@@ -27,23 +27,22 @@
 
 #include <QtCore>
 
-class ConsoleDumpPlugin : public QObject, public PsiPlugin, public EventFilter
-{
+class ConsoleDumpPlugin : public QObject, public PsiPlugin, public EventFilter {
     Q_OBJECT
     Q_INTERFACES(PsiPlugin EventFilter)
 
 public:
     ConsoleDumpPlugin();
 
-    virtual QString name() const;
-    virtual QString shortName() const;
-    virtual QString version() const;
-    virtual QWidget* options() const;
-    virtual bool enable();
-    virtual bool disable();
+    virtual QString  name() const;
+    virtual QString  shortName() const;
+    virtual QString  version() const;
+    virtual QWidget *options() const;
+    virtual bool     enable();
+    virtual bool     disable();
 
-    virtual bool processEvent(int account, const QDomElement& e);
-    virtual bool processMessage(int account, const QString& fromJid, const QString& body, const QString& subject) ;
+    virtual bool processEvent(int account, const QDomElement &e);
+    virtual bool processMessage(int account, const QString &fromJid, const QString &body, const QString &subject);
 
 private:
     bool enabled;
@@ -51,30 +50,15 @@ private:
 
 Q_EXPORT_PLUGIN(ConsoleDumpPlugin);
 
-ConsoleDumpPlugin::ConsoleDumpPlugin()
-    : enabled(false)
-{
-}
+ConsoleDumpPlugin::ConsoleDumpPlugin() : enabled(false) {}
 
-QString ConsoleDumpPlugin::name() const
-{
-    return "Console Dump Plugin";
-}
+QString ConsoleDumpPlugin::name() const { return "Console Dump Plugin"; }
 
-QString ConsoleDumpPlugin::shortName() const
-{
-    return "consdump";
-}
+QString ConsoleDumpPlugin::shortName() const { return "consdump"; }
 
-QString ConsoleDumpPlugin::version() const
-{
-    return "0.1";
-}
+QString ConsoleDumpPlugin::version() const { return "0.1"; }
 
-QWidget* ConsoleDumpPlugin::options() const
-{
-    return 0;
-}
+QWidget *ConsoleDumpPlugin::options() const { return 0; }
 
 bool ConsoleDumpPlugin::enable()
 {
@@ -88,14 +72,14 @@ bool ConsoleDumpPlugin::disable()
     return true;
 }
 
-bool ConsoleDumpPlugin::processEvent(int account, const QDomElement& e)
+bool ConsoleDumpPlugin::processEvent(int account, const QDomElement &e)
 {
     Q_UNUSED(account);
     Q_UNUSED(e);
-    return false;    // don't stop processing
+    return false; // don't stop processing
 }
 
-bool ConsoleDumpPlugin::processMessage(int account, const QString& fromJid, const QString& body, const QString& subject)
+bool ConsoleDumpPlugin::processMessage(int account, const QString &fromJid, const QString &body, const QString &subject)
 {
     Q_UNUSED(account);
     Q_UNUSED(subject);
@@ -104,7 +88,7 @@ bool ConsoleDumpPlugin::processMessage(int account, const QString& fromJid, cons
         qWarning(qPrintable(body));
     }
 
-    return false;    // don't stop processing
+    return false; // don't stop processing
 }
 
 #include "consoledumpplugin.moc"

@@ -27,18 +27,17 @@
 
 using namespace XMPP;
 
-class RosterItemExchangeTask : public Task
-{
+class RosterItemExchangeTask : public Task {
     Q_OBJECT
 
 public:
-    RosterItemExchangeTask(Task*);
+    RosterItemExchangeTask(Task *);
 
-    bool take(const QDomElement&);
+    bool take(const QDomElement &);
     void setIgnoreNonRoster(bool);
 
 signals:
-    void rosterItemExchange(const Jid&, const RosterExchangeItems&);
+    void rosterItemExchange(const Jid &, const RosterExchangeItems &);
 
 private:
     bool ignoreNonRoster_;

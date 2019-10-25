@@ -24,15 +24,14 @@
 
 class PsiAccount;
 
-class ChangePasswordDlg : public QDialog
-{
+class ChangePasswordDlg : public QDialog {
     Q_OBJECT
 public:
-    ChangePasswordDlg(PsiAccount *, QWidget *parent=nullptr);
+    ChangePasswordDlg(PsiAccount *, QWidget *parent = nullptr);
     ~ChangePasswordDlg();
 
 protected:
-    //void closeEvent(QCloseEvent *e);
+    // void closeEvent(QCloseEvent *e);
 
 public slots:
     void done(int);
@@ -48,7 +47,7 @@ private:
     void setWidgetsEnabled(bool enabled);
 
     Ui::ChangePassword ui_;
-    PsiAccount* pa;
+    PsiAccount *       pa;
 };
 
 #endif // CHANGEPWDLG_H

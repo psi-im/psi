@@ -25,28 +25,27 @@
 class QDomDocument;
 class QDomElement;
 
-class PubSubSubscription
-{
+class PubSubSubscription {
 public:
     enum State { None, Pending, Unconfigured, Subscribed };
 
     PubSubSubscription();
-    PubSubSubscription(const QDomElement& e);
+    PubSubSubscription(const QDomElement &e);
 
-    const QString& jid() const;
-    const QString& node() const;
-    State state() const;
+    const QString &jid() const;
+    const QString &node() const;
+    State          state() const;
 
-    bool isNull() const;
-    void fromXml(const QDomElement& e);
-    QDomElement toXml(QDomDocument& doc) const;
+    bool        isNull() const;
+    void        fromXml(const QDomElement &e);
+    QDomElement toXml(QDomDocument &doc) const;
 
-    bool operator==(const PubSubSubscription&) const;
-    bool operator!=(const PubSubSubscription&) const;
+    bool operator==(const PubSubSubscription &) const;
+    bool operator!=(const PubSubSubscription &) const;
 
 private:
     QString jid_, node_;
-    State state_;
+    State   state_;
 };
 
 #endif // PUBSUBSUBSCRIPTION_H

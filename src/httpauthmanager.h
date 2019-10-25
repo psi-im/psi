@@ -26,11 +26,10 @@ class HttpAuthListener;
 class PsiHttpAuthRequest;
 
 namespace XMPP {
-    class Task;
+class Task;
 }
 
-class HttpAuthManager : public QObject
-{
+class HttpAuthManager : public QObject {
     Q_OBJECT
 
 public:

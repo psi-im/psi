@@ -27,10 +27,10 @@
 #include <QVariantMap>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-#define SET_QFLAG(flags, flag, state) \
-    if (state)                        \
-        flags |= flag;                \
-    else                              \
+#define SET_QFLAG(flags, flag, state)                                                                                  \
+    if (state)                                                                                                         \
+        flags |= flag;                                                                                                 \
+    else                                                                                                               \
         flags &= ~flag
 #else
 #define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
@@ -69,12 +69,11 @@ public:
 
     static MessageView systemMessage(const QString &message) { return fromPlainText(message, System); }
     static MessageView urlsMessage(const QMap<QString, QString> &);
-    static MessageView subjectMessage(const QString &subject,
-                                      const QString &prefix = QString());
+    static MessageView subjectMessage(const QString &subject, const QString &prefix = QString());
 
     // accepts plain/text nick, plain/text status and rich/text statusText
-    static MessageView statusMessage(const QString &nick, int status,
-                                     const QString &statusText = QString(), int priority = 0);
+    static MessageView statusMessage(const QString &nick, int status, const QString &statusText = QString(),
+                                     int priority = 0);
 
     // accepts plain/text nick, plain/text status and rich/text statusText
     static MessageView mucJoinMessage(const QString &nick, int status, const QString &message,

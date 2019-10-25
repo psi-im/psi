@@ -24,8 +24,7 @@
 
 class QMimeData;
 
-class ContactListGroupMenu : public ContactListItemMenu
-{
+class ContactListGroupMenu : public ContactListItemMenu {
     Q_OBJECT
 public:
     ContactListGroupMenu(ContactListItem *item, ContactListModel *model);
@@ -33,11 +32,11 @@ public:
 
 signals:
     void removeSelection();
-    void removeGroupWithoutContacts(QMimeData*);
+    void removeGroupWithoutContacts(QMimeData *);
 
 private:
     class Private;
-    Private* d;
+    Private *d;
 };
 
 #endif // CONTACTLISTGROUPMENU_H

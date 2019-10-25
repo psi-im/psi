@@ -2,11 +2,9 @@
 
 #include <QDebug>
 
-GUITestManager::GUITestManager()
-{
-}
+GUITestManager::GUITestManager() {}
 
-GUITestManager* GUITestManager::instance()
+GUITestManager *GUITestManager::instance()
 {
     if (!instance_) {
         instance_ = new GUITestManager();
@@ -14,14 +12,11 @@ GUITestManager* GUITestManager::instance()
     return instance_;
 }
 
-void GUITestManager::registerTest(GUITest* test)
-{
-    tests_ += test;
-}
+void GUITestManager::registerTest(GUITest *test) { tests_ += test; }
 
-bool GUITestManager::runTest(const QString& name)
+bool GUITestManager::runTest(const QString &name)
 {
-    foreach(GUITest* test, tests_) {
+    foreach (GUITest *test, tests_) {
         if (test->name() == name) {
             return test->run();
         }
@@ -33,11 +28,10 @@ bool GUITestManager::runTest(const QString& name)
 QStringList GUITestManager::getTestNames() const
 {
     QStringList test_names;
-    foreach(GUITest* test, tests_) {
+    foreach (GUITest *test, tests_) {
         test_names += test->name();
     }
     return test_names;
 }
 
-
-GUITestManager* GUITestManager::instance_ = NULL;
+GUITestManager *GUITestManager::instance_ = NULL;

@@ -4,10 +4,10 @@
 #include "opt_statusgeneral.h"
 #include "opt_statuspep.h"
 
-OptionsTabStatus::OptionsTabStatus(QObject *parent)
-: MetaOptionsTab(parent, "status", "", tr("Status"), tr("Status preferences"), "psi/status")
+OptionsTabStatus::OptionsTabStatus(QObject *parent) :
+    MetaOptionsTab(parent, "status", "", tr("Status"), tr("Status preferences"), "psi/status")
 {
-    OptionsTabStatusGeneral* general = new OptionsTabStatusGeneral(this);
+    OptionsTabStatusGeneral *general = new OptionsTabStatusGeneral(this);
     addTab(general);
     connect(general, SIGNAL(enableDlgCommonWidgets(bool)), parent, SLOT(enableCommonControls(bool)));
     connect(general, SIGNAL(enableDlgCommonWidgets(bool)), SLOT(enableOtherTabs(bool)));

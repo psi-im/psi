@@ -33,8 +33,8 @@
 #include <QStyle>
 #include <QTimer>
 
-#define BUTTON_WIDTH    16
-#define BUTTON_HEIGHT    14
+#define BUTTON_WIDTH 16
+#define BUTTON_HEIGHT 14
 
 /*static int checkComponent(int b)
 {
@@ -58,8 +58,7 @@ static QColor makeColor(QColor baseColor, int percent)
 // FancyPopup::Private
 //----------------------------------------------------------------------------
 
-class FancyPopup::Private : public QObject
-{
+class FancyPopup::Private : public QObject {
     Q_OBJECT
 public:
     Private(FancyPopup *p);
@@ -101,28 +100,23 @@ public:
     void initContents(QString title, const PsiIcon *icon, bool copyIcon);
 
     // parameters
-    static int hideTimeout;
+    static int    hideTimeout;
     static QColor backgroundColor;
 
-    enum PopupLayout {
-        TopToBottom = 1,
-        BottomToTop = -1
-    };
+    enum PopupLayout { TopToBottom = 1, BottomToTop = -1 };
     PopupLayout popupLayout;
 
     QList<FancyPopup *> prevPopups;
-    //QBoxLayout *layout;
+    // QBoxLayout *layout;
     FancyPopup *popup;
-    QTimer *hideTimer;
-    Ui::Frame ui_;
+    QTimer *    hideTimer;
+    Ui::Frame   ui_;
 };
 
-int  FancyPopup::Private::hideTimeout = 5 * 1000; // 5 seconds
-QColor FancyPopup::Private::backgroundColor = QColor (0x52, 0x97, 0xF9);
+int    FancyPopup::Private::hideTimeout     = 5 * 1000; // 5 seconds
+QColor FancyPopup::Private::backgroundColor = QColor(0x52, 0x97, 0xF9);
 
-FancyPopup::Private::Private(FancyPopup *p) :
-    QObject(p),
-    popupLayout(TopToBottom)
+FancyPopup::Private::Private(FancyPopup *p) : QObject(p), popupLayout(TopToBottom)
 {
     popup = p;
 
@@ -130,25 +124,24 @@ FancyPopup::Private::Private(FancyPopup *p) :
     connect(hideTimer, SIGNAL(timeout()), popup, SLOT(hide()));
 }
 
-FancyPopup::Private::~Private()
-{
-}
+FancyPopup::Private::~Private() {}
 
 void FancyPopup::Private::popupDestroyed(QObject *obj)
 {
-    if ( prevPopups.contains(static_cast<FancyPopup *>(obj)) ) {
+    if (prevPopups.contains(static_cast<FancyPopup *>(obj))) {
         prevPopups.removeAll(static_cast<FancyPopup *>(obj));
-        popup->move( position() );
+        popup->move(position());
     }
 }
 
 QPoint FancyPopup::Private::position()
 {
     QRect geom = qApp->desktop()->availableGeometry(popup);
-    bool topToBottom = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.top-to-bottom").toBool();
+    bool  topToBottom
+        = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.top-to-bottom").toBool();
     bool atLeft = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.at-left-corner").toBool();
     QPoint destination(geom.x() + (atLeft ? 0 : geom.width()),
-                       geom.y() + (topToBottom ? 0 : geom.height()) ); // in which corner popup should appear
+                       geom.y() + (topToBottom ? 0 : geom.height())); // in which corner popup should appear
 
     /*if ( destination.y() > (qApp->desktop()->screenGeometry().height()/2) )
         popupLayout = Private::BottomToTop;
@@ -157,20 +150,20 @@ QPoint FancyPopup::Private::position()
 
     popupLayout = topToBottom ? Private::TopToBottom : Private::BottomToTop;
 
-    if ( (destination.x() + popup->width()) > (geom.x() + geom.width()) )
-        destination.setX( geom.x() + geom.width() - popup->width() );
+    if ((destination.x() + popup->width()) > (geom.x() + geom.width()))
+        destination.setX(geom.x() + geom.width() - popup->width());
 
-    if ( destination.x() < 0 )
-        destination.setX( 0 );
+    if (destination.x() < 0)
+        destination.setX(0);
 
-    if ( (destination.y() + popup->height()) > (geom.y() + geom.height()) )
-        destination.setY( geom.y() + geom.height() - popup->height() );
+    if ((destination.y() + popup->height()) > (geom.y() + geom.height()))
+        destination.setY(geom.y() + geom.height() - popup->height());
 
-    if ( destination.y() < 0 )
-        destination.setY( 0 );
+    if (destination.y() < 0)
+        destination.setY(0);
 
-    foreach ( FancyPopup *p, prevPopups )
-        destination.setY( destination.y() + popupLayout * p->height() );
+    foreach (FancyPopup *p, prevPopups)
+        destination.setY(destination.y() + popupLayout * p->height());
 
     return destination;
 }
@@ -192,7 +185,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
     ui_.closeFrame->setPalette(backgroundPalette);
 
     QBrush titleFontColor;
-    if ( (backgroundColor.red() + backgroundColor.green() + backgroundColor.blue())/3 > 128 )
+    if ((backgroundColor.red() + backgroundColor.green() + backgroundColor.blue()) / 3 > 128)
         titleFontColor = QBrush(Qt::white);
     else
         titleFontColor = QBrush(Qt::black);
@@ -202,14 +195,14 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
     QFont titleFont = ui_.lb_title->font();
     titleFont.setBold(true);
     ui_.lb_title->setFont(titleFont);
-    ui_.lb_title->setText( title );
+    ui_.lb_title->setText(title);
 
     ui_.lb_icon->setPsiIcon(icon, copyIcon);
 
     ui_.closeButton->setObjectName("closeButton");
     ui_.closeButton->setToolTip(tr("Close"));
-    ui_.closeButton->setFocusPolicy( Qt::NoFocus );
-    ui_.closeButton->setIcon( popup->style()->standardPixmap(QStyle::SP_TitleBarCloseButton) );
+    ui_.closeButton->setFocusPolicy(Qt::NoFocus);
+    ui_.closeButton->setIcon(popup->style()->standardPixmap(QStyle::SP_TitleBarCloseButton));
     ui_.closeButton->setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT);
     connect(ui_.closeButton, SIGNAL(clicked()), popup, SLOT(hide()));
 
@@ -230,22 +223,22 @@ bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
 // FancyPopup
 //----------------------------------------------------------------------------
 
-static const QFlags<Qt::WindowType>
-POPUP_FLAGS = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
+static const QFlags<Qt::WindowType> POPUP_FLAGS
+    = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
 
-FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon)
-    : QFrame( nullptr, POPUP_FLAGS )
+FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon) :
+    QFrame(nullptr, POPUP_FLAGS)
 {
     QWidget::setAttribute(Qt::WA_DeleteOnClose);
     setWindowModality(Qt::NonModal);
     d = new Private(this);
 
-    if ( prev ) {
+    if (prev) {
         QList<FancyPopup *> prevPopups = prev->d->prevPopups;
         prevPopups.append(prev);
 
         foreach (FancyPopup *popup, prevPopups) {
-            d->prevPopups.append( popup );
+            d->prevPopups.append(popup);
             connect(popup, SIGNAL(destroyed(QObject *)), d, SLOT(popupDestroyed(QObject *)));
         }
     }
@@ -253,9 +246,7 @@ FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, boo
     d->initContents(title, icon, copyIcon);
 }
 
-FancyPopup::~FancyPopup()
-{
-}
+FancyPopup::~FancyPopup() {}
 
 void FancyPopup::addLayout(QLayout *layout, int stretch)
 {
@@ -265,16 +256,16 @@ void FancyPopup::addLayout(QLayout *layout, int stretch)
 
 void FancyPopup::show()
 {
-    if ( size() != sizeHint() )
-        resize( sizeHint() ); // minimumSizeHint()
+    if (size() != sizeHint())
+        resize(sizeHint()); // minimumSizeHint()
 
     // QLabels with rich contents don't propagate mouse clicks
     QList<QLabel *> labels = findChildren<QLabel *>();
-    foreach(QLabel *label, labels)
+    foreach (QLabel *label, labels)
         label->installEventFilter(d);
 
     // position popup
-    move ( d->position() );
+    move(d->position());
 
     // display popup
     restartHideTimer();
@@ -298,19 +289,10 @@ void FancyPopup::mouseReleaseEvent(QMouseEvent *e)
     hide();
 }
 
-void FancyPopup::restartHideTimer()
-{
-    d->hideTimer->start( d->hideTimeout );
-}
+void FancyPopup::restartHideTimer() { d->hideTimer->start(d->hideTimeout); }
 
-void FancyPopup::setHideTimeout(int time)
-{
-    FancyPopup::Private::hideTimeout = time;
-}
+void FancyPopup::setHideTimeout(int time) { FancyPopup::Private::hideTimeout = time; }
 
-void FancyPopup::setBorderColor(QColor c)
-{
-    FancyPopup::Private::backgroundColor = c;
-}
+void FancyPopup::setBorderColor(QColor c) { FancyPopup::Private::backgroundColor = c; }
 
 #include "fancypopup.moc"

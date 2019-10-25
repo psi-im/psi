@@ -24,14 +24,13 @@
 
 class PsiCon;
 
-class ActiveContactsMenu : public QMenu
-{
+class ActiveContactsMenu : public QMenu {
     Q_OBJECT
 public:
-    ActiveContactsMenu(PsiCon* psi, QWidget* parent);
+    ActiveContactsMenu(PsiCon *psi, QWidget *parent);
 
 private:
-    PsiCon* psi_;
+    PsiCon *psi_;
 };
 
 #endif // ACTIVECONTACTSMENU_H

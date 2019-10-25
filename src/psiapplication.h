@@ -22,13 +22,12 @@
 
 #include <QApplication>
 #ifdef Q_OS_MAC
-#    include <Carbon/Carbon.h>
+#include <Carbon/Carbon.h>
 #endif
 
 class QEvent;
 
-class PsiApplication : public QApplication
-{
+class PsiApplication : public QApplication {
     Q_OBJECT
 public:
     PsiApplication(int &argc, char **argv, bool GUIenabled = true);

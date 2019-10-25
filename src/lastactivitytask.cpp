@@ -25,9 +25,9 @@
 
 using namespace XMPP;
 
-LastActivityTask::LastActivityTask(const Jid& jid, Task* parent) : Task(parent), jid_(jid)
+LastActivityTask::LastActivityTask(const Jid &jid, Task *parent) : Task(parent), jid_(jid)
 {
-    iq_ = createIQ(doc(), "get", jid_.full(), id());
+    iq_               = createIQ(doc(), "get", jid_.full(), id());
     QDomElement query = doc()->createElementNS("jabber:iq:last", "query");
     iq_.appendChild(query);
 }
@@ -35,44 +35,31 @@ LastActivityTask::LastActivityTask(const Jid& jid, Task* parent) : Task(parent),
 /**
  * \brief Queried entity's JID.
  */
-const Jid & LastActivityTask::jid() const
-{
-    return jid_;
-}
+const Jid &LastActivityTask::jid() const { return jid_; }
 
-void LastActivityTask::onGo()
-{
-    send(iq_);
-}
+void LastActivityTask::onGo() { send(iq_); }
 
 bool LastActivityTask::take(const QDomElement &x)
 {
-    if(!iqVerify(x, jid_, id()))
+    if (!iqVerify(x, jid_, id()))
         return false;
 
-    if(x.attribute("type") == "result") {
-        bool ok = false;
-        QDomElement q = queryTag(x);
-        int seconds = q.attribute("seconds").toInt(&ok);
+    if (x.attribute("type") == "result") {
+        bool        ok      = false;
+        QDomElement q       = queryTag(x);
+        int         seconds = q.attribute("seconds").toInt(&ok);
         if (ok) {
             last_time_ = QDateTime::currentDateTime().addSecs(-seconds);
         }
         last_status_ = q.text();
         setSuccess();
-    }
-    else {
+    } else {
         setError(x);
     }
 
     return true;
 }
 
-const QString& LastActivityTask::status() const
-{
-    return last_status_;
-}
+const QString &LastActivityTask::status() const { return last_status_; }
 
-const QDateTime& LastActivityTask::time() const
-{
-    return last_time_;
-}
+const QDateTime &LastActivityTask::time() const { return last_time_; }

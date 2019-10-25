@@ -8,13 +8,12 @@ class QAction;
 class QObject;
 class QString;
 
-class GCToolbarIconAccessor
-{
+class GCToolbarIconAccessor {
 public:
     virtual ~GCToolbarIconAccessor() {}
 
-    virtual QList < QVariantHash > getGCButtonParam() = 0;
-    virtual QAction* getGCAction(QObject* parent, int account, const QString& contact) = 0;
+    virtual QList<QVariantHash> getGCButtonParam()                                                = 0;
+    virtual QAction *           getGCAction(QObject *parent, int account, const QString &contact) = 0;
 };
 
 Q_DECLARE_INTERFACE(GCToolbarIconAccessor, "org.psi-im.GCToolbarIconAccessor/0.1");

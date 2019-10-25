@@ -27,38 +27,27 @@ class JingleRtpChannelPrivate;
 class JingleRtpManagerPrivate;
 class JingleRtpPrivate;
 
-class JingleRtp : public QObject
-{
+class JingleRtp : public QObject {
     Q_OBJECT
 
 public:
-    enum Error
-    {
-        ErrorGeneric,
-        ErrorTimeout,
-        ErrorICE
-    };
+    enum Error { ErrorGeneric, ErrorTimeout, ErrorICE };
 
-    enum Type
-    {
-        Audio = 0x01,
-        Video = 0x02
-    };
+    enum Type { Audio = 0x01, Video = 0x02 };
 
-    class RtpPacket
-    {
+    class RtpPacket {
     public:
-        Type type;
-        int portOffset;
+        Type       type;
+        int        portOffset;
         QByteArray value;
     };
 
     ~JingleRtp();
 
-    XMPP::Jid jid() const;
+    XMPP::Jid                   jid() const;
     QList<JingleRtpPayloadType> remoteAudioPayloadTypes() const;
     QList<JingleRtpPayloadType> remoteVideoPayloadTypes() const;
-    int remoteMaximumBitrate() const;
+    int                         remoteMaximumBitrate() const;
 
     void setLocalAudioPayloadTypes(const QList<JingleRtpPayloadType> &types);
     void setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types);
@@ -104,14 +93,13 @@ private:
     JingleRtpPrivate *d;
 };
 
-class JingleRtpChannel : public QObject
-{
+class JingleRtpChannel : public QObject {
     Q_OBJECT
 
 public:
-    bool packetsAvailable() const;
+    bool                 packetsAvailable() const;
     JingleRtp::RtpPacket read();
-    void write(const JingleRtp::RtpPacket &packet);
+    void                 write(const JingleRtp::RtpPacket &packet);
 
 signals:
     void readyRead();
@@ -130,8 +118,7 @@ private:
     JingleRtpChannelPrivate *d;
 };
 
-class JingleRtpManager : public QObject
-{
+class JingleRtpManager : public QObject {
     Q_OBJECT
 
 public:
@@ -145,7 +132,8 @@ public:
     void setExternalAddress(const QString &host); // resolved locally
     void setStunBindService(const QString &host, int port);
     void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
-    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
+    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
+                                const QString &user, const QString &pass);
     void setBasePort(int port);
 
 signals:

@@ -29,24 +29,19 @@ class PsiOptions;
 class QTreeWidgetItem;
 class QWidget;
 
-class OptionsTabShortcuts : public OptionsTab
-{
+class OptionsTabShortcuts : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabShortcuts(QObject *parent);
     ~OptionsTabShortcuts();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
-    enum Kind {
-        TopLevelItem = 1,
-        ShortcutItem,
-        KeyItem
-    };
+    enum Kind { TopLevelItem = 1, ShortcutItem, KeyItem };
 
-    bool stretchable() const {return true;};
+    bool stretchable() const { return true; };
 
 private slots:
     void onAdd();
@@ -55,13 +50,13 @@ private slots:
     void onRestoreDefaults();
     void onItemDoubleClicked(QTreeWidgetItem *item, int column);
     void onItemSelectionChanged();
-    void onNewShortcutKey(const QKeySequence& key);
+    void onNewShortcutKey(const QKeySequence &key);
 
 private:
-    void addTo(QTreeWidgetItem *shortcutItem);
-    void grep();
+    void    addTo(QTreeWidgetItem *shortcutItem);
+    void    grep();
     QString translateShortcut(QString comment);
-    void readShortcuts(const PsiOptions *options);
+    void    readShortcuts(const PsiOptions *options);
 
     QWidget *w;
 };

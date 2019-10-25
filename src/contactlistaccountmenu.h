@@ -24,8 +24,7 @@
 
 class PsiAccount;
 
-class ContactListAccountMenu : public ContactListItemMenu
-{
+class ContactListAccountMenu : public ContactListItemMenu {
     Q_OBJECT
 public:
     ContactListAccountMenu(PsiAccount *account, ContactListModel *model);
@@ -33,7 +32,7 @@ public:
 
 private:
     class Private;
-    Private* d;
+    Private *d;
 };
 
 #endif // CONTACTLISTACCOUNTMENU_H

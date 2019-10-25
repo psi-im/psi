@@ -1,13 +1,12 @@
 #include <QInputDialog>
 #include <QMessageBox>
 
-#include "sendbuttonmenu.h"
-#include "psioptions.h"
-#include "psiiconset.h"
 #include "common.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "sendbuttonmenu.h"
 
-SendButtonTemplatesEditor::SendButtonTemplatesEditor(QWidget* parent)
-    : QDialog(parent)
+SendButtonTemplatesEditor::SendButtonTemplatesEditor(QWidget *parent) : QDialog(parent)
 {
     ui_.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -20,10 +19,10 @@ SendButtonTemplatesEditor::SendButtonTemplatesEditor(QWidget* parent)
     connect(addRootSeparatorAction, SIGNAL(triggered()), this, SLOT(addRootSeparator()));
     addChildSeparatorAction = new QAction(tr("Add separator as submenu"), this);
     connect(addChildSeparatorAction, SIGNAL(triggered()), this, SLOT(addChildSeparator()));
-    editAction = new QAction(IconsetFactory::icon("psi/action_templates_edit").icon(), tr("Edit"), this);
+    editAction   = new QAction(IconsetFactory::icon("psi/action_templates_edit").icon(), tr("Edit"), this);
     removeAction = new QAction(IconsetFactory::icon("psi/remove").icon(), tr("Remove"), this);
-    upAction = new QAction(IconsetFactory::icon("psi/arrowUp").icon(), tr("Up"), this);
-    downAction = new QAction(IconsetFactory::icon("psi/arrowDown").icon(), tr("Down"), this);
+    upAction     = new QAction(IconsetFactory::icon("psi/arrowUp").icon(), tr("Up"), this);
+    downAction   = new QAction(IconsetFactory::icon("psi/arrowDown").icon(), tr("Down"), this);
     // Create Add button menu
     QMenu *add_menu = new QMenu(this);
     add_menu->addAction(addRootTemplAction);
@@ -32,19 +31,20 @@ SendButtonTemplatesEditor::SendButtonTemplatesEditor(QWidget* parent)
     add_menu->addAction(addChildSeparatorAction);
     ui_.btnAdd->setMenu(add_menu);
     //--
-    QStringList templ_list = PsiOptions::instance()->getOption("options.ui.chat.templates", QStringList()).toStringList();
-    int templ_cnt = templ_list.size();
+    QStringList templ_list
+        = PsiOptions::instance()->getOption("options.ui.chat.templates", QStringList()).toStringList();
+    int                               templ_cnt = templ_list.size();
     QHash<QString, QTreeWidgetItem *> subitems;
     for (int i = 0; i < templ_cnt; i++) {
         QStringList menu_list = SendButtonTemplatesMenu::getMenuItems(templ_list.at(i));
         if (menu_list.size() == 0)
             continue;
         // find subitems if exists
-        QTreeWidgetItem *item = nullptr;
-        QString menu_str = "";
-        int j = menu_list.size() - 2;
+        QTreeWidgetItem *item     = nullptr;
+        QString          menu_str = "";
+        int              j        = menu_list.size() - 2;
         for (; j >= 0; j--) {
-            menu_str = "";
+            menu_str          = "";
             QString menu_str2 = "";
             for (int k = 0; k <= j; k++) {
                 menu_str = menu_str2;
@@ -62,7 +62,7 @@ SendButtonTemplatesEditor::SendButtonTemplatesEditor(QWidget* parent)
         // create subitems
         int sub_cnt = menu_list.size();
         for (; j < sub_cnt; j++) {
-            QString str1 = menu_list.at(j);
+            QString                   str1 = menu_list.at(j);
             QTreeWidgetItem::ItemType type = QTreeWidgetItem::Type;
             if (j == (sub_cnt - 1) && str1 == "\\-") {
                 str1 = tr("<separator>");
@@ -110,7 +110,8 @@ void SendButtonTemplatesEditor::addChildTemplate()
 
 void SendButtonTemplatesEditor::addRootSeparator()
 {
-    QTreeWidgetItem *item = new QTreeWidgetItem(ui_.lstTemplates, QStringList(tr("<separator>")), QTreeWidgetItem::UserType);
+    QTreeWidgetItem *item
+        = new QTreeWidgetItem(ui_.lstTemplates, QStringList(tr("<separator>")), QTreeWidgetItem::UserType);
     item->setFlags(item->flags() & ~Qt::ItemIsDropEnabled);
     ui_.lstTemplates->addTopLevelItem(item);
 }
@@ -137,8 +138,8 @@ void SendButtonTemplatesEditor::editTemplate()
 {
     QTreeWidgetItem *item = ui_.lstTemplates->currentItem();
     if (item && item->type() == QTreeWidgetItem::Type) {
-        QString templ_str = item->text(0);
-        QInputDialog *editBox = new QInputDialog(this, Qt::Dialog);
+        QString       templ_str = item->text(0);
+        QInputDialog *editBox   = new QInputDialog(this, Qt::Dialog);
         editBox->setWindowTitle(tr("Edit template"));
         editBox->setLabelText(tr("Input new template text"));
         editBox->setTextEchoMode(QLineEdit::Normal);
@@ -154,26 +155,20 @@ void SendButtonTemplatesEditor::editTemplate()
     }
 }
 
-void SendButtonTemplatesEditor::upTemplate()
-{
-    swapItem(-1);
-}
+void SendButtonTemplatesEditor::upTemplate() { swapItem(-1); }
 
-void SendButtonTemplatesEditor::downTemplate()
-{
-    swapItem(1);
-}
+void SendButtonTemplatesEditor::downTemplate() { swapItem(1); }
 
-void SendButtonTemplatesEditor::selectionChanged(QTreeWidgetItem *current, QTreeWidgetItem */*previous*/)
+void SendButtonTemplatesEditor::selectionChanged(QTreeWidgetItem *current, QTreeWidgetItem * /*previous*/)
 {
-    bool up_e = false;
-    bool dw_e = false;
-    bool ed_e = false;
-    bool dl_e = false;
+    bool        up_e  = false;
+    bool        dw_e  = false;
+    bool        ed_e  = false;
+    bool        dl_e  = false;
     QModelIndex index = ui_.lstTemplates->currentIndex();
     if (current && index.isValid()) {
         QTreeWidgetItem *parent = current->parent();
-        int cnt = 0;
+        int              cnt    = 0;
         if (parent) {
             cnt = parent->childCount();
         } else {
@@ -189,7 +184,6 @@ void SendButtonTemplatesEditor::selectionChanged(QTreeWidgetItem *current, QTree
                 ed_e = true;
             dl_e = true;
         }
-
     }
     addChildTemplAction->setEnabled(ed_e);
     addChildSeparatorAction->setEnabled(ed_e);
@@ -205,7 +199,7 @@ void SendButtonTemplatesEditor::selectionChanged(QTreeWidgetItem *current, QTree
 
 void SendButtonTemplatesEditor::contextMenu(QPoint pos)
 {
-    QMenu* menu = new QMenu(this);
+    QMenu *menu = new QMenu(this);
     menu->addAction(editAction);
     menu->addAction(removeAction);
     menu->addSeparator();
@@ -226,13 +220,13 @@ void SendButtonTemplatesEditor::contextMenu(QPoint pos)
 
 void SendButtonTemplatesEditor::swapItem(int updown)
 {
-    QTreeWidgetItem *item = ui_.lstTemplates->currentItem();
-    QModelIndex index = ui_.lstTemplates->currentIndex();
+    QTreeWidgetItem *item  = ui_.lstTemplates->currentItem();
+    QModelIndex      index = ui_.lstTemplates->currentIndex();
     if (item && index.isValid()) {
-        int row = index.row();
-        int new_pos = row + updown;
-        QTreeWidgetItem * parent = item->parent();
-        int cnt = 0;
+        int              row     = index.row();
+        int              new_pos = row + updown;
+        QTreeWidgetItem *parent  = item->parent();
+        int              cnt     = 0;
         if (parent) {
             cnt = parent->childCount();
         } else {
@@ -252,14 +246,14 @@ void SendButtonTemplatesEditor::swapItem(int updown)
     }
 }
 
-QStringList SendButtonTemplatesEditor::genTemplatesList(QTreeWidgetItem* item, QString base_path)
+QStringList SendButtonTemplatesEditor::genTemplatesList(QTreeWidgetItem *item, QString base_path)
 {
     QStringList res_lst;
-    QString new_base = base_path;
+    QString     new_base = base_path;
     if (!new_base.isEmpty())
         new_base.append("/");
     QString item_text = SendButtonTemplatesMenu::addSlashes(item->text(0));
-    int child_cnt = item->childCount();
+    int     child_cnt = item->childCount();
     if (child_cnt == 0) {
         if (item->type() != QTreeWidgetItem::Type)
             item_text = "\\-"; // Separator
@@ -292,7 +286,7 @@ void SendButtonTemplatesEditor::accept()
         }
     }
     QStringList templates;
-    int top_cnt = ui_.lstTemplates->topLevelItemCount();
+    int         top_cnt = ui_.lstTemplates->topLevelItemCount();
     for (int idx = 0; idx < top_cnt; idx++) {
         templates.append(genTemplatesList(ui_.lstTemplates->topLevelItem(idx)));
     }
@@ -309,13 +303,11 @@ void SendButtonTemplatesEditor::reject()
 
 //------------------------------
 
-SendButtonTemplatesMenu::SendButtonTemplatesMenu(QWidget* parent)
-    : QMenu(parent)
-    , ps_(false)
+SendButtonTemplatesMenu::SendButtonTemplatesMenu(QWidget *parent) : QMenu(parent), ps_(false)
 {
     setSeparatorsCollapsible(true);
     update();
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
 }
 
 void SendButtonTemplatesMenu::setParams(bool ps)
@@ -339,10 +331,10 @@ void SendButtonTemplatesMenu::updatePsAction()
  */
 QStringList SendButtonTemplatesMenu::getMenuItems(const QString text)
 {
-    QStringList res_list;
-    int str_len = text.length();
-    unsigned int sl_cnt = 0;
-    int str_pos = 0;
+    QStringList  res_list;
+    int          str_len = text.length();
+    unsigned int sl_cnt  = 0;
+    int          str_pos = 0;
     for (int i = 0; i < str_len; i++) {
         QChar ch = text.at(i);
         if (ch == '\\') {
@@ -392,7 +384,8 @@ void SendButtonTemplatesMenu::update()
     updatePsAction();
     addSeparator();
 
-    QAction *editTemplatesAct = new QAction(IconsetFactory::icon("psi/action_templates_edit").icon(), tr("&Edit Templates"), this);
+    QAction *editTemplatesAct
+        = new QAction(IconsetFactory::icon("psi/action_templates_edit").icon(), tr("&Edit Templates"), this);
     connect(editTemplatesAct, SIGNAL(triggered()), SIGNAL(doEditTemplates()));
     addAction(editTemplatesAct);
 
@@ -403,19 +396,20 @@ void SendButtonTemplatesMenu::update()
     addAction(onlyPaste);
     addSeparator();
 
-    QStringList templ_list = PsiOptions::instance()->getOption("options.ui.chat.templates", QStringList()).toStringList();
-    int templ_cnt = templ_list.size();
+    QStringList templ_list
+        = PsiOptions::instance()->getOption("options.ui.chat.templates", QStringList()).toStringList();
+    int                       templ_cnt = templ_list.size();
     QHash<QString, QAction *> submenus;
     for (int i = 0; i < templ_cnt; i++) {
         QStringList menu_list = SendButtonTemplatesMenu::getMenuItems(templ_list.at(i));
         if (menu_list.size() == 0)
             continue;
         // find submenus if exists
-        QAction *m_act = nullptr;
-        QString menu_str = "";
-        int j = menu_list.size() - 2;
+        QAction *m_act    = nullptr;
+        QString  menu_str = "";
+        int      j        = menu_list.size() - 2;
         for (; j >= 0; j--) {
-            menu_str = "";
+            menu_str          = "";
             QString menu_str2 = "";
             for (int k = 0; k <= j; k++) {
                 menu_str = menu_str2;
@@ -438,7 +432,7 @@ void SendButtonTemplatesMenu::update()
                 smenu = new QMenu(this);
         }
         int sub_cnt = menu_list.size();
-        for (; ; j++) {
+        for (;; j++) {
             QString str1 = menu_list.at(j);
             if (j == (sub_cnt - 1) && str1 == "\\-") {
                 smenu->addSeparator();
@@ -447,9 +441,8 @@ void SendButtonTemplatesMenu::update()
             QAction *c_act = makeAction(SendButtonTemplatesMenu::stripSlashes(str1));
             smenu->addAction(c_act);
             if (j == (sub_cnt - 1)) {
-                connect(c_act, &QAction::triggered, this, [this, str1](){
-                    emit doTemplateText(SendButtonTemplatesMenu::stripSlashes(str1));
-                });
+                connect(c_act, &QAction::triggered, this,
+                        [this, str1]() { emit doTemplateText(SendButtonTemplatesMenu::stripSlashes(str1)); });
                 break;
             } else {
                 smenu = new QMenu(this);
@@ -469,14 +462,14 @@ void SendButtonTemplatesMenu::clickOnlyPaste()
         PsiOptions::instance()->setOption("options.ui.chat.only-paste-template", true);
 }
 
-void SendButtonTemplatesMenu::optionChanged(const QString& option)
+void SendButtonTemplatesMenu::optionChanged(const QString &option)
 {
     if (option == "options.ui.chat.disable-paste-send") {
         updatePsAction();
     } else if (option == "options.ui.chat.css") {
         setStyleSheet(PsiOptions::instance()->getOption("options.ui.chat.css").toString());
-    //} else if (option == "options.ui.chat.only-paste-template") {
-    //    onlyPaste->setChecked(PsiOptions::instance()->getOption("options.ui.chat.only-paste-template").toBool());
+        //} else if (option == "options.ui.chat.only-paste-template") {
+        //    onlyPaste->setChecked(PsiOptions::instance()->getOption("options.ui.chat.only-paste-template").toBool());
     }
 }
 
@@ -485,7 +478,4 @@ QString SendButtonTemplatesMenu::addSlashes(QString str)
     return str.replace("\\", "\\\\", Qt::CaseSensitive).replace("/", "\\/");
 }
 
-QString SendButtonTemplatesMenu::stripSlashes(QString str)
-{
-    return str.replace("\\/", "/").replace("\\\\", "\\");
-}
+QString SendButtonTemplatesMenu::stripSlashes(QString str) { return str.replace("\\/", "/").replace("\\\\", "\\"); }

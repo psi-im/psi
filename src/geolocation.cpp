@@ -23,16 +23,11 @@
 #include <QDomDocument>
 #include <QDomElement>
 
-GeoLocation::GeoLocation()
-{
-}
+GeoLocation::GeoLocation() {}
 
-GeoLocation::GeoLocation(const QDomElement& el)
-{
-    fromXml(el);
-}
+GeoLocation::GeoLocation(const QDomElement &el) { fromXml(el); }
 
-QDomElement GeoLocation::toXml(QDomDocument& doc)
+QDomElement GeoLocation::toXml(QDomDocument &doc)
 {
     QDomElement geoloc = doc.createElementNS(PEP_GEOLOC_NS, PEP_GEOLOC_TN);
 
@@ -125,12 +120,12 @@ QDomElement GeoLocation::toXml(QDomDocument& doc)
     return geoloc;
 }
 
-void GeoLocation::fromXml(const QDomElement& e)
+void GeoLocation::fromXml(const QDomElement &e)
 {
     if (e.tagName() != PEP_GEOLOC_TN)
         return;
 
-    for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
+    for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
         QDomElement m = n.toElement();
         if (m.isNull()) {
             continue;
@@ -172,231 +167,127 @@ void GeoLocation::fromXml(const QDomElement& e)
     }
 }
 
-void GeoLocation::setAlt(float alt)
-{
-    alt_ = Maybe<float>(alt);
-}
-void GeoLocation::setBearing(float bearing)
-{
-    bearing_ = Maybe<float>(bearing);
-}
+void GeoLocation::setAlt(float alt) { alt_ = Maybe<float>(alt); }
+void GeoLocation::setBearing(float bearing) { bearing_ = Maybe<float>(bearing); }
 
-void GeoLocation::setError(float error)
-{
-    error_ = Maybe<float>(error);
-}
+void GeoLocation::setError(float error) { error_ = Maybe<float>(error); }
 
-void GeoLocation::setLat(float lat)
-{
-    lat_ = Maybe<float>(lat);
-}
+void GeoLocation::setLat(float lat) { lat_ = Maybe<float>(lat); }
 
-void GeoLocation::setLon(float lon)
-{
-    lon_ = Maybe<float>(lon);
-}
+void GeoLocation::setLon(float lon) { lon_ = Maybe<float>(lon); }
 
-void GeoLocation::setDatum(const QString& datum)
-{
-    datum_ = datum;
-}
+void GeoLocation::setDatum(const QString &datum) { datum_ = datum; }
 
-void GeoLocation::setDescription(const QString& description)
-{
-    description_ = description;
-}
+void GeoLocation::setDescription(const QString &description) { description_ = description; }
 
-const Maybe<float>& GeoLocation::alt() const
-{
-    return alt_;
-}
+const Maybe<float> &GeoLocation::alt() const { return alt_; }
 
-const Maybe<float>& GeoLocation::bearing() const
-{
-    return bearing_;
-}
+const Maybe<float> &GeoLocation::bearing() const { return bearing_; }
 
-const Maybe<float>& GeoLocation::error() const
-{
-    return error_;
-}
+const Maybe<float> &GeoLocation::error() const { return error_; }
 
-const Maybe<float>& GeoLocation::lat() const
-{
-    return lat_;
-}
+const Maybe<float> &GeoLocation::lat() const { return lat_; }
 
-const Maybe<float>& GeoLocation::lon() const
-{
-    return lon_;
-}
+const Maybe<float> &GeoLocation::lon() const { return lon_; }
 
-const QString& GeoLocation::datum() const
-{
-    return datum_;
-}
+const QString &GeoLocation::datum() const { return datum_; }
 
-const QString& GeoLocation::description() const
-{
-    return description_;
-}
+const QString &GeoLocation::description() const { return description_; }
 
-const QString& GeoLocation::country() const
-{
-    return country_;
-}
+const QString &GeoLocation::country() const { return country_; }
 
-const QString& GeoLocation::region() const
-{
-    return region_;
-}
+const QString &GeoLocation::region() const { return region_; }
 
-const QString& GeoLocation::locality() const
-{
-    return locality_;
-}
+const QString &GeoLocation::locality() const { return locality_; }
 
-const QString& GeoLocation::area() const
-{
-    return area_;
-}
+const QString &GeoLocation::area() const { return area_; }
 
-const QString& GeoLocation::street() const
-{
-    return street_;
-}
+const QString &GeoLocation::street() const { return street_; }
 
-const QString& GeoLocation::building() const
-{
-    return building_;
-}
+const QString &GeoLocation::building() const { return building_; }
 
-const QString& GeoLocation::floor() const
-{
-    return floor_;
-}
+const QString &GeoLocation::floor() const { return floor_; }
 
-const QString& GeoLocation::room() const
-{
-    return room_;
-}
+const QString &GeoLocation::room() const { return room_; }
 
-const QString& GeoLocation::postalcode() const
-{
-    return postalcode_;
-}
+const QString &GeoLocation::postalcode() const { return postalcode_; }
 
-const QString& GeoLocation::text() const
-{
-    return text_;
-}
+const QString &GeoLocation::text() const { return text_; }
 
 bool GeoLocation::isNull() const
 {
-    return !lat_.hasValue() && !lon_.hasValue() && !alt_.hasValue() && !bearing_.hasValue() && !error_.hasValue() && country_.isNull() && region_.isNull() && locality_.isNull()
-        && area_.isNull() && street_.isNull() && building_.isNull() && floor_.isNull() && room_.isNull() && postalcode_.isNull() && text_.isNull() && description_.isNull() && datum_.isNull();
+    return !lat_.hasValue() && !lon_.hasValue() && !alt_.hasValue() && !bearing_.hasValue() && !error_.hasValue()
+        && country_.isNull() && region_.isNull() && locality_.isNull() && area_.isNull() && street_.isNull()
+        && building_.isNull() && floor_.isNull() && room_.isNull() && postalcode_.isNull() && text_.isNull()
+        && description_.isNull() && datum_.isNull();
 }
 
-bool GeoLocation::operator==(const GeoLocation& o) const
+bool GeoLocation::operator==(const GeoLocation &o) const
 {
     // FIXME
     bool equal = true;
-    equal = equal && (lat_.hasValue() ? lat_.value() == o.lat().value() : !o.lat().hasValue());
-    equal = equal && (lon_.hasValue() ? lon_.value() == o.lon().value() : !o.lon().hasValue());
-    equal = equal && (alt_.hasValue() ? alt_.value() == o.alt().value() : !o.alt().hasValue());
-    equal = equal && (bearing_.hasValue() ? bearing_.value() == o.bearing().value() : !o.bearing().hasValue());
-    equal = equal && (error_.hasValue() ? error_.value() == o.error().value() : !o.error().hasValue());
-    equal = equal && country() == o.country() && region() == o.region() && locality() == o.locality()
-            && area() == o.area() && street() == o.street() && datum() == o.datum() && building() == o.building()
-            && floor() == o.floor() && room() == o.room() && postalcode() == o.postalcode() && text() == o.text()
-            && description() == o.description();
+    equal      = equal && (lat_.hasValue() ? lat_.value() == o.lat().value() : !o.lat().hasValue());
+    equal      = equal && (lon_.hasValue() ? lon_.value() == o.lon().value() : !o.lon().hasValue());
+    equal      = equal && (alt_.hasValue() ? alt_.value() == o.alt().value() : !o.alt().hasValue());
+    equal      = equal && (bearing_.hasValue() ? bearing_.value() == o.bearing().value() : !o.bearing().hasValue());
+    equal      = equal && (error_.hasValue() ? error_.value() == o.error().value() : !o.error().hasValue());
+    equal      = equal && country() == o.country() && region() == o.region() && locality() == o.locality()
+        && area() == o.area() && street() == o.street() && datum() == o.datum() && building() == o.building()
+        && floor() == o.floor() && room() == o.room() && postalcode() == o.postalcode() && text() == o.text()
+        && description() == o.description();
     return equal;
 }
 
-bool GeoLocation::operator!=(const GeoLocation& o) const
-{
-    return !((*this) == o);
-}
+bool GeoLocation::operator!=(const GeoLocation &o) const { return !((*this) == o); }
 
-void GeoLocation::setCountry(const QString& s)
-{
-    country_ = s;
-}
+void GeoLocation::setCountry(const QString &s) { country_ = s; }
 
-void GeoLocation::setRegion(const QString& s)
-{
-    region_ = s;
-}
+void GeoLocation::setRegion(const QString &s) { region_ = s; }
 
-void GeoLocation::setLocality(const QString& s)
-{
-    locality_ = s;
-}
+void GeoLocation::setLocality(const QString &s) { locality_ = s; }
 
-void GeoLocation::setArea(const QString& s)
-{
-    area_ = s;
-}
+void GeoLocation::setArea(const QString &s) { area_ = s; }
 
-void GeoLocation::setStreet(const QString& s)
-{
-    street_ = s;
-}
+void GeoLocation::setStreet(const QString &s) { street_ = s; }
 
-void GeoLocation::setBuilding(const QString& s)
-{
-    building_ = s;
-}
+void GeoLocation::setBuilding(const QString &s) { building_ = s; }
 
-void GeoLocation::setFloor(const QString& s)
-{
-    floor_ = s;
-}
+void GeoLocation::setFloor(const QString &s) { floor_ = s; }
 
-void GeoLocation::setRoom(const QString& s)
-{
-    room_ = s;
-}
+void GeoLocation::setRoom(const QString &s) { room_ = s; }
 
-void GeoLocation::setPostalcode(const QString& s)
-{
-    postalcode_ = s;
-}
+void GeoLocation::setPostalcode(const QString &s) { postalcode_ = s; }
 
-void GeoLocation::setText(const QString& s)
-{
-    text_ = s;
-}
+void GeoLocation::setText(const QString &s) { text_ = s; }
 
 QString GeoLocation::toString() const
 {
     QString loc;
 
-    if(alt_.hasValue() || lon_.hasValue() || lat_.hasValue()) {
+    if (alt_.hasValue() || lon_.hasValue() || lat_.hasValue()) {
 
         loc += QObject::tr("Latitude/Longitude/Altitude: ");
 
-        if(lat_.hasValue())
+        if (lat_.hasValue())
             loc += QString::number(double(lat_.value())) + "/";
         else
             loc += "0/";
 
-        if(lon_.hasValue())
+        if (lon_.hasValue())
             loc += QString::number(double(lon_.value())) + "/";
         else
             loc += "0/";
 
-        if(alt_.hasValue())
+        if (alt_.hasValue())
             loc += QString::number(double(alt_.value()));
         else
             loc += "0";
-
     }
 
-    if(bearing_.hasValue())
+    if (bearing_.hasValue())
         loc += QObject::tr("\nBearing: ") + QString::number(double(bearing_.value()));
 
-    if(error_.hasValue())
+    if (error_.hasValue())
         loc += QObject::tr("\nError: ") + QString::number(double(error_.value()));
 
     if (!datum().isEmpty())

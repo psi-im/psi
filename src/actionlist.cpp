@@ -28,38 +28,32 @@
 // ActionList
 //----------------------------------------------------------------------------
 
-class ActionList::Private : public QObject
-{
+class ActionList::Private : public QObject {
     Q_OBJECT
 public:
     Private() = default;
-    Private( const Private & );
+    Private(const Private &);
 
-    QString name;
-    int id = 0;
-    QStringList sortedActions;
-    QHash<QString, IconAction*> actions;
-    bool autoDeleteActions = false;
+    QString                      name;
+    int                          id = 0;
+    QStringList                  sortedActions;
+    QHash<QString, IconAction *> actions;
+    bool                         autoDeleteActions = false;
 
 public slots:
     void actionDestroyed(QObject *);
 };
 
-ActionList::ActionList( const QString &name, int id, bool autoDelete )
-    : QObject()
+ActionList::ActionList(const QString &name, int id, bool autoDelete) : QObject()
 {
-    d = new Private();
+    d                    = new Private();
     d->autoDeleteActions = autoDelete;
 
     d->name = name;
     d->id   = id;
 }
 
-ActionList::ActionList( const ActionList &from )
-    : QObject()
-{
-    d = new Private( *from.d );
-}
+ActionList::ActionList(const ActionList &from) : QObject() { d = new Private(*from.d); }
 
 ActionList::~ActionList()
 {
@@ -68,34 +62,22 @@ ActionList::~ActionList()
     delete d;
 }
 
-QString ActionList::name() const
-{
-    return d->name;
-}
+QString ActionList::name() const { return d->name; }
 
-int ActionList::id() const
-{
-    return d->id;
-}
+int ActionList::id() const { return d->id; }
 
-IconAction *ActionList::action( const QString &name ) const
-{
-    return d->actions[name];
-}
+IconAction *ActionList::action(const QString &name) const { return d->actions[name]; }
 
-QStringList ActionList::actions() const
-{
-    return d->sortedActions;
-}
+QStringList ActionList::actions() const { return d->sortedActions; }
 
-void ActionList::addAction( const QString &name, IconAction *action )
+void ActionList::addAction(const QString &name, IconAction *action)
 {
     d->sortedActions << name;
 
-    if ( action ) {
-        action->setObjectName( name );
-        d->actions.insert( name, action );
-        d->connect( action, SIGNAL( destroyed(QObject *) ), d, SLOT( actionDestroyed(QObject *) ) );
+    if (action) {
+        action->setObjectName(name);
+        d->actions.insert(name, action);
+        d->connect(action, SIGNAL(destroyed(QObject *)), d, SLOT(actionDestroyed(QObject *)));
     }
 }
 
@@ -106,40 +88,31 @@ void ActionList::clear()
     d->actions.clear();
 }
 
-ActionList::Private::Private( const Private &from )
-    : QObject()
+ActionList::Private::Private(const Private &from) : QObject()
 {
     name = from.name;
     id   = from.id;
 
-    actions = from.actions;
+    actions           = from.actions;
     autoDeleteActions = from.autoDeleteActions;
 
     sortedActions = from.sortedActions;
 }
 
-void ActionList::Private::actionDestroyed(QObject *obj)
-{
-    actions.remove( obj->objectName() );
-}
+void ActionList::Private::actionDestroyed(QObject *obj) { actions.remove(obj->objectName()); }
 
 //----------------------------------------------------------------------------
 // MetaActionList
 //----------------------------------------------------------------------------
 
-class MetaActionList::Private
-{
+class MetaActionList::Private {
 public:
-    Private() { }
+    Private() {}
 
-    QList<ActionList*> lists;
+    QList<ActionList *> lists;
 };
 
-MetaActionList::MetaActionList()
-    : QObject()
-{
-    d = new Private();
-}
+MetaActionList::MetaActionList() : QObject() { d = new Private(); }
 
 MetaActionList::~MetaActionList()
 {
@@ -148,9 +121,9 @@ MetaActionList::~MetaActionList()
     delete d;
 }
 
-ActionList *MetaActionList::actionList( const QString &name ) const
+ActionList *MetaActionList::actionList(const QString &name) const
 {
-    foreach(ActionList* a, d->lists) {
+    foreach (ActionList *a, d->lists) {
         if (a->name() == name)
             return a;
     }
@@ -158,16 +131,16 @@ ActionList *MetaActionList::actionList( const QString &name ) const
     return nullptr;
 }
 
-QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const
+QList<ActionList *> MetaActionList::actionLists(const unsigned int id) const
 {
-    QList<ActionList*> list;
+    QList<ActionList *> list;
 
-    for ( int i = 0; i < 32; i++ ) {
-        if ( !(id & ( 1u << i )) )
+    for (int i = 0; i < 32; i++) {
+        if (!(id & (1u << i)))
             continue;
 
-        foreach(ActionList* a, d->lists) {
-            if ( uint(a->id()) & ( 1u << i ) )
+        foreach (ActionList *a, d->lists) {
+            if (uint(a->id()) & (1u << i))
                 list.append(a);
         }
     }
@@ -175,16 +148,16 @@ QList<ActionList*> MetaActionList::actionLists( const unsigned int id ) const
     return list;
 }
 
-ActionList MetaActionList::suitableActions( int id ) const
+ActionList MetaActionList::suitableActions(int id) const
 {
-    QList<ActionList*> lists = actionLists( uint(id) );
-    ActionList actions("", 0, false);
+    QList<ActionList *> lists = actionLists(uint(id));
+    ActionList          actions("", 0, false);
 
-    foreach(ActionList* list, lists) {
-        QStringList actionList = list->actions();
-        QStringList::Iterator it2 = actionList.begin();
-        for ( ; it2 != actionList.end(); ++it2 )
-            actions.addAction( *it2, list->action( *it2 ) );
+    foreach (ActionList *list, lists) {
+        QStringList           actionList = list->actions();
+        QStringList::Iterator it2        = actionList.begin();
+        for (; it2 != actionList.end(); ++it2)
+            actions.addAction(*it2, list->action(*it2));
     }
 
     return actions;
@@ -194,21 +167,21 @@ QStringList MetaActionList::actionLists() const
 {
     QStringList names;
 
-    foreach(ActionList* l, d->lists)
+    foreach (ActionList *l, d->lists)
         names << l->name();
 
     return names;
 }
 
-void MetaActionList::addList( ActionList *list )
+void MetaActionList::addList(ActionList *list)
 {
-    if ( list )
-        d->lists.append( list );
+    if (list)
+        d->lists.append(list);
 }
 
 void MetaActionList::clear()
 {
-    foreach(ActionList* l, d->lists) {
+    foreach (ActionList *l, d->lists) {
         l->clear();
     }
 }

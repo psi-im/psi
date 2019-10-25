@@ -3,8 +3,5 @@
 namespace QCA {
 CertificateCollection gSystemStore;
 
-CertificateCollection systemStore()
-{
-    return gSystemStore;
-}
+CertificateCollection systemStore() { return gSystemStore; }
 }; // namespace QCA

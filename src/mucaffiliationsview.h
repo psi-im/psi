@@ -22,12 +22,11 @@
 
 #include <QTreeView>
 
-class MUCAffiliationsView : public QTreeView
-{
+class MUCAffiliationsView : public QTreeView {
     Q_OBJECT
 
 public:
-    MUCAffiliationsView(QWidget* parent = nullptr);
+    MUCAffiliationsView(QWidget *parent = nullptr);
 
 public slots:
     void removeCurrent();
@@ -37,7 +36,7 @@ signals:
     void removeEnabled(bool);
 
 protected:
-    virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous);
+    virtual void currentChanged(const QModelIndex &current, const QModelIndex &previous);
 };
 
 #endif // MUCAFFILIATIONSVIEW_H

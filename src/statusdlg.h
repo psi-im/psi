@@ -31,21 +31,19 @@ class QKeyEvent;
 class UserListItem;
 
 namespace XMPP {
-    class Status;
+class Status;
 }
 using namespace XMPP;
 
-enum setStatusEnum {setStatusForAccount = 0, setStatusForJid, setStatusForJidList};
+enum setStatusEnum { setStatusForAccount = 0, setStatusForJid, setStatusForJidList };
 
-class StatusShowDlg : public QDialog
-{
+class StatusShowDlg : public QDialog {
     Q_OBJECT
 public:
     StatusShowDlg(const UserListItem &);
 };
 
-class StatusSetDlg : public QDialog
-{
+class StatusSetDlg : public QDialog {
     Q_OBJECT
 public:
     StatusSetDlg(PsiCon *, const Status &, bool withPriority = true);

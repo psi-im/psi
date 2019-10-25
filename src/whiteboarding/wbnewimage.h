@@ -25,16 +25,16 @@
 
 class WbNewImage : public WbNewItem {
 public:
-    WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename);
-    void parseCursorMove(QPointF newPos);
+    WbNewImage(QGraphicsScene *s, QPointF startPos, const QString &filename);
+    void     parseCursorMove(QPointF newPos);
     QDomNode serializeToSvg(QDomDocument *doc);
 
 protected:
-    QGraphicsItem* graphicsItem();
+    QGraphicsItem *graphicsItem();
 
 private:
     QGraphicsPixmapItem graphicsitem_;
-    QString filename_;
+    QString             filename_;
 };
 
 #endif // WBNEWIMAGE_H

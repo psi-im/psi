@@ -5,20 +5,19 @@
 
 #include <QStringList>
 
-class GUITestManager
-{
+class GUITestManager {
 public:
-    static GUITestManager* instance();
+    static GUITestManager *instance();
 
-    void registerTest(GUITest* test);
-    bool runTest(const QString& name);
+    void        registerTest(GUITest *test);
+    bool        runTest(const QString &name);
     QStringList getTestNames() const;
 
 private:
     GUITestManager();
 
-    static GUITestManager* instance_;
-    QList<GUITest*> tests_;
+    static GUITestManager *instance_;
+    QList<GUITest *>       tests_;
 };
 
 #endif

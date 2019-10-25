@@ -27,55 +27,51 @@ QString JSUtil::variant2js(const QVariant &value)
 {
     QString strVal;
     switch (value.type()) {
-        case QVariant::String:
-        case QVariant::Color:
-            strVal = value.toString();
-            escapeString(strVal);
-            strVal = QString("\"%1\"").arg(strVal);
-            break;
-        case QVariant::StringList:
-            {
-                QStringList sl = value.toStringList();
-                for (int i=0; i<sl.count(); i++) {
-                    escapeString(sl[i]);
-                    sl[i] = QString("\"%1\"").arg(sl[i]);
-                }
-                strVal = QString("[%1]").arg(sl.join(","));
-            }
-            break;
-        case QVariant::List:
-            {
-                QStringList sl;
-                auto vl = value.toList();
-                sl.reserve(vl.size());
-                for (auto &item: vl) {
-                    sl.append(variant2js(item));
-                }
-                strVal = QString("[%1]").arg(sl.join(","));
-            }
-            break;
-        case QVariant::DateTime:
-            strVal = QString("new Date(%1)").arg(value.toDateTime().toString("yyyy,M-1,d,h,m,s"));
-            break;
-        case QVariant::Date:
-            strVal = QString("new Date(%1)").arg(value.toDate().toString("yyyy,M-1,d"));
-            break;
-        case QVariant::Map:
-            strVal = QString::fromUtf8(QJsonDocument::fromVariant(value).toJson(QJsonDocument::Compact));
-            break;
-        default:
-            strVal = value.toString();
+    case QVariant::String:
+    case QVariant::Color:
+        strVal = value.toString();
+        escapeString(strVal);
+        strVal = QString("\"%1\"").arg(strVal);
+        break;
+    case QVariant::StringList: {
+        QStringList sl = value.toStringList();
+        for (int i = 0; i < sl.count(); i++) {
+            escapeString(sl[i]);
+            sl[i] = QString("\"%1\"").arg(sl[i]);
+        }
+        strVal = QString("[%1]").arg(sl.join(","));
+    } break;
+    case QVariant::List: {
+        QStringList sl;
+        auto        vl = value.toList();
+        sl.reserve(vl.size());
+        for (auto &item : vl) {
+            sl.append(variant2js(item));
+        }
+        strVal = QString("[%1]").arg(sl.join(","));
+    } break;
+    case QVariant::DateTime:
+        strVal = QString("new Date(%1)").arg(value.toDateTime().toString("yyyy,M-1,d,h,m,s"));
+        break;
+    case QVariant::Date:
+        strVal = QString("new Date(%1)").arg(value.toDate().toString("yyyy,M-1,d"));
+        break;
+    case QVariant::Map:
+        strVal = QString::fromUtf8(QJsonDocument::fromVariant(value).toJson(QJsonDocument::Compact));
+        break;
+    default:
+        strVal = value.toString();
     }
     return strVal;
 }
 
-void JSUtil::escapeString(QString& str)
+void JSUtil::escapeString(QString &str)
 {
 
-    str.replace("\r\n", "\n");  //windows
-    str.replace("\r", "\n");    //mac
+    str.replace("\r\n", "\n"); // windows
+    str.replace("\r", "\n");   // mac
     str.replace("\\", "\\\\");
     str.replace("\"", "\\\"");
     str.replace("\n", "\\\n");
-    str.replace(QChar(8232), "\\\n"); //ctrl+enter
+    str.replace(QChar(8232), "\\\n"); // ctrl+enter
 }

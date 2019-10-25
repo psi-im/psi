@@ -22,14 +22,13 @@
 
 #include <QSortFilterProxyModel>
 
-class PrivacyListBlockedModel : public QSortFilterProxyModel
-{
+class PrivacyListBlockedModel : public QSortFilterProxyModel {
 public:
-    PrivacyListBlockedModel(QObject* parent = nullptr);
+    PrivacyListBlockedModel(QObject *parent = nullptr);
 
-    bool lessThan(const QModelIndex & left, const QModelIndex & right ) const;
-    bool filterAcceptsColumn(int source_column, const QModelIndex & source_parent ) const;
-    bool filterAcceptsRow(int source_row, const QModelIndex & source_parent ) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+    bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const;
+    bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const;
 };
 
 #endif // PRIVACYLISTBLOCKEDMODEL_H

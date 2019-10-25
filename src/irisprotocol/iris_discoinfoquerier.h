@@ -8,17 +8,16 @@
 #include <QPointer>
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
 namespace IrisProtocol {
-class DiscoInfoQuerier : public Protocol::DiscoInfoQuerier
-{
+class DiscoInfoQuerier : public Protocol::DiscoInfoQuerier {
     Q_OBJECT
 public:
-    DiscoInfoQuerier(XMPP::Client* client);
+    DiscoInfoQuerier(XMPP::Client *client);
 
-    void getDiscoInfo(const XMPP::Jid& jid, const QString& node);
+    void getDiscoInfo(const XMPP::Jid &jid, const QString &node);
 
 private slots:
     void discoFinished();

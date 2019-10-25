@@ -25,23 +25,23 @@
 
 class PsiIcon;
 
-class IconLabel : public QLabel
-{
+class IconLabel : public QLabel {
     Q_OBJECT
-    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
+    Q_PROPERTY(QString psiIconName READ psiIconName WRITE setPsiIcon)
 
 public:
     IconLabel(QWidget *parent = nullptr);
     ~IconLabel();
 
-    const PsiIcon *psiIcon () const;
-    QString psiIconName () const;
-    void setPsiIcon (const PsiIcon *, bool copyIcon = true);
-    void setPsiIcon (const QString &);
+    const PsiIcon *psiIcon() const;
+    QString        psiIconName() const;
+    void           setPsiIcon(const PsiIcon *, bool copyIcon = true);
+    void           setPsiIcon(const QString &);
 
     void setScaledContents(int width, int height);
 
     class Private;
+
 private:
     Private *d;
 };

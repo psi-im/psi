@@ -25,12 +25,9 @@
 
 #include <QInputDialog>
 
-GroupMenu::GroupMenu(QWidget* parent)
-    : QMenu(parent)
-{
-}
+GroupMenu::GroupMenu(QWidget *parent) : QMenu(parent) {}
 
-void GroupMenu::updateMenu(PsiContact* contact)
+void GroupMenu::updateMenu(PsiContact *contact)
 {
     if (isVisible())
         return;
@@ -41,10 +38,10 @@ void GroupMenu::updateMenu(PsiContact* contact)
     addGroup(tr("&None"), "", contact->userListItem().groups().isEmpty());
     addSeparator();
 
-    int n = 0;
+    int         n         = 0;
     QStringList groupList = contact->account()->groupList();
     groupList.removeAll(PsiContact::hiddenGroupName());
-    foreach(QString groupName, groupList) {
+    foreach (QString groupName, groupList) {
         QString displayName = groupName;
         if (displayName.isEmpty())
             displayName = PsiContact::generalGroupName();
@@ -60,7 +57,7 @@ void GroupMenu::updateMenu(PsiContact* contact)
     addGroup(tr("&Hidden"), PsiContact::hiddenGroupName(), contact->isHidden());
     addSeparator();
 
-    QAction* createNewGroupAction = new QAction(tr("&Create New..."), this);
+    QAction *createNewGroupAction = new QAction(tr("&Create New..."), this);
     connect(createNewGroupAction, SIGNAL(triggered()), SLOT(createNewGroup()));
     addAction(createNewGroupAction);
 }
@@ -72,7 +69,7 @@ void GroupMenu::updateMenu(PsiContact* contact)
  */
 void GroupMenu::addGroup(QString text, QString groupName, bool selected)
 {
-    QAction* action = new QAction(text, this);
+    QAction *action = new QAction(text, this);
     addAction(action);
     action->setCheckable(true);
     action->setChecked(selected);
@@ -82,19 +79,16 @@ void GroupMenu::addGroup(QString text, QString groupName, bool selected)
 
 void GroupMenu::actionActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
-    emit groupActivated(action->property("groupName").toString());
+    QAction *action = static_cast<QAction *>(sender());
+    emit     groupActivated(action->property("groupName").toString());
 }
 
 void GroupMenu::createNewGroup()
 {
     while (contact_) {
-        bool ok = false;
-        QString newgroup = QInputDialog::getText(nullptr, tr("Create New Group"),
-                                                 tr("Enter the new group name:"),
-                                                 QLineEdit::Normal,
-                                                 QString(),
-                                                 &ok, nullptr);
+        bool    ok       = false;
+        QString newgroup = QInputDialog::getText(nullptr, tr("Create New Group"), tr("Enter the new group name:"),
+                                                 QLineEdit::Normal, QString(), &ok, nullptr);
         if (!ok)
             break;
         if (newgroup.isEmpty())

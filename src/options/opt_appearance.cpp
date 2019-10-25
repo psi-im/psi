@@ -25,14 +25,12 @@
 #include <QSlider>
 #include <QWhatsThis>
 
-class OptAppearanceUI : public QWidget, public Ui::OptAppearance
-{
+class OptAppearanceUI : public QWidget, public Ui::OptAppearance {
 public:
     OptAppearanceUI() : QWidget() { setupUi(this); }
 };
 
-class OptAppearanceMiscUI : public QWidget, public Ui::OptAppearanceMisc
-{
+class OptAppearanceMiscUI : public QWidget, public Ui::OptAppearanceMisc {
 public:
     OptAppearanceMiscUI() : QWidget() { setupUi(this); }
 };
@@ -41,8 +39,7 @@ public:
 // FontLabel
 //----------------------------------------------------------------------------
 
-FontLabel::FontLabel(QWidget *parent, const char *name)
-    : QLineEdit(parent)
+FontLabel::FontLabel(QWidget *parent, const char *name) : QLineEdit(parent)
 {
     setObjectName(name);
     setReadOnly(true);
@@ -59,36 +56,30 @@ void FontLabel::setFont(QString fontName)
     QFont f;
     f.fromString(fontName);
     m_font = fontName;
-    setText( tr("%1 %2").arg( f.family() ).arg( f.pointSize() ) );
+    setText(tr("%1 %2").arg(f.family()).arg(f.pointSize()));
     QLineEdit::setFont(f);
 }
 
-QString FontLabel::fontName() const
-{
-    return m_font;
-}
+QString FontLabel::fontName() const { return m_font; }
 
-QSize FontLabel::sizeHint() const
-{
-    return QSize(QLineEdit::sizeHint().width(), m_defaultHeight);
-}
+QSize FontLabel::sizeHint() const { return QSize(QLineEdit::sizeHint().width(), m_defaultHeight); }
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearance
 //----------------------------------------------------------------------------
-OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Psi's appearance"), "psi/appearance")
+OptionsTabAppearance::OptionsTabAppearance(QObject *parent) :
+    MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Psi's appearance"), "psi/appearance")
 {
-
 }
 
 void OptionsTabAppearance::setData(PsiCon *psi, QWidget *w)
 {
-    addTab( new OptionsTabAppearanceGeneral(this) );
-    addTab( new OptionsTabIconset(this) );
+    addTab(new OptionsTabAppearanceGeneral(this));
+    addTab(new OptionsTabIconset(this));
     if (psi->themeManager()->registeredProviders().count()) {
-        addTab( new OptionsTabAppearanceThemes(this) );
+        addTab(new OptionsTabAppearanceThemes(this));
     }
-    addTab( new OptionsTabAppearanceMisc(this) );
+    addTab(new OptionsTabAppearanceMisc(this));
     MetaOptionsTab::setData(psi, w);
 }
 
@@ -97,31 +88,29 @@ void OptionsTabAppearance::setData(PsiCon *psi, QWidget *w)
 //----------------------------------------------------------------------------
 OptionsTabIconset::OptionsTabIconset(QObject *parent) : MetaOptionsTab(parent, "iconsets", "", tr("Icons"), tr("Icons"))
 {
-    addTab( new OptionsTabIconsetEmoticons(this) );
-    addTab( new OptionsTabIconsetMoods(this) );
-    addTab( new OptionsTabIconsetActivity(this) );
-    addTab( new OptionsTabIconsetClients(this) );
-    addTab( new OptionsTabIconsetRoster(this) );
-    addTab( new OptionsTabIconsetSystem(this) );
-    addTab( new OptionsTabIconsetAffiliations(this) );
+    addTab(new OptionsTabIconsetEmoticons(this));
+    addTab(new OptionsTabIconsetMoods(this));
+    addTab(new OptionsTabIconsetActivity(this));
+    addTab(new OptionsTabIconsetClients(this));
+    addTab(new OptionsTabIconsetRoster(this));
+    addTab(new OptionsTabIconsetSystem(this));
+    addTab(new OptionsTabIconsetAffiliations(this));
 }
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearanceMisc
 //----------------------------------------------------------------------------
 
-OptionsTabAppearanceMisc::OptionsTabAppearanceMisc(QObject *parent)
-    : OptionsTab(parent, "appearance_misc", "", tr("Misc."), tr("Miscellaneous Settings"))
+OptionsTabAppearanceMisc::OptionsTabAppearanceMisc(QObject *parent) :
+    OptionsTab(parent, "appearance_misc", "", tr("Misc."), tr("Miscellaneous Settings"))
 {
 }
 
-OptionsTabAppearanceMisc::~OptionsTabAppearanceMisc()
-{
-}
+OptionsTabAppearanceMisc::~OptionsTabAppearanceMisc() {}
 
 QWidget *OptionsTabAppearanceMisc::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
     w = new OptAppearanceMiscUI();
@@ -131,60 +120,61 @@ QWidget *OptionsTabAppearanceMisc::widget()
 
 void OptionsTabAppearanceMisc::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptAppearanceMiscUI *d = static_cast<OptAppearanceMiscUI *>(w);
 
-    PsiOptions::instance()->setOption("options.ui.look.contactlist.use-slim-group-headings", d->ck_newHeadings->isChecked());
-    PsiOptions::instance()->setOption("options.ui.look.contactlist.use-outlined-group-headings", d->ck_outlineHeadings->isChecked());
+    PsiOptions::instance()->setOption("options.ui.look.contactlist.use-slim-group-headings",
+                                      d->ck_newHeadings->isChecked());
+    PsiOptions::instance()->setOption("options.ui.look.contactlist.use-outlined-group-headings",
+                                      d->ck_outlineHeadings->isChecked());
     PsiOptions::instance()->setOption("options.ui.contactlist.opacity", d->sl_rosterop->value());
     PsiOptions::instance()->setOption("options.ui.chat.opacity", d->sl_chatdlgop->value());
 }
 
 void OptionsTabAppearanceMisc::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptAppearanceMiscUI *d = static_cast<OptAppearanceMiscUI *>(w);
 
-    d->ck_newHeadings->setChecked(PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool());
-    d->ck_outlineHeadings->setChecked(PsiOptions::instance()->getOption("options.ui.look.contactlist.use-outlined-group-headings").toBool());
+    d->ck_newHeadings->setChecked(
+        PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool());
+    d->ck_outlineHeadings->setChecked(
+        PsiOptions::instance()->getOption("options.ui.look.contactlist.use-outlined-group-headings").toBool());
 
     d->sl_rosterop->setValue(PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt());
     d->sl_chatdlgop->setValue(PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt());
 }
 
-void OptionsTabAppearanceMisc::setData(PsiCon *, QWidget *parentDialog)
-{
-    parentWidget = parentDialog;
-}
+void OptionsTabAppearanceMisc::setData(PsiCon *, QWidget *parentDialog) { parentWidget = parentDialog; }
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearanceGeneral: Fonts & Colours
 //----------------------------------------------------------------------------
 
-OptionsTabAppearanceGeneral::OptionsTabAppearanceGeneral(QObject *parent)
-    : OptionsTab(parent, "appearance_general", "", tr("Fonts && Colors"), tr("Fonts && Color Settings"))
+OptionsTabAppearanceGeneral::OptionsTabAppearanceGeneral(QObject *parent) :
+    OptionsTab(parent, "appearance_general", "", tr("Fonts && Colors"), tr("Fonts && Color Settings"))
 {
 }
 
 OptionsTabAppearanceGeneral::~OptionsTabAppearanceGeneral()
 {
-    if ( bg_font )
+    if (bg_font)
         delete bg_font;
-    if ( bg_color )
+    if (bg_color)
         delete bg_color;
 }
 
 static QPixmap color2pixmap(QColor c) // taken from opt_general.cpp
 {
-    QPixmap pix(16, 16);
+    QPixmap  pix(16, 16);
     QPainter p(&pix);
 
     p.fillRect(0, 0, pix.width(), pix.height(), QBrush(c));
-    p.setPen( QColor(0, 0, 0) );
+    p.setPen(QColor(0, 0, 0));
     p.drawRect(0, 0, pix.width(), pix.height());
     p.end();
 
@@ -193,10 +183,10 @@ static QPixmap color2pixmap(QColor c) // taken from opt_general.cpp
 
 QWidget *OptionsTabAppearanceGeneral::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new OptAppearanceUI();
+    w                  = new OptAppearanceUI();
     OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);
 
     le_font[0] = d->le_fRoster;
@@ -209,51 +199,43 @@ QWidget *OptionsTabAppearanceGeneral::widget()
     bg_font->addButton(d->pb_fMessage);
     bg_font->addButton(d->pb_fChat);
     bg_font->addButton(d->pb_fPopup);
-    connect(bg_font, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseFont(QAbstractButton*)));
+    connect(bg_font, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseFont(QAbstractButton *)));
 
-    le_font[0]->setWhatsThis(
-        tr("Specifies the font style for the main window."));
-    le_font[1]->setWhatsThis(
-        tr("Specifies the font style for message windows."));
-    le_font[2]->setWhatsThis(
-        tr("Specifies the font style for chat windows."));
-    le_font[3]->setWhatsThis(
-        tr("Specifies the font style for popup windows."));
-    d->pb_fRoster->setWhatsThis(
-        tr("Selects a font for the roster window using the font selection dialog."));
-    d->pb_fMessage->setWhatsThis(
-        tr("Selects a font for message windows using the font selection dialog."));
-    d->pb_fChat->setWhatsThis(
-        tr("Selects a font for chat windows using the font selection dialog."));
+    le_font[0]->setWhatsThis(tr("Specifies the font style for the main window."));
+    le_font[1]->setWhatsThis(tr("Specifies the font style for message windows."));
+    le_font[2]->setWhatsThis(tr("Specifies the font style for chat windows."));
+    le_font[3]->setWhatsThis(tr("Specifies the font style for popup windows."));
+    d->pb_fRoster->setWhatsThis(tr("Selects a font for the roster window using the font selection dialog."));
+    d->pb_fMessage->setWhatsThis(tr("Selects a font for message windows using the font selection dialog."));
+    d->pb_fChat->setWhatsThis(tr("Selects a font for chat windows using the font selection dialog."));
 
     QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
     struct ColorWidgetData {
-        QCheckBox *cbox;
+        QCheckBox *  cbox;
         QToolButton *button;
-        QString option;
-        QString descr;
+        QString      option;
+        QString      descr;
     };
-    ColorWidgetData cwData[] = {
-        {d->ck_cOnline,  d->pb_cOnline,  "contactlist.status.online", s.arg(tr("online")) },
-        {d->ck_cOffline, d->pb_cOffline, "contactlist.status.offline", s.arg(tr("offline")) },
-        {d->ck_cAway,    d->pb_cAway,    "contactlist.status.away", s.arg(tr("away")) },
-        {d->ck_cDND,     d->pb_cDND,     "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
-        {d->ck_cStatus,  d->pb_cStatus,  "contactlist.status-messages", s.arg(tr("Status message"))},
-        {d->ck_cProfileFore,     d->pb_cProfileFore, "contactlist.profile.header-foreground", ""},
-        {d->ck_cProfileBack,     d->pb_cProfileBack, "contactlist.profile.header-background", ""},
-        {d->ck_cGroupFore,       d->pb_cGroupFore,   "contactlist.grouping.header-foreground", ""},
-        {d->ck_cGroupBack,       d->pb_cGroupBack,   "contactlist.grouping.header-background", ""},
-        {d->ck_cListBack,        d->pb_cListBack,    "contactlist.background", ""},
-        {d->ck_cAnimFront,       d->pb_cAnimFront,   "contactlist.status-change-animation1", ""},
-        {d->ck_cAnimBack,        d->pb_cAnimBack,    "contactlist.status-change-animation2", ""},
-        {d->ck_cMessageSent,     d->pb_cMessageSent,     "messages.sent", ""},
-        {d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", ""},
-        {d->ck_cSysMsg,          d->pb_cSysMsg,          "messages.informational", ""},
-        {d->ck_cUserText,        d->pb_cUserText,        "messages.usertext", ""},
-        {d->ck_highlight,        d->pb_highlight,        "messages.highlighting", ""},
-        {d->ck_cLink,            d->pb_cLink,            "messages.link", ""},
-        {d->ck_cLinkVisited,     d->pb_cLinkVisited,     "messages.link-visited", ""}
-    };
+    ColorWidgetData cwData[]
+        = { { d->ck_cOnline, d->pb_cOnline, "contactlist.status.online", s.arg(tr("online")) },
+            { d->ck_cOffline, d->pb_cOffline, "contactlist.status.offline", s.arg(tr("offline")) },
+            { d->ck_cAway, d->pb_cAway, "contactlist.status.away", s.arg(tr("away")) },
+            { d->ck_cDND, d->pb_cDND, "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
+            { d->ck_cStatus, d->pb_cStatus, "contactlist.status-messages", s.arg(tr("Status message")) },
+            { d->ck_cProfileFore, d->pb_cProfileFore, "contactlist.profile.header-foreground", "" },
+            { d->ck_cProfileBack, d->pb_cProfileBack, "contactlist.profile.header-background", "" },
+            { d->ck_cGroupFore, d->pb_cGroupFore, "contactlist.grouping.header-foreground", "" },
+            { d->ck_cGroupBack, d->pb_cGroupBack, "contactlist.grouping.header-background", "" },
+            { d->ck_cListBack, d->pb_cListBack, "contactlist.background", "" },
+            { d->ck_cAnimFront, d->pb_cAnimFront, "contactlist.status-change-animation1", "" },
+            { d->ck_cAnimBack, d->pb_cAnimBack, "contactlist.status-change-animation2", "" },
+            { d->ck_cMessageSent, d->pb_cMessageSent, "messages.sent", "" },
+            { d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", "" },
+            { d->ck_cSysMsg, d->pb_cSysMsg, "messages.informational", "" },
+            { d->ck_cUserText, d->pb_cUserText, "messages.usertext", "" },
+            { d->ck_highlight, d->pb_highlight, "messages.highlighting", "" },
+            { d->ck_cLink, d->pb_cLink, "messages.link", "" },
+            { d->ck_cLinkVisited, d->pb_cLinkVisited, "messages.link-visited", "" } };
 
     bg_color = new QButtonGroup(this);
     for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
@@ -262,12 +244,12 @@ QWidget *OptionsTabAppearanceGeneral::widget()
             cwData[i].cbox->setWhatsThis(cwData[i].descr);
         }
         connect(cwData[i].cbox, SIGNAL(stateChanged(int)), SLOT(colorCheckBoxClicked(int)));
-        colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton*,QString>(cwData[i].button, cwData[i].option);
+        colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton *, QString>(cwData[i].button, cwData[i].option);
     }
-    connect(bg_color, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseColor(QAbstractButton*)));
+    connect(bg_color, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseColor(QAbstractButton *)));
 
     // Avatars
-    //QWhatsThis::add(d->ck_avatarsChatdlg,
+    // QWhatsThis::add(d->ck_avatarsChatdlg,
     //    tr("Toggles displaying of avatars in the chat dialog"));
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool()) {
@@ -278,18 +260,15 @@ QWidget *OptionsTabAppearanceGeneral::widget()
     return w;
 }
 
-static QColor getColor(QAbstractButton *button)
-{
-    return button->property("psi_color").value<QColor>();
-}
+static QColor getColor(QAbstractButton *button) { return button->property("psi_color").value<QColor>(); }
 
 void OptionsTabAppearanceGeneral::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);
-    //LEGOPTS.avatarsChatdlgEnabled = d->ck_avatarsChatdlg->isChecked(); // Avatars
+    // LEGOPTS.avatarsChatdlgEnabled = d->ck_avatarsChatdlg->isChecked(); // Avatars
 
     PsiOptions::instance()->setOption("options.ui.look.font.contactlist", d->le_fRoster->fontName());
     PsiOptions::instance()->setOption("options.ui.look.font.message", d->le_fMessage->fontName());
@@ -299,7 +278,8 @@ void OptionsTabAppearanceGeneral::applyOptions()
     ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
     while (i != colorWidgetsMap.constEnd()) {
         PsiOptions::instance()->setOption("options.ui.look.colors." + i.value().second,
-                                          i.key()->isChecked()? getColor(static_cast<QToolButton*>(i.value().first)) : QColor());
+                                          i.key()->isChecked() ? getColor(static_cast<QToolButton *>(i.value().first))
+                                                               : QColor());
         ++i;
     }
 }
@@ -312,11 +292,11 @@ static void restoreColor(QToolButton *button, QColor c)
 
 void OptionsTabAppearanceGeneral::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptAppearanceUI *d = static_cast<OptAppearanceUI *>(w);
-    //d->ck_avatarsChatdlg->setChecked( LEGOPTS.avatarsChatdlgEnabled ); // Avatars
+    // d->ck_avatarsChatdlg->setChecked( LEGOPTS.avatarsChatdlgEnabled ); // Avatars
 
     d->le_fRoster->setFont(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());
     d->le_fMessage->setFont(PsiOptions::instance()->getOption("options.ui.look.font.message").toString());
@@ -326,43 +306,41 @@ void OptionsTabAppearanceGeneral::restoreOptions()
     ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
     while (i != colorWidgetsMap.constEnd()) {
         QColor color = ColorOpt::instance()->color("options.ui.look.colors." + i.value().second);
-        QColor realColor = PsiOptions::instance()->getOption("options.ui.look.colors." + i.value().second).value<QColor>();
+        QColor realColor
+            = PsiOptions::instance()->getOption("options.ui.look.colors." + i.value().second).value<QColor>();
         i.key()->setChecked(realColor.isValid());
-        restoreColor(static_cast<QToolButton*>(i.value().first), color);
+        restoreColor(static_cast<QToolButton *>(i.value().first), color);
         ++i;
     }
 }
 
-void OptionsTabAppearanceGeneral::setData(PsiCon *, QWidget *parentDialog)
-{
-    parentWidget = parentDialog;
-}
+void OptionsTabAppearanceGeneral::setData(PsiCon *, QWidget *parentDialog) { parentWidget = parentDialog; }
 
-void OptionsTabAppearanceGeneral::chooseFont(QAbstractButton* button)
+void OptionsTabAppearanceGeneral::chooseFont(QAbstractButton *button)
 {
-    bool ok;
+    bool  ok;
     QFont font;
-    int x = (bg_font->buttons()).indexOf(button);
-    font.fromString( le_font[x]->fontName() );
+    int   x = (bg_font->buttons()).indexOf(button);
+    font.fromString(le_font[x]->fontName());
 
     // ensure we don't use the new native font dialog on mac with Qt 4.5,
     //   since it was broken last we checked (qt task #252000)
     QString fnt = QFontDialog::getFont(&ok, font, parentWidget, QString(), QFontDialog::DontUseNativeDialog).toString();
     le_font[x]->setFont(fnt);
 
-    if(ok)
+    if (ok)
         emit dataChanged();
 }
 
-void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton* button)
+void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton *button)
 {
     QColor c;
-    //int x = (bg_color->buttons()).indexOf(button);
+    // int x = (bg_color->buttons()).indexOf(button);
 
     c = getColor(button);
 
     c = QColorDialog::getColor(c, parentWidget);
-    if(c.isValid()) {
+    if (c.isValid()) {
         button->setProperty("psi_color", c);
         //((QPushButton*) bg_color->buttons()[x])->setIcon(name2color(o->color[x].name()));
         button->setIcon(color2pixmap(c));
@@ -373,15 +351,14 @@ void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton* button)
 
 void OptionsTabAppearanceGeneral::colorCheckBoxClicked(int state)
 {
-    QPair<QAbstractButton*,QString> data = colorWidgetsMap[static_cast<QCheckBox*>(sender())];
+    QPair<QAbstractButton *, QString> data = colorWidgetsMap[static_cast<QCheckBox *>(sender())];
     if (state) {
         data.first->setDisabled(false);
-        restoreColor(static_cast<QToolButton*>(data.first), ColorOpt::instance()->color("options.ui.look.colors." + data.second));
-    }
-    else {
-        //data.first->setDisabled(true); // TODO disable color changing
-        QPalette::ColorRole role = ColorOpt::instance()->colorRole(
-                    "options.ui.look.colors." + data.second);
+        restoreColor(static_cast<QToolButton *>(data.first),
+                     ColorOpt::instance()->color("options.ui.look.colors." + data.second));
+    } else {
+        // data.first->setDisabled(true); // TODO disable color changing
+        QPalette::ColorRole role = ColorOpt::instance()->colorRole("options.ui.look.colors." + data.second);
         data.first->setIcon(color2pixmap(QApplication::palette().color(role)));
     }
 }

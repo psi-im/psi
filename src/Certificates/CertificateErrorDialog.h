@@ -10,23 +10,22 @@
 #include <QString>
 #include <QtCrypto>
 
-class CertificateErrorDialog : public QDialog
-{
+class CertificateErrorDialog : public QDialog {
     Q_OBJECT
 public:
-        CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert,
-                               int result, QCA::Validity validity, const QString &domainOverride,
-                               QString &tlsOverrideDomain, QByteArray &tlsOverrideCert, QWidget *parent=nullptr);
-        ~CertificateErrorDialog();
+    CertificateErrorDialog(const QString &title, const QString &host, const QCA::Certificate &cert, int result,
+                           QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain,
+                           QByteArray &tlsOverrideCert, QWidget *parent = nullptr);
+    ~CertificateErrorDialog();
 
 private:
-        QCA::Certificate certificate_;
-        int result_;
-        QCA::Validity validity_;
-        QString &tlsOverrideDomain_;
-        QByteArray &tlsOverrideCert_;
-        QString domainOverride_;
-        QString host_;
+    QCA::Certificate certificate_;
+    int              result_;
+    QCA::Validity    validity_;
+    QString &        tlsOverrideDomain_;
+    QByteArray &     tlsOverrideCert_;
+    QString          domainOverride_;
+    QString          host_;
 };
 
 #endif // CERTIFICATEERRORDIALOG_H

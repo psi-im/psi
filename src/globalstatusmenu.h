@@ -11,8 +11,7 @@ private:
     void addReconnect();
 
 public:
-    GlobalStatusMenu(QWidget* parent, PsiCon* _psi)
-        : StatusMenu(parent, _psi) { };
+    GlobalStatusMenu(QWidget *parent, PsiCon *_psi) : StatusMenu(parent, _psi){};
 
     void fill();
 

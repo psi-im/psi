@@ -28,8 +28,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-PassDialog::PassDialog(const QString& jid, QWidget *parent)
-    : QDialog(parent)
+PassDialog::PassDialog(const QString &jid, QWidget *parent) : QDialog(parent)
 {
     setWindowTitle(tr("Wrong Account Password"));
 
@@ -60,17 +59,8 @@ PassDialog::PassDialog(const QString& jid, QWidget *parent)
     connect(pb_ok, SIGNAL(clicked()), this, SLOT(accept()));
 }
 
-bool PassDialog::savePassword() const
-{
-    return cb_savePassword->isChecked();
-}
+bool PassDialog::savePassword() const { return cb_savePassword->isChecked(); }
 
-void PassDialog::setSavePassword(bool save)
-{
-    cb_savePassword->setChecked(save);
-}
+void PassDialog::setSavePassword(bool save) { cb_savePassword->setChecked(save); }
 
-QString PassDialog::password() const
-{
-    return le_password->text();
-}
+QString PassDialog::password() const { return le_password->text(); }

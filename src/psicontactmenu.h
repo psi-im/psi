@@ -24,15 +24,14 @@
 
 class PsiContact;
 
-class PsiContactMenu : public ContactListItemMenu
-{
+class PsiContactMenu : public ContactListItemMenu {
     Q_OBJECT
 public:
-    PsiContactMenu(PsiContact* contact, ContactListModel* model);
+    PsiContactMenu(PsiContact *contact, ContactListModel *model);
     ~PsiContactMenu();
 
     // reimplemented
-    virtual QList<QAction*> availableActions() const;
+    virtual QList<QAction *> availableActions() const;
 
 signals:
     void removeSelection();
@@ -41,7 +40,7 @@ signals:
 private:
     class Private;
     friend class Private;
-    Private* d;
+    Private *d;
 };
 
 #endif // PSICONTACTMENU_H

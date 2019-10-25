@@ -26,16 +26,15 @@
 class CColor;
 class CPanel;
 
-class BusyWidget : public QWidget
-{
+class BusyWidget : public QWidget {
     Q_OBJECT
-    Q_PROPERTY( bool active READ isActive WRITE setActive )
+    Q_PROPERTY(bool active READ isActive WRITE setActive)
 
-    Q_OVERRIDE( QSize minimumSize DESIGNABLE false SCRIPTABLE false )
-    Q_OVERRIDE( QSize maximumSize DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE(QSize minimumSize DESIGNABLE false SCRIPTABLE false)
+    Q_OVERRIDE(QSize maximumSize DESIGNABLE false SCRIPTABLE false)
 
 public:
-    BusyWidget(QWidget *parent=nullptr);
+    BusyWidget(QWidget *parent = nullptr);
     ~BusyWidget();
 
     bool isActive() const;
@@ -57,6 +56,7 @@ private slots:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;

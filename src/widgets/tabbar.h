@@ -21,8 +21,7 @@
 
 #include <QTabBar>
 
-class TabBar : public QTabBar
-{
+class TabBar : public QTabBar {
     Q_OBJECT
 public:
     explicit TabBar(QWidget *parent = nullptr);
@@ -41,20 +40,20 @@ public:
     bool currentIndexAlwaysAtBottom() const;
 
     // reimplemented
-    QSize minimumSizeHint() const;
-    QSize sizeHint() const;
-    QSize tabSizeHint(int index) const;
-    void setTabsClosable(bool b);
-    bool tabsClosable() const;
-    void setCurrentIndex(int index);
-    void setTabText(int index, const QString &text);
-    void setTabTextColor(int index, const QColor &color);
-    void setTabIcon(int index, const QIcon &icon);
-    QRect tabRect(int index) const;
+    QSize    minimumSizeHint() const;
+    QSize    sizeHint() const;
+    QSize    tabSizeHint(int index) const;
+    void     setTabsClosable(bool b);
+    bool     tabsClosable() const;
+    void     setCurrentIndex(int index);
+    void     setTabText(int index, const QString &text);
+    void     setTabTextColor(int index, const QColor &color);
+    void     setTabIcon(int index, const QIcon &icon);
+    QRect    tabRect(int index) const;
     QWidget *tabButton(int index, ButtonPosition position) const;
-    int tabAt(const QPoint &position) const;
-    bool eventFilter(QObject *watched, QEvent *event);
-    void setUpdateEnabled(bool b);
+    int      tabAt(const QPoint &position) const;
+    bool     eventFilter(QObject *watched, QEvent *event);
+    void     setUpdateEnabled(bool b);
 
 protected:
     // reimplemented

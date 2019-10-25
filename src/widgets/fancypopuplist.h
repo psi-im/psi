@@ -25,31 +25,28 @@
 #include <QList>
 #include <QObject>
 
-class FancyPopupList : public QObject, public QList<FancyPopup *>
-{
+class FancyPopupList : public QObject, public QList<FancyPopup *> {
     Q_OBJECT
 
 public:
-    FancyPopupList()
-    {
-    }
+    FancyPopupList() {}
 
     ~FancyPopupList()
     {
-        while ( !isEmpty() )
+        while (!isEmpty())
             delete takeFirst();
     }
 
     FancyPopup *last()
     {
-        if ( !count() )
+        if (!count())
             return 0;
         return QList<FancyPopup *>::first();
     }
 
     void prepend(const FancyPopup *d)
     {
-        if ( isEmpty() )
+        if (isEmpty())
             emit started();
 
         connect(d, SIGNAL(destroyed(QObject *)), SLOT(popupDestroyed(QObject *)));
@@ -65,7 +62,7 @@ private slots:
     {
         removeAll((FancyPopup *)p);
 
-        if ( isEmpty() )
+        if (isEmpty())
             emit finished();
     }
 };

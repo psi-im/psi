@@ -32,54 +32,45 @@ bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
     return true;
 }
 
-CocoaTrayClick * CocoaTrayClick::instance()
+CocoaTrayClick *CocoaTrayClick::instance()
 {
-    if(!instance_)
+    if (!instance_)
         instance_ = new CocoaTrayClick();
 
     return instance_;
 }
 
-CocoaTrayClick::CocoaTrayClick()
-    : QObject(qApp)
+CocoaTrayClick::CocoaTrayClick() : QObject(qApp)
 {
-    Class cls = objc_getClass("NSApplication");
-    objc_object *appInst = objc_msgSend((objc_object*)cls, sel_registerName("sharedApplication"));
+    Class        cls     = objc_getClass("NSApplication");
+    objc_object *appInst = objc_msgSend((objc_object *)cls, sel_registerName("sharedApplication"));
 
-    if(appInst != NULL) {
-        objc_object* delegate = objc_msgSend(appInst, sel_registerName("delegate"));
-        Class delClass = (Class)objc_msgSend(delegate,  sel_registerName("class"));
-        SEL shouldHandle = sel_registerName("applicationShouldHandleReopen:hasVisibleWindows:");
+    if (appInst != NULL) {
+        objc_object *delegate     = objc_msgSend(appInst, sel_registerName("delegate"));
+        Class        delClass     = (Class)objc_msgSend(delegate, sel_registerName("class"));
+        SEL          shouldHandle = sel_registerName("applicationShouldHandleReopen:hasVisibleWindows:");
         if (class_getInstanceMethod(delClass, shouldHandle)) {
             if (class_replaceMethod(delClass, shouldHandle, (IMP)dockClickHandler, "B@:")) {
 #ifdef DEBUG_OUTPUT
                 qDebug() << "Registered dock click handler (replaced original method)";
 #endif
-            }
-            else {
+            } else {
                 qWarning() << "Failed to replace method for dock click handler";
             }
-        }
-        else {
-            if (class_addMethod(delClass, shouldHandle, (IMP)dockClickHandler,"B@:")) {
+        } else {
+            if (class_addMethod(delClass, shouldHandle, (IMP)dockClickHandler, "B@:")) {
 #ifdef DEBUG_OUTPUT
                 qDebug() << "Registered dock click handler";
 #endif
-            }
-            else {
+            } else {
                 qWarning() << "Failed to register dock click handler";
             }
         }
     }
 }
 
-CocoaTrayClick::~CocoaTrayClick()
-{
-}
+CocoaTrayClick::~CocoaTrayClick() {}
 
-void CocoaTrayClick::emitTrayClicked()
-{
-    emit trayClicked();
-}
+void CocoaTrayClick::emitTrayClicked() { emit trayClicked(); }
 
-CocoaTrayClick* CocoaTrayClick::instance_ = NULL;
+CocoaTrayClick *CocoaTrayClick::instance_ = NULL;

@@ -38,35 +38,30 @@
 #include <QVariant>
 
 #ifndef WIDGET_PLUGIN
-#  include "iconset.h"
-#  include "qite.h"
-#  include "textutil.h"
+#include "iconset.h"
+#include "qite.h"
+#include "textutil.h"
 #else
-    class Iconset;
-    class PsiIcon;
+class Iconset;
+class PsiIcon;
 #endif
 
-static const int IconFormatType = QTextFormat::UserObject;
-static const int MarkerFormatType = QTextFormat::UserObject + 1;
+static const int   IconFormatType   = QTextFormat::UserObject;
+static const int   MarkerFormatType = QTextFormat::UserObject + 1;
 static QStringList allowedImageDirs;
 
 //----------------------------------------------------------------------------
 // TextIconFormat
 //----------------------------------------------------------------------------
 
-class TextIconFormat : public QTextCharFormat
-{
+class TextIconFormat : public QTextCharFormat {
 public:
     TextIconFormat(const QString &iconName, const QString &text);
 
-    enum Property {
-        IconName = QTextFormat::UserProperty + 1,
-        IconText = QTextFormat::UserProperty + 2
-    };
+    enum Property { IconName = QTextFormat::UserProperty + 1, IconText = QTextFormat::UserProperty + 2 };
 };
 
-TextIconFormat::TextIconFormat(const QString &iconName, const QString &text)
-    : QTextCharFormat()
+TextIconFormat::TextIconFormat(const QString &iconName, const QString &text) : QTextCharFormat()
 {
     Q_UNUSED(text);
 
@@ -83,21 +78,18 @@ TextIconFormat::TextIconFormat(const QString &iconName, const QString &text)
 
 #ifndef WIDGET_PLUGIN
 
-class TextIconHandler : public QObject, public QTextObjectInterface
-{
+class TextIconHandler : public QObject, public QTextObjectInterface {
     Q_OBJECT
     Q_INTERFACES(QTextObjectInterface)
 public:
     TextIconHandler(QObject *parent = nullptr);
 
     virtual QSizeF intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format);
-    virtual void drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format);
+    virtual void   drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument,
+                              const QTextFormat &format);
 };
 
-TextIconHandler::TextIconHandler(QObject *parent)
-    : QObject(parent)
-{
-}
+TextIconHandler::TextIconHandler(QObject *parent) : QObject(parent) {}
 
 QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format)
 {
@@ -108,12 +100,13 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     return IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName)).size();
 }
 
-void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument, const QTextFormat &format)
+void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument,
+                                 const QTextFormat &format)
 {
     Q_UNUSED(doc);
     Q_UNUSED(posInDocument);
     const QTextCharFormat charFormat = format.toCharFormat();
-    const QPixmap pixmap = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName));
+    const QPixmap         pixmap     = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName));
 
     painter->drawPixmap(rect, pixmap, pixmap.rect());
 }
@@ -123,18 +116,14 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
 // TextMarkerFormat
 //----------------------------------------------------------------------------
 
-class TextMarkerFormat : public QTextCharFormat
-{
+class TextMarkerFormat : public QTextCharFormat {
 public:
     TextMarkerFormat(const QString &id);
 
-    enum Property {
-        MarkerId = QTextFormat::UserProperty + 3
-    };
+    enum Property { MarkerId = QTextFormat::UserProperty + 3 };
 };
 
-TextMarkerFormat::TextMarkerFormat(const QString &id)
-    : QTextCharFormat()
+TextMarkerFormat::TextMarkerFormat(const QString &id) : QTextCharFormat()
 {
     setObjectType(MarkerFormatType);
     QTextFormat::setProperty(MarkerId, id);
@@ -164,7 +153,8 @@ void PsiRichText::install(QTextDocument *doc)
 /**
  * Make sure that QTextDocument has correctly layouted its text.
  */
-void PsiRichText::ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align, Qt::LayoutDirection layoutDirection, bool textWordWrap)
+void PsiRichText::ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align,
+                                     Qt::LayoutDirection layoutDirection, bool textWordWrap)
 {
     // from QLabelPrivate::ensureTextLayouted
 
@@ -240,14 +230,16 @@ static QStringRef preserveOriginalObjectReplacementCharacters(const QStringRef &
  * adds appropriate format to the \param queue. Returns processed
  * \param text.
  */
-static QString convertIconsToObjectReplacementCharacters(const QStringRef &text, TextCharFormatQueue *queue, const PsiRichText::ParsersMap &parsers)
+static QString convertIconsToObjectReplacementCharacters(const QStringRef &text, TextCharFormatQueue *queue,
+                                                         const PsiRichText::ParsersMap &parsers)
 {
-    QString result;
+    QString    result;
     QStringRef work(text);
 
     int start = -1;
-    forever {
-        start = work.indexOf("<", start+1);
+    forever
+    {
+        start = work.indexOf("<", start + 1);
         if (start == -1)
             break;
         if (work.mid(start + 1, 4) == "icon") {
@@ -260,13 +252,13 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
             int end = work.indexOf(">", start);
             Q_ASSERT(end != -1);
 
-            QStringRef fragment = work.mid(start, end - start);
-            auto matchName = rxName.match(fragment);
+            QStringRef fragment  = work.mid(start, end - start);
+            auto       matchName = rxName.match(fragment);
             if (matchName.hasMatch()) {
 #ifndef WIDGET_PLUGIN
                 QString iconName = TextUtil::unescape(matchName.capturedTexts()[1]);
                 QString iconText;
-                auto matchText = rxText.match(fragment);
+                auto    matchText = rxText.match(fragment);
                 if (matchText.hasMatch()) {
                     iconText = TextUtil::unescape(matchText.capturedTexts()[1]);
                 }
@@ -278,25 +270,26 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
                 result += QChar::ObjectReplacementCharacter;
             }
 
-            work = work.mid(end + 1);
+            work  = work.mid(end + 1);
             start = -1;
         } else {
             auto it = parsers.constBegin();
             for (; it != parsers.constEnd(); ++it) {
-                if (work.mid(start + 1, it.key().length()) == it.key()) { // if parsers key matches with html element name
+                if (work.mid(start + 1, it.key().length())
+                    == it.key()) { // if parsers key matches with html element name
                     result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
                     int end = work.indexOf(">", start);
                     Q_ASSERT(end != -1);
 
                     QStringRef fragment = work.mid(start + it.key().length() + 1, end - start - it.key().length() - 1);
-                    auto charFormat = it.value()(fragment);
+                    auto       charFormat = it.value()(fragment);
                     if (charFormat.isValid()) {
                         queue->enqueue(new QTextCharFormat(charFormat));
                         result += QChar::ObjectReplacementCharacter;
                     }
 
-                    work = work.mid(end + 1);
+                    work  = work.mid(end + 1);
                     start = -1;
 
                     break;
@@ -316,7 +309,8 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
 static void applyFormatToIcons(QTextDocument *doc, TextCharFormatQueue *queue, QTextCursor &cursor)
 {
     QTextCursor searchCursor = cursor;
-    forever {
+    forever
+    {
         searchCursor = doc->find(QString(QChar::ObjectReplacementCharacter), searchCursor);
         if (searchCursor.isNull() || queue->isEmpty()) {
             break;
@@ -338,7 +332,8 @@ static void applyFormatToIcons(QTextDocument *doc, TextCharFormatQueue *queue, Q
 /**
  * Groups some related function calls together.
  */
-static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &cursor, const PsiRichText::ParsersMap &parsers)
+static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &cursor,
+                             const PsiRichText::ParsersMap &parsers)
 {
     TextCharFormatQueue queue;
 
@@ -348,11 +343,11 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 
     // prepare images and remove insecure images
     static QRegExp imgRe("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
-    QString replace;
-    for (int pos = 0; (pos = imgRe.indexIn(text, pos)) != -1; ) {
+    QString        replace;
+    for (int pos = 0; (pos = imgRe.indexIn(text, pos)) != -1;) {
         replace.clear();
-        QString imgSrc = imgRe.cap(1).mid(1, imgRe.cap(1).size() - 2);
-        QUrl imgSrcUrl = QUrl::fromEncoded(imgSrc.toLatin1());
+        QString imgSrc    = imgRe.cap(1).mid(1, imgRe.cap(1).size() - 2);
+        QUrl    imgSrcUrl = QUrl::fromEncoded(imgSrc.toLatin1());
         if (imgSrcUrl.isValid()) {
             if (imgSrcUrl.scheme() == "data") {
                 static QRegExp dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
@@ -366,15 +361,13 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                         }
                     }
                 }
-            }
-            else if (imgSrc.startsWith(":/") || (!imgSrcUrl.scheme().isEmpty() && imgSrcUrl.scheme() != "file")) {
+            } else if (imgSrc.startsWith(":/") || (!imgSrcUrl.scheme().isEmpty() && imgSrcUrl.scheme() != "file")) {
                 pos += imgRe.matchedLength();
                 continue;
-            }
-            else {
+            } else {
                 // go here when  scheme in ["", "file"] and its not resource
-                QString path = QFileInfo(imgSrcUrl.scheme() == "file"?
-                               imgSrcUrl.toLocalFile() : imgSrc).absoluteFilePath();
+                QString path
+                    = QFileInfo(imgSrcUrl.scheme() == "file" ? imgSrcUrl.toLocalFile() : imgSrc).absoluteFilePath();
                 bool baseDirFound = false;
                 foreach (const QString &baseDir, allowedImageDirs) {
                     if (path.startsWith(baseDir)) {
@@ -385,8 +378,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                 if (baseDirFound) {
                     if (imgSrcUrl.scheme() == "file") {
                         replace = path;
-                    }
-                    else {
+                    } else {
                         pos += imgRe.matchedLength();
                         continue;
                     }
@@ -395,14 +387,14 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
         }
         if (replace.isEmpty()) {
             text.remove(pos, imgRe.matchedLength());
-        }
-        else {
-            text.replace(imgRe.pos(1)+1, imgSrc.size(), replace);
+        } else {
+            text.replace(imgRe.pos(1) + 1, imgSrc.size(), replace);
             pos += replace.size() + 1;
         }
     }
 
-    cursor.insertFragment(QTextDocumentFragment::fromHtml(convertIconsToObjectReplacementCharacters(QStringRef(&text), &queue, parsers)));
+    cursor.insertFragment(
+        QTextDocumentFragment::fromHtml(convertIconsToObjectReplacementCharacters(QStringRef(&text), &queue, parsers)));
     cursor.setPosition(initialpos);
 
     applyFormatToIcons(doc, &queue, cursor);
@@ -417,7 +409,7 @@ void PsiRichText::setText(QTextDocument *doc, const QString &text, const Parsers
 {
     QFont font = doc->defaultFont();
     doc->clear();
-    QTextCursor cursor(doc);
+    QTextCursor     cursor(doc);
     QTextCharFormat charFormat = cursor.charFormat();
     charFormat.setFont(font);
     cursor.setCharFormat(charFormat);
@@ -467,16 +459,16 @@ void PsiRichText::insertText(QTextDocument *doc, QTextCursor &cursor, const QStr
  */
 QString PsiRichText::convertToPlainText(const QTextDocument *doc)
 {
-    QString obrepl = QString(QChar::ObjectReplacementCharacter);
+    QString                 obrepl = QString(QChar::ObjectReplacementCharacter);
     QQueue<QTextCharFormat> queue;
-    QTextCursor nc = doc->find(obrepl, 0);
-    QTextCursor cursor;
+    QTextCursor             nc = doc->find(obrepl, 0);
+    QTextCursor             cursor;
 
     while (!nc.isNull()) {
         queue.enqueue(nc.charFormat());
 
         cursor = nc;
-        nc = doc->find(obrepl, cursor);
+        nc     = doc->find(obrepl, cursor);
     }
 
     QString raw = doc->toPlainText();
@@ -506,8 +498,8 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
     if (!textEdit || emoticon.isEmpty())
         return;
 
-    QString text = emoticon + ' ';
-    QTextCursor cursor = textEdit->textCursor();
+    QString                text      = emoticon + ' ';
+    QTextCursor            cursor    = textEdit->textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(textEdit, cursor);
 
     cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
@@ -520,10 +512,7 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
     PsiRichText::restoreSelection(textEdit, cursor, selection);
 }
 
-void PsiRichText::setAllowedImageDirs(const QStringList &dirs)
-{
-    allowedImageDirs = dirs;
-}
+void PsiRichText::setAllowedImageDirs(const QStringList &dirs) { allowedImageDirs = dirs; }
 
 void PsiRichText::insertMarker(QTextCursor &cursor, const QString &uniqueId)
 {
@@ -533,12 +522,13 @@ void PsiRichText::insertMarker(QTextCursor &cursor, const QString &uniqueId)
 // returns cursor with selection on marker
 QTextCursor PsiRichText::findMarker(const QTextCursor &cursor, const QString &uniqueId)
 {
-    QString obrepl = QString(QChar::ObjectReplacementCharacter);
-    auto doc = cursor.document();
-    QTextCursor nc = doc->find(obrepl, cursor);
+    QString     obrepl = QString(QChar::ObjectReplacementCharacter);
+    auto        doc    = cursor.document();
+    QTextCursor nc     = doc->find(obrepl, cursor);
 
     while (!nc.isNull()) {
-        if (nc.charFormat().objectType() == MarkerFormatType && nc.charFormat().stringProperty(TextMarkerFormat::MarkerId) == uniqueId) {
+        if (nc.charFormat().objectType() == MarkerFormatType
+            && nc.charFormat().stringProperty(TextMarkerFormat::MarkerId) == uniqueId) {
             break;
         }
         nc = doc->find(obrepl, nc);
@@ -573,10 +563,10 @@ void PsiRichText::restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Psi
 
     if (selection.start != -1 && selection.end != -1) {
         cursor.setPosition(selection.start, QTextCursor::MoveAnchor);
-        cursor.setPosition(selection.end,   QTextCursor::KeepAnchor);
+        cursor.setPosition(selection.end, QTextCursor::KeepAnchor);
     }
 }
 
 #ifndef WIDGET_PLUGIN
-#    include "psirichtext.moc"
+#include "psirichtext.moc"
 #endif

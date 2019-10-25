@@ -17,8 +17,7 @@
 #include <QRadioButton>
 #include <QWhatsThis>
 
-class OptSoundUI : public QWidget, public Ui::OptSound
-{
+class OptSoundUI : public QWidget, public Ui::OptSound {
 public:
     OptSoundUI() : QWidget() { setupUi(this); }
 };
@@ -27,28 +26,30 @@ public:
 // OptionsTabSound
 //----------------------------------------------------------------------------
 
-OptionsTabSound::OptionsTabSound(QObject *parent)
-: OptionsTab(parent, "sound", "", tr("Sound"), tr("Configure how Psi sounds"), "psi/playSounds")
+OptionsTabSound::OptionsTabSound(QObject *parent) :
+    OptionsTab(parent, "sound", "", tr("Sound"), tr("Configure how Psi sounds"), "psi/playSounds")
 {
 }
 
 OptionsTabSound::~OptionsTabSound()
 {
-    if ( bg_se )
+    if (bg_se)
         delete bg_se;
-    if ( bg_sePlay )
+    if (bg_sePlay)
         delete bg_sePlay;
 }
 
 QWidget *OptionsTabSound::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new OptSoundUI();
+    w             = new OptSoundUI();
     OptSoundUI *d = static_cast<OptSoundUI *>(w);
 
-    sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeGroupChat << d->le_oeHeadline << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT << d->le_oeFTComplete;
+    sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeGroupChat << d->le_oeHeadline
+            << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT
+            << d->le_oeFTComplete;
 
     bg_se = new QButtonGroup;
     bg_se->addButton(d->tb_seMessage);
@@ -73,7 +74,7 @@ QWidget *OptionsTabSound::widget()
     modify_buttons_[d->tb_seIncomingFT] = d->le_oeIncomingFT;
     bg_se->addButton(d->tb_seFTComplete);
     modify_buttons_[d->tb_seFTComplete] = d->le_oeFTComplete;
-    connect(bg_se, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseSoundEvent(QAbstractButton*)));
+    connect(bg_se, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseSoundEvent(QAbstractButton *)));
 
     bg_sePlay = new QButtonGroup;
     bg_sePlay->addButton(d->tb_seMessagePlay);
@@ -98,7 +99,7 @@ QWidget *OptionsTabSound::widget()
     play_buttons_[d->tb_seIncomingFTPlay] = d->le_oeIncomingFT;
     bg_sePlay->addButton(d->tb_seFTCompletePlay);
     play_buttons_[d->tb_seFTCompletePlay] = d->le_oeFTComplete;
-    connect(bg_sePlay, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(previewSoundEvent(QAbstractButton*)));
+    connect(bg_sePlay, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(previewSoundEvent(QAbstractButton *)));
 
     connect(d->pb_soundReset, SIGNAL(clicked()), SLOT(soundReset()));
 
@@ -106,20 +107,18 @@ QWidget *OptionsTabSound::widget()
     int n;
     for (n = 0; n < 11; n++) {
         IconToolButton *tb = static_cast<IconToolButton *>(bg_se->buttons()[n]);
-        tb->setPsiIcon( IconsetFactory::iconPtr("psi/browse") );
+        tb->setPsiIcon(IconsetFactory::iconPtr("psi/browse"));
         tb = static_cast<IconToolButton *>(bg_sePlay->buttons()[n]);
-        tb->setPsiIcon( IconsetFactory::iconPtr("psi/play") );
+        tb->setPsiIcon(IconsetFactory::iconPtr("psi/play"));
     }
 
     // TODO: add QWhatsThis for all widgets
 
-    d->le_player->setWhatsThis(
-        tr("If your system supports multiple sound players, you may"
-        " choose your preferred sound player application here."));
+    d->le_player->setWhatsThis(tr("If your system supports multiple sound players, you may"
+                                  " choose your preferred sound player application here."));
     d->ck_awaySound->setWhatsThis(
         tr("Enable this option if you wish to hear sound alerts when your status is \"away\" or \"extended away\"."));
-    d->ck_gcSound->setWhatsThis(
-        tr("Play sounds for all events in groupchat, not only for mentioning of your nick."));
+    d->ck_gcSound->setWhatsThis(tr("Play sounds for all events in groupchat, not only for mentioning of your nick."));
 
 #if defined(Q_OS_WIN)
     d->lb_player->hide();
@@ -134,13 +133,15 @@ QWidget *OptionsTabSound::widget()
 
 void OptionsTabSound::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptSoundUI *d = static_cast<OptSoundUI *>(w);
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.unix-sound-player", d->le_player->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.silent-while-away", !d->ck_awaySound->isChecked());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.notify-every-muc-message", d->ck_gcSound->isChecked());
+    PsiOptions::instance()->setOption("options.ui.notifications.sounds.silent-while-away",
+                                      !d->ck_awaySound->isChecked());
+    PsiOptions::instance()->setOption("options.ui.notifications.sounds.notify-every-muc-message",
+                                      d->ck_gcSound->isChecked());
 
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-message", d->le_oeMessage->text());
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.new-chat", d->le_oeChat1->text());
@@ -151,14 +152,15 @@ void OptionsTabSound::applyOptions()
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.contact-online", d->le_oeOnline->text());
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.contact-offline", d->le_oeOffline->text());
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.outgoing-chat", d->le_oeSend->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-file-transfer", d->le_oeIncomingFT->text());
-    PsiOptions::instance()->setOption("options.ui.notifications.sounds.completed-file-transfer", d->le_oeFTComplete->text());
-
+    PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-file-transfer",
+                                      d->le_oeIncomingFT->text());
+    PsiOptions::instance()->setOption("options.ui.notifications.sounds.completed-file-transfer",
+                                      d->le_oeFTComplete->text());
 }
 
 void OptionsTabSound::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptSoundUI *d = static_cast<OptSoundUI *>(w);
@@ -168,45 +170,50 @@ void OptionsTabSound::restoreOptions()
 #elif defined(Q_OS_MAC)
     d->le_player->setText(tr("Mac OS Sound"));
 #else
-    d->le_player->setText( PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString() );
+    d->le_player->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString());
 #endif
 
-    d->ck_awaySound->setChecked( !PsiOptions::instance()->getOption("options.ui.notifications.sounds.silent-while-away").toBool() );
-    d->ck_gcSound->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() );
+    d->ck_awaySound->setChecked(
+        !PsiOptions::instance()->getOption("options.ui.notifications.sounds.silent-while-away").toBool());
+    d->ck_gcSound->setChecked(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool());
 
-    d->le_oeMessage->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-message").toString());
+    d->le_oeMessage->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-message").toString());
     d->le_oeChat1->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.new-chat").toString());
-    d->le_oeChat2->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString());
-    d->le_oeGroupChat->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.groupchat-message").toString());
-    d->le_oeSystem->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
-    d->le_oeHeadline->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-headline").toString());
-    d->le_oeOnline->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-online").toString());
-    d->le_oeOffline->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-offline").toString());
-    d->le_oeSend->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.outgoing-chat").toString());
-    d->le_oeIncomingFT->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
-    d->le_oeFTComplete->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.completed-file-transfer").toString());
+    d->le_oeChat2->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString());
+    d->le_oeGroupChat->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.groupchat-message").toString());
+    d->le_oeSystem->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
+    d->le_oeHeadline->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-headline").toString());
+    d->le_oeOnline->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-online").toString());
+    d->le_oeOffline->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-offline").toString());
+    d->le_oeSend->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.outgoing-chat").toString());
+    d->le_oeIncomingFT->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
+    d->le_oeFTComplete->setText(
+        PsiOptions::instance()->getOption("options.ui.notifications.sounds.completed-file-transfer").toString());
 }
 
-void OptionsTabSound::setData(PsiCon *, QWidget *p)
-{
-    parentWidget = p;
-}
+void OptionsTabSound::setData(PsiCon *, QWidget *p) { parentWidget = p; }
 
-void OptionsTabSound::chooseSoundEvent(QAbstractButton* b)
+void OptionsTabSound::chooseSoundEvent(QAbstractButton *b)
 {
-    QString str = FileUtil::getOpenFileName(parentWidget,
-                                            tr("Choose a sound file"),
-                                            tr("Sound (*.wav)"));
+    QString str = FileUtil::getOpenFileName(parentWidget, tr("Choose a sound file"), tr("Sound (*.wav)"));
     if (!str.isEmpty()) {
         modify_buttons_[b]->setText(str);
         emit dataChanged();
     }
 }
 
-void OptionsTabSound::previewSoundEvent(QAbstractButton* b)
-{
-    soundPlay(play_buttons_[b]->text());
-}
+void OptionsTabSound::previewSoundEvent(QAbstractButton *b) { soundPlay(play_buttons_[b]->text()); }
 
 void OptionsTabSound::soundReset()
 {

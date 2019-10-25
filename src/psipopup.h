@@ -29,27 +29,28 @@
 
 class FancyPopup;
 
-class PsiPopup : public QObject, public PsiPopupInterface
-{
+class PsiPopup : public QObject, public PsiPopupInterface {
     Q_OBJECT
 
 public:
-    PsiPopup(QObject* parent = nullptr);
+    PsiPopup(QObject *parent = nullptr);
     ~PsiPopup();
 
-    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = nullptr, const PsiEvent::Ptr& = PsiEvent::Ptr());
-    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
-           const QPixmap* avatar, const PsiIcon* icon, const QString& text);
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const Resource &r,
+                       const UserListItem * = nullptr, const PsiEvent::Ptr & = PsiEvent::Ptr());
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon,
+                       const QString &titleText, const QPixmap *avatar, const PsiIcon *icon, const QString &text);
 
     static void deleteAll();
 
 private:
-    void setData(const Jid &, const Resource &, const UserListItem * = nullptr, const PsiEvent::Ptr &event = PsiEvent::Ptr());
-    void setData(const QPixmap *avatar, const PsiIcon *icon, const QString& text);
-    void setJid(const Jid &j);
-    QString id() const;
+    void        setData(const Jid &, const Resource &, const UserListItem * = nullptr,
+                        const PsiEvent::Ptr &event = PsiEvent::Ptr());
+    void        setData(const QPixmap *avatar, const PsiIcon *icon, const QString &text);
+    void        setJid(const Jid &j);
+    QString     id() const;
     FancyPopup *popup() const;
-    void show();
+    void        show();
 
 private:
     class Private;
@@ -57,16 +58,15 @@ private:
     friend class Private;
 };
 
-class PsiPopupPlugin : public QObject, public PsiPopupPluginInterface
-{
+class PsiPopupPlugin : public QObject, public PsiPopupPluginInterface {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.PsiPopupPluginInterface")
     Q_INTERFACES(PsiPopupPluginInterface)
 
 public:
     virtual ~PsiPopupPlugin() { PsiPopup::deleteAll(); }
-    virtual QString name() const { return "Classic"; }
-    virtual PsiPopupInterface* popup(QObject* p) { return new PsiPopup(p); }
+    virtual QString            name() const { return "Classic"; }
+    virtual PsiPopupInterface *popup(QObject *p) { return new PsiPopup(p); }
 };
 
 #endif // PSIPOPUP_H

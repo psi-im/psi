@@ -30,30 +30,30 @@ class QByteArray;
 class QString;
 
 namespace QCA {
-    class TLS;
+class TLS;
 }
 
 namespace XMPP {
-    class AdvancedConnector;
-    class Client;
-    class ClientStream;
-    class QCATLSHandler;
+class AdvancedConnector;
+class Client;
+class ClientStream;
+class QCATLSHandler;
 }
 
-class MiniClient : public QObject
-{
+class MiniClient : public QObject {
     Q_OBJECT
 public:
-    MiniClient(QObject *parent=nullptr);
+    MiniClient(QObject *parent = nullptr);
     ~MiniClient();
 
-    void reset();
-    void connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool legacy_ssl, bool force_ssl, const QString &host, int port, QString proxy, QString *pass = nullptr);
-    void close();
+    void          reset();
+    void          connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool legacy_ssl, bool force_ssl,
+                                  const QString &host, int port, QString proxy, QString *pass = nullptr);
+    void          close();
     XMPP::Client *client();
-    void setErrorOnDisconnect(bool);
+    void          setErrorOnDisconnect(bool);
 
-    QString tlsOverrideDomain;
+    QString    tlsOverrideDomain;
     QByteArray tlsOverrideCert;
 signals:
     void handshaken();
@@ -74,13 +74,13 @@ private slots:
 
 private:
     XMPP::AdvancedConnector *conn;
-    XMPP::ClientStream *stream;
-    QCA::TLS *tls;
-    XMPP::QCATLSHandler *tlsHandler;
-    XMPP::Client *_client;
-    XMPP::Jid j;
-    QString pass;
-    bool auth, force_ssl, error_disconnect;
+    XMPP::ClientStream *     stream;
+    QCA::TLS *               tls;
+    XMPP::QCATLSHandler *    tlsHandler;
+    XMPP::Client *           _client;
+    XMPP::Jid                j;
+    QString                  pass;
+    bool                     auth, force_ssl, error_disconnect;
 };
 
 #endif // MINICLIENT_H

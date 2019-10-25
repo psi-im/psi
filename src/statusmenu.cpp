@@ -32,8 +32,7 @@
  * Helper class that displays available statuses using QMenu.
  */
 
-StatusMenu::StatusMenu(QWidget* parent, PsiCon* _psi )
-    : QMenu(parent), psi(_psi)
+StatusMenu::StatusMenu(QWidget *parent, PsiCon *_psi) : QMenu(parent), psi(_psi)
 {
     const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
     if (!css.isEmpty()) {
@@ -45,7 +44,7 @@ StatusMenu::StatusMenu(QWidget* parent, PsiCon* _psi )
 
 void StatusMenu::fill()
 {
-    PsiOptions* o = PsiOptions::instance();
+    PsiOptions *o = PsiOptions::instance();
 
     addStatus(XMPP::Status::Online);
     if (!o->getOption("options.status.show-only-online-offline").toBool()) {
@@ -66,7 +65,7 @@ void StatusMenu::fill()
     QString statusInMenus = o->getOption("options.status.presets-in-status-menus").toString();
     if (statusInMenus == "submenu") {
         addSeparator();
-        IconActionGroup* submenu = new IconActionGroup(this);
+        IconActionGroup *submenu = new IconActionGroup(this);
         submenu->setText(tr("Presets"));
         submenu->setPsiIcon("psi/action_templates");
         const QString css = o->getOption("options.ui.contactlist.css").toString();
@@ -75,12 +74,11 @@ void StatusMenu::fill()
         }
         addPresets(submenu);
         submenu->popup()->installEventFilter(this);
-    }
-    else if (statusInMenus == "yes") {
+    } else if (statusInMenus == "yes") {
         addPresets();
     }
 
-    bool showChoose = o->getOption("options.status.show-choose").toBool();
+    bool showChoose    = o->getOption("options.status.show-choose").toBool();
     bool showReconnect = o->getOption("options.status.show-reconnect").toBool();
     if (showChoose || showReconnect) {
         if (showChoose) {
@@ -99,21 +97,22 @@ void StatusMenu::clear()
     QMenu::clear();
 }
 
-void StatusMenu::addPresets(IconActionGroup* parent)
+void StatusMenu::addPresets(IconActionGroup *parent)
 {
-    QObject* parentMenu = parent ? parent : static_cast<QObject*>(this);
-    PsiOptions* o = PsiOptions::instance();
-    QVariantList presets = o->mapKeyList("options.status.presets", true);
-    bool showEditPresets = o->getOption("options.status.show-edit-presets").toBool();
+    QObject *    parentMenu      = parent ? parent : static_cast<QObject *>(this);
+    PsiOptions * o               = PsiOptions::instance();
+    QVariantList presets         = o->mapKeyList("options.status.presets", true);
+    bool         showEditPresets = o->getOption("options.status.show-edit-presets").toBool();
     if ((showEditPresets || presets.count() > 0) && !parent)
         this->addSeparator();
     if (presets.count() > 0) {
-        foreach(QVariant name, presets) {
+        foreach (QVariant name, presets) {
             StatusPreset preset;
-            preset.fromOptions(o,name.toString());
+            preset.fromOptions(o, name.toString());
             preset.filterStatus();
 
-            IconAction* action = new IconAction(name.toString().replace("&", "&&"), parentMenu, status2name(preset.status()));
+            IconAction *action
+                = new IconAction(name.toString().replace("&", "&&"), parentMenu, status2name(preset.status()));
             action->setCheckable(true);
             action->setProperty("preset", name);
             action->setProperty("message", preset.message());
@@ -123,56 +122,49 @@ void StatusMenu::addPresets(IconActionGroup* parent)
         }
     }
     if (showEditPresets) {
-        IconAction* action = new IconAction(tr("Edit presets..."), parentMenu, "psi/action_templates_edit");
+        IconAction *action = new IconAction(tr("Edit presets..."), parentMenu, "psi/action_templates_edit");
         connect(action, SIGNAL(triggered()), SLOT(changePresetsActivated()));
     }
 }
 
 void StatusMenu::presetsChanged()
 {
-    if (PsiOptions::instance()->getOption("options.status.presets-in-status-menus").toString() != "no")
-    {
-        //TODO Maybe refresh only presets?...
+    if (PsiOptions::instance()->getOption("options.status.presets-in-status-menus").toString() != "no") {
+        // TODO Maybe refresh only presets?...
         clear();
         fill();
     }
 }
 
-void StatusMenu::statusChanged(const Status& status)
+void StatusMenu::statusChanged(const Status &status)
 {
     bool presetFound = false;
-    foreach(IconAction* action, presetActs)
-    {
-        //Maybe we should compare with priority too
-        int st = static_cast<int>(status.type());
+    foreach (IconAction *action, presetActs) {
+        // Maybe we should compare with priority too
+        int     st      = static_cast<int>(status.type());
         QString message = action->property("message").toString();
-        if (!presetFound && action->property("status").toInt() == st && message == status.status())
-        {
+        if (!presetFound && action->property("status").toInt() == st && message == status.status()) {
             action->setChecked(true);
             presetFound = true;
-        }
-        else
+        } else
             action->setChecked(false);
     }
     bool statusFound = false;
-    foreach(IconAction* action, statusActs)
-    {
-        if (!statusFound && !presetFound && action->property("type").toInt() == static_cast<int>(status.type()))
-        {
+    foreach (IconAction *action, statusActs) {
+        if (!statusFound && !presetFound && action->property("type").toInt() == static_cast<int>(status.type())) {
             action->setChecked(true);
             statusFound = true;
-        }
-        else
+        } else
             action->setChecked(false);
     }
 }
 
 void StatusMenu::presetActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
-    QString name = action->property("preset").toString();
-    PsiOptions* o = PsiOptions::instance();
-    QString base = o->mapLookup("options.status.presets", name);
+    QAction *    action = static_cast<QAction *>(sender());
+    QString      name   = action->property("preset").toString();
+    PsiOptions * o      = PsiOptions::instance();
+    QString      base   = o->mapLookup("options.status.presets", name);
     XMPP::Status status;
     status.setType(o->getOption(base + ".status").toString());
     status.setStatus(o->getOption(base + ".message").toString());
@@ -189,21 +181,18 @@ void StatusMenu::presetActivated()
     emit statusPresetSelected(status, withPriority, true);
 }
 
-void StatusMenu::changePresetsActivated()
-{
-    psi->doStatusPresets();
-}
+void StatusMenu::changePresetsActivated() { psi->doStatusPresets(); }
 
 void StatusMenu::addStatus(XMPP::Status::Type type)
 {
-    IconAction* action = new IconAction(status2txt(type), this, status2name(type));
+    IconAction *action = new IconAction(status2txt(type), this, status2name(type));
     action->setCheckable(true);
     action->setProperty("type", QVariant(type));
     connect(action, SIGNAL(triggered()), SLOT(statusActivated()));
     statusActs.append(action);
 }
 
-XMPP::Status::Type StatusMenu::actionStatus(const QAction* action) const
+XMPP::Status::Type StatusMenu::actionStatus(const QAction *action) const
 {
     Q_ASSERT(action);
     return static_cast<XMPP::Status::Type>(action->property("type").toInt());
@@ -211,31 +200,26 @@ XMPP::Status::Type StatusMenu::actionStatus(const QAction* action) const
 
 void StatusMenu::statusActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
+    QAction *          action = static_cast<QAction *>(sender());
     XMPP::Status::Type status = actionStatus(action);
-    emit statusSelected(status, false);
+    emit               statusSelected(status, false);
 }
 
 bool StatusMenu::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::MouseButtonRelease)
-    {
-        QMouseEvent* e = static_cast<QMouseEvent*>(event); //We sure event is QMouseEvent
-        QMenu* menu = dynamic_cast<QMenu*>(obj); //Event filter can be installed on anything, so do dynamic_cast
-        assert(menu != nullptr); //Dynamic cast on wrong type will return 0
-        QAction* action = menu->actionAt(e->pos());
-        if (action && e->button() == Qt::RightButton)
-        {
-            if (!action->property("type").isNull())
-            {
+    if (event->type() == QEvent::MouseButtonRelease) {
+        QMouseEvent *e = static_cast<QMouseEvent *>(event); // We sure event is QMouseEvent
+        QMenu *      menu = dynamic_cast<QMenu *>(obj); // Event filter can be installed on anything, so do dynamic_cast
+        assert(menu != nullptr);                        // Dynamic cast on wrong type will return 0
+        QAction *action = menu->actionAt(e->pos());
+        if (action && e->button() == Qt::RightButton) {
+            if (!action->property("type").isNull()) {
                 XMPP::Status::Type status = actionStatus(action);
-                emit statusSelected(status, true);
+                emit               statusSelected(status, true);
                 return true;
-            }
-            else if (!action->property("preset").isNull())
-            {
+            } else if (!action->property("preset").isNull()) {
                 QString presetName = action->property("preset").toString();
-                emit statusPresetDialogForced(presetName);
+                emit    statusPresetDialogForced(presetName);
                 return true;
             }
         }

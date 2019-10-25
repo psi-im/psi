@@ -23,25 +23,24 @@
 class QString;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class JIDUtil
-{
+class JIDUtil {
 public:
     static QString defaultDomain();
-    static void setDefaultDomain(QString domain);
+    static void    setDefaultDomain(QString domain);
 
-    static QString accountToString(const XMPP::Jid&, bool withResource);
-    static XMPP::Jid accountFromString(const QString&);
-    static QString toString(const XMPP::Jid&, bool withResource);
-    static XMPP::Jid fromString(const QString&);
-    static QString encode(const QString &jid);
-    static QString decode(const QString &jid);
-    static QString nickOrJid(const QString&, const QString&);
+    static QString   accountToString(const XMPP::Jid &, bool withResource);
+    static XMPP::Jid accountFromString(const QString &);
+    static QString   toString(const XMPP::Jid &, bool withResource);
+    static XMPP::Jid fromString(const QString &);
+    static QString   encode(const QString &jid);
+    static QString   decode(const QString &jid);
+    static QString   nickOrJid(const QString &, const QString &);
 
-    static QString encode822(const QString&);
-    static QString decode822(const QString&);
+    static QString encode822(const QString &);
+    static QString decode822(const QString &);
 };
 
 #endif // JIDUTIL_H

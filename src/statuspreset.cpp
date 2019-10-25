@@ -28,89 +28,59 @@
 // StatusPreset
 //-----------------------------------------------------------------------------
 
-StatusPreset::StatusPreset() :  name_(""), message_(""), status_(XMPP::Status::Away)
+StatusPreset::StatusPreset() : name_(""), message_(""), status_(XMPP::Status::Away) {}
+
+StatusPreset::StatusPreset(QString name, QString message, XMPP::Status::Type status) :
+    name_(name), message_(message), status_(status)
 {
 }
 
-StatusPreset::StatusPreset(QString name, QString message, XMPP::Status::Type status)
-:  name_(name), message_(message), status_(status)
-{
-}
-
-StatusPreset::StatusPreset(QString name, int priority, QString message, XMPP::Status::Type status)
-:  name_(name), message_(message), status_(status)
+StatusPreset::StatusPreset(QString name, int priority, QString message, XMPP::Status::Type status) :
+    name_(name), message_(message), status_(status)
 {
     setPriority(priority);
 }
 
-StatusPreset::StatusPreset(const QDomElement& el)
-:  name_(""), message_(""), status_(XMPP::Status::Away)
+StatusPreset::StatusPreset(const QDomElement &el) : name_(""), message_(""), status_(XMPP::Status::Away)
 {
     fromXml(el);
 }
 
-QString StatusPreset::name() const
-{
-    return name_;
-}
+QString StatusPreset::name() const { return name_; }
 
-void StatusPreset::setName(const QString& name)
-{
-    name_ = name;
-}
+void StatusPreset::setName(const QString &name) { name_ = name; }
 
-QString StatusPreset::message() const
-{
-    return message_;
-}
+QString StatusPreset::message() const { return message_; }
 
-void StatusPreset::setMessage(const QString& message)
-{
-    message_ = message;
-}
+void StatusPreset::setMessage(const QString &message) { message_ = message; }
 
-XMPP::Status::Type StatusPreset::status() const
-{
-    return status_;
-}
+XMPP::Status::Type StatusPreset::status() const { return status_; }
 
-void StatusPreset::setStatus(XMPP::Status::Type status)
-{
-    status_ = status;
-}
+void StatusPreset::setStatus(XMPP::Status::Type status) { status_ = status; }
 
-Maybe<int> StatusPreset::priority() const
-{
-    return priority_;
-}
+Maybe<int> StatusPreset::priority() const { return priority_; }
 
-void StatusPreset::setPriority(int priority)
-{
-    priority_ = Maybe<int>(priority);
-}
+void StatusPreset::setPriority(int priority) { priority_ = Maybe<int>(priority); }
 
-void StatusPreset::setPriority(const QString& priority)
+void StatusPreset::setPriority(const QString &priority)
 {
     bool ok = false;
-    int p = priority.toInt(&ok);
+    int  p  = priority.toInt(&ok);
     if (ok)
         setPriority(p);
     else
         clearPriority();
 }
 
-void StatusPreset::clearPriority()
-{
-    priority_ = Maybe<int>();
-}
+void StatusPreset::clearPriority() { priority_ = Maybe<int>(); }
 
-QDomElement StatusPreset::toXml(QDomDocument& doc) const
+QDomElement StatusPreset::toXml(QDomDocument &doc) const
 {
     QDomElement preset = doc.createElement("preset");
-    QDomText text = doc.createTextNode(message());
+    QDomText    text   = doc.createTextNode(message());
     preset.appendChild(text);
 
-    preset.setAttribute("name",name());
+    preset.setAttribute("name", name());
     if (priority_.hasValue())
         preset.setAttribute("priority", priority_.value());
     preset.setAttribute("status", XMPP::Status(status()).typeString());
@@ -141,7 +111,7 @@ void StatusPreset::fromXml(const QDomElement &el)
 
 void StatusPreset::filterStatus()
 {
-    PsiOptions* o = PsiOptions::instance();
+    PsiOptions *o = PsiOptions::instance();
     switch (status_) {
     case XMPP::Status::FFC:
         if (!o->getOption("options.ui.menu.status.chat").toBool()) {
@@ -176,11 +146,11 @@ void StatusPreset::toOptions(OptionsTree *o)
 
 void StatusPreset::fromOptions(OptionsTree *o, QString name)
 {
-    QString path = o->mapLookup("options.status.presets", name);
-    name_ = name;
+    QString path       = o->mapLookup("options.status.presets", name);
+    name_              = name;
     bool forcePriority = o->getOption(path + ".force-priority").toBool();
-    message_ = o->getOption(path + ".message").toString();
-    status_ = XMPP::Status::txt2type(o->getOption(path + ".status").toString());
+    message_           = o->getOption(path + ".message").toString();
+    status_            = XMPP::Status::txt2type(o->getOption(path + ".status").toString());
     if (forcePriority)
         priority_ = o->getOption(path + ".priority").toInt();
 }

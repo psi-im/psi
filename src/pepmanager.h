@@ -26,72 +26,67 @@ class PubSubSubscription;
 class QString;
 
 namespace XMPP {
-    class Client;
-    class Jid;
-    class Message;
-    class PubSubItem;
-    class PubSubRetraction;
-    class ServerInfoManager;
+class Client;
+class Jid;
+class Message;
+class PubSubItem;
+class PubSubRetraction;
+class ServerInfoManager;
 }
 using namespace XMPP;
 
-class PEPManager : public QObject
-{
+class PEPManager : public QObject {
     Q_OBJECT
 
 public:
-    enum Access {
-        DefaultAccess,
-        PresenceAccess,
-        PublicAccess
-    };
+    enum Access { DefaultAccess, PresenceAccess, PublicAccess };
 
-    PEPManager(XMPP::Client* client, ServerInfoManager* serverInfo);
+    PEPManager(XMPP::Client *client, ServerInfoManager *serverInfo);
 
-    //void registerNode(const QString&);
-    //void registerNodes(const QStringList&);
-    //bool canPublish(const QString&) const;
+    // void registerNode(const QString&);
+    // void registerNodes(const QStringList&);
+    // bool canPublish(const QString&) const;
 
-    //void subscribe(const QString&, const QString&);
-    //void unsubscribe(const QString&, const QString&);
+    // void subscribe(const QString&, const QString&);
+    // void unsubscribe(const QString&, const QString&);
 
-    void publish(const QString& node, const PubSubItem&, Access = DefaultAccess);
-    void retract(const QString& node, const QString& id);
-    void disable(const QString& tagName, const QString& node, const QString& id);
-    void get(const Jid& jid, const QString& node, const QString& id);
+    void publish(const QString &node, const PubSubItem &, Access = DefaultAccess);
+    void retract(const QString &node, const QString &id);
+    void disable(const QString &tagName, const QString &node, const QString &id);
+    void get(const Jid &jid, const QString &node, const QString &id);
 
-    //void getSubscriptions(const Jid& jid);
+    // void getSubscriptions(const Jid& jid);
 
 signals:
-    void publish_success(const QString&, const PubSubItem&);
-    void publish_error(const QString&, const PubSubItem&);
-    void itemPublished(const Jid& jid, const QString& node, const PubSubItem&);
-    void itemRetracted(const Jid& jid, const QString& node, const PubSubRetraction&);
-    //void ready(const QString& node);
-    //void getSubscriptions_success(const Jid& jid, const QList<PubSubSubscription>& subscriptions);
-    //void getSubscriptions_error(const Jid&, int, const QString&);
-    //void available(bool);
+    void publish_success(const QString &, const PubSubItem &);
+    void publish_error(const QString &, const PubSubItem &);
+    void itemPublished(const Jid &jid, const QString &node, const PubSubItem &);
+    void itemRetracted(const Jid &jid, const QString &node, const PubSubRetraction &);
+    // void ready(const QString& node);
+    // void getSubscriptions_success(const Jid& jid, const QList<PubSubSubscription>& subscriptions);
+    // void getSubscriptions_error(const Jid&, int, const QString&);
+    // void available(bool);
 
 protected slots:
-    void messageReceived(const Message&);
+    void messageReceived(const Message &);
     void getFinished();
-    //void serverFeaturesChanged();
-    //void getSelfSubscriptionsTaskFinished();
-    //void getSubscriptionsTaskFinished();
+    // void serverFeaturesChanged();
+    // void getSelfSubscriptionsTaskFinished();
+    // void getSubscriptionsTaskFinished();
     void publishFinished();
-    //void subscribeFinished();
-    //void unsubscribeFinished();
-    //void createFinished();
+    // void subscribeFinished();
+    // void unsubscribeFinished();
+    // void createFinished();
 
 protected:
-    //void createNode(const QString& node);
-    //void saveSubscriptions();
+    // void createNode(const QString& node);
+    // void saveSubscriptions();
 
 private:
-    XMPP::Client* client_;
-    ServerInfoManager* serverInfo_;
+    XMPP::Client *     client_;
+    ServerInfoManager *serverInfo_;
 
-    //QStringList nodes_, ensured_nodes_;
+    // QStringList nodes_, ensured_nodes_;
 };
 
 #endif // PEPMANAGER_H

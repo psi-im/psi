@@ -22,16 +22,15 @@
 
 #include "ui_passphrase.h"
 
-class PassphraseDlg : public QDialog
-{
+class PassphraseDlg : public QDialog {
     Q_OBJECT
 public:
-    PassphraseDlg(QWidget* parent = nullptr);
+    PassphraseDlg(QWidget *parent = nullptr);
 
-    void promptPassphrase(const QString& name);
+    void promptPassphrase(const QString &name);
 
     QString getPassphrase() const;
-    bool rememberPassPhrase() const;
+    bool    rememberPassPhrase() const;
 
 private:
     Ui::Passphrase ui_;

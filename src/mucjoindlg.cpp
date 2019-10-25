@@ -33,14 +33,14 @@
 #include <QString>
 #include <QStringList>
 
-static const int nickConflictCode     = 409;
+static const int     nickConflictCode = 409;
 static const QString additionalSymbol = "_";
 
-MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) :
-    QDialog(nullptr), nickAlreadyCompleted_(false)
+MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlreadyCompleted_(false)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
+                   | Qt::CustomizeWindowHint);
     setModal(false);
     ui_.setupUi(this);
 #ifndef Q_OS_MAC
@@ -69,7 +69,8 @@ MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) :
     setWindowTitle(CAP(windowTitle()));
 
     connect(ui_.lwFavorites, SIGNAL(currentRowChanged(int)), SLOT(favoritesCurrentRowChanged(int)));
-    connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(favoritesItemDoubleClicked(QListWidgetItem *)));
+    connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
+            SLOT(favoritesItemDoubleClicked(QListWidgetItem *)));
     ui_.lwFavorites->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContentsOnFirstShow);
 
     favoritesCurrentRowChanged(ui_.lwFavorites->currentRow());
@@ -89,8 +90,8 @@ MUCJoinDlg::~MUCJoinDlg()
 void MUCJoinDlg::done(int r)
 {
     if (ui_.busy->isActive()) {
-        //int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"), tr("&Yes"), tr("&No"));
-        //if(n != 0)
+        // int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"),
+        // tr("&Yes"), tr("&No")); if(n != 0)
         //    return;
         account_->groupChatLeave(jid_.domain(), jid_.node());
     }
@@ -127,7 +128,7 @@ void MUCJoinDlg::updateFavorites()
 
     ui_.lwFavorites->clear();
 
-    QHash<QString, QListWidgetItem *> bmMap; // jid to item
+    QHash<QString, QListWidgetItem *>     bmMap; // jid to item
     QMultiMap<QString, QListWidgetItem *> nmMap; // name to item
     if (account_ && account_->bookmarkManager()->isAvailable()) {
         foreach (ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
@@ -194,8 +195,8 @@ void MUCJoinDlg::favoritesCurrentRowChanged(int row)
         return;
     }
     QListWidgetItem *lwi = ui_.lwFavorites->currentItem();
-    Jid jid(lwi->data(Qt::UserRole).toString());
-    QString password(lwi->data(Qt::UserRole + 1).toString());
+    Jid              jid(lwi->data(Qt::UserRole).toString());
+    QString          password(lwi->data(Qt::UserRole + 1).toString());
     if (!jid.isValid() || jid.node().isEmpty()) {
         return;
     }
@@ -208,7 +209,7 @@ void MUCJoinDlg::favoritesCurrentRowChanged(int row)
 
 void MUCJoinDlg::favoritesItemDoubleClicked(QListWidgetItem *lwi)
 {
-    Jid jid(lwi->data(Qt::UserRole).toString());
+    Jid     jid(lwi->data(Qt::UserRole).toString());
     QString password(lwi->data(Qt::UserRole + 1).toString());
     if (!jid.isValid() || jid.node().isEmpty()) {
         return;
@@ -310,7 +311,8 @@ void MUCJoinDlg::error(int error, const QString &str)
 
     nickAlreadyCompleted_ = false;
 
-    QMessageBox *msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
+    QMessageBox *msg = new QMessageBox(QMessageBox::Information, tr("Error"),
+                                       tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
     msg->setAttribute(Qt::WA_DeleteOnClose, true);
     msg->setModal(false);
     msg->show();
@@ -322,17 +324,8 @@ void MUCJoinDlg::setJid(const Jid &mucJid)
     ui_.le_room->setText(mucJid.node());
 }
 
-void MUCJoinDlg::setNick(const QString &nick)
-{
-    ui_.le_nick->setText(nick);
-}
+void MUCJoinDlg::setNick(const QString &nick) { ui_.le_nick->setText(nick); }
 
-void MUCJoinDlg::setPassword(const QString &password)
-{
-    ui_.le_pass->setText(password);
-}
+void MUCJoinDlg::setPassword(const QString &password) { ui_.le_pass->setText(password); }
 
-void MUCJoinDlg::accept()
-{
-    doJoin();
-}
+void MUCJoinDlg::accept() { doJoin(); }

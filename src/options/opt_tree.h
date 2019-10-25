@@ -5,8 +5,7 @@
 
 class QWidget;
 
-class OptionsTabTree : public OptionsTab
-{
+class OptionsTabTree : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabTree(QObject *parent);
@@ -14,7 +13,7 @@ public:
 
     QWidget *widget();
 
-    bool stretchable() const {return true;};
+    bool stretchable() const { return true; };
 
 private:
     QWidget *w;

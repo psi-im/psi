@@ -26,16 +26,16 @@
 
 class WbNewItem {
 public:
-    WbNewItem(QGraphicsScene* s);
+    WbNewItem(QGraphicsScene *s);
     virtual ~WbNewItem();
 
-    virtual void parseCursorMove(QPointF newPos) = 0;
+    virtual void     parseCursorMove(QPointF newPos) = 0;
     virtual QDomNode serializeToSvg(QDomDocument *doc);
 
 protected:
-    virtual QGraphicsItem* graphicsItem() = 0;
+    virtual QGraphicsItem *graphicsItem() = 0;
 
-    QGraphicsScene* scene;
+    QGraphicsScene *scene;
 };
 
 #endif // WBNEWITEM_H

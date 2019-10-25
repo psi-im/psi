@@ -64,7 +64,7 @@ using namespace QCA;
 
 static QByteArray scaleAvatar(const QByteArray &b)
 {
-    //int maxSize = (LEGOPTS.avatarsSize > MAX_AVATAR_SIZE ? MAX_AVATAR_SIZE : LEGOPTS.avatarsSize);
+    // int maxSize = (LEGOPTS.avatarsSize > MAX_AVATAR_SIZE ? MAX_AVATAR_SIZE : LEGOPTS.avatarsSize);
     int    maxSize = AvatarFactory::maxAvatarSize();
     QImage i       = QImage::fromData(b);
     if (i.isNull()) {
@@ -101,24 +101,14 @@ static QByteArray scaleAvatar(const QByteArray &b)
 class AvatarCache : public FileCache {
     Q_OBJECT
 public:
-    enum IconType {
-        NoneType,
-        AvatarType,
-        VCardType,
-        AvatarFromVCardType,
-        CustomType
-    };
+    enum IconType { NoneType, AvatarType, VCardType, AvatarFromVCardType, CustomType };
 
-    enum OpResult {
-        NoData,
-        NotChanged,
-        Changed,
-        UserUpdateRequired
-    };
+    enum OpResult { NoData, NotChanged, Changed, UserUpdateRequired };
 
     // design of the structure is matter of priority, not possible ways of avatars receiving.
     struct JidIcons {
-        FileCacheItem *vcard           = nullptr; // avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
+        FileCacheItem *vcard
+            = nullptr; // avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
         FileCacheItem *avatar          = nullptr; // pubsub or vcard avatar (64x64 or less. TODO consider retina)
         FileCacheItem *customAvatar    = nullptr; // set by you
         bool           avatarFromVCard = false;
@@ -163,7 +153,8 @@ public:
     }
 
     // caches avatars and returns true if it's really something new and valid
-    OpResult setIcon(IconType iconType, const QString &jid, const QByteArray &data, const QByteArray &_hash = QByteArray())
+    OpResult setIcon(IconType iconType, const QString &jid, const QByteArray &data,
+                     const QByteArray &_hash = QByteArray())
     {
         QString metaType = image2type(data);
         if (metaType.isEmpty()) { // a little bit stupid. It's better to use some enum
@@ -184,7 +175,8 @@ public:
         if (newData.isNull())
             return NoData;
 
-        auto &icons = jidToIcons[jid];  // it's fine to make new icons-item here. it's anyway required after all the checks
+        auto &icons
+            = jidToIcons[jid]; // it's fine to make new icons-item here. it's anyway required after all the checks
         if (!canAdd(icons, iconType)) { // for new icons-item we definitely can
             return NotChanged;
         }
@@ -205,7 +197,7 @@ public:
         QVariantMap md;
         md.insert(QLatin1String("type"), metaType);
         md.insert(QLatin1String("jids"), QStringList() << typedJid(iconType, jid));
-        FileCacheItem *item = append(XMPP::Hash { XMPP::Hash::Sha1, hash }, newData, md, 7 * 24 * 3600); // a week
+        FileCacheItem *item = append(XMPP::Hash{ XMPP::Hash::Sha1, hash }, newData, md, 7 * 24 * 3600); // a week
 
         if (iconType == CustomType) {
             item->setUndeletable();
@@ -265,8 +257,8 @@ public:
         return oldActiveIcon == newActiveIcon ? Changed : UserUpdateRequired;
     }
 
-    OpResult appendUser(const QByteArray &hash, IconType iconType, const QString &jid,
-                        JidIcons **iconsOut = nullptr, FileCacheItem **itemOut = nullptr)
+    OpResult appendUser(const QByteArray &hash, IconType iconType, const QString &jid, JidIcons **iconsOut = nullptr,
+                        FileCacheItem **itemOut = nullptr)
     {
         auto item = get(XMPP::Hash(XMPP::Hash::Sha1, hash));
         if (!item) {
@@ -295,13 +287,15 @@ public:
             icons.avatar = nullptr; // we have to regenerate it from new vcard
         }
 
-        FileCacheItem *newActiveIcon = ensureHasAvatar(icons, jid); // for example we have added avatar which was shared with smb.
+        FileCacheItem *newActiveIcon
+            = ensureHasAvatar(icons, jid); // for example we have added avatar which was shared with smb.
         return oldActiveIcon == newActiveIcon ? Changed : UserUpdateRequired;
     }
 
 protected:
     // all the active items are protected (undeletabe) during session. so it's fine to not update user of changes.
-    // from other side we call removeItem of parent class and even if called this function, by design it's only if no users.
+    // from other side we call removeItem of parent class and even if called this function, by design it's only if no
+    // users.
     void removeItem(FileCacheItem *item, bool needSync)
     {
         QStringList jids = item->metadata().value(QLatin1String("jids")).toStringList();
@@ -324,16 +318,9 @@ protected:
     }
 
 private:
-    AvatarCache() :
-        FileCache(AvatarFactory::getCacheDir())
-    {
-        updateJids();
-    }
+    AvatarCache() : FileCache(AvatarFactory::getCacheDir()) { updateJids(); }
 
-    bool areIconsEmpty(const JidIcons &icons) const
-    {
-        return !icons.avatar && !icons.vcard && !icons.customAvatar;
-    }
+    bool areIconsEmpty(const JidIcons &icons) const { return !icons.avatar && !icons.vcard && !icons.customAvatar; }
 
     /**
      * @brief whether we are allowed to add icon to icons set.
@@ -472,10 +459,7 @@ private:
         return NoneType;
     }
 
-    QString extractIconJid(const QString &jid)
-    {
-        return jid.section(QLatin1Char(':'), 1);
-    }
+    QString extractIconJid(const QString &jid) { return jid.section(QLatin1Char(':'), 1); }
 
     QString typedJid(IconType it, const QString &jid)
     {
@@ -566,8 +550,7 @@ public:
     QTimer                                    vcardReqTimer_;
 };
 
-AvatarFactory::AvatarFactory(PsiAccount *pa) :
-    d(new Private)
+AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
 {
     d->pa_ = pa;
     // Register iconset
@@ -584,14 +567,15 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) :
             d->vcardReqTimer_.stop();
         }
         VCardFactory::instance()->getVCard(
-            j,
-            d->pa_->client()->rootTask(), this, [this, hash]() {
+            j, d->pa_->client()->rootTask(), this,
+            [this, hash]() {
                 auto task = dynamic_cast<JT_VCard *>(sender());
                 if (task->success() && !task->vcard().isNull()) {
                     QByteArray ba = task->vcard().photo();
                     if (!ba.isNull()) {
                         QString fullJid = task->jid().full(); // jids for regular contacts are already without resource
-                        if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba, hash) == AvatarCache::UserUpdateRequired) {
+                        if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba, hash)
+                            == AvatarCache::UserUpdateRequired) {
                             d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(task->jid().full()));
                             emit avatarChanged(task->jid());
                         }
@@ -603,22 +587,19 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) :
 
     // Connect signals
     connect(VCardFactory::instance(), SIGNAL(vcardPhotoAvailable(Jid, bool)), this, SLOT(vcardUpdated(Jid, bool)));
-    connect(d->pa_->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(resourceAvailable(const Jid &, const Resource &)));
+    connect(d->pa_->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)),
+            SLOT(resourceAvailable(const Jid &, const Resource &)));
 
     // PEP
-    connect(d->pa_->pepManager(), SIGNAL(itemPublished(const Jid &, const QString &, const PubSubItem &)), SLOT(itemPublished(const Jid &, const QString &, const PubSubItem &)));
-    connect(d->pa_->pepManager(), SIGNAL(publish_success(const QString &, const PubSubItem &)), SLOT(publish_success(const QString &, const PubSubItem &)));
+    connect(d->pa_->pepManager(), SIGNAL(itemPublished(const Jid &, const QString &, const PubSubItem &)),
+            SLOT(itemPublished(const Jid &, const QString &, const PubSubItem &)));
+    connect(d->pa_->pepManager(), SIGNAL(publish_success(const QString &, const PubSubItem &)),
+            SLOT(publish_success(const QString &, const PubSubItem &)));
 }
 
-AvatarFactory::~AvatarFactory()
-{
-    delete d;
-}
+AvatarFactory::~AvatarFactory() { delete d; }
 
-PsiAccount *AvatarFactory::account() const
-{
-    return d->pa_;
-}
+PsiAccount *AvatarFactory::account() const { return d->pa_; }
 
 inline static QPixmap ensureSquareAvatar(const QPixmap &original)
 {
@@ -703,7 +684,7 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QByteArray &hash
 {
     FileCacheItem *item = AvatarCache::instance()->get({ XMPP::Hash::Sha1, hash }, true);
     if (item) {
-        return AvatarData { item->data(), item->metadata()["type"].toString() };
+        return AvatarData{ item->data(), item->metadata()["type"].toString() };
     }
     return AvatarData();
 }
@@ -728,7 +709,8 @@ AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
             vcard = VCardFactory::instance()->vcard(jid);
         }
         if (!vcard.isNull() && !vcard.photo().isNull()) {
-            if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo()) != AvatarCache::NoData) {
+            if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo())
+                != AvatarCache::NoData) {
                 icons = AvatarCache::instance()->icons(jid.full());
             }
         }
@@ -797,9 +779,9 @@ void AvatarFactory::setSelfAvatar(const QString &fileName)
         QImage     avatar_image = QImage::fromData(avatar_data);
         if (!avatar_image.isNull()) {
             // Publish data
-            QDomDocument *doc  = account()->client()->doc();
-            QString       hash = QString::fromLatin1(QCryptographicHash::hash(avatar_data, QCryptographicHash::Sha1).toHex());
-            QDomElement   el   = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
+            QDomDocument *doc = account()->client()->doc();
+            QString hash = QString::fromLatin1(QCryptographicHash::hash(avatar_data, QCryptographicHash::Sha1).toHex());
+            QDomElement el = doc->createElementNS(PEP_AVATAR_DATA_NS, PEP_AVATAR_DATA_TN);
             el.appendChild(doc->createTextNode(QString::fromLatin1(avatar_data.toBase64())));
             d->selfAvatarData_ = avatar_data;
             d->selfAvatarHash_ = hash;
@@ -813,7 +795,8 @@ void AvatarFactory::setSelfAvatar(const QString &fileName)
 void AvatarFactory::importManualAvatar(const Jid &j, const QString &fileName)
 {
     QFile f(fileName);
-    if (!(f.open(QIODevice::ReadOnly) && AvatarCache::instance()->setIcon(AvatarCache::CustomType, j.bare(), f.readAll()))) {
+    if (!(f.open(QIODevice::ReadOnly)
+          && AvatarCache::instance()->setIcon(AvatarCache::CustomType, j.bare(), f.readAll()))) {
         qWarning("Failed to set manual avatar");
     }
     d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(j.bare()));
@@ -828,20 +811,14 @@ void AvatarFactory::removeManualAvatar(const Jid &j)
     }
 }
 
-bool AvatarFactory::hasManualAvatar(const Jid &j)
-{
-    return AvatarCache::instance()->icons(j.bare()).customAvatar;
-}
+bool AvatarFactory::hasManualAvatar(const Jid &j) { return AvatarCache::instance()->icons(j.bare()).customAvatar; }
 
 void AvatarFactory::resourceAvailable(const Jid &jid, const Resource &r)
 {
     statusUpdate(jid.withResource(QString()), r.status());
 }
 
-void AvatarFactory::newMucItem(const Jid &fullJid, const Status &s)
-{
-    statusUpdate(fullJid, s);
-}
+void AvatarFactory::newMucItem(const Jid &fullJid, const Status &s) { statusUpdate(fullJid, s); }
 
 void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status)
 {
@@ -849,11 +826,13 @@ void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status)
     bool isMuc = !jid.resource().isEmpty();
 
     if (status.hasPhotoHash()) { // even if it's empty. user adretises something.
-        auto    hash    = status.photoHash();
-        QString fullJid = jid.full(); // it's not muc. so just bare jids. probably something like XEP-0316 may break this rule
+        auto    hash = status.photoHash();
+        QString fullJid
+            = jid.full(); // it's not muc. so just bare jids. probably something like XEP-0316 may break this rule
 
         if (hash.isEmpty()) { // photo removal
-            if (AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid) == AvatarCache::UserUpdateRequired) {
+            if (AvatarCache::instance()->removeIcon(AvatarCache::VCardType, fullJid)
+                == AvatarCache::UserUpdateRequired) {
                 d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(jid);
             }
@@ -863,7 +842,7 @@ void AvatarFactory::statusUpdate(const Jid &jid, const XMPP::Status &status)
                 d->iconset_.removeIcon(QString(QLatin1String("avatars/%1")).arg(fullJid));
                 emit avatarChanged(jid);
             } else if (result == AvatarCache::NoData) {
-                d->vcardReqQueue_.enqueue(std::tuple<Jid, QByteArray, bool> { jid, hash, isMuc });
+                d->vcardReqQueue_.enqueue(std::tuple<Jid, QByteArray, bool>{ jid, hash, isMuc });
                 if (!d->vcardReqTimer_.isActive()) {
                     d->vcardReqTimer_.start();
                 }
@@ -882,10 +861,7 @@ QString AvatarFactory::getCacheDir()
     return avatars.path();
 }
 
-int AvatarFactory::maxAvatarSize()
-{
-    return MAX_AVATAR_SIZE;
-}
+int AvatarFactory::maxAvatarSize() { return MAX_AVATAR_SIZE; }
 
 /**
  * @brief Scales input pixmap and rounds its corners with given radius
@@ -974,14 +950,16 @@ void AvatarFactory::itemPublished(const Jid &jid, const QString &n, const PubSub
         if (hash.size() < 20)
             return; // doesn't look like sha1 hash. just ignore it
 
-        if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN) && item.payload().firstChildElement().isNull()) {
+        if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)
+            && item.payload().firstChildElement().isNull()) {
             // user wants to stop publishing avatar
             // previously we used "stop" element. now specs are changed
             result = AvatarCache::instance()->removeIcon(AvatarCache::AvatarType, jidFull);
         } else {
             auto mimes = QImageReader::supportedMimeTypes();
 
-            for (QDomElement e = item.payload().firstChildElement(QLatin1String("info")); !e.isNull(); e = e.nextSiblingElement(QLatin1String("info"))) {
+            for (QDomElement e = item.payload().firstChildElement(QLatin1String("info")); !e.isNull();
+                 e             = e.nextSiblingElement(QLatin1String("info"))) {
                 if (!mimes.contains(e.attribute(QLatin1String("type")).toLower().toLatin1())) {
                     continue; // unsupported mime
                 }

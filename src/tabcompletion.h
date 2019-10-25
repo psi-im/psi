@@ -25,32 +25,30 @@
 
 #include <QObject>
 
-class TabCompletion : public QObject
-{
-Q_OBJECT
+class TabCompletion : public QObject {
+    Q_OBJECT
 public:
     TabCompletion(QObject *parent = nullptr);
     ~TabCompletion() = default;
 
-    void setTextEdit(QTextEdit* mle);
-    QTextEdit* getTextEdit();
+    void       setTextEdit(QTextEdit *mle);
+    QTextEdit *getTextEdit();
 
     virtual void reset();
-    void tryComplete();
+    void         tryComplete();
 
 protected:
     QString toComplete_;
-    bool atStart_;
+    bool    atStart_;
 
-    virtual void setup(QString str, int pos, int &start, int &end);
-    virtual QStringList possibleCompletions()=0;
-    virtual QStringList allChoices(QString &guess)=0;
+    virtual void        setup(QString str, int pos, int &start, int &end);
+    virtual QStringList possibleCompletions()      = 0;
+    virtual QStringList allChoices(QString &guess) = 0;
 
     virtual void highlight(bool set);
-    QColor highlight_;
+    QColor       highlight_;
 
 private:
-
     QString longestCommonPrefix(QStringList list);
     QString suggestCompletion(bool *replaced);
 
@@ -58,15 +56,15 @@ private:
 
     enum class TypingStatus : char {
         Normal,
-        TabPressed,    // initial completion
+        TabPressed,         // initial completion
         TabbingCompletions, // switch to tab through multiple
         MultipleSuggestions
     };
 
-    QTextCursor replacementCursor_;
+    QTextCursor  replacementCursor_;
     TypingStatus typingStatus_;
-    QStringList suggestedCompletion_;
-    int  suggestedIndex_;
+    QStringList  suggestedCompletion_;
+    int          suggestedIndex_;
 
     QTextEdit *textEdit_;
 };

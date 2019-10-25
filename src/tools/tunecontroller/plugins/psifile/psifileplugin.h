@@ -34,15 +34,14 @@
 /**
  * \brief A TuneController plugin for the Psi file controller.
  */
-class PsiFilePlugin : public QObject, public TuneControllerPlugin
-{
+class PsiFilePlugin : public QObject, public TuneControllerPlugin {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
     Q_INTERFACES(TuneControllerPlugin)
 
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
 #endif // PSIFILEPLUGIN_H

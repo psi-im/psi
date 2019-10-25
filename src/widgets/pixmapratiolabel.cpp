@@ -5,9 +5,7 @@
 #include <QPainter>
 #include <QTimer>
 
-PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent)
-{
-}
+PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent) {}
 
 void PixmapRatioLabel::setPixmap(const QPixmap &pix)
 {
@@ -15,33 +13,22 @@ void PixmapRatioLabel::setPixmap(const QPixmap &pix)
     update();
 }
 
-void PixmapRatioLabel::setMaxPixmapSize(const QSize &size)
-{
-    _maxPixSize = size;
-}
+void PixmapRatioLabel::setMaxPixmapSize(const QSize &size) { _maxPixSize = size; }
 
-void PixmapRatioLabel::setResizePolicy(PixmapRatioLabel::Policy policy)
-{
-    _policy = policy;
-}
+void PixmapRatioLabel::setResizePolicy(PixmapRatioLabel::Policy policy) { _policy = policy; }
 
-PixmapRatioLabel::Policy PixmapRatioLabel::resizePolicy() const
-{
-    return _policy;
-}
+PixmapRatioLabel::Policy PixmapRatioLabel::resizePolicy() const { return _policy; }
 
 void PixmapRatioLabel::paintEvent(QPaintEvent *event)
 {
-    bool needAdjust = false;
-    QSize ms = _maxPixSize.isEmpty()? _origPix.size() : _maxPixSize;
+    bool  needAdjust = false;
+    QSize ms         = _maxPixSize.isEmpty() ? _origPix.size() : _maxPixSize;
 
     if (_policy == Policy::FitBoth) {
         ms = ms.boundedTo(event->rect().size());
-    } else
-    if (_policy == Policy::FitVertical) {
+    } else if (_policy == Policy::FitVertical) {
         ms.setHeight(qMin(ms.height(), event->rect().height()));
-    } else
-    if (_policy == Policy::FitHorizontal) {
+    } else if (_policy == Policy::FitHorizontal) {
         ms.setWidth(qMin(ms.width(), event->rect().width()));
     }
     if (_scaledPix.isNull()) {
@@ -56,7 +43,7 @@ void PixmapRatioLabel::paintEvent(QPaintEvent *event)
     if (needAdjust) {
         QTimer::singleShot(0, [this]() {
             // setMinWidth/Height invalidates layout. so all the widgets are resized
-            if(_policy == Policy::FitVertical) {
+            if (_policy == Policy::FitVertical) {
                 setMinimumWidth(_scaledPix.width());
             } else if (_policy == Policy::FitHorizontal) {
                 setMinimumHeight(_scaledPix.height());
@@ -64,7 +51,7 @@ void PixmapRatioLabel::paintEvent(QPaintEvent *event)
         });
     }
     QPainter p(this);
-    QRect pixRect(QPoint(0,0), newPixSize);
+    QRect    pixRect(QPoint(0, 0), newPixSize);
     pixRect.moveCenter(event->rect().center());
     p.drawPixmap(pixRect, _scaledPix);
 }

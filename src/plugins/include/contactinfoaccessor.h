@@ -3,13 +3,11 @@
 
 class ContactInfoAccessingHost;
 
-class ContactInfoAccessor
-{
+class ContactInfoAccessor {
 public:
     virtual ~ContactInfoAccessor() {}
 
-    virtual void setContactInfoAccessingHost(ContactInfoAccessingHost* host) = 0;
-
+    virtual void setContactInfoAccessingHost(ContactInfoAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(ContactInfoAccessor, "org.psi-im.ContactInfoAccessor/0.1");

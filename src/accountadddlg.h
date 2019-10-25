@@ -28,11 +28,10 @@ class PsiCon;
 class QString;
 class QWidget;
 
-class AccountAddDlg : public QDialog, public Ui::AccountAdd
-{
+class AccountAddDlg : public QDialog, public Ui::AccountAdd {
     Q_OBJECT
 public:
-    AccountAddDlg(PsiCon *, QWidget *parent=nullptr);
+    AccountAddDlg(PsiCon *, QWidget *parent = nullptr);
     ~AccountAddDlg();
 
 private slots:

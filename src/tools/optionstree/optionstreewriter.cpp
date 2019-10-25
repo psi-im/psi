@@ -8,28 +8,15 @@
 #include <QRect>
 #include <QSize>
 
-OptionsTreeWriter::OptionsTreeWriter(const OptionsTree* options)
-    : options_(options)
-{
-    Q_ASSERT(options_);
-}
+OptionsTreeWriter::OptionsTreeWriter(const OptionsTree *options) : options_(options) { Q_ASSERT(options_); }
 
-void OptionsTreeWriter::setName(const QString& configName)
-{
-    configName_ = configName;
-}
+void OptionsTreeWriter::setName(const QString &configName) { configName_ = configName; }
 
-void OptionsTreeWriter::setNameSpace(const QString& configNS)
-{
-    configNS_ = configNS;
-}
+void OptionsTreeWriter::setNameSpace(const QString &configNS) { configNS_ = configNS; }
 
-void OptionsTreeWriter::setVersion(const QString& configVersion)
-{
-    configVersion_ = configVersion;
-}
+void OptionsTreeWriter::setVersion(const QString &configVersion) { configVersion_ = configVersion; }
 
-bool OptionsTreeWriter::write(QIODevice* device)
+bool OptionsTreeWriter::write(QIODevice *device)
 {
     setDevice(device);
 
@@ -49,9 +36,9 @@ bool OptionsTreeWriter::write(QIODevice* device)
     return true;
 }
 
-void OptionsTreeWriter::writeTree(const VariantTree* tree)
+void OptionsTreeWriter::writeTree(const VariantTree *tree)
 {
-    foreach(QString node, tree->trees_.keys()) {
+    foreach (QString node, tree->trees_.keys()) {
         Q_ASSERT(!node.isEmpty());
         writeStartElement(node);
         if (tree->comments_.contains(node))
@@ -61,7 +48,7 @@ void OptionsTreeWriter::writeTree(const VariantTree* tree)
         writeEndElement();
     }
 
-    foreach(QString child, tree->values_.keys()) {
+    foreach (QString child, tree->values_.keys()) {
         Q_ASSERT(!child.isEmpty());
         writeStartElement(child);
         if (tree->comments_.contains(child))
@@ -71,54 +58,48 @@ void OptionsTreeWriter::writeTree(const VariantTree* tree)
         writeEndElement();
     }
 
-    foreach(QString unknown, tree->unknowns2_.keys()) {
+    foreach (QString unknown, tree->unknowns2_.keys()) {
         writeUnknown(tree->unknowns2_[unknown]);
     }
 }
 
-void OptionsTreeWriter::writeVariant(const QVariant& variant)
+void OptionsTreeWriter::writeVariant(const QVariant &variant)
 {
     writeAttribute("type", variant.typeName());
     if (variant.type() == QVariant::StringList) {
-        foreach(QString s, variant.toStringList()) {
+        foreach (QString s, variant.toStringList()) {
             writeStartElement("item");
             writeCharacters(s);
             writeEndElement();
         }
-    }
-    else if (variant.type() == QVariant::List) {
-        foreach(QVariant v, variant.toList()) {
+    } else if (variant.type() == QVariant::List) {
+        foreach (QVariant v, variant.toList()) {
             writeStartElement("item");
             writeVariant(v);
             writeEndElement();
         }
-    }
-    else if (variant.type() == QVariant::Size) {
+    } else if (variant.type() == QVariant::Size) {
         writeTextElement("width", QString::number(variant.toSize().width()));
         writeTextElement("height", QString::number(variant.toSize().height()));
-    }
-    else if (variant.type() == QVariant::Rect) {
+    } else if (variant.type() == QVariant::Rect) {
         writeTextElement("x", QString::number(variant.toRect().x()));
         writeTextElement("y", QString::number(variant.toRect().y()));
         writeTextElement("width", QString::number(variant.toRect().width()));
         writeTextElement("height", QString::number(variant.toRect().height()));
-    }
-    else if (variant.type() == QVariant::ByteArray) {
+    } else if (variant.type() == QVariant::ByteArray) {
         writeCharacters(variant.toByteArray().toBase64());
-    }
-    else if (variant.type() == QVariant::KeySequence) {
+    } else if (variant.type() == QVariant::KeySequence) {
         QKeySequence k = variant.value<QKeySequence>();
         writeCharacters(k.toString());
-    }
-    else {
+    } else {
         writeCharacters(variant.toString());
     }
 }
 
-void OptionsTreeWriter::writeUnknown(const QString& unknown)
+void OptionsTreeWriter::writeUnknown(const QString &unknown)
 {
     QByteArray ba = unknown.toUtf8();
-    QBuffer buffer(&ba);
+    QBuffer    buffer(&ba);
     buffer.open(QIODevice::ReadOnly);
     QXmlStreamReader reader;
     reader.setDevice(&buffer);
@@ -132,11 +113,11 @@ void OptionsTreeWriter::writeUnknown(const QString& unknown)
     }
 }
 
-void OptionsTreeWriter::readUnknownTree(QXmlStreamReader* reader)
+void OptionsTreeWriter::readUnknownTree(QXmlStreamReader *reader)
 {
     Q_ASSERT(reader->isStartElement());
     writeStartElement(reader->name().toString());
-    foreach(QXmlStreamAttribute attr, reader->attributes()) {
+    foreach (QXmlStreamAttribute attr, reader->attributes()) {
         writeAttribute(attr.name().toString(), attr.value().toString());
     }
 

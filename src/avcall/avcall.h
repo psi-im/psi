@@ -29,30 +29,24 @@ class PsiAccount;
 class QHostAddress;
 
 namespace PsiMedia {
-    class VideoWidget;
+class VideoWidget;
 }
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class AvCall : public QObject
-{
+class AvCall : public QObject {
     Q_OBJECT
 
 public:
-    enum Mode
-    {
-        Audio,
-        Video,
-        Both
-    };
+    enum Mode { Audio, Video, Both };
 
     AvCall(const AvCall &from);
     ~AvCall();
 
     XMPP::Jid jid() const;
-    Mode mode() const;
+    Mode      mode() const;
 
     void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
     void accept(Mode mode, int kbps = -1);
@@ -80,8 +74,7 @@ private:
     AvCallPrivate *d;
 };
 
-class AvCallManager : public QObject
-{
+class AvCallManager : public QObject {
     Q_OBJECT
 
 public:
@@ -98,7 +91,8 @@ public:
     void setSelfAddress(const QHostAddress &addr);
     void setStunBindService(const QString &host, int port);
     void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
-    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
+    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
+                                const QString &user, const QString &pass);
 
     static void setBasePort(int port);
     static void setExternalAddress(const QString &host);

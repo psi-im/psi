@@ -27,44 +27,37 @@
 class QDomDocument;
 class QDomElement;
 
-class ConferenceBookmark
-{
+class ConferenceBookmark {
 public:
-    enum JoinType
-    {
-        Never,
-        Always,
-        OnlyThisComputer,
-        ExceptThisComputer,
-        LastJoinType
-    };
+    enum JoinType { Never, Always, OnlyThisComputer, ExceptThisComputer, LastJoinType };
 
-    ConferenceBookmark(const QString& name, const XMPP::Jid& jid, JoinType auto_join, const QString& nick = QString(), const QString& password = QString());
-    ConferenceBookmark(const QDomElement&);
+    ConferenceBookmark(const QString &name, const XMPP::Jid &jid, JoinType auto_join, const QString &nick = QString(),
+                       const QString &password = QString());
+    ConferenceBookmark(const QDomElement &);
 
     static QStringList joinTypeNames();
 
-    const QString& name() const;
-    const XMPP::Jid& jid() const;
-    JoinType autoJoin() const;
-    bool needJoin() const;
-    void setAutoJoin(JoinType type);
-    const QString& nick() const;
-    const QString& password() const;
+    const QString &  name() const;
+    const XMPP::Jid &jid() const;
+    JoinType         autoJoin() const;
+    bool             needJoin() const;
+    void             setAutoJoin(JoinType type);
+    const QString &  nick() const;
+    const QString &  password() const;
 
     bool isNull() const;
 
-    void fromXml(const QDomElement&);
-    QDomElement toXml(QDomDocument&) const;
+    void        fromXml(const QDomElement &);
+    QDomElement toXml(QDomDocument &) const;
 
-    bool operator==(const ConferenceBookmark& other) const;
+    bool operator==(const ConferenceBookmark &other) const;
 
 private:
-    QString name_;
+    QString   name_;
     XMPP::Jid jid_;
-    JoinType auto_join_;
-    QString nick_;
-    QString password_;
+    JoinType  auto_join_;
+    QString   nick_;
+    QString   password_;
 };
 
 #endif // CONFERENCEBOOKMARK_H

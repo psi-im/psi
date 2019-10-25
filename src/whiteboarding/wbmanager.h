@@ -34,9 +34,9 @@
 class WbRequest;
 
 namespace XMPP {
-    class Client;
-    class Jid;
-    class Message;
+class Client;
+class Jid;
+class Message;
 }
 using namespace XMPP;
 
@@ -49,18 +49,17 @@ using namespace XMPP;
  *
  *  \sa WbDlg
  */
-class WbManager : public QObject
-{
+class WbManager : public QObject {
     Q_OBJECT
 
 public:
     /*! \brief Constructor.
      *  Creates a new manager for the specified Client and PsiAccount
      */
-    WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager);
+    WbManager(XMPP::Client *client, PsiAccount *pa, SxeManager *sxemanager);
     ~WbManager();
     /*! \brief Returns true if features contains WBNS and the user wishes to accept the invitation. */
-    //static bool checkInvitation(const Jid &peer, const QList<QString> &features);
+    // static bool checkInvitation(const Jid &peer, const QList<QString> &features);
     void requestActivated(int id);
 
 public slots:
@@ -71,27 +70,27 @@ private:
     /*! \brief Return a pointer to a dialog to the specified contact.
      *  If such dialog doesn't exits, returns 0.
      */
-    WbDlg* findWbDlg(const Jid &target);
+    WbDlg *findWbDlg(const Jid &target);
 
     /*! \brief A pointer to the PsiAccount to pass to new dialogs.*/
-    PsiAccount* pa_;
+    PsiAccount *pa_;
     /*! \brief A list of dialogs of established sessions.*/
-    QList<WbDlg*> dialogs_;
+    QList<WbDlg *> dialogs_;
     /*! \brief A pointer to the SxeManager used for negotiating sessions.*/
-    SxeManager* sxemanager_;
+    SxeManager *sxemanager_;
 
-    QList<WbRequest*> requests_;
+    QList<WbRequest *> requests_;
 
 signals:
     void wbRequest(const Jid &peer, int id);
 
 private slots:
     /*! \brief Removes and deletes the dialog for the given session.*/
-    void removeDialog(WbDlg* dialog);
+    void removeDialog(WbDlg *dialog);
     /*! \brief Returns a pointer to a new dialog to with given contact and session set.*/
-    void createWbDlg(SxeSession* session);
+    void createWbDlg(SxeSession *session);
 
-    void  checkInvitation(const Jid &peer, const QList<QString> &features, bool* result);
+    void checkInvitation(const Jid &peer, const QList<QString> &features, bool *result);
 };
 
 #endif // WBMANAGER_H

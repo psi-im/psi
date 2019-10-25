@@ -31,34 +31,23 @@
 #include <QMessageBox>
 #include <QTimer>
 
-HistoryImport::HistoryImport(PsiCon *psi) : QObject(),
-    psi_(psi),
-    srcEdb(nullptr),
-    dstEdb(nullptr),
-    hErase(nullptr),
-    hRead(nullptr),
-    hWrite(nullptr),
-    active(false),
-    result_(ResultNone),
-    recordsCount(0),
-    dlg(nullptr)
+HistoryImport::HistoryImport(PsiCon *psi) :
+    QObject(), psi_(psi), srcEdb(nullptr), dstEdb(nullptr), hErase(nullptr), hRead(nullptr), hWrite(nullptr),
+    active(false), result_(ResultNone), recordsCount(0), dlg(nullptr)
 {
 }
 
-HistoryImport::~HistoryImport()
-{
-    clear();
-}
+HistoryImport::~HistoryImport() { clear(); }
 
 bool HistoryImport::isNeeded()
 {
-    bool res = false;
+    bool       res  = false;
     EDBSqLite *stor = static_cast<EDBSqLite *>(psi_->edb());
     if (!stor->getStorageParam("import_start").isEmpty()) {
         EDB *src = stor->mirror();
         if (!src)
             src = new EDBFlatFile(psi_);
-        //if (sou && sou->eventsCount(QString(), XMPP::Jid()) != 0)
+        // if (sou && sou->eventsCount(QString(), XMPP::Jid()) != 0)
         if (!src->contacts(QString(), EDB::Contact).isEmpty())
             res = true;
         else
@@ -112,7 +101,7 @@ int HistoryImport::exec()
 
     foreach (const EDB::ContactItem &ci, srcEdb->contacts(QString(), EDB::Contact)) {
         const XMPP::Jid &jid = ci.jid;
-        QStringList accIds;
+        QStringList      accIds;
         foreach (PsiAccount *acc, psi_->contactList()->accounts()) {
             foreach (PsiContact *contact, acc->contactList()) {
                 if (contact->jid() == jid)
@@ -140,15 +129,15 @@ int HistoryImport::exec()
 void HistoryImport::stop(int reason)
 {
     stopTime = QDateTime::currentDateTime();
-    result_ = reason;
+    result_  = reason;
     if (reason == ResultNormal) {
         dstEdb->setStorageParam("import_start", QString());
         int sec = importDuration();
         int min = sec / 60;
-        sec = sec % 60;
-        qWarning("%s", QString("Import is finished. Duration is %1 min. %2 sec.").arg(min).arg(sec).toUtf8().constData());
-    }
-    else if (reason == ResultCancel)
+        sec     = sec % 60;
+        qWarning("%s",
+                 QString("Import is finished. Duration is %1 min. %2 sec.").arg(min).arg(sec).toUtf8().constData());
+    } else if (reason == ResultCancel)
         qWarning("Import canceled");
     else
         qWarning("Import error");
@@ -157,10 +146,7 @@ void HistoryImport::stop(int reason)
     emit finished(reason);
 }
 
-int HistoryImport::importDuration()
-{
-    return int(startTime.secsTo(stopTime));
-}
+int HistoryImport::importDuration() { return int(startTime.secsTo(stopTime)); }
 
 void HistoryImport::readFromFiles()
 {
@@ -171,8 +157,7 @@ void HistoryImport::readFromFiles()
             stop(ResultError); // Write error
             return;
         }
-    }
-    else if (hErase != nullptr && !hErase->writeSuccess()) {
+    } else if (hErase != nullptr && !hErase->writeSuccess()) {
         stop(ResultError);
         return;
     }
@@ -185,8 +170,8 @@ void HistoryImport::readFromFiles()
         connect(hRead, SIGNAL(finished()), this, SLOT(writeToSqlite()));
     }
 
-    const ImportItem &item = importList.first();
-    int start = item.startNum;
+    const ImportItem &item  = importList.first();
+    int               start = item.startNum;
     if (start == 0)
         qWarning("%s", QString("Importing %1").arg(JIDUtil::toString(item.jid, true)).toUtf8().constData());
     --recordsCount;
@@ -215,7 +200,7 @@ void HistoryImport::writeToSqlite()
         hWrite = new EDBHandle(dstEdb);
         connect(hWrite, SIGNAL(finished()), this, SLOT(readFromFiles()));
     }
-    EDBItemPtr it = r.first();
+    EDBItemPtr  it   = r.first();
     ImportItem &item = importList.first();
     hWrite->append(item.accIds.first(), item.jid, it->event(), EDB::Contact);
     item.startNum += 1;
@@ -227,18 +212,18 @@ void HistoryImport::showDialog()
     dlg->setModal(true);
     dlg->setWindowTitle(tr("Psi+ Import history"));
     QVBoxLayout *mainLayout = new QVBoxLayout(dlg);
-    stackedWidget = new QStackedWidget(dlg);
+    stackedWidget           = new QStackedWidget(dlg);
 
-    QWidget *page1 = new QWidget();
+    QWidget *    page1       = new QWidget();
     QGridLayout *page1Layout = new QGridLayout(page1);
-    QLabel *lbMessage = new QLabel(page1);
+    QLabel *     lbMessage   = new QLabel(page1);
     lbMessage->setWordWrap(true);
     lbMessage->setText(tr("Found %1 files for import.\nContinue?").arg(importList.size()));
     page1Layout->addWidget(lbMessage, 0, 0, 1, 1);
     stackedWidget->addWidget(page1);
 
-    QWidget *page2 = new QWidget();
-    QHBoxLayout *page2Layout = new QHBoxLayout(page2);
+    QWidget *    page2           = new QWidget();
+    QHBoxLayout *page2Layout     = new QHBoxLayout(page2);
     QGridLayout *page2GridLayout = new QGridLayout();
     page2GridLayout->addWidget(new QLabel(tr("Status:"), page2), 0, 0, 1, 1);
     lbStatus = new QLabel(page2);
@@ -279,7 +264,7 @@ void HistoryImport::start()
     lbStatus->setText(tr("Counting records"));
     qApp->processEvents();
     recordsCount = srcEdb->eventsCount(QString(), XMPP::Jid());
-    int max = int(recordsCount / 100);
+    int max      = int(recordsCount / 100);
     if ((recordsCount % 100) != 0)
         ++max;
     progressBar->setMaximum(max);

@@ -6,21 +6,20 @@
 
 class QWidget;
 
-class OptionsTabMsgCommon : public OptionsTab
-{
+class OptionsTabMsgCommon : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabMsgCommon(QObject *parent);
     ~OptionsTabMsgCommon();
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
-    void setData(PsiCon *psi, QWidget *);
+    void     applyOptions();
+    void     restoreOptions();
+    void     setData(PsiCon *psi, QWidget *);
 
 private:
     QWidget *w_;
-    PsiCon *psi_;
+    PsiCon * psi_;
 };
 
 #endif // OPT_MESSAGES_COMMON_H

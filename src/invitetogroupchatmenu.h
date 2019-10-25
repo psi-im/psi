@@ -27,8 +27,7 @@ class PsiAccount;
 class PsiCon;
 class PsiContact;
 
-class InviteToGroupChatMenu : public QMenu
-{
+class InviteToGroupChatMenu : public QMenu {
     Q_OBJECT
 
 public:
@@ -42,5 +41,5 @@ private slots:
     void actionActivated();
 
 private:
-    PsiCon* controller_;
+    PsiCon *controller_;
 };

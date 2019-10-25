@@ -4,7 +4,7 @@
 class QPixmap;
 
 namespace PixmapUtil {
-    QPixmap createTransparentPixmap(int width, int height);
+QPixmap createTransparentPixmap(int width, int height);
 }
 
 #endif // PIXMAPUTIL_H

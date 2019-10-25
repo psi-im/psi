@@ -27,8 +27,7 @@
 
 class PsiCon;
 
-class PsiThemeProvider : public QObject
-{
+class PsiThemeProvider : public QObject {
     Q_OBJECT
 
     PsiCon *_psi;
@@ -36,20 +35,20 @@ class PsiThemeProvider : public QObject
 public:
     PsiThemeProvider(PsiCon *parent);
 
-    inline PsiCon* psi() const { return _psi; }
+    inline PsiCon *psi() const { return _psi; }
 
-    virtual const char* type() const = 0;
-    virtual Theme theme(const QString &id) = 0; // make new theme
-    virtual const QStringList themeIds() const = 0;
-    virtual bool loadCurrent() = 0;
-    virtual void unloadCurrent() = 0;
-    virtual Theme current() const = 0;
-    virtual void setCurrentTheme(const QString &) = 0;
+    virtual const char *      type() const                     = 0;
+    virtual Theme             theme(const QString &id)         = 0; // make new theme
+    virtual const QStringList themeIds() const                 = 0;
+    virtual bool              loadCurrent()                    = 0;
+    virtual void              unloadCurrent()                  = 0;
+    virtual Theme             current() const                  = 0;
+    virtual void              setCurrentTheme(const QString &) = 0;
 
     virtual bool threadedLoading() const;
-    virtual int screenshotWidth() const;
+    virtual int  screenshotWidth() const;
 
-    virtual QString optionsName() const = 0;
+    virtual QString optionsName() const        = 0;
     virtual QString optionsDescription() const = 0;
 
     static QString themePath(const QString &name);

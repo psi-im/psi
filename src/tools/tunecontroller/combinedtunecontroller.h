@@ -25,8 +25,7 @@
 
 #include <QList>
 
-class CombinedTuneController : public TuneController
-{
+class CombinedTuneController : public TuneController {
 public:
     CombinedTuneController();
     ~CombinedTuneController();
@@ -34,7 +33,7 @@ public:
     virtual Tune currentTune();
 
 private:
-    QList<TuneController*> controllers_;
+    QList<TuneController *> controllers_;
 };
 
 #endif // COMBINEDTUNECONTROLLER_H

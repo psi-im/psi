@@ -30,9 +30,9 @@
 #include <QMessageBox>
 #include <QUrlQuery>
 #ifdef WEBENGINE
-#    include <QWebEngineView>
+#include <QWebEngineView>
 #else
-#    include <QWebView>
+#include <QWebView>
 #endif
 
 /**
@@ -52,8 +52,7 @@ class WebView : public QWebView {
 #endif
     Q_OBJECT
 public:
-
-    WebView(QWidget* parent);
+    WebView(QWidget *parent);
 
     /** Evaluates JavaScript code */
     void evaluateJS(const QString &scriptSource = "");
@@ -70,26 +69,26 @@ public slots:
 
 protected:
     /** Creates menu with Copy actions */
-    void contextMenuEvent(QContextMenuEvent* event);
+    void contextMenuEvent(QContextMenuEvent *event);
 #ifndef WEBENGINE
-    void mousePressEvent ( QMouseEvent * event );
-    void mouseReleaseEvent ( QMouseEvent * event );
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
 #endif
-    //QAction* copyAction, *copyLinkAction;
+    // QAction* copyAction, *copyLinkAction;
 
 private:
 #ifndef WEBENGINE
     void convertClipboardHtmlImages(QClipboard::Mode);
 #endif
-    bool possibleDragging;
-    bool isLoading_;
-    QStringList jsBuffer_;
-    QPoint dragStartPosition;
-    QList<QAction*> contextMenuActions_;
+    bool             possibleDragging;
+    bool             isLoading_;
+    QStringList      jsBuffer_;
+    QPoint           dragStartPosition;
+    QList<QAction *> contextMenuActions_;
 
 protected slots:
-    void linkClickedEvent(const QUrl& url);
+    void linkClickedEvent(const QUrl &url);
     void textCopiedEvent();
     void loadStartedEvent();
     void loadFinishedEvent(bool);

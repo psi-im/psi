@@ -22,21 +22,18 @@
 #include <QDir>
 #include <config.h>
 
-SlowTimer::SlowTimer(const QString &path, int line, int maxTime, const QString &message)
-    : _path(QDir::fromNativeSeparators(path))
-    , _line(line)
-    , _message(message)
-    , _maxTime(maxTime)
+SlowTimer::SlowTimer(const QString &path, int line, int maxTime, const QString &message) :
+    _path(QDir::fromNativeSeparators(path)), _line(line), _message(message), _maxTime(maxTime)
 {
     _timer.start();
 }
 
-SlowTimer::~SlowTimer ()
+SlowTimer::~SlowTimer()
 {
     int t = int(_timer.elapsed());
     if (t >= _maxTime) {
         const int stripSz = int(sizeof(__FILE__) - sizeof("src/debug.cpp"));
-        QString relPath = _path.size() > stripSz ? _path.mid(stripSz) : _path;
+        QString   relPath = _path.size() > stripSz ? _path.mid(stripSz) : _path;
         if (_message.isEmpty())
             WARNING() << "[slow]" << QString("%1:%2 %3 milliseconds").arg(relPath).arg(_line).arg(t);
         else

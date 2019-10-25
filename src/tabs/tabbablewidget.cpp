@@ -26,40 +26,36 @@
 
 #include <QTimer>
 #ifdef Q_OS_WIN
-#    include <windows.h>
+#include <windows.h>
 #endif
 
 //----------------------------------------------------------------------------
 // TabbableWidget
 //----------------------------------------------------------------------------
 
-TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
-    : AdvancedWidget<QWidget>(nullptr)
-    , state_(ActivationState::Deactivated)
-    , jid_(jid)
-    , pa_(pa)
-    , tabManager_(tabManager)
+TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
+    AdvancedWidget<QWidget>(nullptr), state_(ActivationState::Deactivated), jid_(jid), pa_(pa), tabManager_(tabManager)
 {
     if (TabbableWidget::chatsCount == 0) {
         TabbableWidget::templateMenu = new SendButtonTemplatesMenu(nullptr);
         TabbableWidget::templateMenu->setParams(false);
-        TabbableWidget::templateMenu->setStyleSheet(PsiOptions::instance()->getOption("options.ui.chat.css").toString());
+        TabbableWidget::templateMenu->setStyleSheet(
+            PsiOptions::instance()->getOption("options.ui.chat.css").toString());
     }
     ++TabbableWidget::chatsCount;
 
     stateCommitTimer_.setInterval(100);
     stateCommitTimer_.setSingleShot(true);
-    connect(&stateCommitTimer_, &QTimer::timeout, this, [this](){
+    connect(&stateCommitTimer_, &QTimer::timeout, this, [this]() {
         // the idea is to not call activated/deactivated virtual methods immediatelly
         // what makes trackbar working better in some cases
-        if(state_ == ActivationState::Activated) {
+        if (state_ == ActivationState::Activated) {
             activated();
-        }
-        else {
+        } else {
             deactivated();
         }
     });
-    //QTimer::singleShot(0, this, SLOT(ensureTabbedCorrectly()));
+    // QTimer::singleShot(0, this, SLOT(ensureTabbedCorrectly()));
 }
 
 void TabbableWidget::ensureTabbedCorrectly()
@@ -67,24 +63,23 @@ void TabbableWidget::ensureTabbedCorrectly()
     if (tabManager_->shouldBeTabbed(this)) {
         if (!isTabbed()) {
             tabManager_->getTabs(this)->addTab(this);
-        }
-        else {
+        } else {
             QTimer::singleShot(0, tabManager_->getTabs(this), SLOT(showTabWithoutActivation()));
         }
-    }
-    else {
-        if (PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toString().contains(tabManager_->tabKind(this))) {
+    } else {
+        if (PsiOptions::instance()
+                ->getOption("options.ui.tabs.tab-singles")
+                .toString()
+                .contains(tabManager_->tabKind(this))) {
             if (isTabbed()) {
                 if (getManagingTabDlg()->tabCount() > 1) {
                     getManagingTabDlg()->closeTab(this, false);
                     tabManager_->newTabs(this)->addTab(this);
                 }
-            }
-            else {
+            } else {
                 tabManager_->newTabs(this)->addTab(this);
             }
-        }
-        else {
+        } else {
             if (isTabbed()) {
                 getManagingTabDlg()->closeTab(this, false);
             }
@@ -134,24 +129,23 @@ TabbableWidget::~TabbableWidget()
     }
 }
 
-int TabbableWidget::chatsCount = 0;
-SendButtonTemplatesMenu *TabbableWidget::templateMenu = nullptr;
+int                                 TabbableWidget::chatsCount      = 0;
+SendButtonTemplatesMenu *           TabbableWidget::templateMenu    = nullptr;
 QPointer<SendButtonTemplatesEditor> TabbableWidget::templateEditDlg = nullptr;
 
-SendButtonTemplatesMenu* TabbableWidget::getTemplateMenu()
-{
-    return TabbableWidget::templateMenu;
-}
+SendButtonTemplatesMenu *TabbableWidget::getTemplateMenu() { return TabbableWidget::templateMenu; }
 
 void TabbableWidget::showTemplateEditor()
 {
     bool new_window = false;
     if (TabbableWidget::templateEditDlg.isNull()) {
-        new_window = true;
+        new_window                      = true;
         TabbableWidget::templateEditDlg = new SendButtonTemplatesEditor(nullptr);
         if (TabbableWidget::templateMenu) {
-            TabbableWidget::templateEditDlg->setStyleSheet(PsiOptions::instance()->getOption("options.ui.chat.css").toString());
-            connect(TabbableWidget::templateEditDlg.data(), SIGNAL(accepted()), TabbableWidget::templateMenu, SLOT(update()));
+            TabbableWidget::templateEditDlg->setStyleSheet(
+                PsiOptions::instance()->getOption("options.ui.chat.css").toString());
+            connect(TabbableWidget::templateEditDlg.data(), SIGNAL(accepted()), TabbableWidget::templateMenu,
+                    SLOT(update()));
         }
     }
     TabbableWidget::templateEditDlg->show();
@@ -162,48 +156,26 @@ void TabbableWidget::showTemplateEditor()
 /**
  * Checks if the dialog is in a tabset
  */
-bool TabbableWidget::isTabbed()
-{
-    return tabManager_->isChatTabbed(this);
-}
+bool TabbableWidget::isTabbed() { return tabManager_->isChatTabbed(this); }
 
-TabDlg* TabbableWidget::getManagingTabDlg()
-{
-    return tabManager_->getManagingTabs(this);
-}
+TabDlg *TabbableWidget::getManagingTabDlg() { return tabManager_->getManagingTabs(this); }
 
 /**
  * Runs any gumph necessary before hiding a tab.
  * (checking new messages, setting the autodelete, cancelling composing etc)
  * \return TabbableWidget is ready to be hidden.
  */
-bool TabbableWidget::readyToHide()
-{
-    return true;
-}
+bool TabbableWidget::readyToHide() { return true; }
 
-Jid TabbableWidget::jid() const
-{
-    return jid_;
-}
+Jid TabbableWidget::jid() const { return jid_; }
 
-void TabbableWidget::setJid(const Jid& j)
-{
-    jid_ = j;
-}
+void TabbableWidget::setJid(const Jid &j) { jid_ = j; }
 
-const QString& TabbableWidget::getDisplayName() const
-{
-    return jid_.node();
-}
+const QString &TabbableWidget::getDisplayName() const { return jid_.node(); }
 
-void TabbableWidget::deactivated()
-{
-}
+void TabbableWidget::deactivated() {}
 
-void TabbableWidget::activated()
-{
-}
+void TabbableWidget::activated() {}
 
 /**
  * Returns true if this tab is active in the active window.
@@ -216,9 +188,8 @@ bool TabbableWidget::isActiveTab()
     if (!isTabbed()) {
         return isActiveWindow() && !isMinimized();
     }
-    return getManagingTabDlg()->isActiveWindow() &&
-           getManagingTabDlg()->tabOnTop(this) &&
-          !getManagingTabDlg()->isMinimized();
+    return getManagingTabDlg()->isActiveWindow() && getManagingTabDlg()->tabOnTop(this)
+        && !getManagingTabDlg()->isMinimized();
 }
 
 void TabbableWidget::doFlash(bool on)
@@ -227,15 +198,9 @@ void TabbableWidget::doFlash(bool on)
     emit updateFlashState();
 }
 
-TabbableWidget::State TabbableWidget::state() const
-{
-    return TabbableWidget::State::None;
-}
+TabbableWidget::State TabbableWidget::state() const { return TabbableWidget::State::None; }
 
-int TabbableWidget::unreadMessageCount() const
-{
-    return 0;
-}
+int TabbableWidget::unreadMessageCount() const { return 0; }
 
 /**
  * Use this to invalidate tab state.
@@ -246,22 +211,16 @@ void TabbableWidget::invalidateTab()
     emit invalidateTabInfo();
 }
 
-PsiAccount* TabbableWidget::account() const
-{
-    return pa_;
-}
+PsiAccount *TabbableWidget::account() const { return pa_; }
 
-void TabbableWidget::changeEvent(QEvent* event)
+void TabbableWidget::changeEvent(QEvent *event)
 {
     AdvancedWidget<QWidget>::changeEvent(event);
 
-    if (event->type() == QEvent::ActivationChange ||
-        event->type() == QEvent::WindowStateChange)
-    {
+    if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
         if (isActiveTab()) {
             state_ = ActivationState::Activated;
-        }
-        else {
+        } else {
             state_ = ActivationState::Deactivated;
         }
         stateCommitTimer_.start();
@@ -273,32 +232,23 @@ void TabbableWidget::changeEvent(QEvent* event)
  */
 void TabbableWidget::setTabIcon(const QIcon &icon)
 {
-    icon_ = icon;
-    TabDlg* tabDlg = tabManager_->getManagingTabs(this);
+    icon_          = icon;
+    TabDlg *tabDlg = tabManager_->getManagingTabs(this);
     if (tabDlg) {
         tabDlg->setTabIcon(this, icon);
     }
 }
 
-const QIcon &TabbableWidget::icon() const
-{
-    return icon_;
-}
+const QIcon &TabbableWidget::icon() const { return icon_; }
 
 void TabbableWidget::hideTab()
 {
-    if(isTabbed())
+    if (isTabbed())
         getManagingTabDlg()->hideTab(this);
     else
         hide();
 }
 
-void TabbableWidget::pinTab()
-{
-    getManagingTabDlg()->pinTab(this);
-}
+void TabbableWidget::pinTab() { getManagingTabDlg()->pinTab(this); }
 
-bool TabbableWidget::isGroupChat()
-{
-    return objectName() == "GroupChatDlg";
-}
+bool TabbableWidget::isGroupChat() { return objectName() == "GroupChatDlg"; }

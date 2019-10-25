@@ -30,24 +30,23 @@
 #include <QMimeData>
 #include <QStyle>
 #ifdef WEBENGINE
-#    include <QWebEngineSettings>
-#    if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-#      include <QWebEngineContextMenuData>
-#    endif
+#include <QWebEngineSettings>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+#include <QWebEngineContextMenuData>
+#endif
 #else
-#    include <QNetworkRequest>
-#    include <QWebFrame>
-#    include <QWebSecurityOrigin>
+#include <QNetworkRequest>
+#include <QWebFrame>
+#include <QWebSecurityOrigin>
 #endif
 
-WebView::WebView(QWidget* parent) :
+WebView::WebView(QWidget *parent) :
 #ifdef WEBENGINE
     QWebEngineView(parent),
 #else
     QWebView(parent),
 #endif
-    possibleDragging(false),
-    isLoading_(false)
+    possibleDragging(false), isLoading_(false)
 {
     setAcceptDrops(false);
 
@@ -64,53 +63,55 @@ WebView::WebView(QWidget* parent) :
     settings()->setAttribute(QWebSettings::JavaEnabled, false);
     settings()->setAttribute(QWebSettings::PluginsEnabled, false);
     settings()->setAttribute(QWebSettings::LocalStorageEnabled, false);
-    settings()->setMaximumPagesInCache( 0 );
-    settings()->setObjectCacheCapacities( 0, 0, 0 );
-    settings()->clearMemoryCaches( );
+    settings()->setMaximumPagesInCache(0);
+    settings()->setObjectCacheCapacities(0, 0, 0);
+    settings()->clearMemoryCaches();
 
     page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
     connect(page()->action(QWebPage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
     connect(page()->action(QWebPage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
-    connect(page(), SIGNAL(linkClicked(const QUrl&)), this, SLOT(linkClickedEvent(const QUrl&))); // most likely we don't need this at all
+    connect(page(), SIGNAL(linkClicked(const QUrl &)), this,
+            SLOT(linkClickedEvent(const QUrl &))); // most likely we don't need this at all
 #endif
     connect(page(), SIGNAL(loadStarted()), this, SLOT(loadStartedEvent()));
     connect(page(), SIGNAL(loadFinished(bool)), this, SLOT(loadFinishedEvent(bool)));
 }
 
-void WebView::linkClickedEvent(const QUrl& url)
+void WebView::linkClickedEvent(const QUrl &url)
 {
-    //qDebug()<<"clicked link: "<<url.toString();
+    // qDebug()<<"clicked link: "<<url.toString();
     URLObject::getInstance()->popupAction(url.toEncoded());
 }
 
 void WebView::loadStartedEvent()
 {
-    //qDebug("page load started");
+    // qDebug("page load started");
     isLoading_ = true;
 }
 
 void WebView::loadFinishedEvent(bool success)
 {
-    //qDebug("page load finished");
+    // qDebug("page load finished");
     if (!success) {
         qDebug("webview page load failed");
     }
     isLoading_ = false;
 }
 
-void WebView::contextMenuEvent(QContextMenuEvent* event)
+void WebView::contextMenuEvent(QContextMenuEvent *event)
 {
-    if (isLoading_) return;
+    if (isLoading_)
+        return;
 #ifdef WEBENGINE
-# if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     QWebEngineContextMenuData r = page()->contextMenuData();
-# else
+#else
     struct CMData {
         QUrl linkUrl() { return QUrl(); } // just a stub. TODO invent something
     };
     CMData r;
-# endif
+#endif
 #else
     QWebHitTestResult r = page()->mainFrame()->hitTestContent(event->pos());
 #endif
@@ -122,13 +123,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
             return;
         }
         menu = URLObject::getInstance()->createPopupMenu(r.linkUrl().toEncoded());
-        //menu->addAction(pageAction(QWebPage::CopyLinkToClipboard));
+        // menu->addAction(pageAction(QWebPage::CopyLinkToClipboard));
     } else {
         menu = new QMenu(this);
         if (!page()->selectedText().isEmpty()) {
 #ifdef WEBENGINE
             menu->addAction(pageAction(QWebEnginePage::Copy));
-            for (auto act: contextMenuActions_) {
+            for (auto act : contextMenuActions_) {
                 menu->addAction(act);
             }
         } else {
@@ -142,7 +143,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
     menu->addAction(pageAction(QWebEnginePage::Reload));
 #else
             menu->addAction(pageAction(QWebPage::Copy));
-            for (auto act: contextMenuActions_) {
+            for (auto act : contextMenuActions_) {
                 menu->addAction(act);
             }
         } else {
@@ -163,26 +164,28 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 }
 
 #ifndef WEBENGINE
-void WebView::mousePressEvent ( QMouseEvent * event )
+void WebView::mousePressEvent(QMouseEvent *event)
 {
-    if (isLoading_) return;
+    if (isLoading_)
+        return;
     QWebView::mousePressEvent(event);
     if (event->buttons() & Qt::LeftButton) {
-        QWebHitTestResult r = page()->mainFrame()->hitTestContent(event->pos());
-        QSize cs = page()->mainFrame()->contentsSize();
-        QSize vs = page()->viewportSize();
-        possibleDragging = r.isContentSelected() &&
-            QRect(QPoint(0,0),
-                  cs - QSize(cs.width()>vs.width()?1:0, cs.height()>vs.height()?1:0) *
-                    style()->pixelMetric(QStyle::PM_ScrollBarExtent)
-                 ).contains(event->pos());
+        QWebHitTestResult r  = page()->mainFrame()->hitTestContent(event->pos());
+        QSize             cs = page()->mainFrame()->contentsSize();
+        QSize             vs = page()->viewportSize();
+        possibleDragging     = r.isContentSelected()
+            && QRect(QPoint(0, 0),
+                     cs
+                         - QSize(cs.width() > vs.width() ? 1 : 0, cs.height() > vs.height() ? 1 : 0)
+                             * style()->pixelMetric(QStyle::PM_ScrollBarExtent))
+                   .contains(event->pos());
         dragStartPosition = event->pos();
     } else {
         possibleDragging = false;
     }
 }
 
-void WebView::mouseReleaseEvent ( QMouseEvent * event )
+void WebView::mouseReleaseEvent(QMouseEvent *event)
 {
     QWebView::mouseReleaseEvent(event);
     possibleDragging = false;
@@ -194,17 +197,16 @@ void WebView::mouseReleaseEvent ( QMouseEvent * event )
 }
 
 void WebView::mouseMoveEvent(QMouseEvent *event)
- {
-    //QWebView::mouseMoveEvent(event);
+{
+    // QWebView::mouseMoveEvent(event);
     if (!possibleDragging || !(event->buttons() & Qt::LeftButton)) {
         QWebView::mouseMoveEvent(event);
         return;
     }
-    if ((event->pos() - dragStartPosition).manhattanLength()
-        < QApplication::startDragDistance())
+    if ((event->pos() - dragStartPosition).manhattanLength() < QApplication::startDragDistance())
         return;
 
-    QDrag *drag = new QDrag(this);
+    QDrag *    drag     = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
 
     QString html = TextUtil::img2title(selectedHtml());
@@ -217,9 +219,9 @@ void WebView::mouseMoveEvent(QMouseEvent *event)
 
 void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 {
-    QClipboard *cb = QApplication::clipboard();
-    QString html = TextUtil::img2title(selectedHtml());
-    QMimeData *data = new QMimeData;
+    QClipboard *cb   = QApplication::clipboard();
+    QString     html = TextUtil::img2title(selectedHtml());
+    QMimeData * data = new QMimeData;
     data->setHtml(html);
     data->setText(TextUtil::rich2plain(html, false));
     cb->setMimeData(data, mode);
@@ -228,7 +230,7 @@ void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 
 void WebView::evaluateJS(const QString &scriptSource)
 {
-    //qDebug()<< "EVALUATE: " << (scriptSource.size()>200?scriptSource.mid(0,200)+"...":scriptSource);
+    // qDebug()<< "EVALUATE: " << (scriptSource.size()>200?scriptSource.mid(0,200)+"...":scriptSource);
 #ifdef WEBENGINE
     page()->runJavaScript(scriptSource);
 #else
@@ -236,16 +238,10 @@ void WebView::evaluateJS(const QString &scriptSource)
 #endif
 }
 
-void WebView::addContextMenuAction(QAction *act)
-{
-    contextMenuActions_.append(act);
-}
+void WebView::addContextMenuAction(QAction *act) { contextMenuActions_.append(act); }
 
 #ifndef WEBENGINE
-QString WebView::selectedText()
-{
-    return TextUtil::rich2plain(TextUtil::img2title(selectedHtml()));
-}
+QString WebView::selectedText() { return TextUtil::rich2plain(TextUtil::img2title(selectedHtml())); }
 #endif
 
 void WebView::copySelected()

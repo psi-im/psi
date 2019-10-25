@@ -28,20 +28,17 @@
 // somewhere too.
 //#define HAVE_MODELTEST
 #ifdef HAVE_MODELTEST
-#    include <modeltest.h>
+#include <modeltest.h>
 #endif
 
-OptionsTreeModel::OptionsTreeModel(OptionsTree* tree, QObject* parent)
-        : QAbstractItemModel(parent),
-        tree_(tree),
-        flat_(false),
-        nextIdx(0)
+OptionsTreeModel::OptionsTreeModel(OptionsTree *tree, QObject *parent) :
+    QAbstractItemModel(parent), tree_(tree), flat_(false), nextIdx(0)
 {
-    connect(tree_, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
-    connect(tree_, SIGNAL(optionAboutToBeInserted(const QString&)), SLOT(optionAboutToBeInserted(const QString&)));
-    connect(tree_, SIGNAL(optionInserted(const QString&)), SLOT(optionInserted(const QString&)));
-    connect(tree_, SIGNAL(optionAboutToBeRemoved(const QString&)), SLOT(optionAboutToBeRemoved(const QString&)));
-    connect(tree_, SIGNAL(optionRemoved(const QString&)), SLOT(optionRemoved(const QString&)));
+    connect(tree_, SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
+    connect(tree_, SIGNAL(optionAboutToBeInserted(const QString &)), SLOT(optionAboutToBeInserted(const QString &)));
+    connect(tree_, SIGNAL(optionInserted(const QString &)), SLOT(optionInserted(const QString &)));
+    connect(tree_, SIGNAL(optionAboutToBeRemoved(const QString &)), SLOT(optionAboutToBeRemoved(const QString &)));
+    connect(tree_, SIGNAL(optionRemoved(const QString &)), SLOT(optionRemoved(const QString &)));
 
 #ifdef HAVE_MODELTEST
     new ModelTest(this, this);
@@ -67,7 +64,7 @@ bool OptionsTreeModel::setFlat(bool b)
 QString OptionsTreeModel::getParentName(const QString &option) const
 {
     QString parentname;
-    int dot_index = option.lastIndexOf('.');
+    int     dot_index = option.lastIndexOf('.');
     if (dot_index != -1) {
         parentname = option.left(dot_index);
     }
@@ -87,14 +84,14 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
     }
 
     if (flat_) {
-        QStringList options = tree_->getChildOptionNames("",false,false);
+        QStringList options = tree_->getChildOptionNames("", false, false);
         options.sort();
         int row = options.indexOf(option);
         return createIndex(row, sec, quintptr(nameToIndex(options.at(row))));
     } else {
         QString parentname(getParentName(option));
 
-        QStringList children = tree_->getChildOptionNames(parentname,true,true);
+        QStringList children = tree_->getChildOptionNames(parentname, true, true);
         children.sort();
         int row = children.indexOf(option);
 
@@ -102,7 +99,7 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
     }
 }
 
-Qt::ItemFlags OptionsTreeModel::flags(const QModelIndex& index) const
+Qt::ItemFlags OptionsTreeModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid()) {
         // Root item
@@ -114,32 +111,29 @@ Qt::ItemFlags OptionsTreeModel::flags(const QModelIndex& index) const
     return f;
 }
 
-int OptionsTreeModel::rowCount(const QModelIndex& parent) const
+int OptionsTreeModel::rowCount(const QModelIndex &parent) const
 {
     if (Section(parent.column()) == Name || !parent.isValid()) {
         if (flat_) {
-            return (parent.isValid() ? 0 : tree_->getChildOptionNames("",false,false).count());
+            return (parent.isValid() ? 0 : tree_->getChildOptionNames("", false, false).count());
         } else {
             QString option;
             if (parent.isValid())
                 option = indexToOptionName(parent);
-            return tree_->getChildOptionNames(option,true,true).count();
+            return tree_->getChildOptionNames(option, true, true).count();
         }
     }
     return 0;
 }
 
-int OptionsTreeModel::columnCount(const QModelIndex&) const
-{
-    return 4;
-}
+int OptionsTreeModel::columnCount(const QModelIndex &) const { return 4; }
 
-QVariant OptionsTreeModel::data(const QModelIndex& index, int role) const
+QVariant OptionsTreeModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
         return QVariant();
 
-    QString option = indexToOptionName(index);
+    QString option  = indexToOptionName(index);
     Section section = Section(index.column());
     if ((role == Qt::DisplayRole) || (role == Qt::EditRole)) {
         if (section == Name) {
@@ -149,14 +143,13 @@ QVariant OptionsTreeModel::data(const QModelIndex& index, int role) const
                 int dot_index = option.lastIndexOf('.');
                 return option.mid(dot_index + 1);
             }
-        }
-        else if (section == Comment) {
+        } else if (section == Comment) {
             return tree_->getComment(option);
         } else if (!tree_->isInternalNode(option)) {
             if (section == Type)
                 return tree_->getOption(option).typeName();
             else if (section == Value)
-                return tree_->getOption(option);//.toString();
+                return tree_->getOption(option); //.toString();
         }
     } else if (role == Qt::ToolTipRole) {
         if (!tree_->isInternalNode(option)) {
@@ -173,40 +166,44 @@ QVariant OptionsTreeModel::headerData(int s, Qt::Orientation, int role) const
 
     Section section = Section(s);
     switch (section) {
-        case Name: return tr("Name");
-        case Type: return QString(tr("Type"));
-        case Value: return QString(tr("Value"));
-        case Comment: return QString(tr("Comment"));
-        default:
-            return QVariant();
+    case Name:
+        return tr("Name");
+    case Type:
+        return QString(tr("Type"));
+    case Value:
+        return QString(tr("Value"));
+    case Comment:
+        return QString(tr("Comment"));
+    default:
+        return QVariant();
     }
 }
 
-QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex & parent) const
+QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if  (column < 0  || column >= SectionBound || row < 0) {
+    if (column < 0 || column >= SectionBound || row < 0) {
         return QModelIndex();
     }
-    int id = 0;
+    int         id = 0;
     QStringList options;
     if (flat_) {
-        options = tree_->getChildOptionNames("",false,false);
+        options = tree_->getChildOptionNames("", false, false);
     } else {
         QString parent_option;
         if (parent.isValid()) {
             parent_option = indexToOptionName(parent);
         }
-        options = tree_->getChildOptionNames(parent_option,true,true);
+        options = tree_->getChildOptionNames(parent_option, true, true);
     }
     if (row >= options.size()) {
         return QModelIndex();
     }
     options.sort();
     id = nameToIndex(options.at(row));
-    return createIndex(row,column,quintptr(id));
+    return createIndex(row, column, quintptr(id));
 }
 
-QModelIndex OptionsTreeModel::parent(const QModelIndex& modelindex) const
+QModelIndex OptionsTreeModel::parent(const QModelIndex &modelindex) const
 {
     if (!modelindex.isValid() || flat_)
         return QModelIndex();
@@ -218,14 +215,14 @@ QModelIndex OptionsTreeModel::parent(const QModelIndex& modelindex) const
     return index(parent_option);
 }
 
-bool OptionsTreeModel::setData ( const QModelIndex & index, const QVariant & value, int role)
+bool OptionsTreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     QString option = indexToOptionName(index);
     if ((role != Qt::EditRole) || (Section(index.column()) != Value) || internalNode(option)) {
         return false;
     }
     QVariant current = tree_->getOption(option);
-    QVariant newval = value;
+    QVariant newval  = value;
     if (!newval.canConvert(int(current.type()))) {
         qWarning("Sorry don't know how to do that!");
         return false;
@@ -235,7 +232,7 @@ bool OptionsTreeModel::setData ( const QModelIndex & index, const QVariant & val
     return true;
 }
 
-void OptionsTreeModel::optionAboutToBeInserted(const QString& option)
+void OptionsTreeModel::optionAboutToBeInserted(const QString &option)
 {
     QString parentname(getParentName(option));
 
@@ -243,28 +240,27 @@ void OptionsTreeModel::optionAboutToBeInserted(const QString& option)
 
     QModelIndex parent(index(parentname));
 
-    QStringList children = tree_->getChildOptionNames(parentname,true,true);
+    QStringList children = tree_->getChildOptionNames(parentname, true, true);
     children << option;
     children.sort();
     int row = children.indexOf(option);
 
     emit beginInsertRows(parent, row, row);
-
 }
 
-void OptionsTreeModel::optionInserted(const QString& option)
+void OptionsTreeModel::optionInserted(const QString &option)
 {
     Q_UNUSED(option)
-    endInsertRows ();
+    endInsertRows();
 }
 
-void OptionsTreeModel::optionAboutToBeRemoved(const QString& option)
+void OptionsTreeModel::optionAboutToBeRemoved(const QString &option)
 {
     QString parentname(getParentName(option));
 
     QModelIndex parent(index(parentname));
 
-    QStringList children = tree_->getChildOptionNames(parentname,true,true);
+    QStringList children = tree_->getChildOptionNames(parentname, true, true);
     children.sort();
     int row = children.indexOf(option);
 
@@ -275,30 +271,28 @@ void OptionsTreeModel::optionAboutToBeRemoved(const QString& option)
         realRemove.push(false);
     }
 }
-void OptionsTreeModel::optionRemoved(const QString& option)
+void OptionsTreeModel::optionRemoved(const QString &option)
 {
     Q_UNUSED(option)
-    if (realRemove.pop()) endRemoveRows ();
+    if (realRemove.pop())
+        endRemoveRows();
 }
 
-void OptionsTreeModel::optionChanged(const QString& option)
+void OptionsTreeModel::optionChanged(const QString &option)
 {
     // only need to notify about options the view can possibly know anything about.
     if (nameMap.contains(option)) {
         QModelIndex modelindex(index(option, Value));
-        emit dataChanged(modelindex, modelindex);
+        emit        dataChanged(modelindex, modelindex);
     }
 }
-bool OptionsTreeModel::internalNode(QString option) const
-{
-    return tree_->isInternalNode(option);
-}
+bool OptionsTreeModel::internalNode(QString option) const { return tree_->isInternalNode(option); }
 
 int OptionsTreeModel::nameToIndex(QString name) const
 {
     if (!nameMap.contains(name)) {
         int idx = nextIdx++;
-        //qDebug() << "adding " << name << " as " << idx;
+        // qDebug() << "adding " << name << " as " << idx;
         nameMap[name] = idx;
         indexMap[idx] = name;
         return idx;
@@ -307,7 +301,4 @@ int OptionsTreeModel::nameToIndex(QString name) const
     }
 }
 
-QString OptionsTreeModel::indexToOptionName(QModelIndex idx) const
-{
-    return indexMap[int(idx.internalId())];
-}
+QString OptionsTreeModel::indexToOptionName(QModelIndex idx) const { return indexMap[int(idx.internalId())]; }

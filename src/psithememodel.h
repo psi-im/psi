@@ -27,39 +27,32 @@
 class PsiThemeProvider;
 class Theme;
 
-struct ThemeItemInfo
-{
-    QString id;
-    QString title;
-    QString version;
-    QString description;
+struct ThemeItemInfo {
+    QString     id;
+    QString     title;
+    QString     version;
+    QString     description;
     QStringList authors;
-    QString creation;
-    QString homeUrl;
+    QString     creation;
+    QString     homeUrl;
 
     bool hasPreview;
-    bool isValid = false;
+    bool isValid   = false;
     bool isCurrent = false;
 };
 
-class PsiThemeModel : public QAbstractListModel
-{
+class PsiThemeModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
-    enum ThemeRoles {
-        IdRole = Qt::UserRole + 1,
-        HasPreviewRole,
-        TitleRole,
-        IsCurrent
-    };
+    enum ThemeRoles { IdRole = Qt::UserRole + 1, HasPreviewRole, TitleRole, IsCurrent };
 
     PsiThemeModel(PsiThemeProvider *provider, QObject *parent);
     ~PsiThemeModel();
 
-    int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
-    QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
-    int themeRow(const QString &id);
+    int      rowCount(const QModelIndex &parent = QModelIndex()) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    int      themeRow(const QString &id);
 
     bool setData(const QModelIndex &index, const QVariant &value, int role);
 
@@ -72,11 +65,11 @@ private slots:
 
 private:
     struct Loader;
-    Loader *loader = nullptr;
-    PsiThemeProvider *provider = nullptr;
+    Loader *                      loader   = nullptr;
+    PsiThemeProvider *            provider = nullptr;
     QFutureWatcher<ThemeItemInfo> themeWatcher;
-    QFuture<ThemeItemInfo> themesFuture;
-    QList<ThemeItemInfo> themesInfo;
+    QFuture<ThemeItemInfo>        themesFuture;
+    QList<ThemeItemInfo>          themesInfo;
 };
 
 #endif // PSITHEMEMODEL_H

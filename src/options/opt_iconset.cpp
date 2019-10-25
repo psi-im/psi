@@ -31,62 +31,51 @@
 #include <QThread>
 #include <QTreeWidget>
 
-class IconsetEmoUI : public QWidget, public Ui::IconsetEmo
-{
+class IconsetEmoUI : public QWidget, public Ui::IconsetEmo {
 public:
     IconsetEmoUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetMoodUI : public QWidget, public Ui::IconsetMood
-{
+class IconsetMoodUI : public QWidget, public Ui::IconsetMood {
 public:
     IconsetMoodUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetClientUI : public QWidget, public Ui::IconsetClient
-{
+class IconsetClientUI : public QWidget, public Ui::IconsetClient {
 public:
     IconsetClientUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetActivityUI : public QWidget, public Ui::IconsetActivity
-{
+class IconsetActivityUI : public QWidget, public Ui::IconsetActivity {
 public:
     IconsetActivityUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetSystemUI : public QWidget, public Ui::IconsetSystem
-{
+class IconsetSystemUI : public QWidget, public Ui::IconsetSystem {
 public:
     IconsetSystemUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetAffiliationUI : public QWidget, public Ui::IconsetAffiliation
-{
-  public:
+class IconsetAffiliationUI : public QWidget, public Ui::IconsetAffiliation {
+public:
     IconsetAffiliationUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetRosterUI : public QWidget, public Ui::IconsetRoster
-{
+class IconsetRosterUI : public QWidget, public Ui::IconsetRoster {
 public:
     IconsetRosterUI() : QWidget() { setupUi(this); }
 };
 
-class IconsetDetailsDlg : public QDialog, public Ui::IconsetDetailsDlg
-{
+class IconsetDetailsDlg : public QDialog, public Ui::IconsetDetailsDlg {
 public:
-    IconsetDetailsDlg(PsiCon *psicon, QWidget* parent, const char* name, bool modal)
-        : QDialog(parent)
-        , psi(psicon)
+    IconsetDetailsDlg(PsiCon *psicon, QWidget *parent, const char *name, bool modal) : QDialog(parent), psi(psicon)
     {
         setAttribute(Qt::WA_DeleteOnClose);
         setupUi(this);
 
         psi->dialogRegister(this);
 
-        QStringList bold_labels({"lb_name2", "lb_version2", "lb_date2",
-                                 "lb_home2", "lb_desc2", "lb_authors"});
+        QStringList bold_labels({ "lb_name2", "lb_version2", "lb_date2", "lb_home2", "lb_desc2", "lb_authors" });
 
         QList<QLabel *> labels = findChildren<QLabel *>();
         foreach (QLabel *l, labels) {
@@ -101,55 +90,49 @@ public:
         setModal(modal);
     }
 
-    ~IconsetDetailsDlg()
-    {
-        psi->dialogUnregister(this);
-    }
+    ~IconsetDetailsDlg() { psi->dialogUnregister(this); }
 
-    void setIconset( const Iconset &is ) {
+    void setIconset(const Iconset &is)
+    {
         setWindowTitle(windowTitle().arg(is.name()));
 
         lb_name->setText(is.name());
         lb_version->setText(is.version());
 
-        if ( is.description().isEmpty() ) {
+        if (is.description().isEmpty()) {
             lb_desc->hide();
             lb_desc2->hide();
-        }
-        else
+        } else
             lb_desc->setText(is.description());
 
-        if ( !is.homeUrl().isEmpty() ) {
+        if (!is.homeUrl().isEmpty()) {
             lb_home->setTitle(is.homeUrl());
             lb_home->setUrl(is.homeUrl());
-        }
-        else {
+        } else {
             lb_home->hide();
             lb_home2->hide();
         }
 
-        if ( is.creation().isEmpty() ) {
+        if (is.creation().isEmpty()) {
             lb_date->hide();
             lb_date2->hide();
-        }
-        else {
+        } else {
             QDate date = QDate::fromString(is.creation(), Qt::ISODate);
             lb_date->setText(date.toString(Qt::LocalDate));
         }
 
-        if ( is.authors().count() == 0 ) {
+        if (is.authors().count() == 0) {
             ptv_authors->hide();
             lb_authors->hide();
-        }
-        else {
-            QString authors;
+        } else {
+            QString                    authors;
             QStringList::ConstIterator it = is.authors().begin();
-            for ( ; it != is.authors().end(); ++it) {
-                if ( !authors.isEmpty() )
+            for (; it != is.authors().end(); ++it) {
+                if (!authors.isEmpty())
                     authors += "<br><br>";
                 authors += *it;
             }
-            ptv_authors->setText( "<qt><nobr>" + authors + "</nobr></qt>" );
+            ptv_authors->setText("<qt><nobr>" + authors + "</nobr></qt>");
         }
 
         isd_iconset->setIconset(is);
@@ -172,14 +155,12 @@ static int countIconsets(QString addDir, QStringList excludeList)
 {
     int count = 0;
 
-    foreach (const QString &dataDir,  ApplicationInfo::dataDirs()) {
-        QDir dir (dataDir + "/iconsets" + addDir);
+    foreach (const QString &dataDir, ApplicationInfo::dataDirs()) {
+        QDir dir(dataDir + "/iconsets" + addDir);
 
-        foreach (const QFileInfo &fi,
-                 dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries))
-        {
+        foreach (const QFileInfo &fi, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
             QString iconsetId = fi.absoluteFilePath().section('/', -2);
-            if ( excludeList.contains(iconsetId) || !Iconset::isSourceAllowed(fi))
+            if (excludeList.contains(iconsetId) || !Iconset::isSourceAllowed(fi))
                 continue;
 
             count++;
@@ -194,15 +175,9 @@ static int countIconsets(QString addDir, QStringList excludeList)
 // IconsetLoadEvent
 //----------------------------------------------------------------------------
 
-class IconsetLoadEvent : public QEvent
-{
+class IconsetLoadEvent : public QEvent {
 public:
-    IconsetLoadEvent(IconsetLoadThread *par, Iconset *i)
-        : QEvent(QEvent::User)
-        , p(par)
-        , is(i)
-    {
-    }
+    IconsetLoadEvent(IconsetLoadThread *par, Iconset *i) : QEvent(QEvent::User), p(par), is(i) {}
 
     IconsetLoadThread *thread() const { return p; }
 
@@ -211,34 +186,25 @@ public:
 
 private:
     IconsetLoadThread *p;
-    Iconset *is;
+    Iconset *          is;
 };
 
 //----------------------------------------------------------------------------
 // IconsetFinishEvent
 //----------------------------------------------------------------------------
 
-class IconsetFinishEvent : public QEvent
-{
+class IconsetFinishEvent : public QEvent {
 public:
-    IconsetFinishEvent()
-        : QEvent( (QEvent::Type)(QEvent::User + 1) )
-    {
-    }
+    IconsetFinishEvent() : QEvent((QEvent::Type)(QEvent::User + 1)) {}
 };
 
 //----------------------------------------------------------------------------
 // IconsetLoadThreadDestroyEvent
 //----------------------------------------------------------------------------
 
-class IconsetLoadThreadDestroyEvent : public QEvent
-{
+class IconsetLoadThreadDestroyEvent : public QEvent {
 public:
-    IconsetLoadThreadDestroyEvent(QThread *t)
-        : QEvent( (QEvent::Type)(QEvent::User + 2) )
-        , thread(t)
-    {
-    }
+    IconsetLoadThreadDestroyEvent(QThread *t) : QEvent((QEvent::Type)(QEvent::User + 2)), thread(t) {}
 
     ~IconsetLoadThreadDestroyEvent()
     {
@@ -254,8 +220,7 @@ private:
 // IconsetLoadThread
 //----------------------------------------------------------------------------
 
-class IconsetLoadThread : public QThread
-{
+class IconsetLoadThread : public QThread {
 public:
     IconsetLoadThread(QObject *parent, QString addPath);
     void excludeIconsets(QStringList);
@@ -267,22 +232,14 @@ protected:
     void postEvent(QEvent *);
 
 private:
-    QObject *parent;
-    QString addPath;
+    QObject *   parent;
+    QString     addPath;
     QStringList excludeList;
 };
 
-IconsetLoadThread::IconsetLoadThread(QObject *p, QString path)
-    : cancelled(false)
-    , parent(p)
-    , addPath(path)
-{
-}
+IconsetLoadThread::IconsetLoadThread(QObject *p, QString path) : cancelled(false), parent(p), addPath(path) {}
 
-void IconsetLoadThread::excludeIconsets(QStringList l)
-{
-    excludeList += l;
-}
+void IconsetLoadThread::excludeIconsets(QStringList l) { excludeList += l; }
 
 static QMutex threadCancelled, threadMutex;
 
@@ -292,7 +249,7 @@ void IconsetLoadThread::postEvent(QEvent *e)
     bool cancel = cancelled;
     threadCancelled.unlock();
 
-    if ( cancel ) {
+    if (cancel) {
         delete e;
         return;
     }
@@ -309,9 +266,7 @@ void IconsetLoadThread::run()
     QStringList failedList;
     foreach (const QString &dataDir, dirs) {
         QDir dir(dataDir + "/iconsets" + addPath);
-        foreach (const QFileInfo &iconsetFI,
-                 dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries))
-        {
+        foreach (const QFileInfo &iconsetFI, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
             if (!Iconset::isSourceAllowed(iconsetFI))
                 continue;
 
@@ -319,7 +274,7 @@ void IconsetLoadThread::run()
             bool cancel = cancelled;
             threadCancelled.unlock();
 
-            if ( cancel )
+            if (cancel)
                 goto getout;
 
             QString iconsetId = iconsetFI.absoluteFilePath().section('/', -2);
@@ -328,21 +283,20 @@ void IconsetLoadThread::run()
 
             Iconset *is = new Iconset;
 
-            if ( is->load (iconsetFI.absoluteFilePath()) ) {
+            if (is->load(iconsetFI.absoluteFilePath())) {
                 failedList.removeOne(is->id());
                 excludeList << is->id();
 
                 // don't forget to delete iconset in ::event()!
                 postEvent(new IconsetLoadEvent(this, is));
-            }
-            else {
+            } else {
                 delete is;
                 failedList << iconsetId;
             }
         }
     }
 
-    for(int i = 0; i < failedList.size(); i++) {
+    for (int i = 0; i < failedList.size(); i++) {
         postEvent(new IconsetLoadEvent(this, nullptr));
     }
 
@@ -355,24 +309,20 @@ getout:
 // OptionsTabIconsetSystem
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetSystem::OptionsTabIconsetSystem(QObject *parent)
-    : OptionsTab(parent, "iconset_system", "", tr("System Icons"), tr("Select the system iconset"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetSystem::OptionsTabIconsetSystem(QObject *parent) :
+    OptionsTab(parent, "iconset_system", "", tr("System Icons"), tr("Select the system iconset")), w(nullptr),
+    thread(nullptr)
 {
 }
 
-OptionsTabIconsetSystem::~OptionsTabIconsetSystem()
-{
-    cancelThread();
-}
+OptionsTabIconsetSystem::~OptionsTabIconsetSystem() { cancelThread(); }
 
 QWidget *OptionsTabIconsetSystem::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetSystemUI;
+    w                  = new IconsetSystemUI;
     IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
 
     connect(d->pb_sysDetails, SIGNAL(clicked()), SLOT(previewIconset()));
@@ -384,20 +334,20 @@ QWidget *OptionsTabIconsetSystem::widget()
 
 void OptionsTabIconsetSystem::applyOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
-    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
-    const Iconset *is = d->iss_system->iconset();
-    if ( is ) {
-        QFileInfo fi( is->fileName() );
+    IconsetSystemUI *d  = static_cast<IconsetSystemUI *>(w);
+    const Iconset *  is = d->iss_system->iconset();
+    if (is) {
+        QFileInfo fi(is->fileName());
         PsiOptions::instance()->setOption("options.iconsets.system", fi.fileName());
     }
 }
 
 void OptionsTabIconsetSystem::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
@@ -410,9 +360,9 @@ void OptionsTabIconsetSystem::restoreOptions()
     d->pb_sysDetails->setEnabled(false);
 
     d->progress->show();
-    d->progress->setValue( 0 );
+    d->progress->setValue(0);
 
-    numIconsets = countIconsets("/system", loaded);
+    numIconsets    = countIconsets("/system", loaded);
     iconsetsLoaded = 0;
 
     cancelThread();
@@ -424,35 +374,34 @@ void OptionsTabIconsetSystem::restoreOptions()
 bool OptionsTabIconsetSystem::event(QEvent *e)
 {
     IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int((float(100 * ++iconsetsLoaded / numIconsets)) ));
+        d->progress->setValue(int((float(100 * ++iconsetsLoaded / numIconsets))));
 
         Iconset *i = le->iconset();
-        if ( i ) {
+        if (i) {
             PsiIconset::instance()->stripFirstAnimFrame(i);
             d->iss_system->insert(*i);
 
-            QFileInfo fi( i->fileName() );
-            if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.system").toString() )
+            QFileInfo fi(i->fileName());
+            if (fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.system").toString())
                 d->iss_system->lastItem()->setSelected(true);
 
             delete i;
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         d->iss_system->setEnabled(true);
         d->pb_sysDetails->setEnabled(true);
 
-        connect(d->iss_system, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_system, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SIGNAL(dataChanged()));
 
         d->progress->hide();
 
@@ -467,8 +416,8 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 
 void OptionsTabIconsetSystem::previewIconset()
 {
-    IconsetSystemUI *d = static_cast<IconsetSystemUI *>(w);
-    const Iconset *is = d->iss_system->iconset();
+    IconsetSystemUI *d  = static_cast<IconsetSystemUI *>(w);
+    const Iconset *  is = d->iss_system->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -476,13 +425,13 @@ void OptionsTabIconsetSystem::previewIconset()
 
 void OptionsTabIconsetSystem::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetSystem::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();
@@ -495,24 +444,20 @@ void OptionsTabIconsetSystem::cancelThread()
 // OptionsTabIconsetEmoticons
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetEmoticons::OptionsTabIconsetEmoticons(QObject *parent)
-    : OptionsTab(parent, "iconset_emoticons", "", tr("Emoticons"), tr("Select your emoticon iconsets"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetEmoticons::OptionsTabIconsetEmoticons(QObject *parent) :
+    OptionsTab(parent, "iconset_emoticons", "", tr("Emoticons"), tr("Select your emoticon iconsets")), w(nullptr),
+    thread(nullptr)
 {
 }
 
-OptionsTabIconsetEmoticons::~OptionsTabIconsetEmoticons()
-{
-    cancelThread();
-}
+OptionsTabIconsetEmoticons::~OptionsTabIconsetEmoticons() { cancelThread(); }
 
 QWidget *OptionsTabIconsetEmoticons::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetEmoUI;
+    w               = new IconsetEmoUI;
     IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
 
     connect(d->pb_emoUp, SIGNAL(clicked()), d->iss_emoticons, SLOT(moveItemUp()));
@@ -523,8 +468,8 @@ QWidget *OptionsTabIconsetEmoticons::widget()
 
     d->ck_useEmoticons->setWhatsThis(
         tr("<P>Emoticons are short sequences of characters that are used to convey an emotion or idea.</P>"
-        "<P>Enable this option if you want Psi to replace common emoticons with a graphical image.</P>"
-        "<P>For example, <B>:-)</B> would be replaced by <icon name=\"psi/smile\"></P>"));
+           "<P>Enable this option if you want Psi to replace common emoticons with a graphical image.</P>"
+           "<P>For example, <B>:-)</B> would be replaced by <icon name=\"psi/smile\"></P>"));
 
     // TODO: add QWhatsThis
 
@@ -533,7 +478,7 @@ QWidget *OptionsTabIconsetEmoticons::widget()
 
 void OptionsTabIconsetEmoticons::applyOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
@@ -543,10 +488,10 @@ void OptionsTabIconsetEmoticons::applyOptions()
     for (int row = 0; row < d->iss_emoticons->count(); row++) {
         IconWidgetItem *item = static_cast<IconWidgetItem *>(d->iss_emoticons->item(row));
 
-        if ( item->isSelected() ) {
+        if (item->isSelected()) {
             const Iconset *is = item->iconset();
-            if ( is ) {
-                QFileInfo fi( is->fileName() );
+            if (is) {
+                QFileInfo fi(is->fileName());
                 list << fi.fileName();
             }
         }
@@ -556,80 +501,78 @@ void OptionsTabIconsetEmoticons::applyOptions()
 
 void OptionsTabIconsetEmoticons::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
-    d->ck_useEmoticons->setChecked( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() );
+    d->ck_useEmoticons->setChecked(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
 
     // fill in the iconset view
     d->iss_emoticons->clear();
 
+    { foreach (Iconset *is, PsiIconset::instance()->emoticons){ d->iss_emoticons->insert(*is);
+    d->iss_emoticons->lastItem()->setSelected(true);
+}
+}
+
+{
+    QStringList loaded;
     {
-        foreach(Iconset* is, PsiIconset::instance()->emoticons) {
-            d->iss_emoticons->insert(*is);
-            d->iss_emoticons->lastItem()->setSelected(true);
+        foreach (Iconset *tmp, PsiIconset::instance()->emoticons) {
+            loaded << tmp->id();
         }
     }
 
-    {
-        QStringList loaded;
-        {
-            foreach(Iconset* tmp, PsiIconset::instance()->emoticons) {
-                loaded << tmp->id();
-            }
-        }
+    d->setCursor(Qt::WaitCursor);
 
-        d->setCursor(Qt::WaitCursor);
+    d->ck_useEmoticons->setEnabled(false);
+    d->groupBox9->setEnabled(false);
 
-        d->ck_useEmoticons->setEnabled(false);
-        d->groupBox9->setEnabled(false);
+    d->progress->show();
+    d->progress->setValue(0);
 
-        d->progress->show();
-        d->progress->setValue( 0 );
+    numIconsets    = countIconsets("/emoticons", loaded);
+    iconsetsLoaded = 0;
 
-        numIconsets = countIconsets("/emoticons", loaded);
-        iconsetsLoaded = 0;
+    cancelThread();
 
-        cancelThread();
-
-        thread = new IconsetLoadThread(this, "/emoticons");
-        thread->excludeIconsets(loaded);
-        thread->start();
-    }
+    thread = new IconsetLoadThread(this, "/emoticons");
+    thread->excludeIconsets(loaded);
+    thread->start();
+}
 }
 
 bool OptionsTabIconsetEmoticons::event(QEvent *e)
 {
     IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
+        d->progress->setValue(int(float(100 * ++iconsetsLoaded / numIconsets)));
 
         Iconset *is = le->iconset();
-        if ( is ) {
+        if (is) {
             PsiIconset::removeAnimation(is);
             d->iss_emoticons->insert(*is);
             delete is;
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         d->ck_useEmoticons->setEnabled(true);
         d->groupBox9->setEnabled(true);
 
-        connect(d->iss_emoticons, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_emoticons, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
 
         bool checked = d->ck_useEmoticons->isChecked();
-        d->ck_useEmoticons->setChecked( true );
-        d->ck_useEmoticons->setChecked( checked );
+        d->ck_useEmoticons->setChecked(true);
+        d->ck_useEmoticons->setChecked(checked);
 
         d->progress->hide();
 
@@ -644,7 +587,7 @@ bool OptionsTabIconsetEmoticons::event(QEvent *e)
 
 void OptionsTabIconsetEmoticons::previewIconset()
 {
-    IconsetEmoUI *d = static_cast<IconsetEmoUI *>(w);
+    IconsetEmoUI * d  = static_cast<IconsetEmoUI *>(w);
     const Iconset *is = d->iss_emoticons->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -653,13 +596,13 @@ void OptionsTabIconsetEmoticons::previewIconset()
 
 void OptionsTabIconsetEmoticons::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetEmoticons::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();
@@ -672,24 +615,19 @@ void OptionsTabIconsetEmoticons::cancelThread()
 // OptionsTabIconsetMoods
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetMoods::OptionsTabIconsetMoods(QObject *parent)
-    : OptionsTab(parent, "iconset_moods", "", tr("Moods"), tr("Select your mood iconset"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetMoods::OptionsTabIconsetMoods(QObject *parent) :
+    OptionsTab(parent, "iconset_moods", "", tr("Moods"), tr("Select your mood iconset")), w(nullptr), thread(nullptr)
 {
 }
 
-OptionsTabIconsetMoods::~OptionsTabIconsetMoods()
-{
-    cancelThread();
-}
+OptionsTabIconsetMoods::~OptionsTabIconsetMoods() { cancelThread(); }
 
 QWidget *OptionsTabIconsetMoods::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetMoodUI;
+    w                = new IconsetMoodUI;
     IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
 
     connect(d->pb_moodDetails, SIGNAL(clicked()), SLOT(previewIconset()));
@@ -699,21 +637,21 @@ QWidget *OptionsTabIconsetMoods::widget()
 
 void OptionsTabIconsetMoods::applyOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
 
     const Iconset *is = d->iss_moods->iconset();
-    if ( is ) {
-        QFileInfo fi( is->fileName() );
+    if (is) {
+        QFileInfo fi(is->fileName());
         PsiOptions::instance()->setOption("options.iconsets.moods", fi.fileName());
     }
 }
 
 void OptionsTabIconsetMoods::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
@@ -732,9 +670,9 @@ void OptionsTabIconsetMoods::restoreOptions()
     d->pb_moodDetails->setPalette(customPal);
 
     d->progress->show();
-    d->progress->setValue( 0 );
+    d->progress->setValue(0);
 
-    numIconsets = countIconsets("/moods", loaded);
+    numIconsets    = countIconsets("/moods", loaded);
     iconsetsLoaded = 0;
 
     cancelThread();
@@ -746,38 +684,37 @@ void OptionsTabIconsetMoods::restoreOptions()
 bool OptionsTabIconsetMoods::event(QEvent *e)
 {
     IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
+        d->progress->setValue(int(float(100 * ++iconsetsLoaded / numIconsets)));
 
         Iconset *i = le->iconset();
-        if ( i ) {
+        if (i) {
             PsiIconset::instance()->stripFirstAnimFrame(i);
             d->iss_moods->insert(*i);
 
-            QFileInfo fi( i->fileName() );
-            if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.moods").toString() )
+            QFileInfo fi(i->fileName());
+            if (fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.moods").toString())
                 d->iss_moods->lastItem()->setSelected(true);
 
             delete i;
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         d->iss_moods->setEnabled(true);
         d->iss_moods->setPalette(QPalette());
 
         d->pb_moodDetails->setEnabled(true);
         d->pb_moodDetails->setPalette(QPalette());
 
-        connect(d->iss_moods, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_moods, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SIGNAL(dataChanged()));
 
         d->progress->hide();
 
@@ -792,7 +729,7 @@ bool OptionsTabIconsetMoods::event(QEvent *e)
 
 void OptionsTabIconsetMoods::previewIconset()
 {
-    IconsetMoodUI *d = static_cast<IconsetMoodUI *>(w);
+    IconsetMoodUI *d  = static_cast<IconsetMoodUI *>(w);
     const Iconset *is = d->iss_moods->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
@@ -801,13 +738,13 @@ void OptionsTabIconsetMoods::previewIconset()
 
 void OptionsTabIconsetMoods::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetMoods::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();
@@ -819,24 +756,20 @@ void OptionsTabIconsetMoods::cancelThread()
 // OptionsTabIconsetActivity
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetActivity::OptionsTabIconsetActivity(QObject *parent)
-    : OptionsTab(parent, "iconset_activities", "", tr("Activity"), tr("Select your activity iconset"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetActivity::OptionsTabIconsetActivity(QObject *parent) :
+    OptionsTab(parent, "iconset_activities", "", tr("Activity"), tr("Select your activity iconset")), w(nullptr),
+    thread(nullptr)
 {
 }
 
-OptionsTabIconsetActivity::~OptionsTabIconsetActivity()
-{
-    cancelThread();
-}
+OptionsTabIconsetActivity::~OptionsTabIconsetActivity() { cancelThread(); }
 
 QWidget *OptionsTabIconsetActivity::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetActivityUI;
+    w                    = new IconsetActivityUI;
     IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
 
     connect(d->pb_activityDetails, SIGNAL(clicked()), SLOT(previewIconset()));
@@ -846,21 +779,21 @@ QWidget *OptionsTabIconsetActivity::widget()
 
 void OptionsTabIconsetActivity::applyOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
 
     const Iconset *is = d->iss_activity->iconset();
-    if ( is ) {
-        QFileInfo fi( is->fileName() );
+    if (is) {
+        QFileInfo fi(is->fileName());
         PsiOptions::instance()->setOption("options.iconsets.activities", fi.fileName());
     }
 }
 
 void OptionsTabIconsetActivity::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
@@ -879,9 +812,9 @@ void OptionsTabIconsetActivity::restoreOptions()
     d->pb_activityDetails->setPalette(customPal);
 
     d->progress->show();
-    d->progress->setValue( 0 );
+    d->progress->setValue(0);
 
-    numIconsets = countIconsets("/activities", loaded);
+    numIconsets    = countIconsets("/activities", loaded);
     iconsetsLoaded = 0;
 
     cancelThread();
@@ -893,38 +826,38 @@ void OptionsTabIconsetActivity::restoreOptions()
 bool OptionsTabIconsetActivity::event(QEvent *e)
 {
     IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
+        d->progress->setValue(int(float(100 * ++iconsetsLoaded / numIconsets)));
 
         Iconset *i = le->iconset();
-        if ( i ) {
+        if (i) {
             PsiIconset::instance()->stripFirstAnimFrame(i);
             d->iss_activity->insert(*i);
 
-            QFileInfo fi( i->fileName() );
-            if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.activities").toString() )
+            QFileInfo fi(i->fileName());
+            if (fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.activities").toString())
                 d->iss_activity->lastItem()->setSelected(true);
 
             delete i;
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         d->iss_activity->setEnabled(true);
         d->iss_activity->setPalette(QPalette());
 
         d->pb_activityDetails->setEnabled(true);
         d->pb_activityDetails->setPalette(QPalette());
 
-        connect(d->iss_activity, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_activity, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
 
         d->progress->hide();
 
@@ -939,8 +872,8 @@ bool OptionsTabIconsetActivity::event(QEvent *e)
 
 void OptionsTabIconsetActivity::previewIconset()
 {
-    IconsetActivityUI *d = static_cast<IconsetActivityUI *>(w);
-    const Iconset *is = d->iss_activity->iconset();
+    IconsetActivityUI *d  = static_cast<IconsetActivityUI *>(w);
+    const Iconset *    is = d->iss_activity->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -948,13 +881,13 @@ void OptionsTabIconsetActivity::previewIconset()
 
 void OptionsTabIconsetActivity::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetActivity::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();
@@ -966,24 +899,20 @@ void OptionsTabIconsetActivity::cancelThread()
 // OptionsTabIconsetAffiliations
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetAffiliations::OptionsTabIconsetAffiliations(QObject *parent)
-    : OptionsTab(parent, "iconset_affiliations", "", tr("Affiliations"), tr("Select your affiliations iconset"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetAffiliations::OptionsTabIconsetAffiliations(QObject *parent) :
+    OptionsTab(parent, "iconset_affiliations", "", tr("Affiliations"), tr("Select your affiliations iconset")),
+    w(nullptr), thread(nullptr)
 {
 }
 
-OptionsTabIconsetAffiliations::~OptionsTabIconsetAffiliations()
-{
-    cancelThread();
-}
+OptionsTabIconsetAffiliations::~OptionsTabIconsetAffiliations() { cancelThread(); }
 
 QWidget *OptionsTabIconsetAffiliations::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetAffiliationUI;
+    w                       = new IconsetAffiliationUI;
     IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
 
     connect(d->pb_affiliationDetails, SIGNAL(clicked()), SLOT(previewIconset()));
@@ -993,21 +922,21 @@ QWidget *OptionsTabIconsetAffiliations::widget()
 
 void OptionsTabIconsetAffiliations::applyOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
 
     const Iconset *is = d->iss_affiliation->iconset();
-    if ( is ) {
-        QFileInfo fi( is->fileName() );
+    if (is) {
+        QFileInfo fi(is->fileName());
         PsiOptions::instance()->setOption("options.iconsets.affiliations", fi.fileName());
     }
 }
 
 void OptionsTabIconsetAffiliations::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
@@ -1026,9 +955,9 @@ void OptionsTabIconsetAffiliations::restoreOptions()
     d->pb_affiliationDetails->setPalette(customPal);
 
     d->progress->show();
-    d->progress->setValue( 0 );
+    d->progress->setValue(0);
 
-    numIconsets = countIconsets("/affiliations", loaded);
+    numIconsets    = countIconsets("/affiliations", loaded);
     iconsetsLoaded = 0;
 
     cancelThread();
@@ -1040,38 +969,38 @@ void OptionsTabIconsetAffiliations::restoreOptions()
 bool OptionsTabIconsetAffiliations::event(QEvent *e)
 {
     IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
+        d->progress->setValue(int(float(100 * ++iconsetsLoaded / numIconsets)));
 
         Iconset *i = le->iconset();
-        if ( i ) {
+        if (i) {
             PsiIconset::instance()->stripFirstAnimFrame(i);
             d->iss_affiliation->insert(*i);
 
-            QFileInfo fi( i->fileName() );
-            if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.affiliations").toString() )
+            QFileInfo fi(i->fileName());
+            if (fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.affiliations").toString())
                 d->iss_affiliation->lastItem()->setSelected(true);
 
             delete i;
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         d->iss_affiliation->setEnabled(true);
         d->iss_affiliation->setPalette(QPalette());
 
         d->pb_affiliationDetails->setEnabled(true);
         d->pb_affiliationDetails->setPalette(QPalette());
 
-        connect(d->iss_affiliation, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_affiliation, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
 
         d->progress->hide();
 
@@ -1086,8 +1015,8 @@ bool OptionsTabIconsetAffiliations::event(QEvent *e)
 
 void OptionsTabIconsetAffiliations::previewIconset()
 {
-    IconsetAffiliationUI *d = static_cast<IconsetAffiliationUI *>(w);
-    const Iconset *is = d->iss_affiliation->iconset();
+    IconsetAffiliationUI *d  = static_cast<IconsetAffiliationUI *>(w);
+    const Iconset *       is = d->iss_affiliation->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -1095,13 +1024,13 @@ void OptionsTabIconsetAffiliations::previewIconset()
 
 void OptionsTabIconsetAffiliations::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetAffiliations::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();
@@ -1114,24 +1043,20 @@ void OptionsTabIconsetAffiliations::cancelThread()
 // OptionsTabIconsetClients
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetClients::OptionsTabIconsetClients(QObject *parent)
-    : OptionsTab(parent, "iconset_clients", "", tr("Clients"), tr("Select your clients iconset"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetClients::OptionsTabIconsetClients(QObject *parent) :
+    OptionsTab(parent, "iconset_clients", "", tr("Clients"), tr("Select your clients iconset")), w(nullptr),
+    thread(nullptr)
 {
 }
 
-OptionsTabIconsetClients::~OptionsTabIconsetClients()
-{
-    cancelThread();
-}
+OptionsTabIconsetClients::~OptionsTabIconsetClients() { cancelThread(); }
 
 QWidget *OptionsTabIconsetClients::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetClientUI;
+    w                  = new IconsetClientUI;
     IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
 
     connect(d->pb_clientDetails, SIGNAL(clicked()), SLOT(previewIconset()));
@@ -1141,21 +1066,21 @@ QWidget *OptionsTabIconsetClients::widget()
 
 void OptionsTabIconsetClients::applyOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
 
     const Iconset *is = d->iss_clients->iconset();
-    if ( is ) {
-        QFileInfo fi( is->fileName() );
+    if (is) {
+        QFileInfo fi(is->fileName());
         PsiOptions::instance()->setOption("options.iconsets.clients", fi.fileName());
     }
 }
 
 void OptionsTabIconsetClients::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
@@ -1174,9 +1099,9 @@ void OptionsTabIconsetClients::restoreOptions()
     d->pb_clientDetails->setPalette(customPal);
 
     d->progress->show();
-    d->progress->setValue( 0 );
+    d->progress->setValue(0);
 
-    numIconsets = countIconsets("/clients", loaded);
+    numIconsets    = countIconsets("/clients", loaded);
     iconsetsLoaded = 0;
 
     cancelThread();
@@ -1188,38 +1113,38 @@ void OptionsTabIconsetClients::restoreOptions()
 bool OptionsTabIconsetClients::event(QEvent *e)
 {
     IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
+        d->progress->setValue(int(float(100 * ++iconsetsLoaded / numIconsets)));
 
         Iconset *i = le->iconset();
-        if ( i ) {
+        if (i) {
             PsiIconset::instance()->stripFirstAnimFrame(i);
             d->iss_clients->insert(*i);
 
-            QFileInfo fi( i->fileName() );
-            if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.clients").toString() )
+            QFileInfo fi(i->fileName());
+            if (fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.clients").toString())
                 d->iss_clients->lastItem()->setSelected(true);
 
             delete i;
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         d->iss_clients->setEnabled(true);
         d->iss_clients->setPalette(QPalette());
 
         d->pb_clientDetails->setEnabled(true);
         d->pb_clientDetails->setPalette(QPalette());
 
-        connect(d->iss_clients, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_clients, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
 
         d->progress->hide();
 
@@ -1234,8 +1159,8 @@ bool OptionsTabIconsetClients::event(QEvent *e)
 
 void OptionsTabIconsetClients::previewIconset()
 {
-    IconsetClientUI *d = static_cast<IconsetClientUI *>(w);
-    const Iconset *is = d->iss_clients->iconset();
+    IconsetClientUI *d  = static_cast<IconsetClientUI *>(w);
+    const Iconset *  is = d->iss_clients->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -1243,13 +1168,13 @@ void OptionsTabIconsetClients::previewIconset()
 
 void OptionsTabIconsetClients::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetClients::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();
@@ -1262,32 +1187,28 @@ void OptionsTabIconsetClients::cancelThread()
 // OptionsTabIconsetRoster
 //----------------------------------------------------------------------------
 
-OptionsTabIconsetRoster::OptionsTabIconsetRoster(QObject *parent)
-    : OptionsTab(parent, "iconset_roster", "", tr("Roster Icons"), tr("Select iconsets for your roster"))
-    , w(nullptr)
-    , thread(nullptr)
+OptionsTabIconsetRoster::OptionsTabIconsetRoster(QObject *parent) :
+    OptionsTab(parent, "iconset_roster", "", tr("Roster Icons"), tr("Select iconsets for your roster")), w(nullptr),
+    thread(nullptr)
 {
 }
 
-OptionsTabIconsetRoster::~OptionsTabIconsetRoster()
-{
-    cancelThread();
-}
+OptionsTabIconsetRoster::~OptionsTabIconsetRoster() { cancelThread(); }
 
-void OptionsTabIconsetRoster::addService(const QString& id, const QString& name)
+void OptionsTabIconsetRoster::addService(const QString &id, const QString &name)
 {
-    IconsetRosterUI*d = static_cast<IconsetRosterUI*>(w);
-    QTreeWidgetItem* item = new QTreeWidgetItem(d->tw_isServices, QStringList(QString(name)));
+    IconsetRosterUI *d    = static_cast<IconsetRosterUI *>(w);
+    QTreeWidgetItem *item = new QTreeWidgetItem(d->tw_isServices, QStringList(QString(name)));
     item->setData(0, ServiceRole, QVariant(QString(id)));
     d->tw_isServices->addTopLevelItem(item);
 }
 
 QWidget *OptionsTabIconsetRoster::widget()
 {
-    if ( w )
+    if (w)
         return nullptr;
 
-    w = new IconsetRosterUI;
+    w                  = new IconsetRosterUI;
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
 
     // Initialize transport iconsets
@@ -1312,14 +1233,19 @@ QWidget *OptionsTabIconsetRoster::widget()
 
     connect(d->pb_defRosterDetails, SIGNAL(clicked()), SLOT(defaultDetails()));
 
-    connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(isServices_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
-    connect(d->tw_isServices, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(isServices_selectionChanged(QTreeWidgetItem *)));
+    connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+            SLOT(isServices_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
+    connect(d->tw_isServices, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
+            SLOT(isServices_selectionChanged(QTreeWidgetItem *)));
     connect(d->pb_servicesDetails, SIGNAL(clicked()), SLOT(servicesDetails()));
     isServices_selectionChanged(nullptr);
 
-    connect(d->iss_customRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(isCustom_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
-    connect(d->tw_customRoster, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
-    connect(d->tw_customRoster, SIGNAL(itemClicked(QTreeWidgetItem *, int )), SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
+    connect(d->iss_customRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+            SLOT(isCustom_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
+    connect(d->tw_customRoster, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
+            SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
+    connect(d->tw_customRoster, SIGNAL(itemClicked(QTreeWidgetItem *, int)),
+            SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
 
     connect(d->pb_customRosterDetails, SIGNAL(clicked()), SLOT(customDetails()));
     connect(d->le_customRoster, SIGNAL(textChanged(const QString &)), SLOT(isCustom_textChanged()));
@@ -1341,7 +1267,8 @@ void OptionsTabIconsetRoster::applyOptions()
         return;
 
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    PsiOptions::instance()->setOption("options.ui.contactlist.use-transport-icons", d->ck_useTransportIconsForContacts->isChecked());
+    PsiOptions::instance()->setOption("options.ui.contactlist.use-transport-icons",
+                                      d->ck_useTransportIconsForContacts->isChecked());
 
     // roster - default
     {
@@ -1370,7 +1297,7 @@ void OptionsTabIconsetRoster::applyOptions()
         QString baseCustomStatusPath = "options.iconsets.custom-status";
         PsiOptions::instance()->removeOption(baseCustomStatusPath, true);
 
-        int index = 0;
+        int                     index = 0;
         QTreeWidgetItemIterator it(d->tw_customRoster);
         while (*it) {
             QString path = baseCustomStatusPath + ".a" + QString::number(index++);
@@ -1383,11 +1310,12 @@ void OptionsTabIconsetRoster::applyOptions()
 
 void OptionsTabIconsetRoster::restoreOptions()
 {
-    if ( !w || thread )
+    if (!w || thread)
         return;
 
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    d->ck_useTransportIconsForContacts->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() );
+    d->ck_useTransportIconsForContacts->setChecked(
+        PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool());
 
     d->iss_defRoster->clear();
     d->iss_servicesRoster->clear();
@@ -1403,9 +1331,9 @@ void OptionsTabIconsetRoster::restoreOptions()
     d->tabWidget3->setPalette(customPal);
 
     d->progress->show();
-    d->progress->setValue( 0 );
+    d->progress->setValue(0);
 
-    numIconsets = countIconsets("/roster", loaded);
+    numIconsets    = countIconsets("/roster", loaded);
     iconsetsLoaded = 0;
 
     cancelThread();
@@ -1417,24 +1345,24 @@ void OptionsTabIconsetRoster::restoreOptions()
 bool OptionsTabIconsetRoster::event(QEvent *e)
 {
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    if ( e->type() == QEvent::User ) { // iconset load event
+    if (e->type() == QEvent::User) { // iconset load event
         IconsetLoadEvent *le = static_cast<IconsetLoadEvent *>(e);
 
-        if ( thread != le->thread() )
+        if (thread != le->thread())
             return false;
 
-        if ( !numIconsets )
+        if (!numIconsets)
             numIconsets = 1;
-        d->progress->setValue( int(float(100 * ++iconsetsLoaded / numIconsets)) );
+        d->progress->setValue(int(float(100 * ++iconsetsLoaded / numIconsets)));
 
         Iconset *i = le->iconset();
-        if ( i ) {
+        if (i) {
             PsiIconset::instance()->stripFirstAnimFrame(i);
-            QFileInfo fi( i->fileName() );
+            QFileInfo fi(i->fileName());
 
             // roster - default
             d->iss_defRoster->insert(*i);
-            if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.status"))
+            if (fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.status"))
                 d->iss_defRoster->lastItem()->setSelected(true);
 
             // roster - service
@@ -1447,8 +1375,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
         }
 
         return true;
-    }
-    else if ( e->type() == QEvent::User + 1 ) { // finish event
+    } else if (e->type() == QEvent::User + 1) { // finish event
         // roster - service
         {
             // fill the QTreeWidget
@@ -1456,11 +1383,13 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
             while (*it) {
                 QTreeWidgetItem *i = *it;
                 if (!i->data(0, ServiceRole).toString().isEmpty()) {
-                    Iconset *iss = PsiIconset::instance()->roster[
-                                       PsiOptions::instance()->getOption(
-                                           PsiOptions::instance()->mapLookup(
-                                               "options.iconsets.service-status",
-                                               i->data(0, ServiceRole).toString())+".iconset").toString()];
+                    Iconset *iss
+                        = PsiIconset::instance()->roster[PsiOptions::instance()
+                                                             ->getOption(PsiOptions::instance()->mapLookup(
+                                                                             "options.iconsets.service-status",
+                                                                             i->data(0, ServiceRole).toString())
+                                                                         + ".iconset")
+                                                             .toString()];
                     if (iss) {
                         i->setText(1, iss->name());
                         QFileInfo fi(iss->fileName());
@@ -1475,20 +1404,21 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
         {
             // Then, fill the QListView
             QTreeWidgetItem *last = nullptr;
-            QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-            foreach(QString base, customicons) {
-                QString regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
-                QString icoset = PsiOptions::instance()->getOption(base + ".iconset").toString();
-                QTreeWidgetItem *item = new QTreeWidgetItem(d->tw_customRoster, last);
-                last = item;
+            QStringList      customicons
+                = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
+            foreach (QString base, customicons) {
+                QString          regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
+                QString          icoset = PsiOptions::instance()->getOption(base + ".iconset").toString();
+                QTreeWidgetItem *item   = new QTreeWidgetItem(d->tw_customRoster, last);
+                last                    = item;
 
                 item->setText(0, clipCustomText(regexp));
                 item->setData(0, RegexpRole, regexp);
 
                 Iconset *iss = PsiIconset::instance()->roster[icoset];
-                if ( iss ) {
+                if (iss) {
                     item->setText(1, iss->name());
-                    QFileInfo fi ( iss->fileName() );
+                    QFileInfo fi(iss->fileName());
                     item->setData(0, IconsetRole, fi.fileName());
                 }
             }
@@ -1498,9 +1428,12 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
         d->tabWidget3->setEnabled(true);
         // d->tabWidget3->setPalette(QPalette());
 
-        connect(d->iss_defRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
-        connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
-        connect(d->iss_customRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+        connect(d->iss_defRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
+        connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
+        connect(d->iss_customRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+                SIGNAL(dataChanged()));
 
         d->progress->hide();
 
@@ -1515,14 +1448,14 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 
 void OptionsTabIconsetRoster::setData(PsiCon *psicon, QWidget *p)
 {
-    psi = psicon;
+    psi          = psicon;
     parentWidget = p;
 }
 
 void OptionsTabIconsetRoster::defaultDetails()
 {
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    const Iconset *is = d->iss_defRoster->iconset();
+    IconsetRosterUI *d  = static_cast<IconsetRosterUI *>(w);
+    const Iconset *  is = d->iss_defRoster->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -1530,8 +1463,8 @@ void OptionsTabIconsetRoster::defaultDetails()
 
 void OptionsTabIconsetRoster::servicesDetails()
 {
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    const Iconset *is = d->iss_servicesRoster->iconset();
+    IconsetRosterUI *d  = static_cast<IconsetRosterUI *>(w);
+    const Iconset *  is = d->iss_servicesRoster->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -1539,8 +1472,8 @@ void OptionsTabIconsetRoster::servicesDetails()
 
 void OptionsTabIconsetRoster::customDetails()
 {
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    const Iconset *is = d->iss_customRoster->iconset();
+    IconsetRosterUI *d  = static_cast<IconsetRosterUI *>(w);
+    const Iconset *  is = d->iss_customRoster->iconset();
     if (is) {
         isDetails(*is, parentWidget->parentWidget(), psi);
     }
@@ -1550,30 +1483,30 @@ void OptionsTabIconsetRoster::customDetails()
 
 void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, QListWidgetItem *)
 {
-    if ( !item )
+    if (!item)
         return;
 
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
+    IconsetRosterUI *d  = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *it = d->tw_isServices->currentItem();
-    if ( !it )
+    if (!it)
         return;
 
     const Iconset *is = static_cast<IconWidgetItem *>(item)->iconset();
-    if ( !is )
+    if (!is)
         return;
 
     it->setText(1, is->name());
-    QFileInfo fi ( is->fileName() );
+    QFileInfo fi(is->fileName());
     it->setData(0, IconsetRole, fi.fileName());
 }
 
 void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 {
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    d->iss_servicesRoster->setEnabled( it != nullptr );
-    d->pb_servicesDetails->setEnabled( it != nullptr );
+    d->iss_servicesRoster->setEnabled(it != nullptr);
+    d->pb_servicesDetails->setEnabled(it != nullptr);
     d->iss_servicesRoster->clearSelection();
-    if ( !it )
+    if (!it)
         return;
 
     QString name = it->data(0, IconsetRole).toString();
@@ -1583,10 +1516,10 @@ void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
     emit noDirty(true);
     for (int row = 0; row < d->iss_servicesRoster->count(); row++) {
         IconWidgetItem *item = static_cast<IconWidgetItem *>(d->iss_servicesRoster->item(row));
-        const Iconset *is = item->iconset();
-        if ( is ) {
-            QFileInfo fi ( is->fileName() );
-            if ( fi.fileName() == name ) {
+        const Iconset * is   = item->iconset();
+        if (is) {
+            QFileInfo fi(is->fileName());
+            if (fi.fileName() == name) {
                 emit noDirty(true);
                 item->setSelected(true);
                 d->iss_servicesRoster->scrollToItem(item);
@@ -1603,33 +1536,33 @@ void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 
 void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QListWidgetItem *)
 {
-    if ( !item )
+    if (!item)
         return;
 
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
+    IconsetRosterUI *d  = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *it = d->tw_customRoster->currentItem();
-    if ( !it )
+    if (!it)
         return;
 
     const Iconset *is = static_cast<IconWidgetItem *>(item)->iconset();
-    if ( !is )
+    if (!is)
         return;
 
     it->setText(1, is->name());
-    QFileInfo fi ( is->fileName() );
+    QFileInfo fi(is->fileName());
     it->setData(0, IconsetRole, fi.fileName());
 }
 
 void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 {
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
-    d->iss_customRoster->setEnabled( it != nullptr );
-    d->pb_customRosterDetails->setEnabled( it != nullptr );
-    //d->pb_customRosterAdd->setEnabled( it != 0 );
-    d->pb_customRosterDelete->setEnabled( it != nullptr );
-    d->le_customRoster->setEnabled( it != nullptr );
+    d->iss_customRoster->setEnabled(it != nullptr);
+    d->pb_customRosterDetails->setEnabled(it != nullptr);
+    // d->pb_customRosterAdd->setEnabled( it != 0 );
+    d->pb_customRosterDelete->setEnabled(it != nullptr);
+    d->le_customRoster->setEnabled(it != nullptr);
     d->iss_customRoster->clearSelection();
-    if ( !it )
+    if (!it)
         return;
 
     QString name = it->data(0, IconsetRole).toString();
@@ -1641,10 +1574,10 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 
     for (int row = 0; row < d->iss_customRoster->count(); row++) {
         IconWidgetItem *item = static_cast<IconWidgetItem *>(d->iss_customRoster->item(row));
-        const Iconset *is = item->iconset();
-        if ( is ) {
-            QFileInfo fi ( is->fileName() );
-            if ( fi.fileName() == name ) {
+        const Iconset * is   = item->iconset();
+        if (is) {
+            QFileInfo fi(is->fileName());
+            if (fi.fileName() == name) {
                 item->setSelected(true);
                 d->iss_customRoster->scrollToItem(item);
                 break;
@@ -1657,9 +1590,9 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 
 void OptionsTabIconsetRoster::isCustom_textChanged()
 {
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
+    IconsetRosterUI *d    = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *item = d->tw_customRoster->currentItem();
-    if ( !item )
+    if (!item)
         return;
 
     item->setText(0, clipCustomText(d->le_customRoster->text()));
@@ -1670,18 +1603,17 @@ void OptionsTabIconsetRoster::isCustom_add()
 {
     IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
 
-    QString def;
+    QString        def;
     const Iconset *iconset = d->iss_defRoster->iconset();
-    if ( iconset ) {
-        QFileInfo fi( iconset->fileName() );
+    if (iconset) {
+        QFileInfo fi(iconset->fileName());
         def = fi.fileName();
-    }
-    else
+    } else
         qWarning("OptionsTabIconsetRoster::isCustom_add(): 'def' is null!");
 
     QTreeWidgetItem *item = new QTreeWidgetItem(d->tw_customRoster);
-    const Iconset *i = PsiIconset::instance()->roster[def];
-    if ( i ) {
+    const Iconset *  i    = PsiIconset::instance()->roster[def];
+    if (i) {
         item->setText(1, i->name());
 
         QFileInfo fi(i->fileName());
@@ -1696,9 +1628,9 @@ void OptionsTabIconsetRoster::isCustom_add()
 
 void OptionsTabIconsetRoster::isCustom_delete()
 {
-    IconsetRosterUI *d = static_cast<IconsetRosterUI *>(w);
+    IconsetRosterUI *d    = static_cast<IconsetRosterUI *>(w);
     QTreeWidgetItem *item = d->tw_customRoster->currentItem();
-    if ( !item )
+    if (!item)
         return;
 
     delete item;
@@ -1709,7 +1641,7 @@ void OptionsTabIconsetRoster::isCustom_delete()
 
 QString OptionsTabIconsetRoster::clipCustomText(QString s)
 {
-    if ( s.length() > 10 ) {
+    if (s.length() > 10) {
         s = s.left(9);
         s += "...";
     }
@@ -1719,7 +1651,7 @@ QString OptionsTabIconsetRoster::clipCustomText(QString s)
 
 void OptionsTabIconsetRoster::cancelThread()
 {
-    if ( thread ) {
+    if (thread) {
         threadCancelled.lock();
         thread->cancelled = true;
         threadCancelled.unlock();

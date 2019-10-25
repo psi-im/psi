@@ -23,9 +23,7 @@
 #include "psioptions.h"
 #include "ui_mucreasonseditor.h"
 
-MUCReasonsEditor::MUCReasonsEditor(QWidget* parent)
-    : QDialog(parent)
-    , ui_(new Ui::MUCReasonsEditor)
+MUCReasonsEditor::MUCReasonsEditor(QWidget *parent) : QDialog(parent), ui_(new Ui::MUCReasonsEditor)
 {
     ui_->setupUi(this);
     ui_->lstReasons->addItems(PsiOptions::instance()->getOption("options.muc.reasons").toStringList());
@@ -35,10 +33,7 @@ MUCReasonsEditor::MUCReasonsEditor(QWidget* parent)
     connect(ui_->lstReasons, SIGNAL(currentTextChanged(QString)), SLOT(currentChanged(QString)));
 }
 
-MUCReasonsEditor::~MUCReasonsEditor()
-{
-    delete ui_;
-}
+MUCReasonsEditor::~MUCReasonsEditor() { delete ui_; }
 
 void MUCReasonsEditor::accept()
 {
@@ -47,10 +42,7 @@ void MUCReasonsEditor::accept()
     QDialog::accept();
 }
 
-void MUCReasonsEditor::currentChanged(const QString &r)
-{
-    ui_->txtReason->setText(r);
-}
+void MUCReasonsEditor::currentChanged(const QString &r) { ui_->txtReason->setText(r); }
 
 void MUCReasonsEditor::addButtonClicked()
 {
@@ -64,7 +56,7 @@ void MUCReasonsEditor::removeButtonClicked()
 {
     int idx = ui_->lstReasons->currentRow();
     if (idx >= 0) {
-        QListWidgetItem *item =ui_->lstReasons->takeItem(idx);
+        QListWidgetItem *item = ui_->lstReasons->takeItem(idx);
         if (item)
             delete item;
     }
@@ -73,7 +65,7 @@ void MUCReasonsEditor::removeButtonClicked()
 void MUCReasonsEditor::save()
 {
     QStringList reasons;
-    int cnt = ui_->lstReasons->count();
+    int         cnt = ui_->lstReasons->count();
     for (int i = 0; i < cnt; ++i)
         reasons.append(ui_->lstReasons->item(i)->text());
     PsiOptions::instance()->setOption("options.muc.reasons", reasons);

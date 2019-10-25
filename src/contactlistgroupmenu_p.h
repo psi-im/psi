@@ -36,8 +36,7 @@
 
 #include <QObject>
 
-class ContactListGroupMenu::Private : public QObject
-{
+class ContactListGroupMenu::Private : public QObject {
     Q_OBJECT
 
 public:
@@ -61,18 +60,18 @@ public slots:
 
 public:
     ContactListGroupMenu *q;
-    ContactListItem *group;
-    QAction *renameAction_;
-    QAction *removeGroupAndContactsAction_;
-    QAction *sendMessageAction_;
-    QAction *removeGroupWithoutContactsAction_;
-    QMenu *authMenu_;
-    QAction *actionAuth_;
-    QAction *actionAuthRequest_;
-    QAction *actionAuthRemove_;
-    QAction *actionCustomStatus_;
-    QAction *actionMucHide_;
-    QAction *actionMucShow_;
-    QAction *actionMucLeave_;
-    QAction *actionHide_;
+    ContactListItem *     group;
+    QAction *             renameAction_;
+    QAction *             removeGroupAndContactsAction_;
+    QAction *             sendMessageAction_;
+    QAction *             removeGroupWithoutContactsAction_;
+    QMenu *               authMenu_;
+    QAction *             actionAuth_;
+    QAction *             actionAuthRequest_;
+    QAction *             actionAuthRemove_;
+    QAction *             actionCustomStatus_;
+    QAction *             actionMucHide_;
+    QAction *             actionMucShow_;
+    QAction *             actionMucLeave_;
+    QAction *             actionHide_;
 };

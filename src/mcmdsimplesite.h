@@ -36,15 +36,16 @@ public:
     ~MCmdSimpleSite() = default;
     virtual void mCmdReady(const QString prompt, const QString preset);
     virtual void mCmdClose();
-    bool isActive() const;
-    void setPrompt(QLabel *p);
-    void setInput(QTextEdit *i);
+    bool         isActive() const;
+    void         setPrompt(QLabel *p);
+    void         setInput(QTextEdit *i);
+
 protected:
-    QLabel *promptWidget;
+    QLabel *   promptWidget;
     QTextEdit *inputWidget;
-    bool open;
-    QString mini_msg_swap;
-    QPalette palette, cmdPalette;
+    bool       open;
+    QString    mini_msg_swap;
+    QPalette   palette, cmdPalette;
 };
 
 #endif // MINICMDSIMPLESITE_H

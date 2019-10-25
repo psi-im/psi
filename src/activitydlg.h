@@ -26,20 +26,19 @@
 
 class PsiAccount;
 
-class ActivityDlg : public QDialog
-{
+class ActivityDlg : public QDialog {
     Q_OBJECT
 
 public:
-    ActivityDlg(QList<PsiAccount*>);
+    ActivityDlg(QList<PsiAccount *>);
 
 protected slots:
     void setActivity();
-    void loadSpecificActivities(const QString&);
+    void loadSpecificActivities(const QString &);
 
 private:
-    Ui::Activity ui_;
-    QList<PsiAccount*> pa_;
+    Ui::Activity        ui_;
+    QList<PsiAccount *> pa_;
 };
 
 #endif // ACTIVITYDLG_H

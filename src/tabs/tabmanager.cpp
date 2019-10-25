@@ -8,27 +8,17 @@
 
 #include <QtAlgorithms>
 
-TabManager::TabManager(PsiCon* psiCon, QObject *parent)
-    : QObject(parent)
-    , psiCon_(psiCon)
-    , tabDlgDelegate_(nullptr)
-    , userManagement_(true)
-    , tabSingles_(true)
-    , simplifiedCaption_(false)
+TabManager::TabManager(PsiCon *psiCon, QObject *parent) :
+    QObject(parent), psiCon_(psiCon), tabDlgDelegate_(nullptr), userManagement_(true), tabSingles_(true),
+    simplifiedCaption_(false)
 {
 }
 
-TabManager::~TabManager()
-{
-    deleteAll();
-}
+TabManager::~TabManager() { deleteAll(); }
 
-PsiCon* TabManager::psiCon() const
-{
-    return psiCon_;
-}
+PsiCon *TabManager::psiCon() const { return psiCon_; }
 
-TabDlg* TabManager::getTabs(QWidget *widget)
+TabDlg *TabManager::getTabs(QWidget *widget)
 {
     QChar kind = tabKind(widget);
     if (preferedTabsetForKind_.contains(kind)) {
@@ -38,7 +28,8 @@ TabDlg* TabManager::getTabs(QWidget *widget)
     }
 }
 
-QChar TabManager::tabKind(QWidget *widget) {
+QChar TabManager::tabKind(QWidget *widget)
+{
     QChar retval = 0;
     if (widget) {
         const QString name = widget->objectName();
@@ -66,11 +57,11 @@ bool TabManager::shouldBeTabbed(QWidget *widget)
     return false;
 }
 
-TabDlg* TabManager::newTabs(QWidget *widget)
+TabDlg *TabManager::newTabs(QWidget *widget)
 {
-    QChar kind = tabKind(widget);
+    QChar   kind = tabKind(widget);
     QString group, grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
-    foreach(QString g, grouping.split(':')) {
+    foreach (QString g, grouping.split(':')) {
         if (g.contains(kind)) {
             group = g;
             break;
@@ -84,52 +75,53 @@ TabDlg* TabManager::newTabs(QWidget *widget)
     tab->setTabBarShownForSingles(tabSingles_);
     tab->setSimplifiedCaptionEnabled(simplifiedCaption_);
     tabsetToKinds_.insert(tab, group);
-    for (int i=0; i < group.length(); i++) {
+    for (int i = 0; i < group.length(); i++) {
         QChar k = group.at(i);
         if (!preferedTabsetForKind_.contains(k)) {
             preferedTabsetForKind_.insert(k, tab);
         }
     }
     tabs_.append(tab);
-    connect(tab, SIGNAL(destroyed(QObject*)), SLOT(tabDestroyed(QObject*)));
+    connect(tab, SIGNAL(destroyed(QObject *)), SLOT(tabDestroyed(QObject *)));
     connect(psiCon_, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
     return tab;
 }
 
-void TabManager::tabDestroyed(QObject* obj)
+void TabManager::tabDestroyed(QObject *obj)
 {
-    Q_ASSERT(tabs_.contains(static_cast<TabDlg*>(obj)));
-    tabs_.removeAll(static_cast<TabDlg*>(obj));
-    tabsetToKinds_.remove(static_cast<TabDlg*>(obj));
-    QMutableMapIterator<QChar, TabDlg*> it(preferedTabsetForKind_);
+    Q_ASSERT(tabs_.contains(static_cast<TabDlg *>(obj)));
+    tabs_.removeAll(static_cast<TabDlg *>(obj));
+    tabsetToKinds_.remove(static_cast<TabDlg *>(obj));
+    QMutableMapIterator<QChar, TabDlg *> it(preferedTabsetForKind_);
     while (it.hasNext()) {
         it.next();
-        if (preferedTabsetForKind_[it.key()] != obj) continue;
+        if (preferedTabsetForKind_[it.key()] != obj)
+            continue;
         bool ok = false;
-        foreach(TabDlg* tabDlg, tabs_) {
+        foreach (TabDlg *tabDlg, tabs_) {
             // currently destroyed tab is removed from the list a few lines above
             if (tabsetToKinds_[tabDlg].contains(it.key())) {
                 preferedTabsetForKind_[it.key()] = tabDlg;
-                ok = true;
+                ok                               = true;
                 break;
             }
         }
-        if (!ok) it.remove();
+        if (!ok)
+            it.remove();
     }
 }
 
-TabDlg *TabManager::preferredTabsForKind(QChar kind) {
-    return preferedTabsetForKind_.value(kind);
-}
+TabDlg *TabManager::preferredTabsForKind(QChar kind) { return preferedTabsetForKind_.value(kind); }
 
-void TabManager::setPreferredTabsForKind(QChar kind, TabDlg *tab) {
+void TabManager::setPreferredTabsForKind(QChar kind, TabDlg *tab)
+{
     Q_ASSERT(tabs_.contains(tab));
     preferedTabsetForKind_[kind] = tab;
 }
 
-bool TabManager::isChatTabbed(const TabbableWidget* chat) const
+bool TabManager::isChatTabbed(const TabbableWidget *chat) const
 {
-    foreach(TabDlg* tabDlg, tabs_) {
+    foreach (TabDlg *tabDlg, tabs_) {
         if (tabDlg->managesTab(chat)) {
             return true;
         }
@@ -137,11 +129,11 @@ bool TabManager::isChatTabbed(const TabbableWidget* chat) const
     return false;
 }
 
-TabDlg* TabManager::getManagingTabs(const TabbableWidget* chat) const
+TabDlg *TabManager::getManagingTabs(const TabbableWidget *chat) const
 {
-    //FIXME: this looks like it could be broken to me (KIS)
-    //Does this mean that opening two chats to the same jid will go wrong?
-    foreach(TabDlg* tabDlg, tabs_) {
+    // FIXME: this looks like it could be broken to me (KIS)
+    // Does this mean that opening two chats to the same jid will go wrong?
+    foreach (TabDlg *tabDlg, tabs_) {
         if (tabDlg->managesTab(chat)) {
             return tabDlg;
         }
@@ -149,10 +141,7 @@ TabDlg* TabManager::getManagingTabs(const TabbableWidget* chat) const
     return nullptr;
 }
 
-const QList<TabDlg*>& TabManager::tabSets()
-{
-    return tabs_;
-}
+const QList<TabDlg *> &TabManager::tabSets() { return tabs_; }
 
 void TabManager::deleteAll()
 {
@@ -160,10 +149,7 @@ void TabManager::deleteAll()
     tabs_.clear();
 }
 
-void TabManager::setTabDlgDelegate(TabDlgDelegate *delegate)
-{
-    tabDlgDelegate_ = delegate;
-}
+void TabManager::setTabDlgDelegate(TabDlgDelegate *delegate) { tabDlgDelegate_ = delegate; }
 
 void TabManager::setUserManagementEnabled(bool enabled)
 {

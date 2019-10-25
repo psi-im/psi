@@ -21,20 +21,18 @@
 #define GAME_PORT 1345
 #define GAME_BACKLOG 5
 
-class GameSocket:public Q3ServerSocket
-{
+class GameSocket : public Q3ServerSocket {
     Q_OBJECT
 public:
     GameSocket(QWidget *parent = NULL, const char *name = NULL);
     ~GameSocket();
 
 private:
-
 protected:
-    void    newConnection(int);
+    void newConnection(int);
 
 signals:
-    void    acceptConnection(int);
+    void acceptConnection(int);
 };
 
 #endif // GAMESOCKET_H

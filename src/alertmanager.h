@@ -32,43 +32,39 @@ public:
     AlertManager(PsiCon *psi);
     ~AlertManager();
 
-    bool raiseDialog(QWidget* w, int prio);
+    bool raiseDialog(QWidget *w, int prio);
 
-    void raiseMessageBox(int prio, QMessageBox::Icon icon, const QString& title, const QString& text);
+    void raiseMessageBox(int prio, QMessageBox::Icon icon, const QString &title, const QString &text);
 
-    void dialogRegister(QWidget* w, int prio);
-    void dialogUnregister(QWidget* w);
+    void dialogRegister(QWidget *w, int prio);
+    void dialogUnregister(QWidget *w);
 
-    QWidget* findDialog(const QMetaObject& mo) const;
-    template<typename T>
-    inline T findDialog() const {
-        return static_cast<T>(findDialog(((T)0)->staticMetaObject));
-    }
+    QWidget *                      findDialog(const QMetaObject &mo) const;
+    template <typename T> inline T findDialog() const { return static_cast<T>(findDialog(((T)0)->staticMetaObject)); }
 
-    void findDialogs(const QMetaObject& mo, QList<void*>* list) const;
-    template<typename T>
-    inline QList<T> findDialogs() const {
+    void                                  findDialogs(const QMetaObject &mo, QList<void *> *list) const;
+    template <typename T> inline QList<T> findDialogs() const
+    {
         QList<T> list;
-        findDialogs(((T)0)->staticMetaObject,
-                    reinterpret_cast<QList<void*>*>(&list));
+        findDialogs(((T)0)->staticMetaObject, reinterpret_cast<QList<void *> *>(&list));
         return list;
     }
 
-    enum { AccountPassword = 100, ConnectionError=50 };
+    enum { AccountPassword = 100, ConnectionError = 50 };
 
 protected:
     void deleteDialogList();
 
 private slots:
-    void forceDialogUnregister(QObject* obj);
+    void forceDialogUnregister(QObject *obj);
 
 public:
     struct Item {
-        QWidget* widget;
-        int priority;
+        QWidget *widget;
+        int      priority;
     };
-    PsiCon *psi_;
-    QList<Item*> list_;
+    PsiCon *      psi_;
+    QList<Item *> list_;
 };
 
 #endif // ALERTMANAGER_H

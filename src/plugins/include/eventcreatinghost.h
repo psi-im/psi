@@ -4,12 +4,13 @@
 class QObject;
 class QString;
 
-class EventCreatingHost
-{
+class EventCreatingHost {
 public:
     virtual ~EventCreatingHost() {}
 
-    virtual void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot) = 0;
+    virtual void createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
+                                const char *slot)
+        = 0;
     virtual void createNewMessageEvent(int account, QDomElement const &element) = 0;
 };
 

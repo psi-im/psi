@@ -42,49 +42,47 @@ class QString;
 class TabDlg;
 class TabManager;
 
-class TabDlgDelegate : public QObject
-{
+class TabDlgDelegate : public QObject {
     Q_OBJECT
 public:
     TabDlgDelegate(QObject *parent = nullptr);
     ~TabDlgDelegate();
 
     virtual Qt::WindowFlags initWindowFlags() const;
-    virtual void create(QWidget *widget);
-    virtual void destroy(QWidget *widget);
-    virtual void tabWidgetCreated(QWidget *widget, PsiTabWidget *tabWidget);
-    virtual bool paintEvent(QWidget *widget, QPaintEvent *event);
-    virtual bool resizeEvent(QWidget *widget, QResizeEvent *event);
-    virtual bool mousePressEvent(QWidget *widget, QMouseEvent *event);
-    virtual bool mouseMoveEvent(QWidget *widget, QMouseEvent *event);
-    virtual bool mouseReleaseEvent(QWidget *widget, QMouseEvent *event);
-    virtual bool changeEvent(QWidget *widget, QEvent *event);
-    virtual bool tabEvent(QWidget *widget, QEvent *event);
-    virtual bool tabEventFilter(QWidget *widget, QObject *obj, QEvent *event);
+    virtual void            create(QWidget *widget);
+    virtual void            destroy(QWidget *widget);
+    virtual void            tabWidgetCreated(QWidget *widget, PsiTabWidget *tabWidget);
+    virtual bool            paintEvent(QWidget *widget, QPaintEvent *event);
+    virtual bool            resizeEvent(QWidget *widget, QResizeEvent *event);
+    virtual bool            mousePressEvent(QWidget *widget, QMouseEvent *event);
+    virtual bool            mouseMoveEvent(QWidget *widget, QMouseEvent *event);
+    virtual bool            mouseReleaseEvent(QWidget *widget, QMouseEvent *event);
+    virtual bool            changeEvent(QWidget *widget, QEvent *event);
+    virtual bool            tabEvent(QWidget *widget, QEvent *event);
+    virtual bool            tabEventFilter(QWidget *widget, QObject *obj, QEvent *event);
 };
 
-class TabDlg : public AdvancedWidget<QWidget>
-{
+class TabDlg : public AdvancedWidget<QWidget> {
     Q_OBJECT
 public:
-    TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate = nullptr);
+    TabDlg(TabManager *tabManager, const QString &geometryOption, TabDlgDelegate *delegate = nullptr);
     ~TabDlg();
-    bool managesTab(const TabbableWidget*) const;
-    bool tabOnTop(const TabbableWidget*) const;
+    bool            managesTab(const TabbableWidget *) const;
+    bool            tabOnTop(const TabbableWidget *) const;
     TabbableWidget *getTab(int i) const;
-    void removeTabWithNoChecks(TabbableWidget *tab);
+    void            removeTabWithNoChecks(TabbableWidget *tab);
 
-    TabbableWidget* getTabPointer(PsiAccount* account, QString fullJid);
+    TabbableWidget *getTabPointer(PsiAccount *account, QString fullJid);
 
     virtual QString desiredCaption() const;
-    QString captionForTab(TabbableWidget* tab) const;
+    QString         captionForTab(TabbableWidget *tab) const;
 
-    int tabCount() const;
-    void setUserManagementEnabled(bool enabled); // default enabled
-    void setTabBarShownForSingles(bool enabled); // default enabled
-    void setSimplifiedCaptionEnabled(bool enabled); // default disabled
-    void setTabIcon(QWidget *,const QIcon &);
-    TabbableWidget* getCurrentTab() const;
+    int             tabCount() const;
+    void            setUserManagementEnabled(bool enabled);    // default enabled
+    void            setTabBarShownForSingles(bool enabled);    // default enabled
+    void            setSimplifiedCaptionEnabled(bool enabled); // default disabled
+    void            setTabIcon(QWidget *, const QIcon &);
+    TabbableWidget *getCurrentTab() const;
 
     bool isTabPinned(QWidget *page);
 
@@ -92,7 +90,7 @@ protected:
     void setShortcuts();
 
     // reimplemented
-    void closeEvent(QCloseEvent*);
+    void closeEvent(QCloseEvent *);
     void changeEvent(QEvent *event);
     void resizeEvent(QResizeEvent *);
     void dragEnterEvent(QDragEnterEvent *event);
@@ -108,21 +106,21 @@ protected:
 
 protected slots:
     void detachCurrentTab();
-    void mouseDoubleClickTab(QWidget*);
-    void mouseMiddleClickTab(QWidget*);
+    void mouseDoubleClickTab(QWidget *);
+    void mouseMiddleClickTab(QWidget *);
 
 public slots:
     void addTab(TabbableWidget *tab);
     void setLooks();
     void closeCurrentTab();
-    void closeTab(TabbableWidget*, bool doclose = true);
-    void selectTab(TabbableWidget*);
+    void closeTab(TabbableWidget *, bool doclose = true);
+    void selectTab(TabbableWidget *);
     void activated();
     void optionsUpdate();
-    void detachTab(TabbableWidget*);
-    void sendTabTo(TabbableWidget*, TabDlg *);
+    void detachTab(TabbableWidget *);
+    void sendTabTo(TabbableWidget *, TabDlg *);
     void tabCloseRequested(int i);
-    void hideTab(TabbableWidget*);
+    void hideTab(TabbableWidget *);
     void pinTab(TabbableWidget *tab);
     void hideCurrentTab();
     void hideAllTab();
@@ -132,10 +130,10 @@ signals:
 
 private slots:
     void updateFlashState();
-    void tabSelected(QWidget* selected);
+    void tabSelected(QWidget *selected);
     void checkHasChats();
     void updateTab();
-    void updateTab(TabbableWidget*);
+    void updateTab(TabbableWidget *);
     void showTabWithoutActivation();
     void nextTab();
     void previousTab();
@@ -143,26 +141,26 @@ private slots:
     void setAsDefaultForChat();
     void setAsDefaultForMuc();
     void menu_sendTabTo(QAction *act);
-    void queuedSendTabTo(TabbableWidget* chat, TabDlg *dest);
-    void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
+    void queuedSendTabTo(TabbableWidget *chat, TabDlg *dest);
+    void showTabMenu(int tab, QPoint pos, QContextMenuEvent *event);
 
 private:
-    TabDlgDelegate *delegate_;
-    QList<TabbableWidget*> tabs_;
-    PsiTabWidget *tabWidget_;
-    QPushButton *detachButton_;
-    QPushButton *closeButton_;
-    QPushButton *closeCross_;
-    QMenu *tabMenu_;
-    QAction *act_close_;
-    QAction *act_next_;
-    QAction *act_prev_;
-    TabManager *tabManager_;
+    TabDlgDelegate *         delegate_;
+    QList<TabbableWidget *>  tabs_;
+    PsiTabWidget *           tabWidget_;
+    QPushButton *            detachButton_;
+    QPushButton *            closeButton_;
+    QPushButton *            closeCross_;
+    QMenu *                  tabMenu_;
+    QAction *                act_close_;
+    QAction *                act_next_;
+    QAction *                act_prev_;
+    TabManager *             tabManager_;
     QPointer<TabbableWidget> selectedTab_;
-    bool userManagement_;
-    bool tabBarSingles_;
-    bool simplifiedCaption_;
-    QList<QAction*> tabMapperActions_;
+    bool                     userManagement_;
+    bool                     tabBarSingles_;
+    bool                     simplifiedCaption_;
+    QList<QAction *>         tabMapperActions_;
 
     QSize chatSize_;
 

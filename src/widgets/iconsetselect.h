@@ -25,8 +25,7 @@
 class Iconset;
 class IconsetSelectItem;
 
-class IconsetSelect : public QListWidget
-{
+class IconsetSelect : public QListWidget {
     Q_OBJECT
 public:
     IconsetSelect(QWidget *parent = nullptr);

@@ -32,27 +32,26 @@ class TabDlg;
 class TabManager;
 
 namespace XMPP {
-    class Jid;
-    class Message;
+class Jid;
+class Message;
 }
 using namespace XMPP;
 
-class TabbableWidget : public AdvancedWidget<QWidget>
-{
+class TabbableWidget : public AdvancedWidget<QWidget> {
     Q_OBJECT
 public:
     TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
     ~TabbableWidget();
 
-    PsiAccount* account() const;
-    void setTabIcon(const QIcon &);
+    PsiAccount * account() const;
+    void         setTabIcon(const QIcon &);
     const QIcon &icon() const;
 
-    virtual Jid jid() const;
-    virtual const QString & getDisplayName() const;
+    virtual Jid            jid() const;
+    virtual const QString &getDisplayName() const;
 
     virtual bool readyToHide();
-    TabDlg* getManagingTabDlg();
+    TabDlg *     getManagingTabDlg();
 
     bool isTabbed();
     bool isActiveTab();
@@ -63,18 +62,14 @@ public:
 
     virtual void invalidateTab();
 
-    enum class State : char {
-        None = 0,
-        Composing,
-        Inactive
-    };
-    virtual State state() const = 0;
-    virtual int unreadMessageCount() const = 0;
-    virtual QString desiredCaption() const = 0;
+    enum class State : char { None = 0, Composing, Inactive };
+    virtual State   state() const              = 0;
+    virtual int     unreadMessageCount() const = 0;
+    virtual QString desiredCaption() const     = 0;
 
     // Templates
-    SendButtonTemplatesMenu* getTemplateMenu();
-    void showTemplateEditor();
+    SendButtonTemplatesMenu *getTemplateMenu();
+    void                     showTemplateEditor();
     // ---
 
 signals:
@@ -83,31 +78,31 @@ signals:
     void eventsRead(const Jid &);
 
 public slots:
-    void bringToFront(bool raiseWindow = true);
+    void         bringToFront(bool raiseWindow = true);
     virtual void ensureTabbedCorrectly();
-    void hideTab();
-    void pinTab();
+    void         hideTab();
+    void         pinTab();
 
 protected:
-    virtual void setJid(const Jid&);
+    virtual void setJid(const Jid &);
     virtual void deactivated();
     virtual void activated();
 
     // reimplemented
-    void changeEvent(QEvent* e);
+    void changeEvent(QEvent *e);
 
 private:
     enum class ActivationState : char { Activated, Deactivated };
     ActivationState state_;
-    QTimer stateCommitTimer_;
+    QTimer          stateCommitTimer_;
 
-    Jid jid_;
+    Jid         jid_;
     PsiAccount *pa_;
     TabManager *tabManager_;
-    QIcon icon_;
+    QIcon       icon_;
     // Templates
-    static int chatsCount;
-    static SendButtonTemplatesMenu *templateMenu;
+    static int                                 chatsCount;
+    static SendButtonTemplatesMenu *           templateMenu;
     static QPointer<SendButtonTemplatesEditor> templateEditDlg;
     // ---
 };

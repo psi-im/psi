@@ -25,25 +25,24 @@
 
 class PsiAccount;
 
-class AccountLabel : public QLabel
-{
+class AccountLabel : public QLabel {
     Q_OBJECT
     Q_PROPERTY(bool showJid READ showJid WRITE setShowJid)
 public:
-    AccountLabel(QWidget* parent);
+    AccountLabel(QWidget *parent);
     ~AccountLabel();
 
-    PsiAccount* account() const;
-    bool showJid() const;
-    void setAccount(PsiAccount* account);
-    void setShowJid(bool showJid);
+    PsiAccount *account() const;
+    bool        showJid() const;
+    void        setAccount(PsiAccount *account);
+    void        setShowJid(bool showJid);
 
 private slots:
     void updateName();
 
 private:
     QPointer<PsiAccount> account_;
-    bool showJid_;
+    bool                 showJid_;
 };
 
 #endif // ACCOUNTLABEL_H

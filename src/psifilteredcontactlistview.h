@@ -22,22 +22,18 @@
 
 #include "psicontactlistview.h"
 
-class PsiFilteredContactListView : public PsiContactListView
-{
+class PsiFilteredContactListView : public PsiContactListView {
     Q_OBJECT
 public:
-    PsiFilteredContactListView(QWidget* parent);
+    PsiFilteredContactListView(QWidget *parent);
 
-    bool handleKeyPressEvent(QKeyEvent* e);
+    bool handleKeyPressEvent(QKeyEvent *e);
 
 signals:
     void quitFilteringMode();
 
 private:
-    enum Direction {
-        Forward,
-        Backward
-    };
+    enum Direction { Forward, Backward };
     void moveSelection(uint delta, Direction direction);
     void selectIndex(int row);
 
@@ -45,7 +41,7 @@ private:
 
 protected:
     // reimplemented
-    virtual void itemActivated(const QModelIndex& index);
+    virtual void itemActivated(const QModelIndex &index);
 };
 
 #endif // PSIFILTEREDCONTACTLISTVIEW_H

@@ -11,100 +11,68 @@
 // OptionsTab
 //----------------------------------------------------------------------------
 
-OptionsTab::OptionsTab(QObject *parent, const char *name)
-: QObject(parent)
-{
-    setObjectName(name);
-}
+OptionsTab::OptionsTab(QObject *parent, const char *name) : QObject(parent) { setObjectName(name); }
 
-OptionsTab::OptionsTab(QObject *parent, QByteArray _id, QByteArray _parentId, QString _name, QString _desc, QString _tabIconName, QString _iconName)
-: QObject(parent)
+OptionsTab::OptionsTab(QObject *parent, QByteArray _id, QByteArray _parentId, QString _name, QString _desc,
+                       QString _tabIconName, QString _iconName) :
+    QObject(parent)
 {
     setObjectName(_name);
-    v_id = _id;
-    v_parentId = _parentId;
-    v_name = _name;
-    v_desc = _desc;
+    v_id          = _id;
+    v_parentId    = _parentId;
+    v_name        = _name;
+    v_desc        = _desc;
     v_tabIconName = _tabIconName;
-    v_iconName = _iconName;
+    v_iconName    = _iconName;
 }
 
-OptionsTab::~OptionsTab()
-{
-}
+OptionsTab::~OptionsTab() {}
 
-QByteArray OptionsTab::id() const
-{
-    return v_id;
-}
+QByteArray OptionsTab::id() const { return v_id; }
 
-QByteArray OptionsTab::parentId() const
-{
-    return v_parentId;
-}
+QByteArray OptionsTab::parentId() const { return v_parentId; }
 
-QString OptionsTab::tabName() const
-{
-    return v_name;
-}
+QString OptionsTab::tabName() const { return v_name; }
 
 PsiIcon *OptionsTab::tabIcon() const
 {
-    if ( v_tabIconName.isEmpty() )
+    if (v_tabIconName.isEmpty())
         return nullptr;
 
-    return const_cast<PsiIcon *>(IconsetFactory::iconPtr( v_tabIconName ));
+    return const_cast<PsiIcon *>(IconsetFactory::iconPtr(v_tabIconName));
 }
 
-QString OptionsTab::name() const
-{
-    return v_name;
-}
+QString OptionsTab::name() const { return v_name; }
 
-QString OptionsTab::desc() const
-{
-    return v_desc;
-}
+QString OptionsTab::desc() const { return v_desc; }
 
 PsiIcon *OptionsTab::psiIcon() const
 {
-    if ( v_iconName.isEmpty() ) {
-        //if ( tabIcon() )
+    if (v_iconName.isEmpty()) {
+        // if ( tabIcon() )
         //    return tabIcon();
 
         return const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/logo_32"));
     }
 
-    return const_cast<PsiIcon *>(IconsetFactory::iconPtr( v_iconName ));
+    return const_cast<PsiIcon *>(IconsetFactory::iconPtr(v_iconName));
 }
 
-void OptionsTab::applyOptions()
-{
-}
+void OptionsTab::applyOptions() {}
 
-void OptionsTab::restoreOptions()
-{
-}
+void OptionsTab::restoreOptions() {}
 
-void OptionsTab::tabAdded(OptionsTab *)
-{
-}
+void OptionsTab::tabAdded(OptionsTab *) {}
 
-bool OptionsTab::stretchable() const
-{
-    return false;
-}
+bool OptionsTab::stretchable() const { return false; }
 
-void OptionsTab::setData(PsiCon *, QWidget *)
-{
-}
+void OptionsTab::setData(PsiCon *, QWidget *) {}
 
 //----------------------------------------------------------------------------
 // OptionsTabWidget
 //----------------------------------------------------------------------------
 
-class OptionsTabWidget : public QTabWidget
-{
+class OptionsTabWidget : public QTabWidget {
     Q_OBJECT
 public:
     OptionsTabWidget(QWidget *parent);
@@ -121,23 +89,30 @@ private slots:
 
 private:
     struct TabData {
-        TabData() { tab = nullptr; initialized = false; }
-        TabData(OptionsTab *t) { tab = t; initialized = false; }
+        TabData()
+        {
+            tab         = nullptr;
+            initialized = false;
+        }
+        TabData(OptionsTab *t)
+        {
+            tab         = t;
+            initialized = false;
+        }
         OptionsTab *tab;
-        bool initialized;
+        bool        initialized;
     };
     QMap<QWidget *, TabData> w2tab;
 };
 
-OptionsTabWidget::OptionsTabWidget(QWidget *parent)
-: QTabWidget(parent)
+OptionsTabWidget::OptionsTabWidget(QWidget *parent) : QTabWidget(parent)
 {
     connect(this, SIGNAL(currentChanged(int)), SLOT(updateCurrent(int)));
 }
 
 void OptionsTabWidget::addTab(OptionsTab *tab)
 {
-    if ( tab->tabName().isEmpty() )
+    if (tab->tabName().isEmpty())
         return; // skip the dummy tabs
 
     // the widget will have no parent; it will be reparented
@@ -145,12 +120,12 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
     QWidget *w = new QWidget(nullptr);
     w->setObjectName(tab->name());
 
-    if ( !tab->desc().isEmpty() )
+    if (!tab->desc().isEmpty())
         setTabToolTip(indexOf(w), tab->desc());
 
     w2tab[w] = TabData(tab);
 
-    if ( tab->tabIcon() )
+    if (tab->tabIcon())
         QTabWidget::addTab(w, tab->tabIcon()->icon(), tab->tabName());
     else
         QTabWidget::addTab(w, tab->tabName());
@@ -161,19 +136,19 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 void OptionsTabWidget::updateCurrent(int index)
 {
     Q_UNUSED(index)
-    QWidget *w = currentWidget ();
-    if ( !w2tab[w].initialized ) {
+    QWidget *w = currentWidget();
+    if (!w2tab[w].initialized) {
         QVBoxLayout *vbox = new QVBoxLayout(w);
         vbox->setMargin(5);
         OptionsTab *opttab = w2tab[w].tab;
 
         QWidget *tab = opttab->widget();
-        if ( !tab )
+        if (!tab)
             return;
 
         tab->setParent(w);
         vbox->addWidget(tab);
-        if ( !opttab->stretchable() )
+        if (!opttab->stretchable())
             vbox->addStretch();
 
         emit noDirty(true);
@@ -196,8 +171,7 @@ void OptionsTabWidget::restoreOptions()
 
 void OptionsTabWidget::enableOtherTabs(bool enable)
 {
-    for (int i = 0; i < count(); i++)
-    {
+    for (int i = 0; i < count(); i++) {
         if (i != currentIndex())
             setTabEnabled(i, enable);
     }
@@ -207,14 +181,11 @@ void OptionsTabWidget::enableOtherTabs(bool enable)
 // MetaOptionsTab
 //----------------------------------------------------------------------------
 
-MetaOptionsTab::MetaOptionsTab(QObject *parent, const char *name)
-: OptionsTab(parent, name)
-{
-    init();
-}
+MetaOptionsTab::MetaOptionsTab(QObject *parent, const char *name) : OptionsTab(parent, name) { init(); }
 
-MetaOptionsTab::MetaOptionsTab(QObject *parent, QByteArray id, QByteArray parentId, QString name, QString desc, QString tabIconName, QString iconName)
-: OptionsTab(parent, id, parentId, name, desc, tabIconName, iconName)
+MetaOptionsTab::MetaOptionsTab(QObject *parent, QByteArray id, QByteArray parentId, QString name, QString desc,
+                               QString tabIconName, QString iconName) :
+    OptionsTab(parent, id, parentId, name, desc, tabIconName, iconName)
 {
     init();
 }
@@ -223,19 +194,18 @@ MetaOptionsTab::~MetaOptionsTab()
 {
     qDeleteAll(tabs);
 
-    //if ( w )   // it does not make much sense to delete it. since the widget will reparented and deleted automatically
+    // if ( w )   // it does not make much sense to delete it. since the widget will reparented and deleted
+    // automatically
     //    delete w;
 }
 
-void MetaOptionsTab::init()
-{
-    w = nullptr;
-}
+void MetaOptionsTab::init() { w = nullptr; }
 
 void MetaOptionsTab::addTab(OptionsTab *tab)
 {
     connect(tab, SIGNAL(dataChanged()), SIGNAL(dataChanged()));
-    //connect(tab, SIGNAL(addWidgetChangedSignal(QString, QCString)), SIGNAL(addWidgetChangedSignal(QString, QCString)));
+    // connect(tab, SIGNAL(addWidgetChangedSignal(QString, QCString)), SIGNAL(addWidgetChangedSignal(QString,
+    // QCString)));
     connect(tab, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
     connect(tab, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
 
@@ -246,21 +216,21 @@ void MetaOptionsTab::enableOtherTabs(bool enable)
 {
     if (!w)
         return;
-    static_cast<OptionsTabWidget*>(w)->enableOtherTabs(enable);
+    static_cast<OptionsTabWidget *>(w)->enableOtherTabs(enable);
 }
 
 QWidget *MetaOptionsTab::widget()
 {
-    if ( w )
+    if (w)
         return w;
 
     OptionsTabWidget *t = new OptionsTabWidget(nullptr);
-    w = t;
+    w                   = t;
 
     connect(w, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
     connect(w, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
 
-    foreach(OptionsTab* tab, tabs) {
+    foreach (OptionsTab *tab, tabs) {
         t->addTab(tab);
     }
 
@@ -272,26 +242,26 @@ QWidget *MetaOptionsTab::widget()
 
 void MetaOptionsTab::applyOptions()
 {
-    foreach(OptionsTab* tab, tabs) {
+    foreach (OptionsTab *tab, tabs) {
         tab->applyOptions();
     }
 }
 
 void MetaOptionsTab::restoreOptions()
 {
-    if ( w ) {
+    if (w) {
         OptionsTabWidget *d = static_cast<OptionsTabWidget *>(w);
         d->restoreOptions();
     }
 
-    foreach(OptionsTab* tab, tabs) {
+    foreach (OptionsTab *tab, tabs) {
         tab->restoreOptions();
     }
 }
 
 void MetaOptionsTab::setData(PsiCon *psi, QWidget *w)
 {
-    foreach(OptionsTab* tab, tabs) {
+    foreach (OptionsTab *tab, tabs) {
         tab->setData(psi, w);
     }
 }

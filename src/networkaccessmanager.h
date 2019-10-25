@@ -39,16 +39,18 @@ class NetworkAccessManager : public QNetworkAccessManager {
 
     Q_OBJECT
 public:
-
     NetworkAccessManager(QObject *parent = nullptr);
 
-    inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler)
-    { _pathHandlers.append(handler); }
+    inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler) { _pathHandlers.append(handler); }
 
     QString registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler);
-    void unregisterSessionHandler(const QString &id);
+    void    unregisterSessionHandler(const QString &id);
 
-    void releaseHandlers() { _pathHandlers.clear(); _sessionHandlers.clear(); }
+    void releaseHandlers()
+    {
+        _pathHandlers.clear();
+        _sessionHandlers.clear();
+    }
 
 private slots:
 
@@ -60,13 +62,12 @@ private slots:
     void callFinished();
 
 protected:
-    QNetworkReply* createRequest(Operation op, const QNetworkRequest & req, QIODevice * outgoingData);
+    QNetworkReply *createRequest(Operation op, const QNetworkRequest &req, QIODevice *outgoingData);
 
 private:
-
-    int _handlerSeed;
-    QList<QSharedPointer<NAMDataHandler> > _pathHandlers;
-    QHash<QString,QSharedPointer<NAMDataHandler> > _sessionHandlers;
+    int                                            _handlerSeed;
+    QList<QSharedPointer<NAMDataHandler>>          _pathHandlers;
+    QHash<QString, QSharedPointer<NAMDataHandler>> _sessionHandlers;
 };
 
 #endif // NETWORKACCESSMANAGER_H

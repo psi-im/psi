@@ -28,39 +28,38 @@ class TabDlg;
 class TabDlgDelegate;
 class TabbableWidget;
 
-class TabManager : public QObject
-{
+class TabManager : public QObject {
     Q_OBJECT
 public:
     TabManager(PsiCon *psiCon, QObject *parent = nullptr);
     ~TabManager();
 
-    PsiCon* psiCon() const;
+    PsiCon *psiCon() const;
 
     /**
      * Get the default tabset for this widget (created if needed).
      */
-    TabDlg* getTabs(QWidget *widget);
+    TabDlg *getTabs(QWidget *widget);
 
     /**
      * Return a new tabset (for this widget).
      */
-    TabDlg* newTabs(QWidget *widget=nullptr);
+    TabDlg *newTabs(QWidget *widget = nullptr);
 
     /**
      * Checks if a tabset manages this widget.
      */
-    bool isChatTabbed(const TabbableWidget*) const;
+    bool isChatTabbed(const TabbableWidget *) const;
 
     /**
      * Returns the tab dialog that owns the supplied widget.
      */
-    TabDlg* getManagingTabs(const TabbableWidget*) const;
+    TabDlg *getManagingTabs(const TabbableWidget *) const;
 
     /**
      * Returns all active tabsets (could be empty).
      */
-    const QList<TabDlg*>& tabSets();
+    const QList<TabDlg *> &tabSets();
 
     /**
      * Checks if a given widget should be in a tabset
@@ -115,18 +114,18 @@ public:
     void setSimplifiedCaptionEnabled(bool enabled);
 
 public slots:
-    void tabDestroyed(QObject*);
+    void tabDestroyed(QObject *);
 
 private:
-    QMap<QChar, TabDlg*> preferedTabsetForKind_;
-    QMap<TabDlg*, QString> tabsetToKinds_;
-    QList<TabDlg*> tabs_;
-    QList<TabbableWidget*> tabControlledChats_;
-    PsiCon *psiCon_;
-    TabDlgDelegate *tabDlgDelegate_;
-    bool userManagement_;
-    bool tabSingles_;
-    bool simplifiedCaption_;
+    QMap<QChar, TabDlg *>   preferedTabsetForKind_;
+    QMap<TabDlg *, QString> tabsetToKinds_;
+    QList<TabDlg *>         tabs_;
+    QList<TabbableWidget *> tabControlledChats_;
+    PsiCon *                psiCon_;
+    TabDlgDelegate *        tabDlgDelegate_;
+    bool                    userManagement_;
+    bool                    tabSingles_;
+    bool                    simplifiedCaption_;
 };
 
 #endif // TABMANAGER_H

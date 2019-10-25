@@ -8,8 +8,7 @@
 #include <QModelIndex>
 #include <QTimer>
 
-class ContactListModel::Private : public QObject
-{
+class ContactListModel::Private : public QObject {
     Q_OBJECT
 
 public:
@@ -24,11 +23,11 @@ public:
     ~Private();
 
     void realAddContact(PsiContact *contact);
-    void addContacts(const QList<PsiContact*> &contacts);
-    void updateContacts(const QList<PsiContact*> &contacts);
+    void addContacts(const QList<PsiContact *> &contacts);
+    void updateContacts(const QList<PsiContact *> &contacts);
 
-    void addOperation(PsiContact* contact, Operation operation);
-    int simplifiedOperationList(int operations) const;
+    void addOperation(PsiContact *contact, Operation operation);
+    int  simplifiedOperationList(int operations) const;
 
     ContactListItem::SpecialGroupType specialGroupFor(PsiContact *contact);
 
@@ -48,14 +47,14 @@ private:
     void cleanUpAccount(PsiAccount *account);
 
 public:
-    ContactListModel *q;
-    bool groupsEnabled;
-    bool accountsEnabled;
-    PsiContactList *contactList;
-    QTimer *commitTimer;
-    QDateTime commitTimerStartTime;
-    QHash<PsiContact*, QPersistentModelIndex> monitoredContacts; // always keeps all the contacts
-    QHash<PsiContact*, int> operationQueue;
-    QStringList collapsed;
-    QStringList hidden;
+    ContactListModel *                         q;
+    bool                                       groupsEnabled;
+    bool                                       accountsEnabled;
+    PsiContactList *                           contactList;
+    QTimer *                                   commitTimer;
+    QDateTime                                  commitTimerStartTime;
+    QHash<PsiContact *, QPersistentModelIndex> monitoredContacts; // always keeps all the contacts
+    QHash<PsiContact *, int>                   operationQueue;
+    QStringList                                collapsed;
+    QStringList                                hidden;
 };

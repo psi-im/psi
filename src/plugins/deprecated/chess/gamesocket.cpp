@@ -16,19 +16,11 @@
 
 #include <Q3Socket>
 
-GameSocket::GameSocket(QWidget *parent, const char *name)
-    :Q3ServerSocket(GAME_PORT, GAME_BACKLOG, (QObject *)parent, name)
+GameSocket::GameSocket(QWidget *parent, const char *name) :
+    Q3ServerSocket(GAME_PORT, GAME_BACKLOG, (QObject *)parent, name)
 {
 }
 
-GameSocket::~GameSocket()
-{
-}
+GameSocket::~GameSocket() {}
 
-void
-GameSocket::newConnection(int sock)
-{
-
-    emit acceptConnection(sock);
-}
-
+void GameSocket::newConnection(int sock) { emit acceptConnection(sock); }

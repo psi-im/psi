@@ -26,15 +26,14 @@
 class QCheckBox;
 class QLineEdit;
 
-class PassDialog : public QDialog
-{
+class PassDialog : public QDialog {
     Q_OBJECT
 public:
-    PassDialog(const QString& jid = "", QWidget *parent = nullptr);
+    PassDialog(const QString &jid = "", QWidget *parent = nullptr);
 
     QString password() const;
-    bool savePassword() const;
-    void setSavePassword(bool save);
+    bool    savePassword() const;
+    void    setSavePassword(bool save);
 
 private:
     QCheckBox *cb_savePassword;

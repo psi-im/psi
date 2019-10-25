@@ -3,8 +3,7 @@
 
 #include "optionstab.h"
 
-class OptionsTabMessages: public MetaOptionsTab
-{
+class OptionsTabMessages : public MetaOptionsTab {
     Q_OBJECT
 public:
     OptionsTabMessages(QObject *parent);

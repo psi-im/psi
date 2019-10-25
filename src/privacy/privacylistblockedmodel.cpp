@@ -23,11 +23,9 @@
 
 #include <QSortFilterProxyModel>
 
-PrivacyListBlockedModel::PrivacyListBlockedModel(QObject* parent) : QSortFilterProxyModel(parent)
-{
-}
+PrivacyListBlockedModel::PrivacyListBlockedModel(QObject *parent) : QSortFilterProxyModel(parent) {}
 
-bool PrivacyListBlockedModel::lessThan(const QModelIndex & left, const QModelIndex & right ) const
+bool PrivacyListBlockedModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
     return left.row() < right.row();
 }
@@ -37,7 +35,9 @@ bool PrivacyListBlockedModel::filterAcceptsColumn(int source_column, const QMode
     return source_column == PrivacyListModel::ValueColumn;
 }
 
-bool PrivacyListBlockedModel::filterAcceptsRow(int source_row, const QModelIndex & source_parent ) const
+bool PrivacyListBlockedModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
 {
-    return sourceModel()->data(sourceModel()->index(source_row,0,source_parent),PrivacyListModel::BlockedRole).toBool();
+    return sourceModel()
+        ->data(sourceModel()->index(source_row, 0, source_parent), PrivacyListModel::BlockedRole)
+        .toBool();
 }

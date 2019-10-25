@@ -92,7 +92,7 @@ class Resource;
 class RosterItem;
 class ServerInfoManager;
 class Stream;
-//class StreamError;
+// class StreamError;
 class XData;
 };
 using namespace XMPP;
@@ -146,17 +146,9 @@ public:
     void          setStatusDirect(const XMPP::Status &, bool withPriority = false);
     void          setStatusActual(const XMPP::Status &);
 
-    enum AutoAway {
-        AutoAway_None = 0,
-        AutoAway_Away,
-        AutoAway_XA,
-        AutoAway_Offline
-    };
+    enum AutoAway { AutoAway_None = 0, AutoAway_Away, AutoAway_XA, AutoAway_Offline };
 
-    enum MucJoinReason {
-        MucAutoJoin,
-        MucCustomJoin
-    };
+    enum MucJoinReason { MucAutoJoin, MucCustomJoin };
 
     void setAutoAwayStatus(AutoAway status);
 
@@ -176,26 +168,20 @@ public:
 
     QList<PsiContact *> activeContacts() const;
 
-    template <typename T>
-    inline T findDialog(const Jid &jid = Jid(), bool compareResource = true) const
+    template <typename T> inline T findDialog(const Jid &jid = Jid(), bool compareResource = true) const
     {
         return static_cast<T>(findDialog(((T)0)->staticMetaObject, jid, compareResource));
     }
-    template <typename T>
-    inline QList<T> findDialogs(const Jid &jid = Jid(), bool compareResource = true) const
+    template <typename T> inline QList<T> findDialogs(const Jid &jid = Jid(), bool compareResource = true) const
     {
         QList<T> list;
-        findDialogs(((T)0)->staticMetaObject,
-                    jid, compareResource,
-                    reinterpret_cast<QList<void *> *>(&list));
+        findDialogs(((T)0)->staticMetaObject, jid, compareResource, reinterpret_cast<QList<void *> *>(&list));
         return list;
     }
-    template <typename T>
-    inline QList<T> findAllDialogs() const
+    template <typename T> inline QList<T> findAllDialogs() const
     {
         QList<T> list;
-        findDialogs(((T)0)->staticMetaObject,
-                    reinterpret_cast<QList<void *> *>(&list));
+        findDialogs(((T)0)->staticMetaObject, reinterpret_cast<QList<void *> *>(&list));
         return list;
     }
 
@@ -218,7 +204,8 @@ public:
     void        openAddUserDlg();
     void        openAddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group);
     void        openGroupChat(const Jid &, ActivationType activationType, MucJoinReason reason = MucCustomJoin);
-    bool        groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString &pass, bool nohistory = false);
+    bool        groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString &pass,
+                              bool nohistory = false);
     void        groupChatSetStatus(const QString &host, const QString &room, const Status &);
     void        groupChatChangeNick(const QString &host, const QString &room, const QString &nick, const Status &);
     void        groupChatLeave(const QString &host, const QString &room);
@@ -262,7 +249,8 @@ public:
     void playSound(SoundType onevent);
 
 #ifdef PSI_PLUGINS
-    void createNewPluginEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot);
+    void createNewPluginEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
+                              const char *slot);
     void createNewMessageEvent(const QDomElement &element);
 #endif
 
@@ -279,9 +267,9 @@ public:
     bool ensureKey(const Jid &);
     void tryVerify(UserListItem *, UserResource *);
 
-    static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler,
-                             QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect,
-                             bool *_isTemporaryAuthFailure, bool *_needAlert);
+    static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str,
+                             bool *_reconn, bool *_badPass, bool *_disableAutoConnect, bool *_isTemporaryAuthFailure,
+                             bool *_needAlert);
 
     void deleteQueueFile();
 
@@ -294,9 +282,7 @@ public:
     QString currentConnectionError() const;
     int     currentConnectionErrorCondition() const;
 
-    enum xmlRingType { RingXmlIn,
-                       RingXmlOut,
-                       RingSysMsg };
+    enum xmlRingType { RingXmlIn, RingXmlOut, RingSysMsg };
     class xmlRingElem {
     public:
         int       type;
@@ -313,9 +299,11 @@ public:
 #ifdef HAVE_KEYCHAIN
     void savePassword();
 #endif
-    void loadBob(const Jid &jid, const QString &cid, QObject *context, std::function<void(bool, const QByteArray &, const QByteArray &)> callback);
+    void loadBob(const Jid &jid, const QString &cid, QObject *context,
+                 std::function<void(bool, const QByteArray &, const QByteArray &)> callback);
     void shareFiles(QWidget *parent, const std::function<void(const QList<Reference> &, const QString &)> &callback);
-    void shareFiles(QWidget *parent, const QMimeData *mdata, const std::function<void(const QList<Reference> &, const QString &)> &callback);
+    void shareFiles(QWidget *parent, const QMimeData *mdata,
+                    const std::function<void(const QList<Reference> &, const QString &)> &callback);
 
     FileSharingDeviceOpener *fileSharingDeviceOpener() const;
     void                     resolveContactName(const Jid &j);
@@ -364,7 +352,7 @@ public slots:
 
     void openUri(const QUrl &uri);
 
-    //dj_ originally referred to 'direct jabber', if you care
+    // dj_ originally referred to 'direct jabber', if you care
     void dj_sendMessage(Message &, bool log = true);
     void dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void dj_replyMessage(const Jid &jid, const QString &body);
@@ -494,7 +482,7 @@ private slots:
     void groupChatMessagesRead(const Jid &);
 #endif
     void edb_finished();
-    //void pgpToggled(bool);
+    // void pgpToggled(bool);
     void pgpKeysUpdated();
 
     void trySignPresence();

@@ -25,15 +25,14 @@
 class Iconset;
 class PsiIcon;
 
-class IconSelectPopup : public QMenu
-{
+class IconSelectPopup : public QMenu {
     Q_OBJECT
 
 public:
     IconSelectPopup(QWidget *parent = nullptr);
     ~IconSelectPopup();
 
-    void setIconset(const Iconset &);
+    void           setIconset(const Iconset &);
     const Iconset &iconset() const;
 
     // reimplemented
