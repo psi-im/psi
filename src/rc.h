@@ -21,8 +21,11 @@
 #define RC_H
 
 #include "ahcommandserver.h"
+#include "xmpp_jid.h"
 
 class PsiCon;
+
+using namespace XMPP;
 
 class RCCommandServer : public AHCommandServer {
 public:

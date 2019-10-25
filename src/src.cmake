@@ -61,6 +61,7 @@ list(APPEND FORMS
     proxy.ui
     rosteravatarframe.ui
     search.ui
+    sendbuttontemplateseditor.ui
     voicecall.ui
     xmlconsole.ui
     )
@@ -242,6 +243,7 @@ list(APPEND HEADERS
     pubsubsubscription.h
     rc.h
     rtparse.h
+    sendbuttonmenu.h
     shortcutmanager.h
     statuspreset.h
     systeminfo.h
@@ -456,6 +458,7 @@ list(APPEND SOURCES
     rosteravatarframe.cpp
     rosteritemexchangetask.cpp
     rtparse.cpp
+    sendbuttonmenu.cpp
     serverlistquerier.cpp
     shortcutmanager.cpp
     showtextdlg.cpp
@@ -507,16 +510,4 @@ else()
         chatview_te.h
         chatview_te.cpp
         )
-endif()
-
-if(IS_PSIPLUS)
-    list(APPEND FORMS
-        sendbuttontemplateseditor.ui
-    )
-    list(APPEND HEADERS
-        sendbuttonmenu.h
-    )
-    list(APPEND SOURCES
-        sendbuttonmenu.cpp
-    )
 endif()
