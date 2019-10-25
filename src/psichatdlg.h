@@ -35,6 +35,7 @@ private slots:
     void toggleSmallChat();
     void doClearButton();
     void doMiniCmd();
+    void doMinimize();
     void addContact();
     void buildMenu();
     void updateCounter();
@@ -49,6 +50,11 @@ private slots:
     void copyUserJid();
     void actActiveContacts();
     void actPgpToggled(bool);
+    void sendButtonMenu();
+    void editTemplates();
+    void doPasteAndSend();
+    void sendTemp(const QString &);
+    void psButtonEnabled();
 
     // reimplemented
     void chatEditCreated();
@@ -84,11 +90,13 @@ private:
 
     ActionList* actions_;
     QAction *act_mini_cmd_;
+    QAction *act_minimize_;
     TypeAheadFindBar *typeahead_;
 
     ActionLineEdit *le_autojid;
     IconAction *act_autojid;
     IconAction *act_active_contacts;
+    IconAction* act_pastesend_;
 
     MCmdManager mCmdManager_;
     MCmdSimpleSite mCmdSite_;

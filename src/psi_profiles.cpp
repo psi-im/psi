@@ -528,7 +528,7 @@ void OptionsMigration::lateMigration()
         chatToolbar.keys += pluginsKeys;
         chatToolbar.keys << "spacer" << "chat_icon" << "chat_file"
                          << "chat_pgp" << "chat_info" << "chat_history" << "chat_voice"
-                         << "chat_active_contacts";
+                         << "chat_active_contacts" << "chat_templates";
 
         if (PsiOptions::instance()->getOption("options.ui.chat.disable-paste-send").toBool()) {
             chatToolbar.keys.removeAt(chatToolbar.keys.indexOf("chat_ps"));
@@ -538,7 +538,8 @@ void OptionsMigration::lateMigration()
         groupchatToolbar.on = chatToolbar.on;
 
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" << "gchat_configure" << "gchat_share_files";
+        groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" <<
+                                 "gchat_configure" << "gchat_share_files" << "gchat_templates";
         groupchatToolbar.keys += pluginsKeys;
         groupchatToolbar.keys << "spacer" << "gchat_icon" ;
 

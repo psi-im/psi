@@ -22,6 +22,7 @@
 
 #include "advwidget.h"
 #include "im.h" // ChatState
+#include "sendbuttonmenu.h"
 
 #include <QIcon>
 #include <QTimer>
@@ -71,6 +72,11 @@ public:
     virtual int unreadMessageCount() const = 0;
     virtual QString desiredCaption() const = 0;
 
+    // Templates
+    SendButtonTemplatesMenu* getTemplateMenu();
+    void showTemplateEditor();
+    // ---
+
 signals:
     void invalidateTabInfo();
     void updateFlashState();
@@ -99,6 +105,11 @@ private:
     PsiAccount *pa_;
     TabManager *tabManager_;
     QIcon icon_;
+    // Templates
+    static int chatsCount;
+    static SendButtonTemplatesMenu *templateMenu;
+    static QPointer<SendButtonTemplatesEditor> templateEditDlg;
+    // ---
 };
 
 #endif // TABBABLEWIDGET_H

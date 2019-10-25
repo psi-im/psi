@@ -241,13 +241,14 @@ public:
     QMap<LanguageManager::LangId, QString> subjectMap;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList *                           actions;
-    IconAction *                           act_bookmark;
+    IconAction *                           act_bookmark, *act_pastesend;
     TypeAheadFindBar *                     typeahead;
     //#ifdef WHITEBOARDING
     //    IconAction *act_whiteboard;
     //#endif
     QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
     QAction *act_mini_cmd, *act_nick, *act_hide, *act_copy_muc_jid;
+    QAction *act_minimize;
 
     MCmdSimpleSite mCmdSite;
     MCmdManager    mCmdManager;
@@ -867,6 +868,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 
     d->state = Private::Connected;
 
+    SendButtonTemplatesMenu* menu = getTemplateMenu();
+    if (menu) {
+        connect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
+        connect(menu, SIGNAL(doEditTemplates()), this, SLOT(editTemplates()));
+        connect(menu, SIGNAL(doTemplateText(const QString &)), this, SLOT(sendTemp(const QString &)));
+    }
+
     setAcceptDrops(true);
 
     ui_.setupUi(this);
@@ -946,6 +954,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
         } else if (name == "gchat_pin_tab") {
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         }
+        else if (name == QLatin1String("gchat_templates")) {
+            action->setMenu(getTemplateMenu());
+        }
     }
 
     actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
@@ -987,6 +998,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateMucName()));
     connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
 
+    d->act_pastesend = new IconAction(tr("Paste and Send"), "psi/action_paste_and_send", tr("Paste and Send"), 0, this);
+    connect(d->act_pastesend, SIGNAL(triggered()), SLOT(doPasteAndSend()));
+
+    d->act_minimize = new QAction(this);
+    connect(d->act_minimize, SIGNAL(triggered()), SLOT(doMinimize()));
+    addAction(d->act_minimize);
+
     int s = PsiIconset::instance()->system().iconSize();
     ui_.toolbar->setIconSize(QSize(s, s));
 
@@ -1002,6 +1020,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     connect(d->act_send, SIGNAL(triggered()), SLOT(mle_returnPressed()));
     ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
     connect(ui_.pb_send, SIGNAL(clicked()), SLOT(mle_returnPressed()));
+    connect(ui_.pb_send, SIGNAL(customContextMenuRequested(const QPoint)), SLOT(sendButtonMenu()));
     d->act_close = new QAction(this);
     addAction(d->act_close);
     connect(d->act_close, SIGNAL(triggered()), SLOT(close()));
@@ -1097,6 +1116,13 @@ GCMainDlg::~GCMainDlg()
     account()->dialogUnregister(this);
     delete d->mucManager;
     delete d;
+
+    SendButtonTemplatesMenu* menu = getTemplateMenu();
+    if (menu) {
+        disconnect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
+        disconnect(menu, SIGNAL(doEditTemplates()), this, SLOT(editTemplates()));
+        disconnect(menu, SIGNAL(doTemplateText(const QString &)), this, SLOT(sendTemp(const QString &)));
+    }
 }
 
 void GCMainDlg::horizSplitterMoved()
@@ -1108,6 +1134,11 @@ void GCMainDlg::horizSplitterMoved()
 
     PsiOptions::instance()->setOption("options.ui.muc.log-width", d->logSize);
     PsiOptions::instance()->setOption("options.ui.muc.roster-width", d->rosterSize);
+}
+
+void GCMainDlg::doMinimize()
+{
+    window()->showMinimized();
 }
 
 void GCMainDlg::ensureTabbedCorrectly()
@@ -1152,6 +1183,7 @@ void GCMainDlg::setShortcuts()
     d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
     d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
     d->act_mini_cmd->setShortcuts(ShortcutManager::instance()->shortcuts("chat.quick-command"));
+    d->act_minimize->setShortcuts(ShortcutManager::instance()->shortcuts("chat.minimize"));
 }
 
 void GCMainDlg::scrollUp()
@@ -2450,6 +2482,8 @@ void GCMainDlg::buildMenu()
     d->pm_settings->addSeparator();
 
     d->pm_settings->addAction(d->actions->action("gchat_icon"));
+    d->pm_settings->addAction(d->actions->action("gchat_templates"));
+    d->pm_settings->addAction(d->act_pastesend);
     d->pm_settings->addAction(d->act_nick);
     d->pm_settings->addAction(d->act_bookmark);
     if (PsiOptions::instance()->getOption("options.ui.tabs.multi-rows").toBool() && d->tabmode) {
@@ -2523,6 +2557,50 @@ void GCMainDlg::resizeEvent(QResizeEvent *e)
 QStringList GCMainDlg::mucRosterContent() const
 {
     return d->usersModel->nickList();
+}
+
+void GCMainDlg::sendButtonMenu()
+{
+    SendButtonTemplatesMenu* menu = getTemplateMenu();
+    if (menu) {
+        menu->setParams(true);
+        menu->exec(QCursor::pos());
+        menu->setParams(false);
+        d->mle()->setFocus();
+    }
+}
+
+void GCMainDlg::editTemplates()
+{
+    if(TabbableWidget::isActiveTab()) {
+        showTemplateEditor();
+    }
+}
+
+void GCMainDlg::doPasteAndSend()
+{
+    if(TabbableWidget::isActiveTab()) {
+        d->mle()->paste();
+        mle_returnPressed();
+        d->act_pastesend->setEnabled(false);
+        QTimer::singleShot(2000, this, SLOT(psButtonEnabled()));
+    }
+}
+
+void GCMainDlg::psButtonEnabled()
+{
+    d->act_pastesend->setEnabled(true);
+}
+
+void GCMainDlg::sendTemp(const QString &templText)
+{
+    if(TabbableWidget::isActiveTab()) {
+        if (!templText.isEmpty()) {
+            d->mle()->textCursor().insertText(templText);
+            if (!PsiOptions::instance()->getOption("options.ui.chat.only-paste-template").toBool())
+                mle_returnPressed();
+        }
+    }
 }
 
 #include "groupchatdlg.moc"

@@ -224,6 +224,7 @@ HEADERS += \
     $$PWD/vcardphotodlg.h \
     $$PWD/psicli.h \
     $$PWD/coloropt.h \
+    $$PWD/sendbuttonmenu.h \
     $$PWD/geolocationdlg.h \
     $$PWD/rosteravatarframe.h \
     $$PWD/psicapsregsitry.h \
@@ -363,6 +364,7 @@ SOURCES += \
     $$PWD/bookmarkmanagedlg.cpp \
     $$PWD/vcardphotodlg.cpp \
     $$PWD/coloropt.cpp \
+    $$PWD/sendbuttonmenu.cpp \
     $$PWD/geolocationdlg.cpp \
     $$PWD/rosteravatarframe.cpp \
     $$PWD/tabcompletion.cpp \
@@ -591,6 +593,7 @@ FORMS += \
     $$PWD/bookmarkmanage.ui \
     $$PWD/ahcommanddlg.ui \
     $$PWD/ahcformdlg.ui \
+    $$PWD/sendbuttontemplateseditor.ui \
     $$PWD/geolocation.ui \
     $$PWD/rosteravatarframe.ui \
     $$PWD/captchadlg.ui \

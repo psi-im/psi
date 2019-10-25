@@ -25,9 +25,14 @@
 #    include "pluginmanager.h"
 #endif
 #include "psioptions.h"
+#include "shortcutmanager.h"
 
 #include <QObject>
 #include <QPointer>
+#include <map>
+#include <utility>
+
+using namespace std;
 
 //----------------------------------------------------------------------------
 // PsiActionList::Private
@@ -44,6 +49,7 @@ private:
     PsiActionList *list;
     PsiCon *psi;
     QPointer<ActionList> statusActionList;
+    map<QString,IconAction*> actionmap;
 
     void createCommon();
     void createMainWin();
@@ -93,13 +99,21 @@ PsiActionList::Private::~Private()
 
 ActionList* PsiActionList::Private::createActionList( QString name, int id, ActionNames *actionlist )
 {
+    static const QStringList skipList = QStringList() << "separator" << "spacer";
+
     ActionList *actions = new ActionList( name, id, false );
 
     QString aName;
     for ( int i = 0; !(aName = QString(actionlist[i].name)).isEmpty(); i++ ) {
         IconAction *action = actionlist[i].action;
         if (action)
+        {
             actions->addAction( aName, action );
+            if(!skipList.contains(aName)) {
+                action->setShortcuts(ShortcutManager::instance()->shortcuts("alist." + aName));
+                actionmap[aName] = action;
+            }
+        }
     }
 
     list->addList( actions );
@@ -437,6 +451,7 @@ void PsiActionList::Private::createChat()
         IconAction *actActiveContacts = new IconAction (tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
         IconAction *actShareFiles = new IconAction (tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
         IconAction *actPinTab = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0 , this);
+        IconAction *actTemplates = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
 
         ActionNames actions[] = {
             { "chat_clear",  actClear  },
@@ -453,6 +468,7 @@ void PsiActionList::Private::createChat()
             { "chat_active_contacts", actActiveContacts   },
             { "chat_share_files", actShareFiles  },
             { "chat_pin_tab", actPinTab },
+            { "chat_templates", actTemplates },
             { "", nullptr }
         };
 
@@ -472,6 +488,7 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actIcon = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
         IconAction *actShareFiles = new IconAction (tr("Share Files"), "psi/share_file", tr("Share Files"), 0, this);
         IconAction *actPinTab = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0 , this);
+        IconAction *actTemplates = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
 
         ActionNames actions[] = {
             { "gchat_clear",  actClear  },
@@ -481,6 +498,7 @@ void PsiActionList::Private::createGroupchat()
             { "gchat_icon", actIcon   },
             { "gchat_share_files", actShareFiles   },
             { "gchat_pin_tab",   actPinTab    },
+            { "gchat_templates", actTemplates },
             { "", nullptr }
         };
 
@@ -521,6 +539,11 @@ void PsiActionList::Private::optionsChanged()
     statusActionList->action("status_chat")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool());
     statusActionList->action("status_xa")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool());
     statusActionList->action("status_invisible")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool());
+
+    for(map<QString,IconAction*>::iterator i=actionmap.begin(); i!=actionmap.end(); i++)
+    {
+         i->second->setShortcuts(ShortcutManager::instance()->shortcuts("alist." + i->first));
+    }
 }
 
 //----------------------------------------------------------------------------

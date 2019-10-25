@@ -134,7 +134,13 @@ private slots:
     void openWhiteboard();
 #endif
     void chatEditCreated();
+    void sendButtonMenu();
+    void editTemplates();
+    void doPasteAndSend();
+    void sendTemp(const QString &);
+    void psButtonEnabled();
     void horizSplitterMoved();
+    void doMinimize();
     void avatarUpdated(const Jid& jid);
     void doContactContextMenu(const QString &nick);
 

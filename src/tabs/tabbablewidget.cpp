@@ -40,6 +40,13 @@ TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabMa
     , pa_(pa)
     , tabManager_(tabManager)
 {
+    if (TabbableWidget::chatsCount == 0) {
+        TabbableWidget::templateMenu = new SendButtonTemplatesMenu(nullptr);
+        TabbableWidget::templateMenu->setParams(false);
+        TabbableWidget::templateMenu->setStyleSheet(PsiOptions::instance()->getOption("options.ui.chat.css").toString());
+    }
+    ++TabbableWidget::chatsCount;
+
     stateCommitTimer_.setInterval(100);
     stateCommitTimer_.setSingleShot(true);
     connect(&stateCommitTimer_, &QTimer::timeout, this, [this](){
@@ -114,6 +121,42 @@ TabbableWidget::~TabbableWidget()
     if (isTabbed()) {
         getManagingTabDlg()->removeTabWithNoChecks(this);
     }
+    --TabbableWidget::chatsCount;
+    if (TabbableWidget::chatsCount == 0) {
+        if (TabbableWidget::templateMenu != nullptr) {
+            delete TabbableWidget::templateMenu;
+            TabbableWidget::templateMenu = nullptr;
+        }
+        if (!TabbableWidget::templateEditDlg.isNull()) {
+            delete (TabbableWidget::templateEditDlg);
+            TabbableWidget::templateEditDlg = nullptr;
+        }
+    }
+}
+
+int TabbableWidget::chatsCount = 0;
+SendButtonTemplatesMenu *TabbableWidget::templateMenu = nullptr;
+QPointer<SendButtonTemplatesEditor> TabbableWidget::templateEditDlg = nullptr;
+
+SendButtonTemplatesMenu* TabbableWidget::getTemplateMenu()
+{
+    return TabbableWidget::templateMenu;
+}
+
+void TabbableWidget::showTemplateEditor()
+{
+    bool new_window = false;
+    if (TabbableWidget::templateEditDlg.isNull()) {
+        new_window = true;
+        TabbableWidget::templateEditDlg = new SendButtonTemplatesEditor(nullptr);
+        if (TabbableWidget::templateMenu) {
+            TabbableWidget::templateEditDlg->setStyleSheet(PsiOptions::instance()->getOption("options.ui.chat.css").toString());
+            connect(TabbableWidget::templateEditDlg.data(), SIGNAL(accepted()), TabbableWidget::templateMenu, SLOT(update()));
+        }
+    }
+    TabbableWidget::templateEditDlg->show();
+    if (!new_window)
+        ::bringToFront(TabbableWidget::templateEditDlg);
 }
 
 /**
