@@ -369,6 +369,13 @@ function initPsiTheme() {
                             share.parentNode.appendChild(playerFragment);
                         new AudioMessage(player);
                     }
+                    else if (type.startsWith("image")) {
+                        let img = chat.util.createHtmlNode(`<img src="/psi/account/${session.account}/sharedfile/${source}">`);
+                        if (share.nextSibling)
+                            share.parentNode.insertBefore(img, share.nextSibling);
+                        else
+                            share.parentNode.appendChild(img);
+                    }
                 }
             },
 

@@ -38,7 +38,7 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     QByteArray     mime;
 
     for (auto &handler : _pathHandlers) {
-        if (handler->data(req, data, mime)) {
+        if (handler(req, data, mime)) {
             reply = new ByteArrayReply(req, data, mime, this);
             break;
         }
@@ -47,7 +47,7 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     if (!reply) {
         QString ua      = req.header(QNetworkRequest::UserAgentHeader).toString();
         auto    handler = _sessionHandlers.value(ua);
-        if (handler && handler->data(req, data, mime)) {
+        if (handler && handler(req, data, mime)) {
             reply = new ByteArrayReply(req, data, mime, this);
         }
     }
@@ -69,13 +69,13 @@ void NetworkAccessManager::callFinished()
     }
 }
 
-QString NetworkAccessManager::registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler)
+QString NetworkAccessManager::registerSessionHandler(const Handler &&handler)
 {
     QString s;
     s.sprintf("t%x", _handlerSeed);
     _handlerSeed += 0x10;
 
-    _sessionHandlers.insert(s, handler);
+    _sessionHandlers.insert(s, std::move(handler));
     return s;
 }
 

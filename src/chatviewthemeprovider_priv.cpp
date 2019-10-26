@@ -55,95 +55,6 @@ void ChatViewUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &i
         info.setHttpHeader(QByteArray("PsiId"), q.mid(sizeof("psiId=") - 1).toUtf8());
     }
 }
-#else
-class AvatarHandler : public NAMDataHandler {
-public:
-    bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
-    {
-        QString path = req.url().path();
-        if (path.startsWith(QLatin1String("/psi/avatar/"))) {
-            QString hash = path.mid(sizeof("/psi/avatar")); // no / because of null pointer
-            if (hash == QLatin1String("default.png")) {
-                QPixmap p;
-                QBuffer buffer(&data);
-                buffer.open(QIODevice::WriteOnly);
-                p = IconsetFactory::icon(QLatin1String("psi/default_avatar")).pixmap();
-                if (p.save(&buffer, "PNG")) {
-                    mime = "image/png";
-                    return true;
-                }
-            } else {
-                AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(QByteArray::fromHex(hash.toLatin1()));
-                if (!ad.data.isEmpty()) {
-                    data = ad.data;
-                    mime = ad.metaType.toLatin1();
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-};
-
-class IconHandler : public NAMDataHandler {
-public:
-    bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
-    {
-        QUrl    url  = req.url();
-        QString path = url.path();
-        if (!path.startsWith(QLatin1String("/psi/icon/"))) {
-            return false;
-        }
-        QString iconId = path.mid(sizeof("/psi/icon/") - 1);
-        int     w      = QUrlQuery(url.query()).queryItemValue("w").toInt();
-        int     h      = QUrlQuery(url.query()).queryItemValue("h").toInt();
-        PsiIcon icon   = IconsetFactory::icon(iconId);
-        if (w && h && !icon.isAnimated()) {
-            QBuffer buffer(&data);
-            buffer.open(QIODevice::WriteOnly);
-            if (icon.pixmap().scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage().save(&buffer, "PNG")
-                && data.size()) {
-                mime = "image/png";
-                return true;
-            }
-        } else { // scaling impossible, return as is. do scaling with help of css or html attributes
-            data = icon.raw();
-            if (!data.isEmpty()) {
-                mime = image2type(data).toLatin1();
-                return true;
-            }
-        }
-
-        return false;
-    }
-};
-
-class ThemesDirHandler : public NAMDataHandler {
-public:
-    bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
-    {
-        QString path = req.url().path();
-        if (path.startsWith("/psi/themes/")) {
-            QString fn = path.mid(sizeof("/psi/themes"));
-            fn.replace("..", ""); // a little security
-            fn = PsiThemeProvider::themePath(fn);
-
-            if (!fn.isEmpty()) {
-                QFile f(fn);
-                if (f.open(QIODevice::ReadOnly)) {
-                    if (fn.endsWith(QLatin1String(".js"))) {
-                        mime = "application/javascript;charset=utf-8";
-                    }
-                    data = f.readAll();
-                    f.close();
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-};
-
 #endif
 
 ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
@@ -300,9 +211,81 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
     requestInterceptor = new ChatViewUrlRequestInterceptor(this);
     QWebEngineProfile::defaultProfile()->setRequestInterceptor(requestInterceptor);
 #else
-    pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new ThemesDirHandler()));
-    pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new IconHandler()));
-    pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new AvatarHandler()));
+    pc->networkAccessManager()->registerPathHandler([](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) {
+        QString path = req.url().path();
+        if (path.startsWith("/psi/themes/")) {
+            QString fn = path.mid(sizeof("/psi/themes"));
+            fn.replace("..", ""); // a little security
+            fn = PsiThemeProvider::themePath(fn);
+
+            if (!fn.isEmpty()) {
+                QFile f(fn);
+                if (f.open(QIODevice::ReadOnly)) {
+                    if (fn.endsWith(QLatin1String(".js"))) {
+                        mime = "application/javascript;charset=utf-8";
+                    }
+                    data = f.readAll();
+                    f.close();
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
+
+    pc->networkAccessManager()->registerPathHandler([](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) {
+        QUrl    url  = req.url();
+        QString path = url.path();
+        if (!path.startsWith(QLatin1String("/psi/icon/"))) {
+            return false;
+        }
+        QString iconId = path.mid(sizeof("/psi/icon/") - 1);
+        int     w      = QUrlQuery(url.query()).queryItemValue("w").toInt();
+        int     h      = QUrlQuery(url.query()).queryItemValue("h").toInt();
+        PsiIcon icon   = IconsetFactory::icon(iconId);
+        if (w && h && !icon.isAnimated()) {
+            QBuffer buffer(&data);
+            buffer.open(QIODevice::WriteOnly);
+            if (icon.pixmap().scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage().save(&buffer, "PNG")
+                && data.size()) {
+                mime = "image/png";
+                return true;
+            }
+        } else { // scaling impossible, return as is. do scaling with help of css or html attributes
+            data = icon.raw();
+            if (!data.isEmpty()) {
+                mime = image2type(data).toLatin1();
+                return true;
+            }
+        }
+
+        return false;
+    });
+
+    pc->networkAccessManager()->registerPathHandler([](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) {
+        QString path = req.url().path();
+        if (path.startsWith(QLatin1String("/psi/avatar/"))) {
+            QString hash = path.mid(sizeof("/psi/avatar")); // no / because of null pointer
+            if (hash == QLatin1String("default.png")) {
+                QPixmap p;
+                QBuffer buffer(&data);
+                buffer.open(QIODevice::WriteOnly);
+                p = IconsetFactory::icon(QLatin1String("psi/default_avatar")).pixmap();
+                if (p.save(&buffer, "PNG")) {
+                    mime = "image/png";
+                    return true;
+                }
+            } else {
+                AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(QByteArray::fromHex(hash.toLatin1()));
+                if (!ad.data.isEmpty()) {
+                    data = ad.data;
+                    mime = ad.metaType.toLatin1();
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
 #endif
 }
 

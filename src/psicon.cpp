@@ -254,6 +254,22 @@ public:
         ;
     }
 
+    std::pair<PsiAccount *, QString> uriToShareSource(const QString &path)
+    {
+        auto pathParts = path.midRef(sizeof("/psi/account")).split('/');
+        if (pathParts.size() < 3 || pathParts[1] != QLatin1String("sharedfile")
+            || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
+            return { nullptr, QString() };
+
+        foreach (PsiAccount *account, contactList->enabledAccounts()) {
+            if (!account->isActive() || account->id() != pathParts[0])
+                continue;
+
+            return { account, pathParts[2].toString() };
+        }
+        return { nullptr, QString() };
+    }
+
 private slots:
     void updateIconSelect()
     {
@@ -510,26 +526,35 @@ bool PsiCon::init()
     d->fileSharingManager = new FileSharingManager(this);
 #ifdef HAVE_WEBSERVER
     d->webServer = new WebServer(this);
-    d->webServer->route(
-        "/psi/account", [this](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
-            if (req->method() != qhttp::EHTTP_GET)
-                return false;
-            QString path      = req->url().path();
-            auto    pathParts = path.midRef(sizeof("/psi/account")).split('/');
-            if (pathParts.size() < 3 || pathParts[1] != QLatin1String("sharedfile")
-                || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
-                return false;
-
-            foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
-                if (!account->isActive() || account->id() != pathParts[0])
-                    continue;
-
-                return d->fileSharingManager->downloadHttpRequest(account, pathParts[2].toString(), req, res);
-            }
-
-            return true;
-        });
+    d->webServer->route("/psi/account",
+                        [this](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
+                            if (req->method() != qhttp::EHTTP_GET)
+                                return false;
+                            PsiAccount *acc;
+                            QString     id;
+                            std::tie(acc, id) = d->uriToShareSource(req->url().path());
+                            if (!acc)
+                                return false;
+                            return d->fileSharingManager->downloadHttpRequest(acc, id, req, res);
+                        });
 #endif
+    d->nam->registerPathHandler([this](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) -> bool {
+        QString path = req.url().path();
+        if (path.startsWith("/psi/account/")) {
+            PsiAccount *acc;
+            QString     id;
+            std::tie(acc, id) = d->uriToShareSource(req.url().path());
+            if (id.isNull() || !acc)
+                return false;
+
+            auto item = d->fileSharingManager->item(XMPP::Hash::from(QStringRef(&id)));
+            if (!item)
+                return false;
+            // TODO!!!
+        }
+        return false;
+    });
+
     d->themeManager = new PsiThemeManager(this);
 #ifdef WEBKIT
     d->themeManager->registerProvider(new ChatViewThemeProvider(this), true);

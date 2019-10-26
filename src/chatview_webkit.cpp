@@ -99,13 +99,14 @@ public:
 
     QString prepareShares(const QString &msg)
     {
-        static QRegularExpression re("<share id=\"([^\"]+)\"/>");
+        static QRegularExpression re("<share id=\"([^\"]+)\"(?: +text=\"([^\"]+)\")?/>");
         int                       post = 0;
         QString                   ret;
         auto                      it = re.globalMatch(msg);
         while (it.hasNext()) {
             auto match = it.next();
             auto idStr = match.captured(1);
+            auto text  = match.captured(2);
             auto id    = XMPP::Hash::from(QStringRef(&idStr));
             auto item  = account_->psi()->fileSharingManager()->item(id);
 
@@ -114,6 +115,7 @@ public:
                 auto    vm = item->metaData();
                 QString attrs;
                 attrs += QString(" id=\"%1\"").arg(idStr);
+                attrs += QString(" text=\"%1\"").arg(text);
                 auto metaType = item->mimeType();
                 attrs += QString(" type=\"%1\"").arg(metaType);
                 if (metaType.startsWith(QLatin1String("audio/"))) {
@@ -125,7 +127,7 @@ public:
                         attrs += QString(" amplitudes=\"%1\"").arg(l.join(','));
                     }
                 }
-                ret.append(QString("<share%1/>").arg(attrs));
+                ret.append(QString("<share%1></share>").arg(attrs));
             }
             post = match.capturedEnd(0);
         }
@@ -149,12 +151,12 @@ class ChatViewJSObject : public ChatViewThemeSession {
     Q_PROPERTY(QString jid READ jid CONSTANT)
     Q_PROPERTY(QString account READ account CONSTANT)
     Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY
-                   remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
+                                                            remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
     Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY
-                   remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
+                                                              remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
     Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged) // local image. from vcard
     Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY
-                   localUserAvatarChanged) // local avatar. resized vcard or PEP.
+                                                            localUserAvatarChanged) // local avatar. resized vcard or PEP.
 
 public:
     ChatViewJSObject(ChatView *view) : ChatViewThemeSession(view), _view(view) {}

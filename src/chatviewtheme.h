@@ -26,16 +26,12 @@
 #include <QPointer>
 #include <functional>
 
-class SessionRequestHandler;
 class ThemeServer;
 
 class ChatViewThemeSession : public QObject {
     Q_OBJECT
 
     friend class ChatViewThemePrivate;
-#ifndef WEBENGINE
-    friend class SessionRequestHandler;
-#endif
 
     Theme   theme;
     QString sessId; // unique id of session

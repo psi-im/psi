@@ -24,6 +24,7 @@
 #include <QHash>
 #include <QNetworkAccessManager>
 #include <QSharedPointer>
+#include <functional>
 
 class QByteArray;
 class QNetworkRequest;
@@ -39,11 +40,13 @@ class NetworkAccessManager : public QNetworkAccessManager {
 
     Q_OBJECT
 public:
+    using Handler = std::function<bool(const QNetworkRequest &req, QByteArray &data, QByteArray &mime)>;
+
     NetworkAccessManager(QObject *parent = nullptr);
 
-    inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler) { _pathHandlers.append(handler); }
+    inline void registerPathHandler(const Handler &&handler) { _pathHandlers.append(std::move(handler)); }
 
-    QString registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler);
+    QString registerSessionHandler(const Handler &&handler);
     void    unregisterSessionHandler(const QString &id);
 
     void releaseHandlers()
@@ -65,9 +68,9 @@ protected:
     QNetworkReply *createRequest(Operation op, const QNetworkRequest &req, QIODevice *outgoingData);
 
 private:
-    int                                            _handlerSeed;
-    QList<QSharedPointer<NAMDataHandler>>          _pathHandlers;
-    QHash<QString, QSharedPointer<NAMDataHandler>> _sessionHandlers;
+    int                     _handlerSeed;
+    QList<Handler>          _pathHandlers;
+    QHash<QString, Handler> _sessionHandlers;
 };
 
 #endif // NETWORKACCESSMANAGER_H

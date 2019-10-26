@@ -54,23 +54,6 @@
 #endif
 
 #ifndef WEBENGINE
-class SessionRequestHandler : public NAMDataHandler {
-    ChatViewThemeSession *session;
-
-public:
-    SessionRequestHandler(ChatViewThemeSession *session) : session(session) {}
-
-    bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
-    {
-        Q_UNUSED(mime)
-        data = session->theme.loadData(session->theme.priv<ChatViewThemePrivate>()->httpRelPath + req.url().path());
-        if (!data.isNull()) {
-            return true;
-        }
-        return false;
-    }
-};
-
 QVariant ChatViewThemePrivate::evaluateFromFile(const QString fileName, QWebFrame *frame)
 {
     QFile f(fileName);
@@ -366,8 +349,15 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 
     page->setNetworkAccessManager(nam);
 
-    SessionRequestHandler *handler = new SessionRequestHandler(session);
-    session->sessId                = nam->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
+    session->sessId = nam->registerSessionHandler(
+        [session](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) {
+            Q_UNUSED(mime)
+            data = session->theme.loadData(session->theme.priv<ChatViewThemePrivate>()->httpRelPath + req.url().path());
+            if (!data.isNull()) {
+                return true;
+            }
+            return false;
+        });
 
     QString html;
     if (prepareSessionHtml) {

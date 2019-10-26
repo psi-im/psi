@@ -155,9 +155,6 @@ public:
 #endif
 
     friend class ChatViewThemeJSUtil;
-#ifndef WEBENGINE
-    friend class SessionRequestHandler;
-#endif
 
     ChatViewThemePrivate(ChatViewThemeProvider *provider);
     ~ChatViewThemePrivate();
