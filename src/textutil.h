@@ -1,9 +1,12 @@
 #ifndef TEXTUTIL_H
 #define TEXTUTIL_H
 
+#include <QtGlobal>
+
 class QString;
 
 namespace TextUtil {
+
 QString escape(const QString &plain);
 QString unescape(const QString &escaped);
 
@@ -17,7 +20,10 @@ QString emoticonify(const QString &in);
 QString img2title(const QString &in);
 
 QString prepareMessageText(const QString &text, bool isEmote = false, bool isHtml = false);
+
 QString sizeUnit(qlonglong n, qlonglong *div = nullptr);
-}; // namespace TextUtil
+QString roundedNumber(qlonglong n, qlonglong div);
+
+} // namespace TextUtil
 
 #endif // TEXTUTIL_H

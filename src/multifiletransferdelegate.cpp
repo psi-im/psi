@@ -36,23 +36,6 @@
 #include <QTime>
 #include <QVBoxLayout>
 
-QString MultiFileTransferDelegate::roundedNumber(qlonglong n, qlonglong div)
-{
-    bool decimal = false;
-    if (div >= 1024) {
-        div /= 10;
-        decimal = true;
-    }
-    qlonglong x_long = n / div;
-    int       x      = int(x_long);
-    if (decimal) {
-        double f = double(x);
-        f /= 10;
-        return QString::number(f, 'f', 1);
-    } else
-        return QString::number(x);
-}
-
 QSize MultiFileTransferDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     Q_UNUSED(index);
@@ -156,7 +139,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
         qlonglong div;
         QString   unit = TextUtil::sizeUnit(qlonglong(fullSize), &div);
 
-        s = roundedNumber(qint64(curSize), div) + '/' + roundedNumber(qint64(fullSize), div) + unit;
+        s = TextUtil::roundedNumber(qint64(curSize), div) + '/' + TextUtil::roundedNumber(qint64(fullSize), div) + unit;
         QString space(" ");
 
         switch (state) {
@@ -170,7 +153,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
                 s += QString(" ") + tr("[Stalled]");
             else {
                 unit = TextUtil::sizeUnit(speed, &div);
-                s += QString(" @ ") + tr("%1%2/s").arg(roundedNumber(speed, div), unit);
+                s += QString(" @ ") + tr("%1%2/s").arg(TextUtil::roundedNumber(speed, div), unit);
 
                 s += ", ";
 

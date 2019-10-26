@@ -585,3 +585,20 @@ QString TextUtil::sizeUnit(qlonglong n, qlonglong *div)
 
     return unit;
 }
+
+QString TextUtil::roundedNumber(qlonglong n, qlonglong div)
+{
+    bool decimal = false;
+    if (div >= 1024) {
+        div /= 10;
+        decimal = true;
+    }
+    qlonglong x_long = n / div;
+    int       x      = int(x_long);
+    if (decimal) {
+        double f = double(x);
+        f /= 10;
+        return QString::number(f, 'f', 1);
+    } else
+        return QString::number(x);
+}

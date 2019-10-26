@@ -32,6 +32,7 @@
 #include "filesharingmanager.h"
 #include "psirichtext.h"
 #include "qiteaudio.h"
+#include "textutil.h"
 #include "urlobject.h"
 
 //----------------------------------------------------------------------------
@@ -96,45 +97,100 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
 
     d->objectParsers = PsiRichText::ParsersMap {
         { "share",
-          [this](const QStringRef &html) -> QTextCharFormat {
+          [this](const QStringRef &html, int insertAfter) -> PsiRichText::ParserRet {
               if (!d->mediaOpener)
-                  return QTextCharFormat();
+                  return { QTextCharFormat(), "" };
               auto    attrs = d->parseHtmlAttrs(html);
               QString id    = attrs.value(QLatin1String("id"));
               if (id.isEmpty())
-                  return QTextCharFormat();
+                  return { QTextCharFormat(), "" };
 
               auto item = d->mediaOpener->sharedItem(id);
               if (!item)
-                  return QTextCharFormat();
+                  return { QTextCharFormat(), "" };
 
               if (item->mimeType().startsWith(QLatin1String("audio/"))) {
-                  return d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener);
+                  return { d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener), "" };
               }
 
               if (item->mimeType().startsWith("image/")) {
-                  QUrl url(QLatin1String("share:") + id);
+                  QString anchorName = QLatin1String("share:") + id;
+                  QUrl    url(anchorName);
+
                   if (item->isCached()) {
-                      QImage img = item->preview(QSize(640, 480));
-                      document()->addResource(QTextDocument::ImageResource, url, img);
-                  } else {
-                      connect(item, &FileSharingItem::downloadFinished, this, [this, url, item]() {
-                          item->disconnect(this);
-                          document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
-                          // document()->adjustSize();
-                      });
-                      auto downloader = item->download(false, 0, 0);
-                      downloader->setSelfDelete(true);
-                      // read just for cache
-                      connect(downloader, &FileShareDownloader::readyRead, this,
-                              [downloader]() { downloader->read(downloader->bytesAvailable()); });
-                      downloader->open();
+                      QVariant         vimg = document()->resource(QTextDocument::ImageResource, url);
+                      QTextImageFormat fmt;
+                      fmt.setName(url.toString());
+                      QImage img;
+                      if (vimg.isValid()) {
+                          img = vimg.value<QImage>();
+                      } else {
+                          img = item->preview(QSize(640, 480));
+                          document()->addResource(QTextDocument::ImageResource, url, img);
+                      }
+
+                      fmt.setWidth(img.width());
+                      fmt.setHeight(img.height());
+
+                      return { fmt, "" };
                   }
-                  QTextImageFormat fmt;
-                  fmt.setName(url.toString());
-                  return fmt;
+
+                  // otherwise we have to download it
+                  connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
+                      item->disconnect(this);
+                      document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
+                      auto        prevCur = textCursor();
+                      QTextCursor cur(document());
+                      cur.setPosition(insertAfter);
+
+                      cur = PsiRichText::findMarker(cur, anchorName + "/start");
+                      if (cur.isNull()) {
+                          cur = PsiRichText::findMarker(QTextCursor(document()), anchorName + "/start");
+                          if (cur.isNull())
+                              return;
+                      }
+                      auto curEnd = PsiRichText::findMarker(cur, anchorName + "/end");
+                      if (curEnd.isNull())
+                          return;
+
+                      bool doScroll = atBottom();
+                      cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
+                      cur.removeSelectedText();
+                      cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
+                      if (doScroll)
+                          scrollToBottom();
+                      setTextCursor(prevCur);
+                  });
+                  auto downloader = item->download(false, 0, 0);
+                  downloader->setSelfDelete(true);
+                  // read just for cache
+                  connect(downloader, &FileShareDownloader::readyRead, this,
+                          [downloader]() { downloader->read(downloader->bytesAvailable()); });
+                  downloader->open();
+
+                  qlonglong div;
+                  QString   unit    = TextUtil::sizeUnit(qlonglong(item->fileSize()), &div);
+                  QString   sizeStr = TextUtil::roundedNumber(qint64(item->fileSize()), div) + unit;
+
+                  QUrl simpleUrl = item->simpleSource();
+                  if (simpleUrl.isValid()) {
+                      return { QTextCharFormat(),
+                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3 (%4, %5)</a><marker id=\"%1/end\">")
+                                   .arg(anchorName, simpleUrl.toString(QUrl::FullyEncoded), simpleUrl.toString(),
+                                        item->mimeType(), sizeStr, anchorName) };
+                  }
+
+                  return { QTextCharFormat(),
+                           QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%1/end\">")
+                               .arg(anchorName, item->mimeType(), sizeStr, anchorName) };
               }
-              return QTextCharFormat();
+              return { QTextCharFormat(), "" };
+          } },
+        { "marker",
+          [this](const QStringRef &html, int) -> PsiRichText::ParserRet {
+              auto attrs = d->parseHtmlAttrs(html);
+              auto id    = attrs.value("id");
+              return { PsiRichText::markerFormat(id), QString() };
           } }
     };
 }

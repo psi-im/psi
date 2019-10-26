@@ -231,7 +231,7 @@ static QStringRef preserveOriginalObjectReplacementCharacters(const QStringRef &
  * \param text.
  */
 static QString convertIconsToObjectReplacementCharacters(const QStringRef &text, TextCharFormatQueue *queue,
-                                                         const PsiRichText::ParsersMap &parsers)
+                                                         int insertedAfter, const PsiRichText::ParsersMap &parsers)
 {
     QString    result;
     QStringRef work(text);
@@ -275,15 +275,23 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
         } else {
             auto it = parsers.constBegin();
             for (; it != parsers.constEnd(); ++it) {
-                if (work.mid(start + 1, it.key().length())
-                    == it.key()) { // if parsers key matches with html element name
+                if (work.mid(start + 1, it.key().length()) == it.key()) {
+                    // if parsers key matches with html element name
                     result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
 
                     int end = work.indexOf(">", start);
                     Q_ASSERT(end != -1);
 
+                    // take attributes part of the tag
                     QStringRef fragment = work.mid(start + it.key().length() + 1, end - start - it.key().length() - 1);
-                    auto       charFormat = it.value()(fragment);
+                    QString    replaceHtml;
+                    QTextCharFormat charFormat;
+
+                    std::tie(charFormat, replaceHtml) = it.value()(fragment, insertedAfter);
+                    if (replaceHtml.size()) {
+                        result += convertIconsToObjectReplacementCharacters(QStringRef(&replaceHtml), queue,
+                                                                            insertedAfter, parsers);
+                    }
                     if (charFormat.isValid()) {
                         queue->enqueue(new QTextCharFormat(charFormat));
                         result += QChar::ObjectReplacementCharacter;
@@ -393,8 +401,8 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
         }
     }
 
-    cursor.insertFragment(
-        QTextDocumentFragment::fromHtml(convertIconsToObjectReplacementCharacters(QStringRef(&text), &queue, parsers)));
+    cursor.insertFragment(QTextDocumentFragment::fromHtml(
+        convertIconsToObjectReplacementCharacters(QStringRef(&text), &queue, cursor.position(), parsers)));
     cursor.setPosition(initialpos);
 
     applyFormatToIcons(doc, &queue, cursor);
@@ -513,6 +521,8 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
 }
 
 void PsiRichText::setAllowedImageDirs(const QStringList &dirs) { allowedImageDirs = dirs; }
+
+QTextCharFormat PsiRichText::markerFormat(const QString &uniqueId) { return TextMarkerFormat(uniqueId); }
 
 void PsiRichText::insertMarker(QTextCursor &cursor, const QString &uniqueId)
 {

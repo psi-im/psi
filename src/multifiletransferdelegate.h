@@ -38,10 +38,6 @@ class MultiFileTransferDelegate : public QStyledItemDelegate {
     mutable QRect   iconRect;
     mutable QPixmap progressTexture;
 
-    static void niceUnit(qlonglong n, qlonglong *div, QString *unit);
-
-    static QString roundedNumber(qlonglong n, qlonglong div);
-
 public:
     using QStyledItemDelegate::QStyledItemDelegate;
 
