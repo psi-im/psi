@@ -25,12 +25,18 @@ jobs:
     - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
       os: osx
       osx_image: xcode10.3
+    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
+      os: osx
+      osx_image: xcode11.2
     - env: TARGET=macos64 ENABLE_WEBENGINE=ON
       os: osx
       osx_image: xcode10
     - env: TARGET=macos64 ENABLE_WEBENGINE=ON
       os: osx
       osx_image: xcode10.3
+    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
+      os: osx
+      osx_image: xcode11.2
 
 install:
   - ./tests/travis-ci/install-build-depends.sh
