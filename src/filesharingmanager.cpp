@@ -193,6 +193,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     if (refs.count()) {
         QString tailReferences;
         QString desc = m.body();
+        // qDebug() << "INIT TEXT:" << desc;
         QString htmlDesc;
         htmlDesc.reserve(desc.size() + refs.count() * 64);
 
@@ -201,6 +202,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         int lastEnd = 0;
         for (auto const &r : m.references()) {
             MediaSharing ms = r.mediaSharing();
+            // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
             // only audio and image supported for now
             if (!ms.isValid() || !ms.file.hasComputedHashes() || !ms.file.hasSize()
                 || !(ms.file.mediaType().startsWith(QLatin1String("audio"))
@@ -211,21 +213,32 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             d->rememberItem(item);
             mv.addReference(item);
 
-            QString shareStr(QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums()[0].toString()));
-            if (r.begin() != -1 && r.begin() >= lastEnd
-                && QUrl(desc.mid(r.begin(), r.end() - r.begin() + 1).trimmed()).isValid()) {
-                htmlDesc += TextUtil::linkify(
-                    TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd))); // something before link
-                htmlDesc += shareStr;                                              // something instead of link
+            if (r.begin() != -1 && r.begin() >= lastEnd) {
+                auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
+                qDebug() << "REF TEXT:" << refText;
+
+                QUrl url(refText.trimmed());
+                if (url.isValid())
+                    refText = url.toString(QUrl::FullyEncoded);
+                else
+                    refText = TextUtil::escape(refText);
+
+                QString shareStr(
+                    QString::fromLatin1("<share id=\"%1\" text=\"%2\"/>").arg(item->sums()[0].toString(), refText));
+
+                // add text before reference
+                htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
+                htmlDesc += shareStr; // something instead of link
                 lastEnd = r.end() + 1;
             } else {
-                tailReferences += shareStr;
+                tailReferences += QString::fromLatin1("<share id=\"%1\"/>").arg(item->sums()[0].toString());
             }
         }
         if (lastEnd < desc.size()) {
             htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, desc.size() - lastEnd)));
         }
         htmlDesc += tailReferences;
+        // qDebug() << "HTML:" << htmlDesc;
         mv.setHtml(htmlDesc);
     }
 }

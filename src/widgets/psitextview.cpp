@@ -27,6 +27,7 @@
 #include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
+#include <QTimer>
 
 #include "filesharingdownloader.h"
 #include "filesharingmanager.h"
@@ -56,9 +57,10 @@ public:
 
     QMap<QString, QString> parseHtmlAttrs(const QStringRef &html)
     {
-        static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])(.*)\\2");
-        auto                      it = attrStart.globalMatch(html);
-        QMap<QString, QString>    attrs;
+        static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])((.(?!\\2))*.)\\2");
+        // static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])([^\"']*)\\2");
+        auto                   it = attrStart.globalMatch(html);
+        QMap<QString, QString> attrs;
         while (it.hasNext()) {
             auto    match = it.next();
             QString name  = match.captured(1);
@@ -155,10 +157,11 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
 
                       bool doScroll = atBottom();
                       cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
+                      // qDebug() << "DEBUG SELECTED:" << cur.selectedText();
                       cur.removeSelectedText();
                       cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
                       if (doScroll)
-                          scrollToBottom();
+                          QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
                       setTextCursor(prevCur);
                   });
                   auto downloader = item->download(false, 0, 0);
@@ -286,6 +289,7 @@ void PsiTextView::insertText(const QString &text, QTextCursor &cursor)
     QTextCursor            selCursor = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
 
+    // qDebug() << "DEBUG TO INSERT:" << text;
     PsiRichText::appendText(document(), cursor, text, false, d->objectParsers);
 
     PsiRichText::restoreSelection(this, selCursor, selection);

@@ -932,8 +932,9 @@ public:
                         text = QLatin1String("SIMS(") + i->mimeType() + ", " + QString::number(i->fileSize()) + "B, "
                             + tr("requires compliant client") + ")";
                     }
-                    r.setRange(desc.size(), desc.size() + text.size() + 1);
-                    desc += QString(" %1").arg(text);
+                    QString refText = QString(" %1").arg(text);
+                    r.setRange(desc.size(), desc.size() + refText.size() - 1);
+                    desc += refText;
 
                     references.append(r);
                 }
