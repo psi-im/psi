@@ -26,6 +26,9 @@
 
 //#define DEBUG_OUTPUT
 
+typedef objc_object* (*object_type)(struct objc_object *self, SEL _cmd);
+object_type objc_msgSendObject = (object_type)objc_msgSend;
+
 bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
 {
     CocoaTrayClick::instance()->emitTrayClicked();
@@ -43,11 +46,11 @@ CocoaTrayClick *CocoaTrayClick::instance()
 CocoaTrayClick::CocoaTrayClick() : QObject(qApp)
 {
     Class        cls     = objc_getClass("NSApplication");
-    objc_object *appInst = objc_msgSend((objc_object *)cls, sel_registerName("sharedApplication"));
+    objc_object *appInst = objc_msgSendObject((objc_object *)cls, sel_registerName("sharedApplication"));
 
     if (appInst != NULL) {
-        objc_object *delegate     = objc_msgSend(appInst, sel_registerName("delegate"));
-        Class        delClass     = (Class)objc_msgSend(delegate, sel_registerName("class"));
+        objc_object *delegate     = objc_msgSendObject(appInst, sel_registerName("delegate"));
+        Class        delClass     = (Class)objc_msgSendObject(delegate, sel_registerName("class"));
         SEL          shouldHandle = sel_registerName("applicationShouldHandleReopen:hasVisibleWindows:");
         if (class_getInstanceMethod(delClass, shouldHandle)) {
             if (class_replaceMethod(delClass, shouldHandle, (IMP)dockClickHandler, "B@:")) {
