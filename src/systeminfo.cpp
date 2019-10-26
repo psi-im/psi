@@ -217,47 +217,19 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 
 #elif defined(Q_OS_MAC)
     os_str_.clear();
-#if QT_VERSION < QT_VERSION_CHECK(5, 9, 0)
-    QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
-    switch (v) {
-    case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
-        os_name_str_    = "Mac OS X";
-        os_version_str_ = "10.9 (Mavericks)";
-        break;
-    case QSysInfo::MV_10_10:
-        os_name_str_    = "Mac OS X";
-        os_version_str_ = "10.10 (Yosemite)";
-        break;
-    case QSysInfo::MV_10_11:
-        os_name_str_    = "Mac OS X";
-        os_version_str_ = "10.11 (El Capitan)";
-        break;
-    case QSysInfo::MV_10_12:
-        os_name_str_    = "macOS";
-        os_version_str_ = "10.12 (Sierra)";
-        break;
-    case 0x000F: // QSysInfo::MV_10_13 should not be used for compatibility reasons
-        os_name_str_    = "macOS";
-        os_version_str_ = "10.13 (High Sierra)";
-        break;
-    case 0x0010: // QSysInfo::MV_10_14 should not be used for compatibility reasons
-        os_name_str_    = "macOS";
-        os_version_str_ = "10.14 (Mojave)";
-        break;
-    default:
-        os_version_str_ = QSysInfo::productVersion();
-        os_name_str_    = QSysInfo::productType();
-        os_str_         = QSysInfo::prettyProductName();
-    }
-#else
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 5)
     auto current = QOperatingSystemVersion::current();
-    if (current.type() == QOperatingSystemVersion::MacOS && current.minorVersion() > 12) {
+    if (current.type() == QOperatingSystemVersion::MacOS &&
+        current.minorVersion() > 12) {
         os_name_str_ = "macOS";
     } else {
         os_name_str_ = "Mac OS X";
     }
-
-    if (current >= QOperatingSystemVersion::MacOSMojave) {
+    if (current > QOperatingSystemVersion::MacOSCatalina) {
+        os_version_str_ = "> 10.15 (unknown)";
+    } else if (current >= QOperatingSystemVersion::MacOSCatalina) {
+        os_version_str_ = "10.15 (Catalina)";
+    } else if (current >= QOperatingSystemVersion::MacOSMojave) {
         os_version_str_ = "10.14 (Mojave)";
     } else if (current >= QOperatingSystemVersion::MacOSHighSierra) {
         os_version_str_ = "10.13 (High Sierra)";
@@ -265,13 +237,47 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
         os_version_str_ = "10.12 (Sierra)";
     } else if (current >= QOperatingSystemVersion::OSXElCapitan) {
         os_version_str_ = "10.11 (El Capitan)";
-    } else if (current >= QOperatingSystemVersion::OSXYosemite) {
-        os_version_str_ = "10.10 (Yosemite)";
-    } else if (current >= QOperatingSystemVersion::OSXMavericks) {
-        os_version_str_ = "10.9 (Mavericks)";
     } else {
-        os_version_str_ = QString("%1.%2").arg(current.majorVersion()).arg(current.minorVersion());
+        os_version_str_ = QString("%1.%2")
+                            .arg(current.majorVersion())
+                            .arg(current.minorVersion());
         os_name_str_    = current.name();
+    }
+#else
+    QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
+    switch (v) {
+    case 0x0011: // QSysInfo::MV_10_15 should not be used for compatibility reasons
+        os_name_str_    = "macOS";
+        os_version_str_ = "10.15 (Catalina)";
+        break;
+    case 0x0010: // QSysInfo::MV_10_14 should not be used for compatibility reasons
+        os_name_str_    = "macOS";
+        os_version_str_ = "10.14 (Mojave)";
+        break;
+    case 0x000F: // QSysInfo::MV_10_13 should not be used for compatibility reasons
+        os_name_str_    = "macOS";
+        os_version_str_ = "10.13 (High Sierra)";
+        break;
+    case 0x000E: // QSysInfo::MV_10_12 should not be used for compatibility reasons
+        os_name_str_    = "macOS";
+        os_version_str_ = "10.12 (Sierra)";
+        break;
+    case 0x000D: // QSysInfo::MV_10_11 should not be used for compatibility reasons
+        os_name_str_    = "Mac OS X";
+        os_version_str_ = "10.11 (El Capitan)";
+        break;
+    case 0x000C: // QSysInfo::MV_10_10 should not be used for compatibility reasons
+        os_name_str_    = "Mac OS X";
+        os_version_str_ = "10.10 (Yosemite)";
+        break;
+    case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
+        os_name_str_    = "Mac OS X";
+        os_version_str_ = "10.9 (Mavericks)";
+        break;
+    default:
+        os_version_str_ = QSysInfo::productVersion();
+        os_name_str_    = QSysInfo::productType();
+        os_str_         = QSysInfo::prettyProductName();
     }
 #endif
     if (os_str_.isEmpty()) {

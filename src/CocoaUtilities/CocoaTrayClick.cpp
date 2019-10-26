@@ -26,9 +26,6 @@
 
 //#define DEBUG_OUTPUT
 
-typedef objc_object* (*object_type)(struct objc_object *self, SEL _cmd);
-object_type objc_msgSendObject = (object_type)objc_msgSend;
-
 bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
 {
     CocoaTrayClick::instance()->emitTrayClicked();
@@ -45,6 +42,9 @@ CocoaTrayClick *CocoaTrayClick::instance()
 
 CocoaTrayClick::CocoaTrayClick() : QObject(qApp)
 {
+    typedef objc_object* (*object_type)(struct objc_object *self, SEL _cmd);
+    object_type objc_msgSendObject = (object_type)objc_msgSend;
+
     Class        cls     = objc_getClass("NSApplication");
     objc_object *appInst = objc_msgSendObject((objc_object *)cls, sel_registerName("sharedApplication"));
 
