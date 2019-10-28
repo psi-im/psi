@@ -119,29 +119,29 @@ if(WIN32)
         unset(ICU_LIBS)
         # Qt5 libraries
         set(QT_LIBAS
+            Qt5Concurrent${D}.dll
             Qt5Core${D}.dll
             Qt5Gui${D}.dll
-            Qt5Widgets${D}.dll
-            Qt5Svg${D}.dll
-            Qt5Network${D}.dll
-            Qt5Svg${D}.dll
-            Qt5Script${D}.dll
-            Qt5Xml${D}.dll
-            Qt5XmlPatterns${D}.dll
-            Qt5Sql${D}.dll
-            Qt5WebKit${D}.dll
-            Qt5WebKitWidgets${D}.dll
-            Qt5Qml${D}.dll
-            Qt5Quick${D}.dll
-            Qt5Positioning${D}.dll
-            Qt5WebChannel${D}.dll
             Qt5Multimedia${D}.dll
             Qt5MultimediaWidgets${D}.dll
-            Qt5Concurrent${D}.dll
-            Qt5Sensors${D}.dll
+            Qt5Network${D}.dll
             Qt5OpenGL${D}.dll
+            Qt5Positioning${D}.dll
             Qt5PrintSupport${D}.dll
+            Qt5Qml${D}.dll
+            Qt5Quick${D}.dll
+            Qt5Script${D}.dll
+            Qt5Sensors${D}.dll
+            Qt5Sql${D}.dll
+            Qt5Svg${D}.dll
+            Qt5Svg${D}.dll
+            Qt5WebChannel${D}.dll
+            Qt5WebKit${D}.dll
+            Qt5WebKitWidgets${D}.dll
+            Qt5Widgets${D}.dll
             Qt5WinExtras${D}.dll
+            Qt5Xml${D}.dll
+            Qt5XmlPatterns${D}.dll
         )
         find_psi_lib("${QT_LIBAS}" "${QT_BIN_DIR}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
         #
@@ -251,30 +251,16 @@ if(WIN32)
         endif()
 
         set(PSIMEDIA_DEPS
-            libjpeg-9.dll
-            libgettextlib-0-19-6.dll
-            libogg-0.dll
-            libtheoradec-1.dll
-            libgettextpo-0.dll
-            liborc-0.4-0.dll
-            libtheoraenc-1.dll
             libasprintf-0.dll
-            libgettextsrc-0-19-6.dll
-            liborc-test-0.4-0.dll
-            libvorbis-0.dll
             libcharset-1.dll
-            libgio-2.0-0.dll
-            libspeex-1.dll
-            libvorbisenc-2.dll
-            libglib-2.0-0.dll
-            libgthread-2.0-0.dll
-            libspeexdsp-1.dll
-            libvorbisfile-3.dll
             libffi-6.dll
+            libgettextlib-0-19-6.dll
+            libgettextpo-0.dll
+            libgettextsrc-0-19-6.dll
+            libgio-2.0-0.dll
+            libglib-2.0-0.dll
             libgmodule-2.0-0.dll
             libgobject-2.0-0.dll
-            libintl-8.dll
-            libtheora-0.dll
             libgstapp-0.10-0.dll
             libgstaudio-0.10-0.dll
             libgstbase-0.10-0.dll
@@ -293,6 +279,20 @@ if(WIN32)
             libgstsdp-0.10-0.dll
             libgsttag-0.10-0.dll
             libgstvideo-0.10-0.dll
+            libgthread-2.0-0.dll
+            libintl-8.dll
+            libjpeg-9.dll
+            libogg-0.dll
+            liborc-0.4-0.dll
+            liborc-test-0.4-0.dll
+            libspeex-1.dll
+            libspeexdsp-1.dll
+            libtheora-0.dll
+            libtheoradec-1.dll
+            libtheoraenc-1.dll
+            libvorbis-0.dll
+            libvorbisenc-2.dll
+            libvorbisfile-3.dll
         )
         if(MSVC)
             set(PSIMEDIA_DEPS
@@ -394,28 +394,28 @@ if(WIN32)
             )
             set(GSTREAMER_PLUGINS
                 libgstapp.dll
-                libgstdirectsoundsrc.dll
-                libgstplayback.dll
-                libgstvideoscale.dll
                 libgstaudioconvert.dll
-                libgstjpeg.dll
-                libgstrtp.dll
-                libgstvolume.dll
                 libgstaudiomixer.dll
-                libgstlevel.dll
-                libgstrtpmanager.dll
-                libgstvorbis.dll
                 libgstaudioresample.dll
-                libgstogg.dll
-                libgsttheora.dll
-                libgstwasapi.dll
                 libgstcoreelements.dll
-                libgstopus.dll
-                libgstvideoconvert.dll
-                libgstwinks.dll
                 libgstdirectsoundsink.dll
+                libgstdirectsoundsrc.dll
+                libgstjpeg.dll
+                libgstlevel.dll
+                libgstogg.dll
+                libgstopus.dll
                 libgstopusparse.dll
+                libgstplayback.dll
+                libgstrtp.dll
+                libgstrtpmanager.dll
+                libgsttheora.dll
+                libgstvideoconvert.dll
                 libgstvideorate.dll
+                libgstvideoscale.dll
+                libgstvolume.dll
+                libgstvorbis.dll
+                libgstwasapi.dll
+                libgstwinks.dll
             )
             set(PSIMEDIA_DEPS_DIR "${CMAKE_PREFIX_PATH}/bin")
             set(GSTREAMER_PLUGINS_DIR "${CMAKE_PREFIX_PATH}/bin/gstreamer-1.0")
@@ -435,32 +435,33 @@ if(WIN32)
     unset(HUNSPELL_LIBS)
     # other libs and executables
     set( LIBRARIES_LIST
-        libgcc_s_sjlj-1.dll
+        gpg.exe
+        libcrypto-1_1-x64.dll
+        libcrypto-1_1.dll
+        libeay32.dll
         libgcc_s_dw2-1.dll
         libgcc_s_seh-1.dll
-        libstdc++-6.dll
-        libwinpthread-1.dll
-        gpg.exe
+        libgcc_s_sjlj-1.dll
         libgcrypt-11.dll
         libgcrypt-20.dll
-        libcrypto-1_1.dll
-        libcrypto-1_1-x64.dll
-        libssl-1_1.dll
-        libssl-1_1-x64.dll
-        libotr.dll
-        libotr-5.dll
-        libsignal-protocol-c.dll
-        libtidy.dll
-        libzlib.dll
-        zlib1.dll
         libgpg-error-0.dll
+        libhunspell.dll
         libidn-11.dll
         libidn-12.dll
-        libhunspell.dll
-        libeay32.dll
+        libminizip.dll
+        libotr-5.dll
+        libotr.dll
         libqca-qt5${D}.dll
-        ssleay32.dll
+        libsignal-protocol-c.dll
+        libssl-1_1-x64.dll
+        libssl-1_1.dll
+        libstdc++-6.dll
+        libtidy.dll
+        libwinpthread-1.dll
         libxslt-1.dll
+        libzlib.dll
+        ssleay32.dll
+        zlib1.dll
     )
 
     if(MSVC)
@@ -475,33 +476,33 @@ if(WIN32)
 
     if(USE_MXE)
         list(APPEND LIBRARIES_LIST
-            libgpg-error6-0.dll
             libbz2.dll
             libfreetype-6.dll
             libglib-2.0-0.dll
+            libgpg-error6-0.dll
             libharfbuzz-0.dll
             libharfbuzz-icu-0.dll
             libiconv-2.dll
             libintl-8.dll
-            libjasper.dll
             libjasper-1.dll
+            libjasper.dll
             libjpeg-9.dll
             liblcms2-2.dll
             liblzma-5.dll
             liblzo2-2.dll
             libmng-2.dll
+            libpcre-1.dll
             libpcre16-0.dll
             libpcre2-16-0.dll
-            libpcre-1.dll
             libpng16-16.dll
-            libssp-0.dll
             libsqlite3-0.dll
+            libssp-0.dll
             libtiff-5.dll
             libwebp-5.dll
             libwebp-7.dll
             libwebpdecoder-1.dll
-            libwebpdemux-1.dll
             libwebpdecoder-3.dll
+            libwebpdemux-1.dll
             libwebpdemux-2.dll
             libxml2-2.dll
             libzstd.dll
@@ -509,20 +510,20 @@ if(WIN32)
     endif()
     if(SEPARATE_QJDNS)
         list(APPEND LIBRARIES_LIST
-            libqjdns.dll
             libjdns.dll
+            libqjdns.dll
         )
     endif()
     find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
     # qca and plugins
     set(QCA_PLUGINS
-        libqca-ossl${D}.dll
         libqca-gnupg${D}.dll
+        libqca-ossl${D}.dll
     )
     if(MSVC)
         list(APPEND QCA_PLUGINS
-            qca-ossl${D}.dll
             qca-gnupg${D}.dll
+            qca-ossl${D}.dll
         )
     endif()
     find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/crypto/")
