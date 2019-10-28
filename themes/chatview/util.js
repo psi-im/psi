@@ -35,6 +35,7 @@ function initPsiTheme() {
         var audio = el.querySelector("audio");
         var progressBar = el.querySelector("progress");
         var titleAnim = null;
+        var detectedDuration = 0;
 
         function updateTitleScroller() {
             if (titleAnim) titleAnim.stop();
@@ -80,7 +81,7 @@ function initPsiTheme() {
             },
 
             seekFraction: function(fraction) {
-                audio.currentTime = fraction * audio.duration;
+                audio.currentTime = fraction * detectedDuration;
                 progressBar.value = fraction * progressBar.max;
             }
 
@@ -91,8 +92,20 @@ function initPsiTheme() {
             else that.play();
             event.preventDefault();
         });
-        audio.addEventListener("durationchange", function(event) { progressBar.max = audio.duration });
-        audio.addEventListener("timeupdate", function(event) { progressBar.value = audio.currentTime });
+        audio.addEventListener("durationchange", function(event) {
+            progressBar.max = audio.duration;
+            detectedDuration = audio.duration;
+            //server.console("duration changed: " + audio.duration + " set progress bar max: " + progressBar.max);
+        });
+        audio.addEventListener("timeupdate", function(event) {
+            if (!isFinite(audio.duration) && audio.currentTime > detectedDuration) {
+                //server.console("set max to current. new max=" + progressBar.max);
+                detectedDuration = audio.currentTime; 
+                progressBar.max = audio.currentTime;
+            }
+            progressBar.value = audio.currentTime;
+            //server.console("time updated: " + audio.currentTime + " set progress bar current value: " + progressBar.value + " duration: " + audio.duration);
+        });
         audio.addEventListener("ended", markStopped);
         progressBar.addEventListener("click", function(event) { that.seekFraction(event.offsetX / progressBar.clientWidth) });
 

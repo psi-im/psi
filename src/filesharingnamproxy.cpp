@@ -37,6 +37,10 @@ FileSharingNAMReply::FileSharingNAMReply(PsiAccount *acc, const QString &sourceI
 
 void FileSharingNAMReply::init()
 {
+    qDebug() << "New FS-NAM" << request().url().toString();
+    for (auto const &h : request().rawHeaderList())
+        qDebug("  %s: %s", h.data(), request().rawHeader(h).data());
+
     auto rangesBa = request().rawHeader(QByteArray::fromRawData("Range", 5));
 
     if (rangesBa.size()) {
@@ -78,7 +82,7 @@ void FileSharingNAMReply::init()
 
     auto cache = item->cache();
     if (cache) {
-        cachedFile = new QFile(acc->psi()->fileSharingManager()->cacheDir() + "/" + cache->fileName(), this);
+        cachedFile = new QFile(item->fileName(), this);
         QFileInfo fi(*cachedFile);
 
         cachedFile->open(QIODevice::ReadOnly);
@@ -115,6 +119,7 @@ void FileSharingNAMReply::init()
 void FileSharingNAMReply::finishWithError(QNetworkReply::NetworkError networkError, int httpCode,
                                           const char *httpReason)
 {
+    qDebug() << "FS-NAM failed" << networkError << httpCode << httpReason;
     QString reason = QString::fromLatin1(httpReason);
     if (httpCode) {
         setAttribute(QNetworkRequest::HttpStatusCodeAttribute, httpCode);
@@ -165,6 +170,11 @@ void FileSharingNAMReply::setupHeaders(qint64 fileSize, QString contentType, QDa
     }
 
     setOpenMode(QIODevice::ReadOnly);
+
+    qDebug() << "FS-NAM headers sent";
+    for (auto const &h : rawHeaderList())
+        qDebug("  %s: %s", h.data(), rawHeader(h).data());
+
     emit metaDataChanged();
 }
 
@@ -226,6 +236,7 @@ qint64 FileSharingNAMReply::bytesAvailable() const
 
 qint64 FileSharingNAMReply::readData(char *buf, qint64 maxlen)
 {
+    // qDebug() << "reading" << maxlen << "bytes";
     if (cachedFile) {
         if (!cachedFile->isOpen())
             return 0;
