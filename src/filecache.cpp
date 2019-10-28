@@ -143,14 +143,17 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
 
     _registry->loadOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS());
 
+    bool needCleanup = false;
     foreach (const QString &prefix, _registry->getChildOptionNames("", true, true)) {
         QByteArray id = QByteArray::fromHex(prefix.section('.', -1).midRef(1).toLatin1());
         if (id.isEmpty())
             continue;
-        auto hAlgo = _registry->getOption(prefix + ".ha").toString();
+        auto hAlgo = _registry->getOption(prefix + ".ha", QString()).toString();
         auto hash  = XMPP::Hash(QStringRef(&hAlgo));
-        if (!hash.isValid())
+        if (!hash.isValid()) {
+            needCleanup = true;
             continue;
+        }
         hash.setData(id);
 
         auto item = new FileCacheItem(
@@ -175,6 +178,11 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
         if (item->isExpired()) {
             remove(item->id());
         }
+    }
+
+    if (needCleanup) {
+        _registryChanged = true;
+        _syncTimer->start();
     }
 }
 
