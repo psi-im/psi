@@ -1,5 +1,5 @@
 /*
- * filesharingroxy.cpp - http proxy for shared files downloads
+ * filesharinghttpproxy.cpp - http proxy for shared files downloads
  * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  *
  */
 
-#include "filesharingproxy.h"
+#include "filesharinghttpproxy.h"
 #include "filecache.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
@@ -33,8 +33,8 @@
 
 #define HTTP_CHUNK (512 * 1024 * 1024)
 
-FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *req,
-                                   qhttp::server::QHttpResponse *res) :
+FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourceIdHex,
+                                           qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) :
     QObject(res),
     item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(QStringRef(&sourceIdHex)))), acc(acc), request(req),
     response(res)
@@ -74,7 +74,7 @@ FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, 
     Q_ASSERT(downloader);
     downloader->setParent(this);
 
-    connect(downloader, &FileShareDownloader::metaDataChanged, this, &FileSharingProxy::onMetadataChanged);
+    connect(downloader, &FileShareDownloader::metaDataChanged, this, &FileSharingHttpProxy::onMetadataChanged);
     connect(downloader, &FileShareDownloader::failed, this, [this]() {
         if (!headersSent) {
             response->setStatusCode(qhttp::ESTATUS_BAD_GATEWAY); // something finnished with errors quite early
@@ -85,10 +85,10 @@ FileSharingProxy::FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, 
     downloader->open();
 }
 
-FileSharingProxy::~FileSharingProxy() { qDebug("FSP deleted"); }
+FileSharingHttpProxy::~FileSharingHttpProxy() { qDebug("FSP deleted"); }
 
 // returns <parsed,list of start/size>
-int FileSharingProxy::parseHttpRangeRequest()
+int FileSharingHttpProxy::parseHttpRangeRequest()
 {
     QByteArray rangesBa = request->headers().value("range");
     if (!rangesBa.size())
@@ -148,8 +148,8 @@ int FileSharingProxy::parseHttpRangeRequest()
     return qhttp::ESTATUS_OK;
 }
 
-void FileSharingProxy::setupHeaders(qint64 fileSize, QString contentType, QDateTime lastModified, bool isRanged,
-                                    qint64 rangeStart, qint64 rangeSize)
+void FileSharingHttpProxy::setupHeaders(qint64 fileSize, QString contentType, QDateTime lastModified, bool isRanged,
+                                        qint64 rangeStart, qint64 rangeSize)
 {
     if (lastModified.isValid())
         response->addHeader("Last-Modified", lastModified.toString(Qt::RFC2822Date).toLatin1());
@@ -178,7 +178,7 @@ void FileSharingProxy::setupHeaders(qint64 fileSize, QString contentType, QDateT
     }
 }
 
-void FileSharingProxy::proxyCache(FileCacheItem *cache)
+void FileSharingHttpProxy::proxyCache(FileCacheItem *cache)
 {
     QFile *   file = new QFile(acc->psi()->fileSharingManager()->cacheDir() + "/" + cache->fileName(), response);
     QFileInfo fi(*file);
@@ -216,7 +216,7 @@ void FileSharingProxy::proxyCache(FileCacheItem *cache)
     }
 }
 
-void FileSharingProxy::onMetadataChanged()
+void FileSharingHttpProxy::onMetadataChanged()
 {
     qint64 start;
     qint64 size;
@@ -256,12 +256,12 @@ void FileSharingProxy::onMetadataChanged()
                  start, size);
     headersSent = true;
 
-    connect(downloader, &FileShareDownloader::readyRead, this, &FileSharingProxy::transfer);
-    connect(downloader, &FileShareDownloader::disconnected, this, &FileSharingProxy::transfer);
-    connect(response, &qhttp::server::QHttpResponse::allBytesWritten, this, &FileSharingProxy::transfer);
+    connect(downloader, &FileShareDownloader::readyRead, this, &FileSharingHttpProxy::transfer);
+    connect(downloader, &FileShareDownloader::disconnected, this, &FileSharingHttpProxy::transfer);
+    connect(response, &qhttp::server::QHttpResponse::allBytesWritten, this, &FileSharingHttpProxy::transfer);
 }
 
-void FileSharingProxy::transfer()
+void FileSharingHttpProxy::transfer()
 {
     qint64 bytesAvail  = downloader ? downloader->bytesAvailable() : 0;
     bool   isConnected = downloader ? downloader->isConnected() : false;

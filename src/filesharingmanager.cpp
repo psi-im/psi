@@ -23,6 +23,7 @@
 #include "filecache.h"
 #include "filesharingdownloader.h"
 #include "fileutil.h"
+#include "httputil.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #ifndef WEBKIT
@@ -36,7 +37,7 @@
 #include "xmpp_reference.h"
 #include "xmpp_vcard.h"
 #ifdef HAVE_WEBSERVER
-#include "filesharingproxy.h"
+#include "filesharinghttpproxy.h"
 #include "qhttpserverconnection.hpp"
 #include "webserver.h"
 #endif
@@ -125,10 +126,19 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
     QList<FileSharingItem *> ret;
     QStringList              files;
 
-    QString voiceMsgMime(QLatin1String("audio/mp4")); // TODO take from recorder
+    QString voiceMsgMime;
     QString voiceAmplitudesMime(QLatin1String("application/x-psi-amplitudes"));
 
-    bool hasVoice = data->hasFormat(voiceMsgMime) && data->hasFormat(voiceAmplitudesMime);
+    bool hasVoice = data->hasFormat(voiceAmplitudesMime);
+    if (hasVoice) {
+        for (auto const &f : data->formats()) {
+            if (f.startsWith("audio/") || f.startsWith("video/")) { // video container may contain just audio
+                voiceMsgMime = f;
+                break;
+            }
+        }
+        hasVoice = !voiceMsgMime.isEmpty();
+    }
     if (!data->hasImage() && !hasVoice && data->hasUrls()) {
         for (auto const &url : data->urls()) {
             if (!url.isLocalFile()) {
@@ -151,7 +161,7 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
             QByteArray  amplitudes = data->data(voiceAmplitudesMime);
             QVariantMap vm;
             vm.insert("amplitudes", amplitudes);
-            item = new FileSharingItem(voiceMsgMime, ba, vm, acc, this);
+            item = new FileSharingItem(voiceMsgMime.replace("video/", "audio/"), ba, vm, acc, this);
         } else {
             QImage img = data->imageData().value<QImage>();
             item       = new FileSharingItem(img, acc, this);
@@ -215,7 +225,6 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
             if (r.begin() != -1 && r.begin() >= lastEnd) {
                 auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
-                qDebug() << "REF TEXT:" << refText;
 
                 QUrl url(refText.trimmed());
                 if (url.isValid())
@@ -289,7 +298,7 @@ bool FileSharingManager::jingleAutoAcceptIncomingDownloadRequest(Jingle::Session
 bool FileSharingManager::downloadHttpRequest(PsiAccount *acc, const QString &sourceIdHex,
                                              qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res)
 {
-    new FileSharingProxy(acc, sourceIdHex, req, res);
+    new FileSharingHttpProxy(acc, sourceIdHex, req, res);
     return true;
 }
 #endif

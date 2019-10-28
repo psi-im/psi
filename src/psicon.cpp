@@ -101,6 +101,7 @@
 #endif
 #ifdef PSI_PLUGINS
 #include "filesharingmanager.h"
+#include "filesharingnamproxy.h"
 #include "pluginmanager.h"
 #endif
 #ifdef WEBKIT
@@ -127,6 +128,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QNetworkConfigurationManager>
+#include <QNetworkReply>
 #include <QPixmap>
 #include <QPixmapCache>
 #include <QPointer>
@@ -538,21 +540,13 @@ bool PsiCon::init()
                             return d->fileSharingManager->downloadHttpRequest(acc, id, req, res);
                         });
 #endif
-    d->nam->registerPathHandler([this](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) -> bool {
-        QString path = req.url().path();
-        if (path.startsWith("/psi/account/")) {
-            PsiAccount *acc;
-            QString     id;
-            std::tie(acc, id) = d->uriToShareSource(req.url().path());
-            if (id.isNull() || !acc)
-                return false;
-
-            auto item = d->fileSharingManager->item(XMPP::Hash::from(QStringRef(&id)));
-            if (!item)
-                return false;
-            // TODO!!!
-        }
-        return false;
+    d->nam->route("/psi/account/", [this](const QNetworkRequest &req) -> QNetworkReply * {
+        PsiAccount *acc;
+        QString     id;
+        std::tie(acc, id) = d->uriToShareSource(req.url().path());
+        if (id.isNull() || !acc)
+            return nullptr;
+        return new FileSharingNAMReply(acc, id, req);
     });
 
     d->themeManager = new PsiThemeManager(this);

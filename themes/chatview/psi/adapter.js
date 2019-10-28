@@ -49,7 +49,9 @@ function psiThemeAdapter(chat) {
             var html = srvLoader.getFileContents("index.html");
             html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
                                 var shared = initPsiTheme().adapter.initSession(); \
-                        </script>");
+                        </script>" + (html.indexOf("%styles%") === -1?"%styles%":"") );
+            html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
+
             srvLoader.setHtml(html);
             eval(srvLoader.getFileContents("load.js"));
             srvLoader.finishThemeLoading();

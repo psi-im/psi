@@ -23,6 +23,7 @@
 #include "bytearrayreply.h"
 
 #include <QCoreApplication>
+#include <QTimer>
 
 NetworkAccessManager::NetworkAccessManager(QObject *parent) : QNetworkAccessManager(parent), _handlerSeed(0) {}
 
@@ -36,6 +37,19 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     QNetworkReply *reply = nullptr;
     QByteArray     data;
     QByteArray     mime;
+
+    QString path = req.url().path();
+    for (auto &h : _streamHandlers) {
+        if (path.startsWith(h.first)) {
+            reply = h.second(req);
+            if (reply) {
+                reply->setParent(this);
+                return reply;
+            } else {
+                return new NAMNotFoundReply(this);
+            }
+        }
+    }
 
     for (auto &handler : _pathHandlers) {
         if (handler(req, data, mime)) {
@@ -80,3 +94,24 @@ QString NetworkAccessManager::registerSessionHandler(const Handler &&handler)
 }
 
 void NetworkAccessManager::unregisterSessionHandler(const QString &id) { _sessionHandlers.remove(id); }
+
+void NetworkAccessManager::route(const QString &path, const NetworkAccessManager::StreamHandler &handler)
+{
+    auto it = _streamHandlers.begin();
+    while (it != _streamHandlers.end()) {
+        if (path.startsWith(it->first))
+            break;
+    }
+    _streamHandlers.insert(it, std::make_pair(path, handler));
+}
+
+NAMNotFoundReply::NAMNotFoundReply(QObject *parent) : QNetworkReply(parent)
+{
+    setError(QNetworkReply::ContentNotFoundError, "Not found");
+    QTimer::singleShot(0, this, [this]() { emit error(QNetworkReply::ContentNotFoundError); });
+    QTimer::singleShot(0, this, &NAMNotFoundReply::finished);
+}
+
+qint64 NAMNotFoundReply::readData(char *, qint64) { return 0; }
+
+void NAMNotFoundReply::abort() {}

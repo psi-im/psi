@@ -36,10 +36,10 @@ public:
     ~ByteArrayReply();
 
     // reimplemented
-    void   abort();
-    qint64 readData(char *buffer, qint64 maxlen);
-    qint64 bytesAvailable() const;
-    bool   open(OpenMode mode);
+    void   abort() override;
+    qint64 readData(char *buffer, qint64 maxlen) override;
+    qint64 bytesAvailable() const override;
+    bool   open(OpenMode mode) override;
 
 private slots:
     void signalError();

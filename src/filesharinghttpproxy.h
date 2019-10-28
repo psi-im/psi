@@ -1,5 +1,5 @@
 /*
- * filesharingroxy.h - http proxy for shared files downloads
+ * filesharinghttpproxy.h - http proxy for shared files downloads
  * Copyright (C) 2019  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef FILESHARINGPROXY_H
-#define FILESHARINGPROXY_H
+#ifndef FILESHARINGHTTPPROXY_H
+#define FILESHARINGHTTPPROXY_H
 
 #include <QObject>
 #include <QPointer>
@@ -33,12 +33,12 @@ namespace qhttp { namespace server {
     class QHttpResponse;
 }}
 
-class FileSharingProxy : public QObject {
+class FileSharingHttpProxy : public QObject {
     Q_OBJECT
 public:
-    explicit FileSharingProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
-                              qhttp::server::QHttpResponse *response);
-    ~FileSharingProxy();
+    explicit FileSharingHttpProxy(PsiAccount *acc, const QString &sourceIdHex, qhttp::server::QHttpRequest *request,
+                                  qhttp::server::QHttpResponse *response);
+    ~FileSharingHttpProxy();
 
 signals:
 
@@ -66,4 +66,4 @@ private:
     bool                          headersSent    = false;
 };
 
-#endif // FILESHARINGPROXY_H
+#endif // FILESHARINGHTTPPROXY_H

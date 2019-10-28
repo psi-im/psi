@@ -23,6 +23,7 @@
 #include "filesharingitem.h"
 #include "qite.h"
 
+#include <QNetworkReply>
 #include <QObject>
 
 class FileCache;

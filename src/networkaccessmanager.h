@@ -23,6 +23,7 @@
 
 #include <QHash>
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QSharedPointer>
 #include <functional>
 
@@ -30,17 +31,20 @@ class QByteArray;
 class QNetworkRequest;
 class QNetworkReply;
 
-class NAMDataHandler {
+class NAMNotFoundReply : public QNetworkReply {
+    Q_OBJECT
 public:
-    virtual ~NAMDataHandler() {}
-    virtual bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const = 0;
+    NAMNotFoundReply(QObject *parent);
+    qint64 readData(char *data, qint64 maxlen) override;
+    void   abort() override;
 };
 
 class NetworkAccessManager : public QNetworkAccessManager {
 
     Q_OBJECT
 public:
-    using Handler = std::function<bool(const QNetworkRequest &req, QByteArray &data, QByteArray &mime)>;
+    using Handler       = std::function<bool(const QNetworkRequest &req, QByteArray &data, QByteArray &mime)>;
+    using StreamHandler = std::function<QNetworkReply *(const QNetworkRequest &req)>;
 
     NetworkAccessManager(QObject *parent = nullptr);
 
@@ -48,6 +52,8 @@ public:
 
     QString registerSessionHandler(const Handler &&handler);
     void    unregisterSessionHandler(const QString &id);
+
+    void route(const QString &path, const StreamHandler &handler);
 
     void releaseHandlers()
     {
@@ -68,9 +74,10 @@ protected:
     QNetworkReply *createRequest(Operation op, const QNetworkRequest &req, QIODevice *outgoingData);
 
 private:
-    int                     _handlerSeed;
-    QList<Handler>          _pathHandlers;
-    QHash<QString, Handler> _sessionHandlers;
+    int                                      _handlerSeed;
+    QList<std::pair<QString, StreamHandler>> _streamHandlers;
+    QList<Handler>                           _pathHandlers;
+    QHash<QString, Handler>                  _sessionHandlers;
 };
 
 #endif // NETWORKACCESSMANAGER_H

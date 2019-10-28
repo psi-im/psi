@@ -238,7 +238,9 @@ HEADERS += \
     $$PWD/multifiletransferdelegate.h \
     $$PWD/filesharingmanager.h \
     $$PWD/filesharingdownloader.h \
-    $$PWD/filesharingitem.h
+    $$PWD/filesharingitem.h \
+    $$PWD/filesharingnamproxy.h \
+    $$PWD/httputil.h
 
 # Source files
 SOURCES += \
@@ -378,7 +380,9 @@ SOURCES += \
     $$PWD/multifiletransferdelegate.cpp \
     $$PWD/filesharingmanager.cpp \
     $$PWD/filesharingdownloader.cpp \
-    $$PWD/filesharingitem.cpp
+    $$PWD/filesharingitem.cpp \
+    $$PWD/filesharingnamproxy.cpp \
+    $$PWD/httputil.cpp
 
 
 CONFIG += filetransfer
@@ -556,8 +560,8 @@ SOURCES += \
 unix|qtwebengine {
     # we need web server to serve media shares and some specific web engine requests
     include (../3rdparty/qhttp.pri)
-    HEADERS += $$PWD/filesharingproxy.h $$PWD/webserver.h
-    SOURCES += $$PWD/filesharingproxy.cpp $$PWD/webserver.cpp
+    HEADERS += $$PWD/filesharinghttpproxy.h $$PWD/webserver.h
+    SOURCES += $$PWD/filesharinghttpproxy.cpp $$PWD/webserver.cpp
     DEFINES += HAVE_WEBSERVER
 }
 

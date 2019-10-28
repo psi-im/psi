@@ -125,6 +125,7 @@ list(APPEND HEADERS
     filesharingmanager.h
     filesharingitem.h
     filesharingdownloader.h
+    filesharingnamproxy.h
     filesharedlg.h
     fileutil.h
     gcuserview.h
@@ -139,6 +140,7 @@ list(APPEND HEADERS
     hoverabletreeview.h
     htmltextcontroller.h
     httpauthmanager.h
+    httputil.h
     infodlg.h
     invitetogroupchatmenu.h
     main.h
@@ -259,10 +261,10 @@ list(APPEND HEADERS
 
 if(UNIX OR IS_WEBENGINE)
     list(APPEND SOURCES
-        filesharingproxy.cpp
+        filesharinghttpproxy.cpp
         webserver.cpp)
     list(APPEND HEADERS
-        filesharingproxy.h
+        filesharinghttpproxy.h
         webserver.h)
 endif()
 
@@ -389,6 +391,7 @@ list(APPEND SOURCES
     filesharingmanager.cpp
     filesharingitem.cpp
     filesharingdownloader.cpp
+    filesharingnamproxy.cpp
     filesharedlg.cpp
     fileutil.cpp
     geolocation.cpp
@@ -397,6 +400,7 @@ list(APPEND SOURCES
     globalstatusmenu.cpp
     groupchattopicdlg.cpp
     groupmenu.cpp
+    httputil.cpp
     historycontactlistmodel.cpp
     historydlg.cpp
     hoverabletreeview.cpp

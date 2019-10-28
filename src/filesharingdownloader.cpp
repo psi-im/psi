@@ -21,6 +21,7 @@
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
+#include "httputil.h"
 #include "jidutil.h"
 #include "networkaccessmanager.h"
 #include "psiaccount.h"
@@ -37,23 +38,6 @@
 #include <QTimer>
 #include <QUrlQuery>
 #include <QVariant>
-
-static std::tuple<bool, qint64, qint64> parseHttpRangeResponse(const QByteArray &value)
-{
-    auto arr = value.split(' ');
-    if (arr.size() != 2 || arr[0] != "bytes" || (arr = arr[1].split('-')).size() != 2)
-        return std::tuple<bool, qint64, qint64>(false, 0, 0);
-    qint64 start, size;
-    bool   ok;
-    start = arr[0].toLongLong(&ok);
-    if (ok) {
-        arr  = arr[1].split('/');
-        size = arr[0].toLongLong(&ok) - start + 1;
-    }
-    if (!ok || size <= 0)
-        return std::tuple<bool, qint64, qint64>(false, 0, 0);
-    return std::tuple<bool, qint64, qint64>(true, start, size);
-}
 
 class AbstractFileShareDownloader : public QObject {
     Q_OBJECT
@@ -264,7 +248,7 @@ public:
             if (status == 206) { // partial content
                 QByteArray ba = reply->rawHeader("Content-Range");
                 bool       parsed;
-                std::tie(parsed, rangeStart, rangeSize) = parseHttpRangeResponse(ba);
+                std::tie(parsed, rangeStart, rangeSize) = Http::parseContentRangeHeader(ba);
                 if (ba.size() && !parsed) {
                     namFailed(QLatin1String("Invalid HTTP response range"));
                     return;

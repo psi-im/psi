@@ -40,6 +40,7 @@
 #include <QLayout>
 #include <QMenu>
 #include <QMimeData>
+#include <QMimeDatabase>
 #include <QResizeEvent>
 #include <QTextCharFormat>
 #include <QTextDocument>
@@ -652,7 +653,9 @@ void ChatEdit::addSoundRecButton()
                     return;
 
                 QMimeData md;
-                md.setData("audio/ogg", recorder_->data());
+                auto      data = recorder_->data();
+                auto      mime = QMimeDatabase().mimeTypeForData(data).name();
+                md.setData(mime, data);
                 md.setData("application/x-psi-amplitudes", recorder_->amplitudes());
                 emit fileSharingRequested(&md);
             });
