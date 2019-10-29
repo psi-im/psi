@@ -129,6 +129,8 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
     QString voiceMsgMime;
     QString voiceAmplitudesMime(QLatin1String("application/x-psi-amplitudes"));
 
+    qDebug() << "FSM items list from clipboard:" << data->formats() << " FILES:" << data->urls();
+
     bool hasVoice = data->hasFormat(voiceAmplitudesMime);
     if (hasVoice) {
         for (auto const &f : data->formats()) {
@@ -139,7 +141,7 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
         }
         hasVoice = !voiceMsgMime.isEmpty();
     }
-    if (!data->hasImage() && !hasVoice && data->hasUrls()) {
+    if (data->hasUrls()) {
         for (auto const &url : data->urls()) {
             if (!url.isLocalFile()) {
                 continue;
@@ -155,7 +157,7 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
     }
 
     if (files.isEmpty()) { // so we have an image
-        FileSharingItem *item;
+        FileSharingItem *item = nullptr;
         if (hasVoice) {
             QByteArray  ba         = data->data(voiceMsgMime);
             QByteArray  amplitudes = data->data(voiceAmplitudesMime);
@@ -166,8 +168,10 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
             QImage img = data->imageData().value<QImage>();
             item       = new FileSharingItem(img, acc, this);
         }
-        d->rememberItem(item);
-        ret.append(item);
+        if (item) {
+            d->rememberItem(item);
+            ret.append(item);
+        }
     } else {
         for (auto const &f : files) {
             auto item = new FileSharingItem(f, acc, this);
