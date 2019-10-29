@@ -30,18 +30,18 @@ std::tuple<ParseResult, qint64, qint64> parseRangeHeader(const QByteArray &range
     qint64 requestedSize  = 0;
 
     if (!rangesBa.startsWith("bytes=")) {
-        return { NotImplementedRangeType, 0, 0 };
+        return std::tuple<ParseResult, qint64, qint64>(NotImplementedRangeType, 0, 0);
     }
 
     if (rangesBa.indexOf(',') != -1) {
-        return { NotImplementedMultirange, 0, 0 };
+        return std::tuple<ParseResult, qint64, qint64>(NotImplementedMultirange, 0, 0);
     }
 
     auto ba = QByteArray::fromRawData(rangesBa.data() + sizeof("bytes"), rangesBa.size() - int(sizeof("bytes")));
 
     auto l = ba.trimmed().split('-');
     if (l.size() != 2) {
-        return { Unparsed, 0, 0 };
+        return std::tuple<ParseResult, qint64, qint64>(Unparsed, 0, 0);
     }
 
     bool   ok;
@@ -49,17 +49,17 @@ std::tuple<ParseResult, qint64, qint64> parseRangeHeader(const QByteArray &range
     qint64 end;
 
     if (!l[0].size()) { // bytes from the end are requested. Jingle-ft doesn't support this
-        return { NotImplementedTailLoad, 0, 0 };
+        return std::tuple<ParseResult, qint64, qint64>(NotImplementedTailLoad, 0, 0);
     }
 
     start = l[0].toLongLong(&ok);
     if (!ok) {
-        return { Unparsed, 0, 0 };
+        return std::tuple<ParseResult, qint64, qint64>(Unparsed, 0, 0);
     }
     if (l[1].size()) {              // if we have end
         end = l[1].toLongLong(&ok); // then parse it
         if (!ok || start > end) {   // if something not parsed or range is invalid
-            return { Unparsed, 0, 0 };
+            return std::tuple<ParseResult, qint64, qint64>(Unparsed, 0, 0);
         }
 
         if (fileSize == -1 || start < fileSize) {
@@ -76,10 +76,10 @@ std::tuple<ParseResult, qint64, qint64> parseRangeHeader(const QByteArray &range
     }
 
     if (fileSize >= 0 && !isRanged) { // isRanged is not set. So it doesn't fit
-        return { OutOfRange, 0, 0 };
+        return std::tuple<ParseResult, qint64, qint64>(OutOfRange, 0, 0);
     }
 
-    return { Parsed, requestedStart, requestedSize };
+    return std::tuple<ParseResult, qint64, qint64>(Parsed, requestedStart, requestedSize);
 }
 
 std::tuple<bool, qint64, qint64> parseContentRangeHeader(const QByteArray &value)
