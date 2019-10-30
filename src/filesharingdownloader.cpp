@@ -412,8 +412,7 @@ public:
 
     void checkCacheReady()
     {
-        if (!bytesLeft || (!downloader->isConnected() && !downloader->bytesAvailable())) {
-            Q_ASSERT(!finished);
+        if (!bytesLeft) {
             if (tmpFile) {
                 tmpFile->close();
                 tmpFile.reset();
@@ -576,7 +575,7 @@ const Jingle::FileTransfer::File &FileShareDownloader::jingleFile() const { retu
 
 qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
 {
-    if (!d->downloader) // wtf?
+    if (!maxSize || !d->downloader) // wtf?
         return 0;
 
     qint64 bytesRead = d->downloader->read(data, maxSize);
