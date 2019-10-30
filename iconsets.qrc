@@ -130,6 +130,7 @@
         <file>iconsets/system/default/ignore_global_actions.png</file>
         <file>iconsets/system/default/action_direct_presence.png</file>
         <file>iconsets/system/default/action_contacts_manager.png</file>
+        <file>iconsets/system/default/action_paste_and_send.png</file>
         <file>iconsets/system/default/cm_check.png</file>
         <file>iconsets/system/default/cm_invertcheck.png</file>
         <file>iconsets/system/default/cm_uncheck.png</file>

@@ -731,7 +731,11 @@
 		<x xmlns='name'>psi/pin</x>
 		<object mime='image/png'>pin.png</object>
 	</icon>
-    <icon>
+	<icon>
+		<x xmlns='name'>psi/action_paste_and_send</x>
+		<object mime='image/png'>action_paste_and_send.png</object>
+	</icon>
+	<icon>
 		<x xmlns='name'>psi/mic_rec</x>
 		<object mime='image/png'>mic_rec.png</object>
 	</icon>
