@@ -35,6 +35,8 @@ FileSharingNAMReply::FileSharingNAMReply(PsiAccount *acc, const QString &sourceI
     QTimer::singleShot(0, this, &FileSharingNAMReply::init);
 }
 
+FileSharingNAMReply::~FileSharingNAMReply() { qDebug("FS-NAM destroy reply"); }
+
 void FileSharingNAMReply::init()
 {
     qDebug() << "New FS-NAM" << request().url().toString();
@@ -169,6 +171,7 @@ void FileSharingNAMReply::setupHeaders(qint64 fileSize, QString contentType, QDa
         setRawHeader("Connection", "keep-alive");
     }
 
+    qDebug("FS-NAM set open mode to readonly");
     setOpenMode(QIODevice::ReadOnly);
 
     qDebug() << "FS-NAM headers sent";

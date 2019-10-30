@@ -43,6 +43,7 @@ class FileSharingNAMReply : public QNetworkReply {
 
 public:
     FileSharingNAMReply(PsiAccount *acc, const QString &sourceIdHex, const QNetworkRequest &req);
+    ~FileSharingNAMReply();
 
     // reimplemented
     void   abort() override;

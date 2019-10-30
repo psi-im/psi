@@ -131,7 +131,8 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
 
     qDebug() << "FSM items list from clipboard:" << data->formats() << " FILES:" << data->urls();
 
-    bool hasVoice = data->hasFormat(voiceAmplitudesMime);
+    QImage img(qvariant_cast<QImage>(data->imageData()));
+    bool   hasVoice = data->hasFormat(voiceAmplitudesMime);
     if (hasVoice) {
         for (auto const &f : data->formats()) {
             if (f.startsWith("audio/") || f.startsWith("video/")) { // video container may contain just audio
@@ -152,7 +153,7 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
             }
         }
     }
-    if (files.isEmpty() && !data->hasImage() && !hasVoice) {
+    if (files.isEmpty() && img.isNull() && !hasVoice) {
         return ret;
     }
 
@@ -164,9 +165,9 @@ QList<FileSharingItem *> FileSharingManager::fromMimeData(const QMimeData *data,
             QVariantMap vm;
             vm.insert("amplitudes", amplitudes);
             item = new FileSharingItem(voiceMsgMime.replace("video/", "audio/"), ba, vm, acc, this);
-        } else {
-            QImage img = data->imageData().value<QImage>();
-            item       = new FileSharingItem(img, acc, this);
+        } else if (!img.isNull()) {
+            qDebug() << img;
+            item = new FileSharingItem(img, acc, this);
         }
         if (item) {
             d->rememberItem(item);
