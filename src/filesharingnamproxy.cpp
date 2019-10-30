@@ -68,7 +68,7 @@ void FileSharingNAMReply::init()
             return;
         case Http::OutOfRange:
             setRawHeader("Content-Range", QByteArray("bytes */") + QByteArray::number(item->fileSize()));
-            finishWithError(QNetworkReply::UnknownContentError, 416, "Requsted range not satisfiable");
+            finishWithError(QNetworkReply::UnknownContentError, 416, "Requested range not satisfiable");
             return;
         }
     }
