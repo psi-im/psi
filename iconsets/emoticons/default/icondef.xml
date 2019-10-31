@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <icondef>
 	<meta>
-		<name>Telegram smile</name>
-		<version>1.0</version>
-		<description>Telegram icons for PSI</description>
-		<creation>2019-10-31</creation>
-		<home>https://psi-im.org/</home>
-		<author email='info@telegram.org'>Telegram</author>
+		<name>Telegram icon pack</name>
+		<version>1.1</version>
+		<description>Default Psi 1.4 iconset</description>
+		<creation>2019-10-30</creation>
+		<home>https://telegram.org/</home>
+		<author email='info@telegram.org'>Telegram LLC</author>
 	</meta>
 
 	<!-- Normal icons -->
@@ -35,6 +35,12 @@
 	</icon>
 
 	<icon>
+		<text>🤔</text>
+		<text>:thinking:</text>
+		<object mime='image/png'>thinking.png</object>
+	</icon>
+
+	<icon>
 		<text>☹️</text>
 		<text>:-(</text>
 		<text>:(</text>
@@ -59,6 +65,54 @@
 	</icon>
 
 	<icon>
+		<text>😘</text>
+		<text>:kiss:</text>
+		<object mime='image/png'>kiss.png</object>
+	</icon>
+
+	<icon>
+		<text>✌️</text>
+		<text>:victory:</text>
+		<object mime='image/png'>victory.png</object>
+	</icon>
+
+	<icon>
+		<text>🤘</text>
+		<text>:signofthehorns:</text>
+		<object mime='image/png'>signofthehorns.png</object>
+	</icon>
+
+	<icon>
+		<text>👈</text>
+		<text>:fingerleft:</text>
+		<object mime='image/png'>fingerleft.png</object>
+	</icon>
+
+	<icon>
+		<text>👉</text>
+		<text>:fingerright:</text>
+		<object mime='image/png'>fingerright.png</object>
+	</icon>
+
+	<icon>
+		<text>👆</text>
+		<text>:fingerup:</text>
+		<object mime='image/png'>fingerup.png</object>
+	</icon>
+
+	<icon>
+		<text>👇</text>
+		<text>:fingerdown:</text>
+		<object mime='image/png'>fingerdown.png</object>
+	</icon>
+
+	<icon>
+		<text>🖐️</text>
+		<text>:hi:</text>
+		<object mime='image/png'>hi.png</object>
+	</icon>
+
+	<icon>
 		<text>🔥</text>
 		<text>:fire:</text>
 		<object mime='image/png'>fire.png</object>
@@ -70,20 +124,6 @@
 		<text>:@</text>
 
 		<object mime='image/png'>angry.png</object>
-	</icon>
-
-	<icon>
-		<text>💔</text>
-		<text>:broken-heart:</text>
-
-		<object mime='image/png'>broken-heart.png</object>
-	</icon>
-
-	<icon>
-		<text>❤️</text>
-		<text>:heart:</text>
-
-		<object mime='image/png'>heart.png</object>
 	</icon>
 
 	<icon>
@@ -100,6 +140,20 @@
 		<text>(n)</text>
 
 		<object mime='image/png'>no.png</object>
+	</icon>
+
+	<icon>
+		<text>💔</text>
+		<text>:broken-heart:</text>
+
+		<object mime='image/png'>broken-heart.png</object>
+	</icon>
+
+	<icon>
+		<text>❤️</text>
+		<text>:heart:</text>
+
+		<object mime='image/png'>heart.png</object>
 	</icon>
 
 	<icon>
@@ -138,8 +192,38 @@
 	</icon>
 
 	<icon>
-		<text>😘</text>
-		<text>:kiss:</text>
-		<object mime='image/png'>kiss.png</object>
+		<text>👮</text>
+		<text>:police:</text>
+		<object mime='image/png'>police.png</object>
+	</icon>
+
+	<icon>
+		<text>☀️</text>
+		<text>:sun:</text>
+		<object mime='image/png'>sun.png</object>
+	</icon>
+
+	<icon>
+		<text>🇧🇾</text>
+		<text>:belarus:</text>
+		<object mime='image/png'>country-by.png</object>
+	</icon>
+
+	<icon>
+		<text>🇷🇺</text>
+		<text>:russia:</text>
+		<object mime='image/png'>country-ru.png</object>
+	</icon>
+
+	<icon>
+		<text>🇺🇦</text>
+		<text>:ukraine:</text>
+		<object mime='image/png'>country-ua.png</object>
+	</icon>
+
+	<icon>
+		<text>🇰🇿</text>
+		<text>:kazakhstan:</text>
+		<object mime='image/png'>country-kz.png</object>
 	</icon>
 </icondef>
