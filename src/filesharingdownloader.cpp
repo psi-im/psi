@@ -109,9 +109,9 @@ class JingleFileShareDownloader : public AbstractFileShareDownloader {
     QList<Jid>                         jids;
 
 public:
-    JingleFileShareDownloader(PsiAccount *acc, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
+    JingleFileShareDownloader(PsiAccount *acc_, const QString &uri, const XMPP::Jingle::FileTransfer::File &file,
                               const QList<Jid> &jids, QObject *parent) :
-        AbstractFileShareDownloader(acc, uri, parent),
+        AbstractFileShareDownloader(acc_, uri, parent),
         file(file), jids(jids)
     {
     }
@@ -153,7 +153,7 @@ public:
             return;
         }
         if (isRanged())
-            file.setRange(XMPP::Jingle::FileTransfer::Range(quint64(rangeStart), quint64(rangeSize)));
+            file.setRange(XMPP::Jingle::FileTransfer::Range(rangeStart, rangeSize));
         app->setFile(file);
         app->setStreamingMode(true);
         session->addContent(app);
@@ -211,7 +211,7 @@ public:
     bool isConnected() const { return connection && app && app->state() == XMPP::Jingle::State::Active; }
 
     bool   hasFileSize() const { return app && app->acceptFile().hasSize(); }
-    qint64 fileSize() const { return app ? app->acceptFile().size() : 0; }
+    qint64 fileSize() const { return app ? qint64(app->acceptFile().size()) : 0; }
 };
 
 class NAMFileShareDownloader : public AbstractFileShareDownloader {
@@ -299,15 +299,14 @@ public:
 class BOBFileShareDownloader : public AbstractFileShareDownloader {
     Q_OBJECT
 
-    PsiAccount *acc;
-    QList<Jid>  jids;
-    QByteArray  receivedData;
-    bool        destroyed = false;
-    bool        connected = false;
+    QList<Jid> jids;
+    QByteArray receivedData;
+    bool       destroyed = false;
+    bool       connected = false;
 
 public:
-    BOBFileShareDownloader(PsiAccount *acc, const QString &uri, const QList<Jid> &jids, QObject *parent) :
-        AbstractFileShareDownloader(acc, uri, parent), jids(jids)
+    BOBFileShareDownloader(PsiAccount *acc_, const QString &uri, const QList<Jid> &jids, QObject *parent) :
+        AbstractFileShareDownloader(acc_, uri, parent), jids(jids)
     {
     }
 
@@ -378,18 +377,18 @@ public:
     Jingle::FileTransfer::File   file;
     QList<Jid>                   jids;
     QStringList                  uris; // sorted from low priority to high.
-    FileSharingItem::SourceType  currentType = FileSharingItem::SourceType::None;
     QScopedPointer<QFile>        tmpFile;
     QString                      dstFileName;
     QString                      lastError;
-    qint64                       rangeStart = 0;
-    qint64                       rangeSize  = 0; // 0 - all the remaining
-    qint64                       bytesLeft  = -1;
-    AbstractFileShareDownloader *downloader = nullptr;
-    bool                         metaReady  = false;
-    bool                         finished   = false;
-    bool                         success    = false;
-    bool                         selfDelete = false;
+    qint64                       rangeStart  = 0;
+    qint64                       rangeSize   = 0; // 0 - all the remaining
+    qint64                       bytesLeft   = -1;
+    AbstractFileShareDownloader *downloader  = nullptr;
+    bool                         metaReady   = false;
+    bool                         finished    = false;
+    bool                         success     = false;
+    bool                         selfDelete  = false;
+    FileSharingItem::SourceType  currentType = FileSharingItem::SourceType::None;
 
     void finishWithError(const QString &errStr)
     {

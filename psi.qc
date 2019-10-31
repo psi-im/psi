@@ -71,7 +71,7 @@
   <dep type='conf'>
     <required/>
   </dep>
-  <dep type='recursiveprl'>
+  <!--dep type='recursiveprl'>
     <required/>
-  </dep>
+  </dep-->
 </qconf>
