@@ -28,8 +28,8 @@ public:
     	vars["plugins_dir"] = "";
     	vars["data_dir"] = "";
 #else
-    	vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
-    	vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
+    	vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" + qc_psi_dir_name + "/plugins";
+    	vars["data_dir"] = conf->getenv("DATADIR") + "/" + qc_psi_dir_name;
 #endif
     	QStringList psiFeatures;
     	if (!qc_webkit_type.isEmpty()) {

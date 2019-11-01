@@ -40,12 +40,10 @@
 //
 // PROG_SNAME - read as small name, system name, soname, short name, fs name
 
-#define PROG_NAME "Psi"
-#define PROG_SNAME "psi"
+#define PROG_NAME CLIENT_NAME
+#define PROG_SNAME CLIENT_SNAME
 #define PROG_VERSION PSI_VERSION
-//#define PROG_VERSION "0.15-dev" " (" __DATE__ ")" //CVS Builds are dated
-//#define PROG_VERSION "0.15";
-#define PROG_CAPS_NODE "https://psi-im.org"
+#define PROG_CAPS_NODE CLIENT_CAPS_NODE
 #define PROG_IPC_NAME "org.psi-im.Psi" // must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"

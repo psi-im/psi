@@ -345,6 +345,7 @@ void TabDlg::addTab(TabbableWidget *tab)
 
     connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
     connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
+    connect(tab, SIGNAL(vSplitterMoved(int, int)), SLOT(updateVSplitters(int, int)));
 
     updateTab(tab);
     setUpdatesEnabled(true);
@@ -406,6 +407,7 @@ void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
 {
     disconnect(tab, SIGNAL(invalidateTabInfo()), this, SLOT(updateTab()));
     disconnect(tab, SIGNAL(updateFlashState()), this, SLOT(updateFlashState()));
+    disconnect(tab, SIGNAL(vSplitterMoved(int, int)), this, SLOT(updateVSplitters(int, int)));
 
     tabs_.removeAll(tab);
     tabWidget_->removePage(tab);
@@ -558,22 +560,28 @@ void TabDlg::updateTab(TabbableWidget *chat)
     tabWidget_->setTabText(chat, captionForTab(chat));
     // now set text colour based upon whether there are new messages/composing etc
 
-    if (chat->state() == TabbableWidget::State::Composing) {
+    TabbableWidget::State state = chat->state();
+    if (state == TabbableWidget::State::Composing) {
         tabWidget_->setTabTextColor(
             chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.composing-color").value<QColor>());
         tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing")->icon());
-    } else if (chat->unreadMessageCount()) {
-        tabWidget_->setTabTextColor(
-            chat,
-            PsiOptions::instance()->getOption("options.ui.look.colors.chat.unread-message-color").value<QColor>());
-        tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat")->icon());
-    } else if (chat->state() == TabbableWidget::State::Inactive) {
-        tabWidget_->setTabTextColor(
-            chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.inactive-color").value<QColor>());
-        tabWidget_->setTabIcon(chat, chat->icon());
     } else {
-        tabWidget_->setTabTextColor(chat, palette().color(QPalette::Text));
-        tabWidget_->setTabIcon(chat, chat->icon());
+        if (state == TabbableWidget::State::Highlighted) {
+            tabWidget_->setTabTextColor(
+                chat,
+                PsiOptions::instance()->getOption("options.ui.look.colors.chat.unread-message-color").value<QColor>());
+        } else if (state == TabbableWidget::State::Inactive) {
+            tabWidget_->setTabTextColor(
+                chat, PsiOptions::instance()->getOption("options.ui.look.colors.chat.inactive-color").value<QColor>());
+        } else {
+            tabWidget_->setTabTextColor(chat, palette().color(QPalette::Text));
+        }
+
+        if (chat->unreadMessageCount()) {
+            tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat")->icon());
+        } else {
+            tabWidget_->setTabIcon(chat, chat->icon());
+        }
     }
     updateCaption();
 }
@@ -807,5 +815,12 @@ void TabDlg::tabCloseRequested(int i)
 void TabDlg::setTabIcon(QWidget *widget, const QIcon &icon) { tabWidget_->setTabIcon(widget, icon); }
 
 bool TabDlg::isTabPinned(QWidget *page) { return tabWidget_->isPagePinned(page); }
+
+void TabDlg::updateVSplitters(int log, int chat)
+{
+    foreach (TabbableWidget *w, tabs_) {
+        w->setVSplitterPosition(log, chat);
+    }
+}
 
 TabbableWidget *TabDlg::getCurrentTab() const { return dynamic_cast<TabbableWidget *>(tabWidget_->currentPage()); }

@@ -32,7 +32,7 @@ class qc_conf : public ConfObj
 {
 public:
     qc_conf(Conf *c) : ConfObj(c) {}
-    QString name() const { return "Psi Configuration"; }
+    QString name() const { return qc_psiplus? "Psi+ Configuration" : "Psi Configuration"; }
     QString shortname() const { return "conf"; }
     QString checkString() const { return QString(); }
     bool exec()
@@ -56,20 +56,38 @@ public:
     	psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
-    	conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
-    	conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
+    	conf->addExtra(QString("PSI_LIBDIR=%1/%2").arg(conf->getenv("LIBDIR"), qc_psi_dir_name));
+    	conf->addExtra(QString("PSI_DATADIR=%1/%2").arg(conf->getenv("DATADIR"), qc_psi_dir_name));
 #endif
 
     	QDir(".").mkdir("src");
-    	QFile file("src/config.h");
-    	if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
-    		QTextStream stream( &file );
+        auto now =  QDateTime::currentDateTime();
+        vars = {
+            {"CLIENT_NAME",     qc_psiplus? "Psi+":"Psi"},
+            {"CLIENT_SNAME",    qc_psiplus? "psi+":"psi"},
+            {"CLIENT_CAPS_NODE",qc_psiplus? "https://psi-plus.com":"https://psi-im.org"},
+            {"PRODUCTION",      ""},
 #ifndef Q_OS_WIN
-    		stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\"" << endl;
-    		stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\"" << endl;
+            {"PSI_LIBDIR",      conf->getenv("LIBDIR") + "/" + qc_psi_dir_name},
+            {"PSI_DATADIR",     conf->getenv("DATADIR") + "/" + qc_psi_dir_name},
 #endif
-    		stream << "#define PSI_VERSION \"" << version << "\"" << endl;
-    	}
+            {"PSI_VERSION",     version},
+            {"PSI_REVISION",    ""},
+            {"PSI_PLUS_REVISION",""},
+            {"PSI_COMPILATION_DATE",now.toString("yyyy-MM-dd")},
+            {"PSI_COMPILATION_TIME",now.toString("HH:mm:ss")},
+        };  
+        psiGenerateFile(sourceDir + "/src/config.h.in", "src/config.h", vars);
+
+        vars = {
+            {"PSILOGO_PREFIX", qc_psiplus?"psiplus/":""},
+            {"MAIN_ICON", qc_psiplus?"psiplus_icon.png":"psimain.png"}
+        };
+
+        auto buildIconDir = QDir::current().absoluteFilePath("iconsets");
+        copyPath(sourceDir + "/iconsets", buildIconDir);
+        psiGenerateFile(sourceDir + "/iconsets.qrc.in", "iconsets.qrc", vars);
+        psiGenerateFile(sourceDir + "/icondef.xml.in", buildIconDir + "/system/default/icondef.xml", vars);
 
     	conf->addDefine("HAVE_CONFIG");
 

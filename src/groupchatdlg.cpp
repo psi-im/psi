@@ -253,6 +253,9 @@ public:
     int logSize;
     int rosterSize;
 
+    int logHeight;
+    int chateditHeight;
+
 public:
     bool trackBar;
     bool tabmode;
@@ -1030,6 +1033,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
     connect(ui_.hsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(horizSplitterMoved()));
+    connect(ui_.vsplitter, SIGNAL(splitterMoved(int, int)), this, SLOT(verticalSplitterMoved(int, int)));
 
     // resize the horizontal splitter
     d->logSize    = PsiOptions::instance()->getOption("options.ui.muc.log-width").toInt();
@@ -1047,10 +1051,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         ui_.hsplitter->insertWidget(0, ui_.lv_users); // Swap widgets
 
     // resize the vertical splitter
-    list.clear();
-    list << 324;
-    list << 10;
-    ui_.vsplitter->setSizes(list);
+    d->logHeight      = PsiOptions::instance()->getOption("options.ui.chat.log-height").toInt();
+    d->chateditHeight = PsiOptions::instance()->getOption("options.ui.chat.chatedit-height").toInt();
+    setVSplitterPosition(d->logHeight, d->chateditHeight);
 
     X11WM_CLASS("groupchat");
 
@@ -1122,6 +1125,26 @@ void GCMainDlg::horizSplitterMoved()
 
     PsiOptions::instance()->setOption("options.ui.muc.log-width", d->logSize);
     PsiOptions::instance()->setOption("options.ui.muc.roster-width", d->rosterSize);
+}
+
+void GCMainDlg::verticalSplitterMoved(int, int)
+{
+    QList<int> list   = ui_.vsplitter->sizes();
+    d->logHeight      = list.first();
+    d->chateditHeight = list.last();
+    PsiOptions::instance()->setOption("options.ui.chat.log-height", d->logHeight);
+    PsiOptions::instance()->setOption("options.ui.chat.chatedit-height", d->chateditHeight);
+
+    emit vSplitterMoved(d->logHeight, d->chateditHeight);
+}
+
+void GCMainDlg::setVSplitterPosition(int log, int chat)
+{
+    QList<int> list;
+    d->logHeight      = log;
+    d->chateditHeight = chat;
+    list << log << chat;
+    ui_.vsplitter->setSizes(list);
 }
 
 void GCMainDlg::doMinimize() { window()->showMinimized(); }
@@ -2481,7 +2504,10 @@ void GCMainDlg::chatEditCreated()
     });
 }
 
-TabbableWidget::State GCMainDlg::state() const { return TabbableWidget::State::None; }
+TabbableWidget::State GCMainDlg::state() const
+{
+    return d->hPending ? TabbableWidget::State::Highlighted : TabbableWidget::State::None;
+}
 
 int GCMainDlg::unreadMessageCount() const { return d->pending; }
 

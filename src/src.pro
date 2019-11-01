@@ -156,7 +156,7 @@ QMAKE_CLEAN += $$OPTIONS_TRANSLATIONS_FILE
 ################################################################################
 
 # Resources
-RESOURCES += ../psi.qrc ../iconsets.qrc
+RESOURCES += ../psi.qrc $$top_builddir/iconsets.qrc
 
 # Platform specifics
 windows {

@@ -3,8 +3,8 @@ TEMPLATE = subdirs
 include($$top_builddir/conf.pri)
 
 # configure iris
-unix:system("echo \"include($$top_srcdir/src/conf_iris.pri)\" > $$top_builddir/iris/conf.pri")
-windows:system("echo include($$top_srcdir/src/conf_iris.pri) > $$top_builddir\\iris\\conf.pri")
+unix:system("mkdir -p \"$$top_builddir/iris\"; echo \"include($$top_srcdir/src/conf_iris.pri)\" > $$top_builddir/iris/conf.pri")
+windows:system("setlocal enableextensions;md $$top_builddir\\iris;echo include($$top_srcdir/src/conf_iris.pri) > $$top_builddir\\iris\\conf.pri")
 
 sub_iris.subdir = iris
 sub_src.subdir = src

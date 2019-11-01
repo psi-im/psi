@@ -281,10 +281,11 @@ void PsiChatDlg::initUi()
 
     connect(account()->client()->capsManager(), SIGNAL(capsChanged(const Jid &)), SLOT(capsChanged(const Jid &)));
 
-    QList<int> list;
-    list << 324;
-    list << 96;
-    ui_.splitter->setSizes(list);
+    logHeight      = PsiOptions::instance()->getOption("options.ui.chat.log-height").toInt();
+    chateditHeight = PsiOptions::instance()->getOption("options.ui.chat.chatedit-height").toInt();
+    setVSplitterPosition(logHeight, chateditHeight);
+
+    connect(ui_.splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(verticalSplitterMoved(int, int)));
 
     smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
     ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
@@ -313,6 +314,26 @@ void PsiChatDlg::initUi()
 #endif
     if (PsiOptions::instance()->getOption("options.media.audio-message").toBool())
         ui_.mle->chatEdit()->addSoundRecButton();
+}
+
+void PsiChatDlg::verticalSplitterMoved(int, int)
+{
+    QList<int> list = ui_.splitter->sizes();
+    logHeight       = list.first();
+    chateditHeight  = list.last();
+    PsiOptions::instance()->setOption("options.ui.chat.log-height", logHeight);
+    PsiOptions::instance()->setOption("options.ui.chat.chatedit-height", chateditHeight);
+
+    emit vSplitterMoved(logHeight, chateditHeight);
+}
+
+void PsiChatDlg::setVSplitterPosition(int log, int chat)
+{
+    QList<int> list;
+    logHeight      = log;
+    chateditHeight = chat;
+    list << log << chat;
+    ui_.splitter->setSizes(list);
 }
 
 void PsiChatDlg::updateCountVisibility()

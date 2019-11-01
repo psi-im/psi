@@ -143,6 +143,7 @@ private slots:
     void menu_sendTabTo(QAction *act);
     void queuedSendTabTo(TabbableWidget *chat, TabDlg *dest);
     void showTabMenu(int tab, QPoint pos, QContextMenuEvent *event);
+    void updateVSplitters(int log, int chat);
 
 private:
     TabDlgDelegate *         delegate_;

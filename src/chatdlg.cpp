@@ -1158,6 +1158,8 @@ void ChatDlg::chatEditCreated()
 
 TabbableWidget::State ChatDlg::state() const
 {
+    if (unreadMessageCount())
+        return TabbableWidget::State::Highlighted;
     switch (contactChatState_) {
     case XMPP::StateComposing:
         return TabbableWidget::State::Composing;

@@ -247,9 +247,6 @@ void PsiActionList::Private::createMainWin()
         actQuit->setMenuRole(QAction::QuitRole);
         actQuit->setWhatsThis(tr("Quits Psi"));
 
-        IconAction *actTip = new IconAction(tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
-        actTip->setWhatsThis(tr("See many useful tips"));
-
         // TODO: probably we want to lock down filetransfer, right?
         IconAction *actFileTrans
             = new IconAction(tr("Transfer Manager"), "psi/filemanager", tr("Trans&fer Manager"), 0, this);
@@ -377,11 +374,30 @@ void PsiActionList::Private::createMainWin()
         IconAction *actOnlineHome = new IconAction(tr("Home Page (Online)"), tr("&Home Page (Online)"), 0, this);
         actOnlineHome->setWhatsThis(tr("Home Page (Online)"));
 
-        IconAction *actOnlineForum = new IconAction(tr("Psi Forum (Online)"), tr("Psi &Forum (Online)"), 0, this);
-        actOnlineForum->setWhatsThis(tr("Psi Forum (Online)"));
+        IconAction *actOnlineForum = new IconAction(
+#ifdef PSI_PLUS
+            tr("Psi+ Forum (Online)"), tr("Psi+ &Forum (Online)")
+#else
+            tr("Psi Forum (Online)"), tr("Psi &Forum (Online)")
+#endif
+                                           ,
+            0, this);
+        actOnlineForum->setWhatsThis(
+#ifdef PSI_PLUS
+            tr("Psi+ Forum (Online)")
+#else
+            tr("Psi Forum (Online)")
+#endif
+        );
 
-        IconAction *actPsiMUC = new IconAction(tr("Join Psi Discussion Room (Online)"),
-                                               tr("&Join Psi Discussion Room (Online)"), 0, this);
+        IconAction *actPsiMUC = new IconAction(
+#ifdef PSI_PLUS
+            tr("Join Psi+ Discussion Room (Online)"), tr("&Join Psi+ Discussion Room (Online)")
+#else
+            tr("Join Psi Discussion Room (Online)"), tr("&Join Psi Discussion Room (Online)")
+#endif
+                                                          ,
+            0, this);
         actOnlineHome->setWhatsThis(tr("Join Psi Discussion Room (Online)"));
 
         IconAction *actBugReport = new IconAction(tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);

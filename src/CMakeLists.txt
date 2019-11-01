@@ -147,8 +147,16 @@ endif()
 
 if( NOT IS_PSIPLUS )
     set(CLIENT_NAME "Psi")
+    set(CLIENT_SNAME "psi")
+    set(CLIENT_CAPS_NODE "https://psi-im.org")
+    set(PSILOGO_PREFIX "")
+    set(MAIN_ICON "psimain.png")
 else()
     set(CLIENT_NAME "Psi+")
+    set(CLIENT_SNAME "psi+")
+    set(CLIENT_CAPS_NODE "https://psi-plus.com")
+    set(PSILOGO_PREFIX "psiplus/")
+    set(MAIN_ICON "psiplus_icon.png")
 endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
@@ -186,6 +194,13 @@ function(prepare_iconsets ACTION)
         unset(FDIR)
     endforeach()
 endfunction()
+
+prepare_iconsets(prepare-src)
+#Generate iconsets.qrc and icondef.xml
+set(ICONDEFXML_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets/system/default/icondef.xml")
+set(ICONSETSQRC_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets.qrc")
+configure_file(${PROJECT_SOURCE_DIR}/icondef.xml.in ${ICONDEFXML_OUTPUT_FILE} @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/iconsets.qrc.in ${ICONSETSQRC_OUTPUT_FILE} @ONLY)
 
 include(src.cmake)
 
@@ -232,8 +247,9 @@ if(LANGS_EXISTS)
 
     set_property(SOURCE ${PSI_TRANSLATIONS}
         PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations
-    )
+        )
 
+    #update translations with: make lupdate
     add_custom_target(lupdate)
     foreach(_LANG ${PSI_TRANSLATIONS})
         get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
@@ -249,6 +265,7 @@ if(LANGS_EXISTS)
 
     # Psi translations
     qt5_add_translation(QM ${PSI_TRANSLATIONS})
+
     if(WIN32 OR APPLE)
         # Qt translations
         get_target_property(QtCore_location Qt5::Core LOCATION)
@@ -269,8 +286,9 @@ endif()
 
 set(RESOURCES
     ${PROJECT_SOURCE_DIR}/psi.qrc
-    ${PROJECT_SOURCE_DIR}/iconsets.qrc
+    ${ICONSETSQRC_OUTPUT_FILE}
 )
+
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
@@ -286,8 +304,10 @@ if(WIN32)
     set(APP_DESCRIPTION "${APP_NAME} : A cross-platform XMPP client aimed at experienced users.")
     if(IS_PSIPLUS)
         set(COMPANY_NAME "Psi+ project")
+        set(APP_ICON "app-plus.ico")
     else()
         set(COMPANY_NAME "psi-im.org")
+        set(APP_ICON "app.ico")
     endif()
     string(REPLACE "\." "," FILE_VERSION ${APP_VERSION})
     if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
@@ -488,6 +508,8 @@ if(LINUX)
         if(INSTALL_EXTRA_FILES)
             set(PROJECT_OUTPUT_DATA_DIR "${DATA_INSTALL_DIR}/${SHARE_SUFF}")
             install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
+            #iconsets
+            install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${PROJECT_OUTPUT_DATA_DIR} PATTERN "default" EXCLUDE)
             install(DIRECTORY ${OTHER_FILES} DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
             #iconsets
             install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${PROJECT_OUTPUT_DATA_DIR} REGEX ${EXCLUDE_REGEXP} EXCLUDE)
@@ -527,6 +549,7 @@ elseif(HAIKU)
     endif()
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
+
     install(DIRECTORY ${OTHER_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF} REGEX ${EXCLUDE_REGEXP} EXCLUDE)
     if(IS_WEBKIT OR IS_WEBENGINE)

@@ -26,7 +26,8 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-if(PsiPluginsApi_INCLUDE_DIR)
+#Prevent extra messages on searching
+if(PsiPluginsApi_INCLUDE_DIR AND PsiPluginsApi_DIR)
     # in cache already
     set(PsiPluginsApi_FIND_QUIETLY TRUE)
 endif()
@@ -37,10 +38,34 @@ endif()
 get_filename_component(ABS_CURRENT_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 get_filename_component(ABS_PARENT_DIR "${ABS_CURRENT_DIR}/.." ABSOLUTE)
 
+if(EXISTS "${ABS_PLUGINS_ROOT_DIR}/cmake/modules/variables.cmake")
+    set(PLUGINS_PATH "${ABS_PLUGINS_ROOT_DIR}")
+elseif(EXISTS "${ABS_CURRENT_DIR}/src/plugins/cmake/modules/variables.cmake")
+    set(PLUGINS_PATH "${ABS_CURRENT_DIR}/src/plugins")
+elseif(EXISTS "${ABS_PARENT_DIR}/src/plugins/cmake/modules/variables.cmake")
+    set(PLUGINS_PATH "${ABS_CURRENT_DIR}/src/plugins")
+endif()
+
 if(CMAKE_CROSSCOMPILING OR CMAKE_CROSS_COMPILING OR (EXISTS "${ABS_PLUGINS_ROOT_DIR}/include"))
     set(SEARCH_FLAG NO_CMAKE_SYSTEM_PATH CMAKE_FIND_ROOT_PATH_BOTH)
 endif()
 
+if(PLUGINS_PATH)
+    if(EXISTS "${PLUGINS_PATH}/cmake/modules/variables.cmake")
+        set(PsiPluginsApi_DIR "${PLUGINS_PATH}/cmake/modules")
+    endif()
+    if(EXISTS "${PLUGINS_PATH}/include/applicationinfoaccessor.h")
+        set(PsiPluginsApi_INCLUDE_DIR "${PLUGINS_PATH}/include")
+    endif()
+endif()
+
+#Double check in case while api was found in local repo
+if(PsiPluginsApi_INCLUDE_DIR AND PsiPluginsApi_DIR)
+    # in cache already
+    set(PsiPluginsApi_FIND_QUIETLY TRUE)
+endif()
+
+if(NOT PsiPluginsApi_DIR)
 find_path(
     PsiPluginsApi_DIR
     NAMES
@@ -55,7 +80,8 @@ find_path(
     share/psi-plus/plugins
     ${SEARCH_FLAG}
 )
-
+endif()
+if(NOT PsiPluginsApi_INCLUDE_DIR)
 find_path(
     PsiPluginsApi_INCLUDE_DIR
     NAMES
@@ -70,7 +96,7 @@ find_path(
     include/psi-plus/plugins
     ${SEARCH_FLAG}
 )
-
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
                 PsiPluginsApi

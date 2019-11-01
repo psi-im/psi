@@ -39,6 +39,7 @@
 ./cmake/modules/win32-prepare-deps.cmake - генерирует список файлов для установки
     командой make prepare-bin-libs, которая установит библиотеки зависимостей
     в выходной каталог сборки. Если доступно использует windeployqt
+    по команде make windeploy
 ./cmake/modules/generate_desktopfile.cmake - генерирует .desktop файл
 ./cmake/modules/fix-codestyle.cmake - исправляет стиль кода исходников по make fix-codestyle
 

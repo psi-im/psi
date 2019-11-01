@@ -30,9 +30,10 @@ class ChatSplitter : public QWidget {
 public:
     ChatSplitter(QWidget *parent);
 
-    void setOrientation(Qt::Orientation orientation);
-    void addWidget(QWidget *widget);
-    void setSizes(const QList<int> &list);
+    void       setOrientation(Qt::Orientation orientation);
+    void       addWidget(QWidget *widget);
+    void       setSizes(const QList<int> &list);
+    QList<int> sizes();
 
 protected:
     /**
@@ -46,6 +47,9 @@ public slots:
 
 private slots:
     void childDestroyed(QObject *obj);
+
+signals:
+    void splitterMoved(int, int);
 
 private:
     void updateChildLayout(QWidget *child);

@@ -53,11 +53,11 @@
         <file>iconsets/system/default/gstreamer-logo-50.png</file>
         <file>iconsets/system/default/help.png</file>
         <file>iconsets/system/default/history.png</file>
-        <file>iconsets/system/default/logo_16.png</file>
-        <file>iconsets/system/default/logo_32.png</file>
-        <file>iconsets/system/default/logo_48.png</file>
-        <file>iconsets/system/default/logo_64.png</file>
-        <file>iconsets/system/default/logo_128.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_16.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_32.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_48.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_64.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_128.png</file>
         <file>iconsets/system/default/icondef.xml</file>
         <file>iconsets/system/default/info.png</file>
         <file>iconsets/system/default/jabber.png</file>
@@ -75,7 +75,7 @@
         <file>iconsets/system/default/pgp.png</file>
         <file>iconsets/system/default/play.png</file>
         <file>iconsets/system/default/play_sounds.png</file>
-        <file>iconsets/system/default/psilogo.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@psilogo.png</file>
         <file>iconsets/system/default/psimain.png</file>
         <file>iconsets/system/default/quit.png</file>
         <file>iconsets/system/default/register.png</file>
@@ -136,6 +136,18 @@
         <file>iconsets/system/default/cm_uncheck.png</file>
         <file>iconsets/system/default/cm_export.png</file>
         <file>iconsets/system/default/cm_import.png</file>
+        <file>iconsets/system/default/psiplus/psiplus_icon.png</file>
+        <file>iconsets/system/default/psiplus/action_vcard_restore.png</file>
+        <file>iconsets/system/default/psiplus/action_vcard_save_as.png</file>
+        <file>iconsets/system/default/psiplus/psiplus_logo.png</file>
+        <file>iconsets/system/default/psiplus/doublenextarrow.png</file>
+        <file>iconsets/system/default/psiplus/doublebackarrow.png</file>
+        <file>iconsets/system/default/crop.png</file>
+        <file>iconsets/system/default/draw.png</file>
+        <file>iconsets/system/default/frame.png</file>
+        <file>iconsets/system/default/palette.png</file>
+        <file>iconsets/system/default/undo.png</file>
+        <file>iconsets/system/default/print.png</file>
         <file>iconsets/system/default/keys_64.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
@@ -159,43 +171,43 @@
         <file>iconsets/system/default/whiteboarding/group.png</file>
         <file>iconsets/system/default/whiteboarding/ungroup.png</file>
         <file>iconsets/system/default/xmpp.svg</file>
-	<file>iconsets/emoticons/default/angry.png</file>
-	<file>iconsets/emoticons/default/beer.png</file>
-	<file>iconsets/emoticons/default/broken-heart.png</file>
-	<file>iconsets/emoticons/default/coffee.png</file>
-	<file>iconsets/emoticons/default/country-by.png</file>
-	<file>iconsets/emoticons/default/country-kz.png</file>
-	<file>iconsets/emoticons/default/country-ru.png</file>
-	<file>iconsets/emoticons/default/country-ua.png</file>
-	<file>iconsets/emoticons/default/cry.png</file>
-	<file>iconsets/emoticons/default/fingerdown.png</file>
-	<file>iconsets/emoticons/default/fingerleft.png</file>
-	<file>iconsets/emoticons/default/fingerright.png</file>
-	<file>iconsets/emoticons/default/fingerup.png</file>
-	<file>iconsets/emoticons/default/fire.png</file>
-	<file>iconsets/emoticons/default/flower.png</file>
-	<file>iconsets/emoticons/default/frow.png</file>
-	<file>iconsets/emoticons/default/grinning.png</file>
-	<file>iconsets/emoticons/default/heart.png</file>
-	<file>iconsets/emoticons/default/hi.png</file>
-	<file>iconsets/emoticons/default/icondef.xml</file>
-	<file>iconsets/emoticons/default/joy.png</file>
-	<file>iconsets/emoticons/default/kiss.png</file>
-	<file>iconsets/emoticons/default/music.png</file>
-	<file>iconsets/emoticons/default/neutral.png</file>
-	<file>iconsets/emoticons/default/no.png</file>
-	<file>iconsets/emoticons/default/phone.png</file>
-	<file>iconsets/emoticons/default/police.png</file>
-	<file>iconsets/emoticons/default/signofthehorns.png</file>
-	<file>iconsets/emoticons/default/smile.png</file>
-	<file>iconsets/emoticons/default/star.png</file>
-	<file>iconsets/emoticons/default/sun.png</file>
-	<file>iconsets/emoticons/default/thinking.png</file>
-	<file>iconsets/emoticons/default/tongue.png</file>
-	<file>iconsets/emoticons/default/unhappy.png</file>
-	<file>iconsets/emoticons/default/victory.png</file>
-	<file>iconsets/emoticons/default/wink.png</file>
-	<file>iconsets/emoticons/default/yes.png</file>
+        <file>iconsets/emoticons/default/angry.png</file>
+        <file>iconsets/emoticons/default/beer.png</file>
+        <file>iconsets/emoticons/default/broken-heart.png</file>
+        <file>iconsets/emoticons/default/coffee.png</file>
+        <file>iconsets/emoticons/default/country-by.png</file>
+        <file>iconsets/emoticons/default/country-kz.png</file>
+        <file>iconsets/emoticons/default/country-ru.png</file>
+        <file>iconsets/emoticons/default/country-ua.png</file>
+        <file>iconsets/emoticons/default/cry.png</file>
+        <file>iconsets/emoticons/default/fingerdown.png</file>
+        <file>iconsets/emoticons/default/fingerleft.png</file>
+        <file>iconsets/emoticons/default/fingerright.png</file>
+        <file>iconsets/emoticons/default/fingerup.png</file>
+        <file>iconsets/emoticons/default/fire.png</file>
+        <file>iconsets/emoticons/default/flower.png</file>
+        <file>iconsets/emoticons/default/frow.png</file>
+        <file>iconsets/emoticons/default/grinning.png</file>
+        <file>iconsets/emoticons/default/heart.png</file>
+        <file>iconsets/emoticons/default/hi.png</file>
+        <file>iconsets/emoticons/default/icondef.xml</file>
+        <file>iconsets/emoticons/default/joy.png</file>
+        <file>iconsets/emoticons/default/kiss.png</file>
+        <file>iconsets/emoticons/default/music.png</file>
+        <file>iconsets/emoticons/default/neutral.png</file>
+        <file>iconsets/emoticons/default/no.png</file>
+        <file>iconsets/emoticons/default/phone.png</file>
+        <file>iconsets/emoticons/default/police.png</file>
+        <file>iconsets/emoticons/default/signofthehorns.png</file>
+        <file>iconsets/emoticons/default/smile.png</file>
+        <file>iconsets/emoticons/default/star.png</file>
+        <file>iconsets/emoticons/default/sun.png</file>
+        <file>iconsets/emoticons/default/thinking.png</file>
+        <file>iconsets/emoticons/default/tongue.png</file>
+        <file>iconsets/emoticons/default/unhappy.png</file>
+        <file>iconsets/emoticons/default/victory.png</file>
+        <file>iconsets/emoticons/default/wink.png</file>
+        <file>iconsets/emoticons/default/yes.png</file>
         <file>iconsets/moods/default/Afraid.png</file>
         <file>iconsets/moods/default/Amazed.png</file>
         <file>iconsets/moods/default/Angry.png</file>

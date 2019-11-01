@@ -132,6 +132,8 @@ QWidget#bottomFrame>QWidget>QTextEdit[correction="true"] {
       background-color: rgb(160,160,0);
 }</css>
                 <status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
+                <log-height type="int">325</log-height>
+                <chatedit-height type="int">10</chatedit-height>
                 <default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
                 <default-jid-mode-ignorelist comment="Default autojid mode ignore list: jid1,jid2,..." type="QString"></default-jid-mode-ignorelist>
                 <history comment="Message history options">
@@ -491,6 +493,7 @@ QLineEdit#le_status_text {
             <service-discovery>
                 <automatically-get-info type="bool">true</automatically-get-info>
                 <automatically-get-items type="bool">false</automatically-get-items>
+                <items-per-page type="int" comment="Number of items per page for page-by-page feature (XEP-0059). 0 turns this feature off.">0</items-per-page>
                 <recent-jids type="QStringList" />
             </service-discovery>
             <tabs>

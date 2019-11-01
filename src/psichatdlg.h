@@ -21,6 +21,8 @@ public:
     PsiChatDlg(const Jid &jid, PsiAccount *account, TabManager *tabManager);
     ~PsiChatDlg();
 
+    virtual void setVSplitterPosition(int log, int chat);
+
 protected:
     // reimplemented
     void contextMenuEvent(QContextMenuEvent *);
@@ -42,6 +44,7 @@ private slots:
     void    updateCountVisibility();
     void    updateContactAdding(PsiContact *c = nullptr);
     void    updateContactAdding(const Jid &j);
+    void    verticalSplitterMoved(int, int);
     void    contactChanged();
     QString makeContactName(const QString &name, const Jid &jid) const;
     void    updateToolbuttons();
@@ -107,6 +110,9 @@ private:
     class ChatDlgMCmdProvider;
 
     static PsiIcon *throbber_icon;
+
+    int logHeight;
+    int chateditHeight;
 };
 
 #endif // PSICHATDLG_H

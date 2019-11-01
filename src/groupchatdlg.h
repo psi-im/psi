@@ -73,6 +73,7 @@ public:
     virtual int                   unreadMessageCount() const;
     const QString &               getDisplayName() const;
     virtual QString               desiredCaption() const;
+    virtual void                  setVSplitterPosition(int log, int chat);
 
 protected:
     void setShortcuts();
@@ -139,6 +140,7 @@ private slots:
     void sendTemp(const QString &);
     void psButtonEnabled();
     void horizSplitterMoved();
+    void verticalSplitterMoved(int, int);
     void doMinimize();
     void avatarUpdated(const Jid &jid);
     void doContactContextMenu(const QString &nick);

@@ -37,6 +37,7 @@ public:
     ~DiscoDlg();
 
     void        doDisco(QString host = QString(), QString node = QString());
+    int         itemsPerPage() const;
     PsiAccount *account();
 
 signals:
