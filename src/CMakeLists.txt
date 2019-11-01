@@ -145,10 +145,14 @@ if( NOT IS_PSIPLUS )
     set(CLIENT_NAME "Psi")
     set(CLIENT_SNAME "psi")
     set(CLIENT_CAPS_NODE "https://psi-im.org")
+    set(LOGO_FILE "psilogo.png")
+    set(LOGO_PNG_FILE ${LOGO_FILE})
 else()
     set(CLIENT_NAME "Psi+")
     set(CLIENT_SNAME "psi+")
     set(CLIENT_CAPS_NODE "https://psi-plus.com")
+    set(LOGO_FILE "psiplus/psilogo.png")
+    set(LOGO_PNG_FILE ${LOGO_FILE})
 endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
@@ -162,6 +166,31 @@ endif()
 
 set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
+
+#Copy default iconsets to build directory and add jisp files to prepare-bin target
+file(GLOB_RECURSE all_iconsets "${PROJECT_SOURCE_DIR}/iconsets/*")
+foreach(_ITEM ${all_iconsets})
+    get_filename_component(FNAME ${_ITEM} NAME)
+    file(RELATIVE_PATH FREL ${PROJECT_SOURCE_DIR} ${_ITEM})
+    get_filename_component(FDIR ${FREL} DIRECTORY)
+    if("${_ITEM}" MATCHES ".*/default/.*")
+        if(NOT "${_ITEM}" MATCHES ".*/system/default/icondef.xml")
+            configure_file(${_ITEM} "${CMAKE_CURRENT_BINARY_DIR}/${FDIR}/${FNAME}" COPYONLY)
+        endif()
+    else()
+        #copy only jisp and README files
+        copy(${_ITEM} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${FDIR}/${FNAME}" prepare-bin)
+    endif()
+    unset(_ITEM)
+    unset(FNAME)
+    unset(FREL)
+    unset(FDIR)
+endforeach()
+#Generate iconsets.qrc and icondef.xml
+set(ICONDEFXML_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets/system/default/icondef.xml")
+set(ICONSETSQRC_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets.qrc")
+configure_file(${PROJECT_SOURCE_DIR}/icondef.xml.in ${ICONDEFXML_OUTPUT_FILE} @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/iconsets.qrc.in ${ICONSETSQRC_OUTPUT_FILE} @ONLY)
 
 include(src.cmake)
 
@@ -234,6 +263,7 @@ if(LANGS_EXISTS AND (WIN32 OR APPLE))
     get_filename_component(QtCore_DIR "${QtCore_location}" DIRECTORY)
     get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../translations" ABSOLUTE)
     if(EXISTS "${QT_TRANSLATIONS_DIR}")
+        message(STATUS "Qt translations found at ${QT_TRANSLATIONS_DIR}")
         file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
         list(APPEND QM ${QT_TRANSLATIONS})
     endif()
@@ -241,16 +271,9 @@ endif()
 
 set(RESOURCES
     ${PROJECT_SOURCE_DIR}/psi.qrc
+    ${ICONSETSQRC_OUTPUT_FILE}
 )
-if(IS_PSI_PLUS)
-    list(APPEND RESOURCES
-        ${PROJECT_SOURCE_DIR}/iconsets-plus.qrc
-        )
-else()
-    list(APPEND RESOURCES
-        ${PROJECT_SOURCE_DIR}/iconsets.qrc
-        )
-endif()
+
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
@@ -410,7 +433,6 @@ set(DOC_FILES
 
 #PREPARE SECTION
 copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
-copy("${PROJECT_SOURCE_DIR}/iconsets/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconsets/" prepare-bin)
 copy("${PROJECT_SOURCE_DIR}/sound/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sound/" prepare-bin)
 if(IS_WEBKIT OR IS_WEBENGINE)
     copy("${PROJECT_SOURCE_DIR}/themes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/themes/" prepare-bin)

@@ -92,7 +92,11 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     PsiIcon _icon = IconsetFactory::icon("psi/psiplus_logo");
     ui_.lb_icon->setPsiIcon(&_icon, true);
 #else
-    ui_.te_psiplus->setVisible(false);
+    for (int i = 0; i < ui_.tw_tabs->count(); ++i) {
+        if (ui_.tw_tabs->tabText(i).contains("psi+", Qt::CaseInsensitive))
+            ui_.tw_tabs->removeTab(i);
+    }
+    setWindowTitle(tr("About Psi"));
 #endif
 
     // fill in Thanks To tab...

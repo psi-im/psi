@@ -75,7 +75,7 @@
         <file>iconsets/system/default/pgp.png</file>
         <file>iconsets/system/default/play.png</file>
         <file>iconsets/system/default/play_sounds.png</file>
-        <file>iconsets/system/default/psiplus/psilogo.png</file>
+        <file>iconsets/system/default/@LOGO_FILE@</file>
         <file>iconsets/system/default/psimain.png</file>
         <file>iconsets/system/default/quit.png</file>
         <file>iconsets/system/default/register.png</file>
@@ -374,7 +374,7 @@
         <file>iconsets/affiliations/default/member.png</file>
         <file>iconsets/affiliations/default/noaffiliation.png</file>
         <file>iconsets/affiliations/default/outcast.png</file>
-        <file>iconsets/affiliations/default/icondef-plus.xml</file>
+        <file>iconsets/affiliations/default/icondef.xml</file>
         <file>iconsets/clients/default/adium.png</file>
         <file>iconsets/clients/default/bitlbee.png</file>
         <file>iconsets/clients/default/bot.png</file>
