@@ -143,8 +143,12 @@ endif()
 
 if( NOT IS_PSIPLUS )
     set(CLIENT_NAME "Psi")
+    set(CLIENT_SNAME "psi")
+    set(CLIENT_CAPS_NODE "https://psi-im.org")
 else()
     set(CLIENT_NAME "Psi+")
+    set(CLIENT_SNAME "psi+")
+    set(CLIENT_CAPS_NODE "https://psi-plus.com")
 endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
@@ -156,14 +160,15 @@ elseif(APPLE)
     message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
 endif()
 
-configure_file(config.h.in config.h @ONLY)
-
-add_definitions(
-    -DQT_STATICPLUGIN
-    -DHAVE_CONFIG
-)
+set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
 
 include(src.cmake)
+
+if(EXISTS "${CONFIG_OUTPUT_FILE}")
+    message(STATUS "${CONFIG_OUTPUT_FILE} file generated")
+    list(APPEND HEADERS ${CONFIG_OUTPUT_FILE})
+endif()
 
 # Only headers or very small sources
 include(irisprotocol/irisprotocol.cmake)
@@ -205,17 +210,18 @@ if(LANGS_EXISTS)
         PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations
     )
 
+    #update translations with: make lupdate
     add_custom_target(lupdate)
     foreach(_LANG ${PSI_TRANSLATIONS})
         get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
         string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
-        add_custom_target(${_SHORT_LANG}
+        add_custom_command(TARGET lupdate
+            PRE_BUILD
             COMMAND ${QT_LUPDATE_EXECUTABLE}
-            ARGS -no-obsolete -recursive . ../iris -ts ${_LANG}
+            ARGS -no-obsolete -recursive ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/iris -ts ${_LANG}
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
             VERBATIM
         )
-        add_dependencies(lupdate ${_SHORT_LANG})
     endforeach()
 
     # Psi translations
@@ -225,9 +231,8 @@ endif()
 if(LANGS_EXISTS AND (WIN32 OR APPLE))
     # Qt translations
     get_target_property(QtCore_location Qt5::Core LOCATION)
-    get_filename_component(QtCore_DIR "${QtCore_location}" PATH)
-    set(QT_ROOT_DIR "${QtCore_DIR}/../..")
-    set(QT_TRANSLATIONS_DIR "${QT_ROOT_DIR}/translations")
+    get_filename_component(QtCore_DIR "${QtCore_location}" DIRECTORY)
+    get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../translations" ABSOLUTE)
     if(EXISTS "${QT_TRANSLATIONS_DIR}")
         file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
         list(APPEND QM ${QT_TRANSLATIONS})
@@ -236,8 +241,16 @@ endif()
 
 set(RESOURCES
     ${PROJECT_SOURCE_DIR}/psi.qrc
-    ${PROJECT_SOURCE_DIR}/iconsets.qrc
 )
+if(IS_PSI_PLUS)
+    list(APPEND RESOURCES
+        ${PROJECT_SOURCE_DIR}/iconsets-plus.qrc
+        )
+else()
+    list(APPEND RESOURCES
+        ${PROJECT_SOURCE_DIR}/iconsets.qrc
+        )
+endif()
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
 
 qt5_wrap_ui(UI_FORMS ${FORMS})
@@ -350,9 +363,6 @@ if(WIN32 AND MSVC)
             imm32
         )
     endif()
-    add_definitions(
-        -DQT_STATICPLUGIN
-    )
 endif()
 
 target_link_libraries(${PROJECT_NAME}

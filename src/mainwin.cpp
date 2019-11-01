@@ -968,9 +968,27 @@ void MainWin::actReadmeActivated()
     w->show();
 }
 
-void MainWin::actOnlineWikiActivated() { DesktopUtil::openUrl("https://github.com/psi-im/psi/wiki"); }
+void MainWin::actOnlineWikiActivated()
+{
+    DesktopUtil::openUrl(
+#ifndef PSI_PLUS
+        "https://github.com/psi-im/psi/wiki"
+#else
+        "https://psi-plus.com/wiki/main"
+#endif
+    );
+}
 
-void MainWin::actOnlineHomeActivated() { DesktopUtil::openUrl("https://psi-im.org"); }
+void MainWin::actOnlineHomeActivated()
+{
+    DesktopUtil::openUrl(
+#ifndef PSI_PLUS
+        "https://psi-im.org"
+#else
+        "https://psi-plus.com"
+#endif
+    );
+}
 
 void MainWin::actOnlineForumActivated() { DesktopUtil::openUrl("https://groups.google.com/forum/#!forum/psi-users"); }
 
@@ -984,7 +1002,16 @@ void MainWin::actJoinPsiMUCActivated()
     account->actionJoin("psi-dev@conference.jabber.ru");
 }
 
-void MainWin::actBugReportActivated() { DesktopUtil::openUrl("https://github.com/psi-im/psi/issues"); }
+void MainWin::actBugReportActivated()
+{
+    DesktopUtil::openUrl(
+#ifndef PSI_PLUS
+        "https://github.com/psi-im/psi/issues"
+#else
+        "https://github.com/psi-plus/main/issues"
+#endif
+    );
+}
 
 void MainWin::actAboutActivated()
 {

@@ -83,3 +83,10 @@
     flex-grow: 1;
 }
 /* END OF AUDIO MESSAGE */
+
+/* IMAGES */
+.preview {
+  max-width: 50%;
+}
+.preview > img { max-width: 100%; }
+/* END OF IMAGES */

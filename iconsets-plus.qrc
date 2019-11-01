@@ -75,7 +75,7 @@
         <file>iconsets/system/default/pgp.png</file>
         <file>iconsets/system/default/play.png</file>
         <file>iconsets/system/default/play_sounds.png</file>
-        <file>iconsets/system/default/psilogo.png</file>
+        <file>iconsets/system/default/psiplus/psilogo.png</file>
         <file>iconsets/system/default/psimain.png</file>
         <file>iconsets/system/default/quit.png</file>
         <file>iconsets/system/default/register.png</file>
@@ -136,6 +136,18 @@
         <file>iconsets/system/default/cm_uncheck.png</file>
         <file>iconsets/system/default/cm_export.png</file>
         <file>iconsets/system/default/cm_import.png</file>
+        <file>iconsets/system/default/psiplus/psiplus_icon.png</file>
+        <file>iconsets/system/default/psiplus/action_vcard_restore.png</file>
+        <file>iconsets/system/default/psiplus/action_vcard_save_as.png</file>
+        <file>iconsets/system/default/psiplus/psiplus_logo.png</file>
+        <file>iconsets/system/default/psiplus/doublenextarrow.png</file>
+        <file>iconsets/system/default/psiplus/doublebackarrow.png</file>
+        <file>iconsets/system/default/psiplus/crop.png</file>
+        <file>iconsets/system/default/psiplus/draw.png</file>
+        <file>iconsets/system/default/psiplus/frame.png</file>
+        <file>iconsets/system/default/psiplus/palette.png</file>
+        <file>iconsets/system/default/psiplus/undo.png</file>
+        <file>iconsets/system/default/psiplus/print.png</file>
         <file>iconsets/system/default/keys_64.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
@@ -362,7 +374,7 @@
         <file>iconsets/affiliations/default/member.png</file>
         <file>iconsets/affiliations/default/noaffiliation.png</file>
         <file>iconsets/affiliations/default/outcast.png</file>
-        <file>iconsets/affiliations/default/icondef.xml</file>
+        <file>iconsets/affiliations/default/icondef-plus.xml</file>
         <file>iconsets/clients/default/adium.png</file>
         <file>iconsets/clients/default/bitlbee.png</file>
         <file>iconsets/clients/default/bot.png</file>

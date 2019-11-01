@@ -29,7 +29,11 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui_.setupUi(this);
+#ifdef PSI_PLUS
+    setWindowIcon(IconsetFactory::icon("psi/psiplus_logo").icon());
+#else
     setWindowIcon(IconsetFactory::icon("psi/logo_32").icon());
+#endif
 
     setModal(false);
 
@@ -57,6 +61,39 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     authors += details(QString::fromUtf8("Vitaly Tonkacheyev"), "thetvg@gmail.com", "", "", tr("Developer"));
     authors += details(QString::fromUtf8("Boris Pek"), "tehnick-8@yandex.ru", "", "", tr("Developer and Maintainer"));
     ui_.te_authors->setText(authors);
+
+#ifdef PSI_PLUS
+
+    // fill in About Psi+ tab...
+    QString psiplus;
+    psiplus += details(QString::fromUtf8("Psi+ Project"), "", "psi-dev@conference.jabber.ru", "https://psi-plus.com/",
+                       tr("Active project members are presents below:"));
+    psiplus += details(QString::fromUtf8("rion"), "rion4ik@gmail.com", "", "", tr("Founder and Lead Patcher"));
+    psiplus += details(QString::fromUtf8("zet"), "vladimir.shelukhin@gmail.com", "", "",
+                       tr("Founder, Patcher and former MS Windows Packager"));
+    psiplus += details(QString::fromUtf8("majik"), "maksim.maj@gmail.com", "", "",
+                       tr("Founder, Patcher and former Designer"));
+    psiplus += details(QString::fromUtf8("Dealer_WeARE"), "wadealer@gmail.com", "", "",
+                       tr("Lead Patcher and Plugins Writer; former macOS Packager"));
+    psiplus += details(QString::fromUtf8("liuch"), "", "", "", tr("Patcher and Plugins Writer"));
+    psiplus += details(QString::fromUtf8("tehnick"), "tehnick-8@yandex.ru", "", "",
+                       tr("Language coordinator; Patcher; Debian and Ubuntu Packager; MS Windows and macOS Packager"));
+    psiplus
+        += details(QString::fromUtf8("KukuRuzo"), "", "", "", tr("Patcher and Plugins Writer; MS Windows Packager"));
+    psiplus
+        += details(QString::fromUtf8("taurus"), "", "", "", tr("Patcher and Plugins Writer; former Fedora Packager"));
+    psiplus += details(QString::fromUtf8("ivan1986"), "", "", "", tr("Patcher and former Ubuntu Packager"));
+    psiplus += details(QString::fromUtf8("nexor (aka zerkalica)"), "", "", "", tr("former Ubuntu Packager"));
+    psiplus += details(QString::fromUtf8("Flint (aka Флинт)"), "", "", "", tr("former Mandriva Linux Packager"));
+    psiplus += details(QString::fromUtf8("ivan101"), "ivan101@users.sourceforge.net", "", "",
+                       tr("Patcher and former Russian translator"));
+    psiplus += details(QString::fromUtf8("Z_God"), "", "", "", tr("Psimedia Patcher and Wiki English localization"));
+    ui_.te_psiplus->setText(psiplus);
+    PsiIcon _icon = IconsetFactory::icon("psi/psiplus_logo");
+    ui_.lb_icon->setPsiIcon(&_icon, true);
+#else
+    ui_.te_psiplus->setVisible(false);
+#endif
 
     // fill in Thanks To tab...
     QString thanks;
@@ -135,7 +172,11 @@ QString AboutDlg::details(QString name, QString email, QString jabber, QString w
     if (!email.isEmpty())
         ret += nbsp + "E-mail: " + "<a href=\"mailto:" + email + "\">" + email + "</a><br>\n";
     if (!jabber.isEmpty())
+#ifndef PSI_PLUS
         ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + jabber + "\">" + jabber + "</a><br>\n";
+#else
+        ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + jabber + "?join\">" + jabber + "</a><br>\n";
+#endif
     if (!www.isEmpty())
         ret += nbsp + "WWW: " + "<a href=\"" + www + "\">" + www + "</a><br>\n";
     if (!desc.isEmpty())

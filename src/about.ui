@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
+    <width>625</width>
     <height>320</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>About Psi</string>
+   <string>About</string>
   </property>
   <layout class="QVBoxLayout">
    <property name="spacing">
@@ -267,7 +267,23 @@
        </item>
       </layout>
      </widget>
-    </widget>
+     <widget class="QWidget" name="tab_psiplus" >
+      <attribute name="title" >
+       <string>About Psi+</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>9</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="PsiTextView" name="te_psiplus" />
+       </item>
+      </layout>
+     </widget>
+     </widget>
    </item>
    <item>
     <layout class="QHBoxLayout">
