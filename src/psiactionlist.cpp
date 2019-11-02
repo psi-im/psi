@@ -247,9 +247,6 @@ void PsiActionList::Private::createMainWin()
         actQuit->setMenuRole(QAction::QuitRole);
         actQuit->setWhatsThis(tr("Quits Psi"));
 
-        IconAction *actTip = new IconAction(tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
-        actTip->setWhatsThis(tr("See many useful tips"));
-
         // TODO: probably we want to lock down filetransfer, right?
         IconAction *actFileTrans
             = new IconAction(tr("Transfer Manager"), "psi/filemanager", tr("Trans&fer Manager"), 0, this);

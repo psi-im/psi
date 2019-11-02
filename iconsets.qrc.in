@@ -53,11 +53,11 @@
         <file>iconsets/system/default/gstreamer-logo-50.png</file>
         <file>iconsets/system/default/help.png</file>
         <file>iconsets/system/default/history.png</file>
-        <file>iconsets/system/default/logo_16.png</file>
-        <file>iconsets/system/default/logo_32.png</file>
-        <file>iconsets/system/default/logo_48.png</file>
-        <file>iconsets/system/default/logo_64.png</file>
-        <file>iconsets/system/default/logo_128.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_16.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_32.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_48.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_64.png</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@logo_128.png</file>
         <file>iconsets/system/default/icondef.xml</file>
         <file>iconsets/system/default/info.png</file>
         <file>iconsets/system/default/jabber.png</file>
@@ -75,7 +75,7 @@
         <file>iconsets/system/default/pgp.png</file>
         <file>iconsets/system/default/play.png</file>
         <file>iconsets/system/default/play_sounds.png</file>
-        <file>iconsets/system/default/@LOGO_FILE@</file>
+        <file>iconsets/system/default/@PSILOGO_PREFIX@psilogo.png</file>
         <file>iconsets/system/default/psimain.png</file>
         <file>iconsets/system/default/quit.png</file>
         <file>iconsets/system/default/register.png</file>

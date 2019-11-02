@@ -327,32 +327,32 @@
 
 	<icon>
 		<x xmlns='name'>psi/logo_16</x>
-        <object mime='image/png'>logo_16.png</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@logo_16.png</object>
 	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/logo_32</x>
-        <object mime='image/png'>logo_32.png</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@logo_32.png</object>
 	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/logo_48</x>
-        <object mime='image/png'>logo_48.png</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@logo_48.png</object>
 	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/logo_64</x>
-        <object mime='image/png'>logo_64.png</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@logo_64.png</object>
 	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/logo_128</x>
-        <object mime='image/png'>logo_128.png</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@logo_128.png</object>
 	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/logo</x>
-        <object mime='image/png'>@LOGO_FILE@</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@psilogo.png</object>
 	</icon>
 
 	<icon>
