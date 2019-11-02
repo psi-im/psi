@@ -352,7 +352,7 @@
 
 	<icon>
 		<x xmlns='name'>psi/logo</x>
-        <object mime='image/png'>@LOGO_PNG_FILE@</object>
+        <object mime='image/png'>@LOGO_FILE@</object>
 	</icon>
 
 	<icon>
