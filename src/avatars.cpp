@@ -972,7 +972,7 @@ void AvatarFactory::itemPublished(const Jid &jid, const QString &n, const PubSub
                 // found in-band png (by xep84 hash is for png) avatar. So we can make request
                 result = cache->appendUser(hash, AvatarCache::AvatarType, jidFull);
                 if (result == AvatarCache::NoData) {
-                    d->pa_->pepManager()->get(jid, PEP_AVATAR_DATA_NS, hash);
+                    d->pa_->pepManager()->get(jid, PEP_AVATAR_DATA_NS, item.id());
                     return;
                 }
                 break;
