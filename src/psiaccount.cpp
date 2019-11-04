@@ -1751,6 +1751,7 @@ void PsiAccount::logout(bool fast, const Status &s)
         d->logoutTimer->start();
     } else {
         d->client->close(fast);
+        d->finishLogout(); // we can't rely on receiving stream disconnected signal
     }
 }
 
