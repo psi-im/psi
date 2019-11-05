@@ -62,10 +62,11 @@ public:
 
     virtual void invalidateTab();
 
-    enum class State : char { None = 0, Composing, Inactive };
+    enum class State : char { None = 0, Composing, Inactive, Highlighted };
     virtual State   state() const              = 0;
     virtual int     unreadMessageCount() const = 0;
     virtual QString desiredCaption() const     = 0;
+    virtual void    setVSplitterPosition(int, int) {} // default implementation do nothing
 
     // Templates
     SendButtonTemplatesMenu *getTemplateMenu();
@@ -76,6 +77,7 @@ signals:
     void invalidateTabInfo();
     void updateFlashState();
     void eventsRead(const Jid &);
+    void vSplitterMoved(int, int);
 
 public slots:
     void         bringToFront(bool raiseWindow = true);

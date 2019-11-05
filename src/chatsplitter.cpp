@@ -71,6 +71,15 @@ void ChatSplitter::setSizes(const QList<int> &list)
         splitter_->setSizes(list);
 }
 
+QList<int> ChatSplitter::sizes()
+{
+    QList<int> list;
+    if (splitter_)
+        list = splitter_->sizes();
+
+    return list;
+}
+
 /**
  * Moves \a child either to the real QSplitter, or adds it to the
  * private layout.
@@ -125,6 +134,8 @@ void ChatSplitter::updateLayout()
 
     foreach (QWidget *child, children_)
         updateChildLayout(child);
+
+    connect(splitter_, SIGNAL(splitterMoved(int, int)), SIGNAL(splitterMoved(int, int)));
 }
 
 /**
