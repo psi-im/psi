@@ -383,7 +383,7 @@ function initPsiTheme() {
                         new AudioMessage(player);
                     }
                     else if (type.startsWith("image")) {
-                        let img = chat.util.createHtmlNode(`<img src="/psi/account/${session.account}/sharedfile/${source}">`);
+                        let img = chat.util.createHtmlNode(`<div class="image preview"><img src="/psi/account/${session.account}/sharedfile/${source}"></div>`);
                         if (share.nextSibling)
                             share.parentNode.insertBefore(img, share.nextSibling);
                         else

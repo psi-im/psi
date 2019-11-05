@@ -84,9 +84,12 @@
 }
 /* END OF AUDIO MESSAGE */
 
-/* IMAGES */
 .preview {
-  max-width: 50%;
+    max-width: 70%;
+    max-height: 95%;
 }
-.preview > img { max-width: 100%; }
-/* END OF IMAGES */
+
+.preview > img {
+    max-width: 100%;
+    max-height: 100%;
+}
