@@ -301,9 +301,6 @@ public:
 #endif
     void loadBob(const Jid &jid, const QString &cid, QObject *context,
                  std::function<void(bool, const QByteArray &, const QByteArray &)> callback);
-    void shareFiles(QWidget *parent, const std::function<void(const QList<Reference> &, const QString &)> &callback);
-    void shareFiles(QWidget *parent, const QMimeData *mdata,
-                    const std::function<void(const QList<Reference> &, const QString &)> &callback);
 
     FileSharingDeviceOpener *fileSharingDeviceOpener() const;
     void                     resolveContactName(const Jid &j);

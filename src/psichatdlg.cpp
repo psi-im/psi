@@ -55,6 +55,7 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <functional>
 
 #define MCMDCHAT "https://psi-im.org/ids/mcmd#chatmain"
 
@@ -522,9 +523,12 @@ void PsiChatDlg::initToolButtons()
             connect(action, SIGNAL(triggered()), SLOT(actActiveContacts()));
         } else if (name == QString::fromLatin1("chat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
-                account()->shareFiles(this, [this](const QList<Reference> &references, const QString &desc) {
-                    doFileShare(references, desc);
-                });
+                FileShareDlg::shareFiles(
+                    account(), account()->selfContact()->jid(),
+                    [this](const QList<XMPP::Reference> &&rl, const QString &desc) {
+                        doFileShare(std::move(rl), desc);
+                    },
+                    this);
             });
         } else if (name == "chat_pin_tab") {
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
@@ -925,8 +929,9 @@ void PsiChatDlg::chatEditCreated()
     tabCompletion.setTextEdit(chatEdit());
 
     connect(chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
-        account()->shareFiles(this, data,
-                              [this](const QList<Reference> &refs, const QString &desc) { doFileShare(refs, desc); });
+        FileShareDlg::shareFiles(
+            account(), account()->selfContact()->jid(), data,
+            [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
     });
 }
 

@@ -112,7 +112,7 @@ protected:
     void dropEvent(QDropEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
-    bool autoSelectContact_;
+    void doFileShare(const QList<Reference> &&references, const QString &desc);
 
 public slots:
     // reimplemented
@@ -129,7 +129,6 @@ protected slots:
     void         doInfo();
     virtual void doHistory();
     virtual void doClear();
-    virtual void doFileShare(const QList<Reference> &references, const QString &desc);
     virtual void doSend();
     void         doVoice();
     void         doFile();
@@ -178,6 +177,9 @@ protected:
 
     virtual ChatView *chatView() const = 0;
     virtual ChatEdit *chatEdit() const = 0;
+
+protected:
+    bool autoSelectContact_;
 
 private:
     bool    highlightersInstalled_;

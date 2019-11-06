@@ -28,7 +28,6 @@
 #include "bookmarkmanager.h"
 #include "busywidget.h"
 #include "coloropt.h"
-#include "filesharedlg.h"
 #include "filesharingmanager.h"
 #include "gcuserview.h"
 #include "groupchattopicdlg.h"
@@ -115,6 +114,7 @@ static const QString geometryOption = "options.ui.muc.size";
 //----------------------------------------------------------------------------
 // StatusPingTask
 //----------------------------------------------------------------------------
+#include "filesharedlg.h"
 #include "xmpp_xmlcommon.h"
 
 class StatusPingTask : public Task {
@@ -929,8 +929,12 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
-                account()->shareFiles(
-                    this, [this](const QList<Reference> &refs, const QString &desc) { d->doFileShare(refs, desc); });
+                FileShareDlg::shareFiles(
+                    account(), jid().withResource(d->self),
+                    [this](const QList<XMPP::Reference> &&rl, const QString &desc) {
+                        d->doFileShare(std::move(rl), desc);
+                    },
+                    this);
             });
         } else if (name == "gchat_pin_tab") {
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
@@ -1654,19 +1658,20 @@ void GCMainDlg::dragEnterEvent(QDragEnterEvent *e)
 
 void GCMainDlg::dropEvent(QDropEvent *e)
 {
-    Jid jid(e->mimeData()->text());
-    if (jid.isValid() && !jid.node().isEmpty() && !d->usersModel->hasJid(jid)) {
+    Jid droppedJid(e->mimeData()->text());
+    if (droppedJid.isValid() && !droppedJid.node().isEmpty() && !d->usersModel->hasJid(droppedJid)) {
         Message m;
         m.setTo(this->jid());
-        m.addMUCInvite(MUCInvite(jid));
+        m.addMUCInvite(MUCInvite(droppedJid));
         if (!d->password.isEmpty())
             m.setMUCPassword(d->password);
         m.setTimeStamp(QDateTime::currentDateTime());
         account()->dj_sendMessage(m);
     } else {
-        account()->shareFiles(this, e->mimeData(), [this](const QList<Reference> &refs, const QString &desc) {
-            d->doFileShare(refs, desc);
-        });
+        FileShareDlg::shareFiles(
+            account(), jid().withResource(d->self), e->mimeData(),
+            [this](const QList<XMPP::Reference> &&rl, const QString &desc) { d->doFileShare(std::move(rl), desc); },
+            this);
     }
 }
 
@@ -2464,8 +2469,10 @@ void GCMainDlg::chatEditCreated()
 
     ui_.mle->chatEdit()->installEventFilter(d);
     connect(ui_.mle->chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
-        account()->shareFiles(
-            this, data, [this](const QList<Reference> &refs, const QString &desc) { d->doFileShare(refs, desc); });
+        FileShareDlg::shareFiles(
+            account(), jid().withResource(d->self), data,
+            [this](const QList<XMPP::Reference> &&rl, const QString &desc) { d->doFileShare(std::move(rl), desc); },
+            this);
     });
 }
 

@@ -349,8 +349,9 @@ void ChatDlg::activated()
 
 void ChatDlg::dropEvent(QDropEvent *event)
 {
-    account()->shareFiles(this, event->mimeData(),
-                          [this](const QList<Reference> &refs, const QString &desc) { doFileShare(refs, desc); });
+    FileShareDlg::shareFiles(
+        account(), jid(), event->mimeData(),
+        [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
 }
 
 void ChatDlg::dragEnterEvent(QDragEnterEvent *event)
@@ -632,11 +633,11 @@ Jid ChatDlg::realJid() const { return realJid_; }
 
 bool ChatDlg::isEncryptionEnabled() const { return false; }
 
-void ChatDlg::doFileShare(const QList<Reference> &references, const QString &desc)
+void ChatDlg::doFileShare(const QList<Reference> &&references, const QString &desc)
 {
     fileShareReferences_ = std::move(references);
     fileShareDesc_       = desc;
-    ChatDlg::doSend(); // FIXME PsiChatDlg does som weird things, so direct call
+    ChatDlg::doSend(); // FIXME PsiChatDlg does some weird things, so direct call
     fileShareReferences_.clear();
     fileShareDesc_ = QString();
 }

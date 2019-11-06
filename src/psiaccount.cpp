@@ -913,40 +913,6 @@ public:
         }
     }
 
-    void setupFileShareDlg(FileShareDlg *                                                        dlg,
-                           const std::function<void(const QList<Reference> &, const QString &)> &callback)
-    {
-        connect(dlg, &FileShareDlg::published, this, [dlg, callback]() {
-            QList<Reference> references;
-            QString          desc = dlg->description();
-
-            // append reference main links to description and setup their range
-            for (auto const &i : dlg->takeItems()) {
-                auto r = i->toReference();
-                if (r.isValid()) {
-                    auto    uri = i->simpleSource();
-                    QString text;
-                    if (uri.isValid()) {
-                        text = uri.toString(QUrl::FullyEncoded);
-                    } else {
-                        text = QLatin1String("SIMS(") + i->mimeType() + ", " + QString::number(i->fileSize()) + "B, "
-                            + tr("requires compliant client") + ")";
-                    }
-                    QString refText = QString(" %1").arg(text);
-                    r.setRange(desc.size(), desc.size() + refText.size() - 1);
-                    desc += refText;
-
-                    references.append(r);
-                }
-                delete i;
-            }
-            callback(references, desc);
-            if (!dlg->hasPublishErrors())
-                dlg->deleteLater();
-        });
-        dlg->show();
-    }
-
 private:
     Status lastManualStatus_;
 
@@ -6467,28 +6433,6 @@ bool PsiAccount::encryptMessageElement(QDomElement &element)
 #else
     return false;
 #endif
-}
-
-void PsiAccount::shareFiles(QWidget *                                                             parent,
-                            const std::function<void(const QList<Reference> &, const QString &)> &callback)
-{
-    QStringList files  = FileUtil::getOpenFileNames(parent, tr("Open Files For Sharing"));
-    auto        itList = psi()->fileSharingManager()->fromFilesList(files, this);
-    if (!itList.count())
-        return;
-
-    auto dlg = new FileShareDlg(itList, parent);
-    d->setupFileShareDlg(dlg, callback);
-}
-
-// TODO unduplicate the code
-void PsiAccount::shareFiles(QWidget *parent, const QMimeData *mdata,
-                            const std::function<void(const QList<Reference> &, const QString &)> &callback)
-{
-    auto dlg = FileShareDlg::fromMimeData(mdata, this, parent);
-    if (!dlg)
-        return;
-    d->setupFileShareDlg(dlg, callback);
 }
 
 #include "psiaccount.moc"

@@ -201,14 +201,9 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     return true;
 }
 
-Reference FileSharingItem::toReference() const
+Reference FileSharingItem::toReference(const Jid &selfJid) const
 {
     QStringList uris(_uris);
-
-    UserListItem *u = _acc->find(_acc->jid());
-    if (u->userResourceList().isEmpty())
-        return Reference();
-    Jid selfJid = u->jid().withResource(u->userResourceList().first().name());
 
     uris.append(QString::fromLatin1("xmpp:%1?jingle-ft").arg(selfJid.full()));
     uris = sortSourcesByPriority(uris);
@@ -304,8 +299,9 @@ FileCacheItem *FileSharingItem::cache(bool reborn) const
     return nullptr;
 }
 
-void FileSharingItem::publish()
+void FileSharingItem::publish(const XMPP::Jid &myJid)
 {
+    Q_UNUSED(myJid)
     Q_ASSERT(_fileType != FileType::RemoteFile);
 
     if (_flags & PublishNotified) {

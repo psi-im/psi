@@ -21,6 +21,7 @@
 
 #include "filecache.h"
 #include "filesharingmanager.h"
+#include "fileutil.h"
 #include "httpfileupload.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
@@ -41,8 +42,10 @@
 #include <QPushButton>
 #include <QUrl>
 
-FileShareDlg::FileShareDlg(const QList<FileSharingItem *> &items, QWidget *parent) :
-    QDialog(parent), ui(new Ui::FileShareDlg)
+FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
+                           const Callback &callback, QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::FileShareDlg), account(acc), myJid(myJid), publishedCallback(callback)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
@@ -95,23 +98,6 @@ void FileShareDlg::showImage(const QImage &img)
     ui->pixmapRatioLabel->show();
 }
 
-QString FileShareDlg::description() const { return ui->lineEdit->text(); }
-
-FileShareDlg *FileShareDlg::fromMimeData(const QMimeData *data, PsiAccount *acc, QWidget *parent)
-{
-    auto items = acc->psi()->fileSharingManager()->fromMimeData(data, acc);
-    if (items.isEmpty())
-        return nullptr;
-    return new FileShareDlg(items, parent);
-}
-
-QList<FileSharingItem *> FileShareDlg::takeItems()
-{
-    auto ret = readyPublishers;
-    readyPublishers.clear();
-    return ret;
-}
-
 void FileShareDlg::publish()
 {
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
@@ -138,7 +124,7 @@ void FileShareDlg::publish()
             inProgressCount--;
             readyPublishers.append(publisher);
             if (!inProgressCount)
-                emit published();
+                finish();
         });
         connect(publisher, &FileSharingItem::logChanged, this,
                 [publisher, item]() { item->setInfo(TextUtil::plain2rich(publisher->log().join('\n'))); });
@@ -146,10 +132,61 @@ void FileShareDlg::publish()
         toPublish.append(publisher);
     });
     if (!inProgressCount) {
-        emit published();
+        finish();
     }
     for (auto &p : toPublish)
-        p->publish();
+        p->publish(myJid);
 }
 
 FileShareDlg::~FileShareDlg() { delete ui; }
+
+void FileShareDlg::finish()
+{
+    QList<Reference> references;
+    QString          desc = ui->lineEdit->text();
+
+    // append reference main links to description and setup their range
+    for (auto const &i : readyPublishers) {
+        auto r = i->toReference(myJid);
+        if (r.isValid()) {
+            auto    uri = i->simpleSource();
+            QString text;
+            if (uri.isValid()) {
+                text = uri.toString(QUrl::FullyEncoded);
+            } else {
+                text = QLatin1String("SIMS(") + i->mimeType() + ", " + QString::number(i->fileSize()) + "B, "
+                    + tr("requires compliant client") + ")";
+            }
+            QString refText = QString(" %1").arg(text);
+            r.setRange(desc.size(), desc.size() + refText.size() - 1);
+            desc += refText;
+
+            references.append(r);
+        }
+        delete i;
+    }
+    publishedCallback(std::move(references), desc);
+    if (!hasFailures)
+        deleteLater();
+}
+
+void FileShareDlg::shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent)
+{
+    QStringList files  = FileUtil::getOpenFileNames(parent, QObject::tr("Open Files For Sharing"));
+    auto        itList = acc->psi()->fileSharingManager()->fromFilesList(files, acc);
+    if (!itList.count())
+        return;
+
+    auto dlg = new FileShareDlg(acc, myJid, itList, callback, parent);
+    dlg->show();
+}
+
+void FileShareDlg::shareFiles(PsiAccount *acc, const Jid &myJid, const QMimeData *data, const Callback &callback,
+                              QWidget *parent)
+{
+    auto items = acc->psi()->fileSharingManager()->fromMimeData(data, acc);
+    if (items.isEmpty())
+        return;
+    auto dlg = new FileShareDlg(acc, myJid, items, callback, parent);
+    dlg->show();
+}

@@ -90,8 +90,8 @@ public:
     PsiAccount *             account() const;
     inline const QStringList log() const { return _log; }
 
-    XMPP::Reference toReference() const;
-    void            publish();
+    XMPP::Reference toReference(const XMPP::Jid &selfJid) const;
+    void            publish(const XMPP::Jid &myJid);
     inline bool     isPublished() const { return _flags & HttpFinished && _flags & JingleFinished; }
 
     /**

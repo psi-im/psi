@@ -20,6 +20,7 @@
 #ifndef FILESHAREDLG_H
 #define FILESHAREDLG_H
 
+#include "xmpp/jid/jid.h"
 #include "xmpp_reference.h"
 
 #include <QDialog>
@@ -41,28 +42,29 @@ class FileShareDlg : public QDialog {
     Q_OBJECT
 
 public:
-    explicit FileShareDlg(const QList<FileSharingItem *> &items, QWidget *parent = nullptr);
+    using Callback = std::function<void(const QList<XMPP::Reference> &&, const QString &)>;
+
+    explicit FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
+                          const Callback &callback, QWidget *parent = nullptr);
     ~FileShareDlg();
 
-    QString     description() const;
-    inline bool hasPublishErrors() const { return hasFailures; }
-
-    static FileShareDlg *fromMimeData(const QMimeData *md, PsiAccount *acc, QWidget *parent);
-
-    void                     showImage(const QImage &img);
-    QList<FileSharingItem *> takeItems();
-public slots:
+    static void shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent);
+    static void shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const QMimeData *data, const Callback &callback,
+                           QWidget *parent);
+private slots:
     void publish();
 
-signals:
-    void published(); // signalled when all items are published or failed
-
 private:
+    void showImage(const QImage &img);
+    void finish();
+
     Ui::FileShareDlg *       ui;
     PsiAccount *             account;
+    XMPP::Jid                myJid;
     QImage                   image;
     MultiFileTransferModel * filesModel;
     QList<FileSharingItem *> readyPublishers;
+    Callback                 publishedCallback;
     int                      inProgressCount = 0;
     bool                     hasFailures     = false;
 };
