@@ -50,21 +50,25 @@ protected:
 
     void downloadError(const QString &err)
     {
-        if (!err.isEmpty())
+        if (!err.isEmpty()) {
             _lastError = err;
+            qDebug("Jingle failed: %s", qPrintable(err));
+        }
         QTimer::singleShot(0, this, &AbstractFileShareDownloader::failed);
     }
 
     Jid selectOnlineJid(const QList<Jid> &jids) const
     {
         for (auto const &j : jids) {
-            if (j == acc->client()->jid())
+            if (j == acc->client()->jid()) // skip self
                 continue;
             for (UserListItem *u : acc->findRelevant(j)) {
                 UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
                 if (rit != u->userResourceList().end())
                     return j;
             }
+            if (acc->findGCContact(j))
+                return j;
         }
         return Jid();
     }
@@ -123,11 +127,11 @@ public:
         if (path.startsWith('/')) { // this happens when authority part is present
             path = path.mid(1);
         }
-        Jid  entity = JIDUtil::fromString(path);
-        auto myJids = jids;
+        Jid  entity     = JIDUtil::fromString(path);
+        auto sourceJids = jids;
         if (entity.isValid() && !entity.node().isEmpty())
-            myJids.prepend(entity);
-        Jid dataSource = selectOnlineJid(myJids);
+            sourceJids.prepend(entity);
+        Jid dataSource = selectOnlineJid(sourceJids);
         if (!dataSource.isValid()) {
             downloadError(tr("Jingle data source is offline"));
             return;
