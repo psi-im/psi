@@ -320,8 +320,10 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
                 meta["uris"] = _uris;
             if (_fileType == FileType::TempFile) {
                 auto cache = _manager->moveToCache(_sums, _fileName, meta, TEMP_TTL);
-                _fileType  = FileType::LocalFile;
-                _fileName  = _manager->cacheDir() + "/" + cache->fileName();
+                if (cache) {
+                    _fileType  = FileType::LocalFile;
+                    _fileName  = _manager->cacheDir() + "/" + cache->fileName();
+                }
             } else {
                 meta["link"] = _fileName;
                 _manager->saveToCache(_sums, QByteArray(), meta, FILE_TTL);
