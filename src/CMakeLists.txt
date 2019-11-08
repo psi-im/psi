@@ -69,6 +69,7 @@ endif()
 
 if(NOT ONLY_BINARY AND (EXISTS "${TRANSLATIONS_DIR}"))
     set(LANGS_EXISTS ON)
+    message(STATUS "${PROJECT_NAME} translations found at ${TRANSLATIONS_DIR}")
     find_package(Qt5 COMPONENTS LinguistTools REQUIRED)
     set(QT_LUPDATE_EXECUTABLE ${Qt5_LUPDATE_EXECUTABLE})
 endif()
@@ -122,7 +123,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite
 )
 
-if( BUNDLED_IRIS )
+if(BUNDLED_IRIS)
     include_directories(
         ${PROJECT_SOURCE_DIR}/iris/src
         ${PROJECT_SOURCE_DIR}/iris/include
@@ -168,24 +169,30 @@ set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
 
 #Copy default iconsets to build directory and add jisp files to prepare-bin target
-file(GLOB_RECURSE all_iconsets "${PROJECT_SOURCE_DIR}/iconsets/*")
-foreach(_ITEM ${all_iconsets})
-    get_filename_component(FNAME ${_ITEM} NAME)
-    file(RELATIVE_PATH FREL ${PROJECT_SOURCE_DIR} ${_ITEM})
-    get_filename_component(FDIR ${FREL} DIRECTORY)
-    if("${_ITEM}" MATCHES ".*/default/.*")
-        if(NOT "${_ITEM}" MATCHES ".*/system/default/icondef.xml")
-            configure_file(${_ITEM} "${CMAKE_CURRENT_BINARY_DIR}/${FDIR}/${FNAME}" COPYONLY)
+function(prepare_iconsets ACTION)
+    file(GLOB_RECURSE all_iconsets "${PROJECT_SOURCE_DIR}/iconsets/*")
+    message(STATUS "Processing iconsets for ${ACTION}")
+    foreach(_ITEM ${all_iconsets})
+        get_filename_component(FNAME ${_ITEM} NAME)
+        file(RELATIVE_PATH FREL ${PROJECT_SOURCE_DIR} ${_ITEM})
+        get_filename_component(FDIR ${FREL} DIRECTORY)
+        if(NOT ${ACTION} STREQUAL "prepare-bin")
+            if("${_ITEM}" MATCHES ".*/default/.*" AND (NOT "${_ITEM}" MATCHES ".*/system/default/icondef.xml"))
+                configure_file(${_ITEM} "${CMAKE_CURRENT_BINARY_DIR}/${FDIR}/${FNAME}" COPYONLY)
+            endif()
+        else()
+            if(NOT "${_ITEM}" MATCHES ".*/default/.*|.*README")
+                copy(${_ITEM} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${FDIR}/${FNAME}" ${ACTION})
+            endif()
         endif()
-    else()
-        #copy only jisp and README files
-        copy(${_ITEM} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${FDIR}/${FNAME}" prepare-bin)
-    endif()
-    unset(_ITEM)
-    unset(FNAME)
-    unset(FREL)
-    unset(FDIR)
-endforeach()
+        unset(_ITEM)
+        unset(FNAME)
+        unset(FREL)
+        unset(FDIR)
+    endforeach()
+endfunction()
+
+prepare_iconsets(prepare-src)
 #Generate iconsets.qrc and icondef.xml
 set(ICONDEFXML_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets/system/default/icondef.xml")
 set(ICONSETSQRC_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets.qrc")
@@ -237,7 +244,7 @@ if(LANGS_EXISTS)
 
     set_property(SOURCE ${PSI_TRANSLATIONS}
         PROPERTY OUTPUT_LOCATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations
-    )
+        )
 
     #update translations with: make lupdate
     add_custom_target(lupdate)
@@ -250,23 +257,28 @@ if(LANGS_EXISTS)
             ARGS -no-obsolete -recursive ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/iris -ts ${_LANG}
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
             VERBATIM
-        )
+            )
     endforeach()
 
     # Psi translations
     qt5_add_translation(QM ${PSI_TRANSLATIONS})
-endif()
 
-if(WIN32 OR APPLE)
-    # Qt translations
-    get_target_property(QtCore_location Qt5::Core LOCATION)
-    get_filename_component(QtCore_DIR "${QtCore_location}" DIRECTORY)
-    get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../translations" ABSOLUTE)
-    if(EXISTS "${QT_TRANSLATIONS_DIR}")
-        message(STATUS "Qt translations found at ${QT_TRANSLATIONS_DIR}")
-        file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
-        list(APPEND QM ${QT_TRANSLATIONS})
+    if(WIN32 OR APPLE)
+        # Qt translations
+        get_target_property(QtCore_location Qt5::Core LOCATION)
+        get_filename_component(QtCore_DIR "${QtCore_location}" DIRECTORY)
+        if(APPLE)
+            get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../../translations" ABSOLUTE)
+        else()
+            get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../translations" ABSOLUTE)
+        endif()
+        if(EXISTS "${QT_TRANSLATIONS_DIR}")
+            message(STATUS "Qt translations found at ${QT_TRANSLATIONS_DIR}")
+            file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
+            list(APPEND QM ${QT_TRANSLATIONS})
+        endif()
     endif()
+    add_custom_target(build_translations DEPENDS ${QM})
 endif()
 
 set(RESOURCES
@@ -289,10 +301,10 @@ if(WIN32)
     set(APP_DESCRIPTION "${APP_NAME} : A cross-platform XMPP client aimed at experienced users.")
     if(IS_PSIPLUS)
         set(COMPANY_NAME "Psi+ project")
-        set(APP_ICON "icon-plus.ico")
+        set(APP_ICON "app-plus.ico")
     else()
         set(COMPANY_NAME "psi-im.org")
-        set(APP_ICON "icon.ico")
+        set(APP_ICON "app.ico")
     endif()
     string(REPLACE "\." "," FILE_VERSION ${APP_VERSION})
     if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
@@ -368,6 +380,9 @@ if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
     )
 endif()
 
+if(LANGS_EXISTS)
+    add_dependencies(${PROJECT_NAME} build_translations)
+endif()
 add_dependencies(${PROJECT_NAME} iris)
 if(UNIX OR IS_WEBENGINE)
     add_dependencies(${PROJECT_NAME} qhttp)
@@ -441,7 +456,7 @@ if(ENABLE_PLUGINS AND EXISTS ${PROJECT_SOURCE_DIR}/skins)
     copy("${PROJECT_SOURCE_DIR}/skins/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/skins/" prepare-bin)
 endif()
 copy("${PROJECT_SOURCE_DIR}/client_icons.txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin)
-if((WIN32 OR APPLE) AND QM)
+if((WIN32 OR APPLE) AND LANGS_EXISTS)
     set(QM_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations")
     foreach(_LANG ${QM})
         get_filename_component(QM_NAME ${_LANG} NAME)
@@ -450,6 +465,7 @@ if((WIN32 OR APPLE) AND QM)
         endif()
     endforeach()
 endif()
+prepare_iconsets(prepare-bin)
 #PREPARE SECTION END
 
 #INSTALL SECTION
