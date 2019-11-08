@@ -146,11 +146,13 @@ if( NOT IS_PSIPLUS )
     set(CLIENT_SNAME "psi")
     set(CLIENT_CAPS_NODE "https://psi-im.org")
     set(PSILOGO_PREFIX "")
+    set(MAIN_ICON "psimain.png")
 else()
     set(CLIENT_NAME "Psi+")
     set(CLIENT_SNAME "psi+")
     set(CLIENT_CAPS_NODE "https://psi-plus.com")
     set(PSILOGO_PREFIX "psiplus/")
+    set(MAIN_ICON "logo_16.png")
 endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
@@ -255,7 +257,7 @@ if(LANGS_EXISTS)
     qt5_add_translation(QM ${PSI_TRANSLATIONS})
 endif()
 
-if(LANGS_EXISTS AND (WIN32 OR APPLE))
+if(WIN32 OR APPLE)
     # Qt translations
     get_target_property(QtCore_location Qt5::Core LOCATION)
     get_filename_component(QtCore_DIR "${QtCore_location}" DIRECTORY)
@@ -287,8 +289,10 @@ if(WIN32)
     set(APP_DESCRIPTION "${APP_NAME} : A cross-platform XMPP client aimed at experienced users.")
     if(IS_PSIPLUS)
         set(COMPANY_NAME "Psi+ project")
+        set(APP_ICON "icon-plus.ico")
     else()
         set(COMPANY_NAME "psi-im.org")
+        set(APP_ICON "icon.ico")
     endif()
     string(REPLACE "\." "," FILE_VERSION ${APP_VERSION})
     if(BUILD_ARCH STREQUAL "i386" OR (BUILD_ARCH STREQUAL "win32"))
@@ -337,7 +341,6 @@ add_executable(${PROJECT_NAME}
     ${HEADERS}
     ${UI_FORMS}
     ${QRC_SOURCES}
-    ${QM}
     ${RC_FILE}
 )
 
@@ -438,6 +441,15 @@ if(ENABLE_PLUGINS AND EXISTS ${PROJECT_SOURCE_DIR}/skins)
     copy("${PROJECT_SOURCE_DIR}/skins/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/skins/" prepare-bin)
 endif()
 copy("${PROJECT_SOURCE_DIR}/client_icons.txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin)
+if((WIN32 OR APPLE) AND QM)
+    set(QM_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations")
+    foreach(_LANG ${QM})
+        get_filename_component(QM_NAME ${_LANG} NAME)
+        if(NOT EXISTS "${QM_OUTPUT}/${QM_NAME}")
+            copy("${_LANG}" "${QM_OUTPUT}/" prepare-bin)
+        endif()
+    endforeach()
+endif()
 #PREPARE SECTION END
 
 #INSTALL SECTION

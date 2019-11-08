@@ -252,7 +252,7 @@
 
 	<icon>
 		<x xmlns='name'>psi/main</x>
-        <object mime='image/png'>psimain.png</object>
+        <object mime='image/png'>@PSILOGO_PREFIX@@MAIN_ICON@</object>
 	</icon>
 
 	<icon>
