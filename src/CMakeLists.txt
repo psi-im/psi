@@ -69,6 +69,7 @@ endif()
 
 if(NOT ONLY_BINARY AND (EXISTS "${TRANSLATIONS_DIR}"))
     set(LANGS_EXISTS ON)
+    message(STATUS "${PROJECT_NAME} translations found at ${TRANSLATIONS_DIR}")
     find_package(Qt5 COMPONENTS LinguistTools REQUIRED)
     set(QT_LUPDATE_EXECUTABLE ${Qt5_LUPDATE_EXECUTABLE})
 endif()
@@ -122,7 +123,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite
 )
 
-if( BUNDLED_IRIS )
+if(BUNDLED_IRIS)
     include_directories(
         ${PROJECT_SOURCE_DIR}/iris/src
         ${PROJECT_SOURCE_DIR}/iris/include
@@ -156,14 +157,39 @@ elseif(APPLE)
     message(STATUS "${CLIENT_NAME} libraries directory: ${PSI_LIBDIR}")
 endif()
 
-configure_file(config.h.in config.h @ONLY)
+set(CONFIG_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CONFIG_OUTPUT_FILE} @ONLY)
 
-add_definitions(
-    -DQT_STATICPLUGIN
-    -DHAVE_CONFIG
-)
+#Copy default iconsets to build directory and add jisp files to prepare-bin target
+function(prepare_iconsets ACTION)
+    file(GLOB_RECURSE all_iconsets "${PROJECT_SOURCE_DIR}/iconsets/*")
+    message(STATUS "Processing iconsets for ${ACTION}")
+    foreach(_ITEM ${all_iconsets})
+        get_filename_component(FNAME ${_ITEM} NAME)
+        file(RELATIVE_PATH FREL ${PROJECT_SOURCE_DIR} ${_ITEM})
+        get_filename_component(FDIR ${FREL} DIRECTORY)
+        if(NOT ${ACTION} STREQUAL "prepare-bin")
+            if("${_ITEM}" MATCHES ".*/default/.*" AND (NOT "${_ITEM}" MATCHES ".*/system/default/icondef.xml"))
+                configure_file(${_ITEM} "${CMAKE_CURRENT_BINARY_DIR}/${FDIR}/${FNAME}" COPYONLY)
+            endif()
+        else()
+            if(NOT "${_ITEM}" MATCHES ".*/default/.*|.*README")
+                copy(${_ITEM} "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${FDIR}/${FNAME}" ${ACTION})
+            endif()
+        endif()
+        unset(_ITEM)
+        unset(FNAME)
+        unset(FREL)
+        unset(FDIR)
+    endforeach()
+endfunction()
 
 include(src.cmake)
+
+if(EXISTS "${CONFIG_OUTPUT_FILE}")
+    message(STATUS "${CONFIG_OUTPUT_FILE} file generated")
+    list(APPEND HEADERS ${CONFIG_OUTPUT_FILE})
+endif()
 
 # Only headers or very small sources
 include(irisprotocol/irisprotocol.cmake)
@@ -209,29 +235,33 @@ if(LANGS_EXISTS)
     foreach(_LANG ${PSI_TRANSLATIONS})
         get_filename_component(_SHORT_LANG ${_LANG} NAME_WE)
         string(REPLACE "@" "_" _SHORT_LANG ${_SHORT_LANG})
-        add_custom_target(${_SHORT_LANG}
+        add_custom_command(TARGET lupdate
+            PRE_BUILD
             COMMAND ${QT_LUPDATE_EXECUTABLE}
-            ARGS -no-obsolete -recursive . ../iris -ts ${_LANG}
+            ARGS -no-obsolete -recursive ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/iris -ts ${_LANG}
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
             VERBATIM
         )
-        add_dependencies(lupdate ${_SHORT_LANG})
     endforeach()
 
     # Psi translations
     qt5_add_translation(QM ${PSI_TRANSLATIONS})
-endif()
-
-if(LANGS_EXISTS AND (WIN32 OR APPLE))
-    # Qt translations
-    get_target_property(QtCore_location Qt5::Core LOCATION)
-    get_filename_component(QtCore_DIR "${QtCore_location}" PATH)
-    set(QT_ROOT_DIR "${QtCore_DIR}/../..")
-    set(QT_TRANSLATIONS_DIR "${QT_ROOT_DIR}/translations")
-    if(EXISTS "${QT_TRANSLATIONS_DIR}")
-        file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
-        list(APPEND QM ${QT_TRANSLATIONS})
+    if(WIN32 OR APPLE)
+        # Qt translations
+        get_target_property(QtCore_location Qt5::Core LOCATION)
+        get_filename_component(QtCore_DIR "${QtCore_location}" DIRECTORY)
+        if(APPLE)
+            get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../../translations" ABSOLUTE)
+        else()
+            get_filename_component(QT_TRANSLATIONS_DIR "${QtCore_DIR}/../translations" ABSOLUTE) #checked with MXE
+        endif()
+        if(EXISTS "${QT_TRANSLATIONS_DIR}")
+            message(STATUS "Qt translations found at ${QT_TRANSLATIONS_DIR}")
+            file(GLOB QT_TRANSLATIONS "${QT_TRANSLATIONS_DIR}/q*.qm")
+            list(APPEND QM ${QT_TRANSLATIONS})
+        endif()
     endif()
+    add_custom_target(build_translations DEPENDS ${QM})
 endif()
 
 set(RESOURCES
@@ -331,6 +361,9 @@ if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
     )
 endif()
 
+if(LANGS_EXISTS)
+    add_dependencies(${PROJECT_NAME} build_translations)
+endif()
 add_dependencies(${PROJECT_NAME} iris)
 if(UNIX OR IS_WEBENGINE)
     add_dependencies(${PROJECT_NAME} qhttp)
@@ -350,9 +383,6 @@ if(WIN32 AND MSVC)
             imm32
         )
     endif()
-    add_definitions(
-        -DQT_STATICPLUGIN
-    )
 endif()
 
 target_link_libraries(${PROJECT_NAME}
@@ -385,7 +415,6 @@ endif()
 
 set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/certs
-    ${PROJECT_SOURCE_DIR}/iconsets
     ${PROJECT_SOURCE_DIR}/sound
 )
 
@@ -400,7 +429,6 @@ set(DOC_FILES
 
 #PREPARE SECTION
 copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
-copy("${PROJECT_SOURCE_DIR}/iconsets/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/iconsets/" prepare-bin)
 copy("${PROJECT_SOURCE_DIR}/sound/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sound/" prepare-bin)
 if(IS_WEBKIT OR IS_WEBENGINE)
     copy("${PROJECT_SOURCE_DIR}/themes/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/themes/" prepare-bin)
@@ -409,6 +437,16 @@ if(ENABLE_PLUGINS AND EXISTS ${PROJECT_SOURCE_DIR}/skins)
     copy("${PROJECT_SOURCE_DIR}/skins/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/skins/" prepare-bin)
 endif()
 copy("${PROJECT_SOURCE_DIR}/client_icons.txt" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" prepare-bin)
+if((WIN32 OR APPLE) AND LANGS_EXISTS)
+    set(QM_OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/translations")
+    foreach(_LANG ${QM})
+        get_filename_component(QM_NAME ${_LANG} NAME)
+        if(NOT EXISTS "${QM_OUTPUT}/${QM_NAME}")
+            copy("${_LANG}" "${QM_OUTPUT}/" prepare-bin)
+        endif()
+    endforeach()
+endif()
+prepare_iconsets(prepare-bin)
 #PREPARE SECTION END
 
 #INSTALL SECTION
@@ -424,6 +462,7 @@ if(LINUX)
         if(NOT VERBOSED_NAME)
             set(VERBOSED_NAME ${PROJECT_NAME})
         endif()
+        #Generate .desktop file
         include(${PROJECT_SOURCE_DIR}/cmake/modules/generate_desktopfile.cmake)
         install(FILES ${OUT_DESK_FILE} DESTINATION ${APPS_INSTALL_DIR})
         if(IS_PSIPLUS)
@@ -433,6 +472,7 @@ if(LINUX)
             set(PSI_LOGO_PREFIX ${PROJECT_SOURCE_DIR}/iconsets/system/default)
             set(SHARE_SUFF "psi")
         endif()
+        #Install logo and pixmaps
         install(FILES ${PSI_LOGO_PREFIX}/logo_128.png DESTINATION ${PIXMAPS_INSTALL_DIR} RENAME ${VERBOSED_NAME}.png)
         foreach(resolution ${RESOLUTIONS})
             unset(LOGO_NAME)
@@ -443,6 +483,8 @@ if(LINUX)
             set(PROJECT_OUTPUT_DATA_DIR "${DATA_INSTALL_DIR}/${SHARE_SUFF}")
             install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
             install(DIRECTORY ${OTHER_FILES} DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
+            #iconsets
+            install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${PROJECT_OUTPUT_DATA_DIR} PATTERN "default" EXCLUDE)
             if(IS_WEBKIT OR IS_WEBENGINE)
                 install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION ${PROJECT_OUTPUT_DATA_DIR})
             endif()
@@ -480,6 +522,7 @@ elseif(HAIKU)
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
     install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
     install(DIRECTORY ${OTHER_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF} PATTERN "default" EXCLUDE)
     if(IS_WEBKIT OR IS_WEBENGINE)
         install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION ${CMAKE_INSTALL_PREFIX}/${SHARE_SUFF})
     endif()
@@ -491,6 +534,7 @@ elseif(WIN32)
     if(NOT ONLY_BINARY AND INSTALL_EXTRA_FILES)
         install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION ${CMAKE_INSTALL_PREFIX})
         install(DIRECTORY ${OTHER_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX})
+        install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${CMAKE_INSTALL_PREFIX} PATTERN "default" EXCLUDE)
         if(IS_WEBKIT OR IS_WEBENGINE)
             install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION ${CMAKE_INSTALL_PREFIX})
         endif()
@@ -559,6 +603,7 @@ elseif(APPLE)
             install(FILES ${MACOSX_ICON} DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
             install(FILES ${PROJECT_SOURCE_DIR}/client_icons.txt DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
             install(DIRECTORY ${OTHER_FILES} DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
+            install(DIRECTORY ${PROJECT_SOURCE_DIR}/iconsets DESTINATION ${PROJECT_OUTPUT_DATA_DIR} PATTERN "default" EXCLUDE)
             if(IS_WEBKIT OR IS_WEBENGINE)
                 install(DIRECTORY ${PROJECT_SOURCE_DIR}/themes DESTINATION "${PROJECT_OUTPUT_DATA_DIR}")
             endif()

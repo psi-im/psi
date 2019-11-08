@@ -7,6 +7,7 @@ add_definitions(
     -DPSI_PLUGINS
     -DUSE_PEP
     -DQT_STATICPLUGIN
+    -DHAVE_CONFIG
     )
 
 if(UNIX AND NOT (APPLE OR HAIKU))
