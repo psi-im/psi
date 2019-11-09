@@ -92,7 +92,6 @@ if(WIN32)
         endif()
         add_custom_target(windeploy
             COMMAND ${WINDEPLOYQTBIN}
-            ARGS
             ${WDARGS}
             $<TARGET_FILE:${PROJECT_NAME}>
             WORKING_DIRECTORY

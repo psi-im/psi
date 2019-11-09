@@ -86,6 +86,7 @@ public:
     virtual bool   isConnected() const                                              = 0;
     virtual bool   hasFileSize() const                                              = 0;
     virtual qint64 fileSize() const                                                 = 0;
+    virtual void   close() {}
 
     inline const QString &lastError() const { return _lastError; }
     void                  setRange(qint64 offset, qint64 length)
@@ -208,6 +209,19 @@ public:
             }
             app->pad()->session()->disconnect(this);
             app->remove(isFailure ? XMPP::Jingle::Reason::FailedApplication : XMPP::Jingle::Reason::Decline, reason);
+            app = nullptr;
+        }
+    }
+
+    void close()
+    {
+        if (app) {
+            if (connection) {
+                connection->disconnect(this);
+                connection.reset();
+            }
+            app->pad()->session()->disconnect(this);
+            app->remove(XMPP::Jingle::Reason::Success);
             app = nullptr;
         }
     }
@@ -424,6 +438,8 @@ public:
             finished = true;
 
             if (selfDelete) {
+                qDebug("all data downloaded");
+                downloader->close();
                 q->deleteLater();
             }
         }

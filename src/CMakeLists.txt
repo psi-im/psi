@@ -333,7 +333,6 @@ add_executable(${PROJECT_NAME}
     ${HEADERS}
     ${UI_FORMS}
     ${QRC_SOURCES}
-    ${QM}
     ${RC_FILE}
 )
 
