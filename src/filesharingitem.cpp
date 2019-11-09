@@ -91,7 +91,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
 
     if (!initFromCache()) {
         _mimeType = QString::fromLatin1("image/png");
-        _fileSize = size_t(ba.size());
+        _fileSize = qint64(ba.size());
         QTemporaryFile file(QDir::tempPath() + QString::fromLatin1("/psishare-XXXXXX.png"));
         file.open();
         file.write(ba);
@@ -117,7 +117,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
 
     if (!initFromCache()) {
         file.seek(0);
-        _fileSize = size_t(file.size());
+        _fileSize = qint64(file.size());
         _mimeType = QMimeDatabase().mimeTypeForFileNameAndData(fileName, &file).name();
     }
 }
@@ -132,7 +132,7 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
 
     if (!initFromCache()) {
         _mimeType = mime;
-        _fileSize = size_t(data.size());
+        _fileSize = qint64(data.size());
 
         QMimeDatabase  db;
         QString        fileExt = db.mimeTypeForData(data).suffixes().value(0);
@@ -174,8 +174,8 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
     } else {
         _fileType = FileType::LocalLink;
         _fileName = link;
-        _fileSize = size_t(
-            QFileInfo(_fileName).size()); // note the readability of the filename was aleady checked by this moment
+        // note the readability of the filename was aleady checked by this moment
+        _fileSize = QFileInfo(_fileName).size();
     }
 
     _sums       = cache->sums();
@@ -215,7 +215,7 @@ Reference FileSharingItem::toReference(const Jid &selfJid) const
     for (auto const &h : _sums)
         jfile.addHash(h);
     jfile.setName(fi.fileName());
-    jfile.setSize(quint64(fi.size()));
+    jfile.setSize(fi.size());
     jfile.setMediaType(_mimeType);
     jfile.setDescription(_description);
 
