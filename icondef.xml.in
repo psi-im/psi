@@ -778,32 +778,32 @@
         <!-- Icons for screenshot-plugin -->
         <icon>
                 <x xmlns='name'>psi/crop</x>
-        <object mime='image/png'>psiplus/crop.png</object>
+        <object mime='image/png'>crop.png</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>psi/draw</x>
-        <object mime='image/png'>psiplus/draw.png</object>
+        <object mime='image/png'>draw.png</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>psi/frame</x>
-        <object mime='image/png'>psiplus/frame.png</object>
+        <object mime='image/png'>frame.png</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>psi/palette</x>
-        <object mime='image/png'>psiplus/palette.png</object>
+        <object mime='image/png'>palette.png</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>psi/undo</x>
-        <object mime='image/png'>psiplus/undo.png</object>
+        <object mime='image/png'>undo.png</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>psi/print</x>
-        <object mime='image/png'>psiplus/print.png</object>
+        <object mime='image/png'>print.png</object>
         </icon>
         <!-- End icons for screenshot-plugin -->
 

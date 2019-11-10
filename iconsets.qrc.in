@@ -142,12 +142,12 @@
         <file>iconsets/system/default/psiplus/psiplus_logo.png</file>
         <file>iconsets/system/default/psiplus/doublenextarrow.png</file>
         <file>iconsets/system/default/psiplus/doublebackarrow.png</file>
-        <file>iconsets/system/default/psiplus/crop.png</file>
-        <file>iconsets/system/default/psiplus/draw.png</file>
-        <file>iconsets/system/default/psiplus/frame.png</file>
-        <file>iconsets/system/default/psiplus/palette.png</file>
-        <file>iconsets/system/default/psiplus/undo.png</file>
-        <file>iconsets/system/default/psiplus/print.png</file>
+        <file>iconsets/system/default/crop.png</file>
+        <file>iconsets/system/default/draw.png</file>
+        <file>iconsets/system/default/frame.png</file>
+        <file>iconsets/system/default/palette.png</file>
+        <file>iconsets/system/default/undo.png</file>
+        <file>iconsets/system/default/print.png</file>
         <file>iconsets/system/default/keys_64.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>

@@ -153,7 +153,7 @@ else()
     set(CLIENT_SNAME "psi+")
     set(CLIENT_CAPS_NODE "https://psi-plus.com")
     set(PSILOGO_PREFIX "psiplus/")
-    set(MAIN_ICON "logo_16.png")
+    set(MAIN_ICON "psiplus_icon.png")
 endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/get-version.cmake)
