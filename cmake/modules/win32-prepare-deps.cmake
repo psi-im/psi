@@ -104,8 +104,14 @@ if(WIN32)
         # required libraries
         set( ICU_LIBS_PREFIXES
             icudt5
+            icudt6
+            icudt7
             icuin5
+            icuin6
+            icuin7
             icuuc5
+            icuuc6
+            icuuc7
             )
         set( ICU_LIBS "" )
         #hack to find icu libs with name template icu\W{2}[1..9]-0.dll
