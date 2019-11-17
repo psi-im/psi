@@ -63,6 +63,10 @@ or
 
   to use Hunspell spellchecker (default ON)
 
+>  -DUSE_HUNSPELL=ON
+
+  to use Aspell spellchecker (default OFF)
+
 >  -DSEPARATE_QJDNS=ON
 
   to build qjdns library as separate library (default OFF)
