@@ -63,6 +63,10 @@ or
 
   to use Hunspell spellchecker (default ON)
 
+>  -DUSE_HUNSPELL=ON
+
+  to use Aspell spellchecker (default OFF)
+
 >  -DSEPARATE_QJDNS=ON
 
   to build qjdns library as separate library (default OFF)
@@ -70,7 +74,7 @@ or
 >  -DCHAT_TYPE = BASIC
 
    to set type of chatlog engine. Possible values: WEBKIT, WEBENGINE, BASIC
-   default value - WEBENGINE
+   default value - BASIC
 
 >  -DPSI_VERSION=${version}
 
