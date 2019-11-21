@@ -31,10 +31,13 @@ function(obtain_git_psi_version GIT_PSI_VERSION)
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                 OUTPUT_VARIABLE MAIN_VER
                 OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_VARIABLE ERROR_1
                 )
             if(MAIN_VER)
                 set(APP_VERSION "${MAIN_VER}" PARENT_SCOPE)
                 set(${GIT_PSI_VERSION} ${MAIN_VER} PARENT_SCOPE)
+            elseif(ERROR_1)
+                message("Can't detect last tag ${ERROR_1}")
             endif()
         endif()
     endif()
@@ -51,6 +54,7 @@ function(obtain_git_psi_plus_version GIT_PSI_PLUS_VERSION)
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                     OUTPUT_VARIABLE COMMITS
                     OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_VARIABLE ERROR_2
                     )
                 if(COMMITS)
                     execute_process(
@@ -58,7 +62,13 @@ function(obtain_git_psi_plus_version GIT_PSI_PLUS_VERSION)
                         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                         OUTPUT_VARIABLE VER_HASH
                         OUTPUT_STRIP_TRAILING_WHITESPACE
+                        ERROR_VARIABLE ERROR_3
                         )
+                elseif(ERROR_2)
+                    message("Can't count commits number: ${ERROR_2}")
+                endif()
+                if(ERROR_3)
+                    message("Can't detect HEAD hash: ${ERROR_3}")
                 endif()
                 if(COMMITS AND VER_HASH)
                     set(PSI_REVISION ${VER_HASH} PARENT_SCOPE)
