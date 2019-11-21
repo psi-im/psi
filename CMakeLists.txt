@@ -38,7 +38,7 @@ option( USE_HUNSPELL "Build psi with hunspell spellcheck" ON )
 option( USE_ENCHANT "Build psi with enchant spellcheck" OFF )
 option( USE_ASPELL "Build psi with aspell spellcheck" OFF )
 option( ENABLE_PLUGINS "Enable plugins" OFF )
-set( CHAT_TYPE "WEBENGINE" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC")
+set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC")
 option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
