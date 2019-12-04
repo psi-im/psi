@@ -55,6 +55,7 @@ protected:
     QModelIndex index(const QString &option, Section sec = Name) const;
     int         nameToIndex(QString name) const;
     bool        internalNode(QString name) const;
+    QStringList getFlatOptions() const;
 
 protected slots:
     void optionChanged(const QString &option);
@@ -66,10 +67,11 @@ protected slots:
 private:
     OptionsTree *               tree_;
     bool                        flat_;
-    mutable QHash<int, QString> indexMap;
-    mutable QHash<QString, int> nameMap;
+    mutable QHash<int, QString> indexMap; // option index (seq number) to option.name mapping
+    mutable QHash<QString, int> nameMap;  // option.name to option index mapping
     mutable int                 nextIdx;
     QStack<bool>                realRemove;
+    mutable QStringList         flatCache;
 };
 
 #endif // OPTIONSTREEMODEL_H

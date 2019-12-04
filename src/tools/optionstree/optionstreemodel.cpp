@@ -50,6 +50,7 @@ bool OptionsTreeModel::setFlat(bool b)
     if (flat_ != b) {
         beginResetModel();
         flat_ = b;
+        flatCache.clear();
         endResetModel();
         return true;
     }
@@ -84,9 +85,8 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
     }
 
     if (flat_) {
-        QStringList options = tree_->getChildOptionNames("", false, false);
-        options.sort();
-        int row = options.indexOf(option);
+        QStringList options = getFlatOptions();
+        int         row     = options.indexOf(option);
         return createIndex(row, sec, quintptr(nameToIndex(options.at(row))));
     } else {
         QString parentname(getParentName(option));
@@ -179,6 +179,15 @@ QVariant OptionsTreeModel::headerData(int s, Qt::Orientation, int role) const
     }
 }
 
+QStringList OptionsTreeModel::getFlatOptions() const
+{
+    if (!flatCache.size()) {
+        flatCache = tree_->getChildOptionNames("", false, false);
+        flatCache.sort();
+    }
+    return flatCache;
+}
+
 QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (column < 0 || column >= SectionBound || row < 0) {
@@ -187,7 +196,7 @@ QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex &pare
     int         id = 0;
     QStringList options;
     if (flat_) {
-        options = tree_->getChildOptionNames("", false, false);
+        options = getFlatOptions();
     } else {
         QString parent_option;
         if (parent.isValid()) {
@@ -234,6 +243,17 @@ bool OptionsTreeModel::setData(const QModelIndex &index, const QVariant &value, 
 
 void OptionsTreeModel::optionAboutToBeInserted(const QString &option)
 {
+    if (flat_) {
+        auto options = getFlatOptions();
+        options.append(option);
+        options.sort();
+        flatCache = options;
+        int row   = options.indexOf(option);
+
+        emit beginInsertRows(QModelIndex(), row, row);
+        return;
+    }
+
     QString parentname(getParentName(option));
 
     // FIXME? handle cases when parent doesn't exist either.
@@ -256,6 +276,18 @@ void OptionsTreeModel::optionInserted(const QString &option)
 
 void OptionsTreeModel::optionAboutToBeRemoved(const QString &option)
 {
+    if (flat_) {
+        auto options = getFlatOptions();
+        auto row     = options.indexOf(option);
+        if (row != -1) {
+            realRemove.push(true);
+            emit beginRemoveRows(QModelIndex(), row, row);
+            flatCache.removeAt(row);
+        } else {
+            realRemove.push(false);
+        }
+        return;
+    }
     QString parentname(getParentName(option));
 
     QModelIndex parent(index(parentname));
