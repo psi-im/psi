@@ -109,6 +109,7 @@ protected:
 
 private:
     void setOverlayText(int value);
+    void setRecButtonIcon();
 
 private:
     QWidget *                         dialog_         = nullptr;

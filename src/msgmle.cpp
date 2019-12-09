@@ -271,6 +271,12 @@ bool ChatEdit::event(QEvent *event)
     if (event->type() == QEvent::ShortcutOverride) {
         return false;
     }
+    if (event->type() == QEvent::PaletteChange) {
+        if (!correction && palOriginal.base().color() != palette().base().color())
+            palOriginal.setColor(QPalette::Base, palette().base().color());
+        if (recButton_ && !correction)
+            setRecButtonIcon();
+    }
     return QTextEdit::event(event);
 }
 
@@ -633,8 +639,7 @@ void ChatEdit::addSoundRecButton()
         overlay_->setVisible(false);
         layout_->addWidget(overlay_.get());
         recButton_->setToolTip(tr("Record and share audio note while pressed"));
-        recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
-        recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+        setRecButtonIcon();
         const int iconSize = PsiIconset::instance()->system().iconSize() + 2;
         recButton_->setMinimumSize(QSize(iconSize, iconSize));
         layout_->addWidget(recButton_.get());
@@ -678,7 +683,7 @@ void ChatEdit::addSoundRecButton()
             recorder_->record();
         });
         connect(recButton_.get(), &QToolButton::released, this, [this]() { // Rec button relesed
-            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+            setRecButtonIcon();
             if (timer_) {
                 timer_->stop();
                 timer_.reset();
@@ -703,6 +708,25 @@ void ChatEdit::removeSoundRecButton()
 }
 
 void ChatEdit::setOverlayText(int value) { overlay_->setText(tr("Recording (%1 sec left)").arg(value)); }
+
+void ChatEdit::setRecButtonIcon()
+{
+    if (recButton_) {
+        const QColor bcgColor = palette().color(QPalette::Normal, QPalette::Base);
+        int          red, green, blue = 0;
+        bcgColor.getRgb(&red, &green, &blue);
+        if ((red * 0.299 + green * 0.578 + blue * 0.144) <= 186) {
+            // Invert icon pixmap if background color is dark
+            QImage recImage = IconsetFactory::icon("psi/mic").image();
+            recImage.invertPixels();
+            recButton_->setIcon(QPixmap::fromImage(recImage));
+            recButton_->setStyleSheet("background-color: none; border: 0; color: white;");
+        } else {
+            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+            recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
+        }
+    }
+}
 
 void ChatEdit::setRigthMargin()
 {
