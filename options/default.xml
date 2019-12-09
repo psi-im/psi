@@ -39,6 +39,9 @@
                 <controller-filter comment="List of disabled controllers" type="QString">WinAmp</controller-filter>
             </tune>
         </extended-presence>
+        <media>
+            <short-audio-message comment="Record and share short audio message" type="bool">true</short-audio-message>
+        </media>
         <muc comment="Multi-User Chat options">
             <bookmarks comment="Options for bookmarked conference rooms">
                 <auto-join comment="Automatically join bookmarked conference rooms that are configured for auto-joining." type="bool">true</auto-join>

@@ -692,6 +692,16 @@ void ChatEdit::addSoundRecButton()
     }
 }
 
+void ChatEdit::removeSoundRecButton()
+{
+    disconnect(recButton_.get());
+    layout_.reset();
+    recButton_.reset();
+    overlay_.reset();
+    disconnect(recorder_.get());
+    recorder_.reset();
+}
+
 void ChatEdit::setOverlayText(int value) { overlay_->setText(tr("Recording (%1 sec left)").arg(value)); }
 
 void ChatEdit::setRigthMargin()

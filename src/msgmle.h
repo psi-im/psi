@@ -70,6 +70,7 @@ public:
     CapitalLettersController *capitalizer();
     void                      addSoundRecButton();
     bool                      hasSoundRecButton() const { return bool(recButton_); }
+    void                      removeSoundRecButton();
 
 public slots:
     void appendMessageHistory(const QString &text);

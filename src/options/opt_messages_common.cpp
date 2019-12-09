@@ -62,6 +62,7 @@ void OptionsTabMsgCommon::applyOptions()
     PsiOptions *    o = PsiOptions::instance();
     o->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
     o->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
+    o->setOption("options.media.short-audio-message", d->ck_audioMessage->isChecked());
     if (d->ck_showTabButtons->isEnabled())
         o->setOption("options.ui.tabs.show-tab-buttons", d->ck_showTabButtons->isChecked());
 
@@ -117,6 +118,7 @@ void OptionsTabMsgCommon::restoreOptions()
     d->ck_showTabButtons->setChecked(o->getOption("options.ui.tabs.show-tab-buttons").toBool());
     d->ck_tabChats->setChecked(o->getOption("options.ui.tabs.use-tabs").toBool());
     d->cb_tabGrouping->setEnabled(o->getOption("options.ui.tabs.use-tabs").toBool());
+    d->ck_audioMessage->setChecked(o->getOption("options.media.short-audio-message").toBool());
     QString tabGrouping = o->getOption("options.ui.tabs.grouping").toString();
     bool    custom      = false;
     if (tabGrouping == "C") {
