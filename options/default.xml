@@ -40,7 +40,7 @@
             </tune>
         </extended-presence>
         <media>
-            <short-audio-message comment="Record and share short audio message" type="bool">true</short-audio-message>
+            <audio-message comment="Record and share audio messages" type="bool">true</audio-message>
         </media>
         <muc comment="Multi-User Chat options">
             <bookmarks comment="Options for bookmarked conference rooms">
