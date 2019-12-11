@@ -29,6 +29,9 @@ private slots:
     void resetit();
     void detach();
 
+protected:
+    void keyPressEvent(QKeyEvent *e);
+
 private:
     PsiOptions *           o_;
     QTreeView *            tv_;
@@ -39,11 +42,13 @@ private:
     QLabel *               lb_type;
     QLabel *               lb_path;
     QLabel *               lb_comment;
+    QLabel *               lb_filter;
     QPushButton *          pb_delete;
     QPushButton *          pb_reset;
     QPushButton *          pb_edit;
     QPushButton *          pb_new;
     QToolButton *          pb_detach;
+    QLineEdit *            le_filter;
 };
 
 #endif // PSIOPTIONSEDITOR_H

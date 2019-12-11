@@ -38,6 +38,7 @@ public:
 
 protected:
     void setTabs(QList<OptionsTab *> tabs); /* can be called from constructor */
+    void keyPressEvent(QKeyEvent *e);
 
 signals:
     void applyOptions();

@@ -219,8 +219,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     os_str_.clear();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 5)
     auto current = QOperatingSystemVersion::current();
-    if (current.type() == QOperatingSystemVersion::MacOS &&
-        current.minorVersion() > 12) {
+    if (current.type() == QOperatingSystemVersion::MacOS && current.minorVersion() > 12) {
         os_name_str_ = "macOS";
     } else {
         os_name_str_ = "Mac OS X";
@@ -238,9 +237,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     } else if (current >= QOperatingSystemVersion::OSXElCapitan) {
         os_version_str_ = "10.11 (El Capitan)";
     } else {
-        os_version_str_ = QString("%1.%2")
-                            .arg(current.majorVersion())
-                            .arg(current.minorVersion());
+        os_version_str_ = QString("%1.%2").arg(current.majorVersion()).arg(current.minorVersion());
         os_name_str_    = current.name();
     }
 #else

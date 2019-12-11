@@ -2320,8 +2320,7 @@ void GCMainDlg::optionsUpdate()
     delete m;*/
 
     setLooks();
-    if (!d->mle()->hasSoundRecButton()
-        && PsiOptions::instance()->getOption("options.media.audio-message").toBool()) {
+    if (!d->mle()->hasSoundRecButton() && PsiOptions::instance()->getOption("options.media.audio-message").toBool()) {
         d->mle()->addSoundRecButton();
     } else if (d->mle()->hasSoundRecButton()) {
         d->mle()->removeSoundRecButton();

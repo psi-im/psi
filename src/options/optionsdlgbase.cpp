@@ -449,4 +449,10 @@ void OptionsDlgBase::doApply() { d->doApply(); }
 
 void OptionsDlgBase::enableCommonControls(bool enable) { d->enableCommonControls(enable); }
 
+void OptionsDlgBase::keyPressEvent(QKeyEvent *e)
+{
+    if (e->modifiers() & Qt::ControlModifier && e->key() == Qt::Key_F)
+        openTab("tree");
+}
+
 #include "optionsdlgbase.moc"
