@@ -4,6 +4,7 @@
 #include "optionstreemodel.h"
 
 #include <QCheckBox>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QPushButton>
 #include <QToolButton>

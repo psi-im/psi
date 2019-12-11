@@ -23,6 +23,7 @@
 #include "ui_ui_options.h"
 
 #include <QDialog>
+#include <QKeyEvent>
 
 class OptionsTab;
 class PsiCon;
