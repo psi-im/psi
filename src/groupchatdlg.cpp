@@ -1083,7 +1083,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupGCTab(this, account(), jid().full());
 #endif
-    d->mle()->addSoundRecButton();
+    if (PsiOptions::instance()->getOption("options.media.audio-message").toBool())
+        d->mle()->addSoundRecButton();
 }
 
 GCMainDlg::~GCMainDlg()
@@ -2319,7 +2320,11 @@ void GCMainDlg::optionsUpdate()
     delete m;*/
 
     setLooks();
-    d->mle()->addSoundRecButton();
+    if (!d->mle()->hasSoundRecButton() && PsiOptions::instance()->getOption("options.media.audio-message").toBool()) {
+        d->mle()->addSoundRecButton();
+    } else if (d->mle()->hasSoundRecButton()) {
+        d->mle()->removeSoundRecButton();
+    }
     setToolbuttons();
     setShortcuts();
     d->typeahead->optionsUpdate();

@@ -39,6 +39,9 @@
                 <controller-filter comment="List of disabled controllers" type="QString">WinAmp</controller-filter>
             </tune>
         </extended-presence>
+        <media>
+            <audio-message comment="Record and share audio messages" type="bool">true</audio-message>
+        </media>
         <muc comment="Multi-User Chat options">
             <bookmarks comment="Options for bookmarked conference rooms">
                 <auto-join comment="Automatically join bookmarked conference rooms that are configured for auto-joining." type="bool">true</auto-join>
@@ -124,7 +127,10 @@
                 <show-previews type="bool">true</show-previews>
                 <warn-before-clear type="bool">true</warn-before-clear>
                 <only-paste-template type="bool">false</only-paste-template>
-                <css type="QString" />
+                <css type="QString">/*Last message correction*/
+QWidget#bottomFrame>QWidget>QTextEdit[correction="true"] {
+      background-color: rgb(160,160,0);
+}</css>
                 <status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
                 <default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
                 <default-jid-mode-ignorelist comment="Default autojid mode ignore list: jid1,jid2,..." type="QString"></default-jid-mode-ignorelist>

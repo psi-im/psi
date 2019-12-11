@@ -321,8 +321,8 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
             if (_fileType == FileType::TempFile) {
                 auto cache = _manager->moveToCache(_sums, _fileName, meta, TEMP_TTL);
                 if (cache) {
-                    _fileType  = FileType::LocalFile;
-                    _fileName  = _manager->cacheDir() + "/" + cache->fileName();
+                    _fileType = FileType::LocalFile;
+                    _fileName = _manager->cacheDir() + "/" + cache->fileName();
                 }
             } else {
                 meta["link"] = _fileName;

@@ -70,6 +70,7 @@ public:
     CapitalLettersController *capitalizer();
     void                      addSoundRecButton();
     bool                      hasSoundRecButton() const { return bool(recButton_); }
+    void                      removeSoundRecButton();
 
 public slots:
     void appendMessageHistory(const QString &text);
@@ -108,6 +109,7 @@ protected:
 
 private:
     void setOverlayText(int value);
+    void setRecButtonIcon();
 
 private:
     QWidget *                         dialog_         = nullptr;
@@ -128,8 +130,6 @@ private:
     CapitalLettersController *        capitalizer_ = nullptr;
     bool                              correction   = false;
     QString                           lastId;
-    QPalette                          palOriginal;
-    QPalette                          palCorrection;
     std::unique_ptr<QLayout>          layout_;
     std::unique_ptr<QToolButton>      recButton_;
     std::unique_ptr<QLabel>           overlay_;

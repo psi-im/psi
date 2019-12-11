@@ -115,11 +115,15 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     layout->setSpacing(0);
     layout->setMargin(0);
 
-    auto filterLe = new QLineEdit(this);
-    filterLe->setProperty("isOption", false);
-    filterLe->setToolTip(tr("Options filter"));
-    layout->addWidget(filterLe);
-    connect(filterLe, &QLineEdit::textChanged, this, [this, filterLe]() { tpm_->setFilterWildcard(filterLe->text()); });
+    QHBoxLayout *filterLayout = new QHBoxLayout;
+    le_filter                 = new QLineEdit(this);
+    le_filter->setProperty("isOption", false);
+    le_filter->setToolTip(tr("Options filter"));
+    lb_filter = new QLabel(tr("Filter"), this);
+    filterLayout->addWidget(lb_filter);
+    filterLayout->addWidget(le_filter);
+    layout->addItem(filterLayout);
+    connect(le_filter, &QLineEdit::textChanged, this, [this]() { tpm_->setFilterWildcard(le_filter->text()); });
 
     tv_ = new QTreeView(this);
     tv_->setModel(tpm_);
@@ -157,19 +161,24 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
     layout->addLayout(buttonLine);
 
     cb_ = new QCheckBox(this);
-    cb_->setText(tr("Flat"));
-    cb_->setToolTip(tr("Display all options as a flat list."));
+    cb_->setText(tr("Display options as a flat list"));
+    cb_->setToolTip(tr("Display options as a flat list."));
     cb_->setProperty("isOption", false);
-    connect(cb_, &QCheckBox::toggled, tm_, [this, filterLe](bool b) {
+    connect(cb_, &QCheckBox::toggled, tm_, [this](bool b) {
         if (tm_->setFlat(b)) {
             if (!b) {
                 tpm_->setFilterWildcard(QString());
+                le_filter->setFocusPolicy(Qt::NoFocus);
+            } else {
+                le_filter->setFocusPolicy(Qt::StrongFocus);
+                QTimer::singleShot(0, le_filter, SLOT(setFocus()));
             }
-            filterLe->setVisible(b);
+            lb_filter->setVisible(b);
+            le_filter->setVisible(b);
         }
     });
-    filterLe->setVisible(cb_->isChecked());
-    buttonLine->addWidget(cb_);
+    cb_->setChecked(true);
+    layout->insertWidget(0, cb_);
 
     buttonLine->addStretch(1);
 
@@ -315,5 +324,11 @@ void PsiOptionsEditor::resetit()
 void PsiOptionsEditor::detach() { new PsiOptionsEditor(); }
 
 void PsiOptionsEditor::bringToFront() { ::bringToFront(this, true); }
+
+void PsiOptionsEditor::keyPressEvent(QKeyEvent *e)
+{
+    if (e->modifiers() & Qt::ControlModifier && e->key() == Qt::Key_F)
+        cb_->setChecked(true);
+}
 
 #include "psioptionseditor.moc"

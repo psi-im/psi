@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>476</width>
-    <height>328</height>
+    <height>357</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,6 +45,16 @@
     <widget class="QCheckBox" name="ck_showCounter">
      <property name="text">
       <string>Show character counter</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_audioMessage">
+     <property name="toolTip">
+      <string>Record and share audio message</string>
+     </property>
+     <property name="text">
+      <string>Enable audio messages</string>
      </property>
     </widget>
    </item>
