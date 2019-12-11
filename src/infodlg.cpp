@@ -44,6 +44,7 @@
 #include <QCalendarWidget>
 #include <QDialogButtonBox>
 #include <QFileDialog>
+#include <QFlags>
 #include <QFormLayout>
 #include <QLabel>
 #include <QLayout>
@@ -51,30 +52,107 @@
 #include <QMessageBox>
 #include <QPixmap>
 #include <QPointer>
+#include <QRadioButton>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
 using namespace XMPP;
 
+class AddressTypeDlg : public QFrame {
+public:
+    enum AddrType {
+        None     = 0,
+        Home     = 0x1,
+        Work     = 0x2,
+        Postal   = 0x4,
+        Parcel   = 0x8,
+        Dom      = 0x10,
+        Intl     = 0x20,
+        Pref     = 0x40,
+        Voice    = 0x80,
+        Fax      = 0x100,
+        Pager    = 0x200,
+        Msg      = 0x400,
+        Cell     = 0x800,
+        Video    = 0x1000,
+        Bbs      = 0x2000,
+        Modem    = 0x4000,
+        Isdn     = 0x8000,
+        Pcs      = 0x10000,
+        Internet = 0x20000,
+        X400     = 0x40000
+    };
+    Q_DECLARE_FLAGS(AddrTypes, AddrType)
+
+    AddrTypes allowedTypes;
+
+    AddressTypeDlg(AddrTypes allowedTypes, QWidget *parent);
+    void                      setTypes(AddrTypes types);
+    AddressTypeDlg::AddrTypes types() const;
+};
+Q_DECLARE_OPERATORS_FOR_FLAGS(AddressTypeDlg::AddrTypes)
+
+AddressTypeDlg::AddressTypeDlg(AddrTypes allowedTypes, QWidget *parent) : QFrame(parent), allowedTypes(allowedTypes)
+{
+    setFrameShape(QFrame::StyledPanel);
+
+    QList<QPair<QString, AddrType>> names = {
+        { tr("Preferred"), Pref }, { tr("Home"), Home },    { tr("Work"), Work },          { tr("Postal"), Postal },
+        { tr("Parcel"), Parcel },  { tr("Domestic"), Dom }, { tr("International"), Intl }, { tr("Voice"), Voice },
+        { tr("Fax"), Fax },        { tr("Pager"), Pager },  { tr("Voice Message"), Msg },  { tr("Cell"), Cell },
+        { tr("Video"), Video },    { QString("BBS"), Bbs }, { tr("Modem"), Modem },        { QString("ISDN"), Isdn },
+        { QString("PCS"), Pcs },   { QString(), Internet }, { QString("X.400"), X400 }
+    };
+
+    auto lt = new QVBoxLayout();
+    for (auto const &p : names) {
+        if (!(allowedTypes & p.second))
+            continue;
+
+        auto ck = new QCheckBox(p.first);
+        ck->setProperty("addrtype", int(p.second));
+        lt->addWidget(ck);
+    }
+    setLayout(lt);
+}
+
+void AddressTypeDlg::setTypes(AddrTypes types)
+{
+
+    for (auto w : findChildren<QCheckBox *>()) {
+        w->setChecked(types & w->property("addrtype").toInt());
+    }
+}
+
+AddressTypeDlg::AddrTypes AddressTypeDlg::types() const
+{
+    AddrTypes t;
+    for (auto w : findChildren<QCheckBox *>()) {
+        t |= (w->isChecked() ? AddrType(w->property("addrtype").toInt()) : None);
+    }
+    return t;
+}
+
 class InfoWidget::Private {
 public:
     Private() = default;
 
-    int                       type = 0;
+    int                       type       = 0;
+    int                       actionType = 0;
     Jid                       jid;
     VCard                     vcard;
     PsiAccount *              pa         = nullptr;
     bool                      busy       = false;
     bool                      te_edited  = false;
-    int                       actionType = 0;
-    JT_VCard *                jt         = nullptr;
     bool                      cacheVCard = false;
+    JT_VCard *                jt         = nullptr;
     QByteArray                photo;
     QDate                     bday;
     QString                   dateTextFormat;
     QList<QString>            infoRequested;
     QPointer<QDialog>         showPhotoDlg;
     QPointer<QFrame>          namesDlg;
+    QPointer<AddressTypeDlg>  emailsDlg;
     QPointer<QPushButton>     noBdayButton;
     QPointer<QFrame>          bdayPopup;
     QPointer<QCalendarWidget> calendar;
@@ -160,6 +238,13 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     d->homepageAction->setVisible(false);
     ui_.le_homepage->addAction(d->homepageAction);
     connect(d->homepageAction, SIGNAL(triggered()), SLOT(goHomepage()));
+
+    d->emailsDlg = new AddressTypeDlg(
+        AddressTypeDlg::Home | AddressTypeDlg::Work | AddressTypeDlg::X400 | AddressTypeDlg::Pref, this);
+    QAction *editaddr = new QAction(IconsetFactory::icon(d->type == Self ? "psi/options" : "psi/info").icon(),
+                                    d->type == Self ? tr("Edit") : tr("Details"), this);
+    ui_.le_email->addAction(editaddr);
+    ui_.le_email->widgetForAction(editaddr)->setPopup(d->emailsDlg);
 
     connect(ui_.te_desc, SIGNAL(textChanged()), this, SLOT(textChanged()));
     connect(ui_.pb_open, SIGNAL(clicked()), this, SLOT(selectPhoto()));
@@ -358,10 +443,27 @@ void InfoWidget::setData(const VCard &i)
                                 + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
                                 + TextUtil::escape(d->vcard.familyName()));
 
-    QString email;
-    if (!i.emailList().isEmpty())
-        email = i.emailList()[0].userid;
-    ui_.le_email->setText(email);
+    // E-Mail handling
+    VCard::Email email;
+    VCard::Email internetEmail;
+    for (auto const &e : i.emailList()) {
+        if (e.pref) {
+            email = e;
+        }
+        if (e.internet) {
+            internetEmail = e;
+        }
+    }
+    if (email.userid.isEmpty() && !i.emailList().isEmpty())
+        email = internetEmail.userid.isEmpty() ? i.emailList()[0] : internetEmail;
+    ui_.le_email->setText(email.userid);
+    AddressTypeDlg::AddrTypes addTypes;
+    addTypes |= (email.pref ? AddressTypeDlg::Pref : AddressTypeDlg::None);
+    addTypes |= (email.home ? AddressTypeDlg::Home : AddressTypeDlg::None);
+    addTypes |= (email.work ? AddressTypeDlg::Work : AddressTypeDlg::None);
+    addTypes |= (email.internet ? AddressTypeDlg::Internet : AddressTypeDlg::None);
+    addTypes |= (email.x400 ? AddressTypeDlg::X400 : AddressTypeDlg::None);
+    d->emailsDlg->setTypes(addTypes);
 
     ui_.le_homepage->setText(i.url());
     d->homepageAction->setVisible(!i.url().isEmpty());
@@ -643,8 +745,20 @@ VCard InfoWidget::makeVCard()
 
     if (!ui_.le_email->text().isEmpty()) {
         VCard::Email email;
-        email.internet = true;
-        email.userid   = ui_.le_email->text();
+        auto         types = d->emailsDlg->types();
+        if (types & AddressTypeDlg::Pref) {
+            email.pref = true;
+            types ^= AddressTypeDlg::Pref;
+        }
+        if (!types) {
+            email.internet = true;
+        } else {
+            email.internet = types & AddressTypeDlg::Internet;
+            email.home     = types & AddressTypeDlg::Home;
+            email.work     = types & AddressTypeDlg::Work;
+            email.x400     = types & AddressTypeDlg::X400;
+        }
+        email.userid = ui_.le_email->text();
 
         VCard::EmailList list;
         list << email;
