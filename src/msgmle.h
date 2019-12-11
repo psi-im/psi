@@ -130,8 +130,6 @@ private:
     CapitalLettersController *        capitalizer_ = nullptr;
     bool                              correction   = false;
     QString                           lastId;
-    QPalette                          palOriginal;
-    QPalette                          palCorrection;
     std::unique_ptr<QLayout>          layout_;
     std::unique_ptr<QToolButton>      recButton_;
     std::unique_ptr<QLabel>           overlay_;

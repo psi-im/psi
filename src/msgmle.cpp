@@ -42,6 +42,7 @@
 #include <QMimeData>
 #include <QMimeDatabase>
 #include <QResizeEvent>
+#include <QStyle>
 #include <QTextCharFormat>
 #include <QTextDocument>
 #include <QTimer>
@@ -156,8 +157,7 @@ private:
 // ChatEdit
 //----------------------------------------------------------------------------
 ChatEdit::ChatEdit(QWidget *parent) :
-    QTextEdit(parent), palOriginal(palette()), palCorrection(palOriginal), layout_(nullptr), recButton_(nullptr),
-    overlay_(nullptr), timeout_(TIMEOUT)
+    QTextEdit(parent), layout_(nullptr), recButton_(nullptr), overlay_(nullptr), timeout_(TIMEOUT)
 {
     controller_  = new HTMLTextController(this);
     capitalizer_ = new CapitalLettersController(this);
@@ -174,7 +174,6 @@ ChatEdit::ChatEdit(QWidget *parent) :
     setCheckSpelling(checkSpellingGloballyEnabled());
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
     typedMsgsIndex = 0;
-    palCorrection.setColor(QPalette::Base, QColor(160, 160, 0));
     initActions();
     setShortcuts();
     optionsChanged();
@@ -271,11 +270,8 @@ bool ChatEdit::event(QEvent *event)
     if (event->type() == QEvent::ShortcutOverride) {
         return false;
     }
-    if (event->type() == QEvent::PaletteChange) {
-        if (!correction && palOriginal.base().color() != palette().base().color())
-            palOriginal.setColor(QPalette::Base, palette().base().color());
-        if (recButton_ && !correction)
-            setRecButtonIcon();
+    if (event->type() == QEvent::PaletteChange && recButton_ && !correction) {
+        setRecButtonIcon();
     }
     return QTextEdit::event(event);
 }
@@ -534,7 +530,13 @@ bool ChatEdit::canInsertFromMimeData(const QMimeData *source) const
             || QTextEdit::canInsertFromMimeData(source));
 }
 
-void ChatEdit::updateBackground() { setPalette(correction ? palCorrection : palOriginal); }
+void ChatEdit::updateBackground()
+{
+    setProperty("correction", correction);
+    style()->unpolish(this);
+    style()->polish(this);
+    update();
+}
 
 void ChatEdit::showMessageHistory()
 {
@@ -712,7 +714,7 @@ void ChatEdit::setOverlayText(int value) { overlay_->setText(tr("Recording (%1 s
 void ChatEdit::setRecButtonIcon()
 {
     if (recButton_) {
-        const QColor bcgColor = palette().color(QPalette::Normal, QPalette::Base);
+        const QColor bcgColor(palette().color(backgroundRole()));
         int          red, green, blue = 0;
         bcgColor.getRgb(&red, &green, &blue);
         if ((red * 0.299 + green * 0.578 + blue * 0.144) <= 186) {
@@ -720,10 +722,15 @@ void ChatEdit::setRecButtonIcon()
             QImage recImage = IconsetFactory::icon("psi/mic").image();
             recImage.invertPixels();
             recButton_->setIcon(QPixmap::fromImage(recImage));
-            recButton_->setStyleSheet("background-color: none; border: 0; color: white;");
         } else {
             recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+        }
+        const QColor toolTipBgColor(palette().toolTipBase().color());
+        toolTipBgColor.getRgb(&red, &green, &blue);
+        if ((red * 0.299 + green * 0.578 + blue * 0.144) <= 186) {
             recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
+        } else {
+            recButton_->setStyleSheet("background-color: none; border: 0; color: white;");
         }
     }
 }
