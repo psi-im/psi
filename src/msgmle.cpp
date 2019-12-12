@@ -713,11 +713,12 @@ void ChatEdit::setOverlayText(int value) { overlay_->setText(tr("Recording (%1 s
 
 void ChatEdit::setRecButtonIcon()
 {
+    auto isColorDark = [](int r, int g, int b) { return (r * 0.299 + g * 0.578 + b * 0.144) <= 186; };
     if (recButton_) {
         const QColor bcgColor(palette().color(backgroundRole()));
         int          red, green, blue = 0;
         bcgColor.getRgb(&red, &green, &blue);
-        if ((red * 0.299 + green * 0.578 + blue * 0.144) <= 186) {
+        if (isColorDark(red, green, blue)) {
             // Invert icon pixmap if background color is dark
             QImage recImage = IconsetFactory::icon("psi/mic").image();
             recImage.invertPixels();
@@ -725,13 +726,11 @@ void ChatEdit::setRecButtonIcon()
         } else {
             recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
         }
-        const QColor toolTipBgColor(palette().toolTipBase().color());
+        const QColor toolTipBgColor(recButton_->palette().color(recButton_->backgroundRole()));
         toolTipBgColor.getRgb(&red, &green, &blue);
-        if ((red * 0.299 + green * 0.578 + blue * 0.144) <= 186) {
-            recButton_->setStyleSheet("background-color: none; border: 0; color: black;");
-        } else {
-            recButton_->setStyleSheet("background-color: none; border: 0; color: white;");
-        }
+        const QString btnStyle
+            = QString("border: 0; color: %1;").arg(isColorDark(red, green, blue) ? "white" : "black");
+        recButton_->setStyleSheet(btnStyle);
     }
 }
 
@@ -764,8 +763,8 @@ LineEdit::~LineEdit() {}
 QSize LineEdit::minimumSizeHint() const
 {
     const int sz = hasSoundRecButton()
-        ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1, fontMetrics().height() + 1)
-        : fontMetrics().height() + 1;
+        ? qMax((PsiIconset::instance()->system().iconSize() + 2) * 2 - 1, fontMetrics().lineSpacing() + 1)
+        : fontMetrics().lineSpacing() + 1;
     QSize sh = QTextEdit::minimumSizeHint();
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
@@ -775,7 +774,7 @@ QSize LineEdit::minimumSizeHint() const
 QSize LineEdit::sizeHint() const
 {
     QSize     sh = QTextEdit::sizeHint();
-    const int sz = hasSoundRecButton() ? qMax(PsiIconset::instance()->system().iconSize() * 2 - 1,
+    const int sz = hasSoundRecButton() ? qMax((PsiIconset::instance()->system().iconSize() + 2) * 2 - 1,
                                               int(document()->documentLayout()->documentSize().height()))
                                        : int(document()->documentLayout()->documentSize().height());
     sh.setHeight(sz);
