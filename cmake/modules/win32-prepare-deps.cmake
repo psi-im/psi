@@ -136,6 +136,7 @@ if(WIN32)
             Qt5Positioning${D}.dll
             Qt5PrintSupport${D}.dll
             Qt5Qml${D}.dll
+            Qt5QmlModels${D}.dll
             Qt5Quick${D}.dll
             Qt5Script${D}.dll
             Qt5Sensors${D}.dll
@@ -455,6 +456,7 @@ if(WIN32)
             libwebpdecoder-3.dll
             libwebpdemux-1.dll
             libwebpdemux-2.dll
+            libwebpmux-3.dll
             libxml2-2.dll
             libzstd.dll
             )
