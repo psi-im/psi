@@ -210,6 +210,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 
     requestInterceptor = new ChatViewUrlRequestInterceptor(this);
     QWebEngineProfile::defaultProfile()->setRequestInterceptor(requestInterceptor);
+    const QString cachePath(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/webengine");
+    QWebEngineProfile::defaultProfile()->setCachePath(cachePath + "/cache");
+    QWebEngineProfile::defaultProfile()->setPersistentStoragePath(cachePath + "/presistent_storage");
 #else
     pc->networkAccessManager()->registerPathHandler([](const QNetworkRequest &req, QByteArray &data, QByteArray &mime) {
         QString path = req.url().path();
