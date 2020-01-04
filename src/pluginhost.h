@@ -178,6 +178,7 @@ public:
     QStringList resources(int account, const QString &jid);
     QString     realJid(int account, const QString &jid);
     QStringList mucNicks(int account, const QString &mucJid);
+    bool        hasCaps(int account, const QString &jid, const QStringList &caps);
 
     // ContactStateAccessor
     bool setActivity(int account, const QString &Jid, QDomElement xml);

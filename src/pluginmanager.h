@@ -168,6 +168,7 @@ private:
     QStringList resources(int account, const QString &jid) const;
     QString     realJid(int account, const QString &jid) const;
     QStringList mucNicks(int account, const QString &mucJid) const;
+    bool        hasCaps(int account, const QString &jid, const QStringList &caps);
 
     bool setActivity(int account, const QString &Jid, QDomElement xml);
     bool setMood(int account, const QString &Jid, QDomElement xml);

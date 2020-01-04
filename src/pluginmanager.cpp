@@ -24,6 +24,7 @@
 #include "psiplugin.h"
 #include "stanzafilter.h"
 #include "stanzasender.h"
+#include "xmpp_caps.h"
 #include "xmpp_client.h"
 #include "xmpp_message.h"
 #include "xmpp_task.h"
@@ -1115,6 +1116,16 @@ QStringList PluginManager::mucNicks(int account, const QString &mucJid) const
         }
     }
     return {};
+}
+
+bool PluginManager::hasCaps(int account, const QString &jid, const QStringList &caps)
+{
+    QStringList l;
+    PsiAccount *pa = accountIds_.account(account);
+    if (pa) {
+        return pa->client()->capsManager()->features(jid).test(caps);
+    }
+    return false;
 }
 
 bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &message) const

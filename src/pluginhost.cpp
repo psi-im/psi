@@ -1179,6 +1179,11 @@ QString PluginHost::realJid(int account, const QString &jid) { return manager_->
 
 QStringList PluginHost::mucNicks(int account, const QString &mucJid) { return manager_->mucNicks(account, mucJid); }
 
+bool PluginHost::hasCaps(int account, const QString &jid, const QStringList &caps)
+{
+    return manager_->hasCaps(account, jid, caps);
+}
+
 bool PluginHost::hasInfoProvider() { return hasInfo_; }
 
 QString PluginHost::pluginInfo() { return infoString_; }
