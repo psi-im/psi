@@ -34,7 +34,7 @@ ConferenceBookmark::ConferenceBookmark(const QString &name, const XMPP::Jid &jid
 {
 }
 
-ConferenceBookmark::ConferenceBookmark(const QDomElement &el) : auto_join_(Never) { fromXml(el); }
+ConferenceBookmark::ConferenceBookmark(const QDomElement &el) { fromXml(el); }
 
 QStringList ConferenceBookmark::joinTypeNames()
 {

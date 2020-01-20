@@ -3547,12 +3547,11 @@ void PsiAccount::actionJoin(const ConferenceBookmark &bookmark, bool connectImme
 #ifdef GROUPCHAT
     MUCJoinDlg *w = new MUCJoinDlg(psi(), this);
 
+    if (reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool())
+        w->show();
     w->setJid(bookmark.jid());
     w->setNick(bookmark.nick().isEmpty() ? JIDUtil::nickOrJid(this->nick(), d->jid.node()) : bookmark.nick());
     w->setPassword(bookmark.password());
-
-    if (reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool())
-        w->show();
     if (connectImmediately) {
         w->doJoin(reason);
     }
