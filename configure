@@ -27,6 +27,7 @@ Project options:
                               file (default for mac).
   --separate-debug-info       Strip debug information into a separate .debug
                               file (default for non-mac).
+  --psiplus                   Build Psi+ instead of Psi
 
 Dependency options:
   --with-idn-inc=[path]            Path to libidn include files
@@ -206,6 +207,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--psiplus)
+			QC_PSIPLUS="Y"
+			shift
+			;;
+
 		--with-idn-inc=*)
 			QC_WITH_IDN_INC=$optarg
 			shift
@@ -378,6 +384,7 @@ echo QC_RELEASE=$QC_RELEASE
 echo QC_DEBUG=$QC_DEBUG
 echo QC_NO_SEPARATE_DEBUG_INFO=$QC_NO_SEPARATE_DEBUG_INFO
 echo QC_SEPARATE_DEBUG_INFO=$QC_SEPARATE_DEBUG_INFO
+echo QC_PSIPLUS=$QC_PSIPLUS
 echo QC_WITH_IDN_INC=$QC_WITH_IDN_INC
 echo QC_WITH_IDN_LIB=$QC_WITH_IDN_LIB
 echo QC_WITH_QCA_INC=$QC_WITH_QCA_INC
@@ -739,6 +746,7 @@ arg: release,Build with debugging turned off (default).
 arg: debug,Build with debugging turned on.
 arg: no-separate-debug-info,Do not store debug information in a separate file (default for mac).
 arg: separate-debug-info,Strip debug information into a separate .debug file (default for non-mac).
+arg: psiplus,Build Psi+ instead of Psi
 -----END QCMOD-----
 arg: debug-and-release,Build two versions, with and without debugging turned on (mac only).
 */
@@ -747,8 +755,8 @@ arg: debug-and-release,Build two versions, with and without debugging turned on 
 bool qc_buildmode_release = false;
 bool qc_buildmode_debug = false;
 bool qc_buildmode_separate_debug_info = false;
-
-#define PSI_DIR_NAME "psi"
+bool qc_psiplus = false;
+QString qc_psi_dir_name = "psi";
 
 static QString sourceDir;
 
@@ -907,6 +915,14 @@ public:
 
     	if(!other.isEmpty())
     		conf->addExtra(other);
+
+        // rebranding
+        qc_psiplus = conf->getenv("QC_PSIPLUS") == "Y";
+        if (qc_psiplus) {
+            qc_psi_dir_name = "psi-plus";
+            conf->addDefine("PSI_PLUS");
+            conf->addExtra("CONFIG += psiplus");
+        }
 
     	return true;
     }
@@ -2311,8 +2327,8 @@ public:
     	vars["plugins_dir"] = "";
     	vars["data_dir"] = "";
 #else
-    	vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" PSI_DIR_NAME "/plugins";
-    	vars["data_dir"] = conf->getenv("DATADIR") + "/" PSI_DIR_NAME;
+    	vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" + qc_psi_dir_name + "/plugins";
+    	vars["data_dir"] = conf->getenv("DATADIR") + "/" + qc_psi_dir_name;
 #endif
     	QStringList psiFeatures;
     	if (!qc_webkit_type.isEmpty()) {
@@ -2359,7 +2375,7 @@ class qc_conf : public ConfObj
 {
 public:
     qc_conf(Conf *c) : ConfObj(c) {}
-    QString name() const { return "Psi Configuration"; }
+    QString name() const { return qc_psiplus? "Psi+ Configuration" : "Psi Configuration"; }
     QString shortname() const { return "conf"; }
     QString checkString() const { return QString(); }
     bool exec()
@@ -2383,8 +2399,8 @@ public:
     	psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
-    	conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
-    	conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
+    	conf->addExtra(QString("PSI_LIBDIR=%1/%2").arg(conf->getenv("LIBDIR"), qc_psi_dir_name));
+    	conf->addExtra(QString("PSI_DATADIR=%1/%2").arg(conf->getenv("DATADIR"), qc_psi_dir_name));
 #endif
 
     	QDir(".").mkdir("src");
@@ -2392,8 +2408,8 @@ public:
     	if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
     		QTextStream stream( &file );
 #ifndef Q_OS_WIN
-    		stream << "#define PSI_LIBDIR \\"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\\"" << endl;
-    		stream << "#define PSI_DATADIR \\"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\\"" << endl;
+    		stream << "#define PSI_LIBDIR \\"" << conf->getenv("LIBDIR") << "/" + qc_psi_dir_name + "\\"" << endl;
+    		stream << "#define PSI_DATADIR \\"" << conf->getenv("DATADIR") << "/" + qc_psi_dir_name + "\\"" << endl;
 #endif
     		stream << "#define PSI_VERSION \\"" << version << "\\"" << endl;
     	}
@@ -3749,6 +3765,7 @@ export QC_RELEASE
 export QC_DEBUG
 export QC_NO_SEPARATE_DEBUG_INFO
 export QC_SEPARATE_DEBUG_INFO
+export QC_PSIPLUS
 export QC_WITH_IDN_INC
 export QC_WITH_IDN_LIB
 export QC_WITH_QCA_INC

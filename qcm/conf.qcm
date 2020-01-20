@@ -32,7 +32,7 @@ class qc_conf : public ConfObj
 {
 public:
     qc_conf(Conf *c) : ConfObj(c) {}
-    QString name() const { return "Psi Configuration"; }
+    QString name() const { return qc_psiplus? "Psi+ Configuration" : "Psi Configuration"; }
     QString shortname() const { return "conf"; }
     QString checkString() const { return QString(); }
     bool exec()
@@ -56,8 +56,8 @@ public:
     	psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
-    	conf->addExtra(QString("PSI_LIBDIR=%1/" PSI_DIR_NAME).arg(conf->getenv("LIBDIR")));
-    	conf->addExtra(QString("PSI_DATADIR=%1/" PSI_DIR_NAME).arg(conf->getenv("DATADIR")));
+    	conf->addExtra(QString("PSI_LIBDIR=%1/%2").arg(conf->getenv("LIBDIR"), qc_psi_dir_name));
+    	conf->addExtra(QString("PSI_DATADIR=%1/%2").arg(conf->getenv("DATADIR"), qc_psi_dir_name));
 #endif
 
     	QDir(".").mkdir("src");
@@ -65,8 +65,8 @@ public:
     	if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
     		QTextStream stream( &file );
 #ifndef Q_OS_WIN
-    		stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/" PSI_DIR_NAME "\"" << endl;
-    		stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" PSI_DIR_NAME "\"" << endl;
+    		stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/" + qc_psi_dir_name + "\"" << endl;
+    		stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" + qc_psi_dir_name + "\"" << endl;
 #endif
     		stream << "#define PSI_VERSION \"" << version << "\"" << endl;
     	}

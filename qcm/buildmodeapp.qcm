@@ -6,6 +6,7 @@ arg: release,Build with debugging turned off (default).
 arg: debug,Build with debugging turned on.
 arg: no-separate-debug-info,Do not store debug information in a separate file (default for mac).
 arg: separate-debug-info,Strip debug information into a separate .debug file (default for non-mac).
+arg: psiplus,Build Psi+ instead of Psi
 -----END QCMOD-----
 arg: debug-and-release,Build two versions, with and without debugging turned on (mac only).
 */
@@ -14,8 +15,8 @@ arg: debug-and-release,Build two versions, with and without debugging turned on 
 bool qc_buildmode_release = false;
 bool qc_buildmode_debug = false;
 bool qc_buildmode_separate_debug_info = false;
-
-#define PSI_DIR_NAME "psi"
+bool qc_psiplus = false;
+QString qc_psi_dir_name = "psi";
 
 static QString sourceDir;
 
@@ -174,6 +175,14 @@ public:
 
     	if(!other.isEmpty())
     		conf->addExtra(other);
+
+        // rebranding
+        qc_psiplus = conf->getenv("QC_PSIPLUS") == "Y";
+        if (qc_psiplus) {
+            qc_psi_dir_name = "psi-plus";
+            conf->addDefine("PSI_PLUS");
+            conf->addExtra("CONFIG += psiplus");
+        }
 
     	return true;
     }
