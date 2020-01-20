@@ -69,6 +69,9 @@ public:
     		stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" + qc_psi_dir_name + "\"" << endl;
 #endif
     		stream << "#define PSI_VERSION \"" << version << "\"" << endl;
+    		stream << "#define CLIENT_NAME \"" << (qc_psiplus? "Psi+":"Psi")  << "\"" << endl;
+    		stream << "#define CLIENT_SNAME \"" << (qc_psiplus? "psi+":"psi") << "\"" << endl;
+    		stream << "#define CLIENT_CAPS_NODE \"" << (qc_psiplus? "https://psi-plus.com":"https://psi-im.org") << "\"" << endl;
     	}
 
     	conf->addDefine("HAVE_CONFIG");
