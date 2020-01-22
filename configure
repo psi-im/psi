@@ -792,6 +792,23 @@ static bool psiGenerateFile(const QString &inFile, const QString &outFile, const
     return true;
 }
 
+void copyPath(QString src, QString dst)
+{
+    QDir dir(src);
+    if (! dir.exists())
+        return;
+
+    foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        QString dst_path = dst + QDir::separator() + d;
+        dir.mkpath(dst_path);
+        copyPath(src+ QDir::separator() + d, dst_path);
+    }
+
+    foreach (QString f, dir.entryList(QDir::Files)) {
+        QFile::copy(src + QDir::separator() + f, dst + QDir::separator() + f);
+    }
+}
+
 class qc_buildmodeapp : public ConfObj
 {
 public:
@@ -2431,8 +2448,10 @@ public:
             {"PSILOGO_PREFIX", qc_psiplus?"psiplus/":""},
             {"MAIN_ICON", qc_psiplus?"psimain.png":"psiplus_icon.png"}
         };
-        psiGenerateFile(sourceDir + "/iconsets.qrc.in", sourceDir + "/iconsets.qrc", vars);
-        psiGenerateFile(sourceDir + "/icondef.xml.in", sourceDir + "/icondef.xml", vars);
+
+        copyPath(sourceDir + "/iconsets", QDir::current().absoluteFilePath("iconsets"));
+        psiGenerateFile(sourceDir + "/iconsets.qrc.in", "iconsets.qrc", vars);
+        psiGenerateFile(sourceDir + "/icondef.xml.in", "icondef.xml", vars);
 
     	conf->addDefine("HAVE_CONFIG");
 

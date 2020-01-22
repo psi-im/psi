@@ -83,8 +83,10 @@ public:
             {"PSILOGO_PREFIX", qc_psiplus?"psiplus/":""},
             {"MAIN_ICON", qc_psiplus?"psimain.png":"psiplus_icon.png"}
         };
-        psiGenerateFile(sourceDir + "/iconsets.qrc.in", sourceDir + "/iconsets.qrc", vars);
-        psiGenerateFile(sourceDir + "/icondef.xml.in", sourceDir + "/icondef.xml", vars);
+
+        copyPath(sourceDir + "/iconsets", QDir::current().absoluteFilePath("iconsets"));
+        psiGenerateFile(sourceDir + "/iconsets.qrc.in", "iconsets.qrc", vars);
+        psiGenerateFile(sourceDir + "/icondef.xml.in", "icondef.xml", vars);
 
     	conf->addDefine("HAVE_CONFIG");
 
