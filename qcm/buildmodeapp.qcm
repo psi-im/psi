@@ -11,6 +11,8 @@ arg: psiplus,Build Psi+ instead of Psi
 arg: debug-and-release,Build two versions, with and without debugging turned on (mac only).
 */
 
+#include <QRegExp>
+
 #define QC_BUILDMODE
 bool qc_buildmode_release = false;
 bool qc_buildmode_debug = false;
@@ -28,6 +30,7 @@ static bool psiGenerateFile(const QString &inFile, const QString &outFile, const
     if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
     	return false;
 
+    QRegExp re("@[^@]*@");
     QTextStream tin(&fin);
     QTextStream tout(&fout);
     while(!tin.atEnd())
@@ -38,8 +41,10 @@ static bool psiGenerateFile(const QString &inFile, const QString &outFile, const
     	while(it.hasNext())
     	{
     		it.next();
-    		line.replace("@@" + it.key() + "@@", it.value());
+    		line.replace("@" + it.key() + "@", it.value());
     	}
+        line.replace(re, "");
+        line.replace("#cmakedefine", "#define");
 
     	tout << line << endl;
     }

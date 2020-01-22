@@ -61,18 +61,30 @@ public:
 #endif
 
     	QDir(".").mkdir("src");
-    	QFile file("src/config.h");
-    	if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
-    		QTextStream stream( &file );
+        auto now =  QDateTime::currentDateTime();
+        vars = {
+            {"CLIENT_NAME",     qc_psiplus? "Psi+":"Psi"},
+            {"CLIENT_SNAME",    qc_psiplus? "psi+":"psi"},
+            {"CLIENT_CAPS_NODE",qc_psiplus? "https://psi-plus.com":"https://psi-im.org"},
+            {"PRODUCTION",      ""},
 #ifndef Q_OS_WIN
-    		stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/" + qc_psi_dir_name + "\"" << endl;
-    		stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/" + qc_psi_dir_name + "\"" << endl;
+            {"PSI_LIBDIR",      conf->getenv("LIBDIR") + "/" + qc_psi_dir_name},
+            {"PSI_DATADIR",     conf->getenv("DATADIR") + "/" + qc_psi_dir_name},
 #endif
-    		stream << "#define PSI_VERSION \"" << version << "\"" << endl;
-    		stream << "#define CLIENT_NAME \"" << (qc_psiplus? "Psi+":"Psi")  << "\"" << endl;
-    		stream << "#define CLIENT_SNAME \"" << (qc_psiplus? "psi+":"psi") << "\"" << endl;
-    		stream << "#define CLIENT_CAPS_NODE \"" << (qc_psiplus? "https://psi-plus.com":"https://psi-im.org") << "\"" << endl;
-    	}
+            {"PSI_VERSION",     version},
+            {"PSI_REVISION",    ""},
+            {"PSI_PLUS_REVISION",""},
+            {"PSI_COMPILATION_DATE",now.toString("yyyy-MM-dd")},
+            {"PSI_COMPILATION_TIME",now.toString("HH:mm:ss")},
+        };  
+        psiGenerateFile(sourceDir + "/src/config.h.in", "src/config.h", vars);
+
+        vars = {
+            {"PSILOGO_PREFIX", qc_psiplus?"psiplus/":""},
+            {"MAIN_ICON", qc_psiplus?"psimain.png":"psiplus_icon.png"}
+        };
+        psiGenerateFile(sourceDir + "/iconsets.qrc.in", sourceDir + "/iconsets.qrc", vars);
+        psiGenerateFile(sourceDir + "/icondef.xml.in", sourceDir + "/icondef.xml", vars);
 
     	conf->addDefine("HAVE_CONFIG");
 

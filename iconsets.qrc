@@ -136,6 +136,18 @@
         <file>iconsets/system/default/cm_uncheck.png</file>
         <file>iconsets/system/default/cm_export.png</file>
         <file>iconsets/system/default/cm_import.png</file>
+        <file>iconsets/system/default/psiplus/psiplus_icon.png</file>
+        <file>iconsets/system/default/psiplus/action_vcard_restore.png</file>
+        <file>iconsets/system/default/psiplus/action_vcard_save_as.png</file>
+        <file>iconsets/system/default/psiplus/psiplus_logo.png</file>
+        <file>iconsets/system/default/psiplus/doublenextarrow.png</file>
+        <file>iconsets/system/default/psiplus/doublebackarrow.png</file>
+        <file>iconsets/system/default/crop.png</file>
+        <file>iconsets/system/default/draw.png</file>
+        <file>iconsets/system/default/frame.png</file>
+        <file>iconsets/system/default/palette.png</file>
+        <file>iconsets/system/default/undo.png</file>
+        <file>iconsets/system/default/print.png</file>
         <file>iconsets/system/default/keys_64.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
