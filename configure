@@ -2446,7 +2446,7 @@ public:
 
         vars = {
             {"PSILOGO_PREFIX", qc_psiplus?"psiplus/":""},
-            {"MAIN_ICON", qc_psiplus?"psimain.png":"psiplus_icon.png"}
+            {"MAIN_ICON", qc_psiplus?"psiplus_icon.png":"psimain.png"}
         };
 
         auto buildIconDir = QDir::current().absoluteFilePath("iconsets");
