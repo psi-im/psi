@@ -84,9 +84,10 @@ public:
             {"MAIN_ICON", qc_psiplus?"psimain.png":"psiplus_icon.png"}
         };
 
-        copyPath(sourceDir + "/iconsets", QDir::current().absoluteFilePath("iconsets"));
+        auto buildIconDir = QDir::current().absoluteFilePath("iconsets");
+        copyPath(sourceDir + "/iconsets", buildIconDir);
         psiGenerateFile(sourceDir + "/iconsets.qrc.in", "iconsets.qrc", vars);
-        psiGenerateFile(sourceDir + "/icondef.xml.in", "icondef.xml", vars);
+        psiGenerateFile(sourceDir + "/icondef.xml.in", buildIconDir + "/system/default/icondef.xml", vars);
 
     	conf->addDefine("HAVE_CONFIG");
 
