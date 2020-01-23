@@ -5,6 +5,7 @@
 # Configuration
 TEMPLATE = app
 TARGET   = psi
+psiplus:TARGET = psi-plus
 CONFIG  += qt thread x11
 DESTDIR  = $$top_builddir
 
@@ -47,22 +48,32 @@ unix {
     #widgets.path = $$PSI_DATADIR/designer
     #widgets.files = ../libpsi/psiwidgets/libpsiwidgets.so
     #INSTALLS += widgets
+    
+    dtfname = psi.desktop
+    dtdata = "$$cat(../psi.desktop, blob)$$cat(../psi-extra-action1.desktop, blob)"
+    psiplus {
+        iconprefix = /psiplus
+        dtfname = psi-plus.desktop
+        dtdata = $$replace(dtdata, Psi, Psi+)
+        dtdata = $$replace(dtdata, psi, $$TARGET)
+    }
+    write_file($$top_builddir/$$dtfname, dtdata)
 
     # icons and desktop files
     dt.path=$$PREFIX/share/applications/
-    dt.files = ../psi.desktop
+    dt.files = $$top_builddir/$$dtfname
     ad.path=$$PREFIX/share/appdata/
     ad.file = ../psi.appdata.xml
     icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
-    icon1.extra = cp -f $$top_srcdir/iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
+    icon1.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_16.png $(INSTALL_ROOT)$$icon1.path/$$TARGET.png
     icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps
-    icon2.extra = cp -f $$top_srcdir/iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/psi.png
+    icon2.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_32.png $(INSTALL_ROOT)$$icon2.path/$$TARGET.png
     icon3.path=$$PREFIX/share/icons/hicolor/48x48/apps
-    icon3.extra = cp -f $$top_srcdir/iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/psi.png
+    icon3.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_48.png $(INSTALL_ROOT)$$icon3.path/$$TARGET.png
     icon4.path=$$PREFIX/share/icons/hicolor/64x64/apps
-    icon4.extra = cp -f $$top_srcdir/iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/psi.png
+    icon4.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_64.png $(INSTALL_ROOT)$$icon4.path/$$TARGET.png
     icon5.path=$$PREFIX/share/icons/hicolor/128x128/apps
-    icon5.extra = cp -f $$top_srcdir/iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/psi.png
+    icon5.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_128.png $(INSTALL_ROOT)$$icon5.path/$$TARGET.png
     INSTALLS += dt ad icon1 icon2 icon3 icon4 icon5
 
     psi_plugins {
