@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2019-10-25
+# Updated: 2020-01-24
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -20,30 +20,25 @@
 # https://sourceforge.net/projects/psiplus/files/macOS/tehnick/
 # https://sourceforge.net/projects/psi/files/Experimental-Builds/macOS/tehnick/
 #
-# Build dependencies of Psi and useful tools:
-# brew install --build-bottle ccache pkg-config coreutils gettext
-# brew install --build-bottle autoconf automake libtool readline
-# brew install https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/cmake.rb
-# brew install --build-bottle openssl@1.1 pcre pcre2 libunistring libidn libidn2
-# brew install --build-bottle qt qtkeychain
-# brew install --build-bottle minizip hunspell
+# Build dependencies for Psi and useful tools:
+# export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
+# brew install ccache coreutils cmake
+# brew install openssl@1.1 libidn minizip hunspell qt qtkeychain
 #
 # Build qca with enabled qca-gnupg plugin:
-# brew install --build-bottle gmp libtasn1 nettle libffi p11-kit libevent unbound
-# brew install --build-bottle adns libassuan libksba libusb npth pinentry gnutls
-# brew install https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/qca.rb
+# brew install --build-bottle https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/qca.rb
 # end
 #
-# Build dependencies of Psi plugins:
-# brew install --build-bottle tidy-html5 libgpg-error libgcrypt libotr
-# brew install --build-bottle libsignal-protocol-c
+# Build dependencies for Psi plugins:
+# brew install tidy-html5 libotr libsignal-protocol-c
 #
 # Additional tools:
-# brew install --build-bottle gnupg wget git
+# brew install gnupg wget htop
 
 set -e
 
 [ -z "${HOMEBREW}" ] && HOMEBREW="/usr/local"
+[ -z "${PSI_PLUS}" ] && PSI_PLUS="OFF"
 
 PATH="${HOMEBREW}/bin:${PATH}"
 PATH="${HOMEBREW}/opt/ccache/libexec:${PATH}"
@@ -62,6 +57,7 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DCHAT_TYPE=${CHAT_TYPE} \
+               -DPSI_PLUS=${PSI_PLUS} \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
