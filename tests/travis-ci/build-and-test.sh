@@ -7,6 +7,13 @@
 set -e
 set -x
 
+if [ -d "./src/plugins/generic" ]
+then
+    export PSI_PLUS="ON"
+else
+    export PSI_PLUS="OFF"
+fi
+
 if [ "${TARGET}" = "linux64" ]
 then
     ./tests/travis-ci/build-in-ubuntu.sh
