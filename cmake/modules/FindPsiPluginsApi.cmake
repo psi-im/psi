@@ -39,11 +39,11 @@ get_filename_component(ABS_CURRENT_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUT
 get_filename_component(ABS_PARENT_DIR "${ABS_CURRENT_DIR}/.." ABSOLUTE)
 
 if(EXISTS "${ABS_PLUGINS_ROOT_DIR}/cmake/modules/variables.cmake")
-    set(PLUGINS_PATH "${ABS_PLUGINS_ROOT_DIR}")
+    set(PLUGINS_DIRECTORY "${ABS_PLUGINS_ROOT_DIR}")
 elseif(EXISTS "${ABS_CURRENT_DIR}/src/plugins/cmake/modules/variables.cmake")
-    set(PLUGINS_PATH "${ABS_CURRENT_DIR}/src/plugins")
+    set(PLUGINS_DIRECTORY "${ABS_CURRENT_DIR}/src/plugins")
 elseif(EXISTS "${ABS_PARENT_DIR}/src/plugins/cmake/modules/variables.cmake")
-    set(PLUGINS_PATH "${ABS_CURRENT_DIR}/src/plugins")
+    set(PLUGINS_DIRECTORY "${ABS_CURRENT_DIR}/src/plugins")
 endif()
 
 if(CMAKE_CROSSCOMPILING OR CMAKE_CROSS_COMPILING OR (EXISTS "${ABS_PLUGINS_ROOT_DIR}/include"))
@@ -51,11 +51,11 @@ if(CMAKE_CROSSCOMPILING OR CMAKE_CROSS_COMPILING OR (EXISTS "${ABS_PLUGINS_ROOT_
 endif()
 
 if(PLUGINS_PATH)
-    if(EXISTS "${PLUGINS_PATH}/cmake/modules/variables.cmake")
-        set(PsiPluginsApi_DIR "${PLUGINS_PATH}/cmake/modules")
+    if(EXISTS "${PLUGINS_DIRECTORY}/cmake/modules/variables.cmake")
+        set(PsiPluginsApi_DIR "${PLUGINS_DIRECTORY}/cmake/modules")
     endif()
-    if(EXISTS "${PLUGINS_PATH}/include/applicationinfoaccessor.h")
-        set(PsiPluginsApi_INCLUDE_DIR "${PLUGINS_PATH}/include")
+    if(EXISTS "${PLUGINS_DIRECTORY}/include/applicationinfoaccessor.h")
+        set(PsiPluginsApi_INCLUDE_DIR "${PLUGINS_DIRECTORY}/include")
     endif()
 endif()
 
