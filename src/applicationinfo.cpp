@@ -119,7 +119,12 @@ QString ApplicationInfo::resourcesDir()
     // in the Resources directory.
     QString     resourcePath;
     CFBundleRef mainBundle          = CFBundleGetMainBundle();
-    CFStringRef resourceCFStringRef = CFStringCreateWithCString(nullptr, "application.icns", kCFStringEncodingASCII);
+#ifdef PSI_PLUS
+    const char appIconName = "application-plus.icns";
+#else
+    const char appIconName = "application.icns";
+#endif
+    CFStringRef resourceCFStringRef = CFStringCreateWithCString(nullptr, appIconName, kCFStringEncodingASCII);
     CFURLRef    resourceURLRef      = CFBundleCopyResourceURL(mainBundle, resourceCFStringRef, nullptr, nullptr);
     if (resourceURLRef) {
         CFStringRef resourcePathStringRef = CFURLCopyFileSystemPath(resourceURLRef, kCFURLPOSIXPathStyle);
