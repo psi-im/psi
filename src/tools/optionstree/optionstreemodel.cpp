@@ -148,8 +148,13 @@ QVariant OptionsTreeModel::data(const QModelIndex &index, int role) const
         } else if (!tree_->isInternalNode(option)) {
             if (section == Type)
                 return tree_->getOption(option).typeName();
-            else if (section == Value)
-                return tree_->getOption(option); //.toString();
+            else if (section == Value) {
+                if (role == Qt::DisplayRole) {
+                    return QVariant(tree_->getOption(option).toString().section('\n', 0, 0)); // Show only first line
+                } else {
+                    return tree_->getOption(option); //.toString();
+                }
+            }
         }
     } else if (role == Qt::ToolTipRole) {
         if (!tree_->isInternalNode(option)) {
