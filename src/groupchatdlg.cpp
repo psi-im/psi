@@ -1783,7 +1783,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         if (!d->gcSelfPresenceSupported && !d->gcSelfAvatarRequested) {
             d->gcSelfAvatarRequested = true;
             VCardFactory::instance()->getVCard(
-                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true);
+                jid(), account()->client()->rootTask(), this, [this]() { GCMainDlg::updateGCVCard(); }, true, false,
+                true);
         }
 
         if (s.isAvailable())

@@ -9,8 +9,10 @@ PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent) {}
 
 void PixmapRatioLabel::setPixmap(const QPixmap &pix)
 {
-    _origPix = pix;
-    update();
+    _origPix   = pix;
+    _scaledPix = QPixmap();
+    updateGeometry();
+    update(contentsRect());
 }
 
 void PixmapRatioLabel::setMaxPixmapSize(const QSize &size) { _maxPixSize = size; }

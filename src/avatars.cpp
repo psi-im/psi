@@ -107,8 +107,8 @@ public:
 
     // design of the structure is matter of priority, not possible ways of avatars receiving.
     struct JidIcons {
-        FileCacheItem *vcard
-            = nullptr; // avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
+        // avatar's photo (posibly much bigger than 64x64 regardless of recommended max 96px)
+        FileCacheItem *vcard           = nullptr;
         FileCacheItem *avatar          = nullptr; // pubsub or vcard avatar (64x64 or less. TODO consider retina)
         FileCacheItem *customAvatar    = nullptr; // set by you
         bool           avatarFromVCard = false;
@@ -257,23 +257,18 @@ public:
         return oldActiveIcon == newActiveIcon ? Changed : UserUpdateRequired;
     }
 
-    OpResult appendUser(const QByteArray &hash, IconType iconType, const QString &jid, JidIcons **iconsOut = nullptr,
-                        FileCacheItem **itemOut = nullptr)
+    OpResult appendUser(const QByteArray &hash, IconType iconType, const QString &jid)
     {
         auto item = get(XMPP::Hash(XMPP::Hash::Sha1, hash));
         if (!item) {
             return NoData;
         }
-        if (itemOut) {
-            *itemOut = item;
-        }
+
         auto &icons = jidToIcons[jid];
-        if (iconsOut) {
-            *iconsOut = &icons;
-        }
         if (!canAdd(icons, iconType)) { // for new icons-item we definitely can
             return NotChanged;
         }
+
         FileCacheItem *oldActiveIcon = activeAvatarIcon(icons);
         FileCacheItem *prevIcon      = setIconItem(icons, item, iconType);
         if (prevIcon == item) {
@@ -432,7 +427,7 @@ private:
         auto        md   = item->metadata();
         QStringList jids = md.value(QLatin1String("jids")).toStringList();
         jids.removeOne(typedJid(iconType, jid));
-        if (iconType == AvatarType) {
+        if (iconType == VCardType) {
             jids.removeOne(typedJid(AvatarFromVCardType, jid));
         }
 
