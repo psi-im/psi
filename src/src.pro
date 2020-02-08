@@ -5,7 +5,6 @@
 # Configuration
 TEMPLATE = app
 TARGET   = psi
-psiplus:TARGET = psi-plus
 CONFIG  += qt thread x11
 DESTDIR  = $$top_builddir
 
@@ -27,6 +26,8 @@ include(../qa/oldtest/unittest.pri)
 include($$top_builddir/conf.pri)
 CONFIG -= c++11 # some versions of qconf add it in conf.pri
 CONFIG += c++14
+
+psiplus:TARGET = psi-plus
 
 unix {
     DEFINES += APP_PREFIX=$$PREFIX
