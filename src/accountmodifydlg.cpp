@@ -236,51 +236,50 @@ void AccountModifyDlg::init()
     pb_removeBlock->hide();
     pb_addBlock->hide();
 
-    // QWhatsThis helpers
-    cb_plain->setWhatsThis(tr("Normally, Psi logs in using the <i>digest</i> authentication "
+    cb_plain->setToolTip(tr("Normally, Psi logs in using the <i>digest</i> authentication "
                               "method.  Check this box to force a plain text login "
                               "to the XMPP server. Use this option only if you have "
                               "problems connecting with the normal login procedure, as it "
                               "makes your connection potentially vulnerable to "
                               "attacks."));
-    ck_auto->setWhatsThis(tr("Automatically login to this account on Psi startup.  Useful if "
+    ck_auto->setToolTip(tr("Automatically login to this account on Psi startup.  Useful if "
                              "you have Psi automatically launched when an Internet "
                              "connection is detected."));
-    ck_connectAfterSleep->setWhatsThis(tr("Makes Psi try to connect when the computer resumes "
+    ck_connectAfterSleep->setToolTip(tr("Makes Psi try to connect when the computer resumes "
                                           "after a sleep."));
-    ck_reconn->setWhatsThis(tr("Makes Psi try to reconnect if the connection was broken.  "
+    ck_reconn->setToolTip(tr("Makes Psi try to reconnect if the connection was broken.  "
                                "Useful, if you have an unstable connection and have to "
                                "reconnect often."));
-    ck_log->setWhatsThis(tr("Keep a log of message history.  Disable this "
+    ck_log->setToolTip(tr("Keep a log of message history.  Disable this "
                             "option if you want to conserve disk space or if you need "
                             "maximum security."));
-    ck_keepAlive->setWhatsThis(tr("Sends so called \"Keep-alive\" packets periodically.  "
+    ck_keepAlive->setToolTip(tr("Sends so called \"Keep-alive\" packets periodically.  "
                                   "It is useful if your connection is set to be "
                                   "automatically disconnected after a certain period of "
                                   "inactivity (for example, by your ISP) and you want to keep it "
                                   "up all the time."));
-    ck_enableSM->setWhatsThis(tr("Enables Stream Management protocol if possible. It is useful, "
+    ck_enableSM->setToolTip(tr("Enables Stream Management protocol if possible. It is useful, "
                                  "if you have an unstable connection. Your server must support "
                                  "this option. To learn more, see XEP-0184."));
-    cb_ssl->setWhatsThis(tr("Check this option to use an encrypted SSL connection to "
+    cb_ssl->setToolTip(tr("Check this option to use an encrypted SSL connection to "
                             "the XMPP server.  You may use this option if your "
                             "server supports it and if you have the necessary qca-ossl "
                             "plugin installed.  For more information, check the "
                             "Psi homepage."));
-    ck_compress->setWhatsThis(tr("Check this option to use a compressed connection to "
+    ck_compress->setToolTip(tr("Check this option to use a compressed connection to "
                                  "the XMPP server, if the server supports it."));
-    ck_host->setWhatsThis(tr("Use this option for manual configuration of your XMPP host "
+    ck_host->setToolTip(tr("Use this option for manual configuration of your XMPP host "
                              "if it is not the same as the host you are connecting to.  This option is mostly useful "
                              "if you have some sort of proxy route on your "
                              "local machine (i.e. you connect to localhost), but your "
                              "account is registered on an external server."));
-    le_resource->setWhatsThis(tr("You can have multiple clients connected to the XMPP server "
+    le_resource->setToolTip(tr("You can have multiple clients connected to the XMPP server "
                                  "with your single account.  Each login is distinguished by a \"resource\" "
                                  "name, which you can specify in this field."));
-    ck_custom_auth->setWhatsThis(tr("This option sets the user (and realm) you want to "
+    ck_custom_auth->setToolTip(tr("This option sets the user (and realm) you want to "
                                     "authenticate as. This overrides the XMPP address you are logging in "
                                     "as."));
-    sb_priority->setWhatsThis(tr("<p>You can have multiple clients connected to the XMPP "
+    sb_priority->setToolTip(tr("<p>You can have multiple clients connected to the XMPP "
                                  "server with your single account.  In such a situation, "
                                  "the client with the highest priority (that is specified in "
                                  "this field) will be the one that will receive "

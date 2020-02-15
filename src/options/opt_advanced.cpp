@@ -9,7 +9,6 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QRadioButton>
-#include <QWhatsThis>
 
 class OptAdvancedUI : public QWidget, public Ui::OptAdvanced {
 public:
@@ -40,20 +39,20 @@ QWidget *OptionsTabAdvanced::widget()
     d->ck_autocopy->hide();
 #endif
 
-    d->ck_messageevents->setWhatsThis(tr("Enables the sending and requesting of message events such as "
+    d->ck_messageevents->setToolTip(tr("Enables the sending and requesting of message events such as "
                                          "'Contact is Typing', ..."));
-    d->ck_inactiveevents->setWhatsThis(tr("Enables the sending of events when you end or suspend a "
+    d->ck_inactiveevents->setToolTip(tr("Enables the sending of events when you end or suspend a "
                                           "conversation"));
-    d->ck_requestReceipts->setWhatsThis(tr("Request receipts from contacts on each message."));
-    d->ck_sendReceipts->setWhatsThis(tr("Send receipts to contacts by request."));
-    d->ck_rc->setWhatsThis(tr("Enables remote controlling your client from other locations"));
-    d->ck_autocopy->setWhatsThis(tr("Check this option if you want the selected text in incoming messages and chat log "
+    d->ck_requestReceipts->setToolTip(tr("Request receipts from contacts on each message."));
+    d->ck_sendReceipts->setToolTip(tr("Send receipts to contacts by request."));
+    d->ck_rc->setToolTip(tr("Enables remote controlling your client from other locations"));
+    d->ck_autocopy->setToolTip(tr("Check this option if you want the selected text in incoming messages and chat log "
                                     "to be automatically copied to clipboard"));
-    d->ck_singleclick->setWhatsThis(tr("Normally, a double-click on a contact will invoke the default action."
+    d->ck_singleclick->setToolTip(tr("Normally, a double-click on a contact will invoke the default action."
                                        "  Check this option if you'd rather invoke with a single-click."));
-    d->ck_jidComplete->setWhatsThis(tr("Enables as-you-type JID autocompletion in message dialog."));
-    d->ck_grabUrls->setWhatsThis(tr("Automatically attaches URLs from clipboard to the messages when enabled"));
-    d->cb_incomingAs->setWhatsThis(
+    d->ck_jidComplete->setToolTip(tr("Enables as-you-type JID autocompletion in message dialog."));
+    d->ck_grabUrls->setToolTip(tr("Automatically attaches URLs from clipboard to the messages when enabled"));
+    d->cb_incomingAs->setToolTip(
         tr("<P>Specifies how to treat incoming events:</P>"
            "<P><B>Normal</B> - messages come as messages, chats come as chats.</P>"
            "<P><B>Messages</B> - All messages/chats come as messages, no matter what their original form was.</P>"
@@ -63,14 +62,14 @@ QWidget *OptionsTabAdvanced::widget()
     d->cb_incomingAs->setItemData(1, "message");
     d->cb_incomingAs->setItemData(2, "chat");
     d->cb_incomingAs->setItemData(3, "current-open");
-    d->ck_showSubjects->setWhatsThis(
+    d->ck_showSubjects->setToolTip(
         tr("Makes Psi show separate subject line in messages. Uncheck this if you want to save some screen space."));
-    d->ck_autoVCardOnLogin->setWhatsThis(tr("By default, Psi always checks your vCard on login. If you want to save "
+    d->ck_autoVCardOnLogin->setToolTip(tr("By default, Psi always checks your vCard on login. If you want to save "
                                             "some traffic, you can uncheck this option."));
-    d->ck_rosterAnim->setWhatsThis(tr("Makes Psi animate contact names in the main window when they come online."));
-    d->ck_scrollTo->setWhatsThis(
+    d->ck_rosterAnim->setToolTip(tr("Makes Psi animate contact names in the main window when they come online."));
+    d->ck_scrollTo->setToolTip(
         tr("Makes Psi scroll the main window automatically so you can see new incoming events."));
-    d->ck_ignoreHeadline->setWhatsThis(tr("Makes Psi ignore all incoming \"headline\" events,"
+    d->ck_ignoreHeadline->setToolTip(tr("Makes Psi ignore all incoming \"headline\" events,"
                                           " like system-wide news on MSN, announcements, etc."));
 
     connect(d->ck_messageevents, SIGNAL(toggled(bool)), d->ck_inactiveevents, SLOT(setEnabled(bool)));

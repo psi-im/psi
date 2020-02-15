@@ -40,11 +40,11 @@ QWidget *OptionsTabInput::widget()
     availableDicts_ = SpellChecker::instance()->getAllLanguages();
     defaultLangs_   = LanguageManager::bestUiMatch(availableDicts_).toSet();
 
-    d->isSpellCheck->setWhatsThis(tr("Check this option if you want your spelling to be checked"));
+    d->isSpellCheck->setToolTip(tr("Check this option if you want your spelling to be checked"));
 
     connect(d->isSpellCheck, &QCheckBox::toggled, this, &OptionsTabInput::itemToggled);
 
-    d->ck_autoCapitalize->setWhatsThis(
+    d->ck_autoCapitalize->setToolTip(
         tr("Enables automatic substitution of the first letter in a sentence to the same capital letter"));
 
     return w_;

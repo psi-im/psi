@@ -12,7 +12,6 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QTextEdit>
-#include <QWhatsThis>
 
 class OptStatusGeneralUI : public QWidget, public Ui::OptStatusGeneral {
 public:
@@ -67,23 +66,23 @@ QWidget *OptionsTabStatusGeneral::widget()
         reorderGridLayout(d->gridLayout, askCount == 4 ? 2 : 3); // 4 items in 2 columns look better
     }
 
-    d->pb_spNew->setWhatsThis(tr("Press this button to create a new status message preset."));
-    d->pb_spDelete->setWhatsThis(tr("Press this button to delete a status message preset."));
-    /*TODO d->cb_preset->setWhatsThis(
+    d->pb_spNew->setToolTip(tr("Press this button to create a new status message preset."));
+    d->pb_spDelete->setToolTip(tr("Press this button to delete a status message preset."));
+    /*TODO d->cb_preset->setToolTip(
         tr("Use this list to select a status message preset"
         " to view or edit in the box to the right. You can"
         " also sort them manually with drag and drop."));*/
-    d->te_sp->setWhatsThis(tr("You may edit the message here for the currently selected"
+    d->te_sp->setToolTip(tr("You may edit the message here for the currently selected"
                               " status message preset in the list to the above."));
-    d->cb_sp_status->setWhatsThis(tr("Use this to choose the status that will be assigned to this preset"));
-    d->le_sp_priority->setWhatsThis(tr("Fill in the priority that will be assigned to this preset."
+    d->cb_sp_status->setToolTip(tr("Use this to choose the status that will be assigned to this preset"));
+    d->le_sp_priority->setToolTip(tr("Fill in the priority that will be assigned to this preset."
                                        " If no priority is given, the default account priority will be used."));
 
-    d->ck_askOnline->setWhatsThis(tr("Jabber allows you to put extended status messages on"
+    d->ck_askOnline->setToolTip(tr("Jabber allows you to put extended status messages on"
                                      " all status types.  Normally, Psi does not prompt you for"
                                      " an extended message when you set your status to \"online\"."
                                      "  Check this option if you want to have this prompt."));
-    // TODO write whatsthis messages for other widgets
+    // TODO write tooltips for other widgets
     return w;
 }
 

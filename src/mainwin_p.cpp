@@ -465,7 +465,7 @@ SpacerAction::SpacerAction(QObject *parent, const char *name) : IconAction(paren
 {
     setObjectName(name);
     setText(tr("<Spacer>"));
-    setWhatsThis(tr("Spacer provides spacing to separate actions"));
+    setToolTip(tr("Spacer provides spacing to separate actions"));
 }
 
 SpacerAction::~SpacerAction() {}
@@ -492,7 +492,7 @@ SeparatorAction::SeparatorAction(QObject *parent, const char *name) :
     IconAction(tr("<Separator>"), tr("<Separator>"), 0, parent, name)
 {
     setSeparator(true);
-    setWhatsThis(tr("Separator"));
+    setToolTip(tr("Separator"));
 }
 
 SeparatorAction::~SeparatorAction() {}

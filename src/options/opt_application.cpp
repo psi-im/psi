@@ -54,11 +54,11 @@ QWidget *OptionsTabApplication::widget()
     OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
 
     // docklet
-    d->ck_docklet->setWhatsThis(tr("Makes Psi use a docklet icon, also known as system tray icon."));
-    d->ck_dockDCstyle->setWhatsThis(tr("Normally, single-clicking on the Psi docklet icon brings the main window to"
+    d->ck_docklet->setToolTip(tr("Makes Psi use a docklet icon, also known as system tray icon."));
+    d->ck_dockDCstyle->setToolTip(tr("Normally, single-clicking on the Psi docklet icon brings the main window to"
                                        " the foreground.  Check this option if you would rather use a double-click."));
-    d->ck_dockHideMW->setWhatsThis(tr("Starts Psi with only the docklet icon visible."));
-    d->ck_dockToolMW->setWhatsThis(tr("Prevents Psi from taking up a slot on the taskbar and makes the main "
+    d->ck_dockHideMW->setToolTip(tr("Starts Psi with only the docklet icon visible."));
+    d->ck_dockToolMW->setToolTip(tr("Prevents Psi from taking up a slot on the taskbar and makes the main "
                                       "window use a small titlebar."));
 
 #ifdef Q_OS_MAC

@@ -10,7 +10,6 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QRadioButton>
-#include <QWhatsThis>
 
 class OptChatUI : public QWidget, public Ui::OptChat {
 public:
@@ -46,22 +45,22 @@ QWidget *OptionsTabChat::widget()
     bg_defAct->addButton(d->rb_defActMsg);
     bg_defAct->addButton(d->rb_defActChat);
 
-    d->rb_defActMsg->setWhatsThis(tr("Make the default action open a normal message window."));
-    d->rb_defActChat->setWhatsThis(tr("Make the default action open a chat window."));
-    d->ck_chatSoftReturn->setWhatsThis(tr("<P>When checked, pressing Enter in a chat window will send your message."
+    d->rb_defActMsg->setToolTip(tr("Make the default action open a normal message window."));
+    d->rb_defActChat->setToolTip(tr("Make the default action open a chat window."));
+    d->ck_chatSoftReturn->setToolTip(tr("<P>When checked, pressing Enter in a chat window will send your message."
                                           "  You must use Shift+Enter in order to create a newline in the chat message."
                                           "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just "
                                           "as they are with regular messages.</P>"));
-    d->ck_alertOpenChats->setWhatsThis(tr("Normally, Psi will not alert you when a new chat message"
+    d->ck_alertOpenChats->setToolTip(tr("Normally, Psi will not alert you when a new chat message"
                                           " is received in a chat window that is already open."
                                           "  Check this option if you want to receive these alerts anyway."));
-    d->ck_raiseChatWindow->setWhatsThis(
+    d->ck_raiseChatWindow->setToolTip(
         tr("Makes Psi bring an open chat window to the front of your screen when you receive a new message."
            " It does not take the keyboard focus, so it will not interfere with your work."));
-    d->ck_switchTabOnMessage->setWhatsThis(
+    d->ck_switchTabOnMessage->setToolTip(
         tr("Makes Psi switch tab on active tabbed window when you receive a new message."
            " It does not take the keyboard focus, so it will not interfere with your work."));
-    d->ck_smallChats->setWhatsThis(tr("Makes Psi open chat windows in compact mode."));
+    d->ck_smallChats->setToolTip(tr("Makes Psi open chat windows in compact mode."));
     QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
                    " chat window is closed.</P>");
 

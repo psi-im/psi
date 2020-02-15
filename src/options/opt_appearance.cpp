@@ -23,7 +23,6 @@
 #include <QRadioButton>
 #include <QSignalMapper>
 #include <QSlider>
-#include <QWhatsThis>
 
 class OptAppearanceUI : public QWidget, public Ui::OptAppearance {
 public:
@@ -201,13 +200,13 @@ QWidget *OptionsTabAppearanceGeneral::widget()
     bg_font->addButton(d->pb_fPopup);
     connect(bg_font, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseFont(QAbstractButton *)));
 
-    le_font[0]->setWhatsThis(tr("Specifies the font style for the main window."));
-    le_font[1]->setWhatsThis(tr("Specifies the font style for message windows."));
-    le_font[2]->setWhatsThis(tr("Specifies the font style for chat windows."));
-    le_font[3]->setWhatsThis(tr("Specifies the font style for popup windows."));
-    d->pb_fRoster->setWhatsThis(tr("Selects a font for the roster window using the font selection dialog."));
-    d->pb_fMessage->setWhatsThis(tr("Selects a font for message windows using the font selection dialog."));
-    d->pb_fChat->setWhatsThis(tr("Selects a font for chat windows using the font selection dialog."));
+    le_font[0]->setToolTip(tr("Specifies the font style for the main window."));
+    le_font[1]->setToolTip(tr("Specifies the font style for message windows."));
+    le_font[2]->setToolTip(tr("Specifies the font style for chat windows."));
+    le_font[3]->setToolTip(tr("Specifies the font style for popup windows."));
+    d->pb_fRoster->setToolTip(tr("Selects a font for the roster window using the font selection dialog."));
+    d->pb_fMessage->setToolTip(tr("Selects a font for message windows using the font selection dialog."));
+    d->pb_fChat->setToolTip(tr("Selects a font for chat windows using the font selection dialog."));
 
     QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
     struct ColorWidgetData {
@@ -241,16 +240,12 @@ QWidget *OptionsTabAppearanceGeneral::widget()
     for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
         bg_color->addButton(cwData[i].button);
         if (!cwData[i].descr.isEmpty()) {
-            cwData[i].cbox->setWhatsThis(cwData[i].descr);
+            cwData[i].cbox->setToolTip(cwData[i].descr);
         }
         connect(cwData[i].cbox, SIGNAL(stateChanged(int)), SLOT(colorCheckBoxClicked(int)));
         colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton *, QString>(cwData[i].button, cwData[i].option);
     }
     connect(bg_color, SIGNAL(buttonClicked(QAbstractButton *)), SLOT(chooseColor(QAbstractButton *)));
-
-    // Avatars
-    // QWhatsThis::add(d->ck_avatarsChatdlg,
-    //    tr("Toggles displaying of avatars in the chat dialog"));
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool()) {
         d->ck_cStatus->hide();

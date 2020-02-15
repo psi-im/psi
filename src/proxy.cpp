@@ -304,16 +304,16 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QString &def, QWidget *paren
     ui_.cb_type->addItem("SOCKS Version 5", "socks");
     ui_.cb_type->addItem("HTTP Polling", "poll");
 
-    ui_.le_host->setWhatsThis(tr("Enter the hostname and port of your proxy server.") + "  "
+    ui_.le_host->setToolTip(tr("Enter the hostname and port of your proxy server.") + "  "
                               + tr("Consult your network administrator if necessary."));
-    ui_.le_port->setWhatsThis(ui_.le_host->whatsThis());
-    ui_.le_user->setWhatsThis(tr("Enter your proxy server login (username) "
+    ui_.le_port->setToolTip(ui_.le_host->toolTip());
+    ui_.le_user->setToolTip(tr("Enter your proxy server login (username) "
                                  "or leave this field blank if the proxy server does not require it.")
                               + "  " + tr("Consult your network administrator if necessary."));
-    ui_.le_pass->setWhatsThis(tr("Enter your proxy server password "
+    ui_.le_pass->setToolTip(tr("Enter your proxy server password "
                                  "or leave this field blank if the proxy server does not require it.")
                               + "  " + tr("Consult your network administrator if necessary."));
-    ui_.cb_type->setWhatsThis(tr("If you require a proxy server to connect, select the type of proxy here.") + "  "
+    ui_.cb_type->setToolTip(tr("If you require a proxy server to connect, select the type of proxy here.") + "  "
                               + tr("Consult your network administrator if necessary."));
 
     d->loadProxies(def);

@@ -40,7 +40,7 @@ AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent) : QDialog(parent)
     connect(pb_add, SIGNAL(clicked()), SLOT(add()));
     connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(setAddButton(const QString &)));
 
-    ck_reg->setWhatsThis(tr("Check this option if you don't yet have an XMPP account "
+    ck_reg->setToolTip(tr("Check this option if you don't yet have an XMPP account "
                             "and you want to register one.  Note that this will only work "
                             "on servers that allow anonymous registration."));
 

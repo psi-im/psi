@@ -12,7 +12,6 @@
 #include <QHeaderView>
 #include <QSignalMapper>
 #include <QToolButton>
-#include <QWhatsThis>
 
 class OptPluginsUI : public QWidget, public Ui::OptPlugins {
 public:

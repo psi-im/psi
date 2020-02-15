@@ -8,7 +8,6 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QTextEdit>
-#include <QWhatsThis>
 #include <limits.h>
 
 class OptStatusAutoUI : public QWidget, public Ui::OptStatusAuto {
@@ -38,12 +37,12 @@ QWidget *OptionsTabStatusAuto::widget()
 
     QString s = tr("Makes Psi automatically set your status to \"away\" if your"
                    " computer is idle for the specified amount of time.");
-    d->ck_asAway->setWhatsThis(s);
-    d->sb_asAway->setWhatsThis(s);
+    d->ck_asAway->setToolTip(s);
+    d->sb_asAway->setToolTip(s);
     s = tr("Makes Psi automatically set your status to \"extended away\" if your"
            " computer is idle for the specified amount of time.");
-    d->ck_asXa->setWhatsThis(s);
-    d->sb_asXa->setWhatsThis(s);
+    d->ck_asXa->setToolTip(s);
+    d->sb_asXa->setToolTip(s);
     s                   = tr("Makes Psi automatically set your status to \"offline\" if your"
            " computer is idle for the specified amount of time."
            "  This will disconnect you from the Jabber server.");
@@ -74,12 +73,12 @@ QWidget *OptionsTabStatusAuto::widget()
         reorderGridLayout(d->gridLayout, dpCount == 4 ? 2 : 3); // 4 items in 2 columns look better
     }
 
-    d->ck_asOffline->setWhatsThis(s);
-    d->sb_asOffline->setWhatsThis(s);
+    d->ck_asOffline->setToolTip(s);
+    d->sb_asOffline->setToolTip(s);
 
-    d->te_asMessage->setWhatsThis(tr("Specifies an extended message to use if you allow Psi"
+    d->te_asMessage->setToolTip(tr("Specifies an extended message to use if you allow Psi"
                                      " to set your status automatically.  See options above."));
-    d->le_asPriority->setWhatsThis(tr("Specifies priority of auto-away status. "
+    d->le_asPriority->setToolTip(tr("Specifies priority of auto-away status. "
                                       "If empty, Psi will use account's default priority."));
 
     return w;

@@ -10,7 +10,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QRadioButton>
-#include <QWhatsThis>
 
 class OptEventsUI : public QWidget, public Ui::OptEvents {
 public:
@@ -34,30 +33,30 @@ QWidget *OptionsTabEvents::widget()
     w              = new OptEventsUI();
     OptEventsUI *d = static_cast<OptEventsUI *>(w);
 
-    d->ck_popupMsgs->setWhatsThis(tr("Makes new incoming message windows pop up automatically when received."));
-    d->ck_popupHeadlines->setWhatsThis(tr("Makes new incoming headlines pop up automatically when received."));
-    d->ck_popupFiles->setWhatsThis(tr("Makes new incoming file requests pop up automatically when received."));
-    d->ck_allowAwayPopup->setWhatsThis(tr("Normally, Psi will not autopopup events when you are away.  "
+    d->ck_popupMsgs->setToolTip(tr("Makes new incoming message windows pop up automatically when received."));
+    d->ck_popupHeadlines->setToolTip(tr("Makes new incoming headlines pop up automatically when received."));
+    d->ck_popupFiles->setToolTip(tr("Makes new incoming file requests pop up automatically when received."));
+    d->ck_allowAwayPopup->setToolTip(tr("Normally, Psi will not autopopup events when you are away.  "
                                           "Set this option if you want them to popup anyway."));
-    d->ck_allowUnlistedPopup->setWhatsThis(tr("Normally, Psi will not autopopup events from users not in your roster.  "
+    d->ck_allowUnlistedPopup->setToolTip(tr("Normally, Psi will not autopopup events from users not in your roster.  "
                                               "Set this option if you want them to popup anyway."));
-    d->ck_raise->setWhatsThis(tr("Makes new incoming events bring the main window to the foreground."));
-    d->ck_ignoreNonRoster->setWhatsThis(tr("Makes Psi ignore all incoming events from contacts"
+    d->ck_raise->setToolTip(tr("Makes new incoming events bring the main window to the foreground."));
+    d->ck_ignoreNonRoster->setToolTip(tr("Makes Psi ignore all incoming events from contacts"
                                            " not already in your list of contacts."));
-    d->cb_animation->setWhatsThis(
+    d->cb_animation->setToolTip(
         tr("What kind of animation should psi use for incoming event icons on the main window?"));
 
     d->cb_animation->setItemData(0, "no");
     d->cb_animation->setItemData(1, "blink");
     d->cb_animation->setItemData(2, "animate");
-    /*    d->rb_aSolid->setWhatsThis(
+    /*    d->rb_aSolid->setToolTip(
             tr("Does not animate or blink incoming event icons on the main window as they are received."));
-        d->rb_aBlink->setWhatsThis(
+        d->rb_aBlink->setToolTip(
             tr("Makes all incoming event icons blink on the main window as events are received."));
-        d->rb_aAnimate->setWhatsThis(
+        d->rb_aAnimate->setToolTip(
             tr("Animates incoming event icons on the main window as events are recieved."));*/
-    d->ck_autoAuth->setWhatsThis(tr("Makes Psi automatically accept all authorization requests from <b>anyone</b>."));
-    d->ck_notifyAuth->setWhatsThis(tr("Makes Psi notify you when your authorization request was approved."));
+    d->ck_autoAuth->setToolTip(tr("Makes Psi automatically accept all authorization requests from <b>anyone</b>."));
+    d->ck_notifyAuth->setToolTip(tr("Makes Psi notify you when your authorization request was approved."));
 
     d->cb_bounce->setItemData(0, "never");
     d->cb_bounce->setItemData(1, "once");

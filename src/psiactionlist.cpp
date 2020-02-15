@@ -130,38 +130,38 @@ void PsiActionList::Private::createMainWin()
     {
         IconActionGroup *viewGroups = new IconActionGroup(this);
         viewGroups->setText(tr("View Groups"));
-        viewGroups->setWhatsThis(tr("Toggle visibility of special roster groups"));
+        viewGroups->setToolTip(tr("Toggle visibility of special roster groups"));
         viewGroups->setUsesDropDown(true);
         viewGroups->setExclusive(false);
 
         IconAction *actEnableGroups = new IconAction(tr("Show Roster Groups"), "psi/enable-groups",
                                                      tr("Show Roster Groups"), 0, viewGroups, nullptr, true);
-        actEnableGroups->setWhatsThis(tr("Enable/disable groups in roster"));
+        actEnableGroups->setToolTip(tr("Enable/disable groups in roster"));
 
         IconAction *showOffline = new IconAction(tr("Show Offline Contacts"), "psi/show_offline",
                                                  tr("Show Offline Contacts"), 0, viewGroups, nullptr, true);
-        showOffline->setWhatsThis(tr("Toggles visibility of offline contacts in roster"));
+        showOffline->setToolTip(tr("Toggles visibility of offline contacts in roster"));
 
         /*IconAction *showAway = new IconAction(tr("Show Away/XA/DnD Contacts"), "psi/show_away", tr("Show Away/XA/DnD
         Contacts"), 0, PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool() ?
-        (QObject*)viewGroups : (QObject*)this, 0, true); showAway->setWhatsThis(tr("Toggles visibility of away/xa/dnd
+        (QObject*)viewGroups : (QObject*)this, 0, true); showAway->setToolTip(tr("Toggles visibility of away/xa/dnd
         contacts in roster"));*/
 
         IconAction *showHidden = new IconAction(tr("Show Hidden Contacts"), "psi/show_hidden",
                                                 tr("Show Hidden Contacts"), 0, viewGroups, nullptr, true);
-        showHidden->setWhatsThis(tr("Toggles visibility of hidden contacts in roster"));
+        showHidden->setToolTip(tr("Toggles visibility of hidden contacts in roster"));
 
         IconAction *showAgents = new IconAction(tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"),
                                                 0, viewGroups, nullptr, true);
-        showAgents->setWhatsThis(tr("Toggles visibility of agents/transports in roster"));
+        showAgents->setToolTip(tr("Toggles visibility of agents/transports in roster"));
 
         IconAction *showSelf = new IconAction(tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0,
                                               viewGroups, nullptr, true);
-        showSelf->setWhatsThis(tr("Toggles visibility of self contact in roster"));
+        showSelf->setToolTip(tr("Toggles visibility of self contact in roster"));
 
         IconAction *showStatusMsg = new IconAction(tr("Show Status Messages"), "psi/statusmsg",
                                                    tr("Show Status Messages"), 0, viewGroups, nullptr, true);
-        showSelf->setWhatsThis(tr("Toggles visibility of status messages of contacts"));
+        showSelf->setToolTip(tr("Toggles visibility of status messages of contacts"));
 
         ActionNames actions[] = { { "view_groups", viewGroups },
                                   { "enable_groups", actEnableGroups },
@@ -178,21 +178,21 @@ void PsiActionList::Private::createMainWin()
 
     {
         PopupAction *optionsButton = new PopupAction(tr("&Psi"), nullptr, this, "optionsButton");
-        optionsButton->setWhatsThis(tr("The main Psi button, that provides access to many actions"));
+        optionsButton->setToolTip(tr("The main Psi button, that provides access to many actions"));
         optionsButton->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred));
         optionsButton->setIcon(IconsetFactory::iconPtr("psi/main"), false);
 
         PopupAction *statusButton = new PopupAction(tr("&Status"), nullptr, this, "statusButton");
-        statusButton->setWhatsThis(
+        statusButton->setToolTip(
             tr("Provides a convenient way to change and to get information about current status"));
         statusButton->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
 
         IconAction *eventNotifier = new EventNotifierAction(this, "EventNotifierAction");
-        eventNotifier->setWhatsThis(tr("Special item that displays number of pending events"));
+        eventNotifier->setToolTip(tr("Special item that displays number of pending events"));
 
         IconAction *actActiveContacts
             = new IconAction(tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
-        actActiveContacts->setWhatsThis(tr("Simple way to find contacts with opened chats"));
+        actActiveContacts->setToolTip(tr("Simple way to find contacts with opened chats"));
 
         ActionNames actions[] = { { "button_options", optionsButton },
                                   { "button_status", statusButton },
@@ -215,16 +215,16 @@ void PsiActionList::Private::createMainWin()
             actDisco = new MAction(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 3, psi, this);
 
         //        IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);
-        //        actReadme->setWhatsThis (tr("Show ReadMe file"));
+        //        actReadme->setToolTip (tr("Show ReadMe file"));
         //
         //        IconAction *actOnlineWiki = new IconAction (tr("Wiki (Online)"), tr("Wiki (Online)"), 0, this);
-        //        actOnlineWiki->setWhatsThis (tr("Wiki (Online)"));
+        //        actOnlineWiki->setToolTip (tr("Wiki (Online)"));
         //
         //        IconAction *actOnlineHome = new IconAction (tr("Home Page (Online)"), tr("Home Page (Online)"), 0,
-        //        this); actOnlineHome->setWhatsThis (tr("Home Page (Online)"));
+        //        this); actOnlineHome->setToolTip (tr("Home Page (Online)"));
         //
         //        IconAction *actBugReport = new IconAction (tr("Report a Bug"), tr("Report a &Bug"), 0, this);
-        //        actBugReport->setWhatsThis (tr("Report a Bug"));
+        //        actBugReport->setToolTip (tr("Report a Bug"));
 
         IconAction *actNewMessage
             = new IconAction(tr("New Blank Message"), "psi/sendMessage", tr("New &Blank Message"), 0, this);
@@ -241,16 +241,16 @@ void PsiActionList::Private::createMainWin()
 
         IconAction *actPlaySounds
             = new IconAction(tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, nullptr, true);
-        actPlaySounds->setWhatsThis(tr("Toggles whether sound should be played or not"));
+        actPlaySounds->setToolTip(tr("Toggles whether sound should be played or not"));
 
         IconAction *actQuit = new IconAction(tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
         actQuit->setMenuRole(QAction::QuitRole);
-        actQuit->setWhatsThis(tr("Quits Psi"));
+        actQuit->setToolTip(tr("Quits Psi"));
 
         // TODO: probably we want to lock down filetransfer, right?
         IconAction *actFileTrans
             = new IconAction(tr("Transfer Manager"), "psi/filemanager", tr("Trans&fer Manager"), 0, this);
-        actFileTrans->setWhatsThis(tr("Opens the transfer manager dialog"));
+        actFileTrans->setToolTip(tr("Opens the transfer manager dialog"));
 
         ActionNames actions[] = { { "menu_disco", actDisco },
                                   { "menu_add_contact", add_act },
@@ -272,17 +272,17 @@ void PsiActionList::Private::createMainWin()
     {
         IconAction *actPublishTune
             = new IconAction(tr("Publish Tune"), "psi/publishTune", tr("Publish &Tune"), 0, this, nullptr, true);
-        actPublishTune->setWhatsThis(tr("Toggles whether the currently playing tune should be published or not"));
+        actPublishTune->setToolTip(tr("Toggles whether the currently playing tune should be published or not"));
 
         IconAction *actSetMood = new IconAction(tr("Set Mood"), "pep/mood", tr("Set Mood"), 0, this);
-        actSetMood->setWhatsThis(tr("Set Mood for all active accounts"));
+        actSetMood->setToolTip(tr("Set Mood for all active accounts"));
 
         IconAction *actSetActivity = new IconAction(tr("Set Activity"), "pep/activities", tr("Set Activity"), 0, this);
-        actSetActivity->setWhatsThis(tr("Set Activity for all active accounts"));
+        actSetActivity->setToolTip(tr("Set Activity for all active accounts"));
 
         IconAction *actSetGeoloc
             = new IconAction(tr("Set Geolocation"), "pep/geolocation", tr("Set Geolocation"), 0, this);
-        actSetGeoloc->setWhatsThis(tr("Set Geolocation for all active accounts"));
+        actSetGeoloc->setToolTip(tr("Set Geolocation for all active accounts"));
 
         ActionNames actions[] = { { "publish_tune", actPublishTune },
                                   { "set_mood", actSetMood },
@@ -301,55 +301,55 @@ void PsiActionList::Private::createMainWin()
 
         IconAction *statusSmallerAlt = new IconAction(this);
         statusSmallerAlt->setText(tr("Set Status"));
-        statusSmallerAlt->setWhatsThis(tr("Smaller alternative to the Status button"));
+        statusSmallerAlt->setToolTip(tr("Smaller alternative to the Status button"));
 
         QString setStatusStr = tr("Changes your global status to '%1'");
 
         bool        statusExl    = true;
         IconAction *statusOnline = new IconAction(status2txt(STATUS_ONLINE), "status/online", status2txt(STATUS_ONLINE),
                                                   0, statusGroup, QString::number(STATUS_ONLINE), statusExl);
-        statusOnline->setWhatsThis(setStatusStr.arg(tr("Online")));
+        statusOnline->setToolTip(setStatusStr.arg(tr("Online")));
 
         IconAction *statusChat = new IconAction(status2txt(STATUS_CHAT), "status/chat", status2txt(STATUS_CHAT), 0,
                                                 statusGroup, QString::number(STATUS_CHAT), true);
-        statusChat->setWhatsThis(setStatusStr.arg(tr("Free for Chat")));
+        statusChat->setToolTip(setStatusStr.arg(tr("Free for Chat")));
 
         statusGroup->addSeparator();
 
         IconAction *statusAway = new IconAction(status2txt(STATUS_AWAY), "status/away", status2txt(STATUS_AWAY), 0,
                                                 statusGroup, QString::number(STATUS_AWAY), statusExl);
-        statusAway->setWhatsThis(setStatusStr.arg(tr("Away")));
+        statusAway->setToolTip(setStatusStr.arg(tr("Away")));
 
         IconAction *statusXa = new IconAction(status2txt(STATUS_XA), "status/xa", status2txt(STATUS_XA), 0, statusGroup,
                                               QString::number(STATUS_XA), statusExl);
-        statusXa->setWhatsThis(setStatusStr.arg(tr("XA")));
+        statusXa->setToolTip(setStatusStr.arg(tr("XA")));
 
         IconAction *statusDnd = new IconAction(status2txt(STATUS_DND), "status/dnd", status2txt(STATUS_DND), 0,
                                                statusGroup, QString::number(STATUS_DND), statusExl);
-        statusDnd->setWhatsThis(setStatusStr.arg(tr("DND")));
+        statusDnd->setToolTip(setStatusStr.arg(tr("DND")));
 
         statusGroup->addSeparator();
 
         IconAction *chooseStatus
             = new IconAction(tr("Choose status..."), "psi/action_direct_presence", tr("Choose..."), 0, statusGroup);
-        chooseStatus->setWhatsThis(tr("Show dialog to set your status"));
+        chooseStatus->setToolTip(tr("Show dialog to set your status"));
 
         IconAction *reconnectAll = new IconAction(tr("Reconnect"), "psi/reload", tr("Reconnect"), 0, statusGroup);
-        reconnectAll->setWhatsThis(tr("Reconnect all active accounts"));
+        reconnectAll->setToolTip(tr("Reconnect all active accounts"));
 
         statusGroup->addSeparator();
 
         IconAction *statusInvisible
             = new IconAction(status2txt(STATUS_INVISIBLE), "status/invisible", status2txt(STATUS_INVISIBLE), 0,
                              statusGroup, QString::number(STATUS_INVISIBLE), statusExl);
-        statusInvisible->setWhatsThis(setStatusStr.arg(tr("Invisible")));
+        statusInvisible->setToolTip(setStatusStr.arg(tr("Invisible")));
 
         statusGroup->addSeparator();
 
         IconAction *statusOffline
             = new IconAction(status2txt(STATUS_OFFLINE), "status/offline", status2txt(STATUS_OFFLINE), 0, statusGroup,
                              QString::number(STATUS_OFFLINE), statusExl);
-        statusOffline->setWhatsThis(setStatusStr.arg(tr("Offline")));
+        statusOffline->setToolTip(setStatusStr.arg(tr("Offline")));
 
         ActionNames actions[] = { { "status_group", statusGroup },     { "status_all", statusSmallerAlt },
                                   { "status_chat", statusChat },       { "status_online", statusOnline },
@@ -363,16 +363,16 @@ void PsiActionList::Private::createMainWin()
 
     {
         IconAction *actReadme = new IconAction(tr("ReadMe"), tr("&ReadMe"), 0, this);
-        actReadme->setWhatsThis(tr("Show ReadMe file"));
+        actReadme->setToolTip(tr("Show ReadMe file"));
 
         IconAction *actTip = new IconAction(tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
-        actTip->setWhatsThis(tr("See many useful tips"));
+        actTip->setToolTip(tr("See many useful tips"));
 
         IconAction *actOnlineWiki = new IconAction(tr("Wiki (Online)"), tr("&Wiki (Online)"), 0, this);
-        actOnlineWiki->setWhatsThis(tr("Wiki (Online)"));
+        actOnlineWiki->setToolTip(tr("Wiki (Online)"));
 
         IconAction *actOnlineHome = new IconAction(tr("Home Page (Online)"), tr("&Home Page (Online)"), 0, this);
-        actOnlineHome->setWhatsThis(tr("Home Page (Online)"));
+        actOnlineHome->setToolTip(tr("Home Page (Online)"));
 
         IconAction *actOnlineForum = new IconAction(
 #ifdef PSI_PLUS
@@ -382,7 +382,7 @@ void PsiActionList::Private::createMainWin()
 #endif
                                            ,
             0, this);
-        actOnlineForum->setWhatsThis(
+        actOnlineForum->setToolTip(
 #ifdef PSI_PLUS
             tr("Psi+ Forum (Online)")
 #else
@@ -398,10 +398,10 @@ void PsiActionList::Private::createMainWin()
 #endif
                                                           ,
             0, this);
-        actOnlineHome->setWhatsThis(tr("Join Psi Discussion Room (Online)"));
+        actOnlineHome->setToolTip(tr("Join Psi Discussion Room (Online)"));
 
         IconAction *actBugReport = new IconAction(tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);
-        actBugReport->setWhatsThis(tr("Report a Bug (Online)"));
+        actBugReport->setToolTip(tr("Report a Bug (Online)"));
 
         IconAction *actAbout = new IconAction(tr("About"), "psi/logo_32", tr("&About"), 0, this);
         actAbout->setMenuRole(QAction::AboutRole);

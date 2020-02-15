@@ -35,7 +35,7 @@ public:
     virtual QString  name() const;
     virtual QString  group() const;
     virtual QString  toolTip() const;
-    virtual QString  whatsThis() const;
+    virtual QString  toolTip() const;
     virtual QString  includeFile() const;
 
     virtual QString codeTemplate() const;

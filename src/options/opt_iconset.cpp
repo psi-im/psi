@@ -327,7 +327,7 @@ QWidget *OptionsTabIconsetSystem::widget()
 
     connect(d->pb_sysDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
-    // TODO: add QWhatsThis
+    // TODO: add ToolTip
 
     return w;
 }
@@ -466,12 +466,12 @@ QWidget *OptionsTabIconsetEmoticons::widget()
     connect(d->pb_emoDown, SIGNAL(clicked()), SIGNAL(dataChanged()));
     connect(d->pb_emoDetails, SIGNAL(clicked()), SLOT(previewIconset()));
 
-    d->ck_useEmoticons->setWhatsThis(
+    d->ck_useEmoticons->setToolTip(
         tr("<P>Emoticons are short sequences of characters that are used to convey an emotion or idea.</P>"
            "<P>Enable this option if you want Psi to replace common emoticons with a graphical image.</P>"
            "<P>For example, <B>:-)</B> would be replaced by <icon name=\"psi/smile\"></P>"));
 
-    // TODO: add QWhatsThis
+    // TODO: add ToolTip
 
     return w;
 }
@@ -1253,10 +1253,10 @@ QWidget *OptionsTabIconsetRoster::widget()
     connect(d->pb_customRosterDelete, SIGNAL(clicked()), SLOT(isCustom_delete()));
     isCustom_selectionChanged(nullptr);
 
-    d->ck_useTransportIconsForContacts->setWhatsThis(
+    d->ck_useTransportIconsForContacts->setToolTip(
         tr("Toggles use of transport icons to the contacts, that use that transports."));
 
-    // TODO: add QWhatsThis
+    // TODO: add ToolTip
 
     return w;
 }

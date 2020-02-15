@@ -14,7 +14,6 @@
 #include <QPixmap>
 #include <QRadioButton>
 #include <QSignalMapper>
-#include <QWhatsThis>
 
 class GeneralGroupchatUI : public QWidget, public Ui::GeneralGroupchat {
 public:

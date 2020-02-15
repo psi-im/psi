@@ -124,7 +124,7 @@ QWidget *OptionsTabToolbars::widget()
     d->tw_availActions->header()->hide();
 
     return w;
-    // TODO: add QWhatsThis to all widgets
+    // TODO: add ToolTip for earch widget
     /*
     QFrame *line = new QFrame( this );
     line->setFrameShape( QFrame::HLine );
@@ -334,8 +334,8 @@ void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *ac
     QListWidgetItem *item = new QListWidgetItem(parent);
 
     QString n = actionName(action);
-    if (!action->whatsThis().isEmpty())
-        n += " - " + action->whatsThis();
+    if (!action->toolTip().isEmpty())
+        n += " - " + action->toolTip();
     item->setText(n);
     item->setData(Qt::UserRole, name);
     item->setIcon(action->icon());
@@ -418,8 +418,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
                 last                  = item;
 
                 QString n = actionName(static_cast<QAction *>(action));
-                if (!action->whatsThis().isEmpty()) {
-                    n += " - " + action->whatsThis();
+                if (!action->toolTip().isEmpty()) {
+                    n += " - " + action->toolTip();
                 }
                 item->setText(0, n);
                 item->setIcon(0, action->icon());

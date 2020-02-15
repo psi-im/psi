@@ -51,7 +51,7 @@ QString PsiWidgetPlugin::group() const { return QStringLiteral("Psi"); }
 
 QString PsiWidgetPlugin::toolTip() const { return name(); }
 
-QString PsiWidgetPlugin::whatsThis() const { return QStringLiteral("Psi Widget"); }
+QString PsiWidgetPlugin::toolTip() const { return QStringLiteral("Psi Widget"); }
 
 QString PsiWidgetPlugin::includeFile() const { return QStringLiteral("psiwidget.h"); }
 
@@ -95,7 +95,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Widget for indicating that program is doing something."; }
+    QString toolTip() const { return "Widget for indicating that program is doing something."; }
 
     QString includeFile() const { return "busywidget.h"; }
 };
@@ -130,7 +130,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Label that can contain animated PsiIcon."; }
+    QString toolTip() const { return "Label that can contain animated PsiIcon."; }
 
     QString includeFile() const { return "iconlabel.h"; }
 };
@@ -165,7 +165,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Just a Fancy Label. Use it for decoration of dialogs. ;-)"; }
+    QString toolTip() const { return "Just a Fancy Label. Use it for decoration of dialogs. ;-)"; }
 
     QString includeFile() const { return "fancylabel.h"; }
 };
@@ -192,7 +192,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Widget for Iconset selection."; }
+    QString toolTip() const { return "Widget for Iconset selection."; }
 
     QString includeFile() const { return "iconsetselect.h"; }
 };
@@ -219,7 +219,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Displays all icons in Iconset."; }
+    QString toolTip() const { return "Displays all icons in Iconset."; }
 
     QString includeFile() const { return "iconsetdisplay.h"; }
 };
@@ -246,7 +246,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "PushButton that can contain animated PsiIcon."; }
+    QString toolTip() const { return "PushButton that can contain animated PsiIcon."; }
 
     QString includeFile() const { return "iconbutton.h"; }
 };
@@ -273,7 +273,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "ToolButton that can contain animated PsiIcon."; }
+    QString toolTip() const { return "ToolButton that can contain animated PsiIcon."; }
 
     QString includeFile() const { return "icontoolbutton.h"; }
 };
@@ -300,7 +300,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Widget for displaying rich-text data, with inline Icons."; }
+    QString toolTip() const { return "Widget for displaying rich-text data, with inline Icons."; }
 
     QString includeFile() const { return "psitextview.h"; }
 };
@@ -333,7 +333,7 @@ public:
                "</widget>\n";
     }
 
-    QString whatsThis() const { return "Widget for displaying clickable URLs."; }
+    QString toolTip() const { return "Widget for displaying clickable URLs."; }
 
     QString includeFile() const { return "urllabel.h"; }
 };

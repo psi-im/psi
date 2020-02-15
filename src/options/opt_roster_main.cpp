@@ -29,12 +29,12 @@ QWidget *OptionsTabRosterMain::widget()
     w                  = new OptRosterMainUI();
     OptRosterMainUI *d = static_cast<OptRosterMainUI *>(w);
 
-    d->ck_alwaysOnTop->setWhatsThis(tr("Makes the main Psi window always be in front of other windows."));
-    d->ck_autoRosterSize->setWhatsThis(tr("Makes the main Psi window resize automatically to fit all contacts."));
-    d->ck_useleft->setWhatsThis(
+    d->ck_alwaysOnTop->setToolTip(tr("Makes the main Psi window always be in front of other windows."));
+    d->ck_autoRosterSize->setToolTip(tr("Makes the main Psi window resize automatically to fit all contacts."));
+    d->ck_useleft->setToolTip(
         tr("Normally, right-clicking with the mouse on a contact will activate the context-menu."
            "  Check this option if you'd rather use a left-click."));
-    d->ck_showMenubar->setWhatsThis(tr("Shows the menubar in the application window."));
+    d->ck_showMenubar->setToolTip(tr("Shows the menubar in the application window."));
 
     connect(d->ck_showClientIcons, SIGNAL(toggled(bool)), d->cb_showAllClientIcons, SLOT(setEnabled(bool)));
 #ifdef Q_OS_MAC

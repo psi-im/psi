@@ -344,7 +344,7 @@ IconAction &IconAction::operator=(const IconAction &from)
     setShortcut(from.shortcut());
     setObjectName(from.objectName());
     setCheckable(from.isCheckable());
-    setWhatsThis(whatsThis());
+    setToolTip(toolTip());
 
     // TODO: add more
 

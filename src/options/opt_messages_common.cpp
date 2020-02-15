@@ -37,13 +37,13 @@ QWidget *OptionsTabMsgCommon::widget()
     connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_showTabButtons, &QCheckBox::setEnabled);
     connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_tabShortcuts, &QCheckBox::setEnabled);
 
-    d->ck_tabChats->setWhatsThis(tr("Makes Psi open chats in a tabbed window."));
-    d->ck_showPreviews->setWhatsThis(tr("Show under links to some media content preview of the content."
+    d->ck_tabChats->setToolTip(tr("Makes Psi open chats in a tabbed window."));
+    d->ck_showPreviews->setToolTip(tr("Show under links to some media content preview of the content."
                                         " It's also possible to play audio and video right in chat."));
-    d->ck_showCounter->setWhatsThis(tr("Makes Psi show message length counter."
+    d->ck_showCounter->setToolTip(tr("Makes Psi show message length counter."
                                        " Check this if you want to know how long is your message."
                                        " Can be useful when you're using SMS transport."));
-    d->ck_contactsMessageFormatting->setWhatsThis(
+    d->ck_contactsMessageFormatting->setToolTip(
         tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact"));
 
     d->cb_tabMdlClick->addItems(clickActList);
