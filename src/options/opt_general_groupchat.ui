@@ -66,7 +66,7 @@
           <property name="toolTip">
            <string>Words which will cause a notification in group chat.</string>
           </property>
-          <property name="whatsThis">
+          <property name="toolTip">
            <string>This is the list of words which when said in group chat will cause the user to be notified.</string>
           </property>
          </widget>
@@ -76,7 +76,7 @@
           <property name="toolTip">
            <string>Type a new word here and press &quot;Add Word&quot; for it to be added to the highlight list</string>
           </property>
-          <property name="whatsThis">
+          <property name="toolTip">
            <string>Type a new word here and press &quot;Add Word&quot; for it to be added to the highlight list</string>
           </property>
          </widget>
@@ -119,7 +119,7 @@
             <property name="toolTip">
              <string>Adds the new word to the list</string>
             </property>
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Adds the new word to the list</string>
             </property>
             <property name="text">
@@ -132,7 +132,7 @@
             <property name="toolTip">
              <string>Removes the selected word from the highlight list</string>
             </property>
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Removes the selected word from the highlight list</string>
             </property>
             <property name="text">
@@ -209,7 +209,7 @@
           <property name="toolTip">
            <string>Colors used for nicks in groupchat</string>
           </property>
-          <property name="whatsThis">
+          <property name="toolTip">
            <string>This is the list of colours with which nicks will be drawn in group chat.</string>
           </property>
          </widget>
@@ -236,7 +236,7 @@
             <property name="toolTip">
              <string>Type a colourcode here, or press the palette to the right</string>
             </property>
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Type a colourcode here, or press the palette to the right</string>
             </property>
            </widget>
@@ -294,7 +294,7 @@
             <property name="toolTip">
              <string>Adds the color to the list</string>
             </property>
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Adds the new color to the list</string>
             </property>
             <property name="text">
@@ -307,7 +307,7 @@
             <property name="toolTip">
              <string>Removes the selected color from the list</string>
             </property>
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Removes the selected color from the list</string>
             </property>
             <property name="text">

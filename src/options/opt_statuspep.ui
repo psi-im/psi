@@ -47,7 +47,7 @@
         <property name="toolTip">
          <string>Add extensions</string>
         </property>
-        <property name="whatsThis">
+        <property name="toolTip">
          <string>Ignored media file extensions on psi tunes sending</string>
         </property>
        </widget>

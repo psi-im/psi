@@ -93,7 +93,7 @@
      </item>
      <item>
       <widget class="QLineEdit" name="edtActionParam">
-       <property name="whatsThis">
+       <property name="toolTip">
         <string extracomment="Action's parameter"/>
        </property>
       </widget>
