@@ -183,8 +183,7 @@ void PsiActionList::Private::createMainWin()
         optionsButton->setIcon(IconsetFactory::iconPtr("psi/main"), false);
 
         PopupAction *statusButton = new PopupAction(tr("&Status"), nullptr, this, "statusButton");
-        statusButton->setToolTip(
-            tr("Provides a convenient way to change and to get information about current status"));
+        statusButton->setToolTip(tr("Provides a convenient way to change and to get information about current status"));
         statusButton->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
 
         IconAction *eventNotifier = new EventNotifierAction(this, "EventNotifierAction");

@@ -73,15 +73,15 @@ QWidget *OptionsTabStatusGeneral::widget()
         " to view or edit in the box to the right. You can"
         " also sort them manually with drag and drop."));*/
     d->te_sp->setToolTip(tr("You may edit the message here for the currently selected"
-                              " status message preset in the list to the above."));
+                            " status message preset in the list to the above."));
     d->cb_sp_status->setToolTip(tr("Use this to choose the status that will be assigned to this preset"));
     d->le_sp_priority->setToolTip(tr("Fill in the priority that will be assigned to this preset."
-                                       " If no priority is given, the default account priority will be used."));
+                                     " If no priority is given, the default account priority will be used."));
 
     d->ck_askOnline->setToolTip(tr("Jabber allows you to put extended status messages on"
-                                     " all status types.  Normally, Psi does not prompt you for"
-                                     " an extended message when you set your status to \"online\"."
-                                     "  Check this option if you want to have this prompt."));
+                                   " all status types.  Normally, Psi does not prompt you for"
+                                   " an extended message when you set your status to \"online\"."
+                                   "  Check this option if you want to have this prompt."));
     // TODO write tooltips for other widgets
     return w;
 }

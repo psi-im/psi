@@ -77,9 +77,9 @@ QWidget *OptionsTabStatusAuto::widget()
     d->sb_asOffline->setToolTip(s);
 
     d->te_asMessage->setToolTip(tr("Specifies an extended message to use if you allow Psi"
-                                     " to set your status automatically.  See options above."));
+                                   " to set your status automatically.  See options above."));
     d->le_asPriority->setToolTip(tr("Specifies priority of auto-away status. "
-                                      "If empty, Psi will use account's default priority."));
+                                    "If empty, Psi will use account's default priority."));
 
     return w;
 }

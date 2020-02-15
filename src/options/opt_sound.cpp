@@ -114,7 +114,7 @@ QWidget *OptionsTabSound::widget()
     // TODO: add ToolTip for earch widget
 
     d->le_player->setToolTip(tr("If your system supports multiple sound players, you may"
-                                  " choose your preferred sound player application here."));
+                                " choose your preferred sound player application here."));
     d->ck_awaySound->setToolTip(
         tr("Enable this option if you wish to hear sound alerts when your status is \"away\" or \"extended away\"."));
     d->ck_gcSound->setToolTip(tr("Play sounds for all events in groupchat, not only for mentioning of your nick."));

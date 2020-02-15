@@ -37,12 +37,12 @@ QWidget *OptionsTabEvents::widget()
     d->ck_popupHeadlines->setToolTip(tr("Makes new incoming headlines pop up automatically when received."));
     d->ck_popupFiles->setToolTip(tr("Makes new incoming file requests pop up automatically when received."));
     d->ck_allowAwayPopup->setToolTip(tr("Normally, Psi will not autopopup events when you are away.  "
-                                          "Set this option if you want them to popup anyway."));
+                                        "Set this option if you want them to popup anyway."));
     d->ck_allowUnlistedPopup->setToolTip(tr("Normally, Psi will not autopopup events from users not in your roster.  "
-                                              "Set this option if you want them to popup anyway."));
+                                            "Set this option if you want them to popup anyway."));
     d->ck_raise->setToolTip(tr("Makes new incoming events bring the main window to the foreground."));
     d->ck_ignoreNonRoster->setToolTip(tr("Makes Psi ignore all incoming events from contacts"
-                                           " not already in your list of contacts."));
+                                         " not already in your list of contacts."));
     d->cb_animation->setToolTip(
         tr("What kind of animation should psi use for incoming event icons on the main window?"));
 

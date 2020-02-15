@@ -48,12 +48,12 @@ QWidget *OptionsTabChat::widget()
     d->rb_defActMsg->setToolTip(tr("Make the default action open a normal message window."));
     d->rb_defActChat->setToolTip(tr("Make the default action open a chat window."));
     d->ck_chatSoftReturn->setToolTip(tr("<P>When checked, pressing Enter in a chat window will send your message."
-                                          "  You must use Shift+Enter in order to create a newline in the chat message."
-                                          "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just "
-                                          "as they are with regular messages.</P>"));
+                                        "  You must use Shift+Enter in order to create a newline in the chat message."
+                                        "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just "
+                                        "as they are with regular messages.</P>"));
     d->ck_alertOpenChats->setToolTip(tr("Normally, Psi will not alert you when a new chat message"
-                                          " is received in a chat window that is already open."
-                                          "  Check this option if you want to receive these alerts anyway."));
+                                        " is received in a chat window that is already open."
+                                        "  Check this option if you want to receive these alerts anyway."));
     d->ck_raiseChatWindow->setToolTip(
         tr("Makes Psi bring an open chat window to the front of your screen when you receive a new message."
            " It does not take the keyboard focus, so it will not interfere with your work."));

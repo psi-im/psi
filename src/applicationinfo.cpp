@@ -120,7 +120,7 @@ QString ApplicationInfo::resourcesDir()
     QString     resourcePath;
     CFBundleRef mainBundle          = CFBundleGetMainBundle();
 #ifdef PSI_PLUS
-    const char *appIconName = "application-plus.icns";
+    const char *appIconName         = "application-plus.icns";
 #else
     const char *appIconName = "application.icns";
 #endif

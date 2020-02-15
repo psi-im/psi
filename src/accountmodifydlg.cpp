@@ -237,59 +237,59 @@ void AccountModifyDlg::init()
     pb_addBlock->hide();
 
     cb_plain->setToolTip(tr("Normally, Psi logs in using the <i>digest</i> authentication "
-                              "method.  Check this box to force a plain text login "
-                              "to the XMPP server. Use this option only if you have "
-                              "problems connecting with the normal login procedure, as it "
-                              "makes your connection potentially vulnerable to "
-                              "attacks."));
+                            "method.  Check this box to force a plain text login "
+                            "to the XMPP server. Use this option only if you have "
+                            "problems connecting with the normal login procedure, as it "
+                            "makes your connection potentially vulnerable to "
+                            "attacks."));
     ck_auto->setToolTip(tr("Automatically login to this account on Psi startup.  Useful if "
-                             "you have Psi automatically launched when an Internet "
-                             "connection is detected."));
+                           "you have Psi automatically launched when an Internet "
+                           "connection is detected."));
     ck_connectAfterSleep->setToolTip(tr("Makes Psi try to connect when the computer resumes "
-                                          "after a sleep."));
+                                        "after a sleep."));
     ck_reconn->setToolTip(tr("Makes Psi try to reconnect if the connection was broken.  "
-                               "Useful, if you have an unstable connection and have to "
-                               "reconnect often."));
+                             "Useful, if you have an unstable connection and have to "
+                             "reconnect often."));
     ck_log->setToolTip(tr("Keep a log of message history.  Disable this "
-                            "option if you want to conserve disk space or if you need "
-                            "maximum security."));
+                          "option if you want to conserve disk space or if you need "
+                          "maximum security."));
     ck_keepAlive->setToolTip(tr("Sends so called \"Keep-alive\" packets periodically.  "
-                                  "It is useful if your connection is set to be "
-                                  "automatically disconnected after a certain period of "
-                                  "inactivity (for example, by your ISP) and you want to keep it "
-                                  "up all the time."));
+                                "It is useful if your connection is set to be "
+                                "automatically disconnected after a certain period of "
+                                "inactivity (for example, by your ISP) and you want to keep it "
+                                "up all the time."));
     ck_enableSM->setToolTip(tr("Enables Stream Management protocol if possible. It is useful, "
-                                 "if you have an unstable connection. Your server must support "
-                                 "this option. To learn more, see XEP-0184."));
+                               "if you have an unstable connection. Your server must support "
+                               "this option. To learn more, see XEP-0184."));
     cb_ssl->setToolTip(tr("Check this option to use an encrypted SSL connection to "
-                            "the XMPP server.  You may use this option if your "
-                            "server supports it and if you have the necessary qca-ossl "
-                            "plugin installed.  For more information, check the "
-                            "Psi homepage."));
+                          "the XMPP server.  You may use this option if your "
+                          "server supports it and if you have the necessary qca-ossl "
+                          "plugin installed.  For more information, check the "
+                          "Psi homepage."));
     ck_compress->setToolTip(tr("Check this option to use a compressed connection to "
-                                 "the XMPP server, if the server supports it."));
+                               "the XMPP server, if the server supports it."));
     ck_host->setToolTip(tr("Use this option for manual configuration of your XMPP host "
-                             "if it is not the same as the host you are connecting to.  This option is mostly useful "
-                             "if you have some sort of proxy route on your "
-                             "local machine (i.e. you connect to localhost), but your "
-                             "account is registered on an external server."));
+                           "if it is not the same as the host you are connecting to.  This option is mostly useful "
+                           "if you have some sort of proxy route on your "
+                           "local machine (i.e. you connect to localhost), but your "
+                           "account is registered on an external server."));
     le_resource->setToolTip(tr("You can have multiple clients connected to the XMPP server "
-                                 "with your single account.  Each login is distinguished by a \"resource\" "
-                                 "name, which you can specify in this field."));
+                               "with your single account.  Each login is distinguished by a \"resource\" "
+                               "name, which you can specify in this field."));
     ck_custom_auth->setToolTip(tr("This option sets the user (and realm) you want to "
-                                    "authenticate as. This overrides the XMPP address you are logging in "
-                                    "as."));
+                                  "authenticate as. This overrides the XMPP address you are logging in "
+                                  "as."));
     sb_priority->setToolTip(tr("<p>You can have multiple clients connected to the XMPP "
-                                 "server with your single account.  In such a situation, "
-                                 "the client with the highest priority (that is specified in "
-                                 "this field) will be the one that will receive "
-                                 "all incoming events.</p>"
-                                 "<p>For example, if you have a permanent connection "
-                                 "to the Internet at your work location, and have a dial-up at home, "
-                                 "you can have your XMPP client permanently running at work "
-                                 "with a low priority, and you can still use the same account "
-                                 "from home, using a client with higher priority to "
-                                 "temporary \"disable\" the lower priority client at work.</p>"));
+                               "server with your single account.  In such a situation, "
+                               "the client with the highest priority (that is specified in "
+                               "this field) will be the one that will receive "
+                               "all incoming events.</p>"
+                               "<p>For example, if you have a permanent connection "
+                               "to the Internet at your work location, and have a dial-up at home, "
+                               "you can have your XMPP client permanently running at work "
+                               "with a low priority, and you can still use the same account "
+                               "from home, using a client with higher priority to "
+                               "temporary \"disable\" the lower priority client at work.</p>"));
 
     // Hiding of UI components
     if ((!pa && acc.name.isEmpty()) || PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {

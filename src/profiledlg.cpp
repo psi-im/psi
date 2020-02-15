@@ -111,9 +111,9 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 
     cb_profile->setToolTip(tr("Select a profile to open from this list."));
     cb_lang->setToolTip(tr("Select a language you would like Psi to use from this "
-                             "list.  You can download extra language packs from the Psi homepage."));
+                           "list.  You can download extra language packs from the Psi homepage."));
     ck_auto->setToolTip(tr("Automatically open this profile when Psi is started.  Useful if "
-                             "you only have one profile."));
+                           "you only have one profile."));
 
     reload(def);
 }

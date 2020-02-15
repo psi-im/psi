@@ -31,9 +31,8 @@ QWidget *OptionsTabRosterMain::widget()
 
     d->ck_alwaysOnTop->setToolTip(tr("Makes the main Psi window always be in front of other windows."));
     d->ck_autoRosterSize->setToolTip(tr("Makes the main Psi window resize automatically to fit all contacts."));
-    d->ck_useleft->setToolTip(
-        tr("Normally, right-clicking with the mouse on a contact will activate the context-menu."
-           "  Check this option if you'd rather use a left-click."));
+    d->ck_useleft->setToolTip(tr("Normally, right-clicking with the mouse on a contact will activate the context-menu."
+                                 "  Check this option if you'd rather use a left-click."));
     d->ck_showMenubar->setToolTip(tr("Shows the menubar in the application window."));
 
     connect(d->ck_showClientIcons, SIGNAL(toggled(bool)), d->cb_showAllClientIcons, SLOT(setEnabled(bool)));
