@@ -121,7 +121,6 @@ endif()
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${PROJECT_SOURCE_DIR}
     ${Qca_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite
 )
