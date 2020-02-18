@@ -30,6 +30,7 @@
 #include "qiteaudio.h"
 #endif
 
+#include "jingle-session.h"
 #include "xmpp_client.h"
 #include "xmpp_hash.h"
 #include "xmpp_jid.h"

@@ -23,6 +23,7 @@
 #include "fileutil.h"
 #include "httputil.h"
 #include "jidutil.h"
+#include "jingle-session.h"
 #include "networkaccessmanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -184,7 +185,7 @@ public:
         connect(app, &Jingle::Application::stateChanged, this, [this](Jingle::State state) {
             if (state != Jingle::State::Finished)
                 return;
-            auto r = app->terminationReason();
+            auto r = app->lastReason();
             app    = nullptr;
             if (r.isValid() && r.condition() == Jingle::Reason::Success) {
                 emit disconnected();

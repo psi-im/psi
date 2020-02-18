@@ -69,6 +69,7 @@
 #ifdef HAVE_JINGLE
 #include "jinglevoicecaller.h"
 #endif
+#include "jingle-session.h"
 #include "mood.h"
 #include "mooddlg.h"
 #include "networkaccessmanager.h"

@@ -24,7 +24,7 @@
 #include "avcall/avcall.h"
 #include "dummystream.h"
 #include "filetransfer.h"
-#include "jingle.h"
+#include "jingle-session.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
@@ -605,7 +605,7 @@ EventQueue::EventQueue(PsiAccount *account) : psi_(nullptr), account_(nullptr), 
 EventQueue::EventQueue(const EventQueue &from) : QObject(), list_(), psi_(nullptr), account_(nullptr), enabled_(false)
 {
     Q_ASSERT(false);
-    Q_UNUSED(from);
+    Q_UNUSED(from)
 }
 
 EventQueue::~EventQueue()

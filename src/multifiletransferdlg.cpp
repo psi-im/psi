@@ -23,6 +23,7 @@
 #include "fileutil.h"
 #include "iconset.h"
 #include "jingle-ft.h"
+#include "jingle-session.h"
 #include "jingle.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
@@ -130,7 +131,7 @@ static void setMFTItemStateFromJingleState(MultiFileTransferItem *item, Jingle::
     case Jingle::State::Created:
         comment = QObject::tr("Not started");
         break;
-    case Jingle::State::PrepareLocalOffer:
+    case Jingle::State::ApprovedToSend:
         comment = QObject::tr("Prepare local offer");
         break;
     case Jingle::State::Unacked:
@@ -272,7 +273,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
                                 auto f = new QFile(fn, app);
                                 f->open(QIODevice::WriteOnly);
                                 f->seek(qint64(offset));
-                                Q_UNUSED(size);
+                                Q_UNUSED(size)
                                 app->setDevice(f);
                             });
                 }
