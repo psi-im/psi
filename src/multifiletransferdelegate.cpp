@@ -200,9 +200,10 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
     painter->setPen(spc);
     QFontMetrics fm(option.font);
     auto         str  = QRect(QPoint(textLeft, speedTop), QPoint(right, speedTop + fontPixelSize));
-    auto         stbr = fm.boundingRect(s);
+    auto         stbr = fm.boundingRect(s + " "); // space because of hinting, italic etc which requires more
     stbr.moveCenter(str.center());
 
+    painter->setFont(option.font);
     painter->drawText(stbr, int(option.displayAlignment), s);
     painter->restore();
 
