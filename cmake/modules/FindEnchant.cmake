@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright 2016-2017 Psi+ Project, Vitaly Tonkacheyev
+# Copyright 2016-2020 Psi+ Project, Vitaly Tonkacheyev
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,22 @@ endif()
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     if(PkgConfig_FOUND)
+        #Searching for enchant-1.x
         pkg_check_modules( PC_Enchant QUIET enchant )
-        set ( Enchant_DEFINITIONS
-            ${PC_Enchant_CFLAGS}
-            ${PC_Enchant_CFLAGS_OTHER}
+        if(NOT PC_Enchant_FOUND)
+            #If enchant-1.x not found searching for enchant-2.x
+            pkg_check_modules( PC_Enchant QUIET enchant-2 )
+        endif()
+        #set package variables
+        if(PC_Enchant_FOUND)
+            set(Enchant_DEFINITIONS
+                ${PC_Enchant_CFLAGS}
+                ${PC_Enchant_CFLAGS_OTHER}
             )
+            if(PC_Enchant_VERSION)
+                set(Enchant_VERSION ${PC_Enchant_VERSION})
+            endif()
+        endif()
     endif()
 endif()
 
@@ -48,26 +59,22 @@ set ( LIBINCS
 find_path(
     Enchant_INCLUDE_DIR ${LIBINCS}
     HINTS
-    ${Enchant_ROOT}/include
-    ${PC_Enchant_INCLUDEDIR}
     ${PC_Enchant_INCLUDE_DIRS}
+    ${Enchant_ROOT}/include
     PATH_SUFFIXES
-    ""
-    if ( NOT ${WIN32} )
     enchant
     enchant-2
-    endif ()
 )
 
 find_library(
     Enchant_LIBRARY
     NAMES enchant enchant-2
-    HINTS 
-    ${PC_Enchant_LIBDIR}
+    HINTS
     ${PC_Enchant_LIBRARY_DIRS}
     ${Enchant_ROOT}/lib
     ${Enchant_ROOT}/bin
 )
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
                 Enchant
@@ -76,42 +83,15 @@ find_package_handle_standard_args(
                 Enchant_INCLUDE_DIR
 )
 
-function(obtain_enchant_version LIBNAME OUTPUT_VERSION)
-    get_filename_component(ENCH_PATH ${LIBNAME} DIRECTORY)
-    file(GLOB LIB_WITH_VER "${ENCH_PATH}/*enchant*.so.[0-9].[0-9].[0-9]" FOLLOW_SYMLINKS)
-    file(GLOB LIB_WITH_SHORT_VER "${ENCH_PATH}/*enchant*.so.[0-9].[0-9]" FOLLOW_SYMLINKS)
-    if(LIB_WITH_VER)
-        string(REGEX MATCHALL "[0-9]\\.[0-9]\\.[0-9]$" VERLINE ${LIB_WITH_VER})
-    elseif(LIB_WITH_SHORT_VER)
-        string(REGEX MATCHALL "[0-9]\\.[0-9]$" VERLINE ${LIB_WITH_SHORT_VER})
-    endif()
-    if(CMAKE_MATCH_0)
-        set(${OUTPUT_VERSION} "${CMAKE_MATCH_0}" PARENT_SCOPE)
-    endif()
-endfunction()
-
-obtain_enchant_version("${Enchant_LIBRARY}" ENCH_VERSION)
-if(ENCH_VERSION)
-    set(Enchant_VERSION "${ENCH_VERSION}")
-else()
-    if(${Enchant_LIBRARY} MATCHES ".+enchant-2.+")
-        set(Enchant_VERSION "2.0")
-    else()
-        set(Enchant_VERSION "1.0")
-    endif()
-endif()
-
 if ( Enchant_FOUND )
     set ( Enchant_LIBRARIES ${Enchant_LIBRARY} )
     set ( Enchant_INCLUDE_DIRS ${Enchant_INCLUDE_DIR} )
-    if(PC_Enchant_VERSION)
-        set ( Enchant_VERSION ${PC_Enchant_VERSION} )
-    endif()
 endif()
 
 if( Enchant_VERSION )
     mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY Enchant_VERSION )
 else ()
+    message(WARNING "No enchant version found. For use enchant-2 library you should set HAVE_ENCHANT2 definition manually")
     mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY )
 endif()
 
