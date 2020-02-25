@@ -32,11 +32,13 @@ endif()
 
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
-    pkg_check_modules( PC_Enchant QUIET enchant )
-    set ( Enchant_DEFINITIONS 
-        ${PC_Enchant_CFLAGS}
-        ${PC_Enchant_CFLAGS_OTHER}
-    )
+    if(PkgConfig_FOUND)
+        pkg_check_modules( PC_Enchant QUIET enchant )
+        set ( Enchant_DEFINITIONS
+            ${PC_Enchant_CFLAGS}
+            ${PC_Enchant_CFLAGS_OTHER}
+            )
+    endif()
 endif()
 
 set ( LIBINCS 
@@ -53,12 +55,13 @@ find_path(
     ""
     if ( NOT ${WIN32} )
     enchant
+    enchant-2
     endif ()
 )
 
 find_library(
     Enchant_LIBRARY
-    NAMES enchant
+    NAMES enchant enchant-2
     HINTS 
     ${PC_Enchant_LIBDIR}
     ${PC_Enchant_LIBRARY_DIRS}
@@ -72,10 +75,36 @@ find_package_handle_standard_args(
                 Enchant_LIBRARY
                 Enchant_INCLUDE_DIR
 )
+
+function(obtain_enchant_version LIBNAME OUTPUT_VERSION)
+    get_filename_component(ENCH_PATH ${LIBNAME} DIRECTORY)
+    file(GLOB LIB_WITH_VER "${ENCH_PATH}/*enchant*.so.[0-9].[0-9].[0-9]" FOLLOW_SYMLINKS)
+    file(GLOB LIB_WITH_SHORT_VER "${ENCH_PATH}/*enchant*.so.[0-9].[0-9]" FOLLOW_SYMLINKS)
+    if(LIB_WITH_VER)
+        string(REGEX MATCHALL "[0-9]\\.[0-9]\\.[0-9]$" VERLINE ${LIB_WITH_VER})
+    elseif(LIB_WITH_SHORT_VER)
+        string(REGEX MATCHALL "[0-9]\\.[0-9]$" VERLINE ${LIB_WITH_SHORT_VER})
+    endif()
+    if(CMAKE_MATCH_0)
+        set(${OUTPUT_VERSION} "${CMAKE_MATCH_0}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+obtain_enchant_version("${Enchant_LIBRARY}" ENCH_VERSION)
+if(ENCH_VERSION)
+    set(Enchant_VERSION "${ENCH_VERSION}")
+else()
+    if(${Enchant_LIBRARY} MATCHES ".+enchant-2.+")
+        set(Enchant_VERSION "2.0")
+    else()
+        set(Enchant_VERSION "1.0")
+    endif()
+endif()
+
 if ( Enchant_FOUND )
     set ( Enchant_LIBRARIES ${Enchant_LIBRARY} )
     set ( Enchant_INCLUDE_DIRS ${Enchant_INCLUDE_DIR} )
-    if(PC_Enchant_FOUND)
+    if(PC_Enchant_VERSION)
         set ( Enchant_VERSION ${PC_Enchant_VERSION} )
     endif()
 endif()
