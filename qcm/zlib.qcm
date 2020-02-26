@@ -9,8 +9,7 @@ arg: with-zlib-lib=[path],Path to zlib library files
 //----------------------------------------------------------------------------
 // qc_zlib
 //----------------------------------------------------------------------------
-class qc_zlib : public ConfObj
-{
+class qc_zlib : public ConfObj {
 public:
     qc_zlib(Conf *c) : ConfObj(c) {}
     QString name() const { return "zlib"; }
@@ -18,95 +17,92 @@ public:
 
     bool exec()
     {
-    	QStringList incs;
-    	QString version, libs, other;
-    	QString s;
-    	
-    	
+        QStringList incs;
+        QString     version, libs, other;
+        QString     s;
 
-    	if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
+        if (!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
 
-    		s = conf->getenv("QC_WITH_ZLIB_INC");
-    		if(!s.isEmpty()) {
-    			if(!conf->checkHeader(s, "zlib.h"))
-    				return false;
-    		}
-    		else {
-    			if(!conf->findHeader("zlib.h", QStringList(), &s))
-    				return false;
-    		}
+            s = conf->getenv("QC_WITH_ZLIB_INC");
+            if (!s.isEmpty()) {
+                if (!conf->checkHeader(s, "zlib.h"))
+                    return false;
+            } else {
+                if (!conf->findHeader("zlib.h", QStringList(), &s))
+                    return false;
+            }
 
-    		QStringList libNames = QStringList() << "z";
-    		QString libName;
+            QStringList libNames = QStringList() << "z";
+            QString     libName;
 #ifdef Q_OS_WIN
-    		libNames << (qc_buildmode_debug? "zlibd" : "zlib");
+            libNames << (qc_buildmode_debug ? "zlibd" : "zlib");
 #endif
-    		for (;;) {
-    			s = conf->getenv("QC_WITH_ZLIB_LIB");
-    			if(!s.isEmpty()) {
-    				foreach (const QString l, libNames) 
-    					if(conf->checkLibrary(s, l)) {
-    						libName = l;
-    						break;
-    					}
-    			} else {
-    				foreach (const QString l, libNames) 
-    					if(conf->findLibrary(l, &s)) {
-    						libName = l;
-    						break;
-    					}
-    			}
-    			
-    			if(!libName.isEmpty())
-    				break;
-    					
-    			return false;
-    		}
-    		if (!s.isEmpty()) {
-    			libs = QString("-L%1 -l%2").arg(s, libName);
-    		} else {
-    			libs = s.isEmpty()? QString("-l")+libName : QString("-L%1 -l%2").arg(s, libName);
-    		}
-    	}
+            for (;;) {
+                s = conf->getenv("QC_WITH_ZLIB_LIB");
+                if (!s.isEmpty()) {
+                    foreach (const QString l, libNames)
+                        if (conf->checkLibrary(s, l)) {
+                            libName = l;
+                            break;
+                        }
+                } else {
+                    foreach (const QString l, libNames)
+                        if (conf->findLibrary(l, &s)) {
+                            libName = l;
+                            break;
+                        }
+                }
 
-    	foreach(const QString &inc, incs) {
-    		conf->addIncludePath(inc);
-    	}
-    	conf->addLib(libs);
+                if (!libName.isEmpty())
+                    break;
+
+                return false;
+            }
+            if (!s.isEmpty()) {
+                libs = QString("-L%1 -l%2").arg(s, libName);
+            } else {
+                libs = s.isEmpty() ? QString("-l") + libName : QString("-L%1 -l%2").arg(s, libName);
+            }
+        }
+
+        foreach (const QString &inc, incs) {
+            conf->addIncludePath(inc);
+        }
+        conf->addLib(libs);
 
 #ifdef Q_OS_WIN
-    	// HACK: on windows, always use psi's bundled minizip
-    	conf->addExtra("CONFIG += psi-minizip");
-    	return true;
+        // HACK: on windows, always use psi's bundled minizip
+        conf->addExtra("CONFIG += psi-minizip");
+        return true;
 #else
-    	incs.clear();
-    	libs.clear();
-    	if(!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {
+        incs.clear();
+        libs.clear();
+        if (!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {
 
-    		s = conf->getenv("QC_WITH_MINIZIP_INC");
-    		if ((!s.isEmpty() && conf->checkHeader(s, "unzip.h")) ||
-    		    (s.isEmpty() && conf->findHeader("unzip.h", QStringList(), &s))) {
-    			incs.append(s);
-    		}
+            s = conf->getenv("QC_WITH_MINIZIP_INC");
+            if ((!s.isEmpty() && conf->checkHeader(s, "unzip.h"))
+                || (s.isEmpty() && conf->findHeader("unzip.h", QStringList(), &s))) {
+                incs.append(s);
+            }
 
-    		s = conf->getenv("QC_WITH_MINIZIP_LIB");
-    		if((!s.isEmpty() && conf->checkLibrary(s, "minizip")) ||
-    		   (s.isEmpty() && conf->findLibrary("minizip", &s))) {
-    			libs = s.isEmpty()? "-lminizip" : QString("-L%1 -lminizip").arg(s);
-    		}
-    	}
+            s = conf->getenv("QC_WITH_MINIZIP_LIB");
+            if ((!s.isEmpty() && conf->checkLibrary(s, "minizip"))
+                || (s.isEmpty() && conf->findLibrary("minizip", &s))) {
+                libs = s.isEmpty() ? "-lminizip" : QString("-L%1 -lminizip").arg(s);
+            }
+        }
 
-    	if (!incs.isEmpty() && !libs.isEmpty()) {
-    		foreach(const QString &inc, incs) {
-    			conf->addIncludePath(inc);
-    		}
-    		conf->addLib(libs);
-    	} else {
+        if (!incs.isEmpty() && !libs.isEmpty()) {
+            foreach (const QString &inc, incs) {
+                conf->addIncludePath(inc);
+            }
+            conf->addLib(libs);
+        } else {
             conf->addExtra("CONFIG += psi-minizip");
             conf->addExtra("bsd:DEFINES += IOAPI_NO_64");
-    	}
+        }
 
-    	return true;
+        return true;
 #endif
     }
 };

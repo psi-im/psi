@@ -7,8 +7,7 @@ name: spellcheck engine
 //----------------------------------------------------------------------------
 // qc_spell
 //----------------------------------------------------------------------------
-class qc_spell : public ConfObj
-{
+class qc_spell : public ConfObj {
 public:
     QString engine;
 
@@ -18,64 +17,61 @@ public:
 
     bool exec()
     {
-    	// on mac, always use built-in spell check
+        // on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-    	engine = "using Mac built-in";
-    	return true;
+        engine = "using Mac built-in";
+        return true;
 #endif
 
-    	bool have = false;
-    	QStringList defs, incs, libs;
+        bool        have = false;
+        QStringList defs, incs, libs;
 
 #ifdef QC_ENCHANT
-    	if(!have && qc_enchant_have)
-    	{
-    		defs = qc_enchant_defs;
-    		incs = qc_enchant_incs;
-    		libs = qc_enchant_libs;
-    		engine = "enchant";
-    		have = true;
-    	}
+        if (!have && qc_enchant_have) {
+            defs   = qc_enchant_defs;
+            incs   = qc_enchant_incs;
+            libs   = qc_enchant_libs;
+            engine = "enchant";
+            have   = true;
+        }
 #endif
 #ifdef QC_ASPELL
-    	if(!have && qc_aspell_have)
-    	{
-    		defs = qc_aspell_defs;
-    		incs = qc_aspell_incs;
-    		libs = qc_aspell_libs;
-    		engine = "aspell";
-    		have = true;
-    	}
+        if (!have && qc_aspell_have) {
+            defs   = qc_aspell_defs;
+            incs   = qc_aspell_incs;
+            libs   = qc_aspell_libs;
+            engine = "aspell";
+            have   = true;
+        }
 #endif
 #ifdef QC_HUNSPELL
-    	if(!have && qc_hunspell_have)
-    	{
-    		defs = qc_hunspell_defs;
-    		incs = qc_hunspell_incs;
-    		libs = qc_hunspell_libs;
-    		engine = "hunspell";
-    		have = true;
-    	}
+        if (!have && qc_hunspell_have) {
+            defs   = qc_hunspell_defs;
+            incs   = qc_hunspell_incs;
+            libs   = qc_hunspell_libs;
+            engine = "hunspell";
+            have   = true;
+        }
 #endif
 
-    	if(!have)
-    		return true;
+        if (!have)
+            return true;
 
-    	for(int n = 0; n < defs.count(); ++n)
-    		conf->addDefine(defs[n]);
-    	for(int n = 0; n < incs.count(); ++n)
-    		conf->addIncludePath(incs[n]);
-    	for(int n = 0; n < libs.count(); ++n)
-    		conf->addLib(libs[n]);
+        for (int n = 0; n < defs.count(); ++n)
+            conf->addDefine(defs[n]);
+        for (int n = 0; n < incs.count(); ++n)
+            conf->addIncludePath(incs[n]);
+        for (int n = 0; n < libs.count(); ++n)
+            conf->addLib(libs[n]);
 
-    	return true;
+        return true;
     }
 
     QString resultString() const
     {
-    	if(!engine.isEmpty())
-    		return engine;
-    	else
-    		return "no";
+        if (!engine.isEmpty())
+            return engine;
+        else
+            return "no";
     }
 };

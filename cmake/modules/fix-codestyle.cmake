@@ -11,6 +11,7 @@ if(CLF_BIN)
         *.hpp
         *.h
         *.mm
+        ../qcm/*.qcm
     )
     foreach(src_file ${SRC_LIST})
         #Exclude libpsi

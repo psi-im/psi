@@ -7,8 +7,7 @@ name: Xorg X11
 //----------------------------------------------------------------------------
 // qc_x11
 //----------------------------------------------------------------------------
-class qc_x11 : public ConfObj
-{
+class qc_x11 : public ConfObj {
 public:
     qc_x11(Conf *c) : ConfObj(c) {}
 
@@ -18,16 +17,15 @@ public:
 
     bool exec()
     {
-    	QString str =
-    		"int main()\n"
-    		"{\n"
-    		"    return 0;\n"
-    		"}\n";
-    	QString proextra = "CONFIG += x11\n";
+        QString str = "int main()\n"
+                      "{\n"
+                      "    return 0;\n"
+                      "}\n";
+        QString proextra = "CONFIG += x11\n";
 #if QT_VERSION >= 0x050000 && defined Q_OS_LINUX
-    	proextra += "LIBS += -lxcb\n";
-    	proextra += "QT += x11extras\n";
+        proextra += "LIBS += -lxcb\n";
+        proextra += "QT += x11extras\n";
 #endif
-    	return conf->doCompileAndLink(str, QStringList(), QString(), proextra, nullptr);
+        return conf->doCompileAndLink(str, QStringList(), QString(), proextra, nullptr);
     }
 };

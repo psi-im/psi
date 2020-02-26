@@ -10,12 +10,9 @@ name: Qt Keychain
 // id, shortname, name, extraConfIfFound
 QC_FIND_QT_COMP_BASE(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain", _base)
 
-class qc_keychain : public qc_keychain_base
-{
+class qc_keychain : public qc_keychain_base {
 public:
-    qc_keychain(Conf *c) :
-        qc_keychain_base(c)
-    {}
+    qc_keychain(Conf *c) : qc_keychain_base(c) {}
 
     bool exec()
     {
@@ -33,23 +30,24 @@ public:
 
         QStringList libnames;
 #ifdef _MSC_VER
-# ifdef QC_BUILDMODE
-    	libnames += (qc_buildmode_debug? "libqt5keychaind" : "libqt5keychain"); // possibly static
-        libnames += (qc_buildmode_debug? "qt5keychaind" : "qt5keychain"); // possibly dynamic
-# else
-    	libnames << "libqt5keychain" << "qt5keychain";
-# endif
+#ifdef QC_BUILDMODE
+        libnames += (qc_buildmode_debug ? "libqt5keychaind" : "libqt5keychain"); // possibly static
+        libnames += (qc_buildmode_debug ? "qt5keychaind" : "qt5keychain");       // possibly dynamic
+#else
+        libnames << "libqt5keychain"
+                 << "qt5keychain";
+#endif
 #else
         libnames << "qt5keychain";
 #endif
         QString libName;
-        foreach (const QString l, libnames) 
-            if(conf->findLibrary(l, &s)) {
+        foreach (const QString l, libnames)
+            if (conf->findLibrary(l, &s)) {
                 libName = l;
                 break;
             }
 
-        if(libName.isEmpty()) {
+        if (libName.isEmpty()) {
             qWarning("keychain library qt5keychain is not found");
             return false;
         }

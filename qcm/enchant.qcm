@@ -5,7 +5,7 @@ name: enchant
 */
 
 #define QC_ENCHANT
-bool qc_enchant_have = false;
+bool        qc_enchant_have = false;
 QStringList qc_enchant_defs;
 QStringList qc_enchant_incs;
 QStringList qc_enchant_libs;
@@ -13,8 +13,7 @@ QStringList qc_enchant_libs;
 //----------------------------------------------------------------------------
 // qc_enchant
 //----------------------------------------------------------------------------
-class qc_enchant : public ConfObj
-{
+class qc_enchant : public ConfObj {
 public:
     qc_enchant(Conf *c) : ConfObj(c) {}
     QString name() const { return "enchant"; }
@@ -25,28 +24,30 @@ public:
 
     bool exec()
     {
-                // on mac, always use built-in spell check
+        // on mac, always use built-in spell check
 #ifdef Q_OS_MAC
-    	return false;
+        return false;
 #endif
 
-    	qc_enchant_have = false;
-    	qc_enchant_defs.clear();
-    	qc_enchant_incs.clear();
-    	qc_enchant_libs.clear();
+        qc_enchant_have = false;
+        qc_enchant_defs.clear();
+        qc_enchant_incs.clear();
+        qc_enchant_libs.clear();
 
-    	QStringList incs;
-    	QString version, libs, other;
-    	if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
-                        return false;
-    	if(conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other))
-                        qc_enchant_defs += "HAVE_ENCHANT2";
+        QStringList incs;
+        QString     version, libs, other;
+        if (!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
+            if (conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
+                qc_enchant_defs += "HAVE_ENCHANT2";
+            } else {
+                return false;
+            }
 
-    	qc_enchant_defs += "HAVE_ENCHANT";
-    	qc_enchant_incs += incs;
-    	qc_enchant_libs += libs;
-    	qc_enchant_have = true;
+        qc_enchant_defs += "HAVE_ENCHANT";
+        qc_enchant_incs += incs;
+        qc_enchant_libs += libs;
+        qc_enchant_have = true;
 
-    	return true;
+        return true;
     }
 };
