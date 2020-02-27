@@ -37,7 +37,7 @@ public:
         QStringList incs;
         QString     version, libs, other;
         if (!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
-            if (conf->findPkgConfig("enchant", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
+            if (conf->findPkgConfig("enchant-2", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
                 qc_enchant_defs += "HAVE_ENCHANT2";
             } else {
                 return false;
