@@ -320,7 +320,12 @@ void GAdvancedWidget::Private::restoreGeometry(QRect savedGeometry)
 {
     QRect geom = savedGeometry;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QRect r = QApplication::screenAt(geom.topLeft())->geometry();
+    QScreen *screen;
+    if (!(screen = QApplication::screenAt(geom.topLeft()))) {
+        qWarning("Failed to find screen for coords %dx%d", geom.topLeft().x(), geom.topLeft().y());
+        return;
+    }
+    QRect r = screen->geometry();
 #else
     QDesktopWidget *pdesktop = QApplication::desktop();
     int             nscreen  = pdesktop->screenNumber(geom.topLeft());
