@@ -95,10 +95,6 @@ find_package( Qca REQUIRED )
 if(LINUX)
     find_package(X11 REQUIRED)
     include_directories(${X11_INCLUDE_DIR})
-    if(USE_XSS)
-        list(APPEND EXTRA_LIBS ${X11_Xscreensaver_LIB})
-        include_directories(${X11_Xscreensaver_INCLUDE_PATH})
-    endif()
 endif()
 
 if(HAIKU)
@@ -434,6 +430,7 @@ target_link_libraries(${PROJECT_NAME}
     tabs
     AutoUpdater
 )
+
 if(APPLE)
     target_link_libraries(${PROJECT_NAME} CocoaUtilities)
 endif()
