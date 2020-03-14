@@ -48,6 +48,7 @@ option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
+option( USE_XSS "Enable Xscreensaver support. Linux only" ON )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
@@ -145,6 +146,10 @@ if(UNIX AND NOT (APPLE OR HAIKU))
         -DAPP_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DAPP_BIN_NAME=${PROJECT_NAME}
     )
+    if(USE_XSS)
+        add_definitions( -DHAVE_XSS )
+        message(STATUS "Xscreensaver support - ENABLED")
+    endif()
 endif()
 
 #Detect *BSD systems

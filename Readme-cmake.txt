@@ -141,6 +141,10 @@ or
   In OS Windows enables prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
   In Linux sets PSI_DATA directory to current binary direrctory (Usefull to debug plugins)
 
+>  -DUSE_XSS=ON
+
+  In OS Linux adds XScreensaver support (default ON).
+  
 ## Work with plugins:
 
 ### Next flags are working only if ENABLE_PLUGINS or ONLY_PLUGINS are enabled
