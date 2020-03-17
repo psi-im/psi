@@ -233,9 +233,18 @@ endif()
 
 if(UNIX OR IS_WEBENGINE)
     add_definitions(-DHAVE_WEBSERVER)
+    find_package(HttpParser QUIET)
+    if(NOT HttpParser_FOUND)
+        include_directories(
+            ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
+        )
+    else()
+        include_directories(
+            ${HttpParser_INCLUDE_DIR}
+        )
+    endif()
     include_directories(
         ${PROJECT_SOURCE_DIR}/3rdparty
-        ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
         ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/src
         ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/src/private
     )

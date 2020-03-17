@@ -26,14 +26,21 @@ include_directories(
 )
 
 find_package(Qt5 REQUIRED Core Network)
+find_package(HttpParser QUIET)
 
-set(http_parser_srcs
-    http-parser/http_parser.c
-)
+if(NOT HttpParser_FOUND)
+    set(http_parser_srcs
+        http-parser/http_parser.c
+    )
 
-set(http_parser_hdrs
-    http-parser/http_parser.h
-)
+    set(http_parser_hdrs
+        http-parser/http_parser.h
+    )
+else()
+    include_directories(${HttpParser_INCLUDE_DIR})
+    message(STATUS "Found http_parser: ${HttpParser_LIBRARY}")
+    list(APPEND EXTRA_LIBS ${HttpParser_LIBRARY})
+endif()
 
 set(qhttp_srcs
     qhttp/src/qhttpabstracts.cpp
@@ -91,7 +98,7 @@ if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 endif()
 
-target_link_libraries(qhttp Qt5::Core Qt5::Network)
+target_link_libraries(qhttp Qt5::Core Qt5::Network ${EXTRA_LIBS})
 target_include_directories(qhttp
     PUBLIC
     ./qhttp/src
