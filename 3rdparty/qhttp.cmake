@@ -22,13 +22,13 @@ include_directories(
     .
     ./qhttp/src
     ./qhttp/src/private
-    ./http-parser
 )
 
 find_package(Qt5 REQUIRED Core Network)
 find_package(HttpParser QUIET)
 
 if(NOT HttpParser_FOUND)
+    include_directories(./http-parser)
     set(http_parser_srcs
         http-parser/http_parser.c
     )
