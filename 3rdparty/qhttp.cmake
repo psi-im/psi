@@ -25,7 +25,7 @@ include_directories(
 )
 
 find_package(Qt5 REQUIRED Core Network)
-find_package(HttpParser QUIET "2.2")
+find_package(HttpParser 2.2 QUIET)
 FIND_PACKAGE_MESSAGE(HttpParser "Found HttpParser-${HttpParser_VERSION}: ${HttpParser_LIBRARY}"
                      "[${HttpParser_LIBRARY}][${X11_INCLUDE_DIR}][${HttpParser_VERSION}]")
 
