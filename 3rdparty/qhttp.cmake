@@ -25,7 +25,9 @@ include_directories(
 )
 
 find_package(Qt5 REQUIRED Core Network)
-find_package(HttpParser QUIET)
+find_package(HttpParser QUIET "2.2")
+FIND_PACKAGE_MESSAGE(HttpParser "Found HttpParser-${HttpParser_VERSION}: ${HttpParser_LIBRARY}"
+                     "[${HttpParser_LIBRARY}][${X11_INCLUDE_DIR}][${HttpParser_VERSION}]")
 
 if(NOT HttpParser_FOUND)
     include_directories(./http-parser)
@@ -38,7 +40,6 @@ if(NOT HttpParser_FOUND)
     )
 else()
     include_directories(${HttpParser_INCLUDE_DIR})
-    message(STATUS "Found http_parser: ${HttpParser_LIBRARY}")
     list(APPEND EXTRA_LIBS ${HttpParser_LIBRARY})
 endif()
 

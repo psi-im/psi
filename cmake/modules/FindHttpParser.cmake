@@ -45,12 +45,35 @@ find_library(
     ${HTTP_PARSER_ROOT}/bin
 )
 
+#Obtain library version
+if(HttpParser_INCLUDE_DIR)
+    set(INC_FILE "${HttpParser_INCLUDE_DIR}/http_parser.h")
+    file(STRINGS "${INC_FILE}" VER_LINES)
+    string(REGEX MATCH "HTTP_PARSER_VERSION_MAJOR ([0-9]+)" VER_LINE_MAJOR ${VER_LINES})
+    if(CMAKE_MATCH_1)
+        set(HttpParser_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    endif()
+    string(REGEX MATCH "HTTP_PARSER_VERSION_MINOR ([0-9]+)" VER_LINE_MINOR ${VER_LINES})
+    if(CMAKE_MATCH_1)
+        set(HttpParser_VERSION_MINOR "${CMAKE_MATCH_1}")
+    endif()
+    string(REGEX MATCH "HTTP_PARSER_VERSION_PATCH ([0-9]+)" VER_LINE_PATCH ${VER_LINES})
+    if(CMAKE_MATCH_1)
+        set(HttpParser_VERSION_PATCH "${CMAKE_MATCH_1}")
+    endif()
+    if(HttpParser_VERSION_MAJOR AND (HttpParser_VERSION_MINOR AND HttpParser_VERSION_PATCH))
+        set(HttpParser_VERSION "${HttpParser_VERSION_MAJOR}.${HttpParser_VERSION_MINOR}.${HttpParser_VERSION_PATCH}")
+    endif()
+endif()
+
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
                 HttpParser
                 DEFAULT_MSG
                 HttpParser_LIBRARY
                 HttpParser_INCLUDE_DIR
+                HttpParser_VERSION
 )
 
 if (HttpParser_FOUND)
@@ -58,5 +81,5 @@ if (HttpParser_FOUND)
     set ( HttpParser_INCLUDE_DIRS ${HttpParser_INCLUDE_DIR} )
 endif()
 
-mark_as_advanced( HttpParser_INCLUDE_DIR HttpParser_LIBRARY )
+mark_as_advanced( HttpParser_INCLUDE_DIR HttpParser_LIBRARY HttpParser_VERSION )
 

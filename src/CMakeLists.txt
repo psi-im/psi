@@ -233,7 +233,7 @@ endif()
 
 if(UNIX OR IS_WEBENGINE)
     add_definitions(-DHAVE_WEBSERVER)
-    find_package(HttpParser QUIET)
+    find_package(HttpParser QUIET "2.2")
     if(NOT HttpParser_FOUND)
         include_directories(
             ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
