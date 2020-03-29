@@ -49,7 +49,10 @@ if(USE_KEYCHAIN)
 endif()
 
 if(LINUX)
-    find_package(Qt5 COMPONENTS DBus X11Extras REQUIRED)
+    find_package(Qt5 COMPONENTS X11Extras REQUIRED)
+    if(USE_DBUS)
+        find_package(Qt5 COMPONENTS DBus REQUIRED)
+    endif()
     find_package(XCB REQUIRED)
     set(EXTRA_LIBS
         ${XCB_LIBRARY}

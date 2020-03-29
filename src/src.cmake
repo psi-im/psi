@@ -10,7 +10,7 @@ add_definitions(
     -DHAVE_CONFIG
     )
 
-if(UNIX AND NOT (APPLE OR HAIKU))
+if(USE_DBUS AND LINUX)
     add_definitions(
         -DUSE_DBUS
         )
@@ -269,17 +269,26 @@ if(UNIX OR IS_WEBENGINE)
         webserver.h)
 endif()
 
-if(UNIX AND NOT APPLE AND NOT HAIKU)
+if(LINUX)
+    if(USE_DBUS)
+        list(APPEND SOURCES
+            dbus.cpp
+            activeprofiles_dbus.cpp
+            psidbusnotifier.cpp
+            )
+        list(APPEND HEADERS
+            psidbusnotifier.h
+            dbus.h
+            )
+    else()
+        list(APPEND SOURCES
+            activeprofiles_stub.cpp
+            )
+    endif()
     list(APPEND SOURCES
-        dbus.cpp
-        activeprofiles_dbus.cpp
-        psidbusnotifier.cpp
         x11windowsystem.cpp
         )
-
     list(APPEND HEADERS
-        psidbusnotifier.h
-        dbus.h
         x11windowsystem.h
         )
 elseif(APPLE)

@@ -49,6 +49,7 @@ option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, 
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 option( USE_XSS "Enable Xscreensaver support. Linux only" ON )
+option( USE_DBUS "Enable DBUS support" ON )
 #Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
@@ -149,6 +150,9 @@ if(UNIX AND NOT (APPLE OR HAIKU))
     if(USE_XSS)
         add_definitions( -DHAVE_XSS )
         message(STATUS "Xscreensaver support - ENABLED")
+    endif()
+    if(USE_DBUS)
+        message(STATUS "DBus support - ENABLED")
     endif()
 endif()
 

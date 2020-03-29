@@ -143,7 +143,11 @@ or
 
 >  -DUSE_XSS=ON
 
-  In OS Linux adds XScreensaver support (default ON).
+  In Linux OS adds XScreensaver support (default ON).
+
+> -DUSE_DBUS = ON
+
+  In Linux OS enables DBus support for client management, notifications, tunes (default ON).
   
 ## Work with plugins:
 

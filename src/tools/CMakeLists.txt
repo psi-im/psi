@@ -120,19 +120,21 @@ elseif(WIN32)
         tunecontroller/winamptunecontroller.h
         tunecontroller/plugins/winamp/winampplugin.h
     )
-elseif(LINUX)  
-    include_directories(tunecontroller/plugins/mpris)
-    add_definitions(-DTC_MPRIS)
-    list(APPEND SOURCES
-        tunecontroller/plugins/mpris/mprisplugin.cpp
+elseif(LINUX)
+    if(USE_DBUS)
+        include_directories(tunecontroller/plugins/mpris)
+        add_definitions(-DTC_MPRIS)
+        list(APPEND SOURCES
+            tunecontroller/plugins/mpris/mprisplugin.cpp
 
-        tunecontroller/mpristunecontroller.cpp
-        tunecontroller/plugins/mpris/mprisplugin.cpp
-    )
+            tunecontroller/mpristunecontroller.cpp
+            tunecontroller/plugins/mpris/mprisplugin.cpp
+        )
 
-    list(APPEND HEADERS
-        tunecontroller/mpristunecontroller.h
-    )
+        list(APPEND HEADERS
+            tunecontroller/mpristunecontroller.h
+        )
+    endif()
 endif()
 
 add_library(tools STATIC ${SOURCES} ${HEADERS})
