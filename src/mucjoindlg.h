@@ -25,6 +25,7 @@
 #include "xmpp_jid.h"
 
 #include <QDialog>
+#include <QTimer>
 
 class PsiCon;
 class QString;
@@ -67,6 +68,7 @@ private:
     QPushButton *             joinButton_;
     XMPP::Jid                 jid_;
     PsiAccount::MucJoinReason reason_;
+    QTimer *                  timer_;
     bool                      nickAlreadyCompleted_;
 
     void disableWidgets();

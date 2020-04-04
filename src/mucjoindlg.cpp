@@ -35,6 +35,7 @@
 
 static const int     nickConflictCode = 409;
 static const QString additionalSymbol = "_";
+static const int     timeout          = 30000;
 
 MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlreadyCompleted_(false)
 {
@@ -53,6 +54,10 @@ MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlre
     ui_.ck_history->hide();
     joinButton_ = ui_.buttonBox->addButton(tr("&Join"), QDialogButtonBox::AcceptRole);
     joinButton_->setDefault(true);
+    timer_ = new QTimer(this);
+    timer_->setInterval(timeout);
+    connect(timer_, &QTimer::timeout, this,
+            [this]() { error(404, tr("No response from server for %1 seconds").arg(timeout / 1000)); });
 
     reason_ = PsiAccount::MucCustomJoin;
 
@@ -269,6 +274,7 @@ void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
     account_->dialogRegister(this, jid_);
 
     setWidgetsEnabled(false);
+    timer_->start();
     ui_.busy->start();
 }
 
@@ -283,6 +289,7 @@ void MUCJoinDlg::setWidgetsEnabled(bool enabled)
 void MUCJoinDlg::joined()
 {
     controller_->recentGCAdd(jid_.full());
+    timer_->stop();
     ui_.busy->stop();
 
     nickAlreadyCompleted_ = false;
@@ -293,6 +300,7 @@ void MUCJoinDlg::joined()
 
 void MUCJoinDlg::error(int error, const QString &str)
 {
+    timer_->stop();
     ui_.busy->stop();
     setWidgetsEnabled(true);
 
