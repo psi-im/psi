@@ -1,4 +1,4 @@
-INCLUDEPATH += $$PWD/include
+INCLUDEPATH += $$PWD/include $$PREFIX/include/psi-plus $$PREFIX/include/psi
 
 HEADERS += \
     $$PWD/include/psiplugin.h \
