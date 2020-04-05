@@ -79,9 +79,11 @@ unix {
 
     psi_plugins {
         pluginsfiles.path  = $$PSI_DATADIR/plugins
-        pluginsfiles.files = plugins/plugins.pri plugins/psiplugin.pri plugins/include $$top_builddir/pluginsconf.pri
+        pluginsfiles.files = plugins/plugins.pri plugins/psiplugin.pri $$top_builddir/pluginsconf.pri
 
-        INSTALLS += pluginsfiles
+        pluginsheaders.path = $$PREFIX/include/$$TARGET/plugins
+        pluginsheaders.extra = cp -f $$top_srcdir/src/plugins/include/*.h $(INSTALL_ROOT)$$pluginsheaders.path/
+        INSTALLS += pluginsfiles pluginsheaders
     }
 }
 
