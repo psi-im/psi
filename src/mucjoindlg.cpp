@@ -56,8 +56,10 @@ MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlre
     joinButton_->setDefault(true);
     timer_ = new QTimer(this);
     timer_->setInterval(timeout);
-    connect(timer_, &QTimer::timeout, this,
-            [this]() { error(404, tr("No response from server for %1 seconds").arg(timeout / 1000)); });
+    connect(timer_, &QTimer::timeout, this, [this]() {
+        account_->groupChatLeave(jid_.domain(), jid_.node());
+        error(404, tr("No response from server for %1 seconds").arg(timeout / 1000));
+    });
 
     reason_ = PsiAccount::MucCustomJoin;
 
