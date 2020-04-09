@@ -1003,10 +1003,6 @@ QString PsiIconset::caps2client(const QString &name)
     if ((it != d->client2icon.constEnd() && name.startsWith(it.key()))
         || (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
 
-        if (name.toLower().startsWith("miranda")) {
-            qDebug("gotcha!");
-        }
-
         for (const ClientIconCheck &ic : it.value()) {
             if (ic.inside.isEmpty()) {
                 return ic.icon;
