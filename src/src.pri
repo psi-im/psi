@@ -622,6 +622,7 @@ psi_plugins {
         $$PWD/pluginmanager.cpp \
         $$PWD/pluginhost.cpp
 
+    include($$PWD/plugins/pluginsconf.pri)
     include($$PWD/plugins/plugins.pri)
 }
 
