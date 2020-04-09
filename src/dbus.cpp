@@ -27,6 +27,7 @@ public Q_SLOTS:
     void raise();
     void sleep();
     void wake();
+    void recvNextEvent();
     /*Q_SIGNALS:
         void psi_pong();
     */
@@ -51,6 +52,9 @@ void PsiConAdapter::raise() { emit ActiveProfiles::instance()->raiseRequested();
 void PsiConAdapter::sleep() { psicon->doSleep(); }
 
 void PsiConAdapter::wake() { psicon->doWakeup(); }
+
+void PsiConAdapter::recvNextEvent() { psicon->recvNextEvent(); }
+
 
 void addPsiConAdapter(PsiCon *psicon)
 {
