@@ -62,6 +62,10 @@ struct ClientIconCheck {
  *   "psi+" => [{"psi-plus",[]}]
  * }
  *
+ * Where psi/psi+        - caps/client name (or its beginning) as it comes from client_icons.txt.
+ *       psi-plus/psi-ny - icon name
+ *       fork/plus/ny    - parts of caps/client name
+ *
  * Now for example we need to lookup icon for caps node "psiplus.com". The most still mathing item here is "psi",
  * (psi+ won't match because psiplus.com doesn't start with psi+). And we don't have anything like "psip" or "psipl"..
  * So we review just "psi" (all its items consequently)
@@ -484,10 +488,10 @@ bool PsiIconset::loadClients()
         d->loadIconset(&d->clients, &clients);
         d->clients.addToFactory();
 
-        QSet<QString> iconsId;
+        QSet<QString> iconNames;
         auto          it = clients.iterator();
         while (it.hasNext()) {
-            iconsId.insert(it.next()->name().section('/', 1, 1));
+            iconNames.insert(it.next()->name().section('/', 1, 1));
         }
 
         ClientIconMap cm; // start part, spec[spec2[spec3]]
@@ -506,7 +510,7 @@ bool PsiIconset::loadClients()
             while (!(line = stream.readLine()).isNull()) {
                 line             = line.trimmed();
                 QString iconName = line.section(QLatin1Char(' '), 0, 0);
-                if (!iconName.length() || !iconsId.contains(iconName)) {
+                if (iconName.isEmpty() || !iconNames.contains(iconName)) {
                     continue;
                 }
                 ClientIconCheck ic   = { iconName, QStringList() };
@@ -529,6 +533,13 @@ bool PsiIconset::loadClients()
                     }
                 }
             }
+
+            // do some sorting to keep elements with a lot of # first
+            for (auto &checkList : cm) {
+                std::sort(checkList.begin(), checkList.end(),
+                          [](const auto &a, const auto &b) { return a.inside.size() > b.inside.size(); });
+            }
+
             /* insert end boundry element to make search implementation simple */
             cm.insert(QLatin1String("~"), QList<ClientIconCheck>());
             return true;
@@ -983,25 +994,32 @@ void PsiIconset::removeAnimation(Iconset *is)
 
 QString PsiIconset::caps2client(const QString &name)
 {
-    ClientIconMap::const_iterator it = d->client2icon.lowerBound(name);
-    if (d->client2icon.size()) {
-        // if name starts with found key or with key of previous item
-        if ((it != d->client2icon.constEnd() && name.startsWith(it.key()))
-            || (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
-            foreach (const ClientIconCheck &ic, it.value()) {
-                if (ic.inside.isEmpty()) {
-                    return ic.icon;
+    if (d->client2icon.isEmpty()) {
+        return QString();
+    }
+
+    auto it = d->client2icon.lowerBound(name);
+    // if name starts with found key or with key of previous item
+    if ((it != d->client2icon.constEnd() && name.startsWith(it.key()))
+        || (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
+
+        if (name.toLower().startsWith("miranda")) {
+            qDebug("gotcha!");
+        }
+
+        for (const ClientIconCheck &ic : it.value()) {
+            if (ic.inside.isEmpty()) {
+                return ic.icon;
+            }
+            bool matched = true;
+            for (const QString &s : ic.inside) {
+                if (!name.contains(s)) {
+                    matched = false;
+                    break;
                 }
-                bool matched = true;
-                foreach (const QString &s, ic.inside) {
-                    if (!name.contains(s)) {
-                        matched = false;
-                        break;
-                    }
-                }
-                if (matched) {
-                    return ic.icon;
-                }
+            }
+            if (matched) {
+                return ic.icon;
             }
         }
     }
