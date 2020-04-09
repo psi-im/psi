@@ -1,6 +1,6 @@
 /*
  * contactmanagerdlg.cpp
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,37 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QMessageBox>
-#include <QItemSelectionModel>
-#include <QFileDialog>
-#include <QFile>
-#include <QScrollArea>
-#include <QCheckBox>
-
 #include "contactmanagerdlg.h"
 
-#include "psiaccount.h"
-#include "userlist.h"
-#include "xmpp_tasks.h"
-#include "psiiconset.h"
-#include "vcardfactory.h"
 //#include "contactview.h"
+#include "xmpp_client.h"
+#include "xmpp_tasks.h"
 
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "userlist.h"
+#include "vcardfactory.h"
 
-ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
-    QDialog(0, Qt::Window),
-    pa_(pa),
-    um(0)
+#include <QCheckBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QItemSelectionModel>
+#include <QMessageBox>
+#include <QScrollArea>
+
+ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) : QDialog(nullptr, Qt::Window), pa_(pa), um(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose, true);
     ui_.setupUi(this);
     pa_->dialogRegister(this);
-    setWindowTitle(tr("Contacts Manager")+" - "+pa->jid().bare());
+    setWindowTitle(tr("Contacts Manager") + " - " + pa->jid().bare());
     setWindowIcon(IconsetFactory::icon("psi/action_contacts_manager").icon());
 
     um = new ContactManagerModel(this, pa_);
@@ -69,15 +66,11 @@ ContactManagerDlg::ContactManagerDlg(PsiAccount *pa) :
     connect(ui_.btnExecute, SIGNAL(clicked()), this, SLOT(executeCurrent()));
     connect(ui_.btnSelect, SIGNAL(clicked()), this, SLOT(doSelect()));
 
-    connect(pa_->client(), SIGNAL(rosterRequestFinished(bool,int,QString)), this, SLOT(client_rosterUpdated(bool,int,QString)));
+    connect(pa_->client(), SIGNAL(rosterRequestFinished(bool, int, QString)), this,
+            SLOT(client_rosterUpdated(bool, int, QString)));
 }
 
-
-
-ContactManagerDlg::~ContactManagerDlg()
-{
-    pa_->dialogUnregister(this);
-}
+ContactManagerDlg::~ContactManagerDlg() { pa_->dialogUnregister(this); }
 
 void ContactManagerDlg::changeEvent(QEvent *e)
 {
@@ -92,79 +85,78 @@ void ContactManagerDlg::changeEvent(QEvent *e)
 
 void ContactManagerDlg::doSelect()
 {
-    int type = ui_.cmbMatchType->itemData(ui_.cmbMatchType->currentIndex()).toInt();
+    int type       = ui_.cmbMatchType->itemData(ui_.cmbMatchType->currentIndex()).toInt();
     int coumnIndex = ui_.cmbField->currentIndex();
-    um->invertByMatch(coumnIndex + 1, type,  ui_.edtMatch->text());
+    um->invertByMatch(coumnIndex + 1, type, ui_.edtMatch->text());
 }
 
 void ContactManagerDlg::executeCurrent()
 {
-    int action = ui_.cbAction->itemData(ui_.cbAction->currentIndex()).toInt();
-    QList<UserListItem *> users = um->checkedUsers();
+    int                   action = ui_.cbAction->itemData(ui_.cbAction->currentIndex()).toInt();
+    QList<UserListItem *> users  = um->checkedUsers();
     if (!users.count() && action != 9) {
         return;
     }
     switch (action) {
-        case 1: //message
-            {
-                QList<XMPP::Jid> list;
-                foreach (UserListItem *u, users) {
-                    list.append(u->jid().full());
-                }
-                pa_->actionSendMessage(list);
+    case 1: // message
+    {
+        QList<XMPP::Jid> list;
+        foreach (UserListItem *u, users) {
+            list.append(u->jid().full());
+        }
+        pa_->actionSendMessage(list);
+    } break;
+    case 2: // remove
+    {
+        if (QMessageBox::question(this, tr("Removal confirmation"),
+                                  tr("Are you sure want to delete selected contacts?"),
+                                  QMessageBox::Yes | QMessageBox::No)
+            != QMessageBox::Yes) {
+            return;
+        }
+        um->startBatch();
+        foreach (UserListItem *u, users) {
+            if (u->isTransport() && !Jid(pa_->client()->host()).compare(u->jid())) {
+                JT_UnRegister *ju = new JT_UnRegister(pa_->client()->rootTask());
+                ju->unreg(u->jid());
+                ju->go(true);
             }
-            break;
-        case 2: //remove
-            {
-                if (QMessageBox::question(this, tr("Removal confirmation"),
-                                          tr("Are you sure want to delete selected contacts?"),
-                                          QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-                    return;
-                }
-                um->startBatch();
-                foreach (UserListItem *u, users) {
-                    if(u->isTransport() && !Jid(pa_->client()->host()).compare(u->jid())) {
-                        JT_UnRegister *ju = new JT_UnRegister(pa_->client()->rootTask());
-                        ju->unreg(u->jid());
-                        ju->go(true);
-                    }
-                    JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
-                    r->remove(u->jid());
-                    r->go(true);
-                }
-                um->clear();
-                pa_->client()->rosterRequest();
-            }
-            break;
-        case 3: //Auth request
-            foreach (UserListItem *u, users) {
-                pa_->dj_authReq(u->jid());
-            }
-            break;
-        case 4: //Auth grant
-            foreach (UserListItem *u, users) {
-                pa_->dj_auth(u->jid());
-            }
-            break;
-        case 5: //change domain
-            changeDomain(users);
-            break;
-        case 6: //resolve nicks
-            foreach (UserListItem *u, users) {
-                VCardFactory::instance()->getVCard(u->jid(), pa_->client()->rootTask(), pa_, SLOT(resolveContactName()));
-            }
-            break;
-        case 7:
-            changeGroup(users);
-            break;
-        case 8: //export
-            exportRoster(users);
-            break;
-        case 9: //import
-            importRoster();
-            break;
-        default:
-            QMessageBox::warning(this, tr("Invalid"), tr("This action is not supported atm"));
+            JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
+            r->remove(u->jid());
+            r->go(true);
+        }
+        um->clear();
+        pa_->client()->rosterRequest();
+    } break;
+    case 3: // Auth request
+        foreach (UserListItem *u, users) {
+            pa_->dj_authReq(u->jid());
+        }
+        break;
+    case 4: // Auth grant
+        foreach (UserListItem *u, users) {
+            pa_->dj_auth(u->jid());
+        }
+        break;
+    case 5: // change domain
+        changeDomain(users);
+        break;
+    case 6: // resolve nicks
+        foreach (UserListItem *u, users) {
+            pa_->resolveContactName(u->jid());
+        }
+        break;
+    case 7:
+        changeGroup(users);
+        break;
+    case 8: // export
+        exportRoster(users);
+        break;
+    case 9: // import
+        importRoster();
+        break;
+    default:
+        QMessageBox::warning(this, tr("Invalid"), tr("This action is not supported atm"));
     }
 }
 
@@ -174,18 +166,18 @@ void ContactManagerDlg::showParamField(int index)
     ui_.edtActionParam->hide();
     ui_.cmbActionParam->hide();
     switch (action) {
-        case 5:
-            ui_.edtActionParam->show();
-            break;
-        case 7:
-            ui_.cmbActionParam->clear();
-            ui_.cmbActionParam->addItems(pa_->groupList());
-            ui_.cmbActionParam->show();
-            break;
+    case 5:
+        ui_.edtActionParam->show();
+        break;
+    case 7:
+        ui_.cmbActionParam->clear();
+        ui_.cmbActionParam->addItems(pa_->groupList());
+        ui_.cmbActionParam->show();
+        break;
     }
 }
 
-void ContactManagerDlg::changeDomain(QList<UserListItem *>& users)
+void ContactManagerDlg::changeDomain(QList<UserListItem *> &users)
 {
     QString domain = ui_.edtActionParam->text();
     if (domain.size()) {
@@ -205,7 +197,7 @@ void ContactManagerDlg::changeDomain(QList<UserListItem *>& users)
     }
 }
 
-void ContactManagerDlg::changeGroup(QList<UserListItem *>& users)
+void ContactManagerDlg::changeGroup(QList<UserListItem *> &users)
 {
     QStringList groups(ui_.cmbActionParam->currentText());
 
@@ -216,7 +208,7 @@ void ContactManagerDlg::changeGroup(QList<UserListItem *>& users)
     }
 }
 
-void ContactManagerDlg::client_rosterUpdated(bool success, int statusCode,QString statusString)
+void ContactManagerDlg::client_rosterUpdated(bool success, int statusCode, QString statusString)
 {
     if (success) {
         um->reloadUsers();
@@ -227,13 +219,13 @@ void ContactManagerDlg::client_rosterUpdated(bool success, int statusCode,QStrin
     um->stopBatch();
 }
 
-void ContactManagerDlg::exportRoster(QList<UserListItem *>& users)
+void ContactManagerDlg::exportRoster(QList<UserListItem *> &users)
 {
     QString fileName = QFileDialog::getSaveFileName(this, tr("Roster file"), QDir::homePath());
     if (!fileName.isEmpty()) {
         QDomDocument doc;
-        QString nick;
-        QDomElement root = doc.createElement("roster");
+        QString      nick;
+        QDomElement  root = doc.createElement("roster");
         doc.appendChild(root);
         foreach (UserListItem *u, users) {
             QDomElement contact = root.appendChild(doc.createElement("contact")).toElement();
@@ -275,14 +267,14 @@ void ContactManagerDlg::importRoster()
             QMessageBox::warning(this, tr("Nothing to do.."), tr("No contacts found in file %1").arg(fileName));
         }
 
-        QHash<QString, QString>nicks;
-        QHash<QString, QStringList>groups;
-        QString jid, nick;
-        QStringList jids;
-        QStringList labelContent;
+        QHash<QString, QString>     nicks;
+        QHash<QString, QStringList> groups;
+        QString                     jid, nick;
+        QStringList                 jids;
+        QStringList                 labelContent;
         for (int i = 0; i < static_cast<int>(domContacts.length()); i++) {
             QDomElement contact = domContacts.item(i).toElement();
-            jid = contact.attribute("jid");
+            jid                 = contact.attribute("jid");
             jids.append(jid);
             QDomNodeList props = contact.childNodes();
             for (int j = 0; j < static_cast<int>(props.length()); j++) {
@@ -300,9 +292,9 @@ void ContactManagerDlg::importRoster()
             labelContent.append(QString("%1 (%2)").arg(jid).arg(nicks[jid]));
         }
 
-        QMessageBox confirmDlg(
-                QMessageBox::Question,tr("Confirm contacts importing"),
-                tr("Do you really want to import these contacts?"), QMessageBox::Cancel | QMessageBox::Yes);
+        QMessageBox confirmDlg(QMessageBox::Question, tr("Confirm contacts importing"),
+                               tr("Do you really want to import these contacts?"),
+                               QMessageBox::Cancel | QMessageBox::Yes);
         confirmDlg.setDetailedText(labelContent.join("\n"));
         if (confirmDlg.exec() == QMessageBox::Yes) {
             um->startBatch();

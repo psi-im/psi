@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,11 +21,11 @@
 #define COCOATRAYCLICK_H
 
 #include <QObject>
-class CocoaTrayClick : public QObject
-{
+
+class CocoaTrayClick : public QObject {
     Q_OBJECT
 public:
-    static CocoaTrayClick* instance();
+    static CocoaTrayClick *instance();
     ~CocoaTrayClick();
 
     void emitTrayClicked();
@@ -36,7 +35,7 @@ signals:
 
 private:
     CocoaTrayClick();
-    static CocoaTrayClick* instance_;
+    static CocoaTrayClick *instance_;
 };
 
 #endif // COCOATRAYCLICK_H

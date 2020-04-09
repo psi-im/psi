@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -24,16 +23,15 @@
 
 #include <QMenu>
 
-class PsiContact;
 class PsiAccount;
 class PsiCon;
+class PsiContact;
 
-class InviteToGroupChatMenu : public QMenu
-{
+class InviteToGroupChatMenu : public QMenu {
     Q_OBJECT
 
 public:
-    InviteToGroupChatMenu(QWidget *parent = 0);
+    InviteToGroupChatMenu(QWidget *parent = nullptr);
     void updateMenu(PsiContact *contact);
 
 signals:
@@ -43,5 +41,5 @@ private slots:
     void actionActivated();
 
 private:
-    PsiCon* controller_;
+    PsiCon *controller_;
 };

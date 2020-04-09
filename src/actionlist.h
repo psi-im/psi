@@ -13,23 +13,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ACTIONLIST_H
 #define ACTIONLIST_H
 
-#include <QObject>
 #include <QList>
+#include <QObject>
 
+class IconAction;
 class QString;
 class QStringList;
-class IconAction;
 
-class ActionList : public QObject
-{
+class ActionList : public QObject {
     Q_OBJECT
 public:
     ActionList(const QString &name, int id, bool autoDelete = true);
@@ -37,35 +35,35 @@ public:
     ~ActionList();
 
     QString name() const;
-    int id() const;
+    int     id() const;
 
-    IconAction *action( const QString &name ) const;
+    IconAction *action(const QString &name) const;
     QStringList actions() const;
 
-    void addAction( const QString &name, IconAction *action );
+    void addAction(const QString &name, IconAction *action);
 
     void clear();
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-class MetaActionList : public QObject
-{
+class MetaActionList : public QObject {
     Q_OBJECT
 public:
     MetaActionList();
     ~MetaActionList();
 
-    ActionList *actionList( const QString &name ) const;
-    QList<ActionList*> actionLists( const unsigned int id ) const;
-    QStringList actionLists() const;
+    ActionList *        actionList(const QString &name) const;
+    QList<ActionList *> actionLists(const unsigned int id) const;
+    QStringList         actionLists() const;
 
-    ActionList suitableActions( int id ) const;
+    ActionList suitableActions(int id) const;
 
-    void addList( ActionList * );
+    void addList(ActionList *);
 
     void clear();
 
@@ -74,4 +72,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ACTIONLIST_H

@@ -13,37 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef DUMMYSTREAM_H
 #define DUMMYSTREAM_H
 
-#include "xmpp_stream.h"
 #include "xmpp_stanza.h"
+#include "xmpp_stream.h"
 
-class DummyStream : public XMPP::Stream
-{
+class DummyStream : public XMPP::Stream {
 public:
-    QDomDocument & doc() const { return v_doc; }
-    QString baseNS() const { return "jabber:client"; }
-    bool old() const { return false; }
+    QDomDocument &doc() const { return v_doc; }
+    QString       baseNS() const { return "jabber:client"; }
+    bool          old() const { return false; }
 
-    void close() { }
-    bool stanzaAvailable() const { return false; }
+    void         close() {}
+    bool         stanzaAvailable() const { return false; }
     XMPP::Stanza read() { return XMPP::Stanza(); }
-    void write(const XMPP::Stanza &) { }
+    void         write(const XMPP::Stanza &) {}
 
-    int errorCondition() const { return 0; }
-    QString errorText() const { return QString::null; }
-    QHash<QString,QString> errorLangText() const { return QHash<QString,QString>(); }
-    QDomElement errorAppSpec() const { return v_doc.documentElement(); }
+    int                     errorCondition() const { return 0; }
+    QString                 errorText() const { return QString(); }
+    QHash<QString, QString> errorLangText() const { return QHash<QString, QString>(); }
+    QDomElement             errorAppSpec() const { return v_doc.documentElement(); }
 
 private:
     static QDomDocument v_doc;
 };
 
-
-#endif
+#endif // DUMMYSTREAM_H

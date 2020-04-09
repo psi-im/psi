@@ -13,37 +13,42 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include "contactlistviewdelegate_p.h"
-
+#include "activity.h"
 #include "avatars.h"
 #include "coloropt.h"
 #include "common.h"
 #include "contactlistitem.h"
 #include "contactlistmodel.h"
 #include "contactlistview.h"
-#include "psiiconset.h"
-#include "psioptions.h"
+#include "contactlistviewdelegate_p.h"
 #include "debug.h"
 #include "mood.h"
-#include "activity.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
-#include <QKeyEvent>
-#include <QLineEdit>
-#include <QPainter>
-#include <QSortFilterProxyModel>
-#include <QMutableSetIterator>
-#include <QSetIterator>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QMutableSetIterator>
+#include <QPainter>
+#include <QSetIterator>
+#include <QSortFilterProxyModel>
+
+#define ALERT_INTERVAL 100 /* msecs */
+#define ANIM_INTERVAL 300  /* msecs */
+
+#define PSI_HIDPI computeScaleFactor(contactList)
+//#define PSI_HIDPI (2) // for testing purposes
 
 static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
-static const QString outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
+static const QString
+                     outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
 static const QString contactListBackgroundOptionPath(QStringLiteral("options.ui.look.colors.contactlist.background"));
 static const QString showStatusMessagesOptionPath(QStringLiteral("options.ui.contactlist.status-messages.show"));
 static const QString statusSingleOptionPath(QStringLiteral("options.ui.contactlist.status-messages.single-line"));
@@ -70,16 +75,13 @@ static const QString onlineColorPath(QStringLiteral("options.ui.look.colors.cont
 static const QString animation1ColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-change-animation1"));
 static const QString animation2ColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-change-animation2"));
 static const QString statusMessageColorPath(QStringLiteral("options.ui.look.colors.contactlist.status-messages"));
-static const QString headerBackgroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
-static const QString headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
+static const QString
+    headerBackgroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-background"));
+static const QString
+    headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
 
-#define ALERT_INTERVAL 100 /* msecs */
-#define ANIM_INTERVAL 300 /* msecs */
-
-#define PSI_HIDPI computeScaleFactor(contactList)
-//#define PSI_HIDPI (2) // for testing purposes
-
-int computeScaleFactor(ContactListView *contactList) {
+int computeScaleFactor(ContactListView *contactList)
+{
     static int factor = 0;
     if (!factor) {
         if (contactList->devicePixelRatio() > 1) {
@@ -96,8 +98,8 @@ int computeScaleFactor(ContactListView *contactList) {
 
 static QRect relativeRect(const QStyleOption &option, const QSize &size, const QRect &prevRect, int padding = 0)
 {
-    QRect r = option.rect;
-    bool isRTL = option.direction == Qt::RightToLeft;
+    QRect r     = option.rect;
+    bool  isRTL = option.direction == Qt::RightToLeft;
     if (isRTL) {
         if (prevRect.isValid()) {
             r.setRight(prevRect.left() - padding);
@@ -108,8 +110,7 @@ static QRect relativeRect(const QStyleOption &option, const QSize &size, const Q
             r.setBottom(r.top() + size.height() - 1);
             r.translate(-1, 1);
         }
-    }
-    else {
+    } else {
         if (prevRect.isValid()) {
             r.setLeft(prevRect.right() + padding);
         }
@@ -126,44 +127,16 @@ static QRect relativeRect(const QStyleOption &option, const QSize &size, const Q
 /* ContactListViewDelegate::Private */
 /************************************/
 
-ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, ContactListView *contactList)
-    : QObject()
-    , q(parent)
-    , contactList(contactList)
-    , horizontalMargin_(5)
-    , verticalMargin_(3)
-    , statusIconSize_(0)
-    , avatarRadius_(0)
-    , alertTimer_(new QTimer(this))
-    , animTimer(new QTimer(this))
-    , fontMetrics_(QFont())
-    , statusFontMetrics_(QFont())
-    , statusSingle_(false)
-    , showStatusMessages_(false)
-    , slimGroup_(false)
-    , outlinedGroup_(false)
-    , showClientIcons_(false)
-    , showMoodIcons_(false)
-    , showActivityIcons_(false)
-    , showGeolocIcons_(false)
-    , showTuneIcons_(false)
-    , showAvatars_(false)
-    , useDefaultAvatar_(false)
-    , avatarAtLeft_(false)
-    , showStatusIcons_(false)
-    , statusIconsOverAvatars_(false)
-    , enableGroups_(false)
-    , allClients_(false)
-    , animPhase(false)
-    , _awayColor(QColor())
-    , _dndColor(QColor())
-    , _offlineColor(QColor())
-    , _onlineColor(QColor())
-    , _animation1Color(QColor())
-    , _animation2Color(QColor())
-    , _statusMessageColor(QColor())
-    , _headerBackgroundColor(QColor())
-    , _headerForegroundColor(QColor())
+ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, ContactListView *contactList) :
+    QObject(), q(parent), contactList(contactList), horizontalMargin_(5), verticalMargin_(3), statusIconSize_(0),
+    avatarRadius_(0), alertTimer_(new QTimer(this)), animTimer(new QTimer(this)), fontMetrics_(QFont()),
+    statusFontMetrics_(QFont()), statusSingle_(false), showStatusMessages_(false), slimGroup_(false),
+    outlinedGroup_(false), showClientIcons_(false), showMoodIcons_(false), showActivityIcons_(false),
+    showGeolocIcons_(false), showTuneIcons_(false), showAvatars_(false), useDefaultAvatar_(false), avatarAtLeft_(false),
+    showStatusIcons_(false), statusIconsOverAvatars_(false), enableGroups_(false), allClients_(false), animPhase(false),
+    _awayColor(QColor()), _dndColor(QColor()), _offlineColor(QColor()), _onlineColor(QColor()),
+    _animation1Color(QColor()), _animation2Color(QColor()), _statusMessageColor(QColor()),
+    _headerBackgroundColor(QColor()), _headerForegroundColor(QColor())
 {
     alertTimer_->setInterval(ALERT_INTERVAL);
     alertTimer_->setSingleShot(false);
@@ -173,12 +146,13 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     animTimer->setSingleShot(false);
     connect(animTimer, SIGNAL(timeout()), SLOT(updateAnim()));
 
-
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
-    connect(ColorOpt::instance(), SIGNAL(changed(const QString&)), SLOT(colorOptionChanged(const QString&)));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
+    connect(ColorOpt::instance(), SIGNAL(changed(const QString &)), SLOT(colorOptionChanged(const QString &)));
     connect(PsiIconset::instance(), SIGNAL(rosterIconsSizeChanged(int)), SLOT(rosterIconsSizeChanged(int)));
 
-    statusIconSize_ = PsiIconset::instance()->roster.value(PsiOptions::instance()->getOption(statusIconsetOptionPath).toString())->iconSize();
+    statusIconSize_ = PsiIconset::instance()
+                          ->roster.value(PsiOptions::instance()->getOption(statusIconsetOptionPath).toString())
+                          ->iconSize();
 
     optionChanged("*");
     colorOptionChanged("*");
@@ -187,121 +161,119 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     contactList->viewport()->update();
 }
 
-ContactListViewDelegate::Private::~Private()
-{
-}
+ContactListViewDelegate::Private::~Private() {}
 
 void ContactListViewDelegate::Private::optionChanged(const QString &option)
 {
-    bool bulkUpdate = (option == "*");
+    bool bulkUpdate     = (option == "*");
     bool updateGeometry = false;
     bool updateViewport = false;
-    bool updated = false;
+    bool updated        = false;
 
     if (bulkUpdate || (!updated && option == contactListFontOptionPath)) {
         font_.fromString(PsiOptions::instance()->getOption(contactListFontOptionPath).toString());
         fontMetrics_ = QFontMetrics(font_);
-        statusFont_.setPointSize(qMax(font_.pointSize()-2, 7));
+        statusFont_.setPointSize(qMax(font_.pointSize() - 2, 7));
         statusFontMetrics_ = QFontMetrics(statusFont_);
-        updated = true;
-        updateGeometry = true;
+        updated            = true;
+        updateGeometry     = true;
     }
     if (bulkUpdate || (!updated && option == contactListBackgroundOptionPath)) {
         QPalette p = contactList->palette();
         p.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
         contactList->setPalette(p);
-        updated = true;
+        updated        = true;
         updateViewport = true;
     }
     if (bulkUpdate || (!updated && option == showStatusMessagesOptionPath)) {
         showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();
-        updated = true;
-        updateGeometry = true;
+        updated             = true;
+        updateGeometry      = true;
     }
-    if(bulkUpdate || (!updated && option == showClientIconsPath)) {
+    if (bulkUpdate || (!updated && option == showClientIconsPath)) {
         showClientIcons_ = PsiOptions::instance()->getOption(showClientIconsPath).toBool();
-        updated = true;
-        updateGeometry = true;
+        updated          = true;
+        updateGeometry   = true;
     }
-    if(bulkUpdate || (!updated && option == showMoodIconsPath)) {
+    if (bulkUpdate || (!updated && option == showMoodIconsPath)) {
         showMoodIcons_ = PsiOptions::instance()->getOption(showMoodIconsPath).toBool();
-        updated = true;
+        updated        = true;
         updateGeometry = true;
     }
-    if(bulkUpdate || (!updated && option == showActivityIconsPath)) {
+    if (bulkUpdate || (!updated && option == showActivityIconsPath)) {
         showActivityIcons_ = PsiOptions::instance()->getOption(showActivityIconsPath).toBool();
-        updated = true;
-        updateGeometry = true;
+        updated            = true;
+        updateGeometry     = true;
     }
-    if(bulkUpdate || (!updated && option == showTuneIconsPath)) {
+    if (bulkUpdate || (!updated && option == showTuneIconsPath)) {
         showTuneIcons_ = PsiOptions::instance()->getOption(showTuneIconsPath).toBool();
-        updated = true;
+        updated        = true;
         updateGeometry = true;
     }
-    if(bulkUpdate || (!updated && option == showGeolocIconsPath)) {
+    if (bulkUpdate || (!updated && option == showGeolocIconsPath)) {
         showGeolocIcons_ = PsiOptions::instance()->getOption(showGeolocIconsPath).toBool();
-        updated = true;
+        updated          = true;
+        updateGeometry   = true;
+    }
+    if (bulkUpdate || (!updated && option == showAvatarsPath)) {
+        showAvatars_   = PsiOptions::instance()->getOption(showAvatarsPath).toBool();
+        updated        = true;
         updateGeometry = true;
     }
-    if(bulkUpdate || (!updated && option == showAvatarsPath)) {
-        showAvatars_ = PsiOptions::instance()->getOption(showAvatarsPath).toBool();
-        updated = true;
-        updateGeometry = true;
-    }
-    if(bulkUpdate || (!updated && option == useDefaultAvatarPath)) {
+    if (bulkUpdate || (!updated && option == useDefaultAvatarPath)) {
         useDefaultAvatar_ = PsiOptions::instance()->getOption(useDefaultAvatarPath).toBool();
-        updated = true;
-        updateViewport = true;
+        updated           = true;
+        updateViewport    = true;
     }
-    if(bulkUpdate || (!updated && option == avatarAtLeftOptionPath)) {
-        avatarAtLeft_ = PsiOptions::instance()->getOption(avatarAtLeftOptionPath).toBool();
-        updated = true;
+    if (bulkUpdate || (!updated && option == avatarAtLeftOptionPath)) {
+        avatarAtLeft_  = PsiOptions::instance()->getOption(avatarAtLeftOptionPath).toBool();
+        updated        = true;
         updateGeometry = true;
     }
-    if(bulkUpdate || (!updated && option == avatarSizeOptionPath)) {
+    if (bulkUpdate || (!updated && option == avatarSizeOptionPath)) {
         int s = pointToPixel(PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt());
         avatarRect_.setSize(QSize(s, s));
-        updated = true;
+        updated        = true;
         updateGeometry = true;
     }
-    if(bulkUpdate || (!updated && option == avatarRadiusOptionPath)) {
-        avatarRadius_ = pointToPixel(PsiOptions::instance()->getOption(avatarRadiusOptionPath).toInt());
-        updated = true;
+    if (bulkUpdate || (!updated && option == avatarRadiusOptionPath)) {
+        avatarRadius_  = pointToPixel(PsiOptions::instance()->getOption(avatarRadiusOptionPath).toInt());
+        updated        = true;
         updateViewport = true;
     }
-    if(bulkUpdate || (!updated && option == showStatusIconsPath)) {
+    if (bulkUpdate || (!updated && option == showStatusIconsPath)) {
         showStatusIcons_ = PsiOptions::instance()->getOption(showStatusIconsPath).toBool();
-        updated = true;
-        updateGeometry = true;
+        updated          = true;
+        updateGeometry   = true;
     }
-    if(bulkUpdate || (!updated && option == statusIconsOverAvatarsPath)) {
+    if (bulkUpdate || (!updated && option == statusIconsOverAvatarsPath)) {
         statusIconsOverAvatars_ = PsiOptions::instance()->getOption(statusIconsOverAvatarsPath).toBool();
-        updated = true;
-        updateGeometry = true;
+        updated                 = true;
+        updateGeometry          = true;
     }
-    if(bulkUpdate || (!updated && option == allClientsOptionPath)) {
-        allClients_= PsiOptions::instance()->getOption(allClientsOptionPath).toBool();
-        updated = true;
+    if (bulkUpdate || (!updated && option == allClientsOptionPath)) {
+        allClients_    = PsiOptions::instance()->getOption(allClientsOptionPath).toBool();
+        updated        = true;
         updateViewport = true;
     }
-    if(bulkUpdate || (!updated && option == enableGroupsOptionPath)) {
-        enableGroups_ = PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool();
-        updated = true;
+    if (bulkUpdate || (!updated && option == enableGroupsOptionPath)) {
+        enableGroups_  = PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool();
+        updated        = true;
         updateViewport = true;
     }
-    if(bulkUpdate || (!updated && option == slimGroupsOptionPath)) {
-        slimGroup_ = PsiOptions::instance()->getOption(slimGroupsOptionPath).toBool();
-        updated = true;
+    if (bulkUpdate || (!updated && option == slimGroupsOptionPath)) {
+        slimGroup_     = PsiOptions::instance()->getOption(slimGroupsOptionPath).toBool();
+        updated        = true;
         updateViewport = true;
     }
-    if(bulkUpdate || (!updated && option == outlinedGroupsOptionPath)) {
+    if (bulkUpdate || (!updated && option == outlinedGroupsOptionPath)) {
         outlinedGroup_ = PsiOptions::instance()->getOption(outlinedGroupsOptionPath).toBool();
-        updated = true;
+        updated        = true;
         updateViewport = true;
     }
-    if(bulkUpdate || (!updated && option == statusSingleOptionPath)) {
+    if (bulkUpdate || (!updated && option == statusSingleOptionPath)) {
         statusSingle_ = !PsiOptions::instance()->getOption(statusSingleOptionPath).toBool();
-        //updated = true;
+        // updated = true;
         updateGeometry = true;
     }
 
@@ -318,52 +290,52 @@ void ContactListViewDelegate::Private::optionChanged(const QString &option)
 
 void ContactListViewDelegate::Private::colorOptionChanged(const QString &option)
 {
-    bool bulkUpdate = (option == "*");
+    bool bulkUpdate     = (option == "*");
     bool updateViewPort = false;
-    bool updated = false;
+    bool updated        = false;
 
     if (bulkUpdate || (!updated && option == awayColorPath)) {
-        _awayColor = ColorOpt::instance()->color(awayColorPath);
-        updated = true;
+        _awayColor     = ColorOpt::instance()->color(awayColorPath);
+        updated        = true;
         updateViewPort = true;
     }
     if (bulkUpdate || (!updated && option == dndColorPath)) {
-        _dndColor = ColorOpt::instance()->color(dndColorPath);
-        updated = true;
+        _dndColor      = ColorOpt::instance()->color(dndColorPath);
+        updated        = true;
         updateViewPort = true;
     }
     if (bulkUpdate || (!updated && option == offlineColorPath)) {
-        _offlineColor = ColorOpt::instance()->color(offlineColorPath);
-        updated = true;
+        _offlineColor  = ColorOpt::instance()->color(offlineColorPath);
+        updated        = true;
         updateViewPort = true;
     }
     if (bulkUpdate || (!updated && option == onlineColorPath)) {
-        _onlineColor = ColorOpt::instance()->color(onlineColorPath);
-        updated = true;
+        _onlineColor   = ColorOpt::instance()->color(onlineColorPath);
+        updated        = true;
         updateViewPort = true;
     }
     if (bulkUpdate || (!updated && option == animation1ColorPath)) {
         _animation1Color = ColorOpt::instance()->color(animation1ColorPath);
-        updated = true;
+        updated          = true;
     }
     if (bulkUpdate || (!updated && option == animation2ColorPath)) {
         _animation2Color = ColorOpt::instance()->color(animation2ColorPath);
-        updated = true;
+        updated          = true;
     }
     if (bulkUpdate || (!updated && option == statusMessageColorPath)) {
         _statusMessageColor = ColorOpt::instance()->color(statusMessageColorPath);
-        updated = true;
+        updated             = true;
         if (showStatusMessages_ && statusSingle_)
             updateViewPort = true;
     }
     if (bulkUpdate || (!updated && option == headerBackgroungColorPath)) {
         _headerBackgroundColor = ColorOpt::instance()->color(headerBackgroungColorPath);
-        updated = true;
-        updateViewPort = true;
+        updated                = true;
+        updateViewPort         = true;
     }
     if (bulkUpdate || (!updated && option == headerForegroungColorPath)) {
         _headerForegroundColor = ColorOpt::instance()->color(headerForegroungColorPath);
-        //updated = true;
+        // updated = true;
         updateViewPort = true;
     }
     if (!bulkUpdate && updateViewPort)
@@ -392,28 +364,27 @@ void ContactListViewDelegate::Private::updateAlerts()
         }
 
         QModelIndex parent = index.parent();
-        int row = index.row();
+        int         row    = index.row();
         if (ranges.contains(parent)) {
             if (index.row() < ranges.value(parent).first)
                 ranges[parent].first = row;
             else if (index.row() > ranges.value(parent).second)
                 ranges[parent].second = row;
-        }
-        else {
+        } else {
             ranges.insert(parent, QPair<int, int>(row, row));
         }
-
     }
 
     QHashIterator<QModelIndex, QPair<int, int>> it2(ranges);
     while (it2.hasNext()) {
         it2.next();
-        int row1 = it2.value().first;
-        int row2 = it2.value().second;
+        int         row1  = it2.value().first;
+        int         row2  = it2.value().second;
         QModelIndex index = it2.key();
 
         // update contacts
-        contactList->dataChanged(index.child(row1, 0), index.child(row2, 0));
+        contactList->dataChanged(contactList->model()->index(row1, 0, index),
+                                 contactList->model()->index(row2, 0, index));
     }
 }
 
@@ -441,28 +412,27 @@ void ContactListViewDelegate::Private::updateAnim()
         }
 
         QModelIndex parent = index.parent();
-        int row = index.row();
+        int         row    = index.row();
         if (ranges.contains(parent)) {
             if (index.row() < ranges.value(parent).first)
                 ranges[parent].first = row;
             else if (index.row() > ranges.value(parent).second)
                 ranges[parent].second = row;
-        }
-        else {
+        } else {
             ranges.insert(parent, QPair<int, int>(row, row));
         }
-
     }
 
     QHashIterator<QModelIndex, QPair<int, int>> it2(ranges);
     while (it2.hasNext()) {
         it2.next();
-        int row1 = it2.value().first;
-        int row2 = it2.value().second;
+        int         row1  = it2.value().first;
+        int         row2  = it2.value().second;
         QModelIndex index = it2.key();
 
         // update contacts
-        contactList->dataChanged(index.child(row1, 0), index.child(row2, 0));
+        contactList->dataChanged(contactList->model()->index(row1, 0, index),
+                                 contactList->model()->index(row2, 0, index));
     }
 }
 
@@ -475,17 +445,15 @@ void ContactListViewDelegate::Private::rosterIconsSizeChanged(int size)
 
 QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index)
 {
-    ContactListItem *item = qvariant_cast<ContactListItem*>(index.data(ContactListModel::ContactListItemRole));
+    ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
 
-    if (type == ContactListItem::Type::ContactType ||
-        type == ContactListItem::Type::AccountType)
-    {
+    if (type == ContactListItem::Type::ContactType || type == ContactListItem::Type::AccountType) {
         bool alert = index.data(ContactListModel::IsAlertingRole).toBool();
         setAlertEnabled(index, alert);
         if (alert) {
             QVariant alertData = index.data(ContactListModel::AlertPictureRole);
-            QIcon alert;
+            QIcon    alert;
             if (alertData.isValid()) {
                 if (alertData.type() == QVariant::Icon) {
                     alert = qvariant_cast<QIcon>(alertData);
@@ -505,7 +473,7 @@ QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index)
         if (!index.data(ContactListModel::PresenceErrorRole).toString().isEmpty())
             s = STATUS_ERROR;
         else if (index.data(ContactListModel::IsAgentRole).toBool())
-            /* s = s */ ;
+            /* s = s */;
         else if (index.data(ContactListModel::AskingForAuthRole).toBool() && s == XMPP::Status::Offline)
             s = STATUS_ASK;
         else if (!index.data(ContactListModel::AuthorizesToSeeStatusRole).toBool() && s == XMPP::Status::Offline)
@@ -517,40 +485,38 @@ QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index)
 
 QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex &index)
 {
-    QList<QPixmap> pixList;
-    ContactListItem *item = qvariant_cast<ContactListItem*>(index.data(ContactListModel::ContactListItemRole));
+    QList<QPixmap>   pixList;
+    ContactListItem *item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     if (item->type() != ContactListItem::Type::ContactType)
         return pixList;
 
     QStringList vList = index.data(ContactListModel::ClientRole).toStringList();
-    if(vList.isEmpty())
+    if (vList.isEmpty())
         return pixList;
 
-    for (QString client: vList) {
+    for (QString client : vList) {
         const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
-        if(!pix.isNull())
+        if (!pix.isNull())
             pixList.push_back(pix);
     }
 
     return pixList;
-
 }
 
 QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
 {
-    int avSize = showAvatars_ ? avatarRect_.height()  : 0;
-    QPixmap av = index.data(ContactListModel::IsMucRole).toBool()
-                 ? QPixmap()
-                 : index.data(ContactListModel::AvatarRole).value<QPixmap>();
+    int     avSize = showAvatars_ ? avatarRect_.height() : 0;
+    QPixmap av     = index.data(ContactListModel::IsMucRole).toBool()
+        ? QPixmap()
+        : index.data(ContactListModel::AvatarRole).value<QPixmap>();
 
-    if(av.isNull() && useDefaultAvatar_)
+    if (av.isNull() && useDefaultAvatar_)
         av = IconsetFactory::iconPixmap("psi/default_avatar");
 
     return AvatarFactory::roundedAvatar(av, avatarRadius_, avSize);
-
 }
 
-void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QModelIndex& index)
+void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QModelIndex &index)
 {
     /* We have a few possible ways to draw contact
      * 1) Avatar is hidden or on the left or on the right
@@ -566,15 +532,14 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
      * 5) If status icon should be shown over avatar (corresponding option is enabled and avatars enabled too),
      *    The draw it over avatar
      * 6) Calculate space required for remaining icons
-     * 7) Divide nickname/icons rectangle into two for icons and for nickname/status_icon. (icons are in favor for space)
-     * 8) If nickname rectangle has zero size just skip nickname/status icon drawing and go to p.13
-     * 9) If status icon is not over avatar then align status based on RTL settings and vertically and draw it
-     * 10) Recalculate rectangle for nickname and other icons (status outside)
-     * 11) Align nick name with respect to RTL and vertically in its rectangle and draw it
-     * 12) on the other side of nickname rectangle draw transparent gradient if it intersects nick space to hide nickname softly
-     * 13) Draw icons in its rectangle aligned vertically starting from opposite side on nickname start
+     * 7) Divide nickname/icons rectangle into two for icons and for nickname/status_icon. (icons are in favor for
+     * space) 8) If nickname rectangle has zero size just skip nickname/status icon drawing and go to p.13 9) If status
+     * icon is not over avatar then align status based on RTL settings and vertically and draw it 10) Recalculate
+     * rectangle for nickname and other icons (status outside) 11) Align nick name with respect to RTL and vertically in
+     * its rectangle and draw it 12) on the other side of nickname rectangle draw transparent gradient if it intersects
+     * nick space to hide nickname softly 13) Draw icons in its rectangle aligned vertically starting from opposite side
+     * on nickname start
      */
-
 
     drawBackground(painter, opt, index);
 
@@ -605,9 +570,9 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 
     // next expand to r.width
     // first check if we need expand at all
-    if (contactBoundingRect.width() + 2 * ContactHMargin*PSI_HIDPI < r.width()) {
+    if (contactBoundingRect.width() + 2 * ContactHMargin * PSI_HIDPI < r.width()) {
         // our previously computed minimal rect is too small for this roster. so expand
-        int diff = r.width() - (contactBoundingRect.width() + 2 * ContactHMargin*PSI_HIDPI);
+        int diff = r.width() - (contactBoundingRect.width() + 2 * ContactHMargin * PSI_HIDPI);
         if (!avatarAtLeft_) {
             avatarStatusRect.translate(diff, 0);
             avatarRect.translate(diff, 0);
@@ -625,25 +590,25 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
     nickRect.setRight(firstLineRect.right());
 
     // start drawing
-    if(showAvatars_ && r.intersects(avatarRect)) {
+    if (showAvatars_ && r.intersects(avatarRect)) {
         const QPixmap avatarPixmap = avatarIcon(index);
-        if(!avatarPixmap.isNull()) {
+        if (!avatarPixmap.isNull()) {
             painter->drawPixmap(avatarRect, avatarPixmap);
         }
     }
 
     QPixmap statusPixmap = this->statusPixmap(index);
-    if(!statusPixmap.isNull()) {
-        if(statusIconsOverAvatars_ && showAvatars_) {
+    if (!statusPixmap.isNull()) {
+        if (statusIconsOverAvatars_ && showAvatars_) {
             statusPixmap = statusPixmap.scaled(statusIconRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         } else {
             if (opt.direction == Qt::RightToLeft) {
                 statusIconRect.moveRight(firstLineRect.right());
-                nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin*PSI_HIDPI);
+                nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin * PSI_HIDPI);
                 secondLineRect.setRight(nickRect.right()); // we don't want status under icon
             } else {
                 statusIconRect.moveLeft(firstLineRect.left());
-                nickRect.setLeft(statusIconRect.right() + StatusIconToNickHMargin*PSI_HIDPI);
+                nickRect.setLeft(statusIconRect.right() + StatusIconToNickHMargin * PSI_HIDPI);
                 secondLineRect.setLeft(nickRect.left()); // we don't want status under icon
             }
         }
@@ -655,17 +620,15 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
     statusLineRect.setRight(secondLineRect.right());
 
     QColor textColor;
-    bool anim = index.data(ContactListModel::IsAnimRole).toBool();
+    bool   anim = index.data(ContactListModel::IsAnimRole).toBool();
     setAnimEnabled(index, anim);
     if (anim) {
-        if(animPhase) {
+        if (animPhase) {
             textColor = _animation2Color;
-        }
-        else {
+        } else {
             textColor = _animation1Color;
         }
-    }
-    else {
+    } else {
         int s = index.data(ContactListModel::StatusTypeRole).toInt();
         if (s == XMPP::Status::Away || s == XMPP::Status::XA)
             textColor = _awayColor;
@@ -679,12 +642,12 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 
     opt.font = font_;
     opt.font.setItalic(index.data(ContactListModel::BlockRole).toBool());
-    opt.fontMetrics = fontMetrics_;
+    opt.fontMetrics  = fontMetrics_;
     QPalette palette = opt.palette;
     palette.setColor(QPalette::Text, textColor);
     opt.palette = palette;
 
-    QString text = index.data(Qt::DisplayRole).toString();
+    QString text       = index.data(Qt::DisplayRole).toString();
     QString statusText = index.data(ContactListModel::StatusTextRole).toString();
     if (showStatusMessages_ && !statusText.isEmpty() && !statusSingle_) {
         text = tr("%1 (%2)").arg(text).arg(statusText);
@@ -693,22 +656,22 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
 
     if (showStatusMessages_ && !statusText.isEmpty() && statusSingle_) {
         palette.setColor(QPalette::Text, _statusMessageColor);
-        opt.palette = palette;
-        opt.font = statusFont_;
+        opt.palette     = palette;
+        opt.font        = statusFont_;
         opt.fontMetrics = statusFontMetrics_;
         painter->save();
         drawText(painter, opt, statusLineRect, statusText);
         painter->restore();
     }
 
-    bool isMuc = index.data(ContactListModel::IsMucRole).toBool();
+    bool    isMuc = index.data(ContactListModel::IsMucRole).toBool();
     QString mucMessages;
-    if(isMuc)
+    if (isMuc)
         mucMessages = index.data(ContactListModel::MucMessagesRole).toString();
 
     QList<QPixmap> rightPixs;
-    QList<int> rightWidths;
-    if(!isMuc) {
+    QList<int>     rightWidths;
+    if (!isMuc) {
         if (showClientIcons_) {
             const QList<QPixmap> pixList = this->clientPixmap(index);
 
@@ -716,7 +679,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
                 const QPixmap &pix = *it;
                 rightPixs.push_back(pix);
                 rightWidths.push_back(pix.width());
-                if(!allClients_)
+                if (!allClients_)
                     break;
             }
         }
@@ -725,7 +688,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
             Mood m = index.data(ContactListModel::MoodRole).value<Mood>();
             if (m.type() != Mood::Unknown) {
                 const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(m.typeValue()));
-                if(!pix.isNull()) {
+                if (!pix.isNull()) {
                     rightPixs.push_back(pix);
                     rightWidths.push_back(pix.width());
                 }
@@ -736,7 +699,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
             QString icon = activityIconName(index.data(ContactListModel::ActivityRole).value<Activity>());
             if (!icon.isNull()) {
                 const QPixmap &pix = IconsetFactory::iconPixmap(icon);
-                if(!pix.isNull()) {
+                if (!pix.isNull()) {
                     rightPixs.push_back(pix);
                     rightWidths.push_back(pix.width());
                 }
@@ -762,39 +725,44 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
         }
     }
 
-    if(rightPixs.isEmpty() && mucMessages.isEmpty())
+    if (rightPixs.isEmpty() && mucMessages.isEmpty())
         return;
 
     int sumWidth = 0;
-    if(isMuc)
+    if (isMuc)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+        sumWidth = fontMetrics_.horizontalAdvance(mucMessages);
+#else
         sumWidth = fontMetrics_.width(mucMessages);
+#endif
     else {
         foreach (int w, rightWidths) {
             sumWidth += w;
         }
-        sumWidth = sumWidth*PSI_HIDPI;
-        sumWidth+=rightPixs.count(); // gap 1px?
+        sumWidth = sumWidth * PSI_HIDPI;
+        sumWidth += rightPixs.count(); // gap 1px?
     }
 
     QRect gradRect(firstLineRect);
     pepIconsRect.setWidth(sumWidth);
     if (opt.direction == Qt::RightToLeft) {
         pepIconsRect.moveLeft(firstLineRect.left());
-        gradRect.setRight(pepIconsRect.right() + NickConcealerWidth*PSI_HIDPI);
+        gradRect.setRight(pepIconsRect.right() + NickConcealerWidth * PSI_HIDPI);
     } else {
         pepIconsRect.moveRight(firstLineRect.right());
-        gradRect.setLeft(pepIconsRect.left() - NickConcealerWidth*PSI_HIDPI);
+        gradRect.setLeft(pepIconsRect.left() - NickConcealerWidth * PSI_HIDPI);
     }
     pepIconsRect &= firstLineRect;
 
-    QColor bgc = (opt.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
+    QColor bgc
+        = (opt.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
     QColor tbgc = bgc;
     tbgc.setAlpha(0);
     QLinearGradient grad;
     if (opt.direction == Qt::RightToLeft) {
-        grad = QLinearGradient(gradRect.right(), 0, gradRect.right() - NickConcealerWidth*PSI_HIDPI, 0);
+        grad = QLinearGradient(gradRect.right(), 0, gradRect.right() - NickConcealerWidth * PSI_HIDPI, 0);
     } else {
-        grad = QLinearGradient(gradRect.left(), 0, gradRect.left() + NickConcealerWidth*PSI_HIDPI, 0);
+        grad = QLinearGradient(gradRect.left(), 0, gradRect.left() + NickConcealerWidth * PSI_HIDPI, 0);
     }
     grad.setColorAt(0, tbgc);
     grad.setColorAt(1, bgc);
@@ -804,16 +772,15 @@ void ContactListViewDelegate::Private::drawContact(QPainter* painter, const QMod
         painter->fillRect(gradRect, tbakBr);
     }
     if (pepIconsRect.intersects(r)) {
-        if(isMuc) {
+        if (isMuc) {
             painter->drawText(pepIconsRect, mucMessages);
-        }
-        else {
-            for (int i=0; i<rightPixs.size(); i++) {
+        } else {
+            for (int i = 0; i < rightPixs.size(); i++) {
                 const QPixmap pix = rightPixs[i];
-                pepIconsRect.setRight(pepIconsRect.right() - pix.width()*PSI_HIDPI -1); // 1 pep gap?
-                QRect targetRect(pepIconsRect.topRight(),pix.size()*PSI_HIDPI);
+                pepIconsRect.setRight(pepIconsRect.right() - pix.width() * PSI_HIDPI - 1); // 1 pep gap?
+                QRect targetRect(pepIconsRect.topRight(), pix.size() * PSI_HIDPI);
                 painter->drawPixmap(targetRect, pix, pix.rect());
-                //qDebug() << r << pepIconsRect.topRight() << pix.size();
+                // qDebug() << r << pepIconsRect.topRight() << pix.size();
             }
         }
     }
@@ -840,23 +807,25 @@ void ContactListViewDelegate::Private::recomputeGeometry()
     if (showClientIcons_ && PsiIconset::instance()->clients.iconSize() > pepSize) {
         pepSize = PsiIconset::instance()->clients.iconSize();
     }
-    if ((showGeolocIcons_ || showTuneIcons_)  && PsiIconset::instance()->system().iconSize() > pepSize) {
+    if ((showGeolocIcons_ || showTuneIcons_) && PsiIconset::instance()->system().iconSize() > pepSize) {
         pepSize = PsiIconset::instance()->system().iconSize();
     }
-    pepIconsRect_.setSize(QSize(0, pepSize*PSI_HIDPI)); // no icons for offline. so 0-width y default
-    statusIconRect_.setSize(QSize(statusIconSize_, statusIconSize_)*PSI_HIDPI);
+    pepIconsRect_.setSize(QSize(0, pepSize * PSI_HIDPI)); // no icons for offline. so 0-width y default
+    statusIconRect_.setSize(QSize(statusIconSize_, statusIconSize_) * PSI_HIDPI);
 
     // .. and sizes of a little more complex stuff
-    firstLineRect_.setSize(QSize(
-        pepIconsRect_.width() + nickRect_.width() + (statusIconsOverAvatars_? 0 : StatusIconToNickHMargin*PSI_HIDPI + statusIconRect_.width()),
-        qMax(qMax(pepSize, nickRect_.height()), statusIconsOverAvatars_? 0: statusIconRect_.height())
-    ));
+    firstLineRect_.setSize(
+        QSize(pepIconsRect_.width() + nickRect_.width()
+                  + (statusIconsOverAvatars_ ? 0 : StatusIconToNickHMargin * PSI_HIDPI + statusIconRect_.width()),
+              qMax(qMax(pepSize, nickRect_.height()), statusIconsOverAvatars_ ? 0 : statusIconRect_.height())));
 
     if (haveSecondLine) {
         statusLineRect_.setSize(QSize(16, statusFontMetrics_.height())); // 16? I forgot why
         secondLineRect_.setHeight(statusLineRect_.height());
         secondLineRect_.setWidth(firstLineRect_.width()); // first line is wider y algo above. so use it
-        linesRect_.setSize(QSize(firstLineRect_.width(), firstLineRect_.height() + NickToStatusLinesVMargin*PSI_HIDPI + secondLineRect_.height()));
+        linesRect_.setSize(
+            QSize(firstLineRect_.width(),
+                  firstLineRect_.height() + NickToStatusLinesVMargin * PSI_HIDPI + secondLineRect_.height()));
     } else {
         secondLineRect_.setSize(QSize(0, 0));
         linesRect_.setSize(firstLineRect_.size());
@@ -864,12 +833,13 @@ void ContactListViewDelegate::Private::recomputeGeometry()
 
     if (showAvatars_) {
         if (statusIconsOverAvatars_) {
-            statusIconRect_.setSize(QSize(12, 12)*PSI_HIDPI);
+            statusIconRect_.setSize(QSize(12, 12) * PSI_HIDPI);
         }
         avatarStatusRect_.setSize(avatarRect_.size());
         // if we want status icon to a little go beyond the avatar then use QRect::united instead for avatarStatusRect_
-        contactBoundingRect_.setSize(QSize(avatarStatusRect_.width() + AvatarToNickHMargin*PSI_HIDPI + linesRect_.width(),
-                                         avatarStatusRect_.height() > linesRect_.height()? avatarStatusRect_.height() : linesRect_.height()));
+        contactBoundingRect_.setSize(
+            QSize(avatarStatusRect_.width() + AvatarToNickHMargin * PSI_HIDPI + linesRect_.width(),
+                  avatarStatusRect_.height() > linesRect_.height() ? avatarStatusRect_.height() : linesRect_.height()));
     } else {
         avatarStatusRect_.setSize(QSize(0, 0));
         contactBoundingRect_.setSize(linesRect_.size());
@@ -877,10 +847,9 @@ void ContactListViewDelegate::Private::recomputeGeometry()
     // all minimal sizes a known now
 
     // align everything vertical
-    contactBoundingRect_.setTopLeft(QPoint(ContactHMargin*PSI_HIDPI,
-                                           ContactVMargin*PSI_HIDPI));
-    int firstLineTop = 0;
-    int secondLineGap = NickToStatusLinesVMargin*PSI_HIDPI;
+    contactBoundingRect_.setTopLeft(QPoint(ContactHMargin * PSI_HIDPI, ContactVMargin * PSI_HIDPI));
+    int firstLineTop  = 0;
+    int secondLineGap = NickToStatusLinesVMargin * PSI_HIDPI;
     if (showAvatars_) {
         // we have to do some vertical align for avatar and lines to look nice
         int avatarStatusTop = 0;
@@ -889,8 +858,8 @@ void ContactListViewDelegate::Private::recomputeGeometry()
             firstLineTop = (avatarStatusRect_.height() - linesRect_.height()) / 2;
             if (haveSecondLine) {
                 int m = (avatarStatusRect_.height() - linesRect_.height()) / 3;
-                if (m > NickToStatusLinesVMargin*PSI_HIDPI) { // if too much free space slide apart the lines as well
-                    firstLineTop = m;
+                if (m > NickToStatusLinesVMargin * PSI_HIDPI) { // if too much free space slide apart the lines as well
+                    firstLineTop  = m;
                     secondLineGap = m;
                     linesRect_.setHeight(firstLineRect_.height() + m + secondLineRect_.height());
                 }
@@ -915,7 +884,8 @@ void ContactListViewDelegate::Private::recomputeGeometry()
             }
         } else {
             linesRect_.moveLeft(contactBoundingRect_.left());
-            avatarStatusRect_.moveRight(contactBoundingRect_.right()); // lines are the same width. so it does not matter which
+            avatarStatusRect_.moveRight(
+                contactBoundingRect_.right()); // lines are the same width. so it does not matter which
             if (statusIconsOverAvatars_) {
                 statusIconRect_.moveBottomLeft(avatarStatusRect_.bottomLeft());
             }
@@ -944,31 +914,30 @@ QSize ContactListViewDelegate::Private::sizeHint(const QModelIndex &index) const
 {
     auto role = qvariant_cast<ContactListItem::Type>(index.data(ContactListModel::TypeRole));
     if (role == ContactListItem::Type::ContactType) {
-        return contactBoundingRect_.size() + QSize(2*ContactHMargin, 2*ContactVMargin)*PSI_HIDPI;
+        return contactBoundingRect_.size() + QSize(2 * ContactHMargin, 2 * ContactVMargin) * PSI_HIDPI;
     }
     int contentHeight;
     if (role == ContactListItem::Type::GroupType) {
-        contentHeight = qMax(IconsetFactory::iconPtr("psi/groupOpen")->pixmap().height() * PSI_HIDPI,
-                             nickRect_.height());
+        contentHeight
+            = qMax(IconsetFactory::iconPtr("psi/groupOpen")->pixmap().height() * PSI_HIDPI, nickRect_.height());
     } else {
-        contentHeight = qMax(showStatusIcons_? statusIconSize_ * PSI_HIDPI : 0, nickRect_.height());
+        contentHeight = qMax(showStatusIcons_ ? statusIconSize_ * PSI_HIDPI : 0, nickRect_.height());
     }
-    return QSize(16, contentHeight + 2 * ContactVMargin*PSI_HIDPI);
+    return QSize(16, contentHeight + 2 * ContactVMargin * PSI_HIDPI);
 }
 
 int ContactListViewDelegate::Private::avatarSize() const
 {
-    return showAvatars_ ?
-            qMax(avatarRect_.height() + 2 * ContactVMargin*PSI_HIDPI,
-                 firstLineRect_.height()) : firstLineRect_.height();
+    return showAvatars_ ? qMax(avatarRect_.height() + 2 * ContactVMargin * PSI_HIDPI, firstLineRect_.height())
+                        : firstLineRect_.height();
 }
 
 void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModelIndex &index)
 {
     QStyleOptionViewItem o = opt;
-    o.font = font_;
-    o.fontMetrics = fontMetrics_;
-    QPalette palette = o.palette;
+    o.font                 = font_;
+    o.fontMetrics          = fontMetrics_;
+    QPalette palette       = o.palette;
     if (!slimGroup_)
         palette.setColor(QPalette::Base, _headerBackgroundColor);
     palette.setColor(QPalette::Text, _headerForegroundColor);
@@ -980,27 +949,31 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
     if (!slimGroup_ && outlinedGroup_) {
         painter->setPen(QPen(_headerForegroundColor));
         QRect gr(r);
-        int s = painter->pen().width();
-        gr.adjust(0,0,-s,-s);
+        int   s = painter->pen().width();
+        gr.adjust(0, 0, -s, -s);
         painter->drawRect(gr);
     }
 
     const QPixmap &pixmap = index.data(ContactListModel::ExpandedRole).toBool()
-                            ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap()
-                            : IconsetFactory::iconPtr("psi/groupClosed")->pixmap();
+        ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap()
+        : IconsetFactory::iconPtr("psi/groupClosed")->pixmap();
 
-    QSize pixmapSize = pixmap.size()*PSI_HIDPI;
+    QSize pixmapSize = pixmap.size() * PSI_HIDPI;
     QRect pixmapRect = relativeRect(opt, pixmapSize, QRect());
-    r = relativeRect(opt, QSize(), pixmapRect, 3);
+    r                = relativeRect(opt, QSize(), pixmapRect, 3);
     pixmapRect.moveTop(opt.rect.top() + (opt.rect.height() - pixmapRect.height()) / 2);
     painter->drawPixmap(pixmapRect, pixmap);
 
     QString text = index.data(ContactListModel::DisplayGroupRole).toString();
     drawText(painter, o, r, text);
 
-    if(slimGroup_ && !(opt.state & QStyle::State_Selected)) {
+    if (slimGroup_ && !(opt.state & QStyle::State_Selected)) {
         int h = r.y() + (r.height() / 2);
-        int x = r.left() + fontMetrics_.width(text) + 8;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+        int x = r.left() + fontMetrics_.horizontalAdvance(text) + 8;
+#else
+        int x    = r.left() + fontMetrics_.width(text) + 8;
+#endif
         painter->setPen(QPen(_headerBackgroundColor, 2));
         painter->drawLine(x, h, r.right(), h);
     }
@@ -1009,9 +982,9 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QModelIndex &index)
 {
     QStyleOptionViewItem o = opt;
-    o.font = font_;
-    o.fontMetrics = fontMetrics_;
-    QPalette palette = o.palette;
+    o.font                 = font_;
+    o.fontMetrics          = fontMetrics_;
+    QPalette palette       = o.palette;
     palette.setColor(QPalette::Base, _headerBackgroundColor);
     palette.setColor(QPalette::Text, _headerForegroundColor);
     o.palette = palette;
@@ -1021,38 +994,43 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
     if (outlinedGroup_) {
         painter->setPen(QPen(_headerForegroundColor));
         QRect r(opt.rect);
-        int s = painter->pen().width();
-        r.adjust(0,0,-s,-s);
+        int   s = painter->pen().width();
+        r.adjust(0, 0, -s, -s);
         painter->drawRect(r);
     }
 
-    const QPixmap statusPixmap = this->statusPixmap(index);
-    const QSize pixmapSize = statusPixmap.size() * PSI_HIDPI;
-    QRect statusIconRect = relativeRect(o, pixmapSize, QRect());
+    const QPixmap statusPixmap   = this->statusPixmap(index);
+    const QSize   pixmapSize     = statusPixmap.size() * PSI_HIDPI;
+    QRect         statusIconRect = relativeRect(o, pixmapSize, QRect());
     statusIconRect.moveTop(opt.rect.top() + (opt.rect.height() - statusIconRect.height()) / 2);
     QString text = index.data(Qt::DisplayRole).toString();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+    QRect r = relativeRect(o, QSize(o.fontMetrics.horizontalAdvance(text), o.rect.height()), statusIconRect, 3);
+#else
     QRect r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), statusIconRect, 3);
+#endif
     painter->drawPixmap(statusIconRect, statusPixmap);
 
     drawText(painter, o, r, text);
 
     QPixmap sslPixmap = index.data(ContactListModel::UsingSSLRole).toBool()
-                        ? IconsetFactory::iconPixmap("psi/cryptoYes")
-                        : IconsetFactory::iconPixmap("psi/cryptoNo");
+        ? IconsetFactory::iconPixmap("psi/cryptoYes")
+        : IconsetFactory::iconPixmap("psi/cryptoNo");
 
     QSize sslPixmapSize = statusPixmap.size() * PSI_HIDPI;
-    QRect sslRect = relativeRect(o, sslPixmapSize, r, 3);
+    QRect sslRect       = relativeRect(o, sslPixmapSize, r, 3);
     sslRect.moveTop(opt.rect.top() + (opt.rect.height() - sslRect.height()) / 2);
     painter->drawPixmap(sslRect, sslPixmap);
     r = relativeRect(opt, QSize(), sslRect, 3);
 
     text = QString("(%1/%2)")
-           .arg(index.data(ContactListModel::OnlineContactsRole).toInt())
-           .arg(index.data(ContactListModel::TotalContactsRole).toInt());
+               .arg(index.data(ContactListModel::OnlineContactsRole).toInt())
+               .arg(index.data(ContactListModel::TotalContactsRole).toInt());
     drawText(painter, o, r, text);
 }
 
-void ContactListViewDelegate::Private::drawText(QPainter *painter, const QStyleOptionViewItem &opt, const QRect &rect, const QString &text)
+void ContactListViewDelegate::Private::drawText(QPainter *painter, const QStyleOptionViewItem &opt, const QRect &rect,
+                                                const QString &text)
 {
     if (text.isEmpty())
         return;
@@ -1060,16 +1038,13 @@ void ContactListViewDelegate::Private::drawText(QPainter *painter, const QStyleO
     QRect rect2 = rect;
     rect2.moveTop(rect2.top() + (rect2.height() - opt.fontMetrics.height()) / 2);
 
-    QPalette::ColorGroup cg = opt.state & QStyle::State_Enabled
-                              ? QPalette::Normal
-                              : QPalette::Disabled;
+    QPalette::ColorGroup cg = opt.state & QStyle::State_Enabled ? QPalette::Normal : QPalette::Disabled;
 
     if (cg == QPalette::Normal && !(opt.state & QStyle::State_Active))
         cg = QPalette::Inactive;
     if (opt.state & QStyle::State_Selected) {
         painter->setPen(opt.palette.color(cg, QPalette::HighlightedText));
-    }
-    else {
+    } else {
         painter->setPen(opt.palette.color(cg, QPalette::Text));
     }
 
@@ -1097,7 +1072,8 @@ void ContactListViewDelegate::Private::drawText(QPainter *painter, const QStyleO
 #endif
 }
 
-void ContactListViewDelegate::Private::drawBackground(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)
+void ContactListViewDelegate::Private::drawBackground(QPainter *painter, const QStyleOptionViewItem &option,
+                                                      const QModelIndex &index)
 {
     QStyleOptionViewItem opt = option;
 
@@ -1108,8 +1084,7 @@ void ContactListViewDelegate::Private::drawBackground(QPainter *painter, const Q
     {
         if (option.showDecorationSelected && (option.state & QStyle::State_Selected)) {
             painter->fillRect(opt.rect, backgroundColor(option, index));
-        }
-        else {
+        } else {
             QPointF oldBO = painter->brushOrigin();
             painter->setBrushOrigin(opt.rect.topLeft());
             painter->fillRect(opt.rect, backgroundColor(option, index));
@@ -1120,7 +1095,7 @@ void ContactListViewDelegate::Private::drawBackground(QPainter *painter, const Q
 
 void ContactListViewDelegate::Private::setEditorCursorPosition(QWidget *editor, int cursorPosition)
 {
-    QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor);
+    QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
     if (lineEdit) {
         if (cursorPosition == -1)
             cursorPosition = lineEdit->text().length();
@@ -1131,9 +1106,7 @@ void ContactListViewDelegate::Private::setEditorCursorPosition(QWidget *editor, 
 // copied from void QItemDelegate::drawBackground(), Qt 4.3.4
 QColor ContactListViewDelegate::Private::backgroundColor(const QStyleOptionViewItem &option, const QModelIndex &index)
 {
-    QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
-                              ? QPalette::Normal
-                              : QPalette::Disabled;
+    QPalette::ColorGroup cg = option.state & QStyle::State_Enabled ? QPalette::Normal : QPalette::Disabled;
 
     if (cg == QPalette::Normal && !(option.state & QStyle::State_Active)) {
         cg = QPalette::Inactive;
@@ -1141,13 +1114,11 @@ QColor ContactListViewDelegate::Private::backgroundColor(const QStyleOptionViewI
 
     if (option.showDecorationSelected && (option.state & QStyle::State_Selected)) {
         return option.palette.brush(cg, QPalette::Highlight).color();
-    }
-    else {
+    } else {
         QVariant value = index.data(Qt::BackgroundRole);
         if (value.canConvert<QBrush>()) {
             return qvariant_cast<QBrush>(value).color();
-        }
-        else {
+        } else {
             return option.palette.brush(cg, QPalette::Base).color();
         }
     }
@@ -1157,20 +1128,18 @@ QColor ContactListViewDelegate::Private::backgroundColor(const QStyleOptionViewI
 
 void ContactListViewDelegate::Private::doSetOptions(const QStyleOptionViewItem &option, const QModelIndex &index)
 {
-    opt = q->setOptions(index, option);
+    opt          = q->setOptions(index, option);
     opt.features = option.features;
 
-    const HoverableStyleOptionViewItem *hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem*>(&option);
-    opt.hovered = hoverable ? hoverable->hovered : false;
-    opt.hoveredPosition = hoverable ? hoverable->hoveredPosition : QPoint();
+    const HoverableStyleOptionViewItem *hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem *>(&option);
+    opt.hovered                                   = hoverable ? hoverable->hovered : false;
+    opt.hoveredPosition                           = hoverable ? hoverable->hoveredPosition : QPoint();
 
     // see hoverabletreeview.cpp
-    if ((opt.displayAlignment & Qt::AlignLeft)
-        && (opt.displayAlignment & Qt::AlignRight)
-        && (opt.displayAlignment & Qt::AlignHCenter)
-        && (opt.displayAlignment & Qt::AlignJustify)) {
+    if ((opt.displayAlignment & Qt::AlignLeft) && (opt.displayAlignment & Qt::AlignRight)
+        && (opt.displayAlignment & Qt::AlignHCenter) && (opt.displayAlignment & Qt::AlignJustify)) {
 
-        opt.hovered = true;
+        opt.hovered         = true;
         opt.hoveredPosition = QPoint(opt.decorationSize.width(), opt.decorationSize.height());
     }
 }
@@ -1179,7 +1148,7 @@ QRect ContactListViewDelegate::Private::getEditorGeometry(const QStyleOptionView
 {
     QRect rect;
 
-    ContactListItem *item = qvariant_cast<ContactListItem*>(index.data(ContactListModel::ContactListItemRole));
+    ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
 
     switch (type) {
@@ -1206,8 +1175,7 @@ void ContactListViewDelegate::Private::setAlertEnabled(const QModelIndex &index,
         if (!alertTimer_->isActive()) {
             alertTimer_->start();
         }
-    }
-    else if (!enable && alertingIndexes.contains(index)) {
+    } else if (!enable && alertingIndexes.contains(index)) {
         alertingIndexes.remove(index);
         if (alertingIndexes.isEmpty()) {
             alertTimer_->stop();
@@ -1222,8 +1190,7 @@ void ContactListViewDelegate::Private::setAnimEnabled(const QModelIndex &index, 
         if (!animTimer->isActive()) {
             animTimer->start();
         }
-    }
-    else if (!enable && animIndexes.contains(index)) {
+    } else if (!enable && animIndexes.contains(index)) {
         animIndexes.remove(index);
         if (alertingIndexes.isEmpty()) {
             animTimer->stop();
@@ -1235,52 +1202,50 @@ void ContactListViewDelegate::Private::setAnimEnabled(const QModelIndex &index, 
 /* ContactListViewDelegate */
 /***************************/
 
-
-ContactListViewDelegate::ContactListViewDelegate(ContactListView *parent)
-    : QItemDelegate(parent)
+ContactListViewDelegate::ContactListViewDelegate(ContactListView *parent) : QItemDelegate(parent)
 {
     d = new Private(this, parent);
     connect(d, SIGNAL(geometryUpdated()), SIGNAL(geometryUpdated()));
 }
 
-ContactListViewDelegate::~ContactListViewDelegate()
-{
-    delete d;
-}
+ContactListViewDelegate::~ContactListViewDelegate() { delete d; }
 
-void ContactListViewDelegate::recomputeGeometry()
-{
-    d->recomputeGeometry();
-}
+void ContactListViewDelegate::recomputeGeometry() { d->recomputeGeometry(); }
 
-void ContactListViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void ContactListViewDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
+                                    const QModelIndex &index) const
 {
     d->doSetOptions(option, index);
 
-    d->iconMode  = !(d->opt.state & QStyle::State_Enabled)
-                   ? QIcon::Disabled
-                   : (d->opt.state & QStyle::State_Selected)
-                     ? QIcon::Selected
-                     : QIcon::Normal;
+    d->iconMode = !(d->opt.state & QStyle::State_Enabled)
+        ? QIcon::Disabled
+        : (d->opt.state & QStyle::State_Selected) ? QIcon::Selected : QIcon::Normal;
 
     d->iconState = d->opt.state & QStyle::State_Open ? QIcon::On : QIcon::Off;
 
-    ContactListItem *item = qvariant_cast<ContactListItem*>(index.data(ContactListModel::ContactListItemRole));
+    ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
 
     switch (type) {
-    case ContactListItem::Type::ContactType:  d->drawContact(painter, index);           break;
-    case ContactListItem::Type::GroupType:    d->drawGroup(painter, index);             break;
-    case ContactListItem::Type::AccountType:  d->drawAccount(painter, index);           break;
-    case ContactListItem::Type::InvalidType:  painter->fillRect(option.rect, Qt::red);  break;
-    default: QItemDelegate::paint(painter, option, index);                              break;
+    case ContactListItem::Type::ContactType:
+        d->drawContact(painter, index);
+        break;
+    case ContactListItem::Type::GroupType:
+        d->drawGroup(painter, index);
+        break;
+    case ContactListItem::Type::AccountType:
+        d->drawAccount(painter, index);
+        break;
+    case ContactListItem::Type::InvalidType:
+        painter->fillRect(option.rect, Qt::red);
+        break;
+    default:
+        QItemDelegate::paint(painter, option, index);
+        break;
     }
 }
 
-int ContactListViewDelegate::avatarSize() const
-{
-    return d->avatarSize();
-}
+int ContactListViewDelegate::avatarSize() const { return d->avatarSize(); }
 
 QSize ContactListViewDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -1308,11 +1273,10 @@ void ContactListViewDelegate::contactAlert(const QModelIndex &index)
 
 void ContactListViewDelegate::animateContacts(const QModelIndexList &indexes, bool started)
 {
-    for (const QModelIndex &index: indexes) {
+    for (const QModelIndex &index : indexes) {
         if (started) {
             d->animIndexes << index;
-        }
-        else {
+        } else {
             d->animIndexes.remove(index);
         }
     }
@@ -1329,7 +1293,8 @@ void ContactListViewDelegate::clearAlerts()
     d->alertTimer_->stop();
 }
 
-void ContactListViewDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void ContactListViewDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                                                   const QModelIndex &index) const
 {
     QRect widgetRect = d->getEditorGeometry(option, index);
     if (!widgetRect.isEmpty()) {
@@ -1341,7 +1306,7 @@ void ContactListViewDelegate::updateEditorGeometry(QWidget *editor, const QStyle
 // and the contact we're editing emits dataChanged()
 void ContactListViewDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
 {
-    QLineEdit *lineEdit = qobject_cast<QLineEdit*>(editor);
+    QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
     if (lineEdit) {
         if (lineEdit->text().isEmpty()) {
             lineEdit->setText(index.data(Qt::EditRole).toString());
@@ -1355,13 +1320,12 @@ void ContactListViewDelegate::setEditorData(QWidget *editor, const QModelIndex &
 
 void ContactListViewDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
 {
-    QLineEdit *lineEdit = qobject_cast<QLineEdit*>(editor);
+    QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
     if (lineEdit) {
         if (index.data(Qt::EditRole).toString() != lineEdit->text()) {
             model->setData(index, lineEdit->text(), Qt::EditRole);
         }
-    }
-    else {
+    } else {
         QItemDelegate::setModelData(editor, model, index);
     }
 }
@@ -1370,23 +1334,18 @@ void ContactListViewDelegate::setModelData(QWidget *editor, QAbstractItemModel *
 bool ContactListViewDelegate::eventFilter(QObject *object, QEvent *event)
 {
     if (event->type() == QEvent::KeyPress) {
-        QWidget *editor = qobject_cast<QWidget*>(object);
-        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        QWidget *  editor   = qobject_cast<QWidget *>(object);
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         if (keyEvent->key() == Qt::Key_Up) {
             d->setEditorCursorPosition(editor, 0);
             return true;
-        }
-        else if (keyEvent->key() == Qt::Key_Down) {
+        } else if (keyEvent->key() == Qt::Key_Down) {
             d->setEditorCursorPosition(editor, -1);
             return true;
-        }
-        else if (keyEvent->key() == Qt::Key_PageUp ||
-                 keyEvent->key() == Qt::Key_PageDown) {
+        } else if (keyEvent->key() == Qt::Key_PageUp || keyEvent->key() == Qt::Key_PageDown) {
 
             return true;
-        }
-        else if (keyEvent->key() == Qt::Key_Tab ||
-                 keyEvent->key() == Qt::Key_Backtab) {
+        } else if (keyEvent->key() == Qt::Key_Tab || keyEvent->key() == Qt::Key_Backtab) {
 
             return true;
         }

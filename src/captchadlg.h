@@ -5,15 +5,14 @@
 
 #include <QDialog>
 
+class PsiAccount;
+class XDataWidget;
+
 namespace Ui {
 class CaptchaDlg;
 }
 
-class PsiAccount;
-class XDataWidget;
-
-class CaptchaDlg : public QDialog
-{
+class CaptchaDlg : public QDialog {
     Q_OBJECT
 
 public:
@@ -23,13 +22,10 @@ public:
 public slots:
     void done(int r);
 
-private slots:
-    void captchaFinished();
-
 private:
-    Ui::CaptchaDlg *ui;
+    Ui::CaptchaDlg *       ui;
     XMPP::CaptchaChallenge challenge;
-    XDataWidget *dataWidget;
+    XDataWidget *          dataWidget;
 };
 
 #endif // CAPTCHADLG_H

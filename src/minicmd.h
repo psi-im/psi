@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,50 +18,48 @@
 
 // Interfaces for mini command system
 
-
-
 #ifndef MINICMD_H
 #define MINICMD_H
 
 #include <QHash>
 #include <QVariant>
 
+/** unparsed state: this is a state where the whole user input is passed
+ * unparsed as the first part to the handler functions
+ */
+#define MCMDSTATE_UNPARSED 1
+
+class MCmdProviderIface;
 class QString;
 class QStringList;
-class MCmdProviderIface;
-
-/** unparsed state: this is a state where the whole user input is passed
-  * unparsed as the first part to the handler functions
-  */
-#define MCMDSTATE_UNPARSED    1
 
 /** This interface models the methods common to all mini command states.
-  */
+ */
 class MCmdStateIface {
 public:
     /** \return the name of the state
      */
-    virtual QString getName()=0;
+    virtual QString getName() = 0;
 
     /** \return the prompt of the state
-      */
-    virtual QString getPrompt()=0;
+     */
+    virtual QString getPrompt() = 0;
 
     /** \return flags for this state
-      */
-    virtual int getFlags()=0;
+     */
+    virtual int getFlags() = 0;
 
     /** Called when the state is no longer needed to free associated memory.
      */
-    virtual void dispose()=0;
+    virtual void dispose() = 0;
 
     /** Called when no more-specific state transition handler handled the command.
      */
-    virtual bool unhandled(QStringList command)=0;
+    virtual bool unhandled(QStringList command) = 0;
 
     /** \return additional data for this state
      */
-    virtual const QHash<QString, QVariant> &getInfo()=0;
+    virtual const QHash<QString, QVariant> &getInfo() = 0;
 
     virtual ~MCmdStateIface() {};
 };
@@ -79,12 +77,12 @@ public:
      *  The site will open the user interface with displaying \a prompt as prompt and
      *  inizialising the input box with \a def.
      */
-    virtual void mCmdReady(const QString prompt, const QString def)=0;
+    virtual void mCmdReady(const QString prompt, const QString def) = 0;
 
     /** Close user interface.
      *  The site closes the user interface.
      */
-    virtual void mCmdClose()=0;
+    virtual void mCmdClose() = 0;
 
     virtual ~MCmdUiSiteIface() {};
 };
@@ -103,28 +101,28 @@ public:
      *  state change for it.
      *  \return FIXME needed?
      */
-    virtual bool processCommand(QString command)=0;
+    virtual bool processCommand(QString command) = 0;
 
     /** Find possible tab complations on the command \a command with cursor on position \a pos.
      *
      *  \return a list of possible replacements of the text between \a start and \a end.
      */
-    virtual QStringList completeCommand(QString &command, int pos, int &start, int &end)=0;
+    virtual QStringList completeCommand(QString &command, int pos, int &start, int &end) = 0;
 
     /** Starts the state machine in the state \a state with a current
      *  text of \a preset.
      */
-    virtual bool open(MCmdStateIface *state, QStringList preset)=0;
+    virtual bool open(MCmdStateIface *state, QStringList preset) = 0;
 
     /** Returns true if the manager is in a non null state; otherwise returns false. */
-    virtual bool isActive()=0;
+    virtual bool isActive() = 0;
 
     // Provider registratation
     /** Registers a provider \a prov with this manager.
      */
-    virtual void registerProvider(MCmdProviderIface *prov)=0;
+    virtual void registerProvider(MCmdProviderIface *prov) = 0;
 
-    virtual ~MCmdManagerIface(){};
+    virtual ~MCmdManagerIface() {};
 };
 
 /** Interface for command providers for a mini command manager.
@@ -143,7 +141,9 @@ public:
      *  in the input box. The provider if \a newstate will get a mCmdInitState
      *  call to setup this state.
      */
-    virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate, QStringList &preset)=0;
+    virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate,
+                                     QStringList &preset)
+        = 0;
 
     /** Called if the user requests tab completion while in state \a state.
      *  \a query is the word to complete (from the start of the word to the
@@ -154,13 +154,14 @@ public:
      * \return a QStringList of all possible completions. If a completion ends with a null char,
      *           an unquoted/unescaped space will be added at the end of the completion. Ordering is irrelevant.
      */
-    virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item)=0;
+    virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item)
+        = 0;
 
     /** FIXME
      */
-    virtual void mCmdSiteDestroyed()=0; // once per registerProvider
+    virtual void mCmdSiteDestroyed() = 0; // once per registerProvider
 
     virtual ~MCmdProviderIface() {};
 };
 
-#endif
+#endif // MINICMD_H

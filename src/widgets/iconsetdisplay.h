@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,19 +22,19 @@
 
 #include <QListWidget>
 
-class IconsetDisplayItem;
 class Iconset;
+class IconsetDisplayItem;
 
-class IconsetDisplay : public QListWidget
-{
+class IconsetDisplay : public QListWidget {
     Q_OBJECT
 public:
-    IconsetDisplay(QWidget *parent = 0);
+    IconsetDisplay(QWidget *parent = nullptr);
     ~IconsetDisplay();
 
     void setIconset(const Iconset &);
+
 private:
     friend class IconsetDisplayItem;
 };
 
-#endif
+#endif // ICONSETDISPLAY_H

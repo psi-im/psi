@@ -12,30 +12,29 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psitooltip.h"
 
+#include "private/qeffects_p.h"
+#include "psitiplabel.h"
+
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QHash>
 #include <QKeyEvent>
 #include <QPointer>
-#include <QHash>
+#include <QScreen>
 #include <QToolTip>
-#include "private/qeffects_p.h"
-
-#include "psitiplabel.h"
 
 //----------------------------------------------------------------------------
 // PsiToolTipHandler
 //----------------------------------------------------------------------------
 
-class PsiToolTipHandler : public QObject
-{
+class PsiToolTipHandler : public QObject {
     Q_OBJECT
 public:
     static PsiToolTipHandler *getInstance()
@@ -48,40 +47,35 @@ public:
 
     void install(QWidget *widget)
     {
-        if(!watchedWidgets_.contains(widget)) {
-            connect(widget, SIGNAL(destroyed(QObject*)), SLOT(widgetDestroyed(QObject*)));
+        if (!watchedWidgets_.contains(widget)) {
+            connect(widget, SIGNAL(destroyed(QObject *)), SLOT(widgetDestroyed(QObject *)));
         }
         watchedWidgets_[widget] = true;
     }
 
 private slots:
-    void widgetDestroyed(QObject* obj)
+    void widgetDestroyed(QObject *obj)
     {
-        QWidget* widget = static_cast<QWidget*>(obj);
+        QWidget *widget = static_cast<QWidget *>(obj);
         watchedWidgets_.remove(widget);
-        if(watchedWidgets_.isEmpty()) {
+        if (watchedWidgets_.isEmpty()) {
             instance->deleteLater();
-            instance = 0;
+            instance = nullptr;
         }
     }
 
 private:
-    QHash<QWidget*, bool> watchedWidgets_;
+    QHash<QWidget *, bool>    watchedWidgets_;
     static PsiToolTipHandler *instance;
 
-    PsiToolTipHandler()
-        : QObject(qApp)
-    {
-        qApp->installEventFilter(this);
-    }
+    PsiToolTipHandler() : QObject(qApp) { qApp->installEventFilter(this); }
 
     bool eventFilter(QObject *obj, QEvent *event)
     {
         if (event->type() == QEvent::ToolTip) {
             QWidget *widget = static_cast<QWidget *>(obj);
-            if (watchedWidgets_.contains(widget) &&
-                (widget->isActiveWindow() ||
-                 widget->window()->testAttribute(Qt::WA_AlwaysShowToolTips))) {
+            if (watchedWidgets_.contains(widget)
+                && (widget->isActiveWindow() || widget->window()->testAttribute(Qt::WA_AlwaysShowToolTips))) {
                 QPoint pos = dynamic_cast<QHelpEvent *>(event)->globalPos();
                 PsiToolTip::showText(pos, widget->toolTip(), widget);
                 event->setAccepted(true);
@@ -93,47 +87,35 @@ private:
     }
 };
 
-PsiToolTipHandler* PsiToolTipHandler::instance = 0;
+PsiToolTipHandler *PsiToolTipHandler::instance = nullptr;
 
 //----------------------------------------------------------------------------
 // ToolTipPosition
 //----------------------------------------------------------------------------
 
-ToolTipPosition::ToolTipPosition(const QPoint& _pos, const QWidget* _w)
-    : pos(_pos)
-    , w(_w)
-{
-}
+ToolTipPosition::ToolTipPosition(const QPoint &_pos, const QWidget *_w) : pos(_pos), w(_w) {}
 
-int ToolTipPosition::getScreenNumber() const
+QPoint ToolTipPosition::calculateTipPosition(const QWidget *label) const
 {
-    if (QApplication::desktop()->isVirtualDesktop())
-        return QApplication::desktop()->screenNumber(pos);
-
-    return QApplication::desktop()->screenNumber(w);
-}
-
-QRect ToolTipPosition::screenRect() const
-{
-#ifdef Q_OS_MAC
-    return QApplication::desktop()->availableGeometry(getScreenNumber());
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    QScreen *s;
+    if (!(s = QApplication::screenAt(pos))) {
+        qWarning("Failed to find screen for coords %dx%d", pos.x(), pos.y());
+        return QPoint(0, 0);
+    }
+    QRect screen = s->geometry();
 #else
-    return QApplication::desktop()->screenGeometry(getScreenNumber());
+    QRect screen = QApplication::desktop()->screenGeometry(pos);
 #endif
-}
-
-QPoint ToolTipPosition::calculateTipPosition(const QWidget* label) const
-{
-    QRect screen = screenRect();
 
     QPoint p = pos;
     p += QPoint(2,
 #ifdef Q_OS_WIN
-                  24
+                24
 #else
-                  16
+                16
 #endif
-               );
+    );
 
     if (p.x() + label->width() > screen.x() + screen.width())
         p.rx() -= 4 + label->width();
@@ -155,9 +137,7 @@ QPoint ToolTipPosition::calculateTipPosition(const QWidget* label) const
 // PsiToolTip
 //----------------------------------------------------------------------------
 
-PsiToolTip::PsiToolTip()
-    : QObject(QCoreApplication::instance())
-{}
+PsiToolTip::PsiToolTip() : QObject(QCoreApplication::instance()) {}
 
 /**
  * QTipLabel's font is being determined at run-time. However QTipLabel's and
@@ -198,13 +178,13 @@ void PsiToolTip::doShowText(const QPoint &pos, const QString &text, const QWidge
         return;
     }
 
-    bool preventAnimation = (PsiTipLabel::instance() != 0);
+    bool preventAnimation = (PsiTipLabel::instance() != nullptr);
 
     installPsiToolTipFont();
-    QFrame *label = createTipLabel(text, QApplication::desktop()->screen(calc->getScreenNumber()));
+    QFrame *label = createTipLabel(text, QApplication::desktop());
     label->move(calc->calculateTipPosition(label));
 
-    if ( QApplication::isEffectEnabled(Qt::UI_AnimateTooltip) == false || preventAnimation)
+    if (QApplication::isEffectEnabled(Qt::UI_AnimateTooltip) == false || preventAnimation)
         label->show();
     else if (QApplication::isEffectEnabled(Qt::UI_FadeTooltip))
         qFadeEffect(label);
@@ -212,25 +192,22 @@ void PsiToolTip::doShowText(const QPoint &pos, const QString &text, const QWidge
         qScrollEffect(label);
 }
 
-bool PsiToolTip::moveAndUpdateTipLabel(PsiTipLabel* label, const QString& text)
-{
-    return label->theText() == text;
-}
+bool PsiToolTip::moveAndUpdateTipLabel(PsiTipLabel *label, const QString &text) { return label->theText() == text; }
 
-void PsiToolTip::updateTipLabel(PsiTipLabel* label, const QString& text)
+void PsiToolTip::updateTipLabel(PsiTipLabel *label, const QString &text)
 {
     Q_UNUSED(label);
     Q_UNUSED(text);
 }
 
-ToolTipPosition* PsiToolTip::createTipPosition(const QPoint& cursorPos, const QWidget* parentWidget)
+ToolTipPosition *PsiToolTip::createTipPosition(const QPoint &cursorPos, const QWidget *parentWidget)
 {
     return new ToolTipPosition(cursorPos, parentWidget);
 }
 
-PsiTipLabel* PsiToolTip::createTipLabel(const QString& text, QWidget* parent)
+PsiTipLabel *PsiToolTip::createTipLabel(const QString &text, QWidget *parent)
 {
-    PsiTipLabel* label = new PsiTipLabel(parent);
+    PsiTipLabel *label = new PsiTipLabel(parent);
     label->init(text);
     return label;
 }
@@ -239,14 +216,11 @@ PsiTipLabel* PsiToolTip::createTipLabel(const QString& text, QWidget* parent)
  * After installation, all tool tips in specified widget will be processed
  * through PsiToolTip and thus <icon> tags would be correctly handled.
  */
-void PsiToolTip::doInstall(QWidget *w)
-{
-    PsiToolTipHandler::getInstance()->install(w);
-}
+void PsiToolTip::doInstall(QWidget *w) { PsiToolTipHandler::getInstance()->install(w); }
 
-PsiToolTip *PsiToolTip::instance_ = 0;
+PsiToolTip *PsiToolTip::instance_ = nullptr;
 
-PsiToolTip* PsiToolTip::instance()
+PsiToolTip *PsiToolTip::instance()
 {
     if (!instance_)
         instance_ = new PsiToolTip();

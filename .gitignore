@@ -71,3 +71,12 @@ builddir
 .qmake.cache
 .qmake.stash
 psi.app/
+myspell/
+translations/
+src/plugins/CMakeLists.txt
+src/plugins/README.md
+src/plugins/cmake/
+src/plugins/dev/
+src/plugins/generic/
+src/plugins/tests/
+src/plugins/unix/

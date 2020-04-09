@@ -12,124 +12,107 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "tabbar.h"
+
 #include "iconset.h"
 
 #include <QAbstractButton>
+#include <QApplication>
+//#include <QDebug>
+#include <QDrag>
+#include <QLine>
+#include <QMimeData>
+#include <QMouseEvent>
 #include <QPixmap>
 #include <QStyleOptionTab>
 #include <QStylePainter>
-#include <QMouseEvent>
-#include <QApplication>
-#include <QLine>
-#include <QDrag>
-#include <QMimeData>
-//#include <QDebug>
+#include <memory>
 
-#define PINNED_CHARS 4
+#define PINNED_CHARS 12
 
 // Do not count invisible &
-//#define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)
+#define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)
 
-class CloseButton : public QAbstractButton
-{
+class CloseButton : public QAbstractButton {
     Q_OBJECT
 
 public:
     CloseButton(QWidget *parent = nullptr);
 
-    QSize sizeHint() const;
-    inline QSize minimumSizeHint() const
-        { return sizeHint(); }
-    void enterEvent(QEvent *event);
-    void leaveEvent(QEvent *event);
-    void paintEvent(QPaintEvent *event);
+    QSize        sizeHint() const;
+    inline QSize minimumSizeHint() const { return sizeHint(); }
+    void         enterEvent(QEvent *event);
+    void         leaveEvent(QEvent *event);
+    void         paintEvent(QPaintEvent *event);
 };
 
-struct RowSf
-{
+struct RowSf {
     RowSf() : number(0), sf(0.) {}
 
-    int number;
+    int    number;
     double sf;
 };
 
 typedef QList<RowSf> LayoutSf;
 
-class TabBar::Private
-{
+class TabBar::Private {
 public:
     Private(TabBar *base);
 
-    void layoutTabs();
-    int pinnedTabWidthHint() const;
+    void  layoutTabs();
+    int   pinnedTabWidthHint() const;
     QSize tabSizeHint(QStyleOptionTab tab) const;
-    void balanseCloseButtons();
-    bool indexAtBottom(int index) const;
+    void  balanseCloseButtons();
+    bool  indexAtBottom(int index) const;
 
-    TabBar *q;
+    TabBar *               q;
     QList<QStyleOptionTab> hackedTabs;
-    QList<CloseButton*> closeButtons;
-    bool tabsClosable;
-    bool multiRow;
-    int hoverTab;
-    bool dragsEnabled;
-    int dragTab;
-    int dragInsertIndex;
-    int dragHoverTab;
-    QPoint mousePressPoint;
-    int pinnedTabs;
-    bool update;
-    bool stopRecursive;
-    bool indexAlwaysAtBottom;
+    QList<CloseButton *>   closeButtons;
+    bool                   tabsClosable;
+    bool                   multiRow;
+    int                    hoverTab;
+    bool                   dragsEnabled;
+    int                    dragTab;
+    int                    dragInsertIndex;
+    int                    dragHoverTab;
+    QPoint                 mousePressPoint;
+    int                    pinnedTabs;
+    bool                   update;
+    bool                   stopRecursive;
+    bool                   indexAlwaysAtBottom;
 
     struct {
         QList<int> tabs;
-        int barWidth;
-        int rows;
-        double baseSf;
-        LayoutSf layout;
+        int        barWidth;
+        int        rows;
+        double     baseSf;
+        LayoutSf   layout;
     } cachedLayout;
 };
 
-TabBar::Private::Private(TabBar *base)
-    : q(base)
-    , hackedTabs()
-    , closeButtons()
-    , tabsClosable(false)
-    , multiRow(false)
-    , hoverTab(-1)
-    , dragsEnabled(true)
-    , dragTab(-1)
-    , dragInsertIndex(-1)
-    , dragHoverTab(-1)
-    , mousePressPoint()
-    , pinnedTabs(0)
-    , update(true)
-    , stopRecursive(false)
-    , indexAlwaysAtBottom(false)
-    , cachedLayout({ QList<int>(), 0, 0, 0., LayoutSf() })
+TabBar::Private::Private(TabBar *base) :
+    q(base), hackedTabs(), closeButtons(), tabsClosable(false), multiRow(false), hoverTab(-1), dragsEnabled(true),
+    dragTab(-1), dragInsertIndex(-1), dragHoverTab(-1), mousePressPoint(), pinnedTabs(0), update(true),
+    stopRecursive(false), indexAlwaysAtBottom(false), cachedLayout({ QList<int>(), 0, 0, 0., LayoutSf() })
 {
     balanseCloseButtons();
 }
 
 LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double baseSf)
 {
-    int layouts[50 * 10000]; // FIXME
+    std::unique_ptr<int[]> layouts(new int[50 * 10000]);
     for (int i = 0; i < rows; ++i) {
-        layouts[i] = i;
+        layouts[size_t(i)] = i;
     }
 
     int *pPrevLayout = &layouts[0];
-    int *pLayout = &layouts[rows];
-    int nTabs = tabs.size();
-
+    int *pLayout     = &layouts[size_t(rows)];
+    int  nTabs       = tabs.size();
 
     // Fill layouts
     while (true) {
@@ -145,8 +128,7 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
                     pLayout[j] = base++;
 
                 break;
-            }
-            else {
+            } else {
                 i--;
             }
         }
@@ -158,15 +140,15 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
         pLayout += rows;
     }
 
-    int *pGoodLayout = 0;
-    double minDSf = 10000.; // Just huge number
+    int *  pGoodLayout = nullptr;
+    double minDSf      = 10000.; // Just huge number
 
     for (pPrevLayout = &layouts[0]; pPrevLayout < pLayout; pPrevLayout += rows) {
-        bool addRow = true;
-        double sf = 0.;
+        bool   addRow = true;
+        double sf     = 0.;
         for (int i = 0; i < rows; ++i) {
             int tabsWidth = 0;
-            int end = i == rows - 1 ? nTabs : pPrevLayout[i + 1];
+            int end       = i == rows - 1 ? nTabs : pPrevLayout[i + 1];
             for (int j = pPrevLayout[i]; j < end; ++j)
                 tabsWidth += tabs[j];
 
@@ -180,11 +162,10 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
             if (i == rows - 1) {
                 if (sf < minDSf) {
                     pGoodLayout = pPrevLayout;
-                    minDSf = sf;
-                }
-                else {
-                    break;
+                    minDSf      = sf;
+                } else {
                     addRow = false;
+                    break;
                 }
             }
         }
@@ -200,7 +181,7 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
             rowSf.number = pGoodLayout[i];
 
             int tabsWidth = 0;
-            int end = i == rows - 1 ? nTabs : pGoodLayout[i + 1];
+            int end       = i == rows - 1 ? nTabs : pGoodLayout[i + 1];
             for (int j = pGoodLayout[i]; j < end; ++j)
                 tabsWidth += tabs[j];
 
@@ -216,9 +197,7 @@ LayoutSf possibleLayouts2(const QList<int> &tabs, int barWidth, int rows, double
 LayoutSf possibleLayouts(const QList<int> &tabs, int barWidth, int rows, double baseSf)
 {
     // Some safe combinations
-    if (                 tabs.size() <= 18
-        || (rows <= 6 && tabs.size() <= 22)
-        || (rows <= 5 && tabs.size() <= 28)
+    if (tabs.size() <= 18 || (rows <= 6 && tabs.size() <= 22) || (rows <= 5 && tabs.size() <= 28)
         || (rows <= 4 && tabs.size() <= 40)) {
 
         return possibleLayouts2(tabs, barWidth, rows, baseSf);
@@ -228,17 +207,17 @@ LayoutSf possibleLayouts(const QList<int> &tabs, int barWidth, int rows, double 
     // in possibleLayouts2 function.
     // Also look at Combination Formula to understand how it works.
     LayoutSf layoutSf;
-    int i = 0;
-    int step = 3;
-    int extratab = (tabs.size() % rows) ? 1 : 0;
+    int      i        = 0;
+    int      step     = 3;
+    int      extratab = (tabs.size() % rows) ? 1 : 0;
     while (i < rows) {
         if (rows - i - step == 1)
             step = 2;
 
-        int rows2 = qMin(step, rows - i);
-        int startPos = i * (tabs.size() / rows + extratab);
-        int length = step * (tabs.size() / rows + extratab);
-        QList<int> tabs2 = tabs.mid(startPos, length);
+        int        rows2    = qMin(step, rows - i);
+        int        startPos = i * (tabs.size() / rows + extratab);
+        int        length   = step * (tabs.size() / rows + extratab);
+        QList<int> tabs2    = tabs.mid(startPos, length);
 
         LayoutSf newLayoutSf = possibleLayouts2(tabs2, barWidth, rows2, baseSf);
         if (newLayoutSf.isEmpty()) {
@@ -263,20 +242,21 @@ void TabBar::Private::layoutTabs()
     pinnedTabs = qMin(pinnedTabs, q->count());
     hackedTabs.clear();
 
-    QTabBar::ButtonPosition closeSide = (QTabBar::ButtonPosition)q->style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, q);
+    QTabBar::ButtonPosition closeSide = static_cast<QTabBar::ButtonPosition>(
+        q->style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, q));
     // Tabs maybe 0 width in all-in-one mode
-    int barWidth = qMax(q->width(), 1);
+    int barWidth      = qMax(q->width(), 1);
     int tabsWidthHint = 0;
 
     int pinnedTabWidth = pinnedTabWidthHint();
-    int pinnedInRow = barWidth / pinnedTabWidth;
+    int pinnedInRow    = barWidth / pinnedTabWidth;
 
     // Protect zero divide
     if (!pinnedInRow)
         pinnedInRow = 1;
 
-    int pinnedRows = pinnedTabs / pinnedInRow;
-    double pinnedSf = static_cast<double>(barWidth) / (pinnedInRow * pinnedTabWidth);
+    int    pinnedRows = pinnedTabs / pinnedInRow;
+    double pinnedSf   = static_cast<double>(barWidth) / (pinnedInRow * pinnedTabWidth);
 
     // Prepare hacked tabs
     for (int i = 0; i < q->count(); i++) {
@@ -293,18 +273,17 @@ void TabBar::Private::layoutTabs()
             tab.rect.setWidth(tab.rect.width() + closeButtons.at(i)->size().width());
             if (closeSide == QTabBar::LeftSide) {
                 tab.leftButtonSize = closeButtons.at(i)->size();
-            }
-            else {
+            } else {
                 tab.rightButtonSize = closeButtons.at(i)->size();
             }
         }
 
         tab.rect.setSize(tabSizeHint(tab));
         // Make pinned tab if need
-        //if (i < pinnedTabs){
-        //    tab.text = PINNED_TEXT(tab.text);
-        //    tab.rect.setWidth(pinnedTabWidth);
-        //}
+        if (i < pinnedTabs) {
+            tab.text = PINNED_TEXT(tab.text);
+            tab.rect.setWidth(pinnedTabWidth);
+        }
         hackedTabs << tab;
     }
 
@@ -316,7 +295,8 @@ void TabBar::Private::layoutTabs()
     // Not enough space for normal tab in row with pinned tabs
     if (pinnedTabs == hackedTabs.size()
         || (pinnedTabs
-            && (barWidth - pinnedTabWidth * (pinnedTabs - pinnedRows * pinnedInRow) < hackedTabs.at(pinnedTabs).rect.width()))) {
+            && (barWidth - pinnedTabWidth * (pinnedTabs - pinnedRows * pinnedInRow)
+                < hackedTabs.at(pinnedTabs).rect.width()))) {
 
         pinnedRows++;
         firstNormalTab = pinnedTabs;
@@ -328,24 +308,23 @@ void TabBar::Private::layoutTabs()
     }
 
     int normalRows = pinnedTabs < hackedTabs.size() ? tabsWidthHint / barWidth + 1 : 0;
-    int rows = normalRows + pinnedRows;
+    int rows       = normalRows + pinnedRows;
 
     if (rows > hackedTabs.size()) {
-        rows = hackedTabs.size();
+        rows       = hackedTabs.size();
         normalRows = rows - pinnedRows;
     }
 
-    double sf = static_cast<float>(barWidth * normalRows) / tabsWidthHint;
+    double   sf = static_cast<double>(barWidth * normalRows) / tabsWidthHint;
     LayoutSf layout;
     if (rows == 1 || hackedTabs.size() == 1) {
         // Only one row in bar
-        rows = 1;
+        rows       = 1;
         normalRows = 1;
         layout << RowSf();
         layout[0].number = 0;
-        layout[0].sf = qMin(1.5, sf);
-    }
-    else {
+        layout[0].sf     = qMin(1.5, sf);
+    } else {
         QList<int> tabWidths;
         for (int i = firstNormalTab; i < hackedTabs.size(); ++i) {
             tabWidths << hackedTabs.at(i).rect.width();
@@ -354,29 +333,26 @@ void TabBar::Private::layoutTabs()
         if (normalRows) {
             while (layout.isEmpty()) {
                 // Speed optimization
-                if (!cachedLayout.layout.isEmpty()
-                    && cachedLayout.tabs == tabWidths
-                    && cachedLayout.barWidth == barWidth
-                    && cachedLayout.baseSf == sf
+                if (!cachedLayout.layout.isEmpty() && cachedLayout.tabs == tabWidths
+                    && cachedLayout.barWidth == barWidth && cachedLayout.baseSf == sf
                     && cachedLayout.rows == normalRows) {
 
                     layout = cachedLayout.layout;
                     break;
-                }
-                else {
+                } else {
                     layout = possibleLayouts(tabWidths, barWidth, normalRows, sf);
                 }
                 if (layout.isEmpty()) {
                     normalRows++;
                     rows++;
-                    sf = static_cast<float>(barWidth * normalRows) / tabsWidthHint;
+                    sf = static_cast<double>(barWidth * normalRows) / tabsWidthHint;
                 }
             }
-            cachedLayout.layout = layout;
+            cachedLayout.layout   = layout;
             cachedLayout.barWidth = barWidth;
-            cachedLayout.baseSf = sf;
-            cachedLayout.tabs = tabWidths;
-            cachedLayout.rows = normalRows;
+            cachedLayout.baseSf   = sf;
+            cachedLayout.tabs     = tabWidths;
+            cachedLayout.rows     = normalRows;
         }
 
         // Add pinned tabs to layout
@@ -387,27 +363,27 @@ void TabBar::Private::layoutTabs()
         for (int i = pinnedRows - 1; i >= 0; --i) {
             RowSf rowSf;
             rowSf.number = i * pinnedInRow;
-            rowSf.sf = pinnedSf;
+            rowSf.sf     = pinnedSf;
             layout.prepend(rowSf);
         }
     }
 
     // Calculate size and position for all tabs
     for (int i = 0; i < rows; ++i) {
-        RowSf &row = layout[i];
-        int endTab = i == rows - 1 ? hackedTabs.size() : layout[i + 1].number;
-        int currentRowWidth = 0;
-        int bottom;
+        RowSf &row             = layout[i];
+        int    endTab          = i == rows - 1 ? hackedTabs.size() : layout[i + 1].number;
+        int    currentRowWidth = 0;
+        int    bottom;
         if (q->shape() == QTabBar::RoundedNorth)
             bottom = i * (hackedTabs[0].rect.height() - 2);
         else
             bottom = (rows - i - 1) * (hackedTabs[0].rect.height() - 2);
 
         for (int j = row.number; j < endTab; j++) {
-            QStyleOptionTab &tab = hackedTabs[j];
-            int tabWidth = tab.rect.width();
+            QStyleOptionTab &tab      = hackedTabs[j];
+            int              tabWidth = tab.rect.width();
             if (rows > 1 && (j < firstNormalTab || j >= pinnedTabs)) {
-                tabWidth *= row.sf;
+                tabWidth *= int(row.sf);
                 tab.rect.setWidth(tabWidth);
             }
             tab.rect.moveTop(bottom);
@@ -418,18 +394,15 @@ void TabBar::Private::layoutTabs()
                     tab.position = QStyleOptionTab::OnlyOneTab;
                     if (rows > 1)
                         tab.rect.setRight(barWidth - 1);
-                }
-                else {
+                } else {
                     currentRowWidth += tabWidth;
                     tab.position = QStyleOptionTab::Beginning;
                 }
-            }
-            else {
+            } else {
                 if (j < endTab - 1) {
                     currentRowWidth += tabWidth;
                     tab.position = QStyleOptionTab::Middle;
-                }
-                else {
+                } else {
                     tab.position = QStyleOptionTab::End;
 
                     if (rows > 1)
@@ -454,30 +427,28 @@ void TabBar::Private::layoutTabs()
 
 inline static bool verticalTabs(QTabBar::Shape shape)
 {
-    return shape == QTabBar::RoundedWest
-           || shape == QTabBar::RoundedEast
-           || shape == QTabBar::TriangularWest
-           || shape == QTabBar::TriangularEast;
+    return shape == QTabBar::RoundedWest || shape == QTabBar::RoundedEast || shape == QTabBar::TriangularWest
+        || shape == QTabBar::TriangularEast;
 }
 
 int TabBar::Private::pinnedTabWidthHint() const
 {
     QStyleOptionTab opt;
     q->initStyleOption(&opt, 0);
-    opt.leftButtonSize = QSize();
+    opt.leftButtonSize  = QSize();
     opt.rightButtonSize = QSize();
-    // opt.text = "XXX";
-    opt.text = QString(PINNED_CHARS, 'X');
-    QSize iconSize = opt.iconSize;
-    int hframe = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
-    int vframe = q->style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, q);
-    QFont f = q->font();
+    opt.text            = "XXX";
+    opt.text            = QString(PINNED_CHARS, 'X');
+    QSize iconSize      = opt.iconSize;
+    int   hframe        = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
+    int   vframe        = q->style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, q);
+    QFont f             = q->font();
     f.setBold(true);
 
     const QFontMetrics fm(f);
 
     int maxWidgetHeight = qMax(opt.leftButtonSize.height(), opt.rightButtonSize.height());
-    int maxWidgetWidth = qMax(opt.leftButtonSize.width(), opt.rightButtonSize.width());
+    int maxWidgetWidth  = qMax(opt.leftButtonSize.width(), opt.rightButtonSize.width());
 
     int padding = 0;
     if (!opt.icon.isNull())
@@ -485,8 +456,8 @@ int TabBar::Private::pinnedTabWidthHint() const
 
     QSize csz;
     if (verticalTabs(q->shape())) {
-        csz = QSize( qMax(maxWidgetWidth, qMax(fm.height(), iconSize.height())) + vframe,
-                     fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe + padding);
+        csz = QSize(qMax(maxWidgetWidth, qMax(fm.height(), iconSize.height())) + vframe,
+                    fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe + padding);
     } else {
         csz = QSize(fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe + padding,
                     qMax(maxWidgetHeight, qMax(fm.height(), iconSize.height())) + vframe);
@@ -494,25 +465,24 @@ int TabBar::Private::pinnedTabWidthHint() const
 
     QSize retSize = q->style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, csz, q);
     return retSize.width() + 5;
-
 }
 
 QSize TabBar::Private::tabSizeHint(QStyleOptionTab opt) const
 {
     QSize iconSize = opt.iconSize;
-    int hframe = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
-    int vframe = q->style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, q);
-    QFont f = q->font();
+    int   hframe   = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
+    int   vframe   = q->style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, q);
+    QFont f        = q->font();
     f.setBold(true);
 
     const QFontMetrics fm(f);
 
     int maxWidgetHeight = qMax(opt.leftButtonSize.height(), opt.rightButtonSize.height());
-    int maxWidgetWidth = qMax(opt.leftButtonSize.width(), opt.rightButtonSize.width());
+    int maxWidgetWidth  = qMax(opt.leftButtonSize.width(), opt.rightButtonSize.width());
 
-    int widgetWidth = 0;
+    int widgetWidth  = 0;
     int widgetHeight = 0;
-    int padding = 0;
+    int padding      = 0;
     if (!opt.leftButtonSize.isEmpty()) {
         padding += 4;
         widgetWidth += opt.leftButtonSize.width();
@@ -528,17 +498,16 @@ QSize TabBar::Private::tabSizeHint(QStyleOptionTab opt) const
 
     QSize csz;
     if (verticalTabs(q->shape())) {
-        csz = QSize( qMax(maxWidgetWidth, qMax(fm.height(), iconSize.height())) + vframe,
-                     fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe + widgetHeight + padding);
+        csz = QSize(qMax(maxWidgetWidth, qMax(fm.height(), iconSize.height())) + vframe,
+                    fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe + widgetHeight
+                        + padding);
     } else {
-        csz = QSize(fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe
-                    + widgetWidth + padding,
+        csz = QSize(fm.size(Qt::TextShowMnemonic, opt.text).width() + iconSize.width() + hframe + widgetWidth + padding,
                     qMax(maxWidgetHeight, qMax(fm.height(), iconSize.height())) + vframe);
     }
 
     QSize retSize = q->style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, csz, q);
     return retSize;
-
 }
 
 void TabBar::Private::balanseCloseButtons()
@@ -563,8 +532,7 @@ void TabBar::Private::balanseCloseButtons()
         for (int i = pinnedTabs; i < closeButtons.size(); ++i) {
             closeButtons.at(i)->show();
         }
-    }
-    else {
+    } else {
         qDeleteAll(closeButtons);
         closeButtons.clear();
     }
@@ -576,8 +544,7 @@ bool TabBar::Private::indexAtBottom(int index) const
         return true;
 
     int lastBeginTab = hackedTabs.size() - 1;
-    while (lastBeginTab > 0
-           && hackedTabs.at(lastBeginTab).position != QStyleOptionTab::Beginning
+    while (lastBeginTab > 0 && hackedTabs.at(lastBeginTab).position != QStyleOptionTab::Beginning
            && hackedTabs.at(lastBeginTab).position != QStyleOptionTab::OnlyOneTab) {
 
         lastBeginTab--;
@@ -586,8 +553,7 @@ bool TabBar::Private::indexAtBottom(int index) const
     return index >= lastBeginTab || index < pinnedTabs;
 }
 
-TabBar::TabBar(QWidget *parent)
-    : QTabBar(parent)
+TabBar::TabBar(QWidget *parent) : QTabBar(parent)
 {
     d = new Private(this);
 #ifdef Q_OS_LINUX
@@ -598,10 +564,7 @@ TabBar::TabBar(QWidget *parent)
 #endif
 }
 
-TabBar::~TabBar()
-{
-    delete d;
-}
+TabBar::~TabBar() { delete d; }
 
 void TabBar::layoutTabs()
 {
@@ -629,8 +592,7 @@ void TabBar::setMultiRow(bool b)
         d->tabsClosable = QTabBar::tabsClosable();
         setElideMode(Qt::ElideNone);
         QTabBar::setTabsClosable(false);
-    }
-    else {
+    } else {
         QTabBar::setTabsClosable(d->tabsClosable);
         d->tabsClosable = false;
     }
@@ -639,8 +601,7 @@ void TabBar::setMultiRow(bool b)
     if (b) {
         // setUsesScrollButtons(false);
         layoutTabs();
-    }
-    else {
+    } else {
         d->hackedTabs.clear();
         update();
     }
@@ -660,12 +621,13 @@ void TabBar::setCurrentIndex(int index)
         return;
 
     d->stopRecursive = true;
-    d->pinnedTabs = qMin(d->pinnedTabs, count());
+    d->pinnedTabs    = qMin(d->pinnedTabs, count());
 
     if (!d->indexAtBottom(index)) {
         int curLastBeginTab = index;
         while (d->hackedTabs.at(curLastBeginTab).position != QStyleOptionTab::Beginning
-               && d->hackedTabs.at(curLastBeginTab).position != QStyleOptionTab::OnlyOneTab && curLastBeginTab > d->pinnedTabs) {
+               && d->hackedTabs.at(curLastBeginTab).position != QStyleOptionTab::OnlyOneTab
+               && curLastBeginTab > d->pinnedTabs) {
 
             curLastBeginTab--;
         }
@@ -674,8 +636,7 @@ void TabBar::setCurrentIndex(int index)
 
             moveTab(curLastBeginTab, count() - 1);
             index = count() - 1;
-        }
-        else {
+        } else {
             int curLastEndingTab = curLastBeginTab;
             while (d->hackedTabs.at(curLastEndingTab).position != QStyleOptionTab::End) {
                 curLastEndingTab++;
@@ -703,13 +664,13 @@ void TabBar::setCurrentIndex(int index)
     d->stopRecursive = false;
 }
 
-void TabBar::setTabText(int index, const QString & text)
+void TabBar::setTabText(int index, const QString &text)
 {
     QTabBar::setTabText(index, text);
     layoutTabs();
 }
 
-void TabBar::setTabTextColor(int index, const QColor & color)
+void TabBar::setTabTextColor(int index, const QColor &color)
 {
     QTabBar::setTabTextColor(index, color);
     layoutTabs();
@@ -728,20 +689,20 @@ QRect TabBar::tabRect(int index) const
             return d->hackedTabs[index].rect;
         else
             return QRect();
-    }
-    else {
+    } else {
         return QTabBar::tabRect(index);
     }
 }
 
 QWidget *TabBar::tabButton(int index, ButtonPosition position) const
 {
-    ButtonPosition closeButtonPos = static_cast<ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, this));
+    ButtonPosition closeButtonPos
+        = static_cast<ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this));
     if (!d->multiRow || position != closeButtonPos)
         return QTabBar::tabButton(index, position);
 
     Q_ASSERT(index < d->closeButtons.size());
-    return index < d->closeButtons.size() ? d->closeButtons[index] : 0;
+    return index < d->closeButtons.size() ? d->closeButtons[index] : nullptr;
 }
 
 int TabBar::tabAt(const QPoint &position) const
@@ -755,8 +716,7 @@ int TabBar::tabAt(const QPoint &position) const
             }
         }
         return tab;
-    }
-    else {
+    } else {
         return QTabBar::tabAt(position);
     }
 }
@@ -764,7 +724,7 @@ int TabBar::tabAt(const QPoint &position) const
 bool TabBar::eventFilter(QObject *watched, QEvent *event)
 {
     if (d->multiRow && watched == this && event->type() == QEvent::MouseButtonPress) {
-        mousePressEvent(static_cast<QMouseEvent*>(event));
+        mousePressEvent(static_cast<QMouseEvent *>(event));
         event->accept();
         return true;
     }
@@ -776,30 +736,28 @@ void TabBar::setUpdateEnabled(bool b)
     d->update = b;
     if (b) {
         layoutTabs();
-    }
-    else {
+    } else {
         d->hackedTabs.clear();
     }
 }
 
-bool TabBar::multiRow() const
-{
-    return d->multiRow;
-}
+bool TabBar::multiRow() const { return d->multiRow; }
 
 /*
  * Enable/disable dragging of tabs
  */
-void TabBar::setDragsEnabled(bool enabled)
-{
-    d->dragsEnabled = enabled;
-}
+void TabBar::setDragsEnabled(bool enabled) { d->dragsEnabled = enabled; }
 
 void TabBar::setTabPinned(int index, bool pinned)
 {
-    int newPos = d->pinnedTabs + (pinned ? 0 : -1);
-    if (index != newPos)
+    int newPos  = d->pinnedTabs + (pinned ? 0 : -1);
+    int tempPos = (index + 1) < d->hackedTabs.count() ? index + 1 : index - 1; // get nearby tab index
+    if (index != newPos) {
+        if (index == TabBar::currentIndex()) { // Check is this tab active
+            setCurrentIndex(tempPos);          // Dirty hack. Set nearby tab as active
+        }
         moveTab(index, newPos);
+    }
 
     d->pinnedTabs += pinned ? +1 : -1;
 
@@ -809,10 +767,7 @@ void TabBar::setTabPinned(int index, bool pinned)
     update();
 }
 
-bool TabBar::isTabPinned(int index)
-{
-    return index < d->pinnedTabs;
-}
+bool TabBar::isTabPinned(int index) { return index < d->pinnedTabs; }
 
 void TabBar::setCurrentIndexAlwaysAtBottom(bool b)
 {
@@ -823,15 +778,9 @@ void TabBar::setCurrentIndexAlwaysAtBottom(bool b)
     layoutTabs();
 }
 
-bool TabBar::currentIndexAlwaysAtBottom() const
-{
-    return d->indexAlwaysAtBottom;
-}
+bool TabBar::currentIndexAlwaysAtBottom() const { return d->indexAlwaysAtBottom; }
 
-QSize TabBar::minimumSizeHint() const
-{
-    return QSize(0, sizeHint().height());
-}
+QSize TabBar::minimumSizeHint() const { return QSize(0, sizeHint().height()); }
 
 QSize TabBar::sizeHint() const
 {
@@ -843,7 +792,7 @@ QSize TabBar::sizeHint() const
     QList<QStyleOptionTab> tabs = d->hackedTabs;
 
     QRect rect;
-    for (int i=0; i < tabs.size(); i++) {
+    for (int i = 0; i < tabs.size(); i++) {
         rect = rect.united(tabs.at(i).rect);
     }
 
@@ -883,27 +832,24 @@ void TabBar::setTabsClosable(bool b)
     d->layoutTabs();
 }
 
-bool TabBar::tabsClosable() const
-{
-    return d->tabsClosable;
-}
+bool TabBar::tabsClosable() const { return d->tabsClosable; }
 
 // stealed from qtabbar_p.h
 static void initStyleBaseOption(QStyleOptionTabBarBase *optTabBase, QTabBar *tabbar, QSize size)
 {
     QStyleOptionTab tabOverlap;
-    tabOverlap.shape = tabbar->shape();
-    int overlap = tabbar->style()->pixelMetric(QStyle::PM_TabBarBaseOverlap, &tabOverlap, tabbar);
+    tabOverlap.shape   = tabbar->shape();
+    int      overlap   = tabbar->style()->pixelMetric(QStyle::PM_TabBarBaseOverlap, &tabOverlap, tabbar);
     QWidget *theParent = tabbar->parentWidget();
     optTabBase->init(tabbar);
-    optTabBase->shape = tabbar->shape();
+    optTabBase->shape        = tabbar->shape();
     optTabBase->documentMode = tabbar->documentMode();
     if (theParent && overlap > 0) {
         QRect rect;
         switch (tabOverlap.shape) {
         case QTabBar::RoundedNorth:
         case QTabBar::TriangularNorth:
-            rect.setRect(0, size.height()-overlap, size.width(), overlap);
+            rect.setRect(0, size.height() - overlap, size.width(), overlap);
             break;
         case QTabBar::RoundedSouth:
         case QTabBar::TriangularSouth:
@@ -930,11 +876,11 @@ void TabBar::paintEvent(QPaintEvent *event)
         return;
     }
 
-    QStylePainter p(this);
+    QStylePainter          p(this);
     QList<QStyleOptionTab> tabs = d->hackedTabs;
 
     for (int i = 0; i < tabs.size() && i < d->pinnedTabs; ++i) {
-        tabs[i].leftButtonSize = QSize();
+        tabs[i].leftButtonSize  = QSize();
         tabs[i].rightButtonSize = QSize();
     }
 
@@ -966,8 +912,8 @@ void TabBar::paintEvent(QPaintEvent *event)
     QPixmap pixmap(width(), rowHeight);
     pixmap.fill(Qt::transparent);
     QStylePainter pp(&pixmap, this);
-    bool drawSelected = false;
-    QPixmap pinPixmap = IconsetFactory::iconPixmap("psi/pin");
+    bool          drawSelected = false;
+    QPixmap       pinPixmap    = IconsetFactory::iconPixmap("psi/pin");
     for (int i = 0; i < tabs.size(); i++) {
         QStyleOptionTab tab = tabs[i];
         if (i != selected) {
@@ -984,11 +930,9 @@ void TabBar::paintEvent(QPaintEvent *event)
             if (i < d->pinnedTabs) {
                 pp.drawPixmap(tab.rect.topRight() - QPoint(pinPixmap.width(), -3), pinPixmap);
             }
-        }
-        else {
+        } else {
             drawSelected = true;
         }
-
 
         if (tab.position == QStyleOptionTab::End || tab.position == QStyleOptionTab::OnlyOneTab) {
             if (drawSelected) {
@@ -1029,7 +973,8 @@ void TabBar::paintEvent(QPaintEvent *event)
         }
     }
 
-    ButtonPosition closeSide = (QTabBar::ButtonPosition)style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, this);
+    ButtonPosition closeSide = static_cast<QTabBar::ButtonPosition>(
+        style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, this));
     QStyle::SubElement se = (closeSide == LeftSide ? QStyle::SE_TabBarTabLeftButton : QStyle::SE_TabBarTabRightButton);
     if (d->tabsClosable) {
         for (int i = 0; i < tabs.size(); i++) {
@@ -1049,8 +994,7 @@ void TabBar::paintEvent(QPaintEvent *event)
         if (d->dragInsertIndex == d->dragHoverTab) {
             line.setP1(tabs[d->dragHoverTab].rect.topLeft());
             line.setP2(tabs[d->dragHoverTab].rect.bottomLeft());
-        }
-        else {
+        } else {
             line.setP1(tabs[d->dragHoverTab].rect.topRight());
             line.setP2(tabs[d->dragHoverTab].rect.bottomRight());
         }
@@ -1065,8 +1009,7 @@ void TabBar::mousePressEvent(QMouseEvent *event)
 {
     if (!d->multiRow) {
         QTabBar::mousePressEvent(event);
-    }
-    else {
+    } else {
         d->mousePressPoint = event->pos();
         event->accept();
     }
@@ -1095,7 +1038,6 @@ void TabBar::mouseReleaseEvent(QMouseEvent *event)
     if (curTab < 0)
         return;
 
-
     setCurrentIndex(curTab);
     d->layoutTabs();
 }
@@ -1118,8 +1060,7 @@ void TabBar::mouseMoveEvent(QMouseEvent *event)
 
     if (!d->multiRow) {
         QTabBar::mouseMoveEvent(event);
-    }
-    else {
+    } else {
         if (d->dragTab == -1) {
             if ((event->pos() - d->mousePressPoint).manhattanLength() >= QApplication::startDragDistance()) {
                 // Do not allow to drag single pinned tab
@@ -1131,12 +1072,12 @@ void TabBar::mouseMoveEvent(QMouseEvent *event)
         }
         if (d->dragTab > -1) {
             QStyleOptionTab tab = d->hackedTabs[d->dragTab];
-            QPixmap pixmap(tab.rect.size());
+            QPixmap         pixmap(tab.rect.size());
             tab.rect.moveTo(0, 0);
             tab.state = QStyle::State_Active | QStyle::State_Enabled | QStyle::State_Selected;
             pixmap.fill(Qt::transparent);
             QStylePainter pp(&pixmap, this);
-            QFont f = pp.font();
+            QFont         f = pp.font();
             f.setBold(true);
             pp.setFont(f);
             pp.style()->drawControl(QStyle::CE_TabBarTab, &tab, &pp);
@@ -1165,14 +1106,14 @@ void TabBar::mouseMoveEvent(QMouseEvent *event)
 
 void TabBar::dragMoveEvent(QDragMoveEvent *event)
 {
-    int newDragHoverTab = tabAt(event->pos());
+    int newDragHoverTab    = tabAt(event->pos());
     int newDragInsertIndex = newDragHoverTab;
 
     // Try to guess that need to insert in the end
     if (newDragHoverTab == -1) {
         QPoint p = d->hackedTabs.last().rect.topRight();
         if (event->pos().x() > p.x() && event->pos().y() > p.y()) {
-            newDragHoverTab = d->hackedTabs.size() - 1;
+            newDragHoverTab    = d->hackedTabs.size() - 1;
             newDragInsertIndex = newDragHoverTab;
         }
     }
@@ -1187,7 +1128,7 @@ void TabBar::dragMoveEvent(QDragMoveEvent *event)
         && ((d->dragTab >= d->pinnedTabs && newDragInsertIndex >= d->pinnedTabs)
             || (d->dragTab < d->pinnedTabs && newDragInsertIndex <= d->pinnedTabs))) {
         d->dragInsertIndex = newDragInsertIndex;
-        d->dragHoverTab = newDragHoverTab;
+        d->dragHoverTab    = newDragHoverTab;
         update();
     }
 }
@@ -1205,7 +1146,7 @@ void TabBar::dragLeaveEvent(QDragLeaveEvent *event)
 {
     Q_UNUSED(event);
 
-    d->dragHoverTab = -1;
+    d->dragHoverTab    = -1;
     d->dragInsertIndex = -1;
     update();
 }
@@ -1219,7 +1160,7 @@ void TabBar::dropEvent(QDropEvent *event)
             d->layoutTabs();
             setCurrentIndex(curTab);
         }
-        d->dragTab = -1;
+        d->dragTab         = -1;
         d->dragInsertIndex = -1;
         update();
     }
@@ -1244,7 +1185,6 @@ void TabBar::tabInserted(int index)
 
     d->balanseCloseButtons();
     d->layoutTabs();
-
 }
 
 void TabBar::tabRemoved(int index)
@@ -1264,13 +1204,12 @@ void TabBar::tabRemoved(int index)
 
 void TabBar::closeTab()
 {
-    CloseButton *cb = qobject_cast<CloseButton*>(sender());
-    int index = d->closeButtons.indexOf(cb);
-    emit tabCloseRequested(index);
+    CloseButton *cb    = qobject_cast<CloseButton *>(sender());
+    int          index = d->closeButtons.indexOf(cb);
+    emit         tabCloseRequested(index);
 }
 
-CloseButton::CloseButton(QWidget *parent)
-    : QAbstractButton(parent)
+CloseButton::CloseButton(QWidget *parent) : QAbstractButton(parent)
 {
     setFocusPolicy(Qt::NoFocus);
     setCursor(Qt::ArrowCursor);
@@ -1281,8 +1220,8 @@ CloseButton::CloseButton(QWidget *parent)
 QSize CloseButton::sizeHint() const
 {
     ensurePolished();
-    int width = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, 0, this);
-    int height = style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight, 0, this);
+    int width  = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, nullptr, this);
+    int height = style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight, nullptr, this);
     return QSize(width, height);
 }
 
@@ -1302,7 +1241,7 @@ void CloseButton::leaveEvent(QEvent *event)
 
 void CloseButton::paintEvent(QPaintEvent *)
 {
-    QPainter p(this);
+    QPainter     p(this);
     QStyleOption opt;
     opt.init(this);
     opt.state |= QStyle::State_AutoRaise;
@@ -1313,10 +1252,11 @@ void CloseButton::paintEvent(QPaintEvent *)
     if (isDown())
         opt.state |= QStyle::State_Sunken;
 
-    if (const TabBar *tb = qobject_cast<const TabBar*>(parent())) {
+    if (const TabBar *tb = qobject_cast<const TabBar *>(parent())) {
         int index = tb->currentIndex();
         if (index >= 0) {
-            QTabBar::ButtonPosition position = static_cast<QTabBar::ButtonPosition>(style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, 0, tb));
+            QTabBar::ButtonPosition position = static_cast<QTabBar::ButtonPosition>(
+                style()->styleHint(QStyle::SH_TabBar_CloseButtonPosition, nullptr, tb));
             if (tb->tabButton(index, position) == this)
                 opt.state |= QStyle::State_Selected;
         }

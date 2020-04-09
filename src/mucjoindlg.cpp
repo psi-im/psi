@@ -13,47 +13,53 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
+#include "mucjoindlg.h"
+
+#include "accountscombobox.h"
+#include "bookmarkmanager.h"
+#include "groupchatdlg.h"
+#include "iconset.h"
+#include "jidutil.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psiiconset.h"
+
+#include <QMessageBox>
 #include <QString>
 #include <QStringList>
-#include <QMessageBox>
 
-#include "jidutil.h"
-#include "psicon.h"
-#include "accountscombobox.h"
-#include "psiaccount.h"
-#include "mucjoindlg.h"
-#include "psicontactlist.h"
-#include "groupchatdlg.h"
-#include "psiiconset.h"
-#include "bookmarkmanager.h"
-#include "iconset.h"
-
-static const int nickConflictCode = 409;
+static const int     nickConflictCode = 409;
 static const QString additionalSymbol = "_";
+static const int     timeout          = 30000;
 
-MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
-    : QDialog(0)
-    , nickAlreadyCompleted_(false)
+MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlreadyCompleted_(false)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
+                   | Qt::CustomizeWindowHint);
     setModal(false);
     ui_.setupUi(this);
 #ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
 #endif
     controller_ = psi;
-    account_ = 0;
+    account_    = nullptr;
     controller_->dialogRegister(this);
     ui_.ck_history->setChecked(true);
     ui_.ck_history->hide();
     joinButton_ = ui_.buttonBox->addButton(tr("&Join"), QDialogButtonBox::AcceptRole);
     joinButton_->setDefault(true);
+    timer_ = new QTimer(this);
+    timer_->setInterval(timeout);
+    connect(timer_, &QTimer::timeout, this, [this]() {
+        account_->groupChatLeave(jid_.domain(), jid_.node());
+        error(404, tr("No response from server for %1 seconds").arg(timeout / 1000));
+    });
 
     reason_ = PsiAccount::MucCustomJoin;
 
@@ -70,7 +76,8 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
     setWindowTitle(CAP(windowTitle()));
 
     connect(ui_.lwFavorites, SIGNAL(currentRowChanged(int)), SLOT(favoritesCurrentRowChanged(int)));
-    connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(favoritesItemDoubleClicked(QListWidgetItem*)));
+    connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
+            SLOT(favoritesItemDoubleClicked(QListWidgetItem *)));
     ui_.lwFavorites->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContentsOnFirstShow);
 
     favoritesCurrentRowChanged(ui_.lwFavorites->currentRow());
@@ -90,8 +97,8 @@ MUCJoinDlg::~MUCJoinDlg()
 void MUCJoinDlg::done(int r)
 {
     if (ui_.busy->isActive()) {
-        //int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"), tr("&Yes"), tr("&No"));
-        //if(n != 0)
+        // int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"),
+        // tr("&Yes"), tr("&No")); if(n != 0)
         //    return;
         account_->groupChatLeave(jid_.domain(), jid_.node());
     }
@@ -124,14 +131,14 @@ void MUCJoinDlg::updateIdentityVisibility()
 
 void MUCJoinDlg::updateFavorites()
 {
-    QListWidgetItem *recentLwi = 0, *lwi;
+    QListWidgetItem *recentLwi = nullptr, *lwi;
 
     ui_.lwFavorites->clear();
 
-    QHash<QString, QListWidgetItem *> bmMap; // jid to item
+    QHash<QString, QListWidgetItem *>     bmMap; // jid to item
     QMultiMap<QString, QListWidgetItem *> nmMap; // name to item
     if (account_ && account_->bookmarkManager()->isAvailable()) {
-        foreach(ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
+        foreach (ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
             if (!c.jid().isValid()) {
                 continue;
             }
@@ -140,34 +147,32 @@ void MUCJoinDlg::updateFavorites()
             if (name.isEmpty()) {
                 name = jidBare;
             }
-            QString s = tr("%1 on %2").arg(c.nick()).arg(name);
-            lwi = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon(), s);
+            QString s = tr("%1 (%2)").arg(name, c.nick());
+            lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon(), s);
             lwi->setData(Qt::UserRole, c.jid().withResource(c.nick()).full());
             lwi->setData(Qt::UserRole + 1, c.password());
             bmMap.insert(jidBare, lwi);
             nmMap.insertMulti(name.toLower(), lwi);
         }
     }
-    for (auto &item: nmMap) { // sorted by key (name)
+    for (auto &item : nmMap) { // sorted by key (name)
         ui_.lwFavorites->addItem(item);
     }
 
-
-    foreach(QString j, controller_->recentGCList()) {
+    foreach (QString j, controller_->recentGCList()) {
         Jid jid(j);
         if (!jid.isValid()) {
             continue;
         }
         QString bareJid = jid.bare();
-        lwi = bmMap.value(bareJid);
+        lwi             = bmMap.value(bareJid);
         if (!lwi) {
             QString s = tr("%1 on %2").arg(jid.resource()).arg(JIDUtil::toString(jid, false));
-            lwi = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/history")).icon(), s);
+            lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/history")).icon(), s);
             lwi->setData(Qt::UserRole, j);
             ui_.lwFavorites->addItem(lwi);
         }
-        if (!recentLwi)
-        {
+        if (!recentLwi) {
             recentLwi = lwi;
         }
     }
@@ -197,8 +202,8 @@ void MUCJoinDlg::favoritesCurrentRowChanged(int row)
         return;
     }
     QListWidgetItem *lwi = ui_.lwFavorites->currentItem();
-    Jid jid(lwi->data(Qt::UserRole).toString());
-    QString password(lwi->data(Qt::UserRole + 1).toString());
+    Jid              jid(lwi->data(Qt::UserRole).toString());
+    QString          password(lwi->data(Qt::UserRole + 1).toString());
     if (!jid.isValid() || jid.node().isEmpty()) {
         return;
     }
@@ -211,7 +216,7 @@ void MUCJoinDlg::favoritesCurrentRowChanged(int row)
 
 void MUCJoinDlg::favoritesItemDoubleClicked(QListWidgetItem *lwi)
 {
-    Jid jid(lwi->data(Qt::UserRole).toString());
+    Jid     jid(lwi->data(Qt::UserRole).toString());
     QString password(lwi->data(Qt::UserRole + 1).toString());
     if (!jid.isValid() || jid.node().isEmpty()) {
         return;
@@ -223,7 +228,6 @@ void MUCJoinDlg::favoritesItemDoubleClicked(QListWidgetItem *lwi)
     ui_.le_pass->setText(password);
     doJoin();
 }
-
 
 void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
 {
@@ -248,20 +252,19 @@ void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
         return;
     }
 
-    GCMainDlg *gc = account_->findDialog<GCMainDlg*>(j.bare());
+    GCMainDlg *gc = account_->findDialog<GCMainDlg *>(j.bare());
     if (gc) {
-        if(gc->isHidden() && !gc->isTabbed())
+        if (gc->isHidden() && !gc->isTabbed())
             gc->ensureTabbedCorrectly();
         gc->bringToFront();
         if (gc->isInactive()) {
-            if(gc->jid() != j.bare())
+            if (gc->jid() != j.bare())
                 gc->setJid(j.bare());
             gc->reactivate();
         }
         joined();
         return;
     }
-
 
     if (!account_->groupChatJoin(host, room, nick, pass, !ui_.ck_history->isChecked())) {
         QMessageBox::information(this, tr("Error"), tr("You are in or joining this room already!"));
@@ -273,6 +276,7 @@ void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
     account_->dialogRegister(this, jid_);
 
     setWidgetsEnabled(false);
+    timer_->start();
     ui_.busy->start();
 }
 
@@ -287,6 +291,7 @@ void MUCJoinDlg::setWidgetsEnabled(bool enabled)
 void MUCJoinDlg::joined()
 {
     controller_->recentGCAdd(jid_.full());
+    timer_->stop();
     ui_.busy->stop();
 
     nickAlreadyCompleted_ = false;
@@ -297,47 +302,40 @@ void MUCJoinDlg::joined()
 
 void MUCJoinDlg::error(int error, const QString &str)
 {
+    timer_->stop();
     ui_.busy->stop();
     setWidgetsEnabled(true);
 
     account_->dialogUnregister(this);
     controller_->dialogRegister(this);
 
-    if(!nickAlreadyCompleted_ && reason_ == PsiAccount::MucAutoJoin && error == nickConflictCode) {
+    if (!nickAlreadyCompleted_ && reason_ == PsiAccount::MucAutoJoin && error == nickConflictCode) {
         nickAlreadyCompleted_ = true;
         ui_.le_nick->setText(ui_.le_nick->text() + additionalSymbol);
         doJoin(reason_);
         return;
     }
 
-    if(!isVisible())
+    if (!isVisible())
         show();
 
     nickAlreadyCompleted_ = false;
 
-    QMessageBox* msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
+    QMessageBox *msg = new QMessageBox(QMessageBox::Information, tr("Error"),
+                                       tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
     msg->setAttribute(Qt::WA_DeleteOnClose, true);
     msg->setModal(false);
     msg->show();
 }
 
-void MUCJoinDlg::setJid(const Jid& mucJid)
+void MUCJoinDlg::setJid(const Jid &mucJid)
 {
     ui_.le_host->setText(mucJid.domain());
     ui_.le_room->setText(mucJid.node());
 }
 
-void MUCJoinDlg::setNick(const QString& nick)
-{
-    ui_.le_nick->setText(nick);
-}
+void MUCJoinDlg::setNick(const QString &nick) { ui_.le_nick->setText(nick); }
 
-void MUCJoinDlg::setPassword(const QString& password)
-{
-    ui_.le_pass->setText(password);
-}
+void MUCJoinDlg::setPassword(const QString &password) { ui_.le_pass->setText(password); }
 
-void MUCJoinDlg::accept()
-{
-    doJoin();
-}
+void MUCJoinDlg::accept() { doJoin(); }

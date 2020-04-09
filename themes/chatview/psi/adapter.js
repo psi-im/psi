@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -27,17 +26,19 @@ function psiThemeAdapter(chat) {
             srvLoader.getFileContents("index.html", function(html){
                 // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
                 // probably it's a good idea if adapter will send to Psi a list of required scripts
-                html = html.replace("%scripts%", "<script src=\"/psithemes/chatview/moment-with-locales.js\"></script>\n \
-<script src=\"/psithemes/chatview/util.js\"></script>\n \
-<script src=\"/psithemes/chatview/psi/adapter.js\"></script>\n \
-<script src=\"/psiglobal/qwebchannel.js\"></script>\n \
+                var hasStyles = html.indexOf("%styles%") !== -1;
+                html = html.replace("%scripts%", "<script src=\"/psi/themes/chatview/moment-with-locales.js\"></script>\n \
+<script src=\"/psi/themes/chatview/util.js\"></script>\n \
+<script src=\"/psi/themes/chatview/psi/adapter.js\"></script>\n \
+<script src=\"/psi/static/qwebchannel.js\"></script>\n \
 <script type=\"text/javascript\">\n \
     new QWebChannel(qt.webChannelTransport, function (channel) {\n \
         window.srvSession = channel.objects.srvSession;\n \
         window.srvUtil = channel.objects.srvUtil;\n \
         var shared = initPsiTheme().adapter.initSession();\n \
     });\n \
-</script>");
+</script>" + (hasStyles?"":"%styles%"));
+                html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
                 srvLoader.setHtml(html);
                 srvLoader.getFileContents("load.js", function(js){
                     eval(js);
@@ -48,7 +49,9 @@ function psiThemeAdapter(chat) {
             var html = srvLoader.getFileContents("index.html");
             html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
                                 var shared = initPsiTheme().adapter.initSession(); \
-                        </script>");
+                        </script>" + (html.indexOf("%styles%") === -1?"%styles%":"") );
+            html = html.replace("%styles%", '<link rel="stylesheet" href="/psi/themes/chatview/psi/psi.css" type="text/css">');
+
             srvLoader.setHtml(html);
             eval(srvLoader.getFileContents("load.js"));
             srvLoader.finishThemeLoading();

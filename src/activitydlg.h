@@ -1,6 +1,6 @@
 /*
  * activitydlg.h
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,34 +13,32 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ACTIVITYDLG_H
 #define ACTIVITYDLG_H
 
-#include <QDialog>
-
 #include "ui_activity.h"
+
+#include <QDialog>
 
 class PsiAccount;
 
-class ActivityDlg : public QDialog
-{
+class ActivityDlg : public QDialog {
     Q_OBJECT
 
 public:
-    ActivityDlg(QList<PsiAccount*>);
+    ActivityDlg(QList<PsiAccount *>);
 
 protected slots:
     void setActivity();
-    void loadSpecificActivities(const QString&);
+    void loadSpecificActivities(const QString &);
 
 private:
-    Ui::Activity ui_;
-    QList<PsiAccount*> pa_;
+    Ui::Activity        ui_;
+    QList<PsiAccount *> pa_;
 };
 
-#endif
+#endif // ACTIVITYDLG_H

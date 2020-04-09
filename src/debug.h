@@ -13,49 +13,44 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #pragma once
 
-#include <QElapsedTimer>
 #include <QDebug>
+#include <QElapsedTimer>
 
 // history
-
-# define EDB_DEBUG() qDebug().noquote() << "[edb]"
-# define EDB_CRITICAL() qCritical().noquote() << "[edb]"
-# define EDB_WARNING() qWarning().noquote() << "[edb]"
-# define EDB_FATAL() QDebug(QtMsgType::QtFatalMsg).noquote() << "[edb]"
+#define EDB_DEBUG() qDebug().noquote() << "[edb]"
+#define EDB_CRITICAL() qCritical().noquote() << "[edb]"
+#define EDB_WARNING() qWarning().noquote() << "[edb]"
+#define EDB_FATAL() QDebug(QtMsgType::QtFatalMsg).noquote() << "[edb]"
 
 // contact list
-
-# define CL_DEBUG() qDebug().noquote() << "[cl]"
-# define CL_CRITICAL() qCritical().noquote() << "[cl]"
-# define CL_WARNING() qWarning().noquote() << "[cl]"
-# define CL_FATAL() QDebug(QtMsgType::QtFatalMsg).noquote() << "[cl]"
+#define CL_DEBUG() qDebug().noquote() << "[cl]"
+#define CL_CRITICAL() qCritical().noquote() << "[cl]"
+#define CL_WARNING() qWarning().noquote() << "[cl]"
+#define CL_FATAL() QDebug(QtMsgType::QtFatalMsg).noquote() << "[cl]"
 
 // Common
+#define DEBUG() qDebug().noquote()
+#define CRITICAL() qCritical().noquote()
+#define WARNING() qWarning().noquote()
+#define FATAL() QDebug(QtMsgType::QtFatalMsg).noquote()
 
-# define DEBUG() qDebug().noquote()
-# define CRITICAL() qCritical().noquote()
-# define WARNING() qWarning().noquote()
-# define FATAL() QDebug(QtMsgType::QtFatalMsg).noquote()
-
-class SlowTimer
-{
+class SlowTimer {
 public:
     SlowTimer(const QString &path, int line, int maxTime = 0, const QString &message = QString());
     ~SlowTimer();
 
 private:
     QElapsedTimer _timer;
-    QString _path;
-    int _line;
-    QString _message;
-    int _maxTime;
+    QString       _path;
+    int           _line;
+    QString       _message;
+    int           _maxTime;
 };
 
 #define SLOW_TIMER(...) SlowTimer slowTimer(__FILE__, __LINE__, __VA_ARGS__)

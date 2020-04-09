@@ -13,30 +13,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "chatsplitter.h"
 
+#include "psioptions.h"
+
+#include <QChildEvent>
 #include <QSplitter>
 #include <QVBoxLayout>
-#include <QChildEvent>
-
-#include "psioptions.h"
 
 /**
  * Handy widget that masquerades itself as QSplitter, and could work
  * in both QSplitter mode, and QSplitter-less mode.
  */
-ChatSplitter::ChatSplitter(QWidget* parent)
-    : QWidget(parent)
-    , splitterEnabled_(true)
-    , splitter_(0)
-    , layout_(0)
+ChatSplitter::ChatSplitter(QWidget *parent) :
+    QWidget(parent), splitterEnabled_(true), splitter_(nullptr), layout_(nullptr)
 {
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
     optionsChanged();
 
     if (!layout_)
@@ -57,11 +53,11 @@ void ChatSplitter::setOrientation(Qt::Orientation orientation)
  * other items. Don't call this function if widget is already added
  * to the splitter's layout.
  */
-void ChatSplitter::addWidget(QWidget* widget)
+void ChatSplitter::addWidget(QWidget *widget)
 {
     Q_ASSERT(!children_.contains(widget));
     children_ << widget;
-    connect(widget, SIGNAL(destroyed(QObject*)), SLOT(childDestroyed(QObject*)));
+    connect(widget, SIGNAL(destroyed(QObject *)), SLOT(childDestroyed(QObject *)));
     updateChildLayout(widget);
 }
 
@@ -69,22 +65,30 @@ void ChatSplitter::addWidget(QWidget* widget)
  * If splitter mode is enabled, the \a list is passed to the
  * actual splitter. Has no effect otherwise.
  */
-void ChatSplitter::setSizes(const QList<int>& list)
+void ChatSplitter::setSizes(const QList<int> &list)
 {
     if (splitter_)
         splitter_->setSizes(list);
+}
+
+QList<int> ChatSplitter::sizes()
+{
+    QList<int> list;
+    if (splitter_)
+        list = splitter_->sizes();
+
+    return list;
 }
 
 /**
  * Moves \a child either to the real QSplitter, or adds it to the
  * private layout.
  */
-void ChatSplitter::updateChildLayout(QWidget* child)
+void ChatSplitter::updateChildLayout(QWidget *child)
 {
     if (splitterEnabled() && splitter_) {
         splitter_->addWidget(child);
-    }
-    else {
+    } else {
         layout_->addWidget(child);
     }
 }
@@ -92,10 +96,10 @@ void ChatSplitter::updateChildLayout(QWidget* child)
 /**
  * Removes destroyed widget from the splitter's child list.
  */
-void ChatSplitter::childDestroyed(QObject* obj)
+void ChatSplitter::childDestroyed(QObject *obj)
 {
     Q_ASSERT(obj->isWidgetType());
-    children_.removeAll(static_cast<QWidget*>(obj));
+    children_.removeAll(static_cast<QWidget *>(obj));
 }
 
 /**
@@ -116,26 +120,28 @@ void ChatSplitter::setSplitterEnabled(bool enable)
  */
 void ChatSplitter::updateLayout()
 {
-    foreach(QWidget* child, children_)
+    foreach (QWidget *child, children_)
         child->setParent(this);
 
     delete splitter_;
     delete layout_;
     splitter_ = new QSplitter(this);
-    layout_ = new QVBoxLayout(this);
+    layout_   = new QVBoxLayout(this);
     layout_->setMargin(0);
     layout_->addWidget(splitter_);
     splitter_->setOrientation(Qt::Vertical);
     splitter_->setVisible(splitterEnabled());
 
-    foreach(QWidget* child, children_)
+    foreach (QWidget *child, children_)
         updateChildLayout(child);
+
+    connect(splitter_, SIGNAL(splitterMoved(int, int)), SIGNAL(splitterMoved(int, int)));
 }
 
 /**
  * Updates layout according to current options.
- * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to PsiOptions, make this slot
- *        private.
+ * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to
+ * PsiOptions, make this slot private.
  */
 void ChatSplitter::optionsChanged()
 {

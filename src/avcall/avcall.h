@@ -12,50 +12,41 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef AVCALL_H
 #define AVCALL_H
 
-#include <QObject>
 #include "xmpp.h"
 
+#include <QObject>
+
+class AvCallManagerPrivate;
+class AvCallPrivate;
+class PsiAccount;
 class QHostAddress;
 
-namespace XMPP
-{
-    class Jid;
+namespace PsiMedia {
+class VideoWidget;
 }
 
-namespace PsiMedia
-{
-    class VideoWidget;
+namespace XMPP {
+class Jid;
 }
 
-class PsiAccount;
-
-class AvCallPrivate;
-class AvCallManagerPrivate;
-
-class AvCall : public QObject
-{
+class AvCall : public QObject {
     Q_OBJECT
 
 public:
-    enum Mode
-    {
-        Audio,
-        Video,
-        Both
-    };
+    enum Mode { Audio, Video, Both };
 
     AvCall(const AvCall &from);
     ~AvCall();
 
     XMPP::Jid jid() const;
-    Mode mode() const;
+    Mode      mode() const;
 
     void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
     void accept(Mode mode, int kbps = -1);
@@ -83,8 +74,7 @@ private:
     AvCallPrivate *d;
 };
 
-class AvCallManager : public QObject
-{
+class AvCallManager : public QObject {
     Q_OBJECT
 
 public:
@@ -101,7 +91,8 @@ public:
     void setSelfAddress(const QHostAddress &addr);
     void setStunBindService(const QString &host, int port);
     void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
-    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
+    void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
+                                const QString &user, const QString &pass);
 
     static void setBasePort(int port);
     static void setExternalAddress(const QString &host);
@@ -120,4 +111,4 @@ private:
     AvCallManagerPrivate *d;
 };
 
-#endif
+#endif // AVCALL_H

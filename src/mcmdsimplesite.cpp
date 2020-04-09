@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,30 +18,22 @@
 
 // simple UI integration for mini command system.
 
-#include <QLabel>
-#include <QTextEdit>
-#include <QPalette>
-#include <QString>
-#include <QToolTip>
 #include "mcmdsimplesite.h"
 
-MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i)
-    : promptWidget(p)
-    , inputWidget(i)
-    , open(false)
-{
-}
+#include <QLabel>
+#include <QPalette>
+#include <QString>
+#include <QTextEdit>
+#include <QToolTip>
 
-MCmdSimpleSite::MCmdSimpleSite()
-    : promptWidget(0)
-    , inputWidget(0)
-    , open(false)
-{
-}
+MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i) : promptWidget(p), inputWidget(i), open(false) {}
+
+MCmdSimpleSite::MCmdSimpleSite() : promptWidget(nullptr), inputWidget(nullptr), open(false) {}
 
 void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
 {
-    if (!open) mini_msg_swap = inputWidget->toPlainText();
+    if (!open)
+        mini_msg_swap = inputWidget->toPlainText();
     open = true;
     promptWidget->setText(prompt);
     inputWidget->setText(def);
@@ -49,27 +41,23 @@ void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
     promptWidget->show();
 }
 
-void MCmdSimpleSite::mCmdClose() {
+void MCmdSimpleSite::mCmdClose()
+{
     open = false;
     inputWidget->setText(mini_msg_swap);
     inputWidget->setPalette(palette);
     promptWidget->hide();
 }
 
-bool MCmdSimpleSite::isActive() const
-{
-    return open;
-}
+bool MCmdSimpleSite::isActive() const { return open; }
 
-void MCmdSimpleSite::setPrompt(QLabel *p)
-{
-    promptWidget = p;
-}
+void MCmdSimpleSite::setPrompt(QLabel *p) { promptWidget = p; }
 
-void MCmdSimpleSite::setInput(QTextEdit *i) {
+void MCmdSimpleSite::setInput(QTextEdit *i)
+{
     inputWidget = i;
-    palette = inputWidget->palette();
-    cmdPalette = palette;
+    palette     = inputWidget->palette();
+    cmdPalette  = palette;
     cmdPalette.setBrush(QPalette::Base, QToolTip::palette().brush(QPalette::ToolTipBase));
     cmdPalette.setBrush(QPalette::Text, QToolTip::palette().brush(QPalette::ToolTipText));
 }

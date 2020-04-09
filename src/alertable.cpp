@@ -13,42 +13,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "alertable.h"
 
-#include <QIcon>
-
 #include "alerticon.h"
+
+#include <QIcon>
 
 /**
  * Class to simplify alert icon plumbing. You'll have to re-implement
  * alertFrameUpdated() in your subclass.
  */
-Alertable::Alertable(QObject* parent)
-    : QObject(parent)
-{
-    alert_ = 0;
-}
+Alertable::Alertable(QObject *parent) : QObject(parent) { alert_ = nullptr; }
 
 /**
  * Destroys alert icon along with itself;
  */
-Alertable::~Alertable()
-{
-    setAlert(0);
-}
+Alertable::~Alertable() { setAlert(nullptr); }
 
 /**
  * Returns true if alert is set, and false otherwise.
  */
-bool Alertable::alerting() const
-{
-    return alert_ != 0;
-}
+bool Alertable::alerting() const { return alert_ != nullptr; }
 
 /**
  * Returns current animation frame of alert, or null QIcon, if
@@ -66,12 +55,12 @@ QIcon Alertable::currentAlertFrame() const
  * Creates new AlertIcon based on provided \param icon. If 0 is passed,
  * alert is cleared.
  */
-void Alertable::setAlert(const PsiIcon* icon)
+void Alertable::setAlert(const PsiIcon *icon)
 {
     if (alert_) {
         alert_->stop();
         delete alert_;
-        alert_ = 0;
+        alert_ = nullptr;
     }
 
     if (icon) {

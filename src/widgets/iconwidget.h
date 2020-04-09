@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,14 +25,12 @@
 
 class Iconset;
 
-class IconWidgetItem : public QObject, public QListWidgetItem
-{
+class IconWidgetItem : public QObject, public QListWidgetItem {
     Q_OBJECT
 public:
-    IconWidgetItem(QListWidget *parent = 0)
-    : QListWidgetItem(parent) {}
+    IconWidgetItem(QListWidget *parent = nullptr) : QListWidgetItem(parent) {}
 
-    virtual const Iconset *iconset() const { return 0; }
+    virtual const Iconset *iconset() const { return nullptr; }
 };
 
-#endif
+#endif // ICONWIDGET_H

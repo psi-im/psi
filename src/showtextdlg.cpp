@@ -12,33 +12,31 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
+#include "showtextdlg.h"
+
+#include <QFile>
+#include <QHBoxLayout>
 #include <QLayout>
 #include <QPushButton>
-#include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
-
-#include "showtextdlg.h"
 
 // FIXME: combine to common init function
-ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
-    : QDialog(parent)
+ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     QString text;
 
     QFile f(fname);
-    if(f.open(QIODevice::ReadOnly)) {
+    if (f.open(QIODevice::ReadOnly)) {
         QTextStream t(&f);
-        while(!t.atEnd())
+        while (!t.atEnd())
             text += t.readLine() + '\n';
         f.close();
     }
@@ -66,8 +64,7 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
     resize(560, 384);
 }
 
-ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent)
-    : QDialog(parent)
+ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent) : QDialog(parent)
 {
     Q_UNUSED(nonfile);
 

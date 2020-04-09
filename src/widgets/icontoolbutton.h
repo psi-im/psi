@@ -12,48 +12,47 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ICONTOOLBUTTON_H
 #define ICONTOOLBUTTON_H
 
-#include <QToolButton>
 #include <QPixmap>
+#include <QToolButton>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
-class IconToolButton : public QToolButton
-{
+class IconToolButton : public QToolButton {
     Q_OBJECT
-    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
+    Q_PROPERTY(QString psiIconName READ psiIconName WRITE setPsiIcon)
 
-    Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
-    Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE(QPixmap pixmap DESIGNABLE false SCRIPTABLE false)
+    Q_OVERRIDE(QIcon icon DESIGNABLE false SCRIPTABLE false)
 
 public:
-    IconToolButton(QWidget *parent = 0);
+    IconToolButton(QWidget *parent = nullptr);
     ~IconToolButton();
 
     void setIcon(const QIcon &);
 
 public slots:
-    void setPsiIcon(const PsiIcon *, bool activate = true);
-    void setPsiIcon(const QString &);
+    void    setPsiIcon(const PsiIcon *, bool activate = true);
+    void    setPsiIcon(const QString &);
     QString psiIconName() const;
 
 protected:
     // reimplemented
-    void paintEvent(QPaintEvent* event);
+    void paintEvent(QPaintEvent *event);
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-#endif
+#endif // ICONTOOLBUTTON_H

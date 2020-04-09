@@ -13,38 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "profiledlg.h"
+
 #include "applicationinfo.h"
+#include "common.h"
 #include "iconset.h"
+#include "iconwidget.h"
+#include "profiles.h"
 #include "psioptions.h"
 
-#include <QLabel>
-#include <QComboBox>
-#include <QMessageBox>
+#include <QButtonGroup>
 #include <QCheckBox>
-#include <QPushButton>
-#include <QInputDialog>
+#include <QComboBox>
 #include <QFile>
 #include <QFileInfo>
-#include <QPixmap>
-#include <QButtonGroup>
-
-#include "profiles.h"
-#include "common.h"
-#include "iconwidget.h"
-
+#include <QInputDialog>
+#include <QLabel>
+#include <QMessageBox>
 #include <QPainter>
-class StretchLogoLabel : public QLabel
-{
+#include <QPixmap>
+#include <QPushButton>
+
+class StretchLogoLabel : public QLabel {
 public:
-    StretchLogoLabel(QPixmap pix, QWidget *label)
-        : QLabel(label->parentWidget())
-        , pixmap_(pix)
+    StretchLogoLabel(QPixmap pix, QWidget *label) : QLabel(label->parentWidget()), pixmap_(pix)
     {
         replaceWidget(label, this);
         setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum));
@@ -75,59 +71,53 @@ private:
 // ProfileOpenDlg
 //----------------------------------------------------------------------------
 
-ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const QString &curLang, QWidget *parent)
-:QDialog(parent)
+ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const QString &curLang, QWidget *parent) :
+    QDialog(parent)
 {
     setupUi(this);
     setModal(true);
     setWindowTitle(CAP(windowTitle()));
     setWindowIcon(IconsetFactory::icon("psi/profile").icon());
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     pb_open->setDefault(true);
 
     langs = _langs;
 
-    QPixmap logo = (QPixmap)IconsetFactory::icon("psi/psiLogo").pixmap();
+    QPixmap logo = QPixmap(IconsetFactory::icon("psi/logo").pixmap());
     lb_logo->setPixmap(logo);
     lb_logo->setFixedSize(logo.width(), logo.height());
     lb_logo->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    //setFixedWidth(logo->width());
+    // setFixedWidth(logo->width());
 
     QImage logoImg = logo.toImage();
-    new StretchLogoLabel(QPixmap::fromImage( logoImg.copy(0, 0, 1, logoImg.height()) ), lb_left);
-    new StretchLogoLabel(QPixmap::fromImage( logoImg.copy(logoImg.width()-1, 0, 1, logoImg.height()) ), lb_right);
+    new StretchLogoLabel(QPixmap::fromImage(logoImg.copy(0, 0, 1, logoImg.height())), lb_left);
+    new StretchLogoLabel(QPixmap::fromImage(logoImg.copy(logoImg.width() - 1, 0, 1, logoImg.height())), lb_right);
 
     connect(pb_open, SIGNAL(clicked()), SLOT(accept()));
     connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
     connect(pb_profiles, SIGNAL(clicked()), SLOT(manageProfiles()));
     connect(cb_lang, SIGNAL(activated(int)), SLOT(langChange(int)));
 
-    int x = 0;
+    int x   = 0;
     langSel = x;
-    for(VarList::ConstIterator it = langs.begin(); it != langs.end(); ++it) {
+    for (VarList::ConstIterator it = langs.begin(); it != langs.end(); ++it) {
         cb_lang->addItem((*it).data());
-        if((curLang.isEmpty() && x == 0) || (curLang == (*it).key())) {
+        if ((curLang.isEmpty() && x == 0) || (curLang == (*it).key())) {
             cb_lang->setCurrentIndex(x);
             langSel = x;
         }
         ++x;
     }
 
-    cb_profile->setWhatsThis(
-        tr("Select a profile to open from this list."));
-    cb_lang->setWhatsThis(
-        tr("Select a language you would like Psi to use from this "
-        "list.  You can download extra language packs from the Psi homepage."));
-    ck_auto->setWhatsThis(
-        tr("Automatically open this profile when Psi is started.  Useful if "
-        "you only have one profile."));
+    cb_profile->setToolTip(tr("Select a profile to open from this list."));
+    cb_lang->setToolTip(tr("Select a language you would like Psi to use from this "
+                           "list.  You can download extra language packs from the Psi homepage."));
+    ck_auto->setToolTip(tr("Automatically open this profile when Psi is started.  Useful if "
+                           "you only have one profile."));
 
     reload(def);
 }
 
-ProfileOpenDlg::~ProfileOpenDlg()
-{
-}
+ProfileOpenDlg::~ProfileOpenDlg() {}
 
 void ProfileOpenDlg::reload(const QString &choose)
 {
@@ -135,16 +125,15 @@ void ProfileOpenDlg::reload(const QString &choose)
 
     cb_profile->clear();
 
-    if(list.count() == 0) {
+    if (list.count() == 0) {
         gb_open->setEnabled(false);
         pb_open->setEnabled(false);
         pb_profiles->setFocus();
-    }
-    else {
+    } else {
         int x = 0;
-        for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+        for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
             cb_profile->addItem(*it);
-            if((choose.isEmpty() && x == 0) || (choose == *it)) {
+            if ((choose.isEmpty() && x == 0) || (choose == *it)) {
                 cb_profile->setCurrentIndex(x);
             }
             ++x;
@@ -168,12 +157,12 @@ void ProfileOpenDlg::manageProfiles()
 
 void ProfileOpenDlg::langChange(int x)
 {
-    if(x == langSel)
+    if (x == langSel)
         return;
     langSel = x;
 
     VarList::Iterator it = langs.findByNum(x);
-    newLang = (*it).key();
+    newLang              = (*it).key();
     done(10);
 }
 
@@ -181,8 +170,7 @@ void ProfileOpenDlg::langChange(int x)
 // ProfileManageDlg
 //----------------------------------------------------------------------------
 
-ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent)
-:QDialog(parent)
+ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent) : QDialog(parent)
 {
     setupUi(this);
     setModal(true);
@@ -196,10 +184,10 @@ ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent)
 
     // load the listing
     QStringList list = getProfilesList();
-    int x = 0;
-    for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+    int         x    = 0;
+    for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
         lbx_profiles->addItem(*it);
-        if(*it == choose)
+        if (*it == choose)
             lbx_profiles->setCurrentRow(x);
         ++x;
     }
@@ -212,16 +200,16 @@ void ProfileManageDlg::slotProfileNew()
     QString name;
 
     ProfileNewDlg *w = new ProfileNewDlg(this);
-    int r = w->exec();
-    if(r == QDialog::Accepted) {
+    int            r = w->exec();
+    if (r == QDialog::Accepted) {
         name = w->name;
 
         lbx_profiles->addItem(name);
-        lbx_profiles->setCurrentRow(lbx_profiles->count()-1);
+        lbx_profiles->setCurrentRow(lbx_profiles->count() - 1);
     }
     delete w;
 
-    if(r == QDialog::Accepted) {
+    if (r == QDialog::Accepted) {
         close();
     }
 }
@@ -229,24 +217,28 @@ void ProfileManageDlg::slotProfileNew()
 void ProfileManageDlg::slotProfileRename()
 {
     int x = lbx_profiles->currentRow();
-    if(x == -1)
+    if (x == -1)
         return;
 
     QString oldname = lbx_profiles->item(x)->text();
     QString name;
 
-    while(1) {
+    while (1) {
         bool ok = false;
-        name = QInputDialog::getText(this, CAP(tr("Rename Profile")), tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters or numbers.  No punctuation or spaces."), QLineEdit::Normal, name, &ok);
-        if(!ok)
+        name    = QInputDialog::getText(this, CAP(tr("Rename Profile")),
+                                     tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters "
+                                        "or numbers.  No punctuation or spaces."),
+                                     QLineEdit::Normal, name, &ok);
+        if (!ok)
             return;
 
-        if(profileExists(name)) {
-            QMessageBox::information(this, CAP(tr("Rename Profile")), tr("There is already another profile with this name.  Please choose another."));
+        if (profileExists(name)) {
+            QMessageBox::information(this, CAP(tr("Rename Profile")),
+                                     tr("There is already another profile with this name.  Please choose another."));
             continue;
-        }
-        else if(!profileRename(oldname, name)) {
-            QMessageBox::information(this, CAP(tr("Rename Profile")), tr("Unable to rename the profile.  Please do not use any special characters."));
+        } else if (!profileRename(oldname, name)) {
+            QMessageBox::information(this, CAP(tr("Rename Profile")),
+                                     tr("Unable to rename the profile.  Please do not use any special characters."));
             continue;
         }
         break;
@@ -258,46 +250,44 @@ void ProfileManageDlg::slotProfileRename()
 void ProfileManageDlg::slotProfileDelete()
 {
     int x = lbx_profiles->currentRow();
-    if(x == -1)
+    if (x == -1)
         return;
     QString name = lbx_profiles->item(x)->text();
 
     QStringList paths;
     paths << ApplicationInfo::profilesDir(ApplicationInfo::ConfigLocation) + "/" + name;
-    if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name)) {
+    if (!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name)) {
         paths << ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name;
     }
-    if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name)) {
+    if (!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name)) {
         paths << ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name;
     }
 
     // prompt first
-    int r = QMessageBox::warning(this,
-        CAP(tr("Delete Profile")),
-        tr(
-        "<qt>Are you sure you want to delete the \"<b>%1</b>\" profile?  "
-        "This will delete all of the profile's message history as well as associated settings!</qt>"
-        ).arg(name),
-        tr("No, I changed my mind"),
-        tr("Delete it!"));
+    int r = QMessageBox::warning(
+        this, CAP(tr("Delete Profile")),
+        tr("<qt>Are you sure you want to delete the \"<b>%1</b>\" profile?  "
+           "This will delete all of the profile's message history as well as associated settings!</qt>")
+            .arg(name),
+        tr("No, I changed my mind"), tr("Delete it!"));
 
-    if(r != 1)
+    if (r != 1)
         return;
 
-    r = QMessageBox::information(this,
-        CAP(tr("Delete Profile")),
-        tr(
-        "<qt>As a precaution, you are being asked one last time if this is what you really want.  "
-        "The following folders will be deleted!<br><br>\n"
-        "<b>%1</b><br><br>\n"
-        "Proceed?"
-        ).arg(paths.join("\n")),
-        tr("&No"),
-        tr("&Yes"));
+    r = QMessageBox::information(
+        this, CAP(tr("Delete Profile")),
+        tr("<qt>As a precaution, you are being asked one last time if this is what you really want.  "
+           "The following folders will be deleted!<br><br>\n"
+           "<b>%1</b><br><br>\n"
+           "Proceed?")
+            .arg(paths.join("\n")),
+        tr("&No"), tr("&Yes"));
 
-    if(r == 1) {
-        if(!profileDelete(paths)) {
-            QMessageBox::critical(this, CAP("Error"), tr("Unable to delete the folders completely.  Ensure you have the proper permission."));
+    if (r == 1) {
+        if (!profileDelete(paths)) {
+            QMessageBox::critical(
+                this, CAP("Error"),
+                tr("Unable to delete the folders completely.  Ensure you have the proper permission."));
             return;
         }
 
@@ -310,11 +300,10 @@ void ProfileManageDlg::updateSelection()
 {
     int x = lbx_profiles->currentRow();
 
-    if(x == -1) {
+    if (x == -1) {
         // pb_rename->setEnabled(false);
         pb_delete->setEnabled(false);
-    }
-    else {
+    } else {
         // pb_rename->setEnabled(true);
         pb_delete->setEnabled(true);
     }
@@ -324,8 +313,7 @@ void ProfileManageDlg::updateSelection()
 // ProfileNewDlg
 //----------------------------------------------------------------------------
 
-ProfileNewDlg::ProfileNewDlg(QWidget *parent)
-:QDialog(parent)
+ProfileNewDlg::ProfileNewDlg(QWidget *parent) : QDialog(parent)
 {
     setupUi(this);
     setModal(true);
@@ -349,13 +337,15 @@ void ProfileNewDlg::slotCreate()
 {
     name = le_name->text();
 
-    if(profileExists(name)) {
-        QMessageBox::information(this, CAP(tr("New Profile")), tr("There is already an existing profile with this name.  Please choose another."));
+    if (profileExists(name)) {
+        QMessageBox::information(this, CAP(tr("New Profile")),
+                                 tr("There is already an existing profile with this name.  Please choose another."));
         return;
     }
 
-    if(!profileNew(name)) {
-        QMessageBox::information(this, CAP(tr("New Profile")), tr("Unable to create the profile.  Please do not use any special characters."));
+    if (!profileNew(name)) {
+        QMessageBox::information(this, CAP(tr("New Profile")),
+                                 tr("Unable to create the profile.  Please do not use any special characters."));
         return;
     }
 
@@ -366,15 +356,11 @@ void ProfileNewDlg::slotCreate()
         qWarning("ERROR: Failed to new profile default options");
     }
 
-
-    o.setOption("options.messages.default-outgoing-message-type" ,rb_message->isChecked() ? "message": "chat");
-    o.setOption("options.ui.emoticons.use-emoticons" ,ck_useEmoticons->isChecked());
+    o.setOption("options.messages.default-outgoing-message-type", rb_message->isChecked() ? "message" : "chat");
+    o.setOption("options.ui.emoticons.use-emoticons", ck_useEmoticons->isChecked());
     o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
 
     accept();
 }
 
-void ProfileNewDlg::nameModified()
-{
-    pb_create->setEnabled(!le_name->text().isEmpty());
-}
+void ProfileNewDlg::nameModified() { pb_create->setEnabled(!le_name->text().isEmpty()); }

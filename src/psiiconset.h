@@ -13,44 +13,43 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PSIICONSET_H
 #define PSIICONSET_H
 
-#include <QMap>
-
 #include "iconset.h"
 #include "psievent.h"
 
+#include <QMap>
+
 class UserListItem;
+
 namespace XMPP {
-    class Status;
-    class Jid;
+class Jid;
+class Status;
 }
 
-class PsiIconset : public QObject
-{
+class PsiIconset : public QObject {
     Q_OBJECT
 public:
-    static PsiIconset* instance();
+    static PsiIconset *instance();
 
     bool loadSystem();
     void reloadRoster();
     bool loadAll();
 
-    QHash<QString, Iconset*> roster;
-    QList<Iconset*> emoticons;
-    Iconset moods;
-    Iconset activities;
-    Iconset clients;
-    Iconset affiliations;
-    const Iconset &system() const;
-    void stripFirstAnimFrame(Iconset *);
-    static void removeAnimation(Iconset *);
+    QHash<QString, Iconset *> roster;
+    QList<Iconset *>          emoticons;
+    Iconset                   moods;
+    Iconset                   activities;
+    Iconset                   clients;
+    Iconset                   affiliations;
+    const Iconset &           system() const;
+    void                      stripFirstAnimFrame(Iconset *);
+    static void               removeAnimation(Iconset *);
 
     PsiIcon *event2icon(const PsiEvent::Ptr &e);
 
@@ -77,7 +76,7 @@ public:
     PsiIcon transportStatus(QString name, const XMPP::Status &);
 
     PsiIcon *statusPtr(UserListItem *);
-    PsiIcon status(UserListItem *);
+    PsiIcon  status(UserListItem *);
 
     QString caps2client(const QString &name);
 signals:
@@ -89,7 +88,7 @@ public slots:
     static void reset();
 
 private slots:
-    void optionChanged(const QString& option);
+    void optionChanged(const QString &option);
 
 private:
     PsiIconset();
@@ -98,7 +97,7 @@ private:
     class Private;
     Private *d;
 
-    static PsiIconset* instance_;
+    static PsiIconset *instance_;
 
     bool loadRoster();
     void loadEmoticons();
@@ -107,9 +106,8 @@ private:
     bool loadClients();
     bool loadAffiliations();
     void loadStatusIconDefinitions();
-
 };
 
 QString status2name(int s);
 
-#endif
+#endif // PSIICONSET_H

@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,13 +24,13 @@
 #include "contactlistitemmenu.h"
 #include "contactlistmodelselection.h"
 #include "contactlistviewdelegate.h"
+#include "debug.h"
 #include "iconaction.h"
+#include "psicontact.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
-#include "debug.h"
 #include "textutil.h"
-#include "psicontact.h"
 
 #include <QAbstractButton>
 #include <QAction>
@@ -40,31 +39,24 @@
 #include <QDropEvent>
 #include <QLineEdit>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScrollBar>
-#include <QMessageBox>
 
-ContactListDragView::ContactListDragView(QWidget* parent)
-    : ContactListView(parent)
-    , backedUpSelection_(0)
-    , removeAction_(0)
-    , dropIndicatorRect_(QRect())
-    , dropIndicatorPosition_(QAbstractItemView::OnViewport)
-    , keyboardModifiers_(Qt::NoModifier)
-    , dirty_(false)
-    , pressedIndex_(0)
-    , pressedIndexWasSelected_(false)
-    , viewportMenu_(0)
-    , editing(false)
+ContactListDragView::ContactListDragView(QWidget *parent) :
+    ContactListView(parent), backedUpSelection_(nullptr), removeAction_(nullptr), dropIndicatorRect_(QRect()),
+    dropIndicatorPosition_(QAbstractItemView::OnViewport), keyboardModifiers_(Qt::NoModifier), dirty_(false),
+    pressedIndex_(nullptr), pressedIndexWasSelected_(false), viewportMenu_(nullptr), editing(false)
 {
-    removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
+    removeAction_ = new IconAction("", "psi/remove", QString(),
+                                   ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
     connect(removeAction_, SIGNAL(triggered()), SLOT(removeSelection()));
     addAction(removeAction_);
 
-    connect(this, SIGNAL(entered(const QModelIndex&)), SLOT(updateCursorMouseHover(const QModelIndex&)));
-    connect(this, SIGNAL(clicked(const QModelIndex&)), SLOT(itemClicked(const QModelIndex&)));
+    connect(this, SIGNAL(entered(const QModelIndex &)), SLOT(updateCursorMouseHover(const QModelIndex &)));
+    connect(this, SIGNAL(clicked(const QModelIndex &)), SLOT(itemClicked(const QModelIndex &)));
     connect(this, SIGNAL(viewportEntered()), SLOT(updateCursorMouseHover()));
 
     setSelectionMode(ExtendedSelection);
@@ -85,18 +77,16 @@ ContactListDragView::~ContactListDragView()
  * Make sure that all keyboard shortcuts are unique in order to avoid
  * "QAction::eventFilter: Ambiguous shortcut overload: Del" messages.
  */
-void ContactListDragView::addContextMenuAction(QAction* action)
+void ContactListDragView::addContextMenuAction(QAction *action)
 {
-    QMenu* menu = action->menu();
+    QMenu *menu = action->menu();
     if (menu) {
         // if the action contains a menu, add the menu's actions instead
-        foreach(QAction* subact, menu->actions()) {
+        foreach (QAction *subact, menu->actions()) {
             addContextMenuAction(subact);
         }
-    }
-    else
-    {
-        foreach(QAction* act, findChildren<QAction*>()) {
+    } else {
+        foreach (QAction *act, findChildren<QAction *>()) {
             // TODO: maybe check individual shortcuts too?
             if (act->shortcuts() == action->shortcuts()) {
                 return;
@@ -107,26 +97,23 @@ void ContactListDragView::addContextMenuAction(QAction* action)
     }
 }
 
-void ContactListDragView::setItemDelegate(QAbstractItemDelegate* delegate)
+void ContactListDragView::setItemDelegate(QAbstractItemDelegate *delegate)
 {
     QAbstractItemDelegate *oldDelegate = itemDelegate();
     if (delegate == oldDelegate)
         return;
     if (delegate) {
-        connect(delegate, SIGNAL(commitData(QWidget*)), this, SLOT(finishedEditing()));
-        connect(delegate, SIGNAL(closeEditor(QWidget*)), this, SLOT(finishedEditing()));
+        connect(delegate, SIGNAL(commitData(QWidget *)), this, SLOT(finishedEditing()));
+        connect(delegate, SIGNAL(closeEditor(QWidget *)), this, SLOT(finishedEditing()));
     }
     ContactListView::setItemDelegate(delegate);
     if (oldDelegate)
         delete oldDelegate;
     modelChanged();
-//    doItemsLayout();
+    //    doItemsLayout();
 }
 
-void ContactListDragView::finishedEditing()
-{
-    editing = false;
-}
+void ContactListDragView::finishedEditing() { editing = false; }
 
 bool ContactListDragView::edit(const QModelIndex &index, EditTrigger trigger, QEvent *event)
 {
@@ -137,7 +124,7 @@ bool ContactListDragView::edit(const QModelIndex &index, EditTrigger trigger, QE
     return false;
 }
 
-void ContactListDragView::leaveEvent(QEvent* e)
+void ContactListDragView::leaveEvent(QEvent *e)
 {
     ContactListView::leaveEvent(e);
     updateCursorMouseHover();
@@ -148,17 +135,16 @@ int ContactListDragView::suggestedItemHeight()
     int rowCount = model()->rowCount(QModelIndex());
     if (!rowCount)
         return 0;
-    return qMin(viewport()->height() / rowCount - 2, dynamic_cast<ContactListViewDelegate*>(itemDelegate())->avatarSize());
+    return qMin(viewport()->height() / rowCount - 2,
+                dynamic_cast<ContactListViewDelegate *>(itemDelegate())->avatarSize());
 }
 
-void ContactListDragView::mouseDoubleClickEvent(QMouseEvent* e)
+void ContactListDragView::mouseDoubleClickEvent(QMouseEvent *e)
 {
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     if (model && pressedIndex_) {
-        QModelIndexList indexes = model->indexesFor(0, pressedIndex_);
-        if (e->button() == Qt::LeftButton
-            && indexes.count() == 1
-            && model->toItem(indexes.first())->isGroup()) {
+        QModelIndexList indexes = model->indexesFor(nullptr, pressedIndex_);
+        if (e->button() == Qt::LeftButton && indexes.count() == 1 && model->toItem(indexes.first())->isGroup()) {
 
             return;
         }
@@ -169,15 +155,14 @@ void ContactListDragView::mouseDoubleClickEvent(QMouseEvent* e)
     }
 }
 
-void ContactListDragView::itemActivated(const QModelIndex& index)
+void ContactListDragView::itemActivated(const QModelIndex &index)
 {
     Q_ASSERT(index.isValid());
 
     if (!index.isValid())
         return;
 
-    if (realModel()->toItem(realIndex(index))->isGroup()
-        && activateItemsOnSingleClick()) {
+    if (realModel()->toItem(realIndex(index))->isGroup() && activateItemsOnSingleClick()) {
 
         toggleExpandedState(index);
         return;
@@ -189,26 +174,26 @@ void ContactListDragView::itemActivated(const QModelIndex& index)
 /**
  * Returns a list of real-model indexes.
  */
-QModelIndexList ContactListDragView::indexesFor(PsiContact* contact, QMimeData* contactSelection) const
+QModelIndexList ContactListDragView::indexesFor(PsiContact *contact, QMimeData *contactSelection) const
 {
-    QModelIndexList indexes;
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    QModelIndexList       indexes;
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     if (model) {
         indexes = model->indexesFor(contact, contactSelection);
     }
     return indexes;
 }
 
-void ContactListDragView::toolTipEntered(PsiContact* contact, QMimeData* contactSelection)
+void ContactListDragView::toolTipEntered(PsiContact *contact, QMimeData *contactSelection)
 {
     Q_UNUSED(contact); // we don't want tooltips on multiple selections
-    QModelIndexList indexes = indexesFor(0, contactSelection);
+    QModelIndexList indexes = indexesFor(nullptr, contactSelection);
     if (indexes.count() == 1) {
         updateCursor(proxyIndex(indexes.first()), UC_TooltipEntered, false);
     }
 }
 
-void ContactListDragView::toolTipHidden(PsiContact* contact, QMimeData* contactSelection)
+void ContactListDragView::toolTipHidden(PsiContact *contact, QMimeData *contactSelection)
 {
     Q_UNUSED(contact);
     Q_UNUSED(contactSelection);
@@ -216,17 +201,11 @@ void ContactListDragView::toolTipHidden(PsiContact* contact, QMimeData* contactS
         updateCursor(QModelIndex(), UC_TooltipHidden, false);
 }
 
-void ContactListDragView::updateCursorMouseHover()
-{
-    updateCursor(QModelIndex(), UC_MouseHover, false);
-}
+void ContactListDragView::updateCursorMouseHover() { updateCursor(QModelIndex(), UC_MouseHover, false); }
 
-bool ContactListDragView::updateCursor(const QModelIndex& index, UpdateCursorOrigin origin, bool force)
+bool ContactListDragView::updateCursor(const QModelIndex &index, UpdateCursorOrigin origin, bool force)
 {
-    if (isContextMenuVisible()     ||
-        extendedSelectionAllowed() ||
-        state() != NoState)
-    {
+    if (isContextMenuVisible() || extendedSelectionAllowed() || state() != NoState) {
         if (!force) {
             return false;
         }
@@ -249,12 +228,12 @@ bool ContactListDragView::updateCursor(const QModelIndex& index, UpdateCursorOri
     return true;
 }
 
-void ContactListDragView::updateCursorMouseHover(const QModelIndex& index)
+void ContactListDragView::updateCursorMouseHover(const QModelIndex &index)
 {
     updateCursor(index, UC_MouseHover, false);
 }
 
-int ContactListDragView::indexCombinedHeight(const QModelIndex& parent, QAbstractItemDelegate* delegate) const
+int ContactListDragView::indexCombinedHeight(const QModelIndex &parent, QAbstractItemDelegate *delegate) const
 {
     if (!delegate || !model())
         return 0;
@@ -269,19 +248,16 @@ int ContactListDragView::indexCombinedHeight(const QModelIndex& parent, QAbstrac
     return result;
 }
 
-void ContactListDragView::setModel(QAbstractItemModel* newModel)
+void ContactListDragView::setModel(QAbstractItemModel *newModel)
 {
     ContactListView::setModel(newModel);
 
     connect(verticalScrollBar(), SIGNAL(valueChanged(int)), SLOT(scrollbarValueChanged()));
 }
 
-bool ContactListDragView::textInputInProgress() const
-{
-    return state() == QAbstractItemView::EditingState;
-}
+bool ContactListDragView::textInputInProgress() const { return state() == QAbstractItemView::EditingState; }
 
-void ContactListDragView::paintEvent(QPaintEvent* e)
+void ContactListDragView::paintEvent(QPaintEvent *e)
 {
     // Q_ASSERT(!dirty_);
     // if (dirty_)
@@ -289,17 +265,15 @@ void ContactListDragView::paintEvent(QPaintEvent* e)
     ContactListView::paintEvent(e);
 
     // drawDragIndicator!!
-    if (state() == QAbstractItemView::DraggingState &&
-        viewport()->cursor().shape() != Qt::ForbiddenCursor &&
-        !dropIndicatorRect_.isEmpty())
-    {
+    if (state() == QAbstractItemView::DraggingState && viewport()->cursor().shape() != Qt::ForbiddenCursor
+        && !dropIndicatorRect_.isEmpty()) {
         QPainter p(viewport());
         // QColor dragIndicatorColor = QColor(0x17, 0x0B, 0xFF);
         QColor dragIndicatorColor = QColor(0x00, 0x00, 0x00);
         p.setPen(QPen(dragIndicatorColor, 2));
         p.setRenderHint(QPainter::Antialiasing, true);
         QPainterPath path;
-        path.addRoundRect(dropIndicatorRect_.adjusted(2, 1, 0, 0), 5);
+        path.addRoundedRect(dropIndicatorRect_.adjusted(2, 1, 0, 0), 5, 5, Qt::RelativeSize);
         p.drawPath(path);
     }
 }
@@ -311,9 +285,9 @@ bool ContactListDragView::supportsDropOnIndex(QDropEvent *e, const QModelIndex &
     }
 
     ContactListModelSelection selection(e->mimeData());
-    ContactListDragModel *model = qobject_cast<ContactListDragModel*>(realModel());
+    ContactListDragModel *    model = qobject_cast<ContactListDragModel *>(realModel());
     if (!selection.haveRosterSelection())
-        model = 0;
+        model = nullptr;
 
     if (model && !model->supportsMimeDataOnIndex(e->mimeData(), realIndex(index))) {
         return false;
@@ -326,48 +300,45 @@ bool ContactListDragView::supportsDropOnIndex(QDropEvent *e, const QModelIndex &
     return true;
 }
 
-static void updateDefaultDropAction(QDropEvent* e)
+static void updateDefaultDropAction(QDropEvent *e)
 {
     if (e->keyboardModifiers() == Qt::NoModifier) {
         e->setDropAction(Qt::MoveAction);
     }
 }
 
-static void acceptDropAction(QDropEvent* e)
+static void acceptDropAction(QDropEvent *e)
 {
     if (e->keyboardModifiers() == Qt::NoModifier) {
         if (e->dropAction() != Qt::MoveAction) {
-            //qWarning("acceptDropAction(): e->dropAction() != Qt::MoveAction");
+            // qWarning("acceptDropAction(): e->dropAction() != Qt::MoveAction");
             return;
         }
         Q_ASSERT(e->dropAction() == Qt::MoveAction);
         e->accept();
-    }
-    else {
+    } else {
         e->acceptProposedAction();
     }
 }
 
-void ContactListDragView::dragMoveEvent(QDragMoveEvent* e)
+void ContactListDragView::dragMoveEvent(QDragMoveEvent *e)
 {
-    QModelIndex index = indexAt(e->pos());
-    dropIndicatorRect_ = QRect();
+    QModelIndex index      = indexAt(e->pos());
+    dropIndicatorRect_     = QRect();
     dropIndicatorPosition_ = OnViewport;
 
     // this is crucial at least for auto-scrolling, possibly other things
     ContactListView::dragMoveEvent(e);
 
     if (supportsDropOnIndex(e, index)) {
-        bool ok = true;
+        bool                      ok = true;
         ContactListModelSelection selection(e->mimeData());
         dropIndicatorPosition_ = dropPosition(e, selection, index);
         if (dropIndicatorPosition_ == AboveItem || dropIndicatorPosition_ == BelowItem) {
             dropIndicatorRect_ = groupReorderDropRect(dropIndicatorPosition_, selection, index);
-        }
-        else if (dropIndicatorPosition_ == OnItem) {
+        } else if (dropIndicatorPosition_ == OnItem) {
             dropIndicatorRect_ = onItemDropRect(index);
-        }
-        else {
+        } else {
             ok = false;
         }
 
@@ -384,29 +355,26 @@ void ContactListDragView::dragMoveEvent(QDragMoveEvent* e)
 
 void ContactListDragView::scrollbarValueChanged()
 {
-    dropIndicatorRect_ = QRect();
+    dropIndicatorRect_     = QRect();
     dropIndicatorPosition_ = OnViewport;
     viewport()->update();
     updateCursorMouseHover(underMouse() ? indexAt(mousePosition()) : QModelIndex());
 }
 
-void ContactListDragView::dragEnterEvent(QDragEnterEvent* e)
+void ContactListDragView::dragEnterEvent(QDragEnterEvent *e)
 {
     ContactListView::dragEnterEvent(e);
     updateDefaultDropAction(e);
     acceptDropAction(e);
 }
 
-void ContactListDragView::dragLeaveEvent(QDragLeaveEvent* e)
-{
-    ContactListView::dragLeaveEvent(e);
-}
+void ContactListDragView::dragLeaveEvent(QDragLeaveEvent *e) { ContactListView::dragLeaveEvent(e); }
 
-void ContactListDragView::dropEvent(QDropEvent* e)
+void ContactListDragView::dropEvent(QDropEvent *e)
 {
     updateDefaultDropAction(e);
 
-    QModelIndex index = indexAt(e->pos());
+    QModelIndex index  = indexAt(e->pos());
     dropIndicatorRect_ = QRect();
 
     if (dropIndicatorPosition_ == OnViewport || !supportsDropOnIndex(e, index)) {
@@ -416,12 +384,10 @@ void ContactListDragView::dropEvent(QDropEvent* e)
     }
 
     if (dropIndicatorPosition_ == OnItem) {
-        if (model()->dropMimeData(e->mimeData(),
-                                  e->dropAction(), -1, -1, index)) {
+        if (model()->dropMimeData(e->mimeData(), e->dropAction(), -1, -1, index)) {
             acceptDropAction(e);
         }
-    }
-    else if (dropIndicatorPosition_ == AboveItem || dropIndicatorPosition_ == BelowItem) {
+    } else if (dropIndicatorPosition_ == AboveItem || dropIndicatorPosition_ == BelowItem) {
         reorderGroups(e, index);
         acceptDropAction(e);
     }
@@ -431,7 +397,9 @@ void ContactListDragView::dropEvent(QDropEvent* e)
     viewport()->update();
 }
 
-QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDropEvent* e, const ContactListModelSelection& selection, const QModelIndex& index) const
+QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDropEvent *                     e,
+                                                                           const ContactListModelSelection &selection,
+                                                                           const QModelIndex &              index) const
 {
     if ((selection.groups().count() > 0 || selection.accounts().count() > 0) && selection.contacts().count() == 0) {
         // TODO: return OnItem in case the special modifiers are pressed
@@ -444,8 +412,7 @@ QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDrop
                 QRect rect = groupVisualRect(group);
                 if (e->pos().y() >= rect.center().y()) {
                     return BelowItem;
-                }
-                else {
+                } else {
                     return AboveItem;
                 }
             }
@@ -462,17 +429,17 @@ QAbstractItemView::DropIndicatorPosition ContactListDragView::dropPosition(QDrop
 
 struct OrderedGroup {
     QString name;
-    int order;
+    int     order;
 };
 
 void ContactListDragView::reorderGroups(QDropEvent *e, const QModelIndex &index)
 {
     ContactListModelSelection selection(e->mimeData());
-    QModelIndex item = itemToReorderGroup(selection, index);
+    QModelIndex               item = itemToReorderGroup(selection, index);
     if (!item.isValid()) {
         return;
     }
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     Q_ASSERT(model);
     Q_ASSERT(selection.groups().count() > 0 || selection.accounts().count() > 0);
     Q_ASSERT(selection.contacts().count() == 0);
@@ -482,7 +449,7 @@ void ContactListDragView::reorderGroups(QDropEvent *e, const QModelIndex &index)
 
     // we need to work in terms of proxy indexes because we need actually-sorted items
     QModelIndex selectedGroup = proxyIndex(selectedGroups.first());
-    QModelIndex groupParent = selectedGroup.parent();
+    QModelIndex groupParent   = selectedGroup.parent();
 
     QModelIndexList groups;
     for (int row = 0; row < this->model()->rowCount(groupParent); ++row) {
@@ -496,33 +463,33 @@ void ContactListDragView::reorderGroups(QDropEvent *e, const QModelIndex &index)
     groups.removeAll(selectedGroup);
     if (dropIndicatorPosition_ == AboveItem) {
         groups.insert(groups.indexOf(item), selectedGroup);
-    }
-    else {
+    } else {
         Q_ASSERT(dropIndicatorPosition_ == BelowItem);
         groups.insert(groups.indexOf(item) + 1, selectedGroup);
     }
 
-//    foreach(QModelIndex i, groups) {
-//        model->setGroupOrder(i.data(ContactListModel::FullGroupNameRole).toString(),
-//                             groups.indexOf(i));
-//    }
+    //    foreach(QModelIndex i, groups) {
+    //        model->setGroupOrder(i.data(ContactListModel::FullGroupNameRole).toString(),
+    //                             groups.indexOf(i));
+    //    }
 }
 
-QModelIndex ContactListDragView::itemToReorderGroup(const ContactListModelSelection& selection, const QModelIndex& index) const
+QModelIndex ContactListDragView::itemToReorderGroup(const ContactListModelSelection &selection,
+                                                    const QModelIndex &              index) const
 {
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     Q_ASSERT(model);
-//    ContactListModel::Type groupType =
-//        selection.groups().count() == 1 ?
-//        ContactListModel::GroupType :
-//        ContactListModel::AccountType;
+    //    ContactListModel::Type groupType =
+    //        selection.groups().count() == 1 ?
+    //        ContactListModel::GroupType :
+    //        ContactListModel::AccountType;
     Q_ASSERT(selection.groups().count() == 1 || selection.accounts().count() == 1);
     QModelIndexList selectedGroups = model->indexesFor(&selection);
     if (!selectedGroups.count())
         return QModelIndex();
     QModelIndex selectedGroup = selectedGroups.first();
     // we need to work in terms of proxy indexes because we need actually-sorted items
-    selectedGroup = proxyIndex(selectedGroup);
+    selectedGroup                 = proxyIndex(selectedGroup);
     const QModelIndex groupParent = selectedGroup.parent();
 
     QModelIndex indexParent = index;
@@ -531,33 +498,36 @@ QModelIndex ContactListDragView::itemToReorderGroup(const ContactListModelSelect
     }
     if (indexParent.parent() != groupParent || indexParent == selectedGroup)
         return QModelIndex();
-//    if (static_cast<ContactListGroup::SpecialType>(indexParent.data(ContactListModel::SpecialGroupTypeRole).toInt()) != ContactListGroup::SpecialType_None)
-//        return QModelIndex();
+    //    if
+    //    (static_cast<ContactListGroup::SpecialType>(indexParent.data(ContactListModel::SpecialGroupTypeRole).toInt())
+    //    != ContactListGroup::SpecialType_None)
+    //        return QModelIndex();
 
     // this code is necessary if we allow contacts on the same level as group items
-//    bool breakAtFirstGroup = (ContactListModel::indexType(index) != groupType) && index.parent() == groupParent;
+    //    bool breakAtFirstGroup = (ContactListModel::indexType(index) != groupType) && index.parent() == groupParent;
     QModelIndex result;
     for (int row = 0; row < this->model()->rowCount(groupParent); ++row) {
         result = this->model()->index(row, indexParent.column(), groupParent);
-//        if (breakAtFirstGroup) {
-//            if (ContactListModel::indexType(result) == groupType)
-//                break;
-//        }
-//        else if (result.row() == indexParent.row()) {
-//            break;
-//        }
+        //        if (breakAtFirstGroup) {
+        //            if (ContactListModel::indexType(result) == groupType)
+        //                break;
+        //        }
+        //        else if (result.row() == indexParent.row()) {
+        //            break;
+        //        }
     }
     return result;
 }
 
-QRect ContactListDragView::groupReorderDropRect(DropIndicatorPosition dropIndicatorPosition, const ContactListModelSelection& selection, const QModelIndex& index) const
+QRect ContactListDragView::groupReorderDropRect(DropIndicatorPosition            dropIndicatorPosition,
+                                                const ContactListModelSelection &selection,
+                                                const QModelIndex &              index) const
 {
     QModelIndex group = itemToReorderGroup(selection, index);
-    QRect r(groupVisualRect(group));
+    QRect       r(groupVisualRect(group));
     if (dropIndicatorPosition == AboveItem) {
         return QRect(r.left(), r.top(), r.width(), 1);
-    }
-    else {
+    } else {
         Q_ASSERT(dropIndicatorPosition == BelowItem);
         QRect result(r.left(), r.bottom(), r.width(), 1);
         if (result.bottom() < viewport()->height() - 2)
@@ -566,7 +536,7 @@ QRect ContactListDragView::groupReorderDropRect(DropIndicatorPosition dropIndica
     }
 }
 
-QRect ContactListDragView::onItemDropRect(const QModelIndex& index) const
+QRect ContactListDragView::onItemDropRect(const QModelIndex &index) const
 {
     if (!index.isValid()) {
         return viewport()->rect().adjusted(0, 0, -1, -1);
@@ -576,13 +546,12 @@ QRect ContactListDragView::onItemDropRect(const QModelIndex& index) const
 
     if (item->isContact()) {
         return onItemDropRect(index.parent());
-    }
-    else {
+    } else {
         return groupVisualRect(index);
     }
 }
 
-QRect ContactListDragView::groupVisualRect(const QModelIndex& index) const
+QRect ContactListDragView::groupVisualRect(const QModelIndex &index) const
 {
     Q_ASSERT(realModel()->toItem(realIndex(index))->isGroup());
 
@@ -591,7 +560,7 @@ QRect ContactListDragView::groupVisualRect(const QModelIndex& index) const
     return result.adjusted(0, 0, -1, -1);
 }
 
-void ContactListDragView::combineVisualRects(const QModelIndex& parent, QRect* result) const
+void ContactListDragView::combineVisualRects(const QModelIndex &parent, QRect *result) const
 {
     Q_ASSERT(result);
     *result = result->united(visualRect(parent));
@@ -601,22 +570,19 @@ void ContactListDragView::combineVisualRects(const QModelIndex& parent, QRect* r
     }
 }
 
-void ContactListDragView::startDrag(Qt::DropActions supportedActions)
-{
-    ContactListView::startDrag(supportedActions);
-}
+void ContactListDragView::startDrag(Qt::DropActions supportedActions) { ContactListView::startDrag(supportedActions); }
 
 // Return ContactListModelSelection
-QMimeData* ContactListDragView::selection() const
+QMimeData *ContactListDragView::selection() const
 {
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     if (model && model->contactList() && !selectedIndexes().isEmpty()) {
         return model->mimeData(realIndexes(selectedIndexes()));
     }
-    return 0;
+    return nullptr;
 }
 
-void ContactListDragView::restoreSelection(QMimeData* _mimeData)
+void ContactListDragView::restoreSelection(QMimeData *_mimeData)
 {
     // setCurrentIndex() actually fires up the timers which in turn could trigger
     // some delayed events that would result in mimeData deletion (if the mimeData
@@ -629,13 +595,13 @@ void ContactListDragView::restoreSelection(QMimeData* _mimeData)
     // setCurrentIndex(QModelIndex());
     clearSelection();
 
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     if (model && !mimeData.isNull()) {
         QModelIndexList indexes = proxyIndexes(model->indexesFor(mimeData));
         if (!indexes.isEmpty()) {
             setCurrentIndex(indexes.first());
             QItemSelection selection;
-            foreach(QModelIndex index, indexes)
+            foreach (QModelIndex index, indexes)
                 selection << QItemSelectionRange(index);
             selectionModel()->select(selection, QItemSelectionModel::Select);
         }
@@ -644,9 +610,9 @@ void ContactListDragView::restoreSelection(QMimeData* _mimeData)
     setUpdatesEnabled(true);
 }
 
-ContactListItemMenu* ContactListDragView::createContextMenuFor(ContactListItem* item) const
+ContactListItemMenu *ContactListDragView::createContextMenuFor(ContactListItem *item) const
 {
-    ContactListItemMenu* menu = ContactListView::createContextMenuFor(item);
+    ContactListItemMenu *menu = ContactListView::createContextMenuFor(item);
     if (menu) {
         if (menu->metaObject()->indexOfSignal("removeSelection()") != -1)
             connect(menu, SIGNAL(removeSelection()), SLOT(removeSelection()));
@@ -657,14 +623,14 @@ ContactListItemMenu* ContactListDragView::createContextMenuFor(ContactListItem* 
 void ContactListDragView::removeSelection()
 {
     SLOW_TIMER(100);
-    QList<PsiContact*> contacts;
-    QStringList contactNames;
+    QList<PsiContact *> contacts;
+    QStringList         contactNames;
 
-    QMimeData *mimeData = selection();
-    QModelIndexList indexes = qobject_cast<ContactListDragModel*>(realModel())->indexesFor(mimeData);
+    QMimeData *     mimeData = selection();
+    QModelIndexList indexes  = qobject_cast<ContactListDragModel *>(realModel())->indexesFor(mimeData);
     delete mimeData;
 
-    for (const QModelIndex &index: indexes) {
+    for (const QModelIndex &index : indexes) {
         ContactListItem *item = realModel()->toItem(index);
 
         if (item->isContact())
@@ -677,7 +643,7 @@ void ContactListDragView::removeSelection()
         return;
 
     // Ask for deleting only some contacts. Exclude private contacts and not in list contacts
-    for (PsiContact *contact: contacts) {
+    for (PsiContact *contact : contacts) {
         QString name = contact->name();
         if (name != contact->jid().full()) {
             name = tr("%1 (%2)").arg(name, TextUtil::escape(contact->jid().full()));
@@ -693,16 +659,17 @@ void ContactListDragView::removeSelection()
     if (!contactNames.isEmpty()) {
         QString message = tr("This will permanently remove<br>"
                              "%1"
-                             "<br>from your contact list."
-                             ).arg(contactNames.join(", "));
+                             "<br>from your contact list.")
+                              .arg(contactNames.join(", "));
 
-        QMessageBox box(QMessageBox::Icon::Warning, tr("Deleting contacts"), message, QMessageBox::StandardButton::Cancel | QMessageBox::StandardButton::Yes, this);
+        QMessageBox box(QMessageBox::Icon::Warning, tr("Deleting contacts"), message,
+                        QMessageBox::StandardButton::Cancel | QMessageBox::StandardButton::Yes, this);
         box.button(QMessageBox::StandardButton::Yes)->setText(tr("Delete"));
         doRemove = static_cast<QMessageBox::StandardButton>(box.exec()) == QMessageBox::StandardButton::Yes;
     }
 
     if (doRemove) {
-        for (PsiContact *contact: contacts) {
+        for (PsiContact *contact : contacts) {
             contact->remove();
         }
     }
@@ -715,29 +682,22 @@ bool ContactListDragView::extendedSelectionAllowed() const
 
 bool ContactListDragView::activateItemsOnSingleClick() const
 {
-//     return style()->styleHint(QStyle::SH_ItemView_ActivateItemOnSingleClick, 0, this);
+    //     return style()->styleHint(QStyle::SH_ItemView_ActivateItemOnSingleClick, 0, this);
     return PsiOptions::instance()->getOption("options.ui.contactlist.use-single-click").toBool();
 }
 
-void ContactListDragView::updateKeyboardModifiers(const QEvent* e)
+void ContactListDragView::updateKeyboardModifiers(const QEvent *e)
 {
-    if (e->type() == QEvent::KeyPress ||
-        e->type() == QEvent::KeyRelease ||
-        e->type() == QEvent::MouseButtonDblClick ||
-        e->type() == QEvent::MouseButtonPress ||
-        e->type() == QEvent::MouseButtonRelease ||
-        e->type() == QEvent::MouseMove)
-    {
-        keyboardModifiers_ = static_cast<const QInputEvent*>(e)->modifiers();
+    if (e->type() == QEvent::KeyPress || e->type() == QEvent::KeyRelease || e->type() == QEvent::MouseButtonDblClick
+        || e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease
+        || e->type() == QEvent::MouseMove) {
+        keyboardModifiers_ = static_cast<const QInputEvent *>(e)->modifiers();
     }
 }
 
-Qt::KeyboardModifiers ContactListDragView::keyboardModifiers() const
-{
-    return keyboardModifiers_;
-}
+Qt::KeyboardModifiers ContactListDragView::keyboardModifiers() const { return keyboardModifiers_; }
 
-bool ContactListDragView::eventFilter(QObject* obj, QEvent* e)
+bool ContactListDragView::eventFilter(QObject *obj, QEvent *e)
 {
     if (obj == this || obj == viewport()) {
         updateKeyboardModifiers(e);
@@ -746,23 +706,21 @@ bool ContactListDragView::eventFilter(QObject* obj, QEvent* e)
     return ContactListView::eventFilter(obj, e);
 }
 
-void ContactListDragView::mousePressEvent(QMouseEvent* e)
+void ContactListDragView::mousePressEvent(QMouseEvent *e)
 {
     pressPosition_ = e->pos();
     delete pressedIndex_;
-    pressedIndex_ = 0;
+    pressedIndex_            = nullptr;
     pressedIndexWasSelected_ = false;
 
-    QModelIndex index = indexAt(e->pos());
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    QModelIndex           index = indexAt(e->pos());
+    ContactListDragModel *model = qobject_cast<ContactListDragModel *>(realModel());
     if (model && index.isValid()) {
         QModelIndexList indexes;
         indexes << realIndex(index);
         pressedIndex_ = model->mimeData(indexes);
     }
-    pressedIndexWasSelected_ = e->button() == Qt::LeftButton &&
-                               selectionModel() &&
-                               selectionModel()->isSelected(index);
+    pressedIndexWasSelected_ = e->button() == Qt::LeftButton && selectionModel() && selectionModel()->isSelected(index);
     if (!index.isValid()) {
         // clear selection
         updateCursor(index, UC_MouseClick, true);
@@ -772,15 +730,15 @@ void ContactListDragView::mousePressEvent(QMouseEvent* e)
     }
     ContactListView::mousePressEvent(e);
 
-    static const int iconSize = 16;
-    bool iconClick = e->pos().x() < iconSize + 2;
+    static const int iconSize  = 16;
+    bool             iconClick = e->pos().x() < iconSize + 2;
 
-    if (( activateItemsOnSingleClick() || iconClick ) && e->button() == Qt::LeftButton) {
+    if ((activateItemsOnSingleClick() || iconClick) && e->button() == Qt::LeftButton) {
         ContactListView::mouseDoubleClickEvent(e);
     }
 }
 
-void ContactListDragView::mouseMoveEvent(QMouseEvent* e)
+void ContactListDragView::mouseMoveEvent(QMouseEvent *e)
 {
     // don't allow any selections after single-clicking on the group button
     if (!pressedIndex_ && !pressedIndexWasSelected_ && e->buttons() & Qt::LeftButton) {
@@ -791,7 +749,7 @@ void ContactListDragView::mouseMoveEvent(QMouseEvent* e)
     ContactListView::mouseMoveEvent(e);
 }
 
-void ContactListDragView::itemClicked(const QModelIndex& index)
+void ContactListDragView::itemClicked(const QModelIndex &index)
 {
     if (activateItemsOnSingleClick())
         itemActivated(index);
@@ -803,7 +761,7 @@ void ContactListDragView::itemClicked(const QModelIndex& index)
     Q_UNUSED(index);
 }
 
-void ContactListDragView::contextMenuEvent(QContextMenuEvent* e)
+void ContactListDragView::contextMenuEvent(QContextMenuEvent *e)
 {
     QModelIndex index = indexAt(e->pos());
     if (!selectedIndexes().contains(index)) {
@@ -821,12 +779,10 @@ void ContactListDragView::contextMenuEvent(QContextMenuEvent* e)
 
 bool ContactListDragView::drawSelectionBackground() const
 {
-    return focusPolicy() == Qt::NoFocus     ||
-           testAttribute(Qt::WA_UnderMouse) ||
-           extendedSelectionAllowed();
+    return focusPolicy() == Qt::NoFocus || testAttribute(Qt::WA_UnderMouse) || extendedSelectionAllowed();
 }
 
-void ContactListDragView::closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint)
+void ContactListDragView::closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint)
 {
     ContactListView::closeEditor(editor, hint);
 }
@@ -835,27 +791,23 @@ void ContactListDragView::backupCurrentSelection()
 {
     if (backedUpSelection_) {
         delete backedUpSelection_;
-        backedUpSelection_ = 0;
+        backedUpSelection_ = nullptr;
     }
 
     backedUpSelection_ = selection();
 }
 
-void ContactListDragView::restoreBackedUpSelection()
-{
-    restoreSelection(backedUpSelection_);
-}
+void ContactListDragView::restoreBackedUpSelection() { restoreSelection(backedUpSelection_); }
 
 void ContactListDragView::modelChanged()
 {
     if (!dirty_) {
-//        setUpdatesEnabled(false);
+        //        setUpdatesEnabled(false);
         if (currentEditor() && editing) {
             backedUpEditorValue_ = currentEditor()->text();
             closeEditor(currentEditor(), QAbstractItemDelegate::NoHint);
             setEditingIndex(currentIndex(), true);
-        }
-        else {
+        } else {
             backedUpEditorValue_ = QString();
         }
         dirty_ = true;
@@ -866,33 +818,27 @@ void ContactListDragView::modelChanged()
 
     // make sure selectionModel() doesn't cache any currently selected indexes
     // otherwise it'll overwrite our correctly restored selection with its own
-//    if (selectionModel()) {
-//        selectionModel()->reset();
-//    }
+    //    if (selectionModel()) {
+    //        selectionModel()->reset();
+    //    }
 
     updateContextMenu();
 }
 
-void ContactListDragView::updateGeometries()
-{
-    ContactListView::updateGeometries();
-}
+void ContactListDragView::updateGeometries() { ContactListView::updateGeometries(); }
 
 /**
  * Prevent emitting activated events when clicking with right mouse button.
  */
-void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
+void ContactListDragView::mouseReleaseEvent(QMouseEvent *event)
 {
-    bool filter = false;
-    ContactListDragModel* model = qobject_cast<ContactListDragModel*>(realModel());
+    bool                  filter = false;
+    ContactListDragModel *model  = qobject_cast<ContactListDragModel *>(realModel());
     if (model && pressedIndex_) {
-        QModelIndexList indexes = model->indexesFor(0, pressedIndex_);
-        QModelIndex index = indexes.count() == 1 ? proxyIndex(indexes.first()) : QModelIndex();
-        if (event->button() == Qt::LeftButton &&
-            index.isValid() &&
-            keyboardModifiers() == 0 &&
-            model->toItem(realIndex(index))->isGroup() &&
-            activateItemsOnSingleClick()) {
+        QModelIndexList indexes = model->indexesFor(nullptr, pressedIndex_);
+        QModelIndex     index   = indexes.count() == 1 ? proxyIndex(indexes.first()) : QModelIndex();
+        if (event->button() == Qt::LeftButton && index.isValid() && keyboardModifiers() == 0
+            && model->toItem(realIndex(index))->isGroup() && activateItemsOnSingleClick()) {
 
             if ((pressPosition_ - event->pos()).manhattanLength() < QApplication::startDragDistance()) {
                 QStyleOptionViewItem option;
@@ -909,10 +855,7 @@ void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
 
     pressPosition_ = QPoint();
     delete pressedIndex_;
-    pressedIndex_ = 0;
+    pressedIndex_ = nullptr;
 }
 
-void ContactListDragView::setViewportMenu(QMenu* menu)
-{
-    viewportMenu_ = menu;
-}
+void ContactListDragView::setViewportMenu(QMenu *menu) { viewportMenu_ = menu; }

@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,11 +25,8 @@
 /* ContactListGroupMenu::Private */
 /*********************************/
 
-
-ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListItem *item)
-    : QObject(0)
-    , q(menu)
-    , group(item)
+ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListItem *item) :
+    QObject(nullptr), q(menu), group(item)
 {
     q->setLabelTitle(item->name());
 
@@ -70,10 +66,10 @@ ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListIt
     actionMucLeave_ = new IconAction(tr("Leave All"), this, "psi/action_muc_leave");
     connect(actionMucLeave_, SIGNAL(triggered()), SLOT(mucLeave()));
 
-    actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, 0, true);
+    actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, nullptr, true);
     connect(actionHide_, SIGNAL(triggered(bool)), SLOT(actHide(bool)));
 
-    authMenu_ = 0;
+    authMenu_ = nullptr;
 
     if (item->specialGroupType() != ContactListItem::SpecialGroupType::ConferenceSpecialGroupType) {
         q->addAction(renameAction_);
@@ -88,8 +84,7 @@ ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListIt
         authMenu_->addAction(actionAuthRemove_);
         menu->addAction(removeGroupWithoutContactsAction_);
         menu->addAction(removeGroupAndContactsAction_);
-    }
-    else {
+    } else {
         menu->addAction(actionMucHide_);
         menu->addAction(actionMucShow_);
         menu->addAction(actionMucLeave_);
@@ -107,7 +102,7 @@ void ContactListGroupMenu::Private::updateActions()
     sendMessageAction_->setVisible(true);
     sendMessageAction_->setEnabled(group->contacts().first()->account()->isAvailable());
     actionCustomStatus_->setEnabled(group->contacts().first()->account()->isAvailable());
-    if(authMenu_)
+    if (authMenu_)
         authMenu_->setEnabled(group->contacts().first()->account()->isAvailable());
     renameAction_->setEnabled(group->isEditable());
     removeGroupAndContactsAction_->setEnabled(group->isRemovable());
@@ -119,8 +114,8 @@ void ContactListGroupMenu::Private::mucHide()
 {
     PsiAccount *pa = group->contacts().first()->account();
     foreach (QString gc, pa->groupchats()) {
-        Jid j(gc);
-        GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
+        Jid        j(gc);
+        GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg && (gcDlg->isTabbed() || !gcDlg->isHidden()))
             gcDlg->hideTab();
     }
@@ -130,8 +125,8 @@ void ContactListGroupMenu::Private::mucShow()
 {
     PsiAccount *pa = group->contacts().first()->account();
     foreach (QString gc, pa->groupchats()) {
-        Jid j(gc);
-        GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
+        Jid        j(gc);
+        GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg) {
             gcDlg->ensureTabbedCorrectly();
             gcDlg->bringToFront();
@@ -143,8 +138,8 @@ void ContactListGroupMenu::Private::mucLeave()
 {
     PsiAccount *pa = group->contacts().first()->account();
     foreach (QString gc, pa->groupchats()) {
-        Jid j(gc);
-        GCMainDlg *gcDlg = pa->findDialog<GCMainDlg*>(j.bare());
+        Jid        j(gc);
+        GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg)
             gcDlg->close();
     }
@@ -171,9 +166,9 @@ void ContactListGroupMenu::Private::authResend()
     if (!group)
         return;
 
-    QList<PsiContact*> contacts = group->contacts();
+    QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        foreach(PsiContact* contact, contacts) {
+        foreach (PsiContact *contact, contacts) {
             contact->account()->actionAuth(contact->jid());
         }
     }
@@ -184,9 +179,9 @@ void ContactListGroupMenu::Private::authRequest()
     if (!group)
         return;
 
-    QList<PsiContact*> contacts = group->contacts();
+    QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        foreach(PsiContact* contact, contacts) {
+        foreach (PsiContact *contact, contacts) {
             contact->account()->actionAuthRequest(contact->jid());
         }
     }
@@ -197,9 +192,9 @@ void ContactListGroupMenu::Private::authRemove()
     if (!group)
         return;
 
-    QList<PsiContact*> contacts = group->contacts();
+    QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        foreach(PsiContact* contact, contacts) {
+        foreach (PsiContact *contact, contacts) {
             contact->account()->actionAuthRemove(contact->jid());
         }
     }
@@ -210,25 +205,26 @@ void ContactListGroupMenu::Private::customStatus()
     if (!group)
         return;
 
-    PsiAccount *pa = group->contacts().first()->account();
-    StatusSetDlg *w = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
+    PsiAccount *     pa = group->contacts().first()->account();
+    StatusSetDlg *   w  = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
     QList<XMPP::Jid> list;
-    foreach(PsiContact* contact, group->contacts()) {
-        if(contact->isPrivate()) continue;
+    foreach (PsiContact *contact, group->contacts()) {
+        if (contact->isPrivate())
+            continue;
         list << contact->jid();
     }
     w->setJidList(list);
-    connect(w, SIGNAL(setJidList(const QList<XMPP::Jid> &, const Status &)), SLOT(setStatusFromDialog(const QList<XMPP::Jid> &, const Status &)));
+    connect(w, SIGNAL(setJidList(const QList<XMPP::Jid> &, const Status &)),
+            SLOT(setStatusFromDialog(const QList<XMPP::Jid> &, const Status &)));
     w->show();
 }
 
 void ContactListGroupMenu::Private::setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s)
 {
     PsiAccount *pa = group->contacts().first()->account();
-    for(QList<Jid>::const_iterator it = j.begin(); it != j.end(); ++it)
-    {
+    for (QList<Jid>::const_iterator it = j.begin(); it != j.end(); ++it) {
         JT_Presence *p = new JT_Presence(pa->client()->rootTask());
-        p->pres(*it,s);
+        p->pres(*it, s);
         p->go(true);
     }
 }
@@ -238,7 +234,7 @@ void ContactListGroupMenu::Private::removeGroupWithoutContacts()
     if (!group)
         return;
 
-    QList<PsiContact*> contacts = group->contacts();
+    QList<PsiContact *> contacts = group->contacts();
 
     if (contacts.isEmpty())
         return;
@@ -250,7 +246,7 @@ void ContactListGroupMenu::Private::removeGroupWithoutContacts()
                                        QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
 
     if (res == QMessageBox::StandardButton::Yes) {
-        for (PsiContact *contact: contacts) {
+        for (PsiContact *contact : contacts) {
             QStringList groups = contact->groups();
             groups.removeAll(group->name());
             contact->setGroups(groups);
@@ -263,10 +259,10 @@ void ContactListGroupMenu::Private::sendMessage()
     if (!group)
         return;
 
-    QList<PsiContact*> contacts = group->contacts();
+    QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
         QList<XMPP::Jid> list;
-        foreach(PsiContact* contact, contacts) {
+        foreach (PsiContact *contact, contacts) {
             list << contact->jid();
         }
         contacts.first()->account()->actionSendMessage(list);
@@ -285,13 +281,10 @@ void ContactListGroupMenu::Private::actHide(bool hide)
 /* ContactListGroupMenu */
 /************************/
 
-ContactListGroupMenu::ContactListGroupMenu(ContactListItem *item, ContactListModel* model)
-    : ContactListItemMenu(item, model)
+ContactListGroupMenu::ContactListGroupMenu(ContactListItem *item, ContactListModel *model) :
+    ContactListItemMenu(item, model)
 {
     d = new Private(this, item);
 }
 
-ContactListGroupMenu::~ContactListGroupMenu()
-{
-    delete d;
-}
+ContactListGroupMenu::~ContactListGroupMenu() { delete d; }

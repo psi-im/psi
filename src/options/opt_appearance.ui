@@ -149,7 +149,7 @@
           </item>
           <item row="9" column="0">
            <widget class="QCheckBox" name="ck_cUserText">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the color for additional text of system messages. MUC topic for example.</string>
             </property>
             <property name="text">
@@ -178,7 +178,7 @@
           </item>
           <item row="1" column="0">
            <widget class="QCheckBox" name="ck_cProfileBack">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the background color for an account name in the main window.</string>
             </property>
             <property name="text">
@@ -207,7 +207,7 @@
           </item>
           <item row="4" column="0">
            <widget class="QCheckBox" name="ck_cAnimFront">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the foreground animation color for nicks.</string>
             </property>
             <property name="text">
@@ -236,7 +236,7 @@
           </item>
           <item row="8" column="0">
            <widget class="QCheckBox" name="ck_cSysMsg">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the color for informational messages in chat windows, like status changes and offline messages.</string>
             </property>
             <property name="text">
@@ -317,7 +317,7 @@
           </item>
           <item row="7" column="0">
            <widget class="QCheckBox" name="ck_cMessageReceived">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the color for received messages in chat and history windows.</string>
             </property>
             <property name="text">
@@ -346,7 +346,7 @@
           </item>
           <item row="3" column="0">
            <widget class="QCheckBox" name="ck_cGroupBack">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the background color for a group name in the main window.</string>
             </property>
             <property name="text">
@@ -427,7 +427,7 @@
           </item>
           <item row="14" column="0">
            <widget class="QCheckBox" name="ck_cListBack">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the background color for the main window.</string>
             </property>
             <property name="text">
@@ -463,7 +463,7 @@
           </item>
           <item row="6" column="0">
            <widget class="QCheckBox" name="ck_cMessageSent">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the color for sent messages in chat and history windows.</string>
             </property>
             <property name="text">
@@ -493,7 +493,7 @@
           </item>
           <item row="5" column="0">
            <widget class="QCheckBox" name="ck_cAnimBack">
-            <property name="whatsThis">
+            <property name="toolTip">
              <string>Specifies the background animation color for nicks.</string>
             </property>
             <property name="text">

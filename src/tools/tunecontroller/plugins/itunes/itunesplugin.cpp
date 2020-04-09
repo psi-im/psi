@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,32 +21,25 @@
 #define QT_STATICPLUGIN
 #endif
 
-#include <QtCore>
-#include <QObject>
-#include <QString>
-
 #include "itunestunecontroller.h"
 #include "tunecontrollerplugin.h"
 
-class ITunesPlugin : public QObject, public TuneControllerPlugin
-{
+#include <QObject>
+#include <QString>
+#include <QtCore>
+
+class ITunesPlugin : public QObject, public TuneControllerPlugin {
     Q_OBJECT
     Q_INTERFACES(TuneControllerPlugin)
     Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
 
 public:
-    virtual QString name();
-    virtual TuneController* createController();
+    virtual QString         name();
+    virtual TuneController *createController();
 };
 
-QString ITunesPlugin::name()
-{
-    return "iTunes";
-}
+QString ITunesPlugin::name() { return "iTunes"; }
 
-TuneController* ITunesPlugin::createController()
-{
-    return new ITunesController();
-}
+TuneController *ITunesPlugin::createController() { return new ITunesController(); }
 
 #include "itunesplugin.moc"

@@ -13,14 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 #ifndef WBSCENE_H
 #define WBSCENE_H
-#include <QPointer>
+
 #include "wbitem.h"
+
+#include <QPointer>
 
 /*! \brief The scene class for whiteboard items.
  *  Inherits QGraphicsScene.
@@ -33,19 +34,19 @@
  *  \sa WbWidget
  *  \sa WbItem
  */
-class WbScene : public QGraphicsScene
-{
+class WbScene : public QGraphicsScene {
     Q_OBJECT
 
 public:
     /*! \brief Constructor
      *  Constructs a new scene with parent \a parent.
      */
-    WbScene(SxeSession* session, QObject * parent = 0);
+    WbScene(SxeSession *session, QObject *parent = nullptr);
 
     /*! \brief Appends the item to a list of items whose "transform" attribute is to be regenerated.*/
-    void queueTransformationRegeneration(WbItem* item);
-    /*! \brief Regenerate the SVG transformation matrices for items queued by queueTransformationRegeneration(WbItem* item) since last regeneration.*/
+    void queueTransformationRegeneration(WbItem *item);
+    /*! \brief Regenerate the SVG transformation matrices for items queued by queueTransformationRegeneration(WbItem*
+     * item) since last regeneration.*/
     void regenerateTransformations();
     /*! \brief Returns the coordinates of the center of all selected items. */
     QPointF selectionCenter() const;
@@ -66,16 +67,15 @@ public slots:
 
 private:
     /*! \brief Brings the selected items \a n levels forward.
-    *  If \a n < 0, the items are send \a n levels baskwards.
-    *  If \a toExtremum is true, the item is sent to the front/back.
-    */
+     *  If \a n < 0, the items are send \a n levels baskwards.
+     *  If \a toExtremum is true, the item is sent to the front/back.
+     */
     void bring(int n, bool toExtremum);
 
-    SxeSession* session_;
-    QList< QPointer<WbItem> > pendingTranformations_;
+    SxeSession *            session_;
+    QList<QPointer<WbItem>> pendingTranformations_;
 
     QPointF selectionCenter_;
 };
 
-#endif
-
+#endif // WBSCENE_H

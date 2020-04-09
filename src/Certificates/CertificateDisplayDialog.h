@@ -12,32 +12,30 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef CERTIFICATEDISPLAYDIALOG_H
 #define CERTIFICATEDISPLAYDIALOG_H
 
-#include <QtCrypto>
-
 #include "ui_CertificateDisplay.h"
 
-class CertificateDisplayDialog : public QDialog
-{
-        Q_OBJECT
+#include <QtCrypto>
 
-    public:
-        CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=0);
+class CertificateDisplayDialog : public QDialog {
+    Q_OBJECT
 
-    protected:
-        static void setLabelStatus(QLabel& l, bool ok);
-        static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
-        QString makePropTable(const QString &heading, const QCA::CertificateInfo &props);
+public:
+    CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent = nullptr);
 
-    private:
-        Ui::CertificateDisplay ui_;
+protected:
+    static void    setLabelStatus(QLabel &l, bool ok);
+    static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
+    QString        makePropTable(const QString &heading, const QCA::CertificateInfo &props);
+
+private:
+    Ui::CertificateDisplay ui_;
 };
 
-#endif
+#endif // CERTIFICATEDISPLAYDIALOG_H

@@ -13,28 +13,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PROFILEDLG_H
 #define PROFILEDLG_H
 
-#include <QDialog>
-
-#include "ui_profileopen.h"
 #include "ui_profilemanage.h"
 #include "ui_profilenew.h"
+#include "ui_profileopen.h"
 #include "varlist.h"
+
+#include <QDialog>
 
 class QButtonGroup;
 
-class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen
-{
+class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen {
     Q_OBJECT
 public:
-    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent=0);
+    ProfileOpenDlg(const QString &, const VarList &, const QString &, QWidget *parent = nullptr);
     ~ProfileOpenDlg();
 
     QString newLang;
@@ -47,14 +45,13 @@ private:
     void reload(const QString &);
 
     VarList langs;
-    int langSel;
+    int     langSel;
 };
 
-class ProfileManageDlg : public QDialog, public Ui::ProfileManage
-{
+class ProfileManageDlg : public QDialog, public Ui::ProfileManage {
     Q_OBJECT
 public:
-    ProfileManageDlg(const QString &, QWidget *parent=0);
+    ProfileManageDlg(const QString &, QWidget *parent = nullptr);
 
 private slots:
     void slotProfileNew();
@@ -63,11 +60,10 @@ private slots:
     void updateSelection();
 };
 
-class ProfileNewDlg : public QDialog, public Ui::ProfileNew
-{
+class ProfileNewDlg : public QDialog, public Ui::ProfileNew {
     Q_OBJECT
 public:
-    ProfileNewDlg(QWidget *parent=0);
+    ProfileNewDlg(QWidget *parent = nullptr);
 
     QString name;
 
@@ -76,7 +72,7 @@ private slots:
     void nameModified();
 
 private:
-    QButtonGroup* buttonGroup_;
+    QButtonGroup *buttonGroup_;
 };
 
-#endif
+#endif // PROFILEDLG_H

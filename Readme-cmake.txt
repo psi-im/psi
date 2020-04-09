@@ -63,28 +63,18 @@ or
 
   to use Hunspell spellchecker (default ON)
 
+>  -DUSE_HUNSPELL=ON
+
+  to use Aspell spellchecker (default OFF)
+
 >  -DSEPARATE_QJDNS=ON
 
   to build qjdns library as separate library (default OFF)
+  
+>  -DCHAT_TYPE = BASIC
 
->  -DENABLE_WEBKIT = ON
-
-   enable support of QtWebKit or QtWebengine. If the flag is enabled and
-   both libraries qtwebkit and qtwebengine are installed the script 
-   automatically selects qtwebengine. (default is ON)
-
->  -DUSE_WEBKIT = OFF
-
-   used to force build with QtWebKit instead of QtWebengine 
-   (ENABLE_WEBKIT flag should be set ON)
-   (default is OFF)
-
->  -DUSE_WEBENGINE = OFF
-
-   use QtWebengine instead of QtWebKit. This flag is set automatically
-   if the USE_WEBKIT flag is disabled and the Qt5Webengine>=5.6.0 library
-   is installed. (ENABLE_WEBKIT flag should be set ON)
-   (default is OFF)
+   to set type of chatlog engine. Possible values: WEBKIT, WEBENGINE, BASIC
+   default value - BASIC
 
 >  -DPSI_VERSION=${version}
 
@@ -146,6 +136,19 @@ or
   to build only psi plugins (default OFF). On enabling this flag 
   ENABLE_PLUGINS flag turns on automatically
 
+>  -DDEV_MODE=ON
+
+  In OS Windows enables prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
+  In Linux sets PSI_DATA directory to current binary direrctory (Usefull to debug plugins)
+
+>  -DUSE_XSS=ON
+
+  In Linux OS adds XScreensaver support (default ON).
+
+> -DUSE_DBUS = ON
+
+  In Linux OS enables DBus support for client management, notifications, tunes (default ON).
+  
 ## Work with plugins:
 
 ### Next flags are working only if ENABLE_PLUGINS or ONLY_PLUGINS are enabled
@@ -156,17 +159,26 @@ or
 
   - possible values for ${plugins}:
 
-    historykeeperplugin	stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
-    cleanerplugin autoreplyplugin contentdownloaderplugin	qipxstatusesplugin skinsplugin icqdieplugin
-    clientswitcherplugin captchaformsplugin watcherplugin videostatusplugin screenshotplugin
-    jabberdiskplugin storagenotesplugin	extendedoptionsplugin imageplugin	extendedmenuplugin
-    birthdayreminderplugin gmailserviceplugin gnupgplugin pepchangenotifyplugin otrplugin
-    chessplugin conferenceloggerplugin gnome3supportplugin enummessagesplugin httpuploadplugin 
-    imagepreviewplugin
+    historykeeperplugin stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
+    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin icqdieplugin
+    clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
+    storagenotesplugin extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
+    gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin
+    enummessagesplugin httpuploadplugin imagepreviewplugin
 
   Example:
 
-  > -DBUILD_PLUGINS="chessplugin;otrplugin;gnome3supportplugin"
+  > -DBUILD_PLUGINS="chessplugin;otrplugin"
+
+    The BUILD_PLUGINS variable can also be used as a blacklist.
+    In this case, all plugins will be compiled, except those indicated.
+    To do this, just specify the variable as
+
+    > -DBUILD_PLUGINS = "-chessplugin;-otrplugin"
+
+    and plugins chessplugin and otrplugin will not be assembled
+
+    ATTENTION! Mixing white and black lists is not allowed.
 
 >  -DPLUGINS_ROOT_DIR=${path}
 
@@ -204,10 +216,6 @@ or
 >  -DHUNSPELL_ROOT=DIRECTORY
 
   to set Hunspell library root directory
-
->  -DDEV_MODE=ON
-
-  to enable prepare-bin-libs target. Allows to copy needed libraries to run Psi/Psi+.
 
 >  -DENABLE_PORTABLE=ON
 

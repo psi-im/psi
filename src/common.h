@@ -13,32 +13,32 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <QString>
-#include <QMap>
-#include <QSize>
-#include <QStringList>
-#include <QList>
+#include "statuspreset.h"
+#include "xmpp_status.h"
+
 #include <QColor>
 #include <QGridLayout>
+#include <QList>
+#include <QMap>
+#include <QSize>
+#include <QString>
+#include <QStringList>
 
 #if __cplusplus < 201703L
-# define PSI_FALLSTHROUGH
+#define PSI_FALLSTHROUGH
 #else
-# define PSI_FALLSTHROUGH [[fallthrough]]
+#define PSI_FALLSTHROUGH [[fallthrough]]
 #endif
 
 class QMenu;
 class TabbableWidget;
-
-#include "statuspreset.h"
 
 // -----------------------------------------------------------------------------
 // Options
@@ -48,23 +48,22 @@ enum { dcClose, dcHour, dcDay, dcNever };
 
 enum Qt3Dock {
     Qt3Dock_Unmanaged = 0,
-    Qt3Dock_TornOff = 1,
-    Qt3Dock_Top = 2,
-    Qt3Dock_Bottom = 3,
-    Qt3Dock_Right = 4,
-    Qt3Dock_Left = 5,
+    Qt3Dock_TornOff   = 1,
+    Qt3Dock_Top       = 2,
+    Qt3Dock_Bottom    = 3,
+    Qt3Dock_Right     = 4,
+    Qt3Dock_Left      = 5,
     Qt3Dock_Minimized = 6
 };
 
-class ToolbarPrefs
-{
+class ToolbarPrefs {
 public:
     ToolbarPrefs();
 
-    QString id;
-    QString name;
+    QString     id;
+    QString     name;
     QStringList keys;
-    Qt3Dock dock;
+    Qt3Dock     dock;
 
     // bool dirty;
     bool on;
@@ -75,19 +74,17 @@ public:
     bool nl;
     // int extraOffset;
 
-    bool operator==(const ToolbarPrefs& other);
+    bool operator==(const ToolbarPrefs &other);
 };
 
-
-struct lateMigrationOptions
-{
+struct lateMigrationOptions {
 
     QMap<QString, QString> serviceRosterIconset;
     QMap<QString, QString> customRosterIconset;
 
-    QMap<QString,StatusPreset> sp; // Status message presets.
+    QMap<QString, StatusPreset> sp; // Status message presets.
 
-    QMap< QString, QList<ToolbarPrefs> > toolbars;
+    QMap<QString, QList<ToolbarPrefs>> toolbars;
 };
 
 // used to be part of the global options struct.
@@ -99,43 +96,46 @@ extern int common_smallFontSize;
 // FIXME find it a new home!
 enum { EventPriorityDontCare = -1 };
 
-
 // -----------------------------------------------------------------------------
 // Status
 // -----------------------------------------------------------------------------
 
-#include "xmpp_status.h"
-
-#define STATUS_OFFLINE   XMPP::Status::Offline
-#define STATUS_ONLINE    XMPP::Status::Online
-#define STATUS_AWAY      XMPP::Status::Away
-#define STATUS_XA        XMPP::Status::XA
-#define STATUS_DND       XMPP::Status::DND
+#define STATUS_OFFLINE XMPP::Status::Offline
+#define STATUS_ONLINE XMPP::Status::Online
+#define STATUS_AWAY XMPP::Status::Away
+#define STATUS_XA XMPP::Status::XA
+#define STATUS_DND XMPP::Status::DND
 #define STATUS_INVISIBLE XMPP::Status::Invisible
-#define STATUS_CHAT      XMPP::Status::FFC
+#define STATUS_CHAT XMPP::Status::FFC
 
-#define STATUS_ASK     100
-#define STATUS_NOAUTH     101
-#define STATUS_ERROR     102
+#define STATUS_ASK 100
+#define STATUS_NOAUTH 101
+#define STATUS_ERROR 102
 
-QString status2txt(int status);
-bool lastPriorityNotEmpty();
-XMPP::Status makeLastStatus(int);
-XMPP::Status makeStatus(int, const QString &);
-XMPP::Status makeStatus(int, const QString &, int);
+QString            status2txt(int status);
+bool               lastPriorityNotEmpty();
+XMPP::Status       makeLastStatus(int);
+XMPP::Status       makeStatus(int, const QString &);
+XMPP::Status       makeStatus(int, const QString &, int);
 XMPP::Status::Type makeSTATUS(const XMPP::Status &);
-QString clipStatus(const QString &str, int width, int height);
-inline int rankStatus(int status)
+QString            clipStatus(const QString &str, int width, int height);
+inline int         rankStatus(int status)
 {
     switch (status) {
-        case XMPP::Status::FFC:       return 0;
-        case XMPP::Status::Online:    return 1;
-        case XMPP::Status::Away:      return 2;
-        case XMPP::Status::XA:        return 3;
-        case XMPP::Status::DND:       return 4;
-        case XMPP::Status::Invisible: return 5;
-        default:
-            return 6;
+    case XMPP::Status::FFC:
+        return 0;
+    case XMPP::Status::Online:
+        return 1;
+    case XMPP::Status::Away:
+        return 2;
+    case XMPP::Status::XA:
+        return 3;
+    case XMPP::Status::DND:
+        return 4;
+    case XMPP::Status::Invisible:
+        return 5;
+    default:
+        return 6;
     }
     return 0;
 }
@@ -144,19 +144,19 @@ inline int rankStatus(int status)
 // Widget tools
 // -----------------------------------------------------------------------------
 
-bool isKde();
-void clearMenu(QMenu *m); // deletes all items, including submenus, from given QMenu
-void bringToFront(QWidget *w, bool grabFocus = true);
-void replaceWidget(QWidget *, QWidget *);
-void closeDialogs(QWidget *);
-TabbableWidget* findActiveTab();
+bool            isKde();
+void            clearMenu(QMenu *m); // deletes all items, including submenus, from given QMenu
+void            bringToFront(QWidget *w, bool grabFocus = true);
+void            replaceWidget(QWidget *, QWidget *);
+void            closeDialogs(QWidget *);
+TabbableWidget *findActiveTab();
 #ifdef HAVE_X11
-# include "x11windowsystem.h"
-# define X11WM_CLASS(x)    X11WindowSystem::instance()->x11wmClass(winId(), (x));
+#include "x11windowsystem.h"
+#define X11WM_CLASS(x) X11WindowSystem::instance()->x11wmClass(winId(), (x));
 #else
-# define X11WM_CLASS(x)    /* dummy */
+#define X11WM_CLASS(x) /* dummy */
 #endif
-void reorderGridLayout(QGridLayout* layout, int maxCols);
+void reorderGridLayout(QGridLayout *layout, int maxCols);
 
 // -----------------------------------------------------------------------------
 // History utilities
@@ -164,7 +164,6 @@ void reorderGridLayout(QGridLayout* layout, int maxCols);
 
 QString logencode(QString);
 QString logdecode(const QString &);
-
 
 // -----------------------------------------------------------------------------
 // Misc.
@@ -182,11 +181,11 @@ bool isKeychainEnabled();
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 
 bool fileCopy(const QString &src, const QString &dest);
-int pointToPixel(int points);
+int  pointToPixel(int points);
 
 // used in option migration
 QString soundDetectPlayer();
-void soundPlay(const QString &);
+void    soundPlay(const QString &);
 
 extern Qt::WindowFlags psi_dialog_flags;
 
@@ -198,5 +197,4 @@ QString activityIconName(const Activity &);
 
 QString macToQtDatetimeFormat(const QString &sys_fmt);
 
-
-#endif
+#endif // COMMON_H

@@ -3,16 +3,13 @@
 
 class ContactStateAccessingHost;
 
-class ContactStateAccessor
-{
+class ContactStateAccessor {
 public:
     virtual ~ContactStateAccessor() {}
 
-    virtual void setContactStateAccessingHost(ContactStateAccessingHost* host) = 0;
-
+    virtual void setContactStateAccessingHost(ContactStateAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(ContactStateAccessor, "org.psi-im.ContactStateAccessor/0.2");
-
 
 #endif // CONTACTSTATEACCESSOR_H

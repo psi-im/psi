@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -24,15 +23,13 @@
 
 #include "adhoc.h"
 
-class AHFileServer : public AHCommandServer
-{
+class AHFileServer : public AHCommandServer {
 public:
-    AHFileServer(AHCServerManager* m) : AHCommandServer(m) { }
-    virtual QString node() const
-        { return QString("http://psi.affinix.com/commands/files"); }
-    virtual bool isAllowed(const Jid&) const;
-    virtual QString name() const { return QString("Send file"); }
-    virtual AHCommand execute(const AHCommand& c, const Jid&);
+    AHFileServer(AHCServerManager *m) : AHCommandServer(m) {}
+    virtual QString   node() const { return QString("https://psi-im.org/commands/files"); }
+    virtual bool      isAllowed(const Jid &) const;
+    virtual QString   name() const { return QString("Send file"); }
+    virtual AHCommand execute(const AHCommand &c, const Jid &);
 };
 
-#endif
+#endif // AHFILESERVER_H

@@ -1,6 +1,6 @@
 /*
  * historyimp.h
- * Copyright (C) 2011   Aleksey Andreev
+ * Copyright (C) 2011  Aleksey Andreev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,64 +13,66 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef HISTORYIMP_H
 #define HISTORYIMP_H
 
-#include <QObject>
-#include <QDialog>
-#include <QLabel>
-#include <QProgressBar>
-#include <QStackedWidget>
-#include <QPushButton>
-
-#include "xmpp/jid/jid.h"
+#include "eventdb.h"
 #include "jidutil.h"
 #include "psicon.h"
-#include "eventdb.h"
+#include "xmpp/jid/jid.h"
 
-struct ImportItem
-{
-    QStringList   accIds;
-    XMPP::Jid     jid;
-    int           startNum;
-    ImportItem(const QStringList &ids, const XMPP::Jid &j) { accIds = ids; jid = j; startNum = 0; }
+#include <QDialog>
+#include <QLabel>
+#include <QObject>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QStackedWidget>
+
+struct ImportItem {
+    QStringList accIds;
+    XMPP::Jid   jid;
+    int         startNum;
+    ImportItem(const QStringList &ids, const XMPP::Jid &j)
+    {
+        accIds   = ids;
+        jid      = j;
+        startNum = 0;
+    }
 };
 
-class HistoryImport : public QObject
-{
+class HistoryImport : public QObject {
     Q_OBJECT
 
 public:
-    enum {ResultNone, ResultNormal, ResultCancel, ResultError};
+    enum { ResultNone, ResultNormal, ResultCancel, ResultError };
     HistoryImport(PsiCon *psi);
     ~HistoryImport();
     bool isNeeded();
-    int exec();
-    int importDuration();
+    int  exec();
+    int  importDuration();
 
 private:
-    PsiCon *psi_;
+    PsiCon *          psi_;
     QList<ImportItem> importList;
-    EDB *srcEdb;
-    EDB *dstEdb;
-    EDBHandle *hErase;
-    EDBHandle *hRead;
-    EDBHandle *hWrite;
-    QDateTime startTime;
-    QDateTime stopTime;
-    bool active;
-    int result_;
-    quint64 recordsCount;
-    QDialog *dlg;
-    QLabel *lbStatus;
-    QProgressBar *progressBar;
-    QStackedWidget *stackedWidget;
-    QPushButton *btnOk;
+    EDB *             srcEdb;
+    EDB *             dstEdb;
+    EDBHandle *       hErase;
+    EDBHandle *       hRead;
+    EDBHandle *       hWrite;
+    QDateTime         startTime;
+    QDateTime         stopTime;
+    bool              active;
+    int               result_;
+    quint64           recordsCount;
+    QDialog *         dlg;
+    QLabel *          lbStatus;
+    QProgressBar *    progressBar;
+    QStackedWidget *  stackedWidget;
+    QPushButton *     btnOk;
 
 private:
     void clear();
@@ -85,7 +87,6 @@ private slots:
 
 signals:
     void finished(int);
-
 };
 
-#endif
+#endif // HISTORYIMP_H

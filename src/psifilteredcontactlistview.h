@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,22 +22,18 @@
 
 #include "psicontactlistview.h"
 
-class PsiFilteredContactListView : public PsiContactListView
-{
+class PsiFilteredContactListView : public PsiContactListView {
     Q_OBJECT
 public:
-    PsiFilteredContactListView(QWidget* parent);
+    PsiFilteredContactListView(QWidget *parent);
 
-    bool handleKeyPressEvent(QKeyEvent* e);
+    bool handleKeyPressEvent(QKeyEvent *e);
 
 signals:
     void quitFilteringMode();
 
 private:
-    enum Direction {
-        Forward,
-        Backward
-    };
+    enum Direction { Forward, Backward };
     void moveSelection(uint delta, Direction direction);
     void selectIndex(int row);
 
@@ -46,7 +41,7 @@ private:
 
 protected:
     // reimplemented
-    virtual void itemActivated(const QModelIndex& index);
+    virtual void itemActivated(const QModelIndex &index);
 };
 
-#endif
+#endif // PSIFILTEREDCONTACTLISTVIEW_H

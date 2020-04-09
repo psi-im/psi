@@ -13,48 +13,48 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "geolocationdlg.h"
 
-#include "xmpp_pubsubitem.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
-#include "psiaccount.h"
-#include "pepmanager.h"
 #include "geolocation.h"
-#include <QLineEdit>
 #include "iconset.h"
+#include "pepmanager.h"
+#include "psiaccount.h"
+#include "xmpp_client.h"
+#include "xmpp_pubsubitem.h"
+#include "xmpp_task.h"
 
-GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
+#include <QLineEdit>
+
+GeoLocationDlg::GeoLocationDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    if(pa_.isEmpty())
+    if (pa_.isEmpty())
         close();
     ui_.setupUi(this);
     setWindowIcon(IconsetFactory::icon("system/geolocation").icon());
     setModal(false);
 
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
-     connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setGeoLocation()));
+    connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setGeoLocation()));
     connect(ui_.pb_reset, SIGNAL(clicked()), SLOT(reset()));
 
-    PsiAccount *pa = pa_.first();
+    PsiAccount *pa     = pa_.first();
     GeoLocation geoloc = pa->geolocation();
-    if(geoloc.isNull())
+    if (geoloc.isNull())
         return;
 
     if (geoloc.alt().hasValue())
-        ui_.le_altitude->setText(QString::number(geoloc.alt().value()));
+        ui_.le_altitude->setText(QString::number(double(geoloc.alt().value())));
 
     if (!geoloc.area().isEmpty())
         ui_.le_area->setText(geoloc.area());
 
     if (geoloc.bearing().hasValue())
-        ui_.le_bearing->setText(QString::number(geoloc.bearing().value()));
+        ui_.le_bearing->setText(QString::number(double(geoloc.bearing().value())));
 
     if (!geoloc.building().isEmpty())
         ui_.le_building->setText(geoloc.building());
@@ -69,19 +69,19 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
         ui_.le_description->setText(geoloc.description());
 
     if (geoloc.error().hasValue())
-        ui_.le_error->setText(QString::number(geoloc.error().value()));
+        ui_.le_error->setText(QString::number(double(geoloc.error().value())));
 
     if (!geoloc.floor().isEmpty())
         ui_.le_floor->setText(geoloc.floor());
 
     if (geoloc.lat().hasValue())
-        ui_.le_latitude->setText(QString::number(geoloc.lat().value()));
+        ui_.le_latitude->setText(QString::number(double(geoloc.lat().value())));
 
     if (!geoloc.locality().isEmpty())
         ui_.le_locality->setText(geoloc.locality());
 
     if (geoloc.lon().hasValue())
-        ui_.le_longitude->setText(QString::number(geoloc.lon().value()));
+        ui_.le_longitude->setText(QString::number(double(geoloc.lon().value())));
 
     if (!geoloc.postalcode().isEmpty())
         ui_.le_postalcode->setText(geoloc.postalcode());
@@ -101,7 +101,7 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
 
 void GeoLocationDlg::reset()
 {
-    foreach(QLineEdit *le, this->findChildren<QLineEdit*>()) {
+    foreach (QLineEdit *le, this->findChildren<QLineEdit *>()) {
         le->setText("");
     }
 }
@@ -110,65 +110,64 @@ void GeoLocationDlg::setGeoLocation()
 {
     GeoLocation geoloc;
 
-    if(!ui_.le_altitude->text().isEmpty())
+    if (!ui_.le_altitude->text().isEmpty())
         geoloc.setAlt(ui_.le_altitude->text().toFloat());
 
-    if(!ui_.le_bearing->text().isEmpty())
+    if (!ui_.le_bearing->text().isEmpty())
         geoloc.setBearing(ui_.le_bearing->text().toFloat());
 
-    if(!ui_.le_error->text().isEmpty())
+    if (!ui_.le_error->text().isEmpty())
         geoloc.setError(ui_.le_error->text().toFloat());
 
-    if(!ui_.le_latitude->text().isEmpty())
+    if (!ui_.le_latitude->text().isEmpty())
         geoloc.setLat(ui_.le_latitude->text().toFloat());
 
-    if(!ui_.le_longitude->text().isEmpty())
+    if (!ui_.le_longitude->text().isEmpty())
         geoloc.setLon(ui_.le_longitude->text().toFloat());
 
-    if(!ui_.le_datum->text().isEmpty())
+    if (!ui_.le_datum->text().isEmpty())
         geoloc.setDatum(ui_.le_datum->text());
 
-    if(!ui_.le_description->text().isEmpty())
+    if (!ui_.le_description->text().isEmpty())
         geoloc.setDescription(ui_.le_description->text());
 
-    if(!ui_.le_country->text().isEmpty())
+    if (!ui_.le_country->text().isEmpty())
         geoloc.setCountry(ui_.le_country->text());
 
-    if(!ui_.le_region->text().isEmpty())
+    if (!ui_.le_region->text().isEmpty())
         geoloc.setRegion(ui_.le_region->text());
 
-    if(!ui_.le_locality->text().isEmpty())
+    if (!ui_.le_locality->text().isEmpty())
         geoloc.setLocality(ui_.le_locality->text());
 
-    if(!ui_.le_area->text().isEmpty())
+    if (!ui_.le_area->text().isEmpty())
         geoloc.setArea(ui_.le_area->text());
 
-    if(!ui_.le_street->text().isEmpty())
+    if (!ui_.le_street->text().isEmpty())
         geoloc.setStreet(ui_.le_street->text());
 
-    if(!ui_.le_building->text().isEmpty())
+    if (!ui_.le_building->text().isEmpty())
         geoloc.setBuilding(ui_.le_building->text());
 
-    if(!ui_.le_floor->text().isEmpty())
+    if (!ui_.le_floor->text().isEmpty())
         geoloc.setFloor(ui_.le_floor->text());
 
-    if(!ui_.le_room->text().isEmpty())
+    if (!ui_.le_room->text().isEmpty())
         geoloc.setRoom(ui_.le_room->text());
 
-    if(!ui_.le_postalcode->text().isEmpty())
+    if (!ui_.le_postalcode->text().isEmpty())
         geoloc.setPostalcode(ui_.le_postalcode->text());
 
-    if(!ui_.le_text->text().isEmpty())
+    if (!ui_.le_text->text().isEmpty())
         geoloc.setText(ui_.le_text->text());
 
-    foreach(PsiAccount *pa, pa_) {
+    foreach (PsiAccount *pa, pa_) {
         if (geoloc.isNull()) {
             pa->pepManager()->disable(PEP_GEOLOC_TN, PEP_GEOLOC_NS, "current");
-        }
-        else {
-            pa->pepManager()->publish(PEP_GEOLOC_NS, PubSubItem("current",geoloc.toXml(*pa->client()->rootTask()->doc())));
+        } else {
+            pa->pepManager()->publish(PEP_GEOLOC_NS,
+                                      PubSubItem("current", geoloc.toXml(*pa->client()->rootTask()->doc())));
         }
     }
     close();
 }
-

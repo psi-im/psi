@@ -13,23 +13,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "rosteravatarframe.h"
-#include "psioptions.h"
+
 #include "iconset.h"
+#include "psioptions.h"
 #include "qpainter.h"
 
-
-RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
-    : QFrame(parent)
-    , statusMessage_("")
+RosterAvatarFrame::RosterAvatarFrame(QWidget *parent) : QFrame(parent), statusMessage_("")
 {
     ui_.setupUi(this);
-    layout()->setMargin(PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
+    layout()->setMargin(
+        PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
     layout()->setSpacing(0);
     setMoodIcon("pep/mood");
     setActivityIcon("pep/activities");
@@ -38,7 +36,7 @@ RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
     connect(ui_.le_status_text, SIGNAL(returnPressed()), this, SLOT(statusMessageReturnPressed()));
     connect(ui_.tb_mood, SIGNAL(pressed()), this, SIGNAL(setMood()));
     connect(ui_.tb_activity, SIGNAL(pressed()), this, SIGNAL(setActivity()));
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)),this, SLOT(optionChanged(QString)));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), this, SLOT(optionChanged(QString)));
 }
 
 void RosterAvatarFrame::setStatusMessage(const QString &message)
@@ -68,18 +66,18 @@ void RosterAvatarFrame::drawAvatar()
 {
     int avSize = PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.size").toInt();
     QPixmap av = avatarPixmap;
-    if(!av.isNull()) {
+    if (!av.isNull()) {
         int radius = PsiOptions::instance()->getOption("options.ui.contactlist.avatars.radius").toInt();
-        if(!radius)
-            av = av.scaled(avSize,avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        else {
-            avSize = qMax(avSize, radius*2);
+        if (!radius)
             av = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            int w = av.width(), h = av.height();
+        else {
+            avSize         = qMax(avSize, radius * 2);
+            av             = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            int          w = av.width(), h = av.height();
             QPainterPath pp;
             pp.addRoundedRect(0, 0, w, h, radius, radius);
             QPixmap avatar_icon = QPixmap(w, h);
-            avatar_icon.fill(QColor(0,0,0,0));
+            avatar_icon.fill(QColor(0, 0, 0, 0));
             QPainter mp(&avatar_icon);
             mp.setBackgroundMode(Qt::TransparentMode);
             mp.setRenderHints(QPainter::Antialiasing, true);
@@ -88,18 +86,12 @@ void RosterAvatarFrame::drawAvatar()
         }
     }
     ui_.lb_avatar->setPixmap(av);
-    ui_.lb_avatar->setFixedSize(avSize,avSize);
+    ui_.lb_avatar->setFixedSize(avSize, avSize);
 }
 
-void RosterAvatarFrame::setStatusIcon(const QIcon &ico)
-{
-    ui_.tb_status->setIcon(ico);
-}
+void RosterAvatarFrame::setStatusIcon(const QIcon &ico) { ui_.tb_status->setIcon(ico); }
 
-void RosterAvatarFrame::setNick(const QString &nick)
-{
-    ui_.lb_nick->setText(nick);
-}
+void RosterAvatarFrame::setNick(const QString &nick) { ui_.lb_nick->setText(nick); }
 
 void RosterAvatarFrame::setFont()
 {
@@ -113,7 +105,7 @@ void RosterAvatarFrame::statusMessageReturnPressed()
 {
     statusMessage_ = ui_.le_status_text->text();
     ui_.le_status_text->setCursorPosition(0);
-    ui_.lb_nick->setFocus(); //remove focus from lineedit
+    ui_.lb_nick->setFocus(); // remove focus from lineedit
     emit statusMessageChanged(statusMessage_);
 }
 
@@ -124,30 +116,28 @@ void RosterAvatarFrame::setStatusMenu(QMenu *menu)
     ui_.tb_status->setPopupMode(QToolButton::InstantPopup);
 }
 
-void RosterAvatarFrame::setTuneAction(QAction *action)
-{
-    ui_.tb_tune->setDefaultAction(action);
-}
+void RosterAvatarFrame::setTuneAction(QAction *action) { ui_.tb_tune->setDefaultAction(action); }
 
 void RosterAvatarFrame::keyPressEvent(QKeyEvent *e)
 {
-    if(e->key() == Qt::Key_Escape) {
+    if (e->key() == Qt::Key_Escape) {
         ui_.le_status_text->setText(statusMessage_);
         ui_.le_status_text->setCursorPosition(0);
-        ui_.lb_nick->setFocus(); //remove focus from lineedit
+        ui_.lb_nick->setFocus(); // remove focus from lineedit
         e->accept();
-    }
-    else {
+    } else {
         e->ignore();
     }
 }
 
 void RosterAvatarFrame::optionChanged(QString option)
 {
-    if(option == "options.ui.contactlist.avatars.radius" || option == "options.ui.contactlist.roster-avatar-frame.avatar.size")
+    if (option == "options.ui.contactlist.avatars.radius"
+        || option == "options.ui.contactlist.roster-avatar-frame.avatar.size")
         drawAvatar();
     else if (option == "options.ui.look.font.contactlist")
         setFont();
     else if (option == "options.ui.contactlist.roster-avatar-frame.avatar.margin")
-        layout()->setMargin(PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
+        layout()->setMargin(
+            PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
 }

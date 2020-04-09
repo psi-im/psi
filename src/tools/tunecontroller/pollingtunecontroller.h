@@ -13,26 +13,25 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef POLLINGTUNECONTROLLER_H
 #define POLLINGTUNECONTROLLER_H
 
-#include <QTimer>
-
 #include "tune.h"
 #include "tunecontroller.h"
 
-class PollingTuneController : public TuneController
-{
+#include <QTimer>
+
+class PollingTuneController : public TuneController {
     Q_OBJECT
 
 private:
     static const int DefaultInterval = 10000;
-    QTimer _timer;
+    QTimer           _timer;
+
 public:
     PollingTuneController();
     inline bool isPolling() const { return _timer.isActive(); }
@@ -47,4 +46,4 @@ private:
     Tune _prevTune;
 };
 
-#endif
+#endif // POLLINGTUNECONTROLLER_H

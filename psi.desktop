@@ -1,6 +1,6 @@
 [Desktop Entry]
 # This is the spec version, *not* the application version
-Version=1.0
+Version=1.1
 Type=Application
 Name=Psi
 GenericName=XMPP Client
@@ -9,9 +9,11 @@ Icon=psi
 Exec=psi %U
 MimeType=x-scheme-handler/xmpp;
 Terminal=false
+X-KDE-StartupNotify=true
 StartupWMClass=Psi
 Categories=Network;InstantMessaging;Qt;
 Keywords=XMPP;Jabber;Chat;InstantMessaging;
+Actions=SelectProfile
 
 # Translations
 GenericName[be]=Кліент XMPP
@@ -19,6 +21,7 @@ GenericName[bg]=Клиент за XMPP
 GenericName[ca]=Client XMPP
 GenericName[cs]=XMPP Klient
 GenericName[de]=XMPP-Programm
+GenericName[el]=XMPP Client
 GenericName[eo]=XMPP Klientilo
 GenericName[es]=Cliente XMPP
 GenericName[fr]=Client XMPP
@@ -43,6 +46,7 @@ Comment[bg]=Комуникирайте през мрежата на XMPP
 Comment[ca]=Comuniqui's a través de la xarxa XMPP
 Comment[cs]=Komunikujte přes XMPP po síti
 Comment[de]=Im XMPP-Netzwerk kommunizieren
+Comment[el]=Επικοινωνήστε μέσω του δικτύου XMPP
 Comment[eo]=Komunikiĝu per la ĵabbera reto
 Comment[es]=Comunícate a través de la red XMPP
 Comment[fr]=Communiquez via le réseau XMPP

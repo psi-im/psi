@@ -1,19 +1,17 @@
 #include "opt_chat.h"
+
 #include "common.h"
 #include "iconwidget.h"
+#include "psioptions.h"
+#include "shortcutmanager.h"
+#include "ui_opt_chat.h"
 
-#include <QWhatsThis>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QButtonGroup>
 #include <QRadioButton>
 
-#include "ui_opt_chat.h"
-#include "shortcutmanager.h"
-#include "psioptions.h"
-
-class OptChatUI : public QWidget, public Ui::OptChat
-{
+class OptChatUI : public QWidget, public Ui::OptChat {
 public:
     OptChatUI() : QWidget() { setupUi(this); }
 };
@@ -22,105 +20,69 @@ public:
 // OptionsTabChat
 //----------------------------------------------------------------------------
 
-OptionsTabChat::OptionsTabChat(QObject *parent)
-: OptionsTab(parent, "chat", "", tr("Chat"), tr("Configure the chat dialog"), "psi/start-chat")
+OptionsTabChat::OptionsTabChat(QObject *parent) :
+    OptionsTab(parent, "chat", "", tr("Chat"), tr("Configure the chat dialog"), "psi/start-chat"), w(nullptr),
+    bg_defAct(nullptr)
 {
-    w = 0;
-    bg_delChats = bg_defAct = 0;
 }
 
 OptionsTabChat::~OptionsTabChat()
 {
-    if ( bg_defAct )
+    if (bg_defAct)
         delete bg_defAct;
-    if ( bg_delChats )
-        delete bg_delChats;
 }
 
 QWidget *OptionsTabChat::widget()
 {
-    if ( w )
-        return 0;
+    if (w)
+        return nullptr;
 
-    w = new OptChatUI();
+    w            = new OptChatUI();
     OptChatUI *d = static_cast<OptChatUI *>(w);
 
     bg_defAct = new QButtonGroup;
-    bg_defAct->setExclusive( true );
-    bg_defAct->addButton( d->rb_defActMsg);
-    bg_defAct->addButton( d->rb_defActChat);
+    bg_defAct->setExclusive(true);
+    bg_defAct->addButton(d->rb_defActMsg);
+    bg_defAct->addButton(d->rb_defActChat);
 
-    bg_delChats = new QButtonGroup;
-    bg_delChats->setExclusive( true );
-    bg_delChats->addButton( d->rb_delChatsClose);
-    bg_delChats->addButton( d->rb_delChatsHour);
-    bg_delChats->addButton( d->rb_delChatsDay);
-    bg_delChats->addButton( d->rb_delChatsNever);
-
-
-    d->rb_defActMsg->setWhatsThis(
-        tr("Make the default action open a normal message window."));
-    d->rb_defActChat->setWhatsThis(
-        tr("Make the default action open a chat window."));
-    d->ck_chatSoftReturn->setWhatsThis(
-        tr("<P>When checked, pressing Enter in a chat window will send your message."
-           "  You must use Shift+Enter in order to create a newline in the chat message."
-           "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just as they are with regular messages.</P>"));
-    d->ck_alertOpenChats->setWhatsThis(
-        tr("Normally, Psi will not alert you when a new chat message"
-        " is received in a chat window that is already open."
-        "  Check this option if you want to receive these alerts anyway."));
-    d->ck_raiseChatWindow->setWhatsThis(
+    d->rb_defActMsg->setToolTip(tr("Make the default action open a normal message window."));
+    d->rb_defActChat->setToolTip(tr("Make the default action open a chat window."));
+    d->ck_chatSoftReturn->setToolTip(tr("<P>When checked, pressing Enter in a chat window will send your message."
+                                        "  You must use Shift+Enter in order to create a newline in the chat message."
+                                        "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just "
+                                        "as they are with regular messages.</P>"));
+    d->ck_alertOpenChats->setToolTip(tr("Normally, Psi will not alert you when a new chat message"
+                                        " is received in a chat window that is already open."
+                                        "  Check this option if you want to receive these alerts anyway."));
+    d->ck_raiseChatWindow->setToolTip(
         tr("Makes Psi bring an open chat window to the front of your screen when you receive a new message."
-        " It does not take the keyboard focus, so it will not interfere with your work."));
-    d->ck_switchTabOnMessage->setWhatsThis(
+           " It does not take the keyboard focus, so it will not interfere with your work."));
+    d->ck_switchTabOnMessage->setToolTip(
         tr("Makes Psi switch tab on active tabbed window when you receive a new message."
-        " It does not take the keyboard focus, so it will not interfere with your work."));
-    d->ck_smallChats->setWhatsThis(
-        tr("Makes Psi open chat windows in compact mode."));
+           " It does not take the keyboard focus, so it will not interfere with your work."));
+    d->ck_smallChats->setToolTip(tr("Makes Psi open chat windows in compact mode."));
     QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
-        " chat window is closed.</P>");
-    d->rb_delChatsClose->setWhatsThis(s +
-        tr("<P>This option does not keep the chat log in memory.</P>"));
-    d->rb_delChatsHour->setWhatsThis(s +
-        tr("<P>This option keeps the chat log for 1 hour before deleting it.</P>"));
-    d->rb_delChatsDay->setWhatsThis(s +
-        tr("<P>This option keeps the chat log for 1 day before deleting it.</P>"));
-    d->rb_delChatsNever->setWhatsThis(s +
-        tr("<P>This options keeps the chat log forever.</P>"));
+                   " chat window is closed.</P>");
 
     return w;
 }
 
 void OptionsTabChat::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptChatUI *d = static_cast<OptChatUI *>(w);
 
-    PsiOptions::instance()->setOption("options.messages.default-outgoing-message-type", bg_defAct->buttons().indexOf(bg_defAct->checkedButton()) == 0 ? "message" : "chat");
-    PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
-    PsiOptions::instance()->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
-    PsiOptions::instance()->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
-    PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
-
-    QString delafter;
-    switch (bg_delChats->buttons().indexOf( bg_delChats->checkedButton() )) {
-        case 0:
-            delafter = "instant";
-            break;
-        case 1:
-            delafter = "hour";
-            break;
-        case 2:
-            delafter = "day";
-            break;
-        case 3:
-            delafter = "never";
-            break;
-    }
-    PsiOptions::instance()->setOption("options.ui.chat.delete-contents-after", delafter);
+    PsiOptions *o = PsiOptions::instance();
+    o->setOption("options.messages.default-outgoing-message-type",
+                 bg_defAct->buttons().indexOf(bg_defAct->checkedButton()) == 0 ? "message" : "chat");
+    o->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
+    o->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
+    o->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
+    o->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
+    o->setOption("options.ui.chat.show-status-changes", d->ck_showStatusChanges->isChecked());
+    o->setOption("options.ui.chat.status-with-priority", d->ck_showStatusPriority->isChecked());
 
     // Soft return.
     // Only update this if the value actually changed, or else custom presets
@@ -130,36 +92,33 @@ void OptionsTabChat::applyOptions()
         QVariantList vl;
         if (d->ck_chatSoftReturn->isChecked()) {
             vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
+        } else {
+            vl << qVariantFromValue(QKeySequence(Qt::Key_Enter + Qt::CTRL))
+               << qVariantFromValue(QKeySequence(Qt::CTRL + Qt::Key_Return));
         }
-        else  {
-            vl << qVariantFromValue(QKeySequence(Qt::Key_Enter+Qt::CTRL)) << qVariantFromValue(QKeySequence(Qt::CTRL+Qt::Key_Return));
-        }
-        PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
+        o->setOption("options.shortcuts.chat.send", vl);
     }
+    o->setOption("options.ui.chat.history.preload-history-size", d->sb_msgHistCount->value());
 }
 
 void OptionsTabChat::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptChatUI *d = static_cast<OptChatUI *>(w);
 
-    bg_defAct->buttons()[PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]->setChecked(true);
-    d->ck_alertOpenChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() );
-    d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
-    d->ck_switchTabOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
-    d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
+    PsiOptions *o = PsiOptions::instance();
+    bg_defAct->buttons()[o->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]
+        ->setChecked(true);
+    d->ck_alertOpenChats->setChecked(o->getOption("options.ui.chat.alert-for-already-open-chats").toBool());
+    d->ck_raiseChatWindow->setChecked(o->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool());
+    d->ck_switchTabOnMessage->setChecked(o->getOption("options.ui.chat.switch-tab-on-new-messages").toBool());
+    d->ck_smallChats->setChecked(o->getOption("options.ui.chat.use-small-chats").toBool());
+    d->ck_showStatusChanges->setChecked(o->getOption("options.ui.chat.show-status-changes").toBool());
+    d->ck_showStatusPriority->setChecked(o->getOption("options.ui.chat.status-with-priority").toBool());
 
-    QString delafter = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
-    if (delafter == "instant") {
-        d->rb_delChatsClose->setChecked(true);
-    } else if (delafter == "hour") {
-        d->rb_delChatsHour->setChecked(true);
-    } else if (delafter == "day") {
-        d->rb_delChatsDay->setChecked(true);
-    } else if (delafter == "never") {
-        d->rb_delChatsNever->setChecked(true);
-    }
-    d->ck_chatSoftReturn->setChecked(ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
+    d->ck_chatSoftReturn->setChecked(
+        ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
+    d->sb_msgHistCount->setValue(o->getOption("options.ui.chat.history.preload-history-size").toInt());
 }

@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,35 +22,35 @@
 
 #include <QList>
 
-class AHCommandServer;
 class AHCommand;
+class AHCommandServer;
 class JT_AHCServer;
 class PsiAccount;
 class QString;
+
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class AHCServerManager
-{
+class AHCServerManager {
 public:
-    AHCServerManager(PsiAccount* pa);
-    void addServer(AHCommandServer*);
-    void removeServer(AHCommandServer*);
+    AHCServerManager(PsiAccount *pa);
+    void addServer(AHCommandServer *);
+    void removeServer(AHCommandServer *);
 
-    typedef QList<AHCommandServer*> ServerList;
-    ServerList commands(const XMPP::Jid&) const;
-    void execute(const AHCommand& command, const XMPP::Jid& requester, QString id);
-    PsiAccount* account() const { return pa_; }
-    bool hasServer(const QString& node, const XMPP::Jid&) const;
+    typedef QList<AHCommandServer *> ServerList;
+    ServerList                       commands(const XMPP::Jid &) const;
+    void                             execute(const AHCommand &command, const XMPP::Jid &requester, QString id);
+    PsiAccount *                     account() const { return pa_; }
+    bool                             hasServer(const QString &node, const XMPP::Jid &) const;
 
 protected:
-    AHCommandServer* findServer(const QString& node) const;
+    AHCommandServer *findServer(const QString &node) const;
 
 private:
-    PsiAccount* pa_;
-    JT_AHCServer* server_task_;
-    ServerList servers_;
+    PsiAccount *  pa_;
+    JT_AHCServer *server_task_;
+    ServerList    servers_;
 };
 
-#endif
+#endif // AHCSERVERMANAGER_H

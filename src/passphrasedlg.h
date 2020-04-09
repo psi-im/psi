@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,19 +22,18 @@
 
 #include "ui_passphrase.h"
 
-class PassphraseDlg : public QDialog
-{
+class PassphraseDlg : public QDialog {
     Q_OBJECT
 public:
-    PassphraseDlg(QWidget* parent = 0);
+    PassphraseDlg(QWidget *parent = nullptr);
 
-    void promptPassphrase(const QString& name);
+    void promptPassphrase(const QString &name);
 
     QString getPassphrase() const;
-    bool rememberPassPhrase() const;
+    bool    rememberPassPhrase() const;
 
 private:
     Ui::Passphrase ui_;
 };
 
-#endif
+#endif // PASSPHRASEDLG_H

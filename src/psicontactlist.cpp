@@ -13,35 +13,27 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psicontactlist.h"
 
-#include <QTimer>
-
-#include "psiaccount.h"
-#include "psievent.h"
 #include "accountadddlg.h"
-#include "xmpp_serverinfomanager.h"
+#include "psiaccount.h"
 #include "psicon.h"
+#include "psievent.h"
 #include "psioptions.h"
+#include "xmpp_serverinfomanager.h"
+
+#include <QTimer>
 
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.
  */
-PsiContactList::PsiContactList(PsiCon* psi)
-    : QObject()
-    , psi_(psi)
-    , showAgents_(false)
-    , showHidden_(false)
-    , showSelf_(false)
-    , showOffline_(false)
-    , accountsLoaded_(false)
-    , contactSortStyle_("")
-    , deinitAccCounter_(0)
+PsiContactList::PsiContactList(PsiCon *psi) :
+    QObject(), psi_(psi), showAgents_(false), showHidden_(false), showSelf_(false), showOffline_(false),
+    accountsLoaded_(false), contactSortStyle_(""), deinitAccCounter_(0)
 {
 }
 
@@ -55,11 +47,11 @@ PsiContactList::~PsiContactList()
 
     // PsiAccount calls some signals while being deleted prior to being unlinked,
     // which in result could cause calls to PsiContactList::accounts()
-    QList<PsiAccount*> toDelete(accounts_);
+    QList<PsiAccount *> toDelete(accounts_);
 
     enabledAccounts_.clear();
 
-    foreach(PsiAccount* account, toDelete)
+    foreach (PsiAccount *account, toDelete)
         delete account;
 }
 
@@ -68,7 +60,7 @@ void PsiContactList::gracefulDeinit()
     deinitAccCounter_ = 0;
     decltype(accounts_) loggedAccs;
 
-    for(auto account : enabledAccounts_) {
+    for (auto account : enabledAccounts_) {
         if (account->isAvailable()) {
             deinitAccCounter_++;
             loggedAccs.append(account);
@@ -89,7 +81,8 @@ void PsiContactList::gracefulDeinit()
 
 void PsiContactList::gracefulDeinitOnDisconnected()
 {
-    disconnect(reinterpret_cast<PsiAccount*>(sender()), &PsiAccount::disconnected, this, &PsiContactList::gracefulDeinitOnDisconnected);
+    disconnect(reinterpret_cast<PsiAccount *>(sender()), &PsiAccount::disconnected, this,
+               &PsiContactList::gracefulDeinitOnDisconnected);
     deinitAccCounter_--;
     if (!deinitAccCounter_) {
         emit gracefulDeinitFinished();
@@ -99,34 +92,25 @@ void PsiContactList::gracefulDeinitOnDisconnected()
 /**
  * Returns pointer to the global Psi Controller.
  */
-PsiCon* PsiContactList::psi() const
-{
-    return psi_;
-}
+PsiCon *PsiContactList::psi() const { return psi_; }
 
 /**
  * Returns list of all accounts if \param enabledOnly is false,
  * equivalent to enabledAccounts() otherwise.
  */
-const QList<PsiAccount*>& PsiContactList::accounts() const
-{
-    return accounts_;
-}
+const QList<PsiAccount *> &PsiContactList::accounts() const { return accounts_; }
 
 /**
  * Returns list with all enabled accounts.
  */
-const QList<PsiAccount*>& PsiContactList::enabledAccounts() const
-{
-    return enabledAccounts_;
-}
+const QList<PsiAccount *> &PsiContactList::enabledAccounts() const { return enabledAccounts_; }
 
 /**
  * Returns true, if there are some enabled accounts which are active.
  */
 bool PsiContactList::haveActiveAccounts() const
 {
-    foreach(PsiAccount* account, enabledAccounts_)
+    foreach (PsiAccount *account, enabledAccounts_)
         if (account->isActive())
             return true;
     return false;
@@ -134,7 +118,7 @@ bool PsiContactList::haveActiveAccounts() const
 
 bool PsiContactList::haveAvailableAccounts() const
 {
-    foreach(PsiAccount* account, enabledAccounts_)
+    foreach (PsiAccount *account, enabledAccounts_)
         if (account->isAvailable())
             return true;
     return false;
@@ -143,17 +127,14 @@ bool PsiContactList::haveAvailableAccounts() const
 /**
  * Returns true if enabledAccounts() list is not empty.
  */
-bool PsiContactList::haveEnabledAccounts() const
-{
-    return !enabledAccounts_.isEmpty();
-}
+bool PsiContactList::haveEnabledAccounts() const { return !enabledAccounts_.isEmpty(); }
 
 /**
  * Returns true if there are some accounts that are trying to establish a connection.
  */
 bool PsiContactList::haveConnectingAccounts() const
 {
-    foreach(PsiAccount* account, enabledAccounts())
+    foreach (PsiAccount *account, enabledAccounts())
         if (account->isActive() && !account->isAvailable())
             return true;
 
@@ -168,36 +149,39 @@ PsiAccount *PsiContactList::defaultAccount() const
     if (!enabledAccounts_.isEmpty()) {
         return enabledAccounts_.first();
     }
-    return 0;
+    return nullptr;
 }
 
 /**
  * Creates new PsiAccount based on some initial settings. This is used by AccountAddDlg.
  */
-PsiAccount* PsiContactList::createAccount(const QString& name, const Jid& j, const QString& pass, bool opt_host, const QString& host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, QString proxyID, const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
+PsiAccount *PsiContactList::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host,
+                                          const QString &host, int port, bool legacy_ssl_probe,
+                                          UserAccount::SSLFlag ssl, QString proxyID, const QString &tlsOverrideDomain,
+                                          const QByteArray &tlsOverrideCert)
 {
     UserAccount acc;
     acc.name = name;
 
     acc.jid = j.full();
-    if(!pass.isEmpty()) {
+    if (!pass.isEmpty()) {
         acc.opt_pass = true;
-        acc.pass = pass;
+        acc.pass     = pass;
     }
 
-    acc.opt_host = opt_host;
-    acc.host = host;
-    acc.port = port;
-    acc.ssl = ssl;
-    acc.proxyID = proxyID;
+    acc.opt_host         = opt_host;
+    acc.host             = host;
+    acc.port             = quint16(port);
+    acc.ssl              = ssl;
+    acc.proxyID          = proxyID;
     acc.legacy_ssl_probe = legacy_ssl_probe;
 
     acc.tog_offline = showOffline();
-    acc.tog_agents = showAgents();
-    acc.tog_hidden = showHidden();
-    acc.tog_self = showSelf();
+    acc.tog_agents  = showAgents();
+    acc.tog_hidden  = showHidden();
+    acc.tog_self    = showSelf();
 
-    acc.tlsOverrideCert = tlsOverrideCert;
+    acc.tlsOverrideCert   = tlsOverrideCert;
     acc.tlsOverrideDomain = tlsOverrideDomain;
 
     PsiAccount *pa = loadAccount(acc);
@@ -213,17 +197,17 @@ PsiAccount* PsiContactList::createAccount(const QString& name, const Jid& j, con
     return pa;
 }
 
-void PsiContactList::createAccount(const UserAccount& acc)
+void PsiContactList::createAccount(const UserAccount &acc)
 {
     PsiAccount *pa = loadAccount(acc);
-    emit saveAccounts();
-    emit accountCreated(pa);
+    emit        saveAccounts();
+    emit        accountCreated(pa);
 }
 
 /**
  * Call this to remove account completely from system.
  */
-void PsiContactList::removeAccount(PsiAccount* account)
+void PsiContactList::removeAccount(PsiAccount *account)
 {
     emit accountRemoved(account);
     account->deleteQueueFile();
@@ -234,10 +218,7 @@ void PsiContactList::removeAccount(PsiAccount* account)
 /**
  * Obsolete. Call PsiAccount::setEnabled() directly.
  */
-void PsiContactList::setAccountEnabled(PsiAccount* account, bool enabled)
-{
-    account->setEnabled(enabled);
-}
+void PsiContactList::setAccountEnabled(PsiAccount *account, bool enabled) { account->setEnabled(enabled); }
 
 /**
  * Counts total number of unread events for all accounts.
@@ -245,7 +226,7 @@ void PsiContactList::setAccountEnabled(PsiAccount* account, bool enabled)
 int PsiContactList::queueCount() const
 {
     int total = 0;
-    foreach(PsiAccount* account, enabledAccounts_)
+    foreach (PsiAccount *account, enabledAccounts_)
         total += account->eventQueue()->count();
     return total;
 }
@@ -253,7 +234,7 @@ int PsiContactList::queueCount() const
 int PsiContactList::queueContactCount() const
 {
     int total = 0;
-    foreach(PsiAccount* account, enabledAccounts_)
+    foreach (PsiAccount *account, enabledAccounts_)
         total += account->eventQueue()->contactCount();
     return total;
 }
@@ -262,9 +243,9 @@ int PsiContactList::queueContactCount() const
  * Finds account with unprocessed event of highest priority, starting with
  * non-DND accounts.
  */
-PsiAccount* PsiContactList::queueLowestEventId()
+PsiAccount *PsiContactList::queueLowestEventId()
 {
-    PsiAccount *low = 0;
+    PsiAccount *low = nullptr;
 
     // first try to get event from non-dnd account
     low = tryQueueLowestEventId(false);
@@ -279,9 +260,9 @@ PsiAccount* PsiContactList::queueLowestEventId()
 /**
  * Creates new PsiAccount from \param acc.
  */
-PsiAccount *PsiContactList::loadAccount(const UserAccount& acc)
+PsiAccount *PsiContactList::loadAccount(const UserAccount &acc)
 {
-    emit beginBulkContactUpdate();
+    emit        beginBulkContactUpdate();
     PsiAccount *pa = psi_->createAccount(acc);
     connect(pa, SIGNAL(enabledChanged()), SIGNAL(accountCountChanged()));
     emit accountAdded(pa);
@@ -295,8 +276,8 @@ PsiAccount *PsiContactList::loadAccount(const UserAccount& acc)
 void PsiContactList::loadAccounts(const UserAccountList &_list)
 {
     UserAccountList list = _list;
-    emit beginBulkContactUpdate();
-    foreach(UserAccount account, list)
+    emit            beginBulkContactUpdate();
+    foreach (UserAccount account, list)
         loadAccount(account);
     emit endBulkContactUpdate();
 
@@ -311,7 +292,7 @@ void PsiContactList::loadAccounts(const UserAccountList &_list)
 UserAccountList PsiContactList::getUserAccountList() const
 {
     UserAccountList acc;
-    foreach(PsiAccount* account, accounts_) {
+    foreach (PsiAccount *account, accounts_) {
         acc += account->userAccount();
     }
     return acc;
@@ -320,9 +301,9 @@ UserAccountList PsiContactList::getUserAccountList() const
 /**
  * Moves accounts from list to top. affects default account
  */
-void PsiContactList::setAccountsOrder(QList<PsiAccount*> accounts)
+void PsiContactList::setAccountsOrder(QList<PsiAccount *> accounts)
 {
-    int start = 0;
+    int  start    = 0;
     bool needSave = false;
     foreach (PsiAccount *account, accounts) {
         int index = accounts_.indexOf(account, start);
@@ -342,13 +323,13 @@ void PsiContactList::setAccountsOrder(QList<PsiAccount*> accounts)
 /**
  * It's called by each and every PsiAccount on its creation.
  */
-void PsiContactList::link(PsiAccount* account)
+void PsiContactList::link(PsiAccount *account)
 {
     Q_ASSERT(!accounts_.contains(account));
     if (accounts_.contains(account))
         return;
     connect(account, SIGNAL(updatedActivity()), this, SIGNAL(accountActivityChanged()));
-    connect(account->serverInfoManager(),SIGNAL(featuresChanged()), this, SIGNAL(accountFeaturesChanged()));
+    connect(account->serverInfoManager(), SIGNAL(featuresChanged()), this, SIGNAL(accountFeaturesChanged()));
     connect(account, SIGNAL(queueChanged()), this, SIGNAL(queueChanged()));
     connect(account, SIGNAL(beginBulkContactUpdate()), this, SIGNAL(beginBulkContactUpdate()));
     connect(account, SIGNAL(endBulkContactUpdate()), this, SIGNAL(endBulkContactUpdate()));
@@ -363,7 +344,7 @@ void PsiContactList::link(PsiAccount* account)
 /**
  * It's called by each and every PsiAccount on its destruction.
  */
-void PsiContactList::unlink(PsiAccount* account)
+void PsiContactList::unlink(PsiAccount *account)
 {
     Q_ASSERT(accounts_.contains(account));
     if (!accounts_.contains(account))
@@ -377,36 +358,21 @@ void PsiContactList::unlink(PsiAccount* account)
 /**
  * TODO
  */
-bool PsiContactList::showAgents() const
-{
-    return showAgents_;
-}
+bool PsiContactList::showAgents() const { return showAgents_; }
 
 /**
  * TODO
  */
-bool PsiContactList::showHidden() const
-{
-    return showHidden_;
-}
+bool PsiContactList::showHidden() const { return showHidden_; }
 
 /**
  * TODO
  */
-bool PsiContactList::showSelf() const
-{
-    return showSelf_;
-}
+bool PsiContactList::showSelf() const { return showSelf_; }
 
-bool PsiContactList::showOffline() const
-{
-    return showOffline_;
-}
+bool PsiContactList::showOffline() const { return showOffline_; }
 
-QString PsiContactList::contactSortStyle() const
-{
-    return contactSortStyle_;
-}
+QString PsiContactList::contactSortStyle() const { return contactSortStyle_; }
 
 /**
  * TODO
@@ -459,22 +425,22 @@ void PsiContactList::setContactSortStyle(QString style)
 
 PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
 {
-    PsiAccount *low = 0;
-    int low_id = 0;
-    int low_prior = EventPriorityDontCare;
+    PsiAccount *low       = nullptr;
+    int         low_id    = 0;
+    int         low_prior = EventPriorityDontCare;
 
-    foreach(PsiAccount *account, enabledAccounts_) {
+    foreach (PsiAccount *account, enabledAccounts_) {
         int n = account->eventQueue()->nextId();
-        if ( n == -1 )
+        if (n == -1)
             continue;
 
         if (!includeDND && account->status().type() == XMPP::Status::DND)
             continue;
 
         int p = account->eventQueue()->peekNext()->priority();
-        if ( !low || (n < low_id && p == low_prior) || p > low_prior ) {
-            low = account;
-            low_id = n;
+        if (!low || (n < low_id && p == low_prior) || p > low_prior) {
+            low       = account;
+            low_id    = n;
             low_prior = p;
         }
     }
@@ -484,82 +450,76 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
 
 void PsiContactList::accountEnabledChanged()
 {
-    PsiAccount* account = (PsiAccount*)sender();
+    PsiAccount *account = static_cast<PsiAccount *>(sender());
     if (account->enabled())
         addEnabledAccount(account);
     else
         removeEnabledAccount(account);
 }
 
-PsiAccount* PsiContactList::getAccount(const QString& id) const
+PsiAccount *PsiContactList::getAccount(const QString &id) const
 {
-    foreach(PsiAccount* account, accounts())
+    foreach (PsiAccount *account, accounts())
         if (account->id() == id)
             return account;
 
-    return 0;
+    return nullptr;
 }
 
-PsiAccount* PsiContactList::getAccountByJid(const XMPP::Jid& jid) const
+PsiAccount *PsiContactList::getAccountByJid(const XMPP::Jid &jid) const
 {
-    foreach(PsiAccount* account, accounts())
+    foreach (PsiAccount *account, accounts())
         if (account->jid().compare(jid, false))
             return account;
 
-    return 0;
+    return nullptr;
 }
 
-const QList<PsiContact*>& PsiContactList::contacts() const
-{
-    return contacts_;
-}
+const QList<PsiContact *> &PsiContactList::contacts() const { return contacts_; }
 
-void PsiContactList::addEnabledAccount(PsiAccount* account)
+void PsiContactList::addEnabledAccount(PsiAccount *account)
 {
     if (enabledAccounts_.contains(account))
         return;
 
     enabledAccounts_.append(account);
-    connect(account, SIGNAL(addedContact(PsiContact*)), SLOT(accountAddedContact(PsiContact*)));
-    connect(account, SIGNAL(removedContact(PsiContact*)), SLOT(accountRemovedContact(PsiContact*)));
+    connect(account, SIGNAL(addedContact(PsiContact *)), SLOT(accountAddedContact(PsiContact *)));
+    connect(account, SIGNAL(removedContact(PsiContact *)), SLOT(accountRemovedContact(PsiContact *)));
 
     emit beginBulkContactUpdate();
     accountAddedContact(account->selfContact());
-    foreach(PsiContact* contact, account->contactList())
+    foreach (PsiContact *contact, account->contactList())
         accountAddedContact(contact);
     emit endBulkContactUpdate();
 }
 
-void PsiContactList::removeEnabledAccount(PsiAccount* account)
+void PsiContactList::removeEnabledAccount(PsiAccount *account)
 {
     if (!enabledAccounts_.contains(account))
         return;
 
     emit beginBulkContactUpdate();
     accountRemovedContact(account->selfContact());
-    foreach(PsiContact* contact, account->contactList())
+    foreach (PsiContact *contact, account->contactList())
         accountRemovedContact(contact);
     emit endBulkContactUpdate();
-    disconnect(account, SIGNAL(addedContact(PsiContact*)), this, SLOT(accountAddedContact(PsiContact*)));
-    disconnect(account, SIGNAL(removedContact(PsiContact*)), this, SLOT(accountRemovedContact(PsiContact*)));
+    disconnect(account, SIGNAL(addedContact(PsiContact *)), this, SLOT(accountAddedContact(PsiContact *)));
+    disconnect(account, SIGNAL(removedContact(PsiContact *)), this, SLOT(accountRemovedContact(PsiContact *)));
     enabledAccounts_.removeAll(account);
 }
 
-void PsiContactList::accountAddedContact(PsiContact* contact)
+void PsiContactList::accountAddedContact(PsiContact *contact)
 {
     Q_ASSERT(!contacts_.contains(contact));
     contacts_.append(contact);
     emit addedContact(contact);
 }
 
-void PsiContactList::accountRemovedContact(PsiContact* contact)
+void PsiContactList::accountRemovedContact(PsiContact *contact)
 {
     Q_ASSERT(contacts_.contains(contact));
     contacts_.removeAll(contact);
     emit removedContact(contact);
 }
 
-bool PsiContactList::accountsLoaded() const
-{
-    return accountsLoaded_;
-}
+bool PsiContactList::accountsLoaded() const { return accountsLoaded_; }

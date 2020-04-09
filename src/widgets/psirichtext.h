@@ -12,35 +12,45 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QTextDocument>
 #include <QTextCursor>
+#include <QTextDocument>
+
+#include <functional>
 
 class QTextEdit;
+class ITEMediaOpener;
 
-class PsiRichText
-{
+class PsiRichText {
 public:
+    using ParserRet  = std::pair<QTextCharFormat, QString>;
+    using Parser     = std::function<ParserRet(const QStringRef &htmlElement, int insertAfter)>;
+    using ParsersMap = QMap<QString, Parser>;
+
     static void install(QTextDocument *doc);
-    static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft, Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
-    static void setText(QTextDocument *doc, const QString &text);
+    static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,
+                                   Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
+    static void setText(QTextDocument *doc, const QString &text, const ParsersMap &parsers = ParsersMap());
     static void insertIcon(QTextCursor &cursor, const QString &iconName, const QString &iconText);
-    static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append = true);
-    static QString convertToPlainText(const QTextDocument *doc);
+    static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append = true,
+                           const ParsersMap &parsers = ParsersMap());
     static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
     static void setAllowedImageDirs(const QStringList &);
 
-    static void insertMarker(QTextCursor &cursor, const QString &uniqueId);
-    static QTextCursor findMarker(const QTextCursor &cursor, const QString &uniqueId); // will modify cursor to stay right after marker.
+    static QString convertToPlainText(const QTextDocument *doc);
+
+    static QTextCharFormat markerFormat(const QString &uniqueId);
+    static void            insertMarker(QTextCursor &cursor, const QString &uniqueId);
+    static QTextCursor     findMarker(const QTextCursor &cursor,
+                                      const QString &    uniqueId); // will modify cursor to stay right after marker.
 
     struct Selection {
         int start, end;
     };
     static Selection saveSelection(QTextEdit *textEdit, QTextCursor &cursor);
-    static void restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Selection selection);
+    static void      restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Selection selection);
 };

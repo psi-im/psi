@@ -13,24 +13,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef PRIVACYLISTBLOCKEDMODEL
-#define PRIVACYLISTBLOCKEDMODEL
+#ifndef PRIVACYLISTBLOCKEDMODEL_H
+#define PRIVACYLISTBLOCKEDMODEL_H
 
 #include <QSortFilterProxyModel>
 
-class PrivacyListBlockedModel : public QSortFilterProxyModel
-{
+class PrivacyListBlockedModel : public QSortFilterProxyModel {
 public:
-    PrivacyListBlockedModel(QObject* parent = NULL);
+    PrivacyListBlockedModel(QObject *parent = nullptr);
 
-    bool lessThan(const QModelIndex & left, const QModelIndex & right ) const;
-    bool filterAcceptsColumn(int source_column, const QModelIndex & source_parent ) const;
-    bool filterAcceptsRow(int source_row, const QModelIndex & source_parent ) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
+    bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const;
+    bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const;
 };
 
-#endif
+#endif // PRIVACYLISTBLOCKEDMODEL_H

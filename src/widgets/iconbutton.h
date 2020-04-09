@@ -12,43 +12,40 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ICONBUTTON_H
 #define ICONBUTTON_H
 
-#include <QPushButton>
-#include <QWidget>
-#include <QString>
-#include <QPixmap>
 #include <QIcon>
-
+#include <QPixmap>
+#include <QPushButton>
+#include <QString>
+#include <QWidget>
 
 class PsiIcon;
 
-class IconButton : public QPushButton
-{
+class IconButton : public QPushButton {
     Q_OBJECT
-    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
-    Q_PROPERTY( bool textVisible READ textVisible WRITE setTextVisible )
+    Q_PROPERTY(QString psiIconName READ psiIconName WRITE setPsiIcon)
+    Q_PROPERTY(bool textVisible READ textVisible WRITE setTextVisible)
 
-    Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
-    Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE(QPixmap pixmap DESIGNABLE false SCRIPTABLE false)
+    Q_OVERRIDE(QIcon icon DESIGNABLE false SCRIPTABLE false)
 
 public:
-    IconButton(QWidget *parent = 0);
+    IconButton(QWidget *parent = nullptr);
     ~IconButton();
 
     void setIcon(const QPixmap &);
 
 public slots:
-    void setPsiIcon(const PsiIcon *, bool activate = true);
-    void forceSetPsiIcon(const PsiIcon *, bool activate = true);
-    void setPsiIcon(const QString &);
+    void    setPsiIcon(const PsiIcon *, bool activate = true);
+    void    forceSetPsiIcon(const PsiIcon *, bool activate = true);
+    void    setPsiIcon(const QString &);
     QString psiIconName() const;
 
     void setText(const QString &);
@@ -58,8 +55,9 @@ public slots:
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-#endif
+#endif // ICONBUTTON_H

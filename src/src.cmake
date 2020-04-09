@@ -7,17 +7,18 @@ add_definitions(
     -DPSI_PLUGINS
     -DUSE_PEP
     -DQT_STATICPLUGIN
+    -DHAVE_CONFIG
     )
 
-if(UNIX AND NOT APPLE)
+if(USE_DBUS AND LINUX)
     add_definitions(
         -DUSE_DBUS
         )
 endif()
 
-#if(APPLE)
-#    add_definitions(-DHAVE_GROWL)
-#endif()
+if(APPLE AND USE_GROWL)
+    add_definitions(-DHAVE_GROWL)
+endif()
 
 include_directories(.)
 
@@ -40,6 +41,7 @@ list(APPEND FORMS
     disco.ui
     filetrans.ui
     filesharedlg.ui
+    multifiletransferdlg.ui
     geolocation.ui
     groupchatdlg.ui
     groupchattopicdlg.ui
@@ -60,7 +62,7 @@ list(APPEND FORMS
     proxy.ui
     rosteravatarframe.ui
     search.ui
-    tip.ui
+    sendbuttontemplateseditor.ui
     voicecall.ui
     xmlconsole.ui
     )
@@ -117,6 +119,14 @@ list(APPEND HEADERS
     eventdlg.h
     filecache.h
     filetransdlg.h
+    multifiletransferitem.h
+    multifiletransfermodel.h
+    multifiletransferdelegate.h
+    multifiletransferdlg.h
+    filesharingmanager.h
+    filesharingitem.h
+    filesharingdownloader.h
+    filesharingnamproxy.h
     filesharedlg.h
     fileutil.h
     gcuserview.h
@@ -131,6 +141,7 @@ list(APPEND HEADERS
     hoverabletreeview.h
     htmltextcontroller.h
     httpauthmanager.h
+    httputil.h
     infodlg.h
     invitetogroupchatmenu.h
     main.h
@@ -193,7 +204,6 @@ list(APPEND HEADERS
     statusmenu.h
     tabcompletion.h
     tasklist.h
-    tipdlg.h
     translationmanager.h
     vcardfactory.h
     vcardphotodlg.h
@@ -201,84 +211,6 @@ list(APPEND HEADERS
     voicecaller.h
     xdata_widget.h
     xmlconsole.h
-    )
-
-# Source files
-list(APPEND SOURCES
-    accountmanagedlg.cpp
-    actionlist.cpp
-    activecontactsmenu.cpp
-    ahcommanddlg.cpp
-    ahcservermanager.cpp
-    alerticon.cpp
-    avatars.cpp
-    contactlistaccountmenu.cpp
-    discodlg.cpp
-    eventdlg.cpp
-    filetransdlg.cpp
-    filesharedlg.cpp
-    gcuserview.cpp
-    groupchatdlg.cpp
-    htmltextcontroller.cpp
-    httpauthmanager.cpp
-    mainwin_p.cpp
-    msgmle.cpp
-    proxy.cpp
-    psiaccount.cpp
-    psiactionlist.cpp
-    psichatdlg.cpp
-    psicon.cpp
-    psicontactlistview.cpp
-    psievent.cpp
-    psioptionseditor.cpp
-    psipopup.cpp
-    psirosterwidget.cpp
-    registrationdlg.cpp
-    searchdlg.cpp
-    xdata_widget.cpp
-    )
-
-if(UNIX AND NOT APPLE)
-    list(APPEND SOURCES
-        dbus.cpp
-        )
-
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_dbus.cpp
-        psidbusnotifier.cpp
-        )
-
-    list(APPEND HEADERS
-        psidbusnotifier.h
-        )
-
-    list(APPEND PLAIN_HEADERS
-        dbus.h
-        )
-    list(APPEND PLAIN_SOURCES
-        x11windowsystem.cpp
-        )
-    list(APPEND PLAIN_HEADERS
-        x11windowsystem.h
-        )
-elseif(APPLE)
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_stub.cpp
-        )
-#    list(APPEND SOURCES
-#        psigrowlnotifier.cpp
-#        )
-#
-#    list(APPEND HEADERS
-#        psigrowlnotifier.h
-#        )
-elseif(WIN32)
-    list(APPEND PLAIN_SOURCES
-        activeprofiles_win.cpp
-        )
-endif()
-
-list(APPEND PLAIN_HEADERS
     abstracttreeitem.h
     activity.h
     activitycatalog.h
@@ -314,6 +246,7 @@ list(APPEND PLAIN_HEADERS
     pubsubsubscription.h
     rc.h
     rtparse.h
+    sendbuttonmenu.h
     shortcutmanager.h
     statuspreset.h
     systeminfo.h
@@ -323,9 +256,96 @@ list(APPEND PLAIN_HEADERS
     urlbookmark.h
     userlist.h
     varlist.h
+    edbsqlite.h
+    historyimp.h
     )
 
-list(APPEND PLAIN_SOURCES
+if(UNIX OR IS_WEBENGINE)
+    list(APPEND SOURCES
+        filesharinghttpproxy.cpp
+        webserver.cpp)
+    list(APPEND HEADERS
+        filesharinghttpproxy.h
+        webserver.h)
+endif()
+
+if(LINUX)
+    if(USE_DBUS)
+        list(APPEND SOURCES
+            dbus.cpp
+            activeprofiles_dbus.cpp
+            psidbusnotifier.cpp
+            )
+        list(APPEND HEADERS
+            psidbusnotifier.h
+            dbus.h
+            )
+    else()
+        list(APPEND SOURCES
+            activeprofiles_stub.cpp
+            )
+    endif()
+    list(APPEND SOURCES
+        x11windowsystem.cpp
+        )
+    list(APPEND HEADERS
+        x11windowsystem.h
+        )
+elseif(APPLE)
+    list(APPEND SOURCES
+        activeprofiles_stub.cpp
+        )
+    if(USE_GROWL)
+        list(APPEND SOURCES
+            psigrowlnotifier.cpp
+            )
+
+        list(APPEND HEADERS
+            psigrowlnotifier.h
+            )
+    endif()
+elseif(HAIKU)
+    list(APPEND SOURCES
+        activeprofiles_stub.cpp
+        )
+elseif(WIN32)
+    list(APPEND SOURCES
+        activeprofiles_win.cpp
+        )
+endif()
+
+# Source files
+list(APPEND SOURCES
+    accountmanagedlg.cpp
+    actionlist.cpp
+    activecontactsmenu.cpp
+    ahcommanddlg.cpp
+    ahcservermanager.cpp
+    alerticon.cpp
+    avatars.cpp
+    contactlistaccountmenu.cpp
+    discodlg.cpp
+    eventdlg.cpp
+    filetransdlg.cpp
+    gcuserview.cpp
+    groupchatdlg.cpp
+    htmltextcontroller.cpp
+    httpauthmanager.cpp
+    mainwin_p.cpp
+    msgmle.cpp
+    proxy.cpp
+    psiaccount.cpp
+    psiactionlist.cpp
+    psichatdlg.cpp
+    psicon.cpp
+    psicontactlistview.cpp
+    psievent.cpp
+    psioptionseditor.cpp
+    psipopup.cpp
+    psirosterwidget.cpp
+    registrationdlg.cpp
+    searchdlg.cpp
+    xdata_widget.cpp
     aboutdlg.cpp
     abstracttreeitem.cpp
     abstracttreemodel.cpp
@@ -378,7 +398,11 @@ list(APPEND PLAIN_SOURCES
     edbflatfile.cpp
     eventdb.cpp
     filecache.cpp
-    fileutil.cpp
+    filesharingmanager.cpp
+    filesharingitem.cpp
+    filesharingdownloader.cpp
+    filesharingnamproxy.cpp
+    filesharedlg.cpp
     fileutil.cpp
     geolocation.cpp
     geolocationdlg.cpp
@@ -386,10 +410,10 @@ list(APPEND PLAIN_SOURCES
     globalstatusmenu.cpp
     groupchattopicdlg.cpp
     groupmenu.cpp
+    httputil.cpp
     historycontactlistmodel.cpp
     historydlg.cpp
     hoverabletreeview.cpp
-    infodlg.cpp
     infodlg.cpp
     invitetogroupchatmenu.cpp
     jidutil.cpp
@@ -411,6 +435,10 @@ list(APPEND PLAIN_SOURCES
     mucjoindlg.cpp
     mucmanager.cpp
     mucreasonseditor.cpp
+    multifiletransferitem.cpp
+    multifiletransfermodel.cpp
+    multifiletransferdelegate.cpp
+    multifiletransferdlg.cpp
     networkaccessmanager.cpp
     passdialog.cpp
     passphrasedlg.cpp
@@ -444,6 +472,7 @@ list(APPEND PLAIN_SOURCES
     rosteravatarframe.cpp
     rosteritemexchangetask.cpp
     rtparse.cpp
+    sendbuttonmenu.cpp
     serverlistquerier.cpp
     shortcutmanager.cpp
     showtextdlg.cpp
@@ -456,7 +485,6 @@ list(APPEND PLAIN_SOURCES
     textutil.cpp
     theme.cpp
     theme_p.cpp
-    tipdlg.cpp
     translationmanager.cpp
     urlbookmark.cpp
     userlist.cpp
@@ -465,17 +493,15 @@ list(APPEND PLAIN_SOURCES
     vcardphotodlg.cpp
     voicecalldlg.cpp
     xmlconsole.cpp
+    edbsqlite.cpp
+    historyimp.cpp
     )
 
-if(ENABLE_WEBKIT)
-    if(USE_WEBENGINE)
-        list(APPEND PLAIN_SOURCES
-            themeserver.cpp
-        )
-        list(APPEND HEADERS
-            themeserver.h
-        )
-    endif()
+include(${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite/libqite.cmake)
+list(APPEND HEADERS ${qite_HEADERS})
+list(APPEND SOURCES ${qite_SOURCES})
+
+if(IS_WEBKIT OR IS_WEBENGINE)
     list(APPEND HEADERS
         chatview_webkit.h
         webview.h
@@ -483,14 +509,10 @@ if(ENABLE_WEBKIT)
         chatviewtheme_p.h
         chatviewthemeprovider.h
         chatviewthemeprovider_priv.h
-        )
-    list(APPEND PLAIN_HEADERS
         jsutil.h
         )
     list(APPEND SOURCES
         chatview_webkit.cpp
-        )
-    list(APPEND PLAIN_SOURCES
         webview.cpp
         jsutil.cpp
         chatviewtheme.cpp
@@ -500,29 +522,6 @@ if(ENABLE_WEBKIT)
 else()
     list(APPEND HEADERS
         chatview_te.h
-        )
-    list(APPEND SOURCES
         chatview_te.cpp
         )
-endif()
-
-list(APPEND HEADERS
-    edbsqlite.h
-    historyimp.h
-    )
-list(APPEND PLAIN_SOURCES
-    edbsqlite.cpp
-    historyimp.cpp
-    )
-
-if(IS_PSIPLUS)
-    list(APPEND FORMS
-        sendbuttontemplateseditor.ui
-    )
-    list(APPEND HEADERS
-        sendbuttonmenu.h
-    )
-    list(APPEND PLAIN_SOURCES
-        sendbuttonmenu.cpp
-    )
 endif()

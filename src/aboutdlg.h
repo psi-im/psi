@@ -13,31 +13,29 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ABOUTDLG_H
 #define ABOUTDLG_H
 
-#include <QDialog>
-
 #include "ui_about.h"
 
-class AboutDlg : public QDialog
-{
+#include <QDialog>
+
+class AboutDlg : public QDialog {
     Q_OBJECT
 
 public:
-    AboutDlg(QWidget* parent = NULL);
+    AboutDlg(QWidget *parent = nullptr);
 
 protected:
-    QString loadText( const QString & fileName );
-    QString details( QString name, QString email, QString jabber, QString www, QString desc );
+    QString loadText(const QString &fileName);
+    QString details(QString name, QString email, QString jabber, QString www, QString desc);
 
 private:
     Ui::AboutDlg ui_;
 };
 
-#endif
+#endif // ABOUTDLG_H

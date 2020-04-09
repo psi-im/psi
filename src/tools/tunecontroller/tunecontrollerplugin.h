@@ -13,26 +13,24 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef TUNECONTROLLERPLUGIN_H
 #define TUNECONTROLLERPLUGIN_H
 
-#include <QString>
 #include <QPluginLoader>
+#include <QString>
 
 class TuneController;
 
 /**
  * \brief Base class for TuneController plugins.
  */
-class TuneControllerPlugin
-{
+class TuneControllerPlugin {
 public:
-    virtual ~TuneControllerPlugin() { }
+    virtual ~TuneControllerPlugin() {}
 
     /**
      * \brief Returns the name of the tune controller.
@@ -42,10 +40,9 @@ public:
     /**
      * \brief Creates a new controller.
      */
-    virtual TuneController* createController() = 0;
+    virtual TuneController *createController() = 0;
 };
 
 Q_DECLARE_INTERFACE(TuneControllerPlugin, "be.el-tramo.TuneController/0.0-20060129");
 
-
-#endif
+#endif // TUNECONTROLLERPLUGIN_H

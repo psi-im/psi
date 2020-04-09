@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,12 +22,11 @@
 
 #include <QTreeView>
 
-class MUCAffiliationsView : public QTreeView
-{
+class MUCAffiliationsView : public QTreeView {
     Q_OBJECT
 
 public:
-    MUCAffiliationsView(QWidget* parent = 0);
+    MUCAffiliationsView(QWidget *parent = nullptr);
 
 public slots:
     void removeCurrent();
@@ -38,7 +36,7 @@ signals:
     void removeEnabled(bool);
 
 protected:
-    virtual void currentChanged(const QModelIndex& current, const QModelIndex& previous);
+    virtual void currentChanged(const QModelIndex &current, const QModelIndex &previous);
 };
 
-#endif
+#endif // MUCAFFILIATIONSVIEW_H

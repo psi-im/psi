@@ -1,18 +1,15 @@
-QT += xml network sql
+QT += xml network sql widgets multimedia concurrent
 
-greaterThan(QT_MAJOR_VERSION, 4) {
-  QT += widgets multimedia concurrent
-
-  unix:!mac {
+unix:!mac {
     LIBS += -lxcb
     QT += x11extras
-  }
+}
 
-  keychain {
+keychain {
     keychain_with_qtmodule:QT += Qt5Keychain # if w/o module let's suppose configure added all paths
     DEFINES += HAVE_KEYCHAIN
-  }
 }
+
 unix:!mac {
   DEFINES += HAVE_X11
   DEFINES += HAVE_FREEDESKTOP
@@ -162,7 +159,6 @@ HEADERS += \
     $$PWD/historydlg.h \
     $$PWD/historyimp.h \
     $$PWD/historycontactlistmodel.h \
-    $$PWD/tipdlg.h \
     $$PWD/searchdlg.h \
     $$PWD/registrationdlg.h \
     $$PWD/psitoolbar.h \
@@ -228,6 +224,7 @@ HEADERS += \
     $$PWD/vcardphotodlg.h \
     $$PWD/psicli.h \
     $$PWD/coloropt.h \
+    $$PWD/sendbuttonmenu.h \
     $$PWD/geolocationdlg.h \
     $$PWD/rosteravatarframe.h \
     $$PWD/psicapsregsitry.h \
@@ -235,7 +232,15 @@ HEADERS += \
     $$PWD/alertmanager.h \
     $$PWD/mcmdcompletion.h \
     $$PWD/captchadlg.h \
-    $$PWD/filesharedlg.h
+    $$PWD/filesharedlg.h \
+    $$PWD/multifiletransfermodel.h \
+    $$PWD/multifiletransferitem.h \
+    $$PWD/multifiletransferdelegate.h \
+    $$PWD/filesharingmanager.h \
+    $$PWD/filesharingdownloader.h \
+    $$PWD/filesharingitem.h \
+    $$PWD/filesharingnamproxy.h \
+    $$PWD/httputil.h
 
 # Source files
 SOURCES += \
@@ -288,7 +293,6 @@ SOURCES += \
     $$PWD/psichatdlg.cpp \
     $$PWD/chatsplitter.cpp \
     $$PWD/chateditproxy.cpp \
-    $$PWD/tipdlg.cpp \
     $$PWD/adduserdlg.cpp \
     $$PWD/mcmdmanager.cpp \
     $$PWD/mcmdsimplesite.cpp \
@@ -362,6 +366,7 @@ SOURCES += \
     $$PWD/bookmarkmanagedlg.cpp \
     $$PWD/vcardphotodlg.cpp \
     $$PWD/coloropt.cpp \
+    $$PWD/sendbuttonmenu.cpp \
     $$PWD/geolocationdlg.cpp \
     $$PWD/rosteravatarframe.cpp \
     $$PWD/tabcompletion.cpp \
@@ -369,7 +374,16 @@ SOURCES += \
     $$PWD/alertmanager.cpp \
     $$PWD/mcmdcompletion.cpp \
     $$PWD/captchadlg.cpp \
-    $$PWD/filesharedlg.cpp
+    $$PWD/filesharedlg.cpp \
+    $$PWD/multifiletransfermodel.cpp \
+    $$PWD/multifiletransferitem.cpp \
+    $$PWD/multifiletransferdelegate.cpp \
+    $$PWD/filesharingmanager.cpp \
+    $$PWD/filesharingdownloader.cpp \
+    $$PWD/filesharingitem.cpp \
+    $$PWD/filesharingnamproxy.cpp \
+    $$PWD/httputil.cpp
+
 
 CONFIG += filetransfer
 filetransfer {
@@ -516,7 +530,6 @@ SOURCES += \
     $$PWD/abstracttreemodel.cpp \
     $$PWD/psicontactlistview.cpp
 
-
 CONFIG += pgputil
 pgputil {
     DEFINES += HAVE_PGPUTIL
@@ -544,6 +557,14 @@ SOURCES += \
     $$PWD/networkaccessmanager.cpp \
     $$PWD/bytearrayreply.cpp \
 
+unix|qtwebengine {
+    # we need web server to serve media shares and some specific web engine requests
+    include (../3rdparty/qhttp.pri)
+    HEADERS += $$PWD/filesharinghttpproxy.h $$PWD/webserver.h
+    SOURCES += $$PWD/filesharinghttpproxy.cpp $$PWD/webserver.cpp
+    DEFINES += HAVE_WEBSERVER
+}
+
 # Qt Designer forms
 FORMS += \
     $$PWD/profileopen.ui \
@@ -569,7 +590,6 @@ FORMS += \
     $$PWD/mucreasonseditor.ui \
     $$PWD/xmlconsole.ui \
     $$PWD/disco.ui \
-    $$PWD/tip.ui \
     $$PWD/mood.ui \
     $$PWD/activity.ui \
     $$PWD/voicecall.ui \
@@ -577,6 +597,7 @@ FORMS += \
     $$PWD/bookmarkmanage.ui \
     $$PWD/ahcommanddlg.ui \
     $$PWD/ahcformdlg.ui \
+    $$PWD/sendbuttontemplateseditor.ui \
     $$PWD/geolocation.ui \
     $$PWD/rosteravatarframe.ui \
     $$PWD/captchadlg.ui \
@@ -649,12 +670,6 @@ qtwebengine|qtwebkit {
     qtwebengine {
         QT += webenginewidgets webchannel
         DEFINES += WEBENGINE
-        include (../3rdparty/qhttp.pri)
-
-        HEADERS +=  \
-            $$PWD/themeserver.h
-        SOURCES +=  \
-            $$PWD/themeserver.cpp
     } else {
         QT += webkit
         greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets
@@ -672,3 +687,5 @@ mac {
 
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
+
+OTHER_FILES += $$PWD/src.cmake $$PWD/CMakeLists.txt

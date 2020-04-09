@@ -1,6 +1,6 @@
 /*
  * webview.h - QWebView handling links and copying text
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,28 +13,27 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef _WEBVIEW_H
-#define    _WEBVIEW_H
+#ifndef WEBVIEW_H
+#define WEBVIEW_H
 
+#include "iconset.h"
+#include "networkaccessmanager.h"
+
+#include <QBuffer>
+#include <QClipboard>
+#include <QContextMenuEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QUrlQuery>
 #ifdef WEBENGINE
 #include <QWebEngineView>
 #else
 #include <QWebView>
 #endif
-#include <QMessageBox>
-#include <QMenu>
-#include <QContextMenuEvent>
-#include <QClipboard>
-#include <QBuffer>
-#include <QUrlQuery>
-
-#include "networkaccessmanager.h"
-#include "iconset.h"
 
 /**
  * Extended QWebView.
@@ -53,8 +52,7 @@ class WebView : public QWebView {
 #endif
     Q_OBJECT
 public:
-
-    WebView(QWidget* parent);
+    WebView(QWidget *parent);
 
     /** Evaluates JavaScript code */
     void evaluateJS(const QString &scriptSource = "");
@@ -71,31 +69,29 @@ public slots:
 
 protected:
     /** Creates menu with Copy actions */
-    void contextMenuEvent(QContextMenuEvent* event);
+    void contextMenuEvent(QContextMenuEvent *event);
 #ifndef WEBENGINE
-    void mousePressEvent ( QMouseEvent * event );
-    void mouseReleaseEvent ( QMouseEvent * event );
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
 #endif
-    //QAction* copyAction, *copyLinkAction;
+    // QAction* copyAction, *copyLinkAction;
 
 private:
 #ifndef WEBENGINE
     void convertClipboardHtmlImages(QClipboard::Mode);
 #endif
-    bool possibleDragging;
-    bool isLoading_;
-    QStringList jsBuffer_;
-    QPoint dragStartPosition;
-    QList<QAction*> contextMenuActions_;
+    bool             possibleDragging;
+    bool             isLoading_;
+    QStringList      jsBuffer_;
+    QPoint           dragStartPosition;
+    QList<QAction *> contextMenuActions_;
 
 protected slots:
-    void linkClickedEvent(const QUrl& url);
+    void linkClickedEvent(const QUrl &url);
     void textCopiedEvent();
     void loadStartedEvent();
     void loadFinishedEvent(bool);
 };
 
-
-#endif
-
+#endif // WEBVIEW_H

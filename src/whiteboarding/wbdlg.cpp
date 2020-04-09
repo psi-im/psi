@@ -4,7 +4,7 @@
  *
  * Originally developed from:
  * chatdlg.cpp - dialog for handling chats
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,22 +17,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "wbdlg.h"
 
-#include <QMessageBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QColorDialog>
-#include <QToolButton>
-
 #include "accountlabel.h"
-#include "stretchwidget.h"
 #include "iconset.h"
+#include "stretchwidget.h"
+
+#include <QColorDialog>
+#include <QHBoxLayout>
+#include <QMessageBox>
+#include <QToolButton>
+#include <QVBoxLayout>
 
 static const QString geometryOption = "options.ui.chat.wb-size";
 
@@ -40,13 +39,14 @@ static const QString geometryOption = "options.ui.chat.wb-size";
 // WbDlg
 //----------------------------------------------------------------------------
 
-WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
-    groupChat_ = session->groupChat();
-    pending_ = 0;
-    keepOpen_ = false;
+WbDlg::WbDlg(SxeSession *session, PsiAccount *pa)
+{
+    groupChat_  = session->groupChat();
+    pending_    = 0;
+    keepOpen_   = false;
     allowEdits_ = true;
 
-    selfDestruct_ = 0;
+    selfDestruct_ = nullptr;
     setAttribute(Qt::WA_DeleteOnClose, false); // we want deferred endSession call and delete from manager
 
     setWindowTitle(CAP(tr("Whiteboard (%1)").arg(pa->jid().bare())));
@@ -72,24 +72,24 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     vb1->addWidget(wbWidget_);
 
     // Bottom (tool) area
-    act_save_ = new IconAction(tr("Save session"), "psi/saveBoard", tr("Save the contents of the whiteboard"), 0, this );
-    act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this );
-    act_clear_ = new IconAction(tr("End session"), "psi/clearChat", tr("Clear the whiteboard"), 0, this );
-    act_end_ = new IconAction(tr("End session"), "psi/closetab", tr("End session"), 0, this );
+    act_save_ = new IconAction(tr("Save session"), "psi/saveBoard", tr("Save the contents of the whiteboard"), 0, this);
+    act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this);
+    act_clear_    = new IconAction(tr("End session"), "psi/clearChat", tr("Clear the whiteboard"), 0, this);
+    act_end_      = new IconAction(tr("End session"), "psi/closetab", tr("End session"), 0, this);
 
     // Black is the default color
     QPixmap pixmap(16, 16);
     pixmap.fill(QColor(Qt::black));
     act_color_ = new QAction(QIcon(pixmap), tr("Stroke color"), this);
     pixmap.fill(QColor(Qt::lightGray));
-    act_fill_ = new IconAction(tr("Fill color"), "psi/select", tr("Fill color"),0, this, 0, true);
+    act_fill_ = new IconAction(tr("Fill color"), "psi/select", tr("Fill color"), 0, this, nullptr, true);
     act_fill_->setIcon(QIcon(pixmap));
     act_fill_->setChecked(false);
 
-    act_widths_ = new IconAction(tr("Stroke width" ), "psi/drawPaths", tr("Stroke width"), 0, this );
-    act_modes_ = new IconAction(tr("Edit mode" ), "psi/select", tr("Edit mode"), 0, this );
+    act_widths_   = new IconAction(tr("Stroke width"), "psi/drawPaths", tr("Stroke width"), 0, this);
+    act_modes_    = new IconAction(tr("Edit mode"), "psi/select", tr("Edit mode"), 0, this);
     group_widths_ = new QActionGroup(this);
-    group_modes_ = new QActionGroup(this);
+    group_modes_  = new QActionGroup(this);
 
     connect(act_color_, SIGNAL(triggered()), SLOT(setStrokeColor()));
     connect(act_fill_, SIGNAL(triggered(bool)), SLOT(setFillColor(bool)));
@@ -102,7 +102,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 
     pixmap = QPixmap(2, 2);
     pixmap.fill(QColor(Qt::black));
-    QAction* widthaction = new QAction(QIcon(pixmap), tr("Thin stroke"), group_widths_);
+    QAction *widthaction = new QAction(QIcon(pixmap), tr("Thin stroke"), group_widths_);
     widthaction->setData(QVariant(1));
     widthaction->setCheckable(true);
     widthaction->trigger();
@@ -117,31 +117,31 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     widthaction->setData(QVariant(6));
     widthaction->setCheckable(true);
 
-    IconAction* action;
-    action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Select));
+    IconAction *action;
+    action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::Select)));
     action->setCheckable(true);
-    action = new IconAction(tr( "Translate"), "psi/translate", tr("Translate"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Translate));
+    action = new IconAction(tr("Translate"), "psi/translate", tr("Translate"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::Translate)));
     action->setCheckable(true);
-    action = new IconAction(tr( "Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Rotate));
+    action = new IconAction(tr("Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::Rotate)));
     action->setCheckable(true);
-    action = new IconAction(tr( "Scale"), "psi/scale", tr("Scale"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Scale));
+    action = new IconAction(tr("Scale"), "psi/scale", tr("Scale"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::Scale)));
     action->setCheckable(true);
-    action = new IconAction(tr( "Erase"), "psi/erase", tr("Erase"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Erase));
+    action = new IconAction(tr("Erase"), "psi/erase", tr("Erase"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::Erase)));
     action->setCheckable(true);
     QAction *separator = new QAction(group_modes_);
     separator->setSeparator(true);
-    action = new IconAction(tr( "Scroll view"), "psi/scroll", tr("Scroll"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::Scroll));
+    action = new IconAction(tr("Scroll view"), "psi/scroll", tr("Scroll"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::Scroll)));
     action->setCheckable(true);
     separator = new QAction(group_modes_);
     separator->setSeparator(true);
-    action = new IconAction(tr( "Draw paths"), "psi/drawPaths", tr("Draw paths"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::DrawPath));
+    action = new IconAction(tr("Draw paths"), "psi/drawPaths", tr("Draw paths"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::DrawPath)));
     action->setCheckable(true);
     action->trigger();
     // action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
@@ -159,8 +159,8 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     //     action = new IconAction(tr( "Add text"), "psi/addText", tr("Add text"), 0, group_modes_ );
     //     action->setData(QVariant(WbWidget::DrawText));
     //     action->setCheckable(true);
-    action = new IconAction(tr( "Add images"), "psi/addImage", tr("Add images"), 0, group_modes_ );
-    action->setData(QVariant((int)WbWidget::Mode::DrawImage));
+    action = new IconAction(tr("Add images"), "psi/addImage", tr("Add images"), 0, group_modes_);
+    action->setData(QVariant(int(WbWidget::Mode::DrawImage)));
     action->setCheckable(true);
 
     menu_widths_ = new QMenu(this);
@@ -172,7 +172,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     act_modes_->setMenu(menu_modes_);
 
     toolbar_ = new QToolBar(tr("Whiteboard toolbar"), this);
-    toolbar_->setIconSize(QSize(16,16));
+    toolbar_->setIconSize(QSize(16, 16));
     toolbar_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
     toolbar_->addAction(act_end_);
     toolbar_->addAction(act_clear_);
@@ -209,37 +209,38 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
     setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
 #endif
 
-    setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
+    setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))
+                     / 100);
 
     setGeometryOptionPath(geometryOption);
 }
 
-WbDlg::~WbDlg() {
-    qDebug("destruct WbDlg");
-}
+WbDlg::~WbDlg() { qDebug("destruct WbDlg"); }
 
-SxeSession* WbDlg::session() const {
-     return wbWidget_->session();
-}
+SxeSession *WbDlg::session() const { return wbWidget_->session(); }
 
-bool WbDlg::allowEdits() const {
-    return allowEdits_;
-}
+bool WbDlg::allowEdits() const { return allowEdits_; }
 
-void WbDlg::setAllowEdits(bool a) {
+void WbDlg::setAllowEdits(bool a)
+{
     allowEdits_ = a;
-    if(!allowEdits_)
+    if (!allowEdits_)
         wbWidget_->setMode(WbWidget::Mode::Scroll);
 }
 
-void WbDlg::peerLeftSession(const Jid &peer) {
+void WbDlg::peerLeftSession(const Jid &peer)
+{
     le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full()).arg(session()->session()));
 }
 
-void WbDlg::endSession() {
-    if(sender() == act_end_) {
-        int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to end the session?\nThe contents of the whiteboard will be lost."), tr("&Yes"), tr("&No"));
-        if(n != 0)
+void WbDlg::endSession()
+{
+    if (sender() == act_end_) {
+        int n = QMessageBox::information(
+            this, tr("Warning"),
+            tr("Are you sure you want to end the session?\nThe contents of the whiteboard will be lost."), tr("&Yes"),
+            tr("&No"));
+        if (n != 0)
             return;
     }
     // terminate the underlying SXE session
@@ -248,58 +249,57 @@ void WbDlg::endSession() {
     emit sessionEnded(this);
 }
 
-void WbDlg::activated() {
-    if(pending_ > 0) {
+void WbDlg::activated()
+{
+    if (pending_ > 0) {
         pending_ = 0;
         updateCaption();
     }
     doFlash(false);
 }
 
-void WbDlg::keyPressEvent(QKeyEvent *e) {
-    if(e->key() == Qt::Key_Escape && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
+void WbDlg::keyPressEvent(QKeyEvent *e)
+{
+    if (e->key() == Qt::Key_Escape && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
         close();
-    else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
+    else if (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier
+             && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
         close();
     else
         e->ignore();
 }
 
-void WbDlg::closeEvent(QCloseEvent *e) {
+void WbDlg::closeEvent(QCloseEvent *e)
+{
     e->accept();
-    if(keepOpen_) {
-        int n = QMessageBox::information(this, tr("Warning"), tr("A new whiteboard message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));
-        if(n != 0) {
+    if (keepOpen_) {
+        int n = QMessageBox::information(
+            this, tr("Warning"),
+            tr("A new whiteboard message was just received.\nDo you still want to close the window?"), tr("&Yes"),
+            tr("&No"));
+        if (n != 0) {
             e->ignore();
             return;
         }
     }
 
-    // destroy the dialog if delChats is dcClose
-    if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant")
-        endSession();
-    else {
-        if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "hour")
-            setSelfDestruct(60);
-        else if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "day")
-            setSelfDestruct(60 * 24);
-    }
+    endSession();
 }
 
-void WbDlg::showEvent(QShowEvent *) {
-    setSelfDestruct(0);
-}
+void WbDlg::showEvent(QShowEvent *) { setSelfDestruct(0); }
 
-void WbDlg::changeEvent(QEvent *e) {
+void WbDlg::changeEvent(QEvent *e)
+{
     if (e->type() == QEvent::ActivationChange && isActiveWindow()) {
         activated();
     }
     e->ignore();
 }
 
-void WbDlg::setStrokeColor() {
+void WbDlg::setStrokeColor()
+{
     QColor newColor = QColorDialog::getColor();
-    if(newColor.isValid()) {
+    if (newColor.isValid()) {
         QPixmap pixmap(16, 16);
         pixmap.fill(newColor);
         act_color_->setIcon(QIcon(pixmap));
@@ -307,36 +307,33 @@ void WbDlg::setStrokeColor() {
     }
 }
 
-void WbDlg::setFillColor(bool fill) {
+void WbDlg::setFillColor(bool fill)
+{
     QColor newColor;
-    if(fill) {
+    if (fill) {
         newColor = QColorDialog::getColor();
-        if(newColor.isValid()) {
+        if (newColor.isValid()) {
             QPixmap pixmap(16, 16);
             pixmap.fill(newColor);
             act_fill_->setIcon(QIcon(pixmap));
         }
-    }
-    else {
+    } else {
         newColor = Qt::transparent;
     }
     wbWidget_->setFillColor(newColor);
 }
 
-void WbDlg::setStrokeWidth(QAction *a) {
-    wbWidget_->setStrokeWidth(a->data().toInt());
-}
+void WbDlg::setStrokeWidth(QAction *a) { wbWidget_->setStrokeWidth(a->data().toInt()); }
 
-void WbDlg::setMode(QAction *a) {
-    if(allowEdits_)
+void WbDlg::setMode(QAction *a)
+{
+    if (allowEdits_)
         wbWidget_->setMode(WbWidget::Mode(a->data().toInt()));
     else
         wbWidget_->setMode(WbWidget::Mode::Scroll);
 }
 
-void WbDlg::setKeepOpenFalse() {
-    keepOpen_ = false;
-}
+void WbDlg::setKeepOpenFalse() { keepOpen_ = false; }
 
 void WbDlg::buildMenu()
 {
@@ -350,29 +347,33 @@ void WbDlg::buildMenu()
     pm_settings_->addAction(act_end_);
 }
 
-void WbDlg::setGeometry() {
+void WbDlg::setGeometry()
+{
     // TODO: make a proper dialog
     QSize size;
 
     bool ok;
-    size.setWidth(QInputDialog::getInt(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
-    if(!ok) {
+    size.setWidth(QInputDialog::getInt(this, tr("Set new width:"), tr("Width:"),
+                                       static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
+    if (!ok) {
         return;
     }
 
-    size.setHeight(QInputDialog::getInt(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10, &ok));
-    if(!ok)
+    size.setHeight(QInputDialog::getInt(this, tr("Set new height:"), tr("Height:"),
+                                        static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10,
+                                        &ok));
+    if (!ok)
         return;
 
     wbWidget_->setSize(size);
 }
 
-void WbDlg::save() {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whitebaord"),
-                                QDir::homePath(),
-                                tr("Scalable Vector Graphics (*.svg)"));
-    fileName = fileName.trimmed();
-    if(!fileName.endsWith(".svg", Qt::CaseInsensitive))
+void WbDlg::save()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whitebaord"), QDir::homePath(),
+                                                    tr("Scalable Vector Graphics (*.svg)"));
+    fileName         = fileName.trimmed();
+    if (!fileName.endsWith(".svg", Qt::CaseInsensitive))
         fileName += ".svg";
 
     QFile file(fileName);
@@ -385,21 +386,23 @@ void WbDlg::save() {
     file.close();
 }
 
-void WbDlg::contextMenuEvent(QContextMenuEvent * e) {
+void WbDlg::contextMenuEvent(QContextMenuEvent *e)
+{
     pm_settings_->exec(QCursor::pos());
     e->accept();
 }
 
-void WbDlg::setSelfDestruct(int minutes) {
-    if(minutes <= 0) {
-        if(selfDestruct_) {
+void WbDlg::setSelfDestruct(int minutes)
+{
+    if (minutes <= 0) {
+        if (selfDestruct_) {
             delete selfDestruct_;
-            selfDestruct_ = 0;
+            selfDestruct_ = nullptr;
         }
         return;
     }
 
-    if(!selfDestruct_) {
+    if (!selfDestruct_) {
         selfDestruct_ = new QTimer(this);
         connect(selfDestruct_, SIGNAL(timeout()), SLOT(endSession()));
     }
@@ -407,12 +410,13 @@ void WbDlg::setSelfDestruct(int minutes) {
     selfDestruct_->start(minutes * 60000);
 }
 
-void WbDlg::updateCaption() {
+void WbDlg::updateCaption()
+{
     QString cap = "";
 
-    if(pending_ > 0) {
+    if (pending_ > 0) {
         cap += "* ";
-        if(pending_ > 1)
+        if (pending_ > 1)
             cap += QString("[%1] ").arg(pending_);
     }
     cap += session()->target().full();

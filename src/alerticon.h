@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,26 +22,25 @@
 
 #include "iconset.h"
 
-class QPixmap;
 class Impix;
-class QString;
 class QIcon;
 class QImage;
+class QPixmap;
+class QString;
 
-class AlertIcon : public PsiIcon
-{
+class AlertIcon : public PsiIcon {
     Q_OBJECT
 public:
     AlertIcon(const PsiIcon *icon);
     ~AlertIcon();
 
     // reimplemented
-    virtual bool isAnimated() const;
+    virtual bool           isAnimated() const;
     virtual const QPixmap &pixmap() const;
-    virtual const QImage &image() const;
-    virtual const QIcon & icon() const;
-    virtual const Impix &impix() const;
-    virtual int frameNumber() const;
+    virtual const QImage & image() const;
+    virtual const QIcon &  icon() const;
+    virtual const Impix &  impix() const;
+    virtual int            frameNumber() const;
     virtual const QString &name() const;
 
     virtual PsiIcon *copy() const;
@@ -53,6 +51,7 @@ public slots:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;
@@ -60,4 +59,4 @@ private:
 
 void alertIconUpdateAlertStyle();
 
-#endif
+#endif // ALERTICON_H

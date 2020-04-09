@@ -13,58 +13,56 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef HOVERABLETREEVIEW_H
 #define HOVERABLETREEVIEW_H
 
-#include <QTreeView>
 #include <QStyleOption>
-
+#include <QTreeView>
 
 typedef QStyleOptionViewItem HoverableStyleOptionViewItemBaseClass;
 
-class HoverableStyleOptionViewItem : public HoverableStyleOptionViewItemBaseClass
-{
+class HoverableStyleOptionViewItem : public HoverableStyleOptionViewItemBaseClass {
 public:
-    enum StyleOptionVersion { Version = HoverableStyleOptionViewItemBaseClass::Version+1 };
+    enum StyleOptionVersion { Version = HoverableStyleOptionViewItemBaseClass::Version + 1 };
 
-    bool hovered;
+    bool   hovered;
     QPoint hoveredPosition;
 
     HoverableStyleOptionViewItem();
-    HoverableStyleOptionViewItem(const HoverableStyleOptionViewItem &other)
-        : HoverableStyleOptionViewItemBaseClass(Version)
+    HoverableStyleOptionViewItem(const HoverableStyleOptionViewItem &other) :
+        HoverableStyleOptionViewItemBaseClass(Version)
     {
         *this = other;
     }
     HoverableStyleOptionViewItem(const QStyleOptionViewItem &other);
-    HoverableStyleOptionViewItem &operator = (const QStyleOptionViewItem &other);
+    HoverableStyleOptionViewItem &       operator=(const QStyleOptionViewItem &other);
+    inline HoverableStyleOptionViewItem &operator=(const HoverableStyleOptionViewItem &other)
+    {
+        return *this = static_cast<QStyleOptionViewItem>(other);
+    }
 
 protected:
     HoverableStyleOptionViewItem(int version);
 };
 
-class HoverableTreeView : public QTreeView
-{
+class HoverableTreeView : public QTreeView {
     Q_OBJECT
 
 public:
-    HoverableTreeView(QWidget* parent = 0);
+    HoverableTreeView(QWidget *parent = nullptr);
 
-    enum HoverableItemFeature {
-        Hovered = 0x8000
-    };
+    enum HoverableItemFeature { Hovered = 0x8000 };
 
     void repairMouseTracking();
 
 protected:
     // reimplemented
-    void mouseMoveEvent(QMouseEvent* event);
-    void drawRow(QPainter* painter, const QStyleOptionViewItem& options, const QModelIndex& index) const;
+    void mouseMoveEvent(QMouseEvent *event);
+    void drawRow(QPainter *painter, const QStyleOptionViewItem &options, const QModelIndex &index) const;
     void startDrag(Qt::DropActions supportedActions);
 
     QPoint mousePosition() const;
@@ -73,4 +71,4 @@ private:
     QPoint mousePosition_;
 };
 
-#endif
+#endif // HOVERABLETREEVIEW_H

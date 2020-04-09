@@ -13,24 +13,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef TUNECONTROLLER_H
 #define TUNECONTROLLER_H
 
-#include <QString>
-#include <QObject>
-
 #include "tune.h"
+
+#include <QObject>
+#include <QString>
 
 /**
  * \brief Base class for representing a media player.
  */
-class TuneController : public QObject
-{
+class TuneController : public QObject {
     Q_OBJECT
 
 public:
@@ -41,7 +39,7 @@ signals:
      * This signal is emitted when the media player started playing a tune.
      * \param tune the playing tune
      */
-    void playing(const Tune& tune);
+    void playing(const Tune &tune);
 
     /**
      * This signal is emitted when the media player stopped playing tunes.
@@ -49,4 +47,4 @@ signals:
     void stopped();
 };
 
-#endif
+#endif // TUNECONTROLLER_H

@@ -1,6 +1,7 @@
 /*
  * passdialog.cpp
- * Copyright (C) 2009-2010 Virnik, 2011 Evgeny Khryukin
+ * Copyright (C) 2009-2010  Virnik
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,19 +26,18 @@
 class QCheckBox;
 class QLineEdit;
 
-class PassDialog : public QDialog
-{
+class PassDialog : public QDialog {
     Q_OBJECT
 public:
-    PassDialog(const QString& jid = "", QWidget *parent = 0);
+    PassDialog(const QString &jid = "", QWidget *parent = nullptr);
 
     QString password() const;
-    bool savePassword() const;
-    void setSavePassword(bool save);
+    bool    savePassword() const;
+    void    setSavePassword(bool save);
 
 private:
     QCheckBox *cb_savePassword;
     QLineEdit *le_password;
 };
 
-#endif
+#endif // PASSDIALOG_H

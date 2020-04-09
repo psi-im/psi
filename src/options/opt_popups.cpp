@@ -13,37 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+#include "opt_popups.h"
+
+#include "popupmanager.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "ui_opt_popups.h"
 
 //#include <QHBoxLayout>
 #include <QRadioButton>
 
-#include "opt_popups.h"
-#include "ui_opt_popups.h"
-#include "psioptions.h"
-#include "psicon.h"
-#include "popupmanager.h"
-
-class OptPopupsUI : public QWidget, public Ui::OptPopups
-{
+class OptPopupsUI : public QWidget, public Ui::OptPopups {
 public:
     OptPopupsUI() : QWidget() { setupUi(this); }
 };
 
-OptionsTabPopups::OptionsTabPopups(QObject *parent)
-    : OptionsTab(parent, "popups", "", tr("Popups"), tr("The popups behaviour"), "psi/tip")
-    , w(0)
-    , popup_(0)
+OptionsTabPopups::OptionsTabPopups(QObject *parent) :
+    OptionsTab(parent, "popups", "", tr("Popups"), tr("The popups behaviour"), "psi/tip"), w(nullptr), popup_(nullptr)
 {
 }
 
 QWidget *OptionsTabPopups::widget()
 {
-    if ( w )
-        return 0;
+    if (w)
+        return nullptr;
 
     w = new OptPopupsUI();
     return w;
@@ -51,7 +48,7 @@ QWidget *OptionsTabPopups::widget()
 
 void OptionsTabPopups::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptPopupsUI *d = static_cast<OptPopupsUI *>(w);
@@ -73,26 +70,27 @@ void OptionsTabPopups::applyOptions()
     o->setOption("options.ui.notifications.passive-popups.maximum-jid-length", QVariant(d->sb_jid->value()));
     o->setOption("options.ui.notifications.passive-popups.maximum-status-length", QVariant(d->sb_status->value()));
     o->setOption("options.ui.notifications.passive-popups.maximum-text-length", QVariant(d->sb_text->value()));
-    o->setOption("options.ui.notifications.passive-popups.top-to-bottom",QVariant(d->ck_topToBottom->isChecked()));
-    o->setOption("options.ui.notifications.passive-popups.at-left-corner",QVariant(d->ck_atLeft->isChecked()));
-    o->setOption("options.ui.notifications.passive-popups.notify-every-muc-message",QVariant(d->ck_everyMucMessage->isChecked()));
+    o->setOption("options.ui.notifications.passive-popups.top-to-bottom", QVariant(d->ck_topToBottom->isChecked()));
+    o->setOption("options.ui.notifications.passive-popups.at-left-corner", QVariant(d->ck_atLeft->isChecked()));
+    o->setOption("options.ui.notifications.passive-popups.notify-every-muc-message",
+                 QVariant(d->ck_everyMucMessage->isChecked()));
 
-    foreach(QObject* obj, d->sa_durations->widget()->children()) {
-        QSpinBox *sb = dynamic_cast<QSpinBox*>(obj);
-        if(sb) {
+    foreach (QObject *obj, d->sa_durations->widget()->children()) {
+        QSpinBox *sb = dynamic_cast<QSpinBox *>(obj);
+        if (sb) {
             const QString oName = sb->property("name").toString();
             const QString oPath = sb->property("path").toString();
-            const int value = sb->value();
+            const int     value = sb->value();
             popup_->setValue(oName, value);
-            if(!oPath.isEmpty()) {
-                PsiOptions::instance()->setOption(oPath, value*1000);
+            if (!oPath.isEmpty()) {
+                PsiOptions::instance()->setOption(oPath, value * 1000);
             }
         }
     }
 
-    foreach(QObject* obj, d->gb_type->children()) {
-        QRadioButton *rb = dynamic_cast<QRadioButton*>(obj);
-        if(rb && rb->isChecked()) {
+    foreach (QObject *obj, d->gb_type->children()) {
+        QRadioButton *rb = dynamic_cast<QRadioButton *>(obj);
+        if (rb && rb->isChecked()) {
             o->setOption("options.ui.notifications.typename", rb->objectName());
             break;
         }
@@ -101,34 +99,39 @@ void OptionsTabPopups::applyOptions()
 
 void OptionsTabPopups::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptPopupsUI *d = static_cast<OptPopupsUI *>(w);
 
     PsiOptions *o = PsiOptions::instance();
 
-    d->ck_popupOn->setChecked( o->getOption("options.ui.notifications.passive-popups.enabled").toBool() );
-    d->ck_popupOnMessage->setChecked( o->getOption("options.ui.notifications.passive-popups.incoming-message").toBool() || o->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool() );
-    d->ck_showPopupMessage->setChecked( o->getOption("options.ui.notifications.passive-popups.showMessage").toBool());
-    d->ck_popupOnHeadline->setChecked( o->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool() );
-    d->ck_popupOnFile->setChecked( o->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool() );
-    d->ck_popupOnOnline->setChecked( o->getOption("options.ui.notifications.passive-popups.status.online").toBool() );
-    d->ck_popupOnOffline->setChecked( o->getOption("options.ui.notifications.passive-popups.status.offline").toBool() );
-    d->ck_popupOnStatus->setChecked( o->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool() );
-    d->ck_popupComposing->setChecked( o->getOption("options.ui.notifications.passive-popups.composing").toBool() );
-    d->sb_avatar->setValue( o->getOption("options.ui.notifications.passive-popups.avatar-size").toInt() );
+    d->ck_popupOn->setChecked(o->getOption("options.ui.notifications.passive-popups.enabled").toBool());
+    d->ck_popupOnMessage->setChecked(o->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()
+                                     || o->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool());
+    d->ck_showPopupMessage->setChecked(o->getOption("options.ui.notifications.passive-popups.showMessage").toBool());
+    d->ck_popupOnHeadline->setChecked(
+        o->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool());
+    d->ck_popupOnFile->setChecked(
+        o->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool());
+    d->ck_popupOnOnline->setChecked(o->getOption("options.ui.notifications.passive-popups.status.online").toBool());
+    d->ck_popupOnOffline->setChecked(o->getOption("options.ui.notifications.passive-popups.status.offline").toBool());
+    d->ck_popupOnStatus->setChecked(
+        o->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool());
+    d->ck_popupComposing->setChecked(o->getOption("options.ui.notifications.passive-popups.composing").toBool());
+    d->sb_avatar->setValue(o->getOption("options.ui.notifications.passive-popups.avatar-size").toInt());
 
     d->sb_jid->setValue(o->getOption("options.ui.notifications.passive-popups.maximum-jid-length").toInt());
     d->sb_status->setValue(o->getOption("options.ui.notifications.passive-popups.maximum-status-length").toInt());
     d->sb_text->setValue(o->getOption("options.ui.notifications.passive-popups.maximum-text-length").toInt());
     d->ck_topToBottom->setChecked(o->getOption("options.ui.notifications.passive-popups.top-to-bottom").toBool());
     d->ck_atLeft->setChecked(o->getOption("options.ui.notifications.passive-popups.at-left-corner").toBool());
-    d->ck_everyMucMessage->setChecked(o->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool());
+    d->ck_everyMucMessage->setChecked(
+        o->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool());
 
-    QWidget *areaWidget = new QWidget;
-    QVBoxLayout *vBox = new QVBoxLayout(areaWidget);
-    foreach(const QString& option, popup_->optionsNamesList()) {
+    QWidget *    areaWidget = new QWidget;
+    QVBoxLayout *vBox       = new QVBoxLayout(areaWidget);
+    foreach (const QString &option, popup_->optionsNamesList()) {
         QHBoxLayout *l = new QHBoxLayout;
         l->addWidget(new QLabel(option));
         l->addStretch();
@@ -146,22 +149,19 @@ void OptionsTabPopups::restoreOptions()
     qDeleteAll(d->gb_type->children());
     QHBoxLayout *l = new QHBoxLayout(d->gb_type);
 
-    foreach(QString type_, popup_->availableTypes()) {
-        QRadioButton* rb = new QRadioButton(type_);
+    foreach (QString type_, popup_->availableTypes()) {
+        QRadioButton *rb = new QRadioButton(type_);
         rb->setObjectName(type_);
         d->gb_type->layout()->addWidget(rb);
         l->addWidget(rb);
-        if(popup_->currentType() == type_)
+        if (popup_->currentType() == type_)
             rb->setChecked(true);
     }
 
-    if(l->count() == 1)
+    if (l->count() == 1)
         d->gb_type->setVisible(false);
 
     emit connectDataChanged(w);
 }
 
-void OptionsTabPopups::setData(PsiCon *psi, QWidget *)
-{
-    popup_ = psi->popupManager();
-}
+void OptionsTabPopups::setData(PsiCon *psi, QWidget *) { popup_ = psi->popupManager(); }

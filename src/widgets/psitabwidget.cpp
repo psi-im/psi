@@ -13,32 +13,38 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psitabwidget.h"
-#include "psitabbar.h"
+
 #include "common.h"
 #include "psioptions.h"
-#include <QWidget>
-#include <QVBoxLayout>
+#include "psitabbar.h"
+
+#include <QApplication>
 #include <QHBoxLayout>
-#include <QToolButton>
+#include <QMenu>
 #include <QStackedLayout>
 #include <QStyle>
-#include <QApplication>
-#include <QMenu>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <QWidget>
 
 /**
  * Constructor
  */
-PsiTabWidget::PsiTabWidget(QWidget *parent)
-        : QWidget(parent) {
+PsiTabWidget::PsiTabWidget(QWidget *parent) : QWidget(parent)
+{
     tabsPosition_ = QTabWidget::East; // impossible => uninitialised state
-    tabBar_ = new PsiTabBar(this);
-    tabBar_->setUsesScrollButtons(true);
+    tabBar_       = new PsiTabBar(this);
+    bool multiRow = PsiOptions::instance()->getOption("options.ui.tabs.multi-rows", true).toBool();
+    bool currentIndexAlwaysAtBottom
+        = PsiOptions::instance()->getOption("options.ui.tabs.current-index-at-bottom", true).toBool();
+    tabBar_->setMultiRow(multiRow);
+    tabBar_->setUsesScrollButtons(!multiRow);
+    tabBar_->setCurrentIndexAlwaysAtBottom(currentIndexAlwaysAtBottom);
     layout_ = new QVBoxLayout(this);
     layout_->setMargin(0);
     layout_->setSpacing(0);
@@ -49,25 +55,27 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
     barLayout_->addWidget(tabBar_, 2);
     barLayout_->setAlignment(Qt::AlignLeft);
 
-    int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, tabBar_),
-        QApplication::globalStrut().width());
+    int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, nullptr, tabBar_),
+                           QApplication::globalStrut().width());
 
     downButton_ = new QToolButton(this);
-    downButton_->setMinimumSize(3,3);
+    downButton_->setMinimumSize(3, 3);
     downButton_->setFixedWidth(buttonwidth);
-    downButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+    downButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     menu_ = new QMenu(this);
     downButton_->setMenu(menu_);
     downButton_->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
     connect(menu_, SIGNAL(aboutToShow()), SLOT(menu_aboutToShow()));
-    connect(menu_, SIGNAL(triggered(QAction*)), SLOT(menu_triggered(QAction*)));
+    connect(menu_, SIGNAL(triggered(QAction *)), SLOT(menu_triggered(QAction *)));
     barLayout_->addWidget(downButton_);
+    barLayout_->setAlignment(downButton_, Qt::AlignBottom);
 
     closeButton_ = new QToolButton(this);
-    closeButton_->setMinimumSize(3,3);
+    closeButton_->setMinimumSize(3, 3);
     closeButton_->setFixedWidth(buttonwidth);
-    closeButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+    closeButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     barLayout_->addWidget(closeButton_);
+    barLayout_->setAlignment(closeButton_, Qt::AlignBottom);
     closeButton_->setText("x");
     downButton_->setArrowType(Qt::DownArrow);
     downButton_->setPopupMode(QToolButton::InstantPopup);
@@ -76,23 +84,26 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
     setTabPosition(QTabWidget::North);
     setLooks();
 
-    if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-close-buttons").toBool()){
-        tabBar_->setTabsClosable(false);
-    }
-    if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-buttons").toBool()){
+    if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-buttons").toBool()) {
         closeButton_->hide();
         downButton_->hide();
     }
+    if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-close-buttons").toBool()) {
+        tabBar_->setTabsClosable(false);
+    }
+
     connect(tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
     connect(tabBar_, SIGNAL(mouseMiddleClickTab(int)), SLOT(mouseMiddleClickTab(int)));
-    connect(tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
-    connect(tabBar_, SIGNAL( contextMenu(QContextMenuEvent*,int)), SLOT( tab_contextMenu(QContextMenuEvent*,int)));
-    connect(tabBar_, SIGNAL(tabMoved(int,int)),SLOT(widgetMoved(int,int)));
-    connect(tabBar_, SIGNAL(tabCloseRequested(int)),SIGNAL(tabCloseRequested(int)));
+    // TabBar::tabRemove must be handled before tab_currentChanged
+    connect(tabBar_, SIGNAL(currentChanged(int)), SLOT(tab_currentChanged(int)));
+    connect(tabBar_, SIGNAL(contextMenu(QContextMenuEvent *, int)), SLOT(tab_contextMenu(QContextMenuEvent *, int)));
     connect(closeButton_, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
+    connect(tabBar_, SIGNAL(tabMoved(int, int)), SLOT(widgetMoved(int, int)));
+    connect(tabBar_, SIGNAL(tabCloseRequested(int)), SIGNAL(tabCloseRequested(int)));
 }
 
-void PsiTabWidget::setCloseIcon(const QIcon& icon) {
+void PsiTabWidget::setCloseIcon(const QIcon &icon)
+{
     closeButton_->setIcon(icon);
     closeButton_->setText("");
 }
@@ -100,15 +111,15 @@ void PsiTabWidget::setCloseIcon(const QIcon& icon) {
 /**
  * Destructor
  */
-PsiTabWidget::~PsiTabWidget() {
-}
+PsiTabWidget::~PsiTabWidget() {}
 
 /**
  * Set the color of text on a tab.
  * \param tab Widget for the tab to change.
  * \param color Color to set text.
  */
-void PsiTabWidget::setTabTextColor( QWidget* tab, const QColor& color) {
+void PsiTabWidget::setTabTextColor(QWidget *tab, const QColor &color)
+{
     for (int i = 0; i < count(); i++) {
         if (widget(i) == tab) {
             tabBar_->setTabTextColor(i, color);
@@ -121,37 +132,32 @@ void PsiTabWidget::setTabTextColor( QWidget* tab, const QColor& color) {
  * \param index Widget to return.
  * \return Specified widget.
  */
-QWidget *PsiTabWidget::widget(int index) {
-    return widgets_[index];
-}
+QWidget *PsiTabWidget::widget(int index) { return widgets_[index]; }
 
-void PsiTabWidget::mouseDoubleClickTab(int tab) {
-    emit mouseDoubleClickTab(widget(tab));
-}
+void PsiTabWidget::mouseDoubleClickTab(int tab) { emit mouseDoubleClickTab(widget(tab)); }
 
-void PsiTabWidget::mouseMiddleClickTab(int tab) {
-    emit mouseMiddleClickTab(widget(tab));
-}
+void PsiTabWidget::mouseMiddleClickTab(int tab) { emit mouseMiddleClickTab(widget(tab)); }
 
 /**
  * Number of tabs/widgets
  */
-int PsiTabWidget::count() {
-    return tabBar_->count();
-}
+int PsiTabWidget::count() { return tabBar_->count(); }
 
 /**
  * Returns the widget of the current page
  */
-QWidget *PsiTabWidget::currentPage() {
+QWidget *PsiTabWidget::currentPage()
+{
     if (currentPageIndex() == -1)
-        return 0;
+        return nullptr;
     return widgets_[currentPageIndex()];
 }
 
-void PsiTabWidget::tab_currentChanged(int tab) {
+void PsiTabWidget::tab_currentChanged(int tab)
+{
     // qt 4.4 sends -1 i case of an empty QTabbar, ignore that case.
-    if (tab == -1) return;
+    if (tab == -1)
+        return;
     setCurrentPage(tab);
     emit currentChanged(currentPage());
 }
@@ -159,9 +165,7 @@ void PsiTabWidget::tab_currentChanged(int tab) {
 /**
  * Returns the index of the current page
  */
-int PsiTabWidget::currentPageIndex() {
-    return tabBar_->currentIndex();
-}
+int PsiTabWidget::currentPageIndex() { return tabBar_->currentIndex(); }
 
 /**
  * Add the Widget to the tab stack.
@@ -180,6 +184,7 @@ void PsiTabWidget::addTab(QWidget *widget, QString name, const QIcon &icon)
         tabBar_->addTab(name);
     setLooks();
     showPage(currentPage());
+    tabBar_->layoutTabs();
 }
 
 void PsiTabWidget::setLooks()
@@ -190,25 +195,34 @@ void PsiTabWidget::setLooks()
     }
 }
 
+void PsiTabWidget::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (tabBar_->multiRow()) {
+        tabBar_->layoutTabs();
+    }
+}
+
 /**
  * Selects the page for the specified widget.
  */
-void PsiTabWidget::showPage(QWidget* widget) {
+void PsiTabWidget::showPage(QWidget *widget)
+{
     for (int i = 0; i < count(); i++) {
         if (widgets_[i] == widget) {
             showPageDirectly(widget);
             tabBar_->setCurrentIndex(i);
         }
     }
-
 }
 
 /**
  * Selects the page for the specified widget (internal helper).
  */
-void PsiTabWidget::showPageDirectly(QWidget* widget) {
+void PsiTabWidget::showPageDirectly(QWidget *widget)
+{
     // FIXME move this back into showPage? should this be in the public interface?
-    for (int i=0; i < count(); i++) {
+    for (int i = 0; i < count(); i++) {
         if (widgets_[i] == widget) {
             stacked_->setCurrentWidget(widget);
             // currentChanged is handled by tabBar_
@@ -217,11 +231,33 @@ void PsiTabWidget::showPageDirectly(QWidget* widget) {
     }
 }
 
+void PsiTabWidget::setPagePinned(QWidget *page, bool pinned)
+{
+    foreach (QWidget *w, widgets_) {
+        if (w == page) {
+            tabBar_->setTabPinned(widgets_.indexOf(w), pinned);
+            showPageDirectly(page);
+            break;
+        }
+    }
+}
+
+bool PsiTabWidget::isPagePinned(QWidget *page)
+{
+    foreach (QWidget *w, widgets_) {
+        if (w == page) {
+            return tabBar_->isTabPinned(widgets_.indexOf(w));
+        }
+    }
+    return false;
+}
+
 /**
  * Removes the page for the specified widget.
  */
-void PsiTabWidget::removePage(QWidget* widget) {
-    for (int i=0; i < count(); i++) {
+void PsiTabWidget::removePage(QWidget *widget)
+{
+    for (int i = 0; i < count(); i++) {
         if (widgets_[i] == widget) {
             stacked_->removeWidget(widget);
             widgets_.remove(i);
@@ -234,7 +270,8 @@ void PsiTabWidget::removePage(QWidget* widget) {
 /**
  * Finds the index of the widget (or -1 if missing).
  */
-int PsiTabWidget::getIndex(QWidget* widget) {
+int PsiTabWidget::getIndex(QWidget *widget)
+{
     for (int i = 0; i < count(); i++) {
         if (widgets_[i] == widget) {
             return i;
@@ -246,7 +283,8 @@ int PsiTabWidget::getIndex(QWidget* widget) {
 /**
  * Set the text of the tab.
  */
-void PsiTabWidget::setTabText(QWidget* widget, const QString& label) {
+void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
+{
     int index = getIndex(widget);
     if (index == -1) {
         return;
@@ -266,17 +304,17 @@ void PsiTabWidget::setTabIcon(QWidget *widget, const QIcon &icon)
     tabBar_->setTabIcon(index, icon);
 }
 
-void PsiTabWidget::setCurrentPage(int index) {
+void PsiTabWidget::setCurrentPage(int index)
+{
     if (index >= 0 && index < count()) {
         showPage(widgets_[index]);
     }
 }
 
-void PsiTabWidget::removeCurrentPage() {
-    removePage(currentPage());
-}
+void PsiTabWidget::removeCurrentPage() { removePage(currentPage()); }
 
-void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
+void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos)
+{
     if (tabsPosition_ == pos) {
         return;
     }
@@ -288,8 +326,8 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
     layout_->removeItem(stacked_);
 
     // addLayout sets parent and complains if it's already set
-    barLayout_->setParent(0);
-    stacked_->setParent(0);
+    barLayout_->setParent(nullptr);
+    stacked_->setParent(nullptr);
     if (tabsPosition_ == QTabWidget::North) {
         layout_->addLayout(barLayout_);
         layout_->addLayout(stacked_);
@@ -299,44 +337,49 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
     }
 }
 
-void PsiTabWidget::menu_aboutToShow() {
+void PsiTabWidget::menu_aboutToShow()
+{
     clearMenu(menu_);
     bool vis = false;
     for (int i = 0; i < tabBar_->count(); i++) {
-        QRect r = tabBar_->tabRect(i);
-        bool newvis = tabBar_->rect().contains(r);
+        QRect r      = tabBar_->tabRect(i);
+        bool  newvis = tabBar_->rect().contains(r);
         if (newvis != vis) {
-            menu_->addSeparator ();
+            menu_->addSeparator();
             vis = newvis;
         }
-        menu_->addAction(tabBar_->tabText(i))->setData(i+1);
+        menu_->addAction(tabBar_->tabText(i))->setData(i + 1);
     }
     emit aboutToShowMenu(menu_);
 }
 
-void PsiTabWidget::menu_triggered(QAction *act) {
+void PsiTabWidget::menu_triggered(QAction *act)
+{
     int idx = act->data().toInt();
     if (idx <= 0 || idx > tabBar_->count()) {
         // out of range
         // emit signal?
     } else {
-        setCurrentPage(idx-1);
+        setCurrentPage(idx - 1);
     }
 }
 
-void PsiTabWidget::tab_contextMenu( QContextMenuEvent * event, int tab) {
+void PsiTabWidget::tab_contextMenu(QContextMenuEvent *event, int tab)
+{
     emit tabContextMenu(tab, tabBar_->mapToGlobal(event->pos()), event);
 }
 
-QWidget* PsiTabWidget::page(int index) {
-    Q_ASSERT(index >=0 && index < count());
+QWidget *PsiTabWidget::page(int index)
+{
+    Q_ASSERT(index >= 0 && index < count());
     return widgets_[index];
 }
 
 /**
  * Show/hide the tab bar of this widget
  */
-void PsiTabWidget::setTabBarShown(bool shown) {
+void PsiTabWidget::setTabBarShown(bool shown)
+{
     if (shown && tabBar_->isHidden()) {
         tabBar_->show();
     } else if (!shown && !tabBar_->isHidden()) {
@@ -347,7 +390,8 @@ void PsiTabWidget::setTabBarShown(bool shown) {
 /**
  * Show/hide the menu and close buttons that appear next to the tab bar
  */
-void PsiTabWidget::setTabButtonsShown(bool shown) {
+void PsiTabWidget::setTabButtonsShown(bool shown)
+{
     if (shown && downButton_->isHidden()) {
         downButton_->show();
         closeButton_->show();
@@ -360,25 +404,23 @@ void PsiTabWidget::setTabButtonsShown(bool shown) {
 /**
  * Enable/disable dragging of tabs
  */
-void PsiTabWidget::setDragsEnabled(bool enabled) {
-    ((PsiTabBar *)tabBar_)->setDragsEnabled(enabled);
-}
+void PsiTabWidget::setDragsEnabled(bool enabled) { static_cast<PsiTabBar *>(tabBar_)->setDragsEnabled(enabled); }
+
+void PsiTabWidget::setTabBarUpdateEnabled(bool b) { tabBar_->setUpdateEnabled(b); }
 
 void PsiTabWidget::widgetMoved(int from, int to)
 {
     if (from > to) {
         stacked_->removeWidget(widgets_[from]);
         widgets_.insert(to, 1, widgets_[from]);
-        widgets_.remove(from+1);
-        stacked_->insertWidget(to,widgets_[to]);
-    }
-    else {
+        widgets_.remove(from + 1);
+        stacked_->insertWidget(to, widgets_[to]);
+    } else {
         stacked_->removeWidget(widgets_[from]);
-        widgets_.insert(to+1, 1, widgets_[from]);
-        widgets_.remove(from,1);
-        stacked_->insertWidget(to,widgets_[to]);
+        widgets_.insert(to + 1, 1, widgets_[from]);
+        widgets_.remove(from, 1);
+        stacked_->insertWidget(to, widgets_[to]);
     }
 
     emit currentChanged(currentPage());
-
 };

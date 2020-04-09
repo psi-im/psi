@@ -13,39 +13,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+#include "adhoc_fileserver.h"
+
+#include "psiaccount.h"
+#include "xmpp_xdata.h"
 
 #include <QDir>
 #include <QFileInfo>
 
-#include "psiaccount.h"
-#include "adhoc_fileserver.h"
-#include "xmpp_xdata.h"
-
 using namespace XMPP;
 
-bool AHFileServer::isAllowed(const Jid& j) const
-{
-    return manager()->account()->jid().compare(j,false);
-}
+bool AHFileServer::isAllowed(const Jid &j) const { return manager()->account()->jid().compare(j, false); }
 
-AHCommand AHFileServer::execute(const AHCommand& c, const Jid& requester)
+AHCommand AHFileServer::execute(const AHCommand &c, const Jid &requester)
 {
     // Extract the file
     QString file;
     if (c.hasData()) {
-        QString fileName, curDir;
+        QString          fileName, curDir;
         XData::FieldList fl = c.data().fields();
-        for (unsigned int i=0; i < fl.count(); i++) {
+        for (unsigned int i = 0; i < fl.count(); i++) {
             if (fl[i].var() == "file" && !(fl[i].value().isEmpty())) {
                 file = fl[i].value().first();
             }
         }
-    }
-    else {
+    } else {
         file = QDir::currentDirPath();
     }
 
@@ -64,13 +60,14 @@ AHCommand AHFileServer::execute(const AHCommand& c, const Jid& requester)
         files_field.setRequired(true);
 
         XData::Field::OptionList file_options;
-         QDir d(file);
-        //d.setFilter(QDir::Files|QDir::Hidden|QDir::NoSymLinks);
+        QDir                     d(file);
+        // d.setFilter(QDir::Files|QDir::Hidden|QDir::NoSymLinks);
         QStringList l = d.entryList();
-        for (QStringList::Iterator it = l.begin(); it != l.end(); ++it ) {
+        for (QStringList::Iterator it = l.begin(); it != l.end(); ++it) {
             XData::Field::Option file_option;
-            QFileInfo fi(QDir(file).filePath(*it));
-            file_option.label = *it + (fi.isDir() ? QString(" [DIR]") : QString(" (%1 bytes)").arg(QString::number(fi.size())));
+            QFileInfo            fi(QDir(file).filePath(*it));
+            file_option.label
+                = *it + (fi.isDir() ? QString(" [DIR]") : QString(" (%1 bytes)").arg(QString::number(fi.size())));
             file_option.value = QDir(file).absFilePath(*it);
             file_options += file_option;
         }
@@ -80,10 +77,9 @@ AHCommand AHFileServer::execute(const AHCommand& c, const Jid& requester)
         form.setFields(fields);
 
         return AHCommand::formReply(c, form);
-    }
-    else {
+    } else {
         QStringList l(file);
-        manager()->account()->sendFiles(requester,l,true);
+        manager()->account()->sendFiles(requester, l, true);
         return AHCommand::completedReply(c);
     }
 }

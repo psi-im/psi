@@ -3,14 +3,13 @@
 
 class SoundAccessingHost;
 
-class SoundAccessor
-{
+class SoundAccessor {
 public:
     virtual ~SoundAccessor() {}
 
-    virtual void setSoundAccessingHost(SoundAccessingHost* host) = 0;
+    virtual void setSoundAccessingHost(SoundAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(SoundAccessor, "org.psi-im.SoundAccessor/0.1");
 
-#endif
+#endif // SOUNDACCESSOR_H

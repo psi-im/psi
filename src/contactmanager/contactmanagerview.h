@@ -1,6 +1,6 @@
 /*
  * contactmanagerview.h
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,16 +22,15 @@
 
 #include <QTableView>
 
-class ContactManagerView : public QTableView
-{
+class ContactManagerView : public QTableView {
     Q_OBJECT
 public:
-    ContactManagerView( QWidget * parent = 0 );
+    ContactManagerView(QWidget *parent = nullptr);
     void init();
 
 protected:
-    void contextMenuEvent( QContextMenuEvent * e );
-    void keyPressEvent( QKeyEvent * e );
+    void contextMenuEvent(QContextMenuEvent *e);
+    void keyPressEvent(QKeyEvent *e);
 };
 
 #endif // CONTACTMANAGERVIEW_H

@@ -1,6 +1,6 @@
 /*
  * contactmanagerview.cpp
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,23 +13,19 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QMenu>
-#include <QContextMenuEvent>
-#include <QHeaderView>
-
 #include "contactmanagerview.h"
+
 #include "psiiconset.h"
 
-ContactManagerView::ContactManagerView( QWidget * parent )
-        : QTableView(parent)
-{
+#include <QContextMenuEvent>
+#include <QHeaderView>
+#include <QMenu>
 
-}
+ContactManagerView::ContactManagerView(QWidget *parent) : QTableView(parent) {}
 
 void ContactManagerView::init()
 {
@@ -37,51 +33,51 @@ void ContactManagerView::init()
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     horizontalHeader()->setStretchLastSection(true);
     horizontalHeader()->setSortIndicator(-1, Qt::AscendingOrder);
-    verticalHeader()->setDefaultAlignment( Qt::AlignHCenter );
+    verticalHeader()->setDefaultAlignment(Qt::AlignHCenter);
 
     connect(horizontalHeader(), SIGNAL(sectionClicked(int)), this, SLOT(sortByColumn(int)));
 }
 
-void ContactManagerView::contextMenuEvent( QContextMenuEvent * e )
+void ContactManagerView::contextMenuEvent(QContextMenuEvent *e)
 {
-    QMenu *popup = new QMenu(this);
+    QMenu *          popup = new QMenu(this);
     QList<QAction *> actions;
-    actions <<new QAction(IconsetFactory::icon("psi/cm_check").icon(), tr("Check"), popup)
-            <<new QAction(IconsetFactory::icon("psi/cm_uncheck").icon(), tr("Uncheck"), popup)
-            <<new QAction(IconsetFactory::icon("psi/cm_invertcheck").icon(), tr("Invert"), popup);
+    actions << new QAction(IconsetFactory::icon("psi/cm_check").icon(), tr("Check"), popup)
+            << new QAction(IconsetFactory::icon("psi/cm_uncheck").icon(), tr("Uncheck"), popup)
+            << new QAction(IconsetFactory::icon("psi/cm_invertcheck").icon(), tr("Invert"), popup);
     popup->addActions(actions);
     QAction *result = popup->exec(e->globalPos());
-    int iresult;
+    int      iresult;
     if (result) {
         iresult = actions.indexOf(result);
         const QVariant value(2);
-        foreach(const QModelIndex &check, selectionModel()->selectedRows(0)) {
+        foreach (const QModelIndex &check, selectionModel()->selectedRows(0)) {
             switch (iresult) {
-                case 0: //check
-                    model()->setData(check, 2);
-                    break;
-                case 1: //uncheck
-                    model()->setData(check, 0);
-                    break;
-                case 2: //invert
-                    model()->setData(check, 3);
-                    break;
+            case 0: // check
+                model()->setData(check, 2);
+                break;
+            case 1: // uncheck
+                model()->setData(check, 0);
+                break;
+            case 2: // invert
+                model()->setData(check, 3);
+                break;
             }
         }
     }
     delete popup;
 }
 
-void ContactManagerView::keyPressEvent( QKeyEvent * e )
+void ContactManagerView::keyPressEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Space) {
-        int data = 2; //check
+        int data = 2; // check
         if (e->modifiers() & Qt::ControlModifier) {
-            data = 3; //invert
+            data = 3; // invert
         } else if (e->modifiers() & Qt::ShiftModifier) {
-            data = 0; //uncheck
+            data = 0; // uncheck
         }
-        foreach(const QModelIndex &check, selectionModel()->selectedRows(0)) {
+        foreach (const QModelIndex &check, selectionModel()->selectedRows(0)) {
             model()->setData(check, data);
         }
         e->accept();

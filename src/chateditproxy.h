@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,27 +22,26 @@
 
 #include <QWidget>
 
-class QTextEdit;
-class QLayout;
 class ChatEdit;
+class QLayout;
+class QTextEdit;
 
-class ChatEditProxy : public QWidget
-{
+class ChatEditProxy : public QWidget {
     Q_OBJECT
 public:
-    ChatEditProxy(QWidget* parent);
+    ChatEditProxy(QWidget *parent);
 
     /**
      * Returns encapsulated QTextEdit widget.
      */
-    ChatEdit* chatEdit() const { return textEdit_; }
+    ChatEdit *chatEdit() const { return textEdit_; }
 
 signals:
     /**
      * Emitted when internal QTextEdit gets replaced with
      * another one.
      */
-    void textEditCreated(QTextEdit* textEdit);
+    void textEditCreated(QTextEdit *textEdit);
 
 protected:
     /**
@@ -56,13 +54,13 @@ public slots:
     void optionsChanged();
 
 private:
-    virtual ChatEdit* createTextEdit();
-    void moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const;
-    void updateLayout();
+    virtual ChatEdit *createTextEdit();
+    void              moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const;
+    void              updateLayout();
 
-    bool lineEditEnabled_;
-    ChatEdit* textEdit_;
-    QLayout* layout_;
+    bool      lineEditEnabled_;
+    ChatEdit *textEdit_;
+    QLayout * layout_;
 };
 
-#endif
+#endif // CHATEDITPROXY_H

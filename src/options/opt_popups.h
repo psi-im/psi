@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,18 +22,17 @@
 
 #include "optionstab.h"
 
-class PsiCon;
 class PopupManager;
+class PsiCon;
 
-class OptionsTabPopups : public OptionsTab
-{
+class OptionsTabPopups : public OptionsTab {
     Q_OBJECT
 public:
     OptionsTabPopups(QObject *parent);
 
     QWidget *widget();
-    void applyOptions();
-    void restoreOptions();
+    void     applyOptions();
+    void     restoreOptions();
 
     virtual bool stretchable() const { return true; }
 
@@ -42,8 +40,8 @@ public slots:
     virtual void setData(PsiCon *psi, QWidget *);
 
 private:
-    QWidget *w;
-    PopupManager* popup_;
+    QWidget *     w;
+    PopupManager *popup_;
 };
 
-#endif
+#endif // OPT_POPUPS_H

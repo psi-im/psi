@@ -13,36 +13,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "accountlabel.h"
+
 #include "psiaccount.h"
 
-AccountLabel::AccountLabel(QWidget* parent)
-    : QLabel(parent)
-    , showJid_(true)
+AccountLabel::AccountLabel(QWidget *parent) : QLabel(parent), showJid_(true)
 {
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
 }
 
-AccountLabel::~AccountLabel()
-{
-}
+AccountLabel::~AccountLabel() {}
 
-PsiAccount* AccountLabel::account() const
-{
-    return account_;
-}
+PsiAccount *AccountLabel::account() const { return account_; }
 
-bool AccountLabel::showJid() const
-{
-    return showJid_;
-}
+bool AccountLabel::showJid() const { return showJid_; }
 
-void AccountLabel::setAccount(PsiAccount* account)
+void AccountLabel::setAccount(PsiAccount *account)
 {
     account_ = account;
     if (account) {

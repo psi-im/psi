@@ -4,7 +4,7 @@
  *
  * Originally developed from:
  * wbdlg.h - dialog for handling chats
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,32 +17,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef WBDLG_H
 #define WBDLG_H
 
-#include <QToolBar>
-#include <QLabel>
-#include <QLineEdit>
-#include <QContextMenuEvent>
-#include <QShowEvent>
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <QCloseEvent>
-#include <QInputDialog>
-// #include <QMessageBoxEx>
-
 #include "advwidget.h"
-#include "im.h"
 #include "common.h"
-#include "wbwidget.h"
 #include "iconlabel.h"
+#include "im.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "wbwidget.h"
+
+#include <QCloseEvent>
+#include <QContextMenuEvent>
+#include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLineEdit>
+// #include <QMessageBoxEx>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QToolBar>
 
 class AccountLabel;
 
@@ -59,24 +58,23 @@ using namespace XMPP;
  *  \sa WbManager
  *  \sa WbWidget
  */
-class WbDlg : public AdvancedWidget<QWidget>
-{
+class WbDlg : public AdvancedWidget<QWidget> {
     Q_OBJECT
 
 public:
     /*! \brief Constructor.
-    *  Creates a new dialog for the specified jid and session.
-    */
-    WbDlg(SxeSession* session, PsiAccount* pa);
+     *  Creates a new dialog for the specified jid and session.
+     */
+    WbDlg(SxeSession *session, PsiAccount *pa);
     /*! \brief Destructor.
-    *  Emits sessionEnded()
-    */
+     *  Emits sessionEnded()
+     */
     ~WbDlg();
 
     /*! \brief Returns the session identifier.*/
-    SxeSession* session() const;
+    SxeSession *session() const;
     /*! \brief Returns whether further edits to the session are allowed.*/
-        bool allowEdits() const;
+    bool allowEdits() const;
     /*! \brief Sets whether further edits to the session are allowed.*/
     void setAllowEdits(bool);
 
@@ -92,7 +90,7 @@ public slots:
 
 signals:
     /*! \brief Signals that the session ended and the dialog is to be deleted.*/
-    void sessionEnded(WbDlg* dialog);
+    void sessionEnded(WbDlg *dialog);
 
 protected:
     // reimplemented
@@ -154,8 +152,8 @@ private:
     /*! \brief The menu for widths.*/
     QMenu *menu_widths_;
     /*! \brief The menu for modes.*/
-    QMenu *menu_modes_;
-    QAction *act_color_, *act_fill_;
+    QMenu *     menu_modes_;
+    QAction *   act_color_, *act_fill_;
     IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
     /*! \brief True if the target is a groupchat.*/
     bool groupChat_;
@@ -170,4 +168,4 @@ private:
     QTimer *selfDestruct_;
 };
 
-#endif
+#endif // WBDLG_H

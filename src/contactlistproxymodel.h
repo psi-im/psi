@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,13 +24,12 @@
 
 class PsiContactList;
 
-class ContactListProxyModel : public QSortFilterProxyModel
-{
+class ContactListProxyModel : public QSortFilterProxyModel {
     Q_OBJECT
 public:
-    ContactListProxyModel(QObject* parent);
+    ContactListProxyModel(QObject *parent);
 
-    void setSourceModel(QAbstractItemModel* model);
+    void setSourceModel(QAbstractItemModel *model);
 
 public slots:
     void updateSorting();
@@ -40,8 +38,8 @@ signals:
     void recalculateSize();
 
 protected:
-    bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
-    bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const;
+    bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
     bool showOffline() const;
     bool showSelf() const;
@@ -52,4 +50,4 @@ private slots:
     void filterParametersChanged();
 };
 
-#endif
+#endif // CONTACTLISTPROXYMODEL_H

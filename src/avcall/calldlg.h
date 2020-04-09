@@ -12,7 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -21,20 +21,18 @@
 
 #include <QDialog>
 
-namespace XMPP
-{
-    class Jid;
+class AvCall;
+class PsiAccount;
+
+namespace XMPP {
+class Jid;
 }
 
-class PsiAccount;
-class AvCall;
-
-class CallDlg : public QDialog
-{
+class CallDlg : public QDialog {
     Q_OBJECT
 
 public:
-    CallDlg(PsiAccount *pa, QWidget *parent = 0);
+    CallDlg(PsiAccount *pa, QWidget *parent = nullptr);
     ~CallDlg();
 
     void setOutgoing(const XMPP::Jid &jid);
@@ -45,4 +43,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // CALLDLG_H

@@ -13,35 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef JIDUTIL
-#define JIDUTIL
+#ifndef JIDUTIL_H
+#define JIDUTIL_H
 
 class QString;
+
 namespace XMPP {
-    class Jid;
+class Jid;
 }
 
-class JIDUtil
-{
+class JIDUtil {
 public:
     static QString defaultDomain();
-    static void setDefaultDomain(QString domain);
+    static void    setDefaultDomain(QString domain);
 
-    static QString accountToString(const XMPP::Jid&, bool withResource);
-    static XMPP::Jid accountFromString(const QString&);
-    static QString toString(const XMPP::Jid&, bool withResource);
-    static XMPP::Jid fromString(const QString&);
-    static QString encode(const QString &jid);
-    static QString decode(const QString &jid);
-    static QString nickOrJid(const QString&, const QString&);
+    static QString   accountToString(const XMPP::Jid &, bool withResource);
+    static XMPP::Jid accountFromString(const QString &);
+    static QString   toString(const XMPP::Jid &, bool withResource);
+    static XMPP::Jid fromString(const QString &);
+    static QString   encode(const QString &jid);
+    static QString   decode(const QString &jid);
+    static QString   nickOrJid(const QString &, const QString &);
 
-    static QString encode822(const QString&);
-    static QString decode822(const QString&);
+    static QString encode822(const QString &);
+    static QString decode822(const QString &);
 };
 
-#endif
+#endif // JIDUTIL_H

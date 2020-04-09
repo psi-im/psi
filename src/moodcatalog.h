@@ -13,54 +13,51 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef MOODCATALOG_H
 #define MOODCATALOG_H
 
+#include "mood.h"
+
 #include <QList>
 #include <QObject>
 
-#include "mood.h"
-
 class QString;
 
-class MoodCatalog : public QObject
-{
+class MoodCatalog : public QObject {
 public:
     class Entry {
-        public:
-            Entry();
-            Entry(Mood::Type, const QString&, const QString&);
-            Mood::Type type() const;
-            const QString& value() const;
-            const QString& text() const;
-            bool isNull() const;
-            bool operator<(const MoodCatalog::Entry &m) const;
+    public:
+        Entry();
+        Entry(Mood::Type, const QString &, const QString &);
+        Mood::Type     type() const;
+        const QString &value() const;
+        const QString &text() const;
+        bool           isNull() const;
+        bool           operator<(const MoodCatalog::Entry &m) const;
 
-        private:
-            Mood::Type type_;
-            QString value_;
-            QString text_;
+    private:
+        Mood::Type type_;
+        QString    value_;
+        QString    text_;
     };
 
-    static MoodCatalog* instance();
+    static MoodCatalog *instance();
 
     Entry findEntryByType(Mood::Type) const;
-    Entry findEntryByValue(const QString&) const;
-    Entry findEntryByText(const QString& text) const;
+    Entry findEntryByValue(const QString &) const;
+    Entry findEntryByText(const QString &text) const;
 
-    const QList<Entry>& entries() const;
+    const QList<Entry> &entries() const;
 
 private:
     MoodCatalog();
 
-    QList<Entry> entries_;
-    static MoodCatalog* instance_;
-
+    QList<Entry>        entries_;
+    static MoodCatalog *instance_;
 };
 
-#endif
+#endif // MOODCATALOG_H

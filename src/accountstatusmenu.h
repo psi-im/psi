@@ -1,18 +1,18 @@
 #ifndef ACCOUNTSTATUSMENU_H
 #define ACCOUNTSTATUSMENU_H
 
-#include "statusmenu.h"
 #include "psiaccount.h"
 #include "psicon.h"
+#include "statusmenu.h"
 
 class AccountStatusMenu : public StatusMenu {
     Q_OBJECT
 private:
-    PsiAccount* account;
+    PsiAccount *account;
 
 public:
-    AccountStatusMenu(QWidget* parent, PsiCon* _psi, PsiAccount* _account)
-        : StatusMenu(parent, _psi), account(_account) {};
+    AccountStatusMenu(QWidget *parent, PsiCon *_psi, PsiAccount *_account) :
+        StatusMenu(parent, _psi), account(_account) {};
 
     void fill();
 
@@ -28,7 +28,6 @@ private slots:
 
 signals:
     void reconnectActivated();
-
 };
 
 #endif // ACCOUNTSTATUSMENU_H

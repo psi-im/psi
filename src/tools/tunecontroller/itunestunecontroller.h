@@ -1,13 +1,12 @@
 #ifndef ITUNESTUNECONTROLLER_H
 #define ITUNESTUNECONTROLLER_H
 
-#include <QString>
-#include <CoreFoundation/CoreFoundation.h>
-
 #include "tunecontrollerinterface.h"
 
-class ITunesController : public TuneController
-{
+#include <CoreFoundation/CoreFoundation.h>
+#include <QString>
+
+class ITunesController : public TuneController {
 public:
     ITunesController();
     ~ITunesController();
@@ -15,8 +14,8 @@ public:
     virtual Tune currentTune() const;
 
 private:
-    static void iTunesCallback(CFNotificationCenterRef,void*,CFStringRef,const void*, CFDictionaryRef info);
-    Tune currentTune_;
+    static void iTunesCallback(CFNotificationCenterRef, void *, CFStringRef, const void *, CFDictionaryRef info);
+    Tune        currentTune_;
 };
 
-#endif
+#endif // ITUNESTUNECONTROLLER_H

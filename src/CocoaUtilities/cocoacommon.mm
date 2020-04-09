@@ -1,6 +1,6 @@
 /*
  * cocoacommon.mm - common utilities for cocoa framework
- * Copyright (C) 2010 Tobias Markmann
+ * Copyright (C) 2010  Tobias Markmann
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,17 +13,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "cocoacommon.h"
+
 #include <Cocoa/Cocoa.h>
 
-int macosCommonFirstWeekday() {
-	int firstDay;
-	NSCalendar *cal = [NSCalendar currentCalendar];
-	firstDay = ([cal firstWeekday] + 5) % 7 + 1;
-	return firstDay;
+int macosCommonFirstWeekday()
+{
+    int         firstDay;
+    NSCalendar *cal = [NSCalendar currentCalendar];
+    firstDay        = ([cal firstWeekday] + 5) % 7 + 1;
+    return firstDay;
 }

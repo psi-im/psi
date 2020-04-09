@@ -1,0 +1,141 @@
+{
+    "app-id": "con.psi_plus.Psi_plus",
+    "runtime": "org.kde.Platform",
+    "runtime-version": "5.12",
+    "sdk": "org.kde.Sdk",
+    "command": "psi-plus",
+    "rename-desktop-file": "psi-plus.desktop",
+    "rename-appdata-file": "psi-plus.appdata.xml",
+    "rename-icon": "psi-plus",
+    "finish-args": [
+        "--socket=x11",
+        "--socket=wayland",
+        "--socket=pulseaudio",
+        "--socket=system-bus",
+        "--socket=session-bus",
+        "--share=ipc",
+        "--share=network",
+        "--filesystem=xdg-documents",
+        "--filesystem=xdg-download",
+        "--filesystem=xdg-music",
+        "--filesystem=xdg-pictures",
+        "--filesystem=xdg-videos",
+        "--talk-name=org.kde.StatusNotifierWatcher",
+        "--talk-name=org.freedesktop.Notifications",
+        "--device=dri"],
+    "build-options": {
+        "cflags": "-O2 -g",
+        "cxxflags": "-O2 -g"
+    },
+    "cleanup": [
+        "/cache",
+        "/man",
+        "/share/man",
+        "/lib/systemd",
+        "*.la", "*.a"
+    ],
+    "modules": [
+        {
+            "name": "qca",
+            "buildsystem": "cmake",
+            "config-opts": ["-DBUILD_TOOLS=OFF", "-DBUILD_TESTS=OFF", "-DBUILD_PLUGINS=ossl;gnupg"],
+            "build-options": {"cxxflags": "-O2 -g"},
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://download.kde.org/stable/qca/2.2.1/qca-2.2.1.tar.xz",
+                    "sha256": "d716d2d8e3ed8d95bbdb061f03081d7d032206f746a30a4d29d72196f50e7b02"
+                }
+            ]
+        },
+        {
+           "name": "libidn",
+           "sources": [
+               {
+                   "type": "archive",
+                   "url": "https://ftp.gnu.org/gnu/libidn/libidn-1.35.tar.gz",
+                   "sha256": "f11af1005b46b7b15d057d7f107315a1ad46935c7fcdf243c16e46ec14f0fe1e"
+               }
+           ]
+        },
+        {
+            "name": "libgpg-error",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.28.tar.bz2",
+                    "sha256": "3edb957744905412f30de3e25da18682cbe509541e18cd3b8f9df695a075da49"
+                }
+            ]
+        },
+        {
+            "name": "libgcrypt",
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.8.2.tar.bz2",
+                    "sha256": "c8064cae7558144b13ef0eb87093412380efa16c4ee30ad12ecb54886a524c07"
+                }
+            ]
+        },
+        {
+            "name": "libotr",
+            "config-opts": ["--with-pic"],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://otr.cypherpunks.ca/libotr-4.1.1.tar.gz",
+                    "sha256": "8b3b182424251067a952fb4e6c7b95a21e644fbb27fbd5f8af2b2ed87ca419f5"
+                }
+            ]
+        },
+        {
+            "name": "tidy-html",
+            "buildsystem": "simple",
+            "build-commands": [
+                "cd build/cmake && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app ../.. ",
+                "cd build/cmake && make && make install"],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/htacg/tidy-html5/archive/5.6.0.zip",
+                    "sha256": "53e71d63eabdf4d9a29c7b8d242b008b185556ad6761d7f1bceebc8400715a88"
+                }
+            ]
+        },
+        {
+            "name": "libsignal-protocol-c",
+            "buildsystem": "cmake",
+            "config-opts": ["-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=0", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON", "-DCMAKE_INSTALL_PREFIX=/app"],
+             "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/signalapp/libsignal-protocol-c.git"
+                }
+             ]
+        },
+        {
+            "name": "psi-plus",
+            "buildsystem": "cmake",
+            "builddir": true,
+            "config-opts": ["-DENABLE_PLUGINS=ON", "-DBUILD_DEV_PLUGINS=ON"],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/psi-plus/psi-plus-snapshots.git"
+                },
+                {
+                    "dest": "psi-plus-l10n",
+                    "type": "git",
+                    "url": "https://github.com/psi-plus/psi-plus-l10n.git"
+                },
+                {
+                    "type": "shell",
+                    "commands": [
+                        "mkdir -p ./translations",
+                        "cp -R psi-plus-l10n/translations ./translations"]
+                }
+            ]
+        }
+    ]
+}

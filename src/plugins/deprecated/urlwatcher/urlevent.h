@@ -13,34 +13,28 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#ifndef _URLEVENT_H_
-#define _URLEVENT_H_
-
-
-
-
+#ifndef URLEVENT_H
+#define URLEVENT_H
 
 #include "QtCore"
 
-class URLEvent : public QObject
-{
+class URLEvent : public QObject {
     Q_OBJECT
 public:
-    URLEvent(QString sender, QString url, QObject *parent = 0): QObject(parent)
+    URLEvent(QString sender, QString url, QObject *parent = 0) : QObject(parent)
     {
-        sender_=sender;
-        url_=url;
-        viewed_=false;
+        sender_ = sender;
+        url_    = url;
+        viewed_ = false;
     }
-    ~URLEvent(){};
+    ~URLEvent() {};
 
     QString sender_;
     QString url_;
-    bool viewed_;
+    bool    viewed_;
 };
 
-#endif /* _URLEVENT_H_ */
+#endif // URLEVENT_H

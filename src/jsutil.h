@@ -13,21 +13,19 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef JSUTIL
-#define JSUTIL
+#ifndef JSUTIL_H
+#define JSUTIL_H
+
+#include <QVariantMap>
 
 class QString;
 class QVariant;
 
-#include <QVariantMap>
-
-class JSUtil
-{
+class JSUtil {
 public:
     static QString variant2js(const QVariant &);
     /** Escapes " and \n  (for JS evaluation) */
@@ -41,5 +39,4 @@ public:
     }
 };
 
-
-#endif
+#endif // JSUTIL_H

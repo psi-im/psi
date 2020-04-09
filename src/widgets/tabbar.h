@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,11 +21,10 @@
 
 #include <QTabBar>
 
-class TabBar : public QTabBar
-{
+class TabBar : public QTabBar {
     Q_OBJECT
 public:
-    explicit TabBar(QWidget *parent = 0);
+    explicit TabBar(QWidget *parent = nullptr);
     ~TabBar();
 
     void layoutTabs();
@@ -42,20 +40,20 @@ public:
     bool currentIndexAlwaysAtBottom() const;
 
     // reimplemented
-    QSize minimumSizeHint() const;
-    QSize sizeHint() const;
-    QSize tabSizeHint(int index) const;
-    void setTabsClosable(bool b);
-    bool tabsClosable() const;
-    void setCurrentIndex(int index);
-    void setTabText(int index, const QString &text);
-    void setTabTextColor(int index, const QColor &color);
-    void setTabIcon(int index, const QIcon &icon);
-    QRect tabRect(int index) const;
+    QSize    minimumSizeHint() const;
+    QSize    sizeHint() const;
+    QSize    tabSizeHint(int index) const;
+    void     setTabsClosable(bool b);
+    bool     tabsClosable() const;
+    void     setCurrentIndex(int index);
+    void     setTabText(int index, const QString &text);
+    void     setTabTextColor(int index, const QColor &color);
+    void     setTabIcon(int index, const QIcon &icon);
+    QRect    tabRect(int index) const;
     QWidget *tabButton(int index, ButtonPosition position) const;
-    int tabAt(const QPoint &position) const;
-    bool eventFilter(QObject *watched, QEvent *event);
-    void setUpdateEnabled(bool b);
+    int      tabAt(const QPoint &position) const;
+    bool     eventFilter(QObject *watched, QEvent *event);
+    void     setUpdateEnabled(bool b);
 
 protected:
     // reimplemented

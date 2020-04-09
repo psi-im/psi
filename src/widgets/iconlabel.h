@@ -12,39 +12,38 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ICONLABEL_H
 #define ICONLABEL_H
 
-#include <QWidget>
 #include <QLabel>
+#include <QWidget>
 
 class PsiIcon;
 
-class IconLabel : public QLabel
-{
+class IconLabel : public QLabel {
     Q_OBJECT
-    Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
+    Q_PROPERTY(QString psiIconName READ psiIconName WRITE setPsiIcon)
 
 public:
     IconLabel(QWidget *parent = nullptr);
     ~IconLabel();
 
-    const PsiIcon *psiIcon () const;
-    QString psiIconName () const;
-    void setPsiIcon (const PsiIcon *, bool copyIcon = true);
-    void setPsiIcon (const QString &);
+    const PsiIcon *psiIcon() const;
+    QString        psiIconName() const;
+    void           setPsiIcon(const PsiIcon *, bool copyIcon = true);
+    void           setPsiIcon(const QString &);
 
     void setScaledContents(int width, int height);
 
     class Private;
+
 private:
     Private *d;
 };
 
-#endif
+#endif // ICONLABEL_H

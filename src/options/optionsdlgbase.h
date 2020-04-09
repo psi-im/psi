@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,23 +21,25 @@
 #define OPTIONSDLGBASE_H
 
 #include "ui_ui_options.h"
+
 #include <QDialog>
+#include <QKeyEvent>
 
 class OptionsTab;
 class PsiCon;
 
-class OptionsDlgBase : public QDialog, public Ui::OptionsUI
-{
+class OptionsDlgBase : public QDialog, public Ui::OptionsUI {
     Q_OBJECT
 public:
-    OptionsDlgBase(PsiCon *, QWidget *parent = 0);
+    OptionsDlgBase(PsiCon *, QWidget *parent = nullptr);
     ~OptionsDlgBase();
 
     PsiCon *psi() const;
-    void openTab(const QString& id);
+    void    openTab(const QString &id);
 
 protected:
-    void setTabs(QList<OptionsTab*> tabs); /* can be called from constructor */
+    void setTabs(QList<OptionsTab *> tabs); /* can be called from constructor */
+    void keyPressEvent(QKeyEvent *e);
 
 signals:
     void applyOptions();
@@ -50,11 +51,12 @@ private slots:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;
 
-    QPushButton* pb_apply;
+    QPushButton *pb_apply;
 };
 
-#endif
+#endif // OPTIONSDLGBASE_H

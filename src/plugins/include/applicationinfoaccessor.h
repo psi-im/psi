@@ -3,13 +3,11 @@
 
 class ApplicationInfoAccessingHost;
 
-class ApplicationInfoAccessor
-{
+class ApplicationInfoAccessor {
 public:
     virtual ~ApplicationInfoAccessor() {}
 
-    virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) = 0;
-
+    virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost *host) = 0;
 };
 
 Q_DECLARE_INTERFACE(ApplicationInfoAccessor, "org.psi-im.ApplicationInfoAccessor/0.1");

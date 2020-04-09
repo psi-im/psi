@@ -1,6 +1,6 @@
 /*
  * aimptunecontroller.h
- * Copyright (C) 2012 Vitaly Tonkacheyev
+ * Copyright (C) 2012  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,8 +24,7 @@
 #include "tune.h"
 #include "windows.h"
 
-class AimpTuneController : public PollingTuneController
-{
+class AimpTuneController : public PollingTuneController {
     Q_OBJECT
 
 public:
@@ -39,7 +37,7 @@ protected slots:
 private:
     Tune getTune() const;
     HWND findAimp() const;
-    int getAimpStatus(const HWND &aimp) const;
+    int  getAimpStatus(const HWND &aimp) const;
     void sendTune(const Tune &tune);
     void clearTune();
 
@@ -48,4 +46,4 @@ private:
     bool _tuneSent;
 };
 
-#endif
+#endif // AIMPTUNECONTROLLER_H

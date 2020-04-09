@@ -13,22 +13,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef _VARIANTTREE_H_
-#define _VARIANTTREE_H_
+#ifndef VARIANTTREE_H
+#define VARIANTTREE_H
 
+#include <QHash>
 #include <QObject>
 #include <QVariant>
-#include <QHash>
 
 class QDomDocument;
-class QDomElement;
 class QDomDocumentFragment;
-
+class QDomElement;
 
 /**
  * \class VariantTree
@@ -47,45 +45,44 @@ class QDomDocumentFragment;
  * name given by the primary component. For the set methods, multiple layers
  * in the hierachy may be created implicitly if the node is not found.
  */
-class VariantTree : public QObject
-{
+class VariantTree : public QObject {
     Q_OBJECT
 public:
-    VariantTree(QObject *parent = 0);
+    VariantTree(QObject *parent = nullptr);
     ~VariantTree();
 
-    void setValue(QString node, QVariant value);
-    QVariant getValue(const QString& node) const;
+    void     setValue(QString node, QVariant value);
+    QVariant getValue(const QString &node) const;
 
     bool isInternalNode(QString node) const;
 
-    void setComment(QString node, QString comment);
+    void    setComment(QString node, QString comment);
     QString getComment(QString node) const;
 
     bool remove(const QString &node, bool internal_nodes = false);
 
-    QStringList nodeChildren(const QString& node = "", bool direct = false, bool internal_nodes = false) const;
+    QStringList nodeChildren(const QString &node = "", bool direct = false, bool internal_nodes = false) const;
 
-    void toXml(QDomDocument &doc, QDomElement& ele) const;
+    void toXml(QDomDocument &doc, QDomElement &ele) const;
     void fromXml(const QDomElement &ele);
 
     static bool isValidNodeName(const QString &name);
 
     static const QVariant missingValue;
-    static const QString missingComment;
+    static const QString  missingComment;
 
 protected:
-    static QVariant elementToVariant(const QDomElement&);
-    static void variantToElement(const QVariant&, QDomElement&);
+    static QVariant elementToVariant(const QDomElement &);
+    static void     variantToElement(const QVariant &, QDomElement &);
 
-    static bool getKeyRest(const QString& node, QString &key, QString &rest);
+    static bool getKeyRest(const QString &node, QString &key, QString &rest);
 
 private:
-    QHash<QString, VariantTree*> trees_;
-    QHash<QString, QVariant> values_;
-    QHash<QString, QString> comments_;
-    QHash<QString, QDomDocumentFragment> unknowns_;        // unknown types preservation
-    QHash<QString, QString> unknowns2_;        // unknown types preservation
+    QHash<QString, VariantTree *>        trees_;
+    QHash<QString, QVariant>             values_;
+    QHash<QString, QString>              comments_;
+    QHash<QString, QDomDocumentFragment> unknowns_;  // unknown types preservation
+    QHash<QString, QString>              unknowns2_; // unknown types preservation
 
     // needed to have a document for the fragments.
     static QDomDocument *unknownsDoc;
@@ -93,4 +90,4 @@ private:
     friend class OptionsTreeWriter;
 };
 
-#endif /* _VARIANTTREE_H_ */
+#endif // VARIANTTREE_H

@@ -13,58 +13,38 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "sxeedit.h"
+
 #include "sxerecordedit.h"
 
 //----------------------------------------------------------------------------
 // SxeEdit
 //----------------------------------------------------------------------------
 
-SxeEdit::SxeEdit(const QString rid, bool remote)
-    : rid_(rid)
-    , remote_(remote)
-    , null_(false)
-{
-};
+SxeEdit::SxeEdit(const QString rid, bool remote) : rid_(rid), remote_(remote), null_(false) {};
 
-SxeEdit::~SxeEdit()
-{
-};
+SxeEdit::~SxeEdit() {};
 
-bool SxeEdit::remote() const
-{
-    return remote_;
-};
+bool SxeEdit::remote() const { return remote_; };
 
-QString SxeEdit::rid() const
-{
-    return rid_;
-};
+QString SxeEdit::rid() const { return rid_; };
 
-bool SxeEdit::isNull()
-{
-    return null_;
-}
+bool SxeEdit::isNull() { return null_; }
 
-void SxeEdit::nullify()
-{
-    null_ = true;
-}
-
+void SxeEdit::nullify() { null_ = true; }
 
 bool SxeEdit::overridenBy(const SxeEdit &e) const
 {
-    if(e.rid() == rid()) {
-        if(e.type() == SxeEdit::Remove)
+    if (e.rid() == rid()) {
+        if (e.type() == SxeEdit::Remove)
             return true;
-        else if(type() == SxeEdit::Record && e.type() == SxeEdit::Record) {
-            const SxeRecordEdit* ep = dynamic_cast<const SxeRecordEdit*>(&e);
-            const SxeRecordEdit* tp = dynamic_cast<const SxeRecordEdit*>(this);
+        else if (type() == SxeEdit::Record && e.type() == SxeEdit::Record) {
+            const SxeRecordEdit *ep = dynamic_cast<const SxeRecordEdit *>(&e);
+            const SxeRecordEdit *tp = dynamic_cast<const SxeRecordEdit *>(this);
             return (ep->version() <= tp->version());
         }
     }
@@ -76,17 +56,17 @@ bool SxeEdit::operator<(const SxeEdit &other) const
 {
 
     // Can't compare edits to different records
-    if(rid() != other.rid())  {
+    if (rid() != other.rid()) {
         qDebug("Comparing SxeEdits to %s an %s.", qPrintable(rid()), qPrintable(other.rid()));
         return false;
     }
 
-    if(type() == other.type()) {
+    if (type() == other.type()) {
 
         // Only Record edits can be unequal with other edits of the same type
-        if(type() == SxeEdit::Record) {
-            const SxeRecordEdit* thisp = dynamic_cast<const SxeRecordEdit*>(this);
-            const SxeRecordEdit* otherp = dynamic_cast<const SxeRecordEdit*>(&other);
+        if (type() == SxeEdit::Record) {
+            const SxeRecordEdit *thisp  = dynamic_cast<const SxeRecordEdit *>(this);
+            const SxeRecordEdit *otherp = dynamic_cast<const SxeRecordEdit *>(&other);
             return (thisp->version() < otherp->version());
         }
 
@@ -95,10 +75,11 @@ bool SxeEdit::operator<(const SxeEdit &other) const
     } else {
 
         // New < Record, Record < Remove
-        if(type() == SxeEdit::New)           return true;
-        if(other.type() == SxeEdit::Remove)  return true;
+        if (type() == SxeEdit::New)
+            return true;
+        if (other.type() == SxeEdit::Remove)
+            return true;
 
         return false;
-
     }
 }

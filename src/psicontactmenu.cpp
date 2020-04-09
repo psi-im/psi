@@ -13,55 +13,49 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include "psicontactmenu_p.h"
-
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QPointer>
-#include <QFileDialog>
-#include <QWidgetAction>
-#include <QApplication>
-#include <QClipboard>
-
+#include "avatars.h"
+#include "avcall/avcall.h"
+#include "bookmarkmanager.h"
+#include "contactlistmodel.h"
+#include "groupchatdlg.h"
 #include "iconaction.h"
 #include "iconset.h"
-#include "psicontact.h"
-#include "psioptions.h"
-#include "contactlistmodel.h"
-#include "shortcutmanager.h"
-#include "psicon.h"
-#include "avatars.h"
-#include "userlist.h"
-#include "xmpp_tasks.h"
-#include "avcall/avcall.h"
-#include "pluginmanager.h"
+#include "invitetogroupchatmenu.h"
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
-#include "invitetogroupchatmenu.h"
+#include "pluginmanager.h"
+#include "psicon.h"
+#include "psicontact.h"
+#include "psicontactmenu_p.h"
+#include "psioptions.h"
 #include "psiprivacymanager.h"
-#include "groupchatdlg.h"
-#include "bookmarkmanager.h"
+#include "shortcutmanager.h"
+#include "userlist.h"
+#include "xmpp_tasks.h"
+
+#include <QApplication>
+#include <QClipboard>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QPointer>
+#include <QWidgetAction>
 
 //----------------------------------------------------------------------------
 // GroupMenu
 //----------------------------------------------------------------------------
 
-
 //----------------------------------------------------------------------------
 // PsiContactMenu::Private
 //----------------------------------------------------------------------------
 
-PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
-    : QObject(0)
-    , contact_(_contact)
-    , menu_(menu)
-    , authMenu_(0)
+PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
+    QObject(nullptr), contact_(_contact), menu_(menu), authMenu_(nullptr)
 {
     Jid jid = _contact->jid();
     menu->setLabelTitle(_contact->isPrivate() ? jid.full() : jid.bare());
@@ -146,28 +140,34 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
     inviteToGroupchatMenu_ = new InviteToGroupChatMenu(menu_);
     inviteToGroupchatMenu_->setTitle(tr("In&vite To"));
     inviteToGroupchatMenu_->setIcon(IconsetFactory::icon("psi/groupChat").icon());
-    connect(inviteToGroupchatMenu_, SIGNAL(inviteToGroupchat(PsiAccount*, QString)), SLOT(inviteToGroupchat(PsiAccount*, QString)));
+    connect(inviteToGroupchatMenu_, SIGNAL(inviteToGroupchat(PsiAccount *, QString)),
+            SLOT(inviteToGroupchat(PsiAccount *, QString)));
 
     groupMenu_ = new GroupMenu(menu_);
     groupMenu_->setTitle(tr("&Group"));
     connect(groupMenu_, SIGNAL(groupActivated(QString)), SLOT(setContactGroup(QString)));
 
     sendMessageToMenu_ = new ResourceMenu(tr("Send Message T&o"), contact_, menu_);
-    connect(sendMessageToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(sendMessageTo(PsiContact*, const XMPP::Jid&)));
+    connect(sendMessageToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
+            SLOT(sendMessageTo(PsiContact *, const XMPP::Jid &)));
 
     openChatToMenu_ = new ResourceMenu(tr("Open Chat &To"), contact_, menu_);
-    connect(openChatToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openChatTo(PsiContact*, const XMPP::Jid&)));
+    connect(openChatToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
+            SLOT(openChatTo(PsiContact *, const XMPP::Jid &)));
 
 #ifdef WHITEBOARDING
     openWhiteboardToMenu_ = new ResourceMenu(tr("Open a White&board To"), contact_, menu_);
-    connect(openWhiteboardToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openWhiteboardTo(PsiContact*, const XMPP::Jid&)));
+    connect(openWhiteboardToMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
+            SLOT(openWhiteboardTo(PsiContact *, const XMPP::Jid &)));
 #endif
     executeCommandMenu_ = new ResourceMenu(tr("E&xecute Command"), contact_, menu_);
-    connect(executeCommandMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(executeCommand(PsiContact*, const XMPP::Jid&)));
+    connect(executeCommandMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
+            SLOT(executeCommand(PsiContact *, const XMPP::Jid &)));
 
     activeChatsMenu_ = new ResourceMenu(tr("&Active Chats"), contact_, menu_);
     activeChatsMenu_->setActiveChatsMode(true);
-    connect(activeChatsMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openActiveChat(PsiContact*, const XMPP::Jid&)));
+    connect(activeChatsMenu_, SIGNAL(resourceActivated(PsiContact *, const XMPP::Jid &)),
+            SLOT(openActiveChat(PsiContact *, const XMPP::Jid &)));
 
     mucHideAction_ = new IconAction(tr("Hide"), this, "psi/action_muc_hide");
     connect(mucHideAction_, SIGNAL(triggered()), SLOT(mucHide()));
@@ -181,21 +181,21 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
     connect(mucLeaveAction_, SIGNAL(triggered()), SLOT(mucLeave()));
     mucLeaveAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
 
-    blockAction_ = new IconAction(tr("Block"), "psi/stop", tr("Block"), 0, this, 0, true);
+    blockAction_ = new IconAction(tr("Block"), "psi/stop", tr("Block"), 0, this, nullptr, true);
     connect(blockAction_, SIGNAL(triggered(bool)), SLOT(block(bool)));
 
-    visibleAction_ = new IconAction(tr("Always Visible"), "psi/eye", tr("Always Visible"), 0, this, 0, true);
+    visibleAction_ = new IconAction(tr("Always Visible"), "psi/eye", tr("Always Visible"), 0, this, nullptr, true);
     connect(visibleAction_, SIGNAL(triggered(bool)), SLOT(setAlwaysVisible(bool)));
 
-    _copyUserJid = new IconAction(tr("Copy User JID"), "", tr("Copy User JID"), 0 , this);
+    _copyUserJid = new IconAction(tr("Copy User JID"), "", tr("Copy User JID"), 0, this);
     connect(_copyUserJid, SIGNAL(triggered(bool)), SLOT(copyJid()));
 
-    _copyMucJid = new IconAction(tr("Copy Groupchat JID"), "", tr("Copy Groupchat JID"), 0 , this);
+    _copyMucJid = new IconAction(tr("Copy Groupchat JID"), "", tr("Copy Groupchat JID"), 0, this);
     connect(_copyMucJid, SIGNAL(triggered(bool)), SLOT(copyJid()));
 
     mucAddToBookmarks = new IconAction(tr("Add To Bookmarks"), this, "psi/bookmark_add");
-    QObject::connect(mucAddToBookmarks, &QAction::triggered, this, [=](bool){
-        GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+    QObject::connect(mucAddToBookmarks, &QAction::triggered, this, [=](bool) {
+        GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg *>(contact_->jid());
         if (gc)
             gc->doBookmark();
     });
@@ -215,7 +215,7 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
         msgMenu_->addAction(openChatAction_);
         msgMenu_->addMenu(openChatToMenu_);
         menu_->addAction(sendFileAction_);
-        if(AvCallManager::isSupported()) {
+        if (AvCallManager::isSupported()) {
             menu_->addAction(voiceCallAction_);
         }
         menu_->addSeparator();
@@ -285,8 +285,7 @@ PsiContactMenu::Private::Private(PsiContactMenu* menu, PsiContact* _contact)
 #endif
 
         updateActions();
-    }
-    else {
+    } else {
         menu_->addAction(mucHideAction_);
         menu_->addAction(mucShowAction_);
         menu_->addAction(mucLeaveAction_);
@@ -302,7 +301,7 @@ void PsiContactMenu::Private::updateActions()
     if (!contact_)
         return;
 
-    if(contact_->isConference()) {
+    if (contact_->isConference()) {
         auto bm = contact_->account()->bookmarkManager();
         mucAddToBookmarks->setVisible(bm->isAvailable() && bm->indexOfConference(contact_->jid()) == -1);
         updateBlockActionState();
@@ -312,7 +311,9 @@ void PsiContactMenu::Private::updateActions()
     inviteToGroupchatMenu_->updateMenu(contact_);
     groupMenu_->updateMenu(contact_);
 
-    addAuthAction_->setVisible(!contact_->isSelf() && !contact_->inList() && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
+    addAuthAction_->setVisible(
+        !contact_->isSelf() && !contact_->inList()
+        && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
     addAuthAction_->setEnabled(contact_->account()->isAvailable());
     customStatusAction_->setEnabled(contact_->account()->isAvailable() && !contact_->isPrivate());
 
@@ -326,13 +327,13 @@ void PsiContactMenu::Private::updateActions()
 #ifdef WHITEBOARDING
     openWhiteboardToMenu_->setEnabled(!openWhiteboardToMenu_->isEmpty());
 #endif
-    if(contact_->account()->isAvailable()
-       && executeCommandMenu_->isEmpty()
-       && contact_->status().type() == Status::Offline )
+    if (contact_->account()->isAvailable() && executeCommandMenu_->isEmpty()
+        && contact_->status().type() == Status::Offline)
         executeCommandMenu_->addResource(XMPP::Status::Offline, "");
     executeCommandMenu_->setEnabled(!executeCommandMenu_->isEmpty());
     activeChatsMenu_->setEnabled(!activeChatsMenu_->isEmpty());
-    activeChatsMenu_->menuAction()->setVisible(PsiOptions::instance()->getOption("options.ui.menu.contact.active-chats").toBool());
+    activeChatsMenu_->menuAction()->setVisible(
+        PsiOptions::instance()->getOption("options.ui.menu.contact.active-chats").toBool());
     voiceCallAction_->setVisible(contact_->account()->avCallManager() && !contact_->isAgent());
     voiceCallAction_->setEnabled(contact_->account()->isAvailable());
     sendFileAction_->setVisible(!contact_->isAgent());
@@ -345,12 +346,16 @@ void PsiContactMenu::Private::updateActions()
     }
     groupMenu_->setEnabled(contact_->isEditable() && contact_->isDragEnabled());
     transportLogonAction_->setVisible(contact_->isAgent());
-    transportLogonAction_->setEnabled(contact_->account()->isAvailable() && contact_->status().type() == XMPP::Status::Offline);
+    transportLogonAction_->setEnabled(contact_->account()->isAvailable()
+                                      && contact_->status().type() == XMPP::Status::Offline);
     transportLogoffAction_->setVisible(contact_->isAgent());
-    transportLogoffAction_->setEnabled(contact_->account()->isAvailable() && contact_->status().type() != XMPP::Status::Offline);
-    _separator1->setVisible(transportLogonAction_->isVisible() || addAuthAction_->isVisible() || transportLogoffAction_->isVisible());
+    transportLogoffAction_->setEnabled(contact_->account()->isAvailable()
+                                       && contact_->status().type() != XMPP::Status::Offline);
+    _separator1->setVisible(transportLogonAction_->isVisible() || addAuthAction_->isVisible()
+                            || transportLogoffAction_->isVisible());
 
-    bool showAuth = !(PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool() || !contact_->inList());
+    bool showAuth = !(PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()
+                      || !contact_->inList());
 
     if (authMenu_) {
         authMenu_->menuAction()->setVisible(showAuth);
@@ -368,34 +373,35 @@ void PsiContactMenu::Private::updateActions()
 
     updateBlockActionState();
     visibleAction_->setChecked(contact_->isAlwaysVisible());
-    removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()  && !contact_->isSelf());
+    removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()
+                              && !contact_->isSelf());
     removeAction_->setEnabled(contact_->removeAvailable());
     if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
         pictureMenu_->menuAction()->setVisible(false);
     }
 #ifdef HAVE_PGPUTIL
-    gpgAssignKeyAction_->setVisible(contact_->account()->hasPGP()
-                                    && PGPUtil::instance().pgpAvailable()
-                                    && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()
-                                    && contact_->userListItem().publicKeyID().isEmpty());
+    gpgAssignKeyAction_->setVisible(
+        contact_->account()->hasPGP() && PGPUtil::instance().pgpAvailable()
+        && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()
+        && contact_->userListItem().publicKeyID().isEmpty());
 
-    gpgUnassignKeyAction_->setVisible(contact_->account()->hasPGP()
-                                      && PGPUtil::instance().pgpAvailable()
-                                      && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()
-                                      && !contact_->userListItem().publicKeyID().isEmpty());
+    gpgUnassignKeyAction_->setVisible(
+        contact_->account()->hasPGP() && PGPUtil::instance().pgpAvailable()
+        && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()
+        && !contact_->userListItem().publicKeyID().isEmpty());
 #endif // HAVE_PGPUTIL
 }
 
 void PsiContactMenu::Private::mucHide()
 {
-    GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+    GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg *>(contact_->jid());
     if (gc && (gc->isTabbed() || !gc->isHidden()))
         gc->hideTab();
 }
 
 void PsiContactMenu::Private::mucShow()
 {
-    GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+    GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg *>(contact_->jid());
     if (gc) {
         gc->ensureTabbedCorrectly();
         gc->bringToFront();
@@ -404,7 +410,7 @@ void PsiContactMenu::Private::mucShow()
 
 void PsiContactMenu::Private::mucLeave()
 {
-    GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+    GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg *>(contact_->jid());
     if (gc)
         gc->close();
 }
@@ -417,22 +423,16 @@ void PsiContactMenu::Private::rename()
     menu_->model()->renameSelectedItem();
 }
 
-void PsiContactMenu::Private::addContact()
-{
-    emit menu_->addSelection();
-}
+void PsiContactMenu::Private::addContact() { emit menu_->addSelection(); }
 
-void PsiContactMenu::Private::removeContact()
-{
-    emit menu_->removeSelection();
-}
+void PsiContactMenu::Private::removeContact() { emit menu_->removeSelection(); }
 
-void PsiContactMenu::Private::inviteToGroupchat(PsiAccount* account, QString groupchat)
+void PsiContactMenu::Private::inviteToGroupchat(PsiAccount *account, QString groupchat)
 {
     if (!contact_)
         return;
     account->actionInvite(contact_->jid(), groupchat);
-    QMessageBox::information(0, tr("Invitation"),
+    QMessageBox::information(nullptr, tr("Invitation"),
                              tr("Sent groupchat invitation to <b>%1</b>.").arg(contact_->name()));
 }
 
@@ -443,7 +443,7 @@ void PsiContactMenu::Private::setContactGroup(QString group)
     contact_->setGroups(QStringList() << group);
 }
 
-void PsiContactMenu::Private::block(bool )
+void PsiContactMenu::Private::block(bool)
 {
     if (!contact_)
         return;
@@ -469,7 +469,7 @@ void PsiContactMenu::Private::addAuth()
     else
         contact_->account()->actionAdd(contact_->jid());
 
-    QMessageBox::information(0, tr("Add"),
+    QMessageBox::information(nullptr, tr("Add"),
                              tr("Added/Authorized <b>%1</b> to the contact list.").arg(contact_->name()));
 }
 
@@ -515,7 +515,7 @@ void PsiContactMenu::Private::sendFile()
 {
     if (!contact_)
         return;
-    contact_->account()->actionSendFile(contact_->jid());
+    contact_->account()->sendFiles(contact_->jid());
 }
 
 void PsiContactMenu::Private::transportLogon()
@@ -537,8 +537,7 @@ void PsiContactMenu::Private::authResend()
     if (!contact_)
         return;
     contact_->account()->actionAuth(contact_->jid());
-    QMessageBox::information(0, tr("Authorize"),
-                             tr("Sent authorization to <b>%1</b>.").arg(contact_->name()));
+    QMessageBox::information(nullptr, tr("Authorize"), tr("Sent authorization to <b>%1</b>.").arg(contact_->name()));
 }
 
 void PsiContactMenu::Private::authRerequest()
@@ -546,7 +545,7 @@ void PsiContactMenu::Private::authRerequest()
     if (!contact_)
         return;
     contact_->account()->actionAuthRequest(contact_->jid());
-    QMessageBox::information(0, tr("Authorize"),
+    QMessageBox::information(nullptr, tr("Authorize"),
                              tr("Rerequested authorization from <b>%1</b>.").arg(contact_->name()));
 }
 
@@ -555,11 +554,12 @@ void PsiContactMenu::Private::authRemove()
     if (!contact_)
         return;
 
-    int n = QMessageBox::information(0, tr("Remove"),
-                                     tr("Are you sure you want to remove authorization from <b>%1</b>?").arg(contact_->name()),
-                                     tr("&Yes"), tr("&No"));
+    int n = QMessageBox::information(
+        nullptr, tr("Remove"),
+        tr("Are you sure you want to remove authorization from <b>%1</b>?").arg(contact_->name()), tr("&Yes"),
+        tr("&No"));
 
-    if(n == 0)
+    if (n == 0)
         contact_->account()->actionAuthRemove(contact_->jid());
 }
 
@@ -575,9 +575,10 @@ void PsiContactMenu::Private::pictureAssign()
 {
     if (!contact_)
         return;
-    QString file = QFileDialog::getOpenFileName(0, tr("Choose an Image"), "", tr("All files (*.png *.jpg *.gif)"));
+    QString file
+        = QFileDialog::getOpenFileName(nullptr, tr("Choose an Image"), "", tr("All files (*.png *.jpg *.gif)"));
     if (!file.isNull()) {
-        contact_->account()->avatarFactory()->importManualAvatar(contact_->jid(),file);
+        contact_->account()->avatarFactory()->importManualAvatar(contact_->jid(), file);
     }
 }
 
@@ -616,7 +617,7 @@ void PsiContactMenu::Private::history()
     contact_->account()->actionHistory(contact_->jid());
 }
 
-void PsiContactMenu::Private::sendMessageTo(PsiContact*, const XMPP::Jid& jid)
+void PsiContactMenu::Private::sendMessageTo(PsiContact *, const XMPP::Jid &jid)
 {
     if (!contact_)
         return;
@@ -624,7 +625,7 @@ void PsiContactMenu::Private::sendMessageTo(PsiContact*, const XMPP::Jid& jid)
     contact_->account()->actionSendMessage(jid);
 }
 
-void PsiContactMenu::Private::openChatTo(PsiContact*, const XMPP::Jid& jid)
+void PsiContactMenu::Private::openChatTo(PsiContact *, const XMPP::Jid &jid)
 {
     if (!contact_)
         return;
@@ -633,7 +634,7 @@ void PsiContactMenu::Private::openChatTo(PsiContact*, const XMPP::Jid& jid)
 }
 
 #ifdef WHITEBOARDING
-void PsiContactMenu::Private::openWhiteboardTo(PsiContact*, const XMPP::Jid& jid)
+void PsiContactMenu::Private::openWhiteboardTo(PsiContact *, const XMPP::Jid &jid)
 {
     if (!contact_)
         return;
@@ -642,7 +643,7 @@ void PsiContactMenu::Private::openWhiteboardTo(PsiContact*, const XMPP::Jid& jid
 }
 #endif
 
-void PsiContactMenu::Private::executeCommand(PsiContact*, const XMPP::Jid& jid)
+void PsiContactMenu::Private::executeCommand(PsiContact *, const XMPP::Jid &jid)
 {
     if (!contact_)
         return;
@@ -650,7 +651,7 @@ void PsiContactMenu::Private::executeCommand(PsiContact*, const XMPP::Jid& jid)
     contact_->account()->actionExecuteCommandSpecific(jid);
 }
 
-void PsiContactMenu::Private::openActiveChat(PsiContact*, const XMPP::Jid& jid)
+void PsiContactMenu::Private::openActiveChat(PsiContact *, const XMPP::Jid &jid)
 {
     if (!contact_)
         return;
@@ -658,39 +659,34 @@ void PsiContactMenu::Private::openActiveChat(PsiContact*, const XMPP::Jid& jid)
     contact_->account()->actionOpenChatSpecific(jid);
 }
 
-void PsiContactMenu::Private::copyJid()
-{
-    qApp->clipboard()->setText(contact_->jid().bare());
-}
+void PsiContactMenu::Private::copyJid() { qApp->clipboard()->setText(contact_->jid().bare()); }
 
 void PsiContactMenu::Private::updateBlockActionState()
 {
-    if(!contact_)
+    if (!contact_)
         return;
-    blockAction_->setVisible(!(contact_->isPrivate()/* || contact_->isAgent()*/ || contact_->isSelf()));
-    blockAction_->setEnabled(contact_->account()->isAvailable() && dynamic_cast<PsiPrivacyManager*>(contact_->account()->privacyManager())->isAvailable());
+    blockAction_->setVisible(!(contact_->isPrivate() /* || contact_->isAgent()*/ || contact_->isSelf()));
+    blockAction_->setEnabled(
+        contact_->account()->isAvailable()
+        && dynamic_cast<PsiPrivacyManager *>(contact_->account()->privacyManager())->isAvailable());
     blockAction_->setChecked(contact_->isBlocked());
     blockAction_->setText(blockAction_->isChecked() ? tr("Unblock") : tr("Block"));
 }
 
-PsiContactMenu::PsiContactMenu(PsiContact* contact, ContactListModel* model)
-    : ContactListItemMenu(nullptr, model)
+PsiContactMenu::PsiContactMenu(PsiContact *contact, ContactListModel *model) : ContactListItemMenu(nullptr, model)
 //    : ContactListItemMenu(contact, model)
 {
     d = new Private(this, contact);
 }
 
-PsiContactMenu::~PsiContactMenu()
-{
-    delete d;
-}
+PsiContactMenu::~PsiContactMenu() { delete d; }
 
-QList<QAction*> PsiContactMenu::availableActions() const
+QList<QAction *> PsiContactMenu::availableActions() const
 {
-    QList<QAction*> result;
-    foreach(QAction* a, ContactListItemMenu::availableActions()) {
+    QList<QAction *> result;
+    foreach (QAction *a, ContactListItemMenu::availableActions()) {
         // if (a != d->removeAction_)
-            result << a;
+        result << a;
     }
     return result;
 }

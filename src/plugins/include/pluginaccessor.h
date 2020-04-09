@@ -1,10 +1,9 @@
-#ifndef PSI_PLUGINACCESSOR_H
-#define PSI_PLUGINACCESSOR_H
+#ifndef PLUGINACCESSOR_H
+#define PLUGINACCESSOR_H
 
 class PluginAccessingHost;
 
-class PluginAccessor
-{
+class PluginAccessor {
 public:
     virtual ~PluginAccessor() {}
 
@@ -13,4 +12,4 @@ public:
 
 Q_DECLARE_INTERFACE(PluginAccessor, "org.psi-im.PluginAccessor/0.1");
 
-#endif //PSI_PLUGINACCESSOR_H
+#endif // PLUGINACCESSOR_H

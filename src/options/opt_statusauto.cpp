@@ -1,57 +1,53 @@
 #include "opt_statusauto.h"
-#include "psioptions.h"
-#include "priorityvalidator.h"
 
-#include <limits.h>
-#include <QWhatsThis>
+#include "priorityvalidator.h"
+#include "psioptions.h"
+#include "ui_opt_statusauto.h"
+
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QTextEdit>
+#include <limits.h>
 
-#include "ui_opt_statusauto.h"
-
-class OptStatusAutoUI : public QWidget, public Ui::OptStatusAuto
-{
+class OptStatusAutoUI : public QWidget, public Ui::OptStatusAuto {
 public:
     OptStatusAutoUI() : QWidget() { setupUi(this); }
 };
 
-OptionsTabStatusAuto::OptionsTabStatusAuto(QObject *parent)
-    : OptionsTab(parent, "status_auto", "", tr("Auto status and priority"), tr("Auto status and priority preferences"))
+OptionsTabStatusAuto::OptionsTabStatusAuto(QObject *parent) :
+    OptionsTab(parent, "status_auto", "", tr("Auto status and priority"), tr("Auto status and priority preferences"))
 {
 }
 
-OptionsTabStatusAuto::~OptionsTabStatusAuto()
-{
-}
+OptionsTabStatusAuto::~OptionsTabStatusAuto() {}
 
 QWidget *OptionsTabStatusAuto::widget()
 {
-    if ( w )
-        return 0;
+    if (w)
+        return nullptr;
 
-    w = new OptStatusAutoUI();
+    w                  = new OptStatusAutoUI();
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
 
-    PriorityValidator* prValidator = new PriorityValidator(d->le_asPriority);
+    PriorityValidator *prValidator = new PriorityValidator(d->le_asPriority);
     d->le_asPriority->setValidator(prValidator);
     prValidator = new PriorityValidator(d->le_asXaPriority);
     d->le_asXaPriority->setValidator(prValidator);
 
     QString s = tr("Makes Psi automatically set your status to \"away\" if your"
-        " computer is idle for the specified amount of time.");
-    d->ck_asAway->setWhatsThis(s);
-    d->sb_asAway->setWhatsThis(s);
+                   " computer is idle for the specified amount of time.");
+    d->ck_asAway->setToolTip(s);
+    d->sb_asAway->setToolTip(s);
     s = tr("Makes Psi automatically set your status to \"extended away\" if your"
-        " computer is idle for the specified amount of time.");
-    d->ck_asXa->setWhatsThis(s);
-    d->sb_asXa->setWhatsThis(s);
-    s = tr("Makes Psi automatically set your status to \"offline\" if your"
-        " computer is idle for the specified amount of time."
-        "  This will disconnect you from the Jabber server.");
-    PsiOptions* o = PsiOptions::instance();
-    int dpCount = 6;
+           " computer is idle for the specified amount of time.");
+    d->ck_asXa->setToolTip(s);
+    d->sb_asXa->setToolTip(s);
+    s                   = tr("Makes Psi automatically set your status to \"offline\" if your"
+           " computer is idle for the specified amount of time."
+           "  This will disconnect you from the Jabber server.");
+    PsiOptions *o       = PsiOptions::instance();
+    int         dpCount = 6;
     if (!o->getOption("options.ui.menu.status.chat").toBool()) {
         d->sb_dpChat->hide();
         d->lb_dpChat->hide();
@@ -74,29 +70,27 @@ QWidget *OptionsTabStatusAuto::widget()
     }
 
     if (dpCount != 6) {
-        reorderGridLayout(d->gridLayout, dpCount == 4 ? 2 : 3); //4 items in 2 columns look better
+        reorderGridLayout(d->gridLayout, dpCount == 4 ? 2 : 3); // 4 items in 2 columns look better
     }
 
-    d->ck_asOffline->setWhatsThis( s);
-    d->sb_asOffline->setWhatsThis( s);
+    d->ck_asOffline->setToolTip(s);
+    d->sb_asOffline->setToolTip(s);
 
-    d->te_asMessage->setWhatsThis(
-        tr("Specifies an extended message to use if you allow Psi"
-        " to set your status automatically.  See options above."));
-    d->le_asPriority->setWhatsThis(
-        tr("Specifies priority of auto-away status. "
-        "If empty, Psi will use account's default priority."));
+    d->te_asMessage->setToolTip(tr("Specifies an extended message to use if you allow Psi"
+                                   " to set your status automatically.  See options above."));
+    d->le_asPriority->setToolTip(tr("Specifies priority of auto-away status. "
+                                    "If empty, Psi will use account's default priority."));
 
     return w;
 }
 
 void OptionsTabStatusAuto::applyOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
-    PsiOptions* o = PsiOptions::instance();
+    PsiOptions *     o = PsiOptions::instance();
 
     o->setOption("options.status.auto-away.away-after", d->sb_asAway->value());
     o->setOption("options.status.auto-away.not-availible-after", d->sb_asXa->value());
@@ -122,25 +116,25 @@ void OptionsTabStatusAuto::applyOptions()
 
 void OptionsTabStatusAuto::restoreOptions()
 {
-    if ( !w )
+    if (!w)
         return;
 
     OptStatusAutoUI *d = static_cast<OptStatusAutoUI *>(w);
-    PsiOptions* o = PsiOptions::instance();
+    PsiOptions *     o = PsiOptions::instance();
 
     d->sb_asAway->setMinimum(0);
     d->sb_asAway->setMaximum(INT_MAX);
-    d->sb_asAway->setValue( o->getOption("options.status.auto-away.away-after").toInt() );
+    d->sb_asAway->setValue(o->getOption("options.status.auto-away.away-after").toInt());
     d->sb_asXa->setMinimum(0);
     d->sb_asXa->setMaximum(INT_MAX);
-    d->sb_asXa->setValue( o->getOption("options.status.auto-away.not-availible-after").toInt() );
+    d->sb_asXa->setValue(o->getOption("options.status.auto-away.not-availible-after").toInt());
     d->sb_asOffline->setMinimum(0);
     d->sb_asOffline->setMaximum(INT_MAX);
-    d->sb_asOffline->setValue( o->getOption("options.status.auto-away.offline-after").toInt() );
-    d->ck_asAway->setChecked( o->getOption("options.status.auto-away.use-away").toBool() );
-    d->ck_asXa->setChecked( o->getOption("options.status.auto-away.use-not-availible").toBool() );
-    d->ck_asOffline->setChecked( o->getOption("options.status.auto-away.use-offline").toBool() );
-    d->te_asMessage->setPlainText( o->getOption("options.status.auto-away.message").toString() );
+    d->sb_asOffline->setValue(o->getOption("options.status.auto-away.offline-after").toInt());
+    d->ck_asAway->setChecked(o->getOption("options.status.auto-away.use-away").toBool());
+    d->ck_asXa->setChecked(o->getOption("options.status.auto-away.use-not-availible").toBool());
+    d->ck_asOffline->setChecked(o->getOption("options.status.auto-away.use-offline").toBool());
+    d->te_asMessage->setPlainText(o->getOption("options.status.auto-away.message").toString());
     if (o->getOption("options.status.auto-away.force-priority").toBool()) {
         d->le_asPriority->setText(QString::number(o->getOption("options.status.auto-away.priority").toInt()));
     } else {
@@ -160,8 +154,4 @@ void OptionsTabStatusAuto::restoreOptions()
     d->sb_dpInvisible->setValue(o->getOption("options.status.default-priority.invisible").toInt());
 }
 
-void OptionsTabStatusAuto::setData(PsiCon *, QWidget *parentDialog)
-{
-    parentWidget = parentDialog;
-}
-
+void OptionsTabStatusAuto::setData(PsiCon *, QWidget *parentDialog) { parentWidget = parentDialog; }

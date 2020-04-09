@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,39 +21,29 @@
 #define CONTACTLISTDRAGMODEL_H
 
 #include "contactlistmodel.h"
-
-class ContactListItem;
-class ContactListGroupItem;
-class PsiContactGroup;
-class PsiAccount;
-class PsiContact;
-
 #include "xmpp_jid.h"
 
 #include <QHash>
 
-class ContactListModelOperationList
-{
+class ContactListGroupItem;
+class ContactListItem;
+class PsiAccount;
+class PsiContact;
+class PsiContactGroup;
+
+class ContactListModelOperationList {
 public:
-    enum Action {
-        Copy = 0,
-        Move,
-        Remove
-    };
+    enum Action { Copy = 0, Move, Remove };
 
     struct Operation {
-        Operation()
-        {}
-        Operation(const QString &_groupFrom, const QString &_groupTo)
-            : groupFrom(_groupFrom)
-            , groupTo(_groupTo)
-        {}
+        Operation() {}
+        Operation(const QString &_groupFrom, const QString &_groupTo) : groupFrom(_groupFrom), groupTo(_groupTo) {}
         QString groupFrom;
         QString groupTo;
     };
 
     struct ContactOperation {
-        PsiContact* contact;
+        PsiContact *     contact;
         QList<Operation> operations;
     };
 
@@ -63,18 +52,17 @@ public:
 
     Action action() const;
 
-    void addOperation(PsiContact* contact, const QString &groupFrom, const QString &groupTo);
+    void                    addOperation(PsiContact *contact, const QString &groupFrom, const QString &groupTo);
     QList<ContactOperation> operations() const;
 
     void removeAccidentalContactMoveOperations();
 
 private:
-    Action action_;
-    QHash<PsiContact*, QList<Operation>> operations_;
+    Action                                action_;
+    QHash<PsiContact *, QList<Operation>> operations_;
 };
 
-class ContactListDragModel : public ContactListModel
-{
+class ContactListDragModel : public ContactListModel {
     Q_OBJECT
 
 public:
@@ -83,9 +71,9 @@ public:
     // reimplemented
     Qt::DropActions supportedDragActions() const;
     Qt::DropActions supportedDropActions() const;
-    Qt::ItemFlags flags(const QModelIndex &index) const;
-    QStringList mimeTypes() const;
-    QMimeData *mimeData(const QModelIndexList &indexes) const;
+    Qt::ItemFlags   flags(const QModelIndex &index) const;
+    QStringList     mimeTypes() const;
+    QMimeData *     mimeData(const QModelIndexList &indexes) const;
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
     void renameGroup(ContactListItem *group, const QString &newName);
 
@@ -95,16 +83,13 @@ public:
     bool supportsMimeDataOnIndex(const QMimeData *data, const QModelIndex &parent) const;
 
 protected:
-    enum OperationType {
-        Operation_DragNDrop = 0,
-        Operation_GroupRename
-    };
+    enum OperationType { Operation_DragNDrop = 0, Operation_GroupRename };
 
     virtual PsiAccount *getDropAccount(PsiAccount *account, const QModelIndex &parent) const;
-    virtual QString getDropGroupName(const QModelIndex &parent) const;
+    virtual QString     getDropGroupName(const QModelIndex &parent) const;
 
     QString sourceOperationsForContactGroup(const QString &groupName, PsiContact *contact) const;
     QString destinationOperationsForContactGroup(const QString &groupName, PsiContact *contact) const;
 };
 
-#endif
+#endif // CONTACTLISTDRAGMODEL_H

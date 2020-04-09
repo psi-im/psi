@@ -13,33 +13,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef GEOLOCATIONDLG_H
 #define GEOLOCATIONDLG_H
 
-#include <QDialog>
-
 #include "ui_geolocation.h"
+
+#include <QDialog>
 
 class PsiAccount;
 
-class GeoLocationDlg : public QDialog
-{
+class GeoLocationDlg : public QDialog {
     Q_OBJECT
 
 public:
-    GeoLocationDlg(QList<PsiAccount*>);
+    GeoLocationDlg(QList<PsiAccount *>);
 
 protected slots:
     void setGeoLocation();
     void reset();
 
 private:
-    Ui::GeoLocation ui_;
-    QList<PsiAccount*> pa_;
+    Ui::GeoLocation     ui_;
+    QList<PsiAccount *> pa_;
 };
 
 #endif // GEOLOCATIONDLG_H

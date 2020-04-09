@@ -1,6 +1,7 @@
 /*
  * passdialog.cpp
- * Copyright (C) 2009-2010 Virnik, 2011 Evgeny Khryukin
+ * Copyright (C) 2009-2010  Virnik
+ * Copyright (C) 2011  Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,24 +14,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
+#include "passdialog.h"
+
 #include <QCheckBox>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLayout>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include "passdialog.h"
-
-
-PassDialog::PassDialog(const QString& jid, QWidget *parent)
-    : QDialog(parent)
+PassDialog::PassDialog(const QString &jid, QWidget *parent) : QDialog(parent)
 {
     setWindowTitle(tr("Wrong Account Password"));
 
@@ -61,17 +59,8 @@ PassDialog::PassDialog(const QString& jid, QWidget *parent)
     connect(pb_ok, SIGNAL(clicked()), this, SLOT(accept()));
 }
 
-bool PassDialog::savePassword() const
-{
-    return cb_savePassword->isChecked();
-}
+bool PassDialog::savePassword() const { return cb_savePassword->isChecked(); }
 
-void PassDialog::setSavePassword(bool save)
-{
-    cb_savePassword->setChecked(save);
-}
+void PassDialog::setSavePassword(bool save) { cb_savePassword->setChecked(save); }
 
-QString PassDialog::password() const
-{
-    return le_password->text();
-}
+QString PassDialog::password() const { return le_password->text(); }

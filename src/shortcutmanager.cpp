@@ -1,10 +1,10 @@
+#include "shortcutmanager.h"
+
+#include "globalshortcut/globalshortcutmanager.h"
+#include "psioptions.h"
+
 #include <QAction>
 #include <QCoreApplication>
-
-#include "psioptions.h"
-#include "shortcutmanager.h"
-#include "globalshortcut/globalshortcutmanager.h"
-
 
 /**
  * \brief The Construtor of the Shortcutmanager
@@ -16,21 +16,21 @@ ShortcutManager::ShortcutManager() : QObject(QCoreApplication::instance())
         qWarning("Restoring chat.send shortcut");
         QVariantList vl;
         vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
-        PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
+        PsiOptions::instance()->setOption("options.shortcuts.chat.send", vl);
     }
 }
 
 /**
  * "The one and only instance" of the ShortcutManager
  */
-ShortcutManager* ShortcutManager::instance_ = NULL;
+ShortcutManager *ShortcutManager::instance_ = nullptr;
 
 /**
  * \brief The Instantiator of the Shortcutmanager
  */
-ShortcutManager* ShortcutManager::instance()
+ShortcutManager *ShortcutManager::instance()
 {
-    if(!instance_)
+    if (!instance_)
         instance_ = new ShortcutManager();
     return instance_;
 }
@@ -42,10 +42,10 @@ ShortcutManager* ShortcutManager::instance()
  * \return QKeySequence, the Keysequence associated with the keyname, or
  *   the first key sequence if there are multiple
  */
-QKeySequence ShortcutManager::shortcut(const QString& name)
+QKeySequence ShortcutManager::shortcut(const QString &name)
 {
-    QVariant variant = PsiOptions::instance()->getOption(QString("options.shortcuts.%1").arg(name));
-    QList<QKeySequence> list = shortcuts(name);
+    QVariant            variant = PsiOptions::instance()->getOption(QString("options.shortcuts.%1").arg(name));
+    QList<QKeySequence> list    = shortcuts(name);
     if (!list.isEmpty())
         return list.first();
     return variant.value<QKeySequence>();
@@ -59,7 +59,7 @@ QKeySequence ShortcutManager::shortcut(const QString& name)
  * 'Enter' should be preferred over 'Return' and 'Ctrl+Enter' should be
  * preferred over 'Ctrl+Return'.
  */
-static bool shortcutManagerKeySequenceLessThan(const QKeySequence& k1, const QKeySequence& k2)
+static bool shortcutManagerKeySequenceLessThan(const QKeySequence &k1, const QKeySequence &k2)
 {
     bool e1 = k1.toString(QKeySequence::PortableText).contains("Enter");
     bool e2 = k2.toString(QKeySequence::PortableText).contains("Enter");
@@ -72,7 +72,7 @@ static bool shortcutManagerKeySequenceLessThan(const QKeySequence& k1, const QKe
  *        mirrored as options.shortcuts.misc.sendmessage
  * \return List of sequences
  */
-QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
+QList<QKeySequence> ShortcutManager::shortcuts(const QString &name)
 {
     return readShortcutsFromOptions(name, PsiOptions::instance());
 }
@@ -84,24 +84,23 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
  * \param options, options instance to read from
  * \return List of sequences
  */
-QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& name, const PsiOptions* options)
+QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString &name, const PsiOptions *options)
 {
     QList<QKeySequence> list;
-    QVariant variant = options->getOption(QString("options.shortcuts.%1").arg(name));
-    QString type = variant.typeName();
+    QVariant            variant = options->getOption(QString("options.shortcuts.%1").arg(name));
+    QString             type    = variant.typeName();
     if (type == "QVariantList") {
-        foreach(QVariant variant, variant.toList()) {
+        foreach (QVariant variant, variant.toList()) {
             QKeySequence k = variant.value<QKeySequence>();
             if (!k.isEmpty() && !list.contains(k))
                 list += k;
         }
-    }
-    else {
+    } else {
         QKeySequence k = variant.value<QKeySequence>();
         if (!k.isEmpty())
             list += k;
     }
-    qStableSort(list.begin(), list.end(), shortcutManagerKeySequenceLessThan);
+    std::stable_sort(list.begin(), list.end(), shortcutManagerKeySequenceLessThan);
     return list;
 }
 
@@ -113,27 +112,25 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
  * \param parent, the widget to which the new QAction should be connected to
  * \param slot, the SLOT() of the parent which should be triggered if the KeySequence is activated
  */
-void ShortcutManager::connect(const QString& path, QObject* parent, const char* slot)
+void ShortcutManager::connect(const QString &path, QObject *parent, const char *slot)
 {
-    if (parent == NULL || slot == NULL)
+    if (parent == nullptr || slot == nullptr)
         return;
 
     if (!path.startsWith("global.")) {
         QList<QKeySequence> shortcuts = ShortcutManager::instance()->shortcuts(path);
 
         if (!shortcuts.isEmpty()) {
-            bool appWide = path.startsWith("appwide.");
-            QAction* act = new QAction(parent);
+            bool     appWide = path.startsWith("appwide.");
+            QAction *act     = new QAction(parent);
             act->setShortcuts(shortcuts);
-            act->setShortcutContext(appWide ?
-                                    Qt::ApplicationShortcut : Qt::WindowShortcut);
+            act->setShortcutContext(appWide ? Qt::ApplicationShortcut : Qt::WindowShortcut);
             if (parent->isWidgetType())
-                ((QWidget*) parent)->addAction(act);
+                static_cast<QWidget *>(parent)->addAction(act);
             parent->connect(act, SIGNAL(triggered()), slot);
         }
-    }
-    else {
-        foreach(QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
+    } else {
+        foreach (QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
             if (!sequence.isEmpty()) {
                 GlobalShortcutManager::instance()->connect(sequence, parent, slot);
             }

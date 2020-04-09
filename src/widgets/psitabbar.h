@@ -13,21 +13,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef _PSITABBAR_H_
-#define _PSITABBAR_H_
+#ifndef PSITABBAR_H
+#define PSITABBAR_H
 
 #include "tabbar.h"
+
 #include <QPoint>
 
 class PsiTabWidget;
 
-class PsiTabBar : public TabBar
-{
+class PsiTabBar : public TabBar {
     Q_OBJECT
 
 public:
@@ -44,17 +43,17 @@ signals:
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent *event);
-    //void dragEnterEvent(QDragEnterEvent *event);
-    //void dropEvent(QDropEvent *event);
+    // void dragEnterEvent(QDragEnterEvent *event);
+    // void dropEvent(QDropEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void contextMenuEvent(QContextMenuEvent *event);
     void wheelEvent(QWheelEvent *event);
     void paintEvent(QPaintEvent *event);
-    void mouseReleaseEvent ( QMouseEvent * event );
-    void resizeEvent(QResizeEvent * event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    void resizeEvent(QResizeEvent *event);
 
 private:
     int findTabUnder(const QPoint &pos);
 };
 
-#endif /* _PSITABBAR_H_ */
+#endif // PSITABBAR_H

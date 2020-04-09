@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,14 +24,13 @@
 #include <QObject>
 #include <QStringList>
 
-class ActiveProfiles: public QObject
-{
+class ActiveProfiles : public QObject {
     Q_OBJECT
 public:
-    static ActiveProfiles* instance();
+    static ActiveProfiles *instance();
 
-    bool setThisProfile(const QString &profile);
-    void unsetThisProfile();
+    bool    setThisProfile(const QString &profile);
+    void    unsetThisProfile();
     QString thisProfile() const;
 
     bool isActive(const QString &profile) const;
@@ -62,4 +60,4 @@ private:
     friend class PsiMain;
 };
 
-#endif
+#endif // ACTIVEPSIPROFILES_H

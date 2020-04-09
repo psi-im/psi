@@ -13,24 +13,25 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PSITABWIDGET_H
 #define PSITABWIDGET_H
 
-#include <QTabWidget>
-#include <QTabBar>
-#include <QDragEnterEvent>
 #include "psitabbar.h"
 
-class QVBoxLayout;
+#include <QDragEnterEvent>
+#include <QTabWidget>
+
+#define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
+
 class QHBoxLayout;
-class QToolButton;
-class QStackedLayout;
 class QMenu;
+class QStackedLayout;
+class QToolButton;
+class QVBoxLayout;
 
 /**
  * \class PsiTabWidget
@@ -40,29 +41,34 @@ class PsiTabWidget : public QWidget //: public QTabWidget
 {
     Q_OBJECT
 public:
-    PsiTabWidget(QWidget *parent = 0);
+    PsiTabWidget(QWidget *parent = nullptr);
     ~PsiTabWidget();
 
-    void setTabTextColor(QWidget *tab, const QColor &color);
-    int count();
+    void     setTabTextColor(QWidget *tab, const QColor &color);
+    int      count();
     QWidget *currentPage();
-    int currentPageIndex();
+    int      currentPageIndex();
     QWidget *widget(int index);
-    void addTab(QWidget *, QString, const QIcon &icon = QIcon());
-    void showPage(QWidget *);
-    void showPageDirectly(QWidget *);
+    void     addTab(QWidget *, QString, const QIcon &icon = QIcon());
+    void     showPage(QWidget *);
+    void     showPageDirectly(QWidget *);
 
-    void removePage(QWidget *);
-    QWidget* page(int index);
-    int getIndex(QWidget *);
-    void setTabText(QWidget *, const QString &);
-    void setTabIcon(QWidget *, const QIcon &);
-    void setTabPosition(QTabWidget::TabPosition pos);
-    void setCloseIcon(const QIcon &);
+    void setPagePinned(QWidget *page, bool pinned);
+    bool isPagePinned(QWidget *page);
+
+    void     removePage(QWidget *);
+    QWidget *page(int index);
+    int      getIndex(QWidget *);
+    void     setTabText(QWidget *, const QString &);
+    void     setTabIcon(QWidget *, const QIcon &);
+    void     setTabPosition(QTabWidget::TabPosition pos);
+    void     setCloseIcon(const QIcon &);
 
     void setTabBarShown(bool shown);     // default shown
     void setTabButtonsShown(bool shown); // default shown
     void setDragsEnabled(bool enabled);  // default enabled
+
+    void setTabBarUpdateEnabled(bool b);
 
 public slots:
     void setCurrentPage(int);
@@ -80,6 +86,9 @@ signals:
     // context menu on the blank space will have tab==-1
     void tabContextMenu(int tab, QPoint pos, QContextMenuEvent *event);
 
+protected:
+    void resizeEvent(QResizeEvent *event);
+
 private slots:
     void mouseDoubleClickTab(int tab);
     void mouseMiddleClickTab(int tab);
@@ -90,18 +99,15 @@ private slots:
     void widgetMoved(int from, int to);
 
 private:
-    QVector<QWidget*> widgets_;
-    QTabBar *tabBar_;
-    QVBoxLayout *layout_;
-    QHBoxLayout *barLayout_;
-    QStackedLayout *stacked_;
-    QToolButton *closeButton_;
-    QToolButton *downButton_;
+    QVector<QWidget *>      widgets_;
+    PsiTabBar *             tabBar_;
+    QVBoxLayout *           layout_;
+    QHBoxLayout *           barLayout_;
+    QStackedLayout *        stacked_;
+    QToolButton *           closeButton_;
+    QToolButton *           downButton_;
     QTabWidget::TabPosition tabsPosition_;
-    QMenu *menu_;
+    QMenu *                 menu_;
 };
 
-
-#define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
-
-#endif
+#endif // PSITABWIDGET_H

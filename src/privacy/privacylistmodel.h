@@ -13,48 +13,44 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PRIVACYLISTMODEL_H
 #define PRIVACYLISTMODEL_H
 
-#include <QAbstractListModel>
-
 #include "privacylist.h"
+
+#include <QAbstractListModel>
 
 class QObject;
 
-class PrivacyListModel : public QAbstractListModel
-{
+class PrivacyListModel : public QAbstractListModel {
 public:
     enum { TextColumn = 0, ValueColumn };
-    enum {
-        BlockedRole = Qt::UserRole + 0
-    };
+    enum { BlockedRole = Qt::UserRole + 0 };
 
-    PrivacyListModel(const PrivacyList& list = PrivacyList(""), QObject* parent = NULL);
+    PrivacyListModel(const PrivacyList &list = PrivacyList(""), QObject *parent = nullptr);
 
     // Overridden from QAbstractListModel
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    int      rowCount(const QModelIndex &parent = QModelIndex()) const;
+    int      columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role) const;
-    bool removeRows(int row, int count, const QModelIndex & parent = QModelIndex());
-    //void reset() { QAbstractListModel::reset(); } // Not really clean
+    bool     removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
+    // void reset() { QAbstractListModel::reset(); } // Not really clean
 
     // Own functions
-    PrivacyList& list() { return list_; }
-    void setList(const PrivacyList& list);
-    bool moveUp(const QModelIndex& index);
-    bool moveDown(const QModelIndex& index);
-    bool edit(const QModelIndex& index);
-    bool add();
-    void insertItem(int pos, const PrivacyListItem &item);
+    PrivacyList &list() { return list_; }
+    void         setList(const PrivacyList &list);
+    bool         moveUp(const QModelIndex &index);
+    bool         moveDown(const QModelIndex &index);
+    bool         edit(const QModelIndex &index);
+    bool         add();
+    void         insertItem(int pos, const PrivacyListItem &item);
 
 private:
     PrivacyList list_;
 };
 
-#endif
+#endif // PRIVACYLISTMODEL_H

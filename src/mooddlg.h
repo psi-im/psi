@@ -13,33 +13,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef MOODDLG_H
 #define MOODDLG_H
 
-#include <QDialog>
-
 #include "ui_mood.h"
+
+#include <QDialog>
 
 class PsiAccount;
 
-class MoodDlg : public QDialog
-{
+class MoodDlg : public QDialog {
     Q_OBJECT
 
 public:
-    MoodDlg(QList<PsiAccount*>);
+    MoodDlg(QList<PsiAccount *>);
 
 protected slots:
     void setMood();
 
 private:
-    Ui::Mood ui_;
-    QList<PsiAccount*> pa_;
+    Ui::Mood            ui_;
+    QList<PsiAccount *> pa_;
 };
 
-#endif
+#endif // MOODDLG_H

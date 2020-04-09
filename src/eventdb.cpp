@@ -1,6 +1,6 @@
 /*
  * eventdb.cpp - asynchronous I/O event database
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,22 +13,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "eventdb.h"
 
-#include <QVector>
-#include <QFileInfo>
-#include <QDir>
-#include <QTimer>
-#include <QTextStream>
-#include <QDateTime>
-
-#include "psievent.h"
 #include "jidutil.h"
+#include "psievent.h"
+
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QTimer>
+#include <QVector>
 
 using namespace XMPP;
 
@@ -37,50 +36,40 @@ using namespace XMPP;
 //----------------------------------------------------------------------------
 EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id)
 {
-    e = event;
+    e    = event;
     v_id = id;
 }
 
-EDBItem::~EDBItem()
-{
-}
+EDBItem::~EDBItem() {}
 
-PsiEvent::Ptr EDBItem::event() const
-{
-    return e;
-}
+PsiEvent::Ptr EDBItem::event() const { return e; }
 
-const QString & EDBItem::id() const
-{
-    return v_id;
-}
-
+const QString &EDBItem::id() const { return v_id; }
 
 //----------------------------------------------------------------------------
 // EDBHandle
 //----------------------------------------------------------------------------
-class EDBHandle::Private
-{
+class EDBHandle::Private {
 public:
     Private() = default;
 
-    EDB *edb = nullptr;
-    int beginRow_ = 0;
+    EDB *     edb       = nullptr;
+    int       beginRow_ = 0;
     EDBResult r;
-    bool busy = false;
-    bool writeSuccess = false;
-    int listeningFor = 0;
-    int lastRequestType = 0;
+    bool      busy            = false;
+    bool      writeSuccess    = false;
+    int       listeningFor    = 0;
+    int       lastRequestType = 0;
 };
 
 EDBHandle::EDBHandle(EDB *edb) : QObject(nullptr)
 {
-    d = new Private;
-    d->edb = edb;
-    d->beginRow_ = 0;
-    d->busy = false;
-    d->writeSuccess = false;
-    d->listeningFor = -1;
+    d                  = new Private;
+    d->edb             = edb;
+    d->beginRow_       = 0;
+    d->busy            = false;
+    d->writeSuccess    = false;
+    d->listeningFor    = -1;
     d->lastRequestType = Read;
 
     d->edb->reg(this);
@@ -95,97 +84,78 @@ EDBHandle::~EDBHandle()
 
 void EDBHandle::get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int begin, int len)
 {
-    d->busy = true;
+    d->busy            = true;
     d->lastRequestType = Read;
-    d->listeningFor = d->edb->op_get(accId, jid, date, direction, begin, len);
+    d->listeningFor    = d->edb->op_get(accId, jid, date, direction, begin, len);
 }
 
-void EDBHandle::find(const QString &accId, const QString &str, const XMPP::Jid &jid, const QDateTime date, int direction)
+void EDBHandle::find(const QString &accId, const QString &str, const XMPP::Jid &jid, const QDateTime date,
+                     int direction)
 {
-    d->busy = true;
+    d->busy            = true;
     d->lastRequestType = Read;
-    d->listeningFor = d->edb->op_find(accId, str, jid, date, direction);
+    d->listeningFor    = d->edb->op_find(accId, str, jid, date, direction);
 }
 
 void EDBHandle::append(const QString &accId, const Jid &j, const PsiEvent::Ptr &e, int type)
 {
-    d->busy = true;
+    d->busy            = true;
     d->lastRequestType = Write;
-    d->listeningFor = d->edb->op_append(accId, j, e, type);
+    d->listeningFor    = d->edb->op_append(accId, j, e, type);
 }
 
 void EDBHandle::erase(const QString &accId, const Jid &j)
 {
-    d->busy = true;
+    d->busy            = true;
     d->lastRequestType = Erase;
-    d->listeningFor = d->edb->op_erase(accId, j);
+    d->listeningFor    = d->edb->op_erase(accId, j);
 }
 
-bool EDBHandle::busy() const
-{
-    return d->busy;
-}
+bool EDBHandle::busy() const { return d->busy; }
 
-const EDBResult EDBHandle::result() const
-{
-    return d->r;
-}
+const EDBResult EDBHandle::result() const { return d->r; }
 
-bool EDBHandle::writeSuccess() const
-{
-    return d->writeSuccess;
-}
+bool EDBHandle::writeSuccess() const { return d->writeSuccess; }
 
 void EDBHandle::edb_resultReady(EDBResult r)
 {
-    d->busy = false;
-    d->r = r;
+    d->busy         = false;
+    d->r            = r;
     d->listeningFor = -1;
     finished();
 }
 
 void EDBHandle::edb_writeFinished(bool b)
 {
-    d->busy = false;
+    d->busy         = false;
     d->writeSuccess = b;
     d->listeningFor = -1;
     finished();
 }
 
-int EDBHandle::listeningFor() const
-{
-    return d->listeningFor;
-}
+int EDBHandle::listeningFor() const { return d->listeningFor; }
 
-int EDBHandle::lastRequestType() const
-{
-    return d->lastRequestType;
-}
+int EDBHandle::lastRequestType() const { return d->lastRequestType; }
 
-int EDBHandle::beginRow() const
-{
-    return d->beginRow_;
-}
-
+int EDBHandle::beginRow() const { return d->beginRow_; }
 
 //----------------------------------------------------------------------------
 // EDB
 //----------------------------------------------------------------------------
-class EDB::Private
-{
+class EDB::Private {
 public:
     Private() = default;
 
-    QList<EDBHandle*> list;
-    int reqid_base = 0;
-    PsiCon *psi = nullptr;
+    QList<EDBHandle *> list;
+    int                reqid_base = 0;
+    PsiCon *           psi        = nullptr;
 };
 
 EDB::EDB(PsiCon *psi)
 {
-    d = new Private;
+    d             = new Private;
     d->reqid_base = 0;
-    d->psi = psi;
+    d->psi        = psi;
 }
 
 EDB::~EDB()
@@ -195,20 +165,11 @@ EDB::~EDB()
     delete d;
 }
 
-int EDB::genUniqueId() const
-{
-    return d->reqid_base++;
-}
+int EDB::genUniqueId() const { return d->reqid_base++; }
 
-void EDB::reg(EDBHandle *h)
-{
-    d->list.append(h);
-}
+void EDB::reg(EDBHandle *h) { d->list.append(h); }
 
-void EDB::unreg(EDBHandle *h)
-{
-    d->list.removeAll(h);
-}
+void EDB::unreg(EDBHandle *h) { d->list.removeAll(h); }
 
 int EDB::op_get(const QString &accId, const Jid &jid, const QDateTime date, int direction, int start, int len)
 {
@@ -225,16 +186,13 @@ int EDB::op_append(const QString &accId, const Jid &j, const PsiEvent::Ptr &e, i
     return append(accId, j, e, type);
 }
 
-int EDB::op_erase(const QString &accId, const Jid &j)
-{
-    return erase(accId, j);
-}
+int EDB::op_erase(const QString &accId, const Jid &j) { return erase(accId, j); }
 
 void EDB::resultReady(int req, EDBResult r, int begin_row)
 {
     // deliver
-    foreach(EDBHandle* h, d->list) {
-        if(h->listeningFor() == req) {
+    foreach (EDBHandle *h, d->list) {
+        if (h->listeningFor() == req) {
             h->d->beginRow_ = begin_row;
             h->edb_resultReady(r);
             return;
@@ -245,15 +203,12 @@ void EDB::resultReady(int req, EDBResult r, int begin_row)
 void EDB::writeFinished(int req, bool b)
 {
     // deliver
-    foreach(EDBHandle* h, d->list) {
-        if(h->listeningFor() == req) {
+    foreach (EDBHandle *h, d->list) {
+        if (h->listeningFor() == req) {
             h->edb_writeFinished(b);
             return;
         }
     }
 }
 
-PsiCon *EDB::psi()
-{
-    return d->psi;
-}
+PsiCon *EDB::psi() { return d->psi; }

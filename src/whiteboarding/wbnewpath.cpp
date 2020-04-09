@@ -14,18 +14,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "wbnewpath.h"
+
 #include "../sxe/sxesession.h"
 
 #include <QGraphicsScene>
 
-WbNewPath::WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor) : WbNewItem(s) {
-    controlPoint_ = 0;
+WbNewPath::WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor,
+                     const QColor &fillColor) :
+    WbNewItem(s)
+{
+    controlPoint_ = nullptr;
 
     graphicsitem_.setZValue(std::numeric_limits<double>::max());
 
@@ -39,50 +42,52 @@ WbNewPath::WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const
     graphicsitem_.setPath(painterpath);
 }
 
-WbNewPath::~WbNewPath() {
-    if(controlPoint_) {
+WbNewPath::~WbNewPath()
+{
+    if (controlPoint_) {
         delete controlPoint_;
     }
 }
 
-void WbNewPath::parseCursorMove(QPointF newPos) {
-    if(controlPoint_) {
+void WbNewPath::parseCursorMove(QPointF newPos)
+{
+    if (controlPoint_) {
         QPainterPath painterpath = graphicsitem_.path();
         // FIXME: the path should actually go through the "controlPoint_".
         painterpath.quadTo(*controlPoint_, newPos);
         graphicsitem_.setPath(painterpath);
 
         delete controlPoint_;
-        controlPoint_ = 0;
-    }
-    else {
+        controlPoint_ = nullptr;
+    } else {
         controlPoint_ = new QPointF(newPos);
     }
 }
 
-QDomNode WbNewPath::serializeToSvg(QDomDocument *doc) {
-    if(controlPoint_) {
+QDomNode WbNewPath::serializeToSvg(QDomDocument *doc)
+{
+    if (controlPoint_) {
         QPainterPath painterpath = graphicsitem_.path();
         painterpath.lineTo(*controlPoint_);
         graphicsitem_.setPath(painterpath);
 
         delete controlPoint_;
-        controlPoint_ = 0;
+        controlPoint_ = nullptr;
     }
 
     // trim the generated SVG to remove unnecessary nested <g/>'s
 
     // first find the <path/> element
-    QDomNode out = WbNewItem::serializeToSvg(doc);
+    QDomNode    out = WbNewItem::serializeToSvg(doc);
     QDomElement trimmed;
-    for(QDomNode n = out.firstChild(); !n.isNull(); n = n.nextSibling()) {
-        if(n.isElement()) {
-            if(n.nodeName() == "path") {
+    for (QDomNode n = out.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        if (n.isElement()) {
+            if (n.nodeName() == "path") {
                 trimmed = n.toElement();
                 break;
             } else {
                 trimmed = n.toElement().elementsByTagName("path").at(0).toElement();
-                if(!trimmed.isNull())
+                if (!trimmed.isNull())
                     break;
             }
         }
@@ -91,13 +96,10 @@ QDomNode WbNewPath::serializeToSvg(QDomDocument *doc) {
     if (!trimmed.isNull()) {
         // copy relevant attributes from the parent <g/>
         QDomNamedNodeMap parentAttr = trimmed.parentNode().toElement().attributes();
-        for(int i = parentAttr.length() - 1; i >= 0; i--) {
+        for (int i = parentAttr.length() - 1; i >= 0; i--) {
             QString name = parentAttr.item(i).nodeName();
-            if((name == "stroke"
-                || name == "stroke-width"
-                || name == "stroke-linecap"
-                || name == "fill"
-                || name == "fill-opacity")
+            if ((name == "stroke" || name == "stroke-width" || name == "stroke-linecap" || name == "fill"
+                 || name == "fill-opacity")
                 && !trimmed.hasAttribute(name))
                 trimmed.setAttributeNode(parentAttr.item(i).toAttr());
         }
@@ -109,6 +111,4 @@ QDomNode WbNewPath::serializeToSvg(QDomDocument *doc) {
     return trimmed;
 }
 
-QGraphicsItem* WbNewPath::graphicsItem() {
-    return &graphicsitem_;
-}
+QGraphicsItem *WbNewPath::graphicsItem() { return &graphicsitem_; }

@@ -4,11 +4,10 @@
 #include <QList>
 #include <QString>
 
-class GUITest
-{
+class GUITest {
 public:
-    virtual ~GUITest() { }
-    virtual bool run() = 0;
+    virtual ~GUITest() {}
+    virtual bool    run()  = 0;
     virtual QString name() = 0;
 };
 

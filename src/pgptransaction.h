@@ -18,47 +18,44 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PGPTRANSACTION_H
 #define PGPTRANSACTION_H
 
-#include <QDomElement>
-#include <QtCrypto>
-
 #include "xmpp_jid.h"
 #include "xmpp_message.h"
 
+#include <QDomElement>
+#include <QtCrypto>
 
-class PGPTransaction : public QCA::SecureMessage
-{
+class PGPTransaction : public QCA::SecureMessage {
     Q_OBJECT
 
 public:
-    PGPTransaction(QCA::SecureMessageSystem*);
+    PGPTransaction(QCA::SecureMessageSystem *);
     ~PGPTransaction();
 
     int id() const;
 
-    const XMPP::Message& message() const;
-    void setMessage(const XMPP::Message&);
+    const XMPP::Message &message() const;
+    void                 setMessage(const XMPP::Message &);
 
-    const QDomElement & xml() const;
-    void setXml(const QDomElement &);
+    const QDomElement &xml() const;
+    void               setXml(const QDomElement &);
 
     XMPP::Jid jid() const;
-    void setJid(const XMPP::Jid &);
+    void      setJid(const XMPP::Jid &);
 
 private:
-    QCA::SecureMessageSystem* system_;
-    XMPP::Message message_;
-    QDomElement xml_;
-    XMPP::Jid jid_;
-    int id_;
-    static int idCounter_;
+    QCA::SecureMessageSystem *system_;
+    XMPP::Message             message_;
+    QDomElement               xml_;
+    XMPP::Jid                 jid_;
+    int                       id_;
+    static int                idCounter_;
 };
 
-#endif
+#endif // PGPTRANSACTION_H

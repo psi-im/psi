@@ -13,22 +13,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include <QPointer>
 #include <QVariantHash>
 
-class PsiOptions;
 class MainWin;
+class PsiOptions;
 
-class BossKey : public QObject
-{
+class BossKey : public QObject {
     Q_OBJECT
 public:
-    BossKey(QObject *p = 0);
+    BossKey(QObject *p = nullptr);
     ~BossKey() {};
 
 public slots:
@@ -39,9 +37,9 @@ private:
     void doShow();
 
 private:
-    bool isHidden_;
-    QList< QPointer<QWidget> > hiddenWidgets_;
-    QVariantHash tmpOptions_;
-    PsiOptions *psiOptions;
-    MainWin* win_;
+    bool                     isHidden_;
+    QList<QPointer<QWidget>> hiddenWidgets_;
+    QVariantHash             tmpOptions_;
+    PsiOptions *             psiOptions;
+    MainWin *                win_;
 };

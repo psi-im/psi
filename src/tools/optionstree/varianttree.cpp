@@ -13,36 +13,31 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "varianttree.h"
 
-#include <QRect>
-#include <QSize>
-#include <QDomElement>
+#include <QColor>
 #include <QDomDocument>
 #include <QDomDocumentFragment>
+#include <QDomElement>
 #include <QKeySequence>
+#include <QRect>
+#include <QSize>
 #include <QStringList>
-#include <QColor>
 
 // FIXME: Helpers from xmpp_xmlcommon.h would be very appropriate for
 // void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 // void VariantTree::elementToVariant(const QVariant& var, QDomElement& e)
 
-QDomDocument *VariantTree::unknownsDoc=0;
+QDomDocument *VariantTree::unknownsDoc = nullptr;
 
 /**
  * Default Constructor
  */
-VariantTree::VariantTree(QObject *parent)
-    : QObject(parent)
-{
-
-}
+VariantTree::VariantTree(QObject *parent) : QObject(parent) {}
 
 /**
  * Default Destructor
@@ -50,11 +45,10 @@ VariantTree::VariantTree(QObject *parent)
  */
 VariantTree::~VariantTree()
 {
-    foreach(VariantTree* vt, trees_.values()) {
+    foreach (VariantTree *vt, trees_.values()) {
         delete vt;
     }
 }
-
 
 /**
  * Split a @a node into local key and rest
@@ -63,38 +57,37 @@ VariantTree::~VariantTree()
  * @param rest part of the @a node after first dot
  * @return
  */
-bool VariantTree::getKeyRest(const QString& node, QString &key, QString &rest)
+bool VariantTree::getKeyRest(const QString &node, QString &key, QString &rest)
 {
     int idx = node.indexOf(QChar('.'));
     if (idx != -1) {
-        key=node.left(idx);
-        rest=node.mid(idx+1);
+        key  = node.left(idx);
+        rest = node.mid(idx + 1);
         return true;
     }
     return false;
 }
 
-
 bool VariantTree::isValidNodeName(const QString &name)
 {
-/* XML backend:
-[4]       NameChar       ::=        Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
-[5]       Name       ::=       (Letter | '_' | ':') (NameChar)*
-but we don't want to have namespaces in the node names....
+    /* XML backend:
+    [4]       NameChar       ::=        Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
+    [5]       Name       ::=       (Letter | '_' | ':') (NameChar)*
+    but we don't want to have namespaces in the node names....
 
-    but for now just allow ascii subset of this:
-    */
-    if (name.isEmpty()) return false;
-    int len = name.length();
+        but for now just allow ascii subset of this:
+        */
+    if (name.isEmpty())
+        return false;
+    int     len = name.length();
     QString other(".-_");
-    QChar ch = name[0];
-    if (!((ch>='A' && ch<='Z') || (ch>='a' && ch<='z') || (ch=='_'))) return false;
-    for (int i=1; i < len; i++) {
+    QChar   ch = name[0];
+    if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch == '_')))
+        return false;
+    for (int i = 1; i < len; i++) {
         ch = name[i];
-        if (!((ch>='A' && ch<='Z')
-            || (ch>='a' && ch<='z')
-            || (other.contains(ch))
-            || (ch >= '0' && ch <= '9'))) return false;
+        if (!((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (other.contains(ch)) || (ch >= '0' && ch <= '9')))
+            return false;
     }
     return true;
 }
@@ -106,29 +99,26 @@ void VariantTree::setValue(QString node, QVariant value)
 {
     QString key, subnode;
     if (getKeyRest(node, key, subnode)) {
-        //not this tier
+        // not this tier
         Q_ASSERT(isValidNodeName(key));
-        if (!trees_.contains(key))
-        {
-            if (values_.contains(key))
-            {
+        if (!trees_.contains(key)) {
+            if (values_.contains(key)) {
                 qWarning("Error: Trying to add option node %s but it already exists as a value", qPrintable(key));
                 return;
             }
-            //create a new tier
-            trees_[key]=new VariantTree(this);
+            // create a new tier
+            trees_[key] = new VariantTree(this);
         }
-        //pass it down a level
-        trees_[key]->setValue(subnode,value);
+        // pass it down a level
+        trees_[key]->setValue(subnode, value);
     } else {
-        //this tier
+        // this tier
         Q_ASSERT(isValidNodeName(node));
-        if (trees_.contains(node))
-        {
+        if (trees_.contains(node)) {
             qWarning("Error: Trying to add option value %s but it already exists as a subtree", qPrintable(node));
             return;
         }
-        values_[node]=value;
+        values_[node] = value;
     }
 }
 
@@ -136,35 +126,35 @@ void VariantTree::setValue(QString node, QVariant value)
  * Get value at @a node
  * @return the value of @a node if @a node exists, otherwise VariantTree::missingValue
  */
-QVariant VariantTree::getValue(const QString& node) const
+QVariant VariantTree::getValue(const QString &node) const
 {
-    QString key,subnode;
+    QString key, subnode;
     if (getKeyRest(node, key, subnode)) {
-        //not this tier
-        if (trees_.contains(key))
-        {
-            return trees_[key]->getValue(subnode);
+        // not this tier
+        auto it = trees_.constFind(key);
+        if (it != trees_.constEnd()) {
+            return it.value()->getValue(subnode);
         }
     } else {
-        //this tier
-        if (values_.contains(node))
-            return values_[node];
+        // this tier
+        auto it = values_.constFind(node);
+        if (it != values_.constEnd())
+            return it.value();
     }
     return missingValue;
 }
 
-
 bool VariantTree::remove(const QString &node, bool internal_nodes)
 {
-    QString key,subnode;
+    QString key, subnode;
     if (getKeyRest(node, key, subnode)) {
-        //not this tier
+        // not this tier
         if (trees_.contains(key)) {
             return trees_[key]->remove(subnode, internal_nodes);
         }
     } else {
         VariantTree *tree;
-        //this tier
+        // this tier
         if (values_.contains(node)) {
             values_.remove(node);
             return true;
@@ -181,11 +171,12 @@ bool VariantTree::remove(const QString &node, bool internal_nodes)
  */
 bool VariantTree::isInternalNode(QString node) const
 {
-    QString key,subnode;
+    QString key, subnode;
     if (getKeyRest(node, key, subnode)) {
-        //not this tier
-        if (trees_.contains(key)) {
-            return trees_[key]->isInternalNode(subnode);
+        // not this tier
+        auto it = trees_.constFind(key);
+        if (it != trees_.constEnd()) {
+            return it.value()->isInternalNode(subnode);
         }
         qWarning("isInternalNode called on non existent node: %s", qPrintable(node));
         return false;
@@ -194,8 +185,6 @@ bool VariantTree::isInternalNode(QString node) const
     }
 }
 
-
-
 /**
  * \brief Sets the comment of the specified node.
  * \param name "Path" to the node
@@ -203,28 +192,25 @@ bool VariantTree::isInternalNode(QString node) const
  */
 void VariantTree::setComment(QString node, QString comment)
 {
-    if (node.contains(QChar('.')))
-    {
-        //not this tier
-        QString key=node.left(node.indexOf(QChar('.')));
-        QString subnode=node.remove(0,node.indexOf(QChar('.'))+1);
+    if (node.contains(QChar('.'))) {
+        // not this tier
+        QString key     = node.left(node.indexOf(QChar('.')));
+        QString subnode = node.remove(0, node.indexOf(QChar('.')) + 1);
         Q_ASSERT(isValidNodeName(key));
-        if (!trees_.contains(key))
-        {
-            if (values_.contains(key))
-            {
+        if (!trees_.contains(key)) {
+            if (values_.contains(key)) {
                 qWarning("Error: Trying to add option node %s but it already exists as a value", qPrintable(key));
                 return;
             }
-            //create a new tier
-            trees_[key]=new VariantTree(this);
+            // create a new tier
+            trees_[key] = new VariantTree(this);
         }
-        //pass it down a level
-        trees_[key]->setComment(subnode,comment);
+        // pass it down a level
+        trees_[key]->setComment(subnode, comment);
     } else {
-        //this tier
+        // this tier
         Q_ASSERT(isValidNodeName(node));
-        comments_[node]=comment;
+        comments_[node] = comment;
     }
 }
 
@@ -234,21 +220,19 @@ void VariantTree::setComment(QString node, QString comment)
  */
 QString VariantTree::getComment(QString node) const
 {
-    if (node.contains(QChar('.')))
-    {
-        //not this tier
-        QString key=node.left(node.indexOf(QChar('.')));
-        QString subnode=node.remove(0,node.indexOf(QChar('.'))+1);
-        if (trees_.contains(key))
-        {
-            return trees_[key]->getComment(subnode);
+    int dotIdx = node.indexOf(QChar('.'));
+    if (dotIdx != -1) {
+        // not this tier
+        QString key     = node.left(dotIdx);
+        QString subnode = node.remove(0, dotIdx + 1);
+        auto    it      = trees_.constFind(key);
+        if (it != trees_.constEnd()) {
+            return it.value()->getComment(subnode);
         }
-    } else {
-        //this tier
-        if (comments_.contains(node))
-            return comments_[node];
+        return QString();
     }
-    return QString();
+    // this tier
+    return comments_.value(node);
 }
 
 /**
@@ -258,74 +242,74 @@ QString VariantTree::getComment(QString node) const
  * \param direct only return direct children
  * \param internal_nodes include internal (non-final) nodes
  */
-QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool internal_nodes) const
+QStringList VariantTree::nodeChildren(const QString &node, bool direct, bool internal_nodes) const
 {
     QStringList children;
-    QString key = node;
+    QString     key = node;
     if (!node.isEmpty()) {
         // Go down further
         QString subnode;
-        if (node.contains('.')) {
-            key = node.left(node.indexOf(QChar('.')));
-            subnode = node.right(node.length() - node.indexOf(QChar('.')) - 1);
+        int     dotIdx = node.indexOf(QChar('.'));
+        if (dotIdx != -1) {
+            key     = node.left(dotIdx);
+            subnode = node.right(node.length() - dotIdx - 1);
         }
         if (trees_.contains(key)) {
-            children = trees_[key]->nodeChildren(subnode,direct,internal_nodes);
+            children = trees_[key]->nodeChildren(subnode, direct, internal_nodes);
         }
-    }
-    else {
+    } else {
         // Current tree
-        foreach (QString subnode, trees_.keys()) {
+        for (auto it = trees_.constBegin(); it != trees_.constEnd(); ++it) {
             if (internal_nodes)
-                children << subnode;
+                children << it.key();
 
             if (!direct)
-                children += nodeChildren(subnode,direct,internal_nodes);
+                children += nodeChildren(it.key(), direct, internal_nodes);
         }
 
-        foreach (QString child, values_.keys()) {
-            children << child;
+        for (auto it = values_.constBegin(); it != values_.constEnd(); ++it) {
+            children << it.key();
         }
     }
 
     if (key.isEmpty()) {
         return children;
-    }
-    else {
+    } else {
         QStringList long_children;
-        foreach (QString child, children) {
-            QString long_child = QString("%1.%2").arg(key).arg(child);
+        foreach (const QString &child, children) {
+            QString long_child = QString("%1.%2").arg(key, child);
             long_children << long_child;
         }
         return long_children;
     }
 }
 
-
 /**
  *
  */
-void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
+void VariantTree::toXml(QDomDocument &doc, QDomElement &ele) const
 {
     // Subtrees
-    foreach (QString node, trees_.keys()) {
-        Q_ASSERT(!node.isEmpty());
-        QDomElement nodeEle = doc.createElement(node);
-        trees_[node]->toXml(doc, nodeEle);
-        if (comments_.contains(node))
-            nodeEle.setAttribute("comment",comments_[node]);
+    for (auto it = trees_.constBegin(); it != trees_.constEnd(); ++it) {
+        Q_ASSERT(!it.key().isEmpty());
+        QDomElement nodeEle = doc.createElement(it.key());
+        it.value()->toXml(doc, nodeEle);
+        auto cit = comments_.constFind(it.key());
+        if (cit != comments_.constEnd())
+            nodeEle.setAttribute("comment", cit.value());
         ele.appendChild(nodeEle);
     }
 
     // Values
-    foreach (QString child, values_.keys()) {
-        Q_ASSERT(!child.isEmpty());
-        QVariant var = values_[child];
-        QDomElement valEle = doc.createElement(child);
-        variantToElement(var,valEle);
+    for (auto it = values_.constBegin(); it != values_.constEnd(); ++it) {
+        Q_ASSERT(!it.key().isEmpty());
+        QVariant    var    = it.value();
+        QDomElement valEle = doc.createElement(it.key());
+        variantToElement(var, valEle);
         ele.appendChild(valEle);
-        if (comments_.contains(child))
-            valEle.setAttribute("comment",comments_[child]);
+        auto cit = comments_.constFind(it.key());
+        if (cit != comments_.constEnd())
+            valEle.setAttribute("comment", cit.value());
     }
 
     // unknown types passthrough
@@ -342,16 +326,15 @@ void VariantTree::fromXml(const QDomElement &ele)
 {
     QDomElement child = ele.firstChildElement();
     while (!child.isNull()) {
-        bool isunknown=false;
-        QString name = child.nodeName();
+        bool    isunknown = false;
+        QString name      = child.nodeName();
         Q_ASSERT(!name.isEmpty());
         if (!child.hasAttribute("type")) {
             // Subnode
-            if ( !trees_.contains(name) )
+            if (!trees_.contains(name))
                 trees_[name] = new VariantTree(this);
             trees_[name]->fromXml(child);
-        }
-        else {
+        } else {
             // Value
             QVariant val;
             val = elementToVariant(child);
@@ -359,7 +342,8 @@ void VariantTree::fromXml(const QDomElement &ele)
                 values_[name] = val;
             } else {
                 isunknown = true;
-                if (!unknownsDoc) unknownsDoc = new QDomDocument();
+                if (!unknownsDoc)
+                    unknownsDoc = new QDomDocument();
                 QDomDocumentFragment frag(unknownsDoc->createDocumentFragment());
                 frag.appendChild(unknownsDoc->importNode(child, true));
                 unknowns_[name] = frag;
@@ -368,10 +352,10 @@ void VariantTree::fromXml(const QDomElement &ele)
 
         // Comments
         if (!isunknown && child.hasAttribute("comment")) {
-            QString comment=child.attribute("comment");
-            comments_[name]=comment;
+            QString comment = child.attribute("comment");
+            comments_[name] = comment;
         }
-        child=child.nextSiblingElement();
+        child = child.nextSiblingElement();
     }
 }
 
@@ -380,11 +364,63 @@ void VariantTree::fromXml(const QDomElement &ele)
  * The attribute of the element is used to determine the type.
  * The tagname of the element is ignored.
  */
-QVariant VariantTree::elementToVariant(const QDomElement& e)
+QVariant VariantTree::elementToVariant(const QDomElement &e)
 {
+    // next declaration sorted from most popular
+    static QString boolType(QString::fromLatin1("bool"));
+    static QString stringType(QString::fromLatin1("QString"));
+    static QString keyseqType(QString::fromLatin1("QKeySequence"));
+    static QString intType(QString::fromLatin1("int"));
+    static QString ulonglongType(QString::fromLatin1("qulonglong"));
+    static QString colorType(QString::fromLatin1("QColor"));
+    static QString stringListType(QString::fromLatin1("QStringList"));
+    static QString rectType(QString::fromLatin1("QRect"));
+    static QString variantListType(QString::fromLatin1("QVariantList"));
+    static QString sizeType(QString::fromLatin1("QSize"));
+    static QString variantMapType(QString::fromLatin1("QVariantMap"));
+    static QString variantHashType(QString::fromLatin1("QVariantHash"));
+    static QString byteArrayType(QString::fromLatin1("QByteArray"));
+
+    static QString typeAttr(QString::fromLatin1("type"));
+
     QVariant value;
-    QString type = e.attribute(QLatin1String("type"));
-    if (type == "QStringList") {
+    QString  type = e.attribute(typeAttr);
+
+    { // let's start from basic most popular types
+        QVariant::Type varianttype;
+        bool           known = true;
+
+        if (type == boolType) {
+            varianttype = QVariant::Bool;
+        } else if (type == stringType) {
+            varianttype = QVariant::String;
+        } else if (type == intType) {
+            varianttype = QVariant::Int;
+        } else if (type == ulonglongType) {
+            varianttype = QVariant::ULongLong;
+        } else if (type == keyseqType) {
+            varianttype = QVariant::KeySequence;
+        } else if (type == colorType) {
+            varianttype = QVariant::Color;
+        } else {
+            known = false;
+        }
+
+        if (known) {
+            for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+                if (node.isText())
+                    value = node.toText().data();
+            }
+
+            if (!value.isValid())
+                value = QString("");
+
+            value.convert(int(varianttype));
+            return value;
+        }
+    }
+
+    if (type == stringListType) {
         QStringList list;
         for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
             QDomElement e = node.toElement();
@@ -393,8 +429,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
             }
         }
         value = list;
-    }
-    else if (type == QLatin1String("QVariantList")) {
+    } else if (type == variantListType) {
         QVariantList list;
         for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
             QDomElement e = node.toElement();
@@ -405,8 +440,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
             }
         }
         value = list;
-    }
-    else if (type == QLatin1String("QVariantMap")) {
+    } else if (type == variantMapType) {
         QVariantMap map;
         for (QDomElement ine = e.firstChildElement(); !ine.isNull(); ine = ine.nextSiblingElement()) {
             QVariant v = elementToVariant(ine);
@@ -414,8 +448,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
                 map.insert(ine.tagName(), v);
         }
         value = map;
-    }
-    else if (type == QLatin1String("QVariantHash")) {
+    } else if (type == variantHashType) {
         QVariantHash map;
         for (QDomElement ine = e.firstChildElement(); !ine.isNull(); ine = ine.nextSiblingElement()) {
             QVariant v = elementToVariant(ine);
@@ -423,44 +456,37 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
                 map.insert(ine.tagName(), v);
         }
         value = map;
-    }
-    else if (type == QLatin1String("QSize")) {
+    } else if (type == sizeType) {
         int width = 0, height = 0;
         for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
             QDomElement e = node.toElement();
             if (!e.isNull()) {
                 if (e.tagName() == QLatin1String("width")) {
                     width = e.text().toInt();
-                }
-                else if (e.tagName() == QLatin1String("height")) {
+                } else if (e.tagName() == QLatin1String("height")) {
                     height = e.text().toInt();
                 }
             }
         }
-        value = QVariant(QSize(width,height));
-    }
-    else if (type == QLatin1String("QRect")) {
+        value = QVariant(QSize(width, height));
+    } else if (type == rectType) {
         int x = 0, y = 0, width = 0, height = 0;
         for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
             QDomElement e = node.toElement();
             if (!e.isNull()) {
                 if (e.tagName() == QLatin1String("width")) {
                     width = e.text().toInt();
-                }
-                else if (e.tagName() == QLatin1String("height")) {
+                } else if (e.tagName() == QLatin1String("height")) {
                     height = e.text().toInt();
-                }
-                else if (e.tagName() == QLatin1String("x")) {
+                } else if (e.tagName() == QLatin1String("x")) {
                     x = e.text().toInt();
-                }
-                else if (e.tagName() == QLatin1String("y")) {
+                } else if (e.tagName() == QLatin1String("y")) {
                     y = e.text().toInt();
                 }
             }
         }
-        value = QVariant(QRect(x,y,width,height));
-    }
-    else if (type == QLatin1String("QByteArray")) {
+        value = QVariant(QRect(x, y, width, height));
+    } else if (type == byteArrayType) {
         value = QByteArray();
         for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
             if (node.isText()) {
@@ -469,38 +495,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
             }
         }
     }
-    else { // Standard values
-        QVariant::Type varianttype;
-        bool known = true;
 
-        if (type==QLatin1String("QString")) {
-            varianttype = QVariant::String;
-        } else if (type==QLatin1String("bool")) {
-            varianttype = QVariant::Bool;
-        } else if (type==QLatin1String("int")) {
-            varianttype = QVariant::Int;
-        } else if (type == QLatin1String("QKeySequence")) {
-            varianttype = QVariant::KeySequence;
-        } else if (type == QLatin1String("QColor")) {
-            varianttype = QVariant::Color;
-        } else {
-            known = false;
-        }
-
-        if (known) {
-            for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
-                if ( node.isText() )
-                    value=node.toText().data();
-            }
-
-            if (!value.isValid())
-                value = QString("");
-
-            value.convert(varianttype);
-        } else {
-            value = QVariant();
-        }
-    }
     return value;
 }
 
@@ -508,49 +503,46 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
  * Modifies the element e to represent the variant var.
  * This method adds an attribute 'type' and contents to the element.
  */
-void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
+void VariantTree::variantToElement(const QVariant &var, QDomElement &e)
 {
     switch (var.type()) {
     case QVariant::List:
-        foreach(QVariant v, var.toList()) {
+        foreach (QVariant v, var.toList()) {
             QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
-            variantToElement(v,item_element);
+            variantToElement(v, item_element);
             e.appendChild(item_element);
         }
         break;
-    case QVariant::Map:
-    {
-        QVariantMap map = var.toMap();
-        QVariantMap::ConstIterator it = map.constBegin();
+    case QVariant::Map: {
+        QVariantMap                map = var.toMap();
+        QVariantMap::ConstIterator it  = map.constBegin();
         for (; it != map.constEnd(); ++it) {
             QDomElement item_element = e.ownerDocument().createElement(it.key());
-            variantToElement(it.value(),item_element);
+            variantToElement(it.value(), item_element);
             e.appendChild(item_element);
         }
         break;
     }
-    case QVariant::Hash:
-    {
-        QVariantHash map = var.toHash();
-        QVariantHash::ConstIterator it = map.constBegin();
+    case QVariant::Hash: {
+        QVariantHash                map = var.toHash();
+        QVariantHash::ConstIterator it  = map.constBegin();
         for (; it != map.constEnd(); ++it) {
             QDomElement item_element = e.ownerDocument().createElement(it.key());
-            variantToElement(it.value(),item_element);
+            variantToElement(it.value(), item_element);
             e.appendChild(item_element);
         }
         break;
     }
     case QVariant::StringList:
-        foreach(const QString &s, var.toStringList()) {
+        foreach (const QString &s, var.toStringList()) {
             QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
-            QDomText text = e.ownerDocument().createTextNode(s);
+            QDomText    text         = e.ownerDocument().createTextNode(s);
             item_element.appendChild(text);
             e.appendChild(item_element);
         }
         break;
-    case QVariant::Size:
-    {
-        QSize size = var.toSize();
+    case QVariant::Size: {
+        QSize       size          = var.toSize();
         QDomElement width_element = e.ownerDocument().createElement(QLatin1String("width"));
         width_element.appendChild(e.ownerDocument().createTextNode(QString::number(size.width())));
         e.appendChild(width_element);
@@ -559,9 +551,8 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
         e.appendChild(height_element);
         break;
     }
-    case QVariant::Rect:
-    {
-        QRect rect = var.toRect();
+    case QVariant::Rect: {
+        QRect       rect      = var.toRect();
         QDomElement x_element = e.ownerDocument().createElement(QLatin1String("x"));
         x_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.x())));
         e.appendChild(x_element);
@@ -576,29 +567,25 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
         e.appendChild(height_element);
         break;
     }
-    case QVariant::ByteArray:
-    {
+    case QVariant::ByteArray: {
         QDomText text = e.ownerDocument().createTextNode(var.toByteArray().toBase64());
         e.appendChild(text);
         break;
     }
-    case QVariant::KeySequence:
-    {
-        QKeySequence k = var.value<QKeySequence>();
-        QDomText text = e.ownerDocument().createTextNode(k.toString());
+    case QVariant::KeySequence: {
+        QKeySequence k    = var.value<QKeySequence>();
+        QDomText     text = e.ownerDocument().createTextNode(k.toString());
         e.appendChild(text);
         break;
     }
-    case QVariant::Color:
-    { // save invalid colors as empty string
+    case QVariant::Color: { // save invalid colors as empty string
         if (var.value<QColor>().isValid()) {
             QDomText text = e.ownerDocument().createTextNode(var.toString());
             e.appendChild(text);
         }
         break;
     }
-    default:
-    {
+    default: {
         QDomText text = e.ownerDocument().createTextNode(var.toString());
         e.appendChild(text);
         break;
@@ -608,4 +595,4 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
     e.setAttribute(QLatin1String("type"), var.typeName());
 }
 
-const QVariant VariantTree::missingValue=QVariant(QVariant::Invalid);
+const QVariant VariantTree::missingValue = QVariant(QVariant::Invalid);

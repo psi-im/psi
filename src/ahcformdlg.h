@@ -13,38 +13,36 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef AHCFORMDLG_H
 #define AHCFORMDLG_H
 
-#include <QObject>
+#include "ui_ahcformdlg.h"
+#include "xmpp_jid.h"
+#include "xmpp_xdata.h"
+
 #include <QDialog>
+#include <QObject>
 #include <QString>
 
-#include "xmpp_xdata.h"
-#include "xmpp_jid.h"
-
-class QPushButton;
-class BusyWidget;
 class AHCommand;
-class XDataWidget;
+class BusyWidget;
 class PsiCon;
+class QPushButton;
+class XDataWidget;
+
 namespace XMPP {
-    class Client;
+class Client;
 }
 
-#include "ui_ahcformdlg.h"
-
-class AHCFormDlg : public QDialog
-{
+class AHCFormDlg : public QDialog {
     Q_OBJECT
 
 public:
-    AHCFormDlg(PsiCon *psi, const AHCommand& r, const XMPP::Jid& receiver, XMPP::Client* client, bool final = false);
+    AHCFormDlg(PsiCon *psi, const AHCommand &r, const XMPP::Jid &receiver, XMPP::Client *client, bool final = false);
 
 protected:
     XMPP::XData data() const;
@@ -59,17 +57,17 @@ protected slots:
 
 private:
     Ui::AHCFormDlg _ui;
-    PsiCon *_psi;
-    QPushButton* _pb_prev;
-    QPushButton* _pb_next;
-    QPushButton* _pb_complete;
-    QPushButton* _pb_cancel;
-    XDataWidget* _xdata;
+    PsiCon *       _psi;
+    QPushButton *  _pb_prev;
+    QPushButton *  _pb_next;
+    QPushButton *  _pb_complete;
+    QPushButton *  _pb_cancel;
+    XDataWidget *  _xdata;
 
-    XMPP::Jid _receiver;
-    QString node_;
-    XMPP::Client* _client;
-    QString sessionId_;
+    XMPP::Jid     _receiver;
+    QString       node_;
+    XMPP::Client *_client;
+    QString       sessionId_;
 };
 
-#endif
+#endif // AHCFORMDLG_H

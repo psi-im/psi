@@ -1,6 +1,6 @@
 /*
  * searchdlg.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,30 +13,27 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef SEARCHDLG_H
 #define SEARCHDLG_H
 
-#include <QDialog>
-
 #include "ui_search.h"
+
+#include <QDialog>
 
 class PsiAccount;
 class QString;
 class QStringList;
 
 namespace XMPP {
-    class Jid;
+class Jid;
 }
-
 using namespace XMPP;
 
-class SearchDlg : public QDialog, public Ui::Search
-{
+class SearchDlg : public QDialog, public Ui::Search {
     Q_OBJECT
 public:
     SearchDlg(const XMPP::Jid &, PsiAccount *);
@@ -50,7 +47,7 @@ private slots:
     void doSearchGet();
     void doSearchSet();
     void selectionChanged();
-    void itemActivated(QTreeWidgetItem* item, int column);
+    void itemActivated(QTreeWidgetItem *item, int column);
     void jt_finished();
     void doStop();
     void doAdd();
@@ -60,8 +57,9 @@ private:
     class Private;
     Private *d;
 
-    void addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last, const QString &email);
+    void addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last,
+                  const QString &email);
     void clear();
 };
 
-#endif
+#endif // SEARCHDLG_H

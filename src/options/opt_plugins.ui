@@ -61,7 +61,7 @@
         <property name="text">
          <string>Plugin Name</string>
         </property>
-        <property name="whatsThis">
+        <property name="toolTip">
          <string>Available plugins</string>
         </property>
         <property name="textAlignment">

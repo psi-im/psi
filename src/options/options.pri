@@ -10,7 +10,6 @@ SOURCES += \
 FORMS += \
     $$PWD/ui_options.ui
 
-
 # additional tabs
 HEADERS += \
     $$PWD/opt_application.h \
@@ -35,7 +34,8 @@ HEADERS += \
     $$PWD/opt_toolbars.h \
     $$PWD/opt_advanced.h \
     $$PWD/opt_shortcuts.h \
-    $$PWD/opt_statuspep.h
+    $$PWD/opt_statuspep.h \
+    $$PWD/opt_accounts.h
 
 HEADERS += $$PWD/opt_tree.h
 
@@ -62,7 +62,8 @@ SOURCES += \
     $$PWD/opt_toolbars.cpp \
     $$PWD/opt_advanced.cpp \
     $$PWD/opt_shortcuts.cpp \
-    $$PWD/opt_statuspep.cpp
+    $$PWD/opt_statuspep.cpp \
+    $$PWD/opt_accounts.cpp
 
 SOURCES += $$PWD/opt_tree.cpp
 

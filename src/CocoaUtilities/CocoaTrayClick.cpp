@@ -13,18 +13,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "CocoaUtilities/CocoaTrayClick.h"
 
-#include <objc/runtime.h>
-#include <objc/message.h>
 #include <QApplication>
-
 #include <QDebug>
+#include <objc/message.h>
+#include <objc/runtime.h>
 
 //#define DEBUG_OUTPUT
 
@@ -34,55 +32,48 @@ bool dockClickHandler(id /*self*/, SEL /*_cmd*/, ...)
     return true;
 }
 
-
-CocoaTrayClick * CocoaTrayClick::instance()
+CocoaTrayClick *CocoaTrayClick::instance()
 {
-    if(!instance_)
+    if (!instance_)
         instance_ = new CocoaTrayClick();
 
     return instance_;
 }
 
-CocoaTrayClick::CocoaTrayClick()
-    : QObject(qApp)
+CocoaTrayClick::CocoaTrayClick() : QObject(qApp)
 {
-    Class cls = objc_getClass("NSApplication");
-    objc_object *appInst = objc_msgSend((objc_object*)cls, sel_registerName("sharedApplication"));
+    typedef objc_object *(*object_type)(struct objc_object * self, SEL _cmd);
+    object_type objc_msgSendObject = (object_type)objc_msgSend;
 
-    if(appInst != NULL) {
-        objc_object* delegate = objc_msgSend(appInst, sel_registerName("delegate"));
-        Class delClass = (Class)objc_msgSend(delegate,  sel_registerName("class"));
-        SEL shouldHandle = sel_registerName("applicationShouldHandleReopen:hasVisibleWindows:");
+    Class        cls     = objc_getClass("NSApplication");
+    objc_object *appInst = objc_msgSendObject((objc_object *)cls, sel_registerName("sharedApplication"));
+
+    if (appInst != NULL) {
+        objc_object *delegate     = objc_msgSendObject(appInst, sel_registerName("delegate"));
+        Class        delClass     = (Class)objc_msgSendObject(delegate, sel_registerName("class"));
+        SEL          shouldHandle = sel_registerName("applicationShouldHandleReopen:hasVisibleWindows:");
         if (class_getInstanceMethod(delClass, shouldHandle)) {
             if (class_replaceMethod(delClass, shouldHandle, (IMP)dockClickHandler, "B@:")) {
 #ifdef DEBUG_OUTPUT
                 qDebug() << "Registered dock click handler (replaced original method)";
 #endif
-            }
-            else {
+            } else {
                 qWarning() << "Failed to replace method for dock click handler";
             }
-        }
-        else {
-            if (class_addMethod(delClass, shouldHandle, (IMP)dockClickHandler,"B@:")) {
+        } else {
+            if (class_addMethod(delClass, shouldHandle, (IMP)dockClickHandler, "B@:")) {
 #ifdef DEBUG_OUTPUT
                 qDebug() << "Registered dock click handler";
 #endif
-            }
-            else {
+            } else {
                 qWarning() << "Failed to register dock click handler";
             }
         }
     }
 }
 
-CocoaTrayClick::~CocoaTrayClick()
-{
-}
+CocoaTrayClick::~CocoaTrayClick() {}
 
-void CocoaTrayClick::emitTrayClicked()
-{
-    emit trayClicked();
-}
+void CocoaTrayClick::emitTrayClicked() { emit trayClicked(); }
 
-CocoaTrayClick* CocoaTrayClick::instance_ = NULL;
+CocoaTrayClick *CocoaTrayClick::instance_ = NULL;

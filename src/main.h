@@ -13,25 +13,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <QString>
-#include <QObject>
 #include <QHash>
+#include <QObject>
+#include <QString>
 
 class PsiCon;
 
-class PsiMain : public QObject
-{
+class PsiMain : public QObject {
     Q_OBJECT
 public:
-    PsiMain(const QHash<QString, QString>& commandline, QObject *parent=0);
+    PsiMain(const QHash<QString, QString> &commandline, QObject *parent = nullptr);
     ~PsiMain();
 
     bool useActiveInstance();
@@ -47,8 +45,8 @@ private slots:
     void bail();
 
 private:
-    QString lastProfile, lastLang;
-    bool autoOpen;
+    QString                 lastProfile, lastLang;
+    bool                    autoOpen;
     QHash<QString, QString> cmdline;
 
     PsiCon *pcon;
@@ -56,4 +54,4 @@ private:
     void saveSettings();
 };
 
-#endif
+#endif // MAIN_H

@@ -1,99 +1,100 @@
 /*
- * (c) 2006 Kevin Smith
- * (c) 2008 Maciej Niedzielski
+ * Copyright (C) 2006  Kevin Smith
+ * Copyright (C) 2008  Maciej Niedzielski
  */
 
 #ifndef PLUGINMANAGER_H
 #define PLUGINMANAGER_H
 
-#include <QtCore>
-#include <QList>
-#include <QMap>
-#include <QHash>
-#include <QDomElement>
-#include <QMenu>
-
 #include "psiplugin.h"
 
-class QPluginLoader;
-
-class PsiAccount;
-class PsiPlugin;
-class PluginHost;
-class PsiCon;
+#include <QDomElement>
+#include <QHash>
+#include <QList>
+#include <QMap>
+#include <QMenu>
+#include <QtCore>
 
 #define PLUGINS_NO_DEBUG
 
-namespace XMPP {
-    class Client;
-}
+class MessageView;
+class PluginHost;
+class PsiAccount;
+class PsiCon;
+class PsiPlugin;
+class QPluginLoader;
 
 namespace QCA {
-    class DirWatch;
+class DirWatch;
 }
 
-class AccountIds
-{
+namespace XMPP {
+class Client;
+}
+
+class AccountIds {
 public:
-    int appendAccount(PsiAccount *acc);
-    void removeAccount(PsiAccount *acc);
-    void clear();
-    bool isValidRange(int id) const { return id_keys.contains(id); }
+    int         appendAccount(PsiAccount *acc);
+    void        removeAccount(PsiAccount *acc);
+    void        clear();
+    bool        isValidRange(int id) const { return id_keys.contains(id); }
     PsiAccount *account(int id) const;
-    int id(PsiAccount *acc) const;
+    int         id(PsiAccount *acc) const;
 
 private:
     QHash<PsiAccount *, int> acc_keys;
     QHash<int, PsiAccount *> id_keys;
 };
 
-class PluginManager : public QObject
-{
+class PluginManager : public QObject {
     Q_OBJECT
 
 public:
-    static PluginManager* instance();
-    void initNewSession(PsiCon *psi);
+    static PluginManager *instance();
+    void                  initNewSession(PsiCon *psi);
 
     QStringList availablePlugins() const;
 
-    void addAccount(PsiAccount* account, XMPP::Client* client);
+    void addAccount(PsiAccount *account, XMPP::Client *client);
 
     void loadEnabledPlugins();
     bool unloadAllPlugins();
 
-    bool isEnabled(const QString& plugin) const;
-    QString pathToPlugin(const QString& plugin) const;
-    QString shortName(const QString& plugin) const;
-    QString nameByShortName(const QString& shortName) const;
-    QString version(const QString& plugin) const;
-    QWidget* optionsWidget(const QString& plugin);
+    bool     isEnabled(const QString &plugin) const;
+    QString  pathToPlugin(const QString &plugin) const;
+    QString  shortName(const QString &plugin) const;
+    QString  nameByShortName(const QString &shortName) const;
+    QString  version(const QString &plugin) const;
+    QWidget *optionsWidget(const QString &plugin);
 
     void setShortcuts();
 
-    bool processEvent(PsiAccount* account, QDomElement& eventXml);
-    bool processMessage(PsiAccount* account, const QString& jidFrom, const QString& body, const QString& subject);
-    bool processOutgoingMessage(PsiAccount* account, const QString& jidTo, QString& body, const QString& type, QString& subject);
-    void processOutgoingStanza(PsiAccount* account, QDomElement &stanza);
-    void logout(PsiAccount* account);
+    bool processEvent(PsiAccount *account, QDomElement &eventXml);
+    bool processMessage(PsiAccount *account, const QString &jidFrom, const QString &body, const QString &subject);
+    bool processOutgoingMessage(PsiAccount *account, const QString &jidTo, QString &body, const QString &type,
+                                QString &subject);
+    void processOutgoingStanza(PsiAccount *account, QDomElement &stanza);
+    void logout(PsiAccount *account);
 
-    void applyOptions(const QString& plugin);
-    void restoreOptions(const QString& plugin);
-    void addToolBarButton(QObject* parent, QWidget* toolbar, PsiAccount* account, const QString& contact, const QString& plugin = "");
-    bool hasToolBarButton(const QString& plugin) const;
-    void addGCToolBarButton(QObject* parent, QWidget* toolbar, PsiAccount* account, const QString& contact, const QString& plugin = "");
-    bool hasGCToolBarButton(const QString& plugin) const;
-    void addAccountMenu(QMenu *menu, PsiAccount* account);
-    void addContactMenu(QMenu *menu, PsiAccount* account, QString jid);
+    void applyOptions(const QString &plugin);
+    void restoreOptions(const QString &plugin);
+    void addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
+                          const QString &plugin = "");
+    bool hasToolBarButton(const QString &plugin) const;
+    void addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
+                            const QString &plugin = "");
+    bool hasGCToolBarButton(const QString &plugin) const;
+    void addAccountMenu(QMenu *menu, PsiAccount *account);
+    void addContactMenu(QMenu *menu, PsiAccount *account, QString jid);
 
-    void setupChatTab(QWidget *tab, PsiAccount* account, const QString& contact);
-    void setupGCTab(QWidget *tab, PsiAccount* account, const QString& contact);
-    bool appendingChatMessage(PsiAccount* account, const QString& contact,
-                  QString& body, QDomElement& html, bool local);
+    void setupChatTab(QWidget *tab, PsiAccount *account, const QString &contact);
+    void setupGCTab(QWidget *tab, PsiAccount *account, const QString &contact);
+    bool appendingChatMessage(PsiAccount *account, const QString &contact, QString &body, QDomElement &html,
+                              bool local);
 
-    QString pluginInfo(const QString& plugin) const;
-    bool hasInfoProvider(const QString& plugin) const;
-    QIcon icon(const QString& plugin) const;
+    QString     pluginInfo(const QString &plugin) const;
+    bool        hasInfoProvider(const QString &plugin) const;
+    QIcon       icon(const QString &plugin) const;
     QStringList pluginFeatures() const;
 
     bool decryptMessageElement(PsiAccount *account, QDomElement &message) const;
@@ -106,98 +107,104 @@ public:
 
 signals:
     void jsFiltersUpdated();
+    void accountLoggedOut(int account_id);
 
 private:
     PluginManager();
-    PsiCon *psi_;
-    void loadAllPlugins();
-    bool verifyStanza(const QString& stanza);
-    QList<PluginHost*> updatePluginsList();
-    void loadPluginIfEnabled(PluginHost* plugin);
+    PsiCon *            psi_;
+    void                loadAllPlugins();
+    bool                verifyStanza(const QString &stanza);
+    QList<PluginHost *> updatePluginsList();
+    void                loadPluginIfEnabled(PluginHost *plugin);
 
-    static PluginManager* instance_;
+    static PluginManager *instance_;
 
-    //account id, client
-    QVector<XMPP::Client*> clients_;
+    // account id, client
+    QVector<XMPP::Client *> clients_;
 
-    //account, account id
+    // account, account id
     AccountIds accountIds_;
 
-    //name, host
-    QMap<QString, PluginHost*> hosts_;
-    //file, host
-    QMap<QString, PluginHost*> pluginByFile_;
-    //sorted by priority
-    QList<PluginHost*> pluginsByPriority_;
+    // name, host
+    QMap<QString, PluginHost *> hosts_;
+    // file, host
+    QMap<QString, PluginHost *> pluginByFile_;
+    // sorted by priority
+    QList<PluginHost *> pluginsByPriority_;
 
-
-    QList<QCA::DirWatch*> dirWatchers_;
+    QList<QCA::DirWatch *> dirWatchers_;
 
     // Options widget provides by plugin on opt_plugins
     QPointer<QWidget> optionsWidget_;
 
-    QMultiMap<PsiPlugin::Priority,std::pair<QString,QString>> _messageViewJSFilters; // priority -> <js, uuid>
-    QTimer *_messageViewJSFiltersTimer = nullptr;
+    QMultiMap<PsiPlugin::Priority, std::pair<QString, QString>> _messageViewJSFilters; // priority -> <js, uuid>
+    QTimer *                                                    _messageViewJSFiltersTimer = nullptr;
 
     class StreamWatcher;
-    bool incomingXml(int account, const QDomElement &eventXml);
-    void sendXml(int account, const QString& xml);
+    bool    incomingXml(int account, const QDomElement &eventXml);
+    void    sendXml(int account, const QString &xml);
     QString uniqueId(int account) const;
 
-    QString getStatus(int account) const;
-    QString getStatusMessage(int account) const;
-    QString proxyHost(int account) const;
-    int proxyPort(int account) const;
-    QString proxyUser(int account) const;
-    QString proxyPassword(int account) const;
+    QString     getStatus(int account) const;
+    QString     getStatusMessage(int account) const;
+    QString     proxyHost(int account) const;
+    int         proxyPort(int account) const;
+    QString     proxyUser(int account) const;
+    QString     proxyPassword(int account) const;
     QStringList getRoster(int account) const;
-    QString getJid(int account) const;
-    QString getId(int account) const;
-    QString getName(int account) const;
-    int findOnlineAccountForContact(const QString &jid) const;
+    QString     getJid(int account) const;
+    QString     getId(int account) const;
+    QString     getName(int account) const;
+    int         findOnlineAccountForContact(const QString &jid) const;
 
-    bool isSelf(int account, const QString& jid) const;
-    bool isAgent(int account, const QString& jid) const;
-    bool inList(int account, const QString& jid) const;
-    bool isPrivate(int account, const QString& jid) const;
-    bool isConference(int account, const QString& jid) const;
-    QString name(int account, const QString& jid) const;
-    QString status(int account, const QString& jid) const;
-    QString statusMessage(int account, const QString& jid) const;
-    QStringList resources(int account, const QString& jid) const;
-    QString realJid(int account, const QString& jid) const;
-    QStringList mucNicks(int account, const QString& mucJid) const;
+    bool        isSelf(int account, const QString &jid) const;
+    bool        isAgent(int account, const QString &jid) const;
+    bool        inList(int account, const QString &jid) const;
+    bool        isPrivate(int account, const QString &jid) const;
+    bool        isConference(int account, const QString &jid) const;
+    QString     name(int account, const QString &jid) const;
+    QString     status(int account, const QString &jid) const;
+    QString     statusMessage(int account, const QString &jid) const;
+    QStringList resources(int account, const QString &jid) const;
+    QString     realJid(int account, const QString &jid) const;
+    QStringList mucNicks(int account, const QString &mucJid) const;
+    bool        hasCaps(int account, const QString &jid, const QStringList &caps);
 
-    bool setActivity(int account, const QString& Jid, QDomElement xml);
-    bool setMood(int account, const QString& Jid, QDomElement xml);
-    bool setTune(int account, const QString& Jid, const QString& tune);
+    bool setActivity(int account, const QString &Jid, QDomElement xml);
+    bool setMood(int account, const QString &Jid, QDomElement xml);
+    bool setTune(int account, const QString &Jid, const QString &tune);
 
-    void initPopup(const QString& text, const QString& title, const QString& icon, int type);
-    void initPopupForJid(int account, const QString& jid, const QString& text, const QString& title, const QString& icon, int tipe);
-    int registerOption(const QString& name, int initValue = 5, const QString& path = QString());
-    void unregisterOption(const QString& name);
-    int popupDuration(const QString& name) const;
-    void setPopupDuration(const QString& name, int value);
+    void initPopup(const QString &text, const QString &title, const QString &icon, int type);
+    void initPopupForJid(int account, const QString &jid, const QString &text, const QString &title,
+                         const QString &icon, int tipe);
+    int  registerOption(const QString &name, int initValue = 5, const QString &path = QString());
+    void unregisterOption(const QString &name);
+    int  popupDuration(const QString &name) const;
+    void setPopupDuration(const QString &name, int value);
 
-    void setStatus(int account, const QString& status, const QString& statusMessage);
+    void setStatus(int account, const QString &status, const QString &statusMessage);
 
-    bool appendSysMsg(int account, const QString& jid, const QString& message);
-    bool appendMsg(int account, const QString& jid, const QString& message, const QString& id, bool wasEncrypted);
+    bool appendSysMsg(int account, const QString &jid, const QString &message);
+    bool appendSysHtmlMsg(int account, const QString &jid, const QString &message);
+    bool appendMsg(int account, const QString &jid, const QString &message, const QString &id, bool wasEncrypted);
 
-    void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
+    void createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot);
     void createNewMessageEvent(int account, QDomElement const &element);
 
     void updateFeatures();
 
-    QString installChatLogJSDataFilter(const QString& js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
-    void uninstallChatLogJSDataFilter(const QString &id);
+    QString installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
+    void    uninstallChatLogJSDataFilter(const QString &id);
 
     friend class PluginHost;
 
+private:
+    bool appendMsgView(int account, const QString &jid, const MessageView &message);
+
 private slots:
     void dirsChanged();
-    void optionChanged(const QString& option);
+    void optionChanged(const QString &option);
     void accountDestroyed();
 };
 
-#endif
+#endif // PLUGINMANAGER_H

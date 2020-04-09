@@ -31,15 +31,15 @@ endif()
 if( LIBTIDY_INCLUDE_DIR AND LIBTIDY_LIBRARY )
     # in cache already
     set(LIBTIDY_FIND_QUIETLY TRUE)
-endif( LIBTIDY_INCLUDE_DIR AND LIBTIDY_LIBRARY )
+endif()
 
 if( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_LIBTIDY QUIET libtidy )
     if( PC_LIBTIDY_FOUND )
         set( LIBTIDY_DEFINITIONS ${PC_LIBTIDY_CFLAGS} ${PC_LIBTIDY_CFLAGS_OTHER} )
-    endif( PC_LIBTIDY_FOUND )
-endif( UNIX AND NOT( APPLE OR CYGWIN ) )
+    endif()
+endif()
 
 set( LIBTIDY_ROOT "" CACHE STRING "Path to libtidy library" )
 
@@ -86,6 +86,6 @@ find_package_handle_standard_args(
 if( LIBTIDY_FOUND )
     set( LIBTIDY_LIBRARIES ${LIBTIDY_LIBRARY} )
     set( LIBTIDY_INCLUDE_DIRS ${LIBTIDY_INCLUDE_DIR} )
-endif( LIBTIDY_FOUND )
+endif()
 
 mark_as_advanced( LIBTIDY_INCLUDE_DIR LIBTIDY_LIBRARY )

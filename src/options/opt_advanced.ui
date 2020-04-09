@@ -59,7 +59,7 @@
    </item>
    <item>
     <widget class="QCheckBox" name="ck_sendComposingEvents">
-     <property name="whatsThis">
+     <property name="toolTip">
       <string>Disables the sending of message events such as &quot;Contact is Typing...&quot;</string>
      </property>
      <property name="text">

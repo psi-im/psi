@@ -13,24 +13,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "contactupdatesmanager.h"
 
-#include <QTimer>
-
 #include "psiaccount.h"
-#include "psicontact.h"
 #include "psicon.h"
+#include "psicontact.h"
 #include "psievent.h"
 #include "userlist.h"
 
-ContactUpdatesManager::ContactUpdatesManager(PsiCon* parent)
-    : QObject(parent)
-    , controller_(parent)
+#include <QTimer>
+
+ContactUpdatesManager::ContactUpdatesManager(PsiCon *parent) : QObject(parent), controller_(parent)
 {
     Q_ASSERT(controller_);
     updateTimer_ = new QTimer(this);
@@ -39,32 +36,30 @@ ContactUpdatesManager::ContactUpdatesManager(PsiCon* parent)
     connect(updateTimer_, SIGNAL(timeout()), SLOT(update()));
 }
 
-ContactUpdatesManager::~ContactUpdatesManager()
-{
-}
+ContactUpdatesManager::~ContactUpdatesManager() {}
 
-void ContactUpdatesManager::contactBlocked(PsiAccount* account, const XMPP::Jid& jid)
+void ContactUpdatesManager::contactBlocked(PsiAccount *account, const XMPP::Jid &jid)
 {
     Q_ASSERT(account);
     updates_ << ContactUpdateAction(ContactBlocked, account, jid);
     updateTimer_->start();
 }
 
-void ContactUpdatesManager::contactDeauthorized(PsiAccount* account, const XMPP::Jid& jid)
+void ContactUpdatesManager::contactDeauthorized(PsiAccount *account, const XMPP::Jid &jid)
 {
     Q_ASSERT(account);
     updates_ << ContactUpdateAction(ContactDeauthorized, account, jid);
     updateTimer_->start();
 }
 
-void ContactUpdatesManager::contactAuthorized(PsiAccount* account, const XMPP::Jid& jid)
+void ContactUpdatesManager::contactAuthorized(PsiAccount *account, const XMPP::Jid &jid)
 {
     Q_ASSERT(account);
     updates_ << ContactUpdateAction(ContactAuthorized, account, jid);
     updateTimer_->start();
 }
 
-void ContactUpdatesManager::contactRemoved(PsiAccount* account, const XMPP::Jid& jid)
+void ContactUpdatesManager::contactRemoved(PsiAccount *account, const XMPP::Jid &jid)
 {
     Q_ASSERT(account);
     // we must act immediately, since otherwise all corresponding events
@@ -73,13 +68,13 @@ void ContactUpdatesManager::contactRemoved(PsiAccount* account, const XMPP::Jid&
     removeToastersFor(account, jid);
 }
 
-void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount* account, const XMPP::Jid& jid, bool denyAuthRequests)
+void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount *account, const XMPP::Jid &jid, bool denyAuthRequests)
 {
     Q_ASSERT(account);
     if (!account || !controller_)
         return;
 
-    foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
+    foreach (EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
         PsiEvent::Ptr e = p.second;
         if (e->type() == PsiEvent::Auth) {
             AuthEvent::Ptr authEvent = e.staticCast<AuthEvent>();
@@ -93,13 +88,13 @@ void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount* account, cons
     }
 }
 
-void ContactUpdatesManager::removeToastersFor(PsiAccount* account, const XMPP::Jid& jid)
+void ContactUpdatesManager::removeToastersFor(PsiAccount *account, const XMPP::Jid &jid)
 {
     Q_ASSERT(account);
     if (!account || !controller_)
         return;
 
-    foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
+    foreach (EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
         PsiEvent::Ptr e = p.second;
         if (e->type() == PsiEvent::Message) {
             account->eventQueue()->dequeue(e);
@@ -107,13 +102,13 @@ void ContactUpdatesManager::removeToastersFor(PsiAccount* account, const XMPP::J
     }
 }
 
-void ContactUpdatesManager::removeNotInListContacts(PsiAccount* account, const XMPP::Jid& jid)
+void ContactUpdatesManager::removeNotInListContacts(PsiAccount *account, const XMPP::Jid &jid)
 {
     Q_ASSERT(account);
     if (!account)
         return;
 
-    foreach(UserListItem* u, account->findRelevant(jid)) {
+    foreach (UserListItem *u, account->findRelevant(jid)) {
         if (u && !u->inList()) {
             account->actionRemove(u->jid());
         }
@@ -130,15 +125,12 @@ void ContactUpdatesManager::update()
         if (action.type == ContactBlocked) {
             removeAuthRequestEventsFor(action.account, action.jid, true);
             removeNotInListContacts(action.account, action.jid);
-        }
-        else if (action.type == ContactAuthorized) {
+        } else if (action.type == ContactAuthorized) {
             removeAuthRequestEventsFor(action.account, action.jid, false);
-        }
-        else if (action.type == ContactDeauthorized) {
+        } else if (action.type == ContactDeauthorized) {
             removeAuthRequestEventsFor(action.account, action.jid, false);
             removeNotInListContacts(action.account, action.jid);
-        }
-        else if (action.type == ContactRemoved) {
+        } else if (action.type == ContactRemoved) {
             Q_ASSERT(false);
         }
     }

@@ -13,15 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QTimer>
+#include "pollingtunecontroller.h"
 
 #include "tune.h"
-#include "pollingtunecontroller.h"
+
+#include <QTimer>
 
 /**
  * \class PollingTuneController
@@ -30,7 +30,6 @@
  * An implementing class only has to implement currentTune(), and the correct
  * signals will be emitted.
  */
-
 
 /**
  * \brief Constructs the controller.
@@ -51,8 +50,7 @@ void PollingTuneController::check()
         _prevTune = tune;
         if (tune.isNull()) {
             emit stopped();
-        }
-        else {
+        } else {
             emit playing(tune);
         }
     }

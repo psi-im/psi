@@ -13,46 +13,44 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef BOOKMARKMANAGER_H
 #define BOOKMARKMANAGER_H
 
-#include <QObject>
-#include <QList>
-
 #include "conferencebookmark.h"
 #include "urlbookmark.h"
 
+#include <QList>
+#include <QObject>
+
 class PsiAccount;
 
-class BookmarkManager : public QObject
-{
+class BookmarkManager : public QObject {
     Q_OBJECT
 
 public:
-    BookmarkManager(PsiAccount* account);
+    BookmarkManager(PsiAccount *account);
 
     bool isAvailable() const;
     bool isBookmarked(const XMPP::Jid &);
 
-    QList<URLBookmark> urls() const;
+    QList<URLBookmark>        urls() const;
     QList<ConferenceBookmark> conferences() const;
-    int indexOfConference(const XMPP::Jid &) const;
-    QString conferenceName(const XMPP::Jid &) const; // convenient method
+    int                       indexOfConference(const XMPP::Jid &) const;
+    QString                   conferenceName(const XMPP::Jid &) const; // convenient method
 
-    void setBookmarks(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
-    void setBookmarks(const QList<URLBookmark>&);
-    void setBookmarks(const QList<ConferenceBookmark>&);
+    void setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
+    void setBookmarks(const QList<URLBookmark> &);
+    void setBookmarks(const QList<ConferenceBookmark> &);
     void removeConference(const XMPP::Jid &);
 
 signals:
     void availabilityChanged();
-    void urlsChanged(const QList<URLBookmark>&);
-    void conferencesChanged(const QList<ConferenceBookmark>&);
+    void urlsChanged(const QList<URLBookmark> &);
+    void conferencesChanged(const QList<ConferenceBookmark> &);
     void bookmarksSaved();
 
 private slots:
@@ -65,11 +63,11 @@ private:
     void setIsAvailable(bool available);
 
 private:
-    PsiAccount* account_;
-    bool accountAvailable_;
-    bool isAvailable_;
-    QList<URLBookmark> urls_;
+    PsiAccount *              account_;
+    bool                      accountAvailable_;
+    bool                      isAvailable_;
+    QList<URLBookmark>        urls_;
     QList<ConferenceBookmark> conferences_;
 };
 
-#endif
+#endif // BOOKMARKMANAGER_H

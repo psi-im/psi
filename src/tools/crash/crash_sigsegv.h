@@ -1,7 +1,7 @@
 /*
  * sigsegv.h -- sigsegv handlers
  *
- * Copyright (c) 2003 Juan F. Codagnone <juam@users.sourceforge.net>
+ * Copyright (C) 2003  Juan F. Codagnone <juam@users.sourceforge.net>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,14 +25,13 @@
 #define CRASH_SIGSEGV_H
 
 namespace Crash {
-
 /**
  * sets the print function (it is used to print the backtrace)
- * if it isn't set, or it is set to NULL, printf will be used.
+ * if it isn't set, or it is set to nullptr, printf will be used.
  *
  * \param  _need_cr    needs to append an \n at the end?
  */
-void *sigsegv_set_print( int (* fnc)(const char *format, ...), int _needs_cr);
+void *sigsegv_set_print(int (*fnc)(const char *format, ...), int _needs_cr);
 
 /**
  * try to print a backtrace of the programa, and dump the core
@@ -43,7 +42,6 @@ void sigsegv_handler_fnc(int signal);
  * try to print a verbose backtrace of the program, and dump the core
  */
 void sigsegv_handler_bt_full_fnc(int signal);
-
 }; // namespace Crash
 
-#endif
+#endif // CRASH_SIGSEGV_H

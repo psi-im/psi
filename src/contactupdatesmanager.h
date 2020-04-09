@@ -13,13 +13,15 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef CONTACTUPDATESMANAGER_H
 #define CONTACTUPDATESMANAGER_H
+
+#include "psiaccount.h"
+#include "xmpp_jid.h"
 
 #include <QObject>
 #include <QPointer>
@@ -27,48 +29,38 @@
 class PsiCon;
 class QTimer;
 
-#include "psiaccount.h"
-#include "xmpp_jid.h"
-
-class ContactUpdatesManager : public QObject
-{
+class ContactUpdatesManager : public QObject {
     Q_OBJECT
 public:
-    ContactUpdatesManager(PsiCon* parent);
+    ContactUpdatesManager(PsiCon *parent);
     ~ContactUpdatesManager();
 
-    void contactBlocked(PsiAccount* account, const XMPP::Jid& jid);
-    void contactDeauthorized(PsiAccount* account, const XMPP::Jid& jid);
-    void contactAuthorized(PsiAccount* account, const XMPP::Jid& jid);
-    void contactRemoved(PsiAccount* account, const XMPP::Jid& jid);
+    void contactBlocked(PsiAccount *account, const XMPP::Jid &jid);
+    void contactDeauthorized(PsiAccount *account, const XMPP::Jid &jid);
+    void contactAuthorized(PsiAccount *account, const XMPP::Jid &jid);
+    void contactRemoved(PsiAccount *account, const XMPP::Jid &jid);
 
 private slots:
     void update();
 
 private:
-    PsiCon* controller_;
-    enum ContactUpdateActionType {
-        ContactBlocked = 0,
-        ContactAuthorized,
-        ContactDeauthorized,
-        ContactRemoved
-    };
+    PsiCon *controller_;
+    enum ContactUpdateActionType { ContactBlocked = 0, ContactAuthorized, ContactDeauthorized, ContactRemoved };
     struct ContactUpdateAction {
-        ContactUpdateAction(ContactUpdateActionType _type, PsiAccount* _account, const XMPP::Jid& _jid)
-            : type(_type)
-            , account(_account)
-            , jid(_jid)
-        {}
+        ContactUpdateAction(ContactUpdateActionType _type, PsiAccount *_account, const XMPP::Jid &_jid) :
+            type(_type), account(_account), jid(_jid)
+        {
+        }
         ContactUpdateActionType type;
-        QPointer<PsiAccount> account;
-        XMPP::Jid jid;
+        QPointer<PsiAccount>    account;
+        XMPP::Jid               jid;
     };
     QList<ContactUpdateAction> updates_;
-    QTimer* updateTimer_;
+    QTimer *                   updateTimer_;
 
-    void removeAuthRequestEventsFor(PsiAccount* account, const XMPP::Jid& jid, bool denyAuthRequests);
-    void removeToastersFor(PsiAccount* account, const XMPP::Jid& jid);
-    void removeNotInListContacts(PsiAccount* account, const XMPP::Jid& jid);
+    void removeAuthRequestEventsFor(PsiAccount *account, const XMPP::Jid &jid, bool denyAuthRequests);
+    void removeToastersFor(PsiAccount *account, const XMPP::Jid &jid);
+    void removeNotInListContacts(PsiAccount *account, const XMPP::Jid &jid);
 };
 
-#endif
+#endif // CONTACTUPDATESMANAGER_H

@@ -1,6 +1,6 @@
 /*
  * accountregdlg.h
- * Copyright (C) 2001, 2002, 2006  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2002, 2006  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,61 +13,59 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ACCOUNTREGDLG_H
 #define ACCOUNTREGDLG_H
 
+#include "profiles.h"
+#include "ui_accountreg.h"
+#include "xmpp_jid.h"
+
 #include <QDialog>
 #include <QString>
 
-#include "profiles.h"
-#include "xmpp_jid.h"
-#include "ui_accountreg.h"
-
-class ProxyManager;
+class MiniClient;
 class ProxyChooser;
-class QWidget;
+class ProxyManager;
+class PsiCon;
+class QByteArray;
 class QScrollArea;
 class QStringList;
-class MiniClient;
-class XDataWidget;
+class QWidget;
 class ServerListQuerier;
-class QByteArray;
-class PsiCon;
+class XDataWidget;
 
 namespace XMPP {
-    class Form;
-    class XData;
+class Form;
+class XData;
 }
 
-class AccountRegDlg : public QDialog
-{
+class AccountRegDlg : public QDialog {
     Q_OBJECT
 public:
-    AccountRegDlg(PsiCon *psi, QWidget *parent = 0);
+    AccountRegDlg(PsiCon *psi, QWidget *parent = nullptr);
     ~AccountRegDlg();
 
-    const XMPP::Jid& jid() const { return jid_; }
-    const QString& pass() const { return pass_; }
-    bool useHost() const { return opt_host_; }
-    const QString& host() const { return host_; }
-    int port() const { return port_; }
-    bool legacySSLProbe() { return legacy_ssl_probe_; }
+    const XMPP::Jid &    jid() const { return jid_; }
+    const QString &      pass() const { return pass_; }
+    bool                 useHost() const { return opt_host_; }
+    const QString &      host() const { return host_; }
+    int                  port() const { return port_; }
+    bool                 legacySSLProbe() { return legacy_ssl_probe_; }
     UserAccount::SSLFlag ssl() const { return ssl_; }
-    QString proxy() const { return proxy_; }
-    QString tlsOverrideDomain() { return tlsOverrideDomain_; }
-    QByteArray tlsOverrideCert() { return tlsOverrideCert_; }
+    QString              proxy() const { return proxy_; }
+    QString              tlsOverrideDomain() { return tlsOverrideDomain_; }
+    QByteArray           tlsOverrideCert() { return tlsOverrideCert_; }
 
 public slots:
     void done(int);
 
 protected:
-    static XMPP::XData convertToXData(const XMPP::Form&);
-    static XMPP::Form convertFromXData(const XMPP::XData&);
+    static XMPP::XData convertToXData(const XMPP::Form &);
+    static XMPP::Form  convertFromXData(const XMPP::XData &);
 
     bool checkSSL();
     void block();
@@ -79,8 +77,8 @@ protected slots:
     void next();
 
     void selectServer();
-    void serverListReceived(const QStringList&);
-    void serverListError(const QString&);
+    void serverListReceived(const QStringList &);
+    void serverListError(const QString &);
 
     void client_handshaken();
     void client_error();
@@ -89,25 +87,25 @@ protected slots:
     void setFields_finished();
 
 private:
-    Ui::AccountReg ui_;
-    PsiCon *psi;
-    QScrollArea* fields_container_;
-    XDataWidget* fields_;
-    ProxyChooser *proxy_chooser_;
+    Ui::AccountReg     ui_;
+    PsiCon *           psi;
+    QScrollArea *      fields_container_;
+    XDataWidget *      fields_;
+    ProxyChooser *     proxy_chooser_;
     ServerListQuerier *serverlist_querier_;
-    MiniClient *client_;
-    bool isOld_;
+    MiniClient *       client_;
+    bool               isOld_;
 
     // Account settings
-    XMPP::Jid jid_, server_;
+    XMPP::Jid            jid_, server_;
     UserAccount::SSLFlag ssl_;
-    bool opt_host_, legacy_ssl_probe_;
-    QString host_;
-    int port_;
-    QString pass_;
-    QString proxy_;
-    QString tlsOverrideDomain_;
-    QByteArray tlsOverrideCert_;
+    bool                 opt_host_, legacy_ssl_probe_;
+    QString              host_;
+    int                  port_;
+    QString              pass_;
+    QString              proxy_;
+    QString              tlsOverrideDomain_;
+    QByteArray           tlsOverrideCert_;
 };
 
-#endif
+#endif // ACCOUNTREGDLG_H

@@ -13,66 +13,64 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef XDATAWIDGET_H
 #define XDATAWIDGET_H
 
-#include <QWidget>
+#include "xmpp_jid.h"
+#include "xmpp_stanza.h"
+#include "xmpp_xdata.h"
+
 #include <QList>
 #include <QString>
 #include <QVBoxLayout>
-
-#include "xmpp_stanza.h"
-#include "xmpp_xdata.h"
-#include "xmpp_jid.h"
+#include <QWidget>
 
 class PsiCon;
 class XDataField;
 
 namespace XMPP {
-    class Client;
+class Client;
 }
 
-class XDataWidget : public QWidget
-{
+class XDataWidget : public QWidget {
     Q_OBJECT
 
 public:
-    XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client* client, XMPP::Jid owner);
+    XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client *client, XMPP::Jid owner);
     ~XDataWidget();
 
-    PsiCon *psi() const;
-    XMPP::Client* client() const;
-    QString registrarType() const;
-    XMPP::Jid owner() const;
+    PsiCon *            psi() const;
+    XMPP::Client *      client() const;
+    QString             registrarType() const;
+    XMPP::Jid           owner() const;
     XMPP::Stanza::Error consistencyError() const;
 
-    void setForm(const XMPP::XData&, bool withInstructions = true);
+    void setForm(const XMPP::XData &, bool withInstructions = true);
 
     XMPP::XData::FieldList fields() const;
-    XDataField* fieldByVar(const QString &) const;
+    XDataField *           fieldByVar(const QString &) const;
 
 protected slots:
-    void linkActivated(const QString&);
+    void linkActivated(const QString &);
 
 private:
-    void setInstructions(const QString&);
+    void setInstructions(const QString &);
     void setFields(const XMPP::XData::FieldList &);
 
 private:
-    typedef QList<XDataField*> XDataFieldList;
-    XDataFieldList fields_;
-    QString registrarType_;
-    QVBoxLayout* layout_;
-    PsiCon *psi_;
-    XMPP::Client* client_;
-    XMPP::Jid owner_;
-    bool consistent_;
-    XMPP::Stanza::Error consistencyError_;
+    typedef QList<XDataField *> XDataFieldList;
+    XDataFieldList              fields_;
+    QString                     registrarType_;
+    QVBoxLayout *               layout_;
+    PsiCon *                    psi_;
+    XMPP::Client *              client_;
+    XMPP::Jid                   owner_;
+    bool                        consistent_;
+    XMPP::Stanza::Error         consistencyError_;
 };
 
-#endif
+#endif // XDATAWIDGET_H

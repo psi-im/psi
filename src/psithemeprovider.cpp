@@ -1,6 +1,6 @@
 /*
  * psithemeprovider.cpp - kinda adapter for set of themes
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,28 +13,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psithemeprovider.h"
 
-#include <QFileInfo>
-#include <QStringList>
-
 #include "applicationinfo.h"
 #include "psicon.h"
 
+#include <QFileInfo>
+#include <QStringList>
 
-PsiThemeProvider::PsiThemeProvider(PsiCon *parent) :
-    QObject(parent),
-    _psi(parent)
+PsiThemeProvider::PsiThemeProvider(PsiCon *parent) : QObject(parent), _psi(parent) {}
+
+QString PsiThemeProvider::themePath(const QString &name)
 {
-
-}
-
-QString PsiThemeProvider::themePath(const QString &name) {
     QStringList dirs;
     dirs << ":";
     dirs << ".";
@@ -45,7 +39,7 @@ QString PsiThemeProvider::themePath(const QString &name) {
         QString fileName = dir + "/themes/" + name;
 
         QFileInfo fi(fileName);
-        if ( fi.exists() )
+        if (fi.exists())
             return fileName;
     }
 
@@ -53,14 +47,7 @@ QString PsiThemeProvider::themePath(const QString &name) {
     return QString();
 }
 
-
 // says where theme is able to load in separate thread
-bool PsiThemeProvider::threadedLoading() const
-{
-    return false;
-}
+bool PsiThemeProvider::threadedLoading() const { return false; }
 
-int PsiThemeProvider::screenshotWidth() const
-{
-    return 0;
-}
+int PsiThemeProvider::screenshotWidth() const { return 0; }

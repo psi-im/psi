@@ -13,45 +13,42 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PSIROSTERWIDGET_H
 #define PSIROSTERWIDGET_H
 
-#include <QWidget>
 #include <QPointer>
+#include <QWidget>
 
 class ContactListDragModel;
 class PsiContactList;
-class QStackedWidget;
 class PsiContactListView;
-class QStackedWidget;
-class QMimeData;
-class QLineEdit;
-class QSortFilterProxyModel;
 class PsiFilteredContactListView;
+class QLineEdit;
+class QMimeData;
+class QSortFilterProxyModel;
+class QStackedWidget;
 
-class PsiRosterWidget : public QWidget
-{
+class PsiRosterWidget : public QWidget {
     Q_OBJECT
 public:
-    PsiRosterWidget(QWidget* parent);
+    PsiRosterWidget(QWidget *parent);
     ~PsiRosterWidget();
 
-    void setContactList(PsiContactList* contactList);
+    void setContactList(PsiContactList *contactList);
 
 public slots:
-    void filterEditTextChanged(const QString&);
+    void filterEditTextChanged(const QString &);
     void quitFilteringMode();
     void updateFilterMode();
     void setFilterModeEnabled(bool enabled);
     void clearFilterEdit();
 
 private slots:
-    void optionChanged(const QString& option);
+    void optionChanged(const QString &option);
     void showAgentsChanged(bool);
     void showHiddenChanged(bool);
     void showSelfChanged(bool);
@@ -59,19 +56,19 @@ private slots:
     void setShowStatusMsg(bool);
 
 protected:
-    bool eventFilter(QObject* obj, QEvent* e);
+    bool eventFilter(QObject *obj, QEvent *e);
 
 private:
-    QPointer<PsiContactList> contactList_;
-    QStackedWidget* stackedWidget_;
-    QWidget* contactListPage_;
-    QWidget* filterPage_;
-    PsiContactListView* contactListPageView_;
-    PsiFilteredContactListView* filterPageView_;
-    QLineEdit* filterEdit_;
+    QPointer<PsiContactList>    contactList_;
+    QStackedWidget *            stackedWidget_;
+    QWidget *                   contactListPage_;
+    QWidget *                   filterPage_;
+    PsiContactListView *        contactListPageView_;
+    PsiFilteredContactListView *filterPageView_;
+    QLineEdit *                 filterEdit_;
 
-    ContactListDragModel* contactListModel_;
-    QSortFilterProxyModel* filterModel_;
+    ContactListDragModel * contactListModel_;
+    QSortFilterProxyModel *filterModel_;
 };
 
-#endif
+#endif // PSIROSTERWIDGET_H

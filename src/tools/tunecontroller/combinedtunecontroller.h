@@ -13,21 +13,19 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef COMBINEDTUNECONTROLLER_H
 #define COMBINEDTUNECONTROLLER_H
 
-#include <QList>
-
 #include "tune.h"
 #include "tunecontroller.h"
 
-class CombinedTuneController : public TuneController
-{
+#include <QList>
+
+class CombinedTuneController : public TuneController {
 public:
     CombinedTuneController();
     ~CombinedTuneController();
@@ -35,7 +33,7 @@ public:
     virtual Tune currentTune();
 
 private:
-    QList<TuneController*> controllers_;
+    QList<TuneController *> controllers_;
 };
 
-#endif
+#endif // COMBINEDTUNECONTROLLER_H

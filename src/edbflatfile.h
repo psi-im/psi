@@ -1,6 +1,6 @@
 /*
  * edbflatfile.h - asynchronous I/O event database
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,25 +13,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef EDBFLATFILE_H
 #define EDBFLATFILE_H
 
+#include "eventdb.h"
+#include "psievent.h"
+#include "xmpp_jid.h"
+
+#include <QDateTime>
+#include <QFile>
 #include <QObject>
 #include <QTimer>
-#include <QFile>
-#include <QDateTime>
 
-#include "eventdb.h"
-#include "xmpp_jid.h"
-#include "psievent.h"
-
-class EDBFlatFile : public EDB
-{
+class EDBFlatFile : public EDB {
     Q_OBJECT
 public:
     EDBFlatFile(PsiCon *psi);
@@ -43,9 +41,9 @@ public:
     int append(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
     int erase(const QString &accId, const XMPP::Jid &);
     QList<EDB::ContactItem> contacts(const QString &accId, int type);
-    quint64 eventsCount(const QString &accId, const XMPP::Jid &jid);
-    QString getStorageParam(const QString &) { return QString(); }
-    void setStorageParam(const QString &, const QString &) {}
+    quint64                 eventsCount(const QString &accId, const XMPP::Jid &jid);
+    QString                 getStorageParam(const QString &) { return QString(); }
+    void                    setStorageParam(const QString &, const QString &) {}
 
     class File;
 
@@ -59,25 +57,24 @@ private:
 
     File *findFile(const XMPP::Jid &) const;
     File *ensureFile(const XMPP::Jid &);
-    bool deleteFile(const XMPP::Jid &);
+    bool  deleteFile(const XMPP::Jid &);
 };
 
-class EDBFlatFile::File : public QObject
-{
+class EDBFlatFile::File : public QObject {
     Q_OBJECT
 public:
     File(const XMPP::Jid &_j);
     ~File();
 
-    int total() const;
-    int getId(QDateTime &date, int dir, int offset);
-    void touch();
+    int           total() const;
+    int           getId(QDateTime &date, int dir, int offset);
+    void          touch();
     PsiEvent::Ptr get(int);
-    bool append(const PsiEvent::Ptr &);
-    int findNearestDate(const QDateTime &date);
+    bool          append(const PsiEvent::Ptr &);
+    int           findNearestDate(const QDateTime &date);
 
-    static QString jidToFileName(const XMPP::Jid &);
-    static QString strToFileName(const QString &s);
+    static QString                 jidToFileName(const XMPP::Jid &);
+    static QString                 strToFileName(const QString &s);
     static QList<EDB::ContactItem> contacts(const QString &accId, int type);
 
 signals:
@@ -88,20 +85,20 @@ private slots:
 
 public:
     XMPP::Jid j;
-    QString fname;
-    QFile f;
-    bool valid;
-    QTimer *t;
+    QString   fname;
+    QFile     f;
+    bool      valid;
+    QTimer *  t;
 
     class Private;
     Private *d;
 
 private:
     PsiEvent::Ptr lineToEvent(const QString &);
-    QString eventToLine(const PsiEvent::Ptr&);
-    void ensureIndex();
-    QString getLine(int id);
-    QDateTime getDate(int id);
+    QString       eventToLine(const PsiEvent::Ptr &);
+    void          ensureIndex();
+    QString       getLine(int id);
+    QDateTime     getDate(int id);
 };
 
 #endif // EDBFLATFILE_H

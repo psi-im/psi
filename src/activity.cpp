@@ -1,6 +1,6 @@
 /*
  * activity.cpp
- * Copyright (C) 2008 Armando Jagucki
+ * Copyright (C) 2008  Armando Jagucki
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,83 +13,61 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+#include "activity.h"
+
+#include "activitycatalog.h"
 
 #include <QDomDocument>
 #include <QDomElement>
 
-#include "activity.h"
-#include "activitycatalog.h"
-
 Activity::Activity()
 {
-    type_ = Unknown;
+    type_         = Unknown;
     specificType_ = UnknownSpecific;
 }
 
-Activity::Activity(Activity::Type type, Activity::SpecificType specificType, const QString& text)
+Activity::Activity(Activity::Type type, Activity::SpecificType specificType, const QString &text)
 {
-    type_ = type;
+    type_         = type;
     specificType_ = specificType;
-    text_ = text;
+    text_         = text;
 }
 
-Activity::Activity(const QDomElement& e)
-{
-    fromXml(e);
-}
+Activity::Activity(const QDomElement &e) { fromXml(e); }
 
-Activity::Type Activity::type() const
-{
-    return type_;
-}
+Activity::Type Activity::type() const { return type_; }
 
-QString Activity::typeText() const
-{
-    return ActivityCatalog::instance()->findEntryByType(type_).text();
-}
+QString Activity::typeText() const { return ActivityCatalog::instance()->findEntryByType(type_).text(); }
 
-Activity::SpecificType Activity::specificType() const
-{
-    return specificType_;
-}
+Activity::SpecificType Activity::specificType() const { return specificType_; }
 
 QString Activity::specificTypeText() const
 {
     return ActivityCatalog::instance()->findEntryByType(specificType_).text();
 }
 
-const QString& Activity::text() const
-{
-    return text_;
-}
+const QString &Activity::text() const { return text_; }
 
-QString Activity::typeValue() const
-{
-    return ActivityCatalog::instance()->findEntryByType(type_).value();
-}
+QString Activity::typeValue() const { return ActivityCatalog::instance()->findEntryByType(type_).value(); }
 
 QString Activity::specificTypeValue() const
 {
     return ActivityCatalog::instance()->findEntryByType(specificType_).value();
 }
 
-bool Activity::isNull() const
-{
-    return type_ == Unknown && text().isEmpty();
-}
+bool Activity::isNull() const { return type_ == Unknown && text().isEmpty(); }
 
-QDomElement Activity::toXml(QDomDocument& doc)
+QDomElement Activity::toXml(QDomDocument &doc)
 {
-    QDomElement activity = doc.createElement(PEP_ACTIVITY_TN);
-    activity.setAttribute("xmlns", PEP_ACTIVITY_NS);
+    QDomElement activity = doc.createElementNS(PEP_ACTIVITY_NS, PEP_ACTIVITY_TN);
 
     if (type() != Unknown) {
-        ActivityCatalog* ac = ActivityCatalog::instance();
-        QDomElement el = doc.createElement(ac->findEntryByType(type()).value());
+        ActivityCatalog *ac = ActivityCatalog::instance();
+        QDomElement      el = doc.createElement(ac->findEntryByType(type()).value());
 
         if (specificType() != UnknownSpecific) {
             QDomElement elChild = doc.createElement(ac->findEntryByType(specificType()).value());
@@ -101,7 +79,7 @@ QDomElement Activity::toXml(QDomDocument& doc)
 
     if (!text().isEmpty()) {
         QDomElement el = doc.createElement("text");
-        QDomText t = doc.createTextNode(text());
+        QDomText    t  = doc.createTextNode(text());
         el.appendChild(t);
         activity.appendChild(el);
     }
@@ -109,9 +87,9 @@ QDomElement Activity::toXml(QDomDocument& doc)
     return activity;
 }
 
-void Activity::fromXml(const QDomElement& element)
+void Activity::fromXml(const QDomElement &element)
 {
-    type_ = Activity::Unknown;
+    type_         = Activity::Unknown;
     specificType_ = Activity::UnknownSpecific;
 
     if (element.tagName() != PEP_ACTIVITY_TN)
@@ -119,15 +97,14 @@ void Activity::fromXml(const QDomElement& element)
 
     for (QDomNode node = element.firstChild(); !node.isNull(); node = node.nextSibling()) {
         QDomElement child = node.toElement();
-        if(child.isNull()) {
+        if (child.isNull()) {
             continue;
         }
         if (child.tagName() == "text") {
             text_ = child.text();
-        }
-        else {
-            ActivityCatalog* ac = ActivityCatalog::instance();
-            type_ = ac->findEntryByValue(child.tagName()).type();
+        } else {
+            ActivityCatalog *ac = ActivityCatalog::instance();
+            type_               = ac->findEntryByValue(child.tagName()).type();
 
             if (child.hasChildNodes()) {
                 QDomElement specificTypeElement = child.firstChildElement();

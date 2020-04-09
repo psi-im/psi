@@ -1,6 +1,6 @@
 /*
  * psithememanager.h - manages all themes in psi
- * Copyright (C) 2010  Rion (Sergey Ilinyh)
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,49 +13,34 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psithememanager.h"
 
-#include <QCoreApplication>
-
-#include "theme.h"
 #include "applicationinfo.h"
+#include "theme.h"
+
+#include <QCoreApplication>
 
 class PsiThemeManager::Private {
 public:
     QMap<QString, PsiThemeProvider *> providers;
-    QSet<QString> required;
+    QSet<QString>                     required;
 };
-
-
 
 //---------------------------------------------------------
 // PsiThemeManager
 //---------------------------------------------------------
-PsiThemeManager::PsiThemeManager()
-    : QObject(QCoreApplication::instance())
+PsiThemeManager::PsiThemeManager(QObject *parent) : QObject(parent)
 {
-    d = new Private;//(this);
+    d = new Private; //(this);
 }
 
-PsiThemeManager::~PsiThemeManager()
-{
-    delete d;
-}
+PsiThemeManager::~PsiThemeManager() { delete d; }
 
-PsiThemeManager* PsiThemeManager::instance()
-{
-    if (!instance_)
-        instance_ = new PsiThemeManager();
-    return instance_;
-}
-
-void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
-                                       bool required)
+void PsiThemeManager::registerProvider(PsiThemeProvider *provider, bool required)
 {
     d->providers[provider->type()] = provider;
     if (required) {
@@ -63,15 +48,18 @@ void PsiThemeManager::registerProvider(PsiThemeProvider *provider,
     }
 }
 
-PsiThemeProvider *PsiThemeManager::provider(const QString &type)
+PsiThemeProvider *PsiThemeManager::unregisterProvider(const QString &type)
 {
-    return d->providers.value(type);
+    auto p = d->providers.take(type);
+    if (p) {
+        p->unloadCurrent();
+    }
+    return p;
 }
 
-QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const
-{
-    return d->providers.values();
-}
+PsiThemeProvider *PsiThemeManager::provider(const QString &type) { return d->providers.value(type); }
+
+QList<PsiThemeProvider *> PsiThemeManager::registeredProviders() const { return d->providers.values(); }
 
 bool PsiThemeManager::loadAll()
 {
@@ -82,5 +70,3 @@ bool PsiThemeManager::loadAll()
     }
     return true;
 }
-
-PsiThemeManager* PsiThemeManager::instance_ = NULL;

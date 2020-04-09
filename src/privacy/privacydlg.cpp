@@ -13,60 +13,63 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QListView>
-#include <QInputDialog>
-#include <QMessageBox>
-
 #include "privacydlg.h"
-#include "privacylist.h"
-#include "privacymanager.h"
-#include "privacylistmodel.h"
+
 #include "iconset.h"
+#include "privacylist.h"
+#include "privacylistmodel.h"
+#include "privacymanager.h"
+
+#include <QInputDialog>
+#include <QListView>
+#include <QMessageBox>
 
 // fixme: subscribe on the destroyed() signal of the manager
 
-PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWidget* parent) : QDialog(parent), manager_(manager)
+PrivacyDlg::PrivacyDlg(const QString &account_name, PrivacyManager *manager, QWidget *parent) :
+    QDialog(parent), manager_(manager)
 {
     ui_.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("%1: Privacy Lists").arg(account_name));
     setWindowIcon(IconsetFactory::icon("psi/eye").icon());
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint
+                   | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 
-    connect(manager_,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),SLOT(updateLists(const QString&, const QString&, const QStringList&)));
-    connect(manager_,SIGNAL(listReceived(const PrivacyList&)),SLOT(refreshList(const PrivacyList&)));
-    connect(manager_,SIGNAL(listError()),SLOT(list_failed()));
-    //connect(manager_,SIGNAL(listNamesError()),SLOT(listNamesError()));
-    //connect(manager_,SIGNAL(listReceiveError()),SLOT(listReceiveError()));
+    connect(manager_, SIGNAL(listsReceived(const QString &, const QString &, const QStringList &)),
+            SLOT(updateLists(const QString &, const QString &, const QStringList &)));
+    connect(manager_, SIGNAL(listReceived(const PrivacyList &)), SLOT(refreshList(const PrivacyList &)));
+    connect(manager_, SIGNAL(listError()), SLOT(list_failed()));
+    // connect(manager_,SIGNAL(listNamesError()),SLOT(listNamesError()));
+    // connect(manager_,SIGNAL(listReceiveError()),SLOT(listReceiveError()));
 
-    connect(ui_.cb_active,SIGNAL(activated(int)),SLOT(active_selected(int)));
-    connect(ui_.cb_default,SIGNAL(activated(int)),SLOT(default_selected(int)));
-    connect(ui_.cb_lists,SIGNAL(activated(int)),SLOT(list_selected(int)));
-    connect(ui_.cb_lists,SIGNAL(currentIndexChanged(int)),SLOT(list_changed(int)));
-    connect(manager_,SIGNAL(changeActiveList_success(QString)),SLOT(changeActiveList_succeeded(QString)));
-    connect(manager_,SIGNAL(changeActiveList_error()),SLOT(change_failed()));
-    connect(manager_,SIGNAL(changeDefaultList_success(QString)),SLOT(changeDefaultList_succeeded(QString)));
-    connect(manager_,SIGNAL(changeDefaultList_error()),SLOT(change_failed()));
-    connect(manager_,SIGNAL(changeList_success(QString)),SLOT(changeList_succeeded(QString)));
-    connect(manager_,SIGNAL(changeList_error()),SLOT(changeList_failed()));
+    connect(ui_.cb_active, SIGNAL(activated(int)), SLOT(active_selected(int)));
+    connect(ui_.cb_default, SIGNAL(activated(int)), SLOT(default_selected(int)));
+    connect(ui_.cb_lists, SIGNAL(activated(int)), SLOT(list_selected(int)));
+    connect(ui_.cb_lists, SIGNAL(currentIndexChanged(int)), SLOT(list_changed(int)));
+    connect(manager_, SIGNAL(changeActiveList_success(QString)), SLOT(changeActiveList_succeeded(QString)));
+    connect(manager_, SIGNAL(changeActiveList_error()), SLOT(change_failed()));
+    connect(manager_, SIGNAL(changeDefaultList_success(QString)), SLOT(changeDefaultList_succeeded(QString)));
+    connect(manager_, SIGNAL(changeDefaultList_error()), SLOT(change_failed()));
+    connect(manager_, SIGNAL(changeList_success(QString)), SLOT(changeList_succeeded(QString)));
+    connect(manager_, SIGNAL(changeList_error()), SLOT(changeList_failed()));
 
-    connect(ui_.pb_newList,SIGNAL(clicked()),SLOT(newList()));
-    connect(ui_.pb_deleteList,SIGNAL(clicked()),SLOT(removeList()));
-    connect(ui_.pb_renameList,SIGNAL(clicked()),SLOT(renameList()));
+    connect(ui_.pb_newList, SIGNAL(clicked()), SLOT(newList()));
+    connect(ui_.pb_deleteList, SIGNAL(clicked()), SLOT(removeList()));
+    connect(ui_.pb_renameList, SIGNAL(clicked()), SLOT(renameList()));
 
-    connect(ui_.pb_add,SIGNAL(clicked()),SLOT(addRule()));
-    connect(ui_.pb_edit,SIGNAL(clicked()),SLOT(editCurrentRule()));
-    connect(ui_.pb_remove,SIGNAL(clicked()),SLOT(removeCurrentRule()));
-    connect(ui_.pb_up,SIGNAL(clicked()),SLOT(moveCurrentRuleUp()));
-    connect(ui_.pb_down,SIGNAL(clicked()),SLOT(moveCurrentRuleDown()));
-    connect(ui_.pb_apply,SIGNAL(clicked()),SLOT(applyList()));
+    connect(ui_.pb_add, SIGNAL(clicked()), SLOT(addRule()));
+    connect(ui_.pb_edit, SIGNAL(clicked()), SLOT(editCurrentRule()));
+    connect(ui_.pb_remove, SIGNAL(clicked()), SLOT(removeCurrentRule()));
+    connect(ui_.pb_up, SIGNAL(clicked()), SLOT(moveCurrentRuleUp()));
+    connect(ui_.pb_down, SIGNAL(clicked()), SLOT(moveCurrentRuleDown()));
+    connect(ui_.pb_apply, SIGNAL(clicked()), SLOT(applyList()));
 
-    connect(ui_.buttonBox->button(QDialogButtonBox::Close),SIGNAL(clicked()),SLOT(close()));
+    connect(ui_.buttonBox->button(QDialogButtonBox::Close), SIGNAL(clicked()), SLOT(close()));
     setWidgetsEnabled(false);
 
     // Disable all buttons
@@ -95,10 +98,7 @@ void PrivacyDlg::setEditRuleEnabled(bool b)
     ui_.pb_remove->setEnabled(b);
 }
 
-void PrivacyDlg::addRule()
-{
-    model_.add();
-}
+void PrivacyDlg::addRule() { model_.add(); }
 
 void PrivacyDlg::editCurrentRule()
 {
@@ -109,7 +109,7 @@ void PrivacyDlg::editCurrentRule()
 void PrivacyDlg::removeCurrentRule()
 {
     if (ui_.lv_rules->currentIndex().isValid()) {
-        model_.removeRow(ui_.lv_rules->currentIndex().row(),ui_.lv_rules->currentIndex().parent());
+        model_.removeRow(ui_.lv_rules->currentIndex().row(), ui_.lv_rules->currentIndex().parent());
     }
 }
 
@@ -117,7 +117,7 @@ void PrivacyDlg::moveCurrentRuleUp()
 {
     int row = ui_.lv_rules->currentIndex().row();
     if (model_.moveUp(ui_.lv_rules->currentIndex())) {
-        ui_.lv_rules->setCurrentIndex(model_.index(row-1,0));
+        ui_.lv_rules->setCurrentIndex(model_.index(row - 1, 0));
     }
 }
 
@@ -125,7 +125,7 @@ void PrivacyDlg::moveCurrentRuleDown()
 {
     int row = ui_.lv_rules->currentIndex().row();
     if (model_.moveDown(ui_.lv_rules->currentIndex())) {
-        ui_.lv_rules->setCurrentIndex(model_.index(row+1,0));
+        ui_.lv_rules->setCurrentIndex(model_.index(row + 1, 0));
     }
 }
 
@@ -145,16 +145,15 @@ void PrivacyDlg::close()
     done(0);
 }
 
-void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeList, const QStringList& names)
+void PrivacyDlg::updateLists(const QString &defaultList, const QString &activeList, const QStringList &names)
 {
     // Active list
     ui_.cb_active->clear();
     ui_.cb_active->addItem(tr("<None>"));
     ui_.cb_active->addItems(names);
     if (!activeList.isEmpty()) {
-        ui_.cb_active->setCurrentIndex(names.indexOf(activeList)+1);
-    }
-    else {
+        ui_.cb_active->setCurrentIndex(names.indexOf(activeList) + 1);
+    } else {
         ui_.cb_active->setCurrentIndex(0);
     }
     previousActive_ = ui_.cb_active->currentIndex();
@@ -164,9 +163,8 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
     ui_.cb_default->addItem(tr("<None>"));
     ui_.cb_default->addItems(names);
     if (!defaultList.isEmpty()) {
-        ui_.cb_default->setCurrentIndex(names.indexOf(defaultList)+1);
-    }
-    else {
+        ui_.cb_default->setCurrentIndex(names.indexOf(defaultList) + 1);
+    } else {
         ui_.cb_default->setCurrentIndex(0);
     }
     previousDefault_ = ui_.cb_default->currentIndex();
@@ -178,16 +176,14 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
     if (ui_.cb_lists->count() > 0) {
         if (!previousList.isEmpty() && ui_.cb_lists->findText(previousList) != -1) {
             ui_.cb_lists->setCurrentIndex(ui_.cb_lists->findText(previousList));
-        }
-        else {
+        } else {
             QString currentList = (activeList.isEmpty() ? activeList : defaultList);
             if (!currentList.isEmpty()) {
                 ui_.cb_lists->setCurrentIndex(names.indexOf(currentList));
             }
         }
         manager_->requestList(ui_.cb_lists->currentText());
-    }
-    else {
+    } else {
         setWidgetsEnabled(true);
     }
 
@@ -205,7 +201,7 @@ void PrivacyDlg::listChanged()
     manager_->requestList(ui_.cb_lists->currentText());
 }
 
-void PrivacyDlg::refreshList(const PrivacyList& list)
+void PrivacyDlg::refreshList(const PrivacyList &list)
 {
     if (list.name() == ui_.cb_lists->currentText()) {
         rememberSettings();
@@ -243,7 +239,7 @@ void PrivacyDlg::list_changed(int i)
     ui_.pb_add->setEnabled(i != -1);
     setEditRuleEnabled(i != -1);
     ui_.pb_apply->setEnabled(i != -1);
-    //setEditRuleEnabled(false);
+    // setEditRuleEnabled(false);
     newList_ = false;
 }
 
@@ -255,7 +251,7 @@ void PrivacyDlg::list_failed()
 
 void PrivacyDlg::changeActiveList_succeeded(QString name)
 {
-    if(!name.isEmpty() && ui_.cb_active->findText(name) == -1) {
+    if (!name.isEmpty() && ui_.cb_active->findText(name) == -1) {
         ui_.cb_active->addItem(name);
         ui_.cb_active->setCurrentIndex(ui_.cb_active->findText(name));
     }
@@ -264,7 +260,7 @@ void PrivacyDlg::changeActiveList_succeeded(QString name)
 
 void PrivacyDlg::changeDefaultList_succeeded(QString name)
 {
-    if(!name.isEmpty() && ui_.cb_default->findText(name) == -1) {
+    if (!name.isEmpty() && ui_.cb_default->findText(name) == -1) {
         ui_.cb_default->addItem(name);
         ui_.cb_default->setCurrentIndex(ui_.cb_default->findText(name));
     }
@@ -273,22 +269,21 @@ void PrivacyDlg::changeDefaultList_succeeded(QString name)
 
 void PrivacyDlg::changeList_succeeded(QString name)
 {
-    if(!name.isEmpty() && ui_.cb_lists->findText(name) == -1) {
+    if (!name.isEmpty() && ui_.cb_lists->findText(name) == -1) {
         ui_.cb_lists->addItem(name);
     }
     // If we just deleted a list, select the first list
     if (model_.list().isEmpty()) {
         ui_.cb_lists->setCurrentIndex(0);
         listChanged();
-    }
-    else {
+    } else {
         setWidgetsEnabled(true);
     }
 }
 
 void PrivacyDlg::changeList_failed()
 {
-    QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error changing the list."));
+    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr("There was an error changing the list."));
     setWidgetsEnabled(true);
 }
 
@@ -301,15 +296,15 @@ void PrivacyDlg::change_succeeded()
 void PrivacyDlg::change_failed()
 {
     revertSettings();
-    QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error processing your request."));
+    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr("There was an error processing your request."));
     setWidgetsEnabled(true);
 }
 
 void PrivacyDlg::rememberSettings()
 {
     previousDefault_ = ui_.cb_default->currentIndex();
-    previousActive_ = ui_.cb_active->currentIndex();
-    previousList_ = ui_.cb_lists->currentIndex();
+    previousActive_  = ui_.cb_active->currentIndex();
+    previousList_    = ui_.cb_lists->currentIndex();
 }
 
 void PrivacyDlg::revertSettings()
@@ -319,21 +314,19 @@ void PrivacyDlg::revertSettings()
     ui_.cb_lists->setCurrentIndex(previousList_);
 }
 
-
 void PrivacyDlg::newList()
 {
-    bool done = false;
-    bool ok = false;
+    bool    done = false;
+    bool    ok   = false;
     QString name;
     while (!done) {
-        name = QInputDialog::getText(this, tr("New List"), tr("Enter the name of the new list:"), QLineEdit::Normal, "", &ok);
+        name = QInputDialog::getText(this, tr("New List"), tr("Enter the name of the new list:"), QLineEdit::Normal, "",
+                                     &ok);
         if (!ok) {
             done = true;
-        }
-        else if (ui_.cb_lists->findText(name) != -1) {
+        } else if (ui_.cb_lists->findText(name) != -1) {
             QMessageBox::critical(this, tr("Error"), tr("A list with this name already exists."));
-        }
-        else if (!name.isEmpty()) {
+        } else if (!name.isEmpty()) {
             done = true;
         }
     }
@@ -360,17 +353,17 @@ void PrivacyDlg::removeList()
 void PrivacyDlg::renameList()
 {
     QString newName = QInputDialog::getText(this, tr("Rename List"), tr("Input new name"));
-    if(newName.isEmpty()) {
+    if (newName.isEmpty()) {
         return;
     }
     PrivacyList tmp = model_.list();
     model_.list().setName(newName);
     tmp.clear();
     manager_->changeList(model_.list());
-    if(ui_.cb_default->currentText() == tmp.name()) {
+    if (ui_.cb_default->currentText() == tmp.name()) {
         manager_->changeDefaultList(newName);
     }
-    if(ui_.cb_active->currentText() == tmp.name()) {
+    if (ui_.cb_active->currentText() == tmp.name()) {
         manager_->changeActiveList(newName);
     }
     manager_->changeList(tmp);

@@ -1,26 +1,25 @@
 /*
- * Copyright (C) 2008 Remko Troncon
+ * Copyright (C) 2008  Remko Troncon
  * See COPYING file for the detailed license.
  */
 
 #ifndef SPARKLEAUTOUPDATER_H
 #define SPARKLEAUTOUPDATER_H
 
-#include <QString>
-
 #include "AutoUpdater/AutoUpdater.h"
 
-class SparkleAutoUpdater : public AutoUpdater
-{
-    public:
-        SparkleAutoUpdater(const QString& url);
-        ~SparkleAutoUpdater();
+#include <QString>
 
-        void checkForUpdates();
+class SparkleAutoUpdater : public AutoUpdater {
+public:
+    SparkleAutoUpdater(const QString &url);
+    ~SparkleAutoUpdater();
 
-    private:
-        class Private;
-        Private* d;
+    void checkForUpdates();
+
+private:
+    class Private;
+    Private *d;
 };
 
-#endif
+#endif // SPARKLEAUTOUPDATER_H

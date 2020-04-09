@@ -13,7 +13,6 @@ CONFIG += pep
 #CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
 
-
 win32:CONFIG(debug, debug|release):DEFINES += ALLOW_QT_PLUGINS_DIR
 
 # Import several very useful Makefile targets
@@ -27,6 +26,8 @@ include(../qa/oldtest/unittest.pri)
 include($$top_builddir/conf.pri)
 CONFIG -= c++11 # some versions of qconf add it in conf.pri
 CONFIG += c++14
+
+psiplus:TARGET = psi-plus
 
 unix {
     DEFINES += APP_PREFIX=$$PREFIX
@@ -48,29 +49,41 @@ unix {
     #widgets.path = $$PSI_DATADIR/designer
     #widgets.files = ../libpsi/psiwidgets/libpsiwidgets.so
     #INSTALLS += widgets
+    
+    dtfname = psi.desktop
+    dtdata = "$$cat(../psi.desktop, blob)$$cat(../psi-extra-action1.desktop, blob)"
+    psiplus {
+        iconprefix = /psiplus
+        dtfname = psi-plus.desktop
+        dtdata = $$replace(dtdata, Psi, Psi+)
+        dtdata = $$replace(dtdata, psi, $$TARGET)
+    }
+    write_file($$top_builddir/$$dtfname, dtdata)
 
     # icons and desktop files
     dt.path=$$PREFIX/share/applications/
-    dt.files = ../psi.desktop
+    dt.files = $$top_builddir/$$dtfname
     ad.path=$$PREFIX/share/appdata/
     ad.file = ../psi.appdata.xml
     icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
-    icon1.extra = cp -f $$top_srcdir/iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
+    icon1.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_16.png $(INSTALL_ROOT)$$icon1.path/$${TARGET}.png
     icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps
-    icon2.extra = cp -f $$top_srcdir/iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/psi.png
+    icon2.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_32.png $(INSTALL_ROOT)$$icon2.path/$${TARGET}.png
     icon3.path=$$PREFIX/share/icons/hicolor/48x48/apps
-    icon3.extra = cp -f $$top_srcdir/iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/psi.png
+    icon3.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_48.png $(INSTALL_ROOT)$$icon3.path/$${TARGET}.png
     icon4.path=$$PREFIX/share/icons/hicolor/64x64/apps
-    icon4.extra = cp -f $$top_srcdir/iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/psi.png
+    icon4.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_64.png $(INSTALL_ROOT)$$icon4.path/$${TARGET}.png
     icon5.path=$$PREFIX/share/icons/hicolor/128x128/apps
-    icon5.extra = cp -f $$top_srcdir/iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/psi.png
+    icon5.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_128.png $(INSTALL_ROOT)$$icon5.path/$${TARGET}.png
     INSTALLS += dt ad icon1 icon2 icon3 icon4 icon5
 
     psi_plugins {
         pluginsfiles.path  = $$PSI_DATADIR/plugins
-        pluginsfiles.files = plugins/plugins.pri plugins/psiplugin.pri plugins/include $$top_builddir/pluginsconf.pri
+        pluginsfiles.files = plugins/plugins.pri plugins/psiplugin.pri $$top_builddir/pluginsconf.pri
 
-        INSTALLS += pluginsfiles
+        pluginsheaders.path = $$PREFIX/include/$$TARGET/plugins
+        pluginsheaders.extra = cp -f $$top_srcdir/src/plugins/include/*.h $(INSTALL_ROOT)$$pluginsheaders.path/
+        INSTALLS += pluginsfiles pluginsheaders
     }
 }
 
@@ -87,8 +100,10 @@ windows {
 include(src.pri)
 
 # don't clash with unittests
-SOURCES += main.cpp
-HEADERS += main.h
+SOURCES += main.cpp \
+    multifiletransferdlg.cpp
+HEADERS += main.h \
+    multifiletransferdlg.h
 
 ################################################################################
 # Translation
@@ -147,7 +162,6 @@ translate_options.commands = $$PWD/../admin/update_options_ts.py $$PWD/../option
 QMAKE_EXTRA_TARGETS += translate
 translate.commands = lupdate . options widgets tools/grepshortcutkeydlg ../cutestuff/network ../iris/xmpp-im -ts $$TRANSLATIONS
 
-
 exists($$OPTIONS_TRANSLATIONS_FILE) {
     SOURCES += $$OPTIONS_TRANSLATIONS_FILE
 }
@@ -156,7 +170,7 @@ QMAKE_CLEAN += $$OPTIONS_TRANSLATIONS_FILE
 ################################################################################
 
 # Resources
-RESOURCES += ../psi.qrc ../iconsets.qrc
+RESOURCES += ../psi.qrc $$top_builddir/iconsets.qrc
 
 # Platform specifics
 windows {
@@ -164,7 +178,7 @@ windows {
     VERSION = $$PSI_VERSION
     QMAKE_TARGET_PRODUCT = "Psi"
     QMAKE_TARGET_COMPANY = psi-im.org
-    QMAKE_TARGET_DESCRIPTION = $${QMAKE_TARGET_PRODUCT}" : A cross-platform XMPP client designed for the power user"
+    QMAKE_TARGET_DESCRIPTION = $${QMAKE_TARGET_PRODUCT}" is a cross-platform XMPP client aimed at experienced users."
     QMAKE_TARGET_COPYRIGHT = "GNU GPL v2"
 }
 mac {
@@ -181,3 +195,6 @@ mac {
     RC_FILE = ../mac/application.icns
     QMAKE_POST_LINK = cp -R ../certs ../iconsets ../sound `dirname $(TARGET)`/../Resources ; echo "APPLpsi " > `dirname $(TARGET)`/../PkgInfo
 }
+
+FORMS += \
+    multifiletransferdlg.ui

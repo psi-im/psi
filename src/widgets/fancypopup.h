@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,11 +25,10 @@
 class PsiIcon;
 class QTimer;
 
-class FancyPopup : public QFrame
-{
+class FancyPopup : public QFrame {
     Q_OBJECT
 public:
-    FancyPopup(QString title, const PsiIcon *icon = 0, FancyPopup *prev = 0, bool copyIcon = true);
+    FancyPopup(QString title, const PsiIcon *icon = nullptr, FancyPopup *prev = nullptr, bool copyIcon = true);
     ~FancyPopup();
 
     void addLayout(QLayout *layout, int stretch = 0);
@@ -50,9 +48,10 @@ protected:
 
 public:
     class Private;
+
 private:
     Private *d;
     friend class Private;
 };
 
-#endif
+#endif // FANCYPOPUP_H

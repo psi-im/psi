@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,11 +22,12 @@
 #include "psicon.h"
 
 #include <QCoreApplication>
-#include <QWidget>
 #include <QTimer>
+#include <QWidget>
 #include <windows.h>
 
 #define QT_WA(unicode, ansi) unicode
+
 /*
     Implementor notes:
 
@@ -37,26 +37,25 @@
     Also note that writing QString("x").toLocal8Bit().constData() is a bad idea and must not be done.
 */
 
-class ActiveProfiles::Private : public QWidget
-{
+class ActiveProfiles::Private : public QWidget {
 public:
-    Private(ActiveProfiles *aprof) : app(ApplicationInfo::IPCName()), home(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)), profile(""), ap(aprof), mutex(0), changesMutex(0) {
+    Private(ActiveProfiles *aprof) :
+        app(ApplicationInfo::IPCName()), home(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)), profile(""),
+        ap(aprof), mutex(0), changesMutex(0)
+    {
 
-        app.replace('\\', '/');    // '\\' has a special meaning in mutex name
+        app.replace('\\', '/'); // '\\' has a special meaning in mutex name
         home.replace('\\', '/');
 
         const QString m = QString("%1 ChangesMutex {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app);
         const QString c = QString("%1 IPC Command {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app);
 
-        QT_WA(
-            changesMutex = CreateMutex(0, FALSE, (LPCWSTR)m.utf16());
-            psiIpcCommand = RegisterWindowMessage((LPCWSTR)c.utf16());
-        ,
-            QByteArray a = m.toLocal8Bit();    // must not call constData() of a temp object
-            changesMutex = CreateMutexA(0, FALSE, (LPCSTR)a.constData());
-            a = c.toLocal8Bit();
-            psiIpcCommand = RegisterWindowMessageA((LPCSTR)a.constData());
-        )
+        QT_WA(changesMutex  = CreateMutex(0, FALSE, (LPCWSTR)m.utf16());
+              psiIpcCommand = RegisterWindowMessage((LPCWSTR)c.utf16());
+              ,
+              QByteArray a = m.toLocal8Bit(); // must not call constData() of a temp object
+              changesMutex = CreateMutexA(0, FALSE, (LPCSTR)a.constData()); a = c.toLocal8Bit();
+              psiIpcCommand = RegisterWindowMessageA((LPCSTR)a.constData());)
 
         if (!changesMutex) {
             qWarning("Couldn't create IPC mutex");
@@ -66,38 +65,35 @@ public:
         }
     }
 
-    QString app, home, profile;
-    ActiveProfiles * const ap;
-    HANDLE mutex, changesMutex;
+    QString               app, home, profile;
+    ActiveProfiles *const ap;
+    HANDLE                mutex, changesMutex;
 
-    QString mutexName(const QString &profile) const {
-        return "ProfileMutex\0x01" + app + "\0x01" + home + "\0x01" + profile + "\0x01 {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}";
+    QString mutexName(const QString &profile) const
+    {
+        return "ProfileMutex\0x01" + app + "\0x01" + home + "\0x01" + profile
+            + "\0x01 {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}";
     }
 
-    QString windowName(const QString &profile) const {
-        return "ProfileWindow\0x01" + app + "\0x01" + home + "\0x01" + profile + "\0x01 {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}";
+    QString windowName(const QString &profile) const
+    {
+        return "ProfileWindow\0x01" + app + "\0x01" + home + "\0x01" + profile
+            + "\0x01 {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}";
     }
 
-    void startChanges()    {
-        WaitForSingleObject(changesMutex, INFINITE);
-    }
+    void startChanges() { WaitForSingleObject(changesMutex, INFINITE); }
 
-    void endChanges() {
-        ReleaseMutex(changesMutex);
-    }
+    void endChanges() { ReleaseMutex(changesMutex); }
 
-    void setWindowText(const QString &text) {
-        QT_WA(
-            SetWindowTextW((HWND)winId(), (LPCWSTR)text.utf16());
-        ,
-            QByteArray a = text.toLocal8Bit();
-            SetWindowTextA(winId(), (LPCSTR)a.constData());
-        )
+    void setWindowText(const QString &text)
+    {
+        QT_WA(SetWindowTextW((HWND)winId(), (LPCWSTR)text.utf16());, QByteArray a = text.toLocal8Bit();
+              SetWindowTextA(winId(), (LPCSTR)a.constData());)
     }
 
     // WM_PSICOMMAND
-    static UINT psiIpcCommand;    // = RegisterWindowMessage()
-    static WPARAM raiseCommand;    // = 1
+    static UINT   psiIpcCommand; // = RegisterWindowMessage()
+    static WPARAM raiseCommand;  // = 1
 
     // WM_COPYDATA
     static const DWORD stringListMessage = 1;
@@ -110,8 +106,8 @@ public:
     QString pickProfile() const;
 };
 
-UINT ActiveProfiles::Private::psiIpcCommand = 0;
-WPARAM ActiveProfiles::Private::raiseCommand = 1;
+UINT   ActiveProfiles::Private::psiIpcCommand = 0;
+WPARAM ActiveProfiles::Private::raiseCommand  = 1;
 
 QString ActiveProfiles::Private::pickProfile() const
 {
@@ -135,12 +131,8 @@ bool ActiveProfiles::Private::sendMessage(const QString &to, UINT message, WPARA
     }
 
     HWND hwnd;
-    QT_WA(
-        hwnd = FindWindowW(0, (LPCWSTR)windowName(to).utf16());
-    ,
-        QByteArray a = windowName(to).toLocal8Bit();
-        hwnd = FindWindowA(0, (LPCSTR)a.constData());
-    )
+    QT_WA(hwnd = FindWindowW(0, (LPCWSTR)windowName(to).utf16());, QByteArray a = windowName(to).toLocal8Bit();
+          hwnd = FindWindowA(0, (LPCSTR)a.constData());)
 
     if (!hwnd)
         return false;
@@ -165,8 +157,8 @@ bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringLis
 
     COPYDATASTRUCT cd;
     cd.dwData = stringListMessage;
-    cd.cbData = ba.size()+1;
-    cd.lpData = (void*)ba.data();
+    cd.cbData = ba.size() + 1;
+    cd.lpData = (void *)ba.data();
 
     return sendMessage(to, WM_COPYDATA, (WPARAM)winId(), (LPARAM)(LPVOID)&cd);
 }
@@ -174,11 +166,11 @@ bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringLis
 bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
 {
     if (msg->message == WM_COPYDATA) {
-        *result = FALSE;
+        *result            = FALSE;
         COPYDATASTRUCT *cd = (COPYDATASTRUCT *)msg->lParam;
         if (cd->dwData == stringListMessage) {
-            char *data = (char*)cd->lpData;
-            const char *end = data + cd->cbData - 1;
+            char *      data = (char *)cd->lpData;
+            const char *end  = data + cd->cbData - 1;
 
             // handle this error here, not to worry later
             if (*end != '\0') {
@@ -204,8 +196,7 @@ bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
             }
         }
         return true;
-    }
-    else if (msg->message == psiIpcCommand) {
+    } else if (msg->message == psiIpcCommand) {
         *result = FALSE;
         if (msg->wParam == raiseCommand) {
             emit ap->raiseRequested();
@@ -217,11 +208,7 @@ bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
     return false;
 }
 
-ActiveProfiles::ActiveProfiles()
-    : QObject(QCoreApplication::instance())
-{
-    d = new ActiveProfiles::Private(this);
-}
+ActiveProfiles::ActiveProfiles() : QObject(QCoreApplication::instance()) { d = new ActiveProfiles::Private(this); }
 
 ActiveProfiles::~ActiveProfiles()
 {
@@ -241,15 +228,10 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 
     d->startChanges();
     HANDLE m;
-    QT_WA(
-        m = CreateMutexW(0, TRUE, (LPCWSTR)d->mutexName(profile).utf16());
-    ,
-        QByteArray a = d->mutexName(profile).toLocal8Bit();
-        m = CreateMutexA(0, TRUE, (LPCSTR)a.constData());
-    )
+    QT_WA(m = CreateMutexW(0, TRUE, (LPCWSTR)d->mutexName(profile).utf16());
+          , QByteArray a = d->mutexName(profile).toLocal8Bit(); m = CreateMutexA(0, TRUE, (LPCSTR)a.constData());)
 
-    if (m == NULL)
-    {
+    if (m == NULL) {
         d->endChanges();
         return false;
     }
@@ -258,12 +240,11 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
         CloseHandle(m);
         d->endChanges();
         return false;
-    }
-    else {
+    } else {
         if (d->mutex) {
             CloseHandle(d->mutex);
         }
-        d->mutex = m;
+        d->mutex   = m;
         d->profile = profile;
         d->setWindowText(d->windowName(profile));
         d->endChanges();
@@ -275,31 +256,24 @@ void ActiveProfiles::unsetThisProfile()
 {
     d->startChanges();
     CloseHandle(d->mutex);
-    d->mutex = 0;
-    d->profile = QString::null;
+    d->mutex   = 0;
+    d->profile = QString();
     d->setWindowText("");
     d->endChanges();
 }
 
-QString ActiveProfiles::thisProfile() const
-{
-    return d->profile;
-}
+QString ActiveProfiles::thisProfile() const { return d->profile; }
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {
     HANDLE m;
-    QT_WA(
-        m = OpenMutexW(SYNCHRONIZE, FALSE, (LPCWSTR)d->mutexName(profile).utf16());
-    ,
-        QByteArray a = d->mutexName(profile).toLocal8Bit();
-        m = OpenMutexA(SYNCHRONIZE, FALSE, (LPCSTR)a.constData());
-    )
+    QT_WA(m = OpenMutexW(SYNCHRONIZE, FALSE, (LPCWSTR)d->mutexName(profile).utf16());
+          , QByteArray a = d->mutexName(profile).toLocal8Bit();
+          m = OpenMutexA(SYNCHRONIZE, FALSE, (LPCSTR)a.constData());)
     if (m != NULL) {
         CloseHandle(m);
         return true;
-    }
-    else {
+    } else {
         DWORD e = GetLastError();
 
         // strangely it seems possible for OpenMutex to return NULL and
@@ -313,11 +287,7 @@ bool ActiveProfiles::isActive(const QString &profile) const
     }
 }
 
-bool ActiveProfiles::isAnyActive() const
-{
-    return !d->pickProfile().isEmpty();
-}
-
+bool ActiveProfiles::isAnyActive() const { return !d->pickProfile().isEmpty(); }
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
@@ -341,12 +311,12 @@ bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
     QStringList list;
     list << "openUri" << uri;
-    return d->sendStringList(profile.isEmpty()? d->pickProfile() : profile, list);
+    return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
 }
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {
     QStringList list;
     list << "setStatus" << status << message;
-    return d->sendStringList(profile.isEmpty()? d->pickProfile() : profile, list);
+    return d->sendStringList(profile.isEmpty() ? d->pickProfile() : profile, list);
 }

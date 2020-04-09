@@ -1,6 +1,6 @@
 /*
  * contactmanagerdlg.h
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,21 +13,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef CONTACTMANAGERDLG_H
 #define CONTACTMANAGERDLG_H
+
+#include "contactmanagermodel.h"
 #include "ui_contactmanagerdlg.h"
 
 #include <QDialog>
-#include "contactmanagermodel.h"
+
 class PsiAccount;
 
 namespace Ui {
-    class ContactManagerDlg;
+class ContactManagerDlg;
 }
 
 class ContactManagerDlg : public QDialog {
@@ -41,20 +42,20 @@ protected:
     virtual void changeEvent(QEvent *e);
 
 private:
-    void changeDomain(QList<UserListItem *>& users);
-    void changeGroup(QList<UserListItem *>& users);
-    void exportRoster(QList<UserListItem *>& users);
+    void changeDomain(QList<UserListItem *> &users);
+    void changeGroup(QList<UserListItem *> &users);
+    void exportRoster(QList<UserListItem *> &users);
     void importRoster();
 
     Ui::ContactManagerDlg ui_;
-    PsiAccount *pa_;
-    ContactManagerModel *um;
+    PsiAccount *          pa_;
+    ContactManagerModel * um;
 
 private slots:
     void doSelect();
     void executeCurrent();
     void showParamField(int index);
-    void client_rosterUpdated(bool,int,QString);
+    void client_rosterUpdated(bool, int, QString);
 };
 
 #endif // CONTACTMANAGERDLG_H

@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
+    <width>625</width>
     <height>320</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>About Psi</string>
+   <string>About</string>
   </property>
   <layout class="QVBoxLayout">
    <property name="spacing">
@@ -49,7 +49,7 @@
      <item>
       <widget class="IconLabel" name="lb_icon" native="true">
        <property name="psiIconName" stdset="0">
-        <string>psi/logo_48</string>
+        <string notr="true">psi/logo_48</string>
        </property>
       </widget>
      </item>
@@ -73,6 +73,9 @@
    </item>
    <item>
     <widget class="QTabWidget" name="tw_tabs">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <widget class="QWidget" name="tab_about">
       <attribute name="title">
        <string>About</string>
@@ -118,10 +121,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>A cross-platform XMPP client designed for the power user.&lt;br&gt;
-&lt;br&gt;
-Copyright © 2001-2017 The Psi Team.&lt;br&gt;
-</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cross-platform XMPP client aimed at experienced users.&lt;br/&gt;&lt;br/&gt;Copyright © 2001-2019 The Psi Team.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat">
           <enum>Qt::RichText</enum>
@@ -267,7 +267,23 @@ Copyright © 2001-2017 The Psi Team.&lt;br&gt;
        </item>
       </layout>
      </widget>
-    </widget>
+     <widget class="QWidget" name="tab_psiplus" >
+      <attribute name="title" >
+       <string>About Psi+</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>9</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="PsiTextView" name="te_psiplus" />
+       </item>
+      </layout>
+     </widget>
+     </widget>
    </item>
    <item>
     <layout class="QHBoxLayout">

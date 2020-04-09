@@ -13,37 +13,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef AHCEXECUTETASK_H
 #define AHCEXECUTETASK_H
 
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
 #include "ahcommand.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
 
 class QDomElement;
 
-class AHCExecuteTask : public XMPP::Task
-{
+class AHCExecuteTask : public XMPP::Task {
 public:
-    AHCExecuteTask(const XMPP::Jid& j, const AHCommand&, XMPP::Task* t);
+    AHCExecuteTask(const XMPP::Jid &j, const AHCommand &, XMPP::Task *t);
 
     void onGo();
     bool take(const QDomElement &x);
 
     inline const XMPP::Jid &receiver() const { return receiver_; }
     inline const AHCommand &resultCommand() const { return resultCommand_; }
-    inline bool hasCommandPayload() const { return hasPayload_; } // true if result command has children
+    inline bool             hasCommandPayload() const { return hasPayload_; } // true if result command has children
 
 private:
-    bool hasPayload_;
+    bool      hasPayload_;
     XMPP::Jid receiver_;
     AHCommand command_;
     AHCommand resultCommand_;
 };
 
-#endif
+#endif // AHCEXECUTETASK_H

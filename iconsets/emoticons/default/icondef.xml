@@ -1,31 +1,31 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <icondef>
 	<meta>
-		<name>Stellar (default)</name>
-		<version>1.0</version>
-		<description>Default Psi 0.9.3 iconset</description>
-		<creation>2003-07-08</creation>
-		<home>http://psi.affinix.com</home>
-		<author email='jmkim@uci.edu'>Jason Kim</author>
-		<author jid='mblsha@jabber.ru' email='mblsha@users.sourceforge.net' www='http://maz.sf.net'>Michail Pishchagin (icondef.xml)</author>
+		<name>Telegram icon pack</name>
+		<version>1.1</version>
+		<description>Default Psi 1.4 iconset</description>
+		<creation>2019-10-30</creation>
+		<home>https://telegram.org/</home>
+		<author email='info@telegram.org'>Telegram LLC</author>
 	</meta>
 
 	<!-- Normal icons -->
 	<icon>
+		<text>😊</text>
 		<text>:-)</text>
 		<text>:)</text>
-
 		<object mime='image/png'>smile.png</object>
 	</icon>
 
 	<icon>
+		<text>😉</text>
 		<text>;-)</text>
 		<text>;)</text>
-
 		<object mime='image/png'>wink.png</object>
 	</icon>
 
 	<icon>
+		<text>😛</text>
 		<text>:-P</text>
 		<text>:-p</text>
 		<text>:P</text>
@@ -35,24 +35,27 @@
 	</icon>
 
 	<icon>
-		<text>:-D</text>
-		<text>:-d</text>
-		<text>:D</text>
-		<text>:d</text>
-		<text>:-></text>
-		<text>:></text>
-
-		<object mime='image/png'>biggrin.png</object>
+		<text>🤔</text>
+		<text>:thinking:</text>
+		<object mime='image/png'>thinking.png</object>
 	</icon>
 
 	<icon>
+		<text>☹️</text>
 		<text>:-(</text>
 		<text>:(</text>
+		<object mime='image/png'>frow.png</object>
+	</icon>
 
+	<icon>
+		<text>😞</text>
+		<text>:-(</text>
+		<text>:(</text>
 		<object mime='image/png'>unhappy.png</object>
 	</icon>
 
 	<icon>
+		<text>😢</text>
 		<text>:'-(</text>
 		<text>:'(</text>
 		<text>;-(</text>
@@ -62,15 +65,61 @@
 	</icon>
 
 	<icon>
-		<text>:-O</text>
-		<text>:-o</text>
-		<text>:O</text>
-		<text>:o</text>
-
-		<object mime='image/png'>oh.png</object>
+		<text>😘</text>
+		<text>:kiss:</text>
+		<object mime='image/png'>kiss.png</object>
 	</icon>
 
 	<icon>
+		<text>✌️</text>
+		<text>:victory:</text>
+		<object mime='image/png'>victory.png</object>
+	</icon>
+
+	<icon>
+		<text>🤘</text>
+		<text>:signofthehorns:</text>
+		<object mime='image/png'>signofthehorns.png</object>
+	</icon>
+
+	<icon>
+		<text>👈</text>
+		<text>:fingerleft:</text>
+		<object mime='image/png'>fingerleft.png</object>
+	</icon>
+
+	<icon>
+		<text>👉</text>
+		<text>:fingerright:</text>
+		<object mime='image/png'>fingerright.png</object>
+	</icon>
+
+	<icon>
+		<text>👆</text>
+		<text>:fingerup:</text>
+		<object mime='image/png'>fingerup.png</object>
+	</icon>
+
+	<icon>
+		<text>👇</text>
+		<text>:fingerdown:</text>
+		<object mime='image/png'>fingerdown.png</object>
+	</icon>
+
+	<icon>
+		<text>🖐️</text>
+		<text>:hi:</text>
+		<object mime='image/png'>hi.png</object>
+	</icon>
+
+	<icon>
+		<text>🔥</text>
+		<text>:fire:</text>
+		<object mime='image/png'>fire.png</object>
+	</icon>
+
+	<icon>
+		<text>😠</text>
 		<text>:-@</text>
 		<text>:@</text>
 
@@ -78,60 +127,7 @@
 	</icon>
 
 	<icon>
-		<text>:-$</text>
-		<text>:$</text>
-
-		<object mime='image/png'>blush.png</object>
-	</icon>
-
-	<icon>
-		<text>:-|</text>
-		<text>:|</text>
-
-		<object mime='image/png'>stare.png</object>
-	</icon>
-
-	<icon>
-		<text>:-S</text>
-		<text>:-s</text>
-		<text>:S</text>
-		<text>:s</text>
-
-		<object mime='image/png'>frowning.png</object>
-	</icon>
-
-	<icon>
-		<text>B-)</text>
-		<text>B)</text>
-		<text>(H)</text>
-		<text>(h)</text>
-
-		<object mime='image/png'>coolglasses.png</object>
-	</icon>
-
-	<icon>
-		<text>:-[</text>
-		<text>:[</text>
-
-		<object mime='image/png'>bat.png</object>
-	</icon>
-
-	<!-- MSN icons -->
-	<icon>
-		<text>(L)</text>
-		<text>(l)</text>
-
-		<object mime='image/png'>heart.png</object>
-	</icon>
-
-	<icon>
-		<text>(U)</text>
-		<text>(u)</text>
-
-		<object mime='image/png'>brheart.png</object>
-	</icon>
-
-	<icon>
+		<text>👍</text>
 		<text>(Y)</text>
 		<text>(y)</text>
 
@@ -139,6 +135,7 @@
 	</icon>
 
 	<icon>
+		<text>👎</text>
 		<text>(N)</text>
 		<text>(n)</text>
 
@@ -146,135 +143,87 @@
 	</icon>
 
 	<icon>
-		<text>(Z)</text>
-		<text>(z)</text>
+		<text>💔</text>
+		<text>:broken-heart:</text>
 
-		<object mime='image/png'>boy.png</object>
+		<object mime='image/png'>broken-heart.png</object>
 	</icon>
 
 	<icon>
-		<text>(X)</text>
-		<text>(x)</text>
+		<text>❤️</text>
+		<text>:heart:</text>
 
-		<object mime='image/png'>girl.png</object>
+		<object mime='image/png'>heart.png</object>
 	</icon>
 
 	<icon>
-		<text>(@)</text>
-
-		<object mime='image/png'>pussy.png</object>
-	</icon>
-
-	<icon>
-		<text>(})</text>
-
-		<object mime='image/png'>hugleft.png</object>
-	</icon>
-
-	<icon>
-		<text>({)</text>
-
-		<object mime='image/png'>hugright.png</object>
-	</icon>
-
-	<icon>
-		<text>(6)</text>
-
-		<object mime='image/png'>devil.png</object>
-	</icon>
-
-	<icon>
-		<text>(R)</text>
-		<text>(r)</text>
-
-		<object mime='image/png'>rainbow.png</object>
-	</icon>
-
-	<icon>
-		<text>(W)</text>
-		<text>(w)</text>
-
-		<object mime='image/png'>brflower.png</object>
-	</icon>
-
-	<icon>
-		<text>(F)</text>
-		<text>(f)</text>
-
+		<text>🌹</text>
 		<object mime='image/png'>flower.png</object>
 	</icon>
 
 	<icon>
-		<text>(P)</text>
-		<text>(p)</text>
-
-		<object mime='image/png'>photo.png</object>
-	</icon>
-
-	<icon>
-		<text>(T)</text>
-		<text>(t)</text>
-
+		<text>📞</text>
+		<text>:phone:</text>
 		<object mime='image/png'>phone.png</object>
 	</icon>
 
 	<icon>
-		<text>(*)</text>
-
+		<text>⭐</text>
+		<text>:star:</text>
 		<object mime='image/png'>star.png</object>
 	</icon>
 
 	<icon>
-		<text>(8)</text>
-
+		<text>🎵</text>
+		<text>:music:</text>
 		<object mime='image/png'>music.png</object>
 	</icon>
 
 	<icon>
-		<text>(I)</text>
-		<text>(i)</text>
-
-		<object mime='image/png'>lamp.png</object>
-	</icon>
-
-	<icon>
-		<text>(B)</text>
-		<text>(b)</text>
-
+		<text>🍺</text>
+		<text>:beer:</text>
 		<object mime='image/png'>beer.png</object>
 	</icon>
 
 	<icon>
-		<text>(D)</text>
-		<text>(d)</text>
-
-		<object mime='image/png'>drink.png</object>
-	</icon>
-
-	<icon>
-		<text>(C)</text>
-		<text>(c)</text>
-
+		<text>☕</text>
+		<text>:coffee:</text>
 		<object mime='image/png'>coffee.png</object>
 	</icon>
 
 	<icon>
-		<text>(%)</text>
-
-		<object mime='image/png'>cuffs.png</object>
+		<text>👮</text>
+		<text>:police:</text>
+		<object mime='image/png'>police.png</object>
 	</icon>
 
 	<icon>
-		<text>(E)</text>
-		<text>(e)</text>
-
-		<object mime='image/png'>mail.png</object>
+		<text>☀️</text>
+		<text>:sun:</text>
+		<object mime='image/png'>sun.png</object>
 	</icon>
 
 	<icon>
-		<text>(K)</text>
-		<text>(k)</text>
+		<text>🇧🇾</text>
+		<text>:belarus:</text>
+		<object mime='image/png'>country-by.png</object>
+	</icon>
 
-		<object mime='image/png'>kiss.png</object>
+	<icon>
+		<text>🇷🇺</text>
+		<text>:russia:</text>
+		<object mime='image/png'>country-ru.png</object>
+	</icon>
+
+	<icon>
+		<text>🇺🇦</text>
+		<text>:ukraine:</text>
+		<object mime='image/png'>country-ua.png</object>
+	</icon>
+
+	<icon>
+		<text>🇰🇿</text>
+		<text>:kazakhstan:</text>
+		<object mime='image/png'>country-kz.png</object>
 	</icon>
 </icondef>

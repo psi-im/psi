@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,8 +25,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 
-PsiFilteredContactListView::PsiFilteredContactListView(QWidget* parent)
-    : PsiContactListView(parent)
+PsiFilteredContactListView::PsiFilteredContactListView(QWidget *parent) : PsiContactListView(parent)
 {
     // setFocusPolicy(Qt::NoFocus);
 
@@ -35,7 +33,7 @@ PsiFilteredContactListView::PsiFilteredContactListView(QWidget* parent)
     setAcceptDrops(false);
 }
 
-bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent* e)
+bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent *e)
 {
     updateKeyboardModifiers(e);
 
@@ -58,7 +56,7 @@ bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent* e)
         return true;
     }
     case Qt::Key_End: {
-        selectIndex(model()->rowCount()-1);
+        selectIndex(model()->rowCount() - 1);
         return true;
     }
     case Qt::Key_Up:
@@ -68,18 +66,17 @@ bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent* e)
     }
     case Qt::Key_PageUp:
     case Qt::Key_PageDown: {
-        int delta = 0;
+        int         delta = 0;
         QModelIndex index = model()->index(0, 0, QModelIndex());
         if (index.isValid()) {
             int itemHeight = itemDelegate()->sizeHint(QStyleOptionViewItem(), index).height();
             if (itemHeight)
                 delta = viewport()->height() / itemHeight;
         }
-        moveSelection(delta, e->key() == Qt::Key_PageUp ? Backward : Forward);
+        moveSelection(uint(delta), e->key() == Qt::Key_PageUp ? Backward : Forward);
         return true;
     }
-    default:
-        ;
+    default:;
     }
 
     return false;
@@ -88,19 +85,19 @@ bool PsiFilteredContactListView::handleKeyPressEvent(QKeyEvent* e)
 void PsiFilteredContactListView::moveSelection(uint delta, PsiFilteredContactListView::Direction direction)
 {
     QModelIndex currentIndex = this->currentIndex();
-    int row = currentIndex.row();
+    uint        row          = uint(currentIndex.row());
     if (currentIndex.isValid())
         row = direction == Forward ? (row + delta) : (row - delta);
     else
         row = 0;
-    selectIndex(row);
+    selectIndex(int(row));
 }
 
 void PsiFilteredContactListView::selectIndex(int row)
 {
     setUpdatesEnabled(false);
 
-    row = qMax(0, qMin(model()->rowCount()-1, row));
+    row                  = qMax(0, qMin(model()->rowCount() - 1, row));
     QModelIndex newIndex = model()->index(row, 0, QModelIndex());
     if (newIndex.isValid()) {
         QItemSelection selection(selectionModel()->selection());
@@ -119,14 +116,11 @@ void PsiFilteredContactListView::selectIndex(int row)
     setUpdatesEnabled(true);
 }
 
-void PsiFilteredContactListView::itemActivated(const QModelIndex& index)
+void PsiFilteredContactListView::itemActivated(const QModelIndex &index)
 {
     PsiContactListView::itemActivated(index);
     if (PsiOptions::instance()->getOption("options.ui.contactlist.autohide-contact-filter").toBool())
         emit quitFilteringMode();
 }
 
-bool PsiFilteredContactListView::extendSelection() const
-{
-    return keyboardModifiers() & Qt::ShiftModifier;
-}
+bool PsiFilteredContactListView::extendSelection() const { return keyboardModifiers() & Qt::ShiftModifier; }

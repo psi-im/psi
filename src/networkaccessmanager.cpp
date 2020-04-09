@@ -1,7 +1,7 @@
 /*
  * networkaccessmanager.cpp - Network Manager for WebView able to process
  * custom url schemas
- * Copyright (C) 2010-2017 senu, Sergey Ilinykh
+ * Copyright (C) 2010-2017  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,57 +14,68 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "networkaccessmanager.h"
 
 #include "bytearrayreply.h"
+
 #include <QCoreApplication>
+#include <QTimer>
 
-NetworkAccessManager::NetworkAccessManager(QObject *parent)
-    : QNetworkAccessManager(parent)
-    , _handlerSeed(0)
-{
-}
+NetworkAccessManager::NetworkAccessManager(QObject *parent) : QNetworkAccessManager(parent), _handlerSeed(0) {}
 
-QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest & req,
-                                                   QIODevice * outgoingData = 0)
+QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest &req,
+                                                   QIODevice *outgoingData = nullptr)
 {
     if (req.url().host() != QLatin1String("psi")) {
         return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
 
     QNetworkReply *reply = nullptr;
-    QByteArray data;
-    QByteArray mime;
+    QByteArray     data;
+    QByteArray     mime;
+
+    QString path = req.url().path();
+    for (auto &h : _streamHandlers) {
+        if (path.startsWith(h.first)) {
+            reply = h.second(req);
+            if (reply) {
+                reply->setParent(this);
+                return reply;
+            } else {
+                return new NAMNotFoundReply(this);
+            }
+        }
+    }
 
     for (auto &handler : _pathHandlers) {
-        if (handler->data(req, data, mime)) {
+        if (handler(req, data, mime)) {
             reply = new ByteArrayReply(req, data, mime, this);
             break;
         }
     }
 
     if (!reply) {
-        QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
-        auto handler = _sessionHandlers.value(ua);
-        if (handler && handler->data(req, data, mime)) {
+        QString ua      = req.header(QNetworkRequest::UserAgentHeader).toString();
+        auto    handler = _sessionHandlers.value(ua);
+        if (handler && handler(req, data, mime)) {
             reply = new ByteArrayReply(req, data, mime, this);
         }
     }
 
     if (!reply) {
-        reply = new ByteArrayReply(req); //finishes with error
+        reply = new ByteArrayReply(req); // finishes with error
     }
     connect(reply, SIGNAL(finished()), SLOT(callFinished()));
 
     return reply;
 }
 
-void NetworkAccessManager::callFinished() {
+void NetworkAccessManager::callFinished()
+{
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     if (reply) {
@@ -72,17 +83,35 @@ void NetworkAccessManager::callFinished() {
     }
 }
 
-QString NetworkAccessManager::registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler)
+QString NetworkAccessManager::registerSessionHandler(const Handler &&handler)
 {
     QString s;
     s.sprintf("t%x", _handlerSeed);
     _handlerSeed += 0x10;
 
-    _sessionHandlers.insert(s, handler);
+    _sessionHandlers.insert(s, std::move(handler));
     return s;
 }
 
-void NetworkAccessManager::unregisterSessionHandler(const QString &id)
+void NetworkAccessManager::unregisterSessionHandler(const QString &id) { _sessionHandlers.remove(id); }
+
+void NetworkAccessManager::route(const QString &path, const NetworkAccessManager::StreamHandler &handler)
 {
-    _sessionHandlers.remove(id);
+    auto it = _streamHandlers.begin();
+    while (it != _streamHandlers.end()) {
+        if (path.startsWith(it->first))
+            break;
+    }
+    _streamHandlers.insert(it, std::make_pair(path, handler));
 }
+
+NAMNotFoundReply::NAMNotFoundReply(QObject *parent) : QNetworkReply(parent)
+{
+    setError(QNetworkReply::ContentNotFoundError, "Not found");
+    QTimer::singleShot(0, this, [this]() { emit error(QNetworkReply::ContentNotFoundError); });
+    QTimer::singleShot(0, this, &NAMNotFoundReply::finished);
+}
+
+qint64 NAMNotFoundReply::readData(char *, qint64) { return 0; }
+
+void NAMNotFoundReply::abort() {}

@@ -6,37 +6,26 @@
 #ifndef CERTIFICATEERRORDIALOG_H
 #define CERTIFICATEERRORDIALOG_H
 
-#include <QtCrypto>
+#include <QDialog>
 #include <QString>
+#include <QtCrypto>
 
-class QMessageBox;
-class QPushButton;
-
-class CertificateErrorDialog : public QObject
-{
+class CertificateErrorDialog : public QDialog {
     Q_OBJECT
 public:
-        CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert);
-        ~CertificateErrorDialog();
-
-        int exec();
-
-public slots:
-        void reject();
+    CertificateErrorDialog(const QString &title, const QString &host, const QCA::Certificate &cert, int result,
+                           QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain,
+                           QByteArray &tlsOverrideCert, QWidget *parent = nullptr);
+    ~CertificateErrorDialog();
 
 private:
-        QMessageBox* messageBox_;
-        QPushButton* detailsButton_;
-        QPushButton* continueButton_;
-        QPushButton* cancelButton_;
-        QPushButton* saveButton_;
-        QCA::Certificate certificate_;
-        int result_;
-        QCA::Validity validity_;
-        QString &tlsOverrideDomain_;
-        QByteArray &tlsOverrideCert_;
-        QString domainOverride_;
-        QString host_;
+    QCA::Certificate certificate_;
+    int              result_;
+    QCA::Validity    validity_;
+    QString &        tlsOverrideDomain_;
+    QByteArray &     tlsOverrideCert_;
+    QString          domainOverride_;
+    QString          host_;
 };
 
-#endif
+#endif // CERTIFICATEERRORDIALOG_H

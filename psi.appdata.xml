@@ -4,7 +4,7 @@
   <licence>GPL-2.0</licence>
   <name>Psi</name>
   <name xml:lang="ru">Psi</name>
-  <summary>The cross-platform XMPP client for power users.</summary>
+  <summary>The cross-platform XMPP client aimed at experienced users.</summary>
   <summary xml:lang="ru">Кроссплатформенный XMPP клиент для продвинутых пользователей.</summary>
   <description>
     <p>
@@ -27,11 +27,11 @@
       <li xml:lang="ru">Поддержка шифрованных подключенй и сообщений</li>
     </ul>
   </description>
-  <url type="homepage">http://psi-im.org</url>
+  <url type="homepage">https://psi-im.org/</url>
   <url type="bugtracker">https://github.com/psi-im/psi/issues</url>
   <screenshots>
     <screenshot type="default">
-    	<image>http://psi-im.org/content/home/feature_default.png</image>
+    	<image>https://psi-im.org/content/home/feature_default.png</image>
     </screenshot>
   </screenshots>
 </application>

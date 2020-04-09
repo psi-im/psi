@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,16 +25,16 @@
 
 class WbNewImage : public WbNewItem {
 public:
-    WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename);
-    void parseCursorMove(QPointF newPos);
+    WbNewImage(QGraphicsScene *s, QPointF startPos, const QString &filename);
+    void     parseCursorMove(QPointF newPos);
     QDomNode serializeToSvg(QDomDocument *doc);
 
 protected:
-    QGraphicsItem* graphicsItem();
+    QGraphicsItem *graphicsItem();
 
 private:
     QGraphicsPixmapItem graphicsitem_;
-    QString filename_;
+    QString             filename_;
 };
 
-#endif
+#endif // WBNEWIMAGE_H

@@ -13,35 +13,40 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef VOICECALLDLG
-#define VOICECALLDLG
-
-#include <QDialog>
+#ifndef VOICECALLDLG_H
+#define VOICECALLDLG_H
 
 #include "ui_voicecall.h"
 #include "xmpp_jid.h"
 
-using namespace XMPP;
+#include <QDialog>
 
 class VoiceCaller;
 
-class VoiceCallDlg : public QDialog
-{
+using namespace XMPP;
+
+class VoiceCallDlg : public QDialog {
     Q_OBJECT
 
 public:
     enum class CallStatus : char {
         Default,
-        Calling, Accepting, Rejecting, Terminating,
-        Accepted, Rejected, InProgress, Terminated, Incoming
+        Calling,
+        Accepting,
+        Rejecting,
+        Terminating,
+        Accepted,
+        Rejected,
+        InProgress,
+        Terminated,
+        Incoming
     };
 
-    VoiceCallDlg(const Jid&, VoiceCaller*);
+    VoiceCallDlg(const Jid &, VoiceCaller *);
 
 public slots:
     void incoming();
@@ -51,10 +56,10 @@ public slots:
     void accept_call();
     void reject_call();
 
-    void accepted(const Jid&);
-    void rejected(const Jid&);
-    void in_progress(const Jid&);
-    void terminated(const Jid&);
+    void accepted(const Jid &);
+    void rejected(const Jid &);
+    void in_progress(const Jid &);
+    void terminated(const Jid &);
 
 protected slots:
     void reject();
@@ -64,10 +69,10 @@ protected:
     void setStatus(CallStatus);
 
 private:
-    Jid jid_;
-    CallStatus status_;
-    VoiceCaller* voiceCaller_;
+    Jid           jid_;
+    CallStatus    status_;
+    VoiceCaller * voiceCaller_;
     Ui::VoiceCall ui_;
 };
 
-#endif
+#endif // VOICECALLDLG_H

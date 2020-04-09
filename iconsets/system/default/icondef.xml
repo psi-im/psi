@@ -5,7 +5,7 @@
 		<version>1.0</version>
 		<description>Crystal System Iconset</description>
 		<creation>2005-11-23</creation>
-		<home>http://psi.affinix.com</home>
+		<home>https://psi-im.org/</home>
 		<author email='jmkim@uci.edu'>Jason Kim (Logo and misc. icons)</author>
 		<author www='http://www.everaldo.com'>Everaldo Coelho (Crystal icons)</author>
 	</meta>
@@ -351,7 +351,7 @@
 	</icon>
 
 	<icon>
-		<x xmlns='name'>psi/psiLogo</x>
+		<x xmlns='name'>psi/logo</x>
 		<object mime='image/png'>psilogo.png</object>
 	</icon>
 
@@ -428,6 +428,11 @@
 	<icon>
 		<x xmlns='name'>psi/upload</x>
 		<object mime='image/png'>upload.png</object>
+	</icon>
+
+    <icon>
+		<x xmlns='name'>psi/share_file</x>
+		<object mime='image/png'>share_file.png</object>
 	</icon>
 
 	<icon>
@@ -705,7 +710,33 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/cm_export</x>
+		<object mime='image/png'>cm_export.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cm_import</x>
+		<object mime='image/png'>cm_import.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/xmpp</x>
 		<object mime='image/png'>xmpp.svg</object>
+	</icon>
+    <icon>
+		<x xmlns='name'>psi/mic</x>
+		<object mime='image/png'>mic.png</object>
+	</icon>
+	<icon>
+		<x xmlns='name'>psi/pin</x>
+		<object mime='image/png'>pin.png</object>
+	</icon>
+	<icon>
+		<x xmlns='name'>psi/action_paste_and_send</x>
+		<object mime='image/png'>action_paste_and_send.png</object>
+	</icon>
+	<icon>
+		<x xmlns='name'>psi/mic_rec</x>
+		<object mime='image/png'>mic_rec.png</object>
 	</icon>
 </icondef>

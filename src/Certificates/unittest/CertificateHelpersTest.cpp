@@ -4,26 +4,22 @@
  * See COPYING for license details.
  */
 
+#include "Certificates/CertificateHelpers.h"
+#include "QtCrypto"
+#include "qttestutil/qttestutil.h"
+
 #include <QObject>
 #include <QtTest/QtTest>
 
-#include "qttestutil/qttestutil.h"
-
-#include "QtCrypto"
-#include "Certificates/CertificateHelpers.h"
-
 using namespace QCA;
 
-class CertificateHelpersTest : public QObject
-{
-         Q_OBJECT
+class CertificateHelpersTest : public QObject {
+    Q_OBJECT
 
-    private slots:
-        void initTestCase() {
-        }
+private slots:
+    void initTestCase() {}
 
-        void cleanupTestCase() {
-        }
+    void cleanupTestCase() {}
 };
 
 QTTESTUTIL_REGISTER_TEST(CertificateHelpersTest);

@@ -13,37 +13,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "typeaheadfind.h"
 
+#include "iconaction.h"
+#include "psioptions.h"
+#include "shortcutmanager.h"
+#include "stretchwidget.h"
+
 #include <QAction>
-#include <QLineEdit>
 #include <QCheckBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QTextEdit>
-
-#include "iconaction.h"
-#include "stretchwidget.h"
-#include "shortcutmanager.h"
-#include "psioptions.h"
 
 /**
  * \class TypeAheadFindBar
  * \brief The TypeAheadFindBar class provides a toolbar for typeahead finding.
  */
 
-class TypeAheadFindBar::Private
-{
+class TypeAheadFindBar::Private {
 private:
-    void updateFoundStyle(bool state) {
+    void updateFoundStyle(bool state)
+    {
         if (state) {
             le_find->setStyleSheet("");
-        }
-        else {
+        } else {
             le_find->setStyleSheet("QLineEdit { background: #ff6666; color: #ffffff }");
         }
     }
@@ -61,7 +59,7 @@ public:
             options |= QTextDocument::FindBackward;
 
             if (widgetType == TypeAheadFindBar::Type::WebView) {
-                //FIXME make it work with web
+                // FIXME make it work with web
             } else {
                 // move cursor before currect selection
                 // to prevent finding the same occurence again
@@ -80,22 +78,24 @@ public:
 
     // real search code
 
-    bool find(const QString &str, QTextDocument::FindFlags options, QTextCursor::MoveOperation start = QTextCursor::NoMove)
+    bool find(const QString &str, QTextDocument::FindFlags options,
+              QTextCursor::MoveOperation start = QTextCursor::NoMove)
     {
         if (widgetType == TypeAheadFindBar::Type::WebView) {
 #ifdef WEBKIT
 #ifdef WEBENGINE
             QWebEnginePage::FindFlags wkOptions;
-            wkOptions |= options & QTextDocument::FindBackward? QWebEnginePage::FindBackward : (QWebEnginePage::FindFlags)0;
-            wkOptions |= options & QTextDocument::FindCaseSensitively? QWebEnginePage::FindCaseSensitively : (QWebEnginePage::FindFlags)0;
-            wv->findText(str, wkOptions, [this](bool found) {
-                updateFoundStyle(found);
-            });
+            wkOptions |= options & QTextDocument::FindBackward ? QWebEnginePage::FindBackward
+                                                               : QWebEnginePage::FindFlags(nullptr);
+            wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebEnginePage::FindCaseSensitively
+                                                                      : QWebEnginePage::FindFlags(nullptr);
+            wv->findText(str, wkOptions, [this](bool found) { updateFoundStyle(found); });
             return true; // means nothing
 #else
             QWebPage::FindFlags wkOptions;
-            wkOptions |= options & QTextDocument::FindBackward? QWebPage::FindBackward : (QWebPage::FindFlags)0;
-            wkOptions |= options & QTextDocument::FindCaseSensitively? QWebPage::FindCaseSensitively : (QWebPage::FindFlags)0;
+            wkOptions |= options & QTextDocument::FindBackward ? QWebPage::FindBackward : (QWebPage::FindFlags)0;
+            wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebPage::FindCaseSensitively
+                                                                      : (QWebPage::FindFlags)0;
             return wv->findText(str, wkOptions);
 #endif
 #else
@@ -111,7 +111,8 @@ public:
         bool found = te->find(text, options);
         if (!found) {
             if (start == QTextCursor::NoMove)
-                return find(text, options, options & QTextDocument::FindBackward ? QTextCursor::End : QTextCursor::Start);
+                return find(text, options,
+                            options & QTextDocument::FindBackward ? QTextCursor::End : QTextCursor::Start);
 
             return false;
         }
@@ -119,8 +120,8 @@ public:
         return true;
     }
 
-    QString text;
-    bool caseSensitive;
+    QString                text;
+    bool                   caseSensitive;
     TypeAheadFindBar::Type widgetType;
 
     QTextEdit *te;
@@ -128,8 +129,8 @@ public:
     WebView *wv;
 #endif
     QLineEdit *le_find;
-    QAction *act_next;
-    QAction *act_prev;
+    QAction *  act_next;
+    QAction *  act_prev;
     QCheckBox *cb_case;
 };
 
@@ -139,32 +140,31 @@ public:
  * \param title, toolbar's title
  * \param parent, toolbar's parent
  */
-TypeAheadFindBar::TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent)
-: QToolBar(title, parent)
+TypeAheadFindBar::TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent) : QToolBar(title, parent)
 {
-    d = new Private();
+    d             = new Private();
     d->widgetType = Type::TextEdit;
-    d->te = textedit;
+    d->te         = textedit;
     init();
 }
 
 #ifdef WEBKIT
-TypeAheadFindBar::TypeAheadFindBar(WebView *webView, const QString &/*title*/, QWidget */*parent*/)
+TypeAheadFindBar::TypeAheadFindBar(WebView *webView, const QString & /*title*/, QWidget * /*parent*/)
 {
-    d = new Private();
+    d             = new Private();
     d->widgetType = Type::WebView;
-    d->wv = webView;
+    d->wv         = webView;
     init();
 }
 #endif
 
 void TypeAheadFindBar::init()
 {
-    setIconSize(QSize(16,16));
+    setIconSize(QSize(16, 16));
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 
     d->caseSensitive = false;
-    d->text = "";
+    d->text          = "";
 
     d->le_find = new QLineEdit(this);
     d->le_find->setMaximumWidth(200);
@@ -201,7 +201,7 @@ void TypeAheadFindBar::init()
 TypeAheadFindBar::~TypeAheadFindBar()
 {
     delete d;
-    d = 0;
+    d = nullptr;
 }
 
 /**
@@ -242,7 +242,7 @@ void TypeAheadFindBar::toggleVisibility()
     if (isVisible())
         hide();
     else
-        //show();
+        // show();
         open();
 }
 
@@ -262,15 +262,14 @@ void TypeAheadFindBar::textChanged(const QString &str)
         d->le_find->setStyleSheet("");
         if (d->widgetType == Type::WebView) {
 #ifdef WEBKIT
-            d->wv->page()->findText(""); //its buggy in qt-4.6.0
+            d->wv->page()->findText(""); // its buggy in qt-4.6.0
 #endif
-        } else { //TextEditType
+        } else { // TextEditType
             cursor.clearSelection();
             d->te->setTextCursor(cursor);
         }
         d->le_find->setStyleSheet("");
-    }
-    else {
+    } else {
         d->act_next->setEnabled(true);
         d->act_prev->setEnabled(true);
 
@@ -288,23 +287,14 @@ void TypeAheadFindBar::textChanged(const QString &str)
 /**
  * \brief Private slot activated when find-next is requested.
  */
-void TypeAheadFindBar::findNext()
-{
-    d->doFind();
-}
+void TypeAheadFindBar::findNext() { d->doFind(); }
 
 /**
  * \brief Private slot activated when find-prev is requested.
  */
-void TypeAheadFindBar::findPrevious()
-{
-    d->doFind(true);
-}
+void TypeAheadFindBar::findPrevious() { d->doFind(true); }
 
 /**
  * \brief Private slot activated when case-sensitive box is toggled.
  */
-void TypeAheadFindBar::caseToggled(int state)
-{
-    d->caseSensitive = (state == Qt::Checked);
-}
+void TypeAheadFindBar::caseToggled(int state) { d->caseSensitive = (state == Qt::Checked); }

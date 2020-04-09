@@ -1,8 +1,9 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+  %styles%
   %scripts%
-  <style type="text/css" media="screen,print">
+  <style type="text/css" media="screen,print" id="themeStyle">
 body {padding:0; margin:0; width:100%;}
 body > div {
     padding:1px 3px;
@@ -60,15 +61,16 @@ function startPsiTheme(shared) {
     var util = chat.util;
     util.console("Starting Psi New Classic theme")
 
-    var cssBody        = util.findStyleSheet(document.styleSheets[0], "body").style;
-    var cssSentMsg     = util.findStyleSheet(document.styleSheets[0], ".sent").style;
-    var cssReceivedMsg = util.findStyleSheet(document.styleSheets[0], ".received").style;
-    var cssInfMsg      = util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
-    var cssUserText    = util.findStyleSheet(document.styleSheets[0], ".usertext").style;
-    var cssChatSays    = util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
-    var cssAlertMsg    = util.findStyleSheet(document.styleSheets[0], ".alert").style;
-    var cssLink        = util.findStyleSheet(document.styleSheets[0], "a").style;
-    var cssLinkVisited = util.findStyleSheet(document.styleSheets[0], "a:visited").style;
+    var themeStyle     = document.getElementById("themeStyle").sheet;
+    var cssBody        = util.findStyleSheet(themeStyle, "body").style;
+    var cssSentMsg     = util.findStyleSheet(themeStyle, ".sent").style;
+    var cssReceivedMsg = util.findStyleSheet(themeStyle, ".received").style;
+    var cssInfMsg      = util.findStyleSheet(themeStyle, ".infmsg").style;
+    var cssUserText    = util.findStyleSheet(themeStyle, ".usertext").style;
+    var cssChatSays    = util.findStyleSheet(themeStyle, ".msg>span:first").style;
+    var cssAlertMsg    = util.findStyleSheet(themeStyle, ".alert").style;
+    var cssLink        = util.findStyleSheet(themeStyle, "a").style;
+    var cssLinkVisited = util.findStyleSheet(themeStyle, "a:visited").style;
     var useMessageIcons, messageIconsSize = 0;
     var colorMap = {
         "options.ui.look.colors.messages.sent" : cssSentMsg,
@@ -184,7 +186,7 @@ function startPsiTheme(shared) {
                     }
                     var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
                     var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-                    icon = icon?"<img src='/psiicon/"+icon+sizeUri+"'"+sizeStyle+" />":"";
+                    icon = icon?"<img src='/psi/icon/"+icon+sizeUri+"'"+sizeStyle+" />":"";
                 }
                 return icon;
             },

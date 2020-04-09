@@ -7,80 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>476</width>
-    <height>300</height>
+    <height>357</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="topMargin">
-      <number>10</number>
-     </property>
-     <item>
-      <widget class="QCheckBox" name="ck_tabChats">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Use tabbed mode:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="cb_tabGrouping">
-       <item>
-        <property name="text">
-         <string>for chats only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for mucs only</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for chats and mucs separately</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for mucs and chats in one window</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>for mucs, chats and roster in one window</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>[customized]</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
    <item>
     <spacer>
      <property name="orientation">
@@ -93,20 +26,6 @@
       </size>
      </property>
     </spacer>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_showTabButtons">
-     <property name="text">
-      <string>Show tab buttons</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_tabShortcuts">
-     <property name="text">
-      <string>Enable Alt-[0-9] tab shortcuts</string>
-     </property>
-    </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="ck_showPreviews">
@@ -130,17 +49,171 @@
     </widget>
    </item>
    <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+    <widget class="QCheckBox" name="ck_audioMessage">
+     <property name="toolTip">
+      <string>Record and share audio message</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
+     <property name="text">
+      <string>Enable audio messages</string>
      </property>
-    </spacer>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Tabs</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QCheckBox" name="ck_tabChats">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Use tabbed mode:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cb_tabGrouping">
+          <item>
+           <property name="text">
+            <string>for chats only</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>for mucs only</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>for chats and mucs separately</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>for mucs and chats in one window</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>for mucs, chats and roster in one window</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>[customized]</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_showTabButtons">
+        <property name="text">
+         <string>Show tab buttons</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_tabShortcuts">
+        <property name="text">
+         <string>Enable Alt-[0-9] tab shortcuts</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="lb_tabMdlClick">
+          <property name="text">
+           <string>Action for mouse middle click on tabs:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cb_tabMdlClick"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLabel" name="lb_tabDblClick">
+          <property name="text">
+           <string>Action for mouse double click on tabs:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cb_tabDblClick"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>

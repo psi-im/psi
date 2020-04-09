@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -32,8 +31,7 @@ class QMenu;
 // Examples of future use:
 // URLObject::getInstance()::registerAction(QRegExp("^http:\/\/"), act_open_browser);
 
-class URLObject : public QObject
-{
+class URLObject : public QObject {
     Q_OBJECT
 
 protected:
@@ -41,7 +39,7 @@ protected:
 
 public:
     static URLObject *getInstance();
-    QMenu *createPopupMenu(const QString &lnk);
+    QMenu *           createPopupMenu(const QString &lnk);
 
     void popupAction(QString lnk);
 
@@ -50,8 +48,9 @@ signals:
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-#endif
+#endif // URLOBJECT_H

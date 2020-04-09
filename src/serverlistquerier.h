@@ -13,38 +13,36 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef SERVERLISTQUERIER
-#define SERVERLISTQUERIER
+#ifndef SERVERLISTQUERIER_H
+#define SERVERLISTQUERIER_H
 
 #include <QObject>
 #include <QUrl>
 
 class QNetworkAccessManager;
 
-class ServerListQuerier : public QObject
-{
+class ServerListQuerier : public QObject {
     Q_OBJECT
 
 public:
-    ServerListQuerier(QObject* parent = NULL);
+    ServerListQuerier(QObject *parent = nullptr);
     void getList();
 
 signals:
-    void listReceived(const QStringList&);
-    void error(const QString&);
+    void listReceived(const QStringList &);
+    void error(const QString &);
 
 protected slots:
     void get_finished();
 
 private:
-    QNetworkAccessManager* http_;
-    QUrl url_;
-    int redirectCount_;
+    QNetworkAccessManager *http_;
+    QUrl                   url_;
+    int                    redirectCount_;
 };
 
-#endif
+#endif // SERVERLISTQUERIER_H

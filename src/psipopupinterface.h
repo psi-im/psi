@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,33 +25,33 @@
 
 class PsiPopupInterface;
 
-class PsiPopupPluginInterface
-{
+class PsiPopupPluginInterface {
 public:
-    virtual QString name() const = 0;
-    virtual bool isAvailable() const { return true; }
-    virtual PsiPopupInterface* popup(QObject* ) = 0;
+    virtual QString            name() const = 0;
+    virtual bool               isAvailable() const { return true; }
+    virtual PsiPopupInterface *popup(QObject *) = 0;
 };
 
 Q_DECLARE_INTERFACE(PsiPopupPluginInterface, "psi-im.org.PsiPopupInterface/0.1")
 
-
-class PsiPopupInterface
-{
+class PsiPopupInterface {
 public:
-    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr()) = 0;
-    virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
-                    const QPixmap* avatar, const PsiIcon* icon, const QString& text) = 0;
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const Resource &r,
+                       const UserListItem * = nullptr, const PsiEvent::Ptr & = PsiEvent::Ptr())
+        = 0;
+    virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon,
+                       const QString &titleText, const QPixmap *avatar, const PsiIcon *icon, const QString &text)
+        = 0;
 
     void setDuration(int d) { duration_ = d; }
 
 protected:
     static QString clipText(QString text);
     static QString title(PopupManager::PopupType type, bool *doAlertIcon, PsiIcon **icon);
-    int duration() const { return duration_; }
+    int            duration() const { return duration_; }
 
 private:
     int duration_;
 };
 
-#endif
+#endif // PSIPOPUPINTERFACE_H

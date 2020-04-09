@@ -13,60 +13,65 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "main.h"
 
-#include "psiapplication.h"
-#include <QTimer>
-
-#include <QImage>
-#include <QBitmap>
-#include <QTextCodec>
-#include <QSettings>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QMessageBox>
-#include <QtCrypto>
-#include <QTranslator>
-#include <QDir>
-#include <QFileInfo>
-#include <QProcess>
-#include <QTime>
-#include <QLibraryInfo>
-#include <QHashIterator>
-
-#include <stdlib.h>
-#include <time.h>
-#include "profiledlg.h"
-#include "activeprofiles.h"
-#include "psicli.h"
-#include "psioptions.h"
-
-#include "eventdlg.h"
-#include "psicon.h"
-#include "psiiconset.h"
-#include "translationmanager.h"
-#include "applicationinfo.h"
-#include "chatdlg.h"
-#ifdef USE_CRASH
-#    include"crash.h"
-#endif
-
 #ifdef Q_OS_MAC
 #include "CocoaUtilities/CocoaInitializer.h"
 #endif
-
-#ifdef Q_OS_WIN
-#    include <qt_windows.h> // for RegDeleteKey
+#include "activeprofiles.h"
+#include "applicationinfo.h"
+#include "chatdlg.h"
+#ifdef USE_CRASH
+#include "crash.h"
 #endif
+#include "eventdlg.h"
+#include "profiledlg.h"
+#include "psiapplication.h"
+#include "psicli.h"
+#include "psicon.h"
+#include "psiiconset.h"
+#include "psioptions.h"
+#include "translationmanager.h"
+
+#include <QBitmap>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDir>
+#include <QFileInfo>
+#include <QHashIterator>
+#include <QImage>
+#include <QLibraryInfo>
+#include <QMessageBox>
+#include <QProcess>
+#include <QSettings>
+#include <QTextCodec>
+#include <QTime>
+#include <QTimer>
+#include <QTranslator>
+#include <QtCrypto>
+#include <stdlib.h>
+#ifdef Q_OS_WIN
+#include <qt_windows.h> // for RegDeleteKey
+#endif
+#include <time.h>
 
 #ifdef Q_OS_WIN
 #define URI_RESTART
 #endif
+
+#if defined(Q_OS_WIN) && !defined(_MSC_VER)
+// Fix of vulnerability in MS Windows in builds using mingw-w64
+// See: https://www.kb.cert.org/vuls/id/307144/
+#define PSI_EXPORT_FUNC __declspec(dllexport)
+#else
+#define PSI_EXPORT_FUNC
+#endif
+
+using namespace XMPP;
 
 /** \mainpage Psi API Documentation
  *
@@ -80,47 +85,37 @@
  *        And here we might put our contact details
  */
 
-
-
-using namespace XMPP;
-
-
-PsiMain::PsiMain(const QHash<QString, QString>& commandline, QObject *par)
-    : QObject(par)
-    , cmdline(commandline)
+PsiMain::PsiMain(const QHash<QString, QString> &commandline, QObject *par) : QObject(par), cmdline(commandline)
 {
-    pcon = 0;
+    pcon = nullptr;
 
     // migrate old (pre 0.11) registry settings...
     QSettings sUser(QSettings::UserScope, "psi-im.org", "Psi");
     lastProfile = sUser.value("last_profile").toString();
-    lastLang = sUser.value("last_lang").toString();
-    autoOpen = sUser.value("auto_open", QVariant(false)).toBool();
+    lastLang    = sUser.value("last_lang").toString();
+    autoOpen    = sUser.value("auto_open", QVariant(false)).toBool();
 
     QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
     lastProfile = s.value("last_profile", lastProfile).toString();
-    lastLang = s.value("last_lang", lastLang).toString();
-    autoOpen = s.value("auto_open", autoOpen).toBool();
+    lastLang    = s.value("last_lang", lastLang).toString();
+    autoOpen    = s.value("auto_open", autoOpen).toBool();
 }
 
-PsiMain::~PsiMain()
-{
-    delete pcon;
-}
+PsiMain::~PsiMain() { delete pcon; }
 
 /**
-  * \brief Try to use already existing Psi instance to handle given commandline
-  * Don't call after useLocalInstance()
-  * \returns true if this instance is no longer needed and should terminate
-  */
+ * \brief Try to use already existing Psi instance to handle given commandline
+ * Don't call after useLocalInstance()
+ * \returns true if this instance is no longer needed and should terminate
+ */
 bool PsiMain::useActiveInstance()
 {
     if (!autoOpen && cmdline.isEmpty()) {
         return false;
-    }
-    else if (!cmdline.contains("help") && !cmdline.contains("version") && !cmdline.contains("choose-profile")
-        && ActiveProfiles::instance()->isAnyActive()
-        && ((cmdline.contains("profile") && ActiveProfiles::instance()->isActive(cmdline["profile"])) || !cmdline.contains("profile"))) {
+    } else if (!cmdline.contains("help") && !cmdline.contains("version") && !cmdline.contains("choose-profile")
+               && ActiveProfiles::instance()->isAnyActive()
+               && ((cmdline.contains("profile") && ActiveProfiles::instance()->isActive(cmdline["profile"]))
+                   || !cmdline.contains("profile"))) {
 
         bool raise = true;
         if (cmdline.contains("uri")) {
@@ -128,7 +123,8 @@ bool PsiMain::useActiveInstance()
             raise = false;
         }
         if (cmdline.contains("status")) {
-            ActiveProfiles::instance()->setStatus(cmdline.value("profile"), cmdline.value("status"), cmdline.value("status-message"));
+            ActiveProfiles::instance()->setStatus(cmdline.value("profile"), cmdline.value("status"),
+                                                  cmdline.value("status-message"));
             raise = false;
         }
 
@@ -137,25 +133,23 @@ bool PsiMain::useActiveInstance()
         }
 
         return true;
-    }
-    else if (cmdline.contains("remote")) {
+    } else if (cmdline.contains("remote")) {
         // there was no active instance to satisfy the request
         // but user doesn't want to start new instance
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
 
 /**
-  * \brief Initialize this Psi instance
-  */
+ * \brief Initialize this Psi instance
+ */
 void PsiMain::useLocalInstance()
 {
-    if(lastLang.isEmpty()) {
+    if (lastLang.isEmpty()) {
         lastLang = QLocale().name().section('_', 0, 0);
-        //printf("guessing locale: [%s]\n", lastLang.latin1());
+        // printf("guessing locale: [%s]\n", lastLang.latin1());
     }
 
     TranslationManager::instance()->loadTranslation(lastLang);
@@ -163,48 +157,39 @@ void PsiMain::useLocalInstance()
     if (cmdline.contains("help")) {
         PsiCli().showHelp();
         QTimer::singleShot(0, this, SLOT(bail()));
-    }
-    else if(cmdline.contains("version")) {
+    } else if (cmdline.contains("version")) {
         PsiCli().showVersion();
         QTimer::singleShot(0, this, SLOT(bail()));
-    }
-    else if(cmdline.contains("choose-profile")) {
+    } else if (cmdline.contains("choose-profile")) {
         // Select a profile
         QTimer::singleShot(0, this, SLOT(chooseProfile()));
-    }
-    else if(cmdline.contains("profile") && profileExists(cmdline["profile"])) {
+    } else if (cmdline.contains("profile") && profileExists(cmdline["profile"])) {
         // Open profile from commandline
         activeProfile = lastProfile = cmdline["profile"];
         QTimer::singleShot(0, this, SLOT(sessionStart()));
-    }
-    else if(autoOpen && !lastProfile.isEmpty() && profileExists(lastProfile)) {
+    } else if (autoOpen && !lastProfile.isEmpty() && profileExists(lastProfile)) {
         // Auto-open the last profile
         activeProfile = lastProfile;
         QTimer::singleShot(0, this, SLOT(sessionStart()));
-    }
-    else if (!lastProfile.isEmpty() && !getProfilesList().isEmpty()) {
+    } else if (!lastProfile.isEmpty() && !getProfilesList().isEmpty()) {
         // Select a profile
         QTimer::singleShot(0, this, SLOT(chooseProfile()));
-    }
-    else if (getProfilesList().count() == 1) {
+    } else if (getProfilesList().count() == 1) {
         // Open the (only) profile
         activeProfile = getProfilesList()[0];
         QTimer::singleShot(0, this, SLOT(sessionStart()));
-    }
-    else if (!getProfilesList().isEmpty()) {
+    } else if (!getProfilesList().isEmpty()) {
         // Select a profile
         QTimer::singleShot(0, this, SLOT(chooseProfile()));
-    }
-    else {
+    } else {
         // Create & open the default profile
         if (!profileExists("default") && !profileNew("default")) {
-            QMessageBox::critical(0, tr("Error"),
-                tr("There was an error creating the default profile."));
+            QMessageBox::critical(nullptr, tr("Error"), tr("There was an error creating the default profile."));
             QTimer::singleShot(0, this, SLOT(bail()));
         } else {
             // options.xml will be created by PsiCon::init
             lastProfile = activeProfile = "default";
-            autoOpen = true;
+            autoOpen                    = true;
             QTimer::singleShot(0, this, SLOT(sessionStart()));
         }
     }
@@ -212,9 +197,9 @@ void PsiMain::useLocalInstance()
 
 void PsiMain::chooseProfile()
 {
-    if(pcon) {
+    if (pcon) {
         delete pcon;
-        pcon = 0;
+        pcon = nullptr;
     }
 
     QString str = "";
@@ -222,27 +207,29 @@ void PsiMain::chooseProfile()
     // dirty, dirty, dirty hack
     PsiIconset::instance()->loadSystem();
 
-    while(1) {
-        ProfileOpenDlg *w = new ProfileOpenDlg(lastProfile, TranslationManager::instance()->availableTranslations(), TranslationManager::instance()->currentLanguage());
+    while (1) {
+        QScopedPointer<ProfileOpenDlg> w(new ProfileOpenDlg(lastProfile,
+                                                            TranslationManager::instance()->availableTranslations(),
+                                                            TranslationManager::instance()->currentLanguage()));
         w->ck_auto->setChecked(autoOpen);
         int r = w->exec();
         // lang change
-        if(r == 10) {
+        if (r == 10) {
             TranslationManager::instance()->loadTranslation(w->newLang);
             lastLang = TranslationManager::instance()->currentLanguage();
-            delete w;
             continue;
-        }
-        else {
+        } else {
             bool again = false;
-            autoOpen = w->ck_auto->isChecked();
-            if(r == QDialog::Accepted) {
-                str = w->cb_profile->currentText();
+            autoOpen   = w->ck_auto->isChecked();
+            if (r == QDialog::Accepted) {
+                str   = w->cb_profile->currentText();
                 again = !ActiveProfiles::instance()->setThisProfile(str);
                 if (again) {
-                    QMessageBox mb(QMessageBox::Question,
-                        CAP(tr("Profile already in use")),
-                        QString(tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")).arg(str),
+                    QMessageBox mb(
+                        QMessageBox::Question, CAP(tr("Profile already in use")),
+                        QString(
+                            tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?"))
+                            .arg(str),
                         QMessageBox::Cancel);
                     QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
                     mb.exec();
@@ -255,7 +242,6 @@ void PsiMain::chooseProfile()
                     }
                 }
             }
-            delete w;
             if (again) {
                 str = "";
                 continue;
@@ -264,7 +250,7 @@ void PsiMain::chooseProfile()
         }
     }
 
-    if(str.isEmpty()) {
+    if (str.isEmpty()) {
         quit();
         return;
     }
@@ -281,7 +267,8 @@ void PsiMain::sessionStart()
 {
     if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
         if (!ActiveProfiles::instance()->raise(activeProfile, true)) {
-            QMessageBox::critical(0, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
+            QMessageBox::critical(nullptr, tr("Error"),
+                                  tr("Cannot open this profile - it is already running, but not responding"));
         }
         quit();
         return;
@@ -293,7 +280,7 @@ void PsiMain::sessionStart()
     pcon = new PsiCon();
     if (!pcon->init()) {
         delete pcon;
-        pcon = 0;
+        pcon = nullptr;
         quit();
         return;
     }
@@ -312,24 +299,22 @@ void PsiMain::sessionStart()
 
 void PsiMain::sessionQuit(int x)
 {
-    if(x == PsiCon::QuitProgram) {
+    if (x == PsiCon::QuitProgram) {
         QTimer::singleShot(0, this, SLOT(bail()));
-    }
-    else if(x == PsiCon::QuitProfile) {
+    } else if (x == PsiCon::QuitProfile) {
         QTimer::singleShot(0, this, SLOT(chooseProfile()));
     }
 }
 
 void PsiMain::bail()
 {
-    if(pcon) {
-        pcon->gracefulDeinit([this](){
+    if (pcon) {
+        pcon->gracefulDeinit([this]() {
             pcon->deleteLater();
-            pcon = 0;
+            pcon = nullptr;
             quit();
         });
-    }
-    else {
+    } else {
         quit();
     }
 }
@@ -348,15 +333,13 @@ void PsiMain::saveSettings()
 static QByteArray encodeUri(const QByteArray &in)
 {
     QByteArray out;
-    for(int n = 0; n < in.size(); ++n) {
+    for (int n = 0; n < in.size(); ++n) {
         unsigned char c = (unsigned char)in[n];
-        if(c == '\\') {
+        if (c == '\\') {
             out += "\\\\";
-        }
-        else if(c >= 0x21 && c < 0x7f && c != '-' && c != '\"') {
+        } else if (c >= 0x21 && c < 0x7f && c != '-' && c != '\"') {
             out += in[n];
-        }
-        else {
+        } else {
             char hex[5];
             qsnprintf(hex, 5, "\\x%02x", c);
             out += QByteArray::fromRawData(hex, 4);
@@ -373,29 +356,27 @@ static QString decodeUri(const QString &in)
     //   into unicode
 
     QByteArray dec;
-    for(int n = 0; n < in.length(); ++n) {
-        if(in[n] == '\\') {
-            if(n + 1 < in.length()) {
+    for (int n = 0; n < in.length(); ++n) {
+        if (in[n] == '\\') {
+            if (n + 1 < in.length()) {
                 ++n;
-                if(in[n] == '\\') {
+                if (in[n] == '\\') {
                     dec += '\\';
-                }
-                else if(in[n] == 'x') {
-                    if(n + 2 < in.length()) {
+                } else if (in[n] == 'x') {
+                    if (n + 2 < in.length()) {
                         ++n;
                         QString xs = in.mid(n, 2);
                         ++n;
                         bool ok = false;
-                        int x = xs.toInt(&ok, 16);
-                        if(ok) {
+                        int  x  = xs.toInt(&ok, 16);
+                        if (ok) {
                             unsigned char c = (unsigned char)x;
                             dec += c;
                         }
                     }
                 }
             }
-        }
-        else
+        } else
             dec += in[n].toLatin1();
     }
 
@@ -418,24 +399,23 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 
     // re-run ourself, with encoded uri
     QCoreApplication qapp(argc, argv);
-    QString selfExe = QCoreApplication::applicationFilePath();
+    QString          selfExe = QCoreApplication::applicationFilePath();
 
     // don't use QCoreApplication::arguments(), because that calls
     //   GetCommandLine which is not clipped.  instead, use the provided
     //   argc/argv.
     QStringList args;
-    for(int n = 1; n < argc; ++n) {
+    for (int n = 1; n < argc; ++n) {
         args += QString::fromLocal8Bit(argv[n]);
     }
 
-    if(!uri.isEmpty()) {
+    if (!uri.isEmpty()) {
         args += QString("--encuri=") + QString::fromLatin1(encodeUri(uri));
     }
 
-    if(QProcess::startDetached(selfExe, args)) {
+    if (QProcess::startDetached(selfExe, args)) {
         return 0;
-    }
-    else {
+    } else {
         return 1;
     }
 }
@@ -446,18 +426,16 @@ QStringList getQtPluginPathEnvVar()
     QStringList out;
 
     QByteArray val = qgetenv("QT_PLUGIN_PATH");
-    if(!val.isEmpty())
-    {
+    if (!val.isEmpty()) {
 #if defined(Q_OS_WIN) || defined(Q_OS_SYMBIAN)
         QLatin1Char pathSep(';');
 #else
         QLatin1Char pathSep(':');
 #endif
         QStringList paths = QString::fromLatin1(val).split(pathSep, QString::SkipEmptyParts);
-        foreach(const QString &path, paths)
-        {
+        foreach (const QString &path, paths) {
             QString canonicalPath = QDir(path).canonicalPath();
-            if(!canonicalPath.isEmpty() && !out.contains(canonicalPath))
+            if (!canonicalPath.isEmpty() && !out.contains(canonicalPath))
                 out += canonicalPath;
         }
     }
@@ -465,7 +443,7 @@ QStringList getQtPluginPathEnvVar()
     return out;
 }
 
-int main(int argc, char *argv[])
+PSI_EXPORT_FUNC int main(int argc, char *argv[])
 {
     // Disable Input Method Editor to fix bug with
     //   third-party keyboard layout switching tools
@@ -496,15 +474,15 @@ int main(int argc, char *argv[])
         return restart_process(argc, argv, cmdline["uri"]);
 #else
         // otherwise, it should enough to modify argc/argv
-        argv[argc] = 0;
+        argv[argc] = nullptr;
 #endif
     }
 
-#if ( defined(Q_OS_MAC) || defined(Q_OS_WIN) ) && ! defined (ALLOW_QT_PLUGINS_DIR)
+#if (defined(Q_OS_MAC) || defined(Q_OS_WIN)) && !defined(ALLOW_QT_PLUGINS_DIR)
     // remove qt's own plugin path on these platforms, to enable safe
     //   distribution
     QString defaultPluginPath = QLibraryInfo::location(QLibraryInfo::PluginsPath);
-    if(!getQtPluginPathEnvVar().contains(defaultPluginPath))
+    if (!getQtPluginPathEnvVar().contains(defaultPluginPath))
         QCoreApplication::removeLibraryPath(defaultPluginPath);
 #endif
 
@@ -519,18 +497,19 @@ int main(int argc, char *argv[])
 #endif
 
     // it must be initialized first in order for ApplicationInfo::resourcesDir() to work
-    qSetMessagePattern("[%{time yyyyMMdd h:mm:ss}] %{if-info}I:%{endif}%{if-warning}W:%{endif}%{if-critical}C:%{endif}%{if-fatal}F:%{endif}"
+    qSetMessagePattern("[%{time yyyyMMdd h:mm:ss}] "
+                       "%{if-info}I:%{endif}%{if-warning}W:%{endif}%{if-critical}C:%{endif}%{if-fatal}F:%{endif}"
                        "%{message} (%{file}:%{line}, %{function})");
-# ifdef Q_OS_WIN
+#ifdef Q_OS_WIN
     QCoreApplication::addLibraryPath(appPath);
-# endif
+#endif
     PsiApplication app(argc, argv);
     QApplication::setApplicationName(ApplicationInfo::name());
     QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
     QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
     QApplication::setQuitOnLastWindowClosed(false);
-#if QT_VERSION >= 0x051000
-    QCoreApplication::setAttribute( Qt::AA_DisableWindowContextHelpButton, true );
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton, true);
 #endif
 
 #ifdef Q_OS_MAC
@@ -544,7 +523,7 @@ int main(int argc, char *argv[])
     QCA::setProperty("pgp-always-trust", true);
     QCA::KeyStoreManager keystoremgr;
     QCA::KeyStoreManager::start();
-    if(keystoremgr.isBusy()) {
+    if (keystoremgr.isBusy()) {
         // Yes, this is an ugly thing, but it works, and it works fine.
         // If it ain't broke, don't fix it please.
         keystoremgr.waitForBusyFinished();
@@ -553,19 +532,19 @@ int main(int argc, char *argv[])
 #ifdef USE_CRASH
     int useCrash = !cmdline.contains("nocrash");
 
-    if ( useCrash )
+    if (useCrash)
         Crash::registerSigsegvHandler(argv[0]);
 #endif
 
     // seed the random number generator
-    srand(time(NULL));
+    srand(uint(time(nullptr)));
 
-    //dtcp_port = 8000;
+    // dtcp_port = 8000;
 
     // now when QApplication created and text codecs initiaized we can convert
     // command line arguments to strings
-    QHash<QString,QString> cmdlines;
-    QHashIterator<QByteArray,QByteArray> clIt(cmdline);
+    QHash<QString, QString>               cmdlines;
+    QHashIterator<QByteArray, QByteArray> clIt(cmdline);
     while (clIt.hasNext()) {
         clIt.next();
 #ifdef URI_RESTART
@@ -585,18 +564,18 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    //if(link_test)
+    // if(link_test)
     //    printf("Link test enabled\n");
 
     // silly winsock workaround
-    //QSocketDevice *d = new QSocketDevice;
-    //delete d;
+    // QSocketDevice *d = new QSocketDevice;
+    // delete d;
 
     // Initialize translations
     TranslationManager::instance();
 
     // need SHA1 for Iconset sound
-    //if(!QCA::isSupported(QCA::CAP_SHA1))
+    // if(!QCA::isSupported(QCA::CAP_SHA1))
     //    QCA::insertProvider(XMPP::createProviderHash());
 
     QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
@@ -619,6 +598,6 @@ Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
 
 //#if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)
-//Q_IMPORT_PLUGIN(qjpeg)
-//Q_IMPORT_PLUGIN(qgif)
+//    Q_IMPORT_PLUGIN(qjpeg)
+//    Q_IMPORT_PLUGIN(qgif)
 //#endif

@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,17 +21,16 @@
 
 #include "abstracttreemodel.h"
 
+#include <QHash>
 #include <QModelIndex>
 #include <QVariant>
-#include <QHash>
 
+class ContactListItem;
 class PsiAccount;
 class PsiContact;
 class PsiContactList;
-class ContactListItem;
 
-class ContactListModel : public AbstractTreeModel
-{
+class ContactListModel : public AbstractTreeModel {
     Q_OBJECT
 
 public:
@@ -80,9 +78,7 @@ public:
         UsingSSLRole,
     };
 
-    enum {
-        NameColumn = 0
-    };
+    enum { NameColumn = 0 };
 
     ContactListModel(PsiContactList *contactList);
     virtual ~ContactListModel();
@@ -97,25 +93,25 @@ public:
     bool accountsEnabled() const;
     void setAccountsEnabled(bool enabled);
 
-    bool showOffline() const;
-    bool showSelf() const;
-    bool showTransports() const;
-    bool showHidden() const;
+    bool    showOffline() const;
+    bool    showSelf() const;
+    bool    showTransports() const;
+    bool    showHidden() const;
     QString contactSortStyle() const;
 
     void renameSelectedItem();
 
-    PsiContact *contactFor(const QModelIndex &index) const;
+    PsiContact *    contactFor(const QModelIndex &index) const;
     QModelIndexList indexesFor(const PsiContact *contact) const;
 
     // reimplemented
-    QVariant data(const QModelIndex& index, int role) const;
-    virtual int columnCount(const QModelIndex &parent) const;
+    QVariant      data(const QModelIndex &index, int role) const;
+    virtual int   columnCount(const QModelIndex &parent) const;
     Qt::ItemFlags flags(const QModelIndex &index) const;
-    virtual bool setData(const QModelIndex &index, const QVariant &data, int role);
+    virtual bool  setData(const QModelIndex &index, const QVariant &data, int role);
 
     ContactListItem *toItem(const QModelIndex &index) const;
-    QModelIndex toModelIndex(ContactListItem *item) const;
+    QModelIndex      toModelIndex(ContactListItem *item) const;
 
 signals:
     void showOfflineChanged();

@@ -1,6 +1,6 @@
 /*
  * mpristunecontroller.h
- * Copyright (C) 2010 Vitaly Tonkacheyev
+ * Copyright (C) 2010  Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,50 +13,40 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef MPRISTUNECONTROLLER_H
 #define MPRISTUNECONTROLLER_H
 
-#include <QDBusConnection>
-#include <QDBusArgument>
-#include <QDBusMessage>
-#include <QDBusInterface>
-#include <QVariantMap>
-#include <QStringList>
-
-#include "tunecontrollerinterface.h"
 #include "tune.h"
+#include "tunecontrollerinterface.h"
 
-struct PlayerStatus
-{
-    int playStatus  = 0;
-    int playOrder   = 0;
-    int playRepeat  = 0;
-    int stopOnce    = 0;
+#include <QDBusArgument>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusMessage>
+#include <QStringList>
+#include <QVariantMap>
+
+struct PlayerStatus {
+    int playStatus = 0;
+    int playOrder  = 0;
+    int playRepeat = 0;
+    int stopOnce   = 0;
 };
 
 Q_DECLARE_METATYPE(PlayerStatus)
 
-class MPRISTuneController : public TuneController
-{
+class MPRISTuneController : public TuneController {
     Q_OBJECT
 
     static const char *MPRIS_PREFIX;
 
-    enum MPRISVersion {
-        MPRIS_1 = 1,
-        MPRIS_2 = 2
-    };
+    enum MPRISVersion { MPRIS_1 = 1, MPRIS_2 = 2 };
 
-    enum PlayStatus {
-        StatusPlaying = 0,
-        StatusPaused = 1,
-        StatusStopped = 2
-    };
+    enum PlayStatus { StatusPlaying = 0, StatusPaused = 1, StatusStopped = 2 };
 
 public:
     MPRISTuneController();
@@ -73,15 +63,15 @@ protected slots:
 private:
     Tune getTune(const QVariantMap &map) const;
     Tune getMpris2Tune(const QVariantMap &map) const;
-    int getMpris2Status(const QString &status) const;
-    int version(const QString &service_) const;
+    int  getMpris2Status(const QString &status) const;
+    int  version(const QString &service_) const;
     void connectToBus(const QString &service_);
     void disconnectFromBus(const QString &service_);
 
 private:
-    Tune currentTune_;
+    Tune        currentTune_;
     QStringList players_;
-    bool tuneSent_;
+    bool        tuneSent_;
 };
 
-#endif
+#endif // MPRISTUNECONTROLLER_H

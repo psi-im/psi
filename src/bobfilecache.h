@@ -1,6 +1,6 @@
 /*
  * bob.h - Bits of Binary server and manager
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -12,35 +12,33 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef BOB_H
-#define BOB_H
+#ifndef BOBFILECACHE_H
+#define BOBFILECACHE_H
 
 #include "iris/xmpp_bitsofbinary.h"
 
-using namespace XMPP;
-
 class FileCache;
 
-class BoBFileCache : public BoBCache
-{
+using namespace XMPP;
+
+class BoBFileCache : public BoBCache {
     Q_OBJECT
 public:
     static BoBFileCache *instance();
 
-    virtual void put(const BoBData &);
-    virtual BoBData get(const QString &);
+    virtual void    put(const BoBData &) override;
+    virtual BoBData get(const Hash &) override;
 
 private:
     BoBFileCache();
 
-    FileCache *_fileCache;
+    FileCache *          _fileCache;
     static BoBFileCache *_instance;
 };
 
-#endif
+#endif // BOBFILECACHE_H

@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,42 +24,41 @@
 
 #include <QKeyEvent>
 
-class RosterAvatarFrame : public QFrame
-{
+class RosterAvatarFrame : public QFrame {
     Q_OBJECT
-    public:
-        RosterAvatarFrame(QWidget *parent);
-        void setAvatar(const QPixmap &avatar);
-        void setStatusIcon(const QIcon &ico);
-        void setNick(const QString &nick);
-        void setStatusMenu(QMenu *menu);
-        void setTuneAction(QAction *action);
+public:
+    RosterAvatarFrame(QWidget *parent);
+    void setAvatar(const QPixmap &avatar);
+    void setStatusIcon(const QIcon &ico);
+    void setNick(const QString &nick);
+    void setStatusMenu(QMenu *menu);
+    void setTuneAction(QAction *action);
 
-    signals:
-        void statusMessageChanged(QString);
-        void setMood();
-        void setActivity();
+signals:
+    void statusMessageChanged(QString);
+    void setMood();
+    void setActivity();
 
-    protected:
-        void keyPressEvent(QKeyEvent *event);
+protected:
+    void keyPressEvent(QKeyEvent *event);
 
-    private slots:
-        void statusMessageReturnPressed();
-        void optionChanged(QString);
+private slots:
+    void statusMessageReturnPressed();
+    void optionChanged(QString);
 
-    public slots:
-        void setStatusMessage(const QString &message);
-        void setMoodIcon(const QString &mood);
-        void setActivityIcon(const QString &activity);
+public slots:
+    void setStatusMessage(const QString &message);
+    void setMoodIcon(const QString &mood);
+    void setActivityIcon(const QString &activity);
 
-    private:
-        Ui::RosterAvatarFrame ui_;
-        QString statusMessage_;
-        QMenu *statusMenu_;
-        QPixmap avatarPixmap;
+private:
+    Ui::RosterAvatarFrame ui_;
+    QString               statusMessage_;
+    QMenu *               statusMenu_;
+    QPixmap               avatarPixmap;
 
-        void drawAvatar();
-        void setFont();
+    void drawAvatar();
+    void setFont();
 };
 
-#endif
+#endif // ROSTERAVATARFRAME_H

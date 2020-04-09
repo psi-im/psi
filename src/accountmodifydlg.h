@@ -1,6 +1,6 @@
 /*
  * accountmodifydlg.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,37 +13,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef ACCOUNTMODIFYDLG_H
 #define ACCOUNTMODIFYDLG_H
 
+#include "privacylistblockedmodel.h"
+#include "privacylistmodel.h"
+#include "profiles.h"
+#include "ui_accountmodify.h"
+
 #include <QDialog>
 #include <QtCrypto>
 
-#include "privacylistmodel.h"
-#include "privacylistblockedmodel.h"
-#include "ui_accountmodify.h"
-#include "profiles.h"
-
-class PsiAccount;
-class QWidget;
-class PsiCon;
 class ProxyChooser;
+class PsiAccount;
+class PsiCon;
+class QWidget;
 
-class AccountModifyDlg : public QDialog, public Ui::AccountModify
-{
+class AccountModifyDlg : public QDialog, public Ui::AccountModify {
     Q_OBJECT
 public:
-    AccountModifyDlg(PsiCon *,QWidget *parent=0);
-    AccountModifyDlg(PsiAccount *, QWidget *parent=0);
+    AccountModifyDlg(PsiCon *, QWidget *parent = nullptr);
+    AccountModifyDlg(PsiAccount *, QWidget *parent = nullptr);
     ~AccountModifyDlg();
 
-    void setPassword(const QString &);
-    const UserAccount& account() const { return acc; }
+    void               setPassword(const QString &);
+    const UserAccount &account() const { return acc; }
 
 protected:
     void init();
@@ -60,40 +58,40 @@ private slots:
 
     void save();
 
-    //void pgpToggled(bool);
+    // void pgpToggled(bool);
     void chooseKey();
     void clearKey();
-     void tabChanged(int);
+    void tabChanged(int);
 
     // Privacy
-     void privacyClicked();
-     void updatePrivacyTab();
-     void setPrivacyTabEnabled(bool b);
-     void addBlockClicked();
-     void removeBlockClicked();
-     void updateBlockedContacts(const PrivacyList&);
-     void getDefaultList_error();
-     void changeList_error();
+    void privacyClicked();
+    void updatePrivacyTab();
+    void setPrivacyTabEnabled(bool b);
+    void addBlockClicked();
+    void removeBlockClicked();
+    void updateBlockedContacts(const PrivacyList &);
+    void getDefaultList_error();
+    void changeList_error();
 
     void resourceCbChanged(int index);
     void priorityCbChanged(int index);
     void autoconnectCksChanged();
 
 private:
-    PsiCon *psi;
-    PsiAccount *pa;
+    PsiCon *      psi;
+    PsiAccount *  pa;
     ProxyChooser *pc;
-    QCA::PGPKey key;
-    UserAccount acc;
+    QCA::PGPKey   key;
+    UserAccount   acc;
 
     // Privacy
-     PrivacyListModel privacyModel;
-     PrivacyListBlockedModel privacyBlockedModel;
-     bool privacyInitialized;
+    PrivacyListModel        privacyModel;
+    PrivacyListBlockedModel privacyBlockedModel;
+    bool                    privacyInitialized;
 
     void updateUserID();
-    void setKeyID(bool b, const QString &s="");
+    void setKeyID(bool b, const QString &s = "");
     bool checkSSL();
 };
 
-#endif
+#endif // ACCOUNTMODIFYDLG_H

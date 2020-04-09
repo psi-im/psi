@@ -1,6 +1,6 @@
 /*
  * registrationdlg.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,48 +13,47 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QDomElement>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QPointer>
-#include <QHBoxLayout>
-#include <QApplication>
-#include <QLabel>
-
-#include "jidutil.h"
-#include "psiaccount.h"
 #include "registrationdlg.h"
+
 #include "busywidget.h"
 #include "common.h"
-#include "xdata_widget.h"
-#include "xmpp_tasks.h"
+#include "jidutil.h"
+#include "psiaccount.h"
 #include "textutil.h"
+#include "xdata_widget.h"
+#include "xmpp_client.h"
+#include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
 
-using namespace XMPP;
+#include <QApplication>
+#include <QDomElement>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QVBoxLayout>
 
+using namespace XMPP;
 
 //----------------------------------------------------------------------------
 // JT_XRegister
 //----------------------------------------------------------------------------
 
-class JT_XRegister : public JT_Register
-{
+class JT_XRegister : public JT_Register {
     Q_OBJECT
 public:
     JT_XRegister(Task *parent);
 
     void setXForm(const Form &frm, const XData &_form);
 
-    bool take(const QDomElement &);
+    bool        take(const QDomElement &);
     QDomElement iq() const;
     QDomElement xdataElement() const;
 
@@ -64,41 +63,34 @@ private:
     QDomElement _iq;
 };
 
-JT_XRegister::JT_XRegister( Task *parent )
-    : JT_Register( parent )
-{
-}
+JT_XRegister::JT_XRegister(Task *parent) : JT_Register(parent) {}
 
-bool JT_XRegister::take( const QDomElement &x )
+bool JT_XRegister::take(const QDomElement &x)
 {
     _iq = x;
 
-    return JT_Register::take( x );
+    return JT_Register::take(x);
 }
 
-QDomElement JT_XRegister::iq() const
-{
-    return _iq;
-}
+QDomElement JT_XRegister::iq() const { return _iq; }
 
 void JT_XRegister::setXForm(const Form &frm, const XData &_form)
 {
-    JT_Register::setForm( frm );
+    JT_Register::setForm(frm);
 
-    _iq = createIQ(doc(), "set", frm.jid().full(), id());
-    QDomElement query = doc()->createElement("query");
-    query.setAttribute("xmlns", "jabber:iq:register");
+    _iq               = createIQ(doc(), "set", frm.jid().full(), id());
+    QDomElement query = doc()->createElementNS("jabber:iq:register", "query");
     _iq.appendChild(query);
 
-    XData form( _form );
-    form.setType( XData::Data_Submit );
-    query.appendChild( form.toXml( doc() ) );
+    XData form(_form);
+    form.setType(XData::Data_Submit);
+    query.appendChild(form.toXml(doc()));
 }
 
 void JT_XRegister::onGo()
 {
-    if ( !_iq.isNull() )
-        send( _iq );
+    if (!_iq.isNull())
+        send(_iq);
     else
         JT_Register::onGo();
 }
@@ -111,7 +103,7 @@ QDomElement JT_XRegister::xdataElement() const
         if (i.isNull())
             continue;
 
-        if (i.attribute("xmlns") == "jabber:x:data")
+        if (i.namespaceURI() == "jabber:x:data")
             return i;
     }
 
@@ -121,37 +113,35 @@ QDomElement JT_XRegister::xdataElement() const
 //----------------------------------------------------------------------------
 // RegistrationDlg
 //----------------------------------------------------------------------------
-class RegistrationDlg::Private
-{
+class RegistrationDlg::Private {
 public:
     Private() = default;
 
-    Jid jid;
+    Jid         jid;
     PsiAccount *pa = nullptr;
 
-    QPushButton *pb_close = nullptr, *pb_reg = nullptr;
+    QPushButton *          pb_close = nullptr, *pb_reg = nullptr;
     QPointer<JT_XRegister> jt;
-    int type = 0;
-    BusyWidget *busy = nullptr;
-    QLabel *lb_top = nullptr;
-    QWidget *gr_form = nullptr;
-    QGridLayout *gr_form_layout = nullptr;
-    Form form;
+    int                    type           = 0;
+    BusyWidget *           busy           = nullptr;
+    QLabel *               lb_top         = nullptr;
+    QWidget *              gr_form        = nullptr;
+    QGridLayout *          gr_form_layout = nullptr;
+    Form                   form;
 
-    QList<QLabel*> lb_field;
-    QList<QLineEdit*> le_field;
-    XDataWidget *xdata = nullptr;
+    QList<QLabel *>    lb_field;
+    QList<QLineEdit *> le_field;
+    XDataWidget *      xdata = nullptr;
 };
 
-RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
-    : QDialog(nullptr)
+RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa) : QDialog(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    d = new Private;
+    d      = new Private;
     d->jid = jid;
-    d->pa = pa;
+    d->pa  = pa;
     d->pa->dialogRegister(this, d->jid);
-    d->jt = nullptr;
+    d->jt    = nullptr;
     d->xdata = nullptr;
 
     setWindowTitle(tr("Registration: %1").arg(d->jid.full()));
@@ -160,11 +150,11 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
     vb1->setMargin(4);
     d->lb_top = new QLabel(this);
     d->lb_top->setWordWrap(true);
-    d->lb_top->setFrameStyle( QFrame::Panel | QFrame::Sunken );
+    d->lb_top->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     d->lb_top->hide();
     vb1->addWidget(d->lb_top);
 
-    d->gr_form = new QWidget(this);
+    d->gr_form        = new QWidget(this);
     d->gr_form_layout = new QGridLayout(d->gr_form);
     d->gr_form_layout->setSpacing(4);
     vb1->addWidget(d->gr_form);
@@ -208,9 +198,13 @@ RegistrationDlg::~RegistrationDlg()
 
 void RegistrationDlg::done(int r)
 {
-    if(d->busy->isActive() && d->type == 1) {
-        int n = QMessageBox::information(this, tr("Busy"), tr("<qt>Registration has already been submitted, so closing this window will not prevent the registration from happening.  Do you still wish to close?</qt>"), tr("&Yes"), tr("&No"));
-        if(n != 0)
+    if (d->busy->isActive() && d->type == 1) {
+        int n = QMessageBox::information(
+            this, tr("Busy"),
+            tr("<qt>Registration has already been submitted, so closing this window will not prevent the registration "
+               "from happening.  Do you still wish to close?</qt>"),
+            tr("&Yes"), tr("&No"));
+        if (n != 0)
             return;
     }
     QDialog::done(r);
@@ -223,7 +217,7 @@ void RegistrationDlg::doRegGet()
     d->busy->start();
 
     d->type = 0;
-    d->jt = new JT_XRegister(d->pa->client()->rootTask());
+    d->jt   = new JT_XRegister(d->pa->client()->rootTask());
     connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
     d->jt->getForm(d->jid);
     d->jt->go(true);
@@ -231,12 +225,12 @@ void RegistrationDlg::doRegGet()
 
 void RegistrationDlg::doRegSet()
 {
-    if(!d->pa->checkConnected(this))
+    if (!d->pa->checkConnected(this))
         return;
 
     d->jt = new JT_XRegister(d->pa->client()->rootTask());
 
-    if ( !d->xdata ) {
+    if (!d->xdata) {
         Form submitForm = d->form;
 
         Q_ASSERT(d->le_field.count() == submitForm.count());
@@ -247,12 +241,11 @@ void RegistrationDlg::doRegSet()
         }
 
         d->jt->setForm(submitForm);
-    }
-    else {
+    } else {
         XData form;
-        form.setFields( d->xdata->fields() );
+        form.setFields(d->xdata->fields());
 
-        d->jt->setXForm( d->form, form );
+        d->jt->setXForm(d->form, form);
     }
 
     d->gr_form->setEnabled(false);
@@ -264,7 +257,7 @@ void RegistrationDlg::doRegSet()
     d->jt->go(true);
 }
 
-void RegistrationDlg::setInstructions(const QString& jid, const QString& instructions)
+void RegistrationDlg::setInstructions(const QString &jid, const QString &instructions)
 {
     QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(jid);
     str += TextUtil::plain2rich(instructions);
@@ -274,7 +267,7 @@ void RegistrationDlg::setInstructions(const QString& jid, const QString& instruc
 /**
  * Returns true if the function was able to successfully process XData.
  */
-void RegistrationDlg::processXData(const XData& form)
+void RegistrationDlg::processXData(const XData &form)
 {
     if (!form.title().isEmpty())
         setWindowTitle(form.title());
@@ -294,14 +287,14 @@ void RegistrationDlg::processXData(const XData& form)
 /**
  * This is used as a fallback when processXData returns true.
  */
-void RegistrationDlg::processLegacyForm(const XMPP::Form& form)
+void RegistrationDlg::processLegacyForm(const XMPP::Form &form)
 {
     setInstructions(d->jid.full(), form.instructions());
 
     for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
         const FormField &f = *it;
 
-        QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
+        QLabel *   lb = new QLabel(f.fieldName(), d->gr_form);
         QLineEdit *le = new QLineEdit(d->gr_form);
         d->gr_form_layout->addWidget(lb); // FIXME
         d->gr_form_layout->addWidget(le); // FIXME
@@ -317,7 +310,7 @@ void RegistrationDlg::processLegacyForm(const XMPP::Form& form)
         d->le_field.first()->setFocus();
 }
 
-void RegistrationDlg::setData(JT_XRegister* jt)
+void RegistrationDlg::setData(JT_XRegister *jt)
 {
     d->form = jt->form();
     if (jt->hasXData()) {
@@ -327,7 +320,7 @@ void RegistrationDlg::setData(JT_XRegister* jt)
     }
 }
 
-void RegistrationDlg::updateData(JT_XRegister* jt)
+void RegistrationDlg::updateData(JT_XRegister *jt)
 {
     if (d->xdata) {
         QDomElement iq = jt->xdataElement();
@@ -345,10 +338,10 @@ void RegistrationDlg::jt_finished()
     d->gr_form->setEnabled(true);
     d->pb_reg->setEnabled(true);
     JT_XRegister *jt = d->jt;
-    d->jt = nullptr;
+    d->jt            = nullptr;
 
-    if(jt->success()) {
-        if(d->type == 0) {
+    if (jt->success()) {
+        if (d->type == 0) {
             setData(jt);
 
             d->gr_form->show();
@@ -357,24 +350,22 @@ void RegistrationDlg::jt_finished()
 
             qApp->processEvents();
             resize(sizeHint());
-        }
-        else {
+        } else {
             closeDialogs(this);
             QMessageBox::information(this, tr("Success"), tr("Registration successful."));
             close();
         }
-    }
-    else {
-        if(d->type == 0) {
-            QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve registration form.\nReason: %1").arg(jt->statusString()));
+    } else {
+        if (d->type == 0) {
+            QMessageBox::critical(this, tr("Error"),
+                                  tr("Unable to retrieve registration form.\nReason: %1").arg(jt->statusString()));
             close();
-        }
-        else {
-            QMessageBox::critical(this, tr("Error"), tr("Error submitting registration form.\nReason: %1").arg(jt->statusString()));
+        } else {
+            QMessageBox::critical(this, tr("Error"),
+                                  tr("Error submitting registration form.\nReason: %1").arg(jt->statusString()));
             if (jt->statusCode() == 406) {
                 // updateData(jt);
-            }
-            else {
+            } else {
                 closeDialogs(this);
                 close();
             }

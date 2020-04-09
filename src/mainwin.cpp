@@ -13,72 +13,64 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "mainwin.h"
 
-#include <QMessageBox>
-#include <QIcon>
+#include "aboutdlg.h"
+#include "activecontactsmenu.h"
+#include "activitydlg.h"
+#include "applicationinfo.h"
+#include "avatars.h"
+#include "avcall/avcall.h"
+#include "common.h"
+#include "desktoputil.h"
+#include "geolocationdlg.h"
+#include "globalstatusmenu.h"
+#include "mainwin_p.h"
+#include "mooddlg.h"
+#include "mucjoindlg.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "psicontactlist.h"
+#include "psievent.h"
+#include "psiiconset.h"
+#include "psimedia/psimedia.h"
+#include "psioptions.h"
+#include "psirosterwidget.h"
+#include "psitoolbar.h"
+#include "psitooltip.h"
+#include "psitrayicon.h"
+#include "rosteravatarframe.h"
+#include "showtextdlg.h"
+#include "statusdlg.h"
+#include "tabdlg.h"
+#include "tabmanager.h"
+#include "textutil.h"
+#include "xmpp_serverinfomanager.h"
+
 #include <QApplication>
-#include <QTimer>
+#include <QCloseEvent>
+#include <QEvent>
+#include <QIcon>
+#include <QKeyEvent>
+#include <QMenu>
+#include <QMenuBar>
+#include <QMessageBox>
 #include <QObject>
 #include <QPainter>
-#include <QSignalMapper>
-#include <QMenuBar>
 #include <QPixmap>
-#include <QCloseEvent>
-#include <QKeyEvent>
-#include <QEvent>
-#include <QVBoxLayout>
-#include <QSplitter>
-#include <QMenu>
-#include <QtAlgorithms>
 #include <QShortcut>
-
+#include <QSignalMapper>
+#include <QSplitter>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QtAlgorithms>
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
-
-#include "tabmanager.h"
-#include "tabdlg.h"
-#include "common.h"
-#include "showtextdlg.h"
-#include "psicon.h"
-#include "textutil.h"
-#include "psiiconset.h"
-#include "xmpp_serverinfomanager.h"
-#include "applicationinfo.h"
-#include "psiaccount.h"
-#include "psievent.h"
-#include "psitooltip.h"
-#include "psitrayicon.h"
-#include "psitoolbar.h"
-#include "aboutdlg.h"
-#include "psitoolbar.h"
-#include "psioptions.h"
-#include "tipdlg.h"
-#include "mucjoindlg.h"
-#include "psicontactlist.h"
-#include "desktoputil.h"
-#include "statusdlg.h"
-#include "globalstatusmenu.h"
-#include "psirosterwidget.h"
-#include "mooddlg.h"
-#include "activitydlg.h"
-#include "geolocationdlg.h"
-#include "activecontactsmenu.h"
-
-#include "mainwin_p.h"
-
-#include "psimedia/psimedia.h"
-#include "avcall/avcall.h"
-
-#include "rosteravatarframe.h"
-#include "avatars.h"
-
 #ifdef HAVE_X11
 #include <x11windowsystem.h>
 #endif
@@ -91,11 +83,11 @@ static const QString showStatusMessagesOptionPath = "options.ui.contactlist.stat
 QString extract_gst_version(const QString &in)
 {
     int start = in.indexOf("GStreamer ");
-    if(start == -1)
+    if (start == -1)
         return QString();
     start += 10;
     int end = in.indexOf(",", start);
-    if(end == -1)
+    if (end == -1)
         return QString();
     return in.mid(start, end - start);
 }
@@ -104,204 +96,185 @@ QString extract_gst_version(const QString &in)
 // MainWin::Private
 //----------------------------------------------------------------------------
 
-class MainWin::Private
-{
+class MainWin::Private {
 public:
     Private(PsiCon *, MainWin *);
     ~Private();
 
-    bool onTop, asTool;
-    QMenu *mainMenu, *optionsMenu, *toolsMenu;
+    bool              onTop, asTool;
+    QMenu *           mainMenu, *optionsMenu, *toolsMenu;
     GlobalStatusMenu *statusMenu;
 #ifdef Q_OS_LINUX
     // Status menu for MenuBar.
     // Workaround a Unity bug.
     GlobalStatusMenu *statusMenuMB = nullptr;
 #endif
-    int sbState;
-    QString nickname;
+    int          sbState;
+    QString      nickname;
     PsiTrayIcon *tray;
-    QMenu *trayMenu;
+    QMenu *      trayMenu;
+#ifdef Q_OS_MAC
+    QMenu *dockMenu;
+#endif
     QVBoxLayout *vb_roster;
-    QSplitter *splitter;
-    TabDlg *mainTabs;
-    QString statusTip;
-    PsiToolBar *viewToolBar;
-    int tabsSize;
-    int rosterSize;
-    bool isLeftRoster;
+    QSplitter *  splitter;
+    TabDlg *     mainTabs;
+    QString      statusTip;
+    PsiToolBar * viewToolBar;
+    int          tabsSize;
+    int          rosterSize;
+    bool         isLeftRoster;
 
-    PopupAction *optionsButton, *statusButton;
-    IconActionGroup *statusGroup, *viewGroups;
-    IconAction *statusSmallerAlt;
+    PopupAction *        optionsButton, *statusButton;
+    IconActionGroup *    statusGroup, *viewGroups;
+    IconAction *         statusSmallerAlt;
     EventNotifierAction *eventNotifier;
-    PsiCon *psi;
-    MainWin *mainWin;
-    RosterAvatarFrame *rosterAvatar;
+    PsiCon *             psi;
+    MainWin *            mainWin;
+    RosterAvatarFrame *  rosterAvatar;
     QPointer<PsiAccount> defaultAccount;
 
-    QLineEdit *searchText;
+    QLineEdit *  searchText;
     QToolButton *searchPb;
-    QWidget *searchWidget;
+    QWidget *    searchWidget;
 
     QTimer *hideTimer;
-    QSignalMapper *statusMapper;
 
     PsiIcon *nextAnim;
-    int nextAmount;
+    int      nextAmount;
 
     QMap<QAction *, int> statusActions;
 
-    int lastStatus;
+    int  lastStatus;
     bool filterActive, prefilterShowOffline, prefilterShowAway;
     bool squishEnabled;
 
-    PsiRosterWidget* rosterWidget_;
+    PsiRosterWidget *rosterWidget_;
 
 #ifdef Q_OS_WIN
     DWORD deactivationTickCount;
 #endif
 
-    void registerActions();
-    IconAction* getAction( QString name );
-    void updateMenu(QStringList actions, QMenu* menu);
+    void        registerActions();
+    IconAction *getAction(QString name);
+    void        updateMenu(QStringList actions, QMenu *menu);
 
     QString ToolTipText;
 
-    QPointer<MoodDlg> moodDlg;
-    QPointer<ActivityDlg> activityDlg;
+    QPointer<MoodDlg>        moodDlg;
+    QPointer<ActivityDlg>    activityDlg;
     QPointer<GeoLocationDlg> geolocationDlg;
 };
 
-MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) :
-    onTop(false),
-    asTool(false),
-    mainMenu(nullptr),
-    optionsMenu(nullptr),
-    toolsMenu(nullptr),
-    statusMenu(nullptr),
-    sbState(0),
-    tray(nullptr),
-    trayMenu(nullptr),
-    vb_roster(nullptr),
-    splitter(nullptr),
-    mainTabs(nullptr),
-    viewToolBar(nullptr),
-    tabsSize(0),
-    rosterSize(0),
-    isLeftRoster(false),
-    psi(_psi),
-    mainWin(_mainWin),
-    rosterAvatar(nullptr),
-    searchText(nullptr),
-    searchPb(nullptr),
-    searchWidget(nullptr),
-    hideTimer(nullptr),
-    nextAnim(nullptr),
-    nextAmount(0),
-    lastStatus(0),
-    rosterWidget_(nullptr)
+MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
+    onTop(false), asTool(false), mainMenu(nullptr), optionsMenu(nullptr), toolsMenu(nullptr), statusMenu(nullptr),
+    sbState(0), tray(nullptr), trayMenu(nullptr),
+#ifdef Q_OS_MAC
+    dockMenu(nullptr),
+#endif
+    vb_roster(nullptr), splitter(nullptr), mainTabs(nullptr), viewToolBar(nullptr), tabsSize(0), rosterSize(0),
+    isLeftRoster(false), psi(_psi), mainWin(_mainWin), rosterAvatar(nullptr), searchText(nullptr), searchPb(nullptr),
+    searchWidget(nullptr), hideTimer(nullptr), nextAnim(nullptr), nextAmount(0), lastStatus(0), rosterWidget_(nullptr)
 {
 
-    statusGroup   = (IconActionGroup *)getAction("status_group");
-    viewGroups    = (IconActionGroup *)getAction("view_groups");
-    eventNotifier = (EventNotifierAction *)getAction("event_notifier");
+    statusGroup   = static_cast<IconActionGroup *>(getAction("status_group"));
+    viewGroups    = static_cast<IconActionGroup *>(getAction("view_groups"));
+    eventNotifier = static_cast<EventNotifierAction *>(getAction("event_notifier"));
 
-    optionsButton = (PopupAction *)getAction("button_options");
-    statusButton  = (PopupAction *)getAction("button_status");
+    optionsButton    = static_cast<PopupAction *>(getAction("button_options"));
+    statusButton     = static_cast<PopupAction *>(getAction("button_status"));
     statusSmallerAlt = getAction("status_all");
 
-    statusMapper = new QSignalMapper(mainWin);
-    mainWin->connect(statusMapper, SIGNAL(mapped(int)), mainWin, SLOT(activatedStatusAction(int)));
-
-    filterActive = false;
+    filterActive         = false;
     prefilterShowOffline = false;
-    prefilterShowAway = false;
+    prefilterShowAway    = false;
 
-    char* squishStr = getenv("SQUISH_ENABLED");
-    squishEnabled = squishStr != 0;
+    char *squishStr = getenv("SQUISH_ENABLED");
+    squishEnabled   = squishStr != nullptr;
 }
 
-MainWin::Private::~Private()
-{
-}
+MainWin::Private::~Private() {}
 
 void MainWin::Private::registerActions()
 {
     struct {
-        const char* name;
-        int id;
-    } statuslist[] = {
-        { "status_chat",      STATUS_CHAT      },
-        { "status_online",    STATUS_ONLINE    },
-        { "status_away",      STATUS_AWAY      },
-        { "status_xa",        STATUS_XA        },
-        { "status_dnd",       STATUS_DND       },
-        { "status_invisible", STATUS_INVISIBLE },
-        { "status_offline",   STATUS_OFFLINE   },
-        { "", 0 }
-    };
+        const char *name;
+        int         id;
+    } statuslist[] = { { "status_chat", STATUS_CHAT },       { "status_online", STATUS_ONLINE },
+                       { "status_away", STATUS_AWAY },       { "status_xa", STATUS_XA },
+                       { "status_dnd", STATUS_DND },         { "status_invisible", STATUS_INVISIBLE },
+                       { "status_offline", STATUS_OFFLINE }, { "", 0 } };
 
-    int i;
+    int     i;
     QString aName;
-    for ( i = 0; !(aName = QString(statuslist[i].name)).isEmpty(); i++ ) {
-        IconAction* action = getAction( aName );
-        connect (action, SIGNAL(triggered()), statusMapper, SLOT(map()));
+    for (i = 0; !(aName = QString::fromLatin1(statuslist[i].name)).isEmpty(); i++) {
+        int         id     = statuslist[i].id;
+        IconAction *action = getAction(aName);
+        mainWin->connect(action, &IconAction::triggered, mainWin, [this, id](bool) {
+            QList<IconAction *> l = statusGroup->findChildren<IconAction *>();
+            foreach (IconAction *action, l) {
+                auto it = statusActions.constFind(action);
+                action->setChecked(it != statusActions.constEnd() && *it == id);
+            }
 
-        statusMapper->setMapping(action, statuslist[i].id);
-        statusActions[action] = statuslist[i].id;
+            mainWin->statusChanged(static_cast<XMPP::Status::Type>(id));
+        });
+
+        statusActions[action] = id;
     }
 
     // register all actions
-    PsiActionList::ActionsType type = PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common );
-    ActionList actions = psi->actionList()->suitableActions( type );
-    QStringList names = actions.actions();
-    QStringList::Iterator it = names.begin();
-    for ( ; it != names.end(); ++it ) {
-        IconAction* action = actions.action( *it );
-        if ( action ) {
-            mainWin->registerAction( action );
+    PsiActionList::ActionsType type
+        = PsiActionList::ActionsType(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
+    ActionList            actions = psi->actionList()->suitableActions(type);
+    QStringList           names   = actions.actions();
+    QStringList::Iterator it      = names.begin();
+    for (; it != names.end(); ++it) {
+        IconAction *action = actions.action(*it);
+        if (action) {
+            mainWin->registerAction(action);
         }
     }
 }
 
-IconAction* MainWin::Private::getAction( QString name )
+IconAction *MainWin::Private::getAction(QString name)
 {
-    PsiActionList::ActionsType type = PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common );
-    ActionList actions = psi->actionList()->suitableActions( type );
-    IconAction* action = actions.action( name );
+    PsiActionList::ActionsType type
+        = PsiActionList::ActionsType(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
+    ActionList  actions = psi->actionList()->suitableActions(type);
+    IconAction *action  = actions.action(name);
 
-    if ( !action ) {
+    if (!action) {
         qWarning("MainWin::Private::getAction(): action %s not found!", qPrintable(name));
     }
-    //else
+    // else
     //    mainWin->registerAction( action );
 
     return action;
 }
 
-void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
+void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 {
     clearMenu(menu);
 
-    IconAction* action;
+    IconAction *action;
     foreach (QString name, actions) {
         // workind around Qt/X11 bug, which displays
         // actions's text and the separator bar in Qt 4.1.1
-        if ( name == "separator" ) {
+        if (name == "separator") {
             menu->addSeparator();
             continue;
         }
 
-        if ( name == "diagnostics" ) {
-            QMenu* diagMenu = new QMenu(tr("Diagnostics"), menu);
+        if (name == "diagnostics") {
+            QMenu *diagMenu = new QMenu(tr("Diagnostics"), menu);
             getAction("help_diag_qcaplugin")->addTo(diagMenu);
             getAction("help_diag_qcakeystore")->addTo(diagMenu);
             menu->addMenu(diagMenu);
             continue;
         }
 
-        if ( (action = getAction(name)) ) {
+        if ((action = getAction(name))) {
             action->addTo(menu);
         }
     }
@@ -315,8 +288,9 @@ const QString toolbarsStateOptionPath = "options.ui.save.toolbars-state";
 const QString rosterGeometryPath      = "options.ui.save.roster-width";
 const QString tabsGeometryPath        = "options.ui.save.log-width";
 
-MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
-:AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
+MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
+    AdvancedWidget<QMainWindow>(nullptr,
+                                (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? Qt::Tool : Qt::Widget))
 {
     setObjectName("MainWin");
     setAttribute(Qt::WA_AlwaysShowToolTips);
@@ -324,40 +298,41 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
     setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 
-    d->onTop = _onTop;
+    d->onTop  = _onTop;
     d->asTool = _asTool;
 
     // sbState:
     //   -1 : connect
     // >= 0 : STATUS_*
-    d->sbState = STATUS_OFFLINE;
+    d->sbState    = STATUS_OFFLINE;
     d->lastStatus = -2;
 
-    d->nextAmount = 0;
-    d->nextAnim = 0;
-    d->tray = 0;
-    d->trayMenu = 0;
-    d->statusTip = "";
-    d->nickname = "";
-    d->defaultAccount = 0;
+    d->nextAmount     = 0;
+    d->nextAnim       = nullptr;
+    d->tray           = nullptr;
+    d->trayMenu       = nullptr;
+    d->statusTip      = "";
+    d->nickname       = "";
+    d->defaultAccount = nullptr;
 
     QWidget *rosterBar = new QWidget(this);
-    bool allInOne = false;
+    bool     allInOne  = false;
 
-    if ( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() && PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
+    if (PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()
+        && PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
         d->splitter = new QSplitter(this);
         d->splitter->setObjectName("onewindowsplitter");
-        connect(d->splitter, SIGNAL(splitterMoved(int,int)), this, SLOT(splitterMoved()));
+        connect(d->splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(splitterMoved()));
         setCentralWidget(d->splitter);
         allInOne = true;
 
-        d->mainTabs = d->psi->tabManager()->newTabs(0);
+        d->mainTabs = d->psi->tabManager()->newTabs(nullptr);
         d->psi->tabManager()->setPreferredTabsForKind('C', d->mainTabs);
         d->psi->tabManager()->setPreferredTabsForKind('M', d->mainTabs);
 
         QList<int> sizes;
-        d->rosterSize = PsiOptions::instance()->getOption(rosterGeometryPath).toInt();
-        d->tabsSize = PsiOptions::instance()->getOption(tabsGeometryPath).toInt();
+        d->rosterSize   = PsiOptions::instance()->getOption(rosterGeometryPath).toInt();
+        d->tabsSize     = PsiOptions::instance()->getOption(tabsGeometryPath).toInt();
         d->isLeftRoster = PsiOptions::instance()->getOption("options.ui.contactlist.aio-left-roster").toBool();
         if (d->isLeftRoster) {
             d->splitter->addWidget(rosterBar);
@@ -373,9 +348,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     } else
         setCentralWidget(rosterBar);
 
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionChanged(const QString &)));
 
-    d->vb_roster = new QVBoxLayout(rosterBar);
+    d->vb_roster     = new QVBoxLayout(rosterBar);
     d->rosterWidget_ = new PsiRosterWidget(rosterBar);
     d->rosterWidget_->setContactList(psi->contactList());
 
@@ -385,15 +360,14 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     // FIXME
     // d->contactListView_->setFrameShape(QFrame::NoFrame);
 #endif
-    QMenu* viewMenu = new QMenu(tr("View"), this);
-
+    QMenu *viewMenu = new QMenu(tr("View"), this);
 
     d->vb_roster->setMargin(layoutMargin);
     d->vb_roster->setSpacing(layoutMargin);
 
     if (allInOne) {
         QString toolOpt = "options.ui.contactlist.toolbars";
-        foreach(QString base, PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
+        foreach (QString base, PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
             // toolbar "Show contacts" is fourth, so check m3
             if (base == toolOpt + ".m3") {
                 d->viewToolBar = new PsiToolBar(base, rosterBar, d->psi->actionList());
@@ -405,7 +379,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
         }
     }
 
-
     // create rosteravatarframe
     d->rosterAvatar = new RosterAvatarFrame(this);
     d->vb_roster->addWidget(d->rosterAvatar);
@@ -415,37 +388,33 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     connect(d->rosterAvatar, SIGNAL(setMood()), this, SLOT(actSetMoodActivated()));
     connect(d->rosterAvatar, SIGNAL(setActivity()), this, SLOT(actSetActivityActivated()));
 
-    //add contact view
+    // add contact view
     d->vb_roster->addWidget(d->rosterWidget_);
 
-    d->statusMenu = new GlobalStatusMenu((QWidget*)this, d->psi);
+    d->statusMenu = new GlobalStatusMenu(qobject_cast<QWidget *>(this), d->psi);
     d->statusMenu->setTitle(tr("Status"));
     d->statusMenu->setObjectName("statusMenu");
-    connect(d->statusMenu, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
-    connect(d->statusMenu, SIGNAL(statusPresetSelected(XMPP::Status,bool,bool)), d->psi, SLOT(setGlobalStatus(XMPP::Status,bool,bool)));
-    connect(d->statusMenu, SIGNAL(statusPresetDialogForced(const QString &)), d->psi, SLOT(showStatusDialog(const QString &)));
+    connect(d->statusMenu, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi,
+            SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
+    connect(d->statusMenu, SIGNAL(statusPresetSelected(XMPP::Status, bool, bool)), d->psi,
+            SLOT(setGlobalStatus(XMPP::Status, bool, bool)));
+    connect(d->statusMenu, SIGNAL(statusPresetDialogForced(const QString &)), d->psi,
+            SLOT(showStatusDialog(const QString &)));
 
 #ifdef Q_OS_LINUX
-    d->statusMenuMB = new GlobalStatusMenu((QWidget*)this, d->psi);
+    d->statusMenuMB = new GlobalStatusMenu(qobject_cast<QWidget *>(this), d->psi);
     d->statusMenuMB->setTitle(tr("Status"));
     d->statusMenuMB->setObjectName("statusMenu");
-    connect(d->statusMenuMB, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
-    connect(d->statusMenuMB, SIGNAL(statusPresetSelected(XMPP::Status,bool,bool)), d->psi, SLOT(setGlobalStatus(XMPP::Status,bool,bool)));
-    connect(d->statusMenuMB, SIGNAL(statusPresetDialogForced(const QString &)), d->psi, SLOT(showStatusDialog(const QString &)));
+    connect(d->statusMenuMB, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi,
+            SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
+    connect(d->statusMenuMB, SIGNAL(statusPresetSelected(XMPP::Status, bool, bool)), d->psi,
+            SLOT(setGlobalStatus(XMPP::Status, bool, bool)));
+    connect(d->statusMenuMB, SIGNAL(statusPresetDialogForced(const QString &)), d->psi,
+            SLOT(showStatusDialog(const QString &)));
 #endif
 
     d->optionsMenu = new QMenu(tr("General"), this);
     d->optionsMenu->setObjectName("optionsMenu");
-#ifdef Q_OS_MAC
-    d->trayMenu = d->statusMenu;
-    extern void qt_mac_set_dock_menu(QMenu *);
-    qt_mac_set_dock_menu(d->statusMenu);
-#else
-    d->trayMenu = new QMenu(this);
-    buildTrayMenu();
-    connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
-#endif
-
 
     buildStatusMenu(d->statusMenu);
 #ifdef Q_OS_LINUX
@@ -453,7 +422,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #endif
     buildOptionsMenu();
     connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
-
 
     X11WM_CLASS("main");
 
@@ -471,7 +439,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
     // Mac-only menus
 #ifdef Q_OS_MAC
-    QMenu* mainMenu = new QMenu(tr("Menu"), this);
+    QMenu *mainMenu = new QMenu(tr("Menu"), this);
     mainMenu->setObjectName("macMainMenu");
     mainMenuBar()->addMenu(mainMenu);
     d->getAction("menu_options")->addTo(mainMenu);
@@ -510,35 +478,33 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     mainMenuBar()->addMenu(d->toolsMenu);
     connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));
 
-    QMenu* helpMenu = new QMenu(tr("Help"), this);
+    QMenu *helpMenu = new QMenu(tr("Help"), this);
     mainMenuBar()->addMenu(helpMenu);
-    d->getAction("help_readme")->addTo (helpMenu);
-    d->getAction("help_tip")->addTo (helpMenu);
+    d->getAction("help_readme")->addTo(helpMenu);
     helpMenu->addSeparator();
-    //d->getAction("help_online_help")->addTo (helpMenu);
-    d->getAction("help_online_wiki")->addTo (helpMenu);
-    d->getAction("help_online_home")->addTo (helpMenu);
-    d->getAction("help_online_forum")->addTo (helpMenu);
-    d->getAction("help_psi_muc")->addTo (helpMenu);
-    d->getAction("help_report_bug")->addTo (helpMenu);
-    QMenu* diagMenu = new QMenu(tr("Diagnostics"), this);
+    d->getAction("help_online_wiki")->addTo(helpMenu);
+    d->getAction("help_online_home")->addTo(helpMenu);
+    d->getAction("help_online_forum")->addTo(helpMenu);
+    d->getAction("help_psi_muc")->addTo(helpMenu);
+    d->getAction("help_report_bug")->addTo(helpMenu);
+    QMenu *diagMenu = new QMenu(tr("Diagnostics"), this);
     helpMenu->addMenu(diagMenu);
-    d->getAction("help_diag_qcaplugin")->addTo (diagMenu);
-    d->getAction("help_diag_qcakeystore")->addTo (diagMenu);
-    if(AvCallManager::isSupported()) {
+    d->getAction("help_diag_qcaplugin")->addTo(diagMenu);
+    d->getAction("help_diag_qcakeystore")->addTo(diagMenu);
+    if (AvCallManager::isSupported()) {
         helpMenu->addSeparator();
-        d->getAction("help_about_psimedia")->addTo (helpMenu);
+        d->getAction("help_about_psimedia")->addTo(helpMenu);
     }
 #else
-    if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool())  {
+    if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
         mainMenuBar()->hide();
     }
-    //else
+    // else
     //    mainMenuBar()->show();
 #endif
-    d->optionsButton->setMenu( d->optionsMenu );
-    d->statusButton->setMenu( d->statusMenu );
-    d->rosterAvatar->setStatusMenu( d->statusMenu );
+    d->optionsButton->setMenu(d->optionsMenu);
+    d->statusButton->setMenu(d->statusMenu);
+    d->rosterAvatar->setStatusMenu(d->statusMenu);
     d->getAction("status_all")->setMenu(d->statusMenu);
 
     buildToolbars();
@@ -550,8 +516,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
     connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
     optionsUpdate();
 
-        /*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
-        connect(sp_ss, SIGNAL(triggered()), SLOT(avcallConfig()));*/
+    /*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
+    connect(sp_ss, SIGNAL(triggered()), SLOT(avcallConfig()));*/
     optionChanged("options.ui.contactlist.css");
 
     reinitAutoHide();
@@ -559,14 +525,14 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
 MainWin::~MainWin()
 {
-    if(d->tray) {
+    if (d->tray) {
         delete d->tray;
-        d->tray = 0;
+        d->tray = nullptr;
     }
 
     saveToolbarsState();
 
-    if(d->splitter) {
+    if (d->splitter) {
         PsiOptions::instance()->setOption(rosterGeometryPath, d->rosterSize);
         PsiOptions::instance()->setOption(tabsGeometryPath, d->tabsSize);
     }
@@ -577,16 +543,15 @@ MainWin::~MainWin()
 void MainWin::splitterMoved()
 {
     QList<int> list = d->splitter->sizes();
-    d->rosterSize = !d->isLeftRoster ? list.last() : list.first();
-    d->tabsSize = d->isLeftRoster ? list.last() : list.first();
+    d->rosterSize   = !d->isLeftRoster ? list.last() : list.first();
+    d->tabsSize     = d->isLeftRoster ? list.last() : list.first();
 }
 
-void MainWin::optionChanged(const QString& option)
+void MainWin::optionChanged(const QString &option)
 {
     if (option == toolbarsStateOptionPath) {
         loadToolbarsState();
-    }
-    else if (option == "options.ui.contactlist.css") {
+    } else if (option == "options.ui.contactlist.css") {
         const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
         if (!css.isEmpty()) {
             setStyleSheet(css);
@@ -594,131 +559,129 @@ void MainWin::optionChanged(const QString& option)
     }
 }
 
-void MainWin::registerAction( IconAction* action )
+void MainWin::registerAction(IconAction *action)
 {
-    const char *activated  = SIGNAL( triggered() );
-    const char *toggled    = SIGNAL( toggled(bool) );
-    const char *setChecked = SLOT( setChecked(bool) );
+    const char *activated  = SIGNAL(triggered());
+    const char *toggled    = SIGNAL(toggled(bool));
+    const char *setChecked = SLOT(setChecked(bool));
 
-    PsiContactList* contactList = psiCon()->contactList();
+    PsiContactList *contactList = psiCon()->contactList();
 
     struct {
-        const char* name;
-        const char* signal;
-        QObject* receiver;
-        const char* slot;
+        const char *name;
+        const char *signal;
+        QObject *   receiver;
+        const char *slot;
     } actionlist[] = {
-        { "choose_status", activated, this, SLOT( actChooseStatusActivated() ) },
-        { "reconnect_all", activated, this, SLOT( actReconnectActivated() ) },
+        { "choose_status", activated, this, SLOT(actChooseStatusActivated()) },
+        { "reconnect_all", activated, this, SLOT(actReconnectActivated()) },
 
-        { "active_contacts",activated, this, SLOT( actActiveContacts() ) },
-        { "show_offline",   toggled, contactList, SLOT( setShowOffline(bool) ) },
+        { "active_contacts", activated, this, SLOT(actActiveContacts()) },
+        { "show_offline", toggled, contactList, SLOT(setShowOffline(bool)) },
         // { "show_away",      toggled, contactList, SLOT( setShowAway(bool) ) },
-        { "show_hidden",    toggled, contactList, SLOT( setShowHidden(bool) ) },
-        { "show_agents",    toggled, contactList, SLOT( setShowAgents(bool) ) },
-        { "show_self",      toggled, contactList, SLOT( setShowSelf(bool) ) },
-        { "show_statusmsg", toggled, d->rosterWidget_, SLOT( setShowStatusMsg(bool) ) },
-        { "enable_groups",  toggled,   this, SLOT( actEnableGroupsActivated(bool) ) },
+        { "show_hidden", toggled, contactList, SLOT(setShowHidden(bool)) },
+        { "show_agents", toggled, contactList, SLOT(setShowAgents(bool)) },
+        { "show_self", toggled, contactList, SLOT(setShowSelf(bool)) },
+        { "show_statusmsg", toggled, d->rosterWidget_, SLOT(setShowStatusMsg(bool)) },
+        { "enable_groups", toggled, this, SLOT(actEnableGroupsActivated(bool)) },
 
-        { "button_options", activated, this, SIGNAL( doOptions() ) },
+        { "button_options", activated, this, SIGNAL(doOptions()) },
 
-        { "menu_disco",       SIGNAL( activated(PsiAccount *, int) ), this, SLOT( activatedAccOption(PsiAccount*, int) ) },
-        { "menu_add_contact", SIGNAL( activated(PsiAccount *, int) ), this, SLOT( activatedAccOption(PsiAccount*, int) ) },
-        { "menu_xml_console", SIGNAL( activated(PsiAccount *, int) ), this, SLOT( activatedAccOption(PsiAccount*, int) ) },
+        { "menu_disco", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
+        { "menu_add_contact", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
+        { "menu_xml_console", SIGNAL(activated(PsiAccount *, int)), this, SLOT(activatedAccOption(PsiAccount *, int)) },
 
-        { "menu_new_message",    activated, this, SIGNAL( blankMessage() ) },
+        { "menu_new_message", activated, this, SIGNAL(blankMessage()) },
 #ifdef GROUPCHAT
-        { "menu_join_groupchat", activated, this, SIGNAL( doGroupChat() ) },
+        { "menu_join_groupchat", activated, this, SIGNAL(doGroupChat()) },
 #endif
-        { "menu_account_setup",  activated, this, SIGNAL( doManageAccounts() ) },
-        { "menu_options",        activated, this, SIGNAL( doOptions() ) },
-        { "menu_file_transfer",  activated, this, SIGNAL( doFileTransDlg() ) },
-        { "menu_toolbars",       activated, this, SIGNAL( doToolbars() ) },
-        { "menu_change_profile", activated, this, SIGNAL( changeProfile() ) },
-        { "menu_quit",           activated, this, SLOT( try2tryCloseProgram() ) },
-        { "menu_play_sounds",    toggled,   this, SLOT( actPlaySoundsActivated(bool) ) },
+        { "menu_options", activated, this, SIGNAL(doOptions()) },
+        { "menu_file_transfer", activated, this, SIGNAL(doFileTransDlg()) },
+        { "menu_toolbars", activated, this, SIGNAL(doToolbars()) },
+        { "menu_change_profile", activated, this, SIGNAL(changeProfile()) },
+        { "menu_quit", activated, this, SLOT(try2tryCloseProgram()) },
+        { "menu_play_sounds", toggled, this, SLOT(actPlaySoundsActivated(bool)) },
 #ifdef USE_PEP
-        { "publish_tune",        toggled,   this, SLOT( actPublishTuneActivated(bool) ) },
-        { "set_mood",         activated,   this, SLOT( actSetMoodActivated() ) },
-        { "set_activity",        activated,   this, SLOT( actSetActivityActivated() ) },
-        { "set_geoloc",         activated,   this, SLOT( actSetGeolocActivated() ) },
+        { "publish_tune", toggled, this, SLOT(actPublishTuneActivated(bool)) },
+        { "set_mood", activated, this, SLOT(actSetMoodActivated()) },
+        { "set_activity", activated, this, SLOT(actSetActivityActivated()) },
+        { "set_geoloc", activated, this, SLOT(actSetGeolocActivated()) },
 #endif
 
-        { "event_notifier", SIGNAL( clicked(int) ), this, SLOT( statusClicked(int) ) },
-        { "event_notifier", activated, this, SLOT( doRecvNextEvent() ) },
+        { "event_notifier", SIGNAL(clicked(int)), this, SLOT(statusClicked(int)) },
+        { "event_notifier", activated, this, SLOT(doRecvNextEvent()) },
 
-        { "help_readme",      activated, this, SLOT( actReadmeActivated() ) },
-        { "help_tip",         activated, this, SLOT( actTipActivated() ) },
-        { "help_online_help", activated, this, SLOT( actOnlineHelpActivated() ) },
-        { "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
-        { "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
-        { "help_online_forum", activated, this, SLOT( actOnlineForumActivated() ) },
-        { "help_psi_muc",     activated, this, SLOT( actJoinPsiMUCActivated() ) },
-        { "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
-        { "help_about",       activated, this, SLOT( actAboutActivated() ) },
-        { "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
-        { "help_about_psimedia",   activated, this, SLOT( actAboutPsiMediaActivated() ) },
-        { "help_diag_qcaplugin",   activated, this, SLOT( actDiagQCAPluginActivated() ) },
-        { "help_diag_qcakeystore", activated, this, SLOT( actDiagQCAKeyStoreActivated() ) },
+        { "help_readme", activated, this, SLOT(actReadmeActivated()) },
+        { "help_online_wiki", activated, this, SLOT(actOnlineWikiActivated()) },
+        { "help_online_home", activated, this, SLOT(actOnlineHomeActivated()) },
+        { "help_online_forum", activated, this, SLOT(actOnlineForumActivated()) },
+        { "help_psi_muc", activated, this, SLOT(actJoinPsiMUCActivated()) },
+        { "help_report_bug", activated, this, SLOT(actBugReportActivated()) },
+        { "help_about", activated, this, SLOT(actAboutActivated()) },
+        { "help_about_qt", activated, this, SLOT(actAboutQtActivated()) },
+        { "help_about_psimedia", activated, this, SLOT(actAboutPsiMediaActivated()) },
+        { "help_diag_qcaplugin", activated, this, SLOT(actDiagQCAPluginActivated()) },
+        { "help_diag_qcakeystore", activated, this, SLOT(actDiagQCAKeyStoreActivated()) },
 
-        { "", 0, 0, 0 }
+        { "", nullptr, nullptr, nullptr }
     };
 
-    int i;
+    int     i;
     QString aName;
-    for ( i = 0; !(aName = QString(actionlist[i].name)).isEmpty(); i++ ) {
-        if ( aName == action->objectName() ) {
+    for (i = 0; !(aName = QString(actionlist[i].name)).isEmpty(); i++) {
+        if (aName == action->objectName()) {
 #ifdef USE_PEP
             // Check before connecting, otherwise we get a loop
-            if ( aName == "publish_tune") {
-                action->setChecked( PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() );
+            if (aName == "publish_tune") {
+                action->setChecked(
+                    PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool());
                 d->rosterAvatar->setTuneAction(action);
             }
 #endif
 
-            disconnect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot ); // for safety
-            connect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot );
+            disconnect(action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot); // for safety
+            connect(action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot);
 
             // special cases
-            if ( aName == "menu_play_sounds" ) {
-                action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
-            }
-            else if ( aName == "enable_groups" ) {
+            if (aName == "menu_play_sounds") {
+                action->setChecked(
+                    PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
+            } else if (aName == "enable_groups") {
                 action->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.enable-groups").toBool());
             }
-            //else if ( aName == "foobar" )
+            // else if ( aName == "foobar" )
             //    ;
         }
     }
 
     struct {
-        const char* name;
-        QObject* sender;
-        const char* signal;
-        const char* slot;
-        bool checked;
-    } reverseactionlist[] = {
-        // { "show_away",      contactList, SIGNAL(showAwayChanged(bool)), setChecked, contactList->showAway()},
-        { "show_hidden",    contactList, SIGNAL(showHiddenChanged(bool)), setChecked, contactList->showHidden()},
-        { "show_offline",   contactList, SIGNAL(showOfflineChanged(bool)), setChecked, contactList->showOffline()},
-        { "show_self",      contactList, SIGNAL(showSelfChanged(bool)), setChecked, contactList->showSelf()},
-        { "show_agents",    contactList, SIGNAL(showAgentsChanged(bool)), setChecked, contactList->showAgents()},
-        { "show_statusmsg", 0, 0, 0, false},
-        { "", 0, 0, 0, false }
-    };
+        const char *name;
+        QObject *   sender;
+        const char *signal;
+        const char *slot;
+        bool        checked;
+    } reverseactionlist[]
+        = { // { "show_away",      contactList, SIGNAL(showAwayChanged(bool)), setChecked, contactList->showAway()},
+            { "show_hidden", contactList, SIGNAL(showHiddenChanged(bool)), setChecked, contactList->showHidden() },
+            { "show_offline", contactList, SIGNAL(showOfflineChanged(bool)), setChecked, contactList->showOffline() },
+            { "show_self", contactList, SIGNAL(showSelfChanged(bool)), setChecked, contactList->showSelf() },
+            { "show_agents", contactList, SIGNAL(showAgentsChanged(bool)), setChecked, contactList->showAgents() },
+            { "show_statusmsg", nullptr, nullptr, nullptr, false },
+            { "", nullptr, nullptr, nullptr, false }
+          };
 
-    for ( i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++ ) {
-        if ( aName == action->objectName() ) {
+    for (i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++) {
+        if (aName == action->objectName()) {
             if (reverseactionlist[i].sender) {
-                disconnect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot ); // for safety
-                connect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot );
+                disconnect(reverseactionlist[i].sender, reverseactionlist[i].signal, action,
+                           reverseactionlist[i].slot); // for safety
+                connect(reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot);
             }
 
             if (aName == "show_statusmsg") {
-                action->setChecked( PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool() );
-            }
-            else
-                action->setChecked( reverseactionlist[i].checked );
+                action->setChecked(PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool());
+            } else
+                action->setChecked(reverseactionlist[i].checked);
         }
     }
 }
@@ -731,50 +694,45 @@ void MainWin::reinitAutoHide()
             d->hideTimer = new QTimer(this);
             connect(d->hideTimer, SIGNAL(timeout()), SLOT(hideTimerTimeout()));
         }
-        d->hideTimer->setInterval(interval*1000);
+        d->hideTimer->setInterval(interval * 1000);
         if (isVisible()) {
             d->hideTimer->start();
         }
     } else {
         delete d->hideTimer;
-        d->hideTimer = 0;
+        d->hideTimer = nullptr;
     }
 }
 
 void MainWin::hideTimerTimeout()
 {
     d->hideTimer->stop();
-    if(d->tray)
+    if (d->tray)
         trayHide();
     else
         setWindowState(Qt::WindowMinimized);
 }
 
-PsiCon* MainWin::psiCon() const
-{
-    return d->psi;
-}
+PsiCon *MainWin::psiCon() const { return d->psi; }
 
 void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 {
-    if(_onTop == d->onTop && _asTool == d->asTool) {
+    if (_onTop == d->onTop && _asTool == d->asTool) {
         return;
     }
 
-    d->onTop = _onTop;
+    d->onTop  = _onTop;
     d->asTool = _asTool;
 
     Qt::WindowFlags flags = windowFlags();
-    if(d->onTop) {
+    if (d->onTop) {
         flags |= Qt::WindowStaysOnTopHint;
-    }
-    else {
+    } else {
         flags &= ~Qt::WindowStaysOnTopHint;
     }
-    if(d->asTool) {
+    if (d->asTool) {
         flags |= Qt::Tool;
-    }
-    else {
+    } else {
         flags &= ~Qt::Tool;
 #ifdef Q_OS_WIN
         flags |= Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint;
@@ -787,18 +745,31 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
 void MainWin::setUseDock(bool use)
 {
-    if (use == (d->tray != 0)) {
+    if (use == (d->tray != nullptr)) {
         return;
     }
 
     if (d->tray) {
         delete d->tray;
-        d->tray = 0;
+        d->tray = nullptr;
+        if (d->trayMenu) {
+            delete d->trayMenu;
+            d->trayMenu = nullptr;
+        }
+#ifdef Q_OS_MAC
+        if (d->dockMenu) {
+            delete d->dockMenu;
+            d->dockMenu = nullptr;
+        }
+#endif
+        if (isHidden())
+            trayShow();
     }
 
     Q_ASSERT(!d->tray);
     if (use) {
-        d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu);
+        buildTrayMenu();
+        d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu, this);
         connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
         connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
         d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
@@ -811,14 +782,11 @@ void MainWin::setUseDock(bool use)
     }
 }
 
-void MainWin::setUseAvatarFrame(bool state)
-{
-    d->rosterAvatar->setVisible(state);
-}
+void MainWin::setUseAvatarFrame(bool state) { d->rosterAvatar->setVisible(state); }
 
 void MainWin::buildStatusMenu()
 {
-    GlobalStatusMenu *statusMenu = qobject_cast<GlobalStatusMenu*>(sender());
+    GlobalStatusMenu *statusMenu = qobject_cast<GlobalStatusMenu *>(sender());
     Q_ASSERT(statusMenu);
     if (statusMenu) {
         buildStatusMenu(statusMenu);
@@ -831,17 +799,7 @@ void MainWin::buildStatusMenu(GlobalStatusMenu *statusMenu)
     statusMenu->fill();
 }
 
-void MainWin::activatedStatusAction(int id)
-{
-    QList<IconAction*> l = d->statusGroup->findChildren<IconAction*>();
-    foreach(IconAction* action, l) {
-        action->setChecked ( d->statusActions.contains(action) && d->statusActions[action] == id );
-    }
-
-    statusChanged(static_cast<XMPP::Status::Type>(id));
-}
-
-QMenuBar* MainWin::mainMenuBar() const
+QMenuBar *MainWin::mainMenuBar() const
 {
 #ifdef Q_OS_MAC
     if (!d->squishEnabled) {
@@ -851,10 +809,7 @@ QMenuBar* MainWin::mainMenuBar() const
     return menuBar();
 }
 
-void MainWin::saveToolbarsState()
-{
-    PsiOptions::instance()->setOption(toolbarsStateOptionPath, saveState());
-}
+void MainWin::saveToolbarsState() { PsiOptions::instance()->setOption(toolbarsStateOptionPath, saveState()); }
 
 void MainWin::loadToolbarsState()
 {
@@ -871,15 +826,15 @@ void MainWin::buildToolbars()
     qDeleteAll(toolbars_);
     toolbars_.clear();
 
-    PsiOptions *options = PsiOptions::instance();
-    bool allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
-    foreach(const QString &base, options->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+    PsiOptions *options  = PsiOptions::instance();
+    bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
+    foreach (const QString &base, options->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
         QString toolbarName = options->getOption(base + ".name").toString();
         if (toolbarName == "Chat" || toolbarName == "Groupchat") {
             continue;
         }
 
-        PsiToolBar* tb;
+        PsiToolBar *tb;
         if (allInOne) {
             if (d && d->viewToolBar && (d->viewToolBar->base() == base))
                 continue;
@@ -888,7 +843,7 @@ void MainWin::buildToolbars()
         } else {
             if (d && d->viewToolBar) {
                 delete d->viewToolBar;
-                d->viewToolBar = 0;
+                d->viewToolBar = nullptr;
             }
             tb = new PsiToolBar(base, this, d->psi->actionList());
         }
@@ -901,7 +856,7 @@ void MainWin::buildToolbars()
 
     // loadToolbarsState also restores correct toolbar visibility,
     // we might want to override that
-    foreach(PsiToolBar* tb, toolbars_) {
+    foreach (PsiToolBar *tb, toolbars_) {
         tb->updateVisibility();
     }
 
@@ -910,7 +865,7 @@ void MainWin::buildToolbars()
 
     // in case we have floating toolbars, they have inherited the 'no updates enabled'
     // state. now we need to explicitly re-enable updates.
-    foreach(PsiToolBar* tb, toolbars_) {
+    foreach (PsiToolBar *tb, toolbars_) {
         tb->setUpdatesEnabled(true);
     }
 
@@ -920,26 +875,21 @@ void MainWin::buildToolbars()
     }
 }
 
-bool MainWin::showDockMenu(const QPoint &)
-{
-    return false;
-}
+bool MainWin::showDockMenu(const QPoint &) { return false; }
 
 void MainWin::buildOptionsMenu()
 {
-    buildGeneralMenu( d->optionsMenu );
+    buildGeneralMenu(d->optionsMenu);
     d->optionsMenu->addSeparator();
     d->optionsMenu->addAction(d->viewGroups);
 
     // help menu
-    QMenu* helpMenu = new QMenu(tr("&Help"), d->optionsMenu);
+    QMenu *helpMenu = new QMenu(tr("&Help"), d->optionsMenu);
     helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
     QStringList actions;
     actions << "help_readme"
-            << "help_tip"
             << "separator"
-            //<< "help_online_help"
             << "help_online_wiki"
             << "help_online_home"
             << "help_online_forum"
@@ -950,13 +900,12 @@ void MainWin::buildOptionsMenu()
             << "help_about"
             << "help_about_qt";
 
-    if(AvCallManager::isSupported())
+    if (AvCallManager::isSupported())
         actions << "help_about_psimedia";
 
     d->updateMenu(actions, helpMenu);
     d->optionsMenu->addMenu(helpMenu);
-    d->getAction("menu_quit")->addTo( d->optionsMenu );
-
+    d->getAction("menu_quit")->addTo(d->optionsMenu);
 }
 
 void MainWin::buildMainMenu()
@@ -971,8 +920,7 @@ void MainWin::buildMainMenu()
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "separator"
-            << "menu_account_setup";
+            << "separator";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
         actions << "menu_change_profile";
     }
@@ -991,7 +939,7 @@ void MainWin::buildToolsMenu()
     d->updateMenu(actions, d->toolsMenu);
 }
 
-void MainWin::buildGeneralMenu(QMenu* menu)
+void MainWin::buildGeneralMenu(QMenu *menu)
 {
     // options menu
     QStringList actions;
@@ -1003,7 +951,6 @@ void MainWin::buildGeneralMenu(QMenu* menu)
 #ifdef GROUPCHAT
             << "menu_join_groupchat"
 #endif
-            << "menu_account_setup"
             << "menu_options"
             << "menu_file_transfer";
     if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
@@ -1014,70 +961,74 @@ void MainWin::buildGeneralMenu(QMenu* menu)
     d->updateMenu(actions, menu);
 }
 
-void MainWin::actReadmeActivated ()
+void MainWin::actReadmeActivated()
 {
-    ShowTextDlg* w = new ShowTextDlg(":/README.html", true);
+    ShowTextDlg *w = new ShowTextDlg(":/README.html", true);
     w->setWindowTitle(CAP(tr("ReadMe")));
     w->show();
 }
 
-void MainWin::actOnlineHelpActivated ()
+void MainWin::actOnlineWikiActivated()
 {
-    DesktopUtil::openUrl("https://psi-im.org/wiki/User_Guide");
+    DesktopUtil::openUrl(
+#ifndef PSI_PLUS
+        "https://github.com/psi-im/psi/wiki"
+#else
+        "https://psi-plus.com/wiki/main"
+#endif
+    );
 }
 
-void MainWin::actOnlineWikiActivated ()
+void MainWin::actOnlineHomeActivated()
 {
-    DesktopUtil::openUrl("https://github.com/psi-im/psi/wiki");
+    DesktopUtil::openUrl(
+#ifndef PSI_PLUS
+        "https://psi-im.org"
+#else
+        "https://psi-plus.com"
+#endif
+    );
 }
 
-void MainWin::actOnlineHomeActivated ()
-{
-    DesktopUtil::openUrl("https://psi-im.org");
-}
-
-void MainWin::actOnlineForumActivated ()
-{
-    DesktopUtil::openUrl("https://forum.psi-im.org");
-}
+void MainWin::actOnlineForumActivated() { DesktopUtil::openUrl("https://groups.google.com/forum/#!forum/psi-users"); }
 
 void MainWin::actJoinPsiMUCActivated()
 {
-    PsiAccount* account = d->psi->contactList()->defaultAccount();
-    if(!account) {
+    PsiAccount *account = d->psi->contactList()->defaultAccount();
+    if (!account) {
         return;
     }
 
     account->actionJoin("psi-dev@conference.jabber.ru");
 }
 
-void MainWin::actBugReportActivated ()
+void MainWin::actBugReportActivated()
 {
-    DesktopUtil::openUrl("https://github.com/psi-im/psi/issues");
+    DesktopUtil::openUrl(
+#ifndef PSI_PLUS
+        "https://github.com/psi-im/psi/issues"
+#else
+        "https://github.com/psi-plus/main/issues"
+#endif
+    );
 }
 
-void MainWin::actAboutActivated ()
+void MainWin::actAboutActivated()
 {
-    AboutDlg* about = new AboutDlg();
+    AboutDlg *about = new AboutDlg();
     about->show();
 }
 
-void MainWin::actTipActivated ()
-{
-    TipDlg::show(d->psi);
-}
+void MainWin::actAboutQtActivated() { QMessageBox::aboutQt(this); }
 
-void MainWin::actAboutQtActivated ()
-{
-    QMessageBox::aboutQt(this);
-}
-
-void MainWin::actAboutPsiMediaActivated ()
+void MainWin::actAboutPsiMediaActivated()
 {
     if (!PsiMedia::isSupported()) {
-        QMessageBox::warning(this, tr("psimedia is unavailable"),
-                             tr("PsiMedia plugin is not loaded or not initialized.<br>"
-                                "Please check <a href=\"https://github.com/psi-im/psimedia\">https://github.com/psi-im/psimedia</a> for more details."));
+        QMessageBox::warning(
+            this, tr("psimedia is unavailable"),
+            tr("PsiMedia plugin is not loaded or not initialized.<br>"
+               "Please check <a href=\"https://github.com/psi-im/psimedia\">https://github.com/psi-im/psimedia</a> for "
+               "more details."));
         return;
     }
     QString creditText = PsiMedia::creditText();
@@ -1085,25 +1036,22 @@ void MainWin::actAboutPsiMediaActivated ()
 
     QString str;
     QPixmap pix;
-    if(!gstVersion.isEmpty())
-    {
-        str = tr(
-            "This application uses GStreamer %1, a comprehensive "
-            "open-source and cross-platform multimedia framework."
-            "  For more information, see "
-            "<a href=\"http://www.gstreamer.net/\">http://www.gstreamer.net/</a>").arg(gstVersion);
+    if (!gstVersion.isEmpty()) {
+        str = tr("This application uses GStreamer %1, a comprehensive "
+                 "open-source and cross-platform multimedia framework."
+                 "  For more information, see "
+                 "<a href=\"http://www.gstreamer.net/\">http://www.gstreamer.net/</a>")
+                  .arg(gstVersion);
         pix = IconsetFactory::icon("psi/gst_logo").pixmap();
-    }
-    else
+    } else
         str = creditText;
 
-    QDialog aboutGst;
+    QDialog      aboutGst;
     QVBoxLayout *vb = new QVBoxLayout(&aboutGst);
     aboutGst.setWindowTitle(tr("About GStreamer"));
     QHBoxLayout *hb = new QHBoxLayout;
     vb->addLayout(hb);
-    if(!pix.isNull())
-    {
+    if (!pix.isNull()) {
         QLabel *la = new QLabel(&aboutGst);
         la->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
         la->setPixmap(pix);
@@ -1119,19 +1067,18 @@ void MainWin::actAboutPsiMediaActivated ()
     buttonBox->addButton(QDialogButtonBox::Ok);
     aboutGst.connect(buttonBox, SIGNAL(accepted()), SLOT(accept()));
     vb->addWidget(buttonBox);
-    if(!pix.isNull())
-    {
+    if (!pix.isNull()) {
         int w = pix.width() * 4;
         aboutGst.resize(w, aboutGst.heightForWidth(w));
     }
     aboutGst.exec();
-    //QMessageBox::about(this, tr("About GStreamer"), str);
+    // QMessageBox::about(this, tr("About GStreamer"), str);
 }
 
 void MainWin::actDiagQCAPluginActivated()
 {
-    QString dtext = QCA::pluginDiagnosticText();
-    ShowTextDlg* w = new ShowTextDlg(dtext, true, false, this);
+    QString      dtext = QCA::pluginDiagnosticText();
+    ShowTextDlg *w     = new ShowTextDlg(dtext, true, false, this);
     w->setWindowTitle(CAP(tr("Security Plugins Diagnostic Text")));
     w->resize(560, 240);
     w->show();
@@ -1139,8 +1086,8 @@ void MainWin::actDiagQCAPluginActivated()
 
 void MainWin::actDiagQCAKeyStoreActivated()
 {
-    QString dtext = QCA::KeyStoreManager::diagnosticText();
-    ShowTextDlg* w = new ShowTextDlg(dtext, true, false, this);
+    QString      dtext = QCA::KeyStoreManager::diagnosticText();
+    ShowTextDlg *w     = new ShowTextDlg(dtext, true, false, this);
     w->setWindowTitle(CAP(tr("Key Storage Diagnostic Text")));
     w->resize(560, 240);
     w->show();
@@ -1148,13 +1095,16 @@ void MainWin::actDiagQCAKeyStoreActivated()
 
 void MainWin::actChooseStatusActivated()
 {
-    PsiOptions* o = PsiOptions::instance();
-    XMPP::Status::Type lastStatus = XMPP::Status::txt2type(PsiOptions::instance()->getOption("options.status.last-status").toString());
+    PsiOptions *       o = PsiOptions::instance();
+    XMPP::Status::Type lastStatus
+        = XMPP::Status::txt2type(PsiOptions::instance()->getOption("options.status.last-status").toString());
     StatusSetDlg *w = new StatusSetDlg(d->psi, makeLastStatus(lastStatus), lastPriorityNotEmpty());
-    connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->psi, SLOT(setGlobalStatus(const XMPP::Status &,bool,bool)));
+    connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->psi,
+            SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
     connect(w, SIGNAL(cancelled()), d->psi, SLOT(updateMainwinStatus()));
-    if(o->getOption("options.ui.systemtray.enable").toBool() == true)
-        connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
+    if (o->getOption("options.ui.systemtray.enable").toBool() == true)
+        connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)),
+                SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
     w->show();
 }
 
@@ -1165,32 +1115,32 @@ void MainWin::actReconnectActivated()
     }
 }
 
-void MainWin::actPlaySoundsActivated (bool state)
+void MainWin::actPlaySoundsActivated(bool state)
 {
     PsiOptions::instance()->setOption("options.ui.notifications.sounds.enable", state);
 }
 
-void MainWin::actPublishTuneActivated (bool state)
+void MainWin::actPublishTuneActivated(bool state)
 {
-    PsiOptions::instance()->setOption("options.extended-presence.tune.publish",state);
+    PsiOptions::instance()->setOption("options.extended-presence.tune.publish", state);
 }
 
-void MainWin::actEnableGroupsActivated (bool state)
+void MainWin::actEnableGroupsActivated(bool state)
 {
     PsiOptions::instance()->setOption("options.ui.contactlist.enable-groups", state);
 }
 
 void MainWin::actSetMoodActivated()
 {
-    QList<PsiAccount*> l;
-    foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
-        if(pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
+    QList<PsiAccount *> l;
+    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+        if (pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
             l.append(pa);
     }
-    if(l.isEmpty())
+    if (l.isEmpty())
         return;
 
-    if(d->moodDlg)
+    if (d->moodDlg)
         bringToFront(d->moodDlg);
     else {
         d->moodDlg = new MoodDlg(l);
@@ -1200,15 +1150,15 @@ void MainWin::actSetMoodActivated()
 
 void MainWin::actSetActivityActivated()
 {
-    QList<PsiAccount*> l;
-    foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
-        if(pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
+    QList<PsiAccount *> l;
+    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+        if (pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
             l.append(pa);
     }
-    if(l.isEmpty())
+    if (l.isEmpty())
         return;
 
-    if(d->activityDlg)
+    if (d->activityDlg)
         bringToFront(d->activityDlg);
     else {
         d->activityDlg = new ActivityDlg(l);
@@ -1218,15 +1168,15 @@ void MainWin::actSetActivityActivated()
 
 void MainWin::actSetGeolocActivated()
 {
-    QList<PsiAccount*> l;
-    foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
-        if(pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
+    QList<PsiAccount *> l;
+    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+        if (pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
             l.append(pa);
     }
-    if(l.isEmpty())
+    if (l.isEmpty())
         return;
 
-    if(d->geolocationDlg)
+    if (d->geolocationDlg)
         bringToFront(d->geolocationDlg);
     else {
         d->geolocationDlg = new GeoLocationDlg(l);
@@ -1236,47 +1186,52 @@ void MainWin::actSetGeolocActivated()
 
 void MainWin::actActiveContacts()
 {
-    ActiveContactsMenu* acm = new ActiveContactsMenu(d->psi, this);
-    if(!acm->actions().isEmpty())
+    ActiveContactsMenu *acm = new ActiveContactsMenu(d->psi, this);
+    if (!acm->actions().isEmpty())
         acm->exec(QCursor::pos());
     delete acm;
 }
 
-void MainWin::activatedAccOption(PsiAccount* pa, int x)
+void MainWin::activatedAccOption(PsiAccount *pa, int x)
 {
-    if(x == 0) {
+    if (x == 0) {
         pa->openAddUserDlg();
-    }
-    else if(x == 2) {
+    } else if (x == 2) {
         pa->showXmlConsole();
-    }
-    else if(x == 3) {
+    } else if (x == 3) {
         pa->doDisco();
     }
 }
 
 void MainWin::buildTrayMenu()
 {
-#ifndef Q_OS_MAC
-    d->trayMenu->clear();
-
-    if(d->nextAmount > 0) {
-        d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
+    if (!d->trayMenu) {
+        d->trayMenu          = new QMenu(this);
+        QAction *nextEvent   = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
+        QAction *hideRestore = d->trayMenu->addAction(tr("Hide"), this, SLOT(trayHideShow()));
+        connect(d->trayMenu, &QMenu::aboutToShow, this, [this, nextEvent, hideRestore]() {
+            nextEvent->setEnabled(d->nextAmount > 0);
+            hideRestore->setText(isHidden() ? tr("Show") : tr("Hide"));
+        });
         d->trayMenu->addSeparator();
+        const QStringList _actions = { "status_online", "status_chat",    "status_away", "status_xa",
+                                       "status_dnd",    "status_offline", "separator",   "menu_options" };
+        foreach (const QString &action, _actions) {
+            d->getAction(action)->addTo(d->trayMenu);
+        }
+#ifndef Q_OS_MAC
+        d->trayMenu->addSeparator();
+        d->getAction("menu_quit")->addTo(d->trayMenu);
     }
-
-    if(isHidden()) {
-        d->trayMenu->addAction(tr("Un&hide"), this, SLOT(trayShow()));
+#else
     }
-    else {
-        d->trayMenu->addAction(tr("&Hide"), this, SLOT(trayHide()));
+    if (!d->dockMenu) {
+        d->dockMenu = new QMenu(this);
+        d->dockMenu->addActions(d->statusMenu->actions());
+        d->trayMenu->addSeparator();
+        d->getAction("menu_options")->addTo(d->trayMenu);
+        d->dockMenu->setAsDockMenu();
     }
-    d->optionsButton->addTo(d->trayMenu);
-    d->trayMenu->addMenu(d->statusMenu);
-
-    d->trayMenu->addSeparator();
-    // TODO!
-    d->getAction("menu_quit")->addTo(d->trayMenu);
 #endif
 }
 
@@ -1285,70 +1240,77 @@ void MainWin::setTrayToolTip()
     if (!d->tray) {
         return;
     }
-    QString s = ApplicationInfo::name();
-    QString str = "<qt>";
+    QString s      = ApplicationInfo::name();
+    QString str    = "<qt>";
     QString imgTag = "icon name";
     str += QString("<div style='white-space:pre'><b>%1</b></div>").arg(TextUtil::escape(ApplicationInfo::name()));
-    QString Tip = "";
-    QString TipPlain = "";
-    QString Events = "";
+    QString Tip         = "";
+    QString TipPlain    = "";
+    QString Events      = "";
     QString EventsPlain = "";
-    foreach(PsiAccount *pa, d->psi->contactList()->enabledAccounts()) {
-        Status stat = pa->status();
-        int status = makeSTATUS(stat);
-        QString istr = "status/offline";
-        if(status == STATUS_ONLINE)
+    foreach (PsiAccount *pa, d->psi->contactList()->enabledAccounts()) {
+        Status  stat   = pa->status();
+        int     status = makeSTATUS(stat);
+        QString istr   = "status/offline";
+        if (status == STATUS_ONLINE)
             istr = "status/online";
-        else if(status == STATUS_AWAY)
+        else if (status == STATUS_AWAY)
             istr = "status/away";
-        else if(status == STATUS_XA)
+        else if (status == STATUS_XA)
             istr = "status/xa";
-        else if(status == STATUS_DND)
+        else if (status == STATUS_DND)
             istr = "status/dnd";
-        else if(status == STATUS_CHAT)
-             istr = "status/chat";
-        else if(status == STATUS_INVISIBLE)
+        else if (status == STATUS_CHAT)
+            istr = "status/chat";
+        else if (status == STATUS_INVISIBLE)
             istr = "status/invisible";
-        Tip += QString("<div style='white-space:pre'>") + QString("<%1=\"%2\"> ").arg(imgTag).arg(istr) + QString("<b>%1</b>").arg(TextUtil::escape(pa->name())) + "</div>";
+        Tip += QString("<div style='white-space:pre'>") + QString("<%1=\"%2\"> ").arg(imgTag).arg(istr)
+            + QString("<b>%1</b>").arg(TextUtil::escape(pa->name())) + "</div>";
         TipPlain += "\n" + pa->name() + " (" + stat.typeString() + ")";
         QString text = stat.status();
-        if(!text.isEmpty()) {
+        if (!text.isEmpty()) {
             text = clipStatus(text, 40, 1);
-            Tip += QString("<div style='white-space:pre'>%1: %2</div>").arg(tr("Status Message")).arg(TextUtil::escape(text));
+            Tip += QString("<div style='white-space:pre'>%1: %2</div>")
+                       .arg(tr("Status Message"))
+                       .arg(TextUtil::escape(text));
         }
 
         PsiEvent::Ptr e;
         e = pa->eventQueue()->peekNext();
-        if(e) {
-            Jid jid = e->jid();
+        if (e) {
+            Jid     jid = e->jid();
             QString from;
-            if(!jid.isEmpty()) {
+            if (!jid.isEmpty()) {
                 LiveRoster Roster = pa->client()->roster();
-                while(!Roster.isEmpty()) {
+                while (!Roster.isEmpty()) {
                     LiveRosterItem item = Roster.takeFirst();
-                    if(item.jid().compare(jid)) {
+                    if (item.jid().compare(jid)) {
                         from = item.name();
                         break;
                     }
                 }
-                if(from.isEmpty()) {
+                if (from.isEmpty()) {
                     from = jid.full();
                 }
             }
-            if(!from.isEmpty()) {
+            if (!from.isEmpty()) {
                 Events += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(from));
                 EventsPlain += "\n" + from;
             }
         }
     }
 
-    if(!Tip.isEmpty()) {
-        str += QString("<div style='white-space:pre'><u><b>%1</b></u></div>").arg(TextUtil::escape(tr("Active accounts:"))) + Tip;
+    if (!Tip.isEmpty()) {
+        str += QString("<div style='white-space:pre'><u><b>%1</b></u></div>")
+                   .arg(TextUtil::escape(tr("Active accounts:")))
+            + Tip;
         s += tr("\nActive accounts:") + TipPlain;
     }
 
-    if(!Events.isEmpty()) {
-        str += QString("<div style='white-space:pre'><u><b>%1</b></u></div>").arg(TextUtil::escape(tr("Incoming event(s) from:"))) + Events;
+    if (!Events.isEmpty()) {
+        str += QString("<div style='white-space:pre'><u><b>%1</b></u></div>")
+                   .arg(TextUtil::escape(tr("Incoming event(s) from:")))
+            + Events;
         s += tr("\nIncoming event(s) from:") + EventsPlain;
     }
 
@@ -1358,29 +1320,25 @@ void MainWin::setTrayToolTip()
     d->tray->setToolTip(s);
 }
 
-void MainWin::doTrayToolTip(QObject *, QPoint p)
-{
-    PsiToolTip::showText(p, d->ToolTipText);
-}
+void MainWin::doTrayToolTip(QObject *, QPoint p) { PsiToolTip::showText(p, d->ToolTipText); }
 
 void MainWin::decorateButton(int status)
 {
     // update the 'change status' buttons
-    QList<IconAction*> l = d->statusGroup->findChildren<IconAction*>();
-    foreach(IconAction* action, l) {
-        action->setChecked ( d->statusActions[action] == status );
+    QList<IconAction *> l = d->statusGroup->findChildren<IconAction *>();
+    foreach (IconAction *action, l) {
+        action->setChecked(d->statusActions[action] == status);
     }
 
     setTrayToolTip();
     d->lastStatus = status;
 
-    if(status == -1) {
+    if (status == -1) {
         d->statusButton->setText(tr("Connecting"));
         if (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() != "no") {
             d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
             d->statusSmallerAlt->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
-        }
-        else {
+        } else {
             d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
             d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
             d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE)->icon());
@@ -1392,8 +1350,7 @@ void MainWin::decorateButton(int status)
         d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
         setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
-    }
-    else {
+    } else {
         d->statusButton->setText(status2txt(status));
         d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
         d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(status));
@@ -1408,40 +1365,34 @@ void MainWin::decorateButton(int status)
     updateTray();
 }
 
-bool MainWin::askQuit()
-{
-    return true;
-}
+bool MainWin::askQuit() { return true; }
 
-void MainWin::try2tryCloseProgram()
-{
-    QTimer::singleShot(0, this, SLOT(tryCloseProgram()));
-}
+void MainWin::try2tryCloseProgram() { QTimer::singleShot(0, this, SLOT(tryCloseProgram())); }
 
 void MainWin::tryCloseProgram()
 {
-    if(askQuit()) {
+    if (askQuit()) {
         closeProgram();
     }
 }
 
-void MainWin::closeEvent(QCloseEvent* e)
+void MainWin::closeEvent(QCloseEvent *e)
 {
 #ifdef Q_OS_MAC
     trayHide();
     e->accept();
 #else
-    PsiOptions *o = PsiOptions::instance();
-    bool quitOnClose = o->getOption("options.ui.contactlist.quit-on-close").toBool()
-            && o->getOption("options.contactlist.autohide-interval").toInt() == 0;
+    PsiOptions *o           = PsiOptions::instance();
+    bool        quitOnClose = o->getOption("options.ui.contactlist.quit-on-close").toBool()
+        && o->getOption("options.contactlist.autohide-interval").toInt() == 0;
 
-    if(d->tray && !quitOnClose) {
+    if (d->tray && !quitOnClose) {
         trayHide();
         e->ignore();
         return;
     }
 
-    if(!askQuit()) {
+    if (!askQuit()) {
         e->ignore();
         return;
     }
@@ -1458,46 +1409,43 @@ void MainWin::changeEvent(QEvent *event)
     if (event->type() == QEvent::ActivationChange
         && PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool()
         && PsiOptions::instance()->getOption("options.ui.contactlist.raise-inactive").toBool()) {
-        //On Windows app window loose active state when you
+        // On Windows app window loose active state when you
         //  click on tray icon. Workaround is to use timer:
         //  we'll keep activated == true within 300 msec
         //  (+ doubleClickInterval, if double click is enabled)
         //  after deactivation.
-        if (!isActiveWindow())
-        {
+        if (!isActiveWindow()) {
             d->deactivationTickCount = GetTickCount();
         }
     }
 #endif
 
-    if (event->type() == QEvent::ActivationChange ||
-        event->type() == QEvent::WindowStateChange)
-    {
+    if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
         if (d->mainTabs) {
             QCoreApplication::sendEvent(d->mainTabs, event);
         }
     }
 }
 
-void MainWin::keyPressEvent(QKeyEvent* e)
+void MainWin::keyPressEvent(QKeyEvent *e)
 {
 #ifdef Q_OS_MAC
     bool allowed = true;
 #else
-    bool allowed = d->tray ? true: false;
+    bool allowed = d->tray ? true : false;
 #endif
 
     bool closekey = false;
-    if(e->key() == Qt::Key_Escape) {
+    if (e->key() == Qt::Key_Escape) {
         closekey = true;
     }
 #ifdef Q_OS_MAC
-    else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {
+    else if (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {
         closekey = true;
     }
 #endif
 
-    if(allowed && closekey) {
+    if (allowed && closekey) {
         close();
         e->accept();
         return;
@@ -1507,38 +1455,36 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 
 void MainWin::enterEvent(QEvent *e)
 {
-    if(d->hideTimer)
+    if (d->hideTimer)
         d->hideTimer->stop();
     QMainWindow::enterEvent(e);
 }
 
 void MainWin::leaveEvent(QEvent *e)
 {
-    if(d->hideTimer)
+    if (d->hideTimer)
         d->hideTimer->start();
     QMainWindow::leaveEvent(e);
 }
 
 bool MainWin::eventFilter(QObject *o, QEvent *e)
 {
-    if(e->type() == QEvent::KeyPress
-       && o->isWidgetType()
-       && isAncestorOf( (QWidget*)o ) ) {
-        if(d->hideTimer && d->hideTimer->isActive())
+    if (e->type() == QEvent::KeyPress && o->isWidgetType() && isAncestorOf(qobject_cast<QWidget *>(o))) {
+        if (d->hideTimer && d->hideTimer->isActive())
             d->hideTimer->start();
     }
     return false;
 }
 
 #ifdef Q_OS_WIN
-#include <windows.h>
-bool MainWin::winEvent(MSG* msg, long* result)
+bool MainWin::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
 {
+    Q_UNUSED(eventType);
     if (d->asTool && msg->message == WM_SYSCOMMAND && msg->wParam == SC_MINIMIZE) {
-        hide();    // minimized toolwindows look bad on Windows, so let's just hide it instead
-            // plus we cannot do this in changeEvent(), because it's called too late
+        hide(); // minimized toolwindows look bad on Windows, so let's just hide it instead
+                // plus we cannot do this in changeEvent(), because it's called too late
         *result = 0;
-        return true;    // don't let Qt process this event
+        return true; // don't let Qt process this event
     }
     return false;
 }
@@ -1548,18 +1494,17 @@ void MainWin::updateCaption()
 {
     QString str = "";
 
-    if(d->nextAmount > 0) {
+    if (d->nextAmount > 0) {
         str += "* ";
     }
 
-    if(d->nickname.isEmpty()) {
+    if (d->nickname.isEmpty()) {
         str += ApplicationInfo::name();
-    }
-    else {
+    } else {
         str += d->nickname;
     }
 
-    if(str == windowTitle()) {
+    if (str == windowTitle()) {
         return;
     }
 
@@ -1568,20 +1513,21 @@ void MainWin::updateCaption()
 
 void MainWin::optionsUpdate()
 {
-    int status = d->lastStatus;
+    int status    = d->lastStatus;
     d->lastStatus = -2;
     decorateButton(status);
 
 #ifndef Q_OS_MAC
     if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
         mainMenuBar()->hide();
-    }
-    else {
+    } else {
         mainMenuBar()->show();
     }
 #endif
 
-    setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
+    setWindowOpacity(
+        double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))
+        / 100);
 
     buildStatusMenu(d->statusMenu);
 #ifdef Q_OS_LINUX
@@ -1592,8 +1538,7 @@ void MainWin::optionsUpdate()
 
 void MainWin::toggleVisible(bool fromTray)
 {
-    if (PsiOptions::instance()->getOption("options.ui.contactlist.raise-inactive").toBool())
-    {
+    if (PsiOptions::instance()->getOption("options.ui.contactlist.raise-inactive").toBool()) {
         bool hidden = false;
 #ifdef Q_OS_WIN
         if (fromTray) {
@@ -1601,29 +1546,24 @@ void MainWin::toggleVisible(bool fromTray)
             if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool())
                 timeout += qApp->doubleClickInterval();
             hidden = isHidden() || (GetTickCount() - d->deactivationTickCount > timeout);
-        }
-        else {
+        } else {
             hidden = isHidden() || !isActiveWindow();
         }
 #elif defined(HAVE_X11)
         Q_UNUSED(fromTray);
-        hidden = isHidden() || X11WindowSystem::instance()->isWindowObscured(this, PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool());
+        hidden = isHidden()
+            || X11WindowSystem::instance()->isWindowObscured(
+                this, PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool());
 #else
-        Q_UNUSED(fromTray);
-        hidden = isHidden() || !isActiveWindow();
+            Q_UNUSED(fromTray);
+            hidden = isHidden() || !isActiveWindow();
 #endif
-        if(hidden) {
-            trayShow();
-        }
-        else {
-            trayHide();
-        }
-    }
-    else
-        isHidden() ? trayShow() : trayHide();
+        hidden ? trayShow() : trayHide();
+    } else
+        trayHideShow();
 }
 
-void MainWin::setTrayToolTip(const Status& status, bool, bool)
+void MainWin::setTrayToolTip(const Status &status, bool, bool)
 {
     Q_UNUSED(status)
 
@@ -1635,11 +1575,11 @@ void MainWin::setTrayToolTip(const Status& status, bool, bool)
 
 void MainWin::trayClicked(const QPoint &, int button)
 {
-    if(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
+    if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
         return;
     }
 
-    if(button == Qt::MidButton) {
+    if (button == Qt::MidButton) {
         doRecvNextEvent();
         return;
     }
@@ -1653,10 +1593,10 @@ void MainWin::trayClicked(const QPoint &, int button)
 
 void MainWin::trayDoubleClicked()
 {
-     //Double click works like second single click now if "double-click" style is disabled
+    // Double click works like second single click now if "double-click" style is disabled
 
-    if(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
-        if(d->nextAmount > 0) {
+    if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
+        if (d->nextAmount > 0) {
             doRecvNextEvent();
             return;
         }
@@ -1667,34 +1607,38 @@ void MainWin::trayDoubleClicked()
 void MainWin::trayShow()
 {
     bringToFront(this);
-    if(d->hideTimer)
+    if (d->hideTimer)
         d->hideTimer->start();
 }
 
-void MainWin::trayHide()
+void MainWin::trayHide() { hide(); }
+
+void MainWin::trayHideShow()
 {
-    hide();
+    if (isHidden()) {
+        trayShow();
+    } else {
+        trayHide();
+    }
 }
 
-void MainWin::updateReadNext(PsiIcon* anim, int amount)
+void MainWin::updateReadNext(PsiIcon *anim, int amount)
 {
     d->nextAnim = anim;
-    if(anim == 0) {
+    if (anim == nullptr) {
         d->nextAmount = 0;
-    }
-    else {
+    } else {
         d->nextAmount = amount;
     }
 
-    if(d->nextAmount <= 0) {
+    if (d->nextAmount <= 0) {
         d->eventNotifier->hide();
         d->eventNotifier->setMessage("");
-    }
-    else {
+    } else {
         d->eventNotifier->setMessage(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
         d->eventNotifier->show();
         // make sure it shows
-        //qApp->processEvents();
+        // qApp->processEvents();
     }
 
     updateTray();
@@ -1705,13 +1649,11 @@ void MainWin::updateReadNext(PsiIcon* anim, int amount)
 QString MainWin::numEventsString(int x) const
 {
     QString s;
-    if(x <= 0) {
+    if (x <= 0) {
         s = "";
-    }
-    else if(x == 1) {
+    } else if (x == 1) {
         s = tr("1 event received");
-    }
-    else {
+    } else {
         s = tr("%1 events received").arg(x);
     }
 
@@ -1720,17 +1662,15 @@ QString MainWin::numEventsString(int x) const
 
 void MainWin::updateTray()
 {
-    if(!d->tray) {
+    if (!d->tray) {
         return;
     }
 
-    if ( d->nextAmount > 0 ) {
+    if (d->nextAmount > 0) {
         d->tray->setAlert(d->nextAnim);
-    }
-    else if ( d->lastStatus == -1 ) {
+    } else if (d->lastStatus == -1) {
         d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
-    }
-    else {
+    } else {
         d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
     }
 
@@ -1738,32 +1678,27 @@ void MainWin::updateTray()
     d->tray->setContextMenu(d->trayMenu);
 }
 
-void MainWin::doRecvNextEvent()
-{
-    recvNextEvent();
-}
+void MainWin::doRecvNextEvent() { recvNextEvent(); }
 
 void MainWin::statusClicked(int x)
 {
-    if(x == Qt::MidButton) {
+    if (x == Qt::MidButton) {
         recvNextEvent();
     }
 }
 
-PsiTrayIcon *MainWin::psiTrayIcon()
-{
-    return d->tray;
-}
+PsiTrayIcon *MainWin::psiTrayIcon() { return d->tray; }
 
 void MainWin::numAccountsChanged()
 {
     d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
     setTrayToolTip();
     PsiAccount *acc = d->psi->contactList()->defaultAccount();
-    if(acc && acc != d->defaultAccount) {
-        if(d->defaultAccount) {
+    if (acc && acc != d->defaultAccount) {
+        if (d->defaultAccount) {
             disconnect(d->defaultAccount, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
-//            disconnect(d->defaultAccount->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged()));
+            //            disconnect(d->defaultAccount->avatarFactory(), SIGNAL(avatarChanged(Jid)), this,
+            //            SLOT(avatarChanged()));
         }
         d->defaultAccount = acc;
         avatarChanged(acc->jid());
@@ -1771,23 +1706,23 @@ void MainWin::numAccountsChanged()
         d->rosterAvatar->setStatusMessage(acc->status().status());
         connect(acc->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged(Jid)));
         connect(acc, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
-
-    } if (!acc) { // no accounts left
+    }
+    if (!acc) { // no accounts left
         d->rosterAvatar->setAvatar(IconsetFactory::iconPixmap("psi/default_avatar"));
     }
 }
 
 void MainWin::nickChanged()
 {
-    if(d->defaultAccount)
+    if (d->defaultAccount)
         d->rosterAvatar->setNick(d->defaultAccount->nick());
 }
 
 void MainWin::avatarChanged(const Jid &jid)
 {
-    if(d->defaultAccount && d->defaultAccount->jid() == jid) {
+    if (d->defaultAccount && d->defaultAccount->jid() == jid) {
         QPixmap pix = d->defaultAccount->avatarFactory()->getAvatar(d->defaultAccount->jid());
-        if(pix.isNull())
+        if (pix.isNull())
             pix = IconsetFactory::iconPixmap("psi/default_avatar");
         d->rosterAvatar->setAvatar(pix);
     }
@@ -1796,7 +1731,7 @@ void MainWin::avatarChanged(const Jid &jid)
 void MainWin::accountFeaturesChanged()
 {
     bool have_pep = false;
-    foreach(PsiAccount* account, d->psi->contactList()->enabledAccounts()) {
+    foreach (PsiAccount *account, d->psi->contactList()->enabledAccounts()) {
         if (account->serverInfoManager()->hasPEP()) {
             have_pep = true;
             break;
@@ -1810,7 +1745,7 @@ void MainWin::accountFeaturesChanged()
 
 void MainWin::dockActivated()
 {
-    if(isHidden()) {
+    if (isHidden()) {
         show();
     }
 }
@@ -1824,19 +1759,18 @@ void MainWin::searchClearClicked()
     d->searchWidget->setVisible(false);
     d->searchText->clear();
 
-    if (d->filterActive)
-    {
+    if (d->filterActive) {
         d->getAction("show_offline")->setChecked(d->prefilterShowOffline);
         d->getAction("show_away")->setChecked(d->prefilterShowAway);
     }
-    d->filterActive=false;
+    d->filterActive = false;
 }
 
 /**
  * Called when the contactview has a keypress.
  * Starts the search/filter process
  */
-void MainWin::searchTextStarted(QString const& text)
+void MainWin::searchTextStarted(QString const &text)
 {
     d->searchWidget->setVisible(true);
     d->searchText->setText(d->searchText->text() + text);
@@ -1848,13 +1782,12 @@ void MainWin::searchTextStarted(QString const& text)
  * Called when the search input is changed.
  * Updates the search.
  */
-void MainWin::searchTextEntered(QString const& text)
+void MainWin::searchTextEntered(QString const &text)
 {
-    if (!d->filterActive)
-    {
-        d->filterActive = true;
+    if (!d->filterActive) {
+        d->filterActive         = true;
         d->prefilterShowOffline = d->getAction("show_offline")->isChecked();
-        d->prefilterShowAway = d->getAction("show_away")->isChecked();
+        d->prefilterShowAway    = d->getAction("show_away")->isChecked();
         d->getAction("show_offline")->setChecked(true);
         d->getAction("show_away")->setChecked(true);
     }
@@ -1864,19 +1797,13 @@ void MainWin::searchTextEntered(QString const& text)
 }
 
 #ifdef Q_OS_MAC
-void MainWin::setWindowIcon(const QPixmap&)
-{
-}
+void MainWin::setWindowIcon(const QPixmap &) {}
 #else
-void MainWin::setWindowIcon(const QPixmap& p)
-{
-    QMainWindow::setWindowIcon(p);
-}
+void MainWin::setWindowIcon(const QPixmap &p) { QMainWindow::setWindowIcon(p); }
 #endif
 
 #if 0
 #if defined(Q_OS_WIN)
-#include <windows.h>
 void MainWin::showNoFocus()
 {
     clearWState( WState_ForceHide );
@@ -1962,7 +1889,7 @@ void MainWin::showNoFocus()
 void MainWin::showNoFocus()
 {
     bringToFront(this);
-    if(d->hideTimer)
+    if (d->hideTimer)
         d->hideTimer->start();
 }
 
@@ -1976,17 +1903,16 @@ void MainWin::resizeEvent(QResizeEvent *e)
 {
     AdvancedWidget<QMainWindow>::resizeEvent(e);
 
-    if(d->splitter && isVisible()) {
-        QList<int> sizes = d->splitter->sizes();
-        int tabsWidth = !d->isLeftRoster ? sizes.first() : sizes.last();
-        int rosterWidth = d->isLeftRoster ? sizes.first() : sizes.last();
-        int dw = rosterWidth - d->rosterSize;
+    if (d->splitter && isVisible()) {
+        QList<int> sizes       = d->splitter->sizes();
+        int        tabsWidth   = !d->isLeftRoster ? sizes.first() : sizes.last();
+        int        rosterWidth = d->isLeftRoster ? sizes.first() : sizes.last();
+        int        dw          = rosterWidth - d->rosterSize;
         sizes.clear();
         sizes.append(tabsWidth + dw);
-        if(d->isLeftRoster) {
+        if (d->isLeftRoster) {
             sizes.prepend(d->rosterSize);
-        }
-        else {
+        } else {
             sizes.append(d->rosterSize);
         }
         d->splitter->setSizes(sizes);

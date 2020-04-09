@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,11 +25,10 @@
 class Iconset;
 class IconsetSelectItem;
 
-class IconsetSelect : public QListWidget
-{
+class IconsetSelect : public QListWidget {
     Q_OBJECT
 public:
-    IconsetSelect(QWidget *parent = 0);
+    IconsetSelect(QWidget *parent = nullptr);
     ~IconsetSelect();
 
     void insert(const Iconset &); // iconsets must be inserted in following order: most prioritent first
@@ -49,4 +47,4 @@ private:
     friend class IconsetSelectItem;
 };
 
-#endif
+#endif // ICONSETSELECT_H

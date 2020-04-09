@@ -13,44 +13,42 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef CONTACTLISTITEMMENU_H
 #define CONTACTLISTITEMMENU_H
 
-#include <QMenu>
 #include <QList>
+#include <QMenu>
 
-class ContactListModel;
 class ContactListItem;
+class ContactListModel;
 class QAction;
 class QLabel;
 
-class ContactListItemMenu : public QMenu
-{
+class ContactListItemMenu : public QMenu {
     Q_OBJECT
 public:
-    ContactListItemMenu(ContactListItem* item, ContactListModel* model);
+    ContactListItemMenu(ContactListItem *item, ContactListModel *model);
     virtual ~ContactListItemMenu();
 
-    virtual ContactListItem* item() const;
+    virtual ContactListItem *item() const;
 
-    void setLabelTitle(const QString &title);
-    virtual void removeActions(QStringList actionNames);
-    virtual QList<QAction*> availableActions() const;
+    void                     setLabelTitle(const QString &title);
+    virtual void             removeActions(QStringList actionNames);
+    virtual QList<QAction *> availableActions() const;
 
 protected:
-    QKeySequence shortcut(const QString& name) const;
-    QList<QKeySequence> shortcuts(const QString& name) const;
-    ContactListModel* model() const;
+    QKeySequence        shortcut(const QString &name) const;
+    QList<QKeySequence> shortcuts(const QString &name) const;
+    ContactListModel *  model() const;
 
 private:
-    ContactListItem* item_;
-    ContactListModel* model_;
-    QLabel *_lblTitle;
+    ContactListItem * item_;
+    ContactListModel *model_;
+    QLabel *          _lblTitle;
 };
 
-#endif
+#endif // CONTACTLISTITEMMENU_H

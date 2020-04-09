@@ -1,6 +1,6 @@
 /*
  * chatviewthemeprovider.cpp - adapter for set of chatview themes
- * Copyright (C) 2010-2017 Sergey Ilinykh
+ * Copyright (C) 2010-2017  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,43 +13,36 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-
 #include "chatviewthemeprovider.h"
 
+#include "applicationinfo.h"
+#include "chatviewtheme.h"
+#include "chatviewtheme_p.h"
+#include "chatviewthemeprovider_priv.h"
+#include "psicon.h"
+#include "psioptions.h"
+#include "psithememanager.h"
+#include "theme.h"
+
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QDir>
 #ifdef WEBENGINE
 #include <QWebEngineUrlRequestInterceptor>
 #endif
-
-#include "psicon.h"
-#include "chatviewtheme.h"
-#include "chatviewtheme_p.h"
-#include "psioptions.h"
-#include "theme.h"
-#include "applicationinfo.h"
-#include "psithememanager.h"
-#ifdef WEBENGINE
-# include "themeserver.h"
-#endif
-#include "chatviewthemeprovider_priv.h"
-#include "chatviewtheme.h"
 
 class ChatViewThemeProvider;
 
 //--------------------------------------
 // ChatViewThemeProvider
 //--------------------------------------
-ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) :
-    PsiThemeProvider(psi)
+ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) : PsiThemeProvider(psi)
 {
-    ChatViewCon::init((PsiCon*)parent());
+    ChatViewCon::init(static_cast<PsiCon *>(parent()));
 }
 
 const QStringList ChatViewThemeProvider::themeIds() const
@@ -62,16 +55,14 @@ const QStringList ChatViewThemeProvider::themeIds() const
 
     QSet<QString> ret;
     foreach (QString dir, dirs) {
-        foreach (QFileInfo tDirInfo, QDir(dir+"/themes/chatview/")
-            .entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
+        foreach (QFileInfo tDirInfo,
+                 QDir(dir + "/themes/chatview/").entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
             QString typeName = tDirInfo.fileName();
             foreach (QFileInfo themeInfo,
-                    QDir(tDirInfo.absoluteFilePath())
-                        .entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot) +
-                    QDir(tDirInfo.absoluteFilePath())
-                        .entryInfoList(QStringList("*.theme"), QDir::Files)) {
-                ret<<(QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
-                //qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
+                     QDir(tDirInfo.absoluteFilePath()).entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)
+                         + QDir(tDirInfo.absoluteFilePath()).entryInfoList(QStringList("*.theme"), QDir::Files)) {
+                ret << (QString("%1/%2").arg(typeName).arg(themeInfo.fileName()));
+                // qDebug("found theme: %s", qPrintable(QString("%1/%2").arg(typeName).arg(themeInfo.fileName())));
             }
         }
     }
@@ -101,7 +92,7 @@ Theme ChatViewThemeProvider::theme(const QString &id)
  */
 bool ChatViewThemeProvider::loadCurrent()
 {
-    QString loadedId = curTheme.id();
+    QString loadedId  = curTheme.id();
     QString themeName = PsiOptions::instance()->getOption(optionString()).toString();
     if (!loadedId.isEmpty() && loadedId == themeName) {
         return true; // already loaded. nothing todo
@@ -118,7 +109,7 @@ bool ChatViewThemeProvider::loadCurrent()
         return false;
     }
 
-    bool startedLoading = t.load([this, t, loadedId](bool success){
+    bool startedLoading = t.load([this, t, loadedId](bool success) {
         if (!success && t.id() != QLatin1String("psi/classic")) {
             qDebug("Failed to load theme \"%s\"", qPrintable(t.id()));
             qDebug("fallback to classic chatview theme");
@@ -135,10 +126,9 @@ bool ChatViewThemeProvider::loadCurrent()
     return startedLoading; // does not really matter. may fail later on loading
 }
 
-Theme ChatViewThemeProvider::current() const
-{
-    return curTheme;
-}
+void ChatViewThemeProvider::unloadCurrent() { curTheme = Theme(); }
+
+Theme ChatViewThemeProvider::current() const { return curTheme; }
 
 void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 {
@@ -149,12 +139,6 @@ void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 }
 
 #ifdef WEBENGINE
-ThemeServer *ChatViewThemeProvider::themeServer()
-{
-    Q_ASSERT(ChatViewCon::isReady());
-    return ChatViewCon::instance()->themeServer;
-}
-
 QWebEngineUrlRequestInterceptor *ChatViewThemeProvider::requestInterceptor()
 {
     Q_ASSERT(ChatViewCon::isReady());

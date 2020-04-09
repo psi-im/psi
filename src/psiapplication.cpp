@@ -13,31 +13,30 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psiapplication.h"
-#include "resourcemenu.h"
-
-#include <QSessionManager>
 
 #ifdef Q_OS_MAC
-#include <Carbon/Carbon.h>
 #include "CocoaUtilities/CocoaTrayClick.h"
 #endif
-
+#include "resourcemenu.h"
 #ifdef Q_OS_WIN
 #include "systemwatch/systemwatch_win.h"
 #endif
+
+#ifdef Q_OS_MAC
+#include <Carbon/Carbon.h>
+#endif
+#include <QSessionManager>
 
 //----------------------------------------------------------------------------
 // PsiApplication
 //----------------------------------------------------------------------------
 
-PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled)
-:    QApplication(argc, argv, GUIenabled)
+PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled) : QApplication(argc, argv, GUIenabled)
 {
     init(GUIenabled);
 #ifdef Q_OS_MAC
@@ -45,10 +44,7 @@ PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled)
 #endif
 }
 
-PsiApplication::~PsiApplication()
-{
-
-}
+PsiApplication::~PsiApplication() {}
 
 void PsiApplication::init(bool GUIenabled)
 {
@@ -59,11 +55,11 @@ void PsiApplication::init(bool GUIenabled)
 }
 
 #ifdef Q_OS_MAC
-bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
+bool PsiApplication::macEventFilter(EventHandlerCallRef, EventRef inEvent)
 {
     UInt32 eclass = GetEventClass(inEvent);
-    int etype = GetEventKind(inEvent);
-    if(eclass == 'eppc' && etype == kEventAppleEvent) {
+    int    etype  = GetEventKind(inEvent);
+    if (eclass == 'eppc' && etype == kEventAppleEvent) {
         dockActivated();
     }
     return false;

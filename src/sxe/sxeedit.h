@@ -13,64 +13,63 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef SXDEEDIT_H
 #define SXDEEDIT_H
 
-#include <QString>
 #include <QDomNode>
+#include <QString>
 
 /*! \brief A class used for storing SXE edits in the undo stacks and in the queue of outgoing edits.*/
 class SxeEdit {
-    public:
-        /*! \brief Describes which kind of edit the object represents.*/
-        enum EditType {New, Record, Remove};
+public:
+    /*! \brief Describes which kind of edit the object represents.*/
+    enum EditType { New, Record, Remove };
 
-        /*! \brief Constructor
-         *  Constructs an SxeEdit for a node with \a rid.
-         */
-        SxeEdit(const QString rid, bool remote);
+    /*! \brief Constructor
+     *  Constructs an SxeEdit for a node with \a rid.
+     */
+    SxeEdit(const QString rid, bool remote);
 
-        virtual ~SxeEdit();
+    virtual ~SxeEdit();
 
-        /*! \brief Indicates whether the edit is from a remote client.*/
-        bool remote() const;
+    /*! \brief Indicates whether the edit is from a remote client.*/
+    bool remote() const;
 
-        /*! \brief The rid of the edit.*/
-        QString rid() const;
+    /*! \brief The rid of the edit.*/
+    QString rid() const;
 
-        /*! \brief The type of edit.*/
-        virtual EditType type() const = 0;
+    /*! \brief The type of edit.*/
+    virtual EditType type() const = 0;
 
-        /*! \brief The XML (the SXE) representing the edit.*/
-        virtual QDomElement xml(QDomDocument &doc) const = 0;
+    /*! \brief The XML (the SXE) representing the edit.*/
+    virtual QDomElement xml(QDomDocument &doc) const = 0;
 
-        /*! \brief A null edit is a no-op.*/
-        bool isNull();
+    /*! \brief A null edit is a no-op.*/
+    bool isNull();
 
-        /*! \brief Turns the edit into a no-op.*/
-        virtual void nullify();
+    /*! \brief Turns the edit into a no-op.*/
+    virtual void nullify();
 
-        /*! \brief Returns true if \a e renders the SxeEdit ineffective
-         *  (e.g. a SxeRemoveEdit will make a SxeNewEdit ineffective).
-         */
-        bool overridenBy(const SxeEdit &e) const;
+    /*! \brief Returns true if \a e renders the SxeEdit ineffective
+     *  (e.g. a SxeRemoveEdit will make a SxeNewEdit ineffective).
+     */
+    bool overridenBy(const SxeEdit &e) const;
 
-        bool operator<(const SxeEdit &other) const;
+    bool operator<(const SxeEdit &other) const;
 
-    protected:
-        /*! \brief The node id of the target.*/
-        QString rid_;
+protected:
+    /*! \brief The node id of the target.*/
+    QString rid_;
 
-        /*! \brief Indicates whether the edit is from a remote client.*/
-        bool remote_;
+    /*! \brief Indicates whether the edit is from a remote client.*/
+    bool remote_;
 
-        /*! \brief Indicates whether the edit has been nullified.*/
-        bool null_;
+    /*! \brief Indicates whether the edit has been nullified.*/
+    bool null_;
 };
 
-#endif
+#endif // SXDEEDIT_H

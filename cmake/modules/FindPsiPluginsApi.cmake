@@ -26,52 +26,77 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-if(PsiPluginsApi_INCLUDE_DIR)
+#Prevent extra messages on searching
+if(PsiPluginsApi_INCLUDE_DIR AND PsiPluginsApi_DIR)
     # in cache already
     set(PsiPluginsApi_FIND_QUIETLY TRUE)
 endif()
 
 if(PLUGINS_ROOT_DIR)
-    get_filename_component(
-        ABS_PLUGINS_ROOT_DIR
-        "${PLUGINS_ROOT_DIR}"
-        ABSOLUTE
-    )
+    get_filename_component(ABS_PLUGINS_ROOT_DIR "${PLUGINS_ROOT_DIR}" ABSOLUTE)
 endif()
-get_filename_component(
-    ABS_CURRENT_DIR
-    "${CMAKE_CURRENT_LIST_DIR}/../.."
-    ABSOLUTE
-)
+get_filename_component(ABS_CURRENT_DIR "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+get_filename_component(ABS_PARENT_DIR "${ABS_CURRENT_DIR}/.." ABSOLUTE)
 
+if(EXISTS "${ABS_PLUGINS_ROOT_DIR}/cmake/modules/variables.cmake")
+    set(PLUGINS_DIRECTORY "${ABS_PLUGINS_ROOT_DIR}")
+elseif(EXISTS "${ABS_CURRENT_DIR}/src/plugins/cmake/modules/variables.cmake")
+    set(PLUGINS_DIRECTORY "${ABS_CURRENT_DIR}/src/plugins")
+elseif(EXISTS "${ABS_PARENT_DIR}/src/plugins/cmake/modules/variables.cmake")
+    set(PLUGINS_DIRECTORY "${ABS_CURRENT_DIR}/src/plugins")
+endif()
+
+if(CMAKE_CROSSCOMPILING OR CMAKE_CROSS_COMPILING OR (EXISTS "${ABS_PLUGINS_ROOT_DIR}/include"))
+    set(SEARCH_FLAG NO_CMAKE_SYSTEM_PATH CMAKE_FIND_ROOT_PATH_BOTH)
+endif()
+
+if(PLUGINS_PATH)
+    if(EXISTS "${PLUGINS_DIRECTORY}/cmake/modules/variables.cmake")
+        set(PsiPluginsApi_DIR "${PLUGINS_DIRECTORY}/cmake/modules")
+    endif()
+    if(EXISTS "${PLUGINS_DIRECTORY}/include/applicationinfoaccessor.h")
+        set(PsiPluginsApi_INCLUDE_DIR "${PLUGINS_DIRECTORY}/include")
+    endif()
+endif()
+
+#Double check in case while api was found in local repo
+if(PsiPluginsApi_INCLUDE_DIR AND PsiPluginsApi_DIR)
+    # in cache already
+    set(PsiPluginsApi_FIND_QUIETLY TRUE)
+endif()
+
+if(NOT PsiPluginsApi_DIR)
 find_path(
     PsiPluginsApi_DIR
     NAMES
     "variables.cmake"
     PATHS
-    ${ABS_CURRENT_DIR}
     ${ABS_PLUGINS_ROOT_DIR}/cmake/modules
+    ${ABS_CURRENT_DIR}
+    ${ABS_PARENT_DIR}/psi
     PATH_SUFFIXES
     src/plugins/cmake/modules
     share/psi/plugins
     share/psi-plus/plugins
-    CMAKE_FIND_ROOT_PATH_BOTH
+    ${SEARCH_FLAG}
 )
-
+endif()
+if(NOT PsiPluginsApi_INCLUDE_DIR)
 find_path(
     PsiPluginsApi_INCLUDE_DIR
     NAMES
     "applicationinfoaccessor.h"
     PATHS
-    ${ABS_CURRENT_DIR}
     ${ABS_PLUGINS_ROOT_DIR}/include
+    ${ABS_CURRENT_DIR}
+    ${ABS_PARENT_DIR}/psi
     PATH_SUFFIXES
     src/plugins/include
-    share/psi/plugins/include
-    share/psi-plus/plugins/include
-    CMAKE_FIND_ROOT_PATH_BOTH
+    include/psi/plugins
+    include/psi-plus/plugins
+    ${SEARCH_FLAG}
 )
-
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
                 PsiPluginsApi

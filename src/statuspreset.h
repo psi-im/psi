@@ -13,52 +13,51 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef STATUSPRESET_H
 #define STATUSPRESET_H
 
-#include <QString>
-
 #include "maybe.h"
-#include "xmpp_status.h"
 #include "optionstree.h"
+#include "xmpp_status.h"
+
+#include <QString>
 
 class QDomDocument;
 class QDomElement;
 
-class StatusPreset
-{
+class StatusPreset {
 public:
     StatusPreset();
-    StatusPreset(QString name, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
-    StatusPreset(QString name, int priority, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
-    StatusPreset(const QDomElement&);
+    StatusPreset(QString name, QString message = QString(), XMPP::Status::Type status = XMPP::Status::Away);
+    StatusPreset(QString name, int priority, QString message = QString(),
+                 XMPP::Status::Type status = XMPP::Status::Away);
+    StatusPreset(const QDomElement &);
 
-    QString name() const;
-    void setName(const QString&);
-    QString message() const;
-    void setMessage(const QString&);
+    QString            name() const;
+    void               setName(const QString &);
+    QString            message() const;
+    void               setMessage(const QString &);
     XMPP::Status::Type status() const;
-    void setStatus(XMPP::Status::Type);
-    Maybe<int> priority() const;
-    void setPriority(int priority);
-    void setPriority(const QString& priority);
-    void clearPriority();
-    void filterStatus();
+    void               setStatus(XMPP::Status::Type);
+    Maybe<int>         priority() const;
+    void               setPriority(int priority);
+    void               setPriority(const QString &priority);
+    void               clearPriority();
+    void               filterStatus();
 
-    void toOptions(OptionsTree *o);
-    void fromOptions(OptionsTree *o, QString name);
-    QDomElement toXml(QDomDocument&) const;
-    void fromXml(const QDomElement&);
+    void        toOptions(OptionsTree *o);
+    void        fromOptions(OptionsTree *o, QString name);
+    QDomElement toXml(QDomDocument &) const;
+    void        fromXml(const QDomElement &);
 
 private:
-    QString name_, message_;
+    QString            name_, message_;
     XMPP::Status::Type status_;
-    Maybe<int> priority_;
+    Maybe<int>         priority_;
 };
 
-#endif
+#endif // STATUSPRESET_H

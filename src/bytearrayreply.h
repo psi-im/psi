@@ -1,6 +1,6 @@
 /*
  * bytearrayreply.h - Base class for QNetworReply'es returning QByteArray
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010  senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,45 +13,41 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef BYTEARRAYREPLY_H
 #define BYTEARRAYREPLY_H
 
-#include <QNetworkReply>
 #include <QBuffer>
-
+#include <QNetworkReply>
 
 class ByteArrayReply : public QNetworkReply {
 
     Q_OBJECT
 
 public:
-    ByteArrayReply(const QNetworkRequest &request,
-                   const QByteArray &ba = QByteArray(),
-                   const QString &mimeType = QString(),
-                   QObject * parent = 0);
+    ByteArrayReply(const QNetworkRequest &request, const QByteArray &ba = QByteArray(),
+                   const QString &mimeType = QString(), QObject *parent = nullptr);
 
     /** Construct IconReply that fails with ContentAccessDenied error */
-    //ByteArrayReply();
+    // ByteArrayReply();
     ~ByteArrayReply();
 
-    //reimplemented
-    void abort();
-    qint64 readData(char *buffer, qint64 maxlen);
-    qint64 bytesAvailable() const;
-    bool open(OpenMode mode);
+    // reimplemented
+    void   abort() override;
+    qint64 readData(char *buffer, qint64 maxlen) override;
+    qint64 bytesAvailable() const override;
+    bool   open(OpenMode mode) override;
 
 private slots:
     void signalError();
 
 private:
-    int origLen;
+    int        origLen;
     QByteArray data;
-    QBuffer buffer;
+    QBuffer    buffer;
 };
 
-#endif
+#endif // BYTEARRAYREPLY_H

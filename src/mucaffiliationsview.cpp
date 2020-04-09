@@ -13,21 +13,20 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QHeaderView>
-
-#include "xmpp_jid.h"
 #include "mucaffiliationsview.h"
 
-MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
+#include "xmpp_jid.h"
+
+#include <QHeaderView>
+
+MUCAffiliationsView::MUCAffiliationsView(QWidget *parent) : QTreeView(parent)
 {
     setRootIsDecorated(false);
     header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    setItemsExpandable(false);
     setItemsExpandable(false);
     setDragEnabled(true);
     setAcceptDrops(true);
@@ -39,22 +38,21 @@ void MUCAffiliationsView::removeCurrent()
 {
     QModelIndex index = currentIndex();
     if (index.isValid() && index.parent().isValid()) {
-        model()->removeRows(index.row(),1,index.parent());
+        model()->removeRows(index.row(), 1, index.parent());
     }
 }
 
-void MUCAffiliationsView::currentChanged(const QModelIndex& current, const QModelIndex& previous)
+void MUCAffiliationsView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
 {
     Q_UNUSED(previous);
     // Commenting these optimizations, since they cause too much trouble
-    //bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
-    //bool remove_before = previous.isValid() && previous.parent().isValid();
-    bool add_after = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
+    // bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
+    // bool remove_before = previous.isValid() && previous.parent().isValid();
+    bool add_after    = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
     bool remove_after = current.isValid() && current.parent().isValid();
 
-    //if (add_before != add_after)
-        emit addEnabled(add_after);
-    //if (remove_before != remove_after)
-        emit removeEnabled(remove_after);
+    // if (add_before != add_after)
+    emit addEnabled(add_after);
+    // if (remove_before != remove_after)
+    emit removeEnabled(remove_after);
 }
-

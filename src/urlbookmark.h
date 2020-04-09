@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,27 +22,26 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
-class URLBookmark
-{
+class URLBookmark {
 public:
-    URLBookmark(const QString& name, const QString& url);
-    URLBookmark(const QDomElement&);
+    URLBookmark(const QString &name, const QString &url);
+    URLBookmark(const QDomElement &);
 
-    const QString& name() const;
-    const QString& url() const;
-    bool isNull() const;
+    const QString &name() const;
+    const QString &url() const;
+    bool           isNull() const;
 
-    void fromXml(const QDomElement&);
-    QDomElement toXml(QDomDocument&) const;
+    void        fromXml(const QDomElement &);
+    QDomElement toXml(QDomDocument &) const;
 
-    bool operator==(const URLBookmark& other) const;
+    bool operator==(const URLBookmark &other) const;
 
 private:
     QString name_;
     QString url_;
 };
 
-#endif
+#endif // URLBOOKMARK_H

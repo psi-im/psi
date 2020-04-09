@@ -243,7 +243,7 @@
         <widget class="ActionLineEdit" name="le_homepage"/>
        </item>
        <item row="5" column="1">
-        <widget class="QLineEdit" name="le_email"/>
+        <widget class="ActionLineEdit" name="le_email"/>
        </item>
       </layout>
      </widget>

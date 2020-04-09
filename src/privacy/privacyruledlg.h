@@ -13,35 +13,33 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PRIVACYRULEDLG_H
 #define PRIVACYRULEDLG_H
 
-#include <QDialog>
-
 #include "ui_privacyrule.h"
+
+#include <QDialog>
 
 class PrivacyListItem;
 
-class PrivacyRuleDlg : public QDialog
-{
+class PrivacyRuleDlg : public QDialog {
     Q_OBJECT
 
 public:
     PrivacyRuleDlg();
 
-    void setRule(const PrivacyListItem&);
+    void            setRule(const PrivacyListItem &);
     PrivacyListItem rule() const;
 
 protected slots:
-    void type_selected(const QString&);
+    void type_selected(const QString &);
 
 private:
     Ui::PrivacyRule ui_;
 };
 
-#endif
+#endif // PRIVACYRULEDLG_H

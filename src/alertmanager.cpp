@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,48 +19,45 @@
 // Manager of a queue for alert popup dialogs (like can't connect to Server,
 // connection errors, etc) the user has to attend to
 
-#include <algorithm>
-#include <QDebug>
-#include <QMessageBox>
-
 #include "alertmanager.h"
 
+#include <QDebug>
+#include <QMessageBox>
+#include <algorithm>
 
-static bool itemCompare(AlertManager::Item* a, AlertManager::Item* b) {
-    return a->priority > b->priority;
-}
+static bool itemCompare(AlertManager::Item *a, AlertManager::Item *b) { return a->priority > b->priority; }
 
-QWidget* AlertManager::findDialog(const QMetaObject& mo) const {
-    foreach(Item* i, list_) {
+QWidget *AlertManager::findDialog(const QMetaObject &mo) const
+{
+    foreach (Item *i, list_) {
         if (mo.cast(i->widget)) {
             return i->widget;
         }
     }
-    return 0;
+    return nullptr;
 }
 
-void AlertManager::findDialogs(const QMetaObject& mo, QList<void*>* list) const
+void AlertManager::findDialogs(const QMetaObject &mo, QList<void *> *list) const
 {
-    foreach(Item* i, list_) {
+    foreach (Item *i, list_) {
         if (mo.cast(i->widget)) {
             list->append(i->widget);
         }
     }
 }
 
-void AlertManager::dialogRegister(QWidget* w, int prio)
+void AlertManager::dialogRegister(QWidget *w, int prio)
 {
     qDebug() << "registered dialog";
-    connect(w, SIGNAL(destroyed(QObject*)), SLOT(forceDialogUnregister(QObject*)));
-    Item* i = new Item();
-    i->widget = w;
+    connect(w, SIGNAL(destroyed(QObject *)), SLOT(forceDialogUnregister(QObject *)));
+    Item *i     = new Item();
+    i->widget   = w;
     i->priority = prio;
     list_.append(i);
     std::push_heap(list_.begin(), list_.end(), itemCompare);
-
 }
 
-void AlertManager::dialogUnregister(QWidget* w)
+void AlertManager::dialogUnregister(QWidget *w)
 {
     if (list_.at(0)->widget == w) {
         std::pop_heap(list_.begin(), list_.end(), itemCompare);
@@ -71,7 +68,7 @@ void AlertManager::dialogUnregister(QWidget* w)
         return;
     }
 
-    foreach(Item* i, list_) {
+    foreach (Item *i, list_) {
         if (i->widget == w) {
             list_.removeAll(i);
             delete i;
@@ -79,28 +76,22 @@ void AlertManager::dialogUnregister(QWidget* w)
         }
     }
     std::make_heap(list_.begin(), list_.end(), itemCompare);
-
 }
 
-void AlertManager::forceDialogUnregister(QObject* obj)
-{
-    dialogUnregister(static_cast<QWidget*>(obj));
-}
-
+void AlertManager::forceDialogUnregister(QObject *obj) { dialogUnregister(static_cast<QWidget *>(obj)); }
 
 void AlertManager::deleteDialogList()
 {
     while (!list_.isEmpty()) {
-        Item* i = list_.takeLast();
+        Item *i = list_.takeLast();
         i->widget->disconnect(); // ensure forceDialogUnregister won't be called
         delete i->widget;
         delete i;
     }
 }
 
-
-
-bool AlertManager::raiseDialog(QWidget* w, int prio) {
+bool AlertManager::raiseDialog(QWidget *w, int prio)
+{
     dialogRegister(w, prio);
     if (list_.at(0)->widget == w) {
         w->show();
@@ -109,26 +100,15 @@ bool AlertManager::raiseDialog(QWidget* w, int prio) {
     return false;
 }
 
-void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QString& title,
-                                   const QString& text)
+void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QString &title, const QString &text)
 {
-    QMessageBox* msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok);
+    QMessageBox *msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok);
     msgBox->setAttribute(Qt::WA_DeleteOnClose);
     msgBox->setModal(false);
 
     raiseDialog(msgBox, prio);
 }
 
+AlertManager::AlertManager(PsiCon *psi) { psi_ = psi; }
 
-
-
-
-
-AlertManager::AlertManager(PsiCon *psi) {
-    psi_ = psi;
-}
-
-
-AlertManager::~AlertManager() {
-    deleteDialogList();
-}
+AlertManager::~AlertManager() { deleteDialogList(); }

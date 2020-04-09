@@ -7,8 +7,7 @@ name: Mac OS X universal binary support
 //----------------------------------------------------------------------------
 // qc_universal
 //----------------------------------------------------------------------------
-class qc_universal : public ConfObj
-{
+class qc_universal : public ConfObj {
 public:
     qc_universal(Conf *c) : ConfObj(c) {}
     QString name() const { return "universal binary support"; }
@@ -18,8 +17,8 @@ public:
     bool exec()
     {
 #ifdef Q_OS_MAC
-    	conf->addExtra("CONFIG += qc_universal");
+        conf->addExtra("CONFIG += qc_universal");
 #endif
-    	return true;
+        return true;
     }
 };

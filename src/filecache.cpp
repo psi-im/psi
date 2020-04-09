@@ -1,6 +1,6 @@
 /*
  * filecache.cpp - File storage with age and size control
- * Copyright (C) 2010 Rion
+ * Copyright (C) 2010  Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -12,46 +12,38 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QTimer>
-#include <QCryptographicHash>
-#include <QDir>
-#include <QDebug>
 #include "filecache.h"
-#include "optionstree.h"
-#include "fileutil.h"
+
 #include "applicationinfo.h"
+#include "fileutil.h"
+#include "optionstree.h"
+#include "xmpp_hash.h"
+
+#include <QDebug>
+#include <QDir>
+#include <QTimer>
 
 #define FC_META_PERSISTENT QStringLiteral("fc_persistent")
 
-FileCacheItem::FileCacheItem(FileCache *parent, const QString &itemId,
-                             const QVariantMap &metadata, const QDateTime &dt,
-                             unsigned int maxAge, unsigned int size,
-                             const QByteArray &data)
-    : QObject(parent)
-    , _id(itemId)
-    , _metadata(metadata)
-    , _ctime(dt)
-    , _maxAge(maxAge)
-    , _size(size)
-    , _data(data)
-    , _flags(size > 0? 0 : OnDisk) /* empty is never saved to disk. let's say it's there already */
+FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata,
+                             const QDateTime &dt, unsigned int maxAge, qint64 size, const QByteArray &data) :
+    QObject(parent),
+    _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _data(data),
+    _flags(size > 0 ? 0 : OnDisk) /* empty is never saved to disk. let's say it's there already */
 {
-    _hash = QCryptographicHash::hash(_id.toUtf8(),
-                                     QCryptographicHash::Sha1).toHex();
+    Q_ASSERT(sums.size() > 0);
+    std::sort(_sums.begin(), _sums.end(),
+              [](const XMPP::Hash &a, const XMPP::Hash &b) -> bool { return int(a.type()) < int(b.type()); });
     QString ext = FileUtil::mimeToFileExt(_metadata.value(QLatin1String("type")).toString());
-    _fileName = _hash + (ext.isEmpty()? "":"." + ext);
+    _fileName   = _sums.value(0).toHex() + (ext.isEmpty() ? "" : "." + ext);
 }
 
-bool FileCacheItem::inMemory() const
-{
-    return _data.size() > 0;
-}
+bool FileCacheItem::inMemory() const { return _data.size() > 0; }
 
 void FileCacheItem::flushToDisk()
 {
@@ -66,8 +58,7 @@ void FileCacheItem::flushToDisk()
             f.close();
             _flags |= OnDisk;
         } else {
-            qWarning("Can't open file %s for writing",
-                     qPrintable(_fileName));
+            qWarning("Can't open file %s for writing", qPrintable(_fileName));
         }
     } else {
         _flags |= OnDisk;
@@ -93,9 +84,9 @@ void FileCacheItem::unload()
 
 bool FileCacheItem::isExpired(bool finishSession) const
 {
-    return _maxAge == FileCache::Session ? finishSession :
-            _maxAge == FileCache::Forever ? false :
-            _ctime.addSecs(_maxAge) < QDateTime::currentDateTime();
+    return _maxAge == FileCache::Session
+        ? finishSession
+        : _maxAge == FileCache::Forever ? false : _ctime.addSecs(_maxAge) < QDateTime::currentDateTime();
 }
 
 QByteArray FileCacheItem::data()
@@ -111,8 +102,7 @@ QByteArray FileCacheItem::data()
             // TODO notify FileCache to check memory restrictions
             f.close();
         } else {
-            qWarning("Can't open file %s for reading",
-                     qPrintable(_fileName));
+            qWarning("Can't open file %s for reading", qPrintable(_fileName));
         }
     }
     return _data;
@@ -137,41 +127,62 @@ bool FileCacheItem::isDeletable() const
     return !(_flags & SessionUndeletable) && !_metadata.contains(FC_META_PERSISTENT);
 }
 
-
 //------------------------------------------------------------------------------
 // FileCache
 //------------------------------------------------------------------------------
-FileCache::FileCache(const QString &cacheDir, QObject *parent)
-    : QObject(parent)
-    , _cacheDir(cacheDir)
-    , _memoryCacheSize(FileCache::DefaultMemoryCacheSize)
-    , _fileCacheSize(FileCache::DefaultFileCacheSize)
-    , _defaultMaxAge(Forever)
-    , _syncPolicy(InstantFLush)
-    , _registryChanged(false)
+FileCache::FileCache(const QString &cacheDir, QObject *parent) :
+    QObject(parent), _cacheDir(cacheDir), _memoryCacheSize(FileCache::DefaultMemoryCacheSize),
+    _fileCacheSize(FileCache::DefaultFileCacheSize), _defaultMaxAge(Forever), _syncPolicy(InstantFLush),
+    _registryChanged(false)
 {
-    _registry = new OptionsTree(this);
+    _registry  = new OptionsTree(this);
     _syncTimer = new QTimer(this);
     _syncTimer->setSingleShot(true);
     _syncTimer->setInterval(1000);
     connect(_syncTimer, SIGNAL(timeout()), SLOT(sync()));
 
-    _registry->loadOptions(_cacheDir + "/cache.xml", "items",
-                           ApplicationInfo::fileCacheNS());
+    _registry->loadOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS());
 
-    foreach(const QString &prefix, _registry->getChildOptionNames("", true, true)) {
-        QString id = _registry->getOption(prefix + ".id").toString();
-        FileCacheItem *item = new FileCacheItem(this, id,
-            _registry->getOption(prefix + ".metadata", QVariantMap()).toMap(),
+    bool needCleanup = false;
+    foreach (const QString &prefix, _registry->getChildOptionNames("", true, true)) {
+        QByteArray id = QByteArray::fromHex(prefix.section('.', -1).midRef(1).toLatin1());
+        if (id.isEmpty())
+            continue;
+        auto hAlgo = _registry->getOption(prefix + ".ha", QString()).toString();
+        auto hash  = XMPP::Hash(QStringRef(&hAlgo));
+        if (!hash.isValid()) {
+            needCleanup = true;
+            continue;
+        }
+        hash.setData(id);
+
+        auto item = new FileCacheItem(
+            this, hash, _registry->getOption(prefix + ".metadata", QVariantMap()).toMap(),
             QDateTime::fromString(_registry->getOption(prefix + ".ctime").toString(), Qt::ISODate),
-            _registry->getOption(prefix + ".max-age").toInt(),
-            _registry->getOption(prefix + ".size").toInt()
-        );
+            _registry->getOption(prefix + ".max-age").toUInt(), _registry->getOption(prefix + ".size").toULongLong());
+
+        for (const auto &s : _registry->getOption(prefix + ".aliases").toStringList()) {
+            auto ind = s.indexOf('+');
+            if (ind == -1)
+                continue;
+            auto       type = XMPP::Hash::parseType(s.leftRef(ind));
+            auto       ba   = QByteArray::fromHex(s.midRef(ind + 1).toLatin1());
+            XMPP::Hash hash(type, ba);
+            if (hash.isValid() && ba.size()) {
+                item->addHashSum(hash);
+            }
+        }
+
         item->_flags |= (FileCacheItem::OnDisk | FileCacheItem::Registered);
-        _items[id] = item;
+        _items.insert(hash, item);
         if (item->isExpired()) {
             remove(item->id());
         }
+    }
+
+    if (needCleanup) {
+        _registryChanged = true;
+        _syncTimer->start();
     }
 }
 
@@ -184,7 +195,7 @@ FileCache::~FileCache()
 void FileCache::gc()
 {
     QDir dir(_cacheDir);
-    foreach(const QString &id, _items.keys()) {
+    foreach (const XMPP::Hash &id, _items.keys()) {
         FileCacheItem *item = _items.value(id);
         // remove broken cache items
         if (item->isOnDisk() && item->size() && !dir.exists(item->fileName())) {
@@ -198,20 +209,45 @@ void FileCache::gc()
     }
 }
 
-FileCacheItem *FileCache::append(const QString &id, const QByteArray &data,
-                                 const QVariantMap &metadata, unsigned int maxAge)
+FileCacheItem *FileCache::append(const QList<XMPP::Hash> &sums, const QByteArray &data, const QVariantMap &metadata,
+                                 unsigned int maxAge)
 {
-    FileCacheItem *item = new FileCacheItem(this, id, metadata,
-                                            QDateTime::currentDateTime(),
-                                            maxAge, data.size(), data);
-    _items[id] = item;
-    _pendingRegisterItems[id] = item;
+    Q_ASSERT(sums.size() > 0);
+
+    FileCacheItem *item
+        = new FileCacheItem(this, sums, metadata, QDateTime::currentDateTime(), maxAge, size_t(data.size()), data);
+    for (auto const &s : sums)
+        _items.insert(s, item);
+    _pendingRegisterItems.insert(sums[0], item);
+    _syncTimer->start();
+    return item;
+}
+
+FileCacheItem *FileCache::moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file, const QVariantMap &metadata,
+                                      unsigned int maxAge)
+{
+    Q_ASSERT(sums.size());
+    auto item = new FileCacheItem(this, sums, metadata, file.lastModified(), maxAge, file.size());
+
+    QString cachedFilePath = QString("%1/%2").arg(_cacheDir, item->fileName());
+    QFile   cachedFile(cachedFilePath);
+    if (cachedFile.exists())
+        cachedFile.remove();
+
+    if (!QFile(file.filePath()).rename(cachedFilePath)) {
+        delete item;
+        return nullptr;
+    }
+    item->_flags |= FileCacheItem::OnDisk;
+    for (auto const &s : sums)
+        _items.insert(s, item);
+    _pendingRegisterItems.insert(sums[0], item);
     _syncTimer->start();
 
     return item;
 }
 
-void FileCache::remove(const QString &id, bool needSync)
+void FileCache::remove(const XMPP::Hash &id, bool needSync)
 {
     FileCacheItem *item = _items.value(id);
     if (item) {
@@ -222,11 +258,13 @@ void FileCache::remove(const QString &id, bool needSync)
 void FileCache::removeItem(FileCacheItem *item, bool needSync)
 {
     if (item->isOnDisk()) {
-        _registry->removeOption("h" + item->hash(), true);
+        _registry->removeOption("h" + item->id().toHex(), true);
         _registryChanged = true;
     }
     item->remove();
-    _items.remove(item->id());
+    for (auto const &a : item->sums()) {
+        _items.remove(a);
+    }
     _pendingRegisterItems.remove(item->id());
     delete item;
     if (needSync) {
@@ -234,12 +272,16 @@ void FileCache::removeItem(FileCacheItem *item, bool needSync)
     }
 }
 
-FileCacheItem *FileCache::get(const QString &id, bool reborn)
+FileCacheItem *FileCache::get(const XMPP::Hash &id, bool reborn)
 {
+    if (!id.isValid())
+        return nullptr;
+
     FileCacheItem *item = _items.value(id);
     if (item) {
         if (!item->isExpired()) {
-            if (reborn && item->maxAge() > 0u && item->created().secsTo(QDateTime::currentDateTime()) < (int)item->maxAge() / 2) {
+            if (reborn && item->maxAge() > 0u
+                && item->created().secsTo(QDateTime::currentDateTime()) < int(item->maxAge()) / 2) {
                 item->reborn();
                 toRegistry(item);
             }
@@ -247,34 +289,28 @@ FileCacheItem *FileCache::get(const QString &id, bool reborn)
         }
         remove(id);
     }
-    return 0;
+    return nullptr;
 }
 
-QByteArray FileCache::getData(const QString &id, bool reborn)
+QByteArray FileCache::getData(const XMPP::Hash &id, bool reborn)
 {
     FileCacheItem *item = get(id, reborn);
     return item ? item->data() : QByteArray();
 }
 
-bool ctimeLessThan(FileCacheItem *a, FileCacheItem *b)
-{
-    return a->created() < b->created();
-}
+bool ctimeLessThan(FileCacheItem *a, FileCacheItem *b) { return a->created() < b->created(); }
 
-void FileCache::sync()
-{
-    sync(false);
-}
+void FileCache::sync() { sync(false); }
 
 void FileCache::sync(bool finishSession)
 {
     QList<FileCacheItem *> loadedItems;
     QList<FileCacheItem *> onDiskItems;
-    quint32 sumMemorySize = 0;
-    quint32 sumFileSize = 0;
-    FileCacheItem *item;
+    qint64                 sumMemorySize = 0;
+    qint64                 sumFileSize   = 0;
+    FileCacheItem *        item;
 
-    QHashIterator<QString, FileCacheItem*> it(_items);
+    QHashIterator<XMPP::Hash, FileCacheItem *> it(_items);
     while (it.hasNext()) {
         it.next();
         item = it.value();
@@ -293,15 +329,15 @@ void FileCache::sync(bool finishSession)
                 onDiskItems.append(item);
             }
         } else if (!item->isRegistered()) { // just put to registry item without data and stop reviewing it
-            toRegistry(item); // save item to registry if not yet
+            toRegistry(item);               // save item to registry if not yet
         }
     }
 
-    //if (sumDataSize > _fileCacheSize || sumMemorySize > _memoryCacheSize) {
+    // if (sumDataSize > _fileCacheSize || sumMemorySize > _memoryCacheSize) {
 
     // flush overflowed in-memory data to disk
     if (sumMemorySize > _memoryCacheSize) {
-        qSort(loadedItems.begin(), loadedItems.end(), ctimeLessThan); // by create time from oldest to newest
+        std::sort(loadedItems.begin(), loadedItems.end(), ctimeLessThan); // by create time from oldest to newest
         while (sumMemorySize > _memoryCacheSize && loadedItems.size()) {
             item = loadedItems.takeFirst();
             if (!item->isOnDisk()) { // was kept in memory only. unload() will flush to disk
@@ -317,7 +353,7 @@ void FileCache::sync(bool finishSession)
     }
 
     // register pending items and flush them if necessary
-    foreach (FileCacheItem *item, _pendingRegisterItems.values()) {
+    foreach (FileCacheItem *item, _pendingRegisterItems) {
         toRegistry(item); // FIXME do this only after we have a file on disk (or data size = 0)
         if (_syncPolicy == InstantFLush) {
             item->flushToDisk();
@@ -326,14 +362,14 @@ void FileCache::sync(bool finishSession)
 
     // remove overflowed disk data
     if (sumFileSize > _fileCacheSize) {
-        qSort(onDiskItems.begin(), onDiskItems.end(), ctimeLessThan);
+        std::sort(onDiskItems.begin(), onDiskItems.end(), ctimeLessThan);
         while (sumFileSize > _fileCacheSize && onDiskItems.size()) {
             item = onDiskItems.takeFirst();
             if (!item->isDeletable()) {
                 continue;
             }
-            QString id = item->id();
-            unsigned int sz = item->size();
+            auto id = item->id();
+            auto sz = item->size();
             removeItem(item, false);
             if (!_items.value(id)) { // really removed
                 sumFileSize -= sz;
@@ -342,8 +378,7 @@ void FileCache::sync(bool finishSession)
     }
 
     if (_registryChanged) {
-        _registry->saveOptions(_cacheDir + "/cache.xml", "items",
-                               ApplicationInfo::fileCacheNS(),
+        _registry->saveOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS(),
                                ApplicationInfo::version());
         _registryChanged = false;
     }
@@ -352,12 +387,20 @@ void FileCache::sync(bool finishSession)
 void FileCache::toRegistry(FileCacheItem *item)
 {
     // TODO build Map/Hash instead and insert it to options
-    QString prefix = QString("h") + item->hash();
-    _registry->setOption(prefix + ".id", item->id());
+    QString prefix = QString("h") + QString::fromLatin1(item->id().toHex());
+    _registry->setOption(prefix + ".ha", item->id().stringType());
     _registry->setOption(prefix + ".metadata", item->metadata());
     _registry->setOption(prefix + ".ctime", item->created().toString(Qt::ISODate));
-    _registry->setOption(prefix + ".max-age", (int)item->maxAge());
-    _registry->setOption(prefix + ".size", (int)item->size());
+    _registry->setOption(prefix + ".max-age", int(item->maxAge()));
+    _registry->setOption(prefix + ".size", qulonglong(item->size()));
+
+    QStringList aliases;
+    auto        it = item->sums().cbegin() + 1;
+    while (it != item->sums().cend()) {
+        aliases.append(QString("%1+%2").arg(it->stringType(), QString::fromLatin1(it->toHex())));
+        ++it;
+    }
+    _registry->setOption(prefix + ".aliases", aliases);
 
     item->_flags |= FileCacheItem::Registered;
     _pendingRegisterItems.remove(item->id());

@@ -7,7 +7,7 @@ will need to build and install Qt 4.4 yourself. See the Qt instructions to find
 out how to do this.
 
 * You need QCA 2.0 and the QCA OpenSSL plugin, which you can get at
-		http://delta.affinix.com/qca/
+		https://userbase.kde.org/QCA
 Instructions on how to build these packages can be found below.
 
 The 'Building QCA' and 'Building QCA the OpenSSL plugin' sections can be

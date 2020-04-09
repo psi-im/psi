@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2008 Justin Karneges, Martin Hostettler
+ * Copyright (C) 2001-2008  Justin Karneges, Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,22 +16,19 @@
  *
  */
 
- // Generic tab completion support code.
+// Generic tab completion support code.
 
-#include <QDebug>
 #include "tabcompletion.h"
 
-TabCompletion::TabCompletion(QObject *parent)
-    : QObject(parent)
-    , atStart_(true)
-    , typingStatus_(TypingStatus::Normal)
-    , suggestedIndex_(0)
-    , textEdit_(nullptr)
+#include <QDebug>
+
+TabCompletion::TabCompletion(QObject *parent) :
+    QObject(parent), atStart_(true), typingStatus_(TypingStatus::Normal), suggestedIndex_(0), textEdit_(nullptr)
 {
 }
 
-
-void TabCompletion::setTextEdit(QTextEdit* textEdit) {
+void TabCompletion::setTextEdit(QTextEdit *textEdit)
+{
     textEdit_ = textEdit;
 
     QColor mleBackground(textEdit_->palette().color(QPalette::Active, QPalette::Base));
@@ -43,45 +40,42 @@ void TabCompletion::setTextEdit(QTextEdit* textEdit) {
     }
 }
 
-QTextEdit* TabCompletion::getTextEdit() {
-    return textEdit_;
-}
+QTextEdit *TabCompletion::getTextEdit() { return textEdit_; }
 
-
-void TabCompletion::highlight(bool set) {
+void TabCompletion::highlight(bool set)
+{
     Q_UNUSED(set);
-/*
-    if (set) {
-        QTextEdit::ExtraSelection es;
-        es.cursor = replacementCursor_;
-        es.format.setBackground(highlight_);
-        textEdit_->setExtraSelections(QList<QTextEdit::ExtraSelection>() << es);
-    } else {
-        if (textEdit_) textEdit_->setExtraSelections(QList<QTextEdit::ExtraSelection>());
-    }*/
+    /*
+        if (set) {
+            QTextEdit::ExtraSelection es;
+            es.cursor = replacementCursor_;
+            es.format.setBackground(highlight_);
+            textEdit_->setExtraSelections(QList<QTextEdit::ExtraSelection>() << es);
+        } else {
+            if (textEdit_) textEdit_->setExtraSelections(QList<QTextEdit::ExtraSelection>());
+        }*/
 }
 
-
-
-
-void TabCompletion::moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor::MoveMode mode) {
+void TabCompletion::moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor::MoveMode mode)
+{
     cur.movePosition(QTextCursor::Start, mode);
     for (int i = 0; i < offset; i++) { // some sane limit on iterations
-        if (cur.position() >= offset) break; // done our work
-        if (!cur.movePosition(QTextCursor::NextCharacter, mode)) break; // failed?
+        if (cur.position() >= offset)
+            break; // done our work
+        if (!cur.movePosition(QTextCursor::NextCharacter, mode))
+            break; // failed?
     }
 }
 
-
-
 /** Find longest common (case insensitive) prefix of \a list.
-    */
-QString TabCompletion::longestCommonPrefix(QStringList list) {
+ */
+QString TabCompletion::longestCommonPrefix(QStringList list)
+{
     QString candidate = list.first().toLower();
-    int len = candidate.length();
+    int     len       = candidate.length();
     while (len > 0) {
         bool found = true;
-        foreach(QString str, list) {
+        foreach (QString str, list) {
             if (str.left(len).toLower() != candidate) {
                 found = false;
                 break;
@@ -98,12 +92,13 @@ QString TabCompletion::longestCommonPrefix(QStringList list) {
     return candidate;
 }
 
-void TabCompletion::setup(QString text, int pos, int &start, int &end) {
-    if (text.isEmpty() || pos==0) {
-        atStart_ = true;
+void TabCompletion::setup(QString text, int pos, int &start, int &end)
+{
+    if (text.isEmpty() || pos == 0) {
+        atStart_    = true;
         toComplete_ = "";
-        start = 0;
-        end = 0;
+        start       = 0;
+        end         = 0;
         return;
     }
     end = pos;
@@ -115,26 +110,24 @@ void TabCompletion::setup(QString text, int pos, int &start, int &end) {
     }
     if (!text[i].isSpace()) {
         atStart_ = true;
-        start = 0;
+        start    = 0;
     } else {
         atStart_ = false;
-        start = i+1;
+        start    = i + 1;
     }
-    toComplete_ = text.mid(start, end-start);
+    toComplete_ = text.mid(start, end - start);
 }
 
-
-
-
-QString TabCompletion::suggestCompletion(bool *replaced) {
+QString TabCompletion::suggestCompletion(bool *replaced)
+{
 
     suggestedCompletion_ = possibleCompletions();
-    suggestedIndex_ = -1;
+    suggestedIndex_      = -1;
 
     QString newText;
     if (suggestedCompletion_.count() == 1) {
         *replaced = true;
-        newText = suggestedCompletion_.first();
+        newText   = suggestedCompletion_.first();
     } else if (suggestedCompletion_.count() > 1) {
         newText = longestCommonPrefix(suggestedCompletion_);
         if (newText.isEmpty()) {
@@ -146,51 +139,49 @@ QString TabCompletion::suggestCompletion(bool *replaced) {
         *replaced = true;
     }
 
-
     return newText;
 }
 
-
-
-void TabCompletion::reset() {
+void TabCompletion::reset()
+{
     typingStatus_ = TypingStatus::Normal;
     highlight(false);
 }
 
 /** Handle tab completion.
-    * User interface uses a dual model, first tab completes upto the
-    * longest common (case insensitiv) match, further tabbing cycles through all
-    * possible completions. When doing a tab completion without something to complete
-    * possibly offers a special guess first.
-    */
-void TabCompletion::tryComplete() {
+ * User interface uses a dual model, first tab completes upto the
+ * longest common (case insensitiv) match, further tabbing cycles through all
+ * possible completions. When doing a tab completion without something to complete
+ * possibly offers a special guess first.
+ */
+void TabCompletion::tryComplete()
+{
     switch (typingStatus_) {
-        case TypingStatus::Normal:
-            typingStatus_ = TypingStatus::TabPressed;
-            break;
-        case TypingStatus::TabPressed:
-            typingStatus_ = TypingStatus::TabbingCompletions;
-            break;
-        default:
-            break;
+    case TypingStatus::Normal:
+        typingStatus_ = TypingStatus::TabPressed;
+        break;
+    case TypingStatus::TabPressed:
+        typingStatus_ = TypingStatus::TabbingCompletions;
+        break;
+    default:
+        break;
     }
 
-
     QString newText;
-    bool replaced = false;
+    bool    replaced = false;
 
     if (typingStatus_ == TypingStatus::MultipleSuggestions) {
         if (!suggestedCompletion_.isEmpty()) {
             suggestedIndex_++;
-            if (suggestedIndex_ >= (int)suggestedCompletion_.count()) {
+            if (suggestedIndex_ >= int(suggestedCompletion_.count())) {
                 suggestedIndex_ = 0;
             }
-            newText = suggestedCompletion_[suggestedIndex_];
+            newText  = suggestedCompletion_[suggestedIndex_];
             replaced = true;
         }
     } else {
-        QTextCursor cursor = textEdit_->textCursor();
-        QString wholeText = textEdit_->toPlainText();
+        QTextCursor cursor    = textEdit_->textCursor();
+        QString     wholeText = textEdit_->toPlainText();
 
         int begin, end;
         setup(wholeText, cursor.position(), begin, end);
@@ -204,14 +195,14 @@ void TabCompletion::tryComplete() {
             QString guess;
             suggestedCompletion_ = allChoices(guess);
 
-            if ( !guess.isEmpty() ) {
+            if (!guess.isEmpty()) {
                 suggestedIndex_ = -1;
-                newText = guess;
-                replaced = true;
+                newText         = guess;
+                replaced        = true;
             } else if (!suggestedCompletion_.isEmpty()) {
                 suggestedIndex_ = 0;
-                newText = suggestedCompletion_.first();
-                replaced = true;
+                newText         = suggestedCompletion_.first();
+                replaced        = true;
             }
         } else {
             newText = suggestCompletion(&replaced);
@@ -231,7 +222,6 @@ void TabCompletion::tryComplete() {
 
         moveCursorToOffset(replacementCursor_, start, QTextCursor::KeepAnchor);
 
-
         newPos.clearSelection();
 
         textEdit_->setTextCursor(newPos);
@@ -241,4 +231,3 @@ void TabCompletion::tryComplete() {
     }
     highlight(typingStatus_ == TypingStatus::MultipleSuggestions);
 }
-

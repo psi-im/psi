@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -24,20 +23,19 @@
 #include <QObject>
 #include <QStringList>
 
-class QString;
 class PrivacyList;
+class QString;
 
-class PrivacyManager : public QObject
-{
+class PrivacyManager : public QObject {
     Q_OBJECT
 
 public:
-    virtual void requestListNames() = 0;
-    virtual void changeDefaultList(const QString& name) = 0;
-    virtual void changeActiveList(const QString& name) = 0;
-    virtual void changeList(const PrivacyList& list) = 0;
-    virtual void getDefaultList() = 0;
-    virtual void requestList(const QString& name) = 0;
+    virtual void requestListNames()                     = 0;
+    virtual void changeDefaultList(const QString &name) = 0;
+    virtual void changeActiveList(const QString &name)  = 0;
+    virtual void changeList(const PrivacyList &list)    = 0;
+    virtual void getDefaultList()                       = 0;
+    virtual void requestList(const QString &name)       = 0;
 
 signals:
     void changeDefaultList_success(QString);
@@ -46,14 +44,14 @@ signals:
     void changeActiveList_error();
     void changeList_success(QString);
     void changeList_error();
-    void defaultListAvailable(const PrivacyList&);
+    void defaultListAvailable(const PrivacyList &);
     void defaultListError();
     void listChangeSuccess();
     void listChangeError();
-    void listReceived(const PrivacyList& p);
+    void listReceived(const PrivacyList &p);
     void listError();
-    void listsReceived(const QString& defaultList, const QString& activeList, const QStringList& lists);
+    void listsReceived(const QString &defaultList, const QString &activeList, const QStringList &lists);
     void listsError();
 };
 
-#endif
+#endif // PRIVACYMANAGER_H

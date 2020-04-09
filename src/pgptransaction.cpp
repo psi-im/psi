@@ -18,60 +18,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QtCrypto>
-
 #include "pgptransaction.h"
+
+#include <QtCrypto>
 
 using namespace XMPP;
 
-PGPTransaction::PGPTransaction(QCA::SecureMessageSystem* system) : QCA::SecureMessage(system), system_(system)
+PGPTransaction::PGPTransaction(QCA::SecureMessageSystem *system) : QCA::SecureMessage(system), system_(system)
 {
     id_ = idCounter_++;
 }
 
-PGPTransaction::~PGPTransaction()
-{
-    delete system_;
-}
+PGPTransaction::~PGPTransaction() { delete system_; }
 
-int PGPTransaction::id() const
-{
-    return id_;
-}
+int PGPTransaction::id() const { return id_; }
 
-void PGPTransaction::setMessage(const XMPP::Message &m)
-{
-    message_ = m;
-}
+void PGPTransaction::setMessage(const XMPP::Message &m) { message_ = m; }
 
-const XMPP::Message & PGPTransaction::message() const
-{
-    return message_;
-}
+const XMPP::Message &PGPTransaction::message() const { return message_; }
 
-const QDomElement & PGPTransaction::xml() const
-{
-    return xml_;
-}
+const QDomElement &PGPTransaction::xml() const { return xml_; }
 
-void PGPTransaction::setXml(const QDomElement &xml)
-{
-    xml_ = xml;
-}
+void PGPTransaction::setXml(const QDomElement &xml) { xml_ = xml; }
 
-Jid PGPTransaction::jid() const
-{
-    return jid_;
-}
+Jid PGPTransaction::jid() const { return jid_; }
 
-void PGPTransaction::setJid(const Jid &j)
-{
-    jid_ = j;
-}
+void PGPTransaction::setJid(const Jid &j) { jid_ = j; }
 
 int PGPTransaction::idCounter_ = 0;

@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,18 +22,17 @@
 
 #include <QMenu>
 
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 
-class IconSelectPopup : public QMenu
-{
+class IconSelectPopup : public QMenu {
     Q_OBJECT
 
 public:
-    IconSelectPopup(QWidget *parent = 0);
+    IconSelectPopup(QWidget *parent = nullptr);
     ~IconSelectPopup();
 
-    void setIconset(const Iconset &);
+    void           setIconset(const Iconset &);
     const Iconset &iconset() const;
 
     // reimplemented
@@ -49,4 +47,4 @@ private:
     Private *d;
 };
 
-#endif
+#endif // ICONSELECT_H

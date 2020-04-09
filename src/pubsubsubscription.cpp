@@ -13,54 +13,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+#include "pubsubsubscription.h"
 
 #include <QDomDocument>
 #include <QDomElement>
 #include <QString>
 
-#include "pubsubsubscription.h"
+PubSubSubscription::PubSubSubscription() {}
 
+PubSubSubscription::PubSubSubscription(const QDomElement &e) { fromXml(e); }
 
-PubSubSubscription::PubSubSubscription()
-{
-}
+const QString &PubSubSubscription::jid() const { return jid_; }
 
-PubSubSubscription::PubSubSubscription(const QDomElement& e)
-{
-    fromXml(e);
-}
+const QString &PubSubSubscription::node() const { return node_; }
 
-const QString& PubSubSubscription::jid() const
-{
-    return jid_;
-}
+PubSubSubscription::State PubSubSubscription::state() const { return state_; }
 
-const QString& PubSubSubscription::node() const
-{
-    return node_;
-}
+bool PubSubSubscription::isNull() const { return jid_.isEmpty() && node_.isEmpty(); }
 
-PubSubSubscription::State PubSubSubscription::state() const
-{
-    return state_;
-}
-
-bool PubSubSubscription::isNull() const
-{
-    return jid_.isEmpty() && node_.isEmpty();
-}
-
-void PubSubSubscription::fromXml(const QDomElement& e)
+void PubSubSubscription::fromXml(const QDomElement &e)
 {
     if (e.tagName() != "subscription")
         return;
 
     node_ = e.attribute("node");
-    jid_ = e.attribute("jid");
+    jid_  = e.attribute("jid");
 
     QString sub = e.attribute("subscription");
     if (sub == "none")
@@ -73,28 +54,25 @@ void PubSubSubscription::fromXml(const QDomElement& e)
         state_ = Subscribed;
 }
 
-QDomElement PubSubSubscription::toXml(QDomDocument& doc) const
+QDomElement PubSubSubscription::toXml(QDomDocument &doc) const
 {
     QDomElement s = doc.createElement("subscription");
-    s.setAttribute("node",node_);
+    s.setAttribute("node", node_);
     if (state_ == None)
-        s.setAttribute("subscription","none");
+        s.setAttribute("subscription", "none");
     else if (state_ == Pending)
-        s.setAttribute("subscription","pending");
+        s.setAttribute("subscription", "pending");
     else if (state_ == Unconfigured)
-        s.setAttribute("subscription","unconfigured");
+        s.setAttribute("subscription", "unconfigured");
     else if (state_ == Subscribed)
-        s.setAttribute("subscription","subscribed");
+        s.setAttribute("subscription", "subscribed");
 
     return s;
 }
 
-bool PubSubSubscription::operator==(const PubSubSubscription& s) const
+bool PubSubSubscription::operator==(const PubSubSubscription &s) const
 {
     return jid() == s.jid() && node() == s.node() && state() == s.state();
 }
 
-bool PubSubSubscription::operator!=(const PubSubSubscription& s) const
-{
-    return !((*this) == s);
-}
+bool PubSubSubscription::operator!=(const PubSubSubscription &s) const { return !((*this) == s); }

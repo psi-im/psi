@@ -12,8 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -21,9 +20,7 @@
 
 #include <QDebug>
 
-AbstractTreeItem::AbstractTreeItem(AbstractTreeItem *parent)
-    : _parent(nullptr)
-    , _children(AbstractTreeItemList())
+AbstractTreeItem::AbstractTreeItem(AbstractTreeItem *parent) : _parent(nullptr), _children(AbstractTreeItemList())
 {
     setParent(parent);
 }
@@ -46,7 +43,7 @@ void AbstractTreeItem::setRow(int row)
 
 int AbstractTreeItem::row() const
 {
-    return _parent ? _parent->_children.indexOf(const_cast<AbstractTreeItem*>(this)) : 0;
+    return _parent ? _parent->_children.indexOf(const_cast<AbstractTreeItem *>(this)) : 0;
 }
 
 void AbstractTreeItem::setParent(AbstractTreeItem *newParent)
@@ -60,10 +57,7 @@ void AbstractTreeItem::setParent(AbstractTreeItem *newParent)
     _parent = newParent;
 }
 
-AbstractTreeItem *AbstractTreeItem::parent() const
-{
-    return _parent;
-}
+AbstractTreeItem *AbstractTreeItem::parent() const { return _parent; }
 
 void AbstractTreeItem::insertChild(int row, AbstractTreeItem *child)
 {
@@ -103,18 +97,12 @@ AbstractTreeItem *AbstractTreeItem::child(int row) const
     if (row < childCount())
         return _children.at(row);
     else
-        return 0;
+        return nullptr;
 }
 
-int AbstractTreeItem::childCount() const
-{
-    return _children.size();
-}
+int AbstractTreeItem::childCount() const { return _children.size(); }
 
-AbstractTreeItemList AbstractTreeItem::children() const
-{
-    return _children;
-}
+AbstractTreeItemList AbstractTreeItem::children() const { return _children; }
 
 void AbstractTreeItem::dump(int indent) const
 {

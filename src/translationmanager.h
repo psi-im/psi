@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,35 +22,34 @@
 
 #include <QObject>
 
-class VarList;
 class QTranslator;
+class VarList;
 
-class TranslationManager : public QObject
-{
+class TranslationManager : public QObject {
     Q_OBJECT
 
 public:
-    static TranslationManager* instance();
+    static TranslationManager *instance();
 
-    VarList availableTranslations();
-    const QString& currentLanguage() const;
-    QString currentXMLLanguage() const;
-    void loadTranslation(const QString& language);
+    VarList        availableTranslations();
+    const QString &currentLanguage() const;
+    QString        currentXMLLanguage() const;
+    void           loadTranslation(const QString &language);
 
 protected:
     QStringList translationDirs() const;
-    bool loadQtTranslation(const QString& language);
+    bool        loadQtTranslation(const QString &language);
 
 private:
     TranslationManager();
     ~TranslationManager();
 
     QString currentLanguage_;
-    //QString currentLanguageName_;
-    QTranslator* translator_;
-    QTranslator* qt_translator_;
+    // QString currentLanguageName_;
+    QTranslator *translator_;
+    QTranslator *qt_translator_;
 
-    static TranslationManager* instance_;
+    static TranslationManager *instance_;
 };
 
-#endif
+#endif // TRANSLATIONMANAGER_H

@@ -15,23 +15,19 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "invitetogroupchatmenu.h"
-#include "psicontact.h"
+
 #include "psiaccount.h"
 #include "psicon.h"
+#include "psicontact.h"
 
-InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget* parent)
-    : QMenu(parent)
-    , controller_(0)
-{
-}
+InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget *parent) : QMenu(parent), controller_(nullptr) {}
 
-void InviteToGroupChatMenu::updateMenu(PsiContact* contact)
+void InviteToGroupChatMenu::updateMenu(PsiContact *contact)
 {
     if (isVisible())
         return;
@@ -40,9 +36,9 @@ void InviteToGroupChatMenu::updateMenu(PsiContact* contact)
     Q_ASSERT(controller_);
     clear();
 
-    foreach(PsiAccount* acc, controller_->contactList()->accounts()) {
-        foreach(QString groupChat, acc->groupchats()) {
-            QAction* action = new QAction(groupChat, this);
+    foreach (PsiAccount *acc, controller_->contactList()->accounts()) {
+        foreach (QString groupChat, acc->groupchats()) {
+            QAction *action = new QAction(groupChat, this);
             addAction(action);
 
             action->setProperty("groupChat", QVariant(groupChat));
@@ -54,7 +50,7 @@ void InviteToGroupChatMenu::updateMenu(PsiContact* contact)
 
 void InviteToGroupChatMenu::actionActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
-    emit inviteToGroupchat(controller_->contactList()->getAccount(action->property("account").toString()),
+    QAction *action = static_cast<QAction *>(sender());
+    emit     inviteToGroupchat(controller_->contactList()->getAccount(action->property("account").toString()),
                            action->property("groupChat").toString());
 }

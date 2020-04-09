@@ -1,7 +1,7 @@
 /*
  * filetunecontroller.h
  * Copyright (C) 2006  Remko Troncon
- * 2011 Vitaly Tonkacheyev, rion
+ * Copyright (C) 2011  Vitaly Tonkacheyev, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,44 +14,38 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef FILEPLAYERCONTROLLER_H
 #define FILEPLAYERCONTROLLER_H
 
+#include "pollingtunecontroller.h"
+#include "tune.h"
+
 namespace QCA {
-    class FileWatch;
+class FileWatch;
 }
 
-#include "tune.h"
-#include "pollingtunecontroller.h"
-
-class FileTuneController : public PollingTuneController
-{
+class FileTuneController : public PollingTuneController {
     Q_OBJECT
 
-    enum Mode {
-        ModeWatch,
-        ModeBoth
-    };
+    enum Mode { ModeWatch, ModeBoth };
 
 public:
-    FileTuneController(const QString& file);
+    FileTuneController(const QString &file);
     Tune currentTune() const;
 
 protected slots:
-    void onFileChanged();
     void check();
 
 private:
-    QString _songFile;
+    QString         _songFile;
     QCA::FileWatch *_tuneFileWatcher;
-    Tune _currentTune;
-    bool _waitForCreated;
+    Tune            _currentTune;
+    bool            _waitForCreated;
     bool _watchFunctional; // is able to work at all (for example it is known NFS doesn't support fs notifications)
 };
 
-#endif
+#endif // FILEPLAYERCONTROLLER_H

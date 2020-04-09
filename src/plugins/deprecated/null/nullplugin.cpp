@@ -18,57 +18,37 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psiplugin.h"
 
-class NullPlugin : public QObject, public PsiPlugin
-{
+class NullPlugin : public QObject, public PsiPlugin {
     Q_OBJECT
     Q_INTERFACES(PsiPlugin)
 
 public:
-    virtual QString name() const;
-    virtual QString shortName() const;
-    virtual QString version() const;
-    virtual QWidget* options() const;
-    virtual bool enable();
-    virtual bool disable();
+    virtual QString  name() const;
+    virtual QString  shortName() const;
+    virtual QString  version() const;
+    virtual QWidget *options() const;
+    virtual bool     enable();
+    virtual bool     disable();
 };
 
 Q_EXPORT_PLUGIN(NullPlugin);
 
-QString NullPlugin::name() const
-{
-    return "Null Plugin";
-}
+QString NullPlugin::name() const { return "Null Plugin"; }
 
-QString NullPlugin::shortName() const
-{
-    return "null";
-}
+QString NullPlugin::shortName() const { return "null"; }
 
-QString NullPlugin::version() const
-{
-    return "0.1";
-}
+QString NullPlugin::version() const { return "0.1"; }
 
-QWidget* NullPlugin::options() const
-{
-    return 0;
-}
+QWidget *NullPlugin::options() const { return 0; }
 
-bool NullPlugin::enable()
-{
-    return true;
-}
+bool NullPlugin::enable() { return true; }
 
-bool NullPlugin::disable()
-{
-    return true;
-}
+bool NullPlugin::disable() { return true; }
 
 #include "nullplugin.moc"

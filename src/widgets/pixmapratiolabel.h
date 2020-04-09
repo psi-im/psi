@@ -5,21 +5,21 @@
 #include <QPixmap>
 #include <QSize>
 
-class PixmapRatioLabel : public QLabel
-{
+class PixmapRatioLabel : public QLabel {
     Q_OBJECT
 
+    Q_ENUMS(Policy)
+    Q_PROPERTY(Policy resizePolicy READ resizePolicy WRITE setResizePolicy)
+
 public:
-    enum class Policy : char {
-        FitVertical,
-        FitHorizontal,
-        FitBoth
-    };
+    enum class Policy : char { FitVertical, FitHorizontal, FitBoth };
 
     explicit PixmapRatioLabel(QWidget *parent = nullptr);
-    void setPixmap(const QPixmap &pix);
-    void setMaxPixmapSize(const QSize &size);
-    inline void setResizePolicy(Policy policy) { _policy = policy; }
+    void   setPixmap(const QPixmap &pix);
+    void   setMaxPixmapSize(const QSize &size);
+    void   setResizePolicy(Policy policy);
+    Policy resizePolicy() const;
+
     inline QSize scaledSize() const { return _scaledPix.size(); }
 
 protected:
@@ -32,8 +32,8 @@ public slots:
 private:
     QPixmap _origPix;
     QPixmap _scaledPix;
-    QSize _maxPixSize;
-    Policy _policy = Policy::FitBoth;
+    QSize   _maxPixSize;
+    Policy  _policy = Policy::FitBoth;
 };
 
 #endif // PIXMAPRATIOLABEL_H

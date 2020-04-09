@@ -1,0 +1,95 @@
+/* AUDIO MESSAGE */
+.psi-audio-msg {
+    color: #141;
+    border-radius: 1em;
+    border: 0.1em solid #60AA60;
+    background-color: #a0dda0;
+    width: 20em;
+    height: 2.2em;
+    padding: 0.2em;
+    position: relative;
+}
+
+.psi-audio-msg .psi-am-play-btn {
+    border-radius: 50%;
+    border: 0.1em solid #60AA60;
+    background-color: #80cc80;
+    width: 2em;
+    height: 2em;
+    float:left;
+    transition: 0.5s;
+}
+.psi-audio-msg .psi-am-play-btn:hover { background-color: #80E080; transition: 0.5s; }
+
+.psi-audio-msg .psi-am-sign-play {
+    border-top: 0.6em solid transparent;
+    border-left: 0.9em solid white;
+    border-bottom: 0.6em solid transparent;
+    border-right: 0 solid transparent;
+    width: 0px;
+    height: 0px;
+    margin-top: 0.4em;
+    margin-left: 36%;
+}
+
+.psi-audio-msg .psi-am-sign-stop {
+    border: 0px;
+    width: 0.8em;
+    height: 0.8em;
+    margin-top: 0.61em;
+    margin-left: 0.61em;
+    background-color: white;
+}
+
+.psi-audio-msg .psi-am-progressbar {
+    position: absolute;
+    left: 2.8em;
+    width: 17.1em;
+    top: 1.7em;
+    height: 0.5em;
+    border: 0.1em solid #60AA60;
+    border-radius: 0.2em;
+    appearance: none;
+    background-color: #8b8;
+}
+.psi-audio-msg .psi-am-progressbar::-webkit-progress-bar {
+    background: transparent;
+}
+.psi-audio-msg .psi-am-progressbar::-webkit-progress-value {
+    border-radius: 0.14em;
+}
+.psi-audio-msg .psi-am-info {
+    position: absolute;
+    left: 2.8em;
+    width: 17em;
+    top: 0.4em;
+    height: 1em;
+    white-space: nowrap;
+}
+
+.psi-audio-msg .psi-am-info>div {
+    display: flex;
+    height: 100%;
+    align-items: flex-end;
+    justify-content: stretch;
+    font-size: 90%;
+    overflow: hidden;
+}
+.psi-audio-msg .psi-am-info div b {
+    display: block;
+    outline: 1px solid #797;
+    margin-left: 1px;
+    background-color: #8b8;
+    flex-grow: 1;
+}
+/* END OF AUDIO MESSAGE */
+
+.preview {
+    max-width: 70%;
+    max-height: 95%;
+}
+
+.preview > img {
+    max-width: 100%;
+    max-height: 100%;
+}

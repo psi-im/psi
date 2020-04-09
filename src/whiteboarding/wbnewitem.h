@@ -14,29 +14,28 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef WBNEWITEM_H
 #define WBNEWITEM_H
 
-#include <QGraphicsItem>
 #include <QDomNode>
+#include <QGraphicsItem>
 
 class WbNewItem {
 public:
-    WbNewItem(QGraphicsScene* s);
+    WbNewItem(QGraphicsScene *s);
     virtual ~WbNewItem();
 
-    virtual void parseCursorMove(QPointF newPos) = 0;
+    virtual void     parseCursorMove(QPointF newPos) = 0;
     virtual QDomNode serializeToSvg(QDomDocument *doc);
 
 protected:
-    virtual QGraphicsItem* graphicsItem() = 0;
+    virtual QGraphicsItem *graphicsItem() = 0;
 
-    QGraphicsScene* scene;
+    QGraphicsScene *scene;
 };
 
-#endif
+#endif // WBNEWITEM_H

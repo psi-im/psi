@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -24,12 +23,11 @@
 #include <QDialog>
 
 // TODO looks like its better to not use this class at all
-class ShowTextDlg : public QDialog
-{
+class ShowTextDlg : public QDialog {
     Q_OBJECT
 public:
-    ShowTextDlg(const QString &fname, bool rich=false, QWidget *parent=0);
+    ShowTextDlg(const QString &fname, bool rich = false, QWidget *parent = nullptr);
     ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent);
 };
 
-#endif
+#endif // CS_SHOWTEXTDLG_H

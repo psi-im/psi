@@ -12,50 +12,65 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psitextview.h"
 
-#include <QMenu>
-#include <QScrollBar>
 #include <QAbstractTextDocumentLayout>
+#include <QMenu>
+#include <QMimeData>
+#include <QRegExp>
+#include <QRegularExpression>
+#include <QScrollBar>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
-#include <QRegExp>
-#include <QMimeData>
+#include <QTimer>
 
-#include "urlobject.h"
+#include "filesharingdownloader.h"
+#include "filesharingmanager.h"
 #include "psirichtext.h"
+#include "qiteaudio.h"
+#include "textutil.h"
+#include "urlobject.h"
 
 //----------------------------------------------------------------------------
 // PsiTextView::Private
 //----------------------------------------------------------------------------
 
 //! \if _hide_doc_
-class PsiTextView::Private : public QObject
-{
+class PsiTextView::Private : public QObject {
     Q_OBJECT
 
 public:
-    Private(QObject *parent)
-    : QObject(parent)
+    using QObject::QObject;
+
+    QString                  anchorOnMousePress;
+    bool                     hadSelectionOnMousePress = false;
+    FileSharingDeviceOpener *mediaOpener              = nullptr;
+    ITEAudioController *     voiceMsgCtrl             = nullptr;
+
+    // handler function accepts everything after tag name upto but exluding final ">"
+    PsiRichText::ParsersMap objectParsers;
+
+    QMap<QString, QString> parseHtmlAttrs(const QStringRef &html)
     {
-        anchorOnMousePress = QString();
-        hadSelectionOnMousePress = false;
+        static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])((.(?!\\2))*.)\\2");
+        // static QRegularExpression attrStart("([a-zA-Z0-9]+)=([\"'])([^\"']*)\\2");
+        auto                   it = attrStart.globalMatch(html);
+        QMap<QString, QString> attrs;
+        while (it.hasNext()) {
+            auto    match = it.next();
+            QString name  = match.captured(1);
+            QString value = match.captured(3);
+            attrs.insert(name, value);
+        }
+        return attrs;
     }
-
-    QString anchorOnMousePress;
-    bool hadSelectionOnMousePress;
-
-    QString fragmentToPlainText(const QTextFragment &fragment);
-    QString blockToPlainText(const QTextBlock &block);
-    QString documentFragmentToPlainText(const QTextDocument &doc, QTextFrame::Iterator frameIt);
 };
-//!endif
+//! endif
 
 //----------------------------------------------------------------------------
 // PsiTextView
@@ -69,8 +84,7 @@ public:
 /**
  * Default constructor.
  */
-PsiTextView::PsiTextView(QWidget *parent)
-: QTextEdit(parent)
+PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
 {
     d = new Private(this);
 
@@ -78,35 +92,138 @@ PsiTextView::PsiTextView(QWidget *parent)
     PsiRichText::install(document());
 
     viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
+
+    auto itc        = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
+    d->voiceMsgCtrl = new ITEAudioController(itc);
+    d->voiceMsgCtrl->setAutoFetchMetadata(true);
+
+    d->objectParsers = PsiRichText::ParsersMap {
+        { "share",
+          [this](const QStringRef &html, int insertAfter) -> PsiRichText::ParserRet {
+              if (!d->mediaOpener)
+                  return { QTextCharFormat(), "" };
+              auto    attrs = d->parseHtmlAttrs(html);
+              QString id    = attrs.value(QLatin1String("id"));
+              if (id.isEmpty())
+                  return { QTextCharFormat(), "" };
+
+              auto item = d->mediaOpener->sharedItem(id);
+              if (!item)
+                  return { QTextCharFormat(), "" };
+
+              if (item->mimeType().startsWith(QLatin1String("audio/"))) {
+                  return { d->voiceMsgCtrl->makeFormat(QUrl(QLatin1String("share:") + id), d->mediaOpener), "" };
+              }
+
+              if (item->mimeType().startsWith("image/")) {
+                  QString anchorName = QLatin1String("share:") + id;
+                  QUrl    url(anchorName);
+
+                  if (item->isCached()) {
+                      QVariant         vimg = document()->resource(QTextDocument::ImageResource, url);
+                      QTextImageFormat fmt;
+                      fmt.setName(url.toString());
+                      QImage img;
+                      if (vimg.isValid()) {
+                          img = vimg.value<QImage>();
+                      } else {
+                          img = item->preview(QSize(640, 480));
+                          document()->addResource(QTextDocument::ImageResource, url, img);
+                      }
+
+                      fmt.setWidth(img.width());
+                      fmt.setHeight(img.height());
+
+                      return { fmt, "" };
+                  }
+
+                  // otherwise we have to download it
+                  connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
+                      item->disconnect(this);
+                      document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
+                      auto        prevCur = textCursor();
+                      QTextCursor cur(document());
+                      cur.setPosition(insertAfter);
+
+                      cur = PsiRichText::findMarker(cur, anchorName + "/start");
+                      if (cur.isNull()) {
+                          cur = PsiRichText::findMarker(QTextCursor(document()), anchorName + "/start");
+                          if (cur.isNull())
+                              return;
+                      }
+                      auto curEnd = PsiRichText::findMarker(cur, anchorName + "/end");
+                      if (curEnd.isNull())
+                          return;
+
+                      bool doScroll = atBottom();
+                      cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
+                      // qDebug() << "DEBUG SELECTED:" << cur.selectedText();
+                      cur.removeSelectedText();
+                      cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
+                      if (doScroll)
+                          QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
+                      setTextCursor(prevCur);
+                  });
+                  auto downloader = item->download(false, 0, 0);
+                  downloader->setSelfDelete(true);
+                  // read just for cache
+                  connect(downloader, &FileShareDownloader::readyRead, this,
+                          [downloader]() { downloader->read(downloader->bytesAvailable()); });
+                  downloader->open();
+
+                  qlonglong div;
+                  QString   unit    = TextUtil::sizeUnit(qlonglong(item->fileSize()), &div);
+                  QString   sizeStr = TextUtil::roundedNumber(qint64(item->fileSize()), div) + unit;
+
+                  QUrl simpleUrl = item->simpleSource();
+                  if (simpleUrl.isValid()) {
+                      return { QTextCharFormat(),
+                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3 (%4, %5)</a><marker id=\"%1/end\">")
+                                   .arg(anchorName, simpleUrl.toString(QUrl::FullyEncoded), simpleUrl.toString(),
+                                        item->mimeType(), sizeStr, anchorName) };
+                  }
+
+                  return { QTextCharFormat(),
+                           QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%1/end\">")
+                               .arg(anchorName, item->mimeType(), sizeStr, anchorName) };
+              }
+              return { QTextCharFormat(), "" };
+          } },
+        { "marker",
+          [this](const QStringRef &html, int) -> PsiRichText::ParserRet {
+              auto attrs = d->parseHtmlAttrs(html);
+              auto id    = attrs.value("id");
+              return { PsiRichText::markerFormat(id), QString() };
+          } }
+    };
 }
 
- /**
+/**
  * Reimplemented createStandardContextMenu(const QPoint &position)
  * for creating of custom context menu
  */
 
-QMenu* PsiTextView::createStandardContextMenu(const QPoint &position)
+QMenu *PsiTextView::createStandardContextMenu(const QPoint &position)
 {
     QTextCursor textcursor = cursorForPosition(position);
-    QMenu *menu;
-    QString anc = anchorAt(position);
+    QMenu *     menu;
+    QString     anc = anchorAt(position);
     if (!anc.isEmpty()) {
         menu = URLObject::getInstance()->createPopupMenu(anc);
 
-        int posInBlock = textcursor.position() - textcursor.block().position();
-        QString textblock = textcursor.block().text();
-        int begin = textcursor.block().position() + textblock.lastIndexOf(QRegExp("\\s|^"), posInBlock) + 1;
-        int end = textcursor.block().position() + textblock.indexOf(QRegExp("\\s|$"), posInBlock);
+        int     posInBlock = textcursor.position() - textcursor.block().position();
+        QString textblock  = textcursor.block().text();
+        int     begin      = textcursor.block().position() + textblock.lastIndexOf(QRegExp("\\s|^"), posInBlock) + 1;
+        int     end        = textcursor.block().position() + textblock.indexOf(QRegExp("\\s|$"), posInBlock);
         textcursor.setPosition(begin);
         textcursor.setPosition(end, QTextCursor::KeepAnchor);
         setTextCursor(textcursor);
 
         menu = URLObject::getInstance()->createPopupMenu(anc);
-    }
-    else {
+    } else {
         if (isSelectedBlock() || !textCursor().hasSelection()) { // only if no selection we select text block
             int begin = textcursor.block().position();
-            int end = begin + textcursor.block().length() - 1;
+            int end   = begin + textcursor.block().length() - 1;
             textcursor.setPosition(begin);
             textcursor.setPosition(end, QTextCursor::KeepAnchor);
             setTextCursor(textcursor);
@@ -120,8 +237,8 @@ bool PsiTextView::isSelectedBlock()
 {
     if (textCursor().hasSelection()) {
         const QTextCursor &cursor = textCursor();
-        const QTextBlock  &block  = cursor.block();
-        int start = cursor.selectionStart();
+        const QTextBlock & block  = cursor.block();
+        int                start  = cursor.selectionStart();
         if (block.position() == start && block.length() == cursor.selectionEnd() - start + 1)
             return true;
     }
@@ -141,18 +258,12 @@ bool PsiTextView::atBottom()
 /**
  * Scrolls the vertical scroll bar to its maximum position i.e. to the bottom.
  */
-void PsiTextView::scrollToBottom()
-{
-    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
-}
+void PsiTextView::scrollToBottom() { verticalScrollBar()->setValue(verticalScrollBar()->maximum()); }
 
 /**
  * Scrolls the vertical scroll bar to its minimum position i.e. to the top.
  */
-void PsiTextView::scrollToTop()
-{
-    verticalScrollBar()->setValue(verticalScrollBar()->minimum());
-}
+void PsiTextView::scrollToTop() { verticalScrollBar()->setValue(verticalScrollBar()->minimum()); }
 
 /**
  * This function is provided for convenience. Please see
@@ -160,10 +271,10 @@ void PsiTextView::scrollToTop()
  */
 void PsiTextView::appendText(const QString &text)
 {
-    QTextCursor cursor = textCursor();
+    QTextCursor            cursor    = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
 
-    PsiRichText::appendText(document(), cursor, text);
+    PsiRichText::appendText(document(), cursor, text, true, d->objectParsers);
 
     PsiRichText::restoreSelection(this, cursor, selection);
     setTextCursor(cursor);
@@ -175,10 +286,11 @@ void PsiTextView::appendText(const QString &text)
  */
 void PsiTextView::insertText(const QString &text, QTextCursor &cursor)
 {
-    QTextCursor selCursor = textCursor();
+    QTextCursor            selCursor = textCursor();
     PsiRichText::Selection selection = PsiRichText::saveSelection(this, selCursor);
 
-    PsiRichText::appendText(document(), cursor, text, false);
+    // qDebug() << "DEBUG TO INSERT:" << text;
+    PsiRichText::appendText(document(), cursor, text, false, d->objectParsers);
 
     PsiRichText::restoreSelection(this, selCursor, selection);
     setTextCursor(selCursor);
@@ -186,9 +298,9 @@ void PsiTextView::insertText(const QString &text, QTextCursor &cursor)
 
 QString PsiTextView::getTextHelper(bool html) const
 {
-    PsiTextView *ptv = const_cast<PsiTextView *>(this);
-    QTextCursor cursor = ptv->textCursor();
-    int position = ptv->verticalScrollBar()->value();
+    PsiTextView *ptv      = const_cast<PsiTextView *>(this);
+    QTextCursor  cursor   = ptv->textCursor();
+    int          position = ptv->verticalScrollBar()->value();
 
     bool unselectAll = false;
     if (!textCursor().hasSelection()) {
@@ -197,7 +309,7 @@ QString PsiTextView::getTextHelper(bool html) const
     }
 
     QMimeData *mime = createMimeDataFromSelection();
-    QString result;
+    QString    result;
     if (html)
         result = mime->html();
     else
@@ -220,15 +332,11 @@ QString PsiTextView::getTextHelper(bool html) const
  * Returns HTML markup for selected text. If no text is selected, returns
  * HTML markup for all text.
  */
-QString PsiTextView::getHtml() const
-{
-    return getTextHelper(true);
-}
+QString PsiTextView::getHtml() const { return getTextHelper(true); }
 
-QString PsiTextView::getPlainText() const
-{
-    return getTextHelper(false);
-}
+QString PsiTextView::getPlainText() const { return getTextHelper(false); }
+
+void PsiTextView::setMediaOpener(FileSharingDeviceOpener *opener) { d->mediaOpener = opener; }
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {
@@ -252,10 +360,10 @@ void PsiTextView::mousePressEvent(QMouseEvent *e)
 {
     d->anchorOnMousePress = anchorAt(e->pos());
     if (!textCursor().hasSelection() && !d->anchorOnMousePress.isEmpty()) {
-        QTextCursor cursor = textCursor();
-        QPoint mapped = QPoint(e->pos().x() + horizontalScrollBar()->value(),
+        QTextCursor cursor    = textCursor();
+        QPoint      mapped    = QPoint(e->pos().x() + horizontalScrollBar()->value(),
                                e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
-        const int cursorPos = document()->documentLayout()->hitTest(mapped, Qt::FuzzyHit);
+        const int   cursorPos = document()->documentLayout()->hitTest(mapped, Qt::FuzzyHit);
         if (cursorPos != -1)
             cursor.setPosition(cursorPos);
         setTextCursor(cursor);
@@ -279,8 +387,7 @@ void PsiTextView::mouseReleaseEvent(QMouseEvent *e)
     if (anchor.isEmpty())
         return;
 
-    if (!textCursor().hasSelection()
-        || (anchor == d->anchorOnMousePress && d->hadSelectionOnMousePress))
+    if (!textCursor().hasSelection() || (anchor == d->anchorOnMousePress && d->hadSelectionOnMousePress))
         URLObject::getInstance()->popupAction(anchor);
 }
 
@@ -291,7 +398,7 @@ void PsiTextView::mouseReleaseEvent(QMouseEvent *e)
 QMimeData *PsiTextView::createMimeDataFromSelection() const
 {
     QTextDocument *doc = new QTextDocument();
-    QTextCursor cursor(doc);
+    QTextCursor    cursor(doc);
     cursor.insertFragment(textCursor().selection());
     QString text = PsiRichText::convertToPlainText(doc);
     delete doc;
@@ -308,21 +415,18 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
  */
 void PsiTextView::resizeEvent(QResizeEvent *e)
 {
-    bool atEnd = verticalScrollBar()->value() ==
-                 verticalScrollBar()->maximum();
-    bool atStart = verticalScrollBar()->value() ==
-                   verticalScrollBar()->minimum();
-    double value = 0;
+    bool   atEnd   = verticalScrollBar()->value() == verticalScrollBar()->maximum();
+    bool   atStart = verticalScrollBar()->value() == verticalScrollBar()->minimum();
+    double value   = 0;
     if (!atEnd && !atStart)
-        value = (double)verticalScrollBar()->maximum() /
-                (double)verticalScrollBar()->value();
+        value = double(verticalScrollBar()->maximum()) / double(verticalScrollBar()->value());
 
     QTextEdit::resizeEvent(e);
 
     if (atEnd)
         verticalScrollBar()->setValue(verticalScrollBar()->maximum());
     else if (value != 0)
-        verticalScrollBar()->setValue((int) ((double)verticalScrollBar()->maximum() / value));
+        verticalScrollBar()->setValue(int(double(verticalScrollBar()->maximum()) / value));
 }
 
 #include "psitextview.moc"

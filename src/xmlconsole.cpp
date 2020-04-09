@@ -1,6 +1,6 @@
 /*
  * xmlconsole.cpp - dialog for interacting manually with XMPP
- * Copyright (C) 2001, 2002  Justin Karneges, Remko Troncon
+ * Copyright (C) 2001-2002  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,34 +13,33 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QLayout>
-#include <QPushButton>
-#include <QCheckBox>
-#include <QVBoxLayout>
-#include <QTextEdit>
-#include <QHBoxLayout>
-#include <QMessageBox>
-#include <QTextFrame>
-#include <QScrollBar>
-
-#include "xmpp_client.h"
 #include "xmlconsole.h"
+
+#include "iconset.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 #include "textutil.h"
-#include "iconset.h"
+#include "xmpp_client.h"
+
+#include <QCheckBox>
+#include <QHBoxLayout>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QScrollBar>
+#include <QTextEdit>
+#include <QTextFrame>
+#include <QVBoxLayout>
 
 //----------------------------------------------------------------------------
 // XmlConsole
 //----------------------------------------------------------------------------
-XmlConsole::XmlConsole(PsiAccount *_pa)
-:QWidget()
+XmlConsole::XmlConsole(PsiAccount *_pa) : QWidget()
 {
     ui_.setupUi(this);
     setWindowIcon(IconsetFactory::icon("psi/xml").icon());
@@ -52,7 +51,7 @@ XmlConsole::XmlConsole(PsiAccount *_pa)
     connect(pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateCaption()));
     updateCaption();
 
-    prompt = 0;
+    prompt = nullptr;
 
     ui_.te->setUndoRedoEnabled(false);
     ui_.te->setReadOnly(true);
@@ -67,13 +66,10 @@ XmlConsole::XmlConsole(PsiAccount *_pa)
     connect(ui_.pb_close, SIGNAL(clicked()), SLOT(close()));
     connect(ui_.pb_dumpRingbuf, SIGNAL(clicked()), SLOT(dumpRingbuf()));
 
-    resize(560,400);
+    resize(560, 400);
 }
 
-XmlConsole::~XmlConsole()
-{
-    pa->dialogUnregister(this);
-}
+XmlConsole::~XmlConsole() { pa->dialogUnregister(this); }
 
 void XmlConsole::clear()
 {
@@ -91,29 +87,29 @@ void XmlConsole::updateCaption()
         setWindowTitle(tr("XML Console"));
 }
 
-void XmlConsole::enable()
-{
-    ui_.ck_enable->setChecked(true);
-}
+void XmlConsole::enable() { ui_.ck_enable->setChecked(true); }
 
-bool XmlConsole::filtered(const QString& str) const
+bool XmlConsole::filtered(const QString &str) const
 {
-    if(ui_.ck_enable->isChecked()) {
+    if (ui_.ck_enable->isChecked()) {
         // Only do parsing if needed
-        if (!ui_.le_jid->text().isEmpty() || !ui_.ck_iq->isChecked() || !ui_.ck_message->isChecked() || !ui_.ck_presence->isChecked() || !ui_.ck_sm->isChecked()) {
+        if (!ui_.le_jid->text().isEmpty() || !ui_.ck_iq->isChecked() || !ui_.ck_message->isChecked()
+            || !ui_.ck_presence->isChecked() || !ui_.ck_sm->isChecked()) {
             QDomDocument doc;
             if (!doc.setContent(str))
                 return true;
 
-            QDomElement e = doc.documentElement();
-            QString tn = e.tagName();
-            if ((tn == "iq" && !ui_.ck_iq->isChecked()) || (tn == "message" && !ui_.ck_message->isChecked()) || (tn == "presence" && !ui_.ck_presence->isChecked()) || ((tn == "a" || tn == "r") && !ui_.ck_sm->isChecked()))
+            QDomElement e  = doc.documentElement();
+            QString     tn = e.tagName();
+            if ((tn == "iq" && !ui_.ck_iq->isChecked()) || (tn == "message" && !ui_.ck_message->isChecked())
+                || (tn == "presence" && !ui_.ck_presence->isChecked())
+                || ((tn == "a" || tn == "r") && !ui_.ck_sm->isChecked()))
                 return true;
 
             if (!ui_.le_jid->text().isEmpty()) {
-                Jid jid(ui_.le_jid->text());
+                Jid  jid(ui_.le_jid->text());
                 bool hasResource = !jid.resource().isEmpty();
-                if (!jid.compare(e.attribute("to"),hasResource) && !jid.compare(e.attribute("from"),hasResource))
+                if (!jid.compare(e.attribute("to"), hasResource) && !jid.compare(e.attribute("from"), hasResource))
                     return true;
             }
         }
@@ -124,8 +120,8 @@ bool XmlConsole::filtered(const QString& str) const
 
 void XmlConsole::dumpRingbuf()
 {
-    QList<PsiAccount::xmlRingElem> buf = pa->dumpRingbuf();
-    bool enablesave = ui_.ck_enable->isChecked();
+    QList<PsiAccount::xmlRingElem> buf        = pa->dumpRingbuf();
+    bool                           enablesave = ui_.ck_enable->isChecked();
     ui_.ck_enable->setChecked(true);
     QString stamp;
     foreach (PsiAccount::xmlRingElem el, buf) {
@@ -139,14 +135,15 @@ void XmlConsole::dumpRingbuf()
     ui_.ck_enable->setChecked(enablesave);
 }
 
-void XmlConsole::addRecord(bool incoming, const QString &str) {
+void XmlConsole::addRecord(bool incoming, const QString &str)
+{
     if (!filtered(str)) {
-        int prevSPos = ui_.te->verticalScrollBar()->value();
-        bool atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
-        QTextCursor prevCur = ui_.te->textCursor();
+        int         prevSPos = ui_.te->verticalScrollBar()->value();
+        bool        atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
+        QTextCursor prevCur  = ui_.te->textCursor();
 
         ui_.te->moveCursor(QTextCursor::End);
-        ui_.te->setTextColor(incoming? Qt::yellow : Qt::red);
+        ui_.te->setTextColor(incoming ? Qt::yellow : Qt::red);
         ui_.te->insertPlainText(str + '\n');
 
         if (!atBottom) {
@@ -158,19 +155,13 @@ void XmlConsole::addRecord(bool incoming, const QString &str) {
     }
 }
 
-void XmlConsole::client_xmlIncoming(const QString &str)
-{
-    addRecord(true, str);
-}
+void XmlConsole::client_xmlIncoming(const QString &str) { addRecord(true, str); }
 
-void XmlConsole::client_xmlOutgoing(const QString &str)
-{
-    addRecord(false, str);
-}
+void XmlConsole::client_xmlOutgoing(const QString &str) { addRecord(false, str); }
 
 void XmlConsole::insertXml()
 {
-    if(prompt)
+    if (prompt)
         bringToFront(prompt);
     else {
         prompt = new XmlPrompt(this);
@@ -179,17 +170,12 @@ void XmlConsole::insertXml()
     }
 }
 
-void XmlConsole::xml_textReady(const QString &str)
-{
-    pa->client()->send(str);
-}
-
+void XmlConsole::xml_textReady(const QString &str) { pa->client()->send(str); }
 
 //----------------------------------------------------------------------------
 // XmlPrompt
 //----------------------------------------------------------------------------
-XmlPrompt::XmlPrompt(QWidget *parent)
-    : QDialog(parent)
+XmlPrompt::XmlPrompt(QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("XML Input"));
@@ -215,12 +201,10 @@ XmlPrompt::XmlPrompt(QWidget *parent)
     connect(pb, SIGNAL(clicked()), SLOT(close()));
     hb1->addWidget(pb);
 
-    resize(320,240);
+    resize(320, 240);
 }
 
-XmlPrompt::~XmlPrompt()
-{
-}
+XmlPrompt::~XmlPrompt() {}
 
 void XmlPrompt::doTransmit()
 {
@@ -229,7 +213,9 @@ void XmlPrompt::doTransmit()
     // Validate input
     QDomDocument doc;
     if (!doc.setContent(str)) {
-        int i = QMessageBox::warning(this, tr("Malformed XML"), tr("You have entered malformed XML input. Are you sure you want to send this ?"), tr("Yes"), tr("No"));
+        int i = QMessageBox::warning(this, tr("Malformed XML"),
+                                     tr("You have entered malformed XML input. Are you sure you want to send this ?"),
+                                     tr("Yes"), tr("No"));
         if (i != 0)
             return;
     }
@@ -237,4 +223,3 @@ void XmlPrompt::doTransmit()
     textReady(str);
     close();
 }
-

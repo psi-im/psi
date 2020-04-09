@@ -12,21 +12,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QtCrypto>
+#include "Certificates/CertificateDisplayDialog.h"
+
+#include "Certificates/CertificateHelpers.h"
+
 #include <QDateTime>
 #include <QLabel>
 #include <QPushButton>
+#include <QtCrypto>
 
-#include "Certificates/CertificateHelpers.h"
-#include "Certificates/CertificateDisplayDialog.h"
-
-
-CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent) : QDialog(parent)
+CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity,
+                                                   QWidget *parent) :
+    QDialog(parent)
 {
     ui_.setupUi(this);
     setModal(true);
@@ -35,22 +36,20 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
     ui_.pb_close->setDefault(true);
     ui_.pb_close->setFocus();
 
-    if(cert.isNull()) {
+    if (cert.isNull()) {
         return;
     }
 
-    if (result == QCA::TLS::Valid) {
-        ui_.lb_valid->setText(tr("The certificate is valid."));
-        setLabelStatus(*ui_.lb_valid, true);
-    }
-    else {
-        ui_.lb_valid->setText(tr("The certificate is NOT valid!") + "\n" + QString(tr("Reason: %1.")).arg(CertificateHelpers::resultToString(result, validity)));
-        setLabelStatus(*ui_.lb_valid, false);
-    }
+    bool resultIsValid = result == QCA::TLS::Valid;
+    ui_.lb_valid->setText(
+        resultIsValid ? tr("The certificate is valid.")
+                      : tr("The certificate is NOT valid!\n")
+                + QString(tr("Reason: %1.")).arg(CertificateHelpers::resultToString(result, validity)));
+    setLabelStatus(*ui_.lb_valid, resultIsValid);
 
-    QDateTime now = QDateTime::currentDateTime();
+    QDateTime now       = QDateTime::currentDateTime();
     QDateTime notBefore = cert.notValidBefore();
-    QDateTime notAfter = cert.notValidAfter();
+    QDateTime notAfter  = cert.notValidAfter();
     ui_.lb_notBefore->setText(cert.notValidBefore().toString());
     setLabelStatus(*ui_.lb_notBefore, now > notBefore);
     ui_.lb_notAfter->setText(cert.notValidAfter().toString());
@@ -58,14 +57,17 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
 
     ui_.lb_sn->setText(cert.serialNumber().toString());
 
-    QString str;
     QString direction = qApp->layoutDirection() == Qt::RightToLeft ? "rtl" : "ltr";
-    str += "<table dir=\"" + direction + "\">";
+    QString str       = "<table dir=\"" + direction + "\">";
     str += makePropTable(tr("Subject Details:"), cert.subjectInfo());
     str += makePropTable(tr("Issuer Details:"), cert.issuerInfo());
     str += "</table>";
-    for (int i=0; i < 2; i++) {
-        QString hashstr = QCA::Hash(i == 0 ? "md5" : "sha1").hashToString(cert.toDER()).toUpper().replace(QRegExp("(..)"), ":\\1").mid(1);
+    for (int i = 0; i < 2; i++) {
+        QString hashstr = QCA::Hash(i == 0 ? "md5" : "sha1")
+                              .hashToString(cert.toDER())
+                              .toUpper()
+                              .replace(QRegExp("(..)"), ":\\1")
+                              .mid(1);
         str += QString("Fingerprint(%1): %2<br>").arg(i == 0 ? "MD5" : "SHA-1").arg(hashstr);
     }
     ui_.tb_cert->setText(str);
@@ -73,8 +75,8 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
 
 QString CertificateDisplayDialog::makePropTable(const QString &heading, const QCA::CertificateInfo &list)
 {
-    QString str;
-    str += "<tr><td><i>" + heading + "</i><br>";
+
+    QString str = "<tr><td><i>" + heading + "</i><br>";
     str += "<table>";
     str += makePropEntry(QCA::Organization, tr("Organization:"), list);
     str += makePropEntry(QCA::OrganizationalUnit, tr("Organizational unit:"), list);
@@ -89,22 +91,23 @@ QString CertificateDisplayDialog::makePropTable(const QString &heading, const QC
     return str;
 }
 
-void CertificateDisplayDialog::setLabelStatus(QLabel& l, bool ok)
+void CertificateDisplayDialog::setLabelStatus(QLabel &l, bool ok)
 {
     QPalette palette;
     palette.setColor(l.foregroundRole(), ok ? QColor("#2A993B") : QColor("#810000"));
     l.setPalette(palette);
 }
 
-QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list)
+QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, const QString &name,
+                                                const QCA::CertificateInfo &list)
 {
-    QString val;
+    QString        val;
     QList<QString> values = list.values(var);
     for (int i = 0; i < values.size(); ++i)
         val += values.at(i) + "<br>";
 
-    if(val.isEmpty())
+    if (val.isEmpty())
         return "";
     else
-        return QString("<tr><td><nobr><b>") + name + "</b></nobr></td><td dir=\"ltr\">" + val + "</td></tr>";
+        return QString("<tr><td><nobr><b>%1</b></nobr></td><td dir=\"ltr\">%2</td></tr>").arg(name).arg(val);
 }

@@ -13,54 +13,53 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#ifndef _TABMANAGER_H_
-#define _TABMANAGER_H_
+#ifndef TABMANAGER_H
+#define TABMANAGER_H
 
-#include <QObject>
-#include <QList>
 #include "psicon.h"
 
-class TabbableWidget;
+#include <QList>
+#include <QObject>
+
 class TabDlg;
 class TabDlgDelegate;
+class TabbableWidget;
 
-class TabManager : public QObject
-{
+class TabManager : public QObject {
     Q_OBJECT
 public:
-    TabManager(PsiCon *psiCon, QObject *parent = 0);
+    TabManager(PsiCon *psiCon, QObject *parent = nullptr);
     ~TabManager();
 
-    PsiCon* psiCon() const;
+    PsiCon *psiCon() const;
 
     /**
      * Get the default tabset for this widget (created if needed).
      */
-    TabDlg* getTabs(QWidget *widget);
+    TabDlg *getTabs(QWidget *widget);
 
     /**
      * Return a new tabset (for this widget).
      */
-    TabDlg*    newTabs(QWidget *widget=0);
+    TabDlg *newTabs(QWidget *widget = nullptr);
 
     /**
      * Checks if a tabset manages this widget.
      */
-    bool isChatTabbed(const TabbableWidget*) const;
+    bool isChatTabbed(const TabbableWidget *) const;
 
     /**
      * Returns the tab dialog that owns the supplied widget.
      */
-    TabDlg* getManagingTabs(const TabbableWidget*) const;
+    TabDlg *getManagingTabs(const TabbableWidget *) const;
 
     /**
      * Returns all active tabsets (could be empty).
      */
-    const QList<TabDlg*>& tabSets();
+    const QList<TabDlg *> &tabSets();
 
     /**
      * Checks if a given widget should be in a tabset
@@ -72,7 +71,6 @@ public:
      * removes and deletes all tabsets
      */
     void deleteAll();
-
 
     /**
      * Returns the Kind of the given widget.
@@ -116,18 +114,18 @@ public:
     void setSimplifiedCaptionEnabled(bool enabled);
 
 public slots:
-    void tabDestroyed(QObject*);
+    void tabDestroyed(QObject *);
 
 private:
-    QMap<QChar, TabDlg*> preferedTabsetForKind_;
-    QMap<TabDlg*, QString> tabsetToKinds_;
-     QList<TabDlg*> tabs_;
-    QList<TabbableWidget*> tabControlledChats_;
-    PsiCon *psiCon_;
-    TabDlgDelegate *tabDlgDelegate_;
-    bool userManagement_;
-    bool tabSingles_;
-    bool simplifiedCaption_;
+    QMap<QChar, TabDlg *>   preferedTabsetForKind_;
+    QMap<TabDlg *, QString> tabsetToKinds_;
+    QList<TabDlg *>         tabs_;
+    QList<TabbableWidget *> tabControlledChats_;
+    PsiCon *                psiCon_;
+    TabDlgDelegate *        tabDlgDelegate_;
+    bool                    userManagement_;
+    bool                    tabSingles_;
+    bool                    simplifiedCaption_;
 };
 
-#endif /* _TABMANAGER_H_ */
+#endif // TABMANAGER_H

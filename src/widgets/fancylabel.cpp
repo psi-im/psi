@@ -12,51 +12,47 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "fancylabel.h"
 
-#include <QPixmap>
 #include <QColor>
-#include <QLayout>
-#include <QLabel>
 #include <QFrame>
+#include <QLabel>
+#include <QLayout>
 #include <QPainter>
+#include <QPixmap>
 #include <QResizeEvent>
 
+#include "iconlabel.h"
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #else
 class PsiIcon;
 #endif
 
-#include "iconlabel.h"
-
 //----------------------------------------------------------------------------
 // IconLabel
 //----------------------------------------------------------------------------
 
-class IconLabel::Private : public QObject
-{
+class IconLabel::Private : public QObject {
     Q_OBJECT
 
 public:
-
     IconLabel *label;
-    PsiIcon *icon;
-    bool copyIcon;
+    PsiIcon *  icon;
+    bool       copyIcon;
 #ifdef WIDGET_PLUGIN
     QString iconName;
 #endif
 
     Private(IconLabel *l)
     {
-        label = l;
-        icon = 0;
+        label    = l;
+        icon     = nullptr;
         copyIcon = false;
     }
 
@@ -64,7 +60,7 @@ public:
     {
         stopIcon();
 #ifndef WIDGET_PLUGIN
-        if ( icon && copyIcon )
+        if (icon && copyIcon)
             delete icon;
 #endif
     }
@@ -77,24 +73,23 @@ public:
 #ifndef WIDGET_PLUGIN
             delete icon;
 #endif
-            icon = 0;
+            icon = nullptr;
         }
 
         copyIcon = _copyIcon;
 
 #ifndef WIDGET_PLUGIN
-        if ( i ) {
+        if (i) {
             if (copyIcon)
                 icon = new PsiIcon(*i);
             else
                 icon = const_cast<PsiIcon *>(i);
-        }
-        else {
-            icon = 0;
+        } else {
+            icon = nullptr;
         }
 
 #else
-    Q_UNUSED(i);
+        Q_UNUSED(i);
 #endif
         startIcon();
     }
@@ -103,8 +98,8 @@ protected:
     void stopIcon()
     {
 #ifndef WIDGET_PLUGIN
-        if ( icon ) {
-            disconnect(icon, 0, this, 0);
+        if (icon) {
+            disconnect(icon, nullptr, this, nullptr);
             icon->stop();
         }
 #endif
@@ -113,7 +108,7 @@ protected:
     void startIcon()
     {
 #ifndef WIDGET_PLUGIN
-        if ( icon ) {
+        if (icon) {
             connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
             icon->activated(false); // TODO: should icon play sound when it's activated on icon?
         }
@@ -130,42 +125,29 @@ private slots:
     }
 };
 
-IconLabel::IconLabel(QWidget *parent)
-: QLabel(parent)
-{
-    d = new Private(this);
-}
+IconLabel::IconLabel(QWidget *parent) : QLabel(parent) { d = new Private(this); }
 
-IconLabel::~IconLabel()
-{
-    delete d;
-}
+IconLabel::~IconLabel() { delete d; }
 
-const PsiIcon *IconLabel::psiIcon () const
-{
-    return d->icon;
-}
+const PsiIcon *IconLabel::psiIcon() const { return d->icon; }
 
-QString IconLabel::psiIconName () const
+QString IconLabel::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
-    if ( d->icon )
+    if (d->icon)
         return d->icon->name();
-    return QString::null;
+    return QString();
 #else
     return d->iconName;
 #endif
 }
 
-void IconLabel::setPsiIcon(const PsiIcon *i, bool copyIcon)
-{
-    d->setIcon(i, copyIcon);
-}
+void IconLabel::setPsiIcon(const PsiIcon *i, bool copyIcon) { d->setIcon(i, copyIcon); }
 
 void IconLabel::setPsiIcon(const QString &name)
 {
 #ifndef WIDGET_PLUGIN
-    setPsiIcon( IconsetFactory::iconPtr(name) );
+    setPsiIcon(IconsetFactory::iconPtr(name));
 #else
     d->iconName = name;
     setText("<qt>icon:<br><small>" + name + "</small></qt>");
@@ -183,8 +165,7 @@ void IconLabel::setScaledContents(int width, int height)
 // MyFancyFrame -- internal
 //----------------------------------------------------------------------------
 
-class MyFancyFrame : public QFrame
-{
+class MyFancyFrame : public QFrame {
     Q_OBJECT
 protected:
     void paintEvent(QPaintEvent *event)
@@ -195,37 +176,37 @@ protected:
         QFrame::paintEvent(event);
     }
 
-    void resizeEvent (QResizeEvent *e)
+    void resizeEvent(QResizeEvent *e)
     {
-        QFrame::resizeEvent (e);
+        QFrame::resizeEvent(e);
 
         QRect rect = geometry();
-        int w = rect.width();
+        int   w    = rect.width();
 
-        if ( rect.height() <= 0 || w <= 0 )
+        if (rect.height() <= 0 || w <= 0)
             return; // avoid crash
 
         int r1, g1, b1;
-        from->getRgb (&r1, &g1, &b1);
+        from->getRgb(&r1, &g1, &b1);
         int r2, g2, b2;
-        to->getRgb (&r2, &g2, &b2);
+        to->getRgb(&r2, &g2, &b2);
 
-        float stepR = (float)(r2 - r1) / w;
-        float stepG = (float)(g2 - g1) / w;
-        float stepB = (float)(b2 - b1) / w;
+        float stepR = float(r2 - r1) / w;
+        float stepG = float(g2 - g1) / w;
+        float stepB = float(b2 - b1) / w;
 
-        QPixmap pix (rect.width(), rect.height());
+        QPixmap  pix(rect.width(), rect.height());
         QPainter p;
-        p.begin (&pix);
+        p.begin(&pix);
         for (int i = 0; i < w; i++) {
-            int r = (int)((float)r1 + stepR*i);
-            int g = (int)((float)g1 + stepG*i);
-            int b = (int)((float)b1 + stepB*i);
+            int r = int(float(r1) + stepR * i);
+            int g = int(float(g1) + stepG * i);
+            int b = int(float(b1) + stepB * i);
 
-            p.setPen ( QColor( r, g, b ) );
-            p.drawLine ( i, 0, i, rect.height() );
+            p.setPen(QColor(r, g, b));
+            p.drawLine(i, 0, i, rect.height());
         }
-        p.end ();
+        p.end();
 
         background = pix;
         update();
@@ -236,11 +217,10 @@ private:
     QPixmap background;
 
 public:
-    MyFancyFrame (QWidget *parent, QColor *_from, QColor *_to)
-    : QFrame (parent)
+    MyFancyFrame(QWidget *parent, QColor *_from, QColor *_to) : QFrame(parent)
     {
         from = _from;
-        to = _to;
+        to   = _to;
     }
 
     void repaintBackground()
@@ -254,25 +234,23 @@ public:
 // FancyLabel
 //----------------------------------------------------------------------------
 
-class FancyLabel::Private : public QObject
-{
+class FancyLabel::Private : public QObject {
 public:
     MyFancyFrame *frame;
-    IconLabel *text, *help, *pix;
-    QColor from, to, font;
-    QString textStr, helpStr;
-    static int smallFontSize;
+    IconLabel *   text, *help, *pix;
+    QColor        from, to, font;
+    QString       textStr, helpStr;
+    static int    smallFontSize;
 
-    Private (FancyLabel *parent)
-    : QObject(parent), from(72, 172, 243), to(255, 255, 255), font(0, 0, 0)
+    Private(FancyLabel *parent) : QObject(parent), from(72, 172, 243), to(255, 255, 255), font(0, 0, 0)
     {
-        QHBoxLayout *mainbox = new QHBoxLayout( parent );
+        QHBoxLayout *mainbox = new QHBoxLayout(parent);
         mainbox->setSpacing(0);
         mainbox->setMargin(0);
 
-        frame = new MyFancyFrame ( parent, &from, &to );
-        frame->setFrameShape( QFrame::StyledPanel );
-        frame->setFrameShadow( QFrame::Raised );
+        frame = new MyFancyFrame(parent, &from, &to);
+        frame->setFrameShape(QFrame::StyledPanel);
+        frame->setFrameShadow(QFrame::Raised);
 
         QHBoxLayout *frameLayout = new QHBoxLayout(frame);
         frameLayout->setMargin(0);
@@ -280,184 +258,127 @@ public:
         QVBoxLayout *layout = new QVBoxLayout;
         layout->setMargin(0);
         layout->setSpacing(0);
-        frameLayout->addLayout( layout );
+        frameLayout->addLayout(layout);
 
-        text = new IconLabel( frame );
-        text->setSizePolicy( (QSizePolicy::Policy)7, (QSizePolicy::Policy)5 );
-        layout->addWidget( text );
+        text = new IconLabel(frame);
+        text->setSizePolicy(QSizePolicy::Policy(7), QSizePolicy::Policy(5));
+        layout->addWidget(text);
 
-        help = new IconLabel( frame );
-        layout->addWidget( help );
+        help = new IconLabel(frame);
+        layout->addWidget(help);
 
         QFont font = help->font();
         font.setPointSize(smallFontSize);
         help->setFont(font);
 
-        pix = new IconLabel( frame );
-        pix->setSizePolicy( (QSizePolicy::Policy)1, (QSizePolicy::Policy)5 );
-        frameLayout->addWidget( pix );
+        pix = new IconLabel(frame);
+        pix->setSizePolicy(QSizePolicy::Policy(1), QSizePolicy::Policy(5));
+        frameLayout->addWidget(pix);
 
-        mainbox->addWidget( frame );
+        mainbox->addWidget(frame);
     }
 };
 
 int FancyLabel::Private::smallFontSize = 0;
 
-FancyLabel::FancyLabel (QWidget *parent)
-: QWidget (parent)
-{
-    d = new Private (this);
-}
+FancyLabel::FancyLabel(QWidget *parent) : QWidget(parent) { d = new Private(this); }
 
-FancyLabel::~FancyLabel ()
-{
-}
+FancyLabel::~FancyLabel() {}
 
-void FancyLabel::setText (const QString &text)
+void FancyLabel::setText(const QString &text)
 {
     d->textStr = text;
-    d->text->setText (QString("<font color=\"%1\"><b>").arg(d->font.name()) + text + "</b></font>");
+    d->text->setText(QString("<font color=\"%1\"><b>").arg(d->font.name()) + text + "</b></font>");
 }
 
-void FancyLabel::setHelp (const QString &help)
+void FancyLabel::setHelp(const QString &help)
 {
     d->helpStr = help;
 
     QString f1 = "<small>";
     QString f2 = "</small>";
-    if ( d->smallFontSize ) {
+    if (d->smallFontSize) {
         f1 = "<font>";
         f2 = "</font>";
     }
 
-    d->help->setText (QString("<font color=\"%1\">").arg(d->font.name()) + f1 + help + f2 + "</font>");
+    d->help->setText(QString("<font color=\"%1\">").arg(d->font.name()) + f1 + help + f2 + "</font>");
 }
 
-void FancyLabel::setPixmap (const QPixmap &pix)
-{
-    d->pix->setPixmap( pix );
-}
+void FancyLabel::setPixmap(const QPixmap &pix) { d->pix->setPixmap(pix); }
 
-void FancyLabel::setColorFrom (const QColor &col)
+void FancyLabel::setColorFrom(const QColor &col)
 {
     d->from = col;
     d->frame->repaintBackground();
 }
 
-void FancyLabel::setColorTo (const QColor &col)
+void FancyLabel::setColorTo(const QColor &col)
 {
     d->to = col;
     d->frame->repaintBackground();
 }
 
-void FancyLabel::setColorFont (const QColor &col)
+void FancyLabel::setColorFont(const QColor &col)
 {
     d->font = col;
     d->frame->repaintBackground();
 }
 
-const QString &FancyLabel::text () const
-{
-    return d->textStr;
-}
+const QString &FancyLabel::text() const { return d->textStr; }
 
-const QString &FancyLabel::help () const
-{
-    return d->helpStr;
-}
+const QString &FancyLabel::help() const { return d->helpStr; }
 
-const QPixmap *FancyLabel::pixmap () const
-{
-    return d->pix->pixmap();
-}
+const QPixmap *FancyLabel::pixmap() const { return d->pix->pixmap(); }
 
-const QColor &FancyLabel::colorFrom () const
-{
-    return d->from;
-}
+const QColor &FancyLabel::colorFrom() const { return d->from; }
 
-const QColor &FancyLabel::colorTo () const
-{
-    return d->to;
-}
+const QColor &FancyLabel::colorTo() const { return d->to; }
 
-const QColor &FancyLabel::colorFont () const
-{
-    return d->font;
-}
+const QColor &FancyLabel::colorFont() const { return d->font; }
 
-const PsiIcon *FancyLabel::psiIcon () const
-{
-    return d->pix->psiIcon();
-}
+const PsiIcon *FancyLabel::psiIcon() const { return d->pix->psiIcon(); }
 
-void FancyLabel::setPsiIcon (const PsiIcon *i)
-{
-    d->pix->setPsiIcon(i);
-}
+void FancyLabel::setPsiIcon(const PsiIcon *i) { d->pix->setPsiIcon(i); }
 
-void FancyLabel::setPsiIcon (const QString &name)
-{
-    d->pix->setPsiIcon(name);
-}
+void FancyLabel::setPsiIcon(const QString &name) { d->pix->setPsiIcon(name); }
 
-QString FancyLabel::psiIconName () const
-{
-    return d->pix->psiIconName();
-}
+QString FancyLabel::psiIconName() const { return d->pix->psiIconName(); }
 
-FancyLabel::Shape FancyLabel::frameShape () const
-{
-    return (FancyLabel::Shape)(int)d->frame->frameShape();
-}
+FancyLabel::Shape FancyLabel::frameShape() const { return FancyLabel::Shape(int(d->frame->frameShape())); }
 
-void FancyLabel::setFrameShape (FancyLabel::Shape v)
+void FancyLabel::setFrameShape(FancyLabel::Shape v)
 {
-    d->frame->setFrameShape( (QFrame::Shape)(int)v );
+    d->frame->setFrameShape(QFrame::Shape(int(v)));
     d->frame->repaintBackground();
 }
 
-FancyLabel::Shadow FancyLabel::frameShadow () const
-{
-    return (FancyLabel::Shadow)(int)d->frame->frameShadow();
-}
+FancyLabel::Shadow FancyLabel::frameShadow() const { return FancyLabel::Shadow(int(d->frame->frameShadow())); }
 
-void FancyLabel::setFrameShadow (FancyLabel::Shadow v)
+void FancyLabel::setFrameShadow(FancyLabel::Shadow v)
 {
-    d->frame->setFrameShadow( (QFrame::Shadow)(int)v );
+    d->frame->setFrameShadow(QFrame::Shadow(int(v)));
     d->frame->repaintBackground();
 }
 
-int FancyLabel::lineWidth () const
-{
-    return d->frame->lineWidth();
-}
+int FancyLabel::lineWidth() const { return d->frame->lineWidth(); }
 
-void FancyLabel::setLineWidth (int v)
+void FancyLabel::setLineWidth(int v)
 {
     d->frame->setLineWidth(v);
     d->frame->repaintBackground();
 }
 
-int FancyLabel::midLineWidth () const
-{
-    return d->frame->midLineWidth();
-}
+int FancyLabel::midLineWidth() const { return d->frame->midLineWidth(); }
 
-void FancyLabel::setMidLineWidth (int v)
+void FancyLabel::setMidLineWidth(int v)
 {
     d->frame->setMidLineWidth(v);
     d->frame->repaintBackground();
 }
 
-void FancyLabel::setScaledContents(int width, int height)
-{
-    d->pix->setScaledContents(width, height);
-}
+void FancyLabel::setScaledContents(int width, int height) { d->pix->setScaledContents(width, height); }
 
-void FancyLabel::setSmallFontSize(int s)
-{
-    Private::smallFontSize = s;
-}
+void FancyLabel::setSmallFontSize(int s) { Private::smallFontSize = s; }
 
 #include "fancylabel.moc"

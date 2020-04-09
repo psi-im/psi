@@ -13,33 +13,29 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "contactlistdragmodel.h"
 
-#include <QtAlgorithms>
-#include <QTimer>
-
-#include "psioptions.h"
-#include "psiaccount.h"
-#include "psicontactlist.h"
-#include "psicontact.h"
 #include "common.h"
-#include "contactlistmodelselection.h"
 #include "contactlistitem.h"
+#include "contactlistmodelselection.h"
 #include "debug.h"
+#include "psiaccount.h"
+#include "psicontact.h"
+#include "psicontactlist.h"
+#include "psioptions.h"
+
+#include <QTimer>
+#include <QtAlgorithms>
 
 //----------------------------------------------------------------------------
 // ContactListModelOperationList
 //----------------------------------------------------------------------------
 
-ContactListModelOperationList::ContactListModelOperationList(Action action)
-    : action_(action)
-{
-}
+ContactListModelOperationList::ContactListModelOperationList(Action action) : action_(action) {}
 
 ContactListModelOperationList::ContactListModelOperationList(Qt::DropAction action)
 {
@@ -52,12 +48,9 @@ ContactListModelOperationList::ContactListModelOperationList(Qt::DropAction acti
     }
 }
 
-ContactListModelOperationList::Action ContactListModelOperationList::action() const
-{
-    return action_;
-}
+ContactListModelOperationList::Action ContactListModelOperationList::action() const { return action_; }
 
-void ContactListModelOperationList::addOperation(PsiContact* contact, const QString& groupFrom, const QString& groupTo)
+void ContactListModelOperationList::addOperation(PsiContact *contact, const QString &groupFrom, const QString &groupTo)
 {
     if (!contact) {
         qWarning("ContactListModelOperationList::addOperation(): contact is NULL");
@@ -67,13 +60,15 @@ void ContactListModelOperationList::addOperation(PsiContact* contact, const QStr
     if (!contact->isEditable()) {
         bool deleteOperation = contact->isRemovable() && groupTo.isEmpty();
         if (!deleteOperation) {
-            qWarning("ContactListModelOperationList::addOperation(): contact is not editable '%s'", qPrintable(contact->jid().full()));
+            qWarning("ContactListModelOperationList::addOperation(): contact is not editable '%s'",
+                     qPrintable(contact->jid().full()));
             return;
         }
     }
 
     if (!contact->groupOperationPermitted(groupFrom, groupTo)) {
-        qWarning("ContactListModelOperationList::addOperation(): contact '%s' refused group operation ('%s' -> '%s')", qPrintable(contact->jid().full()), qPrintable(groupFrom), qPrintable(groupTo));
+        qWarning("ContactListModelOperationList::addOperation(): contact '%s' refused group operation ('%s' -> '%s')",
+                 qPrintable(contact->jid().full()), qPrintable(groupFrom), qPrintable(groupTo));
         return;
     }
 
@@ -89,7 +84,7 @@ QList<ContactListModelOperationList::ContactOperation> ContactListModelOperation
 {
     QList<ContactOperation> result;
 
-    QHash<PsiContact*, QList<Operation> >::const_iterator it;
+    QHash<PsiContact *, QList<Operation>>::const_iterator it;
     for (it = operations_.constBegin(); it != operations_.constEnd(); ++it) {
         ContactOperation op;
         op.contact    = it.key();
@@ -105,10 +100,10 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
     if (action_ != Move)
         return;
 
-    QList<PsiContact*> contacts = operations_.keys();
-    foreach(PsiContact* psiContact, contacts) {
+    QList<PsiContact *> contacts = operations_.keys();
+    foreach (PsiContact *psiContact, contacts) {
         bool remove = false;
-        foreach(Operation op, operations_[psiContact]) {
+        foreach (Operation op, operations_[psiContact]) {
             if (psiContact->groups().contains(op.groupTo)) {
                 remove = true;
                 break;
@@ -124,26 +119,17 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
 // ContactListDragModel
 //----------------------------------------------------------------------------
 
-ContactListDragModel::ContactListDragModel(PsiContactList *contactList)
-    : ContactListModel(contactList)
-{
-}
+ContactListDragModel::ContactListDragModel(PsiContactList *contactList) : ContactListModel(contactList) {}
 
-Qt::DropActions ContactListDragModel::supportedDragActions() const
-{
-    return Qt::MoveAction | Qt::CopyAction;
-}
+Qt::DropActions ContactListDragModel::supportedDragActions() const { return Qt::MoveAction | Qt::CopyAction; }
 
-Qt::DropActions ContactListDragModel::supportedDropActions() const
-{
-    return Qt::MoveAction | Qt::CopyAction;
-}
+Qt::DropActions ContactListDragModel::supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
 
-Qt::ItemFlags ContactListDragModel::flags(const QModelIndex& index) const
+Qt::ItemFlags ContactListDragModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags f = ContactListModel::flags(index);
 
-    ContactListItem *item = static_cast<ContactListItem*>(index.internalPointer());
+    ContactListItem *item = static_cast<ContactListItem *>(index.internalPointer());
 
     if (item) {
         return f | Qt::ItemIsDropEnabled | (item->isDragEnabled() ? Qt::ItemIsDragEnabled : f);
@@ -158,16 +144,14 @@ Qt::ItemFlags ContactListDragModel::flags(const QModelIndex& index) const
 
 QStringList ContactListDragModel::mimeTypes() const
 {
-    return QStringList()
-           << ContactListModelSelection::mimeType()
-           << "text/plain";
+    return QStringList() << ContactListModelSelection::mimeType() << "text/plain";
 }
 
-QMimeData* ContactListDragModel::mimeData(const QModelIndexList& indexes) const
+QMimeData *ContactListDragModel::mimeData(const QModelIndexList &indexes) const
 {
-    QList<ContactListItem*> items;
+    QList<ContactListItem *> items;
 
-    for (const auto &index: indexes) {
+    for (const auto &index : indexes) {
         if (!index.isValid())
             continue;
 
@@ -181,18 +165,18 @@ QMimeData* ContactListDragModel::mimeData(const QModelIndexList& indexes) const
     return new ContactListModelSelection(items);
 }
 
-QModelIndexList ContactListDragModel::indexesFor(const QMimeData* data) const
+QModelIndexList ContactListDragModel::indexesFor(const QMimeData *data) const
 {
-    QModelIndexList result;
+    QModelIndexList           result;
     ContactListModelSelection selection(data);
     if (!selection.haveRosterSelection() || !contactList())
         return result;
 
-    for (ContactListModelSelection::Contact contact: selection.contacts()) {
-        PsiAccount* account = contactList()->getAccount(contact.account);
+    for (ContactListModelSelection::Contact contact : selection.contacts()) {
+        PsiAccount *account = contactList()->getAccount(contact.account);
         if (!account)
             continue;
-        PsiContact* psiContact = account->findContact(contact.jid);
+        PsiContact *psiContact = account->findContact(contact.jid);
         if (!psiContact) {
             if (account->selfContact()->jid() == contact.jid)
                 psiContact = account->selfContact();
@@ -205,37 +189,37 @@ QModelIndexList ContactListDragModel::indexesFor(const QMimeData* data) const
         result += indexes;
     }
 
-    for (ContactListModelSelection::Group group: selection.groups()) {
-        ContactListItem *item = static_cast<ContactListItem*>(root())->findGroup(group.fullName);
-        QModelIndex index = this->toModelIndex(item);
+    for (ContactListModelSelection::Group group : selection.groups()) {
+        ContactListItem *item  = static_cast<ContactListItem *>(root())->findGroup(group.fullName);
+        QModelIndex      index = this->toModelIndex(item);
         if (!result.contains(index))
             result << index;
     }
 
-//    for (ContactListModelSelection::Account account: selection.accounts()) {
-//        PsiAccount* acc = contactList()->getAccount(account.id);
-//        if (!acc)
-//            continue;
-//        ContactListAccountGroup* rootGroup = dynamic_cast<ContactListAccountGroup*>(this->rootGroup());
-//        if (!rootGroup)
-//            continue;
-//        ContactListGroup* accountGroup = rootGroup->findAccount(acc);
-//        QModelIndex index = groupToIndex(accountGroup);
-//        if (!result.contains(index))
-//            result << index;
-//    }
+    //    for (ContactListModelSelection::Account account: selection.accounts()) {
+    //        PsiAccount* acc = contactList()->getAccount(account.id);
+    //        if (!acc)
+    //            continue;
+    //        ContactListAccountGroup* rootGroup = dynamic_cast<ContactListAccountGroup*>(this->rootGroup());
+    //        if (!rootGroup)
+    //            continue;
+    //        ContactListGroup* accountGroup = rootGroup->findAccount(acc);
+    //        QModelIndex index = groupToIndex(accountGroup);
+    //        if (!result.contains(index))
+    //            result << index;
+    //    }
 
     return result;
 }
 
-bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const QModelIndex& parent) const
+bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData *data, const QModelIndex &parent) const
 {
     if ((!groupsEnabled() && !accountsEnabled()) || !ContactListModelSelection(data).haveRosterSelection()) {
         return false;
     }
 
     // disable dragging to special groups
-    ContactListItem *item = toItem(parent);
+    ContactListItem *item  = toItem(parent);
     ContactListItem *group = nullptr;
 
     if (item->isGroup())
@@ -246,7 +230,7 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
     if (group && !group->isEditable())
         return false;
 
-    for (const QModelIndex &index: indexesFor(data)) {
+    for (const QModelIndex &index : indexesFor(data)) {
         if (index == parent) {
             return false;
         }
@@ -276,7 +260,8 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
     return true;
 }
 
-bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
+bool ContactListDragModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column,
+                                        const QModelIndex &parent)
 {
     Q_UNUSED(row);
     Q_UNUSED(column);
@@ -285,8 +270,8 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
     if (!selection.haveRosterSelection() || !contactList())
         return false;
 
-    for (const ContactListModelSelection::Contact &contact: selection.contacts()) {
-        PsiAccount *account = contactList()->getAccount(contact.account);
+    for (const ContactListModelSelection::Contact &contact : selection.contacts()) {
+        PsiAccount *account    = contactList()->getAccount(contact.account);
         PsiContact *psiContact = account ? account->findContact(contact.jid) : nullptr;
 
         if (psiContact) {
@@ -299,7 +284,6 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
         }
     }
 
-
     return true;
 }
 
@@ -309,49 +293,47 @@ void ContactListDragModel::renameGroup(ContactListItem *group, const QString &ne
     Q_UNUSED(newName);
 }
 
-PsiAccount* ContactListDragModel::getDropAccount(PsiAccount* account, const QModelIndex& parent) const
+PsiAccount *ContactListDragModel::getDropAccount(PsiAccount *account, const QModelIndex &parent) const
 {
     Q_UNUSED(account);
 
     if (!parent.isValid())
-        return 0;
+        return nullptr;
 
-    ContactListItem *item = static_cast<ContactListItem*>(parent.internalPointer());
+    ContactListItem *item = static_cast<ContactListItem *>(parent.internalPointer());
     Q_ASSERT(item);
     if (!item)
-        return 0;
+        return nullptr;
 
     if (item->isContact()) {
         return item->contact()->account();
-    }
-    else if (item->isAccount()) {
+    } else if (item->isAccount()) {
         return item->account();
     }
 
-    return 0;
+    return nullptr;
 }
 
-QString ContactListDragModel::getDropGroupName(const QModelIndex& parent) const
+QString ContactListDragModel::getDropGroupName(const QModelIndex &parent) const
 {
     if (!parent.isValid())
         return QString();
 
-    ContactListItem *item = static_cast<ContactListItem*>(parent.internalPointer());
+    ContactListItem *item = static_cast<ContactListItem *>(parent.internalPointer());
     Q_ASSERT(item);
     if (!item)
-        return 0;
+        return nullptr;
 
     if (item->isGroup()) {
         return item->name();
-    }
-    else if (item->isContact() && item->parent()->isGroup()) {
+    } else if (item->isContact() && item->parent()->isGroup()) {
         return item->parent()->name();
     }
 
     return QString();
 }
 
-QString ContactListDragModel::sourceOperationsForContactGroup(const QString& groupName, PsiContact* contact) const
+QString ContactListDragModel::sourceOperationsForContactGroup(const QString &groupName, PsiContact *contact) const
 {
     Q_UNUSED(groupName);
     Q_UNUSED(contact);
@@ -359,7 +341,7 @@ QString ContactListDragModel::sourceOperationsForContactGroup(const QString& gro
     return QString();
 }
 
-QString ContactListDragModel::destinationOperationsForContactGroup(const QString& groupName, PsiContact* contact) const
+QString ContactListDragModel::destinationOperationsForContactGroup(const QString &groupName, PsiContact *contact) const
 {
     Q_UNUSED(groupName);
     Q_UNUSED(contact);
@@ -367,7 +349,7 @@ QString ContactListDragModel::destinationOperationsForContactGroup(const QString
     return QString();
 }
 
-QModelIndexList ContactListDragModel::indexesFor(PsiContact* contact, QMimeData* contactSelection) const
+QModelIndexList ContactListDragModel::indexesFor(PsiContact *contact, QMimeData *contactSelection) const
 {
     QModelIndexList indexes;
     if (contactSelection) {

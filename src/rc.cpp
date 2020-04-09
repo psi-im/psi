@@ -13,33 +13,29 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
+#include "rc.h"
+#include "ahcommand.h"
+#include "ahcservermanager.h"
+#include "groupchatdlg.h"
 #include "iconaction.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psioptions.h"
-#include "rc.h"
 #include "xmpp_xdata.h"
-#include "ahcservermanager.h"
-#include "ahcommand.h"
-#include "groupchatdlg.h"
 
 using namespace XMPP;
 
-bool RCCommandServer::isAllowed(const Jid& j) const
-{
-    return manager()->account()->jid().compare(j,false);
-}
+bool RCCommandServer::isAllowed(const Jid &j) const { return manager()->account()->jid().compare(j, false); }
 
-AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
+AHCommand RCSetStatusServer::execute(const AHCommand &c, const Jid &)
 {
     // Check if the session ID is correct
-    //if (c.sessionId() != "")
+    // if (c.sessionId() != "")
     //    return AHCommand::errorReply(c,AHCError::AHCError(AHCError::BadSessionID));
 
     if (!c.hasData()) {
@@ -120,21 +116,18 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
         form.setFields(fields);
 
         return AHCommand::formReply(c, form);
-    }
-    else {
+    } else {
         // Set the status
-        Status s;
-        bool foundStatus = false;
-        XData::FieldList fl = c.data().fields();
-        for (int i=0; i < fl.count(); i++) {
+        Status           s;
+        bool             foundStatus = false;
+        XData::FieldList fl          = c.data().fields();
+        for (int i = 0; i < fl.count(); i++) {
             if (fl[i].var() == "status" && !(fl[i].value().isEmpty())) {
                 foundStatus = true;
                 s.setType(fl[i].value().first());
-            }
-            else if (fl[i].var() == "status-message" && !fl[i].value().isEmpty()) {
+            } else if (fl[i].var() == "status-message" && !fl[i].value().isEmpty()) {
                 s.setStatus(fl[i].value().join("\n"));
-            }
-            else if (fl[i].var() == "status-priority" && !fl[i].value().isEmpty()) {
+            } else if (fl[i].var() == "status-priority" && !fl[i].value().isEmpty()) {
                 s.setPriority(fl[i].value().first().toInt());
             }
         }
@@ -145,18 +138,17 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
     }
 }
 
-
-AHCommand RCForwardServer::execute(const AHCommand& c, const Jid& j)
+AHCommand RCForwardServer::execute(const AHCommand &c, const Jid &j)
 {
-    int messageCount = manager()->account()->forwardPendingEvents(j);
+    int   messageCount = manager()->account()->forwardPendingEvents(j);
     XData form;
     form.setTitle(QObject::tr("Forward Messages"));
     form.setInstructions(QObject::tr("Forwarded %1 messages").arg(messageCount));
     form.setType(XData::Data_Form);
-    return AHCommand::completedReply(c,form);
+    return AHCommand::completedReply(c, form);
 }
 
-AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
+AHCommand RCSetOptionsServer::execute(const AHCommand &c, const Jid &)
 {
     if (!c.hasData()) {
         // Initial set options form
@@ -177,7 +169,8 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
         sounds_field.setType(XData::Field::Field_Boolean);
         sounds_field.setLabel(QObject::tr("Play sounds"));
         sounds_field.setVar("sounds");
-        sounds_field.setValue(QStringList((PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool() ? "1" : "0")));
+        sounds_field.setValue(QStringList(
+            (PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool() ? "1" : "0")));
         sounds_field.setRequired(false);
         fields += sounds_field;
 
@@ -185,7 +178,8 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
         auto_offline_field.setType(XData::Field::Field_Boolean);
         auto_offline_field.setLabel(QObject::tr("Automatically go offline when idle"));
         auto_offline_field.setVar("auto-offline");
-        auto_offline_field.setValue(QStringList((PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() ? "1" : "0")));
+        auto_offline_field.setValue(QStringList(
+            (PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() ? "1" : "0")));
         auto_offline_field.setRequired(false);
         fields += auto_offline_field;
 
@@ -193,7 +187,10 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
         auto_auth_field.setType(XData::Field::Field_Boolean);
         auto_auth_field.setLabel(QObject::tr("Auto-authorize contacts"));
         auto_auth_field.setVar("auto-auth");
-        auto_auth_field.setValue(QStringList((PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() ? "1" : "0")));
+        auto_auth_field.setValue(QStringList(
+            (PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool()
+                 ? "1"
+                 : "0")));
         auto_auth_field.setRequired(false);
         fields += auto_auth_field;
 
@@ -201,58 +198,59 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
         auto_open_field.setType(XData::Field::Field_Boolean);
         auto_open_field.setLabel(QObject::tr("Auto-open new messages"));
         auto_open_field.setVar("auto-open");
-        auto_open_field.setValue(QStringList((PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() ? "1" : "0")));
+        auto_open_field.setValue(
+            QStringList((PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() ? "1" : "0")));
         auto_open_field.setRequired(false);
         fields += auto_open_field;
 
         form.setFields(fields);
 
         return AHCommand::formReply(c, form);
-    }
-    else {
+    } else {
         // Set the options
         XData::FieldList fl = c.data().fields();
-        for (int i=0; i < fl.count(); i++) {
+        for (int i = 0; i < fl.count(); i++) {
             if (fl[i].var() == "sounds") {
-                QString v =  fl[i].value().first();
-                IconAction* soundact = psiCon_->actionList()->suitableActions(PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common)).action("menu_play_sounds");
+                QString     v        = fl[i].value().first();
+                IconAction *soundact = psiCon_->actionList()
+                                           ->suitableActions(PsiActionList::ActionsType(
+                                               PsiActionList::Actions_MainWin | PsiActionList::Actions_Common))
+                                           .action("menu_play_sounds");
                 if (v == "1")
                     soundact->setChecked(true);
                 else if (v == "0")
                     soundact->setChecked(false);
-            }
-            else if (fl[i].var() == "auto-offline") {
-                QString v =  fl[i].value().first();
+            } else if (fl[i].var() == "auto-offline") {
+                QString v = fl[i].value().first();
                 if (v == "1")
-                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) true);
+                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", true);
                 else if (v == "0")
-                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) false);
-            }
-            else if (fl[i].var() == "auto-auth") {
-                QString v =  fl[i].value().first();
+                    PsiOptions::instance()->setOption("options.status.auto-away.use-offline", false);
+            } else if (fl[i].var() == "auto-auth") {
+                QString v = fl[i].value().first();
                 if (v == "1")
-                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) true);
+                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", true);
                 else if (v == "0")
-                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) false);
-            }
-            else if (fl[i].var() == "auto-open") {
-                QString v =  fl[i].value().first();
+                    PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", false);
+            } else if (fl[i].var() == "auto-open") {
+                QString v = fl[i].value().first();
                 if (v == "1")
-                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) true);
+                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", true);
                 else if (v == "0")
-                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) false);
+                    PsiOptions::instance()->setOption("options.ui.message.auto-popup", false);
             }
         }
         return AHCommand::completedReply(c);
     }
 }
 
-AHCommand RCLeaveMucServer::execute(const AHCommand& c, const Jid& /*j*/)
+AHCommand RCLeaveMucServer::execute(const AHCommand &c, const Jid & /*j*/)
 {
     foreach (QString gc, manager()->account()->groupchats()) {
-        Jid mj(gc);
-        GCMainDlg *gcDlg = manager()->account()->findDialog<GCMainDlg*>(mj.bare());
-        if (gcDlg) gcDlg->close();
+        Jid        mj(gc);
+        GCMainDlg *gcDlg = manager()->account()->findDialog<GCMainDlg *>(mj.bare());
+        if (gcDlg)
+            gcDlg->close();
     }
     XData form;
     form.setTitle(QObject::tr("Leave All Conferences"));

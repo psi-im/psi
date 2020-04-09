@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Martin Hostettler
+ * Copyright (C) 2008  Martin Hostettler
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,8 +26,8 @@
 #include <QPalette>
 
 class QLabel;
-class QTextEdit;
 class QString;
+class QTextEdit;
 
 class MCmdSimpleSite : public MCmdUiSiteIface {
 public:
@@ -36,15 +36,16 @@ public:
     ~MCmdSimpleSite() = default;
     virtual void mCmdReady(const QString prompt, const QString preset);
     virtual void mCmdClose();
-    bool isActive() const;
-    void setPrompt(QLabel *p);
-    void setInput(QTextEdit *i);
+    bool         isActive() const;
+    void         setPrompt(QLabel *p);
+    void         setInput(QTextEdit *i);
+
 protected:
-    QLabel *promptWidget;
+    QLabel *   promptWidget;
     QTextEdit *inputWidget;
-    bool open;
-    QString mini_msg_swap;
-    QPalette palette, cmdPalette;
+    bool       open;
+    QString    mini_msg_swap;
+    QPalette   palette, cmdPalette;
 };
 
-#endif
+#endif // MINICMDSIMPLESITE_H

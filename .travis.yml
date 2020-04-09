@@ -1,0 +1,45 @@
+language: cpp
+
+sudo: required
+cache: ccache
+
+if: tag IS blank
+
+jobs:
+  include:
+    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=xenial
+      os: linux
+      dist: xenial
+    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=bionic
+      os: linux
+      dist: bionic
+    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=xenial
+      os: linux
+      dist: xenial
+    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=bionic
+      os: linux
+      dist: bionic
+    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
+      os: osx
+      osx_image: xcode10
+    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
+      os: osx
+      osx_image: xcode10.3
+    - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
+      os: osx
+      osx_image: xcode11.3
+    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
+      os: osx
+      osx_image: xcode10
+    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
+      os: osx
+      osx_image: xcode10.3
+    - env: TARGET=macos64 ENABLE_WEBENGINE=ON
+      os: osx
+      osx_image: xcode11.3
+
+install:
+  - ./tests/travis-ci/install-build-depends.sh
+
+script:
+  - ./tests/travis-ci/build-and-test.sh

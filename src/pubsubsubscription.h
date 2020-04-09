@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,31 +22,30 @@
 
 #include <QString>
 
-class QDomElement;
 class QDomDocument;
+class QDomElement;
 
-class PubSubSubscription
-{
+class PubSubSubscription {
 public:
     enum State { None, Pending, Unconfigured, Subscribed };
 
     PubSubSubscription();
-    PubSubSubscription(const QDomElement& e);
+    PubSubSubscription(const QDomElement &e);
 
-    const QString& jid() const;
-    const QString& node() const;
-    State state() const;
+    const QString &jid() const;
+    const QString &node() const;
+    State          state() const;
 
-    bool isNull() const;
-    void fromXml(const QDomElement& e);
-    QDomElement toXml(QDomDocument& doc) const;
+    bool        isNull() const;
+    void        fromXml(const QDomElement &e);
+    QDomElement toXml(QDomDocument &doc) const;
 
-    bool operator==(const PubSubSubscription&) const;
-    bool operator!=(const PubSubSubscription&) const;
+    bool operator==(const PubSubSubscription &) const;
+    bool operator!=(const PubSubSubscription &) const;
 
 private:
     QString jid_, node_;
-    State state_;
+    State   state_;
 };
 
-#endif
+#endif // PUBSUBSUBSCRIPTION_H

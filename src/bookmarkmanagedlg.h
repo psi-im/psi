@@ -13,31 +13,28 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef BOOKMARKMANAGEDLG_H
 #define BOOKMARKMANAGEDLG_H
 
-#include <QDialog>
-
 #include "ui_bookmarkmanage.h"
-
-class PsiAccount;
-class QPushButton;
-class QStandardItemModel;
-class QStandardItem;
-class ConferenceBookmark;
-
 #include "xmpp_jid.h"
 
-class BookmarkManageDlg : public QDialog
-{
+#include <QDialog>
+
+class ConferenceBookmark;
+class PsiAccount;
+class QPushButton;
+class QStandardItem;
+class QStandardItemModel;
+
+class BookmarkManageDlg : public QDialog {
     Q_OBJECT
 public:
-    BookmarkManageDlg(PsiAccount* account);
+    BookmarkManageDlg(PsiAccount *account);
     ~BookmarkManageDlg();
 
 public slots:
@@ -57,8 +54,8 @@ private:
     void loadBookmarks();
     void saveBookmarks();
 
-    void appendItem(QStandardItem* item);
-    XMPP::Jid jid() const;
+    void        appendItem(QStandardItem *item);
+    XMPP::Jid   jid() const;
     QModelIndex currentIndex() const;
 
 private slots:
@@ -66,20 +63,20 @@ private slots:
     void removeBookmark();
     void updateCurrentItem();
     void joinCurrentRoom();
-    void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
-    void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+    void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
+    void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void importBookmarks();
     void exportBookmarks();
 
 private:
-    Ui::BookmarkManage ui_;
-    PsiAccount* account_;
-    QStandardItemModel* model_;
-    QPushButton* addButton_;
-    QPushButton* removeButton_;
-    QPushButton* joinButton_;
+    Ui::BookmarkManage  ui_;
+    PsiAccount *        account_;
+    QStandardItemModel *model_;
+    QPushButton *       addButton_;
+    QPushButton *       removeButton_;
+    QPushButton *       joinButton_;
 
-    ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
+    ConferenceBookmark bookmarkFor(const QModelIndex &index) const;
 };
 
-#endif
+#endif // BOOKMARKMANAGEDLG_H

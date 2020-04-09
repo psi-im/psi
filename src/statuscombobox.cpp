@@ -13,24 +13,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "statuscombobox.h"
 
-#include "psioptions.h"
-#include "psiiconset.h"
 #include "common.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
 /**
  * \brief Constructs new StatusComboBox
  * \param parent, widget's parent
  * \param type, selected status type just after creation
  */
-StatusComboBox::StatusComboBox(QWidget* parent, XMPP::Status::Type type)
-    : QComboBox(parent)
+StatusComboBox::StatusComboBox(QWidget *parent, XMPP::Status::Type type) : QComboBox(parent)
 {
     addStatus(XMPP::Status::Online);
     if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
@@ -60,7 +58,8 @@ void StatusComboBox::setStatus(XMPP::Status::Type type)
         type = XMPP::Status::Online;
     else if (type == XMPP::Status::XA && !PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
         type = XMPP::Status::Away;
-    else if (type == XMPP::Status::Invisible && !PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool())
+    else if (type == XMPP::Status::Invisible
+             && !PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool())
         type = XMPP::Status::Offline;
 
     for (int i = 0; i < count(); ++i) {
@@ -81,7 +80,8 @@ XMPP::Status::Type StatusComboBox::status() const
 
 // private
 
-void StatusComboBox::addStatus(XMPP::Status::Type status){
+void StatusComboBox::addStatus(XMPP::Status::Type status)
+{
 #ifdef Q_OS_MAC
     addItem(status2txt(status), status);
 #else

@@ -13,78 +13,75 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef JINGLEVOICECALLER_H
 #define JINGLEVOICECALLER_H
 
-#include <QMap>
-
 #include "voicecaller.h"
 
+#include <QMap>
+
+class JingleCallSlots;
+class JingleClientSlots;
 class PsiAccount;
 
 namespace cricket {
-    class SocketServer;
-    class Thread;
-    class NetworkManager;
-    class BasicPortAllocator;
-    class SessionManager;
-    class PhoneSessionClient;
-    class Call;
-    class SocketAddress;
+class BasicPortAllocator;
+class Call;
+class NetworkManager;
+class PhoneSessionClient;
+class SessionManager;
+class SocketAddress;
+class SocketServer;
+class Thread;
 }
-namespace XMPP {
-    class Jid;
-}
-class JingleClientSlots;
-class JingleCallSlots;
 
+namespace XMPP {
+class Jid;
+}
 using namespace XMPP;
 
-
-class JingleVoiceCaller : public VoiceCaller
-{
+class JingleVoiceCaller : public VoiceCaller {
     Q_OBJECT
 
     friend class JingleClientSlots;
 
 public:
-    JingleVoiceCaller(PsiAccount* account);
+    JingleVoiceCaller(PsiAccount *account);
     ~JingleVoiceCaller();
 
-    virtual bool calling(const Jid&);
+    virtual bool calling(const Jid &);
 
     virtual void initialize();
     virtual void deinitialize();
 
-    virtual void call(const Jid&);
-    virtual void accept(const Jid&);
-    virtual void reject(const Jid&);
-    virtual void terminate(const Jid&);
+    virtual void call(const Jid &);
+    virtual void accept(const Jid &);
+    virtual void reject(const Jid &);
+    virtual void terminate(const Jid &);
 
 protected:
-    void sendStanza(const char*);
-    void registerCall(const Jid&, cricket::Call*);
-    void removeCall(const Jid&);
+    void sendStanza(const char *);
+    void registerCall(const Jid &, cricket::Call *);
+    void removeCall(const Jid &);
 
 protected slots:
-    void receiveStanza(const QString&);
+    void receiveStanza(const QString &);
 
 private:
-    bool initialized_;
-    static cricket::SocketServer *socket_server_;
-    static cricket::Thread *thread_;
-    static cricket::NetworkManager *network_manager_;
+    bool                                initialized_;
+    static cricket::SocketServer *      socket_server_;
+    static cricket::Thread *            thread_;
+    static cricket::NetworkManager *    network_manager_;
     static cricket::BasicPortAllocator *port_allocator_;
-    static cricket::SocketAddress *stun_addr_;
-    cricket::SessionManager *session_manager_;
-    cricket::PhoneSessionClient *phone_client_;
-    JingleClientSlots *slots_;
-    QMap<QString,cricket::Call*> calls_;
+    static cricket::SocketAddress *     stun_addr_;
+    cricket::SessionManager *           session_manager_;
+    cricket::PhoneSessionClient *       phone_client_;
+    JingleClientSlots *                 slots_;
+    QMap<QString, cricket::Call *>      calls_;
 };
 
-#endif
+#endif // JINGLEVOICECALLER_H

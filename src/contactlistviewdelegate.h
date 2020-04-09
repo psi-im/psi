@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -26,11 +25,10 @@
 #include <QItemDelegate>
 
 class ContactListView;
-class PsiContact;
 class PsiAccount;
+class PsiContact;
 
-class ContactListViewDelegate : public QItemDelegate
-{
+class ContactListViewDelegate : public QItemDelegate {
     Q_OBJECT
 
 public:
@@ -38,18 +36,19 @@ public:
     virtual ~ContactListViewDelegate();
 
     void recomputeGeometry();
-    int avatarSize() const;
+    int  avatarSize() const;
 
     void contactAlert(const QModelIndex &index);
     void animateContacts(const QModelIndexList &indexes, bool started);
     void clearAlerts();
 
     // reimplemented
-    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                              const QModelIndex &index) const override;
     void setEditorData(QWidget *editor, const QModelIndex &index) const override;
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
 
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    void  paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
 signals:
@@ -61,5 +60,5 @@ protected:
 
 private:
     class Private;
-    Private* d;
+    Private *d;
 };

@@ -13,17 +13,16 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+
+#include "passphrasedlg.h"
 
 #include <QLineEdit>
 #include <QPushButton>
 
-#include "passphrasedlg.h"
-
-PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
+PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog(parent)
 {
     ui_.setupUi(this);
     setModal(false);
@@ -31,18 +30,12 @@ PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
     connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
 }
 
-void PassphraseDlg::promptPassphrase(const QString& name)
+void PassphraseDlg::promptPassphrase(const QString &name)
 {
     setWindowTitle(tr("%1: OpenPGP Passphrase").arg(name));
     resize(minimumSizeHint());
 }
 
-QString PassphraseDlg::getPassphrase() const
-{
-    return ui_.le_pass->text();
-}
+QString PassphraseDlg::getPassphrase() const { return ui_.le_pass->text(); }
 
-bool PassphraseDlg::rememberPassPhrase() const
-{
-    return ui_.cb_savePass->isChecked();
-}
+bool PassphraseDlg::rememberPassPhrase() const { return ui_.cb_savePass->isChecked(); }

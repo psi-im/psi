@@ -13,47 +13,36 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include "psicon.h"
 #include "accountscombobox.h"
+
 #include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
 
-AccountsComboBox::AccountsComboBox(QWidget* parent)
-    : QComboBox(parent)
-    , controller_(0)
-    , account_(0)
-    , onlineOnly_(false)
+AccountsComboBox::AccountsComboBox(QWidget *parent) :
+    QComboBox(parent), controller_(nullptr), account_(nullptr), onlineOnly_(false)
 {
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
     connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
 }
 
-AccountsComboBox::~AccountsComboBox()
-{
-}
+AccountsComboBox::~AccountsComboBox() {}
 
-PsiAccount* AccountsComboBox::account() const
-{
-    return account_;
-}
+PsiAccount *AccountsComboBox::account() const { return account_; }
 
-void AccountsComboBox::setAccount(PsiAccount* account)
+void AccountsComboBox::setAccount(PsiAccount *account)
 {
     account_ = account;
     updateAccounts();
 }
 
-PsiCon* AccountsComboBox::controller() const
-{
-    return controller_;
-}
+PsiCon *AccountsComboBox::controller() const { return controller_; }
 
-void AccountsComboBox::setController(PsiCon* controller)
+void AccountsComboBox::setController(PsiCon *controller)
 {
     if (controller_) {
         disconnect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
@@ -74,10 +63,7 @@ void AccountsComboBox::setController(PsiCon* controller)
     updateAccounts();
 }
 
-bool AccountsComboBox::onlineOnly() const
-{
-    return onlineOnly_;
-}
+bool AccountsComboBox::onlineOnly() const { return onlineOnly_; }
 
 void AccountsComboBox::setOnlineOnly(bool onlineOnly)
 {
@@ -87,7 +73,7 @@ void AccountsComboBox::setOnlineOnly(bool onlineOnly)
 
 void AccountsComboBox::changeAccount()
 {
-    account_ = 0;
+    account_ = nullptr;
     if (currentIndex() >= 0 && currentIndex() < accounts().count())
         account_ = accounts().at(currentIndex());
     emit activated(account_);
@@ -97,21 +83,21 @@ void AccountsComboBox::updateAccounts()
 {
     clear();
 
-    foreach(PsiAccount* account, accounts())
+    foreach (PsiAccount *account, accounts())
         addItem(account->nameWithJid());
 
     if (accounts().indexOf(account_) == -1) {
-        account_ = accounts().isEmpty() ? 0 : accounts().first();
+        account_ = accounts().isEmpty() ? nullptr : accounts().first();
         emit activated(account_);
     }
     setCurrentIndex(accounts().indexOf(account_));
 }
 
-QList<PsiAccount*> AccountsComboBox::accounts() const
+QList<PsiAccount *> AccountsComboBox::accounts() const
 {
-    QList<PsiAccount*> result;
+    QList<PsiAccount *> result;
     if (controller_) {
-        foreach(PsiAccount* account, controller_->contactList()->enabledAccounts())
+        foreach (PsiAccount *account, controller_->contactList()->enabledAccounts())
             if (!onlineOnly_ || account->isAvailable())
                 result << account;
     }

@@ -13,36 +13,33 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef MUCJOINDLG_H
 #define MUCJOINDLG_H
 
-#include <QDialog>
-
+#include "psiaccount.h"
 #include "ui_mucjoin.h"
+#include "xmpp_jid.h"
+
+#include <QDialog>
+#include <QTimer>
 
 class PsiCon;
 class QString;
 
-#include "xmpp_jid.h"
-#include "psiaccount.h"
-
-class MUCJoinDlg : public QDialog
-{
+class MUCJoinDlg : public QDialog {
     Q_OBJECT
 
 public:
-
     MUCJoinDlg(PsiCon *, PsiAccount *);
     ~MUCJoinDlg();
 
-    void setJid(const XMPP::Jid& jid);
-    void setNick(const QString& nick);
-    void setPassword(const QString& password);
+    void setJid(const XMPP::Jid &jid);
+    void setNick(const QString &nick);
+    void setPassword(const QString &password);
 
     void joined();
     void error(int, const QString &);
@@ -65,13 +62,14 @@ private slots:
     void favoritesItemDoubleClicked(QListWidgetItem *lwi);
 
 private:
-    Ui::MUCJoin ui_;
-    PsiCon* controller_;
-    PsiAccount* account_;
-    QPushButton* joinButton_;
-    XMPP::Jid jid_;
+    Ui::MUCJoin               ui_;
+    PsiCon *                  controller_;
+    PsiAccount *              account_;
+    QPushButton *             joinButton_;
+    XMPP::Jid                 jid_;
     PsiAccount::MucJoinReason reason_;
-    bool nickAlreadyCompleted_;
+    QTimer *                  timer_;
+    bool                      nickAlreadyCompleted_;
 
     void disableWidgets();
     void enableWidgets();
@@ -79,4 +77,4 @@ private:
     void updateFavorites();
 };
 
-#endif
+#endif // MUCJOINDLG_H

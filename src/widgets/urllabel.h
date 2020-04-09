@@ -12,9 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,28 +22,27 @@
 
 #include <QLabel>
 
-class QWidget;
 class QObject;
+class QWidget;
 
-class URLLabel : public QLabel
-{
+class URLLabel : public QLabel {
     Q_OBJECT
 
-    Q_PROPERTY( QString url READ url WRITE setUrl )
-    Q_PROPERTY( QString title READ title WRITE setTitle )
+    Q_PROPERTY(QString url READ url WRITE setUrl)
+    Q_PROPERTY(QString title READ title WRITE setTitle)
 
-    Q_OVERRIDE( QString text DESIGNABLE false SCRIPTABLE false )
-    //Q_OVERRIDE( TextFormat DESIGNABLE false SCRIPTABLE false )
+    Q_OVERRIDE(QString text DESIGNABLE false SCRIPTABLE false)
+    // Q_OVERRIDE( TextFormat DESIGNABLE false SCRIPTABLE false )
 
 public:
-    URLLabel(QWidget *parent = 0);
+    URLLabel(QWidget *parent = nullptr);
     ~URLLabel();
 
     const QString &url() const;
-    void setUrl(const QString &);
+    void           setUrl(const QString &);
 
     const QString &title() const;
-    void setTitle(const QString &);
+    void           setTitle(const QString &);
 
 protected:
     virtual void contextMenuEvent(QContextMenuEvent *);
@@ -54,8 +52,9 @@ protected:
 
 public:
     class Private;
+
 private:
     Private *d;
 };
 
-#endif
+#endif // URLLABEL_H

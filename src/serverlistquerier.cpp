@@ -13,40 +13,37 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QUrl>
+#include "serverlistquerier.h"
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDomNodeList>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QStringList>
-
-#include "serverlistquerier.h"
+#include <QUrl>
 
 // #define XML_SERVER_LIST
-#define SERVERLIST_MAX_REDIRECT  5
+#define SERVERLIST_MAX_REDIRECT 5
 
 // legacy format could be found here as well
 // https://list.jabber.at/api/?format=services-full.xml
 // original http://xmpp.org/services/services.xml does not work anymore (checked on 2016-03-27)
 
-ServerListQuerier::ServerListQuerier(QObject* parent)
-    : QObject(parent)
-    , redirectCount_(0)
+ServerListQuerier::ServerListQuerier(QObject *parent) : QObject(parent), redirectCount_(0)
 {
     http_ = new QNetworkAccessManager(this);
-    url_ = QUrl("https://xmpp.net/directory.php");
+    url_  = QUrl("https://xmpp.net/directory.php");
 }
 
 void ServerListQuerier::getList()
 {
-    redirectCount_ = 0;
+    redirectCount_       = 0;
     QNetworkReply *reply = http_->get(QNetworkRequest(url_));
     connect(reply, SIGNAL(finished()), SLOT(get_finished()));
 }
@@ -57,10 +54,9 @@ void ServerListQuerier::get_finished()
 
     if (reply->error()) {
         emit error(reply->errorString());
-    }
-    else {
+    } else {
         int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if(status == 200) {
+        if (status == 200) {
 #ifdef XML_SERVER_LIST
             // Parse the XML file
             QDomDocument doc;
@@ -70,7 +66,7 @@ void ServerListQuerier::get_finished()
             }
 
             // Fill the list
-            QStringList servers;
+            QStringList  servers;
             QDomNodeList items = doc.elementsByTagName("item");
             for (int i = 0; i < items.count(); i++) {
                 QString jid = items.item(i).toElement().attribute("jid");
@@ -80,16 +76,15 @@ void ServerListQuerier::get_finished()
             }
 #else
             QStringList servers;
-            QString contents = QString::fromUtf8(reply->readAll());
-            int index = 0;
-            QRegExp re("data-original-title=\"([^\"]+)\"");
+            QString     contents = QString::fromUtf8(reply->readAll());
+            int         index    = 0;
+            QRegExp     re("data-original-title=\"([^\"]+)\"");
             while ((index = contents.indexOf(re, index + 1)) != -1) {
                 servers.append(re.cap(1));
             }
 #endif
             emit listReceived(servers);
-        }
-        else if(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
+        } else if (reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
             if (redirectCount_ >= SERVERLIST_MAX_REDIRECT) {
                 emit error(tr("Maximum redirect count reached"));
                 return;
@@ -98,14 +93,13 @@ void ServerListQuerier::get_finished()
             url_ = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).value<QUrl>().resolved(url_);
             if (url_.isValid()) {
                 QNetworkReply *newReply = http_->get(QNetworkRequest(url_));
-                connect(newReply, SIGNAL(finished()),SLOT(get_finished()));
+                connect(newReply, SIGNAL(finished()), SLOT(get_finished()));
                 ++redirectCount_;
             } else {
                 emit error(tr("Invalid redirect URL %1").arg(url_.toString()));
                 return;
             }
-        }
-        else {
+        } else {
             emit error(tr("Unexpected HTTP status code: %1").arg(status));
         }
     }

@@ -12,44 +12,41 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef POPUPLIST_H
 #define POPUPLIST_H
 
-#include <QObject>
-#include <QList>
 #include "fancypopup.h"
 
-class FancyPopupList : public QObject, public QList<FancyPopup *>
-{
+#include <QList>
+#include <QObject>
+
+class FancyPopupList : public QObject, public QList<FancyPopup *> {
     Q_OBJECT
 
 public:
-    FancyPopupList()
-    {
-    }
+    FancyPopupList() {}
 
     ~FancyPopupList()
     {
-        while ( !isEmpty() )
+        while (!isEmpty())
             delete takeFirst();
     }
 
     FancyPopup *last()
     {
-        if ( !count() )
+        if (!count())
             return 0;
         return QList<FancyPopup *>::first();
     }
 
     void prepend(const FancyPopup *d)
     {
-        if ( isEmpty() )
+        if (isEmpty())
             emit started();
 
         connect(d, SIGNAL(destroyed(QObject *)), SLOT(popupDestroyed(QObject *)));
@@ -65,10 +62,9 @@ private slots:
     {
         removeAll((FancyPopup *)p);
 
-        if ( isEmpty() )
+        if (isEmpty())
             emit finished();
     }
 };
 
-#endif
-
+#endif // POPUPLIST_H

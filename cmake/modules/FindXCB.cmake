@@ -37,7 +37,7 @@ if ( UNIX AND NOT( APPLE OR CYGWIN ) )
         ${PC_XCB_CFLAGS}
         ${PC_XCB_CFLAGS_OTHER}
     )
-endif ( UNIX AND NOT( APPLE OR CYGWIN ) )
+endif()
 
 set ( LIBINCS 
     xcb.h
@@ -72,7 +72,7 @@ find_package_handle_standard_args(
 if ( XCB_FOUND )
     set ( XCB_LIBRARIES ${XCB_LIBRARY} )
     set ( XCB_INCLUDE_DIRS ${XCB_INCLUDE_DIR} )
-endif ( XCB_FOUND )
+endif()
 
 mark_as_advanced( XCB_INCLUDE_DIR XCB_LIBRARY )
 

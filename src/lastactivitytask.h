@@ -12,39 +12,37 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef LASTACTIVITYTASK_H
 #define LASTACTIVITYTASK_H
 
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
+
+#include <QDateTime>
 #include <QDomElement>
 #include <QString>
-#include <QDateTime>
 
-#include "xmpp_task.h"
-#include "xmpp_jid.h"
-
-class LastActivityTask : public XMPP::Task
-{
+class LastActivityTask : public XMPP::Task {
 public:
-    LastActivityTask(const XMPP::Jid&, Task*);
+    LastActivityTask(const XMPP::Jid &, Task *);
 
-    void onGo();
-    bool take(const QDomElement &);
-    const XMPP::Jid & jid() const;
+    void             onGo();
+    bool             take(const QDomElement &);
+    const XMPP::Jid &jid() const;
 
-    const QString& status() const;
-    const QDateTime& time() const;
+    const QString &  status() const;
+    const QDateTime &time() const;
 
 private:
     QDomElement iq_;
-    XMPP::Jid jid_;
-    QDateTime last_time_;
-    QString last_status_;
+    XMPP::Jid   jid_;
+    QDateTime   last_time_;
+    QString     last_status_;
 };
 
-#endif
+#endif // LASTACTIVITYTASK_H

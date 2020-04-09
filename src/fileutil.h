@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,23 +24,37 @@
 
 class QWidget;
 
-class FileUtil : public QObject
-{
+class FileUtil : public QObject {
     Q_OBJECT
 
 public:
     static QString lastUsedOpenPath();
-    static void setLastUsedOpenPath(const QString& path);
+    static void    setLastUsedOpenPath(const QString &path);
 
     static QString lastUsedSavePath();
-    static void setLastUsedSavePath(const QString& path);
+    static void    setLastUsedSavePath(const QString &path);
 
-    static QString getImageFileName(QWidget* parent, QString caption = QString());
-    static QString getInbandImageFileName(QWidget* parent);
-    static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
-    static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& defaultFileName = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
+    static QString     getImageFileName(QWidget *parent, QString caption = QString());
+    static QString     getInbandImageFileName(QWidget *parent);
+    static QString     getOpenFileName(QWidget *parent = nullptr, const QString &caption = QString(),
+                                       const QString &filter = QString(), QString *selectedFilter = nullptr);
+    static QStringList getOpenFileNames(QWidget *parent = nullptr, const QString &caption = QString(),
+                                        const QString &filter = QString(), QString *selectedFilter = nullptr);
+    static QString     getSaveFileName(QWidget *parent = nullptr, const QString &caption = QString(),
+                                       const QString &defaultFileName = QString(), const QString &filter = QString(),
+                                       QString *selectedFilter = nullptr);
+    static QString     getSaveDirName(QWidget *parent, const QString &caption);
 
     static QString mimeToFileExt(const QString &mime);
+    static QString cleanFileName(const QString &s);
+    static void    openFolder(const QString &path);
+
+    /**
+     * @brief setModificationTime sets file mofication and access time
+     * @param filename - relative or absolute file name
+     * @param mtime - new file modification time
+     */
+    static void setModificationTime(const QString &filename, const QDateTime &mtime);
 };
 
-#endif
+#endif // FILEUTIL_H

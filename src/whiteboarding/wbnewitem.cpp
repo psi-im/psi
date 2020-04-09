@@ -14,28 +14,26 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "wbnewitem.h"
+
 #include "../sxe/sxesession.h"
 
-#include <QSvgGenerator>
+#include <QBuffer>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
-#include <QBuffer>
+#include <QSvgGenerator>
 
-WbNewItem::WbNewItem(QGraphicsScene* s) {
-    scene = s;
-}
+WbNewItem::WbNewItem(QGraphicsScene *s) { scene = s; }
 
-WbNewItem::~WbNewItem() {
-}
+WbNewItem::~WbNewItem() {}
 
-QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
-    if(!graphicsItem()) {
+QDomNode WbNewItem::serializeToSvg(QDomDocument *doc)
+{
+    if (!graphicsItem()) {
         return QDomDocumentFragment();
     }
 
@@ -45,7 +43,7 @@ QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
     QSvgGenerator generator;
     generator.setOutputDevice(&buffer);
 
-    QPainter painter;
+    QPainter                 painter;
     QStyleOptionGraphicsItem options;
     painter.begin(&generator);
     graphicsItem()->paint(&painter, &options);
@@ -59,12 +57,9 @@ QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
     doc->setContent(buffer.buffer());
     QDomDocumentFragment fragment = doc->createDocumentFragment();
 
-    for(QDomNode n = doc->documentElement().lastChild(); !n.isNull(); n = n.previousSibling()) {
+    for (QDomNode n = doc->documentElement().lastChild(); !n.isNull(); n = n.previousSibling()) {
         // skip <title/>, <desc/>, and <defs/>
-        if(n.isElement() &&
-            !(n.nodeName() == "title"
-                || n.nodeName() == "desc"
-                || n.nodeName() == "defs")) {
+        if (n.isElement() && !(n.nodeName() == "title" || n.nodeName() == "desc" || n.nodeName() == "defs")) {
             n.toElement().setAttribute("id", "e" + SxeSession::generateUUID());
             fragment.insertBefore(n, QDomNode());
         }

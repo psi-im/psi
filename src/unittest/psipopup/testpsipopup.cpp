@@ -1,24 +1,23 @@
-#include <QtTest/QtTest>
+#include "iconset.h"
+#include "im.h" // for Jid
+#include "mainwin.h"
+#include "profiles.h"   // for UserAccount
+#include "psiaccount.h" // for PsiAccount
+#include "psicon.h"     // for PsiCon
+#include "psipopup.h"
+#include "userlist.h" // for UserListItem
+
 #include <QApplication>
 #include <QTimer>
 #include <QtCrypto>
+#include <QtTest/QtTest>
 
-#include "psipopup.h"
-#include "iconset.h"
-#include "psicon.h" // for PsiCon
-#include "psiaccount.h" // for PsiAccount
-#include "profiles.h" // for UserAccount
-#include "im.h" // for Jid
-#include "userlist.h" // for UserListItem
-#include "mainwin.h"
-
-class TestPsiPopup: public QObject
-{
+class TestPsiPopup : public QObject {
     Q_OBJECT
 private:
-    PsiCon *psi;
-    PsiAccount *account;
-    bool timeout;
+    PsiCon *          psi;
+    PsiAccount *      account;
+    bool              timeout;
     QCA::Initializer *qca_init;
 
     void delay(int msecs)
@@ -30,18 +29,15 @@ private:
     }
 
 protected slots:
-    void timedOut()
-    {
-        timeout = true;
-    }
+    void timedOut() { timeout = true; }
 
 private slots:
     void initTestCase()
     {
         // initialize the minimal amount of stuff necessary
         // to show PsiPopups on screen
-//         is = new PsiIconset();
-//         QVERIFY(is->loadAll());
+        //         is = new PsiIconset();
+        //         QVERIFY(is->loadAll());
 
         qca_init = new QCA::Initializer();
         QCA::keyStoreManager()->start();
@@ -62,17 +58,17 @@ private slots:
 
     void testPsiPopup()
     {
-//         Q3MainWindow window;
-//         window.show();
+        //         Q3MainWindow window;
+        //         window.show();
         delay(10000);
 
-        option.ppHideTime = 10 * 1000; // 10 seconds
+        option.ppHideTime    = 10 * 1000; // 10 seconds
         option.ppBorderColor = Qt::blue;
-        option.ppIsOn = true;
+        option.ppIsOn        = true;
 
-        PsiPopup *popup = new PsiPopup(PsiPopup::AlertChat, account);
-        Jid jid("mblsha@jabber.ru");
-        Resource resource("PowerBook");
+        PsiPopup *   popup = new PsiPopup(PsiPopup::AlertChat, account);
+        Jid          jid("mblsha@jabber.ru");
+        Resource     resource("PowerBook");
         UserListItem userListItem;
         MessageEvent psiEvent(account);
         popup->setData(jid, resource, &userListItem, &psiEvent);

@@ -13,55 +13,53 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
-#include <QtCrypto>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QLabel>
-#include <QPointer>
-#include <QTimer>
-#include <QHeaderView>
-#include <QDropEvent>
-#include <QButtonGroup>
+#include "accountmanagedlg.h"
 
-#include "psicon.h"
-#include "psiaccount.h"
+#include "accountadddlg.h"
 #include "common.h"
-#include "xmpp_tasks.h"
+#include "iconaction.h"
+#include "miniclient.h"
 #include "pgputil.h"
 #include "proxy.h"
-#include "miniclient.h"
-#include "accountadddlg.h"
-#include "accountmanagedlg.h"
-#include "ui_accountremove.h"
+#include "psiaccount.h"
+#include "psicon.h"
 #include "psicontactlist.h"
-#include "iconaction.h"
-#include "shortcutmanager.h"
 #include "psiiconset.h"
+#include "shortcutmanager.h"
+#include "ui_accountremove.h"
+#include "xmpp_tasks.h"
+
+#include <QButtonGroup>
+#include <QDropEvent>
+#include <QHeaderView>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPointer>
+#include <QPushButton>
+#include <QTimer>
+#include <QtCrypto>
 
 using namespace XMPP;
-
 
 //----------------------------------------------------------------------------
 // AccountRemoveDlg
 //----------------------------------------------------------------------------
 
-class AccountRemoveDlg : public QDialog, public Ui::AccountRemove
-{
+class AccountRemoveDlg : public QDialog, public Ui::AccountRemove {
     Q_OBJECT
 public:
-    AccountRemoveDlg(const UserAccount &, QWidget *parent=0);
+    AccountRemoveDlg(const UserAccount &, QWidget *parent = nullptr);
     ~AccountRemoveDlg();
 
 protected:
     // reimplemented
-    //void closeEvent(QCloseEvent *);
+    // void closeEvent(QCloseEvent *);
 
 public slots:
     void done(int);
@@ -79,30 +77,29 @@ private:
     class Private;
     Private *d;
 
-    MiniClient *client;
-    QPushButton* pb_close_;
-    QPushButton* pb_remove_;
+    MiniClient * client;
+    QPushButton *pb_close_;
+    QPushButton *pb_remove_;
 };
 
-class AccountRemoveDlg::Private
-{
+class AccountRemoveDlg::Private {
 public:
     Private() = default;
 
-    UserAccount acc;
+    UserAccount   acc;
     QButtonGroup *bg = nullptr;
 };
 
-AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
-:QDialog(parent)
+AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent) : QDialog(parent)
 {
     setupUi(this);
     setModal(false);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
+                   | Qt::CustomizeWindowHint);
 #ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
-    d = new Private;
+    d      = new Private;
     d->acc = acc;
 
     setWindowTitle(CAP(windowTitle()));
@@ -128,10 +125,7 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
     adjustSize();
 }
 
-AccountRemoveDlg::~AccountRemoveDlg()
-{
-    delete d;
-}
+AccountRemoveDlg::~AccountRemoveDlg() { delete d; }
 
 /*void AccountRemoveDlg::closeEvent(QCloseEvent *e)
 {
@@ -141,10 +135,11 @@ AccountRemoveDlg::~AccountRemoveDlg()
 
 void AccountRemoveDlg::done(int r)
 {
-    if(busy->isActive()) {
-        QMessageBox messageBox(QMessageBox::Information, CAP(tr("Warning")), tr("Are you sure you want to cancel the unregistration?"));
-        QPushButton* cancel = messageBox.addButton(tr("&No"), QMessageBox::RejectRole);
-        QPushButton* accept = messageBox.addButton(tr("&Yes"), QMessageBox::AcceptRole);
+    if (busy->isActive()) {
+        QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Warning")),
+                               tr("Are you sure you want to cancel the unregistration?"));
+        QPushButton *cancel = messageBox.addButton(tr("&No"), QMessageBox::RejectRole);
+        QPushButton *accept = messageBox.addButton(tr("&Yes"), QMessageBox::AcceptRole);
         messageBox.setDefaultButton(accept);
         messageBox.exec();
         if (messageBox.clickedButton() == cancel)
@@ -155,11 +150,10 @@ void AccountRemoveDlg::done(int r)
 
 void AccountRemoveDlg::bg_clicked(int x)
 {
-    if(x == 0) {
+    if (x == 0) {
         lb_pass->setEnabled(false);
         le_pass->setEnabled(false);
-    }
-    else if(x == 1) {
+    } else if (x == 1) {
         lb_pass->setEnabled(true);
         le_pass->setEnabled(true);
         le_pass->setFocus();
@@ -170,23 +164,24 @@ void AccountRemoveDlg::remove()
 {
     bool unreg = rb_removeAndUnreg->isChecked();
 
-    if(unreg) {
-        if(!d->acc.pass.isEmpty() && le_pass->text() != d->acc.pass) {
+    if (unreg) {
+        if (!d->acc.pass.isEmpty() && le_pass->text() != d->acc.pass) {
             QMessageBox::information(this, tr("Error"), tr("Password does not match account.  Please try again."));
             le_pass->setFocus();
             return;
         }
     }
 
-    QMessageBox messageBox(QMessageBox::Information, CAP(tr("Warning")), tr("Are you sure you want to remove <b>%1</b> ?").arg(d->acc.name));
-    QPushButton* cancel = messageBox.addButton(QMessageBox::Cancel);
-    QPushButton* remove = messageBox.addButton(tr("&Remove"), QMessageBox::AcceptRole);
+    QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Warning")),
+                           tr("Are you sure you want to remove <b>%1</b> ?").arg(d->acc.name));
+    QPushButton *cancel = messageBox.addButton(QMessageBox::Cancel);
+    QPushButton *remove = messageBox.addButton(tr("&Remove"), QMessageBox::AcceptRole);
     messageBox.setDefaultButton(remove);
     messageBox.exec();
     if (messageBox.clickedButton() == cancel)
         return;
 
-    if(!unreg) {
+    if (!unreg) {
         accept();
         return;
     }
@@ -196,8 +191,10 @@ void AccountRemoveDlg::remove()
     pb_remove_->setEnabled(false);
 
     QString pass = le_pass->text();
-    Jid j(Jid(d->acc.jid).withResource(d->acc.resource));
-    client->connectToServer(j, d->acc.legacy_ssl_probe, d->acc.ssl == UserAccount::SSL_Legacy, d->acc.ssl == UserAccount::SSL_Yes, d->acc.opt_host ? d->acc.host : QString(), d->acc.port, d->acc.proxyID, &pass);
+    Jid     j(Jid(d->acc.jid).withResource(d->acc.resource));
+    client->connectToServer(j, d->acc.legacy_ssl_probe, d->acc.ssl == UserAccount::SSL_Legacy,
+                            d->acc.ssl == UserAccount::SSL_Yes, d->acc.opt_host ? d->acc.host : QString(), d->acc.port,
+                            d->acc.proxyID, &pass);
 }
 
 void AccountRemoveDlg::client_handshaken()
@@ -226,15 +223,16 @@ void AccountRemoveDlg::unreg_finished()
     client->close();
     busy->stop();
 
-    if(reg->success()) {
+    if (reg->success()) {
         QMessageBox::information(this, tr("Success"), tr("The account was unregistered successfully."));
         accept();
         return;
-    }
-    else if(reg->statusCode() != Task::ErrDisc) {
+    } else if (reg->statusCode() != Task::ErrDisc) {
         gb_account->setEnabled(true);
         pb_remove_->setEnabled(true);
-        QMessageBox::critical(this, tr("Error"), QString(tr("There was an error unregistering the account.\nReason: %1")).arg(reg->statusString()));
+        QMessageBox::critical(
+            this, tr("Error"),
+            QString(tr("There was an error unregistering the account.\nReason: %1")).arg(reg->statusString()));
     }
 }
 
@@ -249,15 +247,13 @@ void AccountRemoveDlg::client_disconnected()
 //----------------------------------------------------------------------------
 // AccountManageDlg
 //----------------------------------------------------------------------------
-class AccountManageItem : public QObject, public QTreeWidgetItem
-{
+class AccountManageItem : public QObject, public QTreeWidgetItem {
     Q_OBJECT
 public:
     QPointer<PsiAccount> pa;
 
 public:
-    AccountManageItem(QTreeWidget *par, PsiAccount *_pa)
-    :QTreeWidgetItem(par)
+    AccountManageItem(QTreeWidget *par, PsiAccount *_pa) : QTreeWidgetItem(par)
     {
         pa = _pa;
         Q_ASSERT(!pa.isNull());
@@ -267,7 +263,7 @@ public:
         updateInfo();
     }
 
-    void setData (int column, int role, const QVariant& value)
+    void setData(int column, int role, const QVariant &value)
     {
         bool oldChecked = checkState(0) == Qt::Checked;
         QTreeWidgetItem::setData(column, role, value);
@@ -283,7 +279,7 @@ private slots:
     void updateInfo()
     {
         UserAccount acc = pa->accountOptions();
-        Jid j = acc.jid;
+        Jid         j   = acc.jid;
         setText(0, pa->name());
         setText(1, acc.opt_host && acc.host.length() ? acc.host : j.domain());
         setText(2, pa->isActive() ? AccountManageDlg::tr("Active") : AccountManageDlg::tr("Not active"));
@@ -291,13 +287,7 @@ private slots:
     }
 };
 
-
-
-AccountManageTree::AccountManageTree(QWidget *parent)
-    : QTreeWidget(parent)
-{
-
-}
+AccountManageTree::AccountManageTree(QWidget *parent) : QTreeWidget(parent) {}
 
 void AccountManageTree::dropEvent(QDropEvent *event)
 {
@@ -305,9 +295,9 @@ void AccountManageTree::dropEvent(QDropEvent *event)
     AccountManageTree *tree = qobject_cast<AccountManageTree *>(event->source());
 
     if (tree) {
-        QList<PsiAccount*> accountsList;
+        QList<PsiAccount *> accountsList;
         foreach (QTreeWidgetItem *ami, tree->findItems("*", Qt::MatchWildcard)) {
-            accountsList.append(((AccountManageItem *)ami)->pa.data());
+            accountsList.append(static_cast<AccountManageItem *>(ami)->pa.data());
         }
         emit orderChanged(accountsList);
     }
@@ -316,23 +306,17 @@ void AccountManageTree::dropEvent(QDropEvent *event)
 void AccountManageTree::dragMoveEvent(QDragMoveEvent *event)
 {
     QTreeWidget::dragMoveEvent(event);
-    sortByColumn(-1);
+    sortByColumn(-1, Qt::AscendingOrder);
 }
 
-
-
-AccountManageDlg::AccountManageDlg(PsiCon *_psi)
-:QDialog(0)
+AccountManageDlg::AccountManageDlg(PsiCon *_psi) : QWidget(nullptr)
 {
     setupUi(this);
-    setModal(false);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     psi = _psi;
-    psi->dialogRegister(this);
+    noAccountLabel->setVisible(false);
 
-    setWindowTitle(CAP(windowTitle()));
-
-    removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
+    removeAction_ = new IconAction("", "psi/remove", QString(),
+                                   ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
     connect(removeAction_, SIGNAL(triggered()), SLOT(remove()));
     lv_accs->addAction(removeAction_);
 
@@ -342,34 +326,30 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
     connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
 
     connect(lv_accs, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(modify(QTreeWidgetItem *)));
-    connect(lv_accs, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
-    connect(lv_accs, SIGNAL(orderChanged(QList<PsiAccount*>)), psi, SLOT(setAccountsOrder(QList<PsiAccount*>)));
+    connect(lv_accs, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
+            SLOT(qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
+    connect(lv_accs, SIGNAL(orderChanged(QList<PsiAccount *>)), psi, SLOT(setAccountsOrder(QList<PsiAccount *>)));
     connect(psi, SIGNAL(accountAdded(PsiAccount *)), SLOT(accountAdded(PsiAccount *)));
     connect(psi, SIGNAL(accountRemoved(PsiAccount *)), SLOT(accountRemoved(PsiAccount *)));
     lv_accs->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     lv_accs->setDragDropMode(QAbstractItemView::InternalMove);
     lv_accs->setDragDropOverwriteMode(false);
     lv_accs->setSortingEnabled(true);
-    lv_accs->sortByColumn(-1);
+    lv_accs->sortByColumn(-1, Qt::AscendingOrder);
 
-    foreach(PsiAccount* pa, psi->contactList()->accounts())
+    foreach (PsiAccount *pa, psi->contactList()->accounts())
         new AccountManageItem(lv_accs, pa);
 
     if (lv_accs->topLevelItemCount())
         lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
-
-    //adjustSize();
 }
 
-AccountManageDlg::~AccountManageDlg()
-{
-    psi->dialogUnregister(this);
-}
+AccountManageDlg::~AccountManageDlg() {}
 
 void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetItem *)
 {
-    AccountManageItem *i = static_cast<AccountManageItem *>(lvi);
-    bool ok = i ? true: false;
+    AccountManageItem *i  = static_cast<AccountManageItem *>(lvi);
+    bool               ok = i ? true : false;
 
     pb_modify->setEnabled(ok);
     pb_remove->setEnabled(ok);
@@ -378,19 +358,16 @@ void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetIte
 
 void AccountManageDlg::add()
 {
-    AccountAddDlg *w = new AccountAddDlg(psi, 0);
+    AccountAddDlg *w = new AccountAddDlg(psi, nullptr);
     w->show();
 }
 
-void AccountManageDlg::modify()
-{
-    modify(lv_accs->currentItem());
-}
+void AccountManageDlg::modify() { modify(lv_accs->currentItem()); }
 
 void AccountManageDlg::modify(QTreeWidgetItem *lvi)
 {
     AccountManageItem *i = static_cast<AccountManageItem *>(lvi);
-    if(!i)
+    if (!i)
         return;
 
     i->pa->modify();
@@ -398,19 +375,22 @@ void AccountManageDlg::modify(QTreeWidgetItem *lvi)
 
 void AccountManageDlg::remove()
 {
-    AccountManageItem *i = (AccountManageItem *)lv_accs->currentItem();
-    if(!i)
+    AccountManageItem *i = static_cast<AccountManageItem *>(lv_accs->currentItem());
+    if (!i)
         return;
 
-    if(i->pa->eventQueue()->count()) {
-        QMessageBox::information(0, tr("Error"), qApp->translate("PsiAccount", "Unable to disable the account, as it has pending events."));
+    if (i->pa->eventQueue()->count()) {
+        QMessageBox::information(
+            nullptr, tr("Error"),
+            qApp->translate("PsiAccount", "Unable to disable the account, as it has pending events."));
         return;
     }
 
-    if(i->pa->isActive()) {
-        QMessageBox messageBox(QMessageBox::Information, CAP(tr("Error")), tr("Please disconnect before removing the account."));
-        QPushButton* cancel = messageBox.addButton(QMessageBox::Cancel);
-        QPushButton* disconnect = messageBox.addButton(tr("&Disconnect"), QMessageBox::AcceptRole);
+    if (i->pa->isActive()) {
+        QMessageBox  messageBox(QMessageBox::Information, CAP(tr("Error")),
+                               tr("Please disconnect before removing the account."));
+        QPushButton *cancel     = messageBox.addButton(QMessageBox::Cancel);
+        QPushButton *disconnect = messageBox.addButton(tr("&Disconnect"), QMessageBox::AcceptRole);
         messageBox.setDefaultButton(disconnect);
         messageBox.exec();
         if (messageBox.clickedButton() == cancel)
@@ -420,8 +400,8 @@ void AccountManageDlg::remove()
     }
 
     AccountRemoveDlg *w = new AccountRemoveDlg(i->pa->userAccount());
-    int n = w->exec();
-    if(n != QDialog::Accepted) {
+    int               n = w->exec();
+    if (n != QDialog::Accepted) {
         delete w;
         return;
     }
@@ -432,21 +412,38 @@ void AccountManageDlg::remove()
     lv_accs->setFocus();
 }
 
-void AccountManageDlg::accountAdded(PsiAccount *pa)
-{
-    new AccountManageItem(lv_accs, pa);
-}
+void AccountManageDlg::accountAdded(PsiAccount *pa) { new AccountManageItem(lv_accs, pa); }
 
 void AccountManageDlg::accountRemoved(PsiAccount *pa)
 {
     for (int index = 0; index < lv_accs->topLevelItemCount(); ++index) {
-        AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->topLevelItem(index));
-        if(i->pa == pa) {
+        AccountManageItem *i = static_cast<AccountManageItem *>(lv_accs->topLevelItem(index));
+        if (i->pa == pa) {
             delete i;
-            qlv_selectionChanged(lv_accs->currentItem(), 0);
+            qlv_selectionChanged(lv_accs->currentItem(), nullptr);
             break;
         }
     }
+}
+
+void AccountManageDlg::enableElements(bool enabled)
+{
+    const int items = lv_accs->topLevelItemCount();
+    lv_accs->setEnabled(enabled);
+    pb_remove->setEnabled(enabled);
+    if (!enabled) {
+        if (items > 0) {
+            pb_modify->setEnabled(true);
+            pb_add->setEnabled(false);
+        } else {
+            pb_modify->setEnabled(false);
+            pb_add->setEnabled(true);
+        }
+    } else {
+        pb_modify->setEnabled(true);
+        pb_add->setEnabled(true);
+    }
+    noAccountLabel->setVisible(items <= 0);
 }
 
 #include "accountmanagedlg.moc"

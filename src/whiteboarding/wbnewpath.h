@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,18 +24,18 @@
 #include "wbnewitem.h"
 
 class WbNewPath : public WbNewItem {
-    public:
-        WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
-        ~WbNewPath();
-        void parseCursorMove(QPointF newPos);
-        QDomNode serializeToSvg(QDomDocument *doc);
+public:
+    WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
+    ~WbNewPath();
+    void     parseCursorMove(QPointF newPos);
+    QDomNode serializeToSvg(QDomDocument *doc);
 
-    protected:
-        QGraphicsItem* graphicsItem();
+protected:
+    QGraphicsItem *graphicsItem();
 
-    private:
-        QGraphicsPathItem graphicsitem_;
-        QPointF* controlPoint_;
+private:
+    QGraphicsPathItem graphicsitem_;
+    QPointF *         controlPoint_;
 };
 
-#endif
+#endif // WBNEWPATH_H

@@ -13,25 +13,21 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "groupmenu.h"
 
-#include "userlist.h"
-#include "psicontact.h"
 #include "psiaccount.h"
+#include "psicontact.h"
+#include "userlist.h"
 
 #include <QInputDialog>
 
-GroupMenu::GroupMenu(QWidget* parent)
-    : QMenu(parent)
-{
-}
+GroupMenu::GroupMenu(QWidget *parent) : QMenu(parent) {}
 
-void GroupMenu::updateMenu(PsiContact* contact)
+void GroupMenu::updateMenu(PsiContact *contact)
 {
     if (isVisible())
         return;
@@ -42,10 +38,10 @@ void GroupMenu::updateMenu(PsiContact* contact)
     addGroup(tr("&None"), "", contact->userListItem().groups().isEmpty());
     addSeparator();
 
-    int n = 0;
+    int         n         = 0;
     QStringList groupList = contact->account()->groupList();
     groupList.removeAll(PsiContact::hiddenGroupName());
-    foreach(QString groupName, groupList) {
+    foreach (QString groupName, groupList) {
         QString displayName = groupName;
         if (displayName.isEmpty())
             displayName = PsiContact::generalGroupName();
@@ -61,7 +57,7 @@ void GroupMenu::updateMenu(PsiContact* contact)
     addGroup(tr("&Hidden"), PsiContact::hiddenGroupName(), contact->isHidden());
     addSeparator();
 
-    QAction* createNewGroupAction = new QAction(tr("&Create New..."), this);
+    QAction *createNewGroupAction = new QAction(tr("&Create New..."), this);
     connect(createNewGroupAction, SIGNAL(triggered()), SLOT(createNewGroup()));
     addAction(createNewGroupAction);
 }
@@ -73,7 +69,7 @@ void GroupMenu::updateMenu(PsiContact* contact)
  */
 void GroupMenu::addGroup(QString text, QString groupName, bool selected)
 {
-    QAction* action = new QAction(text, this);
+    QAction *action = new QAction(text, this);
     addAction(action);
     action->setCheckable(true);
     action->setChecked(selected);
@@ -83,19 +79,16 @@ void GroupMenu::addGroup(QString text, QString groupName, bool selected)
 
 void GroupMenu::actionActivated()
 {
-    QAction* action = static_cast<QAction*>(sender());
-    emit groupActivated(action->property("groupName").toString());
+    QAction *action = static_cast<QAction *>(sender());
+    emit     groupActivated(action->property("groupName").toString());
 }
 
 void GroupMenu::createNewGroup()
 {
     while (contact_) {
-        bool ok = false;
-        QString newgroup = QInputDialog::getText(0, tr("Create New Group"),
-                                                 tr("Enter the new group name:"),
-                                                 QLineEdit::Normal,
-                                                 QString::null,
-                                                 &ok, 0);
+        bool    ok       = false;
+        QString newgroup = QInputDialog::getText(nullptr, tr("Create New Group"), tr("Enter the new group name:"),
+                                                 QLineEdit::Normal, QString(), &ok, nullptr);
         if (!ok)
             break;
         if (newgroup.isEmpty())

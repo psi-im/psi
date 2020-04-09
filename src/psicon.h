@@ -1,6 +1,6 @@
 /*
  * psicon.h - core of Psi
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,16 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #ifndef PSICON_H
 #define PSICON_H
-
-#include <QList>
-#include <functional>
 
 #include "profiles.h"
 #include "psiactions.h"
@@ -30,44 +26,48 @@
 #include "tabbablewidget.h"
 #include "tunecontrollermanager.h"
 
-using namespace XMPP;
+#include <QList>
+#include <functional>
 
-class PsiCon;
-class PsiAccount;
-class ContactView;
+class AccountsComboBox;
+class AlertManager;
 class AutoUpdater;
-class EventDlg;
-class UserListItem;
+class ChatDlg;
+class ContactUpdatesManager;
+class ContactView;
 class EDB;
 class EDBItem;
-class ProxyManager;
-class QMenuBar;
+class EventDlg;
+class FileSharingManager;
 class FileTransDlg;
 class IconSelectPopup;
-class QThread;
+class NetworkAccessManager;
+class PopupManager;
+class ProxyManager;
+class PsiAccount;
 class PsiActionList;
+class PsiCon;
+class PsiContactList;
+class PsiThemeManager;
 class PsiToolBar;
+class QMenuBar;
+class QThread;
 class TabDlg;
 class TabManager;
-class AccountsComboBox;
-class ChatDlg;
-class AlertManager;
 class TuneController;
-class PsiContactList;
-class TabManager;
-class ContactUpdatesManager;
-class PopupManager;
-class NetworkAccessManager;
+class UserListItem;
+class WebServer;
 
 namespace OpenPGP {
-    class Engine;
-}
-namespace XMPP {
-    class Jid;
+class Engine;
 }
 
-class PsiCon : public QObject
-{
+namespace XMPP {
+class Jid;
+}
+using namespace XMPP;
+
+class PsiCon : public QObject {
     Q_OBJECT
 public:
     enum { QuitProgram, QuitProfile };
@@ -78,60 +78,67 @@ public:
     void deinit();
     void gracefulDeinit(std::function<void()> callback);
 
-    PsiContactList* contactList() const;
-    EDB *edb() const;
-    TuneControllerManager* tuneManager() const;
-    FileTransDlg *ftdlg();
-    TabManager *tabManager() const;
-    NetworkAccessManager *networkAccessManager() const;
+    PsiContactList *       contactList() const;
+    EDB *                  edb() const;
+    TuneControllerManager *tuneManager() const;
+    FileTransDlg *         ftdlg();
+    TabManager *           tabManager() const;
+    NetworkAccessManager * networkAccessManager() const;
+    FileSharingManager *   fileSharingManager() const;
+    PsiThemeManager *      themeManager() const;
+    WebServer *            webServer() const;
 
     AlertManager *alertManager() const;
 
     QWidget *dialogFind(const char *className);
-    void dialogRegister(QWidget *w);
-    void dialogUnregister(QWidget *w);
-    int idle() const;
+    void     dialogRegister(QWidget *w);
+    void     dialogUnregister(QWidget *w);
+    int      idle() const;
 
-    QMenuBar* defaultMenuBar() const;
+    QMenuBar *defaultMenuBar() const;
 
-    ContactUpdatesManager* contactUpdatesManager() const;
+    ContactUpdatesManager *contactUpdatesManager() const;
 
-    PsiAccount* createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = false, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, QString proxy="", const QString &tlsOverrideDomain="", const QByteArray &tlsOverrideCert=QByteArray());
+    PsiAccount *createAccount(const QString &name, const Jid &j = "", const QString &pass = "", bool opt_host = false,
+                              const QString &host = "", int port = 5222, bool legacy_ssl_probe = false,
+                              UserAccount::SSLFlag ssl = UserAccount::SSL_Auto, QString proxy = "",
+                              const QString &tlsOverrideDomain = "", const QByteArray &tlsOverrideCert = QByteArray());
     PsiAccount *createAccount(const UserAccount &);
-    //void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString &user="", const QString &pass="");
+    // void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString
+    // &user="", const QString &pass="");
     void removeAccount(PsiAccount *);
 
     void playSound(const QString &);
     bool mainWinVisible() const;
 
-    AccountsComboBox *accountsComboBox(QWidget *parent=nullptr, bool online_only = false);
+    AccountsComboBox *accountsComboBox(QWidget *parent = nullptr, bool online_only = false);
 
-    QStringList recentGCList() const;
-    void recentGCAdd(const QString &);
-    QStringList recentBrowseList() const;
-    void recentBrowseAdd(const QString &);
-    const QStringList & recentNodeList() const;
-    void recentNodeAdd(const QString &);
+    QStringList        recentGCList() const;
+    void               recentGCAdd(const QString &);
+    QStringList        recentBrowseList() const;
+    void               recentBrowseAdd(const QString &);
+    const QStringList &recentNodeList() const;
+    void               recentNodeAdd(const QString &);
 
-    EventDlg *createMessageDlg(const QString &, PsiAccount*);
-    EventDlg *createEventDlg(const QString &, PsiAccount*);
-    void updateContactGlobal(PsiAccount *, const Jid &);
+    EventDlg *createMessageDlg(const QString &, PsiAccount *);
+    EventDlg *createEventDlg(const QString &, PsiAccount *);
+    void      updateContactGlobal(PsiAccount *, const Jid &);
 
     PsiActionList *actionList() const;
 
     IconSelectPopup *iconSelectPopup() const;
-    bool filterEvent(const PsiAccount*, const PsiEvent::Ptr &) const;
-    void processEvent(const PsiEvent::Ptr &, ActivationType activationType);
-    void removeEvent(const PsiEvent::Ptr &e);
+    bool             filterEvent(const PsiAccount *, const PsiEvent::Ptr &) const;
+    void             processEvent(const PsiEvent::Ptr &, ActivationType activationType);
+    void             removeEvent(const PsiEvent::Ptr &e);
 
     Status::Type currentStatusType() const;
-    QString currentStatusMessage() const;
+    QString      currentStatusMessage() const;
 
     bool haveAutoUpdater() const;
     void updateStatusPresets();
 
-    PopupManager* popupManager() const;
-    QStringList xmppFatures() const;
+    PopupManager *popupManager() const;
+    QStringList   xmppFatures() const;
 
 signals:
     void quit(int);
@@ -147,18 +154,17 @@ signals:
 
 public slots:
     void setGlobalStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
-    void showStatusDialog(const QString& presetName);
+    void showStatusDialog(const QString &presetName);
     void doToolbars();
     void doStatusPresets();
     void checkAccountsEmpty();
-    void setAccountsOrder(QList<PsiAccount*>);
+    void setAccountsOrder(QList<PsiAccount *>);
 
 public slots:
     void doSleep();
     void doWakeup();
     void closeProgram();
     void changeProfile();
-    void doManageAccounts();
     void doGroupChat();
     void doNewBlankMessage();
     void doOptions();
@@ -180,29 +186,28 @@ public slots:
 
 private slots:
     void saveAccounts();
-    void optionChanged(const QString& option);
+    void optionChanged(const QString &option);
     void forceSavePreferences(QSessionManager &);
     void startBounce();
     void aboutToQuit();
-    void secondsIdle(int);    
+    void secondsIdle(int);
     void proceedWithSleep();
     void networkSessionOpened();
+
 private:
     class Private;
     Private *d;
     friend class Private;
-    ContactUpdatesManager* contactUpdatesManager_;
+    ContactUpdatesManager *contactUpdatesManager_;
 
     void initNetSession();
     void deleteAllDialogs();
-    void s5b_init();
-    void updateS5BServerAddresses();
     void setShortcuts();
 
     friend class PsiAccount; // FIXME
-    void promptUserToCreateAccount();
+    void    promptUserToCreateAccount();
     QString optionsFile() const;
-    void doQuit(int);
+    void    doQuit(int);
 };
 
-#endif
+#endif // PSICON_H

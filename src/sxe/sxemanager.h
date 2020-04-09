@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -22,15 +21,13 @@
 #define SXDEMANAGER_H
 
 #include "QTimer"
-
 #include "sxesession.h"
 
 namespace XMPP {
-    class Client;
-    class Jid;
-    class Message;
+class Client;
+class Jid;
+class Message;
 }
-
 using namespace XMPP;
 
 /*! \brief The manager for SXE sessions and negotiations.
@@ -47,22 +44,31 @@ using namespace XMPP;
  *
  *  \sa SxeSession
  */
-class SxeManager : public QObject
-{
+class SxeManager : public QObject {
     Q_OBJECT
 
     /*! \brief A simple struct used to keep track of the detected SXE sessions.*/
     struct DetectedSession {
         QString session;
-        Jid jid;
-        QTime time;
+        Jid     jid;
+        QTime   time;
     };
 
     /*! \brief A simple class to keep track of the state of a session negotiation process.*/
-    class SxeNegotiation{
+    class SxeNegotiation {
     public:
-        enum Role {Participant, Joiner};
-        enum State {NotStarted, InvitationSent, ConnectionRequested, InvitationAccepted, DocumentBegan, /*DocumentEnded,*/ HistoryOffered, HistoryAccepted, Finished, Aborted};
+        enum Role { Participant, Joiner };
+        enum State {
+            NotStarted,
+            InvitationSent,
+            ConnectionRequested,
+            InvitationAccepted,
+            DocumentBegan,
+            /*DocumentEnded,*/ HistoryOffered,
+            HistoryAccepted,
+            Finished,
+            Aborted
+        };
 
         /*! \brief Describes our role in the negotiation.*/
         Role role;
@@ -92,19 +98,20 @@ public:
     /*! \brief Constructor.
      *  Creates a new manager for the specified Client and PsiAccount
      */
-    SxeManager(XMPP::Client* client, PsiAccount* pa);
+    SxeManager(XMPP::Client *client, PsiAccount *pa);
     /*! \brief Return a list of pointers to sessions to the specified contact.
      *  If no such session exits, returns 0.
      */
-    QList< QPointer<SxeSession> > findSession(const Jid &target);
+    QList<QPointer<SxeSession>> findSession(const Jid &target);
     /*! \brief Return a pointer to the specified session.
      *  If such session doesn't exits, returns 0.
      */
     QPointer<SxeSession> findSession(const QString &session);
-//    /*! \brief Add a callback for invitations.*/
-//    void addInvitationCallback(bool (*callback)(const Jid &peer, const QList<QString> &features));
+    //    /*! \brief Add a callback for invitations.*/
+    //    void addInvitationCallback(bool (*callback)(const Jid &peer, const QList<QString> &features));
     /*! \brief Starts a new session negotiation to the specified contact with given list of features.*/
-    void startNewSession(const Jid &target, const Jid &ownJid, bool groupChat, const QDomDocument &initialDoc, QList<QString> features = QList<QString>());
+    void startNewSession(const Jid &target, const Jid &ownJid, bool groupChat, const QDomDocument &initialDoc,
+                         QList<QString> features = QList<QString>());
     /*! \brief Join an existing session.*/
     void joinSession(const Jid &target, const Jid &ownJid, bool groupChat, const QString &session);
     /*! \brief Checks that \a jid supports SXE and \a features. */
@@ -114,11 +121,12 @@ public:
 
 signals:
     /*! \brief Emitted when \a session has been established.*/
-    void sessionNegotiated(SxeSession* session);
-    /*! \brief Emitted when \a an invitation to \a jid was declined and joining an alternative session \a session was suggested.*/
+    void sessionNegotiated(SxeSession *session);
+    /*! \brief Emitted when \a an invitation to \a jid was declined and joining an alternative session \a session was
+     * suggested.*/
     void alternativeSession(const Jid &jid, const QString &session);
 
-    void invitationCallback(const Jid &peer, const QList<QString> &features, bool* result);
+    void invitationCallback(const Jid &peer, const QList<QString> &features, bool *result);
 
 private:
     /*! \brief Process a message that contains a negotiation element.
@@ -128,45 +136,49 @@ private:
     /*! \brief Process a negotiation element as a Participant.
         Appends the appropriate responses to \a response.
         Returns false iff the negotiation object was deleted. */
-    bool processNegotiationAsParticipant(const QDomNode &negotiationElement, SxeNegotiation* negotiation, QDomNode response);
+    bool processNegotiationAsParticipant(const QDomNode &negotiationElement, SxeNegotiation *negotiation,
+                                         QDomNode response);
     /*! \brief Process a negotiation element as a Joiner.
         Appends the appropriate responses to \a response.
         Returns false iff the negotiation object was deleted. */
-    bool processNegotiationAsJoiner(const QDomNode &negotiationElement, SxeNegotiation* negotiation, QDomNode response, const Message &message);
+    bool processNegotiationAsJoiner(const QDomNode &negotiationElement, SxeNegotiation *negotiation, QDomNode response,
+                                    const Message &message);
     /*! \brief Returns a pointer to a new session instance.*/
-    QPointer<SxeSession> createSxeSession(const Jid &target, QString session, const Jid &ownJid, bool groupChat, const QList<QString> &features);
+    QPointer<SxeSession> createSxeSession(const Jid &target, QString session, const Jid &ownJid, bool groupChat,
+                                          const QList<QString> &features);
     /*! \brief Aborts the negotiation of \a session started with \a peer.*/
     void abortNegotiation(QString session, const Jid &peer, bool groupChat);
     /*! \brief Aborts the negotiation with the peer and deletes the session.*/
-    void abortNegotiation(SxeNegotiation* negotiation);
-    /*! \brief Records the session that the message refers to as a DetectedSession if no entry for the session exists yet.*/
+    void abortNegotiation(SxeNegotiation *negotiation);
+    /*! \brief Records the session that the message refers to as a DetectedSession if no entry for the session exists
+     * yet.*/
     void recordDetectedSession(const Message &message);
     /*! \brief Returns a pointer to a new negotiation instance based on \a message.*/
-    SxeNegotiation* createNegotiation(const Message &message);
+    SxeNegotiation *createNegotiation(const Message &message);
     /*! \brief Returns a pointer to a new negotiation instance.*/
-    SxeNegotiation* createNegotiation(SxeNegotiation::Role role, SxeNegotiation::State state, const QString &sessionId, const Jid &target, const Jid &ownJid, bool groupChat);
+    SxeNegotiation *createNegotiation(SxeNegotiation::Role role, SxeNegotiation::State state, const QString &sessionId,
+                                      const Jid &target, const Jid &ownJid, bool groupChat);
     /*! \brief Returns a pointer to an existing negotiation object of \a session with \a jid.*/
-    SxeNegotiation* findNegotiation(const Jid &jid, const QString &session);
+    SxeNegotiation *findNegotiation(const Jid &jid, const QString &session);
     /*! \brief Remove the negotiation object of \a session with \a jid.*/
-    void removeNegotiation(SxeNegotiation* negotiation);
-
+    void removeNegotiation(SxeNegotiation *negotiation);
 
     /*! \brief A pointer to the Client to listen to.*/
-    XMPP::Client* client_;
+    XMPP::Client *client_;
     /*! \brief A pointer to the PsiAccount to listen to.*/
-    PsiAccount* pa_;
+    PsiAccount *pa_;
     /*! \brief A list of of established sessions.*/
-    QList< QPointer<SxeSession> > sessions_;
+    QList<QPointer<SxeSession>> sessions_;
     /*! \brief A list of negotiations in process.*/
-    QMultiHash<QString, SxeNegotiation* > negotiations_;
+    QMultiHash<QString, SxeNegotiation *> negotiations_;
     /*! \brief A timer used to remove unfinished negotiations after a timeout.*/
     QTimer negotiationTimer_;
     /*! \brief A list of of detected sessions.*/
     QList<DetectedSession> DetectedSessions_;
     /*! \brief A list of Jids corresponding to self.*/
     QList<QString> ownJids_;
-//    /*! \brief A list of callbacks used to determine whether an invitation should be accepted.*/
-//    QList<bool (*)(const Jid &peer, const QList<QString> &features)> invitationCallbacks_;
+    //    /*! \brief A list of callbacks used to determine whether an invitation should be accepted.*/
+    //    QList<bool (*)(const Jid &peer, const QList<QString> &features)> invitationCallbacks_;
     /*! \brief A counter used for including a unique id in each sent sxe element.*/
     int sxeId_;
     /*! \brief A list of messages waiting to be sent out.*/
@@ -176,11 +188,11 @@ private slots:
     /*! \brief Receives incoming message and determines what to do with them.*/
     void messageReceived(const Message &message);
     /*! \brief Send given whiteboard element to receiver in a message.*/
-    void sendSxe(QDomElement sxe, const Jid & receiver, bool groupChat);
+    void sendSxe(QDomElement sxe, const Jid &receiver, bool groupChat);
     /*! \brief Removes and deletes the session.*/
-    void removeSession(SxeSession* session);
+    void removeSession(SxeSession *session);
     /*! \brief Removes the "detected session" record of the given session.*/
-    void removeDetectedSession(SxeSession* session);
+    void removeDetectedSession(SxeSession *session);
     /*! \brief Removes and deletes the possible sessions for the groupchat.*/
     void groupChatLeft(const Jid &);
     /*! \brief Keeps a record of groupchats.*/
@@ -189,4 +201,4 @@ private slots:
     void negotiationTimeout();
 };
 
-#endif
+#endif // SXDEMANAGER_H

@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,38 +22,37 @@
 
 #include <QComboBox>
 
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 
-class AccountsComboBox : public QComboBox
-{
+class AccountsComboBox : public QComboBox {
     Q_OBJECT
 public:
-    AccountsComboBox(QWidget* parent);
+    AccountsComboBox(QWidget *parent);
     ~AccountsComboBox();
 
-    PsiAccount* account() const;
-    void setAccount(PsiAccount* account);
+    PsiAccount *account() const;
+    void        setAccount(PsiAccount *account);
 
-    PsiCon* controller() const;
-    void setController(PsiCon* controller);
+    PsiCon *controller() const;
+    void    setController(PsiCon *controller);
 
     bool onlineOnly() const;
     void setOnlineOnly(bool onlineOnly);
 
 signals:
-    void activated(PsiAccount* account);
+    void activated(PsiAccount *account);
 
 private slots:
     void changeAccount();
     void updateAccounts();
 
 private:
-    PsiCon* controller_;
-    PsiAccount* account_;
-    bool onlineOnly_;
+    PsiCon *    controller_;
+    PsiAccount *account_;
+    bool        onlineOnly_;
 
-    QList<PsiAccount*> accounts() const;
+    QList<PsiAccount *> accounts() const;
 };
 
-#endif
+#endif // ACCOUNTSCOMBOBOX_H

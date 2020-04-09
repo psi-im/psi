@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -23,22 +22,20 @@
 
 #include <QTreeWidget>
 
-namespace XMPP
-{
-    class Jid;
-    class Client;
-}
-
-class PsiCon;
 class PsiAccount;
+class PsiCon;
 class QTreeWidgetItem;
 
-class AccountManageTree : public QTreeWidget
-{
+namespace XMPP {
+class Client;
+class Jid;
+}
+
+class AccountManageTree : public QTreeWidget {
     Q_OBJECT
 
 public:
-    AccountManageTree(QWidget *parent = 0);
+    AccountManageTree(QWidget *parent = nullptr);
 
 protected:
     void dropEvent(QDropEvent *event);
@@ -50,12 +47,12 @@ signals:
 
 #include "ui_accountmanage.h"
 
-class AccountManageDlg : public QDialog, public Ui::AccountManage
-{
+class AccountManageDlg : public QWidget, public Ui::AccountManage {
     Q_OBJECT
 public:
     AccountManageDlg(PsiCon *);
     ~AccountManageDlg();
+    void enableElements(bool enabled);
 
 private slots:
     void qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *);
@@ -67,8 +64,8 @@ private slots:
     void accountRemoved(PsiAccount *);
 
 private:
-    PsiCon *psi;
-    QAction* removeAction_;
+    PsiCon * psi;
+    QAction *removeAction_;
 };
 
-#endif
+#endif // ACCOUNTMANAGEDLG_H

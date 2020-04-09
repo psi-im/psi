@@ -13,22 +13,22 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psipopupinterface.h"
-#include "psioptions.h"
-#include "psiiconset.h"
+
 #include "common.h"
+#include "psiiconset.h"
+#include "psioptions.h"
 
 QString PsiPopupInterface::clipText(QString text)
 {
     int len = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-text-length").toInt();
     if (len > 0) {
         // richtext will give us trouble here
-        if (((int)text.length()) > len) {
+        if (int(text.length()) > len) {
             text = text.left(len);
 
             // delete last unclosed tag
@@ -48,55 +48,55 @@ QString PsiPopupInterface::title(PopupManager::PopupType type, bool *doAlertIcon
 {
     QString text;
 
-    switch(type) {
+    switch (type) {
     case PopupManager::AlertOnline:
-        text = QObject::tr("Contact online");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
+        text         = QObject::tr("Contact online");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("status/online"));
         *doAlertIcon = false;
         break;
     case PopupManager::AlertOffline:
-        text = QObject::tr("Contact offline");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("status/offline");
+        text         = QObject::tr("Contact offline");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("status/offline"));
         *doAlertIcon = false;
         break;
     case PopupManager::AlertStatusChange:
-        text = QObject::tr("Status change");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
+        text         = QObject::tr("Status change");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("status/online"));
         *doAlertIcon = false;
         break;
     case PopupManager::AlertMessage:
-        text = QObject::tr("Incoming message");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/message");
+        text         = QObject::tr("Incoming message");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/message"));
         *doAlertIcon = true;
         break;
     case PopupManager::AlertComposing:
-        text = QObject::tr("Typing notify");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/typing");
+        text         = QObject::tr("Typing notify");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/typing"));
         *doAlertIcon = false;
         break;
     case PopupManager::AlertChat:
-        text = QObject::tr("Incoming chat message");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/chat");
+        text         = QObject::tr("Incoming chat message");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/chat"));
         *doAlertIcon = true;
         break;
     case PopupManager::AlertHeadline:
-        text = QObject::tr("Headline");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
+        text         = QObject::tr("Headline");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/headline"));
         *doAlertIcon = true;
         break;
     case PopupManager::AlertFile:
-        text = QObject::tr("Incoming file");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/file");
+        text         = QObject::tr("Incoming file");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/file"));
         *doAlertIcon = true;
         break;
     case PopupManager::AlertAvCall:
-        text = QObject::tr("Incoming call");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/call");
+        text         = QObject::tr("Incoming call");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/call"));
         *doAlertIcon = true;
         break;
     case PopupManager::AlertGcHighlight:
-        text = QObject::tr("Groupchat highlight");
-        *icon = (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
+        text         = QObject::tr("Groupchat highlight");
+        *icon        = const_cast<PsiIcon *>(IconsetFactory::iconPtr("psi/headline"));
         *doAlertIcon = true;
         break;
     default:

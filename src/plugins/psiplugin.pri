@@ -1,8 +1,10 @@
+# pluginsconf.pri comes in 2 copies. one is right here and another one
+# will be generated from pluginsconf.pri.in and installed to prefix.
 include($$PWD/pluginsconf.pri)
+
 TEMPLATE = lib
 CONFIG += plugin c++14
 QT += xml widgets
-DEFINES += HAVE_QT5
 
 MOC_DIR = .moc/
 OBJECTS_DIR = .obj/

@@ -12,52 +12,46 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-
-#include "iconset.h"
-
-#include <QObject>
-#include <QFile>
-#include <QFileInfo>
-#include <QTimer>
-
-#include <QIcon>
-#include <QRegExp>
-#include <QDomDocument>
-#include <QThread>
-#include <QCoreApplication>
-#include <QLocale>
-#include <QBuffer>
-
-#include <QTextCodec>
-
-#include "anim.h"
 
 // sound support
 #ifndef NO_ICONSET_SOUND
 #define ICONSET_SOUND
 #endif
 
-#ifdef ICONSET_SOUND
-#    include <QDataStream>
-#    include <qca_basic.h>
-#endif
-
 #ifndef NO_ICONSET_ZIP
 #define ICONSET_ZIP
 #endif
 
+#include "iconset.h"
+
+#include "anim.h"
 #ifdef ICONSET_ZIP
-#    include "zip/zip.h"
+#include "zip/zip.h"
 #endif
 
 #include <QApplication>
+#include <QBuffer>
+#include <QCoreApplication>
+#include <QDomDocument>
+#include <QFile>
+#include <QFileInfo>
+#include <QIcon>
+#include <QLocale>
+#include <QObject>
+#include <QRegExp>
 #include <QSharedData>
 #include <QSharedDataPointer>
+#include <QTextCodec>
+#include <QThread>
+#include <QTimer>
+#ifdef ICONSET_SOUND
+#include <QDataStream>
+#include <qca_basic.h>
+#endif
 
 static void moveToMainThread(QObject *obj)
 {
@@ -98,10 +92,7 @@ static void moveToMainThread(QObject *obj)
  *
  * Constructs an Impix without any image data.
  */
-Impix::Impix()
-{
-    d = new Private;
-}
+Impix::Impix() { d = new Private; }
 
 /**
  * \brief Construct an Impix based on a QPixmap
@@ -111,7 +102,7 @@ Impix::Impix()
  */
 Impix::Impix(const QPixmap &from)
 {
-    d = new Private;
+    d     = new Private;
     *this = from;
 }
 
@@ -123,7 +114,7 @@ Impix::Impix(const QPixmap &from)
  */
 Impix::Impix(const QImage &from)
 {
-    d = new Private;
+    d     = new Private;
     *this = from;
 }
 
@@ -132,19 +123,16 @@ Impix::Impix(const QImage &from)
  */
 void Impix::unload()
 {
-    if ( isNull() ) {
+    if (isNull()) {
         return;
     }
 
     d->unload();
 }
 
-bool Impix::isNull() const
-{
-    return !d->image.isNull() || d->pixmap ? false: true;
-}
+bool Impix::isNull() const { return !d->image.isNull() || d->pixmap ? false : true; }
 
-const QPixmap & Impix::pixmap() const
+const QPixmap &Impix::pixmap() const
 {
     if (!d->pixmap) {
         d->pixmap = new QPixmap();
@@ -155,7 +143,7 @@ const QPixmap & Impix::pixmap() const
     return *d->pixmap;
 }
 
-const QImage & Impix::image() const
+const QImage &Impix::image() const
 {
     if (d->image.isNull() && d->pixmap) {
         d->image = d->pixmap->toImage();
@@ -180,13 +168,13 @@ bool Impix::loadFromData(const QByteArray &ba)
     bool ret = false;
 
     delete d->pixmap;
-    d->pixmap = 0;
+    d->pixmap = nullptr;
 
     QImage img;
-    if ( img.loadFromData(ba) ) {
+    if (img.loadFromData(ba)) {
         Q_ASSERT(img.width() > 0);
         Q_ASSERT(img.height() > 0);
-        setImage( img );
+        setImage(img);
         ret = true;
     }
 
@@ -198,13 +186,13 @@ bool Impix::loadFromData(const QByteArray &ba)
 // IconSharedObject
 //----------------------------------------------------------------------------
 
-class IconSharedObject : public QObject
-{
+class IconSharedObject : public QObject {
     Q_OBJECT
 public:
     IconSharedObject()
 #ifdef ICONSET_SOUND
-    : QObject(qApp)
+        :
+        QObject(qApp)
 #endif
     {
         setObjectName("IconSharedObject");
@@ -219,7 +207,7 @@ private:
     friend class PsiIcon;
 };
 
-static IconSharedObject *iconSharedObject = 0;
+static IconSharedObject *iconSharedObject = nullptr;
 
 //----------------------------------------------------------------------------
 // PsiIcon
@@ -239,62 +227,60 @@ static IconSharedObject *iconSharedObject = 0;
  */
 
 //! \if _hide_doc_
-class PsiIcon::Private : public QObject, public QSharedData
-{
+class PsiIcon::Private : public QObject, public QSharedData {
     Q_OBJECT
 public:
     Private()
     {
         moveToMainThread(this);
 
-        anim = 0;
-        icon = 0;
+        anim           = nullptr;
+        icon           = nullptr;
         activatedCount = 0;
     }
 
     ~Private()
     {
         unloadAnim();
-        if ( icon ) {
+        if (icon) {
             delete icon;
         }
     }
 
     // copy all stuff, this constructor is called when detaching
-    Private(const Private &from)
-        : QObject(), QSharedData()
+    Private(const Private &from) : QObject(), QSharedData()
     {
         moveToMainThread(this);
 
-        name = from.name;
-        regExp = from.regExp;
-        text = from.text;
-        sound = from.sound;
-        impix = from.impix;
-        rawData = from.rawData;
-        anim = from.anim ? new Anim ( *from.anim ) : 0;
-        icon = 0;
+        name           = from.name;
+        regExp         = from.regExp;
+        text           = from.text;
+        sound          = from.sound;
+        impix          = from.impix;
+        rawData        = from.rawData;
+        anim           = from.anim ? new Anim(*from.anim) : nullptr;
+        icon           = nullptr;
         activatedCount = from.activatedCount;
     }
 
     void unloadAnim()
     {
-        if ( anim ) {
+        if (anim) {
             delete anim;
         }
-        anim = 0;
+        anim = nullptr;
     }
 
     void connectInstance(PsiIcon *icon)
     {
         connect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
-        connect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
+        connect(this, SIGNAL(iconModified()), icon, SIGNAL(iconModified()));
     }
 
     void disconnectInstance(PsiIcon *icon)
     {
         disconnect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
-        disconnect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
+        disconnect(this, SIGNAL(iconModified()), icon, SIGNAL(iconModified()));
     }
 
 signals:
@@ -304,7 +290,7 @@ signals:
 public:
     const QPixmap &pixmap() const
     {
-        if ( anim ) {
+        if (anim) {
             return anim->framePixmap();
         }
         return impix.pixmap();
@@ -314,14 +300,14 @@ public slots:
     void animUpdate() { emit pixmapChanged(); }
 
 public:
-    QString name;
-    QRegExp regExp;
+    QString         name;
+    QRegExp         regExp;
     QList<IconText> text;
-    QString sound;
+    QString         sound;
 
-    Impix impix;
-    Anim *anim;
-    QIcon *icon;
+    Impix              impix;
+    Anim *             anim;
+    QIcon *            icon;
     mutable QByteArray rawData;
 
     int activatedCount;
@@ -332,8 +318,7 @@ public:
 /**
  * Constructs empty PsiIcon.
  */
-PsiIcon::PsiIcon()
-: QObject(0)
+PsiIcon::PsiIcon() : QObject(nullptr)
 {
     moveToMainThread(this);
 
@@ -344,17 +329,13 @@ PsiIcon::PsiIcon()
 /**
  * Destroys PsiIcon.
  */
-PsiIcon::~PsiIcon()
-{
-}
+PsiIcon::~PsiIcon() {}
 
 /**
  * Creates new icon, that is a copy of \a from. Note, that if one icon will be changed,
  * other will be changed as well. (that's because image data is shared)
  */
-PsiIcon::PsiIcon(const PsiIcon &from)
-: QObject(0)
-, d(from.d)
+PsiIcon::PsiIcon(const PsiIcon &from) : QObject(nullptr), d(from.d)
 {
     moveToMainThread(this);
 
@@ -365,7 +346,7 @@ PsiIcon::PsiIcon(const PsiIcon &from)
  * Creates new icon, that is a copy of \a from. Note, that if one icon will be changed,
  * other will be changed as well. (that's because image data is shared)
  */
-PsiIcon & PsiIcon::operator= (const PsiIcon &from)
+PsiIcon &PsiIcon::operator=(const PsiIcon &from)
 {
     d->disconnectInstance(this);
     d = from.d;
@@ -377,39 +358,30 @@ PsiIcon & PsiIcon::operator= (const PsiIcon &from)
 PsiIcon *PsiIcon::copy() const
 {
     PsiIcon *icon = new PsiIcon;
-    icon->d = new Private( *this->d.data() );
+    icon->d       = new Private(*this->d.data());
     icon->d->connectInstance(icon);
 
     return icon;
 }
 
-void PsiIcon::detach()
-{
-    d.detach();
-}
+void PsiIcon::detach() { d.detach(); }
 
 /**
  * Returns \c true when icon contains animation.
  */
-bool PsiIcon::isAnimated() const
-{
-    return d->anim != 0;
-}
+bool PsiIcon::isAnimated() const { return d->anim != nullptr; }
 
 /**
  * Returns QPixmap of current frame.
  */
-const QPixmap &PsiIcon::pixmap() const
-{
-    return d->pixmap();
-}
+const QPixmap &PsiIcon::pixmap() const { return d->pixmap(); }
 
 /**
  * Returns QImage of current frame.
  */
 const QImage &PsiIcon::image() const
 {
-    if ( d->anim ) {
+    if (d->anim) {
         return d->anim->frameImage();
     }
     return d->impix.image();
@@ -419,10 +391,7 @@ const QImage &PsiIcon::image() const
  * Returns Impix of first animation frame.
  * \sa setImpix()
  */
-const Impix &PsiIcon::impix() const
-{
-    return d->impix;
-}
+const Impix &PsiIcon::impix() const { return d->impix; }
 
 /**
  * Returns Impix of current animation frame.
@@ -430,7 +399,7 @@ const Impix &PsiIcon::impix() const
  */
 const Impix &PsiIcon::frameImpix() const
 {
-    if ( d->anim ) {
+    if (d->anim) {
         return d->anim->frameImpix();
     }
     return d->impix;
@@ -442,11 +411,11 @@ const Impix &PsiIcon::frameImpix() const
  */
 const QIcon &PsiIcon::icon() const
 {
-    if ( d->icon ) {
+    if (d->icon) {
         return *d->icon;
     }
 
-    const_cast<Private*>(d.data())->icon = new QIcon( d->impix.pixmap() );
+    const_cast<Private *>(d.data())->icon = new QIcon(d->impix.pixmap());
     return *d->icon;
 }
 
@@ -454,7 +423,7 @@ const QIcon &PsiIcon::icon() const
 /**
  * Returns original image data
  */
-const QByteArray & PsiIcon::raw() const
+const QByteArray &PsiIcon::raw() const
 {
     if (!(d->rawData.size())) {
         QPixmap pix = impix().pixmap();
@@ -474,14 +443,14 @@ const QByteArray & PsiIcon::raw() const
  */
 void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 {
-    if ( doDetach ) {
+    if (doDetach) {
         detach();
     }
 
     d->impix = impix;
-    if ( d->icon ) {
+    if (d->icon) {
         delete d->icon;
-        d->icon = 0;
+        d->icon = nullptr;
     }
 
     emit d->pixmapChanged();
@@ -491,10 +460,7 @@ void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 /**
  * Returns pointer to Anim object, or \a 0 if PsiIcon doesn't contain an animation.
  */
-const Anim *PsiIcon::anim() const
-{
-    return d->anim;
-}
+const Anim *PsiIcon::anim() const { return d->anim; }
 
 /**
  * Sets the animation for icon to \a anim. Also sets Impix to be the first frame of animation.
@@ -503,23 +469,23 @@ const Anim *PsiIcon::anim() const
  */
 void PsiIcon::setAnim(const Anim &anim, bool doDetach)
 {
-    if ( doDetach ) {
+    if (doDetach) {
         detach();
     }
 
     d->unloadAnim();
     d->anim = new Anim(anim);
 
-    if ( d->anim->numFrames() > 0 ) {
-        setImpix( d->anim->frame(0) );
+    if (d->anim->numFrames() > 0) {
+        setImpix(d->anim->frame(0));
     }
 
-    if ( d->anim->numFrames() < 2 ) {
+    if (d->anim->numFrames() < 2) {
         delete d->anim;
-        d->anim = 0;
+        d->anim = nullptr;
     }
 
-    if ( d->anim && d->activatedCount > 0 ) {
+    if (d->anim && d->activatedCount > 0) {
         d->activatedCount = 0;
         activated(false); // restart the animation, but don't play the sound
     }
@@ -534,11 +500,11 @@ void PsiIcon::setAnim(const Anim &anim, bool doDetach)
  */
 void PsiIcon::removeAnim(bool doDetach)
 {
-    if ( doDetach ) {
+    if (doDetach) {
         detach();
     }
 
-    if ( !d->anim ) {
+    if (!d->anim) {
         return;
     }
 
@@ -546,10 +512,10 @@ void PsiIcon::removeAnim(bool doDetach)
     stop();
 
     delete d->anim;
-    d->anim = 0;
+    d->anim = nullptr;
 
     emit d->pixmapChanged();
-    //emit d->iconModified();
+    // emit d->iconModified();
 }
 
 /**
@@ -558,7 +524,7 @@ void PsiIcon::removeAnim(bool doDetach)
  */
 int PsiIcon::frameNumber() const
 {
-    if ( d->anim ) {
+    if (d->anim) {
         return d->anim->frameNumber();
     }
 
@@ -569,10 +535,7 @@ int PsiIcon::frameNumber() const
  * Returns name of the PsiIcon.
  * \sa setName()
  */
-const QString &PsiIcon::name() const
-{
-    return d->name;
-}
+const QString &PsiIcon::name() const { return d->name; }
 
 /**
  * Sets the PsiIcon name to \a name
@@ -589,10 +552,7 @@ void PsiIcon::setName(const QString &name)
  * Returns PsiIcon's QRegExp. It is used to store information for emoticons.
  * \sa setRegExp()
  */
-const QRegExp &PsiIcon::regExp() const
-{
-    return d->regExp;
-}
+const QRegExp &PsiIcon::regExp() const { return d->regExp; }
 
 /**
  * Sets the PsiIcon QRegExp to \a regExp.
@@ -611,10 +571,7 @@ void PsiIcon::setRegExp(const QRegExp &regExp)
  * \sa setText()
  * \sa regExp()
  */
-const QList<PsiIcon::IconText> &PsiIcon::text() const
-{
-    return d->text;
-}
+const QList<PsiIcon::IconText> &PsiIcon::text() const { return d->text; }
 
 /**
  * Sets the PsiIcon text to \a t.
@@ -643,10 +600,10 @@ QString PsiIcon::defaultText() const
     lang << "";                                  // and then the language without name goes (international?)
     lang << "en";                                // then real English
 
-    QString str;
+    QString               str;
     QStringList::Iterator it = lang.begin();
     for (; it != lang.end(); ++it) {
-        foreach(IconText t, text()){
+        foreach (IconText t, text()) {
             if (t.lang == *it) {
                 str = t.text;
                 break;
@@ -656,7 +613,7 @@ QString PsiIcon::defaultText() const
 
     // if all fails, just get the first text
     if (str.isEmpty()) {
-        foreach(IconText t, text()){
+        foreach (IconText t, text()) {
             if (!t.text.isEmpty()) {
                 str = t.text;
                 break;
@@ -672,10 +629,7 @@ QString PsiIcon::defaultText() const
  * \sa setSound()
  * \sa activated()
  */
-const QString &PsiIcon::sound() const
-{
-    return d->sound;
-}
+const QString &PsiIcon::sound() const { return d->sound; }
 
 /**
  * Sets the sound file name to be associated with this PsiIcon.
@@ -692,10 +646,7 @@ void PsiIcon::setSound(const QString &sound)
 /**
  * Blocks the signals. See the Qt documentation for details.
  */
-bool PsiIcon::blockSignals(bool b)
-{
-    return d->blockSignals(b);
-}
+bool PsiIcon::blockSignals(bool b) { return d->blockSignals(b); }
 
 /**
  * Initializes PsiIcon's Impix (or Anim, if \a isAnim equals \c true).
@@ -710,17 +661,17 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
     }
 #endif
     bool ret = false;
-    if ( isAnim ) {
+    if (isAnim) {
         Anim *anim = new Anim(ba);
         setAnim(*anim);
         ret = anim->numFrames() > 0;
         delete anim; // shared data rules ;)
     }
 
-    if ( !ret && d->impix.loadFromData(ba) )
+    if (!ret && d->impix.loadFromData(ba))
         ret = true;
 
-    if ( ret ) {
+    if (ret) {
         emit d->pixmapChanged();
         emit d->iconModified();
     }
@@ -743,8 +694,8 @@ void PsiIcon::activated(bool playSound)
     d->activatedCount++;
 
 #ifdef ICONSET_SOUND
-    if ( playSound && !d->sound.isNull() ) {
-        if ( !iconSharedObject ) {
+    if (playSound && !d->sound.isNull()) {
+        if (!iconSharedObject) {
             iconSharedObject = new IconSharedObject();
         }
 
@@ -755,11 +706,11 @@ void PsiIcon::activated(bool playSound)
     Q_UNUSED(iconSharedObject);
 #endif
 
-    if ( d->anim ) {
+    if (d->anim) {
         d->anim->unpause();
 
-        d->anim->disconnectUpdate (d, SLOT(animUpdate())); // ensure, that we're connected to signal exactly one time
-        d->anim->connectUpdate (d, SLOT(animUpdate()));
+        d->anim->disconnectUpdate(d, SLOT(animUpdate())); // ensure, that we're connected to signal exactly one time
+        d->anim->connectUpdate(d, SLOT(animUpdate()));
     }
 }
 
@@ -774,9 +725,9 @@ void PsiIcon::stop()
 {
     d->activatedCount--;
 
-    if ( d->activatedCount <= 0 ) {
+    if (d->activatedCount <= 0) {
         d->activatedCount = 0;
-        if ( d->anim ) {
+        if (d->anim) {
             d->anim->pause();
             d->anim->restart();
         }
@@ -791,7 +742,7 @@ void PsiIcon::stripFirstAnimFrame()
 {
     detach();
 
-    if ( d->anim ) {
+    if (d->anim) {
         d->anim->stripFirstFrame();
     }
 }
@@ -811,15 +762,9 @@ void PsiIcon::stripFirstAnimFrame()
  */
 
 //! \if _hide_doc_
-class IconsetFactoryPrivate : public QObject
-{
+class IconsetFactoryPrivate : public QObject {
 private:
-    IconsetFactoryPrivate()
-        : QObject(QCoreApplication::instance())
-        , iconsets_(0)
-        , emptyPixmap_(0)
-    {
-    }
+    IconsetFactoryPrivate() : QObject(QCoreApplication::instance()), iconsets_(nullptr), emptyPixmap_(nullptr) {}
 
     ~IconsetFactoryPrivate()
     {
@@ -827,21 +772,21 @@ private:
             while (!iconsets_->empty())
                 delete iconsets_->takeFirst();
             delete iconsets_;
-            iconsets_ = 0;
+            iconsets_ = nullptr;
         }
 
         if (emptyPixmap_) {
             delete emptyPixmap_;
-            emptyPixmap_ = 0;
+            emptyPixmap_ = nullptr;
         }
     }
 
-    static IconsetFactoryPrivate* instance_;
-    QList<Iconset*>* iconsets_;
-    mutable QPixmap* emptyPixmap_;
+    static IconsetFactoryPrivate *instance_;
+    QList<Iconset *> *            iconsets_;
+    mutable QPixmap *             emptyPixmap_;
 
 public:
-    const QPixmap& emptyPixmap() const
+    const QPixmap &emptyPixmap() const
     {
         if (!emptyPixmap_) {
             emptyPixmap_ = new QPixmap();
@@ -853,8 +798,8 @@ public:
     {
         QStringList list;
 
-        foreach(const Iconset *iconset, *iconsets_) {
-            QListIterator<PsiIcon*> it = iconset->iterator();
+        foreach (const Iconset *iconset, *iconsets_) {
+            QListIterator<PsiIcon *> it = iconset->iterator();
             while (it.hasNext()) {
                 list << it.next()->name();
             }
@@ -867,7 +812,7 @@ public:
     void unregisterIconset(const Iconset *);
 
 public:
-    static IconsetFactoryPrivate* instance()
+    static IconsetFactoryPrivate *instance()
     {
         if (!instance_) {
             instance_ = new IconsetFactoryPrivate();
@@ -877,59 +822,54 @@ public:
 
     const PsiIcon *icon(const QString &name) const;
 
-
     static void reset()
     {
         delete instance_;
-        instance_ = 0;
+        instance_ = nullptr;
     }
 };
 //! \endif
 
-IconsetFactoryPrivate* IconsetFactoryPrivate::instance_ = NULL;
+IconsetFactoryPrivate *IconsetFactoryPrivate::instance_ = nullptr;
 
 void IconsetFactoryPrivate::registerIconset(const Iconset *i)
 {
     if (!iconsets_) {
-        iconsets_ = new QList<Iconset*>;
+        iconsets_ = new QList<Iconset *>;
     }
 
-    if (!iconsets_->contains((Iconset*)i)) {
-        iconsets_->append((Iconset*)i);
+    if (!iconsets_->contains(const_cast<Iconset *>(i))) {
+        iconsets_->append(const_cast<Iconset *>(i));
     }
 }
 
 void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
 {
-    if (iconsets_ && iconsets_->contains((Iconset*)i)) {
-        iconsets_->removeAll((Iconset*)i);
+    if (iconsets_ && iconsets_->contains(const_cast<Iconset *>(i))) {
+        iconsets_->removeAll(const_cast<Iconset *>(i));
     }
 }
 
 const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
 {
     if (!iconsets_) {
-        return 0;
+        return nullptr;
     }
 
-    const PsiIcon *i = 0;
-    Iconset *iconset;
-    foreach (iconset, *iconsets_) {
-        if ( iconset ) {
-            i = iconset->icon(name);
+    const PsiIcon *out = nullptr;
+    for (const Iconset *const iconset : *iconsets_) {
+        if (iconset) {
+            out = iconset->icon(name);
         }
 
-        if ( i ) {
+        if (out) {
             break;
         }
     }
-    return i;
+    return out;
 }
 
-void IconsetFactory::reset()
-{
-    IconsetFactoryPrivate::reset();
-}
+void IconsetFactory::reset() { IconsetFactoryPrivate::reset(); }
 
 /**
  * Returns pointer to PsiIcon with name \a name, or \a 0 if PsiIcon with that name wasn't
@@ -942,7 +882,7 @@ const PsiIcon *IconsetFactory::iconPtr(const QString &name)
     }
 
     const PsiIcon *i = IconsetFactoryPrivate::instance()->icon(name);
-    if ( !i ) {
+    if (!i) {
         qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", qPrintable(name));
     }
     return i;
@@ -955,7 +895,7 @@ const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 PsiIcon IconsetFactory::icon(const QString &name)
 {
     const PsiIcon *i = iconPtr(name);
-    if ( i ) {
+    if (i) {
         return *i;
     }
     return PsiIcon();
@@ -970,7 +910,7 @@ PsiIcon IconsetFactory::icon(const QString &name)
 const QPixmap &IconsetFactory::iconPixmap(const QString &name)
 {
     const PsiIcon *i = iconPtr(name);
-    if ( i ) {
+    if (i) {
         return i->impix().pixmap();
     }
 
@@ -980,10 +920,7 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
 /**
  * Returns list of all PsiIcon names that are in IconsetFactory.
  */
-const QStringList IconsetFactory::icons()
-{
-    return IconsetFactoryPrivate::instance()->icons();
-}
+const QStringList IconsetFactory::icons() { return IconsetFactoryPrivate::instance()->icons(); }
 
 #ifdef WEBKIT
 /**
@@ -992,7 +929,7 @@ const QStringList IconsetFactory::icons()
 const QByteArray IconsetFactory::raw(const QString &name)
 {
     const PsiIcon *i = iconPtr(name);
-    if ( i ) {
+    if (i) {
         return i->raw();
     }
     return QByteArray();
@@ -1016,57 +953,49 @@ const QByteArray IconsetFactory::raw(const QString &name)
  */
 
 //! \if _hide_doc_
-class Iconset::Private : public QSharedData
-{
+class Iconset::Private : public QSharedData {
 private:
     void init()
     {
         name = "Unnamed";
-        //version = "1.0";
-        //description = "No description";
-        //authors << "I. M. Anonymous";
-        //creation = "1900-01-01";
-        homeUrl = QString::null;
+        // version = "1.0";
+        // description = "No description";
+        // authors << "I. M. Anonymous";
+        // creation = "1900-01-01";
+        homeUrl   = QString();
         iconSize_ = 16;
     }
 
 public:
-    QString id, name, version, description, creation, homeUrl, filename;
-    QStringList authors;
+    QString                   id, name, version, description, creation, homeUrl, filename;
+    QStringList               authors;
     QHash<QString, PsiIcon *> dict; // unsorted hash for fast search
-    QList<PsiIcon *> list;          // sorted list
-    QHash<QString, QString> info;
-    int iconSize_;
+    QList<PsiIcon *>          list; // sorted list
+    QHash<QString, QString>   info;
+    int                       iconSize_;
 
 public:
-    Private()
-    {
-        init();
-    }
+    Private() { init(); }
 
-    Private(const Private &from)
-        : QSharedData()
+    Private(const Private &from) : QSharedData()
     {
         init();
 
         setInformation(from);
 
-        QListIterator<PsiIcon *> it( from.list );
-        while ( it.hasNext() ) {
+        QListIterator<PsiIcon *> it(from.list);
+        while (it.hasNext()) {
             PsiIcon *icon = new PsiIcon(*it.next());
             append(icon->name(), icon);
         }
     }
 
-    ~Private()
-    {
-        clear();
-    }
+    ~Private() { clear(); }
 
     void append(QString n, PsiIcon *icon)
     {
         // all PsiIcon names in Iconset must be unique
-        if ( dict.contains(n) ) {
+        if (dict.contains(n)) {
             remove(n);
         }
 
@@ -1077,7 +1006,7 @@ public:
     void clear()
     {
         dict.clear();
-        while ( !list.isEmpty() ) {
+        while (!list.isEmpty()) {
             delete list.takeFirst();
         }
     }
@@ -1101,8 +1030,8 @@ public:
         if (!Iconset::isSourceAllowed(fi)) {
             return ba;
         }
-        if ( fi.isDir() ) {
-            QFile file ( dir + '/' + fileName );
+        if (fi.isDir()) {
+            QFile file(dir + '/' + fileName);
             if (!file.open(QIODevice::ReadOnly)) {
                 return ba;
             }
@@ -1112,12 +1041,12 @@ public:
 #ifdef ICONSET_ZIP
         else { // else its zip or jisp file
             UnZip z(dir);
-            if ( !z.open() ) {
+            if (!z.open()) {
                 return ba;
             }
 
             QString n = fi.completeBaseName() + '/' + fileName;
-            if ( !z.readFile(n, &ba) ) {
+            if (!z.readFile(n, &ba)) {
                 n = "/" + fileName;
                 z.readFile(n, &ba);
             }
@@ -1135,45 +1064,39 @@ public:
 
         for (QDomNode node = i.firstChild(); !node.isNull(); node = node.nextSibling()) {
             QDomElement e = node.toElement();
-            if( e.isNull() ) {
+            if (e.isNull()) {
                 continue;
             }
 
             QString tag = e.tagName();
-            if ( tag == "name" ) {
+            if (tag == "name") {
                 name = e.text();
-            }
-            else if( tag == "size") {
+            } else if (tag == "size") {
                 QString str = e.text();
-                iconSize_ = str.toInt();
-            }
-            else if ( tag == "version" ) {
+                iconSize_   = str.toInt();
+            } else if (tag == "version") {
                 version = e.text();
-            }
-            else if ( tag == "description" ) {
+            } else if (tag == "description") {
                 description = e.text();
-            }
-            else if ( tag == "author" ) {
-                QString n = e.text();
+            } else if (tag == "author") {
+                QString n   = e.text();
                 QString tmp = "<br>&nbsp;&nbsp;";
-                if ( !e.attribute("email").isEmpty() ) {
+                if (!e.attribute("email").isEmpty()) {
                     QString s = e.attribute("email");
-                    n += tmp + QString("Email: <a href='mailto:%1'>%2</a>").arg( s ).arg( s );
+                    n += tmp + QString("Email: <a href='mailto:%1'>%2</a>").arg(s).arg(s);
                 }
-                if ( !e.attribute("jid").isEmpty() ) {
+                if (!e.attribute("jid").isEmpty()) {
                     QString s = e.attribute("jid");
-                    n += tmp + QString("JID: <a href='xmpp:%1'>%2</a>").arg( s ).arg( s );
+                    n += tmp + QString("JID: <a href='xmpp:%1'>%2</a>").arg(s).arg(s);
                 }
-                if ( !e.attribute("www").isEmpty() ) {
+                if (!e.attribute("www").isEmpty()) {
                     QString s = e.attribute("www");
-                    n += tmp + QString("WWW: <a href='%1'>%2</a>").arg( s ).arg( s );
+                    n += tmp + QString("WWW: <a href='%1'>%2</a>").arg(s).arg(s);
                 }
                 authors += n;
-            }
-            else if ( tag == "creation" ) {
+            } else if (tag == "creation") {
                 creation = e.text();
-            }
-            else if ( tag == "home" ) {
+            } else if (tag == "home") {
                 homeUrl = e.text();
             }
         }
@@ -1188,52 +1111,47 @@ public:
         icon.blockSignals(true);
 
         QList<PsiIcon::IconText> text;
-        QHash<QString, QString> graphic, sound, object;
+        QHash<QString, QString>  graphic, sound, object;
 
         QString name;
         name.sprintf("icon_%04d", icon_counter++);
         bool isAnimated = false;
-        bool isImage = false;
+        bool isImage    = false;
 
-        for(QDomNode n = i.firstChild(); !n.isNull(); n = n.nextSibling()) {
+        for (QDomNode n = i.firstChild(); !n.isNull(); n = n.nextSibling()) {
             QDomElement e = n.toElement();
-            if ( e.isNull() ) {
+            if (e.isNull()) {
                 continue;
             }
 
             QString tag = e.tagName();
-            if ( tag == "text" ) {
+            if (tag == "text") {
                 QString lang = e.attribute("xml:lang");
-                if ( lang.isEmpty() ) {
+                if (lang.isEmpty()) {
                     lang = ""; // otherwise there would be many warnings :-(
                 }
                 QString t = e.text();
                 if (!t.isEmpty()) {
                     text.append(PsiIcon::IconText(lang, t));
                 }
-            }
-            else if ( tag == "object" ) {
+            } else if (tag == "object") {
                 object[e.attribute("mime")] = e.text();
-            }
-            else if ( tag == "x" ) {
+            } else if (tag == "x") {
                 QString attr = e.attribute("xmlns");
-                if ( attr == "name" ) {
+                if (attr == "name") {
                     name = e.text();
-                }
-                else if ( attr == "type" ) {
-                    if ( e.text() == "animation" ) {
+                } else if (attr == "type") {
+                    if (e.text() == "animation") {
                         isAnimated = true;
-                    }
-                    else if ( e.text() == "image" ) {
+                    } else if (e.text() == "image") {
                         isImage = true;
                     }
                 }
             }
             // leaved for compatibility with old JEP
-            else if ( tag == "graphic" ) {
+            else if (tag == "graphic") {
                 graphic[e.attribute("mime")] = e.text();
-            }
-            else if ( tag == "sound" ) {
+            } else if (tag == "sound") {
                 sound[e.attribute("mime")] = e.text();
             }
         }
@@ -1243,7 +1161,7 @@ public:
 
         QStringList graphicMime, soundMime, animationMime;
         graphicMime << "image/png"; // first item have higher priority than latter
-        //graphicMime << "video/x-mng"; // due to very serious issue in Qt 4.1.0, this format was disabled
+        // graphicMime << "video/x-mng"; // due to very serious issue in Qt 4.1.0, this format was disabled
         graphicMime << "image/gif";
         graphicMime << "image/x-xpm";
         graphicMime << "image/bmp";
@@ -1257,24 +1175,24 @@ public:
 
         // MIME-types, that support animations
         animationMime << "image/gif";
-        //animationMime << "video/x-mng";
+        // animationMime << "video/x-mng";
 
-        if ( !object.isEmpty() ) {
+        if (!object.isEmpty()) {
             // fill the graphic & sound tables, if there are some
             // 'object' entries. inspect the supported mimetypes
             // and copy mime info and file path to 'graphic' and
             // 'sound' dictonaries.
 
             QStringList::Iterator it = graphicMime.begin();
-            for ( ; it != graphicMime.end(); ++it) {
-                if ( object.contains(*it) && !object[*it].isNull() ) {
+            for (; it != graphicMime.end(); ++it) {
+                if (object.contains(*it) && !object[*it].isNull()) {
                     graphic[*it] = object[*it];
                 }
             }
 
             it = soundMime.begin();
-            for ( ; it != soundMime.end(); ++it) {
-                if ( object.contains(*it) && !object[*it].isNull() ) {
+            for (; it != soundMime.end(); ++it) {
+                if (object.contains(*it) && !object[*it].isNull()) {
                     sound[*it] = object[*it];
                 }
             }
@@ -1284,14 +1202,14 @@ public:
 
         {
             QStringList::Iterator it = graphicMime.begin();
-            for ( ; it != graphicMime.end(); ++it) {
-                if ( graphic.contains(*it) && !graphic[*it].isNull() ) {
+            for (; it != graphicMime.end(); ++it) {
+                if (graphic.contains(*it) && !graphic[*it].isNull()) {
                     // if format supports animations, then load graphic as animation, and
                     // if there is only one frame, then later it would be converted to single Impix
-                    if ( !isAnimated && !isImage ) {
+                    if (!isAnimated && !isImage) {
                         QStringList::Iterator it2 = animationMime.begin();
-                        for ( ; it2 != animationMime.end(); ++it2) {
-                            if ( *it == *it2 ) {
+                        for (; it2 != animationMime.end(); ++it2) {
+                            if (*it == *it2) {
                                 isAnimated = true;
                                 break;
                             }
@@ -1300,12 +1218,12 @@ public:
 
                     QByteArray ba = loadData(graphic[*it], dir);
 
-                    if ( icon.loadFromData( ba, isAnimated ) ) {
+                    if (icon.loadFromData(ba, isAnimated)) {
                         loadSuccess = true;
                         break;
-                    }
-                    else {
-                        qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset", qPrintable(*it), qPrintable(graphic[*it]), qPrintable(name), qPrintable(this->name));
+                    } else {
+                        qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset",
+                               qPrintable(*it), qPrintable(graphic[*it]), qPrintable(name), qPrintable(this->name));
                         loadSuccess = false;
                     }
                 }
@@ -1313,37 +1231,38 @@ public:
         }
 
         {
-            QFileInfo fi(dir);
+            QFileInfo             fi(dir);
             QStringList::Iterator it = soundMime.begin();
-            for ( ; it != soundMime.end(); ++it) {
-                if ( sound.contains(*it) && !sound[*it].isNull() ) {
-                    if ( !fi.isDir() ) { // it is a .zip file then
+            for (; it != soundMime.end(); ++it) {
+                if (sound.contains(*it) && !sound[*it].isNull()) {
+                    if (!fi.isDir()) { // it is a .zip file then
 #ifdef ICONSET_SOUND
-                        if ( !iconSharedObject ) {
+                        if (!iconSharedObject) {
                             iconSharedObject = new IconSharedObject();
                         }
 
                         QString path = iconSharedObject->unpackPath;
-                        if ( path.isEmpty() ) {
+                        if (path.isEmpty()) {
                             break;
                         }
 
                         QFileInfo ext(sound[*it]);
-                        path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + sound[*it]).toUtf8()) + '.' + ext.suffix();
+                        path += "/"
+                            + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + sound[*it]).toUtf8())
+                            + '.' + ext.suffix();
 
-                        QFile file ( path );
-                        file.open ( QIODevice::WriteOnly );
-                        QDataStream out ( &file );
+                        QFile file(path);
+                        file.open(QIODevice::WriteOnly);
+                        QDataStream out(&file);
 
                         QByteArray data = loadData(sound[*it], dir);
-                        out.writeRawData (data, data.size());
+                        out.writeRawData(data, data.size());
 
-                        icon.setSound ( path );
+                        icon.setSound(path);
                         break;
 #endif
-                    }
-                    else {
-                        icon.setSound ( fi.absoluteFilePath() + '/' + sound[*it] );
+                    } else {
+                        icon.setSound(fi.absoluteFilePath() + '/' + sound[*it]);
                         break;
                     }
                 }
@@ -1351,23 +1270,22 @@ public:
         }
 
         // construct RegExp
-        if ( text.count() ) {
+        if (text.count()) {
             QStringList regexp;
-            foreach(PsiIcon::IconText t, text) {
+            foreach (PsiIcon::IconText t, text) {
                 regexp += QRegExp::escape(t.text);
             }
 
             // make sure there is some form of whitespace on at least one side of the text string
-            //regexp = QString("(\\b(%1))|((%2)\\b)").arg(regexp).arg(regexp);
-            icon.setRegExp ( QRegExp(regexp.join("|")) );
+            // regexp = QString("(\\b(%1))|((%2)\\b)").arg(regexp).arg(regexp);
+            icon.setRegExp(QRegExp(regexp.join("|")));
         }
 
         icon.blockSignals(false);
 
-        if ( loadSuccess ) {
-            append( name, new PsiIcon(icon) );
-        }
-        else {
+        if (loadSuccess) {
+            append(name, new PsiIcon(icon));
+        } else {
             qWarning("can't load icon because of unknown type");
         }
 
@@ -1378,30 +1296,28 @@ public:
     bool load(const QDomDocument &doc, const QString dir)
     {
         QDomElement base = doc.documentElement();
-        if ( base.tagName() != "icondef" ) {
+        if (base.tagName() != "icondef") {
             qWarning("failed to load iconset invalid toplevel xml element");
             return false;
         }
 
         bool success = true;
 
-        for(QDomNode node = base.firstChild(); !node.isNull(); node = node.nextSibling()) {
+        for (QDomNode node = base.firstChild(); !node.isNull(); node = node.nextSibling()) {
             QDomElement i = node.toElement();
-            if( i.isNull() ) {
+            if (i.isNull()) {
                 continue;
             }
 
             QString tag = i.tagName();
-            if ( tag == "meta" ) {
-                loadMeta (i, dir);
-            }
-            else if ( tag == "icon" ) {
-                bool ret = loadIcon (i, dir);
-                if ( !ret ) {
+            if (tag == "meta") {
+                loadMeta(i, dir);
+            } else if (tag == "icon") {
+                bool ret = loadIcon(i, dir);
+                if (!ret) {
                     success = false;
                 }
-            }
-            else if ( tag == "x" ) {
+            } else if (tag == "x") {
                 info[i.attribute("xmlns")] = i.text();
             }
         }
@@ -1409,30 +1325,31 @@ public:
         return success;
     }
 
-    void setInformation(const Private &from) {
-        name = from.name;
-        version = from.version;
+    void setInformation(const Private &from)
+    {
+        name        = from.name;
+        version     = from.version;
         description = from.description;
-        creation = from.creation;
-        homeUrl = from.homeUrl;
-        filename = from.filename;
-        authors = from.authors;
-        info = from.info;
-        iconSize_ = from.iconSize_;
+        creation    = from.creation;
+        homeUrl     = from.homeUrl;
+        filename    = from.filename;
+        authors     = from.authors;
+        info        = from.info;
+        iconSize_   = from.iconSize_;
     }
 };
 //! \endif
 
 int Iconset::Private::icon_counter = 0;
 
-//static int iconset_counter = 0;
+// static int iconset_counter = 0;
 
 /**
  * Creates empty Iconset.
  */
 Iconset::Iconset()
 {
-    //iconset_counter++;
+    // iconset_counter++;
 
     d = new Private;
 }
@@ -1442,7 +1359,7 @@ Iconset::Iconset()
  */
 Iconset::Iconset(const Iconset &from)
 {
-    //iconset_counter++;
+    // iconset_counter++;
 
     d = from.d;
 }
@@ -1450,10 +1367,7 @@ Iconset::Iconset(const Iconset &from)
 /**
  * Destroys Iconset, and frees all allocated Icons.
  */
-Iconset::~Iconset()
-{
-    IconsetFactoryPrivate::instance()->unregisterIconset(this);
-}
+Iconset::~Iconset() { IconsetFactoryPrivate::instance()->unregisterIconset(this); }
 
 /**
  * Copies all Icons as well as additional information from Iconset \a from.
@@ -1468,15 +1382,12 @@ Iconset &Iconset::operator=(const Iconset &from)
 Iconset Iconset::copy() const
 {
     Iconset is;
-    is.d = new Private( *this->d.data() );
+    is.d = new Private(*this->d.data());
 
     return is;
 }
 
-void Iconset::detach()
-{
-    d.detach();
-}
+void Iconset::detach() { d.detach(); }
 
 /**
  * Appends icons from Iconset \a from to this Iconset.
@@ -1485,10 +1396,10 @@ Iconset &Iconset::operator+=(const Iconset &i)
 {
     detach();
 
-    QListIterator<PsiIcon *> it( i.d->list );
-    while ( it.hasNext() ) {
+    QListIterator<PsiIcon *> it(i.d->list);
+    while (it.hasNext()) {
         PsiIcon *icon = new PsiIcon(*it.next());
-        d->append( icon->name(), icon );
+        d->append(icon->name(), icon);
     }
 
     return *this;
@@ -1507,10 +1418,7 @@ void Iconset::clear()
 /**
  * Returns the number of Icons in Iconset.
  */
-int Iconset::count() const
-{
-    return d->list.count();
-}
+int Iconset::count() const { return d->list.count(); }
 
 /**
  * Loads Icons and additional information from directory \a dir. Directory can usual directory,
@@ -1526,31 +1434,29 @@ bool Iconset::load(const QString &dir)
     detach();
 
     // make it run okay on windows 9.x (where the pixmap memory is limited)
-    //QPixmap::Optimization optimization = QPixmap::defaultOptimization();
-    //QPixmap::setDefaultOptimization( QPixmap::MemoryOptim );
+    // QPixmap::Optimization optimization = QPixmap::defaultOptimization();
+    // QPixmap::setDefaultOptimization( QPixmap::MemoryOptim );
 
     bool ret = false;
-    d->id = dir.section('/', -2);
+    d->id    = dir.section('/', -2);
 
     QByteArray ba;
-    ba = d->loadData ("icondef.xml", dir);
-    if ( !ba.isEmpty() ) {
+    ba = d->loadData("icondef.xml", dir);
+    if (!ba.isEmpty()) {
         QDomDocument doc;
-        if ( doc.setContent(ba, false) ) {
-            if ( d->load(doc, dir) ) {
+        if (doc.setContent(ba, false)) {
+            if (d->load(doc, dir)) {
                 d->filename = dir;
-                ret = true;
+                ret         = true;
             }
-        }
-        else {
+        } else {
             qWarning("Iconset::load(\"%s\"): Failed to load iconset: icondef.xml is invalid XML", qPrintable(dir));
         }
-    }
-    else {
+    } else {
         qWarning("Iconset::load(\"%s\"): Failed to load icondef.xml", qPrintable(dir));
     }
 
-    //QPixmap::setDefaultOptimization( optimization );
+    // QPixmap::setDefaultOptimization( optimization );
 
     return ret;
 }
@@ -1561,8 +1467,8 @@ bool Iconset::load(const QString &dir)
  */
 const PsiIcon *Iconset::icon(const QString &name) const
 {
-    if ( !d || d->dict.isEmpty() ) {
-        return 0;
+    if (!d || d->dict.isEmpty()) {
+        return nullptr;
     }
 
     return d->dict[name];
@@ -1578,7 +1484,7 @@ void Iconset::setIcon(const QString &name, const PsiIcon &icon)
     PsiIcon *newIcon = new PsiIcon(icon);
 
     d->remove(name);
-    d->append( name, newIcon );
+    d->append(name, newIcon);
 }
 
 /**
@@ -1594,130 +1500,89 @@ void Iconset::removeIcon(const QString &name)
 /**
  * Returns the Iconset unique identifier (ex: "system/default").
  */
-const QString &Iconset::id() const
-{
-    return d->id;
-}
+const QString &Iconset::id() const { return d->id; }
 
 /**
  * Returns the Iconset name.
  */
-const QString &Iconset::name() const
-{
-    return d->name;
-}
+const QString &Iconset::name() const { return d->name; }
 
 /**
  * Returns the icons size from Iconset.
  */
-const int &Iconset::iconSize() const
-{
-    return d->iconSize_;
-}
+const int &Iconset::iconSize() const { return d->iconSize_; }
 
 /**
  * Returns the Iconset version.
  */
-const QString &Iconset::version() const
-{
-    return d->version;
-}
+const QString &Iconset::version() const { return d->version; }
 
 /**
  * Returns the Iconset description string.
  */
-const QString &Iconset::description() const
-{
-    return d->description;
-}
+const QString &Iconset::description() const { return d->description; }
 
 /**
  * Returns the Iconset authors list.
  */
-const QStringList &Iconset::authors() const
-{
-    return d->authors;
-}
+const QStringList &Iconset::authors() const { return d->authors; }
 
 /**
  * Returns the Iconset creation date.
  */
-const QString &Iconset::creation() const
-{
-    return d->creation;
-}
+const QString &Iconset::creation() const { return d->creation; }
 
 /**
  * Returns the Iconsets' home URL.
  */
-const QString &Iconset::homeUrl() const
-{
-    return d->homeUrl;
-}
+const QString &Iconset::homeUrl() const { return d->homeUrl; }
 
 QListIterator<PsiIcon *> Iconset::iterator() const
 {
-    QListIterator<PsiIcon *> it( d->list );
+    QListIterator<PsiIcon *> it(d->list);
     return it;
 }
 
 /**
  * Returns directory (or .zip/.jisp archive) name from which Iconset was loaded.
  */
-const QString &Iconset::fileName() const
-{
-    return d->filename;
-}
+const QString &Iconset::fileName() const { return d->filename; }
 
 /**
  * Sets the Iconset directory (.zip archive) name.
  */
-void Iconset::setFileName(const QString &f)
-{
-    d->filename = f;
-}
+void Iconset::setFileName(const QString &f) { d->filename = f; }
 
 /**
  * Sets the information (meta-data) of this iconset to the information from the given iconset.
  */
-void Iconset::setInformation(const Iconset &from) {
+void Iconset::setInformation(const Iconset &from)
+{
     detach();
-    d->setInformation( *(from.d) );
+    d->setInformation(*(from.d));
 }
 
 /**
  * Returns additional Iconset information.
  * \sa setInfo()
  */
-const QHash<QString, QString> Iconset::info() const
-{
-    return d->info;
-}
+const QHash<QString, QString> Iconset::info() const { return d->info; }
 
 /**
  * Sets additional Iconset information.
  * \sa info()
  */
-void Iconset::setInfo(const QHash<QString, QString> &i)
-{
-    d->info = i;
-}
+void Iconset::setInfo(const QHash<QString, QString> &i) { d->info = i; }
 
 /**
  * Adds Iconset to IconsetFactory.
  */
-void Iconset::addToFactory() const
-{
-    IconsetFactoryPrivate::instance()->registerIconset(this);
-}
+void Iconset::addToFactory() const { IconsetFactoryPrivate::instance()->registerIconset(this); }
 
 /**
  * Removes Iconset from IconsetFactory.
  */
-void Iconset::removeFromFactory() const
-{
-    IconsetFactoryPrivate::instance()->unregisterIconset(this);
-}
+void Iconset::removeFromFactory() const { IconsetFactoryPrivate::instance()->unregisterIconset(this); }
 
 bool Iconset::isSourceAllowed(const QFileInfo &fi)
 {
@@ -1740,7 +1605,7 @@ bool Iconset::isSourceAllowed(const QFileInfo &fi)
  * required (i.e. when sound is stored inside packed iconset.zip file). Unpacked
  * file name will be unique, and you can empty the unpack directory at the application
  * exit. Calling application MUST ensure that the \a unpackPath is already created.
- * If specified \a unpackPath is empty ("" or QString::null) then sounds from archives
+ * If specified \a unpackPath is empty ("" or QString()) then sounds from archives
  * will not be unpacked, and only sounds from already unpacked iconsets (that are not
  * stored in archives) will be played.
  * \a receiver and \a slot are used to specify the object that will be connected to
@@ -1750,7 +1615,7 @@ bool Iconset::isSourceAllowed(const QFileInfo &fi)
 void Iconset::setSoundPrefs(QString unpackPath, QObject *receiver, const char *slot)
 {
 #ifdef ICONSET_SOUND
-    if ( !iconSharedObject ) {
+    if (!iconSharedObject) {
         iconSharedObject = new IconSharedObject();
     }
 

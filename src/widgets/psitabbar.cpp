@@ -13,45 +13,41 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "psitabbar.h"
-#include "psitabwidget.h"
-#include <QMouseEvent>
-#include <QApplication>
-#include <QMimeData>
-#include <QPainter>
 
 #include "psioptions.h"
+#include "psitabwidget.h"
+
+#include <QApplication>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QPainter>
 
 /**
  * Constructor
  */
-PsiTabBar::PsiTabBar(PsiTabWidget *parent)
-        : TabBar(parent)
+PsiTabBar::PsiTabBar(PsiTabWidget *parent) : TabBar(parent)
 {
-    //setAcceptDrops(true);
+    // setAcceptDrops(true);
 
     setMovable(true);
     setTabsClosable(true);
-    setSelectionBehaviorOnRemove ( QTabBar::SelectPreviousTab );
+    setSelectionBehaviorOnRemove(QTabBar::SelectPreviousTab);
 }
 
 /**
  * Destructor
  */
-PsiTabBar::~PsiTabBar() {
-}
+PsiTabBar::~PsiTabBar() {}
 
 /**
  * Returns the parent PsiTabWidget.
  */
-PsiTabWidget* PsiTabBar::psiTabWidget() {
-    return dynamic_cast<PsiTabWidget*> (parent());
-}
+PsiTabWidget *PsiTabBar::psiTabWidget() { return dynamic_cast<PsiTabWidget *>(parent()); }
 
 /**
  * Overriding this allows us to emit signals for double clicks
@@ -62,7 +58,7 @@ void PsiTabBar::mouseDoubleClickEvent(QMouseEvent *event)
         return;
 
     const QPoint pos = event->pos();
-    int tab = findTabUnder(pos);
+    int          tab = findTabUnder(pos);
     if (tab >= 0 && tab < count()) {
         emit mouseDoubleClickTab(tab);
     }
@@ -71,7 +67,8 @@ void PsiTabBar::mouseDoubleClickEvent(QMouseEvent *event)
 /*
  * Returns the index of the tab at a position, or -1 if out of bounds.
  */
-int PsiTabBar::findTabUnder(const QPoint &pos) {
+int PsiTabBar::findTabUnder(const QPoint &pos)
+{
     for (int i = 0; i < count(); i++) {
         if (tabRect(i).contains(pos)) {
             return i;
@@ -80,14 +77,15 @@ int PsiTabBar::findTabUnder(const QPoint &pos) {
     return -1;
 }
 
-void PsiTabBar::mousePressEvent(QMouseEvent *event) {
+void PsiTabBar::mousePressEvent(QMouseEvent *event)
+{
     TabBar::mousePressEvent(event);
     event->accept();
 }
 
-void PsiTabBar::mouseReleaseEvent ( QMouseEvent * event )
+void PsiTabBar::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::MidButton && findTabUnder(event->pos())!=-1) {
+    if (event->button() == Qt::MidButton && findTabUnder(event->pos()) != -1) {
         emit mouseMiddleClickTab(findTabUnder(event->pos()));
         event->accept();
     }
@@ -98,7 +96,8 @@ void PsiTabBar::mouseReleaseEvent ( QMouseEvent * event )
     }
 };
 
-void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
+void PsiTabBar::contextMenuEvent(QContextMenuEvent *event)
+{
     event->accept();
     int tab = findTabUnder(event->pos());
     if (tab < 0)
@@ -107,12 +106,13 @@ void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
     emit contextMenu(event, tab);
 }
 
-void PsiTabBar::wheelEvent(QWheelEvent *event) {
+void PsiTabBar::wheelEvent(QWheelEvent *event)
+{
     if (PsiOptions::instance()->getOption("options.ui.tabs.disable-wheel-scroll").toBool())
         return;
 
     int numDegrees = event->delta() / 8;
-    int numSteps = numDegrees / 15;
+    int numSteps   = numDegrees / 15;
 
     int newIndex = currentIndex() - numSteps;
 
@@ -126,12 +126,6 @@ void PsiTabBar::wheelEvent(QWheelEvent *event) {
     event->accept();
 }
 
-void PsiTabBar::paintEvent(QPaintEvent *event)
-{
-    TabBar::paintEvent(event);
-};
+void PsiTabBar::paintEvent(QPaintEvent *event) { TabBar::paintEvent(event); };
 
-void PsiTabBar::resizeEvent(QResizeEvent * event)
-{
-    QTabBar::resizeEvent(event);
-};
+void PsiTabBar::resizeEvent(QResizeEvent *event) { QTabBar::resizeEvent(event); };

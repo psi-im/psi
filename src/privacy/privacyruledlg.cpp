@@ -13,12 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "privacyruledlg.h"
+
 #include "privacylistitem.h"
 
 PrivacyRuleDlg::PrivacyRuleDlg()
@@ -33,12 +33,12 @@ PrivacyRuleDlg::PrivacyRuleDlg()
     ui_.cb_type->addItem(tr("Subscription"), PrivacyListItem::SubscriptionType);
     ui_.cb_type->addItem(tr("*"), PrivacyListItem::FallthroughType);
 
-    connect(ui_.cb_type,SIGNAL(currentIndexChanged(const QString&)),SLOT(type_selected(const QString&)));
-    connect(ui_.pb_cancel,SIGNAL(clicked()),SLOT(reject()));
-    connect(ui_.pb_ok,SIGNAL(clicked()),SLOT(accept()));
+    connect(ui_.cb_type, SIGNAL(currentIndexChanged(const QString &)), SLOT(type_selected(const QString &)));
+    connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
+    connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(accept()));
 }
 
-void PrivacyRuleDlg::setRule(const PrivacyListItem& item)
+void PrivacyRuleDlg::setRule(const PrivacyListItem &item)
 {
     // Type
     if (item.type() == PrivacyListItem::SubscriptionType) {
@@ -64,18 +64,17 @@ PrivacyListItem PrivacyRuleDlg::rule() const
     PrivacyListItem item;
 
     // Type & value
-    PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
-    if(t == PrivacyListItem::SubscriptionType) {
+    PrivacyListItem::Type t = PrivacyListItem::Type(ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt());
+    if (t == PrivacyListItem::SubscriptionType) {
         item.setType(t);
         item.setValue(ui_.cb_value->itemData(ui_.cb_value->currentIndex()).toString());
-    }
-    else {
+    } else {
         item.setType(t);
         item.setValue(ui_.cb_value->currentText());
     }
 
     // Action
-    item.setAction((PrivacyListItem::Action)ui_.cb_action->itemData(ui_.cb_action->currentIndex()).toInt());
+    item.setAction(PrivacyListItem::Action(ui_.cb_action->itemData(ui_.cb_action->currentIndex()).toInt()));
 
     // Selection
     item.setMessage(ui_.ck_messages->isChecked());
@@ -86,26 +85,24 @@ PrivacyListItem PrivacyRuleDlg::rule() const
     return item;
 }
 
-void PrivacyRuleDlg::type_selected(const QString& type)
+void PrivacyRuleDlg::type_selected(const QString &type)
 {
     ui_.cb_value->clear();
     ui_.cb_value->setItemText(ui_.cb_value->currentIndex(), "");
-    PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
+    PrivacyListItem::Type t = PrivacyListItem::Type(ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt());
     if (t == PrivacyListItem::SubscriptionType) {
         ui_.cb_value->addItem(tr("None"), "none");
         ui_.cb_value->addItem(tr("Both"), "both");
         ui_.cb_value->addItem(tr("From"), "from");
         ui_.cb_value->addItem(tr("To"), "to");
         ui_.cb_value->setEditable(false);
-    }
-    else {
+    } else {
         ui_.cb_value->setEditable(true);
     }
 
     if (type == tr("*")) {
         ui_.cb_value->setEnabled(false);
-    }
-    else {
+    } else {
         ui_.cb_value->setEnabled(true);
     }
 }

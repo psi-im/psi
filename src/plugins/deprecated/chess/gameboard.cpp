@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 by SilverSoft.Net
+ * Copyright (C) 2005  SilverSoft.Net
  * All rights reserved
  *
  * $Id: gameboard.cpp,v 1.1 2005/03/26 11:24:13 denis Exp $
@@ -13,25 +13,9 @@
  *    Fixed the mate checker (big thanks to knyaz@RusNet)
  */
 
-#include <QPainter>
-#include <QFontMetrics>
-#include <QMessageBox>
-#include <QCursor>
-#include <Q3FileDialog>
-//Added by qt3to4:
-#include <Q3PointArray>
-#include <QPixmap>
-#include <QResizeEvent>
-#include <QFocusEvent>
-#include <QMouseEvent>
-#include <QPaintEvent>
-#include <QCloseEvent>
-#include <QDebug>
-#include <stdlib.h>
-
 #include "gameboard.h"
-#include "gamesocket.h"
 
+#include "gamesocket.h"
 #include "xpm/black_bishop.xpm"
 #include "xpm/black_castle.xpm"
 #include "xpm/black_king.xpm"
@@ -45,47 +29,59 @@
 #include "xpm/white_pawn.xpm"
 #include "xpm/white_queen.xpm"
 
-const int     cell_size = 40,
-            XSize = 640,
-            YSize = 480;
+#include <Q3FileDialog>
+#include <Q3PointArray>
+#include <QCloseEvent>
+#include <QCursor>
+#include <QDebug>
+#include <QFocusEvent>
+#include <QFontMetrics>
+#include <QMessageBox>
+#include <QMouseEvent>
+#include <QPaintEvent>
+#include <QPainter>
+#include <QPixmap>
+#include <QResizeEvent>
+#include <stdlib.h>
 
-QColor    cb, cw;
+const int cell_size = 40, XSize = 640, YSize = 480;
 
-bool Figure::hasMyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
-    int x, int y, bool mirror)
+QColor cb, cw;
+
+bool Figure::hasMyFigure(GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y, bool mirror)
 {
-    int    n;
-    bool    res;
+    int  n;
+    bool res;
 
     n = map2map(gt, x, y, mirror);
 
     if (gt == GameBoard::WHITE)
         switch (map[n]) {
-            case GameBoard::DUMMY:
-            case GameBoard::WHITE_PAWN:
-            case GameBoard::WHITE_CASTLE:
-            case GameBoard::WHITE_BISHOP:
-            case GameBoard::WHITE_KING:
-            case GameBoard::WHITE_QUEEN:
-            case GameBoard::WHITE_KNIGHT:
-                res = true;
-                break;
-            default:
-                res = false;
+        case GameBoard::DUMMY:
+        case GameBoard::WHITE_PAWN:
+        case GameBoard::WHITE_CASTLE:
+        case GameBoard::WHITE_BISHOP:
+        case GameBoard::WHITE_KING:
+        case GameBoard::WHITE_QUEEN:
+        case GameBoard::WHITE_KNIGHT:
+            res = true;
+            break;
+        default:
+            res = false;
         }
     else if (gt == GameBoard::BLACK)
         switch (map[n]) {
-            case GameBoard::DUMMY:
-            case GameBoard::BLACK_PAWN:
-            case GameBoard::BLACK_CASTLE:
-            case GameBoard::BLACK_BISHOP:
-            case GameBoard::BLACK_KING:
-            case GameBoard::BLACK_QUEEN:
-            case GameBoard::BLACK_KNIGHT:
-                res = true;
-                break;
-            default:
-                res = false;
+        case GameBoard::DUMMY:
+        case GameBoard::BLACK_PAWN:
+        case GameBoard::BLACK_CASTLE:
+        case GameBoard::BLACK_BISHOP:
+        case GameBoard::BLACK_KING:
+        case GameBoard::BLACK_QUEEN:
+        case GameBoard::BLACK_KNIGHT:
+            res = true;
+            break;
+        default:
+            res = false;
         }
     else
         res = false;
@@ -93,46 +89,44 @@ bool Figure::hasMyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
-int Figure::hasEnemyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
-    int x, int y, bool mirror)
+int Figure::hasEnemyFigure(GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y, bool mirror)
 {
-    int    n;
-    int    res;
+    int n;
+    int res;
 
     n = map2map(gt, x, y, mirror);
 
     if (gt == GameBoard::BLACK)
         switch (map[n]) {
-            case GameBoard::WHITE_PAWN:
-            case GameBoard::WHITE_CASTLE:
-            case GameBoard::WHITE_BISHOP:
-            case GameBoard::WHITE_QUEEN:
-            case GameBoard::WHITE_KNIGHT:
-                res = 1;
-                break;
-            case GameBoard::WHITE_KING:
-                res = 2;
-                break;
-            case GameBoard::DUMMY:
-            default:
-                res = 0;
+        case GameBoard::WHITE_PAWN:
+        case GameBoard::WHITE_CASTLE:
+        case GameBoard::WHITE_BISHOP:
+        case GameBoard::WHITE_QUEEN:
+        case GameBoard::WHITE_KNIGHT:
+            res = 1;
+            break;
+        case GameBoard::WHITE_KING:
+            res = 2;
+            break;
+        case GameBoard::DUMMY:
+        default:
+            res = 0;
         }
     else if (gt == GameBoard::WHITE)
         switch (map[n]) {
-            case GameBoard::BLACK_PAWN:
-            case GameBoard::BLACK_CASTLE:
-            case GameBoard::BLACK_BISHOP:
-            case GameBoard::BLACK_QUEEN:
-            case GameBoard::BLACK_KNIGHT:
-                res = 1;
-                break;
-            case GameBoard::BLACK_KING:
-                res = 2;
-                break;
-            case GameBoard::DUMMY:
-            default:
-                res = 0;
+        case GameBoard::BLACK_PAWN:
+        case GameBoard::BLACK_CASTLE:
+        case GameBoard::BLACK_BISHOP:
+        case GameBoard::BLACK_QUEEN:
+        case GameBoard::BLACK_KNIGHT:
+            res = 1;
+            break;
+        case GameBoard::BLACK_KING:
+            res = 2;
+            break;
+        case GameBoard::DUMMY:
+        default:
+            res = 0;
         }
     else
         res = 0;
@@ -140,21 +134,18 @@ int Figure::hasEnemyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
-bool Figure::hasFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
-    int x, int y, bool mirror)
+bool Figure::hasFigure(GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y, bool mirror)
 {
-    int    n;
+    int n;
 
     n = map2map(gt, x, y, mirror);
 
     return (map[n] != GameBoard::NONE);
 }
 
-
 int Figure::map2map(GameBoard::GameType gt, int x, int y, bool mirror)
 {
-    int    n = -1;
+    int n = -1;
 
     if (gt == GameBoard::WHITE)
         if (mirror)
@@ -170,15 +161,13 @@ int Figure::map2map(GameBoard::GameType gt, int x, int y, bool mirror)
     return (n);
 }
 
-
 QString Figure::map2str(int x, int y)
 {
-    QString    s;
+    QString s;
 
     s = QString(QChar('a' + x - 1)) + QString::number(y);
     return (s);
 }
-
 
 void Figure::str2map(const QString &coo, int *x, int *y)
 {
@@ -186,46 +175,43 @@ void Figure::str2map(const QString &coo, int *x, int *y)
     *y = coo.at(1).toLatin1() - '0';
 }
 
-
-int
-Figure::validMove(GameBoard::GameType gt, GameBoard::FigureType *map,
-    int fx, int fy, int tx, int ty, bool mirror)
+int Figure::validMove(GameBoard::GameType gt, GameBoard::FigureType *map, int fx, int fy, int tx, int ty, bool mirror)
 {
-    Q3PointArray    vl;
-    int        res, f, t;
+    Q3PointArray vl;
+    int          res, f, t;
 
     moveList(vl, gt, map, fx, fy, mirror);
     res = hasPoint(vl, tx, ty);
-    f = map2map(gt, fx, fy, mirror);
+    f   = map2map(gt, fx, fy, mirror);
     switch (map[f]) {
-        case GameBoard::WHITE_PAWN:
-            if (res && (ty == 8))
-                res++;
-            break;
-        case GameBoard::BLACK_PAWN:
-            if (res && (ty == 1))
-                res++;
-            break;
-        default:;
+    case GameBoard::WHITE_PAWN:
+        if (res && (ty == 8))
+            res++;
+        break;
+    case GameBoard::BLACK_PAWN:
+        if (res && (ty == 1))
+            res++;
+        break;
+    default:;
     }
     if (res) {
-        t = map2map(gt, tx, ty, mirror);
+        t      = map2map(gt, tx, ty, mirror);
         map[t] = map[f];
         map[f] = GameBoard::NONE;
         if (mirror) {
             vl.resize(0);
             t = checkKing(gt, map, mirror, vl, false);
             switch (t) {
-                case 1:
-                    res |= 0x10;
-                    break;
-                case 2:
-                    res |= 0x20;
-                    break;
-                case 3:
-                    res |= 0x40;
-                    break;
-                default:;
+            case 1:
+                res |= 0x10;
+                break;
+            case 2:
+                res |= 0x20;
+                break;
+            case 3:
+                res |= 0x40;
+                break;
+            default:;
             }
         }
     }
@@ -233,22 +219,19 @@ Figure::validMove(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
 /*
  *    0 - nothing
  *    1 - check
  *    2 - mate
  *    3 - stalemate
  */
-int
-Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
-    bool mirror, Q3PointArray &vl, bool co)
+int Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map, bool mirror, Q3PointArray &vl, bool co)
 {
-    Q3PointArray        tmp;
-    GameBoard::FigureType    myking, map1[64];
-    GameBoard::GameType    mytype;
-    int            res, x, y, p, xk, yk, pk;
-    bool            hp;
+    Q3PointArray          tmp;
+    GameBoard::FigureType myking, map1[64];
+    GameBoard::GameType   mytype;
+    int                   res, x, y, p, xk, yk, pk;
+    bool                  hp;
 
     if (gt == GameBoard::WHITE) {
         myking = GameBoard::BLACK_KING;
@@ -261,7 +244,8 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
         mytype = GameBoard::NOGAME;
     }
     xk = yk = -1;
-    res = 0; p = -1;
+    res     = 0;
+    p       = -1;
 
     for (y = 1; y < 9; ++y)
         for (x = 1; x < 9; ++x)
@@ -284,15 +268,12 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
             vl.resize(0);
             for (y = 1; y < 9; ++y)
                 for (x = 1; x < 9; ++x)
-                    if (hasMyFigure(mytype, map,
-                        x, y, !mirror))
-                        moveList(vl, mytype, map,
-                            x, y, !mirror);
+                    if (hasMyFigure(mytype, map, x, y, !mirror))
+                        moveList(vl, mytype, map, x, y, !mirror);
             memmove(map1, map, sizeof(map1));
             pk = map2map(mytype, xk, yk, !mirror);
             for (x = vl.size() - 1; x >= 0; --x) {
-                p = map2map(mytype, vl.point(x).x(),
-                    vl.point(x).y(), !mirror);
+                p = map2map(mytype, vl.point(x).x(), vl.point(x).y(), !mirror);
                 if (p != pk)
                     map1[p] = GameBoard::DUMMY;
             }
@@ -301,15 +282,13 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
                 moveListKing(vl, mytype, map, xk, yk, !mirror);
                 memmove(map1, map, sizeof(map1));
                 for (y = 0, x = vl.size() - 1; x >= 0; --x) {
-                    p = map2map(mytype, vl.point(x).x(),
-                        vl.point(x).y(), !mirror);
-                    map1[p] = myking;
+                    p        = map2map(mytype, vl.point(x).x(), vl.point(x).y(), !mirror);
+                    map1[p]  = myking;
                     map1[pk] = GameBoard::NONE;
-                    if (checkKing(gt, map1, mirror,
-                        tmp, true) == 1)
+                    if (checkKing(gt, map1, mirror, tmp, true) == 1)
                         ++y;
                     map1[pk] = map[pk];
-                    map1[p] = map[p];
+                    map1[p]  = map[p];
                 }
                 if (y == (int)vl.size())
                     res++;
@@ -320,8 +299,7 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
         for (y = 1; y < 9; ++y)
             for (x = 1; x < 9; ++x)
                 if (hasMyFigure(mytype, map, x, y, !mirror))
-                    moveList(vl, mytype, map, x, y,
-                        !mirror);
+                    moveList(vl, mytype, map, x, y, !mirror);
         if (vl.size() == 0)
             res = 3;
     }
@@ -329,99 +307,83 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
-void
-Figure::moveList(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveList(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y, bool mirror)
 {
-    int        n;
+    int n;
 
     n = map2map(gt, x, y, mirror);
     switch (map[n]) {
-        case GameBoard::WHITE_PAWN:
-            moveListWhitePawn(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::WHITE_PAWN:
+        moveListWhitePawn(vl, gt, map, x, y, mirror);
+        break;
 
-        case GameBoard::WHITE_CASTLE:
-        case GameBoard::BLACK_CASTLE:
-            moveListCastle(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::WHITE_CASTLE:
+    case GameBoard::BLACK_CASTLE:
+        moveListCastle(vl, gt, map, x, y, mirror);
+        break;
 
-        case GameBoard::WHITE_BISHOP:
-        case GameBoard::BLACK_BISHOP:
-            moveListBishop(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::WHITE_BISHOP:
+    case GameBoard::BLACK_BISHOP:
+        moveListBishop(vl, gt, map, x, y, mirror);
+        break;
 
-        case GameBoard::WHITE_KING:
-        case GameBoard::BLACK_KING:
-            moveListKing(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::WHITE_KING:
+    case GameBoard::BLACK_KING:
+        moveListKing(vl, gt, map, x, y, mirror);
+        break;
 
-        case GameBoard::WHITE_QUEEN:
-        case GameBoard::BLACK_QUEEN:
-            moveListQueen(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::WHITE_QUEEN:
+    case GameBoard::BLACK_QUEEN:
+        moveListQueen(vl, gt, map, x, y, mirror);
+        break;
 
-        case GameBoard::WHITE_KNIGHT:
-        case GameBoard::BLACK_KNIGHT:
-            moveListKnight(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::WHITE_KNIGHT:
+    case GameBoard::BLACK_KNIGHT:
+        moveListKnight(vl, gt, map, x, y, mirror);
+        break;
 
-        case GameBoard::BLACK_PAWN:
-            moveListBlackPawn(vl, gt, map, x, y, mirror);
-            break;
+    case GameBoard::BLACK_PAWN:
+        moveListBlackPawn(vl, gt, map, x, y, mirror);
+        break;
 
-
-        default:;
+    default:;
     }
 }
 
-
-void
-Figure::moveListWhitePawn(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListWhitePawn(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                               bool mirror)
 {
 
-    if (validPoint(gt, map, x, y + 1, mirror) &&
-        !hasFigure(gt, map, x, y + 1, mirror)) {
+    if (validPoint(gt, map, x, y + 1, mirror) && !hasFigure(gt, map, x, y + 1, mirror)) {
         vl.putPoints(vl.size(), 1, x, y + 1);
         if ((y == 2) && validPoint(gt, map, x, y + 2, mirror))
             vl.putPoints(vl.size(), 1, x, y + 2);
     }
-    if (validPoint(gt, map, x + 1, y + 1, mirror) &&
-        hasEnemyFigure(gt, map, x + 1, y + 1, mirror))
+    if (validPoint(gt, map, x + 1, y + 1, mirror) && hasEnemyFigure(gt, map, x + 1, y + 1, mirror))
         vl.putPoints(vl.size(), 1, x + 1, y + 1);
-    if (validPoint(gt, map, x - 1, y + 1, mirror) &&
-        hasEnemyFigure(gt, map, x - 1, y + 1, mirror))
+    if (validPoint(gt, map, x - 1, y + 1, mirror) && hasEnemyFigure(gt, map, x - 1, y + 1, mirror))
         vl.putPoints(vl.size(), 1, x - 1, y + 1);
 }
 
-
-void
-Figure::moveListBlackPawn(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListBlackPawn(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                               bool mirror)
 {
 
-    if (validPoint(gt, map, x, y - 1, mirror) &&
-        !hasFigure(gt, map, x, y - 1, mirror)) {
+    if (validPoint(gt, map, x, y - 1, mirror) && !hasFigure(gt, map, x, y - 1, mirror)) {
         vl.putPoints(vl.size(), 1, x, y - 1);
         if ((y == 7) && validPoint(gt, map, x, y - 2, mirror))
             vl.putPoints(vl.size(), 1, x, y - 2);
     }
-    if (validPoint(gt, map, x + 1, y - 1, mirror) &&
-        hasEnemyFigure(gt, map, x + 1, y - 1, mirror))
+    if (validPoint(gt, map, x + 1, y - 1, mirror) && hasEnemyFigure(gt, map, x + 1, y - 1, mirror))
         vl.putPoints(vl.size(), 1, x + 1, y - 1);
-    if (validPoint(gt, map, x - 1, y - 1, mirror) &&
-        hasEnemyFigure(gt, map, x - 1, y - 1, mirror))
+    if (validPoint(gt, map, x - 1, y - 1, mirror) && hasEnemyFigure(gt, map, x - 1, y - 1, mirror))
         vl.putPoints(vl.size(), 1, x - 1, y - 1);
 }
 
-
-void
-Figure::moveListCastle(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListCastle(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                            bool mirror)
 {
-    int    i;
+    int i;
 
     for (i = x + 1; i < 9; i++) {
         if (!hasFigure(gt, map, i, y, mirror)) {
@@ -457,12 +419,10 @@ Figure::moveListCastle(Q3PointArray &vl, GameBoard::GameType gt,
     }
 }
 
-
-void
-Figure::moveListBishop(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListBishop(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                            bool mirror)
 {
-    int    i, j;
+    int i, j;
 
     for (i = x + 1, j = y + 1; (i < 9) && (j < 9); i++, j++) {
         if (!hasFigure(gt, map, i, j, mirror)) {
@@ -498,58 +458,45 @@ Figure::moveListBishop(Q3PointArray &vl, GameBoard::GameType gt,
     }
 }
 
-
-void
-Figure::moveListKing(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListKing(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                          bool mirror)
 {
-    int    x1, x2, y1, y2;
+    int x1, x2, y1, y2;
 
-    x1 = x - 1; x2 = x + 1;
-    y1 = y - 1; y2 = y + 1;
-    if (validPoint(gt, map, x1, y2, mirror) &&
-        !hasKingsMeeting(gt, map, x1, y2, mirror))
+    x1 = x - 1;
+    x2 = x + 1;
+    y1 = y - 1;
+    y2 = y + 1;
+    if (validPoint(gt, map, x1, y2, mirror) && !hasKingsMeeting(gt, map, x1, y2, mirror))
         vl.putPoints(vl.size(), 1, x1, y2);
-    if (validPoint(gt, map, x, y2, mirror) &&
-        !hasKingsMeeting(gt, map, x, y2, mirror))
+    if (validPoint(gt, map, x, y2, mirror) && !hasKingsMeeting(gt, map, x, y2, mirror))
         vl.putPoints(vl.size(), 1, x, y2);
-    if (validPoint(gt, map, x2, y2, mirror) &&
-        !hasKingsMeeting(gt, map, x2, y2, mirror))
+    if (validPoint(gt, map, x2, y2, mirror) && !hasKingsMeeting(gt, map, x2, y2, mirror))
         vl.putPoints(vl.size(), 1, x2, y2);
-    if (validPoint(gt, map, x1, y, mirror) &&
-        !hasKingsMeeting(gt, map, x1, y, mirror))
+    if (validPoint(gt, map, x1, y, mirror) && !hasKingsMeeting(gt, map, x1, y, mirror))
         vl.putPoints(vl.size(), 1, x1, y);
-    if (validPoint(gt, map, x2, y, mirror) &&
-        !hasKingsMeeting(gt, map, x2, y, mirror))
+    if (validPoint(gt, map, x2, y, mirror) && !hasKingsMeeting(gt, map, x2, y, mirror))
         vl.putPoints(vl.size(), 1, x2, y);
-    if (validPoint(gt, map, x1, y1, mirror) &&
-        !hasKingsMeeting(gt, map, x1, y1, mirror))
+    if (validPoint(gt, map, x1, y1, mirror) && !hasKingsMeeting(gt, map, x1, y1, mirror))
         vl.putPoints(vl.size(), 1, x1, y1);
-    if (validPoint(gt, map, x, y1, mirror) &&
-        !hasKingsMeeting(gt, map, x, y1, mirror))
+    if (validPoint(gt, map, x, y1, mirror) && !hasKingsMeeting(gt, map, x, y1, mirror))
         vl.putPoints(vl.size(), 1, x, y1);
-    if (validPoint(gt, map, x2, y1, mirror) &&
-        !hasKingsMeeting(gt, map, x2, y1, mirror))
+    if (validPoint(gt, map, x2, y1, mirror) && !hasKingsMeeting(gt, map, x2, y1, mirror))
         vl.putPoints(vl.size(), 1, x2, y1);
 }
 
-
-void
-Figure::moveListQueen(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListQueen(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                           bool mirror)
 {
 
     moveListBishop(vl, gt, map, x, y, mirror);
     moveListCastle(vl, gt, map, x, y, mirror);
 }
 
-
-void
-Figure::moveListKnight(Q3PointArray &vl, GameBoard::GameType gt,
-    GameBoard::FigureType *map, int x, int y, bool mirror)
+void Figure::moveListKnight(Q3PointArray &vl, GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y,
+                            bool mirror)
 {
-    int    x1, x2, x3, x4,
-        y1, y2, y3, y4;
+    int x1, x2, x3, x4, y1, y2, y3, y4;
 
     x1 = x + 1;
     x2 = x1 + 1;
@@ -577,21 +524,20 @@ Figure::moveListKnight(Q3PointArray &vl, GameBoard::GameType gt,
         vl.putPoints(vl.size(), 1, x1, y4);
 }
 
-
-bool
-Figure::hasKingsMeeting(GameBoard::GameType gt, GameBoard::FigureType *map,
-    int x, int y, bool mirror)
+bool Figure::hasKingsMeeting(GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y, bool mirror)
 {
-    int    x1, x2, y1, y2;
-    bool    res;
+    int  x1, x2, y1, y2;
+    bool res;
 
-    x1 = x - 1; x2 = x + 1;
-    y1 = y - 1; y2 = y + 1;
+    x1  = x - 1;
+    x2  = x + 1;
+    y1  = y - 1;
+    y2  = y + 1;
     res = false;
 
     if (validPoint(gt, map, x1, y2, mirror))
         res = (hasEnemyFigure(gt, map, x1, y2, mirror) == 2);
-    if (! res && validPoint(gt, map, x, y2, mirror))
+    if (!res && validPoint(gt, map, x, y2, mirror))
         res = (hasEnemyFigure(gt, map, x, y2, mirror) == 2);
     if (!res && validPoint(gt, map, x2, y2, mirror))
         res = (hasEnemyFigure(gt, map, x2, y2, mirror) == 2);
@@ -609,12 +555,10 @@ Figure::hasKingsMeeting(GameBoard::GameType gt, GameBoard::FigureType *map,
     return (res);
 }
 
-
-bool
-Figure::hasPoint(const Q3PointArray &vl, int x, int y)
+bool Figure::hasPoint(const Q3PointArray &vl, int x, int y)
 {
-    int    i, xp, yp, cnt;
-    bool    res = false;
+    int  i, xp, yp, cnt;
+    bool res = false;
 
     cnt = vl.count();
     for (i = 0; i < cnt; ++i) {
@@ -628,14 +572,11 @@ Figure::hasPoint(const Q3PointArray &vl, int x, int y)
     return (res);
 }
 
-
-bool
-Figure::validPoint(GameBoard::GameType gt, GameBoard::FigureType *map,
-    int x, int y, bool mirror)
+bool Figure::validPoint(GameBoard::GameType gt, GameBoard::FigureType *map, int x, int y, bool mirror)
 {
-    bool    res;
+    bool res;
 
-    res = ((x >0) && (x < 9) && (y >0) && (y < 9));
+    res = ((x > 0) && (x < 9) && (y > 0) && (y < 9));
     if (res)
         res = !hasMyFigure(gt, map, x, y, mirror);
 
@@ -644,17 +585,17 @@ Figure::validPoint(GameBoard::GameType gt, GameBoard::FigureType *map,
 
 //-----------------------------------------------------------------------------
 
-GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
-    const char *name)
-    :QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
+GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent, const char *name) :
+    QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
 {
     setAttribute(Qt::WA_DeleteOnClose);
-    QString    str;
+    QString str;
 
     protocol = new GameProtocol();
-    connect(protocol,SIGNAL(sendData(const QString&)), this, SIGNAL(sendData(const QString&)));
+    connect(protocol, SIGNAL(sendData(const QString &)), this, SIGNAL(sendData(const QString &)));
 
-    gt = g; hst = h;
+    gt  = g;
+    hst = h;
     setCursor(QCursor(Qt::WaitCursor));
     if (gt == WHITE)
         str = tr("White");
@@ -667,7 +608,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
     initMap();
 
     sock = new Q3Socket(this);
-    drw = new Drawer(map, &gt, this);
+    drw  = new Drawer(map, &gt, this);
     drw->setEnabled(false);
     drw->setFocusPolicy(Qt::NoFocus);
     box = new Q3GroupBox(tr("Game chat"), this);
@@ -687,8 +628,8 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
     hb = new QListWidget(hist);
     hb->setSelectionMode(QListWidget::NoSelection);
     hb->setPaletteBackgroundColor(cb);
-    //tmr = new QTimer(this);
-    //sock_tout = SOCK_WAIT;
+    // tmr = new QTimer(this);
+    // sock_tout = SOCK_WAIT;
     my_stat = tr("Looking up the host") + ' ' + hst + "...";
     /*QObject::connect(sock, SIGNAL(hostFound()),
         this, SLOT(showHostFound()));
@@ -701,25 +642,20 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
     QObject::connect(sock, SIGNAL(error(int)),
         this, SLOT(sockError(int)));*/
 
-
-    QObject::connect(drw, SIGNAL(moved(const QString&)),
-        this, SLOT(sendMove(const QString&)));
-    QObject::connect(drw, SIGNAL(newFigure(const QString&,
-        GameBoard::FigureType)),
-        this, SLOT(sendFigure(const QString&, GameBoard::FigureType)));
-    QObject::connect(drw, SIGNAL(gameover(int)),
-        this, SLOT(gameover(int)));
-    QObject::connect(edt, SIGNAL(returnPressed()),
-        this, SLOT(sendText()));
-    //QObject::connect(tmr, SIGNAL(timeout()), this, SLOT(sockTest()));
+    QObject::connect(drw, SIGNAL(moved(const QString &)), this, SLOT(sendMove(const QString &)));
+    QObject::connect(drw, SIGNAL(newFigure(const QString &, GameBoard::FigureType)), this,
+                     SLOT(sendFigure(const QString &, GameBoard::FigureType)));
+    QObject::connect(drw, SIGNAL(gameover(int)), this, SLOT(gameover(int)));
+    QObject::connect(edt, SIGNAL(returnPressed()), this, SLOT(sendText()));
+    // QObject::connect(tmr, SIGNAL(timeout()), this, SLOT(sockTest()));
 
     resize(XSize, YSize);
     setMinimumSize(size());
     setMaximumSize(size());
-    //sock->connectToHost(hst, GAME_PORT);
-    //tmr->start(1000);
+    // sock->connectToHost(hst, GAME_PORT);
+    // tmr->start(1000);
 
-    //hackyhackhack
+    // hackyhackhack
     tmr = new QTimer(this);
     connect(tmr, SIGNAL(timeout()), this, SLOT(showHostFound()));
     tmr->start(1000);
@@ -729,9 +665,8 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
     qDebug("GameBoard inited, type 1");
 }
 
-GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
-    :QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase |
-    Qt::WDestructiveClose)
+GameBoard::GameBoard(int sfd, QWidget *parent, const char *name) :
+    QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase | Qt::WDestructiveClose)
 {
 
     gt = NOGAME;
@@ -741,9 +676,9 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
     memset(map, NONE, 64 * sizeof(*map));
 
     protocol = new GameProtocol();
-    connect(protocol,SIGNAL(sendData(const QString&)), this, SIGNAL(sendData(const QString&)));
+    connect(protocol, SIGNAL(sendData(const QString &)), this, SIGNAL(sendData(const QString &)));
     sock = new Q3Socket(this);
-    drw = new Drawer(map, &gt, this);
+    drw  = new Drawer(map, &gt, this);
     drw->setEnabled(false);
     drw->setFocusPolicy(Qt::NoFocus);
     box = new Q3GroupBox(tr("Game chat"), this);
@@ -763,8 +698,8 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
     hb->setSelectionMode(QListWidget::NoSelection);
     hb->setPaletteBackgroundColor(cb);
 
-    //sock->setSocket(sfd);
-    //sock_tout = SOCK_WAIT;
+    // sock->setSocket(sfd);
+    // sock_tout = SOCK_WAIT;
     my_stat = tr("Accepted a new connection");
     /*QObject::connect(sock, SIGNAL(hostFound()),
         this, SLOT(showHostFound()));
@@ -777,29 +712,23 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
     QObject::connect(sock, SIGNAL(error(int)),
         this, SLOT(sockError(int)));*/
 
-
-    QObject::connect(drw, SIGNAL(moved(const QString&)),
-        this, SLOT(sendMove(const QString&)));
-    QObject::connect(drw, SIGNAL(newFigure(const QString&,
-        GameBoard::FigureType)),
-        this, SLOT(sendFigure(const QString&, GameBoard::FigureType)));
-    QObject::connect(drw, SIGNAL(gameover(int)),
-        this, SLOT(gameover(int)));
-    QObject::connect(edt, SIGNAL(returnPressed()),
-        this, SLOT(sendText()));
+    QObject::connect(drw, SIGNAL(moved(const QString &)), this, SLOT(sendMove(const QString &)));
+    QObject::connect(drw, SIGNAL(newFigure(const QString &, GameBoard::FigureType)), this,
+                     SLOT(sendFigure(const QString &, GameBoard::FigureType)));
+    QObject::connect(drw, SIGNAL(gameover(int)), this, SLOT(gameover(int)));
+    QObject::connect(edt, SIGNAL(returnPressed()), this, SLOT(sendText()));
 
     resize(XSize, YSize);
     setMinimumSize(size());
     setMaximumSize(size());
 
-
-    //hackyhackhack
+    // hackyhackhack
     tmr = new QTimer(this);
-    //connect(tmr, SIGNAL(timeout()), this, SLOT(showHostFound()));
-    //tmr->start(1000);
+    // connect(tmr, SIGNAL(timeout()), this, SLOT(showHostFound()));
+    // tmr->start(1000);
     tmr2 = new QTimer(this);
-    //connect(tmr2, SIGNAL(timeout()), this, SLOT(sockConnected()));
-    //tmr2->start(2000);
+    // connect(tmr2, SIGNAL(timeout()), this, SLOT(sockConnected()));
+    // tmr2->start(2000);
 
     qDebug("GameBoard initialised (type 2)");
 }
@@ -822,14 +751,10 @@ GameBoard::~GameBoard()
     delete protocol;
 }
 
-
-void
-GameBoard::resizeEvent(QResizeEvent *e)
+void GameBoard::resizeEvent(QResizeEvent *e)
 {
-    QFontMetrics    fm(font());
-    int        w = e->size().width(),
-            h = e->size().height(),
-            fh = fm.lineSpacing() + 4;
+    QFontMetrics fm(font());
+    int          w = e->size().width(), h = e->size().height(), fh = fm.lineSpacing() + 4;
 
     QWidget::resizeEvent(e);
     drw->move(0, 0);
@@ -842,38 +767,33 @@ GameBoard::resizeEvent(QResizeEvent *e)
     hist->move(drw->x() + drw->width(), drw->y());
     hist->resize(w - hist->x(), box->y());
     hw->move(2, QFontMetrics(hist->font()).lineSpacing());
-    hw->resize((hist->width() - hw->x()) / 2,
-        hist->height() - hw->y() - 2);
+    hw->resize((hist->width() - hw->x()) / 2, hist->height() - hw->y() - 2);
     hb->move(hw->x() + hw->width(), hw->y());
     hb->resize(hw->size());
 }
 
-
-void
-GameBoard::focusInEvent(QFocusEvent *e)
+void GameBoard::focusInEvent(QFocusEvent *e)
 {
 
     QWidget::focusInEvent(e);
     emit showStatus(my_stat);
 }
 
-
-void
-GameBoard::initMap()
+void GameBoard::initMap()
 {
 
     memset(map, NONE, 64 * sizeof(*map));
     if (gt == WHITE) {
-        map[0] = BLACK_CASTLE;
-        map[1] = BLACK_KNIGHT;
-        map[2] = BLACK_BISHOP;
-        map[3] = BLACK_QUEEN;
-        map[4] = BLACK_KING;
-        map[5] = BLACK_BISHOP;
-        map[6] = BLACK_KNIGHT;
-        map[7] = BLACK_CASTLE;
-        map[8] = BLACK_PAWN;
-        map[9] = BLACK_PAWN;
+        map[0]  = BLACK_CASTLE;
+        map[1]  = BLACK_KNIGHT;
+        map[2]  = BLACK_BISHOP;
+        map[3]  = BLACK_QUEEN;
+        map[4]  = BLACK_KING;
+        map[5]  = BLACK_BISHOP;
+        map[6]  = BLACK_KNIGHT;
+        map[7]  = BLACK_CASTLE;
+        map[8]  = BLACK_PAWN;
+        map[9]  = BLACK_PAWN;
         map[10] = BLACK_PAWN;
         map[11] = BLACK_PAWN;
         map[12] = BLACK_PAWN;
@@ -897,16 +817,16 @@ GameBoard::initMap()
         map[62] = WHITE_KNIGHT;
         map[63] = WHITE_CASTLE;
     } else {
-        map[0] = WHITE_CASTLE;
-        map[1] = WHITE_KNIGHT;
-        map[2] = WHITE_BISHOP;
-        map[3] = WHITE_KING;
-        map[4] = WHITE_QUEEN;
-        map[5] = WHITE_BISHOP;
-        map[6] = WHITE_KNIGHT;
-        map[7] = WHITE_CASTLE;
-        map[8] = WHITE_PAWN;
-        map[9] = WHITE_PAWN;
+        map[0]  = WHITE_CASTLE;
+        map[1]  = WHITE_KNIGHT;
+        map[2]  = WHITE_BISHOP;
+        map[3]  = WHITE_KING;
+        map[4]  = WHITE_QUEEN;
+        map[5]  = WHITE_BISHOP;
+        map[6]  = WHITE_KNIGHT;
+        map[7]  = WHITE_CASTLE;
+        map[8]  = WHITE_PAWN;
+        map[9]  = WHITE_PAWN;
         map[10] = WHITE_PAWN;
         map[11] = WHITE_PAWN;
         map[12] = WHITE_PAWN;
@@ -932,9 +852,7 @@ GameBoard::initMap()
     }
 }
 
-
-void
-GameBoard::showHostFound()
+void GameBoard::showHostFound()
 {
     tmr->stop();
     my_stat = tr("The host found");
@@ -942,9 +860,7 @@ GameBoard::showHostFound()
     qDebug("showHostFound");
 }
 
-
-void
-GameBoard::sockConnected()
+void GameBoard::sockConnected()
 {
     tmr2->stop();
     my_stat = tr("Connected to the host");
@@ -954,43 +870,25 @@ GameBoard::sockConnected()
     qDebug("sockConnected");
 }
 
-void GameBoard::receiveData(const QString& data)
+void GameBoard::receiveData(const QString &data) { sockRead(data); }
+
+void GameBoard::sockRead(const QString &data) { parseString(data); }
+
+void GameBoard::sockClosed() { close(); }
+
+void GameBoard::sockError(int err)
 {
-    sockRead(data);
-}
-
-void GameBoard::sockRead(const QString& data)
-{
-    parseString(data);
-
-}
-
-
-void
-GameBoard::sockClosed()
-{
-
-    close();
-}
-
-
-void
-GameBoard::sockError(int err)
-{
-    QString    e;
+    QString e;
 
     QMessageBox::critical(this, tr("Socket Error..."),
-        tr("You have a socket error number") + ' ' +
-        QString::number(err));
+                          tr("You have a socket error number") + ' ' + QString::number(err));
 }
 
-
-void
-GameBoard::parseString(const QString &str)
+void GameBoard::parseString(const QString &str)
 {
-    QStringList    lst(QStringList::split(SEP, str));
-    QString        s(lst[0].lower());
-    int        id;
+    QStringList lst(QStringList::split(SEP, str));
+    QString     s(lst[0].lower());
+    int         id;
 
     if (s == "game") {
         s = lst[1].lower();
@@ -1006,19 +904,18 @@ GameBoard::parseString(const QString &str)
         } else if (s != "accept") {
             if (s == "white") {
                 gt = BLACK;
-                s = tr("White");
+                s  = tr("White");
             } else if (s == "black") {
                 gt = WHITE;
-                s = tr("Black");
+                s  = tr("Black");
                 drw->setEnabled(true);
                 setCursor(QCursor(Qt::ArrowCursor));
             }
             s += ' ' + tr("game from") + ' ';
             my_stat = tr("Accepted the") + ' ' + s;
-            hst = sock->peerName();
+            hst     = sock->peerName();
             if (hst.isEmpty())
-                hst = sock->peerAddress().toString() + ':' +
-                    QString::number(sock->peerPort());
+                hst = sock->peerAddress().toString() + ':' + QString::number(sock->peerPort());
             initMap();
             drw->repaint(true);
             protocol->acceptGame(sock);
@@ -1046,13 +943,12 @@ GameBoard::parseString(const QString &str)
         s = str.right(str.length() - 5);
         updateChat('>' + s);
     } else if (s == "figure") {
-        s = lst[1].lower();
+        s  = lst[1].lower();
         id = lst[2].toInt();
         drw->newFigure(s, id);
         updateHistory(id, true);
     }
 }
-
 
 void GameBoard::sendMove(const QString &str)
 {
@@ -1063,30 +959,26 @@ void GameBoard::sendMove(const QString &str)
     setCursor(QCursor(Qt::WaitCursor));
     updateHistory(str, false);
     sock_tout = SOCK_WAIT;
-    my_stat = tr("Waiting a move...");
+    my_stat   = tr("Waiting a move...");
     emit showStatus(my_stat);
 }
 
-
 void GameBoard::closeEvent(QCloseEvent *e)
 {
-    int    res;
+    int res;
 
     if (gt != NOGAME) {
-        res = QMessageBox::question(this, tr("End the game"),
-            tr("Want you to end the game?\nYou will lose it"),
-            tr("Yes, end"), tr("No, continue"), QString::null, 1);
+        res = QMessageBox::question(this, tr("End the game"), tr("Want you to end the game?\nYou will lose it"),
+                                    tr("Yes, end"), tr("No, continue"), QString::null, 1);
         if (res == 0)
             QWidget::closeEvent(e);
     } else
         QWidget::closeEvent(e);
 }
 
-
-void
-GameBoard::sendText()
+void GameBoard::sendText()
 {
-    QString    s;
+    QString s;
 
     s = edt->text().utf8();
     if (!s.isEmpty()) {
@@ -1096,24 +988,20 @@ GameBoard::sendText()
     edt->clear();
 }
 
-
-void
-GameBoard::updateChat(const QString &s)
+void GameBoard::updateChat(const QString &s)
 {
-    int    fh, h;
+    int fh, h;
 
     lst->insertItem(QString::fromUtf8(s.ascii()));
-    h = lst->height();
+    h  = lst->height();
     fh = QFontMetrics(lst->font()).lineSpacing();
     if ((int)lst->count() * fh >= lst->visibleHeight())
         lst->removeItem(0);
 }
 
-
-void
-GameBoard::updateHistory(const QString &st, bool t)
+void GameBoard::updateHistory(const QString &st, bool t)
 {
-    QString    s;
+    QString s;
 
     if (st.length() == 3) {
         if (st[0] == '@')
@@ -1135,27 +1023,25 @@ GameBoard::updateHistory(const QString &st, bool t)
     }
 }
 
-
-void
-GameBoard::updateHistory(int id, bool t)
+void GameBoard::updateHistory(int id, bool t)
 {
-    QString    s("; "), s1;
+    QString s("; "), s1;
 
     switch (id) {
-        case 3:
-            s += tr("B");
-            break;
-        case 4:
-            s += tr("K");
-            break;
-        case 5:
-            s += tr("C");
-            break;
-        case 10:
-            s += tr("Q");
-            break;
-        default:
-            s += tr("Error!");
+    case 3:
+        s += tr("B");
+        break;
+    case 4:
+        s += tr("K");
+        break;
+    case 5:
+        s += tr("C");
+        break;
+    case 10:
+        s += tr("Q");
+        break;
+    default:
+        s += tr("Error!");
     }
     if (t) {
         if (gt == WHITE) {
@@ -1180,34 +1066,32 @@ GameBoard::updateHistory(int id, bool t)
     }
 }
 
-
-void
-GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
+void GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
 {
-    int    id = -1;
+    int id = -1;
 
     switch (ft) {
-        case BLACK_CASTLE:
-        case WHITE_CASTLE:
-            id = 5;
-            break;
+    case BLACK_CASTLE:
+    case WHITE_CASTLE:
+        id = 5;
+        break;
 
-        case BLACK_BISHOP:
-        case WHITE_BISHOP:
-            id = 3;
-            break;
+    case BLACK_BISHOP:
+    case WHITE_BISHOP:
+        id = 3;
+        break;
 
-        case BLACK_KNIGHT:
-        case WHITE_KNIGHT:
-            id = 4;
-            break;
+    case BLACK_KNIGHT:
+    case WHITE_KNIGHT:
+        id = 4;
+        break;
 
-        case BLACK_QUEEN:
-        case WHITE_QUEEN:
-            id = 10;
-            break;
-        default:
-            id = -1;
+    case BLACK_QUEEN:
+    case WHITE_QUEEN:
+        id = 10;
+        break;
+    default:
+        id = -1;
     }
     if (id != -1) {
         protocol->sendFigure(sock, coo, id);
@@ -1215,35 +1099,27 @@ GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
     }
 }
 
-
-void
-GameBoard::sockTest()
+void GameBoard::sockTest()
 {
 
     --sock_tout;
     if (sock_tout < 0) {
         tmr->stop();
-        HAXEP:
+    HAXEP:
         gt = NOGAME;
         sockClosed();
-    } else if ((sock->state() == QAbstractSocket::HostLookupState) &&
-        (sock_tout + 60 < SOCK_WAIT)) {
+    } else if ((sock->state() == QAbstractSocket::HostLookupState) && (sock_tout + 60 < SOCK_WAIT)) {
         tmr->stop();
-        QMessageBox::critical(this, tr("Lookup Error"),
-            tr("The host") + ' ' + hst + ' ' + tr("not found."));
+        QMessageBox::critical(this, tr("Lookup Error"), tr("The host") + ' ' + hst + ' ' + tr("not found."));
         goto HAXEP;
     }
-
 }
 
-
-void
-GameBoard::saveImage()
+void GameBoard::saveImage()
 {
-    QString    fn;
+    QString fn;
 
-    fn = Q3FileDialog::getSaveFileName(QString::null, "*.png", this, NULL,
-        tr("Save image"));
+    fn = Q3FileDialog::getSaveFileName(QString::null, "*.png", this, NULL, tr("Save image"));
 
     if (!fn.isEmpty()) {
         if (fn.findRev(".png") < (int)(fn.length() - 4))
@@ -1252,29 +1128,21 @@ GameBoard::saveImage()
     }
 }
 
-
-void
-GameBoard::gameover(int type)
+void GameBoard::gameover(int type)
 {
     bool    save = false;
-    QString    s('\n' + tr("Do you want to save the image?")),
-        yes(tr("Yes, save")),
-        no(tr("No, don't save")),
+    QString s('\n' + tr("Do you want to save the image?")), yes(tr("Yes, save")), no(tr("No, don't save")),
         go(tr("Game over"));
 
     if (type == 0) {
-        save = (QMessageBox::question(this, go,
-            tr("You scored the game") + s, yes, no) == 0);
+        save = (QMessageBox::question(this, go, tr("You scored the game") + s, yes, no) == 0);
     } else if (type == 2) {
         updateHistory(GAMEOVER_TXT, false);
         protocol->sendGameover(sock, "MATE");
-        save = (QMessageBox::question(this, go,
-            tr("You have a mate.\nYou lost the game.") + s,
-            yes, no) == 0);
+        save = (QMessageBox::question(this, go, tr("You have a mate.\nYou lost the game.") + s, yes, no) == 0);
     } else if (type == 3) {
         protocol->sendGameover(sock, "STALEMATE");
-        save = (QMessageBox::question(this, go,
-            tr("You have a stalemate") + s, yes, no) == 0);
+        save = (QMessageBox::question(this, go, tr("You have a stalemate") + s, yes, no) == 0);
     }
 
     if (save)
@@ -1283,17 +1151,17 @@ GameBoard::gameover(int type)
 
 //-----------------------------------------------------------------------------
 
-Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g,
-    QWidget *parent, const char *name)
-    :QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
+Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g, QWidget *parent, const char *name) :
+    QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
 {
-    QFontMetrics    fm(font());
-    int        i;
+    QFontMetrics fm(font());
+    int          i;
 
-    map = ft; gt = g;
+    map = ft;
+    gt  = g;
     kk = rcm = lcm = km = false;
-    cs = cell_size * 8;
-    top_margin = 5;
+    cs                  = cell_size * 8;
+    top_margin          = 5;
     for (left_margin = 0, i = 0; i < 8; i++)
         left_margin = MAX(fm.width(QString::number(i)), left_margin);
     left_margin += top_margin;
@@ -1304,30 +1172,26 @@ Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g,
     x_brd = i - cs - 6;
     y_brd = 4;
     tfx = tfy = -1;
-    fig[0] = QPixmap((const char **)black_bishop);
-    fig[1] = QPixmap((const char **)black_castle);
-    fig[2] = QPixmap((const char **)black_knight);
-    fig[3] = QPixmap((const char **)black_pawn);
-    fig[4] = QPixmap((const char **)black_king);
-    fig[5] = QPixmap((const char **)black_queen);
-    fig[6] = QPixmap((const char **)white_bishop);
-    fig[7] = QPixmap((const char **)white_castle);
-    fig[8] = QPixmap((const char **)white_knight);
-    fig[9] = QPixmap((const char **)white_pawn);
-    fig[10] = QPixmap((const char **)white_king);
-    fig[11] = QPixmap((const char **)white_queen);
+    fig[0]    = QPixmap((const char **)black_bishop);
+    fig[1]    = QPixmap((const char **)black_castle);
+    fig[2]    = QPixmap((const char **)black_knight);
+    fig[3]    = QPixmap((const char **)black_pawn);
+    fig[4]    = QPixmap((const char **)black_king);
+    fig[5]    = QPixmap((const char **)black_queen);
+    fig[6]    = QPixmap((const char **)white_bishop);
+    fig[7]    = QPixmap((const char **)white_castle);
+    fig[8]    = QPixmap((const char **)white_knight);
+    fig[9]    = QPixmap((const char **)white_pawn);
+    fig[10]   = QPixmap((const char **)white_king);
+    fig[11]   = QPixmap((const char **)white_queen);
 }
 
-Drawer::~Drawer()
-{
-}
+Drawer::~Drawer() {}
 
-
-void
-Drawer::paintEvent(QPaintEvent *e)
+void Drawer::paintEvent(QPaintEvent *e)
 {
-    QPainter    *p;
-    int        w, y;
+    QPainter *p;
+    int       w, y;
 
     w = width();
     y = w - 4;
@@ -1342,22 +1206,21 @@ Drawer::paintEvent(QPaintEvent *e)
     delete p;
 }
 
-
-void
-Drawer::drawBoard(QPainter *p, int x, int y)
+void Drawer::drawBoard(QPainter *p, int x, int y)
 {
-    int    i, j, cs, x1, r, k;
-    char    c, st;
+    int  i, j, cs, x1, r, k;
+    char c, st;
 
     cs = Drawer::cs + 2;
     p->setPen(Qt::black);
     p->drawRect(x, y, cs, cs);
-    c = 'a'; st = 1;
-    r = (*gt == GameBoard::BLACK);
+    c  = 'a';
+    st = 1;
+    r  = (*gt == GameBoard::BLACK);
     if (r) {
         c += 7;
         st = -st;
-        k = 1;
+        k  = 1;
         r ^= 1;
     } else
         k = 8;
@@ -1375,14 +1238,12 @@ Drawer::drawBoard(QPainter *p, int x, int y)
             p->drawRect(x, y, cell_size, cell_size);
             if (j == 7) {
                 p->setPen(Qt::black);
-                p->drawText(x, cs + 2, cell_size, hl,
-                    Qt::AlignCenter, QChar(c));
+                p->drawText(x, cs + 2, cell_size, hl, Qt::AlignCenter, QChar(c));
                 c += st;
             }
         }
         p->setPen(Qt::black);
-        p->drawText(x1 - left_margin, y, left_margin, cell_size,
-            Qt::AlignCenter, QString::number(k));
+        p->drawText(x1 - left_margin, y, left_margin, cell_size, Qt::AlignCenter, QString::number(k));
         k -= st;
     }
     if ((tfx != -1) && (tfy != -1)) {
@@ -1393,55 +1254,54 @@ Drawer::drawBoard(QPainter *p, int x, int y)
     }
 }
 
-
-void
-Drawer::drawMap(QPainter *p, int x, int y)
+void Drawer::drawMap(QPainter *p, int x, int y)
 {
-    int    i, j, x1, n;
-    QPixmap    *xpm;
+    int      i, j, x1, n;
+    QPixmap *xpm;
 
-    x1 = x + 1; y++;
+    x1 = x + 1;
+    y++;
     for (n = j = 0; j < 8; j++, y += cell_size) {
         for (i = 0, x = x1; i < 8; i++, x += cell_size) {
             switch (map[n++]) {
-                case GameBoard::WHITE_PAWN:
-                    xpm = &fig[9];
-                    break;
-                case GameBoard::WHITE_CASTLE:
-                    xpm = &fig[7];
-                    break;
-                case GameBoard::WHITE_BISHOP:
-                    xpm = &fig[6];
-                    break;
-                case GameBoard::WHITE_KING:
-                    xpm = &fig[10];
-                    break;
-                case GameBoard::WHITE_QUEEN:
-                    xpm = &fig[11];
-                    break;
-                case GameBoard::WHITE_KNIGHT:
-                    xpm = &fig[8];
-                    break;
-                case GameBoard::BLACK_PAWN:
-                    xpm = &fig[3];
-                    break;
-                case GameBoard::BLACK_CASTLE:
-                    xpm = &fig[1];
-                    break;
-                case GameBoard::BLACK_BISHOP:
-                    xpm = &fig[0];
-                    break;
-                case GameBoard::BLACK_KING:
-                    xpm = &fig[4];
-                    break;
-                case GameBoard::BLACK_QUEEN:
-                    xpm = &fig[5];
-                    break;
-                case GameBoard::BLACK_KNIGHT:
-                    xpm = &fig[2];
-                    break;
-                default:
-                    xpm = NULL;
+            case GameBoard::WHITE_PAWN:
+                xpm = &fig[9];
+                break;
+            case GameBoard::WHITE_CASTLE:
+                xpm = &fig[7];
+                break;
+            case GameBoard::WHITE_BISHOP:
+                xpm = &fig[6];
+                break;
+            case GameBoard::WHITE_KING:
+                xpm = &fig[10];
+                break;
+            case GameBoard::WHITE_QUEEN:
+                xpm = &fig[11];
+                break;
+            case GameBoard::WHITE_KNIGHT:
+                xpm = &fig[8];
+                break;
+            case GameBoard::BLACK_PAWN:
+                xpm = &fig[3];
+                break;
+            case GameBoard::BLACK_CASTLE:
+                xpm = &fig[1];
+                break;
+            case GameBoard::BLACK_BISHOP:
+                xpm = &fig[0];
+                break;
+            case GameBoard::BLACK_KING:
+                xpm = &fig[4];
+                break;
+            case GameBoard::BLACK_QUEEN:
+                xpm = &fig[5];
+                break;
+            case GameBoard::BLACK_KNIGHT:
+                xpm = &fig[2];
+                break;
+            default:
+                xpm = NULL;
             }
             if (xpm != NULL)
                 p->drawPixmap(x, y, *xpm);
@@ -1449,12 +1309,9 @@ Drawer::drawMap(QPainter *p, int x, int y)
     }
 }
 
-
-void
-Drawer::mousePressEvent(QMouseEvent *e)
+void Drawer::mousePressEvent(QMouseEvent *e)
 {
-    int    x = e->x() - x_brd,
-        y = e->y() - y_brd;
+    int x = e->x() - x_brd, y = e->y() - y_brd;
 
     if ((x >= 0) && (x <= cs) && (y >= 0) && (y <= cs)) {
         win2map(x, y);
@@ -1471,33 +1328,23 @@ Drawer::mousePressEvent(QMouseEvent *e)
     }
 }
 
+bool Drawer::canTake(int x, int y) { return (Figure::hasMyFigure(*gt, map, x, y, false)); }
 
-bool
-Drawer::canTake(int x, int y)
-{
-
-    return (Figure::hasMyFigure(*gt, map, x, y, false));
-}
-
-
-void
-Drawer::win2map(int &x, int &y)
+void Drawer::win2map(int &x, int &y)
 {
 
     if (*gt == GameBoard::WHITE) {
         x /= cell_size;
         y = 8 - y / cell_size;
         x++;
-    } else  if (*gt == GameBoard::BLACK) {
+    } else if (*gt == GameBoard::BLACK) {
         x = 8 - x / cell_size;
         y /= cell_size;
         y++;
     }
 }
 
-
-void
-Drawer::map2win(int mx, int my, int &x, int &y)
+void Drawer::map2win(int mx, int my, int &x, int &y)
 {
 
     if (*gt == GameBoard::WHITE) {
@@ -1512,9 +1359,7 @@ Drawer::map2win(int mx, int my, int &x, int &y)
     }
 }
 
-
-void
-Drawer::takeFigure(int x, int y)
+void Drawer::takeFigure(int x, int y)
 {
 
     if ((tfx == x) && (tfy == y))
@@ -1526,58 +1371,51 @@ Drawer::takeFigure(int x, int y)
     repaint(false);
 }
 
+bool Drawer::hasTakenFigure() { return ((tfx != -1) && (tfy != -1)); }
 
-bool
-Drawer::hasTakenFigure()
+void Drawer::newFigure(const QString &coo, int id)
 {
+    GameBoard::FigureType ft;
+    int                   x, y, n;
 
-    return ((tfx != -1) && (tfy != -1));
-}
-
-
-void
-Drawer::newFigure(const QString &coo, int id)
-{
-    GameBoard::FigureType    ft;
-    int            x, y, n;
-
-    ft = GameBoard::NONE; n = -1;
+    ft = GameBoard::NONE;
+    n  = -1;
     Figure::str2map(coo, &x, &y);
     if (*gt == GameBoard::WHITE) {
         n = Figure::map2map(GameBoard::BLACK, x, y, true);
         switch (id) {
-            case 3:
-                ft = GameBoard::BLACK_BISHOP;
-                break;
-            case 4:
-                ft = GameBoard::BLACK_KNIGHT;
-                break;
-            case 5:
-                ft = GameBoard::BLACK_CASTLE;
-                break;
-            case 10:
-                ft = GameBoard::BLACK_QUEEN;
-                break;
-            default:
-                ft = GameBoard::NONE;
+        case 3:
+            ft = GameBoard::BLACK_BISHOP;
+            break;
+        case 4:
+            ft = GameBoard::BLACK_KNIGHT;
+            break;
+        case 5:
+            ft = GameBoard::BLACK_CASTLE;
+            break;
+        case 10:
+            ft = GameBoard::BLACK_QUEEN;
+            break;
+        default:
+            ft = GameBoard::NONE;
         }
     } else if (*gt == GameBoard::BLACK) {
         n = Figure::map2map(GameBoard::WHITE, x, y, true);
         switch (id) {
-            case 3:
-                ft = GameBoard::WHITE_BISHOP;
-                break;
-            case 4:
-                ft = GameBoard::WHITE_KNIGHT;
-                break;
-            case 5:
-                ft = GameBoard::WHITE_CASTLE;
-                break;
-            case 10:
-                ft = GameBoard::WHITE_QUEEN;
-                break;
-            default:
-                ft = GameBoard::NONE;
+        case 3:
+            ft = GameBoard::WHITE_BISHOP;
+            break;
+        case 4:
+            ft = GameBoard::WHITE_KNIGHT;
+            break;
+        case 5:
+            ft = GameBoard::WHITE_CASTLE;
+            break;
+        case 10:
+            ft = GameBoard::WHITE_QUEEN;
+            break;
+        default:
+            ft = GameBoard::NONE;
         }
     }
 
@@ -1587,12 +1425,10 @@ Drawer::newFigure(const QString &coo, int id)
     }
 }
 
-
-void
-Drawer::makeMove(const QString &txt)
+void Drawer::makeMove(const QString &txt)
 {
-    int    fx, fy, tx, ty;
-    GameBoard::GameType    et;
+    int                 fx, fy, tx, ty;
+    GameBoard::GameType et;
 
     if (*gt == GameBoard::WHITE)
         et = GameBoard::BLACK;
@@ -1617,22 +1453,19 @@ Drawer::makeMove(const QString &txt)
     }
 }
 
-
-void
-Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
-    bool mirror, bool xc)
+void Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty, bool mirror, bool xc)
 {
-    GameBoard::GameType    et;
-    GameBoard::FigureType    fo, old;
-    int            res, nf, nt;
-    FigureDialog        *dlg;
-    bool            x;
-    Q3PointArray        vl;
+    GameBoard::GameType   et;
+    GameBoard::FigureType fo, old;
+    int                   res, nf, nt;
+    FigureDialog *        dlg;
+    bool                  x;
+    Q3PointArray          vl;
 
-    et = GameBoard::NOGAME;
-    nf = Figure::map2map(gt, fx, fy, mirror);
-    fo = map[nf];
-    nt = Figure::map2map(gt, tx, ty, mirror);
+    et  = GameBoard::NOGAME;
+    nf  = Figure::map2map(gt, fx, fy, mirror);
+    fo  = map[nf];
+    nt  = Figure::map2map(gt, tx, ty, mirror);
     old = map[nt];
     res = Figure::validMove(gt, map, fx, fy, tx, ty, mirror);
     if (res) {
@@ -1642,15 +1475,15 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
                 et = GameBoard::BLACK;
             else if (gt == GameBoard::BLACK)
                 et = GameBoard::WHITE;
-            if (Figure::checkKing(et, map, mirror, vl, true) !=
-                0) {
+            if (Figure::checkKing(et, map, mirror, vl, true) != 0) {
                 map[nf] = map[nt];
                 map[nt] = old;
                 tfx = tfy = -1;
-                QMessageBox::information(this,
-                    tr("Error moving"), tr("You cannot "
-                    "move this figure because the king "
-                    "is in check") + '.');
+                QMessageBox::information(this, tr("Error moving"),
+                                         tr("You cannot "
+                                            "move this figure because the king "
+                                            "is in check")
+                                             + '.');
                 goto HAXEP;
             } else
                 kk = false;
@@ -1659,8 +1492,7 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
             else
                 x = true;
             if (x)
-                emit moved(Figure::map2str(fx, fy) +
-                    Figure::map2str(tx, ty));
+                emit moved(Figure::map2str(fx, fy) + Figure::map2str(tx, ty));
             if ((res & 0xF) == 2) {
                 dlg = new FigureDialog(fig, gt, this);
                 dlg->exec();
@@ -1687,17 +1519,14 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
             emit gameover(3);
             return;
         }
-        HAXEP:
+    HAXEP:
         repaint(false);
     }
 }
 
-
-bool
-Drawer::xchg(GameBoard::FigureType o, GameBoard::FigureType n,
-    int fx, int fy, int tx, int ty)
+bool Drawer::xchg(GameBoard::FigureType o, GameBoard::FigureType n, int fx, int fy, int tx, int ty)
 {
-    bool    ret = true;
+    bool ret = true;
 
     if (*gt == GameBoard::WHITE) {
         km = ((o == n) && (o == GameBoard::WHITE_KING));
@@ -1712,12 +1541,10 @@ Drawer::xchg(GameBoard::FigureType o, GameBoard::FigureType n,
     return (ret);
 }
 
-
-bool
-Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
+bool Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
 {
-    int    n1, n2;
-    bool    ret = true;
+    int  n1, n2;
+    bool ret = true;
 
     n1 = n2 = -1;
     if ((fx == 1) && (fy == 1)) {
@@ -1759,12 +1586,10 @@ Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
     return (ret);
 }
 
-
-bool
-Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
+bool Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
 {
-    int    n1, n2;
-    bool    ret = true;
+    int  n1, n2;
+    bool ret = true;
 
     n1 = n2 = -1;
     if ((fx == 1) && (fy == 8)) {
@@ -1805,50 +1630,43 @@ Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
     return (ret);
 }
 
-
-bool
-Drawer::makeXchg()
+bool Drawer::makeXchg()
 {
 
-    return (QMessageBox::question(this, tr("To castle"),
-        tr("Do you want to castle?"), tr("Yes"), tr("No")) == 0);
+    return (QMessageBox::question(this, tr("To castle"), tr("Do you want to castle?"), tr("Yes"), tr("No")) == 0);
 }
-
 
 //-----------------------------------------------------------------------------
 
-FigureDialog::FigureDialog(const QPixmap *f, const GameBoard::GameType g,
-    QWidget *parent, const char *name):QDialog(parent, name)
+FigureDialog::FigureDialog(const QPixmap *f, const GameBoard::GameType g, QWidget *parent, const char *name) :
+    QDialog(parent, name)
 {
-    QFontMetrics    fm(font());
-    int        w, h;
+    QFontMetrics fm(font());
+    int          w, h;
 
-    gt = g; fig = f;
+    gt  = g;
+    fig = f;
     if (gt == GameBoard::WHITE)
         fr = GameBoard::WHITE_QUEEN;
     else if (gt == GameBoard::BLACK)
         fr = GameBoard::BLACK_QUEEN;
     str = tr("What figure should I set?");
     setCaption(str);
-    fh = fm.lineSpacing() + 2;
-    h = cell_size + fh;
-    w = MAX(cell_size * 4, fm.width(str));
+    fh   = fm.lineSpacing() + 2;
+    h    = cell_size + fh;
+    w    = MAX(cell_size * 4, fm.width(str));
     step = (w - cell_size * 4) / 2;
     resize(w, h);
     setMinimumSize(size());
     setMaximumSize(size());
 }
 
-FigureDialog::~FigureDialog()
-{
-}
+FigureDialog::~FigureDialog() {}
 
-
-void
-FigureDialog::paintEvent(QPaintEvent *e)
+void FigureDialog::paintEvent(QPaintEvent *e)
 {
-    QPainter    *p;
-    int        x, f = -1;
+    QPainter *p;
+    int       x, f = -1;
 
     QDialog::paintEvent(e);
     p = new QPainter(this);
@@ -1860,68 +1678,64 @@ FigureDialog::paintEvent(QPaintEvent *e)
         f = 0;
     else if (gt == GameBoard::WHITE)
         f = 6;
-    p->drawPixmap(x, fh, fig[f]); x += cell_size;
-    p->drawPixmap(x, fh, fig[f + 1]); x += cell_size;
-    p->drawPixmap(x, fh, fig[f + 2]); x += cell_size;
+    p->drawPixmap(x, fh, fig[f]);
+    x += cell_size;
+    p->drawPixmap(x, fh, fig[f + 1]);
+    x += cell_size;
+    p->drawPixmap(x, fh, fig[f + 2]);
+    x += cell_size;
     p->drawPixmap(x, fh, fig[f + 5]);
 
     delete p;
 }
 
-
-void
-FigureDialog::mousePressEvent(QMouseEvent *e)
+void FigureDialog::mousePressEvent(QMouseEvent *e)
 {
-    int    x = e->x(),
-        y = e->y(),
-        f = -1;
+    int x = e->x(), y = e->y(), f = -1;
 
     if (e->button() == Qt::LeftButton) {
-        if ((x >= step) && (x <= width() - step) && (y >= fh) &&
-            (y <= height()))
+        if ((x >= step) && (x <= width() - step) && (y >= fh) && (y <= height()))
             f = (x - step) / cell_size;
     }
 
     if (f != -1) {
         if (gt == GameBoard::WHITE)
             switch (f) {
-                case 0:
-                    fr = GameBoard::WHITE_BISHOP;
-                    break;
-                case 1:
-                    fr = GameBoard::WHITE_CASTLE;
-                    break;
-                case 2:
-                    fr = GameBoard::WHITE_KNIGHT;
-                    break;
-                case 3:
-                default:
-                    fr = GameBoard::WHITE_QUEEN;
+            case 0:
+                fr = GameBoard::WHITE_BISHOP;
+                break;
+            case 1:
+                fr = GameBoard::WHITE_CASTLE;
+                break;
+            case 2:
+                fr = GameBoard::WHITE_KNIGHT;
+                break;
+            case 3:
+            default:
+                fr = GameBoard::WHITE_QUEEN;
             }
         else if (gt == GameBoard::BLACK)
             switch (f) {
-                case 0:
-                    fr = GameBoard::BLACK_BISHOP;
-                    break;
-                case 1:
-                    fr = GameBoard::BLACK_CASTLE;
-                    break;
-                case 2:
-                    fr = GameBoard::BLACK_KNIGHT;
-                    break;
-                case 3:
-                default:
-                    fr = GameBoard::BLACK_QUEEN;
+            case 0:
+                fr = GameBoard::BLACK_BISHOP;
+                break;
+            case 1:
+                fr = GameBoard::BLACK_CASTLE;
+                break;
+            case 2:
+                fr = GameBoard::BLACK_KNIGHT;
+                break;
+            case 3:
+            default:
+                fr = GameBoard::BLACK_QUEEN;
             }
         accept();
     }
 }
 
-
 //-----------------------------------------------------------------------------
 
-void
-GameProtocol::send(Q3Socket *sock, const QString &dat)
+void GameProtocol::send(Q3Socket *sock, const QString &dat)
 {
     /*QString        s(dat + EOL);
     const char    *buf;
@@ -1935,11 +1749,9 @@ GameProtocol::send(Q3Socket *sock, const QString &dat)
     emit sendData(dat);
 }
 
-
-void
-GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
+void GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
 {
-    QString        d("GAME");
+    QString d("GAME");
 
     d += SEP;
     if (gt == GameBoard::WHITE)
@@ -1951,52 +1763,38 @@ GameProtocol::setGameType(Q3Socket *sock, GameBoard::GameType gt)
     send(sock, d);
 }
 
-
-void
-GameProtocol::acceptGame(Q3Socket *sock)
+void GameProtocol::acceptGame(Q3Socket *sock)
 {
-    QString        d("GAME");
+    QString d("GAME");
 
     d += SEP;
     d += "ACCEPT";
     send(sock, d);
 }
 
-
-void
-GameProtocol::sendMove(Q3Socket *sock, const QString &coo)
+void GameProtocol::sendMove(Q3Socket *sock, const QString &coo)
 {
-    QString        d("MOVE");
+    QString d("MOVE");
 
     d += SEP;
     d += coo;
     send(sock, d);
 }
 
+void GameProtocol::sendQuit(Q3Socket *sock) { send(sock, "QUIT"); }
 
-void
-GameProtocol::sendQuit(Q3Socket *sock)
+void GameProtocol::sendText(Q3Socket *sock, const QString &txt)
 {
-
-    send(sock, "QUIT");
-}
-
-
-void
-GameProtocol::sendText(Q3Socket *sock, const QString &txt)
-{
-    QString        d("CHAT");
+    QString d("CHAT");
 
     d += SEP;
     d += txt;
     send(sock, d);
 }
 
-
-void
-GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
+void GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
 {
-    QString        d("FIGURE");
+    QString d("FIGURE");
 
     d += SEP;
     d += coo;
@@ -2005,14 +1803,11 @@ GameProtocol::sendFigure(Q3Socket *sock, const QString &coo, int id)
     send(sock, d);
 }
 
-
-void
-GameProtocol::sendGameover(Q3Socket *sock, const QString &got)
+void GameProtocol::sendGameover(Q3Socket *sock, const QString &got)
 {
-    QString        d("GAME");
+    QString d("GAME");
 
     d += SEP;
     d += got;
     send(sock, d);
 }
-

@@ -14,8 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -30,10 +29,7 @@ bool ActiveProfiles::isActive(const QString &profile) const
     return false;
 }
 
-bool ActiveProfiles::isAnyActive() const
-{
-    return false;
-}
+bool ActiveProfiles::isAnyActive() const { return false; }
 
 bool ActiveProfiles::setThisProfile(const QString &profile)
 {
@@ -41,24 +37,13 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
     return true;
 }
 
-void ActiveProfiles::unsetThisProfile()
-{
-}
+void ActiveProfiles::unsetThisProfile() {}
 
-QString ActiveProfiles::thisProfile() const
-{
-    return QString();
-}
+QString ActiveProfiles::thisProfile() const { return QString(); }
 
-ActiveProfiles::ActiveProfiles()
-    : QObject(QCoreApplication::instance())
-    , d(nullptr)
-{
-}
+ActiveProfiles::ActiveProfiles() : QObject(QCoreApplication::instance()), d(nullptr) {}
 
-ActiveProfiles::~ActiveProfiles()
-{
-}
+ActiveProfiles::~ActiveProfiles() {}
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {

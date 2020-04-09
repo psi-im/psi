@@ -12,6 +12,108 @@ function initPsiTheme() {
     var previewsEnabled = true;
     var optionChangeHandlers = {}
 
+    function BackForthScollerPausedAnimation(start, stop, callback)
+    {
+        callback(start);
+        var that = this;
+        var startTime = performance.now();
+        this.id = setInterval(function animate() {
+            requestAnimationFrame(function(time){
+                if (!that.id) return;
+                var angle = (time - startTime) / 5000;
+                var dist = stop - start;
+                callback(start + (1 - Math.cos(angle)) / 2 * dist);
+            });
+        }, 70); // we can just requestAnimationFrame but this raises cpu load twice
+
+        this.stop = function() { if (this.id){clearInterval(this.id); this.id = null;}};
+    }
+
+    function AudioMessage(el)
+    {
+        var playing = false;
+        var audio = el.querySelector("audio");
+        var progressBar = el.querySelector("progress");
+        var titleAnim = null;
+        var detectedDuration = 0;
+
+        function updateTitleScroller() {
+            if (titleAnim) titleAnim.stop();
+
+            var info = el.querySelector(".psi-am-info > div")
+            if (!info) return;
+
+            if (playing) {
+                if (info.scrollWidth > info.clientWidth) {
+                    titleAnim = new PsiBackForthScollerPausedAnimation(0, info.scrollWidth - info.clientWidth, function(x){
+                        info.scrollLeft = x;
+                    });
+                }
+            } else {
+                info.scrollLeft = 0;
+                titleAnim = null;
+            }
+        }
+
+        function markStopped() {
+            var sign = el.querySelector(".psi-am-play-sign");
+            sign.className = sign.className.replace(/\bpsi-am-sign-stop\b/, "");
+            sign.className += " psi-am-sign-play";
+            playing = false;
+            updateTitleScroller();
+        }
+
+        var that = {
+            play: function() {
+                if (playing) return;
+                var sign = el.querySelector(".psi-am-play-sign");
+                sign.className = sign.className.replace(/\bpsi-am-sign-play\b/, "");
+                sign.className += " psi-am-sign-stop";
+                playing = true;
+                audio.play();
+                updateTitleScroller();
+            },
+
+            stop: function() {
+                if (!playing) return;
+                markStopped();
+                audio.pause();
+            },
+
+            seekFraction: function(fraction) {
+                audio.currentTime = fraction * detectedDuration;
+                progressBar.value = fraction * progressBar.max;
+            }
+
+        }
+
+        el.querySelector(".psi-am-play-btn").addEventListener("click", function(event) {
+            if (playing) that.stop();
+            else that.play();
+            event.preventDefault();
+        });
+        audio.addEventListener("durationchange", function(event) {
+            progressBar.max = audio.duration;
+            detectedDuration = audio.duration;
+            //server.console("duration changed: " + audio.duration + " set progress bar max: " + progressBar.max);
+        });
+        audio.addEventListener("timeupdate", function(event) {
+            if (!isFinite(audio.duration) && audio.currentTime > detectedDuration) {
+                //server.console("set max to current. new max=" + progressBar.max);
+                detectedDuration = audio.currentTime; 
+                progressBar.max = audio.currentTime;
+            }
+            progressBar.value = audio.currentTime;
+            //server.console("time updated: " + audio.currentTime + " set progress bar current value: " + progressBar.value + " duration: " + audio.duration);
+        });
+        audio.addEventListener("ended", markStopped);
+        progressBar.addEventListener("click", function(event) { that.seekFraction(event.offsetX / progressBar.clientWidth) });
+
+        updateTitleScroller();
+
+        return that;
+    }
+
     var chat =  {
         async : async,
         console : server.console,
@@ -106,10 +208,10 @@ function initPsiTheme() {
             },
 
             // replaces <icon name="icon_name" text="icon_text" />
-            // with <img src="/psiicon/icon_name" title="icon_text" />
+            // with <img src="/psi/icon/icon_name" title="icon_text" />
             icon2img : function (obj) {
                 var img = document.createElement('img');
-                img.src = "/psiicon/" + obj.getAttribute("name");
+                img.src = "/psi/icon/" + obj.getAttribute("name");
                 img.title = obj.getAttribute("text");
                 obj.parentNode.replaceChild(img, obj);
             },
@@ -250,18 +352,61 @@ function initPsiTheme() {
                 }
             },
 
-            appendHtml : function(dest, html) {
+            handleShares : function(el) {
+                var shares = el.querySelectorAll("share");
+                for (var li = 0; li < shares.length; li++) {
+                    var share = shares[li];
+                    var info = ""; // TODO
+                    var source = share.getAttribute("id");
+                    var type = share.getAttribute("type");
+                    if (type.startsWith("audio")) {
+                        var hg = share.getAttribute("amplitudes");
+                        if (hg && hg.length)
+                            hg.split(",").forEach(v => { info += `<b style="height:${v}%"></b>` });
+                        var playerFragment = chat.util.createHtmlNode(`<div class="psi-audio-msg">
+  <div class="psi-am-play-btn"><div class="psi-am-play-sign psi-am-sign-play"></div></div>
+  <div class="psi-am-info">
+  <div>
+  ${info}
+  </div>
+  </div>
+  <progress class="psi-am-progressbar"/>
+  <audio>
+    <source src="/psi/account/${session.account}/sharedfile/${source}" type="${type}">
+  </audio>
+</div>`);
+                        var player = playerFragment.firstChild;
+                        if (share.nextSibling)
+                            share.parentNode.insertBefore(playerFragment, share.nextSibling);
+                        else
+                            share.parentNode.appendChild(playerFragment);
+                        new AudioMessage(player);
+                    }
+                    else if (type.startsWith("image")) {
+                        let img = chat.util.createHtmlNode(`<div class="image preview"><img src="/psi/account/${session.account}/sharedfile/${source}"></div>`);
+                        if (share.nextSibling)
+                            share.parentNode.insertBefore(img, share.nextSibling);
+                        else
+                            share.parentNode.appendChild(img);
+                    }
+                }
+            },
+
+            prepareContents : function(html) {
                 htmlSource.innerHTML = html;
                 chat.util.replaceBob(htmlSource);
                 chat.util.handleLinks(htmlSource);
                 chat.util.replaceIcons(htmlSource);
+                chat.util.handleShares(htmlSource);
+            },
+
+            appendHtml : function(dest, html) {
+                chat.util.prepareContents(html);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
             },
 
             siblingHtml : function(dest, html) {
-                htmlSource.innerHTML = html;
-                chat.util.handleLinks(htmlSource);
-                chat.util.replaceIcons(htmlSource);
+                chat.util.prepareContents(html);
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
             },
 
@@ -364,7 +509,7 @@ function initPsiTheme() {
                     while (se.nextSibling !== ee) {
                         se.parentNode.removeChild(se.nextSibling);
                     }
-                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + "<img src=\"/psiicon/psi/action_templates_edit\">"));
+                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + "<img src=\"/psi/icon/psi/action_templates_edit\">"));
                     //chat.console(chat.util.props(node));
                     chat.util.handleLinks(node);
                     chat.util.replaceIcons(node);
@@ -597,6 +742,8 @@ function initPsiTheme() {
             }
         },
 
+        AudioMessage : AudioMessage,
+
         receiveObject : function(data) {
             for(var i=0; i < chat.hooks.length; i++) {
                 try {
@@ -631,7 +778,7 @@ function initPsiTheme() {
                 for (var i = 0; i < data.hooks.length; i++) {
                     try {
                         // same chat object as everywhere
-                        var func = new Function("chat, data", data.hooks[i]); /*jshint -W053 */
+                        let func = new Function("chat, data", data.hooks[i]); /*jshint -W053 */
                         hooks.push(func);
                     } catch(e) {
                         server.console("Failed to evalute receive hook: " + e + "\n" + data.hooks[i]);
@@ -642,7 +789,7 @@ function initPsiTheme() {
                 try {
                     //server.console("An attempt to execute: " + data.js);
                     // same chat object as everywhere
-                    var func = new Function("chat", data.js); /*jshint -W053 */
+                    let func = new Function("chat", data.js); /*jshint -W053 */
                     func(chat);
                 } catch(e) {
                     server.console("Failed to evalute/execute js: " + e + "\n" + data.js);
@@ -679,7 +826,9 @@ function initPsiTheme() {
     try {
         chat.adapter = window.psiThemeAdapter(chat);
         server.optionsChanged.connect(onOptionsChanged)
-        chat.util.connectOptionChange("options.ui.chat.show-previews", function(value){ previewsEnabled = value; })
+        var updateShowPreviews = function(value) { previewsEnabled = value;  }
+        chat.util.psiOption("options.ui.chat.show-previews", updateShowPreviews);
+        chat.util.connectOptionChange("options.ui.chat.show-previews", updateShowPreviews)
     } catch(e) {
         server.console("Failed to initialize adapter:" + e + "(Line:" + e.line + ")");
         chat.adapter = {

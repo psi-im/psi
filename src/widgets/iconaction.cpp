@@ -12,52 +12,50 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "iconaction.h"
+
+#include <QChildEvent>
+#include <QLayout>
+#include <QMenu>
+#include <QTimer>
+
 #include "icontoolbutton.h"
-
 #include "iconwidget.h"
-
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #include "psioptions.h"
 #else
-class PsiIcon;
 class Iconset;
+class PsiIcon;
 #endif
-
-#include <QLayout>
-#include <QMenu>
-#include <QTimer>
-#include <QChildEvent>
 
 //----------------------------------------------------------------------------
 // IconAction
 //----------------------------------------------------------------------------
 
-class IconAction::Private : public QObject
-{
+class IconAction::Private : public QObject {
     Q_OBJECT
 public:
     QList<IconToolButton *> buttons;
-    PsiIcon *icon;
+    PsiIcon *               icon;
 #ifdef WIDGET_PLUGIN
     QString iconName;
 #endif
     IconAction *action;
 
-    Private(IconAction *act, QObject *parent) {
-        icon = 0;
+    Private(IconAction *act, QObject *parent)
+    {
+        icon   = nullptr;
         action = act;
         Q_ASSERT(action);
 
         if (parent && parent->isWidgetType())
-            ((QWidget *)parent)->addAction(action);
+            static_cast<QWidget *>(parent)->addAction(action);
 
 #ifdef Q_OS_MAC
         action->setIconVisibleInMenu(false);
@@ -69,12 +67,13 @@ public:
 #ifndef WIDGET_PLUGIN
         if (icon) {
             delete icon;
-            icon = 0;
+            icon = nullptr;
         }
 #endif
     }
 
-    void init(const QString &objectName, const QString &statusTip, QKeySequence shortcut, bool checkable) {
+    void init(const QString &objectName, const QString &statusTip, QKeySequence shortcut, bool checkable)
+    {
         action->setObjectName(objectName);
         action->setStatusTip(statusTip);
         action->setShortcut(shortcut);
@@ -82,15 +81,15 @@ public:
     }
 };
 
-IconAction::IconAction(QObject *parent, const QString &name)
-: QAction(parent)
+IconAction::IconAction(QObject *parent, const QString &name) : QAction(parent)
 {
     d = new Private(this, parent);
     setObjectName(name);
 }
 
-IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QKeySequence accel, QObject *parent, const QString &name, bool checkable)
-: QAction(text, parent)
+IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QKeySequence accel,
+                       QObject *parent, const QString &name, bool checkable) :
+    QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, accel, checkable);
@@ -98,8 +97,9 @@ IconAction::IconAction(const QString &statusTip, const QString &icon, const QStr
     setPsiIcon(icon);
 }
 
-IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name, bool checkable)
-: QAction(text, parent)
+IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel,
+                       QObject *parent, const QString &name, bool checkable) :
+    QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, QKeySequence(), checkable);
@@ -108,23 +108,24 @@ IconAction::IconAction(const QString &statusTip, const QString &icon, const QStr
     setPsiIcon(icon);
 }
 
-IconAction::IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent, const QString &name, bool checkable)
-: QAction(text, parent)
+IconAction::IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent,
+                       const QString &name, bool checkable) :
+    QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, accel, checkable);
 }
 
-IconAction::IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name, bool checkable)
-: QAction(text, parent)
+IconAction::IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent,
+                       const QString &name, bool checkable) :
+    QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(name, statusTip, QKeySequence(), checkable);
     setShortcuts(accel);
 }
 
-IconAction::IconAction(const QString &text, QObject *parent, const QString &icon)
-    : QAction(text, parent)
+IconAction::IconAction(const QString &text, QObject *parent, const QString &icon) : QAction(text, parent)
 {
     d = new Private(this, parent);
     d->init(QString(), QString(), QKeySequence(), false);
@@ -141,37 +142,34 @@ IconAction::~IconAction()
     delete d;
 }
 
-const PsiIcon *IconAction::psiIcon() const
-{
-    return d->icon;
-}
+const PsiIcon *IconAction::psiIcon() const { return d->icon; }
 
 void IconAction::setPsiIcon(const PsiIcon *i)
 {
 #ifdef WIDGET_PLUGIN
     Q_UNUSED(i);
 #else
-    if ( d->icon ) {
-        disconnect(d->icon, 0, this, 0 );
+    if (d->icon) {
+        disconnect(d->icon, nullptr, this, nullptr);
         d->icon->stop();
         delete d->icon;
-        d->icon = 0;
+        d->icon = nullptr;
     }
 
     QIcon is;
-    if ( i ) {
+    if (i) {
         d->icon = new PsiIcon(*i);
         connect(d->icon, SIGNAL(iconModified()), SLOT(iconUpdated()));
-        //We newer use animated iconactions
-        //d->icon->activated(true);
+        // We newer use animated iconactions
+        // d->icon->activated(true);
 
         is = d->icon->icon();
     }
 
-    QAction::setIcon( is );
+    QAction::setIcon(is);
 
-    foreach ( IconToolButton *btn, d->buttons )
-        btn->setPsiIcon ( d->icon );
+    foreach (IconToolButton *btn, d->buttons)
+        btn->setPsiIcon(d->icon);
 #endif
 }
 
@@ -181,22 +179,22 @@ void IconAction::setPsiIcon(const QString &name)
     d->iconName = name;
 #else
     if (name.isEmpty()) {
-        setPsiIcon( nullptr );
+        setPsiIcon(nullptr);
         return;
     }
-    setPsiIcon( IconsetFactory::iconPtr(name) );
+    setPsiIcon(IconsetFactory::iconPtr(name));
 #endif
 }
 
 QString IconAction::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
-    if ( d->icon )
+    if (d->icon)
         return d->icon->name();
 #else
     return d->iconName;
 #endif
-    return QString::null;
+    return QString();
 }
 
 bool IconAction::addTo(QWidget *w)
@@ -204,8 +202,7 @@ bool IconAction::addTo(QWidget *w)
     w->addAction(this);
     return true;
 
-    QStringList supportedContainers;
-    supportedContainers << "QWidget";
+    /*QStringList supportedContainers = {"QWidget"};
     if (w->inherits("QToolBar") ||
         supportedContainers.contains(w->metaObject()->className()))
     {
@@ -242,45 +239,39 @@ bool IconAction::addTo(QWidget *w)
     else
         w->addAction(this);
 
-    return true;
+    return true;*/
 }
 
 void IconAction::objectDestroyed()
 {
-    const QObject *obj = sender();
-    d->buttons.removeAll((IconToolButton *)obj);
+    QObject *obj = sender();
+    d->buttons.removeAll(static_cast<IconToolButton *>(obj));
 }
 
 void IconAction::setChecked(bool b)
 {
     QAction::setChecked(b);
-    foreach ( IconToolButton *btn, d->buttons )
+    foreach (IconToolButton *btn, d->buttons)
         btn->setChecked(b);
 }
 
-void IconAction::toolButtonToggled(bool b)
-{
-    setChecked(b);
-}
+void IconAction::toolButtonToggled(bool b) { setChecked(b); }
 
 void IconAction::setEnabled(bool e)
 {
     QAction::setEnabled(e);
-    foreach ( IconToolButton *btn, d->buttons )
-        btn->setEnabled (e);
+    foreach (IconToolButton *btn, d->buttons)
+        btn->setEnabled(e);
 }
 
 void IconAction::setText(const QString &t)
 {
     QAction::setText(t);
-    foreach ( IconToolButton *btn, d->buttons )
+    foreach (IconToolButton *btn, d->buttons)
         btn->setText(t);
 }
 
-QList<IconToolButton *> IconAction::buttonList()
-{
-    return d->buttons;
-}
+QList<IconToolButton *> IconAction::buttonList() { return d->buttons; }
 
 void IconAction::iconUpdated()
 {
@@ -292,8 +283,8 @@ void IconAction::iconUpdated()
 QString IconAction::toolTipFromMenuText() const
 {
     QString tt, str = text();
-    for (int i = 0; i < (int)str.length(); i++)
-        if ( str[i] == '&' && str[i+1] != '&' )
+    for (int i = 0; i < int(str.length()); i++)
+        if (str[i] == '&' && str[i + 1] != '&')
             continue;
         else
             tt += str[i];
@@ -301,16 +292,13 @@ QString IconAction::toolTipFromMenuText() const
     return tt;
 }
 
-void IconAction::setMenu( QMenu *p )
-{
-    doSetMenu(p);
-}
+void IconAction::setMenu(QMenu *p) { doSetMenu(p); }
 
-void IconAction::doSetMenu(QMenu* p)
+void IconAction::doSetMenu(QMenu *p)
 {
     QAction::setMenu(p);
 
-    foreach(IconToolButton* btn, d->buttons) {
+    foreach (IconToolButton *btn, d->buttons) {
         btn->setMenu(nullptr);
 
         if (menu())
@@ -318,20 +306,20 @@ void IconAction::doSetMenu(QMenu* p)
     }
 }
 
-void IconAction::setIcon( const QIcon &ic )
+void IconAction::setIcon(const QIcon &ic)
 {
-    QAction::setIcon( ic );
+    QAction::setIcon(ic);
 
-    foreach ( IconToolButton *btn, d->buttons )
-        btn->setIcon( ic );
+    foreach (IconToolButton *btn, d->buttons)
+        btn->setIcon(ic);
 }
 
-void IconAction::setVisible( bool b )
+void IconAction::setVisible(bool b)
 {
-    QAction::setVisible( b );
+    QAction::setVisible(b);
 
-    foreach ( IconToolButton *btn, d->buttons ) {
-        if ( b )
+    foreach (IconToolButton *btn, d->buttons) {
+        if (b)
             btn->show();
         else
             btn->hide();
@@ -340,22 +328,23 @@ void IconAction::setVisible( bool b )
 
 IconAction *IconAction::copy() const
 {
-    IconAction *act = new IconAction(text(), psiIconName(), statusTip(), shortcut(), 0, objectName(), isCheckable());
+    IconAction *act
+        = new IconAction(text(), psiIconName(), statusTip(), shortcut(), nullptr, objectName(), isCheckable());
 
     *act = *this;
 
     return act;
 }
 
-IconAction &IconAction::operator=( const IconAction &from )
+IconAction &IconAction::operator=(const IconAction &from)
 {
-    setText( from.text() );
-    setPsiIcon( from.psiIconName() );
-    setStatusTip( from.statusTip() );
-    setShortcut( from.shortcut() );
-    setObjectName( from.objectName() );
-    setCheckable( from.isCheckable() );
-    setWhatsThis( whatsThis() );
+    setText(from.text());
+    setPsiIcon(from.psiIconName());
+    setStatusTip(from.statusTip());
+    setShortcut(from.shortcut());
+    setObjectName(from.objectName());
+    setCheckable(from.isCheckable());
+    setToolTip(toolTip());
 
     // TODO: add more
 
@@ -364,14 +353,14 @@ IconAction &IconAction::operator=( const IconAction &from )
 
 void IconAction::setParent(QObject *newParent)
 {
-    QWidget *oldParent = qobject_cast<QWidget*>(parent());
+    QWidget *oldParent = qobject_cast<QWidget *>(parent());
     if (oldParent) {
         oldParent->removeAction(this);
     }
 
     QAction::setParent(newParent);
     if (newParent && newParent->isWidgetType()) {
-        ((QWidget *)newParent)->addAction(this);
+        static_cast<QWidget *>(newParent)->addAction(this);
     }
 }
 
@@ -379,18 +368,15 @@ void IconAction::setParent(QObject *newParent)
 // IconActionGroup
 //----------------------------------------------------------------------------
 
-class IconActionGroup::Private : public QObject
-{
+class IconActionGroup::Private : public QObject {
     Q_OBJECT
 public:
-    explicit Private(IconActionGroup *_group) {
-        group = _group;
-    }
+    explicit Private(IconActionGroup *_group) { group = _group; }
 
     IconActionGroup *group = nullptr;
-    QMenu *popup = nullptr;
+    QMenu *          popup = nullptr;
 
-    bool exclusive = false;
+    bool exclusive    = false;
     bool usesDropDown = false;
 
     bool dirty = false;
@@ -410,9 +396,9 @@ void IconActionGroup::Private::updatePopup()
     popup->clear();
 
     QList<QAction *> list = group->findChildren<QAction *>();
-    foreach(QAction *action, list) {
+    foreach (QAction *action, list) {
         if (!group->psiIcon() && action->inherits("IconAction"))
-            group->setIcon(((IconAction *)action)->icon());
+            group->setIcon(static_cast<IconAction *>(action)->icon());
 
         popup->addAction(action);
     }
@@ -421,10 +407,9 @@ void IconActionGroup::Private::updatePopup()
     dirty = false;
 }
 
-IconActionGroup::IconActionGroup(QObject *parent, const char *name, bool exclusive)
-    : IconAction( parent, name )
+IconActionGroup::IconActionGroup(QObject *parent, const char *name, bool exclusive) : IconAction(parent, name)
 {
-    d = new Private(this);
+    d        = new Private(this);
     d->popup = new QMenu();
     d->dirty = true;
     setUsesDropDown(true);
@@ -450,13 +435,10 @@ void IconActionGroup::childEvent(QChildEvent *e)
     IconAction::childEvent(e);
 
     d->dirty = true;
-    QTimer::singleShot( 0, d, SLOT( updatePopup() ) );
+    QTimer::singleShot(0, d, SLOT(updatePopup()));
 }
 
-void IconActionGroup::add( QAction * )
-{
-    qWarning("IconActionGroup::add(): not implemented");
-}
+void IconActionGroup::add(QAction *) { qWarning("IconActionGroup::add(): not implemented"); }
 
 void IconActionGroup::addSeparator()
 {
@@ -465,13 +447,13 @@ void IconActionGroup::addSeparator()
     separatorAction->setSeparator(true);
 }
 
-bool IconActionGroup::addTo( QWidget *w )
+bool IconActionGroup::addTo(QWidget *w)
 {
-    if ( w->inherits("Q3PopupMenu") || w->inherits("QMenu") ) {
+    if (w->inherits("Q3PopupMenu") || w->inherits("QMenu")) {
         QMenu *popup = static_cast<QMenu *>(w);
 
         QList<QAction *> list = findChildren<QAction *>();
-        foreach ( QAction *action, list )
+        foreach (QAction *action, list)
             popup->addAction(action);
 
         return true;
@@ -484,37 +466,19 @@ bool IconActionGroup::addTo( QWidget *w )
 IconAction *IconActionGroup::copy() const
 {
     qWarning("IconActionGroup::copy() doesn't work!");
-    return static_cast<IconAction *>(const_cast<IconActionGroup*>(this));
+    return static_cast<IconAction *>(const_cast<IconActionGroup *>(this));
 }
 
-void IconActionGroup::setExclusive( bool e )
-{
-    d->exclusive = e;
-}
+void IconActionGroup::setExclusive(bool e) { d->exclusive = e; }
 
-bool IconActionGroup::isExclusive() const
-{
-    return d->exclusive;
-}
+bool IconActionGroup::isExclusive() const { return d->exclusive; }
 
-void IconActionGroup::setUsesDropDown( bool u )
-{
-    d->usesDropDown = u;
-}
+void IconActionGroup::setUsesDropDown(bool u) { d->usesDropDown = u; }
 
-bool IconActionGroup::usesDropDown() const
-{
-    return d->usesDropDown;
-}
+bool IconActionGroup::usesDropDown() const { return d->usesDropDown; }
 
-void IconActionGroup::addingToolButton(IconToolButton *btn)
-{
-    btn->setPopupMode( QToolButton::MenuButtonPopup );
-}
+void IconActionGroup::addingToolButton(IconToolButton *btn) { btn->setPopupMode(QToolButton::MenuButtonPopup); }
 
-QMenu* IconActionGroup::popup()
-{
-    return d->popup;
-}
+QMenu *IconActionGroup::popup() { return d->popup; }
 
 #include "iconaction.moc"

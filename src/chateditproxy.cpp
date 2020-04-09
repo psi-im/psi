@@ -13,29 +13,25 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "chateditproxy.h"
 
-#include <QVBoxLayout>
-
 #include "msgmle.h"
 #include "psioptions.h"
 
-ChatEditProxy::ChatEditProxy(QWidget* parent)
-    : QWidget(parent)
-    , lineEditEnabled_(false)
-    , textEdit_(0)
-    , layout_(0)
+#include <QVBoxLayout>
+
+ChatEditProxy::ChatEditProxy(QWidget *parent) :
+    QWidget(parent), lineEditEnabled_(false), textEdit_(nullptr), layout_(nullptr)
 {
     layout_ = new QVBoxLayout(this);
     layout_->setMargin(0);
     layout_->setSpacing(0);
 
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
     optionsChanged();
 
     if (!textEdit_)
@@ -58,7 +54,7 @@ void ChatEditProxy::setLineEditEnabled(bool enable)
 /**
  * Creates new QTextEdit basing on ChatEditProxy's properties.
  */
-ChatEdit* ChatEditProxy::createTextEdit()
+ChatEdit *ChatEditProxy::createTextEdit()
 {
     if (lineEditEnabled())
         return new LineEdit(this);
@@ -72,13 +68,13 @@ ChatEdit* ChatEditProxy::createTextEdit()
  * NB: Make sure that all QSyntaxHighlighters are detached prior to calling
  * this function.
  */
-void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const
+void ChatEditProxy::moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const
 {
-    QTextDocument* doc = oldTextEdit->document();
-    QTextCursor cursor = oldTextEdit->textCursor();
+    QTextDocument *doc    = oldTextEdit->document();
+    QTextCursor    cursor = oldTextEdit->textCursor();
 
     doc->setParent(newTextEdit);
-    oldTextEdit->setDocument(0);
+    oldTextEdit->setDocument(nullptr);
 
     newTextEdit->setDocument(doc);
     newTextEdit->setTextCursor(cursor);
@@ -90,7 +86,7 @@ void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) con
  */
 void ChatEditProxy::updateLayout()
 {
-    ChatEdit* newEdit = createTextEdit();
+    ChatEdit *newEdit = createTextEdit();
 
     if (textEdit_) {
         // all syntaxhighlighters should be removed while we move
@@ -111,8 +107,8 @@ void ChatEditProxy::updateLayout()
 
 /**
  * Update ChatEdit widget according to current options.
- * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to PsiOptions, make this slot
- *        private.
+ * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to
+ * PsiOptions, make this slot private.
  */
 void ChatEditProxy::optionsChanged()
 {

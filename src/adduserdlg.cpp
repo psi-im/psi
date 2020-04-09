@@ -1,6 +1,6 @@
 /*
  * adduserdlg.cpp - dialog for adding contacts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,68 +13,69 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
 #include "adduserdlg.h"
 
-#include <QLabel>
-#include <QLayout>
-#include <QPushButton>
-#include <QMessageBox>
-#include <QComboBox>
-#include <QStringList>
-#include <QLineEdit>
-#include <QCheckBox>
-#include "xmpp_tasks.h"
-#include "psiaccount.h"
-#include "psiiconset.h"
 #include "busywidget.h"
 #include "common.h"
 #include "iconwidget.h"
-#include "tasklist.h"
-#include "xmpp_vcard.h"
-#include "vcardfactory.h"
 #include "infodlg.h"
+#include "psiaccount.h"
+#include "psiiconset.h"
+#include "tasklist.h"
+#include "vcardfactory.h"
+#include "xmpp_client.h"
+#include "xmpp_tasks.h"
+#include "xmpp_vcard.h"
 
-class AddUserDlg::Private
-{
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QStringList>
+
+class AddUserDlg::Private {
 public:
     Private() = default;
 
-    PsiAccount *pa = nullptr;
-    BusyWidget *busy = nullptr;
-    JT_Gateway *jt = nullptr;
-    TaskList *tasks = nullptr;
+    PsiAccount *pa    = nullptr;
+    BusyWidget *busy  = nullptr;
+    JT_Gateway *jt    = nullptr;
+    TaskList *  tasks = nullptr;
 
     QStringList services;
 };
 
-AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *pa)
-    : QDialog(nullptr)
+AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups,
+                       PsiAccount *pa) :
+    QDialog(nullptr)
 {
     init(groups, pa);
     d->services = services;
 
-    cb_service->setItemIcon(0,  IconsetFactory::icon("psi/xmpp").icon());
+    cb_service->setItemIcon(0, IconsetFactory::icon("psi/xmpp").icon());
     QStringList::ConstIterator it1 = services.begin();
     QStringList::ConstIterator it2 = names.begin();
-    for(; it1 != services.end(); ++it1, ++it2)
+    for (; it1 != services.end(); ++it1, ++it2)
         cb_service->addItem(PsiIconset::instance()->status(*it1, STATUS_ONLINE).icon(), *it2);
     connect(cb_service, SIGNAL(activated(int)), SLOT(serviceActivated(int)));
 
     connect(le_transPrompt, SIGNAL(textChanged(const QString &)), SLOT(le_transPromptChanged(const QString &)));
     pb_transGet->setEnabled(false);
-
 }
 
-AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *pa)
+AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups,
+                       PsiAccount *pa)
 {
     init(groups, pa);
 
-    le_jid->setText(jid.full());    // TODO: do we want to encourage adding jids with resource?
+    le_jid->setText(jid.full()); // TODO: do we want to encourage adding jids with resource?
     le_nick->setText(nick);
 
     QStringList suggestedGroups = groups.filter(group, Qt::CaseInsensitive);
@@ -94,33 +95,33 @@ AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString 
 
 void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
 {
-      setupUi(this);
+    setupUi(this);
     setModal(false);
     setAttribute(Qt::WA_DeleteOnClose);
-    d = new Private;
+    d     = new Private;
     d->pa = pa;
     d->pa->dialogRegister(this);
-    d->jt = 0;
+    d->jt    = nullptr;
     d->tasks = new TaskList;
-    connect(d->tasks, SIGNAL(started()),  busy, SLOT(start()));
+    connect(d->tasks, SIGNAL(started()), busy, SLOT(start()));
     connect(d->tasks, SIGNAL(finished()), busy, SLOT(stop()));
 
     setWindowTitle(CAP(windowTitle()));
     setWindowIcon(IconsetFactory::icon("psi/addContact").icon());
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
+                   | Qt::CustomizeWindowHint);
 
     d->busy = busy;
 
     QString str = tr("<None>");
     cb_group->addItem(str);
-    QStringList temp=groups;
+    QStringList temp = groups;
     temp.sort();
     cb_group->addItems(temp);
     str = tr("Hidden");
     if (!groups.contains(str)) {
         cb_group->addItem(str);
     }
-    cb_group->setAutoCompletion(true);
 
     pb_add->setDefault(true);
     connect(pb_add, SIGNAL(clicked()), SLOT(ok()));
@@ -145,10 +146,7 @@ AddUserDlg::~AddUserDlg()
     delete d;
 }
 
-Jid AddUserDlg::jid() const
-{
-    return Jid(le_jid->text().trimmed());
-}
+Jid AddUserDlg::jid() const { return Jid(le_jid->text().trimmed()); }
 
 void AddUserDlg::cancel()
 {
@@ -164,18 +162,21 @@ void AddUserDlg::ok()
         return;
     }
 
-    if(le_jid->text().isEmpty()) {
-        QMessageBox::information(this, tr("Add User: Error"), tr("Please fill in the XMPP address of the person you wish to add."));
+    if (le_jid->text().isEmpty()) {
+        QMessageBox::information(this, tr("Add User: Error"),
+                                 tr("Please fill in the XMPP address of the person you wish to add."));
         return;
     }
-    if(!jid().isValid()) {
-        QMessageBox::information(this, tr("Add User: Error"), tr("The XMPP address you entered is not valid!\nMake sure you enter a fully qualified XMPP address."));
+    if (!jid().isValid()) {
+        QMessageBox::information(
+            this, tr("Add User: Error"),
+            tr("The XMPP address you entered is not valid!\nMake sure you enter a fully qualified XMPP address."));
         return;
     }
 
-    QString gname = cb_group->currentText();
+    QString     gname = cb_group->currentText();
     QStringList list;
-    if(gname != tr("<None>")) {
+    if (gname != tr("<None>")) {
         list += gname;
     }
 
@@ -184,7 +185,7 @@ void AddUserDlg::ok()
     QMessageBox::information(this, tr("Add User: Success"), tr("Added %1 to your roster.").arg(jid().full()));
     le_jid->setText("");
     le_nick->setText("");
-    if(ck_close->isChecked()) {
+    if (ck_close->isChecked()) {
         cb_group->setCurrentIndex(0);
         accept();
     } else {
@@ -194,32 +195,29 @@ void AddUserDlg::ok()
 
 void AddUserDlg::serviceActivated(int x)
 {
-    if(d->jt) {
+    if (d->jt) {
         delete d->jt;
-        d->jt = 0;
+        d->jt = nullptr;
         d->busy->stop();
     }
     gb_trans->setEnabled(false);
     le_transPrompt->setText("");
 
     // XMPP entry
-    if(x == 0)
+    if (x == 0)
         return;
     --x;
 
-    if(x >= 0 && x < (int)d->services.count()) {
+    if (x >= 0 && x < int(d->services.count())) {
         d->jt = new JT_Gateway(d->pa->client()->rootTask());
         connect(d->jt, SIGNAL(finished()), SLOT(jt_getFinished()));
         d->jt->get(Jid(d->services[x]));
         d->jt->go(true);
-        d->tasks->append( d->jt );
+        d->tasks->append(d->jt);
     }
 }
 
-void AddUserDlg::le_transPromptChanged(const QString &str)
-{
-    pb_transGet->setEnabled(!str.isEmpty());
-}
+void AddUserDlg::le_transPromptChanged(const QString &str) { pb_transGet->setEnabled(!str.isEmpty()); }
 
 void AddUserDlg::getTransID()
 {
@@ -229,21 +227,20 @@ void AddUserDlg::getTransID()
 
     d->jt = new JT_Gateway(d->pa->client()->rootTask());
     connect(d->jt, SIGNAL(finished()), SLOT(jt_setFinished()));
-    d->jt->set(Jid(d->services[cb_service->currentIndex()-1]), le_transPrompt->text());
+    d->jt->set(Jid(d->services[cb_service->currentIndex() - 1]), le_transPrompt->text());
     d->jt->go(true);
-    d->tasks->append( d->jt );
+    d->tasks->append(d->jt);
 }
 
 void AddUserDlg::jt_getFinished()
 {
     JT_Gateway *jt = d->jt;
-    d->jt = 0;
+    d->jt          = nullptr;
 
-    if(jt->success()) {
+    if (jt->success()) {
         gb_trans->setEnabled(true);
         lb_transDesc->setText(jt->desc());
-    }
-    else {
+    } else {
         errorGateway(cb_service->currentText(), jt->statusString());
     }
 }
@@ -255,9 +252,9 @@ void AddUserDlg::jt_setFinished()
     pb_transGet->setEnabled(true);
 
     JT_Gateway *jt = d->jt;
-    d->jt = 0;
+    d->jt          = nullptr;
 
-    if(jt->success()) {
+    if (jt->success()) {
         QString jid = jt->translatedJid().full();
         if (jid.isEmpty()) {
             jid = jt->prompt();
@@ -272,8 +269,7 @@ void AddUserDlg::jt_setFinished()
 
         le_nick->setFocus();
         le_nick->selectAll();
-    }
-    else {
+    } else {
         errorGateway(cb_service->currentText(), jt->statusString());
         le_transPrompt->setFocus();
     }
@@ -281,71 +277,73 @@ void AddUserDlg::jt_setFinished()
 
 void AddUserDlg::errorGateway(const QString &str, const QString &err)
 {
-    QMessageBox::information(this, CAP(tr("Error")), tr("<qt>\n"
-        "There was an error getting the Service ID translation information from \"%1\".<br>"
-        "Reason: %2<br>"
-        "<br>"
-        "The service may not support this feature.  In this case you "
-        "will need to enter the XMPP address manually for the contact you wish "
-        "to add.  Examples:<br>"
-        "<br>"
-        "&nbsp;&nbsp;xmppUser@somehost.com<br>"
-        "&nbsp;&nbsp;aolUser@[XMPP address of AIM Transport]<br>"
-        "&nbsp;&nbsp;1234567@[XMPP address of ICQ Transport]<br>"
-        "&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
-        "&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
-        "</qt>"
-        ).arg(str).arg(QString(err).replace('\n', "<br>")));
+    QMessageBox::information(this, CAP(tr("Error")),
+                             tr("<qt>\n"
+                                "There was an error getting the Service ID translation information from \"%1\".<br>"
+                                "Reason: %2<br>"
+                                "<br>"
+                                "The service may not support this feature.  In this case you "
+                                "will need to enter the XMPP address manually for the contact you wish "
+                                "to add.  Examples:<br>"
+                                "<br>"
+                                "&nbsp;&nbsp;xmppUser@somehost.com<br>"
+                                "&nbsp;&nbsp;aolUser@[XMPP address of AIM Transport]<br>"
+                                "&nbsp;&nbsp;1234567@[XMPP address of ICQ Transport]<br>"
+                                "&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
+                                "&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
+                                "</qt>")
+                                 .arg(str)
+                                 .arg(QString(err).replace('\n', "<br>")));
 }
 
 void AddUserDlg::getVCardActivated()
 {
     const VCard vcard = VCardFactory::instance()->vcard(jid());
 
-    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, 0, false);
+    InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, nullptr, false);
     w->show();
 
     // automatically retrieve info if it doesn't exist
-    if(!vcard)
+    if (!vcard)
         w->infoWidget()->doRefresh();
 }
 
 void AddUserDlg::resolveNickActivated()
 {
-    JT_VCard *jt = VCardFactory::instance()->getVCard(jid(), d->pa->client()->rootTask(), this, SLOT(resolveNickFinished()), false);
-    d->tasks->append( jt );
-}
+    JT_VCard *jt = VCardFactory::instance()->getVCard(
+        jid(), d->pa->client()->rootTask(), this,
+        [this]() {
+            JT_VCard *jt = static_cast<JT_VCard *>(sender());
 
-void AddUserDlg::resolveNickFinished()
-{
-    JT_VCard *jt = static_cast<JT_VCard *>(sender());
+            if (jt->success()) {
+                QString           nickname;
+                const XMPP::VCard vcard = jt->vcard();
+                if (!vcard.nickName().isEmpty()) {
+                    nickname = vcard.nickName();
+                } else if (!vcard.fullName().isEmpty()) {
+                    nickname = vcard.fullName();
+                } else {
+                    nickname = vcard.givenName();
+                    if (nickname.isEmpty()) {
+                        nickname = vcard.middleName();
+                    } else if (!vcard.middleName().isEmpty()) {
+                        nickname += " " + vcard.middleName();
+                    }
+                    if (nickname.isEmpty()) {
+                        nickname = vcard.familyName();
+                    } else if (!vcard.familyName().isEmpty()) {
+                        nickname += " " + vcard.familyName();
+                    }
+                }
 
-    if(jt->success()) {
-        QString nickname;
-        const XMPP::VCard vcard = jt->vcard();
-        if ( !vcard.nickName().isEmpty() ) {
-            nickname = vcard.nickName();
-        } else if ( !vcard.fullName().isEmpty() ) {
-            nickname = vcard.fullName();
-        } else {
-            nickname = vcard.givenName();
-            if ( nickname.isEmpty() ) {
-                nickname = vcard.middleName();
-            } else if ( !vcard.middleName().isEmpty() ) {
-                nickname += " " + vcard.middleName();
+                if (nickname.isEmpty()) {
+                    nickname = jt->jid().bare();
+                }
+                le_nick->setText(nickname);
             }
-            if ( nickname.isEmpty() ) {
-                nickname = vcard.familyName();
-            } else if ( !vcard.familyName().isEmpty() ) {
-                nickname += " " + vcard.familyName();
-            }
-        }
-
-        if ( nickname.isEmpty() ) {
-            nickname = jt->jid().bare();
-        }
-        le_nick->setText(nickname);
-    }
+        },
+        false);
+    d->tasks->append(jt);
 }
 
 /**

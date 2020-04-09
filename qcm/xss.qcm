@@ -7,8 +7,7 @@ name: the XScreenSaver extension
 //----------------------------------------------------------------------------
 // qc_xss
 //----------------------------------------------------------------------------
-class qc_xss : public ConfObj
-{
+class qc_xss : public ConfObj {
 public:
     qc_xss(Conf *c) : ConfObj(c) {}
 
@@ -21,32 +20,30 @@ public:
     bool exec()
     {
 #ifdef Q_OS_WIN
-    	// skip XSS support on windows
-    	return false;
+        // skip XSS support on windows
+        return false;
 #else
-    	QString str =
-    		"#include<X11/Xlib.h>\n"
-    		"#include<X11/Xutil.h>\n"
-    		"#include<X11/extensions/scrnsaver.h>\n"
-    		"\n"
-    		"int main()\n"
-    		"{\n"
-    		"    XScreenSaverQueryExtension(NULL, NULL, NULL);\n"
-    		"    return 0;\n"
-    		"}\n";
-    	QString proextra = "CONFIG += x11\n";
+        QString str = "#include<X11/Xlib.h>\n"
+                      "#include<X11/Xutil.h>\n"
+                      "#include<X11/extensions/scrnsaver.h>\n"
+                      "\n"
+                      "int main()\n"
+                      "{\n"
+                      "    XScreenSaverQueryExtension(NULL, NULL, NULL);\n"
+                      "    return 0;\n"
+                      "}\n";
+        QString proextra = "CONFIG += x11\n";
 
-    	if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
-    		if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
-    			return false;
-    		}
-    	}
-    	else {
-    		conf->addLib("-lXss");
-    	}
+        if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
+            if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
+                return false;
+            }
+        } else {
+            conf->addLib("-lXss");
+        }
 
-    	conf->addDefine("HAVE_XSS");
-    	return true;
+        conf->addDefine("HAVE_XSS");
+        return true;
 #endif
     }
 };
