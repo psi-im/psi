@@ -1009,7 +1009,7 @@ QString PsiIconset::caps2client(const QString &name)
             }
             bool matched = true;
             for (const QString &s : ic.inside) {
-                if (!name.contains(s)) {
+                if (name.indexOf(s, it.key().size()) == -1) {
                     matched = false;
                     break;
                 }
