@@ -40,8 +40,7 @@ using namespace XMPP;
 ChangePasswordDlg::ChangePasswordDlg(PsiAccount *_pa, QWidget *parent) : QDialog(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose, true);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
-                   | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
     ui_.setupUi(this);
 
     pa = _pa;

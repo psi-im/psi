@@ -94,8 +94,7 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent) : QD
 {
     setupUi(this);
     setModal(false);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint
-                   | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 #ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
