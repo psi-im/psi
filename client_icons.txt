@@ -42,7 +42,7 @@ mandarin tomclaw.com#mandarin_im
 mcabber mcabber
 meegim meegim
 miranda miranda
-miranda-ng miranda-ng,nightly.miranda.im
+miranda-ng miranda#ng
 monal monal
 movim movim
 mozilla mozilla,thunderbird,instantbird
@@ -53,8 +53,8 @@ pidgin pidgin,gaim
 pixart pixart
 poezio poezio,poez.io
 profanity profanity
-psiplus psi-plus,psi-dev
-psi psi-im
+psi psi,psi-im
+psiplus psi+,psi-plus
 pyicq-t pyicq,icq#transport
 qip qip
 qutim qutim

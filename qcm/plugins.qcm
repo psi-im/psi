@@ -30,14 +30,14 @@ public:
 #else
         vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" + qc_psi_dir_name + "/plugins";
         vars["data_dir"]    = conf->getenv("DATADIR") + "/" + qc_psi_dir_name;
-        vars["plugins_include_dir"] = conf->getenv("PREFIX") + "/include/" + qc_psi_dir_name + "/plugins;
+        vars["plugins_include_dir"] = conf->getenv("PREFIX") + "/include/" + qc_psi_dir_name + "/plugins";
 #endif
         QStringList psiFeatures;
         if (!qc_webkit_type.isEmpty()) {
             psiFeatures << qc_webkit_type;
         }
         vars["features"] = psiFeatures.join(" ");
-        psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf.pri", vars);
+        psiGenerateFile(sourceDir + "/pluginsconf.pri.in", "pluginsconf-dist.pri", vars);
 
         return true;
     }

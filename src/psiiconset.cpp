@@ -62,6 +62,10 @@ struct ClientIconCheck {
  *   "psi+" => [{"psi-plus",[]}]
  * }
  *
+ * Where psi/psi+        - caps/client name (or its beginning) as it comes from client_icons.txt.
+ *       psi-plus/psi-ny - icon name
+ *       fork/plus/ny    - parts of caps/client name
+ *
  * Now for example we need to lookup icon for caps node "psiplus.com". The most still mathing item here is "psi",
  * (psi+ won't match because psiplus.com doesn't start with psi+). And we don't have anything like "psip" or "psipl"..
  * So we review just "psi" (all its items consequently)
@@ -484,54 +488,71 @@ bool PsiIconset::loadClients()
         d->loadIconset(&d->clients, &clients);
         d->clients.addToFactory();
 
-        QSet<QString> iconsId;
+        QSet<QString> iconNames;
         auto          it = clients.iterator();
         while (it.hasNext()) {
-            iconsId.insert(it.next()->name().section('/', 1, 1));
+            iconNames.insert(it.next()->name().section('/', 1, 1));
         }
 
-        QStringList   dirs = ApplicationInfo::dataDirs();
         ClientIconMap cm; // start part, spec[spec2[spec3]]
-        foreach (const QString &dataDir, dirs) {
-            QFile capsConv(dataDir + QLatin1String("/client_icons.txt"));
+
+        auto readClientsDesc = [&](const QString &filePath) {
+            QFile capsConv(filePath);
             /* file format: <icon res name> <left_part_of_cap1#inside1#inside2>,<left_part_of_cap2>
                 next line the same.
             */
-            if (capsConv.open(QIODevice::ReadOnly)) {
-                QTextStream stream(&capsConv);
+            if (!capsConv.open(QIODevice::ReadOnly))
+                return false;
 
-                QString line;
-                while (!(line = stream.readLine()).isNull()) {
-                    line             = line.trimmed();
-                    QString iconName = line.section(QLatin1Char(' '), 0, 0);
-                    if (!iconName.length() || !iconsId.contains(iconName)) {
-                        continue;
-                    }
-                    ClientIconCheck ic   = { iconName, QStringList() };
-                    QString         caps = line.mid(iconName.length());
-                    foreach (const QString &c, caps.split(QLatin1Char(','), QString::SkipEmptyParts)) {
-                        QString ct = c.trimmed();
-                        if (ct.length()) {
-                            QStringList spec = ct.split('#');
-                            if (spec.size() > 1) {
-                                ic.inside = spec.mid(1);
-                            } else {
-                                ic.inside.clear();
-                            }
-                            ClientIconMap::Iterator it = cm.find(spec[0]);
-                            if (it == cm.end()) {
-                                cm.insert(spec[0], QList<ClientIconCheck>() << ic);
-                            } else {
-                                it.value().append(ic);
-                            }
+            QTextStream stream(&capsConv);
+
+            QString line;
+            while (!(line = stream.readLine()).isNull()) {
+                line             = line.trimmed();
+                QString iconName = line.section(QLatin1Char(' '), 0, 0);
+                if (iconName.isEmpty() || !iconNames.contains(iconName)) {
+                    continue;
+                }
+                ClientIconCheck ic   = { iconName, QStringList() };
+                QString         caps = line.mid(iconName.length());
+                for (const QString &c : caps.split(QLatin1Char(','), QString::SkipEmptyParts)) {
+                    QString ct = c.trimmed();
+                    if (ct.length()) {
+                        QStringList spec = ct.split('#');
+                        if (spec.size() > 1) {
+                            ic.inside = spec.mid(1);
+                        } else {
+                            ic.inside.clear();
+                        }
+                        ClientIconMap::Iterator it = cm.find(spec[0]);
+                        if (it == cm.end()) {
+                            cm.insert(spec[0], QList<ClientIconCheck>() << ic);
+                        } else {
+                            it.value().append(ic);
                         }
                     }
                 }
-                /* insert end boundry element to make search implementation simple */
-                cm.insert(QLatin1String("~"), QList<ClientIconCheck>());
-                break;
             }
+
+            // do some sorting to keep elements with a lot of # first
+            for (auto &checkList : cm) {
+                std::sort(checkList.begin(), checkList.end(),
+                          [](const auto &a, const auto &b) { return a.inside.size() > b.inside.size(); });
+            }
+
+            /* insert end boundry element to make search implementation simple */
+            cm.insert(QLatin1String("~"), QList<ClientIconCheck>());
+            return true;
+        };
+
+        auto customPath = PsiOptions::instance()->getOption("options.iconsets.clients-capsfile").toString();
+        if (customPath.isEmpty() || !readClientsDesc(customPath)) {
+            QStringList dirs = ApplicationInfo::dataDirs();
+            for (const auto &dataDir : dirs)
+                if (readClientsDesc(dataDir + QLatin1String("/client_icons.txt")))
+                    break;
         }
+
         if (cm.isEmpty()) {
             qWarning("Failed to read client_icons.txt. Clients detection won't work");
         }
@@ -973,25 +994,28 @@ void PsiIconset::removeAnimation(Iconset *is)
 
 QString PsiIconset::caps2client(const QString &name)
 {
-    ClientIconMap::const_iterator it = d->client2icon.lowerBound(name);
-    if (d->client2icon.size()) {
-        // if name starts with found key or with key of previous item
-        if ((it != d->client2icon.constEnd() && name.startsWith(it.key()))
-            || (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
-            foreach (const ClientIconCheck &ic, it.value()) {
-                if (ic.inside.isEmpty()) {
-                    return ic.icon;
+    if (d->client2icon.isEmpty()) {
+        return QString();
+    }
+
+    auto it = d->client2icon.lowerBound(name);
+    // if name starts with found key or with key of previous item
+    if ((it != d->client2icon.constEnd() && name.startsWith(it.key()))
+        || (it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
+
+        for (const ClientIconCheck &ic : it.value()) {
+            if (ic.inside.isEmpty()) {
+                return ic.icon;
+            }
+            bool matched = true;
+            for (const QString &s : ic.inside) {
+                if (name.indexOf(s, it.key().size()) == -1) {
+                    matched = false;
+                    break;
                 }
-                bool matched = true;
-                foreach (const QString &s, ic.inside) {
-                    if (!name.contains(s)) {
-                        matched = false;
-                        break;
-                    }
-                }
-                if (matched) {
-                    return ic.icon;
-                }
+            }
+            if (matched) {
+                return ic.icon;
             }
         }
     }
