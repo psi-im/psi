@@ -80,3 +80,6 @@ src/plugins/dev/
 src/plugins/generic/
 src/plugins/tests/
 src/plugins/unix/
+
+.idea
+cmake-build-*

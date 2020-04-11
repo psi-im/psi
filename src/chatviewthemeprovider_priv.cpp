@@ -314,8 +314,7 @@ bool ChatViewCon::isReady() { return cvCon; }
 #ifdef WEBENGINE
 QString ChatViewCon::registerSessionHandler(const WebServer::Handler &handler)
 {
-    QString s;
-    s.sprintf("t%x", handlerSeed);
+    QString s = QString::asprintf("t%x", handlerSeed);
     handlerSeed += 0x10;
 
     sessionHandlers.insert(s, handler);

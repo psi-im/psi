@@ -39,8 +39,7 @@ QString JIDUtil::encode(const QString &jid)
             jid2.append('.');
         } else if (!jid.at(n).isLetterOrNumber()) {
             // hex encode
-            QString hex;
-            hex.sprintf("%%%02X", jid.at(n).toLatin1());
+            QString hex = QString::asprintf("%%%02X", jid.at(n).toLatin1());
             jid2.append(hex);
         } else {
             jid2.append(jid.at(n));
@@ -121,8 +120,7 @@ QString JIDUtil::encode822(const QString &s)
     QString out;
     for (int n = 0; n < int(s.length()); ++n) {
         if (s[n] == '\\' || s[n] == '<' || s[n] == '>') {
-            QString hex;
-            hex.sprintf("\\x%02X", uchar(s[n].toLatin1()));
+            QString hex = QString::asprintf("\\x%02X", uchar(s[n].toLatin1()));
             out.append(hex);
         } else
             out += s[n];

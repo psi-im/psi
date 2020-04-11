@@ -1113,8 +1113,7 @@ public:
         QList<PsiIcon::IconText> text;
         QHash<QString, QString>  graphic, sound, object;
 
-        QString name;
-        name.sprintf("icon_%04d", icon_counter++);
+        QString name = QString::asprintf("icon_%04d", icon_counter++);
         bool isAnimated = false;
         bool isImage    = false;
 

@@ -557,7 +557,7 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
     // Update all
     int idx = 0;
     int i   = 0;
-    foreach (ProxyItem pi, list) {
+    for (ProxyItem pi: list) {
         if (pi.id.isEmpty()) {
             do {
                 pi.id = "a" + QString::number(idx++);
@@ -571,7 +571,12 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
     }
 
     // and remove removed
-    foreach (QString key, old.toSet() - current) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    auto oldSet = QSet<QString>(old.begin(), old.end());
+#else
+    auto oldSet = old.toSet();
+#endif
+    for (QString key: oldSet - current) {
         d->o->removeOption("proxies." + key, true);
         emit proxyRemoved(key);
     }

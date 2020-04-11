@@ -87,12 +87,9 @@ static QString lsbRelease(const QStringList &args)
 
 static QString unixHeuristicDetect()
 {
-
-    QString ret;
-
     struct utsname u;
     uname(&u);
-    ret.sprintf("%s", u.sysname);
+    auto ret = QString::asprintf("%s", u.sysname);
 
     // get description about os
     enum LinuxName {

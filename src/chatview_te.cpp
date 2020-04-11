@@ -247,7 +247,7 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 {
     // TODO: provide an option for user to customize
     // time stamp format
-    return QString().sprintf("%02d:%02d:%02d", time.time().hour(), time.time().minute(), time.time().second());
+    return QString::asprintf("%02d:%02d:%02d", time.time().hour(), time.time().minute(), time.time().second());
 }
 
 QString ChatView::colorString(bool local, bool spooled) const

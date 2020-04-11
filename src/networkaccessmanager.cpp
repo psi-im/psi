@@ -85,8 +85,7 @@ void NetworkAccessManager::callFinished()
 
 QString NetworkAccessManager::registerSessionHandler(const Handler &&handler)
 {
-    QString s;
-    s.sprintf("t%x", _handlerSeed);
+    QString s = QString::asprintf("t%x", _handlerSeed);
     _handlerSeed += 0x10;
 
     _sessionHandlers.insert(s, std::move(handler));
