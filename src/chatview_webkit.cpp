@@ -636,9 +636,16 @@ void ChatView::sendJsCode(const QString &js)
     sendJsObject(m);
 }
 
-void ChatView::scrollUp() { emit d->jsObject->scrollRequested(-50); }
+void ChatView::scrollUp() { 
+    emit d->jsObject->scrollRequested(-50); 
+    this->sendJsCode("window.scrollBy(0, -(window.innerHeight/2));");
+    
+}
 
-void ChatView::scrollDown() { emit d->jsObject->scrollRequested(50); }
+void ChatView::scrollDown() {
+    emit d->jsObject->scrollRequested(50);
+    this->sendJsCode("window.scrollBy(0, window.innerHeight/2);");
+}
 
 void ChatView::updateAvatar(const Jid &jid, ChatViewCommon::UserType utype)
 {
