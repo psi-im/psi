@@ -31,6 +31,20 @@ else()
     message(STATUS "===Building Psi===")
 endif()
 
+#Check for submodules
+set(SBM_LIST
+    ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/http_parser.h
+    ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/qhttp.pro
+    ${PROJECT_SOURCE_DIR}/3rdparty/qite/qite.pro
+    ${PROJECT_SOURCE_DIR}/iris/CMakeLists.txt
+    ${PROJECT_SOURCE_DIR}/src/libpsi/tools/CMakeLists.txt
+)
+foreach(submodule ${SBM_LIST})
+    if(NOT EXISTS "${submodule}")
+        message(FATAL_ERROR "Psi submodules not found.\nPlease run:\n====\ncd ${PROJECT_SOURCE_DIR}\ngit submodule init\ngit submodule update\n====\nbefore run cmake again")
+    endif()
+endforeach()
+
 #Common options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( ONLY_PLUGINS "Build psi plugins only" OFF )
