@@ -337,6 +337,11 @@ function psiThemeAdapter(chat) {
         };
 
         shared.session.newMessage.connect(chat.receiveObject);
+        shared.session.scrollRequested.connect((value) => {
+                                                   if (shared.scroller && shared.scroller.cancel)
+                                                       shared.scroller.cancel();
+                                                   window.scrollBy(0, value);
+                                               });
 
         chat.adapter.initSession = null;
         chat.adapter.loadTheme = null;

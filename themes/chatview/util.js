@@ -661,6 +661,8 @@ function initPsiTheme() {
                 o.atBottom = true;
                 o.invalidate();
             }
+
+            o.cancel = stopAnimation; // stops any current in-progress autoscroll
         },
 
         DateTimeFormatter : function(formatStr) {
@@ -825,7 +827,7 @@ function initPsiTheme() {
 
     try {
         chat.adapter = window.psiThemeAdapter(chat);
-        server.optionsChanged.connect(onOptionsChanged)
+        server.optionsChanged.connect(onOptionsChanged);
         var updateShowPreviews = function(value) { previewsEnabled = value;  }
         chat.util.psiOption("options.ui.chat.show-previews", updateShowPreviews);
         chat.util.connectOptionChange("options.ui.chat.show-previews", updateShowPreviews)

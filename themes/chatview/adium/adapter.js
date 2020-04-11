@@ -547,6 +547,7 @@ chat.util.updateObject(adapter, function(chat){
                 session.localUserAvatarChanged.connect(printAvatar);
 
                 session.newMessage.connect(chat.receiveObject);
+                shared.session.scrollRequested.connect((value) => { window.scrollBy(0, value); });
                 chat.util.rereadOptions();
                 session.signalInited();
             }
