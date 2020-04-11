@@ -20,10 +20,12 @@
 
 #include "../psimedia/psimedia.h"
 #include "applicationinfo.h"
+#include "jingle-ice.h"
 #include "jinglertp.h"
 #include "mediadevicewatcher.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "xmpp_client.h"
 #include "xmpp_jid.h"
 
 #include <QCoreApplication>
@@ -292,11 +294,12 @@ class AvCallManagerPrivate : public QObject {
     Q_OBJECT
 
 public:
-    AvCallManager *   q;
-    PsiAccount *      pa;
-    JingleRtpManager *rtpManager;
-    QList<AvCall *>   sessions;
-    QList<AvCall *>   pending;
+    AvCallManager *             q                    = nullptr;
+    PsiAccount *                pa                   = nullptr;
+    JingleRtpManager *          rtpManager           = nullptr;
+    XMPP::Jingle::ICE::Manager *irisJingleICEManager = nullptr;
+    QList<AvCall *>             sessions;
+    QList<AvCall *>             pending;
 
     AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q);
     ~AvCallManagerPrivate();
@@ -363,6 +366,8 @@ public:
 
         manager->rtpManager->setBasePort(g_config->basePort);
         manager->rtpManager->setExternalAddress(g_config->extHost);
+        manager->irisJingleICEManager->setBasePort(g_config->basePort);
+        manager->irisJingleICEManager->setExternalAddress(g_config->extHost);
 
         start_rtp();
     }
@@ -401,6 +406,8 @@ public:
 
         manager->rtpManager->setBasePort(g_config->basePort);
         manager->rtpManager->setExternalAddress(g_config->extHost);
+        manager->irisJingleICEManager->setBasePort(g_config->basePort);
+        manager->irisJingleICEManager->setExternalAddress(g_config->extHost);
 
         // kick off the acceptance negotiation while simultaneously
         //   initializing the rtp engine.  note that session-accept
@@ -727,7 +734,8 @@ void AvCall::unlink() { d->unlink(); }
 //----------------------------------------------------------------------------
 AvCallManagerPrivate::AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q) : QObject(_q), q(_q), pa(_pa)
 {
-    rtpManager = new JingleRtpManager(pa->client());
+    rtpManager           = new JingleRtpManager(pa->client());
+    irisJingleICEManager = pa->client()->jingleICEManager();
     connect(rtpManager, SIGNAL(incomingReady()), SLOT(rtp_incomingReady()));
 }
 
@@ -797,19 +805,29 @@ bool AvCallManager::isVideoSupported()
         return false;
 }
 
-void AvCallManager::setSelfAddress(const QHostAddress &addr) { d->rtpManager->setSelfAddress(addr); }
+void AvCallManager::setSelfAddress(const QHostAddress &addr)
+{
+    d->rtpManager->setSelfAddress(addr);
+    d->irisJingleICEManager->setSelfAddress(addr);
+}
 
-void AvCallManager::setStunBindService(const QString &host, int port) { d->rtpManager->setStunBindService(host, port); }
+void AvCallManager::setStunBindService(const QString &host, int port)
+{
+    d->rtpManager->setStunBindService(host, port);
+    d->irisJingleICEManager->setStunBindService(host, port);
+}
 
 void AvCallManager::setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass)
 {
     d->rtpManager->setStunRelayUdpService(host, port, user, pass);
+    d->irisJingleICEManager->setStunRelayUdpService(host, port, user, pass);
 }
 
 void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
                                            const QString &user, const QString &pass)
 {
     d->rtpManager->setStunRelayTcpService(host, port, proxy, user, pass);
+    d->irisJingleICEManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
 void AvCallManager::setBasePort(int port)

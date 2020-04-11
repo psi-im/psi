@@ -18,6 +18,8 @@
 
 #include "jinglertp.h"
 
+#include "iceagent.h"
+#include "iris/iceagent.h"
 #include "iris/netnames.h"
 #include "iris/turnclient.h"
 #include "iris/udpportreserver.h"
@@ -93,29 +95,6 @@ static QList<QHostAddress> sortAddrs(const QList<QHostAddress> &in)
         out.insert(at, a);
     }
 
-    return out;
-}
-
-static QChar randomPrintableChar()
-{
-    // 0-25 = a-z
-    // 26-51 = A-Z
-    // 52-61 = 0-9
-
-    uchar c = QCA::Random::randomChar() % 62;
-    if (c <= 25)
-        return 'a' + c;
-    else if (c <= 51)
-        return 'A' + (c - 26);
-    else
-        return '0' + (c - 52);
-}
-
-static QString randomCredential(int len)
-{
-    QString out;
-    for (int n = 0; n < len; ++n)
-        out += randomPrintableChar();
     return out;
 }
 
@@ -435,7 +414,7 @@ public:
     IceStatus iceV_status;
 
     bool                   local_media_ready;
-    bool                   prov_accepted;
+    bool                   prov_accepted; // remote knows of the session
     bool                   ice_connected;
     bool                   session_accepted;
     bool                   session_activated;
@@ -700,8 +679,11 @@ private:
         resolver.disconnect(this);
         handshakeTimer->stop();
 
-        delete jt;
-        jt = nullptr;
+        if (jt) {
+            jt->disconnect(this);
+            jt->deleteLater();
+            jt = nullptr;
+        }
 
         if (portReserver) {
             portReserver->setParent(nullptr);
@@ -792,10 +774,8 @@ private:
         QList<XMPP::Ice176::LocalAddress> localAddrs;
 
         QStringList strList;
-        foreach (const QHostAddress &h, listenAddrs) {
-            XMPP::Ice176::LocalAddress addr;
-            addr.addr = h;
-            localAddrs += addr;
+        for (const auto &h : listenAddrs) {
+            localAddrs += XMPP::Ice176::LocalAddress { h };
             strList += h.toString();
         }
 
@@ -893,6 +873,7 @@ private:
                 XMPP::Ice176::ExternalAddress ea;
                 ea.base = la;
                 ea.addr = extAddr;
+                // TODO: assumed direct port mapping. extPort = localPort. It's not that good
                 extAddrs += ea;
             }
             ice->setExternalAddresses(extAddrs);
@@ -940,6 +921,8 @@ private:
                 content.desc.payloadTypes = localAudioPayloadTypes;
                 content.trans.user        = iceA->localUfrag();
                 content.trans.pass        = iceA->localPassword();
+                content.trans.candidates  = iceA_status.localCandidates;
+                iceA_status.localCandidates.clear();
 
                 envelope.contentList += content;
             }
@@ -956,12 +939,22 @@ private:
                 content.desc.payloadTypes = localVideoPayloadTypes;
                 content.trans.user        = iceV->localUfrag();
                 content.trans.pass        = iceV->localPassword();
+                content.trans.candidates  = iceV_status.localCandidates;
+                iceV_status.localCandidates.clear();
 
                 envelope.contentList += content;
             }
 
             jt = new JT_JingleRtp(manager->client->rootTask());
-            connect(jt, SIGNAL(finished()), SLOT(task_finished()));
+            connect(jt, &JT_JingleRtp::finished, this, [this]() {
+                if (jt->success()) {
+                    prov_accepted = true;
+                    flushLocalCandidates();
+                } else {
+                    cleanup();
+                    emit q->rejected();
+                }
+            });
             jt->request(peer, envelope);
             jt->go(true);
         } else {
@@ -972,21 +965,6 @@ private:
 
             flushRemoteCandidates();
         }
-    }
-
-    // received iq-result to session-initiate
-    void prov_accept()
-    {
-        prov_accepted = true;
-
-        flushLocalCandidates();
-    }
-
-    // received iq-error to session-initiate
-    void prov_reject()
-    {
-        cleanup();
-        emit q->rejected();
     }
 
     void flushLocalCandidates()
@@ -1275,20 +1253,6 @@ private slots:
         }
     }
 
-    void task_finished()
-    {
-        if (!jt)
-            return;
-
-        JT_JingleRtp *task = jt;
-        jt                 = nullptr;
-
-        if (task->success())
-            prov_accept();
-        else
-            prov_reject();
-    }
-
     void after_session_accept() { tryActivated(); }
 };
 
@@ -1512,7 +1476,7 @@ JingleRtpManagerPrivate::~JingleRtpManagerPrivate() { delete push_task; }
 QString JingleRtpManagerPrivate::createSid(const XMPP::Jid &peer) const
 {
     while (1) {
-        QString out = randomCredential(16);
+        QString out = XMPP::IceAgent::randomCredential(16);
 
         bool found = false;
         for (int n = 0; n < sessions.count(); ++n) {
