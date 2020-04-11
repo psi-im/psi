@@ -123,8 +123,7 @@ QString encodePassword(const QString &pass, const QString &key)
 
     for (n1 = 0, n2 = 0; n1 < pass.length(); ++n1) {
         ushort  x = pass.at(n1).unicode() ^ key.at(n2++).unicode();
-        QString hex;
-        hex.sprintf("%04x", x);
+        QString hex = QString::asprintf("%04x", x);
         result += hex;
         if (n2 >= key.length()) {
             n2 = 0;

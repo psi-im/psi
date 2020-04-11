@@ -2062,7 +2062,13 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         for (auto l = sm.constBegin(); l != sm.constEnd(); ++l) {
             d->subjectMap.insert(LanguageManager::fromString(l.key()), l.value());
         }
-        auto preferredSubject = LanguageManager::bestUiMatch(d->subjectMap.keys().toSet(), true);
+        auto langs = d->subjectMap.keys();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+        auto langsSet  = QSet<LanguageManager::LangId>(langs.begin(), langs.end());
+        auto preferredSubject = LanguageManager::bestUiMatch(langsSet, true);
+#else
+        auto preferredSubject = LanguageManager::bestUiMatch(langs.toSet(), true);
+#endif
         if (preferredSubject.count()) {
             topic = d->subjectMap.value(preferredSubject.first());
         }

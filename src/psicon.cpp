@@ -401,9 +401,11 @@ bool PsiCon::init()
 
     initNetSession();
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     if (QGuiApplication::desktopFileName().isEmpty()) {
         QGuiApplication::setDesktopFileName(ApplicationInfo::desktopFileBaseName());
     }
+#endif
 
     d->contactList = new PsiContactList(this);
 
@@ -1453,7 +1455,12 @@ void PsiCon::optionChanged(const QString &option)
             auto langs = LanguageManager::deserializeLanguageSet(PsiOptions::instance()->getOption(option).toString());
             if (langs.isEmpty()) {
                 langs = SpellChecker::instance()->getAllLanguages();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+                auto list = LanguageManager::bestUiMatch(langs);
+                langs   = QSet<LanguageManager::LangId>(list.begin(), list.end());
+#else
                 langs = LanguageManager::bestUiMatch(langs).toSet();
+#endif
             }
             SpellChecker::instance()->setActiveLanguages(langs);
         }

@@ -38,8 +38,12 @@ QWidget *OptionsTabInput::widget()
     OptInputUI *d = static_cast<OptInputUI *>(w_);
 
     availableDicts_ = SpellChecker::instance()->getAllLanguages();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    auto list = LanguageManager::bestUiMatch(availableDicts_);
+    defaultLangs_   = QSet<LanguageManager::LangId>(list.begin(), list.end());
+#else
     defaultLangs_   = LanguageManager::bestUiMatch(availableDicts_).toSet();
-
+#endif
     d->isSpellCheck->setToolTip(tr("Check this option if you want your spelling to be checked"));
 
     connect(d->isSpellCheck, &QCheckBox::toggled, this, &OptionsTabInput::itemToggled);
