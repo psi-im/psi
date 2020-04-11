@@ -43,6 +43,7 @@ public:
     static QString fileCacheNS();
 
     // Common
+    static QString desktopFileBaseName();
     static QString desktopFile();
     static bool    isPortable();
 };

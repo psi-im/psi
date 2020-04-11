@@ -401,6 +401,10 @@ bool PsiCon::init()
 
     initNetSession();
 
+    if (QGuiApplication::desktopFileName().isEmpty()) {
+        QGuiApplication::setDesktopFileName(ApplicationInfo::desktopFileBaseName());
+    }
+
     d->contactList = new PsiContactList(this);
 
     connect(d->contactList, SIGNAL(accountAdded(PsiAccount *)), SIGNAL(accountAdded(PsiAccount *)));
