@@ -69,16 +69,12 @@ public:
                 te->setTextCursor(cursor);
             }
         }
-#ifdef WEBENGINE
         find(text, options);
-#else
-        updateFoundStyle(find(text, options));
-#endif
     }
 
     // real search code
 
-    bool find(const QString &str, QTextDocument::FindFlags options,
+    void find(const QString &str, QTextDocument::FindFlags options,
               QTextCursor::MoveOperation start = QTextCursor::NoMove)
     {
         if (widgetType == TypeAheadFindBar::Type::WebView) {
@@ -90,18 +86,21 @@ public:
             wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebEnginePage::FindCaseSensitively
                                                                       : QWebEnginePage::FindFlags(nullptr);
             wv->findText(str, wkOptions, [this](bool found) { updateFoundStyle(found); });
-            return true; // means nothing
 #else
             QWebPage::FindFlags wkOptions;
             wkOptions |= options & QTextDocument::FindBackward ? QWebPage::FindBackward : (QWebPage::FindFlags)0;
             wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebPage::FindCaseSensitively
                                                                       : (QWebPage::FindFlags)0;
-            return wv->findText(str, wkOptions);
+            updateFoundStyle(wv->findText(str, wkOptions));
 #endif
 #else
             Q_UNUSED(str);
 #endif
+            return;
         }
+
+        // If we are here then it's not webkit/engine.
+
         if (start != QTextCursor::NoMove) {
             QTextCursor cursor = te->textCursor();
             cursor.movePosition(start);
@@ -109,15 +108,12 @@ public:
         }
 
         bool found = te->find(text, options);
-        if (!found) {
-            if (start == QTextCursor::NoMove)
-                return find(text, options,
-                            options & QTextDocument::FindBackward ? QTextCursor::End : QTextCursor::Start);
-
-            return false;
+        if (!found && start == QTextCursor::NoMove) {
+            find(text, options, options & QTextDocument::FindBackward ? QTextCursor::End : QTextCursor::Start);
+            return;
         }
 
-        return true;
+        updateFoundStyle(found);
     }
 
     QString                text;

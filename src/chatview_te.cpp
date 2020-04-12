@@ -605,26 +605,6 @@ void ChatView::doTrackBar()
     verticalScrollBar()->setValue(scrollbarValue);
 }
 
-bool ChatView::internalFind(QString str, bool startFromBeginning)
-{
-    if (startFromBeginning) {
-        QTextCursor cursor = textCursor();
-        cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
-        cursor.clearSelection();
-        setTextCursor(cursor);
-    }
-
-    bool found = find(str);
-    if (!found) {
-        if (!startFromBeginning)
-            return internalFind(str, true);
-
-        return false;
-    }
-
-    return true;
-}
-
 ChatView *ChatView::textWidget() { return this; }
 
 QWidget *ChatView::realTextWidget()

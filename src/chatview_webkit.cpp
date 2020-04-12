@@ -690,30 +690,6 @@ void ChatView::doTrackBar()
     sendJsObject(m);
 }
 
-bool ChatView::internalFind(QString str, bool startFromBeginning)
-{
-#ifdef WEBENGINE
-    d->webView->page()->findText(str, QWebEnginePage::FindFlags(), [this, startFromBeginning](bool found) {
-        if (!found && startFromBeginning) {
-            d->webView->page()->findText(QString());
-        }
-    });
-    return false;
-#ifdef __GNUC__
-#warning "TODO: make search asynchronous in all cases"
-#endif
-#else
-    bool found = d->webView->page()->findText(
-        str, startFromBeginning ? QWebPage::FindWrapsAroundDocument : (QWebPage::FindFlag)0);
-
-    if (!found && !startFromBeginning) {
-        return internalFind(str, true);
-    }
-
-    return found;
-#endif
-}
-
 WebView *ChatView::textWidget() { return d->webView; }
 
 QWidget *ChatView::realTextWidget() { return d->webView; }

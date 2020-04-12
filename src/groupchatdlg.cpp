@@ -1612,16 +1612,7 @@ void GCMainDlg::configureRoom()
         d->configDlg->show();
     }
 }
-/*
-void GCMainDlg::doFind(const QString &str)
-{
-    d->lastSearch = str;
-    if (d->te_log()->internalFind(str))
-        d->findDlg->found();
-    else
-        d->findDlg->error(str);
-}
-*/
+
 void GCMainDlg::goDisc()
 {
     if (d->state != Private::Idle && d->state != Private::ForcedLeave) {

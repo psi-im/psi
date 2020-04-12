@@ -65,7 +65,6 @@ public:
 
     void      deferredScroll();
     void      doTrackBar();
-    bool      internalFind(QString str, bool startFromBeginning = false);
     ChatView *textWidget();
     QWidget * realTextWidget();
 

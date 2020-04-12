@@ -110,7 +110,6 @@ private slots:
     void sendNewTopic(const QMap<LanguageManager::LangId, QString> &topics);
     // void openFind();
     void configureRoom();
-    // void doFind(const QString &);
     void pa_updatedActivity();
     void goDisc();
     void goConn();
