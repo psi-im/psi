@@ -49,7 +49,6 @@ public:
 
 private slots:
     void performRequests();
-    void file_timeout();
 
 private:
     class Private;

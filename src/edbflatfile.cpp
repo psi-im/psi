@@ -36,6 +36,8 @@
 
 #define FAKEDELAY 0
 
+static const int MAX_FILES = 50;
+
 using namespace XMPP;
 
 //----------------------------------------------------------------------------
@@ -177,8 +179,14 @@ EDBFlatFile::File *EDBFlatFile::ensureFile(const Jid &j)
     File *i = findFile(j);
     if (!i) {
         i = new File(Jid(j.bare()));
-        connect(i, SIGNAL(timeout()), SLOT(file_timeout()));
+        connect(i, &File::timeout, this, [i, this]() {
+                    d->flist.removeAll(i);
+                    i->deleteLater();
+                });
         d->flist.append(i);
+        if (d->flist.size() > MAX_FILES) {
+            delete d->flist.takeFirst();
+        }
     }
     return i;
 }
@@ -237,7 +245,7 @@ void EDBFlatFile::performRequests()
             for (int n = 0; n < len; ++n) {
                 PsiEvent::Ptr e(f->get(id));
                 if (e) {
-                    EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id)));
+                    EDBItemPtr ei = EDBItemPtr::create(e, QString::number(id));
                     result.append(ei);
                 }
 
@@ -283,13 +291,6 @@ void EDBFlatFile::performRequests()
     }
 
     delete r;
-}
-
-void EDBFlatFile::file_timeout()
-{
-    File *i = static_cast<File *>(sender());
-    d->flist.removeAll(i);
-    i->deleteLater();
 }
 
 //----------------------------------------------------------------------------
