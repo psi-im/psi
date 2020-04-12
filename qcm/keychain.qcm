@@ -18,7 +18,15 @@ public:
     {
         if (qc_keychain_base::exec()) {
             conf->addExtra("CONFIG += keychain_with_qtmodule");
-            return true;
+
+            // some systems with keychain < 0.10.0 have invalid Qt module for Qt5Keychain. let's check.
+            QString str = "int main()\n"
+                          "{\n"
+                          "    QKeychain::Job().settings();\n"
+                          "    return 0;\n"
+                          "}\n";
+            if (conf->doCompileAndLink(str, QStringList(), QString(), "QT += Qt5Keychain"))
+                return true;
         }
 
         // try to find by path
