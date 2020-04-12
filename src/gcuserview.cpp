@@ -172,27 +172,24 @@ public:
         QPixmap status = showStatusIcons_
             ? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap()
             : QPixmap();
-        int h  = rect.height();
-        int sh = status.isNull() ? 0 : status.height();
-        rect.setHeight(qMax(sh, fontHeight_));
-        rect.moveTop(rect.top() + (h - rect.height()) / 2);
         if (!status.isNull()) {
             QRect statusRect(rect);
+            int h  = rect.height();
+            int sh = status.isNull() ? 0 : status.height();
+            statusRect.setHeight(qMax(sh, fontHeight_));
+            statusRect.moveTop(rect.top() + (h - rect.height()) / 2);
             statusRect.setWidth(status.width());
             statusRect.setHeight(status.height());
             statusRect.translate(1, 1);
             mp->drawPixmap(statusRect, status);
             rect.setLeft(statusRect.right() + 2);
-        } else
-            rect.setLeft(rect.left() + 2);
+        }
 
         mp->setPen(QPen((o.state & QStyle::State_Selected) ? palette.color(QPalette::HighlightedText)
                                                            : palette.color(QPalette::Text)));
         mp->setFont(o.font);
         mp->setClipRect(rect);
-        QTextOption to;
-        to.setWrapMode(QTextOption::NoWrap);
-        mp->drawText(rect, index.data(Qt::DisplayRole).toString(), to);
+        mp->drawText(rect, Qt::TextSingleLine, index.data(Qt::DisplayRole).toString());
 
         QList<QPixmap> rightPixs;
 
@@ -248,7 +245,11 @@ public:
         if (index.parent().isValid()) {
             QPixmap statusIcon
                 = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
-            int rowH = qMax(fontHeight_, statusIcon.height() + 2);
+
+            auto height = QFontMetrics(option.font).boundingRect(
+                        index.data(Qt::DisplayRole).toString()).height();
+
+            int rowH = qMax(height, statusIcon.height() + 2);
             int h    = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
             size.setHeight(h);
         } else {
