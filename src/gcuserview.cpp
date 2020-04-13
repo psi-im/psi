@@ -174,8 +174,8 @@ public:
             : QPixmap();
         if (!status.isNull()) {
             QRect statusRect(rect);
-            int h  = rect.height();
-            int sh = status.isNull() ? 0 : status.height();
+            int   h  = rect.height();
+            int   sh = status.isNull() ? 0 : status.height();
             statusRect.setHeight(qMax(sh, fontHeight_));
             statusRect.moveTop(rect.top() + (h - rect.height()) / 2);
             statusRect.setWidth(status.width());
@@ -189,7 +189,9 @@ public:
                                                            : palette.color(QPalette::Text)));
         mp->setFont(o.font);
         mp->setClipRect(rect);
-        mp->drawText(rect, Qt::TextSingleLine, index.data(Qt::DisplayRole).toString());
+        auto nick     = index.data(Qt::DisplayRole).toString();
+        auto nickRect = QFontMetrics(o.font).boundingRect(rect, Qt::AlignVCenter | Qt::TextSingleLine, nick);
+        mp->drawText(nickRect, Qt::TextSingleLine, nick);
 
         QList<QPixmap> rightPixs;
 
@@ -230,9 +232,12 @@ public:
 
         QRect iconRect(rect);
         for (int i = 0; i < rightPixs.size(); i++) {
-            const QPixmap pix = rightPixs[i];
+            const QPixmap &pix = rightPixs[i];
+            auto           pmr = pix.rect();
+            pmr.moveCenter(iconRect.center());
+            pmr.moveRight(iconRect.right());
+            mp->drawPixmap(pmr, pix);
             iconRect.setRight(iconRect.right() - pix.width() - 1);
-            mp->drawPixmap(iconRect.topRight(), pix);
         }
     }
 
@@ -246,8 +251,7 @@ public:
             QPixmap statusIcon
                 = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
 
-            auto height = QFontMetrics(option.font).boundingRect(
-                        index.data(Qt::DisplayRole).toString()).height();
+            auto height = QFontMetrics(option.font).boundingRect(index.data(Qt::DisplayRole).toString()).height();
 
             int rowH = qMax(height, statusIcon.height() + 2);
             int h    = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
@@ -645,7 +649,7 @@ GCUserView::GCUserView(QWidget *parent) : QTreeView(parent)
     connect(this, SIGNAL(doubleClicked(QModelIndex)), SLOT(qlv_doubleClicked(QModelIndex)));
 }
 
-GCUserView::~GCUserView() {}
+GCUserView::~GCUserView() { }
 
 void GCUserView::mousePressEvent(QMouseEvent *event)
 {
