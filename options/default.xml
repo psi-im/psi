@@ -75,7 +75,7 @@
                 <sm comment="Option related to the Stream Management UI">
                     <show comment="Show the Stream Management UI" type="bool">true</show>
                 </sm>
-                <legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">true</legacy-ssl-probe>
+                <legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">false</legacy-ssl-probe>
                 <manual-host comment="Enable manual host configuration" type="bool">true</manual-host>
                 <priority comment="Allow changing the priority" type="bool">true</priority>
                 <privacy comment="Options related to the privacy UI">

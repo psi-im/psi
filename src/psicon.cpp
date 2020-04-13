@@ -215,7 +215,7 @@ struct item_dialog {
 class PsiCon::Private : public QObject {
     Q_OBJECT
 public:
-    Private(PsiCon *parent) : QObject(parent), psi(parent), alertManager(parent) {}
+    Private(PsiCon *parent) : QObject(parent), psi(parent), alertManager(parent) { }
 
     ~Private()
     {
@@ -848,7 +848,7 @@ FileTransDlg *PsiCon::ftdlg()
 PopupManager *PsiCon::popupManager() const { return d->popupManager; }
 
 struct OptFeatureMap {
-    OptFeatureMap(const QString &option, const QStringList &feature) : option(option), feature(feature) {}
+    OptFeatureMap(const QString &option, const QStringList &feature) : option(option), feature(feature) { }
     QString     option;
     QStringList feature;
 };
@@ -1457,7 +1457,7 @@ void PsiCon::optionChanged(const QString &option)
                 langs = SpellChecker::instance()->getAllLanguages();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
                 auto list = LanguageManager::bestUiMatch(langs);
-                langs   = QSet<LanguageManager::LangId>(list.begin(), list.end());
+                langs     = QSet<LanguageManager::LangId>(list.begin(), list.end());
 #else
                 langs = LanguageManager::bestUiMatch(langs).toSet();
 #endif
@@ -1921,9 +1921,8 @@ void PsiCon::promptUserToCreateAccount()
         AccountRegDlg w(this);
         int           n = w.exec();
         if (n == QDialog::Accepted) {
-            contactList()->createAccount(w.jid().node(), w.jid(), w.pass(), w.useHost(), w.host(), w.port(),
-                                         w.legacySSLProbe(), w.ssl(), w.proxy(), w.tlsOverrideDomain(),
-                                         w.tlsOverrideCert());
+            contactList()->createAccount(w.jid().node(), w.jid(), w.pass(), w.useHost(), w.host(), w.port(), false,
+                                         w.ssl(), w.proxy(), w.tlsOverrideDomain(), w.tlsOverrideCert());
         }
     }
 }

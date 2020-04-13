@@ -54,7 +54,6 @@ public:
     bool                 useHost() const { return opt_host_; }
     const QString &      host() const { return host_; }
     int                  port() const { return port_; }
-    bool                 legacySSLProbe() { return legacy_ssl_probe_; }
     UserAccount::SSLFlag ssl() const { return ssl_; }
     QString              proxy() const { return proxy_; }
     QString              tlsOverrideDomain() { return tlsOverrideDomain_; }
@@ -99,7 +98,7 @@ private:
     // Account settings
     XMPP::Jid            jid_, server_;
     UserAccount::SSLFlag ssl_;
-    bool                 opt_host_, legacy_ssl_probe_;
+    bool                 opt_host_;
     QString              host_;
     int                  port_;
     QString              pass_;

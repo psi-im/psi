@@ -98,7 +98,6 @@ void AccountAddDlg::add()
         bool                 opt_host          = w->useHost();
         QString              host              = w->host();
         int                  port              = w->port();
-        bool                 legacy_ssl_probe  = w->legacySSLProbe();
         UserAccount::SSLFlag ssl               = w->ssl();
         QString              proxy             = w->proxy();
         QString              tlsOverrideDomain = w->tlsOverrideDomain();
@@ -106,7 +105,7 @@ void AccountAddDlg::add()
 
         delete w;
 
-        newAccount = psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy,
+        newAccount = psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, false, ssl, proxy,
                                         tlsOverrideDomain, tlsOverrideCert);
     } else {
         newAccount = psi->createAccount(le_name->text());
