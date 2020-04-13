@@ -182,9 +182,10 @@ public:
             statusRect.setHeight(status.height());
             statusRect.translate(1, 1);
             mp->drawPixmap(statusRect, status);
-            rect.setLeft(statusRect.right() + 2);
+            rect.setLeft(statusRect.right());
         }
 
+        rect.setLeft(rect.left() + 2); // give some space between icon and nick
         mp->setPen(QPen((o.state & QStyle::State_Selected) ? palette.color(QPalette::HighlightedText)
                                                            : palette.color(QPalette::Text)));
         mp->setFont(o.font);
