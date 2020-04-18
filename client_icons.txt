@@ -54,7 +54,7 @@ pixart pixart
 poezio poezio,poez.io
 profanity profanity
 psi psi,psi-im
-psiplus psi+,psi-plus
+psiplus psi+,psi-plus,psi-dev
 pyicq-t pyicq,icq#transport
 qip qip
 qutim qutim
