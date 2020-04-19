@@ -891,7 +891,7 @@ private:
         // RTP+RTCP
         ice->setComponentCount(2);
 
-        ice->setLocalCandidateTrickle(true);
+        ice->setLocalFeatures(XMPP::Ice176::Trickle);
     }
 
     // called when all ICE objects are started
