@@ -276,7 +276,7 @@ public:
     bool find(const Jid &, bool online = false);
 };
 
-BlockTransportPopupList::BlockTransportPopupList() : QObject() {}
+BlockTransportPopupList::BlockTransportPopupList() : QObject() { }
 
 bool BlockTransportPopupList::find(const Jid &j, bool online)
 {
@@ -301,9 +301,9 @@ bool BlockTransportPopupList::find(const Jid &j, bool online)
 class IdleServer : public XMPP::Task {
     Q_OBJECT
 public:
-    IdleServer(PsiAccount *pa, Task *parent) : Task(parent), pa_(pa) {}
+    IdleServer(PsiAccount *pa, Task *parent) : Task(parent), pa_(pa) { }
 
-    ~IdleServer() {}
+    ~IdleServer() { }
 
     bool take(const QDomElement &e)
     {
@@ -332,7 +332,7 @@ private:
 //----------------------------------------------------------------------------
 
 struct ReconnectData {
-    ReconnectData(int _delay, int _timeout) : delay(_delay), timeout(_timeout) {}
+    ReconnectData(int _delay, int _timeout) : delay(_delay), timeout(_timeout) { }
     int delay;
     int timeout;
 };
@@ -1013,7 +1013,7 @@ PsiAccount *PsiAccount::create(const UserAccount &acc, PsiContactList *parent, T
     return account;
 }
 
-void PsiAccount::init() {}
+void PsiAccount::init() { }
 
 PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager) : QObject(parent)
 {
@@ -1820,10 +1820,21 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
             QObject::connect(pwJob, &QKeychain::ReadPasswordJob::finished, this, [=](QKeychain::Job *job) {
                 if (job->error() == QKeychain::NoError && d->stream) {
                     d->stream->setPassword(static_cast<QKeychain::ReadPasswordJob *>(job)->textData());
+                    if (d->acc.opt_pass) {
+                        // keychain read success. erase from xml if any
+                        d->acc.opt_pass = false;
+                        emit updatedAccount();
+                    }
+                } else if (job->error() == QKeychain::EntryNotFound && d->acc.opt_pass) {
+                    // the password was already set to stream
+                    savePassword();
                 } else {
+                    if (job->error() > QKeychain::AccessDeniedByUser) { // unrecoverable
+                        PsiOptions::instance()->setOption("options.keychain.enabled", false);
+                    }
                     bool accepted = false;
                     if (d->stream) {
-                        qWarning("KeyChain error=%d", job->error());
+                        qWarning("KeyChain error=%d: %s", job->error(), qPrintable(job->errorString()));
                         accepted = passwordPrompt();
                     } else {
                         // tcp socket reports failure RemoteHostClosedError.
@@ -3080,19 +3091,37 @@ bool PsiAccount::passwordPrompt()
     if (dialog.exec() == QDialog::Accepted && !dialog.password().isEmpty()) {
         d->acc.pass     = dialog.password();
         d->acc.opt_pass = dialog.savePassword();
-#if HAVE_KEYCHAIN
-        if (d->acc.opt_pass && isKeychainEnabled()) {
-            savePassword();
-        }
-#endif
+        savePassword();
         return true;
     }
     return false;
 }
 
-#if HAVE_KEYCHAIN
-void PsiAccount::savePassword() { saveXMPPPasswordToKeyring(d->jid.bare(), d->acc.pass, this); }
+void PsiAccount::savePassword()
+{
+#ifdef HAVE_KEYCHAIN
+    if (!isKeychainEnabled() || !d->acc.opt_pass) {
+        return;
+    }
+    auto pwJob = new QKeychain::WritePasswordJob(QLatin1String("xmpp"), this);
+    pwJob->setTextData(d->acc.pass);
+    pwJob->setKey(d->jid.bare());
+    pwJob->setAutoDelete(true);
+    connect(pwJob, &QKeychain::Job::finished, this, [this](QKeychain::Job *job) {
+        if (job->error() != QKeychain::NoError) {
+            qWarning("Failed to save password in keyring manager");
+            if (job->error() > QKeychain::AccessDeniedByUser) { // unrecoverable
+                PsiOptions::instance()->setOption("options.keychain.enabled", false);
+            }
+            return;
+        }
+        d->acc.opt_pass = false;
+        d->acc.pass.clear();
+        emit updatedAccount(); // to rewrite accounts.xml
+    });
+    pwJob->start();
 #endif
+}
 
 /**
  * @brief Loads bits of binary either from babManager cache or from remote entity if no in cache

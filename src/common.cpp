@@ -122,7 +122,7 @@ QString encodePassword(const QString &pass, const QString &key)
     }
 
     for (n1 = 0, n2 = 0; n1 < pass.length(); ++n1) {
-        ushort  x = pass.at(n1).unicode() ^ key.at(n2++).unicode();
+        ushort  x   = pass.at(n1).unicode() ^ key.at(n2++).unicode();
         QString hex = QString::asprintf("%04x", x);
         result += hex;
         if (n2 >= key.length()) {
@@ -160,20 +160,6 @@ QString decodePassword(const QString &pass, const QString &key)
 }
 
 #ifdef HAVE_KEYCHAIN
-void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent)
-{
-    auto pwJob = new QKeychain::WritePasswordJob(QLatin1String("xmpp"), parent);
-    pwJob->setTextData(pass);
-    pwJob->setKey(jid);
-    pwJob->setAutoDelete(true);
-    QObject::connect(pwJob, &QKeychain::Job::finished, parent, [](QKeychain::Job *job) {
-        if (job->error() != QKeychain::NoError) {
-            qWarning("Failed to save password in keyring manager");
-        }
-    });
-    pwJob->start();
-}
-
 bool isKeychainEnabled()
 {
     return !ApplicationInfo::isPortable()

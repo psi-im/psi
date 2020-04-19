@@ -30,6 +30,7 @@
 #include <QSize>
 #include <QString>
 #include <QStringList>
+#include <functional>
 
 #if __cplusplus < 201703L
 #define PSI_FALLSTHROUGH
@@ -152,7 +153,11 @@ void            closeDialogs(QWidget *);
 TabbableWidget *findActiveTab();
 #ifdef HAVE_X11
 #include "x11windowsystem.h"
-#define X11WM_CLASS(x) { if (QX11Info::isPlatformX11()) X11WindowSystem::instance()->x11wmClass(winId(), (x)); };
+#define X11WM_CLASS(x)                                                                                                 \
+    {                                                                                                                  \
+        if (QX11Info::isPlatformX11())                                                                                 \
+            X11WindowSystem::instance()->x11wmClass(winId(), (x));                                                     \
+    };
 #else
 #define X11WM_CLASS(x) /* dummy */
 #endif
@@ -174,7 +179,6 @@ QString CAP(const QString &str);
 QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
 #ifdef HAVE_KEYCHAIN
-void saveXMPPPasswordToKeyring(const QString &jid, const QString &pass, QObject *parent);
 bool isKeychainEnabled();
 #endif
 

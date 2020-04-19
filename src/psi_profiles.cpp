@@ -136,7 +136,7 @@ void UserAccount::reset()
     roster.clear();
 }
 
-UserAccount::~UserAccount() {}
+UserAccount::~UserAccount() { }
 
 void UserAccount::fromOptions(OptionsTree *o, QString base)
 {
@@ -191,14 +191,6 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     if (!tmp.isEmpty()) {
         opt_pass = true;
         pass     = decodePassword(tmp, jid);
-#ifdef HAVE_KEYCHAIN
-        if (isKeychainEnabled()) {
-            // Erase password from options, since we are going to keep it in keychain only
-            // TODO move this to the migration code. Added in Psi 2.0 2018-01-05
-            o->removeOption(base + ".password");
-            saveXMPPPasswordToKeyring(jid, pass, qApp);
-        }
-#endif
     }
 
     opt_host       = o->getOption(base + ".use-host").toBool();

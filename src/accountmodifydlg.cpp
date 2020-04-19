@@ -122,7 +122,7 @@ void AccountModifyDlg::init()
         auto pwJob = new QKeychain::ReadPasswordJob(QLatin1String("xmpp"), this);
         pwJob->setKey(acc.jid);
         pwJob->setAutoDelete(true);
-        QObject::connect(pwJob, &QKeychain::Job::finished, this, [this](QKeychain::Job *job) {
+        connect(pwJob, &QKeychain::Job::finished, this, [this](QKeychain::Job *job) {
             if (job->error() == QKeychain::NoError) {
                 le_pass->setText(static_cast<QKeychain::ReadPasswordJob *>(job)->textData());
             }

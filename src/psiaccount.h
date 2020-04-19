@@ -296,9 +296,7 @@ public:
     void               updateEntry(const UserListItem &u);
 
     void resetLastManualStatusSafeGuard();
-#ifdef HAVE_KEYCHAIN
     void savePassword();
-#endif
     void loadBob(const Jid &jid, const QString &cid, QObject *context,
                  std::function<void(bool, const QByteArray &, const QByteArray &)> callback);
 

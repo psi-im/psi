@@ -653,14 +653,14 @@ bool PsiCon::init()
     {
         QList<UserAccount> accs;
         QStringList        bases = d->accountTree.getChildOptionNames("accounts", true, true);
-        foreach (QString base, bases) {
+        for (const QString &base : bases) {
             UserAccount ua;
             ua.fromOptions(&d->accountTree, base);
             accs += ua;
         }
         QStringList order = d->accountTree.getOption("order", QStringList()).toStringList();
         int         start = 0;
-        foreach (const QString &id, order) {
+        for (const QString &id : order) {
             for (int i = start; i < accs.size(); ++i) {
                 if (accs[i].id == id) {
                     accs.move(i, start);
@@ -740,7 +740,7 @@ bool PsiCon::init()
     optionChanged("options.ui.spell-check.langs");
 
     // try autologin if needed
-    foreach (PsiAccount *account, d->contactList->accounts()) {
+    for (PsiAccount *account : d->contactList->accounts()) {
         account->autoLogin();
     }
 

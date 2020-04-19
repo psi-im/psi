@@ -185,11 +185,7 @@ PsiAccount *PsiContactList::createAccount(const QString &name, const Jid &j, con
     acc.tlsOverrideDomain = tlsOverrideDomain;
 
     PsiAccount *pa = loadAccount(acc);
-#if HAVE_KEYCHAIN
-    if (isKeychainEnabled()) {
-        pa->savePassword();
-    }
-#endif
+    pa->savePassword();
 
     emit saveAccounts();
     emit accountCreated(pa);
