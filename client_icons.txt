@@ -1,6 +1,7 @@
 adium adium
 aqq aqq
 asterisk asterisk
+atalk atalk,android#atalk
 beem beem
 bitlbee bitlbee
 bombus bombus
@@ -44,13 +45,13 @@ meegim meegim
 miranda miranda
 miranda-ng miranda#ng
 monal monal
-movim movim
+movim movim,moxl.movim
 mozilla mozilla,thunderbird,instantbird
 omnipresence omnipresence
 palringo palringo
 pandion pandion
 pidgin pidgin,gaim
-pixart pixart
+pixart pixart,jabber#pix-art
 poezio poezio,poez.io
 profanity profanity
 psi psi,psi-im
@@ -77,10 +78,11 @@ telepathy telepathy,empathy
 tigase tigase
 trillian trillian
 uwpx uwpx
-vacuum vacuum
+vacuum vacuum,github#vacuum
 verse-api verse
 vk4xmpp vk4xmpp
 vkontakte vkontakte,vk.com,pyvk
+wime wime
 wodxmpp weonlydo
 wtw wtw
 yaxim yaxim
