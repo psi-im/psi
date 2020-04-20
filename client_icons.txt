@@ -53,7 +53,7 @@ pandion pandion
 pidgin pidgin,gaim
 pixart pixart,jabber#pix-art
 poezio poezio,poez.io
-profanity profanity
+profanity profanity,www#profanity
 psi psi,psi-im
 psiplus psi+,psi-plus,psi-dev
 pyicq-t pyicq,icq#transport

@@ -100,6 +100,11 @@ Based on the huge on from Psi+ repository.
         </icon>
 
         <icon>
+                <x xmlns='name'>clients/profanity</x>
+                <object mime='image/png'>profanity.png</object>
+        </icon>
+
+        <icon>
                 <x xmlns='name'>clients/psi</x>
                 <object mime='image/png'>psi.png</object>
         </icon>
