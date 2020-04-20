@@ -56,7 +56,7 @@ profanity profanity
 psi psi,psi-im
 psiplus psi+,psi-plus,psi-dev
 pyicq-t pyicq,icq#transport
-qip qip
+qip qip,2010.qip.ru
 qutim qutim
 qxmpp-api qxmpp
 riddim riddim
