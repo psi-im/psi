@@ -1,0 +1,282 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  %scripts%
+	%styles%
+  <style type="text/css" media="screen,print" id="themeStyle">
+
+/* скролл-бар*/
+body::-webkit-scrollbar {
+  width:15px;
+  height:15px;}
+
+/* скролл-бар, кнопки перемотки*/
+body::-webkit-scrollbar-button {
+  display: block;
+  width: 15px;
+  height: 15px;}
+
+/* скролл-бар, вверху стрелка вверх*/
+body::-webkit-scrollbar-button:decrement:start {
+	background-color: #012F2F;
+	background-image: url(images/ScrollBarArrowUp.png);
+	border: 1px outset #3C7896;
+	border-radius: 3px;
+	padding: 2px;}
+
+/* скролл-бар, вверху стрелка вниз*/
+body::-webkit-scrollbar-button:increment:start {
+height: 0px;}
+
+/* скролл-бар, внизу стрелка вверх*/
+body::-webkit-scrollbar-button:decrement:end {
+	background-color: #031C19;
+	background-image: url(images/ScrollBarArrowUp.png);
+	border: 1px outset #3C7896;
+	border-radius: 3px;
+	padding: 2px;}
+
+/* скролл-бар, внизу стрелка вниз*/
+body::-webkit-scrollbar-button:increment:end {
+	background-color: #031C19;
+	background-image: url(images/ScrollBarArrowDown.png);
+	border: 1px outset #3C7896;
+	border-radius: 3px;
+	padding: 2px;}
+
+/* скролл-бар, ползунок*/
+body::-webkit-scrollbar-thumb {
+	background-color: #072A2C;
+
+	border: 1px outset #3C7896;
+	border-radius: 2px;}
+
+/* скролл-бар, подложка*/
+body::-webkit-scrollbar-track-piece {
+	margin-top: 1px;
+	margin-bottom: 1px;
+	background-color: #012123;
+	border: 1px inset #3C7896;
+	border-radius: 2px;}
+
+body {
+	background: url('images/ChatLog.png') bottom right no-repeat fixed; /* фоновый рисунок чата */
+	background-color: #001415; /* цвет фона чата */
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	border: 0px;
+	padding: 0 0 2px 0;
+	text-shadow: 1px 1px 3px #101010;}
+
+body > div {
+	margin:0px 3px 0px 3px;
+	line-height:1.4em;
+	word-wrap:break-word !important;
+	//white-space: pre-wrap !important;//breaks html messages
+	overflow:hidden;}
+
+body > div img {
+	vertical-align: bottom;}
+
+body > div > img:first-child {
+	vertical-align: text-bottom;}
+
+.msg { /* обычные сообщения */
+	color: #32C8C3;}
+
+.style_time { /* стиль времени */
+	font-weight: normal;}
+
+.style_nick { /* стиль ника */
+	font-weight: normal;}
+
+.alert {  /* хайлайт */
+	font-weight: bold;
+	color: #9BDCC3;}
+
+.trackbar { /* разделитель в конференциях */
+	height: 6px;
+	background: url('images/HR.png');
+	border: 0px;}
+
+.sent {}
+
+.received {}
+
+.infmsg { /* информационные сообщения: тема, статусы... */ }
+
+.usertext {}
+
+.nicklink {
+	text-decoration:none;
+	color:inherit;}
+
+a:hover { cursor:pointer; }
+
+  </style>
+
+</head>
+
+<body>
+
+<script type="text/javascript">
+
+function startPsiTheme(shared) {
+	var util = shared.chat.util;
+
+	var themeStyle     = document.getElementById("themeStyle").sheet;
+	var cssBody = util.findStyleSheet(themeStyle, "body").style;
+	var cssSentMsg = util.findStyleSheet(themeStyle, ".sent").style;
+	var cssReceivedMsg = util.findStyleSheet(themeStyle, ".received").style;
+	var cssInfMsg = util.findStyleSheet(themeStyle, ".infmsg").style;
+	var cssUserText = util.findStyleSheet(themeStyle, ".usertext").style;
+	var cssChatSays = util.findStyleSheet(themeStyle, ".msg>span:first").style;
+	var cssAlertMsg = util.findStyleSheet(themeStyle, ".alert").style;
+	var useMessageIcons, messageIconsSize = 0;
+	var colorMap = {
+        "options.ui.look.colors.messages.sent" : cssSentMsg,
+        "options.ui.look.colors.messages.received" : cssReceivedMsg,
+        "options.ui.look.colors.messages.informational" : cssInfMsg,
+        "options.ui.look.colors.messages.usertext" : cssUserText,
+        "options.ui.look.colors.messages.highlighting" : cssAlertMsg
+    }
+
+	var applyPsiSettings = function() {
+        util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
+        //util.getPaletteColor("Base", function(color){cssBody.backgroundColor = color});
+        util.getPaletteColor("Text", function(color){cssBody.color = color});
+        function updateColor(opt, style) {
+            util.colorOption(opt, function(val){style.color = val});
+        }
+        for (var k in colorMap) {
+            colorMap.hasOwnProperty(k) && updateColor(k, colorMap[k]);
+        }
+
+        util.psiOption("options.ui.chat.use-message-icons", function(val){useMessageIcons = val;});
+		util.psiOption("options.ui.chat.scaled-message-icons", function(val) {
+            if (val) {
+                var d = document.createElement("div");
+                d.style.position = "absolute";
+                d.style.top = "-1000;";
+                d.style.visibility = "hidden";
+                d.style.height = "1em";
+                shared.chatElement.appendChild(d);
+                messageIconsSize = parseInt(document.defaultView.getComputedStyle(d, null).height);
+                shared.chatElement.removeChild(d);
+            }
+		});
+	}
+
+	shared.initTheme({
+		chatElement : document.body,
+		scroller : new shared.chat.WindowScroller(true),
+		templates : {
+			message: shared.isMuc?
+				"<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
+				: "<div class='msg'>%icon%<span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
+			messageNC: shared.isMuc?
+				"<div style='color:%nickcolor%'%alertedemote%>%icon%[%time%] %sender% %message%</div>"
+				: "<div class='%sentrec%'>%icon%[%time%] %sender% %message%</div>",
+			receivedMessage: shared.isMuc?
+				"<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
+				: null,
+			spooledMessage: "<div class='infmsg'>%icon%[%time%] %sender% %message%</div>",
+			sys: "<div class='infmsg'>%icon%%message%</div>",
+			sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
+			sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
+			lastMsgDate: "<div class='infmsg'>%icon%*** %date%</div>",
+			subject: shared.isMuc?
+				"<div class='infmsg'>%icon%[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
+				: "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
+			trackbar: '<hr class="trackbar" />'
+		},
+		dateFormat : "HH:mm:ss",
+		proxy : function() { //optional
+			if (shared.cdata.type == "settings") {
+				applyPsiSettings();
+				return false;
+			} else if (shared.cdata.type == "receipt") {
+				var img = document.getElementById("receipt"+shared.cdata.id);
+				if (img) {
+					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
+					img.src = (shared.cdata.encrypted?"/psi/icon/psi/notification_chat_delivery_ok_pgp":"/psi/icon/psi/notification_chat_delivery_ok")+sizeUri;
+				}
+			}
+			if (shared.cdata.mtype == "message") {
+				var template = shared.cdata.emote && shared.templates.messageNC ||
+					(shared.cdata.spooled && shared.templates.message || null);
+				if (template) {
+					shared.appendHtml(template.toString(), shared.cdata.local?true:null);
+					return false;
+				}
+			}
+		},
+		varHandlers : {
+			alertedemote : function() {
+				return shared.cdata.emote && shared.cdata.alert?" class='alert'":"";
+			},
+			sender : function() {
+				var nick = util.escapeHtml(shared.cdata.sender);
+				nick = shared.cdata.mtype == "message" && shared.isMuc?
+					'<a onclick="psiimtheme.addNick(this)"'+
+					' class="nicklink">'+nick+'</a>' : nick;
+				return shared.cdata.emote?"*"+nick:"&lt;"+nick+"&gt;";
+			},
+			alertedmessage : function() {
+				var msg = shared.cdata.alert?"<span class='alert'>"+
+					shared.cdata.message+"</span>":shared.cdata.message;
+				return shared.cdata.id? util.replaceableMessage(shared.isMuc, shared.cdata.local, shared.cdata.sender, shared.cdata.id, msg) : msg;
+			},
+			sentrec : function() {return shared.cdata.spooled?"infmsg":
+				(shared.cdata.local?"sent":"received");},
+			nickcolor : function() {
+				return util.nickColor(shared.cdata.sender);
+			},
+			icon : function() {
+				var icon = "";
+				if (useMessageIcons) {
+					switch (shared.cdata.mtype) {
+						case "message":
+							icon = shared.cdata.local?(shared.cdata.awaitingReceipt?
+								"psi/notification_chat_send":"psi/notification_chat_delivery_ok")
+								: "psi/notification_chat_receive";
+							if(shared.cdata.encrypted) {
+								icon += "_pgp"
+							}
+							break;
+						case "system":
+						case "subject":
+						case "join":
+						case "part":
+						case "status":
+						case "urls":
+							icon = "psi/notification_chat_info";
+							break;
+						case "lastDate":
+							icon = "psi/notification_chat_time";
+							break;
+					}
+					var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
+					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
+					var id = shared.cdata.awaitingReceipt?" id='receipt"+shared.cdata.id+"'":"";
+					icon = icon?"<img src='/psi/icon/"+icon+sizeUri+"'"+sizeStyle+id+" />":"";
+				}
+				return icon;
+ 			}
+		}
+	});
+	
+	applyPsiSettings();
+	
+	shared.session.signalInited();
+	
+	return {
+		
+		addNick : function(e) { shared.addNick(e.text); }
+	};
+}
+
+</script>
+</body>
+</html>
