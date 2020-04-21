@@ -159,7 +159,7 @@ class ChatViewJSObject : public ChatViewThemeSession {
                    localUserAvatarChanged) // local avatar. resized vcard or PEP.
 
 public:
-    ChatViewJSObject(ChatView *view) : ChatViewThemeSession(view), _view(view) {}
+    ChatViewJSObject(ChatView *view) : ChatViewThemeSession(view), _view(view) { }
 
     // accepts url of http request from chatlog.
     // returns to callback data and content-type.
@@ -188,7 +188,7 @@ public:
 
     inline static QString avatarUrl(const QByteArray &hash)
     {
-        return hash.isEmpty() ? QString() : QLatin1String("psiglobal/avatar/") + hash.toHex();
+        return hash.isEmpty() ? QString() : QLatin1String("psi/avatar/") + hash.toHex();
     }
 
     QString remoteUserImage() const { return avatarUrl(_view->d->remoteIcons.vcard); }
