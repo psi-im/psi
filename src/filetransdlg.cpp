@@ -1475,22 +1475,15 @@ QSize FileTransDelegate::sizeHint(const QStyleOptionViewItem &option, const QMod
 
 class TransferMapping {
 public:
-    FileTransferHandler *h;
-    int                  id;
-    int                  p;
-    qlonglong            sent;
+    FileTransferHandler *h    = nullptr;
+    int                  id   = 0;
+    int                  p    = 0;
+    qlonglong            sent = 0;
 
-    int       at;
-    qlonglong last[10];
+    int       at       = 0;
+    qlonglong last[10] = {};
 
-    TransferMapping()
-    {
-        h    = nullptr;
-        id   = 0;
-        p    = 0;
-        sent = 0;
-        at   = 0;
-    }
+    TransferMapping() { }
 
     ~TransferMapping() { delete h; }
 
@@ -1514,7 +1507,7 @@ public:
     QList<TransferMapping *> transferList;
     QTimer                   t;
 
-    Private(FileTransDlg *_parent) : parent(_parent), psi(nullptr), lv(nullptr) {}
+    Private(FileTransDlg *_parent) : parent(_parent), psi(nullptr), lv(nullptr) { }
 
     ~Private() { qDeleteAll(transferList); }
 

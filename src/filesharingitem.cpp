@@ -58,7 +58,13 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
 {
     _sums = ms.file.computedHashes();
     if (initFromCache()) {
-        _uris = (ms.sources.toSet() + uris().toSet()).toList();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+        auto tmp  = ms.sources + uris();
+        auto tmp2 = QSet<QString>(tmp.begin(), tmp.end());
+        _uris     = QStringList(tmp2.begin(), tmp2.end());
+#else
+        _uris = (ms.sources + uris()).toSet().toList();
+#endif
     } else {
         _fileName = ms.file.name();
         _mimeType = ms.file.mediaType();

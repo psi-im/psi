@@ -29,7 +29,7 @@
 class PsiThemeModel;
 
 struct PsiThemeModel::Loader {
-    Loader(PsiThemeProvider *provider_) : provider(provider_) {}
+    Loader(PsiThemeProvider *provider_) : provider(provider_) { }
 
     typedef ThemeItemInfo result_type;
 
@@ -110,6 +110,7 @@ void PsiThemeModel::loadComplete() { qDebug("Themes loading finished"); }
 
 void PsiThemeModel::load()
 {
+    Q_ASSERT(!loader);
     loader = new Loader(provider);
     if (provider->threadedLoading()) {
         themesFuture = QtConcurrent::mapped(provider->themeIds(), *loader);

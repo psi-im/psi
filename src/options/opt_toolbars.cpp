@@ -356,7 +356,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
     bool moveable      = true;
 
     LookFeelToolbarsUI *d      = static_cast<LookFeelToolbarsUI *>(w);
-    bool                enable = (item == -1) ? false : true;
+    bool                enable = (item != -1);
     d->le_toolbarName->setEnabled(enable);
     // d->pb_toolbarPosition->setEnabled(enable && moveable);
     d->ck_toolbarOn->setEnabled(enable);

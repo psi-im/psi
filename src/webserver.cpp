@@ -48,5 +48,7 @@ void WebServer::route(const char *path, const WebServer::Handler &handler)
 void WebServer::unroute(const char *path)
 {
     QString pstr = QLatin1String(path);
-    std::remove_if(pathHandlers.begin(), pathHandlers.end(), [pstr](const auto &v) { return v.first == pstr; });
+    auto    it
+        = std::remove_if(pathHandlers.begin(), pathHandlers.end(), [pstr](const auto &v) { return v.first == pstr; });
+    pathHandlers.erase(it, pathHandlers.end());
 }

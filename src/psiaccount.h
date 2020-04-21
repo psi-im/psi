@@ -170,18 +170,19 @@ public:
 
     template <typename T> inline T findDialog(const Jid &jid = Jid(), bool compareResource = true) const
     {
-        return static_cast<T>(findDialog(((T)0)->staticMetaObject, jid, compareResource));
+        return static_cast<T>(findDialog(std::remove_pointer<T>::type::staticMetaObject, jid, compareResource));
     }
     template <typename T> inline QList<T> findDialogs(const Jid &jid = Jid(), bool compareResource = true) const
     {
         QList<T> list;
-        findDialogs(((T)0)->staticMetaObject, jid, compareResource, reinterpret_cast<QList<void *> *>(&list));
+        findDialogs(std::remove_pointer<T>::type::staticMetaObject, jid, compareResource,
+                    reinterpret_cast<QList<void *> *>(&list));
         return list;
     }
     template <typename T> inline QList<T> findAllDialogs() const
     {
         QList<T> list;
-        findDialogs(((T)0)->staticMetaObject, reinterpret_cast<QList<void *> *>(&list));
+        findDialogs(std::remove_pointer<T>::type::staticMetaObject, reinterpret_cast<QList<void *> *>(&list));
         return list;
     }
 
@@ -503,12 +504,12 @@ protected:
     void setRCEnabled(bool);
     void sessionStarted();
 
-    virtual void stateChanged();
-    virtual void profileUpdateEntry(const UserListItem &u);
-    virtual void profileRemoveEntry(const Jid &jid);
-    virtual void profileAnimateNick(const Jid &jid);
-    virtual void profileSetAlert(const Jid &jid, const PsiIcon *icon);
-    virtual void profileClearAlert(const Jid &jid);
+    void stateChanged();
+    void profileUpdateEntry(const UserListItem &u);
+    void profileRemoveEntry(const Jid &jid);
+    void profileAnimateNick(const Jid &jid);
+    void profileSetAlert(const Jid &jid, const PsiIcon *icon);
+    void profileClearAlert(const Jid &jid);
 
 private slots:
     void eventFromXml(const PsiEvent::Ptr &e);
