@@ -173,14 +173,9 @@ public:
             ? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap()
             : QPixmap();
         if (!status.isNull()) {
-            QRect statusRect(rect);
-            int   h  = rect.height();
-            int   sh = status.isNull() ? 0 : status.height();
-            statusRect.setHeight(qMax(sh, fontHeight_));
-            statusRect.moveTop(rect.top() + (h - rect.height()) / 2);
-            statusRect.setWidth(status.width());
-            statusRect.setHeight(status.height());
-            statusRect.translate(1, 1);
+            QRect statusRect(status.rect());
+            statusRect.moveTop(rect.top() + (rect.height() - statusRect.height()) / 2);
+            statusRect.moveLeft(rect.left() + 2);
             mp->drawPixmap(statusRect, status);
             rect.setLeft(statusRect.right());
         }
