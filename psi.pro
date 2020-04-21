@@ -26,11 +26,7 @@ OTHER_FILES += options/default.xml \
     psi.astylerc \
     CMakeLists.txt
 
-webkit {
-    OTHER_FILES += themes/chatview/util.js \
-        themes/chatview/psi/adapter.js \
-        themes/chatview/adium/adapter.js
-}
+
 
 # Import useful Makefile targets for testing program using valgrind.
 # Extra targets: valgrind, valgrind_supp and callgrind are available

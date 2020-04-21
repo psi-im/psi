@@ -174,6 +174,9 @@ QMAKE_CLEAN += $$OPTIONS_TRANSLATIONS_FILE
 
 # Resources
 RESOURCES += ../psi.qrc $$top_builddir/iconsets.qrc
+qtwebkit|qtwebengine {
+    RESOURCES += ../webkit.qrc
+}
 
 # Platform specifics
 windows {

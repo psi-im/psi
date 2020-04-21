@@ -302,6 +302,9 @@ set(RESOURCES
     ${PROJECT_SOURCE_DIR}/psi.qrc
     ${ICONSETSQRC_OUTPUT_FILE}
 )
+if(IS_WEBKIT OR IS_WEBENGINE)
+    set(RESOURCES ${RESOURCES} ${PROJECT_SOURCE_DIR}/webkit.qrc)
+endif()
 
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
 
