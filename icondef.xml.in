@@ -316,6 +316,11 @@
         </icon>
 
         <icon>
+                <x xmlns='name'>psi/topic</x>
+        <object mime='image/png'>topic.png</object>
+        </icon>
+
+        <icon>
                 <x xmlns='name'>psi/www</x>
         <object mime='image/png'>url.png</object>
         </icon>

@@ -95,22 +95,6 @@
            </widget>
           </item>
           <item>
-           <widget class="AccountLabel" name="lb_ident">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="lineWidth">
-             <number>0</number>
-            </property>
-            <property name="text">
-             <string notr="true"/>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QToolButton" name="tb_emoticons">
             <property name="toolTip">
              <string>Select icon</string>
@@ -127,24 +111,32 @@
             <property name="popupMode">
              <enum>QToolButton::InstantPopup</enum>
             </property>
+            <property name="autoRaise">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
            <widget class="QToolButton" name="tb_actions">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
             <property name="toolTip">
              <string>Actions</string>
             </property>
             <property name="text">
-             <string/>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
+             <string notr="true">≡</string>
             </property>
             <property name="popupMode">
              <enum>QToolButton::InstantPopup</enum>
+            </property>
+            <property name="toolButtonStyle">
+             <enum>Qt::ToolButtonTextOnly</enum>
+            </property>
+            <property name="autoRaise">
+             <bool>true</bool>
             </property>
             <property name="arrowType">
              <enum>Qt::NoArrow</enum>
@@ -303,6 +295,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>PixmapRatioLabel</class>
+   <extends>QLabel</extends>
+   <header>pixmapratiolabel.h</header>
+  </customwidget>
+  <customwidget>
    <class>ChatView</class>
    <extends>QFrame</extends>
    <header>chatview.h</header>
@@ -320,11 +317,6 @@
    <header>chateditproxy.h</header>
   </customwidget>
   <customwidget>
-   <class>AccountLabel</class>
-   <extends>QLabel</extends>
-   <header>accountlabel.h</header>
-  </customwidget>
-  <customwidget>
    <class>ActionLineEdit</class>
    <extends>QLineEdit</extends>
    <header>actionlineedit.h</header>
@@ -333,11 +325,6 @@
    <class>GCUserView</class>
    <extends>QTreeView</extends>
    <header>gcuserview.h</header>
-  </customwidget>
-  <customwidget>
-   <class>PixmapRatioLabel</class>
-   <extends>QLabel</extends>
-   <header>pixmapratiolabel.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

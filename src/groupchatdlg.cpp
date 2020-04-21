@@ -222,7 +222,7 @@ public:
     QMap<LanguageManager::LangId, QString> subjectMap;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList *                           actions;
-    IconAction *                           act_bookmark, *act_pastesend, *act_topic_edit;
+    IconAction *                           act_bookmark, *act_pastesend;
     TypeAheadFindBar *                     typeahead;
     //#ifdef WHITEBOARDING
     //    IconAction *act_whiteboard;
@@ -863,8 +863,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     ui_.setupUi(this);
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
-    ui_.lb_ident->setAccount(account());
-    ui_.lb_ident->setShowJid(false);
+
     ui_.log->setSessionData(true, false, jid(), jid().full()); // FIXME change conference name
 #ifdef WEBKIT
     ui_.log->setAccount(account());
@@ -878,8 +877,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     PsiToolTip::install(ui_.le_topic);
 
-    connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
-    updateIdentityVisibility();
     /*
     d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
     connect(d->act_find, SIGNAL(triggered()), SLOT(openFind()));
@@ -913,7 +910,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         action->setParent(this);
         d->actions->addAction(name, action);
 
-        if (name == QString::fromLatin1("gchat_clear")) {
+        if (name == QString::fromLatin1("gchat_info")) {
+            connect(action, &IconAction::triggered, this, &GCMainDlg::doShowInfo);
+        } else if (name == QString::fromLatin1("gchat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
         } else if (name == QString::fromLatin1("gchat_find")) {
             // typeahead find
@@ -966,14 +965,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(d->act_mini_cmd, SIGNAL(triggered()), d, SLOT(doMiniCmd()));
     addAction(d->act_mini_cmd);
 
-    QString setTopicText = tr("Set Topic");
-    d->act_topic_edit    = new IconAction(setTopicText, QLatin1String("psi/options"), setTopicText,
-                                       ShortcutManager::instance()->shortcuts("chat.set-topic"), this);
-    d->act_topic_edit->setToolTip(setTopicText);
-    d->act_bookmark = new IconAction(this);
-    connect(d->act_topic_edit, &IconAction::triggered, this, &GCMainDlg::openTopic);
+    d->act_bookmark  = new IconAction(this);
+    auto actSetTopic = d->actions->action("gchat_set_topic");
+    connect(actSetTopic, &IconAction::triggered, this, &GCMainDlg::openTopic);
     connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
-    ui_.le_topic->addAction(d->act_topic_edit);
+    ui_.le_topic->addAction(actSetTopic);
     ui_.le_topic->addAction(d->act_bookmark);
 
     d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
@@ -1274,11 +1270,6 @@ void GCMainDlg::setConnecting()
     QTimer::singleShot(5000, this, SLOT(unsetConnecting()));
 }
 
-void GCMainDlg::updateIdentityVisibility()
-{
-    ui_.lb_ident->setVisible(account()->psi()->contactList()->enabledAccounts().count() > 1);
-}
-
 void GCMainDlg::updateBookmarkIcon()
 {
     BookmarkManager *bm = account()->bookmarkManager();
@@ -1506,6 +1497,21 @@ void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topic
     aSend(m);
 }
 
+void GCMainDlg::doShowInfo()
+{
+    auto dlg = new QDialog(this);
+    dlg->setWindowTitle(getDisplayName());
+    dlg->setWindowIcon(IconsetFactory::icon("psi/info").icon());
+    auto layout = new QVBoxLayout();
+    dlg->setLayout(layout);
+    auto lbl = new AccountLabel(this);
+    lbl->setAccount(account());
+    lbl->setShowJid(false);
+    layout->addWidget(lbl);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+}
+
 void GCMainDlg::doClear() { ui_.log->clear(); }
 
 void GCMainDlg::doClearButton()
@@ -1622,7 +1628,7 @@ void GCMainDlg::goDisc()
 {
     if (d->state != Private::Idle && d->state != Private::ForcedLeave) {
         d->state = Private::Idle;
-        d->act_topic_edit->setEnabled(false);
+        d->actions->action("gchat_set_topic")->setEnabled(false);
         setStatusTabIcon(STATUS_OFFLINE);
         appendSysMsg(tr("Disconnected."), true);
         ui_.mle->chatEdit()->setEnabled(false);
@@ -1714,7 +1720,7 @@ PsiAccount *GCMainDlg::account() const { return TabbableWidget::account(); }
 
 void GCMainDlg::error(int, const QString &str)
 {
-    d->act_topic_edit->setEnabled(false);
+    d->actions->action("gchat_set_topic")->setEnabled(false);
     setStatusTabIcon(STATUS_ERROR);
 
     if (d->state == Private::Connecting)
@@ -2153,7 +2159,7 @@ void GCMainDlg::joined()
     if (d->state == Private::Connecting) {
         d->usersModel->clear();
         d->state = Private::Connected;
-        d->act_topic_edit->setEnabled(true);
+        d->actions->action("gchat_set_topic")->setEnabled(true);
         setStatusTabIcon(STATUS_ONLINE);
         ui_.mle->chatEdit()->setEnabled(true);
         setConnecting();
@@ -2277,7 +2283,7 @@ void GCMainDlg::setLooks()
 
     if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
         ui_.toolbar->show();
-        ui_.tb_actions->hide();
+        // ui_.tb_actions->hide();
         ui_.tb_emoticons->hide();
     } else {
         ui_.toolbar->hide();
@@ -2465,6 +2471,7 @@ void GCMainDlg::buildMenu()
     // Dialog menu
     d->pm_settings->clear();
 
+    d->actions->action("gchat_info")->addTo(d->pm_settings);
     d->actions->action("gchat_clear")->addTo(d->pm_settings);
     d->actions->action("gchat_configure")->addTo(d->pm_settings);
     //#ifdef WHITEBOARDING
@@ -2477,7 +2484,7 @@ void GCMainDlg::buildMenu()
     d->pm_settings->addAction(d->act_pastesend);
     d->pm_settings->addAction(d->act_nick);
     d->pm_settings->addAction(d->act_bookmark);
-    d->pm_settings->addAction(d->act_topic_edit);
+    d->pm_settings->addAction(d->actions->action("gchat_set_topic"));
     if (PsiOptions::instance()->getOption("options.ui.tabs.multi-rows").toBool() && d->tabmode) {
         d->pm_settings->addSeparator();
         d->pm_settings->addAction(d->actions->action("gchat_pin_tab"));
@@ -2488,6 +2495,7 @@ void GCMainDlg::buildMenu()
         PluginManager::instance()->addGCToolBarButton(this, d->pm_settings, account(), jid().full());
     }
 #endif
+    d->pm_settings->addAction(d->actions->action("gchat_share_files"));
 }
 
 void GCMainDlg::chatEditCreated()

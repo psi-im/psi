@@ -434,13 +434,13 @@ void PsiActionList::Private::createMainWin()
     }
 }
 
-void PsiActionList::Private::createMessageChatGroupchat() {}
+void PsiActionList::Private::createMessageChatGroupchat() { }
 
-void PsiActionList::Private::createMessageChat() {}
+void PsiActionList::Private::createMessageChat() { }
 
-void PsiActionList::Private::createChatGroupchat() {}
+void PsiActionList::Private::createChatGroupchat() { }
 
-void PsiActionList::Private::createMessage() {}
+void PsiActionList::Private::createMessage() { }
 
 void PsiActionList::Private::createChat()
 {
@@ -492,6 +492,7 @@ void PsiActionList::Private::createChat()
 void PsiActionList::Private::createGroupchat()
 {
     {
+        IconAction *actInfo = new IconAction(tr("Information"), QLatin1String("psi/info"), tr("Information"), 0, this);
         IconAction *actClear
             = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
         IconAction *actFind     = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
@@ -503,7 +504,12 @@ void PsiActionList::Private::createGroupchat()
         IconAction *actPinTab     = new IconAction(tr("Pin/UnPin Tab"), "psi/pin", tr("Pin/UnPin Tab"), 0, this);
         IconAction *actTemplates  = new IconAction(tr("Templates"), "psi/action_templates", tr("Templates"), 0, this);
 
-        ActionNames actions[] = { { "gchat_clear", actClear },
+        QString     setTopicText = tr("Set Topic");
+        IconAction *actSetTopic  = new IconAction(setTopicText, QLatin1String("psi/topic"), setTopicText, 0, this);
+        actSetTopic->setToolTip(setTopicText);
+
+        ActionNames actions[] = { { "gchat_info", actInfo },
+                                  { "gchat_clear", actClear },
                                   { "gchat_find", actFind },
                                   { "gchat_html_text", actHtmlText },
                                   { "gchat_configure", actConfigure },
@@ -511,6 +517,7 @@ void PsiActionList::Private::createGroupchat()
                                   { "gchat_share_files", actShareFiles },
                                   { "gchat_pin_tab", actPinTab },
                                   { "gchat_templates", actTemplates },
+                                  { "gchat_set_topic", actSetTopic },
                                   { "", nullptr } };
 
         createActionList(tr("Groupchat basic buttons"), Actions_Groupchat, actions);

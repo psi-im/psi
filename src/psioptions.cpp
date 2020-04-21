@@ -40,7 +40,7 @@ using namespace XMPP;
 
 class OptionsStorageTask : public Task {
 public:
-    OptionsStorageTask(Task *parent) : Task(parent) {}
+    OptionsStorageTask(Task *parent) : Task(parent) { }
 
     // TODO
     void set(/* ... */)
@@ -175,17 +175,21 @@ bool PsiOptions::newProfile()
                          << "chat_info"
                          << "chat_history"
                          << "chat_voice"
+                         << "chat_share_files"
                          << "chat_active_contacts"
                          << "gchat_templates";
 
         ToolbarPrefs groupchatToolbar;
         groupchatToolbar.on   = true;
         groupchatToolbar.name = "Groupchat";
-        groupchatToolbar.keys << "gchat_clear"
+        groupchatToolbar.keys << "gchat_info"
+                              << "gchat_clear"
                               << "gchat_find"
                               << "gchat_html_text"
                               << "gchat_configure"
-                              << "gchat_templates";
+                              << "gchat_set_topic"
+                              << "gchat_templates"
+                              << "gchat_share_files";
         groupchatToolbar.keys += pluginsKeys;
         groupchatToolbar.keys << "spacer"
                               << "gchat_icon";

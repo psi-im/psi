@@ -115,6 +115,7 @@ private slots:
     void goConn();
     void goForcedLeave();
     void lv_action(const QString &, const Status &, int);
+    void doShowInfo();
     void doClear();
     void doClearButton();
     void copyMucJid();
@@ -127,7 +128,6 @@ private slots:
     void updateMucName();
     void updateGCVCard();
     void discoInfoFinished();
-    void updateIdentityVisibility();
     void updateBookmarkIcon();
 #ifdef WHITEBOARDING
     void openWhiteboard();
