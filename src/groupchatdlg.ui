@@ -120,11 +120,14 @@
            <widget class="QToolButton" name="tb_actions">
             <property name="font">
              <font>
-              <pointsize>11</pointsize>
+              <pointsize>13</pointsize>
              </font>
             </property>
             <property name="toolTip">
              <string>Actions</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QToolButton { padding: 0px; } QToolButton::menu-indicator { image:none; } </string>
             </property>
             <property name="text">
              <string notr="true">≡</string>
