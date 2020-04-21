@@ -619,6 +619,7 @@ QLineEdit#le_status_text {
                 <show-messagePrev type="QKeySequence" comment="Show prev message" >Ctrl+Up</show-messagePrev>
                 <change-case type="QKeySequence" comment="Change case of letters in the chat edit" >Ctrl+Alt+x</change-case>
                 <minimize type="QKeySequence" comment="Minimize active chat window"/>
+                <set-topic type="QKeySequence" comment="Set chat topic"/>
             </chat>
             <contactlist comment="Shortcuts in the contactlist">
                 <assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>

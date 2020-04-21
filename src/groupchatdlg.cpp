@@ -120,7 +120,7 @@ static const QString geometryOption = "options.ui.muc.size";
 class StatusPingTask : public Task {
     Q_OBJECT
 public:
-    StatusPingTask(const Jid &myjid, Task *parent) : Task(parent), myjid_(myjid) {}
+    StatusPingTask(const Jid &myjid, Task *parent) : Task(parent), myjid_(myjid) { }
 
     void onGo()
     {
@@ -222,7 +222,7 @@ public:
     QMap<LanguageManager::LangId, QString> subjectMap;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList *                           actions;
-    IconAction *                           act_bookmark, *act_pastesend;
+    IconAction *                           act_bookmark, *act_pastesend, *act_topic_edit;
     TypeAheadFindBar *                     typeahead;
     //#ifdef WHITEBOARDING
     //    IconAction *act_whiteboard;
@@ -506,7 +506,7 @@ join <channel>{,<channel>} [pass{,<pass>}
         return res;
     }
 
-    virtual void mCmdSiteDestroyed() {}
+    virtual void mCmdSiteDestroyed() { }
 
 public:
     void doTrackBar()
@@ -876,7 +876,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
     connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
 
-    connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(openTopic()));
     PsiToolTip::install(ui_.le_topic);
 
     connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
@@ -967,8 +966,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     connect(d->act_mini_cmd, SIGNAL(triggered()), d, SLOT(doMiniCmd()));
     addAction(d->act_mini_cmd);
 
+    QString setTopicText = tr("Set Topic");
+    d->act_topic_edit    = new IconAction(setTopicText, QLatin1String("psi/options"), setTopicText,
+                                       ShortcutManager::instance()->shortcuts("chat.set-topic"), this);
+    d->act_topic_edit->setToolTip(setTopicText);
     d->act_bookmark = new IconAction(this);
+    connect(d->act_topic_edit, &IconAction::triggered, this, &GCMainDlg::openTopic);
     connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
+    ui_.le_topic->addAction(d->act_topic_edit);
     ui_.le_topic->addAction(d->act_bookmark);
 
     d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
@@ -1617,7 +1622,7 @@ void GCMainDlg::goDisc()
 {
     if (d->state != Private::Idle && d->state != Private::ForcedLeave) {
         d->state = Private::Idle;
-        ui_.pb_topic->setEnabled(false);
+        d->act_topic_edit->setEnabled(false);
         setStatusTabIcon(STATUS_OFFLINE);
         appendSysMsg(tr("Disconnected."), true);
         ui_.mle->chatEdit()->setEnabled(false);
@@ -1709,7 +1714,7 @@ PsiAccount *GCMainDlg::account() const { return TabbableWidget::account(); }
 
 void GCMainDlg::error(int, const QString &str)
 {
-    ui_.pb_topic->setEnabled(false);
+    d->act_topic_edit->setEnabled(false);
     setStatusTabIcon(STATUS_ERROR);
 
     if (d->state == Private::Connecting)
@@ -2055,7 +2060,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         }
         auto langs = d->subjectMap.keys();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-        auto langsSet  = QSet<LanguageManager::LangId>(langs.begin(), langs.end());
+        auto langsSet         = QSet<LanguageManager::LangId>(langs.begin(), langs.end());
         auto preferredSubject = LanguageManager::bestUiMatch(langsSet, true);
 #else
         auto preferredSubject = LanguageManager::bestUiMatch(langs.toSet(), true);
@@ -2148,7 +2153,7 @@ void GCMainDlg::joined()
     if (d->state == Private::Connecting) {
         d->usersModel->clear();
         d->state = Private::Connected;
-        ui_.pb_topic->setEnabled(true);
+        d->act_topic_edit->setEnabled(true);
         setStatusTabIcon(STATUS_ONLINE);
         ui_.mle->chatEdit()->setEnabled(true);
         setConnecting();
@@ -2472,6 +2477,7 @@ void GCMainDlg::buildMenu()
     d->pm_settings->addAction(d->act_pastesend);
     d->pm_settings->addAction(d->act_nick);
     d->pm_settings->addAction(d->act_bookmark);
+    d->pm_settings->addAction(d->act_topic_edit);
     if (PsiOptions::instance()->getOption("options.ui.tabs.multi-rows").toBool() && d->tabmode) {
         d->pm_settings->addSeparator();
         d->pm_settings->addAction(d->actions->action("gchat_pin_tab"));

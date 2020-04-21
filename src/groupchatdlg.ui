@@ -88,16 +88,6 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QPushButton" name="pb_topic">
-            <property name="text">
-             <string>Topic:</string>
-            </property>
-            <property name="flat">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="ActionLineEdit" name="le_topic">
             <property name="readOnly">
              <bool>true</bool>
@@ -111,6 +101,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="lineWidth">
+             <number>0</number>
             </property>
             <property name="text">
              <string notr="true"/>
