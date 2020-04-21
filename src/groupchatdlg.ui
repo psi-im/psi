@@ -92,6 +92,9 @@
             <property name="text">
              <string>Topic:</string>
             </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -110,7 +113,7 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>AccountLabel</string>
+             <string notr="true"/>
             </property>
            </widget>
           </item>
@@ -282,11 +285,11 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
            <property name="toolTip">
             <string>Send</string>
-           </property>
-           <property name="contextMenuPolicy" >
-            <enum>Qt::CustomContextMenu</enum>
            </property>
           </widget>
          </item>
