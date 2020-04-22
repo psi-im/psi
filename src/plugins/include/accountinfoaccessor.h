@@ -1,11 +1,13 @@
 #ifndef ACCOUNTINFOACCESSOR_H
 #define ACCOUNTINFOACCESSOR_H
 
+#include <QtPlugin>
+
 class AccountInfoAccessingHost;
 
 class AccountInfoAccessor {
 public:
-    virtual ~AccountInfoAccessor() {}
+    virtual ~AccountInfoAccessor() { }
 
     virtual void setAccountInfoAccessingHost(AccountInfoAccessingHost *host) = 0;
 };

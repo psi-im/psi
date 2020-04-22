@@ -1,11 +1,13 @@
 #ifndef PLUGINACCESSINGHOST_H
 #define PLUGINACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class PsiPlugin;
 
 class PluginAccessingHost {
 public:
-    virtual ~PluginAccessingHost() {}
+    virtual ~PluginAccessingHost() { }
 
     virtual QObject *getPlugin(const QString &name) = 0;
 };

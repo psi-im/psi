@@ -1,11 +1,13 @@
 #ifndef PLUGININFOPROVIDER_H
 #define PLUGININFOPROVIDER_H
 
+#include <QtPlugin>
+
 class QString;
 
 class PluginInfoProvider {
 public:
-    virtual ~PluginInfoProvider() {}
+    virtual ~PluginInfoProvider() { }
 
     virtual QString pluginInfo() = 0;
 };

@@ -1,11 +1,13 @@
 #ifndef SOUNDACCESSINGHOST_H
 #define SOUNDACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 
 class SoundAccessingHost {
 public:
-    virtual ~SoundAccessingHost() {}
+    virtual ~SoundAccessingHost() { }
 
     virtual void playSound(const QString &fileName) = 0;
 };

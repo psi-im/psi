@@ -1,11 +1,13 @@
 #ifndef SOUNDACCESSOR_H
 #define SOUNDACCESSOR_H
 
+#include <QtPlugin>
+
 class SoundAccessingHost;
 
 class SoundAccessor {
 public:
-    virtual ~SoundAccessor() {}
+    virtual ~SoundAccessor() { }
 
     virtual void setSoundAccessingHost(SoundAccessingHost *host) = 0;
 };

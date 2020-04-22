@@ -3,6 +3,7 @@
 
 #include <QList>
 #include <QVariantHash>
+#include <QtPlugin>
 
 class QAction;
 class QObject;
@@ -10,7 +11,7 @@ class QString;
 
 class MenuAccessor {
 public:
-    virtual ~MenuAccessor() {}
+    virtual ~MenuAccessor() { }
 
     virtual QList<QVariantHash> getAccountMenuParam()                                                  = 0;
     virtual QList<QVariantHash> getContactMenuParam()                                                  = 0;

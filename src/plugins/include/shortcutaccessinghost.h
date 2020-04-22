@@ -1,12 +1,14 @@
 #ifndef SHORTCUTACCESSINGHOST_H
 #define SHORTCUTACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QKeySequence;
 class QObject;
 
 class ShortcutAccessingHost {
 public:
-    virtual ~ShortcutAccessingHost() {}
+    virtual ~ShortcutAccessingHost() { }
 
     virtual void connectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot)    = 0;
     virtual void disconnectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot) = 0;

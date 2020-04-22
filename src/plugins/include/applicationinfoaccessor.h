@@ -1,11 +1,13 @@
 #ifndef APPLICATIONINFOACCESSOR_H
 #define APPLICATIONINFOACCESSOR_H
 
+#include <QtPlugin>
+
 class ApplicationInfoAccessingHost;
 
 class ApplicationInfoAccessor {
 public:
-    virtual ~ApplicationInfoAccessor() {}
+    virtual ~ApplicationInfoAccessor() { }
 
     virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost *host) = 0;
 };

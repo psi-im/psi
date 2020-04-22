@@ -3,6 +3,7 @@
 
 #include <QList>
 #include <QVariantHash>
+#include <QtPlugin>
 
 class QAction;
 class QObject;
@@ -10,7 +11,7 @@ class QString;
 
 class GCToolbarIconAccessor {
 public:
-    virtual ~GCToolbarIconAccessor() {}
+    virtual ~GCToolbarIconAccessor() { }
 
     virtual QList<QVariantHash> getGCButtonParam()                                                = 0;
     virtual QAction *           getGCAction(QObject *parent, int account, const QString &contact) = 0;

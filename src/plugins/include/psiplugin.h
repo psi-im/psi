@@ -26,6 +26,7 @@
 #define PSIPLUGIN_H
 
 #include <QtCore>
+#include <QtPlugin>
 
 class QWidget;
 
@@ -52,7 +53,7 @@ public:
         PriorityHighest = 4, // always in the start. last loaded Highest plugin moves others to High side
     };
 
-    virtual ~PsiPlugin() {}
+    virtual ~PsiPlugin() { }
 
     virtual Priority priority() { return PriorityNormal; }
 

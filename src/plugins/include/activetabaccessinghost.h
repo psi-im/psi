@@ -1,12 +1,14 @@
 #ifndef ACTIVETABACCESSINGHOST_H
 #define ACTIVETABACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 class QTextEdit;
 
 class ActiveTabAccessingHost {
 public:
-    virtual ~ActiveTabAccessingHost() {}
+    virtual ~ActiveTabAccessingHost() { }
 
     virtual QTextEdit *getEditBox() = 0;
     virtual QString    getJid()     = 0;

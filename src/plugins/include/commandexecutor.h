@@ -1,12 +1,14 @@
 #ifndef COMMANDEXECUTOR_H
 #define COMMANDEXECUTOR_H
 
+#include <QtPlugin>
+
 /**
  * Generic API for arbitrary inter-plugin communication
  */
 class CommandExecutor {
 public:
-    virtual ~CommandExecutor() {}
+    virtual ~CommandExecutor() { }
 
     virtual bool execute(int account, const QHash<QString, QVariant> &args, QHash<QString, QVariant> *result = nullptr)
         = 0;

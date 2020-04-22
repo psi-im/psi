@@ -1,11 +1,13 @@
 #ifndef STANZAFILTER_H
 #define STANZAFILTER_H
 
+#include <QtPlugin>
+
 class QDomElement;
 
 class StanzaFilter {
 public:
-    virtual ~StanzaFilter() {}
+    virtual ~StanzaFilter() { }
 
     // true = handled, don't pass to next handler
 

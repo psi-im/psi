@@ -1,11 +1,13 @@
 #ifndef POPUPACCESSOR_H
 #define POPUPACCESSOR_H
 
+#include <QtPlugin>
+
 class PopupAccessingHost;
 
 class PopupAccessor {
 public:
-    virtual ~PopupAccessor() {}
+    virtual ~PopupAccessor() { }
 
     virtual void setPopupAccessingHost(PopupAccessingHost *host) = 0;
 };

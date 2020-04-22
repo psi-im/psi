@@ -1,11 +1,13 @@
 #ifndef CONTACTSTATEACCESSOR_H
 #define CONTACTSTATEACCESSOR_H
 
+#include <QtPlugin>
+
 class ContactStateAccessingHost;
 
 class ContactStateAccessor {
 public:
-    virtual ~ContactStateAccessor() {}
+    virtual ~ContactStateAccessor() { }
 
     virtual void setContactStateAccessingHost(ContactStateAccessingHost *host) = 0;
 };

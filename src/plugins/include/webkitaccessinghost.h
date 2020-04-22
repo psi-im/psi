@@ -1,6 +1,8 @@
 #ifndef WEBKITACCESSINGHOST_H
 #define WEBKITACCESSINGHOST_H
 
+#include <QtPlugin>
+
 #include "psiplugin.h"
 
 class QString;
@@ -14,7 +16,7 @@ public:
         RT_QML /* well it's reserved =) */
     };
 
-    virtual ~WebkitAccessingHost() {}
+    virtual ~WebkitAccessingHost() { }
 
     virtual RenderType chatLogRenderType() const = 0;
 

@@ -1,12 +1,14 @@
 #ifndef EVENTFILTER_H
 #define EVENTFILTER_H
 
+#include <QtPlugin>
+
 class QDomElement;
 class QString;
 
 class EventFilter {
 public:
-    virtual ~EventFilter() {}
+    virtual ~EventFilter() { }
 
     // true = handled, don't pass to next handler
 

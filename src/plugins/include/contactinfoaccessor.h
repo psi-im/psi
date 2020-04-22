@@ -1,11 +1,13 @@
 #ifndef CONTACTINFOACCESSOR_H
 #define CONTACTINFOACCESSOR_H
 
+#include <QtPlugin>
+
 class ContactInfoAccessingHost;
 
 class ContactInfoAccessor {
 public:
-    virtual ~ContactInfoAccessor() {}
+    virtual ~ContactInfoAccessor() { }
 
     virtual void setContactInfoAccessingHost(ContactInfoAccessingHost *host) = 0;
 };

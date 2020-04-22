@@ -1,11 +1,13 @@
 #ifndef IQNAMESPACEFILTER_H
 #define IQNAMESPACEFILTER_H
 
+#include <QtPlugin>
+
 class QDomElement;
 
 class IqNamespaceFilter {
 public:
-    virtual ~IqNamespaceFilter() {}
+    virtual ~IqNamespaceFilter() { }
 
     virtual bool iqGet(int account, const QDomElement &xml)    = 0;
     virtual bool iqSet(int account, const QDomElement &xml)    = 0;

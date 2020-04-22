@@ -1,11 +1,13 @@
 #ifndef WEBKITACCESSOR_H
 #define WEBKITACCESSOR_H
 
+#include <QtPlugin>
+
 class WebkitAccessingHost;
 
 class WebkitAccessor {
 public:
-    virtual ~WebkitAccessor() {}
+    virtual ~WebkitAccessor() { }
 
     virtual void setWebkitAccessingHost(WebkitAccessingHost *host) = 0;
 };

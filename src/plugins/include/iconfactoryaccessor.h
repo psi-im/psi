@@ -1,11 +1,13 @@
 #ifndef ICONFACTORYACCESSOR_H
 #define ICONFACTORYACCESSOR_H
 
+#include <QtPlugin>
+
 class IconFactoryAccessingHost;
 
 class IconFactoryAccessor {
 public:
-    virtual ~IconFactoryAccessor() {}
+    virtual ~IconFactoryAccessor() { }
 
     virtual void setIconFactoryAccessingHost(IconFactoryAccessingHost *host) = 0;
 };

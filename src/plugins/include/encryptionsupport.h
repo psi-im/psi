@@ -1,6 +1,8 @@
 #ifndef ENCRYPTIONSUPPORT_H
 #define ENCRYPTIONSUPPORT_H
 
+#include <QtPlugin>
+
 class QDomElement;
 
 class EncryptionSupport {

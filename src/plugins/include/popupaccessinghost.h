@@ -1,11 +1,13 @@
 #ifndef POPUPACCESSINGHOST_H
 #define POPUPACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 
 class PopupAccessingHost {
 public:
-    virtual ~PopupAccessingHost() {}
+    virtual ~PopupAccessingHost() { }
 
     virtual void initPopup(const QString &text, const QString &title, const QString &icon = "psi/headline",
                            int type = 0)

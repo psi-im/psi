@@ -1,13 +1,14 @@
 #ifndef PSIACCOUNTCONTROLLINGHOST_H
 #define PSIACCOUNTCONTROLLINGHOST_H
 
+#include <QtPlugin>
 #include <functional>
 
 class QString;
 
 class PsiAccountControllingHost {
 public:
-    virtual ~PsiAccountControllingHost() {}
+    virtual ~PsiAccountControllingHost() { }
 
     virtual void setStatus(int account, const QString &status, const QString &statusMessage) = 0;
 

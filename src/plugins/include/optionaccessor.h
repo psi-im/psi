@@ -1,12 +1,14 @@
 #ifndef OPTIONACCESSOR_H
 #define OPTIONACCESSOR_H
 
+#include <QtPlugin>
+
 class OptionAccessingHost;
 class QString;
 
 class OptionAccessor {
 public:
-    virtual ~OptionAccessor() {}
+    virtual ~OptionAccessor() { }
 
     virtual void setOptionAccessingHost(OptionAccessingHost *host) = 0;
 

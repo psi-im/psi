@@ -1,11 +1,13 @@
 #ifndef ACTIVETABACCESSOR_H
 #define ACTIVETABACCESSOR_H
 
+#include <QtPlugin>
+
 class ActiveTabAccessingHost;
 
 class ActiveTabAccessor {
 public:
-    virtual ~ActiveTabAccessor() {}
+    virtual ~ActiveTabAccessor() { }
 
     virtual void setActiveTabAccessingHost(ActiveTabAccessingHost *host) = 0;
 };

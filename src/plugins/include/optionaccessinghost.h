@@ -1,12 +1,14 @@
 #ifndef OPTIONACCESSINGHOST_H
 #define OPTIONACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 class QVariant;
 
 class OptionAccessingHost {
 public:
-    virtual ~OptionAccessingHost() {}
+    virtual ~OptionAccessingHost() { }
 
     virtual void     setPluginOption(const QString &option, const QVariant &value)                        = 0;
     virtual QVariant getPluginOption(const QString &option, const QVariant &defValue = QVariant::Invalid) = 0;

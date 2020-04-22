@@ -1,11 +1,13 @@
 #ifndef EVENTCREATOR_H
 #define EVENTCREATOR_H
 
+#include <QtPlugin>
+
 class EventCreatingHost;
 
 class EventCreator {
 public:
-    virtual ~EventCreator() {}
+    virtual ~EventCreator() { }
 
     virtual void setEventCreatingHost(EventCreatingHost *host) = 0;
 };

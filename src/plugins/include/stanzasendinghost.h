@@ -1,12 +1,14 @@
 #ifndef STANZASENDINGHOST_H
 #define STANZASENDINGHOST_H
 
+#include <QtPlugin>
+
 class QDomElement;
 class QString;
 
 class StanzaSendingHost {
 public:
-    virtual ~StanzaSendingHost() {}
+    virtual ~StanzaSendingHost() { }
 
     virtual void sendStanza(int account, const QDomElement &xml) = 0;
     virtual void sendStanza(int account, const QString &xml)     = 0;

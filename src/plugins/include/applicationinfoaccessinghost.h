@@ -1,6 +1,8 @@
 #ifndef APPLICATIONINFOACCESSINGHOST_H
 #define APPLICATIONINFOACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 
 struct Proxy {
@@ -14,7 +16,7 @@ struct Proxy {
 class ApplicationInfoAccessingHost {
 public:
     enum HomedirType { ConfigLocation, DataLocation, CacheLocation };
-    virtual ~ApplicationInfoAccessingHost() {}
+    virtual ~ApplicationInfoAccessingHost() { }
 
     // Version info
     virtual QString appName()        = 0;

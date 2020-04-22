@@ -1,12 +1,14 @@
 #ifndef CONTACTINFOACCESSINGHOST_H
 #define CONTACTINFOACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 class QStringList;
 
 class ContactInfoAccessingHost {
 public:
-    virtual ~ContactInfoAccessingHost() {}
+    virtual ~ContactInfoAccessingHost() { }
 
     // Note that all this methods are checking full jid (with resource)
     // So for normal contacts is preferable to use bare jid in queries

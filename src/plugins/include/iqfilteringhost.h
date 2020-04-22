@@ -1,13 +1,15 @@
 #ifndef IQFILTERINGHOST_H
 #define IQFILTERINGHOST_H
 
+#include <QtPlugin>
+
 class IqNamespaceFilter;
 class QRegExp;
 class QString;
 
 class IqFilteringHost {
 public:
-    virtual ~IqFilteringHost() {}
+    virtual ~IqFilteringHost() { }
 
     virtual void addIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter) = 0;
     virtual void addIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter) = 0;

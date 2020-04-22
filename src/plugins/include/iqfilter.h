@@ -1,11 +1,13 @@
 #ifndef IQFILTER_H
 #define IQFILTER_H
 
+#include <QtPlugin>
+
 class IqFilteringHost;
 
 class IqFilter {
 public:
-    virtual ~IqFilter() {}
+    virtual ~IqFilter() { }
 
     virtual void setIqFilteringHost(IqFilteringHost *host) = 0;
 };
