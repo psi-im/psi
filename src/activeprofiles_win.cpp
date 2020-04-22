@@ -143,7 +143,7 @@ bool ActiveProfiles::Private::sendMessage(const QString &to, UINT message, WPARA
 
 bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringList &list) const
 {
-    if (to.isEmpty())
+    if (to.isEmpty() || list.isEmpty())
         return false;
 
     QByteArray ba;
