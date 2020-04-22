@@ -11,11 +11,11 @@ endif()
 
 if(IS_PSIPLUS)
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.psi-plus")
-    set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2001-2019 Psi IM and Psi+ developers")
+    set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2001-2020 Psi IM and Psi+ developers")
     set(MACOSX_ICON_FILE "application-plus.icns")
 else()
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.psi-im")
-    set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2001-2019 Psi IM developers")
+    set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2001-2020 Psi IM developers")
     set(MACOSX_ICON_FILE "application.icns")
 endif()
 
