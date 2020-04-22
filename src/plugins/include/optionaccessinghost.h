@@ -1,6 +1,7 @@
 #ifndef OPTIONACCESSINGHOST_H
 #define OPTIONACCESSINGHOST_H
 
+#include <QVariant>
 #include <QtPlugin>
 
 class QString;
