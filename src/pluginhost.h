@@ -6,13 +6,6 @@
 #ifndef PLUGINHOST_H
 #define PLUGINHOST_H
 
-#include <QDomElement>
-#include <QMultiMap>
-#include <QPointer>
-#include <QRegExp>
-#include <QTextEdit>
-#include <QVariant>
-
 #include "accountinfoaccessinghost.h"
 #include "activetabaccessinghost.h"
 #include "applicationinfo.h"
@@ -35,6 +28,13 @@
 #include "tabdlg.h"
 #include "userlist.h"
 #include "webkitaccessinghost.h"
+
+#include <QDomElement>
+#include <QMultiMap>
+#include <QPointer>
+#include <QRegExp>
+#include <QTextEdit>
+#include <QVariant>
 
 class IqNamespaceFilter;
 class PluginManager;

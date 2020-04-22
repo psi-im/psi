@@ -18,6 +18,7 @@
  */
 
 #include "rc.h"
+
 #include "ahcommand.h"
 #include "ahcservermanager.h"
 #include "groupchatdlg.h"
