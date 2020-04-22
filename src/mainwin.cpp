@@ -974,7 +974,7 @@ void MainWin::actOnlineWikiActivated()
 #ifndef PSI_PLUS
         "https://github.com/psi-im/psi/wiki"
 #else
-        "https://psi-plus.com/wiki/main"
+        "https://psi-plus.com/wiki/en:main"
 #endif
     );
 }
