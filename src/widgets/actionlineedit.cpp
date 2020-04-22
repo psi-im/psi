@@ -96,7 +96,7 @@ void ActionLineEditButton::paintEvent(QPaintEvent *event)
     Qt::ToolButtonStyle tbs  = p->toolButtonStyle();
     int                 lpos = 0;
     // int h = height();
-    int h = p->minimumSizeHint().height() - 2; // 2px padding from max.
+    int h = p->minimumSizeHint().height() * IconScaleFactor; // 2px padding from max.
     if (!icon().isNull() && tbs != Qt::ToolButtonTextOnly) {
         const QPixmap pix = icon().pixmap(QSize(h, h), isEnabled() ? QIcon::Normal : QIcon::Disabled,
                                           isChecked() ? QIcon::On : QIcon::Off);
@@ -116,8 +116,8 @@ QSize ActionLineEditButton::sizeHint() const
     ActionLineEdit *    p   = static_cast<ActionLineEdit *>(parent());
     Qt::ToolButtonStyle tbs = p->toolButtonStyle();
     int                 w = 0, h = p->height();
-    int                 ih = static_cast<QLineEdit *>(parent())->minimumSizeHint().height()
-        - 2; // 2px padding from max. the same as in paintEvent
+    int                 ih = static_cast<QLineEdit *>(parent())->minimumSizeHint().height() * IconScaleFactor;
+
     QSize is(0, 0), ts(0, 0);
     if (!icon().isNull() && tbs != Qt::ToolButtonTextOnly) {
         is = icon().actualSize(QSize(ih, ih), isEnabled() ? QIcon::Normal : QIcon::Disabled,
@@ -186,9 +186,8 @@ void ActionLineEdit::actionEvent(QActionEvent *event)
         }
     }
     sumWidth += 4; //+4px padding between text and buttons. should looks better (magic number)
-    int mLeft, mTop, mRight, mBottom;
-    getTextMargins(&mLeft, &mTop, &mRight, &mBottom);
-    setTextMargins(mLeft, mTop, sumWidth, mBottom);
+    auto margins = textMargins();
+    setTextMargins(margins.left(), margins.top(), sumWidth, margins.bottom());
 }
 
 void ActionLineEdit::contextMenuEvent(QContextMenuEvent *e)

@@ -29,6 +29,8 @@ class ActionLineEditButton : public QAbstractButton {
     Q_OBJECT
 
 public:
+    constexpr static auto IconScaleFactor = 0.6;
+
     ActionLineEditButton(QWidget *parent);
     void     setDefaultAction(QAction *);
     QAction *defaultAction();

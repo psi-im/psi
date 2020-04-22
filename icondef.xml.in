@@ -317,7 +317,7 @@
 
         <icon>
                 <x xmlns='name'>psi/topic</x>
-        <object mime='image/png'>topic.png</object>
+        <object mime='image/png'>topic.svg</object>
         </icon>
 
         <icon>
