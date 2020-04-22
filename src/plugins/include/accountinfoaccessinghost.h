@@ -1,12 +1,14 @@
 #ifndef ACCOUNTINFOACCESSINGHOST_H
 #define ACCOUNTINFOACCESSINGHOST_H
 
+#include <QtPlugin>
+
 class QString;
 class QStringList;
 
 class AccountInfoAccessingHost {
 public:
-    virtual ~AccountInfoAccessingHost() {}
+    virtual ~AccountInfoAccessingHost() { }
 
     virtual QString     getStatus(int account)        = 0;
     virtual QString     getStatusMessage(int account) = 0;

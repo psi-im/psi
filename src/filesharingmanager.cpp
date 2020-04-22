@@ -69,7 +69,7 @@ FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new
     d->cache = new FileCache(cacheDir(), this);
 }
 
-FileSharingManager::~FileSharingManager() {}
+FileSharingManager::~FileSharingManager() { }
 
 QString FileSharingManager::cacheDir()
 {
