@@ -160,7 +160,7 @@ or
   - possible values for ${plugins}:
 
     historykeeperplugin stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
-    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin icqdieplugin
+    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin
     clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
     storagenotesplugin extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
     gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin

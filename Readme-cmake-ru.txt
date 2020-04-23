@@ -167,7 +167,7 @@
   - возможные значения для ${plugins} (можно определить по содержимому каталога plugins/generic):
 
     historykeeperplugin	stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
-    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin icqdieplugin
+    cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin
     clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
     storagenotesplugin	extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
     gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin
