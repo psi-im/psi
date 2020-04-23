@@ -299,6 +299,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
         ur.setName(j.resource());
         ur.setStatus(pa->gcContactStatus(j));
         d->userListItem->userResourceList().append(ur);
+        d->userListItem->setAvatarFactory(pa->avatarFactory());
     } else {
         d->userListItem = nullptr;
     }
