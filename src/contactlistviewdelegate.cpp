@@ -161,7 +161,7 @@ ContactListViewDelegate::Private::Private(ContactListViewDelegate *parent, Conta
     contactList->viewport()->update();
 }
 
-ContactListViewDelegate::Private::~Private() {}
+ContactListViewDelegate::Private::~Private() { }
 
 void ContactListViewDelegate::Private::optionChanged(const QString &option)
 {
@@ -506,9 +506,7 @@ QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex 
 QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
 {
     int     avSize = showAvatars_ ? avatarRect_.height() : 0;
-    QPixmap av     = index.data(ContactListModel::IsMucRole).toBool()
-        ? QPixmap()
-        : index.data(ContactListModel::AvatarRole).value<QPixmap>();
+    QPixmap av     = index.data(ContactListModel::AvatarRole).value<QPixmap>();
 
     if (av.isNull() && useDefaultAvatar_)
         av = IconsetFactory::iconPixmap("psi/default_avatar");
