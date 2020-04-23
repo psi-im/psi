@@ -382,7 +382,7 @@ bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 //------------------------------------------------------------------------------
 // ChatViewThemeJSLoader
 //------------------------------------------------------------------------------
-ChatViewJSLoader::ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent) : QObject(parent), theme(theme) {}
+ChatViewJSLoader::ChatViewJSLoader(ChatViewThemePrivate *theme, QObject *parent) : QObject(parent), theme(theme) { }
 
 const QString ChatViewJSLoader::themeId() const { return theme->id; }
 
@@ -551,7 +551,7 @@ void ChatViewJSLoader::setTransparent() { theme->transparentBackground = true; }
 //------------------------------------------------------------------------------
 ChatViewThemeJSUtil::ChatViewThemeJSUtil(ChatViewThemePrivate *theme, QObject *parent) : QObject(parent), theme(theme)
 {
-    psiDefaultAvatarUrl = "psi/static/avatar/default.png"; // relative to session url
+    psiDefaultAvatarUrl = "psi/avatar/default.png"; // relative to session url
     // may be in the future we can make different defaults. per transport for example
 
     optChangeTimer.setSingleShot(true);
@@ -631,7 +631,7 @@ QString ChatViewThemeJSUtil::hex2rgba(const QString &hex, float opacity)
 //------------------------------------------------------------------------------
 // ChatViewTheme
 //------------------------------------------------------------------------------
-ChatViewThemeSession::ChatViewThemeSession(QObject *parent) : QObject(parent) {}
+ChatViewThemeSession::ChatViewThemeSession(QObject *parent) : QObject(parent) { }
 
 ChatViewThemeSession::~ChatViewThemeSession()
 {
