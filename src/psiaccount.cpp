@@ -5790,11 +5790,11 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
     }
     GCContact *c = findGCContact(j);
     if (!c) {
-        c         = new GCContact;
-        c->jid    = j;
-        c->status = s;
+        c      = new GCContact;
+        c->jid = j;
         d->gcbank.append(c);
     }
+    c->status = s;
 
     w->presence(j.resource(), s);
 
