@@ -35,7 +35,7 @@
 
 static const int     nickConflictCode = 409;
 static const QString additionalSymbol = "_";
-static const int     timeout          = 30000;
+static const int     timeout          = 90000;
 
 MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlreadyCompleted_(false)
 {
