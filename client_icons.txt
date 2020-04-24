@@ -29,6 +29,7 @@ jabbim jabbim
 jabbin jabbin
 jajc jajc
 jappix jappix
+jimm jimm
 jitsi jitsi,sip-communicator,sip#communicator
 jtalk jtalk
 jsxc jsxc
