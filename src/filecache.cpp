@@ -353,7 +353,9 @@ void FileCache::sync(bool finishSession)
     }
 
     // register pending items and flush them if necessary
-    for (FileCacheItem *item : _pendingRegisterItems) {
+    it = QHashIterator<XMPP::Hash, FileCacheItem *>(_pendingRegisterItems);
+    while (it.hasNext()) {
+        item = it.next().value();
         toRegistry(item); // FIXME do this only after we have a file on disk (or data size = 0)
         if (_syncPolicy == InstantFLush) {
             item->flushToDisk();
