@@ -585,6 +585,7 @@ QLineEdit#le_status_text {
                 <chat_share_files type="QKeySequence"></chat_share_files>
                 <chat_templates type="QKeySequence"></chat_templates>
                 <chat_voice type="QKeySequence"></chat_voice>
+                <gchat_info type="QKeySequence"></gchat_info>
                 <gchat_clear type="QKeySequence"></gchat_clear>
                 <gchat_configure type="QKeySequence"></gchat_configure>
                 <gchat_find type="QKeySequence"></gchat_find>
