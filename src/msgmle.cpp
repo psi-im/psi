@@ -330,7 +330,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
             if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {
                 QMenu spell_menu;
                 if (!suggestions.isEmpty()) {
-                    for (QString suggestion : suggestions) {
+                    for (const QString &suggestion : suggestions) {
                         QAction *act_suggestion = spell_menu.addAction(suggestion);
                         connect(act_suggestion, SIGNAL(triggered()), SLOT(applySuggestion()));
                     }

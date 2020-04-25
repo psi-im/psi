@@ -35,7 +35,7 @@ QString PsiThemeProvider::themePath(const QString &name)
     dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
     dirs << ApplicationInfo::resourcesDir();
 
-    for (QString dir : dirs) {
+    for (const QString &dir : dirs) {
         QString fileName = dir + "/themes/" + name;
 
         QFileInfo fi(fileName);

@@ -362,7 +362,7 @@ void TabDlg::pinTab(TabbableWidget *tab) { tabWidget_->setPagePinned(tab, !tabWi
 
 void TabDlg::hideAllTab()
 {
-    foreach (TabbableWidget *tab, tabs_)
+    for (TabbableWidget *tab : tabs_)
         hideTab(tab);
 }
 

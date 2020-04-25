@@ -164,7 +164,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
     QList<QString>   shortcutGroups = options->getChildOptionNames("options.shortcuts", true, true);
 
     /* step through the shortcut groups e.g. chatdlg */
-    for (QString shortcutGroup : shortcutGroups) {
+    for (const QString &shortcutGroup : shortcutGroups) {
         topLevelItem = new QTreeWidgetItem(d->treeShortcuts);
 
         QString comment = options->getComment(shortcutGroup);
@@ -199,7 +199,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
             shortcuts = options->getChildOptionNames(optionsPath, true, true);
             /* step through the shortcuts */
-            for (QString shortcut : shortcuts) {
+            for (const QString &shortcut : shortcuts) {
 
                 keys = ShortcutManager::readShortcutsFromOptions(
                     shortcut.mid(QString("options.shortcuts").length() + 1), options);

@@ -82,7 +82,7 @@ bool loadQtTranslationHelper(const QString &language, const QString &dir, QTrans
 
 bool TranslationManager::loadQtTranslation(const QString &language)
 {
-    for (QString dir : translationDirs()) {
+    for (const QString &dir : translationDirs()) {
         if (!QFile::exists(dir))
             continue;
         if (loadQtTranslationHelper(language, dir, qt_translator_)) {
@@ -105,7 +105,7 @@ void TranslationManager::loadTranslation(const QString &language)
     }
 
     // Try loading the translation file
-    for (QString dir : translationDirs()) {
+    for (const QString &dir : translationDirs()) {
         if (!QFile::exists(dir))
             continue;
         if (translator_->load("psi_" + language, dir)) {
@@ -129,12 +129,12 @@ VarList TranslationManager::availableTranslations()
     langs.set("en", "English");
 
     // Search the paths
-    for (QString dirName : translationDirs()) {
+    for (const QString &dirName : translationDirs()) {
         if (!QFile::exists(dirName))
             continue;
 
         QDir d(dirName);
-        for (QString str : d.entryList()) {
+        for (const QString &str : d.entryList()) {
             // verify that it is a language file
             if (str.left(4) != "psi_")
                 continue;

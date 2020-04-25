@@ -537,7 +537,7 @@ void AccountModifyDlg::save()
     QString aname = def;
     int     n     = 0;
     {
-        foreach (PsiAccount *pa, psi->contactList()->accounts())
+        for (PsiAccount *pa : psi->contactList()->accounts())
             if (aname == pa->name())
                 n++;
     }

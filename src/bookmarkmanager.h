@@ -37,10 +37,10 @@ public:
     bool isAvailable() const;
     bool isBookmarked(const XMPP::Jid &);
 
-    QList<URLBookmark>        urls() const;
-    QList<ConferenceBookmark> conferences() const;
-    int                       indexOfConference(const XMPP::Jid &) const;
-    QString                   conferenceName(const XMPP::Jid &) const; // convenient method
+    const QList<URLBookmark> &       urls() const;
+    const QList<ConferenceBookmark> &conferences() const;
+    int                              indexOfConference(const XMPP::Jid &) const;
+    QString                          conferenceName(const XMPP::Jid &) const; // convenient method
 
     void setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
     void setBookmarks(const QList<URLBookmark> &);

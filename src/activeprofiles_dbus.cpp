@@ -39,9 +39,9 @@
  */
 static QString encodeAlNumD(QString in)
 {
-    QString    out;
-    QByteArray chars = in.toUtf8();
-    bool       first = true;
+    QString          out;
+    const QByteArray chars = in.toUtf8();
+    bool             first = true;
     for (char c : chars) {
         if (('A' <= c) && (c <= 'z')) {
             out += char(c);
@@ -163,7 +163,7 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 void ActiveProfiles::unsetThisProfile()
 {
     QDBusConnectionInterface *dbusIface = QDBusConnection::sessionBus().interface();
-    for (QString name : d->busNames) {
+    for (const QString &name : d->busNames) {
         dbusIface->unregisterService(name);
     }
     d->busNames.clear();

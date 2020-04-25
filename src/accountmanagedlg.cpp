@@ -296,7 +296,7 @@ void AccountManageTree::dropEvent(QDropEvent *event)
 
     if (tree) {
         QList<PsiAccount *> accountsList;
-        foreach (QTreeWidgetItem *ami, tree->findItems("*", Qt::MatchWildcard)) {
+        for (QTreeWidgetItem *ami : tree->findItems("*", Qt::MatchWildcard)) {
             accountsList.append(static_cast<AccountManageItem *>(ami)->pa.data());
         }
         emit orderChanged(accountsList);
@@ -337,7 +337,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi) : QWidget(nullptr)
     lv_accs->setSortingEnabled(true);
     lv_accs->sortByColumn(-1, Qt::AscendingOrder);
 
-    foreach (PsiAccount *pa, psi->contactList()->accounts())
+    for (PsiAccount *pa : psi->contactList()->accounts())
         new AccountManageItem(lv_accs, pa);
 
     if (lv_accs->topLevelItemCount())

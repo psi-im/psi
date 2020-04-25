@@ -48,7 +48,7 @@ ActiveContactsMenu::ActiveContactsMenu(PsiCon *psi, QWidget *parent) : QMenu(par
         if (!pa->enabled())
             continue;
 
-        QList<PsiContact *> list = pa->activeContacts();
+        const QList<PsiContact *> list = pa->activeContacts();
         for (PsiContact *pc : list) {
             new ActiveContactAction(pc->jid().full(), pc->name(),
                                     PsiIconset::instance()->statusPtr(pc->jid(), pc->status())->icon(), pa, this);

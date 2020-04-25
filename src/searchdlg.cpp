@@ -471,7 +471,7 @@ void SearchDlg::doAdd()
     if (nicksAndJids.isEmpty())
         return;
 
-    foreach (Private::NickAndJid nickJid, nicksAndJids)
+    for (Private::NickAndJid nickJid : nicksAndJids)
         emit add(nickJid.jid, nickJid.nick, QStringList(), true);
 
     if (nicksAndJids.count() > 1) {
@@ -491,7 +491,7 @@ void SearchDlg::doInfo()
     if (nicksAndJids.isEmpty())
         return;
 
-    foreach (Private::NickAndJid nickJid, nicksAndJids)
+    for (Private::NickAndJid nickJid : nicksAndJids)
         emit aInfo(nickJid.jid);
 }
 

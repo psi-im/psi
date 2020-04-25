@@ -1193,7 +1193,7 @@ void PsiCon::setGlobalStatus(const Status &s, bool withPriority, bool isManualSt
     }
 
     // globally set each account which is logged in
-    foreach (PsiAccount *account, d->contactList->enabledAccounts())
+    for (PsiAccount *account : d->contactList->enabledAccounts())
         if ((allOffline || account->isActive())
             && (!account->accountOptions().ignore_global_actions || s.type() == Status::Offline))
             account->setStatus(s, withPriority, isManualStatus);
@@ -1493,7 +1493,7 @@ void PsiCon::slotApplyOptions()
     if (!o->getOption("options.ui.contactlist.show-menubar").toBool()) {
         // check if all toolbars are disabled
         bool toolbarsVisible = false;
-        foreach (QString base, o->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+        for (QString base : o->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
             if (o->getOption(base + ".visible").toBool()) {
                 toolbarsVisible = true;
                 break;

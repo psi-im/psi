@@ -357,7 +357,7 @@ void PsiOptions::resetOption(const QString &name)
         }
         setOption(name, dev);
     } else { // internal node
-        for (QString node : nodes) {
+        for (const QString &node : nodes) {
             const QVariant &dev = defaults_->getOption(node);
             if (!dev.isValid()) {
                 continue;

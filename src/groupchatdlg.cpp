@@ -498,7 +498,7 @@ join <channel>{,<channel>} [pass{,<pass>}
             }
         }
         QStringList res;
-        for (QString cmd : all) {
+        for (const QString &cmd : all) {
             if (cmd.startsWith(query, Qt::CaseInsensitive)) {
                 res << cmd;
             }
@@ -611,7 +611,7 @@ public:
 
             QString postAdd = atStart_ ? nickSeparator + " " : "";
 
-            for (QString nick : nicks) {
+            for (const QString &nick : nicks) {
                 if (nick.left(toComplete_.length()).toLower() == toComplete_.toLower()) {
                     suggestedNicks << nick + postAdd;
                 }
@@ -2115,7 +2115,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
     if (options->getOption("options.ui.muc.use-highlighting").toBool()) {
         QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
-        for (QString word : highlightWords) {
+        for (const QString &word : highlightWords) {
             if (m.body().contains((word), Qt::CaseInsensitive)) {
                 d->alert = true;
             }

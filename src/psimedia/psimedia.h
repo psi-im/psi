@@ -241,13 +241,13 @@ public:
 
     bool isNull() const;
 
-    int              id() const;
-    QString          name() const;
-    int              clockrate() const;
-    int              channels() const;
-    int              ptime() const;
-    int              maxptime() const;
-    QList<Parameter> parameters() const;
+    int                     id() const;
+    QString                 name() const;
+    int                     clockrate() const;
+    int                     channels() const;
+    int                     ptime() const;
+    int                     maxptime() const;
+    const QList<Parameter> &parameters() const;
 
     void setId(int i);
     void setName(const QString &str);

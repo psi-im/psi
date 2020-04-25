@@ -230,7 +230,7 @@ void OptionsTabToolbars::restoreOptions()
     QString chatToolbarName      = tr("Chat");
     QString groupchatToolbarName = tr("Groupchat");
 
-    for (QString base : sortedToolbarBases) {
+    for (const QString &base : sortedToolbarBases) {
         ToolbarPrefs tb;
 
         tb.id = o->getOption(base + ".key").toString();

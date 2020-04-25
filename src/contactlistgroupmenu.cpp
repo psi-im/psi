@@ -113,7 +113,7 @@ void ContactListGroupMenu::Private::updateActions()
 void ContactListGroupMenu::Private::mucHide()
 {
     PsiAccount *pa = group->contacts().first()->account();
-    for (QString gc : pa->groupchats()) {
+    for (const QString &gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg && (gcDlg->isTabbed() || !gcDlg->isHidden()))
@@ -124,7 +124,7 @@ void ContactListGroupMenu::Private::mucHide()
 void ContactListGroupMenu::Private::mucShow()
 {
     PsiAccount *pa = group->contacts().first()->account();
-    for (QString gc : pa->groupchats()) {
+    for (const QString &gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg) {
@@ -137,7 +137,7 @@ void ContactListGroupMenu::Private::mucShow()
 void ContactListGroupMenu::Private::mucLeave()
 {
     PsiAccount *pa = group->contacts().first()->account();
-    for (QString gc : pa->groupchats()) {
+    for (const QString &gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg)

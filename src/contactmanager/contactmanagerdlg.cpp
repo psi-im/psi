@@ -230,7 +230,7 @@ void ContactManagerDlg::exportRoster(QList<UserListItem *> &users)
         for (UserListItem *u : users) {
             QDomElement contact = root.appendChild(doc.createElement("contact")).toElement();
             contact.setAttribute("jid", u->jid().bare());
-            for (QString group : u->groups()) {
+            for (const QString &group : u->groups()) {
                 contact.appendChild(doc.createElement("group")).appendChild(doc.createTextNode(group));
             }
             nick = u->name();
@@ -299,7 +299,7 @@ void ContactManagerDlg::importRoster()
         if (confirmDlg.exec() == QMessageBox::Yes) {
             um->startBatch();
             um->clear();
-            for (QString jid : jids) {
+            for (const QString &jid : jids) {
                 JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
                 r->set(Jid(jid), nicks[jid], groups[jid]);
                 r->go(true);

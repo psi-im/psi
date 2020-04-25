@@ -157,7 +157,7 @@ public:
 
     void        registerActions();
     IconAction *getAction(QString name);
-    void        updateMenu(QStringList actions, QMenu *menu);
+    void        updateMenu(const QStringList &actions, QMenu *menu);
 
     QString ToolTipText;
 
@@ -253,12 +253,12 @@ IconAction *MainWin::Private::getAction(QString name)
     return action;
 }
 
-void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
+void MainWin::Private::updateMenu(const QStringList &actions, QMenu *menu)
 {
     clearMenu(menu);
 
     IconAction *action;
-    for (QString name : actions) {
+    for (const QString &name : actions) {
         // workind around Qt/X11 bug, which displays
         // actions's text and the separator bar in Qt 4.1.1
         if (name == "separator") {
@@ -367,7 +367,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
 
     if (allInOne) {
         QString toolOpt = "options.ui.contactlist.toolbars";
-        foreach (QString base, PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
+        for (QString base : PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
             // toolbar "Show contacts" is fourth, so check m3
             if (base == toolOpt + ".m3") {
                 d->viewToolBar = new PsiToolBar(base, rosterBar, d->psi->actionList());
@@ -828,7 +828,7 @@ void MainWin::buildToolbars()
 
     PsiOptions *options  = PsiOptions::instance();
     bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
-    foreach (const QString &base, options->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+    for (const QString &base : options->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
         QString toolbarName = options->getOption(base + ".name").toString();
         if (toolbarName == "Chat" || toolbarName == "Groupchat") {
             continue;

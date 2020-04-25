@@ -38,7 +38,7 @@ void ContactManagerModel::reloadUsers()
 {
     beginResetModel();
     clear();
-    UserList *ul = pa_->userList();
+    const UserList *ul = pa_->userList();
     for (UserListItem *u : *ul) {
         if (u->inList()) {
             addContact(u);

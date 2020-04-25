@@ -253,7 +253,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     }
 
     QStringList rosterCache = o->getChildOptionNames(base + ".roster-cache", true, true);
-    for (QString rbase : rosterCache) {
+    for (const QString &rbase : rosterCache) {
         RosterItem ri;
         ri.setJid(Jid(o->getOption(rbase + ".jid").toString()));
         ri.setName(o->getOption(rbase + ".name").toString());
@@ -421,19 +421,19 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
 
     // now, check if there's groupState name entry in groupList
-    for (QString group : groupState.keys()) {
+    for (const QString &group : groupState.keys()) {
         if (!groupList.contains(group)) {
             removeList << group;
         }
     }
 
     // remove redundant groups
-    for (QString group : removeList) {
+    for (const QString &group : removeList) {
         groupState.remove(group);
     }
 
     // and finally, save the data
-    for (QString group : groupState.keys()) {
+    for (const QString &group : groupState.keys()) {
         QString groupBase = o->mapPut(base + ".group-state", group);
         o->setOption(groupBase + ".open", groupState[group].open);
         o->setOption(groupBase + ".rank", groupState[group].rank);
@@ -549,7 +549,7 @@ void OptionsMigration::lateMigration()
 
         QStringList toolbarBases
             = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-        for (QString base : toolbarBases) {
+        for (const QString &base : toolbarBases) {
             ToolbarPrefs tb;
             tb.id   = PsiOptions::instance()->getOption(base + ".key").toString();
             tb.name = PsiOptions::instance()->getOption(base + ".name").toString();
@@ -710,7 +710,7 @@ bool profileRename(const QString &oldname, const QString &name)
         return false;
 
     // and if all ok we may rename it.
-    for (QString path : paths) {
+    for (const QString &path : paths) {
         QDir d(path);
         if (!d.exists() || !d.exists(oldname))
             continue;
@@ -750,7 +750,7 @@ static bool folderRemove(const QDir &_d)
 bool profileDelete(const QStringList &paths)
 {
     bool ret = true;
-    for (QString path : paths) {
+    for (const QString &path : paths) {
         QDir d(path);
         if (!d.exists())
             continue;

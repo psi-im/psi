@@ -59,7 +59,7 @@ void SxeSession::initializeDocument(const QDomDocument &doc)
 
     // reset the document
     doc_ = QDomDocument();
-    foreach (SxeRecord *meta, recordByNodeId_.values())
+    for (SxeRecord *meta : recordByNodeId_.values())
         meta->deleteLater();
     // recordByNode_.clear();
     recordByNodeId_.clear();
@@ -110,7 +110,7 @@ bool SxeSession::processSxe(const QDomElement &sxe, const QString &id)
     // store incoming edits when queueing
     if (queueing_) {
         // Make sure the element is not already in the queue.
-        foreach (IncomingEdit i, queuedIncomingEdits_)
+        for (IncomingEdit i : queuedIncomingEdits_)
             if (i.xml == sxe)
                 return false;
 

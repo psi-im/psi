@@ -601,7 +601,7 @@ void ContactListDragView::restoreSelection(QMimeData *_mimeData)
         if (!indexes.isEmpty()) {
             setCurrentIndex(indexes.first());
             QItemSelection selection;
-            foreach (QModelIndex index, indexes)
+            for (QModelIndex index : indexes)
                 selection << QItemSelectionRange(index);
             selectionModel()->select(selection, QItemSelectionModel::Select);
         }

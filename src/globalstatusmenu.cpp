@@ -28,9 +28,9 @@ void GlobalStatusMenu::fill()
 {
     StatusMenu::fill();
     // TODO: Find another way to prevent manual toggling
-    foreach (QAction *action, statusActs)
+    for (QAction *action : statusActs)
         connect(action, SIGNAL(triggered(bool)), SLOT(preventStateChange(bool)));
-    foreach (QAction *action, presetActs)
+    for (QAction *action : presetActs)
         connect(action, SIGNAL(triggered(bool)), SLOT(preventStateChange(bool)));
     statusChanged(makeStatus(psi->currentStatusType(), psi->currentStatusMessage()));
 }

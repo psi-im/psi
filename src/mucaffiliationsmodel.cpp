@@ -104,7 +104,7 @@ bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
 
     // Insert the data
     insertRows(real_row, nb_rows, real_index);
-    for (QString text : newItems) {
+    for (const QString &text : newItems) {
         QModelIndex idx = index(real_row, 0, real_index);
         setData(idx, text);
         real_row++;
@@ -126,7 +126,7 @@ QMimeData *MUCAffiliationsModel::mimeData(const QModelIndexList &indexes) const
     QMimeData * mimeData = new QMimeData();
     QByteArray  encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    for (QModelIndex index : indexes) {
+    for (const QModelIndex &index : indexes) {
         if (index.isValid() && index.column() == 0) {
             QString text = data(index, Qt::DisplayRole).toString();
             stream << text;
@@ -204,7 +204,7 @@ MUCAffiliationsModel::AffiliationListIndex MUCAffiliationsModel::affiliationToIn
 void MUCAffiliationsModel::addItems(const QList<MUCItem> &items)
 {
     bool dirty = false;
-    for (MUCItem item : items) {
+    for (const MUCItem &item : items) {
         QModelIndex list = affiliationListIndex(item.affiliation());
         if (list.isValid() && !item.jid().isEmpty()) {
             if (!dirty) {
@@ -249,7 +249,7 @@ QList<MUCItem> MUCAffiliationsModel::changes() const
     }
 
     // Remove all old items not present in the delta
-    for (MUCItem item_old : items_old) {
+    for (const MUCItem &item_old : items_old) {
         bool found = false;
         for (MUCItem item_new : items_delta) {
             if (item_new.jid().compare(item_old.jid(), false)) {

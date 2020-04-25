@@ -73,19 +73,19 @@ void OptionsTabAvCall::restoreOptions()
     d->cb_audioOutDevice->clear();
     if (dw->audioOutputDevices().isEmpty())
         d->cb_audioOutDevice->addItem("<None>", QString());
-    foreach (const PsiMedia::Device &dev, dw->audioOutputDevices())
+    for (const PsiMedia::Device &dev : dw->audioOutputDevices())
         d->cb_audioOutDevice->addItem(dev.name(), dev.id());
 
     d->cb_audioInDevice->clear();
     if (dw->audioInputDevices().isEmpty())
         d->cb_audioInDevice->addItem("<None>", QString());
-    foreach (const PsiMedia::Device &dev, dw->audioInputDevices())
+    for (const PsiMedia::Device &dev : dw->audioInputDevices())
         d->cb_audioInDevice->addItem(dev.name(), dev.id());
 
     d->cb_videoInDevice->clear();
     if (dw->videoInputDevices().isEmpty())
         d->cb_videoInDevice->addItem("<None>", QString());
-    foreach (const PsiMedia::Device &dev, dw->videoInputDevices())
+    for (const PsiMedia::Device &dev : dw->videoInputDevices())
         d->cb_videoInDevice->addItem(dev.name(), dev.id());
 
     auto config = dw->configuration();

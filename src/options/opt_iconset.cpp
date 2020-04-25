@@ -1408,7 +1408,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
             QTreeWidgetItem *last = nullptr;
             QStringList      customicons
                 = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-            for (QString base : customicons) {
+            for (const QString &base : customicons) {
                 QString          regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
                 QString          icoset = PsiOptions::instance()->getOption(base + ".iconset").toString();
                 QTreeWidgetItem *item   = new QTreeWidgetItem(d->tw_customRoster, last);

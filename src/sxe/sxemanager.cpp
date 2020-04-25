@@ -208,7 +208,7 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         QDomElement documentEnd = doc.createElementNS(SXENS, "document-end");
 
         QString usedIds;
-        foreach (const QString usedId, negotiation->session->usedSxeIds())
+        for (const QString usedId : negotiation->session->usedSxeIds())
             usedIds += usedId + ";";
         if (usedIds.size() > 0)
             usedIds = usedIds.left(usedIds.size() - 1); // strip the last ";"
@@ -352,7 +352,7 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
         negotiation->state = SxeNegotiation::Finished;
 
         // Decode the 'used-sxe-ids' field
-        foreach (QString usedId, negotiationElement.toElement().attribute("used-sxe-ids").split(";"))
+        for (QString usedId : negotiationElement.toElement().attribute("used-sxe-ids").split(";"))
             if (usedId.size() > 0)
                 negotiation->session->addUsedSxeId(usedId);
 
@@ -539,7 +539,7 @@ SxeManager::SxeNegotiation *SxeManager::createNegotiation(const Message &message
             // ownJid is determined based on the bare part of ownJids_
 
             negotiation->groupChat = true;
-            for (QString j : ownJids_) {
+            for (const QString &j : ownJids_) {
                 if (message.from().bare() == j.left(j.indexOf("/"))) {
                     negotiation->ownJid = j;
                     break;
@@ -619,7 +619,7 @@ void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool grou
     QDomElement negotiationElement = doc.createElementNS(SXENS, "negotiation");
     QDomElement request            = doc.createElementNS(SXENS, "invitation");
     QDomElement feature            = doc.createElementNS(SXENS, "feature");
-    for (QString f : features) {
+    for (const QString &f : features) {
         feature = feature.cloneNode(false).toElement();
         feature.appendChild(doc.createTextNode(f));
         request.appendChild(feature);
@@ -771,7 +771,7 @@ void SxeManager::groupChatLeft(const Jid &jid)
             ownJids_.removeAt(i);
     }
     QList<QPointer<SxeSession>> matching = findSession(jid);
-    foreach (QPointer<SxeSession> w, matching)
+    for (QPointer<SxeSession> w : matching)
         w->endSession();
 }
 

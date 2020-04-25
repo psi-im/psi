@@ -38,7 +38,7 @@ public:
     int     id() const;
 
     IconAction *action(const QString &name) const;
-    QStringList actions() const;
+    const QStringList &actions() const;
 
     void addAction(const QString &name, IconAction *action);
 

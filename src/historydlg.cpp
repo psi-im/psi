@@ -816,7 +816,7 @@ void HistoryDlg::listAccounts()
     if ((d->psi->edb()->features() & EDB::AllAccounts) != 0)
         ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(), tr("All accounts"), QVariant());
     if (d->psi) {
-        foreach (PsiAccount *account, d->psi->contactList()->enabledAccounts())
+        for (PsiAccount *account : d->psi->contactList()->enabledAccounts())
             ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(), account->nameWithJid(),
                                      QVariant(account->id()));
     }

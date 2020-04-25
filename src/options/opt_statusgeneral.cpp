@@ -102,7 +102,7 @@ void OptionsTabStatusGeneral::applyOptions()
     d->lw_presets->setCurrentRow(-1);
 
     // Delete all presets
-    foreach (QString key, o->getChildOptionNames("options.status.presets", true, true)) {
+    for (QString key : o->getChildOptionNames("options.status.presets", true, true)) {
         o->removeOption(key, true);
     }
 
@@ -142,7 +142,7 @@ void OptionsTabStatusGeneral::restoreOptions()
     d->lw_presets->clear();
     presets.clear();
 
-    foreach (QVariant name, o->mapKeyList("options.status.presets", true)) {
+    for (QVariant name : o->mapKeyList("options.status.presets", true)) {
         StatusPreset sp;
         sp.fromOptions(o, name.toString());
         sp.filterStatus();

@@ -458,7 +458,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         if (!urls.isEmpty()) {
             QVariantMap  xepList;
             QVariantList urlList;
-            foreach (const Url &url, urls)
+            for (const Url &url : urls)
                 if (!url.url().isEmpty()) {
                     QVariantList urlItem;
                     urlItem.append(QVariant(url.url()));

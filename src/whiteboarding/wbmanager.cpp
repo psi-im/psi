@@ -155,7 +155,7 @@ void WbManager::createWbDlg(SxeSession *session)
 {
     // check if the session is a whiteboarding session
     bool whiteboarding = false;
-    for (QString feature : session->features()) {
+    for (const QString &feature : session->features()) {
         if (feature == WBNS)
             whiteboarding = true;
     }

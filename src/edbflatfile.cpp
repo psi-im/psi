@@ -160,7 +160,7 @@ quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
     if (!jid.isEmpty())
         res = quint64(ensureFile(jid)->total());
     else
-        foreach (const ContactItem &ci, contacts(accId, Contact))
+        for (const ContactItem &ci : contacts(accId, Contact))
             res += quint64(ensureFile(ci.jid)->total());
     return res;
 }

@@ -524,7 +524,7 @@ void PsiPrivacyManager::accountStateChanged()
 static QStringList findDifferences(QStringList previous, QStringList current)
 {
     QStringList result;
-    for (QString i : previous) {
+    for (const QString &i : previous) {
         if (!current.contains(i))
             result += i;
     }
@@ -548,7 +548,7 @@ void PsiPrivacyManager::newListReceived(const PrivacyList &list)
     updatedContacts += findDifferences(previouslyBlockedContacts, currentlyBlockedContacts);
     updatedContacts += findDifferences(currentlyBlockedContacts, previouslyBlockedContacts);
 
-    for (QString contact : updatedContacts) {
+    for (const QString &contact : updatedContacts) {
         // emit simulateContactOffline(contact);
 
         if (!isContactBlocked(contact)) {

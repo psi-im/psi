@@ -39,7 +39,7 @@ QStringList VarList::varsToStringList()
 void VarList::fromOptions(OptionsTree *o, QString base)
 {
     QStringList bases = o->getChildOptionNames(base, true, true);
-    for (QString ibase : bases) {
+    for (const QString &ibase : bases) {
         QString var = o->getOption(ibase + ".key").toString();
         QString val = o->getOption(ibase + ".data").toString();
         set(var, val);

@@ -112,7 +112,7 @@ WPARAM ActiveProfiles::Private::raiseCommand  = 1;
 QString ActiveProfiles::Private::pickProfile() const
 {
     QStringList profiles = getProfilesList();
-    for (QString p : profiles) {
+    for (const QString &p : profiles) {
         if (ap->isActive(p)) {
             return p;
         }

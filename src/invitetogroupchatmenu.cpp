@@ -37,7 +37,7 @@ void InviteToGroupChatMenu::updateMenu(PsiContact *contact)
     clear();
 
     for (PsiAccount *acc : controller_->contactList()->accounts()) {
-        for (QString groupChat : acc->groupchats()) {
+        for (const QString &groupChat : acc->groupchats()) {
             QAction *action = new QAction(groupChat, this);
             addAction(action);
 

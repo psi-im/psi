@@ -168,7 +168,7 @@ void IconAction::setPsiIcon(const PsiIcon *i)
 
     QAction::setIcon(is);
 
-    foreach (IconToolButton *btn, d->buttons)
+    for (IconToolButton *btn : d->buttons)
         btn->setPsiIcon(d->icon);
 #endif
 }
@@ -251,7 +251,7 @@ void IconAction::objectDestroyed()
 void IconAction::setChecked(bool b)
 {
     QAction::setChecked(b);
-    foreach (IconToolButton *btn, d->buttons)
+    for (IconToolButton *btn : d->buttons)
         btn->setChecked(b);
 }
 
@@ -260,14 +260,14 @@ void IconAction::toolButtonToggled(bool b) { setChecked(b); }
 void IconAction::setEnabled(bool e)
 {
     QAction::setEnabled(e);
-    foreach (IconToolButton *btn, d->buttons)
+    for (IconToolButton *btn : d->buttons)
         btn->setEnabled(e);
 }
 
 void IconAction::setText(const QString &t)
 {
     QAction::setText(t);
-    foreach (IconToolButton *btn, d->buttons)
+    for (IconToolButton *btn : d->buttons)
         btn->setText(t);
 }
 
@@ -310,7 +310,7 @@ void IconAction::setIcon(const QIcon &ic)
 {
     QAction::setIcon(ic);
 
-    foreach (IconToolButton *btn, d->buttons)
+    for (IconToolButton *btn : d->buttons)
         btn->setIcon(ic);
 }
 
@@ -453,7 +453,7 @@ bool IconActionGroup::addTo(QWidget *w)
         QMenu *popup = static_cast<QMenu *>(w);
 
         QList<QAction *> list = findChildren<QAction *>();
-        foreach (QAction *action, list)
+        for (QAction *action : list)
             popup->addAction(action);
 
         return true;

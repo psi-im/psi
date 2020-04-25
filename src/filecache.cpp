@@ -144,7 +144,7 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
     _registry->loadOptions(_cacheDir + "/cache.xml", "items", ApplicationInfo::fileCacheNS());
 
     bool needCleanup = false;
-    foreach (const QString &prefix, _registry->getChildOptionNames("", true, true)) {
+    for (const QString &prefix : _registry->getChildOptionNames("", true, true)) {
         QByteArray id = QByteArray::fromHex(prefix.section('.', -1).midRef(1).toLatin1());
         if (id.isEmpty())
             continue;

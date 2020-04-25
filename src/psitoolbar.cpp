@@ -97,7 +97,7 @@ void PsiToolBar::initialize()
              << "event_notifier"
              << "spacer";
 
-    for (QString actionName : o->getOption(base_ + ".actions").toStringList()) {
+    for (const QString &actionName : o->getOption(base_ + ".actions").toStringList()) {
         IconAction *action = actions.action(actionName);
 
         if (action) {

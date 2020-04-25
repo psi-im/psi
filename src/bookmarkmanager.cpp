@@ -45,9 +45,9 @@ public:
         QDomElement storage = doc()->createElementNS("storage:bookmarks", "storage");
         prvt.appendChild(storage);
 
-        foreach (URLBookmark u, urls)
+        for (URLBookmark u : urls)
             storage.appendChild(u.toXml(*doc()));
-        foreach (ConferenceBookmark c, conferences)
+        for (ConferenceBookmark c : conferences)
             storage.appendChild(c.toXml(*doc()));
     }
 
@@ -141,9 +141,9 @@ void BookmarkManager::removeConference(const XMPP::Jid &j)
     }
 }
 
-QList<URLBookmark> BookmarkManager::urls() const { return urls_; }
+const QList<URLBookmark> &BookmarkManager::urls() const { return urls_; }
 
-QList<ConferenceBookmark> BookmarkManager::conferences() const { return conferences_; }
+const QList<ConferenceBookmark> &BookmarkManager::conferences() const { return conferences_; }
 
 int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
 {

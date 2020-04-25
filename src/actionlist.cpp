@@ -68,7 +68,7 @@ int ActionList::id() const { return d->id; }
 
 IconAction *ActionList::action(const QString &name) const { return d->actions[name]; }
 
-QStringList ActionList::actions() const { return d->sortedActions; }
+const QStringList &ActionList::actions() const { return d->sortedActions; }
 
 void ActionList::addAction(const QString &name, IconAction *action)
 {
@@ -167,7 +167,7 @@ QStringList MetaActionList::actionLists() const
 {
     QStringList names;
 
-    foreach (ActionList *l, d->lists)
+    for (ActionList *l : d->lists)
         names << l->name();
 
     return names;

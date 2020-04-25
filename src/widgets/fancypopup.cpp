@@ -162,7 +162,7 @@ QPoint FancyPopup::Private::position()
     if (destination.y() < 0)
         destination.setY(0);
 
-    foreach (FancyPopup *p, prevPopups)
+    for (FancyPopup *p : prevPopups)
         destination.setY(destination.y() + popupLayout * p->height());
 
     return destination;
@@ -261,7 +261,7 @@ void FancyPopup::show()
 
     // QLabels with rich contents don't propagate mouse clicks
     QList<QLabel *> labels = findChildren<QLabel *>();
-    foreach (QLabel *label, labels)
+    for (QLabel *label : labels)
         label->installEventFilter(d);
 
     // position popup

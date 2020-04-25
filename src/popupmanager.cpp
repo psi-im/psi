@@ -92,7 +92,7 @@ public:
         else if (type == AlertOffline || type == AlertStatusChange || type == AlertNone || type == AlertComposing)
             type = AlertOnline;
 
-        foreach (const OptionValue &v, options_)
+        for (const OptionValue &v : options_)
             if (v.id == type)
                 return v.optionValue * 1000;
 
@@ -200,7 +200,7 @@ const QString PopupManager::optionPath(const QString &name) const
 const QStringList PopupManager::optionsNamesList() const
 {
     QStringList ret;
-    foreach (const OptionValue &v, d->options_)
+    for (const OptionValue &v : d->options_)
         ret.append(v.optionName);
 
     return ret;

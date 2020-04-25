@@ -74,7 +74,7 @@ void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount *account, cons
     if (!account || !controller_)
         return;
 
-    foreach (EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
+    for (EventQueue::PsiEventId p : account->eventQueue()->eventsFor(jid, false)) {
         PsiEvent::Ptr e = p.second;
         if (e->type() == PsiEvent::Auth) {
             AuthEvent::Ptr authEvent = e.staticCast<AuthEvent>();
@@ -94,7 +94,7 @@ void ContactUpdatesManager::removeToastersFor(PsiAccount *account, const XMPP::J
     if (!account || !controller_)
         return;
 
-    foreach (EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
+    for (EventQueue::PsiEventId p : account->eventQueue()->eventsFor(jid, false)) {
         PsiEvent::Ptr e = p.second;
         if (e->type() == PsiEvent::Message) {
             account->eventQueue()->dequeue(e);

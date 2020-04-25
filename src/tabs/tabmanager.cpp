@@ -61,7 +61,7 @@ TabDlg *TabManager::newTabs(QWidget *widget)
 {
     QChar   kind = tabKind(widget);
     QString group, grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
-    for (QString g : grouping.split(':')) {
+    for (const QString &g : grouping.split(':')) {
         if (g.contains(kind)) {
             group = g;
             break;

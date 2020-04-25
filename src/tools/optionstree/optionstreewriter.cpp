@@ -38,7 +38,7 @@ bool OptionsTreeWriter::write(QIODevice *device)
 
 void OptionsTreeWriter::writeTree(const VariantTree *tree)
 {
-    for (QString node : tree->trees_.keys()) {
+    for (const QString &node : tree->trees_.keys()) {
         Q_ASSERT(!node.isEmpty());
         writeStartElement(node);
         if (tree->comments_.contains(node))
@@ -48,7 +48,7 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
         writeEndElement();
     }
 
-    for (QString child : tree->values_.keys()) {
+    for (const QString &child : tree->values_.keys()) {
         Q_ASSERT(!child.isEmpty());
         writeStartElement(child);
         if (tree->comments_.contains(child))
@@ -58,7 +58,7 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
         writeEndElement();
     }
 
-    for (QString unknown : tree->unknowns2_.keys()) {
+    for (const QString &unknown : tree->unknowns2_.keys()) {
         writeUnknown(tree->unknowns2_[unknown]);
     }
 }
@@ -67,7 +67,7 @@ void OptionsTreeWriter::writeVariant(const QVariant &variant)
 {
     writeAttribute("type", variant.typeName());
     if (variant.type() == QVariant::StringList) {
-        for (QString s : variant.toStringList()) {
+        for (const QString &s : variant.toStringList()) {
             writeStartElement("item");
             writeCharacters(s);
             writeEndElement();

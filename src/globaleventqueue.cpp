@@ -35,7 +35,7 @@ const QList<int> &GlobalEventQueue::ids() const { return ids_; }
 PsiEvent::Ptr GlobalEventQueue::peek(int id) const
 {
     Q_ASSERT(ids_.contains(id));
-    foreach (EventItem *item, items_)
+    for (EventItem *item : items_)
         if (item->id() == id)
             return item->event();
     return PsiEvent::Ptr();

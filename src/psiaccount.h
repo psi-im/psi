@@ -262,7 +262,7 @@ public:
     // sucks sucks sucks sucks sucks sucks sucks
     GCContact *  findGCContact(const Jid &j) const;
     XMPP::Status gcContactStatus(const Jid &j);
-    QStringList  groupchats() const;
+    const QStringList &groupchats() const;
 
     void toggleSecurity(const Jid &, bool);
     bool ensureKey(const Jid &);

@@ -51,7 +51,7 @@ public:
                  << "hunspell";
 #endif
         QString libs, incs;
-        foreach (const QString libname, libnames)
+        for (const QString libname : libnames)
             if (conf->findSimpleLibrary("QC_WITH_HUNSPELL_INC", "QC_WITH_HUNSPELL_LIB", "hunspell/hunspell.hxx",
                                         libname, &incs, &libs)) {
                 break;

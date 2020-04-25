@@ -494,7 +494,7 @@ QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex 
     if (vList.isEmpty())
         return pixList;
 
-    for (QString client : vList) {
+    for (const QString &client : vList) {
         const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
         if (!pix.isNull())
             pixList.push_back(pix);

@@ -51,7 +51,7 @@ PsiContactList::~PsiContactList()
 
     enabledAccounts_.clear();
 
-    foreach (PsiAccount *account, toDelete)
+    for (PsiAccount *account : toDelete)
         delete account;
 }
 
@@ -110,7 +110,7 @@ const QList<PsiAccount *> &PsiContactList::enabledAccounts() const { return enab
  */
 bool PsiContactList::haveActiveAccounts() const
 {
-    foreach (PsiAccount *account, enabledAccounts_)
+    for (PsiAccount *account : enabledAccounts_)
         if (account->isActive())
             return true;
     return false;
@@ -118,7 +118,7 @@ bool PsiContactList::haveActiveAccounts() const
 
 bool PsiContactList::haveAvailableAccounts() const
 {
-    foreach (PsiAccount *account, enabledAccounts_)
+    for (PsiAccount *account : enabledAccounts_)
         if (account->isAvailable())
             return true;
     return false;
@@ -134,7 +134,7 @@ bool PsiContactList::haveEnabledAccounts() const { return !enabledAccounts_.isEm
  */
 bool PsiContactList::haveConnectingAccounts() const
 {
-    foreach (PsiAccount *account, enabledAccounts())
+    for (PsiAccount *account : enabledAccounts())
         if (account->isActive() && !account->isAvailable())
             return true;
 
@@ -222,7 +222,7 @@ void PsiContactList::setAccountEnabled(PsiAccount *account, bool enabled) { acco
 int PsiContactList::queueCount() const
 {
     int total = 0;
-    foreach (PsiAccount *account, enabledAccounts_)
+    for (PsiAccount *account : enabledAccounts_)
         total += account->eventQueue()->count();
     return total;
 }
@@ -230,7 +230,7 @@ int PsiContactList::queueCount() const
 int PsiContactList::queueContactCount() const
 {
     int total = 0;
-    foreach (PsiAccount *account, enabledAccounts_)
+    for (PsiAccount *account : enabledAccounts_)
         total += account->eventQueue()->contactCount();
     return total;
 }
@@ -273,7 +273,7 @@ void PsiContactList::loadAccounts(const UserAccountList &_list)
 {
     UserAccountList list = _list;
     emit            beginBulkContactUpdate();
-    foreach (UserAccount account, list)
+    for (UserAccount account : list)
         loadAccount(account);
     emit endBulkContactUpdate();
 
@@ -455,7 +455,7 @@ void PsiContactList::accountEnabledChanged()
 
 PsiAccount *PsiContactList::getAccount(const QString &id) const
 {
-    foreach (PsiAccount *account, accounts())
+    for (PsiAccount *account : accounts())
         if (account->id() == id)
             return account;
 
@@ -464,7 +464,7 @@ PsiAccount *PsiContactList::getAccount(const QString &id) const
 
 PsiAccount *PsiContactList::getAccountByJid(const XMPP::Jid &jid) const
 {
-    foreach (PsiAccount *account, accounts())
+    for (PsiAccount *account : accounts())
         if (account->jid().compare(jid, false))
             return account;
 
@@ -484,7 +484,7 @@ void PsiContactList::addEnabledAccount(PsiAccount *account)
 
     emit beginBulkContactUpdate();
     accountAddedContact(account->selfContact());
-    foreach (PsiContact *contact, account->contactList())
+    for (PsiContact *contact : account->contactList())
         accountAddedContact(contact);
     emit endBulkContactUpdate();
 }
@@ -496,7 +496,7 @@ void PsiContactList::removeEnabledAccount(PsiAccount *account)
 
     emit beginBulkContactUpdate();
     accountRemovedContact(account->selfContact());
-    foreach (PsiContact *contact, account->contactList())
+    for (PsiContact *contact : account->contactList())
         accountRemovedContact(contact);
     emit endBulkContactUpdate();
     disconnect(account, SIGNAL(addedContact(PsiContact *)), this, SLOT(accountAddedContact(PsiContact *)));

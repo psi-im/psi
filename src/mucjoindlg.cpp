@@ -159,7 +159,7 @@ void MUCJoinDlg::updateFavorites()
         ui_.lwFavorites->addItem(item);
     }
 
-    for (QString j : controller_->recentGCList()) {
+    for (const QString &j : controller_->recentGCList()) {
         Jid jid(j);
         if (!jid.isValid()) {
             continue;

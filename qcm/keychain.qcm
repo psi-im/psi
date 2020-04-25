@@ -49,7 +49,7 @@ public:
         libnames << "qt5keychain";
 #endif
         QString libName;
-        foreach (const QString l, libnames)
+        for (const QString l : libnames)
             if (conf->findLibrary(l, &s)) {
                 libName = l;
                 break;

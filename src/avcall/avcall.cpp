@@ -544,7 +544,7 @@ private:
         if (transmitAudio) {
             QList<JingleRtpPayloadType>  payloadTypes = sess->remoteAudioPayloadTypes();
             QList<PsiMedia::PayloadInfo> list;
-            foreach (const JingleRtpPayloadType &pt, payloadTypes)
+            for (const JingleRtpPayloadType &pt : payloadTypes)
                 list += payloadTypeToPayloadInfo(pt);
             rtp.setRemoteAudioPreferences(list);
         }
@@ -552,7 +552,7 @@ private:
         if (transmitVideo) {
             QList<JingleRtpPayloadType>  payloadTypes = sess->remoteVideoPayloadTypes();
             QList<PsiMedia::PayloadInfo> list;
-            foreach (const JingleRtpPayloadType &pt, payloadTypes)
+            for (const JingleRtpPayloadType &pt : payloadTypes)
                 list += payloadTypeToPayloadInfo(pt);
             rtp.setRemoteVideoPreferences(list);
         }

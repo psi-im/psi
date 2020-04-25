@@ -189,7 +189,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
         }
     }
     // Not in roster list
-    foreach (const EDB::ContactItem &ci, psi->edb()->contacts(acc_id, EDB::Contact)) {
+    for (const EDB::ContactItem &ci : psi->edb()->contacts(acc_id, EDB::Contact)) {
         QString cId = ci.accId + "|" + ci.jid.bare();
         if (c_list.value(cId))
             continue;
@@ -204,7 +204,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
     }
     // Private messages
     if (dispPrivateContacts) {
-        foreach (const EDB::ContactItem &ci, psi->edb()->contacts(acc_id, EDB::GroupChatContact)) {
+        for (const EDB::ContactItem &ci : psi->edb()->contacts(acc_id, EDB::GroupChatContact)) {
             if (!confPrivate) {
                 confPrivate = new TreeItem(Group, tr("Private messages"), "conf-private", 11);
                 rootItem->appendChild(confPrivate);

@@ -40,13 +40,13 @@ public:
             for (;;) {
                 s = conf->getenv("QC_WITH_ZLIB_LIB");
                 if (!s.isEmpty()) {
-                    foreach (const QString l, libNames)
+                    for (const QString l : libNames)
                         if (conf->checkLibrary(s, l)) {
                             libName = l;
                             break;
                         }
                 } else {
-                    foreach (const QString l, libNames)
+                    for (const QString l : libNames)
                         if (conf->findLibrary(l, &s)) {
                             libName = l;
                             break;

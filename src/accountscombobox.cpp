@@ -83,7 +83,7 @@ void AccountsComboBox::updateAccounts()
 {
     clear();
 
-    foreach (PsiAccount *account, accounts())
+    for (PsiAccount *account : accounts())
         addItem(account->nameWithJid());
 
     if (accounts().indexOf(account_) == -1) {
@@ -97,7 +97,7 @@ QList<PsiAccount *> AccountsComboBox::accounts() const
 {
     QList<PsiAccount *> result;
     if (controller_) {
-        foreach (PsiAccount *account, controller_->contactList()->enabledAccounts())
+        for (PsiAccount *account : controller_->contactList()->enabledAccounts())
             if (!onlineOnly_ || account->isAvailable())
                 result << account;
     }

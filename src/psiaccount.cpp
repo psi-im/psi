@@ -544,7 +544,7 @@ private slots:
 public:
     PsiContact *findContact(const Jid &jid) const
     {
-        foreach (PsiContact *contact, contacts)
+        for (PsiContact *contact : contacts)
             if (contact->find(jid))
                 return contact;
 
@@ -566,8 +566,8 @@ public:
     {
         QStringList groupList;
 
-        foreach (PsiContact *contact, contacts)
-            foreach (QString group, contact->userListItem().groups())
+        for (PsiContact *contact : contacts)
+            for (QString group : contact->userListItem().groups())
                 if (!groupList.contains(group))
                     groupList.append(group);
 
@@ -2844,7 +2844,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
                 m.setType("chat");
             else if (type == "current-open") {
                 c = nullptr;
-                foreach (ChatDlg *cl, findChatDialogs(m.from(), false)) {
+                for (ChatDlg *cl : findChatDialogs(m.from(), false)) {
                     if (cl->autoSelectContact() || cl->jid().resource().isEmpty()
                         || m.from().resource() == cl->jid().resource()) {
                         c = cl;
@@ -3347,7 +3347,7 @@ bool PsiAccount::validRosterExchangeItem(const RosterExchangeItem &item)
         if (i == d->client->roster().end())
             return false;
 
-        for (QString group : item.groups()) {
+        for (const QString &group : item.groups()) {
             if (!(*i).groups().contains(group))
                 return false;
         }
@@ -3368,7 +3368,7 @@ ChatDlg *PsiAccount::findChatDialogEx(const Jid &jid, bool ignoreResource) const
 {
     ChatDlg *cm1 = nullptr;
     ChatDlg *cm2 = nullptr;
-    foreach (ChatDlg *cl, findChatDialogs(jid, false)) {
+    for (ChatDlg *cl : findChatDialogs(jid, false)) {
         if (cl->autoSelectContact() || ignoreResource)
             return cl;
         if (!cm1 && jid.resource() == cl->jid().resource()) {
@@ -3479,7 +3479,7 @@ void PsiAccount::openAddUserDlg(const Jid &jid, const QString &nick, const QStri
             services += u->jid().full();
             names += JIDUtil::nickOrJid(u->name(), u->jid().full());
         }
-        for (QString group : u->groups()) {
+        for (const QString &group : u->groups()) {
             if (!gl.contains(group))
                 gl.append(group);
         }
@@ -3637,7 +3637,7 @@ void PsiAccount::simulateRosterOffline()
     emit beginBulkContactUpdate();
 
     notifyOnlineOk = false;
-    foreach (UserListItem *u, d->userList)
+    for (UserListItem *u : d->userList)
         simulateContactOffline(u);
 
     // self
@@ -4984,7 +4984,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 #endif
         if (m.messageReceipt() == ReceiptReceived) {
             if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
-                foreach (ChatDlg *c, findChatDialogs(e->from(), false)) {
+                for (ChatDlg *c : findChatDialogs(e->from(), false)) {
                     if (c->autoSelectContact() || c->jid().resource().isEmpty()
                         || e->from().resource() == c->jid().resource()) {
                         c->incomingMessage(m);
@@ -5723,7 +5723,7 @@ Status PsiAccount::gcContactStatus(const Jid &j)
     }
 }
 
-QStringList PsiAccount::groupchats() const { return d->groupchats; }
+const QStringList &PsiAccount::groupchats() const { return d->groupchats; }
 
 void PsiAccount::client_groupChatJoined(const Jid &j)
 {
@@ -5829,7 +5829,7 @@ QStringList PsiAccount::hiddenChats(const Jid &j) const
 {
     QStringList list;
 
-    foreach (ChatDlg *chat, findDialogs<ChatDlg *>(j, false))
+    for (ChatDlg *chat : findDialogs<ChatDlg *>(j, false))
         list += chat->jid().resource();
 
     return list;

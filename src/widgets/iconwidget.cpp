@@ -423,7 +423,7 @@ public:
         h = icon.pixmap().height();
 
         QStringList str;
-        foreach (PsiIcon::IconText t, icon.text())
+        for (PsiIcon::IconText t : icon.text())
             str += t.text;
 
         if (!str.isEmpty())

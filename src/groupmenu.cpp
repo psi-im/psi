@@ -41,7 +41,7 @@ void GroupMenu::updateMenu(PsiContact *contact)
     int         n         = 0;
     QStringList groupList = contact->account()->groupList();
     groupList.removeAll(PsiContact::hiddenGroupName());
-    for (QString groupName : groupList) {
+    for (const QString &groupName : groupList) {
         QString displayName = groupName;
         if (displayName.isEmpty())
             displayName = PsiContact::generalGroupName();

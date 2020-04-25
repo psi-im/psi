@@ -139,7 +139,7 @@ public:
             }
         }
         QStringList res;
-        for (QString cmd : all) {
+        for (const QString &cmd : all) {
             if (cmd.startsWith(query)) {
                 res << cmd;
             }

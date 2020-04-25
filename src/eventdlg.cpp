@@ -734,7 +734,7 @@ void EventDlg::init()
     if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
         toolButtons << d->tb_pgp;
     toolButtons << d->tb_icon;
-    foreach (IconToolButton *toolButton, toolButtons)
+    for (IconToolButton *toolButton : toolButtons)
         if (toolButton)
             toolButton->setFocusPolicy(Qt::NoFocus);
 
@@ -1395,7 +1395,7 @@ void EventDlg::doSend()
         if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty()
             && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
             m.setTo(d->pa->serverInfoManager()->multicastService());
-            for (QString recipient : list) {
+            for (const QString &recipient : list) {
                 m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
             }
             d->pa->dj_sendMessage(m, true);

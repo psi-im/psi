@@ -88,10 +88,10 @@ void ResourceMenu::contactUpdated()
     clear();
 
     if (!activeChatsMode_) {
-        foreach (const UserResource &resource, contact_->userResourceList())
+        for (const UserResource &resource : contact_->userResourceList())
             addResource(resource);
     } else {
-        for (QString resourceName : contact_->account()->hiddenChats(contact_->jid())) {
+        for (const QString &resourceName : contact_->account()->hiddenChats(contact_->jid())) {
             XMPP::Status::Type              status;
             const UserResourceList &        rl  = contact_->userResourceList();
             UserResourceList::ConstIterator uit = rl.find(resourceName);

@@ -246,7 +246,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand &c, const Jid &)
 
 AHCommand RCLeaveMucServer::execute(const AHCommand &c, const Jid & /*j*/)
 {
-    for (QString gc : manager()->account()->groupchats()) {
+    for (const QString &gc : manager()->account()->groupchats()) {
         Jid        mj(gc);
         GCMainDlg *gcDlg = manager()->account()->findDialog<GCMainDlg *>(mj.bare());
         if (gcDlg)

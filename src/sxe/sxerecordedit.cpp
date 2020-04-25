@@ -62,7 +62,7 @@ QDomElement SxeRecordEdit::xml(QDomDocument &doc) const
 
     edit.setAttribute("rid", rid_);
     edit.setAttribute("version", version_);
-    foreach (Key key, changes_.keys())
+    for (Key key : changes_.keys())
         edit.setAttribute(keyToString(key), changes_[key]);
 
     return edit;

@@ -258,7 +258,7 @@ public:
         printf("IceStopper done\n");
     }
 
-    void start(XMPP::UdpPortReserver *_portReserver, const QList<XMPP::Ice176 *> iceList)
+    void start(XMPP::UdpPortReserver *_portReserver, QList<XMPP::Ice176 *> &&iceList)
     {
         if (_portReserver) {
             portReserver = _portReserver;
@@ -706,7 +706,7 @@ private:
 
             // pass ownership of portReserver, iceA, and iceV
             IceStopper *iceStopper = new IceStopper;
-            iceStopper->start(portReserver, list);
+            iceStopper->start(portReserver, std::move(list));
 
             portReserver = nullptr;
         } else {
@@ -746,8 +746,9 @@ private:
             printf("TURN w/ TCP service: %s;%d\n", qPrintable(stunRelayTcpAddr.toString()), stunRelayTcpPort);
 
         QList<QHostAddress> listenAddrs;
-        for (const QNetworkInterface &ni : QNetworkInterface::allInterfaces()) {
-            QList<QNetworkAddressEntry> entries = ni.addressEntries();
+        auto const          interfaces = QNetworkInterface::allInterfaces();
+        for (const QNetworkInterface &ni : interfaces) {
+            const auto entries = ni.addressEntries();
             for (const QNetworkAddressEntry &na : entries) {
                 QHostAddress h = na.ip();
 
@@ -787,7 +788,7 @@ private:
 
         if (!strList.isEmpty()) {
             printf("Host addresses:\n");
-            foreach (const QString &s, strList)
+            for (const QString &s : strList)
                 printf("  %s\n", qPrintable(s));
         }
 
@@ -1329,7 +1330,7 @@ JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
 
         // pass ownership of portReserver, iceA, and iceV
         IceStopper *iceStopper = new IceStopper;
-        iceStopper->start(portReserver, list);
+        iceStopper->start(portReserver, std::move(list));
     }
 
     rtpActivityTimer->setParent(nullptr);

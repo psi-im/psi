@@ -87,7 +87,7 @@ PluginManager *PluginManager::instance()
 PluginManager::PluginManager() : QObject(nullptr), psi_(nullptr)
 {
     updatePluginsList();
-    for (QString path : pluginDirs()) {
+    for (const QString &path : pluginDirs()) {
         QCA::DirWatch *dw = new QCA::DirWatch(path, this);
         connect(dw, SIGNAL(changed()), SLOT(dirsChanged()));
         dirWatchers_.append(dw);

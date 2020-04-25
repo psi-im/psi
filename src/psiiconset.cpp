@@ -326,7 +326,7 @@ public:
     {
         QList<Iconset *> emo;
 
-        for (QString name : PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList()) {
+        for (const QString &name : PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList()) {
             Iconset *is = new Iconset;
             if (is->load(iconsetPath("emoticons/" + name))) {
                 // PsiIconset::removeAnimation(is);
@@ -411,14 +411,14 @@ bool PsiIconset::loadRoster()
 
     QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
     d->cur_custom_status.clear();
-    for (QString base : customicons) {
+    for (const QString &base : customicons) {
         QString regexp  = PsiOptions::instance()->getOption(base + ".regexp").toString();
         QString iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
         rosterIconsets << iconset;
         d->cur_custom_status.insert(regexp, iconset);
     }
 
-    for (QString it2 : rosterIconsets) {
+    for (const QString &it2 : rosterIconsets) {
         if (it2 == PsiOptions::instance()->getOption("options.iconsets.status").toString()) {
             continue;
         }
@@ -728,7 +728,7 @@ void PsiIconset::reloadRoster()
     }
 
     QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-    for (QString base : customicons) {
+    for (const QString &base : customicons) {
         QString regexp  = PsiOptions::instance()->getOption(base + ".regexp").toString();
         QString iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
         cur_custom_status.insert(regexp, iconset);

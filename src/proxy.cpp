@@ -421,7 +421,7 @@ void ProxyForObject::save()
 {
     items_       = tmp_;
     QString base = "proxy.";
-    for (QString obj : items_.keys()) {
+    for (const QString &obj : items_.keys()) {
         QString val = items_.value(obj);
         ot_->setOption(base + obj, QVariant(val));
     }
@@ -505,7 +505,7 @@ ProxyItemList ProxyManager::itemList() const
     QList<ProxyItem> proxies;
     QString          opt  = "proxies";
     QStringList      keys = d->o->getChildOptionNames(opt, true, true);
-    for (QString key : keys) {
+    for (const QString &key : keys) {
         proxies += getItem(key.mid(opt.length() + 1));
     }
     return proxies;
@@ -576,7 +576,7 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 #else
     auto oldSet = old.toSet();
 #endif
-    for (QString key : oldSet - current) {
+    for (const QString &key : oldSet - current) {
         d->o->removeOption("proxies." + key, true);
         emit proxyRemoved(key);
     }
