@@ -38,7 +38,7 @@ signals:
     void request(const PsiHttpAuthRequest &);
 };
 
-HttpAuthListener::HttpAuthListener(XMPP::Task *parent) : XMPP::Task(parent) {}
+HttpAuthListener::HttpAuthListener(XMPP::Task *parent) : XMPP::Task(parent) { }
 
 bool HttpAuthListener::take(const QDomElement &e)
 {

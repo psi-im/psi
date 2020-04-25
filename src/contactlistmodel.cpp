@@ -54,7 +54,7 @@ ContactListModel::Private::Private(ContactListModel *parent) :
     hidden    = PsiOptions::instance()->getOption(HIDDEN_OPTIONS, QStringList()).toStringList();
 }
 
-ContactListModel::Private::~Private() {}
+ContactListModel::Private::~Private() { }
 
 void ContactListModel::Private::realAddContact(PsiContact *contact)
 {

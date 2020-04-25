@@ -43,7 +43,7 @@ OptionsTabApplication::OptionsTabApplication(QObject *parent) :
 #endif
 }
 
-OptionsTabApplication::~OptionsTabApplication() {}
+OptionsTabApplication::~OptionsTabApplication() { }
 
 QWidget *OptionsTabApplication::widget()
 {
@@ -139,7 +139,7 @@ void OptionsTabApplication::applyOptions()
     QString curLang = TranslationManager::instance()->currentLanguage();
     QString lang    = d->cb_lang->currentText();
     QString itemData;
-    foreach (VarListItem it, TranslationManager::instance()->availableTranslations()) {
+    for (VarListItem it : TranslationManager::instance()->availableTranslations()) {
         if (it.data() == lang) {
             itemData = it.key();
             break;
@@ -207,7 +207,7 @@ void OptionsTabApplication::restoreOptions()
     VarList     vList = TranslationManager::instance()->availableTranslations();
     QStringList lang  = vList.varsToStringList();
     d->cb_lang->addItem(tr("Default"));
-    foreach (QString item, lang) {
+    for (QString item : lang) {
         d->cb_lang->addItem(vList.get(item));
     }
     QString   curLang = TranslationManager::instance()->currentLanguage();

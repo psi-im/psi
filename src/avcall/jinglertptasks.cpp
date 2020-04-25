@@ -86,7 +86,7 @@ static QDomElement payloadTypeToElement(QDomDocument *doc, const JingleRtpPayloa
         e.setAttribute("ptime", QString::number(type.ptime));
     if (type.maxptime != -1)
         e.setAttribute("maxptime", QString::number(type.maxptime));
-    foreach (const JingleRtpPayloadType::Parameter &p, type.parameters) {
+    for (const JingleRtpPayloadType::Parameter &p : type.parameters) {
         QDomElement pe = doc->createElement("parameter");
         pe.setAttribute("name", p.name);
         pe.setAttribute("value", p.value);
@@ -235,9 +235,9 @@ static JingleRtpReason elementToReason(const QDomElement &e)
 //----------------------------------------------------------------------------
 // JT_JingleRtp
 //----------------------------------------------------------------------------
-JT_JingleRtp::JT_JingleRtp(XMPP::Task *parent) : XMPP::Task(parent) {}
+JT_JingleRtp::JT_JingleRtp(XMPP::Task *parent) : XMPP::Task(parent) { }
 
-JT_JingleRtp::~JT_JingleRtp() {}
+JT_JingleRtp::~JT_JingleRtp() { }
 
 void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelope)
 {
@@ -256,7 +256,7 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
         //   a reason for termination
         query.appendChild(reasonToElement(doc(), envelope.reason));
     } else {
-        foreach (const JingleRtpContent &c, envelope.contentList) {
+        for (const JingleRtpContent &c : envelope.contentList) {
             QDomElement content = doc()->createElement("content");
             content.setAttribute("creator", c.creator);
             if (!c.disposition.isEmpty())
@@ -269,7 +269,7 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
                 // TODO: ssrc, bitrate, crypto
                 QDomElement description = doc()->createElementNS("urn:xmpp:jingle:apps:rtp:1", "description");
                 description.setAttribute("media", c.desc.media);
-                foreach (const JingleRtpPayloadType &pt, c.desc.payloadTypes) {
+                for (const JingleRtpPayloadType &pt : c.desc.payloadTypes) {
                     QDomElement p = payloadTypeToElement(doc(), pt);
                     if (!p.isNull())
                         description.appendChild(p);
@@ -281,7 +281,7 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
                 QDomElement transport = doc()->createElementNS("urn:xmpp:jingle:transports:ice-udp:1", "transport");
                 transport.setAttribute("ufrag", c.trans.user);
                 transport.setAttribute("pwd", c.trans.pass);
-                foreach (const XMPP::Ice176::Candidate &ic, c.trans.candidates) {
+                for (const XMPP::Ice176::Candidate &ic : c.trans.candidates) {
                     QDomElement e = candidateToElement(doc(), ic);
                     if (!e.isNull())
                         transport.appendChild(e);
@@ -314,9 +314,9 @@ bool JT_JingleRtp::take(const QDomElement &x)
 //----------------------------------------------------------------------------
 // JT_PushJingleRtp
 //----------------------------------------------------------------------------
-JT_PushJingleRtp::JT_PushJingleRtp(XMPP::Task *parent) : XMPP::Task(parent) {}
+JT_PushJingleRtp::JT_PushJingleRtp(XMPP::Task *parent) : XMPP::Task(parent) { }
 
-JT_PushJingleRtp::~JT_PushJingleRtp() {}
+JT_PushJingleRtp::~JT_PushJingleRtp() { }
 
 void JT_PushJingleRtp::respondSuccess(const XMPP::Jid &to, const QString &id)
 {

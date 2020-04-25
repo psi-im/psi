@@ -27,7 +27,7 @@ ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
 {
 }
 
-ThemePrivate::~ThemePrivate() {}
+ThemePrivate::~ThemePrivate() { }
 
 bool ThemePrivate::load() { return false; }
 
@@ -58,7 +58,7 @@ class FSResourceLoader : public Theme::ResourceLoader {
     bool                    caseInsensetive;
 
 public:
-    FSResourceLoader(const QDir &d, bool caseInsensetive) : baseDir(d), caseInsensetive(caseInsensetive) {}
+    FSResourceLoader(const QDir &d, bool caseInsensetive) : baseDir(d), caseInsensetive(caseInsensetive) { }
 
     QByteArray loadData(const QString &fileName)
     {
@@ -116,7 +116,7 @@ class ZipResourceLoader : public Theme::ResourceLoader {
     QString baseName;
 
 public:
-    ZipResourceLoader(UnZip &&z, const QString &baseName) : z(std::move(z)), baseName(baseName) {}
+    ZipResourceLoader(UnZip &&z, const QString &baseName) : z(std::move(z)), baseName(baseName) { }
 
     QByteArray loadData(const QString &fileName)
     {

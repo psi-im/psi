@@ -30,7 +30,7 @@
  * Helper class that displays available resources using QMenu.
  */
 
-ResourceMenu::ResourceMenu(QWidget *parent) : QMenu(parent), activeChatsMode_(false) {}
+ResourceMenu::ResourceMenu(QWidget *parent) : QMenu(parent), activeChatsMode_(false) { }
 
 ResourceMenu::ResourceMenu(const QString &title, PsiContact *contact, QWidget *parent) :
     QMenu(parent), contact_(contact), activeChatsMode_(false)
@@ -91,7 +91,7 @@ void ResourceMenu::contactUpdated()
         foreach (const UserResource &resource, contact_->userResourceList())
             addResource(resource);
     } else {
-        foreach (QString resourceName, contact_->account()->hiddenChats(contact_->jid())) {
+        for (QString resourceName : contact_->account()->hiddenChats(contact_->jid())) {
             XMPP::Status::Type              status;
             const UserResourceList &        rl  = contact_->userResourceList();
             UserResourceList::ConstIterator uit = rl.find(resourceName);

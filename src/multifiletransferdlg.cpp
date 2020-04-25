@@ -492,7 +492,7 @@ void MultiFileTransferDlg::dropEvent(QDropEvent *event)
     QStringList      dragFiles;
     const QMimeData *mimeData = event->mimeData();
     if (mimeData->hasUrls()) {
-        foreach (const QUrl &url_, mimeData->urls()) {
+        for (const QUrl &url_ : mimeData->urls()) {
             dragFiles << url_.toLocalFile();
         }
     }

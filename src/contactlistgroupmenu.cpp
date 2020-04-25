@@ -113,7 +113,7 @@ void ContactListGroupMenu::Private::updateActions()
 void ContactListGroupMenu::Private::mucHide()
 {
     PsiAccount *pa = group->contacts().first()->account();
-    foreach (QString gc, pa->groupchats()) {
+    for (QString gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg && (gcDlg->isTabbed() || !gcDlg->isHidden()))
@@ -124,7 +124,7 @@ void ContactListGroupMenu::Private::mucHide()
 void ContactListGroupMenu::Private::mucShow()
 {
     PsiAccount *pa = group->contacts().first()->account();
-    foreach (QString gc, pa->groupchats()) {
+    for (QString gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg) {
@@ -137,7 +137,7 @@ void ContactListGroupMenu::Private::mucShow()
 void ContactListGroupMenu::Private::mucLeave()
 {
     PsiAccount *pa = group->contacts().first()->account();
-    foreach (QString gc, pa->groupchats()) {
+    for (QString gc : pa->groupchats()) {
         Jid        j(gc);
         GCMainDlg *gcDlg = pa->findDialog<GCMainDlg *>(j.bare());
         if (gcDlg)
@@ -168,7 +168,7 @@ void ContactListGroupMenu::Private::authResend()
 
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        foreach (PsiContact *contact, contacts) {
+        for (PsiContact *contact : contacts) {
             contact->account()->actionAuth(contact->jid());
         }
     }
@@ -181,7 +181,7 @@ void ContactListGroupMenu::Private::authRequest()
 
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        foreach (PsiContact *contact, contacts) {
+        for (PsiContact *contact : contacts) {
             contact->account()->actionAuthRequest(contact->jid());
         }
     }
@@ -194,7 +194,7 @@ void ContactListGroupMenu::Private::authRemove()
 
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
-        foreach (PsiContact *contact, contacts) {
+        for (PsiContact *contact : contacts) {
             contact->account()->actionAuthRemove(contact->jid());
         }
     }
@@ -208,7 +208,7 @@ void ContactListGroupMenu::Private::customStatus()
     PsiAccount *     pa = group->contacts().first()->account();
     StatusSetDlg *   w  = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
     QList<XMPP::Jid> list;
-    foreach (PsiContact *contact, group->contacts()) {
+    for (PsiContact *contact : group->contacts()) {
         if (contact->isPrivate())
             continue;
         list << contact->jid();
@@ -262,7 +262,7 @@ void ContactListGroupMenu::Private::sendMessage()
     QList<PsiContact *> contacts = group->contacts();
     if (!contacts.isEmpty()) {
         QList<XMPP::Jid> list;
-        foreach (PsiContact *contact, contacts) {
+        for (PsiContact *contact : contacts) {
             list << contact->jid();
         }
         contacts.first()->account()->actionSendMessage(list);

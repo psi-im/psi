@@ -195,7 +195,7 @@ FileCache::~FileCache()
 void FileCache::gc()
 {
     QDir dir(_cacheDir);
-    foreach (const XMPP::Hash &id, _items.keys()) {
+    for (const XMPP::Hash &id : _items.keys()) {
         FileCacheItem *item = _items.value(id);
         // remove broken cache items
         if (item->isOnDisk() && item->size() && !dir.exists(item->fileName())) {
@@ -353,7 +353,7 @@ void FileCache::sync(bool finishSession)
     }
 
     // register pending items and flush them if necessary
-    foreach (FileCacheItem *item, _pendingRegisterItems) {
+    for (FileCacheItem *item : _pendingRegisterItems) {
         toRegistry(item); // FIXME do this only after we have a file on disk (or data size = 0)
         if (_syncPolicy == InstantFLush) {
             item->flushToDisk();

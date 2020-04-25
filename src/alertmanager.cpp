@@ -29,7 +29,7 @@ static bool itemCompare(AlertManager::Item *a, AlertManager::Item *b) { return a
 
 QWidget *AlertManager::findDialog(const QMetaObject &mo) const
 {
-    foreach (Item *i, list_) {
+    for (Item *i : list_) {
         if (mo.cast(i->widget)) {
             return i->widget;
         }
@@ -39,7 +39,7 @@ QWidget *AlertManager::findDialog(const QMetaObject &mo) const
 
 void AlertManager::findDialogs(const QMetaObject &mo, QList<void *> *list) const
 {
-    foreach (Item *i, list_) {
+    for (Item *i : list_) {
         if (mo.cast(i->widget)) {
             list->append(i->widget);
         }
@@ -68,7 +68,7 @@ void AlertManager::dialogUnregister(QWidget *w)
         return;
     }
 
-    foreach (Item *i, list_) {
+    for (Item *i : list_) {
         if (i->widget == w) {
             list_.removeAll(i);
             delete i;

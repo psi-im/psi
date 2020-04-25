@@ -22,7 +22,7 @@
 #include <QDomDocument>
 #include <QDomElement>
 
-URLBookmark::URLBookmark(const QString &name, const QString &url) : name_(name), url_(url) {}
+URLBookmark::URLBookmark(const QString &name, const QString &url) : name_(name), url_(url) { }
 
 URLBookmark::URLBookmark(const QDomElement &el) { fromXml(el); }
 

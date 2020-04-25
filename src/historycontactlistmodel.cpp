@@ -148,7 +148,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
     QHash<QString, bool>       c_list;
     QHash<QString, TreeItem *> groups;
     // Roster contacts
-    foreach (PsiContact *contact, contactList) {
+    for (PsiContact *contact : contactList) {
         if (contact->isConference() || contact->isPrivate())
             continue;
         QString cId = contact->account()->id() + "|" + contact->jid().bare();
@@ -174,7 +174,7 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
         c_list[cId] = true;
     }
     // Self contact
-    foreach (PsiAccount *pa, psi->contactList()->accounts()) {
+    for (PsiAccount *pa : psi->contactList()->accounts()) {
         if (acc_id.isEmpty() || pa->id() == acc_id) {
             PsiContact *self = pa->selfContact();
             QString     cId  = pa->id() + "|" + self->jid().bare();

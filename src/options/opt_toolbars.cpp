@@ -201,7 +201,7 @@ void OptionsTabToolbars::applyOptions()
 
     PsiOptions *o = PsiOptions::instance();
     o->removeOption("options.ui.contactlist.toolbars", true);
-    foreach (const ToolbarPrefs &toolbar, p->toolbars) {
+    for (const ToolbarPrefs &toolbar : p->toolbars) {
         PsiToolBar::structToOptions(o, toolbar);
     }
 }
@@ -230,7 +230,7 @@ void OptionsTabToolbars::restoreOptions()
     QString chatToolbarName      = tr("Chat");
     QString groupchatToolbarName = tr("Groupchat");
 
-    foreach (QString base, sortedToolbarBases) {
+    for (QString base : sortedToolbarBases) {
         ToolbarPrefs tb;
 
         tb.id = o->getOption(base + ".key").toString();
@@ -274,7 +274,7 @@ void OptionsTabToolbars::toolbarAdd()
     do {
         ok      = true;
         tb.name = QObject::tr("<unnamed%1>").arg(j++);
-        foreach (ToolbarPrefs other, p->toolbars) {
+        for (ToolbarPrefs other : p->toolbars) {
             if (other.name == tb.name) {
                 ok = false;
                 break;
@@ -400,7 +400,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
         QList<ActionList *> lists = psi->actionList()->actionLists(p->currentType());
 
-        foreach (ActionList *actionList, lists) {
+        for (ActionList *actionList : lists) {
             QTreeWidgetItem *root = new QTreeWidgetItem(tw, lastRoot);
             lastRoot              = root;
             root->setText(0, actionList->name());

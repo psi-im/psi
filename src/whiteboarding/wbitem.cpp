@@ -37,8 +37,8 @@ WbItemMenu::WbItemMenu(QWidget *parent) : QMenu(parent) { connect(this, SIGNAL(a
 
 WbItemMenu::~WbItemMenu()
 {
-    foreach (QActionGroup *g, groups_) {
-        foreach (QAction *a, g->actions()) {
+    for (QActionGroup *g : groups_) {
+        for (QAction *a : g->actions()) {
             a->deleteLater();
         }
         g->deleteLater();
@@ -112,7 +112,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         if (widget_->mode() == WbWidget::Mode::Translate) {
 
             // Translate each selected item
-            foreach (QGraphicsItem *graphicsitem, scene()->selectedItems()) {
+            for (QGraphicsItem *graphicsitem : scene()->selectedItems()) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
                     QPointF d = graphicsitem->mapFromScene(event->scenePos())
                         - graphicsitem->mapFromScene(event->lastScenePos());
@@ -149,7 +149,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                 delta.rotate((difference.x() + difference.y()) / 2);
             }
 
-            foreach (QGraphicsItem *graphicsitem, scene()->selectedItems()) {
+            for (QGraphicsItem *graphicsitem : scene()->selectedItems()) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
                     QMatrix translation;
                     // get center coordinates of selected items in item coordinates
@@ -169,7 +169,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         } else if (widget_->mode() == WbWidget::Mode::Scale) {
 
             // Scale each selected item
-            foreach (QGraphicsItem *graphicsitem, scene()->selectedItems()) {
+            for (QGraphicsItem *graphicsitem : scene()->selectedItems()) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
 
                     // get center coordinates in item coordinates

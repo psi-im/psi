@@ -45,7 +45,7 @@ ActivityDlg::ActivityDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
     PsiAccount *   pa = pa_.first();
     Activity::Type at = pa->activity().type();
     int            i  = 1;
-    foreach (ActivityCatalog::Entry e, ActivityCatalog::instance()->entries()) {
+    for (ActivityCatalog::Entry e : ActivityCatalog::instance()->entries()) {
         if (e.specificType() == Activity::UnknownSpecific) {
             // The entry e is for a 'general' type.
             ui_.cb_general_type->addItem(IconsetFactory::icon("activities/" + e.value()).icon(), e.text());
@@ -71,7 +71,7 @@ void ActivityDlg::loadSpecificActivities(const QString &generalActivityStr)
         Activity::SpecificType at = pa->activity().specificType();
         int                    i  = 1;
         ActivityCatalog *      ac = ActivityCatalog::instance();
-        foreach (ActivityCatalog::Entry e, ac->entries()) {
+        for (ActivityCatalog::Entry e : ac->entries()) {
             if (e.specificType() != Activity::UnknownSpecific) {
                 // The entry e is for a 'specific' type.
                 ActivityCatalog::Entry ge = ac->findEntryByText(generalActivityStr);
@@ -95,7 +95,7 @@ void ActivityDlg::setActivity()
     QString generalActivityStr  = ui_.cb_general_type->currentText();
     QString specificActivityStr = ui_.cb_specific_type->currentText();
 
-    foreach (PsiAccount *pa, pa_) {
+    for (PsiAccount *pa : pa_) {
         if (generalActivityStr == tr("<unset>")) {
             pa->pepManager()->disable(PEP_ACTIVITY_TN, PEP_ACTIVITY_NS, "current");
         } else {

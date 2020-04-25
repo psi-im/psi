@@ -59,7 +59,7 @@ using namespace XMPP;
  */
 class GoogleJingleInfoTask : public Task {
 public:
-    GoogleJingleInfoTask(Task *parent) : Task(parent) {}
+    GoogleJingleInfoTask(Task *parent) : Task(parent) { }
 
     void onGo()
     {
@@ -92,8 +92,8 @@ public:
  */
 class JingleIQResponder : public XMPP::Task {
 public:
-    JingleIQResponder(XMPP::Task *parent) : Task(parent) {}
-    ~JingleIQResponder() {}
+    JingleIQResponder(XMPP::Task *parent) : Task(parent) { }
+    ~JingleIQResponder() { }
 
     bool take(const QDomElement &e)
     {
@@ -124,7 +124,7 @@ private:
     GoogleFTManager *manager_;
 };
 
-GoogleSessionListener::GoogleSessionListener(GoogleFTManager *manager) : manager_(manager) {}
+GoogleSessionListener::GoogleSessionListener(GoogleFTManager *manager) : manager_(manager) { }
 
 void GoogleSessionListener::sendStanza(const buzz::XmlElement *stanza)
 {
@@ -161,7 +161,7 @@ private:
     GoogleFileTransfer *session_;
 };
 
-GoogleFileTransferListener::GoogleFileTransferListener(GoogleFileTransfer *s) : session_(s) {}
+GoogleFileTransferListener::GoogleFileTransferListener(GoogleFileTransfer *s) : session_(s) { }
 
 void GoogleFileTransferListener::stateChanged(cricket::FileShareState state)
 {
@@ -327,7 +327,7 @@ void GoogleFTManager::deinitialize()
     initialized_ = false;
 }
 
-GoogleFTManager::~GoogleFTManager() {}
+GoogleFTManager::~GoogleFTManager() { }
 
 void GoogleFTManager::sendStanza(const QString &stanza) { client_->send(stanza); }
 

@@ -87,7 +87,7 @@ public:
     virtual bool   isConnected() const                                              = 0;
     virtual bool   hasFileSize() const                                              = 0;
     virtual qint64 fileSize() const                                                 = 0;
-    virtual void   close() {}
+    virtual void   close() { }
 
     inline const QString &lastError() const { return _lastError; }
     void                  setRange(qint64 offset, qint64 length)

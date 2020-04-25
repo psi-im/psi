@@ -31,7 +31,7 @@ OptionsTabAvCall::OptionsTabAvCall(QObject *parent) :
     connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::updated, this, [this]() { restoreOptions(); });
 }
 
-OptionsTabAvCall::~OptionsTabAvCall() {}
+OptionsTabAvCall::~OptionsTabAvCall() { }
 
 QWidget *OptionsTabAvCall::widget()
 {

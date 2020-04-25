@@ -37,7 +37,7 @@ public:
     virtual QString   node() const = 0;
     virtual bool      isAllowed(const XMPP::Jid &) const { return true; }
     virtual AHCommand execute(const AHCommand &, const XMPP::Jid &requester) = 0;
-    virtual void      cancel(const AHCommand &) {}
+    virtual void      cancel(const AHCommand &) { }
 
 protected:
     AHCServerManager *manager() const { return manager_; }

@@ -33,19 +33,19 @@ public:
     static const QString &mimeType();
 
     struct Contact {
-        Contact(QString _jid, QString _account, QString _group) : jid(_jid), account(_account), group(_group) {}
+        Contact(QString _jid, QString _account, QString _group) : jid(_jid), account(_account), group(_group) { }
         QString jid;
         QString account;
         QString group;
     };
 
     struct Group {
-        Group(QString _fullName) : fullName(_fullName) {}
+        Group(QString _fullName) : fullName(_fullName) { }
         QString fullName;
     };
 
     struct Account {
-        Account(QString _id) : id(_id) {}
+        Account(QString _id) : id(_id) { }
         QString id;
     };
 

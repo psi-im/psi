@@ -115,7 +115,7 @@ void OptionsTabGroupchat::restoreOptions()
     d->ck_showStatusChanges->setChecked(o->getOption("options.muc.show-status-changes").toBool());
     d->ck_showStatusPriority->setChecked(o->getOption("options.ui.muc.status-with-priority").toBool());
 
-    foreach (QString col, o->getOption("options.ui.look.colors.muc.nick-colors").toStringList()) {
+    for (QString col : o->getOption("options.ui.look.colors.muc.nick-colors").toStringList()) {
         addNickColor(col);
     }
 

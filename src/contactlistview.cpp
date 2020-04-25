@@ -214,7 +214,7 @@ void ContactListView::rowsInserted(const QModelIndex &parent, int start, int end
 /**
  * Branches? We don't want no steenking branches!
  */
-void ContactListView::drawBranches(QPainter *, const QRect &, const QModelIndex &) const {}
+void ContactListView::drawBranches(QPainter *, const QRect &, const QModelIndex &) const { }
 
 void ContactListView::toggleExpandedState(const QModelIndex &index)
 {
@@ -327,7 +327,7 @@ ContactListModel *ContactListView::realModel() const { return qobject_cast<Conta
 QModelIndexList ContactListView::realIndexes(const QModelIndexList &indexes) const
 {
     QModelIndexList result;
-    foreach (QModelIndex index, indexes) {
+    for (QModelIndex index : indexes) {
         QModelIndex ri = realIndex(index);
         if (ri.isValid())
             result << ri;
@@ -348,7 +348,7 @@ QModelIndex ContactListView::realIndex(const QModelIndex &index) const { return 
 QModelIndexList ContactListView::proxyIndexes(const QModelIndexList &indexes) const
 {
     QModelIndexList result;
-    foreach (QModelIndex index, indexes) {
+    for (QModelIndex index : indexes) {
         QModelIndex pi = proxyIndex(index);
         if (pi.isValid())
             result << pi;

@@ -329,7 +329,7 @@ PsiIcon::PsiIcon() : QObject(nullptr)
 /**
  * Destroys PsiIcon.
  */
-PsiIcon::~PsiIcon() {}
+PsiIcon::~PsiIcon() { }
 
 /**
  * Creates new icon, that is a copy of \a from. Note, that if one icon will be changed,
@@ -603,7 +603,7 @@ QString PsiIcon::defaultText() const
     QString               str;
     QStringList::Iterator it = lang.begin();
     for (; it != lang.end(); ++it) {
-        foreach (IconText t, text()) {
+        for (IconText t : text()) {
             if (t.lang == *it) {
                 str = t.text;
                 break;
@@ -613,7 +613,7 @@ QString PsiIcon::defaultText() const
 
     // if all fails, just get the first text
     if (str.isEmpty()) {
-        foreach (IconText t, text()) {
+        for (IconText t : text()) {
             if (!t.text.isEmpty()) {
                 str = t.text;
                 break;
@@ -764,7 +764,7 @@ void PsiIcon::stripFirstAnimFrame()
 //! \if _hide_doc_
 class IconsetFactoryPrivate : public QObject {
 private:
-    IconsetFactoryPrivate() : QObject(QCoreApplication::instance()), iconsets_(nullptr), emptyPixmap_(nullptr) {}
+    IconsetFactoryPrivate() : QObject(QCoreApplication::instance()), iconsets_(nullptr), emptyPixmap_(nullptr) { }
 
     ~IconsetFactoryPrivate()
     {
@@ -798,7 +798,7 @@ public:
     {
         QStringList list;
 
-        foreach (const Iconset *iconset, *iconsets_) {
+        for (const Iconset *iconset : *iconsets_) {
             QListIterator<PsiIcon *> it = iconset->iterator();
             while (it.hasNext()) {
                 list << it.next()->name();
@@ -1113,9 +1113,9 @@ public:
         QList<PsiIcon::IconText> text;
         QHash<QString, QString>  graphic, sound, object;
 
-        QString name = QString::asprintf("icon_%04d", icon_counter++);
-        bool isAnimated = false;
-        bool isImage    = false;
+        QString name       = QString::asprintf("icon_%04d", icon_counter++);
+        bool    isAnimated = false;
+        bool    isImage    = false;
 
         for (QDomNode n = i.firstChild(); !n.isNull(); n = n.nextSibling()) {
             QDomElement e = n.toElement();
@@ -1271,7 +1271,7 @@ public:
         // construct RegExp
         if (text.count()) {
             QStringList regexp;
-            foreach (PsiIcon::IconText t, text) {
+            for (PsiIcon::IconText t : text) {
                 regexp += QRegExp::escape(t.text);
             }
 

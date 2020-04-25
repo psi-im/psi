@@ -101,7 +101,7 @@ void ContactManagerDlg::executeCurrent()
     case 1: // message
     {
         QList<XMPP::Jid> list;
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             list.append(u->jid().full());
         }
         pa_->actionSendMessage(list);
@@ -115,7 +115,7 @@ void ContactManagerDlg::executeCurrent()
             return;
         }
         um->startBatch();
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             if (u->isTransport() && !Jid(pa_->client()->host()).compare(u->jid())) {
                 JT_UnRegister *ju = new JT_UnRegister(pa_->client()->rootTask());
                 ju->unreg(u->jid());
@@ -129,12 +129,12 @@ void ContactManagerDlg::executeCurrent()
         pa_->client()->rosterRequest();
     } break;
     case 3: // Auth request
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             pa_->dj_authReq(u->jid());
         }
         break;
     case 4: // Auth grant
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             pa_->dj_auth(u->jid());
         }
         break;
@@ -142,7 +142,7 @@ void ContactManagerDlg::executeCurrent()
         changeDomain(users);
         break;
     case 6: // resolve nicks
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             pa_->resolveContactName(u->jid());
         }
         break;
@@ -183,7 +183,7 @@ void ContactManagerDlg::changeDomain(QList<UserListItem *> &users)
     if (domain.size()) {
         um->startBatch();
         um->clear();
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
             if (!u->jid().node().isEmpty()) {
                 r->set(u->jid().withDomain(domain), u->name(), u->groups());
@@ -201,7 +201,7 @@ void ContactManagerDlg::changeGroup(QList<UserListItem *> &users)
 {
     QStringList groups(ui_.cmbActionParam->currentText());
 
-    foreach (UserListItem *u, users) {
+    for (UserListItem *u : users) {
         JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
         r->set(u->jid(), u->name(), groups);
         r->go(true);
@@ -227,10 +227,10 @@ void ContactManagerDlg::exportRoster(QList<UserListItem *> &users)
         QString      nick;
         QDomElement  root = doc.createElement("roster");
         doc.appendChild(root);
-        foreach (UserListItem *u, users) {
+        for (UserListItem *u : users) {
             QDomElement contact = root.appendChild(doc.createElement("contact")).toElement();
             contact.setAttribute("jid", u->jid().bare());
-            foreach (QString group, u->groups()) {
+            for (QString group : u->groups()) {
                 contact.appendChild(doc.createElement("group")).appendChild(doc.createTextNode(group));
             }
             nick = u->name();
@@ -299,7 +299,7 @@ void ContactManagerDlg::importRoster()
         if (confirmDlg.exec() == QMessageBox::Yes) {
             um->startBatch();
             um->clear();
-            foreach (QString jid, jids) {
+            for (QString jid : jids) {
                 JT_Roster *r = new JT_Roster(pa_->client()->rootTask());
                 r->set(Jid(jid), nicks[jid], groups[jid]);
                 r->go(true);

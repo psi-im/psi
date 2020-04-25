@@ -39,7 +39,7 @@ public:
     VideoWidget *q;
     QSize        videoSize;
 
-    VideoWidgetPrivate(VideoWidget *_q) : QObject(_q), q(_q) {}
+    VideoWidgetPrivate(VideoWidget *_q) : QObject(_q), q(_q) { }
 
     virtual QObject *qobject() { return this; }
 
@@ -133,7 +133,7 @@ public:
     bool               enabled;
     int                readyReadListeners;
 
-    RtpChannelPrivate(RtpChannel *_q) : QObject(_q), q(_q), c(nullptr), enabled(false), readyReadListeners(0) {}
+    RtpChannelPrivate(RtpChannel *_q) : QObject(_q), q(_q), c(nullptr), enabled(false), readyReadListeners(0) { }
 
     void setContext(RtpChannelContext *_c)
     {

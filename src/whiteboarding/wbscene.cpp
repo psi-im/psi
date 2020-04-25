@@ -29,7 +29,7 @@ void WbScene::queueTransformationRegeneration(WbItem *item)
 
 void WbScene::regenerateTransformations()
 {
-    foreach (QPointer<WbItem> item, pendingTranformations_) {
+    for (QPointer<WbItem> item : pendingTranformations_) {
         if (item) {
             // qDebug() << QString("Regenerating %1 transform.").arg((unsigned int) &(*item)).toLatin1();
             item->regenerateTransform();
@@ -48,7 +48,7 @@ QPointF WbScene::selectionCenter() const
     }
 
     QRectF box = items.at(0)->sceneBoundingRect();
-    foreach (QGraphicsItem *item, items) {
+    for (QGraphicsItem *item : items) {
         box = box.united(item->sceneBoundingRect());
     }
 
@@ -80,7 +80,7 @@ void WbScene::group()
         std::sort(selected.begin(), selected.end(), zValueLessThan);
 
         // Reparent each selected item
-        foreach (QGraphicsItem *item, selected) {
+        for (QGraphicsItem *item : selected) {
             WbItem *wbitem = dynamic_cast<WbItem *>(item);
             if (wbitem)
                 session_->insertNodeAfter(wbitem->node(), group);
@@ -93,7 +93,7 @@ void WbScene::group()
 
 void WbScene::ungroup()
 {
-    foreach (QGraphicsItem *item, selectedItems()) {
+    for (QGraphicsItem *item : selectedItems()) {
         // find the QDomElement matching the selected item
         WbItem *wbitem = dynamic_cast<WbItem *>(item);
         if (wbitem) {
@@ -136,7 +136,7 @@ void WbScene::bring(int n, bool toExtremum)
         return;
 
     // bring each selected item
-    foreach (QGraphicsItem *selecteditem, selectedItems()) {
+    for (QGraphicsItem *selecteditem : selectedItems()) {
 
         if (!(selecteditem->parentItem() && selecteditem->parentItem()->isSelected())) {
 

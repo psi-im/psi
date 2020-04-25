@@ -66,7 +66,7 @@ static QString findPlugin(const QString &relpath, const QString &basename)
     QDir dir(QCoreApplication::applicationDirPath());
     if (!dir.cd(relpath))
         return QString();
-    foreach (const QString &fileName, dir.entryList()) {
+    for (const QString &fileName : dir.entryList()) {
         if (fileName.contains(basename)) {
             QString filePath = dir.filePath(fileName);
             if (QLibrary::isLibrary(filePath))
@@ -95,7 +95,7 @@ static void ensureLoaded()
             pluginFile   = findPlugin("../Plugins", "gstprovider" DEBUG_POSTFIX);
             resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-0.10";
 #else
-            foreach (const QString &path, ApplicationInfo::pluginDirs()) {
+            for (const QString &path : ApplicationInfo::pluginDirs()) {
                 pluginFile = findPlugin(path, "gstprovider" DEBUG_POSTFIX);
                 if (!pluginFile.isEmpty())
                     break;
@@ -123,7 +123,7 @@ static JingleRtpPayloadType payloadInfoToPayloadType(const PsiMedia::PayloadInfo
     out.channels  = pi.channels();
     out.ptime     = pi.ptime();
     out.maxptime  = pi.maxptime();
-    foreach (const PsiMedia::PayloadInfo::Parameter &pip, pi.parameters()) {
+    for (const PsiMedia::PayloadInfo::Parameter &pip : pi.parameters()) {
         JingleRtpPayloadType::Parameter ptp;
         ptp.name  = pip.name;
         ptp.value = pip.value;
@@ -142,7 +142,7 @@ static PsiMedia::PayloadInfo payloadTypeToPayloadInfo(const JingleRtpPayloadType
     out.setPtime(pt.ptime);
     out.setMaxptime(pt.maxptime);
     QList<PsiMedia::PayloadInfo::Parameter> list;
-    foreach (const JingleRtpPayloadType::Parameter &ptp, pt.parameters) {
+    for (const JingleRtpPayloadType::Parameter &ptp : pt.parameters) {
         PsiMedia::PayloadInfo::Parameter pip;
         pip.name  = ptp.name;
         pip.value = ptp.value;
@@ -245,7 +245,7 @@ public:
     AvTransmit *avTransmit;
     QThread *   previousThread;
 
-    AvTransmitHandler(QObject *parent = nullptr) : QObject(parent), avTransmit(nullptr), previousThread(nullptr) {}
+    AvTransmitHandler(QObject *parent = nullptr) : QObject(parent), avTransmit(nullptr), previousThread(nullptr) { }
 
     ~AvTransmitHandler()
     {
@@ -277,7 +277,7 @@ class AvTransmitThread : public QCA::SyncThread {
 public:
     AvTransmitHandler *handler;
 
-    AvTransmitThread(QObject *parent = nullptr) : QCA::SyncThread(parent), handler(nullptr) {}
+    AvTransmitThread(QObject *parent = nullptr) : QCA::SyncThread(parent), handler(nullptr) { }
 
     ~AvTransmitThread() { stop(); }
 
@@ -576,7 +576,7 @@ private slots:
 
         if (transmitAudio && !rtp.localAudioPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            foreach (PsiMedia::PayloadInfo pi, rtp.localAudioPayloadInfo()) {
+            for (PsiMedia::PayloadInfo pi : rtp.localAudioPayloadInfo()) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
             }
@@ -586,7 +586,7 @@ private slots:
 
         if (transmitVideo && !rtp.localVideoPayloadInfo().isEmpty()) {
             QList<JingleRtpPayloadType> pis;
-            foreach (PsiMedia::PayloadInfo pi, rtp.localVideoPayloadInfo()) {
+            for (PsiMedia::PayloadInfo pi : rtp.localVideoPayloadInfo()) {
                 JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
                 pis << pt;
             }

@@ -52,7 +52,7 @@ public:
 };
 
 struct RowSf {
-    RowSf() : number(0), sf(0.) {}
+    RowSf() : number(0), sf(0.) { }
 
     int    number;
     double sf;

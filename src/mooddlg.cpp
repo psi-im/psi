@@ -43,7 +43,7 @@ MoodDlg::MoodDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
     PsiAccount *pa = pa_.first();
     Mood::Type  mt = pa->mood().type();
     int         i  = 1;
-    foreach (MoodCatalog::Entry e, MoodCatalog::instance()->entries()) {
+    for (MoodCatalog::Entry e : MoodCatalog::instance()->entries()) {
         ui_.cb_type->addItem(IconsetFactory::icon("mood/" + e.value()).icon(), e.text());
         if (e.type() == mt) {
             ui_.cb_type->setCurrentIndex(i);
@@ -56,7 +56,7 @@ MoodDlg::MoodDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_(list)
 void MoodDlg::setMood()
 {
     QString moodstr = ui_.cb_type->currentText();
-    foreach (PsiAccount *pa, pa_) {
+    for (PsiAccount *pa : pa_) {
         if (moodstr == tr("<unset>")) {
             pa->pepManager()->disable("mood", PEP_MOOD_NS, "current");
         } else {

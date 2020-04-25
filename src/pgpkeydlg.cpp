@@ -94,9 +94,9 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     KeyViewItem *selectedItem = nullptr;
     int          row          = 0;
 
-    foreach (QCA::KeyStore *ks, PGPUtil::instance().keystores_) {
+    for (QCA::KeyStore *ks : PGPUtil::instance().keystores_) {
         if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-            foreach (QCA::KeyStoreEntry ke, ks->entryList()) {
+            for (QCA::KeyStoreEntry ke : ks->entryList()) {
                 bool publicKey = (t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey)
                     || (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey);
                 bool secretKey = t == Secret && ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey;

@@ -107,7 +107,7 @@ void ActionList::Private::actionDestroyed(QObject *obj) { actions.remove(obj->ob
 
 class MetaActionList::Private {
 public:
-    Private() {}
+    Private() { }
 
     QList<ActionList *> lists;
 };
@@ -123,7 +123,7 @@ MetaActionList::~MetaActionList()
 
 ActionList *MetaActionList::actionList(const QString &name) const
 {
-    foreach (ActionList *a, d->lists) {
+    for (ActionList *a : d->lists) {
         if (a->name() == name)
             return a;
     }
@@ -139,7 +139,7 @@ QList<ActionList *> MetaActionList::actionLists(const unsigned int id) const
         if (!(id & (1u << i)))
             continue;
 
-        foreach (ActionList *a, d->lists) {
+        for (ActionList *a : d->lists) {
             if (uint(a->id()) & (1u << i))
                 list.append(a);
         }
@@ -153,7 +153,7 @@ ActionList MetaActionList::suitableActions(int id) const
     QList<ActionList *> lists = actionLists(uint(id));
     ActionList          actions("", 0, false);
 
-    foreach (ActionList *list, lists) {
+    for (ActionList *list : lists) {
         QStringList           actionList = list->actions();
         QStringList::Iterator it2        = actionList.begin();
         for (; it2 != actionList.end(); ++it2)
@@ -181,7 +181,7 @@ void MetaActionList::addList(ActionList *list)
 
 void MetaActionList::clear()
 {
-    foreach (ActionList *l, d->lists) {
+    for (ActionList *l : d->lists) {
         l->clear();
     }
 }

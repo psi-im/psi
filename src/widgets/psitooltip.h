@@ -27,7 +27,7 @@ class PsiTipLabel;
 class ToolTipPosition : public QObject {
 public:
     ToolTipPosition(const QPoint &cursorPos, const QWidget *parentWidget);
-    virtual ~ToolTipPosition() {}
+    virtual ~ToolTipPosition() { }
 
     virtual QPoint calculateTipPosition(const QWidget *label) const;
 

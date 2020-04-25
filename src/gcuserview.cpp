@@ -209,7 +209,7 @@ public:
             return;
 
         int sumWidth = 0;
-        foreach (const QPixmap &pix, rightPixs) {
+        for (const QPixmap &pix : rightPixs) {
             sumWidth += pix.width();
         }
         sumWidth += rightPixs.count();

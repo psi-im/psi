@@ -47,7 +47,7 @@ MultiFileTransferModel::MultiFileTransferModel(QObject *parent) : QAbstractListM
     });
 }
 
-MultiFileTransferModel::~MultiFileTransferModel() {}
+MultiFileTransferModel::~MultiFileTransferModel() { }
 
 Qt::ItemFlags MultiFileTransferModel::flags(const QModelIndex &index) const
 {

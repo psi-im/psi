@@ -34,7 +34,7 @@ class TaskList : public QObject, public QList<Task *> {
     Q_OBJECT
 
 public:
-    TaskList() {}
+    TaskList() { }
 
     ~TaskList()
     {

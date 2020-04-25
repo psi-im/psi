@@ -192,7 +192,7 @@ QList<FileSharingItem *> FileSharingManager::fromFilesList(const QStringList &fi
     QList<FileSharingItem *> ret;
     if (fileList.isEmpty())
         return ret;
-    foreach (const QString &file, fileList) {
+    for (const QString &file : fileList) {
         QFileInfo fi(file);
         if (fi.isFile() && fi.isReadable()) {
             auto item = new FileSharingItem(file, acc, this);

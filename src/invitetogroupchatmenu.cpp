@@ -25,7 +25,7 @@
 #include "psicon.h"
 #include "psicontact.h"
 
-InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget *parent) : QMenu(parent), controller_(nullptr) {}
+InviteToGroupChatMenu::InviteToGroupChatMenu(QWidget *parent) : QMenu(parent), controller_(nullptr) { }
 
 void InviteToGroupChatMenu::updateMenu(PsiContact *contact)
 {
@@ -36,8 +36,8 @@ void InviteToGroupChatMenu::updateMenu(PsiContact *contact)
     Q_ASSERT(controller_);
     clear();
 
-    foreach (PsiAccount *acc, controller_->contactList()->accounts()) {
-        foreach (QString groupChat, acc->groupchats()) {
+    for (PsiAccount *acc : controller_->contactList()->accounts()) {
+        for (QString groupChat : acc->groupchats()) {
             QAction *action = new QAction(groupChat, this);
             addAction(action);
 

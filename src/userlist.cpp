@@ -50,7 +50,7 @@ static QString dot_truncate(const QString &in, int clip)
 //----------------------------------------------------------------------------
 // UserResource
 //----------------------------------------------------------------------------
-UserResource::UserResource() : v_pgpVerifyStatus(0) {}
+UserResource::UserResource() : v_pgpVerifyStatus(0) { }
 
 UserResource::UserResource(const Resource &r) { setResource(r); }
 
@@ -155,9 +155,9 @@ bool operator>=(const UserResource &r1, const UserResource &r2) { return r1.prio
 //----------------------------------------------------------------------------
 // UserResourceList
 //----------------------------------------------------------------------------
-UserResourceList::UserResourceList() : QList<UserResource>() {}
+UserResourceList::UserResourceList() : QList<UserResource>() { }
 
-UserResourceList::~UserResourceList() {}
+UserResourceList::~UserResourceList() { }
 
 UserResourceList::Iterator UserResourceList::find(const QString &_find)
 {
@@ -221,7 +221,7 @@ UserListItem::UserListItem(bool self)
     v_hPending      = 0;
 }
 
-UserListItem::~UserListItem() {}
+UserListItem::~UserListItem() { }
 
 bool UserListItem::inList() const { return v_inList; }
 
@@ -679,7 +679,7 @@ bool UserListItem::isSecure(const QString &rname) const
 
 void UserListItem::setSecure(const QString &rname, bool b)
 {
-    foreach (const QString s, secList) {
+    for (const QString s : secList) {
         if (s == rname) {
             if (!b)
                 secList.removeAll(s);
@@ -697,13 +697,13 @@ void UserListItem::setPublicKeyID(const QString &k) { v_keyID = k; }
 //----------------------------------------------------------------------------
 // UserList
 //----------------------------------------------------------------------------
-UserList::UserList() {}
+UserList::UserList() { }
 
-UserList::~UserList() {}
+UserList::~UserList() { }
 
 UserListItem *UserList::find(const XMPP::Jid &j)
 {
-    foreach (UserListItem *i, *this) {
+    for (UserListItem *i : *this) {
         if (i->jid().compare(j))
             return i;
     }

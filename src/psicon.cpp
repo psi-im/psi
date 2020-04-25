@@ -230,7 +230,7 @@ public:
         // save accounts with known base
         QSet<QString> cbases;
         QStringList   order;
-        foreach (UserAccount ua, acc) {
+        for (UserAccount ua : acc) {
             if (!ua.optionsBase.isEmpty()) {
                 ua.toOptions(&accountTree);
                 cbases += ua.optionsBase;
@@ -239,7 +239,7 @@ public:
         }
         // save new accounts
         int idx = 0;
-        foreach (UserAccount ua, acc) {
+        for (UserAccount ua : acc) {
             if (ua.optionsBase.isEmpty()) {
                 QString base;
                 do {
@@ -263,7 +263,7 @@ public:
             || pathParts[2].isEmpty()) // <acoount_uuid>/sharedfile/<file_hash>
             return { nullptr, QString() };
 
-        foreach (PsiAccount *account, contactList->enabledAccounts()) {
+        for (PsiAccount *account : contactList->enabledAccounts()) {
             if (!account->isActive() || account->id() != pathParts[0])
                 continue;
 
@@ -276,7 +276,7 @@ private slots:
     void updateIconSelect()
     {
         Iconset iss;
-        foreach (Iconset *iconset, PsiIconset::instance()->emoticons) {
+        for (Iconset *iconset : PsiIconset::instance()->emoticons) {
             iss += *iconset;
         }
 
@@ -489,7 +489,7 @@ bool PsiCon::init()
     if (!accountsFile.exists()) {
         accountMigration = true;
         int idx          = 0;
-        foreach (UserAccount a, d->optionsMigration.accMigration) {
+        for (UserAccount a : d->optionsMigration.accMigration) {
             QString base = "accounts.a" + QString::number(idx++);
             a.toOptions(&d->accountTree, base);
         }
@@ -890,7 +890,7 @@ QStringList PsiCon::xmppFatures() const
                          QStringList() << "http://jabber.org/protocol/chatstates")
         << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
 
-    foreach (const OptFeatureMap &f, fmap) {
+    for (const OptFeatureMap &f : fmap) {
         if (PsiOptions::instance()->getOption(f.option).toBool()) {
             features << f.feature;
         }
@@ -986,7 +986,7 @@ EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 // FIXME: WTF? Refactor! Refactor!
 void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 {
-    foreach (item_dialog *i, d->dialogList) {
+    for (item_dialog *i : d->dialogList) {
         if (i->className == "EventDlg") {
             EventDlg *e = qobject_cast<EventDlg *>(i->widget);
             if (e->psiAccount() == pa)
@@ -998,7 +998,7 @@ void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 // FIXME: make it work like QObject::findChildren<ChildName>()
 QWidget *PsiCon::dialogFind(const char *className)
 {
-    foreach (item_dialog *i, d->dialogList) {
+    for (item_dialog *i : d->dialogList) {
         // does the classname and jid match?
         if (i->className == className) {
             return i->widget;
@@ -1140,7 +1140,7 @@ XMPP::Status::Type PsiCon::currentStatusType() const
     // bool active = false;
     bool               loggedIn = false;
     XMPP::Status::Type state    = XMPP::Status::Online;
-    foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
+    for (PsiAccount *account : d->contactList->enabledAccounts()) {
         //        if(account->isActive())
         //            active = true;
         if (account->loggedIn()) {
@@ -1159,7 +1159,7 @@ XMPP::Status::Type PsiCon::currentStatusType() const
 QString PsiCon::currentStatusMessage() const
 {
     QString message = "";
-    foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
+    for (PsiAccount *account : d->contactList->enabledAccounts()) {
         if (account->loggedIn()) {
             message = account->status().status();
             break;
@@ -1185,7 +1185,7 @@ void PsiCon::setGlobalStatus(const Status &s, bool withPriority, bool isManualSt
     // Check whether all accounts are logged off
     bool allOffline = true;
 
-    foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
+    for (PsiAccount *account : d->contactList->enabledAccounts()) {
         if (account->isActive()) {
             allOffline = false;
             break;
@@ -1253,7 +1253,7 @@ void PsiCon::updateMainwinStatus()
     bool active   = false;
     bool loggedIn = false;
     int  state    = STATUS_ONLINE;
-    foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
+    for (PsiAccount *account : d->contactList->enabledAccounts()) {
         if (account->isActive())
             active = true;
         if (account->loggedIn()) {
@@ -1338,7 +1338,7 @@ void PsiCon::openUri(const QUrl &uri)
 
     //    // is there such account ready to use?
     //    Jid authJid = JIDUtil::fromString(uri.authority());
-    //    foreach (PsiAccount* acc, d->contactList->enabledAccounts()) {
+    //    for (PsiAccount* acc: d->contactList->enabledAccounts()) {
     //        if (acc->jid().compare(authJid, false)) {
     //            pa = acc;
     //        }
@@ -1346,7 +1346,7 @@ void PsiCon::openUri(const QUrl &uri)
 
     //    // or maybe it is configured but not enabled?
     //    if (!pa) {
-    //        foreach (PsiAccount* acc, d->contactList->accounts()) {
+    //        for (PsiAccount* acc: d->contactList->accounts()) {
     //            if (acc->jid().compare(authJid, false)) {
     //                QMessageBox::error(0, tr("Error"), QString("The account for %1 JID is disabled right
     //                now.").arg(authJid.bare())); return;    // TODO: Should suggest enabling it now
@@ -1569,7 +1569,7 @@ void PsiCon::startBounce()
 
 void PsiCon::proceedWithSleep()
 {
-    foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
+    for (PsiAccount *account : d->contactList->enabledAccounts()) {
         if (account->loggedIn()) {
             return; // we need all disconnedted to proceed with sleep
         }
@@ -1611,7 +1611,7 @@ void PsiCon::recentGCAdd(const QString &str)
 {
     QStringList recentList = recentGCList();
     // remove it if we have it
-    foreach (const QString &s, recentList) {
+    for (const QString &s : recentList) {
         if (s == str) {
             recentList.removeAll(s);
             break;
@@ -1639,7 +1639,7 @@ void PsiCon::recentBrowseAdd(const QString &str)
 {
     QStringList recentList = recentBrowseList();
     // remove it if we have it
-    foreach (const QString &s, recentList) {
+    for (const QString &s : recentList) {
         if (s == str) {
             recentList.removeAll(s);
             break;
@@ -1662,7 +1662,7 @@ const QStringList &PsiCon::recentNodeList() const { return d->recentNodeList; }
 void PsiCon::recentNodeAdd(const QString &str)
 {
     // remove it if we have it
-    foreach (const QString &s, d->recentNodeList) {
+    for (const QString &s : d->recentNodeList) {
         if (s == str) {
             d->recentNodeList.removeAll(s);
             break;
@@ -1891,7 +1891,7 @@ void PsiCon::networkSessionOpened()
 {
     if (d->wakeupPending) {
         d->wakeupPending = false;
-        foreach (PsiAccount *account, d->contactList->enabledAccounts()) {
+        for (PsiAccount *account : d->contactList->enabledAccounts()) {
             account->doWakeup();
         }
 
@@ -1964,7 +1964,7 @@ void PsiCon::secondsIdle(int sec)
     else
         aa = PsiAccount::AutoAway_None;
 
-    foreach (PsiAccount *pa, d->contactList->enabledAccounts()) {
+    for (PsiAccount *pa : d->contactList->enabledAccounts()) {
         if (pa->accountOptions().ignore_global_actions)
             continue;
 

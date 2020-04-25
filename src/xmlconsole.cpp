@@ -124,7 +124,7 @@ void XmlConsole::dumpRingbuf()
     bool                           enablesave = ui_.ck_enable->isChecked();
     ui_.ck_enable->setChecked(true);
     QString stamp;
-    foreach (PsiAccount::xmlRingElem el, buf) {
+    for (PsiAccount::xmlRingElem el : buf) {
         stamp = "<!-- TS:" + el.time.toString(Qt::ISODate) + "-->";
         if (el.type == PsiAccount::RingXmlOut) {
             client_xmlOutgoing(stamp + el.xml);
@@ -204,7 +204,7 @@ XmlPrompt::XmlPrompt(QWidget *parent) : QDialog(parent)
     resize(320, 240);
 }
 
-XmlPrompt::~XmlPrompt() {}
+XmlPrompt::~XmlPrompt() { }
 
 void XmlPrompt::doTransmit()
 {

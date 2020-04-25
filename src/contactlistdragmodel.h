@@ -36,8 +36,8 @@ public:
     enum Action { Copy = 0, Move, Remove };
 
     struct Operation {
-        Operation() {}
-        Operation(const QString &_groupFrom, const QString &_groupTo) : groupFrom(_groupFrom), groupTo(_groupTo) {}
+        Operation() { }
+        Operation(const QString &_groupFrom, const QString &_groupTo) : groupFrom(_groupFrom), groupTo(_groupTo) { }
         QString groupFrom;
         QString groupTo;
     };

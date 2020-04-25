@@ -47,17 +47,17 @@ public:
     AHCError              error;
     AHCommand::Note       note;
 
-    AHCommandPrivate() {}
+    AHCommandPrivate() { }
     AHCommandPrivate(const AHCommandPrivate &other) :
         QSharedData(other), node(other.node), hasData(other.hasData), data(other.data), status(other.status),
         defaultAction(other.defaultAction), actions(other.actions), action(other.action), sessionId(other.sessionId),
         error(other.error), note(other.note)
     {
     }
-    ~AHCommandPrivate() {}
+    ~AHCommandPrivate() { }
 };
 
-AHCommand::AHCommand() : d(new AHCommandPrivate) {}
+AHCommand::AHCommand() : d(new AHCommandPrivate) { }
 
 AHCommand::AHCommand(const QString &node, const QString &sessionId, Action action) : d(new AHCommandPrivate)
 {
@@ -126,9 +126,9 @@ AHCommand::AHCommand(const QDomElement &q) : d(new AHCommandPrivate)
     }
 }
 
-AHCommand::AHCommand(const AHCommand &other) : d(other.d) {}
+AHCommand::AHCommand(const AHCommand &other) : d(other.d) { }
 
-AHCommand::~AHCommand() {}
+AHCommand::~AHCommand() { }
 
 AHCommand &AHCommand::operator=(const AHCommand &other)
 {
@@ -294,7 +294,7 @@ AHCommand::Status AHCommand::string2status(const QString &s)
 // AHCError: The class representing an Ad-Hoc command error
 // --------------------------------------------------------------------------
 
-AHCError::AHCError(ErrorType t) : type_(t) {}
+AHCError::AHCError(ErrorType t) : type_(t) { }
 
 AHCError::AHCError(const QDomElement &e) : type_(None)
 {

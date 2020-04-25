@@ -48,7 +48,7 @@ struct OptionValue {
 class PopupManager::Private {
 
 public:
-    Private() : psi_(nullptr), lastCustomType_(PopupManager::AlertCustom) {}
+    Private() : psi_(nullptr), lastCustomType_(PopupManager::AlertCustom) { }
 
     PsiPopupInterface *popup(const QString &name)
     {
@@ -138,7 +138,7 @@ PopupManager::PopupManager(PsiCon *psi)
 
     d->options_ += initList;
 
-    foreach (QObject *plugin, QPluginLoader::staticInstances()) {
+    for (QObject *plugin : QPluginLoader::staticInstances()) {
         PsiPopupPluginInterface *ppi = qobject_cast<PsiPopupPluginInterface *>(plugin);
         if (ppi && ppi->isAvailable()) {
             d->popups_.insert(ppi->name(), ppi);
@@ -150,7 +150,7 @@ PopupManager::~PopupManager() { delete d; }
 
 int PopupManager::registerOption(const QString &name, int initValue, const QString &path)
 {
-    foreach (const OptionValue &v, d->options_) {
+    for (const OptionValue &v : d->options_) {
         if (v.optionName == name)
             return v.id;
     }
@@ -179,7 +179,7 @@ void PopupManager::setValue(const QString &name, int value)
 
 int PopupManager::value(const QString &name) const
 {
-    foreach (const OptionValue &v, d->options_) {
+    for (const OptionValue &v : d->options_) {
         if (v.optionName == name)
             return v.optionValue;
     }
@@ -189,7 +189,7 @@ int PopupManager::value(const QString &name) const
 
 const QString PopupManager::optionPath(const QString &name) const
 {
-    foreach (const OptionValue &v, d->options_) {
+    for (const OptionValue &v : d->options_) {
         if (v.optionName == name)
             return v.optionPath;
     }

@@ -42,7 +42,7 @@ public:
     int              maxptime;
     QList<Parameter> parameters;
 
-    JingleRtpPayloadType() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) {}
+    JingleRtpPayloadType() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) { }
 };
 
 class JingleRtpCrypto {
@@ -63,7 +63,7 @@ public:
     bool                        encryptionRequired;
     QList<JingleRtpCrypto>      cryptoList;
 
-    JingleRtpDesc() : haveSsrc(false), ssrc(0), bitrate(-1), encryptionRequired(false) {}
+    JingleRtpDesc() : haveSsrc(false), ssrc(0), bitrate(-1), encryptionRequired(false) { }
 };
 
 class JingleRtpRemoteCandidate {
@@ -72,7 +72,7 @@ public:
     QHostAddress addr;
     int          port;
 
-    JingleRtpRemoteCandidate() : component(-1), port(-1) {}
+    JingleRtpRemoteCandidate() : component(-1), port(-1) { }
 };
 
 class JingleRtpTrans {
@@ -119,7 +119,7 @@ public:
     Condition condition;
     QString   text;
 
-    JingleRtpReason() : condition((Condition)-1) {}
+    JingleRtpReason() : condition((Condition)-1) { }
 };
 
 class JingleRtpEnvelope {

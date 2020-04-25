@@ -44,7 +44,7 @@ PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled) : QAppli
 #endif
 }
 
-PsiApplication::~PsiApplication() {}
+PsiApplication::~PsiApplication() { }
 
 void PsiApplication::init(bool GUIenabled)
 {

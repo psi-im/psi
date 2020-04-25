@@ -23,7 +23,7 @@
 #include <QDomDocument>
 #include <QDomElement>
 
-GeoLocation::GeoLocation() {}
+GeoLocation::GeoLocation() { }
 
 GeoLocation::GeoLocation(const QDomElement &el) { fromXml(el); }
 

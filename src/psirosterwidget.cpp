@@ -78,7 +78,7 @@ protected:
             data << index.data(Qt::DisplayRole).toString() << index.data(ContactListModel::JidRole).toString();
         }
 
-        foreach (const QString &str, data) {
+        for (const QString &str : data) {
             if (str.contains(filterRegExp()))
                 return true;
         }
@@ -149,7 +149,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget *parent) :
     filterPageLayout->addWidget(filterPageView_);
 }
 
-PsiRosterWidget::~PsiRosterWidget() {}
+PsiRosterWidget::~PsiRosterWidget() { }
 
 void PsiRosterWidget::setContactList(PsiContactList *contactList)
 {

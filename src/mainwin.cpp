@@ -193,7 +193,7 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) :
     squishEnabled   = squishStr != nullptr;
 }
 
-MainWin::Private::~Private() {}
+MainWin::Private::~Private() { }
 
 void MainWin::Private::registerActions()
 {
@@ -212,7 +212,7 @@ void MainWin::Private::registerActions()
         IconAction *action = getAction(aName);
         mainWin->connect(action, &IconAction::triggered, mainWin, [this, id](bool) {
             QList<IconAction *> l = statusGroup->findChildren<IconAction *>();
-            foreach (IconAction *action, l) {
+            for (IconAction *action : l) {
                 auto it = statusActions.constFind(action);
                 action->setChecked(it != statusActions.constEnd() && *it == id);
             }
@@ -258,7 +258,7 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
     clearMenu(menu);
 
     IconAction *action;
-    foreach (QString name, actions) {
+    for (QString name : actions) {
         // workind around Qt/X11 bug, which displays
         // actions's text and the separator bar in Qt 4.1.1
         if (name == "separator") {
@@ -856,7 +856,7 @@ void MainWin::buildToolbars()
 
     // loadToolbarsState also restores correct toolbar visibility,
     // we might want to override that
-    foreach (PsiToolBar *tb, toolbars_) {
+    for (PsiToolBar *tb : toolbars_) {
         tb->updateVisibility();
     }
 
@@ -865,7 +865,7 @@ void MainWin::buildToolbars()
 
     // in case we have floating toolbars, they have inherited the 'no updates enabled'
     // state. now we need to explicitly re-enable updates.
-    foreach (PsiToolBar *tb, toolbars_) {
+    for (PsiToolBar *tb : toolbars_) {
         tb->setUpdatesEnabled(true);
     }
 
@@ -1110,7 +1110,7 @@ void MainWin::actChooseStatusActivated()
 
 void MainWin::actReconnectActivated()
 {
-    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+    for (PsiAccount *pa : d->psi->contactList()->accounts()) {
         pa->reconnectOnce();
     }
 }
@@ -1133,7 +1133,7 @@ void MainWin::actEnableGroupsActivated(bool state)
 void MainWin::actSetMoodActivated()
 {
     QList<PsiAccount *> l;
-    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+    for (PsiAccount *pa : d->psi->contactList()->accounts()) {
         if (pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
             l.append(pa);
     }
@@ -1151,7 +1151,7 @@ void MainWin::actSetMoodActivated()
 void MainWin::actSetActivityActivated()
 {
     QList<PsiAccount *> l;
-    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+    for (PsiAccount *pa : d->psi->contactList()->accounts()) {
         if (pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
             l.append(pa);
     }
@@ -1169,7 +1169,7 @@ void MainWin::actSetActivityActivated()
 void MainWin::actSetGeolocActivated()
 {
     QList<PsiAccount *> l;
-    foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+    for (PsiAccount *pa : d->psi->contactList()->accounts()) {
         if (pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
             l.append(pa);
     }
@@ -1216,7 +1216,7 @@ void MainWin::buildTrayMenu()
         d->trayMenu->addSeparator();
         const QStringList _actions = { "status_online", "status_chat",    "status_away", "status_xa",
                                        "status_dnd",    "status_offline", "separator",   "menu_options" };
-        foreach (const QString &action, _actions) {
+        for (const QString &action : _actions) {
             d->getAction(action)->addTo(d->trayMenu);
         }
 #ifndef Q_OS_MAC
@@ -1248,7 +1248,7 @@ void MainWin::setTrayToolTip()
     QString TipPlain    = "";
     QString Events      = "";
     QString EventsPlain = "";
-    foreach (PsiAccount *pa, d->psi->contactList()->enabledAccounts()) {
+    for (PsiAccount *pa : d->psi->contactList()->enabledAccounts()) {
         Status  stat   = pa->status();
         int     status = makeSTATUS(stat);
         QString istr   = "status/offline";
@@ -1326,7 +1326,7 @@ void MainWin::decorateButton(int status)
 {
     // update the 'change status' buttons
     QList<IconAction *> l = d->statusGroup->findChildren<IconAction *>();
-    foreach (IconAction *action, l) {
+    for (IconAction *action : l) {
         action->setChecked(d->statusActions[action] == status);
     }
 
@@ -1735,7 +1735,7 @@ void MainWin::avatarChanged(const Jid &jid)
 void MainWin::accountFeaturesChanged()
 {
     bool have_pep = false;
-    foreach (PsiAccount *account, d->psi->contactList()->enabledAccounts()) {
+    for (PsiAccount *account : d->psi->contactList()->enabledAccounts()) {
         if (account->serverInfoManager()->hasPEP()) {
             have_pep = true;
             break;
@@ -1801,7 +1801,7 @@ void MainWin::searchTextEntered(QString const &text)
 }
 
 #ifdef Q_OS_MAC
-void MainWin::setWindowIcon(const QPixmap &) {}
+void MainWin::setWindowIcon(const QPixmap &) { }
 #else
 void MainWin::setWindowIcon(const QPixmap &p) { QMainWindow::setWindowIcon(p); }
 #endif

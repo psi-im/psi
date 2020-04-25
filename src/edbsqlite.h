@@ -80,7 +80,7 @@ class EDBSqLite : public EDB {
     private:
         friend class QueryStorage;
         PreparedQuery(QSqlDatabase db);
-        ~PreparedQuery() {}
+        ~PreparedQuery() { }
     };
     //--------
     class QueryStorage {

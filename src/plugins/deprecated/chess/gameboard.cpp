@@ -1186,7 +1186,7 @@ Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g, QWidget *paren
     fig[11]   = QPixmap((const char **)white_queen);
 }
 
-Drawer::~Drawer() {}
+Drawer::~Drawer() { }
 
 void Drawer::paintEvent(QPaintEvent *e)
 {
@@ -1661,7 +1661,7 @@ FigureDialog::FigureDialog(const QPixmap *f, const GameBoard::GameType g, QWidge
     setMaximumSize(size());
 }
 
-FigureDialog::~FigureDialog() {}
+FigureDialog::~FigureDialog() { }
 
 void FigureDialog::paintEvent(QPaintEvent *e)
 {

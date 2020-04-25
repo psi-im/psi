@@ -1823,7 +1823,7 @@ void FileTransDlg::ft_error(int x, int, const QString &s)
 
 void FileTransDlg::updateItems()
 {
-    foreach (TransferMapping *i, d->transferList) {
+    for (TransferMapping *i : d->transferList) {
         if (i->h) {
             i->logSent();
             d->updateProgress(i);

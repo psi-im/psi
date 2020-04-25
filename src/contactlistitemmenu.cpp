@@ -54,7 +54,7 @@ ContactListItemMenu::ContactListItemMenu(ContactListItem *item, ContactListModel
     }
 }
 
-ContactListItemMenu::~ContactListItemMenu() {}
+ContactListItemMenu::~ContactListItemMenu() { }
 
 ContactListItem *ContactListItemMenu::item() const { return item_; }
 

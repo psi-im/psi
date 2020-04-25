@@ -54,7 +54,7 @@ OptionsTabShortcuts::OptionsTabShortcuts(QObject *parent) :
 /**
  * \brief Destructor of the Options Tab Shortcuts Class
  */
-OptionsTabShortcuts::~OptionsTabShortcuts() {}
+OptionsTabShortcuts::~OptionsTabShortcuts() { }
 
 /**
  * \brief widget, creates the Options Tab Shortcuts Widget
@@ -164,7 +164,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
     QList<QString>   shortcutGroups = options->getChildOptionNames("options.shortcuts", true, true);
 
     /* step through the shortcut groups e.g. chatdlg */
-    foreach (QString shortcutGroup, shortcutGroups) {
+    for (QString shortcutGroup : shortcutGroups) {
         topLevelItem = new QTreeWidgetItem(d->treeShortcuts);
 
         QString comment = options->getComment(shortcutGroup);
@@ -199,7 +199,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
             shortcuts = options->getChildOptionNames(optionsPath, true, true);
             /* step through the shortcuts */
-            foreach (QString shortcut, shortcuts) {
+            for (QString shortcut : shortcuts) {
 
                 keys = ShortcutManager::readShortcutsFromOptions(
                     shortcut.mid(QString("options.shortcuts").length() + 1), options);
@@ -219,7 +219,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
                 /* step through this shortcut's keys and create 'Key XXXX' entries for them */
                 keyItemsCount = 1;
-                foreach (QKeySequence key, keys) {
+                for (QKeySequence key : keys) {
                     keyItem = new QTreeWidgetItem(shortcutItem);
                     keyItem->setText(0, QString(tr("Key %1")).arg(keyItemsCount++));
                     keyItem->setData(0, ITEMKIND, QVariant(int(OptionsTabShortcuts::KeyItem)));

@@ -24,8 +24,8 @@
 
 class ColorData {
 public:
-    ColorData() : role(QPalette::NoRole), valid(false) {}
-    ColorData(const QColor &color, QPalette::ColorRole role) : color(color), role(role), valid(true) {}
+    ColorData() : role(QPalette::NoRole), valid(false) { }
+    ColorData(const QColor &color, QPalette::ColorRole role) : color(color), role(role), valid(true) { }
 
     QColor              color;
     QPalette::ColorRole role;

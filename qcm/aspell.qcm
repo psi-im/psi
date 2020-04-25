@@ -58,7 +58,7 @@ public:
 
         bool    success;
         QString libname_success;
-        foreach (const QString &libname, libnames) {
+        for (const QString &libname: libnames) {
             conf->debug(QString("Trying %1").arg(libname));
             if (conf->checkLibrary(a_lib, libname)) {
                 success         = true;

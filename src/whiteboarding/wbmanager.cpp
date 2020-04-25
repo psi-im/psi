@@ -37,7 +37,7 @@ using namespace XMPP;
 
 class WbRequest {
 public:
-    WbRequest() : loop_(new QEventLoop), id_(lastRequetsId++) {}
+    WbRequest() : loop_(new QEventLoop), id_(lastRequetsId++) { }
 
     ~WbRequest()
     {
@@ -142,7 +142,7 @@ void WbManager::removeDialog(WbDlg *dialog)
 WbDlg *WbManager::findWbDlg(const Jid &jid)
 {
     // find if a dialog for the jid already exists
-    foreach (WbDlg *w, dialogs_) {
+    for (WbDlg *w : dialogs_) {
         // does the jid match?
         if (w->session()->target().compare(jid)) {
             return w;
@@ -155,7 +155,7 @@ void WbManager::createWbDlg(SxeSession *session)
 {
     // check if the session is a whiteboarding session
     bool whiteboarding = false;
-    foreach (QString feature, session->features()) {
+    for (QString feature : session->features()) {
         if (feature == WBNS)
             whiteboarding = true;
     }
@@ -199,7 +199,7 @@ void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features,
 
 void WbManager::requestActivated(int id)
 {
-    foreach (WbRequest *wr, requests_) {
+    for (WbRequest *wr : requests_) {
         if (wr->id() == id) {
             wr->stopLoop();
             return;

@@ -69,7 +69,7 @@ static PayloadInfo importPayloadInfo(const PPayloadInfo &pp)
     out.setPtime(pp.ptime);
     out.setMaxptime(pp.maxptime);
     QList<PayloadInfo::Parameter> list;
-    foreach (const PPayloadInfo::Parameter &pi, pp.parameters) {
+    for (const PPayloadInfo::Parameter &pi : pp.parameters) {
         PayloadInfo::Parameter i;
         i.name  = pi.name;
         i.value = pi.value;
@@ -89,7 +89,7 @@ static PPayloadInfo exportPayloadInfo(const PayloadInfo &p)
     out.ptime     = p.ptime();
     out.maxptime  = p.maxptime();
     QList<PPayloadInfo::Parameter> list;
-    foreach (const PayloadInfo::Parameter &i, p.parameters()) {
+    for (const PayloadInfo::Parameter &i : p.parameters()) {
         PPayloadInfo::Parameter pi;
         pi.name  = i.name;
         pi.value = i.value;
@@ -113,7 +113,7 @@ Provider *provider()
         // static plugin around?
         Provider *  provider = nullptr;
         QObjectList list     = QPluginLoader::staticInstances();
-        foreach (QObject *obj, list) {
+        for (QObject *obj : list) {
             Plugin *instance = qobject_cast<Plugin *>(obj);
             if (!instance)
                 continue;
@@ -224,9 +224,9 @@ public:
 //----------------------------------------------------------------------------
 // Device
 //----------------------------------------------------------------------------
-Device::Device() : d(nullptr) {}
+Device::Device() : d(nullptr) { }
 
-Device::Device(const Device &other) : d(other.d ? new Private(*other.d) : nullptr) {}
+Device::Device(const Device &other) : d(other.d ? new Private(*other.d) : nullptr) { }
 
 Device::~Device() { delete d; }
 
@@ -295,12 +295,12 @@ public:
     int     sampleSize;
     int     channels;
 
-    Private() : sampleRate(0), sampleSize(0), channels(0) {}
+    Private() : sampleRate(0), sampleSize(0), channels(0) { }
 };
 
-AudioParams::AudioParams() : d(new Private) {}
+AudioParams::AudioParams() : d(new Private) { }
 
-AudioParams::AudioParams(const AudioParams &other) : d(new Private(*other.d)) {}
+AudioParams::AudioParams(const AudioParams &other) : d(new Private(*other.d)) { }
 
 AudioParams::~AudioParams() { delete d; }
 
@@ -350,12 +350,12 @@ public:
     QSize   size;
     int     fps;
 
-    Private() : fps(0) {}
+    Private() : fps(0) { }
 };
 
-VideoParams::VideoParams() : d(new Private) {}
+VideoParams::VideoParams() : d(new Private) { }
 
-VideoParams::VideoParams(const VideoParams &other) : d(new Private(*other.d)) {}
+VideoParams::VideoParams(const VideoParams &other) : d(new Private(*other.d)) { }
 
 VideoParams::~VideoParams() { delete d; }
 
@@ -441,16 +441,16 @@ public:
     QByteArray rawValue;
     int        portOffset;
 
-    Private(const QByteArray &_rawValue, int _portOffset) : rawValue(_rawValue), portOffset(_portOffset) {}
+    Private(const QByteArray &_rawValue, int _portOffset) : rawValue(_rawValue), portOffset(_portOffset) { }
 };
 
-RtpPacket::RtpPacket() : d(nullptr) {}
+RtpPacket::RtpPacket() : d(nullptr) { }
 
-RtpPacket::RtpPacket(const QByteArray &rawValue, int portOffset) : d(new Private(rawValue, portOffset)) {}
+RtpPacket::RtpPacket(const QByteArray &rawValue, int portOffset) : d(new Private(rawValue, portOffset)) { }
 
-RtpPacket::RtpPacket(const RtpPacket &other) : d(other.d) {}
+RtpPacket::RtpPacket(const RtpPacket &other) : d(other.d) { }
 
-RtpPacket::~RtpPacket() {}
+RtpPacket::~RtpPacket() { }
 
 RtpPacket &RtpPacket::operator=(const RtpPacket &other)
 {
@@ -553,7 +553,7 @@ public:
     int                           maxptime;
     QList<PayloadInfo::Parameter> parameters;
 
-    Private() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) {}
+    Private() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) { }
 
     bool operator==(const Private &other) const
     {
@@ -572,7 +572,7 @@ public:
             return false;
 
         // for every parameter in 'a'
-        foreach (const PayloadInfo::Parameter &p, a) {
+        for (const PayloadInfo::Parameter &p : a) {
             // make sure it is found in 'b'
             if (!b.contains(p))
                 return false;
@@ -582,9 +582,9 @@ public:
     }
 };
 
-PayloadInfo::PayloadInfo() : d(new Private) {}
+PayloadInfo::PayloadInfo() : d(new Private) { }
 
-PayloadInfo::PayloadInfo(const PayloadInfo &other) : d(new Private(*other.d)) {}
+PayloadInfo::PayloadInfo(const PayloadInfo &other) : d(new Private(*other.d)) { }
 
 PayloadInfo::~PayloadInfo() { delete d; }
 

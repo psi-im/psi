@@ -52,7 +52,7 @@ public:
         }
 
         if (!incs.isEmpty() && !libs.isEmpty()) {
-            foreach (const QString &inc, incs) {
+            for (const QString &inc: incs) {
                 conf->addIncludePath(inc);
             }
             conf->addLib(libs);

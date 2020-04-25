@@ -204,7 +204,7 @@ void AccountRegDlg::next()
         fields.setFields(fields_->fields());
 
         // Determine the username and password
-        foreach (XMPP::XData::Field field, fields.fields()) {
+        for (XMPP::XData::Field field : fields.fields()) {
             if (field.var() == "username" && !field.value().isEmpty()) {
                 jid_ = Jid(field.value().at(0), server_.bare(), "");
             } else if (field.var() == "password" && !field.value().isEmpty()) {
@@ -301,7 +301,7 @@ XMPP::XData AccountRegDlg::convertToXData(const XMPP::Form &form)
 {
     // Convert the fields
     XData::FieldList fields;
-    foreach (FormField f, form) {
+    for (FormField f : form) {
         XData::Field field;
         field.setLabel(f.fieldName());
         field.setVar(f.realName());
@@ -324,7 +324,7 @@ XMPP::XData AccountRegDlg::convertToXData(const XMPP::Form &form)
 XMPP::Form AccountRegDlg::convertFromXData(const XMPP::XData &xdata)
 {
     Form form;
-    foreach (XMPP::XData::Field field, xdata.fields()) {
+    for (XMPP::XData::Field field : xdata.fields()) {
         if (!field.value().isEmpty()) {
             FormField f;
             f.setType(field.var());

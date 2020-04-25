@@ -762,7 +762,7 @@ bool HistoryDlg::selectContact(const QStringList &ids)
 {
     QAbstractItemModel *model      = ui_.contactList->model();
     QModelIndex         startIndex = model->index(0, 0);
-    foreach (const QString &id, ids) {
+    for (const QString &id : ids) {
         QModelIndexList ilist = model->match(startIndex, HistoryContactListModel::ItemIdRole, id, -1,
                                              Qt::MatchRecursive | Qt::MatchFixedString);
         if (ilist.count() > 0) {
@@ -778,7 +778,7 @@ void HistoryDlg::selectDefaultContact(const QModelIndex &prefer_parent, int pref
     QList<QModelIndex> ilist;
     ilist.append(prefer_parent);
     ilist.append(ui_.contactList->model()->index(0, 0));
-    foreach (const QModelIndex &parent, ilist) {
+    for (const QModelIndex &parent : ilist) {
         if (parent.isValid()) {
             for (int i = 1; i <= 2; ++i) {
                 QModelIndex index = ui_.contactList->model()->index(prefer_row, 0, parent);
@@ -1014,9 +1014,9 @@ void HistoryDlg::exportHistory()
                 stream << QString("[%1] <%2>: ").arg(ts, nick) /* << endl*/;
 
                 QStringList lines = me->message().body().split('\n', QString::KeepEmptyParts);
-                foreach (const QString &str, lines) {
+                for (const QString &str : lines) {
                     QStringList sub = wrapString(str, 72);
-                    foreach (const QString &str2, sub) {
+                    for (const QString &str2 : sub) {
                         txt += str2 + "\n" + QString("    ");
                     }
                 }

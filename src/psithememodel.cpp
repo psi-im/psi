@@ -118,7 +118,7 @@ void PsiThemeModel::load()
     } else {
         QStringList ids = provider->themeIds();
         qDebug() << ids;
-        foreach (const QString &id, ids) {
+        for (const QString &id : ids) {
             loader->asyncLoad(id, [this](const ThemeItemInfo &ti) {
                 if (ti.isValid) {
                     beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
@@ -203,7 +203,7 @@ bool PsiThemeModel::setData(const QModelIndex &index, const QVariant &value, int
 int PsiThemeModel::themeRow(const QString &id)
 {
     int i = 0;
-    foreach (const ThemeItemInfo &tii, themesInfo) {
+    for (const ThemeItemInfo &tii : themesInfo) {
         if (tii.id == id) {
             return i;
         }

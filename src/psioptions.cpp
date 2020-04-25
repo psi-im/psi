@@ -156,7 +156,7 @@ bool PsiOptions::newProfile()
 #ifdef PSI_PLUGINS
         PluginManager *pm      = PluginManager::instance();
         QStringList    plugins = pm->availablePlugins();
-        foreach (const QString &plugin, plugins) {
+        for (const QString &plugin : plugins) {
             pluginsKeys << pm->shortName(plugin) + "-plugin";
         }
 #endif
@@ -218,7 +218,7 @@ bool PsiOptions::newProfile()
 
         QList<ToolbarPrefs> toolbars;
         toolbars << chatToolbar << groupchatToolbar << buttons << showContacts << eventNotifier;
-        foreach (ToolbarPrefs tb, toolbars) {
+        for (ToolbarPrefs tb : toolbars) {
             tb.locked = true;
             PsiToolBar::structToOptions(this, tb);
         }
@@ -357,7 +357,7 @@ void PsiOptions::resetOption(const QString &name)
         }
         setOption(name, dev);
     } else { // internal node
-        foreach (QString node, nodes) {
+        for (QString node : nodes) {
             const QVariant &dev = defaults_->getOption(node);
             if (!dev.isValid()) {
                 continue;

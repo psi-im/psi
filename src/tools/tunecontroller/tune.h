@@ -30,7 +30,7 @@ public:
     /**
      * \brief Constructs an empty tune
      */
-    Tune() : time_(0) {}
+    Tune() : time_(0) { }
 
     const QString &name() const { return name_; }
     const QString &artist() const { return artist_; }

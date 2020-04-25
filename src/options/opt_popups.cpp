@@ -75,7 +75,7 @@ void OptionsTabPopups::applyOptions()
     o->setOption("options.ui.notifications.passive-popups.notify-every-muc-message",
                  QVariant(d->ck_everyMucMessage->isChecked()));
 
-    foreach (QObject *obj, d->sa_durations->widget()->children()) {
+    for (QObject *obj : d->sa_durations->widget()->children()) {
         QSpinBox *sb = dynamic_cast<QSpinBox *>(obj);
         if (sb) {
             const QString oName = sb->property("name").toString();
@@ -88,7 +88,7 @@ void OptionsTabPopups::applyOptions()
         }
     }
 
-    foreach (QObject *obj, d->gb_type->children()) {
+    for (QObject *obj : d->gb_type->children()) {
         QRadioButton *rb = dynamic_cast<QRadioButton *>(obj);
         if (rb && rb->isChecked()) {
             o->setOption("options.ui.notifications.typename", rb->objectName());
@@ -131,7 +131,7 @@ void OptionsTabPopups::restoreOptions()
 
     QWidget *    areaWidget = new QWidget;
     QVBoxLayout *vBox       = new QVBoxLayout(areaWidget);
-    foreach (const QString &option, popup_->optionsNamesList()) {
+    for (const QString &option : popup_->optionsNamesList()) {
         QHBoxLayout *l = new QHBoxLayout;
         l->addWidget(new QLabel(option));
         l->addStretch();
@@ -149,7 +149,7 @@ void OptionsTabPopups::restoreOptions()
     qDeleteAll(d->gb_type->children());
     QHBoxLayout *l = new QHBoxLayout(d->gb_type);
 
-    foreach (QString type_, popup_->availableTypes()) {
+    for (QString type_ : popup_->availableTypes()) {
         QRadioButton *rb = new QRadioButton(type_);
         rb->setObjectName(type_);
         d->gb_type->layout()->addWidget(rb);

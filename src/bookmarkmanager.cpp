@@ -29,7 +29,7 @@
 
 class BookmarkTask : public Task {
 public:
-    BookmarkTask(Task *parent) : Task(parent) {}
+    BookmarkTask(Task *parent) : Task(parent) { }
 
     void set(const QList<URLBookmark> &urls, const QList<ConferenceBookmark> &conferences)
     {
@@ -132,7 +132,7 @@ void BookmarkManager::removeConference(const XMPP::Jid &j)
 {
     if (isAvailable_) {
         QList<ConferenceBookmark> confs;
-        foreach (ConferenceBookmark c, conferences_) {
+        for (ConferenceBookmark c : conferences_) {
             if (!c.jid().compare(j, false)) {
                 confs.push_back(c);
             }
@@ -149,7 +149,7 @@ int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
 {
     if (isAvailable_) {
         int i = 0;
-        foreach (ConferenceBookmark c, conferences_) {
+        for (ConferenceBookmark c : conferences_) {
             if (c.jid().compare(j, false)) {
                 return i;
             }

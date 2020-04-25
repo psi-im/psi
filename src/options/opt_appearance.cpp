@@ -105,7 +105,7 @@ OptionsTabAppearanceMisc::OptionsTabAppearanceMisc(QObject *parent) :
 {
 }
 
-OptionsTabAppearanceMisc::~OptionsTabAppearanceMisc() {}
+OptionsTabAppearanceMisc::~OptionsTabAppearanceMisc() { }
 
 QWidget *OptionsTabAppearanceMisc::widget()
 {

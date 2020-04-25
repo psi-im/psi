@@ -36,7 +36,7 @@ ContactUpdatesManager::ContactUpdatesManager(PsiCon *parent) : QObject(parent), 
     connect(updateTimer_, SIGNAL(timeout()), SLOT(update()));
 }
 
-ContactUpdatesManager::~ContactUpdatesManager() {}
+ContactUpdatesManager::~ContactUpdatesManager() { }
 
 void ContactUpdatesManager::contactBlocked(PsiAccount *account, const XMPP::Jid &jid)
 {
@@ -108,7 +108,7 @@ void ContactUpdatesManager::removeNotInListContacts(PsiAccount *account, const X
     if (!account)
         return;
 
-    foreach (UserListItem *u, account->findRelevant(jid)) {
+    for (UserListItem *u : account->findRelevant(jid)) {
         if (u && !u->inList()) {
             account->actionRemove(u->jid());
         }

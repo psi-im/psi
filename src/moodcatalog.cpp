@@ -144,7 +144,7 @@ MoodCatalog *MoodCatalog::instance()
 
 MoodCatalog::Entry MoodCatalog::findEntryByType(Mood::Type type) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.type() == type)
             return e;
     }
@@ -153,7 +153,7 @@ MoodCatalog::Entry MoodCatalog::findEntryByType(Mood::Type type) const
 
 MoodCatalog::Entry MoodCatalog::findEntryByValue(const QString &value) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.value() == value)
             return e;
     }
@@ -162,7 +162,7 @@ MoodCatalog::Entry MoodCatalog::findEntryByValue(const QString &value) const
 
 MoodCatalog::Entry MoodCatalog::findEntryByText(const QString &text) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.text() == text)
             return e;
     }

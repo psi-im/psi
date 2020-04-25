@@ -21,7 +21,7 @@ OptionsTabStatusPep::OptionsTabStatusPep(QObject *parent) :
 {
 }
 
-OptionsTabStatusPep::~OptionsTabStatusPep() {}
+OptionsTabStatusPep::~OptionsTabStatusPep() { }
 
 QWidget *OptionsTabStatusPep::widget()
 {
@@ -81,7 +81,7 @@ void OptionsTabStatusPep::restoreOptions()
     QStringList controllers = psi_->tuneManager()->controllerNames();
     blackList_
         = o->getOption(tuneControllerFilterOptionPath).toString().split(QRegExp("[,]\\s*"), QString::SkipEmptyParts);
-    foreach (const QString &name, controllers) {
+    for (const QString &name : controllers) {
         QCheckBox *cb      = new QCheckBox(name);
         QString    caption = name + " controller";
         cb->setText(caption);

@@ -22,19 +22,19 @@
 
 #include <QDebug>
 
-MCmdSimpleState::MCmdSimpleState(QString name, QString prompt) : name_(name), prompt_(prompt), flags_(0) {}
+MCmdSimpleState::MCmdSimpleState(QString name, QString prompt) : name_(name), prompt_(prompt), flags_(0) { }
 
 MCmdSimpleState::MCmdSimpleState(QString name, QString prompt, int flags) : name_(name), prompt_(prompt), flags_(flags)
 {
 }
 
-MCmdSimpleState::~MCmdSimpleState() {}
+MCmdSimpleState::~MCmdSimpleState() { }
 
 MCmdManager::MCmdManager(MCmdUiSiteIface *site_) : state_(nullptr), uiSite_(site_) {};
 
 MCmdManager::~MCmdManager()
 {
-    foreach (MCmdProviderIface *prov, providers_) {
+    for (MCmdProviderIface *prov : providers_) {
         prov->mCmdSiteDestroyed();
     }
 }
@@ -109,7 +109,7 @@ QString MCmdManager::serializeCommand(const QStringList &list)
     QString retval;
     bool    needspace = false;
     QRegExp specials("([\"\'\\\\ ])");
-    foreach (QString item, list) {
+    for (QString item : list) {
         item.replace(specials, "\\\\1");
         if (item == "")
             item = "\"\"";
@@ -134,7 +134,7 @@ bool MCmdManager::processCommand(QString command)
         char    tmp_3;
         items = parseCommand(command, -1, tmp_1, tmp_2, tmp_1, tmp_1, tmp_3);
     }
-    foreach (MCmdProviderIface *prov, providers_) {
+    for (MCmdProviderIface *prov : providers_) {
         if (prov->mCmdTryStateTransit(state_, items, tmpstate, preset)) {
             state_ = tmpstate;
             if (state_ != nullptr) {
@@ -198,14 +198,14 @@ QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, 
     }
 
     QStringList res;
-    foreach (MCmdProviderIface *prov, providers_) {
+    for (MCmdProviderIface *prov : providers_) {
         res += prov->mCmdTryCompleteCommand(state_, query, all, part);
     }
     res.sort();
 
     QStringList quoted;
     if ((state_->getFlags() & MCMDSTATE_UNPARSED) == 0) {
-        foreach (QString str, res) {
+        for (QString str : res) {
             QString trail;
             if (str.size() > 1 && str.at(str.size() - 1) == QChar(0)) {
                 str.chop(1);

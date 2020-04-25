@@ -137,7 +137,7 @@ bool SxeSession::processSxe(const QDomElement &sxe, const QString &id)
         return false;
 
     // process all the edits
-    foreach (SxeEdit *e, edits) {
+    for (SxeEdit *e : edits) {
         SxeRecord *meta;
         if (e->type() == SxeEdit::New)
             meta = createRecord(e->rid());
@@ -180,7 +180,7 @@ QList<const SxeEdit *> SxeSession::startQueueing()
     QMultiHash<QString, QString> ridByParent;
 
     // first collect all nodes into a hash by their parent
-    foreach (SxeRecord *m, recordByNodeId_.values()) {
+    for (SxeRecord *m : recordByNodeId_.values()) {
         if (!m->parent().isEmpty()) {
             ridByParent.insert(m->parent(), m->rid());
         } else if (!m->node().isElement()) {
@@ -748,7 +748,7 @@ SxeRecord *SxeSession::record(const QDomNode &node) const
         return nullptr;
 
     // go through all the SxeRecord's
-    foreach (SxeRecord *meta, recordByNodeId_.values()) {
+    for (SxeRecord *meta : recordByNodeId_.values()) {
         // qDebug() << QString("id: %1").arg(meta->rid()).toLatin1();
         if (node == meta->node())
             return meta;

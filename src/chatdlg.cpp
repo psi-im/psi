@@ -290,7 +290,7 @@ void ChatDlg::capsChanged(const Jid &j)
     }
 }
 
-void ChatDlg::capsChanged() {}
+void ChatDlg::capsChanged() { }
 
 void ChatDlg::hideEvent(QHideEvent *e)
 {
@@ -359,7 +359,7 @@ void ChatDlg::dragEnterEvent(QDragEnterEvent *event)
     Q_ASSERT(event);
     // bool accept = false;
     if (account()->loggedIn() && event->mimeData()->hasUrls()) {
-        foreach (QUrl url, event->mimeData()->urls()) {
+        for (QUrl url : event->mimeData()->urls()) {
             if (!url.toLocalFile().isEmpty()) {
                 event->accept();
                 break;
@@ -594,7 +594,7 @@ void ChatDlg::optionsUpdate()
     }
 }
 
-void ChatDlg::updatePGP() {}
+void ChatDlg::updatePGP() { }
 
 void ChatDlg::doInfo() { aInfo(jid()); }
 
@@ -897,7 +897,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     if (!m.urlList().isEmpty()) {
         UrlList                urls = m.urlList();
         QMap<QString, QString> urlsMap;
-        foreach (const Url &u, urls) {
+        for (const Url &u : urls) {
             urlsMap.insert(u.url(), u.desc());
         }
         // Some XMPP clients send links to HTTP uploaded files both in body and in jabber:x:oob.
@@ -917,11 +917,11 @@ void ChatDlg::holdMessages(bool hold)
         if (!delayedMessages)
             delayedMessages = new QList<MessageView>();
     } else if (delayedMessages) {
-        foreach (const MessageView &mv, *delayedMessages) {
+        for (const MessageView &mv : *delayedMessages) {
             if (mv.isSpooled())
                 displayMessage(mv);
         }
-        foreach (const MessageView &mv, *delayedMessages) {
+        for (const MessageView &mv : *delayedMessages) {
             if (!mv.isSpooled())
                 displayMessage(mv);
         }

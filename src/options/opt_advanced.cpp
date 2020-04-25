@@ -25,7 +25,7 @@ OptionsTabAdvanced::OptionsTabAdvanced(QObject *parent) :
     w = nullptr;
 }
 
-OptionsTabAdvanced::~OptionsTabAdvanced() {}
+OptionsTabAdvanced::~OptionsTabAdvanced() { }
 
 QWidget *OptionsTabAdvanced::widget()
 {

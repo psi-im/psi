@@ -25,7 +25,7 @@
 
 #include <QInputDialog>
 
-GroupMenu::GroupMenu(QWidget *parent) : QMenu(parent) {}
+GroupMenu::GroupMenu(QWidget *parent) : QMenu(parent) { }
 
 void GroupMenu::updateMenu(PsiContact *contact)
 {
@@ -41,7 +41,7 @@ void GroupMenu::updateMenu(PsiContact *contact)
     int         n         = 0;
     QStringList groupList = contact->account()->groupList();
     groupList.removeAll(PsiContact::hiddenGroupName());
-    foreach (QString groupName, groupList) {
+    for (QString groupName : groupList) {
         QString displayName = groupName;
         if (displayName.isEmpty())
             displayName = PsiContact::generalGroupName();

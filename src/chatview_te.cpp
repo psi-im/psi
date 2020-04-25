@@ -113,10 +113,10 @@ ChatView::ChatView(QWidget *parent) :
     }
 }
 
-ChatView::~ChatView() {}
+ChatView::~ChatView() { }
 
 // something after we know isMuc and dialog is set
-void ChatView::init() {}
+void ChatView::init() { }
 
 QSize ChatView::sizeHint() const { return minimumSizeHint(); }
 
@@ -544,7 +544,7 @@ void ChatView::renderMucSubject(const MessageView &mv)
 void ChatView::renderUrls(const MessageView &mv)
 {
     QMap<QString, QString> urls = mv.urls();
-    foreach (const QString &key, urls.keys()) {
+    for (const QString &key : urls.keys()) {
         appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg(TextUtil::linkify(TextUtil::escape(key))));
         if (!urls.value(key).isEmpty()) {
             appendText(QString("<b>") + tr("Desc:") + "</b> " + QString("%1").arg(urls.value(key)));

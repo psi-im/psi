@@ -69,7 +69,7 @@ private slots:
         // qWarning() << comments_;
     }
 
-    void cleanupTestCase() {}
+    void cleanupTestCase() { }
 
     void createTreeTest()
     {

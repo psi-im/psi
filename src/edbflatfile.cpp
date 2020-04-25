@@ -59,7 +59,7 @@ struct item_file_req {
 
 class EDBFlatFile::Private {
 public:
-    Private() {}
+    Private() { }
 
     QList<File *>          flist;
     QList<item_file_req *> rlist;
@@ -167,7 +167,7 @@ quint64 EDBFlatFile::eventsCount(const QString &accId, const XMPP::Jid &jid)
 
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
 {
-    foreach (File *i, d->flist) {
+    for (File *i : d->flist) {
         if (i->j.compare(j, false))
             return i;
     }
@@ -180,9 +180,9 @@ EDBFlatFile::File *EDBFlatFile::ensureFile(const Jid &j)
     if (!i) {
         i = new File(Jid(j.bare()));
         connect(i, &File::timeout, this, [i, this]() {
-                    d->flist.removeAll(i);
-                    i->deleteLater();
-                });
+            d->flist.removeAll(i);
+            i->deleteLater();
+        });
         d->flist.append(i);
         if (d->flist.size() > MAX_FILES) {
             delete d->flist.takeFirst();
@@ -348,7 +348,7 @@ QList<EDB::ContactItem> EDBFlatFile::File::contacts(const QString &accId, int ty
     if (type == EDB::Contact) {
         QDir          dir(ApplicationInfo::historyDir() + "/");
         QFileInfoList flist = dir.entryInfoList(QStringList(strToFileName("*")), QDir::Files);
-        foreach (const QFileInfo &fi, flist) {
+        for (const QFileInfo &fi : flist) {
             XMPP::Jid jid(JIDUtil::decode(fi.completeBaseName()));
             if (jid.isValid())
                 res.append(ContactItem(accId, jid));

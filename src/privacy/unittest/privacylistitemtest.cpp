@@ -74,9 +74,9 @@ CPPUNIT_TEST_SUITE_REGISTRATION(PrivacyListItemTest);
 
 // -----------------------------------------------------------------------------
 
-PrivacyListItemTest::PrivacyListItemTest() {}
+PrivacyListItemTest::PrivacyListItemTest() { }
 
-PrivacyListItemTest::~PrivacyListItemTest() {}
+PrivacyListItemTest::~PrivacyListItemTest() { }
 
 PrivacyListItem PrivacyListItemTest::createItemFromXml(const QString &xml)
 {

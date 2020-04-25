@@ -64,7 +64,7 @@ QString AccountAddDlg::createNewAccountName(QString def)
     int     n     = 0;
     while (1) {
         bool taken = false;
-        foreach (PsiAccount *pa, psi->contactList()->accounts()) {
+        for (PsiAccount *pa : psi->contactList()->accounts()) {
             if (aname == pa->name()) {
                 taken = true;
                 break;

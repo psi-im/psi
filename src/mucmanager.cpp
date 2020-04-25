@@ -42,7 +42,7 @@ using namespace XMPP;
 
 class MUCItemsTask : public Task {
 public:
-    MUCItemsTask(const Jid &room, Task *parent) : Task(parent), room_(room), action_(MUCManager::Action::Unknown) {}
+    MUCItemsTask(const Jid &room, Task *parent) : Task(parent), room_(room), action_(MUCManager::Action::Unknown) { }
 
     void set(const QList<MUCItem> &items, MUCManager::Action action = MUCManager::Unknown)
     {
@@ -52,7 +52,7 @@ public:
         QDomElement muc = doc()->createElementNS("http://jabber.org/protocol/muc#admin", "query");
         iq_.appendChild(muc);
 
-        foreach (MUCItem item, items) {
+        for (MUCItem item : items) {
             muc.appendChild(item.toXml(*doc()));
         }
     }
@@ -107,7 +107,7 @@ private:
 
 class MUCConfigurationTask : public Task {
 public:
-    MUCConfigurationTask(const Jid &room, Task *parent) : Task(parent), room_(room) {}
+    MUCConfigurationTask(const Jid &room, Task *parent) : Task(parent), room_(room) { }
 
     void set(const XData &data)
     {
@@ -196,7 +196,7 @@ private:
 
 // -----------------------------------------------------------------------------
 
-MUCManager::MUCManager(PsiAccount *account, const Jid &room) : account_(account), room_(room) {}
+MUCManager::MUCManager(PsiAccount *account, const Jid &room) : account_(account), room_(room) { }
 
 const Jid &MUCManager::room() const { return room_; }
 

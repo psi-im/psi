@@ -75,7 +75,7 @@ QString TabCompletion::longestCommonPrefix(QStringList list)
     int     len       = candidate.length();
     while (len > 0) {
         bool found = true;
-        foreach (QString str, list) {
+        for (QString str : list) {
             if (str.left(len).toLower() != candidate) {
                 found = false;
                 break;

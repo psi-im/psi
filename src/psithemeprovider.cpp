@@ -25,7 +25,7 @@
 #include <QFileInfo>
 #include <QStringList>
 
-PsiThemeProvider::PsiThemeProvider(PsiCon *parent) : QObject(parent), _psi(parent) {}
+PsiThemeProvider::PsiThemeProvider(PsiCon *parent) : QObject(parent), _psi(parent) { }
 
 QString PsiThemeProvider::themePath(const QString &name)
 {
@@ -35,7 +35,7 @@ QString PsiThemeProvider::themePath(const QString &name)
     dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
     dirs << ApplicationInfo::resourcesDir();
 
-    foreach (QString dir, dirs) {
+    for (QString dir : dirs) {
         QString fileName = dir + "/themes/" + name;
 
         QFileInfo fi(fileName);

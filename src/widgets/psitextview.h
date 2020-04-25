@@ -51,13 +51,13 @@ protected:
     // make these functions unusable, because they modify
     // document structure and we can't override them to
     // handle Icons correctly
-    void append(const QString &) {}
-    void toHtml() const {}
-    void toPlainText() const {}
-    void insertHtml(const QString &) {}
-    void insertPlainText(const QString &) {}
-    void setHtml(const QString &) {}
-    void setPlainText(const QString &) {}
+    void append(const QString &) { }
+    void toHtml() const { }
+    void toPlainText() const { }
+    void insertHtml(const QString &) { }
+    void insertPlainText(const QString &) { }
+    void setHtml(const QString &) { }
+    void setPlainText(const QString &) { }
 
     // reimplemented
     void       contextMenuEvent(QContextMenuEvent *e);

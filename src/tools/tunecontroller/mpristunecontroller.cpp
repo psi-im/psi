@@ -58,7 +58,7 @@ MPRISTuneController::MPRISTuneController() : tuneSent_(false)
     qDBusRegisterMetaType<PlayerStatus>();
     QDBusConnection bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, busName);
     players_            = bus.interface()->registeredServiceNames().value().filter(MPRIS_PREFIX);
-    foreach (const QString &player, players_) {
+    for (const QString &player : players_) {
         connectToBus(player);
     }
     bus.connect(QLatin1String("org.freedesktop.DBus"), QLatin1String("/org/freedesktop/DBus"),
@@ -68,7 +68,7 @@ MPRISTuneController::MPRISTuneController() : tuneSent_(false)
 
 MPRISTuneController::~MPRISTuneController()
 {
-    foreach (const QString &player, players_) {
+    for (const QString &player : players_) {
         disconnectFromBus(player);
     }
     QDBusConnection(busName).disconnect(QLatin1String("org.freedesktop.DBus"), QLatin1String("/org/freedesktop/DBus"),

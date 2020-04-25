@@ -111,7 +111,7 @@ void PsiTabWidget::setCloseIcon(const QIcon &icon)
 /**
  * Destructor
  */
-PsiTabWidget::~PsiTabWidget() {}
+PsiTabWidget::~PsiTabWidget() { }
 
 /**
  * Set the color of text on a tab.
@@ -233,7 +233,7 @@ void PsiTabWidget::showPageDirectly(QWidget *widget)
 
 void PsiTabWidget::setPagePinned(QWidget *page, bool pinned)
 {
-    foreach (QWidget *w, widgets_) {
+    for (QWidget *w : widgets_) {
         if (w == page) {
             tabBar_->setTabPinned(widgets_.indexOf(w), pinned);
             showPageDirectly(page);
@@ -244,7 +244,7 @@ void PsiTabWidget::setPagePinned(QWidget *page, bool pinned)
 
 bool PsiTabWidget::isPagePinned(QWidget *page)
 {
-    foreach (QWidget *w, widgets_) {
+    for (QWidget *w : widgets_) {
         if (w == page) {
             return tabBar_->isTabPinned(widgets_.indexOf(w));
         }

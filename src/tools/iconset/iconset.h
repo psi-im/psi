@@ -137,7 +137,7 @@ public:
     void           setRegExp(const QRegExp &);
 
     struct IconText {
-        IconText(QString _lang, QString _text) : lang(_lang), text(_text) {}
+        IconText(QString _lang, QString _text) : lang(_lang), text(_text) { }
 
         QString lang;
         QString text;

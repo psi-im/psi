@@ -30,7 +30,7 @@ class ChatViewCommon {
 public:
     enum UserType { LocalParty, RemoteParty, Participant };
 
-    ChatViewCommon() : _nickNumber(0) {}
+    ChatViewCommon() : _nickNumber(0) { }
     void                    setLooks(QWidget *);
     inline const QDateTime &lastMsgTime() const { return _lastMsgTime; }
     bool                    updateLastMsgTime(QDateTime t);

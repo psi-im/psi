@@ -30,12 +30,12 @@
 /**
  * Default constructor
  */
-OptionsTree::OptionsTree(QObject *parent) : QObject(parent) {}
+OptionsTree::OptionsTree(QObject *parent) : QObject(parent) { }
 
 /**
  * Destructor
  */
-OptionsTree::~OptionsTree() {}
+OptionsTree::~OptionsTree() { }
 
 /**
  * Returns the value of the specified option
@@ -125,7 +125,7 @@ QStringList OptionsTree::getChildOptionNames(const QString &parent, bool direct,
 
 bool OptionsTree::isValidName(const QString &name)
 {
-    foreach (QString part, name.split('.')) {
+    for (QString part : name.split('.')) {
         if (!VariantTree::isValidNodeName(part))
             return false;
     }
@@ -135,7 +135,7 @@ bool OptionsTree::isValidName(const QString &name)
 QString OptionsTree::mapLookup(const QString &basename, const QVariant &key) const
 {
     QStringList children = getChildOptionNames(basename, true, true);
-    foreach (QString path, children) {
+    for (QString path : children) {
         if (getOption(path + ".key") == key) {
             return path;
         }
@@ -163,7 +163,7 @@ QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const
 QString OptionsTree::mapPut(const QString &basename, const QVariant &key)
 {
     QStringList children = getChildOptionNames(basename, true, true);
-    foreach (QString path, children) {
+    for (QString path : children) {
         if (getOption(path + ".key") == key) {
             return path;
         }
@@ -210,7 +210,7 @@ QVariantList OptionsTree::mapKeyList(const QString &basename, bool sortedByNumbe
     if (sortedByNumbers) {
         std::sort(children.begin(), children.end(), mapKeyListLessThanByNumber);
     }
-    foreach (QString path, children) {
+    for (QString path : children) {
         ret << getOption(path + ".key");
     }
     return ret;

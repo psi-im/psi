@@ -153,7 +153,7 @@ class DiscoListItem;
 class DiscoConnector : public QObject {
     Q_OBJECT
 public:
-    DiscoConnector(QObject *parent) : QObject(parent) {}
+    DiscoConnector(QObject *parent) : QObject(parent) { }
 
 signals:
     void itemUpdated(QTreeWidgetItem *);
@@ -175,18 +175,18 @@ class DiscoBaseItem : public QObject, public QTreeWidgetItem {
 public:
     DiscoBaseItem(QTreeWidget *parent, int type = Type);
     DiscoBaseItem(QTreeWidgetItem *parent, int type = Type);
-    ~DiscoBaseItem() {}
+    ~DiscoBaseItem() { }
 
     virtual const DiscoItem &item() const;
-    virtual void             itemSelected() {}
-    virtual void             itemClicked() {}
+    virtual void             itemSelected() { }
+    virtual void             itemClicked() { }
 
     virtual bool operator<(const QTreeWidgetItem &other) const;
 };
 
-DiscoBaseItem::DiscoBaseItem(QTreeWidget *parent, int type) : QTreeWidgetItem(parent, type) {}
+DiscoBaseItem::DiscoBaseItem(QTreeWidget *parent, int type) : QTreeWidgetItem(parent, type) { }
 
-DiscoBaseItem::DiscoBaseItem(QTreeWidgetItem *parent, int type) : QTreeWidgetItem(parent, type) {}
+DiscoBaseItem::DiscoBaseItem(QTreeWidgetItem *parent, int type) : QTreeWidgetItem(parent, type) { }
 
 const DiscoItem &DiscoBaseItem::item() const
 {
@@ -210,7 +210,7 @@ class DiscoListItem;
 class DiscoExtraItem : public DiscoBaseItem {
 public:
     DiscoExtraItem(DiscoListItem *parent, const QString &text);
-    virtual ~DiscoExtraItem() {}
+    virtual ~DiscoExtraItem() { }
 
     virtual void itemClicked();
 
@@ -833,7 +833,7 @@ private:
     // helper class to store browser history
     class History {
     public:
-        History(const XMPP::Jid &_jid, const QString &_node) : jid(_jid), node(_node) {}
+        History(const XMPP::Jid &_jid, const QString &_node) : jid(_jid), node(_node) { }
 
         XMPP::Jid jid;
         QString   node;

@@ -70,7 +70,7 @@ public:
         gAdvWidget = new GAdvancedWidget(this);
     }
 
-    virtual ~AdvancedWidget() {}
+    virtual ~AdvancedWidget() { }
 
     void setWindowIcon(const QIcon &icon)
     {

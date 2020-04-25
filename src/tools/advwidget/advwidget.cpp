@@ -51,9 +51,9 @@ public:
     ~AdvancedWidgetShared();
 };
 
-AdvancedWidgetShared::AdvancedWidgetShared() : QObject(qApp) {}
+AdvancedWidgetShared::AdvancedWidgetShared() : QObject(qApp) { }
 
-AdvancedWidgetShared::~AdvancedWidgetShared() {}
+AdvancedWidgetShared::~AdvancedWidgetShared() { }
 
 static AdvancedWidgetShared *advancedWidgetShared = nullptr;
 
@@ -132,7 +132,7 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
     if (stickToWindows)
         list = QApplication::topLevelWidgets();
 
-    foreach (QWidget *w, list) {
+    for (QWidget *w : list) {
         QRect rect;
         bool  dockWidget = false;
 

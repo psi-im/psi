@@ -54,7 +54,7 @@ void SxeRecord::apply(QDomDocument &doc, SxeEdit *edit)
 QList<const SxeEdit *> SxeRecord::edits() const
 {
     QList<const SxeEdit *> edits;
-    foreach (SxeEdit *e, edits_) {
+    for (SxeEdit *e : edits_) {
         edits.append(e);
     }
     return edits;
@@ -180,7 +180,7 @@ bool SxeRecord::applySxeRecordEdit(SxeRecordEdit *edit)
 void SxeRecord::processInOrderRecordEdit(const SxeRecordEdit *edit)
 {
 
-    foreach (SxeRecordEdit::Key key, edit->keys()) {
+    for (SxeRecordEdit::Key key : edit->keys()) {
 
         if (key == SxeRecordEdit::Parent && edit->value(key) != parent()) {
 

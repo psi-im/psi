@@ -102,8 +102,8 @@ int HistoryImport::exec()
     foreach (const EDB::ContactItem &ci, srcEdb->contacts(QString(), EDB::Contact)) {
         const XMPP::Jid &jid = ci.jid;
         QStringList      accIds;
-        foreach (PsiAccount *acc, psi_->contactList()->accounts()) {
-            foreach (PsiContact *contact, acc->contactList()) {
+        for (PsiAccount *acc : psi_->contactList()->accounts()) {
+            for (PsiContact *contact : acc->contactList()) {
                 if (contact->jid() == jid)
                     accIds.append(acc->id());
             }

@@ -26,7 +26,7 @@
 
 Mood::Mood() { type_ = Unknown; }
 
-Mood::Mood(Mood::Type type, const QString &text) : type_(type), text_(text) {}
+Mood::Mood(Mood::Type type, const QString &text) : type_(type), text_(text) { }
 
 Mood::Mood(const QDomElement &e) { fromXml(e); }
 

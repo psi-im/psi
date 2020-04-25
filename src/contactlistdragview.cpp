@@ -82,11 +82,11 @@ void ContactListDragView::addContextMenuAction(QAction *action)
     QMenu *menu = action->menu();
     if (menu) {
         // if the action contains a menu, add the menu's actions instead
-        foreach (QAction *subact, menu->actions()) {
+        for (QAction *subact : menu->actions()) {
             addContextMenuAction(subact);
         }
     } else {
-        foreach (QAction *act, findChildren<QAction *>()) {
+        for (QAction *act : findChildren<QAction *>()) {
             // TODO: maybe check individual shortcuts too?
             if (act->shortcuts() == action->shortcuts()) {
                 return;

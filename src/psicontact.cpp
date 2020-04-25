@@ -290,7 +290,7 @@ QStringList PsiContact::groups() const
         result << QString();
         // #endif
     } else {
-        foreach (QString group, d->u_.groups()) {
+        for (QString group : d->u_.groups()) {
             QString groupName = group.split(accountGroupDelimiter).join(globalGroupDelimiter);
             // #ifdef USE_GENERAL_CONTACT_GROUP
             //             if (groupName.isEmpty()) {
@@ -317,7 +317,7 @@ void PsiContact::setGroups(QStringList newGroups)
     if (!account())
         return;
     QStringList newAccountGroups;
-    foreach (QString group, newGroups) {
+    for (QString group : newGroups) {
         QString groupName = group.split(globalGroupDelimiter).join(accountGroupDelimiter);
         // #ifdef USE_GENERAL_CONTACT_GROUP
         //         if (groupName == generalGroupName()) {
@@ -342,7 +342,7 @@ bool PsiContact::groupOperationPermitted(const QString &oldGroupName, const QStr
 
 bool PsiContact::isRemovable() const
 {
-    foreach (QString group, groups()) {
+    for (QString group : groups()) {
         if (!groupOperationPermitted(group, QString()))
             return false;
     }

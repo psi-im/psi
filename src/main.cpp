@@ -433,7 +433,7 @@ QStringList getQtPluginPathEnvVar()
         QLatin1Char pathSep(':');
 #endif
         QStringList paths = QString::fromLatin1(val).split(pathSep, QString::SkipEmptyParts);
-        foreach (const QString &path, paths) {
+        for (const QString &path : paths) {
             QString canonicalPath = QDir(path).canonicalPath();
             if (!canonicalPath.isEmpty() && !out.contains(canonicalPath))
                 out += canonicalPath;

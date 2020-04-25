@@ -124,7 +124,7 @@ FancyPopup::Private::Private(FancyPopup *p) : QObject(p), popupLayout(TopToBotto
     connect(hideTimer, SIGNAL(timeout()), popup, SLOT(hide()));
 }
 
-FancyPopup::Private::~Private() {}
+FancyPopup::Private::~Private() { }
 
 void FancyPopup::Private::popupDestroyed(QObject *obj)
 {
@@ -237,7 +237,7 @@ FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, boo
         QList<FancyPopup *> prevPopups = prev->d->prevPopups;
         prevPopups.append(prev);
 
-        foreach (FancyPopup *popup, prevPopups) {
+        for (FancyPopup *popup : prevPopups) {
             d->prevPopups.append(popup);
             connect(popup, SIGNAL(destroyed(QObject *)), d, SLOT(popupDestroyed(QObject *)));
         }
@@ -246,7 +246,7 @@ FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, boo
     d->initContents(title, icon, copyIcon);
 }
 
-FancyPopup::~FancyPopup() {}
+FancyPopup::~FancyPopup() { }
 
 void FancyPopup::addLayout(QLayout *layout, int stretch)
 {

@@ -29,7 +29,7 @@ class FancyPopupList : public QObject, public QList<FancyPopup *> {
     Q_OBJECT
 
 public:
-    FancyPopupList() {}
+    FancyPopupList() { }
 
     ~FancyPopupList()
     {

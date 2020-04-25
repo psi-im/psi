@@ -171,7 +171,7 @@ ActivityCatalog *ActivityCatalog::instance()
 
 ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::Type type) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.type() == type)
             return e;
     }
@@ -180,7 +180,7 @@ ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::Type type) con
 
 ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::SpecificType specificType) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.specificType() == specificType)
             return e;
     }
@@ -189,7 +189,7 @@ ActivityCatalog::Entry ActivityCatalog::findEntryByType(Activity::SpecificType s
 
 ActivityCatalog::Entry ActivityCatalog::findEntryByValue(const QString &value) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.value() == value)
             return e;
     }
@@ -198,7 +198,7 @@ ActivityCatalog::Entry ActivityCatalog::findEntryByValue(const QString &value) c
 
 ActivityCatalog::Entry ActivityCatalog::findEntryByText(const QString &text) const
 {
-    foreach (Entry e, entries_) {
+    for (Entry e : entries_) {
         if (e.text() == text)
             return e;
     }

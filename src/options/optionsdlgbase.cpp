@@ -43,7 +43,7 @@
 
 class OptionsTabsDelegate : public QItemDelegate {
 public:
-    OptionsTabsDelegate(QObject *parent) : QItemDelegate(parent) {}
+    OptionsTabsDelegate(QObject *parent) : QItemDelegate(parent) { }
 
     // reimplemented
     virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -216,7 +216,7 @@ void OptionsDlgBase::Private::setTabs(QList<OptionsTab *> t)
 
     option.fontMetrics = dlg->lv_tabs->fontMetrics();
     tabs               = t;
-    foreach (OptionsTab *opttab, tabs) {
+    for (OptionsTab *opttab : tabs) {
         // qWarning("Adding tab %s...", (const char *)opttab->id());
         opttab->setData(psi, dlg);
         connect(opttab, SIGNAL(dataChanged()), SLOT(dataChanged()));
@@ -286,7 +286,7 @@ void OptionsDlgBase::Private::openTab(QString id)
     QWidget *tab = id2widget[id];
     if (!tab) {
         bool found = false;
-        foreach (OptionsTab *opttab, tabs) {
+        for (OptionsTab *opttab : tabs) {
             if (opttab->id() == id) {
                 tab = opttab->widget(); // create the widget
                 if (!tab)
@@ -328,7 +328,7 @@ void OptionsDlgBase::Private::openTab(QString id)
         }
     }
 
-    foreach (OptionsTab *opttab, tabs) {
+    for (OptionsTab *opttab : tabs) {
         if (opttab->id() == id) {
             dlg->lb_pageTitle->setText(opttab->name());
             dlg->lb_pageTitle->setHelp(opttab->desc());
@@ -358,7 +358,7 @@ void OptionsDlgBase::Private::enableCommonControls(bool enable)
 
 void OptionsDlgBase::Private::connectDataChanged(QWidget *widget)
 {
-    foreach (QWidget *w, widget->findChildren<QWidget *>()) {
+    for (QWidget *w : widget->findChildren<QWidget *>()) {
         QVariant isOption = w->property("isOption"); // set to false for ignored widgets
         if (isOption.isValid() && !isOption.toBool()) {
             continue;
@@ -397,7 +397,7 @@ void OptionsDlgBase::Private::doApply()
     if (!dirty)
         return;
 
-    foreach (OptionsTab *opttab, tabs) {
+    for (OptionsTab *opttab : tabs) {
         opttab->applyOptions();
     }
 

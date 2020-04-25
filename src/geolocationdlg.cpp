@@ -101,7 +101,7 @@ GeoLocationDlg::GeoLocationDlg(QList<PsiAccount *> list) : QDialog(nullptr), pa_
 
 void GeoLocationDlg::reset()
 {
-    foreach (QLineEdit *le, this->findChildren<QLineEdit *>()) {
+    for (QLineEdit *le : this->findChildren<QLineEdit *>()) {
         le->setText("");
     }
 }
@@ -161,7 +161,7 @@ void GeoLocationDlg::setGeoLocation()
     if (!ui_.le_text->text().isEmpty())
         geoloc.setText(ui_.le_text->text());
 
-    foreach (PsiAccount *pa, pa_) {
+    for (PsiAccount *pa : pa_) {
         if (geoloc.isNull()) {
             pa->pepManager()->disable(PEP_GEOLOC_TN, PEP_GEOLOC_NS, "current");
         } else {

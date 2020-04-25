@@ -35,7 +35,7 @@
 // ContactListModelOperationList
 //----------------------------------------------------------------------------
 
-ContactListModelOperationList::ContactListModelOperationList(Action action) : action_(action) {}
+ContactListModelOperationList::ContactListModelOperationList(Action action) : action_(action) { }
 
 ContactListModelOperationList::ContactListModelOperationList(Qt::DropAction action)
 {
@@ -101,9 +101,9 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
         return;
 
     QList<PsiContact *> contacts = operations_.keys();
-    foreach (PsiContact *psiContact, contacts) {
+    for (PsiContact *psiContact : contacts) {
         bool remove = false;
-        foreach (Operation op, operations_[psiContact]) {
+        for (Operation op : operations_[psiContact]) {
             if (psiContact->groups().contains(op.groupTo)) {
                 remove = true;
                 break;
@@ -119,7 +119,7 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
 // ContactListDragModel
 //----------------------------------------------------------------------------
 
-ContactListDragModel::ContactListDragModel(PsiContactList *contactList) : ContactListModel(contactList) {}
+ContactListDragModel::ContactListDragModel(PsiContactList *contactList) : ContactListModel(contactList) { }
 
 Qt::DropActions ContactListDragModel::supportedDragActions() const { return Qt::MoveAction | Qt::CopyAction; }
 

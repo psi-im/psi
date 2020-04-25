@@ -11,7 +11,7 @@ OptionsTabTree::OptionsTabTree(QObject *parent) :
     w = nullptr;
 }
 
-OptionsTabTree::~OptionsTabTree() {}
+OptionsTabTree::~OptionsTabTree() { }
 
 QWidget *OptionsTabTree::widget()
 {

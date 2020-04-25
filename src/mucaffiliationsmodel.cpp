@@ -29,7 +29,7 @@ MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown, 2)
 {
     QFont font;
     font.setBold(true);
-    QVariant font_variant = qVariantFromValue(font);
+    QVariant font_variant = QVariant::fromValue(font);
     for (int i = 0; i < Unknown; i++) {
         QModelIndex ind = index(i, 0, QModelIndex());
         setData(ind, QVariant(affiliationlistindexToString(AffiliationListIndex(i))));
@@ -104,7 +104,7 @@ bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction ac
 
     // Insert the data
     insertRows(real_row, nb_rows, real_index);
-    foreach (QString text, newItems) {
+    for (QString text : newItems) {
         QModelIndex idx = index(real_row, 0, real_index);
         setData(idx, text);
         real_row++;
@@ -126,7 +126,7 @@ QMimeData *MUCAffiliationsModel::mimeData(const QModelIndexList &indexes) const
     QMimeData * mimeData = new QMimeData();
     QByteArray  encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    foreach (QModelIndex index, indexes) {
+    for (QModelIndex index : indexes) {
         if (index.isValid() && index.column() == 0) {
             QString text = data(index, Qt::DisplayRole).toString();
             stream << text;
@@ -204,7 +204,7 @@ MUCAffiliationsModel::AffiliationListIndex MUCAffiliationsModel::affiliationToIn
 void MUCAffiliationsModel::addItems(const QList<MUCItem> &items)
 {
     bool dirty = false;
-    foreach (MUCItem item, items) {
+    for (MUCItem item : items) {
         QModelIndex list = affiliationListIndex(item.affiliation());
         if (list.isValid() && !item.jid().isEmpty()) {
             if (!dirty) {
@@ -249,9 +249,9 @@ QList<MUCItem> MUCAffiliationsModel::changes() const
     }
 
     // Remove all old items not present in the delta
-    foreach (MUCItem item_old, items_old) {
+    for (MUCItem item_old : items_old) {
         bool found = false;
-        foreach (MUCItem item_new, items_delta) {
+        for (MUCItem item_new : items_delta) {
             if (item_new.jid().compare(item_old.jid(), false)) {
                 found = true;
                 break;

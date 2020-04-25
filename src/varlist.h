@@ -30,7 +30,7 @@ class QStringList;
 
 class VarListItem {
 public:
-    VarListItem() {}
+    VarListItem() { }
 
     const QString &key() const { return v_key; }
     const QString &data() const { return v_data; }

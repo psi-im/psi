@@ -45,7 +45,7 @@ OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent) :
 
 void OptionsTabAppearanceThemes::setData(PsiCon *psi, QWidget *w)
 {
-    foreach (PsiThemeProvider *provider, psi->themeManager()->registeredProviders()) {
+    for (PsiThemeProvider *provider : psi->themeManager()->registeredProviders()) {
         addTab(new OptionsTabAppearanceTheme(this, provider));
     }
     MetaOptionsTab::setData(psi, w);
@@ -61,7 +61,7 @@ OptionsTabAppearanceTheme::OptionsTabAppearanceTheme(QObject *parent, PsiThemePr
 {
 }
 
-OptionsTabAppearanceTheme::~OptionsTabAppearanceTheme() {}
+OptionsTabAppearanceTheme::~OptionsTabAppearanceTheme() { }
 
 QWidget *OptionsTabAppearanceTheme::widget()
 {

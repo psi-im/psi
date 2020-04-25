@@ -67,7 +67,7 @@ public:
         QList<XDataMediaWidget *> result;
         // simple image filter
         // TODO add support for other formats
-        foreach (const XData::Field::MediaUri &uri, m) {
+        for (const XData::Field::MediaUri &uri : m) {
             if (uri.mimeType.startsWith("image")) {
                 XDataMediaWidget *mw = new XDataMediaWidget(uri, m.mediaSize(), j, xdw);
                 result.append(mw);
@@ -129,7 +129,7 @@ public:
         _field    = f;
         _xdWidget = w;
     }
-    virtual ~XDataField() {}
+    virtual ~XDataField() { }
 
     virtual XData::Field field() const { return _field; }
 
@@ -167,7 +167,7 @@ protected:
 
 class XDataField_Hidden : public XDataField {
 public:
-    XDataField_Hidden(XData::Field f, XDataWidget *w) : XDataField(f, w) {}
+    XDataField_Hidden(XData::Field f, XDataWidget *w) : XDataField(f, w) { }
 };
 
 ////////////////////////////////////////
@@ -258,7 +258,7 @@ public:
             Jid j = xdw->owner();
 
             QList<XDataMediaWidget *> mediaWidgets = XDataMediaWidget::fromMediaElement(me, j, _xdWidget);
-            foreach (XDataMediaWidget *w, mediaWidgets) {
+            for (XDataMediaWidget *w : mediaWidgets) {
                 grid->addWidget(w, row, 0, 1, 3, Qt::AlignCenter);
                 row++;
             }
@@ -582,7 +582,7 @@ void XDataWidget::setForm(const XMPP::XData &d, bool withInstructions)
         short maxAnswers       = 0;
         short requestedAnswers = 0;
         Jid   from;
-        foreach (const XData::Field &field, d.fields()) {
+        for (const XData::Field &field : d.fields()) {
             if (!field.var().isEmpty()) {
                 if (field.var() == "answers") {
                     requestedAnswers = field.value().value(0).toShort();
@@ -694,7 +694,7 @@ void XDataWidget::setFields(const XData::FieldList &f)
 
 XDataField *XDataWidget::fieldByVar(const QString &var) const
 {
-    foreach (XDataField *field, fields_) {
+    for (XDataField *field : fields_) {
         if (field->field().var() == var) {
             return field;
         }

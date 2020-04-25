@@ -54,7 +54,7 @@ const QStringList ChatViewThemeProvider::themeIds() const
     dirs << ApplicationInfo::resourcesDir();
 
     QSet<QString> ret;
-    foreach (QString dir, dirs) {
+    for (QString dir : dirs) {
         foreach (QFileInfo tDirInfo,
                  QDir(dir + "/themes/chatview/").entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot)) {
             QString typeName = tDirInfo.fileName();

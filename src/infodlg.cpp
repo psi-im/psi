@@ -314,8 +314,8 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     ui_.te_status->setAcceptRichText(true);
     PsiRichText::install(ui_.te_status->document());
     updateStatus();
-    foreach (UserListItem *u, d->findRelevant(j)) {
-        foreach (UserResource r, u->userResourceList()) {
+    for (UserListItem *u : d->findRelevant(j)) {
+        for (UserResource r : u->userResourceList()) {
             requestResourceInfo(d->jid.withResource(r.name()));
         }
         if (u->userResourceList().isEmpty() && u->lastAvailable().isNull()) {
@@ -935,7 +935,7 @@ void InfoWidget::clientVersionFinished()
 {
     JT_ClientVersion *j = static_cast<JT_ClientVersion *>(sender());
     if (j->success()) {
-        foreach (UserListItem *u, d->findRelevant(j->jid())) {
+        for (UserListItem *u : d->findRelevant(j->jid())) {
             UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
             bool                       found = (rit == u->userResourceList().end()) ? false : true;
             if (!found) {
@@ -953,7 +953,7 @@ void InfoWidget::entityTimeFinished()
 {
     JT_EntityTime *j = static_cast<JT_EntityTime *>(sender());
     if (j->success()) {
-        foreach (UserListItem *u, d->findRelevant(j->jid())) {
+        for (UserListItem *u : d->findRelevant(j->jid())) {
             UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
             bool                       found = (rit == u->userResourceList().end()) ? false : true;
             if (!found)
@@ -977,7 +977,7 @@ void InfoWidget::requestLastActivityFinished()
 {
     LastActivityTask *j = static_cast<LastActivityTask *>(sender());
     if (j->success()) {
-        foreach (UserListItem *u, d->findRelevant(d->jid)) {
+        for (UserListItem *u : d->findRelevant(d->jid)) {
             u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE, j->status()));
             u->setLastAvailable(j->time());
             d->updateEntry(*u);

@@ -26,7 +26,7 @@ AccountLabel::AccountLabel(QWidget *parent) : QLabel(parent), showJid_(true)
     setFrameStyle(QFrame::Panel | QFrame::Sunken);
 }
 
-AccountLabel::~AccountLabel() {}
+AccountLabel::~AccountLabel() { }
 
 PsiAccount *AccountLabel::account() const { return account_; }
 

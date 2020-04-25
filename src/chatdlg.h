@@ -48,7 +48,7 @@ class Message;
 using namespace XMPP;
 
 struct UserStatus {
-    UserStatus() : userListItem(nullptr), statusType(XMPP::Status::Offline) {}
+    UserStatus() : userListItem(nullptr), statusType(XMPP::Status::Offline) { }
     UserListItem *     userListItem;
     XMPP::Status::Type statusType;
     QString            status;

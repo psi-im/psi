@@ -733,7 +733,7 @@ typedef struct {
 
 class IVideoOutput {
 public:
-    virtual ~IVideoOutput() {}
+    virtual ~IVideoOutput() { }
     virtual int  open(int w, int h, int vflip, double aspectratio, unsigned int fmt) = 0;
     virtual void setcallback(LRESULT (*msgcallback)(void *token, HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam),
                              void *token)
@@ -741,10 +741,10 @@ public:
     }
     virtual void close()           = 0;
     virtual void draw(void *frame) = 0;
-    virtual void drawSubtitle(SubsItem *item) {}
-    virtual void showStatusMsg(const char *text) {}
+    virtual void drawSubtitle(SubsItem *item) { }
+    virtual void showStatusMsg(const char *text) { }
     virtual int  get_latency() { return 0; }
-    virtual void notifyBufferState(int bufferstate) {} /* 0-255*/
+    virtual void notifyBufferState(int bufferstate) { } /* 0-255*/
 
     virtual int extended(int param1, int param2, int param3) { return 0; } // Dispatchable, eat this!
 };

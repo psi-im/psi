@@ -23,7 +23,7 @@
 #include <QDomElement>
 #include <QString>
 
-PubSubSubscription::PubSubSubscription() {}
+PubSubSubscription::PubSubSubscription() { }
 
 PubSubSubscription::PubSubSubscription(const QDomElement &e) { fromXml(e); }
 

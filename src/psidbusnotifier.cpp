@@ -66,7 +66,7 @@ public:
         image.append((char *)img->rgbSwapped().bits(), img->byteCount());
 #endif
     }
-    iiibiiay() {}
+    iiibiiay() { }
     static const int id;
     int              width;
     int              height;
@@ -111,7 +111,7 @@ PsiDBusNotifier::PsiDBusNotifier(QObject *parent) :
     connect(lifeTimer_, SIGNAL(timeout()), SLOT(readyToDie()));
 }
 
-PsiDBusNotifier::~PsiDBusNotifier() {}
+PsiDBusNotifier::~PsiDBusNotifier() { }
 
 bool PsiDBusNotifier::isAvailable()
 {

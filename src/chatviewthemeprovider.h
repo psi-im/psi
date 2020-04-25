@@ -65,7 +65,7 @@ class GroupChatViewThemeProvider : public ChatViewThemeProvider {
     Q_OBJECT
 
 public:
-    GroupChatViewThemeProvider(PsiCon *psi) : ChatViewThemeProvider(psi) {}
+    GroupChatViewThemeProvider(PsiCon *psi) : ChatViewThemeProvider(psi) { }
 
     const char *type() const { return "groupchatview"; }
     QString     optionsName() const { return tr("Groupchat Message Style"); }

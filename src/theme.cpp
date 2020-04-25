@@ -37,11 +37,11 @@
 //--------------------------------------
 // Theme
 //--------------------------------------
-Theme::Theme() {}
+Theme::Theme() { }
 
-Theme::Theme(ThemePrivate *priv) : d(priv) {}
+Theme::Theme(ThemePrivate *priv) : d(priv) { }
 
-Theme::Theme(const Theme &other) : d(other.d) {}
+Theme::Theme(const Theme &other) : d(other.d) { }
 
 Theme &Theme::operator=(const Theme &other)
 {
@@ -49,7 +49,7 @@ Theme &Theme::operator=(const Theme &other)
     return *this;
 }
 
-Theme::~Theme() {}
+Theme::~Theme() { }
 
 bool Theme::isValid() const { return d; }
 
@@ -98,7 +98,7 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
         QFile file(themePath + '/' + fileName);
         if (caseInsensetive && !file.exists()) {
             QDir d(themePath);
-            foreach (const QString &name, fileName.toLower().split('/')) {
+            for (const QString &name : fileName.toLower().split('/')) {
                 if (name.isEmpty()) { // force relative path and drop double slahses
                     continue;
                 }
@@ -222,4 +222,4 @@ QString Theme::title() const { return d->name.isEmpty() ? d->id : d->name; }
 
 void Theme::setState(Theme::State state) { d->state = state; }
 
-Theme::ResourceLoader::~ResourceLoader() {}
+Theme::ResourceLoader::~ResourceLoader() { }

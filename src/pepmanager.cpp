@@ -579,10 +579,10 @@ void PEPManager::get(const Jid &jid, const QString &node, const QString &id)
 void PEPManager::messageReceived(const Message &m)
 {
     if (m.type() != "error") {
-        foreach (PubSubRetraction i, m.pubsubRetractions()) {
+        for (PubSubRetraction i : m.pubsubRetractions()) {
             emit itemRetracted(m.from(), m.pubsubNode(), i);
         }
-        foreach (PubSubItem i, m.pubsubItems()) {
+        for (PubSubItem i : m.pubsubItems()) {
             emit itemPublished(m.from(), m.pubsubNode(), i);
         }
     }

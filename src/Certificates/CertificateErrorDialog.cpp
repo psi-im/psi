@@ -65,4 +65,4 @@ CertificateErrorDialog::CertificateErrorDialog(const QString &title, const QStri
     connect(btnBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-CertificateErrorDialog::~CertificateErrorDialog() {}
+CertificateErrorDialog::~CertificateErrorDialog() { }

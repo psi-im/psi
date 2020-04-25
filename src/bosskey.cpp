@@ -43,7 +43,7 @@ void BossKey::shortCutActivated()
 void BossKey::doHide()
 {
     QWidgetList l = qApp->topLevelWidgets();
-    foreach (QWidget *w, l) {
+    for (QWidget *w : l) {
         w = w->window();
         if (!w->isHidden()) {
             hiddenWidgets_.push_back(QPointer<QWidget>(w));
@@ -65,7 +65,7 @@ void BossKey::doHide()
     static const QString     fileOption     = "options.ui.file-transfer.auto-popup";
     static const QStringList opt            = QStringList()
         << soundOption << popupOption << messageOption << headLineOption << chatOption << fileOption;
-    foreach (const QString &option, opt) {
+    for (const QString &option : opt) {
         tmpOptions_[option] = psiOptions->getOption(option);
         psiOptions->setOption(option, false);
     }
@@ -73,7 +73,7 @@ void BossKey::doHide()
 
 void BossKey::doShow()
 {
-    foreach (QPointer<QWidget> p, hiddenWidgets_) {
+    for (QPointer<QWidget> p : hiddenWidgets_) {
         if (p) {
             p->show();
         }
@@ -85,7 +85,7 @@ void BossKey::doShow()
             ico->show();
         }
     }
-    foreach (const QString &key, tmpOptions_.keys()) {
+    for (const QString &key : tmpOptions_.keys()) {
         psiOptions->setOption(key, tmpOptions_.value(key));
     }
     tmpOptions_.clear();

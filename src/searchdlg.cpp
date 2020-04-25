@@ -56,7 +56,7 @@ private:
     QDomElement _iq;
 };
 
-JT_XSearch::JT_XSearch(Task *parent) : JT_Search(parent) {}
+JT_XSearch::JT_XSearch(Task *parent) : JT_Search(parent) { }
 
 bool JT_XSearch::take(const QDomElement &x)
 {
@@ -93,7 +93,7 @@ void JT_XSearch::onGo()
 //----------------------------------------------------------------------------
 class SearchDlg::Private {
 public:
-    Private(SearchDlg *_dlg) : dlg(_dlg) {}
+    Private(SearchDlg *_dlg) : dlg(_dlg) { }
 
     struct NickAndJid {
         QString   nick;
@@ -125,7 +125,7 @@ public:
             }
         }
 
-        foreach (QTreeWidgetItem *i, dlg->lv_results->selectedItems()) {
+        for (QTreeWidgetItem *i : dlg->lv_results->selectedItems()) {
             NickAndJid nickJid;
             nickJid.jid  = XMPP::Jid(i->text(jid));
             nickJid.nick = i->text(nick);
@@ -391,7 +391,7 @@ void SearchDlg::jt_finished()
                 }
 
                 QStringList header_labels;
-                foreach (XData::ReportField report, form.report()) {
+                for (XData::ReportField report : form.report()) {
                     header_labels << report.label;
                 }
 
@@ -399,10 +399,10 @@ void SearchDlg::jt_finished()
                 lv_results->setColumnCount(0);
                 lv_results->setHeaderLabels(header_labels);
 
-                foreach (XData::ReportItem ri, form.reportItems()) {
+                for (XData::ReportItem ri : form.reportItems()) {
                     int              i   = 0;
                     QTreeWidgetItem *lvi = new QTreeWidgetItem(lv_results);
-                    foreach (XData::ReportField report, form.report()) {
+                    for (XData::ReportField report : form.report()) {
                         lvi->setText(i++, ri[report.name]);
                     }
                 }

@@ -38,7 +38,7 @@ bool OptionsTreeWriter::write(QIODevice *device)
 
 void OptionsTreeWriter::writeTree(const VariantTree *tree)
 {
-    foreach (QString node, tree->trees_.keys()) {
+    for (QString node : tree->trees_.keys()) {
         Q_ASSERT(!node.isEmpty());
         writeStartElement(node);
         if (tree->comments_.contains(node))
@@ -48,7 +48,7 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
         writeEndElement();
     }
 
-    foreach (QString child, tree->values_.keys()) {
+    for (QString child : tree->values_.keys()) {
         Q_ASSERT(!child.isEmpty());
         writeStartElement(child);
         if (tree->comments_.contains(child))
@@ -58,7 +58,7 @@ void OptionsTreeWriter::writeTree(const VariantTree *tree)
         writeEndElement();
     }
 
-    foreach (QString unknown, tree->unknowns2_.keys()) {
+    for (QString unknown : tree->unknowns2_.keys()) {
         writeUnknown(tree->unknowns2_[unknown]);
     }
 }
@@ -67,13 +67,13 @@ void OptionsTreeWriter::writeVariant(const QVariant &variant)
 {
     writeAttribute("type", variant.typeName());
     if (variant.type() == QVariant::StringList) {
-        foreach (QString s, variant.toStringList()) {
+        for (QString s : variant.toStringList()) {
             writeStartElement("item");
             writeCharacters(s);
             writeEndElement();
         }
     } else if (variant.type() == QVariant::List) {
-        foreach (QVariant v, variant.toList()) {
+        for (QVariant v : variant.toList()) {
             writeStartElement("item");
             writeVariant(v);
             writeEndElement();
@@ -117,7 +117,7 @@ void OptionsTreeWriter::readUnknownTree(QXmlStreamReader *reader)
 {
     Q_ASSERT(reader->isStartElement());
     writeStartElement(reader->name().toString());
-    foreach (QXmlStreamAttribute attr, reader->attributes()) {
+    for (QXmlStreamAttribute attr : reader->attributes()) {
         writeAttribute(attr.name().toString(), attr.value().toString());
     }
 

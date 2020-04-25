@@ -51,7 +51,7 @@
  */
 class PluginManager::StreamWatcher : public XMPP::Task {
 public:
-    StreamWatcher(Task *t, PluginManager *m, int a) : Task(t), manager(m), account(a) {}
+    StreamWatcher(Task *t, PluginManager *m, int a) : Task(t), manager(m), account(a) { }
     bool take(const QDomElement &e) { return manager->incomingXml(account, e); }
     void onDisconnect()
     {
@@ -87,7 +87,7 @@ PluginManager *PluginManager::instance()
 PluginManager::PluginManager() : QObject(nullptr), psi_(nullptr)
 {
     updatePluginsList();
-    foreach (QString path, pluginDirs()) {
+    for (QString path : pluginDirs()) {
         QCA::DirWatch *dw = new QCA::DirWatch(path, this);
         connect(dw, SIGNAL(changed()), SLOT(dirsChanged()));
         dirWatchers_.append(dw);
@@ -117,9 +117,9 @@ QList<PluginHost *> PluginManager::updatePluginsList()
 {
     QList<PluginHost *> newPlugins;
 
-    foreach (const QString &d, pluginDirs()) {
+    for (const QString &d : pluginDirs()) {
         QDir dir(d);
-        foreach (QFileInfo fileInfo, dir.entryInfoList(QDir::Files)) {
+        for (QFileInfo fileInfo : dir.entryInfoList(QDir::Files)) {
             QString file = fileInfo.canonicalFilePath();
             if (QLibrary::isLibrary(file)) {
 #ifndef PLUGINS_NO_DEBUG
@@ -160,7 +160,7 @@ QList<PluginHost *> PluginManager::updatePluginsList()
  */
 void PluginManager::dirsChanged()
 {
-    foreach (PluginHost *plugin, updatePluginsList()) {
+    for (PluginHost *plugin : updatePluginsList()) {
         loadPluginIfEnabled(plugin);
     }
 }
@@ -180,7 +180,7 @@ void PluginManager::loadEnabledPlugins()
 #ifndef PLUGINS_NO_DEBUG
     qDebug("Loading enabled plugins");
 #endif
-    foreach (PluginHost *plugin, pluginsByPriority_) {
+    for (PluginHost *plugin : pluginsByPriority_) {
         loadPluginIfEnabled(plugin);
     }
 }
@@ -206,7 +206,7 @@ void PluginManager::optionChanged(const QString &option)
 {
     bool          pluginOpt = option.startsWith(loadOptionPrefix);
     const QString shortName = option.split(".").last();
-    foreach (PluginHost *plugin, pluginByFile_) {
+    for (PluginHost *plugin : pluginByFile_) {
         plugin->optionChanged(option);
         if (pluginOpt && plugin->shortName() == shortName) {
             bool shouldUpdateFeatures;
@@ -251,7 +251,7 @@ void PluginManager::loadAllPlugins()
     }*/
 
     // Now look for external plugins
-    foreach (PluginHost *plugin, hosts_.values()) {
+    for (PluginHost *plugin : hosts_.values()) {
         plugin->load();
         plugin->enable();
     }
@@ -268,7 +268,7 @@ bool PluginManager::unloadAllPlugins()
     qDebug("Unloading all plugins");
 #endif
     bool ok = true;
-    foreach (PluginHost *plugin, hosts_.values()) {
+    for (PluginHost *plugin : hosts_.values()) {
         if (!plugin->unload()) {
             ok = false;
         }
@@ -318,7 +318,7 @@ QString PluginManager::shortName(const QString &plugin) const
 QString PluginManager::nameByShortName(const QString &shortName) const
 {
     QString name;
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (host->shortName() == shortName) {
             name = host->name();
             break;
@@ -373,7 +373,7 @@ QWidget *PluginManager::optionsWidget(const QString &plugin)
  */
 void PluginManager::setShortcuts()
 {
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         host->setShortcuts();
     }
 }
@@ -392,7 +392,7 @@ bool PluginManager::processMessage(PsiAccount *account, const QString &jidFrom, 
                                    const QString &subject)
 {
     bool handled = false;
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (host->processMessage(accountIds_.id(account), jidFrom, body, subject)) {
             handled = true;
             break;
@@ -415,7 +415,7 @@ bool PluginManager::processEvent(PsiAccount *account, QDomElement &event)
 {
     bool      handled = false;
     const int acc_id  = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (host->processEvent(acc_id, event)) {
             handled = true;
             break;
@@ -432,7 +432,7 @@ bool PluginManager::processOutgoingMessage(PsiAccount *account, const QString &j
 {
     bool      handled = false;
     const int acc_id  = accountIds_.id(account);
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         if (host->processOutgoingMessage(acc_id, jidTo, body, type, subject)) {
             handled = true;
             break;
@@ -444,7 +444,7 @@ bool PluginManager::processOutgoingMessage(PsiAccount *account, const QString &j
 void PluginManager::processOutgoingStanza(PsiAccount *account, QDomElement &stanza)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         if (host->outgoingXml(acc_id, stanza)) {
             break;
         }
@@ -457,7 +457,7 @@ void PluginManager::processOutgoingStanza(PsiAccount *account, QDomElement &stan
 void PluginManager::logout(PsiAccount *account)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         host->logout(acc_id);
         emit accountLoggedOut(acc_id);
     }
@@ -478,7 +478,7 @@ void PluginManager::logout(PsiAccount *account)
 bool PluginManager::incomingXml(int account, const QDomElement &xml)
 {
     bool handled = false;
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (host->incomingXml(account, xml)) {
             handled = true;
             break;
@@ -732,7 +732,7 @@ void PluginManager::setPopupDuration(const QString &name, int value) { psi_->pop
 void PluginManager::addAccountMenu(QMenu *menu, PsiAccount *account)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         host->addAccountMenu(menu, i);
     }
 }
@@ -740,7 +740,7 @@ void PluginManager::addAccountMenu(QMenu *menu, PsiAccount *account)
 void PluginManager::addContactMenu(QMenu *menu, PsiAccount *account, QString jid)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         host->addContactMenu(menu, i, jid);
     }
 }
@@ -748,7 +748,7 @@ void PluginManager::addContactMenu(QMenu *menu, PsiAccount *account, QString jid
 void PluginManager::setupChatTab(QWidget *tab, PsiAccount *account, const QString &contact)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         host->setupChatTab(tab, i, contact);
     }
 }
@@ -756,7 +756,7 @@ void PluginManager::setupChatTab(QWidget *tab, PsiAccount *account, const QStrin
 void PluginManager::setupGCTab(QWidget *tab, PsiAccount *account, const QString &contact)
 {
     int i = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         host->setupGCTab(tab, i, contact);
     }
 }
@@ -765,7 +765,7 @@ bool PluginManager::appendingChatMessage(PsiAccount *account, const QString &con
                                          bool local)
 {
     bool handled = false;
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (host->appendingChatMessage(accountIds_.id(account), contact, body, html, local)) {
             handled = true;
             break;
@@ -803,7 +803,7 @@ QIcon PluginManager::icon(const QString &plugin) const
 QStringList PluginManager::pluginFeatures() const
 {
     QStringList features;
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         features << host->pluginFeatures();
     }
     return features;
@@ -849,7 +849,7 @@ void PluginManager::addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccou
                                      const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (plugin.isEmpty() || (host->name() == plugin)) {
             host->addToolBarButton(parent, toolbar, acc_id, contact);
         }
@@ -862,7 +862,7 @@ void PluginManager::addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAcc
                                        const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
-    foreach (PluginHost *host, pluginsByPriority_) {
+    for (PluginHost *host : pluginsByPriority_) {
         if (plugin.isEmpty() || (host->name() == plugin)) {
             host->addGCToolBarButton(parent, toolbar, acc_id, contact);
         }
@@ -1130,7 +1130,7 @@ bool PluginManager::hasCaps(int account, const QString &jid, const QStringList &
 
 bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &message) const
 {
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         if (host->decryptMessageElement(accountIds_.id(account), message)) {
             return true;
         }
@@ -1140,7 +1140,7 @@ bool PluginManager::decryptMessageElement(PsiAccount *account, QDomElement &mess
 
 bool PluginManager::encryptMessageElement(PsiAccount *account, QDomElement &message) const
 {
-    foreach (PluginHost *host, pluginByFile_.values()) {
+    for (PluginHost *host : pluginByFile_.values()) {
         if (host->encryptMessageElement(accountIds_.id(account), message)) {
             return true;
         }

@@ -94,7 +94,7 @@ private:
 
 class ProxyItem {
 public:
-    ProxyItem() {}
+    ProxyItem() { }
 
     QString       id;
     QString       name;

@@ -44,12 +44,12 @@ private:
 
 ActiveContactsMenu::ActiveContactsMenu(PsiCon *psi, QWidget *parent) : QMenu(parent), psi_(psi)
 {
-    foreach (PsiAccount *pa, psi_->contactList()->accounts()) {
+    for (PsiAccount *pa : psi_->contactList()->accounts()) {
         if (!pa->enabled())
             continue;
 
         QList<PsiContact *> list = pa->activeContacts();
-        foreach (PsiContact *pc, list) {
+        for (PsiContact *pc : list) {
             new ActiveContactAction(pc->jid().full(), pc->name(),
                                     PsiIconset::instance()->statusPtr(pc->jid(), pc->status())->icon(), pa, this);
         }

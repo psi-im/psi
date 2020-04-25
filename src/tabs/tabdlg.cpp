@@ -47,17 +47,17 @@
 // TabDlgDelegate
 //----------------------------------------------------------------------------
 
-TabDlgDelegate::TabDlgDelegate(QObject *parent) : QObject(parent) {}
+TabDlgDelegate::TabDlgDelegate(QObject *parent) : QObject(parent) { }
 
-TabDlgDelegate::~TabDlgDelegate() {}
+TabDlgDelegate::~TabDlgDelegate() { }
 
 Qt::WindowFlags TabDlgDelegate::initWindowFlags() const { return Qt::Widget; }
 
-void TabDlgDelegate::create(QWidget *) {}
+void TabDlgDelegate::create(QWidget *) { }
 
-void TabDlgDelegate::destroy(QWidget *) {}
+void TabDlgDelegate::destroy(QWidget *) { }
 
-void TabDlgDelegate::tabWidgetCreated(QWidget *, PsiTabWidget *) {}
+void TabDlgDelegate::tabWidgetCreated(QWidget *, PsiTabWidget *) { }
 
 bool TabDlgDelegate::paintEvent(QWidget *, QPaintEvent *) { return false; }
 
@@ -147,7 +147,7 @@ TabDlg::~TabDlg()
     // Q_ASSERT(tabs_.isEmpty());
 
     // ensure all tabs are closed at this moment
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         delete tab;
     }
 
@@ -209,7 +209,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent *event)
         if (userManagement_) {
             QMenu *sendTo = new QMenu(tabMenu_);
             sendTo->setTitle(tr("Send Tab To"));
-            foreach (TabDlg *tabSet, tabManager_->tabSets()) {
+            for (TabDlg *tabSet : tabManager_->tabSets()) {
                 QAction *act = sendTo->addAction(tabSet->desiredCaption());
                 if (tabSet == this)
                     act->setEnabled(false);
@@ -253,7 +253,7 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
     QMenu *sendTo = new QMenu(menu);
     sendTo->setTitle(tr("Send Current Tab To"));
     int tabDlgMetaType = qRegisterMetaType<TabDlg *>("TabDlg*");
-    foreach (TabDlg *tabSet, tabManager_->tabSets()) {
+    for (TabDlg *tabSet : tabManager_->tabSets()) {
         QAction *act = sendTo->addAction(tabSet->desiredCaption());
         act->setData(QVariant(tabDlgMetaType, &tabSet));
         act->setEnabled(tabSet != this);
@@ -470,7 +470,7 @@ QString TabDlg::desiredCaption() const
 {
     QString cap     = "";
     uint    pending = 0;
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         pending += uint(tab->unreadMessageCount());
     }
     if (pending > 0) {
@@ -506,13 +506,13 @@ void TabDlg::updateCaption()
 
 void TabDlg::closeEvent(QCloseEvent *closeEvent)
 {
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         if (!tab->readyToHide()) {
             closeEvent->ignore();
             return;
         }
     }
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         bool res = true;
         if (PsiOptions::instance()->getOption("options.ui.muc.hide-when-closing").toBool() && tab->isGroupChat())
             res = false;
@@ -524,7 +524,7 @@ TabbableWidget *TabDlg::getTab(int i) const { return static_cast<TabbableWidget 
 
 TabbableWidget *TabDlg::getTabPointer(PsiAccount *account, QString fullJid)
 {
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         if (tab->jid().full() == fullJid && tab->account() == account) {
             return tab;
         }
@@ -638,7 +638,7 @@ void TabDlg::dropEvent(QDropEvent *event)
 
 void TabDlg::extinguishFlashingTabs()
 {
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         if (tab->flashing()) {
             tab->blockSignals(true);
             tab->doFlash(false);
@@ -652,7 +652,7 @@ void TabDlg::extinguishFlashingTabs()
 void TabDlg::updateFlashState()
 {
     bool flash = false;
-    foreach (TabbableWidget *tab, tabs_) {
+    for (TabbableWidget *tab : tabs_) {
         if (tab->flashing()) {
             flash = true;
             break;
@@ -818,7 +818,7 @@ bool TabDlg::isTabPinned(QWidget *page) { return tabWidget_->isPagePinned(page);
 
 void TabDlg::updateVSplitters(int log, int chat)
 {
-    foreach (TabbableWidget *w, tabs_) {
+    for (TabbableWidget *w : tabs_) {
         w->setVSplitterPosition(log, chat);
     }
 }

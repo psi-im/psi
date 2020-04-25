@@ -290,7 +290,7 @@ AttachView::AttachView(QWidget *parent) : QListWidget(parent)
     connect(this, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
 };
 
-AttachView::~AttachView() {}
+AttachView::~AttachView() { }
 
 void AttachView::setReadOnly(bool b) { v_readOnly = b; }
 
@@ -409,7 +409,7 @@ AddUrlDlg::AddUrlDlg(QWidget *parent) : QDialog(parent)
     connect(pb_ok, SIGNAL(clicked()), SLOT(accept()));
 }
 
-AddUrlDlg::~AddUrlDlg() {}
+AddUrlDlg::~AddUrlDlg() { }
 
 //----------------------------------------------------------------------------
 // EventDlg - a window to read and write events
@@ -1174,7 +1174,7 @@ void EventDlg::buildCompletionList()
 
     d->completionList += d->pa->jid().full();
 
-    foreach (UserListItem *u, *d->pa->userList()) {
+    for (UserListItem *u : *d->pa->userList()) {
         QString j = u->jid().full();
         if (!u->name().isEmpty())
             d->completionList += u->name() + " <" + j + '>';
@@ -1395,7 +1395,7 @@ void EventDlg::doSend()
         if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty()
             && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
             m.setTo(d->pa->serverInfoManager()->multicastService());
-            foreach (QString recipient, list) {
+            for (QString recipient : list) {
                 m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
             }
             d->pa->dj_sendMessage(m, true);
@@ -1871,7 +1871,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
     } else if (e->type() == PsiEvent::RosterExchange) {
         RosterExchangeEvent::Ptr re        = e.staticCast<RosterExchangeEvent>();
         int                      additions = 0, deletions = 0, modifications = 0;
-        foreach (RosterExchangeItem item, re->rosterExchangeItems()) {
+        for (RosterExchangeItem item : re->rosterExchangeItems()) {
             switch (item.action()) {
             case RosterExchangeItem::Add:
                 additions++;

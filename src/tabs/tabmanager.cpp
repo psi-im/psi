@@ -61,7 +61,7 @@ TabDlg *TabManager::newTabs(QWidget *widget)
 {
     QChar   kind = tabKind(widget);
     QString group, grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
-    foreach (QString g, grouping.split(':')) {
+    for (QString g : grouping.split(':')) {
         if (g.contains(kind)) {
             group = g;
             break;
@@ -98,7 +98,7 @@ void TabManager::tabDestroyed(QObject *obj)
         if (preferedTabsetForKind_[it.key()] != obj)
             continue;
         bool ok = false;
-        foreach (TabDlg *tabDlg, tabs_) {
+        for (TabDlg *tabDlg : tabs_) {
             // currently destroyed tab is removed from the list a few lines above
             if (tabsetToKinds_[tabDlg].contains(it.key())) {
                 preferedTabsetForKind_[it.key()] = tabDlg;
@@ -121,7 +121,7 @@ void TabManager::setPreferredTabsForKind(QChar kind, TabDlg *tab)
 
 bool TabManager::isChatTabbed(const TabbableWidget *chat) const
 {
-    foreach (TabDlg *tabDlg, tabs_) {
+    for (TabDlg *tabDlg : tabs_) {
         if (tabDlg->managesTab(chat)) {
             return true;
         }
@@ -133,7 +133,7 @@ TabDlg *TabManager::getManagingTabs(const TabbableWidget *chat) const
 {
     // FIXME: this looks like it could be broken to me (KIS)
     // Does this mean that opening two chats to the same jid will go wrong?
-    foreach (TabDlg *tabDlg, tabs_) {
+    for (TabDlg *tabDlg : tabs_) {
         if (tabDlg->managesTab(chat)) {
             return tabDlg;
         }
@@ -158,7 +158,7 @@ void TabManager::setUserManagementEnabled(bool enabled)
     }
 
     userManagement_ = enabled;
-    foreach (TabDlg *tab, tabs_) {
+    for (TabDlg *tab : tabs_) {
         tab->setUserManagementEnabled(enabled);
     }
 }
@@ -170,7 +170,7 @@ void TabManager::setTabBarShownForSingles(bool enabled)
     }
 
     tabSingles_ = enabled;
-    foreach (TabDlg *tab, tabs_) {
+    for (TabDlg *tab : tabs_) {
         tab->setTabBarShownForSingles(enabled);
     }
 }
@@ -182,7 +182,7 @@ void TabManager::setSimplifiedCaptionEnabled(bool enabled)
     }
 
     simplifiedCaption_ = enabled;
-    foreach (TabDlg *tab, tabs_) {
+    for (TabDlg *tab : tabs_) {
         tab->setSimplifiedCaptionEnabled(enabled);
     }
 }

@@ -110,7 +110,7 @@ public:
 
     QString iconsetPath(QString name)
     {
-        foreach (const QString &d, ApplicationInfo::dataDirs()) {
+        for (const QString &d : ApplicationInfo::dataDirs()) {
             QString   fileName = d + "/iconsets/" + name;
             QFileInfo fi(fileName);
             if (fi.exists()) {
@@ -187,7 +187,7 @@ public:
 
         // second level -- transport icon
         if (jid.node().isEmpty() || status_icons.useServicesIcons) {
-            foreach (const StatusIconsets::IconsetItem &item, status_icons.list) {
+            for (const StatusIconsets::IconsetItem &item : status_icons.list) {
                 if (item.regexp.isEmpty() ? jid.node().isEmpty() : (item.regexp.indexIn(jid.domain()) != -1)) {
                     const Iconset *is = psi->roster.value(item.iconset);
                     if (is) {
@@ -202,7 +202,7 @@ public:
         }
 
         // third level -- custom icons
-        foreach (const StatusIconsets::IconsetItem &item, status_icons.customList) {
+        for (const StatusIconsets::IconsetItem &item : status_icons.customList) {
             if (item.regexp.indexIn(jid.bare()) != -1) {
                 const Iconset *is = psi->roster.value(item.iconset);
                 if (is) {
@@ -326,7 +326,7 @@ public:
     {
         QList<Iconset *> emo;
 
-        foreach (QString name, PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList()) {
+        for (QString name : PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList()) {
             Iconset *is = new Iconset;
             if (is->load(iconsetPath("emoticons/" + name))) {
                 // PsiIconset::removeAnimation(is);
@@ -398,7 +398,7 @@ bool PsiIconset::loadRoster()
     QSet<QString> rosterIconsets;
     d->cur_service_status.clear();
 
-    foreach (QVariant service, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+    for (QVariant service : PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
         QString val = PsiOptions::instance()
                           ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
                                       + ".iconset")
@@ -411,14 +411,14 @@ bool PsiIconset::loadRoster()
 
     QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
     d->cur_custom_status.clear();
-    foreach (QString base, customicons) {
+    for (QString base : customicons) {
         QString regexp  = PsiOptions::instance()->getOption(base + ".regexp").toString();
         QString iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
         rosterIconsets << iconset;
         d->cur_custom_status.insert(regexp, iconset);
     }
 
-    foreach (QString it2, rosterIconsets) {
+    for (QString it2 : rosterIconsets) {
         if (it2 == PsiOptions::instance()->getOption("options.iconsets.status").toString()) {
             continue;
         }
@@ -582,7 +582,7 @@ void PsiIconset::loadStatusIconDefinitions()
 {
     d->status_icons.list.clear();
     d->status_icons.customList.clear();
-    foreach (const QVariant &serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+    for (const QVariant &serviceV : PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
         QString                                          service = serviceV.toString();
         PsiIconset::Private::StatusIconsets::IconsetItem item;
         bool                                             find = true;
@@ -717,7 +717,7 @@ void PsiIconset::reloadRoster()
     QMap<QString, QString> cur_service_status;
     QMap<QString, QString> cur_custom_status;
 
-    foreach (QVariant service, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+    for (QVariant service : PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
         QString val = PsiOptions::instance()
                           ->getOption(PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)
                                       + ".iconset")
@@ -728,7 +728,7 @@ void PsiIconset::reloadRoster()
     }
 
     QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-    foreach (QString base, customicons) {
+    for (QString base : customicons) {
         QString regexp  = PsiOptions::instance()->getOption(base + ".regexp").toString();
         QString iconset = PsiOptions::instance()->getOption(base + ".iconset").toString();
         cur_custom_status.insert(regexp, iconset);

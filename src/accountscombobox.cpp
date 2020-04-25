@@ -30,7 +30,7 @@ AccountsComboBox::AccountsComboBox(QWidget *parent) :
     connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
 }
 
-AccountsComboBox::~AccountsComboBox() {}
+AccountsComboBox::~AccountsComboBox() { }
 
 PsiAccount *AccountsComboBox::account() const { return account_; }
 

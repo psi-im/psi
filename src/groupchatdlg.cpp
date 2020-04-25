@@ -498,7 +498,7 @@ join <channel>{,<channel>} [pass{,<pass>}
             }
         }
         QStringList res;
-        foreach (QString cmd, all) {
+        for (QString cmd : all) {
             if (cmd.startsWith(query, Qt::CaseInsensitive)) {
                 res << cmd;
             }
@@ -611,7 +611,7 @@ public:
 
             QString postAdd = atStart_ ? nickSeparator + " " : "";
 
-            foreach (QString nick, nicks) {
+            for (QString nick : nicks) {
                 if (nick.left(toComplete_.length()).toLower() == toComplete_.toLower()) {
                     suggestedNicks << nick + postAdd;
                 }
@@ -905,7 +905,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     ui_.vboxLayout1->addLayout(hb3a);
 
     ActionList *actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Groupchat).at(0);
-    foreach (const QString &name, actList->actions()) {
+    for (const QString &name : actList->actions()) {
         IconAction *action = actList->action(name)->copy();
         action->setParent(this);
         d->actions->addAction(name, action);
@@ -945,7 +945,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
     }
 
     actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
-    foreach (const QString &name, actList->actions()) {
+    for (const QString &name : actList->actions()) {
         IconAction *action = actList->action(name)->copy();
         action->setParent(this);
         d->actions->addAction(name, action);
@@ -2115,7 +2115,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 
     if (options->getOption("options.ui.muc.use-highlighting").toBool()) {
         QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
-        foreach (QString word, highlightWords) {
+        for (QString word : highlightWords) {
             if (m.body().contains((word), Qt::CaseInsensitive)) {
                 d->alert = true;
             }
@@ -2317,7 +2317,7 @@ void GCMainDlg::setToolbuttons()
     ui_.toolbar->clear();
     PsiOptions *options      = PsiOptions::instance();
     QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m1.actions").toStringList();
-    foreach (const QString &actionName, actionsNames) {
+    for (const QString &actionName : actionsNames) {
 #ifdef PSI_PLUGINS
         if (actionName.endsWith("-plugin")) {
             QString name = PluginManager::instance()->nameByShortName(actionName.mid(0, actionName.length() - 7));

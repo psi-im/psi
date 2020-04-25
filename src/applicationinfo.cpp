@@ -306,16 +306,13 @@ QString ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType type)
     return pathToProfile(activeProfile, type);
 }
 
-QString ApplicationInfo::desktopFileBaseName()
-{
-    return QLatin1String(xstr(APP_BIN_NAME) ".desktop");
-}
+QString ApplicationInfo::desktopFileBaseName() { return QLatin1String(xstr(APP_BIN_NAME) ".desktop"); }
 
 QString ApplicationInfo::desktopFile()
 {
-    QString       dFile;
-    auto _desktopFile = QString(xstr(APP_PREFIX) "/share/applications/")  + desktopFileBaseName();
-    QFile         f(_desktopFile);
+    QString dFile;
+    auto    _desktopFile = QString(xstr(APP_PREFIX) "/share/applications/") + desktopFileBaseName();
+    QFile   f(_desktopFile);
     if (f.open(QIODevice::ReadOnly)) {
         dFile = QString::fromUtf8(f.readAll());
     }

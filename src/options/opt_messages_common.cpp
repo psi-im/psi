@@ -19,7 +19,7 @@ OptionsTabMsgCommon::OptionsTabMsgCommon(QObject *parent) :
 {
 }
 
-OptionsTabMsgCommon::~OptionsTabMsgCommon() {}
+OptionsTabMsgCommon::~OptionsTabMsgCommon() { }
 
 QWidget *OptionsTabMsgCommon::widget()
 {

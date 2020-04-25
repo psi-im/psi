@@ -65,7 +65,7 @@ private:
 
 Q_EXPORT_PLUGIN(EchoPlugin);
 
-EchoPlugin::EchoPlugin() : enabled(false), psiOptions(0), sender(0) {}
+EchoPlugin::EchoPlugin() : enabled(false), psiOptions(0), sender(0) { }
 
 //-- PsiPlugin ------------------------------------------------------
 

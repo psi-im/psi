@@ -68,7 +68,7 @@ PsiEvent::PsiEvent(const PsiEvent &from) : QObject()
     v_account     = from.v_account;
 }
 
-PsiEvent::~PsiEvent() {}
+PsiEvent::~PsiEvent() { }
 
 XMPP::Jid PsiEvent::jid() const { return v_jid; }
 
@@ -123,7 +123,7 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
         v_account = account;
     } else if (hasSubTag(*e, "account")) {
         QString accName = subTagText(*e, "account");
-        foreach (PsiAccount *account, psi->contactList()->accounts()) {
+        for (PsiAccount *account : psi->contactList()->accounts()) {
             if (account->name() == accName) {
                 v_account = account;
                 break;
@@ -150,7 +150,7 @@ PluginEvent::PluginEvent(int account, const QString &jid, const QString &descr, 
     from_ = XMPP::Jid(jid);
 }
 
-PluginEvent::~PluginEvent() {}
+PluginEvent::~PluginEvent() { }
 
 int PluginEvent::type() const { return Plugin; }
 
@@ -180,7 +180,7 @@ MessageEvent::MessageEvent(const MessageEvent &from) :
 {
 }
 
-MessageEvent::~MessageEvent() {}
+MessageEvent::~MessageEvent() { }
 
 int MessageEvent::type() const { return Message; }
 
@@ -263,7 +263,7 @@ QString MessageEvent::description() const
         result << v_m.subject();
     if (!v_m.body().isEmpty())
         result << v_m.body();
-    foreach (Url url, v_m.urlList()) {
+    for (Url url : v_m.urlList()) {
         QString text = url.url();
         if (!url.desc().isEmpty())
             text += QString("(%1)").arg(url.desc());
@@ -291,7 +291,7 @@ AuthEvent::AuthEvent(const AuthEvent &from) :
 {
 }
 
-AuthEvent::~AuthEvent() {}
+AuthEvent::~AuthEvent() { }
 
 int AuthEvent::type() const { return Auth; }
 
@@ -420,7 +420,7 @@ HttpAuthEvent::HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc) : M
     setMessage(m);
 }
 
-HttpAuthEvent::~HttpAuthEvent() {}
+HttpAuthEvent::~HttpAuthEvent() { }
 
 QString HttpAuthEvent::description() const { return tr("HTTP Authentication Request"); }
 
@@ -586,7 +586,7 @@ EventItem::EventItem(const EventItem &from)
     v_id = from.v_id;
 }
 
-EventItem::~EventItem() {}
+EventItem::~EventItem() { }
 
 int EventItem::id() const { return v_id; }
 
@@ -627,7 +627,7 @@ EventQueue &EventQueue::operator=(const EventQueue &from)
     psi_     = from.psi_;
     account_ = from.account_;
 
-    foreach (EventItem *i, from.list_) {
+    for (EventItem *i : from.list_) {
         PsiEvent::Ptr e = i->event();
         enqueue(e);
     }
@@ -651,7 +651,7 @@ int EventQueue::count() const { return list_.count(); }
 int EventQueue::contactCount() const
 {
     QSet<QString> set;
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         set.insert(i->event()->jid().bare());
     }
     return set.size();
@@ -660,7 +660,7 @@ int EventQueue::contactCount() const
 int EventQueue::count(const Jid &j, bool compareRes) const
 {
     int total = 0;
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         Jid j2(i->event()->jid());
         if (j.compare(j2, compareRes))
             ++total;
@@ -676,7 +676,7 @@ void EventQueue::enqueue(const PsiEvent::Ptr &e)
     bool found = false;
 
     // skip all with higher or equal priority
-    foreach (EventItem *ei, list_) {
+    for (EventItem *ei : list_) {
         if (ei && ei->event()->priority() < prior) {
             list_.insert(list_.indexOf(ei), i);
             found = true;
@@ -696,7 +696,7 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
     if (!e)
         return;
 
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         if (e == i->event()) {
             list_.removeAll(i);
             emit queueChanged();
@@ -708,7 +708,7 @@ void EventQueue::dequeue(const PsiEvent::Ptr &e)
 
 PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 {
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
         Jid           j2(e->jid());
         if (j.compare(j2, compareRes)) {
@@ -724,7 +724,7 @@ PsiEvent::Ptr EventQueue::dequeue(const Jid &j, bool compareRes)
 
 PsiEvent::Ptr EventQueue::peek(const Jid &j, bool compareRes) const
 {
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
         Jid           j2(e->jid());
         if (j.compare(j2, compareRes)) {
@@ -763,7 +763,7 @@ PsiEvent::Ptr EventQueue::peekNext() const
 
 PsiEvent::Ptr EventQueue::peekFirstChat(const Jid &j, bool compareRes) const
 {
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
         if (e->type() == PsiEvent::Message) {
             MessageEvent::Ptr me = e.staticCast<MessageEvent>();
@@ -849,7 +849,7 @@ void EventQueue::extractByType(int type, QList<PsiEvent::Ptr> *el)
 
 void EventQueue::printContent() const
 {
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         PsiEvent::Ptr e = i->event();
         printf("  %d: (%d) from=[%s] jid=[%s]\n", i->id(), e->type(), qPrintable(e->from().full()),
                qPrintable(e->jid().full()));
@@ -893,7 +893,7 @@ QDomElement EventQueue::toXml(QDomDocument *doc) const
     e.setAttribute("version", "1.0");
     e.appendChild(textTag(doc, "progver", ApplicationInfo::version()));
 
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         QDomElement event = i->event()->toXml(doc);
         e.appendChild(event);
     }
@@ -949,7 +949,7 @@ QList<EventQueue::PsiEventId> EventQueue::eventsFor(const XMPP::Jid &jid, bool c
 {
     QList<PsiEventId> result;
 
-    foreach (EventItem *i, list_) {
+    for (EventItem *i : list_) {
         if (i->event()->from().compare(jid, compareRes))
             result << QPair<int, PsiEvent::Ptr>(i->id(), i->event());
     }

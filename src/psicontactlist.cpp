@@ -288,7 +288,7 @@ void PsiContactList::loadAccounts(const UserAccountList &_list)
 UserAccountList PsiContactList::getUserAccountList() const
 {
     UserAccountList acc;
-    foreach (PsiAccount *account, accounts_) {
+    for (PsiAccount *account : accounts_) {
         acc += account->userAccount();
     }
     return acc;
@@ -301,7 +301,7 @@ void PsiContactList::setAccountsOrder(QList<PsiAccount *> accounts)
 {
     int  start    = 0;
     bool needSave = false;
-    foreach (PsiAccount *account, accounts) {
+    for (PsiAccount *account : accounts) {
         int index = accounts_.indexOf(account, start);
         if (index != -1) {
             accounts_.move(index, start);
@@ -425,7 +425,7 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
     int         low_id    = 0;
     int         low_prior = EventPriorityDontCare;
 
-    foreach (PsiAccount *account, enabledAccounts_) {
+    for (PsiAccount *account : enabledAccounts_) {
         int n = account->eventQueue()->nextId();
         if (n == -1)
             continue;

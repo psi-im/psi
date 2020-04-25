@@ -25,7 +25,7 @@
 #include <QCoreApplication>
 #include <QTimer>
 
-NetworkAccessManager::NetworkAccessManager(QObject *parent) : QNetworkAccessManager(parent), _handlerSeed(0) {}
+NetworkAccessManager::NetworkAccessManager(QObject *parent) : QNetworkAccessManager(parent), _handlerSeed(0) { }
 
 QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest &req,
                                                    QIODevice *outgoingData = nullptr)
@@ -113,4 +113,4 @@ NAMNotFoundReply::NAMNotFoundReply(QObject *parent) : QNetworkReply(parent)
 
 qint64 NAMNotFoundReply::readData(char *, qint64) { return 0; }
 
-void NAMNotFoundReply::abort() {}
+void NAMNotFoundReply::abort() { }

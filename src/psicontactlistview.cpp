@@ -237,7 +237,7 @@ void PsiContactListView::dropEvent(QDropEvent *e)
         return;
 
     QStringList files;
-    foreach (const QUrl &url, e->mimeData()->urls()) {
+    for (const QUrl &url : e->mimeData()->urls()) {
         const QFileInfo fi(url.toLocalFile());
         if (!fi.isDir() && fi.exists()) {
             const QString fileName

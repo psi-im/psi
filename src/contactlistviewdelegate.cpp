@@ -734,7 +734,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         sumWidth = fontMetrics_.width(mucMessages);
 #endif
     else {
-        foreach (int w, rightWidths) {
+        for (int w : rightWidths) {
             sumWidth += w;
         }
         sumWidth = sumWidth * PSI_HIDPI;

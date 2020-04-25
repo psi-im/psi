@@ -46,13 +46,13 @@ class RtpSessionContext;
 
 class Plugin {
 public:
-    virtual ~Plugin() {}
+    virtual ~Plugin() { }
     virtual Provider *createProvider() = 0;
 };
 
 class QObjectInterface {
 public:
-    virtual ~QObjectInterface() {}
+    virtual ~QObjectInterface() { }
 
     virtual QObject *qobject() = 0;
 };
@@ -78,7 +78,7 @@ public:
     int     sampleSize;
     int     channels;
 
-    inline PAudioParams() : sampleRate(0), sampleSize(0), channels(0) {}
+    inline PAudioParams() : sampleRate(0), sampleSize(0), channels(0) { }
 };
 
 class PVideoParams {
@@ -87,7 +87,7 @@ public:
     QSize   size;
     int     fps;
 
-    inline PVideoParams() : fps(0) {}
+    inline PVideoParams() : fps(0) { }
 };
 
 class PFeatures {
@@ -115,7 +115,7 @@ public:
     int              maxptime;
     QList<Parameter> parameters;
 
-    inline PPayloadInfo() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) {}
+    inline PPayloadInfo() : id(-1), clockrate(-1), channels(-1), ptime(-1), maxptime(-1) { }
 };
 
 class PRtpPacket {
@@ -123,7 +123,7 @@ public:
     QByteArray rawValue;
     int        portOffset;
 
-    inline PRtpPacket() : portOffset(0) {}
+    inline PRtpPacket() : portOffset(0) { }
 };
 
 class Provider : public QObjectInterface {

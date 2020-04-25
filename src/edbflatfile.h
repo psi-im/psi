@@ -43,7 +43,7 @@ public:
     QList<EDB::ContactItem> contacts(const QString &accId, int type);
     quint64                 eventsCount(const QString &accId, const XMPP::Jid &jid);
     QString                 getStorageParam(const QString &) { return QString(); }
-    void                    setStorageParam(const QString &, const QString &) {}
+    void                    setStorageParam(const QString &, const QString &) { }
 
     class File;
 

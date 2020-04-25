@@ -58,7 +58,7 @@ public:
             QStringList libNames = QStringList() << "idn";
 #endif
             bool libFound = false;
-            foreach (const QString &libName, libNames) {
+            for (const QString &libName: libNames) {
                 if ((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName))
                     || (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
                     conf->addLib(idn_libdir.isEmpty() ? QString("-l") + libName

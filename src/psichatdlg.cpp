@@ -139,7 +139,7 @@ public:
             }
         }
         QStringList res;
-        foreach (QString cmd, all) {
+        for (QString cmd : all) {
             if (cmd.startsWith(query)) {
                 res << cmd;
             }
@@ -454,7 +454,7 @@ void PsiChatDlg::updateToolbuttons()
     ui_.toolbar->clear();
     PsiOptions *options      = PsiOptions::instance();
     QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m0.actions").toStringList();
-    foreach (const QString &actionName, actionsNames) {
+    for (const QString &actionName : actionsNames) {
         if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
             continue;
         }
@@ -507,7 +507,7 @@ void PsiChatDlg::initToolButtons()
     // -- typeahead
 
     ActionList *list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).at(0);
-    foreach (const QString &name, list->actions()) {
+    for (const QString &name : list->actions()) {
         IconAction *action = list->action(name)->copy();
         action->setParent(this);
         actions_->addAction(name, action);
@@ -560,7 +560,7 @@ void PsiChatDlg::initToolButtons()
     }
 
     list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
-    foreach (const QString &name, list->actions()) {
+    for (const QString &name : list->actions()) {
         IconAction *action = list->action(name)->copy();
         action->setParent(this);
         actions_->addAction(name, action);

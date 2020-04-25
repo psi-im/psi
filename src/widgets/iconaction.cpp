@@ -298,7 +298,7 @@ void IconAction::doSetMenu(QMenu *p)
 {
     QAction::setMenu(p);
 
-    foreach (IconToolButton *btn, d->buttons) {
+    for (IconToolButton *btn : d->buttons) {
         btn->setMenu(nullptr);
 
         if (menu())
@@ -318,7 +318,7 @@ void IconAction::setVisible(bool b)
 {
     QAction::setVisible(b);
 
-    foreach (IconToolButton *btn, d->buttons) {
+    for (IconToolButton *btn : d->buttons) {
         if (b)
             btn->show();
         else
@@ -396,7 +396,7 @@ void IconActionGroup::Private::updatePopup()
     popup->clear();
 
     QList<QAction *> list = group->findChildren<QAction *>();
-    foreach (QAction *action, list) {
+    for (QAction *action : list) {
         if (!group->psiIcon() && action->inherits("IconAction"))
             group->setIcon(static_cast<IconAction *>(action)->icon());
 

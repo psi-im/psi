@@ -6,7 +6,7 @@
 
 class PsiHttpAuthRequest : public XMPP::HttpAuthRequest {
 public:
-    PsiHttpAuthRequest() {}
+    PsiHttpAuthRequest() { }
     PsiHttpAuthRequest(const XMPP::HttpAuthRequest &request, const XMPP::Stanza &stanza) :
         HttpAuthRequest(request), s(stanza)
     {

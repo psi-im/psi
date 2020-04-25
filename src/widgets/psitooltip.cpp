@@ -93,7 +93,7 @@ PsiToolTipHandler *PsiToolTipHandler::instance = nullptr;
 // ToolTipPosition
 //----------------------------------------------------------------------------
 
-ToolTipPosition::ToolTipPosition(const QPoint &_pos, const QWidget *_w) : pos(_pos), w(_w) {}
+ToolTipPosition::ToolTipPosition(const QPoint &_pos, const QWidget *_w) : pos(_pos), w(_w) { }
 
 QPoint ToolTipPosition::calculateTipPosition(const QWidget *label) const
 {
@@ -137,7 +137,7 @@ QPoint ToolTipPosition::calculateTipPosition(const QWidget *label) const
 // PsiToolTip
 //----------------------------------------------------------------------------
 
-PsiToolTip::PsiToolTip() : QObject(QCoreApplication::instance()) {}
+PsiToolTip::PsiToolTip() : QObject(QCoreApplication::instance()) { }
 
 /**
  * QTipLabel's font is being determined at run-time. However QTipLabel's and

@@ -23,7 +23,7 @@
 #include "xmpp_liveroster.h"
 #include "xmpp_xmlcommon.h"
 
-RosterItemExchangeTask::RosterItemExchangeTask(Task *parent) : Task(parent), ignoreNonRoster_(false) {}
+RosterItemExchangeTask::RosterItemExchangeTask(Task *parent) : Task(parent), ignoreNonRoster_(false) { }
 
 bool RosterItemExchangeTask::take(const QDomElement &e)
 {

@@ -277,7 +277,7 @@ void PopupAction::setIcon(const PsiIcon *icon, bool showText, bool alert)
         IconAction::setIcon(QIcon());
     }
 
-    foreach (PopupActionButton *btn, d->buttons) {
+    for (PopupActionButton *btn : d->buttons) {
         btn->setIcon(d->icon, showText);
     }
 
@@ -288,7 +288,7 @@ void PopupAction::setIcon(const PsiIcon *icon, bool showText, bool alert)
 
 void PopupAction::setText(const QString &text)
 {
-    foreach (PopupActionButton *btn, d->buttons) {
+    for (PopupActionButton *btn : d->buttons) {
         btn->setLabel(text);
     }
 }
@@ -320,7 +320,7 @@ void PopupAction::objectDestroyed() { d->buttons.removeAll(static_cast<PopupActi
 void PopupAction::setEnabled(bool e)
 {
     IconAction::setEnabled(e);
-    foreach (PopupActionButton *btn, d->buttons) {
+    for (PopupActionButton *btn : d->buttons) {
         btn->setEnabled(e);
     }
 }
@@ -429,7 +429,7 @@ void MAction::numAccountsChanged()
 
     qDeleteAll(findChildren<QAction *>());
 
-    foreach (PsiAccount *account, accounts()) {
+    for (PsiAccount *account : accounts()) {
         QAction *act = new QAction(account->name(), this);
         act->setProperty("id", accounts().indexOf(account));
         connect(act, SIGNAL(triggered()), SLOT(actionActivated()));
@@ -468,7 +468,7 @@ SpacerAction::SpacerAction(QObject *parent, const char *name) : IconAction(paren
     setToolTip(tr("Spacer provides spacing to separate actions"));
 }
 
-SpacerAction::~SpacerAction() {}
+SpacerAction::~SpacerAction() { }
 
 bool SpacerAction::addTo(QWidget *w)
 {
@@ -495,7 +495,7 @@ SeparatorAction::SeparatorAction(QObject *parent, const char *name) :
     setToolTip(tr("Separator"));
 }
 
-SeparatorAction::~SeparatorAction() {}
+SeparatorAction::~SeparatorAction() { }
 
 // we don't want QToolButtons when adding this action
 // on toolbar
@@ -561,7 +561,7 @@ void EventNotifierAction::setMessage(const QString &m)
 {
     d->message = m;
 
-    foreach (MLabel *label, d->labels) {
+    for (MLabel *label : d->labels) {
         label->setText(d->message);
     }
 }
@@ -576,12 +576,12 @@ void EventNotifierAction::hide()
 {
     d->hide = true;
 
-    foreach (MLabel *label, d->labels) {
+    for (MLabel *label : d->labels) {
         label->hide();
         PsiToolBar *toolBar = dynamic_cast<PsiToolBar *>(label->parent());
         if (toolBar) {
             int found = 0;
-            foreach (QWidget *widget, toolBar->findChildren<QWidget *>()) {
+            for (QWidget *widget : toolBar->findChildren<QWidget *>()) {
                 if (!widget->objectName().startsWith("qt_")
                     && !QString(widget->metaObject()->className()).startsWith("QToolBar")
                     && !QString(widget->metaObject()->className()).startsWith("QMenu")
@@ -603,7 +603,7 @@ void EventNotifierAction::show()
 {
     d->hide = false;
 
-    foreach (MLabel *label, d->labels) {
+    for (MLabel *label : d->labels) {
         label->show();
         QToolBar *toolBar = dynamic_cast<QToolBar *>(label->parent());
         if (toolBar)

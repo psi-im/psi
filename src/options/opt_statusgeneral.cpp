@@ -23,7 +23,7 @@ OptionsTabStatusGeneral::OptionsTabStatusGeneral(QObject *parent) :
 {
 }
 
-OptionsTabStatusGeneral::~OptionsTabStatusGeneral() {}
+OptionsTabStatusGeneral::~OptionsTabStatusGeneral() { }
 
 QWidget *OptionsTabStatusGeneral::widget()
 {

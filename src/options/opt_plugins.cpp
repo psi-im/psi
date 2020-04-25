@@ -85,9 +85,9 @@ QWidget *OptionsTabPlugins::widget()
     return w;
 }
 
-void OptionsTabPlugins::applyOptions() {}
+void OptionsTabPlugins::applyOptions() { }
 
-void OptionsTabPlugins::restoreOptions() {}
+void OptionsTabPlugins::restoreOptions() { }
 
 bool OptionsTabPlugins::stretchable() const { return true; }
 
@@ -105,7 +105,7 @@ void OptionsTabPlugins::listPlugins()
     QStringList plugins = pm->availablePlugins();
     plugins.sort();
     const QSize buttonSize = QSize(21, 21);
-    foreach (const QString &plugin, plugins) {
+    for (const QString &plugin : plugins) {
         QIcon            icon    = pm->icon(plugin);
         bool             enabled = pm->isEnabled(plugin);
         const QString    path    = pm->pathToPlugin(plugin);

@@ -12,7 +12,7 @@ OptionsTabAccounts::OptionsTabAccounts(QObject *parent) :
 {
 }
 
-OptionsTabAccounts::~OptionsTabAccounts() {}
+OptionsTabAccounts::~OptionsTabAccounts() { }
 
 QWidget *OptionsTabAccounts::widget()
 {

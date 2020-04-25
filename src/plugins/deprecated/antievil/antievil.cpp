@@ -16,7 +16,7 @@ class AntiEvilPlugin : public QObject, public PsiPlugin, public StanzaFilter, pu
     Q_INTERFACES(PsiPlugin StanzaFilter StanzaSender);
 
 public:
-    AntiEvilPlugin() : stanzaSender(0) {}
+    AntiEvilPlugin() : stanzaSender(0) { }
 
     //-- PsiPlugin -------------------------------------------
 

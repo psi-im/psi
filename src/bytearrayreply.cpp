@@ -47,7 +47,7 @@ ByteArrayReply::ByteArrayReply(const QNetworkRequest &request, const QByteArray 
     }
 }
 
-ByteArrayReply::~ByteArrayReply() {}
+ByteArrayReply::~ByteArrayReply() { }
 
 void ByteArrayReply::abort()
 {

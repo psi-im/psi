@@ -29,7 +29,7 @@
 
 WbNewItem::WbNewItem(QGraphicsScene *s) { scene = s; }
 
-WbNewItem::~WbNewItem() {}
+WbNewItem::~WbNewItem() { }
 
 QDomNode WbNewItem::serializeToSvg(QDomDocument *doc)
 {

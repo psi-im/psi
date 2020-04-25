@@ -89,7 +89,7 @@ public:
                               const QTextFormat &format);
 };
 
-TextIconHandler::TextIconHandler(QObject *parent) : QObject(parent) {}
+TextIconHandler::TextIconHandler(QObject *parent) : QObject(parent) { }
 
 QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, const QTextFormat &format)
 {
@@ -377,7 +377,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
                 QString path
                     = QFileInfo(imgSrcUrl.scheme() == "file" ? imgSrcUrl.toLocalFile() : imgSrc).absoluteFilePath();
                 bool baseDirFound = false;
-                foreach (const QString &baseDir, allowedImageDirs) {
+                for (const QString &baseDir : allowedImageDirs) {
                     if (path.startsWith(baseDir)) {
                         baseDirFound = true;
                         break;

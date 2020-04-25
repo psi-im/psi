@@ -58,7 +58,7 @@ private:
     AHCServerManager *manager_;
 };
 
-JT_AHCServer::JT_AHCServer(Task *t, AHCServerManager *manager) : Task(t), manager_(manager) {}
+JT_AHCServer::JT_AHCServer(Task *t, AHCServerManager *manager) : Task(t), manager_(manager) { }
 
 bool JT_AHCServer::take(const QDomElement &e)
 {
@@ -138,7 +138,7 @@ void JT_AHCServer::sendCommandList(const QString &to, const QString &from, const
     iq.appendChild(query);
 
     // Add all commands
-    foreach (AHCommandServer *c, manager_->commands(Jid(to))) {
+    for (AHCommandServer *c : manager_->commands(Jid(to))) {
         QDomElement command = doc()->createElement("item");
         command.setAttribute("jid", from);
         command.setAttribute("name", c->name());

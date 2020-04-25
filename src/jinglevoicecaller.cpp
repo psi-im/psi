@@ -63,9 +63,9 @@ public:
  * \brief A task that responds to jingle candidate queries with an empty reply.
  */
 
-JingleIQResponder::JingleIQResponder(Task *parent) : Task(parent) {}
+JingleIQResponder::JingleIQResponder(Task *parent) : Task(parent) { }
 
-JingleIQResponder::~JingleIQResponder() {}
+JingleIQResponder::~JingleIQResponder() { }
 
 bool JingleIQResponder::take(const QDomElement &e)
 {
@@ -101,7 +101,7 @@ private:
     JingleVoiceCaller *voiceCaller_;
 };
 
-JingleClientSlots::JingleClientSlots(JingleVoiceCaller *voiceCaller) : voiceCaller_(voiceCaller) {}
+JingleClientSlots::JingleClientSlots(JingleVoiceCaller *voiceCaller) : voiceCaller_(voiceCaller) { }
 
 void JingleClientSlots::callCreated(cricket::Call *call)
 {
@@ -252,7 +252,7 @@ void JingleVoiceCaller::deinitialize()
     initialized_ = false;
 }
 
-JingleVoiceCaller::~JingleVoiceCaller() {}
+JingleVoiceCaller::~JingleVoiceCaller() { }
 
 bool JingleVoiceCaller::calling(const Jid &jid) { return calls_.contains(jid.full()); }
 

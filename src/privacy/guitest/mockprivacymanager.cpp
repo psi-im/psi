@@ -23,7 +23,7 @@
 
 #include <QDebug>
 
-MockPrivacyManager::MockPrivacyManager() {}
+MockPrivacyManager::MockPrivacyManager() { }
 
 void MockPrivacyManager::requestListNames()
 {

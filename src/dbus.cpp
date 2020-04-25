@@ -37,7 +37,7 @@ private:
 
 PsiConAdapter::PsiConAdapter(PsiCon *psicon_) : QDBusAbstractAdaptor(psicon_) { psicon = psicon_; }
 
-PsiConAdapter::~PsiConAdapter() {}
+PsiConAdapter::~PsiConAdapter() { }
 
 void PsiConAdapter::openURI(QString uri) { emit ActiveProfiles::instance()->openUriRequested(uri); }
 
@@ -54,7 +54,6 @@ void PsiConAdapter::sleep() { psicon->doSleep(); }
 void PsiConAdapter::wake() { psicon->doWakeup(); }
 
 void PsiConAdapter::recvNextEvent() { psicon->recvNextEvent(); }
-
 
 void addPsiConAdapter(PsiCon *psicon)
 {

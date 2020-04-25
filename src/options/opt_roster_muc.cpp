@@ -19,7 +19,7 @@ OptionsTabRosterMuc::OptionsTabRosterMuc(QObject *parent) :
 {
 }
 
-OptionsTabRosterMuc::~OptionsTabRosterMuc() {}
+OptionsTabRosterMuc::~OptionsTabRosterMuc() { }
 
 void OptionsTabRosterMuc::changeEvent(QEvent *e)
 {

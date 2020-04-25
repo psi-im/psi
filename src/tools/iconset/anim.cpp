@@ -228,7 +228,7 @@ Anim::Anim(const Anim &anim) { d = anim.d; }
 /**
  * Deletes animation.
  */
-Anim::~Anim() {}
+Anim::~Anim() { }
 
 /**
  * Returns QPixmap of current frame.

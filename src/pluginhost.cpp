@@ -511,7 +511,7 @@ bool PluginHost::incomingXml(int account, const QDomElement &e)
 
         if (handler) {
             // normal filters
-            foreach (IqNamespaceFilter *f, iqNsFilters_.values(ns)) {
+            for (IqNamespaceFilter *f : iqNsFilters_.values(ns)) {
                 if ((f->*handler)(account, e)) {
                     handled = true;
                     break;
@@ -1244,7 +1244,7 @@ bool PluginHost::encryptMessageElement(int account, QDomElement &message)
 
 QObject *PluginHost::getPlugin(const QString &name)
 {
-    foreach (PluginHost *plugin, manager_->pluginsByPriority_) {
+    for (PluginHost *plugin : manager_->pluginsByPriority_) {
         if (plugin->name() == name || plugin->shortName() == name) {
             return plugin->plugin_;
         }

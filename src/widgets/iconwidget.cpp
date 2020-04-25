@@ -129,7 +129,7 @@ static const char *cancel_xpm[] = { "22 22 60 1",
 class RealIconWidgetItem : public IconWidgetItem {
     Q_OBJECT
 public:
-    RealIconWidgetItem(QListWidget *parent = nullptr) : IconWidgetItem(parent) {}
+    RealIconWidgetItem(QListWidget *parent = nullptr) : IconWidgetItem(parent) { }
 
     virtual void   paint(QPainter *painter) const        = 0;
     virtual int    height() const                        = 0;
@@ -172,7 +172,7 @@ public slots:
 
 class IconWidgetDelegate : public QAbstractItemDelegate {
 public:
-    IconWidgetDelegate(QObject *parent) : QAbstractItemDelegate(parent) {}
+    IconWidgetDelegate(QObject *parent) : QAbstractItemDelegate(parent) { }
 
     QSize sizeHint(const QStyleOptionViewItem & /*option*/, const QModelIndex &index) const
     {
@@ -336,7 +336,7 @@ const int IconsetSelectItem::displayNumIcons = 10;
 
 IconsetSelect::IconsetSelect(QWidget *parent) : QListWidget(parent) { setItemDelegate(new IconWidgetDelegate(this)); }
 
-IconsetSelect::~IconsetSelect() {}
+IconsetSelect::~IconsetSelect() { }
 
 void IconsetSelect::insert(const Iconset &iconset)
 {
@@ -477,7 +477,7 @@ const int IconsetDisplayItem::margin = 3;
 
 IconsetDisplay::IconsetDisplay(QWidget *parent) : QListWidget(parent) { setItemDelegate(new IconWidgetDelegate(this)); }
 
-IconsetDisplay::~IconsetDisplay() {}
+IconsetDisplay::~IconsetDisplay() { }
 
 void IconsetDisplay::setIconset(const Iconset &iconset)
 {

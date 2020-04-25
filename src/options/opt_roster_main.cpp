@@ -19,7 +19,7 @@ OptionsTabRosterMain::OptionsTabRosterMain(QObject *parent) :
 {
 }
 
-OptionsTabRosterMain::~OptionsTabRosterMain() {}
+OptionsTabRosterMain::~OptionsTabRosterMain() { }
 
 QWidget *OptionsTabRosterMain::widget()
 {

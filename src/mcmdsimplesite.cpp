@@ -26,9 +26,9 @@
 #include <QTextEdit>
 #include <QToolTip>
 
-MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i) : promptWidget(p), inputWidget(i), open(false) {}
+MCmdSimpleSite::MCmdSimpleSite(QLabel *p, QTextEdit *i) : promptWidget(p), inputWidget(i), open(false) { }
 
-MCmdSimpleSite::MCmdSimpleSite() : promptWidget(nullptr), inputWidget(nullptr), open(false) {}
+MCmdSimpleSite::MCmdSimpleSite() : promptWidget(nullptr), inputWidget(nullptr), open(false) { }
 
 void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
 {

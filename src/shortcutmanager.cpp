@@ -15,7 +15,7 @@ ShortcutManager::ShortcutManager() : QObject(QCoreApplication::instance())
     if (shortcuts("chat.send").isEmpty()) {
         qWarning("Restoring chat.send shortcut");
         QVariantList vl;
-        vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
+        vl << QVariant::fromValue(QKeySequence(Qt::Key_Enter)) << QVariant::fromValue(QKeySequence(Qt::Key_Return));
         PsiOptions::instance()->setOption("options.shortcuts.chat.send", vl);
     }
 }
@@ -90,7 +90,7 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString &nam
     QVariant            variant = options->getOption(QString("options.shortcuts.%1").arg(name));
     QString             type    = variant.typeName();
     if (type == "QVariantList") {
-        foreach (QVariant variant, variant.toList()) {
+        for (QVariant variant : variant.toList()) {
             QKeySequence k = variant.value<QKeySequence>();
             if (!k.isEmpty() && !list.contains(k))
                 list += k;
@@ -130,7 +130,7 @@ void ShortcutManager::connect(const QString &path, QObject *parent, const char *
             parent->connect(act, SIGNAL(triggered()), slot);
         }
     } else {
-        foreach (QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
+        for (QKeySequence sequence : ShortcutManager::instance()->shortcuts(path)) {
             if (!sequence.isEmpty()) {
                 GlobalShortcutManager::instance()->connect(sequence, parent, slot);
             }

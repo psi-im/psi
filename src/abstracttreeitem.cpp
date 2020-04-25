@@ -113,7 +113,7 @@ void AbstractTreeItem::dump(int indent) const
     qDebug() << qPrintable(fill + QLatin1String(" ") + QLatin1String("parent")) << _parent;
     qDebug() << qPrintable(fill + QLatin1String(" ") + QLatin1String("children")) << _children;
 
-    foreach (AbstractTreeItem *item, _children) {
+    for (AbstractTreeItem *item : _children) {
         item->dump(indent + 1);
     }
     qDebug() << qPrintable(fill + QLatin1String("}"));

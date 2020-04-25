@@ -143,7 +143,7 @@ public slots:
 
         QListWidgetItem *firstItem   = nullptr;
         QListWidgetItem *currentItem = nullptr;
-        foreach (ProxyItem i, list) {
+        for (ProxyItem i : list) {
             QListWidgetItem *item = new QListWidgetItem(i.name);
             addItem(item);
 
@@ -210,7 +210,7 @@ public slots:
         QList<QWidget *> editors = QList<QWidget *>()
             << q->ui_.cb_type << q->ui_.le_host << q->ui_.le_port << q->ui_.le_user << q->ui_.le_pass << q->ui_.le_url
             << q->ui_.gr_auth;
-        foreach (QWidget *w, editors) {
+        for (QWidget *w : editors) {
             w->blockSignals(true);
             w->setEnabled(current);
             if (!current) {
@@ -231,7 +231,7 @@ public slots:
             q->ui_.gr_auth->setChecked(current->data(AuthRole).toBool());
         }
 
-        foreach (QWidget *w, editors) {
+        for (QWidget *w : editors) {
             w->blockSignals(false);
         }
 
@@ -388,7 +388,7 @@ void ProxyChooser::buildComboBox()
     d->cb_proxy->clear();
     d->cb_proxy->addItem(tr("None"), "");
     ProxyItemList list = d->m->itemList();
-    foreach (ProxyItem pi, list) {
+    for (ProxyItem pi : list) {
         d->cb_proxy->addItem(pi.name, pi.id);
     }
 }
@@ -407,7 +407,7 @@ const QString defaultItemName = "Default";
 
 ProxyForObject::ProxyForObject(OptionsTree *o, QObject *parent) : QObject(parent), ot_(o) { loadItem(defaultItemName); }
 
-ProxyForObject::~ProxyForObject() {}
+ProxyForObject::~ProxyForObject() { }
 
 QString ProxyForObject::itemForObject(const QString &obj)
 {
@@ -421,7 +421,7 @@ void ProxyForObject::save()
 {
     items_       = tmp_;
     QString base = "proxy.";
-    foreach (QString obj, items_.keys()) {
+    for (QString obj : items_.keys()) {
         QString val = items_.value(obj);
         ot_->setOption(base + obj, QVariant(val));
     }
@@ -505,7 +505,7 @@ ProxyItemList ProxyManager::itemList() const
     QList<ProxyItem> proxies;
     QString          opt  = "proxies";
     QStringList      keys = d->o->getChildOptionNames(opt, true, true);
-    foreach (QString key, keys) {
+    for (QString key : keys) {
         proxies += getItem(key.mid(opt.length() + 1));
     }
     return proxies;
@@ -528,7 +528,7 @@ QString ProxyManager::lastEdited() const { return d->lastEdited; }
 
 void ProxyManager::migrateItemList(const ProxyItemList &list)
 {
-    foreach (ProxyItem pi, list) {
+    for (ProxyItem pi : list) {
         d->itemToOptions(pi);
     }
 }
@@ -557,7 +557,7 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
     // Update all
     int idx = 0;
     int i   = 0;
-    for (ProxyItem pi: list) {
+    for (ProxyItem pi : list) {
         if (pi.id.isEmpty()) {
             do {
                 pi.id = "a" + QString::number(idx++);
@@ -576,7 +576,7 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 #else
     auto oldSet = old.toSet();
 #endif
-    for (QString key: oldSet - current) {
+    for (QString key : oldSet - current) {
         d->o->removeOption("proxies." + key, true);
         emit proxyRemoved(key);
     }

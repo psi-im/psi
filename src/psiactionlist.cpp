@@ -532,7 +532,7 @@ void PsiActionList::Private::addPluginsActions(ActionsType type)
     PluginManager *pm      = PluginManager::instance();
     QStringList    plugins = pm->availablePlugins();
     ActionList *   actions = new ActionList(tr("Plugins"), type, false);
-    foreach (const QString &plugin, plugins) {
+    for (const QString &plugin : plugins) {
         if ((type == Actions_Chat && !pm->hasToolBarButton(plugin))
             || (type == Actions_Groupchat && !pm->hasGCToolBarButton(plugin))) {
 

@@ -26,7 +26,7 @@ OptionsTab::OptionsTab(QObject *parent, QByteArray _id, QByteArray _parentId, QS
     v_iconName    = _iconName;
 }
 
-OptionsTab::~OptionsTab() {}
+OptionsTab::~OptionsTab() { }
 
 QByteArray OptionsTab::id() const { return v_id; }
 
@@ -58,15 +58,15 @@ PsiIcon *OptionsTab::psiIcon() const
     return const_cast<PsiIcon *>(IconsetFactory::iconPtr(v_iconName));
 }
 
-void OptionsTab::applyOptions() {}
+void OptionsTab::applyOptions() { }
 
-void OptionsTab::restoreOptions() {}
+void OptionsTab::restoreOptions() { }
 
-void OptionsTab::tabAdded(OptionsTab *) {}
+void OptionsTab::tabAdded(OptionsTab *) { }
 
 bool OptionsTab::stretchable() const { return false; }
 
-void OptionsTab::setData(PsiCon *, QWidget *) {}
+void OptionsTab::setData(PsiCon *, QWidget *) { }
 
 //----------------------------------------------------------------------------
 // OptionsTabWidget
@@ -230,7 +230,7 @@ QWidget *MetaOptionsTab::widget()
     connect(w, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
     connect(w, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
 
-    foreach (OptionsTab *tab, tabs) {
+    for (OptionsTab *tab : tabs) {
         t->addTab(tab);
     }
 
@@ -242,7 +242,7 @@ QWidget *MetaOptionsTab::widget()
 
 void MetaOptionsTab::applyOptions()
 {
-    foreach (OptionsTab *tab, tabs) {
+    for (OptionsTab *tab : tabs) {
         tab->applyOptions();
     }
 }
@@ -254,14 +254,14 @@ void MetaOptionsTab::restoreOptions()
         d->restoreOptions();
     }
 
-    foreach (OptionsTab *tab, tabs) {
+    for (OptionsTab *tab : tabs) {
         tab->restoreOptions();
     }
 }
 
 void MetaOptionsTab::setData(PsiCon *psi, QWidget *w)
 {
-    foreach (OptionsTab *tab, tabs) {
+    for (OptionsTab *tab : tabs) {
         tab->setData(psi, w);
     }
 }

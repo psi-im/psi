@@ -207,9 +207,9 @@ private:
 class SxeEvent : public MessageEvent {
     Q_OBJECT
 public:
-    SxeEvent(int id, PsiAccount *acc) : MessageEvent(acc), id_(id) {}
-    SxeEvent(const SxeEvent &from) : MessageEvent(from), id_(from.id()) {}
-    ~SxeEvent() {}
+    SxeEvent(int id, PsiAccount *acc) : MessageEvent(acc), id_(id) { }
+    SxeEvent(const SxeEvent &from) : MessageEvent(from), id_(from.id()) { }
+    ~SxeEvent() { }
     typedef QSharedPointer<SxeEvent> Ptr;
     int                              type() const { return Sxe; }
     //    XMPP::Jid from() const { return jid(); }
@@ -225,13 +225,13 @@ private:
 class PGPEvent : public PsiEvent {
     Q_OBJECT
 public:
-    PGPEvent(PsiAccount *acc) : PsiEvent(acc) {}
-    PGPEvent(const PGPEvent &from) : PsiEvent(from) {}
-    ~PGPEvent() {}
+    PGPEvent(PsiAccount *acc) : PsiEvent(acc) { }
+    PGPEvent(const PGPEvent &from) : PsiEvent(from) { }
+    ~PGPEvent() { }
     typedef QSharedPointer<PGPEvent> Ptr;
     int                              type() const { return PGP; }
     XMPP::Jid                        from() const { return QString(); }
-    void                             setFrom(const XMPP::Jid &) {}
+    void                             setFrom(const XMPP::Jid &) { }
 };
 
 // incoming file transfer

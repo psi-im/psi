@@ -12,7 +12,7 @@ WebServer::WebServer(QObject *parent) : qhttp::server::QHttpServer(parent)
             QString path = req->url().path();
             // qDebug() << "LOADING: " << path << serverPort();
 
-            foreach (auto &h, pathHandlers) {
+            for (auto &h : pathHandlers) {
                 if (path.startsWith(h.first)) {
                     if (h.second(req, res)) {
                         return;

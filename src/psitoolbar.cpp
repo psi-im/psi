@@ -67,7 +67,7 @@ PsiToolBar::PsiToolBar(const QString &base, QWidget *mainWindow, MetaActionList 
     connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));
 }
 
-PsiToolBar::~PsiToolBar() {}
+PsiToolBar::~PsiToolBar() { }
 
 void PsiToolBar::contextMenuEvent(QContextMenuEvent *e)
 {
@@ -97,7 +97,7 @@ void PsiToolBar::initialize()
              << "event_notifier"
              << "spacer";
 
-    foreach (QString actionName, o->getOption(base_ + ".actions").toStringList()) {
+    for (QString actionName : o->getOption(base_ + ".actions").toStringList()) {
         IconAction *action = actions.action(actionName);
 
         if (action) {

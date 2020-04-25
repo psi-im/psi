@@ -105,8 +105,8 @@ class FileSharingDeviceOpener : public ITEMediaOpener {
     PsiAccount *acc;
 
 public:
-    inline FileSharingDeviceOpener(PsiAccount *acc) : acc(acc) {}
-    virtual ~FileSharingDeviceOpener() {}
+    inline FileSharingDeviceOpener(PsiAccount *acc) : acc(acc) { }
+    virtual ~FileSharingDeviceOpener() { }
 
     static XMPP::Hash urlToSourceId(const QUrl &url);
     QIODevice *       open(QUrl &url) override;

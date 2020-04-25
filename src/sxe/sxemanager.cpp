@@ -91,7 +91,7 @@ void SxeManager::messageReceived(const Message &message)
 void SxeManager::recordDetectedSession(const Message &message)
 {
     // check if a record of the session exists
-    foreach (DetectedSession d, DetectedSessions_) {
+    for (DetectedSession d : DetectedSessions_) {
         if (d.session == message.sxe().attribute("session")
             && d.jid.compare(message.from(), message.type() != "groupchat"))
             return;
@@ -113,7 +113,7 @@ void SxeManager::removeSession(SxeSession *session)
     sessions_.removeAll(session);
 
     // cancel possible negotiations
-    foreach (SxeNegotiation *negotiation, negotiations_.values(session->session())) {
+    for (SxeNegotiation *negotiation : negotiations_.values(session->session())) {
         if (negotiation->target.compare(session->target(), true))
             abortNegotiation(negotiation);
     }
@@ -200,7 +200,7 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         response.appendChild(documentBegin);
 
         // append all the SxeEdit's returned by startQueueing()
-        foreach (const SxeEdit *e, snapshot) {
+        for (const SxeEdit *e : snapshot) {
             response.appendChild(e->xml(doc));
         }
 
@@ -471,7 +471,7 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 SxeManager::SxeNegotiation *SxeManager::findNegotiation(const Jid &jid, const QString &session)
 {
     QList<SxeNegotiation *> negotiations = negotiations_.values(session);
-    foreach (SxeNegotiation *negotiation, negotiations) {
+    for (SxeNegotiation *negotiation : negotiations) {
         if (negotiation->state != SxeNegotiation::Aborted
             && negotiation->peer.compare(jid, negotiation->state != SxeNegotiation::ConnectionRequested))
             return negotiation;
@@ -539,7 +539,7 @@ SxeManager::SxeNegotiation *SxeManager::createNegotiation(const Message &message
             // ownJid is determined based on the bare part of ownJids_
 
             negotiation->groupChat = true;
-            foreach (QString j, ownJids_) {
+            for (QString j : ownJids_) {
                 if (message.from().bare() == j.left(j.indexOf("/"))) {
                     negotiation->ownJid = j;
                     break;
@@ -619,7 +619,7 @@ void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool grou
     QDomElement negotiationElement = doc.createElementNS(SXENS, "negotiation");
     QDomElement request            = doc.createElementNS(SXENS, "invitation");
     QDomElement feature            = doc.createElementNS(SXENS, "feature");
-    foreach (QString f, features) {
+    for (QString f : features) {
         feature = feature.cloneNode(false).toElement();
         feature.appendChild(doc.createTextNode(f));
         request.appendChild(feature);
@@ -643,7 +643,7 @@ void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool grou
 
 void SxeManager::negotiationTimeout()
 {
-    foreach (SxeNegotiation *negotiation, negotiations_.values()) {
+    for (SxeNegotiation *negotiation : negotiations_.values()) {
         if (negotiation->role == SxeNegotiation::Participant && negotiation->state < SxeNegotiation::HistoryOffered
             && negotiation->state != SxeNegotiation::DocumentBegan) {
             if (negotiation->session)
@@ -694,7 +694,7 @@ QList<QPointer<SxeSession>> SxeManager::findSession(const Jid &jid)
 {
     // find if a session for the jid already exists
     QList<QPointer<SxeSession>> matching;
-    foreach (QPointer<SxeSession> w, sessions_) {
+    for (QPointer<SxeSession> w : sessions_) {
         // does the jid match?
         if (w->target().compare(jid)) {
             matching.append(w);
@@ -706,7 +706,7 @@ QList<QPointer<SxeSession>> SxeManager::findSession(const Jid &jid)
 QPointer<SxeSession> SxeManager::findSession(const QString &session)
 {
     // find if a session for the session already exists
-    foreach (SxeSession *w, sessions_) {
+    for (SxeSession *w : sessions_) {
         // does the session match?
         if (w->session() == session)
             return w;

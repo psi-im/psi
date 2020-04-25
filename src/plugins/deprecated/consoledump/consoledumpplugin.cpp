@@ -50,7 +50,7 @@ private:
 
 Q_EXPORT_PLUGIN(ConsoleDumpPlugin);
 
-ConsoleDumpPlugin::ConsoleDumpPlugin() : enabled(false) {}
+ConsoleDumpPlugin::ConsoleDumpPlugin() : enabled(false) { }
 
 QString ConsoleDumpPlugin::name() const { return "Console Dump Plugin"; }
 

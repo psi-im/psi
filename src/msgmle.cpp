@@ -64,7 +64,7 @@ public:
         connect(te_->document(), SIGNAL(contentsChange(int, int, int)), SLOT(textChanged(int, int, int)));
     }
 
-    virtual ~CapitalLettersController() {}
+    virtual ~CapitalLettersController() { }
 
     void setAutoCapitalizeEnabled(bool enabled) { enabled_ = enabled; }
 
@@ -330,7 +330,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
             if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {
                 QMenu spell_menu;
                 if (!suggestions.isEmpty()) {
-                    foreach (QString suggestion, suggestions) {
+                    for (QString suggestion : suggestions) {
                         QAction *act_suggestion = spell_menu.addAction(suggestion);
                         connect(act_suggestion, SIGNAL(triggered()), SLOT(applySuggestion()));
                     }
@@ -499,7 +499,7 @@ void ChatEdit::insertFromMimeData(const QMimeData *source)
     if (source->hasImage() || source->hasUrls()) {
         // Check that source doesn't contains a local files and paste data as a text
         bool isLocalFile = false;
-        foreach (const QUrl &url, source->urls()) {
+        for (const QUrl &url : source->urls()) {
             if (url.isLocalFile())
                 isLocalFile = true;
         }
@@ -758,7 +758,7 @@ LineEdit::LineEdit(QWidget *parent) : ChatEdit(parent)
     connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
 }
 
-LineEdit::~LineEdit() {}
+LineEdit::~LineEdit() { }
 
 QSize LineEdit::minimumSizeHint() const
 {

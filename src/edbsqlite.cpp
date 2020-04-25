@@ -514,7 +514,7 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
             QVariantMap extraData = doc.object().toVariantMap();
 
             if (fOk) {
-                foreach (const QVariant &urlItem, extraData["jabber:x:oob"].toList()) {
+                for (const QVariant &urlItem : extraData["jabber:x:oob"].toList()) {
                     QVariantList itemList = urlItem.toList();
                     if (!itemList.isEmpty()) {
                         QString url = itemList.at(0).toString();
@@ -734,11 +734,11 @@ bool EDBSqLite::importExecute()
 
 // ****************** class PreparedQueryes ********************
 
-EDBSqLite::QueryStorage::QueryStorage() {}
+EDBSqLite::QueryStorage::QueryStorage() { }
 
 EDBSqLite::QueryStorage::~QueryStorage()
 {
-    foreach (EDBSqLite::PreparedQuery *q, queryList.values()) {
+    for (EDBSqLite::PreparedQuery *q : queryList.values()) {
         if (q)
             delete q;
     }
@@ -758,7 +758,7 @@ EDBSqLite::PreparedQuery *EDBSqLite::QueryStorage::getPreparedQuery(QueryType ty
     return q;
 }
 
-EDBSqLite::PreparedQuery::PreparedQuery(QSqlDatabase db) : QSqlQuery(db) {}
+EDBSqLite::PreparedQuery::PreparedQuery(QSqlDatabase db) : QSqlQuery(db) { }
 
 QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts, bool allContacts)
 {

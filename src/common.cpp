@@ -384,7 +384,7 @@ void closeDialogs(QWidget *w)
             dialogs.append(static_cast<QDialog *>(*it));
         }
     }
-    foreach (QDialog *w, dialogs) {
+    for (QDialog *w : dialogs) {
         w->close();
     }
 }
@@ -446,7 +446,7 @@ void clearMenu(QMenu *m)
 {
     m->clear();
     QObjectList l = m->children();
-    foreach (QObject *obj, l) {
+    for (QObject *obj : l) {
         QMenu *child = dynamic_cast<QMenu *>(obj);
         if (child) {
             delete child;

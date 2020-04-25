@@ -138,7 +138,7 @@ void MUCJoinDlg::updateFavorites()
     QHash<QString, QListWidgetItem *>     bmMap; // jid to item
     QMultiMap<QString, QListWidgetItem *> nmMap; // name to item
     if (account_ && account_->bookmarkManager()->isAvailable()) {
-        foreach (ConferenceBookmark c, account_->bookmarkManager()->conferences()) {
+        for (ConferenceBookmark c : account_->bookmarkManager()->conferences()) {
             if (!c.jid().isValid()) {
                 continue;
             }
@@ -159,7 +159,7 @@ void MUCJoinDlg::updateFavorites()
         ui_.lwFavorites->addItem(item);
     }
 
-    foreach (QString j, controller_->recentGCList()) {
+    for (QString j : controller_->recentGCList()) {
         Jid jid(j);
         if (!jid.isValid()) {
             continue;

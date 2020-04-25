@@ -69,6 +69,6 @@ void GlobalEventQueue::dequeue(EventItem *item)
     emit queueChanged();
 }
 
-GlobalEventQueue::GlobalEventQueue() : QObject(QCoreApplication::instance()) {}
+GlobalEventQueue::GlobalEventQueue() : QObject(QCoreApplication::instance()) { }
 
 GlobalEventQueue *GlobalEventQueue::instance_ = nullptr;

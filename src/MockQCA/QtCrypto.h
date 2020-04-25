@@ -46,20 +46,20 @@ private:
 
 class CertificateCollection : public QList<Certificate> {
 public:
-    CertificateCollection() {}
+    CertificateCollection() { }
     void               addCertificate(const Certificate &c) { *this += c; }
     QList<Certificate> certificates() const { return *this; }
 };
 
 class SecureArray {
 public:
-    SecureArray() {}
+    SecureArray() { }
     QByteArray toByteArray() { return QByteArray(); }
 };
 
 class Base64 {
 public:
-    Base64() {}
+    Base64() { }
     SecureArray stringToArray(const QString &) { return SecureArray(); }
 };
 

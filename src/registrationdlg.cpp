@@ -63,7 +63,7 @@ private:
     QDomElement _iq;
 };
 
-JT_XRegister::JT_XRegister(Task *parent) : JT_Register(parent) {}
+JT_XRegister::JT_XRegister(Task *parent) : JT_Register(parent) { }
 
 bool JT_XRegister::take(const QDomElement &x)
 {

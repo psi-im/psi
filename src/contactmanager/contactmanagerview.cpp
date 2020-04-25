@@ -25,7 +25,7 @@
 #include <QHeaderView>
 #include <QMenu>
 
-ContactManagerView::ContactManagerView(QWidget *parent) : QTableView(parent) {}
+ContactManagerView::ContactManagerView(QWidget *parent) : QTableView(parent) { }
 
 void ContactManagerView::init()
 {
@@ -51,7 +51,7 @@ void ContactManagerView::contextMenuEvent(QContextMenuEvent *e)
     if (result) {
         iresult = actions.indexOf(result);
         const QVariant value(2);
-        foreach (const QModelIndex &check, selectionModel()->selectedRows(0)) {
+        for (const QModelIndex &check : selectionModel()->selectedRows(0)) {
             switch (iresult) {
             case 0: // check
                 model()->setData(check, 2);
@@ -77,7 +77,7 @@ void ContactManagerView::keyPressEvent(QKeyEvent *e)
         } else if (e->modifiers() & Qt::ShiftModifier) {
             data = 0; // uncheck
         }
-        foreach (const QModelIndex &check, selectionModel()->selectedRows(0)) {
+        for (const QModelIndex &check : selectionModel()->selectedRows(0)) {
             model()->setData(check, data);
         }
         e->accept();

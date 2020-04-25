@@ -45,7 +45,7 @@
  */
 class NotificationContext {
 public:
-    NotificationContext(PsiAccount *a, Jid j) : account_(a), jid_(j), deleteCount_(0) {}
+    NotificationContext(PsiAccount *a, Jid j) : account_(a), jid_(j), deleteCount_(0) { }
     PsiAccount *account() const { return account_; }
     Jid         jid() const { return jid_; }
 

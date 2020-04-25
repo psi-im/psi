@@ -117,7 +117,7 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
     reload(def);
 }
 
-ProfileOpenDlg::~ProfileOpenDlg() {}
+ProfileOpenDlg::~ProfileOpenDlg() { }
 
 void ProfileOpenDlg::reload(const QString &choose)
 {

@@ -23,7 +23,7 @@
 
 #include <QSortFilterProxyModel>
 
-PrivacyListBlockedModel::PrivacyListBlockedModel(QObject *parent) : QSortFilterProxyModel(parent) {}
+PrivacyListBlockedModel::PrivacyListBlockedModel(QObject *parent) : QSortFilterProxyModel(parent) { }
 
 bool PrivacyListBlockedModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {

@@ -287,7 +287,7 @@ private slots:
     }
 };
 
-AccountManageTree::AccountManageTree(QWidget *parent) : QTreeWidget(parent) {}
+AccountManageTree::AccountManageTree(QWidget *parent) : QTreeWidget(parent) { }
 
 void AccountManageTree::dropEvent(QDropEvent *event)
 {
@@ -344,7 +344,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi) : QWidget(nullptr)
         lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
 }
 
-AccountManageDlg::~AccountManageDlg() {}
+AccountManageDlg::~AccountManageDlg() { }
 
 void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetItem *)
 {

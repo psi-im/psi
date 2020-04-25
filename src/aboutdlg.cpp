@@ -129,7 +129,7 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
     thanks += details(QString::fromUtf8("Trolltech AS"), "", "", "", tr("Sponsor"));
     thanks += details(QString::fromUtf8("Google, Inc."), "", "", "", tr("Sponsor (Summer of Code)"));
 
-    foreach (QCA::Provider *p, QCA::providers()) {
+    for (QCA::Provider *p : QCA::providers()) {
         QString credit = p->credit();
         if (!credit.isEmpty()) {
             thanks += details(tr("Security plugin: %1").arg(p->name()), "", "", "", credit);

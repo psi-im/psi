@@ -20,7 +20,7 @@ OptionsTabStatusAuto::OptionsTabStatusAuto(QObject *parent) :
 {
 }
 
-OptionsTabStatusAuto::~OptionsTabStatusAuto() {}
+OptionsTabStatusAuto::~OptionsTabStatusAuto() { }
 
 QWidget *OptionsTabStatusAuto::widget()
 {

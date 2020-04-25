@@ -173,9 +173,9 @@ void TabbableWidget::setJid(const Jid &j) { jid_ = j; }
 
 const QString &TabbableWidget::getDisplayName() const { return jid_.node(); }
 
-void TabbableWidget::deactivated() {}
+void TabbableWidget::deactivated() { }
 
-void TabbableWidget::activated() {}
+void TabbableWidget::activated() { }
 
 /**
  * Returns true if this tab is active in the active window.

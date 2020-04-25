@@ -68,7 +68,7 @@ public:
     struct Note {
         QString  text;
         NoteType type;
-        Note() : type(Info) {}
+        Note() : type(Info) { }
     };
 
     // Constructors

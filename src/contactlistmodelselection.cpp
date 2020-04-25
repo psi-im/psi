@@ -198,13 +198,13 @@ void ContactListModelSelection::debugSelection(const QMimeData *data, const QStr
 {
     qWarning("*** debugSelection %s", qPrintable(name));
     ContactListModelSelection selection(data);
-    foreach (const ContactListModelSelection::Contact &c, selection.contacts()) {
+    for (const ContactListModelSelection::Contact &c : selection.contacts()) {
         qWarning("\tc: '%s' group: '%s' account: '%s'", qPrintable(c.jid), qPrintable(c.group), qPrintable(c.account));
     }
-    foreach (const ContactListModelSelection::Group &g, selection.groups()) {
+    for (const ContactListModelSelection::Group &g : selection.groups()) {
         qWarning("\tg: '%s'", qPrintable(g.fullName));
     }
-    foreach (const ContactListModelSelection::Account &a, selection.accounts()) {
+    for (const ContactListModelSelection::Account &a : selection.accounts()) {
         qWarning("\ta: '%s'", qPrintable(a.id));
     }
 }

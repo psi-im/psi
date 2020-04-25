@@ -253,7 +253,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     }
 
     QStringList rosterCache = o->getChildOptionNames(base + ".roster-cache", true, true);
-    foreach (QString rbase, rosterCache) {
+    for (QString rbase : rosterCache) {
         RosterItem ri;
         ri.setJid(Jid(o->getOption(rbase + ".jid").toString()));
         ri.setName(o->getOption(rbase + ".name").toString());
@@ -267,7 +267,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
     groupState.clear();
     QVariantList states = o->mapKeyList(base + ".group-state");
-    foreach (QVariant k, states) {
+    for (QVariant k : states) {
         GroupData gd;
         QString   sbase = o->mapLookup(base + ".group-state", k);
         gd.open         = o->getOption(sbase + ".open").toBool();
@@ -397,7 +397,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     }
 
     int idx = 0;
-    foreach (RosterItem ri, roster) {
+    for (RosterItem ri : roster) {
         QString rbase = base + ".roster-cache.a" + QString::number(idx++);
         o->setOption(rbase + ".jid", ri.jid().full());
         o->setOption(rbase + ".name", ri.name());
@@ -416,24 +416,24 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     groupList << qApp->translate("ContactProfile", "Agents/Transports");
 
     // first, add all groups' names to groupList
-    foreach (RosterItem i, roster) {
+    for (RosterItem i : roster) {
         groupList += i.groups();
     }
 
     // now, check if there's groupState name entry in groupList
-    foreach (QString group, groupState.keys()) {
+    for (QString group : groupState.keys()) {
         if (!groupList.contains(group)) {
             removeList << group;
         }
     }
 
     // remove redundant groups
-    foreach (QString group, removeList) {
+    for (QString group : removeList) {
         groupState.remove(group);
     }
 
     // and finally, save the data
-    foreach (QString group, groupState.keys()) {
+    for (QString group : groupState.keys()) {
         QString groupBase = o->mapPut(base + ".group-state", group);
         o->setOption(groupBase + ".open", groupState[group].open);
         o->setOption(groupBase + ".rank", groupState[group].rank);
@@ -496,7 +496,7 @@ void OptionsMigration::lateMigration()
 #ifdef PSI_PLUGINS
         PluginManager *pm      = PluginManager::instance();
         QStringList    plugins = pm->availablePlugins();
-        foreach (const QString &plugin, plugins) {
+        for (const QString &plugin : plugins) {
             pluginsKeys << pm->shortName(plugin) + "-plugin";
         }
 #endif
@@ -549,7 +549,7 @@ void OptionsMigration::lateMigration()
 
         QStringList toolbarBases
             = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-        foreach (QString base, toolbarBases) {
+        for (QString base : toolbarBases) {
             ToolbarPrefs tb;
             tb.id   = PsiOptions::instance()->getOption(base + ".key").toString();
             tb.name = PsiOptions::instance()->getOption(base + ".name").toString();
@@ -569,7 +569,7 @@ void OptionsMigration::lateMigration()
 
         PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
 
-        foreach (ToolbarPrefs tb, toolbars) {
+        for (ToolbarPrefs tb : toolbars) {
             tb.locked = true;
             PsiToolBar::structToOptions(PsiOptions::instance(), tb);
         }
@@ -588,7 +588,7 @@ void OptionsMigration::lateMigration()
     if (hideKS.contains(escKS) && closeKS.contains(escKS)) {
         closeKS.removeAll(escKS);
         QVariantList vl;
-        foreach (auto &ks, closeKS) {
+        for (auto &ks : closeKS) {
             vl.append(QVariant::fromValue(ks));
         }
 
@@ -710,7 +710,7 @@ bool profileRename(const QString &oldname, const QString &name)
         return false;
 
     // and if all ok we may rename it.
-    foreach (QString path, paths) {
+    for (QString path : paths) {
         QDir d(path);
         if (!d.exists() || !d.exists(oldname))
             continue;
@@ -750,7 +750,7 @@ static bool folderRemove(const QDir &_d)
 bool profileDelete(const QStringList &paths)
 {
     bool ret = true;
-    foreach (QString path, paths) {
+    for (QString path : paths) {
         QDir d(path);
         if (!d.exists())
             continue;

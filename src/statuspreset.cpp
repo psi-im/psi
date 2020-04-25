@@ -28,7 +28,7 @@
 // StatusPreset
 //-----------------------------------------------------------------------------
 
-StatusPreset::StatusPreset() : name_(""), message_(""), status_(XMPP::Status::Away) {}
+StatusPreset::StatusPreset() : name_(""), message_(""), status_(XMPP::Status::Away) { }
 
 StatusPreset::StatusPreset(QString name, QString message, XMPP::Status::Type status) :
     name_(name), message_(message), status_(status)

@@ -21,6 +21,6 @@ GameSocket::GameSocket(QWidget *parent, const char *name) :
 {
 }
 
-GameSocket::~GameSocket() {}
+GameSocket::~GameSocket() { }
 
 void GameSocket::newConnection(int sock) { emit acceptConnection(sock); }

@@ -67,7 +67,7 @@ MetaAlertIcon::MetaAlertIcon() : QObject(qApp), animTimer(new QTimer(this)), fra
     _blank16.setImage(blankImg);
 }
 
-MetaAlertIcon::~MetaAlertIcon() {}
+MetaAlertIcon::~MetaAlertIcon() { }
 
 Impix MetaAlertIcon::blank16() const { return _blank16; }
 

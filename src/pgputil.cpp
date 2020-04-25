@@ -16,7 +16,7 @@ PGPUtil::PGPUtil() : qcaEventHandler_(nullptr), passphraseDlg_(nullptr), cache_n
     connect(qcaEventHandler_, SIGNAL(eventReady(int, const QCA::Event &)), SLOT(handleEvent(int, const QCA::Event &)));
     qcaEventHandler_->start();
     connect(&qcaKeyStoreManager_, SIGNAL(keyStoreAvailable(const QString &)), SLOT(keyStoreAvailable(const QString &)));
-    foreach (const QString &k, qcaKeyStoreManager_.keyStores()) {
+    for (const QString &k : qcaKeyStoreManager_.keyStores()) {
         keyStoreAvailable(k);
     }
 
@@ -25,7 +25,7 @@ PGPUtil::PGPUtil() : qcaEventHandler_(nullptr), passphraseDlg_(nullptr), cache_n
 
 PGPUtil::~PGPUtil()
 {
-    foreach (QCA::KeyStore *ks, keystores_) {
+    for (QCA::KeyStore *ks : keystores_) {
         delete ks;
     }
     keystores_.clear();
@@ -190,9 +190,9 @@ QString PGPUtil::addHeaderFooter(const QString &str, int type)
 
 QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString &keyID)
 {
-    foreach (QCA::KeyStore *ks, keystores_) {
+    for (QCA::KeyStore *ks : keystores_) {
         if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-            foreach (QCA::KeyStoreEntry ke, ks->entryList()) {
+            for (QCA::KeyStoreEntry ke : ks->entryList()) {
                 if (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey && ke.pgpSecretKey().keyId() == keyID) {
                     return ke;
                 }
@@ -204,9 +204,9 @@ QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString &keyID)
 
 QCA::KeyStoreEntry PGPUtil::getPublicKeyStoreEntry(const QString &keyID)
 {
-    foreach (QCA::KeyStore *ks, keystores_) {
+    for (QCA::KeyStore *ks : keystores_) {
         if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-            foreach (QCA::KeyStoreEntry ke, ks->entryList()) {
+            for (QCA::KeyStoreEntry ke : ks->entryList()) {
                 if ((ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
                      || ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey)
                     && ke.pgpPublicKey().keyId() == keyID) {

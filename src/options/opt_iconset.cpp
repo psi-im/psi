@@ -78,7 +78,7 @@ public:
         QStringList bold_labels({ "lb_name2", "lb_version2", "lb_date2", "lb_home2", "lb_desc2", "lb_authors" });
 
         QList<QLabel *> labels = findChildren<QLabel *>();
-        foreach (QLabel *l, labels) {
+        for (QLabel *l : labels) {
             if (bold_labels.contains(l->objectName())) {
                 QFont font = l->font();
                 font.setBold(true);
@@ -155,10 +155,10 @@ static int countIconsets(QString addDir, QStringList excludeList)
 {
     int count = 0;
 
-    foreach (const QString &dataDir, ApplicationInfo::dataDirs()) {
+    for (const QString &dataDir : ApplicationInfo::dataDirs()) {
         QDir dir(dataDir + "/iconsets" + addDir);
 
-        foreach (const QFileInfo &fi, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
+        for (const QFileInfo &fi : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
             QString iconsetId = fi.absoluteFilePath().section('/', -2);
             if (excludeList.contains(iconsetId) || !Iconset::isSourceAllowed(fi))
                 continue;
@@ -177,7 +177,7 @@ static int countIconsets(QString addDir, QStringList excludeList)
 
 class IconsetLoadEvent : public QEvent {
 public:
-    IconsetLoadEvent(IconsetLoadThread *par, Iconset *i) : QEvent(QEvent::User), p(par), is(i) {}
+    IconsetLoadEvent(IconsetLoadThread *par, Iconset *i) : QEvent(QEvent::User), p(par), is(i) { }
 
     IconsetLoadThread *thread() const { return p; }
 
@@ -195,7 +195,7 @@ private:
 
 class IconsetFinishEvent : public QEvent {
 public:
-    IconsetFinishEvent() : QEvent((QEvent::Type)(QEvent::User + 1)) {}
+    IconsetFinishEvent() : QEvent((QEvent::Type)(QEvent::User + 1)) { }
 };
 
 //----------------------------------------------------------------------------
@@ -204,7 +204,7 @@ public:
 
 class IconsetLoadThreadDestroyEvent : public QEvent {
 public:
-    IconsetLoadThreadDestroyEvent(QThread *t) : QEvent((QEvent::Type)(QEvent::User + 2)), thread(t) {}
+    IconsetLoadThreadDestroyEvent(QThread *t) : QEvent((QEvent::Type)(QEvent::User + 2)), thread(t) { }
 
     ~IconsetLoadThreadDestroyEvent()
     {
@@ -237,7 +237,7 @@ private:
     QStringList excludeList;
 };
 
-IconsetLoadThread::IconsetLoadThread(QObject *p, QString path) : cancelled(false), parent(p), addPath(path) {}
+IconsetLoadThread::IconsetLoadThread(QObject *p, QString path) : cancelled(false), parent(p), addPath(path) { }
 
 void IconsetLoadThread::excludeIconsets(QStringList l) { excludeList += l; }
 
@@ -264,9 +264,9 @@ void IconsetLoadThread::run()
     threadMutex.unlock();
 
     QStringList failedList;
-    foreach (const QString &dataDir, dirs) {
+    for (const QString &dataDir : dirs) {
         QDir dir(dataDir + "/iconsets" + addPath);
-        foreach (const QFileInfo &iconsetFI, dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
+        for (const QFileInfo &iconsetFI : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
             if (!Iconset::isSourceAllowed(iconsetFI))
                 continue;
 
@@ -510,36 +510,38 @@ void OptionsTabIconsetEmoticons::restoreOptions()
     // fill in the iconset view
     d->iss_emoticons->clear();
 
-    { foreach (Iconset *is, PsiIconset::instance()->emoticons) { d->iss_emoticons->insert(*is);
-    d->iss_emoticons->lastItem()->setSelected(true);
-}
-}
-
-{
-    QStringList loaded;
     {
-        foreach (Iconset *tmp, PsiIconset::instance()->emoticons) {
-            loaded << tmp->id();
+        for (Iconset *is : PsiIconset::instance()->emoticons) {
+            d->iss_emoticons->insert(*is);
+            d->iss_emoticons->lastItem()->setSelected(true);
         }
     }
 
-    d->setCursor(Qt::WaitCursor);
+    {
+        QStringList loaded;
+        {
+            for (Iconset *tmp : PsiIconset::instance()->emoticons) {
+                loaded << tmp->id();
+            }
+        }
 
-    d->ck_useEmoticons->setEnabled(false);
-    d->groupBox9->setEnabled(false);
+        d->setCursor(Qt::WaitCursor);
 
-    d->progress->show();
-    d->progress->setValue(0);
+        d->ck_useEmoticons->setEnabled(false);
+        d->groupBox9->setEnabled(false);
 
-    numIconsets    = countIconsets("/emoticons", loaded);
-    iconsetsLoaded = 0;
+        d->progress->show();
+        d->progress->setValue(0);
 
-    cancelThread();
+        numIconsets    = countIconsets("/emoticons", loaded);
+        iconsetsLoaded = 0;
 
-    thread = new IconsetLoadThread(this, "/emoticons");
-    thread->excludeIconsets(loaded);
-    thread->start();
-}
+        cancelThread();
+
+        thread = new IconsetLoadThread(this, "/emoticons");
+        thread->excludeIconsets(loaded);
+        thread->start();
+    }
 }
 
 bool OptionsTabIconsetEmoticons::event(QEvent *e)
@@ -1406,7 +1408,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
             QTreeWidgetItem *last = nullptr;
             QStringList      customicons
                 = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-            foreach (QString base, customicons) {
+            for (QString base : customicons) {
                 QString          regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
                 QString          icoset = PsiOptions::instance()->getOption(base + ".iconset").toString();
                 QTreeWidgetItem *item   = new QTreeWidgetItem(d->tw_customRoster, last);

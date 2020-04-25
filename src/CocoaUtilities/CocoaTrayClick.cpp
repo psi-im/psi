@@ -72,7 +72,7 @@ CocoaTrayClick::CocoaTrayClick() : QObject(qApp)
     }
 }
 
-CocoaTrayClick::~CocoaTrayClick() {}
+CocoaTrayClick::~CocoaTrayClick() { }
 
 void CocoaTrayClick::emitTrayClicked() { emit trayClicked(); }
 

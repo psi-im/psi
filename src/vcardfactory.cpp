@@ -40,12 +40,12 @@
 /**
  * \brief Factory for retrieving and changing VCards.
  */
-VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5) {}
+VCardFactory::VCardFactory() : QObject(qApp), dictSize_(5) { }
 
 /**
  * \brief Destroys all cached VCards.
  */
-VCardFactory::~VCardFactory() {}
+VCardFactory::~VCardFactory() { }
 
 /**
  * \brief Returns the VCardFactory instance.

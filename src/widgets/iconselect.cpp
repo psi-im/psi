@@ -108,7 +108,7 @@ private:
             if (!ic->text().isEmpty()) {
                 // and list of possible variants in the ToolTip
                 QStringList toolTip;
-                foreach (PsiIcon::IconText t, ic->text()) {
+                for (PsiIcon::IconText t : ic->text()) {
                     toolTip += t.text;
                 }
 
@@ -234,7 +234,7 @@ IconSelect::IconSelect(IconSelectPopup *parentMenu) : QWidget(parentMenu)
     Q_UNUSED(shown)
 }
 
-IconSelect::~IconSelect() {}
+IconSelect::~IconSelect() { }
 
 void IconSelect::closeMenu()
 {
@@ -349,7 +349,7 @@ const Iconset &IconSelect::iconset() const { return is; }
 class IconSelectPopup::Private : public QObject {
     Q_OBJECT
 public:
-    Private(IconSelectPopup *parent) : QObject(parent), parent_(parent), icsel_(nullptr), widgetAction_(nullptr) {}
+    Private(IconSelectPopup *parent) : QObject(parent), parent_(parent), icsel_(nullptr), widgetAction_(nullptr) { }
 
     IconSelectPopup *parent_;
     IconSelect *     icsel_;
@@ -373,7 +373,7 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent)
     d->updatedGeometry();
 }
 
-IconSelectPopup::~IconSelectPopup() {}
+IconSelectPopup::~IconSelectPopup() { }
 
 void IconSelectPopup::setIconset(const Iconset &i) { d->icsel_->setIconset(i); }
 

@@ -42,7 +42,7 @@ PsiTabBar::PsiTabBar(PsiTabWidget *parent) : TabBar(parent)
 /**
  * Destructor
  */
-PsiTabBar::~PsiTabBar() {}
+PsiTabBar::~PsiTabBar() { }
 
 /**
  * Returns the parent PsiTabWidget.

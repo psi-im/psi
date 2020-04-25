@@ -170,9 +170,9 @@ void MiniClient::tls_handshaken()
     }
 }
 
-void MiniClient::cs_connected() {}
+void MiniClient::cs_connected() { }
 
-void MiniClient::cs_securityLayerActivated(int) {}
+void MiniClient::cs_securityLayerActivated(int) { }
 
 void MiniClient::cs_needAuthParams(bool user, bool password, bool realm)
 {
@@ -216,7 +216,7 @@ void MiniClient::cs_connectionClosed()
         emit disconnected();
 }
 
-void MiniClient::cs_delayedCloseFinished() {}
+void MiniClient::cs_delayedCloseFinished() { }
 
 void MiniClient::cs_warning(int err)
 {

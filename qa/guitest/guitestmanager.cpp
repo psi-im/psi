@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-GUITestManager::GUITestManager() {}
+GUITestManager::GUITestManager() { }
 
 GUITestManager *GUITestManager::instance()
 {

@@ -58,7 +58,7 @@ private:
     QList<AHCommandItem> commands_;
 };
 
-JT_AHCGetList::JT_AHCGetList(Task *t, const Jid &j) : Task(t), receiver_(j) {}
+JT_AHCGetList::JT_AHCGetList(Task *t, const Jid &j) : Task(t), receiver_(j) { }
 
 void JT_AHCGetList::onGo()
 {
@@ -160,7 +160,7 @@ void AHCommandDlg::refreshCommands()
 void AHCommandDlg::listReceived()
 {
     JT_AHCGetList *task_list = static_cast<JT_AHCGetList *>(sender());
-    foreach (AHCommandItem i, task_list->commands()) {
+    for (AHCommandItem i : task_list->commands()) {
         ui_.cb_commands->addItem(i.name);
         commands_.append(i);
     }

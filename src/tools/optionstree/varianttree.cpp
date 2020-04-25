@@ -37,7 +37,7 @@ QDomDocument *VariantTree::unknownsDoc = nullptr;
 /**
  * Default Constructor
  */
-VariantTree::VariantTree(QObject *parent) : QObject(parent) {}
+VariantTree::VariantTree(QObject *parent) : QObject(parent) { }
 
 /**
  * Default Destructor
@@ -45,7 +45,7 @@ VariantTree::VariantTree(QObject *parent) : QObject(parent) {}
  */
 VariantTree::~VariantTree()
 {
-    foreach (VariantTree *vt, trees_.values()) {
+    for (VariantTree *vt : trees_.values()) {
         delete vt;
     }
 }
@@ -276,7 +276,7 @@ QStringList VariantTree::nodeChildren(const QString &node, bool direct, bool int
         return children;
     } else {
         QStringList long_children;
-        foreach (const QString &child, children) {
+        for (const QString &child : children) {
             QString long_child = QString("%1.%2").arg(key, child);
             long_children << long_child;
         }
@@ -313,7 +313,7 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement &ele) const
     }
 
     // unknown types passthrough
-    foreach (QDomDocumentFragment df, unknowns_) {
+    for (QDomDocumentFragment df : unknowns_) {
         ele.appendChild(doc.importNode(df, true));
     }
 }
@@ -507,7 +507,7 @@ void VariantTree::variantToElement(const QVariant &var, QDomElement &e)
 {
     switch (var.type()) {
     case QVariant::List:
-        foreach (QVariant v, var.toList()) {
+        for (QVariant v : var.toList()) {
             QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
             variantToElement(v, item_element);
             e.appendChild(item_element);
@@ -534,7 +534,7 @@ void VariantTree::variantToElement(const QVariant &var, QDomElement &e)
         break;
     }
     case QVariant::StringList:
-        foreach (const QString &s, var.toStringList()) {
+        for (const QString &s : var.toStringList()) {
             QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
             QDomText    text         = e.ownerDocument().createTextNode(s);
             item_element.appendChild(text);

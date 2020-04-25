@@ -17,9 +17,9 @@ class CertificateHelpersTest : public QObject {
     Q_OBJECT
 
 private slots:
-    void initTestCase() {}
+    void initTestCase() { }
 
-    void cleanupTestCase() {}
+    void cleanupTestCase() { }
 };
 
 QTTESTUTIL_REGISTER_TEST(CertificateHelpersTest);

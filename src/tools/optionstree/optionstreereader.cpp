@@ -195,7 +195,7 @@ void OptionsTreeReader::readUnknownElement(QXmlStreamWriter *writer)
 {
     Q_ASSERT(isStartElement());
     writer->writeStartElement(name().toString());
-    foreach (QXmlStreamAttribute attr, attributes()) {
+    for (QXmlStreamAttribute attr : attributes()) {
         writer->writeAttribute(attr.name().toString(), attr.value().toString());
     }
 

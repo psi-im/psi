@@ -283,7 +283,7 @@ int FancyLabel::Private::smallFontSize = 0;
 
 FancyLabel::FancyLabel(QWidget *parent) : QWidget(parent) { d = new Private(this); }
 
-FancyLabel::~FancyLabel() {}
+FancyLabel::~FancyLabel() { }
 
 void FancyLabel::setText(const QString &text)
 {

@@ -99,7 +99,7 @@ QStringList FileUtil::getOpenFileNames(QWidget *parent, const QString &caption, 
         QStringList result;
         QStringList fileNames
             = QFileDialog::getOpenFileNames(parent, caption, lastUsedOpenPath(), filter, selectedFilter);
-        foreach (const QString &fileName, fileNames) {
+        for (const QString &fileName : fileNames) {
             QFileInfo fi(fileName);
             if (!fi.exists()) {
                 QMessageBox::information(parent, tr("Error"), tr("The file specified does not exist."));

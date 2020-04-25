@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QTimer>
 
-PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent) {}
+PixmapRatioLabel::PixmapRatioLabel(QWidget *parent) : QLabel(parent) { }
 
 void PixmapRatioLabel::setPixmap(const QPixmap &pix)
 {

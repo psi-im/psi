@@ -44,7 +44,7 @@ public:
         }
 
         QString qt;
-        foreach (const QString &wt, tryList) {
+        for (const QString &wt: tryList) {
             if (wt == "qtwebengine") {
                 webkitType = "QtWebEngine";
                 qt         = "webenginewidgets webchannel";

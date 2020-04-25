@@ -148,7 +148,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
     wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", jsLoader.data(), QWebFrame::QtOwnership);
     wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", jsUtil.data(), QWebFrame::QtOwnership);
 
-    foreach (const QString &sp, scriptPaths) {
+    for (const QString &sp : scriptPaths) {
         evaluateFromFile(sp, wv->page()->mainFrame());
     }
 
@@ -217,7 +217,7 @@ void ChatViewThemePrivate::embedSessionJsObject(ChatViewThemeSession *session)
         << PsiThemeProvider::themePath(QLatin1String("chatview/") + id.section('/', 0, 0)
                                        + QLatin1String("/adapter.js"));
 
-    foreach (const QString &script, scriptPaths) {
+    for (const QString &script : scriptPaths) {
         evaluateFromFile(script, wf);
     }
 }
@@ -516,7 +516,7 @@ QVariantMap ChatViewJSLoader::checkFilesExist(const QStringList &files, const QS
     if (!d.isEmpty()) {
         d += QLatin1Char('/');
     }
-    foreach (const QString &f, files) {
+    for (const QString &f : files) {
         ret.insert(f, loader->fileExists(d + f));
     }
 

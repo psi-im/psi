@@ -8,7 +8,7 @@ using namespace std;
 
 SnarlInterface::SnarlInterface() { SNARL_GLOBAL_MESSAGE = "SnarlGlobalMessage"; }
 
-SnarlInterface::~SnarlInterface() {}
+SnarlInterface::~SnarlInterface() { }
 
 long SnarlInterface::snShowMessage(std::string title, std::string text, long timeout, std::string iconPath,
                                    HWND hWndReply, long uReplyMsg)
