@@ -17,15 +17,14 @@
  *
  */
 
+#include "chatviewcommon.h"
+
 #include "psioptions.h"
 
 #include <QApplication>
-#include <QColor>
 #include <QRegExp>
 #include <QWidget>
 #include <math.h>
-
-#include "chatviewcommon.h"
 
 void ChatViewCommon::setLooks(QWidget *w)
 {

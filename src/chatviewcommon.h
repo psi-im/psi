@@ -20,6 +20,7 @@
 #ifndef CHATVIEWBASE_H
 #define CHATVIEWBASE_H
 
+#include <QColor>
 #include <QDateTime>
 #include <QMap>
 #include <QStringList>
