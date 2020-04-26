@@ -4,7 +4,7 @@
 exclude: '^3rdparty'
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -12,18 +12,18 @@ repos:
     -   id: check-merge-conflict
 -   repo: https://github.com/doublify/pre-commit-clang-format
     # for clang-tidy we can take github.com/pocc/pre-commit-hooks
-    rev: master
+    rev: f4c4ac5948aff384af2b439bfabb2bdd65d2b3ac
     hooks:
     -   id: clang-format
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: master
+    rev: v1.1.7
     hooks:
     -   id: forbid-crlf
     -   id: remove-crlf
     -   id: forbid-tabs
     -   id: remove-tabs
 -   repo: https://github.com/openstack-dev/bashate
-    rev: master
+    rev: 2.0.0
     hooks:
     -   id: bashate
         args: ['--ignore', 'E006']
