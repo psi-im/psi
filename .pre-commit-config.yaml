@@ -1,0 +1,29 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+exclude: '^3rdparty'
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-added-large-files
+    -   id: check-merge-conflict
+-   repo: https://github.com/doublify/pre-commit-clang-format
+    # for clang-tidy we can take github.com/pocc/pre-commit-hooks
+    rev: master
+    hooks:
+    -   id: clang-format
+-   repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: master
+    hooks:
+    -   id: forbid-crlf
+    -   id: remove-crlf
+    -   id: forbid-tabs
+    -   id: remove-tabs
+-   repo: https://github.com/openstack-dev/bashate
+    rev: master
+    hooks:
+    -   id: bashate
+        args: ['--ignore', 'E006']
