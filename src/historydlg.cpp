@@ -618,8 +618,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa) :
 #ifndef Q_OS_MAC
     setWindowIcon(IconsetFactory::icon("psi/history").icon());
 #endif
-    ui_.tbFindForward->setIcon(IconsetFactory::icon("psi/arrowDown").icon());
     ui_.tbFindBackward->setIcon(IconsetFactory::icon("psi/arrowUp").icon());
+    ui_.tbFindForward->setIcon(IconsetFactory::icon("psi/arrowDown").icon());
 
     ui_.msgLog->setFont(fontForOption("options.ui.look.font.chat"));
     setLooks(ui_.msgLog);

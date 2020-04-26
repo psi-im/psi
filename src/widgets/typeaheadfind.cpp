@@ -125,8 +125,8 @@ public:
     WebView *wv;
 #endif
     QLineEdit *le_find;
-    QAction *  act_next;
     QAction *  act_prev;
+    QAction *  act_next;
     QCheckBox *cb_case;
 };
 
@@ -168,17 +168,17 @@ void TypeAheadFindBar::init()
     connect(d->le_find, SIGNAL(textEdited(const QString &)), SLOT(textChanged(const QString &)));
     addWidget(d->le_find);
 
-    d->act_next = new IconAction(tr("Find next"), "psi/arrowDown", "", 0, this);
-    d->act_next->setEnabled(false);
-    d->act_next->setToolTip(tr("Find next"));
-    connect(d->act_next, SIGNAL(triggered()), SLOT(findNext()));
-    addAction(d->act_next);
-
     d->act_prev = new IconAction(tr("Find previous"), "psi/arrowUp", "", 0, this);
     d->act_prev->setEnabled(false);
     d->act_prev->setToolTip(tr("Find previous"));
     connect(d->act_prev, SIGNAL(triggered()), SLOT(findPrevious()));
     addAction(d->act_prev);
+
+    d->act_next = new IconAction(tr("Find next"), "psi/arrowDown", "", 0, this);
+    d->act_next->setEnabled(false);
+    d->act_next->setToolTip(tr("Find next"));
+    connect(d->act_next, SIGNAL(triggered()), SLOT(findNext()));
+    addAction(d->act_next);
 
     d->cb_case = new QCheckBox(tr("&Case sensitive"), this);
     connect(d->cb_case, SIGNAL(stateChanged(int)), SLOT(caseToggled(int)));
@@ -206,8 +206,8 @@ TypeAheadFindBar::~TypeAheadFindBar()
  */
 void TypeAheadFindBar::optionsUpdate()
 {
-    d->act_next->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find-next"));
     d->act_prev->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find-prev"));
+    d->act_next->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find-next"));
 }
 
 /**
@@ -253,8 +253,8 @@ void TypeAheadFindBar::textChanged(const QString &str)
     }
 
     if (str.isEmpty()) {
-        d->act_next->setEnabled(false);
         d->act_prev->setEnabled(false);
+        d->act_next->setEnabled(false);
         d->le_find->setStyleSheet("");
         if (d->widgetType == Type::WebView) {
 #ifdef WEBKIT
@@ -266,8 +266,8 @@ void TypeAheadFindBar::textChanged(const QString &str)
         }
         d->le_find->setStyleSheet("");
     } else {
-        d->act_next->setEnabled(true);
         d->act_prev->setEnabled(true);
+        d->act_next->setEnabled(true);
 
         if (d->widgetType == Type::TextEdit) {
             // don't jump to next word occurence after appending new charater
