@@ -260,8 +260,8 @@ public:
     int sendMessageEncrypted(const Message &);
 
     // sucks sucks sucks sucks sucks sucks sucks
-    GCContact *  findGCContact(const Jid &j) const;
-    XMPP::Status gcContactStatus(const Jid &j);
+    GCContact *        findGCContact(const Jid &j) const;
+    XMPP::Status       gcContactStatus(const Jid &j);
     const QStringList &groupchats() const;
 
     void toggleSecurity(const Jid &, bool);

@@ -12,7 +12,7 @@ arg: with-expat-lib=[path],Path to Expat library files (for Google)
 //----------------------------------------------------------------------------
 class qc_google_ft : public ConfObj {
 public:
-    qc_google_ft(Conf *c) : ConfObj(c) {}
+    qc_google_ft(Conf *c) : ConfObj(c) { }
     QString name() const { return "Google File Transfer"; }
     QString shortname() const { return "GoogleFT"; }
     bool    exec()

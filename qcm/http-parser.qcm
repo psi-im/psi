@@ -17,7 +17,7 @@ class qc_http_parser : public ConfObj {
     bool use_bundled;
 
 public:
-    qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
+    qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) { }
     QString name() const { return "HTTP Parser"; }
     QString shortname() const { return "httpparser"; }
 

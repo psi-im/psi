@@ -5,7 +5,7 @@ name: gethostbyname_r()
 */
 class qc_ghbnr : public ConfObj {
 public:
-    qc_ghbnr(Conf *c) : ConfObj(c) {}
+    qc_ghbnr(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "gethostbyname_r()"; }
     QString shortname() const { return "ghbnr"; }

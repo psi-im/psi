@@ -619,6 +619,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
 
     QColor textColor;
     bool   anim = index.data(ContactListModel::IsAnimRole).toBool();
+    int    s    = index.data(ContactListModel::StatusTypeRole).toInt();
     setAnimEnabled(index, anim);
     if (anim) {
         if (animPhase) {
@@ -627,7 +628,6 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
             textColor = _animation1Color;
         }
     } else {
-        int s = index.data(ContactListModel::StatusTypeRole).toInt();
         if (s == XMPP::Status::Away || s == XMPP::Status::XA)
             textColor = _awayColor;
         else if (s == XMPP::Status::DND)
@@ -652,13 +652,13 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
     }
     drawText(painter, opt, nickRect, text);
 
-    if (showStatusMessages_ && !statusText.isEmpty() && statusSingle_) {
+    if (showStatusMessages_ && statusSingle_) {
         palette.setColor(QPalette::Text, _statusMessageColor);
         opt.palette     = palette;
         opt.font        = statusFont_;
         opt.fontMetrics = statusFontMetrics_;
         painter->save();
-        drawText(painter, opt, statusLineRect, statusText);
+        drawText(painter, opt, statusLineRect, statusText.isEmpty() ? status2txt(s) : statusText);
         painter->restore();
     }
 

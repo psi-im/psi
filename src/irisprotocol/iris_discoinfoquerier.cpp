@@ -4,7 +4,7 @@
 using namespace XMPP;
 
 namespace IrisProtocol {
-DiscoInfoQuerier::DiscoInfoQuerier(XMPP::Client *client) : client_(client) {}
+DiscoInfoQuerier::DiscoInfoQuerier(XMPP::Client *client) : client_(client) { }
 
 void DiscoInfoQuerier::getDiscoInfo(const XMPP::Jid &jid, const QString &node)
 {

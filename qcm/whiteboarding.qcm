@@ -10,7 +10,7 @@ name: White Board support
 static bool qc_qtsvg_found = false;
 class qc_whiteboarding : public QtCompFinder {
 public:
-    qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
+    qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) { }
     QString resultString() const
     {
         if (!qc_qtsvg_found) {

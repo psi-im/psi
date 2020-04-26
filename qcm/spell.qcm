@@ -11,7 +11,7 @@ class qc_spell : public ConfObj {
 public:
     QString engine;
 
-    qc_spell(Conf *c) : ConfObj(c) {}
+    qc_spell(Conf *c) : ConfObj(c) { }
     QString name() const { return "spellcheck engine"; }
     QString shortname() const { return "spell"; }
 

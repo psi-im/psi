@@ -11,7 +11,7 @@ arg: with-qjdns-lib=[path],Path to QJDns library files
 //----------------------------------------------------------------------------
 class qc_qjdns : public ConfObj {
 public:
-    qc_qjdns(Conf *c) : ConfObj(c) {}
+    qc_qjdns(Conf *c) : ConfObj(c) { }
     QString name() const { return "QJDns"; }
     QString shortname() const { return "qjdns"; }
     QString resultString() const
@@ -52,7 +52,7 @@ public:
         }
 
         if (!incs.isEmpty() && !libs.isEmpty()) {
-            for (const QString &inc: incs) {
+            for (const QString &inc : incs) {
                 conf->addIncludePath(inc);
             }
             conf->addLib(libs);

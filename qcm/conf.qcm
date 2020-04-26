@@ -29,7 +29,7 @@ static QString psiGetVersion()
 
 class qc_conf : public ConfObj {
 public:
-    qc_conf(Conf *c) : ConfObj(c) {}
+    qc_conf(Conf *c) : ConfObj(c) { }
     QString name() const { return qc_psiplus ? "Psi+ Configuration" : "Psi Configuration"; }
     QString shortname() const { return "conf"; }
     QString checkString() const { return QString(); }

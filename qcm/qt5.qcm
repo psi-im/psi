@@ -5,7 +5,7 @@ name: Qt >= 5.0.0
 */
 class qc_qt5 : public ConfObj {
 public:
-    qc_qt5(Conf *c) : ConfObj(c) {}
+    qc_qt5(Conf *c) : ConfObj(c) { }
     QString name() const { return "Qt >= 5.0.0"; }
     QString shortname() const { return "qt5"; }
     bool    exec() { return (QT_VERSION >= 0x050000); }
@@ -84,7 +84,7 @@ public:
 #define QC_SILENT_NOT_FOUND(modname)                                                                                   \
     class qc_##modname : public ConfObj {                                                                              \
     public:                                                                                                            \
-        qc_##modname(Conf *c) : ConfObj(c) {}                                                                          \
+        qc_##modname(Conf *c) : ConfObj(c) { }                                                                         \
         QString name() const { return QC_AS_STR(modname); }                                                            \
         QString shortname() const { return QC_AS_STR(modname); }                                                       \
         QString checkString() const { return QString(); }                                                              \

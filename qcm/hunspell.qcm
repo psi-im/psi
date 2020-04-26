@@ -17,7 +17,7 @@ QStringList qc_hunspell_libs;
 //----------------------------------------------------------------------------
 class qc_hunspell : public ConfObj {
 public:
-    qc_hunspell(Conf *c) : ConfObj(c) {}
+    qc_hunspell(Conf *c) : ConfObj(c) { }
     QString name() const { return "hunspell"; }
     QString shortname() const { return "hunspell"; }
 

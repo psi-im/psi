@@ -30,7 +30,7 @@ We can try to use https://github.com/lpereira/gomoku to convert from Go.
 //----------------------------------------------------------------------------
 class qc_idn : public ConfObj {
 public:
-    qc_idn(Conf *c) : ConfObj(c) {}
+    qc_idn(Conf *c) : ConfObj(c) { }
     QString name() const { return "LibIDN"; }
     QString shortname() const { return "libidn"; }
     bool    exec()
@@ -58,7 +58,7 @@ public:
             QStringList libNames = QStringList() << "idn";
 #endif
             bool libFound = false;
-            for (const QString &libName: libNames) {
+            for (const QString &libName : libNames) {
                 if ((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName))
                     || (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
                     conf->addLib(idn_libdir.isEmpty() ? QString("-l") + libName

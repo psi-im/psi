@@ -10,7 +10,7 @@ arg: with-growl=[path],Path to the Growl framework
 //----------------------------------------------------------------------------
 class qc_growl : public ConfObj {
 public:
-    qc_growl(Conf *c) : ConfObj(c) {}
+    qc_growl(Conf *c) : ConfObj(c) { }
     QString name() const { return "Growl"; }
     QString shortname() const { return "growl"; }
 #ifndef Q_OS_MAC

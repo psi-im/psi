@@ -9,7 +9,7 @@ name: Mac OS X universal binary support
 //----------------------------------------------------------------------------
 class qc_universal : public ConfObj {
 public:
-    qc_universal(Conf *c) : ConfObj(c) {}
+    qc_universal(Conf *c) : ConfObj(c) { }
     QString name() const { return "universal binary support"; }
     QString shortname() const { return "universal"; }
     QString checkString() const { return QString(); }

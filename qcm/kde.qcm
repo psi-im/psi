@@ -9,7 +9,7 @@ name: KDE
 //----------------------------------------------------------------------------
 class qc_kde : public ConfObj {
 public:
-    qc_kde(Conf *c) : ConfObj(c) {}
+    qc_kde(Conf *c) : ConfObj(c) { }
     QString name() const { return "KDE"; }
     QString shortname() const { return "kde"; }
     bool    exec()

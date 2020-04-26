@@ -109,7 +109,7 @@ static bool qca_try_ext_prf(Conf *conf, bool release, bool debug, QString *prf)
 //----------------------------------------------------------------------------
 class qc_qca : public ConfObj {
 public:
-    qc_qca(Conf *c) : ConfObj(c) {}
+    qc_qca(Conf *c) : ConfObj(c) { }
     QString name() const { return "QCA >= 2.0"; }
     QString shortname() const { return "qca"; }
     bool    exec()

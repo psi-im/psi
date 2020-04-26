@@ -11,7 +11,7 @@ arg: with-zlib-lib=[path],Path to zlib library files
 //----------------------------------------------------------------------------
 class qc_zlib : public ConfObj {
 public:
-    qc_zlib(Conf *c) : ConfObj(c) {}
+    qc_zlib(Conf *c) : ConfObj(c) { }
     QString name() const { return "zlib"; }
     QString shortname() const { return "zlib"; }
 
@@ -65,7 +65,7 @@ public:
             }
         }
 
-        for (const QString &inc: incs) {
+        for (const QString &inc : incs) {
             conf->addIncludePath(inc);
         }
         conf->addLib(libs);
@@ -93,7 +93,7 @@ public:
         }
 
         if (!incs.isEmpty() && !libs.isEmpty()) {
-            for (const QString &inc: incs) {
+            for (const QString &inc : incs) {
                 conf->addIncludePath(inc);
             }
             conf->addLib(libs);

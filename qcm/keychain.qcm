@@ -12,7 +12,7 @@ QC_FIND_QT_COMP_BASE(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain", _
 
 class qc_keychain : public qc_keychain_base {
 public:
-    qc_keychain(Conf *c) : qc_keychain_base(c) {}
+    qc_keychain(Conf *c) : qc_keychain_base(c) { }
 
     bool exec()
     {

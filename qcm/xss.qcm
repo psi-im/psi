@@ -9,7 +9,7 @@ name: the XScreenSaver extension
 //----------------------------------------------------------------------------
 class qc_xss : public ConfObj {
 public:
-    qc_xss(Conf *c) : ConfObj(c) {}
+    qc_xss(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "the XScreenSaver extension"; }
     QString shortname() const { return "xss"; }

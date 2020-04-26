@@ -11,7 +11,7 @@ arg: with-sparkle=[path],Path to the Sparkle framework
 
 class qc_sparkle : public ConfObj {
 public:
-    qc_sparkle(Conf *c) : ConfObj(c) {}
+    qc_sparkle(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "Sparkle"; }
     QString shortname() const { return "sparkle"; }

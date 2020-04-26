@@ -17,7 +17,7 @@ QStringList qc_aspell_libs;
 //----------------------------------------------------------------------------
 class qc_aspell : public ConfObj {
 public:
-    qc_aspell(Conf *c) : ConfObj(c) {}
+    qc_aspell(Conf *c) : ConfObj(c) { }
     QString name() const { return "aspell"; }
     QString shortname() const { return "aspell"; }
 
@@ -58,7 +58,7 @@ public:
 
         bool    success;
         QString libname_success;
-        for (const QString &libname: libnames) {
+        for (const QString &libname : libnames) {
             conf->debug(QString("Trying %1").arg(libname));
             if (conf->checkLibrary(a_lib, libname)) {
                 success         = true;

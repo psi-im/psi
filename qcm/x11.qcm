@@ -9,7 +9,7 @@ name: Xorg X11
 //----------------------------------------------------------------------------
 class qc_x11 : public ConfObj {
 public:
-    qc_x11(Conf *c) : ConfObj(c) {}
+    qc_x11(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "Xorg X11"; }
     QString shortname() const { return "x11"; }

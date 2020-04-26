@@ -14,7 +14,7 @@ arg: with-glibconfig-inc=[path],Path to glibconfig include file (for XMMS)
 //----------------------------------------------------------------------------
 class qc_xmms : public ConfObj {
 public:
-    qc_xmms(Conf *c) : ConfObj(c) {}
+    qc_xmms(Conf *c) : ConfObj(c) { }
     QString name() const { return "XMMS"; }
     QString shortname() const { return "xmms"; }
     bool    exec()

@@ -14,7 +14,7 @@ class qc_webkit : public ConfObj {
     QString webkitType;
 
 public:
-    qc_webkit(Conf *c) : ConfObj(c) {}
+    qc_webkit(Conf *c) : ConfObj(c) { }
     QString name() const { return "QtWebKit"; }
     QString shortname() const { return "webkit"; }
     bool    exec()
@@ -44,7 +44,7 @@ public:
         }
 
         QString qt;
-        for (const QString &wt: tryList) {
+        for (const QString &wt : tryList) {
             if (wt == "qtwebengine") {
                 webkitType = "QtWebEngine";
                 qt         = "webenginewidgets webchannel";

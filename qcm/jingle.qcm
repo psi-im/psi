@@ -25,7 +25,7 @@ arg: with-glibconfig-inc=[path],Path to glibconfig include file (for Jingle)
 //----------------------------------------------------------------------------
 class qc_jingle : public ConfObj {
 public:
-    qc_jingle(Conf *c) : ConfObj(c) {}
+    qc_jingle(Conf *c) : ConfObj(c) { }
     QString name() const { return "Jingle"; }
     QString shortname() const { return "Jingle"; }
     bool    exec()

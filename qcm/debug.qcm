@@ -10,7 +10,7 @@ arg: enable-debug,Enable debugging support
 //----------------------------------------------------------------------------
 class qc_debug : public ConfObj {
 public:
-    qc_debug(Conf *c) : ConfObj(c) {}
+    qc_debug(Conf *c) : ConfObj(c) { }
     QString name() const { return "debugging support"; }
     QString shortname() const { return "debug"; }
     QString checkString() const { return QString(); }

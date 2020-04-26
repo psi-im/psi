@@ -15,7 +15,7 @@ QStringList qc_enchant_libs;
 //----------------------------------------------------------------------------
 class qc_enchant : public ConfObj {
 public:
-    qc_enchant(Conf *c) : ConfObj(c) {}
+    qc_enchant(Conf *c) : ConfObj(c) { }
     QString name() const { return "enchant"; }
     QString shortname() const { return "enchant"; }
 

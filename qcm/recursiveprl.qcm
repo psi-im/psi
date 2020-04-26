@@ -11,7 +11,7 @@ class qc_recursiveprl : public ConfObj {
 public:
     bool success;
 
-    qc_recursiveprl(Conf *c) : ConfObj(c) {}
+    qc_recursiveprl(Conf *c) : ConfObj(c) { }
     QString name() const { return "Generate .prl files"; }
     QString shortname() const { return "recursiveprl"; }
 

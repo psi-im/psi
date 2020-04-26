@@ -14,7 +14,7 @@ name: Linux Directory Notification
 //----------------------------------------------------------------------------
 class qc_dnotify : public ConfObj {
 public:
-    qc_dnotify(Conf *c) : ConfObj(c) {}
+    qc_dnotify(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "Linux Directory Notification"; }
     QString shortname() const { return "dnotify"; }
