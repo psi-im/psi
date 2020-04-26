@@ -33,8 +33,8 @@
 BookmarkManageDlg::BookmarkManageDlg(PsiAccount *account) : QDialog(), account_(account), model_(nullptr)
 {
     setAttribute(Qt::WA_DeleteOnClose, true);
-    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint
-                   | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
+    setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint
+                   | Qt::CustomizeWindowHint);
     ui_.setupUi(this);
     setWindowIcon(IconsetFactory::icon("psi/bookmarks").icon());
 
