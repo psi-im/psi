@@ -209,7 +209,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
     ws->route("/favicon.ico", faviconHandler);
 
     requestInterceptor = new ChatViewUrlRequestInterceptor(this);
-    QWebEngineProfile::defaultProfile()->setRequestInterceptor(requestInterceptor);
+    QWebEngineProfile::defaultProfile()->setUrlRequestInterceptor(requestInterceptor);
     const QString cachePath(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/webengine");
     QWebEngineProfile::defaultProfile()->setCachePath(cachePath + "/cache");
     QWebEngineProfile::defaultProfile()->setPersistentStoragePath(cachePath + "/presistent_storage");
@@ -295,7 +295,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 ChatViewCon::~ChatViewCon()
 {
 #ifdef WEBENGINE
-    QWebEngineProfile::defaultProfile()->setRequestInterceptor(nullptr);
+    QWebEngineProfile::defaultProfile()->setUrlRequestInterceptor(nullptr);
     delete requestInterceptor;
 #endif
 }
