@@ -711,7 +711,7 @@ void EventDlg::init()
     if (d->composing) {
         d->tb_pgp = new IconToolButton(this);
         d->tb_pgp->setCheckable(true);
-        d->tb_pgp->setToolTip(tr("Toggle encryption"));
+        d->tb_pgp->setToolTip(tr("Enable OpenPGP encryption"));
         d->lb_pgp = nullptr;
     } else {
         d->lb_pgp = new IconLabel(this);
