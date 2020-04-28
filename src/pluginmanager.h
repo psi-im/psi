@@ -15,7 +15,7 @@
 #include <QMenu>
 #include <QtCore>
 
-#define PLUGINS_NO_DEBUG
+//#define PLUGINS_NO_DEBUG
 
 class MessageView;
 class PluginHost;
@@ -23,6 +23,7 @@ class PsiAccount;
 class PsiCon;
 class PsiPlugin;
 class QPluginLoader;
+class OAH_PluginOptionsTab;
 
 namespace QCA {
 class DirWatch;
@@ -76,8 +77,11 @@ public:
     void processOutgoingStanza(PsiAccount *account, QDomElement &stanza);
     void logout(PsiAccount *account);
 
-    void applyOptions(const QString &plugin);
-    void restoreOptions(const QString &plugin);
+    void                          addSettingPage(OAH_PluginOptionsTab *tab);
+    void                          removeSettingPage(OAH_PluginOptionsTab *tab);
+    QList<OAH_PluginOptionsTab *> settingsPages() const;
+    void                          applyOptions(const QString &plugin);
+    void                          restoreOptions(const QString &plugin);
     void addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
                           const QString &plugin = "");
     bool hasToolBarButton(const QString &plugin) const;
@@ -101,6 +105,8 @@ public:
     bool encryptMessageElement(PsiAccount *account, QDomElement &message) const;
 
     QStringList messageViewJSFilters() const;
+
+    QList<QAction *> globalAboutMenuActions() const;
 
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;
@@ -135,7 +141,8 @@ private:
     QList<QCA::DirWatch *> dirWatchers_;
 
     // Options widget provides by plugin on opt_plugins
-    QPointer<QWidget> optionsWidget_;
+    QPointer<QWidget>             optionsWidget_;
+    QList<OAH_PluginOptionsTab *> settingsTabs_; // to be inserted into global list
 
     QMultiMap<PsiPlugin::Priority, std::pair<QString, QString>> _messageViewJSFilters; // priority -> <js, uuid>
     QTimer *                                                    _messageViewJSFiltersTimer = nullptr;

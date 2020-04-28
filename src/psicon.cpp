@@ -871,10 +871,7 @@ QStringList PsiCon::xmppFatures() const
         features << "urn:xmpp:jingle:transports:ice-udp:1";
         features << "urn:xmpp:jingle:apps:rtp:1";
         features << "urn:xmpp:jingle:apps:rtp:audio";
-
-        if (AvCallManager::isVideoSupported()) {
-            features << "urn:xmpp:jingle:apps:rtp:video";
-        }
+        features << "urn:xmpp:jingle:apps:rtp:video";
     }
 
     static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()

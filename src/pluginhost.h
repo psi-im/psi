@@ -104,95 +104,98 @@ public:
     void logout(int account);
 
     // StanzaSendingHost
-    void sendStanza(int account, const QDomElement &xml);
-    void sendStanza(int account, const QString &xml);
-    void sendMessage(int account, const QString &to, const QString &body, const QString &subject, const QString &type);
-    QString uniqueId(int account);
-    QString escape(const QString &str);
+    void    sendStanza(int account, const QDomElement &xml) override;
+    void    sendStanza(int account, const QString &xml) override;
+    void    sendMessage(int account, const QString &to, const QString &body, const QString &subject,
+                        const QString &type) override;
+    QString uniqueId(int account) override;
+    QString escape(const QString &str) override;
 
     // IqFilteringHost
-    void addIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter);
-    void addIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter);
-    void removeIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter);
-    void removeIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter);
+    void addIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter) override;
+    void addIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter) override;
+    void removeIqNamespaceFilter(const QString &ns, IqNamespaceFilter *filter) override;
+    void removeIqNamespaceFilter(const QRegExp &ns, IqNamespaceFilter *filter) override;
 
     // OptionAccessingHost
-    void     setPluginOption(const QString &option, const QVariant &value);
-    QVariant getPluginOption(const QString &option, const QVariant &defValue = QVariant::Invalid);
-    void     setGlobalOption(const QString &option, const QVariant &value);
-    QVariant getGlobalOption(const QString &option);
+    void     setPluginOption(const QString &option, const QVariant &value) override;
+    QVariant getPluginOption(const QString &option, const QVariant &defValue = QVariant::Invalid) override;
+    void     setGlobalOption(const QString &option, const QVariant &value) override;
+    QVariant getGlobalOption(const QString &option) override;
     void     optionChanged(const QString &option);
+    void     addSettingPage(OAH_PluginOptionsTab *tab) override;
+    void     removeSettingPage(OAH_PluginOptionsTab *tab) override;
 
     // ShortcutAccessingHost
     void setShortcuts();
-    void connectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot);
-    void disconnectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot);
-    void requestNewShortcut(QObject *receiver, const char *slot);
+    void connectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot) override;
+    void disconnectShortcut(const QKeySequence &shortcut, QObject *receiver, const char *slot) override;
+    void requestNewShortcut(QObject *receiver, const char *slot) override;
 
     // IconFacrotyAccessingHost
-    QIcon getIcon(const QString &name);
-    void  addIcon(const QString &name, const QByteArray &icon);
+    QIcon getIcon(const QString &name) override;
+    void  addIcon(const QString &name, const QByteArray &icon) override;
 
     // ActiveTabHost
-    QTextEdit *getEditBox();
-    QString    getJid();
-    QString    getYourJid();
+    QTextEdit *getEditBox() override;
+    QString    getJid() override;
+    QString    getYourJid() override;
 
     // ApplicationInfoAccessingHost
-    Proxy   getProxyFor(const QString &obj);
-    QString appName();
-    QString appVersion();
-    QString appCapsNode();
-    QString appCapsVersion();
-    QString appOsName();
-    QString appHomeDir(HomedirType type);
-    QString appResourcesDir();
-    QString appLibDir();
-    QString appProfilesDir(HomedirType type);
-    QString appHistoryDir();
-    QString appCurrentProfileDir(HomedirType type);
-    QString appVCardDir();
+    Proxy   getProxyFor(const QString &obj) override;
+    QString appName() override;
+    QString appVersion() override;
+    QString appCapsNode() override;
+    QString appCapsVersion() override;
+    QString appOsName() override;
+    QString appHomeDir(HomedirType type) override;
+    QString appResourcesDir() override;
+    QString appLibDir() override;
+    QString appProfilesDir(HomedirType type) override;
+    QString appHistoryDir() override;
+    QString appCurrentProfileDir(HomedirType type) override;
+    QString appVCardDir() override;
 
     // AccountInfoAcsessingHost
-    QString     getStatus(int account);
-    QString     getStatusMessage(int account);
-    QString     proxyHost(int account);
-    int         proxyPort(int account);
-    QString     proxyUser(int account);
-    QString     proxyPassword(int account);
-    QString     getJid(int account);
-    QString     getId(int account);
-    QString     getName(int account);
-    QStringList getRoster(int account);
-    int         findOnlineAccountForContact(const QString &jid) const;
+    QString     getStatus(int account) override;
+    QString     getStatusMessage(int account) override;
+    QString     proxyHost(int account) override;
+    int         proxyPort(int account) override;
+    QString     proxyUser(int account) override;
+    QString     proxyPassword(int account) override;
+    QString     getJid(int account) override;
+    QString     getId(int account) override;
+    QString     getName(int account) override;
+    QStringList getRoster(int account) override;
+    int         findOnlineAccountForContact(const QString &jid) const override;
 
     // ContactInfoAccessingHost
-    bool        isSelf(int account, const QString &jid);
-    bool        isAgent(int account, const QString &jid);
-    bool        inList(int account, const QString &jid);
-    bool        isPrivate(int account, const QString &jid);
-    bool        isConference(int account, const QString &jid);
-    QString     name(int account, const QString &jid);
-    QString     status(int account, const QString &jid);
-    QString     statusMessage(int account, const QString &jid);
-    QStringList resources(int account, const QString &jid);
-    QString     realJid(int account, const QString &jid);
-    QStringList mucNicks(int account, const QString &mucJid);
-    bool        hasCaps(int account, const QString &jid, const QStringList &caps);
+    bool        isSelf(int account, const QString &jid) override;
+    bool        isAgent(int account, const QString &jid) override;
+    bool        inList(int account, const QString &jid) override;
+    bool        isPrivate(int account, const QString &jid) override;
+    bool        isConference(int account, const QString &jid) override;
+    QString     name(int account, const QString &jid) override;
+    QString     status(int account, const QString &jid) override;
+    QString     statusMessage(int account, const QString &jid) override;
+    QStringList resources(int account, const QString &jid) override;
+    QString     realJid(int account, const QString &jid) override;
+    QStringList mucNicks(int account, const QString &mucJid) override;
+    bool        hasCaps(int account, const QString &jid, const QStringList &caps) override;
 
     // ContactStateAccessor
-    bool setActivity(int account, const QString &Jid, QDomElement xml);
-    bool setMood(int account, const QString &Jid, QDomElement xml);
-    bool setTune(int account, const QString &Jid, QString tune);
+    bool setActivity(int account, const QString &Jid, QDomElement xml) override;
+    bool setMood(int account, const QString &Jid, QDomElement xml) override;
+    bool setTune(int account, const QString &Jid, QString tune) override;
 
     // PopupAccessingHost
-    void initPopup(const QString &text, const QString &title, const QString &icon, int type);
+    void initPopup(const QString &text, const QString &title, const QString &icon, int type) override;
     void initPopupForJid(int account, const QString &jid, const QString &text, const QString &title,
-                         const QString &icon, int type);
-    int  registerOption(const QString &name, int initValue = 5, const QString &path = QString());
-    int  popupDuration(const QString &name);
-    void setPopupDuration(const QString &name, int value);
-    void unregisterOption(const QString &name);
+                         const QString &icon, int type) override;
+    int  registerOption(const QString &name, int initValue = 5, const QString &path = QString()) override;
+    int  popupDuration(const QString &name) override;
+    void setPopupDuration(const QString &name, int value) override;
+    void unregisterOption(const QString &name) override;
 
     void addToolBarButton(QObject *parent, QWidget *toolbar, int account, const QString &contact);
     bool hasToolBarButton();
@@ -218,30 +221,33 @@ public:
     bool    hasInfoProvider();
 
     // PsiAccountControllingHost
-    void setStatus(int account, const QString &status, const QString &statusMessage);
-    bool appendSysMsg(int account, const QString &jid, const QString &message);
-    bool appendSysHtmlMsg(int account, const QString &jid, const QString &message);
-    bool appendMsg(int account, const QString &jid, const QString &message, const QString &id, bool wasEncrypted);
-    void subscribeLogout(QObject *context, std::function<void(int account)> callback);
+    void setStatus(int account, const QString &status, const QString &statusMessage) override;
+    bool appendSysMsg(int account, const QString &jid, const QString &message) override;
+    bool appendSysHtmlMsg(int account, const QString &jid, const QString &message) override;
+    bool appendMsg(int account, const QString &jid, const QString &message, const QString &id,
+                   bool wasEncrypted) override;
+    void subscribeLogout(QObject *context, std::function<void(int account)> callback) override;
 
-    void createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot);
-    void createNewMessageEvent(int account, QDomElement const &element);
+    void createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
+                        const char *slot) override;
+    void createNewMessageEvent(int account, QDomElement const &element) override;
 
-    void playSound(const QString &fileName);
+    void playSound(const QString &fileName) override;
 
     // EncryptionSupport
-    bool decryptMessageElement(int account, QDomElement &message);
-    bool encryptMessageElement(int account, QDomElement &message);
+    bool decryptMessageElement(int account, QDomElement &message) override;
+    bool encryptMessageElement(int account, QDomElement &message) override;
 
     // PluginAccessingHost
 
-    QObject *getPlugin(const QString &name);
+    QObject *getPlugin(const QString &name) override;
 
     // WebkitAccessingHost
-    RenderType chatLogRenderType() const;
-    QString    installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
-    void       uninstallChatLogJSDataFilter(const QString &id);
-    void       executeChatLogJavaScript(QWidget *log, const QString &js);
+    RenderType chatLogRenderType() const override;
+    QString    installChatLogJSDataFilter(const QString &     js,
+                                          PsiPlugin::Priority priority = PsiPlugin::PriorityNormal) override;
+    void       uninstallChatLogJSDataFilter(const QString &id) override;
+    void       executeChatLogJavaScript(QWidget *log, const QString &js) override;
 
 private:
     PluginManager *   manager_;

@@ -34,12 +34,13 @@ QByteArray OptionsTab::parentId() const { return v_parentId; }
 
 QString OptionsTab::tabName() const { return v_name; }
 
-PsiIcon *OptionsTab::tabIcon() const
+QIcon OptionsTab::tabIcon() const
 {
     if (v_tabIconName.isEmpty())
-        return nullptr;
+        return QIcon();
 
-    return const_cast<PsiIcon *>(IconsetFactory::iconPtr(v_tabIconName));
+    auto icon = const_cast<PsiIcon *>(IconsetFactory::iconPtr(v_tabIconName));
+    return icon ? icon->icon() : QIcon();
 }
 
 QString OptionsTab::name() const { return v_name; }
@@ -125,8 +126,9 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 
     w2tab[w] = TabData(tab);
 
-    if (tab->tabIcon())
-        QTabWidget::addTab(w, tab->tabIcon()->icon(), tab->tabName());
+    auto icon = tab->tabIcon();
+    if (!icon.isNull())
+        QTabWidget::addTab(w, icon, tab->tabName());
     else
         QTabWidget::addTab(w, tab->tabName());
 

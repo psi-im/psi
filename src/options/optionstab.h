@@ -20,8 +20,8 @@ public:
     virtual QByteArray id() const;       // Unique identifier, i.e. "plugins_misha's_cool-plugin"
     virtual QByteArray parentId() const; // Identifier of parent tab, i.e. "general"
 
-    virtual QString  tabName() const; // "General"
-    virtual PsiIcon *tabIcon() const; // default implementation returns 0
+    virtual QString tabName() const; // "General"
+    virtual QIcon   tabIcon() const; // default implementation returns 0
 
     virtual QString  name() const;    // "Roster"
     virtual QString  desc() const;    // "You can configure your roster here"

@@ -694,11 +694,6 @@ void GCMainDlg::doContactContextMenu(const QString &nick)
     act = new QAction(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), pm);
     pm->addAction(act);
     act->setData(1);
-    if (AvCallManager::isSupported()) {
-        act = new QAction(IconsetFactory::icon("psi/avcall").icon(), tr("Voice Call"), pm);
-        pm->addAction(act);
-        act->setData(5);
-    }
 
     act = new QAction(tr("E&xecute Command"), pm);
     pm->addAction(act);

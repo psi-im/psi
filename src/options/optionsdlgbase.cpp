@@ -162,7 +162,8 @@ public:
 
 public slots:
     void doApply();
-    void openTab(QString id);
+    void openTab(const QString &id);
+    void removeTab(const QString &id);
     void enableCommonControls(bool enable);
 
 private slots:
@@ -231,9 +232,10 @@ void OptionsDlgBase::Private::setTabs(QList<OptionsTab *> t)
         dlg->lv_tabs->addItem(opttab->tabName());
         QListWidgetItem *item = dlg->lv_tabs->item(dlg->lv_tabs->count() - 1);
         dlg->lv_tabs->setCurrentItem(item);
-        QModelIndex index = dlg->lv_tabs->currentIndex();
-        if (opttab->tabIcon())
-            item->setData(Qt::DecorationRole, opttab->tabIcon()->icon());
+        QModelIndex index   = dlg->lv_tabs->currentIndex();
+        auto        tabIcon = opttab->tabIcon();
+        if (!tabIcon.isNull())
+            item->setData(Qt::DecorationRole, tabIcon);
         item->setData(Qt::UserRole, opttab->id());
 
         int width = dlg->lv_tabs->itemDelegate()->sizeHint(option, index).width()
@@ -278,12 +280,12 @@ void OptionsDlgBase::Private::createChangedMap()
 //    changedMap.insert(widgetName, signal);
 //}
 
-void OptionsDlgBase::Private::openTab(QString id)
+void OptionsDlgBase::Private::openTab(const QString &id)
 {
     if (id.isEmpty())
         return;
 
-    QWidget *tab = id2widget[id];
+    QWidget *tab = id2widget.value(id);
     if (!tab) {
         bool found = false;
         for (OptionsTab *opttab : tabs) {
@@ -347,6 +349,37 @@ void OptionsDlgBase::Private::openTab(QString id)
             break;
         }
     }
+}
+
+void OptionsDlgBase::Private::removeTab(const QString &id)
+{
+    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto t) { return t->id() == id; });
+    if (it == tabs.end()) {
+        return; // it wasn't even registered?
+    }
+    QWidget *widget = id2widget.take(id);
+
+    // clean up side list widget
+    QString tabToSwitch;
+    auto    lwItem = dlg->lv_tabs->currentItem();
+    if (lwItem && lwItem->data(Qt::UserRole).toString() == id) {
+        auto cr = dlg->lv_tabs->currentRow();
+        dlg->lv_tabs->setCurrentRow(cr == (dlg->lv_tabs->count() - 1) ? cr - 1 : cr + 1);
+        lwItem = dlg->lv_tabs->currentItem();
+        if (lwItem)
+            openTab(lwItem->data(Qt::UserRole).toString());
+    }
+    for (int i = 0; i < dlg->lv_tabs->count(); ++i) {
+        QListWidgetItem *item = dlg->lv_tabs->item(i);
+        if (item->data(Qt::UserRole).toString() == id) {
+            delete dlg->lv_tabs->takeItem(i);
+            break;
+        }
+    }
+
+    delete widget; // if any
+    delete *it;
+    tabs.erase(it);
 }
 
 // enable/disable list widget and dialog buttons
@@ -436,6 +469,8 @@ OptionsDlgBase::~OptionsDlgBase()
 PsiCon *OptionsDlgBase::psi() const { return d->psi; }
 
 void OptionsDlgBase::openTab(const QString &id) { d->openTab(id); }
+
+void OptionsDlgBase::removeTab(const QString &id) { d->removeTab(id); }
 
 void OptionsDlgBase::setTabs(QList<OptionsTab *> tabs) { d->setTabs(tabs); }
 

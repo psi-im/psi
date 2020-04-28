@@ -73,12 +73,6 @@ public:
         ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
         ui.cb_bandwidth->setCurrentIndex(1);
 
-        if (!AvCallManager::isVideoSupported()) {
-            ui.ck_useVideo->hide();
-            ui.lb_bandwidth->hide();
-            ui.cb_bandwidth->hide();
-        }
-
         connect(ui.pb_accept, SIGNAL(clicked()), SLOT(ok_clicked()));
         connect(ui.pb_reject, SIGNAL(clicked()), SLOT(cancel_clicked()));
 

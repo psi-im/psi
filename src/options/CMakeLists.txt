@@ -17,6 +17,7 @@ list(APPEND HEADERS
     opt_appearance.h
     opt_advanced.h
     opt_events.h
+    opt_pluginwrapper.h
     opt_popups.h
     opt_roster.h
     opt_roster_main.h
@@ -54,6 +55,7 @@ list(APPEND SOURCES
     opt_iconset.cpp
     opt_messages.cpp
     opt_messages_common.cpp
+    opt_pluginwrapper.cpp
     opt_popups.cpp
     opt_roster.cpp
     opt_roster_main.cpp

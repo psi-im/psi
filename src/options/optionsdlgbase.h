@@ -36,6 +36,7 @@ public:
 
     PsiCon *psi() const;
     void    openTab(const QString &id);
+    void    removeTab(const QString &id);
 
 protected:
     void setTabs(QList<OptionsTab *> tabs); /* can be called from constructor */

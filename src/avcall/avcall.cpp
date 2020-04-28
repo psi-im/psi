@@ -56,64 +56,6 @@ static void ensureConfig()
     }
 }
 
-#ifdef GSTPROVIDER_STATIC
-Q_IMPORT_PLUGIN(gstprovider)
-#endif
-
-#ifndef GSTPROVIDER_STATIC
-static QString findPlugin(const QString &relpath, const QString &basename)
-{
-    QDir dir(QCoreApplication::applicationDirPath());
-    if (!dir.cd(relpath))
-        return QString();
-    for (const QString &fileName : dir.entryList()) {
-        if (fileName.contains(basename)) {
-            QString filePath = dir.filePath(fileName);
-            if (QLibrary::isLibrary(filePath))
-                return filePath;
-        }
-    }
-    return QString();
-}
-#endif
-
-static bool g_loaded = false;
-
-static void ensureLoaded()
-{
-    if (!g_loaded) {
-#ifndef GSTPROVIDER_STATIC
-        QString pluginFile;
-        QString resourcePath;
-
-        pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
-        if (pluginFile.isEmpty()) {
-#if defined(Q_OS_WIN)
-            pluginFile   = findPlugin(".", "gstprovider" DEBUG_POSTFIX);
-            resourcePath = QCoreApplication::applicationDirPath() + "/gstreamer-1.0";
-#elif defined(Q_OS_MAC)
-            pluginFile   = findPlugin("../Plugins", "gstprovider" DEBUG_POSTFIX);
-            resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-1.0";
-#else
-            for (const QString &path : ApplicationInfo::pluginDirs()) {
-                pluginFile = findPlugin(path, "gstprovider" DEBUG_POSTFIX);
-                if (!pluginFile.isEmpty())
-                    break;
-            }
-#endif
-        }
-
-        PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, resourcePath);
-        if (r == PsiMedia::PluginSuccess)
-            g_loaded = true;
-#else
-        g_loaded = true;
-#endif
-        if (g_loaded)
-            ensureConfig();
-    }
-}
-
 static JingleRtpPayloadType payloadInfoToPayloadType(const PsiMedia::PayloadInfo &pi)
 {
     JingleRtpPayloadType out;
@@ -322,7 +264,6 @@ public:
     XMPP::Jid             peer;
     AvCall::Mode          mode;
     int                   bitrate;
-    bool                  allowVideo;
     QString               errorString;
     bool                  transmitAudio;
     bool                  transmitVideo;
@@ -334,8 +275,6 @@ public:
         QObject(_q), q(_q), manager(nullptr), sess(nullptr), transmitAudio(false), transmitVideo(false),
         transmitting(false), avTransmit(nullptr), avTransmitThread(nullptr)
     {
-        allowVideo = AvCallManager::isVideoSupported();
-
         connect(&rtp, SIGNAL(started()), SLOT(rtp_started()));
         connect(&rtp, SIGNAL(preferencesUpdated()), SLOT(rtp_preferencesUpdated()));
         connect(&rtp, SIGNAL(stopped()), SLOT(rtp_stopped()));
@@ -381,7 +320,7 @@ public:
         bool offeredVideo = false;
         if (!sess->remoteAudioPayloadTypes().isEmpty())
             offeredAudio = true;
-        if (allowVideo && !sess->remoteVideoPayloadTypes().isEmpty())
+        if (!sess->remoteVideoPayloadTypes().isEmpty())
             offeredVideo = true;
 
         if (offeredAudio && offeredVideo)
@@ -487,7 +426,7 @@ private:
             } else
                 rtp.setAudioInputDevice(QString());
 
-            if ((mode == AvCall::Video || mode == AvCall::Both) && !config.videoInDeviceId.isEmpty() && allowVideo) {
+            if ((mode == AvCall::Video || mode == AvCall::Both) && !config.videoInDeviceId.isEmpty()) {
                 rtp.setVideoInputDevice(config.videoInDeviceId);
                 transmitVideo = true;
             } else
@@ -783,26 +722,11 @@ void AvCallManager::config()
 
 bool AvCallManager::isSupported()
 {
-    ensureLoaded();
     if (!QCA::isSupported("hmac(sha1)")) {
         printf("hmac support missing for voice calls, install qca-ossl\n");
         return false;
     }
     return PsiMedia::isSupported();
-}
-
-bool AvCallManager::isVideoSupported()
-{
-    if (!isSupported())
-        return false;
-
-    if (PsiOptions::instance()->getOption("options.media.video-support").toBool())
-        return true;
-
-    if (!QString::fromLatin1(qgetenv("PSI_ENABLE_VIDEO")).isEmpty())
-        return true;
-    else
-        return false;
 }
 
 void AvCallManager::setSelfAddress(const QHostAddress &addr)

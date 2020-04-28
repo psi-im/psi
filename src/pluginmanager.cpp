@@ -14,6 +14,7 @@
 #include "iqnamespacefilter.h"
 #include "messageview.h"
 #include "optionaccessor.h"
+#include "optionsdlg.h"
 #include "pluginhost.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
@@ -462,6 +463,19 @@ void PluginManager::logout(PsiAccount *account)
         emit accountLoggedOut(acc_id);
     }
 }
+
+void PluginManager::addSettingPage(OAH_PluginOptionsTab *tab) { settingsTabs_.append(tab); }
+
+void PluginManager::removeSettingPage(OAH_PluginOptionsTab *tab)
+{
+    OptionsDlg *w = qobject_cast<OptionsDlg *>(psi_->dialogFind("OptionsDlg"));
+    if (w) {
+        w->removeTab(tab->id());
+    }
+    settingsTabs_.removeOne(tab);
+}
+
+QList<OAH_PluginOptionsTab *> PluginManager::settingsPages() const { return settingsTabs_; }
 
 /**
  * \brief Give each plugin the opportunity to process the incoming xml
@@ -991,6 +1005,8 @@ QStringList PluginManager::messageViewJSFilters() const
     }
     return ret;
 }
+
+QList<QAction *> PluginManager::globalAboutMenuActions() const { return QList<QAction *>(); }
 
 bool PluginManager::isSelf(int account, const QString &jid) const
 {

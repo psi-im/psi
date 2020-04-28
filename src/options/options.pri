@@ -18,6 +18,7 @@ HEADERS += \
     $$PWD/opt_roster_muc.h \
     $$PWD/opt_chat.h \
     $$PWD/opt_events.h \
+    $$PWD/opt_pluginwrapper.h \
     $$PWD/opt_popups.h \
     $$PWD/opt_status.h \
     $$PWD/opt_statusgeneral.h \
@@ -30,7 +31,6 @@ HEADERS += \
     $$PWD/opt_theme.h \
     $$PWD/opt_groupchat.h \
     $$PWD/opt_sound.h \
-    $$PWD/opt_avcall.h \
     $$PWD/opt_toolbars.h \
     $$PWD/opt_advanced.h \
     $$PWD/opt_shortcuts.h \
@@ -46,6 +46,7 @@ SOURCES += \
     $$PWD/opt_roster_muc.cpp \
     $$PWD/opt_chat.cpp \
     $$PWD/opt_events.cpp \
+    $$PWD/opt_pluginwrapper.cpp \
     $$PWD/opt_popups.cpp \
     $$PWD/opt_status.cpp \
     $$PWD/opt_statusgeneral.cpp \
@@ -58,7 +59,6 @@ SOURCES += \
     $$PWD/opt_theme.cpp \
     $$PWD/opt_groupchat.cpp \
     $$PWD/opt_sound.cpp \
-    $$PWD/opt_avcall.cpp \
     $$PWD/opt_toolbars.cpp \
     $$PWD/opt_advanced.cpp \
     $$PWD/opt_shortcuts.cpp \
@@ -80,7 +80,6 @@ FORMS += \
     $$PWD/opt_appearance_misc.ui \
     $$PWD/opt_theme.ui \
     $$PWD/opt_sound.ui \
-    $$PWD/opt_avcall.ui \
     $$PWD/opt_advanced.ui \
     $$PWD/opt_lookfeel_toolbars.ui \
     $$PWD/opt_messages_common.ui \

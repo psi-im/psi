@@ -86,7 +86,6 @@ public:
 
     static void config();
     static bool isSupported();
-    static bool isVideoSupported();
 
     void setSelfAddress(const QHostAddress &addr);
     void setStunBindService(const QString &host, int port);

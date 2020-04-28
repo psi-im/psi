@@ -774,7 +774,6 @@ QLineEdit#le_status_text {
                 <audio-input type="QString"/>
                 <video-input type="QString"/>
             </devices>
-            <video-support type="bool">false</video-support>
         </media>
         <history comment="General history options">
             <store-muc-private comment="Keep a history of correspondence for MUC private" type="bool">false</store-muc-private>

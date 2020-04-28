@@ -18,6 +18,7 @@
  */
 
 #include "mainwin.h"
+#include "pluginmanager.h"
 
 #include "aboutdlg.h"
 #include "activecontactsmenu.h"
@@ -567,12 +568,13 @@ void MainWin::registerAction(IconAction *action)
 
     PsiContactList *contactList = psiCon()->contactList();
 
-    struct {
+    struct MenuAction {
         const char *name;
         const char *signal;
         QObject *   receiver;
         const char *slot;
-    } actionlist[] = {
+    };
+    std::vector<MenuAction> actionlist = {
         { "choose_status", activated, this, SLOT(actChooseStatusActivated()) },
         { "reconnect_all", activated, this, SLOT(actReconnectActivated()) },
 
@@ -619,16 +621,14 @@ void MainWin::registerAction(IconAction *action)
         { "help_report_bug", activated, this, SLOT(actBugReportActivated()) },
         { "help_about", activated, this, SLOT(actAboutActivated()) },
         { "help_about_qt", activated, this, SLOT(actAboutQtActivated()) },
-        { "help_about_psimedia", activated, this, SLOT(actAboutPsiMediaActivated()) },
         { "help_diag_qcaplugin", activated, this, SLOT(actDiagQCAPluginActivated()) },
         { "help_diag_qcakeystore", activated, this, SLOT(actDiagQCAKeyStoreActivated()) },
-
-        { "", nullptr, nullptr, nullptr }
+        { nullptr, nullptr, nullptr, nullptr }
     };
 
     int     i;
     QString aName;
-    for (i = 0; !(aName = QString(actionlist[i].name)).isEmpty(); i++) {
+    for (i = 0; !(aName = QLatin1String(actionlist[i].name)).isEmpty(); i++) {
         if (aName == action->objectName()) {
 #ifdef USE_PEP
             // Check before connecting, otherwise we get a loop
@@ -900,10 +900,13 @@ void MainWin::buildOptionsMenu()
             << "help_about"
             << "help_about_qt";
 
-    if (AvCallManager::isSupported())
-        actions << "help_about_psimedia";
-
     d->updateMenu(actions, helpMenu);
+
+    auto pluginActions = PluginManager::instance()->globalAboutMenuActions();
+    for (auto a : pluginActions) {
+        helpMenu->addAction(a);
+    }
+
     d->optionsMenu->addMenu(helpMenu);
     d->getAction("menu_quit")->addTo(d->optionsMenu);
 }
@@ -1020,60 +1023,6 @@ void MainWin::actAboutActivated()
 }
 
 void MainWin::actAboutQtActivated() { QMessageBox::aboutQt(this); }
-
-void MainWin::actAboutPsiMediaActivated()
-{
-    if (!PsiMedia::isSupported()) {
-        QMessageBox::warning(
-            this, tr("psimedia is unavailable"),
-            tr("PsiMedia plugin is not loaded or not initialized.<br>"
-               "Please check <a href=\"https://github.com/psi-im/psimedia\">https://github.com/psi-im/psimedia</a> for "
-               "more details."));
-        return;
-    }
-    QString creditText = PsiMedia::creditText();
-    QString gstVersion = extract_gst_version(creditText);
-
-    QString str;
-    QPixmap pix;
-    if (!gstVersion.isEmpty()) {
-        str = tr("This application uses GStreamer %1, a comprehensive "
-                 "open-source and cross-platform multimedia framework."
-                 "  For more information, see "
-                 "<a href=\"http://www.gstreamer.net/\">http://www.gstreamer.net/</a>")
-                  .arg(gstVersion);
-        pix = IconsetFactory::icon("psi/gst_logo").pixmap();
-    } else
-        str = creditText;
-
-    QDialog      aboutGst;
-    QVBoxLayout *vb = new QVBoxLayout(&aboutGst);
-    aboutGst.setWindowTitle(tr("About GStreamer"));
-    QHBoxLayout *hb = new QHBoxLayout;
-    vb->addLayout(hb);
-    if (!pix.isNull()) {
-        QLabel *la = new QLabel(&aboutGst);
-        la->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-        la->setPixmap(pix);
-        hb->addWidget(la);
-    }
-    QLabel *lb = new QLabel(&aboutGst);
-    lb->setText(str);
-    lb->setTextFormat(Qt::RichText);
-    lb->setWordWrap(true);
-    lb->setOpenExternalLinks(true);
-    hb->addWidget(lb);
-    QDialogButtonBox *buttonBox = new QDialogButtonBox(&aboutGst);
-    buttonBox->addButton(QDialogButtonBox::Ok);
-    aboutGst.connect(buttonBox, SIGNAL(accepted()), SLOT(accept()));
-    vb->addWidget(buttonBox);
-    if (!pix.isNull()) {
-        int w = pix.width() * 4;
-        aboutGst.resize(w, aboutGst.heightForWidth(w));
-    }
-    aboutGst.exec();
-    // QMessageBox::about(this, tr("About GStreamer"), str);
-}
 
 void MainWin::actDiagQCAPluginActivated()
 {

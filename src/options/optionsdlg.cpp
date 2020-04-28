@@ -5,15 +5,16 @@
 #include "opt_advanced.h"
 #include "opt_appearance.h"
 #include "opt_application.h"
-#include "opt_avcall.h"
 #include "opt_events.h"
 //#include "opt_groupchat.h"
 #include "opt_iconset.h"
 #include "opt_messages.h"
 #ifdef PSI_PLUGINS
 #include "opt_plugins.h"
+#include "optionaccessinghost.h"
 #endif
 #include "opt_accounts.h"
+#include "opt_pluginwrapper.h"
 #include "opt_popups.h"
 #include "opt_roster.h"
 #include "opt_shortcuts.h"
@@ -21,6 +22,7 @@
 #include "opt_status.h"
 #include "opt_toolbars.h"
 #include "opt_tree.h"
+#include "pluginmanager.h"
 #include "psicon.h"
 
 OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, parent)
@@ -59,11 +61,13 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, paren
     // tabs.append( new OptionsTabIconsetEmoticons(this) );
     // tabs.append( new OptionsTabGroupchat(this) );
     tabs.append(new OptionsTabSound(this));
-    if (AvCallManager::isSupported())
-        tabs.append(new OptionsTabAvCall(this));
     tabs.append(new OptionsTabToolbars(this));
 #ifdef PSI_PLUGINS
     tabs.append(new OptionsTabPlugins(this));
+    auto pluginOptPages = PluginManager::instance()->settingsPages();
+    for (auto &p : pluginOptPages) {
+        tabs.append(new OptionsTabPluginWrapper(p, this));
+    }
 #endif
     tabs.append(new OptionsTabShortcuts(this));
     tabs.append(new OptionsTabAdvanced(this));

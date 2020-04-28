@@ -811,6 +811,10 @@ void PluginHost::setGlobalOption(const QString &option, const QVariant &value)
     PsiOptions::instance()->setOption(option, value);
 }
 
+void PluginHost::addSettingPage(OAH_PluginOptionsTab *tab) { manager_->addSettingPage(tab); }
+
+void PluginHost::removeSettingPage(OAH_PluginOptionsTab *tab) { manager_->removeSettingPage(tab); }
+
 /**
  * \brief Gets a global option (not local to the plugin)
  * The options will be passed unaltered by the plugin manager, so

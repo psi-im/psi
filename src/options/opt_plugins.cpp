@@ -167,7 +167,7 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
     d->tw_Plugins->blockSignals(true); // Block signalls to change item elements
     d->tw_Plugins->itemWidget(item, C_SETTS)->setEnabled(enabled);
     QIcon icon = pm->icon(name);
-    if (!enabled) {
+    if (!enabled && !icon.isNull()) {
         icon = QIcon(icon.pixmap(icon.availableSizes().at(0), QIcon::Disabled));
     }
     item->setIcon(C_NAME, icon);
