@@ -407,8 +407,6 @@ public:
         // for queuing up candidates before using them
         QList<XMPP::Ice176::Candidate> localCandidates;
         QList<XMPP::Ice176::Candidate> remoteCandidates;
-
-        QVector<bool> channelsReady;
     };
     IceStatus iceA_status;
     IceStatus iceV_status;
@@ -797,9 +795,6 @@ private:
             setup_ice(iceA, localAddrs);
 
             iceA_status.started = false;
-            iceA_status.channelsReady.resize(2);
-            iceA_status.channelsReady[0] = false;
-            iceA_status.channelsReady[1] = false;
         }
 
         if (types & JingleRtp::Video) {
@@ -807,9 +802,6 @@ private:
             setup_ice(iceV, localAddrs);
 
             iceV_status.started = false;
-            iceV_status.channelsReady.resize(2);
-            iceV_status.channelsReady[0] = false;
-            iceV_status.channelsReady[1] = false;
         }
 
         XMPP::Ice176::Mode m;
@@ -834,8 +826,7 @@ private:
         connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
         connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)),
                 SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
-        connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)),
-                Qt::QueuedConnection); // signal is not DOR-SS
+        connect(ice, &XMPP::Ice176::readyToSendMedia, this, &JingleRtpPrivate::readyToSendMedia, Qt::QueuedConnection);
 
         ice->setProxy(manager->stunProxy);
         if (portReserver)
@@ -1215,37 +1206,16 @@ private slots:
             flushLocalCandidates();
     }
 
-    void ice_componentReady(int index)
+    void readyToSendMedia()
     {
-        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
-
-        if (ice == iceA) {
-            Q_ASSERT(!iceA_status.channelsReady[index]);
-            iceA_status.channelsReady[index] = true;
-        } else // iceV
-        {
-            Q_ASSERT(!iceV_status.channelsReady[index]);
-            iceV_status.channelsReady[index] = true;
-        }
-
         bool allReady = true;
 
-        if (types & JingleRtp::Audio) {
-            for (int n = 0; n < iceA_status.channelsReady.count(); ++n) {
-                if (!iceA_status.channelsReady[n]) {
-                    allReady = false;
-                    break;
-                }
-            }
+        if (types & JingleRtp::Audio && !iceA->canSendMedia()) {
+            allReady = false;
         }
 
-        if (types & JingleRtp::Video) {
-            for (int n = 0; n < iceV_status.channelsReady.count(); ++n) {
-                if (!iceV_status.channelsReady[n]) {
-                    allReady = false;
-                    break;
-                }
-            }
+        if (types & JingleRtp::Video && !iceV->canSendMedia()) {
+            allReady = false;
         }
 
         if (allReady) {
