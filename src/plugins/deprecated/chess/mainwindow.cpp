@@ -105,7 +105,7 @@ void MainWindow::newGame(int sock)
 void MainWindow::about()
 {
 
-    QMessageBox::about(this, tr("About") + " QNetChess",
+    QMessageBox::about(this, tr("About plugin"),
                        "QNetChess "
                            + tr("is a network game chess for two players.\n"
                                 "It has a client and a server in the same program.\n"

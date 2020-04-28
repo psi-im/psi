@@ -188,9 +188,9 @@ void OptionsTabPlugins::showPluginInfo(int item)
 
         infoDialog = new QDialog(d);
         ui_.setupUi(infoDialog);
-        QString name = d->tw_Plugins->currentItem()->text(C_NAME);
-        infoDialog->setWindowTitle(QString("%1 %2").arg(infoDialog->windowTitle()).arg(name));
+        infoDialog->setWindowTitle(tr("About plugin"));
         infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+        QString name = d->tw_Plugins->currentItem()->text(C_NAME);
         ui_.te_info->setText(PluginManager::instance()->pluginInfo(name));
         infoDialog->setAttribute(Qt::WA_DeleteOnClose);
         infoDialog->show();
