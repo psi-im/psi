@@ -75,7 +75,7 @@ myspell/
 translations/
 src/plugins/CMakeLists.txt
 src/plugins/README.md
-src/plugins/cmake/
+src/plugins/cmake/modules/FindPsiPluginsApi.cmake
 src/plugins/dev/
 src/plugins/generic/
 src/plugins/tests/
