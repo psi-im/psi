@@ -24,7 +24,6 @@ list(APPEND HEADERS
     opt_roster_muc.h
     opt_groupchat.h
     opt_sound.h
-    opt_avcall.h
     opt_messages.h
     opt_messages_common.h
     opt_chat.h
@@ -48,7 +47,6 @@ list(APPEND SOURCES
     opt_advanced.cpp
     opt_appearance.cpp
     opt_application.cpp
-    opt_avcall.cpp
     opt_chat.cpp
     opt_events.cpp
     opt_groupchat.cpp
