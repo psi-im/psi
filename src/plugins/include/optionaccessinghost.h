@@ -10,6 +10,7 @@ class QVariant;
 
 class OAH_PluginOptionsTab {
 public:
+    virtual ~OAH_PluginOptionsTab() = default;
     virtual QWidget *widget() = 0; // caller will take ownership of the plugin but it still can be deleted externally
     virtual void     applyOptions()   = 0;
     virtual void     restoreOptions() = 0;

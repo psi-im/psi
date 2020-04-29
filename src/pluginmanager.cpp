@@ -464,7 +464,14 @@ void PluginManager::logout(PsiAccount *account)
     }
 }
 
-void PluginManager::addSettingPage(OAH_PluginOptionsTab *tab) { settingsTabs_.append(tab); }
+void PluginManager::addSettingPage(OAH_PluginOptionsTab *tab)
+{
+    settingsTabs_.append(tab);
+    OptionsDlg *w = qobject_cast<OptionsDlg *>(psi_->dialogFind("OptionsDlg"));
+    if (w) {
+        w->addPluginWrapperTab(tab);
+    }
+}
 
 void PluginManager::removeSettingPage(OAH_PluginOptionsTab *tab)
 {

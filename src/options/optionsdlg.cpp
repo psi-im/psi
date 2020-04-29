@@ -109,3 +109,11 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, paren
 
     openTab("application");
 }
+
+#ifdef PSI_PLUGINS
+void OptionsDlg::addPluginWrapperTab(OAH_PluginOptionsTab *tab)
+{
+    auto wtab = new OptionsTabPluginWrapper(tab, this);
+    insertTab(wtab, tab->nextToId());
+}
+#endif

@@ -156,9 +156,12 @@ public:
 
 class OptionsDlgBase::Private : public QObject {
     Q_OBJECT
+
 public:
     Private(OptionsDlgBase *dlg, PsiCon *_psi);
     void setTabs(QList<OptionsTab *> t);
+    void insertTab(OptionsTab *opttab, const QByteArray &after = QByteArray());
+    void updateTabsListGeometry();
 
 public slots:
     void doApply();
@@ -210,42 +213,66 @@ OptionsDlgBase::Private::Private(OptionsDlgBase *d, PsiCon *_psi)
     dlg->pb_apply->setEnabled(false);
 }
 
-void OptionsDlgBase::Private::setTabs(QList<OptionsTab *> t)
+void OptionsDlgBase::Private::updateTabsListGeometry()
 {
-    int                  maxWidth = 0;
     QStyleOptionViewItem option;
-
     option.fontMetrics = dlg->lv_tabs->fontMetrics();
-    tabs               = t;
-    for (OptionsTab *opttab : tabs) {
-        // qWarning("Adding tab %s...", (const char *)opttab->id());
-        opttab->setData(psi, dlg);
-        connect(opttab, SIGNAL(dataChanged()), SLOT(dataChanged()));
-        // connect(opttab, SIGNAL(addWidgetChangedSignal(QString, QCString)), SLOT(addWidgetChangedSignal(QString,
-        // QCString)));
-        connect(opttab, SIGNAL(noDirty(bool)), SLOT(noDirtySlot(bool)));
-        connect(opttab, SIGNAL(connectDataChanged(QWidget *)), SLOT(connectDataChanged(QWidget *)));
-
-        if (opttab->id().isEmpty())
-            continue;
-
-        dlg->lv_tabs->addItem(opttab->tabName());
-        QListWidgetItem *item = dlg->lv_tabs->item(dlg->lv_tabs->count() - 1);
-        dlg->lv_tabs->setCurrentItem(item);
-        QModelIndex index   = dlg->lv_tabs->currentIndex();
-        auto        tabIcon = opttab->tabIcon();
-        if (!tabIcon.isNull())
-            item->setData(Qt::DecorationRole, tabIcon);
-        item->setData(Qt::UserRole, opttab->id());
-
-        int width = dlg->lv_tabs->itemDelegate()->sizeHint(option, index).width()
+    int maxWidth       = 0;
+    for (int i = 0; i < dlg->lv_tabs->count(); i++) {
+        auto index = dlg->lv_tabs->model()->index(i, 0);
+        int  width = dlg->lv_tabs->itemDelegate()->sizeHint(option, index).width()
             + dlg->lv_tabs->verticalScrollBar()->sizeHint().width();
         maxWidth = qMax(width, maxWidth);
     }
+
     dlg->lv_tabs->setFixedWidth(maxWidth);
-    if (tabs.count() == 1) {
-        dlg->lv_tabs->setVisible(false);
+    dlg->lv_tabs->setVisible(tabs.count() > 1);
+}
+
+void OptionsDlgBase::Private::setTabs(QList<OptionsTab *> t)
+{
+    tabs.reserve(t.size());
+    for (OptionsTab *opttab : t) {
+        insertTab(opttab);
     }
+    updateTabsListGeometry();
+}
+
+void OptionsDlgBase::Private::insertTab(OptionsTab *opttab, const QByteArray &after)
+{
+    if (opttab->id().isEmpty())
+        return;
+
+    // qWarning("Adding tab %s...", (const char *)opttab->id());
+    opttab->setData(psi, dlg);
+    connect(opttab, SIGNAL(dataChanged()), SLOT(dataChanged()));
+    // connect(opttab, SIGNAL(addWidgetChangedSignal(QString, QCString)), SLOT(addWidgetChangedSignal(QString,
+    // QCString)));
+    connect(opttab, SIGNAL(noDirty(bool)), SLOT(noDirtySlot(bool)));
+    connect(opttab, SIGNAL(connectDataChanged(QWidget *)), SLOT(connectDataChanged(QWidget *)));
+
+    tabs.append(opttab);
+    QListWidgetItem *item = nullptr;
+    if (!after.isEmpty()) {
+        for (int i = 0; i < dlg->lv_tabs->count(); i++) {
+            auto it = dlg->lv_tabs->item(i);
+            if (after == it->data(Qt::UserRole).toByteArray()) {
+                dlg->lv_tabs->insertItem(i + 1, opttab->tabName());
+                item = dlg->lv_tabs->item(i + 1);
+                break;
+            }
+        }
+    }
+    if (!item) {
+        dlg->lv_tabs->addItem(opttab->tabName());
+        item = dlg->lv_tabs->item(dlg->lv_tabs->count() - 1);
+    }
+    // dlg->lv_tabs->setCurrentItem(item);
+
+    auto tabIcon = opttab->tabIcon();
+    if (!tabIcon.isNull())
+        item->setData(Qt::DecorationRole, tabIcon);
+    item->setData(Qt::UserRole, opttab->id());
 }
 
 void OptionsDlgBase::Private::createChangedMap()
@@ -471,6 +498,12 @@ PsiCon *OptionsDlgBase::psi() const { return d->psi; }
 void OptionsDlgBase::openTab(const QString &id) { d->openTab(id); }
 
 void OptionsDlgBase::removeTab(const QString &id) { d->removeTab(id); }
+
+void OptionsDlgBase::insertTab(OptionsTab *tab, const QByteArray &afterId)
+{
+    d->insertTab(tab, afterId);
+    d->updateTabsListGeometry();
+}
 
 void OptionsDlgBase::setTabs(QList<OptionsTab *> tabs) { d->setTabs(tabs); }
 
