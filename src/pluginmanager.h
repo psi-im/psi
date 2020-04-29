@@ -33,6 +33,10 @@ namespace XMPP {
 class Client;
 }
 
+namespace PsiMedia {
+class Provider;
+}
+
 class AccountIds {
 public:
     int         appendAccount(PsiAccount *acc);
@@ -107,6 +111,8 @@ public:
     QStringList messageViewJSFilters() const;
 
     QList<QAction *> globalAboutMenuActions() const;
+
+    bool ensureMediaProvider();
 
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;

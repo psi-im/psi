@@ -21,6 +21,7 @@
 #include "psicon.h"
 #include "psicontact.h"
 #include "psiiconset.h"
+#include "psimediaprovider.h"
 #include "psioptions.h"
 #include "psiplugin.h"
 #include "stanzafilter.h"
@@ -1014,6 +1015,15 @@ QStringList PluginManager::messageViewJSFilters() const
 }
 
 QList<QAction *> PluginManager::globalAboutMenuActions() const { return QList<QAction *>(); }
+
+bool PluginManager::ensureMediaProvider()
+{
+    for (PluginHost *host : pluginsByPriority_) {
+        if (host->ensureMediaProvider())
+            return true;
+    }
+    return false;
+}
 
 bool PluginManager::isSelf(int account, const QString &jid) const
 {

@@ -40,6 +40,9 @@ class IqNamespaceFilter;
 class PluginManager;
 class QPluginLoader;
 class QWidget;
+namespace PsiMedia {
+class Provider;
+}
 
 class PluginHost : public QObject,
                    public StanzaSendingHost,
@@ -248,6 +251,9 @@ public:
                                           PsiPlugin::Priority priority = PsiPlugin::PriorityNormal) override;
     void       uninstallChatLogJSDataFilter(const QString &id) override;
     void       executeChatLogJavaScript(QWidget *log, const QString &js) override;
+
+    // PsiMedia provider
+    bool ensureMediaProvider();
 
 private:
     PluginManager *   manager_;

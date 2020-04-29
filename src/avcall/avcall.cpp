@@ -27,6 +27,9 @@
 #include "psioptions.h"
 #include "xmpp_client.h"
 #include "xmpp_jid.h"
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
 
 #include <QCoreApplication>
 #include <QDir>
@@ -54,6 +57,19 @@ static void ensureConfig()
         g_config  = new MediaConfiguration;
         *g_config = getDefaultConfiguration();
     }
+}
+
+static void ensureLoaded()
+{
+#ifdef PSI_PLUGINS
+    if (PluginManager::instance()->ensureMediaProvider()) {
+        ensureConfig();
+    } else {
+        PsiMedia::setProvider(nullptr);
+        delete g_config;
+        g_config = nullptr;
+    }
+#endif
 }
 
 static JingleRtpPayloadType payloadInfoToPayloadType(const PsiMedia::PayloadInfo &pi)
@@ -722,6 +738,7 @@ void AvCallManager::config()
 
 bool AvCallManager::isSupported()
 {
+    ensureLoaded();
     if (!QCA::isSupported("hmac(sha1)")) {
         printf("hmac support missing for voice calls, install qca-ossl\n");
         return false;

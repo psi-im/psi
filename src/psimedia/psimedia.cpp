@@ -197,6 +197,12 @@ void cleanupProvider()
 
 void unloadPlugin() { cleanupProvider(); }
 
+void setProvider(Provider *provider)
+{
+    // that's pretty stupid impl. In fact we have to notify outer world to cleanup resources quickly
+    g_provider = provider;
+}
+
 QString creditName() { return provider()->creditName(); }
 
 QString creditText() { return provider()->creditText(); }
@@ -766,4 +772,5 @@ RtpSession::Error RtpSession::errorCode() const { return static_cast<RtpSession:
 RtpChannel *RtpSession::audioRtpChannel() { return &d->audioRtpChannel; }
 
 RtpChannel *RtpSession::videoRtpChannel() { return &d->videoRtpChannel; }
+
 }; // namespace PsiMedia

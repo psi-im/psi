@@ -36,6 +36,7 @@ class RtpChannelPrivate;
 class RtpSession;
 class RtpSessionPrivate;
 class VideoWidgetPrivate;
+class Provider;
 
 enum PluginResult { PluginSuccess, ErrorLoad, ErrorVersion, ErrorInit };
 
@@ -44,6 +45,7 @@ PluginResult loadPlugin(const QString &fname, const QString &resourcePath);
 void         unloadPlugin();
 QString      creditName();
 QString      creditText();
+void         setProvider(Provider *provider);
 
 class Device {
 public:

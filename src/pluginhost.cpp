@@ -31,6 +31,8 @@
 #include "popupaccessor.h"
 #include "psiaccount.h"
 #include "psiaccountcontroller.h"
+#include "psimedia/psimedia.h"
+#include "psimediaprovider.h"
 #include "psioptions.h"
 #include "psiplugin.h"
 #include "shortcutaccessor.h"
@@ -1290,6 +1292,25 @@ void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
     Q_UNUSED(log);
     Q_UNUSED(js)
 #endif
+}
+
+bool PluginHost::ensureMediaProvider()
+{
+    if (!enabled_)
+        return false;
+    auto mp = qobject_cast<PsiMedia::Plugin *>(plugin_);
+    if (!mp)
+        return false;
+
+    if (!PsiMedia::isSupported()) {
+        auto p = mp->createProvider();
+        if (p && !p->init(QString())) {
+            delete p;
+            return false;
+        }
+        PsiMedia::setProvider(p);
+    }
+    return true;
 }
 
 //-- helpers --------------------------------------------------------
