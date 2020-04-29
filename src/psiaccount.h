@@ -28,6 +28,7 @@
 #include "activity.h"
 #include "filesharingdownloader.h"
 #include "geolocation.h"
+#include "gpgprocess.h"
 #include "mood.h"
 #include "psiactions.h"
 #include "psievent.h"
@@ -484,7 +485,10 @@ private slots:
     void trySignPresence();
     void pgp_signFinished();
     void pgp_verifyFinished();
-    void pgp_encryptFinished();
+    void pgp_encryptFinished(const int id,
+                             const GpgProcess &gpg,
+                             const Message &origMsg,
+                             const QByteArray &encryptedText);
     void pgp_decryptFinished();
 
     void ed_addAuth(const Jid &);

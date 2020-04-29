@@ -6004,72 +6004,88 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
     if (!ensureKey(_m.to()))
         return -1;
 
-    QString            keyID    = findFirstRelevant(_m.to())->publicKeyID();
-    QCA::KeyStoreEntry keyEntry = PGPUtil::instance().getPublicKeyStoreEntry(keyID);
-    if (keyEntry.isNull())
+    QString keyID    = findFirstRelevant(_m.to())->publicKeyID();
+    if (keyID.isEmpty())
         return -1;
 
-    QCA::SecureMessageKey key;
-    key.setPGPPublicKey(keyEntry.pgpPublicKey());
+    const QStringList arguments = {
+        "--no-tty",
+        "--enable-special-filenames",
+        "--armor",
+        "--always-trust",
+        "--encrypt",
+        "--recipient",
+        "0x" + keyID
+    };
 
-    PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
-    t->setMessage(_m);
-    connect(t, SIGNAL(finished()), SLOT(pgp_encryptFinished()));
-    t->setFormat(QCA::SecureMessage::Ascii);
-    t->setRecipient(key);
-    t->startEncrypt();
-    t->update(_m.body().toUtf8());
-    t->end();
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForStarted();
+    gpg.write(_m.body().toUtf8());
+    gpg.closeWriteChannel();
+    gpg.waitForFinished();
 
-    return t->id();
+    const QByteArray &&out = gpg.readAllStandardOutput();
+
+    static int idCounter = 0;
+    ++idCounter;
+
+    pgp_encryptFinished(idCounter, gpg, _m, out);
+
+    return idCounter;
 #else
     Q_ASSERT(false);
     return -1;
 #endif
 }
 
-void PsiAccount::pgp_encryptFinished()
+void PsiAccount::pgp_encryptFinished(const int id,
+                                     const GpgProcess &gpg,
+                                     const Message &origMsg,
+                                     const QByteArray &encryptedText)
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *pt = static_cast<PGPTransaction *>(sender());
-    int             x  = pt->id();
-
-    if (pt->success()) {
-        Message m = pt->message();
+    if (gpg.success()) {
         // log the message here, before we encrypt it
         {
-            MessageEvent::Ptr me(new MessageEvent(m, this));
+            MessageEvent::Ptr me(new MessageEvent(origMsg, this));
             me->setOriginLocal(true);
             me->setTimeStamp(QDateTime::currentDateTime());
-            logEvent(m.to(), me, EDB::Contact);
+            logEvent(origMsg.to(), me, EDB::Contact);
         }
 
         Message mwrap;
-        mwrap.setTo(m.to());
-        mwrap.setType(m.type());
-        QString enc = PGPUtil::instance().stripHeaderFooter(pt->read());
+        mwrap.setTo(origMsg.to());
+        mwrap.setType(origMsg.type());
+        QString enc = PGPUtil::instance().stripHeaderFooter(QString::fromUtf8(encryptedText));
         mwrap.setBody(tr("[ERROR: This message is encrypted, and you are unable to decrypt it.]"));
         mwrap.setXEncrypted(enc);
         mwrap.setWasEncrypted(true);
         // FIXME: Should be done cleaner, with an extra method in Iris
-        if (m.containsEvent(OfflineEvent))
+        if (origMsg.containsEvent(OfflineEvent))
             mwrap.addEvent(OfflineEvent);
-        if (m.containsEvent(DeliveredEvent))
+        if (origMsg.containsEvent(DeliveredEvent))
             mwrap.addEvent(DeliveredEvent);
-        if (m.containsEvent(DisplayedEvent))
+        if (origMsg.containsEvent(DisplayedEvent))
             mwrap.addEvent(DisplayedEvent);
-        if (m.containsEvent(ComposingEvent))
+        if (origMsg.containsEvent(ComposingEvent))
             mwrap.addEvent(ComposingEvent);
-        if (m.containsEvent(CancelEvent))
+        if (origMsg.containsEvent(CancelEvent))
             mwrap.addEvent(CancelEvent);
-        if (m.messageReceipt() == ReceiptRequest)
+        if (origMsg.messageReceipt() == ReceiptRequest)
             mwrap.setMessageReceipt(ReceiptRequest);
-        mwrap.setChatState(m.chatState());
-        mwrap.setId(m.id());
+        mwrap.setChatState(origMsg.chatState());
+        mwrap.setId(origMsg.id());
         dj_sendMessage(mwrap);
     }
-    emit encryptedMessageSent(x, pt->success(), pt->errorCode(), pt->diagnosticText());
-    pt->deleteLater();
+
+    const bool success = gpg.success();
+    const int error    = gpg.exitCode();
+    const QString &&errorString = gpg.errorString();
+
+    QTimer::singleShot(250, [this, id, success, error, errorString]() {
+        emit this->encryptedMessageSent(id, success, error, errorString);
+    });
 #endif
 }
 

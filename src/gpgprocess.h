@@ -34,6 +34,7 @@ public:
     }
     inline void start(OpenMode mode = ReadWrite) { QProcess::start(_bin, mode); }
 
+    bool success() const;
     bool info(QString &message);
 
 private:

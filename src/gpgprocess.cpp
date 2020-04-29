@@ -32,6 +32,11 @@ GpgProcess::GpgProcess(QObject *parent) : QProcess(parent)
     _bin = findBin();
 }
 
+bool GpgProcess::success() const
+{
+    return (exitCode() == 0);
+}
+
 inline bool checkBin(const QString &bin)
 {
     QFileInfo fi(bin);
