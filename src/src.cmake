@@ -133,6 +133,7 @@ list(APPEND HEADERS
     geolocationdlg.h
     globaleventqueue.h
     globalstatusmenu.h
+    gpgprocess.h
     groupchatdlg.h
     groupchattopicdlg.h
     groupmenu.h
@@ -408,6 +409,7 @@ list(APPEND SOURCES
     geolocationdlg.cpp
     globaleventqueue.cpp
     globalstatusmenu.cpp
+    gpgprocess.cpp
     groupchattopicdlg.cpp
     groupmenu.cpp
     httputil.cpp

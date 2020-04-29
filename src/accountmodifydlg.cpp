@@ -469,7 +469,7 @@ void AccountModifyDlg::chooseKey()
     int                r = w->exec();
     QCA::KeyStoreEntry entry;
     if (r == QDialog::Accepted)
-        entry = w->keyStoreEntry();
+        entry = w->keyId();
     delete w;
 
     if (!entry.isNull()) {

@@ -1,6 +1,7 @@
 /*
  * psiaccount.cpp - handles a Psi account
  * Copyright (C) 2001-2005  Justin Karneges
+ * Copyright (C) 2020  Boris Pek <tehnick-8@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -6345,13 +6346,13 @@ bool PsiAccount::ensureKey(const Jid &j)
         PGPKeyDlg *w = new PGPKeyDlg(PGPKeyDlg::Public, akey, nullptr);
         w->setWindowTitle(tr("Public Key: %1").arg(JIDUtil::toString(j, true)));
         int                r = w->exec();
-        QCA::KeyStoreEntry entry;
+        QString keyId;
         if (r == QDialog::Accepted)
-            entry = w->keyStoreEntry();
+            keyId = w->keyId();
         delete w;
-        if (entry.isNull())
+        if (keyId.isEmpty())
             return false;
-        u->setPublicKeyID(entry.pgpPublicKey().keyId());
+        u->setPublicKeyID(keyId);
         cpUpdate(*u);
     }
 

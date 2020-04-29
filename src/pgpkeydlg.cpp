@@ -1,6 +1,7 @@
 /*
  * pgpkeydlg.h
  * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
+ * Copyright (C) 2020  Boris Pek <tehnick-8@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,8 +26,9 @@
 #include "pgpkeydlg.h"
 
 #include "common.h"
+#include "gpgprocess.h"
 #include "showtextdlg.h"
-#include <pgputil.h>
+#include "pgputil.h"
 
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -38,15 +40,15 @@
 
 class KeyViewItem : public QStandardItem {
 public:
-    KeyViewItem(const QCA::KeyStoreEntry &entry, const QString &name) : QStandardItem(), entry_(entry)
+    KeyViewItem(const QString &id, const QString &name) : QStandardItem(), keyId_(id)
     {
         setText(name);
     }
 
-    QCA::KeyStoreEntry entry() const { return entry_; }
+    QString keyId() const { return keyId_; }
 
 private:
-    QCA::KeyStoreEntry entry_;
+    QString keyId_;
 };
 
 class KeyViewProxyModel : public QSortFilterProxyModel {
@@ -85,43 +87,71 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     connect(ui_.lv_keys, SIGNAL(doubleClicked(const QModelIndex &)), SLOT(doubleClicked(const QModelIndex &)));
     connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
     connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
-    connect(pb_dtext_, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
+    connect(pb_dtext_, SIGNAL(clicked()), SLOT(show_info()));
     connect(ui_.le_filter, SIGNAL(textChanged(const QString &)), this, SLOT(filterTextChanged()));
 
     ui_.le_filter->installEventFilter(this);
 
     KeyViewItem *firstItem    = nullptr;
     KeyViewItem *selectedItem = nullptr;
-    int          row          = 0;
+    int          rowIdx       = 0;
 
-    PGPUtil::instance().reloadKeyStores();
-    for (QCA::KeyStore *ks : PGPUtil::instance().keystores_) {
-        if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-            for (QCA::KeyStoreEntry ke : ks->entryList()) {
-                bool publicKey = (t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey)
-                    || (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey);
-                bool secretKey = t == Secret && ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey;
-                if (publicKey || secretKey) {
-                    KeyViewItem *  i    = new KeyViewItem(ke, ke.id().right(8));
-                    KeyViewItem *  i2   = new KeyViewItem(ke, ke.name());
-                    QStandardItem *root = model_->invisibleRootItem();
-                    root->setChild(row, 0, i);
-                    root->setChild(row, 1, i2);
-                    ++row;
+    const QStringList &&showSecretKeys = {
+        "--with-fingerprint",
+        "--list-secret-keys",
+        "--with-colons",
+        "--fixed-list-mode"
+    };
+    const QStringList &&showPublicKeys = {
+        "--with-fingerprint",
+        "--list-public-keys",
+        "--with-colons",
+        "--fixed-list-mode"
+    };
 
-                    QString keyId;
-                    if (publicKey)
-                        keyId = ke.pgpPublicKey().keyId();
-                    else
-                        keyId = ke.pgpSecretKey().keyId();
+    QString keysRaw;
+    GpgProcess gpg;
 
-                    if (!defaultKeyID.isEmpty() && keyId == defaultKeyID) {
-                        selectedItem = i;
-                    }
+    gpg.start(showSecretKeys);
+    gpg.waitForFinished();
+    keysRaw.append(QString::fromUtf8(gpg.readAll()));
+    gpg.start(showPublicKeys);
+    gpg.waitForFinished();
+    keysRaw.append(QString::fromUtf8(gpg.readAll()));
 
-                    if (!firstItem) {
-                        firstItem = i;
-                    }
+
+    QStringList keysList = keysRaw.split("\n");
+    QString uid;
+    for (const QString &line : keysList) {
+        const QString &&type = line.section(':', 0, 0);
+        QStandardItem *root = model_->invisibleRootItem();
+
+        if (type == "pub" || type == "sec") {
+            uid = line.section(':', 9, 9); // Used ID
+            const QString &&longID = line.section(':', 4, 4).right(16); // Long ID
+            const QString &&shortID = line.section(':', 4, 4).right(8); // Short ID
+
+            KeyViewItem *  i  = new KeyViewItem(longID, shortID);
+            KeyViewItem *  i2 = new KeyViewItem(longID, QString());
+            root->setChild(rowIdx, 0, i);
+            root->setChild(rowIdx, 1, i2);
+            ++rowIdx;
+
+            if (!defaultKeyID.isEmpty() && shortID == defaultKeyID) {
+                selectedItem = i;
+            }
+
+            if (!firstItem) {
+                firstItem = i;
+            }
+        }
+        else if (type == "uid") {
+            if (rowIdx >= 1) {
+                QStandardItem * i2 = root->child(rowIdx - 1, 1);
+
+                if (i2->text().isEmpty()) {
+                    const QString &&name = line.section(':', 9, 9); // Name
+                    i2->setText(name);
                 }
             }
         }
@@ -141,7 +171,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     // adjustSize();
 }
 
-const QCA::KeyStoreEntry &PGPKeyDlg::keyStoreEntry() const { return entry_; }
+const QString &PGPKeyDlg::keyId() const { return keyId_; }
 
 bool PGPKeyDlg::eventFilter(QObject *watched, QEvent *event)
 {
@@ -175,15 +205,19 @@ void PGPKeyDlg::do_accept()
         QMessageBox::information(this, tr("Error"), tr("Please select a key."));
         return;
     }
-    entry_ = i->entry();
+    keyId_ = i->keyId();
     accept();
 }
 
-void PGPKeyDlg::show_ksm_dtext()
+void PGPKeyDlg::show_info()
 {
-    QString      dtext = QCA::KeyStoreManager::diagnosticText();
-    ShowTextDlg *w     = new ShowTextDlg(dtext, true, false, this);
-    w->setWindowTitle(CAP(tr("Key Storage Diagnostic Text")));
+    GpgProcess gpg;
+    QString    info;
+
+    gpg.info(info);
+    ShowTextDlg *w     = new ShowTextDlg(info, true, false, this);
+    w->setWindowTitle(CAP(tr("GnuPG info")));
     w->resize(560, 240);
     w->show();
 }
+
