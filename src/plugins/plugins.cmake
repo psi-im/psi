@@ -35,6 +35,7 @@ list(APPEND PLUGINS_INCLUDES
     plugins/include/popupaccessor.h
     plugins/include/psiaccountcontroller.h
     plugins/include/psiaccountcontrollinghost.h
+    plugins/include/psimediaprovider.h
     plugins/include/psiplugin.h
     plugins/include/shortcutaccessinghost.h
     plugins/include/shortcutaccessor.h

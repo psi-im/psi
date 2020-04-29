@@ -1,4 +1,4 @@
-INCLUDEPATH += $$psi_plugins_include_dir 
+INCLUDEPATH += $$psi_plugins_include_dir
 
 HEADERS += \
     $$psi_plugins_include_dir/psiplugin.h \
@@ -13,6 +13,7 @@ HEADERS += \
     $$psi_plugins_include_dir/optionaccessinghost.h \
     $$psi_plugins_include_dir/popupaccessor.h \
     $$psi_plugins_include_dir/popupaccessinghost.h \
+    $$psi_plugins_include_dir/psimediaprovider.h \
     $$psi_plugins_include_dir/shortcutaccessor.h \
     $$psi_plugins_include_dir/shortcutaccessinghost.h\
     $$psi_plugins_include_dir/iconfactoryaccessor.h \
