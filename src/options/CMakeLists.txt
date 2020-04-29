@@ -76,7 +76,6 @@ list(APPEND FORMS
     opt_appearance.ui
     opt_appearance_misc.ui
     opt_application.ui
-    opt_avcall.ui
     opt_chat.ui
     opt_events.ui
     opt_general_groupchat.ui
