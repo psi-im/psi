@@ -22,6 +22,7 @@ class PGPUtil : public QObject {
 public:
     static PGPUtil &instance();
 
+    void reloadKeyStores();
     bool pgpAvailable();
     void clearPGPAvailableCache();
 
@@ -49,6 +50,7 @@ protected:
     PGPUtil();
     ~PGPUtil();
 
+    void clearKeyStores();
     void promptPassphrase(int id, const QCA::Event &event);
 
 protected slots:
@@ -68,7 +70,7 @@ private:
     QSet<QCA::KeyStore *>  keystores_;
     QMap<QString, QString> passphrases_;
     QCA::EventHandler *    qcaEventHandler_;
-    QCA::KeyStoreManager   qcaKeyStoreManager_;
+    QCA::KeyStoreManager * qcaKeyStoreManager_;
     PassphraseDlg *        passphraseDlg_;
     int                    currentEventId_;
     QString                currentEntryId_;

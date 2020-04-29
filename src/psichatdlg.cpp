@@ -826,9 +826,11 @@ void PsiChatDlg::updatePGP()
 {
     if (account()->hasPGP()) {
         actions_->action("chat_pgp")->setEnabled(true);
+        actions_->action("chat_pgp")->setToolTip(tr("Enable OpenPGP encryption"));
     } else {
         setPGPEnabled(false);
         actions_->action("chat_pgp")->setEnabled(false);
+        actions_->action("chat_pgp")->setToolTip(tr("OpenPGP key is not set in your account settings!"));
     }
 
     checkPGPAutostart();

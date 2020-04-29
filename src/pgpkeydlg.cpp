@@ -94,6 +94,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     KeyViewItem *selectedItem = nullptr;
     int          row          = 0;
 
+    PGPUtil::instance().reloadKeyStores();
     for (QCA::KeyStore *ks : PGPUtil::instance().keystores_) {
         if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
             for (QCA::KeyStoreEntry ke : ks->entryList()) {

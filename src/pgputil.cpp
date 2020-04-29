@@ -10,20 +10,35 @@
 
 PGPUtil *PGPUtil::instance_ = nullptr;
 
-PGPUtil::PGPUtil() : qcaEventHandler_(nullptr), passphraseDlg_(nullptr), cache_no_pgp_(false)
+PGPUtil::PGPUtil()
+    : qcaEventHandler_(nullptr)
+    , qcaKeyStoreManager_(new QCA::KeyStoreManager)
+    , passphraseDlg_(nullptr)
+    , cache_no_pgp_(false)
 {
     qcaEventHandler_ = new QCA::EventHandler(this);
+
     connect(qcaEventHandler_, SIGNAL(eventReady(int, const QCA::Event &)), SLOT(handleEvent(int, const QCA::Event &)));
     qcaEventHandler_->start();
-    connect(&qcaKeyStoreManager_, SIGNAL(keyStoreAvailable(const QString &)), SLOT(keyStoreAvailable(const QString &)));
-    for (const QString &k : qcaKeyStoreManager_.keyStores()) {
-        keyStoreAvailable(k);
-    }
+
+    reloadKeyStores();
+    connect(qcaKeyStoreManager_, &QCA::KeyStoreManager::keyStoreAvailable, this, &PGPUtil::keyStoreAvailable);
 
     connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(deleteLater()));
 }
 
 PGPUtil::~PGPUtil()
+{
+    clearKeyStores();
+
+    if (qcaKeyStoreManager_) {
+        qcaKeyStoreManager_->disconnect();
+        delete qcaKeyStoreManager_;
+        qcaKeyStoreManager_ = nullptr;
+    }
+}
+
+void PGPUtil::clearKeyStores()
 {
     for (QCA::KeyStore *ks : keystores_) {
         delete ks;
@@ -37,6 +52,14 @@ PGPUtil &PGPUtil::instance()
         instance_ = new PGPUtil();
     }
     return *instance_;
+}
+
+void PGPUtil::reloadKeyStores()
+{
+    clearKeyStores();
+    for (const QString &k : qcaKeyStoreManager_->keyStores()) {
+        keyStoreAvailable(k);
+    }
 }
 
 void PGPUtil::handleEvent(int id, const QCA::Event &event)
@@ -269,7 +292,8 @@ void PGPUtil::addPassphrase(const QString &id, const QString &pass) { passphrase
 
 void PGPUtil::keyStoreAvailable(const QString &k)
 {
-    QCA::KeyStore *ks = new QCA::KeyStore(k, &qcaKeyStoreManager_);
+    if (!qcaKeyStoreManager_) return;
+    QCA::KeyStore *ks = new QCA::KeyStore(k, qcaKeyStoreManager_);
     connect(ks, SIGNAL(updated()), SIGNAL(pgpKeysUpdated()));
     keystores_ += ks;
 }
