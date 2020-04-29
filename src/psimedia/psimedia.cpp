@@ -11,8 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
@@ -139,7 +141,7 @@ Provider *provider()
     return g_provider;
 }
 
-bool isSupported() { return (provider() ? true : false); }
+bool isSupported() { return provider() != nullptr; }
 
 PluginResult loadPlugin(const QString &fname, const QString &resourcePath)
 {
@@ -213,7 +215,7 @@ public:
     {
         Device dev;
         dev.d            = new Device::Private;
-        dev.d->type      = Device::Type(pd.type);
+        dev.d->type      = static_cast<Device::Type>(pd.type);
         dev.d->id        = pd.id;
         dev.d->name      = pd.name;
         dev.d->isDefault = pd.isDefault;
@@ -250,7 +252,7 @@ Device &Device::operator=(const Device &other)
     return *this;
 }
 
-bool Device::isNull() const { return (d ? false : true); }
+bool Device::isNull() const { return d == nullptr; }
 
 Device::Type Device::type() const { return d->type; }
 
@@ -334,11 +336,8 @@ void AudioParams::setChannels(int n) { d->channels = n; }
 
 bool AudioParams::operator==(const AudioParams &other) const
 {
-    if (d->codec == other.d->codec && d->sampleRate == other.d->sampleRate && d->sampleSize == other.d->sampleSize
-        && d->channels == other.d->channels) {
-        return true;
-    } else
-        return false;
+    return d->codec == other.d->codec && d->sampleRate == other.d->sampleRate && d->sampleSize == other.d->sampleSize
+        && d->channels == other.d->channels;
 }
 
 //----------------------------------------------------------------------------
@@ -379,10 +378,7 @@ void VideoParams::setFps(int n) { d->fps = n; }
 
 bool VideoParams::operator==(const VideoParams &other) const
 {
-    if (d->codec == other.d->codec && d->size == other.d->size && d->fps == other.d->fps) {
-        return true;
-    } else
-        return false;
+    return d->codec == other.d->codec && d->size == other.d->size && d->fps == other.d->fps;
 }
 
 QString VideoParams::toString() const
@@ -448,15 +444,11 @@ RtpPacket::RtpPacket() : d(nullptr) { }
 
 RtpPacket::RtpPacket(const QByteArray &rawValue, int portOffset) : d(new Private(rawValue, portOffset)) { }
 
-RtpPacket::RtpPacket(const RtpPacket &other) : d(other.d) { }
+RtpPacket::RtpPacket(const RtpPacket &other) = default;
 
-RtpPacket::~RtpPacket() { }
+RtpPacket::~RtpPacket() = default;
 
-RtpPacket &RtpPacket::operator=(const RtpPacket &other)
-{
-    d = other.d;
-    return *this;
-}
+RtpPacket &RtpPacket::operator=(const RtpPacket &other) = default;
 
 bool RtpPacket::isNull() const { return (d ? false : true); }
 
@@ -537,10 +529,7 @@ void RtpChannel::disconnectNotify(const QMetaMethod &signal)
 bool PayloadInfo::Parameter::operator==(const PayloadInfo::Parameter &other) const
 {
     // according to xep-167, parameter names are case-sensitive
-    if (name == other.name && value == other.value)
-        return true;
-    else
-        return false;
+    return name == other.name && value == other.value;
 }
 
 class PayloadInfo::Private {
@@ -558,12 +547,9 @@ public:
     bool operator==(const Private &other) const
     {
         // according to xep-167, parameters are unordered
-        if (id == other.id && name.compare(other.name, Qt::CaseInsensitive) && clockrate == other.clockrate
+        return id == other.id && name.compare(other.name, Qt::CaseInsensitive) && clockrate == other.clockrate
             && channels == other.channels && ptime == other.ptime && maxptime == other.maxptime
-            && compareUnordered(parameters, other.parameters)) {
-            return true;
-        } else
-            return false;
+            && compareUnordered(parameters, other.parameters);
     }
 
     static bool compareUnordered(const QList<PayloadInfo::Parameter> &a, const QList<PayloadInfo::Parameter> &b)
@@ -775,7 +761,7 @@ int RtpSession::inputVolume() const { return d->c->inputVolume(); }
 
 void RtpSession::setInputVolume(int level) { d->c->setInputVolume(level); }
 
-RtpSession::Error RtpSession::errorCode() const { return RtpSession::Error(d->c->errorCode()); }
+RtpSession::Error RtpSession::errorCode() const { return static_cast<RtpSession::Error>(d->c->errorCode()); }
 
 RtpChannel *RtpSession::audioRtpChannel() { return &d->audioRtpChannel; }
 

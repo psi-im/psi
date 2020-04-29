@@ -11,8 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
@@ -73,14 +75,14 @@ class VideoWidget : public QWidget {
     Q_OBJECT
 
 public:
-    VideoWidget(QWidget *parent = nullptr);
-    ~VideoWidget();
+    explicit VideoWidget(QWidget *parent = nullptr);
+    ~VideoWidget() override;
 
-    virtual QSize sizeHint() const;
+    QSize sizeHint() const override;
 
 protected:
-    virtual void paintEvent(QPaintEvent *event);
-    virtual void resizeEvent(QResizeEvent *event);
+    void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 signals:
     // check the size hint after receiving this signal
@@ -153,8 +155,8 @@ class Features : public QObject {
 public:
     enum Type { AudioOut = 0x01, AudioIn = 0x02, VideoIn = 0x04, AudioModes = 0x08, VideoModes = 0x10, All = 0xff };
 
-    Features(QObject *parent = nullptr);
-    ~Features();
+    explicit Features(QObject *parent = nullptr);
+    ~Features() override;
 
     QList<Device> audioOutputDevices();
     QList<Device> audioInputDevices();
@@ -205,12 +207,12 @@ signals:
     void packetsWritten(int count);
 
 protected:
-    virtual void connectNotify(const QMetaMethod &signal) Q_DECL_OVERRIDE;
-    virtual void disconnectNotify(const QMetaMethod &signal) Q_DECL_OVERRIDE;
+    void connectNotify(const QMetaMethod &signal) Q_DECL_OVERRIDE;
+    void disconnectNotify(const QMetaMethod &signal) Q_DECL_OVERRIDE;
 
 private:
     RtpChannel();
-    ~RtpChannel();
+    ~RtpChannel() override;
     Q_DISABLE_COPY(RtpChannel)
 
     friend class RtpSession;
@@ -272,8 +274,8 @@ class RtpSession : public QObject {
 public:
     enum Error { ErrorGeneric, ErrorSystem, ErrorCodec };
 
-    RtpSession(QObject *parent = nullptr);
-    ~RtpSession();
+    explicit RtpSession(QObject *parent = nullptr);
+    ~RtpSession() override;
 
     void reset();
 

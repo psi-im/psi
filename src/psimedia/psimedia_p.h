@@ -11,21 +11,25 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
 #include "psimedia.h"
-#include "psimediaprovider.h"
 
 #include <QCoreApplication>
+#include <QPluginLoader>
+
 #ifdef QT_GUI_LIB
 #include <QPainter>
 #endif
-#include <QPluginLoader>
 
+#include "psimediaprovider.h"
 namespace PsiMedia {
+
 #ifdef QT_GUI_LIB
 //----------------------------------------------------------------------------
 // VideoWidget
