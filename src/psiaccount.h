@@ -161,6 +161,7 @@ public:
     const Activity &   activity() const;
     const GeoLocation &geolocation() const;
     bool               hasPGP() const;
+    QString            pgpKeyId() const;
     QHostAddress *     localAddress() const;
 
     ChatDlg *        findChatDialog(const Jid &jid, bool compareResource = true) const;

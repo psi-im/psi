@@ -1408,6 +1408,8 @@ PrivacyManager *PsiAccount::privacyManager() const { return d->privacyManager; }
 
 bool PsiAccount::hasPGP() const { return !d->cur_pgpSecretKey.isNull(); }
 
+QString PsiAccount::pgpKeyId() const { return d->cur_pgpSecretKey.keyId(); }
+
 QHostAddress *PsiAccount::localAddress() const
 {
     QString s = d->localAddress.toString();
