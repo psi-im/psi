@@ -6006,19 +6006,13 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
     if (!ensureKey(_m.to()))
         return -1;
 
-    QString keyID    = findFirstRelevant(_m.to())->publicKeyID();
+    QString keyID = findFirstRelevant(_m.to())->publicKeyID();
     if (keyID.isEmpty())
         return -1;
 
-    const QStringList arguments = {
-        "--no-tty",
-        "--enable-special-filenames",
-        "--armor",
-        "--always-trust",
-        "--encrypt",
-        "--recipient",
-        "0x" + keyID
-    };
+    const QStringList arguments
+        = { "--no-tty",  "--enable-special-filenames", "--armor", "--always-trust", "--encrypt", "--recipient",
+            "0x" + keyID };
 
     GpgProcess gpg;
     gpg.start(arguments);
@@ -6041,9 +6035,7 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 #endif
 }
 
-void PsiAccount::pgp_encryptFinished(const int id,
-                                     const GpgProcess &gpg,
-                                     const Message &origMsg,
+void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const Message &origMsg,
                                      const QByteArray &encryptedText)
 {
 #ifdef HAVE_PGPUTIL
@@ -6081,8 +6073,8 @@ void PsiAccount::pgp_encryptFinished(const int id,
         dj_sendMessage(mwrap);
     }
 
-    const bool success = gpg.success();
-    const int error    = gpg.exitCode();
+    const bool      success     = gpg.success();
+    const int       error       = gpg.exitCode();
     const QString &&errorString = gpg.errorString();
 
     QTimer::singleShot(250, [this, id, success, error, errorString]() {
@@ -6363,7 +6355,7 @@ bool PsiAccount::ensureKey(const Jid &j)
         // Select a key
         PGPKeyDlg *w = new PGPKeyDlg(PGPKeyDlg::Public, akey, nullptr);
         w->setWindowTitle(tr("Public Key: %1").arg(JIDUtil::toString(j, true)));
-        int                r = w->exec();
+        int     r = w->exec();
         QString keyId;
         if (r == QDialog::Accepted)
             keyId = w->keyId();

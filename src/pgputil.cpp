@@ -10,11 +10,9 @@
 
 PGPUtil *PGPUtil::instance_ = nullptr;
 
-PGPUtil::PGPUtil()
-    : qcaEventHandler_(nullptr)
-    , qcaKeyStoreManager_(new QCA::KeyStoreManager)
-    , passphraseDlg_(nullptr)
-    , cache_no_pgp_(false)
+PGPUtil::PGPUtil() :
+    qcaEventHandler_(nullptr), qcaKeyStoreManager_(new QCA::KeyStoreManager), passphraseDlg_(nullptr),
+    cache_no_pgp_(false)
 {
     qcaEventHandler_ = new QCA::EventHandler(this);
 
@@ -292,7 +290,8 @@ void PGPUtil::addPassphrase(const QString &id, const QString &pass) { passphrase
 
 void PGPUtil::keyStoreAvailable(const QString &k)
 {
-    if (!qcaKeyStoreManager_) return;
+    if (!qcaKeyStoreManager_)
+        return;
     QCA::KeyStore *ks = new QCA::KeyStore(k, qcaKeyStoreManager_);
     connect(ks, SIGNAL(updated()), SIGNAL(pgpKeysUpdated()));
     keystores_ += ks;

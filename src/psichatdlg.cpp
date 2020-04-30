@@ -31,9 +31,9 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "coloropt.h"
-#include "gpgprocess.h"
 #include "fancylabel.h"
 #include "filesharingmanager.h"
+#include "gpgprocess.h"
 #include "iconaction.h"
 #include "iconlabel.h"
 #include "iconselect.h"
@@ -186,7 +186,7 @@ public slots:
             return;
         }
         dlg_->appendSysMsg(TextUtil::escape(
-                               QString("Version response: N: %2 V: %3 OS: %4").arg(version->name(), version->version(), version->os())));
+            QString("Version response: N: %2 V: %3 OS: %4").arg(version->name(), version->version(), version->os())));
     };
 
     void lastactivity_finished()
@@ -202,7 +202,7 @@ public slots:
             dlg_->appendSysMsg(QString("Last activity at %1").arg(idle->time().toString()));
         } else {
             dlg_->appendSysMsg(
-                        QString("Last activity at %1 (%2)").arg(idle->time().toString(), TextUtil::escape(idle->status())));
+                QString("Last activity at %1 (%2)").arg(idle->time().toString(), TextUtil::escape(idle->status())));
         }
     }
 
@@ -247,10 +247,10 @@ void PsiChatDlg::initUi()
     ui_.le_jid->lineEdit()->setReadOnly(true);
     if (autoSelectContact_) {
         QStringList excl = PsiOptions::instance()
-                ->getOption("options.ui.chat.default-jid-mode-ignorelist")
-                .toString()
-                .toLower()
-                .split(",", QString::SkipEmptyParts);
+                               ->getOption("options.ui.chat.default-jid-mode-ignorelist")
+                               .toString()
+                               .toLower()
+                               .split(",", QString::SkipEmptyParts);
         if (excl.indexOf(jid().bare()) == -1) {
             ui_.le_jid->insertItem(0, "auto", jid().full());
             ui_.le_jid->setCurrentIndex(0);
@@ -409,7 +409,7 @@ void PsiChatDlg::setLooks()
         } else {
             ui_.toolbar->hide();
             ui_.tb_emoticons->setVisible(
-                        PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
+                PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
             ui_.tb_actions->show();
             ui_.tb_voice->setVisible(AvCallManager::isSupported());
         }
@@ -509,7 +509,7 @@ void PsiChatDlg::updateToolbuttons()
             action->addTo(ui_.toolbar);
             if (actionName == QLatin1String("chat_icon") || actionName == QLatin1String("chat_templates")) {
                 static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
-                        ->setPopupMode(QToolButton::InstantPopup);
+                    ->setPopupMode(QToolButton::InstantPopup);
             }
         }
     }
@@ -573,11 +573,11 @@ void PsiChatDlg::initToolButtons()
         } else if (name == QString::fromLatin1("chat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
                 FileShareDlg::shareFiles(
-                            account(), account()->selfContact()->jid(),
-                            [this](const QList<XMPP::Reference> &&rl, const QString &desc) {
-                    doFileShare(std::move(rl), desc);
-                },
-                this);
+                    account(), account()->selfContact()->jid(),
+                    [this](const QList<XMPP::Reference> &&rl, const QString &desc) {
+                        doFileShare(std::move(rl), desc);
+                    },
+                    this);
             });
         } else if (name == "chat_pin_tab") {
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
@@ -633,18 +633,14 @@ void PsiChatDlg::setContactToolTip(QString text)
 
 void PsiChatDlg::showOwnFingerprint()
 {
-    const QStringList arguments = {
-        "--with-colons",
-        "--fingerprint",
-        "0x" + account()->pgpKeyId()
-    };
+    const QStringList arguments = { "--with-colons", "--fingerprint", "0x" + account()->pgpKeyId() };
 
     GpgProcess gpg;
     gpg.start(arguments);
     gpg.waitForFinished();
 
-    QString fingerprint;
-    const QString &&out = QString::fromUtf8(gpg.readAllStandardOutput());
+    QString             fingerprint;
+    const QString &&    out   = QString::fromUtf8(gpg.readAllStandardOutput());
     const QStringList &&lines = out.split("\n");
     for (const QString &line : lines) {
         const QString &&type = line.section(':', 0, 0);
@@ -655,7 +651,7 @@ void PsiChatDlg::showOwnFingerprint()
     }
 
     if (fingerprint.size() == 40) {
-        for (int k = fingerprint.size()-4; k >= 3; k -= 4) {
+        for (int k = fingerprint.size() - 4; k >= 3; k -= 4) {
             fingerprint.insert(k, ' ');
         }
         fingerprint.insert(24, ' ');
@@ -744,7 +740,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bo
                 if (old_jid != new_auto_jid) {
                     if (autoSelectContact_ && (status != XMPP::Status::Offline || !new_auto_jid.resource().isEmpty())) {
                         appendSysMsg(tr("Contact has been switched: %1")
-                                     .arg(TextUtil::escape(JIDUtil::toString(new_auto_jid, true))));
+                                         .arg(TextUtil::escape(JIDUtil::toString(new_auto_jid, true))));
                     }
                 }
             }
@@ -874,7 +870,7 @@ void PsiChatDlg::optionsUpdate()
     updateToolbuttons();
     ChatDlg::optionsUpdate();
     if (!ui_.mle->chatEdit()->hasSoundRecButton()
-            && PsiOptions::instance()->getOption("options.media.audio-message").toBool()) {
+        && PsiOptions::instance()->getOption("options.media.audio-message").toBool()) {
         ui_.mle->chatEdit()->addSoundRecButton();
     } else if (ui_.mle->chatEdit()->hasSoundRecButton()) {
         ui_.mle->chatEdit()->removeSoundRecButton();
@@ -897,8 +893,8 @@ void PsiChatDlg::updatePGP()
     checkPGPAutostart();
 
     ui_.tb_pgp->setVisible(
-                account()->hasPGP() && !smallChat_
-                && !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
+        account()->hasPGP() && !smallChat_
+        && !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
     ui_.log->setEncryptionEnabled(isEncryptionEnabled());
 }
 
@@ -930,11 +926,11 @@ void PsiChatDlg::actPgpToggled(bool b)
     if (!account()->hasPGP() || !PGPUtil::instance().pgpAvailable())
         return;
 
-    QMenu *menu = new QMenu();
-    QAction *actEnableGpg = new QAction(tr("Enable OpenPGP encryption"), this);
-    QAction *actDisableGpg = new QAction(tr("Disable OpenPGP encryption"), this);
-    QAction *actAssignKey = new QAction(tr("Assign Open&PGP Key"), this);
-    QAction *actUnassignKey = new QAction(tr("Unassign Open&PGP Key"), this);
+    QMenu *  menu                  = new QMenu();
+    QAction *actEnableGpg          = new QAction(tr("Enable OpenPGP encryption"), this);
+    QAction *actDisableGpg         = new QAction(tr("Disable OpenPGP encryption"), this);
+    QAction *actAssignKey          = new QAction(tr("Assign Open&PGP Key"), this);
+    QAction *actUnassignKey        = new QAction(tr("Unassign Open&PGP Key"), this);
     QAction *actShowOwnFingerprint = new QAction(tr("Show own &fingerprint"), this);
 
     actEnableGpg->setVisible(b);
@@ -959,23 +955,19 @@ void PsiChatDlg::actPgpToggled(bool b)
         autoPGP_ = false;
         ui_.log->setEncryptionEnabled(true);
         actions_->action("chat_pgp")->setChecked(true);
-    }
-    else if (act == actDisableGpg) {
+    } else if (act == actDisableGpg) {
         autoPGP_ = false;
         ui_.log->setEncryptionEnabled(false);
         actions_->action("chat_pgp")->setChecked(false);
-    }
-    else if (act == actAssignKey) {
+    } else if (act == actAssignKey) {
         if (item) {
             account()->actionAssignKey(jid());
         }
-    }
-    else if (act == actUnassignKey) {
+    } else if (act == actUnassignKey) {
         if (item) {
             account()->actionUnassignKey(jid());
         }
-    }
-    else if (act == actShowOwnFingerprint) {
+    } else if (act == actShowOwnFingerprint) {
         showOwnFingerprint();
     }
 
@@ -987,9 +979,9 @@ void PsiChatDlg::doClearButton()
 {
     if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
         switch (QMessageBox::warning(
-                    this, tr("Warning"),
-                    tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
-                    QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No)) {
+            this, tr("Warning"),
+            tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
+            QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No)) {
         case QMessageBox::No:
             break;
         case QMessageBox::YesAll:
@@ -1075,8 +1067,8 @@ void PsiChatDlg::chatEditCreated()
 
     connect(chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
         FileShareDlg::shareFiles(
-                    account(), account()->selfContact()->jid(), data,
-                    [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
+            account(), account()->selfContact()->jid(), data,
+            [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
     });
 }
 

@@ -27,15 +27,9 @@
 #include <windows.h>
 #endif
 
-GpgProcess::GpgProcess(QObject *parent) : QProcess(parent)
-{
-    _bin = findBin();
-}
+GpgProcess::GpgProcess(QObject *parent) : QProcess(parent) { _bin = findBin(); }
 
-bool GpgProcess::success() const
-{
-    return (exitCode() == 0);
-}
+bool GpgProcess::success() const { return (exitCode() == 0); }
 
 inline bool checkBin(const QString &bin)
 {
@@ -112,7 +106,7 @@ QString GpgProcess::findBin() const
 #ifdef Q_OS_WIN
     QString pathSep = ";";
 #else
-    QString pathSep = ":";
+    QString     pathSep = ":";
 #endif
 
     QStringList paths = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, QString::SkipEmptyParts);

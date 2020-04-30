@@ -27,8 +27,8 @@
 
 #include "common.h"
 #include "gpgprocess.h"
-#include "showtextdlg.h"
 #include "pgputil.h"
+#include "showtextdlg.h"
 
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -40,10 +40,7 @@
 
 class KeyViewItem : public QStandardItem {
 public:
-    KeyViewItem(const QString &id, const QString &name) : QStandardItem(), keyId_(id)
-    {
-        setText(name);
-    }
+    KeyViewItem(const QString &id, const QString &name) : QStandardItem(), keyId_(id) { setText(name); }
 
     QString keyId() const { return keyId_; }
 
@@ -96,20 +93,12 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     KeyViewItem *selectedItem = nullptr;
     int          rowIdx       = 0;
 
-    const QStringList &&showSecretKeys = {
-        "--with-fingerprint",
-        "--list-secret-keys",
-        "--with-colons",
-        "--fixed-list-mode"
-    };
-    const QStringList &&showPublicKeys = {
-        "--with-fingerprint",
-        "--list-public-keys",
-        "--with-colons",
-        "--fixed-list-mode"
-    };
+    const QStringList &&showSecretKeys
+        = { "--with-fingerprint", "--list-secret-keys", "--with-colons", "--fixed-list-mode" };
+    const QStringList &&showPublicKeys
+        = { "--with-fingerprint", "--list-public-keys", "--with-colons", "--fixed-list-mode" };
 
-    QString keysRaw;
+    QString    keysRaw;
     GpgProcess gpg;
 
     gpg.start(showSecretKeys);
@@ -119,20 +108,19 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     gpg.waitForFinished();
     keysRaw.append(QString::fromUtf8(gpg.readAll()));
 
-
     QStringList keysList = keysRaw.split("\n");
-    QString uid;
+    QString     uid;
     for (const QString &line : keysList) {
         const QString &&type = line.section(':', 0, 0);
-        QStandardItem *root = model_->invisibleRootItem();
+        QStandardItem * root = model_->invisibleRootItem();
 
         if (type == "pub" || type == "sec") {
-            uid = line.section(':', 9, 9); // Used ID
-            const QString &&longID = line.section(':', 4, 4).right(16); // Long ID
-            const QString &&shortID = line.section(':', 4, 4).right(8); // Short ID
+            uid                     = line.section(':', 9, 9);           // Used ID
+            const QString &&longID  = line.section(':', 4, 4).right(16); // Long ID
+            const QString &&shortID = line.section(':', 4, 4).right(8);  // Short ID
 
-            KeyViewItem *  i  = new KeyViewItem(longID, shortID);
-            KeyViewItem *  i2 = new KeyViewItem(longID, QString());
+            KeyViewItem *i  = new KeyViewItem(longID, shortID);
+            KeyViewItem *i2 = new KeyViewItem(longID, QString());
             root->setChild(rowIdx, 0, i);
             root->setChild(rowIdx, 1, i2);
             ++rowIdx;
@@ -144,10 +132,9 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
             if (!firstItem) {
                 firstItem = i;
             }
-        }
-        else if (type == "uid") {
+        } else if (type == "uid") {
             if (rowIdx >= 1) {
-                QStandardItem * i2 = root->child(rowIdx - 1, 1);
+                QStandardItem *i2 = root->child(rowIdx - 1, 1);
 
                 if (i2->text().isEmpty()) {
                     const QString &&name = line.section(':', 9, 9); // Name
@@ -215,9 +202,8 @@ void PGPKeyDlg::show_info()
     QString    info;
 
     gpg.info(info);
-    ShowTextDlg *w     = new ShowTextDlg(info, true, false, this);
+    ShowTextDlg *w = new ShowTextDlg(info, true, false, this);
     w->setWindowTitle(CAP(tr("GnuPG info")));
     w->resize(560, 240);
     w->show();
 }
-
