@@ -253,27 +253,28 @@ if(WIN32)
     if(PSIMEDIA_FOUND)
         if(MSVC)
             set(PSIMEDIA_DEPS
-                libffi-7.dll
-                libgio-2.0-0.dll
-                libglib-2.0-0.dll
-                libgmodule-2.0-0.dll
-                libgobject-2.0-0.dll
-                libgstapp-1.0-0.dll
-                libgstaudio-1.0-0.dll
-                libgstbadaudio-1.0-0.dll
-                libgstbadbase-1.0-0.dll
-                libgstbase-1.0-0.dll
-                libgstnet-1.0-0.dll
-                libgstpbutils-1.0-0.dll
-                libgstreamer-1.0-0.dll
-                libgstriff-1.0-0.dll
-                libgstrtp-1.0-0.dll
-                libgsttag-1.0-0.dll
-                libgstvideo-1.0-0.dll
-                libgthread-2.0-0.dll
+                ffi-7.dll
+                gio-2.0-0.dll
+                glib-2.0-0.dll
+                gmodule-2.0-0.dll
+                gobject-2.0-0.dll
+                gstapp-1.0-0.dll
+                gstaudio-1.0-0.dll
+                gstbadaudio-1.0-0.dll
+                gstbadbase-1.0-0.dll
+                gstbase-1.0-0.dll
+                gstnet-1.0-0.dll
+                gstpbutils-1.0-0.dll
+                gstreamer-1.0-0.dll
+                gstriff-1.0-0.dll
+                gstrtp-1.0-0.dll
+                gsttag-1.0-0.dll
+                gstvideo-1.0-0.dll
+                gthread-2.0-0.dll
+                libgcc_s_sjlj-1.dll
                 libharfbuzz-0.dll
                 libiconv-2.dll
-                libintl-8.dll
+                intl-8.dll
                 libjpeg-8.dll
                 libogg-0.dll
                 libopus-0.dll
@@ -286,32 +287,32 @@ if(WIN32)
                 libvorbisenc-2.dll
                 libwinpthread-1.dll
                 libxml2-2.dll
-                libz.dll
+                z-1.dll
                 )
             set(GSTREAMER_PLUGINS
-                libgstapp.dll
-                libgstaudioconvert.dll
-                libgstaudiomixer.dll
-                libgstaudioresample.dll
-                libgstcoreelements.dll
-                libgstdirectsoundsink.dll
-                libgstdirectsoundsrc.dll
-                libgstjpeg.dll
-                libgstlevel.dll
-                libgstogg.dll
-                libgstopus.dll
-                libgstopusparse.dll
-                libgstplayback.dll
-                libgstrtp.dll
-                libgstrtpmanager.dll
-                libgsttheora.dll
-                libgstvideoconvert.dll
-                libgstvideorate.dll
-                libgstvideoscale.dll
-                libgstvolume.dll
-                libgstvorbis.dll
-                libgstwasapi.dll
-                libgstwinks.dll
+                gstapp.dll
+                gstaudioconvert.dll
+                gstaudiomixer.dll
+                gstaudioresample.dll
+                gstcoreelements.dll
+                gstdirectsound.dll
+                gstdirectsoundsrc.dll
+                gstjpeg.dll
+                gstlevel.dll
+                gstogg.dll
+                gstopus.dll
+                gstopusparse.dll
+                gstplayback.dll
+                gstrtp.dll
+                gstrtpmanager.dll
+                gsttheora.dll
+                gstvideoconvert.dll
+                gstvideorate.dll
+                gstvideoscale.dll
+                gstvolume.dll
+                gstvorbis.dll
+                gstwasapi.dll
+                gstwinks.dll
                 )
             set(PSIMEDIA_DEPS_DIR "${GST_SDK}/bin")
             set(GSTREAMER_PLUGINS_DIR "${GST_SDK}/lib/gstreamer-1.0")
