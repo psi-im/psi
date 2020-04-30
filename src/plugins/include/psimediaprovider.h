@@ -29,6 +29,8 @@
 #include <QString>
 #include <QVariantMap>
 
+#include <functional>
+
 // since we cannot put signals/slots in Qt "interfaces", we use the following
 //   defines to hint about signals/slots that derived classes should provide
 #define HINT_SIGNALS protected
