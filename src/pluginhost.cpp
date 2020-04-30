@@ -1304,7 +1304,7 @@ bool PluginHost::ensureMediaProvider()
 
     if (!PsiMedia::isSupported()) {
         auto p = mp->createProvider();
-        if (p && !p->init(QString())) {
+        if (p && !p->init()) {
             delete p;
             return false;
         }

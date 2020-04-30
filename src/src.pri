@@ -120,6 +120,7 @@ HEADERS += \
     $$PWD/theme.h \
     $$PWD/theme_p.h \
     $$PWD/applicationinfo.h \
+    $$PWD/gpgprocess.h \
     $$PWD/pgptransaction.h \
     $$PWD/userlist.h \
     $$PWD/mainwin.h \
@@ -266,6 +267,7 @@ SOURCES += \
     $$PWD/theme.cpp \
     $$PWD/theme_p.cpp \
     $$PWD/applicationinfo.cpp \
+    $$PWD/gpgprocess.cpp \
     $$PWD/pgptransaction.cpp \
     $$PWD/userlist.cpp \
     $$PWD/mainwin.cpp \

@@ -33,8 +33,8 @@
 OptionsTabPluginWrapper::OptionsTabPluginWrapper(OAH_PluginOptionsTab *tab, QObject *parent) :
     OptionsTab(parent, tab->id(), tab->parentId(), tab->title(), tab->desc()), plugin(tab)
 {
-    tab->setCallbacks([this]() { emit dataChanged(); }, [this](bool nd) { emit noDirty(nd); },
-                      [this](QWidget *w) { emit connectDataChanged(w); });
+    plugin->setCallbacks([this]() { emit dataChanged(); }, [this](bool nd) { emit noDirty(nd); },
+                         [this](QWidget *w) { emit connectDataChanged(w); });
 }
 
 /**
@@ -62,6 +62,7 @@ void OptionsTabPluginWrapper::applyOptions()
 {
     if (!w)
         return;
+    plugin->applyOptions();
 }
 
 /**
@@ -71,6 +72,7 @@ void OptionsTabPluginWrapper::restoreOptions()
 {
     if (!w)
         return;
+    plugin->restoreOptions();
 }
 
 QIcon OptionsTabPluginWrapper::tabIcon() const { return plugin->icon(); }

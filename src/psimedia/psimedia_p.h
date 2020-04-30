@@ -107,6 +107,7 @@ public:
         videoInputDevices   = importDevices(in.videoInputDevices);
         supportedAudioModes = importAudioModes(in.supportedAudioModes);
         supportedVideoModes = importVideoModes(in.supportedVideoModes);
+        emit q->updated();
     }
 
 private slots:
@@ -114,14 +115,8 @@ private slots:
     {
         c = provider()->createFeatures();
         c->qobject()->setParent(this);
-        connect(c->qobject(), SIGNAL(updated()), SLOT(c_updated()));
-        importResults(c->results());
-    }
-
-    void c_updated()
-    {
-        importResults(c->results());
-        emit q->updated();
+        c->lookup(0xff, this, [this](const PFeatures &in) { importResults(in); });
+        c->monitor(0xff, this, [this](const PFeatures &in) { importResults(in); });
     }
 };
 

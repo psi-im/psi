@@ -128,7 +128,7 @@ Provider *provider()
         }
 
         if (provider) {
-            if (!provider->init(QString())) {
+            if (!provider->init()) {
                 delete provider;
                 return nullptr;
             }
@@ -160,14 +160,16 @@ PluginResult loadPlugin(const QString &fname, const QString &resourcePath)
         return ErrorVersion;
     }
 
-    Provider *provider = instance->createProvider();
+    QVariantMap params;
+    params["resourcePath"] = resourcePath;
+    Provider *provider     = instance->createProvider(params);
     if (!provider) {
         loader->unload();
         delete loader;
         return ErrorInit;
     }
 
-    if (!provider->init(resourcePath)) {
+    if (!provider->init()) {
         delete provider;
         loader->unload();
         delete loader;
