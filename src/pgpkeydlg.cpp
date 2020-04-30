@@ -101,12 +101,16 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     QString    keysRaw;
     GpgProcess gpg;
 
-    gpg.start(showSecretKeys);
-    gpg.waitForFinished();
-    keysRaw.append(QString::fromUtf8(gpg.readAll()));
-    gpg.start(showPublicKeys);
-    gpg.waitForFinished();
-    keysRaw.append(QString::fromUtf8(gpg.readAll()));
+    if (t == Secret || t == All) {
+        gpg.start(showSecretKeys);
+        gpg.waitForFinished();
+        keysRaw.append(QString::fromUtf8(gpg.readAll()));
+    }
+    if (t == Public || t == All) {
+        gpg.start(showPublicKeys);
+        gpg.waitForFinished();
+        keysRaw.append(QString::fromUtf8(gpg.readAll()));
+    }
 
     QStringList keysList = keysRaw.split("\n");
     QString     uid;
