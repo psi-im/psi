@@ -467,15 +467,20 @@ void AccountModifyDlg::chooseKey()
     PGPKeyDlg *w  = new PGPKeyDlg(PGPKeyDlg::Secret, id, this);
     w->setWindowTitle(tr("Secret Key"));
     int                r = w->exec();
-    QCA::KeyStoreEntry entry;
+    QString keyId;
     if (r == QDialog::Accepted)
-        entry = w->keyId();
+        keyId = w->keyId();
     delete w;
 
-    if (!entry.isNull()) {
-        key = entry.pgpSecretKey();
-        updateUserID();
-    }
+    if (keyId.isEmpty())
+        return;
+
+    QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(keyId);
+    if (e.isNull())
+        return;
+
+    key = e.pgpSecretKey();
+    updateUserID();
 }
 
 void AccountModifyDlg::clearKey()
