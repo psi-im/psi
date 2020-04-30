@@ -50,7 +50,7 @@ class RtpSessionContext;
 class Plugin {
 public:
     virtual ~Plugin() { }
-    virtual Provider *createProvider() = 0;
+    virtual Provider *createProvider(const QVariantMap &param) = 0;
 };
 
 class QObjectInterface {
@@ -131,10 +131,10 @@ public:
 
 class Provider : public QObjectInterface {
 public:
-    virtual bool    init(const QString &resourcePath) = 0;
-    virtual bool    isInitialized() const             = 0;
-    virtual QString creditName()                      = 0;
-    virtual QString creditText()                      = 0;
+    virtual bool    init()                = 0;
+    virtual bool    isInitialized() const = 0;
+    virtual QString creditName()          = 0;
+    virtual QString creditText()          = 0;
 
     virtual FeaturesContext *  createFeatures()   = 0;
     virtual RtpSessionContext *createRtpSession() = 0;
