@@ -249,6 +249,7 @@ public:
 
         QListIterator<PsiIcon *> it = iss.iterator();
         count                       = 0;
+        auto iconHeight = ((QFontInfo(parent->font()).pixelSize() + 8) / 16) << 5; // ~ 2 times bigger than font
         while (it.hasNext()) {
             if (count++ >= displayNumIcons)
                 break; // display only first displayNumIcons icons
@@ -256,10 +257,13 @@ public:
             PsiIcon *icon = it.next();
             QPixmap  pix  = icon->pixmap();
 
-            iconRects[icon] = QRect(w, margin, pix.width(), pix.height());
+            QSize s = pix.size();
+            if (pix.height() > iconHeight || pix.width() > iconHeight)
+                s.scale(iconHeight, iconHeight, Qt::KeepAspectRatio);
+            iconRects[icon] = QRect(w, margin, s.width(), s.height());
 
-            w += pix.width() + margin;
-            h = qMax(h, pix.height() + 2 * margin);
+            w += s.width() + margin;
+            h = qMax(h, s.height() + 2 * margin);
 
             connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
             icon->activated(false); // start animation
@@ -315,11 +319,12 @@ public:
 #ifndef WIDGET_PLUGIN
         QFontMetrics fm = painter->fontMetrics();
 
+        painter->setRenderHints(QPainter::SmoothPixmapTransform | QPainter::Antialiasing);
         QMap<PsiIcon *, QRect>::ConstIterator it;
         for (it = iconRects.begin(); it != iconRects.end(); it++) {
             PsiIcon *icon = it.key();
             QRect    r    = it.value();
-            painter->drawPixmap(QPoint(10 + r.left(), fm.lineSpacing() + 2 + r.top()), icon->pixmap());
+            painter->drawPixmap(r.translated(10, fm.lineSpacing() + 2), icon->pixmap());
         }
 #else
         Q_UNUSED(painter);
