@@ -997,9 +997,13 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
         painter->drawRect(r);
     }
 
-    const QPixmap statusPixmap   = this->statusPixmap(index);
-    const QSize   pixmapSize     = statusPixmap.size() * PSI_HIDPI;
-    QRect         statusIconRect = relativeRect(o, pixmapSize, QRect());
+    QPixmap statusPixmap = this->statusPixmap(index);
+    QSize   pixmapSize   = statusPixmap.size() * PSI_HIDPI;
+    if (pixmapSize.height() > opt.rect.height()) {
+        pixmapSize   = pixmapSize.scaled(opt.rect.size() * 0.7, Qt::KeepAspectRatio);
+        statusPixmap = statusPixmap.scaled(pixmapSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    QRect statusIconRect = relativeRect(o, pixmapSize, QRect());
     statusIconRect.moveTop(opt.rect.top() + (opt.rect.height() - statusIconRect.height()) / 2);
     QString text = index.data(Qt::DisplayRole).toString();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
@@ -1015,8 +1019,12 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
         ? IconsetFactory::iconPixmap("psi/cryptoYes")
         : IconsetFactory::iconPixmap("psi/cryptoNo");
 
-    QSize sslPixmapSize = statusPixmap.size() * PSI_HIDPI;
-    QRect sslRect       = relativeRect(o, sslPixmapSize, r, 3);
+    QSize sslPixmapSize = sslPixmap.size() * PSI_HIDPI;
+    if (sslPixmapSize.height() > opt.rect.height()) {
+        sslPixmapSize = sslPixmapSize.scaled(opt.rect.size() * 0.7, Qt::KeepAspectRatio);
+        sslPixmap     = sslPixmap.scaled(sslPixmapSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    QRect sslRect = relativeRect(o, sslPixmapSize, r, 3);
     sslRect.moveTop(opt.rect.top() + (opt.rect.height() - sslRect.height()) / 2);
     painter->drawPixmap(sslRect, sslPixmap);
     r = relativeRect(opt, QSize(), sslRect, 3);
