@@ -20,14 +20,15 @@
 
 #include "psimedia.h"
 
+#include "pluginmanager.h"
+#include "psimediaprovider.h"
+
 #include <QCoreApplication>
 #include <QPluginLoader>
-
 #ifdef QT_GUI_LIB
 #include <QPainter>
 #endif
 
-#include "psimediaprovider.h"
 namespace PsiMedia {
 
 #ifdef QT_GUI_LIB
@@ -82,6 +83,8 @@ public:
 
     Private(Features *_q) : QObject(_q), q(_q)
     {
+        if (!PluginManager::instance()->ensureMediaProvider())
+            return;
         if (provider()->isInitialized()) {
             providerInitialized();
         } else {

@@ -21,11 +21,7 @@
 
 #include <QApplication>
 
-MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent)
-{
-    connect(&_features, SIGNAL(updated()), SLOT(featuresUpdated()));
-    updateDefaults();
-}
+MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent) { }
 
 MediaDeviceWatcher *MediaDeviceWatcher::_instance = nullptr;
 MediaDeviceWatcher *MediaDeviceWatcher::instance()
@@ -35,38 +31,14 @@ MediaDeviceWatcher *MediaDeviceWatcher::instance()
     return _instance;
 }
 
-void MediaDeviceWatcher::updateDefaults()
+void MediaDeviceWatcher::selectDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput)
 {
-    QString id;
-
-    QString userPrefAudioOut = PsiOptions::instance()->getOption("options.media.devices.audio-output").toString();
-    bool    hasAudioOut      = !id.isNull();
-    QString userPrefAudioIn  = PsiOptions::instance()->getOption("options.media.devices.audio-input").toString();
-    bool    hasAudioIn       = !id.isNull();
-    QString userPrefVideoIn  = PsiOptions::instance()->getOption("options.media.devices.video-input").toString();
-    bool    hasVideoIn       = !id.isNull();
-
-    // configuration.liveInput = s.value("liveInput", true).toBool();
-    // configuration.loopFile = s.value("liveFile", true).toBool();
-    // configuration.file = s.value("file", QString()).toString();
-
-    // QString audioParams = s.value("audioParams").toString();
-    // QString videoParams = s.value("videoParams").toString();
-
-    _configuration.audioOutDeviceId = (hasAudioIn && userPrefAudioIn.isEmpty())
-        ? QString()
-        : defaultDeviceId(_features.audioOutputDevices(), userPrefAudioOut);
-    _configuration.audioInDeviceId = (hasAudioOut && userPrefAudioOut.isEmpty())
-        ? QString()
-        : defaultDeviceId(_features.audioInputDevices(), userPrefAudioIn);
-    _configuration.videoInDeviceId = (hasVideoIn && userPrefVideoIn.isEmpty())
-        ? QString()
-        : defaultDeviceId(_features.videoInputDevices(), userPrefVideoIn);
-}
-
-void MediaDeviceWatcher::featuresUpdated()
-{
-    updateDefaults();
+    _configuration.audioOutDeviceId
+        = audioOutput.isEmpty() ? QString() : defaultDeviceId(_features.audioOutputDevices(), audioOutput);
+    _configuration.audioInDeviceId
+        = audioInput.isEmpty() ? QString() : defaultDeviceId(_features.audioInputDevices(), audioInput);
+    _configuration.videoInDeviceId
+        = videoInput.isEmpty() ? QString() : defaultDeviceId(_features.videoInputDevices(), videoInput);
     emit updated();
 }
 

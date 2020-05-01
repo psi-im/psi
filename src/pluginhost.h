@@ -21,6 +21,7 @@
 #include "pluginaccessinghost.h"
 #include "popupaccessinghost.h"
 #include "psiaccountcontrollinghost.h"
+#include "psimediahost.h"
 #include "shortcutaccessinghost.h"
 #include "soundaccessinghost.h"
 #include "stanzasendinghost.h"
@@ -61,12 +62,13 @@ class PluginHost : public QObject,
                    public SoundAccessingHost,
                    public EncryptionSupport,
                    public PluginAccessingHost,
-                   public WebkitAccessingHost {
+                   public WebkitAccessingHost,
+                   public PsiMediaHost {
     Q_OBJECT
     Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost ShortcutAccessingHost IconFactoryAccessingHost
                      ActiveTabAccessingHost ApplicationInfoAccessingHost AccountInfoAccessingHost PopupAccessingHost
                          ContactStateAccessingHost PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost
-                             SoundAccessingHost EncryptionSupport PluginAccessingHost WebkitAccessingHost)
+                             SoundAccessingHost EncryptionSupport PluginAccessingHost WebkitAccessingHost PsiMediaHost)
 
 public:
     PluginHost(PluginManager *manager, const QString &pluginFile);
@@ -252,8 +254,10 @@ public:
     void       uninstallChatLogJSDataFilter(const QString &id) override;
     void       executeChatLogJavaScript(QWidget *log, const QString &js) override;
 
-    // PsiMedia provider
+    // PsiMedia provider (calls from psi to plugin)
     bool ensureMediaProvider();
+    // PsiMediaHost (calls from plugin to psi)
+    void selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput) override;
 
 private:
     PluginManager *   manager_;

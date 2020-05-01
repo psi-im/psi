@@ -5,6 +5,7 @@
 
 #include "pluginhost.h"
 
+#include "../avcall/mediadevicewatcher.h"
 #include "accountinfoaccessor.h"
 #include "activetabaccessor.h"
 #include "applicationinfo.h"
@@ -32,6 +33,7 @@
 #include "psiaccount.h"
 #include "psiaccountcontroller.h"
 #include "psimedia/psimedia.h"
+#include "psimediaaccessor.h"
 #include "psimediaprovider.h"
 #include "psioptions.h"
 #include "psiplugin.h"
@@ -431,6 +433,10 @@ bool PluginHost::enable()
             auto wka = qobject_cast<WebkitAccessor *>(plugin_);
             if (wka) {
                 wka->setWebkitAccessingHost(this);
+            }
+            auto pma = qobject_cast<PsiMediaAccessor *>(plugin_);
+            if (pma) {
+                pma->setPsiMediaHost(this);
             }
 
             connected_ = true;
@@ -1311,6 +1317,11 @@ bool PluginHost::ensureMediaProvider()
         PsiMedia::setProvider(p);
     }
     return true;
+}
+
+void PluginHost::selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput)
+{
+    MediaDeviceWatcher::instance()->selectDevices(audioInput, audioOutput, videoInput);
 }
 
 //-- helpers --------------------------------------------------------

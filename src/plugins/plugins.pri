@@ -14,6 +14,8 @@ HEADERS += \
     $$psi_plugins_include_dir/popupaccessor.h \
     $$psi_plugins_include_dir/popupaccessinghost.h \
     $$psi_plugins_include_dir/psimediaprovider.h \
+    $$psi_plugins_include_dir/psimediaaccessor.h \
+    $$psi_plugins_include_dir/psimediahost.h \
     $$psi_plugins_include_dir/shortcutaccessor.h \
     $$psi_plugins_include_dir/shortcutaccessinghost.h\
     $$psi_plugins_include_dir/iconfactoryaccessor.h \

@@ -41,8 +41,8 @@ class MediaDeviceWatcher : public QObject {
     QString defaultDeviceId(const QList<PsiMedia::Device> &devs, const QString &userPref);
 
 public:
-    static MediaDeviceWatcher *      instance();
-    void                             updateDefaults();
+    static MediaDeviceWatcher *instance();
+    void selectDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput);
     inline const MediaConfiguration &configuration() const { return _configuration; }
 
     inline QList<PsiMedia::Device>      audioInputDevices() { return _features.audioInputDevices(); }
@@ -53,11 +53,6 @@ public:
 
 signals:
     void updated();
-
-public slots:
-
-private slots:
-    void featuresUpdated();
 
 private:
     MediaConfiguration         _configuration;
