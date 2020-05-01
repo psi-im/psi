@@ -497,7 +497,11 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             if (statusIcon) {
                 QByteArray imageArray;
                 QBuffer    buff(&imageArray);
-                statusIcon->image().save(&buff, "png");
+                auto       fontSize = QFontInfo(qApp->font()).pixelSize();
+                auto       image    = statusIcon->image();
+                if (image.height() > fontSize * 1.3)
+                    image = image.scaled(fontSize, fontSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                image.save(&buff, "png");
                 QString imgBase64(QUrl::toPercentEncoding(imageArray.toBase64()));
                 str += QString("<img src=\"data:image/png;base64,%1\" alt=\"img\"/>").arg(imgBase64);
             }

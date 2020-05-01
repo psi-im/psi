@@ -133,6 +133,7 @@ public:
         QPalette             palette = o.palette;
         MUCItem::Role        r       = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
         QRect                rect    = o.rect;
+        int                  gap     = qMax(int(fontHeight_ / 6), 1);
 
         if (nickColoring_) {
             if (r == MUCItem::Moderator)
@@ -161,26 +162,31 @@ public:
             if (!avatarAtLeft_) {
                 avaRect.moveTopRight(rect.topRight());
                 avaRect.translate(-1, 1);
-                rect.setRight(avaRect.left() - 1);
+                rect.setRight(avaRect.left() - gap);
             } else {
                 avaRect.translate(1, 1);
-                rect.setLeft(avaRect.right() + 1);
+                rect.setLeft(avaRect.right() + gap);
             }
             mp->drawPixmap(avaRect, ava);
         }
 
-        QPixmap status = showStatusIcons_
-            ? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap()
-            : QPixmap();
+        // fontHeight_
+        QImage status = showStatusIcons_
+            ? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).image()
+            : QImage();
         if (!status.isNull()) {
             QRect statusRect(status.rect());
+            if (statusRect.height() > fontHeight_ * 1.2) {
+                status     = status.scaled(fontHeight_ * 0.8, fontHeight_ * 0.8, Qt::KeepAspectRatio,
+                                       Qt::SmoothTransformation);
+                statusRect = status.rect();
+            }
             statusRect.moveTop(rect.top() + (rect.height() - statusRect.height()) / 2);
             statusRect.moveLeft(rect.left() + 2);
-            mp->drawPixmap(statusRect, status);
-            rect.setLeft(statusRect.right());
+            mp->drawImage(statusRect, status);
+            rect.setLeft(statusRect.right() + gap);
         }
 
-        rect.setLeft(rect.left() + 2); // give some space between icon and nick
         mp->setPen(QPen((o.state & QStyle::State_Selected) ? palette.color(QPalette::HighlightedText)
                                                            : palette.color(QPalette::Text)));
         mp->setFont(o.font);
@@ -244,12 +250,19 @@ public:
 
         QSize size = QItemDelegate::sizeHint(option, index);
         if (index.parent().isValid()) {
-            QPixmap statusIcon
-                = PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).pixmap();
+            int statusIconHeight = 0;
+            if (showStatusIcons_) {
+                statusIconHeight = PsiIconset::instance()
+                                       ->status(index.data(GCUserModel::StatusRole).value<Status>())
+                                       .image()
+                                       .height();
+                if (statusIconHeight > fontHeight_ * 1.2)
+                    statusIconHeight = fontHeight_ * 0.8;
+            }
 
             auto height = QFontMetrics(option.font).boundingRect(index.data(Qt::DisplayRole).toString()).height();
 
-            int rowH = qMax(height, statusIcon.height() + 2);
+            int rowH = qMax(height, statusIconHeight + 2);
             int h    = showAvatar_ ? qMax(avatarSize_ + 2, rowH) : rowH;
             size.setHeight(h);
         } else {
