@@ -31,7 +31,7 @@ class JingleRtp : public QObject {
     Q_OBJECT
 
 public:
-    enum Error { ErrorGeneric, ErrorTimeout, ErrorICE };
+    enum Error { NoError, ErrorGeneric, ErrorTimeout, ErrorICE };
 
     enum Type { Audio = 0x01, Video = 0x02 };
 

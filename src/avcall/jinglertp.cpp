@@ -371,18 +371,18 @@ class JingleRtpPrivate : public QObject {
 public:
     JingleRtp *q;
 
-    JingleRtpManagerPrivate *manager;
-    bool                     incoming;
+    JingleRtpManagerPrivate *manager  = nullptr;
+    bool                     incoming = false;
     XMPP::Jid                peer;
     QString                  sid;
 
-    int                         types;
+    int                         types = 0;
     QList<JingleRtpPayloadType> localAudioPayloadTypes;
     QList<JingleRtpPayloadType> localVideoPayloadTypes;
     QList<JingleRtpPayloadType> remoteAudioPayloadTypes;
     QList<JingleRtpPayloadType> remoteVideoPayloadTypes;
-    int                         localMaximumBitrate;
-    int                         remoteMaximumBitrate;
+    int                         localMaximumBitrate  = -1;
+    int                         remoteMaximumBitrate = -1;
     QString                     audioName;
     QString                     videoName;
 
@@ -392,14 +392,14 @@ public:
     Resolver          resolver;
     QHostAddress      extAddr;
     QHostAddress      stunBindAddr, stunRelayUdpAddr, stunRelayTcpAddr;
-    int               stunBindPort, stunRelayUdpPort, stunRelayTcpPort;
-    XMPP::Ice176 *    iceA;
-    XMPP::Ice176 *    iceV;
-    JingleRtpChannel *rtpChannel;
+    int               stunBindPort = 0, stunRelayUdpPort = 0, stunRelayTcpPort = 0;
+    XMPP::Ice176 *    iceA       = nullptr;
+    XMPP::Ice176 *    iceV       = nullptr;
+    JingleRtpChannel *rtpChannel = nullptr;
 
     class IceStatus {
     public:
-        bool started;
+        bool started = false;
 
         QString remoteUfrag;
         QString remotePassword;
@@ -411,21 +411,18 @@ public:
     IceStatus iceA_status;
     IceStatus iceV_status;
 
-    bool local_media_ready;
-    bool prov_accepted;         // remote knows of the session
-    bool ice_started   = false; // for all streams
-    bool ice_connected = false; // for all streams
-    bool session_accept_sent;
-    bool session_activated;
+    bool local_media_ready   = false;
+    bool prov_accepted       = false; // remote knows of the session
+    bool ice_started         = false; // for all streams
+    bool ice_connected       = false; // for all streams
+    bool session_accept_sent = false;
+    bool session_activated   = false;
 
-    QTimer *               handshakeTimer;
-    JingleRtp::Error       errorCode;
-    XMPP::UdpPortReserver *portReserver;
+    QTimer *               handshakeTimer = nullptr;
+    JingleRtp::Error       errorCode      = JingleRtp::NoError;
+    XMPP::UdpPortReserver *portReserver   = nullptr;
 
-    JingleRtpPrivate(JingleRtp *_q) :
-        QObject(_q), q(_q), manager(nullptr), localMaximumBitrate(-1), remoteMaximumBitrate(-1), jt(nullptr),
-        resolver(this), iceA(nullptr), iceV(nullptr), local_media_ready(false), prov_accepted(false),
-        ice_connected(false), session_accept_sent(false), session_activated(false), portReserver(nullptr)
+    JingleRtpPrivate(JingleRtp *_q) : QObject(_q), q(_q)
     {
         connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
 
@@ -1212,6 +1209,10 @@ private slots:
 
     void readyToSendMedia()
     {
+        if (ice_connected) {
+            qWarning("readyToSendMedia reported twice for the same stream?");
+            return;
+        }
         bool allReady = true;
 
         if (types & JingleRtp::Audio && !iceA->canSendMedia()) {
