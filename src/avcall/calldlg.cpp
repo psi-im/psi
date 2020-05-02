@@ -32,16 +32,6 @@
 #include <QTime>
 #include <QTimer>
 
-// we have this so if the user plugs in a device, but never goes to the
-//   options screen to select it, and then starts a call, it'll get used
-static void prep_device_opts()
-{
-    auto config = MediaDeviceWatcher::instance()->configuration();
-    AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
-    AvCallManager::setAudioInDevice(config.audioInDeviceId);
-    AvCallManager::setVideoInDevice(config.videoInDeviceId);
-}
-
 class CallDlg::Private : public QObject {
     Q_OBJECT
 
@@ -62,6 +52,17 @@ public:
         ui.setupUi(q);
         q->setWindowTitle(tr("Voice Call"));
         q->setWindowIcon(IconsetFactory::icon("psi/avcall").icon());
+
+        if (AvCallManager::isSupported()) {
+            auto config = MediaDeviceWatcher::instance()->configuration();
+            AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
+            AvCallManager::setAudioInDevice(config.audioInDeviceId);
+            AvCallManager::setVideoInDevice(config.videoInDeviceId);
+            AvCallManager::setBasePort(
+                PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+            AvCallManager::setExternalAddress(
+                PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+        }
 
         ui.lb_bandwidth->setEnabled(false);
         ui.cb_bandwidth->setEnabled(false);
@@ -233,7 +234,6 @@ CallDlg::CallDlg(PsiAccount *pa, QWidget *parent) : QDialog(parent)
     d     = new Private(this);
     d->pa = pa;
     d->pa->dialogRegister(this);
-    prep_device_opts();
 }
 
 CallDlg::~CallDlg()

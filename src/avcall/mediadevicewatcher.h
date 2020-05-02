@@ -23,7 +23,7 @@
 
 class MediaConfiguration {
 public:
-    bool                  liveInput = false;
+    bool                  liveInput = true;
     QString               audioOutDeviceId, audioInDeviceId, videoInDeviceId;
     QString               file;
     bool                  loopFile = false;
@@ -42,6 +42,7 @@ class MediaDeviceWatcher : public QObject {
 
 public:
     static MediaDeviceWatcher *instance();
+    void                       setup();
     void selectDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput);
     inline const MediaConfiguration &configuration() const { return _configuration; }
 
@@ -53,6 +54,7 @@ public:
 
 signals:
     void updated();
+    void availibityChanged();
 
 private:
     MediaConfiguration         _configuration;

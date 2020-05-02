@@ -1846,12 +1846,6 @@ void MainWin::showNoFocus()
         d->hideTimer->start();
 }
 
-void MainWin::avcallConfig()
-{
-    if (AvCallManager::isSupported())
-        AvCallManager::config();
-}
-
 void MainWin::resizeEvent(QResizeEvent *e)
 {
     AdvancedWidget<QMainWindow>::resizeEvent(e);

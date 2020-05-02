@@ -112,8 +112,6 @@ public:
 
     QList<QAction *> globalAboutMenuActions() const;
 
-    bool ensureMediaProvider();
-
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;
 

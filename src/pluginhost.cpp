@@ -1300,28 +1300,15 @@ void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
 #endif
 }
 
-bool PluginHost::ensureMediaProvider()
-{
-    if (!enabled_)
-        return false;
-    auto mp = qobject_cast<PsiMedia::Plugin *>(plugin_);
-    if (!mp)
-        return false;
-
-    if (!PsiMedia::isSupported()) {
-        auto p = mp->createProvider();
-        if (p && !p->init()) {
-            delete p;
-            return false;
-        }
-        PsiMedia::setProvider(p);
-    }
-    return true;
-}
-
 void PluginHost::selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput)
 {
     MediaDeviceWatcher::instance()->selectDevices(audioInput, audioOutput, videoInput);
+}
+
+void PluginHost::setMediaProvider(PsiMedia::Provider *provider)
+{
+    PsiMedia::setProvider(provider);
+    MediaDeviceWatcher::instance()->setup();
 }
 
 //-- helpers --------------------------------------------------------

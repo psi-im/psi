@@ -215,9 +215,7 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
         msgMenu_->addAction(openChatAction_);
         msgMenu_->addMenu(openChatToMenu_);
         menu_->addAction(sendFileAction_);
-        if (AvCallManager::isSupported()) {
-            menu_->addAction(voiceCallAction_);
-        }
+        menu_->addAction(voiceCallAction_);
         menu_->addSeparator();
 
         menu_->addAction(vcardAction_);
@@ -338,6 +336,7 @@ void PsiContactMenu::Private::updateActions()
     voiceCallAction_->setEnabled(contact_->account()->isAvailable());
     sendFileAction_->setVisible(!contact_->isAgent());
     sendFileAction_->setEnabled(contact_->account()->isAvailable());
+    voiceCallAction_->setVisible(AvCallManager::isSupported());
     inviteToGroupchatMenu_->setEnabled(!inviteToGroupchatMenu_->isEmpty() && contact_->account()->isAvailable());
     renameAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
     renameAction_->setEnabled(contact_->isEditable());

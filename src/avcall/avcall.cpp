@@ -40,37 +40,7 @@
 
 #define USE_THREAD
 
-// get default settings
-static MediaConfiguration getDefaultConfiguration()
-{
-    MediaConfiguration config;
-    config.liveInput = true;
-    config.loopFile  = true;
-    return config;
-}
-
-static MediaConfiguration *g_config = nullptr;
-
-static void ensureConfig()
-{
-    if (!g_config) {
-        g_config  = new MediaConfiguration;
-        *g_config = getDefaultConfiguration();
-    }
-}
-
-static void ensureLoaded()
-{
-#ifdef PSI_PLUGINS
-    if (PluginManager::instance()->ensureMediaProvider()) {
-        ensureConfig();
-    } else {
-        PsiMedia::setProvider(nullptr);
-        delete g_config;
-        g_config = nullptr;
-    }
-#endif
-}
+static MediaConfiguration *g_config = new MediaConfiguration;
 
 static JingleRtpPayloadType payloadInfoToPayloadType(const PsiMedia::PayloadInfo &pi)
 {
@@ -449,6 +419,12 @@ private:
                 rtp.setVideoInputDevice(QString());
         } else // non-live (file) input
         {
+            if (config.file.isEmpty()) {
+                errorString = tr("An attempt to send a video file over the call but file name is not set");
+                cleanup();
+                emit q->error();
+                return;
+            }
             rtp.setFileInput(config.file);
             rtp.setFileLoopEnabled(config.loopFile);
 
@@ -738,7 +714,6 @@ void AvCallManager::config()
 
 bool AvCallManager::isSupported()
 {
-    ensureLoaded();
     if (!QCA::isSupported("hmac(sha1)")) {
         printf("hmac support missing for voice calls, install qca-ossl\n");
         return false;

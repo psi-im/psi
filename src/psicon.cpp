@@ -722,15 +722,6 @@ bool PsiCon::init()
     DesktopUtil::setUrlHandler("xmpp", this, "openUri");
     DesktopUtil::setUrlHandler("x-psi-atstyle", this, "openAtStyleUri");
 
-    if (AvCallManager::isSupported()) {
-        auto config = MediaDeviceWatcher::instance()->configuration();
-        AvCallManager::setAudioOutDevice(config.audioOutDeviceId);
-        AvCallManager::setAudioInDevice(config.audioInDeviceId);
-        AvCallManager::setVideoInDevice(config.videoInDeviceId);
-        AvCallManager::setBasePort(options->getOption("options.p2p.bytestreams.listen-port").toInt());
-        AvCallManager::setExternalAddress(options->getOption("options.p2p.bytestreams.external-address").toString());
-    }
-
 #ifdef USE_PEP
     optionChanged(tuneControllerFilterOptionPath);
     optionChanged(tuneUrlFilterOptionPath);
@@ -866,13 +857,6 @@ QStringList PsiCon::xmppFatures() const
                                          << "http://jabber.org/protocol/geoloc"
                                          << "urn:xmpp:avatar:data"
                                          << "urn:xmpp:avatar:metadata";
-
-    if (AvCallManager::isSupported()) {
-        features << "urn:xmpp:jingle:transports:ice-udp:1";
-        features << "urn:xmpp:jingle:apps:rtp:1";
-        features << "urn:xmpp:jingle:apps:rtp:audio";
-        features << "urn:xmpp:jingle:apps:rtp:video";
-    }
 
     static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()
         << OptFeatureMap("options.service-discovery.last-activity", QStringList() << "jabber:iq:last")
@@ -1507,14 +1491,6 @@ void PsiCon::slotApplyOptions()
         }
     }
 #endif
-
-    if (AvCallManager::isSupported()) {
-        AvCallManager::setAudioOutDevice(o->getOption("options.media.devices.audio-output").toString());
-        AvCallManager::setAudioInDevice(o->getOption("options.media.devices.audio-input").toString());
-        AvCallManager::setVideoInDevice(o->getOption("options.media.devices.video-input").toString());
-        AvCallManager::setBasePort(o->getOption("options.p2p.bytestreams.listen-port").toInt());
-        AvCallManager::setExternalAddress(o->getOption("options.p2p.bytestreams.external-address").toString());
-    }
 
     // mainwin stuff
     d->mainwin->setWindowOpts(o->getOption("options.ui.contactlist.always-on-top").toBool(),

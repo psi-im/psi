@@ -386,8 +386,8 @@ public:
     QString                     audioName;
     QString                     videoName;
 
-    QString       init_iq_id;
-    JT_JingleRtp *jt;
+    QString                init_iq_id;
+    QPointer<JT_JingleRtp> jt;
 
     Resolver          resolver;
     QHostAddress      extAddr;

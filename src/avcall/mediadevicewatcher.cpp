@@ -21,7 +21,10 @@
 
 #include <QApplication>
 
-MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent) { }
+MediaDeviceWatcher::MediaDeviceWatcher(QObject *parent) : QObject(parent)
+{
+    connect(&_features, &PsiMedia::Features::availibityChanged, this, &MediaDeviceWatcher::availibityChanged);
+}
 
 MediaDeviceWatcher *MediaDeviceWatcher::_instance = nullptr;
 MediaDeviceWatcher *MediaDeviceWatcher::instance()
@@ -31,14 +34,13 @@ MediaDeviceWatcher *MediaDeviceWatcher::instance()
     return _instance;
 }
 
+void MediaDeviceWatcher::setup() { _features.setup(); }
+
 void MediaDeviceWatcher::selectDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput)
 {
-    _configuration.audioOutDeviceId
-        = audioOutput.isEmpty() ? QString() : defaultDeviceId(_features.audioOutputDevices(), audioOutput);
-    _configuration.audioInDeviceId
-        = audioInput.isEmpty() ? QString() : defaultDeviceId(_features.audioInputDevices(), audioInput);
-    _configuration.videoInDeviceId
-        = videoInput.isEmpty() ? QString() : defaultDeviceId(_features.videoInputDevices(), videoInput);
+    _configuration.audioInDeviceId  = audioInput;
+    _configuration.audioOutDeviceId = audioOutput;
+    _configuration.videoInDeviceId  = videoInput;
     emit updated();
 }
 

@@ -203,6 +203,7 @@ void setProvider(Provider *provider)
 {
     // that's pretty stupid impl. In fact we have to notify outer world to cleanup resources quickly
     g_provider = provider;
+    QObject::connect(provider->qobject(), &QObject::destroyed, []() { g_provider = nullptr; });
 }
 
 QString creditName() { return provider()->creditName(); }
@@ -426,6 +427,8 @@ QList<VideoParams> importVideoModes(const QList<PVideoParams> &in)
 Features::Features(QObject *parent) : QObject(parent) { d = new Private(this); }
 
 Features::~Features() { delete d; }
+
+void Features::setup() { return d->setup(); }
 
 QList<Device> Features::audioOutputDevices() { return d->audioOutputDevices; }
 

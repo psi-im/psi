@@ -160,6 +160,8 @@ public:
     explicit Features(QObject *parent = nullptr);
     ~Features() override;
 
+    void setup();
+
     QList<Device> audioOutputDevices();
     QList<Device> audioInputDevices();
     QList<Device> videoInputDevices();
@@ -169,6 +171,7 @@ public:
 
 signals:
     void updated();
+    void availibityChanged();
 
 private:
     class Private;

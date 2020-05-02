@@ -73,7 +73,7 @@ class Features::Private : public QObject {
 
 public:
     Features *       q;
-    FeaturesContext *c = nullptr;
+    FeaturesContext *c;
 
     QList<Device>      audioOutputDevices;
     QList<Device>      audioInputDevices;
@@ -81,26 +81,21 @@ public:
     QList<AudioParams> supportedAudioModes;
     QList<VideoParams> supportedVideoModes;
 
-    Private(Features *_q) : QObject(_q), q(_q)
-    {
-        if (!PluginManager::instance()->ensureMediaProvider())
-            return;
-        if (provider()->isInitialized()) {
-            providerInitialized();
-        } else {
-            connect(provider()->qobject(), SIGNAL(initialized()), this, SLOT(providerInitialized()));
-        }
-    }
+    Private(Features *_q) : QObject(_q), q(_q) { setup(); }
 
     ~Private() { delete c; }
 
-    void clearResults()
+    void setup()
     {
-        audioOutputDevices.clear();
-        audioInputDevices.clear();
-        videoInputDevices.clear();
-        supportedAudioModes.clear();
-        supportedVideoModes.clear();
+        auto p = provider();
+        if (!p)
+            return;
+        c = p->createFeatures();
+        connect(c->qobject(), SIGNAL(destroyed()), this, SLOT(cleanup()));
+        c->qobject()->setParent(provider()->qobject()); // avoid using invalid context
+        c->lookup(0xff, this, [this](const PFeatures &in) { importResults(in); });
+        c->monitor(0xff, this, [this](const PFeatures &in) { importResults(in); });
+        emit q->availibityChanged();
     }
 
     void importResults(const PFeatures &in)
@@ -112,14 +107,16 @@ public:
         supportedVideoModes = importVideoModes(in.supportedVideoModes);
         emit q->updated();
     }
-
 private slots:
-    void providerInitialized()
+    void cleanup()
     {
-        c = provider()->createFeatures();
-        c->qobject()->setParent(this);
-        c->lookup(0xff, this, [this](const PFeatures &in) { importResults(in); });
-        c->monitor(0xff, this, [this](const PFeatures &in) { importResults(in); });
+        c = nullptr;
+        audioOutputDevices.clear();
+        audioInputDevices.clear();
+        videoInputDevices.clear();
+        supportedAudioModes.clear();
+        supportedVideoModes.clear();
+        emit q->availibityChanged();
     }
 };
 

@@ -254,10 +254,9 @@ public:
     void       uninstallChatLogJSDataFilter(const QString &id) override;
     void       executeChatLogJavaScript(QWidget *log, const QString &js) override;
 
-    // PsiMedia provider (calls from psi to plugin)
-    bool ensureMediaProvider();
     // PsiMediaHost (calls from plugin to psi)
     void selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput) override;
+    void setMediaProvider(PsiMedia::Provider *provider) override;
 
 private:
     PluginManager *   manager_;

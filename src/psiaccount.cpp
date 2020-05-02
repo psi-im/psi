@@ -42,6 +42,7 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
+#include "avcall/mediadevicewatcher.h"
 #include "bobfilecache.h"
 #include "bookmarkmanagedlg.h"
 #include "bookmarkmanager.h"
@@ -1066,6 +1067,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->client->setIdentity(identity);
     updateFeatures();
 
+    // another hack. We rather should have PsiMedia single instance as a member of PsiCon
+    connect(MediaDeviceWatcher::instance(), &MediaDeviceWatcher::availibityChanged, this, &PsiAccount::updateFeatures);
+
 #ifdef FILETRANSFER
     d->client->setFileTransferEnabled(true);
 #else
@@ -1238,12 +1242,10 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             SLOT(incomingGoogleFileTransfer(GoogleFileTransfer *)));
 #endif
 
-    if (AvCallManager::isSupported()) {
-        d->avCallManager = new AvCallManager(this);
-        connect(d->avCallManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
-        d->updateAvCallSettings(acc);
-        d->client->jingleManager()->addExternalManager("urn:xmpp:jingle:apps:rtp:1");
-    }
+    d->avCallManager = new AvCallManager(this);
+    connect(d->avCallManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
+    d->updateAvCallSettings(acc);
+    d->client->jingleManager()->addExternalManager("urn:xmpp:jingle:apps:rtp:1");
 
     // load event queue from disk
     QTimer::singleShot(0, d, SLOT(loadQueue()));
@@ -1519,9 +1521,18 @@ void PsiAccount::updateFeatures()
     features << "urn:xmpp:avatar:data"
              << "urn:xmpp:avatar:metadata";
 #endif
+    if (AvCallManager::isSupported()) {
+        features << "urn:xmpp:jingle:transports:ice-udp:1";
+        features << "urn:xmpp:jingle:apps:rtp:1";
+        features << "urn:xmpp:jingle:apps:rtp:audio";
+        features << "urn:xmpp:jingle:apps:rtp:video";
+    }
 
     // TODO reset hash
     d->client->setFeatures(Features(features));
+    if (presenceSent) {
+        setStatusDirect(d->loginStatus, d->loginWithPriority);
+    }
 }
 
 void PsiAccount::autoLogin()
