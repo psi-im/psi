@@ -411,11 +411,13 @@ public:
     IceStatus iceA_status;
     IceStatus iceV_status;
 
-    bool                   local_media_ready;
-    bool                   prov_accepted; // remote knows of the session
-    bool                   ice_connected;
-    bool                   session_accepted;
-    bool                   session_activated;
+    bool local_media_ready;
+    bool prov_accepted;         // remote knows of the session
+    bool ice_started   = false; // for all streams
+    bool ice_connected = false; // for all streams
+    bool session_accept_sent;
+    bool session_activated;
+
     QTimer *               handshakeTimer;
     JingleRtp::Error       errorCode;
     XMPP::UdpPortReserver *portReserver;
@@ -423,7 +425,7 @@ public:
     JingleRtpPrivate(JingleRtp *_q) :
         QObject(_q), q(_q), manager(nullptr), localMaximumBitrate(-1), remoteMaximumBitrate(-1), jt(nullptr),
         resolver(this), iceA(nullptr), iceV(nullptr), local_media_ready(false), prov_accepted(false),
-        ice_connected(false), session_accepted(false), session_activated(false), portReserver(nullptr)
+        ice_connected(false), session_accept_sent(false), session_activated(false), portReserver(nullptr)
     {
         connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
 
@@ -475,7 +477,13 @@ public:
 
     void reject()
     {
-        if (!incoming) {
+        if (incoming) {
+            // send iq-result if we haven't done so yet
+            if (!prov_accepted) {
+                prov_accepted = true;
+                manager->push_task->respondSuccess(peer, init_iq_id);
+            }
+        } else {
             bool ok = true;
             if ((types & JingleRtp::Audio) && !iceA_status.started)
                 ok = false;
@@ -486,12 +494,6 @@ public:
             if (!ok) {
                 cleanup();
                 return;
-            }
-        } else {
-            // send iq-result if we haven't done so yet
-            if (!prov_accepted) {
-                prov_accepted = true;
-                manager->push_task->respondSuccess(peer, init_iq_id);
             }
         }
 
@@ -565,7 +567,9 @@ public:
 
             // must offer at least one audio or video payload
             if (remoteAudioPayloadTypes.isEmpty() && remoteVideoPayloadTypes.isEmpty())
-                return false;
+                return false; // caller will respond with 400. see JingleRtpManagerPrivate::push_task_incomingRequest
+
+            prov_accepted = true; // caller will respond with Ok immediatelly
         } else if (envelope.action == "session-accept" && !incoming) {
             manager->push_task->respondSuccess(peer, iq_id);
 
@@ -617,7 +621,7 @@ public:
 
             flushRemoteCandidates();
 
-            session_accepted = true;
+            session_accept_sent = true;
             QMetaObject::invokeMethod(this, "after_session_accept", Qt::QueuedConnection);
             emit q->remoteMediaUpdated();
         } else if (envelope.action == "session-terminate") {
@@ -822,12 +826,14 @@ private:
 
     void setup_ice(XMPP::Ice176 *ice, const QList<XMPP::Ice176::LocalAddress> &localAddrs)
     {
-        connect(ice, SIGNAL(started()), SLOT(ice_started()));
+        connect(ice, SIGNAL(started()), SLOT(on_ice_started()));
         connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
         connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)),
                 SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
         connect(ice, &XMPP::Ice176::readyToSendMedia, this, &JingleRtpPrivate::readyToSendMedia, Qt::QueuedConnection);
 
+        ice->setLocalFeatures(XMPP::Ice176::Trickle | XMPP::Ice176::AggressiveNomination);
+        ice->setRemoteFeatures(XMPP::Ice176::Trickle | XMPP::Ice176::AggressiveNomination); // temporarily here
         ice->setProxy(manager->stunProxy);
         if (portReserver)
             ice->setPortReserver(portReserver);
@@ -884,79 +890,6 @@ private:
         ice->setComponentCount(2);
 
         ice->setLocalFeatures(XMPP::Ice176::Trickle);
-    }
-
-    // called when all ICE objects are started
-    void after_ice_started()
-    {
-        printf("after_ice_started\n");
-
-        // for outbound, send the session-initiate
-        if (!incoming) {
-            sid = manager->createSid(peer);
-            manager->client->jingleManager()->registerExternalSession(sid);
-
-            JingleRtpEnvelope envelope;
-            envelope.action    = "session-initiate";
-            envelope.initiator = manager->client->jid().full();
-            envelope.sid       = sid;
-
-            if (types & JingleRtp::Audio) {
-                audioName = "A";
-
-                JingleRtpContent content;
-                content.creator = "initiator";
-                content.name    = audioName;
-                content.senders = "both";
-
-                content.desc.media        = "audio";
-                content.desc.payloadTypes = localAudioPayloadTypes;
-                content.trans.user        = iceA->localUfrag();
-                content.trans.pass        = iceA->localPassword();
-                content.trans.candidates  = iceA_status.localCandidates;
-                iceA_status.localCandidates.clear();
-
-                envelope.contentList += content;
-            }
-
-            if (types & JingleRtp::Video) {
-                videoName = "V";
-
-                JingleRtpContent content;
-                content.creator = "initiator";
-                content.name    = videoName;
-                content.senders = "both";
-
-                content.desc.media        = "video";
-                content.desc.payloadTypes = localVideoPayloadTypes;
-                content.trans.user        = iceV->localUfrag();
-                content.trans.pass        = iceV->localPassword();
-                content.trans.candidates  = iceV_status.localCandidates;
-                iceV_status.localCandidates.clear();
-
-                envelope.contentList += content;
-            }
-
-            jt = new JT_JingleRtp(manager->client->rootTask());
-            connect(jt, &JT_JingleRtp::finished, this, [this]() {
-                if (jt->success()) {
-                    prov_accepted = true;
-                    flushLocalCandidates();
-                } else {
-                    cleanup();
-                    emit q->rejected();
-                }
-            });
-            jt->request(peer, envelope);
-            jt->go(true);
-        } else {
-            restartHandshakeTimer();
-
-            prov_accepted = true;
-            manager->push_task->respondSuccess(peer, init_iq_id);
-
-            flushRemoteCandidates();
-        }
     }
 
     void flushLocalCandidates()
@@ -1040,62 +973,129 @@ private:
         }
     }
 
-    // called when all ICE components are established
-    void after_ice_connected()
+    void sendInitiate()
     {
-        if (incoming)
-            tryAccept();
+        sid = manager->createSid(peer);
+        manager->client->jingleManager()->registerExternalSession(sid);
 
-        tryActivated();
+        JingleRtpEnvelope envelope;
+        envelope.action    = "session-initiate";
+        envelope.initiator = manager->client->jid().full();
+        envelope.sid       = sid;
+
+        if (types & JingleRtp::Audio) {
+            audioName = "A";
+
+            JingleRtpContent content;
+            content.creator = "initiator";
+            content.name    = audioName;
+            content.senders = "both";
+
+            content.desc.media        = "audio";
+            content.desc.payloadTypes = localAudioPayloadTypes;
+            content.trans.user        = iceA->localUfrag();
+            content.trans.pass        = iceA->localPassword();
+            content.trans.candidates  = iceA_status.localCandidates;
+            iceA_status.localCandidates.clear();
+
+            envelope.contentList += content;
+        }
+
+        if (types & JingleRtp::Video) {
+            videoName = "V";
+
+            JingleRtpContent content;
+            content.creator = "initiator";
+            content.name    = videoName;
+            content.senders = "both";
+
+            content.desc.media        = "video";
+            content.desc.payloadTypes = localVideoPayloadTypes;
+            content.trans.user        = iceV->localUfrag();
+            content.trans.pass        = iceV->localPassword();
+            content.trans.candidates  = iceV_status.localCandidates;
+            iceV_status.localCandidates.clear();
+
+            envelope.contentList += content;
+        }
+
+        jt = new JT_JingleRtp(manager->client->rootTask());
+        connect(jt, &JT_JingleRtp::finished, this, [this]() {
+            if (jt->success()) {
+                prov_accepted = true;
+                flushLocalCandidates();
+            } else {
+                cleanup();
+                emit q->rejected();
+            }
+        });
+        jt->request(peer, envelope);
+        jt->go(true);
     }
 
     void tryAccept()
     {
-        if (local_media_ready && ice_connected && !session_accepted) {
-            JingleRtpEnvelope envelope;
-            envelope.action    = "session-accept";
-            envelope.responder = manager->client->jid().full();
-            envelope.sid       = sid;
+        if (!local_media_ready || session_accept_sent)
+            return;
 
-            if (types & JingleRtp::Audio) {
-                JingleRtpContent content;
-                content.creator = "initiator";
-                content.name    = audioName;
-                content.senders = "both";
+        JingleRtpEnvelope envelope;
+        envelope.action    = "session-accept";
+        envelope.responder = manager->client->jid().full();
+        envelope.sid       = sid;
 
-                content.desc.media        = "audio";
-                content.desc.payloadTypes = localAudioPayloadTypes;
-                content.trans.user        = iceA->localUfrag();
-                content.trans.pass        = iceA->localPassword();
+        if (types & JingleRtp::Audio) {
+            JingleRtpContent content;
+            content.creator = "initiator";
+            content.name    = audioName;
+            content.senders = "both";
 
-                envelope.contentList += content;
-            }
+            content.desc.media        = "audio";
+            content.desc.payloadTypes = localAudioPayloadTypes;
+            content.trans.user        = iceA->localUfrag();
+            content.trans.pass        = iceA->localPassword();
+            content.trans.candidates  = iceA_status.localCandidates;
+            iceA_status.localCandidates.clear();
 
-            if (types & JingleRtp::Video) {
-                JingleRtpContent content;
-                content.creator = "initiator";
-                content.name    = videoName;
-                content.senders = "both";
-
-                content.desc.media        = "video";
-                content.desc.payloadTypes = localVideoPayloadTypes;
-                content.trans.user        = iceV->localUfrag();
-                content.trans.pass        = iceV->localPassword();
-
-                envelope.contentList += content;
-            }
-
-            session_accepted = true;
-
-            JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
-            task->request(peer, envelope);
-            task->go(true);
+            envelope.contentList += content;
         }
+
+        if (types & JingleRtp::Video) {
+            JingleRtpContent content;
+            content.creator = "initiator";
+            content.name    = videoName;
+            content.senders = "both";
+
+            content.desc.media        = "video";
+            content.desc.payloadTypes = localVideoPayloadTypes;
+            content.trans.user        = iceV->localUfrag();
+            content.trans.pass        = iceV->localPassword();
+            content.trans.candidates  = iceA_status.localCandidates;
+            iceA_status.localCandidates.clear();
+
+            envelope.contentList += content;
+        }
+
+        session_accept_sent = true;
+
+        JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
+        task->request(peer, envelope);
+        connect(task, &JT_JingleRtp::finished, this, [this, task]() {
+            if (task->success())
+                flushRemoteCandidates();
+            else {
+                reject();
+                errorCode = JingleRtp::ErrorTimeout;
+                emit q->error();
+            }
+        });
+        task->go(true);
+
+        restartHandshakeTimer();
     }
 
     void tryActivated()
     {
-        if (session_accepted && ice_connected) {
+        if (session_accept_sent && ice_connected) {
             if (session_activated) {
                 printf("warning: attempting to activate an already active session\n");
                 return;
@@ -1153,7 +1153,8 @@ private slots:
         emit q->error();
     }
 
-    void ice_started()
+    // this happens when when we are ready to send offer/answer to remote. It's already accepted by the user
+    void on_ice_started()
     {
         XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
@@ -1173,14 +1174,21 @@ private slots:
             iceV->flagComponentAsLowOverhead(1);
         }
 
-        bool ok = true;
+        ice_started = true;
         if ((types & JingleRtp::Audio) && !iceA_status.started)
-            ok = false;
+            ice_started = false;
         if ((types & JingleRtp::Video) && !iceV_status.started)
-            ok = false;
+            ice_started = false;
 
-        if (ok)
-            after_ice_started();
+        if (!ice_started)
+            return;
+
+        // for outbound, send the session-initiate
+        if (incoming) {
+            tryAccept(); // will flush local candidates
+        } else {
+            sendInitiate();
+        }
     }
 
     void ice_error(XMPP::Ice176::Error e)
@@ -1195,15 +1203,13 @@ private slots:
     {
         XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
 
-        if (ice == iceA)
+        if (ice == iceA) {
             iceA_status.localCandidates += list;
-        else // iceV
+            printf("local candidate ready for audio\n");
+        } else { // iceV
             iceV_status.localCandidates += list;
-
-        printf("local candidate ready\n");
-
-        if (prov_accepted)
-            flushLocalCandidates();
+            printf("local candidate ready for video\n");
+        }
     }
 
     void readyToSendMedia()
@@ -1220,7 +1226,7 @@ private slots:
 
         if (allReady) {
             ice_connected = true;
-            after_ice_connected();
+            tryActivated();
         }
     }
 
@@ -1502,6 +1508,8 @@ void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, c
             push_task->respondError(from, iq_id, 400, QString());
             return;
         }
+        push_task->respondSuccess(from, iq_id); // by xep we should also check if `from` jid is allowed
+                                                // or if we lack of resources.
 
         pending += sess;
         emit q->incomingReady();
