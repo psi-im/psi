@@ -888,8 +888,6 @@ private:
 
         // RTP+RTCP
         ice->setComponentCount(2);
-
-        ice->setLocalFeatures(XMPP::Ice176::Trickle);
     }
 
     void flushLocalCandidates()
@@ -1205,10 +1203,10 @@ private slots:
 
         if (ice == iceA) {
             iceA_status.localCandidates += list;
-            printf("local candidate ready for audio\n");
+            printf("got more local candidates for audio stream\n");
         } else { // iceV
             iceV_status.localCandidates += list;
-            printf("local candidate ready for video\n");
+            printf("got more local candidates for video stream\n");
         }
     }
 
