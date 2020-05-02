@@ -29,6 +29,7 @@
 
 #include <QApplication>
 #include <QBuffer>
+#include <QFontInfo>
 #include <QList>
 #include <QPixmap>
 #include <QTextDocument> // for TextUtil::escape()

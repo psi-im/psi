@@ -466,7 +466,7 @@ void AccountModifyDlg::chooseKey()
     QString    id = (key.isNull() ? "" : key.keyId());
     PGPKeyDlg *w  = new PGPKeyDlg(PGPKeyDlg::Secret, id, this);
     w->setWindowTitle(tr("Secret Key"));
-    int                r = w->exec();
+    int     r = w->exec();
     QString keyId;
     if (r == QDialog::Accepted)
         keyId = w->keyId();
