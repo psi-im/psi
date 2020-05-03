@@ -1030,7 +1030,7 @@ private:
 
     void tryAccept()
     {
-        if (!local_media_ready || session_accept_sent)
+        if (!local_media_ready || !ice_started || session_accept_sent)
             return;
 
         JingleRtpEnvelope envelope;
