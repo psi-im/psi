@@ -1210,7 +1210,9 @@ private slots:
     void readyToSendMedia()
     {
         if (ice_connected) {
-            qWarning("readyToSendMedia reported twice for the same stream?");
+            // the signal connection is asynchronous, so by the time of the first etrance to the
+            // function we can already have both audio and video ready to send media. So just return
+            // in this case.
             return;
         }
         bool allReady = true;

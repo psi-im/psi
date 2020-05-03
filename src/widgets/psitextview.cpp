@@ -178,13 +178,13 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
                   QUrl simpleUrl = item->simpleSource();
                   if (simpleUrl.isValid()) {
                       return { QTextCharFormat(),
-                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3 (%4, %5)</a><marker id=\"%1/end\">")
+                               QString("<marker id=\"%1/start\"><a href=\"%2\">%3 (%4, %5)</a><marker id=\"%6/end\">")
                                    .arg(anchorName, simpleUrl.toString(QUrl::FullyEncoded), simpleUrl.toString(),
                                         item->mimeType(), sizeStr, anchorName) };
                   }
 
                   return { QTextCharFormat(),
-                           QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%1/end\">")
+                           QString("<marker id=\"%1/start\">Shared media is downloading (%2, %3)<marker id=\"%4/end\">")
                                .arg(anchorName, item->mimeType(), sizeStr, anchorName) };
               }
               return { QTextCharFormat(), "" };
