@@ -646,7 +646,7 @@ void ContactListDragView::removeSelection()
     for (PsiContact *contact : contacts) {
         QString name = contact->name();
         if (name != contact->jid().full()) {
-            name = tr("%1 (%2)").arg(name, TextUtil::escape(contact->jid().full()));
+            name = QString("%1 (%2)").arg(name, TextUtil::escape(contact->jid().full()));
         }
 
         if (!contact->isPrivate() && contact->inList()) {

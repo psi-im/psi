@@ -37,8 +37,10 @@ AboutDlg::AboutDlg(QWidget *parent) : QDialog(parent)
 
     setModal(false);
 
-    ui_.lb_name->setText(
-        QString("<h3><b>%1 v%2</b></h3>").arg(ApplicationInfo::name()).arg(ApplicationInfo::version()));
+    ui_.lb_about->setText("<html><head/><body><p>"
+                          + tr("Cross-platform XMPP client aimed at experienced users.")
+                          + "<br/><br/>Copyright © 2001-2020 The Psi Team<br/></p></body></html>");
+    ui_.lb_name->setText(QString("<h3><b>%1 v%2</b></h3>").arg(ApplicationInfo::name()).arg(ApplicationInfo::version()));
 
     ui_.te_license->setText(loadText(":/COPYING"));
 

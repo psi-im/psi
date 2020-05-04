@@ -147,7 +147,7 @@ void MUCJoinDlg::updateFavorites()
             if (name.isEmpty()) {
                 name = jidBare;
             }
-            QString s = tr("%1 (%2)").arg(name, c.nick());
+            QString s = QString("%1 (%2)").arg(name, c.nick());
             lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon(), s);
             lwi->setData(Qt::UserRole, c.jid().withResource(c.nick()).full());
             lwi->setData(Qt::UserRole + 1, c.password());

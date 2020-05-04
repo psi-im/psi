@@ -121,7 +121,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cross-platform XMPP client aimed at experienced users.&lt;br/&gt;&lt;br/&gt;Copyright © 2001-2020 The Psi Team.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat">
           <enum>Qt::RichText</enum>
@@ -267,23 +267,32 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_psiplus" >
-      <attribute name="title" >
+     <widget class="QWidget" name="tab_psiplus">
+      <attribute name="title">
        <string>About Psi+</string>
       </attribute>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>9</number>
-       </property>
-       <property name="spacing" >
+      <layout class="QVBoxLayout">
+       <property name="spacing">
         <number>6</number>
        </property>
+       <property name="leftMargin">
+        <number>9</number>
+       </property>
+       <property name="topMargin">
+        <number>9</number>
+       </property>
+       <property name="rightMargin">
+        <number>9</number>
+       </property>
+       <property name="bottomMargin">
+        <number>9</number>
+       </property>
        <item>
-        <widget class="PsiTextView" name="te_psiplus" />
+        <widget class="PsiTextView" name="te_psiplus" native="true"/>
        </item>
       </layout>
      </widget>
-     </widget>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout">
