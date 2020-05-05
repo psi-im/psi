@@ -436,8 +436,8 @@ void ContactListModel::Private::cleanUpAccount(PsiAccount *account)
 /* ContactListModel */
 /********************/
 
-ContactListModel::ContactListModel(PsiContactList *contactList) :
-    AbstractTreeModel(new ContactListItem(this, ContactListItem::Type::RootType)), d(new Private(this))
+ContactListModel::ContactListModel(PsiContactList *contactList, QObject *parent) :
+    AbstractTreeModel(new ContactListItem(this, ContactListItem::Type::RootType), parent), d(new Private(this))
 {
     d->contactList = contactList;
 

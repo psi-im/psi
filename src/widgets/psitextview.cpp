@@ -94,7 +94,7 @@ PsiTextView::PsiTextView(QWidget *parent) : QTextEdit(parent)
     viewport()->setMouseTracking(true); // we want to get all mouseMoveEvents
 
     auto itc        = new InteractiveText(this, QTextFormat::UserObject + 2); // +1 was allocated for MarkerFormatType
-    d->voiceMsgCtrl = new ITEAudioController(itc);
+    d->voiceMsgCtrl = new ITEAudioController(itc, this);
     d->voiceMsgCtrl->setAutoFetchMetadata(true);
 
     d->objectParsers = PsiRichText::ParsersMap {

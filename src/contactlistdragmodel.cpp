@@ -119,7 +119,10 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
 // ContactListDragModel
 //----------------------------------------------------------------------------
 
-ContactListDragModel::ContactListDragModel(PsiContactList *contactList) : ContactListModel(contactList) { }
+ContactListDragModel::ContactListDragModel(PsiContactList *contactList, QObject *parent) :
+    ContactListModel(contactList, parent)
+{
+}
 
 Qt::DropActions ContactListDragModel::supportedDragActions() const { return Qt::MoveAction | Qt::CopyAction; }
 

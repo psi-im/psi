@@ -66,7 +66,7 @@ class ContactListDragModel : public ContactListModel {
     Q_OBJECT
 
 public:
-    ContactListDragModel(PsiContactList *contactList);
+    ContactListDragModel(PsiContactList *contactList, QObject *parent = nullptr);
 
     // reimplemented
     Qt::DropActions supportedDragActions() const;

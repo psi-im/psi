@@ -238,8 +238,10 @@ bool X11WindowSystem::isWindowObscured(QWidget *widget, bool alwaysOnTop)
                         continue;
 
                     QRect rect = windowRect(current);
-                    if (winRect.intersects(rect))
+                    if (winRect.intersects(rect)) {
+                        XFree(data_ret);
                         return true;
+                    }
                 }
             }
             if (data_ret)

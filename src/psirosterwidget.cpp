@@ -170,7 +170,7 @@ void PsiRosterWidget::setContactList(PsiContactList *contactList)
     optionChanged(allowAutoResizeOptionPath);
     optionChanged(showScrollBarOptionPath);
 
-    contactListModel_ = new ContactListDragModel(contactList_);
+    contactListModel_ = new ContactListDragModel(contactList_, this);
     contactListModel_->invalidateLayout();
     contactListModel_->setGroupsEnabled(PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool());
     contactListModel_->setAccountsEnabled(true);

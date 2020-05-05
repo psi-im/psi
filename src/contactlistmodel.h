@@ -80,7 +80,7 @@ public:
 
     enum { NameColumn = 0 };
 
-    ContactListModel(PsiContactList *contactList);
+    ContactListModel(PsiContactList *contactList, QObject *parent = nullptr);
     virtual ~ContactListModel();
 
     virtual PsiContactList *contactList() const;
