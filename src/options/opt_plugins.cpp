@@ -36,6 +36,7 @@ public:
 
 class PluginsOptionsDlg : public OptionsDlgBase {
     Q_OBJECT
+
 public:
     PluginsOptionsDlg(const QString &pluginName, PsiCon *psi, QWidget *parent = nullptr) : OptionsDlgBase(psi, parent)
     {
@@ -48,7 +49,7 @@ public:
         setTabs(QList<OptionsTab *>() << new OptionsTabPlugin(pluginName, this));
 
         psi->dialogRegister(this);
-        setMinimumSize(440, 300);
+        setMinimumSize(600, 300);
 
         openTab("general");
     }
@@ -213,6 +214,7 @@ void OptionsTabPlugins::settingsClicked(int item)
             sw = new PluginsOptionsDlg(pluginName, psi, d);
             sw->setObjectName(shortName);
         }
+        sw->setMinimumSize(600, 300);
         sw->open();
         sw->adjustSize();
     }

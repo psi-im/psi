@@ -321,8 +321,9 @@ void OptionsDlgBase::Private::openTab(const QString &id)
                 if (!tab)
                     continue;
 
-                // TODO: how about QScrollView for large tabs?
-                // idea: maybe do it only for those, whose sizeHint is bigger than ws_tabs'
+                tab->setMinimumSize(tab->sizeHint());
+                tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
                 QWidget *w = new QWidget(dlg->ws_tabs);
                 w->setObjectName("QWidgetStack/tab");
                 QVBoxLayout *vbox = new QVBoxLayout(w);
@@ -331,8 +332,13 @@ void OptionsDlgBase::Private::openTab(const QString &id)
 
                 tab->setParent(w);
                 vbox->addWidget(tab);
-                if (!opttab->stretchable())
-                    vbox->addStretch();
+
+                w->setMinimumSize(w->sizeHint());
+                w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+                // WTF is this!?
+                // if (!opttab->stretchable())
+                //     vbox->addStretch();
 
                 dlg->ws_tabs->addWidget(w);
                 id2widget[id] = w;
