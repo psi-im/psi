@@ -147,9 +147,8 @@ TabDlg::~TabDlg()
     // Q_ASSERT(tabs_.isEmpty());
 
     // ensure all tabs are closed at this moment
-    for (TabbableWidget *tab : tabs_) {
-        delete tab;
-    }
+    qDeleteAll(tabs_);
+    tabs_.clear();
 
     if (delegate_) {
         delegate_->destroy(this);
