@@ -83,7 +83,7 @@ public:
 
     Private(Features *_q) : QObject(_q), q(_q) { setup(); }
 
-    ~Private() { delete c; }
+    ~Private() { }
 
     void setup()
     {
@@ -91,6 +91,7 @@ public:
         if (!p)
             return;
         c = p->createFeatures();
+        c->qobject()->setParent(p->qobject());
         connect(c->qobject(), SIGNAL(destroyed()), this, SLOT(cleanup()));
         c->qobject()->setParent(provider()->qobject()); // avoid using invalid context
         c->lookup(0xff, this, [this](const PFeatures &in) { importResults(in); });
