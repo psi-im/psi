@@ -1723,6 +1723,10 @@ void PsiAccount::logout(bool fast, const Status &s)
 
     if (!fast)
         simulateRosterOffline();
+    else {
+        qDeleteAll(d->gcbank);
+        d->gcbank.clear();
+    }
 
     v_isActive     = false;
     d->loginStatus = Status(Status::Offline);
@@ -3668,9 +3672,8 @@ void PsiAccount::simulateRosterOffline()
         }
     }
 
-    while (!d->gcbank.isEmpty())
-        delete d->gcbank.takeFirst();
-
+    qDeleteAll(d->gcbank);
+    d->gcbank.clear();
     emit endBulkContactUpdate();
 }
 
@@ -5276,6 +5279,7 @@ void PsiAccount::addMucItem(const Jid &jid)
     if (u) {
         d->removeEntry(jid);
         d->userList.removeAll(u);
+        delete u;
     }
     if (!d->groupchats.contains(jid.bare()))
         d->groupchats += jid.bare();
@@ -5678,6 +5682,7 @@ void PsiAccount::groupChatLeave(const QString &host, const QString &room)
     if (u) {
         d->removeEntry(j);
         d->userList.removeAll(u);
+        delete u;
     }
 }
 

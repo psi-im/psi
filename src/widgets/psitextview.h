@@ -30,6 +30,7 @@ class PsiTextView : public QTextEdit {
     Q_OBJECT
 public:
     PsiTextView(QWidget *parent = nullptr);
+    ~PsiTextView();
 
     // Reimplemented
     QMenu *createStandardContextMenu(const QPoint &position);
