@@ -420,7 +420,7 @@ private:
         } else // non-live (file) input
         {
             if (config.file.isEmpty()) {
-                errorString = tr("An attempt to send a video file over the call but file name is not set");
+                errorString = "An attempt to send a video file over the call but file name is not set";
                 cleanup();
                 emit q->error();
                 return;
