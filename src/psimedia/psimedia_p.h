@@ -73,7 +73,7 @@ class Features::Private : public QObject {
 
 public:
     Features *       q;
-    FeaturesContext *c;
+    FeaturesContext *c = nullptr;
 
     QList<Device>      audioOutputDevices;
     QList<Device>      audioInputDevices;
