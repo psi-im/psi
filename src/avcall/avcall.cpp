@@ -38,7 +38,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define USE_THREAD
+// threaded mode is unstable. Enable it at your own risk.
+// most likely moveToThread below has to be handled carefully to call changeThread of Ice176
+//#define USE_THREAD
 
 static MediaConfiguration *g_config = new MediaConfiguration;
 

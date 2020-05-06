@@ -1330,13 +1330,13 @@ void JingleRtpChannelPrivate::setIceObjects(XMPP::UdpPortReserver *_portReserver
             portReserver->moveToThread(thread());
 
         if (iceA) {
-            iceA->moveToThread(thread());
+            iceA->changeThread(thread());
             connect(iceA, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
             connect(iceA, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
         }
 
         if (iceV) {
-            iceV->moveToThread(thread());
+            iceV->changeThread(thread());
             connect(iceV, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
             connect(iceV, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
         }
