@@ -1205,6 +1205,8 @@ private slots:
             iceV_status.localCandidates += list;
             printf("got more local candidates for video stream\n");
         }
+        if (session_accept_sent)
+            flushLocalCandidates();
     }
 
     void readyToSendMedia()
