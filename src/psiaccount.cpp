@@ -2304,7 +2304,7 @@ void PsiAccount::serverFeaturesChanged()
 {
     setPEPAvailable(d->client->serverInfoManager()->hasPEP());
 
-    if (isDisconnecting) {
+    if (isDisconnecting || !isConnected()) {
         return;
     }
 

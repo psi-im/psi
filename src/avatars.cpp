@@ -561,6 +561,8 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
         if (d->vcardReqQueue_.isEmpty()) {
             d->vcardReqTimer_.stop();
         }
+        if (!d->pa_->isConnected())
+            return;
         VCardFactory::instance()->getVCard(
             j, d->pa_->client()->rootTask(), this,
             [this, hash]() {
