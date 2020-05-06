@@ -97,8 +97,9 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
     if (fi.isDir()) {
         QFile file(themePath + '/' + fileName);
         if (caseInsensetive && !file.exists()) {
-            QDir d(themePath);
-            for (const QString &name : fileName.toLower().split('/')) {
+            QDir       d(themePath);
+            const auto tmp = fileName.toLower().split('/');
+            for (const QString &name : tmp) {
                 if (name.isEmpty()) { // force relative path and drop double slahses
                     continue;
                 }

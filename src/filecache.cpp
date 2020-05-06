@@ -161,7 +161,8 @@ FileCache::FileCache(const QString &cacheDir, QObject *parent) :
             QDateTime::fromString(_registry->getOption(prefix + ".ctime").toString(), Qt::ISODate),
             _registry->getOption(prefix + ".max-age").toUInt(), _registry->getOption(prefix + ".size").toULongLong());
 
-        for (const auto &s : _registry->getOption(prefix + ".aliases").toStringList()) {
+        const auto aliases = _registry->getOption(prefix + ".aliases").toStringList();
+        for (const auto &s : aliases) {
             auto ind = s.indexOf('+');
             if (ind == -1)
                 continue;

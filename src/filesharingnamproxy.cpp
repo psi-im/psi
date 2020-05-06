@@ -40,7 +40,8 @@ FileSharingNAMReply::~FileSharingNAMReply() { qDebug("FS-NAM destroy reply"); }
 void FileSharingNAMReply::init()
 {
     qDebug() << "New FS-NAM" << request().url().toString();
-    for (auto const &h : request().rawHeaderList())
+    const auto headers = request().rawHeaderList();
+    for (auto const &h : headers)
         qDebug("  %s: %s", h.data(), request().rawHeader(h).data());
 
     auto rangesBa = request().rawHeader(QByteArray::fromRawData("Range", 5));

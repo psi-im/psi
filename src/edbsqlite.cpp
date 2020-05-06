@@ -514,7 +514,8 @@ PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
             QVariantMap extraData = doc.object().toVariantMap();
 
             if (fOk) {
-                for (const QVariant &urlItem : extraData["jabber:x:oob"].toList()) {
+                const auto urls = extraData["jabber:x:oob"].toList();
+                for (const QVariant &urlItem : urls) {
                     QVariantList itemList = urlItem.toList();
                     if (!itemList.isEmpty()) {
                         QString url = itemList.at(0).toString();

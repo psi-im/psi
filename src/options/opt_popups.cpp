@@ -75,16 +75,14 @@ void OptionsTabPopups::applyOptions()
     o->setOption("options.ui.notifications.passive-popups.notify-every-muc-message",
                  QVariant(d->ck_everyMucMessage->isChecked()));
 
-    for (QObject *obj : d->sa_durations->widget()->children()) {
-        QSpinBox *sb = dynamic_cast<QSpinBox *>(obj);
-        if (sb) {
-            const QString oName = sb->property("name").toString();
-            const QString oPath = sb->property("path").toString();
-            const int     value = sb->value();
-            popup_->setValue(oName, value);
-            if (!oPath.isEmpty()) {
-                PsiOptions::instance()->setOption(oPath, value * 1000);
-            }
+    auto spinBoxes = d->sa_durations->widget()->findChildren<QSpinBox *>(QString(), Qt::FindDirectChildrenOnly);
+    for (auto sb : spinBoxes) {
+        const QString oName = sb->property("name").toString();
+        const QString oPath = sb->property("path").toString();
+        const int     value = sb->value();
+        popup_->setValue(oName, value);
+        if (!oPath.isEmpty()) {
+            PsiOptions::instance()->setOption(oPath, value * 1000);
         }
     }
 

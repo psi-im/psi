@@ -326,7 +326,8 @@ public:
     {
         QList<Iconset *> emo;
 
-        for (const QString &name : PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList()) {
+        const auto names = PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList();
+        for (const QString &name : names) {
             Iconset *is = new Iconset;
             if (is->load(iconsetPath("emoticons/" + name))) {
                 // PsiIconset::removeAnimation(is);

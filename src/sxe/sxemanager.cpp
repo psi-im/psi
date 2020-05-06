@@ -352,7 +352,8 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
         negotiation->state = SxeNegotiation::Finished;
 
         // Decode the 'used-sxe-ids' field
-        for (QString usedId : negotiationElement.toElement().attribute("used-sxe-ids").split(";"))
+        const auto tmp = negotiationElement.toElement().attribute("used-sxe-ids").split(";");
+        for (const QString &usedId : tmp)
             if (usedId.size() > 0)
                 negotiation->session->addUsedSxeId(usedId);
 

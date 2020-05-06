@@ -568,10 +568,12 @@ public:
     {
         QStringList groupList;
 
-        for (PsiContact *contact : contacts)
-            for (QString group : contact->userListItem().groups())
+        for (PsiContact *contact : contacts) {
+            const auto groups = contact->userListItem().groups();
+            for (QString group : groups)
                 if (!groupList.contains(group))
                     groupList.append(group);
+        }
 
         groupList.sort();
         return groupList;
