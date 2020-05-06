@@ -97,7 +97,12 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     Q_UNUSED(posInDocument)
     const QTextCharFormat charFormat = format.toCharFormat();
 
-    return IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName)).size();
+    auto fs = QFontInfo(charFormat.font()).pixelSize();
+    auto is = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName)).size();
+    if (is.height() > 1.2 * fs)
+        return QSize(fs, fs);
+
+    return is;
 }
 
 void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument,
@@ -106,7 +111,11 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
     Q_UNUSED(doc);
     Q_UNUSED(posInDocument);
     const QTextCharFormat charFormat = format.toCharFormat();
-    const QPixmap         pixmap     = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName));
+    QPixmap               pixmap     = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName));
+    auto                  fs         = QFontInfo(charFormat.font()).pixelSize();
+    auto                  is         = pixmap.size();
+    if (is.height() > 1.2 * fs)
+        pixmap = pixmap.scaled(QSize(fs, fs), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     painter->drawPixmap(rect, pixmap, pixmap.rect());
 }

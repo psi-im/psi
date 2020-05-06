@@ -162,16 +162,27 @@ QMenu *ChatView::createStandardContextMenu(const QPoint &position)
 
 void ChatView::addLogIconsResources()
 {
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_receive"), logIconReceive);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_send"), logIconSend);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_receive_pgp"), logIconReceivePgp);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_send_pgp"), logIconSendPgp);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_time"), logIconTime);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_info"), logIconInfo);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered"), logIconDelivered);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered_pgp"), logIconDeliveredPgp);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_corrected"), logIconCorrected);
-    document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_history"), logIconHistory);
+    struct {
+        const char *name;
+        QPixmap     icon;
+    } icons[] = { { "log_icon_receive", logIconReceive },
+                  { "log_icon_send", logIconSend },
+                  { "log_icon_receive_pgp", logIconReceivePgp },
+                  { "log_icon_send_pgp", logIconSendPgp },
+                  { "log_icon_time", logIconTime },
+                  { "log_icon_info", logIconInfo },
+                  { "log_icon_delivered", logIconDelivered },
+                  { "log_icon_delivered_pgp", logIconDeliveredPgp },
+                  { "log_icon_corrected", logIconCorrected },
+                  { "log_icon_history", logIconHistory } };
+    auto fs   = QFontInfo(font()).pixelSize();
+    for (auto &i : icons) {
+        if (i.icon.height() > 1.2 * fs) {
+            i.icon = i.icon.scaled(fs, fs, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+        auto res = QUrl(QLatin1String("icon:") + i.name);
+        document()->addResource(QTextDocument::ImageResource, res, i.icon);
+    }
 }
 
 void ChatView::markReceived(QString id)
