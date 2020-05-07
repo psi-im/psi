@@ -32,7 +32,7 @@ ContactListGroupMenu::Private::Private(ContactListGroupMenu *menu, ContactListIt
 
     connect(menu, SIGNAL(aboutToShow()), SLOT(updateActions()));
 
-    renameAction_ = new IconAction("", tr("Re&name"), menu->shortcuts("contactlist.rename"), this, "act_rename");
+    renameAction_ = new IconAction("", tr("Re&name"), menu->shortcuts("contactlist.rename"), this, "psi/rename");
     connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
 
     actionAuth_ = new QAction(tr("Resend Authorization to Group"), this);
