@@ -176,8 +176,8 @@ public:
             : QImage();
         if (!status.isNull()) {
             QRect statusRect(status.rect());
-            if (statusRect.height() > fontHeight_ * 1.2) {
-                status     = status.scaled(fontHeight_ * 0.8, fontHeight_ * 0.8, Qt::KeepAspectRatio,
+            if (statusRect.height() > fontHeight_ * HugeIconRosterK) {
+                status     = status.scaled(fontHeight_ * EqTextIconK, fontHeight_ * EqTextIconK, Qt::KeepAspectRatio,
                                        Qt::SmoothTransformation);
                 statusRect = status.rect();
             }

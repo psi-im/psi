@@ -140,7 +140,7 @@ void ChatView::addLogIconsResources()
                   { "log_icon_history", "psi/history" } };
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
-    int  scaledSize  = int(fontInfo().pixelSize() * 0.93);
+    int  scaledSize  = int(fontInfo().pixelSize() * EqTextIconK);
     bool scale       = PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool();
 
     auto fs = QFontInfo(font()).pixelSize();
@@ -148,7 +148,7 @@ void ChatView::addLogIconsResources()
         auto res = QUrl(QLatin1String("icon:") + i.name);
         if (useMessageIcons_) {
             auto icon = IconsetFactory::iconPixmap(i.icon);
-            if (icon.height() > 1.2 * fs || scale) {
+            if (icon.height() > HugeIconTextViewK * fs || scale) {
                 icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
             }
             document()->addResource(QTextDocument::ImageResource, res, icon);

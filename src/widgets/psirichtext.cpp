@@ -18,6 +18,7 @@
  */
 
 #include "psirichtext.h"
+#include "common.h"
 
 #include <QAbstractTextDocumentLayout> // for QTextObjectInterface
 #include <QApplication>
@@ -99,7 +100,7 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
 
     auto fs = QFontInfo(charFormat.font()).pixelSize();
     auto is = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName)).size();
-    if (is.height() > 1.2 * fs)
+    if (is.height() > HugeIconTextViewK * fs)
         return QSize(fs, fs);
 
     return is;

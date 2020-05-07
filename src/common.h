@@ -97,6 +97,14 @@ extern int common_smallFontSize;
 // FIXME find it a new home!
 enum { EventPriorityDontCare = -1 };
 
+// coofficients icon-size / font-size signalling where icon needs to be scaled-down
+constexpr double HugeIconRosterK   = 2.0;
+constexpr double HugeIconButtonK   = 2.0;
+constexpr double HugeIconTextViewK = 1.2;
+
+constexpr double EqTextIconK     = 0.93; // icon size equal to text
+constexpr double BiggerTextIconK = 1.5;  // icon visually bigger than text but still looks good
+
 // -----------------------------------------------------------------------------
 // Status
 // -----------------------------------------------------------------------------

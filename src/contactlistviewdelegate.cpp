@@ -518,8 +518,8 @@ QPixmap ContactListViewDelegate::Private::rosterIndicator(const QString iconName
 {
     QPixmap pix = IconsetFactory::iconPixmap(iconName);
     auto    fs  = QFontInfo(font_).pixelSize();
-    if (pix.height() > fs * 1.2) {
-        pix = pix.scaledToHeight(fs * 0.93, Qt::SmoothTransformation);
+    if (pix.height() > fs * HugeIconRosterK) {
+        pix = pix.scaledToHeight(fs * EqTextIconK, Qt::SmoothTransformation);
     }
     return pix;
 }
@@ -611,8 +611,8 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
             statusPixmap = statusPixmap.scaled(statusIconRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         } else {
             auto fs = QFontInfo(font_).pixelSize();
-            if (statusPixmap.height() > fs * 1.2)
-                statusPixmap = statusPixmap.scaledToHeight(fs * 0.93, Qt::SmoothTransformation);
+            if (statusPixmap.height() > fs * HugeIconRosterK)
+                statusPixmap = statusPixmap.scaledToHeight(fs * EqTextIconK, Qt::SmoothTransformation);
             if (opt.direction == Qt::RightToLeft) {
                 statusIconRect.moveRight(firstLineRect.right());
                 nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin * PSI_HIDPI);
