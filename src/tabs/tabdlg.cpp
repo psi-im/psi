@@ -147,8 +147,8 @@ TabDlg::~TabDlg()
     // Q_ASSERT(tabs_.isEmpty());
 
     // ensure all tabs are closed at this moment
-    qDeleteAll(tabs_);
-    tabs_.clear();
+    while (!tabs_.isEmpty())
+        delete tabs_.takeLast();
 
     if (delegate_) {
         delegate_->destroy(this);
