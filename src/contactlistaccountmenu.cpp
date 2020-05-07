@@ -103,10 +103,10 @@ public:
         contactManagerAction_ = new IconAction(tr("&Contacts Manager"), this, "psi/action_contacts_manager");
         connect(contactManagerAction_, SIGNAL(triggered()), SLOT(contactManager()));
 
-        bookmarksManageAction_ = new QAction(tr("Manage Bookmarks"), this);
+        bookmarksManageAction_ = new IconAction(tr("Manage Bookmarks"), this, "psi/bookmarks");
         connect(bookmarksManageAction_, SIGNAL(triggered()), SLOT(bookmarksManage()));
 
-        doGroupChatAction_ = new IconAction(tr("Join Groupchat"), this, "psi/groupChat");
+        doGroupChatAction_ = new IconAction(tr("Join Groupchat"), this, "psi/action_muc_show");
         connect(doGroupChatAction_, SIGNAL(triggered()), SLOT(doGroupChat()));
 
         addContactAction_ = new IconAction(tr("&Add a Contact"), this, "psi/addContact");
@@ -146,10 +146,10 @@ public:
         menu->addAction(moodAction_);
         menu->addAction(activityAction_);
         menu->addAction(geolocationAction_);
-        avatarMenu_ = menu->addMenu(IconsetFactory::icon("psi/vCard").icon(), tr("Avatar"));
+        avatarMenu_ = menu->addMenu(IconsetFactory::icon("psi/default_avatar").icon(), tr("Avatar"));
         avatarMenu_->addAction(setAvatarAction_);
         avatarMenu_->addAction(unsetAvatarAction_);
-        bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Groupchat"));
+        bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/groupChat").icon(), tr("Groupchats"));
         bookmarksMenu_->addAction(doGroupChatAction_);
         bookmarksMenu_->addSeparator();
         bookmarksMenu_->addAction(bookmarksManageAction_);
