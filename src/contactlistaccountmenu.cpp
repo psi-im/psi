@@ -103,7 +103,7 @@ public:
         contactManagerAction_ = new IconAction(tr("&Contacts Manager"), this, "psi/action_contacts_manager");
         connect(contactManagerAction_, SIGNAL(triggered()), SLOT(contactManager()));
 
-        bookmarksManageAction_ = new QAction(tr("Manage Bookmarks"), this);
+        bookmarksManageAction_ = new IconAction(tr("Manage Bookmarks"), this, "psi/bookmarks");
         connect(bookmarksManageAction_, SIGNAL(triggered()), SLOT(bookmarksManage()));
 
         doGroupChatAction_ = new IconAction(tr("Join Groupchat"), this, "psi/groupChat");
