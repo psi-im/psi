@@ -355,6 +355,7 @@ if(WIN32)
                 libgstaudiomixer.dll
                 libgstaudioresample.dll
                 libgstcoreelements.dll
+                libgstdirectsound.dll
                 libgstdirectsoundsink.dll
                 libgstdirectsoundsrc.dll
                 libgstjpeg.dll
