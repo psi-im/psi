@@ -784,6 +784,8 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
     }
     if (pepIconsRect.intersects(r)) {
         if (isMuc) {
+            pepIconsRect.setTop(nickRect.top());
+            pepIconsRect.setHeight(nickRect.height());
             painter->drawText(pepIconsRect, mucMessages);
         } else {
             for (int i = 0; i < rightPixs.size(); i++) {
