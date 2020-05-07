@@ -111,18 +111,7 @@ private:
     XMPP::Jid         jid_;
     QString           name_;
     QPointer<QWidget> dialog_;
-
-    QPixmap  logIconSend;
-    QPixmap  logIconReceive;
-    QPixmap  logIconDelivered;
-    QPixmap  logIconSendPgp;
-    QPixmap  logIconReceivePgp;
-    QPixmap  logIconDeliveredPgp;
-    QPixmap  logIconTime;
-    QPixmap  logIconInfo;
-    QPixmap  logIconCorrected;
-    QPixmap  logIconHistory;
-    QAction *actQuote_;
+    QAction *         actQuote_;
 };
 
 #endif // CHATVIEW_TE_H

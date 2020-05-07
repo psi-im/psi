@@ -495,7 +495,7 @@ QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex 
         return pixList;
 
     for (const QString &client : vList) {
-        const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
+        auto pix = rosterIndicator("clients/" + client);
         if (!pix.isNull())
             pixList.push_back(pix);
     }
@@ -512,6 +512,16 @@ QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
         av = IconsetFactory::iconPixmap("psi/default_avatar");
 
     return AvatarFactory::roundedAvatar(av, avatarRadius_, avSize);
+}
+
+QPixmap ContactListViewDelegate::Private::rosterIndicator(const QString iconName)
+{
+    QPixmap pix = IconsetFactory::iconPixmap(iconName);
+    auto    fs  = QFontInfo(font_).pixelSize();
+    if (pix.height() > fs * 1.2) {
+        pix = pix.scaledToHeight(fs * 0.93, Qt::SmoothTransformation);
+    }
+    return pix;
 }
 
 void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QModelIndex &index)
@@ -600,6 +610,9 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         if (statusIconsOverAvatars_ && showAvatars_) {
             statusPixmap = statusPixmap.scaled(statusIconRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
         } else {
+            auto fs = QFontInfo(font_).pixelSize();
+            if (statusPixmap.height() > fs * 1.2)
+                statusPixmap = statusPixmap.scaledToHeight(fs * 0.93, Qt::SmoothTransformation);
             if (opt.direction == Qt::RightToLeft) {
                 statusIconRect.moveRight(firstLineRect.right());
                 nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin * PSI_HIDPI);
@@ -685,7 +698,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         if (showMoodIcons_) {
             Mood m = index.data(ContactListModel::MoodRole).value<Mood>();
             if (m.type() != Mood::Unknown) {
-                const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(m.typeValue()));
+                auto pix = rosterIndicator(QString("mood/%1").arg(m.typeValue()));
                 if (!pix.isNull()) {
                     rightPixs.push_back(pix);
                     rightWidths.push_back(pix.width());
@@ -696,7 +709,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         if (showActivityIcons_) {
             QString icon = activityIconName(index.data(ContactListModel::ActivityRole).value<Activity>());
             if (!icon.isNull()) {
-                const QPixmap &pix = IconsetFactory::iconPixmap(icon);
+                auto pix = rosterIndicator(icon);
                 if (!pix.isNull()) {
                     rightPixs.push_back(pix);
                     rightWidths.push_back(pix.width());
@@ -705,19 +718,19 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         }
 
         if (showTuneIcons_ && index.data(ContactListModel::TuneRole).toBool()) {
-            const QPixmap &pix = IconsetFactory::iconPixmap("pep/tune");
+            auto pix = rosterIndicator("pep/tune");
             rightPixs.push_back(pix);
             rightWidths.push_back(pix.width());
         }
 
         if (showGeolocIcons_ && index.data(ContactListModel::GeolocationRole).toBool()) {
-            const QPixmap &pix = IconsetFactory::iconPixmap("pep/geolocation");
+            auto pix = rosterIndicator("pep/geolocation");
             rightPixs.push_back(pix);
             rightWidths.push_back(pix.width());
         }
 
         if (index.data(ContactListModel::IsSecureRole).toBool()) {
-            const QPixmap &pix = IconsetFactory::iconPixmap("psi/pgp");
+            auto pix = rosterIndicator("psi/pgp");
             rightPixs.push_back(pix);
             rightWidths.push_back(pix.width());
         }

@@ -36,6 +36,7 @@ public:
     QSize sizeHint(const QModelIndex &index) const;
     int   avatarSize() const;
 
+    QPixmap                rosterIndicator(const QString iconName);
     virtual QPixmap        statusPixmap(const QModelIndex &index);
     virtual QList<QPixmap> clientPixmap(const QModelIndex &index);
     virtual QPixmap        avatarIcon(const QModelIndex &index);

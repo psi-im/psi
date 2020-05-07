@@ -73,44 +73,7 @@ ChatView::ChatView(QWidget *parent) :
     connect(actQuote_, &QAction::triggered, this, [this](bool) { emit quote(getPlainText()); });
     connect(this, &ChatView::selectionChanged, this, [this]() { actQuote_->setEnabled(textCursor().hasSelection()); });
 
-    useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
-    if (useMessageIcons_) {
-        int logIconsSize = int(fontInfo().pixelSize() * 0.93);
-        if (PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool()) {
-            logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive")
-                                 .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send")
-                              .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconDelivered = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok")
-                                   .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconReceivePgp = IconsetFactory::iconPixmap("psi/notification_chat_receive_pgp")
-                                    .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconSendPgp = IconsetFactory::iconPixmap("psi/notification_chat_send_pgp")
-                                 .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp")
-                                      .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time")
-                              .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info")
-                              .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit")
-                                   .scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-            logIconHistory
-                = IconsetFactory::iconPixmap("psi/history").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
-        } else {
-            logIconReceive      = IconsetFactory::iconPixmap("psi/notification_chat_receive");
-            logIconSend         = IconsetFactory::iconPixmap("psi/notification_chat_send");
-            logIconDelivered    = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok");
-            logIconReceivePgp   = IconsetFactory::iconPixmap("psi/notification_chat_receive_pgp");
-            logIconSendPgp      = IconsetFactory::iconPixmap("psi/notification_chat_send_pgp");
-            logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp");
-            logIconTime         = IconsetFactory::iconPixmap("psi/notification_chat_time");
-            logIconInfo         = IconsetFactory::iconPixmap("psi/notification_chat_info");
-            logIconCorrected    = IconsetFactory::iconPixmap("psi/action_templates_edit");
-            logIconHistory      = IconsetFactory::iconPixmap("psi/history");
-        }
-        addLogIconsResources();
-    }
+    addLogIconsResources();
 }
 
 ChatView::~ChatView() { }
@@ -164,32 +127,44 @@ void ChatView::addLogIconsResources()
 {
     struct {
         const char *name;
-        QPixmap     icon;
-    } icons[] = { { "log_icon_receive", logIconReceive },
-                  { "log_icon_send", logIconSend },
-                  { "log_icon_receive_pgp", logIconReceivePgp },
-                  { "log_icon_send_pgp", logIconSendPgp },
-                  { "log_icon_time", logIconTime },
-                  { "log_icon_info", logIconInfo },
-                  { "log_icon_delivered", logIconDelivered },
-                  { "log_icon_delivered_pgp", logIconDeliveredPgp },
-                  { "log_icon_corrected", logIconCorrected },
-                  { "log_icon_history", logIconHistory } };
-    auto fs   = QFontInfo(font()).pixelSize();
+        const char *icon;
+    } icons[] = { { "log_icon_receive", "psi/notification_chat_receive" },
+                  { "log_icon_send", "psi/notification_chat_send" },
+                  { "log_icon_receive_pgp", "psi/notification_chat_receive_pgp" },
+                  { "log_icon_send_pgp", "psi/notification_chat_send_pgp" },
+                  { "log_icon_time", "psi/notification_chat_time" },
+                  { "log_icon_info", "psi/notification_chat_info" },
+                  { "log_icon_delivered", "psi/notification_chat_delivery_ok" },
+                  { "log_icon_delivered_pgp", "psi/notification_chat_delivery_ok_pgp" },
+                  { "log_icon_corrected", "psi/action_templates_edit" },
+                  { "log_icon_history", "psi/history" } };
+
+    useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
+    int  scaledSize  = int(fontInfo().pixelSize() * 0.93);
+    bool scale       = PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool();
+
+    auto fs = QFontInfo(font()).pixelSize();
     for (auto &i : icons) {
-        if (i.icon.height() > 1.2 * fs) {
-            i.icon = i.icon.scaled(fs, fs, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        }
         auto res = QUrl(QLatin1String("icon:") + i.name);
-        document()->addResource(QTextDocument::ImageResource, res, i.icon);
+        if (useMessageIcons_) {
+            auto icon = IconsetFactory::iconPixmap(i.icon);
+            if (icon.height() > 1.2 * fs || scale) {
+                icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
+            }
+            document()->addResource(QTextDocument::ImageResource, res, icon);
+        } else {
+            document()->addResource(QTextDocument::ImageResource, res, QVariant());
+        }
     }
 }
 
 void ChatView::markReceived(QString id)
 {
     if (useMessageIcons_) {
-        document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id),
-                                isEncryptionEnabled_ ? logIconDeliveredPgp : logIconDelivered);
+        auto delivered = document()->resource(
+            QTextDocument::ImageResource,
+            QUrl(QLatin1String("icon:") + (isEncryptionEnabled_ ? "log_icon_delivered_pgp" : "log_icon_delivered")));
+        document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id), delivered);
         setLineWrapColumnOrWidth(lineWrapColumnOrWidth());
     }
 }
@@ -447,8 +422,11 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
     QString timestr = formatTimeStamp(mv.dateTime());
     QString color   = colorString(mv.isLocal(), false);
     if (useMessageIcons_ && mv.isAwaitingReceipt()) {
+        auto sendIcon = document()->resource(
+            QTextDocument::ImageResource,
+            QUrl(QLatin1String("icon:") + (isEncryptionEnabled_ ? "log_icon_send_pgp" : "log_icon_send")));
         document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + mv.messageId()),
-                                isEncryptionEnabled_ ? logIconSendPgp : logIconSend);
+                                sendIcon);
     }
     QString icon;
     if (useMessageIcons_) {
