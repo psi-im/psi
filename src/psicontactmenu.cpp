@@ -63,11 +63,11 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
 
     connect(contact_, SIGNAL(updated()), SLOT(updateActions()));
 
-    renameAction_ = new QAction(tr("Re&name"), this);
+    renameAction_ = new IconAction(tr("Re&name"), this, "psi/rename");
     renameAction_->setShortcuts(menu->shortcuts("contactlist.rename"));
     connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
 
-    removeAction_ = new QAction(tr("&Remove"), this);
+    removeAction_ = new IconAction(tr("&Remove"), this, "psi/remove");
     removeAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.delete"));
     connect(removeAction_, SIGNAL(triggered()), SLOT(removeContact()));
 
