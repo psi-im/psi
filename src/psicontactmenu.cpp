@@ -63,7 +63,7 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
 
     connect(contact_, SIGNAL(updated()), SLOT(updateActions()));
 
-    renameAction_ = new IconAction(tr("Re&name"), this, "psi/rename");
+    renameAction_ = new QAction(tr("Re&name"), this);
     renameAction_->setShortcuts(menu->shortcuts("contactlist.rename"));
     connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
 
