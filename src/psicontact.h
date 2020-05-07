@@ -88,13 +88,15 @@ public:
     bool                 isDragEnabled() const;
     //    bool compare(const ContactListItem* other) const;
     bool isRemovable() const;
+    bool canAddToRsoter() const;
 
-    XMPP::Jid    jid() const;
-    XMPP::Status status() const;
-    QString      statusText() const;
-    QString      toolTip() const;
-    QIcon        picture() const;
-    QIcon        alertPicture() const;
+    XMPP::Jid        jid() const;
+    const XMPP::Jid &realJid() const;
+    XMPP::Status     status() const;
+    QString          statusText() const;
+    QString          toolTip() const;
+    QIcon            picture() const;
+    QIcon            alertPicture() const;
 
     void rereadVCard();
 

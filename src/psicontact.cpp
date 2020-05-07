@@ -194,6 +194,13 @@ QString PsiContact::comparisonName() const { return name() + jid().full() + acco
  */
 XMPP::Jid PsiContact::jid() const { return d->u_.jid(); }
 
+const Jid &PsiContact::realJid() const
+{
+    if (isPrivate() && d->status_.hasMUCItem() && d->status_.mucItem().jid().isValid())
+        return d->status_.mucItem().jid();
+    return d->u_.jid();
+}
+
 /**
  * Returns contact's status.
  */
@@ -350,6 +357,20 @@ bool PsiContact::isRemovable() const
         return true;
     }
     return account()->isAvailable();
+}
+
+bool PsiContact::canAddToRsoter() const
+{
+    if (isSelf() || inList() || PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()
+        || (isPrivate() && !(d->status_.hasMUCItem() && d->status_.mucItem().jid().isValid())))
+        return false;
+
+    if (!isPrivate()) // then what?
+        return true;
+
+    auto realContact = account()->findContact(d->status_.mucItem().jid().withResource(QString()));
+    Q_ASSERT(realContact != this);
+    return !realContact || realContact->canAddToRsoter();
 }
 
 /**

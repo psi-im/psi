@@ -309,9 +309,7 @@ void PsiContactMenu::Private::updateActions()
     inviteToGroupchatMenu_->updateMenu(contact_);
     groupMenu_->updateMenu(contact_);
 
-    addAuthAction_->setVisible(
-        !contact_->isSelf() && !contact_->inList()
-        && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
+    addAuthAction_->setVisible(contact_->canAddToRsoter());
     addAuthAction_->setEnabled(contact_->account()->isAvailable());
     customStatusAction_->setEnabled(contact_->account()->isAvailable() && !contact_->isPrivate());
 
@@ -463,10 +461,11 @@ void PsiContactMenu::Private::addAuth()
     if (!contact_)
         return;
 
+    auto j = contact_->realJid().withResource(QString());
     if (contact_->inList())
-        contact_->account()->actionAuth(contact_->jid());
+        contact_->account()->actionAuth(j);
     else
-        contact_->account()->actionAdd(contact_->jid());
+        contact_->account()->actionAdd(j);
 
     QMessageBox::information(nullptr, tr("Add"),
                              tr("Added/Authorized <b>%1</b> to the contact list.").arg(contact_->name()));
