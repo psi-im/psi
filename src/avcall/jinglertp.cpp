@@ -592,6 +592,7 @@ public:
                 types &= ~JingleRtp::Video;
 
             if (types == 0) {
+                qDebug("None of requested content was accepted! Cleaning up..");
                 reject();
                 emit q->rejected();
                 return false;
@@ -605,6 +606,7 @@ public:
                 }
                 iceA_status.remoteCandidates += audioContent->trans.candidates;
             } else if (iceA) {
+                qDebug("Audio was requested but not accepted! Cleaning up..");
                 auto is = new IceStopper();
                 is->start(portReserver, { iceA });
                 iceA = nullptr;
@@ -617,6 +619,7 @@ public:
                 }
                 iceV_status.remoteCandidates += videoContent->trans.candidates;
             } else if (iceV) {
+                qDebug("Video was requested but not accepted! Cleaning up..");
                 auto is = new IceStopper();
                 is->start(portReserver, { iceV });
                 iceV = nullptr;
