@@ -2251,7 +2251,9 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
         // printf("PsiAccount: [%s] roster retrieved ok.  %d entries.\n", name().latin1(), d->client->roster().count());
 
         // delete flagged items
-        for (UserListItem *u : d->userList) {
+        QMutableListIterator<UserListItem *> it(d->userList);
+        while (it.hasNext()) {
+            auto u = it.next();
             if (u->flagForDelete()) {
                 // QMessageBox::information(0, "blah", QString("deleting: [%1]").arg(u->jid().full()));
 
@@ -2259,7 +2261,7 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
                 updateReadNext(u->jid());
 
                 profileRemoveEntry(u->jid());
-                d->userList.removeAll(u);
+                it.remove();
                 delete u;
             }
         }
