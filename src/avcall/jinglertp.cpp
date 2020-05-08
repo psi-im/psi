@@ -604,6 +604,10 @@ public:
                     iceA_status.remotePassword = audioContent->trans.pass;
                 }
                 iceA_status.remoteCandidates += audioContent->trans.candidates;
+            } else if (iceA) {
+                auto is = new IceStopper();
+                is->start(portReserver, { iceA });
+                iceA = nullptr;
             }
             if (videoContent) {
                 remoteVideoPayloadTypes = videoContent->desc.payloadTypes;
@@ -612,6 +616,10 @@ public:
                     iceV_status.remotePassword = videoContent->trans.pass;
                 }
                 iceV_status.remoteCandidates += videoContent->trans.candidates;
+            } else if (iceV) {
+                auto is = new IceStopper();
+                is->start(portReserver, { iceV });
+                iceV = nullptr;
             }
 
             restartHandshakeTimer();
