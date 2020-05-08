@@ -281,7 +281,7 @@ if(WIN32)
                 libjpeg-8.dll
                 libogg-0.dll
                 libopus-0.dll
-                liborc-0.4-0.dll
+                orc-0.4-0.dll
                 libpng16-16.dll
                 libtheora-0.dll
                 libtheoradec-1.dll
