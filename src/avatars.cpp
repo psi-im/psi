@@ -943,9 +943,14 @@ void AvatarFactory::itemPublished(const Jid &jid, const QString &n, const PubSub
             qWarning("avatars.cpp: Unexpected item payload");
         }
     } else if (n == PEP_AVATAR_METADATA_NS) {
-        auto hash = QByteArray::fromHex(item.id().toLatin1());
-        if (hash.size() < 20)
-            return; // doesn't look like sha1 hash. just ignore it
+        auto       id        = item.id().toLatin1();
+        bool       isCurrent = id == "current";
+        QByteArray hash;
+        if (!isCurrent) {
+            hash = QByteArray::fromHex(id);
+            if (hash.size() < 20)
+                return; // doesn't look like sha1 hash. just ignore it
+        }
 
         if (item.payload().tagName() == QLatin1String(PEP_AVATAR_METADATA_TN)
             && item.payload().firstChildElement().isNull()) {
