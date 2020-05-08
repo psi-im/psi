@@ -70,6 +70,7 @@ public:
     CapitalLettersController *capitalizer();
     void                      addSoundRecButton();
     bool                      hasSoundRecButton() const { return bool(recButton_); }
+    int                       recButtonHeigth() const;
     void                      removeSoundRecButton();
 
 public slots:

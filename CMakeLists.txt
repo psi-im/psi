@@ -68,11 +68,8 @@ option( USE_DBUS "Enable DBUS support" ON )
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
 
-if( IS_PSIPLUS )
-    option( PRODUCTION "Build production version" OFF )
-else()
-    option( PRODUCTION "Build production version" ON )
-endif()
+option( PRODUCTION "Build production version" OFF )
+
 #Windows or MXE only
 option( USE_MXE "Use MXE cross-compilation" OFF )
 option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )

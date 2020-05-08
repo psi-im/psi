@@ -642,7 +642,7 @@ void ChatEdit::addSoundRecButton()
         layout_->addWidget(overlay_.get());
         recButton_->setToolTip(tr("Record and share audio note while pressed"));
         setRecButtonIcon();
-        const int iconSize = PsiIconset::instance()->system().iconSize() + 2;
+        const int iconSize = qMax(PsiIconset::instance()->system().iconSize() + 2, fontMetrics().capHeight() + 2);
         recButton_->setMinimumSize(QSize(iconSize, iconSize));
         layout_->addWidget(recButton_.get());
         layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
@@ -734,6 +734,8 @@ void ChatEdit::setRecButtonIcon()
     }
 }
 
+int ChatEdit::recButtonHeigth() const { return recButton_ ? recButton_->height() : 0; }
+
 void ChatEdit::setRigthMargin()
 {
     const int        margin = PsiIconset::instance()->system().iconSize() + 8;
@@ -762,9 +764,8 @@ LineEdit::~LineEdit() { }
 
 QSize LineEdit::minimumSizeHint() const
 {
-    const int sz = hasSoundRecButton()
-        ? qMax((PsiIconset::instance()->system().iconSize() + 2) * 2 - 1, fontMetrics().lineSpacing() + 1)
-        : fontMetrics().lineSpacing() + 1;
+    const int sz = hasSoundRecButton() ? qMax(recButtonHeigth() * 2 - 1, fontMetrics().lineSpacing() + 1)
+                                       : fontMetrics().lineSpacing() + 1;
     QSize sh = QTextEdit::minimumSizeHint();
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
@@ -774,9 +775,9 @@ QSize LineEdit::minimumSizeHint() const
 QSize LineEdit::sizeHint() const
 {
     QSize     sh = QTextEdit::sizeHint();
-    const int sz = hasSoundRecButton() ? qMax((PsiIconset::instance()->system().iconSize() + 2) * 2 - 1,
-                                              int(document()->documentLayout()->documentSize().height()))
-                                       : int(document()->documentLayout()->documentSize().height());
+    const int sz = hasSoundRecButton()
+        ? qMax(recButtonHeigth() * 2 - 1, int(document()->documentLayout()->documentSize().height()))
+        : int(document()->documentLayout()->documentSize().height());
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
     static_cast<QTextEdit *>(const_cast<LineEdit *>(this))->setMaximumHeight(sh.height());

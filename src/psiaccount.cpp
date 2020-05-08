@@ -6060,8 +6060,7 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 #endif
 }
 
-void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg,
-                                     const Message &origMsg,
+void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const Message &origMsg,
                                      const QString &encryptedText)
 {
 #ifdef HAVE_PGPUTIL
