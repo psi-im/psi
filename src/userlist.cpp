@@ -408,7 +408,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     str += "<td>";
 
     if (useAvatar) {
-        str += QString("<icon name=\"avatars/%1\">").arg(mucItem ? jid().full() : jid().bare());
+        str += QString("<icon name=\"avatars/%1\" size=\"original\">").arg(mucItem ? jid().full() : jid().bare());
         str += "</td><td width=\"10\"></td>";
         str += "<td>";
     }
