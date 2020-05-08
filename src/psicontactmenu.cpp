@@ -288,6 +288,7 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
         menu_->addAction(mucShowAction_);
         menu_->addAction(mucLeaveAction_);
         menu_->addSeparator();
+        menu_->addAction(vcardAction_);
         menu_->addAction(mucAddToBookmarks);
         menu_->addAction(customStatusAction_);
         menu_->addAction(_copyMucJid);
