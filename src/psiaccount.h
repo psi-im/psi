@@ -486,8 +486,7 @@ private slots:
     void trySignPresence();
     void pgp_signFinished();
     void pgp_verifyFinished();
-    void pgp_encryptFinished(const int id, const GpgProcess &gpg, const Message &origMsg,
-                             const QByteArray &encryptedText);
+    void pgp_encryptFinished(const int, const GpgProcess &, const Message &, const QString &);
     void pgp_decryptFinished();
 
     void ed_addAuth(const Jid &);

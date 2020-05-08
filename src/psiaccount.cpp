@@ -6041,12 +6041,17 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
     gpg.closeWriteChannel();
     gpg.waitForFinished();
 
-    const QByteArray &&out = gpg.readAllStandardOutput();
+#ifdef Q_OS_WIN
+    QString encryptedText = QString::fromUtf8(gpg.readAllStandardOutput());
+    encryptedText.replace("\r", "");
+#else
+    const QString &&encryptedText = QString::fromUtf8(gpg.readAllStandardOutput());
+#endif
 
     static int idCounter = 0;
     ++idCounter;
 
-    pgp_encryptFinished(idCounter, gpg, _m, out);
+    pgp_encryptFinished(idCounter, gpg, _m, encryptedText);
 
     return idCounter;
 #else
@@ -6055,8 +6060,9 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 #endif
 }
 
-void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const Message &origMsg,
-                                     const QByteArray &encryptedText)
+void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg,
+                                     const Message &origMsg,
+                                     const QString &encryptedText)
 {
 #ifdef HAVE_PGPUTIL
     if (gpg.success()) {
@@ -6071,7 +6077,7 @@ void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const 
         Message mwrap;
         mwrap.setTo(origMsg.to());
         mwrap.setType(origMsg.type());
-        QString enc = PGPUtil::instance().stripHeaderFooter(QString::fromUtf8(encryptedText));
+        QString enc = PGPUtil::instance().stripHeaderFooter(encryptedText);
         mwrap.setBody(tr("[ERROR: This message is encrypted, and you are unable to decrypt it.]"));
         mwrap.setXEncrypted(enc);
         mwrap.setWasEncrypted(true);
