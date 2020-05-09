@@ -418,18 +418,12 @@ public:
     bool session_accept_sent = false;
     bool session_activated   = false;
 
-    QTimer *               handshakeTimer = nullptr;
-    JingleRtp::Error       errorCode      = JingleRtp::NoError;
-    XMPP::UdpPortReserver *portReserver   = nullptr;
+    JingleRtp::Error       errorCode    = JingleRtp::NoError;
+    XMPP::UdpPortReserver *portReserver = nullptr;
 
     JingleRtpPrivate(JingleRtp *_q) : QObject(_q), q(_q)
     {
         connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
-
-        handshakeTimer = new QTimer(this);
-        connect(handshakeTimer, SIGNAL(timeout()), SLOT(handshake_timeout()));
-        handshakeTimer->setSingleShot(true);
-
         rtpChannel = new JingleRtpChannel;
     }
 
@@ -437,11 +431,6 @@ public:
     {
         cleanup();
         manager->unlink(q);
-
-        handshakeTimer->setParent(nullptr);
-        handshakeTimer->disconnect(this);
-        handshakeTimer->deleteLater();
-
         delete rtpChannel;
     }
 
@@ -625,8 +614,6 @@ public:
                 iceV = nullptr;
             }
 
-            restartHandshakeTimer();
-
             flushRemoteCandidates();
 
             session_accept_sent = true;
@@ -687,7 +674,6 @@ private:
     void cleanup()
     {
         resolver.disconnect(this);
-        handshakeTimer->stop();
 
         if (jt) {
             jt->disconnect(this);
@@ -1095,8 +1081,6 @@ private:
             }
         });
         task->go(true);
-
-        restartHandshakeTimer();
     }
 
     void tryActivated()
@@ -1109,7 +1093,6 @@ private:
 
             printf("activating!\n");
             session_activated = true;
-            handshakeTimer->stop();
 
             if (portReserver)
                 portReserver->setParent(nullptr);
@@ -1133,12 +1116,6 @@ private:
         }
     }
 
-    void restartHandshakeTimer()
-    {
-        // there better be some activity in 10 seconds
-        handshakeTimer->start(10000);
-    }
-
 private slots:
     void resolver_finished()
     {
@@ -1150,13 +1127,6 @@ private slots:
         printf("resolver finished\n");
 
         start_ice();
-    }
-
-    void handshake_timeout()
-    {
-        reject();
-        errorCode = JingleRtp::ErrorTimeout;
-        emit q->error();
     }
 
     // this happens when when we are ready to send offer/answer to remote. It's already accepted by the user
