@@ -642,7 +642,7 @@ void ChatEdit::addSoundRecButton()
         layout_->addWidget(overlay_.get());
         recButton_->setToolTip(tr("Record and share audio note while pressed"));
         setRecButtonIcon();
-        const int iconSize = qMax(PsiIconset::instance()->system().iconSize() + 2, fontMetrics().capHeight() + 2);
+        const int iconSize = qMax(PsiIconset::instance()->system().iconSize() + 2, fontMetrics().ascent() + 2);
         recButton_->setMinimumSize(QSize(iconSize, iconSize));
         layout_->addWidget(recButton_.get());
         layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
