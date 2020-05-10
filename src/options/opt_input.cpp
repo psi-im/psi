@@ -37,6 +37,8 @@ QWidget *OptionsTabInput::widget()
     w_            = new OptInputUI();
     OptInputUI *d = static_cast<OptInputUI *>(w_);
 
+    w_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     availableDicts_ = SpellChecker::instance()->getAllLanguages();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     auto list     = LanguageManager::bestUiMatch(availableDicts_);
@@ -113,6 +115,8 @@ void OptionsTabInput::restoreOptions()
 }
 
 void OptionsTabInput::setData(PsiCon *psi, QWidget *) { psi_ = psi; }
+
+bool OptionsTabInput::stretchable() const { return true; }
 
 void OptionsTabInput::updateDictLists()
 {
