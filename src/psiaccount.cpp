@@ -1201,7 +1201,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     connect(ProxyManager::instance(), SIGNAL(proxyRemoved(QString)), d, SLOT(pm_proxyRemoved(QString)));
 
     connect(d->psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
-    // connect(d->psi, SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
+
 #ifdef HAVE_PGPUTIL
     connect(&PGPUtil::instance(), SIGNAL(pgpKeysUpdated()), SLOT(pgpKeysUpdated()));
     connect(&PGPUtil::instance(), SIGNAL(newPassPhase(QString, QString)), SLOT(newPgpPassPhase(QString, QString)));
@@ -5872,26 +5872,6 @@ const Activity &PsiAccount::activity() const { return d->self.activity(); }
 const GeoLocation &PsiAccount::geolocation() const { return d->self.geoLocation(); }
 
 const Mood &PsiAccount::mood() const { return d->self.mood(); }
-
-// void PsiAccount::pgpToggled(bool b)
-//{
-//    QCA::PGPKey oldkey = d->cur_pgpSecretKey;
-//
-//    // gaining pgp?
-//    if(b)
-//        d->cur_pgpSecretKey = d->acc.pgpSecretKey;
-//    // losing it?
-//    else {
-//        d->cur_pgpSecretKey = QCA::PGPKey();
-//    }
-//
-//    if(!PGPUtil::instance().equals(oldkey,d->cur_pgpSecretKey)) {
-//        pgpKeyChanged();
-//        // resend status if online
-//        if(loggedIn())
-//            setStatusDirect(d->loginStatus);
-//    }
-//}
 
 void PsiAccount::pgpKeysUpdated()
 {

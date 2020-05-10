@@ -336,10 +336,6 @@ void OptionsDlgBase::Private::openTab(const QString &id)
                 w->setMinimumSize(w->sizeHint());
                 w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-                // WTF is this!?
-                // if (!opttab->stretchable())
-                //     vbox->addStretch();
-
                 dlg->ws_tabs->addWidget(w);
                 id2widget[id] = w;
                 connectDataChanged(tab); // no need to connect to dataChanged() slot by hands anymore

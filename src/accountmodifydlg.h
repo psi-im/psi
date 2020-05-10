@@ -58,7 +58,6 @@ private slots:
 
     void save();
 
-    // void pgpToggled(bool);
     void chooseKey();
     void clearKey();
     void tabChanged(int);

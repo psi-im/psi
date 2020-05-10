@@ -62,7 +62,6 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent) : QDialog(p
 
 void AccountModifyDlg::init()
 {
-    // connect(pa->psi(), SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
     if (pa)
         pa->dialogRegister(this);
 
@@ -408,17 +407,6 @@ void AccountModifyDlg::setKeyID(bool b, const QString &s)
         pb_keyclear->setEnabled(false);
     }
 }
-
-// void AccountModifyDlg::pgpToggled(bool b)
-//{
-//    if(b) {
-//        gb_pgp->setEnabled(true);
-//    }
-//    else {
-//        gb_pgp->setEnabled(false);
-//    }
-//    updateUserID();
-//}
 
 void AccountModifyDlg::setPassword(const QString &pw)
 {
