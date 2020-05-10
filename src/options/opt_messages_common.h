@@ -16,6 +16,7 @@ public:
     void     applyOptions();
     void     restoreOptions();
     void     setData(PsiCon *psi, QWidget *);
+    bool     stretchable() const;
 
 private:
     QWidget *w_;

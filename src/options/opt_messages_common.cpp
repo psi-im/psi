@@ -154,3 +154,6 @@ void OptionsTabMsgCommon::restoreOptions()
 }
 
 void OptionsTabMsgCommon::setData(PsiCon *psi, QWidget *) { psi_ = psi; }
+
+bool OptionsTabMsgCommon::stretchable() const { return true; }
+
