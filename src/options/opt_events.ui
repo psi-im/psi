@@ -1,122 +1,141 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>OptEvents</class>
- <widget class="QWidget" name="OptEvents" >
-  <property name="geometry" >
+ <widget class="QWidget" name="OptEvents">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>347</width>
-    <height>335</height>
+    <width>456</width>
+    <height>416</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>OptEventsUI</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>6</number>
    </property>
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
    <item>
-    <widget class="QCheckBox" name="ck_popupMsgs" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_popupMsgs">
+     <property name="text">
       <string>Auto-open new messages</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_popupHeadlines" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_popupHeadlines">
+     <property name="text">
       <string>Auto-open new headlines</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_popupFiles" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_popupFiles">
+     <property name="text">
       <string>Auto-open new files</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_allowAwayPopup" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_allowAwayPopup">
+     <property name="text">
       <string>Allow auto-open even when Away/XA</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_allowUnlistedPopup" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_allowUnlistedPopup">
+     <property name="text">
       <string>Allow auto-open even from unlisted users</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_raise" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_raise">
+     <property name="text">
       <string>Raise roster window on new event</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_ignoreNonRoster" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_ignoreNonRoster">
+     <property name="text">
       <string>Ignore events from contacts not already in your roster</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_autoAuth" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_autoAuth">
+     <property name="text">
       <string>Auto-authorize contacts</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_notifyAuth" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_notifyAuth">
+     <property name="text">
       <string>Notify when authorization was received</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
      <item>
-      <widget class="QLabel" name="lb_bounce" >
-       <property name="text" >
+      <widget class="QLabel" name="lb_bounce">
+       <property name="text">
         <string>Bounce dock:</string>
        </property>
-       <property name="alignment" >
+       <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
-       <property name="buddy" >
+       <property name="buddy">
         <cstring>cb_bounce</cstring>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="cb_bounce" >
+      <widget class="QComboBox" name="cb_bounce">
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Never</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Once</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Forever</string>
         </property>
        </item>
@@ -124,10 +143,10 @@
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>174</width>
          <height>20</height>
@@ -138,40 +157,49 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
      <item>
-      <widget class="QLabel" name="lb_animation" >
-       <property name="text" >
+      <widget class="QLabel" name="lb_animation">
+       <property name="text">
         <string>Animation:</string>
        </property>
-       <property name="alignment" >
+       <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
-       <property name="buddy" >
+       <property name="buddy">
         <cstring>cb_animation</cstring>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="cb_animation" >
+      <widget class="QComboBox" name="cb_animation">
        <item>
-        <property name="text" >
+        <property name="text">
          <string>No animation</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Blink</string>
         </property>
        </item>
        <item>
-        <property name="text" >
+        <property name="text">
          <string>Animate</string>
         </property>
        </item>
@@ -179,10 +207,10 @@
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>139</width>
          <height>20</height>
@@ -192,9 +220,22 @@
      </item>
     </layout>
    </item>
+   <item>
+    <widget class="QLabel" name="verticalSpacerLabel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>ck_popupMsgs</tabstop>
   <tabstop>ck_popupHeadlines</tabstop>
@@ -209,4 +250,5 @@
   <tabstop>cb_animation</tabstop>
  </tabstops>
  <resources/>
+ <connections/>
 </ui>

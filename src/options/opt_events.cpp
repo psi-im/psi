@@ -128,5 +128,8 @@ void OptionsTabEvents::restoreOptions()
     d->ck_notifyAuth->setChecked(
         PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool());
     d->cb_bounce->setCurrentIndex(
-        d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()));
+                d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()));
 }
+
+bool OptionsTabEvents::stretchable() const { return true; }
+
