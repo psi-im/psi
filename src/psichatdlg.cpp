@@ -212,7 +212,7 @@ private:
 
 PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
     ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_),
-    tabCompletion(&mCmdManager_), autoPGP_(true)
+    tabCompletion(&mCmdManager_)
 {
     connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
     connect(account(), SIGNAL(addedContact(PsiContact *)), SLOT(updateContactAdding(PsiContact *)));
@@ -294,8 +294,8 @@ void PsiChatDlg::initUi()
     PsiToolTip::install(ui_.avatar);
 
     UserListItem *u = account()->findFirstRelevant(jid());
-    if (u && u->isSecure(jid().resource()) && account()->hasPGP()) {
-        setPGPEnabled(true);
+    if (u && u->isSecure(jid().resource()) && account()->hasPgp()) {
+        setPgpEnabled(true);
     }
 
     connect(account()->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), this, SLOT(updateAvatar(const Jid &)));
@@ -485,7 +485,7 @@ void PsiChatDlg::updateToolbuttons()
         if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
             continue;
         }
-        if (actionName == "chat_pgp" && !options->getOption("options.pgp.enable").toBool()) {
+        if (actionName == "chat_pgp" && !options->getOption("options.pgp.enabled").toBool()) {
             continue;
         }
 
@@ -879,42 +879,44 @@ void PsiChatDlg::optionsUpdate()
     typeahead_->optionsUpdate();
 }
 
-void PsiChatDlg::updatePGP()
+void PsiChatDlg::updatePgp()
 {
-    if (account()->hasPGP()) {
+    if (account()->hasPgp()) {
         actions_->action("chat_pgp")->setEnabled(true);
         actions_->action("chat_pgp")->setToolTip(tr("OpenPGP encryption"));
     } else {
-        setPGPEnabled(false);
+        setPgpEnabled(false);
         actions_->action("chat_pgp")->setEnabled(false);
         actions_->action("chat_pgp")->setToolTip(tr("OpenPGP key is not set in your account settings!"));
     }
 
-    checkPGPAutostart();
+    checkPgpAutostart();
 
     ui_.tb_pgp->setVisible(
-        account()->hasPGP() && !smallChat_
+        account()->hasPgp() && !smallChat_
         && !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
-    ui_.log->setEncryptionEnabled(isEncryptionEnabled());
+    ui_.log->setPgpEncryptionEnabled(isPgpEncryptionEnabled());
 }
 
-void PsiChatDlg::checkPGPAutostart()
+void PsiChatDlg::checkPgpAutostart()
 {
-    if (account()->hasPGP() && autoPGP_ && PsiOptions::instance()->getOption("options.pgp.auto-start").toBool()) {
-        UserListItem *item = account()->findFirstRelevant(jid());
-        if (item && !item->publicKeyID().isEmpty()) {
-            if (!jid().resource().isEmpty()) {
-                UserResourceList::Iterator rit = item->userResourceList().find(jid().resource());
-                if (rit != item->userResourceList().end()) {
-                    UserResource r = *rit;
-                    if (r.pgpVerifyStatus() != 0) {
-                        setPGPEnabled(false);
-                        return;
-                    }
-                }
+    const bool enabled = PsiOptions::instance()->getOption("options.pgp.enabled").toBool();
+    if (account()->hasPgp() && enabled) {
+        const bool alwaysEnabled = PsiOptions::instance()->getOption("options.pgp.always-enabled").toBool();
+        if (alwaysEnabled) {
+            setPgpEnabled(true);
+        } else {
+            const bool enabledByDefault = PsiOptions::instance()->getOption("options.pgp.enabled-by-default").toBool();
+            const bool enabledManually  = false; // TODO: use storage to get this data
+            const bool disabledManually = false; // TODO: use storage to get this data
+            if (enabledByDefault && !disabledManually) {
+                setPgpEnabled(true);
+            } else {
+                setPgpEnabled(enabledManually);
             }
-            setPGPEnabled(true);
         }
+    } else {
+        setPgpEnabled(false);
     }
 }
 
@@ -923,7 +925,7 @@ void PsiChatDlg::actPgpToggled(bool b)
 #ifdef HAVE_PGPUTIL
     actions_->action("chat_pgp")->setChecked(!b);
 
-    if (!account()->hasPGP() || !PGPUtil::instance().pgpAvailable())
+    if (!account()->hasPgp() || !PGPUtil::instance().pgpAvailable())
         return;
 
     QMenu *  menu                  = new QMenu();
@@ -952,12 +954,10 @@ void PsiChatDlg::actPgpToggled(bool b)
 
     QAction *act = menu->exec(QCursor::pos());
     if (act == actEnableGpg) {
-        autoPGP_ = false;
-        ui_.log->setEncryptionEnabled(true);
+        ui_.log->setPgpEncryptionEnabled(true);
         actions_->action("chat_pgp")->setChecked(true);
     } else if (act == actDisableGpg) {
-        autoPGP_ = false;
-        ui_.log->setEncryptionEnabled(false);
+        ui_.log->setPgpEncryptionEnabled(false);
         actions_->action("chat_pgp")->setChecked(false);
     } else if (act == actAssignKey) {
         if (item) {
@@ -995,10 +995,10 @@ void PsiChatDlg::doClearButton()
     }
 }
 
-void PsiChatDlg::setPGPEnabled(bool enabled)
+void PsiChatDlg::setPgpEnabled(bool enabled)
 {
     actions_->action("chat_pgp")->setChecked(enabled);
-    ui_.log->setEncryptionEnabled(enabled);
+    ui_.log->setPgpEncryptionEnabled(enabled);
 }
 
 void PsiChatDlg::toggleSmallChat()
@@ -1042,7 +1042,7 @@ void PsiChatDlg::buildMenu()
 
 void PsiChatDlg::updateCounter() { ui_.lb_count->setNum(chatEdit()->toPlainText().length()); }
 
-bool PsiChatDlg::isEncryptionEnabled() const { return actions_->action("chat_pgp")->isChecked(); }
+bool PsiChatDlg::isPgpEncryptionEnabled() const { return actions_->action("chat_pgp")->isChecked(); }
 
 void PsiChatDlg::appendSysMsg(const QString &str)
 {

@@ -64,9 +64,10 @@
             <leave-status-message comment="Leave status message" type="QString"></leave-status-message>
         </muc>
         <pgp comment="PGP encryption options">
-            <enable comment="Enable PGP globally" type="bool">true</enable>
+            <enabled comment="Enable PGP globally" type="bool">false</enabled>
             <auto-assign comment="Automatically assign known keys to contacts with signed presences and no assigned keys" type="bool">true</auto-assign>
-            <auto-start comment="Automatically enable PGP encryption" type="bool">false</auto-start>
+            <always-enabled comment="PGP encryption is always enabled" type="bool">false</always-enabled>
+            <enabled-by-default comment="PGP encryption is enabled by default" type="bool">false</enabled-by-default>
         </pgp>
         <ui comment="User interface options">
             <account comment="Account options">

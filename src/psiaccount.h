@@ -160,7 +160,7 @@ public:
     const Mood &       mood() const;
     const Activity &   activity() const;
     const GeoLocation &geolocation() const;
-    bool               hasPGP() const;
+    bool               hasPgp() const;
     QString            pgpKeyId() const;
     QHostAddress *     localAddress() const;
 

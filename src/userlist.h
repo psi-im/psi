@@ -60,7 +60,7 @@ public:
     int            pgpVerifyStatus() const;
     QDateTime      sigTimestamp() const;
     void           setPublicKeyID(const QString &);
-    void           setPGPVerifyStatus(int);
+    void           setPgpVerifyStatus(int);
     void           setSigTimestamp(const QDateTime &);
 
     void               setTune(const QString &);

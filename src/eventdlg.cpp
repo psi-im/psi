@@ -731,7 +731,7 @@ void EventDlg::init()
 
     QList<IconToolButton *> toolButtons;
     toolButtons << d->tb_url << d->tb_info << d->tb_history;
-    if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
+    if (PsiOptions::instance()->getOption("options.pgp.enabled").toBool())
         toolButtons << d->tb_pgp;
     toolButtons << d->tb_icon;
     for (IconToolButton *toolButton : toolButtons)
@@ -932,8 +932,8 @@ void EventDlg::init()
         setTabOrder(d->le_from, d->le_subj);
     setTabOrder(d->le_subj, d->mle);
 
-    updatePGP();
-    connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
+    updatePgp();
+    connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
     connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
@@ -1978,11 +1978,11 @@ void EventDlg::actionGCJoin(const QString &gc, const QString &passw)
     d->pa->actionJoin(j.withResource(""), passw);
 }
 
-void EventDlg::updatePGP()
+void EventDlg::updatePgp()
 {
     if (d->tb_pgp) {
-        d->tb_pgp->setEnabled(d->pa->hasPGP());
-        if (!d->pa->hasPGP()) {
+        d->tb_pgp->setEnabled(d->pa->hasPgp());
+        if (!d->pa->hasPgp()) {
             d->tb_pgp->setChecked(false);
         }
     }

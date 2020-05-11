@@ -94,14 +94,14 @@ private:
     // reimplemented
     void      initUi();
     void      capsChanged();
-    bool      isEncryptionEnabled() const;
+    bool      isPgpEncryptionEnabled() const;
     void      updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
     void      contactUpdated(UserListItem *u, int status, const QString &statusString);
     void      updateAvatar();
     void      optionsUpdate();
-    void      updatePGP();
-    void      checkPGPAutostart();
-    void      setPGPEnabled(bool enabled);
+    void      updatePgp();
+    void      checkPgpAutostart();
+    void      setPgpEnabled(bool enabled);
     void      activated();
     void      setLooks();
     void      setShortcuts();
@@ -131,7 +131,6 @@ private:
 
     MCmdTabCompletion tabCompletion;
 
-    bool autoPGP_;
     bool smallChat_;
     class ChatDlgMCmdProvider;
 

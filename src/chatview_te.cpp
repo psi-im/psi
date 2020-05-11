@@ -85,7 +85,7 @@ QSize ChatView::sizeHint() const { return minimumSizeHint(); }
 
 void ChatView::setDialog(QWidget *dialog) { dialog_ = dialog; }
 
-void ChatView::setEncryptionEnabled(bool enabled) { isEncryptionEnabled_ = enabled; }
+void ChatView::setPgpEncryptionEnabled(bool enabled) { isEncryptionEnabled_ = enabled; }
 
 void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name)
 {

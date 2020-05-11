@@ -1410,7 +1410,7 @@ WbManager *PsiAccount::wbManager() const { return d->wbManager; }
 #endif
 PrivacyManager *PsiAccount::privacyManager() const { return d->privacyManager; }
 
-bool PsiAccount::hasPGP() const { return !d->cur_pgpSecretKey.isNull(); }
+bool PsiAccount::hasPgp() const { return !d->cur_pgpSecretKey.isNull(); }
 
 QString PsiAccount::pgpKeyId() const { return d->cur_pgpSecretKey.keyId(); }
 
@@ -2535,7 +2535,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
                 doPopup = true;
         }
 
-        rp->setPGPVerifyStatus(-1);
+        rp->setPgpVerifyStatus(-1);
         if (!rp->status().xsigned().isEmpty())
             tryVerify(u, rp);
 
@@ -5980,7 +5980,7 @@ void PsiAccount::pgp_verifyFinished()
             signer = t->signer();
 
             ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
-            ur.setPGPVerifyStatus(signer.identityResult());
+            ur.setPgpVerifyStatus(signer.identityResult());
             ur.setSigTimestamp(signer.timestamp());
 
             if (u->publicKeyID().isEmpty() && PsiOptions::instance()->getOption("options.pgp.auto-assign").toBool()) {
@@ -5991,7 +5991,7 @@ void PsiAccount::pgp_verifyFinished()
                 }
             }
         } else {
-            ur.setPGPVerifyStatus(-1);
+            ur.setPgpVerifyStatus(-1);
         }
         cpUpdate(*u);
     }

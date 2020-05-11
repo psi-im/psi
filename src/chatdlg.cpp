@@ -164,9 +164,9 @@ void ChatDlg::init()
     X11WM_CLASS("chat");
     setLooks();
 
-    updatePGP();
+    updatePgp();
 
-    connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
+    connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
     connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
     account()->dialogRegister(this, jid());
@@ -511,7 +511,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
             invalidateTab();
 
             key_ = userStatus.publicKeyID;
-            updatePGP();
+            updatePgp();
 
             if (PsiOptions::instance()->getOption("options.ui.chat.show-status-changes").toBool() && fromPresence
                 && statusChanged) {
@@ -594,7 +594,7 @@ void ChatDlg::optionsUpdate()
     }
 }
 
-void ChatDlg::updatePGP() { }
+void ChatDlg::updatePgp() { }
 
 void ChatDlg::doInfo() { aInfo(jid()); }
 
@@ -631,7 +631,7 @@ void ChatDlg::updateRealJid() { realJid_ = account()->realJid(jid()); }
 
 Jid ChatDlg::realJid() const { return realJid_; }
 
-bool ChatDlg::isEncryptionEnabled() const { return false; }
+bool ChatDlg::isPgpEncryptionEnabled() const { return false; }
 
 void ChatDlg::doFileShare(const QList<Reference> &&references, const QString &desc)
 {
@@ -680,7 +680,7 @@ void ChatDlg::doSend()
     Message m(jid());
     m.setType("chat");
     m.setTimeStamp(QDateTime::currentDateTime());
-    if (isEncryptionEnabled()) {
+    if (isPgpEncryptionEnabled()) {
         m.setWasEncrypted(true);
     }
 
@@ -729,7 +729,7 @@ void ChatDlg::doSend()
     // Update current state
     setChatState(XMPP::StateActive);
 
-    if (isEncryptionEnabled()) {
+    if (isPgpEncryptionEnabled()) {
         chatEdit()->setEnabled(false);
         transid_ = account()->sendMessageEncrypted(m);
         if (transid_ == -1) {
@@ -806,7 +806,7 @@ void ChatDlg::incomingMessage(const Message &m)
     }
 }
 
-void ChatDlg::setPGPEnabled(bool enabled) { Q_UNUSED(enabled); }
+void ChatDlg::setPgpEnabled(bool enabled) { Q_UNUSED(enabled); }
 
 QString ChatDlg::whoNick(bool local) const
 {
@@ -843,7 +843,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
                                              : QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption Disabled"),
                                   MessageView::System));
         if (!local) {
-            setPGPEnabled(encEnabled && account()->hasPGP());
+            setPgpEnabled(encEnabled && account()->hasPgp());
             if (!encEnabled) {
                 // enable warning
                 warnSend_ = true;

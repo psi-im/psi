@@ -73,7 +73,7 @@ public slots:
     void scrollUp();
     void scrollDown();
 
-    void setEncryptionEnabled(bool enabled);
+    void setPgpEncryptionEnabled(bool enabled);
 
 protected:
     // override the tab/esc behavior

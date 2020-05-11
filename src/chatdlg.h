@@ -134,8 +134,8 @@ protected slots:
     void         doFile();
 
 private slots:
-    virtual void updatePGP();
-    virtual void setPGPEnabled(bool enabled);
+    virtual void updatePgp();
+    virtual void setPgpEnabled(bool enabled);
     void         encryptedMessageSent(int, bool, int, const QString &);
     void         setChatState(XMPP::ChatState s);
     void         updateIsComposing(bool);
@@ -168,7 +168,7 @@ protected:
     virtual void updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence);
     virtual void contactUpdated(UserListItem *u, int status, const QString &statusString);
 
-    virtual bool isEncryptionEnabled() const;
+    virtual bool isPgpEncryptionEnabled() const;
 
 protected:
     virtual void nicksChanged();

@@ -121,7 +121,7 @@ QDateTime UserResource::sigTimestamp() const { return sigts; }
 
 void UserResource::setPublicKeyID(const QString &s) { v_keyID = s; }
 
-void UserResource::setPGPVerifyStatus(int x) { v_pgpVerifyStatus = x; }
+void UserResource::setPgpVerifyStatus(int x) { v_pgpVerifyStatus = x; }
 
 void UserResource::setSigTimestamp(const QDateTime &ts) { sigts = ts; }
 
