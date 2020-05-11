@@ -105,8 +105,6 @@ public:
     QMenu *                pictureMenu_;
     QAction *              pictureAssignAction_;
     QAction *              pictureClearAction_;
-    QAction *              gpgAssignKeyAction_;
-    QAction *              gpgUnassignKeyAction_;
     QAction *              vcardAction_;
     QAction *              historyAction_;
     QAction *              mucHideAction_;

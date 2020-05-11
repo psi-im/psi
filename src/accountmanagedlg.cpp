@@ -23,7 +23,6 @@
 #include "common.h"
 #include "iconaction.h"
 #include "miniclient.h"
-#include "pgputil.h"
 #include "proxy.h"
 #include "psiaccount.h"
 #include "psicon.h"

@@ -123,12 +123,6 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
     connect(pictureClearAction_, SIGNAL(triggered()), SLOT(pictureClear()));
     pictureClearAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.clear-custom-avatar"));
 
-    gpgAssignKeyAction_ = new IconAction(tr("Assign Open&PGP Key"), this, "psi/gpg-yes");
-    connect(gpgAssignKeyAction_, SIGNAL(triggered()), SLOT(gpgAssignKey()));
-
-    gpgUnassignKeyAction_ = new IconAction(tr("Unassign Open&PGP Key"), this, "psi/gpg-no");
-    connect(gpgUnassignKeyAction_, SIGNAL(triggered()), SLOT(gpgUnassignKey()));
-
     vcardAction_ = new IconAction(tr("User &Info"), this, "psi/vCard");
     connect(vcardAction_, SIGNAL(triggered()), SLOT(vcard()));
     vcardAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
@@ -271,8 +265,6 @@ PsiContactMenu::Private::Private(PsiContactMenu *menu, PsiContact *_contact) :
         _advancedMenu->addAction(customStatusAction_);
         _advancedMenu->addAction(visibleAction_);
         _advancedMenu->addAction(authRemoveAction_);
-        _advancedMenu->addAction(gpgAssignKeyAction_);
-        _advancedMenu->addAction(gpgUnassignKeyAction_);
 #ifdef WHITEBOARDING
         _advancedMenu->addAction(openWhiteboardAction_);
         _advancedMenu->addMenu(openWhiteboardToMenu_);
@@ -377,17 +369,6 @@ void PsiContactMenu::Private::updateActions()
     if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
         pictureMenu_->menuAction()->setVisible(false);
     }
-#ifdef HAVE_PGPUTIL
-    gpgAssignKeyAction_->setVisible(
-        contact_->account()->hasPGP() && PGPUtil::instance().pgpAvailable()
-        && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()
-        && contact_->userListItem().publicKeyID().isEmpty());
-
-    gpgUnassignKeyAction_->setVisible(
-        contact_->account()->hasPGP() && PGPUtil::instance().pgpAvailable()
-        && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()
-        && !contact_->userListItem().publicKeyID().isEmpty());
-#endif // HAVE_PGPUTIL
 }
 
 void PsiContactMenu::Private::mucHide()

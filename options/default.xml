@@ -291,7 +291,6 @@ QLineEdit#le_status_text {
                 <contact comment="Options for the contact-specific menu">
                     <active-chats comment="Show the 'active chats' menu" type="bool">true</active-chats>
                     <custom-picture comment="Show the 'picture' menu" type="bool">true</custom-picture>
-                    <custom-pgp-key comment="Show the 'assign pgp key' menu" type="bool">true</custom-pgp-key>
                 </contact>
                 <main comment="Options for the main menu">
                     <change-profile comment="Show the 'change profile' menu" type="bool">true</change-profile>
