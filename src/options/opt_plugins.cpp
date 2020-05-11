@@ -113,8 +113,10 @@ void OptionsTabPlugins::listPlugins()
         QString          toolTip = tr("Plugin Path:\n%1").arg(path);
         Qt::CheckState   state   = enabled ? Qt::Checked : Qt::Unchecked;
         QTreeWidgetItem *item    = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
+        auto truncatedPluginName = QString(plugin).replace(" Plugin", "");
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        item->setText(C_NAME, plugin);
+        item->setData(C_NAME, Qt::UserRole, plugin);
+        item->setText(C_NAME, truncatedPluginName);
         item->setText(C_VERSION, pm->version(plugin));
         item->setTextAlignment(C_VERSION, Qt::AlignHCenter);
         item->setToolTip(C_NAME, toolTip);
@@ -161,7 +163,7 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
     d->tw_Plugins->setCurrentItem(item);
 
     PluginManager *pm     = PluginManager::instance();
-    QString        name   = item->text(C_NAME);
+    QString        name   = item->data(C_NAME, Qt::UserRole).toString();
     QString        option = QString("%1.%2").arg(PluginManager::loadOptionPrefix).arg(pm->shortName(name));
     PsiOptions::instance()->setOption(option, enabled);
 
@@ -191,7 +193,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
         ui_.setupUi(infoDialog);
         infoDialog->setWindowTitle(tr("About plugin"));
         infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
-        QString name = d->tw_Plugins->currentItem()->text(C_NAME);
+        const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         ui_.te_info->setText(PluginManager::instance()->pluginInfo(name));
         infoDialog->setAttribute(Qt::WA_DeleteOnClose);
         infoDialog->show();
@@ -207,8 +209,8 @@ void OptionsTabPlugins::settingsClicked(int item)
     d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
     if (d->tw_Plugins->selectedItems().size() > 0) {
-        const QString      pluginName = d->tw_Plugins->currentItem()->text(C_NAME);
-        const QString      shortName  = PluginManager::instance()->shortName(pluginName);
+        const QString     &pluginName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
+        const QString     &shortName  = PluginManager::instance()->shortName(pluginName);
         PluginsOptionsDlg *sw         = d->findChild<PluginsOptionsDlg *>(shortName);
         if (!sw) {
             sw = new PluginsOptionsDlg(pluginName, psi, d);
