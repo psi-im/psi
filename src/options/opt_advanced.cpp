@@ -147,3 +147,6 @@ void OptionsTabAdvanced::restoreOptions()
         PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool());
     d->ck_ignoreHeadline->setChecked(PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool());
 }
+
+bool OptionsTabAdvanced::stretchable() const { return true; }
+
