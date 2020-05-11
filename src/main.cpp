@@ -522,7 +522,8 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     // Initialize QCA
     QCA::setProperty("pgp-always-trust", true);
     QCA::KeyStoreManager keystoremgr;
-    QCA::KeyStoreManager::start();
+    QCA::KeyStoreManager::start("qca-ossl");
+    QCA::KeyStoreManager::start("qca-gnupg");
     if (keystoremgr.isBusy()) {
         // Yes, this is an ugly thing, but it works, and it works fine.
         // If it ain't broke, don't fix it please.
