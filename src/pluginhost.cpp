@@ -252,22 +252,22 @@ bool PluginHost::load()
 bool PluginHost::unload()
 {
     if (plugin_ && disable()) {
-#ifndef PLUGINS_NO_DEBUG
-        qDebug("Try to unload plugin %s", qPrintable(name_));
-#endif
         if (!loader_) {
             qWarning("Plugin %s's loader wasn't found when trying to unload", qPrintable(name_));
             return false;
         } else if (loader_->unload()) {
-            // if we're done with the plugin completely and it's unloaded
-            // we can delete the loader;
-            delete plugin_;
-            delete loader_;
-            plugin_ = nullptr;
-            loader_ = nullptr;
+            // delete plugin_; // loader will delete it automatically
             delete iconset_;
             iconset_   = nullptr;
             connected_ = false;
+            delete loader_;
+            plugin_ = nullptr;
+            loader_ = nullptr;
+#ifndef PLUGINS_NO_DEBUG
+            qDebug("Plugin unloaded: %s", qPrintable(name_));
+#endif
+        } else {
+            qWarning("Failed to unload plugin: %s", qPrintable(name_));
         }
     }
     return plugin_ == nullptr;

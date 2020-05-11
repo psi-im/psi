@@ -259,23 +259,23 @@ public:
     void setMediaProvider(PsiMedia::Provider *provider) override;
 
 private:
-    PluginManager *   manager_;
+    PluginManager *   manager_ = nullptr;
     QPointer<QObject> plugin_;
     QString           file_;
     QString           name_;
     QString           shortName_;
     QString           version_;
-    int               priority_;
+    int               priority_ = 0;
     QIcon             icon_;
-    QPluginLoader *   loader_;
-    Iconset *         iconset_;
-    bool              hasToolBarButton_;
-    bool              hasGCToolBarButton_;
+    QPluginLoader *   loader_             = nullptr;
+    Iconset *         iconset_            = nullptr;
+    bool              hasToolBarButton_   = false;
+    bool              hasGCToolBarButton_ = false;
 
-    bool    valid_;
-    bool    connected_;
-    bool    enabled_;
-    bool    hasInfo_;
+    bool    valid_     = false;
+    bool    connected_ = false;
+    bool    enabled_   = false;
+    bool    hasInfo_   = false;
     QString infoString_;
 
     QMultiMap<QString, IqNamespaceFilter *> iqNsFilters_;
