@@ -19,6 +19,7 @@ public:
     QWidget *widget();
     void     applyOptions();
     void     restoreOptions();
+    bool     stretchable() const;
 
 private slots:
     void chooseSoundEvent(QAbstractButton *);

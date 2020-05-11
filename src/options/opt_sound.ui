@@ -1,358 +1,383 @@
-<ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>OptSound</class>
- <widget class="QWidget" name="OptSound" >
-  <property name="geometry" >
+ <widget class="QWidget" name="OptSound">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>355</width>
-    <height>437</height>
+    <width>446</width>
+    <height>579</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>OptSoundUI</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>6</number>
    </property>
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
      <item>
-      <widget class="QLabel" name="lb_player" >
-       <property name="text" >
+      <widget class="QLabel" name="lb_player">
+       <property name="text">
         <string>Player:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="le_player" />
+      <widget class="QLineEdit" name="le_player"/>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_awaySound" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_awaySound">
+     <property name="text">
       <string>Play sounds when away/XA</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_gcSound" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_gcSound">
+     <property name="text">
       <string>Play sounds for all messages in groupchat</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="Line" name="line8" >
-     <property name="frameShape" >
+    <widget class="Line" name="line8">
+     <property name="frameShape">
       <enum>QFrame::HLine</enum>
      </property>
-     <property name="frameShadow" >
+     <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QGridLayout" >
-     <property name="margin" >
+    <layout class="QGridLayout">
+     <property name="leftMargin">
       <number>0</number>
      </property>
-     <property name="spacing" >
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <property name="spacing">
       <number>6</number>
      </property>
      <item row="10" column="3">
-      <widget class="IconToolButton" name="tb_seFTCompletePlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seFTCompletePlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="10" column="1">
-      <widget class="QLineEdit" name="le_oeFTComplete" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeFTComplete">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="4" column="0">
-      <widget class="QLabel" name="TextLabel_Headline" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel_Headline">
+       <property name="text">
         <string>Headline:</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="le_oeChat1" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeChat1">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="TextLabel4_4_2" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_4_2">
+       <property name="text">
         <string>Receive online status:</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QLineEdit" name="le_oeOnline" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeOnline">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="7" column="2">
-      <widget class="IconToolButton" name="tb_seOffline" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seOffline" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="0" column="2">
-      <widget class="IconToolButton" name="tb_seMessage" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seMessage" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="9" column="1">
-      <widget class="QLineEdit" name="le_oeIncomingFT" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeIncomingFT">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="0" column="0">
-      <widget class="QLabel" name="TextLabel4_6" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_6">
+       <property name="text">
         <string>Receive message:</string>
        </property>
       </widget>
      </item>
      <item row="8" column="2">
-      <widget class="IconToolButton" name="tb_seSend" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seSend" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="7" column="3">
-      <widget class="IconToolButton" name="tb_seOfflinePlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seOfflinePlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="6" column="2">
-      <widget class="IconToolButton" name="tb_seOnline" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seOnline" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="5" column="2">
-      <widget class="IconToolButton" name="tb_seSystem" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seSystem" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="le_oeMessage" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeMessage">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="9" column="3">
-      <widget class="IconToolButton" name="tb_seIncomingFTPlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seIncomingFTPlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="8" column="0">
-      <widget class="QLabel" name="TextLabel4_5_2" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_5_2">
+       <property name="text">
         <string>Send message:</string>
        </property>
       </widget>
      </item>
      <item row="4" column="3">
-      <widget class="IconToolButton" name="tb_seHeadlinePlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seHeadlinePlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLineEdit" name="le_oeHeadline" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeHeadline">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="5" column="0">
-      <widget class="QLabel" name="TextLabel4_3_2" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_3_2">
+       <property name="text">
         <string>System message:</string>
        </property>
       </widget>
      </item>
      <item row="9" column="2">
-      <widget class="IconToolButton" name="tb_seIncomingFT" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seIncomingFT" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="6" column="3">
-      <widget class="IconToolButton" name="tb_seOnlinePlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seOnlinePlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="5" column="3">
-      <widget class="IconToolButton" name="tb_seSystemPlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seSystemPlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="2" column="3">
-      <widget class="IconToolButton" name="tb_seChat2Play" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seChat2Play" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="IconToolButton" name="tb_seHeadline" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seHeadline" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="2" column="2">
-      <widget class="IconToolButton" name="tb_seChat2" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seChat2" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="3">
-      <widget class="IconToolButton" name="tb_seChat1Play" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seChat1Play" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="2">
-      <widget class="IconToolButton" name="tb_seChat1" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seChat1" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="le_oeChat2" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeChat2">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="9" column="0">
-      <widget class="QLabel" name="textLabel1" >
-       <property name="text" >
+      <widget class="QLabel" name="textLabel1">
+       <property name="text">
         <string>Incoming file transfer:</string>
        </property>
       </widget>
      </item>
      <item row="10" column="0">
-      <widget class="QLabel" name="textLabel2" >
-       <property name="text" >
+      <widget class="QLabel" name="textLabel2">
+       <property name="text">
         <string>File transfer complete:</string>
        </property>
       </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QLineEdit" name="le_oeOffline" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeOffline">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="8" column="1">
-      <widget class="QLineEdit" name="le_oeSend" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeSend">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="8" column="3">
-      <widget class="IconToolButton" name="tb_seSendPlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seSendPlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QLineEdit" name="le_oeSystem" >
-       <property name="toolTip" >
+      <widget class="QLineEdit" name="le_oeSystem">
+       <property name="toolTip">
         <string>Enter a filename or !beep for a system beep</string>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="TextLabel4_2_3" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_2_3">
+       <property name="text">
         <string>Receive next chat:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="3">
-      <widget class="IconToolButton" name="tb_seMessagePlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seMessagePlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="TextLabel4_2_2_2" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_2_2_2">
+       <property name="text">
         <string>Receive first chat:</string>
        </property>
       </widget>
      </item>
      <item row="10" column="2">
-      <widget class="IconToolButton" name="tb_seFTComplete" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seFTComplete" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="7" column="0">
-      <widget class="QLabel" name="TextLabel4_4_2_2" >
-       <property name="text" >
+      <widget class="QLabel" name="TextLabel4_4_2_2">
+       <property name="text">
         <string>Receive offline status:</string>
        </property>
       </widget>
@@ -372,15 +397,15 @@
       </widget>
      </item>
      <item row="3" column="2">
-      <widget class="IconToolButton" name="tb_seGroupChat">
-       <property name="text">
+      <widget class="IconToolButton" name="tb_seGroupChat" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
      </item>
      <item row="3" column="3">
-      <widget class="IconToolButton" name="tb_seGroupChatPlay" >
-       <property name="text" >
+      <widget class="IconToolButton" name="tb_seGroupChatPlay" native="true">
+       <property name="text" stdset="0">
         <string/>
        </property>
       </widget>
@@ -388,22 +413,31 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="leftMargin">
       <number>0</number>
      </property>
-     <property name="spacing" >
-      <number>6</number>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
      </property>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeType" >
+       <property name="sizeType">
         <enum>QSizePolicy::Expanding</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>276</width>
          <height>16</height>
@@ -412,17 +446,37 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_soundReset" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_soundReset">
+       <property name="text">
         <string>Reset to defaults</string>
        </property>
       </widget>
      </item>
     </layout>
    </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>IconToolButton</class>
+   <extends>QWidget</extends>
+   <header>icontoolbutton.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>le_player</tabstop>
   <tabstop>ck_awaySound</tabstop>

@@ -203,6 +203,8 @@ void OptionsTabSound::restoreOptions()
 
 void OptionsTabSound::setData(PsiCon *, QWidget *p) { parentWidget = p; }
 
+bool OptionsTabSound::stretchable() const { return true; }
+
 void OptionsTabSound::chooseSoundEvent(QAbstractButton *b)
 {
     QString str = FileUtil::getOpenFileName(parentWidget, tr("Choose a sound file"), tr("Sound (*.wav)"));
