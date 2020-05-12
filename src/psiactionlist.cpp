@@ -454,7 +454,7 @@ void PsiActionList::Private::createChat()
         IconAction *actIcon    = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
         IconAction *actVoice   = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
         IconAction *actFile    = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
-        IconAction *actPgp     = new IconAction(tr("OpenPGP encryption"), "psi/cryptoYes", tr("OpenPGP encryption"), 0,
+        IconAction *actPgp     = new IconAction(QString("OpenPGP"), "psi/cryptoYes", QString("OpenPGP"), 0,
                                             this, nullptr, true);
         IconAction *actInfo    = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
         IconAction *actHistory = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
