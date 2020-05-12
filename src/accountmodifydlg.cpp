@@ -301,7 +301,7 @@ void AccountModifyDlg::init()
         lb_jid->setText(tr("Username:"));
     }
 
-    if (!PsiOptions::instance()->getOption("options.pgp.enabled").toBool()) {
+    if (!PsiOptions::instance()->getOption("plugins.auto-load.openpgp").toBool()) {
         gb_pgp->hide();
     }
 

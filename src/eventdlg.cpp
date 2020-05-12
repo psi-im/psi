@@ -731,7 +731,7 @@ void EventDlg::init()
 
     QList<IconToolButton *> toolButtons;
     toolButtons << d->tb_url << d->tb_info << d->tb_history;
-    if (PsiOptions::instance()->getOption("options.pgp.enabled").toBool())
+    if (PsiOptions::instance()->getOption("plugins.auto-load.openpgp").toBool())
         toolButtons << d->tb_pgp;
     toolButtons << d->tb_icon;
     for (IconToolButton *toolButton : toolButtons)

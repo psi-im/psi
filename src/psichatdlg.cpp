@@ -485,7 +485,7 @@ void PsiChatDlg::updateToolbuttons()
         if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
             continue;
         }
-        if (actionName == "chat_pgp" && !options->getOption("options.pgp.enabled").toBool()) {
+        if (actionName == "chat_pgp" && !options->getOption("plugins.auto-load.openpgp").toBool()) {
             continue;
         }
 
@@ -900,7 +900,7 @@ void PsiChatDlg::updatePgp()
 
 void PsiChatDlg::checkPgpAutostart()
 {
-    const bool enabled = PsiOptions::instance()->getOption("options.pgp.enabled").toBool();
+    const bool enabled = PsiOptions::instance()->getOption("plugins.auto-load.openpgp").toBool();
     if (account()->hasPgp() && enabled) {
         const bool alwaysEnabled = PsiOptions::instance()->getOption("options.pgp.always-enabled").toBool();
         if (alwaysEnabled) {
