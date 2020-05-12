@@ -259,7 +259,9 @@ public:
 
     QStringList hiddenChats(const Jid &) const;
 
-    int sendMessageEncrypted(const Message &);
+    int  sendPgpEncryptedMessage(const Message &);
+    bool isPgpEnabled(const Jid &jid) const;
+    void setPgpEnabled(const Jid &jid, const bool value);
 
     // sucks sucks sucks sucks sucks sucks sucks
     GCContact *        findGCContact(const Jid &j) const;

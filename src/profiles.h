@@ -80,7 +80,9 @@ public:
     QCA::PGPKey pgpSecretKey;
     QString     pgpPassPhrase;
 
-    VarList keybind;
+    VarList     keybind;
+    QStringList pgpEnabledChats;
+    QStringList pgpDisabledChats;
 
     XMPP::Jid dtProxy;
     bool      ibbOnly;

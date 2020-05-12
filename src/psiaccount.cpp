@@ -6000,7 +6000,7 @@ void PsiAccount::pgp_verifyFinished()
 #endif
 }
 
-int PsiAccount::sendMessageEncrypted(const Message &_m)
+int PsiAccount::sendPgpEncryptedMessage(const Message &_m)
 {
 #ifdef HAVE_PGPUTIL
     if (!ensureKey(_m.to()))
@@ -6038,6 +6038,34 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
     Q_ASSERT(false);
     return -1;
 #endif
+}
+
+bool PsiAccount::isPgpEnabled(const Jid &jid) const
+{
+    bool out = false;
+    const bool enabledByDefault = PsiOptions::instance()->getOption("options.pgp.enabled-by-default").toBool();
+    if (enabledByDefault) {
+        out = !d->acc.pgpDisabledChats.contains(jid.bare());
+    } else {
+        out = d->acc.pgpEnabledChats.contains(jid.bare());
+    }
+    return out;
+}
+
+void PsiAccount::setPgpEnabled(const Jid &jid, const bool value)
+{
+    const bool enabledByDefault = PsiOptions::instance()->getOption("options.pgp.enabled-by-default").toBool();
+    if (enabledByDefault) {
+        if (value)
+            d->acc.pgpDisabledChats.removeAll(jid.bare());
+        else
+            d->acc.pgpDisabledChats.append(jid.bare());
+    } else {
+        if (value)
+            d->acc.pgpEnabledChats.append(jid.bare());
+        else
+            d->acc.pgpEnabledChats.removeAll(jid.bare());
+    }
 }
 
 void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const Message &origMsg,

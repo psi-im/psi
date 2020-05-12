@@ -731,7 +731,7 @@ void ChatDlg::doSend()
 
     if (isPgpEncryptionEnabled()) {
         chatEdit()->setEnabled(false);
-        transid_ = account()->sendMessageEncrypted(m);
+        transid_ = account()->sendPgpEncryptedMessage(m);
         if (transid_ == -1) {
             chatEdit()->setEnabled(true);
             chatEdit()->setFocus();

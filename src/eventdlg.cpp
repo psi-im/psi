@@ -1994,7 +1994,7 @@ void EventDlg::trySendEncryptedNext()
         return;
     Message m = d->m;
     m.setTo(Jid(d->sendLeft.first()));
-    d->transid = d->pa->sendMessageEncrypted(m);
+    d->transid = d->pa->sendPgpEncryptedMessage(m);
     if (d->transid == -1) {
         d->le_to->setEnabled(true);
         d->mle->setEnabled(true);

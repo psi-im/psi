@@ -906,14 +906,8 @@ void PsiChatDlg::checkPgpAutostart()
         if (alwaysEnabled) {
             setPgpEnabled(true);
         } else {
-            const bool enabledByDefault = PsiOptions::instance()->getOption("options.pgp.enabled-by-default").toBool();
-            const bool enabledManually  = false; // TODO: use storage to get this data
-            const bool disabledManually = false; // TODO: use storage to get this data
-            if (enabledByDefault && !disabledManually) {
-                setPgpEnabled(true);
-            } else {
-                setPgpEnabled(enabledManually);
-            }
+            // Get stored data from account settings:
+            setPgpEnabled(account()->isPgpEnabled(jid()));
         }
     } else {
         setPgpEnabled(false);
@@ -956,9 +950,11 @@ void PsiChatDlg::actPgpToggled(bool b)
     if (act == actEnableGpg) {
         ui_.log->setPgpEncryptionEnabled(true);
         actions_->action("chat_pgp")->setChecked(true);
+        account()->setPgpEnabled(jid(), true);
     } else if (act == actDisableGpg) {
         ui_.log->setPgpEncryptionEnabled(false);
         actions_->action("chat_pgp")->setChecked(false);
+        account()->setPgpEnabled(jid(), false);
     } else if (act == actAssignKey) {
         if (item) {
             account()->actionAssignKey(jid());

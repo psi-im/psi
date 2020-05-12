@@ -131,6 +131,8 @@ void UserAccount::reset()
     stunHost = stunHosts[0];
 
     keybind.clear();
+    pgpEnabledChats.clear();
+    pgpDisabledChats.clear();
 
     roster.clear();
 }
@@ -277,6 +279,8 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     proxyID = o->getOption(base + ".proxy-id").toString();
 
     keybind.fromOptions(o, base + ".pgp-key-bindings");
+    pgpEnabledChats = o->getOption(base + ".pgp-enabled-chats").toStringList();
+    pgpDisabledChats = o->getOption(base + ".pgp-disabled-chats").toStringList();
 
     dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
     ibbOnly = o->getOption(base + ".ibb-only").toBool();
@@ -441,6 +445,9 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".proxy-id", proxyID);
 
     keybind.toOptions(o, base + ".pgp-key-bindings");
+    o->setOption(base + ".pgp-enabled-chats", pgpEnabledChats);
+    o->setOption(base + ".pgp-disabled-chats", pgpDisabledChats);
+
     o->setOption(base + ".bytestreams-proxy", dtProxy.full());
     o->setOption(base + ".ibb-only", ibbOnly);
 
