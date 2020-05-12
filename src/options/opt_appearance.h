@@ -66,6 +66,7 @@ public:
     QWidget *widget();
     void     applyOptions();
     void     restoreOptions();
+    bool     stretchable() const { return true; }
 
 private slots:
     void setData(PsiCon *, QWidget *);
