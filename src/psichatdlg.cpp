@@ -33,7 +33,6 @@
 #include "coloropt.h"
 #include "fancylabel.h"
 #include "filesharingmanager.h"
-#include "gpgprocess.h"
 #include "iconaction.h"
 #include "iconlabel.h"
 #include "iconselect.h"
@@ -628,32 +627,58 @@ void PsiChatDlg::setContactToolTip(QString text)
 
 void PsiChatDlg::showOwnFingerprint()
 {
-    const QStringList arguments = { "--with-colons", "--fingerprint", "0x" + account()->pgpKeyId() };
-
-    GpgProcess gpg;
-    gpg.start(arguments);
-    gpg.waitForFinished();
-
-    QString             fingerprint;
-    const QString &&    out   = QString::fromUtf8(gpg.readAllStandardOutput());
-    const QStringList &&lines = out.split("\n");
-    for (const QString &line : lines) {
-        const QString &&type = line.section(':', 0, 0);
-        if (type == "fpr") {
-            fingerprint = line.section(':', 9, 9);
-            break;
-        }
-    }
-
-    if (fingerprint.size() == 40) {
-        for (int k = fingerprint.size() - 4; k >= 3; k -= 4) {
-            fingerprint.insert(k, ' ');
-        }
-        fingerprint.insert(24, ' ');
-
+#ifdef HAVE_PGPUTIL
+    const QString &&fingerprint = PGPUtil::getFingerprint(account()->pgpKeyId());
+    if (!fingerprint.isEmpty()) {
         const QString &&msg = tr("Fingerprint for account \"%1\": %2").arg(account()->name()).arg(fingerprint);
         appendSysMsg(msg);
     }
+#endif // HAVE_PGPUTIL
+}
+
+void PsiChatDlg::sendOwnPublicKey()
+{
+#ifdef HAVE_PGPUTIL
+    if (!account()->hasPgp())
+        return;
+
+    const auto &&keyData = PGPUtil::getPublicKeyData(account()->pgpKeyId());
+    sendMessage(keyData);
+
+    const auto &&keyOwnerName = PGPUtil::getKeyOwnerName(account()->pgpKeyId());
+    const auto &&shortId = account()->pgpKeyId().right(8);
+    appendSysMsg(tr("Public key \"%1\" sent").arg(keyOwnerName + " " + shortId));
+#endif // HAVE_PGPUTIL
+}
+
+void PsiChatDlg::sendPublicKey()
+{
+#ifdef HAVE_PGPUTIL
+    // Select a key
+    QString &&keyId = PGPUtil::chooseKey(PGPKeyDlg::Public, QString(), tr("Choose Public Key"));
+    if (keyId.isEmpty())
+        return;
+
+    const auto &&keyData = PGPUtil::getPublicKeyData(keyId);
+    sendMessage(keyData);
+
+    const auto &&keyOwnerName = PGPUtil::getKeyOwnerName(keyId);
+    const auto &&shortId = keyId.right(8);
+    appendSysMsg(tr("Public key \"%1\" sent").arg(keyOwnerName + " " + shortId));
+#endif // HAVE_PGPUTIL
+}
+
+void PsiChatDlg::sendMessage(const QString &body)
+{
+    // Copy-paste from PluginHost::sendMessage()!
+    // TODO(mck): yeah, that's sick..
+    const QString &&xml = QString("<message to='%1' type='%4'><subject>%3</subject><body>%2</body></message>")
+            .arg(TextUtil::escape(jid().bare()))
+            .arg(TextUtil::escape(body))
+            .arg(TextUtil::escape(""))
+            .arg(TextUtil::escape("chat"));
+
+    account()->client()->send(xml);
 }
 
 void PsiChatDlg::updateJidWidget(const QList<UserListItem *> &ul, int status, bool fromPresence)
@@ -923,6 +948,8 @@ void PsiChatDlg::actPgpToggled(bool b)
     QAction *actAssignKey          = new QAction(tr("Assign Open&PGP Key"), this);
     QAction *actUnassignKey        = new QAction(tr("Unassign Open&PGP Key"), this);
     QAction *actShowOwnFingerprint = new QAction(tr("Show own &fingerprint"), this);
+    QAction *actSendOwnPublicKey   = new QAction(tr("Send own public key"), this);
+    QAction *actSendPublicKey      = new QAction(tr("Send public key..."), this);
 
     actEnableGpg->setVisible(b);
     actDisableGpg->setVisible(!b);
@@ -940,6 +967,9 @@ void PsiChatDlg::actPgpToggled(bool b)
         menu->addAction(actUnassignKey);
     }
     menu->addAction(actShowOwnFingerprint);
+    menu->addSeparator();
+    menu->addAction(actSendOwnPublicKey);
+    menu->addAction(actSendPublicKey);
 
     QAction *act = menu->exec(QCursor::pos());
     if (act == actEnableGpg) {
@@ -960,6 +990,10 @@ void PsiChatDlg::actPgpToggled(bool b)
         }
     } else if (act == actShowOwnFingerprint) {
         showOwnFingerprint();
+    } else if (act == actSendOwnPublicKey) {
+        sendOwnPublicKey();
+    } else if (act == actSendPublicKey) {
+        sendPublicKey();
     }
 
     delete menu;

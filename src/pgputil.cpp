@@ -1,5 +1,6 @@
 #include "pgputil.h"
 
+#include "gpgprocess.h"
 #include "passphrasedlg.h"
 #include "showtextdlg.h"
 
@@ -287,6 +288,99 @@ bool PGPUtil::equals(QCA::PGPKey k1, QCA::PGPKey k2)
 void PGPUtil::removePassphrase(const QString &id) { passphrases_.remove(id); }
 
 void PGPUtil::addPassphrase(const QString &id, const QString &pass) { passphrases_.insert(id, pass); }
+
+QString PGPUtil::getKeyOwnerName(const QString &key)
+{
+    if (key.isEmpty())
+        return QString();
+
+    const QStringList &&arguments = { "--list-public-keys", "--with-colons", "--fixed-list-mode", "0x" + key };
+
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForFinished();
+
+    if (!gpg.success())
+        return QString();
+
+    const QString &&rawData = QString::fromUtf8(gpg.readAllStandardOutput());
+    if (rawData.isEmpty())
+        return QString();
+
+    QString name;
+    const QStringList &&stringsList = rawData.split("\n");
+    for (const QString &line : stringsList) {
+        const QString &&type = line.section(':', 0, 0);
+        if (type == "uid") {
+            name = line.section(':', 9, 9); // Name
+            break;
+        }
+    }
+    return name;
+}
+
+QString PGPUtil::getPublicKeyData(const QString &key)
+{
+    if (key.isEmpty())
+        return QString();
+
+    const QStringList &&arguments = { "--armor", "--export", "0x" + key };
+
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForFinished();
+
+    if (!gpg.success())
+        return QString();
+
+#ifdef Q_OS_WIN
+    QString keyData = QString::fromUtf8(gpg.readAllStandardOutput());
+    keyData.replace("\r","");
+#else
+    const QString &&keyData = QString::fromUtf8(gpg.readAllStandardOutput());
+#endif
+    return keyData;
+}
+
+QString PGPUtil::getFingerprint(const QString &key)
+{
+    const QStringList &&arguments = { "--with-colons", "--fingerprint", "0x" + key };
+
+    GpgProcess gpg;
+    gpg.start(arguments);
+    gpg.waitForFinished();
+
+    QString             fingerprint;
+    const QString &&    out   = QString::fromUtf8(gpg.readAllStandardOutput());
+    const QStringList &&lines = out.split("\n");
+    for (const QString &line : lines) {
+        const QString &&type = line.section(':', 0, 0);
+        if (type == "fpr") {
+            fingerprint = line.section(':', 9, 9);
+            break;
+        }
+    }
+
+    if (fingerprint.size() == 40) {
+        for (int k = fingerprint.size() - 4; k >= 3; k -= 4) {
+            fingerprint.insert(k, ' ');
+        }
+        fingerprint.insert(24, ' ');
+        return fingerprint;
+    }
+
+    return QString();
+}
+
+QString PGPUtil::chooseKey(PGPKeyDlg::Type type, const QString &key, const QString &title)
+{
+    PGPKeyDlg d(PGPKeyDlg::Public, key, nullptr);
+    d.setWindowTitle(title);
+    if (d.exec() == QDialog::Accepted) {
+        return d.keyId();
+    }
+    return QString();
+}
 
 void PGPUtil::keyStoreAvailable(const QString &k)
 {

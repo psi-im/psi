@@ -3,6 +3,7 @@
 
 // FIXME: instead of a singleton, make it a member of PsiCon.
 
+#include "pgpkeydlg.h"
 #include <QList>
 #include <QMap>
 #include <QSet>
@@ -42,6 +43,11 @@ public:
     void removePassphrase(const QString &id);
     void addPassphrase(const QString &id, const QString &pass);
 
+    static QString getKeyOwnerName(const QString &key);
+    static QString getPublicKeyData(const QString &key);
+    static QString getFingerprint(const QString &key);
+    static QString chooseKey(PGPKeyDlg::Type type, const QString &key, const QString &title);
+
 signals:
     void pgpKeysUpdated();
     void newPassPhase(const QString &, const QString &);
@@ -75,9 +81,6 @@ private:
     int                    currentEventId_;
     QString                currentEntryId_;
     bool                   cache_no_pgp_;
-
-    // FIXME
-    friend class PGPKeyDlg;
 };
 
 #endif // PGPUTIL_H

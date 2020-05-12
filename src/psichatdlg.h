@@ -57,6 +57,9 @@ protected:
 private:
     void setContactToolTip(QString text);
     void showOwnFingerprint();
+    void sendOwnPublicKey();
+    void sendPublicKey();
+    void sendMessage(const QString &body);
 
 private slots:
     void    toggleSmallChat();

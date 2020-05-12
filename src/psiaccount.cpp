@@ -131,7 +131,6 @@
 #endif
 #ifdef HAVE_PGPUTIL
 #include "multifiletransferdlg.h"
-#include "pgpkeydlg.h"
 #include "pgputil.h"
 #endif
 #ifdef WHITEBOARDING
@@ -6386,13 +6385,8 @@ bool PsiAccount::ensureKey(const Jid &j)
         }
 
         // Select a key
-        PGPKeyDlg *w = new PGPKeyDlg(PGPKeyDlg::Public, akey, nullptr);
-        w->setWindowTitle(tr("Public Key: %1").arg(JIDUtil::toString(j, true)));
-        int     r = w->exec();
-        QString keyId;
-        if (r == QDialog::Accepted)
-            keyId = w->keyId();
-        delete w;
+        const QString &&title = tr("Public Key: %1").arg(JIDUtil::toString(j, true));
+        QString &&keyId = PGPUtil::chooseKey(PGPKeyDlg::Public, akey, title);
         if (keyId.isEmpty())
             return false;
         u->setPublicKeyID(keyId);

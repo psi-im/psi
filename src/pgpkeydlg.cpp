@@ -27,7 +27,6 @@
 
 #include "common.h"
 #include "gpgprocess.h"
-#include "pgputil.h"
 #include "showtextdlg.h"
 
 #include <QHeaderView>
@@ -112,8 +111,8 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
         keysRaw.append(QString::fromUtf8(gpg.readAll()));
     }
 
-    QStringList keysList = keysRaw.split("\n");
-    QString     uid;
+    QString uid;
+    const QStringList &&keysList = keysRaw.split("\n");
     for (const QString &line : keysList) {
         const QString &&type = line.section(':', 0, 0);
         QStandardItem * root = model_->invisibleRootItem();

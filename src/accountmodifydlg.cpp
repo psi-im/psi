@@ -23,7 +23,6 @@
 #include "iconaction.h"
 #include "iconset.h"
 #include "jidutil.h"
-#include "pgpkeydlg.h"
 #include "pgputil.h"
 #include "privacydlg.h"
 #include "privacymanager.h"
@@ -451,14 +450,8 @@ void AccountModifyDlg::ibbOnlyToggled(bool state) { le_dtProxy->setDisabled(stat
 void AccountModifyDlg::chooseKey()
 {
     // Show the key dialog
-    QString    id = (key.isNull() ? "" : key.keyId());
-    PGPKeyDlg *w  = new PGPKeyDlg(PGPKeyDlg::Secret, id, this);
-    w->setWindowTitle(tr("Secret Key"));
-    int     r = w->exec();
-    QString keyId;
-    if (r == QDialog::Accepted)
-        keyId = w->keyId();
-    delete w;
+    const QString &&id = (key.isNull() ? "" : key.keyId());
+    const QString &&keyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, id, tr("Choose Secret Key"));
 
     if (keyId.isEmpty())
         return;
