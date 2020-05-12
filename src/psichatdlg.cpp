@@ -293,11 +293,6 @@ void PsiChatDlg::initUi()
 
     PsiToolTip::install(ui_.avatar);
 
-    UserListItem *u = account()->findFirstRelevant(jid());
-    if (u && u->isSecure(jid().resource()) && account()->hasPgp()) {
-        setPgpEnabled(true);
-    }
-
     connect(account()->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), this, SLOT(updateAvatar(const Jid &)));
 
     pm_settings_ = new QMenu(this);
