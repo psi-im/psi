@@ -142,6 +142,7 @@ void OptionsTabPopups::restoreOptions()
         vBox->addLayout(l);
     }
     d->sa_durations->setWidget(areaWidget);
+    d->sa_durations->setMinimumSize(d->sa_durations->sizeHint());
 
     delete d->gb_type->layout();
     qDeleteAll(d->gb_type->children());
