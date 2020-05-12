@@ -163,7 +163,7 @@ or
     cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin
     clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
     storagenotesplugin extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
-    gnupgplugin pepchangenotifyplugin omemoplugin otrplugin chessplugin conferenceloggerplugin
+    pepchangenotifyplugin omemoplugin openpgpplugin otrplugin chessplugin conferenceloggerplugin
     enummessagesplugin httpuploadplugin imagepreviewplugin
 
   Example:
