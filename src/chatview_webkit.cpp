@@ -474,7 +474,7 @@ void ChatView::init()
     }*/
 }
 
-void ChatView::setEncryptionEnabled(bool enabled) { d->isEncryptionEnabled_ = enabled; }
+void ChatView::setPgpEncryptionEnabled(bool enabled) { d->isEncryptionEnabled_ = enabled; }
 
 void ChatView::markReceived(QString id)
 {
