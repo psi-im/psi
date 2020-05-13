@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>765</width>
-    <height>545</height>
+    <height>570</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_account">
       <attribute name="title">
@@ -1199,7 +1199,7 @@
           <item>
            <widget class="QCheckBox" name="cb_onlyMyTurn">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option disables peer-to-peer connections and also connections to TURN servers provided by the other peer.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: &lt;/span&gt;While this hides your IP address, it makes the connection impossible if TURN server options above are invalid or empty.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>This option disables peer-to-peer connections and also connections to TURN servers provided by the other peer.&lt;br&gt;&lt;br&gt;&lt;b&gt;Warning: &lt;/b&gt;While this hides your IP address, it makes the connection impossible if TURN server options above are invalid or empty.</string>
             </property>
             <property name="text">
              <string>Disable connections potentially exposing my IP address</string>
