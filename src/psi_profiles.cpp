@@ -24,7 +24,6 @@
 #include "atomicxmlfile/atomicxmlfile.h"
 #include "chatdlg.h"
 #include "common.h"
-#include "eventdlg.h"
 #include "fancylabel.h"
 #include "optionstree.h"
 #ifdef HAVE_PGPUTIL
@@ -234,11 +233,6 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
         QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(pgpSecretKeyID);
         if (!e.isNull())
             pgpSecretKey = e.pgpSecretKey();
-
-        pgpPassPhrase = o->getOption(base + ".pgp-pass-phrase").toString();
-        if (!pgpPassPhrase.isEmpty()) {
-            pgpPassPhrase = decodePassword(pgpPassPhrase, pgpSecretKeyID);
-        }
     }
 #endif
 
@@ -381,10 +375,8 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".priority", priority);
     if (!pgpSecretKey.isNull()) {
         o->setOption(base + ".pgp-secret-key-id", pgpSecretKey.keyId());
-        o->setOption(base + ".pgp-pass-phrase", encodePassword(pgpPassPhrase, pgpSecretKey.keyId()));
     } else {
         o->setOption(base + ".pgp-secret-key-id", "");
-        o->setOption(base + ".pgp-pass-phrase", "");
     }
     switch (allow_plain) {
     case XMPP::ClientStream::NoAllowPlain:

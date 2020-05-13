@@ -517,7 +517,6 @@ protected:
 private slots:
     void eventFromXml(const PsiEvent::Ptr &e);
     void simulateContactOffline(const XMPP::Jid &contact);
-    void newPgpPassPhase(const QString &id, const QString &pass);
 
 private:
     class Private;

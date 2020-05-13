@@ -7,10 +7,8 @@
 #include <QList>
 #include <QMap>
 #include <QSet>
+#include <QString>
 #include <QtCrypto>
-
-class PassphraseDlg;
-class QString;
 
 namespace QCA {
 class KeyStore;
@@ -40,9 +38,6 @@ public:
 
     bool equals(QCA::PGPKey, QCA::PGPKey);
 
-    void removePassphrase(const QString &id);
-    void addPassphrase(const QString &id, const QString &pass);
-
     static QString getKeyOwnerName(const QString &key);
     static QString getPublicKeyData(const QString &key);
     static QString getFingerprint(const QString &key);
@@ -50,18 +45,14 @@ public:
 
 signals:
     void pgpKeysUpdated();
-    void newPassPhase(const QString &, const QString &);
 
 protected:
     PGPUtil();
     ~PGPUtil();
 
     void clearKeyStores();
-    void promptPassphrase(int id, const QCA::Event &event);
 
 protected slots:
-    void handleEvent(int id, const QCA::Event &event);
-    void passphraseDone(int);
     void keyStoreAvailable(const QString &);
 
 private:
@@ -74,10 +65,8 @@ private:
     QList<EventItem> pendingEvents_;
 
     QSet<QCA::KeyStore *>  keystores_;
-    QMap<QString, QString> passphrases_;
     QCA::EventHandler *    qcaEventHandler_;
     QCA::KeyStoreManager * qcaKeyStoreManager_;
-    PassphraseDlg *        passphraseDlg_;
     int                    currentEventId_;
     QString                currentEntryId_;
     bool                   cache_no_pgp_;

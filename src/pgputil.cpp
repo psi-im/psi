@@ -1,23 +1,21 @@
 #include "pgputil.h"
 
 #include "gpgprocess.h"
-#include "passphrasedlg.h"
 #include "showtextdlg.h"
 
 #include <QDialog>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QStringList>
 #include <QtCore>
 
 PGPUtil *PGPUtil::instance_ = nullptr;
 
 PGPUtil::PGPUtil() :
-    qcaEventHandler_(nullptr), qcaKeyStoreManager_(new QCA::KeyStoreManager), passphraseDlg_(nullptr),
-    cache_no_pgp_(false)
+    qcaEventHandler_(nullptr), qcaKeyStoreManager_(new QCA::KeyStoreManager), cache_no_pgp_(false)
 {
     qcaEventHandler_ = new QCA::EventHandler(this);
 
-    connect(qcaEventHandler_, SIGNAL(eventReady(int, const QCA::Event &)), SLOT(handleEvent(int, const QCA::Event &)));
     qcaEventHandler_->start();
 
     reloadKeyStores();
@@ -59,85 +57,6 @@ void PGPUtil::reloadKeyStores()
     for (const QString &k : qcaKeyStoreManager_->keyStores()) {
         keyStoreAvailable(k);
     }
-}
-
-void PGPUtil::handleEvent(int id, const QCA::Event &event)
-{
-    if (event.type() == QCA::Event::Password) {
-        QCA::KeyStoreEntry entry = event.keyStoreEntry();
-        if (!entry.isNull() && passphrases_.contains(entry.id())) {
-            qcaEventHandler_->submitPassword(id, QCA::SecureArray(passphrases_[entry.id()].toUtf8()));
-        } else if (passphraseDlg_) {
-            EventItem i;
-            i.id    = id;
-            i.event = event;
-            pendingEvents_.push_back(i);
-        } else {
-            promptPassphrase(id, event);
-        }
-    }
-}
-
-void PGPUtil::promptPassphrase(int id, const QCA::Event &event)
-{
-    QString name;
-    currentEventId_ = id;
-
-    QCA::KeyStoreEntry entry = event.keyStoreEntry();
-    if (!entry.isNull()) {
-        name            = entry.name();
-        currentEntryId_ = entry.id();
-    } else {
-        name            = event.keyStoreInfo().name();
-        currentEntryId_ = QString();
-    }
-
-    if (!passphraseDlg_) {
-        passphraseDlg_ = new PassphraseDlg();
-        connect(passphraseDlg_, SIGNAL(finished(int)), SLOT(passphraseDone(int)));
-    }
-    passphraseDlg_->promptPassphrase(name);
-    passphraseDlg_->show();
-}
-
-void PGPUtil::passphraseDone(int result)
-{
-    // Process the result
-    if (result == QDialog::Accepted) {
-        QString passphrase = passphraseDlg_->getPassphrase();
-        if (!currentEntryId_.isEmpty()) {
-            passphrases_[currentEntryId_] = passphrase;
-            if (passphraseDlg_->rememberPassPhrase()) {
-                emit newPassPhase(currentEntryId_, passphrase);
-            }
-        }
-        qcaEventHandler_->submitPassword(currentEventId_, passphrase.toUtf8());
-    } else if (result == QDialog::Rejected) {
-        qcaEventHandler_->reject(currentEventId_);
-    } else {
-        qWarning() << "PGPUtil: Unexpected passphrase dialog result";
-    }
-
-    // Process the queue
-    if (!pendingEvents_.isEmpty()) {
-        EventItem eventItem;
-        bool      handlePendingEvent = false;
-        while (!pendingEvents_.isEmpty() && !handlePendingEvent) {
-            eventItem                = pendingEvents_.takeFirst();
-            QCA::KeyStoreEntry entry = eventItem.event.keyStoreEntry();
-            if (!entry.isNull() && passphrases_.contains(entry.id())) {
-                qcaEventHandler_->submitPassword(eventItem.id, QCA::SecureArray(passphrases_[entry.id()].toUtf8()));
-            } else {
-                handlePendingEvent = true;
-            }
-        }
-        if (handlePendingEvent) {
-            promptPassphrase(eventItem.id, eventItem.event);
-            return;
-        }
-    }
-    passphraseDlg_->deleteLater();
-    passphraseDlg_ = nullptr;
 }
 
 bool PGPUtil::pgpAvailable()
@@ -285,10 +204,6 @@ bool PGPUtil::equals(QCA::PGPKey k1, QCA::PGPKey k2)
     }
 }
 
-void PGPUtil::removePassphrase(const QString &id) { passphrases_.remove(id); }
-
-void PGPUtil::addPassphrase(const QString &id, const QString &pass) { passphrases_.insert(id, pass); }
-
 QString PGPUtil::getKeyOwnerName(const QString &key)
 {
     if (key.isEmpty())
@@ -393,7 +308,7 @@ void PGPUtil::keyStoreAvailable(const QString &k)
 
 void PGPUtil::showDiagnosticText(const QString &event, const QString &diagnostic)
 {
-    while (1) {
+    while (true) {
         QMessageBox  msgbox(QMessageBox::Critical, tr("Error"), event, QMessageBox::Ok, nullptr);
         QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
         msgbox.exec();

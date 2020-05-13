@@ -221,19 +221,6 @@ private:
 };
 #endif
 
-// request pgp passphrase
-class PGPEvent : public PsiEvent {
-    Q_OBJECT
-public:
-    PGPEvent(PsiAccount *acc) : PsiEvent(acc) { }
-    PGPEvent(const PGPEvent &from) : PsiEvent(from) { }
-    ~PGPEvent() { }
-    typedef QSharedPointer<PGPEvent> Ptr;
-    int                              type() const { return PGP; }
-    XMPP::Jid                        from() const { return QString(); }
-    void                             setFrom(const XMPP::Jid &) { }
-};
-
 // incoming file transfer
 class FileEvent : public PsiEvent {
     Q_OBJECT

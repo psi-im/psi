@@ -452,12 +452,12 @@ void AccountModifyDlg::chooseKey()
 {
     // Show the key dialog
     const QString &&id    = (key.isNull() ? "" : key.keyId());
-    const QString &&keyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, id, tr("Choose Secret Key"));
+    const QString &&newKeyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, id, tr("Choose Secret Key"));
 
-    if (keyId.isEmpty())
+    if (newKeyId.isEmpty())
         return;
 
-    QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(keyId);
+    QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(newKeyId);
     if (e.isNull())
         return;
 

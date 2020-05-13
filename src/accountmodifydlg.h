@@ -26,7 +26,6 @@
 #include "ui_accountmodify.h"
 
 #include <QDialog>
-#include <QtCrypto>
 
 class ProxyChooser;
 class PsiAccount;

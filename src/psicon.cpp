@@ -56,7 +56,6 @@
 #include "networkaccessmanager.h"
 #include "options/opt_toolbars.h"
 #include "options/optionsdlg.h"
-#include "passphrasedlg.h"
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif

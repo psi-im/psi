@@ -54,7 +54,6 @@ list(APPEND FORMS
     mucjoin.ui
     mucreasonseditor.ui
     optioneditor.ui
-    passphrase.ui
     pgpkey.ui
     profilemanage.ui
     profilenew.ui
@@ -161,7 +160,6 @@ list(APPEND HEADERS
     mucreasonseditor.h
     networkaccessmanager.h
     passdialog.h
-    passphrasedlg.h
     pepmanager.h
     pgpkeydlg.h
     pgptransaction.h
@@ -443,7 +441,6 @@ list(APPEND SOURCES
     multifiletransferdlg.cpp
     networkaccessmanager.cpp
     passdialog.cpp
-    passphrasedlg.cpp
     pepmanager.cpp
     pgpkeydlg.cpp
     pgptransaction.cpp

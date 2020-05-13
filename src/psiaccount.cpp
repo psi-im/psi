@@ -76,7 +76,6 @@
 #include "mooddlg.h"
 #include "networkaccessmanager.h"
 #include "passdialog.h"
-#include "passphrasedlg.h"
 #include "pepmanager.h"
 #include "pgptransaction.h"
 //#include "physicallocation.h"
@@ -1204,7 +1203,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
 #ifdef HAVE_PGPUTIL
     connect(&PGPUtil::instance(), SIGNAL(pgpKeysUpdated()), SLOT(pgpKeysUpdated()));
-    connect(&PGPUtil::instance(), SIGNAL(newPassPhase(QString, QString)), SLOT(newPgpPassPhase(QString, QString)));
 #endif
 
     d->setEnabled(enabled());
@@ -5894,23 +5892,10 @@ void PsiAccount::pgpKeysUpdated()
 #endif
 }
 
-void PsiAccount::newPgpPassPhase(const QString &id, const QString &pass)
-{
-    const QString pgpSecretKeyID = (d->acc.pgpSecretKey.isNull() ? "" : d->acc.pgpSecretKey.keyId());
-    if (pgpSecretKeyID == id) {
-        d->acc.pgpPassPhrase = pass;
-    }
-}
-
 void PsiAccount::trySignPresence()
 {
     QCA::SecureMessageKey skey;
     skey.setPGPSecretKey(d->cur_pgpSecretKey);
-#ifdef HAVE_PGPUTIL
-    if (!d->cur_pgpSecretKey.isNull() && !d->acc.pgpPassPhrase.isEmpty()) {
-        PGPUtil::instance().addPassphrase(d->cur_pgpSecretKey.keyId(), d->acc.pgpPassPhrase);
-    }
-#endif
     QByteArray plain = d->loginStatus.status().toUtf8();
 
     PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
@@ -5931,19 +5916,16 @@ void PsiAccount::pgp_signFinished()
         s.setXSigned(PGPUtil::instance().stripHeaderFooter(QString(t->signature())));
         setStatusActual(s);
     } else {
-        // Clear passphrase from cache
         if (t->errorCode() == QCA::SecureMessage::ErrorPassphrase) {
-            d->acc.pgpPassPhrase.clear();
-            QCA::KeyStoreEntry ke = PGPUtil::instance().getSecretKeyStoreEntry(d->cur_pgpSecretKey.keyId());
-            if (!ke.isNull())
-                PGPUtil::instance().removePassphrase(ke.id());
+            ; // TODO
         }
 
-        PGPUtil::showDiagnosticText(tr("There was an error trying to sign your status.\nReason: %1.")
-                                        .arg(PGPUtil::instance().messageErrorString(t->errorCode())),
-                                    t->diagnosticText());
-
-        logout(false, loggedOutStatus());
+        // TODO
+        //        PGPUtil::showDiagnosticText(tr("There was an error trying to sign your status.\nReason: %1.")
+        //                                        .arg(PGPUtil::instance().messageErrorString(t->errorCode())),
+        //                                    t->diagnosticText());
+        //
+        //        logout(false, loggedOutStatus());
         return;
     }
     t->deleteLater();

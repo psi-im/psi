@@ -28,7 +28,6 @@
 #ifdef USE_CRASH
 #include "crash.h"
 #endif
-#include "eventdlg.h"
 #include "profiledlg.h"
 #include "psiapplication.h"
 #include "psicli.h"
