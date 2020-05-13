@@ -615,7 +615,7 @@ public:
                     iceA_status.remotePassword = audioContent->trans.pass;
                 }
                 iceA_status.remoteCandidates += audioContent->trans.candidates;
-                iceA_status.notifyRemoteGatheringComplete = videoContent->trans.gatheringComplete;
+                iceA_status.notifyRemoteGatheringComplete = audioContent->trans.gatheringComplete;
                 iceA_status.ice2                          = audioContent->trans.ice2;
                 iceA->setRemoteFeatures(evalIceFeatures(iceA_status));
             } else if (iceA) {
