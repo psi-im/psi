@@ -374,7 +374,7 @@ QString PGPUtil::getFingerprint(const QString &key)
 
 QString PGPUtil::chooseKey(PGPKeyDlg::Type type, const QString &key, const QString &title)
 {
-    PGPKeyDlg d(PGPKeyDlg::Public, key, nullptr);
+    PGPKeyDlg d(type, key, nullptr);
     d.setWindowTitle(title);
     if (d.exec() == QDialog::Accepted) {
         return d.keyId();
