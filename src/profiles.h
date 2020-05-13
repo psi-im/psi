@@ -96,6 +96,7 @@ public:
     QString     stunHost;
     QString     stunUser;
     QString     stunPass;
+    bool        onlyMyTurn = false;
 
     QByteArray tlsOverrideCert;
     QString    tlsOverrideDomain;

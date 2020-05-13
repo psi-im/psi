@@ -279,7 +279,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     proxyID = o->getOption(base + ".proxy-id").toString();
 
     keybind.fromOptions(o, base + ".pgp-key-bindings");
-    pgpEnabledChats = o->getOption(base + ".pgp-enabled-chats").toStringList();
+    pgpEnabledChats  = o->getOption(base + ".pgp-enabled-chats").toStringList();
     pgpDisabledChats = o->getOption(base + ".pgp-disabled-chats").toStringList();
 
     dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
@@ -299,6 +299,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     if (allSetOptions.contains(base + ".stun-password")) {
         stunPass = o->getOption(base + ".stun-password").toString();
     }
+    onlyMyTurn = o->getOption(base + ".stun-onlymyturn", false).toBool();
 
     if (allSetOptions.contains(base + ".tls")) {
         tlsOverrideCert   = o->getOption(base + ".tls.override-certificate").toByteArray();
@@ -455,6 +456,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".stun-host", stunHost);
     o->setOption(base + ".stun-username", stunUser);
     o->setOption(base + ".stun-password", stunPass);
+    o->setOption(base + ".stun-onlymyturn", onlyMyTurn);
 
     o->setOption(base + ".tls.override-certificate", tlsOverrideCert);
     o->setOption(base + ".tls.override-domain", tlsOverrideDomain);

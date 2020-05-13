@@ -755,6 +755,8 @@ void AvCallManager::setStunRelayTcpService(const QString &host, int port, const 
     d->irisJingleICEManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
+void AvCallManager::setAllowIpExposure(bool allow) { d->rtpManager->setAllowIpExposure(allow); }
+
 void AvCallManager::setBasePort(int port)
 {
     if (port == 0)

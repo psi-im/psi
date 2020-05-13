@@ -888,6 +888,7 @@ public:
         avCallManager->setStunBindService(stunHost, stunPort);
         avCallManager->setStunRelayUdpService(stunHost, stunPort, acc.stunUser, acc.stunPass);
         avCallManager->setStunRelayTcpService(stunHost, stunPort, convert_proxy(acc, jid), acc.stunUser, acc.stunPass);
+        avCallManager->setAllowIpExposure(!acc.onlyMyTurn);
     }
 
     bool isAlwaysVisibleContact(const Jid &jid) const { return acc.alwaysVisibleContacts.contains(jid.bare()); }

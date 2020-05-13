@@ -348,6 +348,7 @@ public:
     int                     stunRelayTcpPort;
     QString                 stunRelayTcpUser;
     QString                 stunRelayTcpPass;
+    bool                    allowIpExposure = true;
     XMPP::TurnClient::Proxy stunProxy;
     int                     basePort;
     QList<JingleRtp *>      sessions;
@@ -919,6 +920,7 @@ private:
         if (!stunRelayTcpAddr.isNull() && !manager->stunRelayTcpUser.isEmpty())
             ice->setStunRelayTcpService(stunRelayTcpAddr, stunRelayTcpPort, manager->stunRelayTcpUser,
                                         manager->stunRelayTcpPass.toUtf8());
+        ice->setAllowIpExposure(manager->allowIpExposure);
 
         // RTP+RTCP
         ice->setComponentCount(2);
@@ -1648,6 +1650,8 @@ void JingleRtpManager::setStunRelayTcpService(const QString &host, int port,
 
     d->stunProxy = tproxy;
 }
+
+void JingleRtpManager::setAllowIpExposure(bool allow) { d->allowIpExposure = allow; }
 
 void JingleRtpManager::setBasePort(int port) { d->basePort = port; }
 

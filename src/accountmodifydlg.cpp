@@ -181,6 +181,7 @@ void AccountModifyDlg::init()
     }
     le_stunUser->setText(acc.stunUser);
     le_stunPass->setText(acc.stunPass);
+    cb_onlyMyTurn->setChecked(acc.onlyMyTurn);
     autoconnectCksChanged();
     connect(ck_ibbOnly, SIGNAL(toggled(bool)), SLOT(ibbOnlyToggled(bool)));
     ibbOnlyToggled(acc.ibbOnly);
@@ -450,7 +451,7 @@ void AccountModifyDlg::ibbOnlyToggled(bool state) { le_dtProxy->setDisabled(stat
 void AccountModifyDlg::chooseKey()
 {
     // Show the key dialog
-    const QString &&id = (key.isNull() ? "" : key.keyId());
+    const QString &&id    = (key.isNull() ? "" : key.keyId());
     const QString &&keyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, id, tr("Choose Secret Key"));
 
     if (keyId.isEmpty())
@@ -575,8 +576,9 @@ void AccountModifyDlg::save()
     if (acc.stunHosts.indexOf(acc.stunHost) == -1) {
         acc.stunHosts << acc.stunHost;
     }
-    acc.stunUser = le_stunUser->text();
-    acc.stunPass = le_stunPass->text();
+    acc.stunUser   = le_stunUser->text();
+    acc.stunPass   = le_stunPass->text();
+    acc.onlyMyTurn = cb_onlyMyTurn->isChecked();
 
     acc.storeSaltedHashedPassword = ck_scram_salted_password->isChecked();
 

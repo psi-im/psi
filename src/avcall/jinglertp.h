@@ -139,7 +139,7 @@ public:
     void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy,
                                 const QString &user, const QString &pass);
     void setBasePort(int port);
-
+    void setAllowIpExposure(bool allow);
 signals:
     void incomingReady();
 

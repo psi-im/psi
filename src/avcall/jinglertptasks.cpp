@@ -439,15 +439,15 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
                 } else if (e.tagName() == "transport" && e.namespaceURI() == "urn:xmpp:jingle:transports:ice:0") {
                     c.trans.user          = e.attribute("ufrag");
                     c.trans.pass          = e.attribute("pwd");
-                    c.trans.ice2          = e.attribute("ice") == QLatin1String("true");
+                    c.trans.ice2          = e.attribute("ice2") == QLatin1String("true");
                     c.trans.transportType = JingleRtpTrans::Ice;
 
                     for (auto n = e.firstChildElement(); !n.isNull(); n = n.nextSiblingElement()) {
-                        if (n.nodeName() == QLatin1String("gathering-complete")) {
+                        if (n.tagName() == QLatin1String("gathering-complete")) {
                             c.trans.gatheringComplete = true;
                             continue;
                         }
-                        if (n.nodeName() != QLatin1String("candidate")) {
+                        if (n.tagName() != QLatin1String("candidate")) {
                             respondError(from, iq_id, 501, n.nodeName());
                             return true;
                         }
