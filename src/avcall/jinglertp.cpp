@@ -374,6 +374,7 @@ public:
     JingleRtpManagerPrivate *manager  = nullptr;
     bool                     incoming = false;
     XMPP::Jid                peer;
+    JingleRtp::PeerFeatures  peerFeatures;
     QString                  sid;
 
     int                         types = 0;
@@ -399,7 +400,12 @@ public:
 
     class IceStatus {
     public:
-        bool started = false;
+        bool started                       = false;
+        bool ice2                          = false;
+        bool notifyLocalGatheringComplete  = false;
+        bool notifyRemoteGatheringComplete = false;
+
+        JingleRtpTrans::Transport transportType = JingleRtpTrans::IceUdp;
 
         QString remoteUfrag;
         QString remotePassword;
@@ -442,10 +448,18 @@ public:
         if (!localAudioPayloadTypes.isEmpty()) {
             printf("there are audio payload types\n");
             types |= JingleRtp::Audio;
+            iceA_status.transportType
+                = (peerFeatures & JingleRtp::IceTransport) ? JingleRtpTrans::Ice : JingleRtpTrans::IceUdp;
+            if (iceA_status.transportType == JingleRtpTrans::Ice)
+                iceA_status.ice2 = true; // try ice2 by default
         }
         if (!localVideoPayloadTypes.isEmpty()) {
             printf("there are video payload types\n");
             types |= JingleRtp::Video;
+            iceV_status.transportType
+                = (peerFeatures & JingleRtp::IceTransport) ? JingleRtpTrans::Ice : JingleRtpTrans::IceUdp;
+            if (iceV_status.transportType == JingleRtpTrans::Ice)
+                iceV_status.ice2 = true; // try ice2 by default
         }
 
         printf("types=%d\n", types);
@@ -539,6 +553,9 @@ public:
                     iceA_status.remoteUfrag    = audioContent->trans.user;
                     iceA_status.remotePassword = audioContent->trans.pass;
                 }
+                iceA_status.ice2          = audioContent->trans.ice2;
+                iceA_status.transportType = audioContent->trans.transportType;
+
                 iceA_status.remoteCandidates += audioContent->trans.candidates;
             }
             if (videoContent) {
@@ -548,6 +565,9 @@ public:
                     iceV_status.remoteUfrag    = videoContent->trans.user;
                     iceV_status.remotePassword = videoContent->trans.pass;
                 }
+                iceV_status.ice2          = videoContent->trans.ice2;
+                iceV_status.transportType = videoContent->trans.transportType;
+
                 iceV_status.remoteCandidates += videoContent->trans.candidates;
             }
 
@@ -564,10 +584,11 @@ public:
 
             // find content
             for (const JingleRtpContent &c : envelope.contentList) {
-                if ((types & JingleRtp::Audio) && c.desc.media == "audio" && c.name == audioName && !audioContent) {
+                if ((types & JingleRtp::Audio) && c.desc.media == "audio" && c.name == audioName
+                    && c.trans.transportType == iceA_status.transportType && !audioContent) {
                     audioContent = &c;
                 } else if ((types & JingleRtp::Video) && c.desc.media == "video" && c.name == videoName
-                           && !videoContent) {
+                           && c.trans.transportType == iceV_status.transportType && !videoContent) {
                     videoContent = &c;
                 }
             }
@@ -594,6 +615,9 @@ public:
                     iceA_status.remotePassword = audioContent->trans.pass;
                 }
                 iceA_status.remoteCandidates += audioContent->trans.candidates;
+                iceA_status.notifyRemoteGatheringComplete = videoContent->trans.gatheringComplete;
+                iceA_status.ice2                          = audioContent->trans.ice2;
+                iceA->setRemoteFeatures(evalIceFeatures(iceA_status));
             } else if (iceA) {
                 qDebug("Audio was requested but not accepted! Cleaning up..");
                 auto is = new IceStopper();
@@ -607,6 +631,9 @@ public:
                     iceV_status.remotePassword = videoContent->trans.pass;
                 }
                 iceV_status.remoteCandidates += videoContent->trans.candidates;
+                iceV_status.notifyRemoteGatheringComplete = videoContent->trans.gatheringComplete;
+                iceV_status.ice2                          = videoContent->trans.ice2;
+                iceV->setRemoteFeatures(evalIceFeatures(iceV_status));
             } else if (iceV) {
                 qDebug("Video was requested but not accepted! Cleaning up..");
                 auto is = new IceStopper();
@@ -729,6 +756,18 @@ private:
         sid.clear();
     }
 
+    XMPP::Ice176::Features evalIceFeatures(const IceStatus &s)
+    {
+        constexpr auto iceUdpOpts
+            = XMPP::Ice176::Trickle | XMPP::Ice176::AggressiveNomination | XMPP::Ice176::RTPOptimization;
+        constexpr auto ice1opts = XMPP::Ice176::Trickle | XMPP::Ice176::AggressiveNomination
+            | XMPP::Ice176::RTPOptimization | XMPP::Ice176::GatheringComplete;
+        constexpr auto ice2opts
+            = XMPP::Ice176::Trickle | XMPP::Ice176::NotNominatedData | XMPP::Ice176::GatheringComplete;
+
+        return s.transportType == JingleRtpTrans::IceUdp ? iceUdpOpts : (s.ice2 ? ice2opts : ice1opts);
+    }
+
     void start_ice()
     {
         stunBindPort     = manager->stunBindPort;
@@ -790,6 +829,9 @@ private:
 
         if (types & JingleRtp::Audio) {
             iceA = new XMPP::Ice176(this);
+            iceA->setLocalFeatures(evalIceFeatures(iceA_status));
+            if (incoming) // else remote will be set when accepted
+                iceA->setRemoteFeatures(evalIceFeatures(iceA_status));
             setup_ice(iceA, localAddrs);
 
             iceA_status.started = false;
@@ -797,17 +839,15 @@ private:
 
         if (types & JingleRtp::Video) {
             iceV = new XMPP::Ice176(this);
+            iceV->setLocalFeatures(evalIceFeatures(iceV_status));
+            if (incoming) // else remote will be set when accepted
+                iceV->setRemoteFeatures(evalIceFeatures(iceV_status));
             setup_ice(iceV, localAddrs);
 
             iceV_status.started = false;
         }
 
-        XMPP::Ice176::Mode m;
-        if (!incoming)
-            m = XMPP::Ice176::Initiator;
-        else
-            m = XMPP::Ice176::Responder;
-
+        XMPP::Ice176::Mode m = incoming ? XMPP::Ice176::Responder : XMPP::Ice176::Initiator;
         if (iceA) {
             printf("starting ice for audio\n");
             iceA->start(m);
@@ -824,10 +864,10 @@ private:
         connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
         connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)),
                 SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
-        connect(ice, &XMPP::Ice176::readyToSendMedia, this, &JingleRtpPrivate::readyToSendMedia, Qt::QueuedConnection);
+        connect(ice, &XMPP::Ice176::readyToSendMedia, this, &JingleRtpPrivate::ice_readyToSendMedia,
+                Qt::QueuedConnection);
+        connect(ice, &XMPP::Ice176::localGatheringComplete, this, &JingleRtpPrivate::ice_localGatheringComplete);
 
-        ice->setLocalFeatures(XMPP::Ice176::Trickle | XMPP::Ice176::AggressiveNomination);
-        ice->setRemoteFeatures(XMPP::Ice176::Trickle | XMPP::Ice176::AggressiveNomination); // temporarily here
         ice->setProxy(manager->stunProxy);
         if (portReserver)
             ice->setPortReserver(portReserver);
@@ -894,34 +934,44 @@ private:
         //   the content type, which in our case is always the
         //   initiator
 
-        if ((types & JingleRtp::Audio) && !iceA_status.localCandidates.isEmpty()) {
+        if ((types & JingleRtp::Audio)
+            && (iceA_status.notifyLocalGatheringComplete || !iceA_status.localCandidates.isEmpty())) {
+
             JingleRtpContent content;
             // if(!incoming)
             content.creator = "initiator";
             // else
             //    content.creator = "responder";
-            content.name = audioName;
+            content.name                    = audioName;
+            content.trans.transportType     = iceA_status.transportType;
+            content.trans.user              = iceA->localUfrag();
+            content.trans.pass              = iceA->localPassword();
+            content.trans.candidates        = iceA_status.localCandidates;
+            content.trans.gatheringComplete = true;
 
-            content.trans.user       = iceA->localUfrag();
-            content.trans.pass       = iceA->localPassword();
-            content.trans.candidates = iceA_status.localCandidates;
             iceA_status.localCandidates.clear();
+            iceA_status.notifyLocalGatheringComplete = false;
 
             contentList += content;
         }
 
-        if ((types & JingleRtp::Video) && !iceV_status.localCandidates.isEmpty()) {
+        if ((types & JingleRtp::Video)
+            && (iceV_status.notifyLocalGatheringComplete || !iceV_status.localCandidates.isEmpty())) {
+
             JingleRtpContent content;
             // if(!incoming)
             content.creator = "initiator";
             // else
             //    content.creator = "responder";
-            content.name = videoName;
+            content.name                    = videoName;
+            content.trans.transportType     = iceV_status.transportType;
+            content.trans.user              = iceV->localUfrag();
+            content.trans.pass              = iceV->localPassword();
+            content.trans.candidates        = iceV_status.localCandidates;
+            content.trans.gatheringComplete = true;
 
-            content.trans.user       = iceV->localUfrag();
-            content.trans.pass       = iceV->localPassword();
-            content.trans.candidates = iceV_status.localCandidates;
             iceV_status.localCandidates.clear();
+            iceV_status.notifyLocalGatheringComplete = false;
 
             contentList += content;
         }
@@ -953,6 +1003,10 @@ private:
                 iceA->addRemoteCandidates(iceA_status.remoteCandidates);
                 iceA_status.remoteCandidates.clear();
             }
+            if (iceA_status.notifyRemoteGatheringComplete) {
+                iceA->setRemoteGatheringComplete();
+                iceA_status.notifyRemoteGatheringComplete = false;
+            }
         }
 
         if (types & JingleRtp::Video && iceV) {
@@ -961,6 +1015,10 @@ private:
             if (!iceV_status.remoteCandidates.isEmpty()) {
                 iceV->addRemoteCandidates(iceV_status.remoteCandidates);
                 iceV_status.remoteCandidates.clear();
+            }
+            if (iceV_status.notifyRemoteGatheringComplete) {
+                iceV->setRemoteGatheringComplete();
+                iceV_status.notifyRemoteGatheringComplete = false;
             }
         }
     }
@@ -983,11 +1041,12 @@ private:
             content.name    = audioName;
             content.senders = "both";
 
-            content.desc.media        = "audio";
-            content.desc.payloadTypes = localAudioPayloadTypes;
-            content.trans.user        = iceA->localUfrag();
-            content.trans.pass        = iceA->localPassword();
-            content.trans.candidates  = iceA_status.localCandidates;
+            content.desc.media          = "audio";
+            content.desc.payloadTypes   = localAudioPayloadTypes;
+            content.trans.transportType = iceA_status.transportType;
+            content.trans.user          = iceA->localUfrag();
+            content.trans.pass          = iceA->localPassword();
+            content.trans.candidates    = iceA_status.localCandidates;
             iceA_status.localCandidates.clear();
 
             envelope.contentList += content;
@@ -1001,11 +1060,12 @@ private:
             content.name    = videoName;
             content.senders = "both";
 
-            content.desc.media        = "video";
-            content.desc.payloadTypes = localVideoPayloadTypes;
-            content.trans.user        = iceV->localUfrag();
-            content.trans.pass        = iceV->localPassword();
-            content.trans.candidates  = iceV_status.localCandidates;
+            content.desc.media          = "video";
+            content.desc.payloadTypes   = localVideoPayloadTypes;
+            content.trans.transportType = iceV_status.transportType;
+            content.trans.user          = iceV->localUfrag();
+            content.trans.pass          = iceV->localPassword();
+            content.trans.candidates    = iceV_status.localCandidates;
             iceV_status.localCandidates.clear();
 
             envelope.contentList += content;
@@ -1041,11 +1101,12 @@ private:
             content.name    = audioName;
             content.senders = "both";
 
-            content.desc.media        = "audio";
-            content.desc.payloadTypes = localAudioPayloadTypes;
-            content.trans.user        = iceA->localUfrag();
-            content.trans.pass        = iceA->localPassword();
-            content.trans.candidates  = iceA_status.localCandidates;
+            content.desc.media          = "audio";
+            content.desc.payloadTypes   = localAudioPayloadTypes;
+            content.trans.transportType = iceA_status.transportType;
+            content.trans.user          = iceA->localUfrag();
+            content.trans.pass          = iceA->localPassword();
+            content.trans.candidates    = iceA_status.localCandidates;
             iceA_status.localCandidates.clear();
 
             envelope.contentList += content;
@@ -1057,12 +1118,13 @@ private:
             content.name    = videoName;
             content.senders = "both";
 
-            content.desc.media        = "video";
-            content.desc.payloadTypes = localVideoPayloadTypes;
-            content.trans.user        = iceV->localUfrag();
-            content.trans.pass        = iceV->localPassword();
-            content.trans.candidates  = iceA_status.localCandidates;
-            iceA_status.localCandidates.clear();
+            content.desc.media          = "video";
+            content.desc.payloadTypes   = localVideoPayloadTypes;
+            content.trans.transportType = iceV_status.transportType;
+            content.trans.user          = iceV->localUfrag();
+            content.trans.pass          = iceV->localPassword();
+            content.trans.candidates    = iceV_status.localCandidates;
+            iceV_status.localCandidates.clear();
 
             envelope.contentList += content;
         }
@@ -1190,7 +1252,19 @@ private slots:
             flushLocalCandidates();
     }
 
-    void readyToSendMedia()
+    void ice_localGatheringComplete()
+    {
+        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
+        if (ice == iceA) {
+            iceA_status.notifyLocalGatheringComplete = true;
+        } else { // iceV
+            iceV_status.notifyLocalGatheringComplete = true;
+        }
+        if (session_accept_sent)
+            flushLocalCandidates();
+    }
+
+    void ice_readyToSendMedia()
     {
         if (ice_connected) {
             // the signal connection is asynchronous, so by the time of the first etrance to the
@@ -1241,9 +1315,10 @@ void JingleRtp::setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &typ
 
 void JingleRtp::setLocalMaximumBitrate(int kbps) { d->localMaximumBitrate = kbps; }
 
-void JingleRtp::connectToJid(const XMPP::Jid &jid)
+void JingleRtp::connectToJid(const XMPP::Jid &jid, JingleRtp::PeerFeatures features)
 {
-    d->peer = jid;
+    d->peer         = jid;
+    d->peerFeatures = features;
     d->startOutgoing();
 }
 

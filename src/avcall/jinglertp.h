@@ -35,6 +35,9 @@ public:
 
     enum Type { Audio = 0x01, Video = 0x02 };
 
+    enum PeerFeature { IceTransport = 0x1, IceUdpTransport = 0x2 };
+    Q_DECLARE_FLAGS(PeerFeatures, PeerFeature)
+
     class RtpPacket {
     public:
         Type       type;
@@ -53,7 +56,7 @@ public:
     void setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types);
     void setLocalMaximumBitrate(int kbps);
 
-    void connectToJid(const XMPP::Jid &jid);
+    void connectToJid(const XMPP::Jid &jid, JingleRtp::PeerFeatures features = IceUdpTransport);
     void accept(int types); // intended types, so ICE knows what to do
     void reject();
 
@@ -92,6 +95,7 @@ private:
 
     JingleRtpPrivate *d;
 };
+Q_DECLARE_OPERATORS_FOR_FLAGS(JingleRtp::PeerFeatures)
 
 class JingleRtpChannel : public QObject {
     Q_OBJECT

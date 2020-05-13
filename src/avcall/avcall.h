@@ -42,13 +42,16 @@ class AvCall : public QObject {
 public:
     enum Mode { Audio, Video, Both };
 
+    enum PeerFeature { IceTransport = 0x1, IceUdpTransport = 0x2 };
+    Q_DECLARE_FLAGS(PeerFeatures, PeerFeature)
+
     AvCall(const AvCall &from);
     ~AvCall();
 
     XMPP::Jid jid() const;
     Mode      mode() const;
 
-    void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
+    void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1, PeerFeatures features = IceUdpTransport);
     void accept(Mode mode, int kbps = -1);
     void reject();
 
@@ -73,6 +76,7 @@ private:
 
     AvCallPrivate *d;
 };
+Q_DECLARE_OPERATORS_FOR_FLAGS(AvCall::PeerFeatures)
 
 class AvCallManager : public QObject {
     Q_OBJECT

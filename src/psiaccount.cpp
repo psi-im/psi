@@ -1524,6 +1524,7 @@ void PsiAccount::updateFeatures()
 #endif
     if (AvCallManager::isSupported()) {
         features << "urn:xmpp:jingle:transports:ice-udp:1";
+        features << "urn:xmpp:jingle:transports:ice:0";
         features << "urn:xmpp:jingle:apps:rtp:1";
         features << "urn:xmpp:jingle:apps:rtp:audio";
         features << "urn:xmpp:jingle:apps:rtp:video";
@@ -6041,7 +6042,7 @@ int PsiAccount::sendPgpEncryptedMessage(const Message &_m)
 
 bool PsiAccount::isPgpEnabled(const Jid &jid) const
 {
-    bool out = false;
+    bool       out              = false;
     const bool enabledByDefault = PsiOptions::instance()->getOption("options.pgp.enabled-by-default").toBool();
     if (enabledByDefault) {
         out = !d->acc.pgpDisabledChats.contains(jid.bare());
@@ -6386,7 +6387,7 @@ bool PsiAccount::ensureKey(const Jid &j)
 
         // Select a key
         const QString &&title = tr("Public Key: %1").arg(JIDUtil::toString(j, true));
-        QString &&keyId = PGPUtil::chooseKey(PGPKeyDlg::Public, akey, title);
+        QString &&      keyId = PGPUtil::chooseKey(PGPKeyDlg::Public, akey, title);
         if (keyId.isEmpty())
             return false;
         u->setPublicKeyID(keyId);

@@ -278,15 +278,20 @@ void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelop
             }
 
             if (!c.trans.user.isEmpty()) {
-                QDomElement transport = doc()->createElementNS("urn:xmpp:jingle:transports:ice-udp:1", "transport");
+                auto ns = c.trans.transportType == JingleRtpTrans::IceUdp ? "urn:xmpp:jingle:transports:ice-udp:1"
+                                                                          : "urn:xmpp:jingle:transports:ice:0";
+                QDomElement transport = doc()->createElementNS(ns, "transport");
                 transport.setAttribute("ufrag", c.trans.user);
                 transport.setAttribute("pwd", c.trans.pass);
+                transport.setAttribute("ice2", QLatin1String("true"));
                 for (const XMPP::Ice176::Candidate &ic : c.trans.candidates) {
                     QDomElement e = candidateToElement(doc(), ic);
                     if (!e.isNull())
                         transport.appendChild(e);
                 }
                 content.appendChild(transport);
+                if (c.trans.gatheringComplete)
+                    transport.appendChild(doc()->createElementNS(ns, "gathering-complete"));
             }
 
             query.appendChild(content);
@@ -414,8 +419,9 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
                         c.desc.payloadTypes += pt;
                     }
                 } else if (e.tagName() == "transport" && e.namespaceURI() == "urn:xmpp:jingle:transports:ice-udp:1") {
-                    c.trans.user = e.attribute("ufrag");
-                    c.trans.pass = e.attribute("pwd");
+                    c.trans.user          = e.attribute("ufrag");
+                    c.trans.pass          = e.attribute("pwd");
+                    c.trans.transportType = JingleRtpTrans::IceUdp;
 
                     for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
                         if (!n.isElement())
@@ -423,6 +429,30 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
 
                         QDomElement             e  = n.toElement();
                         XMPP::Ice176::Candidate ic = elementToCandidate(e);
+                        if (ic.type.isEmpty()) {
+                            respondError(from, iq_id, 400, QString());
+                            return true;
+                        }
+
+                        c.trans.candidates += ic;
+                    }
+                } else if (e.tagName() == "transport" && e.namespaceURI() == "urn:xmpp:jingle:transports:ice:0") {
+                    c.trans.user          = e.attribute("ufrag");
+                    c.trans.pass          = e.attribute("pwd");
+                    c.trans.ice2          = e.attribute("ice") == QLatin1String("true");
+                    c.trans.transportType = JingleRtpTrans::Ice;
+
+                    for (auto n = e.firstChildElement(); !n.isNull(); n = n.nextSiblingElement()) {
+                        if (n.nodeName() == QLatin1String("gathering-complete")) {
+                            c.trans.gatheringComplete = true;
+                            continue;
+                        }
+                        if (n.nodeName() != QLatin1String("candidate")) {
+                            respondError(from, iq_id, 501, n.nodeName());
+                            return true;
+                        }
+
+                        XMPP::Ice176::Candidate ic = elementToCandidate(n);
                         if (ic.type.isEmpty()) {
                             respondError(from, iq_id, 400, QString());
                             return true;

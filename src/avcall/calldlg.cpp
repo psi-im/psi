@@ -26,6 +26,7 @@
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "ui_call.h"
+#include "xmpp_caps.h"
 #include "xmpp_client.h"
 
 #include <QMessageBox>
@@ -158,8 +159,14 @@ private slots:
             connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
             connect(sess, SIGNAL(error()), SLOT(sess_error()));
 
-            active = true;
-            sess->connectToJid(ui.le_to->text(), mode, kbps);
+            active                    = true;
+            auto                 caps = pa->client()->capsManager()->features(ui.le_to->text());
+            AvCall::PeerFeatures features;
+            if (caps.hasJingleIce())
+                features |= AvCall::IceTransport;
+            if (caps.hasJingleIceUdp())
+                features |= AvCall::IceUdpTransport;
+            sess->connectToJid(ui.le_to->text(), mode, kbps, features);
         } else {
             ui.le_to->setEnabled(false);
             ui.ck_useVideo->setEnabled(false);

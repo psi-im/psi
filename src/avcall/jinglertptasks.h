@@ -77,8 +77,13 @@ public:
 
 class JingleRtpTrans {
 public:
+    enum Transport { IceUdp, Ice };
+
     QString                         user;
     QString                         pass;
+    bool                            ice2              = false;
+    bool                            gatheringComplete = false;
+    Transport                       transportType     = IceUdp;
     QList<XMPP::Ice176::Candidate>  candidates;
     QList<JingleRtpRemoteCandidate> remoteCandidates;
 };

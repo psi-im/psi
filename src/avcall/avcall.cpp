@@ -251,6 +251,7 @@ public:
     PsiMedia::RtpSession  rtp;
     XMPP::Jid             peer;
     AvCall::Mode          mode;
+    AvCall::PeerFeatures  peerFeatures;
     int                   bitrate;
     QString               errorString;
     bool                  transmitAudio;
@@ -538,9 +539,14 @@ private slots:
             Q_ASSERT(0);
         }
 
-        if (!incoming)
-            sess->connectToJid(peer);
-        else
+        if (!incoming) {
+            JingleRtp::PeerFeatures features;
+            if (peerFeatures & AvCall::IceTransport)
+                features |= JingleRtp::IceTransport;
+            if (peerFeatures & AvCall::IceUdpTransport)
+                features |= JingleRtp::IceUdpTransport;
+            sess->connectToJid(peer, features);
+        } else
             sess->localMediaUpdate();
     }
 
@@ -639,11 +645,12 @@ XMPP::Jid AvCall::jid() const
 
 AvCall::Mode AvCall::mode() const { return d->mode; }
 
-void AvCall::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps)
+void AvCall::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps, PeerFeatures features)
 {
-    d->peer    = jid;
-    d->mode    = mode;
-    d->bitrate = kbps;
+    d->peer         = jid;
+    d->mode         = mode;
+    d->bitrate      = kbps;
+    d->peerFeatures = features;
     d->startOutgoing();
 }
 
