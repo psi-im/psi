@@ -88,6 +88,7 @@ public:
     QStringList pluginFeatures() const;
 
     // loading
+    void updateMetadata();
     bool load();
     bool unload();
     bool isLoaded() const;

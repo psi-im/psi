@@ -107,13 +107,13 @@ void OptionsTabPlugins::listPlugins()
     plugins.sort();
     const QSize buttonSize = QSize(21, 21);
     for (const QString &plugin : plugins) {
-        QIcon            icon    = pm->icon(plugin);
-        bool             enabled = pm->isEnabled(plugin);
-        const QString    path    = pm->pathToPlugin(plugin);
-        QString          toolTip = tr("Plugin Path:\n%1").arg(path);
-        Qt::CheckState   state   = enabled ? Qt::Checked : Qt::Unchecked;
-        QTreeWidgetItem *item    = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
-        auto truncatedPluginName = QString(plugin).replace(" Plugin", "");
+        QIcon            icon                = pm->icon(plugin);
+        bool             enabled             = pm->isEnabled(plugin);
+        const QString    path                = pm->pathToPlugin(plugin);
+        QString          toolTip             = tr("Plugin Path:\n%1").arg(path);
+        Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
+        QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
+        auto             truncatedPluginName = QString(plugin).replace(" Plugin", "");
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         item->setData(C_NAME, Qt::UserRole, plugin);
         item->setText(C_NAME, truncatedPluginName);
@@ -125,7 +125,7 @@ void OptionsTabPlugins::listPlugins()
             icon = QIcon(icon.pixmap(icon.availableSizes().at(0), QIcon::Disabled));
         }
         item->setIcon(C_NAME, icon);
-        QString   shortName = PluginManager::instance()->shortName(plugin);
+        QString   shortName = pm->shortName(plugin);
         const int index     = d->tw_Plugins->indexOfTopLevelItem(item);
 
         QToolButton *aboutbutton = new QToolButton(d->tw_Plugins);
@@ -209,8 +209,8 @@ void OptionsTabPlugins::settingsClicked(int item)
     d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
     if (d->tw_Plugins->selectedItems().size() > 0) {
-        const QString     &pluginName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
-        const QString     &shortName  = PluginManager::instance()->shortName(pluginName);
+        const QString &    pluginName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
+        const QString &    shortName  = PluginManager::instance()->shortName(pluginName);
         PluginsOptionsDlg *sw         = d->findChild<PluginsOptionsDlg *>(shortName);
         if (!sw) {
             sw = new PluginsOptionsDlg(pluginName, psi, d);

@@ -44,6 +44,7 @@
 #include "tabmanager.h"
 #include "textutil.h"
 #include "toolbariconaccessor.h"
+#include "translationmanager.h"
 #include "webkitaccessor.h"
 #include "widgets/iconaction.h"
 //#include "xmpp_message.h"
@@ -77,8 +78,7 @@ PluginHost::PluginHost(PluginManager *manager, const QString &pluginFile) :
     manager_(manager), plugin_(nullptr), file_(pluginFile), priority_(PsiPlugin::PriorityNormal), loader_(nullptr),
     iconset_(nullptr), valid_(false), connected_(false), enabled_(false), hasInfo_(false), infoString_(QString())
 {
-    load(); // reads plugin name, etc
-    unload();
+    updateMetadata();
 }
 
 /**
@@ -166,6 +166,77 @@ QWidget *PluginHost::optionsWidget() const
 }
 
 //-- loading and enabling -------------------------------------------
+void PluginHost::updateMetadata()
+{
+    if (plugin_) {
+        return;
+    }
+    QPluginLoader loader(file_);
+    auto          md = loader.metaData();
+    if (!md.isEmpty())
+        md = md.value("MetaData").toObject();
+
+    QString curLangFull    = ":" + TranslationManager::instance()->currentLanguage();
+    QString curLang        = curLangFull.section('_', 0, 0);
+    int     nameTranslated = 0;
+    name_.clear();
+    shortName_.clear();
+    priority_ = 2;
+    icon_     = QIcon();
+
+    for (auto it = md.begin(); it != md.end(); ++it) {
+        if (nameTranslated < 2) {
+            if (it.key().startsWith(QLatin1String("name"))) {
+                if (it.key().endsWith(curLangFull)) {
+                    nameTranslated = 2;
+                    name_          = it.value().toString();
+                    continue;
+                }
+                if (nameTranslated < 1) {
+                    if (it.key().endsWith(curLang)) {
+                        nameTranslated = 1;
+                        name_          = it.value().toString();
+                        continue;
+                    }
+                    if (it.key().size() == 4) { // "name"
+                        name_ = it.value().toString();
+                        continue;
+                    }
+                }
+            }
+        }
+        if (it.key() == QLatin1String("shortname")) {
+            shortName_ = it.value().toString();
+        } else if (it.key() == QLatin1String("version")) {
+            version_ = it.value().toString();
+        } else if (it.key() == QLatin1String("priority")) {
+            priority_ = it.value().toInt();
+        } else if (it.key() == QLatin1String("icon")) {
+            auto data = it.value().toString();
+            if (data.startsWith("base64:")) {
+                QPixmap pix;
+                pix.loadFromData(QByteArray::fromBase64(data.midRef(6).toLatin1()));
+                icon_ = QIcon(pix);
+            } else if (data.startsWith("iconset:")) {
+                icon_ = IconsetFactory::icon(data.mid(8)).icon();
+            } else
+                icon_ = QIcon(data); // assuming file name or resource
+        }
+    }
+
+    if (name_.isEmpty() || shortName_.isEmpty()) {
+#ifndef PLUGINS_NO_DEBUG
+        qDebug("Essential metadata for plugin %s is not found. Trying to load to gather it", qPrintable(file_));
+#endif
+        load(); // reads plugin name, etc
+        unload();
+    } else {
+#ifndef PLUGINS_NO_DEBUG
+        qDebug("Loaded metadata for plugin %s", qPrintable(file_));
+#endif
+        valid_ = true;
+    }
+}
 
 /**
  * \brief Loads the plugin.
