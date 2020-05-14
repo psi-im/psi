@@ -61,6 +61,7 @@
 #ifdef GOOGLE_FT
 #include "googleftmanager.h"
 #endif
+#include "gpgtransaction.h"
 #include "historydlg.h"
 #include "httpauthmanager.h"
 #include "httpfileupload.h"
@@ -77,7 +78,6 @@
 #include "networkaccessmanager.h"
 #include "passdialog.h"
 #include "pepmanager.h"
-#include "pgptransaction.h"
 //#include "physicallocation.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -402,7 +402,7 @@ public:
     XmlConsole *             xmlConsole    = nullptr;
     UserList                 userList;
     UserListItem             self;
-    QCA::PGPKey              cur_pgpSecretKey;
+    QString                  cur_pgpSecretKey;
     QList<Message>           messageQueue;
     BlockTransportPopupList *blockTransportPopupList = nullptr;
     int                      userCounter             = 0;
@@ -1408,9 +1408,9 @@ WbManager *PsiAccount::wbManager() const { return d->wbManager; }
 #endif
 PrivacyManager *PsiAccount::privacyManager() const { return d->privacyManager; }
 
-bool PsiAccount::hasPgp() const { return !d->cur_pgpSecretKey.isNull(); }
+bool PsiAccount::hasPgp() const { return !d->cur_pgpSecretKey.isEmpty(); }
 
-QString PsiAccount::pgpKeyId() const { return d->cur_pgpSecretKey.keyId(); }
+QString PsiAccount::pgpKeyId() const { return d->cur_pgpSecretKey; }
 
 QHostAddress *PsiAccount::localAddress() const
 {
@@ -1463,8 +1463,7 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
     if (!d->nickFromVCard)
         setNick(j.node());
 
-    QString pgpSecretKeyID = (d->acc.pgpSecretKey.isNull() ? "" : d->acc.pgpSecretKey.keyId());
-    d->self.setPublicKeyID(pgpSecretKeyID);
+    d->self.setPublicKeyID(d->acc.pgpSecretKey);
 #ifdef HAVE_PGPUTIL
     if (PGPUtil::instance().pgpAvailable()) {
         bool updateStatus   = !PGPUtil::instance().equals(d->acc.pgpSecretKey, d->cur_pgpSecretKey) && loggedIn();
@@ -3178,7 +3177,7 @@ void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
     }
 
     // using pgp?
-    if (!d->cur_pgpSecretKey.isNull()) {
+    if (!d->cur_pgpSecretKey.isEmpty()) {
         d->loginStatus = s;
 
         // sign presence
@@ -5880,10 +5879,10 @@ void PsiAccount::pgpKeysUpdated()
         UserResourceList &rl = u->userResourceList();
         for (UserResourceList::Iterator rit = rl.begin(); rit != rl.end(); ++rit) {
             UserResource &r = *rit;
-            if (!r.status().xsigned().isEmpty() && r.pgpVerifyStatus() == QCA::SecureMessageSignature::NoKey) {
-                QCA::KeyStoreEntry e = PGPUtil::instance().getPublicKeyStoreEntry(r.publicKeyID());
-                if (!e.isNull())
+            if (!r.status().xsigned().isEmpty() && r.pgpVerifyStatus() == PGPUtil::SecureMessageSignature::NoKey) {
+                if (r.publicKeyID().isEmpty()) {
                     tryVerify(u, &r);
+                }
             }
         }
     }
@@ -5894,41 +5893,32 @@ void PsiAccount::pgpKeysUpdated()
 
 void PsiAccount::trySignPresence()
 {
-    QCA::SecureMessageKey skey;
-    skey.setPGPSecretKey(d->cur_pgpSecretKey);
-    QByteArray plain = d->loginStatus.status().toUtf8();
+    if (pgpKeyId().isEmpty())
+        return;
 
-    PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
-    connect(t, SIGNAL(finished()), SLOT(pgp_signFinished()));
-    t->setFormat(QCA::SecureMessage::Ascii);
-    t->setSigner(skey);
-    t->startSign(QCA::SecureMessage::Detached);
-    t->update(plain);
-    t->end();
+    GpgTransaction *transaction = new GpgTransaction(GpgTransaction::Type::Sign, pgpKeyId());
+    connect(transaction, &GpgTransaction::transactionFinished, this, &PsiAccount::pgp_signFinished);
+
+    transaction->setStdInString(d->loginStatus.status());
+    transaction->start();
 }
 
 void PsiAccount::pgp_signFinished()
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *t = static_cast<PGPTransaction *>(sender());
-    if (t->success()) {
+    GpgTransaction *transaction = static_cast<GpgTransaction *>(sender());
+    if (transaction->success()) {
         Status s = d->loginStatus;
-        s.setXSigned(PGPUtil::instance().stripHeaderFooter(QString(t->signature())));
+        s.setXSigned(PGPUtil::instance().stripHeaderFooter(transaction->stdOutString()));
         setStatusActual(s);
     } else {
-        if (t->errorCode() == QCA::SecureMessage::ErrorPassphrase) {
-            ; // TODO
-        }
+        PGPUtil::showDiagnosticText(tr("There was an error trying to sign your status.\nReason: %1.")
+                                    .arg(transaction->stdErrString()), transaction->errorString());
 
-        // TODO
-        //        PGPUtil::showDiagnosticText(tr("There was an error trying to sign your status.\nReason: %1.")
-        //                                        .arg(PGPUtil::instance().messageErrorString(t->errorCode())),
-        //                                    t->diagnosticText());
-        //
-        //        logout(false, loggedOutStatus());
+        logout(false, loggedOutStatus());
         return;
     }
-    t->deleteLater();
+    transaction->deleteLater();
 #else
     Q_ASSERT(false);
 #endif
@@ -5937,20 +5927,22 @@ void PsiAccount::pgp_signFinished()
 void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
-    t->setJid(j);
-    connect(t, SIGNAL(finished()), SLOT(pgp_verifyFinished()));
-    t->startVerify(PGPUtil::instance().addHeaderFooter(s.xsigned(), 1).toUtf8());
-    t->update(s.status().toUtf8());
-    t->end();
+    GpgTransaction *transaction = new GpgTransaction(GpgTransaction::Type::Verify, QString());
+    connect(transaction, &GpgTransaction::transactionFinished, this, &PsiAccount::pgp_verifyFinished);
+
+    transaction->setJid(j);
+    transaction->setData(s.status().toUtf8());
+    transaction->setStdInString(PGPUtil::instance().addHeaderFooter(s.xsigned(), 1));
+    transaction->start();
 #endif
 }
 
 void PsiAccount::pgp_verifyFinished()
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *t = static_cast<PGPTransaction *>(sender());
-    Jid             j = t->jid();
+    GpgTransaction *transaction = static_cast<GpgTransaction *>(sender());
+
+    const Jid &j = transaction->jid();
     for (UserListItem *u : findRelevant(j)) {
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
         bool                       found = (rit == u->userResourceList().end()) ? false : true;
@@ -5958,19 +5950,16 @@ void PsiAccount::pgp_verifyFinished()
             continue;
         UserResource &ur = *rit;
 
-        QCA::SecureMessageSignature signer;
-        if (t->success()) {
-            signer = t->signer();
+        if (transaction->success()) {
+            const auto &signature = PGPUtil::parseSecureMessageSignature(transaction->stdOutString());
 
-            ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
-            ur.setPgpVerifyStatus(signer.identityResult());
-            ur.setSigTimestamp(signer.timestamp());
+            ur.setPublicKeyID(signature.publicKeyId);
+            ur.setPgpVerifyStatus(signature.identityResult);
+            ur.setSigTimestamp(QDateTime::fromSecsSinceEpoch(signature.sigTimestamp));
 
             if (u->publicKeyID().isEmpty() && PsiOptions::instance()->getOption("options.pgp.auto-assign").toBool()) {
-                QString            keyId = signer.key().pgpPublicKey().keyId();
-                QCA::KeyStoreEntry key   = PGPUtil::instance().getPublicKeyStoreEntry(keyId);
-                if (!key.isNull()) {
-                    u->setPublicKeyID(keyId);
+                if (!signature.publicKeyId.isEmpty()) {
+                    u->setPublicKeyID(signature.publicKeyId);
                 }
             }
         } else {
@@ -5979,47 +5968,7 @@ void PsiAccount::pgp_verifyFinished()
         cpUpdate(*u);
     }
 
-    t->deleteLater();
-#endif
-}
-
-int PsiAccount::sendPgpEncryptedMessage(const Message &_m)
-{
-#ifdef HAVE_PGPUTIL
-    if (!ensureKey(_m.to()))
-        return -1;
-
-    QString keyID = findFirstRelevant(_m.to())->publicKeyID();
-    if (keyID.isEmpty())
-        return -1;
-
-    const QStringList arguments
-        = { "--no-tty",  "--enable-special-filenames", "--armor", "--always-trust", "--encrypt", "--recipient",
-            "0x" + keyID };
-
-    GpgProcess gpg;
-    gpg.start(arguments);
-    gpg.waitForStarted();
-    gpg.write(_m.body().toUtf8());
-    gpg.closeWriteChannel();
-    gpg.waitForFinished();
-
-#ifdef Q_OS_WIN
-    QString encryptedText = QString::fromUtf8(gpg.readAllStandardOutput());
-    encryptedText.replace("\r", "");
-#else
-    const QString &&encryptedText = QString::fromUtf8(gpg.readAllStandardOutput());
-#endif
-
-    static int idCounter = 0;
-    ++idCounter;
-
-    pgp_encryptFinished(idCounter, gpg, _m, encryptedText);
-
-    return idCounter;
-#else
-    Q_ASSERT(false);
-    return -1;
+    transaction->deleteLater();
 #endif
 }
 
@@ -6051,11 +6000,39 @@ void PsiAccount::setPgpEnabled(const Jid &jid, const bool value)
     }
 }
 
-void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const Message &origMsg,
-                                     const QString &encryptedText)
+int PsiAccount::sendPgpEncryptedMessage(const Message &m)
 {
 #ifdef HAVE_PGPUTIL
-    if (gpg.success()) {
+    if (!ensureKey(m.to()))
+        return -1;
+
+    QString keyID = findFirstRelevant(m.to())->publicKeyID();
+    if (keyID.isEmpty())
+        return -1;
+
+    GpgTransaction *transaction = new GpgTransaction(GpgTransaction::Type::Encrypt, keyID);
+    connect(transaction, &GpgTransaction::transactionFinished, this, &PsiAccount::pgp_encryptFinished);
+
+    transaction->setOrigMessage(m);
+    transaction->setStdInString(m.body());
+    transaction->start();
+    return transaction->id();
+#else
+    Q_ASSERT(false);
+    return -1;
+#endif
+}
+
+void PsiAccount::pgp_encryptFinished()
+{
+#ifdef HAVE_PGPUTIL
+    GpgTransaction *transaction = dynamic_cast<GpgTransaction*>(sender());
+    if (!transaction)
+        return;
+
+    if (transaction->success()) {
+        const Message &origMsg = transaction->origMessage();
+
         // log the message here, before we encrypt it
         {
             MessageEvent::Ptr me(new MessageEvent(origMsg, this));
@@ -6067,7 +6044,7 @@ void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const 
         Message mwrap;
         mwrap.setTo(origMsg.to());
         mwrap.setType(origMsg.type());
-        QString enc = PGPUtil::instance().stripHeaderFooter(encryptedText);
+        QString enc = PGPUtil::instance().stripHeaderFooter(transaction->stdOutString());
         mwrap.setBody(tr("[ERROR: This message is encrypted, and you are unable to decrypt it.]"));
         mwrap.setXEncrypted(enc);
         mwrap.setWasEncrypted(true);
@@ -6089,60 +6066,54 @@ void PsiAccount::pgp_encryptFinished(const int id, const GpgProcess &gpg, const 
         dj_sendMessage(mwrap);
     }
 
-    const bool      success     = gpg.success();
-    const int       error       = gpg.exitCode();
-    const QString &&errorString = gpg.errorString();
-
-    QTimer::singleShot(250, [this, id, success, error, errorString]() {
-        emit this->encryptedMessageSent(id, success, error, errorString);
-    });
+    emit encryptedMessageSent(transaction->id(), transaction->success(),
+                              transaction->exitCode(), transaction->errorString());
+    transaction->deleteLater();
 #endif
 }
 
 void PsiAccount::processEncryptedMessage(const Message &m)
 {
 #ifdef HAVE_PGPUTIL
-    PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
-    t->setMessage(m);
-    connect(t, SIGNAL(finished()), SLOT(pgp_decryptFinished()));
-    t->setFormat(QCA::SecureMessage::Ascii);
-    t->startDecrypt();
-    t->update(PGPUtil::instance().addHeaderFooter(m.xencrypted(), 0).toUtf8());
-    t->end();
+    GpgTransaction *transaction = new GpgTransaction(GpgTransaction::Type::Decrypt, pgpKeyId());
+    connect(transaction, &GpgTransaction::transactionFinished, this, &PsiAccount::pgp_decryptFinished);
+
+    transaction->setOrigMessage(m);
+    transaction->setStdInString(PGPUtil::instance().addHeaderFooter(m.xencrypted(), 0));
+    transaction->start();
 #endif
 }
 
 void PsiAccount::pgp_decryptFinished()
 {
-    PGPTransaction *pt       = static_cast<PGPTransaction *>(sender());
-    bool            tryAgain = false;
-    if (pt->success()) {
-        Message m = pt->message();
-        m.setBody(QString::fromUtf8(pt->read()));
+#ifdef HAVE_PGPUTIL
+    GpgTransaction *transaction = dynamic_cast<GpgTransaction *>(sender());
+    if (!transaction)
+        return;
+
+    if (transaction->success()) {
+        Message m = transaction->origMessage();
+        m.setBody(transaction->stdOutString());
         m.setXEncrypted("");
         m.setWasEncrypted(true);
         processIncomingMessage(m);
     } else {
         if (loggedIn()) {
             Message m;
-            m.setTo(pt->message().from());
+            m.setTo(transaction->origMessage().from());
             m.setType("error");
-            if (!pt->message().id().isEmpty())
-                m.setId(pt->message().id());
-            m.setBody(pt->message().body());
+            if (!transaction->origMessage().id().isEmpty())
+                m.setId(transaction->origMessage().id());
+            m.setBody(transaction->origMessage().body());
 
             m.setError(Stanza::Error(Stanza::Error::Modify, Stanza::Error::NotAcceptable, "Unable to decrypt"));
             d->client->sendMessage(m);
         }
     }
+    transaction->deleteLater();
 
-    pt->deleteLater();
-
-    if (tryAgain) {
-        processEncryptedMessageNext();
-    } else {
-        processEncryptedMessageDone();
-    }
+    processEncryptedMessageDone();
+#endif
 }
 
 void PsiAccount::processMessageQueue()
@@ -6355,7 +6326,7 @@ bool PsiAccount::ensureKey(const Jid &j)
             }
         }
 
-        if (akey.isEmpty() || PGPUtil::instance().getPublicKeyStoreEntry(akey).isNull()) {
+        if (akey.isEmpty()) {
             int n = QMessageBox::information(
                 nullptr, CAP(tr("No key")),
                 tr("<p>Psi was unable to locate the OpenPGP key to use for <b>%1</b>.<br>"

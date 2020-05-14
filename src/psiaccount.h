@@ -28,7 +28,6 @@
 #include "activity.h"
 #include "filesharingdownloader.h"
 #include "geolocation.h"
-#include "gpgprocess.h"
 #include "mood.h"
 #include "psiactions.h"
 #include "psievent.h"
@@ -259,9 +258,9 @@ public:
 
     QStringList hiddenChats(const Jid &) const;
 
-    int  sendPgpEncryptedMessage(const Message &);
     bool isPgpEnabled(const Jid &jid) const;
     void setPgpEnabled(const Jid &jid, const bool value);
+    int  sendPgpEncryptedMessage(const Message &);
 
     // sucks sucks sucks sucks sucks sucks sucks
     GCContact *        findGCContact(const Jid &j) const;
@@ -487,7 +486,7 @@ private slots:
     void trySignPresence();
     void pgp_signFinished();
     void pgp_verifyFinished();
-    void pgp_encryptFinished(const int, const GpgProcess &, const Message &, const QString &);
+    void pgp_encryptFinished();
     void pgp_decryptFinished();
 
     void ed_addAuth(const Jid &);

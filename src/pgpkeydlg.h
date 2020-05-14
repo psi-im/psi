@@ -53,11 +53,11 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event);
 
 private:
-    Ui::PGPKey             ui_;
-    QString                keyId_;
-    QPushButton *          pb_dtext_;
-    QStandardItemModel *   model_;
-    QSortFilterProxyModel *proxy_;
+    Ui::PGPKey             m_ui;
+    QString                m_keyId;
+    QPushButton *          m_pb_dtext;
+    QStandardItemModel *   m_model;
+    QSortFilterProxyModel *m_proxy;
 };
 
 #endif // PGPKEYDLG_H

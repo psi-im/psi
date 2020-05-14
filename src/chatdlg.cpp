@@ -767,7 +767,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
     if (b) {
         doneSend();
     } else {
-        PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
+        PGPUtil::showDiagnosticText(dtext, dtext);
     }
     chatEdit()->setEnabled(true);
     chatEdit()->setFocus();

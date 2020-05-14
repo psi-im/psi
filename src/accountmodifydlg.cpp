@@ -188,9 +188,8 @@ void AccountModifyDlg::init()
 
     ck_scram_salted_password->setChecked(acc.storeSaltedHashedPassword);
 
-    key = acc.pgpSecretKey;
+    pgpKeyId = acc.pgpSecretKey;
     updateUserID();
-    PGPUtil::instance().clearPGPAvailableCache();
     if (PGPUtil::instance().pgpAvailable()) {
         gb_pgp->setEnabled(true);
     }
@@ -385,10 +384,10 @@ AccountModifyDlg::~AccountModifyDlg()
 
 void AccountModifyDlg::updateUserID()
 {
-    if (key.isNull()) {
+    if (pgpKeyId.isEmpty()) {
         setKeyID(false);
     } else {
-        setKeyID(true, key.primaryUserId());
+        setKeyID(true, PGPUtil::getKeyOwnerName(pgpKeyId));
     }
 }
 
@@ -451,24 +450,19 @@ void AccountModifyDlg::ibbOnlyToggled(bool state) { le_dtProxy->setDisabled(stat
 void AccountModifyDlg::chooseKey()
 {
     // Show the key dialog
-    const QString &&id    = (key.isNull() ? "" : key.keyId());
-    const QString &&newKeyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, id, tr("Choose Secret Key"));
+    const QString &&newKeyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, pgpKeyId, tr("Choose Secret Key"));
 
     if (newKeyId.isEmpty())
         return;
 
-    QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(newKeyId);
-    if (e.isNull())
-        return;
-
-    key = e.pgpSecretKey();
+    pgpKeyId = newKeyId;
     updateUserID();
 }
 
 void AccountModifyDlg::clearKey()
 {
     setKeyID(false);
-    key = QCA::PGPKey();
+    pgpKeyId.clear();
 }
 
 void AccountModifyDlg::detailsVCard()
@@ -582,7 +576,7 @@ void AccountModifyDlg::save()
 
     acc.storeSaltedHashedPassword = ck_scram_salted_password->isChecked();
 
-    acc.pgpSecretKey = key;
+    acc.pgpSecretKey = pgpKeyId;
 
     acc.proxyID = pc->currentItem();
 

@@ -65,28 +65,28 @@ public:
     }
 };
 
-PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDialog(parent), model_(nullptr)
+PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDialog(parent), m_model(nullptr)
 {
-    ui_.setupUi(this);
+    m_ui.setupUi(this);
     setModal(true);
 
-    pb_dtext_ = ui_.buttonBox->addButton(tr("&Diagnostics"), QDialogButtonBox::ActionRole);
+    m_pb_dtext = m_ui.buttonBox->addButton(tr("&Diagnostics"), QDialogButtonBox::ActionRole);
 
-    model_ = new QStandardItemModel(this);
-    model_->setHorizontalHeaderLabels(QStringList() << tr("Key ID") << tr("User ID"));
-    proxy_ = new KeyViewProxyModel(this);
-    proxy_->setSourceModel(model_);
-    ui_.lv_keys->setModel(proxy_);
+    m_model = new QStandardItemModel(this);
+    m_model->setHorizontalHeaderLabels(QStringList() << tr("Key ID") << tr("User ID"));
+    m_proxy = new KeyViewProxyModel(this);
+    m_proxy->setSourceModel(m_model);
+    m_ui.lv_keys->setModel(m_proxy);
 
-    ui_.lv_keys->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_ui.lv_keys->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
-    connect(ui_.lv_keys, SIGNAL(doubleClicked(const QModelIndex &)), SLOT(doubleClicked(const QModelIndex &)));
-    connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
-    connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
-    connect(pb_dtext_, SIGNAL(clicked()), SLOT(show_info()));
-    connect(ui_.le_filter, SIGNAL(textChanged(const QString &)), this, SLOT(filterTextChanged()));
+    connect(m_ui.lv_keys, SIGNAL(doubleClicked(const QModelIndex &)), SLOT(doubleClicked(const QModelIndex &)));
+    connect(m_ui.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
+    connect(m_ui.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
+    connect(m_pb_dtext, SIGNAL(clicked()), SLOT(show_info()));
+    connect(m_ui.le_filter, SIGNAL(textChanged(const QString &)), this, SLOT(filterTextChanged()));
 
-    ui_.le_filter->installEventFilter(this);
+    m_ui.le_filter->installEventFilter(this);
 
     KeyViewItem *firstItem    = nullptr;
     KeyViewItem *selectedItem = nullptr;
@@ -115,7 +115,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     const QStringList &&keysList = keysRaw.split("\n");
     for (const QString &line : keysList) {
         const QString &&type = line.section(':', 0, 0);
-        QStandardItem * root = model_->invisibleRootItem();
+        QStandardItem * root = m_model->invisibleRootItem();
 
         if (type == "pub" || type == "sec") {
             uid                     = line.section(':', 9, 9);           // Used ID
@@ -152,50 +152,50 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
     }
 
     if (firstItem) {
-        QModelIndex realIndex = model_->indexFromItem(firstItem);
-        QModelIndex fakeIndex = proxy_->mapFromSource(realIndex);
-        ui_.lv_keys->setCurrentIndex(fakeIndex);
-        ui_.lv_keys->scrollTo(fakeIndex);
+        QModelIndex realIndex = m_model->indexFromItem(firstItem);
+        QModelIndex fakeIndex = m_proxy->mapFromSource(realIndex);
+        m_ui.lv_keys->setCurrentIndex(fakeIndex);
+        m_ui.lv_keys->scrollTo(fakeIndex);
     }
 
     // adjustSize();
 }
 
-const QString &PGPKeyDlg::keyId() const { return keyId_; }
+const QString &PGPKeyDlg::keyId() const { return m_keyId; }
 
 bool PGPKeyDlg::eventFilter(QObject *watched, QEvent *event)
 {
-    if (watched == ui_.le_filter && event->type() == QEvent::KeyPress) {
+    if (watched == m_ui.le_filter && event->type() == QEvent::KeyPress) {
         QKeyEvent *ke = static_cast<QKeyEvent *>(event);
         if (ke->key() == Qt::Key_Up || ke->key() == Qt::Key_Down || ke->key() == Qt::Key_PageUp
             || ke->key() == Qt::Key_PageDown || ke->key() == Qt::Key_Home || ke->key() == Qt::Key_End) {
-            QCoreApplication::instance()->sendEvent(ui_.lv_keys, event);
+            QCoreApplication::instance()->sendEvent(m_ui.lv_keys, event);
             return true;
         }
     }
     return QDialog::eventFilter(watched, event);
 }
 
-void PGPKeyDlg::filterTextChanged() { proxy_->setFilterWildcard(ui_.le_filter->text()); }
+void PGPKeyDlg::filterTextChanged() { m_proxy->setFilterWildcard(m_ui.le_filter->text()); }
 
 void PGPKeyDlg::doubleClicked(const QModelIndex &index)
 {
-    ui_.lv_keys->setCurrentIndex(index);
+    m_ui.lv_keys->setCurrentIndex(index);
     do_accept();
 }
 
 void PGPKeyDlg::do_accept()
 {
-    QModelIndex fakeIndex = ui_.lv_keys->currentIndex();
-    QModelIndex realIndex = proxy_->mapToSource(fakeIndex);
+    QModelIndex fakeIndex = m_ui.lv_keys->currentIndex();
+    QModelIndex realIndex = m_proxy->mapToSource(fakeIndex);
 
-    QStandardItem *item = model_->itemFromIndex(realIndex);
+    QStandardItem *item = m_model->itemFromIndex(realIndex);
     KeyViewItem *  i    = dynamic_cast<KeyViewItem *>(item);
     if (!i) {
         QMessageBox::information(this, tr("Error"), tr("Please select a key."));
         return;
     }
-    keyId_ = i->keyId();
+    m_keyId = i->keyId();
     accept();
 }
 

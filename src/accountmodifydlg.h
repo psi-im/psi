@@ -79,8 +79,8 @@ private:
     PsiCon *      psi;
     PsiAccount *  pa;
     ProxyChooser *pc;
-    QCA::PGPKey   key;
     UserAccount   acc;
+    QString       pgpKeyId;
 
     // Privacy
     PrivacyListModel        privacyModel;

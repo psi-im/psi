@@ -27,9 +27,25 @@
 #include <windows.h>
 #endif
 
-GpgProcess::GpgProcess(QObject *parent) : QProcess(parent) { _bin = findBin(); }
+GpgProcess::GpgProcess(QObject *parent) : QProcess(parent)
+{
+    m_bin = findBin();
+}
 
-bool GpgProcess::success() const { return (exitCode() == 0); }
+void GpgProcess::start(const QStringList &arguments, QIODevice::OpenMode mode)
+{
+    QProcess::start(m_bin, arguments, mode);
+}
+
+void GpgProcess::start(QIODevice::OpenMode mode)
+{
+    QProcess::start(m_bin, mode);
+}
+
+bool GpgProcess::success() const
+{
+    return (exitCode() == 0);
+}
 
 inline bool checkBin(const QString &bin)
 {
@@ -136,18 +152,18 @@ QString GpgProcess::findBin() const
 
 bool GpgProcess::info(QString &message)
 {
-    QStringList arguments { "--version", "--no-tty" };
+    const QStringList &&arguments = { "--version", "--no-tty" };
     start(arguments);
     waitForFinished();
 
     bool res = false;
 
-    if (!_bin.isEmpty()) {
+    if (!m_bin.isEmpty()) {
         if (error() == FailedToStart) {
-            message = tr("Can't start ") + _bin;
+            message = tr("Can't start ") + m_bin;
         } else {
             message = QString("%1 %2\n%3")
-                          .arg(QDir::toNativeSeparators(_bin))
+                          .arg(QDir::toNativeSeparators(m_bin))
                           .arg(arguments.join(" "))
                           .arg(QString::fromLocal8Bit(readAll()));
             res = true;

@@ -2026,7 +2026,7 @@ void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
             return;
         }
     } else {
-        PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
+        PGPUtil::showDiagnosticText(dtext, dtext);
     }
 
     d->le_to->setEnabled(true);

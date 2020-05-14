@@ -133,6 +133,7 @@ list(APPEND HEADERS
     globaleventqueue.h
     globalstatusmenu.h
     gpgprocess.h
+    gpgtransaction.h
     groupchatdlg.h
     groupchattopicdlg.h
     groupmenu.h
@@ -162,7 +163,6 @@ list(APPEND HEADERS
     passdialog.h
     pepmanager.h
     pgpkeydlg.h
-    pgptransaction.h
     pgputil.h
     pluginhost.h
     pluginmanager.h
@@ -408,6 +408,7 @@ list(APPEND SOURCES
     globaleventqueue.cpp
     globalstatusmenu.cpp
     gpgprocess.cpp
+    gpgtransaction.cpp
     groupchattopicdlg.cpp
     groupmenu.cpp
     httputil.cpp
@@ -443,7 +444,6 @@ list(APPEND SOURCES
     passdialog.cpp
     pepmanager.cpp
     pgpkeydlg.cpp
-    pgptransaction.cpp
     pgputil.cpp
     pixmaputil.cpp
     pluginhost.cpp

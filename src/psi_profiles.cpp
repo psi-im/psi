@@ -228,12 +228,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
     }
 
 #ifdef HAVE_PGPUTIL
-    QString pgpSecretKeyID = o->getOption(base + ".pgp-secret-key-id").toString();
-    if (!pgpSecretKeyID.isEmpty()) {
-        QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(pgpSecretKeyID);
-        if (!e.isNull())
-            pgpSecretKey = e.pgpSecretKey();
-    }
+    pgpSecretKey = o->getOption(base + ".pgp-secret-key-id").toString();
 #endif
 
     tmp = o->getOption(base + ".allow-plain").toString();
@@ -374,7 +369,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
     o->setOption(base + ".resource", resource);
     o->setOption(base + ".priority", priority);
     if (!pgpSecretKey.isNull()) {
-        o->setOption(base + ".pgp-secret-key-id", pgpSecretKey.keyId());
+        o->setOption(base + ".pgp-secret-key-id", pgpSecretKey);
     } else {
         o->setOption(base + ".pgp-secret-key-id", "");
     }

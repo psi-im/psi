@@ -18,8 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GPGPROCESS_H
-#define GPGPROCESS_H
+#pragma once
 
 #include <QProcess>
 
@@ -28,18 +27,14 @@ class GpgProcess : public QProcess {
 
 public:
     GpgProcess(QObject *parent = nullptr);
-    inline void start(const QStringList &arguments, OpenMode mode = ReadWrite)
-    {
-        QProcess::start(_bin, arguments, mode);
-    }
-    inline void start(OpenMode mode = ReadWrite) { QProcess::start(_bin, mode); }
+
+    void start(const QStringList &arguments, OpenMode mode = ReadWrite);
+    void start(OpenMode mode = ReadWrite);
 
     bool success() const;
     bool info(QString &message);
 
 private:
     QString findBin() const;
-    QString _bin;
+    QString m_bin;
 };
-
-#endif // GPGPROCESS_H

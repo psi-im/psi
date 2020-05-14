@@ -23,6 +23,7 @@
 #include "common.h"
 #include "jidutil.h"
 #include "mucmanager.h"
+#include "pgputil.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "textutil.h"
@@ -34,7 +35,6 @@
 #include <QPixmap>
 #include <QTextDocument> // for TextUtil::escape()
 #include <QUrl>
-#include <QtCrypto>
 
 using namespace XMPP;
 
@@ -516,18 +516,18 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             if (!r.publicKeyID().isEmpty()
                 && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool()) {
                 int v = r.pgpVerifyStatus();
-                if (v == QCA::SecureMessageSignature::Valid || v == QCA::SecureMessageSignature::InvalidSignature
-                    || v == QCA::SecureMessageSignature::InvalidKey || v == QCA::SecureMessageSignature::NoKey) {
-                    if (v == QCA::SecureMessageSignature::Valid) {
+                if (v == PGPUtil::SecureMessageSignature::Valid || v == PGPUtil::SecureMessageSignature::InvalidSignature
+                    || v == PGPUtil::SecureMessageSignature::InvalidKey || v == PGPUtil::SecureMessageSignature::NoKey) {
+                    if (v == PGPUtil::SecureMessageSignature::Valid) {
                         QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
                         str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes")
                             + QObject::tr("Signed") + ": " + "<font color=\"#2A993B\">" + d + "</font>";
-                    } else if (v == QCA::SecureMessageSignature::NoKey) {
+                    } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
                         QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
                         str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown")
                             + QObject::tr("Signed") + ": " + d;
-                    } else if (v == QCA::SecureMessageSignature::InvalidSignature
-                               || v == QCA::SecureMessageSignature::InvalidKey) {
+                    } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
+                               || v == PGPUtil::SecureMessageSignature::InvalidKey) {
                         str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad")
                             + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
                     }
