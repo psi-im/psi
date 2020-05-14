@@ -23,4 +23,3 @@ HEADERS += gameboard.h \
 SOURCES += gameboard.cpp gamesocket.cpp mainwindow.cpp
 
 SOURCES += chessplugin.cpp
-

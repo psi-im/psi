@@ -1,0 +1,55 @@
+include_directories(
+    ${CMAKE_CURRENT_LIST_DIR}/include
+)
+
+list(APPEND PLUGINS_INCLUDES
+    ${CMAKE_CURRENT_LIST_DIR}/include/accountinfoaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/accountinfoaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/activetabaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/activetabaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/applicationinfoaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/applicationinfoaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/chattabaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/commandexecutor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/contactinfoaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/contactinfoaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/contactstateaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/contactstateaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/encryptionsupport.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/eventcreatinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/eventcreator.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/eventfilter.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/gctoolbariconaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/iconfactoryaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/iconfactoryaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/iqfilter.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/iqfilteringhost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/iqnamespacefilter.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/menuaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/optionaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/optionaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/pluginaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/pluginaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/plugininfoprovider.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/popupaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/popupaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psiaccountcontroller.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psiaccountcontrollinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psimediaprovider.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psimediaaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psimediahost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/psiplugin.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/shortcutaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/shortcutaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/soundaccessinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/soundaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/stanzafilter.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/stanzasender.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/stanzasendinghost.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/toolbariconaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/webkitaccessor.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/webkitaccessinghost.h
+)
+list(APPEND HEADERS
+    ${PLUGINS_INCLUDES}
+)

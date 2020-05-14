@@ -217,7 +217,7 @@ endif()
 # Only headers or very small sources
 include(irisprotocol/irisprotocol.cmake)
 include(protocol/protocol.cmake)
-include(plugins/plugins.cmake)
+include(${PROJECT_SOURCE_DIR}/plugins/plugins.cmake)
 
 add_subdirectory(AutoUpdater)
 add_subdirectory(options)
@@ -650,8 +650,3 @@ elseif(APPLE)
     endif()
 endif()
 #INSTALL SECTION END
-
-if(ENABLE_PLUGINS AND (NOT ONLY_BINARY))
-    add_subdirectory(plugins)
-endif()
-

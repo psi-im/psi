@@ -610,7 +610,7 @@ FORMS += \
 include($$PWD/options/options.pri)
 
 # interactive text elements
-include(../3rdparty/qite/libqite/libqite.pri)
+include($$PWD/../3rdparty/qite/libqite/libqite.pri)
 
 # Plugins
 psi_plugins {
@@ -624,8 +624,8 @@ psi_plugins {
         $$PWD/pluginmanager.cpp \
         $$PWD/pluginhost.cpp
 
-    include($$PWD/plugins/pluginsconf.pri)
-    include($$PWD/plugins/plugins.pri)
+    include($$PWD/../plugins/pluginsconf.pri)
+    include($$PWD/../plugins/plugins.pri)
 }
 
 dbus {
