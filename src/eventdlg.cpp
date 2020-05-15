@@ -31,9 +31,6 @@
 #include "icontoolbutton.h"
 #include "iconwidget.h"
 #include "jidutil.h"
-#ifdef HAVE_PGPUTIL
-#include "pgputil.h"
-#endif
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
@@ -903,9 +900,6 @@ void EventDlg::init()
     else
         setTabOrder(d->le_from, d->le_subj);
     setTabOrder(d->le_subj, d->mle);
-
-    connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
-            SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
     setGeometryOptionPath(geometryOption);
 
@@ -1918,55 +1912,6 @@ void EventDlg::actionGCJoin(const QString &gc, const QString &passw)
 {
     Jid j(gc);
     d->pa->actionJoin(j.withResource(""), passw);
-}
-
-void EventDlg::trySendEncryptedNext()
-{
-    if (d->sendLeft.isEmpty())
-        return;
-    Message m = d->m;
-    m.setTo(Jid(d->sendLeft.first()));
-    d->transid = d->pa->sendPgpEncryptedMessage(m);
-    if (d->transid == -1) {
-        d->le_to->setEnabled(true);
-        d->mle->setEnabled(true);
-        d->mle->setFocus();
-        return;
-    }
-}
-
-void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
-{
-#ifdef HAVE_PGPUTIL
-    if (d->transid == -1)
-        return;
-    if (d->transid != x)
-        return;
-    d->transid = -1;
-    if (b) {
-        // remove the item
-        Jid j(d->sendLeft.takeFirst());
-
-        // d->pa->toggleSecurity(j, d->enc);
-
-        if (d->sendLeft.isEmpty()) {
-            d->le_to->setEnabled(true);
-            d->mle->setEnabled(true);
-            doneSend();
-        } else {
-            trySendEncryptedNext();
-            return;
-        }
-    } else {
-        PGPUtil::showDiagnosticText(dtext, dtext);
-    }
-
-    d->le_to->setEnabled(true);
-    d->mle->setEnabled(true);
-    d->mle->setFocus();
-#else
-    Q_ASSERT(false);
-#endif
 }
 
 #include "eventdlg.moc"

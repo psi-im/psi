@@ -174,9 +174,6 @@ private slots:
     void doFormSubmit();
     void doFormCancel();
 
-    void encryptedMessageSent(int, bool, int, const QString &);
-    void trySendEncryptedNext();
-
 public:
     class Private;
 
