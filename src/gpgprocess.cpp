@@ -27,16 +27,29 @@
 #include <windows.h>
 #endif
 
-GpgProcess::GpgProcess(QObject *parent) : QProcess(parent) { m_bin = findBin(); }
+QString GpgProcess::m_bin = QString();
+
+GpgProcess::GpgProcess(QObject *parent) : QProcess(parent)
+{
+    if (m_bin.isEmpty()) {
+        m_bin = findBin();
+    }
+}
 
 void GpgProcess::start(const QStringList &arguments, QIODevice::OpenMode mode)
 {
     QProcess::start(m_bin, arguments, mode);
 }
 
-void GpgProcess::start(QIODevice::OpenMode mode) { QProcess::start(m_bin, mode); }
+void GpgProcess::start(QIODevice::OpenMode mode)
+{
+    QProcess::start(m_bin, mode);
+}
 
-bool GpgProcess::success() const { return (exitCode() == 0); }
+bool GpgProcess::success() const
+{
+    return (exitCode() == 0);
+}
 
 inline bool checkBin(const QString &bin)
 {

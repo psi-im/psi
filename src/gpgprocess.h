@@ -36,5 +36,5 @@ public:
 
 private:
     QString findBin() const;
-    QString m_bin;
+    static QString m_bin;
 };
