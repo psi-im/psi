@@ -481,7 +481,6 @@ private slots:
     void groupChatMessagesRead(const Jid &);
 #endif
     void edb_finished();
-    void pgpKeysUpdated();
 
     void trySignPresence();
     void pgp_signFinished();

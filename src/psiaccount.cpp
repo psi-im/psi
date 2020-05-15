@@ -1201,10 +1201,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
     connect(d->psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 
-#ifdef HAVE_PGPUTIL
-    connect(&PGPUtil::instance(), SIGNAL(pgpKeysUpdated()), SLOT(pgpKeysUpdated()));
-#endif
-
     d->setEnabled(enabled());
 
     // Listen to the capabilities manager
@@ -5870,26 +5866,6 @@ const Activity &PsiAccount::activity() const { return d->self.activity(); }
 const GeoLocation &PsiAccount::geolocation() const { return d->self.geoLocation(); }
 
 const Mood &PsiAccount::mood() const { return d->self.mood(); }
-
-void PsiAccount::pgpKeysUpdated()
-{
-#ifdef HAVE_PGPUTIL
-    // are there any sigs that need verifying?
-    for (UserListItem *u : d->userList) {
-        UserResourceList &rl = u->userResourceList();
-        for (UserResourceList::Iterator rit = rl.begin(); rit != rl.end(); ++rit) {
-            UserResource &r = *rit;
-            if (!r.status().xsigned().isEmpty() && r.pgpVerifyStatus() == PGPUtil::SecureMessageSignature::NoKey) {
-                if (r.publicKeyID().isEmpty()) {
-                    tryVerify(u, &r);
-                }
-            }
-        }
-    }
-#else
-    Q_ASSERT(false);
-#endif
-}
 
 void PsiAccount::trySignPresence()
 {
