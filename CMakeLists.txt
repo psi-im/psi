@@ -57,7 +57,7 @@ option( USE_CCACHE "Use ccache utility if found" ON )
 option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF ) #Experimental
 option( USE_CRASH "Enable builtin sigsegv handling" OFF )
 option( USE_KEYCHAIN "Enable Qt5Keychain support" ON )
-option( BUILD_PSIMEDIA "Build psimedia plugin if sources found" OFF )
+option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree" OFF )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
