@@ -446,11 +446,10 @@ public:
     QComboBox *       cb_type     = nullptr;
     AccountLabel *    lb_ident    = nullptr;
     IconLabel *       lb_status   = nullptr;
-    IconLabel *       lb_pgp      = nullptr;
     ELineEdit *       le_to       = nullptr;
     QLineEdit *       le_from     = nullptr;
     QLineEdit *       le_subj     = nullptr;
-    IconToolButton *tb_url = nullptr, *tb_info = nullptr, *tb_history = nullptr, *tb_pgp = nullptr, *tb_icon = nullptr;
+    IconToolButton *tb_url = nullptr, *tb_info = nullptr, *tb_history = nullptr, *tb_icon = nullptr;
     IconButton *    pb_next = nullptr, *pb_close = nullptr, *pb_quote = nullptr, *pb_deny = nullptr, *pb_send = nullptr,
                *pb_reply = nullptr, *pb_chat = nullptr, *pb_auth = nullptr, *pb_http_confirm = nullptr,
                *pb_http_deny = nullptr, *pb_form_submit = nullptr, *pb_form_cancel = nullptr;
@@ -475,7 +474,6 @@ public:
     QStringList         sendLeft;
 
     bool composing  = false;
-    bool enc        = false;
     bool urlOnShow  = false;
     int  transid    = 0;
     int  nextAmount = 0;
@@ -558,12 +556,6 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa) : AdvancedWid
         d->le_to->setFocus();
     else
         d->mle->setFocus();
-
-    if (d->tb_pgp) {
-        UserListItem *u = d->pa->findFirstRelevant(d->jid);
-        if (u && u->isSecure(d->jid.resource()))
-            d->tb_pgp->setChecked(true);
-    }
 }
 
 EventDlg::EventDlg(const Jid &j, PsiAccount *pa, bool unique) : AdvancedWidget<QWidget>(nullptr)
@@ -625,7 +617,6 @@ void EventDlg::init()
     d->lb_identity = new QLabel(tr("Identity:"), this);
     hb1->addWidget(d->lb_identity);
 
-    d->enc     = false;
     d->transid = -1;
 
     if (d->composing) {
@@ -708,17 +699,6 @@ void EventDlg::init()
     d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     d->lb_count->setNum(0);
 
-    if (d->composing) {
-        d->tb_pgp = new IconToolButton(this);
-        d->tb_pgp->setCheckable(true);
-        d->tb_pgp->setToolTip(tr("OpenPGP encryption"));
-        d->lb_pgp = nullptr;
-    } else {
-        d->lb_pgp = new IconLabel(this);
-        d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr("psi/cryptoNo"));
-        d->tb_pgp = nullptr;
-    }
-
     d->tb_url = new IconToolButton(this);
     connect(d->tb_url, SIGNAL(clicked()), SLOT(addUrl()));
     d->tb_url->setToolTip(tr("Add URL"));
@@ -731,8 +711,6 @@ void EventDlg::init()
 
     QList<IconToolButton *> toolButtons;
     toolButtons << d->tb_url << d->tb_info << d->tb_history;
-    if (PsiOptions::instance()->getOption("plugins.auto-load.openpgp").toBool())
-        toolButtons << d->tb_pgp;
     toolButtons << d->tb_icon;
     for (IconToolButton *toolButton : toolButtons)
         if (toolButton)
@@ -757,9 +735,7 @@ void EventDlg::init()
         if (!d->composing) {
             d->le_subj->setReadOnly(true);
             d->tb_url->setEnabled(false);
-            hb3->addWidget(d->lb_pgp);
-        } else
-            hb3->addWidget(d->tb_pgp);
+        }
 
     } else {
         d->le_subj->hide();
@@ -768,10 +744,6 @@ void EventDlg::init()
         hb2->addWidget(d->tb_url);
         hb2->addWidget(d->tb_info);
         hb2->addWidget(d->tb_history);
-        if (d->composing)
-            hb2->addWidget(d->tb_pgp);
-        else
-            hb2->addWidget(d->lb_pgp);
     }
 
     // text area
@@ -932,8 +904,6 @@ void EventDlg::init()
         setTabOrder(d->le_from, d->le_subj);
     setTabOrder(d->le_subj, d->mle);
 
-    updatePgp();
-    connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePgp()));
     connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)),
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
@@ -1288,15 +1258,6 @@ void EventDlg::optionsUpdate()
     d->tb_url->setPsiIcon(IconsetFactory::iconPtr("psi/www"));
     d->tb_info->setPsiIcon(IconsetFactory::iconPtr("psi/vCard"));
     d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
-    if (d->tb_pgp) {
-        QIcon i;
-        i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(), QIcon::Normal, QIcon::Off);
-        i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
-        d->tb_pgp->setPsiIcon(nullptr);
-        d->tb_pgp->setIcon(i);
-    }
-    if (d->lb_pgp)
-        d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo"));
 
     // update the readnext icon
     if (d->nextAmount > 0)
@@ -1379,34 +1340,22 @@ void EventDlg::doSend()
     m.setUrlList(d->attachView->urlList());
     m.setTimeStamp(QDateTime::currentDateTime());
     m.setThread(d->thread);
-    if (d->tb_pgp->isChecked())
-        m.setWasEncrypted(true);
     d->m = m;
 
-    d->enc = false;
-    if (d->tb_pgp->isChecked()) {
-        d->le_to->setEnabled(false);
-        d->mle->setEnabled(false);
-        d->enc      = true;
-        d->sendLeft = list;
-
-        trySendEncryptedNext();
-    } else {
-        if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty()
+    if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty()
             && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
-            m.setTo(d->pa->serverInfoManager()->multicastService());
-            for (const QString &recipient : list) {
-                m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
-            }
-            d->pa->dj_sendMessage(m, true);
-        } else {
-            for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-                m.setTo(Jid(*it));
-                d->pa->dj_sendMessage(m, true);
-            }
+        m.setTo(d->pa->serverInfoManager()->multicastService());
+        for (const QString &recipient : list) {
+            m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
         }
-        doneSend();
+        d->pa->dj_sendMessage(m, true);
+    } else {
+        for (QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
+            m.setTo(Jid(*it));
+            d->pa->dj_sendMessage(m, true);
+        }
     }
+    doneSend();
 }
 
 void EventDlg::doneSend() { close(); }
@@ -1697,8 +1646,6 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
     d->le_from->setToolTip(e->from().full());
     setTime(e->timeStamp(), e->late());
 
-    d->enc = false;
-
     bool showHttpId = false;
 
     if (e->type() == PsiEvent::HttpAuth) {
@@ -1744,8 +1691,6 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
     if (e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
         MessageEvent::Ptr me = e.staticCast<MessageEvent>();
         const Message &   m  = me->message();
-
-        d->enc = m.wasEncrypted();
 
         // HTTP auth request buttons
         if (e->type() == PsiEvent::HttpAuth) {
@@ -1927,9 +1872,6 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 
     d->mle->scrollToTop();
 
-    if (d->lb_pgp)
-        d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo"));
-
     if (!d->le_subj->text().isEmpty())
         d->le_subj->setToolTip(d->le_subj->text());
     else
@@ -1976,16 +1918,6 @@ void EventDlg::actionGCJoin(const QString &gc, const QString &passw)
 {
     Jid j(gc);
     d->pa->actionJoin(j.withResource(""), passw);
-}
-
-void EventDlg::updatePgp()
-{
-    if (d->tb_pgp) {
-        d->tb_pgp->setEnabled(d->pa->hasPgp());
-        if (!d->pa->hasPgp()) {
-            d->tb_pgp->setChecked(false);
-        }
-    }
 }
 
 void EventDlg::trySendEncryptedNext()
