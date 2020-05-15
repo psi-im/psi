@@ -3,7 +3,7 @@ unset(FORMS)
 unset(SOURCES)
 unset(UI_FORMS)
 
-if(WIN32 AND IS_PSIPLUS)
+if(WIN32 AND PSI_PLUS)
     if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/QDChecker.cpp")
         set(USE_QDCHECKER ON)
     endif()
