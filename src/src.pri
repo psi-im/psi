@@ -121,7 +121,7 @@ HEADERS += \
     $$PWD/theme_p.h \
     $$PWD/applicationinfo.h \
     $$PWD/gpgprocess.h \
-    $$PWD/pgptransaction.h \
+    $$PWD/gpgtransaction.h \
     $$PWD/userlist.h \
     $$PWD/mainwin.h \
     $$PWD/mainwin_p.h \
@@ -163,7 +163,6 @@ HEADERS += \
     $$PWD/searchdlg.h \
     $$PWD/registrationdlg.h \
     $$PWD/psitoolbar.h \
-    $$PWD/passphrasedlg.h \
     $$PWD/vcardfactory.h \
     $$PWD/tasklist.h \
     $$PWD/discodlg.h \
@@ -268,7 +267,7 @@ SOURCES += \
     $$PWD/theme_p.cpp \
     $$PWD/applicationinfo.cpp \
     $$PWD/gpgprocess.cpp \
-    $$PWD/pgptransaction.cpp \
+    $$PWD/gpgtransaction.cpp \
     $$PWD/userlist.cpp \
     $$PWD/mainwin.cpp \
     $$PWD/mainwin_p.cpp \
@@ -309,7 +308,6 @@ SOURCES += \
     $$PWD/searchdlg.cpp \
     $$PWD/registrationdlg.cpp \
     $$PWD/psitoolbar.cpp \
-    $$PWD/passphrasedlg.cpp \
     $$PWD/vcardfactory.cpp \
     $$PWD/discodlg.cpp \
     $$PWD/alerticon.cpp \
@@ -587,7 +585,6 @@ FORMS += \
     $$PWD/about.ui \
     $$PWD/history.ui \
     $$PWD/optioneditor.ui \
-    $$PWD/passphrase.ui \
     $$PWD/mucconfig.ui \
     $$PWD/mucreasonseditor.ui \
     $$PWD/xmlconsole.ui \
