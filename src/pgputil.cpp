@@ -222,16 +222,10 @@ PGPUtil::SecureMessageSignature PGPUtil::parseSecureMessageSignature(const QStri
         const QString &&type = line.section(' ', 1, 1);
         if (type == QStringLiteral("GOODSIG")) {
             out.identityResult = SecureMessageSignature::Valid;
-            out.publicKeyId    = line.section(' ', 2, 2);
-            if (out.publicKeyId.size() > 16) {
-                out.publicKeyId = out.publicKeyId.right(16);
-            }
             out.userName = line.section(' ', 3);
         } else if (type == QStringLiteral("VALIDSIG")) {
             out.sigTimestamp = line.section(' ', 4, 4).toLongLong();
-            if (!out.userName.isEmpty()) {
-                break;
-            }
+            out.publicKeyId  = line.section(' ', 11, 11).right(16);
         }
         if (type == QStringLiteral("BADSIG")) {
             out.identityResult = SecureMessageSignature::InvalidSignature;
