@@ -646,7 +646,7 @@ void PsiChatDlg::sendOwnPublicKey()
     sendMessage(keyData);
 
     const auto &&keyOwnerName = PGPUtil::getKeyOwnerName(account()->pgpKeyId());
-    const auto &&shortId = account()->pgpKeyId().right(8);
+    const auto &&shortId      = account()->pgpKeyId().right(8);
     appendSysMsg(tr("Public key \"%1\" sent").arg(keyOwnerName + " " + shortId));
 #endif // HAVE_PGPUTIL
 }
@@ -663,7 +663,7 @@ void PsiChatDlg::sendPublicKey()
     sendMessage(keyData);
 
     const auto &&keyOwnerName = PGPUtil::getKeyOwnerName(keyId);
-    const auto &&shortId = keyId.right(8);
+    const auto &&shortId      = keyId.right(8);
     appendSysMsg(tr("Public key \"%1\" sent").arg(keyOwnerName + " " + shortId));
 #endif // HAVE_PGPUTIL
 }
@@ -673,10 +673,10 @@ void PsiChatDlg::sendMessage(const QString &body)
     // Copy-paste from PluginHost::sendMessage()!
     // TODO(mck): yeah, that's sick..
     const QString &&xml = QString("<message to='%1' type='%4'><subject>%3</subject><body>%2</body></message>")
-            .arg(TextUtil::escape(jid().bare()))
-            .arg(TextUtil::escape(body))
-            .arg(TextUtil::escape(""))
-            .arg(TextUtil::escape("chat"));
+                              .arg(TextUtil::escape(jid().bare()))
+                              .arg(TextUtil::escape(body))
+                              .arg(TextUtil::escape(""))
+                              .arg(TextUtil::escape("chat"));
 
     account()->client()->send(xml);
 }

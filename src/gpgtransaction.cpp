@@ -36,53 +36,32 @@ GpgTransaction::GpgTransaction(const Type type, const QString &keyID, QObject *p
 
     switch (type) {
     case Type::Sign: {
-        m_arguments = QStringList {
-                "--no-tty",
-                "--enable-special-filenames",
-                "--armor",
-                "--always-trust",
-                "--detach-sign",
-                "--default-key",
-                "0x" + keyID
-        };
+        m_arguments = QStringList { "--no-tty",      "--enable-special-filenames",
+                                    "--armor",       "--always-trust",
+                                    "--detach-sign", "--default-key",
+                                    "0x" + keyID };
     } break;
     case Type::Verify: {
-        m_tempFile = QDir::tempPath() + "/psi.pgp.verify." + QString::number(m_id) + ".txt";
+        m_tempFile  = QDir::tempPath() + "/psi.pgp.verify." + QString::number(m_id) + ".txt";
         m_arguments = QStringList {
-                "--no-tty",
-                "--enable-special-filenames",
-                "--always-trust",
-                "--status-fd=1",
-                "--verify",
-                "-",
-                m_tempFile
+            "--no-tty", "--enable-special-filenames", "--always-trust", "--status-fd=1", "--verify", "-", m_tempFile
         };
     } break;
     case Type::Encrypt: {
-        m_arguments = QStringList {
-                "--no-tty",
-                "--enable-special-filenames",
-                "--armor",
-                "--always-trust",
-                "--encrypt",
-                "--recipient",
-                "0x" + keyID
-        };
+        m_arguments = QStringList { "--no-tty",  "--enable-special-filenames",
+                                    "--armor",   "--always-trust",
+                                    "--encrypt", "--recipient",
+                                    "0x" + keyID };
     } break;
     case Type::Decrypt: {
-        m_arguments = QStringList {
-                "--no-tty",
-                "--enable-special-filenames",
-                "--armor",
-                "--always-trust",
-                "--decrypt",
-                "--recipient",
-                "0x" + keyID
-        };
+        m_arguments = QStringList { "--no-tty",  "--enable-special-filenames",
+                                    "--armor",   "--always-trust",
+                                    "--decrypt", "--recipient",
+                                    "0x" + keyID };
     } break;
     }
 
-    connect(this, &QProcess::started,  this, &GpgTransaction::processStarted);
+    connect(this, &QProcess::started, this, &GpgTransaction::processStarted);
 
     // TODO: update after stopping support of Ubuntu Xenial and WinXP:
     connect(this, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(processFinished()));
@@ -93,8 +72,7 @@ void GpgTransaction::start()
     // TODO: rewrite without usage of temporary file!
     if (m_type == Type::Verify) {
         QFile file(m_tempFile);
-        if (file.open(QIODevice::WriteOnly))
-        {
+        if (file.open(QIODevice::WriteOnly)) {
             file.write(m_data);
             file.close();
         }
@@ -103,10 +81,7 @@ void GpgTransaction::start()
     GpgProcess::start(m_arguments);
 }
 
-int GpgTransaction::id() const
-{
-    return m_id;
-}
+int GpgTransaction::id() const { return m_id; }
 
 void GpgTransaction::setGpgArguments(const QStringList &arguments)
 {
@@ -114,55 +89,25 @@ void GpgTransaction::setGpgArguments(const QStringList &arguments)
     m_arguments = arguments;
 }
 
-void GpgTransaction::setStdInString(const QString &str)
-{
-    m_stdInString = str;
-}
+void GpgTransaction::setStdInString(const QString &str) { m_stdInString = str; }
 
-void GpgTransaction::setOrigMessage(const XMPP::Message &msg)
-{
-    m_origMessage = msg;
-}
+void GpgTransaction::setOrigMessage(const XMPP::Message &msg) { m_origMessage = msg; }
 
-void GpgTransaction::setJid(const XMPP::Jid &jid)
-{
-    m_jid = jid;
-}
+void GpgTransaction::setJid(const XMPP::Jid &jid) { m_jid = jid; }
 
-void GpgTransaction::setData(const QByteArray &data)
-{
-    m_data = data;
-}
+void GpgTransaction::setData(const QByteArray &data) { m_data = data; }
 
-QString GpgTransaction::stdInString() const
-{
-    return m_stdInString;
-}
+QString GpgTransaction::stdInString() const { return m_stdInString; }
 
-QString GpgTransaction::stdOutString() const
-{
-    return m_stdOutString;
-}
+QString GpgTransaction::stdOutString() const { return m_stdOutString; }
 
-QString GpgTransaction::stdErrString() const
-{
-    return m_stdErrString;
-}
+QString GpgTransaction::stdErrString() const { return m_stdErrString; }
 
-XMPP::Message GpgTransaction::origMessage() const
-{
-    return m_origMessage;
-}
+XMPP::Message GpgTransaction::origMessage() const { return m_origMessage; }
 
-XMPP::Jid GpgTransaction::jid() const
-{
-    return m_jid;
-}
+XMPP::Jid GpgTransaction::jid() const { return m_jid; }
 
-QByteArray GpgTransaction::data() const
-{
-    return m_data;
-}
+QByteArray GpgTransaction::data() const { return m_data; }
 
 void GpgTransaction::processStarted()
 {

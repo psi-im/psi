@@ -451,11 +451,11 @@ void PsiActionList::Private::createChat()
         IconAction *actHtmlText = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
         IconAction *actAddContact
             = new IconAction(tr("Add Contact To Roster"), "psi/addContact", tr("Add Contact"), 0, this);
-        IconAction *actIcon    = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
-        IconAction *actVoice   = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
-        IconAction *actFile    = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
-        IconAction *actPgp     = new IconAction(QString("OpenPGP"), "psi/cryptoYes", QString("OpenPGP"), 0,
-                                            this, nullptr, true);
+        IconAction *actIcon  = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
+        IconAction *actVoice = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
+        IconAction *actFile  = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
+        IconAction *actPgp
+            = new IconAction(QString("OpenPGP"), "psi/cryptoYes", QString("OpenPGP"), 0, this, nullptr, true);
         IconAction *actInfo    = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
         IconAction *actHistory = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
         IconAction *actCompact

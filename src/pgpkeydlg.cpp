@@ -111,7 +111,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString &defaultKeyID, QWidget *parent) : QDi
         keysRaw.append(QString::fromUtf8(gpg.readAll()));
     }
 
-    QString uid;
+    QString             uid;
     const QStringList &&keysList = keysRaw.split("\n");
     for (const QString &line : keysList) {
         const QString &&type = line.section(':', 0, 0);

@@ -516,8 +516,10 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             if (!r.publicKeyID().isEmpty()
                 && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool()) {
                 int v = r.pgpVerifyStatus();
-                if (v == PGPUtil::SecureMessageSignature::Valid || v == PGPUtil::SecureMessageSignature::InvalidSignature
-                    || v == PGPUtil::SecureMessageSignature::InvalidKey || v == PGPUtil::SecureMessageSignature::NoKey) {
+                if (v == PGPUtil::SecureMessageSignature::Valid
+                    || v == PGPUtil::SecureMessageSignature::InvalidSignature
+                    || v == PGPUtil::SecureMessageSignature::InvalidKey
+                    || v == PGPUtil::SecureMessageSignature::NoKey) {
                     if (v == PGPUtil::SecureMessageSignature::Valid) {
                         QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
                         str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes")

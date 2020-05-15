@@ -48,12 +48,12 @@ public:
     void setJid(const XMPP::Jid &jid);
     void setData(const QByteArray &data);
 
-    QString stdInString() const;
-    QString stdOutString() const;
-    QString stdErrString() const;
+    QString       stdInString() const;
+    QString       stdOutString() const;
+    QString       stdErrString() const;
     XMPP::Message origMessage() const;
-    XMPP::Jid jid() const;
-    QByteArray data() const;
+    XMPP::Jid     jid() const;
+    QByteArray    data() const;
 
 signals:
     void transactionFinished();
@@ -67,13 +67,12 @@ private:
     int        m_id;
     Type       m_type;
 
-    QStringList m_arguments;
-    QString m_stdInString;
-    QString m_stdOutString;
-    QString m_stdErrString;
+    QStringList   m_arguments;
+    QString       m_stdInString;
+    QString       m_stdOutString;
+    QString       m_stdErrString;
     XMPP::Message m_origMessage;
-    XMPP::Jid m_jid;
-    QByteArray m_data;
-    QString m_tempFile;
+    XMPP::Jid     m_jid;
+    QByteArray    m_data;
+    QString       m_tempFile;
 };
-

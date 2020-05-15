@@ -53,14 +53,14 @@ public:
 
     struct SecureMessageSignature {
         enum {
-            Valid = 0,          //< indentity is verified, matches signature
-            InvalidSignature,   //< valid key provided, but signature failed
-            InvalidKey,         //< invalid key provided
-            NoKey               //< identity unknown
+            Valid = 0,        //< indentity is verified, matches signature
+            InvalidSignature, //< valid key provided, but signature failed
+            InvalidKey,       //< invalid key provided
+            NoKey             //< identity unknown
         };
 
-        qint64 sigTimestamp = 0;
-        int identityResult = -1;
+        qint64  sigTimestamp   = 0;
+        int     identityResult = -1;
         QString sigCreationDate;
         QString publicKeyId;
         QString userName;
@@ -74,4 +74,3 @@ protected:
 private:
     static PGPUtil *m_instance;
 };
-

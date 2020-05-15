@@ -36,10 +36,7 @@
 
 PGPUtil *PGPUtil::m_instance = nullptr;
 
-PGPUtil::PGPUtil()
-{
-    connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(deleteLater()));
-}
+PGPUtil::PGPUtil() { connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(deleteLater())); }
 
 PGPUtil &PGPUtil::instance()
 {
@@ -51,7 +48,7 @@ PGPUtil &PGPUtil::instance()
 
 bool PGPUtil::pgpAvailable()
 {
-    QString message;
+    QString    message;
     GpgProcess gpg;
     return gpg.info(message);
 }
@@ -142,7 +139,7 @@ QString PGPUtil::getKeyOwnerName(const QString &key)
     if (rawData.isEmpty())
         return QString();
 
-    QString name;
+    QString             name;
     const QStringList &&stringsList = rawData.split("\n");
     for (const QString &line : stringsList) {
         const QString &&type = line.section(':', 0, 0);
@@ -170,7 +167,7 @@ QString PGPUtil::getPublicKeyData(const QString &key)
 
 #ifdef Q_OS_WIN
     QString keyData = QString::fromUtf8(gpg.readAllStandardOutput());
-    keyData.replace("\r","");
+    keyData.replace("\r", "");
 #else
     const QString &&keyData = QString::fromUtf8(gpg.readAllStandardOutput());
 #endif
@@ -220,12 +217,12 @@ QString PGPUtil::chooseKey(PGPKeyDlg::Type type, const QString &key, const QStri
 PGPUtil::SecureMessageSignature PGPUtil::parseSecureMessageSignature(const QString &stdOutString)
 {
     SecureMessageSignature out;
-    const QStringList &&strings = stdOutString.split("\n");
+    const QStringList &&   strings = stdOutString.split("\n");
     for (const QString &line : strings) {
         const QString &&type = line.section(' ', 1, 1);
         if (type == QStringLiteral("GOODSIG")) {
             out.identityResult = SecureMessageSignature::Valid;
-            out.publicKeyId = line.section(' ', 2, 2);
+            out.publicKeyId    = line.section(' ', 2, 2);
             if (out.publicKeyId.size() > 16) {
                 out.publicKeyId = out.publicKeyId.right(16);
             }
@@ -235,14 +232,16 @@ PGPUtil::SecureMessageSignature PGPUtil::parseSecureMessageSignature(const QStri
             if (!out.userName.isEmpty()) {
                 break;
             }
-        } if (type == QStringLiteral("BADSIG")) {
+        }
+        if (type == QStringLiteral("BADSIG")) {
             out.identityResult = SecureMessageSignature::InvalidSignature;
-            out.publicKeyId = line.section(' ', 2, 2);
+            out.publicKeyId    = line.section(' ', 2, 2);
             if (out.publicKeyId.size() > 16) {
                 out.publicKeyId = out.publicKeyId.right(16);
             }
             out.userName = line.section(' ', 3);
-        } if (type == QStringLiteral("ERRSIG")) {
+        }
+        if (type == QStringLiteral("ERRSIG")) {
             out.identityResult = SecureMessageSignature::NoKey;
         }
     }

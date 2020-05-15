@@ -337,7 +337,7 @@ void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *ac
     if (!action->toolTip().isEmpty() && action->toolTip() != n) {
         n += " - " + action->toolTip();
     }
-    n.replace(" Plugin","");
+    n.replace(" Plugin", "");
     item->setText(n);
     item->setData(Qt::UserRole, name);
     item->setIcon(action->icon());
@@ -423,7 +423,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
                 if (!action->toolTip().isEmpty() && action->toolTip() != n) {
                     n += " - " + action->toolTip();
                 }
-                n.replace(" Plugin","");
+                n.replace(" Plugin", "");
                 item->setText(0, n);
                 item->setIcon(0, action->icon());
                 item->setData(0, Qt::UserRole, action->objectName());

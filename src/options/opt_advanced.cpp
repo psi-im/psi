@@ -149,4 +149,3 @@ void OptionsTabAdvanced::restoreOptions()
 }
 
 bool OptionsTabAdvanced::stretchable() const { return true; }
-

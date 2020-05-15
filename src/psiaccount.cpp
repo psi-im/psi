@@ -5912,8 +5912,9 @@ void PsiAccount::pgp_signFinished()
         s.setXSigned(PGPUtil::instance().stripHeaderFooter(transaction->stdOutString()));
         setStatusActual(s);
     } else {
-        PGPUtil::showDiagnosticText(tr("There was an error trying to sign your status.\nReason: %1.")
-                                    .arg(transaction->stdErrString()), transaction->errorString());
+        PGPUtil::showDiagnosticText(
+            tr("There was an error trying to sign your status.\nReason: %1.").arg(transaction->stdErrString()),
+            transaction->errorString());
 
         logout(false, loggedOutStatus());
         return;
@@ -5955,7 +5956,11 @@ void PsiAccount::pgp_verifyFinished()
 
             ur.setPublicKeyID(signature.publicKeyId);
             ur.setPgpVerifyStatus(signature.identityResult);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
             ur.setSigTimestamp(QDateTime::fromSecsSinceEpoch(signature.sigTimestamp));
+#else
+            ur.setSigTimestamp(QDateTime::fromMSecsSinceEpoch(signature.sigTimestamp * 1000));
+#endif
 
             if (u->publicKeyID().isEmpty() && PsiOptions::instance()->getOption("options.pgp.auto-assign").toBool()) {
                 if (!signature.publicKeyId.isEmpty()) {
@@ -6026,7 +6031,7 @@ int PsiAccount::sendPgpEncryptedMessage(const Message &m)
 void PsiAccount::pgp_encryptFinished()
 {
 #ifdef HAVE_PGPUTIL
-    GpgTransaction *transaction = dynamic_cast<GpgTransaction*>(sender());
+    GpgTransaction *transaction = dynamic_cast<GpgTransaction *>(sender());
     if (!transaction)
         return;
 
@@ -6066,8 +6071,8 @@ void PsiAccount::pgp_encryptFinished()
         dj_sendMessage(mwrap);
     }
 
-    emit encryptedMessageSent(transaction->id(), transaction->success(),
-                              transaction->exitCode(), transaction->errorString());
+    emit encryptedMessageSent(transaction->id(), transaction->success(), transaction->exitCode(),
+                              transaction->errorString());
     transaction->deleteLater();
 #endif
 }
