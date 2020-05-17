@@ -1,6 +1,7 @@
 #ifndef ACCOUNTINFOACCESSINGHOST_H
 #define ACCOUNTINFOACCESSINGHOST_H
 
+#include <QMap>
 #include <QtPlugin>
 
 class QString;
@@ -23,6 +24,7 @@ public:
     virtual int         findOnlineAccountForContact(const QString &jid)
         const = 0; // gets all accounts and searches for specified contact in them. return -1 if account is not found
     virtual QString     getPgpKey(int account)        = 0;
+    virtual QMap<QString, QString> getKnownPgpKeys(int account) = 0;
 };
 
 Q_DECLARE_INTERFACE(AccountInfoAccessingHost, "org.psi-im.AccountInfoAccessingHost/0.1");

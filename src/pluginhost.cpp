@@ -1087,6 +1087,8 @@ int PluginHost::findOnlineAccountForContact(const QString &jid) const
 
 QString PluginHost::getPgpKey(int account) { return manager_->getPgpKey(account); }
 
+QMap<QString, QString> PluginHost::getKnownPgpKeys(int account) { return manager_->getKnownPgpKeys(account); }
+
 void PluginHost::subscribeLogout(QObject *context, std::function<void(int account)> callback)
 {
     connect(manager_, &PluginManager::accountLoggedOut, context, callback);
@@ -1095,6 +1097,11 @@ void PluginHost::subscribeLogout(QObject *context, std::function<void(int accoun
 void PluginHost::setPgpKey(int account, const QString &keyId)
 {
     manager_->setPgpKey(account, keyId);
+}
+
+void PluginHost::removeKnownPgpKey(int account, const QString &jid)
+{
+    manager_->removeKnownPgpKey(account, jid);
 }
 
 bool PluginHost::setActivity(int account, const QString &Jid, QDomElement xml)

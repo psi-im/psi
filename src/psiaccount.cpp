@@ -1187,14 +1187,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
         client_rosterItemUpdated(*it);
 
     // restore pgp key bindings
-    for (VarList::ConstIterator kit = acc.keybind.begin(); kit != acc.keybind.end(); ++kit) {
-        const VarListItem &i = *kit;
-        UserListItem *     u = find(Jid(i.key()));
-        if (u) {
-            u->setPublicKeyID(i.data());
-            cpUpdate(*u);
-        }
-    }
+    setKnownPgpKeys(acc.pgpKnownKeys);
 
     setUserAccount(acc);
     connect(ProxyManager::instance(), SIGNAL(proxyRemoved(QString)), d, SLOT(pm_proxyRemoved(QString)));
@@ -1372,13 +1365,13 @@ const UserAccount &PsiAccount::userAccount() const
 {
     // save the roster and pgp key bindings
     d->acc.roster.clear();
-    d->acc.keybind.clear();
+    d->acc.pgpKnownKeys.clear();
     for (UserListItem *u : d->userList) {
         if (u->inList())
             d->acc.roster += *u;
 
         if (!u->publicKeyID().isEmpty())
-            d->acc.keybind.set(u->jid().full(), u->publicKeyID());
+            d->acc.pgpKnownKeys.set(u->jid().full(), u->publicKeyID());
     }
 
     return d->acc;
@@ -1414,6 +1407,27 @@ QHostAddress *PsiAccount::localAddress() const
     if (s.isEmpty() || s == "0.0.0.0")
         return nullptr;
     return &d->localAddress;
+}
+
+void PsiAccount::setKnownPgpKeys(const VarList &list)
+{
+    for (VarList::ConstIterator kit = list.begin(); kit != list.end(); ++kit) {
+        const VarListItem &i = *kit;
+        UserListItem      *u = find(Jid(i.key()));
+        if (u) {
+            u->setPublicKeyID(i.data());
+            cpUpdate(*u);
+        }
+    }
+}
+
+void PsiAccount::removeKnownPgpKey(const QString &jid)
+{
+    UserListItem *u = find(Jid(jid));
+    if (u) {
+        u->setPublicKeyID(QString());
+        cpUpdate(*u);
+    }
 }
 
 void PsiAccount::setUserAccount(const UserAccount &_acc)

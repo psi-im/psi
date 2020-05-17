@@ -12,6 +12,7 @@ public:
 
     virtual void setStatus(int account, const QString &status, const QString &statusMessage) = 0;
     virtual void setPgpKey(int account, const QString &keyId) = 0;
+    virtual void removeKnownPgpKey(int account, const QString &jid) = 0;
 
     virtual bool appendSysMsg(int account, const QString &jid, const QString &message)     = 0;
     virtual bool appendSysHtmlMsg(int account, const QString &jid, const QString &message) = 0;

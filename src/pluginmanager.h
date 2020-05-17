@@ -168,6 +168,8 @@ private:
     QString     getName(int account) const;
     int         findOnlineAccountForContact(const QString &jid) const;
     QString     getPgpKey(int account) const;
+    QMap<QString, QString> getKnownPgpKeys(int account) const;
+
 
     bool        isSelf(int account, const QString &jid) const;
     bool        isAgent(int account, const QString &jid) const;
@@ -196,6 +198,7 @@ private:
 
     void setStatus(int account, const QString &status, const QString &statusMessage);
     void setPgpKey(int account, const QString &keyId);
+    void removeKnownPgpKey(int account, const QString &jid);
 
     bool appendSysMsg(int account, const QString &jid, const QString &message);
     bool appendSysHtmlMsg(int account, const QString &jid, const QString &message);

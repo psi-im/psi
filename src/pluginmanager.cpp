@@ -660,6 +660,19 @@ QString PluginManager::getPgpKey(int account) const
     return keyId;
 }
 
+QMap<QString, QString> PluginManager::getKnownPgpKeys(int account) const
+{
+    QMap<QString, QString> out;
+    PsiAccount *pa = accountIds_.account(account);
+    if (pa) {
+        UserAccount acc = pa->userAccount();
+        for (const auto &item: acc.pgpKnownKeys) {
+            out[item.key()] = item.data();
+        }
+    }
+    return out;
+}
+
 int PluginManager::findOnlineAccountForContact(const QString &jid) const
 {
     Jid j(jid);
@@ -918,6 +931,14 @@ void PluginManager::setPgpKey(int account, const QString &keyId)
         UserAccount acc = pa->userAccount();
         acc.pgpSecretKey = keyId;
         pa->setUserAccount(acc);
+    }
+}
+
+void PluginManager::removeKnownPgpKey(int account, const QString &jid)
+{
+    PsiAccount *pa = accountIds_.account(account);
+    if (pa) {
+        pa->removeKnownPgpKey(jid);
     }
 }
 

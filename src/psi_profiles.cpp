@@ -129,7 +129,7 @@ void UserAccount::reset()
 
     stunHost = stunHosts[0];
 
-    keybind.clear();
+    pgpKnownKeys.clear();
     pgpEnabledChats.clear();
     pgpDisabledChats.clear();
 
@@ -267,7 +267,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
     proxyID = o->getOption(base + ".proxy-id").toString();
 
-    keybind.fromOptions(o, base + ".pgp-key-bindings");
+    pgpKnownKeys.fromOptions(o, base + ".pgp-key-bindings");
     pgpEnabledChats  = o->getOption(base + ".pgp-enabled-chats").toStringList();
     pgpDisabledChats = o->getOption(base + ".pgp-disabled-chats").toStringList();
 
@@ -432,7 +432,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
     o->setOption(base + ".proxy-id", proxyID);
 
-    keybind.toOptions(o, base + ".pgp-key-bindings");
+    pgpKnownKeys.toOptions(o, base + ".pgp-key-bindings");
     o->setOption(base + ".pgp-enabled-chats", pgpEnabledChats);
     o->setOption(base + ".pgp-disabled-chats", pgpDisabledChats);
 

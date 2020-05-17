@@ -75,6 +75,7 @@ class UserAccount;
 class UserList;
 class UserListItem;
 class UserResource;
+class VarList;
 class VoiceCaller;
 #ifdef WHITEBOARDING
 class WbManager;
@@ -162,6 +163,8 @@ public:
     bool               hasPgp() const;
     QString            pgpKeyId() const;
     QHostAddress *     localAddress() const;
+    void               setKnownPgpKeys(const VarList &list);
+    void               removeKnownPgpKey(const QString &jid);
 
     ChatDlg *        findChatDialog(const Jid &jid, bool compareResource = true) const;
     ChatDlg *        findChatDialogEx(const Jid &jid, bool ignoreResource = false) const;
@@ -306,6 +309,7 @@ public:
 
     FileSharingDeviceOpener *fileSharingDeviceOpener() const;
     void                     resolveContactName(const Jid &j);
+
 signals:
     void accountDestroyed();
     void connectionError(const QString &errorInfo);

@@ -79,7 +79,7 @@ public:
 
     QString pgpSecretKey;
 
-    VarList     keybind;
+    VarList     pgpKnownKeys;
     QStringList pgpEnabledChats;
     QStringList pgpDisabledChats;
 
