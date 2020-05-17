@@ -25,9 +25,6 @@
 #include "iconaction.h"
 #include "iconset.h"
 #include "invitetogroupchatmenu.h"
-#ifdef HAVE_PGPUTIL
-#include "pgputil.h"
-#endif
 #include "pluginmanager.h"
 #include "psicon.h"
 #include "psicontact.h"

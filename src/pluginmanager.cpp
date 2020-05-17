@@ -651,6 +651,15 @@ QString PluginManager::getName(int account) const
     return nm;
 }
 
+QString PluginManager::getPgpKey(int account) const
+{
+    QString     keyId;
+    PsiAccount *pa = accountIds_.account(account);
+    if (pa)
+        keyId = pa->pgpKeyId();
+    return keyId;
+}
+
 int PluginManager::findOnlineAccountForContact(const QString &jid) const
 {
     Jid j(jid);
@@ -899,6 +908,16 @@ void PluginManager::setStatus(int account, const QString &status, const QString 
     if (acc) {
         XMPP::Status s(status, statusMessage);
         acc->setStatus(s, false, true);
+    }
+}
+
+void PluginManager::setPgpKey(int account, const QString &keyId)
+{
+    PsiAccount *pa = accountIds_.account(account);
+    if (pa) {
+        UserAccount acc = pa->userAccount();
+        acc.pgpSecretKey = keyId;
+        pa->setUserAccount(acc);
     }
 }
 

@@ -58,10 +58,6 @@ class TuneController;
 class UserListItem;
 class WebServer;
 
-namespace OpenPGP {
-class Engine;
-}
-
 namespace XMPP {
 class Jid;
 }

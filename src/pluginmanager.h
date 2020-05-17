@@ -167,6 +167,7 @@ private:
     QString     getId(int account) const;
     QString     getName(int account) const;
     int         findOnlineAccountForContact(const QString &jid) const;
+    QString     getPgpKey(int account) const;
 
     bool        isSelf(int account, const QString &jid) const;
     bool        isAgent(int account, const QString &jid) const;
@@ -194,6 +195,7 @@ private:
     void setPopupDuration(const QString &name, int value);
 
     void setStatus(int account, const QString &status, const QString &statusMessage);
+    void setPgpKey(int account, const QString &keyId);
 
     bool appendSysMsg(int account, const QString &jid, const QString &message);
     bool appendSysHtmlMsg(int account, const QString &jid, const QString &message);

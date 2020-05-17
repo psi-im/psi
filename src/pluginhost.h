@@ -174,6 +174,7 @@ public:
     QString     getName(int account) override;
     QStringList getRoster(int account) override;
     int         findOnlineAccountForContact(const QString &jid) const override;
+    QString     getPgpKey(int account) override;
 
     // ContactInfoAccessingHost
     bool        isSelf(int account, const QString &jid) override;
@@ -233,6 +234,7 @@ public:
     bool appendMsg(int account, const QString &jid, const QString &message, const QString &id,
                    bool wasEncrypted) override;
     void subscribeLogout(QObject *context, std::function<void(int account)> callback) override;
+    void setPgpKey(int account, const QString &keyId) override;
 
     void createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
                         const char *slot) override;
