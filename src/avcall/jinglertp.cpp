@@ -247,7 +247,7 @@ public:
 
     IceStopper(QObject *parent = nullptr) : QObject(parent), t(this), portReserver(nullptr)
     {
-        connect(&t, SIGNAL(timeout()), SLOT(t_timeout()));
+        connect(&t, &QTimer::timeout, this, &IceStopper::deleteLater);
         t.setSingleShot(true);
     }
 
@@ -268,20 +268,23 @@ public:
 
         for (XMPP::Ice176 *ice : left) {
             ice->setParent(this);
+            if (ice->isStopped()) {
+                ice_stopped(ice);
+                continue;
+            }
 
             // TODO: error() also?
-            connect(ice, SIGNAL(stopped()), SLOT(ice_stopped()));
-            connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
+            connect(ice, &XMPP::Ice176::stopped, this, [this, ice]() { ice_stopped(ice); });
+            connect(ice, &XMPP::Ice176::error, this, [this, ice](XMPP::Ice176::Error) { ice_stopped(ice); });
             ice->stop();
         }
 
         t.start(3000);
     }
 
-private slots:
-    void ice_stopped()
+private:
+    void ice_stopped(XMPP::Ice176 *ice)
     {
-        XMPP::Ice176 *ice = static_cast<XMPP::Ice176 *>(sender());
         ice->disconnect(this);
         ice->setParent(nullptr);
         ice->deleteLater();
@@ -289,15 +292,6 @@ private slots:
         if (left.isEmpty())
             deleteLater();
     }
-
-    void ice_error(XMPP::Ice176::Error e)
-    {
-        Q_UNUSED(e);
-
-        ice_stopped();
-    }
-
-    void t_timeout() { deleteLater(); }
 };
 
 //----------------------------------------------------------------------------
@@ -619,6 +613,7 @@ public:
                 iceA_status.notifyRemoteGatheringComplete = audioContent->trans.gatheringComplete;
                 iceA_status.ice2                          = audioContent->trans.ice2;
                 iceA->setRemoteFeatures(evalIceFeatures(iceA_status));
+                iceA->startChecks();
             } else if (iceA) {
                 qDebug("Audio was requested but not accepted! Cleaning up..");
                 auto is = new IceStopper();
@@ -635,6 +630,7 @@ public:
                 iceV_status.notifyRemoteGatheringComplete = videoContent->trans.gatheringComplete;
                 iceV_status.ice2                          = videoContent->trans.ice2;
                 iceV->setRemoteFeatures(evalIceFeatures(iceV_status));
+                iceV->startChecks();
             } else if (iceV) {
                 qDebug("Video was requested but not accepted! Cleaning up..");
                 auto is = new IceStopper();
@@ -949,7 +945,7 @@ private:
             content.trans.user              = iceA->localUfrag();
             content.trans.pass              = iceA->localPassword();
             content.trans.candidates        = iceA_status.localCandidates;
-            content.trans.gatheringComplete = true;
+            content.trans.gatheringComplete = iceA_status.notifyLocalGatheringComplete;
 
             iceA_status.localCandidates.clear();
             iceA_status.notifyLocalGatheringComplete = false;
@@ -970,7 +966,7 @@ private:
             content.trans.user              = iceV->localUfrag();
             content.trans.pass              = iceV->localPassword();
             content.trans.candidates        = iceV_status.localCandidates;
-            content.trans.gatheringComplete = true;
+            content.trans.gatheringComplete = iceV_status.notifyLocalGatheringComplete;
 
             iceV_status.localCandidates.clear();
             iceV_status.notifyLocalGatheringComplete = false;
@@ -1136,9 +1132,13 @@ private:
         JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
         task->request(peer, envelope);
         connect(task, &JT_JingleRtp::finished, this, [this, task]() {
-            if (task->success())
+            if (task->success()) {
+                if (iceA)
+                    iceA->startChecks();
+                if (iceV)
+                    iceV->startChecks();
                 flushRemoteCandidates();
-            else {
+            } else {
                 reject();
                 errorCode = JingleRtp::ErrorTimeout;
                 emit q->error();
