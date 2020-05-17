@@ -23,6 +23,6 @@ public:
     virtual void subscribeLogout(QObject *context, std::function<void(int account)> callback) = 0;
 };
 
-Q_DECLARE_INTERFACE(PsiAccountControllingHost, "org.psi-im.PsiAccountControllingHost/0.3")
+Q_DECLARE_INTERFACE(PsiAccountControllingHost, "org.psi-im.PsiAccountControllingHost/0.4")
 
 #endif // PSIACCOUNTCONTROLLINGHOST_H

@@ -27,6 +27,6 @@ public:
     virtual QMap<QString, QString> getKnownPgpKeys(int account) = 0;
 };
 
-Q_DECLARE_INTERFACE(AccountInfoAccessingHost, "org.psi-im.AccountInfoAccessingHost/0.1");
+Q_DECLARE_INTERFACE(AccountInfoAccessingHost, "org.psi-im.AccountInfoAccessingHost/0.2");
 
 #endif // ACCOUNTINFOACCESSINGHOST_H
