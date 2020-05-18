@@ -47,6 +47,8 @@ Dependency options:
   --with-http-parser-inc=[path]    Path to HTTP Parser include files
   --with-http-parser-lib=[path]    Path to HTTP Parser library files
   --bundled-http-parser            Build with bundled HTTP Parser
+  --with-b2-inc=[path]             Path to libb2 include files
+  --with-b2-lib=[path]             Path to libb2 library or framework files
   --disable-growl                  Disable use of Growl
   --with-growl=[path]              Path to the Growl framework
   --enable-whiteboarding           Enable use of White Board support
@@ -65,359 +67,369 @@ EOT
 
 # which/make detection adapted from Qt
 which_command() {
-	ALL_MATCHES=
-	if [ "$1" = "-a" ]; then
-		ALL_MATCHES="-a"
-		shift
-	fi
+    ALL_MATCHES=
+    if [ "$1" = "-a" ]; then
+        ALL_MATCHES="-a"
+        shift
+    fi
 
-	OLD_HOME=$HOME
-	HOME=/dev/null
-	export HOME
+    OLD_HOME=$HOME
+    HOME=/dev/null
+    export HOME
 
-	WHICH=`which which 2>/dev/null`
-	if echo $WHICH | grep 'shell built-in command' >/dev/null 2>&1; then
-		WHICH=which
-	elif [ -z "$WHICH" ]; then
-		if which which >/dev/null 2>&1; then
-			WHICH=which
-		else
-			for a in /usr/ucb /usr/bin /bin /usr/local/bin; do
-				if [ -x $a/which ]; then
-					WHICH=$a/which
-					break
-				fi
-			done
-		fi
-	fi
+    WHICH=`which which 2>/dev/null`
+    if echo $WHICH | grep 'shell built-in command' >/dev/null 2>&1; then
+        WHICH=which
+    elif [ -z "$WHICH" ]; then
+        if which which >/dev/null 2>&1; then
+            WHICH=which
+        else
+            for a in /usr/ucb /usr/bin /bin /usr/local/bin; do
+                if [ -x $a/which ]; then
+                    WHICH=$a/which
+                    break
+                fi
+            done
+        fi
+    fi
 
-	RET_CODE=1
-	if [ -z "$WHICH" ]; then
-		OLD_IFS=$IFS
-		IFS=:
-		for a in $PATH; do
-			if [ -x $a/$1 ]; then
-				echo "$a/$1"
-				RET_CODE=0
-				[ -z "$ALL_MATCHES" ] && break
-			fi
-		done
-		IFS=$OLD_IFS
-		export IFS
-	else
-		a=`"$WHICH" "$ALL_MATCHES" "$1" 2>/dev/null`
-		if [ ! -z "$a" -a -x "$a" ]; then
-			echo "$a"
-			RET_CODE=0
-		fi
-	fi
-	HOME=$OLD_HOME
-	export HOME
-	return $RET_CODE
+    RET_CODE=1
+    if [ -z "$WHICH" ]; then
+        OLD_IFS=$IFS
+        IFS=:
+        for a in $PATH; do
+            if [ -x $a/$1 ]; then
+                echo "$a/$1"
+                RET_CODE=0
+                [ -z "$ALL_MATCHES" ] && break
+            fi
+        done
+        IFS=$OLD_IFS
+        export IFS
+    else
+        a=`"$WHICH" "$ALL_MATCHES" "$1" 2>/dev/null`
+        if [ ! -z "$a" -a -x "$a" ]; then
+            echo "$a"
+            RET_CODE=0
+        fi
+    fi
+    HOME=$OLD_HOME
+    export HOME
+    return $RET_CODE
 }
 WHICH=which_command
 
 # find a make command
 if [ -z "$MAKE" ]; then
-	MAKE=
-	for mk in gmake make; do
-		if $WHICH $mk >/dev/null 2>&1; then
-			MAKE=`$WHICH $mk`
-			break
-		fi
-	done
-	if [ -z "$MAKE" ]; then
-		echo "You don't seem to have 'make' or 'gmake' in your PATH."
-		echo "Cannot proceed."
-		exit 1
-	fi
+    MAKE=
+    for mk in gmake make; do
+        if $WHICH $mk >/dev/null 2>&1; then
+            MAKE=`$WHICH $mk`
+            break
+        fi
+    done
+    if [ -z "$MAKE" ]; then
+        echo "You don't seem to have 'make' or 'gmake' in your PATH."
+        echo "Cannot proceed."
+        exit 1
+    fi
 fi
 
 show_qt_info() {
-	printf "Be sure you have a proper Qt 4.0+ build environment set up.  This means not\n"
-	printf "just Qt, but also a C++ compiler, a make tool, and any other packages\n"
-	printf "necessary for compiling C++ programs.\n"
-	printf "\n"
-	printf "If you are certain everything is installed, then it could be that Qt is not\n"
-	printf "being recognized or that a different version of Qt is being detected by\n"
-	printf "mistake (for example, this could happen if \$QTDIR is pointing to a Qt 3\n"
-	printf "installation).  At least one of the following conditions must be satisfied:\n"
-	printf "\n"
-	printf " 1) --qtdir is set to the location of Qt\n"
-	printf " 2) \$QTDIR is set to the location of Qt\n"
-	printf " 3) QtCore is in the pkg-config database\n"
-	printf " 4) qmake is in the \$PATH\n"
-	printf "\n"
-	printf "This script will use the first one it finds to be true, checked in the above\n"
-	printf "order.  #3 and #4 are the recommended options.  #1 and #2 are mainly for\n"
-	printf "overriding the system configuration.\n"
-	printf "\n"
+    printf "Be sure you have a proper Qt 4.0+ build environment set up.  This means not\n"
+    printf "just Qt, but also a C++ compiler, a make tool, and any other packages\n"
+    printf "necessary for compiling C++ programs.\n"
+    printf "\n"
+    printf "If you are certain everything is installed, then it could be that Qt is not\n"
+    printf "being recognized or that a different version of Qt is being detected by\n"
+    printf "mistake (for example, this could happen if \$QTDIR is pointing to a Qt 3\n"
+    printf "installation).  At least one of the following conditions must be satisfied:\n"
+    printf "\n"
+    printf " 1) --qtdir is set to the location of Qt\n"
+    printf " 2) \$QTDIR is set to the location of Qt\n"
+    printf " 3) QtCore is in the pkg-config database\n"
+    printf " 4) qmake is in the \$PATH\n"
+    printf "\n"
+    printf "This script will use the first one it finds to be true, checked in the above\n"
+    printf "order.  #3 and #4 are the recommended options.  #1 and #2 are mainly for\n"
+    printf "overriding the system configuration.\n"
+    printf "\n"
 }
 
 while [ $# -gt 0 ]; do
-	optarg=`expr "x$1" : 'x[^=]*=\(.*\)'`
-	case "$1" in
-		--prefix=*)
-			PREFIX=$optarg
-			shift
-			;;
+    optarg=`expr "x$1" : 'x[^=]*=\(.*\)'`
+    case "$1" in
+        --prefix=*)
+            PREFIX=$optarg
+            shift
+            ;;
 
-		--bindir=*)
-			BINDIR=$optarg
-			shift
-			;;
+        --bindir=*)
+            BINDIR=$optarg
+            shift
+            ;;
 
-		--libdir=*)
-			LIBDIR=$optarg
-			shift
-			;;
+        --libdir=*)
+            LIBDIR=$optarg
+            shift
+            ;;
 
-		--datadir=*)
-			DATADIR=$optarg
-			shift
-			;;
+        --datadir=*)
+            DATADIR=$optarg
+            shift
+            ;;
 
-		--qtdir=*)
-			EX_QTDIR=$optarg
-			shift
-			;;
+        --qtdir=*)
+            EX_QTDIR=$optarg
+            shift
+            ;;
 
-		--extraconf=*)
-			QC_EXTRACONF=$optarg
-			shift
-			;;
+        --extraconf=*)
+            QC_EXTRACONF=$optarg
+            shift
+            ;;
 
-		--release)
-			QC_RELEASE="Y"
-			shift
-			;;
+        --release)
+            QC_RELEASE="Y"
+            shift
+            ;;
 
-		--debug)
-			QC_DEBUG="Y"
-			shift
-			;;
+        --debug)
+            QC_DEBUG="Y"
+            shift
+            ;;
 
-		--no-separate-debug-info)
-			QC_NO_SEPARATE_DEBUG_INFO="Y"
-			shift
-			;;
+        --no-separate-debug-info)
+            QC_NO_SEPARATE_DEBUG_INFO="Y"
+            shift
+            ;;
 
-		--separate-debug-info)
-			QC_SEPARATE_DEBUG_INFO="Y"
-			shift
-			;;
+        --separate-debug-info)
+            QC_SEPARATE_DEBUG_INFO="Y"
+            shift
+            ;;
 
-		--psiplus)
-			QC_PSIPLUS="Y"
-			shift
-			;;
+        --psiplus)
+            QC_PSIPLUS="Y"
+            shift
+            ;;
 
-		--with-idn-inc=*)
-			QC_WITH_IDN_INC=$optarg
-			shift
-			;;
+        --with-idn-inc=*)
+            QC_WITH_IDN_INC=$optarg
+            shift
+            ;;
 
-		--with-idn-lib=*)
-			QC_WITH_IDN_LIB=$optarg
-			shift
-			;;
+        --with-idn-lib=*)
+            QC_WITH_IDN_LIB=$optarg
+            shift
+            ;;
 
-		--with-qca-inc=*)
-			QC_WITH_QCA_INC=$optarg
-			shift
-			;;
+        --with-qca-inc=*)
+            QC_WITH_QCA_INC=$optarg
+            shift
+            ;;
 
-		--with-qca-lib=*)
-			QC_WITH_QCA_LIB=$optarg
-			shift
-			;;
+        --with-qca-lib=*)
+            QC_WITH_QCA_LIB=$optarg
+            shift
+            ;;
 
-		--with-zlib-inc=*)
-			QC_WITH_ZLIB_INC=$optarg
-			shift
-			;;
+        --with-zlib-inc=*)
+            QC_WITH_ZLIB_INC=$optarg
+            shift
+            ;;
 
-		--with-zlib-lib=*)
-			QC_WITH_ZLIB_LIB=$optarg
-			shift
-			;;
+        --with-zlib-lib=*)
+            QC_WITH_ZLIB_LIB=$optarg
+            shift
+            ;;
 
-		--with-qjdns-inc=*)
-			QC_WITH_QJDNS_INC=$optarg
-			shift
-			;;
+        --with-qjdns-inc=*)
+            QC_WITH_QJDNS_INC=$optarg
+            shift
+            ;;
 
-		--with-qjdns-lib=*)
-			QC_WITH_QJDNS_LIB=$optarg
-			shift
-			;;
+        --with-qjdns-lib=*)
+            QC_WITH_QJDNS_LIB=$optarg
+            shift
+            ;;
 
-		--enable-universal)
-			QC_ENABLE_universal="Y"
-			shift
-			;;
+        --enable-universal)
+            QC_ENABLE_universal="Y"
+            shift
+            ;;
 
-		--disable-universal)
-			QC_DEFAULT_DISABLE_universal="Y"
-			shift
-			;;
+        --disable-universal)
+            QC_DEFAULT_DISABLE_universal="Y"
+            shift
+            ;;
 
-		--disable-qdbus)
-			QC_DISABLE_qdbus="Y"
-			shift
-			;;
+        --disable-qdbus)
+            QC_DISABLE_qdbus="Y"
+            shift
+            ;;
 
-		--enable-qdbus)
-			QC_DEFAULT_ENABLE_qdbus="Y"
-			shift
-			;;
+        --enable-qdbus)
+            QC_DEFAULT_ENABLE_qdbus="Y"
+            shift
+            ;;
 
-		--disable-keychain)
-			QC_DISABLE_keychain="Y"
-			shift
-			;;
+        --disable-keychain)
+            QC_DISABLE_keychain="Y"
+            shift
+            ;;
 
-		--enable-keychain)
-			QC_DEFAULT_ENABLE_keychain="Y"
-			shift
-			;;
+        --enable-keychain)
+            QC_DEFAULT_ENABLE_keychain="Y"
+            shift
+            ;;
 
-		--enable-webkit)
-			QC_ENABLE_webkit="Y"
-			shift
-			;;
+        --enable-webkit)
+            QC_ENABLE_webkit="Y"
+            shift
+            ;;
 
-		--disable-webkit)
-			QC_DEFAULT_DISABLE_webkit="Y"
-			shift
-			;;
+        --disable-webkit)
+            QC_DEFAULT_DISABLE_webkit="Y"
+            shift
+            ;;
 
-		--with-webkit=*)
-			QC_WITH_WEBKIT=$optarg
-			shift
-			;;
+        --with-webkit=*)
+            QC_WITH_WEBKIT=$optarg
+            shift
+            ;;
 
-		--with-http-parser-inc=*)
-			QC_WITH_HTTP_PARSER_INC=$optarg
-			shift
-			;;
+        --with-http-parser-inc=*)
+            QC_WITH_HTTP_PARSER_INC=$optarg
+            shift
+            ;;
 
-		--with-http-parser-lib=*)
-			QC_WITH_HTTP_PARSER_LIB=$optarg
-			shift
-			;;
+        --with-http-parser-lib=*)
+            QC_WITH_HTTP_PARSER_LIB=$optarg
+            shift
+            ;;
 
-		--bundled-http-parser)
-			QC_BUNDLED_HTTP_PARSER="Y"
-			shift
-			;;
+        --bundled-http-parser)
+            QC_BUNDLED_HTTP_PARSER="Y"
+            shift
+            ;;
 
-		--disable-growl)
-			QC_DISABLE_growl="Y"
-			shift
-			;;
+        --with-b2-inc=*)
+            QC_WITH_B2_INC=$optarg
+            shift
+            ;;
 
-		--enable-growl)
-			QC_DEFAULT_ENABLE_growl="Y"
-			shift
-			;;
+        --with-b2-lib=*)
+            QC_WITH_B2_LIB=$optarg
+            shift
+            ;;
 
-		--with-growl=*)
-			QC_WITH_GROWL=$optarg
-			shift
-			;;
+        --disable-growl)
+            QC_DISABLE_growl="Y"
+            shift
+            ;;
 
-		--enable-whiteboarding)
-			QC_ENABLE_whiteboarding="Y"
-			shift
-			;;
+        --enable-growl)
+            QC_DEFAULT_ENABLE_growl="Y"
+            shift
+            ;;
 
-		--disable-whiteboarding)
-			QC_DEFAULT_DISABLE_whiteboarding="Y"
-			shift
-			;;
+        --with-growl=*)
+            QC_WITH_GROWL=$optarg
+            shift
+            ;;
 
-		--disable-xss)
-			QC_DISABLE_xss="Y"
-			shift
-			;;
+        --enable-whiteboarding)
+            QC_ENABLE_whiteboarding="Y"
+            shift
+            ;;
 
-		--enable-xss)
-			QC_DEFAULT_ENABLE_xss="Y"
-			shift
-			;;
+        --disable-whiteboarding)
+            QC_DEFAULT_DISABLE_whiteboarding="Y"
+            shift
+            ;;
 
-		--disable-aspell)
-			QC_DISABLE_aspell="Y"
-			shift
-			;;
+        --disable-xss)
+            QC_DISABLE_xss="Y"
+            shift
+            ;;
 
-		--enable-aspell)
-			QC_DEFAULT_ENABLE_aspell="Y"
-			shift
-			;;
+        --enable-xss)
+            QC_DEFAULT_ENABLE_xss="Y"
+            shift
+            ;;
 
-		--with-aspell-inc=*)
-			QC_WITH_ASPELL_INC=$optarg
-			shift
-			;;
+        --disable-aspell)
+            QC_DISABLE_aspell="Y"
+            shift
+            ;;
 
-		--with-aspell-lib=*)
-			QC_WITH_ASPELL_LIB=$optarg
-			shift
-			;;
+        --enable-aspell)
+            QC_DEFAULT_ENABLE_aspell="Y"
+            shift
+            ;;
 
-		--disable-enchant)
-			QC_DISABLE_enchant="Y"
-			shift
-			;;
+        --with-aspell-inc=*)
+            QC_WITH_ASPELL_INC=$optarg
+            shift
+            ;;
 
-		--enable-enchant)
-			QC_DEFAULT_ENABLE_enchant="Y"
-			shift
-			;;
+        --with-aspell-lib=*)
+            QC_WITH_ASPELL_LIB=$optarg
+            shift
+            ;;
 
-		--disable-hunspell)
-			QC_DISABLE_hunspell="Y"
-			shift
-			;;
+        --disable-enchant)
+            QC_DISABLE_enchant="Y"
+            shift
+            ;;
 
-		--enable-hunspell)
-			QC_DEFAULT_ENABLE_hunspell="Y"
-			shift
-			;;
+        --enable-enchant)
+            QC_DEFAULT_ENABLE_enchant="Y"
+            shift
+            ;;
 
-		--with-hunspell-inc=*)
-			QC_WITH_HUNSPELL_INC=$optarg
-			shift
-			;;
+        --disable-hunspell)
+            QC_DISABLE_hunspell="Y"
+            shift
+            ;;
 
-		--with-hunspell-lib=*)
-			QC_WITH_HUNSPELL_LIB=$optarg
-			shift
-			;;
+        --enable-hunspell)
+            QC_DEFAULT_ENABLE_hunspell="Y"
+            shift
+            ;;
 
-		--disable-plugins)
-			QC_DISABLE_plugins="Y"
-			shift
-			;;
+        --with-hunspell-inc=*)
+            QC_WITH_HUNSPELL_INC=$optarg
+            shift
+            ;;
 
-		--enable-plugins)
-			QC_DEFAULT_ENABLE_plugins="Y"
-			shift
-			;;
+        --with-hunspell-lib=*)
+            QC_WITH_HUNSPELL_LIB=$optarg
+            shift
+            ;;
 
-		--verbose)
-			QC_VERBOSE="Y"
-			shift
-			;;
-		--qtselect=*)
-			QC_QTSELECT="${optarg}"
-			shift
-			;;
-		--help) show_usage; exit ;;
-		*) echo "configure: WARNING: unrecognized options: $1" >&2; shift; ;;
-	esac
+        --disable-plugins)
+            QC_DISABLE_plugins="Y"
+            shift
+            ;;
+
+        --enable-plugins)
+            QC_DEFAULT_ENABLE_plugins="Y"
+            shift
+            ;;
+
+        --verbose)
+            QC_VERBOSE="Y"
+            shift
+            ;;
+        --qtselect=*)
+            QC_QTSELECT="${optarg}"
+            shift
+            ;;
+        --help) show_usage; exit ;;
+        *) echo "configure: WARNING: unrecognized options: $1" >&2; shift; ;;
+    esac
 done
 
 PREFIX=${PREFIX:-/usr/local}
@@ -460,6 +472,8 @@ echo QC_WITH_WEBKIT=$QC_WITH_WEBKIT
 echo QC_WITH_HTTP_PARSER_INC=$QC_WITH_HTTP_PARSER_INC
 echo QC_WITH_HTTP_PARSER_LIB=$QC_WITH_HTTP_PARSER_LIB
 echo QC_BUNDLED_HTTP_PARSER=$QC_BUNDLED_HTTP_PARSER
+echo QC_WITH_B2_INC=$QC_WITH_B2_INC
+echo QC_WITH_B2_LIB=$QC_WITH_B2_LIB
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_DEFAULT_ENABLE_growl=$QC_DEFAULT_ENABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
@@ -485,46 +499,46 @@ fi
 printf "Verifying Qt build environment ... "
 
 if [ -z "$QC_QTSELECT" ]; then
-	QC_QTSELECT="$(echo $QT_SELECT | tr -d "qt")"
+    QC_QTSELECT="$(echo $QT_SELECT | tr -d "qt")"
 fi
 
 if [ ! -z "$QC_QTSELECT" ]; then
-	QTSEARCHTEXT="$QC_QTSELECT"
+    QTSEARCHTEXT="$QC_QTSELECT"
 else
-	QTSEARCHTEXT="4 or 5"
+    QTSEARCHTEXT="4 or 5"
 fi
 
 # run qmake and check version
 qmake_check() {
-	if [ -x "$1" ]; then
-		cmd="\"$1\" -query QT_VERSION"
-		if [ "$QC_VERBOSE" = "Y" ]; then
-			echo "running: $cmd"
-		fi
-		vout=`/bin/sh -c "$cmd" 2>&1`
-		case "${vout}" in
-			*.*.*)
-				vmaj="${vout%%.*}"
-				if [ ! -z "$QC_QTSELECT" ]; then
-					if [ "$vmaj" = "$QC_QTSELECT" ]; then
-						return 0
-					fi
-				else
-					if [ "$vmaj" = "4" ] || [ "$vmaj" = "5" ]; then
-						return 0
-					fi
-				fi
-				;;
-		esac
-		if [ "$QC_VERBOSE" = "Y" ]; then
-			echo "Warning: $1 not for Qt ${QTSEARCHTEXT}"
-		fi
-	fi
-	return 1
+    if [ -x "$1" ]; then
+        cmd="\"$1\" -query QT_VERSION"
+        if [ "$QC_VERBOSE" = "Y" ]; then
+            echo "running: $cmd"
+        fi
+        vout=`/bin/sh -c "$cmd" 2>&1`
+        case "${vout}" in
+            *.*.*)
+                vmaj="${vout%%.*}"
+                if [ ! -z "$QC_QTSELECT" ]; then
+                    if [ "$vmaj" = "$QC_QTSELECT" ]; then
+                        return 0
+                    fi
+                else
+                    if [ "$vmaj" = "4" ] || [ "$vmaj" = "5" ]; then
+                        return 0
+                    fi
+                fi
+                ;;
+        esac
+        if [ "$QC_VERBOSE" = "Y" ]; then
+            echo "Warning: $1 not for Qt ${QTSEARCHTEXT}"
+        fi
+    fi
+    return 1
 }
 
 if [ "$QC_VERBOSE" = "Y" ]; then
-	echo
+    echo
 fi
 
 qm=""
@@ -532,160 +546,160 @@ qt4_names="qmake-qt4 qmake4"
 qt5_names="qmake-qt5 qmake5"
 names="qmake"
 if [ -z "$QC_QTSELECT" ]; then
-	names="${qt5_names} ${qt4_names} $names"
+    names="${qt5_names} ${qt4_names} $names"
 else
-	if [ "$QC_QTSELECT" = "4" ]; then
-		names="${qt4_names} $names"
-	elif [ "$QC_QTSELECT" -ge "5" ]; then
-		names="${qt5_names} $names"
-	fi
+    if [ "$QC_QTSELECT" = "4" ]; then
+        names="${qt4_names} $names"
+    elif [ "$QC_QTSELECT" -ge "5" ]; then
+        names="${qt5_names} $names"
+    fi
 fi
 
 if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
-	# qt4 check: --qtdir
-	for n in $names; do
-		qstr=$EX_QTDIR/bin/$n
-		if qmake_check "$qstr"; then
-			qm=$qstr
-			break
-		fi
-	done
-	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-		echo "Warning: qmake not found via --qtdir"
-	fi
+    # qt4 check: --qtdir
+    for n in $names; do
+        qstr=$EX_QTDIR/bin/$n
+        if qmake_check "$qstr"; then
+            qm=$qstr
+            break
+        fi
+    done
+    if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+        echo "Warning: qmake not found via --qtdir"
+    fi
 
 elif [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
-	# qt4 check: QTDIR
-	for n in $names; do
-		qstr=$QTDIR/bin/$n
-		if qmake_check "$qstr"; then
-			qm=$qstr
-			break
-		fi
-	done
-	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-		echo "Warning: qmake not found via \$QTDIR"
-	fi
+    # qt4 check: QTDIR
+    for n in $names; do
+        qstr=$QTDIR/bin/$n
+        if qmake_check "$qstr"; then
+            qm=$qstr
+            break
+        fi
+    done
+    if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+        echo "Warning: qmake not found via \$QTDIR"
+    fi
 
 else
-	# Try all other implicit checks
+    # Try all other implicit checks
 
-	# qtchooser
-	if [ -z "$qm" ]; then
-		qtchooser=$($WHICH qtchooser 2>/dev/null)
-		if [ ! -z "$qtchooser" ]; then
-			if [ ! -z "$QC_QTSELECT" ]; then
-				versions="$QC_QTSELECT"
-			else
-				cmd="$qtchooser --list-versions"
-				if [ "$QC_VERBOSE" = "Y" ]; then
-					echo "running: $cmd"
-				fi
-				versions=`$cmd`
-			fi
-			for version in $versions; do
-				cmd="$qtchooser -run-tool=qmake -qt=${version} -query QT_INSTALL_BINS"
-				if [ "$QC_VERBOSE" = "Y" ]; then
-					echo "running: $cmd"
-				fi
-				qtbins=`$cmd 2>/dev/null`
-				if [ ! -z "$qtbins" ] && qmake_check "$qtbins/qmake"; then
-					qm="$qtbins/qmake"
-					break
-				fi
-			done
-		fi
-	fi
-	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-		echo "Warning: qmake not found via qtchooser"
-	fi
+    # qtchooser
+    if [ -z "$qm" ]; then
+        qtchooser=$($WHICH qtchooser 2>/dev/null)
+        if [ ! -z "$qtchooser" ]; then
+            if [ ! -z "$QC_QTSELECT" ]; then
+                versions="$QC_QTSELECT"
+            else
+                cmd="$qtchooser --list-versions"
+                if [ "$QC_VERBOSE" = "Y" ]; then
+                    echo "running: $cmd"
+                fi
+                versions=`$cmd`
+            fi
+            for version in $versions; do
+                cmd="$qtchooser -run-tool=qmake -qt=${version} -query QT_INSTALL_BINS"
+                if [ "$QC_VERBOSE" = "Y" ]; then
+                    echo "running: $cmd"
+                fi
+                qtbins=`$cmd 2>/dev/null`
+                if [ ! -z "$qtbins" ] && qmake_check "$qtbins/qmake"; then
+                    qm="$qtbins/qmake"
+                    break
+                fi
+            done
+        fi
+    fi
+    if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+        echo "Warning: qmake not found via qtchooser"
+    fi
 
-	# qt4: pkg-config
-	if [ -z "$qm" ]; then
-		cmd="pkg-config QtCore --variable=exec_prefix"
-		if [ "$QC_VERBOSE" = "Y" ]; then
-			echo "running: $cmd"
-		fi
-		str=`$cmd 2>/dev/null`
-		if [ ! -z "$str" ]; then
-			for n in $names; do
-				qstr=$str/bin/$n
-				if qmake_check "$qstr"; then
-					qm=$qstr
-					break
-				fi
-			done
-		fi
-	fi
-	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-		echo "Warning: qmake not found via pkg-config"
-	fi
+    # qt4: pkg-config
+    if [ -z "$qm" ]; then
+        cmd="pkg-config QtCore --variable=exec_prefix"
+        if [ "$QC_VERBOSE" = "Y" ]; then
+            echo "running: $cmd"
+        fi
+        str=`$cmd 2>/dev/null`
+        if [ ! -z "$str" ]; then
+            for n in $names; do
+                qstr=$str/bin/$n
+                if qmake_check "$qstr"; then
+                    qm=$qstr
+                    break
+                fi
+            done
+        fi
+    fi
+    if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+        echo "Warning: qmake not found via pkg-config"
+    fi
 
-	# qmake in PATH
-	if [ -z "$qm" ]; then
-		for n in $names; do
-			qstr=`$WHICH -a $n 2>/dev/null`
-			for q in $qstr; do
-				if qmake_check "$q"; then
-					qm="$q"
-					break
-				fi
-			done
-			if [ ! -z "$qm" ]; then
-				break
-			fi
-		done
-	fi
-	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-		echo "Warning: qmake not found via \$PATH"
-	fi
+    # qmake in PATH
+    if [ -z "$qm" ]; then
+        for n in $names; do
+            qstr=`$WHICH -a $n 2>/dev/null`
+            for q in $qstr; do
+                if qmake_check "$q"; then
+                    qm="$q"
+                    break
+                fi
+            done
+            if [ ! -z "$qm" ]; then
+                break
+            fi
+        done
+    fi
+    if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+        echo "Warning: qmake not found via \$PATH"
+    fi
 
-	# end of implicit checks
+    # end of implicit checks
 fi
 
 if [ -z "$qm" ]; then
-	if [ "$QC_VERBOSE" = "Y" ]; then
-		echo " -> fail"
-	else
-		echo "fail"
-	fi
-	printf "\n"
-	printf "Reason: Unable to find the 'qmake' tool for Qt ${QTSEARCHTEXT}.\n"
-	printf "\n"
-	show_qt_info
-	exit 1;
+    if [ "$QC_VERBOSE" = "Y" ]; then
+        echo " -> fail"
+    else
+        echo "fail"
+    fi
+    printf "\n"
+    printf "Reason: Unable to find the 'qmake' tool for Qt ${QTSEARCHTEXT}.\n"
+    printf "\n"
+    show_qt_info
+    exit 1;
 fi
 if [ "$QC_VERBOSE" = "Y" ]; then
-	echo qmake found in "$qm"
+    echo qmake found in "$qm"
 fi
 
 # try to determine the active makespec
 defmakespec=$QMAKESPEC
 if [ -z "$defmakespec" ]; then
-	if $WHICH readlink >/dev/null 2>&1; then
-		READLINK=`$WHICH readlink`
-	fi
-	if [ ! -z "$READLINK" ]; then
-		qt_mkspecsdir=`"$qm" -query QT_INSTALL_DATA`/mkspecs
-		if [ -d "$qt_mkspecsdir" ] && [ -h "$qt_mkspecsdir/default" ]; then
-			defmakespec=`$READLINK $qt_mkspecsdir/default`
-		fi
-	fi
+    if $WHICH readlink >/dev/null 2>&1; then
+        READLINK=`$WHICH readlink`
+    fi
+    if [ ! -z "$READLINK" ]; then
+        qt_mkspecsdir=`"$qm" -query QT_INSTALL_DATA`/mkspecs
+        if [ -d "$qt_mkspecsdir" ] && [ -h "$qt_mkspecsdir/default" ]; then
+            defmakespec=`$READLINK $qt_mkspecsdir/default`
+        fi
+    fi
 fi
 
 if [ "$QC_VERBOSE" = "Y" ]; then
-	echo makespec is $defmakespec
+    echo makespec is $defmakespec
 fi
 
 qm_spec=""
 # if the makespec is macx-xcode, force macx-g++
 if [ "$defmakespec" = "macx-xcode" ]; then
-	qm_spec=macx-g++
-	QMAKESPEC=$qm_spec
-	export QMAKESPEC
-	if [ "$QC_VERBOSE" = "Y" ]; then
-		echo overriding makespec to $qm_spec
-	fi
+    qm_spec=macx-g++
+    QMAKESPEC=$qm_spec
+    export QMAKESPEC
+    if [ "$QC_VERBOSE" = "Y" ]; then
+        echo overriding makespec to $qm_spec
+    fi
 fi
 
 gen_files() {
@@ -698,7 +712,7 @@ name: Qt >= 5.0.0
 */
 class qc_qt5 : public ConfObj {
 public:
-    qc_qt5(Conf *c) : ConfObj(c) {}
+    qc_qt5(Conf *c) : ConfObj(c) { }
     QString name() const { return "Qt >= 5.0.0"; }
     QString shortname() const { return "qt5"; }
     bool    exec() { return (QT_VERSION >= 0x050000); }
@@ -755,7 +769,7 @@ public:
         QString str = "\\n"
                       "int main()\\n"
                       "{\\n"
-                      "	return 0;\\n"
+                      "    return 0;\\n"
                       "}\\n";
 
         int ret;
@@ -777,7 +791,7 @@ public:
 #define QC_SILENT_NOT_FOUND(modname)                                                                                   \\
     class qc_##modname : public ConfObj {                                                                              \\
     public:                                                                                                            \\
-        qc_##modname(Conf *c) : ConfObj(c) {}                                                                          \\
+        qc_##modname(Conf *c) : ConfObj(c) { }                                                                         \\
         QString name() const { return QC_AS_STR(modname); }                                                            \\
         QString shortname() const { return QC_AS_STR(modname); }                                                       \\
         QString checkString() const { return QString(); }                                                              \\
@@ -855,20 +869,20 @@ void copyPath(QString src, QString dst)
     if (!dir.exists())
         return;
 
-    foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+    for (const QString &d : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
         QString dst_path = dst + QDir::separator() + d;
         dir.mkpath(dst_path);
         copyPath(src + QDir::separator() + d, dst_path);
     }
 
-    foreach (QString f, dir.entryList(QDir::Files)) {
+    for (const QString &f : dir.entryList(QDir::Files)) {
         QFile::copy(src + QDir::separator() + f, dst + QDir::separator() + f);
     }
 }
 
 class qc_buildmodeapp : public ConfObj {
 public:
-    qc_buildmodeapp(Conf *c) : ConfObj(c) {}
+    qc_buildmodeapp(Conf *c) : ConfObj(c) { }
     QString name() const { return "buildmodeapp"; }
     QString shortname() const { return "buildmodeapp"; }
 
@@ -1028,7 +1042,7 @@ We can try to use https://github.com/lpereira/gomoku to convert from Go.
 //----------------------------------------------------------------------------
 class qc_idn : public ConfObj {
 public:
-    qc_idn(Conf *c) : ConfObj(c) {}
+    qc_idn(Conf *c) : ConfObj(c) { }
     QString name() const { return "LibIDN"; }
     QString shortname() const { return "libidn"; }
     bool    exec()
@@ -1056,7 +1070,7 @@ public:
             QStringList libNames = QStringList() << "idn";
 #endif
             bool libFound = false;
-            foreach (const QString &libName, libNames) {
+            for (const QString &libName : libNames) {
                 if ((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName))
                     || (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
                     conf->addLib(idn_libdir.isEmpty() ? QString("-l") + libName
@@ -1109,10 +1123,10 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
                           "!isEmpty(QCA_FRAMEWORKDIR): {\\n"
                           "    framework_dir = \$\$QCA_FRAMEWORKDIR\\n"
                           "    exists(\$\$framework_dir/\$\${QCA_NAME}.framework) {\\n"
-                          "    	#QMAKE_FRAMEWORKPATH *= \$\$framework_dir\\n"
-                          "    	LIBS *= -F\$\$framework_dir\\n"
-                          "    	INCLUDEPATH += \$\$framework_dir/\$\${QCA_NAME}.framework/Headers\\n"
-                          "    	LINKAGE = -framework \$\${QCA_NAME}\\n"
+                          "        #QMAKE_FRAMEWORKPATH *= \$\$framework_dir\\n"
+                          "        LIBS *= -F\$\$framework_dir\\n"
+                          "        INCLUDEPATH += \$\$framework_dir/\$\${QCA_NAME}.framework/Headers\\n"
+                          "        LINKAGE = -framework \$\${QCA_NAME}\\n"
                           "    }\\n"
                           "}\\n"
                           "\\n"
@@ -1122,8 +1136,8 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
                           "    !isEmpty(QCA_LIBDIR):LIBS += -L\$\$QCA_LIBDIR\\n"
                           "    LINKAGE = -l\$\${QCA_NAME}\\n"
                           "    CONFIG(debug, debug|release) {\\n"
-                          "    	windows:LINKAGE = -l\$\${QCA_NAME}d\\n"
-                          "    	mac:LINKAGE = -l\$\${QCA_NAME}_debug\\n"
+                          "        windows:LINKAGE = -l\$\${QCA_NAME}d\\n"
+                          "        mac:LINKAGE = -l\$\${QCA_NAME}_debug\\n"
                           "    }\\n"
                           "}\\n"
                           "\\n"
@@ -1152,8 +1166,8 @@ static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, co
                   "\\n"
                   "int main()\\n"
                   "{\\n"
-                  "	unsigned long x = QCA_VERSION;\\n"
-                  "	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\\n"
+                  "    unsigned long x = QCA_VERSION;\\n"
+                  "    if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\\n"
                   "}\\n";
 
     // test desired versions, potentially both release and debug
@@ -1196,7 +1210,7 @@ static bool qca_try_ext_prf(Conf *conf, bool release, bool debug, QString *prf)
 //----------------------------------------------------------------------------
 class qc_qca : public ConfObj {
 public:
-    qc_qca(Conf *c) : ConfObj(c) {}
+    qc_qca(Conf *c) : ConfObj(c) { }
     QString name() const { return "QCA >= 2.0"; }
     QString shortname() const { return "qca"; }
     bool    exec()
@@ -1279,7 +1293,7 @@ arg: with-zlib-lib=[path],Path to zlib library files
 //----------------------------------------------------------------------------
 class qc_zlib : public ConfObj {
 public:
-    qc_zlib(Conf *c) : ConfObj(c) {}
+    qc_zlib(Conf *c) : ConfObj(c) { }
     QString name() const { return "zlib"; }
     QString shortname() const { return "zlib"; }
 
@@ -1308,13 +1322,13 @@ public:
             for (;;) {
                 s = conf->getenv("QC_WITH_ZLIB_LIB");
                 if (!s.isEmpty()) {
-                    foreach (const QString l, libNames)
+                    for (const QString l : libNames)
                         if (conf->checkLibrary(s, l)) {
                             libName = l;
                             break;
                         }
                 } else {
-                    foreach (const QString l, libNames)
+                    for (const QString l : libNames)
                         if (conf->findLibrary(l, &s)) {
                             libName = l;
                             break;
@@ -1333,7 +1347,7 @@ public:
             }
         }
 
-        foreach (const QString &inc, incs) {
+        for (const QString &inc : incs) {
             conf->addIncludePath(inc);
         }
         conf->addLib(libs);
@@ -1361,7 +1375,7 @@ public:
         }
 
         if (!incs.isEmpty() && !libs.isEmpty()) {
-            foreach (const QString &inc, incs) {
+            for (const QString &inc : incs) {
                 conf->addIncludePath(inc);
             }
             conf->addLib(libs);
@@ -1388,7 +1402,7 @@ arg: with-qjdns-lib=[path],Path to QJDns library files
 //----------------------------------------------------------------------------
 class qc_qjdns : public ConfObj {
 public:
-    qc_qjdns(Conf *c) : ConfObj(c) {}
+    qc_qjdns(Conf *c) : ConfObj(c) { }
     QString name() const { return "QJDns"; }
     QString shortname() const { return "qjdns"; }
     QString resultString() const
@@ -1429,7 +1443,7 @@ public:
         }
 
         if (!incs.isEmpty() && !libs.isEmpty()) {
-            foreach (const QString &inc, incs) {
+            for (const QString &inc : incs) {
                 conf->addIncludePath(inc);
             }
             conf->addLib(libs);
@@ -1452,7 +1466,7 @@ name: Xorg X11
 //----------------------------------------------------------------------------
 class qc_x11 : public ConfObj {
 public:
-    qc_x11(Conf *c) : ConfObj(c) {}
+    qc_x11(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "Xorg X11"; }
     QString shortname() const { return "x11"; }
@@ -1484,7 +1498,7 @@ name: Mac OS X universal binary support
 //----------------------------------------------------------------------------
 class qc_universal : public ConfObj {
 public:
-    qc_universal(Conf *c) : ConfObj(c) {}
+    qc_universal(Conf *c) : ConfObj(c) { }
     QString name() const { return "universal binary support"; }
     QString shortname() const { return "universal"; }
     QString checkString() const { return QString(); }
@@ -1529,7 +1543,7 @@ QC_FIND_QT_COMP_BASE(Qt5Keychain, keychain, Qt Keychain, "CONFIG += keychain", _
 
 class qc_keychain : public qc_keychain_base {
 public:
-    qc_keychain(Conf *c) : qc_keychain_base(c) {}
+    qc_keychain(Conf *c) : qc_keychain_base(c) { }
 
     bool exec()
     {
@@ -1566,7 +1580,7 @@ public:
         libnames << "qt5keychain";
 #endif
         QString libName;
-        foreach (const QString l, libnames)
+        for (const QString l : libnames)
             if (conf->findLibrary(l, &s)) {
                 libName = l;
                 break;
@@ -1672,7 +1686,7 @@ class qc_webkit : public ConfObj {
     QString webkitType;
 
 public:
-    qc_webkit(Conf *c) : ConfObj(c) {}
+    qc_webkit(Conf *c) : ConfObj(c) { }
     QString name() const { return "QtWebKit"; }
     QString shortname() const { return "webkit"; }
     bool    exec()
@@ -1702,7 +1716,7 @@ public:
         }
 
         QString qt;
-        foreach (const QString &wt, tryList) {
+        for (const QString &wt : tryList) {
             if (wt == "qtwebengine") {
                 webkitType = "QtWebEngine";
                 qt         = "webenginewidgets webchannel";
@@ -1717,7 +1731,7 @@ public:
             QString str = "\\n"
                           "int main()\\n"
                           "{\\n"
-                          "	return 0;\\n"
+                          "    return 0;\\n"
                           "}\\n";
 
             int ret;
@@ -1758,7 +1772,7 @@ class qc_http_parser : public ConfObj {
     bool use_bundled;
 
 public:
-    qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) {}
+    qc_http_parser(Conf *c) : ConfObj(c), use_bundled(false) { }
     QString name() const { return "HTTP Parser"; }
     QString shortname() const { return "httpparser"; }
 
@@ -1833,6 +1847,77 @@ public:
         return true;
     }
 };
+#line 1 "b2.qcm"
+/*
+-----BEGIN QCMOD-----
+name: libb2
+arg: with-b2-inc=[path],Path to libb2 include files
+arg: with-b2-lib=[path],Path to libb2 library or framework files
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_b2
+//----------------------------------------------------------------------------
+class qc_b2 : public ConfObj
+{
+    bool use_system = false;
+public:
+    qc_b2(Conf *c) : ConfObj(c) {}
+    QString name() const { return "LibB2"; }
+    QString shortname() const { return "libb2"; }
+    QString resultString() const { return use_system? "system":"bundled"; }
+    bool exec()
+    {
+        QString b2_incdir, b2_libdir;
+        b2_incdir = conf->getenv("QC_WITH_B2_INC");
+        b2_libdir = conf->getenv("QC_WITH_B2_LIB");
+
+        if (b2_incdir.isEmpty() && b2_libdir.isEmpty()) {
+            if (!checkCustomDirs(b2_incdir, b2_libdir)) {
+                printf("b2 search paths provided but library is not found there. use bundled");
+                return true;
+            }
+            use_system = true;
+        } else {
+            QStringList incs;
+            QString version, libs, other;
+            if(conf->findPkgConfig("libb2", VersionAny, QString::null, &version, &incs, &libs, &other))
+            {
+                    for(int n = 0; n < incs.count(); ++n)
+                            conf->addIncludePath(incs[n]);
+                    if(!libs.isEmpty())
+                            conf->addLib(libs);
+                    use_system = true;
+            }
+        }
+
+        if (use_system) {
+            conf->addExtra("CONFIG += bundled_blake2");
+        }
+
+        return true;
+    }
+
+    bool checkCustomDirs(QString &b2_incdir, QString &b2_libdir)
+    {
+        if ((b2_incdir.isEmpty() && !conf->findHeader("blake2.h", QStringList(), &b2_incdir)) ||
+            (!b2_incdir.isEmpty() && !conf->checkHeader(b2_incdir, "blake2.h"))) {
+            printf("Headers not found!\\n");
+            return false;
+        }
+
+        if((!b2_libdir.isEmpty() && conf->checkLibrary(b2_libdir, "b2")) ||
+           (b2_libdir.isEmpty() && conf->findLibrary("b2", &b2_libdir))) {
+            conf->addLib(b2_libdir.isEmpty()? "-lb2" : QString("-L%1 -lb2").arg(b2_libdir));
+            conf->addIncludePath(b2_incdir);
+            return true;
+        }
+
+        printf("Libraries not found!\\n");
+        return false;
+    }
+};
 #line 1 "growl.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1846,7 +1931,7 @@ arg: with-growl=[path],Path to the Growl framework
 //----------------------------------------------------------------------------
 class qc_growl : public ConfObj {
 public:
-    qc_growl(Conf *c) : ConfObj(c) {}
+    qc_growl(Conf *c) : ConfObj(c) { }
     QString name() const { return "Growl"; }
     QString shortname() const { return "growl"; }
 #ifndef Q_OS_MAC
@@ -1909,7 +1994,7 @@ name: White Board support
 static bool qc_qtsvg_found = false;
 class qc_whiteboarding : public QtCompFinder {
 public:
-    qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) {}
+    qc_whiteboarding(Conf *c) : QtCompFinder("svg", "whiteboarding", "White Board support", "", c) { }
     QString resultString() const
     {
         if (!qc_qtsvg_found) {
@@ -1951,7 +2036,7 @@ name: the XScreenSaver extension
 //----------------------------------------------------------------------------
 class qc_xss : public ConfObj {
 public:
-    qc_xss(Conf *c) : ConfObj(c) {}
+    qc_xss(Conf *c) : ConfObj(c) { }
 
     QString name() const { return "the XScreenSaver extension"; }
     QString shortname() const { return "xss"; }
@@ -2009,7 +2094,7 @@ QStringList qc_aspell_libs;
 //----------------------------------------------------------------------------
 class qc_aspell : public ConfObj {
 public:
-    qc_aspell(Conf *c) : ConfObj(c) {}
+    qc_aspell(Conf *c) : ConfObj(c) { }
     QString name() const { return "aspell"; }
     QString shortname() const { return "aspell"; }
 
@@ -2050,7 +2135,7 @@ public:
 
         bool    success;
         QString libname_success;
-        foreach (const QString &libname, libnames) {
+        for (const QString &libname : libnames) {
             conf->debug(QString("Trying %1").arg(libname));
             if (conf->checkLibrary(a_lib, libname)) {
                 success         = true;
@@ -2129,7 +2214,7 @@ QStringList qc_enchant_libs;
 //----------------------------------------------------------------------------
 class qc_enchant : public ConfObj {
 public:
-    qc_enchant(Conf *c) : ConfObj(c) {}
+    qc_enchant(Conf *c) : ConfObj(c) { }
     QString name() const { return "enchant"; }
     QString shortname() const { return "enchant"; }
 
@@ -2185,7 +2270,7 @@ QStringList qc_hunspell_libs;
 //----------------------------------------------------------------------------
 class qc_hunspell : public ConfObj {
 public:
-    qc_hunspell(Conf *c) : ConfObj(c) {}
+    qc_hunspell(Conf *c) : ConfObj(c) { }
     QString name() const { return "hunspell"; }
     QString shortname() const { return "hunspell"; }
 
@@ -2219,7 +2304,7 @@ public:
                  << "hunspell";
 #endif
         QString libs, incs;
-        foreach (const QString libname, libnames)
+        for (const QString libname : libnames)
             if (conf->findSimpleLibrary("QC_WITH_HUNSPELL_INC", "QC_WITH_HUNSPELL_LIB", "hunspell/hunspell.hxx",
                                         libname, &incs, &libs)) {
                 break;
@@ -2270,7 +2355,7 @@ class qc_spell : public ConfObj {
 public:
     QString engine;
 
-    qc_spell(Conf *c) : ConfObj(c) {}
+    qc_spell(Conf *c) : ConfObj(c) { }
     QString name() const { return "spellcheck engine"; }
     QString shortname() const { return "spell"; }
 
@@ -2346,7 +2431,7 @@ name: Psi Plugin support
 //----------------------------------------------------------------------------
 class qc_plugins : public ConfObj {
 public:
-    qc_plugins(Conf *c) : ConfObj(c) {}
+    qc_plugins(Conf *c) : ConfObj(c) { }
     QString name() const { return "Psi Plugin support"; }
     QString shortname() const { return "plugins"; }
     bool    exec()
@@ -2365,8 +2450,8 @@ public:
         vars["data_dir"]    = "";
         vars["include_dir"] = "";
 #else
-        vars["plugins_dir"] = conf->getenv("LIBDIR") + "/" + qc_psi_dir_name + "/plugins";
-        vars["data_dir"]    = conf->getenv("DATADIR") + "/" + qc_psi_dir_name;
+        vars["plugins_dir"]         = conf->getenv("LIBDIR") + "/" + qc_psi_dir_name + "/plugins";
+        vars["data_dir"]            = conf->getenv("DATADIR") + "/" + qc_psi_dir_name;
         vars["plugins_include_dir"] = conf->getenv("PREFIX") + "/include/" + qc_psi_dir_name + "/plugins";
 #endif
         QStringList psiFeatures;
@@ -2411,7 +2496,7 @@ static QString psiGetVersion()
 
 class qc_conf : public ConfObj {
 public:
-    qc_conf(Conf *c) : ConfObj(c) {}
+    qc_conf(Conf *c) : ConfObj(c) { }
     QString name() const { return qc_psiplus ? "Psi+ Configuration" : "Psi Configuration"; }
     QString shortname() const { return "conf"; }
     QString checkString() const { return QString(); }
@@ -2527,6 +2612,9 @@ cat >"$1/modules_new.cpp" <<EOT
     o->required = false;
     o->disabled = true;
     o = new qc_http_parser(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_b2(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_growl(conf);
@@ -3090,7 +3178,7 @@ public:
         if (!libs.isEmpty())
             conf->addLib(libs);
         // if(!other.isEmpty())
-        //	conf->addExtra(QString("QMAKE_CFLAGS += %1\\n").arg(other));
+        //    conf->addExtra(QString("QMAKE_CFLAGS += %1\\n").arg(other));
 
         if (!required)
             conf->addDefine("HAVE_PKG_" + qc_escapeArg(pkgname).toUpper());
@@ -3755,6 +3843,8 @@ export QC_WITH_WEBKIT
 export QC_WITH_HTTP_PARSER_INC
 export QC_WITH_HTTP_PARSER_LIB
 export QC_BUNDLED_HTTP_PARSER
+export QC_WITH_B2_INC
+export QC_WITH_B2_LIB
 export QC_DISABLE_growl
 export QC_DEFAULT_ENABLE_growl
 export QC_WITH_GROWL
@@ -3778,34 +3868,34 @@ export QC_VERBOSE
 export QC_QTSELECT
 rm -rf ".qconftemp"
 (
-	mkdir ".qconftemp"
-	gen_files ".qconftemp"
-	cd ".qconftemp"
-	if [ ! -z "$qm_spec" ]; then
-		"$qm" -spec $qm_spec conf4.pro >/dev/null
-	else
-		"$qm" conf4.pro >/dev/null
-	fi
-	$MAKE clean >/dev/null 2>&1
-	$MAKE >../conf.log 2>&1
+    mkdir ".qconftemp"
+    gen_files ".qconftemp"
+    cd ".qconftemp"
+    if [ ! -z "$qm_spec" ]; then
+        "$qm" -spec $qm_spec conf4.pro >/dev/null
+    else
+        "$qm" conf4.pro >/dev/null
+    fi
+    $MAKE clean >/dev/null 2>&1
+    $MAKE >../conf.log 2>&1
 )
 
 if [ "$?" != "0" ]; then
-	rm -rf ".qconftemp"
-	if [ "$QC_VERBOSE" = "Y" ]; then
-		echo " -> fail"
-	else
-		echo "fail"
-	fi
-	printf "\n"
-	printf "Reason: There was an error compiling 'conf'.  See conf.log for details.\n"
-	printf "\n"
-	show_qt_info
-	if [ "$QC_VERBOSE" = "Y" ]; then
-		echo "conf.log:"
-		cat conf.log
-	fi
-	exit 1;
+    rm -rf ".qconftemp"
+    if [ "$QC_VERBOSE" = "Y" ]; then
+        echo " -> fail"
+    else
+        echo "fail"
+    fi
+    printf "\n"
+    printf "Reason: There was an error compiling 'conf'.  See conf.log for details.\n"
+    printf "\n"
+    show_qt_info
+    if [ "$QC_VERBOSE" = "Y" ]; then
+        echo "conf.log:"
+        cat conf.log
+    fi
+    exit 1;
 fi
 
 QC_COMMAND=$0
@@ -3821,22 +3911,22 @@ export QC_MAKETOOL
 ".qconftemp/conf"
 ret="$?"
 if [ "$ret" = "1" ]; then
-	rm -rf ".qconftemp"
-	echo
-	exit 1;
+    rm -rf ".qconftemp"
+    echo
+    exit 1;
 else
-	if [ "$ret" != "0" ]; then
-		rm -rf ".qconftemp"
-		if [ "$QC_VERBOSE" = "Y" ]; then
-			echo " -> fail"
-		else
-			echo "fail"
-		fi
-		echo
-		echo "Reason: Unexpected error launching 'conf'"
-		echo
-		exit 1;
-	fi
+    if [ "$ret" != "0" ]; then
+        rm -rf ".qconftemp"
+        if [ "$QC_VERBOSE" = "Y" ]; then
+            echo " -> fail"
+        else
+            echo "fail"
+        fi
+        echo
+        echo "Reason: Unexpected error launching 'conf'"
+        echo
+        exit 1;
+    fi
 fi
 rm -rf ".qconftemp"
 

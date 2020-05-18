@@ -55,6 +55,9 @@
   <dep type='http-parser'>
     <required/>
   </dep>
+  <dep type='b2'>
+    <required/>
+  </dep>
   <dep type='growl'/>
   <dep type='whiteboarding'>
     <disabled/>
