@@ -140,7 +140,6 @@ protected:
     // reimplemented
     void showEvent(QShowEvent *);
     void keyPressEvent(QKeyEvent *);
-    void closeEvent(QCloseEvent *);
 
 public slots:
     void optionsUpdate();

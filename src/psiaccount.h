@@ -424,8 +424,8 @@ public slots:
     void featureActivated(QString feature, Jid jid, QString node);
     void actionSendStatus(const Jid &jid);
 
-    void actionAssignKey(const Jid &);
-    void actionUnassignKey(const Jid &);
+    void actionAssignPgpKey(const Jid &);
+    void actionUnassignPgpKey(const Jid &);
 
     void invokeGCMessage(const Jid &);
     void invokeGCChat(const Jid &);
@@ -486,7 +486,7 @@ private slots:
 #endif
     void edb_finished();
 
-    void trySignPresence();
+    void pgp_trySignPresence();
     void pgp_signFinished();
     void pgp_verifyFinished();
     void pgp_encryptFinished();
@@ -542,10 +542,10 @@ private:
     ChatDlg *     ensureChatDlg(const Jid &);
     void          lastStepLogin();
     void          processIncomingMessage(const Message &);
-    void          processEncryptedMessage(const Message &);
     void          processMessageQueue();
-    void          processEncryptedMessageNext();
-    void          processEncryptedMessageDone();
+    void          processPgpEncryptedMessage(const Message &);
+    void          processPgpEncryptedMessageNext();
+    void          processPgpEncryptedMessageDone();
     void          verifyStatus(const Jid &j, const Status &s);
     bool          passwordPrompt();
     void          sentInitialPresence();

@@ -943,19 +943,19 @@ void PsiChatDlg::actPgpToggled(bool b)
         return;
 
     QMenu *  menu                  = new QMenu();
-    QAction *actEnableGpg          = new QAction(tr("Enable OpenPGP encryption"), this);
-    QAction *actDisableGpg         = new QAction(tr("Disable OpenPGP encryption"), this);
+    QAction *actEnablePgp          = new QAction(tr("Enable OpenPGP encryption"), this);
+    QAction *actDisablePgp         = new QAction(tr("Disable OpenPGP encryption"), this);
     QAction *actAssignKey          = new QAction(tr("Assign Open&PGP Key"), this);
     QAction *actUnassignKey        = new QAction(tr("Unassign Open&PGP Key"), this);
     QAction *actShowOwnFingerprint = new QAction(tr("Show own &fingerprint"), this);
     QAction *actSendOwnPublicKey   = new QAction(tr("Send own public key"), this);
     QAction *actSendPublicKey      = new QAction(tr("Send public key..."), this);
 
-    actEnableGpg->setVisible(b);
-    actDisableGpg->setVisible(!b);
+    actEnablePgp->setVisible(b);
+    actDisablePgp->setVisible(!b);
 
-    menu->addAction(actEnableGpg);
-    menu->addAction(actDisableGpg);
+    menu->addAction(actEnablePgp);
+    menu->addAction(actDisablePgp);
 
     UserListItem *item = account()->findFirstRelevant(jid());
     if (item) {
@@ -972,21 +972,21 @@ void PsiChatDlg::actPgpToggled(bool b)
     menu->addAction(actSendPublicKey);
 
     QAction *act = menu->exec(QCursor::pos());
-    if (act == actEnableGpg) {
+    if (act == actEnablePgp) {
         ui_.log->setPgpEncryptionEnabled(true);
         actions_->action("chat_pgp")->setChecked(true);
         account()->setPgpEnabled(jid(), true);
-    } else if (act == actDisableGpg) {
+    } else if (act == actDisablePgp) {
         ui_.log->setPgpEncryptionEnabled(false);
         actions_->action("chat_pgp")->setChecked(false);
         account()->setPgpEnabled(jid(), false);
     } else if (act == actAssignKey) {
         if (item) {
-            account()->actionAssignKey(jid());
+            account()->actionAssignPgpKey(jid());
         }
     } else if (act == actUnassignKey) {
         if (item) {
-            account()->actionUnassignKey(jid());
+            account()->actionUnassignPgpKey(jid());
         }
     } else if (act == actShowOwnFingerprint) {
         showOwnFingerprint();

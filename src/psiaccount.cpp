@@ -3191,7 +3191,7 @@ void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
         d->loginStatus = s;
 
         // sign presence
-        trySignPresence();
+        pgp_trySignPresence();
     } else {
         /*if(d->psi->pgp() && !d->cur_pgpSecretKeyID.isEmpty())
             s.setKeyID(d->cur_pgpSecretKeyID);
@@ -4537,7 +4537,7 @@ void PsiAccount::actionInvite(const Jid &j, const QString &gc)
     dj_sendMessage(m);
 }
 
-void PsiAccount::actionAssignKey(const Jid &j)
+void PsiAccount::actionAssignPgpKey(const Jid &j)
 {
     if (ensureKey(j)) {
         UserListItem *u = findFirstRelevant(j);
@@ -4547,7 +4547,7 @@ void PsiAccount::actionAssignKey(const Jid &j)
     }
 }
 
-void PsiAccount::actionUnassignKey(const Jid &j)
+void PsiAccount::actionUnassignPgpKey(const Jid &j)
 {
     UserListItem *u = findFirstRelevant(j);
     if (u) {
@@ -5881,7 +5881,7 @@ const GeoLocation &PsiAccount::geolocation() const { return d->self.geoLocation(
 
 const Mood &PsiAccount::mood() const { return d->self.mood(); }
 
-void PsiAccount::trySignPresence()
+void PsiAccount::pgp_trySignPresence()
 {
     if (pgpKeyId().isEmpty())
         return;
@@ -6067,7 +6067,7 @@ void PsiAccount::pgp_encryptFinished()
 #endif
 }
 
-void PsiAccount::processEncryptedMessage(const Message &m)
+void PsiAccount::processPgpEncryptedMessage(const Message &m)
 {
 #ifdef HAVE_PGPUTIL
     GpgTransaction *transaction = new GpgTransaction(GpgTransaction::Type::Decrypt, pgpKeyId());
@@ -6107,7 +6107,7 @@ void PsiAccount::pgp_decryptFinished()
     }
     transaction->deleteLater();
 
-    processEncryptedMessageDone();
+    processPgpEncryptedMessageDone();
 #endif
 }
 
@@ -6119,7 +6119,7 @@ void PsiAccount::processMessageQueue()
 #ifdef HAVE_PGPUTIL
         // encrypted?
         if (PGPUtil::instance().pgpAvailable() && !mp.xencrypted().isEmpty()) {
-            processEncryptedMessageNext();
+            processPgpEncryptedMessageNext();
             break;
         }
 #endif
@@ -6129,13 +6129,13 @@ void PsiAccount::processMessageQueue()
     }
 }
 
-void PsiAccount::processEncryptedMessageNext()
+void PsiAccount::processPgpEncryptedMessageNext()
 {
     // 'peek' and try to process it
-    processEncryptedMessage(d->messageQueue.first());
+    processPgpEncryptedMessage(d->messageQueue.first());
 }
 
-void PsiAccount::processEncryptedMessageDone()
+void PsiAccount::processPgpEncryptedMessageDone()
 {
     // 'pop' the message
     if (!d->messageQueue.isEmpty())

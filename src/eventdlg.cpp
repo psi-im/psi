@@ -1292,15 +1292,6 @@ void EventDlg::keyPressEvent(QKeyEvent *e)
         e->ignore();
 }
 
-void EventDlg::closeEvent(QCloseEvent *e)
-{
-    // really lame way of checking if we are encrypting
-    if (!d->mle->isEnabled())
-        return;
-
-    e->accept();
-}
-
 void EventDlg::doSend()
 {
     if (!d->composing)

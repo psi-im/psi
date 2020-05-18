@@ -566,18 +566,18 @@ void PsiContactMenu::Private::pictureClear()
     contact_->account()->avatarFactory()->removeManualAvatar(contact_->jid());
 }
 
-void PsiContactMenu::Private::gpgAssignKey()
+void PsiContactMenu::Private::pgpAssignKey()
 {
     if (!contact_)
         return;
-    contact_->account()->actionAssignKey(contact_->jid());
+    contact_->account()->actionAssignPgpKey(contact_->jid());
 }
 
-void PsiContactMenu::Private::gpgUnassignKey()
+void PsiContactMenu::Private::pgpUnassignKey()
 {
     if (!contact_)
         return;
-    contact_->account()->actionUnassignKey(contact_->jid());
+    contact_->account()->actionUnassignPgpKey(contact_->jid());
 }
 
 void PsiContactMenu::Private::vcard()

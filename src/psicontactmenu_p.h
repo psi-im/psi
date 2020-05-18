@@ -60,8 +60,8 @@ public slots:
     void customStatus();
     void pictureAssign();
     void pictureClear();
-    void gpgAssignKey();
-    void gpgUnassignKey();
+    void pgpAssignKey();
+    void pgpUnassignKey();
     void vcard();
     void history();
     void sendMessageTo(PsiContact *, const XMPP::Jid &jid);

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>429</width>
+    <width>455</width>
     <height>344</height>
    </rect>
   </property>
@@ -188,7 +188,7 @@
          <item>
           <widget class="QToolButton" name="tb_pgp">
            <property name="toolTip">
-            <string>Toggle encryption</string>
+            <string notr="true"/>
            </property>
            <property name="text">
             <string/>
@@ -347,11 +347,11 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
            <property name="toolTip">
             <string>Send</string>
-           </property>
-           <property name="contextMenuPolicy" >
-            <enum>Qt::CustomContextMenu</enum>
            </property>
           </widget>
          </item>

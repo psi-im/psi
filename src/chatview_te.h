@@ -105,7 +105,7 @@ signals:
 private:
     bool              isMuc_;
     bool              isMucPrivate_;
-    bool              isEncryptionEnabled_;
+    bool              isPgpEncryptionEnabled_;
     bool              useMessageIcons_;
     int               oldTrackBarPosition;
     XMPP::Jid         jid_;
