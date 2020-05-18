@@ -40,12 +40,8 @@ class Provider;
 
 enum PluginResult { PluginSuccess, ErrorLoad, ErrorVersion, ErrorInit };
 
-bool         isSupported();
-PluginResult loadPlugin(const QString &fname, const QString &resourcePath);
-void         unloadPlugin();
-QString      creditName();
-QString      creditText();
-void         setProvider(Provider *provider);
+bool isSupported();
+void setProvider(Provider *provider);
 
 class Device {
 public:

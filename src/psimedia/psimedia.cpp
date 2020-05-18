@@ -104,100 +104,11 @@ static PPayloadInfo exportPayloadInfo(const PayloadInfo &p)
 //----------------------------------------------------------------------------
 // Global
 //----------------------------------------------------------------------------
-static Provider *     g_provider     = nullptr;
-static QPluginLoader *g_pluginLoader = nullptr;
+static Provider *g_provider = nullptr;
 
-static void cleanupProvider();
+Provider *provider() { return g_provider; }
 
-Provider *provider()
-{
-    if (!g_provider) {
-        // static plugin around?
-        Provider *  provider = nullptr;
-        QObjectList list     = QPluginLoader::staticInstances();
-        for (QObject *obj : list) {
-            Plugin *instance = qobject_cast<Plugin *>(obj);
-            if (!instance)
-                continue;
-
-            Provider *p = instance->createProvider();
-            if (p) {
-                provider = p;
-                break;
-            }
-        }
-
-        if (provider) {
-            if (!provider->init()) {
-                delete provider;
-                return nullptr;
-            }
-
-            g_provider = provider;
-            qAddPostRoutine(cleanupProvider);
-        }
-    }
-
-    return g_provider;
-}
-
-bool isSupported() { return provider() != nullptr; }
-
-PluginResult loadPlugin(const QString &fname, const QString &resourcePath)
-{
-    if (g_provider)
-        return PluginSuccess;
-
-    QPluginLoader *loader = new QPluginLoader(fname);
-    if (!loader->load()) {
-        delete loader;
-        return ErrorLoad;
-    }
-
-    Plugin *instance = qobject_cast<Plugin *>(loader->instance());
-    if (!instance) {
-        delete loader;
-        return ErrorVersion;
-    }
-
-    QVariantMap params;
-    params["resourcePath"] = resourcePath;
-    Provider *provider     = instance->createProvider(params);
-    if (!provider) {
-        loader->unload();
-        delete loader;
-        return ErrorInit;
-    }
-
-    if (!provider->init()) {
-        delete provider;
-        loader->unload();
-        delete loader;
-        return ErrorInit;
-    }
-
-    g_provider     = provider;
-    g_pluginLoader = loader;
-    qAddPostRoutine(cleanupProvider);
-    return PluginSuccess;
-}
-
-void cleanupProvider()
-{
-    if (!g_provider)
-        return;
-
-    delete g_provider;
-    g_provider = nullptr;
-
-    if (g_pluginLoader) {
-        g_pluginLoader->unload();
-        delete g_pluginLoader;
-        g_pluginLoader = nullptr;
-    }
-}
-
-void unloadPlugin() { cleanupProvider(); }
+bool isSupported() { return g_provider != nullptr; }
 
 void setProvider(Provider *provider)
 {
@@ -205,10 +116,6 @@ void setProvider(Provider *provider)
     g_provider = provider;
     QObject::connect(provider->qobject(), &QObject::destroyed, []() { g_provider = nullptr; });
 }
-
-QString creditName() { return provider()->creditName(); }
-
-QString creditText() { return provider()->creditText(); }
 
 class Device::Private {
 public:
