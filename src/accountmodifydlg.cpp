@@ -23,7 +23,6 @@
 #include "iconaction.h"
 #include "iconset.h"
 #include "jidutil.h"
-#include "pgputil.h"
 #include "privacydlg.h"
 #include "privacymanager.h"
 #include "proxy.h"
@@ -83,11 +82,7 @@ void AccountModifyDlg::init()
     lb_security_level->hide();
 
     connect(ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
-    connect(pb_key, SIGNAL(clicked()), SLOT(chooseKey()));
-    connect(pb_keyclear, SIGNAL(clicked()), SLOT(clearKey()));
     connect(buttonBox->button(QDialogButtonBox::Save), SIGNAL(clicked()), SLOT(save()));
-
-    gb_pgp->setEnabled(false);
 
     if (pa) {
         connect(pb_vcard, SIGNAL(clicked()), SLOT(detailsVCard()));
@@ -187,12 +182,6 @@ void AccountModifyDlg::init()
     ibbOnlyToggled(acc.ibbOnly);
 
     ck_scram_salted_password->setChecked(acc.storeSaltedHashedPassword);
-
-    pgpKeyId = acc.pgpSecretKey;
-    updateUserID();
-    if (PGPUtil::instance().pgpAvailable()) {
-        gb_pgp->setEnabled(true);
-    }
 
     pc = ProxyManager::instance()->createProxyChooser(tab_connection);
     replaceWidget(lb_proxychooser, pc);
@@ -300,10 +289,6 @@ void AccountModifyDlg::init()
         lb_jid->setText(tr("Username:"));
     }
 
-    if (!PsiOptions::instance()->getOption("plugins.auto-load.openpgp").toBool()) {
-        gb_pgp->hide();
-    }
-
     if (!PsiOptions::instance()->getOption("options.ui.account.privacy.show").toBool())
         tab_main->removeTab(tab_main->indexOf(tab_privacy));
 
@@ -382,31 +367,6 @@ AccountModifyDlg::~AccountModifyDlg()
         pa->dialogUnregister(this);
 }
 
-void AccountModifyDlg::updateUserID()
-{
-    if (pgpKeyId.isEmpty()) {
-        setKeyID(false);
-    } else {
-        setKeyID(true, PGPUtil::getKeyOwnerName(pgpKeyId));
-    }
-}
-
-void AccountModifyDlg::setKeyID(bool b, const QString &s)
-{
-    if (b) {
-        lb_keyname->setText(s);
-        lb_keyname->setMinimumWidth(100);
-        lb_keyicon->setEnabled(true);
-        lb_keyname->setEnabled(true);
-        pb_keyclear->setEnabled(true);
-    } else {
-        lb_keyname->setText(tr("No Key Selected"));
-        lb_keyicon->setEnabled(false);
-        lb_keyname->setEnabled(false);
-        pb_keyclear->setEnabled(false);
-    }
-}
-
 void AccountModifyDlg::setPassword(const QString &pw)
 {
     if (!le_pass->text().isEmpty())
@@ -446,24 +406,6 @@ void AccountModifyDlg::hostToggled(bool on)
 }
 
 void AccountModifyDlg::ibbOnlyToggled(bool state) { le_dtProxy->setDisabled(state); }
-
-void AccountModifyDlg::chooseKey()
-{
-    // Show the key dialog
-    const QString &&newKeyId = PGPUtil::chooseKey(PGPKeyDlg::Secret, pgpKeyId, tr("Choose Secret Key"));
-
-    if (newKeyId.isEmpty())
-        return;
-
-    pgpKeyId = newKeyId;
-    updateUserID();
-}
-
-void AccountModifyDlg::clearKey()
-{
-    setKeyID(false);
-    pgpKeyId.clear();
-}
 
 void AccountModifyDlg::detailsVCard()
 {
@@ -575,9 +517,6 @@ void AccountModifyDlg::save()
     acc.onlyMyTurn = cb_onlyMyTurn->isChecked();
 
     acc.storeSaltedHashedPassword = ck_scram_salted_password->isChecked();
-
-    acc.pgpSecretKey = pgpKeyId;
-
     acc.proxyID = pc->currentItem();
 
     if (pa) {

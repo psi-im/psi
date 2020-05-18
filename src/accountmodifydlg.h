@@ -57,8 +57,6 @@ private slots:
 
     void save();
 
-    void chooseKey();
-    void clearKey();
     void tabChanged(int);
 
     // Privacy
@@ -76,20 +74,18 @@ private slots:
     void autoconnectCksChanged();
 
 private:
+    bool checkSSL();
+
+private:
     PsiCon *      psi;
     PsiAccount *  pa;
     ProxyChooser *pc;
     UserAccount   acc;
-    QString       pgpKeyId;
 
     // Privacy
     PrivacyListModel        privacyModel;
     PrivacyListBlockedModel privacyBlockedModel;
     bool                    privacyInitialized;
-
-    void updateUserID();
-    void setKeyID(bool b, const QString &s = "");
-    bool checkSSL();
 };
 
 #endif // ACCOUNTMODIFYDLG_H
