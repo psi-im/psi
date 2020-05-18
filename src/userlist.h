@@ -126,6 +126,7 @@ public:
     QString         findClient(const UserResource &ur) const;
     const Activity &activity() const;
     QString         pending() const;
+    QString         tooltipPgpData(const UserResource &ur, const QString &imgTag) const;
 
     void               setJid(const XMPP::Jid &);
     void               setInList(bool);

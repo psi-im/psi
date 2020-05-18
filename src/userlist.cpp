@@ -323,6 +323,36 @@ QString UserListItem::pending() const
     return str;
 }
 
+QString UserListItem::tooltipPgpData(const UserResource &ur, const QString &imgTag) const
+{
+    QString out;
+    int v = ur.pgpVerifyStatus();
+    if (v == PGPUtil::SecureMessageSignature::Valid
+        || v == PGPUtil::SecureMessageSignature::InvalidSignature
+        || v == PGPUtil::SecureMessageSignature::InvalidKey
+        || v == PGPUtil::SecureMessageSignature::NoKey) {
+        if (v == PGPUtil::SecureMessageSignature::Valid) {
+            QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes")
+                + QObject::tr("Signed") + ": " + "<font color=\"#2A993B\">" + d + "</font>";
+        } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
+            QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown")
+                + QObject::tr("Signed") + ": " + d;
+        } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
+                   || v == PGPUtil::SecureMessageSignature::InvalidKey) {
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad")
+                + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
+        }
+
+        if (v_keyID != ur.publicKeyID()) {
+            out += QString(" [%1]").arg(ur.publicKeyID().right(8));
+        }
+        out += "</div>";
+    }
+    return out;
+}
+
 bool UserListItem::isAvailable() const { return !v_url.isEmpty(); }
 
 bool UserListItem::isHidden() const { return groups().contains(qApp->translate("PsiContact", "Hidden")); }
@@ -428,9 +458,12 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
         str += QString("<div style='white-space:pre'>") + QObject::tr("Subscription") + ": " + subscription().toString()
             + "</div>";
 
-    if (!v_keyID.isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
+    // OpenPGP
+    const bool showPgpData = PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool();
+    if (!v_keyID.isEmpty() && showPgpData) {
         str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/pgp") + QObject::tr("OpenPGP")
             + ": " + v_keyID.right(8) + "</div>";
+    }
 
     // User Mood
     if (!mood().isNull()) {
@@ -513,31 +546,11 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                            .arg(TextUtil::escape(JIDUtil::toString(r.status().mucItem().jid(), true)));
             str += secstr + "</div>";
 
-            if (!r.publicKeyID().isEmpty()
-                && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool()) {
-                int v = r.pgpVerifyStatus();
-                if (v == PGPUtil::SecureMessageSignature::Valid
-                    || v == PGPUtil::SecureMessageSignature::InvalidSignature
-                    || v == PGPUtil::SecureMessageSignature::InvalidKey
-                    || v == PGPUtil::SecureMessageSignature::NoKey) {
-                    if (v == PGPUtil::SecureMessageSignature::Valid) {
-                        QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-                        str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes")
-                            + QObject::tr("Signed") + ": " + "<font color=\"#2A993B\">" + d + "</font>";
-                    } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
-                        QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-                        str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown")
-                            + QObject::tr("Signed") + ": " + d;
-                    } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
-                               || v == PGPUtil::SecureMessageSignature::InvalidKey) {
-                        str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad")
-                            + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
-                    }
-
-                    if (v_keyID != r.publicKeyID())
-                        str += QString(" [%1]").arg(r.publicKeyID().right(8));
-                    str += "</div>";
-                }
+            // OpenPGP
+            if (!r.publicKeyID().isEmpty() && showPgpData) {
+                const QString &&pgpData = tooltipPgpData(r, imgTag);
+                if (!pgpData.isEmpty())
+                    str += pgpData;
             }
 
             // client
