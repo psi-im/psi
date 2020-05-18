@@ -137,6 +137,9 @@ public:
     virtual bool init()                = 0;
     virtual bool isInitialized() const = 0;
 
+    virtual QString creditName() const = 0;
+    virtual QString creditText() const = 0;
+
     virtual FeaturesContext *  createFeatures()   = 0;
     virtual RtpSessionContext *createRtpSession() = 0;
 

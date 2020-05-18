@@ -41,6 +41,10 @@ class Provider;
 enum PluginResult { PluginSuccess, ErrorLoad, ErrorVersion, ErrorInit };
 
 bool isSupported();
+
+QString creditName();
+QString creditText();
+
 void setProvider(Provider *provider);
 
 class Device {

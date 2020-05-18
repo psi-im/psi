@@ -110,6 +110,24 @@ Provider *provider() { return g_provider; }
 
 bool isSupported() { return g_provider != nullptr; }
 
+QString creditName()
+{
+    auto p = provider();
+    if (p) {
+        return p->creditName();
+    }
+    return QString();
+}
+
+QString creditText()
+{
+    auto p = provider();
+    if (p) {
+        return p->creditText();
+    }
+    return QString();
+}
+
 void setProvider(Provider *provider)
 {
     // that's pretty stupid impl. In fact we have to notify outer world to cleanup resources quickly
