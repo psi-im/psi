@@ -54,7 +54,7 @@ QWidget *OptionsTabEvents::widget()
         d->rb_aBlink->setToolTip(
             tr("Makes all incoming event icons blink on the main window as events are received."));
         d->rb_aAnimate->setToolTip(
-            tr("Animates incoming event icons on the main window as events are recieved."));*/
+            tr("Animates incoming event icons on the main window as events are received."));*/
     d->ck_autoAuth->setToolTip(tr("Makes Psi automatically accept all authorization requests from <b>anyone</b>."));
     d->ck_notifyAuth->setToolTip(tr("Makes Psi notify you when your authorization request was approved."));
 
