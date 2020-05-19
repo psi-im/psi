@@ -78,6 +78,10 @@ if(APPLE)
     option( USE_MAC_DOC "Use macOS dock" OFF )
 endif()
 
+if(WIN32 AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")))
+    option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF)
+endif()
+
 if( USE_HUNSPELL AND (USE_ENCHANT AND USE_ASPELL) )
     message(FATAL_ERROR "Flags USE_HUNSPELL, USE_ASPELL and USE_ENCHANT cannot be enabled at the same time.\nPlease enable only one of them")
 elseif( USE_HUNSPELL AND USE_ASPELL )

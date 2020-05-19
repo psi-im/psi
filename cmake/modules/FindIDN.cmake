@@ -52,9 +52,7 @@ find_path(
 )
 set(IDN_NAMES
     idn${D}
-    libidn${D}
     idn-11${D}
-    libidn-11${D}
 )
 find_library(
     IDN_LIBRARY

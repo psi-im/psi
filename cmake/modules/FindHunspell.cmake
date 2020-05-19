@@ -36,13 +36,13 @@ endif()
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_HUNSPELL QUIET hunspell )
-    set ( HUNSPELL_DEFINITIONS 
+    set ( HUNSPELL_DEFINITIONS
         ${PC_HUNSPELL_CFLAGS}
         ${PC_HUNSPELL_CFLAGS_OTHER}
     )
 endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     hunspell.hxx
 )
 
@@ -65,12 +65,11 @@ set(HUNSPELL_NAMES
     hunspell-1.5
     hunspell-1.6
     hunspell-1.7
-    libhunspell${d}
 )
 find_library(
     HUNSPELL_LIBRARY
     NAMES ${HUNSPELL_NAMES}
-    HINTS 
+    HINTS
     ${PC_HUNSPELL_LIBDIR}
     ${PC_HUNSPELL_LIBRARY_DIRS}
     ${HUNSPELL_ROOT}/lib
@@ -89,4 +88,3 @@ if ( HUNSPELL_FOUND )
 endif()
 
 mark_as_advanced( HUNSPELL_INCLUDE_DIR HUNSPELL_LIBRARY )
-
