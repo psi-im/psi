@@ -66,7 +66,7 @@ FileSharingHttpProxy::FileSharingHttpProxy(PsiAccount *acc, const QString &sourc
 
     auto cache = item->cache();
     if (cache) {
-        proxyCache(cache);
+        proxyCache();
         return; // handled with success
     }
 
@@ -178,18 +178,23 @@ void FileSharingHttpProxy::setupHeaders(qint64 fileSize, QString contentType, QD
     }
 }
 
-void FileSharingHttpProxy::proxyCache(FileCacheItem *cache)
+void FileSharingHttpProxy::proxyCache()
 {
-    QFile *   file = new QFile(acc->psi()->fileSharingManager()->cacheDir() + "/" + cache->fileName(), response);
-    QFileInfo fi(*file);
-    auto      status = qhttp::TStatusCode(parseHttpRangeRequest());
+    auto status = qhttp::TStatusCode(parseHttpRangeRequest());
     if (status != qhttp::ESTATUS_OK) {
         response->setStatusCode(status);
         qWarning("http range parse failed: %d", status);
         request->end();
         return; // handled with error
     }
-    file->open(QIODevice::ReadOnly);
+    QFile *   file = new QFile(item->fileName(), response);
+    QFileInfo fi(*file);
+    if (!file->open(QIODevice::ReadOnly)) {
+        response->setStatusCode(qhttp::ESTATUS_NOT_FOUND);
+        qWarning("FSP failed to open cached file: %s", qPrintable(file->errorString()));
+        request->end();
+        return; // handled with error
+    }
     qint64 size = fi.size();
     if (isRanged) {
         if (requestedSize)

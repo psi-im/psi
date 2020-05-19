@@ -51,7 +51,7 @@ private:
     int  parseHttpRangeRequest();
     void setupHeaders(qint64 fileSize, QString contentType, QDateTime lastModified, bool isRanged, qint64 rangeStart,
                       qint64 rangeSize);
-    void proxyCache(FileCacheItem *item);
+    void proxyCache();
 
 private:
     FileSharingItem *             item = nullptr;
