@@ -34,7 +34,7 @@ See [INSTALL](https://github.com/psi-im/psi/blob/master/INSTALL) file.
 
 In 2009 a Psi fork named [Psi+](https://psi-plus.com/) was started. Project purposes were: implementation of new features, writing of patches and plugins for transferring them to upstream. As of 2017 all active Psi+ developers have become official Psi developers and now Psi+ is just a development branch of Psi with rolling release development model.
 
-Users who wants to receive new features and bug fixes very quickly may use Psi+ on daily basic. Users who do not care about new trends and prefer constancy may choose Psi as it uses classical development model and its releases are quite rare.
+Users who wants to receive new features and bug fixes very quickly may use Psi+ on daily basis. Users who do not care about new trends and prefer constancy may choose Psi as it uses classical development model and its releases are quite rare.
 
 Currently the development model looks like this:
 
