@@ -136,30 +136,30 @@
 
 ./src/widgets/CMakeLists.txt - собирает статическую библиотеку widgets
 
-./src/plugins/plugins.cmake - список файлов заголовков оторые подключаются в основные списки сборки
+./plugins/plugins.cmake - список файлов заголовков оторые подключаются в основные списки сборки
 
-./src/plugins/variables.cmake.in - шаблон файла, который содержит основные
+./plugins/variables.cmake.in - шаблон файла, который содержит основные
     переменные для сборки плагинов, общие для всех плагинов
 
-./src/plugins/pluginsconf.pri.cmake.in - шаблон файла pluginsconf.pri, генерируемого при сборке
+./plugins/pluginsconf.pri.cmake.in - шаблон файла pluginsconf.pri, генерируемого при сборке
 
-./src/plugins/CMakeLists.txt - основной скрипт управляющий плагинами
+./plugins/CMakeLists.txt - основной скрипт управляющий плагинами
     содержит основные правила сборки для всех плагинов
     подключает каталоги generic, unix, dev
 
-./src/plugins/generic/CMakeLists.txt:
+./plugins/generic/CMakeLists.txt:
     подключает каталоги плагинов, если задана переменная BUILD_PLUGINS, то
     подключает только заданные каталоги плагинов
 
-./src/plugins/dev/CMakeLists.txt:
+./plugins/dev/CMakeLists.txt:
     подключает каталоги плагинов, если задана переменная BUILD_PLUGINS, то
     подключает только заданные каталоги плагинов
 
-./src/plugins/unix/CMakeLists.txt:
+./plugins/unix/CMakeLists.txt:
     подключает каталоги плагинов, если задана переменная BUILD_PLUGINS, то
     подключает только заданные каталоги плагинов
 
-./src/plugins/тип/плагин/CMakeLists.txt - собирает и устанавливает плагин
+./plugins/тип/плагин/CMakeLists.txt - собирает и устанавливает плагин
     типа "тип" с именем "плагин". Структура у всех этих скриптов практически
     не отличается
 

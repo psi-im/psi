@@ -21,7 +21,7 @@ then
     du -shc /usr/share/pixmaps/psi*
     du -shc /usr/share/psi*
 
-    if [ -d "./src/plugins/generic" ]
+    if [ -d "./plugins/generic" ]
     then
         ls -alp /usr/lib/psi*/plugins/*
         du -shc /usr/lib/psi*/plugins/*

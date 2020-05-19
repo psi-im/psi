@@ -367,7 +367,7 @@ prepare_sources() {
     log "Copying plugins..."
     cd "${PSI_DIR}/plugins/generic"
     PLUGINS=`find . -maxdepth 1 -name '*plugin' | cut -d"/" -f2 | grep -v "videostatusplugin"`
-    cp -a "${PSI_DIR}/plugins/generic" "${PSI_DIR}/build/src/plugins" || \
+    cp -a "${PSI_DIR}/plugins/generic" "${PSI_DIR}/build/plugins" || \
         die "preparing plugins requires prepared psi sources"
 
     cd "${PSI_DIR}/psi"
@@ -435,7 +435,7 @@ prep_omemo_plugin() {
 }
 
 plugins_compile() {
-    cd "${PSI_DIR}/build/src/plugins"
+    cd "${PSI_DIR}/build/plugins"
     echo "QMAKE_MAC_SDK = macosx${MAC_SDK_VER}" >> psiplugin.pri
     echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_DEPLOYMENT_TARGET}" >> psiplugin.pri
     
@@ -443,7 +443,7 @@ plugins_compile() {
     echo ${PLUGINS}
     log "Compiling plugins..."
     for pl in ${PLUGINS}; do
-        cd ${PSI_DIR}/build/src/plugins/generic/${pl} && log "Compiling ${pl} plugin."
+        cd ${PSI_DIR}/build/plugins/generic/${pl} && log "Compiling ${pl} plugin."
 
         if [ $pl = "otrplugin" ]; then
             prep_otr_plugin
@@ -616,7 +616,7 @@ copy_plugins() {
     fi
 
     for pl in ${PLUGINS}; do
-        cd ${PSI_DIR}/build/src/plugins/generic/${pl}
+        cd ${PSI_DIR}/build/plugins/generic/${pl}
         if [ -f "lib${pl}.dylib" ]; then
              cp "lib${pl}.dylib" "$CONTENTSDIR/Resources/plugins"
         fi

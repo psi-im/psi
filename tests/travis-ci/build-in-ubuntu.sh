@@ -13,7 +13,7 @@ CFLAGS="$(dpkg-buildflags --get CFLAGS) ${CPPFLAGS}"
 CXXFLAGS="$(dpkg-buildflags --get CXXFLAGS) ${CPPFLAGS}"
 LDFLAGS="$(dpkg-buildflags --get LDFLAGS) -Wl,--as-needed"
 
-[ -d "./src/plugins/generic" ] && \
+[ -d "./plugins/generic" ] && \
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 

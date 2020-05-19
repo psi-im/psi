@@ -45,7 +45,7 @@ CUR_DIR="$(dirname $(realpath -s ${0}))"
 MAIN_DIR="$(realpath -s ${CUR_DIR}/..)"
 TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
 
-[ -d "${MAIN_DIR}/src/plugins/generic" ] && \
+[ -d "${MAIN_DIR}/plugins/generic" ] && \
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 

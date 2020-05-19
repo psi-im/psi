@@ -75,7 +75,7 @@ find_path(
     ${ABS_CURRENT_DIR}
     ${ABS_PARENT_DIR}/psi
     PATH_SUFFIXES
-    src/plugins/cmake/modules
+    plugins/cmake/modules
     share/psi/plugins
     share/psi-plus/plugins
     ${SEARCH_FLAG}
@@ -91,7 +91,7 @@ find_path(
     ${ABS_CURRENT_DIR}
     ${ABS_PARENT_DIR}/psi
     PATH_SUFFIXES
-    src/plugins/include
+    plugins/include
     include/psi/plugins
     include/psi-plus/plugins
     ${SEARCH_FLAG}

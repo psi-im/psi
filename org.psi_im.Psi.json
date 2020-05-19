@@ -170,7 +170,7 @@
                     "type": "shell",
                     "commands": [
                         "cp -R psi-l10n/translations .",
-                        "cp -R psi-plugins/* src/plugins"]
+                        "cp -R psi-plugins/* plugins"]
                 }
             ]
         }
