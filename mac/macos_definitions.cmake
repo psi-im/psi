@@ -9,7 +9,7 @@ if(POLICY CMP0077)
     endif()
 endif()
 
-if(IS_PSIPLUS)
+if(PSI_PLUS)
     set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.psi-plus")
     set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2001-2020 Psi IM and Psi+ developers")
     set(MACOSX_ICON_FILE "application-plus.icns")
