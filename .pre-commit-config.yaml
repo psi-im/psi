@@ -15,6 +15,7 @@ repos:
     rev: f4c4ac5948aff384af2b439bfabb2bdd65d2b3ac
     hooks:
     -   id: clang-format
+        files: \.(cpp|h)$
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.7
     hooks:
