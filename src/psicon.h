@@ -111,6 +111,7 @@ public:
 
     QStringList        recentGCList() const;
     void               recentGCAdd(const QString &);
+    void               recentGCRemove(const QString &str);
     QStringList        recentBrowseList() const;
     void               recentBrowseAdd(const QString &);
     const QStringList &recentNodeList() const;

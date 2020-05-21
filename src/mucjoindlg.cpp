@@ -37,6 +37,8 @@ static const int     nickConflictCode = 409;
 static const QString additionalSymbol = "_";
 static const int     timeout          = 90000;
 
+enum FavoritesItemRoles { FavoritesJidRole = Qt::UserRole, FavoritesPasswordRole, FavoritesIsBookmark };
+
 MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlreadyCompleted_(false)
 {
     setAttribute(Qt::WA_DeleteOnClose);
@@ -78,12 +80,51 @@ MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlre
     connect(ui_.lwFavorites, SIGNAL(currentRowChanged(int)), SLOT(favoritesCurrentRowChanged(int)));
     connect(ui_.lwFavorites, SIGNAL(itemDoubleClicked(QListWidgetItem *)),
             SLOT(favoritesItemDoubleClicked(QListWidgetItem *)));
+    connect(ui_.lwFavorites, &QListWidget::customContextMenuRequested, this,
+            &MUCJoinDlg::lwFavorites_customContextMenuRequested);
+
+    ui_.lwFavorites->setContextMenuPolicy(Qt::CustomContextMenu);
     ui_.lwFavorites->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContentsOnFirstShow);
 
     favoritesCurrentRowChanged(ui_.lwFavorites->currentRow());
 
     setWidgetsEnabled(true);
     adjustSize();
+}
+
+void MUCJoinDlg::lwFavorites_customContextMenuRequested(const QPoint &pos)
+{
+    QPoint globalPos = ui_.lwFavorites->mapToGlobal(pos);
+
+    auto item = ui_.lwFavorites->itemAt(pos);
+    if (!item)
+        return;
+
+    QMenu myMenu;
+    if (item->data(FavoritesIsBookmark).toBool())
+        myMenu.addAction(IconsetFactory::icon(QLatin1String("psi/bookmark_add")).icon(), tr("Remove from bookmarks"),
+                         this, [this, item]() {
+                             account_->bookmarkManager()->removeConference(item->data(FavoritesJidRole).toString());
+                             item->setIcon(IconsetFactory::icon(QLatin1String("psi/history")).icon());
+                         });
+    else
+        myMenu.addAction(IconsetFactory::icon(QLatin1String("psi/bookmark_remove")).icon(), tr("Add to bookmarks"),
+                         this, [this, item]() {
+                             auto jid = item->data(FavoritesJidRole).toString();
+                             account_->bookmarkManager()->addConference({ jid, jid, ConferenceBookmark::Never });
+                             item->setIcon(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon());
+                         });
+    myMenu.addAction(IconsetFactory::icon(QLatin1String("psi/remove")).icon(), tr("Remove"), this, [this, item]() {
+        auto jid = item->data(FavoritesJidRole).toString();
+        if (item->data(FavoritesIsBookmark).toBool())
+            account_->bookmarkManager()->removeConference(jid);
+        controller_->recentGCRemove(jid);
+        ui_.lwFavorites->takeItem(ui_.lwFavorites->row(item));
+        delete item;
+    });
+
+    // Show context menu at handling position
+    myMenu.exec(globalPos);
 }
 
 MUCJoinDlg::~MUCJoinDlg()
@@ -149,8 +190,9 @@ void MUCJoinDlg::updateFavorites()
             }
             QString s = QString("%1 (%2)").arg(name, c.nick());
             lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon(), s);
-            lwi->setData(Qt::UserRole, c.jid().withResource(c.nick()).full());
-            lwi->setData(Qt::UserRole + 1, c.password());
+            lwi->setData(FavoritesJidRole, c.jid().withResource(c.nick()).full());
+            lwi->setData(FavoritesPasswordRole + 1, c.password());
+            lwi->setData(FavoritesIsBookmark, true);
             bmMap.insert(jidBare, lwi);
             nmMap.insertMulti(name.toLower(), lwi);
         }
@@ -169,7 +211,8 @@ void MUCJoinDlg::updateFavorites()
         if (!lwi) {
             QString s = tr("%1 on %2").arg(jid.resource()).arg(JIDUtil::toString(jid, false));
             lwi       = new QListWidgetItem(IconsetFactory::icon(QLatin1String("psi/history")).icon(), s);
-            lwi->setData(Qt::UserRole, j);
+            lwi->setData(FavoritesJidRole, j);
+            lwi->setData(FavoritesIsBookmark, false);
             ui_.lwFavorites->addItem(lwi);
         }
         if (!recentLwi) {
@@ -202,8 +245,8 @@ void MUCJoinDlg::favoritesCurrentRowChanged(int row)
         return;
     }
     QListWidgetItem *lwi = ui_.lwFavorites->currentItem();
-    Jid              jid(lwi->data(Qt::UserRole).toString());
-    QString          password(lwi->data(Qt::UserRole + 1).toString());
+    Jid              jid(lwi->data(FavoritesJidRole).toString());
+    QString          password(lwi->data(FavoritesPasswordRole).toString());
     if (!jid.isValid() || jid.node().isEmpty()) {
         return;
     }
@@ -216,8 +259,8 @@ void MUCJoinDlg::favoritesCurrentRowChanged(int row)
 
 void MUCJoinDlg::favoritesItemDoubleClicked(QListWidgetItem *lwi)
 {
-    Jid     jid(lwi->data(Qt::UserRole).toString());
-    QString password(lwi->data(Qt::UserRole + 1).toString());
+    Jid     jid(lwi->data(FavoritesJidRole).toString());
+    QString password(lwi->data(FavoritesPasswordRole).toString());
     if (!jid.isValid() || jid.node().isEmpty()) {
         return;
     }

@@ -60,6 +60,7 @@ private slots:
     void pa_disconnected();
     void favoritesCurrentRowChanged(int);
     void favoritesItemDoubleClicked(QListWidgetItem *lwi);
+    void lwFavorites_customContextMenuRequested(const QPoint &pos);
 
 private:
     Ui::MUCJoin               ui_;

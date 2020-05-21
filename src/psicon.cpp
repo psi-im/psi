@@ -1602,6 +1602,19 @@ void PsiCon::recentGCAdd(const QString &str)
     PsiOptions::instance()->setOption("options.muc.recent-joins.jids", recentList);
 }
 
+void PsiCon::recentGCRemove(const QString &str)
+{
+    QStringList recentList = recentGCList();
+    // remove it if we have it
+    for (const QString &s : recentList) {
+        if (s == str) {
+            recentList.removeAll(s);
+            break;
+        }
+    }
+    PsiOptions::instance()->setOption("options.muc.recent-joins.jids", recentList);
+}
+
 QStringList PsiCon::recentBrowseList() const
 {
     return PsiOptions::instance()->getOption("options.ui.service-discovery.recent-jids").toStringList();

@@ -45,6 +45,7 @@ public:
     void setBookmarks(const QList<URLBookmark> &, const QList<ConferenceBookmark> &);
     void setBookmarks(const QList<URLBookmark> &);
     void setBookmarks(const QList<ConferenceBookmark> &);
+    void addConference(const ConferenceBookmark &newb);
     void removeConference(const XMPP::Jid &);
 
 signals:

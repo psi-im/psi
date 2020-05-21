@@ -128,6 +128,19 @@ void BookmarkManager::setIsAvailable(bool available)
 
 bool BookmarkManager::isBookmarked(const XMPP::Jid &j) { return indexOfConference(j) >= 0; }
 
+void BookmarkManager::addConference(const ConferenceBookmark &newb)
+{
+    if (!isAvailable_ && !newb.isNull())
+        return;
+    auto it = std::find_if(conferences_.begin(), conferences_.end(),
+                           [newb](auto const &c) { return newb.jid().compare(c.jid(), false); });
+    if (it == conferences_.end()) {
+        auto copy = conferences_;
+        copy.append(newb);
+        setBookmarks(copy);
+    }
+}
+
 void BookmarkManager::removeConference(const XMPP::Jid &j)
 {
     if (isAvailable_) {
