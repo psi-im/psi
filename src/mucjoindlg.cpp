@@ -100,28 +100,42 @@ void MUCJoinDlg::lwFavorites_customContextMenuRequested(const QPoint &pos)
     if (!item)
         return;
 
-    QMenu myMenu;
-    if (item->data(FavoritesIsBookmark).toBool())
-        myMenu.addAction(IconsetFactory::icon(QLatin1String("psi/bookmark_add")).icon(), tr("Remove from bookmarks"),
-                         this, [this, item]() {
-                             account_->bookmarkManager()->removeConference(item->data(FavoritesJidRole).toString());
-                             item->setIcon(IconsetFactory::icon(QLatin1String("psi/history")).icon());
-                         });
-    else
-        myMenu.addAction(IconsetFactory::icon(QLatin1String("psi/bookmark_remove")).icon(), tr("Add to bookmarks"),
-                         this, [this, item]() {
-                             auto jid = item->data(FavoritesJidRole).toString();
-                             account_->bookmarkManager()->addConference({ jid, jid, ConferenceBookmark::Never });
-                             item->setIcon(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon());
-                         });
-    myMenu.addAction(IconsetFactory::icon(QLatin1String("psi/remove")).icon(), tr("Remove"), this, [this, item]() {
+    QMenu    myMenu;
+    QAction *bookmarkAction;
+    QAction *destroyAction;
+    if (item->data(FavoritesIsBookmark).toBool()) {
+        bookmarkAction = new QAction(IconsetFactory::icon(QLatin1String("psi/bookmark_add")).icon(),
+                                     tr("Remove from bookmarks"), &myMenu);
+        connect(bookmarkAction, &QAction::triggered, this, [this, item](bool) {
+            auto jid = item->data(FavoritesJidRole).toString();
+            account_->bookmarkManager()->removeConference(XMPP::Jid(jid).bare());
+            item->setIcon(IconsetFactory::icon(QLatin1String("psi/history")).icon());
+            item->setData(FavoritesIsBookmark, false);
+            controller_->recentGCAdd(jid);
+        });
+    } else {
+        bookmarkAction = new QAction(IconsetFactory::icon(QLatin1String("psi/bookmark_remove")).icon(),
+                                     tr("Add to bookmarks"), &myMenu);
+        connect(bookmarkAction, &QAction::triggered, this, [this, item](bool) {
+            auto jid = XMPP::Jid(item->data(FavoritesJidRole).toString());
+            account_->bookmarkManager()->addConference(
+                { jid.node(), jid.bare(), ConferenceBookmark::Never, jid.resource() });
+            item->setIcon(IconsetFactory::icon(QLatin1String("psi/bookmarks")).icon());
+            item->setData(FavoritesIsBookmark, true);
+        });
+    }
+    destroyAction = new QAction(IconsetFactory::icon(QLatin1String("psi/remove")).icon(), tr("Remove"), &myMenu);
+    connect(destroyAction, &QAction::triggered, this, [this, item](bool) {
         auto jid = item->data(FavoritesJidRole).toString();
         if (item->data(FavoritesIsBookmark).toBool())
-            account_->bookmarkManager()->removeConference(jid);
+            account_->bookmarkManager()->removeConference(XMPP::Jid(jid).bare());
         controller_->recentGCRemove(jid);
         ui_.lwFavorites->takeItem(ui_.lwFavorites->row(item));
         delete item;
     });
+
+    myMenu.addAction(bookmarkAction);
+    myMenu.addAction(destroyAction);
 
     // Show context menu at handling position
     myMenu.exec(globalPos);
