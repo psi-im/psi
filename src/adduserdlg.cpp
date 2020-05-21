@@ -85,10 +85,10 @@ AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString 
         cb_group->lineEdit()->setText(group);
     }
 
-    QSize s(te_info->width(), w_serviceTranslation->sizeHint().height());
+    QSize s(tb_info->width(), w_serviceTranslation->sizeHint().height());
     w_serviceTranslation->hide();
     w_serviceTranslation->setEnabled(false);
-    te_info->hide();
+    tb_info->hide();
 
     resize(size() - s);
 }

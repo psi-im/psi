@@ -189,15 +189,29 @@ void OptionsTabPlugins::showPluginInfo(int item)
         if (infoDialog)
             delete (infoDialog);
 
+        const QSize dialogSize = PsiOptions::instance()->getOption("options.ui.save.plugin-info-dialog-size", QSize(600, 400)).toSize();
+
         infoDialog = new QDialog(d);
         ui_.setupUi(infoDialog);
         infoDialog->setWindowTitle(tr("About plugin"));
         infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
         const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
-        ui_.te_info->setText(PluginManager::instance()->pluginInfo(name));
-        infoDialog->setAttribute(Qt::WA_DeleteOnClose);
+        ui_.tb_info->setText(PluginManager::instance()->pluginInfo(name));
+        infoDialog->resize(dialogSize);
         infoDialog->show();
+
+        connect(infoDialog, &QDialog::finished, this, &OptionsTabPlugins::savePluginInfoDialogSize);
     }
+}
+
+void OptionsTabPlugins::savePluginInfoDialogSize()
+{
+    QDialog *dlg = dynamic_cast<QDialog*>(sender());
+    if (!dlg)
+        return;
+
+    PsiOptions::instance()->setOption("options.ui.save.plugin-info-dialog-size", dlg->size());
+    dlg->deleteLater();
 }
 
 void OptionsTabPlugins::settingsClicked(int item)

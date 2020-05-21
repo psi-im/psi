@@ -18,7 +18,7 @@
     <enum>QLayout::SetMinimumSize</enum>
    </property>
    <item>
-    <widget class="QTextEdit" name="te_info">
+    <widget class="QTextEdit" name="tb_info">
      <property name="minimumSize">
       <size>
        <width>200</width>
