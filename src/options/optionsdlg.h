@@ -11,6 +11,9 @@ class OptionsDlg : public OptionsDlgBase {
 public:
     OptionsDlg(PsiCon *, QWidget *parent = nullptr);
     void addPluginWrapperTab(OAH_PluginOptionsTab *tab);
+
+private slots:
+    void saveDialogSize();
 };
 
 #endif // OPTIONSDLG_H
