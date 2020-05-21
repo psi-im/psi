@@ -38,6 +38,7 @@ private slots:
     void savePluginInfoDialogSize();
     void itemChanged(QTreeWidgetItem *item, int column);
     void settingsClicked(int item);
+    void savePluginSettingsDialogSize();
 };
 
 #endif // OPT_PLUGINS_H

@@ -223,6 +223,7 @@ void OptionsTabPlugins::settingsClicked(int item)
     d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
     if (d->tw_Plugins->selectedItems().size() > 0) {
+        const QSize        dialogSize = PsiOptions::instance()->getOption("options.ui.save.plugin-settings-dialog-size", QSize(600, 400)).toSize();
         const QString &    pluginName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         const QString &    shortName  = PluginManager::instance()->shortName(pluginName);
         PluginsOptionsDlg *sw         = d->findChild<PluginsOptionsDlg *>(shortName);
@@ -230,10 +231,21 @@ void OptionsTabPlugins::settingsClicked(int item)
             sw = new PluginsOptionsDlg(pluginName, psi, d);
             sw->setObjectName(shortName);
         }
-        sw->setMinimumSize(600, 300);
+        sw->resize(dialogSize);
         sw->open();
-        sw->adjustSize();
+
+        connect(sw, &QDialog::finished, this, &OptionsTabPlugins::savePluginSettingsDialogSize);
     }
+}
+
+void OptionsTabPlugins::savePluginSettingsDialogSize()
+{
+    QDialog *dlg = dynamic_cast<QDialog*>(sender());
+    if (!dlg)
+        return;
+
+    PsiOptions::instance()->setOption("options.ui.save.plugin-settings-dialog-size", dlg->size());
+    dlg->deleteLater();
 }
 
 #include "opt_plugins.moc"
