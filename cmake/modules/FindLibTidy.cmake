@@ -41,8 +41,6 @@ if( UNIX AND NOT( APPLE OR CYGWIN ) )
     endif()
 endif()
 
-set( LIBTIDY_ROOT "" CACHE STRING "Path to libtidy library" )
-
 find_path(
     LIBTIDY_INCLUDE_DIR tidy.h
     HINTS

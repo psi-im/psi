@@ -50,8 +50,6 @@ if( WIN32 )
     endif()
 endif()
 
-set( LIBGCRYPT_ROOT "" CACHE STRING "Path to libgcrypt library" )
-
 find_path(
     LIBGCRYPT_INCLUDE_DIR gcrypt.h
     HINTS
@@ -71,7 +69,7 @@ set(LIBGCRYPT_NAMES
 find_library(
     LIBGCRYPT_LIBRARY
     NAMES ${LIBGCRYPT_NAMES}
-    HINTS 
+    HINTS
     ${PC_LIBGCRYPT_LIBDIR}
     ${PC_LIBGCRYPT_LIBRARY_DIRS}
     ${LIBGCRYPT_LIB_HINT}

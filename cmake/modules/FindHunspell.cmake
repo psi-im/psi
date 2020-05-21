@@ -60,6 +60,7 @@ find_path(
 )
 set(HUNSPELL_NAMES
     hunspell${d}
+    libhunspell${d}
     hunspell-1.3
     hunspell-1.4
     hunspell-1.5

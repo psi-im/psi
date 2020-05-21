@@ -41,8 +41,6 @@ if( UNIX AND NOT( APPLE OR CYGWIN ) )
     endif()
 endif()
 
-set( LIBOTR_ROOT "" CACHE STRING "Path to libotr library" )
-
 find_path(
     LIBOTR_INCLUDE_DIR libotr/privkey.h
     HINTS
@@ -61,7 +59,7 @@ set(LIBOTR_NAMES
 find_library(
     LIBOTR_LIBRARY
     NAMES ${LIBOTR_NAMES}
-    HINTS 
+    HINTS
     ${PC_LIBOTR_LIBDIR}
     ${PC_LIBOTR_LIBRARY_DIRS}
     ${LIBOTR_ROOT}/lib

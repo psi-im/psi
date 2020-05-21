@@ -50,8 +50,6 @@ if( WIN32 )
     endif()
 endif()
 
-set( LIBGPGERROR_ROOT "" CACHE STRING "Path to libgpg-error library" )
-
 find_path(
     LIBGPGERROR_INCLUDE_DIR gpg-error.h
     HINTS
@@ -71,7 +69,7 @@ set(LIBGPGERROR_NAMES
 find_library(
     LIBGPGERROR_LIBRARY
     NAMES ${LIBGPGERROR_NAMES}
-    HINTS 
+    HINTS
     ${PC_LIBGPGERROR_LIBDIR}
     ${PC_LIBGPGERROR_LIBRARY_DIRS}
     ${LIBGPGERROR_LIB_HINT}

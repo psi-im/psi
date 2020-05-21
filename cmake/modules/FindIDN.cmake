@@ -41,8 +41,6 @@ if( UNIX AND NOT( APPLE OR CYGWIN ) )
     endif()
 endif()
 
-set( IDN_ROOT "" CACHE STRING "Path to libidn library" )
-
 find_path(
     IDN_INCLUDE_DIR idna.h
     HINTS
@@ -52,6 +50,7 @@ find_path(
 )
 set(IDN_NAMES
     idn${D}
+    libidn${D}
     idn-11${D}
 )
 find_library(
