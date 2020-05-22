@@ -49,6 +49,7 @@ namespace PsiMedia {
 class FeaturesContext;
 class Provider;
 class RtpSessionContext;
+class AudioRecorderContext;
 
 class Plugin {
 public:
@@ -140,8 +141,9 @@ public:
     virtual QString creditName() const = 0;
     virtual QString creditText() const = 0;
 
-    virtual FeaturesContext *  createFeatures()   = 0;
-    virtual RtpSessionContext *createRtpSession() = 0;
+    virtual FeaturesContext *     createFeatures()      = 0;
+    virtual RtpSessionContext *   createRtpSession()    = 0;
+    virtual AudioRecorderContext *createAudioRecorder() = 0;
 
     HINT_SIGNALS : HINT_METHOD(initialized())
 };
@@ -245,12 +247,33 @@ public:
                                HINT_METHOD(stopped()) HINT_METHOD(finished()) // for file playback only
                    HINT_METHOD(error())
 };
+
+class AudioRecorderContext : public QObjectInterface {
+public:
+    enum Error { ErrorGeneric, ErrorSystem, ErrorCodec };
+
+    virtual void setInputDevice(const QString &deviceId)  = 0;
+    virtual void setOutputDevice(QIODevice *recordDevice) = 0;
+
+    virtual void                setPreferences(const QList<PAudioParams> &params) = 0;
+    virtual QList<PAudioParams> preferences() const                               = 0;
+
+    virtual void start() = 0;
+    virtual void pause() = 0;
+    virtual void stop()  = 0;
+
+    virtual Error errorCode() const = 0;
+
+    HINT_SIGNALS : HINT_METHOD(started()) HINT_METHOD(preferencesUpdated()) HINT_METHOD(stopped()) HINT_METHOD(paused())
+                       HINT_METHOD(error())
+};
 }; // namespace PsiMedia
 
 Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.4")
-Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.5")
 Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::RtpSessionContext, "org.psi-im.psimedia.RtpSessionContext/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::AudioRecorderContext, "org.psi-im.psimedia.AudioRecorderContext/1.4")
 
 #endif // PSIMEDIAPROVIDER_H
