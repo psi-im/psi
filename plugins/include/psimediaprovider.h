@@ -269,7 +269,7 @@ public:
 };
 }; // namespace PsiMedia
 
-Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.4")
+Q_DECLARE_INTERFACE(PsiMedia::Plugin, "org.psi-im.psimedia.Plugin/1.5")
 Q_DECLARE_INTERFACE(PsiMedia::Provider, "org.psi-im.psimedia.Provider/1.5")
 Q_DECLARE_INTERFACE(PsiMedia::FeaturesContext, "org.psi-im.psimedia.FeaturesContext/1.4")
 Q_DECLARE_INTERFACE(PsiMedia::RtpChannelContext, "org.psi-im.psimedia.RtpChannelContext/1.4")
