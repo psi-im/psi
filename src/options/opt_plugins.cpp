@@ -202,11 +202,13 @@ void OptionsTabPlugins::showPluginInfo(int item)
 
         auto vendors = PluginManager::instance()->vendor(name).split(',');
         for (auto &v : vendors) {
-            v = TextUtil::escape(v.trimmed());
+            v = TextUtil::linkify(TextUtil::escape(v.trimmed()));
         }
         QString vendor = vendors.mid(0, vendors.size() - 1).join(", ");
         vendor         = vendor.isEmpty() ? vendors.last() : tr("%1 and %2").arg(vendor, vendors.last());
 
+        int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 1.2;
+        ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(name).pixmap(iconSize, QIcon::Normal, QIcon::On));
         ui_.lbl_meta->setText(tr("<b>%1</b> %2 by %3").arg(name, PluginManager::instance()->version(name), vendor));
         infoDialog->resize(dialogSize);
         infoDialog->show();
