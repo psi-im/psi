@@ -7,6 +7,7 @@
 #include "psicon.h"
 #include "psiiconset.h"
 #include "psioptions.h"
+#include "textutil.h"
 #include "ui_opt_plugins.h"
 
 #include <QHeaderView>
@@ -189,7 +190,8 @@ void OptionsTabPlugins::showPluginInfo(int item)
         if (infoDialog)
             delete (infoDialog);
 
-        const QSize dialogSize = PsiOptions::instance()->getOption("options.ui.save.plugin-info-dialog-size", QSize(600, 400)).toSize();
+        const QSize dialogSize
+            = PsiOptions::instance()->getOption("options.ui.save.plugin-info-dialog-size", QSize(600, 400)).toSize();
 
         infoDialog = new QDialog(d);
         ui_.setupUi(infoDialog);
@@ -197,6 +199,15 @@ void OptionsTabPlugins::showPluginInfo(int item)
         infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
         const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         ui_.tb_info->setText(PluginManager::instance()->pluginInfo(name));
+
+        auto vendors = PluginManager::instance()->vendor(name).split(',', Qt::SkipEmptyParts);
+        for (auto &v : vendors) {
+            v = TextUtil::escape(v.trimmed());
+        }
+        QString vendor = vendors.mid(0, vendors.size() - 1).join(", ");
+        vendor         = vendor.isEmpty() ? vendors.last() : tr("%1 and %2").arg(vendor, vendors.last());
+
+        ui_.lbl_meta->setText(tr("<b>%1</b> %2 by %3").arg(name, PluginManager::instance()->version(name), vendor));
         infoDialog->resize(dialogSize);
         infoDialog->show();
 
@@ -206,7 +217,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
 
 void OptionsTabPlugins::savePluginInfoDialogSize()
 {
-    QDialog *dlg = dynamic_cast<QDialog*>(sender());
+    QDialog *dlg = dynamic_cast<QDialog *>(sender());
     if (!dlg)
         return;
 
@@ -223,7 +234,9 @@ void OptionsTabPlugins::settingsClicked(int item)
     d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
     if (d->tw_Plugins->selectedItems().size() > 0) {
-        const QSize        dialogSize = PsiOptions::instance()->getOption("options.ui.save.plugin-settings-dialog-size", QSize(600, 400)).toSize();
+        const QSize dialogSize = PsiOptions::instance()
+                                     ->getOption("options.ui.save.plugin-settings-dialog-size", QSize(600, 400))
+                                     .toSize();
         const QString &    pluginName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         const QString &    shortName  = PluginManager::instance()->shortName(pluginName);
         PluginsOptionsDlg *sw         = d->findChild<PluginsOptionsDlg *>(shortName);
@@ -240,7 +253,7 @@ void OptionsTabPlugins::settingsClicked(int item)
 
 void OptionsTabPlugins::savePluginSettingsDialogSize()
 {
-    QDialog *dlg = dynamic_cast<QDialog*>(sender());
+    QDialog *dlg = dynamic_cast<QDialog *>(sender());
     if (!dlg)
         return;
 

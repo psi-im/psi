@@ -130,6 +130,13 @@ const QString &PluginHost::shortName() const { return shortName_; }
 const QString &PluginHost::version() const { return version_; }
 
 /**
+ * \brief Returns plugin vendor string.
+ *
+ * Data is available also when plugin is not loaded.
+ */
+const QString &PluginHost::vendor() const { return vendor_; }
+
+/**
  * \brief Returns plugin priority.
  *
  * Data is available also when plugin is not loaded.
@@ -176,53 +183,35 @@ void PluginHost::updateMetadata()
     if (!md.isEmpty())
         md = md.value("MetaData").toObject();
 
-    QString curLangFull    = ":" + TranslationManager::instance()->currentLanguage();
-    QString curLang        = curLangFull.section('_', 0, 0);
-    int     nameTranslated = 0;
-    name_.clear();
-    shortName_.clear();
-    priority_ = 2;
-    icon_     = QIcon();
+    QString curLangFull = ":" + TranslationManager::instance()->currentLanguage();
+    QString curLang     = curLangFull.section('_', 0, 0);
 
-    for (auto it = md.begin(); it != md.end(); ++it) {
-        if (nameTranslated < 2) {
-            if (it.key().startsWith(QLatin1String("name"))) {
-                if (it.key().endsWith(curLangFull)) {
-                    nameTranslated = 2;
-                    name_          = it.value().toString();
-                    continue;
-                }
-                if (nameTranslated < 1) {
-                    if (it.key().endsWith(curLang)) {
-                        nameTranslated = 1;
-                        name_          = it.value().toString();
-                        continue;
-                    }
-                    if (it.key().size() == 4) { // "name"
-                        name_ = it.value().toString();
-                        continue;
-                    }
-                }
-            }
-        }
-        if (it.key() == QLatin1String("shortname")) {
-            shortName_ = it.value().toString();
-        } else if (it.key() == QLatin1String("version")) {
-            version_ = it.value().toString();
-        } else if (it.key() == QLatin1String("priority")) {
-            priority_ = it.value().toInt();
-        } else if (it.key() == QLatin1String("icon")) {
-            auto data = it.value().toString();
-            if (data.startsWith("base64:")) {
-                QPixmap pix;
-                pix.loadFromData(QByteArray::fromBase64(data.midRef(6).toLatin1()));
-                icon_ = QIcon(pix);
-            } else if (data.startsWith("iconset:")) {
-                icon_ = IconsetFactory::icon(data.mid(8)).icon();
-            } else
-                icon_ = QIcon(data); // assuming file name or resource
-        }
-    }
+    name_ = md.value(QLatin1String("name:") + curLangFull).toString();
+    if (name_.isEmpty())
+        name_ = md.value(QLatin1String("name:") + curLang).toString();
+    if (name_.isEmpty())
+        name_ = md.value(QLatin1String("name")).toString();
+
+    shortName_ = md.value(QLatin1String("shortname")).toString();
+    vendor_    = md.value(QLatin1String("vendor")).toString();
+    version_   = md.value(QLatin1String("version")).toString();
+    priority_  = md.value(QLatin1String("priority")).toInt(2);
+
+    infoString_ = md.value(QLatin1String("description:") + curLangFull).toString();
+    if (infoString_.isEmpty())
+        infoString_ = md.value(QLatin1String("description:") + curLang).toString();
+    if (infoString_.isEmpty())
+        infoString_ = md.value(QLatin1String("description")).toString();
+
+    QString data = md.value(QLatin1String("icon")).toString();
+    if (data.startsWith("base64:")) {
+        QPixmap pix;
+        pix.loadFromData(QByteArray::fromBase64(data.midRef(6).toLatin1()));
+        icon_ = QIcon(pix);
+    } else if (data.startsWith("iconset:")) {
+        icon_ = IconsetFactory::icon(data.mid(8)).icon();
+    } else
+        icon_ = QIcon(data); // assuming file name or resource
 
     if (name_.isEmpty() || shortName_.isEmpty()) {
 #ifndef PLUGINS_NO_DEBUG
@@ -1094,15 +1083,9 @@ void PluginHost::subscribeLogout(QObject *context, std::function<void(int accoun
     connect(manager_, &PluginManager::accountLoggedOut, context, callback);
 }
 
-void PluginHost::setPgpKey(int account, const QString &keyId)
-{
-    manager_->setPgpKey(account, keyId);
-}
+void PluginHost::setPgpKey(int account, const QString &keyId) { manager_->setPgpKey(account, keyId); }
 
-void PluginHost::removeKnownPgpKey(int account, const QString &jid)
-{
-    manager_->removeKnownPgpKey(account, jid);
-}
+void PluginHost::removeKnownPgpKey(int account, const QString &jid) { manager_->removeKnownPgpKey(account, jid); }
 
 bool PluginHost::setActivity(int account, const QString &Jid, QDomElement xml)
 {

@@ -82,6 +82,7 @@ public:
     const QString &name() const;
     const QString &shortName() const;
     const QString &version() const;
+    const QString &vendor() const;
     int            priority() const;
     const QIcon &  icon() const;
 
@@ -163,18 +164,18 @@ public:
     QString appVCardDir() override;
 
     // AccountInfoAcsessingHost
-    QString     getStatus(int account) override;
-    QString     getStatusMessage(int account) override;
-    QString     proxyHost(int account) override;
-    int         proxyPort(int account) override;
-    QString     proxyUser(int account) override;
-    QString     proxyPassword(int account) override;
-    QString     getJid(int account) override;
-    QString     getId(int account) override;
-    QString     getName(int account) override;
-    QStringList getRoster(int account) override;
-    int         findOnlineAccountForContact(const QString &jid) const override;
-    QString     getPgpKey(int account) override;
+    QString                getStatus(int account) override;
+    QString                getStatusMessage(int account) override;
+    QString                proxyHost(int account) override;
+    int                    proxyPort(int account) override;
+    QString                proxyUser(int account) override;
+    QString                proxyPassword(int account) override;
+    QString                getJid(int account) override;
+    QString                getId(int account) override;
+    QString                getName(int account) override;
+    QStringList            getRoster(int account) override;
+    int                    findOnlineAccountForContact(const QString &jid) const override;
+    QString                getPgpKey(int account) override;
     QMap<QString, QString> getKnownPgpKeys(int account) override;
 
     // ContactInfoAccessingHost
@@ -270,6 +271,7 @@ private:
     QString           name_;
     QString           shortName_;
     QString           version_;
+    QString           vendor_;
     int               priority_ = 0;
     QIcon             icon_;
     QPluginLoader *   loader_             = nullptr;

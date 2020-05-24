@@ -338,6 +338,12 @@ QString PluginManager::version(const QString &plugin) const
     return name;
 }
 
+QString PluginManager::vendor(const QString &plugin) const
+{
+    auto it = hosts_.find(plugin);
+    return it == hosts_.end() ? QString() : it.value()->vendor();
+}
+
 /**
  * Returns a list of available plugin names found in all plugin directories.
  */
@@ -663,10 +669,10 @@ QString PluginManager::getPgpKey(int account) const
 QMap<QString, QString> PluginManager::getKnownPgpKeys(int account) const
 {
     QMap<QString, QString> out;
-    PsiAccount *pa = accountIds_.account(account);
+    PsiAccount *           pa = accountIds_.account(account);
     if (pa) {
         UserAccount acc = pa->userAccount();
-        for (const auto &item: acc.pgpKnownKeys) {
+        for (const auto &item : acc.pgpKnownKeys) {
             out[item.key()] = item.data();
         }
     }
@@ -928,7 +934,7 @@ void PluginManager::setPgpKey(int account, const QString &keyId)
 {
     PsiAccount *pa = accountIds_.account(account);
     if (pa) {
-        UserAccount acc = pa->userAccount();
+        UserAccount acc  = pa->userAccount();
         acc.pgpSecretKey = keyId;
         pa->setUserAccount(acc);
     }

@@ -70,6 +70,7 @@ public:
     QString  shortName(const QString &plugin) const;
     QString  nameByShortName(const QString &shortName) const;
     QString  version(const QString &plugin) const;
+    QString  vendor(const QString &plugin) const;
     QWidget *optionsWidget(const QString &plugin);
 
     void setShortcuts();
@@ -156,20 +157,19 @@ private:
     void    sendXml(int account, const QString &xml);
     QString uniqueId(int account) const;
 
-    QString     getStatus(int account) const;
-    QString     getStatusMessage(int account) const;
-    QString     proxyHost(int account) const;
-    int         proxyPort(int account) const;
-    QString     proxyUser(int account) const;
-    QString     proxyPassword(int account) const;
-    QStringList getRoster(int account) const;
-    QString     getJid(int account) const;
-    QString     getId(int account) const;
-    QString     getName(int account) const;
-    int         findOnlineAccountForContact(const QString &jid) const;
-    QString     getPgpKey(int account) const;
+    QString                getStatus(int account) const;
+    QString                getStatusMessage(int account) const;
+    QString                proxyHost(int account) const;
+    int                    proxyPort(int account) const;
+    QString                proxyUser(int account) const;
+    QString                proxyPassword(int account) const;
+    QStringList            getRoster(int account) const;
+    QString                getJid(int account) const;
+    QString                getId(int account) const;
+    QString                getName(int account) const;
+    int                    findOnlineAccountForContact(const QString &jid) const;
+    QString                getPgpKey(int account) const;
     QMap<QString, QString> getKnownPgpKeys(int account) const;
-
 
     bool        isSelf(int account, const QString &jid) const;
     bool        isAgent(int account, const QString &jid) const;
