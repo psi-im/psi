@@ -200,7 +200,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
         const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         ui_.tb_info->setText(PluginManager::instance()->pluginInfo(name));
 
-        auto vendors = PluginManager::instance()->vendor(name).split(',', Qt::SkipEmptyParts);
+        auto vendors = PluginManager::instance()->vendor(name).split(',');
         for (auto &v : vendors) {
             v = TextUtil::escape(v.trimmed());
         }
