@@ -108,10 +108,12 @@ void OptionsTabPlugins::listPlugins()
     plugins.sort();
     const QSize buttonSize = QSize(21, 21);
     for (const QString &plugin : plugins) {
-        QIcon            icon                = pm->icon(plugin);
-        bool             enabled             = pm->isEnabled(plugin);
-        const QString    path                = pm->pathToPlugin(plugin);
-        QString          toolTip             = tr("Plugin Path:\n%1").arg(path);
+        QIcon         icon    = pm->icon(plugin);
+        bool          enabled = pm->isEnabled(plugin);
+        const QString path    = pm->pathToPlugin(plugin);
+        QString       toolTip = QString("<b>%1</b><br/><br/>%2<br/><br/><b>%3:</b><br/>%4")
+                              .arg(plugin, pm->pluginInfo(plugin), tr("Plugin Path"), path);
+
         Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
         QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
         auto             truncatedPluginName = QString(plugin).replace(" Plugin", "");
