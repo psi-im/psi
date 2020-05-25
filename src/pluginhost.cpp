@@ -202,6 +202,7 @@ void PluginHost::updateMetadata()
         infoString_ = md.value(QLatin1String("description:") + curLang).toString();
     if (infoString_.isEmpty())
         infoString_ = md.value(QLatin1String("description")).toString();
+    infoString_ = TextUtil::plain2rich(infoString_);
 
     QString data = md.value(QLatin1String("icon")).toString();
     if (data.startsWith("base64:")) {
