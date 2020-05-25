@@ -207,9 +207,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
         infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
         const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         ui_.tb_info->setText(PluginManager::instance()->pluginInfo(name));
-
-        auto vendor = TextUtil::linkify(TextUtil::escape(PluginManager::instance()->vendor(name)));
-
+        auto vendor = formatVendorText(PluginManager::instance()->vendor(name));
         int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
         ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(name).pixmap(iconSize, QIcon::Normal, QIcon::On));
         ui_.lbl_meta->setText(tr("<b>%1 %2</b><br/><b>%3:</b> %4")
@@ -268,6 +266,33 @@ void OptionsTabPlugins::savePluginSettingsDialogSize()
 
     PsiOptions::instance()->setOption("options.ui.save.plugin-settings-dialog-size", dlg->size());
     dlg->deleteLater();
+}
+
+QString OptionsTabPlugins::formatVendorText(const QString &text)
+{
+    if (!text.contains("@") || !text.contains("<") || !text.contains(">"))
+        return TextUtil::escape(text);
+
+    QStringList authors = text.split(", ");
+    for (QString &author : authors) {
+        if (!author.contains("@") || !author.contains("<") || !author.contains(">"))
+            continue;
+
+        QStringList words = author.split(" ");
+        if (words.size() < 2)
+            continue;
+
+        QString email = words.last();
+        if (email.contains("@")) {
+            words.removeLast();
+            email.remove("<");
+            email.remove(">");
+            author = TextUtil::escape(words.join(" "));
+            author = QString("<a href=\"mailto:%2\">%1</a>")
+                    .arg(author).arg(TextUtil::escape(email));
+        }
+    }
+    return authors.join(", ");
 }
 
 #include "opt_plugins.moc"

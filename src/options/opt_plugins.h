@@ -39,6 +39,9 @@ private slots:
     void itemChanged(QTreeWidgetItem *item, int column);
     void settingsClicked(int item);
     void savePluginSettingsDialogSize();
+
+private:
+    inline QString formatVendorText(const QString &text);
 };
 
 #endif // OPT_PLUGINS_H
