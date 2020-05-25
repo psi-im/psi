@@ -208,7 +208,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
         auto vendor = formatVendorText(PluginManager::instance()->vendor(name), false);
         int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
         ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(name).pixmap(iconSize, QIcon::Normal, QIcon::On));
-        ui_.lbl_meta->setText(tr("<b>%1 %2</b><br/><b>%3:</b> %4")
+        ui_.lbl_meta->setText(QString("<b>%1 %2</b><br/><b>%3:</b> %4")
                                   .arg(name, PluginManager::instance()->version(name), tr("Authors"), vendor));
         ui_.lbl_file->setText(
             QString("<b>%1:</b> %2")
