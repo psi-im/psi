@@ -203,16 +203,12 @@ void OptionsTabPlugins::showPluginInfo(int item)
         const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         ui_.tb_info->setText(PluginManager::instance()->pluginInfo(name));
 
-        auto vendors = PluginManager::instance()->vendor(name).split(',');
-        for (auto &v : vendors) {
-            v = TextUtil::linkify(TextUtil::escape(v.trimmed()));
-        }
-        QString vendor = vendors.mid(0, vendors.size() - 1).join(", ");
-        vendor         = vendor.isEmpty() ? vendors.last() : tr("%1 and %2").arg(vendor, vendors.last());
+        auto vendor = TextUtil::linkify(TextUtil::escape(PluginManager::instance()->vendor(name)));
 
-        int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 1.2;
+        int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
         ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(name).pixmap(iconSize, QIcon::Normal, QIcon::On));
-        ui_.lbl_meta->setText(tr("<b>%1</b> %2 by %3").arg(name, PluginManager::instance()->version(name), vendor));
+        ui_.lbl_meta->setText(tr("<b>%1 %2</b><br/><b>%3:</b> %4")
+                                  .arg(name, PluginManager::instance()->version(name), tr("Authors"), vendor));
         ui_.lbl_file->setText(
             QString("<b>%1:</b> %2")
                 .arg(tr("Plugin Path"), TextUtil::escape(PluginManager::instance()->pathToPlugin(name))));
