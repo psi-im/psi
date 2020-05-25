@@ -111,9 +111,14 @@ void OptionsTabPlugins::listPlugins()
         QIcon         icon    = pm->icon(plugin);
         bool          enabled = pm->isEnabled(plugin);
         const QString path    = pm->pathToPlugin(plugin);
-        QString       toolTip = QString("<b>%1 %2</b><br/><b>%3: </b>%4<br/><br/>%5<br/><br/><b>%6:</b><br/>%7")
-                              .arg(plugin, pm->version(plugin), tr("Authors"), pm->vendor(plugin),
-                                   pm->description(plugin), tr("Plugin Path"), path);
+
+        auto vendors = TextUtil::plain2rich(pm->vendor(plugin)).split(",");
+        for (auto &v : vendors)
+            v = v.trimmed();
+        QString toolTip
+            = QString("<b>%1 %2</b><br/>%3<br/><br/><b>%4:</b><br/>&nbsp;&nbsp;%5<br/><br/><b>%6:</b><br/>%7")
+                  .arg(plugin, pm->version(plugin), TextUtil::plain2rich(pm->description(plugin)), tr("Authors"),
+                       vendors.join("<br/>&nbsp;&nbsp;"), tr("Plugin Path"), path);
 
         Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
         QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
