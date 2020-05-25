@@ -213,6 +213,9 @@ void OptionsTabPlugins::showPluginInfo(int item)
         int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 1.2;
         ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(name).pixmap(iconSize, QIcon::Normal, QIcon::On));
         ui_.lbl_meta->setText(tr("<b>%1</b> %2 by %3").arg(name, PluginManager::instance()->version(name), vendor));
+        ui_.lbl_file->setText(
+            QString("<b>%1:</b> %2")
+                .arg(tr("Plugin Path"), TextUtil::escape(PluginManager::instance()->pathToPlugin(name))));
         infoDialog->resize(dialogSize);
         infoDialog->show();
 
