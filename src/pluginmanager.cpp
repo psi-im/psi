@@ -344,6 +344,12 @@ QString PluginManager::vendor(const QString &plugin) const
     return it == hosts_.end() ? QString() : it.value()->vendor();
 }
 
+QString PluginManager::description(const QString &plugin) const
+{
+    auto it = hosts_.find(plugin);
+    return it == hosts_.end() ? QString() : it.value()->description();
+}
+
 /**
  * Returns a list of available plugin names found in all plugin directories.
  */
@@ -834,9 +840,12 @@ bool PluginManager::hasInfoProvider(const QString &plugin) const
 
 QString PluginManager::pluginInfo(const QString &plugin) const
 {
-    QString info;
-    if (hosts_.contains(plugin))
-        info = hosts_[plugin]->pluginInfo();
+    auto it = hosts_.find(plugin);
+    if (it == hosts_.end())
+        return QString();
+    QString info = it.value()->pluginInfo();
+    if (info.isEmpty())
+        info = it.value()->description();
     return info;
 }
 

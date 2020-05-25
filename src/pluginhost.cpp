@@ -137,6 +137,13 @@ const QString &PluginHost::version() const { return version_; }
 const QString &PluginHost::vendor() const { return vendor_; }
 
 /**
+ * \brief Returns plugin description string.
+ *
+ * Data is available also when plugin is not loaded.
+ */
+const QString &PluginHost::description() const { return description_; }
+
+/**
  * \brief Returns plugin priority.
  *
  * Data is available also when plugin is not loaded.
@@ -197,12 +204,12 @@ void PluginHost::updateMetadata()
     version_   = md.value(QLatin1String("version")).toString();
     priority_  = md.value(QLatin1String("priority")).toInt(2);
 
-    infoString_ = md.value(QLatin1String("description:") + curLangFull).toString();
-    if (infoString_.isEmpty())
-        infoString_ = md.value(QLatin1String("description:") + curLang).toString();
-    if (infoString_.isEmpty())
-        infoString_ = md.value(QLatin1String("description")).toString();
-    infoString_ = TextUtil::plain2rich(infoString_);
+    description_ = md.value(QLatin1String("description") + curLangFull).toString();
+    if (description_.isEmpty())
+        description_ = md.value(QLatin1String("description") + curLang).toString();
+    if (description_.isEmpty())
+        description_ = md.value(QLatin1String("description")).toString();
+    description_ = TextUtil::plain2rich(description_);
 
     QString data = md.value(QLatin1String("icon")).toString();
     if (data.startsWith("base64:")) {

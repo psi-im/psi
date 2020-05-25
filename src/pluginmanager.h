@@ -71,6 +71,7 @@ public:
     QString  nameByShortName(const QString &shortName) const;
     QString  version(const QString &plugin) const;
     QString  vendor(const QString &plugin) const;
+    QString  description(const QString &plugin) const;
     QWidget *optionsWidget(const QString &plugin);
 
     void setShortcuts();

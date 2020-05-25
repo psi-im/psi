@@ -83,6 +83,7 @@ public:
     const QString &shortName() const;
     const QString &version() const;
     const QString &vendor() const;
+    const QString &description() const;
     int            priority() const;
     const QIcon &  icon() const;
 
@@ -272,6 +273,7 @@ private:
     QString           shortName_;
     QString           version_;
     QString           vendor_;
+    QString           description_;
     int               priority_ = 0;
     QIcon             icon_;
     QPluginLoader *   loader_             = nullptr;
