@@ -112,13 +112,11 @@ void OptionsTabPlugins::listPlugins()
         bool          enabled = pm->isEnabled(plugin);
         const QString path    = pm->pathToPlugin(plugin);
 
-        auto vendors = TextUtil::plain2rich(pm->vendor(plugin)).split(",");
-        for (auto &v : vendors)
-            v = v.trimmed();
+        auto vendors = formatVendorText(pm->vendor(plugin), true);
         QString toolTip
-            = QString("<b>%1 %2</b><br/>%3<br/><br/><b>%4:</b><br/>&nbsp;&nbsp;%5<br/><br/><b>%6:</b><br/>%7")
+            = QString("<b>%1 %2</b><br/>%3<br/><br/><b>%4:</b><br/>%5<br/><br/><b>%6:</b><br/>%7")
                   .arg(plugin, pm->version(plugin), TextUtil::plain2rich(pm->description(plugin)), tr("Authors"),
-                       vendors.join("<br/>&nbsp;&nbsp;"), tr("Plugin Path"), path);
+                       vendors, tr("Plugin Path"), path);
 
         Qt::CheckState   state               = enabled ? Qt::Checked : Qt::Unchecked;
         QTreeWidgetItem *item                = new QTreeWidgetItem(d->tw_Plugins, QTreeWidgetItem::Type);
@@ -207,7 +205,7 @@ void OptionsTabPlugins::showPluginInfo(int item)
         infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
         const QString &name = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
         ui_.tb_info->setText(PluginManager::instance()->pluginInfo(name));
-        auto vendor = formatVendorText(PluginManager::instance()->vendor(name));
+        auto vendor = formatVendorText(PluginManager::instance()->vendor(name), false);
         int iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
         ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(name).pixmap(iconSize, QIcon::Normal, QIcon::On));
         ui_.lbl_meta->setText(tr("<b>%1 %2</b><br/><b>%3:</b> %4")
@@ -268,7 +266,7 @@ void OptionsTabPlugins::savePluginSettingsDialogSize()
     dlg->deleteLater();
 }
 
-QString OptionsTabPlugins::formatVendorText(const QString &text)
+QString OptionsTabPlugins::formatVendorText(const QString &text, const bool removeEmail)
 {
     if (!text.contains("@") || !text.contains("<") || !text.contains(">"))
         return TextUtil::escape(text);
@@ -285,11 +283,13 @@ QString OptionsTabPlugins::formatVendorText(const QString &text)
         QString email = words.last();
         if (email.contains("@")) {
             words.removeLast();
-            email.remove("<");
-            email.remove(">");
-            author = TextUtil::escape(words.join(" "));
-            author = QString("<a href=\"mailto:%2\">%1</a>")
-                    .arg(author).arg(TextUtil::escape(email));
+            if (!removeEmail) {
+                email.remove("<");
+                email.remove(">");
+                author = TextUtil::escape(words.join(" "));
+                author = QString("<a href=\"mailto:%2\">%1</a>")
+                        .arg(author).arg(TextUtil::escape(email));
+            }
         }
     }
     return authors.join(", ");

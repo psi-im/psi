@@ -41,7 +41,7 @@ private slots:
     void savePluginSettingsDialogSize();
 
 private:
-    inline QString formatVendorText(const QString &text);
+    inline QString formatVendorText(const QString &text, const bool removeEmail);
 };
 
 #endif // OPT_PLUGINS_H
