@@ -66,7 +66,7 @@ QString ActionList::name() const { return d->name; }
 
 int ActionList::id() const { return d->id; }
 
-IconAction *ActionList::action(const QString &name) const { return d->actions[name]; }
+IconAction *ActionList::action(const QString &name) const { return d->actions.value(name); }
 
 const QStringList &ActionList::actions() const { return d->sortedActions; }
 
@@ -134,7 +134,7 @@ ActionList *MetaActionList::actionList(const QString &name) const
 ActionList *MetaActionList::actionList(const QString &name, int id) const
 {
     auto it
-        = std::find_if(d->lists.begin(), d->lists.end(), [&](auto a) { return a->name() == name && a->id() == id; });
+        = std::find_if(d->lists.begin(), d->lists.end(), [&](auto a) { return a->id() == id && a->name() == name; });
     if (it == d->lists.end())
         return nullptr;
     return *it;

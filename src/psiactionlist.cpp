@@ -88,10 +88,12 @@ PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
 
 #ifdef PSI_PLUGINS
     connect(PluginManager::instance(), &PluginManager::pluginEnabled, this, [this](const QString &shortName) {
-        PluginManager *pm           = PluginManager::instance();
-        QStringList    plugins      = pm->availablePlugins();
-        auto           chatActions  = list->actionList(tr("Plugins"), Actions_Chat);
-        auto           groupActions = list->actionList(tr("Plugins"), Actions_Groupchat);
+        PluginManager *pm      = PluginManager::instance();
+        QStringList    plugins = pm->availablePlugins();
+
+        auto trPlugins    = tr("Plugins");
+        auto chatActions  = list->actionList(trPlugins, Actions_Chat);
+        auto groupActions = list->actionList(trPlugins, Actions_Groupchat);
 
         auto pluginName = pm->pluginName(shortName);
         if (chatActions && pm->hasToolBarButton(shortName)) {
@@ -105,6 +107,22 @@ PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
             action->setIcon(pm->icon(shortName));
             groupActions->addAction(shortName + "-plugin", action);
         }
+    });
+
+    connect(PluginManager::instance(), &PluginManager::pluginDisabled, this, [this](const QString &shortName) {
+        PluginManager *pm      = PluginManager::instance();
+        QStringList    plugins = pm->availablePlugins();
+
+        auto trPlugins    = tr("Plugins");
+        auto chatActions  = list->actionList(trPlugins, Actions_Chat);
+        auto groupActions = list->actionList(trPlugins, Actions_Groupchat);
+
+        auto pluginName = pm->pluginName(shortName);
+        if (chatActions)
+            delete chatActions->action(shortName + "-plugin");
+
+        if (groupActions)
+            delete groupActions->action(shortName + "-plugin");
     });
 #endif
 
