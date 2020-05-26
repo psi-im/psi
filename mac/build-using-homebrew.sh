@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2020-01-24
+# Updated: 2020-05-26
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -33,7 +33,7 @@
 # brew install tidy-html5 libotr libsignal-protocol-c
 #
 # Additional tools:
-# brew install gnupg wget htop
+# brew install gnupg pinentry-mac wget htop
 
 set -e
 
@@ -53,14 +53,21 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
      CHAT_TYPE="webengine" || \
      CHAT_TYPE="basic"
 
+[ "${ENABLE_DEV_PLUGINS}" != "ON" ] && \
+     ENABLE_DEV_PLUGINS="OFF"
+
+[ "${ENABLE_PSIMEDIA}" != "ON" ] && \
+     ENABLE_PSIMEDIA="OFF"
+
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
-               -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DCHAT_TYPE=${CHAT_TYPE} \
+               -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
+               -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \
+               -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_HUNSPELL=ON \
                -DUSE_KEYCHAIN=ON \
                -DUSE_SPARKLE=OFF \
                -DUSE_QJDNS=OFF \
-               -DBUILD_DEV_PLUGINS=OFF \
                -DVERBOSE_PROGRAM_NAME=ON"
 
 mkdir -p "${MAIN_DIR}/builddir"
