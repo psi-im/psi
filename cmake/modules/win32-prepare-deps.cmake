@@ -417,6 +417,7 @@ if(WIN32)
         libwinpthread-1.dll
         libxslt-1.dll
         libzlib.dll
+        libzstd.dll
         ssleay32.dll
         zlib1.dll
         )
