@@ -173,6 +173,8 @@ QString FileUtil::getInbandImageFileName(QWidget *parent)
 // see also image2type in xmpp_vcard.cpp
 QString FileUtil::mimeToFileExt(const QString &mime)
 {
+    if (mime.isEmpty())
+        return QString();
     static QMap<QString, QString> mimes;
     if (!mimes.size()) {
         mimes["image/png"]     = QLatin1String("png");

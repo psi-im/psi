@@ -39,8 +39,10 @@ FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, c
     Q_ASSERT(sums.size() > 0);
     std::sort(_sums.begin(), _sums.end(),
               [](const XMPP::Hash &a, const XMPP::Hash &b) -> bool { return int(a.type()) < int(b.type()); });
-    QString ext = FileUtil::mimeToFileExt(_metadata.value(QLatin1String("type")).toString());
-    _fileName   = _sums.value(0).toHex() + (ext.isEmpty() ? "" : "." + ext);
+
+    auto    metaType = _metadata.value(QLatin1String("type"));
+    QString ext      = metaType.isNull() ? QString() : FileUtil::mimeToFileExt(metaType.toString());
+    _fileName        = _sums.value(0).toHex() + (ext.isEmpty() ? "" : "." + ext);
 }
 
 bool FileCacheItem::inMemory() const { return _data.size() > 0; }
