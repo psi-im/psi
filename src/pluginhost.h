@@ -265,6 +265,10 @@ public:
     void selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput) override;
     void setMediaProvider(PsiMedia::Provider *provider) override;
 
+signals:
+    void enabled();
+    void disabled();
+
 private:
     PluginManager *   manager_ = nullptr;
     QPointer<QObject> plugin_;

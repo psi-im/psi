@@ -86,6 +86,28 @@ PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
     createChat();
     createGroupchat();
 
+#ifdef PSI_PLUGINS
+    connect(PluginManager::instance(), &PluginManager::pluginEnabled, this, [this](const QString &shortName) {
+        PluginManager *pm           = PluginManager::instance();
+        QStringList    plugins      = pm->availablePlugins();
+        auto           chatActions  = list->actionList(tr("Plugins"), Actions_Chat);
+        auto           groupActions = list->actionList(tr("Plugins"), Actions_Groupchat);
+
+        auto pluginName = pm->pluginName(shortName);
+        if (chatActions && pm->hasToolBarButton(shortName)) {
+            IconAction *action = new IconAction(pluginName, "", pluginName, 0, this);
+            action->setIcon(pm->icon(shortName));
+            chatActions->addAction(shortName + "-plugin", action);
+        }
+
+        if (groupActions && pm->hasGCToolBarButton(shortName)) {
+            IconAction *action = new IconAction(pluginName, "", pluginName, 0, this);
+            action->setIcon(pm->icon(shortName));
+            groupActions->addAction(shortName + "-plugin", action);
+        }
+    });
+#endif
+
     connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
     optionsChanged();
 }
@@ -529,20 +551,7 @@ void PsiActionList::Private::createGroupchat()
 void PsiActionList::Private::addPluginsActions(ActionsType type)
 {
 #ifdef PSI_PLUGINS
-    PluginManager *pm      = PluginManager::instance();
-    QStringList    plugins = pm->availablePlugins();
-    ActionList *   actions = new ActionList(tr("Plugins"), type, false);
-    for (const QString &plugin : plugins) {
-        if ((type == Actions_Chat && !pm->hasToolBarButton(plugin))
-            || (type == Actions_Groupchat && !pm->hasGCToolBarButton(plugin))) {
-
-            continue;
-        }
-
-        IconAction *action = new IconAction(plugin, "", plugin, 0, this);
-        action->setIcon(pm->icon(plugin));
-        actions->addAction(pm->shortName(plugin) + "-plugin", action);
-    }
+    ActionList *actions = new ActionList(tr("Plugins"), type, false);
     list->addList(actions);
 #else
     Q_UNUSED(type)

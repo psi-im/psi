@@ -511,6 +511,8 @@ bool PluginHost::enable()
         }
 
         enabled_ = qobject_cast<PsiPlugin *>(plugin_)->enable();
+        if (enabled_)
+            emit enabled();
     }
 
     return enabled_;
@@ -528,6 +530,8 @@ bool PluginHost::disable()
 {
     if (enabled_) {
         enabled_ = !qobject_cast<PsiPlugin *>(plugin_)->disable();
+        if (!enabled_)
+            emit disabled();
     }
     return !enabled_;
 }
@@ -1330,10 +1334,10 @@ bool PluginHost::encryptMessageElement(int account, QDomElement &message)
  * PluginAccessingHost
  */
 
-QObject *PluginHost::getPlugin(const QString &name)
+QObject *PluginHost::getPlugin(const QString &shortName)
 {
     for (PluginHost *plugin : manager_->pluginsByPriority_) {
-        if (plugin->name() == name || plugin->shortName() == name) {
+        if (plugin->shortName() == shortName || plugin->name() == shortName) {
             return plugin->plugin_;
         }
     }

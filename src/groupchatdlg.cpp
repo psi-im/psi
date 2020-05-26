@@ -2315,7 +2315,7 @@ void GCMainDlg::setToolbuttons()
     for (const QString &actionName : actionsNames) {
 #ifdef PSI_PLUGINS
         if (actionName.endsWith("-plugin")) {
-            QString name = PluginManager::instance()->nameByShortName(actionName.mid(0, actionName.length() - 7));
+            QString name = PluginManager::instance()->pluginName(actionName.mid(0, actionName.length() - 7));
             if (!name.isEmpty())
                 PluginManager::instance()->addGCToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
             continue;

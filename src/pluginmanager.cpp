@@ -129,9 +129,13 @@ QList<PluginHost *> PluginManager::updatePluginsList()
 #endif
                 if (!pluginByFile_.contains(file)) {
                     PluginHost *host = new PluginHost(this, file);
-                    if (host->isValid() && !hosts_.contains(host->name())) {
-                        hosts_[host->name()] = host;
-                        pluginByFile_[file]  = host;
+                    connect(host, &PluginHost::enabled, this,
+                            [this, shortName = host->shortName()]() { emit pluginEnabled(shortName); });
+                    connect(host, &PluginHost::disabled, this,
+                            [this, shortName = host->shortName()]() { emit pluginDisabled(shortName); });
+                    if (host->isValid() && !hosts_.contains(host->shortName())) {
+                        hosts_[host->shortName()] = host;
+                        pluginByFile_[file]       = host;
                         newPlugins.append(host);
                         if (host->priority() == PsiPlugin::PriorityHighest || !pluginsByPriority_.size()) {
                             pluginsByPriority_.push_front(host);
@@ -255,7 +259,8 @@ void PluginManager::loadAllPlugins()
     // Now look for external plugins
     for (PluginHost *plugin : hosts_.values()) {
         plugin->load();
-        plugin->enable();
+        if (plugin->enable())
+            emit pluginEnabled(plugin->shortName());
     }
 }
 
@@ -308,25 +313,19 @@ QString PluginManager::pathToPlugin(const QString &plugin) const
  * \param plugin Name of the plugin.
  * \return Path to the plugin file.
  */
-QString PluginManager::shortName(const QString &plugin) const
-{
-    QString name;
-    if (hosts_.contains(plugin)) {
-        name = hosts_[plugin]->shortName();
-    }
-    return name;
-}
+// QString PluginManager::shortName(const QString &plugin) const
+//{
+//    QString name;
+//    if (hosts_.contains(plugin)) {
+//        name = hosts_[plugin]->shortName();
+//    }
+//    return name;
+//}
 
-QString PluginManager::nameByShortName(const QString &shortName) const
+QString PluginManager::pluginName(const QString &shortName) const
 {
-    QString name;
-    for (PluginHost *host : pluginsByPriority_) {
-        if (host->shortName() == shortName) {
-            name = host->name();
-            break;
-        }
-    }
-    return name;
+    auto host = hosts_.value(shortName);
+    return host ? host->name() : QString();
 }
 
 QString PluginManager::version(const QString &plugin) const
@@ -907,9 +906,10 @@ void PluginManager::restoreOptions(const QString &plugin)
 void PluginManager::addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
                                      const QString &plugin)
 {
+    qWarning("deprecated PluginManager::addToolBarButton");
     const int acc_id = accountIds_.id(account);
     for (PluginHost *host : pluginsByPriority_) {
-        if (plugin.isEmpty() || (host->name() == plugin)) {
+        if (plugin.isEmpty() || (host->shortName() == plugin)) {
             host->addToolBarButton(parent, toolbar, acc_id, contact);
         }
     }
@@ -920,9 +920,10 @@ bool PluginManager::hasToolBarButton(const QString &plugin) const { return hosts
 void PluginManager::addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
                                        const QString &plugin)
 {
+    qWarning("deprecated PluginManager::addGCToolBarButton");
     const int acc_id = accountIds_.id(account);
     for (PluginHost *host : pluginsByPriority_) {
-        if (plugin.isEmpty() || (host->name() == plugin)) {
+        if (plugin.isEmpty() || (host->shortName() == plugin)) {
             host->addGCToolBarButton(parent, toolbar, acc_id, contact);
         }
     }

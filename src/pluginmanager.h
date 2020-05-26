@@ -65,10 +65,10 @@ public:
     void loadEnabledPlugins();
     bool unloadAllPlugins();
 
-    bool     isEnabled(const QString &plugin) const;
-    QString  pathToPlugin(const QString &plugin) const;
-    QString  shortName(const QString &plugin) const;
-    QString  nameByShortName(const QString &shortName) const;
+    bool    isEnabled(const QString &plugin) const;
+    QString pathToPlugin(const QString &plugin) const;
+    // QString  shortName(const QString &plugin) const;
+    QString  pluginName(const QString &shortName) const;
     QString  version(const QString &plugin) const;
     QString  vendor(const QString &plugin) const;
     QString  description(const QString &plugin) const;
@@ -120,6 +120,8 @@ public:
 signals:
     void jsFiltersUpdated();
     void accountLoggedOut(int account_id);
+    void pluginEnabled(const QString &shortName);
+    void pluginDisabled(const QString &shortName);
 
 private:
     PluginManager();
@@ -137,7 +139,7 @@ private:
     // account, account id
     AccountIds accountIds_;
 
-    // name, host
+    // shortName, host
     QMap<QString, PluginHost *> hosts_;
     // file, host
     QMap<QString, PluginHost *> pluginByFile_;

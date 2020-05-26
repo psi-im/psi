@@ -131,6 +131,15 @@ ActionList *MetaActionList::actionList(const QString &name) const
     return nullptr;
 }
 
+ActionList *MetaActionList::actionList(const QString &name, int id) const
+{
+    auto it
+        = std::find_if(d->lists.begin(), d->lists.end(), [&](auto a) { return a->name() == name && a->id() == id; });
+    if (it == d->lists.end())
+        return nullptr;
+    return *it;
+}
+
 QList<ActionList *> MetaActionList::actionLists(const unsigned int id) const
 {
     QList<ActionList *> list;

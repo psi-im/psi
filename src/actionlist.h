@@ -58,6 +58,7 @@ public:
     ~MetaActionList();
 
     ActionList *        actionList(const QString &name) const;
+    ActionList *        actionList(const QString &name, int id) const;
     QList<ActionList *> actionLists(const unsigned int id) const;
     QStringList         actionLists() const;
 

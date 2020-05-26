@@ -157,7 +157,7 @@ bool PsiOptions::newProfile()
         PluginManager *pm      = PluginManager::instance();
         QStringList    plugins = pm->availablePlugins();
         for (const QString &plugin : plugins) {
-            pluginsKeys << pm->shortName(plugin) + "-plugin";
+            pluginsKeys << plugin + "-plugin";
         }
 #endif
         ToolbarPrefs chatToolbar;
