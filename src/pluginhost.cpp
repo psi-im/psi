@@ -279,11 +279,11 @@ bool PluginHost::load()
                 valid_  = true;
                 // loaded_ = true;
                 // enabled_ = false;
-                name_                   = psiPlugin->name();
-                shortName_              = psiPlugin->shortName();
-                version_                = psiPlugin->version();
-                priority_               = psiPlugin->priority();
-                icon_                   = QIcon(psiPlugin->icon());
+                name_ = psiPlugin->name();
+                // shortName_ = psiPlugin->shortName();
+                // version_   = psiPlugin->version();
+                // priority_  = psiPlugin->priority();
+                // icon_      = QIcon(psiPlugin->icon());
                 hasToolBarButton_       = qobject_cast<ToolbarIconAccessor *>(plugin_) ? true : false;
                 hasGCToolBarButton_     = qobject_cast<GCToolbarIconAccessor *>(plugin_) ? true : false;
                 PluginInfoProvider *pip = qobject_cast<PluginInfoProvider *>(plugin_);
