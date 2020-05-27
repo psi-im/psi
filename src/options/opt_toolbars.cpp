@@ -3,6 +3,7 @@
 #include "common.h"
 #include "iconaction.h"
 #include "iconwidget.h"
+#include "pluginmanager.h"
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psioptions.h"
@@ -83,8 +84,20 @@ public:
             return nullptr;
         QTreeWidgetItem *item = new QTreeWidgetItem(root, preceding);
 
-        QObject::connect(action, &IconAction::destroyed, q,
-                         [root, item]() { delete root->takeChild(root->indexOfChild(item)); });
+        QObject::connect(action, &IconAction::destroyed, q, [this, root, item]() {
+            QString actionName = item->data(0, Qt::UserRole).toString();
+            delete root->takeChild(root->indexOfChild(item));
+            LookFeelToolbarsUI *d = static_cast<LookFeelToolbarsUI *>(q->w);
+
+            if (root->data(0, Qt::UserRole + 1) == d->cb_toolbars->currentIndex()) {
+                for (int i = 0; i < d->lw_selectedActions->count(); i++) {
+                    if (d->lw_selectedActions->item(i)->data(Qt::UserRole).toString() == actionName) {
+                        delete d->lw_selectedActions->takeItem(i);
+                        q->updateArrows();
+                    }
+                }
+            }
+        });
 
         QString n = q->actionName(static_cast<QAction *>(action));
         if (!action->toolTip().isEmpty() && action->toolTip() != n) {
@@ -349,9 +362,9 @@ void OptionsTabToolbars::addToolbarAction(QListWidget *parent, QString name, int
     addToolbarAction(parent, action, name);
 }
 
-void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *action, QString name)
+void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *action, QString name, int pos)
 {
-    QListWidgetItem *item = new QListWidgetItem(parent);
+    QListWidgetItem *item = new QListWidgetItem();
 
     QString n = actionName(action);
     if (!action->toolTip().isEmpty() && action->toolTip() != n) {
@@ -362,6 +375,12 @@ void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *ac
     item->setData(Qt::UserRole, name);
     item->setIcon(action->icon());
     item->setHidden(!action->isVisible());
+
+    if (pos == -1) {
+        parent->addItem(item);
+    } else {
+        parent->insertItem(pos, item);
+    }
 }
 
 void OptionsTabToolbars::toolbarSelectionChanged(int item)
@@ -427,18 +446,20 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
             lastRoot              = root;
             root->setText(0, actionList->name());
             root->setData(0, Qt::UserRole, QString(""));
+            root->setData(0, Qt::UserRole + 1, n);
             root->setExpanded(true);
 
-            connect(
-                actionList, &ActionList::actionAdded, this,
-                [root, this](IconAction *action) { p->insertAction(root, action, nullptr); }, Qt::UniqueConnection);
+            connect(actionList, &ActionList::actionAdded, this, &OptionsTabToolbars::onActionAdded,
+                    Qt::UniqueConnection);
 
-            QTreeWidgetItem *     last        = nullptr;
-            QStringList           actionNames = actionList->actions();
-            QStringList::Iterator it2         = actionNames.begin();
-            for (; it2 != actionNames.end(); ++it2) {
-                IconAction *action = actionList->action(*it2);
-                auto        item   = p->insertAction(root, action, last);
+            QTreeWidgetItem *last        = nullptr;
+            QStringList      actionNames = actionList->actions();
+            for (auto const &name : actionNames) {
+                IconAction *action = actionList->action(name);
+                if (!action) {
+                    continue;
+                }
+                auto item = p->insertAction(root, action, last);
                 if (item)
                     last = item;
             }
@@ -446,13 +467,41 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
         tw->resizeColumnToContents(0);
     }
 
-    QStringList::Iterator it = tb.keys.begin();
-    for (; it != tb.keys.end(); ++it) {
-        addToolbarAction(d->lw_selectedActions, *it, p->currentType());
+    for (auto const &name : tb.keys) {
+        addToolbarAction(d->lw_selectedActions, name, p->currentType());
     }
     updateArrows();
 
     noDirty = false;
+}
+
+void OptionsTabToolbars::onActionAdded(IconAction *action)
+{
+    auto                listName = static_cast<ActionList *>(sender())->name();
+    LookFeelToolbarsUI *d        = static_cast<LookFeelToolbarsUI *>(w);
+
+    QTreeWidgetItemIterator it(d->tw_availActions);
+    bool                    available = false;
+    while (*it) {
+        if ((*it)->text(0) == listName) {
+            p->insertAction(*it, action, nullptr);
+            available = true;
+            break;
+        }
+        ++it;
+    }
+    if (!available)
+        return;
+
+    ToolbarPrefs tb;
+    int          n = d->cb_toolbars->currentIndex();
+    tb             = p->toolbars[n];
+    int pos        = tb.keys.indexOf(action->objectName());
+    if (pos == -1)
+        return; // not preferred
+
+    addToolbarAction(d->lw_selectedActions, action, action->objectName(), pos);
+    updateArrows();
 }
 
 void OptionsTabToolbars::rebuildToolbarKeys()

@@ -65,6 +65,7 @@ public:
     void loadEnabledPlugins();
     bool unloadAllPlugins();
 
+    bool    isAvailable(const QString &plugin) const;
     bool    isEnabled(const QString &plugin) const;
     QString pathToPlugin(const QString &plugin) const;
     // QString  shortName(const QString &plugin) const;

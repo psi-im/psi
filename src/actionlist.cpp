@@ -100,7 +100,11 @@ ActionList::Private::Private(const Private &from) : QObject()
     sortedActions = from.sortedActions;
 }
 
-void ActionList::Private::actionDestroyed(QObject *obj) { actions.remove(obj->objectName()); }
+void ActionList::Private::actionDestroyed(QObject *obj)
+{
+    sortedActions.removeOne(obj->objectName());
+    actions.remove(obj->objectName());
+}
 
 //----------------------------------------------------------------------------
 // MetaActionList

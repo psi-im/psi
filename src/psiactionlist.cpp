@@ -118,8 +118,10 @@ PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
         auto groupActions = list->actionList(trPlugins, Actions_Groupchat);
 
         auto pluginName = pm->pluginName(shortName);
-        if (chatActions)
-            delete chatActions->action(shortName + "-plugin");
+        if (chatActions) {
+            auto action = chatActions->action(shortName + "-plugin");
+            delete action;
+        }
 
         if (groupActions)
             delete groupActions->action(shortName + "-plugin");

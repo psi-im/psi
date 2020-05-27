@@ -10,6 +10,7 @@ class QAction;
 class QListWidget;
 class QListWidgetItem;
 class QTreeWidgetItem;
+class IconAction;
 
 class OptionsTabToolbars : public OptionsTab {
     Q_OBJECT
@@ -29,7 +30,7 @@ private slots:
     void    toolbarAdd();
     void    toolbarDelete();
     void    addToolbarAction(QListWidget *, QString name, int toolbarId);
-    void    addToolbarAction(QListWidget *, const QAction *action, QString name);
+    void    addToolbarAction(QListWidget *, const QAction *action, QString name, int pos = -1);
     void    toolbarSelectionChanged(int);
     void    rebuildToolbarKeys();
     void    toolbarNameChanged();
@@ -44,6 +45,8 @@ private slots:
     void    avaAct_selectionChanged(QTreeWidgetItem *);
 
     void toolbarPositionApply();
+
+    void onActionAdded(IconAction *action);
 
 private:
     void updateArrows();

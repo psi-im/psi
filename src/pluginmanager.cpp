@@ -283,6 +283,8 @@ bool PluginManager::unloadAllPlugins()
     return ok;
 }
 
+bool PluginManager::isAvailable(const QString &plugin) const { return hosts_.contains(plugin); }
+
 bool PluginManager::isEnabled(const QString &plugin) const
 {
     bool enabled = false;
