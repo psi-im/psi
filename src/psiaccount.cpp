@@ -3188,21 +3188,8 @@ void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
         d->reconnectConnection = QMetaObject::Connection();
     }
 
-    // using pgp?
-    if (!d->cur_pgpSecretKey.isEmpty()) {
-        d->loginStatus = s;
-
-        // sign presence
-        pgp_trySignPresence();
-    } else {
-        /*if(d->psi->pgp() && !d->cur_pgpSecretKeyID.isEmpty())
-            s.setKeyID(d->cur_pgpSecretKeyID);
-        else
-            s.setKeyID("");*/
-
-        // send presence normally
-        setStatusActual(s);
-    }
+    // send presence
+    setStatusActual(s);
 }
 
 void PsiAccount::setStatusActual(const Status &_s)
@@ -5882,40 +5869,6 @@ const Activity &PsiAccount::activity() const { return d->self.activity(); }
 const GeoLocation &PsiAccount::geolocation() const { return d->self.geoLocation(); }
 
 const Mood &PsiAccount::mood() const { return d->self.mood(); }
-
-void PsiAccount::pgp_trySignPresence()
-{
-    if (pgpKeyId().isEmpty())
-        return;
-
-    GpgTransaction *transaction = new GpgTransaction(GpgTransaction::Type::Sign, pgpKeyId());
-    connect(transaction, &GpgTransaction::transactionFinished, this, &PsiAccount::pgp_signFinished);
-
-    transaction->setStdInString(d->loginStatus.status());
-    transaction->start();
-}
-
-void PsiAccount::pgp_signFinished()
-{
-#ifdef HAVE_PGPUTIL
-    GpgTransaction *transaction = static_cast<GpgTransaction *>(sender());
-    if (transaction->success()) {
-        Status s = d->loginStatus;
-        s.setXSigned(PGPUtil::instance().stripHeaderFooter(transaction->stdOutString()));
-        setStatusActual(s);
-    } else {
-        PGPUtil::showDiagnosticText(
-            tr("There was an error trying to sign your status.\nReason: %1.").arg(transaction->stdErrString()),
-            transaction->errorString());
-
-        logout(false, loggedOutStatus());
-        return;
-    }
-    transaction->deleteLater();
-#else
-    Q_ASSERT(false);
-#endif
-}
 
 void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 {

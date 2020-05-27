@@ -486,8 +486,6 @@ private slots:
 #endif
     void edb_finished();
 
-    void pgp_trySignPresence();
-    void pgp_signFinished();
     void pgp_verifyFinished();
     void pgp_encryptFinished();
     void pgp_decryptFinished();
