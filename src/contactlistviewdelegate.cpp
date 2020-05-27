@@ -506,7 +506,10 @@ QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex 
 QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
 {
     int     avSize = showAvatars_ ? avatarRect_.height() : 0;
-    QPixmap av     = index.data(ContactListModel::AvatarRole).value<QPixmap>();
+    QPixmap av;
+    auto    v = index.data(ContactListModel::AvatarRole);
+    if (!v.isNull())
+        av = v.value<QPixmap>();
 
     if (av.isNull() && useDefaultAvatar_)
         av = IconsetFactory::iconPixmap("psi/default_avatar");
