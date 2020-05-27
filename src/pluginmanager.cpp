@@ -906,7 +906,6 @@ void PluginManager::restoreOptions(const QString &plugin)
 void PluginManager::addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
                                      const QString &plugin)
 {
-    qWarning("deprecated PluginManager::addToolBarButton");
     const int acc_id = accountIds_.id(account);
     for (PluginHost *host : pluginsByPriority_) {
         if (plugin.isEmpty() || (host->shortName() == plugin)) {
@@ -920,7 +919,6 @@ bool PluginManager::hasToolBarButton(const QString &plugin) const { return hosts
 void PluginManager::addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
                                        const QString &plugin)
 {
-    qWarning("deprecated PluginManager::addGCToolBarButton");
     const int acc_id = accountIds_.id(account);
     for (PluginHost *host : pluginsByPriority_) {
         if (plugin.isEmpty() || (host->shortName() == plugin)) {
