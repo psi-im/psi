@@ -78,6 +78,7 @@ void ActionList::addAction(const QString &name, IconAction *action)
         action->setObjectName(name);
         d->actions.insert(name, action);
         d->connect(action, SIGNAL(destroyed(QObject *)), d, SLOT(actionDestroyed(QObject *)));
+        emit actionAdded(action);
     }
 }
 

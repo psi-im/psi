@@ -76,6 +76,26 @@ public:
         }
         return type;
     }
+
+    QTreeWidgetItem *insertAction(QTreeWidgetItem *root, IconAction *action, QTreeWidgetItem *preceding)
+    {
+        if (!action->isVisible())
+            return nullptr;
+        QTreeWidgetItem *item = new QTreeWidgetItem(root, preceding);
+
+        QObject::connect(action, &IconAction::destroyed, q,
+                         [root, item]() { delete root->takeChild(root->indexOfChild(item)); });
+
+        QString n = q->actionName(static_cast<QAction *>(action));
+        if (!action->toolTip().isEmpty() && action->toolTip() != n) {
+            n += " - " + action->toolTip();
+        }
+        n.replace(" Plugin", "");
+        item->setText(0, n);
+        item->setIcon(0, action->icon());
+        item->setData(0, Qt::UserRole, action->objectName());
+        return item;
+    }
 };
 
 OptionsTabToolbars::OptionsTabToolbars(QObject *parent) :
@@ -409,24 +429,18 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
             root->setData(0, Qt::UserRole, QString(""));
             root->setExpanded(true);
 
+            connect(
+                actionList, &ActionList::actionAdded, this,
+                [root, this](IconAction *action) { p->insertAction(root, action, nullptr); }, Qt::UniqueConnection);
+
             QTreeWidgetItem *     last        = nullptr;
             QStringList           actionNames = actionList->actions();
             QStringList::Iterator it2         = actionNames.begin();
             for (; it2 != actionNames.end(); ++it2) {
                 IconAction *action = actionList->action(*it2);
-                if (!action->isVisible())
-                    continue;
-                QTreeWidgetItem *item = new QTreeWidgetItem(root, last);
-                last                  = item;
-
-                QString n = actionName(static_cast<QAction *>(action));
-                if (!action->toolTip().isEmpty() && action->toolTip() != n) {
-                    n += " - " + action->toolTip();
-                }
-                n.replace(" Plugin", "");
-                item->setText(0, n);
-                item->setIcon(0, action->icon());
-                item->setData(0, Qt::UserRole, action->objectName());
+                auto        item   = p->insertAction(root, action, last);
+                if (item)
+                    last = item;
             }
         }
         tw->resizeColumnToContents(0);

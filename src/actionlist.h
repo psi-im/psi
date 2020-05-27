@@ -44,6 +44,9 @@ public:
 
     void clear();
 
+signals:
+    void actionAdded(IconAction *);
+
 public:
     class Private;
 
