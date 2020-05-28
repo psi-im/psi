@@ -901,8 +901,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     ActionList *actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Groupchat).at(0);
     for (const QString &name : actList->actions()) {
-        IconAction *action = actList->action(name)->copy();
-        action->setParent(this);
+        auto action = actList->copyAction(name, this);
         d->actions->addAction(name, action);
 
         if (name == QString::fromLatin1("gchat_info")) {
@@ -941,8 +940,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
     for (const QString &name : actList->actions()) {
-        IconAction *action = actList->action(name)->copy();
-        action->setParent(this);
+        auto action = actList->copyAction(name, this);
         d->actions->addAction(name, action);
     }
 
@@ -2328,9 +2326,8 @@ void GCMainDlg::setToolbuttons()
             continue;
         }
 
-        IconAction *action = d->actions->action(actionName);
+        auto action = d->actions->addActionToWidget(actionName, ui_.toolbar, this);
         if (action) {
-            action->addTo(ui_.toolbar);
             if (actionName == "gchat_icon" || actionName == "gchat_templates") {
                 static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
                     ->setPopupMode(QToolButton::InstantPopup);

@@ -510,9 +510,12 @@ bool PluginHost::enable()
             connected_ = true;
         }
 
-        enabled_ = qobject_cast<PsiPlugin *>(plugin_)->enable();
+        enableHandler = new QObject(this);
+        enabled_      = qobject_cast<PsiPlugin *>(plugin_)->enable();
         if (enabled_)
             emit enabled();
+        else
+            delete enableHandler;
     }
 
     return enabled_;
@@ -530,8 +533,10 @@ bool PluginHost::disable()
 {
     if (enabled_) {
         enabled_ = !qobject_cast<PsiPlugin *>(plugin_)->disable();
-        if (!enabled_)
+        if (!enabled_) {
+            delete enableHandler;
             emit disabled();
+        }
     }
     return !enabled_;
 }
@@ -1124,12 +1129,14 @@ void PluginHost::addToolBarButton(QObject *parent, QWidget *toolbar, int account
                 IconAction * button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
                 connect(button, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
                         param.value("slot").value<QString>().toLatin1());
+                connect(enableHandler, &QObject::destroyed, button, &QObject::deleteLater);
                 toolbar->addAction(button);
             }
         }
         QAction *act = ta->getAction(parent, account, contact);
         if (act) {
             act->setObjectName(shortName_);
+            connect(enableHandler, &QObject::destroyed, act, &QObject::deleteLater);
             toolbar->addAction(act);
         }
     }
@@ -1148,12 +1155,16 @@ void PluginHost::addGCToolBarButton(QObject *parent, QWidget *toolbar, int accou
                 IconAction * button = new IconAction(th, param.value("icon").value<QString>(), th, 0, parent);
                 connect(button, SIGNAL(triggered()), param.value("reciver").value<QObject *>(),
                         param.value("slot").value<QString>().toLatin1());
+                connect(enableHandler, &QObject::destroyed, button, &QObject::deleteLater);
                 toolbar->addAction(button);
             }
         }
         QAction *act = ta->getGCAction(parent, account, contact);
-        if (act)
+        if (act) {
+            act->setObjectName(shortName_);
+            connect(enableHandler, &QObject::destroyed, act, &QObject::deleteLater);
             toolbar->addAction(act);
+        }
     }
 }
 

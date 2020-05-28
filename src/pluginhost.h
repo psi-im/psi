@@ -74,6 +74,9 @@ public:
     PluginHost(PluginManager *manager, const QString &pluginFile);
     virtual ~PluginHost();
 
+    PluginHost(const PluginHost &) = delete;
+    PluginHost &operator=(const PluginHost &) = delete;
+
     bool           isValid() const;
     const QString &path() const;
     QWidget *      optionsWidget() const;
@@ -265,6 +268,9 @@ public:
     void selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput) override;
     void setMediaProvider(PsiMedia::Provider *provider) override;
 
+private:
+    bool loadPlugin(QObject *pluginObject);
+
 signals:
     void enabled();
     void disabled();
@@ -281,6 +287,7 @@ private:
     int               priority_ = 0;
     QIcon             icon_;
     QPluginLoader *   loader_             = nullptr;
+    QPointer<QObject> enableHandler       = nullptr;
     Iconset *         iconset_            = nullptr;
     bool              hasToolBarButton_   = false;
     bool              hasGCToolBarButton_ = false;
@@ -298,12 +305,6 @@ private:
 
     QList<QVariantHash> accMenu_;
     QList<QVariantHash> contactMenu_;
-
-    bool loadPlugin(QObject *pluginObject);
-
-    // disable copying
-    PluginHost(const PluginHost &);
-    PluginHost &operator=(const PluginHost &);
 };
 
 #endif // PLUGINHOST_H

@@ -23,6 +23,7 @@
 
 #include <QHash>
 #include <QList>
+#include <QPointer>
 
 //----------------------------------------------------------------------------
 // ActionList
@@ -67,6 +68,19 @@ QString ActionList::name() const { return d->name; }
 int ActionList::id() const { return d->id; }
 
 IconAction *ActionList::action(const QString &name) const { return d->actions.value(name); }
+IconAction *ActionList::copyAction(const QString &name, QObject *parent) const
+{
+    auto origAction = d->actions.value(name);
+    if (origAction) {
+        IconAction *action = origAction->copy();
+        if (action) {
+            action->setParent(parent);
+            connect(origAction, &IconAction::destroyed, action, &QObject::deleteLater);
+            return action;
+        }
+    }
+    return nullptr;
+}
 
 const QStringList &ActionList::actions() const { return d->sortedActions; }
 
@@ -80,6 +94,18 @@ void ActionList::addAction(const QString &name, IconAction *action)
         d->connect(action, SIGNAL(destroyed(QObject *)), d, SLOT(actionDestroyed(QObject *)));
         emit actionAdded(action);
     }
+}
+
+IconAction *ActionList::addActionToWidget(const QString &name, QWidget *w, QObject *actionParent)
+{
+    auto action = copyAction(name, actionParent);
+    if (action) {
+        if (action->addTo(w)) {
+            return action;
+        }
+        delete action;
+    }
+    return nullptr;
 }
 
 void ActionList::clear()

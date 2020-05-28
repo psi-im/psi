@@ -498,9 +498,8 @@ void PsiChatDlg::updateToolbuttons()
             continue;
         }
 
-        IconAction *action = actions_->action(actionName);
+        IconAction *action = actions_->addActionToWidget(actionName, ui_.toolbar, this);
         if (action) {
-            action->addTo(ui_.toolbar);
             if (actionName == QLatin1String("chat_icon") || actionName == QLatin1String("chat_templates")) {
                 static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
                     ->setPopupMode(QToolButton::InstantPopup);
@@ -529,8 +528,7 @@ void PsiChatDlg::initToolButtons()
 
     ActionList *list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).at(0);
     for (const QString &name : list->actions()) {
-        IconAction *action = list->action(name)->copy();
-        action->setParent(this);
+        auto action = list->copyAction(name, this);
         actions_->addAction(name, action);
         if (name == QString::fromLatin1("chat_clear")) {
             connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
@@ -582,8 +580,7 @@ void PsiChatDlg::initToolButtons()
 
     list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
     for (const QString &name : list->actions()) {
-        IconAction *action = list->action(name)->copy();
-        action->setParent(this);
+        IconAction *action = list->copyAction(name, this);
         actions_->addAction(name, action);
     }
 }

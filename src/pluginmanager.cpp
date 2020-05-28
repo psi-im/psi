@@ -893,15 +893,17 @@ bool PluginManager::verifyStanza(const QString &stanza)
 
 void PluginManager::applyOptions(const QString &plugin)
 {
-    if (hosts_.contains(plugin)) {
-        hosts_[plugin]->applyOptions();
+    auto host = hosts_.value(plugin);
+    if (host) {
+        host->applyOptions();
     }
 }
 
 void PluginManager::restoreOptions(const QString &plugin)
 {
-    if (hosts_.contains(plugin)) {
-        hosts_[plugin]->restoreOptions();
+    auto host = hosts_.value(plugin);
+    if (host) {
+        host->restoreOptions();
     }
 }
 
@@ -910,26 +912,38 @@ void PluginManager::addToolBarButton(QObject *parent, QWidget *toolbar, PsiAccou
 {
     const int acc_id = accountIds_.id(account);
     for (PluginHost *host : pluginsByPriority_) {
-        if (plugin.isEmpty() || (host->shortName() == plugin)) {
+        if ((plugin.isEmpty() || (host->shortName() == plugin)) && host->isEnabled()) {
             host->addToolBarButton(parent, toolbar, acc_id, contact);
         }
     }
 }
 
-bool PluginManager::hasToolBarButton(const QString &plugin) const { return hosts_[plugin]->hasToolBarButton(); }
+bool PluginManager::hasToolBarButton(const QString &plugin) const
+{
+    auto host = hosts_.value(plugin);
+    if (host && host->isEnabled())
+        return host->hasToolBarButton();
+    return false;
+}
 
 void PluginManager::addGCToolBarButton(QObject *parent, QWidget *toolbar, PsiAccount *account, const QString &contact,
                                        const QString &plugin)
 {
     const int acc_id = accountIds_.id(account);
     for (PluginHost *host : pluginsByPriority_) {
-        if (plugin.isEmpty() || (host->shortName() == plugin)) {
+        if ((plugin.isEmpty() || (host->shortName() == plugin)) && host->isEnabled()) {
             host->addGCToolBarButton(parent, toolbar, acc_id, contact);
         }
     }
 }
 
-bool PluginManager::hasGCToolBarButton(const QString &plugin) const { return hosts_[plugin]->hasGCToolBarButton(); }
+bool PluginManager::hasGCToolBarButton(const QString &plugin) const
+{
+    auto host = hosts_.value(plugin);
+    if (host && host->isEnabled())
+        return host->hasGCToolBarButton();
+    return false;
+}
 
 void PluginManager::setStatus(int account, const QString &status, const QString &statusMessage)
 {

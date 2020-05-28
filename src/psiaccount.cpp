@@ -3877,6 +3877,9 @@ EventDlg *PsiAccount::createEventDlg(const Jid &j)
     connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)),
             SLOT(dj_rosterExchange(const RosterExchangeItems &)));
     connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
+#ifdef PSI_PLUGINS
+    connect(PluginManager::instance(), &PluginManager::pluginEnabled, w, [w](const QString &) { w->optionsUpdate(); });
+#endif
     connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
     connect(w, SIGNAL(aFormSubmit(const XData &, const QString &, const Jid &)),
             SLOT(dj_formSubmit(const XData &, const QString &, const Jid &)));
@@ -3899,6 +3902,10 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
         connect(c, SIGNAL(aFile(const Jid &)), SLOT(sendFiles(const Jid &)));
         connect(c, SIGNAL(aVoice(const Jid &)), SLOT(actionVoice(const Jid &)));
         connect(d->psi, SIGNAL(emitOptionsUpdate()), c, SLOT(optionsUpdate()));
+#ifdef PSI_PLUGINS
+        connect(PluginManager::instance(), &PluginManager::pluginEnabled, c,
+                [c](const QString &) { c->optionsUpdate(); });
+#endif
         connect(this, SIGNAL(updateContact(const Jid &, bool)), c, SLOT(updateContact(const Jid &, bool)));
     } else {
         c->setJid(j);
@@ -4250,6 +4257,10 @@ void PsiAccount::actionHistoryBox(const PsiEvent::Ptr &e)
     connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)),
             SLOT(dj_rosterExchange(const RosterExchangeItems &)));
     connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
+#ifdef PSI_PLUGINS
+    connect(PluginManager::instance(), &PluginManager::pluginEnabled, w, [w](const QString &) { w->optionsUpdate(); });
+#endif
+
     connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
     w->updateEvent(e);
     w->show();
@@ -5634,6 +5645,9 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MucJ
     connect(w, SIGNAL(aSend(Message &)), SLOT(dj_sendMessage(Message &)));
     connect(w, SIGNAL(messagesRead(const Jid &)), SLOT(groupChatMessagesRead(const Jid &)));
     connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
+#ifdef PSI_PLUGINS
+    connect(PluginManager::instance(), &PluginManager::pluginEnabled, w, [w](const QString &) { w->optionsUpdate(); });
+#endif
     if (reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
         w->ensureTabbedCorrectly();
         if (activationType == UserAction)
