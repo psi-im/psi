@@ -26,7 +26,6 @@
 class IconAction;
 class QString;
 class QStringList;
-class QWidget;
 
 class ActionList : public QObject {
     Q_OBJECT
@@ -42,8 +41,7 @@ public:
     IconAction *       copyAction(const QString &name, QObject *parent = nullptr) const;
     const QStringList &actions() const;
 
-    void        addAction(const QString &name, IconAction *action);
-    IconAction *addActionToWidget(const QString &name, QWidget *w, QObject *actionParent = nullptr);
+    void addAction(const QString &name, IconAction *action);
 
     void clear();
 

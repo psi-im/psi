@@ -2326,8 +2326,9 @@ void GCMainDlg::setToolbuttons()
             continue;
         }
 
-        auto action = d->actions->addActionToWidget(actionName, ui_.toolbar, this);
+        auto action = d->actions->action(actionName);
         if (action) {
+            action->addTo(ui_.toolbar);
             if (actionName == "gchat_icon" || actionName == "gchat_templates") {
                 static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
                     ->setPopupMode(QToolButton::InstantPopup);

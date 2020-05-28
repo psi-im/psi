@@ -498,8 +498,9 @@ void PsiChatDlg::updateToolbuttons()
             continue;
         }
 
-        IconAction *action = actions_->addActionToWidget(actionName, ui_.toolbar, this);
+        auto action = actions_->action(actionName);
         if (action) {
+            action->addTo(ui_.toolbar);
             if (actionName == QLatin1String("chat_icon") || actionName == QLatin1String("chat_templates")) {
                 static_cast<QToolButton *>(ui_.toolbar->widgetForAction(action))
                     ->setPopupMode(QToolButton::InstantPopup);

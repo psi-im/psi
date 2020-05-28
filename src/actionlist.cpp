@@ -96,18 +96,6 @@ void ActionList::addAction(const QString &name, IconAction *action)
     }
 }
 
-IconAction *ActionList::addActionToWidget(const QString &name, QWidget *w, QObject *actionParent)
-{
-    auto action = copyAction(name, actionParent);
-    if (action) {
-        if (action->addTo(w)) {
-            return action;
-        }
-        delete action;
-    }
-    return nullptr;
-}
-
 void ActionList::clear()
 {
     if (d->autoDeleteActions)
