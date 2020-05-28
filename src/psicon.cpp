@@ -642,6 +642,8 @@ bool PsiCon::init()
 
 #ifdef PSI_PLUGINS
     // Plugin Manager
+    connect(PluginManager::instance(), &PluginManager::pluginEnabled, this,
+            [this](const QString &) { slotApplyOptions(); });
     PluginManager::instance()->initNewSession(this);
 #endif
 
