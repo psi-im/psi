@@ -140,6 +140,7 @@ void OptionsTabPlugins::listPlugins()
         aboutbutton->resize(buttonSize);
         aboutbutton->setObjectName("ab_" + shortName);
         aboutbutton->setToolTip(tr("Show information about plugin"));
+        aboutbutton->setEnabled(enabled);
         d->tw_Plugins->setItemWidget(item, C_ABOUT, aboutbutton);
         connect(aboutbutton, &QToolButton::clicked, this, [index, this](bool) { showPluginInfo(index); });
 
@@ -176,6 +177,7 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
 
     d->tw_Plugins->blockSignals(true); // Block signalls to change item elements
     d->tw_Plugins->itemWidget(item, C_SETTS)->setEnabled(enabled);
+    d->tw_Plugins->itemWidget(item, C_ABOUT)->setEnabled(enabled);
     QIcon icon = pm->icon(name);
     if (!enabled && !icon.isNull()) {
         icon = QIcon(icon.pixmap(icon.availableSizes().at(0), QIcon::Disabled));

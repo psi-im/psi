@@ -446,8 +446,8 @@ public:
     ELineEdit *       le_to       = nullptr;
     QLineEdit *       le_from     = nullptr;
     QLineEdit *       le_subj     = nullptr;
-    IconToolButton *tb_url = nullptr, *tb_info = nullptr, *tb_history = nullptr, *tb_icon = nullptr;
-    IconButton *    pb_next = nullptr, *pb_close = nullptr, *pb_quote = nullptr, *pb_deny = nullptr, *pb_send = nullptr,
+    IconToolButton *  tb_url = nullptr, *tb_info = nullptr, *tb_history = nullptr, *tb_icon = nullptr;
+    IconButton *pb_next = nullptr, *pb_close = nullptr, *pb_quote = nullptr, *pb_deny = nullptr, *pb_send = nullptr,
                *pb_reply = nullptr, *pb_chat = nullptr, *pb_auth = nullptr, *pb_http_confirm = nullptr,
                *pb_http_deny = nullptr, *pb_form_submit = nullptr, *pb_form_cancel = nullptr;
     QCheckBox *  ck_all_auth       = nullptr;
@@ -1328,7 +1328,7 @@ void EventDlg::doSend()
     d->m = m;
 
     if (list.count() > 1 && !d->pa->serverInfoManager()->multicastService().isEmpty()
-            && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
+        && PsiOptions::instance()->getOption("options.enable-multicast").toBool()) {
         m.setTo(d->pa->serverInfoManager()->multicastService());
         for (const QString &recipient : list) {
             m.addAddress(Address(XMPP::Address::To, Jid(recipient)));

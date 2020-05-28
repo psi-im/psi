@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>341</width>
-    <height>209</height>
+    <height>250</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,6 +36,13 @@
      </property>
      <property name="text">
       <string>Disable scrollbar</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_rosterAtLeft">
+     <property name="text">
+      <string>Place groupchat roster at left</string>
      </property>
     </widget>
    </item>

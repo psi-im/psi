@@ -517,7 +517,7 @@ void AccountModifyDlg::save()
     acc.onlyMyTurn = cb_onlyMyTurn->isChecked();
 
     acc.storeSaltedHashedPassword = ck_scram_salted_password->isChecked();
-    acc.proxyID = pc->currentItem();
+    acc.proxyID                   = pc->currentItem();
 
     if (pa) {
         pa->setUserAccount(acc);

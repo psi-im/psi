@@ -326,19 +326,17 @@ QString UserListItem::pending() const
 QString UserListItem::tooltipPgpData(const UserResource &ur, const QString &imgTag) const
 {
     QString out;
-    int v = ur.pgpVerifyStatus();
-    if (v == PGPUtil::SecureMessageSignature::Valid
-        || v == PGPUtil::SecureMessageSignature::InvalidSignature
-        || v == PGPUtil::SecureMessageSignature::InvalidKey
-        || v == PGPUtil::SecureMessageSignature::NoKey) {
+    int     v = ur.pgpVerifyStatus();
+    if (v == PGPUtil::SecureMessageSignature::Valid || v == PGPUtil::SecureMessageSignature::InvalidSignature
+        || v == PGPUtil::SecureMessageSignature::InvalidKey || v == PGPUtil::SecureMessageSignature::NoKey) {
         if (v == PGPUtil::SecureMessageSignature::Valid) {
             QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes")
-                + QObject::tr("Signed") + ": " + "<font color=\"#2A993B\">" + d + "</font>";
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes") + QObject::tr("Signed")
+                + ": " + "<font color=\"#2A993B\">" + d + "</font>";
         } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
             QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown")
-                + QObject::tr("Signed") + ": " + d;
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown") + QObject::tr("Signed")
+                + ": " + d;
         } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
                    || v == PGPUtil::SecureMessageSignature::InvalidKey) {
             out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad")

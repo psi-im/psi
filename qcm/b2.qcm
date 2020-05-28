@@ -9,15 +9,15 @@ arg: with-b2-lib=[path],Path to libb2 library or framework files
 //----------------------------------------------------------------------------
 // qc_b2
 //----------------------------------------------------------------------------
-class qc_b2 : public ConfObj
-{
+class qc_b2 : public ConfObj {
     bool use_system = false;
+
 public:
-    qc_b2(Conf *c) : ConfObj(c) {}
+    qc_b2(Conf *c) : ConfObj(c) { }
     QString name() const { return "LibB2"; }
     QString shortname() const { return "libb2"; }
-    QString resultString() const { return use_system? "system":"bundled"; }
-    bool exec()
+    QString resultString() const { return use_system ? "system" : "bundled"; }
+    bool    exec()
     {
         QString b2_incdir, b2_libdir;
         b2_incdir = conf->getenv("QC_WITH_B2_INC");
@@ -31,14 +31,13 @@ public:
             use_system = true;
         } else {
             QStringList incs;
-            QString version, libs, other;
-            if(conf->findPkgConfig("libb2", VersionAny, QString::null, &version, &incs, &libs, &other))
-            {
-                    for(int n = 0; n < incs.count(); ++n)
-                            conf->addIncludePath(incs[n]);
-                    if(!libs.isEmpty())
-                            conf->addLib(libs);
-                    use_system = true;
+            QString     version, libs, other;
+            if (conf->findPkgConfig("libb2", VersionAny, QString::null, &version, &incs, &libs, &other)) {
+                for (int n = 0; n < incs.count(); ++n)
+                    conf->addIncludePath(incs[n]);
+                if (!libs.isEmpty())
+                    conf->addLib(libs);
+                use_system = true;
             }
         }
 
@@ -51,15 +50,15 @@ public:
 
     bool checkCustomDirs(QString &b2_incdir, QString &b2_libdir)
     {
-        if ((b2_incdir.isEmpty() && !conf->findHeader("blake2.h", QStringList(), &b2_incdir)) ||
-            (!b2_incdir.isEmpty() && !conf->checkHeader(b2_incdir, "blake2.h"))) {
+        if ((b2_incdir.isEmpty() && !conf->findHeader("blake2.h", QStringList(), &b2_incdir))
+            || (!b2_incdir.isEmpty() && !conf->checkHeader(b2_incdir, "blake2.h"))) {
             printf("Headers not found!\n");
             return false;
         }
 
-        if((!b2_libdir.isEmpty() && conf->checkLibrary(b2_libdir, "b2")) ||
-           (b2_libdir.isEmpty() && conf->findLibrary("b2", &b2_libdir))) {
-            conf->addLib(b2_libdir.isEmpty()? "-lb2" : QString("-L%1 -lb2").arg(b2_libdir));
+        if ((!b2_libdir.isEmpty() && conf->checkLibrary(b2_libdir, "b2"))
+            || (b2_libdir.isEmpty() && conf->findLibrary("b2", &b2_libdir))) {
+            conf->addLib(b2_libdir.isEmpty() ? "-lb2" : QString("-L%1 -lb2").arg(b2_libdir));
             conf->addIncludePath(b2_incdir);
             return true;
         }

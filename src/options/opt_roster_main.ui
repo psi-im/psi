@@ -280,6 +280,20 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QCheckBox" name="ck_avatarsAtLeft">
+        <property name="text">
+         <string>Place avatars at left</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_iconOverAvatar">
+        <property name="text">
+         <string>Place status icon over avatar</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

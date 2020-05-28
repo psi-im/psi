@@ -222,7 +222,7 @@ PGPUtil::SecureMessageSignature PGPUtil::parseSecureMessageSignature(const QStri
         const QString &&type = line.section(' ', 1, 1);
         if (type == QStringLiteral("GOODSIG")) {
             out.identityResult = SecureMessageSignature::Valid;
-            out.userName = line.section(' ', 3);
+            out.userName       = line.section(' ', 3);
         } else if (type == QStringLiteral("VALIDSIG")) {
             out.sigTimestamp = line.section(' ', 4, 4).toLongLong();
             out.publicKeyId  = line.section(' ', 11, 11).right(16);

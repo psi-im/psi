@@ -35,6 +35,6 @@ public:
     bool info(QString &message);
 
 private:
-    QString findBin() const;
+    QString        findBin() const;
     static QString m_bin;
 };

@@ -58,6 +58,7 @@ void OptionsTabRosterMuc::applyOptions()
     OptRosterMucUI *d = static_cast<OptRosterMucUI *>(w);
 
     PsiOptions::instance()->setOption("options.ui.muc.userlist.disable-scrollbar", d->ck_disableScrollbar->isChecked());
+    PsiOptions::instance()->setOption("options.ui.muc.roster-at-left", d->ck_rosterAtLeft->isChecked());
 
     // enabled icons
     PsiOptions::instance()->setOption("options.ui.muc.userlist.avatars.show", d->ck_showAvatarIcons->isChecked());
@@ -82,6 +83,7 @@ void OptionsTabRosterMuc::restoreOptions()
 
     d->ck_disableScrollbar->setChecked(
         PsiOptions::instance()->getOption("options.ui.muc.userlist.disable-scrollbar").toBool());
+    d->ck_rosterAtLeft->setChecked(PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool());
 
     // enabled icons
     d->ck_showAvatarIcons->setChecked(

@@ -79,8 +79,8 @@ public:
     QList<QVariantMap>        jsBuffer_;
     bool                      sessionReady_ = false;
     QPointer<QWidget>         dialog_;
-    bool                      isMuc_               = false;
-    bool                      isMucPrivate_        = false;
+    bool                      isMuc_                  = false;
+    bool                      isMucPrivate_           = false;
     bool                      isPgpEncryptionEnabled_ = false;
     Jid                       jid_;
     QString                   name_;

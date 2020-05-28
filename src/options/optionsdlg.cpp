@@ -23,8 +23,8 @@
 #include "opt_toolbars.h"
 #include "opt_tree.h"
 #include "pluginmanager.h"
-#include "psioptions.h"
 #include "psicon.h"
+#include "psioptions.h"
 
 OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, parent)
 {
@@ -107,7 +107,8 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) : OptionsDlgBase(psi, paren
     psi->dialogRegister(this);
     openTab("application");
 
-    const QSize dialogSize = PsiOptions::instance()->getOption("options.ui.save.psi-options-dialog-size", QSize(800, 600)).toSize();
+    const QSize dialogSize
+        = PsiOptions::instance()->getOption("options.ui.save.psi-options-dialog-size", QSize(800, 600)).toSize();
     resize(dialogSize);
 
     connect(this, &OptionsDlg::finished, this, &OptionsDlg::saveDialogSize);
@@ -122,12 +123,11 @@ void OptionsDlg::addPluginWrapperTab(OAH_PluginOptionsTab *tab)
 
 void OptionsDlg::saveDialogSize()
 {
-    QDialog *dlg = dynamic_cast<QDialog*>(sender());
+    QDialog *dlg = dynamic_cast<QDialog *>(sender());
     if (!dlg)
         return;
 
     PsiOptions::instance()->setOption("options.ui.save.psi-options-dialog-size", dlg->size());
     dlg->deleteLater();
-
 }
 #endif

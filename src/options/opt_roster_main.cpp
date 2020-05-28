@@ -75,6 +75,10 @@ void OptionsTabRosterMain::applyOptions()
     // avatars settings
     PsiOptions::instance()->setOption("options.ui.contactlist.avatars.size", d->sb_avatarsSize->value());
     PsiOptions::instance()->setOption("options.ui.contactlist.avatars.radius", d->sb_avatarsRadius->value());
+    PsiOptions::instance()->setOption("options.ui.contactlist.avatars.avatars-at-left",
+                                      d->ck_avatarsAtLeft->isChecked());
+    PsiOptions::instance()->setOption("options.ui.contactlist.status-icon-over-avatar",
+                                      d->ck_iconOverAvatar->isChecked());
 }
 
 void OptionsTabRosterMain::restoreOptions()
@@ -116,4 +120,8 @@ void OptionsTabRosterMain::restoreOptions()
     // avatars settings
     d->sb_avatarsSize->setValue(PsiOptions::instance()->getOption("options.ui.contactlist.avatars.size").toInt());
     d->sb_avatarsRadius->setValue(PsiOptions::instance()->getOption("options.ui.contactlist.avatars.radius").toInt());
+    d->ck_avatarsAtLeft->setChecked(
+        PsiOptions::instance()->getOption("options.ui.contactlist.avatars.avatars-at-left").toBool());
+    d->ck_iconOverAvatar->setChecked(
+        PsiOptions::instance()->getOption("options.ui.contactlist.status-icon-over-avatar").toBool());
 }
