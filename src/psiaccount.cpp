@@ -1538,6 +1538,8 @@ void PsiAccount::updateFeatures()
         features << "urn:xmpp:jingle:apps:rtp:video";
     }
 
+    features << "jabber:x:conference"; // allow direct invites
+
     // TODO reset hash
     d->client->setFeatures(Features(features));
     if (presenceSent) {
