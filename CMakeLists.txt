@@ -157,9 +157,6 @@ if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     if(IS_WEBENGINE)
         message(FATAL_ERROR "Webengine is not available in MXE. Please set the CHAT_TYPE variable to Webkit or Basic")
     endif()
-    if(USE_KEYCHAIN AND (EXISTS "${CMAKE_PREFIX_PATH}/lib/cmake/Qt5Keychain"))
-        set(Qt5Keychain_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/Qt5Keychain" CACHE STRING "Path to Qt5Keychain cmake files")
-    endif()
 endif()
 
 # Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
