@@ -886,10 +886,10 @@ void PsiChatDlg::optionsUpdate()
 
     updateToolbuttons();
     ChatDlg::optionsUpdate();
-    if (!ui_.mle->chatEdit()->hasSoundRecButton()
-        && PsiOptions::instance()->getOption("options.media.audio-message").toBool()) {
+    bool audioEnabled = PsiOptions::instance()->getOption("options.media.audio-message").toBool();
+    if (!ui_.mle->chatEdit()->hasSoundRecButton() && audioEnabled) {
         ui_.mle->chatEdit()->addSoundRecButton();
-    } else if (ui_.mle->chatEdit()->hasSoundRecButton()) {
+    } else if (ui_.mle->chatEdit()->hasSoundRecButton() && !audioEnabled) {
         ui_.mle->chatEdit()->removeSoundRecButton();
     }
     // typeahead find bar
