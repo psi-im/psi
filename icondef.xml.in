@@ -411,11 +411,6 @@
         </icon>
 
         <icon>
-                <x xmlns='name'>psi/tip</x>
-        <object mime='image/png'>tip.png</object>
-        </icon>
-
-        <icon>
                 <x xmlns='name'>psi/browse</x>
         <object mime='image/png'>browse.png</object>
         </icon>

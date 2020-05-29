@@ -260,10 +260,6 @@
     <successful-subscription type="bool">false</successful-subscription>
     <bounce-dock type="QString">forever</bounce-dock>
    </notifications>
-   <tip comment="Tip of the day options">
-    <number type="int" comment="The next tip to show">1</number>
-    <show type="bool" comment="Show the tip of the day upon startup">false</show>
-   </tip>
    <muc comment="Multi-User Chat options">
     <use-highlighting type="bool">true</use-highlighting>
     <size type="QSize" comment="Remembered window size">
