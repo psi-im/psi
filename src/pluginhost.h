@@ -255,7 +255,8 @@ public:
 
     // PluginAccessingHost
 
-    QObject *getPlugin(const QString &name) override;
+    QObject *   getPlugin(const QString &name) override;
+    QVariantMap selfMetadata() const override;
 
     // WebkitAccessingHost
     RenderType chatLogRenderType() const override;

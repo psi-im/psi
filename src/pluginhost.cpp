@@ -1355,6 +1355,18 @@ QObject *PluginHost::getPlugin(const QString &shortName)
     return nullptr;
 }
 
+QVariantMap PluginHost::selfMetadata() const
+{
+    QVariantMap md;
+    md.insert(QLatin1String("name"), name_);
+    md.insert(QLatin1String("shortname"), shortName_);
+    md.insert(QLatin1String("version"), version_);
+    md.insert(QLatin1String("priority"), priority_);
+    md.insert(QLatin1String("icon"), icon_);
+    md.insert(QLatin1String("description"), description_);
+    return md;
+}
+
 WebkitAccessingHost::RenderType PluginHost::chatLogRenderType() const
 {
 #ifdef WEBKIT
