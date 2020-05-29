@@ -556,7 +556,6 @@ QLineEdit#le_status_text {
                 <set_activity type="QKeySequence" comment="Set Activity"/>
                 <set_geoloc type="QKeySequence" comment="Set Geolocation"/>
                 <help_readme type="QKeySequence" comment="README"></help_readme>
-                <help_tip type="QKeySequence" comment="Tips"></help_tip>
                 <help_online_forum type="QKeySequence" comment="Psi Forum (Online)"></help_online_forum>
                 <help_online_help type="QKeySequence" comment="Open Help"></help_online_help>
                 <help_online_wiki type="QKeySequence" comment="Open Wiki"></help_online_wiki>

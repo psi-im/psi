@@ -406,9 +406,6 @@ void PsiActionList::Private::createMainWin()
         IconAction *actReadme = new IconAction(tr("ReadMe"), tr("&ReadMe"), 0, this);
         actReadme->setToolTip(tr("Show ReadMe file"));
 
-        IconAction *actTip = new IconAction(tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
-        actTip->setToolTip(tr("See many useful tips"));
-
         IconAction *actOnlineWiki = new IconAction(tr("Wiki (Online)"), tr("&Wiki (Online)"), 0, this);
         actOnlineWiki->setToolTip(tr("Wiki (Online)"));
 
@@ -459,7 +456,6 @@ void PsiActionList::Private::createMainWin()
         IconAction *actDiagQCAKeyStore = new IconAction(tr("Key Storage"), tr("&Key Storage"), 0, this);
 
         ActionNames actions[] = { { "help_readme", actReadme },
-                                  { "help_tip", actTip },
                                   { "help_online_wiki", actOnlineWiki },
                                   { "help_online_home", actOnlineHome },
                                   { "help_online_forum", actOnlineForum },
