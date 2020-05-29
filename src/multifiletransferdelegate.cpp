@@ -30,6 +30,7 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPlainTextEdit>
 #include <QStyledItemDelegate>
 #include <QTextEdit>

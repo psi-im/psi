@@ -23,6 +23,7 @@
 #include "../sxe/sxesession.h"
 
 #include <QGraphicsScene>
+#include <QPainterPath>
 
 WbNewPath::WbNewPath(QGraphicsScene *s, QPointF startPos, int strokeWidth, const QColor &strokeColor,
                      const QColor &fillColor) :

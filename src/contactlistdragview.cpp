@@ -43,6 +43,7 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QScrollBar>
 
 ContactListDragView::ContactListDragView(QWidget *parent) :

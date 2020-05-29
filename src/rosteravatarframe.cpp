@@ -23,6 +23,8 @@
 #include "psioptions.h"
 #include "qpainter.h"
 
+#include <QPainterPath>
+
 RosterAvatarFrame::RosterAvatarFrame(QWidget *parent) : QFrame(parent), statusMessage_("")
 {
     ui_.setupUi(this);
