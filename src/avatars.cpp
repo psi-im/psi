@@ -50,6 +50,7 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPixmap>
 #include <QtCrypto>
 
