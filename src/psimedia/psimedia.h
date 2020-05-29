@@ -28,6 +28,7 @@
 #ifdef QT_GUI_LIB
 #include <QWidget>
 #endif
+#include <functional>
 
 class QMetaMethod;
 
