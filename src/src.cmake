@@ -201,6 +201,7 @@ list(APPEND HEADERS
     statuscombobox.h
     statusdlg.h
     statusmenu.h
+    svgiconengine.h
     tabcompletion.h
     tasklist.h
     translationmanager.h
@@ -479,6 +480,7 @@ list(APPEND SOURCES
     statusdlg.cpp
     statusmenu.cpp
     statuspreset.cpp
+    svgiconengine.cpp
     systeminfo.cpp
     tabcompletion.cpp
     textutil.cpp
