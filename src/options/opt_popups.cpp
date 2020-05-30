@@ -33,7 +33,8 @@ public:
 };
 
 OptionsTabPopups::OptionsTabPopups(QObject *parent) :
-    OptionsTab(parent, "popups", "", tr("Popups"), tr("The popups behaviour"), "psi/jabber"), w(nullptr), popup_(nullptr)
+    OptionsTab(parent, "popups", "", tr("Popups"), tr("The popups behaviour"), "psi/jabber"), w(nullptr),
+    popup_(nullptr)
 {
 }
 

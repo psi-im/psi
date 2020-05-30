@@ -34,10 +34,10 @@ private:
 
 private slots:
     void listPlugins();
-    void showPluginInfo(int item);
+    void showPluginInfo(QTreeWidgetItem *item);
     void savePluginInfoDialogSize();
     void itemChanged(QTreeWidgetItem *item, int column);
-    void settingsClicked(int item);
+    void settingsClicked(QTreeWidgetItem *item);
     void savePluginSettingsDialogSize();
 
 private:

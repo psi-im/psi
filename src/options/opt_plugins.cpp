@@ -105,8 +105,7 @@ void OptionsTabPlugins::listPlugins()
 
     PluginManager *pm = PluginManager::instance();
 
-    QStringList plugins = pm->availablePlugins();
-    plugins.sort();
+    QStringList plugins    = pm->availablePlugins();
     const QSize buttonSize = QSize(21, 21);
     for (const QString &shortName : plugins) {
         QIcon         icon       = pm->icon(shortName);
@@ -133,7 +132,6 @@ void OptionsTabPlugins::listPlugins()
             icon = QIcon(icon.pixmap(icon.availableSizes().at(0), QIcon::Disabled));
         }
         item->setIcon(C_NAME, icon);
-        const int index = d->tw_Plugins->indexOfTopLevelItem(item);
 
         QToolButton *aboutbutton = new QToolButton(d->tw_Plugins);
         aboutbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/info")));
@@ -142,7 +140,7 @@ void OptionsTabPlugins::listPlugins()
         aboutbutton->setToolTip(tr("Show information about plugin"));
         aboutbutton->setEnabled(enabled);
         d->tw_Plugins->setItemWidget(item, C_ABOUT, aboutbutton);
-        connect(aboutbutton, &QToolButton::clicked, this, [index, this](bool) { showPluginInfo(index); });
+        connect(aboutbutton, &QToolButton::clicked, this, [item, this](bool) { showPluginInfo(item); });
 
         QToolButton *settsbutton = new QToolButton(d->tw_Plugins);
         settsbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/options")));
@@ -151,10 +149,10 @@ void OptionsTabPlugins::listPlugins()
         settsbutton->setToolTip(tr("Open plugin settings dialog"));
         settsbutton->setEnabled(enabled);
         d->tw_Plugins->setItemWidget(item, C_SETTS, settsbutton);
-        connect(settsbutton, &QToolButton::clicked, this, [index, this](bool) { settingsClicked(index); });
+        connect(settsbutton, &QToolButton::clicked, this, [item, this](bool) { settingsClicked(item); });
     }
-    d->tw_Plugins->sortByColumn(C_NAME, Qt::AscendingOrder);
     if (d->tw_Plugins->topLevelItemCount() > 0) {
+        d->tw_Plugins->sortItems(C_NAME, Qt::AscendingOrder);
         d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);
         d->tw_Plugins->resizeColumnToContents(C_VERSION);
         d->tw_Plugins->resizeColumnToContents(C_ABOUT);
@@ -187,42 +185,39 @@ void OptionsTabPlugins::itemChanged(QTreeWidgetItem *item, int column)
     d->tw_Plugins->blockSignals(false); // Release signals blocking
 }
 
-void OptionsTabPlugins::showPluginInfo(int item)
+void OptionsTabPlugins::showPluginInfo(QTreeWidgetItem *item)
 {
     if (!w)
         return;
 
     OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
-    d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
 
-    if (d->tw_Plugins->selectedItems().size() > 0) {
-        if (infoDialog)
-            delete (infoDialog);
+    if (infoDialog)
+        delete (infoDialog);
 
-        const QSize dialogSize
-            = PsiOptions::instance()->getOption("options.ui.save.plugin-info-dialog-size", QSize(600, 400)).toSize();
+    const QSize dialogSize
+        = PsiOptions::instance()->getOption("options.ui.save.plugin-info-dialog-size", QSize(600, 400)).toSize();
 
-        infoDialog = new QDialog(d);
-        ui_.setupUi(infoDialog);
-        infoDialog->setWindowTitle(tr("About plugin"));
-        infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
-        const QString &shortName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
-        ui_.tb_info->setText(PluginManager::instance()->pluginInfo(shortName));
-        auto vendor   = formatVendorText(PluginManager::instance()->vendor(shortName), false);
-        int  iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
-        ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(shortName).pixmap(iconSize, QIcon::Normal, QIcon::On));
+    infoDialog = new QDialog(d);
+    ui_.setupUi(infoDialog);
+    infoDialog->setWindowTitle(tr("About plugin"));
+    infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+    const QString &shortName = item->data(C_NAME, Qt::UserRole).toString();
+    ui_.tb_info->setText(PluginManager::instance()->pluginInfo(shortName));
+    auto vendor   = formatVendorText(PluginManager::instance()->vendor(shortName), false);
+    int  iconSize = ui_.lbl_icon->fontInfo().pixelSize() * 2.5;
+    ui_.lbl_icon->setPixmap(PluginManager::instance()->icon(shortName).pixmap(iconSize, QIcon::Normal, QIcon::On));
 
-        auto name = PluginManager::instance()->pluginName(shortName);
-        ui_.lbl_meta->setText(QString("<b>%1 %2</b><br/><b>%3:</b> %4")
-                                  .arg(name, PluginManager::instance()->version(shortName), tr("Authors"), vendor));
-        ui_.lbl_file->setText(
-            QString("<b>%1:</b> %2")
-                .arg(tr("Plugin Path"), TextUtil::escape(PluginManager::instance()->pathToPlugin(shortName))));
-        infoDialog->resize(dialogSize);
-        infoDialog->show();
+    auto name = PluginManager::instance()->pluginName(shortName);
+    ui_.lbl_meta->setText(QString("<b>%1 %2</b><br/><b>%3:</b> %4")
+                              .arg(name, PluginManager::instance()->version(shortName), tr("Authors"), vendor));
+    ui_.lbl_file->setText(
+        QString("<b>%1:</b> %2")
+            .arg(tr("Plugin Path"), TextUtil::escape(PluginManager::instance()->pathToPlugin(shortName))));
+    infoDialog->resize(dialogSize);
+    infoDialog->show();
 
-        connect(infoDialog, &QDialog::finished, this, &OptionsTabPlugins::savePluginInfoDialogSize);
-    }
+    connect(infoDialog, &QDialog::finished, this, &OptionsTabPlugins::savePluginInfoDialogSize);
 }
 
 void OptionsTabPlugins::savePluginInfoDialogSize()
@@ -235,29 +230,24 @@ void OptionsTabPlugins::savePluginInfoDialogSize()
     dlg->deleteLater();
 }
 
-void OptionsTabPlugins::settingsClicked(int item)
+void OptionsTabPlugins::settingsClicked(QTreeWidgetItem *item)
 {
     if (!w)
         return;
 
     OptPluginsUI *d = static_cast<OptPluginsUI *>(w);
-    d->tw_Plugins->setCurrentItem(d->tw_Plugins->topLevelItem(item));
-
-    if (d->tw_Plugins->selectedItems().size() > 0) {
-        const QSize dialogSize = PsiOptions::instance()
-                                     ->getOption("options.ui.save.plugin-settings-dialog-size", QSize(600, 400))
-                                     .toSize();
-        const QString &    shortName = d->tw_Plugins->currentItem()->data(C_NAME, Qt::UserRole).toString();
-        PluginsOptionsDlg *sw        = d->findChild<PluginsOptionsDlg *>(shortName);
-        if (!sw) {
-            sw = new PluginsOptionsDlg(shortName, psi, d);
-            sw->setObjectName(shortName);
-        }
-        sw->resize(dialogSize);
-        sw->open();
-
-        connect(sw, &QDialog::finished, this, &OptionsTabPlugins::savePluginSettingsDialogSize);
+    const QSize   dialogSize
+        = PsiOptions::instance()->getOption("options.ui.save.plugin-settings-dialog-size", QSize(600, 400)).toSize();
+    const QString &    shortName = item->data(C_NAME, Qt::UserRole).toString();
+    PluginsOptionsDlg *sw        = d->findChild<PluginsOptionsDlg *>(shortName);
+    if (!sw) {
+        sw = new PluginsOptionsDlg(shortName, psi, d);
+        sw->setObjectName(shortName);
     }
+    sw->resize(dialogSize);
+    sw->open();
+
+    connect(sw, &QDialog::finished, this, &OptionsTabPlugins::savePluginSettingsDialogSize);
 }
 
 void OptionsTabPlugins::savePluginSettingsDialogSize()
