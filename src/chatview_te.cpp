@@ -147,7 +147,7 @@ void ChatView::addLogIconsResources()
     for (auto &i : icons) {
         auto res = QUrl(QLatin1String("icon:") + i.name);
         if (useMessageIcons_) {
-            auto icon = IconsetFactory::iconPixmap(i.icon);
+            auto icon = IconsetFactory::iconPixmap(i.icon, scaledSize);
             if (icon.height() > HugeIconTextViewK * fs || scale) {
                 icon = icon.scaledToHeight(scaledSize, Qt::SmoothTransformation);
             }

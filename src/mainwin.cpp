@@ -1661,7 +1661,7 @@ void MainWin::numAccountsChanged()
         connect(acc, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
     }
     if (!acc) { // no accounts left
-        d->rosterAvatar->setAvatar(IconsetFactory::iconPixmap("psi/default_avatar"));
+        avatarChanged(Jid());
     }
 }
 
@@ -1673,12 +1673,16 @@ void MainWin::nickChanged()
 
 void MainWin::avatarChanged(const Jid &jid)
 {
+    QPixmap pix;
     if (d->defaultAccount && d->defaultAccount->jid() == jid) {
-        QPixmap pix = d->defaultAccount->avatarFactory()->getAvatar(d->defaultAccount->jid());
-        if (pix.isNull())
-            pix = IconsetFactory::iconPixmap("psi/default_avatar");
-        d->rosterAvatar->setAvatar(pix);
+        pix = d->defaultAccount->avatarFactory()->getAvatar(d->defaultAccount->jid());
     }
+    if (pix.isNull()) {
+        int avSize
+            = PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.size").toInt();
+        pix = IconsetFactory::iconPixmap("psi/default_avatar", avSize);
+    }
+    d->rosterAvatar->setAvatar(pix);
 }
 
 void MainWin::accountFeaturesChanged()

@@ -19,6 +19,7 @@
 
 #include "tabbar.h"
 
+#include "common.h"
 #include "iconset.h"
 
 #include <QAbstractButton>
@@ -913,7 +914,7 @@ void TabBar::paintEvent(QPaintEvent *event)
     pixmap.fill(Qt::transparent);
     QStylePainter pp(&pixmap, this);
     bool          drawSelected = false;
-    QPixmap       pinPixmap    = IconsetFactory::iconPixmap("psi/pin");
+    QPixmap       pinPixmap    = IconsetFactory::iconPixmap("psi/pin", fontInfo().pixelSize() * EqTextIconK);
     for (int i = 0; i < tabs.size(); i++) {
         QStyleOptionTab tab = tabs[i];
         if (i != selected) {

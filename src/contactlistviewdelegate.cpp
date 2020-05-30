@@ -512,15 +512,16 @@ QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
         av = v.value<QPixmap>();
 
     if (av.isNull() && useDefaultAvatar_)
-        av = IconsetFactory::iconPixmap("psi/default_avatar");
+        av = IconsetFactory::iconPixmap("psi/default_avatar", avSize);
 
     return AvatarFactory::roundedAvatar(av, avatarRadius_, avSize);
 }
 
 QPixmap ContactListViewDelegate::Private::rosterIndicator(const QString iconName)
 {
-    QPixmap pix = IconsetFactory::iconPixmap(iconName);
-    auto    fs  = QFontInfo(font_).pixelSize();
+    auto    fs          = QFontInfo(font_).pixelSize() * EqTextIconK;
+    auto    desiredSize = QSize(fs, fs);
+    QPixmap pix         = IconsetFactory::iconPixmap(iconName, desiredSize);
     if (pix.height() > fs * HugeIconRosterK) {
         pix = pix.scaledToHeight(fs * EqTextIconK, Qt::SmoothTransformation);
     }
@@ -1033,9 +1034,10 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
 
     drawText(painter, o, r, text);
 
+    auto    iconSize  = painter->fontInfo().pixelSize() * EqTextIconK;
     QPixmap sslPixmap = index.data(ContactListModel::UsingSSLRole).toBool()
-        ? IconsetFactory::iconPixmap("psi/cryptoYes")
-        : IconsetFactory::iconPixmap("psi/cryptoNo");
+        ? IconsetFactory::iconPixmap("psi/cryptoYes", iconSize)
+        : IconsetFactory::iconPixmap("psi/cryptoNo", iconSize);
 
     QSize sslPixmapSize = sslPixmap.size() * PSI_HIDPI;
     if (sslPixmapSize.height() > opt.rect.height()) {

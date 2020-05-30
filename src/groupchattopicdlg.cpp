@@ -31,7 +31,7 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
         if (!addLangDlg) {
             addLangDlg = new QDialog(this);
             m_addLangUi->setupUi(addLangDlg);
-            addLangDlg->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+            addLangDlg->setWindowIcon(IconsetFactory::iconPtr("psi/logo_128")->icon());
             addLangDlg->setAttribute(Qt::WA_DeleteOnClose);
 
             m_addLangUi->cmbLang->addItem(tr("Any Language"), 0);

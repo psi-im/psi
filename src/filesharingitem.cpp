@@ -93,7 +93,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
     QBuffer    buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG", 0);
-    _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, ba));
+    _sums.append(Hash::from(Hash::Sha1, ba));
 
     if (!initFromCache()) {
         _mimeType = QString::fromLatin1("image/png");
@@ -119,7 +119,7 @@ FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileS
     if (!h.isValid())
         return;
 
-    _sums.insert(Hash::Sha1, h);
+    _sums.append(h);
 
     if (!initFromCache()) {
         file.seek(0);
@@ -134,7 +134,7 @@ FileSharingItem::FileSharingItem(const QString &mime, const QByteArray &data, co
     _acc(acc), _manager(manager), _fileType(FileType::TempFile), _flags(SizeKnown),
     _modifyTime(QDateTime::currentDateTimeUtc()), _metaData(metaData)
 {
-    _sums.insert(Hash::Sha1, Hash::from(Hash::Sha1, data));
+    _sums.append(Hash::from(Hash::Sha1, data));
 
     if (!initFromCache()) {
         _mimeType = mime;

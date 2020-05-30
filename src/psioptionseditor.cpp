@@ -200,7 +200,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
 
     if (parent) {
         pb_detach = new QToolButton(this);
-        pb_detach->setIcon(IconsetFactory::iconPixmap("psi/advanced"));
+        pb_detach->setIcon(IconsetFactory::iconPtr("psi/advanced")->icon());
         pb_detach->setIconSize(QSize(16, 16));
         pb_detach->setToolTip(tr("Open a detached option editor window."));
         buttonLine->addWidget(pb_detach);

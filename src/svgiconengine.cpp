@@ -19,7 +19,10 @@
 
 #include "svgiconengine.h"
 
+#include <QApplication>
 #include <QPainter>
+#include <QPalette>
+#include <QPixmapCache>
 
 QSize SvgIconEngine::actualSize(const QSize &size, QIcon::Mode mode, QIcon::State state)
 {
@@ -55,7 +58,7 @@ void SvgIconEngine::virtual_hook(int id, void *data)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
     case QIconEngine::ScaledPixmapHook: {
         auto arg    = reinterpret_cast<ScaledPixmapArgument *>(data);
-        arg->pixmap = renderPixmap(arg->size * arg->scale, arg->mode, arg->state);
+        arg->pixmap = pixmap(arg->size * arg->scale, arg->mode, arg->state);
         break;
     }
 #endif
@@ -64,7 +67,33 @@ void SvgIconEngine::virtual_hook(int id, void *data)
 
 QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state)
 {
-    return renderPixmap(size, mode, state);
+    QPixmap pm;
+    if (mode == QIcon::Disabled && disabledCache.isValid() && QPixmapCache::find(disabledCache, &pm))
+        return pm;
+
+    if (normalCache.isValid() && QPixmapCache::find(normalCache, &pm)) {
+        if (mode == QIcon::Active || mode == QIcon::Normal)
+            return pm;
+    }
+
+    if (!pm)
+        pm = renderPixmap(size, mode, state);
+    normalCache = QPixmapCache::insert(pm);
+
+    if (mode == QIcon::Selected) {
+        auto hlColor = qApp->palette().color(QPalette::Normal, QPalette::Highlight);
+        hlColor.setAlpha(128);
+        QPainter p(&pm);
+        p.setPen(Qt::NoPen);
+        p.fillRect(pm.rect(), hlColor);
+    } else if (mode == QIcon::Disabled) {
+        auto img = pm.toImage();
+        img.convertTo(QImage::Format_Grayscale8);
+        pm            = QPixmap::fromImage(img);
+        disabledCache = QPixmapCache::insert(pm);
+    }
+
+    return pm;
 }
 
 QPixmap SvgIconEngine::renderPixmap(const QSize &size, QIcon::Mode mode, QIcon::State state)

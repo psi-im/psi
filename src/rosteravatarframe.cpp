@@ -56,12 +56,12 @@ void RosterAvatarFrame::setAvatar(const QPixmap &avatar)
 
 void RosterAvatarFrame::setMoodIcon(const QString &mood)
 {
-    ui_.tb_mood->setIcon(QIcon(IconsetFactory::iconPixmap(mood)));
+    ui_.tb_mood->setIcon(IconsetFactory::iconPtr(mood)->icon());
 }
 
 void RosterAvatarFrame::setActivityIcon(const QString &activity)
 {
-    ui_.tb_activity->setIcon(QIcon(IconsetFactory::iconPixmap(activity)));
+    ui_.tb_activity->setIcon(IconsetFactory::iconPtr(activity)->icon());
 }
 
 void RosterAvatarFrame::drawAvatar()

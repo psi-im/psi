@@ -21,6 +21,7 @@
 #define SVGICONENGINE_H
 
 #include <QIconEngine>
+#include <QPixmapCache>
 #include <QSvgRenderer>
 #include <memory>
 
@@ -28,6 +29,8 @@ class SvgIconEngine : public QIconEngine {
 
     QString                       name;
     std::shared_ptr<QSvgRenderer> renderer;
+    QPixmapCache::Key             normalCache;
+    QPixmapCache::Key             disabledCache;
 
 public:
     SvgIconEngine(const QString &name, std::shared_ptr<QSvgRenderer> renderer) : name(name), renderer(renderer) { }

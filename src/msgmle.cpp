@@ -667,7 +667,7 @@ void ChatEdit::addSoundRecButton()
                 emit fileSharingRequested(&md);
             });
             connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this]() {
-                recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec"));
+                recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize()));
                 overlay_->setVisible(true);
                 timeout_ = TIMEOUT;
                 timer_.reset(new QTimer); // countdown timer to stop recording while the button is pressed
@@ -724,7 +724,7 @@ void ChatEdit::setRecButtonIcon()
             recImage.invertPixels();
             recButton_->setIcon(QPixmap::fromImage(recImage));
         } else {
-            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic"));
+            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic", fontInfo().pixelSize()));
         }
         const QColor toolTipBgColor(recButton_->palette().color(recButton_->backgroundRole()));
         toolTipBgColor.getRgb(&red, &green, &blue);

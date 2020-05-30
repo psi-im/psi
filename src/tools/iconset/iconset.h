@@ -236,6 +236,10 @@ public:
     static PsiIcon        icon(const QString &name);
     static inline PsiIcon icon(const char *name) { return icon(QString(QLatin1String(name))); } // optimization
     static QPixmap        iconPixmap(const QString &name, const QSize desiredSize = QSize());
+    static inline QPixmap iconPixmap(const QString &name, int desiredSize)
+    {
+        return iconPixmap(name, QSize(desiredSize, desiredSize));
+    }
 
     static const PsiIcon *   iconPtr(const QString &name);
     static const QStringList icons();

@@ -833,7 +833,8 @@ void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &stat
             }
             QString client(u->findClient(r));
             if (!client.isEmpty()) {
-                const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
+                const QPixmap &pix
+                    = IconsetFactory::iconPixmap("clients/" + client, fontInfo().pixelSize() * EqTextIconK);
                 ui_.lb_client->setPixmap(pix);
             }
             ui_.lb_client->setToolTip(r.versionString());
@@ -862,6 +863,7 @@ void PsiChatDlg::updateAvatar()
         client   = (*it).clientName();
         private_ = ul->isPrivate();
     }
+    int optSize = PsiOptions::instance()->getOption("options.ui.chat.avatars.size").toInt();
     // QPixmap p = account()->avatarFactory()->getAvatar(jid().withResource(res),client);
     QPixmap p = private_ ? account()->avatarFactory()->getMucAvatar(jid().withResource(res))
                          : account()->avatarFactory()->getAvatar(jid().withResource(res));
@@ -870,9 +872,9 @@ void PsiChatDlg::updateAvatar()
             ui_.avatar->hide();
             return;
         }
-        p = IconsetFactory::iconPixmap("psi/default_avatar");
+        p = IconsetFactory::iconPixmap("psi/default_avatar", optSize);
     }
-    int optSize = PsiOptions::instance()->getOption("options.ui.chat.avatars.size").toInt();
+
     ui_.avatar->setFixedSize(optSize, optSize);
     int avatarSize = p.width(); // qMax(p.width(), p.height());
     if (avatarSize > optSize)
@@ -1208,14 +1210,15 @@ void PsiChatDlg::contactChanged() /* current jid was chanegd in Jid combobox.TOD
 
 void PsiChatDlg::updateAutojidIcon()
 {
-    QIcon   icon(IconsetFactory::iconPixmap("psi/autojid"));
+    QIcon   icon = IconsetFactory::iconPtr("psi/autojid")->icon();
     QPixmap pix;
     QString text;
+    auto    iconSize = fontInfo().pixelSize() * EqTextIconK;
     if (autoSelectContact_) {
-        pix  = icon.pixmap(QSize(16, 16), QIcon::Normal, QIcon::Off);
+        pix  = icon.pixmap(iconSize, QIcon::Normal, QIcon::Off);
         text = tr("turn off autojid");
     } else {
-        pix  = icon.pixmap(QSize(16, 16), QIcon::Disabled, QIcon::Off);
+        pix  = icon.pixmap(iconSize, QIcon::Disabled, QIcon::Off);
         text = tr("turn on autojid");
     }
     act_autojid->setIcon(QIcon(pix));

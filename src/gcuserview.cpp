@@ -129,11 +129,12 @@ public:
     void paintContact(QPainter *mp, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
         mp->save();
-        QStyleOptionViewItem o       = option;
-        QPalette             palette = o.palette;
-        MUCItem::Role        r       = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
-        QRect                rect    = o.rect;
-        int                  gap     = qMax(int(fontHeight_ / 6), 1);
+        QStyleOptionViewItem o         = option;
+        QPalette             palette   = o.palette;
+        MUCItem::Role        r         = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
+        QRect                rect      = o.rect;
+        int                  gap       = qMax(int(fontHeight_ / 6), 1);
+        int                  iconsSize = option.fontMetrics.height() * EqTextIconK;
 
         if (nickColoring_) {
             if (r == MUCItem::Moderator)
@@ -153,7 +154,7 @@ public:
         if (showAvatar_) {
             QPixmap ava = index.data(GCUserModel::AvatarRole).value<QPixmap>();
             if (ava.isNull()) {
-                ava = IconsetFactory::iconPixmap("psi/default_avatar");
+                ava = IconsetFactory::iconPixmap("psi/default_avatar", avatarSize_);
             }
             ava = AvatarFactory::roundedAvatar(ava, avatarRadius_, avatarSize_);
             QRect avaRect(rect);
@@ -176,9 +177,8 @@ public:
             : QImage();
         if (!status.isNull()) {
             QRect statusRect(status.rect());
-            if (statusRect.height() > fontHeight_ * HugeIconRosterK) {
-                status     = status.scaled(fontHeight_ * EqTextIconK, fontHeight_ * EqTextIconK, Qt::KeepAspectRatio,
-                                       Qt::SmoothTransformation);
+            if (statusRect.height() > iconsSize) {
+                status     = status.scaled(iconsSize, iconsSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 statusRect = status.rect();
             }
             statusRect.moveTop(rect.top() + (rect.height() - statusRect.height()) / 2);
@@ -197,17 +197,21 @@ public:
 
         QList<QPixmap> rightPixs;
 
-        if (showAffiliations_) {
-            QPixmap pix = index.data(GCUserModel::AffilationIconRole).value<QPixmap>();
-            if (!pix.isNull())
-                rightPixs.push_back(pix);
-        }
+        auto addIcon = [&](int role) mutable {
+            QString name;
+            auto    pixv = index.data(role);
+            if (!pixv.isNull() && !(name = pixv.toString()).isEmpty()) {
+                QPixmap pix = IconsetFactory::iconPixmap(name, iconsSize);
+                if (!pix.isNull())
+                    rightPixs.push_back(pix);
+            }
+        };
 
-        if (showClients_) {
-            QPixmap clientPix = index.data(GCUserModel::ClientIconRole).value<QPixmap>();
-            if (!clientPix.isNull())
-                rightPixs.push_back(clientPix);
-        }
+        if (showAffiliations_)
+            addIcon(GCUserModel::AffilationIconRole);
+
+        if (showClients_)
+            addIcon(GCUserModel::ClientIconRole);
 
         mp->restore();
 
@@ -356,22 +360,22 @@ QVariant GCUserModel::data(const QModelIndex &index, int role) const
             u.userResourceList().append(ur);
             QStringList clients = u.clients();
             if (!clients.isEmpty())
-                return IconsetFactory::iconPixmap("clients/" + clients.takeFirst());
+                return QLatin1String("clients/") + clients.takeFirst();
             break;
         }
         case AffilationIconRole: {
             MUCItem::Affiliation a = contact.status.mucItem().affiliation();
 
             if (a == MUCItem::Owner)
-                return IconsetFactory::iconPixmap("affiliation/owner");
+                return QLatin1String("affiliation/owner");
             else if (a == MUCItem::Admin)
-                return IconsetFactory::iconPixmap("affiliation/admin");
+                return QLatin1String("affiliation/admin");
             else if (a == MUCItem::Member)
-                return IconsetFactory::iconPixmap("affiliation/member");
+                return QLatin1String("affiliation/member");
             else if (a == MUCItem::Outcast)
-                return IconsetFactory::iconPixmap("affiliation/outcast");
+                return QLatin1String("affiliation/outcast");
             else
-                return IconsetFactory::iconPixmap("affiliation/noaffiliation");
+                return QLatin1String("affiliation/noaffiliation");
         }
         }
     } else {

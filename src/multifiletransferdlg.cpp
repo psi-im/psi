@@ -420,9 +420,10 @@ void MultiFileTransferDlg::updateMyVisuals()
 {
     QPixmap avatar;
     ui->lblMyAvatar->setToolTip(d->account->jid().full());
-    avatar = d->account->avatarFactory()->getAvatar(d->account->jid());
+    avatar     = d->account->avatarFactory()->getAvatar(d->account->jid());
+    int avSize = fontInfo().pixelSize() * 3.5;
     if (avatar.isNull()) {
-        avatar = IconsetFactory::iconPixmap("psi/default_avatar");
+        avatar = IconsetFactory::iconPixmap("psi/default_avatar", avSize);
     }
     ui->lblMyAvatar->setPixmap(avatar);
     ui->lblMyName->setText(d->account->nick());
@@ -452,8 +453,9 @@ void MultiFileTransferDlg::updatePeerVisuals()
         ui->lblPeerName->setText(tr("Not selected"));
     }
 
+    int avSize = fontInfo().pixelSize() * 3.5;
     if (avatar.isNull()) {
-        avatar = IconsetFactory::iconPixmap("psi/default_avatar");
+        avatar = IconsetFactory::iconPixmap("psi/default_avatar", avSize);
     }
     ui->lblPeerAvatar->setPixmap(avatar);
 }
