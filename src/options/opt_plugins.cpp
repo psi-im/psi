@@ -153,6 +153,7 @@ void OptionsTabPlugins::listPlugins()
         d->tw_Plugins->setItemWidget(item, C_SETTS, settsbutton);
         connect(settsbutton, &QToolButton::clicked, this, [index, this](bool) { settingsClicked(index); });
     }
+    d->tw_Plugins->sortByColumn(C_NAME, Qt::AscendingOrder);
     if (d->tw_Plugins->topLevelItemCount() > 0) {
         d->tw_Plugins->header()->setSectionResizeMode(C_NAME, QHeaderView::Stretch);
         d->tw_Plugins->resizeColumnToContents(C_VERSION);
