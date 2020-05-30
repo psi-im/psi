@@ -97,6 +97,7 @@ include($$PWD/../iris/iris.pri)
 # Header files
 HEADERS += \
     $$PWD/debug.h \
+    $$PWD/svgiconengine.h \
     $$PWD/varlist.h \
     $$PWD/jidutil.h \
     $$PWD/showtextdlg.h \
@@ -245,6 +246,7 @@ HEADERS += \
 # Source files
 SOURCES += \
     $$PWD/debug.cpp \
+    $$PWD/svgiconengine.cpp \
     $$PWD/varlist.cpp \
     $$PWD/jidutil.cpp \
     $$PWD/showtextdlg.cpp \

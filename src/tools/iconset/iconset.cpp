@@ -32,6 +32,7 @@
 #ifdef ICONSET_ZIP
 #include "zip/zip.h"
 #endif
+#include "svgiconengine.h"
 
 #include <QApplication>
 #include <QBuffer>
@@ -40,11 +41,14 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QIcon>
+#include <QIconEngine>
 #include <QLocale>
 #include <QObject>
+#include <QPainter>
 #include <QRegExp>
 #include <QSharedData>
 #include <QSharedDataPointer>
+#include <QSvgRenderer>
 #include <QTextCodec>
 #include <QThread>
 #include <QTimer>
@@ -163,6 +167,15 @@ void Impix::setImage(const QImage &x)
     d->image = x;
 }
 
+QSize Impix::size() const
+{
+    if (d->pixmap)
+        return d->pixmap->size();
+    if (!d->image.isNull())
+        return d->image.size();
+    return {};
+}
+
 bool Impix::loadFromData(const QByteArray &ba)
 {
     bool ret = false;
@@ -258,6 +271,8 @@ public:
         sound          = from.sound;
         impix          = from.impix;
         rawData        = from.rawData;
+        scalable       = from.scalable;
+        svgRenderer    = from.svgRenderer;
         anim           = from.anim ? new Anim(*from.anim) : nullptr;
         icon           = nullptr;
         activatedCount = from.activatedCount;
@@ -288,12 +303,21 @@ signals:
     void iconModified();
 
 public:
-    const QPixmap &pixmap() const
+    QPixmap pixmap(const QSize &desiredSize = QSize()) const
     {
-        if (anim) {
-            return anim->framePixmap();
+        if (svgRenderer) {
+            QSize   sz = svgRenderer->defaultSize().scaled(desiredSize, Qt::KeepAspectRatio);
+            QPixmap pix(sz);
+            pix.fill(Qt::transparent);
+            QPainter p(&pix);
+            svgRenderer->render(&p);
+            return pix;
         }
-        return impix.pixmap();
+
+        QPixmap pix = anim ? anim->framePixmap() : impix.pixmap();
+        if (scalable)
+            return pix.scaled(desiredSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        return pix;
     }
 
 public slots:
@@ -305,12 +329,14 @@ public:
     QList<IconText> text;
     QString         sound;
 
-    Impix              impix;
-    Anim *             anim;
-    QIcon *            icon;
-    mutable QByteArray rawData;
+    Impix                         impix;
+    Anim *                        anim = nullptr;
+    std::shared_ptr<QSvgRenderer> svgRenderer;
+    QIcon *                       icon = nullptr;
+    mutable QByteArray            rawData;
+    bool                          scalable = false;
 
-    int activatedCount;
+    int activatedCount = 0;
     friend class PsiIcon;
 };
 //! \endif
@@ -374,17 +400,29 @@ bool PsiIcon::isAnimated() const { return d->anim != nullptr; }
 /**
  * Returns QPixmap of current frame.
  */
-const QPixmap &PsiIcon::pixmap() const { return d->pixmap(); }
+QPixmap PsiIcon::pixmap(const QSize &desiredSize) const { return d->pixmap(desiredSize); }
 
 /**
  * Returns QImage of current frame.
  */
-const QImage &PsiIcon::image() const
+QImage PsiIcon::image(const QSize &desiredSize) const
 {
     if (d->anim) {
         return d->anim->frameImage();
     }
-    return d->impix.image();
+
+    auto img = d->impix.image();
+    if (d->svgRenderer) {
+        QSize sz = d->svgRenderer->defaultSize().scaled(desiredSize, Qt::KeepAspectRatio);
+        if (!img.isNull() && img.size() == sz)
+            return img;
+        img = QImage(sz, QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter p(&img);
+        d->svgRenderer->render(&p);
+        // d->impix.setImage(img); // we need some mutable member to chache this.
+    }
+    return img;
 }
 
 /**
@@ -409,23 +447,26 @@ const Impix &PsiIcon::frameImpix() const
  * Returns QIcon of first animation frame.
  * TODO: Add automatic greyscale icon generation.
  */
-const QIcon &PsiIcon::icon() const
+QIcon PsiIcon::icon() const
 {
     if (d->icon) {
         return *d->icon;
     }
 
+    if (d->svgRenderer) {
+        auto eng = new SvgIconEngine(d->svgRenderer);
+        return QIcon(eng);
+    }
     const_cast<Private *>(d.data())->icon = new QIcon(d->impix.pixmap());
     return *d->icon;
 }
 
-#ifdef WEBKIT
 /**
  * Returns original image data
  */
 const QByteArray &PsiIcon::raw() const
 {
-    if (!(d->rawData.size())) {
+    if (d->rawData.isEmpty()) {
         QPixmap pix = impix().pixmap();
         if (!pix.isNull()) {
             QBuffer buffer(&d->rawData);
@@ -435,7 +476,19 @@ const QByteArray &PsiIcon::raw() const
     }
     return d->rawData;
 }
-#endif
+
+QSize PsiIcon::size(const QSize &desiredSize) const
+{
+    if (d->scalable) {
+        QSize origSize = d->svgRenderer ? d->svgRenderer->defaultSize() : d->impix.size();
+        if (desiredSize.isEmpty())
+            return origSize;
+        return origSize.scaled(desiredSize, Qt::KeepAspectRatio);
+    }
+    return d->impix.size();
+}
+
+bool PsiIcon::isScalable() const { return d->scalable; }
 
 /**
  * Sets the PsiIcon impix to \a impix.
@@ -652,22 +705,34 @@ bool PsiIcon::blockSignals(bool b) { return d->blockSignals(b); }
  * Initializes PsiIcon's Impix (or Anim, if \a isAnim equals \c true).
  * Iconset::load uses this function.
  */
-bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
+bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim, bool isScalable)
 {
-    detach();
-#ifdef WEBKIT
-    d->rawData = ba;
-#endif
     bool ret = false;
-    if (isAnim) {
-        Anim *anim = new Anim(ba);
-        setAnim(*anim);
-        ret = anim->numFrames() > 0;
-        delete anim; // shared data rules ;)
-    }
 
-    if (!ret && d->impix.loadFromData(ba))
+    detach();
+    d->rawData     = ba;
+    d->scalable    = isScalable;
+    d->svgRenderer = nullptr;
+    if (d->scalable) {
+        d->svgRenderer = std::make_shared<QSvgRenderer>(ba);
+        if (!d->svgRenderer->isValid()) {
+            d->svgRenderer.reset();
+            d->svgRenderer = nullptr;
+        }
+    }
+    if (d->svgRenderer) {
         ret = true;
+    } else {
+        if (isAnim) {
+            Anim *anim = new Anim(ba);
+            setAnim(*anim);
+            ret = anim->numFrames() > 0;
+            delete anim; // shared data rules ;)
+        }
+
+        if (!ret && d->impix.loadFromData(ba))
+            ret = true;
+    }
 
     if (ret) {
         emit d->pixmapChanged();
@@ -905,10 +970,12 @@ PsiIcon IconsetFactory::icon(const QString &name)
  * This function is faster than the call to IconsetFactory::icon() and cast to QPixmap,
  * because the intermediate PsiIcon object is not created and destroyed.
  */
-const QPixmap &IconsetFactory::iconPixmap(const QString &name)
+QPixmap IconsetFactory::iconPixmap(const QString &name, const QSize desiredSize)
 {
     const PsiIcon *i = iconPtr(name);
     if (i) {
+        if (!desiredSize.isEmpty() && i->isScalable())
+            return i->pixmap(desiredSize);
         return i->impix().pixmap();
     }
 
@@ -920,7 +987,6 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
  */
 const QStringList IconsetFactory::icons() { return IconsetFactoryPrivate::instance()->icons(); }
 
-#ifdef WEBKIT
 /**
  * Returs image raw data aka original image
  */
@@ -932,7 +998,6 @@ const QByteArray IconsetFactory::raw(const QString &name)
     }
     return QByteArray();
 }
-#endif
 
 //----------------------------------------------------------------------------
 // Iconset
@@ -1109,11 +1174,12 @@ public:
         icon.blockSignals(true);
 
         QList<PsiIcon::IconText> text;
-        QHash<QString, QString>  graphic, sound, object;
+        QHash<QString, QString>  graphic, sound, object; // mime => filename
 
         QString name       = QString::asprintf("icon_%04d", icon_counter++);
         bool    isAnimated = false;
         bool    isImage    = false;
+        bool    isScalable = false;
 
         for (QDomNode n = i.firstChild(); !n.isNull(); n = n.nextSibling()) {
             QDomElement e = n.toElement();
@@ -1142,6 +1208,8 @@ public:
                         isAnimated = true;
                     } else if (e.text() == "image") {
                         isImage = true;
+                    } else if (e.text() == "scalable") { // force scalability. should work well for big enough images
+                        isScalable = true;
                     }
                 }
             }
@@ -1156,7 +1224,7 @@ public:
         icon.setText(text);
         icon.setName(name);
 
-        QStringList graphicMime, soundMime, animationMime;
+        QStringList graphicMime, soundMime, animationMime, scalableMime;
         graphicMime << "image/png"; // first item have higher priority than latter
         // graphicMime << "video/x-mng"; // due to very serious issue in Qt 4.1.0, this format was disabled
         graphicMime << "image/gif";
@@ -1164,6 +1232,8 @@ public:
         graphicMime << "image/bmp";
         graphicMime << "image/jpeg";
         graphicMime << "image/svg+xml"; // TODO: untested
+
+        scalableMime << "image/svg+xml";
 
         soundMime << "audio/x-wav";
         soundMime << "audio/x-ogg";
@@ -1195,37 +1265,21 @@ public:
             }
         }
 
-        bool loadSuccess = false;
+        bool loadSuccess = std::any_of(graphicMime.begin(), graphicMime.end(), [&](const auto &mime) {
+            QString fileName = graphic.value(mime);
+            if (fileName.isEmpty())
+                return false;
+            // if format supports animations, then load graphic as animation, and
+            // if there is only one frame, then later it would be converted to single Impix
+            QByteArray ba = loadData(fileName, dir);
+            if (icon.loadFromData(ba, isAnimated || (!isImage && animationMime.indexOf(mime) != -1),
+                                  isScalable || scalableMime.indexOf(mime) != -1))
+                return true;
 
-        {
-            QStringList::Iterator it = graphicMime.begin();
-            for (; it != graphicMime.end(); ++it) {
-                if (graphic.contains(*it) && !graphic[*it].isNull()) {
-                    // if format supports animations, then load graphic as animation, and
-                    // if there is only one frame, then later it would be converted to single Impix
-                    if (!isAnimated && !isImage) {
-                        QStringList::Iterator it2 = animationMime.begin();
-                        for (; it2 != animationMime.end(); ++it2) {
-                            if (*it == *it2) {
-                                isAnimated = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    QByteArray ba = loadData(graphic[*it], dir);
-
-                    if (icon.loadFromData(ba, isAnimated)) {
-                        loadSuccess = true;
-                        break;
-                    } else {
-                        qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset",
-                               qPrintable(*it), qPrintable(graphic[*it]), qPrintable(name), qPrintable(this->name));
-                        loadSuccess = false;
-                    }
-                }
-            }
-        }
+            qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset",
+                   qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+            return false;
+        });
 
         {
             QFileInfo             fi(dir);

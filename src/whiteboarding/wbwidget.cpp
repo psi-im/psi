@@ -25,6 +25,9 @@
 
 #include <QApplication>
 #include <QMouseEvent>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+#include <QRandomGenerator>
+#endif
 
 WbWidget::WbWidget(SxeSession *session, QWidget *parent) : QGraphicsView(parent)
 {
@@ -210,9 +213,9 @@ void WbWidget::resizeEvent(QResizeEvent *event)
 {
     // Never show areas outside the sceneRect
     // Doesn't consider rotated views.
-    QMatrix t;
-    qreal   sx = event->size().width() / scene_->sceneRect().width();
-    qreal   sy = event->size().height() / scene_->sceneRect().height();
+    QTransform t;
+    qreal      sx = event->size().width() / scene_->sceneRect().width();
+    qreal      sy = event->size().height() / scene_->sceneRect().height();
 
     // Never shrink the view. Only enlarge if necessary.
     if (sx > 1 || sy > 1) {
@@ -222,7 +225,7 @@ void WbWidget::resizeEvent(QResizeEvent *event)
             t.scale(sy, sy);
     }
 
-    setMatrix(t);
+    setTransform(t);
     QGraphicsView::resizeEvent(event);
 }
 
@@ -408,7 +411,11 @@ void WbWidget::addToIdLess(const QDomElement &element)
         idlessItems_.append(item);
 
         // Try adding the 'id' attribute after a random delay of 0 to 2s
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+        QTimer::singleShot(QRandomGenerator::global()->bounded(2000), this, SLOT(addIds()));
+#else
         QTimer::singleShot(2000 * qrand() / RAND_MAX, this, SLOT(addIds()));
+#endif
     }
 }
 

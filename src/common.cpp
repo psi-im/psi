@@ -771,7 +771,7 @@ QString macToQtDatetimeFormat(const QString &sys_fmt)
 }
 #endif
 
-int pointToPixel(int points)
+int pointToPixel(qreal points)
 {
     // In typography 1 point (also called PostScript point)
     // is 1/72 of an inch

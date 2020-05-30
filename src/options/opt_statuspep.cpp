@@ -79,8 +79,12 @@ void OptionsTabStatusPep::restoreOptions()
     tuneFilters_      = o->getOption(tuneUrlFilterOptionPath).toString();
     d->tuneExtensions->setText(tuneFilters_);
     QStringList controllers = psi_->tuneManager()->controllerNames();
-    blackList_
-        = o->getOption(tuneControllerFilterOptionPath).toString().split(QRegExp("[,]\\s*"), QString::SkipEmptyParts);
+    QString     tmpBL       = o->getOption(tuneControllerFilterOptionPath).toString();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    blackList_ = tmpBL.split(QRegExp("[,]\\s*"), Qt::SkipEmptyParts);
+#else
+    blackList_ = tmpBL.split(QRegExp("[,]\\s*"), QString::SkipEmptyParts);
+#endif
     for (const QString &name : controllers) {
         QCheckBox *cb      = new QCheckBox(name);
         QString    caption = name + " controller";

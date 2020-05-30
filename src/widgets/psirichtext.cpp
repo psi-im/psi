@@ -57,7 +57,7 @@ static QStringList allowedImageDirs;
 
 class TextIconFormat : public QTextCharFormat {
 public:
-    TextIconFormat(const QString &iconName, const QString &text, int size = -1);
+    TextIconFormat(const QString &iconName, const QString &text, qreal size = -1);
 
     enum Property {
         IconName = QTextFormat::UserProperty + 1,
@@ -66,7 +66,7 @@ public:
     };
 };
 
-TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, int size) : QTextCharFormat()
+TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, qreal size) : QTextCharFormat()
 {
     Q_UNUSED(text);
 
@@ -103,17 +103,18 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     Q_UNUSED(posInDocument)
     const QTextCharFormat charFormat = format.toCharFormat();
 
-    auto htmlSize = charFormat.stringProperty(TextIconFormat::IconSize).toInt();
-    auto origSize = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName)).size();
-    if (origSize.isNull())
-        return origSize;
+    auto htmlSize = charFormat.doubleProperty(TextIconFormat::IconSize);
+    auto iconName = charFormat.stringProperty(TextIconFormat::IconName);
 
-    if (htmlSize == 0)
-        return origSize;
+    auto icon = IconsetFactory::iconPtr(iconName);
     if (htmlSize > 0) {
-        auto fitSize = pointToPixel(htmlSize);
-        return origSize.scaled(fitSize, fitSize, Qt::KeepAspectRatio);
+        auto pxSize = pointToPixel(htmlSize);
+        return icon->size(QSize(pxSize, pxSize));
     }
+
+    auto origSize = icon->size();
+    if (origSize.isNull() || htmlSize == 0)
+        return origSize;
 
     auto fontSize = QFontInfo(charFormat.font()).pixelSize();
     if (origSize.height() > HugeIconTextViewK * fontSize)
@@ -129,7 +130,7 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
     Q_UNUSED(posInDocument);
     const QTextCharFormat charFormat = format.toCharFormat();
 
-    auto pixmap = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName));
+    auto pixmap = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName), rect.size().toSize());
     if (rect.size() == pixmap.size()) {
         painter->drawPixmap(rect, pixmap, pixmap.rect());
     }
@@ -291,14 +292,14 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
                     iconText = TextUtil::unescape(matchText.capturedTexts()[1]);
                 }
 
-                int  iconSize  = -1; // not defined. will be resized to be aligned with text if necessary
-                auto matchSize = rxSize.match(fragment);
+                double iconSize  = -1; // not defined. will be resized to be aligned with text if necessary
+                auto   matchSize = rxSize.match(fragment);
                 if (matchSize.hasMatch()) {
                     auto szText = matchSize.capturedTexts()[1];
                     if (szText == QLatin1String("original"))
                         iconSize = 0; // use original size
                     else
-                        iconSize = szText.toInt(); // size in points
+                        iconSize = szText.toDouble(); // size in points
                 }
 #else
                 QString iconName = matchName.capturedTexts()[1];

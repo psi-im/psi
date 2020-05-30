@@ -22,6 +22,7 @@
 #include "psioptions.h"
 
 #include <QApplication>
+#include <QIcon>
 #include <QPixmap>
 #include <QTimer>
 
@@ -216,15 +217,23 @@ AlertIcon::~AlertIcon() { delete d; }
 
 bool AlertIcon::isAnimated() const { return d->real->isAnimated(); }
 
-const QPixmap &AlertIcon::pixmap() const { return d->impix.pixmap(); }
+QPixmap AlertIcon::pixmap(const QSize &desiredSize) const
+{
+    Q_UNUSED(desiredSize);
+    return d->impix.pixmap();
+}
 
-const QImage &AlertIcon::image() const { return d->impix.image(); }
+QImage AlertIcon::image(const QSize &desiredSize) const
+{
+    Q_UNUSED(desiredSize);
+    return d->impix.image();
+}
 
 void AlertIcon::activated(bool playSound) { d->activated(playSound); }
 
 void AlertIcon::stop() { d->stop(); }
 
-const QIcon &AlertIcon::icon() const { return d->real->icon(); }
+QIcon AlertIcon::icon() const { return d->real->icon(); }
 
 const Impix &AlertIcon::impix() const { return d->impix; }
 

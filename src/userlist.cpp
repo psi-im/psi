@@ -525,14 +525,16 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                 hr = "<hr/>";
             str += hr + "<div style='white-space:pre'>";
 
-            PsiIcon *statusIcon = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
+            auto     fontPixelSize = QFontInfo(qApp->font()).pixelSize();
+            auto     fontPointSize = QFontInfo(qApp->font()).pointSize();
+            PsiIcon *statusIcon    = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
             if (statusIcon) {
                 QByteArray imageArray;
                 QBuffer    buff(&imageArray);
-                auto       fontSize = QFontInfo(qApp->font()).pixelSize();
-                auto       image    = statusIcon->image();
-                if (image.height() > fontSize * 1.3)
-                    image = image.scaled(fontSize, fontSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+                auto image = statusIcon->image();
+                if (image.height() > fontPixelSize * 1.3)
+                    image = image.scaled(fontPixelSize, fontPixelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 image.save(&buff, "png");
                 QString imgBase64(QUrl::toPercentEncoding(imageArray.toBase64()));
                 str += QString("<img src=\"data:image/png;base64,%1\" alt=\"img\"/>").arg(imgBase64);
@@ -560,7 +562,9 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                 ver = TextUtil::escape(ver);
                 QString client(findClient(r));
                 if (!client.isEmpty()) {
-                    client = QString("<%1=\"%2\">").arg(imgTag).arg("clients/" + client);
+                    client = QString("<%1=\"%2\" size=\"%3\">")
+                                 .arg(imgTag)
+                                 .arg("clients/" + client, QString::number(fontPointSize * 1.3));
                 }
                 str += QString("<div class='layer1'>%1 ").arg(client) + QObject::tr("Using") + QString(": %3").arg(ver)
                     + "</div>";

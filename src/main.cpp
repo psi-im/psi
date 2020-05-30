@@ -431,7 +431,11 @@ QStringList getQtPluginPathEnvVar()
 #else
         QLatin1Char pathSep(':');
 #endif
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        QStringList paths = QString::fromLatin1(val).split(pathSep, Qt::SkipEmptyParts);
+#else
         QStringList paths = QString::fromLatin1(val).split(pathSep, QString::SkipEmptyParts);
+#endif
         for (const QString &path : paths) {
             QString canonicalPath = QDir(path).canonicalPath();
             if (!canonicalPath.isEmpty() && !out.contains(canonicalPath))

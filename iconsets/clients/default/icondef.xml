@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<icondef>                                                         
-        <meta>                                                    
+<icondef>
+        <meta>
                 <name>Psi Default Fingerprint - size 16</name>
                 <version>1.0</version>
                 <creation>2017-05-01</creation>
@@ -31,7 +31,7 @@ Based on the huge on from Psi+ repository.
 
         <icon>
                 <x xmlns='name'>clients/conversations</x>
-                <object mime='image/png'>conversations.png</object>
+                <object mime='image/svg+xml'>conversations.svg</object>
         </icon>
 
         <icon>
@@ -134,7 +134,7 @@ Based on the huge on from Psi+ repository.
                 <object mime='image/png'>sawim.png</object>
         </icon>
 
-		<icon>
+        <icon>
                 <x xmlns='name'>clients/spark</x>
                 <object mime='image/png'>spark.png</object>
         </icon>

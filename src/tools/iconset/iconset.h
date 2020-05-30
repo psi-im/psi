@@ -61,6 +61,8 @@ public:
         return *this;
     }
 
+    QSize size() const;
+
     bool loadFromData(const QByteArray &);
 
 private:
@@ -112,13 +114,13 @@ public:
     //! see icon().
     // operator const QIcon &() const { return icon(); }
 
-    virtual bool           isAnimated() const;
-    virtual const QPixmap &pixmap() const;
-    virtual const QImage & image() const;
-    virtual const QIcon &  icon() const;
-#ifdef WEBKIT
-    virtual const QByteArray &raw() const;
-#endif
+    virtual bool      isAnimated() const;
+    virtual QPixmap   pixmap(const QSize &desiredSize = QSize()) const;
+    virtual QImage    image(const QSize &desiredSize = QSize()) const;
+    virtual QIcon     icon() const;
+    const QByteArray &raw() const;
+    QSize             size(const QSize &desiredSize = QSize()) const;
+    bool              isScalable() const;
 
     virtual const Impix &impix() const;
     virtual const Impix &frameImpix() const;
@@ -152,7 +154,7 @@ public:
     void           setSound(const QString &);
 
     bool blockSignals(bool);
-    bool loadFromData(const QByteArray &, bool isAnimation);
+    bool loadFromData(const QByteArray &, bool isAnimation, bool isScalable = false);
 
     void stripFirstAnimFrame();
 
@@ -233,13 +235,12 @@ public:
 
     static PsiIcon        icon(const QString &name);
     static inline PsiIcon icon(const char *name) { return icon(QString(QLatin1String(name))); } // optimization
-    static const QPixmap &iconPixmap(const QString &name);
+    static QPixmap        iconPixmap(const QString &name, const QSize desiredSize = QSize());
 
     static const PsiIcon *   iconPtr(const QString &name);
     static const QStringList icons();
-#ifdef WEBKIT
+
     static const QByteArray raw(const QString &name);
-#endif
 };
 
 #endif // ICONSET_H

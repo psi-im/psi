@@ -193,7 +193,7 @@ bool isKeychainEnabled();
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 
 bool fileCopy(const QString &src, const QString &dest);
-int  pointToPixel(int points);
+int  pointToPixel(qreal points);
 
 // used in option migration
 QString soundDetectPlayer();
