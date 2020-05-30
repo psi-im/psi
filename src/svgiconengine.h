@@ -26,13 +26,21 @@
 
 class SvgIconEngine : public QIconEngine {
 
+    QString                       name;
     std::shared_ptr<QSvgRenderer> renderer;
 
 public:
-    SvgIconEngine(std::shared_ptr<QSvgRenderer> renderer) : renderer(renderer) { }
+    SvgIconEngine(const QString &name, std::shared_ptr<QSvgRenderer> renderer) : name(name), renderer(renderer) { }
 
+    QSize        actualSize(const QSize &size, QIcon::Mode mode, QIcon::State state) override;
     QIconEngine *clone() const override;
     void         paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state) override;
+    void         virtual_hook(int id, void *data) override;
+
+    QPixmap pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state) override;
+
+private:
+    QPixmap renderPixmap(const QSize &size, QIcon::Mode mode, QIcon::State state);
 };
 
 #endif // SVGICONENGINE_H
