@@ -61,7 +61,9 @@ else()
 endif()
 set(LIBTIDY_NAMES
     tidy${D}
+    tidys${D}
     libtidy${D}
+    libtidys${D}
     libtidy-0-99-0
     tidy-0-99-0
 )
