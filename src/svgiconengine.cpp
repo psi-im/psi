@@ -68,10 +68,10 @@ void SvgIconEngine::virtual_hook(int id, void *data)
 QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state)
 {
     QPixmap pm;
-    if (mode == QIcon::Disabled && disabledCache.isValid() && QPixmapCache::find(disabledCache, &pm))
+    if (mode == QIcon::Disabled && QPixmapCache::find(disabledCache, &pm))
         return pm;
 
-    if (normalCache.isValid() && QPixmapCache::find(normalCache, &pm)) {
+    if (QPixmapCache::find(normalCache, &pm)) {
         if (mode == QIcon::Active || mode == QIcon::Normal)
             return pm;
     }

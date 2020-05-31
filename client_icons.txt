@@ -52,7 +52,7 @@ omnipresence omnipresence
 palringo palringo
 pandion pandion
 pidgin pidgin,gaim
-pixart pix-art
+pix-art pix-art
 poezio poezio,poez.io
 profanity profanity,www#profanity
 psi psi,psi-im

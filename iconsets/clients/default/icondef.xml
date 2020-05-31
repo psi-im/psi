@@ -11,17 +11,12 @@
                 <description>Default Clients iconpack.
 
 Based on the huge on from Psi+ repository.
-</description>
+                </description>
            </meta>
 
         <icon>
-                <x xmlns='name'>clients/adium</x>
-                <object mime='image/png'>adium.png</object>
-        </icon>
-
-        <icon>
                 <x xmlns='name'>clients/bitlbee</x>
-                <object mime='image/png'>bitlbee.png</object>
+                <object mime='image/png'>bitlbee.svg</object>
         </icon>
 
         <icon>
@@ -36,37 +31,32 @@ Based on the huge on from Psi+ repository.
 
         <icon>
                 <x xmlns='name'>clients/dino</x>
-                <object mime='image/png'>dino.png</object>
+                <object mime='image/png'>dino.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/isida-bot</x>
-                <object mime='image/png'>isida-bot.png</object>
+                <object mime='image/png'>isida-bot.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/gajim</x>
-                <object mime='image/png'>gajim.png</object>
+                <object mime='image/png'>gajim.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/jtalk</x>
-                <object mime='image/png'>jtalk.png</object>
-        </icon>
-
-        <icon>
-                <x xmlns='name'>clients/kadu</x>
-                <object mime='image/png'>kadu.png</object>
+                <object mime='image/png'>jtalk.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/kopete</x>
-                <object mime='image/png'>kopete.png</object>
+                <object mime='image/png'>kopete.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/leechcraft-azoth</x>
-                <object mime='image/png'>leechcraft-azoth.png</object>
+                <object mime='image/png'>leechcraft-azoth.svg</object>
         </icon>
 
         <icon>
@@ -76,32 +66,32 @@ Based on the huge on from Psi+ repository.
 
         <icon>
                 <x xmlns='name'>clients/miranda</x>
-                <object mime='image/png'>miranda.png</object>
+                <object mime='image/png'>miranda.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/miranda-ng</x>
-                <object mime='image/png'>miranda-ng.png</object>
+                <object mime='image/png'>miranda-ng.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/movim</x>
-                <object mime='image/png'>movim.png</object>
+                <object mime='image/png'>movim.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/pidgin</x>
-                <object mime='image/png'>pidgin.png</object>
+                <object mime='image/png'>pidgin.svg</object>
         </icon>
 
         <icon>
-                <x xmlns='name'>clients/pixart</x>
-                <object mime='image/png'>pixart.png</object>
+                <x xmlns='name'>clients/pix-art</x>
+                <object mime='image/png'>pix-art.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/poezio</x>
-                <object mime='image/png'>poezio.png</object>
+                <object mime='image/svg+xml'>poezio.svg</object>
         </icon>
 
         <icon>
@@ -111,42 +101,37 @@ Based on the huge on from Psi+ repository.
 
         <icon>
                 <x xmlns='name'>clients/psi</x>
-                <object mime='image/png'>psi.png</object>
+                <object mime='image/png'>psi.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/psiplus</x>
-                <object mime='image/png'>psiplus.png</object>
+                <object mime='image/png'>psiplus.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/qip</x>
-                <object mime='image/png'>qip.png</object>
+                <object mime='image/png'>qip.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/qutim</x>
-                <object mime='image/png'>qutim.png</object>
-        </icon>
-
-        <icon>
-                <x xmlns='name'>clients/sawim</x>
-                <object mime='image/png'>sawim.png</object>
+                <object mime='image/png'>qutim.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/spark</x>
-                <object mime='image/png'>spark.png</object>
+                <object mime='image/png'>spark.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/swift</x>
-                <object mime='image/png'>swift.png</object>
+                <object mime='image/png'>swift.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/tkabber</x>
-                <object mime='image/png'>tkabber.png</object>
+                <object mime='image/png'>tkabber.svg</object>
         </icon>
 
         <icon>
@@ -156,17 +141,17 @@ Based on the huge on from Psi+ repository.
 
         <icon>
                 <x xmlns='name'>clients/vk4xmpp</x>
-                <object mime='image/png'>vk4xmpp.png</object>
+                <object mime='image/png'>vk4xmpp.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/xabber</x>
-                <object mime='image/png'>xabber.png</object>
+                <object mime='image/png'>xabber.svg</object>
         </icon>
 
         <icon>
                 <x xmlns='name'>clients/yaxim</x>
-                <object mime='image/png'>yaxim.png</object>
+                <object mime='image/png'>yaxim.svg</object>
         </icon>
 
 </icondef>
