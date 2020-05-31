@@ -237,8 +237,6 @@ public:
     void setStatus(int account, const QString &status, const QString &statusMessage) override;
     bool appendSysMsg(int account, const QString &jid, const QString &message) override;
     bool appendSysHtmlMsg(int account, const QString &jid, const QString &message) override;
-    bool appendMsg(int account, const QString &jid, const QString &message, const QString &id,
-                   bool wasEncrypted) override;
     void subscribeLogout(QObject *context, std::function<void(int account)> callback) override;
     void setPgpKey(int account, const QString &keyId) override;
     void removeKnownPgpKey(int account, const QString &jid) override;

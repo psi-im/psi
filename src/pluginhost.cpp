@@ -1306,12 +1306,6 @@ bool PluginHost::appendSysHtmlMsg(int account, const QString &jid, const QString
     return manager_->appendSysHtmlMsg(account, jid, message);
 }
 
-bool PluginHost::appendMsg(int account, const QString &jid, const QString &message, const QString &id,
-                           bool wasEncrypted)
-{
-    return manager_->appendMsg(account, jid, message, id, wasEncrypted);
-}
-
 void PluginHost::createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
                                 const char *slot)
 {

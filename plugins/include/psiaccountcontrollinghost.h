@@ -17,12 +17,9 @@ public:
     virtual bool appendSysMsg(int account, const QString &jid, const QString &message)     = 0;
     virtual bool appendSysHtmlMsg(int account, const QString &jid, const QString &message) = 0;
 
-    virtual bool appendMsg(int account, const QString &jid, const QString &message, const QString &id,
-                           bool wasEncrypted = false)
-        = 0;
     virtual void subscribeLogout(QObject *context, std::function<void(int account)> callback) = 0;
 };
 
-Q_DECLARE_INTERFACE(PsiAccountControllingHost, "org.psi-im.PsiAccountControllingHost/0.4")
+Q_DECLARE_INTERFACE(PsiAccountControllingHost, "org.psi-im.PsiAccountControllingHost/0.5")
 
 #endif // PSIACCOUNTCONTROLLINGHOST_H
