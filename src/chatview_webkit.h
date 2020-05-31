@@ -72,7 +72,7 @@ public slots:
     void scrollDown();
     void updateAvatar(const XMPP::Jid &jid, UserType utype);
 
-    void setPgpEncryptionEnabled(bool enabled);
+    void setEncryptionEnabled(bool enabled);
 
 protected:
     // override the tab/esc behavior

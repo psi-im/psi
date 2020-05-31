@@ -73,7 +73,7 @@ public slots:
     void scrollUp();
     void scrollDown();
 
-    void setPgpEncryptionEnabled(bool enabled);
+    void setEncryptionEnabled(bool enabled);
 
 protected:
     // override the tab/esc behavior
@@ -105,7 +105,7 @@ signals:
 private:
     bool              isMuc_;
     bool              isMucPrivate_;
-    bool              isPgpEncryptionEnabled_;
+    bool              isEncryptionEnabled_;
     bool              useMessageIcons_;
     int               oldTrackBarPosition;
     XMPP::Jid         jid_;

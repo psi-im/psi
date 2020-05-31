@@ -200,7 +200,7 @@ function startPsiTheme(shared) {
 				var img = document.getElementById("receipt"+shared.cdata.id);
 				if (img) {
 					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-					img.src = (shared.cdata.encrypted?"/psi/icon/psi/notification_chat_delivery_ok_pgp":"/psi/icon/psi/notification_chat_delivery_ok")+sizeUri;
+					img.src = (shared.cdata.encrypted?"/psi/icon/psi/notification_chat_delivery_ok_encrypted":"/psi/icon/psi/notification_chat_delivery_ok")+sizeUri;
 				}
 			}
 			if (shared.cdata.mtype == "message") {

@@ -53,7 +53,7 @@ static const QRegExp removeTagsRE("<[^>]*>");
 // ChatView
 //----------------------------------------------------------------------------
 ChatView::ChatView(QWidget *parent) :
-    PsiTextView(parent), isMuc_(false), isPgpEncryptionEnabled_(false), oldTrackBarPosition(0), dialog_(nullptr)
+    PsiTextView(parent), isMuc_(false), isEncryptionEnabled_(false), oldTrackBarPosition(0), dialog_(nullptr)
 {
     setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
@@ -85,7 +85,7 @@ QSize ChatView::sizeHint() const { return minimumSizeHint(); }
 
 void ChatView::setDialog(QWidget *dialog) { dialog_ = dialog; }
 
-void ChatView::setPgpEncryptionEnabled(bool enabled) { isPgpEncryptionEnabled_ = enabled; }
+void ChatView::setEncryptionEnabled(bool enabled) { isEncryptionEnabled_ = enabled; }
 
 void ChatView::setSessionData(bool isMuc, bool isMucPrivate, const XMPP::Jid &jid, const QString name)
 {
@@ -130,12 +130,12 @@ void ChatView::addLogIconsResources()
         const char *icon;
     } icons[] = { { "log_icon_receive", "psi/notification_chat_receive" },
                   { "log_icon_send", "psi/notification_chat_send" },
-                  { "log_icon_receive_pgp", "psi/notification_chat_receive_pgp" },
-                  { "log_icon_send_pgp", "psi/notification_chat_send_pgp" },
+                  { "log_icon_receive_encrypted", "psi/notification_chat_receive_encrypted" },
+                  { "log_icon_send_encrypted", "psi/notification_chat_send_encrypted" },
                   { "log_icon_time", "psi/notification_chat_time" },
                   { "log_icon_info", "psi/notification_chat_info" },
                   { "log_icon_delivered", "psi/notification_chat_delivery_ok" },
-                  { "log_icon_delivered_pgp", "psi/notification_chat_delivery_ok_pgp" },
+                  { "log_icon_delivered_encrypted", "psi/notification_chat_delivery_ok_encrypted" },
                   { "log_icon_corrected", "psi/action_templates_edit" },
                   { "log_icon_history", "psi/history" } };
 
@@ -163,7 +163,7 @@ void ChatView::markReceived(QString id)
     if (useMessageIcons_) {
         auto delivered = document()->resource(
             QTextDocument::ImageResource,
-            QUrl(QLatin1String("icon:") + (isPgpEncryptionEnabled_ ? "log_icon_delivered_pgp" : "log_icon_delivered")));
+            QUrl(QLatin1String("icon:") + (isEncryptionEnabled_ ? "log_icon_delivered_encrypted" : "log_icon_delivered")));
         document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id), delivered);
         setLineWrapColumnOrWidth(lineWrapColumnOrWidth());
     }
@@ -424,7 +424,7 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
     if (useMessageIcons_ && mv.isAwaitingReceipt()) {
         auto sendIcon = document()->resource(
             QTextDocument::ImageResource,
-            QUrl(QLatin1String("icon:") + (isPgpEncryptionEnabled_ ? "log_icon_send_pgp" : "log_icon_send")));
+            QUrl(QLatin1String("icon:") + (isEncryptionEnabled_ ? "log_icon_send_encrypted" : "log_icon_send")));
         document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + mv.messageId()),
                                 sendIcon);
     }
@@ -436,13 +436,13 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
         else if (mv.isLocal()) {
             if (mv.isAwaitingReceipt())
                 sRes = QString("icon:delivery") + mv.messageId();
-            else if (isPgpEncryptionEnabled_)
-                sRes = "icon:log_icon_receive_pgp";
+            else if (isEncryptionEnabled_)
+                sRes = "icon:log_icon_receive_encrypted";
             else
                 sRes = "icon:log_icon_send";
         } else {
-            if (isPgpEncryptionEnabled_)
-                sRes = "icon:log_icon_receive_pgp";
+            if (isEncryptionEnabled_)
+                sRes = "icon:log_icon_receive_encrypted";
             else
                 sRes = "icon:log_icon_receive";
         }

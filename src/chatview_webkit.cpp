@@ -81,7 +81,7 @@ public:
     QPointer<QWidget>         dialog_;
     bool                      isMuc_                  = false;
     bool                      isMucPrivate_           = false;
-    bool                      isPgpEncryptionEnabled_ = false;
+    bool                      isEncryptionEnabled_ = false;
     Jid                       jid_;
     QString                   name_;
     PsiAccount *              account_ = nullptr;
@@ -474,14 +474,14 @@ void ChatView::init()
     }*/
 }
 
-void ChatView::setPgpEncryptionEnabled(bool enabled) { d->isPgpEncryptionEnabled_ = enabled; }
+void ChatView::setEncryptionEnabled(bool enabled) { d->isEncryptionEnabled_ = enabled; }
 
 void ChatView::markReceived(QString id)
 {
     QVariantMap m;
     m["type"]      = "receipt";
     m["id"]        = id;
-    m["encrypted"] = d->isPgpEncryptionEnabled_;
+    m["encrypted"] = d->isEncryptionEnabled_;
     sendJsObject(m);
 }
 
@@ -617,7 +617,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         *it = ChatViewPrivate::closeIconTags(it.value().toString());
     }
 
-    vm["encrypted"] = d->isPgpEncryptionEnabled_;
+    vm["encrypted"] = d->isEncryptionEnabled_;
     if (!replaceId.isEmpty()) {
         vm["type"]      = "replace";
         vm["replaceId"] = replaceId;

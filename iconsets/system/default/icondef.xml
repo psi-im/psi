@@ -136,18 +136,18 @@
 	</icon>
 
 	<icon>
-		<x xmlns='name'>psi/notification_chat_delivery_ok_pgp</x>
-		<object mime='image/png'>notification_chat_delivery_ok_pgp.png</object>
+		<x xmlns='name'>psi/notification_chat_delivery_ok_encrypted</x>
+		<object mime='image/png'>notification_chat_delivery_ok_encrypted.png</object>
 	</icon>
 
 	<icon>
-		<x xmlns='name'>psi/notification_chat_receive_pgp</x>
-		<object mime='image/png'>notification_chat_receive_pgp.png</object>
+		<x xmlns='name'>psi/notification_chat_receive_encrypted</x>
+		<object mime='image/png'>notification_chat_receive_encrypted.png</object>
 	</icon>
 
 	<icon>
-		<x xmlns='name'>psi/notification_chat_send_pgp</x>
-		<object mime='image/png'>notification_chat_send_pgp.png</object>
+		<x xmlns='name'>psi/notification_chat_send_encrypted</x>
+		<object mime='image/png'>notification_chat_send_encrypted.png</object>
 	</icon>
 
 	<icon>
