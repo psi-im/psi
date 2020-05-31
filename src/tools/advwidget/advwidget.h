@@ -63,7 +63,7 @@ private:
     GAdvancedWidget *gAdvWidget;
 
 public:
-    AdvancedWidget(QWidget *parent = nullptr, Qt::WindowFlags f = nullptr) : BaseClass(parent), gAdvWidget(nullptr)
+    AdvancedWidget(QWidget *parent = nullptr, Qt::WindowFlags f = {}) : BaseClass(parent), gAdvWidget(nullptr)
     {
         if (f != 0)
             BaseClass::setWindowFlags(f);

@@ -516,7 +516,11 @@ bool PsiIconset::loadClients()
                 }
                 ClientIconCheck ic   = { iconName, QStringList() };
                 QString         caps = line.mid(iconName.length());
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                for (const QString &c : caps.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+#else
                 for (const QString &c : caps.split(QLatin1Char(','), QString::SkipEmptyParts)) {
+#endif
                     QString ct = c.trimmed();
                     if (ct.length()) {
                         QStringList spec = ct.split('#');

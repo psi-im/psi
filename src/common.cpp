@@ -561,8 +561,12 @@ bool ToolbarPrefs::operator==(const ToolbarPrefs &other)
 
 int versionStringToInt(const char *version)
 {
-    QString     str   = QString::fromLatin1(version);
+    QString str = QString::fromLatin1(version);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    QStringList parts = str.split('.', Qt::KeepEmptyParts);
+#else
     QStringList parts = str.split('.', QString::KeepEmptyParts);
+#endif
     if (parts.count() != 3) {
         return 0;
     }

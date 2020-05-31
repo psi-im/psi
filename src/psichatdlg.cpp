@@ -249,7 +249,11 @@ void PsiChatDlg::initUi()
                                ->getOption("options.ui.chat.default-jid-mode-ignorelist")
                                .toString()
                                .toLower()
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                               .split(",", Qt::SkipEmptyParts);
+#else
                                .split(",", QString::SkipEmptyParts);
+#endif
         if (excl.indexOf(jid().bare()) == -1) {
             ui_.le_jid->insertItem(0, "auto", jid().full());
             ui_.le_jid->setCurrentIndex(0);

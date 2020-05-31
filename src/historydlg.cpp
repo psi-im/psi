@@ -1012,8 +1012,11 @@ void HistoryDlg::exportHistory()
             if (e->type() == PsiEvent::Message) {
                 MessageEvent::Ptr me = e.staticCast<MessageEvent>();
                 stream << QString("[%1] <%2>: ").arg(ts, nick) /* << endl*/;
-
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                QStringList lines = me->message().body().split('\n', Qt::KeepEmptyParts);
+#else
                 QStringList lines = me->message().body().split('\n', QString::KeepEmptyParts);
+#endif
                 for (const QString &str : lines) {
                     QStringList sub = wrapString(str, 72);
                     for (const QString &str2 : sub) {
@@ -1023,8 +1026,11 @@ void HistoryDlg::exportHistory()
             } else {
                 continue;
             }
-
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            stream << txt << Qt::endl;
+#else
             stream << txt << endl;
+#endif
         }
         delete h;
 

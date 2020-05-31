@@ -111,8 +111,13 @@ void PsiTabBar::wheelEvent(QWheelEvent *event)
     if (PsiOptions::instance()->getOption("options.ui.tabs.disable-wheel-scroll").toBool())
         return;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    auto numDegreesP = event->angleDelta() / 8;
+    int  numDegrees  = numDegreesP.x() ? numDegreesP.x() : numDegreesP.y();
+#else
     int numDegrees = event->delta() / 8;
-    int numSteps   = numDegrees / 15;
+#endif
+    int numSteps = numDegrees / 15;
 
     int newIndex = currentIndex() - numSteps;
 

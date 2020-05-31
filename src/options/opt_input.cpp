@@ -121,7 +121,15 @@ bool OptionsTabInput::stretchable() const { return true; }
 void OptionsTabInput::updateDictLists()
 {
     PsiOptions *o             = PsiOptions::instance();
-    QStringList newLoadedList = o->getOption(DICTS_OPTION).toString().split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    QStringList newLoadedList = o->getOption(DICTS_OPTION)
+                                    .toString()
+                                    .split(QRegExp("\\s+"),
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+                                           Qt::SkipEmptyParts
+#else
+                                           QString::SkipEmptyParts
+#endif
+                                    );
     QSet<LanguageManager::LangId> newLoadedSet;
     for (auto &l : newLoadedList) {
         auto id = LanguageManager::fromString(l);

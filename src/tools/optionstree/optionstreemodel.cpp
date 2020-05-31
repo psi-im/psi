@@ -103,7 +103,7 @@ Qt::ItemFlags OptionsTreeModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid()) {
         // Root item
-        return nullptr;
+        return {};
     }
     Qt::ItemFlags f = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
     if ((index.column() == Value) && !internalNode(indexToOptionName(index)))

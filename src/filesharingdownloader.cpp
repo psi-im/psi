@@ -283,7 +283,11 @@ public:
         });
 
         connect(reply, &QNetworkReply::readyRead, this, &NAMFileShareDownloader::readyRead);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        connect(reply, &QNetworkReply::errorOccurred,
+#else
         connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+#endif
                 [=](QNetworkReply::NetworkError code) { qDebug("reply errored %d", code); });
         connect(reply, &QNetworkReply::finished, this, [this]() {
             qDebug("reply is finished. error code=%d. bytes available=%lld", reply->error(), reply->bytesAvailable());

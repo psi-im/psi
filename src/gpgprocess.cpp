@@ -41,7 +41,7 @@ void GpgProcess::start(const QStringList &arguments, QIODevice::OpenMode mode)
     QProcess::start(m_bin, arguments, mode);
 }
 
-void GpgProcess::start(QIODevice::OpenMode mode) { QProcess::start(m_bin, mode); }
+void GpgProcess::start(QIODevice::OpenMode mode) { start({}, mode); }
 
 bool GpgProcess::success() const { return (exitCode() == 0); }
 
@@ -122,9 +122,11 @@ QString GpgProcess::findBin() const
 #else
     QString     pathSep = ":";
 #endif
-
-    QStringList paths = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, QString::SkipEmptyParts);
-
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    QStringList paths = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, Qt::SkipEmptyParts);
+#else
+    QStringList paths   = QString::fromLocal8Bit(qgetenv("PATH")).split(pathSep, QString::SkipEmptyParts);
+#endif
 #ifdef Q_OS_MAC
     // On Mac OS bundled always uses system default PATH
     // so it need explicitly add extra paths which can

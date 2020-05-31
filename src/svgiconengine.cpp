@@ -88,7 +88,11 @@ QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State 
         p.fillRect(pm.rect(), hlColor);
     } else if (mode == QIcon::Disabled) {
         auto img = pm.toImage();
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+        img = img.convertToFormat(QImage::Format_Grayscale8);
+#else
         img.convertTo(QImage::Format_Grayscale8);
+#endif
         pm            = QPixmap::fromImage(img);
         disabledCache = QPixmapCache::insert(pm);
     }
