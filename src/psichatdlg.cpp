@@ -919,7 +919,6 @@ void PsiChatDlg::updatePgp()
     ui_.tb_pgp->setVisible(
         account()->hasPgp() && !smallChat_
         && !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
-    ui_.log->setPgpEncryptionEnabled(isPgpEncryptionEnabled());
 }
 
 void PsiChatDlg::checkPgpAutostart()
@@ -977,11 +976,9 @@ void PsiChatDlg::actPgpToggled(bool b)
 
     QAction *act = menu->exec(QCursor::pos());
     if (act == actEnablePgp) {
-        ui_.log->setPgpEncryptionEnabled(true);
         actions_->action("chat_pgp")->setChecked(true);
         account()->setPgpEnabled(jid(), true);
     } else if (act == actDisablePgp) {
-        ui_.log->setPgpEncryptionEnabled(false);
         actions_->action("chat_pgp")->setChecked(false);
         account()->setPgpEnabled(jid(), false);
     } else if (act == actAssignKey) {
@@ -1027,7 +1024,6 @@ void PsiChatDlg::doClearButton()
 void PsiChatDlg::setPgpEnabled(bool enabled)
 {
     actions_->action("chat_pgp")->setChecked(enabled);
-    ui_.log->setPgpEncryptionEnabled(enabled);
 }
 
 void PsiChatDlg::toggleSmallChat()

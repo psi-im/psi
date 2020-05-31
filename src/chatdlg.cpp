@@ -838,6 +838,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
     }
 
     if (encChanged) {
+        chatView()->setPgpEncryptionEnabled(encEnabled);
         dispatchMessage(
             MessageView::fromHtml(encEnabled ? QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption Enabled")
                                              : QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption Disabled"),
