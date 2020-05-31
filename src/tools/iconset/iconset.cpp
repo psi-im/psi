@@ -1271,7 +1271,7 @@ public:
                 return false;
             // if format supports animations, then load graphic as animation, and
             // if there is only one frame, then later it would be converted to single Impix
-            QByteArray ba = loadData(fileName, dir);
+            QByteArray ba = this->loadData(fileName, dir);
             if (icon.loadFromData(ba, isAnimated || (!isImage && animationMime.indexOf(mime) != -1),
                                   isScalable || scalableMime.indexOf(mime) != -1))
                 return true;
