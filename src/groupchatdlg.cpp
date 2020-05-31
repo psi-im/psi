@@ -2187,6 +2187,24 @@ void GCMainDlg::dispatchMessage(const MessageView &mv)
 
 void GCMainDlg::appendMessage(const Message &m, bool alert)
 {
+    // figure out the encryption state
+    bool encChanged = false;
+    bool encEnabled = false;
+    {
+        if (lastWasEncrypted_ != m.wasEncrypted()) {
+            encChanged = true;
+        }
+        lastWasEncrypted_ = m.wasEncrypted();
+        encEnabled        = lastWasEncrypted_;
+    }
+    if (encChanged) {
+        ui_.log->setEncryptionEnabled(encEnabled);
+        dispatchMessage(
+            MessageView::fromHtml(encEnabled ? QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled")
+                                             : QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled"),
+                                  MessageView::System));
+    }
+
     MessageView mv(MessageView::Message);
     if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool()
         && !m.html().text().isEmpty()) {

@@ -374,9 +374,22 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     const QString timestr = formatTimeStamp(mv.dateTime());
     QString       alerttagso, alerttagsc, nickcolor;
     QString       textcolor = palette().color(QPalette::Active, QPalette::Text).name();
-    QString       icon      = useMessageIcons_
-        ? (QString("<img src=\"%1\" />").arg(mv.isLocal() ? "icon:log_icon_delivered" : "icon:log_icon_receive"))
-        : "";
+    QString icon;
+    if (useMessageIcons_) {
+        QString sRes;
+        if (mv.isLocal()) {
+            if (isEncryptionEnabled_)
+                sRes = "icon:log_icon_delivered_encrypted";
+            else
+                sRes = "icon:log_icon_delivered";
+        } else {
+            if (isEncryptionEnabled_)
+                sRes = "icon:log_icon_receive_encrypted";
+            else
+                sRes = "icon:log_icon_receive";
+        }
+        icon = QString("<img src=\"%1\" />").arg(sRes);
+    }
     if (mv.isAlert()) {
         textcolor
             = PsiOptions::instance()->getOption("options.ui.look.colors.messages.highlighting").value<QColor>().name();

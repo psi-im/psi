@@ -152,6 +152,8 @@ private:
     Private *        d;
     Ui::GroupChatDlg ui_;
 
+    bool lastWasEncrypted_ = false;
+
     void doAlert();
     void appendMessage(const Message &, bool);
     void setLooks();
