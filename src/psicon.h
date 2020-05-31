@@ -197,7 +197,6 @@ private:
     friend class Private;
     ContactUpdatesManager *contactUpdatesManager_;
 
-    void initNetSession();
     void deleteAllDialogs();
     void setShortcuts();
 

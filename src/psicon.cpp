@@ -307,20 +307,18 @@ public:
 #endif
     PsiActionList *actionList = nullptr;
     // GlobalAccelManager *globalAccelManager;
-    TuneControllerManager *      tuneManager          = nullptr;
-    QMenuBar *                   defaultMenuBar       = nullptr;
-    TabManager *                 tabManager           = nullptr;
-    bool                         quitting             = false;
-    bool                         wakeupPending        = false;
-    QTimer *                     updatedAccountTimer_ = nullptr;
-    AutoUpdater *                autoUpdater          = nullptr;
-    AlertManager                 alertManager;
-    BossKey *                    bossKey      = nullptr;
-    PopupManager *               popupManager = nullptr;
-    QNetworkConfigurationManager netConfMng;
-    QNetworkSession *            netSession      = nullptr;
-    quint16                      byteStreamsPort = 0;
-    QString                      externalByteStreamsAddress;
+    TuneControllerManager *tuneManager          = nullptr;
+    QMenuBar *             defaultMenuBar       = nullptr;
+    TabManager *           tabManager           = nullptr;
+    bool                   quitting             = false;
+    bool                   wakeupPending        = false;
+    QTimer *               updatedAccountTimer_ = nullptr;
+    AutoUpdater *          autoUpdater          = nullptr;
+    AlertManager           alertManager;
+    BossKey *              bossKey         = nullptr;
+    PopupManager *         popupManager    = nullptr;
+    quint16                byteStreamsPort = 0;
+    QString                externalByteStreamsAddress;
 
     struct IdleSettings {
         IdleSettings() = default;
@@ -397,8 +395,6 @@ bool PsiCon::init()
     // PGP initialization (needs to be before any gpg usage!)
     PGPUtil::instance();
 #endif
-
-    initNetSession();
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
     if (QGuiApplication::desktopFileName().isEmpty()) {
@@ -1841,37 +1837,10 @@ void PsiCon::doWakeup()
 
     d->wakeupPending = true; // and wait for signal till network session is opened (proved to work on gentoo+nm+xfce)
 
-    QTimer::singleShot(5000, this, SLOT(networkSessionOpened())); // a fallback if QNetworkSession doesn't signal
+    // TODO QNetworkSession was deprecated and removed. Think again how we can live with it
+    QTimer::singleShot(3000, this, SLOT(networkSessionOpened())); // a fallback if QNetworkSession doesn't signal
     // if 5secs is not enough to connect to the network then it isn't considered a wakeup anymore but a regular
     // reconnect.
-}
-
-void PsiCon::initNetSession()
-{
-    d->netSession = new QNetworkSession(d->netConfMng.defaultConfiguration(), this);
-    connect(d->netSession, &QNetworkSession::opened, this, &PsiCon::networkSessionOpened);
-    connect(d->netSession, &QNetworkSession::closed, this, [this]() {
-        disconnect(d->netSession);
-        d->netSession->deleteLater();
-        initNetSession();
-    });
-    /* next commented out lines could be used for fine-grained control. otherwise forced roaming will be used
-
-    connect(d->netSession, &QNetworkSession::preferredConfigurationChanged, this,
-            [this](const QNetworkConfiguration &config, bool isSeamless)
-    {
-        Q_UNUSED(config)
-        Q_UNUSED(isSeamless)
-
-        d->netSession->migrate();
-    });
-    connect(d->netSession, &QNetworkSession::newConfigurationActivated, this, [this]()
-    {
-        d->netSession->accept();
-        // theoretically psi should catch connection failure on sockets and start reconnecting
-    });
-    */
-    d->netSession->open();
 }
 
 void PsiCon::networkSessionOpened()
