@@ -1265,7 +1265,7 @@ public:
             }
         }
 
-        bool loadSuccess = std::any_of(graphicMime.begin(), graphicMime.end(), [&](const auto &mime) {
+        bool loadSuccess = std::any_of(graphicMime.begin(), graphicMime.end(), [&, this](const auto &mime) {
             QString fileName = graphic.value(mime);
             if (fileName.isEmpty())
                 return false;
