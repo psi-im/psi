@@ -36,7 +36,7 @@ private slots:
             iconset->authors()[1],
             QString("Michail Pishchagin (icondef.xml)<br>&nbsp;&nbsp;Email: <a "
                     "href='mailto:mblsha@users.sourceforge.net'>mblsha@users.sourceforge.net</a><br>&nbsp;&nbsp;JID: "
-                    "<a href='jabber:mblsha@jabber.ru'>mblsha@jabber.ru</a><br>&nbsp;&nbsp;WWW: <a "
+                    "<a href='xmpp:mblsha@jabber.ru'>mblsha@jabber.ru</a><br>&nbsp;&nbsp;WWW: <a "
                     "href='http://maz.sf.net'>http://maz.sf.net</a>"));
         QCOMPARE(iconset->creation(), QString("2003-07-08"));
         QCOMPARE(iconset->description(), QString("Default Psi 0.9.1 iconset"));
