@@ -5,7 +5,7 @@ atalk atalk,android#atalk
 beem beem
 bitlbee bitlbee
 bombus bombus
-bot aspro,blacksmith,capsula,dictbot,fatal,fin.jabber.ru,freq,gluxi,historian,imformer,j-cool,j-tmb,jabbrik,jabga,jabrvista,jame,jabrss,justa,lytgeygen,magnet2.py,neutrina,osiris,pako#bot,qabber,sleekbot,snapi,sofserver,storm,sulci,talisman,ultimate,utah,witcher,yamaneko
+bot akarixb,aspro,blacksmith,capsula,dictbot,fatal,fin.jabber.ru,freq,gluxi,historian,imformer,j-cool,j-tmb,jabbrik,jabga,jabrvista,jame,jabrss,justa,lytgeygen,magnet2.py,neutrina,osiris,pako#bot,qabber,sleekbot,snapi,sofserver,storm,sulci,talisman,ultimate,utah,witcher,yamaneko
 candy candy
 centerim centerim
 chatsecure chatsecure,gibberbot
