@@ -62,6 +62,7 @@
             </recent-joins>
             <reasons type="QStringList" />
             <leave-status-message comment="Leave status message" type="QString"></leave-status-message>
+            <connection-interval type="int">0</connection-interval>
         </muc>
         <pgp comment="PGP encryption options">
             <auto-assign comment="Automatically assign known keys to contacts with signed presences and no assigned keys" type="bool">true</auto-assign>

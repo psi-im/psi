@@ -69,7 +69,7 @@ private:
     QPushButton *             joinButton_;
     XMPP::Jid                 jid_;
     PsiAccount::MucJoinReason reason_;
-    QTimer *                  timer_;
+    QTimer *                  joinTimer_;
     bool                      nickAlreadyCompleted_;
 
     void disableWidgets();

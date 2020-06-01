@@ -107,6 +107,7 @@ void OptionsTabAdvanced::applyOptions()
     PsiOptions::instance()->setOption("options.ui.contactlist.ensure-contact-visible-on-event",
                                       d->ck_scrollTo->isChecked());
     PsiOptions::instance()->setOption("options.messages.ignore-headlines", d->ck_ignoreHeadline->isChecked());
+    PsiOptions::instance()->setOption("options.muc.connection-interval", d->sb_mucInterval->value());
 }
 
 void OptionsTabAdvanced::restoreOptions()
@@ -146,6 +147,7 @@ void OptionsTabAdvanced::restoreOptions()
     d->ck_scrollTo->setChecked(
         PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool());
     d->ck_ignoreHeadline->setChecked(PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool());
+    d->sb_mucInterval->setValue(PsiOptions::instance()->getOption("options.muc.connection-interval").toInt());
 }
 
 bool OptionsTabAdvanced::stretchable() const { return true; }
