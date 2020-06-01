@@ -76,26 +76,56 @@ QString ApplicationInfo::fileCacheNS() { return PROG_FILECACHE_NS; }
 
 QStringList ApplicationInfo::getCertificateStoreDirs()
 {
-    QStringList l;
-    l += ApplicationInfo::resourcesDir() + "/certs";
-    l += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs";
-    return l;
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+    // Special hack for correct work of AppImage, snap and flatpak builds
+    static const QString &&additionalPath =
+            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF "/certs");
+#endif
+
+    static const QStringList &&dirs = {
+    #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+        additionalPath,
+    #endif
+        ApplicationInfo::resourcesDir() + "/certs",
+        ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs"
+    };
+    return dirs;
 }
 
 QStringList ApplicationInfo::dataDirs()
 {
-    const static QStringList dirs = QStringList() << ":"
-                                                  << "." << homeDir(DataLocation) << resourcesDir();
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+    // Special hack for correct work of AppImage, snap and flatpak builds
+    static const QString &&additionalPath =
+            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF);
+#endif
+
+    static const QStringList &&dirs = {
+    #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+        additionalPath,
+    #endif
+        ":", ".", homeDir(DataLocation), resourcesDir()
+    };
     return dirs;
 }
 
 QStringList ApplicationInfo::pluginDirs()
 {
-    QStringList l;
-    l += ApplicationInfo::resourcesDir() + "/plugins";
-    l += homeDir(ApplicationInfo::DataLocation) + "/plugins";
-    l += libDir() + "/plugins";
-    return l;
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+    // Special hack for correct work of AppImage, snap and flatpak builds
+    static const QString &&additionalPath =
+            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../lib/" SHARE_SUFF "/plugins");
+#endif
+
+    static const QStringList &&dirs = {
+    #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+        additionalPath,
+    #endif
+        ApplicationInfo::resourcesDir() + "/plugins",
+        homeDir(ApplicationInfo::DataLocation) + "/plugins",
+        libDir() + "/plugins"
+    };
+    return dirs;
 }
 
 QString ApplicationInfo::getCertificateStoreSaveDir()

@@ -20,6 +20,7 @@
 #include "translationmanager.h"
 
 #include "applicationinfo.h"
+#include "config.h"
 #include "varlist.h"
 
 #include <QCoreApplication>
@@ -168,14 +169,25 @@ VarList TranslationManager::availableTranslations()
 
 QStringList TranslationManager::translationDirs() const
 {
-    QStringList dirs;
-    dirs << ".";
-    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation);
-    dirs << ApplicationInfo::resourcesDir();
-    const QString subdir = "/translations";
-    dirs << "." + subdir;
-    dirs << ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir;
-    dirs << ApplicationInfo::resourcesDir() + subdir;
+    static const QString &&subdir = "/translations";
+
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+    // Special hack for correct work of AppImage, snap and flatpak builds
+    static const QString &&additionalPath =
+            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF + subdir);
+#endif
+
+    static const QStringList &&dirs = {
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+        additionalPath,
+#endif
+        ".",
+        ApplicationInfo::homeDir(ApplicationInfo::DataLocation),
+        ApplicationInfo::resourcesDir(),
+        "." + subdir,
+        ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir,
+        ApplicationInfo::resourcesDir() + subdir
+    };
     return dirs;
 }
 

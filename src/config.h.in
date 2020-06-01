@@ -2,6 +2,7 @@
 #cmakedefine CLIENT_SNAME "@CLIENT_SNAME@"
 #cmakedefine CLIENT_CAPS_NODE "@CLIENT_CAPS_NODE@"
 #cmakedefine PRODUCTION "@PRODUCTION@"
+#cmakedefine SHARE_SUFF "@SHARE_SUFF@"
 #cmakedefine PSI_LIBDIR "@PSI_LIBDIR@"
 #cmakedefine PSI_DATADIR "@PSI_DATADIR@"
 #cmakedefine PSI_VERSION "@PSI_VERSION@"
