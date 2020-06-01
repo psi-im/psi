@@ -212,7 +212,8 @@ QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex &pare
     if (row >= options.size()) {
         return QModelIndex();
     }
-    options.sort();
+    if (!flat_) // otherwise already sorted
+        options.sort();
     id = nameToIndex(options.at(row));
     return createIndex(row, column, quintptr(id));
 }
