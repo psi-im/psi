@@ -43,13 +43,15 @@
 //    return s1.toLower() < s2.toLower();
 //}
 
+class GCUserView;
+
 //----------------------------------------------------------------------------
 // GCUserViewDelegate
 //----------------------------------------------------------------------------
 class GCUserViewDelegate : public QItemDelegate {
     Q_OBJECT
 public:
-    GCUserViewDelegate(QObject *p) : QItemDelegate(p) { updateSettings(); }
+    GCUserViewDelegate(GCUserView *p) : QItemDelegate(p), view(p) { updateSettings(); }
 
     void updateSettings()
     {
@@ -73,7 +75,11 @@ public:
 
         QFont font;
         font.fromString(o->getOption("options.ui.look.font.contactlist").toString());
-        fontHeight_ = QFontMetrics(font).height() + 2;
+        fontHeight_ = QFontMetrics(font).height();
+
+        auto ii    = PsiIconset::instance();
+        auto sizes = { ii->clients.iconSize(), ii->system().iconSize(), ii->affiliations.iconSize() };
+        iconsSize_ = *std::max_element(sizes.begin(), sizes.end()) * computeScaleFactor(view);
     }
 
     void paint(QPainter *mp, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -129,12 +135,11 @@ public:
     void paintContact(QPainter *mp, const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
         mp->save();
-        QStyleOptionViewItem o         = option;
-        QPalette             palette   = o.palette;
-        MUCItem::Role        r         = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
-        QRect                rect      = o.rect;
-        int                  gap       = qMax(int(fontHeight_ / 6), 1);
-        int                  iconsSize = option.fontMetrics.height() * EqTextIconK;
+        QStyleOptionViewItem o       = option;
+        QPalette             palette = o.palette;
+        MUCItem::Role        r       = index.data(GCUserModel::StatusRole).value<Status>().mucItem().role();
+        QRect                rect    = o.rect;
+        int                  gap     = qMax(int(fontHeight_ / 6), 1);
 
         if (nickColoring_) {
             if (r == MUCItem::Moderator)
@@ -177,8 +182,8 @@ public:
             : QImage();
         if (!status.isNull()) {
             QRect statusRect(status.rect());
-            if (statusRect.height() > iconsSize) {
-                status     = status.scaled(iconsSize, iconsSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            if (statusRect.height() > iconsSize_) {
+                status     = status.scaled(iconsSize_, iconsSize_, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 statusRect = status.rect();
             }
             statusRect.moveTop(rect.top() + (rect.height() - statusRect.height()) / 2);
@@ -201,7 +206,7 @@ public:
             QString name;
             auto    pixv = index.data(role);
             if (!pixv.isNull() && !(name = pixv.toString()).isEmpty()) {
-                QPixmap pix = IconsetFactory::iconPixmap(name, iconsSize);
+                QPixmap pix = IconsetFactory::iconPixmap(name, iconsSize_);
                 if (!pix.isNull())
                     rightPixs.push_back(pix);
             }
@@ -289,10 +294,11 @@ public:
     }
 
 private:
-    QColor colorForeground_, colorBackground_, colorModerator_, colorParticipant_, colorVisitor_, colorNoRole_;
-    bool   showGroups_, slimGroups_, nickColoring_, showClients_, showAffiliations_, showStatusIcons_, showAvatar_,
+    QWidget *view;
+    QColor   colorForeground_, colorBackground_, colorModerator_, colorParticipant_, colorVisitor_, colorNoRole_;
+    bool     showGroups_, slimGroups_, nickColoring_, showClients_, showAffiliations_, showStatusIcons_, showAvatar_,
         avatarAtLeft_;
-    int avatarSize_, fontHeight_, avatarRadius_;
+    int avatarSize_, fontHeight_, avatarRadius_, iconsSize_;
 };
 
 //----------------------------------------------------------------------------

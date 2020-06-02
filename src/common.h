@@ -40,6 +40,7 @@
 
 class QMenu;
 class TabbableWidget;
+class QPaintDevice;
 
 // -----------------------------------------------------------------------------
 // Options
@@ -104,6 +105,9 @@ constexpr double HugeIconTextViewK = 1.5;
 
 constexpr double EqTextIconK     = 0.93; // icon size equal to text
 constexpr double BiggerTextIconK = 1.5;  // icon visually bigger than text but still looks good
+
+int pointToPixel(qreal points);
+int computeScaleFactor(QPaintDevice *pd);
 
 // -----------------------------------------------------------------------------
 // Status
@@ -193,7 +197,6 @@ bool isKeychainEnabled();
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 
 bool fileCopy(const QString &src, const QString &dest);
-int  pointToPixel(qreal points);
 
 // used in option migration
 QString soundDetectPlayer();

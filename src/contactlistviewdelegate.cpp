@@ -80,22 +80,6 @@ static const QString
 static const QString
     headerForegroungColorPath(QStringLiteral("options.ui.look.colors.contactlist.grouping.header-foreground"));
 
-int computeScaleFactor(ContactListView *contactList)
-{
-    static int factor = 0;
-    if (!factor) {
-        if (contactList->devicePixelRatio() > 1) {
-            factor = 1; // It's autodetected by Qt. it will scale everything on it's own.
-        } else {
-            factor = qApp->desktop()->logicalDpiX() / 90;
-            if (!factor) {
-                factor = 1;
-            }
-        }
-    }
-    return factor;
-}
-
 static QRect relativeRect(const QStyleOption &option, const QSize &size, const QRect &prevRect, int padding = 0)
 {
     QRect r     = option.rect;
@@ -519,11 +503,11 @@ QPixmap ContactListViewDelegate::Private::avatarIcon(const QModelIndex &index)
 
 QPixmap ContactListViewDelegate::Private::rosterIndicator(const QString iconName)
 {
-    auto    fs          = QFontInfo(font_).pixelSize() * EqTextIconK;
-    auto    desiredSize = QSize(fs, fs);
+    auto    iconHeight  = pepIconsRect_.height();
+    auto    desiredSize = QSize(iconHeight, iconHeight);
     QPixmap pix         = IconsetFactory::iconPixmap(iconName, desiredSize);
-    if (pix.height() > fs * HugeIconRosterK) {
-        pix = pix.scaledToHeight(fs * EqTextIconK, Qt::SmoothTransformation);
+    if (pix.height() > iconHeight * HugeIconRosterK) {
+        pix = pix.scaledToHeight(iconHeight, Qt::SmoothTransformation);
     }
     return pix;
 }
@@ -690,8 +674,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         if (showClientIcons_) {
             const QList<QPixmap> pixList = this->clientPixmap(index);
 
-            for (QList<QPixmap>::ConstIterator it = pixList.begin(); it != pixList.end(); ++it) {
-                const QPixmap &pix = *it;
+            for (auto const &pix : pixList) {
                 rightPixs.push_back(pix);
                 rightWidths.push_back(pix.width());
                 if (!allClients_)

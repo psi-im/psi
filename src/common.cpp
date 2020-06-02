@@ -43,6 +43,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QObject>
+#include <QPaintDevice>
 #include <QProcess>
 #include <QRegExp>
 #include <QSound>
@@ -782,4 +783,20 @@ int pointToPixel(qreal points)
     static const double postScriptPoint = 1 / 72.;
 
     return qRound(points * (qApp->desktop()->logicalDpiX() * postScriptPoint));
+}
+
+int computeScaleFactor(QPaintDevice *pd)
+{
+    static int factor = 0;
+    if (!factor) {
+        if (pd->devicePixelRatio() > 1) {
+            factor = 1; // It's autodetected by Qt. it will scale everything on it's own.
+        } else {
+            factor = qApp->desktop()->logicalDpiX() / 90;
+            if (!factor) {
+                factor = 1;
+            }
+        }
+    }
+    return factor;
 }
