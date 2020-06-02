@@ -78,14 +78,14 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 {
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
     // Special hack for correct work of AppImage, snap and flatpak builds
-    static const QString &&additionalPath =
-            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF "/certs");
+    static const QString &&additionalPath
+        = QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF "/certs");
 #endif
 
     static const QStringList &&dirs = {
-    #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
-    #endif
+#endif
         ApplicationInfo::resourcesDir() + "/certs",
         ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs"
     };
@@ -96,15 +96,18 @@ QStringList ApplicationInfo::dataDirs()
 {
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
     // Special hack for correct work of AppImage, snap and flatpak builds
-    static const QString &&additionalPath =
-            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF);
+    static const QString &&additionalPath
+        = QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF);
 #endif
 
     static const QStringList &&dirs = {
-    #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
-    #endif
-        ":", ".", homeDir(DataLocation), resourcesDir()
+#endif
+        ":",
+        ".",
+        homeDir(DataLocation),
+        resourcesDir()
     };
     return dirs;
 }
@@ -113,14 +116,14 @@ QStringList ApplicationInfo::pluginDirs()
 {
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
     // Special hack for correct work of AppImage, snap and flatpak builds
-    static const QString &&additionalPath =
-            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../lib/" SHARE_SUFF "/plugins");
+    static const QString &&additionalPath
+        = QDir().absoluteFilePath(qApp->applicationDirPath() + "/../lib/" SHARE_SUFF "/plugins");
 #endif
 
     static const QStringList &&dirs = {
-    #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
+#if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
         additionalPath,
-    #endif
+#endif
         ApplicationInfo::resourcesDir() + "/plugins",
         homeDir(ApplicationInfo::DataLocation) + "/plugins",
         libDir() + "/plugins"

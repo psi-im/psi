@@ -163,7 +163,8 @@ void ChatView::markReceived(QString id)
     if (useMessageIcons_) {
         auto delivered = document()->resource(
             QTextDocument::ImageResource,
-            QUrl(QLatin1String("icon:") + (isEncryptionEnabled_ ? "log_icon_delivered_encrypted" : "log_icon_delivered")));
+            QUrl(QLatin1String("icon:")
+                 + (isEncryptionEnabled_ ? "log_icon_delivered_encrypted" : "log_icon_delivered")));
         document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id), delivered);
         setLineWrapColumnOrWidth(lineWrapColumnOrWidth());
     }
@@ -374,7 +375,7 @@ void ChatView::renderMucMessage(const MessageView &mv, QTextCursor &insertCursor
     const QString timestr = formatTimeStamp(mv.dateTime());
     QString       alerttagso, alerttagsc, nickcolor;
     QString       textcolor = palette().color(QPalette::Active, QPalette::Text).name();
-    QString icon;
+    QString       icon;
     if (useMessageIcons_) {
         QString sRes;
         if (mv.isLocal()) {

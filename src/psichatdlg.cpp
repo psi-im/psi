@@ -1021,10 +1021,7 @@ void PsiChatDlg::doClearButton()
     }
 }
 
-void PsiChatDlg::setPgpEnabled(bool enabled)
-{
-    actions_->action("chat_pgp")->setChecked(enabled);
-}
+void PsiChatDlg::setPgpEnabled(bool enabled) { actions_->action("chat_pgp")->setChecked(enabled); }
 
 void PsiChatDlg::toggleSmallChat()
 {

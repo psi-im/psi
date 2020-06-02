@@ -173,8 +173,8 @@ QStringList TranslationManager::translationDirs() const
 
 #if defined(Q_OS_LINUX) && defined(SHARE_SUFF)
     // Special hack for correct work of AppImage, snap and flatpak builds
-    static const QString &&additionalPath =
-            QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF + subdir);
+    static const QString &&additionalPath
+        = QDir().absoluteFilePath(qApp->applicationDirPath() + "/../share/" SHARE_SUFF + subdir);
 #endif
 
     static const QStringList &&dirs = {
