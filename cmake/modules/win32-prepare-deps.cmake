@@ -431,6 +431,7 @@ if(WIN32)
             liblcms2-2.dll
             liblzma-5.dll
             liblzo2-2.dll
+            libminizip.dll
             libmng-2.dll
             libpcre-1.dll
             libpcre16-0.dll
