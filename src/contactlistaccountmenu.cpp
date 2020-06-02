@@ -210,7 +210,7 @@ private slots:
             bookmarksManageAction_->setEnabled(true);
             bookmarksMenu_->addSeparator();
             for (ConferenceBookmark c : account->bookmarkManager()->conferences()) {
-                QAction *joinAction = new QAction(QString(tr("Join %1")).arg(c.name()), this);
+                QAction *joinAction = new QAction(c.name(), this);
                 joinAction->setProperty("bookmark", bookmarksJoinActions_.count());
                 connect(joinAction, SIGNAL(triggered()), SLOT(bookmarksJoin()));
                 bookmarksMenu_->addAction(joinAction);
