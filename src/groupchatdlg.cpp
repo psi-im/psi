@@ -2199,10 +2199,16 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
     }
     if (encChanged) {
         ui_.log->setEncryptionEnabled(encEnabled);
-        dispatchMessage(
-            MessageView::fromHtml(encEnabled ? QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled")
-                                             : QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled"),
-                                  MessageView::System));
+        QString msg = QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled");
+        if (encEnabled) {
+            if (!m.encryptionProtocol().isEmpty()) {
+                msg = QString("<icon name=\"psi/cryptoYes\"> ")
+                        + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
+            } else {
+                msg = QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled");
+            }
+        }
+        dispatchMessage(MessageView::fromHtml(msg, MessageView::System));
     }
 
     MessageView mv(MessageView::Message);

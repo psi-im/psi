@@ -6000,6 +6000,7 @@ void PsiAccount::pgp_encryptFinished()
         mwrap.setBody(tr("[ERROR: This message is encrypted, and you are unable to decrypt it.]"));
         mwrap.setXEncrypted(enc);
         mwrap.setWasEncrypted(true);
+        mwrap.setEncryptionProtocol("Legacy OpenPGP");
         // FIXME: Should be done cleaner, with an extra method in Iris
         if (origMsg.containsEvent(OfflineEvent))
             mwrap.addEvent(OfflineEvent);
@@ -6048,6 +6049,7 @@ void PsiAccount::pgp_decryptFinished()
         m.setBody(transaction->stdOutString());
         m.setXEncrypted("");
         m.setWasEncrypted(true);
+        m.setEncryptionProtocol("Legacy OpenPGP");
         processIncomingMessage(m);
     } else {
         if (loggedIn()) {

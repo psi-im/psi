@@ -682,6 +682,7 @@ void ChatDlg::doSend()
     m.setTimeStamp(QDateTime::currentDateTime());
     if (isPgpEncryptionEnabled()) {
         m.setWasEncrypted(true);
+        m.setEncryptionProtocol("Legacy OpenPGP");
     }
 
     if (fileShareReferences_.count()) {
@@ -839,12 +840,17 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 
     if (encChanged) {
         chatView()->setEncryptionEnabled(encEnabled);
-        dispatchMessage(
-            MessageView::fromHtml(encEnabled ? QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled")
-                                             : QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled"),
-                                  MessageView::System));
+        QString msg = QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled");
+        if (encEnabled) {
+            if (!m.encryptionProtocol().isEmpty()) {
+                msg = QString("<icon name=\"psi/cryptoYes\"> ")
+                        + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
+            } else {
+                msg = QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled");
+            }
+        }
+        dispatchMessage(MessageView::fromHtml(msg, MessageView::System));
         if (!local) {
-            setPgpEnabled(encEnabled && account()->hasPgp());
             if (!encEnabled) {
                 // enable warning
                 warnSend_ = true;
