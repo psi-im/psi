@@ -28,7 +28,7 @@ QSize SvgIconEngine::actualSize(const QSize &size, QIcon::Mode mode, QIcon::Stat
 {
     Q_UNUSED(mode);
     Q_UNUSED(state);
-    return renderer->defaultSize().scaled(size, Qt::KeepAspectRatio);
+    return size.isEmpty() ? renderer->defaultSize() : renderer->defaultSize().scaled(size, Qt::KeepAspectRatio);
 }
 
 QIconEngine *SvgIconEngine::clone() const { return new SvgIconEngine(name, renderer); }
@@ -104,7 +104,7 @@ QPixmap SvgIconEngine::renderPixmap(const QSize &size, QIcon::Mode mode, QIcon::
 {
     Q_UNUSED(mode)
     Q_UNUSED(state)
-    auto    sz = renderer->defaultSize().scaled(size, Qt::KeepAspectRatio);
+    auto    sz = size.isEmpty() ? renderer->defaultSize() : renderer->defaultSize().scaled(size, Qt::KeepAspectRatio);
     QPixmap pix(sz);
     pix.fill(Qt::transparent);
     QPainter p(&pix);

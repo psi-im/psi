@@ -306,7 +306,8 @@ public:
     QPixmap pixmap(const QSize &desiredSize = QSize()) const
     {
         if (svgRenderer) {
-            QSize   sz = svgRenderer->defaultSize().scaled(desiredSize, Qt::KeepAspectRatio);
+            QSize sz = desiredSize.isEmpty() ? svgRenderer->defaultSize()
+                                             : svgRenderer->defaultSize().scaled(desiredSize, Qt::KeepAspectRatio);
             QPixmap pix(sz);
             pix.fill(Qt::transparent);
             QPainter p(&pix);
