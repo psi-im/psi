@@ -9,7 +9,11 @@ X11WindowSystem *X11WindowSystem::_instance = nullptr;
 
 void X11WindowSystem::x11wmClass(WId wid, QString resName)
 {
-    if (!QX11Info::isPlatformX11())
+#if defined(LIMIT_X11_USAGE)
+    return;
+#endif
+
+    if (!QX11Info::isPlatformX11()) // Avoid crashes if launched in Wayland
         return;
 
     // Display *dsp = x11Display();                 // get the display
@@ -33,7 +37,11 @@ void X11WindowSystem::x11wmClass(WId wid, QString resName)
 // Helper function
 static bool getCardinal32Prop(Display *display, Window win, char *propName, long *value)
 {
-    if (!QX11Info::isPlatformX11())
+#if defined(LIMIT_X11_USAGE)
+    return false;
+#endif
+
+    if (!QX11Info::isPlatformX11()) // Avoid crashes if launched in Wayland
         return false;
 
     Atom          nameAtom, typeAtom, actual_type_return;
@@ -125,7 +133,9 @@ X11WindowSystem::X11WindowSystem()
     while (i--)
         atoms[i] = 0;
 
+#if !defined(LIMIT_X11_USAGE)
     XInternAtoms(QX11Info::display(), const_cast<char **>(names), atomsCount, true, atoms);
+#endif
 
     i = atomsCount;
     while (i--)
