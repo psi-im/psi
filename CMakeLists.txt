@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
-#Set automoc and autouic policy
+# Set automoc and autouic policy
 if(POLICY CMP0071)
     if(${CMAKE_VERSION} VERSION_LESS "3.10.0")
         cmake_policy(SET CMP0071 OLD)
@@ -18,7 +18,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "")
 endif()
 
-#Psi or Psi+ detection
+# Psi or Psi+ detection
 option(PSI_PLUS "Build Psi+ client instead of Psi" OFF)
 if(PSI_PLUS)
     add_definitions(-DPSI_PLUS)
@@ -29,7 +29,12 @@ else()
     message(STATUS "===Building Psi===")
 endif()
 
-#Check for submodules
+# Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
+if(UNIX AND NOT (APPLE OR HAIKU))
+    set(LINUX ON)
+endif()
+
+# Check for submodules
 set(SBM_LIST
     ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/http_parser.h
     ${PROJECT_SOURCE_DIR}/3rdparty/qhttp/qhttp.pro
@@ -43,7 +48,7 @@ foreach(submodule ${SBM_LIST})
     endif()
 endforeach()
 
-#Common options
+# Common options
 option( BUNDLED_IRIS "Build iris library bundled" ON )
 option( ONLY_PLUGINS "Build psi plugins only" OFF )
 option( USE_HUNSPELL "Build psi with hunspell spellcheck" ON )
@@ -60,24 +65,28 @@ option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
-option( USE_X11 "Enable X11 features support. Linux only" ON )
-option( USE_XSS "Enable Xscreensaver support. Linux only" ON )
 option( USE_DBUS "Enable DBUS support" ON )
-#Iris options
+# Iris options
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
 
 option( PRODUCTION "Build production version" OFF )
 
-#Windows or MXE only
+# Windows or MXE only
 option( USE_MXE "Use MXE cross-compilation" OFF )
 option( ENABLE_PORTABLE "Create portable version of Psi+ in win32" OFF )
-#Apple only
+if(LINUX)
+    option( USE_X11 "Enable X11 features support" ON )
+    option( USE_XSS "Enable Xscreensaver support" ON )
+    option( LIMIT_X11_USAGE "Disable usage of X11 features which may crash program" OFF )
+endif()
+# Apple only
 if(APPLE)
     option( USE_SPARKLE "Use Sparkle for APPLE builds" ON )
     option( USE_GROWL "Use growl for macOS builds" OFF )
     option( USE_MAC_DOC "Use macOS dock" OFF )
 endif()
+
 
 if(WIN32 AND ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")))
     option( NO_DEBUG_OPTIMIZATION "Disable optimization for debug builds" OFF)
@@ -150,7 +159,7 @@ if(USE_CRASH)
     add_definitions(-DUSE_CRASH)
 endif()
 
-#Detect MXE cross-compilation
+# Detect MXE cross-compilation
 if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     message(STATUS "MXE environment detected")
     set(USE_MXE ON)
@@ -160,12 +169,15 @@ if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     endif()
 endif()
 
-# Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
+# For GNU/Linux and *BSD systems:
 if(UNIX AND NOT (APPLE OR HAIKU))
-    set(LINUX ON)
     if(USE_X11)
         add_definitions( -DHAVE_X11 )
         message(STATUS "X11 features support - ENABLED")
+    endif()
+    if(LIMIT_X11_USAGE)
+        add_definitions( -DLIMIT_X11_USAGE )
+        message(STATUS "Unsafe X11 features support - DISABLED")
     endif()
     add_definitions(
         -DHAVE_FREEDESKTOP
@@ -181,7 +193,7 @@ if(UNIX AND NOT (APPLE OR HAIKU))
     endif()
 endif()
 
-#Detect *BSD systems
+# Detect *BSD systems
 STRING (REGEX MATCH "BSD" PROJECT_OS_BSD ${CMAKE_SYSTEM_NAME})
 if(PROJECT_OS_BSD)
     add_definitions(-DIOAPI_NO_64)
@@ -194,7 +206,7 @@ include_regular_expression("^.*\\.h$")
 # Put executable in build root dir
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/psi" )
 
-#Set CXX and C Flags
+# Set CXX and C Flags
 if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 elseif(WIN32)
