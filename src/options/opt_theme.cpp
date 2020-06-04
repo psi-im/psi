@@ -113,11 +113,11 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 #if 0
             const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
             bool isPsi = id.startsWith("psi");
-            const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
-                             : IconsetFactory::iconPixmap("clients/adium");
+            const QPixmap client = isPsi ? IconsetFactory::iconPtr("clients/psi")->icon()
+                             : IconsetFactory::iconPtr("clients/adium")->icon();
             const QString clientName = isPsi ? tr("Psi Theme") : tr("Adium Theme");
             QToolButton *screenshotButton = new QToolButton(d->themeView);
-            screenshotButton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/eye")));
+            screenshotButton->setIcon(QIcon(IconsetFactory::iconPtr("psi/eye")->icon())));
             screenshotButton->resize(buttonSize);
             screenshotButton->setObjectName(SCREEN_PREFIX + id);
             screenshotButton->setToolTip(tr("Show theme screenshot"));
@@ -165,7 +165,7 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
         const QPixmap     scr   = unsortedModel->data(index, PsiThemeModel::HasPreviewRole).value<QPixmap>();
 
         screenshotDialog->setWindowTitle(tr("%1 Screenshot").arg(name_));
-        screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+        screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
 
         QBoxLayout *box   = new QBoxLayout(QBoxLayout::LeftToRight, screenshotDialog);
         QLabel *    image = new QLabel(screenshotDialog);

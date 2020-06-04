@@ -134,7 +134,7 @@ void OptionsTabPlugins::listPlugins()
         item->setIcon(C_NAME, icon);
 
         QToolButton *aboutbutton = new QToolButton(d->tw_Plugins);
-        aboutbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/info")));
+        aboutbutton->setIcon(QIcon(IconsetFactory::iconPtr(QLatin1String("psi/info"))->icon()));
         aboutbutton->resize(buttonSize);
         aboutbutton->setObjectName("ab_" + shortName);
         aboutbutton->setToolTip(tr("Show information about plugin"));
@@ -143,7 +143,7 @@ void OptionsTabPlugins::listPlugins()
         connect(aboutbutton, &QToolButton::clicked, this, [item, this](bool) { showPluginInfo(item); });
 
         QToolButton *settsbutton = new QToolButton(d->tw_Plugins);
-        settsbutton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/options")));
+        settsbutton->setIcon(QIcon(IconsetFactory::iconPtr(QLatin1String("psi/options"))->icon()));
         settsbutton->resize(buttonSize);
         settsbutton->setObjectName("sb_" + shortName);
         settsbutton->setToolTip(tr("Open plugin settings dialog"));
@@ -201,7 +201,7 @@ void OptionsTabPlugins::showPluginInfo(QTreeWidgetItem *item)
     infoDialog = new QDialog(d);
     ui_.setupUi(infoDialog);
     infoDialog->setWindowTitle(tr("About plugin"));
-    infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+    infoDialog->setWindowIcon(QIcon(IconsetFactory::iconPtr("psi/logo_128")->icon()));
     const QString &shortName = item->data(C_NAME, Qt::UserRole).toString();
     ui_.tb_info->setText(PluginManager::instance()->pluginInfo(shortName));
     auto vendor   = formatVendorText(PluginManager::instance()->vendor(shortName), false);
