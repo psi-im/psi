@@ -649,10 +649,9 @@ QString PsiIcon::defaultText() const
     }
 
     // first, try to get the text by priorities
-    QStringList lang;
-    lang << QLocale().name().section('_', 0, 0); // most prioritent, is the local language
-    lang << "";                                  // and then the language without name goes (international?)
-    lang << "en";                                // then real English
+    QStringList lang { QLocale().name().section('_', 0, 0), // most prioritent, is the local language
+                       "",                                  // and then the language without name goes (international?)
+                       "en" };                              // then real English
 
     QString               str;
     QStringList::Iterator it = lang.begin();
@@ -1223,25 +1222,12 @@ public:
         icon.setText(text);
         icon.setName(name);
 
-        QStringList graphicMime, soundMime, animationMime, scalableMime;
-        graphicMime << "image/png"; // first item have higher priority than latter
-        // graphicMime << "video/x-mng"; // due to very serious issue in Qt 4.1.0, this format was disabled
-        graphicMime << "image/gif";
-        graphicMime << "image/x-xpm";
-        graphicMime << "image/bmp";
-        graphicMime << "image/jpeg";
-        graphicMime << "image/svg+xml"; // TODO: untested
-
-        scalableMime << "image/svg+xml";
-
-        soundMime << "audio/x-wav";
-        soundMime << "audio/x-ogg";
-        soundMime << "audio/x-mp3";
-        soundMime << "audio/x-midi";
-
+        // first item have higher priority than latter
+        QStringList graphicMime { "image/png", "image/gif", "image/x-xpm", "image/bmp", "image/jpeg", "image/svg+xml" };
+        QStringList scalableMime { "image/svg+xml" };
+        QStringList soundMime { "audio/x-wav", "audio/x-ogg", "audio/x-mp3", "audio/x-midi" };
         // MIME-types, that support animations
-        animationMime << "image/gif";
-        // animationMime << "video/x-mng";
+        QStringList animationMime { "image/gif" };
 
         if (!object.isEmpty()) {
             // fill the graphic & sound tables, if there are some
