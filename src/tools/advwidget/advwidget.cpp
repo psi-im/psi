@@ -28,11 +28,6 @@
 #include <QTimer>
 #include <QWidget>
 #include <QtGlobal> // required to make mingw32 happy
-#ifdef HAVE_X11
-#include <QX11Info>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#endif
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <winuser.h>

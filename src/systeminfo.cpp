@@ -16,7 +16,7 @@
 #include <QStringList>
 #include <QSysInfo>
 #include <QTextStream>
-#if defined(HAVE_X11) || defined(Q_OS_MAC)
+#if defined(Q_OS_UNIX)
 #include <stdlib.h>
 #include <string.h>
 #include <sys/utsname.h>
@@ -46,7 +46,7 @@
 #error "Minimal supported version of Qt in this file is 5.5.0"
 #endif
 
-#if defined(HAVE_X11)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 static QString lsbRelease(const QStringList &args)
 {
     QStringList path = QString(qgetenv("PATH")).split(':');
@@ -182,7 +182,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
     os_name_str_ = os_str_;
 
     // Detect
-#if defined(HAVE_X11)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC) && !defined(Q_OS_HAIKU)
     // attempt to get LSB version before trying the distro-specific approach
     os_str_ = lsbRelease(QStringList() << "--description"
                                        << "--short");

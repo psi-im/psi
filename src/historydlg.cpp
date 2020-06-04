@@ -581,7 +581,7 @@ public:
     Jid         jid;
     PsiAccount *pa;
     PsiCon *    psi;
-#ifndef HAVE_X11
+#ifndef Q_OS_LINUX
     bool autoCopyText;
 #endif
 };
@@ -639,7 +639,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa) :
     connect(ui_.buttonFirst, SIGNAL(released()), SLOT(getEarliest()));
     connect(ui_.calendar, SIGNAL(selectionChanged()), SLOT(getDate()));
     connect(ui_.calendar, SIGNAL(activated(QDate)), SLOT(getDate()));
-#ifndef HAVE_X11 // linux has this feature built-in
+#ifndef Q_OS_LINUX // linux has this feature built-in
     optionUpdated("options.ui.automatically-copy-selected-text");
     connect(ui_.msgLog, SIGNAL(selectionChanged()), SLOT(autoCopy()));
     connect(ui_.msgLog, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
@@ -1158,7 +1158,7 @@ void HistoryDlg::removedContact(PsiContact *pc)
 
 void HistoryDlg::optionUpdated(const QString &option)
 {
-#ifndef HAVE_X11
+#ifndef Q_OS_LINUX
     if (option == "options.ui.automatically-copy-selected-text") {
         d->autoCopyText = PsiOptions::instance()->getOption(option).toBool();
     } else
@@ -1173,7 +1173,7 @@ void HistoryDlg::optionUpdated(const QString &option)
         displayProxy->setFormattingFlag(PsiOptions::instance()->getOption(option).toBool());
 }
 
-#ifndef HAVE_X11
+#ifndef Q_OS_LINUX
 void HistoryDlg::autoCopy()
 {
     if (d->autoCopyText) {

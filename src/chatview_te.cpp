@@ -62,7 +62,7 @@ ChatView::ChatView(QWidget *parent) :
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setLooks(this);
 
-#ifndef HAVE_X11 // linux has this feature built-in
+#ifndef Q_OS_LINUX // linux has this feature built-in
     connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
     connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
 #endif
