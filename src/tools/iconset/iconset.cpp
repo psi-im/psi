@@ -1059,10 +1059,7 @@ public:
     void append(QString n, PsiIcon *icon)
     {
         // all PsiIcon names in Iconset must be unique
-        if (dict.contains(n)) {
-            remove(n);
-        }
-
+        remove(dict.find(n));
         dict[n] = icon;
         list.append(icon);
     }
@@ -1075,9 +1072,10 @@ public:
         }
     }
 
-    void remove(QString name)
+    void remove(QString name) { remove(dict.find(name)); }
+
+    void remove(QHash<QString, PsiIcon *>::iterator it)
     {
-        auto it = dict.find(name);
         if (it != dict.end()) {
             PsiIcon *i = it.value();
             dict.erase(it);
@@ -1523,7 +1521,7 @@ const PsiIcon *Iconset::icon(const QString &name) const
         return nullptr;
     }
 
-    return d->dict[name];
+    return d->dict.value(name);
 }
 
 /**
