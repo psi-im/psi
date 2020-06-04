@@ -96,7 +96,7 @@ Based on the huge on from Psi+ repository.
 
         <icon>
                 <x xmlns='name'>clients/profanity</x>
-                <object mime='image/png'>profanity.png</object>
+                <object mime='image/png'>profanity.svg</object>
         </icon>
 
         <icon>

@@ -159,7 +159,11 @@ void IconAction::setPsiIcon(const PsiIcon *i)
     QIcon is;
     if (i) {
         d->icon = new PsiIcon(*i);
-        connect(d->icon, SIGNAL(iconModified()), SLOT(iconUpdated()));
+        connect(d->icon, &PsiIcon::iconModified, this, [this]() {
+#ifndef WIDGET_PLUGIN
+            QAction::setIcon(d->icon ? d->icon->icon() : QIcon());
+#endif
+        });
         // We newer use animated iconactions
         // d->icon->activated(true);
 
@@ -272,13 +276,6 @@ void IconAction::setText(const QString &t)
 }
 
 QList<IconToolButton *> IconAction::buttonList() { return d->buttons; }
-
-void IconAction::iconUpdated()
-{
-#ifndef WIDGET_PLUGIN
-    QAction::setIcon(d->icon ? d->icon->icon() : QIcon());
-#endif
-}
 
 QString IconAction::toolTipFromMenuText() const
 {

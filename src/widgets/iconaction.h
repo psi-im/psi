@@ -77,7 +77,6 @@ protected:
 
 private slots:
     void objectDestroyed();
-    void iconUpdated();
     void toolButtonToggled(bool);
 
 public:
