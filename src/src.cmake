@@ -285,12 +285,14 @@ if(LINUX)
             activeprofiles_stub.cpp
             )
     endif()
-    list(APPEND SOURCES
-        x11windowsystem.cpp
-        )
-    list(APPEND HEADERS
-        x11windowsystem.h
-        )
+    if(USE_X11)
+        list(APPEND SOURCES
+            x11windowsystem.cpp
+            )
+        list(APPEND HEADERS
+            x11windowsystem.h
+            )
+    endif()
 elseif(APPLE)
     list(APPEND SOURCES
         activeprofiles_stub.cpp

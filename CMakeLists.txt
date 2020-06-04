@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 #Psi or Psi+ detection
-option(PSI_PLUS "Build Psi+ client instead of Psi" OFF)
+option(PSI_PLUS "Build Psi+ client instead of Psi" ON)
 if(PSI_PLUS)
     add_definitions(-DPSI_PLUS)
     project(psi-plus)
@@ -60,6 +60,7 @@ option( ONLY_BINARY "Build and install only binary file" OFF )
 option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
+option( USE_X11 "Enable X11 features support. Linux only" ON )
 option( USE_XSS "Enable Xscreensaver support. Linux only" ON )
 option( USE_DBUS "Enable DBUS support" ON )
 #Iris options
@@ -162,8 +163,11 @@ endif()
 # Define LINUX on Linux like as WIN32 on Windows and APPLE on macOS
 if(UNIX AND NOT (APPLE OR HAIKU))
     set(LINUX ON)
+    if(USE_X11)
+        add_definitions( -DHAVE_X11 )
+        message(STATUS "X11 features support - ENABLED")
+    endif()
     add_definitions(
-        -DHAVE_X11
         -DHAVE_FREEDESKTOP
         -DAPP_PREFIX=${CMAKE_INSTALL_PREFIX}
         -DAPP_BIN_NAME=${PROJECT_NAME}
