@@ -22,6 +22,7 @@
 #include "accountlabel.h"
 #include "bookmarkmanager.h"
 #include "busywidget.h"
+#include "common.h"
 #include "iconaction.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -95,7 +96,8 @@ PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, 
                     img = icon.pixmap().toImage();
                     QPainter p(&img);
                     PsiIcon  bicon = IconsetFactory::icon("psi/bookmark_remove");
-                    p.drawImage(QRect(img.rect().center(), img.rect().bottomRight()), bicon.image());
+                    auto     is    = qApp->fontMetrics().height() * EqTextIconK;
+                    p.drawImage(QRect(img.rect().center(), img.rect().bottomRight()), bicon.image(QSize(is, is)));
                 }
                 icon.setImpix(Impix(img));
             }

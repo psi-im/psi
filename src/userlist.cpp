@@ -532,7 +532,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                 QByteArray imageArray;
                 QBuffer    buff(&imageArray);
 
-                auto image = statusIcon->image();
+                auto image = statusIcon->image(QSize(fontPixelSize, fontPixelSize));
                 if (image.height() > fontPixelSize * 1.3)
                     image = image.scaled(fontPixelSize, fontPixelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 image.save(&buff, "png");

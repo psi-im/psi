@@ -718,13 +718,14 @@ void ChatEdit::setRecButtonIcon()
         const QColor bcgColor(palette().color(backgroundRole()));
         int          red, green, blue = 0;
         bcgColor.getRgb(&red, &green, &blue);
+        auto mis = fontInfo().pixelSize();
         if (isColorDark(red, green, blue)) {
             // Invert icon pixmap if background color is dark
-            QImage recImage = IconsetFactory::icon("psi/mic").image();
+            QImage recImage = IconsetFactory::icon("psi/mic").image(QSize(mis, mis));
             recImage.invertPixels();
             recButton_->setIcon(QPixmap::fromImage(recImage));
         } else {
-            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic", fontInfo().pixelSize()));
+            recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic", mis));
         }
         const QColor toolTipBgColor(recButton_->palette().color(recButton_->backgroundRole()));
         toolTipBgColor.getRgb(&red, &green, &blue);

@@ -177,9 +177,10 @@ public:
         }
 
         // fontHeight_
-        QImage status = showStatusIcons_
-            ? PsiIconset::instance()->status(index.data(GCUserModel::StatusRole).value<Status>()).image()
-            : QImage();
+        QImage status = showStatusIcons_ ? PsiIconset::instance()
+                                               ->status(index.data(GCUserModel::StatusRole).value<Status>())
+                                               .image(QSize(iconsSize_, iconsSize_))
+                                         : QImage();
         if (!status.isNull()) {
             QRect statusRect(status.rect());
             if (statusRect.height() > iconsSize_) {
