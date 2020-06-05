@@ -107,6 +107,10 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     auto iconName = charFormat.stringProperty(TextIconFormat::IconName);
 
     auto icon = IconsetFactory::iconPtr(iconName);
+    if (!icon) {
+        qWarning("invalid icon: %s", qPrintable(iconName));
+        return QSizeF();
+    }
     if (htmlSize > 0) {
         auto pxSize = pointToPixel(htmlSize);
         return icon->size(QSize(pxSize, pxSize));
@@ -128,9 +132,16 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
 {
     Q_UNUSED(doc);
     Q_UNUSED(posInDocument);
-    const QTextCharFormat charFormat = format.toCharFormat();
 
-    auto pixmap = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName), rect.size().toSize());
+    const QTextCharFormat charFormat = format.toCharFormat();
+    auto const            iconName   = charFormat.stringProperty(TextIconFormat::IconName);
+
+    if (rect.isNull()) {
+        qWarning("Null rect for drawing icon %s", qPrintable(iconName));
+        return;
+    }
+
+    auto pixmap = IconsetFactory::iconPixmap(iconName, rect.size().toSize());
     if (rect.size() == pixmap.size()) {
         painter->drawPixmap(rect, pixmap, pixmap.rect());
     }
