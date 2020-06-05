@@ -90,12 +90,20 @@ QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State 
         auto img = pm.toImage();
         for (int x = 0; x < img.width(); x++) {
             for (int y = 0; y < img.height(); y++) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+                QColor c = QColor(img.pixel(x, y));
+#else
                 QColor c = img.pixelColor(x, y);
-                auto   t = c.alpha();
-                auto   h = c.hue();
-                auto   v = c.value();
+#endif
+                auto t = c.alpha();
+                auto h = c.hue();
+                auto v = c.value();
                 c.setHsv(h, 0, v, t);
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+                img.setPixel(x, y, c.rgba());
+#else
                 img.setPixelColor(x, y, c);
+#endif
             }
         }
         pm            = QPixmap::fromImage(img);
