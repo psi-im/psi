@@ -37,11 +37,7 @@ void PsiTrayIcon::setContextMenu(QMenu *menu) { trayicon_->setContextMenu(menu);
 
 void PsiTrayIcon::setToolTip(const QString &str)
 {
-#ifndef HAVE_X11
     trayicon_->setToolTip(str);
-#else
-    Q_UNUSED(str)
-#endif
 }
 
 void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
@@ -101,53 +97,7 @@ QPixmap PsiTrayIcon::makeIcon()
     if (!icon_)
         return QPixmap();
 
-#ifdef HAVE_X11
-    // on X11, the KDE dock is 22x22.  let's make our icon_ "seem" bigger.
-    QImage real(22, 22, QImage::Format_ARGB32);
-    QImage in = icon_->image();
-    in.detach();
-
-    // make sure it is no bigger than 16x16
-    if (in.width() > 16 || in.height() > 16)
-        in = in.scaled(16, 16, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-
-    int xo = (real.width() - in.width()) / 2;
-    int yo = (real.height() - in.height()) / 2;
-
-    int n, n2;
-
-    // clear the output and make it transparent
-    // deprecates real.fill(0)
-    for (n2 = 0; n2 < real.height(); ++n2)
-        for (n = 0; n < real.width(); ++n)
-            real.setPixel(n, n2, qRgba(0, 0, 0, 0));
-
-    // draw a dropshadow
-    for (n2 = 0; n2 < in.height(); ++n2) {
-        for (n = 0; n < in.width(); ++n) {
-            if (int a = qAlpha(in.pixel(n, n2)) / 2) {
-                int x = n + xo + 2;
-                int y = n2 + yo + 2;
-                real.setPixel(x, y, qRgba(0, 0, 0, a));
-            }
-        }
-    }
-
-    // draw the image
-    for (n2 = 0; n2 < in.height(); ++n2) {
-        for (n = 0; n < in.width(); ++n) {
-            if (qAlpha(in.pixel(n, n2))) {
-                QRgb pold = real.pixel(n + xo, n2 + yo);
-                QRgb pnew = in.pixel(n, n2);
-                real.setPixel(n + xo, n2 + yo, pixelBlend(pold, pnew));
-            }
-        }
-    }
-
-    return QPixmap::fromImage(real);
-#else
     return icon_->pixmap();
-#endif
 }
 
 void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
