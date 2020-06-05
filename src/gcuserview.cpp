@@ -262,12 +262,13 @@ public:
         if (index.parent().isValid()) {
             int statusIconHeight = 0;
             if (showStatusIcons_) {
+                statusIconHeight = fontHeight_ * EqTextIconK;
                 statusIconHeight = PsiIconset::instance()
                                        ->status(index.data(GCUserModel::StatusRole).value<Status>())
-                                       .image()
+                                       .image(QSize(statusIconHeight, statusIconHeight))
                                        .height();
                 if (statusIconHeight > fontHeight_ * 1.2)
-                    statusIconHeight = fontHeight_ * 0.8;
+                    statusIconHeight = fontHeight_ * EqTextIconK;
             }
 
             auto height = QFontMetrics(option.font).boundingRect(index.data(Qt::DisplayRole).toString()).height();
