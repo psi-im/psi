@@ -88,11 +88,16 @@ QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State 
         p.fillRect(pm.rect(), hlColor);
     } else if (mode == QIcon::Disabled) {
         auto img = pm.toImage();
-#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
-        img = img.convertToFormat(QImage::Format_Grayscale8);
-#else
-        img.convertTo(QImage::Format_Grayscale8);
-#endif
+        for (int x = 0; x < img.width(); x++) {
+            for (int y = 0; y < img.height(); y++) {
+                QColor c = img.pixelColor(x, y);
+                auto   t = c.alpha();
+                auto   h = c.hue();
+                auto   v = c.value();
+                c.setHsv(h, 0, v, t);
+                img.setPixelColor(x, y, c);
+            }
+        }
         pm            = QPixmap::fromImage(img);
         disabledCache = QPixmapCache::insert(pm);
     }
