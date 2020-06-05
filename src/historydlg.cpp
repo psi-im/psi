@@ -1173,14 +1173,14 @@ void HistoryDlg::optionUpdated(const QString &option)
         displayProxy->setFormattingFlag(PsiOptions::instance()->getOption(option).toBool());
 }
 
-#ifndef Q_OS_LINUX
 void HistoryDlg::autoCopy()
 {
+#ifndef Q_OS_LINUX
     if (d->autoCopyText) {
         ui_.msgLog->copy();
     }
-}
 #endif
+}
 
 void HistoryDlg::viewUpdated()
 {

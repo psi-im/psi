@@ -167,9 +167,7 @@ private slots:
     void doMenu();
     void removedContact(PsiContact *);
     void optionUpdated(const QString &option);
-#ifndef Q_OS_LINUX
     void autoCopy();
-#endif
     void viewUpdated();
     void showFoundResult(int rows);
     void updateSearchHint();
