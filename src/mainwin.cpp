@@ -157,7 +157,7 @@ public:
 #endif
 
     void        registerActions();
-    IconAction *getAction(QString name);
+    IconAction *getAction(const QString &name);
     void        updateMenu(const QStringList &actions, QMenu *menu);
 
     QString ToolTipText;
@@ -238,7 +238,7 @@ void MainWin::Private::registerActions()
     }
 }
 
-IconAction *MainWin::Private::getAction(QString name)
+IconAction *MainWin::Private::getAction(const QString &name)
 {
     PsiActionList::ActionsType type
         = PsiActionList::ActionsType(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
@@ -1155,6 +1155,8 @@ void MainWin::activatedAccOption(PsiAccount *pa, int x)
 void MainWin::buildTrayMenu()
 {
     if (!d->trayMenu) {
+        auto iconSize = fontInfo().pixelSize() * BiggerTextIconK;
+
         d->trayMenu          = new QMenu(this);
         QAction *nextEvent   = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
         QAction *hideRestore = d->trayMenu->addAction(tr("Hide"), this, SLOT(trayHideShow()));
@@ -1165,12 +1167,36 @@ void MainWin::buildTrayMenu()
         d->trayMenu->addSeparator();
         const QStringList _actions = { "status_online", "status_chat",    "status_away", "status_xa",
                                        "status_dnd",    "status_offline", "separator",   "menu_options" };
-        for (const QString &action : _actions) {
-            d->getAction(action)->addTo(d->trayMenu);
+        for (const QString &actionName : _actions) {
+            auto action = d->getAction(actionName);
+            if (actionName == QLatin1String("separator") || !action->psiIcon() || !action->psiIcon()->isScalable()) {
+                action->addTo(d->trayMenu);
+                continue;
+            }
+
+            // same workaround as bellow (adding copies of action with pixmaps instead of svg)
+
+            auto actionCopy
+                = new QAction(QIcon(action->icon().pixmap(iconSize, iconSize)), action->text(), d->trayMenu);
+            actionCopy->setCheckable(action->isCheckable());
+            actionCopy->setChecked(action->isChecked());
+            connect(actionCopy, &QAction::triggered, action, &QAction::trigger);
+            d->trayMenu->addAction(actionCopy);
         }
 #ifndef Q_OS_MAC
         d->trayMenu->addSeparator();
-        d->getAction("menu_quit")->addTo(d->trayMenu);
+
+        // Workaround for some unknow bug. likely this one https://bugreports.qt.io/browse/QTBUG-63187
+        // replaces possible svg icon with QPixmap
+        auto quitAction = d->getAction("menu_quit");
+        if (!quitAction->psiIcon() || !quitAction->psiIcon()->isScalable()) {
+            quitAction->addTo(d->trayMenu);
+        } else {
+            auto quitCopy
+                = new QAction(QIcon(quitAction->icon().pixmap(iconSize, iconSize)), quitAction->text(), d->trayMenu);
+            connect(quitCopy, &QAction::triggered, quitAction, &QAction::trigger);
+            d->trayMenu->addAction(quitCopy);
+        }
     }
 #else
     }

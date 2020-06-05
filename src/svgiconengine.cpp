@@ -46,6 +46,7 @@ void SvgIconEngine::virtual_hook(int id, void *data)
     switch (id) {
     case QIconEngine::AvailableSizesHook:
         reinterpret_cast<AvailableSizesArgument *>(data)->sizes.clear();
+        reinterpret_cast<AvailableSizesArgument *>(data)->sizes.append(renderer->defaultSize());
         break;
     case QIconEngine::IconNameHook:
         *reinterpret_cast<QString *>(data) = name;
