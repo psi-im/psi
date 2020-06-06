@@ -46,6 +46,9 @@
   <dep type='qtnetwork'>
     <required/>
   </dep>
+  <dep type='qtsvg'>
+    <required/>
+  </dep>
   <dep type='qtxml'>
     <required/>
   </dep>

@@ -1,4 +1,4 @@
-QT += xml network sql widgets multimedia concurrent
+QT += xml network sql svg widgets multimedia concurrent
 
 unix:!mac {
     LIBS += -lxcb
