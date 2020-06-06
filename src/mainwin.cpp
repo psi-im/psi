@@ -1165,38 +1165,33 @@ void MainWin::buildTrayMenu()
             hideRestore->setText(isHidden() ? tr("Show") : tr("Hide"));
         });
         d->trayMenu->addSeparator();
-        const QStringList _actions = { "status_online", "status_chat",    "status_away", "status_xa",
-                                       "status_dnd",    "status_offline", "separator",   "menu_options" };
-        for (const QString &actionName : _actions) {
+
+        auto addWrappedAction = [&](const QString &actionName) {
             auto action = d->getAction(actionName);
             if (actionName == QLatin1String("separator") || !action->psiIcon() || !action->psiIcon()->isScalable()) {
                 action->addTo(d->trayMenu);
-                continue;
+                return;
             }
 
-            // same workaround as bellow (adding copies of action with pixmaps instead of svg)
-
+            // Workaround for some unknow bug. likely this one https://bugreports.qt.io/browse/QTBUG-63187
+            // replaces possible svg icon with QPixmap
             auto actionCopy
                 = new QAction(QIcon(action->icon().pixmap(iconSize, iconSize)), action->text(), d->trayMenu);
             actionCopy->setCheckable(action->isCheckable());
             actionCopy->setChecked(action->isChecked());
             connect(actionCopy, &QAction::triggered, action, &QAction::trigger);
+            connect(actionCopy, &QAction::toggled, action, &QAction::setChecked);
             d->trayMenu->addAction(actionCopy);
+        };
+
+        const QStringList _actions = { "status_online", "status_chat",    "status_away", "status_xa",
+                                       "status_dnd",    "status_offline", "separator",   "menu_options" };
+        for (const QString &actionName : _actions) {
+            addWrappedAction(actionName);
         }
 #ifndef Q_OS_MAC
         d->trayMenu->addSeparator();
-
-        // Workaround for some unknow bug. likely this one https://bugreports.qt.io/browse/QTBUG-63187
-        // replaces possible svg icon with QPixmap
-        auto quitAction = d->getAction("menu_quit");
-        if (!quitAction->psiIcon() || !quitAction->psiIcon()->isScalable()) {
-            quitAction->addTo(d->trayMenu);
-        } else {
-            auto quitCopy
-                = new QAction(QIcon(quitAction->icon().pixmap(iconSize, iconSize)), quitAction->text(), d->trayMenu);
-            connect(quitCopy, &QAction::triggered, quitAction, &QAction::trigger);
-            d->trayMenu->addAction(quitCopy);
-        }
+        addWrappedAction(QLatin1String("menu_quit"));
     }
 #else
     }
