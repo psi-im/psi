@@ -160,7 +160,7 @@ private slots:
     void optionChanged(const QString &);
 
 public slots:
-    void setWindowIcon(const QPixmap &);
+    void setWindowIcon(const QIcon &);
     void showNoFocus();
 
     void decorateButton(int);

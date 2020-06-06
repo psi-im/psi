@@ -297,7 +297,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
     setAttribute(Qt::WA_AlwaysShowToolTips);
     d = new Private(psi, this);
 
-    setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
+    setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
 
     d->onTop  = _onTop;
     d->asTool = _asTool;
@@ -1324,7 +1324,7 @@ void MainWin::decorateButton(int status)
 #endif
         d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
-        setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
+        setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).icon());
     } else {
         d->statusButton->setText(status2txt(status));
         d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
@@ -1334,7 +1334,7 @@ void MainWin::decorateButton(int status)
         d->statusMenuMB->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
 #endif
         d->statusMenu->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
-        setWindowIcon(PsiIconset::instance()->status(status).impix());
+        setWindowIcon(PsiIconset::instance()->status(status).icon());
     }
 
     updateTray();
@@ -1782,7 +1782,7 @@ void MainWin::searchTextEntered(QString const &text)
 #ifdef Q_OS_MAC
 void MainWin::setWindowIcon(const QPixmap &) { }
 #else
-void MainWin::setWindowIcon(const QPixmap &p) { QMainWindow::setWindowIcon(p); }
+void MainWin::setWindowIcon(const QIcon &p) { QMainWindow::setWindowIcon(p); }
 #endif
 
 #if 0
