@@ -1780,7 +1780,7 @@ void MainWin::searchTextEntered(QString const &text)
 }
 
 #ifdef Q_OS_MAC
-void MainWin::setWindowIcon(const QPixmap &) { }
+void MainWin::setWindowIcon(const QIcon &) { }
 #else
 void MainWin::setWindowIcon(const QIcon &p) { QMainWindow::setWindowIcon(p); }
 #endif
