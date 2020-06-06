@@ -708,6 +708,8 @@ bool PsiIcon::blockSignals(bool b) { return d->blockSignals(b); }
 bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim, bool isScalable)
 {
     bool ret = false;
+    if (ba.isEmpty())
+        return ret;
 
     detach();
     d->rawData     = ba;
@@ -739,7 +741,6 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim, bool isScalable)
         emit d->iconModified();
     }
 
-    Q_ASSERT(ret);
     return ret;
 }
 
@@ -1089,11 +1090,13 @@ public:
 
         QFileInfo fi(dir);
         if (!Iconset::isSourceAllowed(fi)) {
+            qWarning("%s is invalid icons source", qPrintable(dir));
             return ba;
         }
         if (fi.isDir()) {
             QFile file(dir + '/' + fileName);
             if (!file.open(QIODevice::ReadOnly)) {
+                qWarning("%s is not found in %s", qPrintable(fileName), qPrintable(dir));
                 return ba;
             }
 
@@ -1103,6 +1106,7 @@ public:
         else { // else its zip or jisp file
             UnZip z(dir);
             if (!z.open()) {
+                qWarning("Icons source \"%s\" looks to be corrupted", qPrintable(dir));
                 return ba;
             }
 
@@ -1257,8 +1261,10 @@ public:
             // if format supports animations, then load graphic as animation, and
             // if there is only one frame, then later it would be converted to single Impix
             QByteArray ba = this->loadData(fileName, dir);
-            if (icon.loadFromData(ba, isAnimated || (!isImage && animationMime.indexOf(mime) != -1),
-                                  isScalable || scalableMime.indexOf(mime) != -1))
+            Q_ASSERT(!dir.startsWith(QLatin1String(":/")) || !ba.isEmpty());
+            if (!ba.isEmpty()
+                && icon.loadFromData(ba, isAnimated || (!isImage && animationMime.indexOf(mime) != -1),
+                                     isScalable || scalableMime.indexOf(mime) != -1))
                 return true;
 
             qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset",
@@ -1267,24 +1273,30 @@ public:
         });
 
         {
-            QFileInfo             fi(dir);
-            QStringList::Iterator it = soundMime.begin();
-            for (; it != soundMime.end(); ++it) {
-                if (sound.contains(*it) && !sound[*it].isNull()) {
-                    if (!fi.isDir()) { // it is a .zip file then
+            auto it = soundMime.end();
+            if (sound.size())
+                it = std::find_if(soundMime.begin(), soundMime.end(),
+                                  [&](auto const &mime) { return sound.contains(mime); });
+
+            if (it != soundMime.end()) {
+                auto const &mime = *it;
+                QFileInfo   fi(dir);
+                QString     fileName = sound[*it];
+                if (!fi.isDir()) { // it is a .zip file then
 #ifdef ICONSET_SOUND
-                        if (!iconSharedObject) {
-                            iconSharedObject = new IconSharedObject();
-                        }
+                    if (!iconSharedObject) {
+                        iconSharedObject = new IconSharedObject();
+                    }
 
-                        QString path = iconSharedObject->unpackPath;
-                        if (path.isEmpty()) {
-                            break;
-                        }
-
-                        QFileInfo ext(sound[*it]);
+                    QString path = iconSharedObject->unpackPath;
+                    if (path.isEmpty()) {
+                        qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                               "unpack path is empty",
+                               qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                    } else {
+                        QFileInfo ext(fileName);
                         path += "/"
-                            + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + sound[*it]).toUtf8())
+                            + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + fileName).toUtf8())
                             + '.' + ext.suffix();
 
                         QFile file(path);
@@ -1292,15 +1304,18 @@ public:
                         QDataStream out(&file);
 
                         QByteArray data = loadData(sound[*it], dir);
-                        out.writeRawData(data, data.size());
-
-                        icon.setSound(path);
-                        break;
-#endif
-                    } else {
-                        icon.setSound(fi.absoluteFilePath() + '/' + sound[*it]);
-                        break;
+                        if (data.isEmpty()) {
+                            qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                                   "file is empty",
+                                   qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                        } else {
+                            out.writeRawData(data, data.size());
+                            icon.setSound(path);
+                        }
                     }
+#endif
+                } else {
+                    icon.setSound(fi.absoluteFilePath() + '/' + sound[*it]);
                 }
             }
         }
@@ -1489,6 +1504,8 @@ bool Iconset::load(const QString &dir)
             qWarning("Iconset::load(\"%s\"): Failed to load iconset: icondef.xml is invalid XML", qPrintable(dir));
         }
     } else {
+        Q_ASSERT_X(!dir.startsWith(QLatin1String(":/")) || !ba.isEmpty(), qPrintable(dir),
+                   "Failed to load icondef.xml");
         qWarning("Iconset::load(\"%s\"): Failed to load icondef.xml", qPrintable(dir));
     }
 

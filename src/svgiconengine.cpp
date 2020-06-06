@@ -67,18 +67,41 @@ void SvgIconEngine::virtual_hook(int id, void *data)
 
 QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State state)
 {
-    QPixmap pm;
-    if (mode == QIcon::Disabled && QPixmapCache::find(disabledCache, &pm))
+    QPixmap     pm;
+    static auto findCache = [](std::list<CacheEntry> &cache, const QSize &size, QPixmap &pm) mutable {
+        auto it = cache.begin();
+        while (it != cache.end()) {
+            if (it->size == size) {
+                if (QPixmapCache::find(it->key, &pm)) {
+                    return true;
+                }
+                cache.erase(it);
+                return false;
+            }
+            ++it;
+        }
+        return false;
+    };
+
+    static auto insertCache = [](std::list<CacheEntry> &cache, const QSize &size, const QPixmap &pm) mutable {
+        cache.push_back(CacheEntry { QPixmapCache::insert(pm), size });
+        if (cache.size() > 5) {
+            QPixmapCache::remove(cache.front().key);
+        }
+    };
+
+    if (mode == QIcon::Disabled && findCache(disabledCache, size, pm))
         return pm;
 
-    if (QPixmapCache::find(normalCache, &pm)) {
+    if (findCache(normalCache, size, pm)) {
         if (mode == QIcon::Active || mode == QIcon::Normal)
             return pm;
     }
 
-    if (!pm)
+    if (!pm) {
         pm = renderPixmap(size, mode, state);
-    normalCache = QPixmapCache::insert(pm);
+        insertCache(normalCache, size, pm);
+    } // else we need selected or disabled from normal which we took from the cache
 
     if (mode == QIcon::Selected) {
         auto hlColor = qApp->palette().color(QPalette::Normal, QPalette::Highlight);
@@ -106,8 +129,8 @@ QPixmap SvgIconEngine::pixmap(const QSize &size, QIcon::Mode mode, QIcon::State 
 #endif
             }
         }
-        pm            = QPixmap::fromImage(img);
-        disabledCache = QPixmapCache::insert(pm);
+        pm = QPixmap::fromImage(img);
+        insertCache(disabledCache, size, pm);
     }
 
     return pm;
