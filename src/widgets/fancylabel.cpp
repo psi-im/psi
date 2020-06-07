@@ -122,7 +122,7 @@ private slots:
     void iconUpdated()
     {
 #ifndef WIDGET_PLUGIN
-        auto is = label->fontInfo().pixelSize() * EqTextIconK;
+        auto is = int(label->fontInfo().pixelSize() * EqTextIconK + 0.5);
         label->setPixmap(icon ? icon->pixmap(QSize(is, is)) : QPixmap());
 #endif
     }

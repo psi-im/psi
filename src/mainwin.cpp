@@ -1155,7 +1155,7 @@ void MainWin::activatedAccOption(PsiAccount *pa, int x)
 void MainWin::buildTrayMenu()
 {
     if (!d->trayMenu) {
-        auto iconSize = fontInfo().pixelSize() * BiggerTextIconK;
+        auto iconSize = int(fontInfo().pixelSize() * BiggerTextIconK + .5);
 
         d->trayMenu          = new QMenu(this);
         QAction *nextEvent   = d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));

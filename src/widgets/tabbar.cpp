@@ -914,7 +914,7 @@ void TabBar::paintEvent(QPaintEvent *event)
     pixmap.fill(Qt::transparent);
     QStylePainter pp(&pixmap, this);
     bool          drawSelected = false;
-    QPixmap       pinPixmap    = IconsetFactory::iconPixmap("psi/pin", fontInfo().pixelSize() * EqTextIconK);
+    QPixmap       pinPixmap    = IconsetFactory::iconPixmap("psi/pin", fontInfo().pixelSize() * EqTextIconK + .5);
     for (int i = 0; i < tabs.size(); i++) {
         QStyleOptionTab tab = tabs[i];
         if (i != selected) {

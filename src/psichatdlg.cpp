@@ -838,7 +838,7 @@ void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &stat
             QString client(u->findClient(r));
             if (!client.isEmpty()) {
                 const QPixmap &pix
-                    = IconsetFactory::iconPixmap("clients/" + client, fontInfo().pixelSize() * EqTextIconK);
+                    = IconsetFactory::iconPixmap("clients/" + client, fontInfo().pixelSize() * EqTextIconK + .5);
                 ui_.lb_client->setPixmap(pix);
             }
             ui_.lb_client->setToolTip(r.versionString());
@@ -1210,7 +1210,7 @@ void PsiChatDlg::updateAutojidIcon()
     QIcon   icon = IconsetFactory::iconPtr("psi/autojid")->icon();
     QPixmap pix;
     QString text;
-    auto    iconSize = fontInfo().pixelSize() * EqTextIconK;
+    auto    iconSize = int(fontInfo().pixelSize() * EqTextIconK + .5);
     if (autoSelectContact_) {
         pix  = icon.pixmap(iconSize, QIcon::Normal, QIcon::Off);
         text = tr("turn off autojid");

@@ -564,7 +564,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                 if (!client.isEmpty()) {
                     client = QString("<%1=\"%2\" size=\"%3\">")
                                  .arg(imgTag)
-                                 .arg("clients/" + client, QString::number(fontPointSize * EqTextIconK));
+                                 .arg("clients/" + client, QString::number(int(fontPointSize * EqTextIconK + .5)));
                 }
                 str += QString("<div class='layer1'>%1 ").arg(client) + QObject::tr("Using") + QString(": %3").arg(ver)
                     + "</div>";

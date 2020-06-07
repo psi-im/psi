@@ -600,7 +600,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         } else {
             auto fs = QFontInfo(font_).pixelSize();
             if (statusPixmap.height() > fs * HugeIconRosterK)
-                statusPixmap = statusPixmap.scaledToHeight(fs * EqTextIconK, Qt::SmoothTransformation);
+                statusPixmap = statusPixmap.scaledToHeight(fs * EqTextIconK + .5, Qt::SmoothTransformation);
             if (opt.direction == Qt::RightToLeft) {
                 statusIconRect.moveRight(firstLineRect.right());
                 nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin * PSI_HIDPI);
@@ -955,7 +955,7 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
         painter->drawRect(gr);
     }
 
-    auto           iconHeight = opt.rect.height() * EqTextIconK;
+    auto           iconHeight = int(opt.rect.height() * EqTextIconK + .5);
     const QPixmap &pixmap     = index.data(ContactListModel::ExpandedRole).toBool()
         ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap(QSize(iconHeight, iconHeight))
         : IconsetFactory::iconPtr("psi/groupClosed")->pixmap(QSize(iconHeight, iconHeight));

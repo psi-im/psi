@@ -140,7 +140,7 @@ void ChatView::addLogIconsResources()
                   { "log_icon_history", "psi/history" } };
 
     useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
-    int  scaledSize  = int(fontInfo().pixelSize() * EqTextIconK);
+    int  scaledSize  = int(fontInfo().pixelSize() * EqTextIconK + .5);
     bool scale       = PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool();
 
     auto fs = QFontInfo(font()).pixelSize();
