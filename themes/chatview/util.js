@@ -100,7 +100,7 @@ function initPsiTheme() {
         audio.addEventListener("timeupdate", function(event) {
             if (!isFinite(audio.duration) && audio.currentTime > detectedDuration) {
                 //server.console("set max to current. new max=" + progressBar.max);
-                detectedDuration = audio.currentTime; 
+                detectedDuration = audio.currentTime;
                 progressBar.max = audio.currentTime;
             }
             progressBar.value = audio.currentTime;
@@ -509,11 +509,13 @@ function initPsiTheme() {
                     while (se.nextSibling !== ee) {
                         se.parentNode.removeChild(se.nextSibling);
                     }
-                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + "<img src=\"/psi/icon/psi/action_templates_edit\">"));
+                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + '<img class="icon" src="/psi/icon/psi/action_templates_edit">'));
                     //chat.console(chat.util.props(node));
                     chat.util.handleLinks(node);
                     chat.util.replaceIcons(node);
                     ee.parentNode.insertBefore(node, ee);
+                    se.parentNode.removeChild(se);
+                    ee.parentNode.removeChild(ee);
                     return true;
                 }
                 return false;
@@ -636,7 +638,7 @@ function initPsiTheme() {
                 ro.observe(document.scrollingElement);
                 // Observe the timeline to process new messages
                 // ro.observe(timeline);
-                
+
             }
 
             //let's consider scroll may happen only by user action
