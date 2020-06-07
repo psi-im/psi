@@ -49,11 +49,18 @@ ChatViewUrlRequestInterceptor::ChatViewUrlRequestInterceptor(QObject *parent) : 
 
 void ChatViewUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
 {
-    QString q    = info.firstPartyUrl().query();
-    auto    host = info.requestUrl().host();
-    if (host == QLatin1String("127.0.0.1") && q.startsWith(QLatin1String("psiId="))) {
+    QString parentQ = info.firstPartyUrl().query();
+    auto    host    = info.requestUrl().host();
+    QString curQ    = info.requestUrl().query();
+
+    if (host == QLatin1String("127.0.0.1")) {
+        QString param = QLatin1String("psiId=");
         // handle urls like this http://127.0.0.1:12345/?psiId=ab4ba
-        info.setHttpHeader(QByteArray("PsiId"), q.mid(sizeof("psiId=") - 1).toUtf8());
+        if (curQ.startsWith(param)) {
+            info.setHttpHeader(QByteArray("PsiId"), curQ.mid(sizeof("psiId=") - 1).toUtf8());
+        } else if (parentQ.startsWith(param)) {
+            info.setHttpHeader(QByteArray("PsiId"), parentQ.mid(sizeof("psiId=") - 1).toUtf8());
+        }
     } else if (host.endsWith(QLatin1String("imgur.com"))) {  // imgur doesn't like localhost
         info.setHttpHeader("Referer", "https://google.com"); // most of pictures are found in google
     }
