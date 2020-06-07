@@ -1304,7 +1304,7 @@ public:
                 file.open(QIODevice::WriteOnly);
                 QDataStream out(&file);
 
-                QByteArray data = loadData(fileName, dir);
+                QByteArray data = this->loadData(fileName, dir); // "this" for compatibility with old gcc
                 if (data.isEmpty()) {
                     qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
                            "file is empty",
