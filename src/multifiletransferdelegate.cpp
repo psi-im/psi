@@ -101,7 +101,7 @@ void MultiFileTransferDelegate::paint(QPainter *painter, const QStyleOptionViewI
 
         QRect ir(0, 0, option.rect.height() - 4 * spacing, option.rect.height() - 4 * spacing);
         ir.moveCenter(option.rect.center());
-        painter->drawPixmap(ir, IconsetFactory::icon("psi/add").pixmap());
+        painter->drawPixmap(ir, IconsetFactory::icon("psi/add").pixmap(ir.size()));
         painter->restore();
         return;
     }

@@ -86,10 +86,13 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
     };
 
     WebServer::Handler iconsHandler = [&](qhttp::server::QHttpRequest *req, qhttp::server::QHttpResponse *res) -> bool {
-        QString    name = req->url().path().mid(sizeof("/psi/icon"));
-        QByteArray ba   = IconsetFactory::raw(name);
+        QString name = req->url().path().mid(sizeof("/psi/icon"));
+        auto    icon = IconsetFactory::iconPtr(name);
 
-        if (!ba.isEmpty()) {
+        if (icon) {
+            auto ba = icon->raw();
+            res->addHeader("Content-Type", icon->mimeType().toLatin1());
+            res->addHeader("Content-Length", QByteArray::number(ba.size()));
             res->setStatusCode(qhttp::ESTATUS_OK);
             res->end(ba);
             return true;
@@ -249,19 +252,22 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
         QString iconId = path.mid(sizeof("/psi/icon/") - 1);
         int     w      = QUrlQuery(url.query()).queryItemValue("w").toInt();
         int     h      = QUrlQuery(url.query()).queryItemValue("h").toInt();
-        PsiIcon icon   = IconsetFactory::icon(iconId);
-        if (w && h && !icon.isAnimated()) {
+        auto    icon   = IconsetFactory::iconPtr(iconId);
+        if (w && h && !icon->isAnimated() && !icon->isScalable()) {
             QBuffer buffer(&data);
             buffer.open(QIODevice::WriteOnly);
-            if (icon.pixmap().scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation).toImage().save(&buffer, "PNG")
+            if (icon->pixmap()
+                    .scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+                    .toImage()
+                    .save(&buffer, "PNG")
                 && data.size()) {
                 mime = "image/png";
                 return true;
             }
         } else { // scaling impossible, return as is. do scaling with help of css or html attributes
-            data = icon.raw();
+            data = icon->raw();
             if (!data.isEmpty()) {
-                mime = image2type(data).toLatin1();
+                mime = icon->mimeType().toLatin1();
                 return true;
             }
         }

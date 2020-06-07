@@ -93,11 +93,12 @@ PsiIcon category2icon(PsiAccount *acc, const Jid &jid, const QString &category, 
             if (acc->bookmarkManager()->isBookmarked(jid)) {
                 static QImage img;
                 if (img.isNull()) {
-                    img = icon.pixmap().toImage();
+                    auto is = qApp->fontMetrics().height() * EqTextIconK;
+                    img     = icon.pixmap(QSize(is, is)).toImage();
                     QPainter p(&img);
-                    PsiIcon  bicon = IconsetFactory::icon("psi/bookmark_remove");
-                    auto     is    = qApp->fontMetrics().height() * EqTextIconK;
-                    p.drawImage(QRect(img.rect().center(), img.rect().bottomRight()), bicon.image(QSize(is, is)));
+                    PsiIcon  bicon    = IconsetFactory::icon("psi/bookmark_remove");
+                    auto     ovrlRect = QRect(img.rect().center(), img.rect().bottomRight());
+                    p.drawImage(ovrlRect, bicon.image(ovrlRect.size()));
                 }
                 icon.setImpix(Impix(img));
             }

@@ -10,7 +10,11 @@ body > div {
     word-wrap:break-word !important;
     overflow:hidden;
 }
-body > div img { vertical-align:bottom; }
+body > div img {
+    vertical-align:bottom;
+    max-height: 1em;
+    max-width: 1em;
+}
 body > div > img:first-child { vertical-align:text-bottom; }
 a { color: default; }
 a:visited { color: default; }
@@ -109,8 +113,7 @@ function startPsiTheme(shared) {
             } else if (shared.cdata.type == "receipt") {
                 var img = document.getElementById("receipt"+shared.cdata.id);
                 if (img) {
-                    var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-                    img.src = (shared.cdata.encrypted?"/psi/icon/psi/notification_chat_delivery_ok_encrypted":"/psi/icon/psi/notification_chat_delivery_ok")+sizeUri;
+                    img.src = (shared.cdata.encrypted?"/psi/icon/psi/notification_chat_delivery_ok_encrypted":"/psi/icon/psi/notification_chat_delivery_ok");
                 }
             }
             if (shared.cdata.mtype == "message") {
@@ -171,9 +174,8 @@ function startPsiTheme(shared) {
                             break;
                     }
                     var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
-                    var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
                     var id = shared.cdata.awaitingReceipt?" id='receipt"+shared.cdata.id+"'":"";
-                    icon = icon?"<img src='/psi/icon/"+icon+sizeUri+"'"+sizeStyle+id+" />":"";
+                    icon = icon?`<img class="icon" src="/psi/icon/${icon}"${sizeStyle}${id} />`:'';
                 }
                 return icon;
             }

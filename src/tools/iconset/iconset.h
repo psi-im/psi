@@ -121,6 +121,7 @@ public:
     const QByteArray &raw() const;
     QSize             size(const QSize &desiredSize = QSize()) const;
     bool              isScalable() const;
+    const QString &   mimeType() const;
 
     virtual const Impix &impix() const;
     virtual const Impix &frameImpix() const;
@@ -154,7 +155,7 @@ public:
     void           setSound(const QString &);
 
     bool blockSignals(bool);
-    bool loadFromData(const QByteArray &, bool isAnimation, bool isScalable = false);
+    bool loadFromData(const QString &mime, const QByteArray &, bool isAnimation, bool isScalable = false);
 
     void stripFirstAnimFrame();
 

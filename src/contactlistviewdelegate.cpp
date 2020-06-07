@@ -427,7 +427,7 @@ void ContactListViewDelegate::Private::rosterIconsSizeChanged(int size)
     contactList->viewport()->update();
 }
 
-QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index)
+QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index, const QSize &desiredSize)
 {
     ContactListItem *     item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
     ContactListItem::Type type = item->type();
@@ -444,7 +444,7 @@ QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index)
                 }
             }
 
-            return alert.pixmap(100, 100);
+            return alert.pixmap(desiredSize);
         }
     }
 
@@ -464,7 +464,7 @@ QPixmap ContactListViewDelegate::Private::statusPixmap(const QModelIndex &index)
             s = STATUS_NOAUTH;
     }
 
-    return PsiIconset::instance()->statusPtr(index.data(ContactListModel::JidRole).toString(), s)->pixmap();
+    return PsiIconset::instance()->statusPtr(index.data(ContactListModel::JidRole).toString(), s)->pixmap(desiredSize);
 }
 
 QList<QPixmap> ContactListViewDelegate::Private::clientPixmap(const QModelIndex &index)
@@ -593,7 +593,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         }
     }
 
-    QPixmap statusPixmap = this->statusPixmap(index);
+    QPixmap statusPixmap = this->statusPixmap(index, statusIconRect.size());
     if (!statusPixmap.isNull()) {
         if (statusIconsOverAvatars_ && showAvatars_) {
             statusPixmap = statusPixmap.scaled(statusIconRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -918,8 +918,9 @@ QSize ContactListViewDelegate::Private::sizeHint(const QModelIndex &index) const
     }
     int contentHeight;
     if (role == ContactListItem::Type::GroupType) {
+        auto icon = IconsetFactory::iconPtr("psi/groupOpen");
         contentHeight
-            = qMax(IconsetFactory::iconPtr("psi/groupOpen")->pixmap().height() * PSI_HIDPI, nickRect_.height());
+            = icon->isScalable() ? nickRect_.height() : qMax(icon->pixmap().height() * PSI_HIDPI, nickRect_.height());
     } else {
         contentHeight = qMax(showStatusIcons_ ? statusIconSize_ * PSI_HIDPI : 0, nickRect_.height());
     }
@@ -954,9 +955,10 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
         painter->drawRect(gr);
     }
 
-    const QPixmap &pixmap = index.data(ContactListModel::ExpandedRole).toBool()
-        ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap()
-        : IconsetFactory::iconPtr("psi/groupClosed")->pixmap();
+    auto           iconHeight = opt.rect.height() * EqTextIconK;
+    const QPixmap &pixmap     = index.data(ContactListModel::ExpandedRole).toBool()
+        ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap(QSize(iconHeight, iconHeight))
+        : IconsetFactory::iconPtr("psi/groupClosed")->pixmap(QSize(iconHeight, iconHeight));
 
     QSize pixmapSize = pixmap.size() * PSI_HIDPI;
     QRect pixmapRect = relativeRect(opt, pixmapSize, QRect());
@@ -999,7 +1001,11 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
         painter->drawRect(r);
     }
 
-    QPixmap statusPixmap = this->statusPixmap(index);
+    QSize iconSize = statusIconRect_.size();
+    if (statusIconsOverAvatars_)
+        iconSize = QSize(painter->fontInfo().pixelSize() * EqTextIconK, painter->fontInfo().pixelSize() * EqTextIconK);
+
+    QPixmap statusPixmap = this->statusPixmap(index, iconSize);
     QSize   pixmapSize   = statusPixmap.size() * PSI_HIDPI;
     if (pixmapSize.height() > opt.rect.height()) {
         pixmapSize   = pixmapSize.scaled(opt.rect.size() * 0.7, Qt::KeepAspectRatio);
@@ -1017,10 +1023,9 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
 
     drawText(painter, o, r, text);
 
-    auto    iconSize  = painter->fontInfo().pixelSize() * EqTextIconK;
-    QPixmap sslPixmap = index.data(ContactListModel::UsingSSLRole).toBool()
-        ? IconsetFactory::iconPixmap("psi/cryptoYes", iconSize)
-        : IconsetFactory::iconPixmap("psi/cryptoNo", iconSize);
+    QPixmap sslPixmap = IconsetFactory::iconPtr(index.data(ContactListModel::UsingSSLRole).toBool() ? "psi/cryptoYes"
+                                                                                                    : "psi/cryptoNo")
+                            ->pixmap(iconSize);
 
     QSize sslPixmapSize = sslPixmap.size() * PSI_HIDPI;
     if (sslPixmapSize.height() > opt.rect.height()) {

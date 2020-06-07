@@ -20,6 +20,7 @@
 #include "fancylabel.h"
 
 #include <QColor>
+#include <QFontInfo>
 #include <QFrame>
 #include <QLabel>
 #include <QLayout>
@@ -29,6 +30,7 @@
 
 #include "iconlabel.h"
 #ifndef WIDGET_PLUGIN
+#include "common.h"
 #include "iconset.h"
 #else
 class PsiIcon;
@@ -120,7 +122,8 @@ private slots:
     void iconUpdated()
     {
 #ifndef WIDGET_PLUGIN
-        label->setPixmap(icon ? icon->pixmap() : QPixmap());
+        auto is = label->fontInfo().pixelSize() * EqTextIconK;
+        label->setPixmap(icon ? icon->pixmap(QSize(is, is)) : QPixmap());
 #endif
     }
 };
@@ -329,7 +332,14 @@ const QString &FancyLabel::text() const { return d->textStr; }
 
 const QString &FancyLabel::help() const { return d->helpStr; }
 
-const QPixmap *FancyLabel::pixmap() const { return d->pix->pixmap(); }
+QPixmap FancyLabel::pixmap() const
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    return d->pix->pixmap(Qt::ReturnByValue);
+#else
+    return *d->pix->pixmap();
+#endif
+}
 
 const QColor &FancyLabel::colorFrom() const { return d->from; }
 

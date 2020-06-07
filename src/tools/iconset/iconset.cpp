@@ -266,6 +266,7 @@ public:
         moveToMainThread(this);
 
         name           = from.name;
+        mime           = from.mime;
         regExp         = from.regExp;
         text           = from.text;
         sound          = from.sound;
@@ -329,6 +330,7 @@ public:
     QRegExp         regExp;
     QList<IconText> text;
     QString         sound;
+    QString         mime;
 
     Impix                         impix;
     Anim *                        anim = nullptr;
@@ -490,6 +492,8 @@ QSize PsiIcon::size(const QSize &desiredSize) const
 }
 
 bool PsiIcon::isScalable() const { return d->scalable; }
+
+const QString &PsiIcon::mimeType() const { return d->mime; }
 
 /**
  * Sets the PsiIcon impix to \a impix.
@@ -705,7 +709,7 @@ bool PsiIcon::blockSignals(bool b) { return d->blockSignals(b); }
  * Initializes PsiIcon's Impix (or Anim, if \a isAnim equals \c true).
  * Iconset::load uses this function.
  */
-bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim, bool isScalable)
+bool PsiIcon::loadFromData(const QString &mime, const QByteArray &ba, bool isAnim, bool isScalable)
 {
     bool ret = false;
     if (ba.isEmpty())
@@ -737,6 +741,7 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim, bool isScalable)
     }
 
     if (ret) {
+        d->mime = mime;
         emit d->pixmapChanged();
         emit d->iconModified();
     }
@@ -1227,43 +1232,45 @@ public:
         icon.setName(name);
 
         // first item have higher priority than latter
-        QStringList graphicMime { "image/png", "image/gif", "image/x-xpm", "image/bmp", "image/jpeg", "image/svg+xml" };
-        QStringList scalableMime { "image/svg+xml" };
-        QStringList soundMime { "audio/x-wav", "audio/x-ogg", "audio/x-mp3", "audio/x-midi" };
+        static const QStringList graphicMime { "image/svg+xml", "image/png", "image/gif",
+                                               "image/x-xpm",   "image/bmp", "image/jpeg" };
+        static const QStringList scalableMime { "image/svg+xml" };
+        static const QStringList soundMime { "audio/x-wav", "audio/x-ogg", "audio/x-mp3", "audio/x-midi" };
         // MIME-types, that support animations
-        QStringList animationMime { "image/gif" };
+        static const QStringList animationMime { "image/gif" };
 
+        QStringList preferredGraphic;
+        QStringList preferredSound;
         if (!object.isEmpty()) {
             // fill the graphic & sound tables, if there are some
             // 'object' entries. inspect the supported mimetypes
             // and copy mime info and file path to 'graphic' and
             // 'sound' dictonaries.
-
-            QStringList::Iterator it = graphicMime.begin();
-            for (; it != graphicMime.end(); ++it) {
-                if (object.contains(*it) && !object[*it].isNull()) {
-                    graphic[*it] = object[*it];
+            for (auto const &mime : graphicMime) {
+                auto it = object.find(mime);
+                if (it != object.end()) {
+                    graphic.insert(mime, it.value());
+                    preferredGraphic.append(mime);
                 }
             }
 
-            it = soundMime.begin();
-            for (; it != soundMime.end(); ++it) {
-                if (object.contains(*it) && !object[*it].isNull()) {
-                    sound[*it] = object[*it];
+            for (auto const &mime : soundMime) {
+                auto it = object.find(mime);
+                if (it != object.end()) {
+                    sound.insert(mime, it.value());
+                    preferredSound.append(mime);
                 }
             }
         }
 
-        bool loadSuccess = std::any_of(graphicMime.begin(), graphicMime.end(), [&, this](const auto &mime) {
+        bool loadSuccess = std::any_of(preferredGraphic.begin(), preferredGraphic.end(), [&, this](const auto &mime) {
             QString fileName = graphic.value(mime);
-            if (fileName.isEmpty())
-                return false;
             // if format supports animations, then load graphic as animation, and
             // if there is only one frame, then later it would be converted to single Impix
             QByteArray ba = this->loadData(fileName, dir);
             Q_ASSERT(!dir.startsWith(QLatin1String(":/")) || !ba.isEmpty());
             if (!ba.isEmpty()
-                && icon.loadFromData(ba, isAnimated || (!isImage && animationMime.indexOf(mime) != -1),
+                && icon.loadFromData(mime, ba, isAnimated || (!isImage && animationMime.indexOf(mime) != -1),
                                      isScalable || scalableMime.indexOf(mime) != -1))
                 return true;
 
@@ -1272,53 +1279,55 @@ public:
             return false;
         });
 
-        {
-            auto it = soundMime.end();
-            if (sound.size())
-                it = std::find_if(soundMime.begin(), soundMime.end(),
-                                  [&](auto const &mime) { return sound.contains(mime); });
-
-            if (it != soundMime.end()) {
-                auto const &mime = *it;
-                QFileInfo   fi(dir);
-                QString     fileName = sound[*it];
-                if (!fi.isDir()) { // it is a .zip file then
+        std::any_of(preferredSound.begin(), preferredSound.end(), [&, this](const auto &mime) {
+            QFileInfo fi(dir);
+            QString   fileName = sound[mime];
+            if (!fi.isDir()) { // it is a .zip file then
 #ifdef ICONSET_SOUND
-                    if (!iconSharedObject) {
-                        iconSharedObject = new IconSharedObject();
-                    }
-
-                    QString path = iconSharedObject->unpackPath;
-                    if (path.isEmpty()) {
-                        qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
-                               "unpack path is empty",
-                               qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
-                    } else {
-                        QFileInfo ext(fileName);
-                        path += "/"
-                            + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + fileName).toUtf8())
-                            + '.' + ext.suffix();
-
-                        QFile file(path);
-                        file.open(QIODevice::WriteOnly);
-                        QDataStream out(&file);
-
-                        QByteArray data = loadData(sound[*it], dir);
-                        if (data.isEmpty()) {
-                            qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
-                                   "file is empty",
-                                   qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
-                        } else {
-                            out.writeRawData(data, data.size());
-                            icon.setSound(path);
-                        }
-                    }
-#endif
-                } else {
-                    icon.setSound(fi.absoluteFilePath() + '/' + sound[*it]);
+                if (!iconSharedObject) {
+                    iconSharedObject = new IconSharedObject();
                 }
+
+                QString path = iconSharedObject->unpackPath;
+                if (path.isEmpty()) {
+                    qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                           "unpack path is empty",
+                           qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                    return false;
+                }
+
+                QFileInfo ext(fileName);
+                path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + fileName).toUtf8())
+                    + '.' + ext.suffix();
+
+                QFile file(path);
+                file.open(QIODevice::WriteOnly);
+                QDataStream out(&file);
+
+                QByteArray data = loadData(fileName, dir);
+                if (data.isEmpty()) {
+                    qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                           "file is empty",
+                           qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                    return false;
+                }
+
+                out.writeRawData(data, data.size());
+                icon.setSound(path);
+                return true;
+#endif
+            } else {
+                QString absFN = fi.absoluteFilePath() + '/' + fileName;
+                if (QFileInfo(absFN).isReadable()) {
+                    icon.setSound(absFN);
+                    return true;
+                }
+                qDebug("Iconset::load(): Couldn't load %s (%s) audio for the %s icon for the %s iconset. "
+                       "not readable",
+                       qPrintable(mime), qPrintable(fileName), qPrintable(name), qPrintable(this->name));
+                return false;
             }
-        }
+        });
 
         // construct RegExp
         if (text.count()) {

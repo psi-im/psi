@@ -23,6 +23,7 @@
 #include "psithememanager.h"
 #include "textutil.h"
 
+#include <QIcon>
 #include <QPixmap>
 #include <QtConcurrentMap>
 
@@ -140,7 +141,7 @@ QVariant PsiThemeModel::data(const QModelIndex &index, int role) const
 {
     switch (role) {
     case Qt::DecorationRole:
-        return IconsetFactory::icon(QString("clients/") + themesInfo[index.row()].id.section('/', 0, 0)).pixmap();
+        return IconsetFactory::iconPtr(QString("clients/") + themesInfo[index.row()].id.section('/', 0, 0))->icon();
     case Qt::ToolTipRole: {
         QStringList          toolTip;
         const ThemeItemInfo &ti = themesInfo[index.row()];

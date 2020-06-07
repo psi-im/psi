@@ -144,8 +144,8 @@ void PopupActionButton::pixmapUpdated()
 {
     QPixmap pix;
     if (icon) {
-        pix     = icon->pixmap();
         auto fs = fontInfo().pixelSize();
+        pix     = icon->pixmap(QSize(fs * HugeIconButtonK, fs * HugeIconButtonK));
         if (pix.height() > fs * HugeIconButtonK) {
             pix = pix.scaledToHeight(fs * BiggerTextIconK, Qt::SmoothTransformation);
         }

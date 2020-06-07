@@ -10,7 +10,11 @@ body > div {
     word-wrap:break-word !important;
     overflow:hidden;
 }
-body > div img { vertical-align:bottom; }
+body > div img {
+    vertical-align:bottom;
+    max-height: 1em;
+    max-width: 1em;
+}
 body > div > img:first-child { vertical-align:text-bottom; }
 a { color: default; }
 a:visited { color: default; }
@@ -185,8 +189,7 @@ function startPsiTheme(shared) {
                             break;
                     }
                     var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
-                    var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-                    icon = icon?"<img src='/psi/icon/"+icon+sizeUri+"'"+sizeStyle+" />":"";
+                    icon = icon?`<img class="icon" src="/psi/icon/${icon}"${sizeStyle} />`:'';
                 }
                 return icon;
             },

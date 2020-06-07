@@ -49,7 +49,7 @@ public:
 
     const QString &text() const;
     const QString &help() const;
-    const QPixmap *pixmap() const;
+    QPixmap        pixmap() const;
     const QColor & colorFrom() const;
     const QColor & colorTo() const;
     const QColor & colorFont() const;

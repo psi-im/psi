@@ -254,7 +254,7 @@ void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType /* typ
     else if (icon)
         pix = icon->pixmap();
     else if (avatar)
-        pix = QPixmap(*avatar);
+        pix = *avatar;
     // Notify Growl
     NotificationContext *context = new NotificationContext(account, j);
     gn_->notify(QObject::tr("Incoming Headline"), titleText, TextUtil::rich2plain(text), pix, false, this,

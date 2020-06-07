@@ -35,10 +35,7 @@ PsiTrayIcon::~PsiTrayIcon()
 
 void PsiTrayIcon::setContextMenu(QMenu *menu) { trayicon_->setContextMenu(menu); }
 
-void PsiTrayIcon::setToolTip(const QString &str)
-{
-    trayicon_->setToolTip(str);
-}
+void PsiTrayIcon::setToolTip(const QString &str) { trayicon_->setToolTip(str); }
 
 void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
 {
@@ -97,7 +94,7 @@ QPixmap PsiTrayIcon::makeIcon()
     if (!icon_)
         return QPixmap();
 
-    return icon_->pixmap();
+    return icon_->pixmap(trayicon_->geometry().size());
 }
 
 void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
