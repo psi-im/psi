@@ -1001,10 +1001,7 @@ void ContactListViewDelegate::Private::drawAccount(QPainter *painter, const QMod
         painter->drawRect(r);
     }
 
-    QSize iconSize = statusIconRect_.size();
-    if (statusIconsOverAvatars_)
-        iconSize = QSize(painter->fontInfo().pixelSize() * EqTextIconK, painter->fontInfo().pixelSize() * EqTextIconK);
-
+    QSize   iconSize     = QSize(nickRect_.height(), nickRect_.height());
     QPixmap statusPixmap = this->statusPixmap(index, iconSize);
     QSize   pixmapSize   = statusPixmap.size() * PSI_HIDPI;
     if (pixmapSize.height() > opt.rect.height()) {
