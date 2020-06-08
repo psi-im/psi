@@ -482,7 +482,7 @@ set(DOC_FILES
 )
 
 set(APP_DATA_FILE
-    "${PROJECT_SOURCE_DIR}/psi.appdata.xml" #Replace psi with PROJECT_NAME in future
+    "${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.appdata.xml"
 )
 
 #PREPARE SECTION
