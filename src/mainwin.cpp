@@ -1670,7 +1670,7 @@ void MainWin::numAccountsChanged()
     PsiAccount *acc = d->psi->contactList()->defaultAccount();
     if (acc && acc != d->defaultAccount) {
         if (d->defaultAccount) {
-            disconnect(d->defaultAccount, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+            disconnect(d->defaultAccount, &PsiAccount::nickChanged, this, &MainWin::nickChanged);
             //            disconnect(d->defaultAccount->avatarFactory(), SIGNAL(avatarChanged(Jid)), this,
             //            SLOT(avatarChanged()));
         }
@@ -1678,8 +1678,8 @@ void MainWin::numAccountsChanged()
         avatarChanged(acc->jid());
         nickChanged();
         d->rosterAvatar->setStatusMessage(acc->status().status());
-        connect(acc->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged(Jid)));
-        connect(acc, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+        connect(acc->avatarFactory(), &AvatarFactory::avatarChanged, this, &MainWin::avatarChanged);
+        connect(acc, &PsiAccount::nickChanged, this, &MainWin::nickChanged);
     }
     if (!acc) { // no accounts left
         avatarChanged(Jid());

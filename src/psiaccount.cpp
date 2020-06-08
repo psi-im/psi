@@ -2092,7 +2092,13 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
         str = tr("Connection Error: %1").arg(s);
     } else if (err == XMPP::ClientStream::ErrNeg) {
         QString s;
-        int     x = stream->errorCondition();
+        int     x;
+        if (stream) {
+            x = stream->errorCondition();
+        } else {
+            x      = XMPP::Stream::GenericStreamError;
+            reconn = false;
+        }
         if (x == XMPP::ClientStream::HostGone)
             s = tr("Host no longer hosted");
         else if (x == XMPP::ClientStream::HostUnknown)
@@ -2101,13 +2107,20 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
             s      = tr("A required remote connection failed");
             reconn = true;
         } else if (x == XMPP::ClientStream::SeeOtherHost)
-            s = tr("See other host: %1").arg(stream->errorText());
+            s = tr("See other host: %1").arg((stream) ? stream->errorText() : QString());
         else if (x == XMPP::ClientStream::UnsupportedVersion)
             s = tr("Server does not support proper XMPP version");
         str = tr("Stream Negotiation Error: %1").arg(s) + "\n" + detail;
     } else if (err == XMPP::ClientStream::ErrTLS) {
-        int     x = stream->errorCondition();
+        int     x;
         QString s;
+        if (stream) {
+            x = stream->errorCondition();
+        } else {
+            x      = XMPP::Stream::GenericStreamError;
+            reconn = false;
+        }
+
         if (x == XMPP::ClientStream::TLSStart)
             s = tr("Server rejected STARTTLS");
         else if (x == XMPP::ClientStream::TLSFail) {
@@ -3892,14 +3905,15 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
     if (!c) {
         // create the chatbox
         c = ChatDlg::create(j, this, d->tabManager);
-        connect(c, SIGNAL(aSend(Message &)), SLOT(dj_sendMessage(Message &)));
-        connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
-        connect(c, SIGNAL(aInfo(const Jid &)), SLOT(actionInfo(const Jid &)));
-        connect(c, SIGNAL(aHistory(const Jid &)), SLOT(actionHistory(const Jid &)));
-        connect(c, SIGNAL(aFile(const Jid &)), SLOT(sendFiles(const Jid &)));
-        connect(c, SIGNAL(aVoice(const Jid &)), SLOT(actionVoice(const Jid &)));
-        connect(d->psi, SIGNAL(emitOptionsUpdate()), c, SLOT(optionsUpdate()));
-        connect(this, SIGNAL(updateContact(const Jid &, bool)), c, SLOT(updateContact(const Jid &, bool)));
+        connect(c, &ChatDlg::aSend, this, [this](XMPP::Message &msg) { dj_sendMessage(msg); });
+        connect(c, &ChatDlg::messagesRead, this, &PsiAccount::chatMessagesRead);
+        connect(c, &ChatDlg::aInfo, this, [this](const XMPP::Jid &jid) { actionInfo(jid); });
+        connect(c, &ChatDlg::aHistory, this, &PsiAccount::actionHistory);
+        connect(c, &ChatDlg::aFile, this, [this](const XMPP::Jid &jid) { sendFiles(jid); });
+        connect(c, &ChatDlg::aVoice, this, &PsiAccount::actionVoice);
+        connect(d->psi, &PsiCon::emitOptionsUpdate, c, &ChatDlg::optionsUpdate);
+        connect(this, static_cast<void (PsiAccount::*)(const XMPP::Jid &, bool)>(&PsiAccount::updateContact), c,
+                &ChatDlg::updateContact);
     } else {
         c->setJid(j);
     }

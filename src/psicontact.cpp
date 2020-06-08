@@ -117,9 +117,9 @@ PsiContact::PsiContact(const UserListItem &u, PsiAccount *account, bool isSelf) 
     d->isSelf   = isSelf;
     d->account_ = account;
     if (d->account_) {
-        connect(d->account_->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), SLOT(avatarChanged(const Jid &)));
+        connect(d->account_->avatarFactory(), &AvatarFactory::avatarChanged, this, &PsiContact::avatarChanged);
     }
-    connect(VCardFactory::instance(), SIGNAL(vcardChanged(const Jid &)), SLOT(vcardChanged(const Jid &)));
+    connect(VCardFactory::instance(), &VCardFactory::vcardChanged, this, &PsiContact::vcardChanged);
     update(u);
 
     // updateParent();

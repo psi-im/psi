@@ -170,7 +170,8 @@ void HistoryContactListModel::loadContacts(PsiCon *psi, const QString &acc_id)
                 groupItem = generalGroup;
         }
         QString tooltipStr = makeContactToolTip(psi, acc_id, contact->jid(), true);
-        groupItem->appendChild(new TreeItem(RosterContact, contact->name(), tooltipStr, cId));
+        if (groupItem)
+            groupItem->appendChild(new TreeItem(RosterContact, contact->name(), tooltipStr, cId));
         c_list[cId] = true;
     }
     // Self contact

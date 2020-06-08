@@ -1231,7 +1231,7 @@ bool DiscoDlg::Private::eventFilter(QObject *object, QEvent *event)
 {
     if (object == dlg->lv_disco) {
         if (event->type() == QEvent::ContextMenu) {
-            QContextMenuEvent *e = static_cast<QContextMenuEvent *>(event);
+            auto e = static_cast<QContextMenuEvent *>(event);
 
             QTreeWidgetItem *twi = dlg->lv_disco->currentItem();
             if (!twi || twi->type() == MoreItemsType)

@@ -89,12 +89,12 @@ public:
     void              appendMessage(const Message &, bool local = false);
 
 signals:
-    void aInfo(const Jid &);
-    void aHistory(const Jid &);
-    void aVoice(const Jid &);
-    void messagesRead(const Jid &);
-    void aSend(Message &);
-    void aFile(const Jid &);
+    void aInfo(const XMPP::Jid &);
+    void aHistory(const XMPP::Jid &);
+    void aVoice(const XMPP::Jid &);
+    void messagesRead(const XMPP::Jid &);
+    void aSend(XMPP::Message &);
+    void aFile(const XMPP::Jid &);
     void messageAppended(const QString &, QWidget *);
 
     /**
@@ -120,10 +120,10 @@ public slots:
     virtual void activated() override;
 
     virtual void optionsUpdate();
-    void         updateContact(const Jid &, bool);
-    void         incomingMessage(const Message &);
+    void         updateContact(const XMPP::Jid &, bool);
+    void         incomingMessage(const XMPP::Message &);
     virtual void updateAvatar() = 0;
-    void         updateAvatar(const Jid &);
+    void         updateAvatar(const XMPP::Jid &);
 
 protected slots:
     void         doInfo();
@@ -139,9 +139,9 @@ private slots:
     void         encryptedMessageSent(int, bool, int, const QString &);
     void         setChatState(XMPP::ChatState s);
     void         updateIsComposing(bool);
-    void         setContactChatState(ChatState s);
+    void         setContactChatState(XMPP::ChatState s);
     void         logSelectionChanged();
-    void         capsChanged(const Jid &);
+    void         capsChanged(const XMPP::Jid &);
     void         addEmoticon(QString text);
     void         initComposing();
     void         setComposing();

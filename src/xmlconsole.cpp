@@ -220,6 +220,6 @@ void XmlPrompt::doTransmit()
             return;
     }
 
-    textReady(str);
+    emit textReady(str);
     close();
 }

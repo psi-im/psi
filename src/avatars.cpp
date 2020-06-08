@@ -584,15 +584,12 @@ AvatarFactory::AvatarFactory(PsiAccount *pa) : d(new Private)
     });
 
     // Connect signals
-    connect(VCardFactory::instance(), SIGNAL(vcardPhotoAvailable(Jid, bool)), this, SLOT(vcardUpdated(Jid, bool)));
-    connect(d->pa_->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)),
-            SLOT(resourceAvailable(const Jid &, const Resource &)));
+    connect(VCardFactory::instance(), &VCardFactory::vcardPhotoAvailable, this, &AvatarFactory::vcardUpdated);
+    connect(d->pa_->client(), &XMPP::Client::resourceAvailable, this, &AvatarFactory::resourceAvailable);
 
     // PEP
-    connect(d->pa_->pepManager(), SIGNAL(itemPublished(const Jid &, const QString &, const PubSubItem &)),
-            SLOT(itemPublished(const Jid &, const QString &, const PubSubItem &)));
-    connect(d->pa_->pepManager(), SIGNAL(publish_success(const QString &, const PubSubItem &)),
-            SLOT(publish_success(const QString &, const PubSubItem &)));
+    connect(d->pa_->pepManager(), &PEPManager::itemPublished, this, &AvatarFactory::itemPublished);
+    connect(d->pa_->pepManager(), &PEPManager::publish_success, this, &AvatarFactory::publish_success);
 }
 
 AvatarFactory::~AvatarFactory() { delete d; }

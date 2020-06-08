@@ -54,10 +54,9 @@ void AccountsComboBox::setController(PsiCon *controller)
     if (controller_) {
         connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
         connect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
-    }
-
-    if (controller_->contactList()->haveEnabledAccounts()) {
-        setAccount(controller_->contactList()->enabledAccounts().first());
+        if (controller_->contactList()->haveEnabledAccounts()) {
+            setAccount(controller_->contactList()->enabledAccounts().first());
+        }
     }
 
     updateAccounts();

@@ -53,7 +53,7 @@ public slots:
     void authRequest();
     void authRemove();
     void customStatus();
-    void setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s);
+    void setStatusFromDialog(const QList<XMPP::Jid> &j, const XMPP::Status &s);
     void removeGroupWithoutContacts();
     void sendMessage();
     void actHide(bool hide);

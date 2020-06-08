@@ -128,7 +128,7 @@ void OptionsTabPopups::restoreOptions()
     d->ck_everyMucMessage->setChecked(
         o->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool());
 
-    QWidget *    areaWidget = new QWidget;
+    QWidget *    areaWidget = new QWidget(w);
     QVBoxLayout *vBox       = new QVBoxLayout(areaWidget);
     for (const QString &option : popup_->optionsNamesList()) {
         QHBoxLayout *l = new QHBoxLayout;

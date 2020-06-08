@@ -421,7 +421,7 @@ ChatView::ChatView(QWidget *parent) : QFrame(parent), d(new ChatViewPrivate)
             SLOT(psiOptionChanged(QString)));                        // needed only for save autocopy state atm
     psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy connection
 #endif
-    connect(d->jsObject, SIGNAL(inited()), SLOT(sessionInited()));
+    connect(d->jsObject, &ChatViewJSObject::inited, this, &ChatView::sessionInited);
 
 #ifdef PSI_PLUGINS
     QVariantMap m;
