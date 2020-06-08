@@ -25,6 +25,11 @@ Based on the huge on from Psi+ repository.
         </icon>
 
         <icon>
+                <x xmlns='name'>clients/conv6ations</x>
+                <object mime='image/svg+xml'>conv6ations.svg</object>
+        </icon>
+
+        <icon>
                 <x xmlns='name'>clients/conversations</x>
                 <object mime='image/svg+xml'>conversations.svg</object>
         </icon>

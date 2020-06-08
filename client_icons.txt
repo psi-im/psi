@@ -10,6 +10,7 @@ candy candy
 centerim centerim
 chatsecure chatsecure,gibberbot
 coccinella coccinella
+conv6ations conv6ations
 conversations conversations
 converse converse,conversejs
 dino dino
