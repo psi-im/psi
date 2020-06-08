@@ -49,7 +49,7 @@ unix {
     #widgets.path = $$PSI_DATADIR/designer
     #widgets.files = ../libpsi/psiwidgets/libpsiwidgets.so
     #INSTALLS += widgets
-    
+
     dtfname = psi.desktop
     dtdata = "$$cat(../psi.desktop, blob)$$cat(../psi-extra-action1.desktop, blob)"
     psiplus {
@@ -63,7 +63,7 @@ unix {
     # icons and desktop files
     dt.path=$$PREFIX/share/applications/
     dt.files = $$top_builddir/$$dtfname
-    ad.path=$$PREFIX/share/appdata/
+    ad.path=$$PREFIX/share/metainfo/
     ad.file = ../psi.appdata.xml
     icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
     icon1.extra = cp -f $$top_srcdir/iconsets/system/default$$iconprefix/logo_16.png $(INSTALL_ROOT)$$icon1.path/$${TARGET}.png
@@ -85,7 +85,7 @@ unix {
         pluginsconf.extra = cp -f $$top_builddir/pluginsconf-dist.pri $(INSTALL_ROOT)$$pluginsconf.path/pluginsconf.pri
 
         pluginsheaders.path = $$PREFIX/include/$$TARGET/plugins
-	pluginsheaders.files = $$files(plugins/include/*.h)
+        pluginsheaders.files = $$files(plugins/include/*.h)
         INSTALLS += pluginsfiles pluginsheaders pluginsconf
     }
 }
