@@ -1694,6 +1694,10 @@ void MainWin::nickChanged()
 
 void MainWin::avatarChanged(const Jid &jid)
 {
+    // we come here all the contacts
+    if (d->defaultAccount && d->defaultAccount->jid() != jid)
+        return; // we don't care about other contacts
+
     QPixmap pix;
     if (d->defaultAccount && d->defaultAccount->jid() == jid) {
         pix = d->defaultAccount->avatarFactory()->getAvatar(d->defaultAccount->jid());
