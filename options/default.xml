@@ -109,7 +109,7 @@
                 <opacity comment="Opacity percentage of chat dialogs" type="int">100</opacity>
                 <legacy-formatting comment="This enables legacy usenet-style formatting (// ** __)" type="bool">true</legacy-formatting>
                 <avatars comment="Avatar options">
-                    <size comment="Maximum size of the avatar" type="int">24</size>
+                    <size comment="Maximum size of the avatar" type="int">64</size>
                     <show comment="Show avatars in the chat dialog" type="bool">true</show>
                 </avatars>
                 <alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>

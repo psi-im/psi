@@ -55,6 +55,7 @@
 #include "tabdlg.h"
 #include "textutil.h"
 #include "userlist.h"
+#include "widgets/pixmapratiolabel.h"
 #include "xmpp_caps.h"
 #include "xmpp_tasks.h"
 #ifdef PSI_PLUGINS
@@ -879,11 +880,9 @@ void PsiChatDlg::updateAvatar()
         p = IconsetFactory::iconPixmap("psi/default_avatar", optSize);
     }
 
-    ui_.avatar->setFixedSize(optSize, optSize);
-    int avatarSize = p.width(); // qMax(p.width(), p.height());
-    if (avatarSize > optSize)
-        avatarSize = optSize;
-    ui_.avatar->setPixmap(p.scaled(QSize(avatarSize, avatarSize), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui_.avatar->setResizePolicy(PixmapRatioLabel::Policy::FitVertical);
+    ui_.avatar->setMaxPixmapSize(QSize(optSize, optSize) * devicePixelRatio());
+    ui_.avatar->setPixmap(p);
     ui_.avatar->show();
 }
 

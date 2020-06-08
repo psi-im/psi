@@ -356,13 +356,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="avatar">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
+          <widget class="PixmapRatioLabel" name="avatar">
            <property name="text">
             <string>Avatar</string>
            </property>
@@ -406,6 +400,11 @@
    <class>IconLabel</class>
    <extends>QLabel</extends>
    <header>iconlabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PixmapRatioLabel</class>
+   <extends>QLabel</extends>
+   <header>pixmapratiolabel.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

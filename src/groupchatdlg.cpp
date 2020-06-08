@@ -1334,8 +1334,9 @@ void GCMainDlg::setMucSelfAvatar()
     }
     ui_.lblAvatar->setVisible(enabled);
     if (enabled) {
+        int optSize = PsiOptions::instance()->getOption("options.ui.chat.avatars.size").toInt();
         ui_.lblAvatar->setResizePolicy(PixmapRatioLabel::Policy::FitVertical);
-        ui_.lblAvatar->setMaxPixmapSize(QSize(64, 64) * devicePixelRatio());
+        ui_.lblAvatar->setMaxPixmapSize(QSize(optSize, optSize) * devicePixelRatio());
         ui_.lblAvatar->setPixmap(p);
     } else {
         ui_.lblAvatar->resize(0, 0);
@@ -2203,7 +2204,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
         if (encEnabled) {
             if (!m.encryptionProtocol().isEmpty()) {
                 msg = QString("<icon name=\"psi/cryptoYes\"> ")
-                        + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
+                    + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
             } else {
                 msg = QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled");
             }
