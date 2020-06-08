@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<application>
-  <id type="desktop">psi.desktop</id>
-  <licence>GPL-2.0</licence>
+<component type="desktop">
+  <id>org.psi_im.Psi</id>
+  <launchable type="desktop-id">psi.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0</project_license>
   <name>Psi</name>
   <name xml:lang="ru">Psi</name>
   <summary>The cross-platform XMPP client aimed at experienced users.</summary>
@@ -13,7 +15,6 @@
     <p xml:lang="ru">
       Psi - это мессенджер для Windows, Linux и Mac OS X подключающийся к свободной и открытой XMPP сети.
     </p>
-
     <p>Features:</p>
     <p xml:lang="ru">Features:</p>
     <ul>
@@ -31,7 +32,7 @@
   <url type="bugtracker">https://github.com/psi-im/psi/issues</url>
   <screenshots>
     <screenshot type="default">
-    	<image>https://psi-im.org/content/home/feature_default.png</image>
+      <image>https://psi-im.org/content/home/feature_default.png</image>
     </screenshot>
   </screenshots>
-</application>
+</component>
