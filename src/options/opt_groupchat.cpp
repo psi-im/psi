@@ -6,13 +6,11 @@
 #include "ui_opt_general_groupchat.h"
 
 #include <QButtonGroup>
-#include <QCheckBox>
 #include <QColorDialog>
 #include <QComboBox>
 #include <QLineEdit>
 #include <QPainter>
 #include <QPixmap>
-#include <QRadioButton>
 #include <QSignalMapper>
 
 class GeneralGroupchatUI : public QWidget, public Ui::GeneralGroupchat {

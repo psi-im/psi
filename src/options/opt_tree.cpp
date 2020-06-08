@@ -2,7 +2,6 @@
 
 #include "psioptionseditor.h"
 
-#include <QDebug>
 #include <QVBoxLayout>
 
 OptionsTabTree::OptionsTabTree(QObject *parent) :

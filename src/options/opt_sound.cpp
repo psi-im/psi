@@ -1,6 +1,5 @@
 #include "opt_sound.h"
 
-#include "applicationinfo.h"
 #include "common.h"
 #include "fileutil.h"
 #include "iconset.h"
@@ -11,10 +10,7 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QFileDialog>
 #include <QLabel>
-#include <QLineEdit>
-#include <QRadioButton>
 
 class OptSoundUI : public QWidget, public Ui::OptSound {
 public:

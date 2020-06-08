@@ -11,18 +11,10 @@
 #include "ui_opt_lookfeel_toolbars.h"
 
 #include <QAction>
-#include <QCheckBox>
-#include <QComboBox>
 #include <QEvent>
-#include <QHBoxLayout>
-#include <QHeaderView>
-#include <QLayout>
 #include <QLineEdit>
-#include <QList>
 #include <QPushButton>
 #include <QRegExp>
-#include <QSpinBox>
-#include <QVBoxLayout>
 
 #define CHAT_TOOLBAR 0
 #define GROUPCHAT_TOOLBAR 1

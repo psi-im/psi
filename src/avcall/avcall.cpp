@@ -35,8 +35,8 @@
 #include <QDir>
 #include <QLibrary>
 #include <QtCrypto>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 // threaded mode is unstable. Enable it at your own risk.
 // most likely moveToThread below has to be handled carefully to call changeThread of Ice176
@@ -109,7 +109,7 @@ public:
         connect(transport, SIGNAL(packetsWritten(int)), SLOT(transport_packetsWritten(int)));
     }
 
-    ~AvTransmit()
+    ~AvTransmit() override
     {
         if (audio)
             audio->setParent(nullptr);
@@ -175,9 +175,12 @@ public:
     AvTransmit *avTransmit;
     QThread *   previousThread;
 
-    AvTransmitHandler(QObject *parent = nullptr) : QObject(parent), avTransmit(nullptr), previousThread(nullptr) { }
+    explicit AvTransmitHandler(QObject *parent = nullptr) :
+        QObject(parent), avTransmit(nullptr), previousThread(nullptr)
+    {
+    }
 
-    ~AvTransmitHandler()
+    ~AvTransmitHandler() override
     {
         if (avTransmit)
             releaseAvTransmit();
@@ -207,14 +210,14 @@ class AvTransmitThread : public QCA::SyncThread {
 public:
     AvTransmitHandler *handler;
 
-    AvTransmitThread(QObject *parent = nullptr) : QCA::SyncThread(parent), handler(nullptr) { }
+    explicit AvTransmitThread(QObject *parent = nullptr) : QCA::SyncThread(parent), handler(nullptr) { }
 
-    ~AvTransmitThread() { stop(); }
+    ~AvTransmitThread() override { stop(); }
 
 protected:
-    virtual void atStart() { handler = new AvTransmitHandler; }
+    void atStart() override { handler = new AvTransmitHandler; }
 
-    virtual void atEnd() { delete handler; }
+    void atEnd() override { delete handler; }
 };
 
 //----------------------------------------------------------------------------
@@ -232,7 +235,7 @@ public:
     QList<AvCall *>             pending;
 
     AvCallManagerPrivate(PsiAccount *_pa, AvCallManager *_q);
-    ~AvCallManagerPrivate();
+    ~AvCallManagerPrivate() override;
 
     void unlink(AvCall *call);
 
@@ -260,7 +263,7 @@ public:
     AvTransmit *          avTransmit;
     AvTransmitThread *    avTransmitThread;
 
-    AvCallPrivate(AvCall *_q) :
+    explicit AvCallPrivate(AvCall *_q) :
         QObject(_q), q(_q), manager(nullptr), sess(nullptr), transmitAudio(false), transmitVideo(false),
         transmitting(false), avTransmit(nullptr), avTransmitThread(nullptr)
     {
@@ -270,7 +273,7 @@ public:
         connect(&rtp, SIGNAL(error()), SLOT(rtp_error()));
     }
 
-    ~AvCallPrivate()
+    ~AvCallPrivate() override
     {
         rtp.disconnect(this);
         cleanup();

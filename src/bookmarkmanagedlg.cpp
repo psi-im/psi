@@ -85,8 +85,9 @@ void BookmarkManageDlg::reject() { QDialog::reject(); }
 void BookmarkManageDlg::accept()
 {
     QStandardItem *item = model_->item(ui_.listView->currentIndex().row());
-    if (item && item->data(Qt::DisplayRole).toString().isEmpty())
-        item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
+    if (item)
+        if (item->data(Qt::DisplayRole).toString().isEmpty())
+            item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
 
     if (account_->checkConnected(this)) {
         saveBookmarks();

@@ -21,11 +21,9 @@
 
 #include "iconset.h"
 #include "privacylist.h"
-#include "privacylistmodel.h"
 #include "privacymanager.h"
 
 #include <QInputDialog>
-#include <QListView>
 #include <QMessageBox>
 
 // fixme: subscribe on the destroyed() signal of the manager

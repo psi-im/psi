@@ -5,11 +5,8 @@
 #include "psioptions.h"
 #include "ui_opt_events.h"
 
-#include <QCheckBox>
-#include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QRadioButton>
 
 class OptEventsUI : public QWidget, public Ui::OptEvents {
 public:

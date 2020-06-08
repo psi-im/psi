@@ -1,6 +1,5 @@
 #include "tabmanager.h"
 
-#include "chatdlg.h"
 #include "groupchatdlg.h"
 #include "psioptions.h"
 #include "tabbablewidget.h"

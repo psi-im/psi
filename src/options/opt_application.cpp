@@ -2,7 +2,6 @@
 
 #include "applicationinfo.h"
 #include "common.h"
-#include "iconwidget.h"
 #include "proxy.h"
 #include "psioptions.h"
 #include "translationmanager.h"
@@ -13,7 +12,6 @@
 #include <QComboBox>
 #include <QDir>
 #include <QLineEdit>
-#include <QList>
 #include <QMessageBox>
 #include <QSettings>
 #include <QStandardPaths>

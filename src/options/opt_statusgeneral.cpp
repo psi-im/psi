@@ -6,12 +6,8 @@
 #include "psioptions.h"
 #include "ui_opt_statusgeneral.h"
 
-#include <QCheckBox>
 #include <QComboBox>
-#include <QInputDialog>
-#include <QLineEdit>
 #include <QMessageBox>
-#include <QTextEdit>
 
 class OptStatusGeneralUI : public QWidget, public Ui::OptStatusGeneral {
 public:

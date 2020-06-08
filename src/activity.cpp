@@ -22,7 +22,6 @@
 #include "activitycatalog.h"
 
 #include <QDomDocument>
-#include <QDomElement>
 
 Activity::Activity()
 {

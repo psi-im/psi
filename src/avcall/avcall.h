@@ -46,7 +46,7 @@ public:
     Q_DECLARE_FLAGS(PeerFeatures, PeerFeature)
 
     AvCall(const AvCall &from);
-    ~AvCall();
+    ~AvCall() override;
 
     XMPP::Jid jid() const;
     Mode      mode() const;
@@ -74,7 +74,7 @@ private:
     friend class AvCallManagerPrivate;
     AvCall();
 
-    AvCallPrivate *d;
+    AvCallPrivate *d {};
 };
 Q_DECLARE_OPERATORS_FOR_FLAGS(AvCall::PeerFeatures)
 
@@ -82,8 +82,8 @@ class AvCallManager : public QObject {
     Q_OBJECT
 
 public:
-    AvCallManager(PsiAccount *pa);
-    ~AvCallManager();
+    explicit AvCallManager(PsiAccount *pa);
+    ~AvCallManager() override;
 
     AvCall *createOutgoing();
     AvCall *takeIncoming();
