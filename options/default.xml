@@ -155,8 +155,8 @@ QWidget#bottomFrame>QWidget>QTextEdit[correction="true"] {
                 <auto-delete-unlisted comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore" type="bool">false</auto-delete-unlisted>
                 <opacity comment="Opacity percentage of the contact list" type="int">100</opacity>
                 <status-messages comment="Status messages for contacts">
-                    <single-line comment="Show status messages on the same line as the nickname" type="bool">true</single-line>
-                    <show comment="Show status messages" type="bool">false</show>
+                    <single-line comment="Show status messages on the same line as the nickname" type="bool">false</single-line>
+                    <show comment="Show status messages" type="bool">true</show>
                 </status-messages>
                 <tooltip comment="Display options for the contact list tooltips">
                     <css type="QString"></css>
@@ -232,7 +232,7 @@ QLineEdit#le_status_text {
                     <agent-contacts type="bool">true</agent-contacts>
                     <away-contacts type="bool">true</away-contacts>
                     <hidden-contacts-group type="bool">true</hidden-contacts-group>
-                    <offline-contacts type="bool">true</offline-contacts>
+                    <offline-contacts type="bool">false</offline-contacts>
                     <self-contact type="bool">true</self-contact>
                 </show>
                 <show-group-counts type="bool">true</show-group-counts>
@@ -242,7 +242,7 @@ QLineEdit#le_status_text {
                     <show type="bool">true</show>
                     <avatars-at-left type="bool">true</avatars-at-left>
                     <use-default-avatar type="bool">true</use-default-avatar>
-                    <size type="int">24</size>
+                    <size type="int">26</size>
                     <radius type="int">5</radius>
                 </avatars>
                 <show-mood-icons type="bool">true</show-mood-icons>
@@ -311,13 +311,13 @@ QLineEdit#le_status_text {
                     <use-slim-group-headings type="bool">false</use-slim-group-headings>
                     <nick-coloring type = "bool">true</nick-coloring>
                     <show-client-icons type = "bool">true</show-client-icons>
-                    <show-affiliation-icons type = "bool">true</show-affiliation-icons>
+                    <show-affiliation-icons type = "bool">false</show-affiliation-icons>
                     <contact-sort-style type = "QString">alpha</contact-sort-style>
-                    <show-status-icons type = "bool">true</show-status-icons>
+                    <show-status-icons type = "bool">false</show-status-icons>
                     <disable-scrollbar type = "bool">true</disable-scrollbar>
                     <avatars>
-                        <show type="bool">false</show>
-                        <size type="int">24</size>
+                        <show type="bool">true</show>
+                        <size type="int">20</size>
                         <avatars-at-left type="bool">true</avatars-at-left>
                         <radius type="int">3</radius>
                     </avatars>
