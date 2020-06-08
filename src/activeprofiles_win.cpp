@@ -291,7 +291,7 @@ bool ActiveProfiles::isAnyActive() const { return !d->pickProfile().isEmpty(); }
 
 bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
-    QLabel *lab = 0;
+    QLabel *lab = nullptr;
     if (withUI) {
         lab = new QLabel(tr("This psi profile is already running...<br>please wait..."));
         QTimer::singleShot(250, lab, SLOT(show()));

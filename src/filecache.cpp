@@ -34,7 +34,7 @@ FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, c
                              const QDateTime &dt, unsigned int maxAge, qint64 size, const QByteArray &data) :
     QObject(parent),
     _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _data(data),
-    _flags(size > 0 ? 0 : OnDisk) /* empty is never saved to disk. let's say it's there already */
+    _flags(quint16(size > 0 ? 0 : OnDisk)) /* empty is never saved to disk. let's say it's there already */
 {
     Q_ASSERT(sums.size() > 0);
     std::sort(_sums.begin(), _sums.end(),
@@ -217,8 +217,8 @@ FileCacheItem *FileCache::append(const QList<XMPP::Hash> &sums, const QByteArray
 {
     Q_ASSERT(sums.size() > 0);
 
-    FileCacheItem *item
-        = new FileCacheItem(this, sums, metadata, QDateTime::currentDateTime(), maxAge, size_t(data.size()), data);
+    FileCacheItem *item = new FileCacheItem(this, sums, metadata, QDateTime::currentDateTime(), maxAge,
+                                            qint64(size_t(data.size())), data);
     for (auto const &s : sums)
         _items.insert(s, item);
     _pendingRegisterItems.insert(sums[0], item);

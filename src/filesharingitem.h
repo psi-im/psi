@@ -81,7 +81,7 @@ public:
     inline const HashSums &   sums() const { return _sums; }
     inline QVariantMap        metaData() const { return _metaData; }
     inline qint64             fileSize() const { return _fileSize; }
-    inline bool               isSizeKnown() const { return _flags & SizeKnown; }
+    inline bool               isSizeKnown() const { return bool(_flags & SizeKnown); }
     inline const QStringList &uris() const { return _uris; }
 
     // reborn flag updates ttl for the item

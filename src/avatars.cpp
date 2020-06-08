@@ -806,7 +806,10 @@ void AvatarFactory::removeManualAvatar(const Jid &j)
     }
 }
 
-bool AvatarFactory::hasManualAvatar(const Jid &j) { return AvatarCache::instance()->icons(j.bare()).customAvatar; }
+bool AvatarFactory::hasManualAvatar(const Jid &j)
+{
+    return bool(AvatarCache::instance()->icons(j.bare()).customAvatar);
+}
 
 void AvatarFactory::resourceAvailable(const Jid &jid, const Resource &r)
 {

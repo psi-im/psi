@@ -2520,7 +2520,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
         QString                    oldStatus, oldKey;
         UserResource *             rp;
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
-        bool                       found = (rit == u->userResourceList().end()) ? false : true;
+        bool                       found = !(rit == u->userResourceList().end());
         if (!found) {
             popupType = PopupOnline;
 
@@ -2647,7 +2647,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 
         // remove resource
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
-        bool                       found = (rit == u->userResourceList().end()) ? false : true;
+        bool                       found = !(rit == u->userResourceList().end());
         if (found) {
             u->setLastUnavailableStatus(r.status());
             // u->userResourceList().removeAll(*rit);//we cant use it since operator== is used for other purpose
@@ -3253,7 +3253,7 @@ void PsiAccount::capsChanged(const Jid &j)
 
     for (UserListItem *u : findRelevant(j)) {
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
-        bool                       found = (rit == u->userResourceList().end()) ? false : true;
+        bool                       found = !(rit == u->userResourceList().end());
         if (!found)
             continue;
         (*rit).setClient(name, version, os);
@@ -4576,13 +4576,14 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 
     QString querytype = uri.queryItems().value(0).first; // defaults to empty string
 
-    if (0) {
+    /*if (0) {
         //} else if (querytype == "command") {
         //    // action
         //} else if (querytype == "disco") {
         //    actionDisco(entity, uri.queryItemValue("node")); //x
         //    // request, type
-    } else if (querytype == "invite") {
+    } else */
+    if (querytype == "invite") {
         actionJoin(entity, uri.queryItemValue("password"));
         // jid
     } else if (querytype == "join") {
@@ -5907,7 +5908,7 @@ void PsiAccount::pgp_verifyFinished()
     const Jid &j = transaction->jid();
     for (UserListItem *u : findRelevant(j)) {
         UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
-        bool                       found = (rit == u->userResourceList().end()) ? false : true;
+        bool                       found = !(rit == u->userResourceList().end());
         if (!found)
             continue;
         UserResource &ur = *rit;

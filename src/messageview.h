@@ -97,19 +97,19 @@ public:
     inline const Flags &flags() const { return _flags; }
 
     inline void setAlert(bool state = true) { SET_QFLAG(_flags, Alert, state); }
-    inline bool isAlert() const { return _flags & Alert; }
+    inline bool isAlert() const { return bool(_flags & Alert); }
     inline void setLocal(bool state = true) { SET_QFLAG(_flags, Local, state); }
-    inline bool isLocal() const { return _flags & Local; }
+    inline bool isLocal() const { return bool(_flags & Local); }
     inline void setEmote(bool state = true) { SET_QFLAG(_flags, Emote, state); }
-    inline bool isEmote() const { return _flags & Emote; }
+    inline bool isEmote() const { return bool(_flags & Emote); }
     inline void setSpooled(bool state = true) { SET_QFLAG(_flags, Spooled, state); }
-    inline bool isSpooled() const { return _flags & Spooled; }
+    inline bool isSpooled() const { return bool(_flags & Spooled); }
     inline void setAwaitingReceipt(bool b = true) { SET_QFLAG(_flags, AwaitingReceipt, b); }
-    inline bool isAwaitingReceipt() const { return _flags & AwaitingReceipt; }
+    inline bool isAwaitingReceipt() const { return bool(_flags & AwaitingReceipt); }
     inline void setStatusChangeHidden(bool b = true) { SET_QFLAG(_flags, HideStatusChange, b); }
-    inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
+    inline bool isStatusChangeHidden() const { return bool(_flags & HideStatusChange); }
     inline void setJoinLeaveHidden(bool b = true) { SET_QFLAG(_flags, HideJoinLeave, b); }
-    inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
+    inline bool isJoinLeaveHidden() const { return bool(_flags & HideJoinLeave); }
 
     inline void setStatus(int s) { _status = s; }
     inline int  status() const { return _status; }

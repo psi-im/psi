@@ -428,7 +428,7 @@ bool PsiContact::isActiveContact() const
     if (isConference()) {
         return false;
     }
-    return account()->findChatDialog(jid(), isPrivate() ? true : false);
+    return bool(account()->findChatDialog(jid(), isPrivate()));
 }
 
 /**

@@ -651,9 +651,5 @@ void AccountModifyDlg::priorityCbChanged(int index) { sb_priority->setEnabled(in
 
 void AccountModifyDlg::autoconnectCksChanged()
 {
-    if (ck_auto->isChecked() || ck_connectAfterSleep->isChecked()) {
-        ck_autoSameStatus->setEnabled(true);
-    } else {
-        ck_autoSameStatus->setEnabled(false);
-    }
+    ck_autoSameStatus->setEnabled(ck_auto->isChecked() || ck_connectAfterSleep->isChecked());
 }

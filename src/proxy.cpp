@@ -84,7 +84,7 @@ bool ProxySettings::fromXml(const QDomElement &e)
     host    = XMLHelper::subTagText(e, "host");
     port    = XMLHelper::subTagText(e, "port").toInt();
     url     = XMLHelper::subTagText(e, "url");
-    useAuth = (XMLHelper::subTagText(e, "useAuth") == "true") ? true : false;
+    useAuth = XMLHelper::subTagText(e, "useAuth") == "true";
     user    = XMLHelper::subTagText(e, "user");
     pass    = XMLHelper::subTagText(e, "pass");
     return true;
@@ -205,14 +205,14 @@ public slots:
     void currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
     {
         Q_UNUSED(previous);
-        q->ui_.pb_remove->setEnabled(current);
+        q->ui_.pb_remove->setEnabled(bool(current));
 
         QList<QWidget *> editors = QList<QWidget *>()
             << q->ui_.cb_type << q->ui_.le_host << q->ui_.le_port << q->ui_.le_user << q->ui_.le_pass << q->ui_.le_url
             << q->ui_.gr_auth;
         for (QWidget *w : editors) {
             w->blockSignals(true);
-            w->setEnabled(current);
+            w->setEnabled(bool(current));
             if (!current) {
                 if (dynamic_cast<QLineEdit *>(w))
                     dynamic_cast<QLineEdit *>(w)->setText(QString());

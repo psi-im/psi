@@ -166,7 +166,7 @@ void MUCJoinDlg::updateIdentity(PsiAccount *pa)
         disconnect(account_, SIGNAL(disconnected()), this, SLOT(pa_disconnected()));
 
     account_ = pa;
-    joinButton_->setEnabled(account_);
+    joinButton_->setEnabled(bool(account_));
 
     if (!account_) {
         ui_.busy->stop();

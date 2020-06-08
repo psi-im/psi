@@ -256,7 +256,7 @@ void GAdvancedWidget::Private::updateGeometry()
 
 void GAdvancedWidget::Private::saveGeometry()
 {
-    bool isMaximized = static_cast<bool>(parentWidget_->windowState() & Qt::WindowMaximized);
+    bool isMaximized = bool(parentWidget_->windowState() & Qt::WindowMaximized);
     // if window is maximized normalGeometry() returns null rect. So in this case we use cached geometry
     PsiOptions::instance()->setOption(geometryOptionPath_,
                                       isMaximized ? normalGeometry_ : parentWidget_->normalGeometry());

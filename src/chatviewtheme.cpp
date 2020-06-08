@@ -188,7 +188,7 @@ QWidget *ChatViewThemePrivate::previewWidget()
     return l;
 }
 
-bool ChatViewThemePrivate::isMuc() const { return dynamic_cast<GroupChatViewThemeProvider *>(provider); }
+bool ChatViewThemePrivate::isMuc() const { return bool(dynamic_cast<GroupChatViewThemeProvider *>(provider)); }
 
 QVariantMap ChatViewThemePrivate::loadFromCacheMulti(const QVariantList &list)
 {

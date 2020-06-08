@@ -123,4 +123,4 @@ void PsiFilteredContactListView::itemActivated(const QModelIndex &index)
         emit quitFilteringMode();
 }
 
-bool PsiFilteredContactListView::extendSelection() const { return keyboardModifiers() & Qt::ShiftModifier; }
+bool PsiFilteredContactListView::extendSelection() const { return bool(keyboardModifiers() & Qt::ShiftModifier); }

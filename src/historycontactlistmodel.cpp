@@ -337,8 +337,5 @@ bool HistoryContactListProxyModel::filterAcceptsRow(int source_row, const QModel
     if (sourceModel()->data(index, Qt::DisplayRole).toString().contains(_pattern, Qt::CaseInsensitive))
         return true;
     QString jid = sourceModel()->data(index, HistoryContactListModel::ItemIdRole).toString().section('|', 1, 1);
-    if (jid.contains(_pattern, Qt::CaseInsensitive))
-        return true;
-
-    return false;
+    return jid.contains(_pattern, Qt::CaseInsensitive);
 }

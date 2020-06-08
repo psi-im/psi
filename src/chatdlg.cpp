@@ -709,10 +709,10 @@ void ChatDlg::doSend()
         // FIXME uncomment next lines when all bugs will be fixed
         // if (!jid().resource().isEmpty() || (account()->capsManager()->isEnabled() &&
         //    account()->capsManager()->features(jid()).test(sl))) {
-        if (true) {
-            m.setMessageReceipt(ReceiptRequest);
-            // rememberPosition(id);
-        }
+        // if (true) {
+        m.setMessageReceipt(ReceiptRequest);
+        // rememberPosition(id);
+        //}
     }
 
     m_ = m;
@@ -761,6 +761,7 @@ void ChatDlg::doneSend()
 
 void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
+    Q_UNUSED(e);
     if (transid_ == -1 || transid_ != x) {
         return;
     }

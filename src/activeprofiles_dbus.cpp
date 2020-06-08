@@ -206,8 +206,5 @@ bool ActiveProfiles::raise(const QString &profile, bool withUI) const
         lab->hide();
         delete lab;
     }
-    if (rmsg.type() == QDBusMessage::ReplyMessage) {
-        return true;
-    } else
-        return false;
+    return rmsg.type() == QDBusMessage::ReplyMessage;
 }

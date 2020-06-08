@@ -55,10 +55,7 @@ public:
         if (!allowAutoresize)
             return false;
 
-        if (lv->window()->isMaximized())
-            return false;
-
-        return true;
+        return !lv->window()->isMaximized() && true;
     }
 
     int calculateHeight(const QModelIndex &parent) const

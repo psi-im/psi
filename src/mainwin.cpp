@@ -1051,7 +1051,7 @@ void MainWin::actChooseStatusActivated()
     connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->psi,
             SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
     connect(w, SIGNAL(cancelled()), d->psi, SLOT(updateMainwinStatus()));
-    if (o->getOption("options.ui.systemtray.enable").toBool() == true)
+    if (o->getOption("options.ui.systemtray.enable").toBool())
         connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)),
                 SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
     w->show();
@@ -1402,7 +1402,7 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 #ifdef Q_OS_MAC
     bool allowed = true;
 #else
-    bool allowed = d->tray ? true : false;
+    bool allowed = d->tray != nullptr;
 #endif
 
     bool closekey = false;

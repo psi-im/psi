@@ -162,8 +162,9 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
 
     if (!deselected.isEmpty()) {
         QStandardItem *item = model_->item(deselected.indexes().first().row());
-        if (item && item->data(Qt::DisplayRole).toString().isEmpty())
-            item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
+        if (item)
+            if (item->data(Qt::DisplayRole).toString().isEmpty())
+                item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
     }
 
     XMPP::Jid jid = XMPP::Jid(current.data(JidRole).toString());

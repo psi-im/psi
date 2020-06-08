@@ -300,13 +300,7 @@ void ProfileManageDlg::updateSelection()
 {
     int x = lbx_profiles->currentRow();
 
-    if (x == -1) {
-        // pb_rename->setEnabled(false);
-        pb_delete->setEnabled(false);
-    } else {
-        // pb_rename->setEnabled(true);
-        pb_delete->setEnabled(true);
-    }
+    pb_delete->setEnabled(x != -1);
 }
 
 //----------------------------------------------------------------------------

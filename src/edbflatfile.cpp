@@ -595,7 +595,7 @@ PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
         else
             m.setType("");
 
-        bool originLocal = (strData.at(Origin) == "to") ? true : false;
+        bool originLocal = strData.at(Origin) == "to";
         m.setFrom(j);
         if (strData.at(Flags).at(0) == 'N')
             m.setBody(logdecode(sText));

@@ -467,11 +467,9 @@ void PsiChatDlg::updateContactAdding(PsiContact *c)
     if (!c || realJid().compare(c->jid(), false)) {
         Jid           rj = realJid();
         UserListItem *uli;
-        if (rj.isNull() || ((uli = account()->findFirstRelevant(rj)) && (uli->inList() || uli->isSelf()))) {
-            actions_->action("chat_add_contact")->setVisible(false);
-        } else {
-            actions_->action("chat_add_contact")->setVisible(true);
-        }
+        actions_->action("chat_add_contact")
+            ->setVisible(
+                !(rj.isNull() || ((uli = account()->findFirstRelevant(rj)) && (uli->inList() || uli->isSelf()))));
     }
 }
 
@@ -839,7 +837,7 @@ void PsiChatDlg::contactUpdated(UserListItem *u, int status, const QString &stat
             QString client(u->findClient(r));
             if (!client.isEmpty()) {
                 const QPixmap &pix
-                    = IconsetFactory::iconPixmap("clients/" + client, fontInfo().pixelSize() * EqTextIconK + .5);
+                    = IconsetFactory::iconPixmap("clients/" + client, int(fontInfo().pixelSize() * EqTextIconK + .5));
                 ui_.lb_client->setPixmap(pix);
             }
             ui_.lb_client->setToolTip(r.versionString());

@@ -1058,10 +1058,7 @@ public:
 
         int lastDist = dist;
         dist         = progressBarDist(progressBarWidth());
-        if (dist != lastDist)
-            return true;
-        else
-            return false;
+        return dist != lastDist;
     }
 
     void updateRate()
@@ -1798,10 +1795,7 @@ void FileTransDlg::ft_progress(int p, qlonglong sent)
     TransferMapping *i = d->findMapping(static_cast<FileTransferHandler *>(sender()));
     i->p               = p;
     i->sent            = sent;
-    if (p == i->h->totalSteps())
-        d->updateProgress(i, true);
-    else
-        d->updateProgress(i, false);
+    d->updateProgress(i, p == i->h->totalSteps());
 }
 
 void FileTransDlg::ft_error(int x, int, const QString &s)

@@ -193,7 +193,7 @@ QRect X11WindowSystem::windowRect(Window win)
             XFree(data_ret);
     }
 
-    return QRect(x, y, int(w), int(h));
+    return { x, y, int(w), int(h) };
 }
 
 // Determine if window is obscured by other windows

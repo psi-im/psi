@@ -600,7 +600,7 @@ void ContactListViewDelegate::Private::drawContact(QPainter *painter, const QMod
         } else {
             auto fs = QFontInfo(font_).pixelSize();
             if (statusPixmap.height() > fs * HugeIconRosterK)
-                statusPixmap = statusPixmap.scaledToHeight(fs * EqTextIconK + .5, Qt::SmoothTransformation);
+                statusPixmap = statusPixmap.scaledToHeight(int(fs * EqTextIconK + .5), Qt::SmoothTransformation);
             if (opt.direction == Qt::RightToLeft) {
                 statusIconRect.moveRight(firstLineRect.right());
                 nickRect.setRight(statusIconRect.left() - StatusIconToNickHMargin * PSI_HIDPI);
