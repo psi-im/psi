@@ -2,7 +2,6 @@
 #define PSITRAYICON_H
 
 #include <QObject>
-#include <QRgb>
 #include <QSystemTrayIcon>
 
 class PsiIcon;
@@ -20,9 +19,6 @@ public:
     void setToolTip(const QString &);
     void setIcon(const PsiIcon *, bool alert = false);
     void setAlert(const PsiIcon *);
-    bool isAnimating() const;
-
-    bool isWMDock();
 
 signals:
     void clicked(const QPoint &, int);
@@ -40,7 +36,6 @@ private slots:
 
 protected:
     QPixmap makeIcon();
-    QRgb    pixelBlend(QRgb p1, QRgb p2);
     bool    eventFilter(QObject *, QEvent *);
 
 private:

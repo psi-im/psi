@@ -72,7 +72,7 @@ Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxB
 // FIXME find it a new home!
 int common_smallFontSize = 0;
 
-QString CAP(const QString &str) { return QString("%1: %2").arg(ApplicationInfo::name()).arg(str); }
+QString CAP(const QString &str) { return QString("%1: %2").arg(ApplicationInfo::name(), str); }
 
 // clips plain text
 QString clipStatus(const QString &str, int width, int height)

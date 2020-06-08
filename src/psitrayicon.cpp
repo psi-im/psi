@@ -4,7 +4,6 @@
 #include "common.h"
 #include "iconset.h"
 
-#include <QApplication> // old
 #include <QHelpEvent>
 #include <QPixmap>
 #include <QPixmapCache>
@@ -18,8 +17,7 @@ PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent) :
 {
     trayicon_->setContextMenu(popup);
     setToolTip(tip);
-    connect(trayicon_, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
-            SLOT(trayicon_activated(QSystemTrayIcon::ActivationReason)));
+    connect(trayicon_, &QSystemTrayIcon::activated, this, &PsiTrayIcon::trayicon_activated);
     trayicon_->installEventFilter(this);
 }
 
@@ -54,7 +52,7 @@ void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
         else
             icon_ = new AlertIcon(icon);
 
-        connect(icon_, SIGNAL(pixmapChanged()), SLOT(animate()));
+        connect(icon_, &PsiIcon::pixmapChanged, this, &PsiTrayIcon::animate);
         icon_->activated();
     } else
         icon_ = new PsiIcon();
@@ -64,30 +62,9 @@ void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
 
 void PsiTrayIcon::setAlert(const PsiIcon *icon) { setIcon(icon, true); }
 
-bool PsiTrayIcon::isAnimating() const { return icon_->isAnimated(); }
-
-bool PsiTrayIcon::isWMDock() { return false; }
-
 void PsiTrayIcon::show() { trayicon_->show(); }
 
 void PsiTrayIcon::hide() { trayicon_->hide(); }
-
-// a function to blend 2 pixels taking their alpha channels
-// into consideration
-// p1 is in the 1st layer, p2 is in the 2nd layer (over p1)
-QRgb PsiTrayIcon::pixelBlend(QRgb p1, QRgb p2)
-{
-    int a2 = qAlpha(p2);
-    if (a2 == 255)
-        return p2; // don't calculate anything if p2 is completely opaque
-    int    a1    = qAlpha(p1);
-    double prop1 = double(a1 * (255 - a2)) / double(255 * 255);
-    double prop2 = double(a2) / 255.0;
-    int    r     = int(qRed(p1) * prop1 + qRed(p2) * prop2);
-    int    g     = int(qGreen(p1) * prop1 + qGreen(p2) * prop2);
-    int    b     = int(qBlue(p1) * prop1 + qBlue(p2) * prop2);
-    return qRgba(r, g, b, (a1 > a2) ? a1 : a2);
-}
 
 QPixmap PsiTrayIcon::makeIcon()
 {
@@ -116,8 +93,8 @@ void PsiTrayIcon::animate()
     if (!icon_)
         return;
 
-    QString cachedName
-        = "PsiTray/" + icon_->name() + "/" + QString::number(realIcon_) + "/" + QString::number(icon_->frameNumber());
+    QString cachedName = QString("PsiTray/%1/%2/%3")
+                             .arg(icon_->name(), QString::number(realIcon_), QString::number(icon_->frameNumber()));
 
     QPixmap p;
     if (!QPixmapCache::find(cachedName, &p)) {
