@@ -217,8 +217,8 @@ FileCacheItem *FileCache::append(const QList<XMPP::Hash> &sums, const QByteArray
 {
     Q_ASSERT(sums.size() > 0);
 
-    FileCacheItem *item = new FileCacheItem(this, sums, metadata, QDateTime::currentDateTime(), maxAge,
-                                            qint64(size_t(data.size())), data);
+    FileCacheItem *item
+        = new FileCacheItem(this, sums, metadata, QDateTime::currentDateTime(), maxAge, qint64(data.size()), data);
     for (auto const &s : sums)
         _items.insert(s, item);
     _pendingRegisterItems.insert(sums[0], item);

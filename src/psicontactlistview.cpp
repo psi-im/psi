@@ -50,13 +50,7 @@ public:
         connect(recalculateSizeTimer, SIGNAL(timeout()), SLOT(doRecalculateSize()));
     }
 
-    bool allowResize() const
-    {
-        if (!allowAutoresize)
-            return false;
-
-        return !lv->window()->isMaximized() && true;
-    }
+    bool allowResize() const { return allowAutoresize && !lv->window()->isMaximized(); }
 
     int calculateHeight(const QModelIndex &parent) const
     {
