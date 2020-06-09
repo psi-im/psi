@@ -133,7 +133,11 @@ void FileSharingNAMReply::finishWithError(QNetworkReply::NetworkError networkErr
     }
     if (httpCode) {
         setError(networkError, reason);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        emit errorOccurred(networkError);
+#else
         emit error(networkError);
+#endif
     }
     if (downloader) {
         downloader->disconnect(this);

@@ -522,7 +522,11 @@ bool EDBFlatFile::File::append(const PsiEvent::Ptr &e)
     QTextStream t;
     t.setDevice(&f);
     t.setCodec("UTF-8");
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    t << line << Qt::endl;
+#else
     t << line << endl;
+#endif
     f.flush();
 
     if (d->indexed) {

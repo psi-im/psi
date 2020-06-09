@@ -181,7 +181,11 @@ QWidget *ChatViewThemePrivate::previewWidget()
 {
     QLabel *l = new QLabel;
     l->setPixmap(QPixmap::fromImage(QImage::fromData(loadData("screenshot.png"))));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    if (l->pixmap(Qt::ReturnByValue).isNull()) {
+#else
     if (l->pixmap()->isNull()) {
+#endif
         delete l;
         return nullptr;
     }

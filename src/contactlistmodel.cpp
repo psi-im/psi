@@ -44,7 +44,7 @@
 
 ContactListModel::Private::Private(ContactListModel *parent) :
     QObject(), q(parent), groupsEnabled(false), accountsEnabled(false), contactList(nullptr),
-    commitTimer(new QTimer(this)), commitTimerStartTime(), monitoredContacts(), operationQueue(), collapsed(), hidden()
+    commitTimer(new QTimer(this))
 {
     connect(commitTimer, SIGNAL(timeout()), SLOT(commit()));
     commitTimer->setSingleShot(true);
@@ -110,13 +110,13 @@ void ContactListModel::Private::realAddContact(PsiContact *contact)
             }
             groupItem->appendChild(item);
 
-            monitoredContacts.insertMulti(contact, q->toModelIndex(item));
+            monitoredContacts.insert(contact, q->toModelIndex(item));
         }
     } else {
         ContactListItem *item = new ContactListItem(q, ContactListItem::Type::ContactType);
         item->setContact(contact);
         root->appendChild(item);
-        monitoredContacts.insertMulti(contact, q->toModelIndex(item));
+        monitoredContacts.insert(contact, q->toModelIndex(item));
     }
 
     connect(contact, SIGNAL(destroyed(PsiContact *)), SLOT(removeContact(PsiContact *)));

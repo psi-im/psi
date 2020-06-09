@@ -208,7 +208,7 @@ void MUCJoinDlg::updateFavorites()
             lwi->setData(FavoritesPasswordRole + 1, c.password());
             lwi->setData(FavoritesIsBookmark, true);
             bmMap.insert(jidBare, lwi);
-            nmMap.insertMulti(name.toLower(), lwi);
+            nmMap.insert(name.toLower(), lwi);
         }
     }
     for (auto &item : nmMap) { // sorted by key (name)

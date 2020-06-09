@@ -99,7 +99,7 @@ QVariant HistoryContactListModel::data(const QModelIndex &index, int role) const
 Qt::ItemFlags HistoryContactListModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
-        return nullptr;
+        return {};
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 

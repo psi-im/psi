@@ -6,6 +6,7 @@
 
 #include <QDateTime>
 #include <QModelIndex>
+#include <QMultiHash>
 #include <QTimer>
 
 class ContactListModel::Private : public QObject {
@@ -47,14 +48,14 @@ private:
     void cleanUpAccount(PsiAccount *account);
 
 public:
-    ContactListModel *                         q;
-    bool                                       groupsEnabled;
-    bool                                       accountsEnabled;
-    PsiContactList *                           contactList;
-    QTimer *                                   commitTimer;
-    QDateTime                                  commitTimerStartTime;
-    QHash<PsiContact *, QPersistentModelIndex> monitoredContacts; // always keeps all the contacts
-    QHash<PsiContact *, int>                   operationQueue;
-    QStringList                                collapsed;
-    QStringList                                hidden;
+    ContactListModel *                              q;
+    bool                                            groupsEnabled;
+    bool                                            accountsEnabled;
+    PsiContactList *                                contactList;
+    QTimer *                                        commitTimer;
+    QDateTime                                       commitTimerStartTime;
+    QMultiHash<PsiContact *, QPersistentModelIndex> monitoredContacts; // always keeps all the contacts
+    QHash<PsiContact *, int>                        operationQueue;
+    QStringList                                     collapsed;
+    QStringList                                     hidden;
 };
