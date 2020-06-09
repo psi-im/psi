@@ -68,7 +68,7 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
                               .toUpper()
                               .replace(QRegExp("(..)"), ":\\1")
                               .mid(1);
-        str += QString("Fingerprint(%1): %2<br>").arg(i == 0 ? "MD5" : "SHA-1").arg(hashstr);
+        str += QString("Fingerprint(%1): %2<br>").arg(i == 0 ? "MD5" : "SHA-1", hashstr);
     }
     ui_.tb_cert->setText(str);
 }
@@ -109,5 +109,5 @@ QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, co
     if (val.isEmpty())
         return "";
     else
-        return QString("<tr><td><nobr><b>%1</b></nobr></td><td dir=\"ltr\">%2</td></tr>").arg(name).arg(val);
+        return QString("<tr><td><nobr><b>%1</b></nobr></td><td dir=\"ltr\">%2</td></tr>").arg(name, val);
 }

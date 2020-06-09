@@ -21,7 +21,6 @@
 
 #include "psicon.h"
 #include "psiiconset.h"
-#include "psioptions.h"
 #include "psithememanager.h"
 #include "psithememodel.h"
 #include "ui_opt_theme.h"

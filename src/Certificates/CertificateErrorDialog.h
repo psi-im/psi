@@ -16,7 +16,7 @@ public:
     CertificateErrorDialog(const QString &title, const QString &host, const QCA::Certificate &cert, int result,
                            QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain,
                            QByteArray &tlsOverrideCert, QWidget *parent = nullptr);
-    ~CertificateErrorDialog();
+    ~CertificateErrorDialog() override;
 
 private:
     QCA::Certificate certificate_;

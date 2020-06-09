@@ -237,7 +237,7 @@ static JingleRtpReason elementToReason(const QDomElement &e)
 //----------------------------------------------------------------------------
 JT_JingleRtp::JT_JingleRtp(XMPP::Task *parent) : XMPP::Task(parent) { }
 
-JT_JingleRtp::~JT_JingleRtp() { }
+JT_JingleRtp::~JT_JingleRtp() = default;
 
 void JT_JingleRtp::request(const XMPP::Jid &to, const JingleRtpEnvelope &envelope)
 {
@@ -321,7 +321,7 @@ bool JT_JingleRtp::take(const QDomElement &x)
 //----------------------------------------------------------------------------
 JT_PushJingleRtp::JT_PushJingleRtp(XMPP::Task *parent) : XMPP::Task(parent) { }
 
-JT_PushJingleRtp::~JT_PushJingleRtp() { }
+JT_PushJingleRtp::~JT_PushJingleRtp() = default;
 
 void JT_PushJingleRtp::respondSuccess(const XMPP::Jid &to, const QString &id)
 {

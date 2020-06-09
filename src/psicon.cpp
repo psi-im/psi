@@ -1086,7 +1086,7 @@ void PsiCon::statusMenuChanged(XMPP::Status::Type x, bool forceDialog)
         connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)),
                 SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
         connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
-        if (o->getOption("options.ui.systemtray.enable").toBool() == true)
+        if (o->getOption("options.ui.systemtray.enable").toBool())
             connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin,
                     SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
         w->show();
@@ -1188,7 +1188,7 @@ void PsiCon::showStatusDialog(const QString &presetName)
     StatusSetDlg *w = new StatusSetDlg(this, status, preset.priority().hasValue());
     connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
     connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
-    if (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
+    if (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool())
         connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin,
                 SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
     w->show();

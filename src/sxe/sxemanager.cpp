@@ -786,9 +786,5 @@ bool SxeManager::checkSupport(const Jid &jid, const QList<QString> &features)
 {
     Features f = pa_->client()->capsManager()->features(jid);
 
-    if (f.test(SXENS) && f.test(features)) {
-        return true;
-    }
-
-    return false;
+    return f.test(SXENS) && f.test(features);
 }

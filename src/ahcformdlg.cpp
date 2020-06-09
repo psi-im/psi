@@ -119,7 +119,7 @@ AHCFormDlg::AHCFormDlg(PsiCon *psi, const AHCommand &r, const Jid &receiver, XMP
     }
 
     if (!r.data().title().isEmpty()) {
-        setWindowTitle(QString("%1 (%2)").arg(r.data().title()).arg(receiver.full()));
+        setWindowTitle(QString("%1 (%2)").arg(r.data().title(), receiver.full()));
     } else {
         setWindowTitle(QString("%1").arg(receiver.full()));
     }

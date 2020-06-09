@@ -325,11 +325,7 @@ bool PsiRosterWidget::eventFilter(QObject *obj, QEvent *e)
                 return true;
             }
         } else if (ke->key() == Qt::Key_F3) {
-            if (filterEdit_->isVisible() && filterEdit_->text().isEmpty()) {
-                setFilterModeEnabled(false);
-            } else {
-                setFilterModeEnabled(true);
-            }
+            setFilterModeEnabled(!(filterEdit_->isVisible() && filterEdit_->text().isEmpty()));
             filterEdit_->setText("");
             return true;
         }

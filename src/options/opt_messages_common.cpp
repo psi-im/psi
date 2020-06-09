@@ -3,7 +3,6 @@
 #include "psioptions.h"
 #include "ui_opt_messages_common.h"
 
-#include <QDebug>
 #include <QWidget>
 
 static const QStringList clickActList = { "none", "hide", "close", "detach" };

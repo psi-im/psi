@@ -80,7 +80,7 @@ void URLLabel::setTitle(const QString &t)
 
 void URLLabel::updateText()
 {
-    setText(QString("<a href=\"%1\">%2</a>").arg(d->url).arg(d->title));
+    setText(QString("<a href=\"%1\">%2</a>").arg(d->url, d->title));
 
     if (d->url != d->title)
         setToolTip(d->url);

@@ -36,10 +36,10 @@ class ContactManagerDlg : public QDialog {
     Q_DISABLE_COPY(ContactManagerDlg)
 public:
     explicit ContactManagerDlg(PsiAccount *pa);
-    virtual ~ContactManagerDlg();
+    ~ContactManagerDlg() override;
 
 protected:
-    virtual void changeEvent(QEvent *e);
+    void changeEvent(QEvent *e) override;
 
 private:
     void changeDomain(QList<UserListItem *> &users);

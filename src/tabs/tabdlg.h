@@ -29,7 +29,6 @@
 #include <QWidget>
 
 class ChatDlg;
-class ChatTabs;
 class PsiCon;
 class PsiTabWidget;
 class QAction;

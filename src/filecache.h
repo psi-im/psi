@@ -59,8 +59,8 @@ public:
     bool              remove() const; // remove file from disk but not from registry. don't call this directly.
     void              unload();       // drop file to disk, deallocate memory
     inline bool       inMemory() const;
-    inline bool       isOnDisk() const { return _flags & OnDisk; }         // data is on disk and not in rgistry
-    inline bool       isRegistered() const { return _flags & Registered; } // data is on disk and not in rgistry
+    inline bool       isOnDisk() const { return bool(_flags & OnDisk); }         // data is on disk and not in rgistry
+    inline bool       isRegistered() const { return bool(_flags & Registered); } // data is on disk and not in rgistry
     bool              isExpired(bool finishSession = false) const;
     inline FileCache *parentCache() const { return (FileCache *)parent(); }
     inline XMPP::Hash id() const { return _sums.value(0); }
@@ -110,8 +110,8 @@ private:
 class FileCache : public QObject {
     Q_OBJECT
 public:
-    static constexpr unsigned int Session = 0;  // remove data when application exits
-    static constexpr unsigned int Forever = -1; // never remove
+    static constexpr unsigned int Session = 0; // remove data when application exits
+    static constexpr unsigned int Forever = std::numeric_limits<unsigned int>::max(); // never remove
 
     static constexpr unsigned int DefaultMemoryCacheSize = 1 * 1024 * 1024;  // 1 Mb
     static constexpr unsigned int DefaultFileCacheSize   = 50 * 1024 * 1024; // 50 Mb

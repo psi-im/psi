@@ -142,7 +142,7 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 
             // we want for widget to stick to outer edges of another widget, so
             // we'll change the rect to what it'll snap
-            rect       = QRect(w->frameGeometry().bottomRight(), w->frameGeometry().topLeft());
+            rect       = QRect(w->frameGeometry().topLeft(), w->frameGeometry().bottomRight());
             dockWidget = true;
         }
 
@@ -256,7 +256,7 @@ void GAdvancedWidget::Private::updateGeometry()
 
 void GAdvancedWidget::Private::saveGeometry()
 {
-    bool isMaximized = parentWidget_->windowState() & Qt::WindowMaximized;
+    bool isMaximized = bool(parentWidget_->windowState() & Qt::WindowMaximized);
     // if window is maximized normalGeometry() returns null rect. So in this case we use cached geometry
     PsiOptions::instance()->setOption(geometryOptionPath_,
                                       isMaximized ? normalGeometry_ : parentWidget_->normalGeometry());

@@ -174,17 +174,9 @@ bool ContactListItem::lessThan(const ContactListItem *other) const
     } else if (_type == Type::AccountType && other->_type == Type::AccountType) {
         return QString::localeAwareCompare(_account->name().toLower(), other->_account->name().toLower()) < 0;
     } else if (_type == Type::ContactType && other->_type == Type::GroupType) {
-        if (_contact->isSelf()) {
-            return true;
-        } else {
-            return false;
-        }
+        return _contact->isSelf();
     } else if (_type == Type::GroupType && other->_type == Type::ContactType) {
-        if (other->_contact->isSelf()) {
-            return false;
-        } else {
-            return true;
-        }
+        return !other->_contact->isSelf();
     }
 
     return false;

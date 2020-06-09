@@ -348,7 +348,7 @@ AccountManageDlg::~AccountManageDlg() { }
 void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetItem *)
 {
     AccountManageItem *i  = static_cast<AccountManageItem *>(lvi);
-    bool               ok = i ? true : false;
+    bool               ok = i != nullptr;
 
     pb_modify->setEnabled(ok);
     pb_remove->setEnabled(ok);

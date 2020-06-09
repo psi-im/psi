@@ -244,10 +244,7 @@ bool OptionsTree::saveOptions(const QString &fileName, const QString &configName
     doc.appendChild(base);
 
     tree_.toXml(doc, base);
-    if (!f.saveDocument(doc))
-        return false;
-
-    return true;
+    return f.saveDocument(doc);
 }
 
 /**

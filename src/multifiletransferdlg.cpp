@@ -190,7 +190,7 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
     app->setProperty("mftitem", QVariant::fromValue<MultiFileTransferItem *>(item));
     connect(app, &Jingle::FileTransfer::Application::stateChanged, item, [this, app, item](Jingle::State state) {
         if (state == Jingle::State::Accepted) {
-            item->setOffset(app->acceptFile().range().offset);
+            item->setOffset(quint64(app->acceptFile().range().offset));
         }
         setMFTItemStateFromJingleState(item, app);
         if (state == Jingle::State::Finished && app->senders() == Jingle::negateOrigin(d->session->role())) {
@@ -226,7 +226,7 @@ void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
             auto app  = static_cast<Jingle::FileTransfer::Application *>(c);
             auto file = app->file();
             auto item = d->model->addTransfer(MultiFileTransferModel::Incoming, file.name(),
-                                              file.size()); // FIXME size is optional. ranges?
+                                              quint64(file.size())); // FIXME size is optional. ranges?
             setupCommonSignals(app, item);
 
             auto thumb = file.thumbnail();
@@ -421,7 +421,7 @@ void MultiFileTransferDlg::updateMyVisuals()
     QPixmap avatar;
     ui->lblMyAvatar->setToolTip(d->account->jid().full());
     avatar     = d->account->avatarFactory()->getAvatar(d->account->jid());
-    int avSize = fontInfo().pixelSize() * 3.5;
+    int avSize = int(fontInfo().pixelSize() * 3.5);
     if (avatar.isNull()) {
         avatar = IconsetFactory::iconPixmap("psi/default_avatar", avSize);
     }
@@ -453,7 +453,7 @@ void MultiFileTransferDlg::updatePeerVisuals()
         ui->lblPeerName->setText(tr("Not selected"));
     }
 
-    int avSize = fontInfo().pixelSize() * 3.5;
+    int avSize = int(fontInfo().pixelSize() * 3.5);
     if (avatar.isNull()) {
         avatar = IconsetFactory::iconPixmap("psi/default_avatar", avSize);
     }

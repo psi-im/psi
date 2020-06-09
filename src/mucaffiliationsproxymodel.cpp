@@ -15,8 +15,5 @@ bool MUCAffiliationsProxyModel::filterAcceptsRow(int sourceRow, const QModelInde
     if (!idx.parent().isValid())
         return true;
 
-    if (filterRegExp().indexIn(idx.data().toString()) >= 0)
-        return true;
-
-    return false;
+    return filterRegExp().indexIn(idx.data().toString()) >= 0;
 }

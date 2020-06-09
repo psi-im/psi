@@ -36,9 +36,6 @@
 
 #define PINNED_CHARS 12
 
-// Do not count invisible &
-#define PINNED_TEXT(text) text.left(text.left(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS)
-
 class CloseButton : public QAbstractButton {
     Q_OBJECT
 
@@ -71,21 +68,21 @@ public:
     void  balanseCloseButtons();
     bool  indexAtBottom(int index) const;
 
-    TabBar *               q;
-    QList<QStyleOptionTab> hackedTabs;
-    QList<CloseButton *>   closeButtons;
-    bool                   tabsClosable;
-    bool                   multiRow;
-    int                    hoverTab;
-    bool                   dragsEnabled;
-    int                    dragTab;
-    int                    dragInsertIndex;
-    int                    dragHoverTab;
-    QPoint                 mousePressPoint;
-    int                    pinnedTabs;
-    bool                   update;
-    bool                   stopRecursive;
-    bool                   indexAlwaysAtBottom;
+    TabBar *                 q;
+    QVector<QStyleOptionTab> hackedTabs;
+    QVector<CloseButton *>   closeButtons;
+    bool                     tabsClosable;
+    bool                     multiRow;
+    int                      hoverTab;
+    bool                     dragsEnabled;
+    int                      dragTab;
+    int                      dragInsertIndex;
+    int                      dragHoverTab;
+    QPoint                   mousePressPoint;
+    int                      pinnedTabs;
+    bool                     update;
+    bool                     stopRecursive;
+    bool                     indexAlwaysAtBottom;
 
     struct {
         QList<int> tabs;
@@ -225,8 +222,8 @@ LayoutSf possibleLayouts(const QList<int> &tabs, int barWidth, int rows, double 
             layoutSf.clear();
             break;
         }
-        for (int j = 0; j < newLayoutSf.size(); ++j) {
-            newLayoutSf[j].number += startPos;
+        for (auto item : newLayoutSf) {
+            item.number += startPos;
         }
         layoutSf += newLayoutSf;
         i += step;
@@ -282,7 +279,8 @@ void TabBar::Private::layoutTabs()
         tab.rect.setSize(tabSizeHint(tab));
         // Make pinned tab if need
         if (i < pinnedTabs) {
-            tab.text = PINNED_TEXT(tab.text);
+            QString tL = tab.text.left(PINNED_CHARS);
+            tab.text   = tab.text.left(tL.contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS);
             tab.rect.setWidth(pinnedTabWidth);
         }
         hackedTabs << tab;
@@ -357,8 +355,8 @@ void TabBar::Private::layoutTabs()
         }
 
         // Add pinned tabs to layout
-        for (int i = 0; i < layout.size(); ++i) {
-            layout[i].number += firstNormalTab;
+        for (auto item : layout) {
+            item.number += firstNormalTab;
         }
 
         for (int i = pinnedRows - 1; i >= 0; --i) {
@@ -790,7 +788,7 @@ QSize TabBar::sizeHint() const
         return QTabBar::sizeHint();
     }
 
-    QList<QStyleOptionTab> tabs = d->hackedTabs;
+    auto tabs = d->hackedTabs;
 
     QRect rect;
     for (int i = 0; i < tabs.size(); i++) {
@@ -877,8 +875,8 @@ void TabBar::paintEvent(QPaintEvent *event)
         return;
     }
 
-    QStylePainter          p(this);
-    QList<QStyleOptionTab> tabs = d->hackedTabs;
+    QStylePainter p(this);
+    auto          tabs = d->hackedTabs;
 
     for (int i = 0; i < tabs.size() && i < d->pinnedTabs; ++i) {
         tabs[i].leftButtonSize  = QSize();
@@ -1223,7 +1221,7 @@ QSize CloseButton::sizeHint() const
     ensurePolished();
     int width  = style()->pixelMetric(QStyle::PM_TabCloseIndicatorWidth, nullptr, this);
     int height = style()->pixelMetric(QStyle::PM_TabCloseIndicatorHeight, nullptr, this);
-    return QSize(width, height);
+    return { width, height };
 }
 
 void CloseButton::enterEvent(QEvent *event)

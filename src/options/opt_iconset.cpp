@@ -1,7 +1,6 @@
 #include "opt_iconset.h"
 
 #include "applicationinfo.h"
-#include "common.h"
 #include "iconwidget.h"
 #include "psicon.h"
 #include "psiiconset.h"
@@ -16,17 +15,13 @@
 #include "ui_ui_isdetails.h"
 
 #include <QApplication>
-#include <QCheckBox>
-#include <QComboBox>
 #include <QCursor>
 #include <QDir>
 #include <QEvent>
 #include <QFileInfo>
 #include <QFont>
-#include <QLineEdit>
 #include <QMutex>
 #include <QPalette>
-#include <QRadioButton>
 #include <QTabWidget>
 #include <QThread>
 #include <QTreeWidget>

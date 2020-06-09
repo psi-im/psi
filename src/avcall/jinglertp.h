@@ -45,7 +45,7 @@ public:
         QByteArray value;
     };
 
-    ~JingleRtp();
+    ~JingleRtp() override;
 
     XMPP::Jid                   jid() const;
     QList<JingleRtpPayloadType> remoteAudioPayloadTypes() const;
@@ -117,7 +117,7 @@ private:
     friend class JingleRtpChannelPrivate;
     friend class JingleRtpPrivate;
     JingleRtpChannel();
-    ~JingleRtpChannel();
+    ~JingleRtpChannel() override;
 
     JingleRtpChannelPrivate *d;
 };
@@ -126,8 +126,8 @@ class JingleRtpManager : public QObject {
     Q_OBJECT
 
 public:
-    JingleRtpManager(XMPP::Client *client);
-    ~JingleRtpManager();
+    explicit JingleRtpManager(XMPP::Client *client);
+    ~JingleRtpManager() override;
 
     JingleRtp *createOutgoing();
     JingleRtp *takeIncoming();

@@ -77,9 +77,6 @@ bool SxeEdit::operator<(const SxeEdit &other) const
         // New < Record, Record < Remove
         if (type() == SxeEdit::New)
             return true;
-        if (other.type() == SxeEdit::Remove)
-            return true;
-
-        return false;
+        return other.type() == SxeEdit::Remove;
     }
 }

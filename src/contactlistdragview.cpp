@@ -294,11 +294,7 @@ bool ContactListDragView::supportsDropOnIndex(QDropEvent *e, const QModelIndex &
         return false;
     }
 
-    if (dropPosition(e, selection, index) == OnViewport) {
-        return false;
-    }
-
-    return true;
+    return !(dropPosition(e, selection, index) == OnViewport);
 }
 
 static void updateDefaultDropAction(QDropEvent *e)

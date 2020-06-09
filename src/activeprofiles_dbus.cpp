@@ -100,10 +100,11 @@ QString ActiveProfiles::Private::dbusName(QString prof)
 {
     QString name = PSIDBUSNAME;
     name += ".";
-    name += encodeAlNumD(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)).right(qMax(0, 200 - name.size()));
+    name
+        += encodeAlNumD(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)).rightRef(qMax(0, 200 - name.size()));
     if (!prof.isEmpty()) {
         name += ".";
-        name += encodeAlNumD(prof).right(qMax(0, 250 - name.size()));
+        name += encodeAlNumD(prof).rightRef(qMax(0, 250 - name.size()));
     }
     return name;
 }
@@ -205,8 +206,5 @@ bool ActiveProfiles::raise(const QString &profile, bool withUI) const
         lab->hide();
         delete lab;
     }
-    if (rmsg.type() == QDBusMessage::ReplyMessage) {
-        return true;
-    } else
-        return false;
+    return rmsg.type() == QDBusMessage::ReplyMessage;
 }

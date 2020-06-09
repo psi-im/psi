@@ -48,7 +48,7 @@ public:
     QTimer *               timer;
     QTime                  call_duration;
 
-    Private(CallDlg *_q) : QObject(_q), q(_q), active(false), activated(false), sess(nullptr), timer(nullptr)
+    explicit Private(CallDlg *_q) : QObject(_q), q(_q), active(false), activated(false), sess(nullptr), timer(nullptr)
     {
         ui.setupUi(q);
         q->setWindowTitle(tr("Voice Call"));
@@ -87,7 +87,7 @@ public:
         q->resize(q->minimumSizeHint());
     }
 
-    ~Private()
+    ~Private() override
     {
         if (sess) {
             if (active)

@@ -15,9 +15,9 @@ namespace IrisProtocol {
 class DiscoInfoQuerier : public Protocol::DiscoInfoQuerier {
     Q_OBJECT
 public:
-    DiscoInfoQuerier(XMPP::Client *client);
+    explicit DiscoInfoQuerier(XMPP::Client *client);
 
-    void getDiscoInfo(const XMPP::Jid &jid, const QString &node);
+    void getDiscoInfo(const XMPP::Jid &jid, const QString &node) override;
 
 private slots:
     void discoFinished();

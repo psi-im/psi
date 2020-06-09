@@ -264,13 +264,7 @@ static QString linkify_htmlsafe(const QString &in)
     return out;
 }
 
-static bool linkify_okUrl(const QString &url)
-{
-    if (url.at(url.length() - 1) == '.')
-        return false;
-
-    return true;
-}
+static bool linkify_okUrl(const QString &url) { return !(url.at(url.length() - 1) == '.'); }
 
 static bool linkify_okEmail(const QString &addy)
 {
@@ -284,10 +278,7 @@ static bool linkify_okEmail(const QString &addy)
         return false;
     if ((addy.length() - 1) - d <= 0)
         return false;
-    if (addy.indexOf("..") != -1)
-        return false;
-
-    return true;
+    return addy.indexOf("..") == -1;
 }
 
 /**

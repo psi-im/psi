@@ -456,10 +456,9 @@ void SendButtonTemplatesMenu::update()
 
 void SendButtonTemplatesMenu::clickOnlyPaste()
 {
-    if (PsiOptions::instance()->getOption("options.ui.chat.only-paste-template").toBool())
-        PsiOptions::instance()->setOption("options.ui.chat.only-paste-template", false);
-    else
-        PsiOptions::instance()->setOption("options.ui.chat.only-paste-template", true);
+    PsiOptions::instance()->setOption(
+        "options.ui.chat.only-paste-template",
+        !PsiOptions::instance()->getOption("options.ui.chat.only-paste-template").toBool());
 }
 
 void SendButtonTemplatesMenu::optionChanged(const QString &option)

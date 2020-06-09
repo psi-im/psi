@@ -120,7 +120,7 @@ void AddressTypeDlg::setTypes(AddrTypes types)
 {
 
     for (auto w : findChildren<QCheckBox *>()) {
-        w->setChecked(types & w->property("addrtype").toInt());
+        w->setChecked(bool(types & w->property("addrtype").toInt()));
     }
 }
 
@@ -754,10 +754,10 @@ VCard InfoWidget::makeVCard()
         if (!types) {
             email.internet = true;
         } else {
-            email.internet = types & AddressTypeDlg::Internet;
-            email.home     = types & AddressTypeDlg::Home;
-            email.work     = types & AddressTypeDlg::Work;
-            email.x400     = types & AddressTypeDlg::X400;
+            email.internet = bool(types & AddressTypeDlg::Internet);
+            email.home     = bool(types & AddressTypeDlg::Home);
+            email.work     = bool(types & AddressTypeDlg::Work);
+            email.x400     = bool(types & AddressTypeDlg::X400);
         }
         email.userid = ui_.le_email->text();
 
@@ -937,7 +937,7 @@ void InfoWidget::clientVersionFinished()
     if (j->success()) {
         for (UserListItem *u : d->findRelevant(j->jid())) {
             UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
-            bool                       found = (rit == u->userResourceList().end()) ? false : true;
+            bool                       found = !(rit == u->userResourceList().end());
             if (!found) {
                 continue;
             }
@@ -955,7 +955,7 @@ void InfoWidget::entityTimeFinished()
     if (j->success()) {
         for (UserListItem *u : d->findRelevant(j->jid())) {
             UserResourceList::Iterator rit   = u->userResourceList().find(j->jid().resource());
-            bool                       found = (rit == u->userResourceList().end()) ? false : true;
+            bool                       found = !(rit == u->userResourceList().end());
             if (!found)
                 continue;
 

@@ -274,7 +274,7 @@ bool ChatDlg::readyToHide()
 
     if (pending_ > 0) {
         pending_ = 0;
-        messagesRead(jid());
+        emit messagesRead(jid());
         invalidateTab();
     }
     doFlash(false);
@@ -335,7 +335,7 @@ void ChatDlg::activated()
 
     if (pending_ > 0) {
         pending_ = 0;
-        messagesRead(jid());
+        emit messagesRead(jid());
         invalidateTab();
     }
     doFlash(false);
@@ -545,7 +545,7 @@ void ChatDlg::contactUpdated(UserListItem *u, int status, const QString &statusS
     Q_UNUSED(statusString);
 }
 
-void ChatDlg::doVoice() { aVoice(jid()); }
+void ChatDlg::doVoice() { emit aVoice(jid()); }
 
 void ChatDlg::updateAvatar(const Jid &j)
 {
@@ -596,11 +596,11 @@ void ChatDlg::optionsUpdate()
 
 void ChatDlg::updatePgp() { }
 
-void ChatDlg::doInfo() { aInfo(jid()); }
+void ChatDlg::doInfo() { emit aInfo(jid()); }
 
-void ChatDlg::doHistory() { aHistory(jid()); }
+void ChatDlg::doHistory() { emit aHistory(jid()); }
 
-void ChatDlg::doFile() { aFile(jid()); }
+void ChatDlg::doFile() { emit aFile(jid()); }
 
 void ChatDlg::doClear() { chatView()->clear(); }
 
@@ -709,14 +709,14 @@ void ChatDlg::doSend()
         // FIXME uncomment next lines when all bugs will be fixed
         // if (!jid().resource().isEmpty() || (account()->capsManager()->isEnabled() &&
         //    account()->capsManager()->features(jid()).test(sl))) {
-        if (true) {
-            m.setMessageReceipt(ReceiptRequest);
-            // rememberPosition(id);
-        }
+        // if (true) {
+        m.setMessageReceipt(ReceiptRequest);
+        // rememberPosition(id);
+        //}
     }
 
     m_ = m;
-    emit chatEdit()->appendMessageHistory(m.body());
+    chatEdit()->appendMessageHistory(m.body());
 
     // Request events
     if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool()) {
@@ -739,7 +739,7 @@ void ChatDlg::doSend()
             return;
         }
     } else {
-        aSend(m_);
+        emit aSend(m_);
         doneSend();
     }
 
@@ -761,6 +761,7 @@ void ChatDlg::doneSend()
 
 void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
+    Q_UNUSED(e);
     if (transid_ == -1 || transid_ != x) {
         return;
     }
@@ -844,7 +845,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
         if (encEnabled) {
             if (!m.encryptionProtocol().isEmpty()) {
                 msg = QString("<icon name=\"psi/cryptoYes\"> ")
-                        + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
+                    + tr("%1 encryption is enabled").arg(m.encryptionProtocol());
             } else {
                 msg = QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption is enabled");
             }

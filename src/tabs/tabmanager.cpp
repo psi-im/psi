@@ -1,6 +1,5 @@
 #include "tabmanager.h"
 
-#include "chatdlg.h"
 #include "groupchatdlg.h"
 #include "psioptions.h"
 #include "tabbablewidget.h"
@@ -51,10 +50,7 @@ bool TabManager::shouldBeTabbed(QWidget *widget)
     }
 
     QString grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
-    if (grouping.contains(tabKind(widget))) {
-        return true;
-    }
-    return false;
+    return grouping.contains(tabKind(widget));
 }
 
 TabDlg *TabManager::newTabs(QWidget *widget)

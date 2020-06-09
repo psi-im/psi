@@ -113,9 +113,5 @@ bool ChatViewCommon::compatibleColors(const QColor &c1, const QColor &c2)
     double dV = abs(c1.value() - c2.value());
     double dC = sqrt(0.2126 * dR * dR + 0.7152 * dG * dG + 0.0722 * dB * dB);
 
-    if ((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10)) {
-        return false;
-    }
-
-    return true;
+    return !((dC < 80. && dV > 100) || (dC < 110. && dV <= 100 && dV > 10) || (dC < 125. && dV <= 10));
 }

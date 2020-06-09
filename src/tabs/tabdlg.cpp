@@ -770,10 +770,7 @@ void TabDlg::updateTabBar()
     if (tabBarSingles_) {
         tabWidget_->setTabBarShown(true);
     } else {
-        if (tabWidget_->count() > 1)
-            tabWidget_->setTabBarShown(true);
-        else
-            tabWidget_->setTabBarShown(false);
+        tabWidget_->setTabBarShown(tabWidget_->count() > 1);
     }
 }
 

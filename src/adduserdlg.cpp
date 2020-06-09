@@ -292,8 +292,7 @@ void AddUserDlg::errorGateway(const QString &str, const QString &err)
                                 "&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
                                 "&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
                                 "</qt>")
-                                 .arg(str)
-                                 .arg(QString(err).replace('\n', "<br>")));
+                                 .arg(str, QString(err).replace('\n', "<br>")));
 }
 
 void AddUserDlg::getVCardActivated()

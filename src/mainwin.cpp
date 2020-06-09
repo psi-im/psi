@@ -1051,7 +1051,7 @@ void MainWin::actChooseStatusActivated()
     connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->psi,
             SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
     connect(w, SIGNAL(cancelled()), d->psi, SLOT(updateMainwinStatus()));
-    if (o->getOption("options.ui.systemtray.enable").toBool() == true)
+    if (o->getOption("options.ui.systemtray.enable").toBool())
         connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)),
                 SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
     w->show();
@@ -1402,7 +1402,7 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 #ifdef Q_OS_MAC
     bool allowed = true;
 #else
-    bool allowed = d->tray ? true : false;
+    bool allowed = d->tray != nullptr;
 #endif
 
     bool closekey = false;
@@ -1670,7 +1670,7 @@ void MainWin::numAccountsChanged()
     PsiAccount *acc = d->psi->contactList()->defaultAccount();
     if (acc && acc != d->defaultAccount) {
         if (d->defaultAccount) {
-            disconnect(d->defaultAccount, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+            disconnect(d->defaultAccount, &PsiAccount::nickChanged, this, &MainWin::nickChanged);
             //            disconnect(d->defaultAccount->avatarFactory(), SIGNAL(avatarChanged(Jid)), this,
             //            SLOT(avatarChanged()));
         }
@@ -1678,8 +1678,8 @@ void MainWin::numAccountsChanged()
         avatarChanged(acc->jid());
         nickChanged();
         d->rosterAvatar->setStatusMessage(acc->status().status());
-        connect(acc->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged(Jid)));
-        connect(acc, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+        connect(acc->avatarFactory(), &AvatarFactory::avatarChanged, this, &MainWin::avatarChanged);
+        connect(acc, &PsiAccount::nickChanged, this, &MainWin::nickChanged);
     }
     if (!acc) { // no accounts left
         avatarChanged(Jid());

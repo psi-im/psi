@@ -7,7 +7,6 @@
 #include <QCheckBox>
 #include <QLocale>
 #include <QTreeWidget>
-#include <QTreeWidgetItem>
 #include <QWidget>
 
 static const QString ENABLED_OPTION    = QStringLiteral("options.ui.spell-check.enabled");

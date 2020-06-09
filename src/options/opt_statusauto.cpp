@@ -5,9 +5,6 @@
 #include "ui_opt_statusauto.h"
 
 #include <QCheckBox>
-#include <QLineEdit>
-#include <QSpinBox>
-#include <QTextEdit>
 #include <limits.h>
 
 class OptStatusAutoUI : public QWidget, public Ui::OptStatusAuto {

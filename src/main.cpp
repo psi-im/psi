@@ -132,13 +132,8 @@ bool PsiMain::useActiveInstance()
         }
 
         return true;
-    } else if (cmdline.contains("remote")) {
-        // there was no active instance to satisfy the request
-        // but user doesn't want to start new instance
-        return true;
-    } else {
-        return false;
-    }
+    } else
+        return cmdline.contains("remote");
 }
 
 /**
@@ -584,7 +579,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 
     QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
     psi->useLocalInstance();
-    int returnValue = app.exec();
+    int returnValue = QCoreApplication::exec();
     delete psi;
 
     return returnValue;

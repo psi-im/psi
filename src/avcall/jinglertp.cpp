@@ -27,8 +27,8 @@
 #include "xmpp_client.h"
 
 #include <QtCrypto>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 // TODO: reject offers that don't contain at least one of audio or video
 // TODO: support candidate negotiations over the JingleRtpChannel thread
@@ -121,7 +121,8 @@ public:
     QHostAddress extAddr;
     QHostAddress stunBindAddr, stunRelayUdpAddr, stunRelayTcpAddr;
 
-    Resolver(QObject *parent = nullptr) : QObject(parent), dnsA(parent), dnsB(parent), dnsC(parent), dnsD(parent)
+    explicit Resolver(QObject *parent = nullptr) :
+        QObject(parent), dnsA(parent), dnsB(parent), dnsC(parent), dnsD(parent)
     {
         connect(&dnsA, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)),
                 SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
@@ -245,13 +246,13 @@ public:
     XMPP::UdpPortReserver *portReserver;
     QList<XMPP::Ice176 *>  left;
 
-    IceStopper(QObject *parent = nullptr) : QObject(parent), t(this), portReserver(nullptr)
+    explicit IceStopper(QObject *parent = nullptr) : QObject(parent), t(this), portReserver(nullptr)
     {
         connect(&t, &QTimer::timeout, this, &IceStopper::deleteLater);
         t.setSingleShot(true);
     }
 
-    ~IceStopper()
+    ~IceStopper() override
     {
         qDeleteAll(left);
         delete portReserver;
@@ -310,8 +311,8 @@ public:
     QTimer *                    rtpActivityTimer;
     QList<JingleRtp::RtpPacket> in;
 
-    JingleRtpChannelPrivate(JingleRtpChannel *_q);
-    ~JingleRtpChannelPrivate();
+    explicit JingleRtpChannelPrivate(JingleRtpChannel *_q);
+    ~JingleRtpChannelPrivate() override;
 
     void setIceObjects(XMPP::UdpPortReserver *_portReserver, XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV);
     void restartRtpActivityTimer();
@@ -350,7 +351,7 @@ public:
     JT_PushJingleRtp *      push_task;
 
     JingleRtpManagerPrivate(XMPP::Client *_client, JingleRtpManager *_q);
-    ~JingleRtpManagerPrivate();
+    ~JingleRtpManagerPrivate() override;
 
     QString createSid(const XMPP::Jid &peer) const;
 
@@ -422,13 +423,13 @@ public:
     JingleRtp::Error       errorCode    = JingleRtp::NoError;
     XMPP::UdpPortReserver *portReserver = nullptr;
 
-    JingleRtpPrivate(JingleRtp *_q) : QObject(_q), q(_q)
+    explicit JingleRtpPrivate(JingleRtp *_q) : QObject(_q), q(_q)
     {
         connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
         rtpChannel = new JingleRtpChannel;
     }
 
-    ~JingleRtpPrivate()
+    ~JingleRtpPrivate() override
     {
         cleanup();
         manager->unlink(q);

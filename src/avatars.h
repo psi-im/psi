@@ -89,15 +89,15 @@ public:
 
     void statusUpdate(const Jid &jid, const XMPP::Status &status);
 signals:
-    void avatarChanged(const Jid &);
+    void avatarChanged(const XMPP::Jid &);
 
 protected slots:
-    void itemPublished(const Jid &, const QString &, const PubSubItem &);
-    void publish_success(const QString &, const PubSubItem &);
-    void resourceAvailable(const Jid &, const Resource &);
+    void itemPublished(const XMPP::Jid &, const QString &, const PubSubItem &);
+    void publish_success(const QString &, const XMPP::PubSubItem &);
+    void resourceAvailable(const XMPP::Jid &, const XMPP::Resource &);
 
 private slots:
-    void vcardUpdated(const Jid &, bool isMuc);
+    void vcardUpdated(const XMPP::Jid &, bool isMuc);
 
 private:
     class Private;

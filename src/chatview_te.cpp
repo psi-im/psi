@@ -106,7 +106,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     const QUrl anc = QUrl::fromEncoded(anchorAt(e->pos()).toLatin1());
 
     if (anc.scheme() == "addnick") {
-        showNM(anc.path().mid(1));
+        emit showNM(anc.path().mid(1));
         e->accept();
     } else {
         QMenu *menu = createStandardContextMenu(e->pos());
@@ -284,7 +284,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
         QString color = ColorOpt::instance()->color(informationalColorOpt).name();
         appendText(
             QString(useMessageIcons_ ? "<img src=\"icon:log_icon_time\" />" : "")
-            + QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
+            + QString("<font color=\"%1\">*** %2</font>").arg(color, mv.dateTime().date().toString(Qt::ISODate)));
     }
 
     switch (mv.type()) {
@@ -478,8 +478,7 @@ void ChatView::renderMessage(const MessageView &mv, QTextCursor &insertCursor)
         }
         if (mv.isSpooled())
             str.append(QString("<span style=\"color: %1\">%2</span>")
-                           .arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name())
-                           .arg(inner));
+                           .arg(ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name(), inner));
         else
             str.append(inner);
     }

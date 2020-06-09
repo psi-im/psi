@@ -41,7 +41,7 @@ bool SnarlInterface::snHideMessage(long id)
     SNARLSTRUCT snarlStruct;
     snarlStruct.id  = id;
     snarlStruct.cmd = SNARL_HIDE;
-    return static_cast<bool>(send(snarlStruct));
+    return bool(send(snarlStruct));
 }
 
 bool SnarlInterface::snIsMessageVisible(long id)
@@ -49,7 +49,7 @@ bool SnarlInterface::snIsMessageVisible(long id)
     SNARLSTRUCT snarlStruct;
     snarlStruct.id  = id;
     snarlStruct.cmd = SNARL_IS_VISIBLE;
-    return static_cast<bool>(send(snarlStruct));
+    return bool(send(snarlStruct));
 }
 
 bool SnarlInterface::snUpdateMessage(long id, std::string title, std::string text)
@@ -67,7 +67,7 @@ bool SnarlInterface::snUpdateMessage(long id, std::string title, std::string tex
     } else {
         strcpy(snarlStruct.text, text.c_str());
     }
-    return static_cast<bool>(send(snarlStruct));
+    return bool(send(snarlStruct));
 }
 
 bool SnarlInterface::snRegisterConfig(HWND hWnd, std::string appName, long replyMsg)
@@ -81,7 +81,7 @@ bool SnarlInterface::snRegisterConfig(HWND hWnd, std::string appName, long reply
     } else {
         strcpy(snarlStruct.title, appName.c_str());
     }
-    return static_cast<bool>(send(snarlStruct));
+    return bool(send(snarlStruct));
 }
 
 bool SnarlInterface::snRevokeConfig(HWND hWnd)
@@ -89,7 +89,7 @@ bool SnarlInterface::snRevokeConfig(HWND hWnd)
     SNARLSTRUCT snarlStruct;
     snarlStruct.cmd      = SNARL_REVOKE_CONFIG_WINDOW;
     snarlStruct.lngData2 = reinterpret_cast<long>(hWnd);
-    return static_cast<bool>(send(snarlStruct));
+    return bool(send(snarlStruct));
 }
 
 bool SnarlInterface::snGetVersion(int *major, int *minor)

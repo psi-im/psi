@@ -655,12 +655,13 @@ Qt::ItemFlags ContactListModel::flags(const QModelIndex &index) const
     f |= Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
     ContactListItem *item = toItem(index);
-    if ((index.column() == NameColumn) && item && item->isEditable())
-        f |= Qt::ItemIsEditable;
+    if (item) {
+        if ((index.column() == NameColumn) && item->isEditable())
+            f |= Qt::ItemIsEditable;
 
-    if (!item->isExpandable())
-        f |= Qt::ItemNeverHasChildren;
-
+        if (!item->isExpandable())
+            f |= Qt::ItemNeverHasChildren;
+    }
     return f;
 }
 

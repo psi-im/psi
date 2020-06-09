@@ -49,15 +49,15 @@ public:
     const static int RegexpMatch = 2;
 
     ContactManagerModel(QObject *parent, PsiAccount *pa);
-    int                  rowCount(const QModelIndex &parent = QModelIndex()) const;
-    int                  columnCount(const QModelIndex &parent = QModelIndex()) const;
-    QVariant             data(const QModelIndex &index, int role) const;
-    QVariant             headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-    Qt::ItemFlags        flags(const QModelIndex &index) const;
-    bool                 setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-    void                 sort(int column, Qt::SortOrder order);
-    static bool          sortLessThan(UserListItem *u1, UserListItem *u2);
-    static Role          sortRole;
+    int           rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int           columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant      data(const QModelIndex &index, int role) const override;
+    QVariant      headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool          setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    void          sort(int column, Qt::SortOrder order) override;
+    static bool   sortLessThan(UserListItem *u1, UserListItem *u2);
+    static Role   sortRole;
     static Qt::SortOrder sortOrder;
 
     QStringList           manageableFields();

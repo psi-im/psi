@@ -6,8 +6,6 @@
 #include "opt_appearance.h"
 #include "opt_application.h"
 #include "opt_events.h"
-//#include "opt_groupchat.h"
-#include "opt_iconset.h"
 #include "opt_messages.h"
 #ifdef PSI_PLUGINS
 #include "opt_plugins.h"

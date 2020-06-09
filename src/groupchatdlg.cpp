@@ -1074,7 +1074,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
 
     connect(ui_.log->textWidget(), SIGNAL(quote(const QString &)), ui_.mle->chatEdit(),
             SLOT(insertAsQuote(const QString &)));
-    connect(pa->avatarFactory(), SIGNAL(avatarChanged(Jid)), SLOT(avatarUpdated(Jid)));
+    connect(pa->avatarFactory(), &AvatarFactory::avatarChanged, this, &GCMainDlg::avatarUpdated);
 
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupGCTab(this, account(), jid().full());

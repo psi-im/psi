@@ -134,7 +134,7 @@ void Impix::unload()
     d->unload();
 }
 
-bool Impix::isNull() const { return !d->image.isNull() || d->pixmap ? false : true; }
+bool Impix::isNull() const { return !(!d->image.isNull() || d->pixmap); }
 
 const QPixmap &Impix::pixmap() const
 {

@@ -1,8 +1,6 @@
 #include "opt_appearance.h"
 
 #include "coloropt.h"
-#include "common.h"
-#include "iconwidget.h"
 #include "opt_iconset.h"
 #include "opt_theme.h"
 #include "psicon.h"
@@ -14,7 +12,6 @@
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QColorDialog>
-#include <QComboBox>
 #include <QFontDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -22,7 +19,6 @@
 #include <QPixmap>
 #include <QRadioButton>
 #include <QSignalMapper>
-#include <QSlider>
 
 class OptAppearanceUI : public QWidget, public Ui::OptAppearance {
 public:

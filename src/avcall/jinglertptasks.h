@@ -143,13 +143,13 @@ class JT_JingleRtp : public XMPP::Task {
     Q_OBJECT
 
 public:
-    JT_JingleRtp(XMPP::Task *parent);
-    ~JT_JingleRtp();
+    explicit JT_JingleRtp(XMPP::Task *parent);
+    ~JT_JingleRtp() override;
 
     void request(const XMPP::Jid &to, const JingleRtpEnvelope &envelope);
 
-    virtual void onGo();
-    virtual bool take(const QDomElement &x);
+    void onGo() override;
+    bool take(const QDomElement &x) override;
 
 private:
     QDomElement iq_;
@@ -160,13 +160,13 @@ class JT_PushJingleRtp : public XMPP::Task {
     Q_OBJECT
 
 public:
-    JT_PushJingleRtp(XMPP::Task *parent);
-    ~JT_PushJingleRtp();
+    explicit JT_PushJingleRtp(XMPP::Task *parent);
+    ~JT_PushJingleRtp() override;
 
     void respondSuccess(const XMPP::Jid &to, const QString &id);
     void respondError(const XMPP::Jid &to, const QString &id, int code, const QString &str);
 
-    virtual bool take(const QDomElement &e);
+    bool take(const QDomElement &e) override;
 
 signals:
     void incomingRequest(const XMPP::Jid &from, const QString &iq_id, const JingleRtpEnvelope &envelope);
