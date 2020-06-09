@@ -481,6 +481,10 @@ set(DOC_FILES
     "${PROJECT_SOURCE_DIR}/README.html"
 )
 
+set(APP_DATA_FILE
+    "${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.appdata.xml"
+)
+
 #PREPARE SECTION
 copy("${PROJECT_SOURCE_DIR}/certs/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/certs/" prepare-bin)
 copy("${PROJECT_SOURCE_DIR}/sound/" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sound/" prepare-bin)
@@ -527,6 +531,7 @@ if(LINUX)
         endif()
         #Install logo and pixmaps
         install(FILES ${PSI_LOGO_PREFIX}/logo_128.png DESTINATION ${PIXMAPS_INSTALL_DIR} RENAME ${VERBOSED_NAME}.png)
+        install(FILES ${APP_DATA_FILE} DESTINATION "${DATA_INSTALL_DIR}/metainfo")
         foreach(resolution ${RESOLUTIONS})
             unset(LOGO_NAME)
             set(LOGO_NAME "${PSI_LOGO_PREFIX}/logo_${resolution}.png")

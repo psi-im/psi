@@ -117,6 +117,7 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Official builds for Psi releases](https://sourceforge.net/projects/psi/files/) (executables for Windows and macOS)
 * [Psi+ installers for Windows](https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/KukuRuzo/)
 * [Psi+ portable builds for Windows](https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/tehnick/)
+* [Psi+ builds for Linux](https://sourceforge.net/projects/psiplus/files/Linux/tehnick/) (AppImage)
 * [Psi+ builds for macOS](https://sourceforge.net/projects/psiplus/files/macOS/tehnick/)
 * [Psi+ package in Haiku](https://depot.haiku-os.org/psi_plus)
 * [Official PPA for Ubuntu and distros based on it](https://launchpad.net/~psi-plus/+archive/ubuntu/ppa) (daily builds)
