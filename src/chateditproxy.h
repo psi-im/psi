@@ -35,6 +35,7 @@ public:
      * Returns encapsulated QTextEdit widget.
      */
     ChatEdit *chatEdit() const { return textEdit_; }
+    void      optionsChanged();
 
 signals:
     /**
@@ -48,15 +49,12 @@ protected:
      * Returns true if line edit mode is enabled.
      */
     bool lineEditEnabled() const { return lineEditEnabled_; }
-    void setLineEditEnabled(bool enable);
-
-public slots:
-    void optionsChanged();
 
 private:
     virtual ChatEdit *createTextEdit();
     void              moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const;
     void              updateLayout();
+    void              addRrecordButton();
 
     bool      lineEditEnabled_;
     ChatEdit *textEdit_;

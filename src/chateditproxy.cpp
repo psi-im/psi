@@ -24,6 +24,9 @@
 
 #include <QVBoxLayout>
 
+static const QLatin1String expandingLineEdit("options.ui.chat.use-expanding-line-edit");
+static const QLatin1String audioMessage("options.media.audio-message");
+
 ChatEditProxy::ChatEditProxy(QWidget *parent) :
     QWidget(parent), lineEditEnabled_(false), textEdit_(nullptr), layout_(nullptr)
 {
@@ -31,24 +34,16 @@ ChatEditProxy::ChatEditProxy(QWidget *parent) :
     layout_->setMargin(0);
     layout_->setSpacing(0);
 
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
+    connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, [this](const QString &option) {
+        if (option == expandingLineEdit)
+            optionsChanged();
+        if (option == audioMessage)
+            addRrecordButton();
+    });
     optionsChanged();
 
     if (!textEdit_)
         updateLayout();
-}
-
-/**
- * If \a enable is true, then the LineEdit is used as internal
- * QTextEdit. Updates internal layout if necessary.
- */
-void ChatEditProxy::setLineEditEnabled(bool enable)
-{
-    if (lineEditEnabled_ == enable)
-        return;
-
-    lineEditEnabled_ = enable;
-    updateLayout();
 }
 
 /**
@@ -102,15 +97,29 @@ void ChatEditProxy::updateLayout()
     delete textEdit_;
     textEdit_ = newEdit;
     layout_->addWidget(textEdit_);
+    // Add sound record button if allowed and not exists
+    addRrecordButton();
     emit textEditCreated(textEdit_);
 }
 
 /**
  * Update ChatEdit widget according to current options.
- * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to
- * PsiOptions, make this slot private.
  */
 void ChatEditProxy::optionsChanged()
 {
-    setLineEditEnabled(PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
+    bool isLineEdit = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
+    if (lineEditEnabled_ != isLineEdit) {
+        lineEditEnabled_ = isLineEdit;
+        updateLayout();
+    }
+}
+
+void ChatEditProxy::addRrecordButton()
+{
+    bool isEnabled = PsiOptions::instance()->getOption(audioMessage).toBool();
+    if (!textEdit_->hasSoundRecButton() && isEnabled) {
+        textEdit_->addSoundRecButton();
+    } else if (textEdit_->hasSoundRecButton() && !isEnabled) {
+        textEdit_->removeSoundRecButton();
+    }
 }

@@ -338,8 +338,6 @@ void PsiChatDlg::initUi()
 #ifdef PSI_PLUGINS
     PluginManager::instance()->setupChatTab(this, account(), jid().full());
 #endif
-    if (PsiOptions::instance()->getOption("options.media.audio-message").toBool())
-        ui_.mle->chatEdit()->addSoundRecButton();
 }
 
 void PsiChatDlg::verticalSplitterMoved(int, int)
@@ -890,12 +888,6 @@ void PsiChatDlg::optionsUpdate()
 
     updateToolbuttons();
     ChatDlg::optionsUpdate();
-    bool audioEnabled = PsiOptions::instance()->getOption("options.media.audio-message").toBool();
-    if (!ui_.mle->chatEdit()->hasSoundRecButton() && audioEnabled) {
-        ui_.mle->chatEdit()->addSoundRecButton();
-    } else if (ui_.mle->chatEdit()->hasSoundRecButton() && !audioEnabled) {
-        ui_.mle->chatEdit()->removeSoundRecButton();
-    }
     // typeahead find bar
     typeahead_->optionsUpdate();
 }
