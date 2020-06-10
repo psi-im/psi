@@ -75,6 +75,18 @@ void ShowPhotoDlg::resizeEvent(QResizeEvent *)
 
 void ShowPhotoDlg::wheelEvent(QWheelEvent *event)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    auto  numDegreesP = event->angleDelta() / 8;
+    int   delta       = numDegreesP.x() ? numDegreesP.x() : numDegreesP.y();
+    int   width, height;
+    QSize ps = label->pixmap(Qt::ReturnByValue).size();
+    ps.scale(ps.width() + delta, ps.height() + delta, Qt::KeepAspectRatio);
+    width  = ps.width();
+    height = ps.height() + toolbar->height();
+    if ((event->position().x() < width) && (event->position().y() < height)) {
+        resize(ps.width(), ps.height() + toolbar->height());
+    }
+#else
     int   delta = event->delta() / 8;
     int   width, height;
     QSize ps = label->pixmap()->size();
@@ -84,4 +96,5 @@ void ShowPhotoDlg::wheelEvent(QWheelEvent *event)
     if ((event->x() < width) && (event->y() < height)) {
         resize(ps.width(), ps.height() + toolbar->height());
     }
+#endif
 }

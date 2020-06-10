@@ -1136,7 +1136,11 @@ void HistoryDlg::getNext()
 
 void HistoryDlg::getDate()
 {
-    QDateTime ts(ui_.calendar->selectedDate());
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    QDateTime ts = ui_.calendar->selectedDate().startOfDay(Qt::UTC);
+#else
+    QDateTime ts(ui_.calendar->selectedDate(), { 0, 0 }, Qt::UTC);
+#endif
     startRequest();
     displayProxy->displayFromDate(getCurrentAccountId(), d->jid, ts);
 }

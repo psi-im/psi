@@ -107,7 +107,13 @@ void NetworkAccessManager::route(const QString &path, const NetworkAccessManager
 NAMNotFoundReply::NAMNotFoundReply(QObject *parent) : QNetworkReply(parent)
 {
     setError(QNetworkReply::ContentNotFoundError, "Not found");
-    QTimer::singleShot(0, this, [this]() { emit error(QNetworkReply::ContentNotFoundError); });
+    QTimer::singleShot(0, this, [this]() {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        emit errorOccurred(QNetworkReply::ContentNotFoundError);
+#else
+        emit error(QNetworkReply::ContentNotFoundError);
+#endif
+    });
     QTimer::singleShot(0, this, &NAMNotFoundReply::finished);
 }
 

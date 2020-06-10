@@ -468,7 +468,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
                 }
             xepList["jabber:x:oob"] = QVariant(urlList);
             QJsonDocument doc(QJsonObject::fromVariantMap(xepList));
-            extraData = QString::fromUtf8(doc.toBinaryData());
+            extraData = QString::fromUtf8(doc.toJson());
         }
         query->bindValue(":extra_data", extraData);
     } else {

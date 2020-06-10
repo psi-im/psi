@@ -70,4 +70,11 @@ bool ByteArrayReply::open(OpenMode mode)
     return buffer.open(mode);
 }
 
-void ByteArrayReply::signalError() { emit error(error()); }
+void ByteArrayReply::signalError()
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    emit errorOccurred(error());
+#else
+    emit error(error());
+#endif
+}
