@@ -297,7 +297,7 @@ void PsiChatDlg::initUi()
 
     PsiToolTip::install(ui_.avatar);
 
-    connect(account()->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), this, SLOT(updateAvatar(const Jid &)));
+    connect(account()->avatarFactory(), &AvatarFactory::avatarChanged, this, &PsiChatDlg::updateAvatar);
 
     pm_settings_ = new QMenu(this);
     connect(pm_settings_, SIGNAL(aboutToShow()), SLOT(buildMenu()));
@@ -305,7 +305,7 @@ void PsiChatDlg::initUi()
     ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
     ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
-    connect(account()->client()->capsManager(), SIGNAL(capsChanged(const Jid &)), SLOT(capsChanged(const Jid &)));
+    connect(account()->client()->capsManager(), &CapsManager::capsChanged, this, &PsiChatDlg::capsChanged);
 
     logHeight      = PsiOptions::instance()->getOption("options.ui.chat.log-height").toInt();
     chateditHeight = PsiOptions::instance()->getOption("options.ui.chat.chatedit-height").toInt();
