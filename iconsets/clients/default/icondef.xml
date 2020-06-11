@@ -13,6 +13,10 @@
 Based on the huge on from Psi+ repository.
                 </description>
            </meta>
+        <icon>
+                <x xmlns='name'>clients/adium</x>
+                <object mime='image/png'>adium.png</object>
+        </icon>
 
         <icon>
                 <x xmlns='name'>clients/bitlbee</x>
