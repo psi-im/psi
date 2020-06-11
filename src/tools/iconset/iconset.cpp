@@ -1195,17 +1195,18 @@ public:
             return false;
         }
 
-        QFileInfo finfo;
-        bool      found = false;
-        for (auto const &fext : exts) {
-            auto fn      = dir + QLatin1String("/") + baseFN + QLatin1String(".") + fext;
-            auto tmpInfo = QFileInfo(fn);
-            if (tmpInfo.isReadable()) {
-                finfo = tmpInfo;
-                found = true;
-                break;
+        auto      baseFNPath = dir + QLatin1String("/") + baseFN;
+        QFileInfo finfo(baseFNPath);
+        bool      found = finfo.isReadable();
+        if (!found)
+            for (auto const &fext : exts) {
+                auto tmpFN = baseFNPath + QLatin1String(".") + fext;
+                finfo      = QFileInfo(tmpFN);
+                found      = finfo.isReadable();
+                if (found) {
+                    break;
+                }
             }
-        }
 
         if (!found) {
             qWarning("file not found for emoticon: %s", qPrintable(baseFN));

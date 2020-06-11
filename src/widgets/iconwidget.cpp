@@ -122,6 +122,8 @@ static const char *cancel_xpm[] = { "22 22 60 1",
                                     "                      " };
 #endif
 
+constexpr int ScalableIconFactor = 3;
+
 //----------------------------------------------------------------------------
 // RealIconWidgetItem
 //----------------------------------------------------------------------------
@@ -425,7 +427,8 @@ public:
         connect(&icon, SIGNAL(pixmapChanged()), SLOT(update()));
         icon.activated(false);
 
-        h = icon.pixmap().height();
+        auto iconSize = qApp->fontMetrics().height() * ScalableIconFactor;
+        h             = icon.pixmap(QSize(iconSize, iconSize)).height();
 
         QStringList str;
         for (PsiIcon::IconText t : icon.text())
@@ -467,7 +470,9 @@ public:
     void paint(QPainter *painter) const
     {
 #ifndef WIDGET_PLUGIN
-        painter->drawPixmap(QPoint((2 * margin + w - icon.pixmap().width()) / 2, margin), icon.pixmap());
+        auto iconSize = qApp->fontMetrics().height() * ScalableIconFactor;
+        painter->drawPixmap(QPoint((2 * margin + w - icon.pixmap(QSize(iconSize, iconSize)).width()) / 2, margin),
+                            icon.pixmap(QSize(iconSize, iconSize)));
 #else
         Q_UNUSED(painter);
 #endif
@@ -487,10 +492,11 @@ IconsetDisplay::~IconsetDisplay() { }
 void IconsetDisplay::setIconset(const Iconset &iconset)
 {
 #ifndef WIDGET_PLUGIN
-    int                      w  = 0;
-    QListIterator<PsiIcon *> it = iconset.iterator();
+    int                      w        = 0;
+    auto                     iconSize = qApp->fontMetrics().height() * ScalableIconFactor;
+    QListIterator<PsiIcon *> it       = iconset.iterator();
     while (it.hasNext()) {
-        w = qMax(w, it.next()->pixmap().width());
+        w = qMax(w, it.next()->pixmap(QSize(iconSize, iconSize)).width());
     }
 
     it = iconset.iterator();
