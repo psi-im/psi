@@ -51,6 +51,7 @@ class IconSelectButton : public QAbstractButton {
 private:
     PsiIcon *ic;
     QSize    s;
+    QSize    maxIconSize;
     bool     animated;
 
 public:
@@ -71,7 +72,7 @@ public:
         }
     }
 
-    void setIcon(const PsiIcon *i)
+    void setIcon(const PsiIcon *i, const QSize &maxSize = QSize())
     {
         iconStop();
 
@@ -80,6 +81,7 @@ public:
             ic = nullptr;
         }
 
+        maxIconSize = maxSize;
         if (i)
             ic = new PsiIcon(*(const_cast<PsiIcon *>(i)));
         else
@@ -175,7 +177,10 @@ private:
         style()->drawControl(QStyle::CE_MenuItem, &opt, &p, this);
 
         if (ic) {
-            QPixmap pix = ic->pixmap();
+            QPixmap pix = ic->pixmap(maxIconSize);
+            if (pix.width() > maxIconSize.width() || pix.height() > maxIconSize.height()) {
+                pix = pix.scaled(maxIconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            }
             p.drawPixmap((width() - pix.width()) / 2, (height() - pix.height()) / 2, pix);
         }
     }
@@ -285,13 +290,20 @@ void IconSelect::setIconset(const Iconset &iconset)
     // first we need to find optimal size for elements and don't forget about
     // taking too much screen space
     float w = 0, h = 0;
+    int   maxPrefTileHeight = fontInfo().pixelSize() * 1.5;
+    auto  maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
 
     double                   count; // the 'double' type is somewhat important for MSVC.NET here
     QListIterator<PsiIcon *> it = is.iterator();
     for (count = 0; it.hasNext(); count++) {
-        PsiIcon *icon = it.next();
-        w += icon->pixmap().width();
-        h += icon->pixmap().height();
+        PsiIcon *icon    = it.next();
+        auto     pix     = icon->pixmap(maxPrefSize);
+        auto     pixSize = pix.size();
+        if (pix.width() > maxPrefSize.width() || pix.height() > maxPrefSize.height()) {
+            pixSize.scale(maxPrefSize, Qt::KeepAspectRatio);
+        }
+        w += pixSize.width();
+        h += pixSize.height();
     }
     w /= float(count);
     h /= float(count);
@@ -324,7 +336,7 @@ void IconSelect::setIconset(const Iconset &iconset)
 
         IconSelectButton *b = new IconSelectButton(this);
         grid->addWidget(b, row, column);
-        b->setIcon(it.next());
+        b->setIcon(it.next(), maxPrefSize);
         b->setSizeHint(QSize(tileSize, tileSize));
         connect(b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
         connect(b, SIGNAL(textSelected(QString)), menu, SIGNAL(textSelected(QString)));
