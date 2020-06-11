@@ -29,6 +29,7 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QSet>
+#include <QStandardPaths>
 #include <QTextStream>
 
 using namespace XMPP;
