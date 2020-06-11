@@ -175,7 +175,7 @@ function startPsiTheme(shared) {
                     }
                     var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
                     var id = shared.cdata.awaitingReceipt?" id='receipt"+shared.cdata.id+"'":"";
-                    icon = icon?`<img class="icon" src="/psi/icon/${icon}"${sizeStyle}${id} />`:'';
+                    icon = icon?`<img class="psi-icon" src="/psi/icon/${icon}"${sizeStyle}${id} />`:'';
                 }
                 return icon;
             }

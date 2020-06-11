@@ -140,8 +140,12 @@ int PsiThemeModel::rowCount(const QModelIndex &parent) const
 QVariant PsiThemeModel::data(const QModelIndex &index, int role) const
 {
     switch (role) {
-    case Qt::DecorationRole:
-        return IconsetFactory::iconPtr(QString("clients/") + themesInfo[index.row()].id.section('/', 0, 0))->icon();
+    case Qt::DecorationRole: {
+        auto pi = IconsetFactory::iconPtr(QString("clients/") + themesInfo[index.row()].id.section('/', 0, 0));
+        if (pi)
+            return pi->icon();
+        return QVariant();
+    }
     case Qt::ToolTipRole: {
         QStringList          toolTip;
         const ThemeItemInfo &ti = themesInfo[index.row()];

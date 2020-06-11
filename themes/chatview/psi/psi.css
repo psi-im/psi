@@ -84,12 +84,23 @@
 }
 /* END OF AUDIO MESSAGE */
 
-.preview {
+.psi-preview {
     max-width: 70%;
     max-height: 95%;
 }
 
-.preview > img {
+.psi-preview > img {
     max-width: 100%;
     max-height: 100%;
+}
+
+img.psi-icon {
+    vertical-align:bottom;
+    max-height: 1em;
+    max-width: 1em;
+}
+
+img.psi-smiley {
+    max-height: 1.5em;
+    vertical-align:bottom;
 }

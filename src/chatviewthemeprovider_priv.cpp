@@ -103,6 +103,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
             auto ba = icon->raw();
             res->addHeader("Content-Type", icon->mimeType().toLatin1());
             res->addHeader("Content-Length", QByteArray::number(ba.size()));
+            if (ba.size() > 1 && std::uint8_t(ba.at(0)) == 0x1f && std::uint8_t(ba.at(1)) == 0x8b) {
+                res->addHeader("Content-Encoding", "gzip");
+            }
             res->setStatusCode(qhttp::ESTATUS_OK);
             res->end(ba);
             return true;

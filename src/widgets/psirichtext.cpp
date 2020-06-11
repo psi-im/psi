@@ -103,6 +103,11 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     Q_UNUSED(posInDocument)
     const QTextCharFormat charFormat = format.toCharFormat();
 
+    /*
+     * >0 - size in points
+     *  0 - original size
+     * <0 - scale factor relative to font size after converting to absolute(positive) value
+     */
     auto htmlSize = charFormat.doubleProperty(TextIconFormat::IconSize);
     auto iconName = charFormat.stringProperty(TextIconFormat::IconName);
 
@@ -111,20 +116,22 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         qWarning("invalid icon: %s", qPrintable(iconName));
         return QSizeF();
     }
+
     if (htmlSize > 0) {
         auto pxSize = pointToPixel(htmlSize);
         return icon->size(QSize(pxSize, pxSize));
     }
 
-    auto origSize = icon->size();
-    if (origSize.isNull() || htmlSize == 0)
-        return origSize;
+    if (htmlSize == 0) {
+        return icon->size();
+    }
 
-    auto fontSize = QFontInfo(charFormat.font()).pixelSize();
-    if (origSize.height() > HugeIconTextViewK * fontSize)
-        return origSize.scaled(fontSize, fontSize, Qt::KeepAspectRatio);
+    if (icon->isScalable()) {
+        auto fontSize = QFontInfo(charFormat.font()).pixelSize() * std::abs(htmlSize);
+        return icon->size(QSize(fontSize, fontSize));
+    }
 
-    return origSize;
+    return icon->size();
 }
 
 void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument,
@@ -303,7 +310,7 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
                     iconText = TextUtil::unescape(matchText.capturedTexts()[1]);
                 }
 
-                double iconSize  = -1; // not defined. will be resized to be aligned with text if necessary
+                double iconSize  = -EqTextIconK; // not defined. will be resized to be aligned with text if necessary
                 auto   matchSize = rxSize.match(fragment);
                 if (matchSize.hasMatch()) {
                     auto szText = matchSize.capturedTexts()[1];

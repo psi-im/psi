@@ -213,6 +213,8 @@ function initPsiTheme() {
                 var img = document.createElement('img');
                 img.src = "/psi/icon/" + obj.getAttribute("name");
                 img.title = obj.getAttribute("text");
+                img.className = "psi-" + (obj.getAttribute("type") || "icon");
+                // ignore size attribute. it's up to css style how to size.
                 obj.parentNode.replaceChild(img, obj);
             },
 
@@ -270,7 +272,7 @@ function initPsiTheme() {
                 }
 
                 if (link) {
-                    var iframe = chat.util.createHtmlNode('<div class="youtube preview"><iframe width="560" height="315" src="'+ link +
+                    var iframe = chat.util.createHtmlNode('<div class="youtube psi-preview"><iframe width="560" height="315" src="'+ link +
                                                           '" frameborder="0" allowfullscreen="1"></iframe></div>');
                     linkEl.parentNode.insertBefore(iframe, linkEl.nextSibling);
                 }
@@ -278,20 +280,20 @@ function initPsiTheme() {
 
             replaceImage : function(linkEl)
             {
-                var img = chat.util.createHtmlNode('<div class="image preview"><img style="display:block;max-width:560px; max-height:315px" '+
+                var img = chat.util.createHtmlNode('<div class="image psi-preview"><img style="display:block;max-width:560px; max-height:315px" '+
                                                    'src="'+ linkEl.href +'" border="0">');
                 linkEl.parentNode.insertBefore(img, linkEl.nextSibling);
             },
 
             replaceAudio : function(linkEl)
             {
-                var audio = chat.util.createHtmlNode('<div class="audio preview"><audio controls="1"><source src="'+ linkEl.href +'"></audio></div>');
+                var audio = chat.util.createHtmlNode('<div class="audio psi-preview"><audio controls="1"><source src="'+ linkEl.href +'"></audio></div>');
                 linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
             },
 
             replaceVideo : function(linkEl)
             {
-                var audio = chat.util.createHtmlNode('<div class="video preview"><video width="560" height="315" controls="1"><source src="'+ linkEl.href +'"></video></div>');
+                var audio = chat.util.createHtmlNode('<div class="video psi-preview"><video width="560" height="315" controls="1"><source src="'+ linkEl.href +'"></video></div>');
                 linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
             },
 
@@ -383,7 +385,7 @@ function initPsiTheme() {
                         new AudioMessage(player);
                     }
                     else if (type.startsWith("image")) {
-                        let img = chat.util.createHtmlNode(`<div class="image preview"><img src="/psi/account/${session.account}/sharedfile/${source}"></div>`);
+                        let img = chat.util.createHtmlNode(`<div class="image psi-preview"><img src="/psi/account/${session.account}/sharedfile/${source}"></div>`);
                         if (share.nextSibling)
                             share.parentNode.insertBefore(img, share.nextSibling);
                         else

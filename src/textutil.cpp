@@ -1,6 +1,7 @@
 #include "textutil.h"
 
 #include "coloropt.h"
+#include "common.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "rtparse.h"
@@ -512,9 +513,9 @@ QString TextUtil::emoticonify(const QString &in)
             if (!closest)
                 break;
 
-            p.putRich(QString("<icon name=\"%1\" text=\"%2\">")
-                          .arg(TextUtil::escape(closest->name()))
-                          .arg(TextUtil::escape(str.mid(foundPos, foundLen))));
+            p.putRich(QString("<icon name=\"%1\" text=\"%2\" size=\"%3\" type=\"smiley\">")
+                          .arg(TextUtil::escape(closest->name()), TextUtil::escape(str.mid(foundPos, foundLen)),
+                               QString::number(-BiggerTextIconK)));
             i = foundPos + foundLen;
         }
     }
