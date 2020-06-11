@@ -38,6 +38,8 @@
 #include <QUrl>
 #include <QVariant>
 
+#include <cmath>
+
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #include "qite.h"
@@ -127,7 +129,7 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     }
 
     if (icon->isScalable()) {
-        auto fontSize = QFontInfo(charFormat.font()).pixelSize() * std::abs(double(htmlSize));
+        auto fontSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
         return icon->size(QSize(fontSize, fontSize));
     }
 
