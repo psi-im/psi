@@ -1180,7 +1180,14 @@ void MainWin::buildTrayMenu()
             actionCopy->setCheckable(action->isCheckable());
             actionCopy->setChecked(action->isChecked());
             connect(actionCopy, &QAction::triggered, action, &QAction::trigger);
-            connect(actionCopy, &QAction::toggled, action, &QAction::setChecked);
+            // connect(actionCopy, &QAction::toggled, action, &QAction::setChecked);
+            connect(
+                action, &QAction::changed, actionCopy,
+                [action, actionCopy]() {
+                    if (actionCopy->isCheckable())
+                        actionCopy->setChecked(action->isChecked());
+                },
+                Qt::QueuedConnection);
             d->trayMenu->addAction(actionCopy);
         };
 
