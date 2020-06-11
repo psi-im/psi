@@ -168,6 +168,10 @@ public:
             newData = data;
         } else {
             newData = scaleAvatar(data);
+            if (newData.isNull()) { // the image failed to load to QImage. likely supported but broken image
+                qWarning("got broken image (type=%d) from %s", int(iconType), qPrintable(jid));
+                return NoData;
+            }
             if (!newData.isSharedWith(data)) { // some new data. so resized
                 metaType = QLatin1String("image/png");
             }
