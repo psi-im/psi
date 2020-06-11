@@ -166,6 +166,25 @@ static int countIconsets(QString addDir, QStringList excludeList)
     return count;
 }
 
+static int countKdeEmoticonsIconsets(QStringList excludeList)
+{
+    int count = 0;
+
+    for (const QString &d : QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
+                                                      QStandardPaths::LocateDirectory)) {
+        QDir dir(d);
+        for (const QFileInfo &fi : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllDirs)) {
+            QString iconsetId = fi.fileName();
+            if (excludeList.contains(iconsetId))
+                continue;
+            count++;
+            excludeList << iconsetId;
+        }
+    }
+
+    return count;
+}
+
 //----------------------------------------------------------------------------
 // IconsetLoadEvent
 //----------------------------------------------------------------------------
@@ -218,18 +237,23 @@ private:
 class IconsetLoadThread : public QThread {
 public:
     IconsetLoadThread(QObject *parent, QString addPath);
-    void excludeIconsets(QStringList);
+    void        excludeIconsets(QStringList);
+    inline void probeKdeEmoticons(bool probe) { kdeEmoticons = probe; }
 
     bool cancelled;
 
 protected:
     void run();
+    void loadPsiIconsets();
+    void loadKdeEmoticons();
     void postEvent(QEvent *);
 
 private:
     QObject *   parent;
     QString     addPath;
+    QStringList failedList;
     QStringList excludeList;
+    bool        kdeEmoticons = false;
 };
 
 IconsetLoadThread::IconsetLoadThread(QObject *p, QString path) : cancelled(false), parent(p), addPath(path) { }
@@ -254,11 +278,59 @@ void IconsetLoadThread::postEvent(QEvent *e)
 
 void IconsetLoadThread::run()
 {
+    loadPsiIconsets();
+    if (kdeEmoticons)
+        loadKdeEmoticons();
+
+    for (int i = 0; i < failedList.size(); i++) {
+        postEvent(new IconsetLoadEvent(this, nullptr));
+    }
+
+    postEvent(new IconsetFinishEvent());
+    QApplication::postEvent(qApp, new IconsetLoadThreadDestroyEvent(this)); // self destruct
+}
+
+void IconsetLoadThread::loadKdeEmoticons()
+{
+    QStringList failedList;
+    for (const QString &d : QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
+                                                      QStandardPaths::LocateDirectory)) {
+        QDir dir(d);
+        for (const QFileInfo &fi : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllDirs)) {
+
+            threadCancelled.lock();
+            bool cancel = cancelled;
+            threadCancelled.unlock();
+
+            if (cancel)
+                return;
+
+            QString iconsetId = fi.fileName();
+            if (excludeList.contains(iconsetId) || !Iconset::isSourceAllowed(fi))
+                continue;
+
+            Iconset *is = new Iconset;
+
+            if (is->load(fi.absoluteFilePath(), Iconset::Format::KdeEmoticons)) {
+                failedList.removeOne(is->id());
+                excludeList << is->id();
+
+                // don't forget to delete iconset in ::event()!
+                postEvent(new IconsetLoadEvent(this, is));
+            } else {
+                delete is;
+                failedList << iconsetId;
+            }
+        }
+    }
+}
+
+void IconsetLoadThread::loadPsiIconsets()
+{
     threadMutex.lock();
     QStringList dirs = ApplicationInfo::dataDirs();
     threadMutex.unlock();
 
-    QStringList failedList;
     for (const QString &dataDir : dirs) {
         QDir dir(dataDir + "/iconsets" + addPath);
         for (const QFileInfo &iconsetFI : dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries)) {
@@ -270,7 +342,7 @@ void IconsetLoadThread::run()
             threadCancelled.unlock();
 
             if (cancel)
-                goto getout;
+                return;
 
             QString iconsetId = iconsetFI.absoluteFilePath().section('/', -2);
             if (excludeList.contains(iconsetId))
@@ -290,14 +362,6 @@ void IconsetLoadThread::run()
             }
         }
     }
-
-    for (int i = 0; i < failedList.size(); i++) {
-        postEvent(new IconsetLoadEvent(this, nullptr));
-    }
-
-getout:
-    postEvent(new IconsetFinishEvent());
-    QApplication::postEvent(qApp, new IconsetLoadThreadDestroyEvent(this)); // self destruct
 }
 
 //----------------------------------------------------------------------------
@@ -528,13 +592,14 @@ void OptionsTabIconsetEmoticons::restoreOptions()
         d->progress->show();
         d->progress->setValue(0);
 
-        numIconsets    = countIconsets("/emoticons", loaded);
+        numIconsets    = countIconsets("/emoticons", loaded) + countKdeEmoticonsIconsets(loaded);
         iconsetsLoaded = 0;
 
         cancelThread();
 
         thread = new IconsetLoadThread(this, "/emoticons");
         thread->excludeIconsets(loaded);
+        thread->probeKdeEmoticons(true);
         thread->start();
     }
 }

@@ -122,6 +122,21 @@ public:
         return QString();
     }
 
+    QString kdeEmoticonsPath(QString name)
+    {
+        for (const QString &d : QStandardPaths::locateAll(
+                 QStandardPaths::GenericDataLocation, QLatin1String("emoticons"), QStandardPaths::LocateDirectory)) {
+            QString   fileName = d + "/" + name;
+            QFileInfo fi(fileName);
+            if (fi.exists()) {
+                return fileName;
+            }
+        }
+
+        qWarning("PsiIconset::Private::kdeEmoticonsPath(\"%s\"): not found", qPrintable(name));
+        return QString();
+    }
+
     void stripFirstAnimFrame(Iconset &is)
     {
         QListIterator<PsiIcon *> it = is.iterator();
@@ -314,6 +329,13 @@ public:
             Iconset *is = new Iconset;
             if (is->load(iconsetPath("emoticons/" + name))) {
                 // PsiIconset::removeAnimation(is);
+                is->addToFactory();
+                emo.append(is);
+                continue;
+            }
+            delete is;
+            is = new Iconset;
+            if (is->load(kdeEmoticonsPath(name), Iconset::Format::KdeEmoticons)) {
                 is->addToFactory();
                 emo.append(is);
             } else

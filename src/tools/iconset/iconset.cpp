@@ -1175,6 +1175,87 @@ public:
     static int icon_counter; // used to give unique names to icons
 
     // will return 'true' when icon is loaded ok
+    bool loadKdeEmoticon(const QDomElement &emot, const QString &dir, QSize &size)
+    {
+        static const QStringList exts   = { "png", "gif", "svg", "svgz", "mng" };
+        auto                     baseFN = emot.attribute(QLatin1String("file"));
+
+        PsiIcon icon;
+        icon.blockSignals(true);
+
+        QList<PsiIcon::IconText> text;
+
+        for (QDomElement i = emot.firstChildElement(QLatin1String("string")); !i.isNull();
+             i             = i.nextSiblingElement(QLatin1String("string"))) {
+            text.append({ "", i.text() });
+        }
+
+        if (text.isEmpty()) {
+            qWarning("text is empty for emoticon: %s", qPrintable(baseFN));
+            return false;
+        }
+
+        QFileInfo finfo;
+        bool      found = false;
+        for (auto const &fext : exts) {
+            auto fn      = dir + QLatin1String("/") + baseFN + QLatin1String(".") + fext;
+            auto tmpInfo = QFileInfo(fn);
+            if (tmpInfo.isReadable()) {
+                finfo = tmpInfo;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            qWarning("file not found for emoticon: %s", qPrintable(baseFN));
+            return false;
+        }
+
+        icon.setText(text);
+        icon.setName(baseFN);
+
+        QString mime;
+        bool    isScalable = false;
+        bool    isAnimated = false;
+        if (finfo.suffix() == "svg" || finfo.suffix() == "svgz") {
+            isScalable = true;
+            mime       = QLatin1String("image/svg+xml");
+        } else if (finfo.suffix() == "png") {
+            mime = QLatin1String("image/png");
+        } else if (finfo.suffix() == "gif") {
+            mime       = QLatin1String("image/gif");
+            isAnimated = true;
+        } else {
+            mime = QLatin1String("image/mng");
+        }
+
+        QFile file(finfo.filePath());
+        if (!(file.open(QIODevice::ReadOnly) && icon.loadFromData(mime, file.readAll(), isAnimated, isScalable))) {
+            qWarning("failed to read emoticon: %s", qPrintable(baseFN));
+            return false;
+        }
+
+        // construct RegExp
+        if (text.count()) {
+            QStringList regexp;
+            for (PsiIcon::IconText t : text) {
+                regexp += QRegExp::escape(t.text);
+            }
+
+            // make sure there is some form of whitespace on at least one side of the text string
+            // regexp = QString("(\\b(%1))|((%2)\\b)").arg(regexp).arg(regexp);
+            icon.setRegExp(QRegExp(regexp.join("|")));
+        }
+        size = icon.size();
+
+        icon.blockSignals(false);
+
+        append(baseFN, new PsiIcon(icon));
+        return true;
+    }
+
+    // will return 'true' when icon is loaded ok
     bool loadIcon(const QDomElement &i, const QString &dir)
     {
         PsiIcon icon;
@@ -1352,6 +1433,36 @@ public:
         return loadSuccess;
     }
 
+    bool loadKdeEmoticons(const QDomDocument &doc, const QString dir)
+    {
+        QDomElement base = doc.documentElement();
+        if (base.tagName() != "messaging-emoticon-map") {
+            qWarning("failed to load iconset invalid toplevel xml element");
+            return false;
+        }
+
+        bool success = false;
+        name         = QFileInfo(dir).fileName();
+        version      = "unknown";
+        description  = "KDE Emoticons";
+        iconSize_    = 0;
+
+        for (QDomElement i = base.firstChildElement(QLatin1String("emoticon")); !i.isNull();
+             i             = i.nextSiblingElement(QLatin1String("emoticon"))) {
+
+            QSize s;
+            bool  ret = loadKdeEmoticon(i, dir, s);
+            if (ret) {
+                success = true;
+                if (s.height() > iconSize_) {
+                    iconSize_ = s.height();
+                }
+            }
+        }
+
+        return success;
+    }
+
     // would return 'true' on success
     bool load(const QDomDocument &doc, const QString dir)
     {
@@ -1484,7 +1595,7 @@ int Iconset::count() const { return d->list.count(); }
  * Loads Icons and additional information from directory \a dir. Directory can usual directory,
  * or a .zip/.jisp archive. There must exist file named \c icondef.xml in that directory.
  */
-bool Iconset::load(const QString &dir)
+bool Iconset::load(const QString &dir, Format format)
 {
     if (dir.isEmpty()) {
         return false;
@@ -1498,14 +1609,29 @@ bool Iconset::load(const QString &dir)
     // QPixmap::setDefaultOptimization( QPixmap::MemoryOptim );
 
     bool ret = false;
-    d->id    = dir.section('/', -2);
 
     QByteArray ba;
-    ba = d->loadData("icondef.xml", dir);
+
+    QString fileName;
+    switch (format) {
+    case Format::Psi:
+        d->id    = dir.section('/', -2);
+        fileName = QLatin1String("icondef.xml");
+        break;
+    case Format::KdeEmoticons:
+        d->id    = dir.section('/', -1);
+        fileName = QLatin1String("emoticons.xml");
+        break;
+    default:
+        return false;
+    }
+
+    ba = d->loadData(fileName, dir);
     if (!ba.isEmpty()) {
         QDomDocument doc;
         if (doc.setContent(ba, false)) {
-            if (d->load(doc, dir)) {
+            if ((format == Format::Psi && d->load(doc, dir))
+                || (format == Format::KdeEmoticons && d->loadKdeEmoticons(doc, dir))) {
                 d->filename = dir;
                 ret         = true;
             }

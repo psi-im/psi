@@ -181,6 +181,8 @@ private:
 
 class Iconset {
 public:
+    enum class Format { Psi, KdeEmoticons };
+
     Iconset();
     Iconset(const Iconset &);
     ~Iconset();
@@ -191,7 +193,7 @@ public:
     void clear();
     int  count() const;
 
-    bool load(const QString &dir);
+    bool load(const QString &dir, Format format = Format::Psi);
 
     const PsiIcon *icon(const QString &) const;
     void           setIcon(const QString &, const PsiIcon &);
