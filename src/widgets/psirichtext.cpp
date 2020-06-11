@@ -127,7 +127,7 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     }
 
     if (icon->isScalable()) {
-        auto fontSize = QFontInfo(charFormat.font()).pixelSize() * std::abs(htmlSize);
+        auto fontSize = QFontInfo(charFormat.font()).pixelSize() * std::abs(double(htmlSize));
         return icon->size(QSize(fontSize, fontSize));
     }
 
