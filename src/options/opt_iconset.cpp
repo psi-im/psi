@@ -22,6 +22,7 @@
 #include <QFont>
 #include <QMutex>
 #include <QPalette>
+#include <QStandardPaths>
 #include <QTabWidget>
 #include <QThread>
 #include <QTreeWidget>
