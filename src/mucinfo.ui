@@ -19,7 +19,7 @@
      <item row="0" column="0">
       <widget class="QLabel" name="lblAccountTitle">
        <property name="text">
-        <string>Account</string>
+        <string>Account:</string>
        </property>
       </widget>
      </item>
@@ -33,7 +33,7 @@
      <item row="1" column="0">
       <widget class="QLabel" name="lblMucJidTitile">
        <property name="text">
-        <string>ID</string>
+        <string>ID:</string>
        </property>
       </widget>
      </item>
@@ -50,7 +50,7 @@
      <item row="2" column="0">
       <widget class="QLabel" name="lblDiscoNameTitile">
        <property name="text">
-        <string>Name</string>
+        <string>Name:</string>
        </property>
       </widget>
      </item>
@@ -70,7 +70,7 @@
      <item row="3" column="0">
       <widget class="QLabel" name="lblMucDescTitle">
        <property name="text">
-        <string>Description</string>
+        <string>Description:</string>
        </property>
       </widget>
      </item>
