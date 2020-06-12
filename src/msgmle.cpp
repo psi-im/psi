@@ -581,8 +581,12 @@ XMPP::HTMLElement ChatEdit::toHTMLElement()
     QDomDocument doc;
     if (!doc.setContent(html))
         return elem;
-    QDomElement htmlElem  = doc.firstChildElement("body");
-    QDomElement p         = htmlElem.firstChildElement("p");
+    QDomElement htmlElem = doc.firstChildElement("body");
+    QDomElement p        = htmlElem.firstChildElement("p");
+    if (p.isNull()) {
+        // try Qt 5.15 way
+        p = htmlElem.firstChildElement("table").firstChildElement("tr").firstChildElement("td").firstChildElement("p");
+    }
     QDomElement body      = doc.createElementNS("http://www.w3.org/1999/xhtml", "body");
     bool        foundSpan = false;
     int         paraCnt   = 0;
