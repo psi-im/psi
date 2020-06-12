@@ -64,6 +64,7 @@
 #include "tabdlg.h"
 #include "textutil.h"
 #include "typeaheadfind.h"
+#include "ui_mucinfo.h"
 #include "urlobject.h"
 #include "userlist.h"
 #include "vcardfactory.h"
@@ -217,7 +218,7 @@ public:
     MUCManager *                           mucManager;
     GCUserModel *                          usersModel;
     QString                                self, prev_self;
-    QString                                mucName, discoMucName, vcardMucName;
+    QString                                mucName, discoMucName, discoMucDescription, vcardMucName;
     QString                                password;
     QMap<LanguageManager::LangId, QString> subjectMap;
     bool                                   nonAnonymous; // got status code 100 ?
@@ -1316,6 +1317,8 @@ void GCMainDlg::discoInfoFinished()
     if (i.count() > 0) {
         d->discoMucName = i.first().name;
     }
+    auto x = t->item().findExtension(XData::Data_Result, QLatin1String("http://jabber.org/protocol/muc#roominfo"));
+    d->discoMucDescription = x.getField("muc#roominfo_description").value().value(0);
     if (d->mucNameSource >= Private::TitleDisco) {
         updateMucName();
     }
@@ -1490,15 +1493,15 @@ void GCMainDlg::sendNewTopic(const QMap<LanguageManager::LangId, QString> &topic
 
 void GCMainDlg::doShowInfo()
 {
-    auto dlg = new QDialog(this);
+    auto        dlg = new QDialog(this);
+    Ui::MucInfo ui;
+    ui.setupUi(dlg);
     dlg->setWindowTitle(getDisplayName());
     dlg->setWindowIcon(IconsetFactory::icon("psi/info").icon());
-    auto layout = new QVBoxLayout();
-    dlg->setLayout(layout);
-    auto lbl = new AccountLabel(this);
-    lbl->setAccount(account());
-    lbl->setShowJid(false);
-    layout->addWidget(lbl);
+    ui.lblAccount->setAccount(account());
+    ui.lblMucJid->setText(QString("<a href=\"xmpp:%1?join\">%1</a>").arg(jid().bare()));
+    ui.lblDiscoName->setText(d->discoMucName);
+    ui.lblMucDesc->setText(d->discoMucDescription);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->show();
 }

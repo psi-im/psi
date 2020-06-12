@@ -51,6 +51,7 @@ list(APPEND FORMS
     info.ui
     mood.ui
     mucconfig.ui
+    mucinfo.ui
     mucjoin.ui
     mucreasonseditor.ui
     optioneditor.ui

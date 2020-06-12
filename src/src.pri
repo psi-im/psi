@@ -569,6 +569,7 @@ unix|qtwebengine {
 
 # Qt Designer forms
 FORMS += \
+    $$PWD/mucinfo.ui \
     $$PWD/profileopen.ui \
     $$PWD/profilemanage.ui \
     $$PWD/profilenew.ui \
