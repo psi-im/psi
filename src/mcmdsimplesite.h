@@ -45,7 +45,6 @@ protected:
     QTextEdit *inputWidget;
     bool       open;
     QString    mini_msg_swap;
-    QPalette   palette, cmdPalette;
 };
 
 #endif // MINICMDSIMPLESITE_H

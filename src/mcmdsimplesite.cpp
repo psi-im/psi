@@ -37,7 +37,6 @@ void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
     open = true;
     promptWidget->setText(prompt);
     inputWidget->setText(def);
-    inputWidget->setPalette(cmdPalette);
     promptWidget->show();
 }
 
@@ -45,7 +44,6 @@ void MCmdSimpleSite::mCmdClose()
 {
     open = false;
     inputWidget->setText(mini_msg_swap);
-    inputWidget->setPalette(palette);
     promptWidget->hide();
 }
 
@@ -53,11 +51,4 @@ bool MCmdSimpleSite::isActive() const { return open; }
 
 void MCmdSimpleSite::setPrompt(QLabel *p) { promptWidget = p; }
 
-void MCmdSimpleSite::setInput(QTextEdit *i)
-{
-    inputWidget = i;
-    palette     = inputWidget->palette();
-    cmdPalette  = palette;
-    cmdPalette.setBrush(QPalette::Base, QToolTip::palette().brush(QPalette::ToolTipBase));
-    cmdPalette.setBrush(QPalette::Text, QToolTip::palette().brush(QPalette::ToolTipText));
-}
+void MCmdSimpleSite::setInput(QTextEdit *i) { inputWidget = i; }

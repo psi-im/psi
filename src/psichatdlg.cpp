@@ -1137,7 +1137,7 @@ void PsiChatDlg::doSend()
     }
 }
 
-void PsiChatDlg::doMiniCmd() { mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, tr("Command>")), QStringList()); }
+void PsiChatDlg::doMiniCmd() { mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, tr("Command") + '>'), QStringList()); }
 
 void PsiChatDlg::addContact()
 {
