@@ -77,6 +77,8 @@ TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, qre
     QTextFormat::setProperty(IconText, text);
     QTextFormat::setProperty(IconSize, size);
 
+    setVerticalAlignment(QTextCharFormat::AlignBottom);
+
     // TODO: handle animations
 }
 
@@ -128,9 +130,11 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
         return icon->size();
     }
 
+    auto relSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
     if (icon->isScalable()) {
-        auto fontSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
-        return icon->size(QSize(fontSize, fontSize));
+        return icon->size(QSize(relSize, relSize));
+    } else if (icon->size().height() > relSize * HugeIconTextViewK) { // still too huge
+        return icon->size().scaled(QSize(relSize, relSize), Qt::KeepAspectRatio);
     }
 
     return icon->size();
@@ -156,7 +160,7 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
     }
 
     auto sp = pixmap.scaled(rect.size().toSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    painter->drawPixmap(rect, sp, pixmap.rect());
+    painter->drawPixmap(rect, sp, sp.rect());
 }
 #endif // WIDGET_PLUGIN
 
