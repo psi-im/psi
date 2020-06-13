@@ -6,8 +6,8 @@
   <project_license>GPL-2.0+</project_license>
   <name>Psi</name>
   <name xml:lang="ru">Psi</name>
-  <summary>The cross-platform powerful XMPP client designed for experienced users.</summary>
-  <summary xml:lang="ru">Кроссплатформенный XMPP клиент для опытных пользователей.</summary>
+  <summary>The cross-platform powerful XMPP client designed for experienced users</summary>
+  <summary xml:lang="ru">Кроссплатформенный XMPP клиент для опытных пользователей</summary>
   <description>
     <p>
       Psi is a powerful XMPP client designed for experienced users. It is highly portable and runs on GNU/Linux, MS Windows, macOS, FreeBSD and Haiku.
