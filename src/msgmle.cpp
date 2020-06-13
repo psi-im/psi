@@ -66,7 +66,8 @@ public:
 
     virtual ~CapitalLettersController() { }
 
-    void setAutoCapitalizeEnabled(bool enabled) { enabled_ = enabled; }
+    void setEnabled(bool enabled) { enabled_ = enabled; }
+    bool isEnabled() const { return enabled_; }
 
 private:
     void capitalizeChar(int pos, QChar c) { changeChar(pos, c.toUpper()); }
@@ -407,8 +408,7 @@ void ChatEdit::addToDictionary()
 void ChatEdit::optionsChanged()
 {
     setCheckSpelling(checkSpellingGloballyEnabled());
-    capitalizer_->setAutoCapitalizeEnabled(
-        PsiOptions::instance()->getOption("options.ui.chat.auto-capitalize").toBool());
+    capitalizer_->setEnabled(PsiOptions::instance()->getOption("options.ui.chat.auto-capitalize").toBool());
 }
 
 void ChatEdit::showHistoryMessageNext()

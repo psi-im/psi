@@ -1141,7 +1141,9 @@ void ChatDlg::setInputText(const QString &text)
 {
     // chatEdit()->setPlainText(text); because undo/redo history is reset when the function been called.
     chatEdit()->selectAll();
+    chatEdit()->document()->blockSignals(true); // to disable things like auto-capitalizer
     chatEdit()->insertPlainText(text);
+    chatEdit()->document()->blockSignals(false);
 
     chatEdit()->moveCursor(QTextCursor::End);
 }
