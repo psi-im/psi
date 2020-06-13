@@ -587,20 +587,17 @@ XMPP::HTMLElement ChatEdit::toHTMLElement()
         // try Qt 5.15 way
         p = htmlElem.firstChildElement("table").firstChildElement("tr").firstChildElement("td").firstChildElement("p");
     }
-    QDomElement body      = doc.createElementNS("http://www.w3.org/1999/xhtml", "body");
-    bool        foundSpan = false;
-    int         paraCnt   = 0;
+    QDomElement body    = doc.createElementNS("http://www.w3.org/1999/xhtml", "body");
+    bool        htmlish = false;
     while (!p.isNull()) {
-        p.setAttribute("style", "margin:0;padding:0;"); // p.removeAttribute("style");
-        body.appendChild(p.cloneNode(true).toElement());
-        if (!p.firstChildElement("span").isNull())
-            foundSpan = true;
+        for (auto pc = p.firstChild(); !pc.isNull(); pc = pc.nextSibling()) {
+            if (pc.isElement() && pc.toElement().tagName() != QStringLiteral("br"))
+                htmlish = true;
+            body.appendChild(pc.cloneNode(true));
+        }
         p = p.nextSiblingElement("p");
-        ++paraCnt;
     }
-    if (foundSpan) {
-        if (paraCnt == 1)
-            body.firstChildElement("p").setTagName("span");
+    if (htmlish && body.childNodes().size() > 0) {
         elem.setBody(body);
     }
     return elem;
