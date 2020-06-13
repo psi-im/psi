@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
     <key>CFBundleGetInfoString</key>
-    <string>Cross-platform XMPP client aimed at experienced users.</string>
+    <string>${MACOSX_BUNDLE_LONG_VERSION_STRING}, ${MACOSX_BUNDLE_COPYRIGHT}</string>
     <key>CFBundleIconFile</key>
     <string>${MACOSX_ICON_FILE}</string>
     <key>CFBundleIdentifier</key>
