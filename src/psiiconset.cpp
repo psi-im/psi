@@ -109,32 +109,29 @@ public:
 
     Private(PsiIconset *_psi) { psi = _psi; }
 
-    QString iconsetPath(QString name)
+    QString iconsetPath(QString name, Iconset::Format format = Iconset::Format::Psi)
     {
-        for (const QString &d : ApplicationInfo::dataDirs()) {
-            QString   fileName = d + "/iconsets/" + name;
-            QFileInfo fi(fileName);
-            if (fi.exists()) {
-                return fileName;
+        if (format == Iconset::Format::Psi) {
+            for (const QString &d : ApplicationInfo::dataDirs()) {
+                QString   fileName = d + "/iconsets/" + name;
+                QFileInfo fi(fileName);
+                if (fi.exists()) {
+                    return fileName;
+                }
+            }
+        } else if (format == Iconset::Format::KdeEmoticons) {
+            for (const QString &d :
+                 QStandardPaths::locateAll(QStandardPaths::GenericDataLocation, QLatin1String("emoticons"),
+                                           QStandardPaths::LocateDirectory)) {
+                QString   fileName = d + "/" + name;
+                QFileInfo fi(fileName);
+                if (fi.exists()) {
+                    return fileName;
+                }
             }
         }
 
         qWarning("PsiIconset::Private::iconsetPath(\"%s\"): not found", qPrintable(name));
-        return QString();
-    }
-
-    QString kdeEmoticonsPath(QString name)
-    {
-        for (const QString &d : QStandardPaths::locateAll(
-                 QStandardPaths::GenericDataLocation, QLatin1String("emoticons"), QStandardPaths::LocateDirectory)) {
-            QString   fileName = d + "/" + name;
-            QFileInfo fi(fileName);
-            if (fi.exists()) {
-                return fileName;
-            }
-        }
-
-        qWarning("PsiIconset::Private::kdeEmoticonsPath(\"%s\"): not found", qPrintable(name));
         return QString();
     }
 
@@ -336,7 +333,7 @@ public:
             }
             delete is;
             is = new Iconset;
-            if (is->load(kdeEmoticonsPath(name), Iconset::Format::KdeEmoticons)) {
+            if (is->load(iconsetPath(name, Iconset::Format::KdeEmoticons), Iconset::Format::KdeEmoticons)) {
                 is->addToFactory();
                 emo.append(is);
             } else
