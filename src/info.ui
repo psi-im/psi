@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>429</width>
-    <height>346</height>
+    <width>450</width>
+    <height>323</height>
    </rect>
   </property>
   <property name="sizeGripEnabled" stdset="0">
@@ -31,6 +31,9 @@
    </property>
    <item>
     <widget class="QTabWidget" name="tabwidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
      <widget class="QWidget" name="tab_general">
       <attribute name="title">
        <string>General</string>
@@ -72,7 +75,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>60</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -337,7 +340,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>0</width>
-           <height>20</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -447,7 +450,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>0</width>
-           <height>20</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>

@@ -75,7 +75,7 @@ private slots:
 private:
     class Private;
     Private *d;
-    Ui::Info ui_;
+    Ui::Info m_ui;
     // QPushButton* pb_refresh_;
     // QPushButton* pb_close_;
     // QPushButton* pb_submit_;
@@ -100,7 +100,7 @@ class InfoDlg : public QDialog {
 public:
     InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent = nullptr,
             bool cacheVCard = true);
-    inline InfoWidget *infoWidget() const { return iw; }
+    inline InfoWidget *infoWidget() const { return m_iw; }
 
 protected:
     void closeEvent(QCloseEvent *e);
@@ -111,8 +111,8 @@ private slots:
     void release();
 
 private:
-    Ui::InfoDlg ui_;
-    InfoWidget *iw;
+    Ui::InfoDlg m_ui;
+    InfoWidget *m_iw;
 };
 
 #endif // INFODLG_H

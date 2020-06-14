@@ -199,7 +199,7 @@ public:
 InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard) :
     QWidget(parent)
 {
-    ui_.setupUi(this);
+    m_ui.setupUi(this);
     d            = new Private;
     d->type      = type;
     d->jid       = j;
@@ -231,25 +231,25 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
 
     QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self ? "psi/options" : "psi/info").icon(),
                                      d->type == Self ? tr("Edit names") : tr("View names"), this);
-    ui_.le_fullname->addAction(editnames);
-    ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
+    m_ui.le_fullname->addAction(editnames);
+    m_ui.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
     d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), tr("Open web browser"), this);
     d->homepageAction->setToolTip(tr("Open web browser"));
     d->homepageAction->setVisible(false);
-    ui_.le_homepage->addAction(d->homepageAction);
+    m_ui.le_homepage->addAction(d->homepageAction);
     connect(d->homepageAction, SIGNAL(triggered()), SLOT(goHomepage()));
 
     d->emailsDlg = new AddressTypeDlg(
         AddressTypeDlg::Home | AddressTypeDlg::Work | AddressTypeDlg::X400 | AddressTypeDlg::Pref, this);
     QAction *editaddr = new QAction(IconsetFactory::icon(d->type == Self ? "psi/options" : "psi/info").icon(),
                                     d->type == Self ? tr("Edit") : tr("Details"), this);
-    ui_.le_email->addAction(editaddr);
-    ui_.le_email->widgetForAction(editaddr)->setPopup(d->emailsDlg);
+    m_ui.le_email->addAction(editaddr);
+    m_ui.le_email->widgetForAction(editaddr)->setPopup(d->emailsDlg);
 
-    connect(ui_.te_desc, SIGNAL(textChanged()), this, SLOT(textChanged()));
-    connect(ui_.pb_open, SIGNAL(clicked()), this, SLOT(selectPhoto()));
-    connect(ui_.pb_clear, SIGNAL(clicked()), this, SLOT(clearPhoto()));
-    connect(ui_.tb_photo, SIGNAL(clicked()), SLOT(showPhoto()));
+    connect(m_ui.te_desc, SIGNAL(textChanged()), this, SLOT(textChanged()));
+    connect(m_ui.pb_open, SIGNAL(clicked()), this, SLOT(selectPhoto()));
+    connect(m_ui.pb_clear, SIGNAL(clicked()), this, SLOT(clearPhoto()));
+    connect(m_ui.tb_photo, SIGNAL(clicked()), SLOT(showPhoto()));
     // connect(editnames, SIGNAL(triggered()), d->namesDlg, SLOT(show()));
 
     if (d->type == Self || d->type == MucAdm) {
@@ -275,16 +275,16 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
 
         QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), tr("Edit birthday"), this);
         showcal->setToolTip(tr("Edit birthday"));
-        ui_.le_bday->addAction(showcal);
-        ui_.le_bday->widgetForAction(showcal)->setPopup(d->bdayPopup);
+        m_ui.le_bday->addAction(showcal);
+        m_ui.le_bday->widgetForAction(showcal)->setPopup(d->bdayPopup);
         connect(showcal, SIGNAL(triggered()), this, SLOT(doShowCal()));
         connect(d->calendar, SIGNAL(clicked(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
         connect(d->calendar, SIGNAL(activated(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
         connect(d->noBdayButton, SIGNAL(clicked()), SLOT(doClearBirthDate()));
     } else {
         // Hide buttons
-        ui_.pb_open->hide();
-        ui_.pb_clear->hide();
+        m_ui.pb_open->hide();
+        m_ui.pb_clear->hide();
         setReadOnly(true);
     }
 
@@ -310,9 +310,9 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
     connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)),
             SLOT(contactUnavailable(const Jid &, const Resource &)));
     connect(d->pa, SIGNAL(updateContact(const Jid &)), SLOT(contactUpdated(const Jid &)));
-    ui_.te_status->setReadOnly(true);
-    ui_.te_status->setAcceptRichText(true);
-    PsiRichText::install(ui_.te_status->document());
+    m_ui.te_status->setReadOnly(true);
+    m_ui.te_status->setAcceptRichText(true);
+    PsiRichText::install(m_ui.te_status->document());
     updateStatus();
     for (UserListItem *u : d->findRelevant(j)) {
         for (UserResource r : u->userResourceList()) {
@@ -425,21 +425,21 @@ void InfoWidget::setData(const VCard &i)
     d->le_givenname->setText(i.givenName());
     d->le_middlename->setText(i.middleName());
     d->le_familyname->setText(i.familyName());
-    ui_.le_nickname->setText(i.nickName());
+    m_ui.le_nickname->setText(i.nickName());
     d->bday = QDate::fromString(i.bdayStr(), Qt::ISODate);
     if (d->bday.isValid()) {
-        ui_.le_bday->setText(d->bday.toString(d->dateTextFormat));
+        m_ui.le_bday->setText(d->bday.toString(d->dateTextFormat));
     } else {
-        ui_.le_bday->setText(i.bdayStr());
+        m_ui.le_bday->setText(i.bdayStr());
     }
     const QString fullName = i.fullName();
     if (d->type != Self && d->type != MucAdm && fullName.isEmpty()) {
-        ui_.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName()).arg(i.middleName()).arg(i.familyName()));
+        m_ui.le_fullname->setText(QString("%1 %2 %3").arg(i.givenName()).arg(i.middleName()).arg(i.familyName()));
     } else {
-        ui_.le_fullname->setText(fullName);
+        m_ui.le_fullname->setText(fullName);
     }
 
-    ui_.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
+    m_ui.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
                                 + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
                                 + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
                                 + TextUtil::escape(d->vcard.familyName()));
@@ -457,7 +457,7 @@ void InfoWidget::setData(const VCard &i)
     }
     if (email.userid.isEmpty() && !i.emailList().isEmpty())
         email = internetEmail.userid.isEmpty() ? i.emailList()[0] : internetEmail;
-    ui_.le_email->setText(email.userid);
+    m_ui.le_email->setText(email.userid);
     AddressTypeDlg::AddrTypes addTypes;
     addTypes |= (email.pref ? AddressTypeDlg::Pref : AddressTypeDlg::None);
     addTypes |= (email.home ? AddressTypeDlg::Home : AddressTypeDlg::None);
@@ -466,34 +466,34 @@ void InfoWidget::setData(const VCard &i)
     addTypes |= (email.x400 ? AddressTypeDlg::X400 : AddressTypeDlg::None);
     d->emailsDlg->setTypes(addTypes);
 
-    ui_.le_homepage->setText(i.url());
+    m_ui.le_homepage->setText(i.url());
     d->homepageAction->setVisible(!i.url().isEmpty());
 
     QString phone;
     if (!i.phoneList().isEmpty())
         phone = i.phoneList()[0].number;
-    ui_.le_phone->setText(phone);
+    m_ui.le_phone->setText(phone);
 
     VCard::Address addr;
     if (!i.addressList().isEmpty())
         addr = i.addressList()[0];
-    ui_.le_street->setText(addr.street);
-    ui_.le_ext->setText(addr.extaddr);
-    ui_.le_city->setText(addr.locality);
-    ui_.le_state->setText(addr.region);
-    ui_.le_pcode->setText(addr.pcode);
-    ui_.le_country->setText(addr.country);
+    m_ui.le_street->setText(addr.street);
+    m_ui.le_ext->setText(addr.extaddr);
+    m_ui.le_city->setText(addr.locality);
+    m_ui.le_state->setText(addr.region);
+    m_ui.le_pcode->setText(addr.pcode);
+    m_ui.le_country->setText(addr.country);
 
-    ui_.le_orgName->setText(i.org().name);
+    m_ui.le_orgName->setText(i.org().name);
 
     QString unit;
     if (!i.org().unit.isEmpty())
         unit = i.org().unit[0];
-    ui_.le_orgUnit->setText(unit);
+    m_ui.le_orgUnit->setText(unit);
 
-    ui_.le_title->setText(i.title());
-    ui_.le_role->setText(i.role());
-    ui_.te_desc->setPlainText(i.desc());
+    m_ui.le_title->setText(i.title());
+    m_ui.le_role->setText(i.role());
+    m_ui.te_desc->setPlainText(i.desc());
 
     if (!i.photo().isEmpty()) {
         // printf("There is a picture...\n");
@@ -524,65 +524,65 @@ bool InfoWidget::updatePhoto()
     if (img.isNull()) {
         return false;
     }
-    int max_width  = ui_.tb_photo->width() - 10;  // FIXME: Ugly magic number
-    int max_height = ui_.tb_photo->height() - 10; // FIXME: Ugly magic number
+    int max_width  = m_ui.tb_photo->width() - 10;  // FIXME: Ugly magic number
+    int max_height = m_ui.tb_photo->height() - 10; // FIXME: Ugly magic number
 
-    ui_.tb_photo->setIcon(QPixmap::fromImage(img));
-    ui_.tb_photo->setIconSize(QSize(max_width, max_height));
+    m_ui.tb_photo->setIcon(QPixmap::fromImage(img));
+    m_ui.tb_photo->setIconSize(QSize(max_width, max_height));
     return true;
 }
 
 void InfoWidget::fieldsEnable(bool x)
 {
-    ui_.le_fullname->setEnabled(x);
+    m_ui.le_fullname->setEnabled(x);
     d->le_givenname->setEnabled(x);
     d->le_middlename->setEnabled(x);
     d->le_familyname->setEnabled(x);
-    ui_.le_nickname->setEnabled(x);
-    ui_.le_bday->setEnabled(x);
-    ui_.le_email->setEnabled(x);
-    ui_.le_homepage->setEnabled(x);
-    ui_.le_phone->setEnabled(x);
-    ui_.pb_open->setEnabled(x);
-    ui_.pb_clear->setEnabled(x);
+    m_ui.le_nickname->setEnabled(x);
+    m_ui.le_bday->setEnabled(x);
+    m_ui.le_email->setEnabled(x);
+    m_ui.le_homepage->setEnabled(x);
+    m_ui.le_phone->setEnabled(x);
+    m_ui.pb_open->setEnabled(x);
+    m_ui.pb_clear->setEnabled(x);
 
-    ui_.le_street->setEnabled(x);
-    ui_.le_ext->setEnabled(x);
-    ui_.le_city->setEnabled(x);
-    ui_.le_state->setEnabled(x);
-    ui_.le_pcode->setEnabled(x);
-    ui_.le_country->setEnabled(x);
+    m_ui.le_street->setEnabled(x);
+    m_ui.le_ext->setEnabled(x);
+    m_ui.le_city->setEnabled(x);
+    m_ui.le_state->setEnabled(x);
+    m_ui.le_pcode->setEnabled(x);
+    m_ui.le_country->setEnabled(x);
 
-    ui_.le_orgName->setEnabled(x);
-    ui_.le_orgUnit->setEnabled(x);
-    ui_.le_title->setEnabled(x);
-    ui_.le_role->setEnabled(x);
-    ui_.te_desc->setEnabled(x);
+    m_ui.le_orgName->setEnabled(x);
+    m_ui.le_orgUnit->setEnabled(x);
+    m_ui.le_title->setEnabled(x);
+    m_ui.le_role->setEnabled(x);
+    m_ui.te_desc->setEnabled(x);
 
     setEdited(false);
 }
 
 void InfoWidget::setEdited(bool x)
 {
-    ui_.le_fullname->setModified(x);
+    m_ui.le_fullname->setModified(x);
     d->le_givenname->setModified(x);
     d->le_middlename->setModified(x);
     d->le_familyname->setModified(x);
-    ui_.le_nickname->setModified(x);
-    ui_.le_bday->setModified(x);
-    ui_.le_email->setModified(x);
-    ui_.le_homepage->setModified(x);
-    ui_.le_phone->setModified(x);
-    ui_.le_street->setModified(x);
-    ui_.le_ext->setModified(x);
-    ui_.le_city->setModified(x);
-    ui_.le_state->setModified(x);
-    ui_.le_pcode->setModified(x);
-    ui_.le_country->setModified(x);
-    ui_.le_orgName->setModified(x);
-    ui_.le_orgUnit->setModified(x);
-    ui_.le_title->setModified(x);
-    ui_.le_role->setModified(x);
+    m_ui.le_nickname->setModified(x);
+    m_ui.le_bday->setModified(x);
+    m_ui.le_email->setModified(x);
+    m_ui.le_homepage->setModified(x);
+    m_ui.le_phone->setModified(x);
+    m_ui.le_street->setModified(x);
+    m_ui.le_ext->setModified(x);
+    m_ui.le_city->setModified(x);
+    m_ui.le_state->setModified(x);
+    m_ui.le_pcode->setModified(x);
+    m_ui.le_country->setModified(x);
+    m_ui.le_orgName->setModified(x);
+    m_ui.le_orgUnit->setModified(x);
+    m_ui.le_title->setModified(x);
+    m_ui.le_role->setModified(x);
 
     d->te_edited = x;
 }
@@ -591,7 +591,7 @@ bool InfoWidget::edited()
 {
     bool x = false;
 
-    if (ui_.le_fullname->isModified())
+    if (m_ui.le_fullname->isModified())
         x = true;
     if (d->le_givenname->isModified())
         x = true;
@@ -599,35 +599,35 @@ bool InfoWidget::edited()
         x = true;
     if (d->le_familyname->isModified())
         x = true;
-    if (ui_.le_nickname->isModified())
+    if (m_ui.le_nickname->isModified())
         x = true;
-    if (ui_.le_bday->isModified())
+    if (m_ui.le_bday->isModified())
         x = true;
-    if (ui_.le_email->isModified())
+    if (m_ui.le_email->isModified())
         x = true;
-    if (ui_.le_homepage->isModified())
+    if (m_ui.le_homepage->isModified())
         x = true;
-    if (ui_.le_phone->isModified())
+    if (m_ui.le_phone->isModified())
         x = true;
-    if (ui_.le_street->isModified())
+    if (m_ui.le_street->isModified())
         x = true;
-    if (ui_.le_ext->isModified())
+    if (m_ui.le_ext->isModified())
         x = true;
-    if (ui_.le_city->isModified())
+    if (m_ui.le_city->isModified())
         x = true;
-    if (ui_.le_state->isModified())
+    if (m_ui.le_state->isModified())
         x = true;
-    if (ui_.le_pcode->isModified())
+    if (m_ui.le_pcode->isModified())
         x = true;
-    if (ui_.le_country->isModified())
+    if (m_ui.le_country->isModified())
         x = true;
-    if (ui_.le_orgName->isModified())
+    if (m_ui.le_orgName->isModified())
         x = true;
-    if (ui_.le_orgUnit->isModified())
+    if (m_ui.le_orgUnit->isModified())
         x = true;
-    if (ui_.le_title->isModified())
+    if (m_ui.le_title->isModified())
         x = true;
-    if (ui_.le_role->isModified())
+    if (m_ui.le_role->isModified())
         x = true;
     if (d->te_edited)
         x = true;
@@ -637,26 +637,26 @@ bool InfoWidget::edited()
 
 void InfoWidget::setReadOnly(bool x)
 {
-    ui_.le_fullname->setReadOnly(x);
+    m_ui.le_fullname->setReadOnly(x);
     d->le_givenname->setReadOnly(x);
     d->le_middlename->setReadOnly(x);
     d->le_familyname->setReadOnly(x);
-    ui_.le_nickname->setReadOnly(x);
+    m_ui.le_nickname->setReadOnly(x);
     // ui_.le_bday->setReadOnly(x); //always read only. use calendar
-    ui_.le_email->setReadOnly(x);
-    ui_.le_homepage->setReadOnly(x);
-    ui_.le_phone->setReadOnly(x);
-    ui_.le_street->setReadOnly(x);
-    ui_.le_ext->setReadOnly(x);
-    ui_.le_city->setReadOnly(x);
-    ui_.le_state->setReadOnly(x);
-    ui_.le_pcode->setReadOnly(x);
-    ui_.le_country->setReadOnly(x);
-    ui_.le_orgName->setReadOnly(x);
-    ui_.le_orgUnit->setReadOnly(x);
-    ui_.le_title->setReadOnly(x);
-    ui_.le_role->setReadOnly(x);
-    ui_.te_desc->setReadOnly(x);
+    m_ui.le_email->setReadOnly(x);
+    m_ui.le_homepage->setReadOnly(x);
+    m_ui.le_phone->setReadOnly(x);
+    m_ui.le_street->setReadOnly(x);
+    m_ui.le_ext->setReadOnly(x);
+    m_ui.le_city->setReadOnly(x);
+    m_ui.le_state->setReadOnly(x);
+    m_ui.le_pcode->setReadOnly(x);
+    m_ui.le_country->setReadOnly(x);
+    m_ui.le_orgName->setReadOnly(x);
+    m_ui.le_orgUnit->setReadOnly(x);
+    m_ui.le_title->setReadOnly(x);
+    m_ui.le_role->setReadOnly(x);
+    m_ui.te_desc->setReadOnly(x);
 }
 
 void InfoWidget::doRefresh()
@@ -707,7 +707,7 @@ const Jid &InfoWidget::jid() const { return d->jid; }
 
 void InfoWidget::doShowCal()
 {
-    d->noBdayButton->setChecked(ui_.le_bday->text().isEmpty());
+    d->noBdayButton->setChecked(m_ui.le_bday->text().isEmpty());
     if (d->bday.isValid()) {
         d->calendar->setSelectedDate(d->bday);
     }
@@ -717,18 +717,18 @@ void InfoWidget::doUpdateFromCalendar(const QDate &date)
 {
     if (d->bday != date) {
         d->bday = date;
-        ui_.le_bday->setText(date.toString(d->dateTextFormat));
-        ui_.le_bday->setModified(true);
+        m_ui.le_bday->setText(date.toString(d->dateTextFormat));
+        m_ui.le_bday->setModified(true);
     }
     d->bdayPopup->hide();
 }
 
 void InfoWidget::doClearBirthDate()
 {
-    if (!ui_.le_bday->text().isEmpty()) {
+    if (!m_ui.le_bday->text().isEmpty()) {
         d->bday = QDate();
-        ui_.le_bday->setText("");
-        ui_.le_bday->setModified(true);
+        m_ui.le_bday->setText("");
+        m_ui.le_bday->setModified(true);
     }
     d->bdayPopup->hide();
 }
@@ -737,14 +737,14 @@ VCard InfoWidget::makeVCard()
 {
     VCard v = VCard::makeEmpty();
 
-    v.setFullName(ui_.le_fullname->text());
+    v.setFullName(m_ui.le_fullname->text());
     v.setGivenName(d->le_givenname->text());
     v.setMiddleName(d->le_middlename->text());
     v.setFamilyName(d->le_familyname->text());
-    v.setNickName(ui_.le_nickname->text());
-    v.setBdayStr(d->bday.isValid() ? d->bday.toString(Qt::ISODate) : ui_.le_bday->text());
+    v.setNickName(m_ui.le_nickname->text());
+    v.setBdayStr(d->bday.isValid() ? d->bday.toString(Qt::ISODate) : m_ui.le_bday->text());
 
-    if (!ui_.le_email->text().isEmpty()) {
+    if (!m_ui.le_email->text().isEmpty()) {
         VCard::Email email;
         auto         types = d->emailsDlg->types();
         if (types & AddressTypeDlg::Pref) {
@@ -759,20 +759,20 @@ VCard InfoWidget::makeVCard()
             email.work     = bool(types & AddressTypeDlg::Work);
             email.x400     = bool(types & AddressTypeDlg::X400);
         }
-        email.userid = ui_.le_email->text();
+        email.userid = m_ui.le_email->text();
 
         VCard::EmailList list;
         list << email;
         v.setEmailList(list);
     }
 
-    v.setUrl(ui_.le_homepage->text());
+    v.setUrl(m_ui.le_homepage->text());
 
-    if (!ui_.le_phone->text().isEmpty()) {
+    if (!m_ui.le_phone->text().isEmpty()) {
         VCard::Phone p;
         p.home   = true;
         p.voice  = true;
-        p.number = ui_.le_phone->text();
+        p.number = m_ui.le_phone->text();
 
         VCard::PhoneList list;
         list << p;
@@ -784,16 +784,16 @@ VCard InfoWidget::makeVCard()
         v.setPhoto(d->photo);
     }
 
-    if (!ui_.le_street->text().isEmpty() || !ui_.le_ext->text().isEmpty() || !ui_.le_city->text().isEmpty()
-        || !ui_.le_state->text().isEmpty() || !ui_.le_pcode->text().isEmpty() || !ui_.le_country->text().isEmpty()) {
+    if (!m_ui.le_street->text().isEmpty() || !m_ui.le_ext->text().isEmpty() || !m_ui.le_city->text().isEmpty()
+        || !m_ui.le_state->text().isEmpty() || !m_ui.le_pcode->text().isEmpty() || !m_ui.le_country->text().isEmpty()) {
         VCard::Address addr;
         addr.home     = true;
-        addr.street   = ui_.le_street->text();
-        addr.extaddr  = ui_.le_ext->text();
-        addr.locality = ui_.le_city->text();
-        addr.region   = ui_.le_state->text();
-        addr.pcode    = ui_.le_pcode->text();
-        addr.country  = ui_.le_country->text();
+        addr.street   = m_ui.le_street->text();
+        addr.extaddr  = m_ui.le_ext->text();
+        addr.locality = m_ui.le_city->text();
+        addr.region   = m_ui.le_state->text();
+        addr.pcode    = m_ui.le_pcode->text();
+        addr.country  = m_ui.le_country->text();
 
         VCard::AddressList list;
         list << addr;
@@ -802,17 +802,17 @@ VCard InfoWidget::makeVCard()
 
     VCard::Org org;
 
-    org.name = ui_.le_orgName->text();
+    org.name = m_ui.le_orgName->text();
 
-    if (!ui_.le_orgUnit->text().isEmpty()) {
-        org.unit << ui_.le_orgUnit->text();
+    if (!m_ui.le_orgUnit->text().isEmpty()) {
+        org.unit << m_ui.le_orgUnit->text();
     }
 
     v.setOrg(org);
 
-    v.setTitle(ui_.le_title->text());
-    v.setRole(ui_.le_role->text());
-    v.setDesc(ui_.te_desc->toPlainText());
+    v.setTitle(m_ui.le_title->text());
+    v.setRole(m_ui.le_role->text());
+    v.setDesc(m_ui.te_desc->toPlainText());
 
     return v;
 }
@@ -855,8 +855,8 @@ void InfoWidget::setPreviewPhoto(const QString &path)
  */
 void InfoWidget::clearPhoto()
 {
-    ui_.tb_photo->setIcon(QIcon());
-    ui_.tb_photo->setText(tr("Picture not\navailable"));
+    m_ui.tb_photo->setIcon(QIcon());
+    m_ui.tb_photo->setText(tr("Picture not\navailable"));
     d->photo = QByteArray();
 
     // the picture changed, so notify there are some changes done
@@ -870,7 +870,7 @@ void InfoWidget::updateStatus()
 {
     UserListItem *u = d->find(d->jid);
     if (u) {
-        PsiRichText::setText(ui_.te_status->document(), u->makeDesc());
+        PsiRichText::setText(m_ui.te_status->document(), u->makeDesc());
     } else if (d->jid.node().isEmpty() && d->jid.domain() == d->pa->jid().domain()) { // requesting info for our server.
         // let's add some more stuff..
         static const QMap<QString, QString> transMap {
@@ -890,9 +890,9 @@ void InfoWidget::updateStatus()
                 }
             }
         }
-        PsiRichText::setText(ui_.te_status->document(), info);
+        PsiRichText::setText(m_ui.te_status->document(), info);
     } else {
-        ui_.te_status->clear();
+        m_ui.te_status->clear();
     }
 }
 
@@ -902,12 +902,12 @@ void InfoWidget::updateStatus()
 void InfoWidget::setStatusVisibility(bool visible)
 {
     // Add/remove tab if necessary
-    int index = ui_.tabwidget->indexOf(ui_.tab_status);
+    int index = m_ui.tabwidget->indexOf(m_ui.tab_status);
     if (index == -1) {
         if (visible)
-            ui_.tabwidget->addTab(ui_.tab_status, tr("Status"));
+            m_ui.tabwidget->addTab(m_ui.tab_status, tr("Status"));
     } else if (!visible) {
-        ui_.tabwidget->removeTab(index);
+        m_ui.tabwidget->removeTab(index);
     }
 }
 
@@ -1026,7 +1026,7 @@ void InfoWidget::showPhoto()
 
 void InfoWidget::goHomepage()
 {
-    QString homepage = ui_.le_homepage->text();
+    QString homepage = m_ui.le_homepage->text();
     if (!homepage.isEmpty()) {
         if (homepage.indexOf("://") == -1) {
             homepage = "http://" + homepage;
@@ -1044,28 +1044,30 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidge
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint
                    | Qt::CustomizeWindowHint);
     setModal(false);
-    ui_.setupUi(this);
-    iw = new InfoWidget(type, j, vc, pa, parent, cacheVCard);
-    ui_.loContents->addWidget(iw);
+    m_ui.setupUi(this);
+    m_iw = new InfoWidget(type, j, vc, pa, parent, cacheVCard);
+    m_ui.loContents->addWidget(m_iw);
 
     if (type == InfoWidget::Self) {
-        ui_.pb_disco->hide();
+        m_ui.pb_disco->hide();
     } else {
-        ui_.pb_submit->hide();
+        m_ui.pb_submit->hide();
     }
 
-    connect(ui_.pb_refresh, SIGNAL(clicked()), iw, SLOT(doRefresh()));
-    connect(ui_.pb_refresh, SIGNAL(clicked()), iw, SLOT(updateStatus()));
-    connect(ui_.pb_submit, SIGNAL(clicked()), iw, SLOT(publish()));
-    connect(ui_.pb_close, SIGNAL(clicked()), this, SLOT(close()));
-    connect(ui_.pb_disco, SIGNAL(clicked()), this, SLOT(doDisco()));
-    connect(iw, SIGNAL(busy()), SLOT(doBusy()));
-    connect(iw, SIGNAL(released()), SLOT(release()));
+    adjustSize();
+
+    connect(m_ui.pb_refresh, SIGNAL(clicked()), m_iw, SLOT(doRefresh()));
+    connect(m_ui.pb_refresh, SIGNAL(clicked()), m_iw, SLOT(updateStatus()));
+    connect(m_ui.pb_submit, SIGNAL(clicked()), m_iw, SLOT(publish()));
+    connect(m_ui.pb_close, SIGNAL(clicked()), this, SLOT(close()));
+    connect(m_ui.pb_disco, SIGNAL(clicked()), this, SLOT(doDisco()));
+    connect(m_iw, SIGNAL(busy()), SLOT(doBusy()));
+    connect(m_iw, SIGNAL(released()), SLOT(release()));
 }
 
 void InfoDlg::closeEvent(QCloseEvent *e)
 {
-    if (iw->aboutToClose()) {
+    if (m_iw->aboutToClose()) {
         e->accept();
     } else {
         e->ignore();
@@ -1074,24 +1076,24 @@ void InfoDlg::closeEvent(QCloseEvent *e)
 
 void InfoDlg::doDisco()
 {
-    DiscoDlg *w = new DiscoDlg(iw->account(), iw->jid(), "");
-    connect(w, SIGNAL(featureActivated(QString, Jid, QString)), iw->account(),
+    DiscoDlg *w = new DiscoDlg(m_iw->account(), m_iw->jid(), "");
+    connect(w, SIGNAL(featureActivated(QString, Jid, QString)), m_iw->account(),
             SLOT(featureActivated(QString, Jid, QString)));
     w->show();
 }
 
 void InfoDlg::doBusy()
 {
-    ui_.pb_submit->setEnabled(false);
-    ui_.pb_refresh->setEnabled(false);
-    ui_.pb_close->setEnabled(false);
-    ui_.busy->start();
+    m_ui.pb_submit->setEnabled(false);
+    m_ui.pb_refresh->setEnabled(false);
+    m_ui.pb_close->setEnabled(false);
+    m_ui.busy->start();
 }
 
 void InfoDlg::release()
 {
-    ui_.pb_refresh->setEnabled(true);
-    ui_.pb_submit->setEnabled(true);
-    ui_.pb_close->setEnabled(true);
-    ui_.busy->stop();
+    m_ui.pb_refresh->setEnabled(true);
+    m_ui.pb_submit->setEnabled(true);
+    m_ui.pb_close->setEnabled(true);
+    m_ui.busy->stop();
 }
