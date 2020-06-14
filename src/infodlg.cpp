@@ -58,6 +58,8 @@
 
 using namespace XMPP;
 
+static QString k_optionName{"options.ui.save.vcard-info-dialog-size"};
+
 class AddressTypeDlg : public QFrame {
 public:
     enum AddrType {
@@ -1054,7 +1056,11 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidge
         m_ui.pb_submit->hide();
     }
 
-    adjustSize();
+    auto dialogSizeOption = PsiOptions::instance()->getOption(k_optionName);
+    if (dialogSizeOption.isValid())
+        resize(dialogSizeOption.toSize());
+    else
+        adjustSize();
 
     connect(m_ui.pb_refresh, SIGNAL(clicked()), m_iw, SLOT(doRefresh()));
     connect(m_ui.pb_refresh, SIGNAL(clicked()), m_iw, SLOT(updateStatus()));
@@ -1068,6 +1074,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vc, PsiAccount *pa, QWidge
 void InfoDlg::closeEvent(QCloseEvent *e)
 {
     if (m_iw->aboutToClose()) {
+        PsiOptions::instance()->setOption(k_optionName, size());
         e->accept();
     } else {
         e->ignore();
