@@ -321,20 +321,18 @@ void OptionsDlgBase::Private::openTab(const QString &id)
                 if (!tab)
                     continue;
 
-                tab->setMinimumSize(tab->sizeHint());
                 tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
                 QWidget *w = new QWidget(dlg->ws_tabs);
                 w->setObjectName("QWidgetStack/tab");
+                w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
                 QVBoxLayout *vbox = new QVBoxLayout(w);
                 vbox->setSpacing(0);
                 vbox->setMargin(0);
 
                 tab->setParent(w);
                 vbox->addWidget(tab);
-
-                w->setMinimumSize(w->sizeHint());
-                w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
                 dlg->ws_tabs->addWidget(w);
                 id2widget[id] = w;

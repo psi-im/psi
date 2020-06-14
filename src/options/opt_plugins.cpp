@@ -48,10 +48,9 @@ public:
             icon = IconsetFactory::iconPtr("psi/options")->icon();
         }
         setWindowIcon(icon);
-        setTabs(QList<OptionsTab *>() << new OptionsTabPlugin(shortPluginName, this));
+        setTabs({new OptionsTabPlugin(shortPluginName, this)});
 
         psi->dialogRegister(this);
-        setMinimumSize(600, 300);
 
         openTab("general");
     }
