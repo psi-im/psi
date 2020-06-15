@@ -511,7 +511,8 @@ void TabDlg::closeEvent(QCloseEvent *closeEvent)
             return;
         }
     }
-    for (TabbableWidget *tab : tabs_) {
+    auto copy = tabs_; // we need a copy since closeTab will likely modify the list
+    for (TabbableWidget *tab : copy) {
         bool res = true;
         if (PsiOptions::instance()->getOption("options.ui.muc.hide-when-closing").toBool() && tab->isGroupChat())
             res = false;
