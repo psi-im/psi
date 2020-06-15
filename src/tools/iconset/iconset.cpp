@@ -1732,6 +1732,10 @@ QListIterator<PsiIcon *> Iconset::iterator() const
     return it;
 }
 
+QList<PsiIcon *>::const_iterator Iconset::begin() const { return d->list.cbegin(); }
+
+QList<PsiIcon *>::const_iterator Iconset::end() const { return d->list.cend(); }
+
 /**
  * Returns directory (or .zip/.jisp archive) name from which Iconset was loaded.
  */

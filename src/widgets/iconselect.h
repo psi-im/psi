@@ -34,6 +34,7 @@ public:
 
     void           setIconset(const Iconset &);
     const Iconset &iconset() const;
+    void           setEmojiSortingEnabled(bool enabled);
 
     // reimplemented
     void mousePressEvent(QMouseEvent *e);

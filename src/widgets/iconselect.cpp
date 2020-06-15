@@ -19,6 +19,7 @@
 
 #include "iconselect.h"
 
+#include "emojiregistry.h"
 #include "iconset.h"
 #include "psitooltip.h"
 
@@ -34,7 +35,8 @@
 #include <QStyleOption>
 #include <QTextCodec>
 #include <QWidgetAction>
-#include <math.h>
+
+#include <cmath>
 
 //----------------------------------------------------------------------------
 // IconSelectButton
@@ -199,6 +201,7 @@ private:
     Iconset          is;
     QGridLayout *    grid;
     bool             shown;
+    bool             emojiSorting;
 
 signals:
     void updatedGeometry();
@@ -210,9 +213,12 @@ public:
     void           setIconset(const Iconset &);
     const Iconset &iconset() const;
 
+    void setEmojiSortingEnabled(bool enabled);
+
 protected:
-    void noIcons();
-    void createLayout();
+    QList<PsiIcon *> sortEmojis() const;
+    void             noIcons();
+    void             createLayout();
 
     void paintEvent(QPaintEvent *)
     {
@@ -314,7 +320,7 @@ void IconSelect::setIconset(const Iconset &iconset)
     QRect r       = QApplication::desktop()->availableGeometry(menu);
     int   maxSize = qMin(r.width(), r.height()) * 3 / 4;
 
-    int size = int(ceil(sqrt(count)));
+    int size = int(ceil(std::sqrt(count)));
 
     if (size * tileSize > maxSize) { // too many icons. find reasonable size.
         int c = 0;
@@ -329,7 +335,13 @@ void IconSelect::setIconset(const Iconset &iconset)
 
     int row    = 0;
     int column = 0;
-    it         = is.iterator();
+
+    QList<PsiIcon *> sortIcons;
+    if (emojiSorting) {
+        sortIcons = sortEmojis();
+        it        = QListIterator<PsiIcon *>(sortIcons);
+    } else
+        it = is.iterator();
     while (it.hasNext()) {
         if (++count > size * size)
             break;
@@ -353,6 +365,44 @@ void IconSelect::setIconset(const Iconset &iconset)
 }
 
 const Iconset &IconSelect::iconset() const { return is; }
+
+void IconSelect::setEmojiSortingEnabled(bool enabled) { emojiSorting = enabled; }
+
+QList<PsiIcon *> IconSelect::sortEmojis() const
+{
+    QList<PsiIcon *> ret;
+    QList<PsiIcon *> notEmoji;
+    ret.reserve(is.count());
+    QHash<QString, PsiIcon *> cp2icon; // codepoint to icon map
+
+    auto &er = EmojiRegistry::instance();
+
+    for (const auto &icon : is) {
+        bool found = false;
+        for (const auto &text : icon->text()) {
+            if (er.isEmoji(text.text)) {
+                cp2icon.insert(text.text, icon);
+                found = true;
+            }
+        }
+        if (!found)
+            notEmoji.append(icon);
+    }
+
+    for (auto const &group : EmojiRegistry::instance().groups) {
+        for (auto const &subgroup : group.subGroups) {
+            for (auto const &emoji : subgroup.emojis) {
+                auto icon = cp2icon.value(emoji.code);
+                if (icon) {
+                    ret.append(icon);
+                }
+            }
+        }
+    }
+
+    ret += notEmoji;
+    return ret;
+}
 
 //----------------------------------------------------------------------------
 // IconSelectPopup
@@ -390,6 +440,8 @@ IconSelectPopup::~IconSelectPopup() { }
 void IconSelectPopup::setIconset(const Iconset &i) { d->icsel_->setIconset(i); }
 
 const Iconset &IconSelectPopup::iconset() const { return d->icsel_->iconset(); }
+
+void IconSelectPopup::setEmojiSortingEnabled(bool enabled) { d->icsel_->setEmojiSortingEnabled(enabled); }
 
 /**
     It's used by child widget to close the menu by simulating a

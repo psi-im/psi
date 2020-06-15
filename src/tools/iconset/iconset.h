@@ -216,7 +216,9 @@ public:
     const QHash<QString, QString> info() const;
     void                          setInfo(const QHash<QString, QString> &);
 
-    QListIterator<PsiIcon *> iterator() const;
+    QListIterator<PsiIcon *>         iterator() const;
+    QList<PsiIcon *>::const_iterator begin() const;
+    QList<PsiIcon *>::const_iterator end() const;
 
     void addToFactory() const;
     void removeFromFactory() const;

@@ -3,6 +3,7 @@ DEPENDPATH  += $$PWD
 
 SOURCES += \
     $$PWD/busywidget.cpp \
+    $$PWD/emojiregistry.cpp \
     $$PWD/fancylabel.cpp \
     $$PWD/iconselect.cpp \
     $$PWD/iconwidget.cpp \
@@ -22,6 +23,7 @@ SOURCES += \
     $$PWD/pixmapratiolabel.cpp
 
 HEADERS += \
+    $$PWD/emojiregistry.h \
     $$PWD/stretchwidget.h \
     $$PWD/busywidget.h \
     $$PWD/fancylabel.h \

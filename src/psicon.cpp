@@ -508,6 +508,7 @@ bool PsiCon::init()
     profileDir.rmdir("info"); // remove unused dir
 
     d->iconSelect = new IconSelectPopup(nullptr);
+    d->iconSelect->setEmojiSortingEnabled(true);
     connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
 
     const QString css = options->getOption("options.ui.chat.css").toString();
