@@ -77,7 +77,7 @@ TextIconFormat::TextIconFormat(const QString &iconName, const QString &text, qre
     QTextFormat::setProperty(IconText, text);
     QTextFormat::setProperty(IconSize, size);
 
-    setVerticalAlignment(QTextCharFormat::AlignBottom);
+    setVerticalAlignment(size < -1 ? QTextCharFormat::AlignBottom : QTextCharFormat::AlignNormal);
 
     // TODO: handle animations
 }
@@ -316,7 +316,7 @@ static QString convertIconsToObjectReplacementCharacters(const QStringRef &text,
                     iconText = TextUtil::unescape(matchText.capturedTexts()[1]);
                 }
 
-                double iconSize  = -EqTextIconK; // not defined. will be resized to be aligned with text if necessary
+                double iconSize  = -1; // not defined. will be resized to be aligned with text if necessary
                 auto   matchSize = rxSize.match(fragment);
                 if (matchSize.hasMatch()) {
                     auto szText = matchSize.capturedTexts()[1];
