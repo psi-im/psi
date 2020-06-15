@@ -1,8 +1,6 @@
 #include "emojiregistry.h"
 #include "emojidb.cpp"
 
-#include <QStringLiteral>
-
 const EmojiRegistry &EmojiRegistry::instance()
 {
     static EmojiRegistry i;
