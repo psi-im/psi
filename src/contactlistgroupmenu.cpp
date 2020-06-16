@@ -18,6 +18,7 @@
  */
 
 #include "contactlistgroupmenu_p.h"
+#include "psiaccount.h"
 
 #include <QMessageBox>
 

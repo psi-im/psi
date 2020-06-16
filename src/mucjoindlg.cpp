@@ -63,7 +63,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa) : QDialog(nullptr), nickAlre
         error(404, tr("No response from server for %1 seconds").arg(timeout / 1000));
     });
 
-    reason_ = PsiAccount::MucCustomJoin;
+    reason_ = MucCustomJoin;
 
     updateIdentity(pa);
 
@@ -286,7 +286,7 @@ void MUCJoinDlg::favoritesItemDoubleClicked(QListWidgetItem *lwi)
     doJoin();
 }
 
-void MUCJoinDlg::doJoin(PsiAccount::MucJoinReason r)
+void MUCJoinDlg::doJoin(MucJoinReason r)
 {
     if (!account_ || !account_->checkConnected(this))
         return;
@@ -366,7 +366,7 @@ void MUCJoinDlg::error(int error, const QString &str)
     account_->dialogUnregister(this);
     controller_->dialogRegister(this);
 
-    if (!nickAlreadyCompleted_ && reason_ == PsiAccount::MucAutoJoin && error == nickConflictCode) {
+    if (!nickAlreadyCompleted_ && reason_ == MucAutoJoin && error == nickConflictCode) {
         nickAlreadyCompleted_ = true;
         ui_.le_nick->setText(ui_.le_nick->text() + additionalSymbol);
         doJoin(reason_);

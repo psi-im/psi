@@ -26,6 +26,7 @@
 #include "iconset.h"
 #include "invitetogroupchatmenu.h"
 #include "pluginmanager.h"
+#include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
 #include "psicontactmenu_p.h"

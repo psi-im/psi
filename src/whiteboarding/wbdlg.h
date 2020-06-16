@@ -28,7 +28,6 @@
 #include "common.h"
 #include "iconlabel.h"
 #include "im.h"
-#include "psiaccount.h"
 #include "psioptions.h"
 #include "wbwidget.h"
 
@@ -44,6 +43,7 @@
 #include <QToolBar>
 
 class AccountLabel;
+class PsiAccount;
 
 using namespace XMPP;
 

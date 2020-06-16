@@ -140,3 +140,10 @@ void ContactUpdatesManager::update()
     else
         updateTimer_->start();
 }
+
+ContactUpdatesManager::ContactUpdateAction::ContactUpdateAction(ContactUpdatesManager::ContactUpdateActionType _type,
+                                                                PsiAccount *_account, const Jid &_jid) :
+    type(_type),
+    account(_account), jid(_jid)
+{
+}

@@ -21,7 +21,6 @@
 #define SXDESESSION_H
 
 #include "im.h"
-#include "psiaccount.h"
 #include "sxerecord.h"
 
 #include <QDomNode>

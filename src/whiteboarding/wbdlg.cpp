@@ -25,6 +25,7 @@
 
 #include "accountlabel.h"
 #include "iconset.h"
+#include "psiaccount.h"
 #include "stretchwidget.h"
 
 #include <QColorDialog>

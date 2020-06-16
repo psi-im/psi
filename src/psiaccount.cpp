@@ -2421,7 +2421,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
             auto ul = findRelevant(Jid(QString(), cj.domain()));
             if (ul.isEmpty() || !ul[0]->isTransport()
                 || !ul[0]->resourceList().isEmpty()) { // don't join to MUCs on disconnected transports
-                actionJoin(c, true, MucAutoJoin);
+                actionJoin(c, true, false);
             }
         }
     }
@@ -2574,7 +2574,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
                 Jid cj = c.jid().withResource(QString());
                 if (u->jid().domain() == cj.domain() && !findDialog<GCMainDlg *>(cj) && c.needJoin()) {
                     // now join MUCs on connected transport
-                    actionJoin(c, true, MucAutoJoin);
+                    actionJoin(c, true, false);
                 }
             }
         }
@@ -2632,6 +2632,58 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
     }
 }
 
+void PsiAccount::userListItemUnavailable(UserListItem *u, const Jid &j, const Resource &r, bool *doSound, bool *doPopup)
+{
+    bool local = false;
+    if (u->isSelf() && r.name() == d->client->resource())
+        local = true;
+
+    // remove resource
+    bool found = u->isConference();
+    if (!found) {
+        auto rit = u->userResourceList().find(j.resource());
+        found    = !(rit == u->userResourceList().end());
+    }
+    if (found) {
+        u->setLastUnavailableStatus(r.status());
+        if (u->isConference()) {
+            u->removeAllResources();
+        } else {
+            u->removeResource(j.resource());
+        }
+
+        if (!u->isAvailable())
+            u->setLastAvailable(QDateTime::currentDateTime());
+
+        if (!u->isAvailable() || u->isSelf()) {
+            // don't sound for our own resource
+            if (!isDisconnecting && !local && !u->isHidden()) {
+                if (doSound)
+                    *doSound = true;
+                if (doPopup)
+                    *doPopup = true;
+            }
+        }
+    } else {
+        // if we get here, then we've received unavailable
+        //   presence for a contact that is already considered
+        //   unavailable
+        u->setLastUnavailableStatus(r.status());
+
+        if (!u->isAvailable()) {
+            QDateTime ts = r.status().timeStamp();
+            if (ts.isValid()) {
+                u->setLastAvailable(ts);
+            }
+        }
+
+        // no sounds/popups in this case
+    }
+
+    u->setPresenceError("");
+    cpUpdate(*u, r.name(), true);
+}
+
 void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 {
     bool doSound = false;
@@ -2641,51 +2693,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
         new BlockTransportPopup(d->blockTransportPopupList, j);
 
     for (UserListItem *u : findRelevant(j)) {
-        bool local = false;
-        if (u->isSelf() && r.name() == d->client->resource())
-            local = true;
-
-        // remove resource
-        UserResourceList::Iterator rit   = u->userResourceList().find(j.resource());
-        bool                       found = !(rit == u->userResourceList().end());
-        if (found) {
-            u->setLastUnavailableStatus(r.status());
-            // u->userResourceList().removeAll(*rit);//we cant use it since operator== is used for other purpose
-            QMutableListIterator<UserResource> i(u->userResourceList());
-            while (i.hasNext()) {
-                if (i.next().name() == j.resource()) {
-                    i.remove();
-                }
-            }
-
-            if (!u->isAvailable())
-                u->setLastAvailable(QDateTime::currentDateTime());
-
-            if (!u->isAvailable() || u->isSelf()) {
-                // don't sound for our own resource
-                if (!isDisconnecting && !local && !u->isHidden()) {
-                    doSound = true;
-                    doPopup = true;
-                }
-            }
-        } else {
-            // if we get here, then we've received unavailable
-            //   presence for a contact that is already considered
-            //   unavailable
-            u->setLastUnavailableStatus(r.status());
-
-            if (!u->isAvailable()) {
-                QDateTime ts = r.status().timeStamp();
-                if (ts.isValid()) {
-                    u->setLastAvailable(ts);
-                }
-            }
-
-            // no sounds/popups in this case
-        }
-
-        u->setPresenceError("");
-        cpUpdate(*u, r.name(), true);
+        userListItemUnavailable(u, j, r, &doSound, &doPopup);
     }
     if (doSound)
         playSound(eOffline);
@@ -3604,12 +3612,14 @@ void PsiAccount::actionJoin(const Jid &mucJid, const QString &password)
     actionJoin(ConferenceBookmark(QString(), mucJid, ConferenceBookmark::Never, QString(), password), false);
 }
 
-void PsiAccount::actionJoin(const ConferenceBookmark &bookmark, bool connectImmediately, MucJoinReason reason)
+void PsiAccount::actionJoin(const ConferenceBookmark &bookmark, bool connectImmediately, bool custom)
 {
 #ifdef GROUPCHAT
-    MUCJoinDlg *w = new MUCJoinDlg(psi(), this);
+    auto        reason = custom ? MUCJoinDlg::MucCustomJoin : MUCJoinDlg::MucAutoJoin;
+    MUCJoinDlg *w      = new MUCJoinDlg(psi(), this);
 
-    if (reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool())
+    if (reason != MUCJoinDlg::MucAutoJoin
+        || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool())
         w->show();
     w->setJid(bookmark.jid());
     w->setNick(bookmark.nick().isEmpty() ? JIDUtil::nickOrJid(this->nick(), d->jid.node()) : bookmark.nick());
@@ -3653,10 +3663,14 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
         for (UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
             const UserResource &r = *rit;
             Jid                 j = u->jid();
-            if (u->jid().resource().isEmpty()) {
-                j = j.withResource(r.name());
+            if (u->isConference()) {
+                userListItemUnavailable(u, j, r);
+            } else {
+                if (u->jid().resource().isEmpty()) {
+                    j = j.withResource(r.name());
+                }
+                client_resourceUnavailable(j, r);
             }
-            client_resourceUnavailable(j, r);
         }
     }
     u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE, ""));
@@ -5642,23 +5656,6 @@ void PsiAccount::edb_finished()
     delete h;
 }
 
-void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MucJoinReason reason)
-{
-#ifdef GROUPCHAT
-    GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
-    w->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
-    connect(w, SIGNAL(aSend(Message &)), SLOT(dj_sendMessage(Message &)));
-    connect(w, SIGNAL(messagesRead(const Jid &)), SLOT(groupChatMessagesRead(const Jid &)));
-    connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
-
-    if (reason != MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
-        w->ensureTabbedCorrectly();
-        if (activationType == UserAction)
-            w->bringToFront();
-    }
-#endif
-}
-
 bool PsiAccount::groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString &pass,
                                bool nohistory)
 {
@@ -5776,17 +5773,20 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
     MUCJoinDlg *w = findDialog<MUCJoinDlg *>(j);
     if (!w)
         return;
-    MucJoinReason r = w->getReason();
+    auto r = w->getReason();
     w->joined();
 
-    openGroupChat(j, UserAction, r);
-    //    if(r == MUCJoinDlg::MucAutoJoin &&
-    //    PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
-    //        m = findDialog<GCMainDlg*>(Jid(j.bare()));
-    //        if(m) {
-    //            QTimer::singleShot(0, m, SLOT(hideTab()));
-    //        }
-    //    }
+    GCMainDlg *chat = new GCMainDlg(this, j, d->tabManager);
+    chat->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
+    connect(chat, SIGNAL(aSend(Message &)), SLOT(dj_sendMessage(Message &)));
+    connect(chat, SIGNAL(messagesRead(const Jid &)), SLOT(groupChatMessagesRead(const Jid &)));
+    connect(d->psi, SIGNAL(emitOptionsUpdate()), chat, SLOT(optionsUpdate()));
+
+    if (r != MUCJoinDlg::MucAutoJoin
+        || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
+        chat->ensureTabbedCorrectly();
+        chat->bringToFront();
+    }
 
 #endif
 }

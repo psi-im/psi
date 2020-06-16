@@ -18,11 +18,11 @@
  */
 
 #include "groupmenu.h"
-#include "psiaccount.h"
 #include "psicontactmenu.h"
 #include "resourcemenu.h"
 
 class InviteToGroupChatMenu;
+class PsiAccount;
 
 class PsiContactMenu::Private : public QObject {
     Q_OBJECT

@@ -28,6 +28,7 @@ class Client;
 class Jid;
 class Message;
 }
+class PsiAccount;
 using namespace XMPP;
 
 /*! \brief The manager for SXE sessions and negotiations.

@@ -149,8 +149,6 @@ public:
 
     enum AutoAway { AutoAway_None = 0, AutoAway_Away, AutoAway_XA, AutoAway_Offline };
 
-    enum MucJoinReason { MucAutoJoin, MucCustomJoin };
-
     void setAutoAwayStatus(AutoAway status);
 
     bool               noPopup() const;
@@ -208,7 +206,6 @@ public:
     void        showXmlConsole();
     void        openAddUserDlg();
     void        openAddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group);
-    void        openGroupChat(const Jid &, ActivationType activationType, MucJoinReason reason = MucCustomJoin);
     bool        groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString &pass,
                               bool nohistory = false);
     void        groupChatSetStatus(const QString &host, const QString &room, const Status &);
@@ -408,7 +405,7 @@ public slots:
     void actionSearch(const Jid &);
     void actionManageBookmarks();
     void actionJoin(const Jid &mucJid, const QString &password = QString());
-    void actionJoin(const ConferenceBookmark &bookmark, bool connectImmediately, MucJoinReason reason = MucCustomJoin);
+    void actionJoin(const ConferenceBookmark &bookmark, bool connectImmediately, bool custom = true);
     void actionDisco(const Jid &, const QString &);
     void actionInvite(const Jid &, const QString &);
     void actionVoice(const Jid &);
@@ -564,6 +561,8 @@ private:
 
     bool decryptMessageElement(QDomElement &element) override;
     bool encryptMessageElement(QDomElement &element) override;
+    void userListItemUnavailable(UserListItem *u, const Jid &j, const Resource &r, bool *doSound = nullptr,
+                                 bool *doPopup = nullptr);
 };
 
 #endif // PSIACCOUNT_H

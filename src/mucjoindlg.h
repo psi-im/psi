@@ -20,7 +20,6 @@
 #ifndef MUCJOINDLG_H
 #define MUCJOINDLG_H
 
-#include "psiaccount.h"
 #include "ui_mucjoin.h"
 #include "xmpp_jid.h"
 
@@ -28,12 +27,15 @@
 #include <QTimer>
 
 class PsiCon;
+class PsiAccount;
 class QString;
 
 class MUCJoinDlg : public QDialog {
     Q_OBJECT
 
 public:
+    enum MucJoinReason { MucAutoJoin, MucCustomJoin };
+
     MUCJoinDlg(PsiCon *, PsiAccount *);
     ~MUCJoinDlg();
 
@@ -46,13 +48,13 @@ public:
 
 public slots:
     void done(int);
-    void doJoin(PsiAccount::MucJoinReason reason = PsiAccount::MucCustomJoin);
+    void doJoin(MucJoinReason reason = MucCustomJoin);
 
     // reimplemented
     void accept();
 
 public:
-    PsiAccount::MucJoinReason getReason() const { return reason_; }
+    MucJoinReason getReason() const { return reason_; }
 
 private slots:
     void updateIdentity(PsiAccount *);
@@ -63,14 +65,14 @@ private slots:
     void lwFavorites_customContextMenuRequested(const QPoint &pos);
 
 private:
-    Ui::MUCJoin               ui_;
-    PsiCon *                  controller_;
-    PsiAccount *              account_;
-    QPushButton *             joinButton_;
-    XMPP::Jid                 jid_;
-    PsiAccount::MucJoinReason reason_;
-    QTimer *                  timer_;
-    bool                      nickAlreadyCompleted_;
+    Ui::MUCJoin   ui_;
+    PsiCon *      controller_;
+    PsiAccount *  account_;
+    QPushButton * joinButton_;
+    XMPP::Jid     jid_;
+    MucJoinReason reason_;
+    QTimer *      timer_;
+    bool          nickAlreadyCompleted_;
 
     void disableWidgets();
     void enableWidgets();

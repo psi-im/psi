@@ -395,6 +395,19 @@ UserResourceList::Iterator UserListItem::priority() { return v_url.priority(); }
 
 const UserResourceList &UserListItem::userResourceList() const { return v_url; }
 
+void UserListItem::removeAllResources() { return v_url.clear(); }
+
+void UserListItem::removeResource(const QString &resource)
+{
+    // v_url.removeAll(*rit);//we cant use it since operator== is used for other purpose
+    QMutableListIterator<UserResource> i(v_url);
+    while (i.hasNext()) {
+        if (i.next().name() == resource) {
+            i.remove();
+        }
+    }
+}
+
 UserResourceList::ConstIterator UserListItem::priority() const { return v_url.priority(); }
 
 QString UserListItem::makeTip(bool trim, bool doLinkify) const

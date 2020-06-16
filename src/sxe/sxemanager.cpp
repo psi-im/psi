@@ -20,6 +20,7 @@
 #include "sxemanager.h"
 
 #include "common.h"
+#include "psiaccount.h"
 #include "psioptions.h"
 #include "psipopup.h"
 #include "xmpp_caps.h"

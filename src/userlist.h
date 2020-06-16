@@ -149,6 +149,8 @@ public:
     UserResourceList::Iterator      priority();
     const UserResourceList &        userResourceList() const;
     UserResourceList::ConstIterator priority() const;
+    void                            removeAllResources();
+    void                            removeResource(const QString &resource);
 
     bool isSecure() const;
     bool isSecure(const QString &rname) const;

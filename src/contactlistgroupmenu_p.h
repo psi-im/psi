@@ -26,7 +26,6 @@
 #include "groupchatdlg.h"
 #include "iconaction.h"
 #include "iconset.h"
-#include "psiaccount.h"
 #include "psicontact.h"
 #include "psicontactlist.h"
 #include "psioptions.h"

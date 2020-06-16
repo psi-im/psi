@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "iconaction.h"
+#include "psiaccount.h"
 #include "psiiconset.h"
 #include "psioptions.h"
 #include "statusdlg.h"

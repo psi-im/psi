@@ -20,7 +20,6 @@
 #ifndef CONTACTUPDATESMANAGER_H
 #define CONTACTUPDATESMANAGER_H
 
-#include "psiaccount.h"
 #include "xmpp_jid.h"
 
 #include <QObject>
@@ -28,6 +27,7 @@
 
 class PsiCon;
 class QTimer;
+class PsiAccount;
 
 class ContactUpdatesManager : public QObject {
     Q_OBJECT
@@ -47,10 +47,7 @@ private:
     PsiCon *controller_;
     enum ContactUpdateActionType { ContactBlocked = 0, ContactAuthorized, ContactDeauthorized, ContactRemoved };
     struct ContactUpdateAction {
-        ContactUpdateAction(ContactUpdateActionType _type, PsiAccount *_account, const XMPP::Jid &_jid) :
-            type(_type), account(_account), jid(_jid)
-        {
-        }
+        ContactUpdateAction(ContactUpdateActionType _type, PsiAccount *_account, const XMPP::Jid &_jid);
         ContactUpdateActionType type;
         QPointer<PsiAccount>    account;
         XMPP::Jid               jid;
