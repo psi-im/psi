@@ -53,8 +53,12 @@ QWidget *OptionsTabApplication::widget()
 
     // docklet
     d->ck_docklet->setToolTip(tr("Makes Psi use a docklet icon, also known as system tray icon."));
+#ifdef Q_OS_WIN
     d->ck_dockDCstyle->setToolTip(tr("Normally, single-clicking on the Psi docklet icon brings the main window to"
                                      " the foreground.  Check this option if you would rather use a double-click."));
+#else
+    d->ck_dockDCstyle->setVisible(false);
+#endif
     d->ck_dockHideMW->setToolTip(tr("Starts Psi with only the docklet icon visible."));
     d->ck_dockToolMW->setToolTip(tr("Prevents Psi from taking up a slot on the taskbar and makes the main "
                                     "window use a small titlebar."));
@@ -122,7 +126,9 @@ void OptionsTabApplication::applyOptions()
 
     // docklet
     PsiOptions::instance()->setOption("options.ui.systemtray.enable", d->ck_docklet->isChecked());
+#ifdef Q_OS_WIN
     PsiOptions::instance()->setOption("options.ui.systemtray.use-double-click", d->ck_dockDCstyle->isChecked());
+#endif
     PsiOptions::instance()->setOption("options.contactlist.hide-on-start", d->ck_dockHideMW->isChecked());
     PsiOptions::instance()->setOption("options.contactlist.use-toolwindow", d->ck_dockToolMW->isChecked());
 
@@ -191,7 +197,9 @@ void OptionsTabApplication::restoreOptions()
 
     // docklet
     d->ck_docklet->setChecked(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
+#ifdef Q_OS_WIN
     d->ck_dockDCstyle->setChecked(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool());
+#endif
     d->ck_dockHideMW->setChecked(PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool());
     d->ck_dockToolMW->setChecked(PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool());
     doEnableQuitOnClose(d->ck_docklet->isChecked() ? 1 : 0);
@@ -248,6 +256,8 @@ void OptionsTabApplication::doEnableQuitOnClose(int state)
     OptApplicationUI *d = static_cast<OptApplicationUI *>(w);
     d->ck_quitOnClose->setEnabled(state > 0);
     d->ck_dockToolMW->setEnabled(state > 0);
+#ifdef Q_OS_WIN
     d->ck_dockDCstyle->setEnabled(state > 0);
+#endif
     d->ck_dockHideMW->setEnabled(state > 0);
 }

@@ -771,7 +771,9 @@ void MainWin::setUseDock(bool use)
         buildTrayMenu();
         d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu, this);
         connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
+#ifdef Q_OS_WIN
         connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
+#endif
         d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
         setTrayToolTip();
         connect(d->tray, SIGNAL(doToolTip(QObject *, QPoint)), this, SLOT(doTrayToolTip(QObject *, QPoint)));
@@ -1556,9 +1558,11 @@ void MainWin::setTrayToolTip(const Status &status, bool, bool)
 
 void MainWin::trayClicked(const QPoint &, int button)
 {
+#ifdef Q_OS_WIN
     if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
         return;
     }
+#endif
 
     if (button == Qt::MidButton) {
         doRecvNextEvent();
@@ -1574,6 +1578,7 @@ void MainWin::trayClicked(const QPoint &, int button)
 
 void MainWin::trayDoubleClicked()
 {
+#ifdef Q_OS_WIN
     // Double click works like second single click now if "double-click" style is disabled
 
     if (PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
@@ -1583,6 +1588,7 @@ void MainWin::trayDoubleClicked()
         }
     }
     toggleVisible(true);
+#endif
 }
 
 void MainWin::trayShow()

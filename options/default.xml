@@ -343,7 +343,6 @@ QLineEdit#le_status_text {
             </spell-check>
             <disable-send-button type="bool">true</disable-send-button>
             <systemtray comment="Options related to the system tray">
-                <use-old comment="Use the old system tray code (deprecated)" type="bool">false</use-old>
                 <enable type="bool">true</enable>
                 <use-double-click type="bool">false</use-double-click>
             </systemtray>

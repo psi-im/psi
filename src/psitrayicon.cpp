@@ -78,13 +78,13 @@ void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
 {
 #ifdef Q_OS_MAC
     Q_UNUSED(reason)
-#else
+#elif !defined(Q_OS_MAC)
     if (reason == QSystemTrayIcon::Trigger)
         emit clicked(QPoint(), Qt::LeftButton);
     else if (reason == QSystemTrayIcon::MiddleClick || (isKde() && reason == QSystemTrayIcon::Context))
         emit clicked(QPoint(), Qt::MidButton);
-    else if (reason == QSystemTrayIcon::DoubleClick)
-        emit doubleClicked(QPoint());
+#elif defined(Q_OS_WIN)
+    else if (reason == QSystemTrayIcon::DoubleClick) emit doubleClicked(QPoint());
 #endif
 }
 
