@@ -220,6 +220,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent) : QWidget(parent)
 
     if (!parent)
         show();
+    updateWidth();
 }
 
 void PsiOptionsEditor::tv_edit(const QModelIndex &idx)
@@ -255,7 +256,6 @@ void PsiOptionsEditor::selectionChanged(const QModelIndex &idx_f)
     QString     comment = tm_->data(idx.sibling(idx.row(), 3), Qt::DisplayRole).toString();
     lb_path->setText("<b>" + TextUtil::escape(tm_->indexToOptionName(idx)) + "</b>");
     lb_comment->setText(comment);
-    updateWidth();
     QString option = tm_->indexToOptionName(idx);
     QString typ;
     if (o_->isInternalNode(option)) {
