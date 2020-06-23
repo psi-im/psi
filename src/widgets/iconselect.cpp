@@ -383,6 +383,7 @@ QList<PsiIcon *> IconSelect::sortEmojis() const
             if (er.isEmoji(text.text)) {
                 cp2icon.insert(text.text, icon);
                 found = true;
+                break;
             }
         }
         if (!found)
