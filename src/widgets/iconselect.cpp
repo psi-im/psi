@@ -296,7 +296,7 @@ void IconSelect::setIconset(const Iconset &iconset)
     // first we need to find optimal size for elements and don't forget about
     // taking too much screen space
     float w = 0, h = 0;
-    int   maxPrefTileHeight = fontInfo().pixelSize() * 1.5;
+    int   maxPrefTileHeight = fontInfo().pixelSize() * 2;
     auto  maxPrefSize       = QSize(maxPrefTileHeight, maxPrefTileHeight);
 
     double                   count; // the 'double' type is somewhat important for MSVC.NET here
