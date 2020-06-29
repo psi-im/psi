@@ -222,7 +222,7 @@ LayoutSf possibleLayouts(const QList<int> &tabs, int barWidth, int rows, double 
             layoutSf.clear();
             break;
         }
-        for (auto item : newLayoutSf) {
+        for (auto &item : newLayoutSf) {
             item.number += startPos;
         }
         layoutSf += newLayoutSf;
@@ -279,8 +279,7 @@ void TabBar::Private::layoutTabs()
         tab.rect.setSize(tabSizeHint(tab));
         // Make pinned tab if need
         if (i < pinnedTabs) {
-            QString tL = tab.text.left(PINNED_CHARS);
-            tab.text   = tab.text.left(tL.contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS);
+            tab.text = tab.text.left(tab.text.leftRef(PINNED_CHARS).contains("&") ? (PINNED_CHARS + 1) : PINNED_CHARS);
             tab.rect.setWidth(pinnedTabWidth);
         }
         hackedTabs << tab;
@@ -355,7 +354,7 @@ void TabBar::Private::layoutTabs()
         }
 
         // Add pinned tabs to layout
-        for (auto item : layout) {
+        for (auto &item : layout) {
             item.number += firstNormalTab;
         }
 
@@ -436,7 +435,6 @@ int TabBar::Private::pinnedTabWidthHint() const
     q->initStyleOption(&opt, 0);
     opt.leftButtonSize  = QSize();
     opt.rightButtonSize = QSize();
-    opt.text            = "XXX";
     opt.text            = QString(PINNED_CHARS, 'X');
     QSize iconSize      = opt.iconSize;
     int   hframe        = q->style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, q);
@@ -518,7 +516,7 @@ void TabBar::Private::balanseCloseButtons()
             CloseButton *cb = new CloseButton(q);
             closeButtons << cb;
             cb->show();
-            connect(cb, SIGNAL(clicked()), q, SLOT(closeTab()));
+            connect(cb, &CloseButton::clicked, q, &TabBar::closeTab);
         }
 
         while (closeButtons.size() > q->count()) {
@@ -779,7 +777,7 @@ void TabBar::setCurrentIndexAlwaysAtBottom(bool b)
 
 bool TabBar::currentIndexAlwaysAtBottom() const { return d->indexAlwaysAtBottom; }
 
-QSize TabBar::minimumSizeHint() const { return QSize(0, sizeHint().height()); }
+QSize TabBar::minimumSizeHint() const { return { 0, sizeHint().height() }; }
 
 QSize TabBar::sizeHint() const
 {

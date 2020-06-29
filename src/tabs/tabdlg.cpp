@@ -204,7 +204,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent *event)
 
         QAction *c = tabMenu_->addAction(tr("Close Tab"));
 
-        QMap<QAction *, TabDlg *> sentTos;
+        QHash<QAction *, TabDlg *> sentTos;
         if (userManagement_) {
             QMenu *sendTo = new QMenu(tabMenu_);
             sendTo->setTitle(tr("Send Tab To"));
