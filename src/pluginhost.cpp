@@ -1104,6 +1104,11 @@ void PluginHost::setPgpKey(int account, const QString &keyId) { manager_->setPgp
 
 void PluginHost::removeKnownPgpKey(int account, const QString &jid) { manager_->removeKnownPgpKey(account, jid); }
 
+void PluginHost::setClientVersionInfo(int account, const QVariantMap &info)
+{
+    manager_->setClientVersionInfo(account, info);
+}
+
 bool PluginHost::setActivity(int account, const QString &Jid, QDomElement xml)
 {
     return manager_->setActivity(account, Jid, xml);

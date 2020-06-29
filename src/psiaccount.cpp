@@ -383,11 +383,12 @@ public:
         });
     }
 
-    PsiContactList *         contactList             = nullptr;
-    PsiContact *             selfContact             = nullptr;
-    PsiCon *                 psi                     = nullptr;
-    PsiAccount *             account                 = nullptr;
-    Client *                 client                  = nullptr;
+    PsiContactList *         contactList = nullptr;
+    PsiContact *             selfContact = nullptr;
+    PsiCon *                 psi         = nullptr;
+    PsiAccount *             account     = nullptr;
+    Client *                 client      = nullptr;
+    QVariantMap              clientVersionInfo;
     FileSharingDeviceOpener *fileSharingDeviceOpener = nullptr;
     UserAccount              acc;
     Jid                      jid, nextJid;
@@ -1053,11 +1054,16 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 #ifdef PSI_PLUGINS
     PluginManager::instance()->addAccount(this, d->client);
 #endif
-    d->client->setOSName(SystemInfo::instance()->osName());
-    d->client->setOSVersion(SystemInfo::instance()->osVersion());
-    d->client->setClientName(ApplicationInfo::name());
-    d->client->setClientVersion(ApplicationInfo::version());
-    d->client->setCaps(CapsSpec(ApplicationInfo::capsNode(), QCryptographicHash::Sha1));
+    static const auto cvPropGet = [this](const char *prop, const QString &defValue) {
+        auto it = d->clientVersionInfo.find(QLatin1String(prop));
+        return it != d->clientVersionInfo.end() && it.value().canConvert<QString>() ? it.value().toString() : defValue;
+    };
+
+    d->client->setOSName(cvPropGet("os-name", SystemInfo::instance()->osName()));
+    d->client->setOSVersion(cvPropGet("os-version", SystemInfo::instance()->osVersion()));
+    d->client->setClientName(cvPropGet("client-name", ApplicationInfo::name()));
+    d->client->setClientVersion(cvPropGet("client-version", ApplicationInfo::version()));
+    d->client->setCaps(CapsSpec(cvPropGet("caps-node", ApplicationInfo::capsNode()), QCryptographicHash::Sha1));
     d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
     d->client->setEncryptionHandler(this);
 
@@ -2312,6 +2318,8 @@ void PsiAccount::resolveContactName(const Jid &j)
 {
     VCardFactory::instance()->getVCard(j, client()->rootTask(), this, [this]() { jt_resolveContactName(); });
 }
+
+void PsiAccount::setClientVersionInfoMap(const QVariantMap &info) { d->clientVersionInfo = info; }
 
 void PsiAccount::jt_resolveContactName()
 {

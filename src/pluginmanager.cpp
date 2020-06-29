@@ -972,6 +972,14 @@ void PluginManager::removeKnownPgpKey(int account, const QString &jid)
     }
 }
 
+void PluginManager::setClientVersionInfo(int account, const QVariantMap &info)
+{
+    PsiAccount *pa = accountIds_.account(account);
+    if (pa) {
+        pa->setClientVersionInfoMap(info);
+    }
+}
+
 bool PluginManager::appendSysMsg(int account, const QString &jid, const QString &message)
 {
     return appendMsgView(account, jid, MessageView::fromPlainText(message, MessageView::System));

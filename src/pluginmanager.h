@@ -203,6 +203,7 @@ private:
     void setStatus(int account, const QString &status, const QString &statusMessage);
     void setPgpKey(int account, const QString &keyId);
     void removeKnownPgpKey(int account, const QString &jid);
+    void setClientVersionInfo(int account, const QVariantMap &info);
 
     bool appendSysMsg(int account, const QString &jid, const QString &message);
     bool appendSysHtmlMsg(int account, const QString &jid, const QString &message);

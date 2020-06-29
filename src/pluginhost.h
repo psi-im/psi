@@ -240,6 +240,7 @@ public:
     void subscribeLogout(QObject *context, std::function<void(int account)> callback) override;
     void setPgpKey(int account, const QString &keyId) override;
     void removeKnownPgpKey(int account, const QString &jid) override;
+    void setClientVersionInfo(int account, const QVariantMap &info) override;
 
     void createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
                         const char *slot) override;

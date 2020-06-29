@@ -307,6 +307,8 @@ public:
     FileSharingDeviceOpener *fileSharingDeviceOpener() const;
     void                     resolveContactName(const Jid &j);
 
+    void setClientVersionInfoMap(const QVariantMap &info);
+
 signals:
     void accountDestroyed();
     void connectionError(const QString &errorInfo);
