@@ -56,9 +56,9 @@ All changes are tested on Continuous Integration services:
 
 * 2017-now,  Sergey Ilinykh <<rion4ik@gmail.com>>, Psi and Psi+ projects
 * 2010-2017, Sergey Ilinykh <<rion4ik@gmail.com>>, Psi+ project
-* 2009-2010, [Justin Karneges](http://andbit.net/) <<justin@karneges.com>>, Psi project
-* 2004-2009, [Kevin Smith](http://doomsong.co.uk/) <<kevin@kismith.co.uk>>, Psi project
-* 2001-2004, [Justin Karneges](http://andbit.net/) <<justin@karneges.com>>, Psi project
+* 2009-2010, [Justin Karneges](https://jblog.andbit.net/) <<justin@karneges.com>>, Psi project
+* 2004-2009, [Kevin Smith](https://doomsong.co.uk/) <<kevin@kismith.co.uk>>, Psi project
+* 2001-2004, [Justin Karneges](https://jblog.andbit.net/) <<justin@karneges.com>>, Psi project
 
 ### Other contributors
 
