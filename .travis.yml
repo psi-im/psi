@@ -13,30 +13,36 @@ jobs:
     - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=bionic
       os: linux
       dist: bionic
+    - env: TARGET=linux64 ENABLE_WEBKIT=OFF DIST=focal
+      os: linux
+      dist: focal
     - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=xenial
       os: linux
       dist: xenial
     - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=bionic
       os: linux
       dist: bionic
+    - env: TARGET=linux64 ENABLE_WEBKIT=ON DIST=focal
+      os: linux
+      dist: focal
     - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
       os: osx
       osx_image: xcode10
     - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
       os: osx
-      osx_image: xcode10.3
+      osx_image: xcode11.3
     - env: TARGET=macos64 ENABLE_WEBENGINE=OFF
       os: osx
-      osx_image: xcode11.3
+      osx_image: xcode12
     - env: TARGET=macos64 ENABLE_WEBENGINE=ON
       os: osx
       osx_image: xcode10
     - env: TARGET=macos64 ENABLE_WEBENGINE=ON
       os: osx
-      osx_image: xcode10.3
+      osx_image: xcode11.3
     - env: TARGET=macos64 ENABLE_WEBENGINE=ON
       os: osx
-      osx_image: xcode11.3
+      osx_image: xcode12
 
 install:
   - ./tests/travis-ci/install-build-depends.sh
