@@ -31,6 +31,8 @@
 #include <QLayout>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QStyle>
 #include <QStyleOption>
 #include <QTextCodec>
@@ -318,7 +320,7 @@ void IconSelect::setIconset(const Iconset &iconset)
     int       tileSize = int(qMax(w, h)) + 2 * margin;
 
     QRect r       = QApplication::desktop()->availableGeometry(menu);
-    int   maxSize = qMin(r.width(), r.height()) * 3 / 4;
+    int   maxSize = qMin(r.width(), r.height()) / 3;
 
     int size = int(ceil(std::sqrt(count)));
 
@@ -343,18 +345,12 @@ void IconSelect::setIconset(const Iconset &iconset)
     } else
         it = is.iterator();
     while (it.hasNext()) {
-        if (++count > size * size)
-            break;
-
         IconSelectButton *b = new IconSelectButton(this);
         grid->addWidget(b, row, column);
         b->setIcon(it.next(), maxPrefSize);
         b->setSizeHint(QSize(tileSize, tileSize));
         connect(b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
-        connect(b, SIGNAL(textSelected(QString)), menu, SIGNAL(textSelected(QString)));
-
-        // connect (menu, SIGNAL(aboutToShow()), b, SLOT(aboutToShow()));
-        // connect (menu, SIGNAL(aboutToHide()), b, SLOT(aboutToHide()));
+        connect(b, &IconSelectButton::textSelected, menu, &IconSelectPopup::textSelected);
 
         if (++column >= size) {
             ++row;
@@ -417,11 +413,18 @@ public:
     IconSelectPopup *parent_;
     IconSelect *     icsel_;
     QWidgetAction *  widgetAction_;
+    QScrollArea *    scrollArea_;
 
 public slots:
     void updatedGeometry()
     {
-        widgetAction_->setDefaultWidget(icsel_);
+        widgetAction_->setDefaultWidget(scrollArea_);
+        QRect r       = QApplication::desktop()->availableGeometry(scrollArea_);
+        int   maxSize = qMin(r.width(), r.height()) / 3;
+        int   vBarWidth
+            = scrollArea_->verticalScrollBar()->isEnabled() ? scrollArea_->verticalScrollBar()->sizeHint().rwidth() : 0;
+        scrollArea_->setMinimumWidth(icsel_->sizeHint().rwidth() + vBarWidth);
+        scrollArea_->setMinimumHeight(qMin(icsel_->sizeHint().rheight(), maxSize));
         parent_->removeAction(widgetAction_);
         parent_->addAction(widgetAction_);
     }
@@ -432,7 +435,12 @@ IconSelectPopup::IconSelectPopup(QWidget *parent) : QMenu(parent)
     d                = new Private(this);
     d->icsel_        = new IconSelect(this);
     d->widgetAction_ = new QWidgetAction(this);
-    connect(d->icsel_, SIGNAL(updatedGeometry()), d, SLOT(updatedGeometry()));
+    d->scrollArea_   = new QScrollArea(this);
+    d->scrollArea_->setWidget(d->icsel_);
+    d->scrollArea_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    d->scrollArea_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    d->scrollArea_->setWidgetResizable(true);
+    connect(d->icsel_, &IconSelect::updatedGeometry, d, &IconSelectPopup::Private::updatedGeometry);
     d->updatedGeometry();
 }
 
