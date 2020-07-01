@@ -322,14 +322,9 @@ void IconSelect::setIconset(const Iconset &iconset)
     QRect r       = QApplication::desktop()->availableGeometry(menu);
     int   maxSize = qMin(r.width(), r.height()) / 3;
 
-    int size = int(ceil(std::sqrt(count)));
-
-    if (size * tileSize > maxSize) { // too many icons. find reasonable size.
-        int c = 0;
-        for (w = 0; w <= maxSize; w += tileSize)
-            c++;
-        size = c - 1;
-    }
+    int size       = int(ceil(std::sqrt(count)));
+    int maxColumns = int(maxSize / tileSize) - 1;
+    size           = size > maxColumns ? maxColumns : size;
 
     // now, fill grid with elements
     createLayout();
