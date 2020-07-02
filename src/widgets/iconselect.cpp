@@ -420,6 +420,7 @@ public slots:
             = scrollArea_->verticalScrollBar()->isEnabled() ? scrollArea_->verticalScrollBar()->sizeHint().rwidth() : 0;
         scrollArea_->setMinimumWidth(icsel_->sizeHint().rwidth() + vBarWidth);
         scrollArea_->setMinimumHeight(qMin(icsel_->sizeHint().rheight(), maxSize));
+        scrollArea_->setFrameStyle(QFrame::Plain);
         parent_->removeAction(widgetAction_);
         parent_->addAction(widgetAction_);
     }
