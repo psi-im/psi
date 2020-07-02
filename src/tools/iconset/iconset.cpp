@@ -1036,12 +1036,13 @@ private:
     }
 
 public:
-    QString                   id, name, version, description, creation, homeUrl, filename;
-    QStringList               authors;
-    QHash<QString, PsiIcon *> dict; // unsorted hash for fast search
-    QList<PsiIcon *>          list; // sorted list
-    QHash<QString, QString>   info;
-    int                       iconSize_;
+    QString                    id, name, version, description, creation, homeUrl, filename;
+    QStringList                authors;
+    QHash<QString, PsiIcon *>  dict; // unsorted hash for fast search
+    QList<PsiIcon *>           list; // sorted list
+    QHash<QString, QString>    info;
+    int                        iconSize_;
+    QHash<QString, QByteArray> zipCache;
 
 public:
     Private() { init(); }
@@ -1110,16 +1111,9 @@ public:
 #ifdef ICONSET_ZIP
         else { // else its zip or jisp file
             UnZip z(dir);
-            if (!z.open()) {
-                qWarning("Icons source \"%s\" looks to be corrupted", qPrintable(dir));
-                return ba;
-            }
-
-            QString n = fi.completeBaseName() + '/' + fileName;
-            if (!z.readFile(n, &ba)) {
-                n = "/" + fileName;
-                z.readFile(n, &ba);
-            }
+            if (zipCache.isEmpty())
+                zipCache = z.unpackAll();
+            ba = zipCache.value(fi.completeBaseName() + '/' + fileName);
         }
 #endif
 
@@ -1644,6 +1638,7 @@ bool Iconset::load(const QString &dir, Format format)
                    "Failed to load icondef.xml");
         qWarning("Iconset::load(\"%s\"): Failed to load icondef.xml", qPrintable(dir));
     }
+    d->zipCache.clear();
 
     // QPixmap::setDefaultOptimization( optimization );
 
