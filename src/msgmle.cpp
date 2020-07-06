@@ -59,12 +59,12 @@ static const int maxOverlayTime = TIMEOUT / SECOND;
 class CapitalLettersController : public QObject {
     Q_OBJECT
 public:
-    CapitalLettersController(QTextEdit *parent) : QObject(), te_(parent), enabled_(true)
+    explicit CapitalLettersController(QTextEdit *parent) : QObject(), te_(parent), enabled_(true)
     {
         connect(te_->document(), SIGNAL(contentsChange(int, int, int)), SLOT(textChanged(int, int, int)));
     }
 
-    virtual ~CapitalLettersController() { }
+    ~CapitalLettersController() override = default;
 
     void setEnabled(bool enabled) { enabled_ = enabled; }
     bool isEnabled() const { return enabled_; }
@@ -365,8 +365,8 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
  */
 void ChatEdit::applySuggestion()
 {
-    QAction *act_suggestion   = qobject_cast<QAction *>(sender());
-    int      current_position = textCursor().position();
+    auto *act_suggestion   = qobject_cast<QAction *>(sender());
+    int   current_position = textCursor().position();
 
     // Replace the word
     QTextCursor tc = cursorForPosition(last_click_);
@@ -643,7 +643,7 @@ void ChatEdit::addSoundRecButton()
         layout_->addWidget(overlay_.get());
         recButton_->setToolTip(tr("Record and share audio note while pressed"));
         setRecButtonIcon();
-        const int iconSize = qMax(PsiIconset::instance()->system().iconSize() + 2, fontMetrics().ascent() + 2);
+        auto iconSize = fontInfo().pixelSize() * 1.5;
         recButton_->setMinimumSize(QSize(iconSize, iconSize));
         layout_->addWidget(recButton_.get());
         layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
@@ -668,7 +668,7 @@ void ChatEdit::addSoundRecButton()
                 emit fileSharingRequested(&md);
             });
             connect(recorder_.get(), &AudioRecorder::recordingStarted, this, [this]() {
-                recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize()));
+                recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize() * 1.5));
                 overlay_->setVisible(true);
                 timeout_ = TIMEOUT;
                 timer_.reset(new QTimer); // countdown timer to stop recording while the button is pressed
@@ -719,7 +719,7 @@ void ChatEdit::setRecButtonIcon()
         const QColor bcgColor(palette().color(backgroundRole()));
         int          red, green, blue = 0;
         bcgColor.getRgb(&red, &green, &blue);
-        auto mis = fontInfo().pixelSize();
+        auto mis = fontInfo().pixelSize() * 1.5;
         if (isColorDark(red, green, blue)) {
             // Invert icon pixmap if background color is dark
             QImage recImage = IconsetFactory::icon("psi/mic").image(QSize(mis, mis));
@@ -736,11 +736,12 @@ void ChatEdit::setRecButtonIcon()
     }
 }
 
-int ChatEdit::recButtonHeigth() const { return recButton_ ? recButton_->height() : 0; }
+int ChatEdit::recButtonHeigth() const { return recButton_ ? recButton_->minimumHeight() : 0; }
 
 void ChatEdit::setRigthMargin()
 {
-    const int        margin = PsiIconset::instance()->system().iconSize() + 8;
+    // Set margin for text to avoid text placing under record button
+    const float      margin = recButtonHeigth() * 1.5;
     QTextFrameFormat frmt   = document()->rootFrame()->frameFormat();
     if (frmt.rightMargin() < margin) {
         frmt.setRightMargin(margin);
@@ -759,16 +760,16 @@ LineEdit::LineEdit(QWidget *parent) : ChatEdit(parent)
 
     setMinimumHeight(0);
 
-    connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
+    connect(this, &QTextEdit::textChanged, this, &LineEdit::recalculateSize);
 }
 
 LineEdit::~LineEdit() { }
 
 QSize LineEdit::minimumSizeHint() const
 {
-    const int sz = hasSoundRecButton() ? qMax(recButtonHeigth() * 2 - 1, fontMetrics().lineSpacing() + 1)
-                                       : fontMetrics().lineSpacing() + 1;
-    QSize sh = QTextEdit::minimumSizeHint();
+    const int spacing = fontMetrics().lineSpacing() + 1;
+    const int sz      = hasSoundRecButton() ? qMax(recButtonHeigth() * 2 - 1, spacing) : spacing;
+    QSize     sh      = QTextEdit::minimumSizeHint();
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
     return sh;
@@ -776,10 +777,9 @@ QSize LineEdit::minimumSizeHint() const
 
 QSize LineEdit::sizeHint() const
 {
-    QSize     sh = QTextEdit::sizeHint();
-    const int sz = hasSoundRecButton()
-        ? qMax(recButtonHeigth() * 2 - 1, int(document()->documentLayout()->documentSize().height()))
-        : int(document()->documentLayout()->documentSize().height());
+    QSize     sh      = QTextEdit::sizeHint();
+    const int dHeight = int(document()->documentLayout()->documentSize().height());
+    const int sz      = hasSoundRecButton() ? qMax(recButtonHeigth() * 2 - 1, dHeight) : dHeight;
     sh.setHeight(sz);
     sh += QSize(0, QFrame::lineWidth() * 2);
     static_cast<QTextEdit *>(const_cast<LineEdit *>(this))->setMaximumHeight(sh.height());

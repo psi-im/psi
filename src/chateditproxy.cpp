@@ -107,11 +107,8 @@ void ChatEditProxy::updateLayout()
  */
 void ChatEditProxy::optionsChanged()
 {
-    bool isLineEdit = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
-    if (lineEditEnabled_ != isLineEdit) {
-        lineEditEnabled_ = isLineEdit;
-        updateLayout();
-    }
+    lineEditEnabled_ = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
+    updateLayout();
 }
 
 void ChatEditProxy::addRrecordButton()
