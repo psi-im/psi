@@ -172,7 +172,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 {
     // TODO: use darker color on popup borders
     QPalette backgroundPalette;
-    backgroundPalette.setBrush(QPalette::Background, QBrush(backgroundColor));
+    backgroundPalette.setBrush(QPalette::Window, QBrush(backgroundColor));
     QPixmap back(1, 1);
     back.fill(backgroundColor);
 
