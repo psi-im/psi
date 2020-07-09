@@ -70,7 +70,7 @@ or
 >  -DSEPARATE_QJDNS=ON
 
   to build qjdns library as separate library (default OFF)
-  
+
 >  -DCHAT_TYPE = BASIC
 
    to set type of chatlog engine. Possible values: WEBKIT, WEBENGINE, BASIC
@@ -78,7 +78,7 @@ or
 
 >  -DPSI_VERSION=${version}
 
-  to set Psi/Psi+ version manually 
+  to set Psi/Psi+ version manually
   ( Example for Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ).
   Script sets this flag automatically from "version" file if it exists in sources directory
 
@@ -133,7 +133,7 @@ or
 
 >  -DONLY_PLUGINS=ON
 
-  to build only psi plugins (default OFF). On enabling this flag 
+  to build only psi plugins (default OFF). On enabling this flag
   ENABLE_PLUGINS flag turns on automatically
 
 >  -DDEV_MODE=ON
@@ -148,7 +148,7 @@ or
 > -DUSE_DBUS = ON
 
   In Linux OS enables DBus support for client management, notifications, tunes (default ON).
-  
+
 ## Work with plugins:
 
 ### Next flags are working only if ENABLE_PLUGINS or ONLY_PLUGINS are enabled
@@ -185,7 +185,7 @@ or
   Path to the include directory to build plugins outside of Psi/Psi+
   sources (path to the plugins.cmake file)
 
->  -DPLUGINS_PATH=${path} 
+>  -DPLUGINS_PATH=${path}
 
   to install plugins into ${path}. To install into default suffix:
 
@@ -205,10 +205,6 @@ or
 
   to set Qca library root directory
 
->  -DIDN_ROOT=DIRECTORY
-
-  to set Idn library root directory
-
 >  -DZLIB_ROOT=DIRECTORY
 
   to set Zlib library root directory
@@ -219,7 +215,7 @@ or
 
 >  -DENABLE_PORTABLE=ON
 
-  to build portable version (not need to rename binary). 
+  to build portable version (not need to rename binary).
   Enables prepare-bin-libs target.
 
 ### To build OTRPLUGIN in OS WINDOWS you need to set additional variables

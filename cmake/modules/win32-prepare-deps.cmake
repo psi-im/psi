@@ -56,7 +56,6 @@ if(WIN32)
     endif()
     if(EXISTS "${SDK_PATH}")
         list(APPEND PATHES
-            "${IDN_ROOT}bin"
             "${HUNSPELL_ROOT}bin"
             "${LIBGCRYPT_ROOT}bin"
             "${LIBGPGERROR_ROOT}bin"
@@ -387,8 +386,6 @@ if(WIN32)
         libgcrypt-20.dll
         libgpg-error-0.dll
         libhunspell.dll
-        libidn-11.dll
-        libidn-12.dll
         libotr-5.dll
         libotr.dll
         libqca-qt5${D}.dll
@@ -410,7 +407,6 @@ if(WIN32)
             libotr${D}.dll
             tidy${D}.dll
             zlib1${D}.dll
-            libidn${D}.dll
             qca-qt5${D}.dll
             )
     endif()

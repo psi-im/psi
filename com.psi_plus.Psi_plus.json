@@ -49,16 +49,6 @@
             ]
         },
         {
-           "name": "libidn",
-           "sources": [
-               {
-                   "type": "archive",
-                   "url": "https://ftp.gnu.org/gnu/libidn/libidn-1.35.tar.gz",
-                   "sha256": "f11af1005b46b7b15d057d7f107315a1ad46935c7fcdf243c16e46ec14f0fe1e"
-               }
-           ]
-        },
-        {
             "name": "libgpg-error",
             "sources": [
                 {

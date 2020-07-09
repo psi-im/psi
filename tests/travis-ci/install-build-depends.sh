@@ -16,7 +16,6 @@ then
     sudo apt-get install -qq cmake \
                              libhttp-parser-dev \
                              libhunspell-dev \
-                             libidn11-dev \
                              libminizip-dev \
                              libotr5-dev \
                              libqca-qt5-2-dev \
@@ -37,7 +36,6 @@ if [ "${TARGET}" = "macos64" ]
 then
     HOMEBREW_NO_AUTO_UPDATE=1
     PACKAGES="ccache \
-              libidn \
               qtkeychain \
               qca \
               minizip \
@@ -51,4 +49,3 @@ then
         brew ls --versions "${PKG}" > /dev/null || brew install "${PKG}"
     done
 fi
-

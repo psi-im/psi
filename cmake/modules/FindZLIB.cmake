@@ -41,7 +41,7 @@ if( UNIX AND NOT( APPLE OR CYGWIN ) )
     endif()
 endif()
 
-set( ZLIB_ROOT "" CACHE STRING "Path to libidn library" )
+set( ZLIB_ROOT "" CACHE STRING "Path to zlib library" )
 
 find_path(
     ZLIB_INCLUDE_DIR zlib.h

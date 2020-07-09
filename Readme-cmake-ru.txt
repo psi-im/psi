@@ -73,9 +73,9 @@
 
 >  -DPSI_VERSION=${version}
 
-  задать версию Psi/Psi+ вручную 
+  задать версию Psi/Psi+ вручную
   ( Пример для Psi+: 1.0.40 (2017-06-05, Psi:a7d2d7b8, Psi+:055e945, webkit) ).
-  Данный флаг ставить не обязательно, т.к. скрипт автоматически 
+  Данный флаг ставить не обязательно, т.к. скрипт автоматически
   определяет версию по содержимому файла "version"
 
 >  -DCMAKE_BUILD_TYPE=Release
@@ -89,15 +89,15 @@
 
 >  -DUSE_MXE=ON (по-умолчанию - OFF)
 
-  Включает поддержку MXE (M cross environment). Выключает флаг 
+  Включает поддержку MXE (M cross environment). Выключает флаг
   USE_CCACHE и добавляет новые зависимости, если флаг PRODUCTION включен.
   Данный флаг ставить не обязательно, т.к. скрипт умеет определять MXE
-  автоматически 
+  автоматически
 
 > -DVERBOSE_PROGRAM_NAME=ON
 
   использовать развернутое имя для бинарного файла (Экспериментальный флаг)
-  (по-умолчанию -OFF). После компиляции будет создан бинарный файл не с 
+  (по-умолчанию -OFF). После компиляции будет создан бинарный файл не с
   именем psi или psi-plus, а например psi-webkit или psi-plus-webengine-sql
 
 > -DPRODUCTION=ON (по-умолчанию для Psi - ON, для Psi+ - OFF)
@@ -118,7 +118,7 @@
 
 >  -DINSTALL_EXTRA_FILES=ON
 
-  Если OFF, то звуки, сертификаты, иконки, темы и файл cilent_icons.txt 
+  Если OFF, то звуки, сертификаты, иконки, темы и файл cilent_icons.txt
   установлены не будут
 
 >  -DINSTALL_PLUGINS_SDK=ON
@@ -147,7 +147,7 @@
   В OS Linux включает режим разработчика и вместе с флагом ENABLE_PLUGINS
   при использовании psi-plus-snapshots позовяет отлаживать плагины без
   установки Psi
-  
+
 >  -DUSE_XSS=ON
 
   В OS Linux добавляет поддержку XScreensaver (по-умолчанию ON).
@@ -166,10 +166,10 @@
 
   - возможные значения для ${plugins} (можно определить по содержимому каталога plugins/generic):
 
-    historykeeperplugin	stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
+    historykeeperplugin    stopspamplugin juickplugin translateplugin gomokugameplugin attentionplugin
     cleanerplugin autoreplyplugin contentdownloaderplugin qipxstatusesplugin skinsplugin
     clientswitcherplugin watcherplugin videostatusplugin screenshotplugin jabberdiskplugin
-    storagenotesplugin	extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
+    storagenotesplugin    extendedoptionsplugin imageplugin extendedmenuplugin birthdayreminderplugin
     pepchangenotifyplugin omemoplugin openpgpplugin otrplugin chessplugin conferenceloggerplugin
     enummessagesplugin httpuploadplugin imagepreviewplugin
 
@@ -193,7 +193,7 @@
   Путь к каталогу include для сборки плагинов в отрыве от исходников
   Psi/Psi+ (каталог где лежит файл plugins.cmake)
 
->  -DPLUGINS_PATH=${path} 
+>  -DPLUGINS_PATH=${path}
 
   установка плагинов в каталог с суфииксом ${path}. Для установки по-умолчанию:
 
@@ -213,19 +213,15 @@
 
 > -DENABLE_PORTABLE=ON
 
-  для сборки портативной версии (сделано для удобства, чтобы не 
-  переименовывать бинарник вручную). (по-умолчанию - OFF). На выходе 
-  получим "имя-бинарника-portable.exe", а если VERBOSE_PROGRAM_NAME=ON, 
+  для сборки портативной версии (сделано для удобства, чтобы не
+  переименовывать бинарник вручную). (по-умолчанию - OFF). На выходе
+  получим "имя-бинарника-portable.exe", а если VERBOSE_PROGRAM_NAME=ON,
   то "расширенное-имя-бинарника-portable.exe". При включении этого флага
   автоматически становится доступна цель сборки prepare-bin-libs.
 
 >  -DQCA_DIR=DIRECTORY
 
   задать корневой каталог с библиотекой Qca
-
->  -DIDN_ROOT=DIRECTORY
-
-  задать корневой каталог с библиотекой Idn
 
 >  -DZLIB_ROOT=DIRECTORY
 
@@ -235,7 +231,7 @@
 
   задать корневой каталог с библиотекой Hunspell
 
-### Для сборки плагина OTR в OS WINDOWS возможно понадобятся дополнительные флаги: 
+### Для сборки плагина OTR в OS WINDOWS возможно понадобятся дополнительные флаги:
 
 > -DLIBGCRYPT_ROOT=%LIBGCRYPT_ROOT%
 
@@ -261,5 +257,5 @@
 
 >  -DSDK_PATH=path
 
-  Если задать этот флаг, то флаги к корневым каталогам библиотек 
+  Если задать этот флаг, то флаги к корневым каталогам библиотек
   зависимостей можно не задавать.

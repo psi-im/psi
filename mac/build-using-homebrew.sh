@@ -23,7 +23,7 @@
 # Build dependencies for Psi and useful tools:
 # export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
 # brew install ccache coreutils cmake
-# brew install openssl@1.1 libidn minizip hunspell qt qtkeychain
+# brew install openssl@1.1 minizip hunspell qt qtkeychain
 #
 # Build qca with enabled qca-gnupg plugin:
 # brew install --build-bottle https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/qca.rb
@@ -50,14 +50,14 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="OFF"
 
 [ "${ENABLE_WEBENGINE}" = "ON" ] && \
-     CHAT_TYPE="webengine" || \
-     CHAT_TYPE="basic"
+    CHAT_TYPE="webengine" || \
+    CHAT_TYPE="basic"
 
 [ "${ENABLE_DEV_PLUGINS}" != "ON" ] && \
-     ENABLE_DEV_PLUGINS="OFF"
+    ENABLE_DEV_PLUGINS="OFF"
 
 [ "${ENABLE_PSIMEDIA}" != "ON" ] && \
-     ENABLE_PSIMEDIA="OFF"
+    ENABLE_PSIMEDIA="OFF"
 
 BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DCHAT_TYPE=${CHAT_TYPE} \
@@ -86,4 +86,3 @@ echo
 
 echo "App bundle is successfully built!"
 echo
-

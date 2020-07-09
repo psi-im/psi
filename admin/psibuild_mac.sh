@@ -13,10 +13,10 @@ MAC_DEPLOYMENT_TARGET=10.9
 QTDIR="${HOME}/Qt/5.9.7/clang_64"
 QT_FRAMEWORK_VERSION=5
 
-QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets QtSql QtDBus"  #QtWebEngine 
+QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets QtSql QtDBus"  #QtWebEngine
 
 QT_PLUGINS="audio/libqtaudio_coreaudio.dylib bearer/libqgenericbearer.dylib platforms/libqcocoa.dylib printsupport/libcocoaprintersupport.dylib iconengines/libqsvgicon.dylib"
-QT_PLUGINS="${QT_PLUGINS} mediaservice/libqtmedia_audioengine.dylib mediaservice/libqavfmediaplayer.dylib styles/libqmacstyle.dylib sqldrivers/libqsqlite.dylib" 
+QT_PLUGINS="${QT_PLUGINS} mediaservice/libqtmedia_audioengine.dylib mediaservice/libqavfmediaplayer.dylib styles/libqmacstyle.dylib sqldrivers/libqsqlite.dylib"
 QT_PLUGINS="${QT_PLUGINS} imageformats/libqgif.dylib imageformats/libqjpeg.dylib imageformats/libqsvg.dylib imageformats/libqwbmp.dylib imageformats/libqtiff.dylib imageformats/libqwebp.dylib  imageformats/libqtga.dylib imageformats/libqico.dylib imageformats/libqicns.dylib imageformats/libqmacjp2.dylib"
 
 export QMAKESPEC="macx-clang"
@@ -107,7 +107,7 @@ check_env() {
 
     if [ ! -d "${PSI_DIR}" ]
     then
-        mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"    
+        mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
     fi
 
     MAKEOPT=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1)) -s }
@@ -239,7 +239,7 @@ prepare_workspace() {
 
 get_framework() {
     get_url=$1
-    file_name=$2    
+    file_name=$2
 
     if [ ! -f $file_name.tar.bz2 ]; then
         log "Downloading $file_name"
@@ -274,7 +274,7 @@ get_deps() {
             log "Downloading ${deps_file}"
             curl -L -o ${deps_file}.tar.bz2 ${deps_url} || die "can't download url ${deps_url}"
         fi
-        
+
         log "Extracting ${deps_file}"
         tar jxvf ${deps_file}.tar.bz2 2>/dev/null || die "can't extract file ${deps_file}"
     fi
@@ -291,19 +291,19 @@ fetch_deps() {
 
 build_qca() {
     mkdir -p "${QCA_PATH}" && cd "${QCA_PATH}" || die "Can't create QCA build folder"
-    
-    #export CC="/usr/bin/clang"    
+
+    #export CC="/usr/bin/clang"
     #export CXX="/usr/bin/clang++"
-        
+
     log "Compiling QCA..."
 
     sed -ie "s/target_link_libraries(qca-ossl crypto)/target_link_libraries(qca-ossl)/" "${PSI_DIR}/qca/plugins/qca-ossl/CMakeLists.txt"
-    
+
     local opts="-DBUILD_TESTS=OFF -DOPENSSL_ROOT_DIR=${SSL_PATH} -DOPENSSL_LIBRARIES=${SSL_PATH}/lib -DLIBGCRYPT_LIBRARIES=${DEPS_PREFIX}/lib"
     #opts=$opts -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="-stdlib=libc++ -std=gnu++11 -arch x86_64"
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${QCA_PREFIX}" -DQCA_PLUGINS_INSTALL_DIR="${QCA_PLUGINS_PATH}/.." $opts ${PSI_DIR}/qca 2>/dev/null || die "QCA configuring error"
     make ${MAKEOPT} || die "QCA build error"
-    
+
     make install || die "Can't install QCA"
 
     install_name_tool -id @rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5 "${QCA_PREFIX}/lib/qca-qt5.framework/qca-qt5"
@@ -316,28 +316,28 @@ build_qca() {
 
 function build_libsignal() {
     mkdir -p "${LIBSIGNAL_PATH}" && cd "${LIBSIGNAL_PATH}" || die "Can't create LIBSIGNAL build folder"
-    
-    #export CC="/usr/bin/clang"    
+
+    #export CC="/usr/bin/clang"
     #export CXX="/usr/bin/clang++"
-        
+
     log "Compiling LIBSIGNAL..."
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${LIBS_PATH}" -DCMAKE_OSX_DEPLOYMENT_TARGET=${MAC_DEPLOYMENT_TARGET} ../libsignal 2>/dev/null || die "LIBSIGNAL configuring error"
     make ${MAKEOPT} || die "LIBSIGNAL build error"
-    
+
     make install || die "Can't install LIBSIGNAL"
 }
 
 function build_qtkeychain() {
         mkdir -p "${QTKEYCHAIN_PATH}" && cd "${QTKEYCHAIN_PATH}" || die "Can't create QTKEYCHAIN build folder"
-    
-    #export CC="/usr/bin/clang"    
+
+    #export CC="/usr/bin/clang"
     #export CXX="/usr/bin/clang++"
-        
+
     log "Compiling QTKEYCHAIN..."
 
     cmake -DCMAKE_INSTALL_PREFIX="${QTKEYCHAIN_PREFIX}" -DCMAKE_OSX_DEPLOYMENT_TARGET=${MAC_DEPLOYMENT_TARGET} -DCMAKE_BUILD_TYPE=Release ${PSI_DIR}/qtkeychain 2>/dev/null || die "QTKEYCHAIN configuring error"
     make ${MAKEOPT} || die "QTKEYCHAIN build error"
-    
+
     make install || die "Can't install QTKEYCHAIN"
 
     #install_name_tool -id @rpath/qca-qt5.framework/Versions/${QCA_VER}/qca-qt5 "${QCA_PREFIX}/lib/qca-qt5.framework/qca-qt5"
@@ -401,7 +401,7 @@ src_compile() {
         CONF_OPTS=" --enable-webkit $CONF_OPTS"
     fi
 
-    CONF_OPTS=" --with-idn-lib=${LIBS_PATH}/lib --with-idn-inc=${LIBS_PATH}/include --with-qca-lib=${QCA_PREFIX}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
+    CONF_OPTS=" --with-qca-lib=${QCA_PREFIX}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
 
     ${QCONF} || die "QConf failed"
 
@@ -438,7 +438,7 @@ plugins_compile() {
     cd "${PSI_DIR}/build/plugins"
     echo "QMAKE_MAC_SDK = macosx${MAC_SDK_VER}" >> psiplugin.pri
     echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = ${MAC_DEPLOYMENT_TARGET}" >> psiplugin.pri
-    
+
     log "List plugins for compiling..."
     echo ${PLUGINS}
     log "Compiling plugins..."
@@ -452,7 +452,7 @@ plugins_compile() {
         if [ $pl = "omemoplugin" ]; then
             prep_omemo_plugin
         fi
-        
+
         $QMAKE && $MAKE $MAKEOPT || log "make ${pl} plugin failed"
     done
 }
@@ -563,7 +563,6 @@ copy_main_libs() {
     log "\tCopying libs..."
 
         cp -f "${LIBS_PATH}/lib/libz.dylib"     "$CONTENTSDIR/Frameworks/"
-        cp -f "${LIBS_PATH}/lib/libidn.dylib"   "$CONTENTSDIR/Frameworks/"
         cp -f "${SSL_PATH}/lib/libssl.dylib"    "$CONTENTSDIR/Frameworks/"
         cp -f "${SSL_PATH}/lib/libcrypto.dylib" "$CONTENTSDIR/Frameworks/"
         chmod +w "$CONTENTSDIR/Frameworks/libssl.dylib"
@@ -571,14 +570,12 @@ copy_main_libs() {
         cp -f "${QTKEYCHAIN_PREFIX}/lib/libqt5keychain.dylib" "$CONTENTSDIR/Frameworks/"
 
         install_name_tool -id "@executable_path/../Frameworks/libz.dylib" "$CONTENTSDIR/Frameworks/libz.dylib"
-        install_name_tool -id "@executable_path/../Frameworks/libidn.dylib" "$CONTENTSDIR/Frameworks/libidn.dylib"
         install_name_tool -id "@executable_path/../Frameworks/libssl.dylib" "$CONTENTSDIR/Frameworks/libssl.dylib"
         install_name_tool -change "${SSL_PATH}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "$CONTENTSDIR/Frameworks/libssl.dylib"
         install_name_tool -id "@executable_path/../Frameworks/libcrypto.dylib" "$CONTENTSDIR/Frameworks/libcrypto.dylib"
         install_name_tool -id "@executable_path/../Frameworks/libqt5keychain.dylib" "$CONTENTSDIR/Frameworks/libqt5keychain.dylib"
 
         install_name_tool -change "${LIBS_PATH}/lib/libz.1.dylib"    "@executable_path/../Frameworks/libz.dylib"   "$CONTENTSDIR/MacOS/psi"
-        install_name_tool -change "${LIBS_PATH}/lib/libidn.11.dylib" "@executable_path/../Frameworks/libidn.dylib" "$CONTENTSDIR/MacOS/psi"
         install_name_tool -change "${LIBS_PATH}/lib/libqt5keychain.1.dylib" "@executable_path/../Frameworks/libqt5keychain.dylib" "$CONTENTSDIR/MacOS/psi"
 }
 
@@ -591,14 +588,14 @@ copy_otrplugins_libs() {
         cp -f "${LIBS_PATH}/lib/libtidy.dylib"      "$CONTENTSDIR/Frameworks/"
 
         install_name_tool -id "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/libgpg-error.dylib"
-        
+
     install_name_tool -id "@executable_path/../Frameworks/libgcrypt.dylib" "$CONTENTSDIR/Frameworks/libgcrypt.dylib"
     install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/libgcrypt.dylib"
-        
+
     install_name_tool -id "@executable_path/../Frameworks/libotr.dylib" "$CONTENTSDIR/Frameworks/libotr.dylib"
         install_name_tool -change "${LIBS_PATH}/lib/libgcrypt.20.dylib" "@executable_path/../Frameworks/libgcrypt.dylib" "$CONTENTSDIR/Frameworks/libotr.dylib"
     install_name_tool -change "${LIBS_PATH}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "$CONTENTSDIR/Frameworks/libotr.dylib"
-        
+
     install_name_tool -id "@executable_path/../Frameworks/libtidy.dylib" "$CONTENTSDIR/Frameworks/libtidy.dylib"
 
         install_name_tool -change "${LIBS_PATH}/lib/libotr.5.dylib"       "@executable_path/../Frameworks/libotr.dylib"       "$CONTENTSDIR/Resources/plugins/libotrplugin.dylib"
@@ -662,13 +659,13 @@ copy_growl() {
     cleanup_framework "$CONTENTSDIR/Frameworks/Growl.framework" Growl A
 }
 
-prepeare_bundle() {    
+prepeare_bundle() {
     log "Copying dependencies..."
 
     cd "${PSI_DIR}/build"
 
     CONTENTSDIR=${PSI_DIR}/build/${PSI_APP}/Contents
-    mkdir "$CONTENTSDIR/Frameworks"    
+    mkdir "$CONTENTSDIR/Frameworks"
 
     copy_qt
     copy_qca

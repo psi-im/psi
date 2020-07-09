@@ -28,7 +28,6 @@ if(WIN32)
     #Set SDK-related variables
     if(SDK_PATH AND (EXISTS "${SDK_PATH}"))
         set(QCA_DIR "${SDK_PATH}/" CACHE STRING "Path to QCA")
-        set(IDN_ROOT "${SDK_PATH}/" CACHE STRING "Path to IDN library")
         set(HUNSPELL_ROOT "${SDK_PATH}/" CACHE STRING "Path to hunspell library")
         if(ENABLE_PLUGINS)
             set(LIBGCRYPT_ROOT "${SDK_PATH}/" CACHE STRING "Path to libgcrypt library")

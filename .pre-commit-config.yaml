@@ -24,8 +24,8 @@ repos:
     -   id: remove-crlf
     -   id: forbid-tabs
     -   id: remove-tabs
--   repo: https://github.com/openstack-dev/bashate
-    rev: 2.0.0
-    hooks:
-    -   id: bashate
-        args: ['--ignore', 'E006']
+#-   repo: https://github.com/openstack-dev/bashate
+#    rev: 2.0.0
+#    hooks:
+#    -   id: bashate
+#        args: ['--ignore', 'E006']
