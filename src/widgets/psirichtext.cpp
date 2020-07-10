@@ -132,9 +132,9 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
 
     auto relSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
     if (icon->isScalable()) {
-        return icon->size(QSize(relSize, relSize));
+        return icon->size(QSize(0, relSize));
     } else if (icon->size().height() > relSize * HugeIconTextViewK) { // still too huge
-        return icon->size().scaled(QSize(relSize, relSize), Qt::KeepAspectRatio);
+        return icon->size().scaled(QSize(icon->size().width(), relSize), Qt::KeepAspectRatio);
     }
 
     return icon->size();

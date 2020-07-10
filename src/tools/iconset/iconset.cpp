@@ -484,8 +484,14 @@ QSize PsiIcon::size(const QSize &desiredSize) const
 {
     if (d->scalable) {
         QSize origSize = d->svgRenderer ? d->svgRenderer->defaultSize() : d->impix.size();
-        if (desiredSize.isEmpty())
+        if (!desiredSize.width() && !desiredSize.height())
             return origSize;
+        if (!desiredSize.width()) {
+            return origSize.scaled(origSize.width(), desiredSize.height(), Qt::KeepAspectRatio);
+        }
+        if (!desiredSize.height()) {
+            return origSize.scaled(desiredSize.width(), origSize.height(), Qt::KeepAspectRatio);
+        }
         return origSize.scaled(desiredSize, Qt::KeepAspectRatio);
     }
     return d->impix.size();
