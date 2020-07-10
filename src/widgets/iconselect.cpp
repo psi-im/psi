@@ -323,7 +323,7 @@ void IconSelect::setIconset(const Iconset &iconset)
     int   maxSize = qMin(r.width(), r.height()) / 3;
 
     int size       = int(ceil(std::sqrt(count)));
-    int maxColumns = int(maxSize / tileSize) - 1;
+    int maxColumns = int(maxSize / tileSize);
     size           = size > maxColumns ? maxColumns : size;
 
     // now, fill grid with elements
