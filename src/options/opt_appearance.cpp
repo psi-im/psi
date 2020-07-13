@@ -230,7 +230,9 @@ QWidget *OptionsTabAppearanceGeneral::widget()
             { d->ck_cUserText, d->pb_cUserText, "messages.usertext", "" },
             { d->ck_highlight, d->pb_highlight, "messages.highlighting", "" },
             { d->ck_cLink, d->pb_cLink, "messages.link", "" },
-            { d->ck_cLinkVisited, d->pb_cLinkVisited, "messages.link-visited", "" } };
+            { d->ck_cLinkVisited, d->pb_cLinkVisited, "messages.link-visited", "" },
+            { d->ck_cToolTipText, d->pb_cToolTipText, "tooltip.text", "" },
+            { d->ck_cToolTipBack, d->pb_cToolTipBack, "tooltip.background", "" } };
 
     bg_color = new QButtonGroup(this);
     for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
