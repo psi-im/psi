@@ -285,6 +285,7 @@ private:
     QString           vendor_;
     QString           description_;
     int               priority_ = 0;
+    QByteArray        rawIcon_;
     QIcon             icon_;
     QPluginLoader *   loader_             = nullptr;
     QPointer<QObject> enableHandler       = nullptr;

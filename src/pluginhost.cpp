@@ -213,8 +213,9 @@ void PluginHost::updateMetadata()
 
     QString data = md.value(QLatin1String("icon")).toString();
     if (data.startsWith("base64:")) {
+        rawIcon_ = QByteArray::fromBase64(data.midRef(6).toLatin1());
         QPixmap pix;
-        pix.loadFromData(QByteArray::fromBase64(data.midRef(6).toLatin1()));
+        pix.loadFromData(rawIcon_);
         icon_ = QIcon(pix);
     } else if (data.startsWith("iconset:")) {
         icon_ = IconsetFactory::icon(data.mid(8)).icon();
@@ -284,6 +285,9 @@ bool PluginHost::load()
                 // version_   = psiPlugin->version();
                 // priority_  = psiPlugin->priority();
                 // icon_      = QIcon(psiPlugin->icon());
+
+                plugin->setProperty("metadata", selfMetadata());
+
                 hasToolBarButton_       = qobject_cast<ToolbarIconAccessor *>(plugin_) ? true : false;
                 hasGCToolBarButton_     = qobject_cast<GCToolbarIconAccessor *>(plugin_) ? true : false;
                 PluginInfoProvider *pip = qobject_cast<PluginInfoProvider *>(plugin_);
@@ -1362,6 +1366,7 @@ QVariantMap PluginHost::selfMetadata() const
     md.insert(QLatin1String("version"), version_);
     md.insert(QLatin1String("priority"), priority_);
     md.insert(QLatin1String("icon"), icon_);
+    md.insert(QLatin1String("rawIcon"), rawIcon_);
     md.insert(QLatin1String("description"), description_);
     return md;
 }

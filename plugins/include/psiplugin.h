@@ -30,6 +30,9 @@
 
 class QWidget;
 
+// see PluginHost::selfMetadata for possible properties
+#define PSI_PLUGIN_MD(prop) property("metadata").toMap().value(QLatin1String(prop))
+
 /**
  * \brief An abstract class for implementing a plugin
  */
