@@ -333,7 +333,7 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
         return nullptr;
 
     if (item->isCached()) {
-        url = QUrl::fromLocalFile(fsm->cacheDir() + "/" + item->cache()->fileName());
+        url = QUrl::fromLocalFile(item->fileName());
         return nullptr;
     }
 
