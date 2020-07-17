@@ -35,7 +35,7 @@ public:
      * Returns encapsulated QTextEdit widget.
      */
     ChatEdit *chatEdit() const { return textEdit_; }
-    void      optionsChanged();
+    void      optionsChanged(const QString &option);
 
 signals:
     /**
@@ -54,7 +54,6 @@ private:
     virtual ChatEdit *createTextEdit();
     void              moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const;
     void              updateLayout();
-    void              addRrecordButton();
 
     bool      lineEditEnabled_;
     ChatEdit *textEdit_;

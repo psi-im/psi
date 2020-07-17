@@ -83,7 +83,7 @@ public slots:
 protected slots:
     void applySuggestion();
     void addToDictionary();
-    void optionsChanged();
+    void optionsChanged(const QString &option);
     void showHistoryMessageNext();
     void showHistoryMessagePrev();
     void showHistoryMessageFirst();

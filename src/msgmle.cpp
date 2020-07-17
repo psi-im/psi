@@ -1,4 +1,4 @@
-/*
+﻿/*
  * msgmle.cpp - subclass of PsiTextView to handle various hotkeys
  * Copyright (C) 2001-2003  Justin Karneges, Michail Pishchagin
  *
@@ -48,9 +48,12 @@
 #include <QTimer>
 #include <QToolButton>
 
-static const int TIMEOUT        = 30000; // 30 secs maximum time interval
-static const int SECOND         = 1000;
-static const int maxOverlayTime = TIMEOUT / SECOND;
+static const int           TIMEOUT        = 30000; // 30 secs maximum time interval
+static const int           SECOND         = 1000;
+static const int           maxOverlayTime = TIMEOUT / SECOND;
+static const QLatin1String capOption("options.ui.chat.auto-capitalize");
+static const QLatin1String audioMessage("options.media.audio-message");
+static const QLatin1String spellOption("options.ui.spell-check.enabled");
 
 //----------------------------------------------------------------------------
 // CapitalLettersController
@@ -61,7 +64,7 @@ class CapitalLettersController : public QObject {
 public:
     explicit CapitalLettersController(QTextEdit *parent) : QObject(), te_(parent), enabled_(true)
     {
-        connect(te_->document(), SIGNAL(contentsChange(int, int, int)), SLOT(textChanged(int, int, int)));
+        connect(te_->document(), &QTextDocument::contentsChange, this, &CapitalLettersController::textChanged);
     }
 
     ~CapitalLettersController() override = default;
@@ -101,9 +104,8 @@ public slots:
             } else if (charsAdded > 1) { // Insert a piece of text
                 return;
             } else {
-                QString txt = te_->toPlainText();
                 QRegExp capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
-                int     index = txt.lastIndexOf(capitalizeAfter);
+                int     index = te_->toPlainText().lastIndexOf(capitalizeAfter);
                 if (index != -1 && index == pos - capitalizeAfter.matchedLength()) {
                     capitalizeNext_ = true;
                 }
@@ -173,11 +175,13 @@ ChatEdit::ChatEdit(QWidget *parent) :
 
     previous_position_ = 0;
     setCheckSpelling(checkSpellingGloballyEnabled());
-    connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString &)), SLOT(optionsChanged()));
+    connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &ChatEdit::optionsChanged);
     typedMsgsIndex = 0;
     initActions();
     setShortcuts();
-    optionsChanged();
+    optionsChanged(spellOption);
+    optionsChanged(capOption);
+    optionsChanged(audioMessage);
 }
 
 ChatEdit::~ChatEdit()
@@ -193,30 +197,30 @@ void ChatEdit::initActions()
 {
     act_showMessagePrev = new QAction(this);
     addAction(act_showMessagePrev);
-    connect(act_showMessagePrev, SIGNAL(triggered()), SLOT(showHistoryMessagePrev()));
+    connect(act_showMessagePrev, &QAction::triggered, this, &ChatEdit::showHistoryMessagePrev);
 
     act_showMessageNext = new QAction(this);
     addAction(act_showMessageNext);
-    connect(act_showMessageNext, SIGNAL(triggered()), SLOT(showHistoryMessageNext()));
+    connect(act_showMessageNext, &QAction::triggered, this, &ChatEdit::showHistoryMessageNext);
 
     act_showMessageFirst = new QAction(this);
     addAction(act_showMessageFirst);
-    connect(act_showMessageFirst, SIGNAL(triggered()), SLOT(showHistoryMessageFirst()));
+    connect(act_showMessageFirst, &QAction::triggered, this, &ChatEdit::showHistoryMessageFirst);
 
     act_showMessageLast = new QAction(this);
     addAction(act_showMessageLast);
-    connect(act_showMessageLast, SIGNAL(triggered()), SLOT(showHistoryMessageLast()));
+    connect(act_showMessageLast, &QAction::triggered, this, &ChatEdit::showHistoryMessageLast);
 
     act_changeCase = new QAction(this);
     addAction(act_changeCase);
-    connect(act_changeCase, SIGNAL(triggered()), capitalizer_, SLOT(changeCase()));
+    connect(act_changeCase, &QAction::triggered, capitalizer_, &CapitalLettersController::changeCase);
 
     QClipboard *clipboard = QApplication::clipboard();
     actPasteAsQuote_      = new QAction(tr("Paste as Quotation"), this);
     actPasteAsQuote_->setEnabled(clipboard->mimeData()->hasText());
     addAction(actPasteAsQuote_);
-    connect(actPasteAsQuote_, SIGNAL(triggered()), SLOT(pasteAsQuote()));
-    connect(clipboard, SIGNAL(dataChanged()), SLOT(changeActPasteAsQuoteState()));
+    connect(actPasteAsQuote_, &QAction::triggered, this, &ChatEdit::pasteAsQuote);
+    connect(clipboard, &QClipboard::dataChanged, this, &ChatEdit::changeActPasteAsQuoteState);
 }
 
 void ChatEdit::setShortcuts()
@@ -247,12 +251,12 @@ QMenu *ChatEdit::createStandardContextMenu(const QPoint &position)
 
 bool ChatEdit::checkSpellingGloballyEnabled()
 {
-    return (SpellChecker::instance()->available()
-            && PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
+    return (SpellChecker::instance()->available() && PsiOptions::instance()->getOption(spellOption).toBool());
 }
 
 void ChatEdit::setCheckSpelling(bool b)
 {
+    document()->blockSignals(true);
     check_spelling_ = b;
     if (check_spelling_) {
         if (!spellhighlighter_)
@@ -260,6 +264,7 @@ void ChatEdit::setCheckSpelling(bool b)
     } else {
         spellhighlighter_.reset();
     }
+    document()->blockSignals(false);
 }
 
 bool ChatEdit::focusNextPrevChild(bool next) { return QWidget::focusNextPrevChild(next); }
@@ -333,13 +338,13 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
                 if (!suggestions.isEmpty()) {
                     for (const QString &suggestion : suggestions) {
                         QAction *act_suggestion = spell_menu.addAction(suggestion);
-                        connect(act_suggestion, SIGNAL(triggered()), SLOT(applySuggestion()));
+                        connect(act_suggestion, &QAction::triggered, this, &ChatEdit::applySuggestion);
                     }
                     spell_menu.addSeparator();
                 }
                 if (SpellChecker::instance()->writable()) {
                     QAction *act_add = spell_menu.addAction(tr("Add to dictionary"));
-                    connect(act_add, SIGNAL(triggered()), SLOT(addToDictionary()));
+                    connect(act_add, &QAction::triggered, this, &ChatEdit::addToDictionary);
                 }
                 spell_menu.exec(QCursor::pos());
                 e->accept();
@@ -405,10 +410,20 @@ void ChatEdit::addToDictionary()
     setTextCursor(tc);
 }
 
-void ChatEdit::optionsChanged()
+void ChatEdit::optionsChanged(const QString &option)
 {
-    setCheckSpelling(checkSpellingGloballyEnabled());
-    capitalizer_->setEnabled(PsiOptions::instance()->getOption("options.ui.chat.auto-capitalize").toBool());
+    if (option == spellOption)
+        setCheckSpelling(checkSpellingGloballyEnabled());
+    if (option == capOption)
+        capitalizer_->setEnabled(PsiOptions::instance()->getOption(capOption).toBool());
+    if (option == audioMessage) {
+        bool isEnabled = PsiOptions::instance()->getOption(audioMessage).toBool();
+        if (!recButton_ && isEnabled) {
+            addSoundRecButton();
+        } else if (recButton_ && !isEnabled) {
+            removeSoundRecButton();
+        }
+    }
 }
 
 void ChatEdit::showHistoryMessageNext()
@@ -703,11 +718,13 @@ void ChatEdit::addSoundRecButton()
 void ChatEdit::removeSoundRecButton()
 {
     disconnect(recButton_.get());
-    layout_.reset();
     recButton_.reset();
     overlay_.reset();
+    layout_.reset();
     disconnect(recorder_.get());
     recorder_.reset();
+    disconnect(document(), &QTextDocument::contentsChanged, this, &ChatEdit::setRigthMargin);
+    setRigthMargin();
 }
 
 void ChatEdit::setOverlayText(int value) { overlay_->setText(tr("Recording (%1 sec left)").arg(value)); }
@@ -743,9 +760,11 @@ void ChatEdit::setRigthMargin()
     // Set margin for text to avoid text placing under record button
     const float      margin = recButtonHeigth() * 1.5;
     QTextFrameFormat frmt   = document()->rootFrame()->frameFormat();
-    if (frmt.rightMargin() < margin) {
+    if (frmt.rightMargin() < margin || margin == 0) {
+        document()->blockSignals(true);
         frmt.setRightMargin(margin);
         document()->rootFrame()->setFrameFormat(frmt);
+        document()->blockSignals(false);
     }
 }
 
@@ -760,7 +779,7 @@ LineEdit::LineEdit(QWidget *parent) : ChatEdit(parent)
 
     setMinimumHeight(0);
 
-    connect(this, &QTextEdit::textChanged, this, &LineEdit::recalculateSize);
+    connect(document(), &QTextDocument::contentsChanged, this, &LineEdit::recalculateSize);
 }
 
 LineEdit::~LineEdit() { }
@@ -789,13 +808,13 @@ QSize LineEdit::sizeHint() const
 void LineEdit::resizeEvent(QResizeEvent *e)
 {
     ChatEdit::resizeEvent(e);
-    QTimer::singleShot(0, this, SLOT(updateScrollBar()));
+    QTimer::singleShot(0, this, &LineEdit::updateScrollBar);
 }
 
 void LineEdit::recalculateSize()
 {
     updateGeometry();
-    QTimer::singleShot(0, this, SLOT(updateScrollBar()));
+    QTimer::singleShot(0, this, &LineEdit::updateScrollBar);
 }
 
 void LineEdit::updateScrollBar()

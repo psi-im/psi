@@ -379,7 +379,6 @@ void PsiChatDlg::setLooks()
         chatEdit()->setCssString(css);
     }
     ui_.splitter->optionsChanged();
-    ui_.mle->optionsChanged();
 
     int s = PsiIconset::instance()->system().iconSize();
     ui_.lb_status->setFixedSize(s, s);

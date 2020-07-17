@@ -916,7 +916,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) : Tab
         } else if (name == QString::fromLatin1("gchat_configure")) {
             connect(action, SIGNAL(triggered()), SLOT(configureRoom()));
         } else if (name == QString::fromLatin1("gchat_html_text")) {
-            connect(action, SIGNAL(triggered()), d->mle(), SLOT(doHTMLTextMenu()));
+            connect(action, &QAction::triggered, d->mle(), &ChatEdit::doHTMLTextMenu);
         } else if (name == QString::fromLatin1("gchat_icon")) {
             connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
             action->setMenu(pa->psi()->iconSelectPopup());
@@ -2288,7 +2288,6 @@ void GCMainDlg::setLooks()
         d->mle()->setCssString(css);
     }
     ui_.vsplitter->optionsChanged();
-    ui_.mle->optionsChanged();
 
     // update the fonts
     QFont f;

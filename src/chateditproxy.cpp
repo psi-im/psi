@@ -25,7 +25,6 @@
 #include <QVBoxLayout>
 
 static const QLatin1String expandingLineEdit("options.ui.chat.use-expanding-line-edit");
-static const QLatin1String audioMessage("options.media.audio-message");
 
 ChatEditProxy::ChatEditProxy(QWidget *parent) :
     QWidget(parent), lineEditEnabled_(false), textEdit_(nullptr), layout_(nullptr)
@@ -34,16 +33,8 @@ ChatEditProxy::ChatEditProxy(QWidget *parent) :
     layout_->setMargin(0);
     layout_->setSpacing(0);
 
-    connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, [this](const QString &option) {
-        if (option == expandingLineEdit)
-            optionsChanged();
-        if (option == audioMessage)
-            addRrecordButton();
-    });
-    optionsChanged();
-
-    if (!textEdit_)
-        updateLayout();
+    connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &ChatEditProxy::optionsChanged);
+    optionsChanged(expandingLineEdit);
 }
 
 /**
@@ -97,26 +88,16 @@ void ChatEditProxy::updateLayout()
     delete textEdit_;
     textEdit_ = newEdit;
     layout_->addWidget(textEdit_);
-    // Add sound record button if allowed and not exists
-    addRrecordButton();
     emit textEditCreated(textEdit_);
 }
 
 /**
  * Update ChatEdit widget according to current options.
  */
-void ChatEditProxy::optionsChanged()
+void ChatEditProxy::optionsChanged(const QString &option)
 {
-    lineEditEnabled_ = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
-    updateLayout();
-}
-
-void ChatEditProxy::addRrecordButton()
-{
-    bool isEnabled = PsiOptions::instance()->getOption(audioMessage).toBool();
-    if (!textEdit_->hasSoundRecButton() && isEnabled) {
-        textEdit_->addSoundRecButton();
-    } else if (textEdit_->hasSoundRecButton() && !isEnabled) {
-        textEdit_->removeSoundRecButton();
+    if (option == expandingLineEdit) {
+        lineEditEnabled_ = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
+        updateLayout();
     }
 }
