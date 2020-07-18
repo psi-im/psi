@@ -159,6 +159,7 @@ public:
     QString appCapsNode() override;
     QString appCapsVersion() override;
     QString appOsName() override;
+    QString appOsVersion() override;
     QString appHomeDir(HomedirType type) override;
     QString appResourcesDir() override;
     QString appLibDir() override;

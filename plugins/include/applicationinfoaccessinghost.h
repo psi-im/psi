@@ -24,6 +24,7 @@ public:
     virtual QString appCapsNode()    = 0;
     virtual QString appCapsVersion() = 0;
     virtual QString appOsName()      = 0;
+    virtual QString appOsVersion()   = 0;
 
     // Directories
     virtual QString appHomeDir(HomedirType type)           = 0;

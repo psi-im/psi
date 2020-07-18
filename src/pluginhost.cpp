@@ -41,6 +41,7 @@
 #include "soundaccessor.h"
 #include "stanzafilter.h"
 #include "stanzasender.h"
+#include "systeminfo.h"
 #include "tabmanager.h"
 #include "textutil.h"
 #include "toolbariconaccessor.h"
@@ -1045,6 +1046,8 @@ QString PluginHost::appCapsVersion()
 }
 
 QString PluginHost::appOsName() { return ApplicationInfo::osName(); }
+
+QString PluginHost::appOsVersion() { return SystemInfo::instance()->osVersion(); }
 
 QString PluginHost::appHomeDir(ApplicationInfoAccessingHost::HomedirType type)
 {
