@@ -140,7 +140,7 @@ void WebView::contextMenuEvent(QContextMenuEvent *event)
         }
         menu->addAction(pageAction(QWebEnginePage::InspectElement));
     }
-    menu->addAction(pageAction(QWebEnginePage::Reload));
+    // menu->addAction(pageAction(QWebEnginePage::Reload));
 #else
             menu->addAction(pageAction(QWebPage::Copy));
             for (auto act : contextMenuActions_) {
@@ -156,7 +156,7 @@ void WebView::contextMenuEvent(QContextMenuEvent *event)
             menu->addAction(pageAction(QWebPage::InspectElement));
         }
     }
-    menu->addAction(pageAction(QWebPage::Reload));
+    // menu->addAction(pageAction(QWebPage::Reload));
 #endif
     menu->exec(mapToGlobal(event->pos()));
     event->accept();
