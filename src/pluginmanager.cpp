@@ -467,6 +467,18 @@ void PluginManager::processOutgoingStanza(PsiAccount *account, QDomElement &stan
 }
 
 /**
+ * Notify to plugins that an account is going to connect.
+ */
+void PluginManager::startLogin(PsiAccount *account)
+{
+    const int acc_id = accountIds_.id(account);
+    for (PluginHost *host : pluginByFile_.values()) {
+        host->logout(acc_id);
+        emit accountBeforeLogin(acc_id);
+    }
+}
+
+/**
  * Notify to plugins that an account will go offline now.
  */
 void PluginManager::logout(PsiAccount *account)

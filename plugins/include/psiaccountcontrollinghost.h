@@ -17,10 +17,11 @@ public:
     virtual bool appendSysMsg(int account, const QString &jid, const QString &message)     = 0;
     virtual bool appendSysHtmlMsg(int account, const QString &jid, const QString &message) = 0;
 
-    virtual void subscribeLogout(QObject *context, std::function<void(int account)> callback) = 0;
-    virtual void setClientVersionInfo(int account, const QVariantMap &info)                   = 0;
+    virtual void subscribeBeforeLogin(QObject *context, std::function<void(int account)> callback) = 0;
+    virtual void subscribeLogout(QObject *context, std::function<void(int account)> callback)      = 0;
+    virtual void setClientVersionInfo(int account, const QVariantMap &info)                        = 0;
 };
 
-Q_DECLARE_INTERFACE(PsiAccountControllingHost, "org.psi-im.PsiAccountControllingHost/0.6")
+Q_DECLARE_INTERFACE(PsiAccountControllingHost, "org.psi-im.PsiAccountControllingHost/0.7")
 
 #endif // PSIACCOUNTCONTROLLINGHOST_H

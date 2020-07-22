@@ -1102,6 +1102,11 @@ QString PluginHost::getPgpKey(int account) { return manager_->getPgpKey(account)
 
 QMap<QString, QString> PluginHost::getKnownPgpKeys(int account) { return manager_->getKnownPgpKeys(account); }
 
+void PluginHost::subscribeBeforeLogin(QObject *context, std::function<void(int)> callback)
+{
+    connect(manager_, &PluginManager::accountBeforeLogin, context, callback);
+}
+
 void PluginHost::subscribeLogout(QObject *context, std::function<void(int account)> callback)
 {
     connect(manager_, &PluginManager::accountLoggedOut, context, callback);

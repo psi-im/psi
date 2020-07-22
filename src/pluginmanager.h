@@ -82,6 +82,7 @@ public:
     bool processOutgoingMessage(PsiAccount *account, const QString &jidTo, QString &body, const QString &type,
                                 QString &subject);
     void processOutgoingStanza(PsiAccount *account, QDomElement &stanza);
+    void startLogin(PsiAccount *account);
     void logout(PsiAccount *account);
 
     void                          addSettingPage(OAH_PluginOptionsTab *tab);
@@ -120,6 +121,7 @@ public:
 
 signals:
     void jsFiltersUpdated();
+    void accountBeforeLogin(int account_id);
     void accountLoggedOut(int account_id);
     void pluginEnabled(const QString &shortName);
     void pluginDisabled(const QString &shortName);

@@ -1595,7 +1595,6 @@ void PsiAccount::login()
     if (isActive() && !doReconnect)
         return;
 
-    updateClientVersionInfo();
     const bool tlsSupported             = QCA::isSupported("tls");
     const bool keyStoreManagerAvailable = !QCA::KeyStoreManager().isBusy();
     if (d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) {
@@ -1625,6 +1624,11 @@ void PsiAccount::login()
             return;
         }
     }
+
+#ifdef PSI_PLUGINS
+    PluginManager::instance()->startLogin(this);
+#endif
+    updateClientVersionInfo();
 
     if (d->acc.legacy_ssl_probe) {
         // disable the feature and display a notice
