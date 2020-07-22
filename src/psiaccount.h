@@ -565,6 +565,7 @@ private:
     bool encryptMessageElement(QDomElement &element) override;
     void userListItemUnavailable(UserListItem *u, const Jid &j, const Resource &r, bool *doSound = nullptr,
                                  bool *doPopup = nullptr);
+    void updateClientVersionInfo();
 };
 
 #endif // PSIACCOUNT_H
