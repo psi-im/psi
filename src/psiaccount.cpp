@@ -1054,7 +1054,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 #ifdef PSI_PLUGINS
     PluginManager::instance()->addAccount(this, d->client);
 #endif
-    updateClientVersionInfo();
     d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
     d->client->setEncryptionHandler(this);
 
@@ -1596,6 +1595,7 @@ void PsiAccount::login()
     if (isActive() && !doReconnect)
         return;
 
+    updateClientVersionInfo();
     const bool tlsSupported             = QCA::isSupported("tls");
     const bool keyStoreManagerAvailable = !QCA::KeyStoreManager().isBusy();
     if (d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) {
