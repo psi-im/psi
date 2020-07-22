@@ -1056,7 +1056,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 #endif
     static const auto cvPropGet = [this](const char *prop, const QString &defValue) {
         auto it = d->clientVersionInfo.find(QLatin1String(prop));
-        return it != d->clientVersionInfo.end() && it.value().canConvert<QString>() ? it.value().toString() : defValue;
+        auto ret
+            = it != d->clientVersionInfo.end() && it.value().canConvert<QString>() ? it.value().toString() : defValue;
+        return ret.isNull() ? defValue : ret;
     };
 
     d->client->setOSName(cvPropGet("os-name", SystemInfo::instance()->osName()));
