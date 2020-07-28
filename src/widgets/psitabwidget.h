@@ -58,7 +58,6 @@ public:
 
     void     removePage(QWidget *);
     QWidget *page(int index);
-    int      getIndex(QWidget *);
     void     setTabText(QWidget *, const QString &);
     void     setTabIcon(QWidget *, const QIcon &);
     void     setTabPosition(QTabWidget::TabPosition pos);

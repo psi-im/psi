@@ -130,7 +130,6 @@ signals:
 private slots:
     void updateFlashState();
     void tabSelected(QWidget *selected);
-    void checkHasChats();
     void updateTab();
     void updateTab(TabbableWidget *);
     void showTabWithoutActivation();

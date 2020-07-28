@@ -361,7 +361,8 @@ void TabDlg::pinTab(TabbableWidget *tab) { tabWidget_->setPagePinned(tab, !tabWi
 
 void TabDlg::hideAllTab()
 {
-    for (TabbableWidget *tab : tabs_)
+    QList<TabbableWidget *> copy = tabs_;
+    for (TabbableWidget *tab : copy)
         hideTab(tab);
 }
 
@@ -410,7 +411,14 @@ void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
 
     tabs_.removeAll(tab);
     tabWidget_->removePage(tab);
-    checkHasChats();
+
+    if (tabWidget_->count() > 0 || this != window())
+        return;
+    if (tabs_.count() > 0) {
+        hide();
+        return;
+    }
+    deleteLater();
 }
 
 /**
@@ -446,17 +454,6 @@ void TabDlg::selectTab(TabbableWidget *chat)
     setUpdatesEnabled(false);
     tabWidget_->showPage(chat);
     setUpdatesEnabled(true);
-}
-
-void TabDlg::checkHasChats()
-{
-    if (tabWidget_->count() > 0 || this != window())
-        return;
-    if (tabs_.count() > 0) {
-        hide();
-        return;
-    }
-    deleteLater();
 }
 
 void TabDlg::activated()
@@ -651,16 +648,8 @@ void TabDlg::extinguishFlashingTabs()
 
 void TabDlg::updateFlashState()
 {
-    bool flash = false;
-    for (TabbableWidget *tab : tabs_) {
-        if (tab->flashing()) {
-            flash = true;
-            break;
-        }
-    }
-
-    flash = flash && !isActiveWindow();
-    doFlash(flash);
+    auto it = std::find_if(tabs_.cbegin(), tabs_.cend(), [](auto const &t) { return t->flashing(); });
+    doFlash(it != tabs_.cend());
 }
 
 void TabDlg::paintEvent(QPaintEvent *event)

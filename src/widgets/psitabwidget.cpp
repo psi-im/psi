@@ -120,10 +120,9 @@ PsiTabWidget::~PsiTabWidget() { }
  */
 void PsiTabWidget::setTabTextColor(QWidget *tab, const QColor &color)
 {
-    for (int i = 0; i < count(); i++) {
-        if (widget(i) == tab) {
-            tabBar_->setTabTextColor(i, color);
-        }
+    auto i = widgets_.indexOf(tab);
+    if (i != -1) {
+        tabBar_->setTabTextColor(i, color);
     }
 }
 
@@ -208,11 +207,10 @@ void PsiTabWidget::resizeEvent(QResizeEvent *event)
  */
 void PsiTabWidget::showPage(QWidget *widget)
 {
-    for (int i = 0; i < count(); i++) {
-        if (widgets_[i] == widget) {
-            showPageDirectly(widget);
-            tabBar_->setCurrentIndex(i);
-        }
+    auto i = widgets_.indexOf(widget);
+    if (i != -1) {
+        showPageDirectly(widget);
+        tabBar_->setCurrentIndex(i);
     }
 }
 
@@ -222,32 +220,27 @@ void PsiTabWidget::showPage(QWidget *widget)
 void PsiTabWidget::showPageDirectly(QWidget *widget)
 {
     // FIXME move this back into showPage? should this be in the public interface?
-    for (int i = 0; i < count(); i++) {
-        if (widgets_[i] == widget) {
-            stacked_->setCurrentWidget(widget);
-            // currentChanged is handled by tabBar_
-            return;
-        }
+    auto i = widgets_.indexOf(widget);
+    if (i != -1) {
+        stacked_->setCurrentWidget(widget);
+        // currentChanged is handled by tabBar_
     }
 }
 
 void PsiTabWidget::setPagePinned(QWidget *page, bool pinned)
 {
-    for (QWidget *w : widgets_) {
-        if (w == page) {
-            tabBar_->setTabPinned(widgets_.indexOf(w), pinned);
-            showPageDirectly(page);
-            break;
-        }
+    auto i = widgets_.indexOf(page);
+    if (i != -1) {
+        tabBar_->setTabPinned(i, pinned);
+        showPageDirectly(page);
     }
 }
 
 bool PsiTabWidget::isPagePinned(QWidget *page)
 {
-    for (QWidget *w : widgets_) {
-        if (w == page) {
-            return tabBar_->isTabPinned(widgets_.indexOf(w));
-        }
+    auto i = widgets_.indexOf(page);
+    if (i != -1) {
+        return tabBar_->isTabPinned(i);
     }
     return false;
 }
@@ -257,27 +250,13 @@ bool PsiTabWidget::isPagePinned(QWidget *page)
  */
 void PsiTabWidget::removePage(QWidget *widget)
 {
-    for (int i = 0; i < count(); i++) {
-        if (widgets_[i] == widget) {
-            stacked_->removeWidget(widget);
-            widgets_.remove(i);
-            tabBar_->removeTab(i);
-            // tabBar_ emits current changed if needed
-        }
+    auto i = widgets_.indexOf(widget);
+    if (i != -1) {
+        stacked_->removeWidget(widget);
+        widgets_.remove(i);
+        tabBar_->removeTab(i);
+        // tabBar_ emits current changed if needed
     }
-}
-
-/**
- * Finds the index of the widget (or -1 if missing).
- */
-int PsiTabWidget::getIndex(QWidget *widget)
-{
-    for (int i = 0; i < count(); i++) {
-        if (widgets_[i] == widget) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 /**
@@ -285,11 +264,10 @@ int PsiTabWidget::getIndex(QWidget *widget)
  */
 void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
 {
-    int index = getIndex(widget);
-    if (index == -1) {
-        return;
+    int index = widgets_.indexOf(widget);
+    if (index != -1) {
+        tabBar_->setTabText(index, label);
     }
-    tabBar_->setTabText(index, label);
 }
 
 /**
@@ -297,19 +275,14 @@ void PsiTabWidget::setTabText(QWidget *widget, const QString &label)
  */
 void PsiTabWidget::setTabIcon(QWidget *widget, const QIcon &icon)
 {
-    int index = getIndex(widget);
+    int index = widgets_.indexOf(widget);
     if (index == -1 || !PsiOptions::instance()->getOption("options.ui.tabs.show-tab-icons").toBool()) {
         return;
     }
     tabBar_->setTabIcon(index, icon);
 }
 
-void PsiTabWidget::setCurrentPage(int index)
-{
-    if (index >= 0 && index < count()) {
-        showPage(widgets_[index]);
-    }
-}
+void PsiTabWidget::setCurrentPage(int index) { showPage(widgets_.value(index)); }
 
 void PsiTabWidget::removeCurrentPage() { removePage(currentPage()); }
 
