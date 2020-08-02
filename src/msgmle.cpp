@@ -642,9 +642,9 @@ void ChatEdit::insertAsQuote(const QString &text)
 void ChatEdit::addSoundRecButton()
 {
     if (!recButton_) {
-        layout_.reset(new QHBoxLayout(this));
-        recButton_.reset(new QToolButton(this));
-        overlay_.reset(new QLabel(this));
+        layout_    = new QHBoxLayout(this);
+        recButton_ = new QToolButton(this);
+        overlay_   = new QLabel(this);
 
         // Set text right margin for rec button
         connect(document(), &QTextDocument::contentsChanged, this, &ChatEdit::setRigthMargin);
@@ -655,15 +655,15 @@ void ChatEdit::addSoundRecButton()
         overlay_->setAlignment(Qt::AlignCenter);
         setOverlayText(maxOverlayTime);
         overlay_->setVisible(false);
-        layout_->addWidget(overlay_.get());
+        layout_->addWidget(overlay_);
         recButton_->setToolTip(tr("Record and share audio note while pressed"));
         setRecButtonIcon();
         auto iconSize = fontInfo().pixelSize() * 1.5;
         recButton_->setMinimumSize(QSize(iconSize, iconSize));
-        layout_->addWidget(recButton_.get());
+        layout_->addWidget(recButton_);
         layout_->setAlignment(Qt::AlignRight | Qt::AlignBottom);
 
-        connect(recButton_.get(), &QToolButton::pressed, this, [this]() { // Rec button pressed
+        connect(recButton_, &QToolButton::pressed, this, [this]() { // Rec button pressed
             if (recorder_) {
                 recorder_->disconnect();
                 recorder_.reset();
@@ -686,8 +686,8 @@ void ChatEdit::addSoundRecButton()
                 recButton_->setIcon(IconsetFactory::iconPixmap("psi/mic_rec", fontInfo().pixelSize() * 1.5));
                 overlay_->setVisible(true);
                 timeout_ = TIMEOUT;
-                timer_.reset(new QTimer); // countdown timer to stop recording while the button is pressed
-                connect(timer_.get(), &QTimer::timeout, this, [this]() {
+                timer_   = new QTimer(this); // countdown timer to stop recording while the button is pressed
+                connect(timer_, &QTimer::timeout, this, [this]() {
                     if (timeout_ > 0) {
                         timeout_ -= SECOND;
                         setOverlayText(timeout_ / SECOND);
@@ -700,11 +700,11 @@ void ChatEdit::addSoundRecButton()
             });
             recorder_->record();
         });
-        connect(recButton_.get(), &QToolButton::released, this, [this]() { // Rec button relesed
+        connect(recButton_, &QToolButton::released, this, [this]() { // Rec button relesed
             setRecButtonIcon();
             if (timer_) {
                 timer_->stop();
-                timer_.reset();
+                delete timer_;
             }
             setOverlayText(maxOverlayTime);
             overlay_->setVisible(false);
@@ -717,10 +717,9 @@ void ChatEdit::addSoundRecButton()
 
 void ChatEdit::removeSoundRecButton()
 {
-    disconnect(recButton_.get());
-    recButton_.reset();
-    overlay_.reset();
-    layout_.reset();
+    delete recButton_;
+    delete overlay_;
+    delete layout_;
     disconnect(recorder_.get());
     recorder_.reset();
     disconnect(document(), &QTextDocument::contentsChanged, this, &ChatEdit::setRigthMargin);

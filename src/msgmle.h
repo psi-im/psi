@@ -22,6 +22,7 @@
 
 #include "xmpp_htmlelement.h"
 
+#include <QPointer>
 #include <QTextEdit>
 #include <memory>
 
@@ -69,7 +70,7 @@ public:
     }
     CapitalLettersController *capitalizer();
     void                      addSoundRecButton();
-    bool                      hasSoundRecButton() const { return bool(recButton_); }
+    bool                      hasSoundRecButton() const { return !recButton_.isNull(); }
     int                       recButtonHeigth() const;
     void                      removeSoundRecButton();
 
@@ -131,10 +132,10 @@ private:
     CapitalLettersController *        capitalizer_ = nullptr;
     bool                              correction   = false;
     QString                           lastId;
-    std::unique_ptr<QLayout>          layout_;
-    std::unique_ptr<QToolButton>      recButton_;
-    std::unique_ptr<QLabel>           overlay_;
-    std::unique_ptr<QTimer>           timer_;
+    QPointer<QLayout>                 layout_;
+    QPointer<QToolButton>             recButton_;
+    QPointer<QLabel>                  overlay_;
+    QPointer<QTimer>                  timer_;
     std::unique_ptr<AudioRecorder>    recorder_;
     int                               timeout_;
 };
