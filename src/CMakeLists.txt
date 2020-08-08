@@ -96,7 +96,10 @@ if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 endif()
 
-find_package( Qca REQUIRED )
+option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ON)
+if (NOT BUNDLED_QCA)
+    find_package( Qca REQUIRED )
+endif()
 
 if(LINUX)
     find_package(X11 REQUIRED)
