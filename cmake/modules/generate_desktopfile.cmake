@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.1.0 )
+cmake_minimum_required( VERSION 3.2.0 )
 
 set(DESKTOP_FILE "${PROJECT_SOURCE_DIR}/psi.desktop")
 set(DESKTOP_FILE_SEC_PART "${PROJECT_SOURCE_DIR}/psi-extra-action1.desktop")

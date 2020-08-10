@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.2.0)
 # Set automoc and autouic policy
 if(POLICY CMP0071)
     if(${CMAKE_VERSION} VERSION_LESS "3.10.0")

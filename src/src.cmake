@@ -39,21 +39,21 @@ list(APPEND FORMS
     changepw.ui
     chatdlg.ui
     disco.ui
-    filetrans.ui
     filesharedlg.ui
-    multifiletransferdlg.ui
+    filetrans.ui
     geolocation.ui
     groupchatdlg.ui
-    groupchattopicdlg.ui
     groupchattopicaddlang.ui
+    groupchattopicdlg.ui
     history.ui
-    infodlg.ui
     info.ui
+    infodlg.ui
     mood.ui
     mucconfig.ui
     mucinfo.ui
     mucjoin.ui
     mucreasonseditor.ui
+    multifiletransferdlg.ui
     optioneditor.ui
     pgpkey.ui
     profilemanage.ui
@@ -69,6 +69,7 @@ list(APPEND FORMS
 
 list(APPEND HEADERS
     aboutdlg.h
+    abstracttreeitem.h
     abstracttreemodel.h
     accountadddlg.h
     accountlabel.h
@@ -80,13 +81,20 @@ list(APPEND HEADERS
     actionlist.h
     activecontactsmenu.h
     activeprofiles.h
+    activity.h
+    activitycatalog.h
     activitydlg.h
     adduserdlg.h
+    ahcexecutetask.h
     ahcformdlg.h
+    ahcommand.h
     ahcommanddlg.h
+    ahcommandserver.h
+    ahcservermanager.h
     alertable.h
     alerticon.h
     alertmanager.h
+    applicationinfo.h
     avatars.h
     bobfilecache.h
     bookmarkmanagedlg.h
@@ -98,12 +106,17 @@ list(APPEND HEADERS
     chatdlg.h
     chateditproxy.h
     chatsplitter.h
+    chatview.h
+    chatviewcommon.h
     coloropt.h
+    common.h
+    conferencebookmark.h
     contactlistaccountmenu.h
     contactlistdragmodel.h
     contactlistdragview.h
     contactlistgroupmenu.h
     contactlistgroupmenu_p.h
+    contactlistitem.h
     contactlistitemmenu.h
     contactlistmodel.h
     contactlistmodel_p.h
@@ -113,23 +126,24 @@ list(APPEND HEADERS
     contactlistviewdelegate.h
     contactlistviewdelegate_p.h
     contactupdatesmanager.h
+    debug.h
+    desktoputil.h
     discodlg.h
+    dummystream.h
     edbflatfile.h
+    edbsqlite.h
     eventdb.h
     eventdlg.h
     filecache.h
-    filetransdlg.h
-    multifiletransferitem.h
-    multifiletransfermodel.h
-    multifiletransferdelegate.h
-    multifiletransferdlg.h
-    filesharingmanager.h
-    filesharingitem.h
-    filesharingdownloader.h
-    filesharingnamproxy.h
     filesharedlg.h
+    filesharingdownloader.h
+    filesharingitem.h
+    filesharingmanager.h
+    filesharingnamproxy.h
+    filetransdlg.h
     fileutil.h
     gcuserview.h
+    geolocation.h
     geolocationdlg.h
     globaleventqueue.h
     globalstatusmenu.h
@@ -140,17 +154,25 @@ list(APPEND HEADERS
     groupmenu.h
     historycontactlistmodel.h
     historydlg.h
+    historyimp.h
     hoverabletreeview.h
     htmltextcontroller.h
     httpauthmanager.h
     httputil.h
     infodlg.h
     invitetogroupchatmenu.h
+    jidutil.h
+    lastactivitytask.h
     main.h
     mainwin.h
     mainwin_p.h
+    mcmdcompletion.h
     mcmdmanager.h
+    messageview.h
     miniclient.h
+    minicmd.h
+    mood.h
+    moodcatalog.h
     mooddlg.h
     msgmle.h
     mucaffiliationsmodel.h
@@ -160,16 +182,25 @@ list(APPEND HEADERS
     mucjoindlg.h
     mucmanager.h
     mucreasonseditor.h
+    multifiletransferdelegate.h
+    multifiletransferdlg.h
+    multifiletransferitem.h
+    multifiletransfermodel.h
     networkaccessmanager.h
     passdialog.h
     pepmanager.h
     pgpkeydlg.h
     pgputil.h
+    pixmaputil.h
     pluginhost.h
     pluginmanager.h
+    popupmanager.h
     profiledlg.h
+    profiles.h
     proxy.h
     psiaccount.h
+    psiactionlist.h
+    psiactions.h
     psiapplication.h
     psicapsregsitry.h
     psichatdlg.h
@@ -182,83 +213,52 @@ list(APPEND HEADERS
     psicontactmenu_p.h
     psievent.h
     psifilteredcontactlistview.h
+    psihttpauthrequest.h
     psiiconset.h
     psioptions.h
     psioptionseditor.h
     psipopup.h
+    psipopupinterface.h
     psirosterwidget.h
+    psiselfcontact.h
     psithememanager.h
     psithememodel.h
     psithemeprovider.h
     psitoolbar.h
     psitrayicon.h
+    pubsubsubscription.h
+    rc.h
     registrationdlg.h
     resourcemenu.h
     rosteravatarframe.h
     rosteritemexchangetask.h
+    rtparse.h
     searchdlg.h
+    sendbuttonmenu.h
     serverlistquerier.h
+    shortcutmanager.h
     showtextdlg.h
     statuscombobox.h
     statusdlg.h
     statusmenu.h
+    statuspreset.h
     svgiconengine.h
+    systeminfo.h
     tabcompletion.h
     tasklist.h
+    textutil.h
+    theme.h
+    theme_p.h
     translationmanager.h
+    urlbookmark.h
+    userlist.h
+    varlist.h
     vcardfactory.h
     vcardphotodlg.h
     voicecalldlg.h
     voicecaller.h
     xdata_widget.h
     xmlconsole.h
-    abstracttreeitem.h
-    activity.h
-    activitycatalog.h
-    ahcexecutetask.h
-    ahcommand.h
-    ahcommandserver.h
-    ahcservermanager.h
-    applicationinfo.h
-    chatview.h
-    chatviewcommon.h
-    common.h
-    conferencebookmark.h
-    contactlistitem.h
-    debug.h
-    desktoputil.h
-    dummystream.h
-    geolocation.h
-    jidutil.h
-    lastactivitytask.h
-    mcmdcompletion.h
-    messageview.h
-    minicmd.h
-    mood.h
-    moodcatalog.h
-    pixmaputil.h
-    popupmanager.h
-    profiles.h
-    psiactionlist.h
-    psiactions.h
-    psihttpauthrequest.h
-    psipopupinterface.h
-    psiselfcontact.h
-    pubsubsubscription.h
-    rc.h
-    rtparse.h
-    sendbuttonmenu.h
-    shortcutmanager.h
-    statuspreset.h
-    systeminfo.h
-    textutil.h
-    theme.h
-    theme_p.h
-    urlbookmark.h
-    userlist.h
-    varlist.h
-    edbsqlite.h
-    historyimp.h
     )
 
 if(UNIX OR IS_WEBENGINE)
@@ -319,45 +319,18 @@ endif()
 
 # Source files
 list(APPEND SOURCES
-    accountmanagedlg.cpp
-    actionlist.cpp
-    activecontactsmenu.cpp
-    ahcommanddlg.cpp
-    ahcservermanager.cpp
-    alerticon.cpp
-    avatars.cpp
-    contactlistaccountmenu.cpp
-    discodlg.cpp
-    eventdlg.cpp
-    filetransdlg.cpp
-    gcuserview.cpp
-    groupchatdlg.cpp
-    htmltextcontroller.cpp
-    httpauthmanager.cpp
-    mainwin_p.cpp
-    msgmle.cpp
-    proxy.cpp
-    psiaccount.cpp
-    psiactionlist.cpp
-    psichatdlg.cpp
-    psicon.cpp
-    psicontactlistview.cpp
-    psievent.cpp
-    psioptionseditor.cpp
-    psipopup.cpp
-    psirosterwidget.cpp
-    registrationdlg.cpp
-    searchdlg.cpp
-    xdata_widget.cpp
     aboutdlg.cpp
     abstracttreeitem.cpp
     abstracttreemodel.cpp
     accountadddlg.cpp
     accountlabel.cpp
+    accountmanagedlg.cpp
     accountmodifydlg.cpp
     accountregdlg.cpp
     accountscombobox.cpp
     accountstatusmenu.cpp
+    actionlist.cpp
+    activecontactsmenu.cpp
     activeprofiles.cpp
     activity.cpp
     activitycatalog.cpp
@@ -366,10 +339,14 @@ list(APPEND SOURCES
     ahcexecutetask.cpp
     ahcformdlg.cpp
     ahcommand.cpp
+    ahcommanddlg.cpp
     ahcommandserver.cpp
+    ahcservermanager.cpp
     alertable.cpp
+    alerticon.cpp
     alertmanager.cpp
     applicationinfo.cpp
+    avatars.cpp
     bobfilecache.cpp
     bookmarkmanagedlg.cpp
     bookmarkmanager.cpp
@@ -384,6 +361,7 @@ list(APPEND SOURCES
     coloropt.cpp
     common.cpp
     conferencebookmark.cpp
+    contactlistaccountmenu.cpp
     contactlistdragmodel.cpp
     contactlistdragview.cpp
     contactlistgroupmenu.cpp
@@ -397,34 +375,44 @@ list(APPEND SOURCES
     contactupdatesmanager.cpp
     debug.cpp
     desktoputil.cpp
+    discodlg.cpp
     dummystream.cpp
     edbflatfile.cpp
+    edbsqlite.cpp
     eventdb.cpp
+    eventdlg.cpp
     filecache.cpp
-    filesharingmanager.cpp
-    filesharingitem.cpp
-    filesharingdownloader.cpp
-    filesharingnamproxy.cpp
     filesharedlg.cpp
+    filesharingdownloader.cpp
+    filesharingitem.cpp
+    filesharingmanager.cpp
+    filesharingnamproxy.cpp
+    filetransdlg.cpp
     fileutil.cpp
+    gcuserview.cpp
     geolocation.cpp
     geolocationdlg.cpp
     globaleventqueue.cpp
     globalstatusmenu.cpp
     gpgprocess.cpp
     gpgtransaction.cpp
+    groupchatdlg.cpp
     groupchattopicdlg.cpp
     groupmenu.cpp
-    httputil.cpp
     historycontactlistmodel.cpp
     historydlg.cpp
+    historyimp.cpp
     hoverabletreeview.cpp
+    htmltextcontroller.cpp
+    httpauthmanager.cpp
+    httputil.cpp
     infodlg.cpp
     invitetogroupchatmenu.cpp
     jidutil.cpp
     lastactivitytask.cpp
     main.cpp
     mainwin.cpp
+    mainwin_p.cpp
     mcmdcompletion.cpp
     mcmdmanager.cpp
     mcmdsimplesite.cpp
@@ -433,6 +421,7 @@ list(APPEND SOURCES
     mood.cpp
     moodcatalog.cpp
     mooddlg.cpp
+    msgmle.cpp
     mucaffiliationsmodel.cpp
     mucaffiliationsproxymodel.cpp
     mucaffiliationsview.cpp
@@ -440,10 +429,10 @@ list(APPEND SOURCES
     mucjoindlg.cpp
     mucmanager.cpp
     mucreasonseditor.cpp
-    multifiletransferitem.cpp
-    multifiletransfermodel.cpp
     multifiletransferdelegate.cpp
     multifiletransferdlg.cpp
+    multifiletransferitem.cpp
+    multifiletransfermodel.cpp
     networkaccessmanager.cpp
     passdialog.cpp
     pepmanager.cpp
@@ -454,16 +443,26 @@ list(APPEND SOURCES
     pluginmanager.cpp
     popupmanager.cpp
     profiledlg.cpp
-    psicapsregsitry.cpp
-    psicontactmenu.cpp
+    proxy.cpp
     psi_profiles.cpp
+    psiaccount.cpp
+    psiactionlist.cpp
     psiapplication.cpp
+    psicapsregsitry.cpp
+    psichatdlg.cpp
+    psicon.cpp
     psicontact.cpp
     psicontactlist.cpp
+    psicontactlistview.cpp
+    psicontactmenu.cpp
+    psievent.cpp
     psifilteredcontactlistview.cpp
     psiiconset.cpp
     psioptions.cpp
+    psioptionseditor.cpp
+    psipopup.cpp
     psipopupinterface.cpp
+    psirosterwidget.cpp
     psithememanager.cpp
     psithememodel.cpp
     psithemeprovider.cpp
@@ -471,10 +470,12 @@ list(APPEND SOURCES
     psitrayicon.cpp
     pubsubsubscription.cpp
     rc.cpp
+    registrationdlg.cpp
     resourcemenu.cpp
     rosteravatarframe.cpp
     rosteritemexchangetask.cpp
     rtparse.cpp
+    searchdlg.cpp
     sendbuttonmenu.cpp
     serverlistquerier.cpp
     shortcutmanager.cpp
@@ -496,9 +497,8 @@ list(APPEND SOURCES
     vcardfactory.cpp
     vcardphotodlg.cpp
     voicecalldlg.cpp
+    xdata_widget.cpp
     xmlconsole.cpp
-    edbsqlite.cpp
-    historyimp.cpp
     )
 
 include(${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite/libqite.cmake)
@@ -508,24 +508,26 @@ list(APPEND SOURCES ${qite_SOURCES})
 if(IS_WEBKIT OR IS_WEBENGINE)
     list(APPEND HEADERS
         chatview_webkit.h
-        webview.h
         chatviewtheme.h
         chatviewtheme_p.h
         chatviewthemeprovider.h
         chatviewthemeprovider_priv.h
         jsutil.h
+        webview.h
         )
     list(APPEND SOURCES
         chatview_webkit.cpp
-        webview.cpp
-        jsutil.cpp
         chatviewtheme.cpp
         chatviewthemeprovider.cpp
         chatviewthemeprovider_priv.cpp
+        jsutil.cpp
+        webview.cpp
         )
 else()
     list(APPEND HEADERS
         chatview_te.h
+        )
+    list(APPEND SOURCES
         chatview_te.cpp
         )
 endif()

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.2.0)
 
 set(VER_FILE ${PROJECT_SOURCE_DIR}/version)
 unset(APP_VERSION)
