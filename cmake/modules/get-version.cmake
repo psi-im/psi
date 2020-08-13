@@ -6,11 +6,12 @@ unset(PSI_REVISION)
 unset(PSI_PLUS_REVISION)
 set(DEFAULT_VER "1.4")
 
-find_program(GIT_BIN git DOC "Path to git utility")
-if(GIT_BIN)
-    message(STATUS "Git utility found ${GIT_BIN}")
-else()
-    message("Git utility not found")
+if(NOT Git_FOUND)
+    include(FindGit)
+    find_package(Git)
+    if(NOT BUNDLED_QCA AND (NOT Git_FOUND))
+        message("Git utility not found")
+    endif()
 endif()
 
 if(EXISTS "${PROJECT_SOURCE_DIR}/generate-single-repo.sh")
@@ -33,9 +34,9 @@ function(read_version_file VF_RESULT)
 endfunction()
 
 function(run_git GIT_ARG1 GIT_ARG2 GIT_ARG3 RESULT)
-    if(GIT_BIN)
+    if(GIT_EXECUTABLE)
         execute_process(
-            COMMAND ${GIT_BIN} ${GIT_ARG1} ${GIT_ARG2} ${GIT_ARG3}
+            COMMAND ${GIT_EXECUTABLE} ${GIT_ARG1} ${GIT_ARG2} ${GIT_ARG3}
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
             OUTPUT_VARIABLE RES
             OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -44,7 +45,7 @@ function(run_git GIT_ARG1 GIT_ARG2 GIT_ARG3 RESULT)
         if(RES)
             set(${RESULT} ${RES} PARENT_SCOPE)
         elseif(ERROR_1)
-            message("Can't execute ${GIT_BIN} ${GIT_ARG1} ${GIT_ARG2} ${GIT_ARG3}: ${ERROR_1}")
+            message("Can't execute ${GIT_EXECUTABLE} ${GIT_ARG1} ${GIT_ARG2} ${GIT_ARG3}: ${ERROR_1}")
         endif()
     endif()
 endfunction()
