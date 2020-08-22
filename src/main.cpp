@@ -587,13 +587,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 
 #ifdef QCA_STATIC
 #include <QtPlugin>
-#ifdef HAVE_OPENSSL
 Q_IMPORT_PLUGIN(qca_ossl)
-#endif
-#ifdef HAVE_CYRUSSASL
-Q_IMPORT_PLUGIN(qca_cyrus_sasl)
-#endif
-Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
 
 //#if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)
