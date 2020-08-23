@@ -441,6 +441,12 @@ if(WIN32 AND MSVC)
     endif()
 endif()
 
+if(BUNDLED_QCA)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QCA_STATIC)
+    find_package(OpenSSL COMPONENTS Crypto SSL REQUIRED)
+    list(APPEND EXTRA_LIBS ${Qca_OSSL_LIB_EXPORT} OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
     ${QT_LIBRARIES}
     ${EXTRA_LDFLAGS}
@@ -449,11 +455,7 @@ target_link_libraries(${PROJECT_NAME}
     iris
     ${Qca_LIBRARY}
 )
-if(BUNDLED_QCA)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE QCA_STATIC)
-    find_package(OpenSSL REQUIRED)
-    target_link_libraries(${PROJECT_NAME} ${Qca_OSSL_LIB} OpenSSL::SSL)
-endif()
+
 
 target_link_libraries(${PROJECT_NAME}
     options
