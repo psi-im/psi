@@ -521,7 +521,10 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
     QCA::setProperty("pgp-always-trust", true);
     QCA::KeyStoreManager keystoremgr;
     QCA::KeyStoreManager::start("qca-ossl");
+#ifndef BUNDLED_QCA
+    // non-bundled has a bug which causes hard-lock w/o gnupg
     QCA::KeyStoreManager::start("qca-gnupg");
+#endif
     if (keystoremgr.isBusy()) {
         // Yes, this is an ugly thing, but it works, and it works fine.
         // If it ain't broke, don't fix it please.
