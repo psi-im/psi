@@ -388,7 +388,6 @@ if(WIN32)
         libhunspell.dll
         libotr-5.dll
         libotr.dll
-        libqca-qt5${D}.dll
         libsignal-protocol-c.dll
         libssl-1_1-x64.dll
         libssl-1_1.dll
@@ -407,7 +406,6 @@ if(WIN32)
             libotr${D}.dll
             tidy${D}.dll
             zlib1${D}.dll
-            qca-qt5${D}.dll
             )
     endif()
 
@@ -454,17 +452,26 @@ if(WIN32)
             )
     endif()
     find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
-    # qca and plugins
-    set(QCA_PLUGINS
-        libqca-gnupg${D}.dll
-        libqca-ossl${D}.dll
-        )
-    if(MSVC)
-        list(APPEND QCA_PLUGINS
-            qca-gnupg${D}.dll
-            qca-ossl${D}.dll
+    if(NOT BUNDLED_QCA)
+        set(QCA_LIB
+            libqca-qt5${D}.dll
             )
+        # qca and plugins
+        set(QCA_PLUGINS
+            libqca-gnupg${D}.dll
+            libqca-ossl${D}.dll
+            )
+        if(MSVC)
+            set(QCA_LIB
+                qca-qt5${D}.dll
+                )
+            list(APPEND QCA_PLUGINS
+                qca-gnupg${D}.dll
+                qca-ossl${D}.dll
+                )
+        endif()
+        find_psi_lib("${QCA_LIB}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+        find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/crypto/")
     endif()
-    find_psi_lib("${QCA_PLUGINS}" "${PATHES}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtplugins/crypto/")
     copy("${PROJECT_SOURCE_DIR}/win32/qt.conf" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" "${LIBS_TARGET}")
 endif()

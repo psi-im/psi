@@ -160,6 +160,10 @@ if(USE_CRASH)
     add_definitions(-DUSE_CRASH)
 endif()
 
+if(BUNDLED_QCA)
+    add_definitions(-DQCA_STATIC)
+endif()
+
 # Detect MXE cross-compilation
 if( (CMAKE_CROSSCOMPILING) AND (DEFINED MSYS) )
     message(STATUS "MXE environment detected")

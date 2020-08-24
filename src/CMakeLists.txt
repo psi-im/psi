@@ -102,9 +102,12 @@ if (NOT BUNDLED_QCA)
     include_directories(${Qca_INCLUDE_DIR})
 else()
     find_package(OpenSSL REQUIRED)
-    add_definitions(-DQCA_STATIC)
     include_directories(${Qca_INCLUDE_DIR_EXPORT})
     set(Qca_LIBRARY ${Qca_LIBRARY_EXPORT} OpenSSL::SSL OpenSSL::Crypto)
+    #Additional win32 link dependencies
+    if(WIN32 OR USE_MXE)
+        list(APPEND Qca_LIBRARY crypt32 ws2_32)
+    endif()
 endif()
 
 if(LINUX)
