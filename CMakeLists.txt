@@ -67,6 +67,7 @@ option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of proje
 option( DEV_MODE "Enable prepare-bin-libs target for Windows OS only. Set PSI_DATADIR and PSI_LIBDIR to CMAKE_RUNTIME_OUTPUT_DIRECTORY to debug plugins for Linux only" OFF )
 option( USE_DBUS "Enable DBUS support" ON )
 # Iris options
+option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ON)
 option( USE_QJDNS "Use qjdns/jdns library. Disabled by default for Qt5" OFF )
 option( SEPARATE_QJDNS "Build qjdns as separate lib" OFF )
 

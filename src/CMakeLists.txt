@@ -27,6 +27,7 @@ endif()
 
 set(TRANSLATIONS_DIR "${PROJECT_SOURCE_DIR}/translations")
 
+#Work with external packages
 find_package(Qt5 COMPONENTS Widgets Core Gui Xml Network Concurrent Multimedia Svg Sql REQUIRED)
 if(IS_WEBKIT)
     find_package(Qt5 COMPONENTS WebKit WebKitWidgets REQUIRED)
@@ -96,9 +97,14 @@ if(APPLE)
     list(APPEND EXTRA_LDFLAGS "-framework Carbon" "-framework AppKit" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
 endif()
 
-option( BUNDLED_QCA "Adds: DTLS, Blake2b and other useful for XMPP crypto-stuff" ON)
 if (NOT BUNDLED_QCA)
     find_package( Qca REQUIRED )
+    include_directories(${Qca_INCLUDE_DIR})
+else()
+    find_package(OpenSSL REQUIRED)
+    add_definitions(-DQCA_STATIC)
+    include_directories(${Qca_INCLUDE_DIR_EXPORT})
+    set(Qca_LIBRARY ${Qca_LIBRARY_EXPORT} OpenSSL::SSL OpenSSL::Crypto)
 endif()
 
 if(LINUX)
@@ -130,7 +136,6 @@ endif()
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${Qca_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/3rdparty/qite/libqite
 )
 
@@ -144,6 +149,7 @@ else()
     include_directories(${Iris_INCLUDE_DIR})
 endif()
 
+#Prepare and generate config.h file
 string(TIMESTAMP PSI_COMPILATION_DATE "%Y-%m-%d")
 string(TIMESTAMP PSI_COMPILATION_TIME "%H:%M:%S")
 
@@ -224,8 +230,10 @@ set(ICONSETSQRC_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/iconsets.qrc")
 configure_file(${PROJECT_SOURCE_DIR}/icondef.xml.in ${ICONDEFXML_OUTPUT_FILE} @ONLY)
 configure_file(${PROJECT_SOURCE_DIR}/iconsets.qrc.in ${ICONSETSQRC_OUTPUT_FILE} @ONLY)
 
+#Include SOURCES HEADERS FORMS
 include(src.cmake)
 
+#Append config.h to HEADERS list
 if(EXISTS "${CONFIG_OUTPUT_FILE}")
     message(STATUS "${CONFIG_OUTPUT_FILE} file generated")
     list(APPEND HEADERS ${CONFIG_OUTPUT_FILE})
@@ -236,6 +244,7 @@ include(irisprotocol/irisprotocol.cmake)
 include(protocol/protocol.cmake)
 include(${PROJECT_SOURCE_DIR}/plugins/plugins.cmake)
 
+#Static libs
 add_subdirectory(AutoUpdater)
 add_subdirectory(options)
 add_subdirectory(tabs)
@@ -254,6 +263,7 @@ if(APPLE)
     add_subdirectory(CocoaUtilities)
 endif()
 
+#Adds qhttp if needed
 if(UNIX OR IS_WEBENGINE)
     add_definitions(-DHAVE_WEBSERVER)
     find_package(HttpParser 2.2 QUIET)
@@ -273,6 +283,7 @@ if(UNIX OR IS_WEBENGINE)
     )
 endif()
 
+#Work with project translation files
 if(LANGS_EXISTS)
     file(GLOB PSI_TRANSLATIONS "${TRANSLATIONS_DIR}/psi_*.ts")
 
@@ -324,10 +335,11 @@ if(IS_WEBKIT OR IS_WEBENGINE)
 endif()
 
 qt5_add_resources(QRC_SOURCES ${RESOURCES})
-
 qt5_wrap_ui(UI_FORMS ${FORMS})
+#Small hack to compile ui files before some *.cpp files
 add_custom_target(build_ui_files DEPENDS "${UI_FORMS}")
 
+#Prepare and comiple win rc file
 if(WIN32)
     if(PSI_PLUS)
         set(APP_NAME "Psi+")
@@ -383,6 +395,7 @@ if(WIN32)
     compile_rc_file(${DECS_RC_NAME} ${RC_FILE})
 endif()
 
+#Main executable creation
 add_executable(${PROJECT_NAME}
     WIN32
     MACOSX_BUNDLE
@@ -395,7 +408,7 @@ add_executable(${PROJECT_NAME}
 
 include(${PROJECT_SOURCE_DIR}/cmake/modules/fix-codestyle.cmake)
 
-#Experimental feature
+#Add webkit/webengine suffix to output binary name
 if(VERBOSE_PROGRAM_NAME)
     if(IS_WEBKIT)
         set(VERBOSE_SUFFIX "-webkit")
@@ -403,8 +416,8 @@ if(VERBOSE_PROGRAM_NAME)
         set(VERBOSE_SUFFIX "-webengine")
     endif()
 endif()
-#
 
+#Add portable suffix to output binary name
 if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
     if(ENABLE_PORTABLE)
         set(PORTABLE_SUFFIX "-portable")
@@ -417,6 +430,7 @@ if(ENABLE_PORTABLE OR VERBOSE_PROGRAM_NAME)
     )
 endif()
 
+#Build dependencies before project
 if(LANGS_EXISTS)
     add_dependencies(${PROJECT_NAME} build_translations)
 endif()
@@ -426,6 +440,7 @@ if(UNIX OR IS_WEBENGINE)
 endif()
 add_dependencies(${PROJECT_NAME} build_ui_files)
 
+#Add win32 additional dependencies
 if(WIN32 AND MSVC)
     list(APPEND EXTRA_LIBS
         wsock32
@@ -441,12 +456,6 @@ if(WIN32 AND MSVC)
     endif()
 endif()
 
-if(BUNDLED_QCA)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE QCA_STATIC)
-    find_package(OpenSSL COMPONENTS Crypto SSL REQUIRED)
-    list(APPEND EXTRA_LIBS ${Qca_OSSL_LIB_EXPORT} OpenSSL::SSL OpenSSL::Crypto)
-endif()
-
 target_link_libraries(${PROJECT_NAME}
     ${QT_LIBRARIES}
     ${EXTRA_LDFLAGS}
@@ -455,7 +464,6 @@ target_link_libraries(${PROJECT_NAME}
     iris
     ${Qca_LIBRARY}
 )
-
 
 target_link_libraries(${PROJECT_NAME}
     options
@@ -478,6 +486,7 @@ if(APPLE)
     target_link_libraries(${PROJECT_NAME} CocoaUtilities)
 endif()
 
+#Pre-install section
 set(OTHER_FILES
     ${PROJECT_SOURCE_DIR}/certs
     ${PROJECT_SOURCE_DIR}/sound
