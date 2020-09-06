@@ -937,8 +937,10 @@ void HistoryDlg::highlightBlocks()
 {
 	const QString text = ui_.searchField->text();
 	QTextCursor cur = ui_.msgLog->textCursor();
-	QTextCursor old = cur;
-	int sc_pos = ui_.msgLog->verticalScrollBar()->value();
+    QTextCursor old = cur;
+    int sc_pos = 0;
+    if (ui_.msgLog->verticalScrollBar())
+        sc_pos = ui_.msgLog->verticalScrollBar()->value();
 	cur.clearSelection();
 	cur.movePosition(QTextCursor::Start);
 	ui_.msgLog->setTextCursor(cur);
@@ -958,8 +960,9 @@ void HistoryDlg::highlightBlocks()
 	}
 
 	ui_.msgLog->setExtraSelections(extras);
-	ui_.msgLog->setTextCursor(old);
-	ui_.msgLog->verticalScrollBar()->setValue(sc_pos);
+    ui_.msgLog->setTextCursor(old);
+    if (ui_.msgLog->verticalScrollBar())
+        ui_.msgLog->verticalScrollBar()->setValue(sc_pos);
 }
 
 void HistoryDlg::findMessages()
