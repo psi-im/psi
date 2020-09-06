@@ -37,7 +37,7 @@ public:
 	void write(const XMPP::Stanza &) { }
 
 	int errorCondition() const { return 0; }
-	QString errorText() const { return QString::null; }
+	QString errorText() const { return QString(); }
 	QDomElement errorAppSpec() const { return v_doc.documentElement(); }
 
 private:

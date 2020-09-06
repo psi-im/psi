@@ -52,7 +52,7 @@ static QString getNext(QString *str)
 		++n;
 	}
 	if(n == (int)str->length()) {
-		return QString::null;
+		return QString();
 	}
 	// find end or next space
 	while(n < (int)str->length() && !str->at(n).isSpace()) {
@@ -72,7 +72,7 @@ static QStringList wrapString(const QString &str, int wid)
 	//printf("parsing: [%s]\n", tmp.latin1());
 	while(1) {
 		QString word = getNext(&tmp);
-		if(word == QString::null) {
+		if(word == QString()) {
 			lines += cur;
 			break;
 		}

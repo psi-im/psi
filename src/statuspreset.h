@@ -34,8 +34,8 @@ class StatusPreset
 {
 public:
 	StatusPreset();
-	StatusPreset(QString name, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
-	StatusPreset(QString name, int priority, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
+	StatusPreset(QString name, QString message = QString(), XMPP::Status::Type status = XMPP::Status::Away);
+	StatusPreset(QString name, int priority, QString message = QString(), XMPP::Status::Type status = XMPP::Status::Away);
 	StatusPreset(const QDomElement&);
 
 	QString name() const;

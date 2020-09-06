@@ -200,7 +200,7 @@ QString IconAction::psiIconName() const
 #else
 	return d->iconName;
 #endif
-	return QString::null;
+	return QString();
 }
 
 bool IconAction::addTo(QWidget *w)

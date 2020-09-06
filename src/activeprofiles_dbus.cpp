@@ -188,7 +188,7 @@ void ActiveProfiles::unsetThisProfile()
 		dbusIface->unregisterService(name);
 	}
 	d->busNames.clear();
-	d->profile = QString::null;
+	d->profile = QString();
 }
 
 QString ActiveProfiles::thisProfile() const

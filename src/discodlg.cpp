@@ -781,7 +781,7 @@ public: // functions
 	~Private();
 
 public slots:
-	void doDisco(QString host = QString::null, QString node = QString::null, bool doHistory = true);
+	void doDisco(QString host = QString(), QString node = QString(), bool doHistory = true);
 
 	void actionStop();
 	void actionRefresh();

@@ -3478,7 +3478,7 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
 		actionInfo(jid);
 	else if ( f.id() == Features::FID_Add ) {
 		QStringList sl;
-		dj_add(jid, QString::null, sl, true);
+		dj_add(jid, QString(), sl, true);
 	}
 	else if ( f.hasVersion() ) {
 		actionQueryVersion(jid);
@@ -4739,7 +4739,7 @@ void PsiAccount::dj_replyMessage(const Jid &jid, const QString &body, const QStr
 
 void PsiAccount::dj_replyMessage(const Jid &j, const QString &body)
 {
-	dj_replyMessage(j, body, QString::null, QString::null);
+	dj_replyMessage(j, body, QString(), QString());
 }
 
 void PsiAccount::dj_addAuth(const Jid &j)
