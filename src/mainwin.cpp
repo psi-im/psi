@@ -990,7 +990,7 @@ void MainWin::actReadmeActivated ()
 
 void MainWin::actOnlineHelpActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/wiki/User_Guide");
+    DesktopUtil::openUrl("https://psi-im.org/wiki/User_Guide");
 }
 
 void MainWin::actOnlineWikiActivated ()
@@ -1000,12 +1000,12 @@ void MainWin::actOnlineWikiActivated ()
 
 void MainWin::actOnlineHomeActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org");
+    DesktopUtil::openUrl("https://psi-im.org");
 }
 
 void MainWin::actOnlineForumActivated ()
 {
-	DesktopUtil::openUrl("http://forum.psi-im.org");
+    DesktopUtil::openUrl("https://groups.google.com/g/psi-users?pli=1");
 }
 
 void MainWin::actJoinPsiMUCActivated()
@@ -1015,7 +1015,7 @@ void MainWin::actJoinPsiMUCActivated()
 		return;
 	}
 
-	account->actionJoin("psi@conference.psi-im.org");
+    account->actionJoin("psi-dev@conference.jabber.ru");
 }
 
 void MainWin::actBugReportActivated ()
@@ -1052,7 +1052,7 @@ void MainWin::actAboutPsiMediaActivated ()
 			"This application uses GStreamer %1, a comprehensive "
 			"open-source and cross-platform multimedia framework."
 			"  For more information, see "
-			"<a href=\"http://www.gstreamer.net/\">http://www.gstreamer.net/</a>").arg(gstVersion);
+            "<a href=\"https://www.gstreamer.net/\">http://www.gstreamer.net/</a>").arg(gstVersion);
 		pix = IconsetFactory::icon("psi/gst_logo").pixmap();
 	}
 	else

@@ -887,7 +887,7 @@ void InfoWidget::goHomepage()
 	QString homepage = ui_.le_homepage->text();
 	if (!homepage.isEmpty()) {
 		if (homepage.indexOf("://") == -1) {
-			homepage = "http://" + homepage;
+            homepage = "https://" + homepage;
 		}
 		DesktopUtil::openUrl(homepage);
 	}
