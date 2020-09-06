@@ -34,6 +34,7 @@
 #include <QFile>
 #include <QBuffer>
 #include <QPainter>
+#include <QPainterPath>
 
 #include "xmpp_xmlcommon.h"
 #include "xmpp_vcard.h"

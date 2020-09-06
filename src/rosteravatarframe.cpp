@@ -23,6 +23,7 @@
 #include "iconset.h"
 #include "qpainter.h"
 
+#include <QPainterPath>
 
 RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
 	: QFrame(parent)

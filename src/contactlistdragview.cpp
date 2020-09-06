@@ -45,6 +45,7 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QMessageBox>
+#include <QPainterPath>
 
 ContactListDragView::ContactListDragView(QWidget* parent)
 	: ContactListView(parent)
