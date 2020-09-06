@@ -53,6 +53,10 @@ Notes
 
 Changes
 -------
+  New in 1.5
+  - Backported fixes to various bugs/crashes from the master branch
+  - Fixed compatibility with Qt 5.15
+
   New in 1.4
   - Fixed reconnection on Stream Management resume failure
   - Fixed compatibility with Qt >= 5.10
