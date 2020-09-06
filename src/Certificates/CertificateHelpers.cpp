@@ -159,7 +159,13 @@ QString CertificateHelpers::resultToString(int result, QCA::Validity validity)
 
 // shared by PsiAccount and MiniClient
 bool CertificateHelpers::checkCertificate(QCA::TLS* tls, XMPP::QCATLSHandler *tlsHandler, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert, QObject * canceler, const QString &title, const QString &host) {
-	QCA::Certificate cert = tls->peerCertificateChain().primary();
+
+    auto chain = tls->peerCertificateChain();
+    if (chain.isEmpty()) {
+        qWarning("Certificate chain is empty");
+        return false;
+    }
+    QCA::Certificate cert = tls->peerCertificateChain().primary();
 	int result = tls->peerIdentityResult();
 	QString hostnameOverrideable;
 
