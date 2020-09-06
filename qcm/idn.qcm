@@ -1,0 +1,61 @@
+/*
+-----BEGIN QCMOD-----
+name: libidn
+arg: with-idn-inc=[path],Path to libidn include files
+arg: with-idn-lib=[path],Path to libidn library or framework files
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_idn
+//----------------------------------------------------------------------------
+class qc_idn : public ConfObj
+{
+public:
+	qc_idn(Conf *c) : ConfObj(c) {}
+	QString name() const { return "LibIDN"; }
+	QString shortname() const { return "libidn"; }
+	bool exec()
+	{
+		QString idn_incdir, idn_libdir;
+		idn_incdir = conf->getenv("QC_WITH_IDN_INC");
+		idn_libdir = conf->getenv("QC_WITH_IDN_LIB");
+
+		if (!idn_incdir.isEmpty() || !idn_libdir.isEmpty()) { // prefer this if given
+			if ((!idn_incdir.isEmpty() && conf->checkHeader(idn_incdir, "stringprep.h")) ||
+			    (idn_incdir.isEmpty() && conf->findHeader("stringprep.h", QStringList(), &idn_incdir))) {
+				conf->addIncludePath(idn_incdir);
+			} else {
+				printf("Headers not found!\n");
+				return false;
+			}
+
+#ifdef Q_OS_WIN
+			QString libName = qc_buildmode_debug? "idnd" : "idn";
+#else
+			QString libName("idn");
+#endif
+			if((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName)) ||
+			   (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
+				conf->addLib(idn_libdir.isEmpty()? QString("-l") + libName : QString("-L%1 -l%2").arg(idn_libdir, libName));
+			} else {
+				printf("Libraries not found!\n");
+				return false;
+			}
+			return true;
+		}
+
+		QStringList incs;
+		QString version, libs, other;
+		if(conf->findPkgConfig("libidn", VersionAny, QString(), &version, &incs, &libs, &other))
+		{
+			for(int n = 0; n < incs.count(); ++n)
+				conf->addIncludePath(incs[n]);
+			if(!libs.isEmpty())
+				conf->addLib(libs);
+			return true;
+		}
+
+		return false;
+	}
+};

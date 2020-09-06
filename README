@@ -1,0 +1,198 @@
+Psi 1.3
+-------
+Date: September 24th, 2017
+
+Maintainers:
+  Sergey Ilinykh (2010 (Psi+) - 2017 (Psi/Psi+))
+  rion4ik@gmail.com
+  https://psi-im.org/
+
+  Justin Karneges (2001-2004, 2009-2010)
+  justin@affinix.com
+  https://psi-im.org/
+
+  Kevin Smith (2004-2009)
+  kismith@psi-im.org
+  https://www.kismith.co.uk/
+
+
+  For installation or compiling instructions, see the INSTALL file.
+
+  This program is licensed under the GNU General Public License. See the
+  COPYING file for more information.
+
+
+Notes
+-----
+  - QCA --
+    * QCA 2.x is required to build Psi.
+    * The qca-ossl and qca-gnupg plugins are desirable for full functionality
+      of Psi.
+
+  - Voice Calling --
+    * The PsiMedia 1.0.x plugin and the qca-ossl plugin are needed to activate
+      the voice calling feature. Source of PsiMedia can be found at:
+        http://delta.affinix.com/psimedia/
+      On Windows, place gstprovider.dll into the base directory.
+      On Mac, place libgstprovider.dylib into Psi.app/Contents/plugins
+      On Linux, place libgstprovider.so into LIBDIR/psi/plugins
+
+  - Upgrading to 0.15 --
+    * During the upgrade process, any existing files will be copied to new
+      locations. You can opt to have the files in the original locations
+      removed or left intact.
+
+  - GnuPG tips --
+    * Always use the latest version of GnuPG.
+    * On Windows, use a native build instead of one based on cygwin, and make
+      sure it is properly installed in the registry.
+    * Ensure 'gpg' actually works, by testing it from the command-line.
+    * You must have a public and secret keyring. Psi cannot operate
+      without them, and they must be there when you start it.
+
+
+Changes
+-------
+  New in 1.5
+  - Backported fixes to various bugs/crashes from the master branch
+  - Fixed compatibility with Qt 5.15
+
+  New in 1.4
+  - Fixed reconnection on Stream Management resume failure
+  - Fixed compatibility with Qt >= 5.10
+  - Improved media contents previews for WebKit version (YouTube and files)
+  - CMake-based build fixes
+
+  New in 1.3
+  - Fixed connection to Openfire server
+  - Fixed connections by IP (fixes socks file transfer as well)
+  - Fixed compilation with new version of Enchant
+  - Fixed broken file transfer after reconnection
+  - Minor UI fixes
+
+  New in 1.2
+  - Removed AIM and MSN icons.
+  - Fixed debug build on Visual Studio.
+  - Font and windows sizes adjusted for regular fullhd displays.
+  - Fixed crashes online account remove and contact delete from another resource.
+  - History DB and dialog improvements.
+  - Fixed crash on unrecognized dictionary encodings in hunspell checker.
+  - Added option to disable previews in webkit builds.
+  - Fixed Youtube links recognition.
+
+  New in 1.1
+  - Fixed a few crashes. Seems to be pretty stable now.
+  - Contact list was rewritten once again.
+  - Improved stream management (no more disconnects).
+  - Better support for HIDPI displays.
+  - More Psi+ patches merged.
+  - JDNS was replaced with QDnsLookup for Qt5 builds.
+  - CMake support.
+  - A lot of minor UI fixes.
+
+  New in 1.0
+  - Almost all Psi+ patches were merged (a lot of features).
+  - Plugins support is enabled by default.
+
+  New in 0.15
+  - Merge many changes from Psi+.
+  - New message history browser.
+  - New, fast contact list window.
+  - TURN proxying for voice calls.
+  - Store data in more standardized locations based on the platform.
+  - No longer dependent on the Qt3Support library.
+  - Domains ending in .local now always work, whether via DNS server or mdns.
+  - Windows 64-bit and Mac 64-bit now supported. Mac PPC deprecated.
+  - Legacy SSL port probe feature removed.
+  - Various small features and bugfixes.
+
+  New in 0.14
+  - Added color options to the chat window.
+  - Can now specify a reason for kick/ban in groupchat.
+  - Improved User Info window, to show more fields and photo view/save.
+  - Support for Enchant as an alternative to Aspell.
+  - Commandline interface now supports choosing profile and setting status.
+  - D-BUS interface now supports setting status and indicating sleep/wake.
+  - Fixed voice calling compatibility bugs with Pidgin and Empathy.
+  - Various other minor improvements and bugfixes.
+
+  New in 0.13
+  - Voice calls (Jingle RTP).
+  - Basic XMPP URI handler.
+  - Ability to permanently trust certificates at connect time.
+  - Mini command system (Ctrl+7 in chat window).
+  - Various bugfixes.
+
+
+Description
+-----------
+
+  Psi is a capable XMPP client aimed at experienced users. Its design goals
+  are simplicity and stability. Psi is highly portable and runs on Windows,
+  Unix/X11, and Mac OS X.
+
+  The interface is very ICQ-like. Alerts appear in the contact list when
+  events are received, and things like subscriptions requests appear as
+  "system messages" (ICQ users know these well).  Even "Chats" are queued in
+  the contact list. Also, chats are "remembered" by default, so that you don't
+  have to keep a bunch of windows open for each person. Just close the
+  chat window. If you open it again it will all be there.
+
+  Psi is minimal but powerful. There are keybindings for just about
+  everything, Unicode is supported throughout, and contacts are cached
+  offline. Security is also a major consideration, and Psi provides it for
+  both client-to-server (SSL) and client-to-client (GnuPG).
+
+
+How you can help
+----------------
+
+  Comments
+  --------
+  We like comments, even (especially) if they are a simple thanks.
+
+  Bug reports
+  -----------
+  If you want to help us out, please file a bug report on our tracker at:
+    https://github.com/psi-im/psi/issues
+  Please be as descriptive as possible and tell us what exactly you were doing 
+  at the time something went wrong. If possible, send us a stack backtrace.
+
+  We also have a XMPP conference psi-dev@conference.jabber.ru and
+  mailing list https://groups.google.com/forum/#!forum/psi-devel.
+
+  Wishes
+  ------
+  We can't possibly know what everyone wants, so we appreciate all feature
+  requests. These can be submitted to the issue tracker as well (see above).
+
+  Porting
+  -------
+  Psi should be very portable. Please e-mail us first if you want to port Psi
+  to another platform.
+
+  Graphics
+  --------
+  There are many ways to contribute to the Psi project, if you think you can
+  do a better job with any of the Psi graphics, then go right ahead!
+
+  Sound
+  -----
+  Same goes for sound.  Start mixing!
+
+  Programming
+  -----------
+  Patches are welcome. External tools would be useful as well, like Licq
+  conversion utilities (iconsets, message history, etc). Get to work!
+
+  Packaging
+  ---------
+  Want to make an RPM or something?
+
+  Financial
+  ---------
+  You can send a paypal gift if you'd like, to donate@psi-im.org
+
+
+Have fun,
+-The Psi team
