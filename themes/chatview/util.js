@@ -559,8 +559,10 @@ function initPsiTheme() {
 
     try {
         chat.adapter = window.psiThemeAdapter(chat);
-        server.optionsChanged.connect(onOptionsChanged)
-        chat.util.connectOptionChange("options.ui.chat.show-previews", function(value){ previewsEnabled = value; })
+        server.optionsChanged.connect(onOptionsChanged);
+        var updateShowPreviews = function(value) { previewsEnabled = value;  }
+        chat.util.psiOption("options.ui.chat.show-previews", updateShowPreviews);
+        chat.util.connectOptionChange("options.ui.chat.show-previews", updateShowPreviews)
     } catch(e) {
         server.console("Failed to initialize adapter:" + e + "(Line:" + e.line + ")");
         chat.adapter = {

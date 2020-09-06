@@ -13,8 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
 
@@ -330,6 +329,11 @@ function psiThemeAdapter(chat) {
         };
 
         shared.session.newMessage.connect(chat.receiveObject);
+        shared.session.scrollRequested.connect(function(value) {
+                                                   if (shared.scroller && shared.scroller.cancel)
+                                                       shared.scroller.cancel();
+                                                   window.scrollBy(0, value);
+                                               });
 
         chat.adapter.initSession = null;
         chat.adapter.loadTheme = null;
