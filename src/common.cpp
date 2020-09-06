@@ -570,16 +570,17 @@ void bringToFront(QWidget *widget, bool)
 	QWidget* w = widget->window();
 
 #ifdef HAVE_X11
-	// If we're not on the current desktop, do the hide/show trick
-	long dsk, curr_dsk;
-	Window win = w->winId();
-	if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
-		//qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
-		if((dsk != curr_dsk) && (dsk != -1)) {  // second condition for sticky windows
-			w->hide();
-		}
-	}
-
+    if (QX11Info::isPlatformX11()) {
+        // If we're not on the current desktop, do the hide/show trick
+        long dsk, curr_dsk;
+        Window win = w->winId();
+        if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
+            //qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
+            if((dsk != curr_dsk) && (dsk != -1)) {  // second condition for sticky windows
+                w->hide();
+            }
+        }
+    }
 	// FIXME: multi-desktop hacks for Win and Mac required
 #endif
 

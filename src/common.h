@@ -148,7 +148,7 @@ TabbableWidget* findActiveTab();
 #include <QWidget>
 #include <QX11Info>
 void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)	x11wmClass(QX11Info::display(), winId(), (x));
+#define X11WM_CLASS(x)	{ if (QX11Info::isPlatformX11()) x11wmClass(QX11Info::display(), winId(), (x)); };
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif

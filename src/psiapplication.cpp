@@ -265,7 +265,7 @@ void PsiApplication::init(bool GUIenabled)
 #endif
 
 #ifdef HAVE_X11
-	if ( GUIenabled ) {
+    if ( GUIenabled && QX11Info::isPlatformX11() ) {
 		const int max = 20;
 		char* names[max];
 		int n = 0;
@@ -351,7 +351,7 @@ void PsiApplication::init(bool GUIenabled)
 bool PsiApplication::notify(QObject *receiver, QEvent *event)
 {
 #ifdef HAVE_X11
-	if( event->type() == QEvent::Show && receiver->isWidgetType())
+    if( event->type() == QEvent::Show && receiver->isWidgetType() && QX11Info::isPlatformX11())
 	{
 		QWidget* w = static_cast< QWidget* >( receiver );
 		if( w->isTopLevel() && qt_x_last_input_time != CurrentTime ) // CurrentTime means no input event yet

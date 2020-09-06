@@ -249,42 +249,43 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	FlashWindowEx(&fwi);
 
 #elif defined( HAVE_X11 )
-	static Atom demandsAttention = None;
-	static Atom wmState = None;
+    if (QX11Info::isPlatformX11()) {
+        static Atom demandsAttention = None;
+        static Atom wmState = None;
 
 
-	/* Xlib-based solution */
-	// adopted from http://www.qtforum.org/article/12334/Taskbar-flashing.html
-	// public domain by Marcin Jakubowski
-	Display *xdisplay = QX11Info::display();
-	Window rootwin = QX11Info::appRootWindow();
+        /* Xlib-based solution */
+        // adopted from http://www.qtforum.org/article/12334/Taskbar-flashing.html
+        // public domain by Marcin Jakubowski
+        Display *xdisplay = QX11Info::display();
+        Window rootwin = QX11Info::appRootWindow();
 
-	if (demandsAttention == None) {
-		demandsAttention = XInternAtom(xdisplay, "_NET_WM_STATE_DEMANDS_ATTENTION", true);
-	}
-	if (wmState == None) {
-		wmState = XInternAtom(xdisplay, "_NET_WM_STATE", true);
-	}
+        if (demandsAttention == None) {
+            demandsAttention = XInternAtom(xdisplay, "_NET_WM_STATE_DEMANDS_ATTENTION", true);
+        }
+        if (wmState == None) {
+            wmState = XInternAtom(xdisplay, "_NET_WM_STATE", true);
+        }
 
-	XEvent e;
-	e.xclient.type = ClientMessage;
-	e.xclient.message_type = wmState;
-	e.xclient.display = xdisplay;
-	e.xclient.window = parentWidget_->winId();
-	e.xclient.format = 32;
-	e.xclient.data.l[1] = demandsAttention;
-	e.xclient.data.l[2] = 0l;
-	e.xclient.data.l[3] = 0l;
-	e.xclient.data.l[4] = 0l;
+        XEvent e;
+        e.xclient.type = ClientMessage;
+        e.xclient.message_type = wmState;
+        e.xclient.display = xdisplay;
+        e.xclient.window = parentWidget_->winId();
+        e.xclient.format = 32;
+        e.xclient.data.l[1] = demandsAttention;
+        e.xclient.data.l[2] = 0l;
+        e.xclient.data.l[3] = 0l;
+        e.xclient.data.l[4] = 0l;
 
-	if (yes) {
-		e.xclient.data.l[0] = 1;
-	}
-	else {
-		e.xclient.data.l[0] = 0;
-	}
-	XSendEvent(xdisplay, rootwin, False, (SubstructureRedirectMask | SubstructureNotifyMask), &e);
-
+        if (yes) {
+            e.xclient.data.l[0] = 1;
+        }
+        else {
+            e.xclient.data.l[0] = 0;
+        }
+        XSendEvent(xdisplay, rootwin, False, (SubstructureRedirectMask | SubstructureNotifyMask), &e);
+    }
 #else
 	Q_UNUSED(yes)
 #endif
