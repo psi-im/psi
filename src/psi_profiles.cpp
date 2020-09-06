@@ -113,8 +113,7 @@ void UserAccount::reset()
 	proxy_pass = "";
 
 	stunHosts.clear();
-	stunHosts << "stun.jabber.ru:5249"
-			  << "stun.habahaba.im"
+    stunHosts << "stun.l.google.com:19302"
 			  << "stun.ekiga.net"
 			  << "provserver.televolution.net"
 			  << "stun1.voiceeclipse.net"
