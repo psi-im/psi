@@ -705,9 +705,7 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
 {
 	detach();
 #ifdef WEBKIT
-	if (isAnim) {
-		d->rawData = ba;
-	}
+    d->rawData = ba;
 #endif
 	bool ret = false;
 	if ( isAnim ) {
