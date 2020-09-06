@@ -872,13 +872,18 @@ void AvatarFactory::vcardUpdated(const Jid &j, bool isMuc)
 {
 	QByteArray ba;
 	QString fullJid;
+    XMPP::VCard vcard;
 	if (isMuc) {
-		ba = VCardFactory::instance()->mucVcard(j).photo();
+        vcard = VCardFactory::instance()->mucVcard(j);
 		fullJid = j.full();
 	} else {
-		ba = VCardFactory::instance()->vcard(j).photo();
+        vcard = VCardFactory::instance()->vcard(j);
 		fullJid = j.bare();
-	}
+    }
+    if (!vcard) {
+        return; // wtf??
+    }
+    ba = vcard.photo();
 	if (!ba.isEmpty()) {
 		if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba) == AvatarCache::UserUpdateRequired) {
 			emit avatarChanged(j);
