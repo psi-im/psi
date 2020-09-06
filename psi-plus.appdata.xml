@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
-  <id>org.psi-im.psi</id>
-  <launchable type="desktop-id">psi.desktop</launchable>
+  <id>com.psi-plus.psi-plus</id>
+  <launchable type="desktop-id">psi-plus.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0+</project_license>
-  <name>Psi</name>
+  <name>Psi+</name>
   <name xml:lang="ru">Psi</name>
   <summary>The cross-platform powerful XMPP client designed for experienced users.</summary>
   <summary xml:lang="ru">Кроссплатформенный XMPP клиент для опытных пользователей.</summary>
@@ -27,12 +27,14 @@
       <li>User interface is translated to many languages</li>
       <li xml:lang="ru">Интерфейс программы переведен на множество языков</li>
     </ul>
+    <p>Psi+ is a development branch of Psi with rolling release development model. Users who wants to receive new features and bug fixes very quickly may use Psi+ on daily basis. Users who do not care about new trends and prefer constancy may choose Psi as it uses classical development model and its releases are quite rare.</p>
+    <p xml:lang="ru">Psi+ — это ветка разработки клиента Psi, для которой используется модель разработки с плавающим релизом. Пользователи, которые хотят быстро получать новые функции и исправления ошибок, могут использовать Psi+ на ежедневной основе. Пользователи, которые не заботятся о новых тенденциях и предпочитают постоянство, могут выбрать Psi, поскольку он использует классическую модель разработки и его выпуски довольно редки.</p>
   </description>
-  <url type="homepage">https://psi-im.org/</url>
+  <url type="homepage">https://psi-plus.com/</url>
   <url type="bugtracker">https://github.com/psi-im/psi/issues</url>
   <screenshots>
     <screenshot type="default">
-      <image>https://psi-im.org/content/home/feature_default.png</image>
+      <image>https://psi-plus.com/wi/psiplus_screen_linux_big.png</image>
     </screenshot>
   </screenshots>
 </component>
