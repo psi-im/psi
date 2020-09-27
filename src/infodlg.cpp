@@ -58,7 +58,7 @@
 
 using namespace XMPP;
 
-static QString k_optionName{"options.ui.save.vcard-info-dialog-size"};
+static QString k_optionName { "options.ui.save.vcard-info-dialog-size" };
 
 class AddressTypeDlg : public QFrame {
 public:
@@ -442,9 +442,9 @@ void InfoWidget::setData(const VCard &i)
     }
 
     m_ui.le_fullname->setToolTip(QString("<b>") + tr("First Name:") + "</b> " + TextUtil::escape(d->vcard.givenName())
-                                + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
-                                + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
-                                + TextUtil::escape(d->vcard.familyName()));
+                                 + "<br>" + "<b>" + tr("Middle Name:") + "</b> "
+                                 + TextUtil::escape(d->vcard.middleName()) + "<br>" + "<b>" + tr("Last Name:") + "</b> "
+                                 + TextUtil::escape(d->vcard.familyName()));
 
     // E-Mail handling
     VCard::Email email;
@@ -495,7 +495,7 @@ void InfoWidget::setData(const VCard &i)
 
     m_ui.le_title->setText(i.title());
     m_ui.le_role->setText(i.role());
-    m_ui.te_desc->setPlainText(i.desc());
+    m_ui.te_desc->setPlainText(i.desc().isEmpty() ? i.note() : i.desc());
 
     if (!i.photo().isEmpty()) {
         // printf("There is a picture...\n");
