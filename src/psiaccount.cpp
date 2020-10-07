@@ -1491,7 +1491,7 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
 
 void PsiAccount::updateClientVersionInfo()
 {
-    static const auto cvPropGet = [this](const char *prop, const QString &defValue) {
+    const auto cvPropGet = [this](const char *prop, const QString &defValue) {
         auto it = d->clientVersionInfo.find(QLatin1String(prop));
         auto ret
             = it != d->clientVersionInfo.end() && it.value().canConvert<QString>() ? it.value().toString() : defValue;
