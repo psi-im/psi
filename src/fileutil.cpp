@@ -237,7 +237,7 @@ void FileUtil::setModificationTime(const QString &filename, const QDateTime &mti
 #if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
     qint64 secs = mtime.toSecsSinceEpoch();
 #else
-    qint64  secs = mtime.toTime_t();
+    qint64 secs = mtime.toTime_t();
 #endif
 #ifdef Q_OS_WIN
     _utimbuf t;

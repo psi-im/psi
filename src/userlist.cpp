@@ -33,14 +33,14 @@
 #include <QFontInfo>
 #include <QList>
 #include <QPixmap>
-#include <QTextDocument> // for TextUtil::escape()
+// for TextUtil::escape()
 #include <QUrl>
 
 using namespace XMPP;
 
 static QString dot_truncate(const QString &in, int clip)
 {
-    if (int(in.length()) <= clip)
+    if (in.length() <= clip)
         return in;
     QString s = in;
     s.truncate(clip);
@@ -51,8 +51,6 @@ static QString dot_truncate(const QString &in, int clip)
 //----------------------------------------------------------------------------
 // UserResource
 //----------------------------------------------------------------------------
-UserResource::UserResource() : v_pgpVerifyStatus(0) { }
-
 UserResource::UserResource(const Resource &r) { setResource(r); }
 
 void UserResource::setResource(const Resource &r)
@@ -158,8 +156,6 @@ bool operator>=(const UserResource &r1, const UserResource &r2) { return r1.prio
 //----------------------------------------------------------------------------
 UserResourceList::UserResourceList() : QList<UserResource>() { }
 
-UserResourceList::~UserResourceList() { }
-
 UserResourceList::Iterator UserResourceList::find(const QString &_find)
 {
     for (UserResourceList::Iterator it = begin(); it != end(); ++it) {
@@ -221,8 +217,6 @@ UserListItem::UserListItem(bool self)
     v_pending       = 0;
     v_hPending      = 0;
 }
-
-UserListItem::~UserListItem() { }
 
 bool UserListItem::inList() const { return v_inList; }
 
@@ -293,12 +287,7 @@ void UserListItem::setAvatarFactory(AvatarFactory *av) { v_avatarFactory = av; }
 void UserListItem::setJid(const Jid &j)
 {
     LiveRosterItem::setJid(j);
-
-    int n = jid().full().indexOf('@');
-    if (n == -1)
-        v_isTransport = true;
-    else
-        v_isTransport = false;
+    v_isTransport = !jid().full().contains(QLatin1Char('@'));
 }
 
 bool UserListItem::isTransport() const { return v_isTransport; }
@@ -331,16 +320,16 @@ QString UserListItem::tooltipPgpData(const UserResource &ur, const QString &imgT
         || v == PGPUtil::SecureMessageSignature::InvalidKey || v == PGPUtil::SecureMessageSignature::NoKey) {
         if (v == PGPUtil::SecureMessageSignature::Valid) {
             QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes") + QObject::tr("Signed")
-                + ": " + "<font color=\"#2A993B\">" + d + "</font>";
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/gpg-yes") + QObject::tr("Signed") + ": "
+                + "<font color=\"#2A993B\">" + d + "</font>";
         } else if (v == PGPUtil::SecureMessageSignature::NoKey) {
             QString d = ur.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
-            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown") + QObject::tr("Signed")
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/keyUnknown") + QObject::tr("Signed")
                 + ": " + d;
         } else if (v == PGPUtil::SecureMessageSignature::InvalidSignature
                    || v == PGPUtil::SecureMessageSignature::InvalidKey) {
-            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad")
-                + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
+            out += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/keyBad") + "<font color=\"#810000\">"
+                + QObject::tr("Bad signature") + "</font>";
         }
 
         if (v_keyID != ur.publicKeyID()) {
@@ -421,12 +410,12 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     // you most probably want to wrap it with TextUtil::escape()
 
     QString str;
-    int     s = PsiIconset::instance()->system().iconSize();
+    int     iconSize = PsiIconset::instance()->system().iconSize();
     str += QString("<style type='text/css'> \
         .layer1 { white-space:pre; margin-left:%1px;} \
         .layer2 { white-space:normal; margin-left:%1px;} \
     </style>")
-               .arg(s + 2);
+               .arg(iconSize + 2);
 
     QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed
                                   // that QMimeSourceFactory unloads sometimes
@@ -449,7 +438,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     str += "<td>";
 
     if (useAvatar) {
-        str += QString("<icon name=\"avatars/%1\" size=\"original\">").arg(mucItem ? jid().full() : jid().bare());
+        str += QString(R"(<icon name="avatars/%1" size="original">)").arg(mucItem ? jid().full() : jid().bare());
         str += "</td><td width=\"10\"></td>";
         str += "<td>";
     }
@@ -472,7 +461,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
     // OpenPGP
     const bool showPgpData = PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool();
     if (!v_keyID.isEmpty() && showPgpData) {
-        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/pgp") + QObject::tr("OpenPGP")
+        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "psi/pgp") + QObject::tr("OpenPGP")
             + ": " + v_keyID.right(8) + "</div>";
     }
 
@@ -499,7 +488,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
     // User Tune
     if (!tune().isEmpty())
-        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("pep/tune")
+        str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "pep/tune")
             + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
 
     // User Physical Location
@@ -512,9 +501,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
         && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
         str += QString("<div style='white-space:pre'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> "
                        "</td><td><div>%3</div></td></tr></table></div>")
-                   .arg(imgTag)
-                   .arg("pep/geolocation")
-                   .arg(TextUtil::escape(geoLocation().toString().trimmed()));
+                   .arg(imgTag, "pep/geolocation", TextUtil::escape(geoLocation().toString().trimmed()));
 
     // resources
     if (!userResourceList().isEmpty()) {
@@ -549,7 +536,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                     image = image.scaled(fontPixelSize, fontPixelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
                 image.save(&buff, "png");
                 QString imgBase64(QUrl::toPercentEncoding(imageArray.toBase64()));
-                str += QString("<img src=\"data:image/png;base64,%1\" alt=\"img\"/>").arg(imgBase64);
+                str += QString(R"(<img src="data:image/png;base64,%1" alt="img"/>)").arg(imgBase64);
             }
 
             str += QString(" <b>%1</b> ").arg(TextUtil::escape(name)) + QString("(%1)").arg(r.priority());
@@ -583,7 +570,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             // Entity Time
             if (r.timezoneOffset().hasValue()) {
                 QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value() * 60);
-                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/time") + QObject::tr("Time")
+                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/time") + QObject::tr("Time")
                     + QString(": %1 (%2)").arg(dt.toString(Qt::DefaultLocaleShortDate)).arg(r.timezoneOffsetString())
                     + "</div>";
             }
@@ -604,7 +591,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                     aff = "affiliation/noaffiliation";
 
                 if (r.status().mucItem().role() != MUCItem::NoRole) {
-                    str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td>")
+                    str += QString(R"(<div class='layer2'><table cellspacing="0"><tr><td><%1="%2"> </td><td>)")
                                .arg(imgTag)
                                .arg(aff);
                     str += QString("<div style='white-space:pre'>")
@@ -621,8 +608,8 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             if (r.status().timeStamp().isValid()
                 && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.last-status").toBool()) {
                 QString d = r.status().timeStamp().toString(Qt::DefaultLocaleShortDate);
-                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/info")
-                    + QObject::tr("Last Status") + ": " + d + "</div>";
+                str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag, "psi/info") + QObject::tr("Last Status")
+                    + ": " + d + "</div>";
             }
 
             // status message
@@ -642,17 +629,14 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
                 str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> "
                                "</td><td><div><u>%3</u>: %4</div></td></tr></table></div>")
-                           .arg(imgTag)
-                           .arg("psi/action_templates_edit")
-                           .arg(head)
-                           .arg(s);
+                           .arg(imgTag, "psi/action_templates_edit", head, s);
             }
         }
     } else {
         // last available
         if (!lastAvailable().isNull()) {
             QString d = lastAvailable().toString(Qt::DefaultLocaleShortDate);
-            str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/info")
+            str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag, "psi/info")
                 + QObject::tr("Last Available") + ": " + d + "</div>";
         }
 
@@ -662,7 +646,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             str += QString("<div style='white-space:pre'>") + QObject::tr("Presence Error")
                 + QString(": %1").arg(TextUtil::escape(err[0])) + "</div>";
             err.pop_front();
-            for (QString line : err)
+            for (const QString &line : err)
                 str += "<div>" + TextUtil::escape(line) + "</div>";
         }
 
@@ -679,10 +663,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
             }
             str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div><u>%3</u>: "
                            "%4</div></td></tr></table></div>")
-                       .arg(imgTag)
-                       .arg("psi/action_templates_edit")
-                       .arg(head)
-                       .arg(s);
+                       .arg(imgTag, "psi/action_templates_edit", head, s);
         }
     }
 
@@ -700,18 +681,11 @@ void UserListItem::setPrivate(bool b) { v_private = b; }
 
 bool UserListItem::isSecure() const { return !secList.isEmpty(); }
 
-bool UserListItem::isSecure(const QString &rname) const
-{
-    for (QStringList::ConstIterator it = secList.begin(); it != secList.end(); ++it) {
-        if (*it == rname)
-            return true;
-    }
-    return false;
-}
+bool UserListItem::isSecure(const QString &rname) const { return secList.contains(rname); }
 
 void UserListItem::setSecure(const QString &rname, bool b)
 {
-    for (const QString s : secList) {
+    for (const QString &s : secList) {
         if (s == rname) {
             if (!b)
                 secList.removeAll(s);
@@ -729,10 +703,6 @@ void UserListItem::setPublicKeyID(const QString &k) { v_keyID = k; }
 //----------------------------------------------------------------------------
 // UserList
 //----------------------------------------------------------------------------
-UserList::UserList() { }
-
-UserList::~UserList() { }
-
 UserListItem *UserList::find(const XMPP::Jid &j)
 {
     for (UserListItem *i : *this) {

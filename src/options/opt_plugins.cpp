@@ -48,7 +48,7 @@ public:
             icon = IconsetFactory::iconPtr("psi/options")->icon();
         }
         setWindowIcon(icon);
-        setTabs({new OptionsTabPlugin(shortPluginName, this)});
+        setTabs({ new OptionsTabPlugin(shortPluginName, this) });
 
         psi->dialogRegister(this);
 

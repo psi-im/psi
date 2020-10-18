@@ -95,4 +95,3 @@ New in 0.13
 - Ability to permanently trust certificates at connect time.
 - Mini command system (Ctrl+7 in chat window).
 - Various bugfixes.
-

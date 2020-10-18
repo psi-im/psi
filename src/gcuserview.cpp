@@ -230,8 +230,8 @@ public:
         }
         sumWidth += rightPixs.count();
 
-        QColor bgc = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight)
-                                                             : palette.color(QPalette::Base);
+        QColor bgc  = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight)
+                                                              : palette.color(QPalette::Base);
         QColor tbgc = bgc;
         tbgc.setAlpha(0);
         QLinearGradient grad(rect.right() - sumWidth - 20, 0, rect.right() - sumWidth, 0);

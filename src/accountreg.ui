@@ -62,9 +62,9 @@
               <height>0</height>
              </size>
             </property>
-			<property name="editable">
-			 <bool>true</bool>
-			</property>
+            <property name="editable">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="2" column="0" colspan="2">
@@ -275,9 +275,9 @@
        <property name="text" >
         <string>&amp;Next</string>
        </property>
-	   <property name="default" >
-	    <bool>true</bool>
-	   </property>
+       <property name="default" >
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>

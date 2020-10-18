@@ -5,7 +5,7 @@ TARGET_DIR=../iconsets
 
 ROSTER_DEFAULT='crystal-roster'
 ROSTER_EXTRAS='
-    crystal-icq crystal-service crystal-yahoo 
+    crystal-icq crystal-service crystal-yahoo
     crystal-gadu crystal-sms crystal-roster
     '
 

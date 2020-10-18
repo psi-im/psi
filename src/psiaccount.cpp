@@ -4455,7 +4455,8 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
         }
 
         w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self
-                                          : isMucMember ? InfoWidget::MucContact : InfoWidget::Contact,
+                            : isMucMember ? InfoWidget::MucContact
+                                          : InfoWidget::Contact,
                         j, vcard, this, nullptr, true);
 
         w->infoWidget()->setStatusVisibility(showStatusInfo);

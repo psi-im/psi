@@ -1,7 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-	<qresource>
-		<file>cert.pem</file>
-	</qresource>
+    <qresource>
+        <file>cert.pem</file>
+    </qresource>
 </RCC>
-

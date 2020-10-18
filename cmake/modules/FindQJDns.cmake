@@ -36,13 +36,13 @@ endif()
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_QJDns QUIET jdns )
-    set ( QJDns_DEFINITIONS 
+    set ( QJDns_DEFINITIONS
         ${PC_QJDns_CFLAGS}
         ${PC_QJDns_CFLAGS_OTHER}
     )
 endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     qjdns.h
 )
 
@@ -69,7 +69,7 @@ set(QJDns_NAMES
 find_library(
     QJDns_LIBRARY
     NAMES ${QJDns_NAMES}
-    HINTS 
+    HINTS
     ${PC_QJDns_LIBDIR}
     ${PC_QJDns_LIBRARY_DIRS}
     ${QJDNS_DIR}/lib

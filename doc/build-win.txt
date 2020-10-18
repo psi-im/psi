@@ -6,12 +6,12 @@ MingW32 self-installer. All the instructions below are performed from within
 the Qt command prompt (found in the Start menu)
 
 * You need QCA 2.0 and the QCA OpenSSL plugin, which you can get at
-		https://userbase.kde.org/QCA
+        https://userbase.kde.org/QCA
 Instructions on how to build these packages can be found below.
 
 * If you want to use the QCA OpenSSL plugin on Windows, you will need to
 download and install the OpenSSL package from
-		http://www.openssl.org/related/binaries.html
+        http://www.openssl.org/related/binaries.html
 
 The 'Building QCA' and 'Building QCA the OpenSSL plugin' sections can be
 skipped by downloading the sources of these packages, and unpackaging them
@@ -48,7 +48,7 @@ respectively.
 to point to the dir where you installed OpenSSL (e.g. C:/OpenSSL).
 Change -L$$OPENSSL_PREFIX/lib into -L$$OPENSSL_PREFIX/lib/MingW.
 
-* Run the following commands: 
+* Run the following commands:
 
    qmake
    mingw32-make

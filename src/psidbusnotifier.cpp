@@ -310,7 +310,7 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*
     if (avatar || titleIcon) {
         int    size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
         QImage im   = avatar ? avatar->toImage().scaledToWidth(size, Qt::SmoothTransformation)
-                           : titleIcon->pixmap(QSize(size, size)).toImage();
+                             : titleIcon->pixmap(QSize(size, size)).toImage();
         iiibiiay i(&im);
         hints.insert("icon_data", QVariant(iiibiiay::id, &i));
     }

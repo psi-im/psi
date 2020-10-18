@@ -52,7 +52,7 @@ if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     endif()
 endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     enchant.h
 )
 
@@ -94,4 +94,3 @@ else ()
     message(WARNING "No enchant version found. For use enchant-2 library you should set HAVE_ENCHANT2 definition manually")
     mark_as_advanced( Enchant_INCLUDE_DIR Enchant_LIBRARY )
 endif()
-

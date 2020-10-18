@@ -48,7 +48,7 @@
 static const QString contactListFontOptionPath(QStringLiteral("options.ui.look.font.contactlist"));
 static const QString slimGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-slim-group-headings"));
 static const QString
-                     outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
+    outlinedGroupsOptionPath(QStringLiteral("options.ui.look.contactlist.use-outlined-group-headings"));
 static const QString contactListBackgroundOptionPath(QStringLiteral("options.ui.look.colors.contactlist.background"));
 static const QString showStatusMessagesOptionPath(QStringLiteral("options.ui.contactlist.status-messages.show"));
 static const QString statusSingleOptionPath(QStringLiteral("options.ui.contactlist.status-messages.single-line"));
@@ -957,8 +957,8 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 
     auto           iconHeight = int(opt.rect.height() * EqTextIconK + .5);
     const QPixmap &pixmap     = index.data(ContactListModel::ExpandedRole).toBool()
-        ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap(QSize(iconHeight, iconHeight))
-        : IconsetFactory::iconPtr("psi/groupClosed")->pixmap(QSize(iconHeight, iconHeight));
+            ? IconsetFactory::iconPtr("psi/groupOpen")->pixmap(QSize(iconHeight, iconHeight))
+            : IconsetFactory::iconPtr("psi/groupClosed")->pixmap(QSize(iconHeight, iconHeight));
 
     QSize pixmapSize = pixmap.size() * PSI_HIDPI;
     QRect pixmapRect = relativeRect(opt, pixmapSize, QRect());
@@ -974,7 +974,7 @@ void ContactListViewDelegate::Private::drawGroup(QPainter *painter, const QModel
 #if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
         int x = r.left() + fontMetrics_.horizontalAdvance(text) + 8;
 #else
-        int x    = r.left() + fontMetrics_.width(text) + 8;
+        int x = r.left() + fontMetrics_.width(text) + 8;
 #endif
         painter->setPen(QPen(_headerBackgroundColor, 2));
         painter->drawLine(x, h, r.right(), h);
@@ -1228,9 +1228,9 @@ void ContactListViewDelegate::paint(QPainter *painter, const QStyleOptionViewIte
 {
     d->doSetOptions(option, index);
 
-    d->iconMode = !(d->opt.state & QStyle::State_Enabled)
-        ? QIcon::Disabled
-        : (d->opt.state & QStyle::State_Selected) ? QIcon::Selected : QIcon::Normal;
+    d->iconMode = !(d->opt.state & QStyle::State_Enabled) ? QIcon::Disabled
+        : (d->opt.state & QStyle::State_Selected)         ? QIcon::Selected
+                                                          : QIcon::Normal;
 
     d->iconState = d->opt.state & QStyle::State_Open ? QIcon::On : QIcon::Off;
 

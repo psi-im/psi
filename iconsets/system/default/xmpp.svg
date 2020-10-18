@@ -4,15 +4,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" xml:space="preserve" viewBox="0 0 200 200" width="200px" height="200px" x="0px" y="0px" enable-background="new 0 0 200 200">
 
 <linearGradient id="SVGID_right_" y2="1.279e-13" gradientUnits="userSpaceOnUse" x2="-1073.2" gradientTransform="translate(1196.604,15.368977)" y1="126.85" x1="-1073.2">
-	<stop stop-color="#1b3967" offset=".011"/>
-	<stop stop-color="#13b5ea" offset=".467"/>
-	<stop stop-color="#002b5c" offset=".9945"/>
+    <stop stop-color="#1b3967" offset=".011"/>
+    <stop stop-color="#13b5ea" offset=".467"/>
+    <stop stop-color="#002b5c" offset=".9945"/>
 </linearGradient>
 
 <linearGradient id="SVGID_left_" y2="1.279e-13" gradientUnits="userSpaceOnUse" x2="-1073.2" gradientTransform="matrix(-1,0,0,1,-994.78801,15.367977)" y1="126.85" x1="-1073.2">
-	<stop stop-color="#1b3967" offset=".011"/>
-	<stop stop-color="#13b5ea" offset=".467"/>
-	<stop stop-color="#002b5c" offset=".9945"/>
+    <stop stop-color="#1b3967" offset=".011"/>
+    <stop stop-color="#13b5ea" offset=".467"/>
+    <stop stop-color="#002b5c" offset=".9945"/>
 </linearGradient>
 
 <path d="m 151.80512,29.557978 c 0.077,1.313 -1.787,0.968 -1.787,2.293 0,38.551 -46.558,97.366012 -91.687985,108.730012 v 1.639 C 118.28313,136.69999 186.89012,74.419978 188.40012,15.369977 l -36.599,14.189001 z" style="fill:url(#SVGID_right_)"/>

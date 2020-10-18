@@ -5,16 +5,16 @@ import xml.dom
 import sys
 
 def rec_parse(node, context): # node : xml.dom.Node
-	for i in node.childNodes:
-		if i.nodeType == xml.dom.Node.ELEMENT_NODE:
-			if i.hasAttribute("comment"):
-				print('QT_TRANSLATE_NOOP("' + context + '","' + i.getAttribute("comment") + '");');
-			rec_parse(i,context)
+    for i in node.childNodes:
+        if i.nodeType == xml.dom.Node.ELEMENT_NODE:
+            if i.hasAttribute("comment"):
+                print('QT_TRANSLATE_NOOP("' + context + '","' + i.getAttribute("comment") + '");');
+            rec_parse(i,context)
 
 
 if len(sys.argv) != 2:
-	print("usage: %s options.xml > output.cpp" % sys.argv[0])
-	sys.exit(1)
+    print("usage: %s options.xml > output.cpp" % sys.argv[0])
+    sys.exit(1)
 
 print("#define QT_TRANSLATE_NOOP(a,b)")
 

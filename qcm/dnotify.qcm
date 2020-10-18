@@ -29,8 +29,8 @@ public:
                       "\n"
                       "int main()\n"
                       "{\n"
-                      "	 DN_DELETE|DN_CREATE|DN_RENAME|DN_MULTISHOT|DN_MODIFY|DN_ATTRIB;\n"
-                      "	 return 0;\n"
+                      "     DN_DELETE|DN_CREATE|DN_RENAME|DN_MULTISHOT|DN_MODIFY|DN_ATTRIB;\n"
+                      "     return 0;\n"
                       "}\n";
         int ret;
         if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), &ret) || ret != 0)

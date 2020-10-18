@@ -18,16 +18,16 @@ CocoaInitializer::CocoaInitializer()
 {
     Q_UNUSED(d)
 #if 0
-	d = new CocoaInitializer::Private();
-	NSApplicationLoad();
-	d->autoReleasePool_ = [[NSAutoreleasePool alloc] init];
+    d = new CocoaInitializer::Private();
+    NSApplicationLoad();
+    d->autoReleasePool_ = [[NSAutoreleasePool alloc] init];
 #endif
 }
 
 CocoaInitializer::~CocoaInitializer()
 {
 #if 0
-	[d->autoReleasePool_ release];
-	delete d;
+    [d->autoReleasePool_ release];
+    delete d;
 #endif
 }

@@ -53,7 +53,7 @@ find_path(
 find_library(
     Qca_LIBRARY
     NAMES qca-qt5${D}
-    HINTS 
+    HINTS
     ${QCA_DIR}/lib
     ${QCA_DIR}/bin
 )
@@ -72,4 +72,3 @@ if (Qca_FOUND)
 endif()
 
 mark_as_advanced( Qca_INCLUDE_DIR Qca_LIBRARY )
-

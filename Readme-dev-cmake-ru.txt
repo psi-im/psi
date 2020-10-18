@@ -16,7 +16,7 @@
 
 ./3rdparty/CMakeLists.txt - собирает статическую библиотеку qhttp
 ./3rdparty/qite/libqite/libqite.cmake - содержит список файлов проекта qite
- 
+
 ./cmake/modules - каталог модулей для поиска библиотек:
 ./cmake/modulesCOPYING-CMAKE-SCRIPTS - файл лицензии (для решения проблем
     с сопровождением)
@@ -60,7 +60,7 @@
     Требуется доработка.
 ***/
 
-./iris/cmake/modules - модули поиска библиотек для iris (копии модулей 
+./iris/cmake/modules - модули поиска библиотек для iris (копии модулей
     из корня)
 
 ./iris/src/irisnet/CMakeLists.txt - собирает статическую библиотеку irisnet
@@ -76,7 +76,7 @@
     генерирует файл psi_win.rc на основе файла ../win32/psi_win.rc.in и
         компилирует psi_win.o
     подключает файл src.cmake
-    подключает файл ../3rdparty/qite/libqite/libqite.cmake 
+    подключает файл ../3rdparty/qite/libqite/libqite.cmake
     подключает файл irisprotocol/irisprotocol.cmake
     подключает файл protocol/protocol.cmake
     подключает файл plugins/plugins.cmake
@@ -166,7 +166,7 @@
 ./win32/psi_win.rc.in - файл-шаблон для создания файла psi_win.rc
 
 /***
-Для удобства опакечивания плагинов, чтобы не тянуть все файлы иходников 
+Для удобства опакечивания плагинов, чтобы не тянуть все файлы иходников
 Psi и не заниматься копированием, если включен флаг INSTALL_PLUGINS_SDK
 при сборке и установке клиента Psi средствами CMake-скриптов,
 вместе с основными файлами клиента Psi могут быть установлены файлы

@@ -515,7 +515,7 @@ void ChatView::contextMenuEvent(QContextMenuEvent *e)
     Q_UNUSED(e)
     qDebug("Can't check menu hit point. Calling default handler");
 #else
-    QUrl                      linkUrl;
+    QUrl linkUrl;
 #ifdef WEBENGINE
     QWebEngineContextMenuData cmd = d->webView->page()->contextMenuData();
     linkUrl                       = cmd.linkUrl();

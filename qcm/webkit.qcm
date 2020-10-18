@@ -59,7 +59,7 @@ public:
             QString str = "\n"
                           "int main()\n"
                           "{\n"
-                          "	return 0;\n"
+                          "    return 0;\n"
                           "}\n";
 
             int ret;

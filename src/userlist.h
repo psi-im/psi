@@ -40,7 +40,7 @@ class Jid;
 
 class UserResource : public XMPP::Resource {
 public:
-    UserResource();
+    UserResource() = default;
     UserResource(const XMPP::Resource &);
     ~UserResource() = default;
 
@@ -77,7 +77,7 @@ private:
     QString     v_tune;
     GeoLocation v_geoLocation;
     // PhysicalLocation v_physicalLocation;
-    int       v_pgpVerifyStatus;
+    int       v_pgpVerifyStatus = 0;
     QDateTime sigts;
 };
 
@@ -90,7 +90,7 @@ bool operator>=(const UserResource &r1, const UserResource &r2);
 class UserResourceList : public QList<UserResource> {
 public:
     UserResourceList();
-    ~UserResourceList();
+    ~UserResourceList() = default;
 
     void sort();
 
@@ -104,7 +104,7 @@ public:
 class UserListItem : public XMPP::LiveRosterItem {
 public:
     UserListItem(bool self = false);
-    ~UserListItem();
+    ~UserListItem() = default;
 
     bool            inList() const;
     bool            isTransport() const;
@@ -182,8 +182,8 @@ typedef QListIterator<UserListItem *> UserListIt;
 
 class UserList : public QList<UserListItem *> {
 public:
-    UserList();
-    ~UserList();
+    UserList()  = default;
+    ~UserList() = default;
 
     UserListItem *find(const XMPP::Jid &);
 };

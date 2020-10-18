@@ -1,5 +1,5 @@
 #! /usr/bin/env ruby
-# This script is used to update auto-generated 
+# This script is used to update auto-generated
 # files named 'checkall' and 'unittest.pro'.
 
 # get list of path names

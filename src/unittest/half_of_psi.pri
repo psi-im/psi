@@ -16,4 +16,3 @@ DEFINES += UNIT_TEST
 # unittest helpers
 TESTBASEDIR = $$PSI_CPP/../unittest
 include($$TESTBASEDIR/unittest.pri)
-

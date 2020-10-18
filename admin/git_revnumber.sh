@@ -11,4 +11,3 @@ if [ ! -z "${1}" ]; then
 fi
 
 git rev-list --count ${ref_commit}..HEAD
-

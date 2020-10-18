@@ -133,4 +133,3 @@ If you want to donate some money for development of Psi and Psi+ project, it is 
 * [Page on Wikipedia](https://en.wikipedia.org/wiki/Psi_\(instant_messaging_client\))
 
 Have fun!
-

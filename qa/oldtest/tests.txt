@@ -1,4 +1,4 @@
-# This file contains a relative path to each unittest 
+# This file contains a relative path to each unittest
 # directory on separate line.
 ../src/tools/iconset/unittest
 ../src/widgets/unittest/iconaction

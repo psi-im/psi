@@ -40,7 +40,7 @@ find_path(
 find_library(
     HttpParser_LIBRARY
     NAMES http_parser
-    HINTS 
+    HINTS
     ${HTTP_PARSER_ROOT}/lib
     ${HTTP_PARSER_ROOT}/bin
 )
@@ -82,4 +82,3 @@ if (HttpParser_FOUND)
 endif()
 
 mark_as_advanced( HttpParser_INCLUDE_DIR HttpParser_LIBRARY HttpParser_VERSION )
-

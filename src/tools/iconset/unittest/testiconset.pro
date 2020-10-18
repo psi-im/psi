@@ -19,4 +19,3 @@ CONFIG += zip
 ZIP_CPP = $$PSICS_CPP/zip
 INCLUDEPATH += $$ZIP_CPP
 include($$ZIP_CPP/zip.pri)
-

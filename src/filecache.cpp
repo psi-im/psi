@@ -86,9 +86,9 @@ void FileCacheItem::unload()
 
 bool FileCacheItem::isExpired(bool finishSession) const
 {
-    return _maxAge == FileCache::Session
-        ? finishSession
-        : _maxAge == FileCache::Forever ? false : _ctime.addSecs(_maxAge) < QDateTime::currentDateTime();
+    return _maxAge == FileCache::Session ? finishSession
+        : _maxAge == FileCache::Forever  ? false
+                                         : _ctime.addSecs(_maxAge) < QDateTime::currentDateTime();
 }
 
 QByteArray FileCacheItem::data()

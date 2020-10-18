@@ -42,4 +42,3 @@ cmake .. ${BUILD_OPTIONS} \
       -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}"
 make -k -j $(nproc) VERBOSE=1
 sudo make install -j 1
-

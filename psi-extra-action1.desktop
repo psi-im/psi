@@ -2,4 +2,4 @@
 [Desktop Action SelectProfile]
 Exec=psi --choose-profile
 Name=Start with another profile
-Icon=psi 
+Icon=psi

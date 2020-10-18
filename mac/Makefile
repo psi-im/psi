@@ -1,19 +1,19 @@
 #
 # Build file for packaging Psi/Mac.
 #
-# The DMG packager looks for a template.dmg.bz2 for using as its 
+# The DMG packager looks for a template.dmg.bz2 for using as its
 # DMG template. If it doesn't find one, it generates a clean one.
 #
 # If you create a DMG template, you should make one containing all
 # the files listed in $(FILES) below, and arrange everything to suit
 # your style. The contents of the files themselves does not matter, so
-# they can be empty. 
+# they can be empty.
 #
 # Parameters:
 #	* BUILD: Set this to 'no' if you do not want to build the source tree or
 #		check dependencies of the 'disk' dir when building the DMG.
 #
-# Remko Troncon 
+# Remko Troncon
 # http://el-tramo.be
 #
 
@@ -147,7 +147,7 @@ TEMPLATE_DMG=template.dmg
 $(TEMPLATE_DMG): $(TEMPLATE_DMG).bz2
 	bunzip2 -k $<
 
-$(TEMPLATE_DMG).bz2: 
+$(TEMPLATE_DMG).bz2:
 	@echo
 	@echo --------------------- Generating empty template --------------------
 	mkdir template
@@ -181,4 +181,3 @@ $(MASTER_DMG): $(WC_DMG) $(DISK_FILES)
 .PHONY: clean-dmg
 clean-dmg:
 	-rm -rf $(TEMPLATE_DMG) $(MASTER_DMG) $(WC_DMG) $(NAME)-*.dmg
-

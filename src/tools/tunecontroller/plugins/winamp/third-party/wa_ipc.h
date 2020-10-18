@@ -67,7 +67,7 @@ typedef struct {
 ** Use IPC_DELETE to clear Winamp's internal playlist.
 */
 
-#define IPC_STARTPLAY 102      // starts playback. almost like hitting play in Winamp.
+#define IPC_STARTPLAY 102 // starts playback. almost like hitting play in Winamp.
 #define IPC_STARTPLAY_INT 1102 // used internally, don't bother using it (won't be any fun)
 
 #define IPC_CHDIR 103
@@ -527,7 +527,7 @@ typedef struct _prefsDlgRec {
 #define IPC_OPENURLBOX                                                                                                 \
     360 // pass a HWND to a parent, returns a HGLOBAL that needs to be freed with GlobalFree(), if successful
 #define IPC_OPENFILEBOX 362 // pass a HWND to a parent
-#define IPC_OPENDIRBOX 363  // pass a HWND to a parent
+#define IPC_OPENDIRBOX 363 // pass a HWND to a parent
 
 // pass an HWND to a parent. call this if you take over the whole UI so that the dialogs are not appearing on the
 // bottom right of the screen since the main winamp window is at 3000x3000, call again with NULL to reset
@@ -670,18 +670,18 @@ typedef struct {
 
 // the following IPC use waSpawnMenuParms as parameter
 #define IPC_SPAWNEQPRESETMENU 933
-#define IPC_SPAWNFILEMENU 934       // menubar
-#define IPC_SPAWNOPTIONSMENU 935    // menubar
-#define IPC_SPAWNWINDOWSMENU 936    // menubar
-#define IPC_SPAWNHELPMENU 937       // menubar
-#define IPC_SPAWNPLAYMENU 938       // menubar
-#define IPC_SPAWNPEFILEMENU 939     // menubar
+#define IPC_SPAWNFILEMENU 934 // menubar
+#define IPC_SPAWNOPTIONSMENU 935 // menubar
+#define IPC_SPAWNWINDOWSMENU 936 // menubar
+#define IPC_SPAWNHELPMENU 937 // menubar
+#define IPC_SPAWNPLAYMENU 938 // menubar
+#define IPC_SPAWNPEFILEMENU 939 // menubar
 #define IPC_SPAWNPEPLAYLISTMENU 940 // menubar
-#define IPC_SPAWNPESORTMENU 941     // menubar
-#define IPC_SPAWNPEHELPMENU 942     // menubar
-#define IPC_SPAWNMLFILEMENU 943     // menubar
-#define IPC_SPAWNMLVIEWMENU 944     // menubar
-#define IPC_SPAWNMLHELPMENU 945     // menubar
+#define IPC_SPAWNPESORTMENU 941 // menubar
+#define IPC_SPAWNPEHELPMENU 942 // menubar
+#define IPC_SPAWNMLFILEMENU 943 // menubar
+#define IPC_SPAWNMLVIEWMENU 944 // menubar
+#define IPC_SPAWNMLHELPMENU 945 // menubar
 #define IPC_SPAWNPELISTOFPLAYLISTS 946
 
 typedef struct {
@@ -882,12 +882,12 @@ typedef struct {
 #define VIDCMD_LIB 3
 #define VIDPOPUP_MISC 4
 
-#define IPC_MBURL 1003          // sets the URL
-#define IPC_MBGETCURURL 1004    // copies the current URL into wParam (have a 4096 buffer ready)
-#define IPC_MBGETDESC 1005      // copies the current URL description into wParam (have a 4096 buffer ready)
+#define IPC_MBURL 1003 // sets the URL
+#define IPC_MBGETCURURL 1004 // copies the current URL into wParam (have a 4096 buffer ready)
+#define IPC_MBGETDESC 1005 // copies the current URL description into wParam (have a 4096 buffer ready)
 #define IPC_MBCHECKLOCFILE 1006 // checks that the link file is up to date (otherwise updates it). wParam=parent HWND
-#define IPC_MBREFRESH 1007      // refreshes the "now playing" view in the library
-#define IPC_MBGETDEFURL 1008    // copies the default URL into wParam (have a 4096 buffer ready)
+#define IPC_MBREFRESH 1007 // refreshes the "now playing" view in the library
+#define IPC_MBGETDEFURL 1008 // copies the default URL into wParam (have a 4096 buffer ready)
 
 #define IPC_STATS_LIBRARY_ITEMCNT 1300 // updates library count status
 
@@ -925,12 +925,12 @@ typedef struct {
 ** SendMessage(hwnd_winamp, WM_COMMAND,command_name,0);
 */
 
-#define WINAMP_OPTIONS_EQ 40036     // toggles the EQ window
+#define WINAMP_OPTIONS_EQ 40036 // toggles the EQ window
 #define WINAMP_OPTIONS_PLEDIT 40040 // toggles the playlist window
-#define WINAMP_VOLUMEUP 40058       // turns the volume up a little
-#define WINAMP_VOLUMEDOWN 40059     // turns the volume down a little
-#define WINAMP_FFWD5S 40060         // fast forwards 5 seconds
-#define WINAMP_REW5S 40061          // rewinds 5 seconds
+#define WINAMP_VOLUMEUP 40058 // turns the volume up a little
+#define WINAMP_VOLUMEDOWN 40059 // turns the volume down a little
+#define WINAMP_FFWD5S 40060 // fast forwards 5 seconds
+#define WINAMP_REW5S 40061 // rewinds 5 seconds
 
 // the following are the five main control buttons, with optionally shift
 // or control pressed
@@ -951,11 +951,11 @@ typedef struct {
 #define WINAMP_BUTTON4_CTRL 40157
 #define WINAMP_BUTTON5_CTRL 40158
 
-#define WINAMP_FILE_PLAY 40029     // pops up the load file(s) box
-#define WINAMP_FILE_DIR 40187      // pops up the load directory box
+#define WINAMP_FILE_PLAY 40029 // pops up the load file(s) box
+#define WINAMP_FILE_DIR 40187 // pops up the load directory box
 #define WINAMP_OPTIONS_PREFS 40012 // pops up the preferences
-#define WINAMP_OPTIONS_AOT 40019   // toggles always on top
-#define WINAMP_HELP_ABOUT 40041    // pops up the about box :)
+#define WINAMP_OPTIONS_AOT 40019 // toggles always on top
+#define WINAMP_HELP_ABOUT 40041 // pops up the about box :)
 
 #define ID_MAIN_PLAY_AUDIOCD1 40323 // starts playing the audio CD in the first CD reader
 #define ID_MAIN_PLAY_AUDIOCD2 40323 // plays the 2nd

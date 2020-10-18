@@ -33,13 +33,13 @@ endif ()
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_XCB QUIET xcb )
-    set ( XCB_DEFINITIONS 
+    set ( XCB_DEFINITIONS
         ${PC_XCB_CFLAGS}
         ${PC_XCB_CFLAGS_OTHER}
     )
 endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     xcb.h
 )
 
@@ -56,7 +56,7 @@ find_path(
 find_library(
     XCB_LIBRARY
     NAMES xcb
-    HINTS 
+    HINTS
     ${PC_XCB_LIBDIR}
     ${PC_XCB_LIBRARY_DIRS}
     ${XCB_ROOT}/lib
@@ -75,4 +75,3 @@ if ( XCB_FOUND )
 endif()
 
 mark_as_advanced( XCB_INCLUDE_DIR XCB_LIBRARY )
-

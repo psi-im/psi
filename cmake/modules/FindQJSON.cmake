@@ -33,13 +33,13 @@ endif()
 if ( UNIX AND NOT( APPLE OR CYGWIN ) )
     find_package( PkgConfig QUIET )
     pkg_check_modules( PC_QJSON QUIET QJson )
-    set ( QJSON_DEFINITIONS 
+    set ( QJSON_DEFINITIONS
         ${PC_QJSON_CFLAGS}
         ${PC_QJSON_CFLAGS_OTHER}
     )
 endif()
 
-set ( LIBINCS 
+set ( LIBINCS
     parser.h
 )
 
@@ -59,7 +59,7 @@ find_path(
 find_library(
     QJSON_LIBRARY
     NAMES qjson
-    HINTS 
+    HINTS
     ${PC_QJSON_LIBDIR}
     ${PC_QJSON_LIBRARY_DIRS}
     ${QJSON_ROOT}/lib
@@ -78,4 +78,3 @@ if ( QJSON_FOUND )
 endif()
 
 mark_as_advanced( QJSON_INCLUDE_DIR QJSON_LIBRARY )
-

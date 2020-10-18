@@ -35,4 +35,3 @@ then
     ls -alp ../Psi*.dmg
     du -shc ../Psi*.dmg
 fi
-

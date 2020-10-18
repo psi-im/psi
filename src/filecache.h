@@ -55,7 +55,7 @@ public:
     }
 
     void
-                      flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
+    flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
     bool              remove() const; // remove file from disk but not from registry. don't call this directly.
     void              unload();       // drop file to disk, deallocate memory
     inline bool       inMemory() const;
