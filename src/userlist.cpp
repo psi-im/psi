@@ -600,7 +600,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
                     str += QString("<div style='white-space:pre'>")
                         + QObject::tr("Affiliation: %1")
                               .arg(MUCManager::affiliationToString(r.status().mucItem().affiliation()))
-                        + QString("</td></tr></table></div>");
+                        + QString("</div></td></tr></table></div>");
                 }
             }
 
