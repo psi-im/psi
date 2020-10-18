@@ -115,29 +115,32 @@ QSizeF TextIconHandler::intrinsicSize(QTextDocument *doc, int posInDocument, con
     auto htmlSize = charFormat.doubleProperty(TextIconFormat::IconSize);
     auto iconName = charFormat.stringProperty(TextIconFormat::IconName);
 
-    auto icon = IconsetFactory::iconPtr(iconName);
+    QSizeF ret;
+    auto   icon = IconsetFactory::iconPtr(iconName);
     if (!icon) {
         qWarning("invalid icon: %s", qPrintable(iconName));
-        return QSizeF();
-    }
+        ret = QSizeF();
+    } else
 
-    if (htmlSize > 0) {
+        if (htmlSize > 0) {
         auto pxSize = pointToPixel(htmlSize);
-        return icon->size(QSize(pxSize, pxSize));
+        ret         = icon->size(QSize(pxSize, pxSize));
+    } else
+
+        if (htmlSize == 0) {
+        ret = icon->size();
+    } else {
+        auto relSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
+        if (icon->isScalable()) {
+            ret = icon->size(QSize(0, relSize));
+        } else if (icon->size().height() > relSize * HugeIconTextViewK) { // still too huge
+            ret = icon->size().scaled(QSize(icon->size().width(), relSize), Qt::KeepAspectRatio);
+        } else {
+            ret = icon->size();
+        }
     }
 
-    if (htmlSize == 0) {
-        return icon->size();
-    }
-
-    auto relSize = QFontInfo(charFormat.font()).pixelSize() * std::fabs(double(htmlSize));
-    if (icon->isScalable()) {
-        return icon->size(QSize(0, relSize));
-    } else if (icon->size().height() > relSize * HugeIconTextViewK) { // still too huge
-        return icon->size().scaled(QSize(icon->size().width(), relSize), Qt::KeepAspectRatio);
-    }
-
-    return icon->size();
+    return ret;
 }
 
 void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDocument *doc, int posInDocument,
