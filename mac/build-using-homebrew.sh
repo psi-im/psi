@@ -3,7 +3,7 @@
 # Authors: Boris Pek
 # License: Public Domain
 # Created: 2018-10-07
-# Updated: 2020-05-26
+# Updated: 2020-10-26
 # Version: N/A
 #
 # Description: script for building of app bundles for macOS
@@ -23,7 +23,7 @@
 # Build dependencies for Psi and useful tools:
 # export HOMEBREW_NO_BOTTLE_SOURCE_FALLBACK=1
 # brew install ccache coreutils cmake
-# brew install openssl@1.1 minizip hunspell qt qtkeychain
+# brew install openssl@1.1 libusrsctp minizip hunspell qt qtkeychain
 #
 # Build qca with enabled qca-gnupg plugin:
 # brew install --build-bottle https://raw.githubusercontent.com/tehnick/homebrew-core/hobby/Formula/qca.rb
