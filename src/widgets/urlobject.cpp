@@ -78,13 +78,13 @@ public:
         act_join_groupchat = new IconAction(tr, "psi/groupChat", tr, 0, this);
         connectXmppAction(act_join_groupchat, "join");
 
-        tr       = qApp->translate("URLLabel", "Copy location");
-        act_copy = new IconAction(tr, tr, 0, this);
-        connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
-
         tr       = qApp->translate("URLLabel", "User Info");
         act_info = new IconAction(tr, "psi/vCard", tr, 0, this);
         connectXmppAction(act_info, "vcard");
+
+        tr       = qApp->translate("URLLabel", "Copy location");
+        act_copy = new IconAction(tr, tr, 0, this);
+        connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
     }
 
     QString copyString(QString from)
@@ -112,7 +112,7 @@ public slots:
     void popupAction(QString lnk)
     {
         if (lnk.startsWith("x-psi-atstyle:")) {
-            lnk.replace(0, 13, "mailto");
+            lnk.replace(0, 13, "xmpp");
         }
         emit urlObject->openURL(lnk);
     }
@@ -189,27 +189,32 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
     QMenu *m = new QMenu;
 
     bool needGenericOpen = true;
-    if (service == "mailto" || service == "x-psi-atstyle") {
-        needGenericOpen = false;
-        m->addAction(d->act_mailto);
-    }
     if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
         needGenericOpen = false;
+        m->addAction(d->act_xmpp);
+        m->addSeparator();
+        m->addAction(d->act_chat);
+        m->addAction(d->act_send_message);
+        m->addSeparator();
+        m->addAction(d->act_join_groupchat);
+        m->addSeparator();
+        m->addAction(d->act_add_to_roster);
+        m->addSeparator();
+        m->addAction(d->act_info);
         if (service == "x-psi-atstyle") {
             m->addSeparator();
         }
-        m->addAction(d->act_info);
-        m->addAction(d->act_xmpp);
-        m->addAction(d->act_chat);
-        m->addAction(d->act_send_message);
-        m->addAction(d->act_join_groupchat);
-        m->addAction(d->act_add_to_roster);
+    }
+    if (service == "mailto" || service == "x-psi-atstyle") {
+        needGenericOpen = false;
+        m->addAction(d->act_mailto);
         if (service == "x-psi-atstyle") {
             m->addSeparator();
         }
     }
     if (needGenericOpen) {
         m->addAction(d->act_browser);
+        m->addSeparator();
     }
 
     m->addAction(d->act_copy);
