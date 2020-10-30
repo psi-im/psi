@@ -302,8 +302,52 @@ QString TextUtil::linkify(const QString &in)
             n += 5;
             isUrl = true;
             href  = "";
-        } else if (linkify_pmatch(out, n, "mailto:")) {
+        } else if (linkify_pmatch(out, n, "apt:")) {
+            n += 4;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "bitcoin:")) {
+            n += 8;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "callto:")) {
             n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "cvs://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ed2k://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "facetime://")) {
+            n += 11;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "fax:")) {
+            n += 4;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "file://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ftp://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ftps://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "geo:")) {
+            n += 4;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "git://")) {
+            n += 6;
             isUrl = true;
             href  = "";
         } else if (linkify_pmatch(out, n, "http://")) {
@@ -314,24 +358,120 @@ QString TextUtil::linkify(const QString &in)
             n += 8;
             isUrl = true;
             href  = "";
-        } else if (linkify_pmatch(out, n, "ftp://")) {
+        } else if (linkify_pmatch(out, n, "im:")) {
+            n += 3;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ipp://")) {
             n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ipps://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "irc://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "irc6://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ircs://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ldap://")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ldaps://")) {
+            n += 8;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "magnet:")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "maps:")) {
+            n += 5;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "mailto:")) {
+            n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "message:")) {
+            n += 8;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "mumble://")) {
+            n += 9;
             isUrl = true;
             href  = "";
         } else if (linkify_pmatch(out, n, "news://")) {
             n += 7;
             isUrl = true;
             href  = "";
-        } else if (linkify_pmatch(out, n, "ed2k://")) {
+        } else if (linkify_pmatch(out, n, "nntp://")) {
             n += 7;
             isUrl = true;
             href  = "";
-        } else if (linkify_pmatch(out, n, "file://")) {
+        } else if (linkify_pmatch(out, n, "psyc://")) {
             n += 7;
             isUrl = true;
             href  = "";
-        } else if (linkify_pmatch(out, n, "magnet:")) {
+        } else if (linkify_pmatch(out, n, "sftp://")) {
             n += 7;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "sip:")) {
+            n += 4;
+            isSip = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "sips:")) {
+            n += 5;
+            isSip = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "skype:")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "smb://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ssh://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "svn://")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "tel:")) {
+            n += 4;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "teamspeak://")) {
+            n += 12;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "turn:")) {
+            n += 5;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "turns:")) {
+            n += 6;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "ventrilo://")) {
+            n += 11;
+            isUrl = true;
+            href  = "";
+        } else if (linkify_pmatch(out, n, "vnc://")) {
+            n += 6;
             isUrl = true;
             href  = "";
         } else if (linkify_pmatch(out, n, "www.")) {
