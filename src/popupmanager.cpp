@@ -223,7 +223,7 @@ void PopupManager::doPopup(PsiAccount *account, PopupType pType, const Jid &j, c
 }
 
 void PopupManager::doPopup(PsiAccount *account, const Jid &j, const PsiIcon *titleIcon, const QString &titleText,
-                           const QPixmap *avatar, const PsiIcon *icon, const QString &text, bool checkNoPopup,
+                           const QPixmap &avatar, const PsiIcon *icon, const QString &text, bool checkNoPopup,
                            PopupType pType)
 {
     if (!PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool())

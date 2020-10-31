@@ -245,7 +245,7 @@ void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType type, 
 }
 
 void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType /* type*/, const Jid &j,
-                             const PsiIcon *titleIcon, const QString &titleText, const QPixmap *avatar,
+                             const PsiIcon *titleIcon, const QString &titleText, const QPixmap &avatar,
                              const PsiIcon *icon, const QString &text)
 {
     QPixmap pix;
@@ -253,8 +253,8 @@ void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType /* typ
         pix = titleIcon->pixmap();
     else if (icon)
         pix = icon->pixmap();
-    else if (avatar)
-        pix = *avatar;
+    else if (!avatar.isNull())
+        pix = avatar;
     // Notify Growl
     NotificationContext *context = new NotificationContext(account, j);
     gn_->notify(QObject::tr("Incoming Headline"), titleText, TextUtil::rich2plain(text), pix, false, this,

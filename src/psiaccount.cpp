@@ -5258,7 +5258,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 #ifdef PSI_PLUGINS
             } else {
                 psi()->popupManager()->doPopup(this, j, IconsetFactory::iconPtr("psi/headline"), tr("Headline"),
-                                               nullptr, nullptr, e->description(), false, popupType);
+                                               QPixmap(), nullptr, e->description(), false, popupType);
             }
 #endif
         }

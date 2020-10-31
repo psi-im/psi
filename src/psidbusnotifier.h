@@ -46,7 +46,7 @@ public:
     virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const Resource &r,
                        const UserListItem * = nullptr, const PsiEvent::Ptr & = PsiEvent::Ptr());
     virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon,
-                       const QString &titleText, const QPixmap *avatar, const PsiIcon *icon, const QString &text);
+                       const QString &titleText, const QPixmap &avatar, const PsiIcon *icon, const QString &text);
 
 private slots:
     void popupClosed(uint id, uint reason);

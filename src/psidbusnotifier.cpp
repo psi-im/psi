@@ -297,7 +297,7 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType type, c
 }
 
 void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*/, const Jid &j,
-                            const PsiIcon *titleIcon, const QString &titleText, const QPixmap *avatar,
+                            const PsiIcon *titleIcon, const QString &titleText, const QPixmap &avatar,
                             const PsiIcon * /*icon*/, const QString &text)
 {
     account_ = account;
@@ -307,10 +307,10 @@ void PsiDBusNotifier::popup(PsiAccount *account, PopupManager::PopupType /*type*
     if (PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.dbus.transient-hint").toBool()) {
         hints.insert("transient", QVariant(true));
     }
-    if (avatar || titleIcon) {
+    if (!avatar.isNull() || titleIcon) {
         int    size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
-        QImage im   = avatar ? avatar->toImage().scaledToWidth(size, Qt::SmoothTransformation)
-                             : titleIcon->pixmap(QSize(size, size)).toImage();
+        QImage im   = avatar.isNull() ? titleIcon->pixmap(QSize(size, size)).toImage()
+                                      : avatar.toImage().scaledToWidth(size, Qt::SmoothTransformation);
         iiibiiay i(&im);
         hints.insert("icon_data", QVariant(iiibiiay::id, &i));
     }

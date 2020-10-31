@@ -40,7 +40,7 @@ public:
                        const UserListItem * = nullptr, const PsiEvent::Ptr & = PsiEvent::Ptr())
         = 0;
     virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon,
-                       const QString &titleText, const QPixmap *avatar, const PsiIcon *icon, const QString &text)
+                       const QString &titleText, const QPixmap &avatar, const PsiIcon *icon, const QString &text)
         = 0;
 
     void setDuration(int d) { duration_ = d; }

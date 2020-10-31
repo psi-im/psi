@@ -20,10 +20,12 @@
 #include "mucjoindlg.h"
 
 #include "accountscombobox.h"
+#include "avatars.h"
 #include "bookmarkmanager.h"
 #include "groupchatdlg.h"
 #include "iconset.h"
 #include "jidutil.h"
+#include "popupmanager.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
@@ -378,11 +380,10 @@ void MUCJoinDlg::error(int error, const QString &str)
 
     nickAlreadyCompleted_ = false;
 
-    QMessageBox *msg = new QMessageBox(QMessageBox::Information, tr("Error"),
-                                       tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
-    msg->setAttribute(Qt::WA_DeleteOnClose, true);
-    msg->setModal(false);
-    msg->show();
+    account_->psi()->popupManager()->doPopup(account_, jid_, IconsetFactory::iconPtr("status/error"), tr("Error"),
+                                             account_->avatarFactory()->getAvatar(jid_),
+                                             IconsetFactory::iconPtr("status/offline"),
+                                             tr("Unable to join groupchat.\nReason: %1").arg(str));
 }
 
 void MUCJoinDlg::setJid(const Jid &mucJid)

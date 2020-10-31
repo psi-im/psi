@@ -66,7 +66,7 @@ public:
     ~Private();
 
     void        init(const PsiIcon *titleIcon, const QString &titleText, PsiAccount *_acc);
-    QBoxLayout *createContactInfo(const QPixmap *avatar, const PsiIcon *icon, const QString &text);
+    QBoxLayout *createContactInfo(const QPixmap &avatar, const PsiIcon *icon, const QString &text);
 
 private slots:
     void popupDestroyed();
@@ -164,15 +164,15 @@ void PsiPopup::Private::popupClicked(int button)
     popup->deleteLater();
 }
 
-QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap *avatar, const PsiIcon *icon, const QString &text)
+QBoxLayout *PsiPopup::Private::createContactInfo(const QPixmap &avatar, const PsiIcon *icon, const QString &text)
 {
     QHBoxLayout *dataBox = new QHBoxLayout();
 
-    if (avatar && !avatar->isNull()) {
+    if (!avatar.isNull()) {
         int     size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
         QLabel *avatarLabel = new QLabel(popup);
         avatarLabel->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-        avatarLabel->setPixmap(avatar->scaled(QSize(size, size), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        avatarLabel->setPixmap(avatar.scaled(QSize(size, size), Qt::KeepAspectRatio, Qt::SmoothTransformation));
         dataBox->addWidget(avatarLabel);
         dataBox->addSpacing(5);
     }
@@ -218,7 +218,7 @@ void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j
 }
 
 void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j, const PsiIcon *titleIcon,
-                     const QString &titleText, const QPixmap *avatar, const PsiIcon *icon, const QString &text)
+                     const QString &titleText, const QPixmap &avatar, const PsiIcon *icon, const QString &text)
 {
     d->popupType = type;
     d->init(titleIcon, titleText, acc);
@@ -228,7 +228,7 @@ void PsiPopup::popup(PsiAccount *acc, PopupManager::PopupType type, const Jid &j
 
 void PsiPopup::setJid(const Jid &j) { d->jid = j; }
 
-void PsiPopup::setData(const QPixmap *avatar, const PsiIcon *icon, const QString &text)
+void PsiPopup::setData(const QPixmap &avatar, const PsiIcon *icon, const QString &text)
 {
     if (!d->popup) {
         deleteLater();
@@ -337,13 +337,13 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
                 contactText += "<br/><font size=\"+1\">" + message + "</font>";
             }
         }
-        setData(&avatar, icon, contactText);
+        setData(avatar, icon, contactText);
     } else if (d->popupType == PopupManager::AlertComposing) {
         QString txt = "<font size=\"+1\">" + name + tr(" is typing...") + "</font>";
-        setData(&avatar, icon, txt);
+        setData(avatar, icon, txt);
     } else if (d->popupType == PopupManager::AlertHeadline) {
         QVBoxLayout *vbox = new QVBoxLayout;
-        vbox->addLayout(d->createContactInfo(&avatar, icon, contactText));
+        vbox->addLayout(d->createContactInfo(avatar, icon, contactText));
 
         vbox->addSpacing(5);
 
