@@ -503,6 +503,7 @@ PSI_EXPORT_FUNC int main(int argc, char *argv[])
 #endif
     PsiApplication app(argc, argv);
     QApplication::setApplicationName(ApplicationInfo::name());
+    QApplication::setApplicationVersion(ApplicationInfo::version());
     QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
     QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
     QApplication::setQuitOnLastWindowClosed(false);
